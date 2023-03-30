@@ -22,6 +22,16 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.alterTable(TABLE_NAME, (table) => {
     table.string('branchName').notNullable().alter()
     table.string('userId').notNullable().alter()
+
+    // lets migrate the precision as well
+    table
+      .timestamp('uploadDate', { precision: 3, useTz: true })
+      .defaultTo(knex.fn.now())
+      .alter()
+    table
+      .timestamp('convertedLastUpdate', { precision: 3, useTz: true })
+      .defaultTo(knex.fn.now())
+      .alter()
   })
 }
 
@@ -29,5 +39,14 @@ export async function down(knex: Knex): Promise<void> {
   await knex.schema.alterTable(TABLE_NAME, (table) => {
     table.string('branchName').nullable().alter()
     table.string('userId').nullable().alter()
+
+    table
+      .timestamp('uploadDate', { precision: 6, useTz: true })
+      .defaultTo(knex.fn.now())
+      .alter()
+    table
+      .timestamp('convertedLastUpdate', { precision: 6, useTz: true })
+      .defaultTo(knex.fn.now())
+      .alter()
   })
 }

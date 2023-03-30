@@ -522,7 +522,7 @@ export type EditCommentInput = {
 
 export type FileUpload = {
   __typename?: 'FileUpload';
-  branchName?: Maybe<Scalars['String']>;
+  branchName: Scalars['String'];
   /** If present, the conversion result is stored in this commit. */
   convertedCommitId?: Maybe<Scalars['String']>;
   convertedLastUpdate: Scalars['DateTime'];

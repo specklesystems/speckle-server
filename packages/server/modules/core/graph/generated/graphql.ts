@@ -530,7 +530,7 @@ export type EditCommentInput = {
 
 export type FileUpload = {
   __typename?: 'FileUpload';
-  branchName?: Maybe<Scalars['String']>;
+  branchName: Scalars['String'];
   /** If present, the conversion result is stored in this commit. */
   convertedCommitId?: Maybe<Scalars['String']>;
   convertedLastUpdate: Scalars['DateTime'];
@@ -3185,7 +3185,7 @@ export interface EmailAddressScalarConfig extends GraphQLScalarTypeConfig<Resolv
 }
 
 export type FileUploadResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FileUpload'] = ResolversParentTypes['FileUpload']> = {
-  branchName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  branchName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   convertedCommitId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   convertedLastUpdate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   convertedMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

@@ -12,7 +12,7 @@ extend type Stream {
 type FileUpload {
   id: String!
   streamId: String!
-  branchName: String
+  branchName: String!
   """
   If present, the conversion result is stored in this commit.
   """
