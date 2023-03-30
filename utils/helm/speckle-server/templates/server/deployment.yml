@@ -139,9 +139,9 @@ spec:
             value: "true"
           {{- end }}
 
-          {{- if (and .Values.server.mp .Values.server.mp.enabled) }}
+          {{- if .Values.server.monitoring.mp.enabled }}
           - name: ENABLE_MP
-            value: {{ default "true" ( .Values.server.mp.enabled | quote) }}
+            value: {{ default "true" ( .Values.server.monitoring.mp.enabled | quote) }}
           {{- end }}
 
           # *** S3 Object Storage ***
