@@ -56,7 +56,7 @@ spec:
               - matchPattern: "*.ingest.sentry.io"
 {{- end }}
 {{- if (ne "false" .Values.server.monitoring.mp.enabled) }}
-              - matchName: 'analytics.speckle.systems'
+              - matchPattern: 'analytics.speckle.systems'
 {{- end }}
 {{- if .Values.server.email.enabled }}
               # email server
@@ -122,6 +122,15 @@ spec:
     - toFQDNs:
         - matchName: 'accounts.google.com'
         - matchName: 'www.googleapis.com'
+      toPorts:
+        - ports:
+            - port: '443'
+              protocol: TCP
+{{- end }}
+{{- if (ne "false" .Values.server.monitoring.mp.enabled) }}
+    # monitoring
+    - toFQDNs:
+        - matchName: 'analytics.speckle.systems'
       toPorts:
         - ports:
             - port: '443'
