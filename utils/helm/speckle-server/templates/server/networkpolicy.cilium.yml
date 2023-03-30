@@ -56,7 +56,7 @@ spec:
               - matchPattern: "*.ingest.sentry.io"
 {{- end }}
 {{- if (ne "false" .Values.server.monitoring.mp.enabled) }}
-              - matchPattern: 'analytics.speckle.systems'
+              - matchName: 'analytics.speckle.systems'
 {{- end }}
 {{- if .Values.server.email.enabled }}
               # email server
