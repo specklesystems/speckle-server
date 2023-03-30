@@ -155,7 +155,7 @@ export default class SpeckleMesh extends Mesh {
         this.transformsBuffer[index + 6] = batchObject.transform.elements[9]
         this.transformsBuffer[index + 7] = batchObject.transform.elements[13]
 
-        this.transformsBuffer[index + 8] = batchObject.transform.elements[3]
+        this.transformsBuffer[index + 8] = batchObject.transform.elements[2]
         this.transformsBuffer[index + 9] = batchObject.transform.elements[6]
         this.transformsBuffer[index + 10] = batchObject.transform.elements[10]
         this.transformsBuffer[index + 11] = batchObject.transform.elements[14]

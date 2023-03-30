@@ -10,11 +10,13 @@ import {
   Intersection,
   Matrix4,
   Mesh,
+  MeshBasicMaterial,
   Object3D,
   Plane,
   RGBADepthPacking,
   Scene,
   Sphere,
+  SphereGeometry,
   Spherical,
   sRGBEncoding,
   Texture,
@@ -57,6 +59,7 @@ import { Shadowcatcher } from './Shadowcatcher'
 import Logger from 'js-logger'
 import SpeckleMesh from './objects/SpeckleMesh'
 import { ExtendedIntersection } from './objects/SpeckleRaycaster'
+import { BatchObject } from './batching/BatchObject'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -90,6 +93,9 @@ export default class SpeckleRenderer {
   private sectionBoxOutlines: SectionBoxOutlines = null
   private _shadowcatcher: Shadowcatcher = null
   private cancel: { [subtreeId: string]: boolean } = {}
+  // public static cameraPos: Vector3 = new Vector3()
+  // public static viewMatrix: Matrix4 = new Matrix4()
+  // public static cameraMatrix: Matrix4 = new Matrix4()
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -320,10 +326,31 @@ export default class SpeckleRenderer {
     }
 
     this._scene.add(this._shadowcatcher.shadowcatcherMesh)
+    const geometry = new SphereGeometry(0.25, 32, 16)
+    const material = new MeshBasicMaterial({ color: 0xff0000 })
+    const sphere = new Mesh(geometry, material)
+    sphere.layers.set(ObjectLayers.PROPS)
+    this._scene.add(sphere)
   }
 
   public update(deltaTime: number) {
     this.needsRender = this.viewer.cameraHandler.controls.update(deltaTime)
+    // SpeckleRenderer.cameraPos.set(
+    //   this.camera.matrixWorld.elements[12],
+    //   this.camera.matrixWorld.elements[13],
+    //   this.camera.matrixWorld.elements[14]
+    // )
+    // this.camera.updateMatrixWorld(true)
+    // SpeckleRenderer.cameraMatrix.copy(this.camera.matrixWorld)
+    // SpeckleRenderer.viewMatrix.copy(this.camera.matrixWorldInverse)
+
+    // const batches = this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+    // const meshes = batches.map((batch: MeshBatch) => batch.mesh)
+    // const objects = meshes.flatMap((mesh) => mesh.batchObjects)
+    // objects.forEach((obj: BatchObject) => {
+    //   obj.updateView()
+    //   this.markTransformsDirty(obj.renderView.batchId)
+    // })
 
     this.batcher.update(deltaTime)
 
@@ -1328,6 +1355,22 @@ export default class SpeckleRenderer {
     this.renderer.shadowMap.needsUpdate = true
     this.needsRender = true
     this.resetPipeline()
+  }
+
+  public getObjects(id: string): BatchObject[] {
+    const node = WorldTree.getInstance().findId(id)
+    const rvs = WorldTree.getRenderTree().getRenderViewsForNode(node, node)
+    const batches = this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+    const meshes = batches.map((batch: MeshBatch) => batch.mesh)
+    const objects = meshes.flatMap((mesh) => mesh.batchObjects)
+    const selectedObjects = objects.filter((obj: BatchObject) =>
+      rvs.includes(obj.renderView)
+    )
+    return selectedObjects
+  }
+
+  public markTransformsDirty(batchId: string) {
+    ;(this.batcher.batches[batchId] as MeshBatch).mesh.transformsDirty = true
   }
 
   // public compile() {

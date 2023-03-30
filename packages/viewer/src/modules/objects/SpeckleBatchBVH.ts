@@ -40,15 +40,15 @@ export class SpeckleBatchBVH {
 
     this.batchObjects.forEach((batchObject: BatchObject) => {
       rayBuff.copy(ray)
-      const hits = batchObject.bvh.raycast(this.transformInput(rayBuff), materialOrSide)
+      const hits = batchObject.bvh.raycast(rayBuff, materialOrSide)
       hits.forEach((hit) => {
         ;(hit as ExtendedIntersection).batchObject = batchObject
       })
       res.push(...hits)
     })
-    res.forEach((value) => {
-      value.point = this.transformOutput(value.point)
-    })
+    // res.forEach((value) => {
+    //   value.point = this.transformOutput(value.point)
+    // })
     return res
   }
 
@@ -182,10 +182,10 @@ export class SpeckleBatchBVH {
   }
 
   public transformInput<T extends Vector3 | Ray | Box3>(input: T): T {
-    return input.applyMatrix4(this.originTransform) as T
+    return input as T //input.applyMatrix4(this.originTransform) as T
   }
 
   public transformOutput<T extends Vector3 | Ray | Box3>(output: T): T {
-    return output.applyMatrix4(this.originTransformInv) as T
+    return output as T //output.applyMatrix4(this.originTransformInv) as T
   }
 }

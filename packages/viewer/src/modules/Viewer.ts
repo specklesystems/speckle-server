@@ -31,6 +31,7 @@ import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
+import { BatchObject } from './batching/BatchObject'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -122,6 +123,10 @@ export class Viewer extends EventEmitter implements IViewer {
     this.on(ViewerEvent.LoadCancelled, (url: string) => {
       Logger.warn(`Cancelled load for ${url}`)
     })
+  }
+
+  public getObjects(id: string): BatchObject[] {
+    return this.speckleRenderer.getObjects(id)
   }
 
   public setSectionBox(

@@ -1,5 +1,6 @@
 import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
+import { BatchObject } from './modules/batching/BatchObject'
 import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
@@ -215,6 +216,8 @@ export interface IViewer {
   query<T extends Query>(query: T): QueryArgsResultMap[T['operation']]
   queryAsync(query: Query): Promise<QueryResult>
   get Utils(): Utils
+
+  getObjects(id: string): BatchObject[]
 
   dispose(): void
 }

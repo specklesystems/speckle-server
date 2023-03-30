@@ -69,8 +69,11 @@ Otherwise, keep in mind that if you use this class for any other purposes, you c
 to get the correct values for Vectors, Rays, Boxes, etc
  */
 export class SpeckleMeshBVH extends MeshBVH {
+  private static readonly MatBuff: Matrix4 = new Matrix4()
   public inputTransform: Matrix4
   public outputTransform: Matrix4
+  public inputOriginTransform: Matrix4
+  public outputOriginTransfom: Matrix4
 
   public static buildBVH(
     indices: number[],
@@ -235,11 +238,15 @@ export class SpeckleMeshBVH extends MeshBVH {
   }
 
   public transformInput<T extends Vector3 | Ray | Box3>(input: T): T {
-    return input.applyMatrix4(this.inputTransform) as T
+    SpeckleMeshBVH.MatBuff.copy(this.inputOriginTransform).multiply(this.inputTransform)
+    return input.applyMatrix4(SpeckleMeshBVH.MatBuff) as T
   }
 
   public transformOutput<T extends Vector3 | Ray | Box3>(output: T): T {
-    return output.applyMatrix4(this.outputTransform) as T
+    SpeckleMeshBVH.MatBuff.copy(this.outputOriginTransfom).multiply(
+      this.outputTransform
+    )
+    return output.applyMatrix4(SpeckleMeshBVH.MatBuff) as T
   }
 
   public getBoundingBox(target) {

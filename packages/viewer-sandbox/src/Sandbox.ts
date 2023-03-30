@@ -1,10 +1,13 @@
+import { Box3 } from '@speckle/viewer'
+import { Vector3 } from '@speckle/viewer'
 import {
   CanonicalView,
   DebugViewer,
   PropertyInfo,
   SelectionEvent,
   SunLightConfiguration,
-  ViewerEvent
+  ViewerEvent,
+  BatchObject
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
@@ -17,6 +20,7 @@ export default class Sandbox {
   private streams: { [url: string]: Array<unknown> } = {}
   private properties: PropertyInfo[]
   private selectionList: SelectionEvent[]
+  private objectControls
 
   public static urlParams = {
     url: 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
@@ -125,6 +129,12 @@ export default class Sandbox {
       this.properties = this.viewer.getObjectProperties()
       url
     })
+    viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent) => {
+      if (selectionEvent && selectionEvent.hits) {
+        const objects = this.viewer.getObjects(selectionEvent.hits[0].guid)
+        this.addObjectControls(selectionEvent.hits[0].guid, objects)
+      }
+    })
   }
 
   public refresh() {
@@ -198,6 +208,73 @@ export default class Sandbox {
 
   private removeViewControls() {
     this.viewsFolder.dispose()
+  }
+
+  public addObjectControls(id: string, objects: BatchObject[]) {
+    if (this.objectControls) {
+      this.objectControls.dispose()
+    }
+    this.objectControls = this.tabs.pages[0].addFolder({
+      title: `Object: ${id}`
+    })
+
+    const position = { value: { x: 0, y: 0, z: 0 } }
+    const rotation = { value: { x: 0, y: 0, z: 0 } }
+    const scale = { value: { x: 1, y: 1, z: 1 } }
+    this.objectControls
+      .addInput(position, 'value', { label: 'Position' })
+      .on('change', () => {
+        const unionBox: Box3 = new Box3()
+        objects.forEach((obj: BatchObject) => {
+          unionBox.union(obj.renderView.aabb)
+        })
+        const origin = unionBox.getCenter(new Vector3())
+        objects.forEach((obj: BatchObject) => {
+          obj.transformTRS(position.value, rotation.value, scale.value, origin)
+          this.viewer.getRenderer().markTransformsDirty(obj.renderView.batchId)
+        })
+        this.viewer.requestRender()
+      })
+
+    this.objectControls
+      .addInput(rotation, 'value', {
+        label: 'Rotation Euler',
+        x: { step: 0.1 },
+        y: { step: 0.1 },
+        z: { step: 0.1 }
+      })
+      .on('change', () => {
+        const unionBox: Box3 = new Box3()
+        objects.forEach((obj: BatchObject) => {
+          unionBox.union(obj.renderView.aabb)
+        })
+        const origin = unionBox.getCenter(new Vector3())
+        objects.forEach((obj: BatchObject) => {
+          obj.transformTRS(position.value, rotation.value, scale.value, origin)
+          this.viewer.getRenderer().markTransformsDirty(obj.renderView.batchId)
+        })
+        this.viewer.requestRender()
+      })
+
+    this.objectControls
+      .addInput(scale, 'value', {
+        label: 'Scale',
+        x: { step: 0.1 },
+        y: { step: 0.1 },
+        z: { step: 0.1 }
+      })
+      .on('change', () => {
+        const unionBox: Box3 = new Box3()
+        objects.forEach((obj: BatchObject) => {
+          unionBox.union(obj.renderView.aabb)
+        })
+        const origin = unionBox.getCenter(new Vector3())
+        objects.forEach((obj: BatchObject) => {
+          obj.transformTRS(position.value, rotation.value, scale.value, origin)
+          this.viewer.getRenderer().markTransformsDirty(obj.renderView.batchId)
+        })
+        this.viewer.requestRender()
+      })
   }
 
   public makeGenericUI() {

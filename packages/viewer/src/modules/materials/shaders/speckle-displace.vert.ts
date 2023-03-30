@@ -139,11 +139,11 @@ void main() {
         vec4 rteLocalPosition = computeRelativePositionSeparate(position_low.xyz, position.xyz, uViewer_low, uViewer_high);
     #endif
 
-    #ifdef USE_RTE
-        vec4 mvPosition = rteLocalPosition;
-    #else
+    // #ifdef USE_RTE
+    //     vec4 mvPosition = rteLocalPosition;
+    // #else
         vec4 mvPosition = vec4( transformed, 1.0 );
-    #endif
+    // #endif
 
     #ifdef TRANSFORM_STORAGE
         mvPosition = objectMatrix * mvPosition;

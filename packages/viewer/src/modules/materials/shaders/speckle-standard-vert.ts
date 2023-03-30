@@ -151,7 +151,13 @@ void main() {
         mat4 objectMatrix = objectTransform();
     #endif
     #ifdef USE_RTE
-        vec4 rteLocalPosition = computeRelativePositionSeparate(position_low.xyz, position.xyz, uViewer_low, uViewer_high);
+        vec4 position_lowT = vec4(position_low, 1.);
+        vec4 position_highT = vec4(position, 1.);
+        #ifdef TRANSFORM_STORAGE
+            position_lowT = objectMatrix * vec4(position_low, 1.);
+            position_highT = objectMatrix * vec4(position, 1.);
+        #endif
+        vec4 rteLocalPosition = computeRelativePositionSeparate(position_lowT.xyz, position_highT.xyz, uViewer_low, uViewer_high);
     #endif
 
     #ifdef USE_RTE
@@ -160,14 +166,11 @@ void main() {
         vec4 mvPosition = vec4( transformed, 1.0 );
     #endif
 
-    #ifdef TRANSFORM_STORAGE
-        mvPosition = objectMatrix * mvPosition;
-    #endif
     
     #ifdef USE_INSTANCING
         mvPosition = instanceMatrix * mvPosition;
     #endif
-    
+
     mvPosition = modelViewMatrix * mvPosition;
 
     gl_Position = projectionMatrix * mvPosition;
@@ -196,9 +199,9 @@ void main() {
             shadowPosition = computeRelativePositionSeparate(position_low.xyz, position.xyz, uShadowViewer_low, uShadowViewer_high);
             shadowMatrix = rteShadowMatrix;
         #endif
-        #ifdef TRANSFORM_STORAGE
-            shadowPosition = objectMatrix * shadowPosition;
-        #endif
+        // #ifdef TRANSFORM_STORAGE
+        //     shadowPosition = objectMatrix * shadowPosition;
+        // #endif
         shadowWorldPosition = modelMatrix * shadowPosition + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );
         vDirectionalShadowCoord[ i ] = shadowMatrix * shadowWorldPosition;
 	}

@@ -9,7 +9,8 @@ import {
   Vector3,
   MeshStandardMaterial,
   Material,
-  IUniform
+  IUniform,
+  Euler
 } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
