@@ -23,7 +23,7 @@ export function importFile(
     rejectResponse = reject
   })
 
-  const finalModelName = modelName || file.name
+  const finalModelName = encodeURIComponent(modelName || file.name)
 
   const data = new FormData()
   const formKey = 'file'
@@ -34,6 +34,7 @@ export function importFile(
     'POST',
     new URL(`/api/file/autodetect/${projectId}/${finalModelName}`, apiOrigin).toString()
   )
+  request.responseType = 'json'
 
   request.setRequestHeader('Authorization', `Bearer ${authToken}`)
 

@@ -1,5 +1,5 @@
 import { MaybeRef } from '@vueuse/core'
-import { Nullable, Optional } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import { BaseError } from '~~/lib/core/errors/base'
 import {
   FileTypeSpecifier,
@@ -126,4 +126,39 @@ export function usePrepareUploadableFiles(params: {
 
 class FileTooLargeError extends BaseError {
   static defaultMessage = "The selected file's size is too large"
+}
+
+export function useFileUploadProgressCore(params: {
+  item: MaybeRef<MaybeNullOrUndefined<UploadFileItem>>
+}) {
+  const errorMessage = computed(() => {
+    const item = unref(params.item)
+    if (!item) return null
+
+    const itemError = item.error
+    if (itemError) return itemError.message
+
+    const uploadError = item.result?.uploadError
+    if (uploadError) return uploadError
+
+    return null
+  })
+
+  const progressBarColorClass = computed(() => {
+    const item = unref(params.item)
+    if (errorMessage.value) return 'bg-danger'
+    if (item && item.progress >= 100) return 'bg-success'
+    return 'bg-primary'
+  })
+
+  const progressBarClasses = computed(() => {
+    const item = unref(params.item)
+    return [
+      'h-1',
+      progressBarColorClass.value,
+      `w-[${item ? item.progress : 0}%]`
+    ].join(' ')
+  })
+
+  return { errorMessage, progressBarClasses }
 }

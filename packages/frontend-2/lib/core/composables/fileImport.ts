@@ -19,7 +19,6 @@ export function useFileImport(params: {
   } = useRuntimeConfig()
 
   const accept = ref('.ifc,.stl,.obj,.mtl')
-  const error = ref(null as Nullable<Error>)
   const upload = ref(null as Nullable<UploadFileItem>)
   const isUploading = ref(false)
 
@@ -29,12 +28,16 @@ export function useFileImport(params: {
     const file = params.files[0]
     if (!file) return
 
+    upload.value = {
+      ...file,
+      result: undefined,
+      progress: 0
+    }
+
     if (file.error) {
-      error.value = file.error
       return
     }
 
-    error.value = null
     upload.value = {
       ...file,
       result: undefined,
@@ -64,7 +67,6 @@ export function useFileImport(params: {
         uploadError: ensureError(e).message,
         formKey: 'file'
       }
-      error.value = ensureError(e)
     } finally {
       upload.value.progress = 100
       isUploading.value = false
@@ -75,7 +77,6 @@ export function useFileImport(params: {
     maxSizeInBytes,
     onFilesSelected,
     accept,
-    error,
     upload,
     isUploading
   }

@@ -53,18 +53,30 @@
             :class="[
               isDraggingFiles
                 ? 'border-primary'
-                : fileError
+                : errorMessage
                 ? 'border-danger'
                 : 'border-outline-2'
             ]"
           >
-            <span
-              v-if="fileError"
-              class="text-danger inline-flex space-x-1 items-center"
+            <div
+              v-if="fileUpload"
+              class="max-w-sm p-2 flex flex-col justify-center space-y-1 text-foreground-2"
             >
-              <ExclamationTriangleIcon class="h-4 w-4" />
-              <span>{{ fileError.message }}</span>
-            </span>
+              <span class="text-center">
+                {{ fileUpload.file.name }}
+              </span>
+              <span
+                v-if="errorMessage"
+                class="text-danger inline-flex space-x-1 items-center text-center"
+              >
+                <ExclamationTriangleIcon class="h-4 w-4" />
+                <span>{{ errorMessage }}</span>
+              </span>
+              <div
+                v-if="fileUpload.progress > 0"
+                :class="[' w-full mt-2', progressBarClasses]"
+              />
+            </div>
             <span v-else class="text-foreground-2">
               Use our
               <b>connectors</b>
@@ -111,6 +123,14 @@ import { useProjectUpdateTracking } from '~~/lib/projects/composables/projectMan
 import { Nullable } from '@speckle/shared'
 import { useFileImport } from '~~/lib/core/composables/fileImport'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
+import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
+
+/**
+ * TODO: On file import uploaded refresh pendingModels
+ * - On file import processed, refresh pendingModels + models (or cache update)
+ * - Render pendingModel / pendingVersion
+ * - Reuse template & composables in model card view as well
+ */
 
 const fullProjectDashboardItemFragment = addFragmentDependencies(
   projectDashboardItemFragment,
@@ -128,10 +148,13 @@ const {
   maxSizeInBytes,
   onFilesSelected,
   accept,
-  error: fileError,
   upload: fileUpload,
   isUploading
 } = useFileImport({ projectId })
+const { errorMessage, progressBarClasses } = useFileUploadProgressCore({
+  item: fileUpload
+})
+
 useProjectUpdateTracking(projectId)
 
 useProjectVersionUpdateTracking(
