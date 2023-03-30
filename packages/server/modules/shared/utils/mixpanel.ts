@@ -1,5 +1,9 @@
 /* eslint-disable camelcase */
-import { Optional, resolveMixpanelUserId } from '@speckle/shared'
+import {
+  Optional,
+  resolveMixpanelUserId,
+  resolveMixpanelServerId
+} from '@speckle/shared'
 import { enableMixpanel, getBaseUrl } from '@/modules/shared/helpers/envHelper'
 import Mixpanel from 'mixpanel'
 import { mixpanelLogger } from '@/logging/logging'
@@ -10,7 +14,7 @@ let baseTrackingProperties: Optional<Record<string, string>> = undefined
 function getMixpanelServerId(): string {
   const canonicalUrl = getBaseUrl()
   const url = new URL(canonicalUrl)
-  return url.hostname.toLowerCase()
+  return resolveMixpanelServerId(url.hostname)
 }
 
 function getBaseTrackingProperties() {

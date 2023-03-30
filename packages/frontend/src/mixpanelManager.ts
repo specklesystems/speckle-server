@@ -2,9 +2,9 @@
 import mixpanel, { OverridedMixpanel } from 'mixpanel-browser'
 import { Optional } from '@/helpers/typeHelpers'
 import { AppLocalStorage } from '@/utils/localStorage'
-import md5 from '@/helpers/md5'
 import * as ThemeStateManager from '@/main/utils/themeStateManager'
 import { intersection, mapKeys } from 'lodash'
+import { resolveMixpanelServerId } from '@speckle/shared'
 
 let mixpanelInitialized = false
 
@@ -44,7 +44,7 @@ export function getMixpanelUserId(): Optional<string> {
  * Get mixpanel server identifier
  */
 export function getMixpanelServerId(): string {
-  return md5(window.location.hostname.toLowerCase()).toUpperCase()
+  return resolveMixpanelServerId(window.location.hostname)
 }
 
 /**
