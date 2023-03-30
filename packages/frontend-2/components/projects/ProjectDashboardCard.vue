@@ -58,7 +58,6 @@
                 : 'border-outline-2'
             ]"
           >
-            <div></div>
             <span
               v-if="fileError"
               class="text-danger inline-flex space-x-1 items-center"
