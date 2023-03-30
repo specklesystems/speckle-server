@@ -127,6 +127,15 @@ spec:
             - port: '443'
               protocol: TCP
 {{- end }}
+{{- if (ne "false" .Values.server.monitoring.mp.enabled) }}
+    # monitoring
+    - toFQDNs:
+        - matchName: 'analytics.speckle.systems'
+      toPorts:
+        - ports:
+            - port: '443'
+              protocol: TCP
+{{- end }}
 {{- if .Values.server.auth.github.enabled }}
     # github auth
     - toFQDNs:
