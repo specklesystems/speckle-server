@@ -136,7 +136,7 @@ export function uploadFile(params: {
   return Object.values(results)[0]
 }
 
-type PostBlobResponse = {
+export type PostBlobResponse = {
   uploadResults: BlobPostResultItem[]
 }
 
