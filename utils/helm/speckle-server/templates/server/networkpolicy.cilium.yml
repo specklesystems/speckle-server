@@ -55,7 +55,7 @@ spec:
               # DNS lookup for sentry
               - matchPattern: "*.ingest.sentry.io"
 {{- end }}
-{{- if not (and .Values.server.mp (eq "false" .Values.server.mp.enabled)) }}
+{{- if (ne "false" .Values.server.monitoring.mp.enabled) }}
               - matchName: 'analytics.speckle.systems'
 {{- end }}
 {{- if .Values.server.email.enabled }}
