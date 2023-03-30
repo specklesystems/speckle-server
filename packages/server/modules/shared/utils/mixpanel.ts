@@ -1,9 +1,27 @@
 /* eslint-disable camelcase */
 import { Optional, resolveMixpanelUserId } from '@speckle/shared'
-import { enableMixpanel } from '@/modules/shared/helpers/envHelper'
+import { enableMixpanel, getBaseUrl } from '@/modules/shared/helpers/envHelper'
 import Mixpanel from 'mixpanel'
+import { mixpanelLogger } from '@/logging/logging'
 
 let client: Optional<Mixpanel.Mixpanel> = undefined
+let baseTrackingProperties: Optional<Record<string, string>> = undefined
+
+function getMixpanelServerId(): string {
+  const canonicalUrl = getBaseUrl()
+  const url = new URL(canonicalUrl)
+  return url.hostname.toLowerCase()
+}
+
+function getBaseTrackingProperties() {
+  if (baseTrackingProperties) return baseTrackingProperties
+  baseTrackingProperties = {
+    server_id: getMixpanelServerId(),
+    hostApp: 'serverside'
+  }
+
+  return baseTrackingProperties
+}
 
 export function initialize() {
   if (client || !enableMixpanel()) return
@@ -14,7 +32,8 @@ export function initialize() {
 }
 
 /**
- * Mixpanel client. Can be undefined if not initialized or disabled.
+ * Mixpanel client. Can be undefined if not initialized or disabled. It's advised that you use the mixpanel() helper instead
+ * to ensure all of the important properties are sent with all tracking calls.
  */
 export function getClient() {
   return client
@@ -25,7 +44,7 @@ export function getClient() {
  */
 export function mixpanel(params: { mixpanelUserId: Optional<string> }) {
   const { mixpanelUserId } = params
-  const userIdentificationProperties = () => ({
+  const getUserIdentificationProperties = () => ({
     ...(mixpanelUserId
       ? {
           distinct_id: mixpanelUserId
@@ -35,10 +54,23 @@ export function mixpanel(params: { mixpanelUserId: Optional<string> }) {
 
   return {
     track: (eventName: string, extraProperties?: Record<string, unknown>) => {
-      return getClient()?.track(eventName, {
-        ...userIdentificationProperties(),
+      const payload = {
+        ...getUserIdentificationProperties(),
+        ...getBaseTrackingProperties(),
         ...(extraProperties || {})
-      })
+      }
+
+      const client = getClient()
+      if (client) {
+        mixpanelLogger.info(
+          {
+            eventName,
+            payload
+          },
+          'Mixpanel track() invoked'
+        )
+        client.track(eventName, payload)
+      }
     }
   }
 }
