@@ -64,6 +64,7 @@ export function useFileImport(params: {
         uploadError: ensureError(e).message,
         formKey: 'file'
       }
+      error.value = ensureError(e)
     } finally {
       upload.value.progress = 100
       isUploading.value = false
