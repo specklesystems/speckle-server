@@ -57,12 +57,16 @@ async function doTask(task) {
   let fileSizeForMetric = 0
 
   const metricDurationEnd = metricDuration.startTimer()
+  let newBranchCreated = false
+  let branchMetadata = { streamId: null, branchName: null }
+
   try {
     taskLogger.info('Doing task.')
     const info = await FileUploads().where({ id: task.id }).first()
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
     }
+
     fileTypeForMetric = info.fileType || 'missing_info'
     fileSizeForMetric = Number(info.fileSize) || 0
     taskLogger = taskLogger.child({
@@ -77,6 +81,19 @@ async function doTask(task) {
     fs.mkdirSync(TMP_INPUT_DIR, { recursive: true })
 
     serverApi = new ServerAPI({ streamId: info.streamId })
+
+    branchMetadata = {
+      branchName: info.branchName,
+      streamId: info.streamId
+    }
+    const existingBranch = await serverApi.getBranchByNameAndStreamId({
+      streamId: info.streamId,
+      name: info.branchName
+    })
+    if (!existingBranch) {
+      newBranchCreated = true
+    }
+
     const { token } = await serverApi.createToken({
       userId: info.userId,
       name: 'temp upload token',
@@ -190,7 +207,12 @@ async function doTask(task) {
     )
     metricOperationErrors.labels(fileTypeForMetric).inc()
   } finally {
-    await knex.raw(`NOTIFY file_import_update, '${task.id}'`)
+    const { streamId, branchName } = branchMetadata
+    await knex.raw(
+      `NOTIFY file_import_update, '${task.id}:::${streamId}:::${branchName}:::${
+        newBranchCreated ? 1 : 0
+      }'`
+    )
   }
   metricDurationEnd({ op: fileTypeForMetric })
   metricInputFileSize.labels(fileTypeForMetric).observe(fileSizeForMetric)

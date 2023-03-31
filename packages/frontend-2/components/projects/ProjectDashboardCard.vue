@@ -46,52 +46,11 @@
           :show-actions="false"
           height="h-52"
         />
-        <FormFileUploadZone
+        <ProjectImportFileArea
           v-if="hasNoModels"
-          v-slot="{ isDraggingFiles }"
-          :disabled="isUploading"
-          :size-limit="maxSizeInBytes"
-          :accept="accept"
-          class="h-36 flex items-center col-span-4 py-4"
-          @files-selected="onFilesSelected"
-        >
-          <div
-            class="w-full h-full border-dashed border-2 rounded-md p-10 flex items-center justify-center text-sm"
-            :class="[
-              isDraggingFiles
-                ? 'border-primary'
-                : errorMessage
-                ? 'border-danger'
-                : 'border-outline-2'
-            ]"
-          >
-            <div
-              v-if="fileUpload"
-              class="max-w-sm p-2 flex flex-col justify-center space-y-1 text-foreground-2"
-            >
-              <span class="text-center">
-                {{ fileUpload.file.name }}
-              </span>
-              <span
-                v-if="errorMessage"
-                class="text-danger inline-flex space-x-1 items-center text-center"
-              >
-                <ExclamationTriangleIcon class="h-4 w-4" />
-                <span>{{ errorMessage }}</span>
-              </span>
-              <div
-                v-if="fileUpload.progress > 0"
-                :class="[' w-full mt-2', progressBarClasses]"
-                :style="progressBarStyle"
-              />
-            </div>
-            <span v-else class="text-foreground-2">
-              Use our
-              <b>connectors</b>
-              to send data to this model, or drag and drop a IFC/OBJ/STL file here.
-            </span>
-          </div>
-        </FormFileUploadZone>
+          :project-id="project.id"
+          class="h-36 col-span-4"
+        />
       </div>
       <div
         v-if="modelItemTotalCount > 4"
@@ -118,42 +77,19 @@ import {
 import { UserCircleIcon, ClockIcon, CubeIcon } from '@heroicons/vue/24/outline'
 import { projectRoute } from '~~/lib/common/helpers/route'
 import {
-  addFragmentDependencies,
   evictObjectFields,
   getCacheId,
-  modifyObjectFields,
-  updateCacheByFilter
+  modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import {
-  projectDashboardItemFragment,
-  projectDashboardItemNoModelsFragment,
-  projectPageLatestItemsModelItemFragment
-} from '~~/lib/projects/graphql/fragments'
-import { has, sortBy } from 'lodash-es'
+import { has } from 'lodash-es'
 import {
   useProjectModelUpdateTracking,
   useProjectPendingModelUpdateTracking
 } from '~~/lib/projects/composables/modelManagement'
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import { useProjectUpdateTracking } from '~~/lib/projects/composables/projectManagement'
-import { useFileImport } from '~~/lib/core/composables/fileImport'
-import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
-import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-
-/**
- * TODO: On file import uploaded refresh pendingModels
- * - On file import processed, refresh pendingModels + models (or cache update)
- * - Render pendingModel / pendingVersion
- * - Reuse template & composables in model card view as well
- */
-
-const fullProjectDashboardItemFragment = addFragmentDependencies(
-  projectDashboardItemFragment,
-  projectPageLatestItemsModelItemFragment,
-  projectDashboardItemNoModelsFragment
-)
 
 const props = defineProps<{
   project: ProjectDashboardItemFragment
@@ -162,19 +98,6 @@ const props = defineProps<{
 const projectId = computed(() => props.project.id)
 
 const { triggerNotification } = useGlobalToast()
-
-const {
-  maxSizeInBytes,
-  onFilesSelected,
-  accept,
-  upload: fileUpload,
-  isUploading
-} = useFileImport({ projectId })
-
-const { errorMessage, progressBarClasses, progressBarStyle } =
-  useFileUploadProgressCore({
-    item: fileUpload
-  })
 
 useProjectUpdateTracking(projectId)
 
@@ -192,34 +115,51 @@ useProjectVersionUpdateTracking(
     ) {
       // Added new model w/ versions OR updated model that now has versions (it might now have had them previously)
       // So - add it to the list, if its not already there
-      updateCacheByFilter(
+      modifyObjectFields<ProjectModelsArgs, Project['models']>(
         cache,
-        {
-          fragment: {
-            fragment: fullProjectDashboardItemFragment,
-            fragmentName: 'ProjectDashboardItem',
-            id: getCacheId('Project', props.project.id)
-          }
-        },
-        (data) => {
-          const newItems = data.models.items.slice()
-          if (!newItems.find((i) => i.id === version.model.id)) {
-            newItems.unshift(version.model)
-          }
+        getCacheId('Project', props.project.id),
+        (fieldName, variables, value, { ref }) => {
+          if (fieldName !== 'models') return
+          if (variables.filter?.search) return
 
-          const itemsSortedByDate = sortBy(newItems, (i) =>
-            dayjs(i.updatedAt).toDate().getTime()
-          ).reverse()
+          const newModelRef = ref('Model', version.model.id)
+          const newItems = (value?.items || []).slice()
+
+          let isAdded = false
+          if (!newItems.find((i) => i.__ref === newModelRef.__ref)) {
+            newItems.unshift(newModelRef)
+            isAdded = true
+          }
 
           return {
-            ...data,
-            models: {
-              ...data.models,
-              items: itemsSortedByDate.slice(0, 4)
-            }
+            ...(value || {}),
+            items: newItems,
+            totalCount: (value.totalCount || 0) + (isAdded ? 1 : 0)
           }
         }
       )
+
+      if (event.type === ProjectVersionsUpdatedMessageType.Created) {
+        // Remove from pending models?
+        modifyObjectFields<
+          ProjectPendingImportedModelsArgs,
+          Project['pendingImportedModels']
+        >(
+          cache,
+          getCacheId('Project', props.project.id),
+          (fieldName, _variables, value, { readField }) => {
+            if (fieldName !== 'pendingImportedModels') return
+            if (!value?.length) return
+
+            const versionModelName = version.model.name
+            const currentModels = (value || []).filter((i) => {
+              const itemModelName = readField('modelName', i)
+              return itemModelName !== versionModelName
+            })
+            return currentModels
+          }
+        )
+      }
     }
   },
   { silenceToast: true }
@@ -242,7 +182,8 @@ useProjectPendingModelUpdateTracking(projectId, (event, cache) => {
       }
     )
   } else if (event.type === ProjectPendingModelsUpdatedMessageType.Updated) {
-    // If converted emit toast notification, replace card with actual model entity & remove from pending models
+    // If converted emit toast notification & remove from pending models
+    // (if it still exists there, cause "version create" subscription might've already removed it)
     const success = event.model.convertedStatus === FileUploadConvertedStatus.Completed
     const newModel = event.model.model
 
@@ -269,32 +210,6 @@ useProjectPendingModelUpdateTracking(projectId, (event, cache) => {
           return currentModels
         }
       )
-
-      modifyObjectFields<ProjectModelsArgs, Project['models']>(
-        cache,
-        getCacheId('Project', props.project.id),
-        (fieldName, variables, value, { ref }) => {
-          if (fieldName !== 'models') return
-          if (variables.filter?.search) return
-
-          return {
-            ...(value || {}),
-            totalCount: (value.totalCount || 0) + 1,
-            items: [ref('Model', newModel.id), ...(value.items || [])]
-          }
-        }
-      )
-
-      // Evict other project page models queries so that we don't have a stale cache there
-      evictObjectFields<ProjectModelsArgs>(
-        cache,
-        getCacheId('Project', props.project.id),
-        (fieldName, variables) => {
-          if (fieldName !== 'models') return false
-          if (!has(variables?.filter, 'search')) return false
-          return true
-        }
-      )
     }
   }
 })
@@ -310,37 +225,26 @@ useProjectModelUpdateTracking(projectId, (event, cache) => {
   ) {
     // Added new model w/ versions OR updated model that now has versions (it might now have had them previously)
     // So - add it to the list, if its not already there
-    updateCacheByFilter(
+    modifyObjectFields<ProjectModelsArgs, Project['models']>(
       cache,
-      {
-        fragment: {
-          fragment: fullProjectDashboardItemFragment,
-          fragmentName: 'ProjectDashboardItem',
-          id: getCacheId('Project', props.project.id)
-        }
-      },
-      (data) => {
-        const newItems = data.models.items.slice()
-        let newTotalCount = data.models.totalCount
-        if (!newItems.find((i) => i.id === model.id)) {
-          newItems.unshift(model)
-        }
+      getCacheId('Project', props.project.id),
+      (fieldName, variables, value, { ref }) => {
+        if (fieldName !== 'models') return
+        if (variables.filter?.search) return
 
-        if (event.type === ProjectModelsUpdatedMessageType.Created) {
-          newTotalCount += 1
-        }
+        const newModelRef = ref('Model', model.id)
+        const newItems = (value?.items || []).slice()
 
-        const itemsSortedByDate = sortBy(newItems, (i) =>
-          dayjs(i.updatedAt).toDate().getTime()
-        ).reverse()
+        let isAdded = false
+        if (!newItems.find((i) => i.__ref === newModelRef.__ref)) {
+          newItems.unshift(newModelRef)
+          isAdded = true
+        }
 
         return {
-          ...data,
-          models: {
-            ...data.models,
-            totalCount: newTotalCount,
-            items: itemsSortedByDate.slice(0, 4)
-          }
+          ...(value || {}),
+          items: newItems,
+          totalCount: (value.totalCount || 0) + (isAdded ? 1 : 0)
         }
       }
     )

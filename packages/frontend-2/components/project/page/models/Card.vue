@@ -50,7 +50,14 @@
         </div>
         <PreviewImage v-else-if="previewUrl" :preview-url="previewUrl" />
         <div v-else class="h-full w-full p-4">
+          <ProjectImportFileArea
+            v-if="true"
+            :project-id="project.id"
+            :model-name="model.name"
+            class="h-full w-full"
+          />
           <div
+            v-if="false"
             class="rounded-xl p-4 flex items-center h-full w-full border-dashed border-2 border-blue-500/10 text-foreground-2 text-xs text-center"
           >
             <div :class="`opacity-50 group-hover:opacity-100`">
