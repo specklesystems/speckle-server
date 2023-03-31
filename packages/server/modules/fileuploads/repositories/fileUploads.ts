@@ -22,7 +22,7 @@ export async function getStreamFileUploads(params: { streamId: string }) {
   return fileInfos
 }
 
-type SaveUploadFileInput = Pick<
+export type SaveUploadFileInput = Pick<
   FileUploadRecord,
   'streamId' | 'branchName' | 'userId' | 'fileName' | 'fileType' | 'fileSize'
 > & { fileId: string }
@@ -50,7 +50,10 @@ export async function saveUploadFile({
   return newRecord as FileUploadRecord
 }
 
-export async function getStreamPendingModels(streamId: string) {
+export async function getStreamPendingModels(
+  streamId: string,
+  options?: Partial<{ limit: number }>
+) {
   const q = FileUploads.knex<FileUploadRecord[]>()
     .where(FileUploads.col.streamId, streamId)
     .whereIn(FileUploads.col.convertedStatus, [
@@ -63,10 +66,18 @@ export async function getStreamPendingModels(streamId: string) {
     )
     .orderBy(FileUploads.col.uploadDate, 'desc')
 
+  if (options?.limit) {
+    q.limit(options.limit)
+  }
+
   return await q
 }
 
-export async function getBranchPendingVersions(streamId: string, branchName: string) {
+export async function getBranchPendingVersions(
+  streamId: string,
+  branchName: string,
+  options?: Partial<{ limit: number }>
+) {
   const q = FileUploads.knex<FileUploadRecord[]>()
     .where(FileUploads.col.streamId, streamId)
     .where(FileUploads.col.branchName, branchName)
@@ -79,6 +90,10 @@ export async function getBranchPendingVersions(streamId: string, branchName: str
       Branches.knex().select(Branches.col.name).where(Branches.col.streamId, streamId)
     )
     .orderBy(FileUploads.col.uploadDate, 'desc')
+
+  if (options?.limit) {
+    q.limit(options.limit)
+  }
 
   return await q
 }

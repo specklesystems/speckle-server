@@ -1,5 +1,5 @@
 import { MaybeRef } from '@vueuse/core'
-import { ensureError, MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { ensureError, MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import { useServerFileUploadLimit } from '~~/lib/common/composables/serverInfo'
 import { UploadableFileItem, UploadFileItem } from '~~/lib/form/composables/fileUpload'
 import { importFile } from '~~/lib/core/api/fileImport'
@@ -21,6 +21,11 @@ export function useFileImport(params: {
   const accept = ref('.ifc,.stl,.obj,.mtl')
   const upload = ref(null as Nullable<UploadFileItem>)
   const isUploading = ref(false)
+
+  let onFileUploadedCb: Optional<(file: UploadFileItem) => void> = undefined
+  const onFileUploaded = (cb: (file: UploadFileItem) => void) => {
+    onFileUploadedCb = cb
+  }
 
   const onFilesSelected = async (params: { files: UploadableFileItem[] }) => {
     if (isUploading.value || !authToken.value) return
@@ -61,6 +66,7 @@ export function useFileImport(params: {
         }
       )
       upload.value.result = res
+      onFileUploadedCb?.(upload.value)
     } catch (e) {
       upload.value.result = {
         uploadStatus: BlobUploadStatus.Failure,
@@ -78,6 +84,7 @@ export function useFileImport(params: {
     onFilesSelected,
     accept,
     upload,
-    isUploading
+    isUploading,
+    onFileUploaded
   }
 }

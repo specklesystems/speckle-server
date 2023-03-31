@@ -19,8 +19,7 @@ const {
 const { makeOgImage } = require('./ogImage')
 const { moduleLogger, logger } = require('@/logging/logging')
 const {
-  setupResultListener,
-  shutdownResultListener
+  listenForPreviewGenerationUpdates
 } = require('@/modules/previews/services/resultListener')
 
 const httpErrorImage = (httpErrorCode) =>
@@ -266,11 +265,7 @@ exports.init = (app) => {
     )
   })
 
-  setupResultListener()
+  listenForPreviewGenerationUpdates()
 }
 
 exports.finalize = () => {}
-
-exports.shutdown = () => {
-  shutdownResultListener()
-}

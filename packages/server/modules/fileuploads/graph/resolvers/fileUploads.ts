@@ -1,3 +1,4 @@
+import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   getStreamFileUploads,
@@ -5,6 +6,11 @@ import {
   getStreamPendingModels,
   getBranchPendingVersions
 } from '@/modules/fileuploads/repositories/fileUploads'
+import { authorizeResolver } from '@/modules/shared'
+import {
+  FileImportSubscriptions,
+  filteredSubscribe
+} from '@/modules/shared/utils/subscriptions'
 
 export = {
   Stream: {
@@ -16,18 +22,37 @@ export = {
     }
   },
   Project: {
-    async pendingImportedModels(parent) {
-      return await getStreamPendingModels(parent.id)
+    async pendingImportedModels(parent, args) {
+      return await getStreamPendingModels(parent.id, args)
     }
   },
   Model: {
-    async pendingImportedVersions(parent) {
-      return await getBranchPendingVersions(parent.streamId, parent.name)
+    async pendingImportedVersions(parent, args) {
+      return await getBranchPendingVersions(parent.streamId, parent.name, args)
     }
   },
   FileUpload: {
     projectId: (parent) => parent.streamId,
     modelName: (parent) => parent.branchName,
-    convertedVersionId: (parent) => parent.convertedCommitId
+    convertedVersionId: (parent) => parent.convertedCommitId,
+    async model(parent, _args, ctx) {
+      return await ctx.loaders.streams.getStreamBranchByName
+        .forStream(parent.streamId)
+        .load(parent.branchName.toLowerCase())
+    }
+  },
+  Subscription: {
+    projectPendingModelsUpdated: {
+      subscribe: filteredSubscribe(
+        FileImportSubscriptions.ProjectProjectPendingModelsUpdated,
+        async (payload, args, ctx) => {
+          const { id: projectId } = args
+          if (payload.projectId !== projectId) return false
+
+          await authorizeResolver(ctx.userId, projectId, Roles.Stream.Reviewer)
+          return true
+        }
+      )
+    }
   }
 } as Resolvers

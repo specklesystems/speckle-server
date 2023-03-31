@@ -1,6 +1,13 @@
 import { Optional } from '@speckle/shared'
 import { BlobPostResultItem, PostBlobResponse } from '~~/lib/core/api/blobStorage'
 
+export enum FileUploadConvertedStatus {
+  Queued = 0,
+  Converting = 1,
+  Completed = 2,
+  Error = 3
+}
+
 export function importFile(
   params: {
     file: File

@@ -1,16 +1,19 @@
 /* istanbul ignore file */
-'use strict'
-
-const { saveUploadFile } = require('@/modules/fileuploads/repositories/fileUploads')
+const {
+  insertNewUploadAndNotify
+} = require('@/modules/fileuploads/services/management')
 const request = require('request')
 const { streamWritePermissions } = require('@/modules/shared/authz')
 const { authMiddlewareCreator } = require('@/modules/shared/middleware')
 const { moduleLogger } = require('@/logging/logging')
+const {
+  listenForImportUpdates
+} = require('@/modules/fileuploads/services/resultListener')
 
 const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) => {
   await Promise.all(
     uploadResults.map(async (upload) => {
-      await saveUploadFile({
+      await insertNewUploadAndNotify({
         fileId: upload.blobId,
         streamId,
         branchName,
@@ -72,6 +75,8 @@ exports.init = async (app) => {
       )
     }
   )
+
+  listenForImportUpdates()
 }
 
 exports.finalize = () => {}

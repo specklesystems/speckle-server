@@ -536,6 +536,8 @@ export type FileUpload = {
   fileSize: Scalars['Int'];
   fileType: Scalars['String'];
   id: Scalars['String'];
+  /** Model associated with the file upload, if it exists already */
+  model?: Maybe<Model>;
   /** Alias for branchName */
   modelName: Scalars['String'];
   /** Alias for streamId */
@@ -643,6 +645,11 @@ export type Model = {
 export type ModelCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
+};
+
+
+export type ModelPendingImportedVersionsArgs = {
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
 
@@ -1242,6 +1249,11 @@ export type ProjectModelsArgs = {
 };
 
 
+export type ProjectPendingImportedModelsArgs = {
+  limit?: InputMaybe<Scalars['Int']>;
+};
+
+
 export type ProjectVersionsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
@@ -1425,6 +1437,19 @@ export type ProjectMutationsUpdateArgs = {
 export type ProjectMutationsUpdateRoleArgs = {
   input: ProjectUpdateRoleInput;
 };
+
+export type ProjectPendingModelsUpdatedMessage = {
+  __typename?: 'ProjectPendingModelsUpdatedMessage';
+  /** Pending model ID */
+  id: Scalars['String'];
+  model: FileUpload;
+  type: ProjectPendingModelsUpdatedMessageType;
+};
+
+export enum ProjectPendingModelsUpdatedMessageType {
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
 
 /** Any values left null will be ignored, so only set the properties that you want updated */
 export type ProjectUpdateInput = {
@@ -2048,6 +2073,8 @@ export type Subscription = {
   projectCommentsUpdated: ProjectCommentsUpdatedMessage;
   /** Subscribe to changes to a project's models. Optionally specify modelIds to track. */
   projectModelsUpdated: ProjectModelsUpdatedMessage;
+  /** Subscribe to changes to a project's pending models */
+  projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
   /** Track updates to a specific project */
   projectUpdated: ProjectUpdatedMessage;
   /** Subscribe to when a project's versions get their preview image fully generated. */
@@ -2132,6 +2159,11 @@ export type SubscriptionProjectCommentsUpdatedArgs = {
 export type SubscriptionProjectModelsUpdatedArgs = {
   id: Scalars['String'];
   modelIds?: InputMaybe<Array<Scalars['String']>>;
+};
+
+
+export type SubscriptionProjectPendingModelsUpdatedArgs = {
+  id: Scalars['String'];
 };
 
 

@@ -189,6 +189,8 @@ async function doTask(task) {
       [err.toString(), task.id]
     )
     metricOperationErrors.labels(fileTypeForMetric).inc()
+  } finally {
+    await knex.raw(`NOTIFY file_import_update, '${task.id}'`)
   }
   metricDurationEnd({ op: fileTypeForMetric })
   metricInputFileSize.labels(fileTypeForMetric).observe(fileSizeForMetric)

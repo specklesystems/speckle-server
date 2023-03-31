@@ -59,3 +59,18 @@ export const onProjectVersionsPreviewGeneratedSubscription = graphql(`
     }
   }
 `)
+
+export const onProjectPendingModelsUpdatedSubscription = graphql(`
+  subscription OnProjectPendingModelsUpdated($id: String!) {
+    projectPendingModelsUpdated(id: $id) {
+      id
+      type
+      model {
+        ...ProjectPageLatestItemsPendingModelItem
+        model {
+          ...ProjectPageLatestItemsModelItem
+        }
+      }
+    }
+  }
+`)

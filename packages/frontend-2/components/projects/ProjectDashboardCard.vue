@@ -31,6 +31,13 @@
         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 flex-grow col-span-4 lg:col-span-3"
       >
         <ProjectPageModelsCard
+          v-for="pendingModel in pendingModels"
+          :key="pendingModel.id"
+          :model="pendingModel"
+          :project="project"
+          height="h-52"
+        />
+        <ProjectPageModelsCard
           v-for="model in models"
           :key="model.id"
           :model="model"
@@ -40,7 +47,7 @@
           height="h-52"
         />
         <FormFileUploadZone
-          v-if="models.length === 0"
+          v-if="hasNoModels"
           v-slot="{ isDraggingFiles }"
           :disabled="isUploading"
           :size-limit="maxSizeInBytes"
@@ -75,6 +82,7 @@
               <div
                 v-if="fileUpload.progress > 0"
                 :class="[' w-full mt-2', progressBarClasses]"
+                :style="progressBarStyle"
               />
             </div>
             <span v-else class="text-foreground-2">
@@ -86,11 +94,11 @@
         </FormFileUploadZone>
       </div>
       <div
-        v-if="project.models.totalCount > 4"
+        v-if="modelItemTotalCount > 4"
         class="absolute -right-11 hover:right-0 top-1/2 translate -translate-y-1/2 bg-foundation text-primary text-xs font-semibold transition-all opacity-0 group-hover:opacity-100 rounded-l-md shadow-md px-1 py-2"
       >
-        +{{ project.models.totalCount - 4 }} model{{
-          project.models.totalCount - 4 !== 1 ? 's' : ''
+        +{{ modelItemTotalCount - 4 }} model{{
+          modelItemTotalCount - 4 !== 1 ? 's' : ''
         }}
       </div>
     </div>
@@ -99,8 +107,12 @@
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 import {
+  Project,
   ProjectDashboardItemFragment,
+  ProjectModelsArgs,
   ProjectModelsUpdatedMessageType,
+  ProjectPendingImportedModelsArgs,
+  ProjectPendingModelsUpdatedMessageType,
   ProjectVersionsUpdatedMessageType
 } from '~~/lib/common/generated/gql/graphql'
 import { UserCircleIcon, ClockIcon, CubeIcon } from '@heroicons/vue/24/outline'
@@ -109,6 +121,7 @@ import {
   addFragmentDependencies,
   evictObjectFields,
   getCacheId,
+  modifyObjectFields,
   updateCacheByFilter
 } from '~~/lib/common/helpers/graphql'
 import {
@@ -117,13 +130,17 @@ import {
   projectPageLatestItemsModelItemFragment
 } from '~~/lib/projects/graphql/fragments'
 import { has, sortBy } from 'lodash-es'
-import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
+import {
+  useProjectModelUpdateTracking,
+  useProjectPendingModelUpdateTracking
+} from '~~/lib/projects/composables/modelManagement'
 import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
 import { useProjectUpdateTracking } from '~~/lib/projects/composables/projectManagement'
-import { Nullable } from '@speckle/shared'
 import { useFileImport } from '~~/lib/core/composables/fileImport'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
 import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
+import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 /**
  * TODO: On file import uploaded refresh pendingModels
@@ -144,6 +161,8 @@ const props = defineProps<{
 
 const projectId = computed(() => props.project.id)
 
+const { triggerNotification } = useGlobalToast()
+
 const {
   maxSizeInBytes,
   onFilesSelected,
@@ -151,9 +170,11 @@ const {
   upload: fileUpload,
   isUploading
 } = useFileImport({ projectId })
-const { errorMessage, progressBarClasses } = useFileUploadProgressCore({
-  item: fileUpload
-})
+
+const { errorMessage, progressBarClasses, progressBarStyle } =
+  useFileUploadProgressCore({
+    item: fileUpload
+  })
 
 useProjectUpdateTracking(projectId)
 
@@ -204,6 +225,80 @@ useProjectVersionUpdateTracking(
   { silenceToast: true }
 )
 
+useProjectPendingModelUpdateTracking(projectId, (event, cache) => {
+  if (event.type === ProjectPendingModelsUpdatedMessageType.Created) {
+    // Insert into project.pendingModels
+    modifyObjectFields<
+      ProjectPendingImportedModelsArgs,
+      Project['pendingImportedModels']
+    >(
+      cache,
+      getCacheId('Project', props.project.id),
+      (fieldName, _variables, value, { ref }) => {
+        if (fieldName !== 'pendingImportedModels') return
+        const currentModels = (value || []).slice()
+        currentModels.push(ref('FileUpload', event.id))
+        return currentModels
+      }
+    )
+  } else if (event.type === ProjectPendingModelsUpdatedMessageType.Updated) {
+    // If converted emit toast notification, replace card with actual model entity & remove from pending models
+    const success = event.model.convertedStatus === FileUploadConvertedStatus.Completed
+    const newModel = event.model.model
+
+    if (success && newModel) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'File successfully imported',
+        description: `${event.model.modelName} has been successfully imported`
+      })
+
+      modifyObjectFields<
+        ProjectPendingImportedModelsArgs,
+        Project['pendingImportedModels']
+      >(
+        cache,
+        getCacheId('Project', props.project.id),
+        (fieldName, _variables, value, { ref }) => {
+          if (fieldName !== 'pendingImportedModels') return
+          if (!value?.length) return
+
+          const currentModels = (value || []).filter(
+            (i) => i.__ref !== ref('FileUpload', event.id).__ref
+          )
+          return currentModels
+        }
+      )
+
+      modifyObjectFields<ProjectModelsArgs, Project['models']>(
+        cache,
+        getCacheId('Project', props.project.id),
+        (fieldName, variables, value, { ref }) => {
+          if (fieldName !== 'models') return
+          if (variables.filter?.search) return
+
+          return {
+            ...(value || {}),
+            totalCount: (value.totalCount || 0) + 1,
+            items: [ref('Model', newModel.id), ...(value.items || [])]
+          }
+        }
+      )
+
+      // Evict other project page models queries so that we don't have a stale cache there
+      evictObjectFields<ProjectModelsArgs>(
+        cache,
+        getCacheId('Project', props.project.id),
+        (fieldName, variables) => {
+          if (fieldName !== 'models') return false
+          if (!has(variables?.filter, 'search')) return false
+          return true
+        }
+      )
+    }
+  }
+})
+
 useProjectModelUpdateTracking(projectId, (event, cache) => {
   const model = event.model
   if (
@@ -251,8 +346,8 @@ useProjectModelUpdateTracking(projectId, (event, cache) => {
     )
   }
 
-  // Evict project page models queries so that we don't have a stale cache there
-  evictObjectFields<{ filter?: { search?: Nullable<string> } }>(
+  // Evict other project page models queries so that we don't have a stale cache there
+  evictObjectFields<ProjectModelsArgs>(
     cache,
     getCacheId('Project', props.project.id),
     (fieldName, variables) => {
@@ -264,6 +359,15 @@ useProjectModelUpdateTracking(projectId, (event, cache) => {
 })
 
 const teamUsers = computed(() => props.project.team.map((t) => t.user))
-const models = computed(() => props.project.models?.items || [])
+const pendingModels = computed(() => props.project.pendingImportedModels)
+const models = computed(() => {
+  const items = props.project.models?.items || []
+  return items.slice(0, Math.max(0, 4 - pendingModels.value.length))
+})
 const updatedAt = computed(() => dayjs(props.project.updatedAt).from(dayjs()))
+
+const hasNoModels = computed(() => !models.value.length && !pendingModels.value.length)
+const modelItemTotalCount = computed(
+  () => props.project.models.totalCount + pendingModels.value.length
+)
 </script>

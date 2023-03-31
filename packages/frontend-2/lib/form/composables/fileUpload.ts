@@ -9,6 +9,7 @@ import {
   validateFileType
 } from '~~/lib/core/helpers/file'
 import { BlobPostResultItem } from '~~/lib/core/api/blobStorage'
+import { CSSProperties } from 'vue'
 
 /**
  * A file, as emitted out from FileUploadZone
@@ -152,13 +153,15 @@ export function useFileUploadProgressCore(params: {
   })
 
   const progressBarClasses = computed(() => {
-    const item = unref(params.item)
-    return [
-      'h-1',
-      progressBarColorClass.value,
-      `w-[${item ? item.progress : 0}%]`
-    ].join(' ')
+    return ['h-1', progressBarColorClass.value].join(' ')
   })
 
-  return { errorMessage, progressBarClasses }
+  const progressBarStyle = computed((): CSSProperties => {
+    const item = unref(params.item)
+    return {
+      width: `${item ? item.progress : 0}%`
+    }
+  })
+
+  return { errorMessage, progressBarClasses, progressBarStyle }
 }

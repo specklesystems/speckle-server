@@ -28,6 +28,21 @@ export const projectDashboardItemFragment = graphql(`
         ...ProjectPageLatestItemsModelItem
       }
     }
+    pendingImportedModels(limit: 4) {
+      ...ProjectPageLatestItemsPendingModelItem
+    }
+  }
+`)
+
+export const projectPageLatestItemsPendingModelItemFragment = graphql(`
+  fragment ProjectPageLatestItemsPendingModelItem on FileUpload {
+    id
+    projectId
+    modelName
+    convertedStatus
+    convertedMessage
+    uploadDate
+    convertedLastUpdate
   }
 `)
 

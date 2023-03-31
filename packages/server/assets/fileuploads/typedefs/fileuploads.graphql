@@ -13,14 +13,14 @@ extend type Project {
   """
   Returns a list models that are being created from a file import
   """
-  pendingImportedModels: [FileUpload!]!
+  pendingImportedModels(limit: Int = 25): [FileUpload!]!
 }
 
 extend type Model {
   """
   Returns a list of versions that are being created from a file import
   """
-  pendingImportedVersions: [FileUpload!]!
+  pendingImportedVersions(limit: Int = 25): [FileUpload!]!
 }
 
 type FileUpload {
@@ -61,4 +61,30 @@ type FileUpload {
   uploadComplete: Boolean!
   uploadDate: DateTime!
   convertedLastUpdate: DateTime!
+
+  """
+  Model associated with the file upload, if it exists already
+  """
+  model: Model
+}
+
+enum ProjectPendingModelsUpdatedMessageType {
+  CREATED
+  UPDATED
+}
+
+type ProjectPendingModelsUpdatedMessage {
+  type: ProjectPendingModelsUpdatedMessageType!
+  """
+  Pending model ID
+  """
+  id: String!
+  model: FileUpload!
+}
+
+extend type Subscription {
+  """
+  Subscribe to changes to a project's pending models
+  """
+  projectPendingModelsUpdated(id: String!): ProjectPendingModelsUpdatedMessage!
 }

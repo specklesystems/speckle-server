@@ -14,7 +14,11 @@
         @click="onDelete"
       ></FormButton>
     </div>
-    <div v-if="item.progress > 0" :class="[' w-full mt-2', progressBarClasses]" />
+    <div
+      v-if="item.progress > 0"
+      :class="[' w-full mt-2', progressBarClasses]"
+      :style="progressBarStyle"
+    />
     <div v-if="false" class="flex flex-col flex-grow">
       <div class="text-foreground space-x-1 inline-flex max-w-full truncate">
         <span class="normal truncate">{{ item.file.name }}</span>
@@ -25,7 +29,11 @@
       <div v-if="errorMessage" class="label label--light text-danger truncate">
         {{ errorMessage }}
       </div>
-      <div v-if="item.progress > 0" :class="progressBarClasses" />
+      <div
+        v-if="item.progress > 0"
+        :class="progressBarClasses"
+        :style="progressBarStyle"
+      />
     </div>
     <FormButton
       v-if="false"
@@ -56,9 +64,10 @@ const props = defineProps<{
   disabled?: boolean
 }>()
 
-const { errorMessage, progressBarClasses } = useFileUploadProgressCore({
-  item: computed(() => props.item)
-})
+const { errorMessage, progressBarClasses, progressBarStyle } =
+  useFileUploadProgressCore({
+    item: computed(() => props.item)
+  })
 
 const onDelete = () => {
   if (props.disabled) return
