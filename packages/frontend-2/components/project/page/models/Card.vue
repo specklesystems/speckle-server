@@ -85,7 +85,7 @@
           </template>
         </div>
         <div v-else class="h-full w-full p-4">
-          <ProjectImportFileArea
+          <ProjectCardImportFileArea
             v-if="true"
             :project-id="project.id"
             :model-name="model.name"
@@ -186,6 +186,7 @@ import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
  * TODO:
  * - Create pending version card
  * - Update model card list view as well
+ * - Check versions gallery version updates (subscriptions there?)
  */
 
 graphql(`

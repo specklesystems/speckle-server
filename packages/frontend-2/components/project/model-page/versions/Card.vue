@@ -15,20 +15,55 @@
       @click="$emit('click', $event)"
     >
       <div class="h-64 flex items-center justify-center relative">
-        <PreviewImage :preview-url="version.previewUrl" />
         <div
-          class="absolute top-0 left-0 p-2 flex space-x-1 items-center transition opacity-0 group-hover:opacity-100"
+          v-if="isPendingVersionFragment(version)"
+          class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
         >
-          <UserAvatar :user="version.authorUser" />
-          <SourceAppBadge v-if="sourceApp" :source-app="sourceApp" />
+          <template
+            v-if="
+              [
+                FileUploadConvertedStatus.Queued,
+                FileUploadConvertedStatus.Converting
+              ].includes(version.convertedStatus)
+            "
+          >
+            <span>Importing</span>
+            <CommonLoadingBar loading class="max-w-[100px]" />
+          </template>
+          <template
+            v-else-if="version.convertedStatus === FileUploadConvertedStatus.Completed"
+          >
+            <span class="inline-flex items-center space-x-1">
+              <CheckCircleIcon class="h-4 w-4 text-success" />
+              <span>Importing successful</span>
+            </span>
+          </template>
+          <template v-else>
+            <span class="inline-flex items-center space-x-1">
+              <ExclamationTriangleIcon class="h-4 w-4 text-danger" />
+              <span>Importing failed</span>
+            </span>
+            <span v-if="version.convertedMessage">
+              {{ version.convertedMessage }}
+            </span>
+          </template>
         </div>
-        <div
-          v-if="version.commentThreadCount.totalCount !== 0"
-          class="absolute top-0 right-0 p-2 flex items-center transition opacity-0 group-hover:opacity-100 h-8 bg-foundation border-2 border-primary-muted shadow-md justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2"
-        >
-          <ChatBubbleLeftRightIcon class="w-4 h-4" />
-          <span>{{ version.commentThreadCount.totalCount }}</span>
-        </div>
+        <template v-else>
+          <PreviewImage :preview-url="version.previewUrl" />
+          <div
+            class="absolute top-0 left-0 p-2 flex space-x-1 items-center transition opacity-0 group-hover:opacity-100"
+          >
+            <UserAvatar :user="version.authorUser" />
+            <SourceAppBadge v-if="sourceApp" :source-app="sourceApp" />
+          </div>
+          <div
+            v-if="version.commentThreadCount.totalCount !== 0"
+            class="absolute top-0 right-0 p-2 flex items-center transition opacity-0 group-hover:opacity-100 h-8 bg-foundation border-2 border-primary-muted shadow-md justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2"
+          >
+            <ChatBubbleLeftRightIcon class="w-4 h-4" />
+            <span>{{ version.commentThreadCount.totalCount }}</span>
+          </div>
+        </template>
       </div>
       <div class="flex flex-col px-2 pt-1 pb-3">
         <div
@@ -39,7 +74,7 @@
         </div>
         <div class="w-full flex" @click.stop>
           <FormCheckbox
-            v-if="selectable"
+            v-if="isSelectable"
             v-model="checkboxModel"
             v-tippy="
               selectionDisabled
@@ -52,9 +87,10 @@
             :disabled="selectionDisabled"
           />
           <div class="font-bold truncate grow">
-            {{ version.message || 'no message' }}
+            {{ message }}
           </div>
           <ProjectModelPageVersionsCardActions
+            v-if="!isPendingVersionFragment(version)"
             v-model:open="showActionsMenu"
             :project-id="projectId"
             :model-id="modelId"
@@ -70,12 +106,21 @@
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
-import { ProjectModelPageVersionsCardVersionFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  PendingFileUploadFragment,
+  ProjectModelPageVersionsCardVersionFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { SpeckleViewer, SourceApps } from '@speckle/shared'
 import { VersionActionTypes } from '~~/lib/projects/helpers/components'
-import { ChatBubbleLeftRightIcon } from '@heroicons/vue/24/solid'
+import { isPendingVersionFragment } from '~~/lib/projects/helpers/models'
+import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
+import {
+  ChatBubbleLeftRightIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/vue/24/solid'
 
 graphql(`
   fragment ProjectModelPageVersionsCardVersion on Version {
@@ -103,7 +148,7 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  version: ProjectModelPageVersionsCardVersionFragment
+  version: ProjectModelPageVersionsCardVersionFragment | PendingFileUploadFragment
   projectId: string
   modelId: string
   selectable?: boolean
@@ -113,8 +158,15 @@ const props = defineProps<{
 
 const showActionsMenu = ref(false)
 
-const createdAt = computed(() => dayjs(props.version.createdAt).from(dayjs()))
+const createdAt = computed(() => {
+  const date = isPendingVersionFragment(props.version)
+    ? props.version.convertedLastUpdate || props.version.uploadDate
+    : props.version.createdAt
+  return dayjs(date).from(dayjs())
+})
 const viewerRoute = computed(() => {
+  if (isPendingVersionFragment(props.version)) return undefined
+
   const resourceIdString = SpeckleViewer.ViewerRoute.resourceBuilder()
     .addModel(props.modelId, props.version.id)
     .toString()
@@ -122,11 +174,27 @@ const viewerRoute = computed(() => {
 })
 
 const sourceApp = computed(() =>
-  SourceApps.find((a) => props.version.sourceApplication?.includes(a.searchKey))
+  SourceApps.find((a) => {
+    const sourceApp = isPendingVersionFragment(props.version)
+      ? props.version.fileType
+      : props.version.sourceApplication
+
+    return sourceApp?.includes(a.searchKey)
+  })
 )
 
+const isSelectable = computed(
+  () => props.selectable && !isPendingVersionFragment(props.version)
+)
+
+const message = computed(() => {
+  if (isPendingVersionFragment(props.version))
+    return `File upload: ${props.version.fileName}`
+  return props.version.message || 'no message'
+})
+
 const checkboxModel = computed({
-  get: () => (props.selectable && props.selected ? true : undefined),
+  get: () => (isSelectable.value && props.selected ? true : undefined),
   set: (newVal) => emit('update:selected', !!newVal)
 })
 

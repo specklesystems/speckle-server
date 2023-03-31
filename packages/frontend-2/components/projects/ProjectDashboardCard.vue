@@ -46,7 +46,7 @@
           :show-actions="false"
           height="h-52"
         />
-        <ProjectImportFileArea
+        <ProjectCardImportFileArea
           v-if="hasNoModels"
           :project-id="project.id"
           class="h-36 col-span-4"

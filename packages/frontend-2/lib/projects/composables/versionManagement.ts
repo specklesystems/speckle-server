@@ -82,6 +82,50 @@ export function useProjectVersionUpdateTracking(
       version
     ) {
       if (event.type === ProjectVersionsUpdatedMessageType.Created) {
+        // Add to model.versions
+        modifyObjectFields<ModelVersionsArgs, Model['versions']>(
+          apollo.cache,
+          getCacheId('Model', version.model.id),
+          (fieldName, _vars, value, { ref }) => {
+            if (fieldName !== 'versions') return
+            const newItems = (value?.items || []).slice()
+            newItems.unshift(ref('Version', version.id))
+
+            return {
+              ...(value || {}),
+              items: newItems,
+              totalCount: (value.totalCount || 0) + 1
+            }
+          }
+        )
+
+        // Remove from pendingVersions, in case it's there
+        modifyObjectFields<
+          ModelPendingImportedVersionsArgs,
+          Model['pendingImportedVersions']
+        >(
+          apollo.cache,
+          getCacheId('Model', version.model.id),
+          (fieldName, _variables, value, { readField }) => {
+            if (fieldName !== 'pendingImportedVersions') return
+            if (!value?.length) return
+
+            // Unfortunately message matching is the best we can do
+            const newMessage = version.message || ''
+            const pendingWithFittingMessageIdx = (value || []).findIndex((i) => {
+              const fileName = <string>readField('fileName', i) || ''
+              return newMessage.includes(fileName)
+            })
+
+            const newVersions = (value || []).slice()
+            if (pendingWithFittingMessageIdx !== -1) {
+              newVersions.splice(pendingWithFittingMessageIdx, 1)
+            }
+
+            return newVersions
+          }
+        )
+
         // Emit toast
         if (!silenceToast) {
           triggerNotification({
@@ -461,8 +505,29 @@ export function useProjectPendingVersionUpdateTracking(
         }
       )
     } else if (event.type === ProjectPendingVersionsUpdatedMessageType.Updated) {
+      const success =
+        event.version.convertedStatus === FileUploadConvertedStatus.Completed
       const failure = event.version.convertedStatus === FileUploadConvertedStatus.Error
-      if (failure) {
+
+      if (success) {
+        // Remove from model.pendingVersions
+        modifyObjectFields<
+          ModelPendingImportedVersionsArgs,
+          Model['pendingImportedVersions']
+        >(
+          apollo.cache,
+          getCacheId('Model', modelId),
+          (fieldName, _variables, value, { ref }) => {
+            if (fieldName !== 'pendingImportedVersions') return
+            if (!value?.length) return
+
+            const currentVersions = (value || []).filter(
+              (i) => i.__ref !== ref('FileUpload', event.id).__ref
+            )
+            return currentVersions
+          }
+        )
+      } else if (failure) {
         triggerNotification({
           type: ToastNotificationType.Danger,
           title: 'File import failed',

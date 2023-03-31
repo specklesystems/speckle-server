@@ -28,19 +28,27 @@
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 relative z-0"
     >
       <!-- Decrementing z-index necessary for the actions menu to render correctly. Each card has its own stacking context because of the scale property -->
-      <ProjectModelPageVersionsCard
-        v-for="(item, i) in items"
-        :key="item.id"
-        v-model:selected="itemsSelectedState[item.id]"
-        :version="item"
-        :model-id="project.model.id"
-        :project-id="project.id"
-        :style="`z-index: ${items.length - i};`"
-        :selectable="!!selectedItems.length"
-        :selection-disabled="disabledSelections[item.id]"
-        @select="onSelect(item)"
-        @chosen="onSingleActionChosen($event, item)"
-      />
+      <template v-for="(item, i) in items" :key="item.id">
+        <ProjectModelPageVersionsCard
+          v-if="!isPendingVersionFragment(item)"
+          v-model:selected="itemsSelectedState[item.id]"
+          :version="item"
+          :model-id="project.model.id"
+          :project-id="project.id"
+          :style="`z-index: ${items.length - i};`"
+          :selectable="!!selectedItems.length"
+          :selection-disabled="disabledSelections[item.id]"
+          @select="onSelect(item)"
+          @chosen="onSingleActionChosen($event, item)"
+        />
+        <ProjectModelPageVersionsCard
+          v-else
+          :version="item"
+          :model-id="project.model.id"
+          :project-id="project.id"
+          :style="`z-index: ${items.length - i};`"
+        />
+      </template>
     </div>
     <div v-else>TODO: Versions Empty state</div>
     <InfiniteLoading v-if="items?.length" @infinite="infiniteLoad" />
@@ -79,6 +87,7 @@ import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { useModelVersions } from '~~/lib/projects/composables/versionManagement'
 import { VersionActionTypes } from '~~/lib/projects/helpers/components'
 import { reduce } from 'lodash-es'
+import { isPendingVersionFragment } from '~~/lib/projects/helpers/models'
 
 type SingleVersion = NonNullable<Get<typeof versions.value, 'items[0]'>>
 
@@ -94,6 +103,9 @@ graphql(`
         items {
           ...ProjectModelPageVersionsCardVersion
         }
+      }
+      pendingImportedVersions {
+        ...PendingFileUpload
       }
     }
   }
@@ -113,7 +125,13 @@ const { versions, loadMore, moreToLoad } = useModelVersions({
 })
 const { activeUser } = useActiveUser()
 
-const items = computed(() => versions.value?.items)
+const realVersionItems = computed(() => versions.value?.items)
+
+const items = computed(() => [
+  ...(props.project.model?.pendingImportedVersions || []),
+  ...(realVersionItems.value || [])
+])
+
 const itemsSelectedState = ref({} as Record<string, boolean>)
 const dialogState = ref(
   null as Nullable<{
@@ -124,7 +142,8 @@ const dialogState = ref(
 )
 
 const selectedItems = computed({
-  get: () => (items.value || []).filter((i) => !!itemsSelectedState.value[i.id]),
+  get: () =>
+    (realVersionItems.value || []).filter((i) => !!itemsSelectedState.value[i.id]),
   set: (newVal) =>
     (itemsSelectedState.value = reduce(
       newVal,
@@ -139,7 +158,7 @@ const disabledSelections = computed(() => {
   const results: Record<string, boolean> = {}
   if (props.project.role === Roles.Stream.Owner) return results
 
-  for (const item of items.value || []) {
+  for (const item of realVersionItems.value || []) {
     if (!activeUser.value || item.authorUser?.id !== activeUser.value.id) {
       results[item.id] = true
     }
