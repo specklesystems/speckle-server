@@ -44,7 +44,19 @@ export = {
   Subscription: {
     projectPendingModelsUpdated: {
       subscribe: filteredSubscribe(
-        FileImportSubscriptions.ProjectProjectPendingModelsUpdated,
+        FileImportSubscriptions.ProjectPendingModelsUpdated,
+        async (payload, args, ctx) => {
+          const { id: projectId } = args
+          if (payload.projectId !== projectId) return false
+
+          await authorizeResolver(ctx.userId, projectId, Roles.Stream.Reviewer)
+          return true
+        }
+      )
+    },
+    projectPendingVersionsUpdated: {
+      subscribe: filteredSubscribe(
+        FileImportSubscriptions.ProjectPendingVersionsUpdated,
         async (payload, args, ctx) => {
           const { id: projectId } = args
           if (payload.projectId !== projectId) return false

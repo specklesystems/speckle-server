@@ -30,7 +30,10 @@ import {
   viewerLoadedResourcesQuery
 } from '~~/lib/viewer/graphql/queries'
 import { SpeckleViewer } from '@speckle/shared'
-import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
+import {
+  useProjectPendingVersionUpdateTracking,
+  useProjectVersionUpdateTracking
+} from '~~/lib/projects/composables/versionManagement'
 import { PartialDeep } from 'type-fest'
 import {
   useViewerOpenedThreadUpdateEmitter,
@@ -430,6 +433,9 @@ function useViewerSubscriptionEventTracker() {
     },
     { silenceToast: true }
   )
+
+  // Track pending version updates (file imports)
+  useProjectPendingVersionUpdateTracking(projectId.value)
 }
 
 export function useViewerPostSetup() {

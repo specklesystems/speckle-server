@@ -1,7 +1,10 @@
 import { FileImportSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { listenFor, MessageType } from '@/modules/core/utils/dbNotificationListener'
 import { getFileInfo } from '@/modules/fileuploads/repositories/fileUploads'
-import { ProjectPendingModelsUpdatedMessageType } from '@/modules/core/graph/generated/graphql'
+import {
+  ProjectPendingModelsUpdatedMessageType,
+  ProjectPendingVersionsUpdatedMessageType
+} from '@/modules/core/graph/generated/graphql'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
 
@@ -20,17 +23,26 @@ async function onFileImportProcessed(msg: MessageType) {
   ])
   if (!upload) return
 
-  await publish(FileImportSubscriptions.ProjectProjectPendingModelsUpdated, {
-    projectPendingModelsUpdated: {
-      id: upload.id,
-      type: ProjectPendingModelsUpdatedMessageType.Updated,
-      model: upload
-    },
-    projectId: upload.streamId
-  })
-
   if (branch && isNewBranch) {
+    await publish(FileImportSubscriptions.ProjectPendingModelsUpdated, {
+      projectPendingModelsUpdated: {
+        id: upload.id,
+        type: ProjectPendingModelsUpdatedMessageType.Updated,
+        model: upload
+      },
+      projectId: upload.streamId
+    })
     await addBranchCreatedActivity({ branch })
+  } else if (!isNewBranch) {
+    await publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
+      projectPendingVersionsUpdated: {
+        id: upload.id,
+        type: ProjectPendingVersionsUpdatedMessageType.Updated,
+        version: upload
+      },
+      projectId: upload.streamId,
+      branchName: upload.branchName
+    })
   }
 }
 

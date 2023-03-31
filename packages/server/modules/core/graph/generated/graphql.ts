@@ -1449,13 +1449,26 @@ export type ProjectMutationsUpdateRoleArgs = {
 
 export type ProjectPendingModelsUpdatedMessage = {
   __typename?: 'ProjectPendingModelsUpdatedMessage';
-  /** Pending model ID */
+  /** Upload ID */
   id: Scalars['String'];
   model: FileUpload;
   type: ProjectPendingModelsUpdatedMessageType;
 };
 
 export enum ProjectPendingModelsUpdatedMessageType {
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
+
+export type ProjectPendingVersionsUpdatedMessage = {
+  __typename?: 'ProjectPendingVersionsUpdatedMessage';
+  /** Upload ID */
+  id: Scalars['String'];
+  type: ProjectPendingVersionsUpdatedMessageType;
+  version: FileUpload;
+};
+
+export enum ProjectPendingVersionsUpdatedMessageType {
   Created = 'CREATED',
   Updated = 'UPDATED'
 }
@@ -2084,6 +2097,8 @@ export type Subscription = {
   projectModelsUpdated: ProjectModelsUpdatedMessage;
   /** Subscribe to changes to a project's pending models */
   projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
+  /** Subscribe to changes to a project's pending versions */
+  projectPendingVersionsUpdated: ProjectPendingVersionsUpdatedMessage;
   /** Track updates to a specific project */
   projectUpdated: ProjectUpdatedMessage;
   /** Subscribe to when a project's versions get their preview image fully generated. */
@@ -2172,6 +2187,11 @@ export type SubscriptionProjectModelsUpdatedArgs = {
 
 
 export type SubscriptionProjectPendingModelsUpdatedArgs = {
+  id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectPendingVersionsUpdatedArgs = {
   id: Scalars['String'];
 };
 
@@ -2760,6 +2780,8 @@ export type ResolversTypes = {
   ProjectMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ProjectPendingModelsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectPendingModelsUpdatedMessage, 'model'> & { model: ResolversTypes['FileUpload'] }>;
   ProjectPendingModelsUpdatedMessageType: ProjectPendingModelsUpdatedMessageType;
+  ProjectPendingVersionsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversTypes['FileUpload'] }>;
+  ProjectPendingVersionsUpdatedMessageType: ProjectPendingVersionsUpdatedMessageType;
   ProjectUpdateInput: ProjectUpdateInput;
   ProjectUpdateRoleInput: ProjectUpdateRoleInput;
   ProjectUpdatedMessage: ResolverTypeWrapper<Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
@@ -2915,6 +2937,7 @@ export type ResolversParentTypes = {
   ProjectModelsUpdatedMessage: Omit<ProjectModelsUpdatedMessage, 'model'> & { model?: Maybe<ResolversParentTypes['Model']> };
   ProjectMutations: MutationsObjectGraphQLReturn;
   ProjectPendingModelsUpdatedMessage: Omit<ProjectPendingModelsUpdatedMessage, 'model'> & { model: ResolversParentTypes['FileUpload'] };
+  ProjectPendingVersionsUpdatedMessage: Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversParentTypes['FileUpload'] };
   ProjectUpdateInput: ProjectUpdateInput;
   ProjectUpdateRoleInput: ProjectUpdateRoleInput;
   ProjectUpdatedMessage: Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
@@ -3503,6 +3526,13 @@ export type ProjectPendingModelsUpdatedMessageResolvers<ContextType = GraphQLCon
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ProjectPendingVersionsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectPendingVersionsUpdatedMessage'] = ResolversParentTypes['ProjectPendingVersionsUpdatedMessage']> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectPendingVersionsUpdatedMessageType'], ParentType, ContextType>;
+  version?: Resolver<ResolversTypes['FileUpload'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type ProjectUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectUpdatedMessage'] = ResolversParentTypes['ProjectUpdatedMessage']> = {
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   project?: Resolver<Maybe<ResolversTypes['Project']>, ParentType, ContextType>;
@@ -3712,6 +3742,7 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   projectCommentsUpdated?: SubscriptionResolver<ResolversTypes['ProjectCommentsUpdatedMessage'], "projectCommentsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectCommentsUpdatedArgs, 'target'>>;
   projectModelsUpdated?: SubscriptionResolver<ResolversTypes['ProjectModelsUpdatedMessage'], "projectModelsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectModelsUpdatedArgs, 'id'>>;
   projectPendingModelsUpdated?: SubscriptionResolver<ResolversTypes['ProjectPendingModelsUpdatedMessage'], "projectPendingModelsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectPendingModelsUpdatedArgs, 'id'>>;
+  projectPendingVersionsUpdated?: SubscriptionResolver<ResolversTypes['ProjectPendingVersionsUpdatedMessage'], "projectPendingVersionsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectPendingVersionsUpdatedArgs, 'id'>>;
   projectUpdated?: SubscriptionResolver<ResolversTypes['ProjectUpdatedMessage'], "projectUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectUpdatedArgs, 'id'>>;
   projectVersionsPreviewGenerated?: SubscriptionResolver<ResolversTypes['ProjectVersionsPreviewGeneratedMessage'], "projectVersionsPreviewGenerated", ParentType, ContextType, RequireFields<SubscriptionProjectVersionsPreviewGeneratedArgs, 'id'>>;
   projectVersionsUpdated?: SubscriptionResolver<ResolversTypes['ProjectVersionsUpdatedMessage'], "projectVersionsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectVersionsUpdatedArgs, 'id'>>;
@@ -3919,6 +3950,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ProjectModelsUpdatedMessage?: ProjectModelsUpdatedMessageResolvers<ContextType>;
   ProjectMutations?: ProjectMutationsResolvers<ContextType>;
   ProjectPendingModelsUpdatedMessage?: ProjectPendingModelsUpdatedMessageResolvers<ContextType>;
+  ProjectPendingVersionsUpdatedMessage?: ProjectPendingVersionsUpdatedMessageResolvers<ContextType>;
   ProjectUpdatedMessage?: ProjectUpdatedMessageResolvers<ContextType>;
   ProjectVersionsPreviewGeneratedMessage?: ProjectVersionsPreviewGeneratedMessageResolvers<ContextType>;
   ProjectVersionsUpdatedMessage?: ProjectVersionsUpdatedMessageResolvers<ContextType>;

@@ -185,6 +185,7 @@ useProjectPendingModelUpdateTracking(projectId, (event, cache) => {
     // If converted emit toast notification & remove from pending models
     // (if it still exists there, cause "version create" subscription might've already removed it)
     const success = event.model.convertedStatus === FileUploadConvertedStatus.Completed
+    const failure = event.model.convertedStatus === FileUploadConvertedStatus.Error
     const newModel = event.model.model
 
     if (success && newModel) {
@@ -210,6 +211,14 @@ useProjectPendingModelUpdateTracking(projectId, (event, cache) => {
           return currentModels
         }
       )
+    } else if (failure) {
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'File import failed',
+        description:
+          event.model.convertedMessage ||
+          `${event.model.modelName} could not be imported`
+      })
     }
   }
 })

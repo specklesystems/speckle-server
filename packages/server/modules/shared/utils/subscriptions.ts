@@ -8,12 +8,14 @@ import {
   ProjectCommentsUpdatedMessage,
   ProjectModelsUpdatedMessage,
   ProjectPendingModelsUpdatedMessage,
+  ProjectPendingVersionsUpdatedMessage,
   ProjectUpdatedMessage,
   ProjectVersionsPreviewGeneratedMessage,
   ProjectVersionsUpdatedMessage,
   SubscriptionProjectCommentsUpdatedArgs,
   SubscriptionProjectModelsUpdatedArgs,
   SubscriptionProjectPendingModelsUpdatedArgs,
+  SubscriptionProjectPendingVersionsUpdatedArgs,
   SubscriptionProjectUpdatedArgs,
   SubscriptionProjectVersionsPreviewGeneratedArgs,
   SubscriptionProjectVersionsUpdatedArgs,
@@ -88,7 +90,8 @@ export enum ViewerSubscriptions {
 }
 
 export enum FileImportSubscriptions {
-  ProjectProjectPendingModelsUpdated = 'PROJECT_PENDING_MODELS_UPDATED'
+  ProjectPendingModelsUpdated = 'PROJECT_PENDING_MODELS_UPDATED',
+  ProjectPendingVersionsUpdated = 'PROJECT_PENDING_VERSIONS_UPDATED'
 }
 
 type NoVariables = Record<string, never>
@@ -160,7 +163,7 @@ type SubscriptionTypeMap = {
     }
     variables: SubscriptionProjectCommentsUpdatedArgs
   }
-  [FileImportSubscriptions.ProjectProjectPendingModelsUpdated]: {
+  [FileImportSubscriptions.ProjectPendingModelsUpdated]: {
     payload: {
       projectPendingModelsUpdated: Merge<
         ProjectPendingModelsUpdatedMessage,
@@ -169,6 +172,17 @@ type SubscriptionTypeMap = {
       projectId: string
     }
     variables: SubscriptionProjectPendingModelsUpdatedArgs
+  }
+  [FileImportSubscriptions.ProjectPendingVersionsUpdated]: {
+    payload: {
+      projectPendingVersionsUpdated: Merge<
+        ProjectPendingVersionsUpdatedMessage,
+        { version: FileUploadGraphQLReturn }
+      >
+      projectId: string
+      branchName: string
+    }
+    variables: SubscriptionProjectPendingVersionsUpdatedArgs
   }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 

@@ -1,13 +1,11 @@
 import { has } from 'lodash-es'
 import {
   ProjectPageLatestItemsModelItemFragment,
-  ProjectPageLatestItemsPendingModelItemFragment
+  PendingFileUploadFragment
 } from '~~/lib/common/generated/gql/graphql'
 
 export function isPendingModelFragment(
-  i:
-    | ProjectPageLatestItemsModelItemFragment
-    | ProjectPageLatestItemsPendingModelItemFragment
-): i is ProjectPageLatestItemsPendingModelItemFragment {
+  i: ProjectPageLatestItemsModelItemFragment | PendingFileUploadFragment
+): i is PendingFileUploadFragment {
   return has(i, 'convertedMessage')
 }

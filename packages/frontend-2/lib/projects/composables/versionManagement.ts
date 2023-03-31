@@ -7,17 +7,23 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import {
   DeleteVersionsInput,
   Model,
+  ModelPendingImportedVersionsArgs,
   ModelVersionArgs,
   ModelVersionsArgs,
   MoveVersionsInput,
+  OnProjectPendingVersionsUpdatedSubscription,
   OnProjectVersionsUpdateSubscription,
   Project,
+  ProjectPendingVersionsUpdatedMessageType,
   ProjectVersionsArgs,
   ProjectVersionsUpdatedMessageType,
   UpdateVersionInput
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
-import { onProjectVersionsUpdateSubscription } from '~~/lib/projects/graphql/subscriptions'
+import {
+  onProjectPendingVersionsUpdatedSubscription,
+  onProjectVersionsUpdateSubscription
+} from '~~/lib/projects/graphql/subscriptions'
 import {
   convertThrowIntoFetchResult,
   evictObjectFields,
@@ -35,6 +41,7 @@ import {
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
 import { isUndefined } from 'lodash-es'
+import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 
 /**
  * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
@@ -408,4 +415,64 @@ export function useUpdateVersion() {
 
     return data?.versionMutations.update
   }
+}
+
+/**
+ * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
+ * that we don't want to duplicate (or extract that part out into a separate composable)
+ */
+export function useProjectPendingVersionUpdateTracking(
+  projectId: MaybeRef<string>,
+  handler?: (
+    data: NonNullable<
+      Get<OnProjectPendingVersionsUpdatedSubscription, 'projectPendingVersionsUpdated'>
+    >,
+    cache: ApolloCache<unknown>
+  ) => void
+) {
+  const { onResult: onProjectPendingVersionsUpdate } = useSubscription(
+    onProjectPendingVersionsUpdatedSubscription,
+    () => ({
+      id: unref(projectId)
+    })
+  )
+  const apollo = useApolloClient().client
+  const { triggerNotification } = useGlobalToast()
+
+  onProjectPendingVersionsUpdate((res) => {
+    if (!res.data?.projectPendingVersionsUpdated.id) return
+    const event = res.data.projectPendingVersionsUpdated
+    const modelId = event.version.model?.id
+    if (!modelId) return
+
+    if (event.type === ProjectPendingVersionsUpdatedMessageType.Created) {
+      // Insert into model.pendingVersions
+      modifyObjectFields<
+        ModelPendingImportedVersionsArgs,
+        Model['pendingImportedVersions']
+      >(
+        apollo.cache,
+        getCacheId('Model', modelId),
+        (fieldName, _variables, value, { ref }) => {
+          if (fieldName !== 'pendingImportedVersions') return
+          const currentVersions = (value || []).slice()
+          currentVersions.push(ref('FileUpload', event.id))
+          return currentVersions
+        }
+      )
+    } else if (event.type === ProjectPendingVersionsUpdatedMessageType.Updated) {
+      const failure = event.version.convertedStatus === FileUploadConvertedStatus.Error
+      if (failure) {
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: 'File import failed',
+          description:
+            event.version.convertedMessage ||
+            `${event.version.modelName} could not be imported`
+        })
+      }
+    }
+
+    handler?.(event, apollo.cache)
+  })
 }

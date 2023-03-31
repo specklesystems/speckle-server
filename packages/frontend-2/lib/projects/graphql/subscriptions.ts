@@ -66,7 +66,22 @@ export const onProjectPendingModelsUpdatedSubscription = graphql(`
       id
       type
       model {
-        ...ProjectPageLatestItemsPendingModelItem
+        ...PendingFileUpload
+        model {
+          ...ProjectPageLatestItemsModelItem
+        }
+      }
+    }
+  }
+`)
+
+export const onProjectPendingVersionsUpdatedSubscription = graphql(`
+  subscription OnProjectPendingVersionsUpdated($id: String!) {
+    projectPendingVersionsUpdated(id: $id) {
+      id
+      type
+      version {
+        ...PendingFileUpload
         model {
           ...ProjectPageLatestItemsModelItem
         }

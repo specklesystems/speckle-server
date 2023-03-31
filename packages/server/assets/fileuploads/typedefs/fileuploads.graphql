@@ -76,10 +76,24 @@ enum ProjectPendingModelsUpdatedMessageType {
 type ProjectPendingModelsUpdatedMessage {
   type: ProjectPendingModelsUpdatedMessageType!
   """
-  Pending model ID
+  Upload ID
   """
   id: String!
   model: FileUpload!
+}
+
+enum ProjectPendingVersionsUpdatedMessageType {
+  CREATED
+  UPDATED
+}
+
+type ProjectPendingVersionsUpdatedMessage {
+  type: ProjectPendingVersionsUpdatedMessageType!
+  """
+  Upload ID
+  """
+  id: String!
+  version: FileUpload!
 }
 
 extend type Subscription {
@@ -87,4 +101,8 @@ extend type Subscription {
   Subscribe to changes to a project's pending models
   """
   projectPendingModelsUpdated(id: String!): ProjectPendingModelsUpdatedMessage!
+  """
+  Subscribe to changes to a project's pending versions
+  """
+  projectPendingVersionsUpdated(id: String!): ProjectPendingVersionsUpdatedMessage!
 }

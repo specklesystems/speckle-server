@@ -49,6 +49,41 @@
           </template>
         </div>
         <PreviewImage v-else-if="previewUrl" :preview-url="previewUrl" />
+        <div
+          v-else-if="pendingVersion"
+          class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
+        >
+          <template
+            v-if="
+              [
+                FileUploadConvertedStatus.Queued,
+                FileUploadConvertedStatus.Converting
+              ].includes(pendingVersion.convertedStatus)
+            "
+          >
+            <span>Importing new version</span>
+            <CommonLoadingBar loading class="max-w-[100px]" />
+          </template>
+          <template
+            v-else-if="
+              pendingVersion.convertedStatus === FileUploadConvertedStatus.Completed
+            "
+          >
+            <span class="inline-flex items-center space-x-1">
+              <CheckCircleIcon class="h-4 w-4 text-success" />
+              <span>Version import successful</span>
+            </span>
+          </template>
+          <template v-else>
+            <span class="inline-flex items-center space-x-1">
+              <ExclamationTriangleIcon class="h-4 w-4 text-danger" />
+              <span>Version import failed</span>
+            </span>
+            <span v-if="pendingVersion.convertedMessage">
+              {{ pendingVersion.convertedMessage }}
+            </span>
+          </template>
+        </div>
         <div v-else class="h-full w-full p-4">
           <ProjectImportFileArea
             v-if="true"
@@ -131,8 +166,8 @@
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 import {
+  PendingFileUploadFragment,
   ProjectPageLatestItemsModelItemFragment,
-  ProjectPageLatestItemsPendingModelItemFragment,
   ProjectPageModelsCardProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
 import {
@@ -147,6 +182,12 @@ import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 
+/**
+ * TODO:
+ * - Create pending version card
+ * - Update model card list view as well
+ */
+
 graphql(`
   fragment ProjectPageModelsCardProject on Project {
     id
@@ -160,9 +201,7 @@ defineEmits<{
 
 const props = withDefaults(
   defineProps<{
-    model:
-      | ProjectPageLatestItemsModelItemFragment
-      | ProjectPageLatestItemsPendingModelItemFragment
+    model: ProjectPageLatestItemsModelItemFragment | PendingFileUploadFragment
     project: ProjectPageModelsCardProjectFragment
     showVersions?: boolean
     showActions?: boolean
@@ -219,5 +258,9 @@ const finalShowVersions = computed(
 const canEdit = computed(() => canModifyModels(props.project))
 const versionCount = computed(() =>
   isPendingModelFragment(props.model) ? 0 : props.model.versionCount.totalCount
+)
+
+const pendingVersion = computed(() =>
+  isPendingModelFragment(props.model) ? null : props.model.pendingImportedVersions[0]
 )
 </script>

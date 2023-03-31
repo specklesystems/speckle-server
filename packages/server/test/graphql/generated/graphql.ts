@@ -1440,13 +1440,26 @@ export type ProjectMutationsUpdateRoleArgs = {
 
 export type ProjectPendingModelsUpdatedMessage = {
   __typename?: 'ProjectPendingModelsUpdatedMessage';
-  /** Pending model ID */
+  /** Upload ID */
   id: Scalars['String'];
   model: FileUpload;
   type: ProjectPendingModelsUpdatedMessageType;
 };
 
 export enum ProjectPendingModelsUpdatedMessageType {
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
+
+export type ProjectPendingVersionsUpdatedMessage = {
+  __typename?: 'ProjectPendingVersionsUpdatedMessage';
+  /** Upload ID */
+  id: Scalars['String'];
+  type: ProjectPendingVersionsUpdatedMessageType;
+  version: FileUpload;
+};
+
+export enum ProjectPendingVersionsUpdatedMessageType {
   Created = 'CREATED',
   Updated = 'UPDATED'
 }
@@ -2075,6 +2088,8 @@ export type Subscription = {
   projectModelsUpdated: ProjectModelsUpdatedMessage;
   /** Subscribe to changes to a project's pending models */
   projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
+  /** Subscribe to changes to a project's pending versions */
+  projectPendingVersionsUpdated: ProjectPendingVersionsUpdatedMessage;
   /** Track updates to a specific project */
   projectUpdated: ProjectUpdatedMessage;
   /** Subscribe to when a project's versions get their preview image fully generated. */
@@ -2163,6 +2178,11 @@ export type SubscriptionProjectModelsUpdatedArgs = {
 
 
 export type SubscriptionProjectPendingModelsUpdatedArgs = {
+  id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectPendingVersionsUpdatedArgs = {
   id: Scalars['String'];
 };
 
