@@ -28,7 +28,6 @@ export default {
       { name: 'excel', color: 'green lighten-1', short: 'XLSX' },
       { name: 'unity', color: 'teal', short: 'UNITY' },
       { name: 'unreal', color: 'brown', short: 'UE' },
-      { name: 'python', color: 'yellow darken-1', short: 'PY' },
       { name: '.net', color: 'purple darken-2', short: '.NET' },
       { name: 'ifc', color: 'red darken-4', short: 'IFC' },
       { name: 'qgis', color: 'light-green accent-4', short: 'QGIS' },
@@ -45,7 +44,8 @@ export default {
       { name: 'openrail', color: 'brown accent-4', short: 'ORAIL' },
       { name: 'openbuildings', color: 'brown accent-4', short: 'OBUILD' },
       { name: 'microstation', color: 'brown accent-4', short: 'MICRO' },
-      { name: 'navisworks', color: 'green darken-3', short: 'NAVIS' }
+      { name: 'navisworks', color: 'green darken-3', short: 'NAVIS' },
+      { name: 'python', color: 'yellow darken-1', short: 'PY' }
     ]
   }),
   computed: {
