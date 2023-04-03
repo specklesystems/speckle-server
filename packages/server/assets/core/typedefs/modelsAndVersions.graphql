@@ -165,9 +165,14 @@ type ModelsTreeItem {
   """
   model: Model
   """
+  Only set if tree item represents a pending model (file import)
+  """
+  pendingModel: FileUpload
+  """
   Whether or not this item has nested children models
   """
   hasChildren: Boolean!
+  isPendingModel: Boolean!
   children: [ModelsTreeItem!]!
   updatedAt: DateTime!
 }

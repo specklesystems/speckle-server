@@ -306,8 +306,6 @@ export async function getModelTreeItemsFiltered(
     })
   }
 
-  console.log(q.toQuery())
-
   const res = await q
   const items = res.map((i): ModelsTreeItemGraphQLReturn => {
     const displayName = last(i.name.split('/')) as string
@@ -317,7 +315,8 @@ export async function getModelTreeItemsFiltered(
       name: displayName,
       fullName: i.name,
       updatedAt: i.updatedAt,
-      hasChildren: i.hasChildren
+      hasChildren: i.hasChildren,
+      isPendingModel: false
     }
   })
 
@@ -401,7 +400,8 @@ export async function getModelTreeItems(
       name: i.branchPart,
       fullName,
       updatedAt: i.updatedAt,
-      hasChildren: fullName.length < i.longestFullName.length
+      hasChildren: fullName.length < i.longestFullName.length,
+      isPendingModel: false
     }
   })
 

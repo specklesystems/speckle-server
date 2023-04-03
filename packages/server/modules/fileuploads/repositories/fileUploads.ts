@@ -1,4 +1,4 @@
-import { Branches, FileUploads } from '@/modules/core/dbSchema'
+import { Branches, FileUploads, knex } from '@/modules/core/dbSchema'
 import {
   FileUploadConvertedStatus,
   FileUploadRecord
@@ -52,7 +52,7 @@ export async function saveUploadFile({
 
 export async function getStreamPendingModels(
   streamId: string,
-  options?: Partial<{ limit: number }>
+  options?: Partial<{ limit: number; branchNamePattern: string }>
 ) {
   const q = FileUploads.knex<FileUploadRecord[]>()
     .where(FileUploads.col.streamId, streamId)
@@ -68,6 +68,12 @@ export async function getStreamPendingModels(
 
   if (options?.limit) {
     q.limit(options.limit)
+  }
+
+  if (options?.branchNamePattern) {
+    q.whereRaw(
+      knex.raw(`?? ~* ?`, [FileUploads.col.branchName, options.branchNamePattern])
+    )
   }
 
   return await q

@@ -714,6 +714,7 @@ export type ModelsTreeItem = {
   /** Whether or not this item has nested children models */
   hasChildren: Scalars['Boolean'];
   id: Scalars['ID'];
+  isPendingModel: Scalars['Boolean'];
   /**
    * Nullable cause the item can represent a parent that doesn't actually exist as a model on its own.
    * E.g. A model named "foo/bar" is supposed to be a child of "foo" and will be represented as such,
@@ -721,6 +722,8 @@ export type ModelsTreeItem = {
    */
   model?: Maybe<Model>;
   name: Scalars['String'];
+  /** Only set if tree item represents a pending model (file import) */
+  pendingModel?: Maybe<FileUpload>;
   updatedAt: Scalars['DateTime'];
 };
 
@@ -3342,8 +3345,10 @@ export type ModelsTreeItemResolvers<ContextType = GraphQLContext, ParentType ext
   fullName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   hasChildren?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  isPendingModel?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  pendingModel?: Resolver<Maybe<ResolversTypes['FileUpload']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

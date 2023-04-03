@@ -181,6 +181,13 @@ useProjectPendingModelUpdateTracking(projectId, (event, cache) => {
         return currentModels
       }
     )
+
+    // Evict modelsTree
+    evictObjectFields(
+      cache,
+      getCacheId('Project', props.project.id),
+      (fieldName) => fieldName === 'modelsTree'
+    )
   } else if (event.type === ProjectPendingModelsUpdatedMessageType.Updated) {
     // If converted emit toast notification & remove from pending models
     // (if it still exists there, cause "version create" subscription might've already removed it)

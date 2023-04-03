@@ -12,14 +12,17 @@
     >
       <div class="flex items-center flex-grow">
         <!-- Icon -->
-        <CubeIcon
-          v-if="model && model.versionCount.totalCount !== 0"
-          class="w-4 h-4 text-foreground-2 mx-2"
-        />
-        <CubeTransparentIcon
-          v-if="model && model.versionCount.totalCount === 0"
-          class="w-4 h-4 text-foreground-2 mx-2"
-        />
+        <template v-if="model">
+          <CubeIcon
+            v-if="model.versionCount.totalCount !== 0"
+            class="w-4 h-4 text-foreground-2 mx-2"
+          />
+          <CubeTransparentIcon v-else class="w-4 h-4 text-foreground-2 mx-2" />
+        </template>
+        <template v-else-if="pendingModel">
+          <ArrowUpOnSquareIcon class="w-4 h-4 text-foreground-2 mx-2" />
+        </template>
+
         <!-- Name -->
         <div class="flex justify-start space-x-2 items-center">
           <span class="text-lg font-bold text-foreground">
@@ -30,6 +33,7 @@
               v-model:open="showActionsMenu"
               :model="model"
               :project-id="projectId"
+              :can-edit="canContribute"
               @click.stop.prevent
               @model-updated="$emit('model-updated')"
             />
@@ -68,7 +72,7 @@
           </div>
         </div>
         <div
-          v-if="itemType === StructureItemType.EmptyModel"
+          v-else-if="itemType === StructureItemType.EmptyModel"
           class="flex items-center space-x-2 text-foreground-2 text-xs"
         >
           <div class="text-right opacity-50 group-hover:opacity-100 transition">
@@ -79,11 +83,49 @@
             or drag and drop a IFC/OBJ/STL file here.
           </div>
         </div>
+        <div
+          v-else-if="pendingModel && itemType === StructureItemType.PendingModel"
+          class="text-foreground-2 text-sm flex flex-col items-center space-y-1"
+        >
+          <template
+            v-if="
+              [
+                FileUploadConvertedStatus.Queued,
+                FileUploadConvertedStatus.Converting
+              ].includes(pendingModel.convertedStatus)
+            "
+          >
+            <span>Importing</span>
+            <CommonLoadingBar loading class="max-w-[100px]" />
+          </template>
+          <template
+            v-else-if="
+              pendingModel.convertedStatus === FileUploadConvertedStatus.Completed
+            "
+          >
+            <span class="inline-flex items-center space-x-1">
+              <CheckCircleIcon class="h-4 w-4 text-success" />
+              <span>Importing successful</span>
+            </span>
+          </template>
+          <template v-else>
+            <span class="inline-flex items-center space-x-1">
+              <ExclamationTriangleIcon class="h-4 w-4 text-danger" />
+              <span>Importing failed</span>
+            </span>
+            <span v-if="pendingModel.convertedMessage">
+              {{ pendingModel.convertedMessage }}
+            </span>
+          </template>
+        </div>
       </div>
       <!-- Preview or icon section -->
-      <div class="w-24 h-20 ml-4">
+      <div
+        v-if="item.model?.previewUrl || itemType === StructureItemType.EmptyModel"
+        class="w-24 h-20 ml-4"
+      >
         <PreviewImage
-          v-if="hasVersions && item.model && item.model.previewUrl"
+          v-if="item.model?.previewUrl"
           :preview-url="item.model.previewUrl"
         />
 
@@ -94,6 +136,7 @@
           <PlusIcon class="w-6 h-6 text-blue-500/50" />
         </div>
       </div>
+      <div v-else class="h-20 mr-4" />
     </NuxtLink>
     <!-- Doubling up for mixed items -->
     <div
@@ -190,18 +233,23 @@ import {
   PlusIcon,
   ArrowPathRoundedSquareIcon,
   ChatBubbleLeftRightIcon,
-  ArrowTopRightOnSquareIcon
+  ArrowTopRightOnSquareIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/vue/24/solid'
+import { ArrowUpOnSquareIcon } from '@heroicons/vue/24/outline'
 import { SingleLevelModelTreeItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { projectModelChildrenTreeQuery } from '~~/lib/projects/graphql/queries'
+import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 
 enum StructureItemType {
   EmptyModel, // emptyModel
   ModelWithOnlyVersions, // fullModel
   ModelWithOnlySubmodels, // group
-  ModelWithVersionsAndSubmodels // mixed
+  ModelWithVersionsAndSubmodels, // mixed
+  PendingModel
 }
 
 graphql(`
@@ -211,6 +259,9 @@ graphql(`
     fullName
     model {
       ...ProjectModelsViewModelItem
+    }
+    pendingModel {
+      ...PendingFileUpload
     }
     hasChildren
     updatedAt
@@ -231,9 +282,11 @@ const props = defineProps<{
 const expanded = ref(false)
 const showActionsMenu = ref(false)
 
+const isPendingFileUpload = computed(() => !!props.item.pendingModel?.id)
 const itemType = computed<StructureItemType>(() => {
-  const item = props.item
+  if (isPendingFileUpload.value) return StructureItemType.PendingModel
 
+  const item = props.item
   if (item.model?.versionCount.totalCount) {
     if (hasChildren.value) {
       return StructureItemType.ModelWithVersionsAndSubmodels
@@ -263,9 +316,12 @@ const hasSubmodels = computed(() =>
 )
 
 const name = computed(() =>
-  props.isSearchResult ? props.item.fullName : props.item.name
+  props.isSearchResult || isPendingFileUpload.value
+    ? props.item.fullName
+    : props.item.name
 )
 const model = computed(() => props.item.model)
+const pendingModel = computed(() => props.item.pendingModel)
 const hasChildren = computed(() =>
   props.isSearchResult ? false : props.item.hasChildren
 )
