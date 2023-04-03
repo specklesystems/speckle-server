@@ -96,7 +96,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer.create(this.container)
     window.addEventListener('resize', this.resize.bind(this), false)
 
-    new Assets(this.speckleRenderer.renderer)
+    new Assets()
     this.filteringManager = new FilteringManager(this.speckleRenderer)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -178,7 +178,10 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public async init(): Promise<void> {
     if (this.startupParams.environmentSrc) {
-      Assets.getEnvironment(this.startupParams.environmentSrc)
+      Assets.getEnvironment(
+        this.startupParams.environmentSrc,
+        this.speckleRenderer.renderer
+      )
         .then((value: Texture) => {
           this.speckleRenderer.indirectIBL = value
         })

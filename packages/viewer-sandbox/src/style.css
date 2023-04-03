@@ -17,9 +17,15 @@
   );
 }
 
-#renderer {
+#renderer0 {
   position: absolute;
-  height: 100%;
+  height: 50%;
+  width: 100%;
+}
+#renderer1 {
+  position: absolute;
+  top: 50%;
+  height: 50%;
   width: 100%;
 }
 
