@@ -156,6 +156,9 @@ function createCache(): InMemoryCache {
           },
           invitedTeam: {
             merge: (_existing, incoming) => incoming
+          },
+          pendingImportedModels: {
+            merge: (_existing, incoming) => incoming
           }
         }
       },
@@ -164,6 +167,9 @@ function createCache(): InMemoryCache {
           versions: {
             keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('VersionCollection')
+          },
+          pendingImportedVersions: {
+            merge: (_existing, incoming) => incoming
           }
         }
       },

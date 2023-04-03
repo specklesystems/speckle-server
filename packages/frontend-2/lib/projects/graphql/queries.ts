@@ -125,7 +125,7 @@ export const projectModelVersionsQuery = graphql(`
     $versionsCursor: String
   ) {
     project(id: $projectId) {
-      ...ProjectModelPageVersionsProject
+      ...ProjectModelPageVersionsPagination
     }
   }
 `)

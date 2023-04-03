@@ -184,9 +184,9 @@ import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 
 /**
  * TODO:
- * - Create pending version card
+ * - Pending version card fix updating
  * - Update model card list view as well
- * - Check versions gallery version updates (subscriptions there?)
+ * - Viewer no models view - wat do? (broken header)
  */
 
 graphql(`

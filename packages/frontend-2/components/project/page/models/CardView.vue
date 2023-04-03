@@ -38,6 +38,7 @@ const props = withDefaults(
     showVersions?: boolean
     disableDefaultLinks?: boolean
     excludedIds?: string[]
+    excludeEmptyModels?: boolean
   }>(),
   {
     showActions: true,
@@ -50,7 +51,8 @@ const { result: latestModelsResult } = useQuery(latestModelsQuery, () => ({
   projectId: props.project.id,
   filter: {
     search: props.search || null,
-    excludeIds: props.excludedIds || null
+    excludeIds: props.excludedIds || null,
+    onlyWithVersions: !!props.excludeEmptyModels
   }
 }))
 

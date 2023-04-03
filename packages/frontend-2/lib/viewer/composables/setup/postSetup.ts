@@ -7,6 +7,7 @@ import {
   ProjectCommentsUpdatedMessageType,
   ProjectCommentThreadsArgs,
   ProjectModelsUpdatedMessageType,
+  ProjectUpdatedMessageType,
   ProjectVersionsUpdatedMessageType,
   ProjectViewerResourcesQuery,
   ViewerLoadedResourcesQuery,
@@ -39,6 +40,9 @@ import {
   useViewerOpenedThreadUpdateEmitter,
   useViewerThreadTracking
 } from '~~/lib/viewer/composables/commentBubbles'
+import { useProjectUpdateTracking } from '~~/lib/projects/composables/projectManagement'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { useNavigateToHome } from '~~/lib/common/helpers/route'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -133,6 +137,8 @@ function useViewerSubscriptionEventTracker() {
       response: { resourceQueryVariables, resourceItemsQueryVariables }
     }
   } = useInjectedViewerState()
+  const { triggerNotification } = useGlobalToast()
+  const goHome = useNavigateToHome()
 
   useViewerCommentUpdateTracking(
     {
@@ -436,6 +442,21 @@ function useViewerSubscriptionEventTracker() {
 
   // Track pending version updates (file imports)
   useProjectPendingVersionUpdateTracking(projectId.value)
+
+  // Redirect to home if project deleted
+  useProjectUpdateTracking(projectId, (event) => {
+    const isDeleted = event.type === ProjectUpdatedMessageType.Deleted
+
+    if (isDeleted) {
+      goHome()
+
+      triggerNotification({
+        type: ToastNotificationType.Info,
+        title: 'Project deleted',
+        description: 'Redirecting to home'
+      })
+    }
+  })
 }
 
 export function useViewerPostSetup() {

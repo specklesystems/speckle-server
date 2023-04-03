@@ -82,23 +82,6 @@ export function useProjectVersionUpdateTracking(
       version
     ) {
       if (event.type === ProjectVersionsUpdatedMessageType.Created) {
-        // Add to model.versions
-        modifyObjectFields<ModelVersionsArgs, Model['versions']>(
-          apollo.cache,
-          getCacheId('Model', version.model.id),
-          (fieldName, _vars, value, { ref }) => {
-            if (fieldName !== 'versions') return
-            const newItems = (value?.items || []).slice()
-            newItems.unshift(ref('Version', version.id))
-
-            return {
-              ...(value || {}),
-              items: newItems,
-              totalCount: (value.totalCount || 0) + 1
-            }
-          }
-        )
-
         // Remove from pendingVersions, in case it's there
         modifyObjectFields<
           ModelPendingImportedVersionsArgs,
@@ -121,8 +104,24 @@ export function useProjectVersionUpdateTracking(
             if (pendingWithFittingMessageIdx !== -1) {
               newVersions.splice(pendingWithFittingMessageIdx, 1)
             }
-
             return newVersions
+          }
+        )
+
+        // Add to model.versions
+        modifyObjectFields<ModelVersionsArgs, Model['versions']>(
+          apollo.cache,
+          getCacheId('Model', version.model.id),
+          (fieldName, _vars, value, { ref }) => {
+            if (fieldName !== 'versions') return
+            const newItems = (value?.items || []).slice()
+            newItems.unshift(ref('Version', version.id))
+
+            return {
+              ...(value || {}),
+              items: newItems,
+              totalCount: (value.totalCount || 0) + 1
+            }
           }
         )
 
@@ -520,7 +519,6 @@ export function useProjectPendingVersionUpdateTracking(
           (fieldName, _variables, value, { ref }) => {
             if (fieldName !== 'pendingImportedVersions') return
             if (!value?.length) return
-
             const currentVersions = (value || []).filter(
               (i) => i.__ref !== ref('FileUpload', event.id).__ref
             )

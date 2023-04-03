@@ -92,9 +92,8 @@ import { isPendingVersionFragment } from '~~/lib/projects/helpers/models'
 type SingleVersion = NonNullable<Get<typeof versions.value, 'items[0]'>>
 
 graphql(`
-  fragment ProjectModelPageVersionsProject on Project {
+  fragment ProjectModelPageVersionsPagination on Project {
     id
-    role
     model(id: $modelId) {
       id
       versions(limit: 16, cursor: $versionsCursor) {
@@ -104,10 +103,21 @@ graphql(`
           ...ProjectModelPageVersionsCardVersion
         }
       }
+    }
+  }
+`)
+
+graphql(`
+  fragment ProjectModelPageVersionsProject on Project {
+    id
+    role
+    model(id: $modelId) {
+      id
       pendingImportedVersions {
         ...PendingFileUpload
       }
     }
+    ...ProjectModelPageVersionsPagination
   }
 `)
 
