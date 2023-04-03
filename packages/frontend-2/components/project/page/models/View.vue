@@ -84,22 +84,6 @@ graphql(`
   }
 `)
 
-graphql(`
-  fragment ProjectModelsViewModelItem on Model {
-    id
-    name
-    displayName
-    versionCount: versions(limit: 0) {
-      totalCount
-    }
-    commentThreadCount: commentThreads(limit: 0) {
-      totalCount
-    }
-    previewUrl
-    updatedAt
-  }
-`)
-
 const queryLoading = ref(false)
 const search = ref('')
 const debouncedSearch = ref('')

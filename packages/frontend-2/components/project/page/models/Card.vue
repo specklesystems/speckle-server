@@ -86,21 +86,10 @@
         </div>
         <div v-else class="h-full w-full p-4">
           <ProjectCardImportFileArea
-            v-if="true"
             :project-id="project.id"
             :model-name="model.name"
             class="h-full w-full"
           />
-          <div
-            v-if="false"
-            class="rounded-xl p-4 flex items-center h-full w-full border-dashed border-2 border-blue-500/10 text-foreground-2 text-xs text-center"
-          >
-            <div :class="`opacity-50 group-hover:opacity-100`">
-              Use our
-              <b>connectors</b>
-              to send data to this model, or drag and drop a IFC/OBJ/STL file here.
-            </div>
-          </div>
         </div>
       </div>
       <div class="h-12 flex items-center px-2 py-1 space-x-1">

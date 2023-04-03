@@ -7,7 +7,7 @@
     -->
     <NuxtLink
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group bg-foundation w-full py-1 pr-1 flex items-center rounded-md shadow hover:shadow-xl cursor-pointer hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary"
+      class="group bg-foundation w-full py-1 pr-1 flex rounded-md shadow hover:shadow-xl cursor-pointer hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary items-stretch"
       :to="modelLink || ''"
     >
       <div class="flex items-center flex-grow">
@@ -73,19 +73,53 @@
         </div>
         <div
           v-else-if="itemType === StructureItemType.EmptyModel"
-          class="flex items-center space-x-2 text-foreground-2 text-xs"
+          class="flex items-center h-full"
         >
-          <div class="text-right opacity-50 group-hover:opacity-100 transition">
-            Use our
-            <b>connectors</b>
-            to send data to this model,
-            <br />
-            or drag and drop a IFC/OBJ/STL file here.
+          <div
+            v-if="pendingVersion"
+            class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
+          >
+            <template
+              v-if="
+                [
+                  FileUploadConvertedStatus.Queued,
+                  FileUploadConvertedStatus.Converting
+                ].includes(pendingVersion.convertedStatus)
+              "
+            >
+              <span>Importing new version</span>
+              <CommonLoadingBar loading class="max-w-[100px]" />
+            </template>
+            <template
+              v-else-if="
+                pendingVersion.convertedStatus === FileUploadConvertedStatus.Completed
+              "
+            >
+              <span class="inline-flex items-center space-x-1">
+                <CheckCircleIcon class="h-4 w-4 text-success" />
+                <span>Version import successful</span>
+              </span>
+            </template>
+            <template v-else>
+              <span class="inline-flex items-center space-x-1">
+                <ExclamationTriangleIcon class="h-4 w-4 text-danger" />
+                <span>Version import failed</span>
+              </span>
+              <span v-if="pendingVersion.convertedMessage">
+                {{ pendingVersion.convertedMessage }}
+              </span>
+            </template>
           </div>
+          <ProjectCardImportFileArea
+            v-else
+            :project-id="projectId"
+            :model-name="item.fullName"
+            class="h-full w-full"
+          />
         </div>
         <div
           v-else-if="pendingModel && itemType === StructureItemType.PendingModel"
-          class="text-foreground-2 text-sm flex flex-col items-center space-y-1"
+          class="text-foreground-2 text-sm flex flex-col items-center space-y-1 mr-4"
         >
           <template
             v-if="
@@ -120,23 +154,13 @@
         </div>
       </div>
       <!-- Preview or icon section -->
-      <div
-        v-if="item.model?.previewUrl || itemType === StructureItemType.EmptyModel"
-        class="w-24 h-20 ml-4"
-      >
+      <div v-if="item.model?.previewUrl" class="w-24 h-20 ml-4">
         <PreviewImage
           v-if="item.model?.previewUrl"
           :preview-url="item.model.previewUrl"
         />
-
-        <div
-          v-if="itemType === StructureItemType.EmptyModel"
-          class="w-full h-full rounded-md bg-primary-muted flex flex-col items-center justify-center"
-        >
-          <PlusIcon class="w-6 h-6 text-blue-500/50" />
-        </div>
       </div>
-      <div v-else class="h-20 mr-4" />
+      <div v-else class="h-20" />
     </NuxtLink>
     <!-- Doubling up for mixed items -->
     <div
@@ -244,6 +268,10 @@ import { useQuery } from '@vue/apollo-composable'
 import { projectModelChildrenTreeQuery } from '~~/lib/projects/graphql/queries'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 
+/**
+ * TODO: The template in this file is a complete mess, needs refactoring
+ */
+
 enum StructureItemType {
   EmptyModel, // emptyModel
   ModelWithOnlyVersions, // fullModel
@@ -258,7 +286,7 @@ graphql(`
     name
     fullName
     model {
-      ...ProjectModelsViewModelItem
+      ...ProjectPageLatestItemsModelItem
     }
     pendingModel {
       ...PendingFileUpload
@@ -322,6 +350,7 @@ const name = computed(() =>
 )
 const model = computed(() => props.item.model)
 const pendingModel = computed(() => props.item.pendingModel)
+const pendingVersion = computed(() => model.value?.pendingImportedVersions[0])
 const hasChildren = computed(() =>
   props.isSearchResult ? false : props.item.hasChildren
 )
