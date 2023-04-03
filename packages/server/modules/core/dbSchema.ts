@@ -95,17 +95,29 @@ type SchemaConfigParams = {
    * column names with table prefixes.
    */
   withoutTablePrefix?: boolean
+
+  /**
+   * Configure a custom table prefix that will be attached to column names. This will be relevant when you're
+   * building subqueries or joining a table onto itself.
+   */
+  withCustomTablePrefix?: string
 }
 
 const createBaseInnerSchemaConfigBuilder =
   <T extends string, C extends string>(tableName: T, columns: C[]) =>
   (params: SchemaConfigParams = {}): BaseInnerSchemaConfig<T, C> => {
-    const colName = (col: string) =>
-      params.withoutTablePrefix ? col : `${tableName}.${col}`
+    const aliasedTableName = params.withCustomTablePrefix
+      ? `${tableName} as ${params.withCustomTablePrefix}`
+      : tableName
+    const colName = (col: string) => {
+      if (params.withoutTablePrefix) return col
+      const prefix = params.withCustomTablePrefix || tableName
+      return `${prefix}.${col}`
+    }
 
     return {
-      name: tableName,
-      knex: () => knex(tableName),
+      name: aliasedTableName as T,
+      knex: () => knex(aliasedTableName),
       col: reduce(
         columns,
         (prev, curr) => {

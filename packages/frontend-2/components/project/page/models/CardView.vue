@@ -47,16 +47,26 @@ const props = withDefaults(
 )
 
 const areQueriesLoading = useQueryLoading()
-const { result: latestModelsResult } = useQuery(latestModelsQuery, () => ({
-  projectId: props.project.id,
-  filter: {
-    search: props.search || null,
-    excludeIds: props.excludedIds || null,
-    onlyWithVersions: !!props.excludeEmptyModels
-  }
-}))
+const { result: latestModelsResult, variables: latestModelsVariables } = useQuery(
+  latestModelsQuery,
+  () => ({
+    projectId: props.project.id,
+    filter: {
+      search: props.search || null,
+      excludeIds: props.excludedIds || null,
+      onlyWithVersions: !!props.excludeEmptyModels
+    }
+  })
+)
 
-const items = computed(() => latestModelsResult.value?.project?.models?.items || [])
+const models = computed(() => latestModelsResult.value?.project?.models?.items || [])
+const pendingModels = computed(() =>
+  latestModelsVariables.value?.filter?.search
+    ? []
+    : latestModelsResult.value?.project?.pendingImportedModels || []
+)
+
+const items = computed(() => [...pendingModels.value, ...models.value])
 const itemsCount = computed(() => items.value.length)
 
 watch(areQueriesLoading, (newVal) => {

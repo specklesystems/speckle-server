@@ -11,7 +11,7 @@ extend type Project {
   Return's a project's models in a tree view with submodels being nested under parent models
   real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
   """
-  modelsTree: [ModelsTreeItem!]!
+  modelsTree(filter: ProjectModelsTreeFilter): [ModelsTreeItem!]!
   """
   Returns a specific model by its ID
   """
@@ -31,6 +31,13 @@ extend type Project {
   Returns a flat list of all project versions
   """
   versions(limit: Int! = 25, cursor: String): VersionCollection!
+}
+
+input ProjectModelsTreeFilter {
+  """
+  Search for specific models. If used, tree items from different levels may be mixed.
+  """
+  search: String
 }
 
 type ViewerResourceGroup {

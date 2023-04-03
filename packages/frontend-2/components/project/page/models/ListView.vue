@@ -1,22 +1,24 @@
 <template>
-  <div
-    v-if="search && searchResult?.project?.models.items.length !== 0"
-    class="space-y-4"
-  >
-    <ProjectPageModelsStructureItem
-      v-for="item in searchResultItems"
-      :key="item.model?.id"
-      :item="item"
-      :project-id="project.id"
+  <div v-if="treeItemCount" class="space-y-4 mb-14 max-w-full">
+    <div v-for="item in topLevelItems" :key="item.fullName">
+      <ProjectPageModelsStructureItem
+        :item="item"
+        :project-id="projectId"
+        :can-contribute="canContribute"
+        :is-search-result="isUsingSearch"
+        @model-updated="onModelUpdated"
+      />
+    </div>
+    <ProjectPageModelsNewModelStructureItem
+      v-if="canContribute && !isUsingSearch"
+      :project-id="projectId"
     />
   </div>
-
   <CommonEmptySearchState
-    v-else-if="search && searchResult?.project?.models.items.length === 0"
+    v-else-if="search && (treeTopLevelResult?.project?.modelsTree || []).length === 0"
     @clear-search="$emit('clear-search')"
   />
-
-  <ProjectPageModelsStructuredView v-else :project="project" />
+  <div v-else>TODO: List empty state</div>
 </template>
 <script setup lang="ts">
 import {
@@ -24,7 +26,8 @@ import {
   SingleLevelModelTreeItemFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
-import { latestModelsQuery } from '~~/lib/projects/graphql/queries'
+import { projectModelsTreeTopLevelQuery } from '~~/lib/projects/graphql/queries'
+import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
@@ -37,27 +40,28 @@ const props = defineProps<{
 }>()
 
 const areQueriesLoading = useQueryLoading()
-const { result: searchResult } = useQuery(
-  latestModelsQuery,
-  () => ({
-    projectId: props.project.id,
-    filter: {
-      search: props.search || null
-    }
-  }),
-  () => ({ enabled: !!props.search })
+const projectId = computed(() => props.project.id)
+
+const {
+  result: treeTopLevelResult,
+  refetch: refetchTree,
+  variables: resultVariables
+} = useQuery(projectModelsTreeTopLevelQuery, () => ({
+  projectId: projectId.value,
+  filter: props.search ? { search: props.search } : undefined
+}))
+
+const topLevelItems = computed(
+  (): SingleLevelModelTreeItemFragment[] =>
+    treeTopLevelResult.value?.project?.modelsTree || []
 )
+const treeItemCount = computed(() => topLevelItems.value.length)
+const canContribute = computed(() => canModifyModels(props.project))
+const isUsingSearch = computed(() => !!resultVariables.value?.filter?.search)
+
+const onModelUpdated = () => refetchTree()
 
 watch(areQueriesLoading, (newVal) => {
   emit('update:loading', newVal)
-})
-
-const searchResultItems = computed(() => {
-  return searchResult.value?.project?.models.items.map((item) => {
-    return {
-      name: item.name,
-      model: item
-    } as unknown as SingleLevelModelTreeItemFragment
-  })
 })
 </script>

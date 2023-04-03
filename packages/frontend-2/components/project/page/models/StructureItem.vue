@@ -225,6 +225,7 @@ const props = defineProps<{
   item: SingleLevelModelTreeItemFragment
   projectId: string
   canContribute?: boolean
+  isSearchResult?: boolean
 }>()
 
 const expanded = ref(false)
@@ -234,13 +235,13 @@ const itemType = computed<StructureItemType>(() => {
   const item = props.item
 
   if (item.model?.versionCount.totalCount) {
-    if (item.hasChildren) {
+    if (hasChildren.value) {
       return StructureItemType.ModelWithVersionsAndSubmodels
     } else {
       return StructureItemType.ModelWithOnlyVersions
     }
   } else {
-    if (item.hasChildren) {
+    if (hasChildren.value) {
       return StructureItemType.ModelWithOnlySubmodels
     } else {
       return StructureItemType.EmptyModel
@@ -261,9 +262,13 @@ const hasSubmodels = computed(() =>
   ].includes(itemType.value)
 )
 
-const name = computed(() => props.item.name)
+const name = computed(() =>
+  props.isSearchResult ? props.item.fullName : props.item.name
+)
 const model = computed(() => props.item.model)
-const hasChildren = computed(() => props.item.hasChildren)
+const hasChildren = computed(() =>
+  props.isSearchResult ? false : props.item.hasChildren
+)
 
 const updatedAt = computed(() =>
   dayjs(props.item.model ? props.item.model?.updatedAt : props.item.updatedAt).from(

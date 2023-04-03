@@ -1249,6 +1249,11 @@ export type ProjectModelsArgs = {
 };
 
 
+export type ProjectModelsTreeArgs = {
+  filter?: InputMaybe<ProjectModelsTreeFilter>;
+};
+
+
 export type ProjectPendingImportedModelsArgs = {
   limit?: InputMaybe<Scalars['Int']>;
 };
@@ -1378,6 +1383,11 @@ export type ProjectModelsFilter = {
   search?: InputMaybe<Scalars['String']>;
   /** Filter by source apps used in models */
   sourceApps?: InputMaybe<Array<Scalars['String']>>;
+};
+
+export type ProjectModelsTreeFilter = {
+  /** Search for specific models. If used, tree items from different levels may be mixed. */
+  search?: InputMaybe<Scalars['String']>;
 };
 
 export type ProjectModelsUpdatedMessage = {

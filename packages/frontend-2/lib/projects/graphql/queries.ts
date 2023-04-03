@@ -39,22 +39,28 @@ export const latestModelsQuery = graphql(`
   query ProjectLatestModels($projectId: String!, $filter: ProjectModelsFilter) {
     project(id: $projectId) {
       id
-      models(cursor: null, limit: 100, filter: $filter) {
+      models(cursor: null, limit: 16, filter: $filter) {
         totalCount
         cursor
         items {
           ...ProjectPageLatestItemsModelItem
         }
       }
+      pendingImportedModels(limit: 16) {
+        ...PendingFileUpload
+      }
     }
   }
 `)
 
 export const projectModelsTreeTopLevelQuery = graphql(`
-  query ProjectModelsTreeTopLevel($projectId: String!) {
+  query ProjectModelsTreeTopLevel(
+    $projectId: String!
+    $filter: ProjectModelsTreeFilter
+  ) {
     project(id: $projectId) {
       id
-      modelsTree {
+      modelsTree(filter: $filter) {
         ...SingleLevelModelTreeItem
       }
     }

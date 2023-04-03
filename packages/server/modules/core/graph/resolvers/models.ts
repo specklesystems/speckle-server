@@ -1,6 +1,9 @@
 import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { getModelTreeItems } from '@/modules/core/repositories/branches'
+import {
+  getModelTreeItems,
+  getModelTreeItemsFiltered
+} from '@/modules/core/repositories/branches'
 import {
   createBranchAndNotify,
   deleteBranchAndNotify,
@@ -29,8 +32,10 @@ export = {
     async model(_parent, args, ctx) {
       return ctx.loaders.branches.getById.load(args.id)
     },
-    async modelsTree(parent) {
-      return await getModelTreeItems(parent.id)
+    async modelsTree(parent, args) {
+      return args.filter?.search
+        ? await getModelTreeItemsFiltered(parent.id, args.filter.search)
+        : await getModelTreeItems(parent.id)
     },
     async modelChildrenTree(parent, { fullName }) {
       return await getModelTreeItems(parent.id, fullName)

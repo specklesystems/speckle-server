@@ -1258,6 +1258,11 @@ export type ProjectModelsArgs = {
 };
 
 
+export type ProjectModelsTreeArgs = {
+  filter?: InputMaybe<ProjectModelsTreeFilter>;
+};
+
+
 export type ProjectPendingImportedModelsArgs = {
   limit?: InputMaybe<Scalars['Int']>;
 };
@@ -1387,6 +1392,11 @@ export type ProjectModelsFilter = {
   search?: InputMaybe<Scalars['String']>;
   /** Filter by source apps used in models */
   sourceApps?: InputMaybe<Array<Scalars['String']>>;
+};
+
+export type ProjectModelsTreeFilter = {
+  /** Search for specific models. If used, tree items from different levels may be mixed. */
+  search?: InputMaybe<Scalars['String']>;
 };
 
 export type ProjectModelsUpdatedMessage = {
@@ -2775,6 +2785,7 @@ export type ResolversTypes = {
   ProjectInviteMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ProjectInviteUseInput: ProjectInviteUseInput;
   ProjectModelsFilter: ProjectModelsFilter;
+  ProjectModelsTreeFilter: ProjectModelsTreeFilter;
   ProjectModelsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectModelsUpdatedMessage, 'model'> & { model?: Maybe<ResolversTypes['Model']> }>;
   ProjectModelsUpdatedMessageType: ProjectModelsUpdatedMessageType;
   ProjectMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
@@ -2934,6 +2945,7 @@ export type ResolversParentTypes = {
   ProjectInviteMutations: MutationsObjectGraphQLReturn;
   ProjectInviteUseInput: ProjectInviteUseInput;
   ProjectModelsFilter: ProjectModelsFilter;
+  ProjectModelsTreeFilter: ProjectModelsTreeFilter;
   ProjectModelsUpdatedMessage: Omit<ProjectModelsUpdatedMessage, 'model'> & { model?: Maybe<ResolversParentTypes['Model']> };
   ProjectMutations: MutationsObjectGraphQLReturn;
   ProjectPendingModelsUpdatedMessage: Omit<ProjectPendingModelsUpdatedMessage, 'model'> & { model: ResolversParentTypes['FileUpload'] };
@@ -3453,7 +3465,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType, RequireFields<ProjectModelArgs, 'id'>>;
   modelChildrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType, RequireFields<ProjectModelChildrenTreeArgs, 'fullName'>>;
   models?: Resolver<ResolversTypes['ModelCollection'], ParentType, ContextType, RequireFields<ProjectModelsArgs, 'limit'>>;
-  modelsTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
+  modelsTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType, Partial<ProjectModelsTreeArgs>>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   pendingImportedModels?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType, RequireFields<ProjectPendingImportedModelsArgs, 'limit'>>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
