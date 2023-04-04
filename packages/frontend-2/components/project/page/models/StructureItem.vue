@@ -75,41 +75,12 @@
           v-else-if="itemType === StructureItemType.EmptyModel"
           class="flex items-center h-full"
         >
-          <div
+          <ProjectPendingFileImportStatus
             v-if="pendingVersion"
-            class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
-          >
-            <template
-              v-if="
-                [
-                  FileUploadConvertedStatus.Queued,
-                  FileUploadConvertedStatus.Converting
-                ].includes(pendingVersion.convertedStatus)
-              "
-            >
-              <span>Importing new version</span>
-              <CommonLoadingBar loading class="max-w-[100px]" />
-            </template>
-            <template
-              v-else-if="
-                pendingVersion.convertedStatus === FileUploadConvertedStatus.Completed
-              "
-            >
-              <span class="inline-flex items-center space-x-1">
-                <CheckCircleIcon class="h-4 w-4 text-success" />
-                <span>Version import successful</span>
-              </span>
-            </template>
-            <template v-else>
-              <span class="inline-flex items-center space-x-1">
-                <ExclamationTriangleIcon class="h-4 w-4 text-danger" />
-                <span>Version import failed</span>
-              </span>
-              <span v-if="pendingVersion.convertedMessage">
-                {{ pendingVersion.convertedMessage }}
-              </span>
-            </template>
-          </div>
+            :upload="pendingVersion"
+            type="subversion"
+            class="px-4 w-full"
+          />
           <ProjectCardImportFileArea
             v-else
             :project-id="projectId"
@@ -117,41 +88,11 @@
             class="h-full w-full"
           />
         </div>
-        <div
+        <ProjectPendingFileImportStatus
           v-else-if="pendingModel && itemType === StructureItemType.PendingModel"
+          :upload="pendingModel"
           class="text-foreground-2 text-sm flex flex-col items-center space-y-1 mr-4"
-        >
-          <template
-            v-if="
-              [
-                FileUploadConvertedStatus.Queued,
-                FileUploadConvertedStatus.Converting
-              ].includes(pendingModel.convertedStatus)
-            "
-          >
-            <span>Importing</span>
-            <CommonLoadingBar loading class="max-w-[100px]" />
-          </template>
-          <template
-            v-else-if="
-              pendingModel.convertedStatus === FileUploadConvertedStatus.Completed
-            "
-          >
-            <span class="inline-flex items-center space-x-1">
-              <CheckCircleIcon class="h-4 w-4 text-success" />
-              <span>Importing successful</span>
-            </span>
-          </template>
-          <template v-else>
-            <span class="inline-flex items-center space-x-1">
-              <ExclamationTriangleIcon class="h-4 w-4 text-danger" />
-              <span>Importing failed</span>
-            </span>
-            <span v-if="pendingModel.convertedMessage">
-              {{ pendingModel.convertedMessage }}
-            </span>
-          </template>
-        </div>
+        />
       </div>
       <!-- Preview or icon section -->
       <div v-if="item.model?.previewUrl" class="w-24 h-20 ml-4">
@@ -257,16 +198,13 @@ import {
   PlusIcon,
   ArrowPathRoundedSquareIcon,
   ChatBubbleLeftRightIcon,
-  ArrowTopRightOnSquareIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
 import { ArrowUpOnSquareIcon } from '@heroicons/vue/24/outline'
 import { SingleLevelModelTreeItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { projectModelChildrenTreeQuery } from '~~/lib/projects/graphql/queries'
-import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring

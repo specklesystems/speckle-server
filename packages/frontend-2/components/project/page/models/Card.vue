@@ -15,75 +15,18 @@
       @click="$emit('click', $event)"
     >
       <div :class="`${height} flex items-center justify-center`">
-        <div
+        <ProjectPendingFileImportStatus
           v-if="isPendingModelFragment(model)"
-          class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
-        >
-          <template
-            v-if="
-              [
-                FileUploadConvertedStatus.Queued,
-                FileUploadConvertedStatus.Converting
-              ].includes(model.convertedStatus)
-            "
-          >
-            <span>Importing</span>
-            <CommonLoadingBar loading class="max-w-[100px]" />
-          </template>
-          <template
-            v-else-if="model.convertedStatus === FileUploadConvertedStatus.Completed"
-          >
-            <span class="inline-flex items-center space-x-1">
-              <CheckCircleIcon class="h-4 w-4 text-success" />
-              <span>Importing successful</span>
-            </span>
-          </template>
-          <template v-else>
-            <span class="inline-flex items-center space-x-1">
-              <ExclamationTriangleIcon class="h-4 w-4 text-danger" />
-              <span>Importing failed</span>
-            </span>
-            <span v-if="model.convertedMessage">
-              {{ model.convertedMessage }}
-            </span>
-          </template>
-        </div>
+          :upload="model"
+          class="px-4 w-full"
+        />
         <PreviewImage v-else-if="previewUrl" :preview-url="previewUrl" />
-        <div
+        <ProjectPendingFileImportStatus
           v-else-if="pendingVersion"
+          :upload="pendingVersion"
+          type="subversion"
           class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
-        >
-          <template
-            v-if="
-              [
-                FileUploadConvertedStatus.Queued,
-                FileUploadConvertedStatus.Converting
-              ].includes(pendingVersion.convertedStatus)
-            "
-          >
-            <span>Importing new version</span>
-            <CommonLoadingBar loading class="max-w-[100px]" />
-          </template>
-          <template
-            v-else-if="
-              pendingVersion.convertedStatus === FileUploadConvertedStatus.Completed
-            "
-          >
-            <span class="inline-flex items-center space-x-1">
-              <CheckCircleIcon class="h-4 w-4 text-success" />
-              <span>Version import successful</span>
-            </span>
-          </template>
-          <template v-else>
-            <span class="inline-flex items-center space-x-1">
-              <ExclamationTriangleIcon class="h-4 w-4 text-danger" />
-              <span>Version import failed</span>
-            </span>
-            <span v-if="pendingVersion.convertedMessage">
-              {{ pendingVersion.convertedMessage }}
-            </span>
-          </template>
-        </div>
+        />
         <div v-else class="h-full w-full p-4">
           <ProjectCardImportFileArea
             :project-id="project.id"
@@ -161,20 +104,12 @@ import {
 } from '~~/lib/common/generated/gql/graphql'
 import {
   ArrowPathRoundedSquareIcon,
-  ChatBubbleLeftRightIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon
+  ChatBubbleLeftRightIcon
 } from '@heroicons/vue/24/solid'
 import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
-import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
-
-/**
- * TODO:
- * - Update model card list view as well (pending model + pending version)
- */
 
 graphql(`
   fragment ProjectPageModelsCardProject on Project {

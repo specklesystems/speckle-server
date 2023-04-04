@@ -15,39 +15,11 @@
       @click="$emit('click', $event)"
     >
       <div class="h-64 flex items-center justify-center relative">
-        <div
+        <ProjectPendingFileImportStatus
           v-if="isPendingVersionFragment(version)"
+          :upload="version"
           class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
-        >
-          <template
-            v-if="
-              [
-                FileUploadConvertedStatus.Queued,
-                FileUploadConvertedStatus.Converting
-              ].includes(version.convertedStatus)
-            "
-          >
-            <span>Importing</span>
-            <CommonLoadingBar loading class="max-w-[100px]" />
-          </template>
-          <template
-            v-else-if="version.convertedStatus === FileUploadConvertedStatus.Completed"
-          >
-            <span class="inline-flex items-center space-x-1">
-              <CheckCircleIcon class="h-4 w-4 text-success" />
-              <span>Importing successful</span>
-            </span>
-          </template>
-          <template v-else>
-            <span class="inline-flex items-center space-x-1">
-              <ExclamationTriangleIcon class="h-4 w-4 text-danger" />
-              <span>Importing failed</span>
-            </span>
-            <span v-if="version.convertedMessage">
-              {{ version.convertedMessage }}
-            </span>
-          </template>
-        </div>
+        />
         <template v-else>
           <PreviewImage :preview-url="version.previewUrl" />
           <div
@@ -115,12 +87,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { SpeckleViewer, SourceApps } from '@speckle/shared'
 import { VersionActionTypes } from '~~/lib/projects/helpers/components'
 import { isPendingVersionFragment } from '~~/lib/projects/helpers/models'
-import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
-import {
-  ChatBubbleLeftRightIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon
-} from '@heroicons/vue/24/solid'
+import { ChatBubbleLeftRightIcon } from '@heroicons/vue/24/solid'
 
 graphql(`
   fragment ProjectModelPageVersionsCardVersion on Version {
