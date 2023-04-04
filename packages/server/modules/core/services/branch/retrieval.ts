@@ -59,20 +59,20 @@ export async function getProjectModelsTree(
   }>,
   options?: Partial<{ filterOutEmptyMain: boolean }>
 ) {
+  // TODO: We can support searching for uploads as well, but we don't have that
+  // support in the paginated models query, so scrapping it for now
   // TODO: We can support nesting uploads, but needs more work
   // const branchNamePattern = `${filter?.parentModelName || ''}${
   //   filter?.search ? `.*${filter.search}.*` : ``
   // }`
-  const branchNamePattern = filter?.search ? `.*${filter.search}.*` : undefined
+  // const branchNamePattern = filter?.search ? `.*${filter.search}.*` : undefined
 
   const [baseModelItems, pendingModelItems] = await Promise.all([
     filter?.search
       ? getModelTreeItemsFiltered(projectId, filter.search, options)
       : getModelTreeItems(projectId, filter?.parentModelName, options),
-    !filter?.parentModelName
-      ? getStreamPendingModels(projectId, {
-          branchNamePattern: branchNamePattern || undefined
-        }).then((res) =>
+    !filter?.parentModelName && !filter?.search
+      ? getStreamPendingModels(projectId).then((res) =>
           res.map(
             (i): ModelsTreeItemGraphQLReturn => ({
               id: `${i.streamId}-${i.branchName}`,
