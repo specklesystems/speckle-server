@@ -176,7 +176,8 @@ export class SpeckleBatchBVH {
     target.makeEmpty()
     const scratchBox: Box3 = new Box3()
     this.batchObjects.forEach((batchObject: BatchObject) => {
-      target.union(batchObject.bvh.getBoundingBox(scratchBox))
+      const objBounds = batchObject.bvh.getBoundingBox(scratchBox)
+      target.union(objBounds)
     })
     return this.transformOutput(target)
   }

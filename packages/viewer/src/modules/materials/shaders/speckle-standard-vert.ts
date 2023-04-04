@@ -76,6 +76,42 @@ varying vec3 vViewPosition;
             return uTransforms[int(objIndex)];
         #endif
     }
+
+    void objectTransformSeparate(out vec4 quaternion, out vec4 pivotLow, out vec4 pivotHigh, out vec4 translation, out vec4 scale){
+        #if TRANSFORM_STORAGE == 0
+            #if __VERSION__ == 300
+                ivec2 uv = ivec2(int(objIndex)*4, 0); 
+                vec4 v0 = texelFetch( tTransforms, uv, 0 );
+                vec4 v1 = texelFetch( tTransforms, uv + ivec2(1, 0), 0);
+                vec4 v2 = texelFetch( tTransforms, uv + ivec2(2, 0), 0);
+                vec4 v3 = texelFetch( tTransforms, uv + ivec2(3, 0), 0);
+                quaternion = v0;
+                pivotLow = vec4(v1.xyz, 1.);
+                pivotHigh = vec4(v2.xyz, 1.);
+                translation = vec4(v3.xyz, 1.);
+                scale = vec4(v1.w, v2.w, v3.w, 1.);
+
+
+            // #elif
+            //     float size = objCount * 3.;
+            //     vec2 cUv = vec2(0.5/size, 0.5);
+            //     vec2 dUv = vec2(1./size, 0.);
+                
+            //     vec2 uv = vec2((objIndex * 3.)/size + cUv.x, cUv.y);
+            //     vec4 r0 = texture2D( tTransforms, uv);
+            //     vec4 r1 = texture2D( tTransforms, uv + dUv);
+            //     vec4 r2 = texture2D( tTransforms, uv + 2. * dUv);
+            //     return mat4(
+            //         r0.x, r1.x, r2.x, 0.,
+            //         r0.y, r1.y, r2.y, 0.,
+            //         r0.z, r1.z, r2.z, 0.,
+            //         r0.w, r1.w, r2.w, 1.
+            //     );
+            #endif
+        // #elif TRANSFORM_STORAGE == 1
+        //     return uTransforms[int(objIndex)];
+        #endif
+    }
 #endif
 
 #ifdef USE_RTE
@@ -128,6 +164,13 @@ varying vec3 vViewPosition;
     }
 #endif
 
+vec3 rotate_vertex_position(vec3 position, vec4 quat)
+{ 
+  vec4 q = quat;
+  vec3 v = position.xyz;
+  return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
+}
+
 void main() {
 
     #include <uv_vertex>
@@ -154,10 +197,13 @@ void main() {
         vec4 position_lowT = vec4(position_low, 1.);
         vec4 position_highT = vec4(position, 1.);
         #ifdef TRANSFORM_STORAGE
-            position_lowT = objectMatrix * vec4(position_low, 1.);
-            position_highT = objectMatrix * vec4(position, 1.);
+            vec4 quaternion, pivotLow, pivotHigh, translation, scale;
+            objectTransformSeparate(quaternion, pivotLow, pivotHigh, translation, scale);
+            vec4 pivot = computeRelativePositionSeparate(pivotLow.xyz, pivotHigh.xyz, uViewer_low, uViewer_high);
         #endif
         vec4 rteLocalPosition = computeRelativePositionSeparate(position_lowT.xyz, position_highT.xyz, uViewer_low, uViewer_high);
+        rteLocalPosition = vec4(rotate_vertex_position((rteLocalPosition - pivot).xyz, quaternion) * scale.xyz, 0.) + pivot + translation;
+
     #endif
 
     #ifdef USE_RTE
@@ -166,12 +212,27 @@ void main() {
         vec4 mvPosition = vec4( transformed, 1.0 );
     #endif
 
+    // #ifdef TRANSFORM_STORAGE
+    //     mvPosition = objectMatrix * mvPosition;
+    // #endif
     
     #ifdef USE_INSTANCING
         mvPosition = instanceMatrix * mvPosition;
     #endif
+    mat4 tModel = mat4(vec4(1., 0., 0., 0.), vec4(0., 1., 0., 0.), vec4(0., 0., 1., 0.), objectMatrix[3]);
+    // mat3 rModel = mat3(objectMatrix);
 
-    mvPosition = modelViewMatrix * mvPosition;
+    // mat4 mv = modelViewMatrix * mat4(vec4(rModel[0], 0.), vec4(rModel[1], 0.), vec4(rModel[2], 0.), vec4(0., 0., 0., 1.));
+    // mv[3] = vec4(0., 0., 0., 1.);
+    // mv = modelViewMatrix * tModel;
+    // mvPosition = mv * mvPosition;
+    // mvPosition.xyz += uViewer_high + uViewer_low;
+    // mvPosition = objectMatrix * mvPosition;
+    // mvPosition.xyz -= uViewer_high + uViewer_low;
+    
+    mat4 mv = modelViewMatrix;
+    mv[3] = vec4(0., 0., 0., 1.);
+    mvPosition = mv * mvPosition;
 
     gl_Position = projectionMatrix * mvPosition;
 

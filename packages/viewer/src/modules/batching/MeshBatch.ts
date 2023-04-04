@@ -481,6 +481,7 @@ export default class MeshBatch implements Batch {
     this.mesh.buildBVH(WorldTree.getRenderTree(this.subtreeId).treeBounds)
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
+    this.mesh.frustumCulled = false
   }
 
   public getRenderView(index: number): NodeRenderView {

@@ -93,8 +93,11 @@ export class SpeckleMeshBVH extends MeshBVH {
     }
 
     bvhGeometry.setAttribute('position', new Float32BufferAttribute(position, 3))
+    bvhGeometry.computeBoundingBox()
+
     const bvh = new SpeckleMeshBVH(bvhGeometry, options)
-    // bvh.geometry.boundingBox = bvh.getBoundingBox(new Box3())
+    // console.log('three -> ', bvhGeometry.boundingBox)
+    // console.log('mata -> ', bvh.getBoundingBox(new Box3()))
     return bvh
   }
 
@@ -238,7 +241,9 @@ export class SpeckleMeshBVH extends MeshBVH {
   }
 
   public transformInput<T extends Vector3 | Ray | Box3>(input: T): T {
-    SpeckleMeshBVH.MatBuff.copy(this.inputOriginTransform).multiply(this.inputTransform)
+    SpeckleMeshBVH.MatBuff.copy(this.inputOriginTransform).premultiply(
+      this.inputTransform
+    )
     return input.applyMatrix4(SpeckleMeshBVH.MatBuff) as T
   }
 
@@ -251,6 +256,7 @@ export class SpeckleMeshBVH extends MeshBVH {
 
   public getBoundingBox(target) {
     super.getBoundingBox(target)
+    // console.log('BVH Size -> ', target.getSize(new Vector3()))
     return this.transformOutput(target)
   }
 }

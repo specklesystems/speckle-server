@@ -2,7 +2,9 @@ import Logger from 'js-logger'
 import {
   BackSide,
   Box3,
+  Box3Helper,
   BufferGeometry,
+  Color,
   DataTexture,
   DoubleSide,
   FloatType,
@@ -20,6 +22,7 @@ import {
 import { TransformStorage } from '../batching/Batcher'
 import { BatchObject } from '../batching/BatchObject'
 import { SpeckleBatchBVH } from './SpeckleBatchBVH'
+import { ObjectLayers } from '../SpeckleRenderer'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -64,6 +67,8 @@ export default class SpeckleMesh extends Mesh {
   public transformsTextureUniform: DataTexture = null
   public transformsArrayUniforms: Matrix4[] = null
 
+  private boxHelper: Box3Helper
+
   public get BVH() {
     return this.bvh
   }
@@ -86,7 +91,7 @@ export default class SpeckleMesh extends Mesh {
     this.transformStorage = transformStorage
 
     if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
-      this.transformsBuffer = new Float32Array(this._batchObjects.length * 3 * 4)
+      this.transformsBuffer = new Float32Array(this._batchObjects.length * 4 * 4)
       this.transformsTextureUniform = new DataTexture(
         this.transformsBuffer,
         this.transformsBuffer.length / 4,
@@ -144,21 +149,40 @@ export default class SpeckleMesh extends Mesh {
     if (!this.transformsDirty) return
     if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
       this._batchObjects.forEach((batchObject: BatchObject) => {
-        const index = batchObject.batchIndex * 12
-        this.transformsBuffer[index] = batchObject.transform.elements[0]
-        this.transformsBuffer[index + 1] = batchObject.transform.elements[4]
-        this.transformsBuffer[index + 2] = batchObject.transform.elements[8]
-        this.transformsBuffer[index + 3] = batchObject.transform.elements[12]
+        const index = batchObject.batchIndex * 16
+        this.transformsBuffer[index] = batchObject.quaternion.x
+        this.transformsBuffer[index + 1] = batchObject.quaternion.y
+        this.transformsBuffer[index + 2] = batchObject.quaternion.z
+        this.transformsBuffer[index + 3] = batchObject.quaternion.w
 
-        this.transformsBuffer[index + 4] = batchObject.transform.elements[1]
-        this.transformsBuffer[index + 5] = batchObject.transform.elements[5]
-        this.transformsBuffer[index + 6] = batchObject.transform.elements[9]
-        this.transformsBuffer[index + 7] = batchObject.transform.elements[13]
+        this.transformsBuffer[index + 4] = batchObject.pivot_Low.x
+        this.transformsBuffer[index + 5] = batchObject.pivot_Low.y
+        this.transformsBuffer[index + 6] = batchObject.pivot_Low.z
+        this.transformsBuffer[index + 7] = batchObject.scale.x
 
-        this.transformsBuffer[index + 8] = batchObject.transform.elements[2]
-        this.transformsBuffer[index + 9] = batchObject.transform.elements[6]
-        this.transformsBuffer[index + 10] = batchObject.transform.elements[10]
-        this.transformsBuffer[index + 11] = batchObject.transform.elements[14]
+        this.transformsBuffer[index + 8] = batchObject.pivot_High.x
+        this.transformsBuffer[index + 9] = batchObject.pivot_High.y
+        this.transformsBuffer[index + 10] = batchObject.pivot_High.z
+        this.transformsBuffer[index + 11] = batchObject.scale.y
+
+        this.transformsBuffer[index + 12] = batchObject.translation.x
+        this.transformsBuffer[index + 13] = batchObject.translation.y
+        this.transformsBuffer[index + 14] = batchObject.translation.z
+        this.transformsBuffer[index + 15] = batchObject.scale.z
+        // this.transformsBuffer[index] = batchObject.transform.elements[0]
+        // this.transformsBuffer[index + 1] = batchObject.transform.elements[4]
+        // this.transformsBuffer[index + 2] = batchObject.transform.elements[8]
+        // this.transformsBuffer[index + 3] = batchObject.transform.elements[12]
+
+        // this.transformsBuffer[index + 4] = batchObject.transform.elements[1]
+        // this.transformsBuffer[index + 5] = batchObject.transform.elements[5]
+        // this.transformsBuffer[index + 6] = batchObject.transform.elements[9]
+        // this.transformsBuffer[index + 7] = batchObject.transform.elements[13]
+
+        // this.transformsBuffer[index + 8] = batchObject.transform.elements[2]
+        // this.transformsBuffer[index + 9] = batchObject.transform.elements[6]
+        // this.transformsBuffer[index + 10] = batchObject.transform.elements[10]
+        // this.transformsBuffer[index + 11] = batchObject.transform.elements[14]
       })
       this.transformsTextureUniform.needsUpdate = true
     } else {
@@ -166,8 +190,14 @@ export default class SpeckleMesh extends Mesh {
     }
     if (this.bvh) {
       this.bvh.getBoundingBox(this.bvh.bounds)
+      // console.log('Size -> ', this.bvh.bounds.getSize(new Vector3()))
       this.geometry.boundingBox.copy(this.bvh.bounds)
       this.geometry.boundingBox.getBoundingSphere(this.geometry.boundingSphere)
+      if (!this.boxHelper) {
+        this.boxHelper = new Box3Helper(this.bvh.bounds, new Color(0xff0000))
+        this.boxHelper.layers.set(ObjectLayers.PROPS)
+        this.parent.add(this.boxHelper)
+      }
     }
     this.transformsDirty = false
   }

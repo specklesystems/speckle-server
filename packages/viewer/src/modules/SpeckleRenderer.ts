@@ -93,9 +93,9 @@ export default class SpeckleRenderer {
   private sectionBoxOutlines: SectionBoxOutlines = null
   private _shadowcatcher: Shadowcatcher = null
   private cancel: { [subtreeId: string]: boolean } = {}
-  // public static cameraPos: Vector3 = new Vector3()
-  // public static viewMatrix: Matrix4 = new Matrix4()
-  // public static cameraMatrix: Matrix4 = new Matrix4()
+  public static cameraPos: Vector3 = new Vector3()
+  public static viewMatrix: Matrix4 = new Matrix4()
+  public static cameraMatrix: Matrix4 = new Matrix4()
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -335,14 +335,14 @@ export default class SpeckleRenderer {
 
   public update(deltaTime: number) {
     this.needsRender = this.viewer.cameraHandler.controls.update(deltaTime)
-    // SpeckleRenderer.cameraPos.set(
-    //   this.camera.matrixWorld.elements[12],
-    //   this.camera.matrixWorld.elements[13],
-    //   this.camera.matrixWorld.elements[14]
-    // )
-    // this.camera.updateMatrixWorld(true)
-    // SpeckleRenderer.cameraMatrix.copy(this.camera.matrixWorld)
-    // SpeckleRenderer.viewMatrix.copy(this.camera.matrixWorldInverse)
+    SpeckleRenderer.cameraPos.set(
+      this.camera.matrixWorld.elements[12],
+      this.camera.matrixWorld.elements[13],
+      this.camera.matrixWorld.elements[14]
+    )
+    this.camera.updateMatrixWorld(true)
+    SpeckleRenderer.cameraMatrix.copy(this.camera.matrixWorld)
+    SpeckleRenderer.viewMatrix.copy(this.camera.matrixWorldInverse)
 
     // const batches = this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
     // const meshes = batches.map((batch: MeshBatch) => batch.mesh)
@@ -582,6 +582,7 @@ export default class SpeckleRenderer {
         },
         ['USE_RTE', 'ALPHATEST_REJECTION']
       )
+
       if (this.SHOW_BVH) {
         const bvhHelper: MeshBVHVisualizer = new MeshBVHVisualizer(
           batchRenderable as Mesh,
@@ -1349,6 +1350,7 @@ export default class SpeckleRenderer {
         objects[i].transform.copy(mat)
         const matInv = new Matrix4().copy(mat).invert()
         objects[i].transformInv.copy(matInv)
+        objects[i].translation.set(dir.x, dir.y, dir.z)
       }
       batches[k].mesh.transformsDirty = true
     }
