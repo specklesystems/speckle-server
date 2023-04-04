@@ -4,6 +4,10 @@ import { UploadableFileItem, UploadFileItem } from '~~/lib/form/composables/file
 import { Optional } from '@speckle/shared'
 import { Merge, SetRequired } from 'type-fest'
 
+export enum BlobUploadStatus {
+  Failure = 2
+}
+
 export type BlobPostResultItem = {
   blobId?: string
   fileName?: string
@@ -136,7 +140,7 @@ export function uploadFile(params: {
   return Object.values(results)[0]
 }
 
-type PostBlobResponse = {
+export type PostBlobResponse = {
   uploadResults: BlobPostResultItem[]
 }
 
@@ -206,7 +210,7 @@ export function uploadFiles(params: {
       uploadFile.progress = 100
       uploadFile.result = uploadResults.find((r) => r.formKey === uploadFile.id) || {
         uploadError: 'Unable to resolve upload results',
-        uploadStatus: 2,
+        uploadStatus: BlobUploadStatus.Failure,
         formKey: uploadFile.id
       }
     }
@@ -223,7 +227,7 @@ export function uploadFiles(params: {
       uploadFile.progress = 100
       uploadFile.result = uploadResults.find((r) => r.formKey === uploadFile.id) || {
         uploadError: 'Upload request failed unexpectedly',
-        uploadStatus: 2,
+        uploadStatus: BlobUploadStatus.Failure,
         formKey: uploadFile.id
       }
     }

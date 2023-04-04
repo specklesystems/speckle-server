@@ -1,12 +1,14 @@
 import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { getModelTreeItems } from '@/modules/core/repositories/branches'
 import {
   createBranchAndNotify,
   deleteBranchAndNotify,
   updateBranchAndNotify
 } from '@/modules/core/services/branch/management'
-import { getPaginatedProjectModels } from '@/modules/core/services/branch/retrieval'
+import {
+  getPaginatedProjectModels,
+  getProjectModelsTree
+} from '@/modules/core/services/branch/retrieval'
 import { authorizeResolver } from '@/modules/shared'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { last } from 'lodash'
@@ -29,11 +31,15 @@ export = {
     async model(_parent, args, ctx) {
       return ctx.loaders.branches.getById.load(args.id)
     },
-    async modelsTree(parent) {
-      return await getModelTreeItems(parent.id)
+    async modelsTree(parent, args) {
+      return await getProjectModelsTree(parent.id, {
+        search: args.filter?.search || undefined
+      })
     },
     async modelChildrenTree(parent, { fullName }) {
-      return await getModelTreeItems(parent.id, fullName)
+      return await getProjectModelsTree(parent.id, {
+        parentModelName: fullName
+      })
     },
     async viewerResources(parent, { resourceIdString, loadedVersionsOnly }) {
       return await getViewerResourceGroups({
@@ -56,7 +62,9 @@ export = {
       return latestCommit ? new URL(path, getServerOrigin()).toString() : null
     },
     async childrenTree(parent) {
-      return await getModelTreeItems(parent.streamId, parent.name)
+      return await getProjectModelsTree(parent.streamId, {
+        parentModelName: parent.name
+      })
     },
     async displayName(parent) {
       return last(parent.name.split('/'))
@@ -83,7 +91,9 @@ export = {
         .load(parent.fullName)
     },
     async children(parent) {
-      return await getModelTreeItems(parent.projectId, parent.fullName)
+      return await getProjectModelsTree(parent.projectId, {
+        parentModelName: parent.fullName
+      })
     }
   },
   Mutation: {

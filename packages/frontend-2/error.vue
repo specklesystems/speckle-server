@@ -28,7 +28,10 @@ const props = defineProps<{
 }>()
 
 useHead({
-  title: computed(() => `${props.error.statusCode} - ${props.error.message}`)
+  title: computed(() => `${props.error.statusCode} - ${props.error.message}`),
+  bodyAttrs: {
+    class: 'simple-scrollbar bg-foundation-page text-foreground'
+  }
 })
 
 const isDev = ref(process.dev)

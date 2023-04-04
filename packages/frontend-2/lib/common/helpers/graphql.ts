@@ -147,6 +147,13 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
 
     return writeData(newData)
   } catch (e: unknown) {
+    if (e instanceof Error) {
+      // Invalid fragment - throw always
+      if (e.message.toLowerCase().includes('no fragment named')) {
+        throw e
+      }
+    }
+
     if (ignoreCacheErrors) {
       console.warn('Failed Apollo cache update:', e)
       return false

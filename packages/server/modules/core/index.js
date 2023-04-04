@@ -1,6 +1,9 @@
-'use strict'
 const { registerOrUpdateScope, registerOrUpdateRole } = require('@/modules/shared')
 const { moduleLogger } = require('@/logging/logging')
+const {
+  setupResultListener,
+  shutdownResultListener
+} = require('@/modules/core/utils/dbNotificationListener')
 
 exports.init = async (app) => {
   moduleLogger.info('💥 Init core module')
@@ -26,6 +29,13 @@ exports.init = async (app) => {
   for (const role of roles) {
     await registerOrUpdateRole(role)
   }
+
+  // Setup global pg notification listener
+  setupResultListener()
 }
 
 exports.finalize = () => {}
+
+exports.shutdown = () => {
+  shutdownResultListener()
+}

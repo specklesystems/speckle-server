@@ -43,7 +43,10 @@ import {
   useProjectModelUpdateTracking
 } from '~~/lib/projects/composables/modelManagement'
 import { useProjectUpdateTracking } from '~~/lib/projects/composables/projectManagement'
-import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
+import {
+  useProjectPendingVersionUpdateTracking,
+  useProjectVersionUpdateTracking
+} from '~~/lib/projects/composables/versionManagement'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 
 graphql(`
@@ -74,6 +77,7 @@ const projectId = computed(() => route.params.id as string)
 
 // update preview URLs
 useProjectVersionUpdateTracking(projectId)
+useProjectPendingVersionUpdateTracking(projectId)
 
 useProjectModelUpdateTracking(projectId, (event) => {
   // If creation, refresh all project's model fields

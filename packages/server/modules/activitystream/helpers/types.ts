@@ -51,7 +51,8 @@ export const ActionTypes = Object.freeze(<const>{
     Create: 'commit_create',
     Update: 'commit_update',
     Receive: 'commit_receive',
-    Delete: 'commit_delete'
+    Delete: 'commit_delete',
+    Move: 'commit_move'
   },
   User: {
     Create: 'user_create',

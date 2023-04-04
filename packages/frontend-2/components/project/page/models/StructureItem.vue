@@ -7,19 +7,22 @@
     -->
     <NuxtLink
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group bg-foundation w-full py-1 pr-1 flex items-center rounded-md shadow hover:shadow-xl cursor-pointer hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary"
+      class="group bg-foundation w-full py-1 pr-1 flex rounded-md shadow hover:shadow-xl cursor-pointer hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary items-stretch"
       :to="modelLink || ''"
     >
       <div class="flex items-center flex-grow">
         <!-- Icon -->
-        <CubeIcon
-          v-if="model && model.versionCount.totalCount !== 0"
-          class="w-4 h-4 text-foreground-2 mx-2"
-        />
-        <CubeTransparentIcon
-          v-if="model && model.versionCount.totalCount === 0"
-          class="w-4 h-4 text-foreground-2 mx-2"
-        />
+        <template v-if="model">
+          <CubeIcon
+            v-if="model.versionCount.totalCount !== 0"
+            class="w-4 h-4 text-foreground-2 mx-2"
+          />
+          <CubeTransparentIcon v-else class="w-4 h-4 text-foreground-2 mx-2" />
+        </template>
+        <template v-else-if="pendingModel">
+          <ArrowUpOnSquareIcon class="w-4 h-4 text-foreground-2 mx-2" />
+        </template>
+
         <!-- Name -->
         <div class="flex justify-start space-x-2 items-center">
           <span class="text-lg font-bold text-foreground">
@@ -30,6 +33,7 @@
               v-model:open="showActionsMenu"
               :model="model"
               :project-id="projectId"
+              :can-edit="canContribute"
               @click.stop.prevent
               @model-updated="$emit('model-updated')"
             />
@@ -68,32 +72,36 @@
           </div>
         </div>
         <div
-          v-if="itemType === StructureItemType.EmptyModel"
-          class="flex items-center space-x-2 text-foreground-2 text-xs"
+          v-else-if="itemType === StructureItemType.EmptyModel"
+          class="flex items-center h-full"
         >
-          <div class="text-right opacity-50 group-hover:opacity-100 transition">
-            Use our
-            <b>connectors</b>
-            to send data to this model,
-            <br />
-            or drag and drop a IFC/OBJ/STL file here.
-          </div>
+          <ProjectPendingFileImportStatus
+            v-if="pendingVersion"
+            :upload="pendingVersion"
+            type="subversion"
+            class="px-4 w-full"
+          />
+          <ProjectCardImportFileArea
+            v-else
+            :project-id="projectId"
+            :model-name="item.fullName"
+            class="h-full w-full"
+          />
         </div>
+        <ProjectPendingFileImportStatus
+          v-else-if="pendingModel && itemType === StructureItemType.PendingModel"
+          :upload="pendingModel"
+          class="text-foreground-2 text-sm flex flex-col items-center space-y-1 mr-4"
+        />
       </div>
       <!-- Preview or icon section -->
-      <div class="w-24 h-20 ml-4">
+      <div v-if="item.model?.previewUrl" class="w-24 h-20 ml-4">
         <PreviewImage
-          v-if="hasVersions && item.model && item.model.previewUrl"
+          v-if="item.model?.previewUrl"
           :preview-url="item.model.previewUrl"
         />
-
-        <div
-          v-if="itemType === StructureItemType.EmptyModel"
-          class="w-full h-full rounded-md bg-primary-muted flex flex-col items-center justify-center"
-        >
-          <PlusIcon class="w-6 h-6 text-blue-500/50" />
-        </div>
       </div>
+      <div v-else class="h-20" />
     </NuxtLink>
     <!-- Doubling up for mixed items -->
     <div
@@ -192,16 +200,22 @@ import {
   ChatBubbleLeftRightIcon,
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
+import { ArrowUpOnSquareIcon } from '@heroicons/vue/24/outline'
 import { SingleLevelModelTreeItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { projectModelChildrenTreeQuery } from '~~/lib/projects/graphql/queries'
 
+/**
+ * TODO: The template in this file is a complete mess, needs refactoring
+ */
+
 enum StructureItemType {
   EmptyModel, // emptyModel
   ModelWithOnlyVersions, // fullModel
   ModelWithOnlySubmodels, // group
-  ModelWithVersionsAndSubmodels // mixed
+  ModelWithVersionsAndSubmodels, // mixed
+  PendingModel
 }
 
 graphql(`
@@ -210,7 +224,10 @@ graphql(`
     name
     fullName
     model {
-      ...ProjectModelsViewModelItem
+      ...ProjectPageLatestItemsModelItem
+    }
+    pendingModel {
+      ...PendingFileUpload
     }
     hasChildren
     updatedAt
@@ -225,22 +242,25 @@ const props = defineProps<{
   item: SingleLevelModelTreeItemFragment
   projectId: string
   canContribute?: boolean
+  isSearchResult?: boolean
 }>()
 
 const expanded = ref(false)
 const showActionsMenu = ref(false)
 
+const isPendingFileUpload = computed(() => !!props.item.pendingModel?.id)
 const itemType = computed<StructureItemType>(() => {
-  const item = props.item
+  if (isPendingFileUpload.value) return StructureItemType.PendingModel
 
+  const item = props.item
   if (item.model?.versionCount.totalCount) {
-    if (item.hasChildren) {
+    if (hasChildren.value) {
       return StructureItemType.ModelWithVersionsAndSubmodels
     } else {
       return StructureItemType.ModelWithOnlyVersions
     }
   } else {
-    if (item.hasChildren) {
+    if (hasChildren.value) {
       return StructureItemType.ModelWithOnlySubmodels
     } else {
       return StructureItemType.EmptyModel
@@ -261,9 +281,17 @@ const hasSubmodels = computed(() =>
   ].includes(itemType.value)
 )
 
-const name = computed(() => props.item.name)
+const name = computed(() =>
+  props.isSearchResult || isPendingFileUpload.value
+    ? props.item.fullName
+    : props.item.name
+)
 const model = computed(() => props.item.model)
-const hasChildren = computed(() => props.item.hasChildren)
+const pendingModel = computed(() => props.item.pendingModel)
+const pendingVersion = computed(() => model.value?.pendingImportedVersions[0])
+const hasChildren = computed(() =>
+  props.isSearchResult ? false : props.item.hasChildren
+)
 
 const updatedAt = computed(() =>
   dayjs(props.item.model ? props.item.model?.updatedAt : props.item.updatedAt).from(

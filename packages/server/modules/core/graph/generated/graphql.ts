@@ -3,6 +3,7 @@ import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, Version
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
+import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -530,7 +531,7 @@ export type EditCommentInput = {
 
 export type FileUpload = {
   __typename?: 'FileUpload';
-  branchName?: Maybe<Scalars['String']>;
+  branchName: Scalars['String'];
   /** If present, the conversion result is stored in this commit. */
   convertedCommitId?: Maybe<Scalars['String']>;
   convertedLastUpdate: Scalars['DateTime'];
@@ -538,10 +539,18 @@ export type FileUpload = {
   convertedMessage?: Maybe<Scalars['String']>;
   /** 0 = queued, 1 = processing, 2 = success, 3 = error */
   convertedStatus: Scalars['Int'];
+  /** Alias for convertedCommitId */
+  convertedVersionId?: Maybe<Scalars['String']>;
   fileName: Scalars['String'];
   fileSize: Scalars['Int'];
   fileType: Scalars['String'];
   id: Scalars['String'];
+  /** Model associated with the file upload, if it exists already */
+  model?: Maybe<Model>;
+  /** Alias for branchName */
+  modelName: Scalars['String'];
+  /** Alias for streamId */
+  projectId: Scalars['String'];
   streamId: Scalars['String'];
   uploadComplete: Scalars['Boolean'];
   uploadDate: Scalars['DateTime'];
@@ -633,6 +642,8 @@ export type Model = {
   id: Scalars['ID'];
   /** Full name including the names of parent models delimited by forward slashes */
   name: Scalars['String'];
+  /** Returns a list of versions that are being created from a file import */
+  pendingImportedVersions: Array<FileUpload>;
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
   version?: Maybe<Version>;
@@ -643,6 +654,11 @@ export type Model = {
 export type ModelCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
+};
+
+
+export type ModelPendingImportedVersionsArgs = {
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
 
@@ -698,6 +714,7 @@ export type ModelsTreeItem = {
   /** Whether or not this item has nested children models */
   hasChildren: Scalars['Boolean'];
   id: Scalars['ID'];
+  isPendingModel: Scalars['Boolean'];
   /**
    * Nullable cause the item can represent a parent that doesn't actually exist as a model on its own.
    * E.g. A model named "foo/bar" is supposed to be a child of "foo" and will be represented as such,
@@ -705,6 +722,8 @@ export type ModelsTreeItem = {
    */
   model?: Maybe<Model>;
   name: Scalars['String'];
+  /** Only set if tree item represents a pending model (file import) */
+  pendingModel?: Maybe<FileUpload>;
   updatedAt: Scalars['DateTime'];
 };
 
@@ -1202,6 +1221,8 @@ export type Project = {
    */
   modelsTree: Array<ModelsTreeItem>;
   name: Scalars['String'];
+  /** Returns a list models that are being created from a file import */
+  pendingImportedModels: Array<FileUpload>;
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
   role?: Maybe<Scalars['String']>;
   /** Source apps used in any models of this project */
@@ -1237,6 +1258,16 @@ export type ProjectModelsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<ProjectModelsFilter>;
   limit?: Scalars['Int'];
+};
+
+
+export type ProjectModelsTreeArgs = {
+  filter?: InputMaybe<ProjectModelsTreeFilter>;
+};
+
+
+export type ProjectPendingImportedModelsArgs = {
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
 
@@ -1366,6 +1397,11 @@ export type ProjectModelsFilter = {
   sourceApps?: InputMaybe<Array<Scalars['String']>>;
 };
 
+export type ProjectModelsTreeFilter = {
+  /** Search for specific models. If used, tree items from different levels may be mixed. */
+  search?: InputMaybe<Scalars['String']>;
+};
+
 export type ProjectModelsUpdatedMessage = {
   __typename?: 'ProjectModelsUpdatedMessage';
   /** Model ID */
@@ -1423,6 +1459,32 @@ export type ProjectMutationsUpdateArgs = {
 export type ProjectMutationsUpdateRoleArgs = {
   input: ProjectUpdateRoleInput;
 };
+
+export type ProjectPendingModelsUpdatedMessage = {
+  __typename?: 'ProjectPendingModelsUpdatedMessage';
+  /** Upload ID */
+  id: Scalars['String'];
+  model: FileUpload;
+  type: ProjectPendingModelsUpdatedMessageType;
+};
+
+export enum ProjectPendingModelsUpdatedMessageType {
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
+
+export type ProjectPendingVersionsUpdatedMessage = {
+  __typename?: 'ProjectPendingVersionsUpdatedMessage';
+  /** Upload ID */
+  id: Scalars['String'];
+  type: ProjectPendingVersionsUpdatedMessageType;
+  version: FileUpload;
+};
+
+export enum ProjectPendingVersionsUpdatedMessageType {
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
 
 /** Any values left null will be ignored, so only set the properties that you want updated */
 export type ProjectUpdateInput = {
@@ -1847,7 +1909,7 @@ export type Stream = {
   /** Returns a specific file upload that belongs to this stream. */
   fileUpload?: Maybe<FileUpload>;
   /** Returns a list of all the file uploads for this stream. */
-  fileUploads?: Maybe<Array<Maybe<FileUpload>>>;
+  fileUploads: Array<FileUpload>;
   id: Scalars['String'];
   /**
    * Whether the stream (if public) can be found on public stream exploration pages
@@ -2046,6 +2108,10 @@ export type Subscription = {
   projectCommentsUpdated: ProjectCommentsUpdatedMessage;
   /** Subscribe to changes to a project's models. Optionally specify modelIds to track. */
   projectModelsUpdated: ProjectModelsUpdatedMessage;
+  /** Subscribe to changes to a project's pending models */
+  projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
+  /** Subscribe to changes to a project's pending versions */
+  projectPendingVersionsUpdated: ProjectPendingVersionsUpdatedMessage;
   /** Track updates to a specific project */
   projectUpdated: ProjectUpdatedMessage;
   /** Subscribe to when a project's versions get their preview image fully generated. */
@@ -2130,6 +2196,16 @@ export type SubscriptionProjectCommentsUpdatedArgs = {
 export type SubscriptionProjectModelsUpdatedArgs = {
   id: Scalars['String'];
   modelIds?: InputMaybe<Array<Scalars['String']>>;
+};
+
+
+export type SubscriptionProjectPendingModelsUpdatedArgs = {
+  id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectPendingVersionsUpdatedArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -2451,7 +2527,7 @@ export type ViewerUserActivityMessageInput = {
   /** Must be set if status !== DISCONNECTED */
   selection?: InputMaybe<ViewerUserSelectionInfoInput>;
   status: ViewerUserActivityStatus;
-  /** Must be set if status !== DISCONNECTED & user has a thread open */
+  /** Must be set if status !== DISCONNECTED & user has a thread or the "new thread" editor open */
   thread?: InputMaybe<ViewerUserOpenThreadMessageInput>;
   userId?: InputMaybe<Scalars['String']>;
   userName: Scalars['String'];
@@ -2467,12 +2543,13 @@ export enum ViewerUserActivityStatus {
 export type ViewerUserOpenThreadMessage = {
   __typename?: 'ViewerUserOpenThreadMessage';
   isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
+  threadId?: Maybe<Scalars['String']>;
 };
 
 export type ViewerUserOpenThreadMessageInput = {
   isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
+  /** Set to null, if inside the "new thread" editor, not an existing thread */
+  threadId?: InputMaybe<Scalars['String']>;
 };
 
 export type ViewerUserSelectionInfo = {
@@ -2680,7 +2757,7 @@ export type ResolversTypes = {
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EditCommentInput: EditCommentInput;
   EmailAddress: ResolverTypeWrapper<Scalars['EmailAddress']>;
-  FileUpload: ResolverTypeWrapper<FileUpload>;
+  FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
   Float: ResolverTypeWrapper<Scalars['Float']>;
   ID: ResolverTypeWrapper<Scalars['ID']>;
   Int: ResolverTypeWrapper<Scalars['Int']>;
@@ -2711,9 +2788,14 @@ export type ResolversTypes = {
   ProjectInviteMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ProjectInviteUseInput: ProjectInviteUseInput;
   ProjectModelsFilter: ProjectModelsFilter;
+  ProjectModelsTreeFilter: ProjectModelsTreeFilter;
   ProjectModelsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectModelsUpdatedMessage, 'model'> & { model?: Maybe<ResolversTypes['Model']> }>;
   ProjectModelsUpdatedMessageType: ProjectModelsUpdatedMessageType;
   ProjectMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  ProjectPendingModelsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectPendingModelsUpdatedMessage, 'model'> & { model: ResolversTypes['FileUpload'] }>;
+  ProjectPendingModelsUpdatedMessageType: ProjectPendingModelsUpdatedMessageType;
+  ProjectPendingVersionsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversTypes['FileUpload'] }>;
+  ProjectPendingVersionsUpdatedMessageType: ProjectPendingVersionsUpdatedMessageType;
   ProjectUpdateInput: ProjectUpdateInput;
   ProjectUpdateRoleInput: ProjectUpdateRoleInput;
   ProjectUpdatedMessage: ResolverTypeWrapper<Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
@@ -2836,7 +2918,7 @@ export type ResolversParentTypes = {
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EditCommentInput: EditCommentInput;
   EmailAddress: Scalars['EmailAddress'];
-  FileUpload: FileUpload;
+  FileUpload: FileUploadGraphQLReturn;
   Float: Scalars['Float'];
   ID: Scalars['ID'];
   Int: Scalars['Int'];
@@ -2866,8 +2948,11 @@ export type ResolversParentTypes = {
   ProjectInviteMutations: MutationsObjectGraphQLReturn;
   ProjectInviteUseInput: ProjectInviteUseInput;
   ProjectModelsFilter: ProjectModelsFilter;
+  ProjectModelsTreeFilter: ProjectModelsTreeFilter;
   ProjectModelsUpdatedMessage: Omit<ProjectModelsUpdatedMessage, 'model'> & { model?: Maybe<ResolversParentTypes['Model']> };
   ProjectMutations: MutationsObjectGraphQLReturn;
+  ProjectPendingModelsUpdatedMessage: Omit<ProjectPendingModelsUpdatedMessage, 'model'> & { model: ResolversParentTypes['FileUpload'] };
+  ProjectPendingVersionsUpdatedMessage: Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversParentTypes['FileUpload'] };
   ProjectUpdateInput: ProjectUpdateInput;
   ProjectUpdateRoleInput: ProjectUpdateRoleInput;
   ProjectUpdatedMessage: Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
@@ -3184,15 +3269,19 @@ export interface EmailAddressScalarConfig extends GraphQLScalarTypeConfig<Resolv
 }
 
 export type FileUploadResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FileUpload'] = ResolversParentTypes['FileUpload']> = {
-  branchName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  branchName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   convertedCommitId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   convertedLastUpdate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   convertedMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   convertedStatus?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  convertedVersionId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   fileName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   fileSize?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   fileType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
+  modelName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   streamId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   uploadComplete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   uploadDate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
@@ -3229,6 +3318,7 @@ export type ModelResolvers<ContextType = GraphQLContext, ParentType extends Reso
   displayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  pendingImportedVersions?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType, RequireFields<ModelPendingImportedVersionsArgs, 'limit'>>;
   previewUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   version?: Resolver<Maybe<ResolversTypes['Version']>, ParentType, ContextType, RequireFields<ModelVersionArgs, 'id'>>;
@@ -3255,8 +3345,10 @@ export type ModelsTreeItemResolvers<ContextType = GraphQLContext, ParentType ext
   fullName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   hasChildren?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  isPendingModel?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  pendingModel?: Resolver<Maybe<ResolversTypes['FileUpload']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -3378,8 +3470,9 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType, RequireFields<ProjectModelArgs, 'id'>>;
   modelChildrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType, RequireFields<ProjectModelChildrenTreeArgs, 'fullName'>>;
   models?: Resolver<ResolversTypes['ModelCollection'], ParentType, ContextType, RequireFields<ProjectModelsArgs, 'limit'>>;
-  modelsTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
+  modelsTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType, Partial<ProjectModelsTreeArgs>>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  pendingImportedModels?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType, RequireFields<ProjectPendingImportedModelsArgs, 'limit'>>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   sourceApps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   team?: Resolver<Array<ResolversTypes['ProjectCollaborator']>, ParentType, ContextType>;
@@ -3440,6 +3533,20 @@ export type ProjectMutationsResolvers<ContextType = GraphQLContext, ParentType e
   leave?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsLeaveArgs, 'id'>>;
   update?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateArgs, 'update'>>;
   updateRole?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateRoleArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectPendingModelsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectPendingModelsUpdatedMessage'] = ResolversParentTypes['ProjectPendingModelsUpdatedMessage']> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  model?: Resolver<ResolversTypes['FileUpload'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectPendingModelsUpdatedMessageType'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectPendingVersionsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectPendingVersionsUpdatedMessage'] = ResolversParentTypes['ProjectPendingVersionsUpdatedMessage']> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectPendingVersionsUpdatedMessageType'], ParentType, ContextType>;
+  version?: Resolver<ResolversTypes['FileUpload'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3598,7 +3705,7 @@ export type StreamResolvers<ContextType = GraphQLContext, ParentType extends Res
   favoritedDate?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   favoritesCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   fileUpload?: Resolver<Maybe<ResolversTypes['FileUpload']>, ParentType, ContextType, RequireFields<StreamFileUploadArgs, 'id'>>;
-  fileUploads?: Resolver<Maybe<Array<Maybe<ResolversTypes['FileUpload']>>>, ParentType, ContextType>;
+  fileUploads?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   isDiscoverable?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   isPublic?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -3651,6 +3758,8 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   commitUpdated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitUpdated", ParentType, ContextType, RequireFields<SubscriptionCommitUpdatedArgs, 'streamId'>>;
   projectCommentsUpdated?: SubscriptionResolver<ResolversTypes['ProjectCommentsUpdatedMessage'], "projectCommentsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectCommentsUpdatedArgs, 'target'>>;
   projectModelsUpdated?: SubscriptionResolver<ResolversTypes['ProjectModelsUpdatedMessage'], "projectModelsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectModelsUpdatedArgs, 'id'>>;
+  projectPendingModelsUpdated?: SubscriptionResolver<ResolversTypes['ProjectPendingModelsUpdatedMessage'], "projectPendingModelsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectPendingModelsUpdatedArgs, 'id'>>;
+  projectPendingVersionsUpdated?: SubscriptionResolver<ResolversTypes['ProjectPendingVersionsUpdatedMessage'], "projectPendingVersionsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectPendingVersionsUpdatedArgs, 'id'>>;
   projectUpdated?: SubscriptionResolver<ResolversTypes['ProjectUpdatedMessage'], "projectUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectUpdatedArgs, 'id'>>;
   projectVersionsPreviewGenerated?: SubscriptionResolver<ResolversTypes['ProjectVersionsPreviewGeneratedMessage'], "projectVersionsPreviewGenerated", ParentType, ContextType, RequireFields<SubscriptionProjectVersionsPreviewGeneratedArgs, 'id'>>;
   projectVersionsUpdated?: SubscriptionResolver<ResolversTypes['ProjectVersionsUpdatedMessage'], "projectVersionsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectVersionsUpdatedArgs, 'id'>>;
@@ -3764,7 +3873,7 @@ export type ViewerUserActivityMessageResolvers<ContextType = GraphQLContext, Par
 
 export type ViewerUserOpenThreadMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ViewerUserOpenThreadMessage'] = ResolversParentTypes['ViewerUserOpenThreadMessage']> = {
   isTyping?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  threadId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  threadId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3857,6 +3966,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ProjectInviteMutations?: ProjectInviteMutationsResolvers<ContextType>;
   ProjectModelsUpdatedMessage?: ProjectModelsUpdatedMessageResolvers<ContextType>;
   ProjectMutations?: ProjectMutationsResolvers<ContextType>;
+  ProjectPendingModelsUpdatedMessage?: ProjectPendingModelsUpdatedMessageResolvers<ContextType>;
+  ProjectPendingVersionsUpdatedMessage?: ProjectPendingVersionsUpdatedMessageResolvers<ContextType>;
   ProjectUpdatedMessage?: ProjectUpdatedMessageResolvers<ContextType>;
   ProjectVersionsPreviewGeneratedMessage?: ProjectVersionsPreviewGeneratedMessageResolvers<ContextType>;
   ProjectVersionsUpdatedMessage?: ProjectVersionsUpdatedMessageResolvers<ContextType>;

@@ -522,7 +522,7 @@ export type EditCommentInput = {
 
 export type FileUpload = {
   __typename?: 'FileUpload';
-  branchName?: Maybe<Scalars['String']>;
+  branchName: Scalars['String'];
   /** If present, the conversion result is stored in this commit. */
   convertedCommitId?: Maybe<Scalars['String']>;
   convertedLastUpdate: Scalars['DateTime'];
@@ -530,10 +530,18 @@ export type FileUpload = {
   convertedMessage?: Maybe<Scalars['String']>;
   /** 0 = queued, 1 = processing, 2 = success, 3 = error */
   convertedStatus: Scalars['Int'];
+  /** Alias for convertedCommitId */
+  convertedVersionId?: Maybe<Scalars['String']>;
   fileName: Scalars['String'];
   fileSize: Scalars['Int'];
   fileType: Scalars['String'];
   id: Scalars['String'];
+  /** Model associated with the file upload, if it exists already */
+  model?: Maybe<Model>;
+  /** Alias for branchName */
+  modelName: Scalars['String'];
+  /** Alias for streamId */
+  projectId: Scalars['String'];
   streamId: Scalars['String'];
   uploadComplete: Scalars['Boolean'];
   uploadDate: Scalars['DateTime'];
@@ -625,6 +633,8 @@ export type Model = {
   id: Scalars['ID'];
   /** Full name including the names of parent models delimited by forward slashes */
   name: Scalars['String'];
+  /** Returns a list of versions that are being created from a file import */
+  pendingImportedVersions: Array<FileUpload>;
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
   version?: Maybe<Version>;
@@ -635,6 +645,11 @@ export type Model = {
 export type ModelCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
+};
+
+
+export type ModelPendingImportedVersionsArgs = {
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
 
@@ -690,6 +705,7 @@ export type ModelsTreeItem = {
   /** Whether or not this item has nested children models */
   hasChildren: Scalars['Boolean'];
   id: Scalars['ID'];
+  isPendingModel: Scalars['Boolean'];
   /**
    * Nullable cause the item can represent a parent that doesn't actually exist as a model on its own.
    * E.g. A model named "foo/bar" is supposed to be a child of "foo" and will be represented as such,
@@ -697,6 +713,8 @@ export type ModelsTreeItem = {
    */
   model?: Maybe<Model>;
   name: Scalars['String'];
+  /** Only set if tree item represents a pending model (file import) */
+  pendingModel?: Maybe<FileUpload>;
   updatedAt: Scalars['DateTime'];
 };
 
@@ -1194,6 +1212,8 @@ export type Project = {
    */
   modelsTree: Array<ModelsTreeItem>;
   name: Scalars['String'];
+  /** Returns a list models that are being created from a file import */
+  pendingImportedModels: Array<FileUpload>;
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
   role?: Maybe<Scalars['String']>;
   /** Source apps used in any models of this project */
@@ -1229,6 +1249,16 @@ export type ProjectModelsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<ProjectModelsFilter>;
   limit?: Scalars['Int'];
+};
+
+
+export type ProjectModelsTreeArgs = {
+  filter?: InputMaybe<ProjectModelsTreeFilter>;
+};
+
+
+export type ProjectPendingImportedModelsArgs = {
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
 
@@ -1358,6 +1388,11 @@ export type ProjectModelsFilter = {
   sourceApps?: InputMaybe<Array<Scalars['String']>>;
 };
 
+export type ProjectModelsTreeFilter = {
+  /** Search for specific models. If used, tree items from different levels may be mixed. */
+  search?: InputMaybe<Scalars['String']>;
+};
+
 export type ProjectModelsUpdatedMessage = {
   __typename?: 'ProjectModelsUpdatedMessage';
   /** Model ID */
@@ -1415,6 +1450,32 @@ export type ProjectMutationsUpdateArgs = {
 export type ProjectMutationsUpdateRoleArgs = {
   input: ProjectUpdateRoleInput;
 };
+
+export type ProjectPendingModelsUpdatedMessage = {
+  __typename?: 'ProjectPendingModelsUpdatedMessage';
+  /** Upload ID */
+  id: Scalars['String'];
+  model: FileUpload;
+  type: ProjectPendingModelsUpdatedMessageType;
+};
+
+export enum ProjectPendingModelsUpdatedMessageType {
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
+
+export type ProjectPendingVersionsUpdatedMessage = {
+  __typename?: 'ProjectPendingVersionsUpdatedMessage';
+  /** Upload ID */
+  id: Scalars['String'];
+  type: ProjectPendingVersionsUpdatedMessageType;
+  version: FileUpload;
+};
+
+export enum ProjectPendingVersionsUpdatedMessageType {
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
 
 /** Any values left null will be ignored, so only set the properties that you want updated */
 export type ProjectUpdateInput = {
@@ -1839,7 +1900,7 @@ export type Stream = {
   /** Returns a specific file upload that belongs to this stream. */
   fileUpload?: Maybe<FileUpload>;
   /** Returns a list of all the file uploads for this stream. */
-  fileUploads?: Maybe<Array<Maybe<FileUpload>>>;
+  fileUploads: Array<FileUpload>;
   id: Scalars['String'];
   /**
    * Whether the stream (if public) can be found on public stream exploration pages
@@ -2038,6 +2099,10 @@ export type Subscription = {
   projectCommentsUpdated: ProjectCommentsUpdatedMessage;
   /** Subscribe to changes to a project's models. Optionally specify modelIds to track. */
   projectModelsUpdated: ProjectModelsUpdatedMessage;
+  /** Subscribe to changes to a project's pending models */
+  projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
+  /** Subscribe to changes to a project's pending versions */
+  projectPendingVersionsUpdated: ProjectPendingVersionsUpdatedMessage;
   /** Track updates to a specific project */
   projectUpdated: ProjectUpdatedMessage;
   /** Subscribe to when a project's versions get their preview image fully generated. */
@@ -2122,6 +2187,16 @@ export type SubscriptionProjectCommentsUpdatedArgs = {
 export type SubscriptionProjectModelsUpdatedArgs = {
   id: Scalars['String'];
   modelIds?: InputMaybe<Array<Scalars['String']>>;
+};
+
+
+export type SubscriptionProjectPendingModelsUpdatedArgs = {
+  id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectPendingVersionsUpdatedArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -2443,7 +2518,7 @@ export type ViewerUserActivityMessageInput = {
   /** Must be set if status !== DISCONNECTED */
   selection?: InputMaybe<ViewerUserSelectionInfoInput>;
   status: ViewerUserActivityStatus;
-  /** Must be set if status !== DISCONNECTED & user has a thread open */
+  /** Must be set if status !== DISCONNECTED & user has a thread or the "new thread" editor open */
   thread?: InputMaybe<ViewerUserOpenThreadMessageInput>;
   userId?: InputMaybe<Scalars['String']>;
   userName: Scalars['String'];
@@ -2459,12 +2534,13 @@ export enum ViewerUserActivityStatus {
 export type ViewerUserOpenThreadMessage = {
   __typename?: 'ViewerUserOpenThreadMessage';
   isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
+  threadId?: Maybe<Scalars['String']>;
 };
 
 export type ViewerUserOpenThreadMessageInput = {
   isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
+  /** Set to null, if inside the "new thread" editor, not an existing thread */
+  threadId?: InputMaybe<Scalars['String']>;
 };
 
 export type ViewerUserSelectionInfo = {

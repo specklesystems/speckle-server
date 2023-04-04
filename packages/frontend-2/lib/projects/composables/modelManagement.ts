@@ -8,6 +8,7 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import {
   DeleteModelInput,
   OnProjectModelsUpdateSubscription,
+  OnProjectPendingModelsUpdatedSubscription,
   ProjectModelsUpdatedMessageType,
   UpdateModelInput
 } from '~~/lib/common/generated/gql/graphql'
@@ -23,7 +24,10 @@ import {
   deleteModelMutation,
   updateModelMutation
 } from '~~/lib/projects/graphql/mutations'
-import { onProjectModelsUpdateSubscription } from '~~/lib/projects/graphql/subscriptions'
+import {
+  onProjectModelsUpdateSubscription,
+  onProjectPendingModelsUpdatedSubscription
+} from '~~/lib/projects/graphql/subscriptions'
 import { modelRoute } from '~~/lib/common/helpers/route'
 
 const isValidModelName: GenericValidateFunction<string> = (name) => {
@@ -216,6 +220,31 @@ export function useProjectModelUpdateTracking(
         id: getCacheId('Model', event.id)
       })
     }
+
+    handler?.(event, apollo.cache)
+  })
+}
+
+export function useProjectPendingModelUpdateTracking(
+  projectId: MaybeRef<string>,
+  handler?: (
+    data: NonNullable<
+      Get<OnProjectPendingModelsUpdatedSubscription, 'projectPendingModelsUpdated'>
+    >,
+    cache: ApolloCache<unknown>
+  ) => void
+) {
+  const { onResult: onProjectPendingModelUpdate } = useSubscription(
+    onProjectPendingModelsUpdatedSubscription,
+    () => ({
+      id: unref(projectId)
+    })
+  )
+  const apollo = useApolloClient().client
+
+  onProjectPendingModelUpdate((res) => {
+    if (!res.data?.projectPendingModelsUpdated.id) return
+    const event = res.data.projectPendingModelsUpdated
 
     handler?.(event, apollo.cache)
   })

@@ -10,7 +10,7 @@ import {
 } from '@/modules/shared/helpers/dbHelper'
 import crs from 'crypto-random-string'
 import { Knex } from 'knex'
-import { clamp, trim } from 'lodash'
+import { clamp, last, trim } from 'lodash'
 
 export const generateBranchId = () => crs({ length: 10 })
 
@@ -269,13 +269,73 @@ export async function getPaginatedProjectModelsTotalCount(
   return parseInt(res?.count || '0')
 }
 
+export async function getModelTreeItemsFiltered(
+  projectId: string,
+  search: string,
+  options?: Partial<{ filterOutEmptyMain: boolean }>
+) {
+  const BranchesJoin = Branches.with({ withCustomTablePrefix: 'b2' })
+
+  const q = Branches.knex()
+    .select<Array<BranchRecord & { hasChildren: boolean }>>([
+      ...Branches.cols,
+      knex.raw(`COUNT(??) > 0 as "hasChildren"`, [BranchesJoin.col.id])
+    ])
+    .leftJoin(BranchesJoin.name, (lj) => {
+      lj.on(
+        BranchesJoin.col.name,
+        'ilike',
+        knex.raw(`(?? || '%')`, [Branches.col.name])
+      )
+        .andOn(BranchesJoin.col.name, '!=', Branches.col.name)
+        .andOn(BranchesJoin.col.streamId, '=', Branches.col.streamId)
+    })
+    .where(Branches.col.streamId, projectId)
+    .andWhereILike(Branches.col.name, `%${search}%`)
+    .groupBy(Branches.col.id)
+
+  if (options?.filterOutEmptyMain) {
+    q.andWhere((w) => {
+      w.whereNot(Branches.col.name, 'main').orWhere(
+        0,
+        '<',
+        BranchCommits.knex()
+          .count()
+          .where(BranchCommits.col.branchId, knex.raw(Branches.col.id))
+      )
+    })
+  }
+
+  const res = await q
+  const items = res.map((i): ModelsTreeItemGraphQLReturn => {
+    const displayName = last(i.name.split('/')) as string
+    return {
+      id: `${projectId}-${i.name}`,
+      projectId,
+      name: displayName,
+      fullName: i.name,
+      updatedAt: i.updatedAt,
+      hasChildren: i.hasChildren,
+      isPendingModel: false
+    }
+  })
+
+  return items
+}
+
 export async function getModelTreeItems(
   projectId: string,
   parentModelName?: string,
   options?: Partial<{ filterOutEmptyMain: boolean }>
 ) {
+  const cleanInput = (input: string | null | undefined) => {
+    const clean = (input || '').replaceAll(/[^\w\s]+/g, '').toLowerCase()
+    const trimmed = trim(trim(clean), '/')
+    return trimmed
+  }
+
   const { filterOutEmptyMain = true } = options || {}
-  const cleanModelName = trim(trim(parentModelName || ''), '/').toLowerCase()
+  const cleanModelName = cleanInput(parentModelName)
   const branchPartPattern = `[^/]+` // regexp for each branch part between slashes
 
   const regExp = cleanModelName.length
@@ -340,7 +400,8 @@ export async function getModelTreeItems(
       name: i.branchPart,
       fullName,
       updatedAt: i.updatedAt,
-      hasChildren: fullName.length < i.longestFullName.length
+      hasChildren: fullName.length < i.longestFullName.length,
+      isPendingModel: false
     }
   })
 

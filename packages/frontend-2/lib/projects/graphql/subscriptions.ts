@@ -41,6 +41,7 @@ export const onProjectVersionsUpdateSubscription = graphql(`
       version {
         id
         ...ViewerModelVersionCardItem
+        ...ProjectModelPageVersionsCardVersion
         model {
           id
           ...ProjectPageLatestItemsModelItem
@@ -56,6 +57,36 @@ export const onProjectVersionsPreviewGeneratedSubscription = graphql(`
       projectId
       objectId
       versionId
+    }
+  }
+`)
+
+export const onProjectPendingModelsUpdatedSubscription = graphql(`
+  subscription OnProjectPendingModelsUpdated($id: String!) {
+    projectPendingModelsUpdated(id: $id) {
+      id
+      type
+      model {
+        ...PendingFileUpload
+        model {
+          ...ProjectPageLatestItemsModelItem
+        }
+      }
+    }
+  }
+`)
+
+export const onProjectPendingVersionsUpdatedSubscription = graphql(`
+  subscription OnProjectPendingVersionsUpdated($id: String!) {
+    projectPendingVersionsUpdated(id: $id) {
+      id
+      type
+      version {
+        ...PendingFileUpload
+        model {
+          ...ProjectPageLatestItemsModelItem
+        }
+      }
     }
   }
 `)

@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div
-    class="group rounded-md bg-foundation shadow transition hover:scale-[1.02] border-2 border-transparent hover:border-outline-2 hover:shadow-xl"
+    :class="containerClasses"
     @mouseleave=";(showActionsMenu = false), (hovered = false)"
     @mouseenter="hovered = true"
   >
@@ -10,31 +10,41 @@
       TODO: Report it to Vue/Nuxt!
     -->
     <NuxtLink
-      :href="disableDefaultLink ? undefined : modelRoute(project.id, model.id)"
+      :href="defaultLinkDisabled ? undefined : modelRoute(project.id, model.id)"
       class="cursor-pointer"
       @click="$emit('click', $event)"
     >
       <div :class="`${height} flex items-center justify-center`">
-        <PreviewImage v-if="model.previewUrl" :preview-url="model.previewUrl" />
+        <ProjectPendingFileImportStatus
+          v-if="isPendingModelFragment(model)"
+          :upload="model"
+          class="px-4 w-full"
+        />
+        <PreviewImage v-else-if="previewUrl" :preview-url="previewUrl" />
+        <ProjectPendingFileImportStatus
+          v-else-if="pendingVersion"
+          :upload="pendingVersion"
+          type="subversion"
+          class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
+        />
         <div v-else class="h-full w-full p-4">
-          <div
-            class="rounded-xl p-4 flex items-center h-full w-full border-dashed border-2 border-blue-500/10 text-foreground-2 text-xs text-center"
-          >
-            <div :class="`opacity-50 group-hover:opacity-100`">
-              Use our
-              <b>connectors</b>
-              to send data to this model, or drag and drop a IFC/OBJ/STL file here.
-            </div>
-          </div>
+          <ProjectCardImportFileArea
+            :project-id="project.id"
+            :model-name="model.name"
+            class="h-full w-full"
+          />
         </div>
       </div>
       <div class="h-12 flex items-center px-2 py-1 space-x-1">
         <div class="flex-grow min-w-0">
-          <div v-if="path" class="text-xs text-foreground-2 relative -mb-1 truncate">
-            {{ path }}
+          <div
+            v-if="nameParts[0]"
+            class="text-xs text-foreground-2 relative -mb-1 truncate"
+          >
+            {{ nameParts[0] }}
           </div>
           <div class="font-bold truncate text-foreground flex-shrink min-w-0">
-            {{ model.displayName }}
+            {{ nameParts[1] }}
           </div>
         </div>
         <div class="flex items-center">
@@ -48,7 +58,7 @@
           </div>
 
           <FormButton
-            v-if="showVersions"
+            v-if="finalShowVersions"
             v-tippy="'View Version Gallery'"
             rounded
             size="xs"
@@ -57,12 +67,12 @@
             :class="`transition ${
               hovered ? 'inline-block opacity-100' : 'hidden opacity-0'
             }`"
-            :disabled="model.versionCount.totalCount === 0"
+            :disabled="versionCount === 0"
           >
-            {{ model?.versionCount.totalCount }}
+            {{ versionCount }}
           </FormButton>
           <ProjectPageModelsActions
-            v-if="showActions"
+            v-if="showActions && !isPendingModelFragment(model)"
             v-model:open="showActionsMenu"
             :model="model"
             :project-id="project.id"
@@ -72,7 +82,9 @@
         </div>
       </div>
       <div
-        v-if="model.commentThreadCount.totalCount !== 0"
+        v-if="
+          !isPendingModelFragment(model) && model.commentThreadCount.totalCount !== 0
+        "
         :class="`absolute top-0 right-0 p-2 flex items-center transition border-2 border-primary-muted h-8 bg-foundation shadow-md justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2 ${
           hovered ? 'opacity-100' : 'opacity-0'
         }`"
@@ -86,6 +98,7 @@
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 import {
+  PendingFileUploadFragment,
   ProjectPageLatestItemsModelItemFragment,
   ProjectPageModelsCardProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
@@ -96,6 +109,7 @@ import {
 import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
+import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
 
 graphql(`
   fragment ProjectPageModelsCardProject on Project {
@@ -110,7 +124,7 @@ defineEmits<{
 
 const props = withDefaults(
   defineProps<{
-    model: ProjectPageLatestItemsModelItemFragment
+    model: ProjectPageLatestItemsModelItemFragment | PendingFileUploadFragment
     project: ProjectPageModelsCardProjectFragment
     showVersions?: boolean
     showActions?: boolean
@@ -127,16 +141,49 @@ const props = withDefaults(
 const showActionsMenu = ref(false)
 const hovered = ref(false)
 
-const path = computed(() => {
-  const model = props.model
-  if (model.name === model.displayName) return null
+const containerClasses = computed(() => {
+  const classParts = [
+    'group rounded-md bg-foundation shadow transition border-2 border-transparent'
+  ]
 
-  return model.name.substring(0, model.name.length - model.displayName.length)
+  if (!isPendingModelFragment(props.model)) {
+    classParts.push('hover:scale-[1.02] hover:border-outline-2 hover:shadow-xl')
+  }
+
+  return classParts.join(' ')
+})
+const nameParts = computed(() => {
+  const model = props.model
+  const modelName = isPendingModelFragment(model) ? model.modelName : model.name
+  const splitName = modelName.split('/')
+  if (splitName.length === 1) return [null, modelName]
+
+  const displayName = splitName.pop()
+  return [splitName.join('/') + '/', displayName]
 })
 
-const updatedAt = computed(() => dayjs(props.model.updatedAt).from(dayjs()))
+const previewUrl = computed(() =>
+  isPendingModelFragment(props.model) ? null : props.model.previewUrl
+)
+const defaultLinkDisabled = computed(
+  () => props.disableDefaultLink || isPendingModelFragment(props.model)
+)
 
+const updatedAt = computed(() => {
+  const date = isPendingModelFragment(props.model)
+    ? props.model.convertedLastUpdate || props.model.uploadDate
+    : props.model.updatedAt
+  return dayjs(date).from(dayjs())
+})
+const finalShowVersions = computed(
+  () => props.showVersions && !isPendingModelFragment(props.model)
+)
 const canEdit = computed(() => canModifyModels(props.project))
+const versionCount = computed(() =>
+  isPendingModelFragment(props.model) ? 0 : props.model.versionCount.totalCount
+)
 
-props.model.commentThreadCount
+const pendingVersion = computed(() =>
+  isPendingModelFragment(props.model) ? null : props.model.pendingImportedVersions[0]
+)
 </script>
