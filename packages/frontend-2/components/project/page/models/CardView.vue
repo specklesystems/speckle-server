@@ -14,15 +14,19 @@
     />
   </div>
   <CommonEmptySearchState
-    v-else-if="search && latestModelsResult?.project?.models.items.length === 0"
+    v-else-if="search && items.length === 0"
     @clear-search="() => $emit('clear-search')"
   />
   <div v-else>TODO: Grid empty state</div>
 </template>
 <script setup lang="ts">
-import { ProjectPageModelsViewFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  FormUsersSelectItemFragment,
+  ProjectPageLatestItemsModelsFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import { latestModelsQuery } from '~~/lib/projects/graphql/queries'
+import { SourceAppDefinition } from '@speckle/shared'
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
@@ -32,13 +36,16 @@ const emit = defineEmits<{
 
 const props = withDefaults(
   defineProps<{
-    project: ProjectPageModelsViewFragment
+    project: ProjectPageLatestItemsModelsFragment
     search?: string
     showActions?: boolean
     showVersions?: boolean
     disableDefaultLinks?: boolean
     excludedIds?: string[]
     excludeEmptyModels?: boolean
+    disablePagination?: boolean
+    sourceApps?: SourceAppDefinition[]
+    contributors?: FormUsersSelectItemFragment[]
   }>(),
   {
     showActions: true,
@@ -46,6 +53,7 @@ const props = withDefaults(
   }
 )
 
+const cursor = ref(null)
 const areQueriesLoading = useQueryLoading()
 const { result: latestModelsResult, variables: latestModelsVariables } = useQuery(
   latestModelsQuery,
@@ -55,7 +63,8 @@ const { result: latestModelsResult, variables: latestModelsVariables } = useQuer
       search: props.search || null,
       excludeIds: props.excludedIds || null,
       onlyWithVersions: !!props.excludeEmptyModels
-    }
+    },
+    cursor: cursor.value
   })
 )
 
@@ -66,7 +75,12 @@ const pendingModels = computed(() =>
     : latestModelsResult.value?.project?.pendingImportedModels || []
 )
 
-const items = computed(() => [...pendingModels.value, ...models.value])
+const items = computed(() =>
+  [...pendingModels.value, ...models.value].slice(
+    0,
+    props.disablePagination ? 16 : undefined
+  )
+)
 const itemsCount = computed(() => items.value.length)
 
 watch(areQueriesLoading, (newVal) => {

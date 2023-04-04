@@ -22,7 +22,7 @@
 </template>
 <script setup lang="ts">
 import {
-  ProjectPageModelsViewFragment,
+  ProjectPageLatestItemsModelsFragment,
   SingleLevelModelTreeItemFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
@@ -35,7 +35,7 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  project: ProjectPageModelsViewFragment
+  project: ProjectPageLatestItemsModelsFragment
   search?: string
 }>()
 

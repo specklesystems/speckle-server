@@ -19,7 +19,7 @@
       </div>
       <div class="flex flex-col space-y-14">
         <!-- Latest models -->
-        <ProjectPageModelsView :project="project" />
+        <ProjectPageLatestItemsModels :project="project" />
         <!-- Latest comments -->
         <ProjectPageLatestItemsComments :project="project" />
         <!-- More actions -->
@@ -61,7 +61,6 @@ graphql(`
     ...ProjectPageStatsBlockComments
     ...ProjectPageLatestItemsModels
     ...ProjectPageLatestItemsComments
-    ...ProjectPageModelsView
   }
 `)
 

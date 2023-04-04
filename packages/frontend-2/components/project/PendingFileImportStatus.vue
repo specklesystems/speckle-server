@@ -42,7 +42,7 @@ type ImportedItemType = 'self' | 'subversion'
 const props = withDefaults(
   defineProps<{
     upload: PendingFileUploadFragment
-    type: ImportedItemType
+    type?: ImportedItemType
   }>(),
   {
     type: 'self'

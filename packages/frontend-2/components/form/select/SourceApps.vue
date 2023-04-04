@@ -2,7 +2,7 @@
   <FormSelectBase
     v-model="selectedValue"
     :multiple="multiple"
-    :items="items?.length ? items : SourceApps"
+    :items="items ?? SourceApps"
     :search="search"
     :search-placeholder="searchPlaceholder"
     :label="label"

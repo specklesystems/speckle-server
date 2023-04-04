@@ -1,12 +1,15 @@
 <template>
   <div class="flex flex-col">
     <!-- Header -->
-    <div class="flex flex-col space-y-2 justify-between mb-4 lg:flex-row lg:space-y-0">
+    <div :class="headingClasses">
       <!-- Left heading (title, See All) -->
       <div
         class="flex flex-col items-start space-y-1 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between sm:space-x-2"
       >
-        <div class="flex items-center space-x-2 group hover:cursor-pointer">
+        <NuxtLink
+          class="flex items-center space-x-2 group hover:cursor-pointer"
+          :to="seeAllUrl"
+        >
           <h2 class="h4 font-bold transition group-hover:text-primary">
             {{ title }}
           </h2>
@@ -17,14 +20,18 @@
             {{ count }}
           </div>
           <div class="invisible group-hover:visible transition text-xs">view all</div>
-        </div>
+        </NuxtLink>
       </div>
       <!-- Right heading (filters, grid/list toggle) -->
       <div v-if="!hideFilters" class="flex space-x-4 items-center w-full lg:w-auto">
         <div class="grow lg:grow-0">
           <slot name="filters" />
         </div>
-        <LayoutGridListToggle v-model="gridOrList" />
+        <LayoutGridListToggle
+          v-if="!hideGridListToggle"
+          v-model="gridOrList"
+          v-tippy="'Swap Grid/Card View'"
+        />
       </div>
     </div>
     <!-- Main Content -->
@@ -34,26 +41,24 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
-import { GridListToggleValue } from '~~/lib/layout/helpers/components'
-
-defineEmits<{
-  (e: 'see-all-click', v: MouseEvent): void
-}>()
+import { useProjectPageItemViewType } from '~~/lib/projects/composables/layout'
 
 const props = defineProps<{
   title: string
   count: number
   seeAllUrl?: string
   hideFilters?: boolean
+  hideGridListToggle?: boolean
+  hideHeadingBottomMargin?: boolean
 }>()
 
-const viewTypeCookie = useSynchronizedCookie(`projectPage-${props.title}-viewType`)
-const gridOrList = computed({
-  get: () =>
-    viewTypeCookie.value === GridListToggleValue.List
-      ? GridListToggleValue.List
-      : GridListToggleValue.Grid,
-  set: (newVal) => (viewTypeCookie.value = newVal)
+const gridOrList = useProjectPageItemViewType(props.title)
+const headingClasses = computed(() => {
+  const classes = ['flex flex-col space-y-2 justify-between lg:flex-row lg:space-y-0']
+  if (!props.hideHeadingBottomMargin) {
+    classes.push('mb-4')
+  }
+
+  return classes.join(' ')
 })
 </script>

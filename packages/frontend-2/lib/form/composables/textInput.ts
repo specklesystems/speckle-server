@@ -21,6 +21,7 @@ export function useTextInputCore(params: {
   }>
   emit: {
     (e: 'change', val: { event?: Event; value: string }): void
+    (e: 'clear'): void
   }
   inputEl: Ref<Nullable<HTMLInputElement | HTMLTextAreaElement>>
 }) {
@@ -75,6 +76,7 @@ export function useTextInputCore(params: {
   const clear = () => {
     value.value = ''
     emit('change', { value: '' })
+    emit('clear')
   }
 
   onMounted(() => {

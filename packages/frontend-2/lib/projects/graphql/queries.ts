@@ -36,10 +36,14 @@ export const projectPageQuery = graphql(`
 `)
 
 export const latestModelsQuery = graphql(`
-  query ProjectLatestModels($projectId: String!, $filter: ProjectModelsFilter) {
+  query ProjectLatestModels(
+    $projectId: String!
+    $filter: ProjectModelsFilter
+    $cursor: String = null
+  ) {
     project(id: $projectId) {
       id
-      models(cursor: null, limit: 16, filter: $filter) {
+      models(cursor: $cursor, limit: 16, filter: $filter) {
         totalCount
         cursor
         items {
@@ -132,6 +136,15 @@ export const projectModelVersionsQuery = graphql(`
   ) {
     project(id: $projectId) {
       ...ProjectModelPageVersionsPagination
+    }
+  }
+`)
+
+export const projectModelsPageQuery = graphql(`
+  query ProjectModelsPage($projectId: String!) {
+    project(id: $projectId) {
+      ...ProjectModelsPageHeader_Project
+      ...ProjectModelsPageResults_Project
     }
   }
 `)
