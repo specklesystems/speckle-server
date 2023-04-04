@@ -24,6 +24,7 @@
           placeholder="Search"
           class="bg-foundation shadow w-full md:w-60"
           :show-clear="search !== ''"
+          :disabled="disabled"
           size="lg"
           @change="($event) => updateSearchImmediately($event.value)"
           @update:model-value="updateDebouncedSearch"

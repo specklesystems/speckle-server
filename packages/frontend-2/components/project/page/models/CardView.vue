@@ -14,10 +14,14 @@
     />
   </div>
   <CommonEmptySearchState
-    v-else-if="search && items.length === 0"
+    v-else-if="isSearchResults && items.length === 0"
     @clear-search="() => $emit('clear-search')"
   />
   <div v-else>TODO: Grid empty state</div>
+  <InfiniteLoading
+    v-if="items?.length && !disablePagination"
+    @infinite="infiniteLoad"
+  />
 </template>
 <script setup lang="ts">
 import {
@@ -26,7 +30,12 @@ import {
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import { latestModelsQuery } from '~~/lib/projects/graphql/queries'
-import { SourceAppDefinition } from '@speckle/shared'
+import { Nullable, SourceAppDefinition } from '@speckle/shared'
+import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+
+// TODO: pendingImportedModels extract
+// TODO: List view pagination, but thats gonna result in having to paginate pending uploads together w/
+// actual branches.....so might as well do it for models query?
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
@@ -53,21 +62,38 @@ const props = withDefaults(
   }
 )
 
-const cursor = ref(null)
+const cursor = ref(null as Nullable<string>)
 const areQueriesLoading = useQueryLoading()
-const { result: latestModelsResult, variables: latestModelsVariables } = useQuery(
-  latestModelsQuery,
-  () => ({
-    projectId: props.project.id,
-    filter: {
-      search: props.search || null,
-      excludeIds: props.excludedIds || null,
-      onlyWithVersions: !!props.excludeEmptyModels
-    },
-    cursor: cursor.value
-  })
-)
+const {
+  result: latestModelsResult,
+  variables: latestModelsVariables,
+  fetchMore: fetchMoreModels,
+  onResult: onLatestModelsLoaded
+} = useQuery(latestModelsQuery, () => ({
+  projectId: props.project.id,
+  filter: {
+    search: props.search || null,
+    excludeIds: props.excludedIds || null,
+    onlyWithVersions: !!props.excludeEmptyModels,
+    sourceApps: props.sourceApps?.length
+      ? props.sourceApps.map((a) => a.searchKey)
+      : null,
+    contributors: props.contributors?.length
+      ? props.contributors.map((c) => c.id)
+      : null
+  },
+  cursor: cursor.value
+}))
 
+onLatestModelsLoaded((res) => {
+  if (props.disablePagination) return
+  cursor.value = res.data?.project?.models?.cursor || null
+})
+
+const isSearchResults = computed(() => {
+  const filter = latestModelsVariables.value?.filter || {}
+  return Object.values(filter).some((v) => !!v)
+})
 const models = computed(() => latestModelsResult.value?.project?.models?.items || [])
 const pendingModels = computed(() =>
   latestModelsVariables.value?.filter?.search
@@ -82,6 +108,34 @@ const items = computed(() =>
   )
 )
 const itemsCount = computed(() => items.value.length)
+const moreToLoad = computed(
+  () =>
+    (!latestModelsResult.value?.project ||
+      latestModelsResult.value.project.models.items.length <
+        latestModelsResult.value.project.models.totalCount) &&
+    cursor.value
+)
+
+const infiniteLoad = async (state: InfiniteLoaderState) => {
+  if (!moreToLoad.value) return state.complete()
+
+  try {
+    await fetchMoreModels({
+      variables: {
+        cursor: cursor.value
+      }
+    })
+  } catch (e) {
+    console.error(e)
+    state.error()
+    return
+  }
+
+  state.loaded()
+  if (!moreToLoad.value) {
+    state.complete()
+  }
+}
 
 watch(areQueriesLoading, (newVal) => {
   emit('update:loading', newVal)

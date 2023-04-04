@@ -8,12 +8,17 @@
         v-model:search="search"
         :project="project"
         :disabled="loading"
+        class="z-[1] relative"
       />
       <ProjectModelsPageResults
         v-model:grid-or-list="gridOrList"
         v-model:search="search"
         v-model:loading="loading"
+        :source-apps="selectedApps"
+        :contributors="selectedMembers"
         :project="project"
+        class="z-[0] relative"
+        @clear-search="clearSearch"
       />
     </div>
   </div>
@@ -84,4 +89,10 @@ useProjectUpdateTracking(projectId, (event) => {
     description: isDeleted ? 'Redirecting to home' : undefined
   })
 })
+
+const clearSearch = () => {
+  search.value = ''
+  selectedMembers.value = []
+  selectedApps.value = []
+}
 </script>

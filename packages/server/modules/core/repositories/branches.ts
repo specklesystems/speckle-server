@@ -235,7 +235,7 @@ export async function getPaginatedProjectModelsItems(
   params: ProjectModelsArgs
 ) {
   const { cursor, limit } = params
-  if (params.filter?.ids && !params.filter.ids.length) {
+  if ((params.filter?.ids && !params.filter.ids.length) || limit === 0) {
     // empty ids: return empty array!
     return { items: [], cursor: null }
   }
@@ -243,7 +243,7 @@ export async function getPaginatedProjectModelsItems(
   const q = getPaginatedProjectModelsBaseQuery<BranchRecord[]>(projectId, params)
   q.limit(clamp(limit || 25, 1, 100)).orderBy(Branches.col.updatedAt, 'desc')
 
-  if (cursor) q.andWhere(Branches.col.updatedAt, '>', cursor)
+  if (cursor) q.andWhere(Branches.col.updatedAt, '<', cursor)
 
   const results = await q
   return {

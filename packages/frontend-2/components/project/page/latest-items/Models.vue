@@ -8,7 +8,7 @@
   >
     <template #default>
       <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
-      <div :class="queryLoading ? 'hidden' : 'block'">
+      <div>
         <ProjectPageModelsListView
           v-if="gridOrList === GridListToggleValue.List"
           :search="debouncedSearch"
@@ -20,6 +20,7 @@
           v-if="gridOrList === GridListToggleValue.Grid"
           :search="debouncedSearch"
           :project="project"
+          disable-pagination
           @update:loading="queryLoading = $event"
           @clear-search=";(search = ''), updateSearchImmediately()"
         />

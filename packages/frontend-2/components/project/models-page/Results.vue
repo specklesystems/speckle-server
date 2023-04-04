@@ -1,7 +1,6 @@
 <template>
   <div>
-    <CommonLoadingBar :loading="!!finalLoading" class="my-2" />
-    <div :class="finalLoading ? 'hidden' : 'block'">
+    <div>
       <ProjectPageModelsListView
         v-if="gridOrList === GridListToggleValue.List"
         :search="finalSearch"
@@ -13,6 +12,8 @@
         v-if="gridOrList === GridListToggleValue.Grid"
         :search="finalSearch"
         :project="project"
+        :source-apps="sourceApps"
+        :contributors="contributors"
         @update:loading="finalLoading = $event"
         @clear-search="clearSearch"
       />
@@ -20,8 +21,12 @@
   </div>
 </template>
 <script setup lang="ts">
+import { SourceAppDefinition } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectModelsPageResults_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  FormUsersSelectItemFragment,
+  ProjectModelsPageResults_ProjectFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 
 graphql(`
@@ -33,6 +38,7 @@ graphql(`
 const emit = defineEmits<{
   (e: 'update:search', val: string): void
   (e: 'update:loading', val: boolean): void
+  (e: 'clear-search'): void
 }>()
 
 const props = defineProps<{
@@ -40,6 +46,8 @@ const props = defineProps<{
   search: string
   gridOrList: GridListToggleValue
   loading: boolean
+  sourceApps: SourceAppDefinition[]
+  contributors: FormUsersSelectItemFragment[]
 }>()
 
 const finalSearch = computed({
@@ -54,6 +62,6 @@ const finalLoading = computed({
 
 const clearSearch = () => {
   finalSearch.value = ''
-  finalLoading.value = true
+  emit('clear-search')
 }
 </script>
