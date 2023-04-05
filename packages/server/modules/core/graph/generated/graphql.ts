@@ -714,7 +714,6 @@ export type ModelsTreeItem = {
   /** Whether or not this item has nested children models */
   hasChildren: Scalars['Boolean'];
   id: Scalars['ID'];
-  isPendingModel: Scalars['Boolean'];
   /**
    * Nullable cause the item can represent a parent that doesn't actually exist as a model on its own.
    * E.g. A model named "foo/bar" is supposed to be a child of "foo" and will be represented as such,
@@ -722,9 +721,14 @@ export type ModelsTreeItem = {
    */
   model?: Maybe<Model>;
   name: Scalars['String'];
-  /** Only set if tree item represents a pending model (file import) */
-  pendingModel?: Maybe<FileUpload>;
   updatedAt: Scalars['DateTime'];
+};
+
+export type ModelsTreeItemCollection = {
+  __typename?: 'ModelsTreeItemCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<ModelsTreeItem>;
+  totalCount: Scalars['Int'];
 };
 
 export type MoveVersionsInput = {
@@ -1219,7 +1223,7 @@ export type Project = {
    * Return's a project's models in a tree view with submodels being nested under parent models
    * real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
    */
-  modelsTree: Array<ModelsTreeItem>;
+  modelsTree: ModelsTreeItemCollection;
   name: Scalars['String'];
   /** Returns a list models that are being created from a file import */
   pendingImportedModels: Array<FileUpload>;
@@ -1262,7 +1266,9 @@ export type ProjectModelsArgs = {
 
 
 export type ProjectModelsTreeArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<ProjectModelsTreeFilter>;
+  limit?: Scalars['Int'];
 };
 
 
@@ -2768,6 +2774,7 @@ export type ResolversTypes = {
   ModelMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ModelVersionsFilter: ModelVersionsFilter;
   ModelsTreeItem: ResolverTypeWrapper<ModelsTreeItemGraphQLReturn>;
+  ModelsTreeItemCollection: ResolverTypeWrapper<Omit<ModelsTreeItemCollection, 'items'> & { items: Array<ResolversTypes['ModelsTreeItem']> }>;
   MoveVersionsInput: MoveVersionsInput;
   Mutation: ResolverTypeWrapper<{}>;
   Object: ResolverTypeWrapper<Object>;
@@ -2929,6 +2936,7 @@ export type ResolversParentTypes = {
   ModelMutations: MutationsObjectGraphQLReturn;
   ModelVersionsFilter: ModelVersionsFilter;
   ModelsTreeItem: ModelsTreeItemGraphQLReturn;
+  ModelsTreeItemCollection: Omit<ModelsTreeItemCollection, 'items'> & { items: Array<ResolversParentTypes['ModelsTreeItem']> };
   MoveVersionsInput: MoveVersionsInput;
   Mutation: {};
   Object: Object;
@@ -3345,11 +3353,16 @@ export type ModelsTreeItemResolvers<ContextType = GraphQLContext, ParentType ext
   fullName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   hasChildren?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  isPendingModel?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  pendingModel?: Resolver<Maybe<ResolversTypes['FileUpload']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ModelsTreeItemCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ModelsTreeItemCollection'] = ResolversParentTypes['ModelsTreeItemCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3470,7 +3483,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType, RequireFields<ProjectModelArgs, 'id'>>;
   modelChildrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType, RequireFields<ProjectModelChildrenTreeArgs, 'fullName'>>;
   models?: Resolver<ResolversTypes['ModelCollection'], ParentType, ContextType, RequireFields<ProjectModelsArgs, 'limit'>>;
-  modelsTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType, Partial<ProjectModelsTreeArgs>>;
+  modelsTree?: Resolver<ResolversTypes['ModelsTreeItemCollection'], ParentType, ContextType, RequireFields<ProjectModelsTreeArgs, 'limit'>>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   pendingImportedModels?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType, RequireFields<ProjectPendingImportedModelsArgs, 'limit'>>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -3952,6 +3965,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ModelCollection?: ModelCollectionResolvers<ContextType>;
   ModelMutations?: ModelMutationsResolvers<ContextType>;
   ModelsTreeItem?: ModelsTreeItemResolvers<ContextType>;
+  ModelsTreeItemCollection?: ModelsTreeItemCollectionResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Object?: ObjectResolvers<ContextType>;
   ObjectCollection?: ObjectCollectionResolvers<ContextType>;

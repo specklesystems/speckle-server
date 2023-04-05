@@ -1,5 +1,7 @@
 import {
+  ModelsTreeItemCollection,
   ProjectModelsArgs,
+  ProjectModelsTreeArgs,
   StreamBranchesArgs
 } from '@/modules/core/graph/generated/graphql'
 import { UserInputError } from 'apollo-server-core'
@@ -9,11 +11,13 @@ import {
   getPaginatedProjectModelsItems,
   getPaginatedProjectModelsTotalCount,
   getModelTreeItemsFiltered,
-  getModelTreeItems
+  getModelTreeItems,
+  getModelTreeItemsFilteredTotalCount,
+  getModelTreeItemsTotalCount
 } from '@/modules/core/repositories/branches'
-import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
-import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { last } from 'lodash'
+import { Merge } from 'type-fest'
+import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 
 export async function getStructuredStreamModels(streamId: string) {
   return getStructuredProjectModels(streamId)
@@ -51,43 +55,42 @@ export async function getPaginatedProjectModels(
   }
 }
 
-export async function getProjectModelsTree(
+export async function getProjectTopLevelModelsTree(
   projectId: string,
-  filter?: Partial<{
-    search: string
-    parentModelName: string
-  }>,
+  args: ProjectModelsTreeArgs,
   options?: Partial<{ filterOutEmptyMain: boolean }>
-) {
-  // TODO: We can support searching for uploads as well, but we don't have that
-  // support in the paginated models query, so scrapping it for now
-  // TODO: We can support nesting uploads, but needs more work
-  // const branchNamePattern = `${filter?.parentModelName || ''}${
-  //   filter?.search ? `.*${filter.search}.*` : ``
-  // }`
-  // const branchNamePattern = filter?.search ? `.*${filter.search}.*` : undefined
-
-  const [baseModelItems, pendingModelItems] = await Promise.all([
-    filter?.search
-      ? getModelTreeItemsFiltered(projectId, filter.search, options)
-      : getModelTreeItems(projectId, filter?.parentModelName, options),
-    !filter?.parentModelName && !filter?.search
-      ? getStreamPendingModels(projectId).then((res) =>
-          res.map(
-            (i): ModelsTreeItemGraphQLReturn => ({
-              id: `${i.streamId}-${i.branchName}`,
-              projectId,
-              name: last(i.branchName.split('/')) as string,
-              fullName: i.branchName,
-              updatedAt: i.convertedLastUpdate || i.uploadDate,
-              hasChildren: false,
-              isPendingModel: true,
-              pendingModel: i
-            })
-          )
+): Promise<Merge<ModelsTreeItemCollection, { items: ModelsTreeItemGraphQLReturn[] }>> {
+  const [items, totalCount] = await Promise.all([
+    args.filter?.search
+      ? getModelTreeItemsFiltered(
+          projectId,
+          {
+            ...args,
+            filter: {
+              search: args.filter.search
+            }
+          },
+          options
         )
-      : []
+      : getModelTreeItems(projectId, args, options),
+    args.filter?.search
+      ? getModelTreeItemsFilteredTotalCount(
+          projectId,
+          {
+            ...args,
+            filter: {
+              search: args.filter.search
+            }
+          },
+          options
+        )
+      : getModelTreeItemsTotalCount(projectId, options)
   ])
 
-  return [...pendingModelItems, ...baseModelItems]
+  const lastItem = last(items)
+  return {
+    items,
+    totalCount,
+    cursor: lastItem ? lastItem.updatedAt.toISOString() : null
+  }
 }

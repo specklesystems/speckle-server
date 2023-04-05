@@ -43,6 +43,8 @@ import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 // actual branches.....so might as well do it for models query?
 // - or maybe just always put pending uploads first? but what if theres more than 16?
 // TODO: Fix models list/card, versions list/card to just preload pending first, and then load actual ones afterwards with pagination
+// TODO: Fix cache updates to modelsTree cause of collection change
+// TODO: ModelsTreeItem members/sources filter
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
@@ -108,8 +110,16 @@ const { onResult: onExtraPagesLoaded, fetchMore: fetchMorePages } = useQuery(
     ...latestModelsQueryVariables.value,
     cursor: cursor.value
   }),
-  () => ({ enabled: !!cursor.value })
+  () => ({ enabled: !!(cursor.value && !props.disablePagination) })
 )
+
+const isFiltering = computed(() => {
+  const filter = latestModelsVariables.value?.filter
+  if (filter?.contributors?.length) return true
+  if (filter?.search?.length) return true
+  if (filter?.sourceApps?.length) return true
+  return false
+})
 
 onLatestModelsLoaded((res) => {
   if (props.disablePagination) return
@@ -127,7 +137,7 @@ const isSearchResults = computed(() => {
 })
 const models = computed(() => latestModelsResult.value?.project?.models?.items || [])
 const pendingModels = computed(() =>
-  latestModelsVariables.value?.filter?.search
+  isFiltering.value
     ? []
     : latestModelsResult.value?.project?.pendingImportedModels || []
 )

@@ -1,7 +1,10 @@
 import { Optional } from '@speckle/shared'
 import { BranchCommits, Branches, Commits, knex } from '@/modules/core/dbSchema'
 import { BranchNameError } from '@/modules/core/errors/branch'
-import { ProjectModelsArgs } from '@/modules/core/graph/generated/graphql'
+import {
+  ProjectModelsArgs,
+  ProjectModelsTreeArgs
+} from '@/modules/core/graph/generated/graphql'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
 import {
@@ -11,6 +14,7 @@ import {
 import crs from 'crypto-random-string'
 import { Knex } from 'knex'
 import { clamp, last, trim } from 'lodash'
+import { Merge } from 'type-fest'
 
 export const generateBranchId = () => crs({ length: 10 })
 
@@ -269,11 +273,12 @@ export async function getPaginatedProjectModelsTotalCount(
   return parseInt(res?.count || '0')
 }
 
-export async function getModelTreeItemsFiltered(
+function getModelTreeItemsFilteredBaseQuery(
   projectId: string,
-  search: string,
+  args: Merge<ProjectModelsTreeArgs, { filter: { search: string } }>,
   options?: Partial<{ filterOutEmptyMain: boolean }>
 ) {
+  const search = args.filter.search
   const BranchesJoin = Branches.with({ withCustomTablePrefix: 'b2' })
 
   const q = Branches.knex()
@@ -293,6 +298,7 @@ export async function getModelTreeItemsFiltered(
     .where(Branches.col.streamId, projectId)
     .andWhereILike(Branches.col.name, `%${search}%`)
     .groupBy(Branches.col.id)
+    .orderBy(Branches.col.updatedAt, 'desc')
 
   if (options?.filterOutEmptyMain) {
     q.andWhere((w) => {
@@ -306,6 +312,22 @@ export async function getModelTreeItemsFiltered(
     })
   }
 
+  return q
+}
+
+export async function getModelTreeItemsFiltered(
+  projectId: string,
+  args: Merge<ProjectModelsTreeArgs, { filter: { search: string } }>,
+  options?: Partial<{ filterOutEmptyMain: boolean }>
+) {
+  const limit = clamp(args.limit || 25, 0, 100)
+  const q = getModelTreeItemsFilteredBaseQuery(projectId, args, options)
+  q.limit(limit)
+
+  if (args.cursor) {
+    q.andWhere(Branches.col.updatedAt, '<', args.cursor)
+  }
+
   const res = await q
   const items = res.map((i): ModelsTreeItemGraphQLReturn => {
     const displayName = last(i.name.split('/')) as string
@@ -315,18 +337,27 @@ export async function getModelTreeItemsFiltered(
       name: displayName,
       fullName: i.name,
       updatedAt: i.updatedAt,
-      hasChildren: i.hasChildren,
-      isPendingModel: false
+      hasChildren: i.hasChildren
     }
   })
 
   return items
 }
 
-export async function getModelTreeItems(
+export async function getModelTreeItemsFilteredTotalCount(
   projectId: string,
-  parentModelName?: string,
+  args: Merge<ProjectModelsTreeArgs, { filter: { search: string } }>,
   options?: Partial<{ filterOutEmptyMain: boolean }>
+) {
+  const baseQ = getModelTreeItemsFilteredBaseQuery(projectId, args, options)
+  const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+  const [row] = await q
+  return parseInt(row.count || '0')
+}
+
+function getModelTreeItemsBaseQuery(
+  projectId: string,
+  options?: Partial<{ filterOutEmptyMain: boolean; parentModelName: string }>
 ) {
   const cleanInput = (input: string | null | undefined) => {
     const clean = (input || '').replaceAll(/[^\w\s]+/g, '').toLowerCase()
@@ -334,7 +365,7 @@ export async function getModelTreeItems(
     return trimmed
   }
 
-  const { filterOutEmptyMain = true } = options || {}
+  const { filterOutEmptyMain = true, parentModelName } = options || {}
   const cleanModelName = cleanInput(parentModelName)
   const branchPartPattern = `[^/]+` // regexp for each branch part between slashes
 
@@ -390,9 +421,32 @@ export async function getModelTreeItems(
       })
   }
 
+  return {
+    query: finalQuery,
+    parentModelName: cleanModelName
+  }
+}
+
+export async function getModelTreeItems(
+  projectId: string,
+  args: Omit<ProjectModelsTreeArgs, 'filter'>,
+  options?: Partial<{ filterOutEmptyMain: boolean; parentModelName: string }>
+) {
+  const limit = clamp(args.limit || 25, 0, 100)
+  const { query, parentModelName } = getModelTreeItemsBaseQuery(projectId, options)
+
+  const finalQuery = knex.from(query.as('sq1'))
+  finalQuery.limit(limit)
+
+  if (args.cursor) {
+    finalQuery.andWhere('updatedAt', '<', args.cursor)
+  }
+
   const res = await finalQuery
   const items = res.map((i): ModelsTreeItemGraphQLReturn => {
-    const fullName = cleanModelName ? `${cleanModelName}/${i.branchPart}` : i.branchPart
+    const fullName = parentModelName
+      ? `${parentModelName}/${i.branchPart}`
+      : i.branchPart
 
     return {
       id: `${projectId}-${fullName}`,
@@ -400,12 +454,21 @@ export async function getModelTreeItems(
       name: i.branchPart,
       fullName,
       updatedAt: i.updatedAt,
-      hasChildren: fullName.length < i.longestFullName.length,
-      isPendingModel: false
+      hasChildren: fullName.length < i.longestFullName.length
     }
   })
 
   return items
+}
+
+export async function getModelTreeItemsTotalCount(
+  projectId: string,
+  options?: Partial<{ filterOutEmptyMain: boolean; parentModelName: string }>
+) {
+  const { query } = getModelTreeItemsBaseQuery(projectId, options)
+  const q = knex.count<{ count: string }[]>().from(query.as('sq1'))
+  const [row] = await q
+  return parseInt(row.count || '0')
 }
 
 export const validateBranchName = (name: string) => {

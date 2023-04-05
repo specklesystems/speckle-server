@@ -79,8 +79,34 @@ export const projectModelsTreeTopLevelQuery = graphql(`
   ) {
     project(id: $projectId) {
       id
-      modelsTree(filter: $filter) {
-        ...SingleLevelModelTreeItem
+      modelsTree(cursor: null, limit: 8, filter: $filter) {
+        totalCount
+        cursor
+        items {
+          ...SingleLevelModelTreeItem
+        }
+      }
+      pendingImportedModels {
+        ...PendingFileUpload
+      }
+    }
+  }
+`)
+
+export const projectModelsTreeTopLevelPaginationQuery = graphql(`
+  query ProjectModelsTreeTopLevelPagination(
+    $projectId: String!
+    $filter: ProjectModelsTreeFilter
+    $cursor: String = null
+  ) {
+    project(id: $projectId) {
+      id
+      modelsTree(cursor: $cursor, limit: 8, filter: $filter) {
+        totalCount
+        cursor
+        items {
+          ...SingleLevelModelTreeItem
+        }
       }
     }
   }

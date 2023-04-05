@@ -13,6 +13,7 @@
           v-if="gridOrList === GridListToggleValue.List"
           :search="debouncedSearch"
           :project="project"
+          disable-pagination
           @update:loading="queryLoading = $event"
           @clear-search=";(search = ''), updateSearchImmediately()"
         />

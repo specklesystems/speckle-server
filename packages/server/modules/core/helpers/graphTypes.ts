@@ -11,7 +11,6 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { BranchRecord, CommitRecord, StreamRecord } from '@/modules/core/helpers/types'
-import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 
 /**
  * The types of objects we return in resolvers often don't have the exact type as the object in the schema.
@@ -102,16 +101,11 @@ export type LimitedUserGraphQLReturn = Omit<
   'totalOwnedStreamsFavorites' | 'commits' | 'streams'
 >
 
-export type ModelsTreeItemGraphQLReturn = Omit<
-  ModelsTreeItem,
-  'model' | 'children' | 'pendingModel'
-> & {
+export type ModelsTreeItemGraphQLReturn = Omit<ModelsTreeItem, 'model' | 'children'> & {
   /**
    * Required for field resolvers, not actually returned in response
    */
   projectId: string
-} & {
-  pendingModel?: FileUploadRecord
 }
 
 /**
