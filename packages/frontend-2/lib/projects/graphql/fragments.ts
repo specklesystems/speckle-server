@@ -28,6 +28,23 @@ export const projectDashboardItemFragment = graphql(`
         ...ProjectPageLatestItemsModelItem
       }
     }
+    pendingImportedModels(limit: 4) {
+      ...PendingFileUpload
+    }
+  }
+`)
+
+export const pendingFileUploadFragment = graphql(`
+  fragment PendingFileUpload on FileUpload {
+    id
+    projectId
+    modelName
+    convertedStatus
+    convertedMessage
+    uploadDate
+    convertedLastUpdate
+    fileType
+    fileName
   }
 `)
 
@@ -41,6 +58,9 @@ export const projectPageLatestItemsModelItemFragment = graphql(`
     }
     commentThreadCount: commentThreads(limit: 0) {
       totalCount
+    }
+    pendingImportedVersions(limit: 1) {
+      ...PendingFileUpload
     }
     previewUrl
     createdAt

@@ -22,6 +22,7 @@
       :show-actions="false"
       :show-versions="false"
       disable-default-links
+      exclude-empty-models
       @update:loading="($event) => (queryLoading = $event)"
       @model-clicked="onModelClicked"
       @clear-search="clear"

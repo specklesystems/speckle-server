@@ -7,11 +7,15 @@ import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import {
   ProjectCommentsUpdatedMessage,
   ProjectModelsUpdatedMessage,
+  ProjectPendingModelsUpdatedMessage,
+  ProjectPendingVersionsUpdatedMessage,
   ProjectUpdatedMessage,
   ProjectVersionsPreviewGeneratedMessage,
   ProjectVersionsUpdatedMessage,
   SubscriptionProjectCommentsUpdatedArgs,
   SubscriptionProjectModelsUpdatedArgs,
+  SubscriptionProjectPendingModelsUpdatedArgs,
+  SubscriptionProjectPendingVersionsUpdatedArgs,
   SubscriptionProjectUpdatedArgs,
   SubscriptionProjectVersionsPreviewGeneratedArgs,
   SubscriptionProjectVersionsUpdatedArgs,
@@ -28,6 +32,7 @@ import {
   VersionGraphQLReturn
 } from '@/modules/core/helpers/graphTypes'
 import { CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes'
+import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -82,6 +87,11 @@ export enum ProjectSubscriptions {
 
 export enum ViewerSubscriptions {
   UserActivityBroadcasted = 'VIEWER_USER_ACTIVITY_BROADCASTED'
+}
+
+export enum FileImportSubscriptions {
+  ProjectPendingModelsUpdated = 'PROJECT_PENDING_MODELS_UPDATED',
+  ProjectPendingVersionsUpdated = 'PROJECT_PENDING_VERSIONS_UPDATED'
 }
 
 type NoVariables = Record<string, never>
@@ -153,9 +163,34 @@ type SubscriptionTypeMap = {
     }
     variables: SubscriptionProjectCommentsUpdatedArgs
   }
+  [FileImportSubscriptions.ProjectPendingModelsUpdated]: {
+    payload: {
+      projectPendingModelsUpdated: Merge<
+        ProjectPendingModelsUpdatedMessage,
+        { model: FileUploadGraphQLReturn }
+      >
+      projectId: string
+    }
+    variables: SubscriptionProjectPendingModelsUpdatedArgs
+  }
+  [FileImportSubscriptions.ProjectPendingVersionsUpdated]: {
+    payload: {
+      projectPendingVersionsUpdated: Merge<
+        ProjectPendingVersionsUpdatedMessage,
+        { version: FileUploadGraphQLReturn }
+      >
+      projectId: string
+      branchName: string
+    }
+    variables: SubscriptionProjectPendingVersionsUpdatedArgs
+  }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
-type SubscriptionEvent = UserSubscriptions | ProjectSubscriptions | ViewerSubscriptions
+type SubscriptionEvent =
+  | UserSubscriptions
+  | ProjectSubscriptions
+  | ViewerSubscriptions
+  | FileImportSubscriptions
 
 /**
  * Publish a GQL subscription event

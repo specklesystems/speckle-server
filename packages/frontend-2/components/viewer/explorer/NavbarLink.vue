@@ -1,5 +1,11 @@
 <template>
-  <HeaderNavLink :to="route.fullPath" :name="lastBreadcrumbName"></HeaderNavLink>
+  <div>
+    <HeaderNavLink
+      v-if="lastBreadcrumbName"
+      :to="route.fullPath"
+      :name="lastBreadcrumbName"
+    ></HeaderNavLink>
+  </div>
 </template>
 <script setup lang="ts">
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
@@ -9,7 +15,7 @@ const { modelsAndVersionIds: loadedModels, objects: loadedObjects } =
   useInjectedViewerLoadedResources()
 
 const lastBreadcrumbName = computed(() => {
-  if (!loadedModels.value?.length && !loadedObjects.value?.length) return 'loading'
+  if (!loadedModels.value?.length && !loadedObjects.value?.length) return null
   const totalLen = loadedModels.value.length + loadedObjects.value.length
   const hasObjects = loadedObjects.value.length !== 0
   const hasModels = loadedModels.value.length !== 0

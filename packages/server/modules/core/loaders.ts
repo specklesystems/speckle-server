@@ -50,6 +50,8 @@ import {
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { Users } from '@/modules/core/dbSchema'
+import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
+import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -165,6 +167,36 @@ export function buildRequestLoaders(ctx: AuthContext) {
                   const results = keyBy(
                     await getStreamBranchesByName(streamId, branchNames.slice()),
                     'name'
+                  )
+                  return branchNames.map((n) => results[n] || null)
+                }
+              )
+              streamBranchLoaders.set(streamId, loader)
+            }
+
+            return loader
+          }
+        }
+      })(),
+      /**
+       * Get a specific branch of a specific stream. Each stream ID technically has its own loader &
+       * thus its own query.
+       */
+      getStreamPendingBranchByName: (() => {
+        type BranchDataLoader = DataLoader<string, Nullable<FileUploadRecord>>
+        const streamBranchLoaders = new Map<string, BranchDataLoader>()
+        return {
+          clearAll: () => streamBranchLoaders.clear(),
+          forStream(streamId: string): BranchDataLoader {
+            let loader = streamBranchLoaders.get(streamId)
+            if (!loader) {
+              loader = new DataLoader<string, Nullable<FileUploadRecord>>(
+                async (branchNames) => {
+                  const results = keyBy(
+                    await getStreamPendingModels(streamId, {
+                      branchNamePattern: `(${branchNames.slice().join('|')})`
+                    }),
+                    'branchName'
                   )
                   return branchNames.map((n) => results[n] || null)
                 }

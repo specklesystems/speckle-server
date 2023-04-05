@@ -1,4 +1,8 @@
 import {
+  addCommitDeletedActivity,
+  addCommitMovedActivity
+} from '@/modules/activitystream/services/commitActivity'
+import {
   CommitInvalidAccessError,
   CommitBatchUpdateError
 } from '@/modules/core/errors/commit'
@@ -93,7 +97,7 @@ async function validateCommitsMove(
   const targetBranch = isOldBatchInput(params)
     ? params.targetBranch
     : params.targetModelName
-  const { streams } = await validateBatchBaseRules(params, userId)
+  const { streams, commitsWithStreams } = await validateBatchBaseRules(params, userId)
 
   if (streams.length > 1) {
     throw new CommitBatchUpdateError('Commits belong to different streams')
@@ -113,7 +117,7 @@ async function validateCommitsMove(
     )
   }
 
-  return { stream, branch }
+  return { stream, branch, commitsWithStreams }
 }
 
 /**
@@ -123,7 +127,7 @@ async function validateCommitsDelete(
   params: CommitsDeleteInput | DeleteVersionsInput,
   userId: string
 ) {
-  await validateBatchBaseRules(params, userId)
+  return await validateBatchBaseRules(params, userId)
 }
 
 /**
@@ -137,7 +141,10 @@ export async function batchMoveCommits(
     ? params
     : { commitIds: params.versionIds, targetBranch: params.targetModelName }
 
-  const { branch, stream } = await validateCommitsMove(params, userId)
+  const { branch, stream, commitsWithStreams } = await validateCommitsMove(
+    params,
+    userId
+  )
 
   try {
     const finalBranch =
@@ -150,6 +157,18 @@ export async function batchMoveCommits(
       }))
 
     await moveCommitsToBranch(commitIds, finalBranch.id)
+    await Promise.all(
+      commitsWithStreams.map(({ commit, stream }) =>
+        addCommitMovedActivity({
+          commitId: commit.id,
+          streamId: stream.id,
+          userId,
+          commit,
+          originalBranchId: commit.branchId,
+          newBranchId: finalBranch.id
+        })
+      )
+    )
     return finalBranch
   } catch (e) {
     const err = ensureError(e)
@@ -166,10 +185,21 @@ export async function batchDeleteCommits(
 ) {
   const commitIds = isOldBatchInput(params) ? params.commitIds : params.versionIds
 
-  await validateCommitsDelete(params, userId)
+  const { commitsWithStreams } = await validateCommitsDelete(params, userId)
 
   try {
     await deleteCommits(commitIds)
+    await Promise.all(
+      commitsWithStreams.map(({ commit, stream }) =>
+        addCommitDeletedActivity({
+          commitId: commit.id,
+          streamId: stream.id,
+          userId,
+          commit,
+          branchId: commit.branchId
+        })
+      )
+    )
   } catch (e) {
     const err = ensureError(e)
     throw new CommitBatchUpdateError('Batch commit delete failed', { cause: err })
