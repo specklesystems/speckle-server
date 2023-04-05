@@ -360,7 +360,7 @@ function getModelTreeItemsBaseQuery(
   options?: Partial<{ filterOutEmptyMain: boolean; parentModelName: string }>
 ) {
   const cleanInput = (input: string | null | undefined) => {
-    const clean = (input || '').replaceAll(/[^\w\s]+/g, '').toLowerCase()
+    const clean = (input || '').toLowerCase()
     const trimmed = trim(trim(clean), '/')
     return trimmed
   }

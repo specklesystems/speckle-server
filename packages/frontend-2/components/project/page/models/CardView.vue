@@ -45,6 +45,7 @@ import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 // TODO: Fix models list/card, versions list/card to just preload pending first, and then load actual ones afterwards with pagination
 // TODO: Fix cache updates to modelsTree cause of collection change
 // TODO: ModelsTreeItem members/sources filter
+// TODO: ModelsTreeItem children doesnt seem to work (test2/testerrr/a)
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
