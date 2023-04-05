@@ -273,7 +273,7 @@ const foregroundClasses = computed(() => {
     } else {
       if (props.color === 'invert') {
         classParts.push(
-          'text-foundation hover:text-foundation-2 dark:text-foreground dark:hover:text-foreground-2'
+          'text-foundation hover:text-foundation-2 dark:text-foreground dark:hover:text-foreground'
         )
       } else if (props.color === 'secondary') {
         classParts.push('text-foreground-2 hover:text-primary-focus')

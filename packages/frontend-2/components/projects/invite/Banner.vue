@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col space-y-4 sm:space-y-0 sm:space-x-2 sm:items-center sm:flex-row py-5 sm:py-2 px-2 rounded transition"
+    class="flex flex-col space-y-4 sm:space-y-0 sm:space-x-2 sm:items-center sm:flex-row py-5 sm:py-2"
   >
     <div class="flex space-x-2 items-center grow text-sm">
       <UserAvatar :user="invite.invitedBy" />
