@@ -1,5 +1,5 @@
 <template>
-  <div v-if="treeItemCount" class="space-y-4 max-w-full">
+  <div v-if="topLevelItems.length" class="space-y-4 max-w-full">
     <div v-for="item in topLevelItems" :key="item.id">
       <ProjectPageModelsStructureItem
         :item="item"
@@ -40,6 +40,7 @@ import { ProjectModelsTreeTopLevelQueryVariables } from '~~/lib/common/generated
 import { Nullable } from '@speckle/shared'
 import { projectModelsTreeTopLevelPaginationQuery } from '~~/lib/projects/graphql/queries'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
@@ -52,8 +53,9 @@ const props = defineProps<{
   disablePagination?: boolean
 }>()
 
-const cursor = ref(null as Nullable<string>)
+const infiniteLoadCacheBuster = ref(0)
 
+const evictModelFields = useEvictProjectModelFields()
 const areQueriesLoading = useQueryLoading()
 const projectId = computed(() => props.project.id)
 
@@ -66,21 +68,14 @@ const baseQueryVariables = computed(
 
 const infiniteLoadIdentifier = computed(() => {
   const vars = baseQueryVariables.value
-  return JSON.stringify(vars.filter)
+  return JSON.stringify(vars.filter) + `${infiniteLoadCacheBuster.value}`
 })
 
 // Base query (all pending uploads + first page of models)
-const {
-  result: treeTopLevelResult,
-  refetch: refetchTree,
-  variables: resultVariables,
-  onResult: onBaseQueryResult
-} = useQuery(projectModelsTreeTopLevelQuery, () => baseQueryVariables.value)
-
-onBaseQueryResult((res) => {
-  if (props.disablePagination) return
-  cursor.value = res.data?.project?.modelsTree.cursor || null
-})
+const { result: treeTopLevelResult, variables: resultVariables } = useQuery(
+  projectModelsTreeTopLevelQuery,
+  () => baseQueryVariables.value
+)
 
 const isFiltering = computed(() => {
   const filter = resultVariables.value?.filter
@@ -91,52 +86,59 @@ const isFiltering = computed(() => {
 })
 
 // Pagination query
-const { onResult: onExtraPagesLoaded, fetchMore: fetchMorePages } = useQuery(
+const { result: extraPagesResult, fetchMore: fetchMorePages } = useQuery(
   projectModelsTreeTopLevelPaginationQuery,
   () => ({
     ...baseQueryVariables.value,
-    cursor: cursor.value
+    cursor: null as Nullable<string>
   }),
-  () => ({ enabled: !!(cursor.value && !props.disablePagination) })
+  () => ({ enabled: !props.disablePagination })
 )
-
-onExtraPagesLoaded((res) => {
-  if (props.disablePagination) return
-  cursor.value = res.data?.project?.modelsTree.cursor || null
-})
 
 const pendingModels = computed(() =>
   isFiltering.value
     ? []
     : treeTopLevelResult.value?.project?.pendingImportedModels || []
 )
+const modelTreeItems = computed(
+  () => extraPagesResult.value?.project?.modelsTree.items || []
+)
+
 const topLevelItems = computed(
   (): Array<SingleLevelModelTreeItemFragment | PendingFileUploadFragment> =>
-    [
-      ...pendingModels.value,
-      ...(treeTopLevelResult.value?.project?.modelsTree.items || [])
-    ].slice(0, props.disablePagination ? 8 : undefined)
+    [...pendingModels.value, ...modelTreeItems.value].slice(
+      0,
+      props.disablePagination ? 8 : undefined
+    )
 )
-const treeItemCount = computed(() => topLevelItems.value.length)
 const canContribute = computed(() => canModifyModels(props.project))
 const isUsingSearch = computed(() => !!resultVariables.value?.filter?.search)
 const moreToLoad = computed(
   () =>
-    (!treeTopLevelResult.value?.project ||
-      treeTopLevelResult.value.project.modelsTree.items.length <
-        treeTopLevelResult.value.project.modelsTree.totalCount) &&
-    cursor.value
+    !extraPagesResult.value?.project ||
+    extraPagesResult.value.project.modelsTree.items.length <
+      extraPagesResult.value.project.modelsTree.totalCount
 )
 
-const onModelUpdated = () => refetchTree()
+const onModelUpdated = () => {
+  // Evict model data
+  evictModelFields(props.project.id)
+
+  // Reset pagination
+  infiniteLoadCacheBuster.value++
+}
 
 const infiniteLoad = async (state: InfiniteLoaderState) => {
-  if (!moreToLoad.value) return state.complete()
+  const cursor =
+    extraPagesResult.value?.project?.modelsTree.cursor ||
+    treeTopLevelResult.value?.project?.modelsTree.cursor ||
+    null
+  if (!moreToLoad.value || !cursor) return state.complete()
 
   try {
     await fetchMorePages({
       variables: {
-        cursor: cursor.value
+        cursor
       }
     })
   } catch (e) {
@@ -153,12 +155,5 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
 
 watch(areQueriesLoading, (newVal) => {
   emit('update:loading', newVal)
-})
-
-watch(infiniteLoadIdentifier, (newId, oldId) => {
-  // If filters changed, reset cursor
-  if (newId !== oldId) {
-    cursor.value = null
-  }
 })
 </script>

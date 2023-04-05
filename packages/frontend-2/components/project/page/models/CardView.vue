@@ -38,14 +38,7 @@ import {
 import { Nullable, SourceAppDefinition } from '@speckle/shared'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 
-// TODO: pendingImportedModels extract
-// TODO: List view pagination, but thats gonna result in having to paginate pending uploads together w/
-// actual branches.....so might as well do it for models query?
-// - or maybe just always put pending uploads first? but what if theres more than 16?
-// TODO: Fix models list/card, versions list/card to just preload pending first, and then load actual ones afterwards with pagination
-// TODO: Fix cache updates to modelsTree cause of collection change
 // TODO: ModelsTreeItem members/sources filter
-// TODO: ModelsTreeItem children doesnt seem to work (test2/testerrr/a)
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
@@ -72,7 +65,6 @@ const props = withDefaults(
   }
 )
 
-const cursor = ref(null as Nullable<string>)
 const areQueriesLoading = useQueryLoading()
 
 const latestModelsQueryVariables = computed(
@@ -98,20 +90,19 @@ const infiniteLoadIdentifier = computed(() => {
 })
 
 // Base query (all pending uploads + first page of models)
-const {
-  result: latestModelsResult,
-  variables: latestModelsVariables,
-  onResult: onLatestModelsLoaded
-} = useQuery(latestModelsQuery, () => latestModelsQueryVariables.value)
+const { result: latestModelsResult, variables: latestModelsVariables } = useQuery(
+  latestModelsQuery,
+  () => latestModelsQueryVariables.value
+)
 
 // Pagination query
-const { onResult: onExtraPagesLoaded, fetchMore: fetchMorePages } = useQuery(
+const { result: extraPagesResult, fetchMore: fetchMorePages } = useQuery(
   latestModelsPaginationQuery,
   () => ({
     ...latestModelsQueryVariables.value,
-    cursor: cursor.value
+    cursor: null as Nullable<string>
   }),
-  () => ({ enabled: !!(cursor.value && !props.disablePagination) })
+  () => ({ enabled: !props.disablePagination })
 )
 
 const isFiltering = computed(() => {
@@ -122,21 +113,11 @@ const isFiltering = computed(() => {
   return false
 })
 
-onLatestModelsLoaded((res) => {
-  if (props.disablePagination) return
-  cursor.value = res.data?.project?.models?.cursor || null
-})
-
-onExtraPagesLoaded((res) => {
-  if (props.disablePagination) return
-  cursor.value = res.data?.project?.models?.cursor || null
-})
-
 const isSearchResults = computed(() => {
   const filter = latestModelsVariables.value?.filter || {}
   return Object.values(filter).some((v) => !!v)
 })
-const models = computed(() => latestModelsResult.value?.project?.models?.items || [])
+const models = computed(() => extraPagesResult.value?.project?.models?.items || [])
 const pendingModels = computed(() =>
   isFiltering.value
     ? []
@@ -152,19 +133,22 @@ const items = computed(() =>
 const itemsCount = computed(() => items.value.length)
 const moreToLoad = computed(
   () =>
-    (!latestModelsResult.value?.project ||
-      latestModelsResult.value.project.models.items.length <
-        latestModelsResult.value.project.models.totalCount) &&
-    cursor.value
+    !latestModelsResult.value?.project ||
+    latestModelsResult.value.project.models.items.length <
+      latestModelsResult.value.project.models.totalCount
 )
 
 const infiniteLoad = async (state: InfiniteLoaderState) => {
-  if (!moreToLoad.value) return state.complete()
+  const cursor =
+    extraPagesResult.value?.project?.models.cursor ||
+    latestModelsResult.value?.project?.models.cursor ||
+    null
+  if (!moreToLoad.value || !cursor) return state.complete()
 
   try {
     await fetchMorePages({
       variables: {
-        cursor: cursor.value
+        cursor
       }
     })
   } catch (e) {
@@ -181,12 +165,5 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
 
 watch(areQueriesLoading, (newVal) => {
   emit('update:loading', newVal)
-})
-
-watch(infiniteLoadIdentifier, (newId, oldId) => {
-  // If filters changed, reset cursor
-  if (newId !== oldId) {
-    cursor.value = null
-  }
 })
 </script>
