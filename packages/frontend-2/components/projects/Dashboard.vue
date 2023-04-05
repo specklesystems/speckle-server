@@ -4,15 +4,19 @@
     <div
       class="w-[calc(100vw-8px)] ml-[calc(50%-50vw+4px)] mr-[calc(50%-50vw+4px)] -mt-6 mb-10 bg-blue-500/10 rounded-b-md"
     >
-      <OnboardingChecklistV1 />
-
+      <ClientOnly>
+        <div v-if="showChecklist">
+          <OnboardingChecklistV1 show-intro />
+        </div>
+      </ClientOnly>
       <ProjectsInviteBanners
         v-if="projectsPanelResult?.activeUser?.projectInvites?.length"
         :invites="projectsPanelResult?.activeUser"
       />
     </div>
-    <div class="flex flex-col space-y-2 sm:flex-row sm:items-center mb-8 top-16">
+    <div class="flex flex-col space-y-2 sm:flex-row sm:items-center mb-8 pt-4">
       <h1 class="h4 font-bold">Projects</h1>
+
       <div class="flex-grow flex items-center justify-end space-x-2">
         <FormTextInput
           v-if="!showEmptyState"
@@ -68,6 +72,7 @@ import { projectRoute } from '~~/lib/common/helpers/route'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { Nullable } from '@speckle/shared'
+import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 
 const onUserProjectsUpdateSubscription = graphql(`
   subscription OnUserProjectsUpdate {
@@ -247,4 +252,32 @@ watch(search, (newVal) => {
 })
 
 watch(areQueriesLoading, (newVal) => (showLoadingBar.value = newVal))
+
+const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
+  `hasCompletedChecklistV1`,
+  { default: () => false }
+)
+
+const hasDismissedChecklistTime = useSynchronizedCookie<string | undefined>(
+  `hasDismissedChecklistTime`,
+  { default: () => undefined }
+)
+
+const hasDismissedChecklistTimeAgo = computed(() => {
+  return (
+    new Date().getTime() -
+    new Date(hasDismissedChecklistTime.value || Date.now()).getTime()
+  )
+})
+
+const showChecklist = computed(() => {
+  if (hasCompletedChecklistV1.value) return false
+  if (hasDismissedChecklistTime.value === undefined) return true
+  if (
+    hasDismissedChecklistTime.value !== undefined &&
+    hasDismissedChecklistTimeAgo.value > 86400000 // 10_0000 // 86400000
+  )
+    return true
+  return false
+})
 </script>

@@ -1,9 +1,9 @@
 <template>
-  <OnboardingDialogBase @close="emit('close')" @cancel="emit('cancel')">
+  <OnboardingDialogBase>
     <template #header>One step away from sending a model to Speckle!</template>
     <div class="w-full h-72 bg-primary rounded-xl flex items-center justify-center">
       <PlayIcon class="w-10 h-10 text-white" />
-      <span class="text-xs">How and why to login into manager</span>
+      <span class="text-xs">Install manager + How and why to login into manager</span>
     </div>
 
     <div class="flex justify-center">
@@ -17,7 +17,7 @@
 import { PlayIcon } from '@heroicons/vue/24/solid'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 
-const emit = defineEmits(['close', 'cancel'])
+const emit = defineEmits(['done'])
 
 const hasAuthorizedManager = useSynchronizedCookie<boolean>(`hasAuthorizedManager`)
 
@@ -29,6 +29,6 @@ const authoriseManager = () => {
   a.click()
 
   hasAuthorizedManager.value = true
-  emit('close')
+  emit('done')
 }
 </script>

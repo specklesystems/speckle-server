@@ -1,5 +1,5 @@
 <template>
-  <OnboardingDialogBase @close="emit('close')" @cancel="emit('cancel')">
+  <OnboardingDialogBase>
     <template #header>Ready to send your first model?</template>
     <div class="w-full h-72 bg-primary rounded-xl flex items-center justify-center">
       <PlayIcon class="w-10 h-10 text-white" />
@@ -18,7 +18,7 @@
         text
         @click.stop="downloadManager(os === 'Windows' ? 'dmg' : 'exe')"
       >
-        s Download for {{ os === 'Windows' ? 'Mac OS' : 'Windows' }}
+        Download for {{ os === 'Windows' ? 'Mac OS' : 'Windows' }}
       </FormButton>
     </div>
     <div v-else class="flex justify-center flex-col space-y-2">
@@ -42,7 +42,7 @@ import { PlayIcon } from '@heroicons/vue/24/solid'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
-const emit = defineEmits(['close', 'cancel'])
+const emit = defineEmits(['done'])
 
 const hasDownloadedManager = useSynchronizedCookie<boolean>(`hasDownloadedManager`)
 
@@ -106,6 +106,6 @@ const downloadManager = (ext: string | null = null) => {
   })
 
   hasDownloadedManager.value = true
-  emit('close')
+  emit('done')
 }
 </script>

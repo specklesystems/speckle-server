@@ -6,14 +6,12 @@
       <span class="text-xs">How to do a first model upload</span>
     </div>
     <div class="flex justify-center">
-      <FormButton size="xl" class="shadow-md" @click="emit('close')">
-        Got it!
-      </FormButton>
+      <FormButton size="xl" class="shadow-md" @click="emit('done')">Got it!</FormButton>
     </div>
   </OnboardingDialogBase>
 </template>
 <script setup lang="ts">
 import { PlayIcon } from '@heroicons/vue/24/solid'
 
-const emit = defineEmits(['close', 'cancel'])
+const emit = defineEmits(['done'])
 </script>

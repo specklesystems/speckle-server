@@ -27,7 +27,7 @@
   </div>
 </template>
 <script setup lang="ts">
-const emit = defineEmits(['close', 'cancel'])
+const emit = defineEmits(['cancel'])
 withDefaults(defineProps<{ allowCancel?: boolean; cancelPrompt?: string }>(), {
   allowCancel: true,
   cancelPrompt: 'Cancel'

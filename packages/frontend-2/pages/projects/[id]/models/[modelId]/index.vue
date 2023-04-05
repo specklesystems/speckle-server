@@ -23,7 +23,7 @@
         <!-- Tour host -->
         <div
           v-if="tourState.showTour"
-          class="z-30 fixed w-full h-full flex justify-center items-center pointer-events-none"
+          class="fixed w-full h-full flex justify-center items-center pointer-events-none z-[100]"
         >
           <TourOnboarding />
         </div>
