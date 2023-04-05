@@ -5,6 +5,8 @@
         v-if="gridOrList === GridListToggleValue.List"
         :search="finalSearch"
         :project="project"
+        :source-apps="sourceApps"
+        :contributors="contributors"
         @update:loading="finalLoading = $event"
         @clear-search="clearSearch"
       />

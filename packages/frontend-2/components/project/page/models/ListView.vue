@@ -16,7 +16,7 @@
   </div>
   <CommonEmptySearchState
     v-else-if="
-      search && (treeTopLevelResult?.project?.modelsTree.items || []).length === 0
+      isFiltering && (treeTopLevelResult?.project?.modelsTree.items || []).length === 0
     "
     @clear-search="$emit('clear-search')"
   />
@@ -31,13 +31,14 @@
 import {
   PendingFileUploadFragment,
   ProjectPageLatestItemsModelsFragment,
-  SingleLevelModelTreeItemFragment
+  SingleLevelModelTreeItemFragment,
+  FormUsersSelectItemFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import { projectModelsTreeTopLevelQuery } from '~~/lib/projects/graphql/queries'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { ProjectModelsTreeTopLevelQueryVariables } from '~~/lib/common/generated/gql/graphql'
-import { Nullable } from '@speckle/shared'
+import { Nullable, SourceAppDefinition } from '@speckle/shared'
 import { projectModelsTreeTopLevelPaginationQuery } from '~~/lib/projects/graphql/queries'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
@@ -51,6 +52,8 @@ const props = defineProps<{
   project: ProjectPageLatestItemsModelsFragment
   search?: string
   disablePagination?: boolean
+  sourceApps?: SourceAppDefinition[]
+  contributors?: FormUsersSelectItemFragment[]
 }>()
 
 const infiniteLoadCacheBuster = ref(0)
@@ -62,7 +65,15 @@ const projectId = computed(() => props.project.id)
 const baseQueryVariables = computed(
   (): ProjectModelsTreeTopLevelQueryVariables => ({
     projectId: projectId.value,
-    filter: props.search ? { search: props.search } : undefined
+    filter: {
+      search: props.search || null,
+      sourceApps: props.sourceApps?.length
+        ? props.sourceApps.map((a) => a.searchKey)
+        : null,
+      contributors: props.contributors?.length
+        ? props.contributors.map((c) => c.id)
+        : null
+    }
   })
 )
 
@@ -79,9 +90,9 @@ const { result: treeTopLevelResult, variables: resultVariables } = useQuery(
 
 const isFiltering = computed(() => {
   const filter = resultVariables.value?.filter
-  // if (filter?.contributors?.length) return true
+  if (filter?.contributors?.length) return true
   if (filter?.search?.length) return true
-  // if (filter?.contributors?.length) return true
+  if (filter?.sourceApps?.length) return true
   return false
 })
 

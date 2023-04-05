@@ -42,6 +42,14 @@ input ProjectModelsTreeFilter {
   Search for specific models. If used, tree items from different levels may be mixed.
   """
   search: String
+  """
+  Filter by source apps used in models
+  """
+  sourceApps: [String!]
+  """
+  Filter by IDs of contributors who participated in models
+  """
+  contributors: [String!]
 }
 
 type ViewerResourceGroup {

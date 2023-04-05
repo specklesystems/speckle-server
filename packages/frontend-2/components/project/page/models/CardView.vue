@@ -14,7 +14,7 @@
     />
   </div>
   <CommonEmptySearchState
-    v-else-if="isSearchResults && items.length === 0"
+    v-else-if="isFiltering && items.length === 0"
     @clear-search="() => $emit('clear-search')"
   />
   <div v-else>TODO: Grid empty state</div>
@@ -113,10 +113,6 @@ const isFiltering = computed(() => {
   return false
 })
 
-const isSearchResults = computed(() => {
-  const filter = latestModelsVariables.value?.filter || {}
-  return Object.values(filter).some((v) => !!v)
-})
 const models = computed(() => extraPagesResult.value?.project?.models?.items || [])
 const pendingModels = computed(() =>
   isFiltering.value

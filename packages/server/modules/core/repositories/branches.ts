@@ -14,7 +14,6 @@ import {
 import crs from 'crypto-random-string'
 import { Knex } from 'knex'
 import { clamp, last, trim } from 'lodash'
-import { Merge } from 'type-fest'
 
 export const generateBranchId = () => crs({ length: 10 })
 
@@ -275,10 +274,13 @@ export async function getPaginatedProjectModelsTotalCount(
 
 function getModelTreeItemsFilteredBaseQuery(
   projectId: string,
-  args: Merge<ProjectModelsTreeArgs, { filter: { search: string } }>,
+  args: ProjectModelsTreeArgs,
   options?: Partial<{ filterOutEmptyMain: boolean }>
 ) {
-  const search = args.filter.search
+  const search = args.filter?.search
+  const sourceApps = args.filter?.sourceApps || []
+  const contributors = args.filter?.contributors || []
+
   const BranchesJoin = Branches.with({ withCustomTablePrefix: 'b2' })
 
   const q = Branches.knex()
@@ -290,13 +292,12 @@ function getModelTreeItemsFilteredBaseQuery(
       lj.on(
         BranchesJoin.col.name,
         'ilike',
-        knex.raw(`(?? || '%')`, [Branches.col.name])
+        knex.raw(`(?? || '%')`, [Branches.col.name]) // TODO: Needs to be '/%'?
       )
         .andOn(BranchesJoin.col.name, '!=', Branches.col.name)
         .andOn(BranchesJoin.col.streamId, '=', Branches.col.streamId)
     })
     .where(Branches.col.streamId, projectId)
-    .andWhereILike(Branches.col.name, `%${search}%`)
     .groupBy(Branches.col.id)
     .orderBy(Branches.col.updatedAt, 'desc')
 
@@ -312,12 +313,34 @@ function getModelTreeItemsFilteredBaseQuery(
     })
   }
 
+  if (search?.length) {
+    q.andWhereILike(Branches.col.name, `%${search}%`)
+  }
+
+  if (sourceApps.length || contributors.length) {
+    q.leftJoin(
+      BranchCommits.name,
+      BranchCommits.col.branchId,
+      Branches.col.id
+    ).leftJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
+
+    if (contributors.length) {
+      q.whereIn(Commits.col.author, contributors)
+    }
+
+    if (sourceApps.length) {
+      q.whereRaw(
+        knex.raw(`?? ~* ?`, [Commits.col.sourceApplication, sourceApps.join('|')])
+      )
+    }
+  }
+
   return q
 }
 
 export async function getModelTreeItemsFiltered(
   projectId: string,
-  args: Merge<ProjectModelsTreeArgs, { filter: { search: string } }>,
+  args: ProjectModelsTreeArgs,
   options?: Partial<{ filterOutEmptyMain: boolean }>
 ) {
   const limit = clamp(args.limit || 25, 0, 100)
@@ -346,7 +369,7 @@ export async function getModelTreeItemsFiltered(
 
 export async function getModelTreeItemsFilteredTotalCount(
   projectId: string,
-  args: Merge<ProjectModelsTreeArgs, { filter: { search: string } }>,
+  args: ProjectModelsTreeArgs,
   options?: Partial<{ filterOutEmptyMain: boolean }>
 ) {
   const baseQ = getModelTreeItemsFilteredBaseQuery(projectId, args, options)

@@ -1404,8 +1404,12 @@ export type ProjectModelsFilter = {
 };
 
 export type ProjectModelsTreeFilter = {
+  /** Filter by IDs of contributors who participated in models */
+  contributors?: InputMaybe<Array<Scalars['String']>>;
   /** Search for specific models. If used, tree items from different levels may be mixed. */
   search?: InputMaybe<Scalars['String']>;
+  /** Filter by source apps used in models */
+  sourceApps?: InputMaybe<Array<Scalars['String']>>;
 };
 
 export type ProjectModelsUpdatedMessage = {

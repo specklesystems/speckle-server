@@ -60,32 +60,32 @@ export async function getProjectTopLevelModelsTree(
   args: ProjectModelsTreeArgs,
   options?: Partial<{ filterOutEmptyMain: boolean }>
 ): Promise<Merge<ModelsTreeItemCollection, { items: ModelsTreeItemGraphQLReturn[] }>> {
-  const [items, totalCount] = await Promise.all([
-    args.filter?.search
-      ? getModelTreeItemsFiltered(
-          projectId,
-          {
-            ...args,
-            filter: {
-              search: args.filter.search
-            }
-          },
-          options
-        )
-      : getModelTreeItems(projectId, args, options),
-    args.filter?.search
-      ? getModelTreeItemsFilteredTotalCount(
-          projectId,
-          {
-            ...args,
-            filter: {
-              search: args.filter.search
-            }
-          },
-          options
-        )
-      : getModelTreeItemsTotalCount(projectId, options)
-  ])
+  let items: ModelsTreeItemGraphQLReturn[] = []
+  let totalCount = 0
+
+  // TODO: Only use query with filtering support?
+
+  if (
+    args.filter?.search ||
+    args.filter?.contributors?.length ||
+    args.filter?.sourceApps?.length
+  ) {
+    const [filteredItems, filteredTotalCount] = await Promise.all([
+      getModelTreeItemsFiltered(projectId, args, options),
+      getModelTreeItemsFilteredTotalCount(projectId, args, options)
+    ])
+
+    items = filteredItems
+    totalCount = filteredTotalCount
+  } else {
+    const [unfilteredItems, unfilteredTotalCount] = await Promise.all([
+      getModelTreeItems(projectId, args, options),
+      getModelTreeItemsTotalCount(projectId, options)
+    ])
+
+    items = unfilteredItems
+    totalCount = unfilteredTotalCount
+  }
 
   const lastItem = last(items)
   return {
