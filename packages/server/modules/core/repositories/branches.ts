@@ -245,7 +245,7 @@ export async function getPaginatedProjectModelsItems(
 
   if (cursor) q.andWhere(Branches.col.updatedAt, '<', cursor)
 
-  const results = await q
+  const results = (await q) as BranchRecord[]
   return {
     items: results,
     cursor:

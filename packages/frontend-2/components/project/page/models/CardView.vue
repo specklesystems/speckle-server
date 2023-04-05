@@ -20,22 +20,29 @@
   <div v-else>TODO: Grid empty state</div>
   <InfiniteLoading
     v-if="items?.length && !disablePagination"
+    :settings="{ identifier: infiniteLoadIdentifier }"
     @infinite="infiniteLoad"
   />
 </template>
 <script setup lang="ts">
 import {
   FormUsersSelectItemFragment,
+  ProjectLatestModelsPaginationQueryVariables,
   ProjectPageLatestItemsModelsFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
-import { latestModelsQuery } from '~~/lib/projects/graphql/queries'
+import {
+  latestModelsPaginationQuery,
+  latestModelsQuery
+} from '~~/lib/projects/graphql/queries'
 import { Nullable, SourceAppDefinition } from '@speckle/shared'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 
 // TODO: pendingImportedModels extract
 // TODO: List view pagination, but thats gonna result in having to paginate pending uploads together w/
 // actual branches.....so might as well do it for models query?
+// - or maybe just always put pending uploads first? but what if theres more than 16?
+// TODO: Fix models list/card, versions list/card to just preload pending first, and then load actual ones afterwards with pagination
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
@@ -64,28 +71,52 @@ const props = withDefaults(
 
 const cursor = ref(null as Nullable<string>)
 const areQueriesLoading = useQueryLoading()
+
+const latestModelsQueryVariables = computed(
+  (): ProjectLatestModelsPaginationQueryVariables => ({
+    projectId: props.project.id,
+    filter: {
+      search: props.search || null,
+      excludeIds: props.excludedIds || null,
+      onlyWithVersions: !!props.excludeEmptyModels,
+      sourceApps: props.sourceApps?.length
+        ? props.sourceApps.map((a) => a.searchKey)
+        : null,
+      contributors: props.contributors?.length
+        ? props.contributors.map((c) => c.id)
+        : null
+    }
+  })
+)
+
+const infiniteLoadIdentifier = computed(() => {
+  const vars = latestModelsQueryVariables.value
+  return JSON.stringify(vars.filter)
+})
+
+// Base query (all pending uploads + first page of models)
 const {
   result: latestModelsResult,
   variables: latestModelsVariables,
-  fetchMore: fetchMoreModels,
   onResult: onLatestModelsLoaded
-} = useQuery(latestModelsQuery, () => ({
-  projectId: props.project.id,
-  filter: {
-    search: props.search || null,
-    excludeIds: props.excludedIds || null,
-    onlyWithVersions: !!props.excludeEmptyModels,
-    sourceApps: props.sourceApps?.length
-      ? props.sourceApps.map((a) => a.searchKey)
-      : null,
-    contributors: props.contributors?.length
-      ? props.contributors.map((c) => c.id)
-      : null
-  },
-  cursor: cursor.value
-}))
+} = useQuery(latestModelsQuery, () => latestModelsQueryVariables.value)
+
+// Pagination query
+const { onResult: onExtraPagesLoaded, fetchMore: fetchMorePages } = useQuery(
+  latestModelsPaginationQuery,
+  () => ({
+    ...latestModelsQueryVariables.value,
+    cursor: cursor.value
+  }),
+  () => ({ enabled: !!cursor.value })
+)
 
 onLatestModelsLoaded((res) => {
+  if (props.disablePagination) return
+  cursor.value = res.data?.project?.models?.cursor || null
+})
+
+onExtraPagesLoaded((res) => {
   if (props.disablePagination) return
   cursor.value = res.data?.project?.models?.cursor || null
 })
@@ -120,7 +151,7 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
   if (!moreToLoad.value) return state.complete()
 
   try {
-    await fetchMoreModels({
+    await fetchMorePages({
       variables: {
         cursor: cursor.value
       }
@@ -139,5 +170,12 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
 
 watch(areQueriesLoading, (newVal) => {
   emit('update:loading', newVal)
+})
+
+watch(infiniteLoadIdentifier, (newId, oldId) => {
+  // If filters changed, reset cursor
+  if (newId !== oldId) {
+    cursor.value = null
+  }
 })
 </script>

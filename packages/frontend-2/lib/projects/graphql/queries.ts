@@ -36,7 +36,25 @@ export const projectPageQuery = graphql(`
 `)
 
 export const latestModelsQuery = graphql(`
-  query ProjectLatestModels(
+  query ProjectLatestModels($projectId: String!, $filter: ProjectModelsFilter) {
+    project(id: $projectId) {
+      id
+      models(cursor: null, limit: 16, filter: $filter) {
+        totalCount
+        cursor
+        items {
+          ...ProjectPageLatestItemsModelItem
+        }
+      }
+      pendingImportedModels {
+        ...PendingFileUpload
+      }
+    }
+  }
+`)
+
+export const latestModelsPaginationQuery = graphql(`
+  query ProjectLatestModelsPagination(
     $projectId: String!
     $filter: ProjectModelsFilter
     $cursor: String = null
@@ -49,9 +67,6 @@ export const latestModelsQuery = graphql(`
         items {
           ...ProjectPageLatestItemsModelItem
         }
-      }
-      pendingImportedModels(limit: 16) {
-        ...PendingFileUpload
       }
     }
   }
