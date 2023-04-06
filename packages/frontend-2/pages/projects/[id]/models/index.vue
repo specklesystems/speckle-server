@@ -67,6 +67,7 @@ const { result } = useQuery(projectModelsPageQuery, () => ({
 
 const project = computed(() => result.value?.project)
 
+// TODO: Maybe move these to a parent page that is the same for all projects subpages?
 // Subscriptions for tracking updates to project, models, versions
 useProjectVersionUpdateTracking(projectId)
 useProjectPendingVersionUpdateTracking(projectId)

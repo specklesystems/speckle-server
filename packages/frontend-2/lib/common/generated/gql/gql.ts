@@ -21,6 +21,8 @@ const documents = {
     "\n  fragment AuthStategiesServerInfoFragment on ServerInfo {\n    authStrategies {\n      id\n      name\n      url\n    }\n  }\n": types.AuthStategiesServerInfoFragmentFragmentDoc,
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": types.CommonModelSelectorModelFragmentDoc,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.FormUsersSelectItemFragmentDoc,
+    "\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n": types.ProjectDiscussionsPageHeader_ProjectFragmentDoc,
+    "\n  fragment ProjectDiscussionsPageResults_Project on Project {\n    id\n    commentThreads(cursor: null, limit: 8) {\n      totalCount\n      cursor\n      items {\n        ...ProjectPageLatestItemsCommentItem\n      }\n    }\n  }\n": types.ProjectDiscussionsPageResults_ProjectFragmentDoc,
     "\n  fragment ProjectModelPageHeaderProject on Project {\n    id\n    name\n    model(id: $modelId) {\n      id\n      name\n    }\n  }\n": types.ProjectModelPageHeaderProjectFragmentDoc,
     "\n  fragment ProjectModelPageVersionsPagination on Project {\n    id\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n  }\n": types.ProjectModelPageVersionsPaginationFragmentDoc,
     "\n  fragment ProjectModelPageVersionsProject on Project {\n    id\n    role\n    model(id: $modelId) {\n      id\n      pendingImportedVersions {\n        ...PendingFileUpload\n      }\n    }\n    ...ProjectModelPageVersionsPagination\n  }\n": types.ProjectModelPageVersionsProjectFragmentDoc,
@@ -94,12 +96,13 @@ const documents = {
     "\n  query ProjectModelsTreeTopLevel(\n    $projectId: String!\n    $filter: ProjectModelsTreeFilter\n  ) {\n    project(id: $projectId) {\n      id\n      modelsTree(cursor: null, limit: 8, filter: $filter) {\n        totalCount\n        cursor\n        items {\n          ...SingleLevelModelTreeItem\n        }\n      }\n      pendingImportedModels {\n        ...PendingFileUpload\n      }\n    }\n  }\n": types.ProjectModelsTreeTopLevelDocument,
     "\n  query ProjectModelsTreeTopLevelPagination(\n    $projectId: String!\n    $filter: ProjectModelsTreeFilter\n    $cursor: String = null\n  ) {\n    project(id: $projectId) {\n      id\n      modelsTree(cursor: $cursor, limit: 8, filter: $filter) {\n        totalCount\n        cursor\n        items {\n          ...SingleLevelModelTreeItem\n        }\n      }\n    }\n  }\n": types.ProjectModelsTreeTopLevelPaginationDocument,
     "\n  query ProjectModelChildrenTree($projectId: String!, $parentName: String!) {\n    project(id: $projectId) {\n      id\n      modelChildrenTree(fullName: $parentName) {\n        ...SingleLevelModelTreeItem\n      }\n    }\n  }\n": types.ProjectModelChildrenTreeDocument,
-    "\n  query ProjectLatestCommentThreads($projectId: String!) {\n    project(id: $projectId) {\n      id\n      commentThreads(cursor: null, limit: 8) {\n        totalCount\n        cursor\n        items {\n          ...ProjectPageLatestItemsCommentItem\n        }\n      }\n    }\n  }\n": types.ProjectLatestCommentThreadsDocument,
+    "\n  query ProjectLatestCommentThreads($projectId: String!, $cursor: String = null) {\n    project(id: $projectId) {\n      id\n      commentThreads(cursor: $cursor, limit: 8) {\n        totalCount\n        cursor\n        items {\n          ...ProjectPageLatestItemsCommentItem\n        }\n      }\n    }\n  }\n": types.ProjectLatestCommentThreadsDocument,
     "\n  query ProjectInvite($projectId: String!, $token: String) {\n    projectInvite(projectId: $projectId, token: $token) {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectInviteDocument,
     "\n  query ProjectModelCheck($projectId: String!, $modelId: String!) {\n    project(id: $projectId) {\n      model(id: $modelId) {\n        id\n      }\n    }\n  }\n": types.ProjectModelCheckDocument,
     "\n  query ProjectModelPage(\n    $projectId: String!\n    $modelId: String!\n    $versionsCursor: String\n  ) {\n    project(id: $projectId) {\n      ...ProjectModelPageHeaderProject\n      ...ProjectModelPageVersionsProject\n    }\n  }\n": types.ProjectModelPageDocument,
     "\n  query ProjectModelVersions(\n    $projectId: String!\n    $modelId: String!\n    $versionsCursor: String\n  ) {\n    project(id: $projectId) {\n      ...ProjectModelPageVersionsPagination\n    }\n  }\n": types.ProjectModelVersionsDocument,
     "\n  query ProjectModelsPage($projectId: String!) {\n    project(id: $projectId) {\n      ...ProjectModelsPageHeader_Project\n      ...ProjectModelsPageResults_Project\n    }\n  }\n": types.ProjectModelsPageDocument,
+    "\n  query ProjectDiscussionsPage($projectId: String!) {\n    project(id: $projectId) {\n      ...ProjectDiscussionsPageHeader_Project\n      ...ProjectDiscussionsPageResults_Project\n    }\n  }\n": types.ProjectDiscussionsPageDocument,
     "\n  subscription OnProjectUpdated($id: String!) {\n    projectUpdated(id: $id) {\n      id\n      type\n      project {\n        ...ProjectPageProject\n        ...ProjectDashboardItemNoModels\n      }\n    }\n  }\n": types.OnProjectUpdatedDocument,
     "\n  subscription OnProjectModelsUpdate($id: String!) {\n    projectModelsUpdated(id: $id) {\n      id\n      type\n      model {\n        id\n        versions(limit: 1) {\n          items {\n            id\n            referencedObject\n          }\n        }\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n  }\n": types.OnProjectModelsUpdateDocument,
     "\n  subscription OnProjectVersionsUpdate($id: String!) {\n    projectVersionsUpdated(id: $id) {\n      id\n      modelId\n      type\n      version {\n        id\n        ...ViewerModelVersionCardItem\n        ...ProjectModelPageVersionsCardVersion\n        model {\n          id\n          ...ProjectPageLatestItemsModelItem\n        }\n      }\n    }\n  }\n": types.OnProjectVersionsUpdateDocument,
@@ -173,6 +176,14 @@ export function graphql(source: "\n  fragment CommonModelSelectorModel on Model 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n"): (typeof documents)["\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ProjectDiscussionsPageResults_Project on Project {\n    id\n    commentThreads(cursor: null, limit: 8) {\n      totalCount\n      cursor\n      items {\n        ...ProjectPageLatestItemsCommentItem\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectDiscussionsPageResults_Project on Project {\n    id\n    commentThreads(cursor: null, limit: 8) {\n      totalCount\n      cursor\n      items {\n        ...ProjectPageLatestItemsCommentItem\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -468,7 +479,7 @@ export function graphql(source: "\n  query ProjectModelChildrenTree($projectId: 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ProjectLatestCommentThreads($projectId: String!) {\n    project(id: $projectId) {\n      id\n      commentThreads(cursor: null, limit: 8) {\n        totalCount\n        cursor\n        items {\n          ...ProjectPageLatestItemsCommentItem\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query ProjectLatestCommentThreads($projectId: String!) {\n    project(id: $projectId) {\n      id\n      commentThreads(cursor: null, limit: 8) {\n        totalCount\n        cursor\n        items {\n          ...ProjectPageLatestItemsCommentItem\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query ProjectLatestCommentThreads($projectId: String!, $cursor: String = null) {\n    project(id: $projectId) {\n      id\n      commentThreads(cursor: $cursor, limit: 8) {\n        totalCount\n        cursor\n        items {\n          ...ProjectPageLatestItemsCommentItem\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query ProjectLatestCommentThreads($projectId: String!, $cursor: String = null) {\n    project(id: $projectId) {\n      id\n      commentThreads(cursor: $cursor, limit: 8) {\n        totalCount\n        cursor\n        items {\n          ...ProjectPageLatestItemsCommentItem\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -489,6 +500,10 @@ export function graphql(source: "\n  query ProjectModelVersions(\n    $projectId
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query ProjectModelsPage($projectId: String!) {\n    project(id: $projectId) {\n      ...ProjectModelsPageHeader_Project\n      ...ProjectModelsPageResults_Project\n    }\n  }\n"): (typeof documents)["\n  query ProjectModelsPage($projectId: String!) {\n    project(id: $projectId) {\n      ...ProjectModelsPageHeader_Project\n      ...ProjectModelsPageResults_Project\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ProjectDiscussionsPage($projectId: String!) {\n    project(id: $projectId) {\n      ...ProjectDiscussionsPageHeader_Project\n      ...ProjectDiscussionsPageResults_Project\n    }\n  }\n"): (typeof documents)["\n  query ProjectDiscussionsPage($projectId: String!) {\n    project(id: $projectId) {\n      ...ProjectDiscussionsPageHeader_Project\n      ...ProjectDiscussionsPageResults_Project\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

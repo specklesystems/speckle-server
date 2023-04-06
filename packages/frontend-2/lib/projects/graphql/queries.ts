@@ -124,10 +124,10 @@ export const projectModelChildrenTreeQuery = graphql(`
 `)
 
 export const latestCommentThreadsQuery = graphql(`
-  query ProjectLatestCommentThreads($projectId: String!) {
+  query ProjectLatestCommentThreads($projectId: String!, $cursor: String = null) {
     project(id: $projectId) {
       id
-      commentThreads(cursor: null, limit: 8) {
+      commentThreads(cursor: $cursor, limit: 8) {
         totalCount
         cursor
         items {
@@ -186,6 +186,15 @@ export const projectModelsPageQuery = graphql(`
     project(id: $projectId) {
       ...ProjectModelsPageHeader_Project
       ...ProjectModelsPageResults_Project
+    }
+  }
+`)
+
+export const projectDiscussionsPageQuery = graphql(`
+  query ProjectDiscussionsPage($projectId: String!) {
+    project(id: $projectId) {
+      ...ProjectDiscussionsPageHeader_Project
+      ...ProjectDiscussionsPageResults_Project
     }
   }
 `)

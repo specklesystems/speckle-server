@@ -63,8 +63,6 @@ export async function getProjectTopLevelModelsTree(
   let items: ModelsTreeItemGraphQLReturn[] = []
   let totalCount = 0
 
-  // TODO: Only use query with filtering support?
-
   if (
     args.filter?.search ||
     args.filter?.contributors?.length ||

@@ -13,10 +13,14 @@ import { ProjectLatestCommentThreadsQuery } from '~~/lib/common/generated/gql/gr
 
 const props = defineProps<{
   threads?: ProjectLatestCommentThreadsQuery
+  disablePagination?: boolean
 }>()
 
 const items = computed(() =>
-  (props.threads?.project?.commentThreads?.items || []).slice(0, 6)
+  (props.threads?.project?.commentThreads?.items || []).slice(
+    0,
+    props.disablePagination ? 8 : undefined
+  )
 )
 const projectId = computed(() => props.threads?.project?.id as string)
 </script>
