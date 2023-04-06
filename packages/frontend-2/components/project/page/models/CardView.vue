@@ -20,7 +20,7 @@
   <div v-else>TODO: Grid empty state</div>
   <InfiniteLoading
     v-if="items?.length && !disablePagination"
-    :settings="{ identifier: infiniteLoadIdentifier }"
+    :settings="{ identifier: infiniteLoaderId }"
     @infinite="infiniteLoad"
   />
 </template>
@@ -82,19 +82,21 @@ const latestModelsQueryVariables = computed(
   })
 )
 
-const infiniteLoadIdentifier = computed(() => {
-  const vars = latestModelsQueryVariables.value
-  return JSON.stringify(vars.filter)
-})
+const infiniteLoaderId = ref('')
 
 // Base query (all pending uploads + first page of models)
-const { result: baseResult, variables: latestModelsVariables } = useQuery(
-  latestModelsQuery,
-  () => latestModelsQueryVariables.value
-)
+const {
+  result: baseResult,
+  variables: latestModelsVariables,
+  onResult: onBaseResult
+} = useQuery(latestModelsQuery, () => latestModelsQueryVariables.value)
 
 // Pagination query
-const { result: extraPagesResult, fetchMore: fetchMorePages } = useQuery(
+const {
+  result: extraPagesResult,
+  fetchMore: fetchMorePages,
+  onResult: onExtraPagesResult
+} = useQuery(
   latestModelsPaginationQuery,
   () => ({
     ...latestModelsQueryVariables.value,
@@ -159,7 +161,16 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
   }
 }
 
+const calculateLoaderId = () => {
+  const vars = latestModelsQueryVariables.value
+  const id = JSON.stringify(vars.filter)
+  infiniteLoaderId.value = id
+}
+
 watch(areQueriesLoading, (newVal) => {
   emit('update:loading', newVal)
 })
+
+onBaseResult(calculateLoaderId)
+onExtraPagesResult(calculateLoaderId)
 </script>

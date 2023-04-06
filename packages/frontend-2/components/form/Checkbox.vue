@@ -16,7 +16,7 @@
         @change="onChange"
       />
     </div>
-    <div class="ml-2 text-sm" style="padding-top: 3px">
+    <div class="ml-2 text-sm" style="padding-top: 2px">
       <label
         :for="finalId"
         class="font-medium text-foreground"

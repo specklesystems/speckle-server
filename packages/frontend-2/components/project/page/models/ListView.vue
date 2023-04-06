@@ -23,7 +23,7 @@
   <div v-else>TODO: List empty state</div>
   <InfiniteLoading
     v-if="topLevelItems?.length && !disablePagination"
-    :settings="{ identifier: infiniteLoadIdentifier }"
+    :settings="{ identifier: infiniteLoaderId }"
     @infinite="infiniteLoad"
   />
 </template>
@@ -77,16 +77,14 @@ const baseQueryVariables = computed(
   })
 )
 
-const infiniteLoadIdentifier = computed(() => {
-  const vars = baseQueryVariables.value
-  return JSON.stringify(vars.filter) + `${infiniteLoadCacheBuster.value}`
-})
+const infiniteLoaderId = ref('')
 
 // Base query (all pending uploads + first page of models)
-const { result: baseResult, variables: resultVariables } = useQuery(
-  projectModelsTreeTopLevelQuery,
-  () => baseQueryVariables.value
-)
+const {
+  result: baseResult,
+  variables: resultVariables,
+  onResult: onBaseResult
+} = useQuery(projectModelsTreeTopLevelQuery, () => baseQueryVariables.value)
 
 const isFiltering = computed(() => {
   const filter = resultVariables.value?.filter
@@ -97,7 +95,11 @@ const isFiltering = computed(() => {
 })
 
 // Pagination query
-const { result: extraPagesResult, fetchMore: fetchMorePages } = useQuery(
+const {
+  result: extraPagesResult,
+  fetchMore: fetchMorePages,
+  onResult: onExtraPagesResult
+} = useQuery(
   projectModelsTreeTopLevelPaginationQuery,
   () => ({
     ...baseQueryVariables.value,
@@ -137,6 +139,7 @@ const onModelUpdated = () => {
 
   // Reset pagination
   infiniteLoadCacheBuster.value++
+  calculateLoaderId()
 }
 
 const infiniteLoad = async (state: InfiniteLoaderState) => {
@@ -164,7 +167,16 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
   }
 }
 
+const calculateLoaderId = () => {
+  const vars = baseQueryVariables.value
+  const id = JSON.stringify(vars.filter) + `${infiniteLoadCacheBuster.value}`
+  infiniteLoaderId.value = id
+}
+
 watch(areQueriesLoading, (newVal) => {
   emit('update:loading', newVal)
 })
+
+onBaseResult(calculateLoaderId)
+onExtraPagesResult(calculateLoaderId)
 </script>
