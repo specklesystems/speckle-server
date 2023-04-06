@@ -18,7 +18,7 @@ export function useFileImport(params: {
     public: { apiOrigin }
   } = useRuntimeConfig()
 
-  const accept = ref('.ifc,.stl,.obj,.mtl')
+  const accept = ref('.ifc,.stl,.obj')
   const upload = ref(null as Nullable<UploadFileItem>)
   const isUploading = ref(false)
 

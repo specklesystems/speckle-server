@@ -26,7 +26,7 @@
         <ExclamationTriangleIcon class="h-4 w-4 text-danger" />
         <span>{{ isSelfImport ? 'Import failed' : 'Version import failed' }}</span>
       </span>
-      <span v-if="upload.convertedMessage">
+      <span v-if="upload.convertedMessage" class="text-center">
         {{ upload.convertedMessage }}
       </span>
     </template>
