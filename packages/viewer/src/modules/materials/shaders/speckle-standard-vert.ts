@@ -86,6 +86,11 @@ varying vec3 vViewPosition;
             scale = vec4(tMatrix[1][3], tMatrix[2][3], tMatrix[3][3], 1.);
         #endif
     }
+
+    vec3 rotate_vertex_position(vec3 position, vec4 quat)
+    { 
+        return position + 2.0 * cross(quat.xyz, cross(quat.xyz, position) + quat.w * position);
+    }
 #endif
 
 #ifdef USE_RTE
@@ -135,11 +140,6 @@ varying vec3 vViewPosition;
         
         vec3 position = highDifference.xyz + lowDifference.xyz;
         return vec4(position, 1.);
-    }
-
-    vec3 rotate_vertex_position(vec3 position, vec4 quat)
-    { 
-        return position + 2.0 * cross(quat.xyz, cross(quat.xyz, position) + quat.w * position);
     }
 #endif
 

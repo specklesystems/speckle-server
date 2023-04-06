@@ -1,5 +1,13 @@
 /* eslint-disable camelcase */
-import { IUniform, Material, MeshStandardMaterial, UniformsUtils } from 'three'
+import {
+  IUniform,
+  Material,
+  MeshBasicMaterial,
+  MeshDepthMaterial,
+  MeshNormalMaterial,
+  MeshStandardMaterial,
+  UniformsUtils
+} from 'three'
 import { Uniforms } from './SpeckleStandardMaterial'
 
 export class SpeckleMaterial {
@@ -67,7 +75,8 @@ export class SpeckleMaterial {
   protected copyFrom(source) {
     this['userData'] = {}
     this.setUniforms(this.uniformsDef)
-
+    this.copyUniforms(source)
+    this.bindUniforms()
     Object.assign(this['defines'], source.defines)
   }
 
@@ -81,9 +90,22 @@ export class SpeckleMaterial {
 }
 
 export class ExtendedMeshStandardMaterial extends MeshStandardMaterial {}
+export class ExtendedMeshBasicMaterial extends MeshBasicMaterial {}
+export class ExtendedMeshDepthMaterial extends MeshDepthMaterial {}
+export class ExtendedMeshNormalMaterial extends MeshNormalMaterial {}
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ExtendedMeshStandardMaterial extends SpeckleMaterial {}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface ExtendedMeshBasicMaterial extends SpeckleMaterial {}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface ExtendedMeshDepthMaterial extends SpeckleMaterial {}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface ExtendedMeshNormalMaterial extends SpeckleMaterial {}
+
 applyMixins(ExtendedMeshStandardMaterial, [SpeckleMaterial])
+applyMixins(ExtendedMeshBasicMaterial, [SpeckleMaterial])
+applyMixins(ExtendedMeshDepthMaterial, [SpeckleMaterial])
+applyMixins(ExtendedMeshNormalMaterial, [SpeckleMaterial])
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function applyMixins(derivedCtor: any, constructors: any[]) {

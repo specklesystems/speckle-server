@@ -3,19 +3,26 @@
 /* eslint-disable camelcase */
 import { speckleBasicVert } from './shaders/speckle-basic-vert'
 import { speckleBasicFrag } from './shaders/speckle-basic-frag'
-import { UniformsUtils, ShaderLib, Vector3, MeshBasicMaterial, Material } from 'three'
+import {
+  UniformsUtils,
+  ShaderLib,
+  Vector3,
+  MeshBasicMaterial,
+  Material,
+  IUniform
+} from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import SpeckleMesh from '../objects/SpeckleMesh'
 
 import { Uniforms } from './SpeckleStandardMaterial'
+import { ExtendedMeshBasicMaterial } from './SpeckleMaterial'
 
-class SpeckleBasicMaterial extends MeshBasicMaterial {
+class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()
   protected static readonly vecBuff0: Vector3 = new Vector3()
   protected static readonly vecBuff1: Vector3 = new Vector3()
   protected static readonly vecBuff2: Vector3 = new Vector3()
-  private _internalUniforms = null
 
   protected get vertexShader(): string {
     return speckleBasicVert
@@ -23,6 +30,10 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
 
   protected get fragmentShader(): string {
     return speckleBasicFrag
+  }
+
+  protected get baseUniforms(): { [uniform: string]: IUniform } {
+    return ShaderLib.basic.uniforms
   }
 
   protected get uniformsDef(): Uniforms {
@@ -37,67 +48,17 @@ class SpeckleBasicMaterial extends MeshBasicMaterial {
 
   constructor(parameters, defines = []) {
     super(parameters)
-
-    this.setUniforms(this.uniformsDef)
-
-    if (defines) {
-      this.defines = {}
-      for (let k = 0; k < defines.length; k++) {
-        this.defines[defines[k]] = ' '
-      }
-    }
-
-    this.onBeforeCompile = this.onCompile
-  }
-
-  protected setUniforms(def: Uniforms) {
-    for (const k in def) {
-      this.userData[k] = {
-        value: def[k]
-      }
-    }
-    this['uniforms'] = UniformsUtils.merge([ShaderLib.basic.uniforms, this.userData])
-  }
-
-  protected copyUniforms(material: Material) {
-    for (const k in material.userData) {
-      if (this.userData[k] !== undefined)
-        this.userData[k].value = material.userData[k].value
-    }
-  }
-
-  protected bindUniforms() {
-    if (!this._internalUniforms) return
-
-    for (const k in this.uniformsDef) {
-      this._internalUniforms.uniforms[k] = this.userData[k]
-    }
-  }
-
-  protected onCompile(shader, renderer) {
-    this._internalUniforms = shader
-
-    this.bindUniforms()
-    shader.vertexShader = this.vertexShader
-    shader.fragmentShader = this.fragmentShader
+    this.init(defines)
   }
 
   /** We need a unique key per program */
   public customProgramCacheKey() {
-    /** Bruh... */
-    // return this.onBeforeCompile.toString()
     return this.constructor.name
   }
 
   public copy(source) {
     super.copy(source)
-    this.copyUniforms(source)
-
-    this.defines = {}
-    Object.assign(this.defines, source.defines)
-    /** We need to bind the uniforms here, otherwise three.js fucks up and sporadically doesn't update our uniforms! */
-    this.bindUniforms()
-
+    this.copyFrom(source)
     return this
   }
 

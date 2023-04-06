@@ -57,8 +57,6 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
 
   /** We need a unique key per program */
   public customProgramCacheKey() {
-    /** Bruh... */
-    // return this.onBeforeCompile.toString()
     return this.constructor.name
   }
 

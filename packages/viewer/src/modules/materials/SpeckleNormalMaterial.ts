@@ -3,13 +3,14 @@
 /* eslint-disable camelcase */
 import { speckleNormalVert } from './shaders/speckle-normal-vert'
 import { speckleNormalFrag } from './shaders/speckle-normal-frag'
-import { UniformsUtils, ShaderLib, Vector3, MeshNormalMaterial } from 'three'
+import { UniformsUtils, ShaderLib, Vector3, MeshNormalMaterial, IUniform } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import { Uniforms } from './SpeckleStandardMaterial'
 import SpeckleMesh from '../objects/SpeckleMesh'
+import { ExtendedMeshNormalMaterial } from './SpeckleMaterial'
 
-class SpeckleNormalMaterial extends MeshNormalMaterial {
+class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()
   protected static readonly vecBuff0: Vector3 = new Vector3()
   protected static readonly vecBuff1: Vector3 = new Vector3()
@@ -23,6 +24,10 @@ class SpeckleNormalMaterial extends MeshNormalMaterial {
     return speckleNormalFrag
   }
 
+  protected get baseUniforms(): { [uniform: string]: IUniform } {
+    return ShaderLib.normal.uniforms
+  }
+
   protected get uniformsDef(): Uniforms {
     return {
       uViewer_high: new Vector3(),
@@ -34,50 +39,17 @@ class SpeckleNormalMaterial extends MeshNormalMaterial {
 
   constructor(parameters, defines = []) {
     super(parameters)
-
-    this.setUniforms(this.uniformsDef)
-
-    if (defines) {
-      this.defines = {}
-      for (let k = 0; k < defines.length; k++) {
-        this.defines[defines[k]] = ' '
-      }
-    }
-
-    this.onBeforeCompile = this.onCompile
-  }
-
-  protected setUniforms(def: Uniforms) {
-    for (const k in def) {
-      this.userData[k] = {
-        value: def[k]
-      }
-    }
-    this['uniforms'] = UniformsUtils.merge([ShaderLib.normal.uniforms, this.userData])
-  }
-
-  protected onCompile(shader, renderer) {
-    for (const k in this.uniformsDef) {
-      shader.uniforms[k] = this.userData[k]
-    }
-    shader.vertexShader = this.vertexShader
-    shader.fragmentShader = this.fragmentShader
+    this.init(defines)
   }
 
   /** We need a unique key per program */
   public customProgramCacheKey() {
-    /** Bruh... */
-    // return this.onBeforeCompile.toString()
     return this.constructor.name
   }
 
   public copy(source) {
     super.copy(source)
-    this.userData = {}
-    this.setUniforms(this.uniformsDef)
-
-    Object.assign(this.defines, source.defines)
-
+    this.copyFrom(source)
     return this
   }
 
