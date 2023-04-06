@@ -52,7 +52,6 @@ const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
 export default class SpeckleMesh extends Mesh {
   public static MeshBatchNumber = 0
 
-  private batchNumber = -1
   private bvh: SpeckleBatchBVH = null
   private batchMaterial: Material = null
   private materialCache: { [id: string]: Material } = {}
@@ -80,7 +79,6 @@ export default class SpeckleMesh extends Mesh {
   constructor(geometry: BufferGeometry, material: Material) {
     super(geometry, material)
     this.batchMaterial = material
-    this.batchNumber = SpeckleMesh.MeshBatchNumber++
   }
 
   public setBatchObjects(
@@ -100,7 +98,7 @@ export default class SpeckleMesh extends Mesh {
         FloatType
       )
     } else if (this.transformStorage === TransformStorage.UNIFORM_ARRAY) {
-      this.transformsArrayUniforms = this._batchObjects.map((value) => value.transform)
+      this.transformsArrayUniforms = this._batchObjects.map(() => new Matrix4())
     }
     this.updateTransformsUniform()
   }
@@ -127,20 +125,21 @@ export default class SpeckleMesh extends Mesh {
   }
 
   public updateMaterialTransformsUniform(material: Material) {
-    // material.defines['BATCH_NUMBER'] = this.batchNumber
     material.defines['TRANSFORM_STORAGE'] = this.transformStorage
-    // if (
-    //   !material.defines['OBJ_COUNT'] ||
-    //   material.defines['OBJ_COUNT'] !== this._batchObjects.length
-    // ) {
-    //   material.defines['OBJ_COUNT'] = this._batchObjects.length
-    // }
+
     if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
       material.userData.tTransforms.value = this.transformsTextureUniform
       if (material.userData.objCount)
         material.userData.objCount.value = this._batchObjects.length
-    } else if (this.transformStorage === TransformStorage.UNIFORM_ARRAY)
+    } else if (this.transformStorage === TransformStorage.UNIFORM_ARRAY) {
+      if (
+        !material.defines['OBJ_COUNT'] ||
+        material.defines['OBJ_COUNT'] !== this._batchObjects.length
+      ) {
+        material.defines['OBJ_COUNT'] = this._batchObjects.length
+      }
       material.userData.uTransforms.value = this.transformsArrayUniforms
+    }
 
     material.needsUpdate = true
   }
@@ -172,7 +171,26 @@ export default class SpeckleMesh extends Mesh {
       })
       this.transformsTextureUniform.needsUpdate = true
     } else {
-      this.transformsArrayUniforms = this._batchObjects.map((value) => value.transform)
+      this._batchObjects.forEach((batchObject: BatchObject, index: number) => {
+        this.transformsArrayUniforms[index].set(
+          batchObject.quaternion.x,
+          batchObject.pivot_Low.x,
+          batchObject.pivot_High.x,
+          batchObject.translation.x,
+          batchObject.quaternion.y,
+          batchObject.pivot_Low.y,
+          batchObject.pivot_High.y,
+          batchObject.translation.y,
+          batchObject.quaternion.z,
+          batchObject.pivot_Low.z,
+          batchObject.pivot_High.z,
+          batchObject.translation.z,
+          batchObject.quaternion.w,
+          batchObject.scale.x,
+          batchObject.scale.y,
+          batchObject.scale.z
+        )
+      })
     }
     if (this.bvh) {
       this.bvh.getBoundingBox(this.bvh.bounds)

@@ -231,7 +231,7 @@ export default class Batcher {
           batchID,
           subtreeId,
           renderViews,
-          TransformStorage.VERTEX_TEXTURE
+          TransformStorage.UNIFORM_ARRAY
         )
         break
       case GeometryType.LINE:
