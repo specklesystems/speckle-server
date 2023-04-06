@@ -87,7 +87,6 @@ class SpeckleNormalMaterial extends MeshNormalMaterial {
     SpeckleNormalMaterial.matBuff.elements[12] = 0
     SpeckleNormalMaterial.matBuff.elements[13] = 0
     SpeckleNormalMaterial.matBuff.elements[14] = 0
-    SpeckleNormalMaterial.matBuff.multiply(object.matrixWorld)
     object.modelViewMatrix.copy(SpeckleNormalMaterial.matBuff)
 
     SpeckleNormalMaterial.vecBuff0.set(

@@ -111,7 +111,6 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     SpeckleDepthMaterial.matBuff.elements[12] = 0
     SpeckleDepthMaterial.matBuff.elements[13] = 0
     SpeckleDepthMaterial.matBuff.elements[14] = 0
-    SpeckleDepthMaterial.matBuff.multiply(object.matrixWorld)
     object.modelViewMatrix.copy(SpeckleDepthMaterial.matBuff)
 
     SpeckleDepthMaterial.vecBuff0.set(
@@ -132,42 +131,6 @@ class SpeckleDepthMaterial extends MeshDepthMaterial {
     if (object instanceof SpeckleMesh) {
       ;(object as SpeckleMesh).updateMaterialTransformsUniform(this)
     }
-
-    // console.log(this.userData.rteModelViewMatrix.value)
-
-    /** Not a big fan of this, but otherwise three.js won't update
-     *  our uniforms when the material is used the scene's override
-     */
-    // if (scene.overrideMaterial === this) {
-    //   const materialProperties = _this.properties.get(this)
-    //   const program = materialProperties.currentProgram
-    //   if (program) {
-    //     // _this.getContext().useProgram(program.program)
-    //     const p_uniforms = program.getUniforms()
-    //     _this
-    //       .getContext()
-    //       .uniformMatrix4fv(
-    //         p_uniforms.map['rteModelViewMatrix'].addr,
-    //         false,
-    //         this.userData.rteModelViewMatrix.value.elements
-    //       )
-
-    //     if (p_uniforms.map['objCount'])
-    //       _this
-    //         .getContext()
-    //         .uniform1f(p_uniforms.map['objCount'].addr, this.userData.objCount.value)
-
-    //     const textureProperties = _this.properties.get(this.userData.tTransforms.value)
-    //     const gl = _this.getContext()
-
-    //     gl.uniform1i(
-    //       p_uniforms.map['tTransforms'].addr,
-    //       p_uniforms.map['tTransforms'].cache
-    //     )
-    //     // gl.activeTexture(p_uniforms.map['tTransforms'].cache)
-    //     gl.bindTexture(gl.TEXTURE_2D, textureProperties.__webglTexture)
-    //   }
-    // }
 
     this.needsUpdate = true
   }

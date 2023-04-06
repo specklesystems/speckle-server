@@ -136,14 +136,14 @@ varying vec3 vViewPosition;
         vec3 position = highDifference.xyz + lowDifference.xyz;
         return vec4(position, 1.);
     }
+
+    vec3 rotate_vertex_position(vec3 position, vec4 quat)
+    { 
+        return position + 2.0 * cross(quat.xyz, cross(quat.xyz, position) + quat.w * position);
+    }
 #endif
 
-vec3 rotate_vertex_position(vec3 position, vec4 quat)
-{ 
-  vec4 q = quat;
-  vec3 v = position.xyz;
-  return v + 2.0 * cross(q.xyz, cross(q.xyz, v) + q.w * v);
-}
+
 
 void main() {
 
