@@ -1,7 +1,6 @@
 import Logger from 'js-logger'
 import {
   BackSide,
-  Box3,
   Box3Helper,
   BufferGeometry,
   Color,
@@ -67,6 +66,7 @@ export default class SpeckleMesh extends Mesh {
   public transformsTextureUniform: DataTexture = null
   public transformsArrayUniforms: Matrix4[] = null
 
+  private debugBatchBox = false
   private boxHelper: Box3Helper
 
   public get BVH() {
@@ -169,20 +169,6 @@ export default class SpeckleMesh extends Mesh {
         this.transformsBuffer[index + 13] = batchObject.translation.y
         this.transformsBuffer[index + 14] = batchObject.translation.z
         this.transformsBuffer[index + 15] = batchObject.scale.z
-        // this.transformsBuffer[index] = batchObject.transform.elements[0]
-        // this.transformsBuffer[index + 1] = batchObject.transform.elements[4]
-        // this.transformsBuffer[index + 2] = batchObject.transform.elements[8]
-        // this.transformsBuffer[index + 3] = batchObject.transform.elements[12]
-
-        // this.transformsBuffer[index + 4] = batchObject.transform.elements[1]
-        // this.transformsBuffer[index + 5] = batchObject.transform.elements[5]
-        // this.transformsBuffer[index + 6] = batchObject.transform.elements[9]
-        // this.transformsBuffer[index + 7] = batchObject.transform.elements[13]
-
-        // this.transformsBuffer[index + 8] = batchObject.transform.elements[2]
-        // this.transformsBuffer[index + 9] = batchObject.transform.elements[6]
-        // this.transformsBuffer[index + 10] = batchObject.transform.elements[10]
-        // this.transformsBuffer[index + 11] = batchObject.transform.elements[14]
       })
       this.transformsTextureUniform.needsUpdate = true
     } else {
@@ -190,10 +176,9 @@ export default class SpeckleMesh extends Mesh {
     }
     if (this.bvh) {
       this.bvh.getBoundingBox(this.bvh.bounds)
-      // console.log('Size -> ', this.bvh.bounds.getSize(new Vector3()))
       this.geometry.boundingBox.copy(this.bvh.bounds)
       this.geometry.boundingBox.getBoundingSphere(this.geometry.boundingSphere)
-      if (!this.boxHelper) {
+      if (!this.boxHelper && this.debugBatchBox) {
         this.boxHelper = new Box3Helper(this.bvh.bounds, new Color(0xff0000))
         this.boxHelper.layers.set(ObjectLayers.PROPS)
         this.parent.add(this.boxHelper)
@@ -202,8 +187,8 @@ export default class SpeckleMesh extends Mesh {
     this.transformsDirty = false
   }
 
-  public buildBVH(bounds: Box3) {
-    this.bvh = new SpeckleBatchBVH(this.batchObjects, bounds)
+  public buildBVH() {
+    this.bvh = new SpeckleBatchBVH(this.batchObjects)
   }
 
   public getBatchObjectMaterial(batchObject: BatchObject) {

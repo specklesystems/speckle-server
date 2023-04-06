@@ -70,12 +70,11 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
 
   /** Called by three.js render loop */
   public onBeforeRender(_this, scene, camera, geometry, object, group) {
-    // SpeckleStandardMaterial.matBuff.copy(camera.matrixWorldInverse)
-    // SpeckleStandardMaterial.matBuff.elements[12] = 0
-    // SpeckleStandardMaterial.matBuff.elements[13] = 0
-    // SpeckleStandardMaterial.matBuff.elements[14] = 0
-    // SpeckleStandardMaterial.matBuff.multiply(object.matrixWorld)
-    // object.modelViewMatrix.copy(SpeckleStandardMaterial.matBuff)
+    SpeckleStandardMaterial.matBuff.copy(camera.matrixWorldInverse)
+    SpeckleStandardMaterial.matBuff.elements[12] = 0
+    SpeckleStandardMaterial.matBuff.elements[13] = 0
+    SpeckleStandardMaterial.matBuff.elements[14] = 0
+    object.modelViewMatrix.copy(SpeckleStandardMaterial.matBuff)
 
     SpeckleStandardMaterial.vecBuff0.set(
       camera.matrixWorld.elements[12],

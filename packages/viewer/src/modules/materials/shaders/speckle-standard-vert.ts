@@ -43,41 +43,7 @@ varying vec3 vViewPosition;
 #include <clipping_planes_pars_vertex>
 
 #ifdef TRANSFORM_STORAGE
-    mat4 objectTransform(){
-        #if TRANSFORM_STORAGE == 0
-            #if __VERSION__ == 300
-                ivec2 uv = ivec2(int(objIndex)*3, 0); 
-                vec4 r0 = texelFetch( tTransforms, uv, 0 );
-                vec4 r1 = texelFetch( tTransforms, uv + ivec2(1, 0), 0);
-                vec4 r2 = texelFetch( tTransforms, uv + ivec2(2, 0), 0);
-                return mat4(
-                    r0.x, r1.x, r2.x, 0.,
-                    r0.y, r1.y, r2.y, 0.,
-                    r0.z, r1.z, r2.z, 0.,
-                    r0.w, r1.w, r2.w, 1.
-                );
-            #elif
-                float size = objCount * 3.;
-                vec2 cUv = vec2(0.5/size, 0.5);
-                vec2 dUv = vec2(1./size, 0.);
-                
-                vec2 uv = vec2((objIndex * 3.)/size + cUv.x, cUv.y);
-                vec4 r0 = texture2D( tTransforms, uv);
-                vec4 r1 = texture2D( tTransforms, uv + dUv);
-                vec4 r2 = texture2D( tTransforms, uv + 2. * dUv);
-                return mat4(
-                    r0.x, r1.x, r2.x, 0.,
-                    r0.y, r1.y, r2.y, 0.,
-                    r0.z, r1.z, r2.z, 0.,
-                    r0.w, r1.w, r2.w, 1.
-                );
-            #endif
-        #elif TRANSFORM_STORAGE == 1
-            return uTransforms[int(objIndex)];
-        #endif
-    }
-
-    void objectTransformSeparate(out vec4 quaternion, out vec4 pivotLow, out vec4 pivotHigh, out vec4 translation, out vec4 scale){
+    void objectTransform(out vec4 quaternion, out vec4 pivotLow, out vec4 pivotHigh, out vec4 translation, out vec4 scale){
         #if TRANSFORM_STORAGE == 0
             #if __VERSION__ == 300
                 ivec2 uv = ivec2(int(objIndex)*4, 0); 
@@ -191,19 +157,17 @@ void main() {
     //#include <project_vertex> // EDITED CHUNK
     
     #ifdef TRANSFORM_STORAGE
-        mat4 objectMatrix = objectTransform();
+        vec4 tQuaternion, tPivotLow, tPivotHigh, tTranslation, tScale;
+        objectTransform(tQuaternion, tPivotLow, tPivotHigh, tTranslation, tScale);
     #endif
     #ifdef USE_RTE
         vec4 position_lowT = vec4(position_low, 1.);
         vec4 position_highT = vec4(position, 1.);
-        #ifdef TRANSFORM_STORAGE
-            vec4 quaternion, pivotLow, pivotHigh, translation, scale;
-            objectTransformSeparate(quaternion, pivotLow, pivotHigh, translation, scale);
-            vec4 pivot = computeRelativePositionSeparate(pivotLow.xyz, pivotHigh.xyz, uViewer_low, uViewer_high);
-        #endif
         vec4 rteLocalPosition = computeRelativePositionSeparate(position_lowT.xyz, position_highT.xyz, uViewer_low, uViewer_high);
-        rteLocalPosition = vec4(rotate_vertex_position((rteLocalPosition - pivot).xyz, quaternion) * scale.xyz, 0.) + pivot + translation;
-
+        #ifdef TRANSFORM_STORAGE
+            vec4 rtePivot = computeRelativePositionSeparate(tPivotLow.xyz, tPivotHigh.xyz, uViewer_low, uViewer_high);
+            rteLocalPosition.xyz = rotate_vertex_position((rteLocalPosition - rtePivot).xyz, tQuaternion) * tScale.xyz + rtePivot.xyz + tTranslation.xyz;
+        #endif
     #endif
 
     #ifdef USE_RTE
@@ -212,27 +176,11 @@ void main() {
         vec4 mvPosition = vec4( transformed, 1.0 );
     #endif
 
-    // #ifdef TRANSFORM_STORAGE
-    //     mvPosition = objectMatrix * mvPosition;
-    // #endif
-    
     #ifdef USE_INSTANCING
         mvPosition = instanceMatrix * mvPosition;
     #endif
-    mat4 tModel = mat4(vec4(1., 0., 0., 0.), vec4(0., 1., 0., 0.), vec4(0., 0., 1., 0.), objectMatrix[3]);
-    // mat3 rModel = mat3(objectMatrix);
-
-    // mat4 mv = modelViewMatrix * mat4(vec4(rModel[0], 0.), vec4(rModel[1], 0.), vec4(rModel[2], 0.), vec4(0., 0., 0., 1.));
-    // mv[3] = vec4(0., 0., 0., 1.);
-    // mv = modelViewMatrix * tModel;
-    // mvPosition = mv * mvPosition;
-    // mvPosition.xyz += uViewer_high + uViewer_low;
-    // mvPosition = objectMatrix * mvPosition;
-    // mvPosition.xyz -= uViewer_high + uViewer_low;
     
-    mat4 mv = modelViewMatrix;
-    mv[3] = vec4(0., 0., 0., 1.);
-    mvPosition = mv * mvPosition;
+    mvPosition = modelViewMatrix * mvPosition;
 
     gl_Position = projectionMatrix * mvPosition;
 
@@ -260,9 +208,10 @@ void main() {
             shadowPosition = computeRelativePositionSeparate(position_low.xyz, position.xyz, uShadowViewer_low, uShadowViewer_high);
             shadowMatrix = rteShadowMatrix;
         #endif
-        // #ifdef TRANSFORM_STORAGE
-        //     shadowPosition = objectMatrix * shadowPosition;
-        // #endif
+        #ifdef TRANSFORM_STORAGE
+            vec4 rtePivotShadow = computeRelativePositionSeparate(tPivotLow.xyz, tPivotHigh.xyz, uShadowViewer_low, uShadowViewer_high);
+            shadowPosition.xyz = rotate_vertex_position((shadowPosition - rtePivotShadow).xyz, tQuaternion) * tScale.xyz + rtePivotShadow.xyz + tTranslation.xyz;
+        #endif
         shadowWorldPosition = modelMatrix * shadowPosition + vec4( shadowWorldNormal * directionalLightShadows[ i ].shadowNormalBias, 0 );
         vDirectionalShadowCoord[ i ] = shadowMatrix * shadowWorldPosition;
 	}

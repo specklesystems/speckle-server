@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import { Box3, Euler, Matrix4, Quaternion, Vector3 } from 'three'
+import { Euler, Matrix4, Quaternion, Vector3 } from 'three'
 import { SpeckleMeshBVH } from '../objects/SpeckleMeshBVH'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Geometry } from '../converter/Geometry'
@@ -10,7 +10,6 @@ export class BatchObject {
   private _renderView: NodeRenderView
   private _bvh: SpeckleMeshBVH
   private _batchIndex: number
-  public bounds: Box3
   public transform: Matrix4
   public transformInv: Matrix4
   public quaternion: Quaternion = new Quaternion()
@@ -38,14 +37,12 @@ export class BatchObject {
   public constructor(renderView: NodeRenderView, batchIndex: number) {
     this._renderView = renderView
     this._batchIndex = batchIndex
-    this.bounds = new Box3()
     this.transform = new Matrix4().identity()
     this.transformInv = new Matrix4().identity()
   }
 
-  public buildBVH(bounds: Box3) {
+  public buildBVH() {
     const rvCenter = this._renderView.aabb.getCenter(new Vector3())
-    // console.log(boundsCenter, rvCenter)
     const transform = new Matrix4().makeTranslation(rvCenter.x, rvCenter.y, rvCenter.z)
     transform.invert()
 
@@ -61,8 +58,14 @@ export class BatchObject {
       localPositions[k + 1] = vecBuff.y
       localPositions[k + 2] = vecBuff.z
     }
+
+    Geometry.DoubleToHighLowVector(
+      new Vector3(rvCenter.x, rvCenter.y, rvCenter.z),
+      this.pivot_Low,
+      this.pivot_High
+    )
+
     this._bvh = SpeckleMeshBVH.buildBVH(indices, localPositions)
-    this.bounds.copy(bounds)
     this._bvh.inputTransform = this.transformInv
     this._bvh.outputTransform = this.transform
     this._bvh.inputOriginTransform = new Matrix4().copy(transform)
@@ -75,22 +78,14 @@ export class BatchObject {
     scale: VectorLike,
     origin: VectorLike
   ) {
-    const TOrigin = new Matrix4().makeTranslation(origin.x, origin.y, origin.z)
-    const center = this.bounds.getCenter(new Vector3())
-    const centerT = new Matrix4().makeTranslation(center.x, center.y, center.z)
-    centerT.invert()
-    centerT.multiply(TOrigin)
-
     const T = new Matrix4().makeTranslation(position.x, position.y, position.z)
     const R = new Matrix4().makeRotationFromEuler(
       new Euler(euler.x, euler.y, euler.z, 'XYZ')
     )
     const S = new Matrix4().makeScale(scale.x, scale.y, scale.z)
     this.transform.identity()
-    // this.transform.multiply(centerT)
     this.transform.multiply(R)
     this.transform.multiply(S)
-    // this.transform.multiply(centerTInv)
     this.transform.premultiply(T)
 
     this.transformInv.copy(this.transform)

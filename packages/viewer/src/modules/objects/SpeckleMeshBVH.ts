@@ -59,7 +59,7 @@ export const DefaultBVHOptions = {
 
 We've made this wrapper around the original implementation to hide the transformations we do behind the scenes
 in order to avoid storing vertex positions as Float64. Instead we store them as Float32, but the whole BVH is 
-re-centered around world origin (0,0,0). We use the resulting transformations to transform anything that comes
+re-centered around the mesh local origin as (0,0,0). We use the resulting transformations to transform anything that comes
 in or out of the BVH in order to keep this re-centering opaque.
 
 We've implemented auto-transformation for raycasting and shapecasting. Other functionalities like bvhcast or geometrycast
@@ -96,8 +96,6 @@ export class SpeckleMeshBVH extends MeshBVH {
     bvhGeometry.computeBoundingBox()
 
     const bvh = new SpeckleMeshBVH(bvhGeometry, options)
-    // console.log('three -> ', bvhGeometry.boundingBox)
-    // console.log('mata -> ', bvh.getBoundingBox(new Box3()))
     return bvh
   }
 
@@ -256,7 +254,6 @@ export class SpeckleMeshBVH extends MeshBVH {
 
   public getBoundingBox(target) {
     super.getBoundingBox(target)
-    // console.log('BVH Size -> ', target.getSize(new Vector3()))
     return this.transformOutput(target)
   }
 }
