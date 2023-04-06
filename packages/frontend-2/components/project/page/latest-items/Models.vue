@@ -59,7 +59,7 @@
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { ProjectPageLatestItemsModelsFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
-import { useProjectPageItemViewType } from '~~/lib/projects/composables/layout'
+import { useProjectPageItemViewType } from '~~/lib/projects/composables/projectPages'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { debounce } from 'lodash-es'
 import { PlusIcon } from '@heroicons/vue/24/solid'

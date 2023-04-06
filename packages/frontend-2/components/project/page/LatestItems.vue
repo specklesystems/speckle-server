@@ -41,7 +41,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useProjectPageItemViewType } from '~~/lib/projects/composables/layout'
+import { useProjectPageItemViewType } from '~~/lib/projects/composables/projectPages'
 
 const props = defineProps<{
   title: string
