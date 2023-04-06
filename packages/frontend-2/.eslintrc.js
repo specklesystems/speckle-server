@@ -33,7 +33,8 @@ const config = {
     camelcase: [
       'error',
       {
-        properties: 'always'
+        properties: 'always',
+        allow: ['^[\\w]+_[\\w]+Fragment$']
       }
     ],
     'no-alert': 'error',

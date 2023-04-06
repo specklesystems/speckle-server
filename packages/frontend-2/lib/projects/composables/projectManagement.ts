@@ -41,8 +41,16 @@ export function useProjectUpdateTracking(
   handler?: (
     data: NonNullable<Get<OnProjectUpdatedSubscription, 'projectUpdated'>>,
     cache: ApolloCache<unknown>
-  ) => void
+  ) => void,
+  options?: Partial<{
+    redirectOnDeletion: boolean
+    notifyOnUpdate?: boolean
+  }>
 ) {
+  const { redirectOnDeletion, notifyOnUpdate } = options || {}
+
+  const goHome = useNavigateToHome()
+  const { triggerNotification } = useGlobalToast()
   const apollo = useApolloClient().client
   const { onResult: onProjectUpdated } = useSubscription(
     onProjectUpdatedSubscription,
@@ -62,6 +70,18 @@ export function useProjectUpdateTracking(
       cache.evict({
         id: getCacheId('Project', event.id)
       })
+
+      if (redirectOnDeletion) {
+        goHome()
+      }
+
+      if (redirectOnDeletion || notifyOnUpdate) {
+        triggerNotification({
+          type: ToastNotificationType.Info,
+          title: isDeleted ? 'Project deleted' : 'Project updated',
+          description: isDeleted ? 'Redirecting to home' : undefined
+        })
+      }
     }
 
     handler?.(event, cache)

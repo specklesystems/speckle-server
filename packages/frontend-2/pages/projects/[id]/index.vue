@@ -19,7 +19,7 @@
       </div>
       <div class="flex flex-col space-y-14">
         <!-- Latest models -->
-        <ProjectPageModelsView :project="project" />
+        <ProjectPageLatestItemsModels :project="project" />
         <!-- Latest comments -->
         <ProjectPageLatestItemsComments :project="project" />
         <!-- More actions -->
@@ -31,23 +31,9 @@
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import { Optional } from '@speckle/shared'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
-  ProjectModelsUpdatedMessageType,
-  ProjectUpdatedMessageType
-} from '~~/lib/common/generated/gql/graphql'
-import { useNavigateToHome } from '~~/lib/common/helpers/route'
-import {
-  useEvictProjectModelFields,
-  useProjectModelUpdateTracking
-} from '~~/lib/projects/composables/modelManagement'
-import { useProjectUpdateTracking } from '~~/lib/projects/composables/projectManagement'
-import {
-  useProjectPendingVersionUpdateTracking,
-  useProjectVersionUpdateTracking
-} from '~~/lib/projects/composables/versionManagement'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
+import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 
 graphql(`
   fragment ProjectPageProject on Project {
@@ -61,7 +47,6 @@ graphql(`
     ...ProjectPageStatsBlockComments
     ...ProjectPageLatestItemsModels
     ...ProjectPageLatestItemsComments
-    ...ProjectPageModelsView
   }
 `)
 
@@ -69,37 +54,9 @@ definePageMeta({
   middleware: ['require-valid-project']
 })
 
-const evictProjectModels = useEvictProjectModelFields()
-const { triggerNotification } = useGlobalToast()
 const route = useRoute()
-const goHome = useNavigateToHome()
 const projectId = computed(() => route.params.id as string)
-
-// update preview URLs
-useProjectVersionUpdateTracking(projectId)
-useProjectPendingVersionUpdateTracking(projectId)
-
-useProjectModelUpdateTracking(projectId, (event) => {
-  // If creation, refresh all project's model fields
-  if (event.type === ProjectModelsUpdatedMessageType.Created) {
-    evictProjectModels(projectId.value)
-  }
-})
-
-useProjectUpdateTracking(projectId, (event) => {
-  const isDeleted = event.type === ProjectUpdatedMessageType.Deleted
-
-  if (isDeleted) {
-    goHome()
-  }
-
-  triggerNotification({
-    type: ToastNotificationType.Info,
-    title: isDeleted ? 'Project deleted' : 'Project updated',
-    description: isDeleted ? 'Redirecting to home' : undefined
-  })
-})
-
+useGeneralProjectPageUpdateTracking({ projectId }, { notifyOnProjectUpdate: true })
 const { result: projectPageResult } = useQuery(
   projectPageQuery,
   () => ({

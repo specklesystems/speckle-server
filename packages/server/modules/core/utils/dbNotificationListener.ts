@@ -1,5 +1,5 @@
 import { MaybeAsync, Optional } from '@speckle/shared'
-import { logger, moduleLogger } from '@/logging/logging'
+import { dbNotificationLogger, moduleLogger } from '@/logging/logging'
 import { knex } from '@/modules/core/dbSchema'
 import * as Knex from 'knex'
 import * as pg from 'pg'
@@ -13,6 +13,13 @@ const listeners: Record<string, { setup: boolean; listener: ListenerType }> = {}
 
 function messageProcessor(msg: MessageType) {
   const listener = listeners[msg.channel]
+  dbNotificationLogger.info(
+    {
+      ...msg,
+      listenerRegistered: !!listener
+    },
+    'Message received'
+  )
   if (!listener) return
 
   return listener.listener(msg)
@@ -35,7 +42,7 @@ function setupConnection(connection: pg.Connection) {
     if (!shuttingDown) reconnectClient()
   })
   connection.on('error', (err: unknown) => {
-    logger.error(err, 'Preview listener connection error')
+    dbNotificationLogger.error(err, 'Notification listener connection error')
   })
   setupListeners(connection)
 }
@@ -51,7 +58,10 @@ function reconnectClient() {
       clearInterval(interval)
       setupConnection(newConnection)
     } catch (e: unknown) {
-      logger.error(e, 'Preview listener connection acquisition failed')
+      dbNotificationLogger.error(
+        e,
+        'Notification listener connection acquisition failed'
+      )
     }
   }, 3000)
 }

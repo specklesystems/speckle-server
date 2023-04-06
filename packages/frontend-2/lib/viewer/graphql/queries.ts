@@ -49,7 +49,7 @@ export const viewerLoadedResourcesQuery = graphql(`
           }
         }
       }
-      ...ProjectPageModelsView
+      ...ProjectPageLatestItemsModels
       ...ModelPageProject
     }
   }

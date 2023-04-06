@@ -68,6 +68,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', val: string): void
   (e: 'change', val: { event?: Event; value: string }): void
   (e: 'input', val: { event?: Event; value: string }): void
+  (e: 'clear'): void
 }>()
 
 const props = withDefaults(

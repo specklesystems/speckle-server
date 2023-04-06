@@ -29,7 +29,7 @@
         </label>
         <PencilIcon
           v-if="canEdit"
-          class="shrink-0 ml-2 mt-2 w-4 h-4 opacity-0 group-hover:opacity-100 transition text-foreground-2"
+          class="shrink-0 ml-2 mt-3 w-4 h-4 opacity-0 group-hover:opacity-100 transition text-foreground-2"
         />
       </div>
       <Portal to="navigation">
@@ -46,7 +46,7 @@
       </Portal> -->
     </div>
     <div class="mt-3 flex space-x-2 group">
-      <div class="shrink-0 mt-0.5 text-foreground-2">
+      <div class="shrink-0 text-foreground-2">
         <InformationCircleIcon class="hidden md:inline-block w-5 h-5" />
       </div>
       <label>
@@ -77,10 +77,10 @@
           />
         </div>
       </label>
-      <div class="shrink-0 ml-2 mt-0.5 text-foreground-2">
+      <div class="shrink-0 ml-2 mt-1 text-foreground-2">
         <PencilIcon
           v-if="canEdit"
-          class="w-5 h-5 opacity-0 group-hover:opacity-100 transition text-foreground-2"
+          class="w-4 h-4 opacity-0 group-hover:opacity-100 transition text-foreground-2"
         />
       </div>
     </div>

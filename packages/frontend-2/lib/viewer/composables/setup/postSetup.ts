@@ -1,4 +1,4 @@
-import { difference, uniq, merge } from 'lodash-es'
+import { difference, uniq } from 'lodash-es'
 import { ViewerEvent } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import {
@@ -6,43 +6,23 @@ import {
   Project,
   ProjectCommentsUpdatedMessageType,
   ProjectCommentThreadsArgs,
-  ProjectModelsUpdatedMessageType,
-  ProjectUpdatedMessageType,
-  ProjectVersionsUpdatedMessageType,
-  ProjectViewerResourcesQuery,
-  ViewerLoadedResourcesQuery,
   ViewerResourceItem
 } from '~~/lib/common/generated/gql/graphql'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 import { useGetObjectUrl } from '~~/lib/viewer/composables/viewer'
-import { useApolloClient } from '@vue/apollo-composable'
 import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
 import {
   getCacheId,
   getObjectReference,
   ModifyFnCacheData,
-  modifyObjectFields,
-  updateCacheByFilter
+  modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { useProjectModelUpdateTracking } from '~~/lib/projects/composables/modelManagement'
-import {
-  projectViewerResourcesQuery,
-  viewerLoadedResourcesQuery
-} from '~~/lib/viewer/graphql/queries'
-import { SpeckleViewer } from '@speckle/shared'
-import {
-  useProjectPendingVersionUpdateTracking,
-  useProjectVersionUpdateTracking
-} from '~~/lib/projects/composables/versionManagement'
-import { PartialDeep } from 'type-fest'
 import {
   useViewerOpenedThreadUpdateEmitter,
   useViewerThreadTracking
 } from '~~/lib/viewer/composables/commentBubbles'
-import { useProjectUpdateTracking } from '~~/lib/projects/composables/projectManagement'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { useNavigateToHome } from '~~/lib/common/helpers/route'
+import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -129,17 +109,19 @@ function useViewerObjectAutoLoading() {
 function useViewerSubscriptionEventTracker() {
   if (process.server) return
 
-  const apollo = useApolloClient().client
   const {
     projectId,
     resources: {
-      request: { resourceIdString, threadFilters },
-      response: { resourceQueryVariables, resourceItemsQueryVariables }
+      request: { resourceIdString, threadFilters }
     }
   } = useInjectedViewerState()
-  const { triggerNotification } = useGlobalToast()
-  const goHome = useNavigateToHome()
 
+  // Track all project/model/version updates
+  useGeneralProjectPageUpdateTracking({
+    projectId
+  })
+
+  // Also track updates to comments
   useViewerCommentUpdateTracking(
     {
       projectId,
@@ -221,242 +203,6 @@ function useViewerSubscriptionEventTracker() {
       }
     }
   )
-
-  useProjectModelUpdateTracking(projectId, (event) => {
-    // If model deleted, delete resource item
-    if (event.type === ProjectModelsUpdatedMessageType.Deleted) {
-      updateCacheByFilter(
-        apollo.cache,
-        {
-          query: {
-            query: projectViewerResourcesQuery,
-            variables: resourceItemsQueryVariables.value
-          }
-        },
-        (data) => {
-          if (!data.project?.viewerResources) return
-          const groupIdx = data.project.viewerResources.findIndex((g) =>
-            g.items.find((i) => i.modelId === event.id)
-          )
-          if (groupIdx === -1) return
-
-          const newGroups = data.project.viewerResources
-            .map((g) => {
-              const newItems = g.items.filter((i) => i.modelId !== event.id)
-              return {
-                ...g,
-                items: newItems
-              }
-            })
-            .filter((g) => g.items.length > 0)
-
-          return {
-            ...data,
-            project: {
-              ...data.project,
-              viewerResources: newGroups
-            }
-          }
-        }
-      )
-      return
-    }
-
-    const model = event.model
-    const version = model?.versions.items[0]
-    if (!model || !version) return
-
-    // Check if resourceItems need to be updated with this new model
-    updateCacheByFilter(
-      apollo.cache,
-      {
-        query: {
-          query: projectViewerResourcesQuery,
-          variables: resourceItemsQueryVariables.value
-        }
-      },
-      (data) => {
-        if (!data.project?.viewerResources) return
-
-        // group is updatable only if it's a folder group, cause then this new
-        // model possibly has to go under it. also make sure that the model
-        // doesn't already exist there
-        const groupIdx = data.project.viewerResources.findIndex((g) => {
-          const [res] = SpeckleViewer.ViewerRoute.parseUrlParameters(g.identifier)
-          if (
-            SpeckleViewer.ViewerRoute.isModelFolderResource(res) &&
-            model.name.startsWith(res.folderName) &&
-            !g.items.some((i) => i.modelId === model.id)
-          )
-            return true
-          return false
-        })
-        if (groupIdx === -1) return
-
-        const group = data.project.viewerResources[groupIdx]
-        const newItems = [
-          ...group.items,
-          {
-            modelId: model.id,
-            versionId: version.id,
-            objectId: version.referencedObject
-          }
-        ]
-
-        const newGroups = data.project.viewerResources.slice()
-        newGroups.splice(groupIdx, 1, {
-          ...group,
-          items: newItems
-        })
-
-        return {
-          ...data,
-          project: {
-            ...data.project,
-            viewerResources: newGroups
-          }
-        }
-      }
-    )
-  })
-
-  // Track version updates
-  useProjectVersionUpdateTracking(
-    projectId,
-    (event) => {
-      if (event.type !== ProjectVersionsUpdatedMessageType.Created) return
-      const version = event.version
-      if (!version) return
-
-      const modelId = version.model.id
-      const modelName = version.model.name
-      const objectId = version.referencedObject
-
-      if (!resourceQueryVariables.value || !resourceItemsQueryVariables.value) return
-
-      // Add new version to Model.versions
-      updateCacheByFilter(
-        apollo.cache,
-        {
-          query: {
-            query: viewerLoadedResourcesQuery,
-            variables: resourceQueryVariables.value
-          }
-        },
-        (data) => {
-          if (!data.project?.models.items) return
-
-          const newModels = data.project.models.items.slice()
-          const modelIdx = newModels.findIndex((m) => m.id === modelId)
-          if (modelIdx === -1) return
-
-          const model = newModels[modelIdx]
-          const newVersions = model.versions.items.slice()
-          newVersions.unshift(version)
-
-          newModels.splice(modelIdx, 1, {
-            ...model,
-            versions: {
-              ...model.versions,
-              items: newVersions,
-              totalCount: model.versions.totalCount + 1
-            }
-          })
-
-          return merge<
-            PartialDeep<ViewerLoadedResourcesQuery>,
-            ViewerLoadedResourcesQuery,
-            PartialDeep<ViewerLoadedResourcesQuery>
-          >({}, data, {
-            project: { models: { items: newModels } }
-          })
-        }
-      )
-
-      // Update resourceItems w/ new data, potentially changing de-duplication results
-      updateCacheByFilter(
-        apollo.cache,
-        {
-          query: {
-            query: projectViewerResourcesQuery,
-            variables: resourceItemsQueryVariables.value
-          }
-        },
-        (data) => {
-          if (!data.project?.viewerResources) return
-
-          // group is updatable only if references a model w/o a specific version id
-          // in which case we're gonna replace it with the latest one
-          // or maybe its a folder group
-          const groupIdx = data.project.viewerResources.findIndex((g) => {
-            const [res] = SpeckleViewer.ViewerRoute.parseUrlParameters(g.identifier)
-            if (
-              SpeckleViewer.ViewerRoute.isModelResource(res) &&
-              !res.versionId &&
-              g.items.find((i) => i.modelId === modelId)
-            )
-              return true
-            if (
-              SpeckleViewer.ViewerRoute.isModelFolderResource(res) &&
-              (g.items.find((i) => i.modelId === modelId) ||
-                modelName.startsWith(res.folderName))
-            )
-              return true
-            return false
-          })
-          if (groupIdx === -1) return
-
-          const group = data.project.viewerResources[groupIdx]
-          const groupItemIdx = group.items.findIndex((i) => i.modelId === modelId)
-
-          const newGroupItem =
-            groupItemIdx !== -1
-              ? { ...group.items[groupItemIdx], objectId, versionId: version.id }
-              : {
-                  versionId: version.id,
-                  objectId,
-                  modelId
-                }
-
-          const newGroupItems = group.items.slice()
-          if (groupItemIdx !== -1) {
-            newGroupItems.splice(groupItemIdx, 1, newGroupItem)
-          } else {
-            newGroupItems.push(newGroupItem)
-          }
-
-          const newGroup = { ...group, items: newGroupItems }
-          const newGroups = data.project.viewerResources.slice()
-          newGroups.splice(groupIdx, 1, newGroup)
-
-          return merge<
-            PartialDeep<ProjectViewerResourcesQuery>,
-            ProjectViewerResourcesQuery,
-            PartialDeep<ProjectViewerResourcesQuery>
-          >({}, data, { project: { viewerResources: newGroups } })
-        }
-      )
-    },
-    { silenceToast: true }
-  )
-
-  // Track pending version updates (file imports)
-  useProjectPendingVersionUpdateTracking(projectId.value)
-
-  // Redirect to home if project deleted
-  useProjectUpdateTracking(projectId, (event) => {
-    const isDeleted = event.type === ProjectUpdatedMessageType.Deleted
-
-    if (isDeleted) {
-      goHome()
-
-      triggerNotification({
-        type: ToastNotificationType.Info,
-        title: 'Project deleted',
-        description: 'Redirecting to home'
-      })
-    }
-  })
 }
 
 export function useViewerPostSetup() {

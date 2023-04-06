@@ -5,7 +5,7 @@
       :name="name"
       :multiple="multiple"
       :by="by"
-      :disabled="disabled"
+      :disabled="isDisabled"
       as="div"
     >
       <ListboxLabel
@@ -279,6 +279,8 @@ const searchInput = ref(null as Nullable<HTMLInputElement>)
 const searchValue = ref('')
 
 const internalHelpTipId = ref(nanoid())
+
+const isDisabled = computed(() => props.disabled || !props.items.length)
 const title = computed(() => unref(props.label) || unref(props.name))
 const errorMessage = computed(() => {
   const base = error.value
@@ -303,13 +305,13 @@ const buttonClasses = computed(() => {
   if (props.buttonStyle !== 'simple') {
     classParts.push('py-2 px-3 outline outline-2 outline-primary-muted hover:shadow ')
     classParts.push(
-      props.disabled
+      isDisabled.value
         ? 'bg-foundation-disabled text-foreground-disabled'
         : 'bg-foundation text-foreground'
     )
   }
 
-  if (props.disabled) classParts.push('cursor-not-allowed')
+  if (isDisabled.value) classParts.push('cursor-not-allowed')
 
   return classParts.join(' ')
 })
