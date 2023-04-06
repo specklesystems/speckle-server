@@ -277,22 +277,25 @@ function getModelTreeItemsFilteredBaseQuery(
   args: ProjectModelsTreeArgs,
   options?: Partial<{ filterOutEmptyMain: boolean }>
 ) {
-  const search = args.filter?.search
+  const search = args.filter?.search || ''
   const sourceApps = args.filter?.sourceApps || []
   const contributors = args.filter?.contributors || []
+  const isFiltering = search.length || sourceApps.length || contributors.length
+  const filterOutEmptyMain = !isFiltering && (options?.filterOutEmptyMain ?? true)
 
   const BranchesJoin = Branches.with({ withCustomTablePrefix: 'b2' })
 
   const q = Branches.knex()
-    .select<Array<BranchRecord & { hasChildren: boolean }>>([
-      ...Branches.cols,
+    .select<Array<{ name: string; updatedAt: Date; hasChildren: boolean }>>([
+      Branches.col.name,
+      Branches.col.updatedAt,
       knex.raw(`COUNT(??) > 0 as "hasChildren"`, [BranchesJoin.col.id])
     ])
     .leftJoin(BranchesJoin.name, (lj) => {
       lj.on(
         BranchesJoin.col.name,
         'ilike',
-        knex.raw(`(?? || '%')`, [Branches.col.name]) // TODO: Needs to be '/%'?
+        knex.raw(`(?? || '/%')`, [Branches.col.name])
       )
         .andOn(BranchesJoin.col.name, '!=', Branches.col.name)
         .andOn(BranchesJoin.col.streamId, '=', Branches.col.streamId)
@@ -301,7 +304,7 @@ function getModelTreeItemsFilteredBaseQuery(
     .groupBy(Branches.col.id)
     .orderBy(Branches.col.updatedAt, 'desc')
 
-  if (options?.filterOutEmptyMain) {
+  if (filterOutEmptyMain) {
     q.andWhere((w) => {
       w.whereNot(Branches.col.name, 'main').orWhere(
         0,
@@ -313,7 +316,7 @@ function getModelTreeItemsFilteredBaseQuery(
     })
   }
 
-  if (search?.length) {
+  if (search.length) {
     q.andWhereILike(Branches.col.name, `%${search}%`)
   }
 

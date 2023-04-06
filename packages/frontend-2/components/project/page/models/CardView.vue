@@ -38,8 +38,6 @@ import {
 import { Nullable, SourceAppDefinition } from '@speckle/shared'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 
-// TODO: ModelsTreeItem members/sources filter
-
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
   (e: 'model-clicked', v: { id: string; e: MouseEvent }): void
@@ -90,7 +88,7 @@ const infiniteLoadIdentifier = computed(() => {
 })
 
 // Base query (all pending uploads + first page of models)
-const { result: latestModelsResult, variables: latestModelsVariables } = useQuery(
+const { result: baseResult, variables: latestModelsVariables } = useQuery(
   latestModelsQuery,
   () => latestModelsQueryVariables.value
 )
@@ -113,11 +111,13 @@ const isFiltering = computed(() => {
   return false
 })
 
-const models = computed(() => extraPagesResult.value?.project?.models?.items || [])
+const models = computed(() =>
+  extraPagesResult.value
+    ? extraPagesResult.value?.project?.models?.items || []
+    : baseResult.value?.project?.models?.items || []
+)
 const pendingModels = computed(() =>
-  isFiltering.value
-    ? []
-    : latestModelsResult.value?.project?.pendingImportedModels || []
+  isFiltering.value ? [] : baseResult.value?.project?.pendingImportedModels || []
 )
 
 const items = computed(() =>
@@ -129,15 +129,15 @@ const items = computed(() =>
 const itemsCount = computed(() => items.value.length)
 const moreToLoad = computed(
   () =>
-    !latestModelsResult.value?.project ||
-    latestModelsResult.value.project.models.items.length <
-      latestModelsResult.value.project.models.totalCount
+    !baseResult.value?.project ||
+    baseResult.value.project.models.items.length <
+      baseResult.value.project.models.totalCount
 )
 
 const infiniteLoad = async (state: InfiniteLoaderState) => {
   const cursor =
     extraPagesResult.value?.project?.models.cursor ||
-    latestModelsResult.value?.project?.models.cursor ||
+    baseResult.value?.project?.models.cursor ||
     null
   if (!moreToLoad.value || !cursor) return state.complete()
 

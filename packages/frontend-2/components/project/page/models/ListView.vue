@@ -16,7 +16,7 @@
   </div>
   <CommonEmptySearchState
     v-else-if="
-      isFiltering && (treeTopLevelResult?.project?.modelsTree.items || []).length === 0
+      isFiltering && (baseResult?.project?.modelsTree.items || []).length === 0
     "
     @clear-search="$emit('clear-search')"
   />
@@ -83,7 +83,7 @@ const infiniteLoadIdentifier = computed(() => {
 })
 
 // Base query (all pending uploads + first page of models)
-const { result: treeTopLevelResult, variables: resultVariables } = useQuery(
+const { result: baseResult, variables: resultVariables } = useQuery(
   projectModelsTreeTopLevelQuery,
   () => baseQueryVariables.value
 )
@@ -107,12 +107,12 @@ const { result: extraPagesResult, fetchMore: fetchMorePages } = useQuery(
 )
 
 const pendingModels = computed(() =>
-  isFiltering.value
-    ? []
-    : treeTopLevelResult.value?.project?.pendingImportedModels || []
+  isFiltering.value ? [] : baseResult.value?.project?.pendingImportedModels || []
 )
-const modelTreeItems = computed(
-  () => extraPagesResult.value?.project?.modelsTree.items || []
+const modelTreeItems = computed(() =>
+  extraPagesResult.value
+    ? extraPagesResult.value?.project?.modelsTree.items || []
+    : baseResult.value?.project?.modelsTree.items || []
 )
 
 const topLevelItems = computed(
@@ -142,7 +142,7 @@ const onModelUpdated = () => {
 const infiniteLoad = async (state: InfiniteLoaderState) => {
   const cursor =
     extraPagesResult.value?.project?.modelsTree.cursor ||
-    treeTopLevelResult.value?.project?.modelsTree.cursor ||
+    baseResult.value?.project?.modelsTree.cursor ||
     null
   if (!moreToLoad.value || !cursor) return state.complete()
 
