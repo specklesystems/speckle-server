@@ -24,6 +24,7 @@ import {
 import { ObjectLayers } from '../SpeckleRenderer'
 import { TransformStorage } from './Batcher'
 import { BatchObject } from './BatchObject'
+import { GeometryConverter } from '../converter/GeometryConverter'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -481,6 +482,12 @@ export default class MeshBatch implements Batch {
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
     this.mesh.frustumCulled = false
+
+    if (!GeometryConverter.keepGeometryData) {
+      batchObjects.forEach((element: BatchObject) => {
+        element.renderView.disposeGeometry()
+      })
+    }
   }
 
   public getRenderView(index: number): NodeRenderView {
