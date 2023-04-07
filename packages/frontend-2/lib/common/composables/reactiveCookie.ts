@@ -1,5 +1,5 @@
 import { CookieOptions } from '#app'
-import { useScopedState } from '~/lib/common/composables/scopedState'
+import { useScopedState } from '~~/lib/common/composables/scopedState'
 
 /**
  * Makes useCookie() synchronized across the app so that a change to it from one place
