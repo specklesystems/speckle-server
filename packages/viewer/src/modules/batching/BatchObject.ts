@@ -10,13 +10,23 @@ export class BatchObject {
   private _renderView: NodeRenderView
   private _bvh: SpeckleMeshBVH
   private _batchIndex: number
+  private _localOrigin: Vector3
   public transform: Matrix4
   public transformInv: Matrix4
+
   public quaternion: Quaternion = new Quaternion()
   public pivot_High: Vector3 = new Vector3()
   public pivot_Low: Vector3 = new Vector3()
   public translation: Vector3 = new Vector3()
   public scale: Vector3 = new Vector3(1, 1, 1)
+
+  private static matBuff0: Matrix4 = new Matrix4()
+  private static matBuff1: Matrix4 = new Matrix4()
+  private static matBuff2: Matrix4 = new Matrix4()
+  private static eulerBuff: Euler = new Euler()
+  private static translationBuff: Vector3 = new Vector3()
+  private static scaleBuff: Vector3 = new Vector3()
+  private static pivotBuff: Vector3 = new Vector3()
 
   public get renderView(): NodeRenderView {
     return this._renderView
@@ -39,11 +49,21 @@ export class BatchObject {
     this._batchIndex = batchIndex
     this.transform = new Matrix4().identity()
     this.transformInv = new Matrix4().identity()
+
+    this._localOrigin = this._renderView.aabb.getCenter(new Vector3())
+    Geometry.DoubleToHighLowVector(
+      new Vector3(this._localOrigin.x, this._localOrigin.y, this._localOrigin.z),
+      this.pivot_Low,
+      this.pivot_High
+    )
   }
 
   public buildBVH() {
-    const rvCenter = this._renderView.aabb.getCenter(new Vector3())
-    const transform = new Matrix4().makeTranslation(rvCenter.x, rvCenter.y, rvCenter.z)
+    const transform = new Matrix4().makeTranslation(
+      this._localOrigin.x,
+      this._localOrigin.y,
+      this._localOrigin.z
+    )
     transform.invert()
 
     const indices = this._renderView.renderData.geometry.attributes.INDEX
@@ -59,12 +79,6 @@ export class BatchObject {
       localPositions[k + 2] = vecBuff.z
     }
 
-    Geometry.DoubleToHighLowVector(
-      new Vector3(rvCenter.x, rvCenter.y, rvCenter.z),
-      this.pivot_Low,
-      this.pivot_High
-    )
-
     this._bvh = SpeckleMeshBVH.buildBVH(indices, localPositions)
     this._bvh.inputTransform = this.transformInv
     this._bvh.outputTransform = this.transform
@@ -73,16 +87,43 @@ export class BatchObject {
   }
 
   public transformTRS(
-    position: VectorLike,
+    translation: VectorLike,
     euler: VectorLike,
     scale: VectorLike,
-    origin: VectorLike
+    pivot: VectorLike
   ) {
-    const T = new Matrix4().makeTranslation(position.x, position.y, position.z)
-    const R = new Matrix4().makeRotationFromEuler(
-      new Euler(euler.x, euler.y, euler.z, 'XYZ')
-    )
-    const S = new Matrix4().makeScale(scale.x, scale.y, scale.z)
+    let T: Matrix4 = BatchObject.matBuff0.identity()
+    let R: Matrix4 = BatchObject.matBuff1.identity()
+    let S: Matrix4 = BatchObject.matBuff2.identity()
+    BatchObject.eulerBuff.set(0, 0, 0, 'XYZ')
+    BatchObject.translationBuff.set(0, 0, 0)
+    BatchObject.scaleBuff.set(1, 1, 1)
+    BatchObject.pivotBuff.copy(this._localOrigin)
+
+    if (translation) {
+      T = BatchObject.matBuff0.makeTranslation(
+        translation.x,
+        translation.y,
+        translation.z
+      )
+      BatchObject.translationBuff.set(translation.x, translation.y, translation.z)
+    }
+
+    if (euler) {
+      BatchObject.eulerBuff.set(euler.x, euler.y, euler.z, 'XYZ')
+      R = BatchObject.matBuff1.makeRotationFromEuler(BatchObject.eulerBuff)
+      this.quaternion.setFromEuler(BatchObject.eulerBuff)
+    }
+
+    if (scale) {
+      S = BatchObject.matBuff2.makeScale(scale.x, scale.y, scale.z)
+      BatchObject.scaleBuff.set(scale.x, scale.y, scale.z)
+    }
+
+    if (pivot) {
+      BatchObject.pivotBuff.set(pivot.x, pivot.y, pivot.z)
+    }
+
     this.transform.identity()
     this.transform.multiply(R)
     this.transform.multiply(S)
@@ -91,15 +132,14 @@ export class BatchObject {
     this.transformInv.copy(this.transform)
     this.transformInv.invert()
 
-    this.quaternion = new Quaternion().setFromEuler(
-      new Euler(euler.x, euler.y, euler.z, 'XYZ')
-    )
+    this.translation.copy(BatchObject.translationBuff)
+    this.quaternion.setFromEuler(BatchObject.eulerBuff)
+    this.scale.copy(BatchObject.scaleBuff)
+
     Geometry.DoubleToHighLowVector(
-      new Vector3(origin.x, origin.y, origin.z),
+      BatchObject.pivotBuff,
       this.pivot_Low,
       this.pivot_High
     )
-    this.translation.set(position.x, position.y, position.z)
-    this.scale.set(scale.x, scale.y, scale.z)
   }
 }
