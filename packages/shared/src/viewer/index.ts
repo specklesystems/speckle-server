@@ -1,1 +1,1 @@
-export * as ViewerRoute from './helpers/route'
+export * as ViewerRoute from './helpers/route.js'

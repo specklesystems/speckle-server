@@ -77,7 +77,8 @@
     "vue-semantic-server.trace.server": "off",
     "vue-syntactic-server.trace.server": "off",
     "svg.preview.background": "transparent",
-    "editor.tabSize": 2
+    "editor.tabSize": 2,
+    "typescript.tsdk": "node_modules/typescript/lib"
   },
   "extensions": {
     // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.

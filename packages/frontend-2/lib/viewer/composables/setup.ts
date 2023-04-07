@@ -17,7 +17,8 @@ import {
   Ref
 } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import { Nullable, Optional, SpeckleViewer } from '@speckle/shared'
+import { Nullable, Optional } from '@speckle/shared'
+import * as SpeckleViewer from '@speckle/shared/viewer'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,

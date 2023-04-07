@@ -2,7 +2,8 @@ import { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useQuery, useSubscription } from '@vue/apollo-composable'
 import { MaybeRef } from '@vueuse/core'
 import { Get } from 'type-fest'
-import { Nullable, SpeckleViewer } from '@speckle/shared'
+import { Nullable } from '@speckle/shared'
+import * as SpeckleViewer from '@speckle/shared/viewer'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import {
   DeleteVersionsInput,

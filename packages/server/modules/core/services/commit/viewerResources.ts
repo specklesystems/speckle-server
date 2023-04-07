@@ -18,7 +18,8 @@ import {
   getSpecificBranchCommits
 } from '@/modules/core/repositories/commits'
 import { getStreamObjects } from '@/modules/core/repositories/objects'
-import { Optional, SpeckleViewer } from '@speckle/shared'
+import { Optional } from '@speckle/shared'
+import * as SpeckleViewer from '@speckle/shared/viewer'
 import { flatten, keyBy, reduce, uniq, uniqWith } from 'lodash'
 
 function isResourceItemEqual(a: ViewerResourceItem, b: ViewerResourceItem) {

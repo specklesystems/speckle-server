@@ -69,6 +69,7 @@ import { useEventHub } from '@/main/lib/core/composables/core'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import { useGlobalToast } from '@/main/lib/core/composables/notifications'
 import { streamPendingAccessRequestsFragment } from '@/graphql/fragments/streams'
+import { Optional } from '@speckle/shared/core'
 
 type StreamAccessRequest = NonNullable<
   Get<StreamWithCollaboratorsQuery, 'stream.pendingAccessRequests.0'>

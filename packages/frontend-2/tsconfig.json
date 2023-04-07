@@ -2,8 +2,9 @@
   // https://v3.nuxtjs.org/concepts/typescript
   "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
+    "moduleResolution": "bundler",
     "paths": {
-      "@speckle/shared": ["../shared/dist-esm/index"],
+      "@speckle/shared": ["../shared/dist/index"],
       "@speckle/viewer": ["../viewer/dist/index"],
       "~~": ["."],
       "~~/*": ["./*"],

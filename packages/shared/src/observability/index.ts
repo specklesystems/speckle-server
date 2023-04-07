@@ -1,4 +1,4 @@
-import pino, { LoggerOptions } from 'pino'
+import { LoggerOptions, pino } from 'pino'
 
 let logger: pino.Logger
 

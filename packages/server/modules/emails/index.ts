@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 /* istanbul ignore file */
 import { moduleLogger } from '@/logging/logging'
 import * as SendingService from '@/modules/emails/services/sending'
@@ -15,7 +16,7 @@ const emailsModule: SpeckleModule = {
     await initializeTransporter()
 
     // init rest api
-    ;(await import('./rest')).default(app)
+    require('./rest/index')(app)
 
     // init event listeners
     if (isInitial) {

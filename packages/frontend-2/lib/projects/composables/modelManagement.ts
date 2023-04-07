@@ -3,7 +3,7 @@ import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import { MaybeRef, useClipboard } from '@vueuse/core'
 import { Get } from 'type-fest'
 import { GenericValidateFunction } from 'vee-validate'
-import { SpeckleViewer } from '@speckle/shared'
+import * as SpeckleViewer from '@speckle/shared/viewer'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import {
   DeleteModelInput,
