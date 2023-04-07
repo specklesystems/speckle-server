@@ -96,6 +96,7 @@ const onSubmit = handleSubmit(async (values) => {
       )
   if (success) {
     isOpen.value = false
+    selectedProject.value = undefined
   }
 })
 </script>
