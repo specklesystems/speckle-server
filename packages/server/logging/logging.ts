@@ -1,7 +1,6 @@
 // Note logging is imported by www & ts-www, prior to init() being called
 // so we can't use local imports with '@' etc., as they aren't yet defined.
-import { Observability } from '@speckle/shared'
-export { Observability } from '@speckle/shared'
+import * as Observability from '@speckle/shared/observability'
 
 const { getLogger, extendLoggerComponent } = Observability
 
@@ -25,3 +24,4 @@ export const servicesLogger = extendLoggerComponent(logger, 'services')
 export const rateLimiterLogger = extendLoggerComponent(logger, 'rate-limiter')
 export const redisLogger = extendLoggerComponent(logger, 'redis')
 export const dbNotificationLogger = extendLoggerComponent(logger, 'db-notifications')
+export { Observability }

@@ -1,6 +1,6 @@
 {
   "name": "@speckle/shared",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Shared code between various Speckle JS packages",
   "homepage": "https://speckle.systems",
   "repository": {
@@ -8,10 +8,31 @@
     "url": "https://github.com/specklesystems/speckle-server.git",
     "directory": "packages/shared"
   },
-  "main": "./dist-cjs/index.js",
-  "types": "./dist-esm/index.d.ts",
-  "module": "./dist-esm/index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist-cjs/index.js"
+    },
+    "./core": {
+      "import": "./dist/core/index.js",
+      "require": "./dist-cjs/core/index.js"
+    },
+    "./viewer": {
+      "import": "./dist/viewer/index.js",
+      "require": "./dist-cjs/viewer/index.js"
+    },
+    "./rich-text-editor": {
+      "import": "./dist/rich-text-editor/index.js",
+      "require": "./dist-cjs/rich-text-editor/index.js"
+    },
+    "./observability": {
+      "import": "./dist/observability/index.js",
+      "require": "./dist-cjs/observability/index.js"
+    }
+  },
   "scripts": {
+    "build:new": "tsc && tsc --module commonjs --outDir ./dist-cjs",
     "build": "NODE_ENV=production rollup --config",
     "build:dev": "rollup --config",
     "dev": "rollup --config --watch",

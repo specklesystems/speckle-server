@@ -62,8 +62,8 @@
   </v-card>
 </template>
 <script>
-import { gql } from '@apollo/client/core'
 import { AppLocalStorage } from '@/utils/localStorage'
+import { gql } from '@apollo/client/core'
 
 export default {
   props: {

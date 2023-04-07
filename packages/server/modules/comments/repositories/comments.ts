@@ -30,10 +30,11 @@ import {
 } from '@/modules/shared/helpers/dbHelper'
 import { Knex } from 'knex'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
-import { SpeckleViewer } from '@speckle/shared'
+import * as SpeckleViewer from '@speckle/shared/viewer'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { Merge } from 'type-fest'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
+import { Roles } from '@speckle/shared'
 
 export const generateCommentId = () => crs({ length: 10 })
 

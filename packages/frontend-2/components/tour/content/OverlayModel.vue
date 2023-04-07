@@ -31,12 +31,14 @@
 <script setup lang="ts">
 import { CheckIcon } from '@heroicons/vue/24/solid'
 import { useQuery } from '@vue/apollo-composable'
-import { SpeckleViewer } from '~~/../shared/dist-esm'
+import * as SpeckleViewer from '@speckle/shared/viewer'
 import { latestModelsQuery } from '~~/lib/projects/graphql/queries'
 import {
   useInjectedViewerRequestedResources,
   useInjectedViewerLoadedResources
 } from '~~/lib/viewer/composables/setup'
+import { Optional } from '@speckle/shared'
+Optional
 
 const { items } = useInjectedViewerRequestedResources()
 const { project, modelsAndVersionIds } = useInjectedViewerLoadedResources()

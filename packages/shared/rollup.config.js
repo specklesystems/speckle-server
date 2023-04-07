@@ -5,6 +5,8 @@ const typescript2 = require('rollup-plugin-typescript2')
 const isProd = process.env.NODE_ENV === 'production'
 const sourcemap = isProd ? false : 'inline'
 
+// TODO: Built ejs & cjs with ts directly + copy package.json w/ type: commonjs (or build to .cjs - how does graphql-tools/utils do it)
+
 /** @type {import('rollup').RollupOptions} */
 module.exports = {
   input: 'src/index.ts',

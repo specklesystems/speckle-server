@@ -13,7 +13,7 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { SpeckleViewer } from '@speckle/shared'
+import * as SpeckleViewer from '@speckle/shared/viewer'
 import { LayoutTabItem } from '~~/lib/layout/helpers/components'
 import { useInjectedViewerRequestedResources } from '~~/lib/viewer/composables/setup'
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import {
   initializeQueue,
   consumeIncomingNotifications,
@@ -18,20 +19,16 @@ export async function initializeConsumption(
   moduleLogger.info('📞 Initializing notification queue consumption...')
 
   const allHandlers: Partial<NotificationTypeHandlers> = {
-    [NotificationType.MentionedInComment]: (
-      await import('@/modules/notifications/services/handlers/mentionedInComment')
-    ).default,
-    [NotificationType.NewStreamAccessRequest]: (
-      await import('@/modules/notifications/services/handlers/newStreamAccessRequest')
-    ).default,
-    [NotificationType.StreamAccessRequestApproved]: (
-      await import(
-        '@/modules/notifications/services/handlers/streamAccessRequestApproved'
-      )
-    ).default,
-    [NotificationType.ActivityDigest]: (
-      await import('@/modules/notifications/services/handlers/activityDigest')
-    ).default
+    [NotificationType.MentionedInComment]:
+      require('@/modules/notifications/services/handlers/mentionedInComment').default,
+    [NotificationType.NewStreamAccessRequest]:
+      require('@/modules/notifications/services/handlers/newStreamAccessRequest')
+        .default,
+    [NotificationType.StreamAccessRequestApproved]:
+      require('@/modules/notifications/services/handlers/streamAccessRequestApproved')
+        .default,
+    [NotificationType.ActivityDigest]:
+      require('@/modules/notifications/services/handlers/activityDigest').default
   }
 
   registerNotificationHandlers(customHandlers || allHandlers)

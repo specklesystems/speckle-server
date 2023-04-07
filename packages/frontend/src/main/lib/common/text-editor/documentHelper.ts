@@ -1,4 +1,4 @@
-import { RichTextEditor } from '@speckle/shared'
+import * as RichTextEditor from '@speckle/shared/rich-text-editor'
 import { JSONContent } from '@tiptap/core'
 
 const { isDocEmpty, documentToBasicString } = RichTextEditor

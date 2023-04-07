@@ -1,4 +1,6 @@
-import { RichTextEditor, SpeckleViewer } from '@speckle/shared'
+import * as SpeckleViewer from '@speckle/shared/viewer'
+import * as RichTextEditor from '@speckle/shared/rich-text-editor'
+
 import { sortBy } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
@@ -8,6 +10,8 @@ import {
 import { modelRoute } from '~~/lib/common/helpers/route'
 import { CommentEditorValue } from '~~/lib/viewer/composables/commentManagement'
 import { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHashState'
+// import { Optional } from '@speckle/shared'
+// ViewerHashStateKeys
 
 export function convertCommentEditorValueToInput(
   value: CommentEditorValue

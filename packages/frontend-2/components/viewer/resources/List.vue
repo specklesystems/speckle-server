@@ -41,7 +41,7 @@
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
-import { SpeckleViewer } from '@speckle/shared'
+import * as SpeckleViewer from '@speckle/shared/viewer'
 import {
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
