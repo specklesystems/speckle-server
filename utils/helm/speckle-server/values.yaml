@@ -549,6 +549,51 @@ server:
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ##
     memory: 3Gi
+  ratelimiting:
+    ## @param server.ratelimiting.all_requests The maximum number of requests that can be made to the Speckle server in a moving one second window.
+    all_requests: 500
+    ## @param server.ratelimiting.burst_all_requests If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server in a moving one minute window.
+    burst_all_requests: 2000
+    ## @param server.ratelimiting.user_create The maximum number of requests that can be made to the Speckle server to create a new user in a moving one second window.
+    user_create: 6
+    ## @param server.ratelimiting.burst_user_create If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to create a new user in a moving one minute window.
+    burst_user_create: 1000
+    ## @param server.ratelimiting.stream_create The maximum number of requests that can be made to the Speckle server to create a new stream in a moving one second window.
+    stream_create: 1
+    ## @param server.ratelimiting.burst_stream_create If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to create a new stream in a moving one minute window.
+    burst_stream_create: 100
+    ## @param server.ratelimiting.commit_create The maximum number of requests that can be made to the Speckle server to create a new commit in a moving one second window.
+    commit_create: 1
+    ## @param server.ratelimiting.burst_commit_create If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to create a new commit in a moving one minute window.
+    burst_commit_create: 100
+    ## @param server.ratelimiting.object_create The maximum number of requests that can be made to the Speckle server to get a new object in a moving one second window.
+    post_getobjects_streamid: 3
+    ## @param server.ratelimiting.burst_object_create If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to get a new object in a moving one minute window.
+    burst_post_getobjects_streamid: 200
+    ## @param server.ratelimiting.post_diff_streamid The maximum number of requests that can be made to the Speckle server to undertake a diff in a moving one second window.
+    post_diff_streamid: 10
+    ## @param server.ratelimiting.burst_post_diff_streamid If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to undertake a diff in a moving one minute window.
+    burst_post_diff_streamid: 1000
+    ## @param server.ratelimiting.post_objects_streamid The maximum number of requests that can be made to the Speckle server to post a new object in a moving one second window.
+    post_objects_streamid: 6
+    ## @param server.ratelimiting.burst_post_objects_streamid If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to post a new object in a moving one minute window.
+    burst_post_objects_streamid: 400
+    ## @param server.ratelimiting.get_objects_streamid_objectid The maximum number of requests that can be made to the Speckle server to get an object in a moving one second window.
+    get_objects_streamid_objectid: 3
+    ## @param server.ratelimiting.burst_get_objects_streamid_objectid If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to get an object in a moving one minute window.
+    burst_get_objects_streamid_objectid: 200
+    ## @param server.ratelimiting.get_objects_streamid_objectid_single The maximum number of requests that can be made to the Speckle server to get a single object in a moving one second window.
+    get_objects_streamid_objectid_single: 3
+    ## @param server.ratelimiting.burst_get_objects_streamid_objectid_single If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to get a single object in a moving one minute window.
+    burst_get_objects_streamid_objectid_single: 200
+    ## @param server.ratelimiting.post_graphql The maximum number of requests that can be made to the GraphQL API in a moving one second window.
+    post_graphql: 10
+    ## @param server.ratelimiting.post_grapqhl If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the GraphQL API in a moving one minute window.
+    burst_post_grapqhl: 20
+    ## @param server.ratelimiting.get_auth The maximum number of requests that can be made to the Speckle server to authenticate in a moving one second window.
+    get_auth: 2
+    ## @param server.ratelimiting.burst_get_auth If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to authenticate in a moving one minute window.
+    burst_get_auth: 20
   serviceAccount:
     ## @param server.serviceAccount.create If enabled, a Kubernetes Service Account will be created for this pod.
     ## This provides additional security by limiting this pod's access to the Kubernetes API and to Secrets on the Kubernetes cluster.
