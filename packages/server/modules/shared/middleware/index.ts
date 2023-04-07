@@ -87,15 +87,18 @@ export async function authContextMiddleware(
 ) {
   const token = getTokenFromRequest(req)
   const authContext = await createAuthContextFromToken(token)
+  const logger = req.log.child({ authContext })
   if (!authContext.auth && authContext.err) {
     let message = 'Unknown Auth context error'
     let status = 500
     message = authContext.err?.message || message
     if (authContext.err instanceof UnauthorizedError) status = 401
     if (authContext.err instanceof ForbiddenError) status = 403
+    logger.warn('Auth context creation failed.')
     return res.status(status).json({ error: message })
   }
   req.context = authContext
+  logger.info('Auth context created')
   next()
 }
 
