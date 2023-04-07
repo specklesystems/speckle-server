@@ -1340,7 +1340,6 @@ export type ProjectCreateInput = {
 export type ProjectInviteCreateInput = {
   /** Either this or userId must be filled */
   email?: InputMaybe<Scalars['String']>;
-  projectId: Scalars['ID'];
   /** Defaults to the contributor role, if not specified */
   role?: InputMaybe<Scalars['String']>;
   /** Either this or email must be filled */
@@ -1349,12 +1348,20 @@ export type ProjectInviteCreateInput = {
 
 export type ProjectInviteMutations = {
   __typename?: 'ProjectInviteMutations';
+  /** Batch invite to project */
+  batchCreate: Project;
   /** Cancel a pending stream invite. Can only be invoked by a project owner. */
   cancel: Project;
   /** Invite a new or registered user to be a project collaborator. Can only be invoked by a project owner. */
   create: Project;
   /** Accept or decline a project invite */
   use: Scalars['Boolean'];
+};
+
+
+export type ProjectInviteMutationsBatchCreateArgs = {
+  input: Array<ProjectInviteCreateInput>;
+  projectId: Scalars['ID'];
 };
 
 
@@ -1366,6 +1373,7 @@ export type ProjectInviteMutationsCancelArgs = {
 
 export type ProjectInviteMutationsCreateArgs = {
   input: ProjectInviteCreateInput;
+  projectId: Scalars['ID'];
 };
 
 
@@ -2392,6 +2400,8 @@ export type UserDeleteInput = {
 };
 
 export type UserProjectsFilter = {
+  /** Only return projects owned by the active user */
+  ownedOnly?: InputMaybe<Scalars['Boolean']>;
   /** Filter out projects by name */
   search?: InputMaybe<Scalars['String']>;
 };

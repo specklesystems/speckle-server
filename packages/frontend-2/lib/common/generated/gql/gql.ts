@@ -20,6 +20,7 @@ const documents = {
     "\n  mutation RequestVerification {\n    requestVerification\n  }\n": types.RequestVerificationDocument,
     "\n  fragment AuthStategiesServerInfoFragment on ServerInfo {\n    authStrategies {\n      id\n      name\n      url\n    }\n  }\n": types.AuthStategiesServerInfoFragmentFragmentDoc,
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": types.CommonModelSelectorModelFragmentDoc,
+    "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.FormUsersSelectItemFragmentDoc,
     "\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n": types.ProjectDiscussionsPageHeader_ProjectFragmentDoc,
     "\n  fragment ProjectDiscussionsPageResults_Project on Project {\n    id\n  }\n": types.ProjectDiscussionsPageResults_ProjectFragmentDoc,
@@ -69,6 +70,7 @@ const documents = {
     "\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n": types.ProjectModelsSelectorValuesDocument,
     "\n  query ServerVersionInfo {\n    serverInfo {\n      version\n    }\n  }\n": types.ServerVersionInfoDocument,
     "\n  query InternalTestData {\n    testNumber\n    testList {\n      foo\n      bar\n    }\n  }\n": types.InternalTestDataDocument,
+    "\n  query SearchProjects($search: String, $ownedOnly: Boolean = false) {\n    activeUser {\n      projects(limit: 10, filter: { search: $search, ownedOnly: $ownedOnly }) {\n        totalCount\n        items {\n          ...FormSelectProjects_Project\n        }\n      }\n    }\n  }\n": types.SearchProjectsDocument,
     "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      user {\n        id\n        name\n        avatar\n      }\n    }\n    ...ProjectPageModelsCardProject\n  }\n": types.ProjectDashboardItemNoModelsFragmentDoc,
     "\n  fragment ProjectDashboardItem on Project {\n    id\n    ...ProjectDashboardItemNoModels\n    models(limit: 4, filter: { onlyWithVersions: true }) {\n      totalCount\n      items {\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n    pendingImportedModels(limit: 4) {\n      ...PendingFileUpload\n    }\n  }\n": types.ProjectDashboardItemFragmentDoc,
     "\n  fragment PendingFileUpload on FileUpload {\n    id\n    projectId\n    modelName\n    convertedStatus\n    convertedMessage\n    uploadDate\n    convertedLastUpdate\n    fileType\n    fileName\n  }\n": types.PendingFileUploadFragmentDoc,
@@ -79,7 +81,7 @@ const documents = {
     "\n  mutation UpdateModel($input: UpdateModelInput!) {\n    modelMutations {\n      update(input: $input) {\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n  }\n": types.UpdateModelDocument,
     "\n  mutation DeleteModel($input: DeleteModelInput!) {\n    modelMutations {\n      delete(input: $input)\n    }\n  }\n": types.DeleteModelDocument,
     "\n  mutation UpdateProjectRole($input: ProjectUpdateRoleInput!) {\n    projectMutations {\n      updateRole(input: $input) {\n        id\n        team {\n          role\n          user {\n            ...LimitedUserAvatar\n          }\n        }\n      }\n    }\n  }\n": types.UpdateProjectRoleDocument,
-    "\n  mutation InviteProjectUser($input: ProjectInviteCreateInput!) {\n    projectMutations {\n      invites {\n        create(input: $input) {\n          ...ProjectPageTeamDialog\n        }\n      }\n    }\n  }\n": types.InviteProjectUserDocument,
+    "\n  mutation InviteProjectUser($projectId: ID!, $input: [ProjectInviteCreateInput!]!) {\n    projectMutations {\n      invites {\n        batchCreate(projectId: $projectId, input: $input) {\n          ...ProjectPageTeamDialog\n        }\n      }\n    }\n  }\n": types.InviteProjectUserDocument,
     "\n  mutation CancelProjectInvite($projectId: ID!, $inviteId: String!) {\n    projectMutations {\n      invites {\n        cancel(projectId: $projectId, inviteId: $inviteId) {\n          ...ProjectPageTeamDialog\n        }\n      }\n    }\n  }\n": types.CancelProjectInviteDocument,
     "\n  mutation UpdateProjectMetadata($update: ProjectUpdateInput!) {\n    projectMutations {\n      update(update: $update) {\n        id\n        ...ProjectUpdatableMetadata\n      }\n    }\n  }\n": types.UpdateProjectMetadataDocument,
     "\n  mutation DeleteProject($id: String!) {\n    projectMutations {\n      delete(id: $id)\n    }\n  }\n": types.DeleteProjectDocument,
@@ -109,7 +111,7 @@ const documents = {
     "\n  subscription OnProjectVersionsPreviewGenerated($id: String!) {\n    projectVersionsPreviewGenerated(id: $id) {\n      projectId\n      objectId\n      versionId\n    }\n  }\n": types.OnProjectVersionsPreviewGeneratedDocument,
     "\n  subscription OnProjectPendingModelsUpdated($id: String!) {\n    projectPendingModelsUpdated(id: $id) {\n      id\n      type\n      model {\n        ...PendingFileUpload\n        model {\n          ...ProjectPageLatestItemsModelItem\n        }\n      }\n    }\n  }\n": types.OnProjectPendingModelsUpdatedDocument,
     "\n  subscription OnProjectPendingVersionsUpdated($id: String!) {\n    projectPendingVersionsUpdated(id: $id) {\n      id\n      type\n      version {\n        ...PendingFileUpload\n        model {\n          ...ProjectPageLatestItemsModelItem\n        }\n      }\n    }\n  }\n": types.OnProjectPendingVersionsUpdatedDocument,
-    "\n  mutation InviteServerUser($input: ServerInviteCreateInput!) {\n    serverInviteCreate(input: $input)\n  }\n": types.InviteServerUserDocument,
+    "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n": types.InviteServerUserDocument,
     "\n  fragment ViewerCommentBubblesData on Comment {\n    id\n    viewedAt\n    data {\n      location\n      camPos\n      sectionBox\n      selection\n      filters {\n        hiddenIds\n        isolatedIds\n        propertyInfoKey\n        passMax\n        passMin\n        sectionBox\n      }\n    }\n  }\n": types.ViewerCommentBubblesDataFragmentDoc,
     "\n  fragment ViewerCommentThread on Comment {\n    ...ViewerCommentsListItem\n    ...ViewerCommentBubblesData\n    ...ViewerCommentsReplyItem\n  }\n": types.ViewerCommentThreadFragmentDoc,
     "\n  fragment ViewerCommentsReplyItem on Comment {\n    id\n    archived\n    rawText\n    text {\n      doc\n    }\n    author {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    ...ThreadCommentAttachment\n  }\n": types.ViewerCommentsReplyItemFragmentDoc,
@@ -172,6 +174,10 @@ export function graphql(source: "\n  fragment AuthStategiesServerInfoFragment on
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -371,6 +377,10 @@ export function graphql(source: "\n  query InternalTestData {\n    testNumber\n 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  query SearchProjects($search: String, $ownedOnly: Boolean = false) {\n    activeUser {\n      projects(limit: 10, filter: { search: $search, ownedOnly: $ownedOnly }) {\n        totalCount\n        items {\n          ...FormSelectProjects_Project\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query SearchProjects($search: String, $ownedOnly: Boolean = false) {\n    activeUser {\n      projects(limit: 10, filter: { search: $search, ownedOnly: $ownedOnly }) {\n        totalCount\n        items {\n          ...FormSelectProjects_Project\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      user {\n        id\n        name\n        avatar\n      }\n    }\n    ...ProjectPageModelsCardProject\n  }\n"): (typeof documents)["\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      user {\n        id\n        name\n        avatar\n      }\n    }\n    ...ProjectPageModelsCardProject\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -411,7 +421,7 @@ export function graphql(source: "\n  mutation UpdateProjectRole($input: ProjectU
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation InviteProjectUser($input: ProjectInviteCreateInput!) {\n    projectMutations {\n      invites {\n        create(input: $input) {\n          ...ProjectPageTeamDialog\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation InviteProjectUser($input: ProjectInviteCreateInput!) {\n    projectMutations {\n      invites {\n        create(input: $input) {\n          ...ProjectPageTeamDialog\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  mutation InviteProjectUser($projectId: ID!, $input: [ProjectInviteCreateInput!]!) {\n    projectMutations {\n      invites {\n        batchCreate(projectId: $projectId, input: $input) {\n          ...ProjectPageTeamDialog\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation InviteProjectUser($projectId: ID!, $input: [ProjectInviteCreateInput!]!) {\n    projectMutations {\n      invites {\n        batchCreate(projectId: $projectId, input: $input) {\n          ...ProjectPageTeamDialog\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -531,7 +541,7 @@ export function graphql(source: "\n  subscription OnProjectPendingVersionsUpdate
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation InviteServerUser($input: ServerInviteCreateInput!) {\n    serverInviteCreate(input: $input)\n  }\n"): (typeof documents)["\n  mutation InviteServerUser($input: ServerInviteCreateInput!) {\n    serverInviteCreate(input: $input)\n  }\n"];
+export function graphql(source: "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n"): (typeof documents)["\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

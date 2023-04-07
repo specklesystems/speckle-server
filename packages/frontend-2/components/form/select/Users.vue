@@ -4,7 +4,7 @@
     :multiple="multiple"
     :items="users"
     :search="search"
-    :search-filter-predicate="searchFilterPredicate"
+    :filter-predicate="searchFilterPredicate"
     :search-placeholder="searchPlaceholder"
     :label="label"
     :show-label="showLabel"
