@@ -667,20 +667,11 @@ function getUserStreamsQueryBase<
 /**
  * Get streams the user is a collaborator on
  */
-export async function getUserStreams({
-  userId,
-  limit,
-  cursor,
-  forOtherUser,
-  searchQuery
-}: UserStreamsQueryParams) {
+export async function getUserStreams(params: UserStreamsQueryParams) {
+  const { limit, cursor } = params
   const finalLimit = clamp(limit || 25, 1, 50)
 
-  const query = getUserStreamsQueryBase<StreamWithOptionalRole>({
-    userId,
-    forOtherUser,
-    searchQuery
-  })
+  const query = getUserStreamsQueryBase<StreamWithOptionalRole>(params)
   query.select(STREAM_WITH_OPTIONAL_ROLE_COLUMNS)
 
   if (cursor) query.andWhere(Streams.col.updatedAt, '<', cursor)
@@ -697,16 +688,8 @@ export async function getUserStreams({
 /**
  * Get the total amount of streams the user is a collaborator on
  */
-export async function getUserStreamsCount({
-  userId,
-  forOtherUser,
-  searchQuery
-}: UserStreamsQueryCountParams) {
-  const query = getUserStreamsQueryBase({
-    userId,
-    forOtherUser,
-    searchQuery
-  })
+export async function getUserStreamsCount(params: UserStreamsQueryCountParams) {
+  const query = getUserStreamsQueryBase(params)
   const countQuery = query.count<{ count: string }[]>()
 
   const [res] = await countQuery
