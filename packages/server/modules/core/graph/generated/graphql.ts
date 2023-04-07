@@ -2409,6 +2409,8 @@ export type UserDeleteInput = {
 };
 
 export type UserProjectsFilter = {
+  /** Only return projects owned by the active user */
+  ownedOnly?: InputMaybe<Scalars['Boolean']>;
   /** Filter out projects by name */
   search?: InputMaybe<Scalars['String']>;
 };

@@ -141,7 +141,8 @@ export = {
       const totalCount = await getUserStreamsCount({
         userId: ctx.userId!,
         forOtherUser: false,
-        searchQuery: args.filter?.search || undefined
+        searchQuery: args.filter?.search || undefined,
+        ownedOnly: args.filter?.ownedOnly || undefined
       })
 
       const { cursor, streams } = await getUserStreams({
@@ -149,7 +150,8 @@ export = {
         limit: args.limit,
         cursor: args.cursor || undefined,
         searchQuery: args.filter?.search || undefined,
-        forOtherUser: false
+        forOtherUser: false,
+        ownedOnly: args.filter?.ownedOnly || undefined
       })
 
       return { totalCount, cursor, items: streams }

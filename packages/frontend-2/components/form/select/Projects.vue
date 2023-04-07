@@ -2,31 +2,32 @@
   <FormSelectBase
     v-model="selectedValue"
     :multiple="multiple"
-    :items="items ?? SourceApps"
-    :search="search"
+    :search="true"
     :search-placeholder="searchPlaceholder"
+    :get-search-results="invokeSearch"
     :label="label"
     :show-label="showLabel"
-    :name="name || 'sourceApps'"
-    :filter-predicate="searchFilterPredicate"
-    by="name"
+    :name="name || 'projects'"
+    by="id"
   >
     <template #nothing-selected>
       <template v-if="selectorPlaceholder">
         {{ selectorPlaceholder }}
       </template>
       <template v-else>
-        {{ multiple ? 'Select apps' : 'Select an app' }}
+        {{ multiple ? 'Select projects' : 'Select a project' }}
       </template>
     </template>
     <template #something-selected="{ value }">
       <template v-if="isMultiItemArrayValue(value)">
-        <div ref="elementToWatchForChanges" class="flex items-center space-x-0.5 h-5">
+        <div ref="elementToWatchForChanges" class="flex items-center space-x-0.5">
           <div
             ref="itemContainer"
-            class="flex flex-wrap overflow-hidden space-x-0.5 h-5"
+            class="flex flex-wrap overflow-hidden space-x-0.5 h-6"
           >
-            <SourceAppBadge v-for="item in value" :key="item.name" :source-app="item" />
+            <div v-for="(item, i) in value" :key="item.id" class="text-foreground">
+              {{ item.name + (i < value.length - 1 ? ', ' : '') }}
+            </div>
           </div>
           <div v-if="hiddenSelectedItemCount > 0" class="text-foreground-2 normal">
             +{{ hiddenSelectedItemCount }}
@@ -35,31 +36,40 @@
       </template>
       <template v-else>
         <div class="flex items-center">
-          <div
-            class="h-2 w-2 rounded-full mr-2"
-            :style="{ backgroundColor: firstItem(value).bgColor }"
-          />
-          <span class="truncate">{{ firstItem(value).name }}</span>
+          <span class="truncate text-foreground">
+            {{ (isArrayValue(value) ? value[0] : value).name }}
+          </span>
         </div>
       </template>
     </template>
     <template #option="{ item }">
       <div class="flex items-center">
-        <div
-          class="h-2 w-2 rounded-full mr-2"
-          :style="{ backgroundColor: item.bgColor }"
-        />
         <span class="truncate">{{ item.name }}</span>
       </div>
     </template>
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { Nullable, Optional, SourceAppDefinition, SourceApps } from '@speckle/shared'
 import { PropType } from 'vue'
+import { Nullable, Optional } from '@speckle/shared'
+import { graphql } from '~~/lib/common/generated/gql'
+import { FormSelectProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { useFormSelectChildInternals } from '~~/lib/form/composables/select'
+import { useApolloClient } from '@vue/apollo-composable'
+import { searchProjectsQuery } from '~~/lib/form/graphql/queries'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
-type ValueType = SourceAppDefinition | SourceAppDefinition[] | undefined
+type ValueType =
+  | FormSelectProjects_ProjectFragment
+  | FormSelectProjects_ProjectFragment[]
+  | undefined
+
+graphql(`
+  fragment FormSelectProjects_Project on Project {
+    id
+    name
+  }
+`)
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ValueType): void
@@ -67,7 +77,7 @@ const emit = defineEmits<{
 
 const props = defineProps({
   /**
-   * Whether to allow selecting multiple source apps
+   * Whether to allow selecting multiple items
    */
   multiple: {
     type: Boolean,
@@ -78,22 +88,15 @@ const props = defineProps({
     default: undefined
   },
   /**
-   * Whether to allow filtering source apps through a search box
-   */
-  search: {
-    type: Boolean,
-    default: false
-  },
-  /**
    * Search placeholder text
    */
   searchPlaceholder: {
     type: String,
-    default: 'Search apps'
+    default: 'Search projects'
   },
   selectorPlaceholder: {
     type: String as PropType<Optional<string>>,
-    default: undefined
+    default: ''
   },
   /**
    * Label is required at the very least for screen-readers
@@ -114,24 +117,36 @@ const props = defineProps({
     default: undefined
   },
   /**
-   * Control source apps to show. If left undefined, will show all available options.
+   * Whether to only return owned streams from server
    */
-  items: {
-    type: Array as PropType<Optional<SourceAppDefinition[]>>,
-    default: undefined
+  ownedOnly: {
+    type: Boolean,
+    default: false
   }
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
 const itemContainer = ref(null as Nullable<HTMLElement>)
 
-const { selectedValue, hiddenSelectedItemCount, isMultiItemArrayValue, firstItem } =
-  useFormSelectChildInternals<SourceAppDefinition>({
+const { selectedValue, hiddenSelectedItemCount, isArrayValue, isMultiItemArrayValue } =
+  useFormSelectChildInternals<FormSelectProjects_ProjectFragment>({
     props: toRefs(props),
     emit,
     dynamicVisibility: { elementToWatchForChanges, itemContainer }
   })
 
-const searchFilterPredicate = (i: SourceAppDefinition, search: string) =>
-  i.name.toLocaleLowerCase().includes(search.toLocaleLowerCase())
+const apollo = useApolloClient().client
+const { isLoggedIn } = useActiveUser()
+
+const invokeSearch = async (search: string) => {
+  if (!isLoggedIn.value) return []
+  const results = await apollo.query({
+    query: searchProjectsQuery,
+    variables: {
+      search: search.trim().length ? search : null,
+      ownedOnly: props.ownedOnly
+    }
+  })
+  return results.data.activeUser?.projects.items || []
+}
 </script>

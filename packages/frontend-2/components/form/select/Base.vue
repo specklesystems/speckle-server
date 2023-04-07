@@ -66,6 +66,8 @@
                   type="text"
                   class="pl-9 w-full border-0 bg-foundation-page rounded placeholder:font-normal normal placeholder:text-foreground-2 focus:outline-none focus:ring-1 focus:border-outline-1 focus:ring-outline-1"
                   :placeholder="searchPlaceholder"
+                  @change="triggerSearch"
+                  @keydown.stop
                 />
               </div>
             </label>
@@ -73,41 +75,55 @@
               class="overflow-auto simple-scrollbar"
               :class="[hasSearch ? 'max-h-52' : 'max-h-60']"
             >
-              <ListboxOption
-                v-for="item in filteredItems"
-                :key="itemKey(item)"
-                v-slot="{ active, selected }"
-                :value="item"
+              <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
+                <CommonLoadingBar :loading="true" />
+              </div>
+              <div
+                v-else-if="
+                  isAsyncSearchMode && searchValue.length && !currentItems.length
+                "
               >
-                <li
-                  :class="[
-                    active ? 'text-primary' : 'text-foreground',
-                    'relative transition cursor-pointer select-none py-1.5 pl-3',
-                    !hideCheckmarks ? 'pr-9' : ''
-                  ]"
+                <slot name="nothing-found">
+                  <div class="text-foreground-2 text-center">Nothing found 🤷‍♂️</div>
+                </slot>
+              </div>
+              <template v-if="!isAsyncSearchMode || !isAsyncLoading">
+                <ListboxOption
+                  v-for="item in finalItems"
+                  :key="itemKey(item)"
+                  v-slot="{ active, selected }"
+                  :value="item"
                 >
-                  <span :class="['block truncate']">
-                    <slot
-                      name="option"
-                      :item="item"
-                      :active="active"
-                      :selected="selected"
-                    >
-                      {{ simpleDisplayText(item) }}
-                    </slot>
-                  </span>
-
-                  <span
-                    v-if="!hideCheckmarks && selected"
+                  <li
                     :class="[
                       active ? 'text-primary' : 'text-foreground',
-                      'absolute inset-y-0 right-0 flex items-center pr-4'
+                      'relative transition cursor-pointer select-none py-1.5 pl-3',
+                      !hideCheckmarks ? 'pr-9' : ''
                     ]"
                   >
-                    <CheckIcon class="h-5 w-5" aria-hidden="true" />
-                  </span>
-                </li>
-              </ListboxOption>
+                    <span :class="['block truncate']">
+                      <slot
+                        name="option"
+                        :item="item"
+                        :active="active"
+                        :selected="selected"
+                      >
+                        {{ simpleDisplayText(item) }}
+                      </slot>
+                    </span>
+
+                    <span
+                      v-if="!hideCheckmarks && selected"
+                      :class="[
+                        active ? 'text-primary' : 'text-foreground',
+                        'absolute inset-y-0 right-0 flex items-center pr-4'
+                      ]"
+                    >
+                      <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                    </span>
+                  </li>
+                </ListboxOption>
+              </template>
             </div>
           </ListboxOptions>
         </Transition>
@@ -143,9 +159,9 @@ import {
   ChevronUpIcon,
   MagnifyingGlassIcon
 } from '@heroicons/vue/24/solid'
-import { isArray } from 'lodash-es'
+import { debounce, isArray } from 'lodash-es'
 import { PropType } from 'vue'
-import { Nullable, Optional } from '@speckle/shared'
+import { MaybeAsync, Nullable, Optional } from '@speckle/shared'
 import { RuleExpression, useField } from 'vee-validate'
 import { nanoid } from 'nanoid'
 
@@ -164,26 +180,39 @@ const props = defineProps({
   },
   items: {
     type: Array as PropType<SingleItem[]>,
-    required: true
+    default: () => []
   },
   modelValue: {
     type: [Object, Array, String] as PropType<ValueType>,
     default: undefined
   },
   /**
-   * Whether to enable the search bar. To enable you must pass in searchFilterPredicate also
+   * Whether to enable the search bar. You must also set one of the following:
+   * * filterPredicate - to allow filtering passed in `items` based on search bar
+   * * getSearchResults - to allow asynchronously loading items from server (props.items no longer required in this case,
+   *  but can be used to prefill initial values)
    */
   search: {
     type: Boolean,
     default: false
   },
   /**
-   * This will be invoked to filter items based on whatever is entered inside the search bar. Return
-   * true if item fits the search conditions.
+   * If search=true and this is set, you can use this to filter passed in items based on whatever
+   * the user enters in the search bar
    */
-  searchFilterPredicate: {
+  filterPredicate: {
     type: Function as PropType<
       Optional<(item: SingleItem, searchString: string) => boolean>
+    >,
+    default: undefined
+  },
+  /**
+   * If search=true and this is set, you can use this to load data asynchronously depending
+   * on the search query
+   */
+  getSearchResults: {
+    type: Function as PropType<
+      Optional<(searchString: string) => MaybeAsync<SingleItem[]>>
     >,
     default: undefined
   },
@@ -277,10 +306,11 @@ const { value, errorMessage: error } = useField<ValueType>(props.name, props.rul
 
 const searchInput = ref(null as Nullable<HTMLInputElement>)
 const searchValue = ref('')
+const currentItems = ref([] as SingleItem[])
+const isAsyncLoading = ref(false)
 
 const internalHelpTipId = ref(nanoid())
 
-const isDisabled = computed(() => props.disabled || !props.items.length)
 const title = computed(() => unref(props.label) || unref(props.name))
 const errorMessage = computed(() => {
   const base = error.value
@@ -316,7 +346,13 @@ const buttonClasses = computed(() => {
   return classParts.join(' ')
 })
 
-const hasSearch = computed(() => !!(props.search && props.searchFilterPredicate))
+const hasSearch = computed(
+  () => !!(props.search && (props.filterPredicate || props.getSearchResults))
+)
+const isAsyncSearchMode = computed(() => hasSearch.value && props.getSearchResults)
+const isDisabled = computed(
+  () => props.disabled || (!props.items.length && !isAsyncSearchMode.value)
+)
 
 const wrappedValue = computed({
   get: () => {
@@ -350,14 +386,51 @@ const wrappedValue = computed({
   }
 })
 
-const filteredItems = computed(() => {
+const finalItems = computed(() => {
   const searchVal = searchValue.value
-  if (!hasSearch.value || !searchVal?.length) return props.items
+  if (!hasSearch.value || !searchVal?.length) return currentItems.value
 
-  return props.items.filter((i) => props.searchFilterPredicate?.(i, searchVal) || false)
+  if (props.filterPredicate) {
+    return currentItems.value.filter(
+      (i) => props.filterPredicate?.(i, searchVal) || false
+    )
+  }
+
+  return currentItems.value
 })
 
 const simpleDisplayText = (v: ValueType) => JSON.stringify(v)
 const itemKey = (v: SingleItem): string | number =>
   props.by ? (v[props.by] as string) : v
+
+const triggerSearch = async () => {
+  if (!isAsyncSearchMode.value || !props.getSearchResults) return
+
+  isAsyncLoading.value = true
+  try {
+    currentItems.value = await props.getSearchResults(searchValue.value)
+  } finally {
+    isAsyncLoading.value = false
+  }
+}
+const debouncedSearch = debounce(triggerSearch, 1000)
+
+watch(
+  () => props.items,
+  (newItems) => {
+    currentItems.value = newItems.slice()
+  },
+  { immediate: true }
+)
+
+watch(searchValue, () => {
+  if (!isAsyncSearchMode.value) return
+  debouncedSearch()
+})
+
+onMounted(() => {
+  if (isAsyncSearchMode.value && !props.items.length) {
+    triggerSearch()
+  }
+})
 </script>

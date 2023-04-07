@@ -23,9 +23,21 @@
           :rules="[isStringOfLength({ maxLength: 1024 })]"
           placeholder="Write an optional invitation message!"
         />
-        <div class="grow flex justify-end">
-          <FormButton text @click="isOpen = false">Cancel</FormButton>
-          <FormButton submit :disabled="anyMutationsLoading">Send</FormButton>
+        <div
+          class="grow flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center"
+        >
+          <div class="grow">
+            <FormSelectProjects
+              v-model="selectedProject"
+              label="(Optional) Select project to invite to"
+              class="w-full sm:w-60"
+              owned-only
+            />
+          </div>
+          <div class="flex justify-end">
+            <FormButton text @click="isOpen = false">Cancel</FormButton>
+            <FormButton submit :disabled="anyMutationsLoading">Send</FormButton>
+          </div>
         </div>
       </div>
     </form>
@@ -33,13 +45,16 @@
 </template>
 <script setup lang="ts">
 import { EnvelopeIcon } from '@heroicons/vue/24/solid'
+import { Optional } from '@speckle/shared'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
+import { FormSelectProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import {
   isRequired,
   isOneOrMultipleEmails,
   isStringOfLength
 } from '~~/lib/common/helpers/validation'
+import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useInviteUserToServer } from '~~/lib/server/composables/invites'
 
 const emit = defineEmits<{
@@ -50,8 +65,11 @@ const props = defineProps<{
   open: boolean
 }>()
 
+const selectedProject = ref(undefined as Optional<FormSelectProjects_ProjectFragment>)
+
 const { handleSubmit } = useForm<{ message?: string; emailsString: string }>()
-const { mutate: inviteUser } = useInviteUserToServer()
+const { mutate: inviteUserToServer } = useInviteUserToServer()
+const inviteUserToProject = useInviteUserToProject()
 const anyMutationsLoading = useMutationLoading()
 
 const isOpen = computed({
@@ -61,12 +79,21 @@ const isOpen = computed({
 
 const onSubmit = handleSubmit(async (values) => {
   const emails = values.emailsString.split(',').map((i) => i.trim())
-  const success = await inviteUser(
-    emails.map((email) => ({
-      email,
-      message: values.message
-    }))
-  )
+  const project = selectedProject.value
+
+  const success = project
+    ? await inviteUserToProject(
+        project.id,
+        emails.map((email) => ({
+          email
+        }))
+      )
+    : await inviteUserToServer(
+        emails.map((email) => ({
+          email,
+          message: values.message
+        }))
+      )
   if (success) {
     isOpen.value = false
   }
