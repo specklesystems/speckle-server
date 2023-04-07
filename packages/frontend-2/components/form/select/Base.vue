@@ -78,11 +78,7 @@
               <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
                 <CommonLoadingBar :loading="true" />
               </div>
-              <div
-                v-else-if="
-                  isAsyncSearchMode && searchValue.length && !currentItems.length
-                "
-              >
+              <div v-else-if="isAsyncSearchMode && !currentItems.length">
                 <slot name="nothing-found">
                   <div class="text-foreground-2 text-center">Nothing found 🤷‍♂️</div>
                 </slot>

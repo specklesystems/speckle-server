@@ -211,3 +211,11 @@ export const WithAsyncSearch: StoryObj = {
     }
   }
 }
+
+export const Empty: StoryObj = {
+  ...WithAsyncSearch,
+  args: {
+    ...WithAsyncSearch.args,
+    getSearchResults: () => []
+  }
+}
