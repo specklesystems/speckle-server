@@ -30,7 +30,7 @@ spec:
       ports:
         - port: 443
 {{- end }}
-{{- if ( or .Values.server.auth.google.enabled .Values.server.auth.github.enabled .Values.server.auth.azure_ad.enabled .Values.server.auth.oidc.enabled ) }}
+{{- if ( or .Values.server.auth.google.enabled .Values.server.auth.github.enabled .Values.server.auth.azure_ad.enabled .Values.server.auth.oidc.enabled (ne "false" .Values.server.monitoring.mp.enabled) ) }}
     - to:
       - ipBlock:
           cidr: 0.0.0.0/0

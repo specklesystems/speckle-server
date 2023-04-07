@@ -338,10 +338,6 @@ export default {
         )
 
         if (res.redirected) {
-          this.$mixpanel.track('Sign Up', {
-            isInvite: this.token !== null,
-            type: 'action'
-          })
           processSuccessfulAuth(res)
           this.loading = false
           return

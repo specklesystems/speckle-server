@@ -578,7 +578,7 @@ server:
         ## @param server.monitoring.apollo.key.secretKey The key within the Kubernetes Secret holding the Apollo monitoring key as its value.
         ##
         secretKey: ''
-
+    mp: {}
   ## @param server.sentry_dns (Optional) The Data Source Name that was provided by Sentry.io
   ## Sentry.io allows events within Speckle to be monitored
   ##

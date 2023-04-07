@@ -103,3 +103,8 @@ export function isSSLServer() {
 export function adminOverrideEnabled() {
   return process.env.ADMIN_OVERRIDE_ENABLED === 'true'
 }
+
+export function enableMixpanel() {
+  // if not explicitly set to '0' or 'false', it is enabled by default
+  return !['0', 'false'].includes(process.env.ENABLE_MP || 'true')
+}
