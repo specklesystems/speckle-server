@@ -412,6 +412,10 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
+  public explode(time: number, range: number) {
+    this.speckleRenderer.setExplode(time, range)
+  }
+
   /**
    * OBJECT LOADING/UNLOADING
    */

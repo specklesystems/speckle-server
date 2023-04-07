@@ -76,6 +76,7 @@ export default class Sandbox {
     showBvh: false,
     totalBvhSize: 0,
     explode: 0,
+    explodeRange: 100,
     culling: true
   }
 
@@ -924,7 +925,24 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         value
-        this.viewer.getRenderer().setExplodeTime(Sandbox.batchesParams.explode)
+        this.viewer.explode(
+          Sandbox.batchesParams.explode,
+          Sandbox.batchesParams.explodeRange
+        )
+      })
+    container
+      .addInput(Sandbox.batchesParams, 'explodeRange', {
+        label: 'Explode Range',
+        min: 1,
+        max: 1000,
+        step: 1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.explode(
+          Sandbox.batchesParams.explode,
+          Sandbox.batchesParams.explodeRange
+        )
       })
     // container
     //   .addInput(Sandbox.batchesParams, 'culling', {

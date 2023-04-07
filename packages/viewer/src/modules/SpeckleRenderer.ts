@@ -1316,7 +1316,7 @@ export default class SpeckleRenderer {
     this.batcher.isolateBatch(batchId)
   }
 
-  public setExplodeTime(time: number) {
+  public setExplode(time: number, range: number) {
     const batches: MeshBatch[] = this.batcher.getBatches(
       undefined,
       GeometryType.MESH
@@ -1326,12 +1326,8 @@ export default class SpeckleRenderer {
       for (let i = 0; i < objects.length; i++) {
         const center = objects[i].renderView.aabb.getCenter(new Vector3())
         const dir = center.sub(Viewer.World.worldOrigin)
-        dir.normalize().multiplyScalar(time * 100)
-        const mat = new Matrix4().makeTranslation(dir.x, dir.y, dir.z)
-        objects[i].transform.copy(mat)
-        const matInv = new Matrix4().copy(mat).invert()
-        objects[i].transformInv.copy(matInv)
-        objects[i].translation.set(dir.x, dir.y, dir.z)
+        dir.normalize().multiplyScalar(time * range)
+        objects[i].transformTRS(dir, undefined, undefined, undefined)
       }
       batches[k].mesh.transformsDirty = true
     }
@@ -1355,17 +1351,4 @@ export default class SpeckleRenderer {
   public markTransformsDirty(batchId: string) {
     ;(this.batcher.batches[batchId] as MeshBatch).mesh.transformsDirty = true
   }
-
-  // public compile() {
-  //   const batches: MeshBatch[] = this.batcher.getBatches(
-  //     undefined,
-  //     GeometryType.MESH
-  //   ) as MeshBatch[]
-  //   for (let k = 0; k < batches.length; k++) {
-  //     const mesh = batches[k].mesh
-  //     const materialProperties = (this._renderer as any).properties.get(mesh.material)
-  //     const programs = materialProperties.programs
-  //     // console.log(programs)
-  //   }
-  // }
 }

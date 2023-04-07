@@ -218,6 +218,7 @@ export interface IViewer {
   get Utils(): Utils
 
   getObjects(id: string): BatchObject[]
+  explode(time: number, range: number)
 
   dispose(): void
 }
