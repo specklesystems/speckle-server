@@ -76,7 +76,7 @@
       </slot>
     </div>
     <p
-      v-if="helpTipId"
+      v-if="helpTipId && !hideHelpTip"
       :id="helpTipId"
       class="mt-2 ml-3 text-sm"
       :class="helpTipClasses"
@@ -225,6 +225,10 @@ const props = defineProps({
   inputClasses: {
     type: String,
     default: null
+  },
+  hideErrorMessage: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -246,6 +250,7 @@ const {
   helpTipId,
   helpTipClasses,
   helpTip,
+  hideHelpTip,
   errorMessage,
   clear,
   focus

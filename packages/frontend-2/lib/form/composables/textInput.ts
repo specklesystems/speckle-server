@@ -18,6 +18,7 @@ export function useTextInputCore(params: {
     autoFocus?: boolean
     showClear?: boolean
     useLabelInErrors?: boolean
+    hideErrorMessage?: boolean
   }>
   emit: {
     (e: 'change', val: { event?: Event; value: string }): void
@@ -60,6 +61,9 @@ export function useTextInputCore(params: {
     return base.replace('Value', title.value)
   })
 
+  const hideHelpTip = computed(
+    () => errorMessage.value && unref(props.hideErrorMessage)
+  )
   const helpTip = computed(() => errorMessage.value || unref(props.help))
   const hasHelpTip = computed(() => !!helpTip.value)
   const helpTipId = computed(() =>
@@ -92,6 +96,7 @@ export function useTextInputCore(params: {
     helpTipId,
     helpTipClasses,
     helpTip,
+    hideHelpTip,
     errorMessage,
     clear,
     focus
