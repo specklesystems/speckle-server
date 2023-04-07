@@ -566,9 +566,9 @@ server:
     commit_create: 1
     ## @param server.ratelimiting.burst_commit_create If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to create a new commit in a moving one minute window.
     burst_commit_create: 100
-    ## @param server.ratelimiting.object_create The maximum number of requests that can be made to the Speckle server to get a new object in a moving one second window.
+    ## @param server.ratelimiting.post_getobjects_streamid The maximum number of requests that can be made to the Speckle server to get a new object in a moving one second window.
     post_getobjects_streamid: 3
-    ## @param server.ratelimiting.burst_object_create If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to get a new object in a moving one minute window.
+    ## @param server.ratelimiting.burst_post_getobjects_streamid If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to get a new object in a moving one minute window.
     burst_post_getobjects_streamid: 200
     ## @param server.ratelimiting.post_diff_streamid The maximum number of requests that can be made to the Speckle server to undertake a diff in a moving one second window.
     post_diff_streamid: 10
@@ -588,7 +588,7 @@ server:
     burst_get_objects_streamid_objectid_single: 200
     ## @param server.ratelimiting.post_graphql The maximum number of requests that can be made to the GraphQL API in a moving one second window.
     post_graphql: 10
-    ## @param server.ratelimiting.post_grapqhl If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the GraphQL API in a moving one minute window.
+    ## @param server.ratelimiting.burst_post_grapqhl If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the GraphQL API in a moving one minute window.
     burst_post_grapqhl: 20
     ## @param server.ratelimiting.get_auth The maximum number of requests that can be made to the Speckle server to authenticate in a moving one second window.
     get_auth: 2
