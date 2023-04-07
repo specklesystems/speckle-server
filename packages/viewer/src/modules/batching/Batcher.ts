@@ -18,6 +18,7 @@ import { Material, Mesh, WebGLRenderer } from 'three'
 import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
 import Logger from 'js-logger'
 import { World } from '../World'
+import SpeckleMesh from '../objects/SpeckleMesh'
 
 export enum TransformStorage {
   VERTEX_TEXTURE = 0,
@@ -346,7 +347,7 @@ export default class Batcher {
     return visibilityRanges
   }
 
-  public getOpaque() {
+  public getOpaque(): Record<string, BatchUpdateRange> {
     const visibilityRanges = {}
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
@@ -375,6 +376,25 @@ export default class Batcher {
       }
     }
     return visibilityRanges
+  }
+
+  public overrideMaterial(
+    ranges: Record<string, BatchUpdateRange>,
+    material: Material
+  ) {
+    for (const k in ranges) {
+      if (this.batches[k].geometryType !== GeometryType.MESH) continue
+      const mesh = this.batches[k].renderObject as SpeckleMesh
+      mesh.setOverrideMaterial(material)
+    }
+  }
+
+  public restoreMaterial(ranges: Record<string, BatchUpdateRange>) {
+    for (const k in ranges) {
+      if (this.batches[k].geometryType !== GeometryType.MESH) continue
+      const mesh = this.batches[k].renderObject as SpeckleMesh
+      mesh.restoreMaterial()
+    }
   }
 
   public purgeBatches(subtreeId: string) {
