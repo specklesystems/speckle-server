@@ -100,7 +100,8 @@ const inviteEmail = async (email: string, projectId: string) => {
     .mutate({
       mutation: inviteProjectUserMutation,
       variables: {
-        input: { projectId, email }
+        input: { email },
+        projectId
       }
     })
     .catch(convertThrowIntoFetchResult)
@@ -425,7 +426,7 @@ export function EmailSuggestion({ editor, nodeName, projectId }: SuggestionOptio
             allowSpaces,
             allowedPrefixes,
             startOfLine,
-            $position: selection.$from
+            $position: selection.$from as any // some kind of dependency version mismatch bug here
           })
           const decorationId = `id_${Math.floor(Math.random() * 0xffffffff)}`
 

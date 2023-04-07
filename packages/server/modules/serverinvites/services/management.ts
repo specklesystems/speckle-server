@@ -14,12 +14,14 @@ import { createAndSendInvite } from '@/modules/serverinvites/services/inviteCrea
 import { has } from 'lodash'
 import { finalizeStreamInvite } from '@/modules/serverinvites/services/inviteProcessingService'
 
+type FullProjectInviteCreateInput = ProjectInviteCreateInput & { projectId: string }
+
 const isStreamInviteCreateInput = (
-  i: StreamInviteCreateInput | ProjectInviteCreateInput
+  i: StreamInviteCreateInput | FullProjectInviteCreateInput
 ): i is StreamInviteCreateInput => has(i, 'streamId')
 
 export async function createStreamInviteAndNotify(
-  input: StreamInviteCreateInput | ProjectInviteCreateInput,
+  input: StreamInviteCreateInput | FullProjectInviteCreateInput,
   inviterId: string
 ) {
   const { email, userId, role } = input

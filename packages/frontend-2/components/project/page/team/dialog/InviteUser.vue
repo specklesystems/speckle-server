@@ -18,10 +18,7 @@
           </div>
         </template>
       </FormTextInput>
-      <div
-        v-if="searchUsers.length || isValidEmail(searchVariables?.query || '')"
-        class="flex flex-col space-y-4"
-      >
+      <div v-if="searchUsers.length || selectedEmails" class="flex flex-col space-y-4">
         <template v-if="searchUsers.length">
           <template v-for="user in searchUsers" :key="user.id">
             <div class="flex items-center space-x-2">
@@ -33,16 +30,13 @@
             </div>
           </template>
         </template>
-        <template v-else-if="searchVariables?.query">
+        <template v-else-if="selectedEmails?.length">
           <div class="flex items-center space-x-2">
             <UserAvatar />
-            <span class="grow truncate">{{ searchVariables.query }}</span>
+            <span class="grow truncate">{{ selectedEmails.join(', ') }}</span>
             <FormButton
               :disabled="loading"
-              @click="
-                () =>
-                  searchVariables?.query ? onInviteUser(searchVariables.query) : void 0
-              "
+              @click="() => onInviteUser(selectedEmails || [])"
             >
               Invite
             </FormButton>
@@ -56,10 +50,13 @@
 import { Roles } from '@speckle/shared'
 import { Get } from 'type-fest'
 import { useUserSearch } from '~~/lib/common/composables/users'
-import { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  ProjectInviteCreateInput,
+  ProjectPageTeamDialogFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { isEmail } from '~~/lib/common/helpers/validation'
-import { isString } from 'lodash-es'
+import { isArray, isString } from 'lodash-es'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
 import { UserPlusIcon } from '@heroicons/vue/24/solid'
@@ -104,26 +101,34 @@ const isValidEmail = (val: string) =>
     ? true
     : false
 
-const onInviteUser = async (user: InvitableUser) => {
-  if (isString(user)) {
-    if (!isValidEmail(user)) return
-    // Invite email
-    loading.value = true
-    await createInvite({
-      email: user,
+const onInviteUser = async (user: InvitableUser | InvitableUser[]) => {
+  const users = isArray(user) ? user : [user]
+  const inputs: ProjectInviteCreateInput[] = users
+    .filter((u) => (isString(u) ? isValidEmail(u) : u))
+    .map((u) => ({
       role: role.value,
-      projectId: props.project.id
-    })
-    loading.value = false
-  } else {
-    // Invite existing user
-    loading.value = true
-    await createInvite({
-      userId: user.id,
-      role: role.value,
-      projectId: props.project.id
-    })
-    loading.value = false
-  }
+      ...(isString(u)
+        ? {
+            email: u
+          }
+        : {
+            userId: u.id
+          })
+    }))
+  if (!inputs.length) return
+
+  // Invite email
+  loading.value = true
+  await createInvite(props.project.id, inputs)
+  loading.value = false
 }
+
+const selectedEmails = computed(() => {
+  const query = searchVariables.value?.query || ''
+  if (isValidEmail(query)) return [query]
+
+  const multipleEmails = query.split(',').map((i) => i.trim())
+  const validEmails = multipleEmails.filter((e) => isValidEmail(e))
+  return validEmails.length ? validEmails : null
+})
 </script>

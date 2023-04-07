@@ -35,7 +35,7 @@ import {
   ProjectSubscriptions,
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { has } from 'lodash'
+import { chunk, has } from 'lodash'
 
 export = {
   Query: {
@@ -101,9 +101,30 @@ export = {
   },
   ProjectInviteMutations: {
     async create(_parent, args, ctx) {
-      await authorizeResolver(ctx.userId!, args.input.projectId, Roles.Stream.Owner)
-      await createStreamInviteAndNotify(args.input, ctx.userId!)
-      return ctx.loaders.streams.getStream.load(args.input.projectId)
+      await authorizeResolver(ctx.userId!, args.projectId, Roles.Stream.Owner)
+      await createStreamInviteAndNotify(
+        {
+          ...args.input,
+          projectId: args.projectId
+        },
+        ctx.userId!
+      )
+      return ctx.loaders.streams.getStream.load(args.projectId)
+    },
+    async batchCreate(_parent, args, ctx) {
+      await authorizeResolver(ctx.userId!, args.projectId, Roles.Stream.Owner)
+      const inputBatches = chunk(args.input, 10)
+      for (const batch of inputBatches) {
+        await Promise.all(
+          batch.map((i) =>
+            createStreamInviteAndNotify(
+              { ...i, projectId: args.projectId },
+              ctx.userId!
+            )
+          )
+        )
+      }
+      return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async use(_parent, args, ctx) {
       await useStreamInviteAndNotify(args.input, ctx.userId!)

@@ -50,7 +50,6 @@ input ProjectInviteCreateInput {
   Either this or email must be filled
   """
   userId: String
-  projectId: ID!
   """
   Defaults to the contributor role, if not specified
   """
@@ -67,7 +66,13 @@ type ProjectInviteMutations {
   """
   Invite a new or registered user to be a project collaborator. Can only be invoked by a project owner.
   """
-  create(input: ProjectInviteCreateInput!): Project! @hasScope(scope: "users:invite")
+  create(projectId: ID!, input: ProjectInviteCreateInput!): Project!
+    @hasScope(scope: "users:invite")
+  """
+  Batch invite to project
+  """
+  batchCreate(projectId: ID!, input: [ProjectInviteCreateInput!]!): Project!
+    @hasScope(scope: "users:invite")
 
   """
   Accept or decline a project invite

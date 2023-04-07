@@ -56,10 +56,10 @@ export const updateProjectRoleMutation = graphql(`
 `)
 
 export const inviteProjectUserMutation = graphql(`
-  mutation InviteProjectUser($input: ProjectInviteCreateInput!) {
+  mutation InviteProjectUser($projectId: ID!, $input: [ProjectInviteCreateInput!]!) {
     projectMutations {
       invites {
-        create(input: $input) {
+        batchCreate(projectId: $projectId, input: $input) {
           ...ProjectPageTeamDialog
         }
       }
