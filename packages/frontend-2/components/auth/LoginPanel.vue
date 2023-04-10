@@ -1,7 +1,7 @@
 <template>
   <LayoutPanel fancy-glow class="max-w-lg mx-auto w-full">
     <div class="space-y-4">
-      <div class="flex flex-col items-center space-x-2 space-y-2">
+      <div class="flex flex-col items-center space-y-2">
         <h1
           class="text-center h3 font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
         >
