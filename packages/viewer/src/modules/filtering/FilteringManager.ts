@@ -9,6 +9,7 @@ import {
   NumericPropertyInfo
 } from './PropertyManager'
 import SpeckleRenderer from '../SpeckleRenderer'
+import { RenderTree } from '../tree/RenderTree'
 
 export type FilteringState = {
   selectedObjects?: string[]
@@ -39,6 +40,7 @@ export interface FilterMaterial {
 
 export class FilteringManager {
   public WTI: WorldTree
+  public RTI: RenderTree
   private Renderer: SpeckleRenderer
   private StateKey: string = null
 
@@ -50,8 +52,9 @@ export class FilteringManager {
   private UserspaceColorState = new UserspaceColorState()
   private ColorStringFilterState2: ColorStringFilterState = null
 
-  public constructor(renderer: SpeckleRenderer) {
-    this.WTI = WorldTree.getInstance()
+  public constructor(renderer: SpeckleRenderer, treeId: string) {
+    this.WTI = WorldTree.getInstance(treeId)
+    this.RTI = WorldTree.getRenderTree(treeId)
     this.Renderer = renderer
   }
 
@@ -173,16 +176,14 @@ export class FilteringManager {
   private visibilityWalk(node: TreeNode): boolean {
     if (!node.model.atomic) return true
     if (this.VisibilityState.ids.indexOf(node.model.raw.id) !== -1) {
-      this.VisibilityState.rvs.push(
-        ...WorldTree.getRenderTree().getRenderViewsForNode(node, node)
-      )
+      this.VisibilityState.rvs.push(...this.RTI.getRenderViewsForNode(node, node))
     }
     return true
   }
 
   private isolationWalk(node: TreeNode): boolean {
     if (!node.model.atomic || node.model.id === 'MOTHERSHIP') return true
-    const rvs = WorldTree.getRenderTree().getRenderViewsForNode(node, node)
+    const rvs = this.RTI.getRenderViewsForNode(node, node)
     if (this.VisibilityState.ids.indexOf(node.model.raw.id) === -1) {
       this.VisibilityState.rvs.push(...rvs)
     } else {
@@ -223,10 +224,10 @@ export class FilteringManager {
     const nonMatchingRvs: NodeRenderView[] = []
     const colorGroups: ValueGroupColorItemNumericProps[] = []
 
-    WorldTree.getInstance().walk((node: TreeNode) => {
+    this.WTI.walk((node: TreeNode) => {
       if (!node.model.atomic || node.model.id === 'MOTHERSHIP' || node.model.root)
         return true
-      const rvs = WorldTree.getRenderTree().getRenderViewsForNode(node, node)
+      const rvs = this.RTI.getRenderViewsForNode(node, node)
       const idx = matchingIds.indexOf(node.model.raw.id)
       if (idx === -1) {
         nonMatchingRvs.push(...rvs)
@@ -271,7 +272,7 @@ export class FilteringManager {
         return true
       }
       const vg = valueGroupColors.find((v) => v.ids.indexOf(node.model.raw.id) !== -1)
-      const rvs = WorldTree.getRenderTree().getRenderViewsForNode(node, node)
+      const rvs = this.RTI.getRenderViewsForNode(node, node)
       if (!vg) {
         nonMatchingRvs.push(...rvs)
         return true
@@ -316,14 +317,14 @@ export class FilteringManager {
       return { ...g, nodes: [], rvs: [] }
     })
 
-    WorldTree.getInstance().walk((node: TreeNode) => {
+    this.WTI.walk((node: TreeNode) => {
       if (!node.model?.raw?.id) return true
       for (const group of localGroups) {
         if (group.objectIds.includes(node.model.raw.id)) {
           group.nodes.push(node)
-          const rvsNodes = WorldTree.getRenderTree()
-            .getRenderViewNodesForNode(node, node)
-            .map((rvNode) => rvNode.model.renderView)
+          const rvsNodes = this.RTI.getRenderViewNodesForNode(node, node).map(
+            (rvNode) => rvNode.model.renderView
+          )
           if (rvsNodes) group.rvs.push(...rvsNodes)
         }
       }
@@ -354,7 +355,7 @@ export class FilteringManager {
     const nodes = []
     if (ids.length !== 0) {
       /** This walk still takes longer than we'd like */
-      WorldTree.getInstance().walk((node: TreeNode) => {
+      this.WTI.walk((node: TreeNode) => {
         if (ids.indexOf(node.model.raw.id) !== -1) {
           nodes.push(node)
         }
@@ -364,10 +365,7 @@ export class FilteringManager {
         /** There's also quite a lot of redundancy here as well. The nodes coming are
          * hierarchical and we end up getting the same render views more than once.
          */
-        const rvs = WorldTree.getRenderTree().getRenderViewNodesForNode(
-          nodes[k],
-          nodes[k]
-        )
+        const rvs = this.RTI.getRenderViewNodesForNode(nodes[k], nodes[k])
         if (rvs) {
           state.rvs.push(...rvs.map((e) => e.model.renderView))
           state.ids.push(...rvs.map((e) => e.model.raw.id))

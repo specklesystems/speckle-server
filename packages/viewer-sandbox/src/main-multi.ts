@@ -90,10 +90,7 @@ const createViewer = async (container: HTMLElement, stream: string) => {
   await sandbox.loadUrl(stream)
 }
 
-createViewer(
-  container0,
-  'https://latest.speckle.dev/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216'
-)
+createViewer(container0, 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8')
 createViewer(container1, 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8')
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

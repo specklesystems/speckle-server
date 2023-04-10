@@ -24,7 +24,7 @@ export interface Batch {
   setDrawRanges(...ranges: BatchUpdateRange[])
   autoFillDrawRanges()
   resetDrawRanges()
-  buildBatch()
+  buildBatch(treeId?: string)
   getRenderView(index: number): NodeRenderView
   onUpdate(deltaTime: number)
   onRender(renderer: WebGLRenderer)

@@ -447,7 +447,11 @@ export default class SpeckleRenderer {
   }
 
   public addRenderTree(subtreeId: string) {
-    this.batcher.makeBatches(subtreeId, SpeckleTypeAllRenderables)
+    this.batcher.makeBatches(
+      this.viewer.viewerGuid,
+      subtreeId,
+      SpeckleTypeAllRenderables
+    )
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
     subtreeGroup.layers.set(ObjectLayers.STREAM_CONTENT)
@@ -475,6 +479,7 @@ export default class SpeckleRenderer {
     this.rootGroup.add(subtreeGroup)
 
     const generator = this.batcher.makeBatchesAsync(
+      this.viewer.viewerGuid,
       subtreeId,
       SpeckleTypeAllRenderables,
       undefined,
@@ -786,7 +791,7 @@ export default class SpeckleRenderer {
     const queryResult = []
     for (let k = 0; k < rvs.length; k++) {
       const hitId = rvs[k].renderData.id
-      const hitNode = WorldTree.getInstance().findId(hitId)
+      const hitNode = WorldTree.getInstance(this.viewer.viewerGuid).findId(hitId)
       let parentNode = hitNode
       while (!parentNode.model.atomic && parentNode.parent) {
         parentNode = parentNode.parent
@@ -906,11 +911,16 @@ export default class SpeckleRenderer {
     let box = new Box3()
     const rvs: NodeRenderView[] = []
     if (objectIds.length > 0) {
-      WorldTree.getInstance().walk((node: TreeNode) => {
+      WorldTree.getInstance(this.viewer.viewerGuid).walk((node: TreeNode) => {
         if (!node.model.atomic) return true
         if (!node.model.raw) return true
         if (objectIds.indexOf(node.model.raw.id) !== -1) {
-          rvs.push(...WorldTree.getRenderTree().getRenderViewsForNode(node, node))
+          rvs.push(
+            ...WorldTree.getRenderTree(this.viewer.viewerGuid).getRenderViewsForNode(
+              node,
+              node
+            )
+          )
         }
         return true
       })
@@ -1195,41 +1205,41 @@ export default class SpeckleRenderer {
   }
 
   /** DEBUG */
-  public onObjectClickDebug(e) {
-    const results: Array<Intersection> = this._intersections.intersect(
-      this._scene,
-      this.viewer.cameraHandler.activeCam.camera,
-      e,
-      true,
-      this.viewer.sectionBox.getCurrentBox()
-    )
-    if (!results) {
-      this.batcher.resetBatchesDrawRanges()
-      return
-    }
-    const result = results[0]
-    // console.warn(result)
-    const rv = this.batcher.getRenderView(
-      result.object.uuid,
-      result.faceIndex !== undefined ? result.faceIndex : result.index
-    )
-    const hitId = rv.renderData.id
+  // public onObjectClickDebug(e) {
+  //   const results: Array<Intersection> = this._intersections.intersect(
+  //     this._scene,
+  //     this.viewer.cameraHandler.activeCam.camera,
+  //     e,
+  //     true,
+  //     this.viewer.sectionBox.getCurrentBox()
+  //   )
+  //   if (!results) {
+  //     this.batcher.resetBatchesDrawRanges()
+  //     return
+  //   }
+  //   const result = results[0]
+  //   // console.warn(result)
+  //   const rv = this.batcher.getRenderView(
+  //     result.object.uuid,
+  //     result.faceIndex !== undefined ? result.faceIndex : result.index
+  //   )
+  //   const hitId = rv.renderData.id
 
-    // const hitNode = WorldTree.getInstance().findId(hitId)
-    // console.log(hitNode)
+  //   // const hitNode = WorldTree.getInstance(this.viewer.viewerGuid).findId(hitId)
+  //   // console.log(hitNode)
 
-    this.batcher.resetBatchesDrawRanges()
+  //   this.batcher.resetBatchesDrawRanges()
 
-    this.batcher.isolateRenderViewBatch(hitId)
-    if (this.SHOW_BVH) {
-      this.allObjects.traverse((obj) => {
-        if (obj.name.includes('_bvh')) {
-          obj.visible = false
-        }
-      })
-      this.scene.getObjectByName(result.object.id + '_bvh').visible = true
-    }
-  }
+  //   this.batcher.isolateRenderViewBatch(hitId)
+  //   if (this.SHOW_BVH) {
+  //     this.allObjects.traverse((obj) => {
+  //       if (obj.name.includes('_bvh')) {
+  //         obj.visible = false
+  //       }
+  //     })
+  //     this.scene.getObjectByName(result.object.id + '_bvh').visible = true
+  //   }
+  // }
 
   public debugShowBatches() {
     this.batcher.resetBatchesDrawRanges()

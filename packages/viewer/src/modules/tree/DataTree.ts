@@ -43,10 +43,10 @@ class DataTreeInternal implements DataTree {
 }
 
 export class DataTreeBuilder {
-  public static build(root: TreeNode): DataTree {
+  public static build(treeId: string, root: TreeNode): DataTree {
     const dataTree = new DataTreeInternal()
     let parent = null
-    WorldTree.getInstance().walk((node: TreeNode) => {
+    WorldTree.getInstance(treeId).walk((node: TreeNode) => {
       if (!node.parent) {
         parent = dataTree.root
         return true
@@ -56,7 +56,7 @@ export class DataTreeBuilder {
         return localNode.model.guid === node.parent.model.id
       })
 
-      const _node: TreeNode = WorldTree.getInstance().parse({
+      const _node: TreeNode = WorldTree.getInstance(treeId).parse({
         guid: node.model.id,
         data: node.model.raw,
         atomic: node.model.atomic,

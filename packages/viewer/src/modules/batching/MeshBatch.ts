@@ -412,7 +412,7 @@ export default class MeshBatch implements Batch {
     this.geometry.setDrawRange(0, Infinity)
   }
 
-  public buildBatch() {
+  public buildBatch(treeId: string) {
     const indicesCount = this.renderViews.flatMap(
       (val: NodeRenderView) => val.renderData.geometry.attributes.INDEX
     ).length
@@ -458,7 +458,7 @@ export default class MeshBatch implements Batch {
     this.boundsTree = Geometry.buildBVH(
       indices,
       position,
-      WorldTree.getRenderTree(this.subtreeId).treeBounds
+      WorldTree.getRenderTree(treeId, this.subtreeId).treeBounds
     )
     this.boundsTree.getBoundingBox(this.bounds)
     this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial, this.boundsTree)

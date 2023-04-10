@@ -11,6 +11,6 @@ export class DebugViewer extends Viewer {
   }
 
   getWorldTree() {
-    return WorldTree.getInstance()
+    return WorldTree.getInstance(this.guid)
   }
 }

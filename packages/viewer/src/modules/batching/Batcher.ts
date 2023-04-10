@@ -15,7 +15,7 @@ import {
 import PointBatch from './PointBatch'
 // import { FilterMaterialType } from '../FilteringManager'
 import { Material, Mesh, WebGLRenderer } from 'three'
-import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
+import { FilterMaterial } from '../filtering/FilteringManager'
 import Logger from 'js-logger'
 import { World } from '../World'
 
@@ -29,11 +29,12 @@ export default class Batcher {
   }
 
   public makeBatches(
+    treeId: string,
     subtreeId: string,
     speckleType: SpeckleType[],
     batchType?: GeometryType
   ) {
-    const rendeViews = WorldTree.getRenderTree(subtreeId)
+    const rendeViews = WorldTree.getRenderTree(treeId, subtreeId)
       .getAtomicRenderViews(...speckleType)
       .sort((a, b) => {
         if (a.renderMaterialHash === 0) return -1
@@ -47,12 +48,19 @@ export default class Batcher {
     Logger.warn(`Batch count: ${materialHashes}`)
 
     for (let i = 0; i < materialHashes.length; i++) {
-      const batch = this.buildBatch(subtreeId, rendeViews, materialHashes[i], batchType)
+      const batch = this.buildBatch(
+        treeId,
+        subtreeId,
+        rendeViews,
+        materialHashes[i],
+        batchType
+      )
       this.batches[batch.id] = batch
     }
   }
 
   public async *makeBatchesAsync(
+    treeId: string,
     subtreeId: string,
     speckleType: SpeckleType[],
     batchType?: GeometryType,
@@ -60,7 +68,7 @@ export default class Batcher {
   ) {
     const pause = World.getPause(priority)
 
-    const rendeViews = WorldTree.getRenderTree(subtreeId)
+    const rendeViews = WorldTree.getRenderTree(treeId, subtreeId)
       .getAtomicRenderViews(...speckleType)
       .sort((a, b) => {
         if (a.renderMaterialHash === 0) return -1
@@ -74,7 +82,13 @@ export default class Batcher {
     Logger.warn(`Batch count: ${materialHashes.length}`)
 
     for (let i = 0; i < materialHashes.length; i++) {
-      const batch = this.buildBatch(subtreeId, rendeViews, materialHashes[i], batchType)
+      const batch = this.buildBatch(
+        treeId,
+        subtreeId,
+        rendeViews,
+        materialHashes[i],
+        batchType
+      )
       this.batches[batch.id] = batch
       yield this.batches[batch.id]
       await pause()
@@ -82,6 +96,7 @@ export default class Batcher {
   }
 
   private buildBatch(
+    treeId: string,
     subtreeId: string,
     renderViews: NodeRenderView[],
     materialHash: number,
@@ -128,7 +143,7 @@ export default class Batcher {
     }
 
     geometryBatch.setBatchMaterial(material)
-    geometryBatch.buildBatch()
+    geometryBatch.buildBatch(treeId)
     return geometryBatch
   }
 
@@ -328,67 +343,67 @@ export default class Batcher {
   /**
    * Used for debuggin only
    */
-  public isolateRenderView(id: string) {
-    const rvs = WorldTree.getRenderTree().getRenderViewsForNodeId(id)
-    const batchIds = [...Array.from(new Set(rvs.map((value) => value.batchId)))]
-    for (const k in this.batches) {
-      if (!batchIds.includes(k)) {
-        this.batches[k].setDrawRanges({
-          offset: 0,
-          count: Infinity,
-          material: this.materials.getFilterMaterial(
-            this.batches[k].renderViews[0],
-            FilterMaterialType.GHOST
-          )
-        })
-        this.batches[k].setVisibleRange(HideAllBatchUpdateRange)
-      } else {
-        const drawRanges = []
-        for (let i = 0; i < this.batches[k].renderViews.length; i++) {
-          if (!rvs.includes(this.batches[k].renderViews[i])) {
-            drawRanges.push({
-              offset: this.batches[k].renderViews[i].batchStart,
-              count: this.batches[k].renderViews[i].batchCount,
-              material: this.materials.getFilterMaterial(
-                this.batches[k].renderViews[i],
-                FilterMaterialType.GHOST
-              )
-            })
-          } else {
-            drawRanges.push({
-              offset: this.batches[k].renderViews[i].batchStart,
-              count: this.batches[k].renderViews[i].batchCount,
-              material: this.materials.getFilterMaterial(
-                this.batches[k].renderViews[i],
-                FilterMaterialType.SELECT
-              )
-            })
-          }
-        }
-        if (drawRanges.length > 0) {
-          this.batches[k].setDrawRanges(...drawRanges)
-          this.batches[k].autoFillDrawRanges()
-        }
-      }
-    }
-  }
+  // public isolateRenderView(id: string) {
+  //   const rvs = WorldTree.getRenderTree().getRenderViewsForNodeId(id)
+  //   const batchIds = [...Array.from(new Set(rvs.map((value) => value.batchId)))]
+  //   for (const k in this.batches) {
+  //     if (!batchIds.includes(k)) {
+  //       this.batches[k].setDrawRanges({
+  //         offset: 0,
+  //         count: Infinity,
+  //         material: this.materials.getFilterMaterial(
+  //           this.batches[k].renderViews[0],
+  //           FilterMaterialType.GHOST
+  //         )
+  //       })
+  //       this.batches[k].setVisibleRange(HideAllBatchUpdateRange)
+  //     } else {
+  //       const drawRanges = []
+  //       for (let i = 0; i < this.batches[k].renderViews.length; i++) {
+  //         if (!rvs.includes(this.batches[k].renderViews[i])) {
+  //           drawRanges.push({
+  //             offset: this.batches[k].renderViews[i].batchStart,
+  //             count: this.batches[k].renderViews[i].batchCount,
+  //             material: this.materials.getFilterMaterial(
+  //               this.batches[k].renderViews[i],
+  //               FilterMaterialType.GHOST
+  //             )
+  //           })
+  //         } else {
+  //           drawRanges.push({
+  //             offset: this.batches[k].renderViews[i].batchStart,
+  //             count: this.batches[k].renderViews[i].batchCount,
+  //             material: this.materials.getFilterMaterial(
+  //               this.batches[k].renderViews[i],
+  //               FilterMaterialType.SELECT
+  //             )
+  //           })
+  //         }
+  //       }
+  //       if (drawRanges.length > 0) {
+  //         this.batches[k].setDrawRanges(...drawRanges)
+  //         this.batches[k].autoFillDrawRanges()
+  //       }
+  //     }
+  //   }
+  // }
 
   /**
    * Used for debuggin only
    */
-  public async isolateRenderViewBatch(id: string) {
-    const rv = WorldTree.getRenderTree().getRenderViewForNodeId(id)
-    for (const k in this.batches) {
-      if (k !== rv.batchId) {
-        this.batches[k].setDrawRanges({
-          offset: 0,
-          count: Infinity,
-          material: this.materials.getFilterMaterial(
-            this.batches[k].renderViews[0],
-            FilterMaterialType.GHOST
-          )
-        })
-      }
-    }
-  }
+  // public async isolateRenderViewBatch(id: string) {
+  //   const rv = WorldTree.getRenderTree().getRenderViewForNodeId(id)
+  //   for (const k in this.batches) {
+  //     if (k !== rv.batchId) {
+  //       this.batches[k].setDrawRanges({
+  //         offset: 0,
+  //         count: Infinity,
+  //         material: this.materials.getFilterMaterial(
+  //           this.batches[k].renderViews[0],
+  //           FilterMaterialType.GHOST
+  //         )
+  //       })
+  //     }
+  //   }
+  // }
 }
