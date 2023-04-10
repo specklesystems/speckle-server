@@ -14,6 +14,9 @@ import {
   OnProjectPendingVersionsUpdatedSubscription,
   OnProjectVersionsUpdateSubscription,
   Project,
+  ProjectModelsArgs,
+  ProjectModelsTreeArgs,
+  ProjectPendingImportedModelsArgs,
   ProjectPendingVersionsUpdatedMessageType,
   ProjectVersionsArgs,
   ProjectVersionsUpdatedMessageType,
@@ -81,7 +84,60 @@ export function useProjectVersionUpdateTracking(
       ].includes(event.type) &&
       version
     ) {
+      // Added new model w/ versions OR updated model that now has versions (it might not have had them previously)
+      // So - add it to the list, if its not already there
+      modifyObjectFields<ProjectModelsArgs, Project['models']>(
+        apollo.cache,
+        getCacheId('Project', unref(projectId)),
+        (fieldName, variables, value, { ref }) => {
+          if (fieldName !== 'models') return
+          if (variables.filter?.search) return
+
+          const newModelRef = ref('Model', version.model.id)
+          const newItems = (value?.items || []).slice()
+
+          let isAdded = false
+          if (!newItems.find((i) => i.__ref === newModelRef.__ref)) {
+            newItems.unshift(newModelRef)
+            isAdded = true
+          }
+
+          return {
+            ...(value || {}),
+            items: newItems,
+            totalCount: (value.totalCount || 0) + (isAdded ? 1 : 0)
+          }
+        }
+      )
+
+      // + Evict modelsTree, if it doesnt have this model
+      evictObjectFields<ProjectModelsTreeArgs, Project['modelsTree']>(
+        apollo.cache,
+        getCacheId('Project', unref(projectId)),
+        (fieldName, variables, value, { readField }) => {
+          if (fieldName !== 'modelsTree') return false
+          if (variables.filter?.search) return false
+          if (variables.filter?.contributors?.length) return false
+          if (variables.filter?.sourceApps?.length) return false
+
+          const items = value?.items || []
+          for (const item of items) {
+            const fullName = readField('fullName', item)
+            if (fullName === version.model.name) return false
+          }
+
+          return true
+        }
+      )
+
       if (event.type === ProjectVersionsUpdatedMessageType.Created) {
+        // Evict project.viewerResources
+        evictObjectFields(
+          apollo.cache,
+          getCacheId('Project', unref(projectId)),
+          (fieldName) => fieldName === 'viewerResources'
+        )
+
         // Remove from pendingVersions, in case it's there
         modifyObjectFields<
           ModelPendingImportedVersionsArgs,
@@ -125,6 +181,27 @@ export function useProjectVersionUpdateTracking(
           }
         )
 
+        // Potentially remove item from Project.pendingImportedModels?
+        // Remove from pending models?
+        modifyObjectFields<
+          ProjectPendingImportedModelsArgs,
+          Project['pendingImportedModels']
+        >(
+          apollo.cache,
+          getCacheId('Project', unref(projectId)),
+          (fieldName, _variables, value, { readField }) => {
+            if (fieldName !== 'pendingImportedModels') return
+            if (!value?.length) return
+
+            const versionModelName = version.model.name
+            const currentModels = (value || []).filter((i) => {
+              const itemModelName = readField('modelName', i)
+              return itemModelName !== versionModelName
+            })
+            return currentModels
+          }
+        )
+
         // Emit toast
         if (!silenceToast) {
           triggerNotification({
@@ -156,6 +233,12 @@ export function useProjectVersionUpdateTracking(
           (fieldName) =>
             ['updatedAt', 'previewUrl', 'versionCount', 'versions'].includes(fieldName)
         )
+
+        // Evict project.viewerResources
+        apollo.cache.evict({
+          id: getCacheId('Project', unref(projectId)),
+          fieldName: 'viewerResources'
+        })
       }
     }
 
@@ -531,7 +614,7 @@ export function useProjectPendingVersionUpdateTracking(
           title: 'File import failed',
           description:
             event.version.convertedMessage ||
-            `${event.version.modelName} could not be imported`
+            `${event.version.modelName} version could not be imported`
         })
       }
     }

@@ -14,15 +14,29 @@
     />
   </div>
   <CommonEmptySearchState
-    v-else-if="search && latestModelsResult?.project?.models.items.length === 0"
+    v-else-if="isFiltering && items.length === 0"
     @clear-search="() => $emit('clear-search')"
   />
   <div v-else>TODO: Grid empty state</div>
+  <InfiniteLoading
+    v-if="items?.length && !disablePagination"
+    :settings="{ identifier: infiniteLoaderId }"
+    @infinite="infiniteLoad"
+  />
 </template>
 <script setup lang="ts">
-import { ProjectPageModelsViewFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  FormUsersSelectItemFragment,
+  ProjectLatestModelsPaginationQueryVariables,
+  ProjectPageLatestItemsModelsFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
-import { latestModelsQuery } from '~~/lib/projects/graphql/queries'
+import {
+  latestModelsPaginationQuery,
+  latestModelsQuery
+} from '~~/lib/projects/graphql/queries'
+import { Nullable, SourceAppDefinition } from '@speckle/shared'
+import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
@@ -32,13 +46,16 @@ const emit = defineEmits<{
 
 const props = withDefaults(
   defineProps<{
-    project: ProjectPageModelsViewFragment
+    project: ProjectPageLatestItemsModelsFragment
     search?: string
     showActions?: boolean
     showVersions?: boolean
     disableDefaultLinks?: boolean
     excludedIds?: string[]
     excludeEmptyModels?: boolean
+    disablePagination?: boolean
+    sourceApps?: SourceAppDefinition[]
+    contributors?: FormUsersSelectItemFragment[]
   }>(),
   {
     showActions: true,
@@ -47,29 +64,113 @@ const props = withDefaults(
 )
 
 const areQueriesLoading = useQueryLoading()
-const { result: latestModelsResult, variables: latestModelsVariables } = useQuery(
-  latestModelsQuery,
-  () => ({
+
+const latestModelsQueryVariables = computed(
+  (): ProjectLatestModelsPaginationQueryVariables => ({
     projectId: props.project.id,
     filter: {
       search: props.search || null,
       excludeIds: props.excludedIds || null,
-      onlyWithVersions: !!props.excludeEmptyModels
+      onlyWithVersions: !!props.excludeEmptyModels,
+      sourceApps: props.sourceApps?.length
+        ? props.sourceApps.map((a) => a.searchKey)
+        : null,
+      contributors: props.contributors?.length
+        ? props.contributors.map((c) => c.id)
+        : null
     }
   })
 )
 
-const models = computed(() => latestModelsResult.value?.project?.models?.items || [])
-const pendingModels = computed(() =>
-  latestModelsVariables.value?.filter?.search
-    ? []
-    : latestModelsResult.value?.project?.pendingImportedModels || []
+const infiniteLoaderId = ref('')
+
+// Base query (all pending uploads + first page of models)
+const {
+  result: baseResult,
+  variables: latestModelsVariables,
+  onResult: onBaseResult
+} = useQuery(latestModelsQuery, () => latestModelsQueryVariables.value)
+
+// Pagination query
+const {
+  result: extraPagesResult,
+  fetchMore: fetchMorePages,
+  onResult: onExtraPagesResult
+} = useQuery(
+  latestModelsPaginationQuery,
+  () => ({
+    ...latestModelsQueryVariables.value,
+    cursor: null as Nullable<string>
+  }),
+  () => ({ enabled: !props.disablePagination })
 )
 
-const items = computed(() => [...pendingModels.value, ...models.value])
+const isFiltering = computed(() => {
+  const filter = latestModelsVariables.value?.filter
+  if (filter?.contributors?.length) return true
+  if (filter?.search?.length) return true
+  if (filter?.sourceApps?.length) return true
+  return false
+})
+
+const models = computed(() =>
+  extraPagesResult.value
+    ? extraPagesResult.value?.project?.models?.items || []
+    : baseResult.value?.project?.models?.items || []
+)
+const pendingModels = computed(() =>
+  isFiltering.value ? [] : baseResult.value?.project?.pendingImportedModels || []
+)
+
+const items = computed(() =>
+  [...pendingModels.value, ...models.value].slice(
+    0,
+    props.disablePagination ? 16 : undefined
+  )
+)
 const itemsCount = computed(() => items.value.length)
+const moreToLoad = computed(
+  () =>
+    !baseResult.value?.project ||
+    baseResult.value.project.models.items.length <
+      baseResult.value.project.models.totalCount
+)
+
+const infiniteLoad = async (state: InfiniteLoaderState) => {
+  const cursor =
+    extraPagesResult.value?.project?.models.cursor ||
+    baseResult.value?.project?.models.cursor ||
+    null
+  if (!moreToLoad.value || !cursor) return state.complete()
+
+  try {
+    await fetchMorePages({
+      variables: {
+        cursor
+      }
+    })
+  } catch (e) {
+    console.error(e)
+    state.error()
+    return
+  }
+
+  state.loaded()
+  if (!moreToLoad.value) {
+    state.complete()
+  }
+}
+
+const calculateLoaderId = () => {
+  const vars = latestModelsQueryVariables.value
+  const id = JSON.stringify(vars.filter)
+  infiniteLoaderId.value = id
+}
 
 watch(areQueriesLoading, (newVal) => {
   emit('update:loading', newVal)
 })
+
+onBaseResult(calculateLoaderId)
+onExtraPagesResult(calculateLoaderId)
 </script>

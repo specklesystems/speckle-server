@@ -11,7 +11,11 @@ extend type Project {
   Return's a project's models in a tree view with submodels being nested under parent models
   real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
   """
-  modelsTree(filter: ProjectModelsTreeFilter): [ModelsTreeItem!]!
+  modelsTree(
+    cursor: String
+    limit: Int! = 25
+    filter: ProjectModelsTreeFilter
+  ): ModelsTreeItemCollection!
   """
   Returns a specific model by its ID
   """
@@ -38,6 +42,14 @@ input ProjectModelsTreeFilter {
   Search for specific models. If used, tree items from different levels may be mixed.
   """
   search: String
+  """
+  Filter by source apps used in models
+  """
+  sourceApps: [String!]
+  """
+  Filter by IDs of contributors who participated in models
+  """
+  contributors: [String!]
 }
 
 type ViewerResourceGroup {
@@ -94,6 +106,12 @@ type ModelCollection {
   totalCount: Int!
   cursor: String
   items: [Model!]!
+}
+
+type ModelsTreeItemCollection {
+  totalCount: Int!
+  cursor: String
+  items: [ModelsTreeItem!]!
 }
 
 input CreateModelInput {
@@ -165,14 +183,9 @@ type ModelsTreeItem {
   """
   model: Model
   """
-  Only set if tree item represents a pending model (file import)
-  """
-  pendingModel: FileUpload
-  """
   Whether or not this item has nested children models
   """
   hasChildren: Boolean!
-  isPendingModel: Boolean!
   children: [ModelsTreeItem!]!
   updatedAt: DateTime!
 }

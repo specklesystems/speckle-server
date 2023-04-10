@@ -19,6 +19,10 @@ export const modelRoute = (
   }`
 export const modelVersionsRoute = (projectId: string, modelId: string) =>
   `/projects/${projectId}/models/${modelId}/versions`
+export const allProjectModelsRoute = (projectId: string) =>
+  `/projects/${projectId}/models`
+export const projectDiscussionsRoute = (projectId: string) =>
+  `/projects/${projectId}/discussions`
 
 /**
  * TODO: Page doesn't exist

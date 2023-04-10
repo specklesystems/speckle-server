@@ -76,7 +76,7 @@
       </slot>
     </div>
     <p
-      v-if="helpTipId"
+      v-if="helpTipId && !hideHelpTip"
       :id="helpTipId"
       class="mt-2 ml-3 text-sm"
       :class="helpTipClasses"
@@ -225,6 +225,10 @@ const props = defineProps({
   inputClasses: {
     type: String,
     default: null
+  },
+  hideErrorMessage: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -232,6 +236,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', val: string): void
   (e: 'change', val: { event?: Event; value: string }): void
   (e: 'input', val: { event?: Event; value: string }): void
+  (e: 'clear'): void
   (e: 'focusin'): void
   (e: 'focusout'): void
 }>()
@@ -247,6 +252,7 @@ const {
   helpTipId,
   helpTipClasses,
   helpTip,
+  hideHelpTip,
   errorMessage,
   clear,
   focus

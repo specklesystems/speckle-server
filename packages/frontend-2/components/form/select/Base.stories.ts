@@ -1,3 +1,4 @@
+import { wait } from '@speckle/shared'
 import { Meta, StoryObj } from '@storybook/vue3'
 import FormSelectBase from '~~/components/form/select/Base.vue'
 import { isRequired } from '~~/lib/common/helpers/validation'
@@ -65,7 +66,10 @@ export default {
       type: 'string',
       description: 'Slot for rendering each option'
     },
-    searchFilterPredicate: {
+    filterPredicate: {
+      type: 'function'
+    },
+    getSearchResults: {
       type: 'function'
     }
   }
@@ -94,8 +98,9 @@ export const Default: StoryObj = {
     items: fakeItems,
     modelValue: undefined,
     search: false,
-    searchFilterPredicate: (val: FakeItemType, search: string) =>
+    filterPredicate: (val: FakeItemType, search: string) =>
       val.name.toLowerCase().includes(search.toLowerCase()),
+    getSearchResults: undefined,
     searchPlaceholder: 'Search',
     label: 'Choose an item',
     showLabel: false,
@@ -172,7 +177,7 @@ export const WithValidation: StoryObj = {
     items: fakeItems,
     modelValue: undefined,
     search: false,
-    searchFilterPredicate: (val: FakeItemType, search: string) =>
+    filterPredicate: (val: FakeItemType, search: string) =>
       val.name.toLowerCase().includes(search.toLowerCase()),
     searchPlaceholder: 'Search',
     label: 'Item',
@@ -180,5 +185,37 @@ export const WithValidation: StoryObj = {
     by: 'name',
     rules: [isRequired],
     help: 'This is a random help message'
+  }
+}
+
+export const WithFilter: StoryObj = {
+  ...Default,
+  args: {
+    ...Default.args,
+    search: true
+  }
+}
+
+export const WithAsyncSearch: StoryObj = {
+  ...WithFilter,
+  args: {
+    ...WithFilter.args,
+    items: undefined,
+    filterPredicate: undefined,
+    getSearchResults: async (search: string): Promise<FakeItemType[]> => {
+      const items = fakeItems.filter((val) =>
+        val.name.toLowerCase().includes(search.toLowerCase())
+      )
+      await wait(2000)
+      return items
+    }
+  }
+}
+
+export const Empty: StoryObj = {
+  ...WithAsyncSearch,
+  args: {
+    ...WithAsyncSearch.args,
+    getSearchResults: () => []
   }
 }

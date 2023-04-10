@@ -7,7 +7,7 @@ import {
 } from '@/modules/core/services/branch/management'
 import {
   getPaginatedProjectModels,
-  getProjectModelsTree
+  getProjectTopLevelModelsTree
 } from '@/modules/core/services/branch/retrieval'
 import { authorizeResolver } from '@/modules/shared'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
@@ -22,6 +22,7 @@ import {
   filteredSubscribe,
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
+import { getModelTreeItems } from '@/modules/core/repositories/branches'
 
 export = {
   Project: {
@@ -32,14 +33,16 @@ export = {
       return ctx.loaders.branches.getById.load(args.id)
     },
     async modelsTree(parent, args) {
-      return await getProjectModelsTree(parent.id, {
-        search: args.filter?.search || undefined
-      })
+      return await getProjectTopLevelModelsTree(parent.id, args)
     },
     async modelChildrenTree(parent, { fullName }) {
-      return await getProjectModelsTree(parent.id, {
-        parentModelName: fullName
-      })
+      return await getModelTreeItems(
+        parent.id,
+        {},
+        {
+          parentModelName: fullName
+        }
+      )
     },
     async viewerResources(parent, { resourceIdString, loadedVersionsOnly }) {
       return await getViewerResourceGroups({
@@ -62,9 +65,13 @@ export = {
       return latestCommit ? new URL(path, getServerOrigin()).toString() : null
     },
     async childrenTree(parent) {
-      return await getProjectModelsTree(parent.streamId, {
-        parentModelName: parent.name
-      })
+      return await getModelTreeItems(
+        parent.streamId,
+        {},
+        {
+          parentModelName: parent.name
+        }
+      )
     },
     async displayName(parent) {
       return last(parent.name.split('/'))
@@ -91,9 +98,13 @@ export = {
         .load(parent.fullName)
     },
     async children(parent) {
-      return await getProjectModelsTree(parent.projectId, {
-        parentModelName: parent.fullName
-      })
+      return await getModelTreeItems(
+        parent.projectId,
+        {},
+        {
+          parentModelName: parent.fullName
+        }
+      )
     }
   },
   Mutation: {

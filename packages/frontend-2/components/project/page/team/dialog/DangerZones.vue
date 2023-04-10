@@ -41,7 +41,7 @@
           </div>
         </DisclosureButton>
         <DisclosurePanel class="flex flex-col space-y-4">
-          <div v-if="isOwner" class="flex flex-col space-y-2 pb-2">
+          <form class="flex flex-col space-y-2 pb-2" @submit="onDelete">
             <div class="label label--light">
               Deleting a project is an irreversible action! If you are sure you want to
               proceed, please type in the project name
@@ -50,23 +50,27 @@
             </div>
             <div class="flex space-x-2">
               <FormTextInput
-                v-model="typedProjectName"
-                name="deleteProject"
+                name="projectName"
+                label="Project name"
                 size="sm"
                 placeholder="Project name"
+                :rules="[stringMatchesProjectName]"
                 full-width
+                validate-on-mount
+                validate-on-value-update
+                hide-error-message
               />
             </div>
             <FormButton
               color="danger"
               size="sm"
-              :disabled="!isProjectNameTyped"
+              :disabled="!!Object.values(deleteErrors).length"
               class="self-start"
-              @click="onDelete"
+              submit
             >
               Delete
             </FormButton>
-          </div>
+          </form>
         </DisclosurePanel>
       </Disclosure>
     </div>
@@ -75,7 +79,7 @@
 <script setup lang="ts">
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 import { TrashIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
-
+import { GenericValidateFunction, useForm } from 'vee-validate'
 import { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import {
   useDeleteProject,
@@ -83,21 +87,26 @@ import {
 } from '~~/lib/projects/composables/projectManagement'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
 
+const stringMatchesProjectName: GenericValidateFunction<string> = (val: string) => {
+  return val === props.project.name ? true : 'Value must match the project name exactly'
+}
+
 const props = defineProps<{
   project: ProjectPageTeamDialogFragment
+}>()
+
+const { handleSubmit: handleDeleteSubmit, errors: deleteErrors } = useForm<{
+  projectName: string
 }>()
 
 const { isOwner, canLeaveProject } = useTeamDialogInternals({ props: toRefs(props) })
 const deleteProject = useDeleteProject()
 const leaveProject = useLeaveProject()
 
-const typedProjectName = ref('')
-const isProjectNameTyped = computed(() => typedProjectName.value === props.project.name)
-
-const onDelete = async () => {
-  if (!isProjectNameTyped.value || !isOwner.value) return
+const onDelete = handleDeleteSubmit(async () => {
+  if (!isOwner.value) return
   await deleteProject(props.project.id, { goHome: true })
-}
+})
 
 const onLeave = async () => {
   if (!canLeaveProject.value) return

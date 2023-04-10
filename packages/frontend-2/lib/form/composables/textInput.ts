@@ -18,9 +18,11 @@ export function useTextInputCore(params: {
     autoFocus?: boolean
     showClear?: boolean
     useLabelInErrors?: boolean
+    hideErrorMessage?: boolean
   }>
   emit: {
     (e: 'change', val: { event?: Event; value: string }): void
+    (e: 'clear'): void
   }
   inputEl: Ref<Nullable<HTMLInputElement | HTMLTextAreaElement>>
 }) {
@@ -35,7 +37,7 @@ export function useTextInputCore(params: {
   const coreClasses = computed(() => {
     const classParts = [
       'block w-full rounded focus:outline-none bg-foundation-page text-foreground transition-all',
-      'disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-muted',
+      'disabled:cursor-not-allowed disabled:bg-foundation-disabled disabled:text-disabled-muted',
       'placeholder:text-foreground-2'
     ]
 
@@ -59,6 +61,9 @@ export function useTextInputCore(params: {
     return base.replace('Value', title.value)
   })
 
+  const hideHelpTip = computed(
+    () => errorMessage.value && unref(props.hideErrorMessage)
+  )
   const helpTip = computed(() => errorMessage.value || unref(props.help))
   const hasHelpTip = computed(() => !!helpTip.value)
   const helpTipId = computed(() =>
@@ -75,6 +80,7 @@ export function useTextInputCore(params: {
   const clear = () => {
     value.value = ''
     emit('change', { value: '' })
+    emit('clear')
   }
 
   onMounted(() => {
@@ -90,6 +96,7 @@ export function useTextInputCore(params: {
     helpTipId,
     helpTipClasses,
     helpTip,
+    hideHelpTip,
     errorMessage,
     clear,
     focus

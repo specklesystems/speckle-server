@@ -1,6 +1,7 @@
 import { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import { MaybeRef } from '@vueuse/core'
+import { isArray } from 'lodash-es'
 import { Get } from 'type-fest'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
@@ -41,8 +42,16 @@ export function useProjectUpdateTracking(
   handler?: (
     data: NonNullable<Get<OnProjectUpdatedSubscription, 'projectUpdated'>>,
     cache: ApolloCache<unknown>
-  ) => void
+  ) => void,
+  options?: Partial<{
+    redirectOnDeletion: boolean
+    notifyOnUpdate?: boolean
+  }>
 ) {
+  const { redirectOnDeletion, notifyOnUpdate } = options || {}
+
+  const goHome = useNavigateToHome()
+  const { triggerNotification } = useGlobalToast()
   const apollo = useApolloClient().client
   const { onResult: onProjectUpdated } = useSubscription(
     onProjectUpdatedSubscription,
@@ -62,6 +71,18 @@ export function useProjectUpdateTracking(
       cache.evict({
         id: getCacheId('Project', event.id)
       })
+
+      if (redirectOnDeletion) {
+        goHome()
+      }
+
+      if (redirectOnDeletion || notifyOnUpdate) {
+        triggerNotification({
+          type: ToastNotificationType.Info,
+          title: isDeleted ? 'Project deleted' : 'Project updated',
+          description: isDeleted ? 'Redirecting to home' : undefined
+        })
+      }
     }
 
     handler?.(event, cache)
@@ -141,18 +162,21 @@ export function useInviteUserToProject() {
   const { activeUser } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
 
-  return async (input: ProjectInviteCreateInput) => {
+  return async (
+    projectId: string,
+    input: ProjectInviteCreateInput | ProjectInviteCreateInput[]
+  ) => {
     const userId = activeUser.value?.id
     if (!userId) return
 
     const { data, errors } = await apollo
       .mutate({
         mutation: inviteProjectUserMutation,
-        variables: { input }
+        variables: { input: isArray(input) ? input : [input], projectId }
       })
       .catch(convertThrowIntoFetchResult)
 
-    if (!data?.projectMutations.invites.create.id) {
+    if (!data?.projectMutations.invites.batchCreate.id) {
       const err = getFirstErrorMessage(errors)
       triggerNotification({
         type: ToastNotificationType.Danger,
@@ -166,7 +190,7 @@ export function useInviteUserToProject() {
       })
     }
 
-    return data?.projectMutations.invites.create
+    return data?.projectMutations.invites.batchCreate
   }
 }
 

@@ -5,6 +5,7 @@ import { Optional } from '@speckle/shared'
 import { Merge, SetRequired } from 'type-fest'
 
 export enum BlobUploadStatus {
+  Success = 1,
   Failure = 2
 }
 

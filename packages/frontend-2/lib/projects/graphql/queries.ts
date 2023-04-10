@@ -46,8 +46,27 @@ export const latestModelsQuery = graphql(`
           ...ProjectPageLatestItemsModelItem
         }
       }
-      pendingImportedModels(limit: 16) {
+      pendingImportedModels {
         ...PendingFileUpload
+      }
+    }
+  }
+`)
+
+export const latestModelsPaginationQuery = graphql(`
+  query ProjectLatestModelsPagination(
+    $projectId: String!
+    $filter: ProjectModelsFilter
+    $cursor: String = null
+  ) {
+    project(id: $projectId) {
+      id
+      models(cursor: $cursor, limit: 16, filter: $filter) {
+        totalCount
+        cursor
+        items {
+          ...ProjectPageLatestItemsModelItem
+        }
       }
     }
   }
@@ -60,8 +79,34 @@ export const projectModelsTreeTopLevelQuery = graphql(`
   ) {
     project(id: $projectId) {
       id
-      modelsTree(filter: $filter) {
-        ...SingleLevelModelTreeItem
+      modelsTree(cursor: null, limit: 8, filter: $filter) {
+        totalCount
+        cursor
+        items {
+          ...SingleLevelModelTreeItem
+        }
+      }
+      pendingImportedModels {
+        ...PendingFileUpload
+      }
+    }
+  }
+`)
+
+export const projectModelsTreeTopLevelPaginationQuery = graphql(`
+  query ProjectModelsTreeTopLevelPagination(
+    $projectId: String!
+    $filter: ProjectModelsTreeFilter
+    $cursor: String = null
+  ) {
+    project(id: $projectId) {
+      id
+      modelsTree(cursor: $cursor, limit: 8, filter: $filter) {
+        totalCount
+        cursor
+        items {
+          ...SingleLevelModelTreeItem
+        }
       }
     }
   }
@@ -79,10 +124,14 @@ export const projectModelChildrenTreeQuery = graphql(`
 `)
 
 export const latestCommentThreadsQuery = graphql(`
-  query ProjectLatestCommentThreads($projectId: String!) {
+  query ProjectLatestCommentThreads(
+    $projectId: String!
+    $cursor: String = null
+    $filter: ProjectCommentsFilter = null
+  ) {
     project(id: $projectId) {
       id
-      commentThreads(cursor: null, limit: 8) {
+      commentThreads(cursor: $cursor, limit: 8, filter: $filter) {
         totalCount
         cursor
         items {
@@ -132,6 +181,24 @@ export const projectModelVersionsQuery = graphql(`
   ) {
     project(id: $projectId) {
       ...ProjectModelPageVersionsPagination
+    }
+  }
+`)
+
+export const projectModelsPageQuery = graphql(`
+  query ProjectModelsPage($projectId: String!) {
+    project(id: $projectId) {
+      ...ProjectModelsPageHeader_Project
+      ...ProjectModelsPageResults_Project
+    }
+  }
+`)
+
+export const projectDiscussionsPageQuery = graphql(`
+  query ProjectDiscussionsPage($projectId: String!) {
+    project(id: $projectId) {
+      ...ProjectDiscussionsPageHeader_Project
+      ...ProjectDiscussionsPageResults_Project
     }
   }
 `)

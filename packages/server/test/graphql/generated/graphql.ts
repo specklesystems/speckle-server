@@ -705,7 +705,6 @@ export type ModelsTreeItem = {
   /** Whether or not this item has nested children models */
   hasChildren: Scalars['Boolean'];
   id: Scalars['ID'];
-  isPendingModel: Scalars['Boolean'];
   /**
    * Nullable cause the item can represent a parent that doesn't actually exist as a model on its own.
    * E.g. A model named "foo/bar" is supposed to be a child of "foo" and will be represented as such,
@@ -713,9 +712,14 @@ export type ModelsTreeItem = {
    */
   model?: Maybe<Model>;
   name: Scalars['String'];
-  /** Only set if tree item represents a pending model (file import) */
-  pendingModel?: Maybe<FileUpload>;
   updatedAt: Scalars['DateTime'];
+};
+
+export type ModelsTreeItemCollection = {
+  __typename?: 'ModelsTreeItemCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<ModelsTreeItem>;
+  totalCount: Scalars['Int'];
 };
 
 export type MoveVersionsInput = {
@@ -1210,7 +1214,7 @@ export type Project = {
    * Return's a project's models in a tree view with submodels being nested under parent models
    * real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
    */
-  modelsTree: Array<ModelsTreeItem>;
+  modelsTree: ModelsTreeItemCollection;
   name: Scalars['String'];
   /** Returns a list models that are being created from a file import */
   pendingImportedModels: Array<FileUpload>;
@@ -1253,7 +1257,9 @@ export type ProjectModelsArgs = {
 
 
 export type ProjectModelsTreeArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<ProjectModelsTreeFilter>;
+  limit?: Scalars['Int'];
 };
 
 
@@ -1334,7 +1340,6 @@ export type ProjectCreateInput = {
 export type ProjectInviteCreateInput = {
   /** Either this or userId must be filled */
   email?: InputMaybe<Scalars['String']>;
-  projectId: Scalars['ID'];
   /** Defaults to the contributor role, if not specified */
   role?: InputMaybe<Scalars['String']>;
   /** Either this or email must be filled */
@@ -1343,12 +1348,20 @@ export type ProjectInviteCreateInput = {
 
 export type ProjectInviteMutations = {
   __typename?: 'ProjectInviteMutations';
+  /** Batch invite to project */
+  batchCreate: Project;
   /** Cancel a pending stream invite. Can only be invoked by a project owner. */
   cancel: Project;
   /** Invite a new or registered user to be a project collaborator. Can only be invoked by a project owner. */
   create: Project;
   /** Accept or decline a project invite */
   use: Scalars['Boolean'];
+};
+
+
+export type ProjectInviteMutationsBatchCreateArgs = {
+  input: Array<ProjectInviteCreateInput>;
+  projectId: Scalars['ID'];
 };
 
 
@@ -1360,6 +1373,7 @@ export type ProjectInviteMutationsCancelArgs = {
 
 export type ProjectInviteMutationsCreateArgs = {
   input: ProjectInviteCreateInput;
+  projectId: Scalars['ID'];
 };
 
 
@@ -1389,8 +1403,12 @@ export type ProjectModelsFilter = {
 };
 
 export type ProjectModelsTreeFilter = {
+  /** Filter by IDs of contributors who participated in models */
+  contributors?: InputMaybe<Array<Scalars['String']>>;
   /** Search for specific models. If used, tree items from different levels may be mixed. */
   search?: InputMaybe<Scalars['String']>;
+  /** Filter by source apps used in models */
+  sourceApps?: InputMaybe<Array<Scalars['String']>>;
 };
 
 export type ProjectModelsUpdatedMessage = {
@@ -2382,6 +2400,8 @@ export type UserDeleteInput = {
 };
 
 export type UserProjectsFilter = {
+  /** Only return projects owned by the active user */
+  ownedOnly?: InputMaybe<Scalars['Boolean']>;
   /** Filter out projects by name */
   search?: InputMaybe<Scalars['String']>;
 };

@@ -2,6 +2,7 @@
   <ProjectPageLatestItems
     :count="project.commentThreadCount.totalCount"
     :hide-filters="showCommentsIntro"
+    :see-all-url="projectDiscussionsRoute(project.id)"
     title="Discussions"
   >
     <template #default="{ gridOrList }">
@@ -9,8 +10,13 @@
         <ProjectPageLatestItemsCommentsGrid
           v-if="gridOrList === GridListToggleValue.Grid"
           :threads="latestCommentsResult"
+          disable-pagination
         />
-        <ProjectPageLatestItemsCommentsList v-else :threads="latestCommentsResult" />
+        <ProjectPageLatestItemsCommentsList
+          v-else
+          :threads="latestCommentsResult"
+          disable-pagination
+        />
       </template>
       <template v-else>
         <ProjectPageLatestItemsCommentsIntroCard />
@@ -24,6 +30,7 @@ import { ProjectPageLatestItemsCommentsFragment } from '~~/lib/common/generated/
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { useQuery } from '@vue/apollo-composable'
 import { latestCommentThreadsQuery } from '~~/lib/projects/graphql/queries'
+import { projectDiscussionsRoute } from '~~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectPageLatestItemsComments on Project {

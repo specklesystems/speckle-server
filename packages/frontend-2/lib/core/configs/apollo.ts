@@ -135,6 +135,10 @@ function createCache(): InMemoryCache {
             keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('CommentCollection')
           },
+          modelsTree: {
+            keyArgs: ['filter', 'limit'],
+            merge: buildAbstractCollectionMergeFunction('ModelsTreeItemCollection')
+          },
           replyAuthors: {
             keyArgs: false,
             merge: buildAbstractCollectionMergeFunction('CommentReplyAuthorCollection')

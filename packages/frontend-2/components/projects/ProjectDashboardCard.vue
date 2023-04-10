@@ -65,31 +65,10 @@
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
-import {
-  Project,
-  ProjectDashboardItemFragment,
-  ProjectModelsArgs,
-  ProjectModelsUpdatedMessageType,
-  ProjectPendingImportedModelsArgs,
-  ProjectPendingModelsUpdatedMessageType,
-  ProjectVersionsUpdatedMessageType
-} from '~~/lib/common/generated/gql/graphql'
+import { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { UserCircleIcon, ClockIcon, CubeIcon } from '@heroicons/vue/24/outline'
 import { projectRoute } from '~~/lib/common/helpers/route'
-import {
-  evictObjectFields,
-  getCacheId,
-  modifyObjectFields
-} from '~~/lib/common/helpers/graphql'
-import { has } from 'lodash-es'
-import {
-  useProjectModelUpdateTracking,
-  useProjectPendingModelUpdateTracking
-} from '~~/lib/projects/composables/modelManagement'
-import { useProjectVersionUpdateTracking } from '~~/lib/projects/composables/versionManagement'
-import { useProjectUpdateTracking } from '~~/lib/projects/composables/projectManagement'
-import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 
 const props = defineProps<{
   project: ProjectDashboardItemFragment
@@ -97,186 +76,11 @@ const props = defineProps<{
 
 const projectId = computed(() => props.project.id)
 
-const { triggerNotification } = useGlobalToast()
-
-useProjectUpdateTracking(projectId)
-
-useProjectVersionUpdateTracking(
-  projectId,
-  (event, cache) => {
-    // Re-calculate latest 4 models
-    const version = event.version
-    if (
-      [
-        ProjectVersionsUpdatedMessageType.Created,
-        ProjectVersionsUpdatedMessageType.Updated
-      ].includes(event.type) &&
-      version
-    ) {
-      // Added new model w/ versions OR updated model that now has versions (it might now have had them previously)
-      // So - add it to the list, if its not already there
-      modifyObjectFields<ProjectModelsArgs, Project['models']>(
-        cache,
-        getCacheId('Project', props.project.id),
-        (fieldName, variables, value, { ref }) => {
-          if (fieldName !== 'models') return
-          if (variables.filter?.search) return
-
-          const newModelRef = ref('Model', version.model.id)
-          const newItems = (value?.items || []).slice()
-
-          let isAdded = false
-          if (!newItems.find((i) => i.__ref === newModelRef.__ref)) {
-            newItems.unshift(newModelRef)
-            isAdded = true
-          }
-
-          return {
-            ...(value || {}),
-            items: newItems,
-            totalCount: (value.totalCount || 0) + (isAdded ? 1 : 0)
-          }
-        }
-      )
-
-      if (event.type === ProjectVersionsUpdatedMessageType.Created) {
-        // Remove from pending models?
-        modifyObjectFields<
-          ProjectPendingImportedModelsArgs,
-          Project['pendingImportedModels']
-        >(
-          cache,
-          getCacheId('Project', props.project.id),
-          (fieldName, _variables, value, { readField }) => {
-            if (fieldName !== 'pendingImportedModels') return
-            if (!value?.length) return
-
-            const versionModelName = version.model.name
-            const currentModels = (value || []).filter((i) => {
-              const itemModelName = readField('modelName', i)
-              return itemModelName !== versionModelName
-            })
-            return currentModels
-          }
-        )
-      }
-    }
-  },
-  { silenceToast: true }
+// Tracking updates to project, its models and versions
+useGeneralProjectPageUpdateTracking(
+  { projectId },
+  { redirectHomeOnProjectDeletion: false }
 )
-
-useProjectPendingModelUpdateTracking(projectId, (event, cache) => {
-  if (event.type === ProjectPendingModelsUpdatedMessageType.Created) {
-    // Insert into project.pendingModels
-    modifyObjectFields<
-      ProjectPendingImportedModelsArgs,
-      Project['pendingImportedModels']
-    >(
-      cache,
-      getCacheId('Project', props.project.id),
-      (fieldName, _variables, value, { ref }) => {
-        if (fieldName !== 'pendingImportedModels') return
-        const currentModels = (value || []).slice()
-        currentModels.push(ref('FileUpload', event.id))
-        return currentModels
-      }
-    )
-
-    // Evict modelsTree
-    evictObjectFields(
-      cache,
-      getCacheId('Project', props.project.id),
-      (fieldName) => fieldName === 'modelsTree'
-    )
-  } else if (event.type === ProjectPendingModelsUpdatedMessageType.Updated) {
-    // If converted emit toast notification & remove from pending models
-    // (if it still exists there, cause "version create" subscription might've already removed it)
-    const success = event.model.convertedStatus === FileUploadConvertedStatus.Completed
-    const failure = event.model.convertedStatus === FileUploadConvertedStatus.Error
-    const newModel = event.model.model
-
-    if (success && newModel) {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'File successfully imported',
-        description: `${event.model.modelName} has been successfully imported`
-      })
-
-      modifyObjectFields<
-        ProjectPendingImportedModelsArgs,
-        Project['pendingImportedModels']
-      >(
-        cache,
-        getCacheId('Project', props.project.id),
-        (fieldName, _variables, value, { ref }) => {
-          if (fieldName !== 'pendingImportedModels') return
-          if (!value?.length) return
-
-          const currentModels = (value || []).filter(
-            (i) => i.__ref !== ref('FileUpload', event.id).__ref
-          )
-          return currentModels
-        }
-      )
-    } else if (failure) {
-      triggerNotification({
-        type: ToastNotificationType.Danger,
-        title: 'File import failed',
-        description:
-          event.model.convertedMessage ||
-          `${event.model.modelName} could not be imported`
-      })
-    }
-  }
-})
-
-useProjectModelUpdateTracking(projectId, (event, cache) => {
-  const model = event.model
-  if (
-    [
-      ProjectModelsUpdatedMessageType.Created,
-      ProjectModelsUpdatedMessageType.Updated
-    ].includes(event.type) &&
-    model?.versionCount.totalCount
-  ) {
-    // Added new model w/ versions OR updated model that now has versions (it might now have had them previously)
-    // So - add it to the list, if its not already there
-    modifyObjectFields<ProjectModelsArgs, Project['models']>(
-      cache,
-      getCacheId('Project', props.project.id),
-      (fieldName, variables, value, { ref }) => {
-        if (fieldName !== 'models') return
-        if (variables.filter?.search) return
-
-        const newModelRef = ref('Model', model.id)
-        const newItems = (value?.items || []).slice()
-
-        let isAdded = false
-        if (!newItems.find((i) => i.__ref === newModelRef.__ref)) {
-          newItems.unshift(newModelRef)
-          isAdded = true
-        }
-
-        return {
-          ...(value || {}),
-          items: newItems,
-          totalCount: (value.totalCount || 0) + (isAdded ? 1 : 0)
-        }
-      }
-    )
-  }
-
-  // Evict other project page models queries so that we don't have a stale cache there
-  evictObjectFields<ProjectModelsArgs>(
-    cache,
-    getCacheId('Project', props.project.id),
-    (fieldName, variables) => {
-      if (fieldName !== 'models') return false
-      if (!has(variables?.filter, 'search')) return false
-      return true
-    }
-  )
-})
 
 const teamUsers = computed(() => props.project.team.map((t) => t.user))
 const pendingModels = computed(() => props.project.pendingImportedModels)

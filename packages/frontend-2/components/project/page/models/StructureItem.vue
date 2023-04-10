@@ -61,7 +61,7 @@
           </div>
           <div class="text-xs text-foreground-2">
             <FormButton
-              v-if="item.model"
+              v-if="!isPendingFileUpload(item) && item.model"
               rounded
               size="xs"
               :icon-left="ArrowPathRoundedSquareIcon"
@@ -72,7 +72,9 @@
           </div>
         </div>
         <div
-          v-else-if="itemType === StructureItemType.EmptyModel"
+          v-else-if="
+            itemType === StructureItemType.EmptyModel && !isPendingFileUpload(item)
+          "
           class="flex items-center h-full"
         >
           <ProjectPendingFileImportStatus
@@ -95,7 +97,10 @@
         />
       </div>
       <!-- Preview or icon section -->
-      <div v-if="item.model?.previewUrl" class="w-24 h-20 ml-4">
+      <div
+        v-if="!isPendingFileUpload(item) && item.model?.previewUrl"
+        class="w-24 h-20 ml-4"
+      >
         <PreviewImage
           v-if="item.model?.previewUrl"
           :preview-url="item.model.previewUrl"
@@ -164,7 +169,10 @@
         </div>
       </button>
       <!-- Children list -->
-      <div v-if="hasChildren && expanded" class="pl-8 mt-4 space-y-4">
+      <div
+        v-if="hasChildren && expanded && !isPendingFileUpload(item)"
+        class="pl-8 mt-4 space-y-4"
+      >
         <div v-for="child in children" :key="child.fullName" class="flex">
           <div class="h-20 absolute -ml-8 flex items-center mt-0 mr-1 pl-1">
             <ChevronDownIcon class="w-4 h-4 rotate-45 text-foreground-2" />
@@ -201,10 +209,14 @@ import {
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
 import { ArrowUpOnSquareIcon } from '@heroicons/vue/24/outline'
-import { SingleLevelModelTreeItemFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  PendingFileUploadFragment,
+  SingleLevelModelTreeItemFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { projectModelChildrenTreeQuery } from '~~/lib/projects/graphql/queries'
+import { has } from 'lodash-es'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -226,20 +238,21 @@ graphql(`
     model {
       ...ProjectPageLatestItemsModelItem
     }
-    pendingModel {
-      ...PendingFileUpload
-    }
     hasChildren
     updatedAt
   }
 `)
+
+const isPendingFileUpload = (
+  i: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
+): i is PendingFileUploadFragment => has(i, 'uploadDate')
 
 const emit = defineEmits<{
   (e: 'model-updated'): void
 }>()
 
 const props = defineProps<{
-  item: SingleLevelModelTreeItemFragment
+  item: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
   projectId: string
   canContribute?: boolean
   isSearchResult?: boolean
@@ -248,9 +261,8 @@ const props = defineProps<{
 const expanded = ref(false)
 const showActionsMenu = ref(false)
 
-const isPendingFileUpload = computed(() => !!props.item.pendingModel?.id)
 const itemType = computed<StructureItemType>(() => {
-  if (isPendingFileUpload.value) return StructureItemType.PendingModel
+  if (isPendingFileUpload(props.item)) return StructureItemType.PendingModel
 
   const item = props.item
   if (item.model?.versionCount.totalCount) {
@@ -281,30 +293,44 @@ const hasSubmodels = computed(() =>
   ].includes(itemType.value)
 )
 
-const name = computed(() =>
-  props.isSearchResult || isPendingFileUpload.value
-    ? props.item.fullName
-    : props.item.name
+const name = computed(() => {
+  if (isPendingFileUpload(props.item)) return props.item.modelName
+  return props.isSearchResult ? props.item.fullName : props.item.name
+})
+
+const model = computed(() =>
+  !isPendingFileUpload(props.item) ? props.item.model : null
 )
-const model = computed(() => props.item.model)
-const pendingModel = computed(() => props.item.pendingModel)
+const pendingModel = computed(() =>
+  isPendingFileUpload(props.item) ? props.item : null
+)
 const pendingVersion = computed(() => model.value?.pendingImportedVersions[0])
 const hasChildren = computed(() =>
-  props.isSearchResult ? false : props.item.hasChildren
+  props.isSearchResult || isPendingFileUpload(props.item)
+    ? false
+    : props.item.hasChildren
 )
 
-const updatedAt = computed(() =>
-  dayjs(props.item.model ? props.item.model?.updatedAt : props.item.updatedAt).from(
-    dayjs()
-  )
-)
+const updatedAt = computed(() => {
+  const date = isPendingFileUpload(props.item)
+    ? props.item.convertedLastUpdate || props.item.uploadDate
+    : props.item.updatedAt
+
+  return dayjs(date).from(dayjs())
+})
 
 const modelLink = computed(() => {
-  if (!props.item.model || props.item.model?.versionCount.totalCount === 0) return null
+  if (
+    isPendingFileUpload(props.item) ||
+    !props.item.model ||
+    props.item.model?.versionCount.totalCount === 0
+  )
+    return null
   return modelRoute(props.projectId, props.item.model.id)
 })
 
 const viewAllUrl = computed(() => {
+  if (isPendingFileUpload(props.item)) return undefined
   return modelRoute(props.projectId, `$${props.item.fullName}`)
 })
 
@@ -312,9 +338,11 @@ const { result: childrenResult, refetch: refetchChildren } = useQuery(
   projectModelChildrenTreeQuery,
   () => ({
     projectId: props.projectId,
-    parentName: props.item.fullName
+    parentName: isPendingFileUpload(props.item) ? '' : props.item.fullName
   }),
-  () => ({ enabled: hasChildren.value && expanded.value })
+  () => ({
+    enabled: hasChildren.value && expanded.value && !isPendingFileUpload(props.item)
+  })
 )
 
 const children = computed(() => childrenResult.value?.project?.modelChildrenTree || [])

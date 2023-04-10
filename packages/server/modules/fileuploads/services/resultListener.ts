@@ -23,7 +23,7 @@ async function onFileImportProcessed(msg: MessageType) {
   ])
   if (!upload) return
 
-  if (branch && isNewBranch) {
+  if (isNewBranch) {
     await publish(FileImportSubscriptions.ProjectPendingModelsUpdated, {
       projectPendingModelsUpdated: {
         id: upload.id,
@@ -32,8 +32,9 @@ async function onFileImportProcessed(msg: MessageType) {
       },
       projectId: upload.streamId
     })
-    await addBranchCreatedActivity({ branch })
-  } else if (!isNewBranch) {
+
+    if (branch) await addBranchCreatedActivity({ branch })
+  } else {
     await publish(FileImportSubscriptions.ProjectPendingVersionsUpdated, {
       projectPendingVersionsUpdated: {
         id: upload.id,
