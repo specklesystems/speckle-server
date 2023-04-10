@@ -1284,7 +1284,7 @@ export default class SpeckleRenderer {
         offset: 0,
         count: Infinity,
         material: this.batcher.materials.getDebugBatchMaterial(
-          this.batcher.batches[k].getRenderView(0)
+          this.batcher.batches[k].renderViews[0]
         )
       })
     }

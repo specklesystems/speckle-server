@@ -492,13 +492,13 @@ export default class MeshBatch implements Batch {
 
   public getRenderView(index: number): NodeRenderView {
     index
-    // NOT IMPLEMENTED
+    console.warn('Deprecated! Do not call this anymore')
     return null
   }
 
   public getMaterialAtIndex(index: number): Material {
     index
-    // NOT IMPLEMENTED
+    console.warn('Deprecated! Do not call this anymore')
     return null
   }
 
