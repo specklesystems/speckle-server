@@ -5,7 +5,8 @@
   >
     <div class="flex items-center flex-grow overflow-hidden space-x-2">
       <div class="flex items-center flex-none space-x-1 text-sm font-semibold">
-        <UserAvatarGroup :users="allAvatars" :max-count="4" />
+        <UserAvatarGroup v-if="!thread.archived" :users="allAvatars" :max-count="4" />
+        <CheckCircleIcon v-else class="w-8 h-8 text-primary" />
         <span class="hidden md:inline-block">
           {{ thread.author.name }}
           <template v-if="threadAuthors.length !== 1">
@@ -41,6 +42,7 @@ import { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generat
 import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
 import { AvatarUserType } from '~~/lib/user/composables/avatar'
 import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
+import { CheckCircleIcon } from '@heroicons/vue/24/solid'
 
 const props = defineProps<{
   thread: ProjectPageLatestItemsCommentItemFragment
