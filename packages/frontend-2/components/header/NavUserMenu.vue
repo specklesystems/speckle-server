@@ -25,8 +25,9 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex items-center justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
+              @click="() => (showProfileEditDialog = true)"
             >
-              My Profile
+              Edit Profile
               <UserAvatar :user="activeUser" size="sm" class="mr-1" />
             </NuxtLink>
           </MenuItem>
@@ -85,6 +86,7 @@
       </Transition>
     </Menu>
     <ServerInviteDialog v-model:open="showInviteDialog" />
+    <UserProfileEditDialog v-model:open="showProfileEditDialog" />
   </div>
 </template>
 <script setup lang="ts">
@@ -113,6 +115,7 @@ const route = useRoute()
 const router = useRouter()
 
 const showInviteDialog = ref(false)
+const showProfileEditDialog = ref(false)
 const token = computed(() => route.query.token as Optional<string>)
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
