@@ -8,7 +8,8 @@
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 definePageMeta({
-  title: 'Dashboard'
+  title: 'Dashboard',
+  middleware: ['dashboard-redirect']
 })
 
 const { isLoggedIn } = useActiveUser()
