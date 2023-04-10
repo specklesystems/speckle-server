@@ -287,6 +287,96 @@ spec:
                 name: {{ default .Values.secretName .Values.server.monitoring.apollo.key.secretName }}
                 key: {{ default "apollo_key" .Values.server.monitoring.apollo.key.secretKey }}
           {{- end }}
+
+          # Rate Limiting
+          {{- if .Values.server.ratelimiting.all_requests }}
+          - name: RATELIMIT_ALL_REQUESTS
+            value: "{{ .Values.server.ratelimiting.all_requests }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_all_requests }}
+          - name: RATELIMIT_BURST_ALL_REQUESTS
+            value: "{{ .Values.server.ratelimiting.burst_all_requests }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.user_create }}
+          - name: RATELIMIT_USER_CREATE
+            value: "{{ .Values.server.ratelimiting.user_create }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_user_create }}
+          - name: RATELIMIT_BURST_USER_CREATE
+            value: "{{ .Values.server.ratelimiting.burst_user_create }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.stream_create }}
+          - name: RATELIMIT_STREAM_CREATE
+            value: "{{ .Values.server.ratelimiting.stream_create }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_stream_create }}
+          - name: RATELIMIT_BURST_STREAM_CREATE
+            value: "{{ .Values.server.ratelimiting.burst_stream_create }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.commit_create }}
+          - name: RATELIMIT_COMMIT_CREATE
+            value: "{{ .Values.server.ratelimiting.commit_create }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_commit_create }}
+          - name: RATELIMIT_BURST_COMMIT_CREATE
+            value: "{{ .Values.server.ratelimiting.burst_commit_create }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.post_getobjects_streamid }}
+          - name: RATELIMIT_POST_GETOBJECTS_STREAMID
+            value: "{{ .Values.server.ratelimiting.post_getobjects_streamid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_post_getobjects_streamid }}
+          - name: RATELIMIT_BURST_POST_GETOBJECTS_STREAMID
+            value: "{{ .Values.server.ratelimiting.burst_post_getobjects_streamid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.post_diff_streamid }}
+          - name: RATELIMIT_POST_DIFF_STREAMID
+            value: "{{ .Values.server.ratelimiting.post_diff_streamid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_post_diff_streamid }}
+          - name: RATELIMIT_BURST_POST_DIFF_STREAMID
+            value: "{{ .Values.server.ratelimiting.burst_post_diff_streamid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.post_objects_streamid }}
+          - name: RATELIMIT_POST_OBJECTS_STREAMID
+            value: "{{ .Values.server.ratelimiting.post_objects_streamid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_post_objects_streamid }}
+          - name: RATELIMIT_BURST_POST_OBJECTS_STREAMID
+            value: "{{ .Values.server.ratelimiting.burst_post_objects_streamid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.get_objects_streamid_objectid }}
+          - name: RATELIMIT_GET_OBJECTS_STREAMID_OBJECTID
+            value: "{{ .Values.server.ratelimiting.get_objects_streamid_objectid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_get_objects_streamid_objectid }}
+          - name: RATELIMIT_BURST_GET_OBJECTS_STREAMID_OBJECTID
+            value: "{{ .Values.server.ratelimiting.burst_get_objects_streamid_objectid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.get_objects_streamid_objectid_single }}
+          - name: RATELIMIT_GET_OBJECTS_STREAMID_OBJECTID_SINGLE
+            value: "{{ .Values.server.ratelimiting.get_objects_streamid_objectid_single }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_get_objects_streamid_objectid_single }}
+          - name: RATELIMIT_BURST_GET_OBJECTS_STREAMID_OBJECTID_SINGLE
+            value: "{{ .Values.server.ratelimiting.burst_get_objects_streamid_objectid_single }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.post_graphql }}
+          - name: RATELIMIT_POST_GRAPHQL
+            value: "{{ .Values.server.ratelimiting.post_graphql }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_post_graphql }}
+          - name: RATELIMIT_BURST_POST_GRAPHQL
+            value: "{{ .Values.server.ratelimiting.burst_post_graphql }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.get_auth }}
+          - name: RATELIMIT_GET_AUTH
+            value: "{{ .Values.server.ratelimiting.get_auth }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_get_auth }}
+          - name: RATELIMIT_BURST_GET_AUTH
+            value: "{{ .Values.server.ratelimiting.burst_get_auth }}"
+          {{- end }}
       {{- if .Values.server.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.server.affinity "context" $) | nindent 8 }}
       {{- end }}
