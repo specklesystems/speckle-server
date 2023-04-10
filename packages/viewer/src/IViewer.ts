@@ -2,12 +2,15 @@ import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
 import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
+import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
+import { Utils } from './modules/Utils'
 
 export interface ViewerParams {
   showStats: boolean
   environmentSrc: Asset | string
   verbose: boolean
+  keepGeometryData: boolean
 }
 export enum AssetType {
   TEXTURE_8BPP = 'png', // For now
@@ -34,6 +37,7 @@ export interface Asset {
 export const DefaultViewerParams: ViewerParams = {
   showStats: false,
   verbose: false,
+  keepGeometryData: false,
   environmentSrc: {
     src: sampleHdri,
     type: AssetType.TEXTURE_EXR
@@ -43,9 +47,11 @@ export const DefaultViewerParams: ViewerParams = {
 export enum ViewerEvent {
   ObjectClicked = 'object-clicked',
   ObjectDoubleClicked = 'object-doubleclicked',
+  DownloadComplete = 'download-complete',
   LoadComplete = 'load-complete',
   LoadProgress = 'load-progress',
   UnloadComplete = 'unload-complete',
+  LoadCancelled = 'load-cancelled',
   UnloadAllComplete = 'unload-all-complete',
   Busy = 'busy',
   SectionBoxChanged = 'section-box-changed',
@@ -152,6 +158,12 @@ export interface IViewer {
   )
 
   loadObject(url: string, token?: string, enableCaching?: boolean): Promise<void>
+  loadObjectAsync(
+    url: string,
+    token?: string,
+    enableCaching?: boolean,
+    priority?: number
+  ): Promise<void>
   cancelLoad(url: string, unload?: boolean): Promise<void>
   unloadObject(url: string): Promise<void>
   unloadAll(): Promise<void>
@@ -200,6 +212,9 @@ export interface IViewer {
 
   /** Data ops */
   getDataTree(): DataTree
+  query<T extends Query>(query: T): QueryArgsResultMap[T['operation']]
+  queryAsync(query: Query): Promise<QueryResult>
+  get Utils(): Utils
 
   dispose(): void
 }

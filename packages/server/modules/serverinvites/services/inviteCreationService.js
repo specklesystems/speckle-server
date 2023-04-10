@@ -25,10 +25,7 @@ const { getUsers, getUser } = require('@/modules/core/repositories/users')
 const {
   addStreamInviteSentOutActivity
 } = require('@/modules/activitystream/services/streamActivity')
-const {
-  buildBasicTemplateEmail,
-  buildBasicTemplateServerInfo
-} = require('@/modules/emails/services/templateFormatting')
+const { renderEmail } = require('@/modules/emails/services/emailRendering')
 
 /**
  * @typedef {{
@@ -218,7 +215,7 @@ function buildInviteLink(invite) {
   }
 }
 
-function buildHtmlPreamble(invite, inviter, serverInfo, resourceName) {
+function buildMjmlPreamble(invite, inviter, serverInfo, resourceName) {
   const { message } = invite
   const forServer = isServerInvite(invite)
 
@@ -227,15 +224,19 @@ function buildHtmlPreamble(invite, inviter, serverInfo, resourceName) {
     : `become a collaborator on the <b>${resourceName}</b> stream`
 
   const bodyStart = `
+  <mj-text>
   Hello!
   <br />
   <br />
   ${inviter.name} has just sent you this invitation to ${dynamicText}! 
-  ${message ? inviter.name + ' said: <em>"' + message + '"</em>' : ''}`
+  ${message ? inviter.name + ' said: <em>"' + message + '"</em>' : ''}
+  </mj-text>
+  `
 
   return {
     bodyStart,
-    bodyEnd: 'Feel free to ignore this invite if you do not know the person sending it.'
+    bodyEnd:
+      '<mj-text>Feel free to ignore this invite if you do not know the person sending it.</mj-text>'
   }
 }
 
@@ -264,7 +265,7 @@ ${message ? inviter.name + ' said: "' + sanitizeMessage(message, true) + '"' : '
  * @param {import('@/modules/core/helpers/userHelper').UserRecord} inviter
  * @param {import('@/modules/core/helpers/types').ServerInfo} serverInfo
  * @param {string} resourceName
- * @returns {import('@/modules/emails/services/templateFormatting').BasicEmailTemplateParams}
+ * @returns {import('@/modules/emails/services/emailRendering').EmailTemplateParams}
  */
 function buildEmailTemplateParams(
   invite,
@@ -274,13 +275,12 @@ function buildEmailTemplateParams(
   resourceName
 ) {
   return {
-    html: buildHtmlPreamble(invite, inviter, serverInfo, resourceName),
+    mjml: buildMjmlPreamble(invite, inviter, serverInfo, resourceName),
     text: buildTextPreamble(invite, inviter, serverInfo, resourceName),
     cta: {
       title: 'Accept the invitation',
       url: inviteLink
-    },
-    server: buildBasicTemplateServerInfo(serverInfo)
+    }
   }
 }
 
@@ -305,9 +305,13 @@ async function buildEmailContents(invite, inviter, targetUser, resource) {
     inviteLink,
     resourceName
   )
-  const { html, text } = await buildBasicTemplateEmail(templateParams)
   const subject = buildEmailSubject(invite, inviter, resourceName)
 
+  const { text, html } = await renderEmail(
+    templateParams,
+    serverInfo,
+    targetUser || null
+  )
   return {
     to: email,
     subject,

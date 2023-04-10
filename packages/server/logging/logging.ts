@@ -22,3 +22,6 @@ export const notificationsLogger = extendLoggerComponent(logger, 'notifications'
 export const uploadEndpointLogger = extendLoggerComponent(logger, 'upload-endpoint')
 export const dbLogger = extendLoggerComponent(logger, 'db')
 export const servicesLogger = extendLoggerComponent(logger, 'services')
+export const rateLimiterLogger = extendLoggerComponent(logger, 'rate-limiter')
+export const redisLogger = extendLoggerComponent(logger, 'redis')
+export const mixpanelLogger = extendLoggerComponent(logger, 'mixpanel')

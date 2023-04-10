@@ -12,7 +12,7 @@
     "directory": "packages/objectloader"
   },
   "engines": {
-    "node": "^18.12.1"
+    "node": "^18.15.0"
   },
   "scripts": {
     "lint": "eslint . --ext .js,.ts",

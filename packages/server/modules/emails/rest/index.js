@@ -13,7 +13,7 @@ module.exports = (app) => {
         error instanceof EmailVerificationFinalizationError
           ? error.message
           : 'Email verification unexpectedly failed'
-
+      req.log.info({ err: error }, 'Email verification failed.')
       return res.redirect(`/?emailverifiederror=${msg}`)
     }
   })

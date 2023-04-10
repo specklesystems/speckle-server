@@ -65,8 +65,8 @@ exports.init = (app) => {
 
     const previewImgId = previewInfo.preview[angle]
     if (!previewImgId) {
-      logger.error(
-        `Error: Preview angle '${angle}' not found for object ${streamId}:${objectId}`
+      logger.warn(
+        `Preview angle '${angle}' not found for object ${streamId}:${objectId}`
       )
       return {
         type: 'file',
@@ -76,7 +76,7 @@ exports.init = (app) => {
     }
     const previewImg = await getPreviewImage({ previewId: previewImgId })
     if (!previewImg) {
-      logger.error(`Error: Preview image not found: ${previewImgId}`)
+      logger.warn(`Preview image not found: ${previewImgId}`)
       return {
         type: 'file',
         file: previewErrorImage
@@ -246,8 +246,7 @@ exports.init = (app) => {
   app.get('/preview/:streamId/objects/:objectId/:angle?', cors(), async (req, res) => {
     const { hasPermissions } = await checkStreamPermissions(req)
     if (!hasPermissions) {
-      // return res.status( httpErrorCode ).end()
-      return res.sendFile()
+      return res.status(403).end()
     }
 
     return sendObjectPreview(

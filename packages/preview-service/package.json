@@ -11,7 +11,7 @@
     "directory": "packages/preview-service"
   },
   "engines": {
-    "node": "^18.12.1"
+    "node": "^18.15.0"
   },
   "scripts": {
     "dev": "LOG_PRETTY=true nodemon --trace-deprecation ./bin/www",
@@ -28,7 +28,7 @@
     "file-type": "^16.5.4",
     "http-errors": "~1.6.3",
     "join-images": "^1.1.3",
-    "knex": "^2.0.0",
+    "knex": "^2.4.1",
     "node-fetch": "^2.6.1",
     "pg": "^8.7.3",
     "pg-query-stream": "^4.2.3",
@@ -36,7 +36,7 @@
     "pino-pretty": "^9.1.1",
     "prom-client": "^14.0.1",
     "puppeteer": "^13.3.2",
-    "sharp": "^0.30.5",
+    "sharp": "^0.30.7",
     "yargs": "^17.3.0",
     "zlib": "^1.0.5"
   },
@@ -49,7 +49,7 @@
     "html-webpack-plugin": "^5.3.1",
     "nodemon": "^2.0.20",
     "prettier": "^2.5.1",
-    "webpack": "^5.69.1",
+    "webpack": "^5.76.0",
     "webpack-cli": "^4.6.0",
     "webpack-dev-server": "^4.6.0"
   }

@@ -478,29 +478,42 @@ export default {
       if (!this.$refs.commentButton) return
       this.visible = true
 
-      const projectedLocation = new THREE.Vector3(
-        info.hits[0].point.x,
-        info.hits[0].point.y,
-        info.hits[0].point.z
-      )
+      let collapsedSize = this.$refs.commentButton.clientWidth
+      collapsedSize = 36
       this.location = new THREE.Vector3(
         info.hits[0].point.x,
         info.hits[0].point.y,
         info.hits[0].point.z
       )
+      // const projectedLocation = new THREE.Vector3(
+      //   info.hits[0].point.x,
+      //   info.hits[0].point.y,
+      //   info.hits[0].point.z
+      // )
 
-      const cam = this.viewer.cameraHandler.camera
-      cam.updateProjectionMatrix()
-      projectedLocation.project(cam)
-      let collapsedSize = this.$refs.commentButton.clientWidth
-      collapsedSize = 36
-      const mappedLocation = new THREE.Vector3(
-        (projectedLocation.x * 0.5 + 0.5) * this.$refs.parent.clientWidth -
-          collapsedSize / 2,
-        (projectedLocation.y * -0.5 + 0.5) * this.$refs.parent.clientHeight -
-          collapsedSize / 1,
-        0
+      // const cam = this.viewer.cameraHandler.camera
+      // cam.updateProjectionMatrix()
+      // projectedLocation.project(cam)
+
+      // const mappedLocation = new THREE.Vector3(
+      //   (projectedLocation.x * 0.5 + 0.5) * this.$refs.parent.clientWidth -
+      //     collapsedSize / 2,
+      //   (projectedLocation.y * -0.5 + 0.5) * this.$refs.parent.clientHeight -
+      //     collapsedSize / 1,
+      //   0
+      // )
+      const projectionResult = this.viewer.query({
+        point: this.location,
+        operation: 'Project'
+      })
+      const mappedLocation = this.viewer.Utils.NDCToScreen(
+        projectionResult.x,
+        projectionResult.y,
+        this.$refs.parent.clientWidth,
+        this.$refs.parent.clientHeight
       )
+      mappedLocation.x -= collapsedSize / 2
+      mappedLocation.y -= collapsedSize / 1
       this.$refs.commentButton.style.transform = ''
       this.$refs.commentButton.style.transition = 'all 0.3s ease'
       this.$refs.commentButton.style.top = `${mappedLocation.y - 7}px`
@@ -509,23 +522,46 @@ export default {
     updateCommentBubble() {
       if (!this.location) return
       if (!this.$refs.commentButton) return
-      const cam = this.viewer.cameraHandler.activeCam.camera
-      cam.updateProjectionMatrix()
-      const projectedLocation = this.location.clone()
-      projectedLocation.project(cam)
       let collapsedSize = this.$refs.commentButton.clientWidth
       collapsedSize = 36
-      const mappedLocation = new THREE.Vector3(
-        (projectedLocation.x * 0.5 + 0.5) * this.$refs.parent.clientWidth -
-          collapsedSize / 2,
-        (projectedLocation.y * -0.5 + 0.5) * this.$refs.parent.clientHeight -
-          collapsedSize / 1,
-        0
+
+      // const cam = this.viewer.cameraHandler.activeCam.camera
+      // cam.updateProjectionMatrix()
+      // const projectedLocation = this.location.clone()
+      // projectedLocation.project(cam)
+      // const mappedLocation = new THREE.Vector3(
+      //   (projectedLocation.x * 0.5 + 0.5) * this.$refs.parent.clientWidth -
+      //     collapsedSize / 2,
+      //   (projectedLocation.y * -0.5 + 0.5) * this.$refs.parent.clientHeight -
+      //     collapsedSize / 1,
+      //   0
+      // )
+
+      const projectionResult = this.viewer.query({
+        point: this.location,
+        operation: 'Project'
+      })
+      const mappedLocation = this.viewer.Utils.NDCToScreen(
+        projectionResult.x,
+        projectionResult.y,
+        this.$refs.parent.clientWidth,
+        this.$refs.parent.clientHeight
       )
+      mappedLocation.x -= collapsedSize / 2
+      mappedLocation.y -= collapsedSize / 1
+
+      /** Just as an example */
+      const occlusionRes = this.viewer.query({
+        point: this.location,
+        tolerance: 0.001,
+        operation: 'Occlusion'
+      })
+      const opacity = occlusionRes.objects === null ? '1.0' : '0.25'
       this.$refs.commentButton.style.transform = ''
       this.$refs.commentButton.style.transition = ''
       this.$refs.commentButton.style.top = `${mappedLocation.y - 7}px`
       this.$refs.commentButton.style.left = `${mappedLocation.x}px`
+      this.$refs.commentButton.style.opacity = opacity
     }
   }
 }

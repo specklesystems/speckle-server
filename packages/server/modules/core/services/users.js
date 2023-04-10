@@ -15,6 +15,12 @@ const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const { deleteAllUserInvites } = require('@/modules/serverinvites/repositories')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
 const { dbLogger } = require('@/logging/logging')
+const {
+  UserInputError,
+  PasswordTooShortError
+} = require('@/modules/core/errors/userinput')
+
+const MINIMUM_PASSWORD_LENGTH = 8
 
 const changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -27,7 +33,7 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
   if ((await countAdminUsers()) === 1) {
     const currentAdmin = await Acl().where({ role: 'server:admin' }).first()
     if (currentAdmin.userId === userId) {
-      throw new Error('Cannot remove the last admin role from the server')
+      throw new UserInputError('Cannot remove the last admin role from the server')
     }
   }
 }
@@ -62,14 +68,14 @@ module.exports = {
     user.email = user.email.toLowerCase()
 
     if (user.password) {
-      if (user.password.length < 8)
-        throw new Error('Password to short; needs to be 8 characters or longer.')
+      if (user.password.length < MINIMUM_PASSWORD_LENGTH)
+        throw new PasswordTooShortError(MINIMUM_PASSWORD_LENGTH)
       user.passwordDigest = await bcrypt.hash(user.password, 10)
     }
     delete user.password
 
     const usr = await userByEmailQuery(user.email).select('id').first()
-    if (usr) throw new Error('Email taken. Try logging in?')
+    if (usr) throw new UserInputError('Email taken. Try logging in?')
 
     const [newUser] = (await Users().insert(user, UsersSchema.cols)) || []
     if (!newUser) throw new Error("Couldn't create user")
@@ -83,8 +89,17 @@ module.exports = {
     return newUser.id
   },
 
+  /**
+   * @returns {Promise<{
+   *  id: string,
+   *  email: string,
+   *  isNewUser?: boolean
+   * }>}
+   */
   async findOrCreateUser({ user }) {
-    const existingUser = await userByEmailQuery(user.email).select('id').first()
+    const existingUser = await userByEmailQuery(user.email)
+      .select(['id', 'email'])
+      .first()
     if (existingUser) return existingUser
 
     user.password = crs({ length: 20 })
@@ -136,8 +151,8 @@ module.exports = {
   },
 
   async updateUserPassword({ id, newPassword }) {
-    if (newPassword.length < 8)
-      throw new Error('Password to short; needs to be 8 characters or longer.')
+    if (newPassword.length < MINIMUM_PASSWORD_LENGTH)
+      throw new PasswordTooShortError(MINIMUM_PASSWORD_LENGTH)
     const passwordDigest = await bcrypt.hash(newPassword, 10)
     await Users().where({ id }).update({ passwordDigest })
   },

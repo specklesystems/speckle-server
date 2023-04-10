@@ -7,13 +7,12 @@ const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { getObjectsStream } = require('../services/objects')
 
 const { pipeline, PassThrough } = require('stream')
-const { logger } = require('@/logging/logging')
 
 module.exports = (app) => {
   app.options('/api/getobjects/:streamId', cors())
 
   app.post('/api/getobjects/:streamId', cors(), async (req, res) => {
-    const boundLogger = logger.child({
+    req.log = req.log.child({
       userId: req.context.userId || '-',
       streamId: req.params.streamId
     })
@@ -44,9 +43,9 @@ module.exports = (app) => {
       res,
       (err) => {
         if (err) {
-          boundLogger.error(err, `App error streaming objects`)
+          req.log.error(err, `App error streaming objects`)
         } else {
-          boundLogger.info(
+          req.log.info(
             `Streamed ${childrenList.length} objects (size: ${
               gzipStream.bytesWritten / 1000000
             } MB)`
@@ -71,7 +70,7 @@ module.exports = (app) => {
         })
       }
     } catch (ex) {
-      boundLogger.error(ex, `DB Error streaming objects`)
+      req.log.error(ex, `DB Error streaming objects`)
       speckleObjStream.emit('error', new Error('Database streaming error'))
     }
     speckleObjStream.end()

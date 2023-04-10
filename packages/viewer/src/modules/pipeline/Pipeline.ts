@@ -23,6 +23,8 @@ import {
 } from './StaticAOPass'
 import { SpecklePass } from './SpecklePass'
 import { ColorPass } from './ColorPass'
+import { StencilPass } from './StencilPass'
+import { StencilMaskPass } from './StencilMaskPass'
 
 export enum RenderType {
   NORMAL,
@@ -71,7 +73,9 @@ export class Pipeline {
 
   private depthPass: DepthPass = null
   private normalsPass: NormalsPass = null
+  private stencilPass: StencilPass = null
   private renderPass: ColorPass = null
+  private stencilMaskPass: StencilMaskPass = null
   private dynamicAoPass: DynamicSAOPass = null
   private applySaoPass: ApplySAOPass = null
   private copyOutputPass: CopyOutputPass = null
@@ -224,20 +228,27 @@ export class Pipeline {
     this.depthPass = new DepthPass()
     this.normalsPass = new NormalsPass()
     this.dynamicAoPass = new DynamicSAOPass()
+    this.stencilPass = new StencilPass()
     this.renderPass = new ColorPass()
+    this.stencilMaskPass = new StencilMaskPass()
     this.applySaoPass = new ApplySAOPass()
     this.staticAoPass = new StaticAOPass()
 
     this.copyOutputPass = new CopyOutputPass()
     this.copyOutputPass.renderToScreen = true
 
-    this.depthPass.setLayers([ObjectLayers.STREAM_CONTENT])
-    this.normalsPass.setLayers([ObjectLayers.STREAM_CONTENT])
+    this.depthPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    this.normalsPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    this.stencilPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     this.renderPass.setLayers([
       ObjectLayers.PROPS,
       ObjectLayers.STREAM_CONTENT,
+      ObjectLayers.STREAM_CONTENT_MESH,
+      ObjectLayers.STREAM_CONTENT_LINE,
+      ObjectLayers.STREAM_CONTENT_POINT,
       ObjectLayers.SHADOWCATCHER
     ])
+    this.stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
 
     let restoreVisibility
     this.depthPass.onBeforeRender = () => {
@@ -255,6 +266,24 @@ export class Pipeline {
       this._batcher.applyVisibility(opaque)
     }
     this.normalsPass.onAfterRender = () => {
+      this._batcher.applyVisibility(restoreVisibility)
+    }
+
+    this.stencilPass.onBeforeRender = () => {
+      restoreVisibility = this._batcher.saveVisiblity()
+      const stencil = this._batcher.getStencil()
+      this._batcher.applyVisibility(stencil)
+    }
+    this.stencilPass.onAfterRender = () => {
+      this._batcher.applyVisibility(restoreVisibility)
+    }
+
+    this.stencilMaskPass.onBeforeRender = () => {
+      restoreVisibility = this._batcher.saveVisiblity()
+      const stencil = this._batcher.getStencil()
+      this._batcher.applyVisibility(stencil)
+    }
+    this.stencilMaskPass.onAfterRender = () => {
       this._batcher.applyVisibility(restoreVisibility)
     }
 
@@ -287,7 +316,9 @@ export class Pipeline {
     pipeline.push(this.normalsPass)
     pipeline.push(this.dynamicAoPass)
     pipeline.push(this.staticAoPass)
+    pipeline.push(this.stencilPass)
     pipeline.push(this.renderPass)
+    pipeline.push(this.stencilMaskPass)
     pipeline.push(this.applySaoPass)
 
     this.needsProgressive = true
@@ -308,6 +339,8 @@ export class Pipeline {
 
   public updateClippingPlanes(planes: Plane[]) {
     this.depthPass.setClippingPlanes(planes)
+    this.stencilPass.setClippingPlanes(planes)
+    this.stencilMaskPass.setClippingPlanes(planes)
   }
 
   public reset() {
@@ -316,7 +349,9 @@ export class Pipeline {
   }
 
   public update(renderer: SpeckleRenderer) {
+    this.stencilPass.update(renderer.scene, renderer.camera)
     this.renderPass.update(renderer.scene, renderer.camera)
+    this.stencilMaskPass.update(renderer.scene, renderer.camera)
     this.depthPass.update(renderer.scene, renderer.camera)
     this.dynamicAoPass.update(renderer.scene, renderer.camera)
     this.normalsPass.update(renderer.scene, renderer.camera)

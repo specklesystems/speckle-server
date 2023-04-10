@@ -129,6 +129,13 @@ export class NodeRenderView {
     )
   }
 
+  public get validGeometry() {
+    return (
+      this._renderData.geometry.attributes.POSITION &&
+      this._renderData.geometry.attributes.POSITION.length > 0
+    )
+  }
+
   public constructor(data: NodeRenderData) {
     this._renderData = data
     this._geometryType = this.getGeometryType()
@@ -172,6 +179,12 @@ export class NodeRenderView {
 
       default:
         return GeometryType.LINE
+    }
+  }
+
+  public disposeGeometry() {
+    for (const attr in this._renderData.geometry.attributes) {
+      this._renderData.geometry.attributes[attr] = []
     }
   }
 

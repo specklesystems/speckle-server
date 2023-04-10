@@ -1,6 +1,6 @@
 ARG NODE_ENV=production
 
-FROM node:18.12.1-bullseye-slim as build-stage
+FROM node:18.15.0-bullseye-slim as build-stage
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
@@ -31,7 +31,7 @@ ENV TINI_VERSION=${TINI_VERSION}
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini ./tini
 RUN chmod +x ./tini
 
-FROM node:18.12.1-bullseye-slim as dependency-stage
+FROM node:18.15.0-bullseye-slim as dependency-stage
 # yarn install
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}

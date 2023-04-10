@@ -5,12 +5,11 @@ import { ServerInfo } from '@/modules/core/helpers/types'
 import { getStream, StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
-import { sendEmail } from '@/modules/emails/services/sending'
 import {
-  BasicEmailTemplateParams,
-  buildBasicTemplateEmail,
-  buildBasicTemplateServerInfo
-} from '@/modules/emails/services/templateFormatting'
+  EmailTemplateParams,
+  renderEmail
+} from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
 import { NotificationValidationError } from '@/modules/notifications/errors'
 import {
   NotificationHandler,
@@ -98,16 +97,19 @@ function validate(state: {
   }
 }
 
-function buildEmailTemplateHtml(
+function buildEmailTemplateMjml(
   state: ValidatedNotificationState
-): BasicEmailTemplateParams['html'] {
+): EmailTemplateParams['mjml'] {
   const { author, stream } = state
 
   return {
-    bodyStart: `Hello,<br/>
+    bodyStart: `
+  <mj-text>
+  Hello,<br/>
   <br/>
   <b>${author.name}</b> has just mentioned you in a comment on the <b>${stream.name}</b> stream.
   Please click on the button below to see the comment. 
+  </mj-text>
   `,
     bodyEnd: undefined
   }
@@ -115,7 +117,7 @@ function buildEmailTemplateHtml(
 
 function buildEmailTemplateText(
   state: ValidatedNotificationState
-): BasicEmailTemplateParams['text'] {
+): EmailTemplateParams['text'] {
   const { author, stream } = state
 
   return {
@@ -129,12 +131,11 @@ Please open the link below to see the comment.`,
 
 function buildEmailTemplateParams(
   state: ValidatedNotificationState
-): BasicEmailTemplateParams {
+): EmailTemplateParams {
   const {
     commitOrObjectId: { objectId, commitId },
     stream,
-    threadComment,
-    serverInfo
+    threadComment
   } = state
 
   const commentRoute = getCommentRoute(stream.id, threadComment.id, {
@@ -144,13 +145,12 @@ function buildEmailTemplateParams(
   const url = new URL(commentRoute, getBaseUrl()).toString()
 
   return {
-    html: buildEmailTemplateHtml(state),
+    mjml: buildEmailTemplateMjml(state),
     text: buildEmailTemplateText(state),
     cta: {
       url,
       title: 'View comment thread'
-    },
-    server: buildBasicTemplateServerInfo(serverInfo)
+    }
   }
 }
 
@@ -189,7 +189,7 @@ const handler: NotificationHandler<MentionedInCommentMessage> = async (msg) => {
   })
 
   const templateParams = buildEmailTemplateParams(state)
-  const { text, html } = await buildBasicTemplateEmail(templateParams)
+  const { text, html } = await renderEmail(templateParams, serverInfo, targetUser)
   await sendEmail({
     to: state.targetUser.email,
     text,

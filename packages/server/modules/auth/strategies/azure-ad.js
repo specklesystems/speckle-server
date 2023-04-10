@@ -12,7 +12,7 @@ const {
   resolveAuthRedirectPath
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
-const { logger } = require('@/logging/logging')
+const { UserInputError } = require('@/modules/core/errors/userinput')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const strategy = new OIDCStrategy(
@@ -61,7 +61,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         const existingUser = await getUserByEmail({ email: user.email })
 
         if (existingUser && !existingUser.verified) {
-          throw new Error(
+          throw new UserInputError(
             'Email already in use by a user with unverified email. Verify the email on the existing user to be able to log in with Azure'
           )
         }
@@ -86,6 +86,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           })
           // ID is used later for verifying access token
           req.user.id = myUser.id
+          req.user.isNewUser = myUser.isNewUser
 
           // process invites
           if (myUser.isNewUser) {
@@ -97,7 +98,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
         // if the server is invite only and we have no invite id, throw.
         if (serverInfo.inviteOnly && !req.session.token) {
-          throw new Error(
+          throw new UserInputError(
             'This server is invite only. Please authenticate yourself through a valid invite link.'
           )
         }
@@ -110,6 +111,8 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
         // ID is used later for verifying access token
         req.user.id = myUser.id
+        req.user.isInvite = !!validInvite
+        req.log = req.log.child({ userId: myUser.id })
 
         // use the invite
         await finalizeInvitedServerRegistration(user.email, myUser.id)
@@ -120,7 +123,16 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         // return to the auth flow
         return next()
       } catch (err) {
-        logger.error(err)
+        switch (err.constructor) {
+          case UserInputError:
+            req.log.info(
+              { err },
+              'User input error during Azure AD authentication callback.'
+            )
+            break
+          default:
+            req.log.error(err, 'Error during Azure AD authentication callback.')
+        }
         return next()
       }
     },

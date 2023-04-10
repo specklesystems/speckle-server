@@ -3,7 +3,7 @@ import {
   Camera,
   Intersection,
   Object3D,
-  Points,
+  Ray,
   Scene,
   Vector2,
   Vector4
@@ -12,10 +12,10 @@ import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
 import { SpeckleRaycaster } from './objects/SpeckleRaycaster'
 import Logger from 'js-logger'
+import { ObjectLayers } from './SpeckleRenderer'
 
 export class Intersections {
   private raycaster: SpeckleRaycaster
-  private allowPointPick = false
   private boxBuffer: Box3 = new Box3()
   private vec0Buffer: Vector4 = new Vector4()
   private vec1Buffer: Vector4 = new Vector4()
@@ -79,9 +79,44 @@ export class Intersections {
     camera: Camera,
     point: Vector2,
     nearest = true,
-    bounds: Box3 = null
+    bounds: Box3 = null,
+    castLayers: Array<ObjectLayers> = undefined,
+    firstOnly = false
   ): Array<Intersection> {
     this.raycaster.setFromCamera(point, camera)
+    this.raycaster.firstHitOnly = firstOnly
+    return this.intersectInternal(scene, nearest, bounds, castLayers)
+  }
+
+  public intersectRay(
+    scene: Scene,
+    camera: Camera,
+    ray: Ray,
+    nearest = true,
+    bounds: Box3 = null,
+    castLayers: Array<ObjectLayers> = undefined,
+    firstOnly = false
+  ): Array<Intersection> {
+    this.raycaster.camera = camera
+    this.raycaster.set(ray.origin, ray.direction)
+    this.raycaster.firstHitOnly = firstOnly
+    return this.intersectInternal(scene, nearest, bounds, castLayers)
+  }
+
+  private intersectInternal(
+    scene: Scene,
+    nearest: boolean,
+    bounds: Box3,
+    castLayers: Array<ObjectLayers>
+  ) {
+    const preserveMask = this.raycaster.layers.mask
+
+    if (castLayers !== undefined) {
+      this.raycaster.layers.disableAll()
+      castLayers.forEach((layer) => {
+        this.raycaster.layers.enable(layer)
+      })
+    }
     const target = scene.getObjectByName('ContentGroup')
 
     let results = []
@@ -90,6 +125,7 @@ export class Intersections {
       results = this.raycaster.intersectObjects(target.children)
       Logger.warn('Interesct time -> ', performance.now() - start)
     }
+    this.raycaster.layers.mask = preserveMask
 
     if (results.length === 0) return null
     if (nearest)
@@ -101,11 +137,7 @@ export class Intersections {
         return bounds.containsPoint(result.point)
       })
     }
-    if (!this.allowPointPick) {
-      results = results.filter((val) => {
-        return !(val.object instanceof Points)
-      })
-    }
+
     return results
   }
 }

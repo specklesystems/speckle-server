@@ -61,7 +61,7 @@ export default class ViewerObjectLoader {
       objectId: this.objectId,
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      options: { enableCaching, customLogger: Logger as any }
+      options: { enableCaching, customLogger: (Logger as any).log }
     })
 
     this.converter = new Converter(this.loader)
@@ -76,6 +76,7 @@ export default class ViewerObjectLoader {
     let total = 0
     let viewerLoads = 0
     let firstObjectPromise = null
+    Logger.warn('Downloading object ', this.objectUrl)
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.cancel) {
         this.emiter.emit(ViewerEvent.LoadProgress, {
@@ -83,7 +84,7 @@ export default class ViewerObjectLoader {
           id: this.objectId,
           url: this.objectUrl
         }) // to hide progress bar, easier on the frontend
-        this.emiter.emit('load-cancelled', { id: this.objectId, url: this.objectUrl })
+        this.emiter.emit('load-cancelled', this.objectUrl)
         return
       }
       await this.converter.asyncPause()
@@ -110,9 +111,11 @@ export default class ViewerObjectLoader {
 
     // await this.viewer.sceneManager.postLoadFunction()
     Logger.warn(
-      `Loaded object ${this.objectId} in ${(performance.now() - start) / 1000} seconds`
+      `Finished downloading object ${this.objectId} in ${
+        (performance.now() - start) / 1000
+      } seconds`
     )
-    this.emiter.emit(ViewerEvent.LoadComplete, this.objectUrl)
+    this.emiter.emit(ViewerEvent.DownloadComplete, this.objectUrl)
 
     if (viewerLoads === 0) {
       Logger.warn(`Viewer: no 3d objects found in object ${this.objectId}`)
@@ -124,5 +127,9 @@ export default class ViewerObjectLoader {
 
   cancelLoad() {
     this.cancel = true
+  }
+
+  dispose() {
+    this.loader.dispose()
   }
 }

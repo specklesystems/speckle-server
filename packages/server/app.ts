@@ -11,7 +11,10 @@ import { createTerminus } from '@godaddy/terminus'
 import * as Sentry from '@sentry/node'
 import Logging from '@/logging'
 import { startupLogger, shutdownLogger } from '@/logging/logging'
-import { LoggingExpressMiddleware } from '@/logging/expressLogging'
+import {
+  DetermineRequestIdMiddleware,
+  LoggingExpressMiddleware
+} from '@/logging/expressLogging'
 
 import { errorLoggingMiddleware } from '@/logging/errorLogging'
 import prometheusClient from 'prom-client'
@@ -38,7 +41,11 @@ import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString, toNumber } from 'lodash'
-import { authContextMiddleware, buildContext } from '@/modules/shared/middleware'
+import {
+  authContextMiddleware,
+  buildContext,
+  mixpanelTrackerHelperMiddleware
+} from '@/modules/shared/middleware'
 
 let graphqlServer: ApolloServer
 
@@ -183,9 +190,8 @@ export async function init() {
   // Should perhaps be done manually?
   await knex.migrate.latest()
 
-  if (process.env.NODE_ENV !== 'test') {
-    app.use(LoggingExpressMiddleware)
-  }
+  app.use(DetermineRequestIdMiddleware)
+  app.use(LoggingExpressMiddleware)
 
   if (process.env.COMPRESSION) {
     app.use(compression())
@@ -201,6 +207,7 @@ export async function init() {
   app.use(errorLoggingMiddleware)
   app.use(authContextMiddleware)
   app.use(createRateLimiterMiddleware())
+  app.use(mixpanelTrackerHelperMiddleware)
 
   app.use(Sentry.Handlers.errorHandler())
 

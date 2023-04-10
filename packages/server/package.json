@@ -12,7 +12,7 @@
     "url": "https://github.com/specklesystems/Server.git"
   },
   "engines": {
-    "node": "^18.12.1"
+    "node": "^18.15.0"
   },
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json",
@@ -31,7 +31,7 @@
     "gqlgen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.100.0",
+    "@aws-sdk/client-s3": "^3.276.0",
     "@aws-sdk/lib-storage": "^3.100.0",
     "@godaddy/terminus": "^4.9.0",
     "@graphql-tools/schema": "^9.0.4",
@@ -61,8 +61,9 @@
     "graphql-scalars": "^1.18.0",
     "graphql-subscriptions": "^2.0.0",
     "ioredis": "^5.2.2",
-    "knex": "^2.0.0",
+    "knex": "^2.4.1",
     "lodash": "^4.17.21",
+    "mixpanel": "^0.17.0",
     "mjml": "^4.13.0",
     "module-alias": "^2.2.2",
     "node-cron": "^3.0.2",
@@ -81,14 +82,13 @@
     "pino-pretty": "^9.1.1",
     "prom-client": "^14.0.1",
     "rate-limiter-flexible": "^2.4.1",
-    "redis": "^3.1.1",
     "request": "^2.88.2",
     "response-time": "^2.3.2",
-    "sanitize-html": "^2.7.0",
+    "sanitize-html": "^2.7.1",
     "sharp": "^0.30.5",
     "string-pixel-width": "^1.10.0",
     "subscriptions-transport-ws": "^0.11.0",
-    "undici": "^5.14.0",
+    "undici": "^5.19.1",
     "verror": "^1.10.1",
     "xml-escape": "^1.1.0",
     "zxcvbn": "^4.4.2"

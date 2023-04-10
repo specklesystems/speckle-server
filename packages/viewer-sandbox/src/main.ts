@@ -17,7 +17,7 @@ if (!container) {
 // Viewer setup
 const params = DefaultViewerParams
 params.showStats = true
-// params.verbose = true
+params.verbose = true
 
 const multiSelectList: SelectionEvent[] = []
 const viewer: Viewer = new DebugViewer(container, params)
@@ -29,6 +29,39 @@ window.addEventListener('load', () => {
   viewer.resize()
 })
 
+/** QUERY TEST */
+// container.addEventListener('mousemove', async (ev) => {
+//   const point = viewer.Utils.screenToNDC(ev.clientX, ev.clientY)
+//   const res: QueryResult = viewer.query<IntersectionQuery>({
+//     id: 'test',
+//     point,
+//     operation: 'Pick'
+//   })
+//   if (!res) return
+//   const hitPoint = {
+//     x: res.objects[0].point.x,
+//     y: res.objects[0].point.y,
+//     z: res.objects[0].point.z
+//   }
+//   await viewer.selectObjects([res.objects[0].object.id])
+//   const resProj: QueryResult = viewer.query<PointQuery>({
+//     id: 'test',
+//     point: hitPoint,
+//     operation: 'Project'
+//   })
+//   // console.log(viewer.Utils.NDCToScreen(res_p.x, res_p.y))
+//   const resUnProj: QueryResult = viewer.query<PointQuery>({
+//     id: 'test',
+//     point: { x: resProj.x, y: resProj.y, z: resProj.z },
+//     operation: 'Unproject'
+//   })
+//   console.log(
+//     hitPoint.x - resUnProj.x,
+//     hitPoint.y - resUnProj.y,
+//     hitPoint.z - resUnProj.z
+//   )
+// })
+
 viewer.on(
   ViewerEvent.LoadProgress,
   (a: { progress: number; id: string; url: string }) => {
@@ -37,6 +70,19 @@ viewer.on(
     }
   }
 )
+
+// const updt = () => {
+//   const resOcc = viewer.query<IntersectionQuery>({
+//     id: 'testX',
+//     point: { x: -2.2779617121296436, y: -1.9397099063369891, z: 7.411126386421243 },
+//     tolerance: 0.001,
+//     operation: 'Occlusion'
+//   })
+//   if (resOcc) console.log(resOcc.objects === null)
+//   requestAnimationFrame(updt)
+// }
+
+// requestAnimationFrame(updt)
 
 viewer.on(ViewerEvent.LoadComplete, () => {
   Object.assign(Sandbox.sceneParams.worldSize, Viewer.World.worldSize)
@@ -62,7 +108,7 @@ viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
   }
 
   const ids = multiSelectList.map((val) => val.hits[0].object.id)
-  // console.log(ids[0])
+  console.log(selectionInfo)
   await viewer.selectObjects(ids as string[])
 })
 
@@ -80,7 +126,14 @@ sandbox.makeSceneUI()
 sandbox.makeFilteringUI()
 sandbox.makeBatchesUI()
 // Load demo object
-
+// setTimeout(async () => {
+//   const objUrl = (
+//     await UrlHelper.getResourceUrls(
+//       'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
+//     )
+//   )[0]
+//   viewer.cancelLoad(objUrl)
+// }, 1500)
 await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
   // Revit sample house (good for bim-like stuff with many display meshes)
@@ -126,6 +179,7 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/78bdd8eb76'
   // Point cloud
   // 'https://latest.speckle.dev/streams/2d19273d31/commits/9ceb423feb'
+  // 'https://latest.speckle.dev/streams/7707df6cae/commits/02bdf09092'
   // Luis sphere
   // 'https://speckle.xyz/streams/b85d53c3b4/commits/b47f21b707'
   // Crankshaft
@@ -178,5 +232,37 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/b5cc4e967c/commits/efdf3e2728?c=%5B-59.16128,-41.76491,-4.77376,-4.08052,-12.63558,-4.77376,0,1%5D'
   // 'https://latest.speckle.dev/streams/92b620fb17/commits/b4366a7086?filter=%7B%7D&c=%5B-31.02357,37.60008,96.58899,11.01564,7.40652,66.0411,0,1%5D)'
   // double
-  'https://latest.speckle.dev/streams/92b620fb17/commits/b4366a7086?overlay=c009dbe144&filter=%7B%7D&c=%5B-104.70053,-98.80617,67.44669,6.53096,1.8739,38.584,0,1%5D'
+  // 'https://latest.speckle.dev/streams/92b620fb17/commits/b4366a7086?overlay=c009dbe144&filter=%7B%7D&c=%5B-104.70053,-98.80617,67.44669,6.53096,1.8739,38.584,0,1%5D'
+  // 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb',
+  // 'https://latest.speckle.dev/streams/efd2c6a31d/commits/4b495e1901'
+  // 'https://latest.speckle.dev/streams/efd2c6a31d/commits/4b495e1901'
+  // tekla 2
+  // 'https://speckle.xyz/streams/be4813ccd2/commits/da85000921?c=%5B-1.12295,-2.60901,6.12402,4.77979,0.555,3.63346,0,1%5D'
+  // 'https://latest.speckle.dev/streams/85bc4f61c6/commits/bb7b718a1a'
+
+  // large meshes
+  // 'https://speckle.xyz/streams/48e6e33aa6/commits/2cf892f1b0'
+  // large lines
+  // 'https://latest.speckle.dev/streams/444bfbd6e4/commits/8f297ad0cd'
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6b1b1195c4'
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/cef1e7527b'
+  // large lines
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
+  // Instances Rhino
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/1fff853107'
+  // Instances Revit
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/92858681b7'
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/655771674e'
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/00dbbf4509'
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/46fd255010'
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/038a587267'
+  // 'https://latest.speckle.dev/streams/3f895e614f/commits/8a3e424997'
+  // Big curves
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
+  // 'https://speckle.xyz/streams/7ce9010d71/commits/afda4ffdf8'
+  // Jonathon's lines
+  // 'https://speckle.xyz/streams/7ce9010d71/commits/8cd9e7e4fc'
+  // 'https://speckle.xyz/streams/7ce9010d71/objects/f46f95746975591c18b0b854dab5b570 '
+  // 'https://speckle.xyz/streams/813b728084/commits/e2f5ac9775'
+  'https://speckle.xyz/streams/7ce9010d71/commits/b8bbfd0c05?c=%5B-4.50925,11.1348,5.38124,-0.23829,0.68512,-0.09006,0,1%5D'
 )

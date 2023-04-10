@@ -5,8 +5,11 @@
       $vuetify.breakpoint.xs ? '90%' : '300px'
     }; height: 100vh; position: absolute; padding-top: 72px`"
   >
-    <div style="height: 100vh; overflow-y: auto" class="simple-scrollbar">
-      <div class="d-flex align-center" style="pointer-events: auto">
+    <div
+      style="max-height: 100%; overflow-y: auto; pointer-events: auto"
+      class="simple-scrollbar"
+    >
+      <div class="d-flex align-center" style="max-width: 99%">
         <span class="caption">Selection Info</span>
         <v-spacer />
         <v-btn

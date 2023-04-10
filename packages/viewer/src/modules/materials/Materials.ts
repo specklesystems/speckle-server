@@ -1,9 +1,11 @@
 import {
+  AlwaysStencilFunc,
   Color,
   DoubleSide,
   FrontSide,
   Material,
   MathUtils,
+  ReplaceStencilOp,
   Texture,
   Vector2
 } from 'three'
@@ -108,6 +110,13 @@ export default class Materials {
       ['USE_RTE']
     )
     this.meshHighlightMaterial.clipShadows = true
+    this.meshHighlightMaterial.stencilWrite = true
+    this.meshHighlightMaterial.stencilWriteMask = 0xff
+    this.meshHighlightMaterial.stencilRef = 0x00
+    this.meshHighlightMaterial.stencilFunc = AlwaysStencilFunc
+    this.meshHighlightMaterial.stencilZFail = ReplaceStencilOp
+    this.meshHighlightMaterial.stencilZPass = ReplaceStencilOp
+    this.meshHighlightMaterial.stencilFail = ReplaceStencilOp
 
     this.meshTransparentHighlightMaterial = new SpeckleStandardMaterial(
       {
@@ -122,6 +131,13 @@ export default class Materials {
       ['USE_RTE']
     )
     this.meshTransparentHighlightMaterial.clipShadows = true
+    this.meshTransparentHighlightMaterial.stencilWrite = true
+    this.meshTransparentHighlightMaterial.stencilWriteMask = 0xff
+    this.meshTransparentHighlightMaterial.stencilRef = 0x00
+    this.meshTransparentHighlightMaterial.stencilFunc = AlwaysStencilFunc
+    this.meshTransparentHighlightMaterial.stencilZFail = ReplaceStencilOp
+    this.meshTransparentHighlightMaterial.stencilZPass = ReplaceStencilOp
+    this.meshTransparentHighlightMaterial.stencilFail = ReplaceStencilOp
 
     this.meshGhostMaterial = new SpeckleGhostMaterial(
       {
@@ -372,12 +388,17 @@ export default class Materials {
     ;(
       this.pointCloudHighlightMaterial as SpecklePointMaterial
     ).color.convertSRGBToLinear()
+    ;(this.pointCloudHighlightMaterial as SpecklePointMaterial).toneMapped = false
     ;(this.pointHighlightMaterial as SpecklePointMaterial).color.convertSRGBToLinear()
+    ;(this.pointHighlightMaterial as SpecklePointMaterial).toneMapped = false
     ;(this.pointOverlayMaterial as SpecklePointMaterial).color.convertSRGBToLinear()
+    ;(this.pointOverlayMaterial as SpecklePointMaterial).toneMapped = false
     // Jesus prettier... o_0
     ;(
       this.pointCloudOverlayMaterial as SpecklePointMaterial
     ).color.convertSRGBToLinear()
+    ;(this.pointCloudOverlayMaterial as SpecklePointMaterial).toneMapped = false
+    ;(this.pointGhostMaterial as SpecklePointMaterial).toneMapped = false
   }
 
   private async createDefaultNullMaterials() {
@@ -538,6 +559,7 @@ export default class Materials {
     )
     mat.transparent = mat.opacity < 1 ? true : false
     mat.depthWrite = mat.transparent ? false : true
+    mat.toneMapped = false
     mat.color.convertSRGBToLinear()
     return mat
   }
@@ -562,6 +584,9 @@ export default class Materials {
           this.materialMap[hash] = this.makeLineMaterial(material as DisplayStyle)
           break
         case GeometryType.POINT:
+          this.materialMap[hash] = this.makePointMaterial(material as RenderMaterial)
+          break
+        case GeometryType.POINT_CLOUD:
           this.materialMap[hash] = this.makePointMaterial(material as RenderMaterial)
           break
       }

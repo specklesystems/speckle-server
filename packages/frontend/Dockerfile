@@ -2,7 +2,7 @@
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
 # build stage
-FROM node:18.12.1-bullseye-slim as build-stage
+FROM node:18.15.0-bullseye-slim as build-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 
@@ -30,21 +30,29 @@ COPY packages/shared ./packages/shared/
 # This way the foreach only builds the frontend and its deps
 RUN yarn workspaces foreach run build
 
+RUN DEBIAN_FRONTEND=noninteractive \
+    apt-get -q update && \
+    apt-get install --no-install-recommends -y \
+    gettext=0.21-4 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 # production stage
-FROM openresty/openresty:1.21.4.1-4-jammy-amd64 as production-stage
+FROM bitnami/openresty:1.21.4-1-debian-11-r80 as production-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 
 ENV NODE_ENV=${NODE_ENV}
 ENV FILE_SIZE_LIMIT_MB=100
 
-COPY --from=build-stage /speckle-server/packages/frontend/dist /usr/share/nginx/html
-RUN rm /etc/nginx/conf.d/default.conf
+COPY --from=build-stage /usr/bin/envsubst /usr/bin/envsubst
 
-COPY packages/frontend/nginx/ /etc/nginx/
+COPY --from=build-stage /speckle-server/packages/frontend/dist /app
+
+COPY packages/frontend/nginx/ /opt/bitnami/openresty/nginx/
 
 # prepare the environment
-ENTRYPOINT ["/etc/nginx/docker-entrypoint.sh"]
+ENTRYPOINT ["/opt/bitnami/openresty/nginx/docker-entrypoint.sh"]
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 8080
+CMD ["/opt/bitnami/scripts/openresty/entrypoint.sh", "/opt/bitnami/scripts/openresty/run.sh"]

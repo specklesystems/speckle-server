@@ -1,14 +1,15 @@
 'use strict'
 
-const redis = require('redis')
 const ExpressSession = require('express-session')
 const RedisStore = require('connect-redis')(ExpressSession)
 const passport = require('passport')
 
 const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
-const { isSSLServer } = require('@/modules/shared/helpers/envHelper')
-const { moduleLogger } = require('@/logging/logging')
+const { isSSLServer, getRedisUrl } = require('@/modules/shared/helpers/envHelper')
+const { authLogger } = require('@/logging/logging')
+const { createRedisClient } = require('@/modules/shared/redis/redis')
+const { mixpanel, resolveMixpanelUserId } = require('@/modules/shared/utils/mixpanel')
 
 /**
  * TODO: Get rid of session entirely, we don't use it for the app and it's not really necessary for the auth flow, so it only complicates things
@@ -21,8 +22,9 @@ module.exports = async (app) => {
   passport.deserializeUser((user, done) => done(null, user))
   app.use(passport.initialize())
 
+  const redisClient = createRedisClient(getRedisUrl())
   const session = ExpressSession({
-    store: new RedisStore({ client: redis.createClient(process.env.REDIS_URL) }),
+    store: new RedisStore({ client: redisClient }),
     secret: process.env.SESSION_SECRET,
     saveUninitialized: false,
     resave: false,
@@ -49,8 +51,9 @@ module.exports = async (app) => {
     next()
   }
 
-  /*
+  /**
   Finalizes authentication for the main frontend application.
+  @param {import('express').Request} req
    */
   const finalizeAuth = async (req, res) => {
     try {
@@ -65,12 +68,26 @@ module.exports = async (app) => {
       // Resolve redirect URL
       const urlObj = new URL(req.authRedirectPath || '/', process.env.CANONICAL_URL)
       urlObj.searchParams.set('access_code', ac)
+
+      if (req.user.isNewUser) {
+        urlObj.searchParams.set('register', 'true')
+
+        // Send event to MP
+        const userId = req.user.email ? resolveMixpanelUserId(req.user.email) : null
+        const isInvite = !!req.user.isInvite
+        if (userId) {
+          await mixpanel({ mixpanelUserId: userId }).track('Sign Up', {
+            isInvite
+          })
+        }
+      }
+
       const redirectUrl = urlObj.toString()
 
       return res.redirect(redirectUrl)
     } catch (err) {
       sentry({ err })
-      moduleLogger.error(err)
+      authLogger.error(err, 'Could not finalize auth')
       if (req.session) req.session.destroy()
       return res.status(401).send({ err: err.message })
     }

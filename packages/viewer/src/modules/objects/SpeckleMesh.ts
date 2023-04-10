@@ -6,12 +6,14 @@ import {
   Matrix4,
   Mesh,
   Ray,
+  Raycaster,
   Sphere,
   Triangle,
   Vector2,
   Vector3
 } from 'three'
-import { estimateMemoryInBytes, MeshBVH } from 'three-mesh-bvh'
+import { estimateMemoryInBytes } from 'three-mesh-bvh'
+import { SpeckleMeshBVH } from './SpeckleMeshBVH'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -40,11 +42,15 @@ const ray = /* @__PURE__ */ new Ray()
 const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
 
 export default class SpeckleMesh extends Mesh {
-  private boundsTree: MeshBVH = null
+  private boundsTree: SpeckleMeshBVH = null
   public boundsTreeSizeInBytes = 0
   private batchMaterial: Material = null
 
-  constructor(geometry: BufferGeometry, material: Material, bvh: MeshBVH) {
+  public get BVH() {
+    return this.boundsTree
+  }
+
+  constructor(geometry: BufferGeometry, material: Material, bvh: SpeckleMeshBVH) {
     super(geometry, material)
     this.batchMaterial = material
     this.boundsTree = bvh
@@ -72,7 +78,7 @@ export default class SpeckleMesh extends Mesh {
     }
   }
 
-  raycast(raycaster, intersects) {
+  raycast(raycaster: Raycaster, intersects) {
     if (this.boundsTree) {
       if (this.batchMaterial === undefined) return
 

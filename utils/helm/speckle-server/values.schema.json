@@ -118,9 +118,7 @@
                       "type": "array",
                       "description": "(Cilium Network Policy only) The endpoint selector yaml object used to uniquely select the in-cluster endpoint in which the prometheus pods are deployed",
                       "default": [],
-                      "items": {
-                        "type": "object"
-                      }
+                      "items": {}
                     }
                   }
                 }
@@ -438,6 +436,16 @@
           "description": "The number of instances of the Server pod to be deployed within the cluster.",
           "default": 1
         },
+        "logLevel": {
+          "type": "string",
+          "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
+          "default": "info"
+        },
+        "adminOverrideEnabled": {
+          "type": "boolean",
+          "description": "Enables the server side admin authz override",
+          "default": false
+        },
         "sessionSecret": {
           "type": "object",
           "properties": {
@@ -573,9 +581,7 @@
                   "type": "array",
                   "description": "List of `matchName` or `matchPattern` maps for domains that should be allow-listed for egress in Network Policy. https://docs.microsoft.com/en-us/azure/azure-portal/azure-portal-safelist-urls?tabs=public-cloud are enabled by default.",
                   "default": [],
-                  "items": {
-                    "type": "object"
-                  }
+                  "items": {}
                 },
                 "port": {
                   "type": "number",
@@ -589,7 +595,7 @@
               "properties": {
                 "enabled": {
                   "type": "boolean",
-                  "description": "If enabled, users can authenticate via OpenID Connect.",
+                  "description": "If enabled, users can authenticate via OpenID Connect identity provider",
                   "default": false
                 },
                 "name": {
@@ -626,9 +632,7 @@
                   "type": "array",
                   "description": "List of `matchName` or `matchPattern` maps for domains that should be allow-listed for egress in Network Policy.",
                   "default": [],
-                  "items": {
-                    "type": "object"
-                  }
+                  "items": {}
                 }
               }
             }
@@ -759,12 +763,137 @@
             }
           }
         },
+        "ratelimiting": {
+          "type": "object",
+          "properties": {
+            "all_requests": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server in a moving one second window.",
+              "default": 500
+            },
+            "burst_all_requests": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server in a moving one minute window.",
+              "default": 2000
+            },
+            "user_create": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to create a new user in a moving one second window.",
+              "default": 6
+            },
+            "burst_user_create": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to create a new user in a moving one minute window.",
+              "default": 1000
+            },
+            "stream_create": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to create a new stream in a moving one second window.",
+              "default": 1
+            },
+            "burst_stream_create": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to create a new stream in a moving one minute window.",
+              "default": 100
+            },
+            "commit_create": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to create a new commit in a moving one second window.",
+              "default": 1
+            },
+            "burst_commit_create": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to create a new commit in a moving one minute window.",
+              "default": 100
+            },
+            "post_getobjects_streamid": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to get a new object in a moving one second window.",
+              "default": 3
+            },
+            "burst_post_getobjects_streamid": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to get a new object in a moving one minute window.",
+              "default": 200
+            },
+            "post_diff_streamid": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to undertake a diff in a moving one second window.",
+              "default": 10
+            },
+            "burst_post_diff_streamid": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to undertake a diff in a moving one minute window.",
+              "default": 1000
+            },
+            "post_objects_streamid": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to post a new object in a moving one second window.",
+              "default": 6
+            },
+            "burst_post_objects_streamid": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to post a new object in a moving one minute window.",
+              "default": 400
+            },
+            "get_objects_streamid_objectid": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to get an object in a moving one second window.",
+              "default": 3
+            },
+            "burst_get_objects_streamid_objectid": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to get an object in a moving one minute window.",
+              "default": 200
+            },
+            "get_objects_streamid_objectid_single": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to get a single object in a moving one second window.",
+              "default": 3
+            },
+            "burst_get_objects_streamid_objectid_single": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to get a single object in a moving one minute window.",
+              "default": 200
+            },
+            "post_graphql": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the GraphQL API in a moving one second window.",
+              "default": 10
+            },
+            "burst_post_grapqhl": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the GraphQL API in a moving one minute window.",
+              "default": 20
+            },
+            "get_auth": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to authenticate in a moving one second window.",
+              "default": 2
+            },
+            "burst_get_auth": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to authenticate in a moving one minute window.",
+              "default": 20
+            }
+          }
+        },
         "serviceAccount": {
           "type": "object",
           "properties": {
             "create": {
               "type": "boolean",
               "description": "If enabled, a Kubernetes Service Account will be created for this pod.",
+              "default": true
+            }
+          }
+        },
+        "fileUploads": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, file uploads on the server will be flagged as enabled",
               "default": true
             }
           }
@@ -801,6 +930,11 @@
                   }
                 }
               }
+            },
+            "mp": {
+              "type": "object",
+              "description": "(Optional) If server.monitoring.mp.enabled is set to false, metrics will not be collected by the Speckle server.",
+              "default": {}
             }
           }
         },
@@ -843,17 +977,13 @@
           "type": "array",
           "description": "Tolerations for Speckle server pods scheduling",
           "default": [],
-          "items": {
-            "type": "object"
-          }
+          "items": {}
         },
         "topologySpreadConstraints": {
           "type": "array",
           "description": "Spread Constraints for Speckle server pod scheduling",
           "default": [],
-          "items": {
-            "type": "object"
-          }
+          "items": {}
         }
       }
     },
@@ -864,6 +994,11 @@
           "type": "number",
           "description": "The number of instances of the Frontend pod to be deployed within the cluster.",
           "default": 1
+        },
+        "logLevel": {
+          "type": "string",
+          "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
+          "default": "info"
         },
         "requests": {
           "type": "object",
@@ -919,17 +1054,13 @@
           "type": "array",
           "description": "Tolerations for Speckle frontend pods scheduling",
           "default": [],
-          "items": {
-            "type": "object"
-          }
+          "items": {}
         },
         "topologySpreadConstraints": {
           "type": "array",
           "description": "Spread Constraints for Speckle frontend pod scheduling",
           "default": [],
-          "items": {
-            "type": "object"
-          }
+          "items": {}
         },
         "serviceAccount": {
           "type": "object",
@@ -950,6 +1081,11 @@
           "type": "number",
           "description": "The number of instances of the Preview Service pod to be deployed within the cluster.",
           "default": 1
+        },
+        "logLevel": {
+          "type": "string",
+          "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
+          "default": "info"
         },
         "requests": {
           "type": "object",
@@ -1005,17 +1141,13 @@
           "type": "array",
           "description": "Tolerations for Speckle Preview Service pods scheduling",
           "default": [],
-          "items": {
-            "type": "object"
-          }
+          "items": {}
         },
         "topologySpreadConstraints": {
           "type": "array",
           "description": "Spread Constraints for Speckle Preview Service pod scheduling",
           "default": [],
-          "items": {
-            "type": "object"
-          }
+          "items": {}
         },
         "serviceAccount": {
           "type": "object",
@@ -1036,6 +1168,11 @@
           "type": "number",
           "description": "The number of instances of the Webhook Service pod to be deployed within the cluster.",
           "default": 1
+        },
+        "logLevel": {
+          "type": "string",
+          "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
+          "default": "info"
         },
         "requests": {
           "type": "object",
@@ -1091,17 +1228,13 @@
           "type": "array",
           "description": "Tolerations for Speckle Webhook Service pods scheduling",
           "default": [],
-          "items": {
-            "type": "object"
-          }
+          "items": {}
         },
         "topologySpreadConstraints": {
           "type": "array",
           "description": "Spread Constraints for Speckle Webhook Service pod scheduling",
           "default": [],
-          "items": {
-            "type": "object"
-          }
+          "items": {}
         },
         "serviceAccount": {
           "type": "object",
@@ -1122,6 +1255,11 @@
           "type": "number",
           "description": "The number of instances of the FileImport Service pod to be deployed within the cluster.",
           "default": 1
+        },
+        "logLevel": {
+          "type": "string",
+          "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
+          "default": "info"
         },
         "requests": {
           "type": "object",
@@ -1177,17 +1315,13 @@
           "type": "array",
           "description": "Tolerations for Speckle FileImport Service pods scheduling",
           "default": [],
-          "items": {
-            "type": "object"
-          }
+          "items": {}
         },
         "topologySpreadConstraints": {
           "type": "array",
           "description": "Spread Constraints for Speckle FileImport Service pod scheduling",
           "default": [],
-          "items": {
-            "type": "object"
-          }
+          "items": {}
         },
         "serviceAccount": {
           "type": "object",
@@ -1213,6 +1347,11 @@
           "type": "number",
           "description": "The number of instances of the Monitoring pod to be deployed within the cluster.",
           "default": 1
+        },
+        "logLevel": {
+          "type": "string",
+          "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
+          "default": "info"
         },
         "requests": {
           "type": "object",
@@ -1268,17 +1407,13 @@
           "type": "array",
           "description": "Tolerations for Speckle Monitoring pods scheduling",
           "default": [],
-          "items": {
-            "type": "object"
-          }
+          "items": {}
         },
         "topologySpreadConstraints": {
           "type": "array",
           "description": "Spread Constraints for Speckle Monitoring pod scheduling",
           "default": [],
-          "items": {
-            "type": "object"
-          }
+          "items": {}
         },
         "serviceAccount": {
           "type": "object",
@@ -1300,6 +1435,11 @@
     "test": {
       "type": "object",
       "properties": {
+        "logLevel": {
+          "type": "string",
+          "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
+          "default": "info"
+        },
         "requests": {
           "type": "object",
           "properties": {
