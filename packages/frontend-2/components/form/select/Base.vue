@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="flex w-full max-w-full">
     <Listbox
       v-model="wrappedValue"
       :name="name"
@@ -7,6 +7,7 @@
       :by="by"
       :disabled="isDisabled"
       as="div"
+      class="flex-1"
     >
       <ListboxLabel
         class="block label text-foreground"
@@ -16,32 +17,34 @@
       </ListboxLabel>
       <div :class="['relative', showLabel ? 'mt-1' : '']">
         <ListboxButton v-slot="{ open }" :class="buttonClasses">
-          <span class="block truncate grow text-left">
-            <template
-              v-if="!wrappedValue || (isArray(wrappedValue) && !wrappedValue.length)"
-            >
-              <slot name="nothing-selected">
-                {{ label }}
-              </slot>
-            </template>
-            <template v-else>
-              <slot name="something-selected" :value="wrappedValue">
-                {{ simpleDisplayText(wrappedValue) }}
-              </slot>
-            </template>
-          </span>
-          <span class="pointer-events-none shrink-0 ml-1">
-            <ChevronUpIcon
-              v-if="open"
-              class="h-4 w-4 text-foreground"
-              aria-hidden="true"
-            />
-            <ChevronDownIcon
-              v-else
-              class="h-4 w-4 text-foreground"
-              aria-hidden="true"
-            />
-          </span>
+          <div class="flex items-center justify-between w-full">
+            <div class="block truncate grow text-left">
+              <template
+                v-if="!wrappedValue || (isArray(wrappedValue) && !wrappedValue.length)"
+              >
+                <slot name="nothing-selected">
+                  {{ label }}
+                </slot>
+              </template>
+              <template v-else>
+                <slot name="something-selected" :value="wrappedValue">
+                  {{ simpleDisplayText(wrappedValue) }}
+                </slot>
+              </template>
+            </div>
+            <div class="pointer-events-none shrink-0 ml-1 flex items-center">
+              <ChevronUpIcon
+                v-if="open"
+                class="h-4 w-4 text-foreground"
+                aria-hidden="true"
+              />
+              <ChevronDownIcon
+                v-else
+                class="h-4 w-4 text-foreground"
+                aria-hidden="true"
+              />
+            </div>
+          </div>
         </ListboxButton>
         <Transition
           leave-active-class="transition ease-in duration-100"
@@ -49,7 +52,7 @@
           leave-to-class="opacity-0"
         >
           <ListboxOptions
-            class="absolute z-10 mt-1 w-full rounded-lg bg-foundation-2 py-1 label label--light outline outline-2 outline-primary-muted focus:outline-none shadow"
+            class="absolute z-10 mt-1 w-full rounded-md bg-foundation-2 py-1 label label--light outline outline-2 outline-primary-muted focus:outline-none shadow"
             @focus="searchInput?.focus()"
           >
             <label v-if="hasSearch" class="flex flex-col mx-1 mb-1">
@@ -84,6 +87,9 @@
                 </slot>
               </div>
               <template v-if="!isAsyncSearchMode || !isAsyncLoading">
+                <!-- <ListboxOption>
+                  <div class="w-full">Clear</div>
+                </ListboxOption> -->
                 <ListboxOption
                   v-for="item in finalItems"
                   :key="itemKey(item)"
@@ -125,6 +131,23 @@
         </Transition>
       </div>
     </Listbox>
+    <!-- <div class="flex-shrink"> -->
+    <!-- Clear Button -->
+    <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
+    <div
+      v-if="clearable"
+      :class="`flex flex-shrink-0 items-center justify-end bg-primary-muted hover:bg-primary hover:text-foreground-on-primary rounded-r-md overflow-hidden transition-all ${
+        showClear ? 'w-6' : 'w-0 px-0'
+      }`"
+    >
+      <button
+        v-tippy="'Clear'"
+        class="flex items-center justify-center w-full h-full text-center"
+        @click="wrappedValue = []"
+      >
+        <XMarkIcon class="w-3 h-3" />
+      </button>
+    </div>
     <p
       v-if="helpTipId"
       :id="helpTipId"
@@ -153,7 +176,8 @@ import {
   ChevronDownIcon,
   CheckIcon,
   ChevronUpIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  XMarkIcon
 } from '@heroicons/vue/24/solid'
 import { debounce, isArray } from 'lodash-es'
 import { PropType } from 'vue'
@@ -257,6 +281,10 @@ const props = defineProps({
     type: Boolean as PropType<Optional<boolean>>,
     default: true
   },
+  clearable: {
+    type: Boolean,
+    default: false
+  },
   /**
    * Validation stuff
    */
@@ -324,7 +352,7 @@ const helpTipClasses = computed((): string =>
 
 const buttonClasses = computed(() => {
   const classParts = [
-    'normal w-full rounded-lg cursor-pointer transition',
+    'normal w-full rounded-md cursor-pointer transition',
     'flex items-center'
   ]
 
@@ -380,6 +408,10 @@ const wrappedValue = computed({
       value.value = isUnset ? undefined : newVal
     }
   }
+})
+
+const showClear = computed(() => {
+  return wrappedValue.value.length !== 0
 })
 
 const finalItems = computed(() => {
