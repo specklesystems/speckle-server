@@ -147,7 +147,8 @@ module.exports = {
     delete user.passwordDigest
     delete user.password
     delete user.email
-    await Users().where({ id }).update(user)
+    const [newUser] = await Users().where({ id }).update(user, '*')
+    return newUser
   },
 
   async updateUserPassword({ id, newPassword }) {

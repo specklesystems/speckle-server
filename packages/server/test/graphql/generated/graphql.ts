@@ -23,6 +23,13 @@ export type ActiveUserMutations = {
   __typename?: 'ActiveUserMutations';
   /** Mark onboarding as complete */
   finishOnboarding: Scalars['Boolean'];
+  /** Edit a user's profile */
+  update: User;
+};
+
+
+export type ActiveUserMutationsUpdateArgs = {
+  user: UserUpdateInput;
 };
 
 export type Activity = {
@@ -818,7 +825,10 @@ export type Mutation = {
   userDelete: Scalars['Boolean'];
   userNotificationPreferencesUpdate?: Maybe<Scalars['Boolean']>;
   userRoleChange: Scalars['Boolean'];
-  /** Edits a user's profile. */
+  /**
+   * Edits a user's profile.
+   * @deprecated Use activeUserMutations version
+   */
   userUpdate: Scalars['Boolean'];
   /**
    * Used for broadcasting real time chat head bubbles and status. Does not persist any info.

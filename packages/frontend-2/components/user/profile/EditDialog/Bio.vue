@@ -5,6 +5,8 @@
       <span>Bio</span>
     </div>
     <div class="flex flex-col space-y-4">
+      <!-- <LazyUserAvatarEditor class="w-6/12 self-center" /> -->
+      <UserAvatarEditable class="w-6/12 self-center" :user="user" />
       <FormTextInput
         v-model="name"
         label="Name"
@@ -47,6 +49,7 @@ graphql(`
     name
     company
     bio
+    ...UserAvatarEditable_User
   }
 `)
 

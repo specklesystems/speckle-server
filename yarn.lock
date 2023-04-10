@@ -9838,6 +9838,7 @@ __metadata:
     typescript: ^4.8.3
     v3-infinite-loading: ^1.2.2
     vee-validate: ^4.7.0
+    vue-advanced-cropper: ^2.8.8
     vue-tippy: ^6.0.0
     vue-tsc: ^1.0.8
     wait-on: ^6.0.1
@@ -17214,6 +17215,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"classnames@npm:^2.2.6":
+  version: 2.3.2
+  resolution: "classnames@npm:2.3.2"
+  checksum: 2c62199789618d95545c872787137262e741f9db13328e216b093eea91c85ef2bfb152c1f9e63027204e2559a006a92eb74147d46c800a9f96297ae1d9f96f4e
+  languageName: node
+  linkType: hard
+
 "clean-css@npm:^4.2.1":
   version: 4.2.4
   resolution: "clean-css@npm:4.2.4"
@@ -19552,6 +19560,13 @@ __metadata:
   version: 0.2.0
   resolution: "eastasianwidth@npm:0.2.0"
   checksum: 7d00d7cd8e49b9afa762a813faac332dee781932d6f2c848dc348939c4253f1d4564341b7af1d041853bc3f32c2ef141b58e0a4d9862c17a7f08f68df1e0f1ed
+  languageName: node
+  linkType: hard
+
+"easy-bem@npm:^1.0.2":
+  version: 1.1.1
+  resolution: "easy-bem@npm:1.1.1"
+  checksum: c4d44a8cd792fddf9e1869bba543b7ec958080d56ea4764bb6e53b8238a0c2d075f0ee46b95f9dca40032b3e56e5bfc794a5da286eaf424d9db730c5ae91d656
   languageName: node
   linkType: hard
 
@@ -38119,6 +38134,19 @@ __metadata:
   version: 3.0.6
   resolution: "vscode-uri@npm:3.0.6"
   checksum: 8b6a36553d089309c09f7aa2ca8dae321a1cb7ff5dcab35f0914d5155d3110722bdb6de67dcb727df15fecd83221d11bb4ab1274a9116b9ccc05b86cefe60dfc
+  languageName: node
+  linkType: hard
+
+"vue-advanced-cropper@npm:^2.8.8":
+  version: 2.8.8
+  resolution: "vue-advanced-cropper@npm:2.8.8"
+  dependencies:
+    classnames: ^2.2.6
+    debounce: ^1.2.0
+    easy-bem: ^1.0.2
+  peerDependencies:
+    vue: ^3.0.0
+  checksum: 9ae67a1d89cd86fc4e7bce63b59512e423632ed7b45a3dc784278342d11ea39385956887a76c482d0909d8d73db44470a4e1bc32fe34d38813ceb41e0ac725a6
   languageName: node
   linkType: hard
 

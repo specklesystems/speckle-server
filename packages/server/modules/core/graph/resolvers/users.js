@@ -202,6 +202,22 @@ module.exports = {
   ActiveUserMutations: {
     async finishOnboarding(_parent, _args, ctx) {
       return await markOnboardingComplete(ctx.userId || '')
+    },
+    async update(_parent, args, context) {
+      const oldValue = await getUserById({ userId: context.userId })
+      const newUser = await updateUser(context.userId, args.user)
+
+      await saveActivity({
+        streamId: null,
+        resourceType: 'user',
+        resourceId: context.userId,
+        actionType: ActionTypes.User.Update,
+        userId: context.userId,
+        info: { old: oldValue, new: args.user },
+        message: 'User updated'
+      })
+
+      return newUser
     }
   }
 }

@@ -135,6 +135,11 @@ type ActiveUserMutations {
   Mark onboarding as complete
   """
   finishOnboarding: Boolean!
+
+  """
+  Edit a user's profile
+  """
+  update(user: UserUpdateInput!): User!
 }
 
 extend type Mutation {
@@ -142,6 +147,7 @@ extend type Mutation {
   Edits a user's profile.
   """
   userUpdate(user: UserUpdateInput!): Boolean!
+    @deprecated(reason: "Use activeUserMutations version")
 
   """
   Delete a user's account.
