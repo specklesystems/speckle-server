@@ -31,7 +31,9 @@
     <FormButton submit full-width class="my-8" :disabled="loading">Log in</FormButton>
     <div class="text-center">
       <span class="mr-2">Don't have an account?</span>
-      <CommonTextLink :to="finalRegisterRoute">Register</CommonTextLink>
+      <CommonTextLink :to="finalRegisterRoute" :icon-right="ArrowRightIcon">
+        Register
+      </CommonTextLink>
     </div>
   </form>
 </template>
@@ -42,6 +44,7 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { ensureError } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { forgottenPasswordRoute, registerRoute } from '~~/lib/common/helpers/route'
+import { ArrowRightIcon } from '@heroicons/vue/20/solid'
 
 type FormValues = { email: string; password: string }
 

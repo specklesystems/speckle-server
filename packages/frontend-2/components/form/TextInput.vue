@@ -2,7 +2,7 @@
   <div :class="[fullWidth ? 'w-full' : '']">
     <label
       :for="name"
-      class="block label text-foreground"
+      class="block label text-foreground-2 mb-2"
       :class="{ 'sr-only': !showLabel }"
     >
       <span>{{ title }}</span>

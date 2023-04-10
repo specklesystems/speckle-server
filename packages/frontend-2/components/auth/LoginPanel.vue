@@ -1,28 +1,34 @@
 <template>
-  <div class="flex flex-col items-center">
-    <LogoTextWhite class="my-6 sm:mb-14" />
-    <LayoutPanel class="max-w-screen-sm mx-auto w-full">
-      <div class="space-y-8">
-        <h1 class="h4 sm:h3 font-bold leading-9 text-center">Log into my account</h1>
-        <AuthThirdPartyLoginBlock
-          v-if="hasThirdPartyStrategies && serverInfo"
-          :server-info="serverInfo"
-          :challenge="challenge"
-          :app-id="appId"
-        />
-        <div>
-          <div class="text-center label text-foreground-2 mb-3">
-            {{
-              hasThirdPartyStrategies
-                ? 'Or login with your email'
-                : 'Login with your email'
-            }}
-          </div>
-          <AuthLoginWithEmailBlock v-if="hasLocalStrategy" :challenge="challenge" />
-        </div>
+  <LayoutPanel class="max-w-lg mx-auto w-full shadow-xl transition">
+    <div class="space-y-4">
+      <div class="flex flex-col items-center space-x-2 space-y-2">
+        <h1
+          class="text-center h3 font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
+        >
+          Speckle Login
+        </h1>
+        <h2 class="text-center text-foreground-2">
+          Interoperability, Collaboration and Automation for 3D
+        </h2>
       </div>
-    </LayoutPanel>
-  </div>
+      <AuthThirdPartyLoginBlock
+        v-if="hasThirdPartyStrategies && serverInfo"
+        :server-info="serverInfo"
+        :challenge="challenge"
+        :app-id="appId"
+      />
+      <div>
+        <div class="text-center label text-foreground-2 mb-3 text-xs font-normal">
+          {{
+            hasThirdPartyStrategies
+              ? 'Or login with your email'
+              : 'Login with your email'
+          }}
+        </div>
+        <AuthLoginWithEmailBlock v-if="hasLocalStrategy" :challenge="challenge" />
+      </div>
+    </div>
+  </LayoutPanel>
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
