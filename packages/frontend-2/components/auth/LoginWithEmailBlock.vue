@@ -1,6 +1,6 @@
 <template>
   <form @submit="onSubmit">
-    <div class="flex flex-col space-y-4">
+    <div class="flex flex-col space-y-2">
       <FormTextInput
         type="email"
         name="email"

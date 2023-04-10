@@ -1,5 +1,5 @@
 <template>
-  <LayoutPanel class="max-w-lg mx-auto w-full hover:shadow-xl transition">
+  <LayoutPanel fancy-glow class="max-w-lg mx-auto w-full">
     <div class="space-y-4">
       <div class="flex flex-col items-center space-x-2 space-y-2">
         <h1

@@ -1,7 +1,7 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
   <form @submit="onSubmit">
-    <div class="flex flex-col space-y-4">
+    <div class="flex flex-col space-y-2">
       <FormTextInput
         type="text"
         name="name"
@@ -34,9 +34,14 @@
         :rules="passwordRules"
         show-label
         :disabled="loading"
+        @focusin="pwdFocused = true"
+        @focusout="pwdFocused = false"
       />
     </div>
-    <AuthPasswordChecks :password="password" class="mt-2 h-0 overflow-hidden" />
+    <AuthPasswordChecks
+      :password="password"
+      :class="`mt-2 overflow-hidden ${pwdFocused ? 'h-8' : 'h-0'} transition-[height]`"
+    />
     <FormButton submit full-width class="mt-4" :disabled="loading">Sign up</FormButton>
     <div
       v-if="serverInfo.termsOfService"
@@ -93,6 +98,8 @@ const nameRules = [isRequired]
 
 const { signUpWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
+
+const pwdFocused = ref(false)
 
 const finalLoginRoute = computed(() => {
   const result = router.resolve({
