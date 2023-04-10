@@ -72,7 +72,7 @@ export default class Batcher {
         if (valid) {
           vertCount += value.renderData.geometry.attributes.POSITION.length / 3
         }
-        return value
+        return valid
       })
       const batches = this.splitBatch(renderViewsBatch, vertCount)
       for (let k = 0; k < batches.length; k++) {
@@ -123,7 +123,7 @@ export default class Batcher {
         if (valid) {
           vertCount += value.renderData.geometry.attributes.POSITION.length / 3
         }
-        return value
+        return valid
       })
       const batches = this.splitBatch(renderViewsBatch, vertCount)
       for (let k = 0; k < batches.length; k++) {

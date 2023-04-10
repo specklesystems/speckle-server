@@ -10,13 +10,11 @@ import {
   Intersection,
   Matrix4,
   Mesh,
-  MeshBasicMaterial,
   Object3D,
   Plane,
   RGBADepthPacking,
   Scene,
   Sphere,
-  SphereGeometry,
   Spherical,
   sRGBEncoding,
   Texture,
@@ -323,11 +321,6 @@ export default class SpeckleRenderer {
     }
 
     this._scene.add(this._shadowcatcher.shadowcatcherMesh)
-    const geometry = new SphereGeometry(0.25, 32, 16)
-    const material = new MeshBasicMaterial({ color: 0xff0000 })
-    const sphere = new Mesh(geometry, material)
-    sphere.layers.set(ObjectLayers.PROPS)
-    this._scene.add(sphere)
   }
 
   public update(deltaTime: number) {

@@ -270,5 +270,7 @@ await sandbox.loadUrl(
   //'Rafinery'
   // 'https://speckle.xyz/streams/b7cac6a6df/commits/2e42381302'
   // 'https://speckle.xyz/streams/7ce9010d71/commits/b8bbfd0c05?c=%5B-4.50925,11.1348,5.38124,-0.23829,0.68512,-0.09006,0,1%5D'
-  'https://latest.speckle.dev/streams/caec6d6676/commits/588c731104'
+  // 'https://latest.speckle.dev/streams/caec6d6676/commits/588c731104'
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/1fff853107'
+  'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
 )
