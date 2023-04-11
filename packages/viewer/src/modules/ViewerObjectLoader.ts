@@ -65,7 +65,7 @@ export default class ViewerObjectLoader {
       options: { enableCaching, customLogger: (Logger as any).log }
     })
 
-    this.converter = new Converter(this.loader, parent.viewerGuid)
+    this.converter = new Converter(this.loader, parent.getWorldTree())
 
     this.cancel = false
   }

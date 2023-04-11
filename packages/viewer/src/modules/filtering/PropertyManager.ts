@@ -2,7 +2,7 @@ import flatten from '../../helpers/flatten'
 import { TreeNode, WorldTree } from '../tree/WorldTree'
 
 export class PropertyManager {
-  private static propCache = {} as Record<string, PropertyInfo[]>
+  private propCache = {} as Record<string, PropertyInfo[]>
 
   /**
    *
@@ -10,12 +10,12 @@ export class PropertyManager {
    * @param bypassCache Forces a full rescan if set to true.
    * @returns a list of property infos containing basic information for filtering purposes.
    */
-  public static getProperties(
-    treeId: string,
+  public getProperties(
+    tree: WorldTree,
     resourceUrl: string = null,
     bypassCache = false
   ): PropertyInfo[] {
-    let rootNode: TreeNode = WorldTree.getInstance(treeId).root
+    let rootNode: TreeNode = tree.root
 
     if (!bypassCache && this.propCache[resourceUrl ? resourceUrl : rootNode.model.id])
       return this.propCache[resourceUrl ? resourceUrl : rootNode.model.id]
@@ -30,7 +30,7 @@ export class PropertyManager {
 
     const propValues = {}
 
-    WorldTree.getInstance(treeId).walk((node: TreeNode) => {
+    tree.walk((node: TreeNode) => {
       if (!node.model.atomic) return true
       const obj = flatten(node.model.raw)
       for (const key in obj) {

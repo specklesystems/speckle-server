@@ -24,54 +24,38 @@ export interface NodeData {
 }
 
 export class WorldTree {
-  private static worldTreeInstances: { [id: string]: WorldTree } = {}
-  private static renderTreeInstances: { [id: string]: { [id: string]: RenderTree } } =
-    {}
+  private renderTreeInstances: { [id: string]: RenderTree } = {}
   private readonly supressWarnings = true
+  private static readonly ROOT_ID = 'ROOT'
 
-  private constructor() {
+  public constructor() {
     this.tree = new TreeModel()
+    this._root = this.parse({
+      id: WorldTree.ROOT_ID,
+      raw: {},
+      atomic: true,
+      children: [],
+      renderView: null
+    })
   }
 
-  public static getInstance(treeId: string): WorldTree {
-    if (!WorldTree.worldTreeInstances[treeId]) {
-      WorldTree.worldTreeInstances[treeId] = new WorldTree()
-      WorldTree.worldTreeInstances[treeId]._root = WorldTree.worldTreeInstances[
-        treeId
-      ].parse({
-        id: treeId,
-        raw: {},
-        atomic: true,
-        children: [],
-        renderView: null
-      })
-    }
-
-    return WorldTree.worldTreeInstances[treeId]
-  }
-
-  public static getRenderTree(treeId: string, subtreeId?: string): RenderTree {
-    if (!WorldTree.getInstance(treeId)._root) {
+  public getRenderTree(subtreeId?: string): RenderTree {
+    if (!this._root) {
       console.error(`WorldTree not initialised`)
       return null
     }
 
-    const id = subtreeId ? subtreeId : WorldTree.getInstance(treeId).root.model.id
-    if (!WorldTree.renderTreeInstances[treeId]) {
-      WorldTree.renderTreeInstances[treeId] = {}
-    }
-    if (!WorldTree.renderTreeInstances[treeId][id]) {
-      WorldTree.renderTreeInstances[treeId][id] = new RenderTree(
-        treeId,
-        WorldTree.getInstance(treeId).findId(id)
-      )
+    const id = subtreeId ? subtreeId : this.root.model.id
+
+    if (!this.renderTreeInstances[id]) {
+      this.renderTreeInstances[id] = new RenderTree(this, this.findId(id))
     }
 
-    return WorldTree.renderTreeInstances[treeId][id]
+    return this.renderTreeInstances[id]
   }
 
-  public static getDataTree(treeId: string): DataTree {
-    return DataTreeBuilder.build(treeId, WorldTree.worldTreeInstances[treeId]._root)
+  public getDataTree(): DataTree {
+    return DataTreeBuilder.build(this)
   }
 
   private tree: TreeModel
@@ -162,19 +146,19 @@ export class WorldTree {
 
   public purge(subtreeId?: string) {
     if (subtreeId) {
-      delete WorldTree.renderTreeInstances[subtreeId]
+      delete this.renderTreeInstances[subtreeId]
       this.removeNode(this.findId(subtreeId))
       return
     }
 
-    Object.keys(WorldTree.renderTreeInstances).forEach(
-      (key) => delete WorldTree.renderTreeInstances[key]
+    Object.keys(this.renderTreeInstances).forEach(
+      (key) => delete this.renderTreeInstances[key]
     )
     this._root.drop()
     this._root.children.length = 0
     this.tree = new TreeModel()
     this._root = this.tree.parse({
-      id: 'MOTHERSHIP',
+      id: WorldTree.ROOT_ID,
       raw: {},
       atomic: true,
       children: []

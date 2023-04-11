@@ -217,7 +217,6 @@ export interface IViewer {
   query<T extends Query>(query: T): QueryArgsResultMap[T['operation']]
   queryAsync(query: Query): Promise<QueryResult>
   get Utils(): Utils
-  get viewerGuid(): string
 
   dispose(): void
 }

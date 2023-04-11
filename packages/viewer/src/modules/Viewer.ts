@@ -31,11 +31,9 @@ import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
-import { generateUUID } from 'three/src/math/MathUtils'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
-  protected guid: string
   private container: HTMLElement
   private stats: Optional<Stats>
 
@@ -43,10 +41,12 @@ export class Viewer extends EventEmitter implements IViewer {
   private startupParams: ViewerParams
 
   /** Viewer components */
+  private tree: WorldTree = new WorldTree()
   private static world: World = new World()
   public static Assets: Assets
   protected speckleRenderer: SpeckleRenderer
   private filteringManager: FilteringManager
+  private propertyManager: PropertyManager
   /** Legacy viewer components (will revisit soon) */
   public sectionBox: SectionBox
   public cameraHandler: CameraHandler
@@ -73,10 +73,6 @@ export class Viewer extends EventEmitter implements IViewer {
     return this.utils
   }
 
-  public get viewerGuid(): string {
-    return this.guid
-  }
-
   public constructor(
     container: HTMLElement,
     params: ViewerParams = DefaultViewerParams
@@ -86,11 +82,11 @@ export class Viewer extends EventEmitter implements IViewer {
     Logger.setLevel(params.verbose ? Logger.TRACE : Logger.ERROR)
     GeometryConverter.keepGeometryData = params.keepGeometryData
 
-    this.guid = generateUUID()
     this.container = container || document.getElementById('renderer')
     if (params.showStats) {
       this.stats = Stats()
       this.container.appendChild(this.stats.dom)
+      this.stats.dom.style.position = '' // Mad CSS skills
     }
     this.loaders = {}
     this.startupParams = params
@@ -104,7 +100,8 @@ export class Viewer extends EventEmitter implements IViewer {
     window.addEventListener('resize', this.resize.bind(this), false)
 
     new Assets()
-    this.filteringManager = new FilteringManager(this.speckleRenderer, this.viewerGuid)
+    this.filteringManager = new FilteringManager(this.speckleRenderer, this.tree)
+    this.propertyManager = new PropertyManager()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     // ;(window as any)._V = this // For debugging! ಠ_ಠ
@@ -207,7 +204,7 @@ export class Viewer extends EventEmitter implements IViewer {
     resourceURL: string = null,
     bypassCache = true
   ): PropertyInfo[] {
-    return PropertyManager.getProperties(this.viewerGuid, resourceURL, bypassCache)
+    return this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
   }
 
   public selectObjects(objectIds: string[]): Promise<FilteringState> {
@@ -330,11 +327,11 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public getDataTree(): DataTree {
-    return WorldTree.getDataTree(this.guid)
+    return this.tree.getDataTree()
   }
 
   public getWorldTree(): WorldTree {
-    return WorldTree.getInstance(this.guid)
+    return this.tree
   }
 
   public query<T extends Query>(query: T): QueryArgsResultMap[T['operation']] {
@@ -387,7 +384,7 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public getViews(): SpeckleView[] {
-    return WorldTree.getInstance(this.guid)
+    return this.tree
       .findAll((node: TreeNode) => {
         return node.model.renderView?.speckleType === SpeckleType.View3D
       })
@@ -447,7 +444,7 @@ export class Viewer extends EventEmitter implements IViewer {
     await this.downloadObject(url, token, enableCaching)
 
     let t0 = performance.now()
-    WorldTree.getRenderTree(this.viewerGuid, url).buildRenderTree()
+    this.tree.getRenderTree(url).buildRenderTree()
     Logger.log('SYNC Tree build time -> ', performance.now() - t0)
 
     t0 = performance.now()
@@ -470,10 +467,7 @@ export class Viewer extends EventEmitter implements IViewer {
     await this.downloadObject(url, token, enableCaching)
 
     let t0 = performance.now()
-    const treeBuilt = await WorldTree.getRenderTree(
-      this.viewerGuid,
-      url
-    ).buildRenderTreeAsync(priority)
+    const treeBuilt = await this.tree.getRenderTree(url).buildRenderTreeAsync(priority)
     Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
 
     if (treeBuilt) {
@@ -489,7 +483,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public async cancelLoad(url: string, unload = false) {
     this.loaders[url].cancelLoad()
-    WorldTree.getRenderTree(this.viewerGuid, url).cancelBuild(url)
+    this.tree.getRenderTree(url).cancelBuild(url)
     this.speckleRenderer.cancelRenderTree(url)
     if (unload) {
       await this.unloadObject(url)
@@ -503,8 +497,8 @@ export class Viewer extends EventEmitter implements IViewer {
         (this as EventEmitter).emit(ViewerEvent.Busy, true)
       delete this.loaders[url]
       this.speckleRenderer.removeRenderTree(url)
-      WorldTree.getRenderTree(this.guid, url).purge()
-      WorldTree.getInstance(this.guid).purge(url)
+      this.tree.getRenderTree(url).purge()
+      this.tree.purge(url)
     } finally {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit(ViewerEvent.Busy, false)
@@ -522,12 +516,12 @@ export class Viewer extends EventEmitter implements IViewer {
         delete this.loaders[key]
       }
       this.filteringManager.reset()
-      WorldTree.getInstance(this.guid).root.children.forEach((node) => {
+      this.tree.root.children.forEach((node) => {
         this.speckleRenderer.removeRenderTree(node.model.id)
-        WorldTree.getRenderTree(this.guid).purge()
+        this.tree.getRenderTree().purge()
       })
 
-      WorldTree.getInstance(this.guid).purge()
+      this.tree.purge()
     } finally {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit(ViewerEvent.Busy, false)

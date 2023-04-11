@@ -1,7 +1,6 @@
 import { generateUUID } from 'three/src/math/MathUtils'
 import MeshBatch from './MeshBatch'
 import { SpeckleType } from '../converter/GeometryConverter'
-import { WorldTree } from '../tree/WorldTree'
 import LineBatch from './LineBatch'
 import Materials from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
@@ -18,6 +17,7 @@ import { Material, Mesh, WebGLRenderer } from 'three'
 import { FilterMaterial } from '../filtering/FilteringManager'
 import Logger from 'js-logger'
 import { World } from '../World'
+import { RenderTree } from '../tree/RenderTree'
 
 export default class Batcher {
   public materials: Materials
@@ -29,18 +29,15 @@ export default class Batcher {
   }
 
   public makeBatches(
-    treeId: string,
-    subtreeId: string,
+    renderTree: RenderTree,
     speckleType: SpeckleType[],
     batchType?: GeometryType
   ) {
-    const rendeViews = WorldTree.getRenderTree(treeId, subtreeId)
-      .getAtomicRenderViews(...speckleType)
-      .sort((a, b) => {
-        if (a.renderMaterialHash === 0) return -1
-        if (b.renderMaterialHash === 0) return 1
-        return a.renderMaterialHash - b.renderMaterialHash
-      })
+    const rendeViews = renderTree.getAtomicRenderViews(...speckleType).sort((a, b) => {
+      if (a.renderMaterialHash === 0) return -1
+      if (b.renderMaterialHash === 0) return 1
+      return a.renderMaterialHash - b.renderMaterialHash
+    })
     const materialHashes = [
       ...Array.from(new Set(rendeViews.map((value) => value.renderMaterialHash)))
     ]
@@ -49,8 +46,7 @@ export default class Batcher {
 
     for (let i = 0; i < materialHashes.length; i++) {
       const batch = this.buildBatch(
-        treeId,
-        subtreeId,
+        renderTree,
         rendeViews,
         materialHashes[i],
         batchType
@@ -60,21 +56,18 @@ export default class Batcher {
   }
 
   public async *makeBatchesAsync(
-    treeId: string,
-    subtreeId: string,
+    renderTree: RenderTree,
     speckleType: SpeckleType[],
     batchType?: GeometryType,
     priority?: number
   ) {
     const pause = World.getPause(priority)
 
-    const rendeViews = WorldTree.getRenderTree(treeId, subtreeId)
-      .getAtomicRenderViews(...speckleType)
-      .sort((a, b) => {
-        if (a.renderMaterialHash === 0) return -1
-        if (b.renderMaterialHash === 0) return 1
-        return a.renderMaterialHash - b.renderMaterialHash
-      })
+    const rendeViews = renderTree.getAtomicRenderViews(...speckleType).sort((a, b) => {
+      if (a.renderMaterialHash === 0) return -1
+      if (b.renderMaterialHash === 0) return 1
+      return a.renderMaterialHash - b.renderMaterialHash
+    })
     const materialHashes = [
       ...Array.from(new Set(rendeViews.map((value) => value.renderMaterialHash)))
     ]
@@ -83,8 +76,7 @@ export default class Batcher {
 
     for (let i = 0; i < materialHashes.length; i++) {
       const batch = this.buildBatch(
-        treeId,
-        subtreeId,
+        renderTree,
         rendeViews,
         materialHashes[i],
         batchType
@@ -96,8 +88,7 @@ export default class Batcher {
   }
 
   private buildBatch(
-    treeId: string,
-    subtreeId: string,
+    renderTree: RenderTree,
     renderViews: NodeRenderView[],
     materialHash: number,
     batchType?: GeometryType
@@ -129,21 +120,41 @@ export default class Batcher {
     let geometryBatch: Batch = null
     switch (geometryType) {
       case GeometryType.MESH:
-        geometryBatch = new MeshBatch(batchID, subtreeId, batch)
+        geometryBatch = new MeshBatch(
+          batchID,
+          renderTree.id,
+          renderTree.treeBounds,
+          batch
+        )
         break
       case GeometryType.LINE:
-        geometryBatch = new LineBatch(batchID, subtreeId, batch)
+        geometryBatch = new LineBatch(
+          batchID,
+          renderTree.id,
+          renderTree.treeBounds,
+          batch
+        )
         break
       case GeometryType.POINT:
-        geometryBatch = new PointBatch(batchID, subtreeId, batch)
+        geometryBatch = new PointBatch(
+          batchID,
+          renderTree.id,
+          renderTree.treeBounds,
+          batch
+        )
         break
       case GeometryType.POINT_CLOUD:
-        geometryBatch = new PointBatch(batchID, subtreeId, batch)
+        geometryBatch = new PointBatch(
+          batchID,
+          renderTree.id,
+          renderTree.treeBounds,
+          batch
+        )
         break
     }
 
     geometryBatch.setBatchMaterial(material)
-    geometryBatch.buildBatch(treeId)
+    geometryBatch.buildBatch()
     return geometryBatch
   }
 

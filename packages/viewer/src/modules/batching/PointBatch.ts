@@ -1,4 +1,5 @@
 import {
+  Box3,
   BufferGeometry,
   Float32BufferAttribute,
   Material,
@@ -23,14 +24,21 @@ import { ObjectLayers } from '../SpeckleRenderer'
 export default class PointBatch implements Batch {
   public id: string
   public subtreeId: string
+  public bounds: Box3
   public renderViews: NodeRenderView[]
   private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: Points
 
-  public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
+  public constructor(
+    id: string,
+    subtreeId: string,
+    bounds: Box3,
+    renderViews: NodeRenderView[]
+  ) {
     this.id = id
     this.subtreeId = subtreeId
+    this.bounds = bounds
     this.renderViews = renderViews
   }
 

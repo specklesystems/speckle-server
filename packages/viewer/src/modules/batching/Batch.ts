@@ -1,4 +1,4 @@
-import { Material, Object3D, WebGLRenderer } from 'three'
+import { Box3, Material, Object3D, WebGLRenderer } from 'three'
 import { MaterialOptions } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
 
@@ -12,6 +12,7 @@ export enum GeometryType {
 export interface Batch {
   id: string
   subtreeId: string
+  bounds: Box3
   renderViews: NodeRenderView[]
   batchMaterial: Material
   renderObject: Object3D
@@ -24,7 +25,7 @@ export interface Batch {
   setDrawRanges(...ranges: BatchUpdateRange[])
   autoFillDrawRanges()
   resetDrawRanges()
-  buildBatch(treeId?: string)
+  buildBatch()
   getRenderView(index: number): NodeRenderView
   onUpdate(deltaTime: number)
   onRender(renderer: WebGLRenderer)

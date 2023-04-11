@@ -52,9 +52,9 @@ export class FilteringManager {
   private UserspaceColorState = new UserspaceColorState()
   private ColorStringFilterState2: ColorStringFilterState = null
 
-  public constructor(renderer: SpeckleRenderer, treeId: string) {
-    this.WTI = WorldTree.getInstance(treeId)
-    this.RTI = WorldTree.getRenderTree(treeId)
+  public constructor(renderer: SpeckleRenderer, tree: WorldTree) {
+    this.WTI = tree
+    this.RTI = tree.getRenderTree()
     this.Renderer = renderer
   }
 

@@ -7,8 +7,8 @@ import { Geometry } from '../converter/Geometry'
 import Logger from 'js-logger'
 
 export class RenderTree {
+  private tree: WorldTree
   private root: TreeNode
-  private treeId: string
   private _treeBounds: Box3 = new Box3()
   private cancel = false
 
@@ -16,13 +16,17 @@ export class RenderTree {
     return this._treeBounds
   }
 
-  public constructor(treeId: string, root: TreeNode) {
-    this.root = root
-    this.treeId = treeId
+  public get id(): string {
+    return this.root.model.id
+  }
+
+  public constructor(tree: WorldTree, subtreeRoot: TreeNode) {
+    this.tree = tree
+    this.root = subtreeRoot
   }
 
   public buildRenderTree() {
-    this.root.walk((node: TreeNode): boolean => {
+    this.tree.walk((node: TreeNode): boolean => {
       const rendeNode = this.buildRenderNode(node)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
       if (node.model.renderView && node.model.renderView.hasGeometry) {
@@ -44,7 +48,7 @@ export class RenderTree {
   }
 
   public buildRenderTreeAsync(priority: number): Promise<boolean> {
-    const p = WorldTree.getInstance(this.treeId).walkAsync(
+    const p = this.tree.walkAsync(
       (node: TreeNode): boolean => {
         const rendeNode = this.buildRenderNode(node)
         node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
@@ -95,7 +99,7 @@ export class RenderTree {
     if (node.model.raw.renderMaterial) {
       return node
     }
-    const ancestors = WorldTree.getInstance(this.treeId).getAncestors(node)
+    const ancestors = this.tree.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.raw.renderMaterial) {
         return ancestors[k]
@@ -107,7 +111,7 @@ export class RenderTree {
     if (node.model.raw.displayStyle) {
       return node
     }
-    const ancestors = WorldTree.getInstance(this.treeId).getAncestors(node)
+    const ancestors = this.tree.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.raw.displayStyle) {
         return ancestors[k]
@@ -117,7 +121,7 @@ export class RenderTree {
 
   public computeTransform(node: TreeNode): Matrix4 {
     const transform = new Matrix4()
-    const ancestors = WorldTree.getInstance(this.treeId).getAncestors(node)
+    const ancestors = this.tree.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.renderView) {
         const renderNode: NodeRenderData = ancestors[k].model.renderView.renderData
@@ -179,13 +183,11 @@ export class RenderTree {
     if (node.model.atomic) {
       return node.model.renderView
     }
-    return WorldTree.getInstance(this.treeId)
-      .getAncestors(node)
-      .find((node) => node.model.atomic)
+    return this.tree.getAncestors(node).find((node) => node.model.atomic)
   }
 
   public getRenderViewsForNodeId(id: string): NodeRenderView[] {
-    const node = WorldTree.getInstance(this.treeId).findId(id)
+    const node = this.tree.findId(id)
     if (!node) {
       Logger.warn(`Id ${id} does not exist`)
       return null
@@ -194,7 +196,7 @@ export class RenderTree {
   }
 
   public getRenderViewForNodeId(id: string): NodeRenderView {
-    const node = WorldTree.getInstance(this.treeId).findId(id)
+    const node = this.tree.findId(id)
     if (!node) {
       Logger.warn(`Id ${id} does not exist`)
       return null
@@ -203,12 +205,12 @@ export class RenderTree {
   }
 
   public purge() {
-    this.root = null
+    this.tree = null
   }
 
-  public cancelBuild(id: string) {
+  public cancelBuild(subtreeId: string) {
     this.cancel = true
-    WorldTree.getInstance(this.treeId).purge(id)
+    this.tree.purge(subtreeId)
     this.purge()
   }
 }

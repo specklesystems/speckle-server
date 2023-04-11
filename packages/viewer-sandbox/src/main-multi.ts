@@ -30,7 +30,7 @@ const createViewer = async (container: HTMLElement, stream: string) => {
   const viewer: Viewer = new DebugViewer(container, params)
   await viewer.init()
 
-  const sandbox = new Sandbox(viewer as DebugViewer, multiSelectList)
+  const sandbox = new Sandbox(container, viewer as DebugViewer, multiSelectList)
 
   window.addEventListener('load', () => {
     viewer.resize()
@@ -46,8 +46,8 @@ const createViewer = async (container: HTMLElement, stream: string) => {
   )
 
   viewer.on(ViewerEvent.LoadComplete, () => {
-    Object.assign(Sandbox.sceneParams.worldSize, Viewer.World.worldSize)
-    Object.assign(Sandbox.sceneParams.worldOrigin, Viewer.World.worldOrigin)
+    Object.assign(sandbox.sceneParams.worldSize, Viewer.World.worldSize)
+    Object.assign(sandbox.sceneParams.worldOrigin, Viewer.World.worldOrigin)
     sandbox.refresh()
   })
 

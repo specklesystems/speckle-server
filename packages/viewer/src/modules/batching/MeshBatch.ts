@@ -24,7 +24,6 @@ import {
 } from './Batch'
 import Logger from 'js-logger'
 import { GeometryConverter } from '../converter/GeometryConverter'
-import { WorldTree } from '../tree/WorldTree'
 import { SpeckleMeshBVH } from '../objects/SpeckleMeshBVH'
 import { ObjectLayers } from '../SpeckleRenderer'
 
@@ -37,14 +36,21 @@ export default class MeshBatch implements Batch {
   public mesh: SpeckleMesh
   public boundsTree: SpeckleMeshBVH
   public bounds: Box3 = new Box3()
+
   private gradientIndexBuffer: BufferAttribute
   private indexBuffer0: BufferAttribute
   private indexBuffer1: BufferAttribute
   private indexBufferIndex = 0
 
-  public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
+  public constructor(
+    id: string,
+    subtreeId: string,
+    bounds: Box3,
+    renderViews: NodeRenderView[]
+  ) {
     this.id = id
     this.subtreeId = subtreeId
+    this.bounds = bounds
     this.renderViews = renderViews
   }
 
@@ -412,7 +418,7 @@ export default class MeshBatch implements Batch {
     this.geometry.setDrawRange(0, Infinity)
   }
 
-  public buildBatch(treeId: string) {
+  public buildBatch() {
     const indicesCount = this.renderViews.flatMap(
       (val: NodeRenderView) => val.renderData.geometry.attributes.INDEX
     ).length
@@ -455,11 +461,7 @@ export default class MeshBatch implements Batch {
       this.batchMaterial.vertexColors ? color : null
     )
 
-    this.boundsTree = Geometry.buildBVH(
-      indices,
-      position,
-      WorldTree.getRenderTree(treeId, this.subtreeId).treeBounds
-    )
+    this.boundsTree = Geometry.buildBVH(indices, position, this.bounds)
     this.boundsTree.getBoundingBox(this.bounds)
     this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial, this.boundsTree)
     this.mesh.uuid = this.id
