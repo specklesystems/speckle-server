@@ -10,7 +10,10 @@ const {
   unmakeUserAdmin,
   archiveUser
 } = require('../../services/users')
-const { updateUserAndNotify } = require('@/modules/core/services/users/management')
+const {
+  updateUserAndNotify,
+  changePassword
+} = require('@/modules/core/services/users/management')
 const { saveActivity } = require('@/modules/activitystream/services')
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { validateServerRole, validateScopes } = require(`@/modules/shared`)
@@ -191,6 +194,11 @@ module.exports = {
     async update(_parent, args, context) {
       const newUser = await updateUserAndNotify(context.userId, args.user)
       return newUser
+    },
+
+    async changePassword(_parent, args, ctx) {
+      await changePassword(ctx.userId, args.input)
+      return true
     }
   }
 }

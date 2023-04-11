@@ -25,3 +25,11 @@ export const deleteAccountMutation = graphql(`
     userDelete(userConfirmation: $input)
   }
 `)
+
+export const changePasswordMutation = graphql(`
+  mutation ChangePassword($input: ChangePasswordInput!) {
+    activeUserMutations {
+      changePassword(input: $input)
+    }
+  }
+`)

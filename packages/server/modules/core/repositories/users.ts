@@ -18,6 +18,11 @@ export type GetUserParams = Partial<{
    * Join server_acl and get user role info
    */
   withRole: boolean
+
+  /**
+   * Skip record sanitization. ONLY use when you wish to work with a user's password digest
+   */
+  skipClean: boolean
 }>
 
 function sanitizeUserRecord<T extends Nullable<UserRecord>>(user: T): T {
@@ -33,7 +38,7 @@ export async function getUsers(
   userIds: string | string[],
   params?: GetUserParams
 ): Promise<UserWithOptionalRole[]> {
-  const { withRole } = params || {}
+  const { withRole, skipClean } = params || {}
   userIds = isArray(userIds) ? userIds : [userIds]
 
   const q = Users.knex<UserWithOptionalRole[]>().whereIn(Users.col.id, userIds)
@@ -47,7 +52,7 @@ export async function getUsers(
     q.groupBy(Users.col.id)
   }
 
-  return (await q).map(sanitizeUserRecord)
+  return (await q).map((u) => (skipClean ? u : sanitizeUserRecord(u)))
 }
 
 /**
@@ -111,8 +116,16 @@ const validateInputRecord = (input: Partial<UserRecord>) => {
   }
 }
 
-export async function updateUser(userId: string, update: Partial<UserRecord>) {
-  update = cleanInputRecord(update)
+export async function updateUser(
+  userId: string,
+  update: Partial<UserRecord>,
+  options?: Partial<{
+    skipClean: boolean
+  }>
+) {
+  if (!options?.skipClean) {
+    update = cleanInputRecord(update)
+  }
   validateInputRecord(update)
 
   const [newUser] = await Users.knex().where(Users.col.id, userId).update(update, '*')

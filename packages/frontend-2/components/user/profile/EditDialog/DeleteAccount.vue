@@ -53,6 +53,10 @@ const stringMatchesEmail: GenericValidateFunction<string> = (val: string) => {
     : 'Value must match the email exactly'
 }
 
+const emit = defineEmits<{
+  (e: 'deleted'): void
+}>()
+
 const props = defineProps<{
   user: UserProfileEditDialogDeleteAccount_UserFragment
 }>()
@@ -63,8 +67,9 @@ const { mutate, loading } = useDeleteAccount()
 const emailPlaceholder = computed(() => props.user.email || 'example@example.com')
 
 const onDelete = handleSubmit(async (values) => {
-  await mutate({
+  const isDeleted = await mutate({
     email: values.deleteEmail
   })
+  if (isDeleted) emit('deleted')
 })
 </script>

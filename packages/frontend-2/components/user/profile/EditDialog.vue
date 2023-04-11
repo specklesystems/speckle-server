@@ -3,7 +3,8 @@
     <div v-if="user" class="flex flex-col text-foreground space-y-4">
       <UserProfileEditDialogBio :user="user" />
       <UserProfileEditDialogNotificationPreferences :user="user" />
-      <UserProfileEditDialogDeleteAccount :user="user" />
+      <UserProfileEditDialogChangePassword :user="user" />
+      <UserProfileEditDialogDeleteAccount :user="user" @deleted="isOpen = false" />
     </div>
   </LayoutDialog>
 </template>

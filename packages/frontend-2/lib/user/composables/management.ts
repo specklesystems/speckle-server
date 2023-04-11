@@ -3,13 +3,18 @@ import { cloneDeep } from 'lodash-es'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { UserDeleteInput, UserUpdateInput } from '~~/lib/common/generated/gql/graphql'
+import {
+  ChangePasswordInput,
+  UserDeleteInput,
+  UserUpdateInput
+} from '~~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,
   getCacheId,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import {
+  changePasswordMutation,
   deleteAccountMutation,
   updateNotificationPreferencesMutation,
   updateUserMutation
@@ -113,13 +118,44 @@ export function useDeleteAccount() {
         const errMsg = getFirstErrorMessage(result?.errors)
         triggerNotification({
           type: ToastNotificationType.Danger,
-          title: 'Account deletion failed failed',
+          title: 'Account deletion failed',
           description: errMsg
         })
       }
 
       // Log user out
       if (isSuccess) await logout({ skipToast: true })
+
+      return isSuccess
+    },
+    loading
+  }
+}
+
+export function useChangePassword() {
+  const { mutate, loading } = useMutation(changePasswordMutation)
+  const { triggerNotification } = useGlobalToast()
+
+  return {
+    mutate: async (input: ChangePasswordInput) => {
+      const result = await mutate({
+        input
+      }).catch(convertThrowIntoFetchResult)
+
+      const isSuccess = !!result?.data?.activeUserMutations?.changePassword
+      if (isSuccess) {
+        triggerNotification({
+          type: ToastNotificationType.Info,
+          title: 'Password changed'
+        })
+      } else {
+        const errMsg = getFirstErrorMessage(result?.errors)
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: 'Password change failed',
+          description: errMsg
+        })
+      }
 
       return isSuccess
     },

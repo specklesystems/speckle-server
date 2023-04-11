@@ -130,6 +130,11 @@ type UserSearchResultCollection {
   items: [LimitedUser!]!
 }
 
+input ChangePasswordInput {
+  oldPassword: String!
+  newPassword: String!
+}
+
 type ActiveUserMutations {
   """
   Mark onboarding as complete
@@ -140,6 +145,11 @@ type ActiveUserMutations {
   Edit a user's profile
   """
   update(user: UserUpdateInput!): User!
+
+  """
+  Change your password
+  """
+  changePassword(input: ChangePasswordInput!): Boolean!
 }
 
 extend type Mutation {

@@ -30,10 +30,17 @@ export type Scalars = {
 
 export type ActiveUserMutations = {
   __typename?: 'ActiveUserMutations';
+  /** Change your password */
+  changePassword: Scalars['Boolean'];
   /** Mark onboarding as complete */
   finishOnboarding: Scalars['Boolean'];
   /** Edit a user's profile */
   update: User;
+};
+
+
+export type ActiveUserMutationsChangePasswordArgs = {
+  input: ChangePasswordInput;
 };
 
 
@@ -204,6 +211,11 @@ export type BranchUpdateInput = {
   id: Scalars['String'];
   name?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
+};
+
+export type ChangePasswordInput = {
+  newPassword: Scalars['String'];
+  oldPassword: Scalars['String'];
 };
 
 export type Comment = {
@@ -2756,6 +2768,7 @@ export type ResolversTypes = {
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
+  ChangePasswordInput: ChangePasswordInput;
   Comment: ResolverTypeWrapper<CommentGraphQLReturn>;
   CommentActivityMessage: ResolverTypeWrapper<Omit<CommentActivityMessage, 'comment'> & { comment: ResolversTypes['Comment'] }>;
   CommentCollection: ResolverTypeWrapper<Omit<CommentCollection, 'items'> & { items: Array<ResolversTypes['Comment']> }>;
@@ -2919,6 +2932,7 @@ export type ResolversParentTypes = {
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
+  ChangePasswordInput: ChangePasswordInput;
   Comment: CommentGraphQLReturn;
   CommentActivityMessage: Omit<CommentActivityMessage, 'comment'> & { comment: ResolversParentTypes['Comment'] };
   CommentCollection: Omit<CommentCollection, 'items'> & { items: Array<ResolversParentTypes['Comment']> };
@@ -3081,6 +3095,7 @@ export type IsOwnerDirectiveArgs = { };
 export type IsOwnerDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = IsOwnerDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
 export type ActiveUserMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ActiveUserMutations'] = ResolversParentTypes['ActiveUserMutations']> = {
+  changePassword?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ActiveUserMutationsChangePasswordArgs, 'input'>>;
   finishOnboarding?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   update?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<ActiveUserMutationsUpdateArgs, 'user'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
