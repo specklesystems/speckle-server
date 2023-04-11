@@ -4,9 +4,9 @@ import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { loginRoute } from '~~/lib/common/helpers/route'
 
 /**
- * Redirect user to /onboarding, if they haven't done it yet
+ * Redirect unauthenticated users to the login page
  */
-export default defineNuxtRouteMiddleware(async (to) => {
+export default defineNuxtRouteMiddleware(async () => {
   const { $apollo } = useNuxtApp()
   const client = ($apollo as { default: ApolloClient<unknown> }).default
 
