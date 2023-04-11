@@ -6,7 +6,7 @@ import {
 import { ensureError, Optional, SafeLocalStorage } from '@speckle/shared'
 import { CookieKeys, LocalStorageKeys } from '~~/lib/common/helpers/constants'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
-import { useNavigateToHome } from '~~/lib/common/helpers/route'
+import { useNavigateToHome, useNavigateToLogin } from '~~/lib/common/helpers/route'
 import { useApolloClient } from '@vue/apollo-composable'
 import { speckleWebAppId } from '~~/lib/auth/helpers/strategies'
 import { randomString } from '~~/lib/common/helpers/random'
@@ -59,6 +59,7 @@ export const useAuthManager = () => {
   const resetAuthState = useResetAuthState()
   const route = useRoute()
   const goHome = useNavigateToHome()
+  const goToLogin = useNavigateToLogin()
   const { triggerNotification } = useGlobalToast()
   const mixpanel = useMixpanel()
   const postAuthRedirect = usePostAuthRedirect()
@@ -261,7 +262,7 @@ export const useAuthManager = () => {
    * Log out
    */
   const logout = async () => {
-    await saveNewToken()
+    await saveNewToken(undefined, { skipRedirect: true })
 
     triggerNotification({
       type: ToastNotificationType.Info,
@@ -270,6 +271,7 @@ export const useAuthManager = () => {
     })
 
     postAuthRedirect.deleteState()
+    goToLogin()
   }
 
   return {

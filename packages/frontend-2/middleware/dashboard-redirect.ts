@@ -6,7 +6,9 @@ import { loginRoute } from '~~/lib/common/helpers/route'
 /**
  * Redirect unauthenticated users to the login page
  */
-export default defineNuxtRouteMiddleware(async () => {
+export default defineNuxtRouteMiddleware(async (to) => {
+  // NOTE: deeper rethink required
+  return
   const { $apollo } = useNuxtApp()
   const client = ($apollo as { default: ApolloClient<unknown> }).default
 
@@ -15,6 +17,6 @@ export default defineNuxtRouteMiddleware(async () => {
       query: activeUserQuery
     })
     .catch(convertThrowIntoFetchResult)
-
-  if (!data?.activeUser?.id) return navigateTo(loginRoute)
+  console.log(to.query)
+  if (!data?.activeUser?.id) return navigateTo({ path: loginRoute, query: to.query })
 })
