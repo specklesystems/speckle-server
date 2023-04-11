@@ -98,7 +98,6 @@ export async function authContextMiddleware(
     return res.status(status).json({ error: message })
   }
   req.context = authContext
-  logger.info('Auth context created')
   next()
 }
 
