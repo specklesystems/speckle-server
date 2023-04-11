@@ -44,12 +44,11 @@ export const LoggingExpressMiddleware = HttpLogger({
         method: req.raw.method,
         path: req.raw.url?.split('?')[0], // Remove query params which might be sensitive
         // Allowlist useful headers
-        headers: {
-          host: req.raw.headers.host,
-          'user-agent': req.raw.headers['user-agent'],
-          'x-request-id': req.raw.headers[REQUEST_ID_HEADER],
-          referer: req.raw.headers.referer
-        }
+        headers: Object.fromEntries(
+          Object.entries(req.raw.headers).filter(
+            ([key]) => !['cookie', 'authorization'].includes(key.toLocaleLowerCase())
+          )
+        )
       }
     }),
     res: pino.stdSerializers.wrapResponseSerializer((res) => {
@@ -61,15 +60,7 @@ export const LoggingExpressMiddleware = HttpLogger({
       return {
         statusCode: res.raw.statusCode,
         // Allowlist useful headers
-        headers: {
-          'content-length': resRaw.raw.headers['content-length'],
-          'content-type': resRaw.raw.headers['content-type'],
-          'retry-after': resRaw.raw.headers['retry-after'],
-          'x-ratelimit-remaining': resRaw.raw.headers['x-ratelimit-remaining'],
-          'x-ratelimit-reset': resRaw.raw.headers['x-ratelimit-reset'],
-          'x-request-id': resRaw.raw.headers['x-request-id'],
-          'x-speckle-meditation': resRaw.raw.headers['x-speckle-meditation']
-        }
+        headers: resRaw.raw.headers
       }
     })
   }
