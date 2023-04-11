@@ -28,9 +28,9 @@
 
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
-        v-tippy="'Comments (c)'"
-        :active="activeControl === 'comments'"
-        @click="toggleActiveControl('comments')"
+        v-tippy="'Discussions (d)'"
+        :active="activeControl === 'discussions'"
+        @click="toggleActiveControl('discussions')"
       >
         <ChatBubbleLeftRightIcon class="h-5 w-5" />
       </ViewerControlsButtonToggle>
@@ -103,7 +103,7 @@
         </KeepAlive>
       </div>
       <ViewerComments
-        v-if="activeControl === 'comments'"
+        v-if="activeControl === 'discussions'"
         class="pointer-events-auto"
         @close="activeControl = 'none'"
       />
@@ -131,7 +131,7 @@ const {
   }
 } = useInjectedViewerState()
 
-type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'comments'
+type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'discussions'
 
 const activeControl = ref<ActiveControl>('models')
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
@@ -154,8 +154,8 @@ onKeyStroke('e', () => {
 onKeyStroke('f', () => {
   if (!globalTextInputFocus.value) toggleActiveControl('filters')
 })
-onKeyStroke(['c', 'C'], () => {
-  if (!globalTextInputFocus.value) toggleActiveControl('comments')
+onKeyStroke(['d', 'D'], () => {
+  if (!globalTextInputFocus.value) toggleActiveControl('discussions')
 })
 
 // Viewer actions kbd shortcuts
