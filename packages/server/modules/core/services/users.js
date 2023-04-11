@@ -142,6 +142,9 @@ module.exports = {
     return role
   },
 
+  /**
+   * @deprecated {Use updateUserAndNotify() or repo method directly}
+   */
   async updateUser(id, user) {
     delete user.id
     delete user.passwordDigest

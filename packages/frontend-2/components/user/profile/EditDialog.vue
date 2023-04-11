@@ -2,6 +2,7 @@
   <LayoutDialog v-model:open="isOpen" max-width="md">
     <div v-if="user" class="flex flex-col text-foreground space-y-4">
       <UserProfileEditDialogBio :user="user" />
+      <UserProfileEditDialogNotificationPreferences :user="user" />
     </div>
   </LayoutDialog>
 </template>

@@ -13,3 +13,9 @@ export const updateUserMutation = graphql(`
     }
   }
 `)
+
+export const updateNotificationPreferencesMutation = graphql(`
+  mutation UpdateNotificationPreferences($input: JSONObject!) {
+    userNotificationPreferencesUpdate(preferences: $input)
+  }
+`)

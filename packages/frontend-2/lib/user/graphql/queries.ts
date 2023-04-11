@@ -4,6 +4,7 @@ export const profileEditDialogQuery = graphql(`
   query ProfileEditDialog {
     activeUser {
       ...UserProfileEditDialogBio_User
+      ...UserProfileEditDialogNotificationPreferences_User
     }
   }
 `)
