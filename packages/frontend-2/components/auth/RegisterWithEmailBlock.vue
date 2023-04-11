@@ -1,10 +1,11 @@
+<!-- eslint-disable vue/no-v-html -->
 <template>
   <form @submit="onSubmit">
-    <div class="flex flex-col space-y-4">
+    <div class="flex flex-col space-y-2">
       <FormTextInput
         type="text"
         name="name"
-        label="Name"
+        label="Full Name"
         placeholder="John Doe"
         size="xl"
         :rules="nameRules"
@@ -16,7 +17,7 @@
       <FormTextInput
         type="email"
         name="email"
-        label="E-mail"
+        label="Email"
         placeholder="example@email.com"
         size="xl"
         :rules="emailRules"
@@ -33,16 +34,25 @@
         :rules="passwordRules"
         show-label
         :disabled="loading"
+        @focusin="pwdFocused = true"
+        @focusout="pwdFocused = false"
       />
     </div>
-    <AuthPasswordChecks :password="password" class="mt-4" />
-    <FormButton submit full-width class="mt-8" :disabled="loading">Sign up</FormButton>
-    <div v-if="serverInfo.termsOfService" class="mt-8">
-      {{ serverInfo.termsOfService }}
-    </div>
+    <AuthPasswordChecks
+      :password="password"
+      :class="`mt-2 overflow-hidden ${pwdFocused ? 'h-8' : 'h-0'} transition-[height]`"
+    />
+    <FormButton submit full-width class="mt-4" :disabled="loading">Sign up</FormButton>
+    <div
+      v-if="serverInfo.termsOfService"
+      class="mt-2 text-xs text-foreground-2 text-center linkify-tos"
+      v-html="serverInfo.termsOfService"
+    ></div>
     <div class="mt-8 text-center">
       <span class="mr-2">Already have an account?</span>
-      <CommonTextLink :to="finalLoginRoute">Log in</CommonTextLink>
+      <CommonTextLink :to="finalLoginRoute" :icon-right="ArrowRightIcon">
+        Log in
+      </CommonTextLink>
     </div>
   </form>
 </template>
@@ -56,7 +66,7 @@ import { loginRoute } from '~~/lib/common/helpers/route'
 import { passwordRules } from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
-import { UserIcon } from '@heroicons/vue/20/solid'
+import { UserIcon, ArrowRightIcon } from '@heroicons/vue/20/solid'
 
 /**
  * TODO:
@@ -89,6 +99,8 @@ const nameRules = [isRequired]
 const { signUpWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 
+const pwdFocused = ref(false)
+
 const finalLoginRoute = computed(() => {
   const result = router.resolve({
     path: loginRoute,
@@ -117,3 +129,8 @@ const onSubmit = handleSubmit(async (fullUser) => {
   }
 })
 </script>
+<style>
+.linkify-tos a {
+  text-decoration: underline;
+}
+</style>

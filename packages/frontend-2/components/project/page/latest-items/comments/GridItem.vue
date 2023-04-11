@@ -16,6 +16,7 @@
       <div class="flex flex-col w-full">
         <div class="flex items-center w-full px-2">
           <UserAvatarGroup
+            v-if="!thread.archived"
             v-tippy="
               `${thread.author.name} ${
                 allAvatars.length !== 1
@@ -26,6 +27,7 @@
             :users="allAvatars"
             :max-count="4"
           />
+          <CheckCircleIcon v-else class="w-8 h-8 text-primary" />
         </div>
         <div
           class="mt-2 p-2 transition-all bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm rounded-t-lg dark:group-hover:bg-neutral-800 group-hover:bg-foundation"
@@ -52,6 +54,7 @@ import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewIm
 import { times } from 'lodash-es'
 import { AvatarUserType } from '~~/lib/user/composables/avatar'
 import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
+import { CheckCircleIcon } from '@heroicons/vue/24/solid'
 
 const props = defineProps<{
   thread: ProjectPageLatestItemsCommentItemFragment

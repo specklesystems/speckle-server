@@ -13,7 +13,7 @@
     <div
       class="flex flex-col space-y-2 md:space-y-0 md:flex-row md:justify-between md:items-center mb-4"
     >
-      <h1 class="block h4 font-bold">Models</h1>
+      <h1 class="block h4 font-bold">All Models</h1>
       <div
         class="flex flex-col space-y-2 md:space-y-0 md:flex-row md:items-center md:space-x-2"
       >
@@ -24,7 +24,6 @@
           placeholder="Search"
           class="bg-foundation shadow w-full md:w-60"
           :show-clear="search !== ''"
-          :disabled="disabled"
           size="lg"
           @change="($event) => updateSearchImmediately($event.value)"
           @update:model-value="updateDebouncedSearch"
@@ -33,26 +32,36 @@
           <FormSelectUsers
             v-model="finalSelectedMembers"
             :users="team"
-            :disabled="disabled"
             multiple
-            search
             selector-placeholder="All members"
             label="Filter by members"
-            class="grow shrink w-[140px] lg:w-56"
+            class="grow shrink w-[120px] lg:w-44"
+            clearable
           />
           <FormSelectSourceApps
             v-model="finalSelectedApps"
             :items="availableSourceApps"
-            :disabled="disabled"
             multiple
             selector-placeholder="All sources"
             label="Filter by sources"
             class="grow shrink w-[120px] lg:w-44"
+            clearable
           />
           <LayoutGridListToggle
             v-model="finalGridOrList"
             v-tippy="'Swap Grid/Card View'"
             class="shrink-0"
+          />
+          <FormButton
+            v-if="canContribute"
+            :icon-right="PlusIcon"
+            @click="showNewDialog = true"
+          >
+            New Model
+          </FormButton>
+          <ProjectPageModelsNewDialog
+            v-model:open="showNewDialog"
+            :project-id="project.id"
           />
         </div>
       </div>
@@ -69,6 +78,8 @@ import {
 } from '~~/lib/common/generated/gql/graphql'
 import { projectRoute, allProjectModelsRoute } from '~~/lib/common/helpers/route'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
+import { PlusIcon } from '@heroicons/vue/24/solid'
+import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 
 const emit = defineEmits<{
   (e: 'update:selected-members', val: FormUsersSelectItemFragment[]): void
@@ -82,6 +93,7 @@ graphql(`
     id
     name
     sourceApps
+    role
     team {
       user {
         ...FormUsersSelectItem
@@ -100,6 +112,9 @@ const props = defineProps<{
 }>()
 
 const search = ref('')
+
+const canContribute = computed(() => canModifyModels(props.project))
+const showNewDialog = ref(false)
 
 const debouncedSearch = computed({
   get: () => props.search,

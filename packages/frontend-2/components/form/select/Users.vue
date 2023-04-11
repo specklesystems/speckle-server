@@ -40,16 +40,16 @@
         </div>
       </template>
       <template v-else>
-        <div class="flex items-center">
+        <div class="flex items-center overflow-hidden">
           <UserAvatar
             :user="isArrayValue(value) ? value[0] : value"
             no-border
             class="mr-2"
             size="sm"
           />
-          <span class="truncate label label--light">
+          <!-- <span class="truncate label label--light min-w-0">
             {{ (isArrayValue(value) ? value[0] : value).name }}
-          </span>
+          </span> -->
         </div>
       </template>
     </template>

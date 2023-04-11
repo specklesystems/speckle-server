@@ -4,10 +4,10 @@
       <FormButton
         text
         size="xs"
-        :icon-right="showVisibilityOptions ? XMarkIcon : EllipsisVerticalIcon"
+        :icon-right="showVisibilityOptions ? ChevronUpIcon : ChevronDownIcon"
         @click="showVisibilityOptions = !showVisibilityOptions"
       >
-        Comment Visibility Options
+        Discussion Visibility Options
       </FormButton>
     </template>
     <div class="flex flex-col px-1">
@@ -64,8 +64,8 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import {
   CheckCircleIcon,
-  EllipsisVerticalIcon,
-  XMarkIcon
+  ChevronDownIcon,
+  ChevronUpIcon
 } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
 import {

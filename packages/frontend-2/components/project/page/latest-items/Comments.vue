@@ -51,6 +51,7 @@ graphql(`
     rawText
     createdAt
     updatedAt
+    archived
     repliesCount: replies(limit: 0) {
       totalCount
     }

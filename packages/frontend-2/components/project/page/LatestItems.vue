@@ -7,6 +7,7 @@
         class="flex flex-col items-start space-y-1 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between sm:space-x-2"
       >
         <NuxtLink
+          v-tippy="'View All'"
           class="flex items-center space-x-2 group hover:cursor-pointer"
           :to="seeAllUrl"
         >
@@ -15,11 +16,10 @@
           </h2>
 
           <div
-            class="text-foreground-2 text-xs flex items-center justify-center w-6 h-6 rounded-full p-2 bg-foundation group-hover:bg-primary group-hover:text-foreground-on-primary transition"
+            class="text-foreground-2 text-xs flex items-center justify-center group-hover:text-primary transition"
           >
             {{ count }}
           </div>
-          <div class="invisible group-hover:visible transition text-xs">view all</div>
         </NuxtLink>
       </div>
       <!-- Right heading (filters, grid/list toggle) -->

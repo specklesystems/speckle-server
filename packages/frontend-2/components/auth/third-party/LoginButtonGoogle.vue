@@ -1,9 +1,9 @@
 <template>
-  <AuthThirdPartyLoginButtonBase :to="to" no-vertical-padding class="dark:bg-[#4285F4]">
+  <AuthThirdPartyLoginButtonBase :to="to" no-vertical-padding>
     <img
       src="~/assets/images/auth/google_icon_w_bg.svg"
       alt="Google Sign In"
-      class="w-11 bg-[#ffffff]"
+      class="w-11"
     />
     <div>Google</div>
   </AuthThirdPartyLoginButtonBase>
