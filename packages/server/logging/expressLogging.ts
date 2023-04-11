@@ -65,7 +65,7 @@ export const LoggingExpressMiddleware = HttpLogger({
       return {
         statusCode: res.raw.statusCode,
         // Allowlist useful headers
-        headers: resRaw.headers
+        headers: resRaw.raw.headers
       }
     })
   }
