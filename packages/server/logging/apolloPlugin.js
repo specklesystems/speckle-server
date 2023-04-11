@@ -3,7 +3,6 @@
 const { Observability } = require('@speckle/shared')
 const Sentry = require('@sentry/node')
 const { ApolloError } = require('apollo-server-express')
-const { getLogger } = require('nodemailer/lib/shared')
 const prometheusClient = require('prom-client')
 
 const metricCallCount = new prometheusClient.Counter({
@@ -23,7 +22,8 @@ module.exports = {
         }
 
         let logger =
-          ctx.log || Observability.extendLoggerComponent(getLogger(), 'graphql')
+          ctx.log ||
+          Observability.extendLoggerComponent(Observability.getLogger(), 'graphql')
 
         const op = `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
         const name = `GQL ${ctx.operation.selectionSet.selections[0].name.value}`
@@ -51,7 +51,8 @@ module.exports = {
         if (!ctx.operation) return
 
         let logger =
-          ctx.log || Observability.extendLoggerComponent(getLogger(), 'graphql')
+          ctx.log ||
+          Observability.extendLoggerComponent(Observability.getLogger(), 'graphql')
 
         for (const err of ctx.errors) {
           if (err instanceof ApolloError) {
@@ -90,7 +91,8 @@ module.exports = {
       },
       willSendResponse(ctx) {
         const logger =
-          ctx.log || Observability.extendLoggerComponent(getLogger(), 'graphql')
+          ctx.log ||
+          Observability.extendLoggerComponent(Observability.getLogger(), 'graphql')
         logger.info('graphql response')
 
         if (ctx.request.transaction) {
