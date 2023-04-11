@@ -4,14 +4,13 @@ const {
   getUser,
   getUserByEmail,
   getUserRole,
-  updateUser,
   deleteUser,
   searchUsers,
-  getUserById,
   makeUserAdmin,
   unmakeUserAdmin,
   archiveUser
 } = require('../../services/users')
+const { updateUserAndNotify } = require('@/modules/core/services/users/management')
 const { saveActivity } = require('@/modules/activitystream/services')
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { validateServerRole, validateScopes } = require(`@/modules/shared`)
@@ -133,21 +132,7 @@ module.exports = {
   Mutation: {
     async userUpdate(parent, args, context) {
       await validateServerRole(context, 'server:user')
-
-      const oldValue = await getUserById({ userId: context.userId })
-
-      await updateUser(context.userId, args.user)
-
-      await saveActivity({
-        streamId: null,
-        resourceType: 'user',
-        resourceId: context.userId,
-        actionType: ActionTypes.User.Update,
-        userId: context.userId,
-        info: { old: oldValue, new: args.user },
-        message: 'User updated'
-      })
-
+      await updateUserAndNotify(context.userId, args.user)
       return true
     },
 
@@ -204,19 +189,7 @@ module.exports = {
       return await markOnboardingComplete(ctx.userId || '')
     },
     async update(_parent, args, context) {
-      const oldValue = await getUserById({ userId: context.userId })
-      const newUser = await updateUser(context.userId, args.user)
-
-      await saveActivity({
-        streamId: null,
-        resourceType: 'user',
-        resourceId: context.userId,
-        actionType: ActionTypes.User.Update,
-        userId: context.userId,
-        info: { old: oldValue, new: args.user },
-        message: 'User updated'
-      })
-
+      const newUser = await updateUserAndNotify(context.userId, args.user)
       return newUser
     }
   }

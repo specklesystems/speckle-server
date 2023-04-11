@@ -3,6 +3,7 @@ import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { isArray } from 'lodash'
 import { metaHelpers } from '@/modules/core/helpers/meta'
+import { UserValidationError } from '@/modules/core/errors/user'
 
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**
@@ -88,4 +89,28 @@ export async function markOnboardingComplete(userId: string) {
   const newMeta = await meta.set(userId, 'isOnboardingFinished', true)
 
   return !!newMeta.value
+}
+
+const cleanInputRecord = (
+  update: Partial<UserRecord & { password?: string }>
+): Partial<UserRecord> => {
+  delete update.id
+  delete update.passwordDigest
+  delete update.password
+  delete update.email
+  return update
+}
+
+const validateInputRecord = (input: Partial<UserRecord>) => {
+  if ((input.avatar?.length || 0) > 524288) {
+    throw new UserValidationError('User avatar is too big, please try a smaller one')
+  }
+}
+
+export async function updateUser(userId: string, update: Partial<UserRecord>) {
+  update = cleanInputRecord(update)
+  validateInputRecord(update)
+
+  const [newUser] = await Users.knex().where(Users.col.id, userId).update(update, '*')
+  return newUser as Nullable<UserRecord>
 }

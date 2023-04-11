@@ -84,7 +84,7 @@
       <FormButton color="secondary" size="sm" @click="$emit('cancel')">
         Cancel
       </FormButton>
-      <FormButton size="sm" @click="onSave">Save</FormButton>
+      <FormButton size="sm" :disabled="loading" @click="onSave">Save</FormButton>
     </div>
   </div>
 </template>
@@ -103,6 +103,7 @@ import 'vue-advanced-cropper/dist/style.css'
 import { graphql } from '~~/lib/common/generated/gql'
 import { UserAvatarEditor_UserFragment } from '~~/lib/common/generated/gql/graphql'
 import { UploadableFileItem } from '~~/lib/form/composables/fileUpload'
+import { useUpdateUserProfile } from '~~/lib/user/composables/management'
 
 /**
  * Always try to lazy load this, as it's quite heavy
@@ -123,6 +124,8 @@ const emit = defineEmits<{
 const props = defineProps<{
   user: UserAvatarEditor_UserFragment
 }>()
+
+const { mutate, loading } = useUpdateUserProfile()
 
 const cropper = ref(
   null as Nullable<{
@@ -156,6 +159,15 @@ const getDashedBorderClasses = (isDraggingFiles: boolean) => {
   return 'border-outline-2'
 }
 
+const saveChanges = async (newUrl: Nullable<string>) => {
+  if (props.user.avatar === newUrl) return
+  if (loading.value) return
+
+  await mutate({
+    avatar: newUrl
+  })
+}
+
 const rotateLeft = () => cropper.value?.rotate(-90)
 const rotateRight = () => cropper.value?.rotate(90)
 const flipHorizontal = () => cropper.value?.flip(1, 0)
@@ -166,9 +178,10 @@ const onRemove = () => {
   selectedUpload.value = null
   activeImageUrl.value = null
 }
-const onSave = () => {
+const onSave = async () => {
   const newUrl = cropper.value?.getResult().canvas.toDataURL() || null
   emit('save', newUrl)
+  await saveChanges(newUrl)
 }
 
 onUnmounted(() => {
