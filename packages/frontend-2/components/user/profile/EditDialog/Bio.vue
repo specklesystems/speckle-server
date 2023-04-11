@@ -16,6 +16,8 @@
         show-label
         show-required
         :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
+        :disabled="loading"
+        @change="save"
       />
       <FormTextInput
         v-model="company"
@@ -25,13 +27,18 @@
         :custom-icon="BriefcaseIcon"
         show-label
         :rules="[isStringOfLength({ maxLength: 512 })]"
+        :disabled="loading"
+        @change="save"
       />
       <FormTextArea
+        v-model="bio"
         name="bio"
         label="Bio"
         show-label
         placeholder="Tell everyone a little bit about yourself!"
         :rules="[isStringOfLength({ maxLength: 2048 })]"
+        :disabled="loading"
+        @change="save"
       />
     </div>
   </div>
@@ -39,9 +46,14 @@
 <script setup lang="ts">
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { UserIcon, BriefcaseIcon } from '@heroicons/vue/24/solid'
+import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
-import { UserProfileEditDialogBio_UserFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  UserProfileEditDialogBio_UserFragment,
+  UserUpdateInput
+} from '~~/lib/common/generated/gql/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+import { useUpdateUserProfile } from '~~/lib/user/composables/management'
 
 graphql(`
   fragment UserProfileEditDialogBio_User on User {
@@ -57,9 +69,22 @@ const props = defineProps<{
   user: UserProfileEditDialogBio_UserFragment
 }>()
 
+const { mutate, loading } = useUpdateUserProfile()
+
 const name = ref('')
 const company = ref('')
 const bio = ref('')
+
+const save = async () => {
+  const input: UserUpdateInput = {}
+  if (name.value !== props.user.name) input.name = name.value
+  if (company.value !== props.user.company) input.company = company.value
+  if (bio.value !== props.user.bio) input.bio = bio.value
+  if (!Object.values(input).length) return
+
+  await mutate(input)
+}
+const debouncedSave = debounce(save, 500)
 
 watch(
   () => props.user,
@@ -70,4 +95,6 @@ watch(
   },
   { deep: true, immediate: true }
 )
+
+watch(() => [name.value, company.value, bio.value], debouncedSave)
 </script>

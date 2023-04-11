@@ -105,6 +105,10 @@ const validateInputRecord = (input: Partial<UserRecord>) => {
   if ((input.avatar?.length || 0) > 524288) {
     throw new UserValidationError('User avatar is too big, please try a smaller one')
   }
+
+  if (!Object.values(input).length) {
+    throw new UserValidationError('User update payload empty')
+  }
 }
 
 export async function updateUser(userId: string, update: Partial<UserRecord>) {
