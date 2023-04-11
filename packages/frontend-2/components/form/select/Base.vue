@@ -137,13 +137,13 @@
     <div
       v-if="clearable"
       :class="`flex flex-shrink-0 items-center justify-end bg-primary-muted hover:bg-primary hover:text-foreground-on-primary rounded-r-md overflow-hidden transition-all ${
-        showClear ? 'w-6' : 'w-0 px-0'
+        hasValueSelected ? 'w-6' : 'w-0 px-0'
       }`"
     >
       <button
         v-tippy="'Clear'"
         class="flex items-center justify-center w-full h-full text-center"
-        @click="wrappedValue = []"
+        @click="clearValue()"
       >
         <XMarkIcon class="w-3 h-3" />
       </button>
@@ -410,9 +410,15 @@ const wrappedValue = computed({
   }
 })
 
-const showClear = computed(() => {
-  return wrappedValue.value.length !== 0
+const hasValueSelected = computed(() => {
+  if (props.multiple) return wrappedValue.value.length !== 0
+  else return !!wrappedValue.value
 })
+
+const clearValue = () => {
+  if (props.multiple) wrappedValue.value = []
+  else wrappedValue.value = undefined
+}
 
 const finalItems = computed(() => {
   const searchVal = searchValue.value
