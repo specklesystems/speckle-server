@@ -31,7 +31,7 @@
     </div>
     <div
       v-if="isOwner"
-      class="border-l-2 border-danger pl-2 rounded transition hover:bg-red-500/10"
+      class="border-l-2 border-danger px-2 rounded transition hover:bg-red-500/10"
     >
       <Disclosure>
         <DisclosureButton class="pr-3 text-danger h-10 w-full flex items-center">

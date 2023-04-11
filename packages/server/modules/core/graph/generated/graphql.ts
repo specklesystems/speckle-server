@@ -2415,7 +2415,7 @@ export type UserTimelineArgs = {
 };
 
 export type UserDeleteInput = {
-  email?: InputMaybe<Scalars['String']>;
+  email: Scalars['String'];
 };
 
 export type UserProjectsFilter = {

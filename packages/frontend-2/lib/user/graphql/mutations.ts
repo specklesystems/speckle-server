@@ -19,3 +19,9 @@ export const updateNotificationPreferencesMutation = graphql(`
     userNotificationPreferencesUpdate(preferences: $input)
   }
 `)
+
+export const deleteAccountMutation = graphql(`
+  mutation DeleteAccount($input: UserDeleteInput!) {
+    userDelete(userConfirmation: $input)
+  }
+`)

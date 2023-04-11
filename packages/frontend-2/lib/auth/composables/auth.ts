@@ -260,14 +260,20 @@ export const useAuthManager = () => {
   /**
    * Log out
    */
-  const logout = async () => {
+  const logout = async (
+    options?: Partial<{
+      skipToast: boolean
+    }>
+  ) => {
     await saveNewToken()
 
-    triggerNotification({
-      type: ToastNotificationType.Info,
-      title: 'Goodbye!',
-      description: "You've been logged out"
-    })
+    if (!options?.skipToast) {
+      triggerNotification({
+        type: ToastNotificationType.Info,
+        title: 'Goodbye!',
+        description: "You've been logged out"
+      })
+    }
 
     postAuthRedirect.deleteState()
   }

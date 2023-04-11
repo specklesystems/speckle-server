@@ -180,5 +180,5 @@ input UserUpdateInput {
 }
 
 input UserDeleteInput {
-  email: String
+  email: String!
 }
