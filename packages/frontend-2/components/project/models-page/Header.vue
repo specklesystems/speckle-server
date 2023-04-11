@@ -52,6 +52,17 @@
             v-tippy="'Swap Grid/Card View'"
             class="shrink-0"
           />
+          <FormButton
+            v-if="canContribute"
+            :icon-right="PlusIcon"
+            @click="showNewDialog = true"
+          >
+            New Model
+          </FormButton>
+          <ProjectPageModelsNewDialog
+            v-model:open="showNewDialog"
+            :project-id="project.id"
+          />
         </div>
       </div>
     </div>
@@ -67,6 +78,8 @@ import {
 } from '~~/lib/common/generated/gql/graphql'
 import { projectRoute, allProjectModelsRoute } from '~~/lib/common/helpers/route'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
+import { PlusIcon } from '@heroicons/vue/24/solid'
+import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 
 const emit = defineEmits<{
   (e: 'update:selected-members', val: FormUsersSelectItemFragment[]): void
@@ -80,6 +93,7 @@ graphql(`
     id
     name
     sourceApps
+    role
     team {
       user {
         ...FormUsersSelectItem
@@ -98,6 +112,9 @@ const props = defineProps<{
 }>()
 
 const search = ref('')
+
+const canContribute = computed(() => canModifyModels(props.project))
+const showNewDialog = ref(false)
 
 const debouncedSearch = computed({
   get: () => props.search,
