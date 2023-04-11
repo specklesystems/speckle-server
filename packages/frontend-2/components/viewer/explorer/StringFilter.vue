@@ -1,13 +1,10 @@
 <template>
-  <div v-if="filter" class="px-3">
+  <div v-if="filter" class="pr-3 pl-2 flex flex-col space-y-2 pb-2">
     <ViewerExplorerStringFilterItem
       v-for="(vg, index) in filter.valueGroups"
       :key="index"
       :item="vg"
     />
-    <!-- <div v-for="(vg, index) in filter.valueGroups" :key="index">
-      <div class="text-sm">{{ vg.value }} | {{ vg.ids.length }}</div>
-    </div> -->
   </div>
 </template>
 <script setup lang="ts">

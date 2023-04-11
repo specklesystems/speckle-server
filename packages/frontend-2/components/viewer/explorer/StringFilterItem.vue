@@ -1,31 +1,40 @@
 <template>
-  <div
-    class="flex group justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2"
-  >
-    <div class="flex space-x-2 items-center flex-shrink truncate">
-      <span class="truncate">{{ item.value }}</span>
-      <span class="text-xs text-foreground-2">({{ item.ids.length }})</span>
+  <div>
+    <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
+    <div
+      :class="`flex group pl-1 justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 ${
+        isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'
+      }`"
+      @click="(e) => setSelection(e)"
+    >
+      <div class="flex space-x-2 items-center flex-shrink truncate">
+        <span class="truncate">{{ item.value.split('.').reverse()[0] }}</span>
+        <span class="text-xs text-foreground-2">({{ item.ids.length }})</span>
+      </div>
+      <!-- <div class="flex-grow"></div> -->
+      <div class="flex items-center flex-shrink-0">
+        <button
+          :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
+            isHidden ? 'opacity-100' : ''
+          }`"
+          @click.stop="hideOrShowObject"
+        >
+          <EyeIcon v-if="!isHidden" class="h-3 w-3" />
+          <EyeSlashIcon v-else class="h-3 w-3" />
+        </button>
+        <button
+          :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
+            isIsolated ? 'opacity-100' : ''
+          }`"
+          @click.stop="isolateOrUnisolateObject"
+        >
+          <FunnelIconOutline v-if="!isIsolated" class="h-3 w-3" />
+          <FunnelIcon v-else class="h-3 w-3" />
+        </button>
+      </div>
     </div>
-    <!-- <div class="flex-grow"></div> -->
-    <div class="flex items-center flex-shrink-0">
-      <button
-        :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
-          isHidden ? 'opacity-100' : ''
-        }`"
-        @click.stop="hideOrShowObject"
-      >
-        <EyeIcon v-if="!isHidden" class="h-3 w-3" />
-        <EyeSlashIcon v-else class="h-3 w-3" />
-      </button>
-      <button
-        :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
-          isIsolated ? 'opacity-100' : ''
-        }`"
-        @click.stop="isolateOrUnisolateObject"
-      >
-        <FunnelIconOutline v-if="!isIsolated" class="h-3 w-3" />
-        <FunnelIcon v-else class="h-3 w-3" />
-      </button>
+    <div v-if="false" class="text-xs text-foreground-2">
+      selected: {{ isSelected }}; isHidden {{ isHidden }}; isIsolated: {{ isIsolated }}
     </div>
   </div>
 </template>
@@ -44,7 +53,30 @@ const props = defineProps<{
   }
 }>()
 
-const { filters } = useInjectedViewerInterfaceState()
+const {
+  selection: {
+    addToSelection,
+    clearSelection,
+    removeFromSelection,
+    setSelectionFromObjectIds,
+    objects
+  },
+  filters
+} = useInjectedViewerInterfaceState()
+
+const isSelected = computed(() => {
+  const selObjsIds = objects.value.map((o) => o.id as string)
+
+  return selObjsIds.some((id) => props.item.ids.includes(id)) //containsAll(props.item.ids, selObjsIds)
+})
+
+const setSelection = (e: MouseEvent) => {
+  if (isHidden.value) return
+  if (isSelected.value) return clearSelection()
+  const isolatedObjectIds = isolatedObjects.value
+  const targets = props.item.ids.filter((id) => isolatedObjectIds?.includes(id))
+  setSelectionFromObjectIds(targets)
+}
 
 const hiddenObjects = computed(() => filters.current.value?.hiddenObjects)
 const isolatedObjects = computed(() => filters.current.value?.isolatedObjects)
@@ -62,22 +94,23 @@ const isIsolated = computed(() => {
 })
 
 const stateKey = ViewerSceneExplorerStateKey
+
 const hideOrShowObject = () => {
-  // const ids = getTargetObjectIds(rawSpeckleData)
-  // if (!isHidden.value) {
-  //   removeFromSelection(rawSpeckleData)
-  //   filters.hideObjects(ids, stateKey, true)
-  //   return
-  // }
-  // return filters.showObjects(ids, stateKey, true)
+  const ids = props.item.ids
+  if (!isHidden.value) {
+    // removeFromSelection(rawSpeckleData)
+    filters.hideObjects(ids, stateKey, true)
+    return
+  }
+  return filters.showObjects(ids, stateKey, true)
 }
 
 const isolateOrUnisolateObject = () => {
-  // const ids = getTargetObjectIds(rawSpeckleData)
-  // if (!isIsolated.value) {
-  //   filters.isolateObjects(ids, stateKey, true)
-  //   return
-  // }
-  // return filters.unIsolateObjects(ids, stateKey, true)
+  const ids = props.item.ids
+  if (!isIsolated.value) {
+    filters.isolateObjects(ids, stateKey, true)
+    return
+  }
+  return filters.unIsolateObjects(ids, stateKey, true)
 }
 </script>
