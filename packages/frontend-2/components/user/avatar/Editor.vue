@@ -163,9 +163,10 @@ const saveChanges = async (newUrl: Nullable<string>) => {
   if (props.user.avatar === newUrl) return
   if (loading.value) return
 
-  await mutate({
-    avatar: newUrl
+  const result = await mutate({
+    avatar: newUrl || ''
   })
+  return !!result?.data?.activeUserMutations.update
 }
 
 const rotateLeft = () => cropper.value?.rotate(-90)
@@ -180,8 +181,8 @@ const onRemove = () => {
 }
 const onSave = async () => {
   const newUrl = cropper.value?.getResult().canvas.toDataURL() || null
-  emit('save', newUrl)
-  await saveChanges(newUrl)
+  const success = await saveChanges(newUrl)
+  if (success) emit('save', newUrl)
 }
 
 onUnmounted(() => {

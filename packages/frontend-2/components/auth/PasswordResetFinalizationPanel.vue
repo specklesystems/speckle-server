@@ -31,11 +31,8 @@
   </LayoutPanel>
 </template>
 <script setup lang="ts">
-import { ensureError } from '@speckle/shared'
 import { useForm } from 'vee-validate'
 import { usePasswordReset } from '~~/lib/auth/composables/passwordReset'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { useNavigateToLogin } from '~~/lib/common/helpers/route'
 import { isRequired, isSameAs } from '~~/lib/common/helpers/validation'
 
 type FormValues = {
@@ -49,31 +46,12 @@ const props = defineProps<{
 
 const { handleSubmit } = useForm<FormValues>()
 const { finalize } = usePasswordReset()
-const { triggerNotification } = useGlobalToast()
-const goToLogin = useNavigateToLogin()
 
 const passwordRules = [isRequired]
 const passwordRepeatRules = [...passwordRules, isSameAs('password')]
 const loading = ref(false)
 
-const onSubmit = handleSubmit(async ({ password }) => {
-  try {
-    loading.value = true
-    await finalize(password, props.token)
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Password successfully changed',
-      description: `You can now log in with your new password`
-    })
-    goToLogin()
-  } catch (e) {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Password change failed',
-      description: `${ensureError(e).message}`
-    })
-  } finally {
-    loading.value = false
-  }
-})
+const onSubmit = handleSubmit(
+  async ({ password }) => await finalize(password, props.token)
+)
 </script>

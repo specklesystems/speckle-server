@@ -1,64 +1,27 @@
 <template>
   <LayoutDisclosure title="Change password" :icon="LockClosedIcon">
-    <form class="flex flex-col space-y-4" @submit="onChange">
-      <FormTextInput
-        name="oldPassword"
-        label="Old password"
-        size="sm"
-        full-width
-        validate-on-value-update
-        show-label
-        type="password"
-        :rules="[isRequired]"
-      />
-      <FormTextInput
-        name="newPassword"
-        label="New password"
-        size="sm"
-        full-width
-        validate-on-value-update
-        show-label
-        type="password"
-        :rules="[isRequired]"
-      />
-      <FormTextInput
-        name="newPasswordRepeat"
-        label="New password (repeated)"
-        size="sm"
-        full-width
-        validate-on-value-update
-        show-label
-        type="password"
-        :rules="[isRequired, isSameAs('newPassword', 'New password')]"
-      />
-      <div class="flex justify-end">
-        <FormButton submit size="sm" :disabled="loading">Change</FormButton>
+    <div class="flex flex-col space-y-4">
+      <div>
+        Press the button below to start the password reset process. Once pressed, you
+        will receive an e-mail with further instructions.
       </div>
-    </form>
+      <div class="flex justify-end">
+        <FormButton size="sm" @click="onClick">Reset password</FormButton>
+      </div>
+    </div>
   </LayoutDisclosure>
 </template>
 <script setup lang="ts">
 import { LockClosedIcon } from '@heroicons/vue/24/outline'
-import { useForm } from 'vee-validate'
-import { graphql } from '~~/lib/common/generated/gql'
-import { isRequired, isSameAs } from '~~/lib/common/helpers/validation'
-import { useChangePassword } from '~~/lib/user/composables/management'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { usePasswordReset } from '~~/lib/auth/composables/passwordReset'
 
-graphql(`
-  fragment UserProfileEditDialogDeleteAccount_User on User {
-    id
-    email
-  }
-`)
+const { activeUser } = useActiveUser()
+const { sendResetEmail } = usePasswordReset()
 
-const { handleSubmit } = useForm<{
-  oldPassword: string
-  newPassword: string
-  newPasswordRepeat: string
-}>()
-const { mutate, loading } = useChangePassword()
-
-const onChange = handleSubmit(async (values) => {
-  await mutate(values)
-})
+const onClick = async () => {
+  const email = activeUser.value?.email
+  if (!email) return
+  await sendResetEmail(email)
+}
 </script>

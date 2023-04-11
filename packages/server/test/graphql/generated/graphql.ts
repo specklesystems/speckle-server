@@ -21,17 +21,10 @@ export type Scalars = {
 
 export type ActiveUserMutations = {
   __typename?: 'ActiveUserMutations';
-  /** Change your password */
-  changePassword: Scalars['Boolean'];
   /** Mark onboarding as complete */
   finishOnboarding: Scalars['Boolean'];
   /** Edit a user's profile */
   update: User;
-};
-
-
-export type ActiveUserMutationsChangePasswordArgs = {
-  input: ChangePasswordInput;
 };
 
 
@@ -202,11 +195,6 @@ export type BranchUpdateInput = {
   id: Scalars['String'];
   name?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
-};
-
-export type ChangePasswordInput = {
-  newPassword: Scalars['String'];
-  oldPassword: Scalars['String'];
 };
 
 export type Comment = {

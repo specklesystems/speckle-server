@@ -1,6 +1,11 @@
 <template>
   <div class="flex justify-center">
-    <LazyUserAvatarEditor v-if="editMode" :user="user" @cancel="editMode = false" />
+    <LazyUserAvatarEditor
+      v-if="editMode"
+      :user="user"
+      @cancel="editMode = false"
+      @save="editMode = false"
+    />
     <div v-else class="relative group">
       <UserAvatar :user="user" size="editable" />
       <div
