@@ -9,4 +9,8 @@ const mixpanel = useMixpanel()
 onMounted(() => {
   mixpanel.track('Visit Log In')
 })
+
+definePageMeta({
+  layout: 'login-or-register'
+})
 </script>

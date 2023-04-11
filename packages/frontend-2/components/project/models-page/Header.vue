@@ -13,7 +13,7 @@
     <div
       class="flex flex-col space-y-2 md:space-y-0 md:flex-row md:justify-between md:items-center mb-4"
     >
-      <h1 class="block h4 font-bold">Models</h1>
+      <h1 class="block h4 font-bold">All Models</h1>
       <div
         class="flex flex-col space-y-2 md:space-y-0 md:flex-row md:items-center md:space-x-2"
       >
@@ -24,7 +24,6 @@
           placeholder="Search"
           class="bg-foundation shadow w-full md:w-60"
           :show-clear="search !== ''"
-          :disabled="disabled"
           size="lg"
           @change="($event) => updateSearchImmediately($event.value)"
           @update:model-value="updateDebouncedSearch"
@@ -33,21 +32,20 @@
           <FormSelectUsers
             v-model="finalSelectedMembers"
             :users="team"
-            :disabled="disabled"
             multiple
-            search
             selector-placeholder="All members"
             label="Filter by members"
-            class="grow shrink w-[140px] lg:w-56"
+            class="grow shrink w-[120px] lg:w-44"
+            clearable
           />
           <FormSelectSourceApps
             v-model="finalSelectedApps"
             :items="availableSourceApps"
-            :disabled="disabled"
             multiple
             selector-placeholder="All sources"
             label="Filter by sources"
             class="grow shrink w-[120px] lg:w-44"
+            clearable
           />
           <LayoutGridListToggle
             v-model="finalGridOrList"

@@ -46,10 +46,10 @@
         <LayoutGridListToggle v-model="gridOrList" v-tippy="'Swap Grid/Card View'" />
         <FormButton
           v-if="canContribute"
-          :icon-left="PlusIcon"
+          :icon-right="PlusIcon"
           @click="showNewDialog = true"
         >
-          New
+          New Model
         </FormButton>
       </div>
     </template>

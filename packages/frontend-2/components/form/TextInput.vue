@@ -2,7 +2,7 @@
   <div :class="[fullWidth ? 'w-full' : '']">
     <label
       :for="name"
-      class="block label text-foreground"
+      class="block label text-foreground-2 mb-2"
       :class="{ 'sr-only': !showLabel }"
     >
       <span>{{ title }}</span>
@@ -42,8 +42,8 @@
         :aria-describedby="helpTipId"
         role="textbox"
         v-bind="$attrs"
-        @focusin="textInputGlobalFocus = true"
-        @focusout="textInputGlobalFocus = false"
+        @focusin=";(textInputGlobalFocus = true), $emit('focusin')"
+        @focusout=";(textInputGlobalFocus = false), $emit('focusout')"
         @change="$emit('change', { event: $event, value })"
         @input="$emit('input', { event: $event, value })"
       />
@@ -237,6 +237,8 @@ const emit = defineEmits<{
   (e: 'change', val: { event?: Event; value: string }): void
   (e: 'input', val: { event?: Event; value: string }): void
   (e: 'clear'): void
+  (e: 'focusin'): void
+  (e: 'focusout'): void
 }>()
 
 const slots = useSlots()
