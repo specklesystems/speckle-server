@@ -44,16 +44,11 @@ export const LoggingExpressMiddleware = HttpLogger({
         method: req.raw.method,
         path: req.raw.url?.split('?')[0], // Remove query params which might be sensitive
         // Allowlist useful headers
-        headers: Object.keys(req.raw.headers)
-          .filter(
-            (key) => !['cookie', 'authorization'].includes(key.toLocaleLowerCase())
+        headers: Object.fromEntries(
+          Object.entries(req.raw.headers).filter(
+            ([key]) => !['cookie', 'authorization'].includes(key.toLocaleLowerCase())
           )
-          .reduce((obj, key) => {
-            return {
-              ...obj,
-              [key]: req.raw.headers[key]
-            }
-          }, {})
+        )
       }
     }),
     res: pino.stdSerializers.wrapResponseSerializer((res) => {
