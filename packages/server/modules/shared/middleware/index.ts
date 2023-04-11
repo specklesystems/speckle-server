@@ -19,6 +19,8 @@ import {
 import { getUser } from '@/modules/core/repositories/users'
 import { resolveMixpanelUserId } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
+import { Observability } from '@speckle/shared'
+import { pino } from 'pino'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -104,6 +106,8 @@ export function addLoadersToCtx(ctx: AuthContext): GraphQLContext {
   return { ...ctx, loaders }
 }
 
+type ApolloContext = AuthContext & { log?: pino.Logger }
+
 /**
  * Build context for GQL operations
  */
@@ -114,9 +118,14 @@ export async function buildContext({
   req: MaybeNullOrUndefined<Request>
   token: Nullable<string>
 }): Promise<GraphQLContext> {
-  const ctx =
+  const ctx: ApolloContext =
     req?.context ||
     (await createAuthContextFromToken(token ?? getTokenFromRequest(req)))
+
+  ctx.log = Observability.extendLoggerComponent(
+    req?.log || Observability.getLogger(),
+    'graphql'
+  )
 
   // Adding request data loaders
   return addLoadersToCtx(ctx)

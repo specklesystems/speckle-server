@@ -1,8 +1,8 @@
 /* istanbul ignore file */
-// const { logger } = require('@/logging/logging')
 const Sentry = require('@sentry/node')
 const { ApolloError } = require('apollo-server-express')
 const prometheusClient = require('prom-client')
+const { graphqlLogger } = require('@/logging/logging')
 
 const metricCallCount = new prometheusClient.Counter({
   name: 'speckle_server_apollo_calls',
@@ -20,13 +20,20 @@ module.exports = {
           return
         }
 
+        let logger = ctx.log || graphqlLogger
+
+        const op = `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
+        const name = `GQL ${ctx.operation.selectionSet.selections[0].name.value}`
+        logger = logger.child({ op, name })
+
         const transaction = Sentry.startTransaction({
-          op: `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`,
-          name: `GQL ${ctx.operation.selectionSet.selections[0].name.value}`
+          op,
+          name
         })
 
         try {
           const actionName = `${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
+          logger = logger.child({ actionName })
           metricCallCount.labels(actionName).inc()
           // logger.debug(actionName)
         } catch (e) {
@@ -35,18 +42,36 @@ module.exports = {
 
         Sentry.configureScope((scope) => scope.setSpan(transaction))
         ctx.request.transaction = transaction
+        ctx.log = logger
       },
       didEncounterErrors(ctx) {
         if (!ctx.operation) return
+
+        let logger = ctx.log || graphqlLogger
 
         for (const err of ctx.errors) {
           if (err instanceof ApolloError) {
             continue
           }
+
+          const kind = ctx.operation.operation
+          const query = ctx.request.query
+          const variables = ctx.request.variables
+
+          logger = logger.child({
+            kind,
+            query,
+            variables
+          })
+          if (err.path) {
+            logger = logger.child({ 'query-path': err.path.join(' > ') })
+          }
+          logger.error(err, 'graphql error')
+
           Sentry.withScope((scope) => {
-            scope.setTag('kind', ctx.operation.operation)
-            scope.setExtra('query', ctx.request.query)
-            scope.setExtra('variables', ctx.request.variables)
+            scope.setTag('kind', kind)
+            scope.setExtra('query', query)
+            scope.setExtra('variables', variables)
             if (err.path) {
               // We can also add the path as breadcrumb
               scope.addBreadcrumb({
@@ -60,6 +85,9 @@ module.exports = {
         }
       },
       willSendResponse(ctx) {
+        const logger = ctx.log || graphqlLogger
+        logger.info('graphql response')
+
         if (ctx.request.transaction) {
           ctx.request.transaction.finish()
         }
