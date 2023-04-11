@@ -1,9 +1,8 @@
 /* istanbul ignore file */
-// const { logger } = require('@/logging/logging')
-const { Observability } = require('@speckle/shared')
 const Sentry = require('@sentry/node')
 const { ApolloError } = require('apollo-server-express')
 const prometheusClient = require('prom-client')
+const { graphqlLogger } = require('@/logging/logging')
 
 const metricCallCount = new prometheusClient.Counter({
   name: 'speckle_server_apollo_calls',
@@ -21,9 +20,7 @@ module.exports = {
           return
         }
 
-        let logger =
-          ctx.log ||
-          Observability.extendLoggerComponent(Observability.getLogger(), 'graphql')
+        let logger = ctx.log || graphqlLogger
 
         const op = `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
         const name = `GQL ${ctx.operation.selectionSet.selections[0].name.value}`
@@ -50,9 +47,7 @@ module.exports = {
       didEncounterErrors(ctx) {
         if (!ctx.operation) return
 
-        let logger =
-          ctx.log ||
-          Observability.extendLoggerComponent(Observability.getLogger(), 'graphql')
+        let logger = ctx.log || graphqlLogger
 
         for (const err of ctx.errors) {
           if (err instanceof ApolloError) {
@@ -90,9 +85,7 @@ module.exports = {
         }
       },
       willSendResponse(ctx) {
-        const logger =
-          ctx.log ||
-          Observability.extendLoggerComponent(Observability.getLogger(), 'graphql')
+        const logger = ctx.log || graphqlLogger
         logger.info('graphql response')
 
         if (ctx.request.transaction) {
