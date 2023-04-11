@@ -19,7 +19,7 @@ import {
 import { getUser } from '@/modules/core/repositories/users'
 import { resolveMixpanelUserId } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
-import { extendLoggerComponent, getLogger } from '@/../shared/dist-esm/observability'
+import { Observability } from '@speckle/shared'
 import { pino } from 'pino'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
@@ -122,7 +122,10 @@ export async function buildContext({
     req?.context ||
     (await createAuthContextFromToken(token ?? getTokenFromRequest(req)))
 
-  ctx.log = extendLoggerComponent(req?.log || getLogger(), 'graphql')
+  ctx.log = Observability.extendLoggerComponent(
+    req?.log || Observability.getLogger(),
+    'graphql'
+  )
 
   // Adding request data loaders
   return addLoadersToCtx(ctx)
