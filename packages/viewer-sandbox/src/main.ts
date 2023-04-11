@@ -89,6 +89,16 @@ viewer.on(ViewerEvent.LoadComplete, () => {
   Object.assign(Sandbox.sceneParams.worldOrigin, Viewer.World.worldOrigin)
   sandbox.refresh()
 })
+viewer.on(ViewerEvent.UnloadComplete, () => {
+  Object.assign(Sandbox.sceneParams.worldSize, Viewer.World.worldSize)
+  Object.assign(Sandbox.sceneParams.worldOrigin, Viewer.World.worldOrigin)
+  sandbox.refresh()
+})
+viewer.on(ViewerEvent.UnloadAllComplete, () => {
+  Object.assign(Sandbox.sceneParams.worldSize, Viewer.World.worldSize)
+  Object.assign(Sandbox.sceneParams.worldOrigin, Viewer.World.worldOrigin)
+  sandbox.refresh()
+})
 
 viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
   if (!selectionInfo) {
@@ -273,4 +283,5 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/caec6d6676/commits/588c731104'
   // 'https://latest.speckle.dev/streams/f92e060177/commits/1fff853107'
   'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
+  // 'https://latest.speckle.dev/streams/bbdf474833/commits/83d0eb7e06 '
 )

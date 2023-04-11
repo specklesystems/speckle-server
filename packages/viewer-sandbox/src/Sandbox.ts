@@ -1,4 +1,4 @@
-import { Box3 } from '@speckle/viewer'
+import { Box3, Viewer, WorldTree } from '@speckle/viewer'
 import { Vector3 } from '@speckle/viewer'
 import {
   CanonicalView,
@@ -21,6 +21,7 @@ export default class Sandbox {
   private properties: PropertyInfo[]
   private selectionList: SelectionEvent[]
   private objectControls
+  private batchesFolder
 
   public static urlParams = {
     url: 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
@@ -122,12 +123,13 @@ export default class Sandbox {
       this.removeViewControls()
       this.addViewControls()
       this.properties = this.viewer.getObjectProperties()
-      url
+      Viewer.World.reduceWorld(WorldTree.getRenderTree(url).treeBounds)
     })
     viewer.on(ViewerEvent.UnloadAllComplete, (url: string) => {
       this.removeViewControls()
       this.addViewControls()
       this.properties = this.viewer.getObjectProperties()
+      Viewer.World.resetWorld()
       url
     })
     viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent) => {
@@ -143,9 +145,12 @@ export default class Sandbox {
   }
 
   private addBatches() {
+    if (this.batchesFolder) this.batchesFolder.dispose()
+
+    this.batchesFolder = this.tabs.pages[3].addFolder({ title: 'Batches' })
     const batchIds = this.viewer.getRenderer().getBatchIds()
     for (let k = 0; k < batchIds.length; k++) {
-      const button = this.tabs.pages[3].addButton({
+      const button = this.batchesFolder.addButton({
         title: this.viewer.getRenderer().getBatchSize(batchIds[k]).toString()
       })
       button.on('click', () => {
@@ -353,8 +358,7 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
-      this.viewer.getRenderer().compile()
+      console.warn(await this.viewer.screenshot())
     })
 
     const rotate = this.tabs.pages[0].addButton({

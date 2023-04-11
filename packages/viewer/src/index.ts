@@ -31,6 +31,7 @@ import { Utils } from './modules/Utils'
 import { ObjectLayers } from './modules/SpeckleRenderer'
 import { BatchObject } from './modules/batching/BatchObject'
 import { Box3, Vector3 } from 'three'
+import { WorldTree } from './modules/tree/WorldTree'
 
 export {
   Viewer,
@@ -41,7 +42,8 @@ export {
   World,
   BatchObject,
   Box3,
-  Vector3
+  Vector3,
+  WorldTree
 }
 
 export type {
