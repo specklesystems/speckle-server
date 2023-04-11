@@ -1,10 +1,7 @@
 import { addUserUpdatedActivity } from '@/modules/activitystream/services/userActivity'
 import { UserUpdateError, UserValidationError } from '@/modules/core/errors/user'
 import { PasswordTooShortError } from '@/modules/core/errors/userinput'
-import {
-  UserUpdateInput,
-  ChangePasswordInput
-} from '@/modules/core/graph/generated/graphql'
+import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import { UserRecord } from '@/modules/core/helpers/userHelper'
 import { getUser, updateUser } from '@/modules/core/repositories/users'
 import { isNullOrUndefined } from '@speckle/shared'
@@ -60,7 +57,10 @@ export async function createPasswordDigest(newPassword: string) {
   return await bcrypt.hash(newPassword, 10)
 }
 
-export async function changePassword(userId: string, input: ChangePasswordInput) {
+export async function changePassword(
+  userId: string,
+  input: { oldPassword: string; newPassword: string }
+) {
   const { oldPassword, newPassword } = input
   const user = await getUser(userId, { skipClean: true })
   if (!user) {
