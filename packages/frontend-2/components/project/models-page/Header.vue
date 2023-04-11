@@ -55,6 +55,7 @@
           <FormButton
             v-if="canContribute"
             :icon-right="PlusIcon"
+            class="hidden md:flex"
             @click="showNewDialog = true"
           >
             New Model
