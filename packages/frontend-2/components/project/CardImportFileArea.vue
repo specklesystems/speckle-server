@@ -1,5 +1,6 @@
 <template>
   <FormFileUploadZone
+    ref="uploadZone"
     v-slot="{ isDraggingFiles }"
     :disabled="isUploading"
     :size-limit="maxSizeInBytes"
@@ -47,6 +48,7 @@
 import { useFileImport } from '~~/lib/core/composables/fileImport'
 import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
+import { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
   projectId: string
@@ -66,6 +68,12 @@ const { errorMessage, progressBarClasses, progressBarStyle } =
     item: fileUpload
   })
 
+const uploadZone = ref(
+  null as Nullable<{
+    triggerPicker: () => void
+  }>
+)
+
 const isModelCardVariant = computed(() => !!props.modelName)
 
 const getDashedBorderClasses = (isDraggingFiles: boolean) => {
@@ -74,4 +82,12 @@ const getDashedBorderClasses = (isDraggingFiles: boolean) => {
 
   return isModelCardVariant.value ? 'border-blue-500/10' : 'border-outline-2'
 }
+
+const triggerPicker = () => {
+  uploadZone.value?.triggerPicker()
+}
+
+defineExpose({
+  triggerPicker
+})
 </script>

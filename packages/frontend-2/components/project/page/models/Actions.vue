@@ -43,12 +43,14 @@ graphql(`
 enum ActionTypes {
   Rename = 'rename',
   Delete = 'delete',
-  Share = 'share'
+  Share = 'share',
+  UploadVersion = 'upload-version'
 }
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
   (e: 'model-updated'): void
+  (e: 'upload-version'): void
 }>()
 
 const props = defineProps<{
@@ -73,7 +75,14 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
       disabled: isMain.value || !props.canEdit
     }
   ],
-  [{ title: 'Share', id: ActionTypes.Share }]
+  [{ title: 'Share', id: ActionTypes.Share }],
+  [
+    {
+      title: 'Upload new version',
+      id: ActionTypes.UploadVersion,
+      disabled: !props.canEdit
+    }
+  ]
 ])
 
 const isRenameDialogOpen = computed({
@@ -95,6 +104,9 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       break
     case ActionTypes.Share:
       copyModelLink(props.projectId, props.model.id)
+      break
+    case ActionTypes.UploadVersion:
+      emit('upload-version')
       break
   }
 }

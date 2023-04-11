@@ -43,7 +43,7 @@ import {
 } from '~~/lib/projects/graphql/mutations'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
-import { isUndefined } from 'lodash-es'
+import { isUndefined, uniqBy } from 'lodash-es'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 
 /**
@@ -583,7 +583,7 @@ export function useProjectPendingVersionUpdateTracking(
           if (fieldName !== 'pendingImportedVersions') return
           const currentVersions = (value || []).slice()
           currentVersions.push(ref('FileUpload', event.id))
-          return currentVersions
+          return uniqBy(currentVersions, (v) => v.__ref)
         }
       )
     } else if (event.type === ProjectPendingVersionsUpdatedMessageType.Updated) {
