@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 // const { logger } = require('@/logging/logging')
-const { extendLoggerComponent } = require('@/../shared/dist-esm/observability')
+const { Observability } = require('@speckle/shared')
 const Sentry = require('@sentry/node')
 const { ApolloError } = require('apollo-server-express')
 const { getLogger } = require('nodemailer/lib/shared')
@@ -22,7 +22,8 @@ module.exports = {
           return
         }
 
-        let logger = ctx.log || extendLoggerComponent(getLogger(), 'graphql')
+        let logger =
+          ctx.log || Observability.extendLoggerComponent(getLogger(), 'graphql')
 
         const op = `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
         const name = `GQL ${ctx.operation.selectionSet.selections[0].name.value}`
@@ -49,7 +50,8 @@ module.exports = {
       didEncounterErrors(ctx) {
         if (!ctx.operation) return
 
-        let logger = ctx.log || extendLoggerComponent(getLogger(), 'graphql')
+        let logger =
+          ctx.log || Observability.extendLoggerComponent(getLogger(), 'graphql')
 
         for (const err of ctx.errors) {
           if (err instanceof ApolloError) {
@@ -87,7 +89,8 @@ module.exports = {
         }
       },
       willSendResponse(ctx) {
-        const logger = ctx.log || extendLoggerComponent(getLogger(), 'graphql')
+        const logger =
+          ctx.log || Observability.extendLoggerComponent(getLogger(), 'graphql')
         logger.info('graphql response')
 
         if (ctx.request.transaction) {
