@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /* istanbul ignore file */
 const Sentry = require('@sentry/node')
 const { ApolloError } = require('apollo-server-express')
@@ -24,7 +25,17 @@ module.exports = {
 
         const op = `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
         const name = `GQL ${ctx.operation.selectionSet.selections[0].name.value}`
-        logger = logger.child({ op, name })
+        const kind = ctx.operation.operation
+        const query = ctx.request.query
+        const variables = ctx.request.variables
+
+        logger = logger.child({
+          graphql_operation_kind: kind,
+          graphql_query: query,
+          graphql_variables: variables,
+          graphql_operation_value: op,
+          grqphql_operation_name: name
+        })
 
         const transaction = Sentry.startTransaction({
           op,
@@ -58,11 +69,6 @@ module.exports = {
           const query = ctx.request.query
           const variables = ctx.request.variables
 
-          logger = logger.child({
-            kind,
-            query,
-            variables
-          })
           if (err.path) {
             logger = logger.child({ 'query-path': err.path.join(' > ') })
           }
