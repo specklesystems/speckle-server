@@ -8,7 +8,9 @@
       @click="setSelection()"
     >
       <div class="flex space-x-2 items-center flex-shrink truncate">
-        <span class="truncate">{{ item.value.split('.').reverse()[0] }}</span>
+        <span class="truncate">
+          {{ item.value.split('.').reverse()[0] || item.value || 'No Name' }}
+        </span>
         <span class="text-xs text-foreground-2">({{ item.ids.length }})</span>
       </div>
       <!-- <div class="flex-grow"></div> -->

@@ -3,7 +3,7 @@
     <div
       class="bg-foundation-2 sticky top-0 z-50 flex h-10 items-center justify-between rounded-t-lg px-2 shadow-md"
     >
-      <div class="flex items-center"><slot name="actions"></slot></div>
+      <div class="flex items-center w-full"><slot name="actions"></slot></div>
       <div v-if="!hideClose">
         <FormButton size="sm" text @click="$emit('close')">
           <XMarkIcon class="h-3 w-3" />
