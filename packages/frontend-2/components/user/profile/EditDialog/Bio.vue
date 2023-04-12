@@ -73,6 +73,7 @@ const company = ref('')
 const bio = ref('')
 
 const save = async () => {
+  debouncedSave.cancel()
   const input: UserUpdateInput = {}
   if (name.value !== props.user.name) input.name = name.value
   if (company.value !== props.user.company) input.company = company.value

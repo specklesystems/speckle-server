@@ -22,7 +22,26 @@ export function useUpdateUserProfile() {
 
   return {
     mutate: async (input: UserUpdateInput) => {
-      const result = await mutate({ input }).catch(convertThrowIntoFetchResult)
+      const result = await mutate(
+        { input },
+        {
+          update: (cache, res) => {
+            const update = res.data?.activeUserMutations.update
+            if (!update) return
+
+            // Updated LimitedUser as well
+            cache.modify({
+              id: getCacheId('LimitedUser', update.id),
+              fields: {
+                name: () => update.name,
+                bio: () => update.bio,
+                company: () => update.company,
+                avatar: () => update.avatar
+              }
+            })
+          }
+        }
+      ).catch(convertThrowIntoFetchResult)
 
       if (result?.data?.activeUserMutations.update.id) {
         triggerNotification({

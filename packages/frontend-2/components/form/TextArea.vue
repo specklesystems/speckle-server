@@ -13,7 +13,7 @@
         ref="inputElement"
         v-model="value"
         :name="name"
-        :class="[coreClasses, 'min-h-[4rem]']"
+        :class="[coreClasses, iconClasses, 'min-h-[4rem]']"
         :placeholder="placeholder"
         :disabled="disabled"
         :aria-invalid="errorMessage ? 'true' : 'false'"
@@ -114,6 +114,18 @@ const {
   props: toRefs(props),
   emit,
   inputEl: inputElement
+})
+
+const iconClasses = computed(() => {
+  const classParts: string[] = []
+
+  if (props.showClear && errorMessage.value) {
+    classParts.push('pr-12')
+  } else if (props.showClear || errorMessage.value) {
+    classParts.push('pr-8')
+  }
+
+  return classParts.join(' ')
 })
 
 defineExpose({ focus })
