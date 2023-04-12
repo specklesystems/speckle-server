@@ -16,7 +16,7 @@ class DataTreeInternal implements DataTree {
 
   public constructor() {
     this.tree = new TreeModel()
-    this.root = this.tree.parse({ guid: 'MOTHERSHIP' })
+    this.root = this.tree.parse({ guid: WorldTree.ROOT_ID })
   }
   public findAll(predicate: ObjectPredicate): SpeckleObject[] {
     return this.root

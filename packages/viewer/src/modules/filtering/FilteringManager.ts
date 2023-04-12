@@ -182,7 +182,7 @@ export class FilteringManager {
   }
 
   private isolationWalk(node: TreeNode): boolean {
-    if (!node.model.atomic || node.model.id === 'MOTHERSHIP') return true
+    if (!node.model.atomic || this.WTI.isRoot(node)) return true
     const rvs = this.RTI.getRenderViewsForNode(node, node)
     if (this.VisibilityState.ids.indexOf(node.model.raw.id) === -1) {
       this.VisibilityState.rvs.push(...rvs)
@@ -225,8 +225,7 @@ export class FilteringManager {
     const colorGroups: ValueGroupColorItemNumericProps[] = []
 
     this.WTI.walk((node: TreeNode) => {
-      if (!node.model.atomic || node.model.id === 'MOTHERSHIP' || node.model.root)
-        return true
+      if (!node.model.atomic || this.WTI.isRoot(node)) return true
       const rvs = this.RTI.getRenderViewsForNode(node, node)
       const idx = matchingIds.indexOf(node.model.raw.id)
       if (idx === -1) {
@@ -268,7 +267,7 @@ export class FilteringManager {
     // windows (family instances) inside walls get the same color as the walls, even though
     // they are identified as a different category.
     this.WTI.walk((node: TreeNode) => {
-      if (!node.model.atomic || node.model.id === 'MOTHERSHIP') {
+      if (!node.model.atomic || this.WTI.isRoot(node)) {
         return true
       }
       const vg = valueGroupColors.find((v) => v.ids.indexOf(node.model.raw.id) !== -1)

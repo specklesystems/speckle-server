@@ -15,18 +15,13 @@ export interface NodeData {
   children: TreeNode[]
   nestedNodes: TreeNode[]
   atomic: boolean
-  /**
-   * Keeps track wether this the root commit object or not.
-   * TODO: Ask Alex wether this is somehow avoidable.
-   */
-  root: boolean
   renderView?: NodeRenderView
 }
 
 export class WorldTree {
   private renderTreeInstances: { [id: string]: RenderTree } = {}
   private readonly supressWarnings = true
-  private static readonly ROOT_ID = 'ROOT'
+  public static readonly ROOT_ID = 'ROOT'
 
   public constructor() {
     this.tree = new TreeModel()
@@ -63,6 +58,10 @@ export class WorldTree {
 
   public get root(): TreeNode {
     return this._root
+  }
+
+  public isRoot(node: TreeNode) {
+    return node === this._root
   }
 
   public parse(model) {
