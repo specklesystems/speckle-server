@@ -43,6 +43,10 @@
         :stencil-props="{
           aspectRatio: 1 / 1
         }"
+        :canvas="{
+          width: 250,
+          height: 250
+        }"
       />
       <FormFileUploadZone
         ref="uploadZone"
@@ -180,7 +184,7 @@ const onRemove = () => {
   activeImageUrl.value = null
 }
 const onSave = async () => {
-  const newUrl = cropper.value?.getResult().canvas.toDataURL() || null
+  const newUrl = cropper.value?.getResult().canvas.toDataURL('image/jpeg', 0.85) || null
   const success = await saveChanges(newUrl)
   if (success) emit('save', newUrl)
 }
