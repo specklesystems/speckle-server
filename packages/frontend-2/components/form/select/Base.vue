@@ -1,5 +1,5 @@
 <template>
-  <div class="flex w-full max-w-full">
+  <div>
     <Listbox
       v-model="wrappedValue"
       :name="name"
@@ -7,7 +7,6 @@
       :by="by"
       :disabled="isDisabled"
       as="div"
-      class="flex-1"
     >
       <ListboxLabel
         class="block label text-foreground"
@@ -15,7 +14,8 @@
       >
         {{ label }}
       </ListboxLabel>
-      <div :class="['relative', showLabel ? 'mt-1' : '']">
+      <div :class="buttonsWrapperClasses">
+        <!-- <div class="relative flex"> -->
         <ListboxButton v-slot="{ open }" :class="buttonClasses">
           <div class="flex items-center justify-between w-full">
             <div class="block truncate grow text-left">
@@ -46,13 +46,24 @@
             </div>
           </div>
         </ListboxButton>
+        <!-- </div> -->
+        <!-- Clear Button -->
+        <button
+          v-if="renderClearButton"
+          v-tippy="'Clear'"
+          :class="clearButtonClasses"
+          :disabled="disabled"
+          @click="clearValue()"
+        >
+          <XMarkIcon class="w-3 h-3" />
+        </button>
         <Transition
           leave-active-class="transition ease-in duration-100"
           leave-from-class="opacity-100"
           leave-to-class="opacity-0"
         >
           <ListboxOptions
-            class="absolute z-10 mt-1 w-full rounded-md bg-foundation-2 py-1 label label--light outline outline-2 outline-primary-muted focus:outline-none shadow"
+            class="absolute top-[100%] z-10 mt-1 w-full rounded-md bg-foundation-2 py-1 label label--light outline outline-2 outline-primary-muted focus:outline-none shadow"
             @focus="searchInput?.focus()"
           >
             <label v-if="hasSearch" class="flex flex-col mx-1 mb-1">
@@ -87,9 +98,6 @@
                 </slot>
               </div>
               <template v-if="!isAsyncSearchMode || !isAsyncLoading">
-                <!-- <ListboxOption>
-                  <div class="w-full">Clear</div>
-                </ListboxOption> -->
                 <ListboxOption
                   v-for="item in finalItems"
                   :key="itemKey(item)"
@@ -131,23 +139,6 @@
         </Transition>
       </div>
     </Listbox>
-    <!-- <div class="flex-shrink"> -->
-    <!-- Clear Button -->
-    <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-    <div
-      v-if="clearable"
-      :class="`flex flex-shrink-0 items-center justify-end bg-primary-muted hover:bg-primary hover:text-foreground-on-primary rounded-r-md overflow-hidden transition-all ${
-        hasValueSelected ? 'w-6' : 'w-0 px-0'
-      }`"
-    >
-      <button
-        v-tippy="'Clear'"
-        class="flex items-center justify-center w-full h-full text-center"
-        @click="clearValue()"
-      >
-        <XMarkIcon class="w-3 h-3" />
-      </button>
-    </div>
     <p
       v-if="helpTipId"
       :id="helpTipId"
@@ -350,22 +341,73 @@ const helpTipClasses = computed((): string =>
   error.value ? 'text-danger' : 'text-foreground-2'
 )
 
-const buttonClasses = computed(() => {
-  const classParts = [
-    'normal w-full rounded-md cursor-pointer transition',
-    'flex items-center'
-  ]
+const renderClearButton = computed(
+  () => props.buttonStyle !== 'simple' && props.clearable && !props.disabled
+)
+
+const buttonsWrapperClasses = computed(() => {
+  const classParts: string[] = ['relative flex group', props.showLabel ? 'mt-1' : '']
 
   if (props.buttonStyle !== 'simple') {
-    classParts.push('py-2 px-3 outline outline-2 outline-primary-muted hover:shadow ')
+    classParts.push('hover:shadow rounded-md')
+    classParts.push('outline outline-2 outline-primary-muted')
+  }
+
+  return classParts.join(' ')
+})
+
+const commonButtonClasses = computed(() => {
+  const classParts: string[] = []
+
+  if (props.buttonStyle !== 'simple') {
+    // classParts.push('group-hover:shadow')
+    // classParts.push('outline outline-2 outline-primary-muted ')
     classParts.push(
-      isDisabled.value
-        ? 'bg-foundation-disabled text-foreground-disabled'
-        : 'bg-foundation text-foreground'
+      isDisabled.value ? 'bg-foundation-disabled text-foreground-disabled' : ''
     )
   }
 
   if (isDisabled.value) classParts.push('cursor-not-allowed')
+
+  return classParts.join(' ')
+})
+
+const clearButtonClasses = computed(() => {
+  const classParts = [
+    'relative z-[1]',
+    'flex items-center justify-center text-center shrink-0',
+    'rounded-r-md overflow-hidden transition-all',
+    hasValueSelected.value ? `w-6 ${commonButtonClasses.value}` : 'w-0'
+  ]
+
+  if (!isDisabled.value) {
+    classParts.push(
+      'bg-primary-muted hover:bg-primary hover:text-foreground-on-primary'
+    )
+  }
+
+  return classParts.join(' ')
+})
+
+const buttonClasses = computed(() => {
+  const classParts = [
+    'relative z-[2]',
+    'normal rounded-md cursor-pointer transition truncate flex-1',
+    'flex items-center',
+    commonButtonClasses.value
+  ]
+
+  if (props.buttonStyle !== 'simple') {
+    classParts.push('py-2 px-3')
+
+    if (!isDisabled.value) {
+      classParts.push('bg-foundation text-foreground')
+    }
+  }
+
+  if (renderClearButton.value && hasValueSelected.value) {
+    classParts.push('rounded-r-none')
+  }
 
   return classParts.join(' ')
 })

@@ -16,7 +16,6 @@
         show-label
         show-required
         :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
-        :disabled="loading"
         @change="save"
       />
       <FormTextInput
@@ -27,7 +26,6 @@
         :custom-icon="BriefcaseIcon"
         show-label
         :rules="[isStringOfLength({ maxLength: 512 })]"
-        :disabled="loading"
         @change="save"
       />
       <FormTextArea
@@ -37,7 +35,6 @@
         show-label
         placeholder="Tell everyone a little bit about yourself!"
         :rules="[isStringOfLength({ maxLength: 2048 })]"
-        :disabled="loading"
         @change="save"
       />
     </div>
@@ -69,7 +66,7 @@ const props = defineProps<{
   user: UserProfileEditDialogBio_UserFragment
 }>()
 
-const { mutate, loading } = useUpdateUserProfile()
+const { mutate } = useUpdateUserProfile()
 
 const name = ref('')
 const company = ref('')
@@ -84,7 +81,7 @@ const save = async () => {
 
   await mutate(input)
 }
-const debouncedSave = debounce(save, 500)
+const debouncedSave = debounce(save, 1000)
 
 watch(
   () => props.user,

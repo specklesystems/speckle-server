@@ -47,9 +47,9 @@
             class="mr-2"
             size="sm"
           />
-          <!-- <span class="truncate label label--light min-w-0">
+          <span class="truncate label label--light min-w-0">
             {{ (isArrayValue(value) ? value[0] : value).name }}
-          </span> -->
+          </span>
         </div>
       </template>
     </template>
