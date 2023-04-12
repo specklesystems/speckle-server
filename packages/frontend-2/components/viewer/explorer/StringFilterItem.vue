@@ -55,7 +55,7 @@ import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 
 import { containsAll } from '~~/lib/common/helpers/utils'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
-import { ViewerSceneExplorerStateKey } from '~~/lib/common/helpers/constants'
+// import { ViewerSceneExplorerStateKey } from '~~/lib/common/helpers/constants'
 
 const props = defineProps<{
   item: {
@@ -66,9 +66,9 @@ const props = defineProps<{
 
 const {
   selection: {
-    addToSelection,
+    // addToSelection,
     clearSelection,
-    removeFromSelection,
+    // removeFromSelection,
     setSelectionFromObjectIds,
     objects
   },
@@ -115,7 +115,7 @@ const isIsolated = computed(() => {
   // return containsAll(ids, isolatedObjects.value)
 })
 
-const stateKey = ViewerSceneExplorerStateKey
+// const stateKey = ViewerSceneExplorerStateKey
 
 const hideOrShowObject = () => {
   // const ids = props.item.ids

@@ -4,6 +4,7 @@ import {
   DefaultViewerParams,
   FilteringState,
   PropertyInfo,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   TreeNode
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
