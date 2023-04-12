@@ -297,7 +297,9 @@ const useAuthAppIdAndChallenge = () => {
 
   onMounted(() => {
     // Resolve challenge & appId from querystring or generate them
-    const queryChallenge = route.query.challenge as Optional<string>
+    const queryChallenge =
+      (route.query.challenge as Optional<string>) ||
+      SafeLocalStorage.get(LocalStorageKeys.AuthAppChallenge)
     const queryAppId = route.query.appId as Optional<string>
 
     appId.value = queryAppId || speckleWebAppId
