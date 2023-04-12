@@ -192,7 +192,7 @@ module.exports = {
    * @deprecated {Use validateUserPassword()}
    */
   async validatePasssword({ email, password }) {
-    const user = await getUserByEmail(email)
+    const user = await getUserByEmail(email, { skipClean: true })
     if (!user) return false
     return await validateUserPassword({
       password,

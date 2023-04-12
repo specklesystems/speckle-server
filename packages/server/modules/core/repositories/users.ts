@@ -67,10 +67,13 @@ export async function getUser(userId: string, params?: GetUserParams) {
 /**
  * Get user by e-mail address
  */
-export async function getUserByEmail(email: string) {
+export async function getUserByEmail(
+  email: string,
+  options?: Partial<{ skipClean: boolean }>
+) {
   const q = Users.knex<UserRecord[]>().whereRaw('lower(email) = lower(?)', [email])
   const user = await q.first()
-  return user ? sanitizeUserRecord(user) : null
+  return user ? (!options?.skipClean ? sanitizeUserRecord(user) : user) : null
 }
 
 /**
