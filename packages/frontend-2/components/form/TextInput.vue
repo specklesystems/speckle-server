@@ -1,10 +1,6 @@
 <template>
   <div :class="[fullWidth ? 'w-full' : '']">
-    <label
-      :for="name"
-      class="block label text-foreground-2 mb-2"
-      :class="{ 'sr-only': !showLabel }"
-    >
+    <label :for="name" :class="labelClasses">
       <span>{{ title }}</span>
     </label>
     <div class="relative">
@@ -255,7 +251,8 @@ const {
   hideHelpTip,
   errorMessage,
   clear,
-  focus
+  focus,
+  labelClasses
 } = useTextInputCore({
   props: toRefs(props),
   emit,
