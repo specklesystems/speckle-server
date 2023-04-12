@@ -24,7 +24,6 @@
   },
   "dependencies": {
     "@speckle/shared": "workspace:^",
-    "aws-sdk": "^2.1075.0",
     "bcrypt": "^5.0.1",
     "crypto-random-string": "^3.3.1",
     "knex": "^2.4.1",
