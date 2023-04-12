@@ -78,6 +78,10 @@
           You will be redirected automatically
         </span>
       </div>
+      <div v-else-if="app === null" class="space-x-2">
+        <span>Could not resolve app.</span>
+        <CommonTextLink :to="homeRoute">Go Home</CommonTextLink>
+      </div>
     </LayoutPanel>
   </div>
 </template>
@@ -91,6 +95,7 @@ import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 import { ChevronUpIcon } from '@heroicons/vue/20/solid'
 import { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { homeRoute } from '~~/lib/common/helpers/route'
 
 enum ChosenAction {
   Allow = 'allow',
@@ -98,7 +103,8 @@ enum ChosenAction {
 }
 
 definePageMeta({
-  middleware: 'auth'
+  middleware: 'auth',
+  name: 'authorize-app'
 })
 
 const {
