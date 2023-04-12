@@ -77,7 +77,7 @@ const props = withDefaults(
      * Unique ID for the input (must be unique page-wide)
      */
     name: string
-    showLabel?: string
+    showLabel?: boolean
     help?: string
     placeholder?: string
     label?: string

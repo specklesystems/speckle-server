@@ -20,15 +20,20 @@
           :upload="model"
           class="px-4 w-full"
         />
-        <PreviewImage v-else-if="previewUrl" :preview-url="previewUrl" />
         <ProjectPendingFileImportStatus
           v-else-if="pendingVersion"
           :upload="pendingVersion"
           type="subversion"
           class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
         />
-        <div v-else class="h-full w-full p-4">
+        <PreviewImage v-else-if="previewUrl" :preview-url="previewUrl" />
+        <div
+          v-if="!isPendingModelFragment(model)"
+          v-show="!previewUrl && !pendingVersion"
+          class="h-full w-full p-4"
+        >
           <ProjectCardImportFileArea
+            ref="importArea"
             :project-id="project.id"
             :model-name="model.name"
             class="h-full w-full"
@@ -78,6 +83,7 @@
             :project-id="project.id"
             :can-edit="canEdit"
             @click.stop.prevent
+            @upload-version="triggerVersionUpload"
           />
         </div>
       </div>
@@ -110,6 +116,7 @@ import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
+import { Nullable } from '@speckle/shared'
 
 graphql(`
   fragment ProjectPageModelsCardProject on Project {
@@ -138,6 +145,11 @@ const props = withDefaults(
   }
 )
 
+const importArea = ref(
+  null as Nullable<{
+    triggerPicker: () => void
+  }>
+)
 const showActionsMenu = ref(false)
 const hovered = ref(false)
 
@@ -183,7 +195,13 @@ const versionCount = computed(() =>
   isPendingModelFragment(props.model) ? 0 : props.model.versionCount.totalCount
 )
 
-const pendingVersion = computed(() =>
-  isPendingModelFragment(props.model) ? null : props.model.pendingImportedVersions[0]
-)
+const pendingVersion = computed(() => {
+  return isPendingModelFragment(props.model)
+    ? null
+    : props.model.pendingImportedVersions[0]
+})
+
+const triggerVersionUpload = () => {
+  importArea.value?.triggerPicker()
+}
 </script>
