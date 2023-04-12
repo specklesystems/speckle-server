@@ -20,7 +20,7 @@ module.exports = {
           return
         }
 
-        let logger = ctx.log || graphqlLogger
+        let logger = ctx.context.log || graphqlLogger
 
         const op = `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
         const name = `GQL ${ctx.operation.selectionSet.selections[0].name.value}`
@@ -42,12 +42,12 @@ module.exports = {
 
         Sentry.configureScope((scope) => scope.setSpan(transaction))
         ctx.request.transaction = transaction
-        ctx.log = logger
+        ctx.context.log = logger
       },
       didEncounterErrors(ctx) {
         if (!ctx.operation) return
 
-        let logger = ctx.log || graphqlLogger
+        let logger = ctx.context.log || graphqlLogger
 
         for (const err of ctx.errors) {
           if (err instanceof ApolloError) {
@@ -85,7 +85,7 @@ module.exports = {
         }
       },
       willSendResponse(ctx) {
-        const logger = ctx.log || graphqlLogger
+        const logger = ctx.context.log || graphqlLogger
         logger.info('graphql response')
 
         if (ctx.request.transaction) {
