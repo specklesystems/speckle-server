@@ -92,7 +92,7 @@ const relevantFilters = computed(() => {
       f.key.endsWith('.units') ||
       f.key.endsWith('.speckle_type') ||
       f.key.includes('.parameters.') ||
-      f.key.includes('level.') ||
+      // f.key.includes('level.') ||
       f.key.includes('renderMaterial') ||
       f.key.includes('.domain') ||
       f.key.includes('plane.') ||
