@@ -86,7 +86,7 @@ export class Viewer extends EventEmitter implements IViewer {
     if (params.showStats) {
       this.stats = Stats()
       this.container.appendChild(this.stats.dom)
-      this.stats.dom.style.position = '' // Mad CSS skills
+      this.stats.dom.style.position = 'relative' // Mad CSS skills
     }
     this.loaders = {}
     this.startupParams = params

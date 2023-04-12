@@ -81,8 +81,8 @@ export default class Batcher {
         materialHashes[i],
         batchType
       )
-      this.batches[batch.id] = batch
-      yield this.batches[batch.id]
+      if (batch) this.batches[batch.id] = batch
+      yield batch
       await pause()
     }
   }
@@ -96,6 +96,17 @@ export default class Batcher {
     let batch = renderViews.filter((value) => value.renderMaterialHash === materialHash)
     /** Prune any meshes with no geometry data */
     batch = batch.filter((value) => value.validGeometry)
+
+    if (!batch.length) {
+      /** This is for the case when all renderviews have invalid geometries, and it generally
+       * means there is something wrong with the stream
+       */
+      Logger.warn(
+        'All renderviews have invalid geometries. Skipping batch!',
+        renderViews
+      )
+      return null
+    }
 
     const geometryType = batchType !== undefined ? batchType : batch[0].geometryType
     let matRef = null

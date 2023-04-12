@@ -16,7 +16,6 @@ export default class Coverter {
   private activePromises: number
   private maxChildrenPromises: number
   private spoofIDs = true
-  private isRoot = true
   private tree: WorldTree
 
   private readonly NodeConverterMapping: {
@@ -103,10 +102,8 @@ export default class Coverter {
       id: !node ? objectURL : this.getNodeId(obj),
       raw: Object.assign({}, obj),
       atomic: true,
-      root: this.isRoot,
       children: []
     })
-    this.isRoot = false
 
     if (node === null) {
       this.tree.addSubtree(childNode)

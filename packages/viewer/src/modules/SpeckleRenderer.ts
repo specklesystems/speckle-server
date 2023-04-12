@@ -484,6 +484,8 @@ export default class SpeckleRenderer {
       priority
     )
     for await (const batch of generator) {
+      if (!batch) continue
+
       this.addBatch(batch, subtreeGroup)
       this.zoom()
       if (batch.geometryType === GeometryType.MESH) {
