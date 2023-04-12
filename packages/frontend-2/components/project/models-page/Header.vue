@@ -70,7 +70,6 @@
             v-if="canContribute"
             class="hidden sm:inline-flex"
             :icon-right="PlusIcon"
-            class="hidden md:flex"
             @click="showNewDialog = true"
           >
             New
