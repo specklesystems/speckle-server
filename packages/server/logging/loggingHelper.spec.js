@@ -28,19 +28,25 @@ describe('loggingHelper', () => {
       const result = filterSensitiveVariables(variables)
       expect(result).to.deep.equal({ nest1: {} })
     })
-    it('should filter deeply nested sensitive variables', () => {
+    it('should filter sensitive variables in tree structure', () => {
       const variables = {
         nest1: {
-          email: 'exampleValue',
-          emailaddress: 'exampleValue',
-          // eslint-disable-next-line camelcase
-          email_address: 'exampleValue',
-          emails: 'exampleValue',
-          notsensitive: 'exampleValue'
+          nest2: {
+            // eslint-disable-next-line camelcase
+            email_address: 'exampleValue',
+            emails: 'exampleValue',
+            notsensitive: 'exampleValue'
+          },
+          nest3: {
+            email: 'exampleValue',
+            emailaddress: 'exampleValue'
+          }
         }
       }
       const result = filterSensitiveVariables(variables)
-      expect(result).to.deep.equal({ nest1: { notsensitive: 'exampleValue' } })
+      expect(result).to.deep.equal({
+        nest1: { nest2: { notsensitive: 'exampleValue' }, nest3: {} }
+      })
     })
   })
 })
