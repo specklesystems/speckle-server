@@ -21,8 +21,8 @@
             Reset
           </FormButton>
         </div>
-
-        <div>
+        <!-- Disabling as something is wrong with colors -->
+        <!-- <div>
           <FormButton
             v-tippy="'Toggle coloring'"
             size="xs"
@@ -32,7 +32,7 @@
             <SparklesIconOutline v-if="!colors" class="w-3 h-3 text-primary" />
             <SparklesIcon v-else class="w-3 h-3 text-primary" />
           </FormButton>
-        </div>
+        </div> -->
       </div>
     </template>
     <div
@@ -41,16 +41,29 @@
       } transition-[height] border-b-2 border-primary-muted`"
     >
       <div class="sticky top-0">
-        <FormTextInput name="filter search" placeholder="Search" size="sm" />
+        <FormTextInput
+          v-model="searchString"
+          name="filter search"
+          placeholder="Search for a property"
+          size="sm"
+        />
       </div>
-      <div v-for="(filter, index) in stringFilters" :key="index" class="text-xs px-1">
+      <div
+        v-for="(filter, index) in stringFiltersLimited"
+        :key="index"
+        class="text-xs px-1"
+      >
         <button
           class="block w-full text-left hover:bg-primary-muted transition truncate rounded-md py-[1px]"
           @click=";(activeFilter = filter), (showAllFilters = false)"
         >
           {{ filter.key }}
-          <!-- , {{ filter.objectCount }} -->
         </button>
+      </div>
+      <div v-if="itemCount < stringFiltersSearched.length" class="mb-2">
+        <FormButton size="xs" text full-width @click="itemCount += 30">
+          View More ({{ stringFiltersSearched.length - itemCount }})
+        </FormButton>
       </div>
     </div>
     <div>
@@ -59,7 +72,9 @@
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ChevronDownIcon, ChevronUpIcon, SparklesIcon } from '@heroicons/vue/24/solid'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { SparklesIcon as SparklesIconOutline } from '@heroicons/vue/24/outline'
 import { PropertyInfo, StringPropertyInfo } from '@speckle/viewer'
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
@@ -102,6 +117,7 @@ const relevantFilters = computed(() => {
 const activeFilter = ref<StringPropertyInfo | null>(null)
 
 const colors = ref(false)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const toggleColors = () => {
   colors.value = !colors.value
 
@@ -117,9 +133,24 @@ const speckleTypeFilter = computed(
 const stringFilters = computed(
   () => relevantFilters.value.filter((f) => f.type === 'string') as StringPropertyInfo[]
 )
+
+const searchString = ref<string | undefined>(undefined)
+const stringFiltersSearched = computed(() => {
+  if (!searchString.value) return stringFilters.value
+  itemCount.value = 30 // nasty, but yolo - reset max limit on search change
+  return stringFilters.value.filter((f) =>
+    f.key.toLowerCase().includes((searchString.value as string).toLowerCase())
+  )
+})
+
+const itemCount = ref(30)
+const stringFiltersLimited = computed(() => {
+  return stringFiltersSearched.value.slice(0, itemCount.value)
+})
+
 // const numericFilters = computed(() => props.filters.filter((f) => f.type === 'number'))
 
-// Too lazy to follow up in here for now.
+// Too lazy to follow up in here for now, as i think we need a bit of a better strategy in connectors first :/
 const title = computed(() => {
   const currentFilterKey =
     activeFilter.value?.key || speckleTypeFilter.value?.key || 'Loading'

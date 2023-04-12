@@ -3,7 +3,9 @@
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <div
       :class="`flex group pl-1 justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 hover:bg-primary-muted hover:shadow-md transition-all ${
-        availableTargetIds.length === 0 ? 'text-foreground-2' : 'text-foreground'
+        availableTargetIds.length === 0
+          ? 'text-foreground-2 cursor-auto'
+          : 'text-foreground cursor-pointer'
       } ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}`"
       @click="setSelection()"
     >
@@ -11,9 +13,15 @@
         <span class="truncate">
           {{ item.value.split('.').reverse()[0] || item.value || 'No Name' }}
         </span>
-        <span class="text-xs text-foreground-2">({{ item.ids.length }})</span>
+        <span class="text-xs text-foreground-2">({{ availableTargetIds.length }})</span>
       </div>
-      <!-- <div class="flex-grow"></div> -->
+      <!-- 
+        Note: not allowing for hiding/isolation CURRENTLY as there is a larger change needed. 
+        Essentially, we need to have a two-state approach to visibility and isolation. 
+        One is set by the explorer, and the other one by the filters - this would allow for us to 
+        enable isolate this level, and from the remaining objects, isolate the doors only. 
+        Requires a larger rework of the viewer state composable & filtering methods.
+      -->
       <div v-if="false" class="flex items-center flex-shrink-0">
         <button
           :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
@@ -35,6 +43,7 @@
         </button>
       </div>
     </div>
+    <!-- Debugging info -->
     <!-- <div v-if="true" class="text-xs text-foreground-2">
       selected: {{ isSelected }}; isHidden {{ isHidden }}; isIsolated: {{ isIsolated }}
     </div> -->
