@@ -13,7 +13,14 @@ describe('loggingHelper', () => {
         notsensitive: 'exampleValue'
       }
       const result = filterSensitiveVariables(variables)
-      expect(result).to.deep.equal({ notsensitive: 'exampleValue' })
+      expect(result).to.deep.equal({
+        email: '[REDACTED]',
+        emailaddress: '[REDACTED]',
+        // eslint-disable-next-line camelcase
+        email_address: '[REDACTED]',
+        emails: '[REDACTED]',
+        notsensitive: 'exampleValue'
+      })
     })
     it('should filter nested sensitive variables', () => {
       const variables = {
@@ -26,7 +33,15 @@ describe('loggingHelper', () => {
         }
       }
       const result = filterSensitiveVariables(variables)
-      expect(result).to.deep.equal({ nest1: {} })
+      expect(result).to.deep.equal({
+        nest1: {
+          email: '[REDACTED]',
+          emailaddress: '[REDACTED]',
+          // eslint-disable-next-line camelcase
+          email_address: '[REDACTED]',
+          emails: '[REDACTED]'
+        }
+      })
     })
     it('should filter sensitive variables in tree structure', () => {
       const variables = {
@@ -45,7 +60,18 @@ describe('loggingHelper', () => {
       }
       const result = filterSensitiveVariables(variables)
       expect(result).to.deep.equal({
-        nest1: { nest2: { notsensitive: 'exampleValue' }, nest3: {} }
+        nest1: {
+          nest2: {
+            // eslint-disable-next-line camelcase
+            email_address: '[REDACTED]',
+            emails: '[REDACTED]',
+            notsensitive: 'exampleValue'
+          },
+          nest3: {
+            email: '[REDACTED]',
+            emailaddress: '[REDACTED]'
+          }
+        }
       })
     })
   })
