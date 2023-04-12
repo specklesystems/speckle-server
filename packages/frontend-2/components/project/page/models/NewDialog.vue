@@ -39,6 +39,12 @@ const emit = defineEmits<{
 const props = defineProps<{
   open: boolean
   projectId: string
+  /**
+   * If creating a nested model, specify the prefix of the parent model here as it will be prefixed
+   * to whatever the user enters.
+   * E.g. if creating a model under "a/b", then put "a/b" here
+   */
+  parentModelName?: string
 }>()
 
 const { handleSubmit } = useForm<{ name: string }>()
@@ -58,4 +64,13 @@ const onSubmit = handleSubmit(async ({ name }) => {
   openState.value = false
   newModelName.value = ''
 })
+
+watch(
+  () => props.open,
+  (isOpen, oldIsOpen) => {
+    if (isOpen && isOpen !== oldIsOpen) {
+      newModelName.value = props.parentModelName ? `${props.parentModelName}/` : ''
+    }
+  }
+)
 </script>

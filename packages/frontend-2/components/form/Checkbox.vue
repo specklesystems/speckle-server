@@ -115,7 +115,7 @@ const props = defineProps({
    * Checkbox group's value
    */
   modelValue: {
-    type: [String, Boolean] as PropType<ValueType>,
+    type: [String, Boolean] as PropType<ValueType | false>,
     default: undefined
   },
   /**
@@ -124,7 +124,7 @@ const props = defineProps({
    */
   value: {
     type: [String, Boolean] as PropType<Optional<string | true>>,
-    default: undefined
+    default: true
   },
   /**
    * HTML ID to use, must be globally unique. If not specified, a random ID will be generated. One is necessary to properly associate the label and checkbox.
@@ -155,7 +155,7 @@ const {
   validateOnMount: props.validateOnMount,
   type: 'checkbox',
   checkedValue: checkboxValue,
-  initialValue: props.modelValue
+  initialValue: props.modelValue || undefined
 })
 
 const onChange = (e: unknown) => {

@@ -138,6 +138,7 @@ export default {
   },
   methods: {
     async updateAvatar() {
+      console.log(this.imageData)
       try {
         await this.$apollo.mutate({
           mutation: gql`

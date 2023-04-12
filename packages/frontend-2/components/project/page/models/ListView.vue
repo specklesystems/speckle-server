@@ -7,6 +7,7 @@
         :can-contribute="canContribute"
         :is-search-result="isUsingSearch"
         @model-updated="onModelUpdated"
+        @create-submodel="onCreateSubmodel"
       />
     </div>
     <ProjectPageModelsNewModelStructureItem
@@ -25,6 +26,11 @@
     v-if="topLevelItems?.length && !disablePagination"
     :settings="{ identifier: infiniteLoaderId }"
     @infinite="infiniteLoad"
+  />
+  <ProjectPageModelsNewDialog
+    v-model:open="showNewDialog"
+    :project-id="project.id"
+    :parent-model-name="newSubmodelParent || undefined"
   />
 </template>
 <script setup lang="ts">
@@ -57,6 +63,15 @@ const props = defineProps<{
 }>()
 
 const infiniteLoadCacheBuster = ref(0)
+const newSubmodelParent = ref('')
+const showNewDialog = computed({
+  get: () => !!newSubmodelParent.value,
+  set: (newVal) => {
+    if (!newVal) {
+      newSubmodelParent.value = ''
+    }
+  }
+})
 
 const evictModelFields = useEvictProjectModelFields()
 const areQueriesLoading = useQueryLoading()
@@ -140,6 +155,10 @@ const onModelUpdated = () => {
   // Reset pagination
   infiniteLoadCacheBuster.value++
   calculateLoaderId()
+}
+
+const onCreateSubmodel = (parentModelName: string) => {
+  newSubmodelParent.value = parentModelName
 }
 
 const infiniteLoad = async (state: InfiniteLoaderState) => {

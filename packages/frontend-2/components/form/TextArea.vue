@@ -1,10 +1,6 @@
 <template>
   <div :class="[fullWidth ? 'w-full' : '']">
-    <label
-      :for="name"
-      class="block label text-foreground"
-      :class="{ 'sr-only': !showLabel }"
-    >
+    <label :for="name" :class="labelClasses">
       <span>{{ title }}</span>
     </label>
     <div class="relative">
@@ -13,7 +9,7 @@
         ref="inputElement"
         v-model="value"
         :name="name"
-        :class="[coreClasses, 'min-h-[4rem]']"
+        :class="[coreClasses, iconClasses, 'min-h-[4rem]']"
         :placeholder="placeholder"
         :disabled="disabled"
         :aria-invalid="errorMessage ? 'true' : 'false'"
@@ -77,7 +73,7 @@ const props = withDefaults(
      * Unique ID for the input (must be unique page-wide)
      */
     name: string
-    showLabel?: string
+    showLabel?: boolean
     help?: string
     placeholder?: string
     label?: string
@@ -108,12 +104,25 @@ const {
   helpTipClasses,
   helpTip,
   errorMessage,
+  labelClasses,
   clear,
   focus
 } = useTextInputCore({
   props: toRefs(props),
   emit,
   inputEl: inputElement
+})
+
+const iconClasses = computed(() => {
+  const classParts: string[] = []
+
+  if (props.showClear && errorMessage.value) {
+    classParts.push('pr-12')
+  } else if (props.showClear || errorMessage.value) {
+    classParts.push('pr-8')
+  }
+
+  return classParts.join(' ')
 })
 
 defineExpose({ focus })

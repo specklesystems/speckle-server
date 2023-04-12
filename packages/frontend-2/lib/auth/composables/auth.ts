@@ -261,14 +261,20 @@ export const useAuthManager = () => {
   /**
    * Log out
    */
-  const logout = async () => {
+  const logout = async (
+    options?: Partial<{
+      skipToast: boolean
+    }>
+  ) => {
     await saveNewToken(undefined, { skipRedirect: true })
 
-    triggerNotification({
-      type: ToastNotificationType.Info,
-      title: 'Goodbye!',
-      description: "You've been logged out"
-    })
+    if (!options?.skipToast) {
+      triggerNotification({
+        type: ToastNotificationType.Info,
+        title: 'Goodbye!',
+        description: "You've been logged out"
+      })
+    }
 
     postAuthRedirect.deleteState()
     goToLogin()
@@ -291,7 +297,9 @@ const useAuthAppIdAndChallenge = () => {
 
   onMounted(() => {
     // Resolve challenge & appId from querystring or generate them
-    const queryChallenge = route.query.challenge as Optional<string>
+    const queryChallenge =
+      (route.query.challenge as Optional<string>) ||
+      SafeLocalStorage.get(LocalStorageKeys.AuthAppChallenge)
     const queryAppId = route.query.appId as Optional<string>
 
     appId.value = queryAppId || speckleWebAppId

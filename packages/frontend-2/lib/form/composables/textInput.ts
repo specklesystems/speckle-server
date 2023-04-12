@@ -11,6 +11,7 @@ export function useTextInputCore(params: {
     name: string
     help?: string
     label?: string
+    showLabel?: boolean
     rules?: RuleExpression<string>
     validateOnMount?: boolean
     validateOnValueUpdate?: boolean
@@ -32,6 +33,15 @@ export function useTextInputCore(params: {
     validateOnMount: unref(props.validateOnMount),
     validateOnValueUpdate: unref(props.validateOnValueUpdate),
     initialValue: unref(props.modelValue) || undefined
+  })
+
+  const labelClasses = computed(() => {
+    const classParts = ['block label text-foreground-2 mb-2']
+    if (!unref(props.showLabel)) {
+      classParts.push('sr-only')
+    }
+
+    return classParts.join(' ')
   })
 
   const coreClasses = computed(() => {
@@ -99,6 +109,7 @@ export function useTextInputCore(params: {
     hideHelpTip,
     errorMessage,
     clear,
-    focus
+    focus,
+    labelClasses
   }
 }

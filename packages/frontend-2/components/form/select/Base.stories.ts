@@ -71,6 +71,13 @@ export default {
     },
     getSearchResults: {
       type: 'function'
+    },
+    disabled: {
+      type: 'boolean'
+    },
+    buttonStyle: {
+      options: ['base', 'simple'],
+      control: { type: 'select' }
     }
   }
 } as Meta
@@ -105,8 +112,32 @@ export const Default: StoryObj = {
     label: 'Choose an item',
     showLabel: false,
     by: 'name',
-    name: 'example'
+    name: 'example',
+    clearable: true,
+    buttonStyle: 'base',
+    disabled: false
   }
+}
+
+export const LimitedWidth: StoryObj = {
+  ...Default,
+  render: (args, ctx) => ({
+    components: { FormSelectBase },
+    setup: () => {
+      return { args }
+    },
+    template: `
+      <div class="flex justify-center h-72 w-44">
+        <FormSelectBase v-bind="args" class="max-w-xs w-full" @update:modelValue="onModelUpdate"/>
+      </div>
+    `,
+    methods: {
+      onModelUpdate(val: FakeItemType) {
+        args['update:modelValue'](val)
+        ctx.updateArgs({ ...args, modelValue: val })
+      }
+    }
+  })
 }
 
 export const WithCustomSlots: StoryObj = {
@@ -217,5 +248,13 @@ export const Empty: StoryObj = {
   args: {
     ...WithAsyncSearch.args,
     getSearchResults: () => []
+  }
+}
+
+export const Simple: StoryObj = {
+  ...Default,
+  args: {
+    ...Default.args,
+    buttonStyle: 'simple'
   }
 }

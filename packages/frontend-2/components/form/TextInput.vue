@@ -1,16 +1,12 @@
 <template>
   <div :class="[fullWidth ? 'w-full' : '']">
-    <label
-      :for="name"
-      class="block label text-foreground-2 mb-2"
-      :class="{ 'sr-only': !showLabel }"
-    >
+    <label :for="name" :class="labelClasses">
       <span>{{ title }}</span>
     </label>
     <div class="relative">
       <div
         v-if="hasLeadingIcon"
-        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4"
+        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2"
       >
         <Component
           :is="customIcon"
@@ -255,7 +251,8 @@ const {
   hideHelpTip,
   errorMessage,
   clear,
-  focus
+  focus,
+  labelClasses
 } = useTextInputCore({
   props: toRefs(props),
   emit,
@@ -284,7 +281,7 @@ const iconClasses = computed((): string => {
   const classParts: string[] = []
 
   if (hasLeadingIcon.value) {
-    classParts.push('pl-10')
+    classParts.push('pl-8')
   }
 
   if (!slots['input-right']) {

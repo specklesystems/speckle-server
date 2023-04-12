@@ -6,6 +6,11 @@ const {
   ServerAcl: ServerAclSchema,
   Users: UsersSchema
 } = require('@/modules/core/dbSchema')
+const {
+  validateUserPassword,
+  updateUserAndNotify,
+  MINIMUM_PASSWORD_LENGTH
+} = require('@/modules/core/services/users/management')
 
 const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
@@ -13,6 +18,7 @@ const Acl = () => ServerAclSchema.knex()
 const { deleteStream } = require('./streams')
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const { deleteAllUserInvites } = require('@/modules/serverinvites/repositories')
+const { getUserByEmail } = require('@/modules/core/repositories/users')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
 const { pick } = require('lodash')
 const { dbLogger } = require('@/logging/logging')
@@ -20,8 +26,6 @@ const {
   UserInputError,
   PasswordTooShortError
 } = require('@/modules/core/errors/userinput')
-
-const MINIMUM_PASSWORD_LENGTH = 8
 
 const changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -142,14 +146,16 @@ module.exports = {
     return role
   },
 
+  /**
+   * @deprecated {Use updateUserAndNotify() or repo method directly}
+   */
   async updateUser(id, user) {
-    delete user.id
-    delete user.passwordDigest
-    delete user.password
-    delete user.email
-    await Users().where({ id }).update(user)
+    return await updateUserAndNotify(id, user)
   },
 
+  /**
+   * @deprecated {Use changePassword()}
+   */
   async updateUserPassword({ id, newPassword }) {
     if (newPassword.length < MINIMUM_PASSWORD_LENGTH)
       throw new PasswordTooShortError(MINIMUM_PASSWORD_LENGTH)
@@ -182,11 +188,16 @@ module.exports = {
     }
   },
 
+  /**
+   * @deprecated {Use validateUserPassword()}
+   */
   async validatePasssword({ email, password }) {
-    const { passwordDigest } = await userByEmailQuery(email)
-      .select('passwordDigest')
-      .first()
-    return bcrypt.compare(password, passwordDigest)
+    const user = await getUserByEmail(email, { skipClean: true })
+    if (!user) return false
+    return await validateUserPassword({
+      password,
+      user
+    })
   },
 
   async deleteUser(id) {

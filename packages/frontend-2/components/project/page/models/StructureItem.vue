@@ -36,21 +36,53 @@
               :can-edit="canContribute"
               @click.stop.prevent
               @model-updated="$emit('model-updated')"
+              @upload-version="triggerVersionUpload"
             />
           </span>
         </div>
         <!-- Empty model action -->
-        <div
+        <NuxtLink
           v-if="itemType === StructureItemType.EmptyModel"
-          class="ml-2 opacity-0 group-hover:opacity-100 transition duration-200 text-xs text-foreground-2 flex items-center space-x-1"
+          :class="[
+            'cursor-pointer ml-2 text-xs text-foreground-2 flex items-center space-x-1',
+            'opacity-0 group-hover:opacity-100 transition duration-200',
+            'hover:text-primary p-1'
+          ]"
+          @click.stop="$emit('create-submodel', model?.name || '')"
         >
-          <PlusIcon class="w-3 h-3 text-foreground-2 hover:text-primary" />
+          <PlusIcon class="w-3 h-3" />
           submodel
-        </div>
+        </NuxtLink>
         <!-- Spacer -->
         <div class="flex-grow"></div>
-        <!-- Full model items -->
-        <div v-if="hasVersions" class="flex items-center space-x-10">
+        <ProjectCardImportFileArea
+          v-if="!isPendingFileUpload(item)"
+          ref="importArea"
+          :project-id="projectId"
+          :model-name="item.fullName"
+          class="hidden"
+        />
+        <div
+          v-if="
+            !isPendingFileUpload(item) &&
+            (pendingVersion || itemType === StructureItemType.EmptyModel)
+          "
+          class="flex items-center h-full"
+        >
+          <ProjectPendingFileImportStatus
+            v-if="pendingVersion"
+            :upload="pendingVersion"
+            type="subversion"
+            class="px-4 w-full"
+          />
+          <ProjectCardImportFileArea
+            v-else
+            :project-id="projectId"
+            :model-name="item.fullName"
+            class="h-full w-full"
+          />
+        </div>
+        <div v-else-if="hasVersions" class="flex items-center space-x-10">
           <div class="text-xs text-foreground-2">
             updated
             <b>{{ updatedAt }}</b>
@@ -71,25 +103,6 @@
             </FormButton>
           </div>
         </div>
-        <div
-          v-else-if="
-            itemType === StructureItemType.EmptyModel && !isPendingFileUpload(item)
-          "
-          class="flex items-center h-full"
-        >
-          <ProjectPendingFileImportStatus
-            v-if="pendingVersion"
-            :upload="pendingVersion"
-            type="subversion"
-            class="px-4 w-full"
-          />
-          <ProjectCardImportFileArea
-            v-else
-            :project-id="projectId"
-            :model-name="item.fullName"
-            class="h-full w-full"
-          />
-        </div>
         <ProjectPendingFileImportStatus
           v-else-if="pendingModel && itemType === StructureItemType.PendingModel"
           :upload="pendingModel"
@@ -98,7 +111,7 @@
       </div>
       <!-- Preview or icon section -->
       <div
-        v-if="!isPendingFileUpload(item) && item.model?.previewUrl"
+        v-if="!isPendingFileUpload(item) && item.model?.previewUrl && !pendingVersion"
         class="w-24 h-20 ml-4"
       >
         <PreviewImage
@@ -184,6 +197,7 @@
             :can-contribute="canContribute"
             class="flex-grow"
             @model-updated="onModelUpdated"
+            @create-submodel="emit('create-submodel', $event)"
           />
         </div>
         <ProjectPageModelsNewModelStructureItem
@@ -217,6 +231,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { projectModelChildrenTreeQuery } from '~~/lib/projects/graphql/queries'
 import { has } from 'lodash-es'
+import { Nullable } from '@speckle/shared'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -249,6 +264,7 @@ const isPendingFileUpload = (
 
 const emit = defineEmits<{
   (e: 'model-updated'): void
+  (e: 'create-submodel', parentModelName: string): void
 }>()
 
 const props = defineProps<{
@@ -258,6 +274,11 @@ const props = defineProps<{
   isSearchResult?: boolean
 }>()
 
+const importArea = ref(
+  null as Nullable<{
+    triggerPicker: () => void
+  }>
+)
 const expanded = ref(false)
 const showActionsMenu = ref(false)
 
@@ -350,5 +371,9 @@ const children = computed(() => childrenResult.value?.project?.modelChildrenTree
 const onModelUpdated = () => {
   emit('model-updated')
   refetchChildren()
+}
+
+const triggerVersionUpload = () => {
+  importArea.value?.triggerPicker()
 }
 </script>

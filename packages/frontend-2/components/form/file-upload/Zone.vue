@@ -12,6 +12,7 @@
       class="hidden"
       :accept="accept"
       :multiple="multiple"
+      @click.stop
       @change="onInputChange"
     />
   </div>

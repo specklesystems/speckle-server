@@ -8,6 +8,8 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import PortalVue from 'portal-vue'
 import type { RouteLocationNormalizedLoaded, Router } from 'vue-router'
+import VueTippy from 'vue-tippy'
+import 'tippy.js/dist/tippy.css'
 
 const stubGlobalComponents = (app: App<Element>) => {
   const Head = defineComponent({
@@ -83,6 +85,13 @@ export const setupVueApp = (app: App<Element>) => {
   // TODO: Implement more DRY plugin reuse
   // Init day.js
   dayjs.extend(relativeTime)
+
+  app.use(VueTippy, {
+    defaultProps: {
+      arrow: true
+    },
+    flipDuration: 0
+  })
 
   // Init portal vue
   app.use(PortalVue)
