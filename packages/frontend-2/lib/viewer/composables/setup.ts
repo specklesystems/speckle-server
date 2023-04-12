@@ -3,7 +3,9 @@ import {
   Viewer,
   DefaultViewerParams,
   FilteringState,
-  PropertyInfo
+  PropertyInfo,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  TreeNode
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -224,7 +226,7 @@ export type InjectableViewerState = Readonly<{
     selection: {
       objects: ComputedRef<Raw<Record<string, unknown>>[]>
       addToSelection: (object: Record<string, unknown>) => void
-      // setSelectionFromObjectIds: (ids: string[]) => void
+      setSelectionFromObjectIds: (ids: string[]) => void
       removeFromSelection: (object: Record<string, unknown> | string) => void
       clearSelection: () => void
     }
@@ -689,7 +691,7 @@ function setupInterfaceState(
     if (process.server) return
     viewerBusy.value = true
 
-    const result = await viewer.instance.isolateObjects(...params)
+    const result = await viewer.instance.isolateObjects(...params, false)
     filteringState.value = markRaw(result)
     viewerBusy.value = false
   }
@@ -764,18 +766,23 @@ function setupInterfaceState(
 
   // NOTE: can be used for directly selecting objects coming from user tracking.
   // commented out as not sure it's right behaviour.
-  // const setSelectionFromObjectIds = (ids: string[]) => {
-  //   const tree = viewer.instance.getWorldTree()
-  //   const res = tree.findAll((node: TreeNode) => {
-  //     const id = node.model?.raw.id as string
-  //     if (ids.includes(id)) return true
-  //     return false
-  //   })
+  const setSelectionFromObjectIds = (ids: string[]) => {
+    const tree = viewer.instance.getWorldTree()
+    const res = tree.findAll((node: Record<string, unknown>) => {
+      const t = node.model as Record<string, unknown>
+      const raw = t.raw as Record<string, unknown>
+      const id = raw.id as string
+      if (!raw || !id) return false
+      if (ids.includes(id)) return true
+      return false
+    })
 
-  //   const objs = res.map((node) => node.model?.raw as Record<string, unknown>)
-  //   selectedObjects.value = objs
-  //   setViewerSelectionFilter()
-  // }
+    const objs = res.map(
+      (node) => (node.model as Record<string, unknown>).raw as Record<string, unknown>
+    ) // as Record<string, unknown>[] //.map((node) => node.model?.raw as Record<string, unknown>)
+    selectedObjects.value = objs
+    setViewerSelectionFilter()
+  }
 
   const removeFromSelection = (object: Record<string, unknown> | string) => {
     const objectId = typeof object === 'string' ? object : (object.id as string)
@@ -923,7 +930,7 @@ function setupInterfaceState(
       selection: {
         objects: computed(() => selectedObjects.value.slice()),
         addToSelection,
-        // setSelectionFromObjectIds,
+        setSelectionFromObjectIds,
         clearSelection,
         removeFromSelection
       }

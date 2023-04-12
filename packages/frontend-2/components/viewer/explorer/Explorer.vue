@@ -1,38 +1,45 @@
 <template>
-  <ViewerLayoutPanel @close="$emit('close')">
-    <template #actions>
-      <FormButton size="xs" text :icon-left="BarsArrowDownIcon" @click="expandLevel++">
-        Unfold
-      </FormButton>
-      <FormButton
-        size="xs"
-        text
-        :icon-left="BarsArrowUpIcon"
-        :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
-        @click="collapse()"
-      >
-        Collapse
-      </FormButton>
-      <!-- <span class="text-xs">{{ expandLevel }}, {{ manualExpandLevel }}</span> -->
-    </template>
-    <div class="relative flex flex-col space-y-2 py-2">
-      <div
-        v-for="(rootNode, idx) in rootNodes"
-        :key="idx"
-        class="bg-foundation rounded-lg"
-      >
-        <ViewerExplorerTreeItem
-          :item-id="(rootNode.data?.id as string)"
-          :tree-item="markRaw(rootNode)"
-          :sub-header="'Model Version'"
-          :debug="false"
-          :expand-level="expandLevel"
-          :manual-expand-level="manualExpandLevel"
-          @expanded="(e) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
-        />
+  <div>
+    <ViewerLayoutPanel @close="$emit('close')">
+      <template #actions>
+        <FormButton
+          size="xs"
+          text
+          :icon-left="BarsArrowDownIcon"
+          @click="expandLevel++"
+        >
+          Unfold
+        </FormButton>
+        <FormButton
+          size="xs"
+          text
+          :icon-left="BarsArrowUpIcon"
+          :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
+          @click="collapse()"
+        >
+          Collapse
+        </FormButton>
+      </template>
+      <div class="relative flex flex-col space-y-2 py-2">
+        <div
+          v-for="(rootNode, idx) in rootNodes"
+          :key="idx"
+          class="bg-foundation rounded-lg"
+        >
+          <ViewerExplorerTreeItem
+            :item-id="(rootNode.data?.id as string)"
+            :tree-item="markRaw(rootNode)"
+            :sub-header="'Model Version'"
+            :debug="false"
+            :expand-level="expandLevel"
+            :manual-expand-level="manualExpandLevel"
+            @expanded="(e) => (manualExpandLevel < e ? (manualExpandLevel = e) : '')"
+          />
+        </div>
       </div>
-    </div>
-  </ViewerLayoutPanel>
+    </ViewerLayoutPanel>
+    <ViewerExplorerFilters :filters="filters" />
+  </div>
 </template>
 <script setup lang="ts">
 import { BarsArrowUpIcon, BarsArrowDownIcon } from '@heroicons/vue/24/solid'
@@ -55,6 +62,7 @@ const {
 const { instance: viewer } = useInjectedViewer()
 
 let realTree = viewer.getWorldTree()
+const filters = shallowRef(viewer.getObjectProperties())
 
 const expandLevel = ref(-1)
 const manualExpandLevel = ref(-1)
@@ -69,8 +77,8 @@ const refHack = ref(1)
 onMounted(() => {
   viewer.on(ViewerEvent.Busy, (isBusy) => {
     if (isBusy) return
-    console.log('should get new tree')
     realTree = viewer.getWorldTree()
+    filters.value = viewer.getObjectProperties()
     refHack.value++
   })
 })

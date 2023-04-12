@@ -27,11 +27,16 @@
       <div class="px-1 py-2">
         <div class="space-y-2">
           <ViewerSelectionObject
-            v-for="object in objects"
+            v-for="object in objectsLimited"
             :key="(object.id as string)"
             :object="object"
             :unfold="false"
           />
+        </div>
+        <div v-if="itemCount <= objects.length" class="mb-2">
+          <FormButton size="xs" text full-width @click="itemCount += 10">
+            View More ({{ objects.length - itemCount }})
+          </FormButton>
         </div>
         <div v-if="objects.length === 1" class="text-foreground-2 mt-2 px-2 text-xs">
           Hold down "shift" to select multiple objects.
@@ -59,6 +64,11 @@ const {
 } = useInjectedViewerState()
 
 // const unfold = computed(() => objects.value.length === 1)
+
+const itemCount = ref(10)
+const objectsLimited = computed(() => {
+  return objects.value.slice(0, itemCount.value)
+})
 
 const hiddenObjects = computed(() => filters.current.value?.hiddenObjects)
 const isolatedObjects = computed(() => filters.current.value?.isolatedObjects)
