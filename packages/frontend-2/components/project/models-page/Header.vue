@@ -13,7 +13,17 @@
     <div
       class="flex flex-col space-y-2 md:space-y-0 md:flex-row md:justify-between md:items-center mb-4"
     >
-      <h1 class="block h4 font-bold">All Models</h1>
+      <div class="flex justify-between items-center">
+        <h1 class="block h4 font-bold">All Models</h1>
+        <FormButton
+          v-if="canContribute"
+          class="inline-flex sm:hidden"
+          :icon-right="PlusIcon"
+          @click="showNewDialog = true"
+        >
+          New
+        </FormButton>
+      </div>
       <div
         class="flex flex-col space-y-2 md:space-y-0 md:flex-row md:items-center md:space-x-2"
       >
@@ -22,50 +32,52 @@
           name="modelsearch"
           :show-label="false"
           placeholder="Search"
-          class="bg-foundation shadow w-full md:w-60"
+          class="bg-foundation shadow w-full md:w-40 lg:w-60"
           :show-clear="search !== ''"
           size="lg"
           @change="($event) => updateSearchImmediately($event.value)"
           @update:model-value="updateDebouncedSearch"
         ></FormTextInput>
-        <div class="flex items-center space-x-2">
+        <div
+          class="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0"
+        >
           <FormSelectUsers
             v-model="finalSelectedMembers"
             :users="team"
             multiple
             selector-placeholder="All members"
             label="Filter by members"
-            class="grow shrink w-[120px] lg:w-44"
+            class="grow shrink sm:w-[120px] lg:w-44"
             clearable
           />
-          <FormSelectSourceApps
-            v-model="finalSelectedApps"
-            :items="availableSourceApps"
-            multiple
-            selector-placeholder="All sources"
-            label="Filter by sources"
-            class="grow shrink w-[120px] lg:w-44"
-            clearable
-          />
-          <LayoutGridListToggle
-            v-model="finalGridOrList"
-            v-tippy="'Swap Grid/Card View'"
-            class="shrink-0"
-          />
+          <div class="flex items-center space-x-2 grow">
+            <FormSelectSourceApps
+              v-model="finalSelectedApps"
+              :items="availableSourceApps"
+              multiple
+              selector-placeholder="All sources"
+              label="Filter by sources"
+              class="grow shrink w-[120px] lg:w-44"
+              clearable
+            />
+            <LayoutGridListToggle
+              v-model="finalGridOrList"
+              v-tippy="'Swap Grid/Card View'"
+              class="shrink-0"
+            />
+          </div>
           <FormButton
             v-if="canContribute"
+            class="hidden sm:inline-flex"
             :icon-right="PlusIcon"
             @click="showNewDialog = true"
           >
-            New Model
+            New
           </FormButton>
-          <ProjectPageModelsNewDialog
-            v-model:open="showNewDialog"
-            :project-id="project.id"
-          />
         </div>
       </div>
     </div>
+    <ProjectPageModelsNewDialog v-model:open="showNewDialog" :project-id="project.id" />
   </div>
 </template>
 <script setup lang="ts">

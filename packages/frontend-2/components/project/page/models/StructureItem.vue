@@ -41,13 +41,18 @@
           </span>
         </div>
         <!-- Empty model action -->
-        <div
+        <NuxtLink
           v-if="itemType === StructureItemType.EmptyModel"
-          class="ml-2 opacity-0 group-hover:opacity-100 transition duration-200 text-xs text-foreground-2 flex items-center space-x-1"
+          :class="[
+            'cursor-pointer ml-2 text-xs text-foreground-2 flex items-center space-x-1',
+            'opacity-0 group-hover:opacity-100 transition duration-200',
+            'hover:text-primary p-1'
+          ]"
+          @click.stop="$emit('create-submodel', model?.name || '')"
         >
-          <PlusIcon class="w-3 h-3 text-foreground-2 hover:text-primary" />
+          <PlusIcon class="w-3 h-3" />
           submodel
-        </div>
+        </NuxtLink>
         <!-- Spacer -->
         <div class="flex-grow"></div>
         <ProjectCardImportFileArea
@@ -192,6 +197,7 @@
             :can-contribute="canContribute"
             class="flex-grow"
             @model-updated="onModelUpdated"
+            @create-submodel="emit('create-submodel', $event)"
           />
         </div>
         <ProjectPageModelsNewModelStructureItem
@@ -258,6 +264,7 @@ const isPendingFileUpload = (
 
 const emit = defineEmits<{
   (e: 'model-updated'): void
+  (e: 'create-submodel', parentModelName: string): void
 }>()
 
 const props = defineProps<{
