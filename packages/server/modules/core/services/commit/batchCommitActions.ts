@@ -1,13 +1,22 @@
 import {
+  addCommitDeletedActivity,
+  addCommitMovedActivity
+} from '@/modules/activitystream/services/commitActivity'
+import {
   CommitInvalidAccessError,
   CommitBatchUpdateError
 } from '@/modules/core/errors/commit'
 import {
   CommitsDeleteInput,
-  CommitsMoveInput
+  CommitsMoveInput,
+  DeleteVersionsInput,
+  MoveVersionsInput
 } from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
+import {
+  createBranch,
+  getStreamBranchByName
+} from '@/modules/core/repositories/branches'
 import {
   deleteCommits,
   getCommits,
@@ -15,16 +24,19 @@ import {
 } from '@/modules/core/repositories/commits'
 import { getStreams } from '@/modules/core/repositories/streams'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
-import { difference, groupBy, keyBy } from 'lodash'
+import { difference, groupBy, has, keyBy } from 'lodash'
 
-type CommitBatchInput = CommitsMoveInput | CommitsDeleteInput
+type OldBatchInput = CommitsMoveInput | CommitsDeleteInput
+type CommitBatchInput = OldBatchInput | MoveVersionsInput | DeleteVersionsInput
+
+const isOldBatchInput = (i: CommitBatchInput): i is OldBatchInput => has(i, 'commitIds')
 
 /**
  * Do base validation that's going to be appropriate for all batch actions and return
  * the DB entities that were tested
  */
 async function validateBatchBaseRules(params: CommitBatchInput, userId: string) {
-  const { commitIds } = params
+  const commitIds = isOldBatchInput(params) ? params.commitIds : params.versionIds
 
   if (!userId) {
     throw new CommitInvalidAccessError(
@@ -78,9 +90,14 @@ async function validateBatchBaseRules(params: CommitBatchInput, userId: string) 
 /**
  * Validate batch move params
  */
-async function validateCommitsMove(params: CommitsMoveInput, userId: string) {
-  const { targetBranch } = params
-  const { streams } = await validateBatchBaseRules(params, userId)
+async function validateCommitsMove(
+  params: CommitsMoveInput | MoveVersionsInput,
+  userId: string
+) {
+  const targetBranch = isOldBatchInput(params)
+    ? params.targetBranch
+    : params.targetModelName
+  const { streams, commitsWithStreams } = await validateBatchBaseRules(params, userId)
 
   if (streams.length > 1) {
     throw new CommitBatchUpdateError('Commits belong to different streams')
@@ -88,30 +105,71 @@ async function validateCommitsMove(params: CommitsMoveInput, userId: string) {
 
   const stream = streams[0]
   const branch = await getStreamBranchByName(stream.id, targetBranch)
-  if (!branch) {
-    throw new CommitBatchUpdateError('Invalid target branch')
+
+  if (
+    !branch &&
+    !(<string[]>[Roles.Stream.Contributor, Roles.Stream.Owner]).includes(
+      stream.role || ''
+    )
+  ) {
+    throw new CommitBatchUpdateError(
+      'Non-existant target branch referenced and active user does not have the rights to create a new one'
+    )
   }
 
-  return { stream, branch }
+  return { stream, branch, commitsWithStreams }
 }
 
 /**
  * Validate batch delete params
  */
-async function validateCommitsDelete(params: CommitsDeleteInput, userId: string) {
-  await validateBatchBaseRules(params, userId)
+async function validateCommitsDelete(
+  params: CommitsDeleteInput | DeleteVersionsInput,
+  userId: string
+) {
+  return await validateBatchBaseRules(params, userId)
 }
 
 /**
  * Move a batch of commits belonging to the same stream to another branch
  */
-export async function batchMoveCommits(params: CommitsMoveInput, userId: string) {
-  const { commitIds } = params
+export async function batchMoveCommits(
+  params: CommitsMoveInput | MoveVersionsInput,
+  userId: string
+) {
+  const { commitIds, targetBranch } = isOldBatchInput(params)
+    ? params
+    : { commitIds: params.versionIds, targetBranch: params.targetModelName }
 
-  const { branch } = await validateCommitsMove(params, userId)
+  const { branch, stream, commitsWithStreams } = await validateCommitsMove(
+    params,
+    userId
+  )
 
   try {
-    await moveCommitsToBranch(commitIds, branch.id)
+    const finalBranch =
+      branch ||
+      (await createBranch({
+        name: targetBranch,
+        streamId: stream.id,
+        authorId: userId,
+        description: null
+      }))
+
+    await moveCommitsToBranch(commitIds, finalBranch.id)
+    await Promise.all(
+      commitsWithStreams.map(({ commit, stream }) =>
+        addCommitMovedActivity({
+          commitId: commit.id,
+          streamId: stream.id,
+          userId,
+          commit,
+          originalBranchId: commit.branchId,
+          newBranchId: finalBranch.id
+        })
+      )
+    )
+    return finalBranch
   } catch (e) {
     const err = ensureError(e)
     throw new CommitBatchUpdateError('Batch commit move failed', { cause: err })
@@ -121,13 +179,27 @@ export async function batchMoveCommits(params: CommitsMoveInput, userId: string)
 /**
  * Delete a batch of commits
  */
-export async function batchDeleteCommits(params: CommitsDeleteInput, userId: string) {
-  const { commitIds } = params
+export async function batchDeleteCommits(
+  params: CommitsDeleteInput | DeleteVersionsInput,
+  userId: string
+) {
+  const commitIds = isOldBatchInput(params) ? params.commitIds : params.versionIds
 
-  await validateCommitsDelete(params, userId)
+  const { commitsWithStreams } = await validateCommitsDelete(params, userId)
 
   try {
     await deleteCommits(commitIds)
+    await Promise.all(
+      commitsWithStreams.map(({ commit, stream }) =>
+        addCommitDeletedActivity({
+          commitId: commit.id,
+          streamId: stream.id,
+          userId,
+          commit,
+          branchId: commit.branchId
+        })
+      )
+    )
   } catch (e) {
     const err = ensureError(e)
     throw new CommitBatchUpdateError('Batch commit delete failed', { cause: err })

@@ -8,6 +8,12 @@ import {
 import { RequestDataLoaders } from '@/modules/core/loaders'
 import { AuthContext } from '@/modules/shared/authz'
 import { Express } from 'express'
+import { ConditionalKeys, SetRequired } from 'type-fest'
+
+export type MarkNullableOptional<T> = SetRequired<
+  Partial<T>,
+  ConditionalKeys<T, NonNullable<unknown>>
+>
 
 export type SpeckleModule<T extends Record<string, unknown> = Record<string, unknown>> =
   {

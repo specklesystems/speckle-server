@@ -1,5 +1,5 @@
 import { InvalidArgumentError } from '@/modules/shared/errors'
-import { getBaseUrl } from '@/modules/shared/helpers/envHelper'
+import { getFrontendOrigin, useNewFrontend } from '@/modules/shared/helpers/envHelper'
 import { MaybeNullOrUndefined } from '@/modules/shared/helpers/typeHelper'
 
 /**
@@ -8,11 +8,11 @@ import { MaybeNullOrUndefined } from '@/modules/shared/helpers/typeHelper'
  */
 
 export function getStreamRoute(streamId: string): string {
-  return `/streams/${streamId}`
+  return useNewFrontend() ? `/projects/${streamId}` : `/streams/${streamId}`
 }
 
 export function getRegistrationRoute(): string {
-  return `/authn/register`
+  return useNewFrontend() ? `/authn/register` : '/authn/register'
 }
 
 export function getCommentRoute(
@@ -33,7 +33,9 @@ export function getCommentRoute(
 }
 
 export function getPasswordResetFinalizationRoute(tokenId: string): string {
-  return `/authn/resetpassword/finalize?t=${tokenId}`
+  return useNewFrontend()
+    ? `/authn/reset-password?token=${tokenId}`
+    : `/authn/resetpassword/finalize?t=${tokenId}`
 }
 
 export function getEmailVerificationFinalizationRoute(tokenId: string): string {
@@ -44,6 +46,6 @@ export function getStreamCollaboratorsRoute(streamId: string): string {
   return `${getStreamRoute(streamId)}/collaborators`
 }
 
-export function buildAbsoluteUrlFromRoute(route: string): string {
-  return new URL(route, getBaseUrl()).toString()
+export function buildAbsoluteFrontendUrlFromPath(route: string): string {
+  return new URL(route, getFrontendOrigin()).toString()
 }

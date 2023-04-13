@@ -32,7 +32,7 @@ export function buildCommentTextFromInput({
   doc = undefined,
   blobIds = []
 }: Partial<{
-  doc: JSONContent
+  doc: JSONContent | null
   blobIds: string[]
 }>) {
   if ((!isTextEditorDoc(doc) || isDocEmpty(doc)) && !blobIds.length) {

@@ -1,0 +1,22 @@
+{{- if (and (.Values.frontend_2.networkPolicy.enabled) (eq .Values.networkPlugin.type "cilium")) -}}
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: {{ include "frontend_2.name" $ }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "frontend_2.labels" . | indent 4 }}
+spec:
+  endpointSelector:
+    matchLabels:
+{{ include "frontend_2.selectorLabels" . | indent 6 }}
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: {{ .Values.ingress.namespace }}
+{{ include "speckle.ingress.selector.pod" $ | indent 12 }}
+      toPorts:
+        - ports:
+            - port: "www"
+              protocol: TCP
+{{- end }}

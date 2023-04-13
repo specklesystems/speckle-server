@@ -6,6 +6,7 @@ const passport = require('passport')
 
 const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
+const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
 const { isSSLServer, getRedisUrl } = require('@/modules/shared/helpers/envHelper')
 const { authLogger } = require('@/logging/logging')
 const { createRedisClient } = require('@/modules/shared/redis/redis')
@@ -64,7 +65,7 @@ module.exports = async (app) => {
       if (req.session) req.session.destroy()
 
       // Resolve redirect URL
-      const urlObj = new URL(req.authRedirectPath || '/', process.env.CANONICAL_URL)
+      const urlObj = new URL(req.authRedirectPath || '/', getFrontendOrigin())
       urlObj.searchParams.set('access_code', ac)
       const redirectUrl = urlObj.toString()
 

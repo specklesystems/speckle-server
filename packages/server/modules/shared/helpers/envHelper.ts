@@ -1,5 +1,13 @@
+import { Nullable } from '@speckle/shared'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
+
+/**
+ * Whether the server is supposed to serve frontend 2.0
+ */
+export function useNewFrontend() {
+  return ['1', 'true'].includes(process.env.USE_FRONTEND_2 || 'false')
+}
 
 export function isTestEnv() {
   return process.env.NODE_ENV === 'test'
@@ -75,13 +83,11 @@ export function getOidcName() {
 
 /**
  * Get app base url / canonical url / origin
+ * TODO: Go over all getBaseUrl() usages and move them to getXOrigin() instead
+ * @deprecated Since the new FE both apps (Server & FE) have different base urls, so use `getFrontendOrigin()` or `getServerOrigin()` instead
  */
 export function getBaseUrl() {
-  if (!process.env.CANONICAL_URL) {
-    throw new MisconfiguredEnvironmentError('CANONICAL_URL env var not configured')
-  }
-
-  return trimEnd(process.env.CANONICAL_URL, '/')
+  return getServerOrigin()
 }
 
 /**
@@ -94,10 +100,46 @@ export function shouldDisableNotificationsConsumption() {
 }
 
 /**
+ * Get frontend app origin/base URL
+ */
+export function getFrontendOrigin() {
+  const envKey = useNewFrontend() ? 'FRONTEND_ORIGIN' : 'CANONICAL_URL'
+  const trimmedOrigin = trimEnd(process.env[envKey], '/')
+
+  if (!trimmedOrigin) {
+    throw new MisconfiguredEnvironmentError(
+      `Frontend origin env var (${envKey}) not configured!`
+    )
+  }
+
+  return trimmedOrigin
+}
+
+/**
+ * Get server app origin/base URL
+ */
+export function getServerOrigin() {
+  if (!process.env.CANONICAL_URL) {
+    throw new MisconfiguredEnvironmentError(
+      'Server origin env var (CANONICAL_URL) not configured'
+    )
+  }
+
+  return trimEnd(process.env.CANONICAL_URL, '/')
+}
+
+/**
  * Check whether we're running an SSL server
  */
 export function isSSLServer() {
   return /^https:\/\//.test(getBaseUrl())
+}
+
+/**
+ * Source stream for cloning tutorial/guide streams for users
+ */
+export function getOnboardingStreamId(): Nullable<string> {
+  return process.env.ONBOARDING_STREAM_ID || null
 }
 
 export function adminOverrideEnabled() {

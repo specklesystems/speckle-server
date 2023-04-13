@@ -6,6 +6,7 @@
     };`"
   >
     <div v-show="showBubbles">
+      <!-- User click point -->
       <div
         v-for="user in users"
         :ref="`user-target-${user.uuid}`"
@@ -15,6 +16,7 @@
           user.hidden ? '0.2' : 1
         }; transform-origin:center; width: 10px; height:10px; pointer-events:none`"
       ></div>
+      <!-- User pointed arrow circle -->
       <div
         v-for="user in users"
         :ref="`user-arrow-${user.uuid}`"
@@ -36,6 +38,7 @@
           mdi-menu-right
         </v-icon>
       </div>
+      <!-- User avatar -->
       <div
         v-for="sessionUser in users"
         :ref="`user-bubble-${sessionUser.uuid}`"
@@ -199,7 +202,10 @@ export default {
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          selectedCommentMetaData
+          selectedCommentMetaData {
+            id
+            selectionLocation
+          }
           addingComment
           selectedObjects
         }

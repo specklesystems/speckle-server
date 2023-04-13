@@ -1,6 +1,6 @@
 'use strict'
 const zlib = require('zlib')
-const cors = require('cors')
+const { corsMiddleware } = require('@/modules/core/configs/cors')
 
 const { validatePermissionsReadStream } = require('./authUtils')
 const { SpeckleObjectsStream } = require('./speckleObjectsStream')
@@ -9,9 +9,9 @@ const { getObjectsStream } = require('../services/objects')
 const { pipeline, PassThrough } = require('stream')
 
 module.exports = (app) => {
-  app.options('/api/getobjects/:streamId', cors())
+  app.options('/api/getobjects/:streamId', corsMiddleware())
 
-  app.post('/api/getobjects/:streamId', cors(), async (req, res) => {
+  app.post('/api/getobjects/:streamId', corsMiddleware(), async (req, res) => {
     req.log = req.log.child({
       userId: req.context.userId || '-',
       streamId: req.params.streamId

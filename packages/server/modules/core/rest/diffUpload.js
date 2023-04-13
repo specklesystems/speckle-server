@@ -1,15 +1,15 @@
 'use strict'
 const zlib = require('zlib')
-const cors = require('cors')
+const { corsMiddleware } = require('@/modules/core/configs/cors')
 
 const { validatePermissionsWriteStream } = require('./authUtils')
 
 const { hasObjects } = require('../services/objects')
 
 module.exports = (app) => {
-  app.options('/api/diff/:streamId', cors())
+  app.options('/api/diff/:streamId', corsMiddleware())
 
-  app.post('/api/diff/:streamId', cors(), async (req, res) => {
+  app.post('/api/diff/:streamId', corsMiddleware(), async (req, res) => {
     req.log = req.log.child({
       userId: req.context.userId || '-',
       streamId: req.params.streamId

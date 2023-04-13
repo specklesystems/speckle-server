@@ -1,7 +1,7 @@
 <mj-section padding="0">
   <mj-column>
     <mj-button
-      background-color="linear-gradient(90deg, rgba(0,143,233,1) 0%, rgba(0,76,235,1) 100%)"
+      mj-class="bgblue"
       border-radius="8px"
       color="white"
       href="<%- params.cta.url -%>"
