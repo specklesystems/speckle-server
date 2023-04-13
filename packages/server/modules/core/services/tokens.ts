@@ -116,7 +116,8 @@ export async function validateToken(
     return { valid: false }
   }
 
-  const timeDiff = Math.abs(Date.now() - new Date(token.createdAt).getMilliseconds())
+  const tokenCreatedAtMilliseconds = new Date(token.createdAt).getMilliseconds()
+  const timeDiff = Math.abs(Date.now() - tokenCreatedAtMilliseconds)
   if (timeDiff > token.lifespan) {
     await module.exports.revokeToken(tokenId, token.owner)
     return { valid: false }
@@ -138,10 +139,12 @@ export async function validateToken(
       scopes: scopes.map((s) => s.scopeName)
     }
 
+    const remainingTokenTimeMilliseconds =
+      tokenCreatedAtMilliseconds + token.lifespan - Date.now() //FIXME does the token have a token.expireAt field?
     await setTokenValidationResultInCache(
       tokenId,
       authContext,
-      Math.min(10, token.lifespan / 1000)
+      Math.min(10, remainingTokenTimeMilliseconds / 1000)
     ) // cache for 10 seconds or the token lifespan, whichever is shorter
 
     return authContext
