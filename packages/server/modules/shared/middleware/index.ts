@@ -169,6 +169,7 @@ export async function determineClientIpAddressMiddleware(
   _res: Response,
   next: NextFunction
 ) {
-  req.headers[X_SPECKLE_CLIENT_IP_HEADER] = md5(getIpFromRequest(req))
+  const ip = getIpFromRequest(req)
+  if (ip) req.headers[X_SPECKLE_CLIENT_IP_HEADER] = md5(ip)
   next()
 }
