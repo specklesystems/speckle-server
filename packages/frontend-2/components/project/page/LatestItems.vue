@@ -23,16 +23,12 @@
         </NuxtLink>
       </div>
       <!-- Right heading (filters, grid/list toggle) -->
-      <div v-if="!hideFilters" class="flex space-x-4 items-center w-full lg:w-auto">
-        <div class="grow lg:grow-0">
+      <slot v-if="!hideFilters" name="filters">
+        <div class="flex space-x-4 items-center grow justify-end flex-wrap">
           <slot name="filters" />
+          <LayoutGridListToggle v-model="gridOrList" v-tippy="'Swap Grid/Card View'" />
         </div>
-        <LayoutGridListToggle
-          v-if="!hideGridListToggle"
-          v-model="gridOrList"
-          v-tippy="'Swap Grid/Card View'"
-        />
-      </div>
+      </slot>
     </div>
     <!-- Main Content -->
     <div>
@@ -48,13 +44,12 @@ const props = defineProps<{
   count: number
   seeAllUrl?: string
   hideFilters?: boolean
-  hideGridListToggle?: boolean
   hideHeadingBottomMargin?: boolean
 }>()
 
 const gridOrList = useProjectPageItemViewType(props.title)
 const headingClasses = computed(() => {
-  const classes = ['flex flex-col space-y-2 justify-between lg:flex-row lg:space-y-0']
+  const classes = ['flex flex-wrap']
   if (!props.hideHeadingBottomMargin) {
     classes.push('mb-4')
   }
