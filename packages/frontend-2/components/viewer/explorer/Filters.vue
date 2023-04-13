@@ -12,17 +12,20 @@
           >
             {{ title.split('.').reverse()[0] || title || 'No Title' }}
           </FormButton>
+          <!-- // TODO: when resetting, reset colors as well if applied -->
           <FormButton
             v-if="title !== 'Object Type'"
             text
             size="xs"
-            @click=";(activeFilter = null), (showAllFilters = false)"
+            @click="
+              ;(activeFilter = null), (showAllFilters = false), refreshColorsIfSet()
+            "
           >
             Reset
           </FormButton>
         </div>
         <!-- Disabling as something is wrong with colors -->
-        <!-- <div>
+        <div>
           <FormButton
             v-tippy="'Toggle coloring'"
             size="xs"
@@ -32,7 +35,7 @@
             <SparklesIconOutline v-if="!colors" class="w-3 h-3 text-primary" />
             <SparklesIcon v-else class="w-3 h-3 text-primary" />
           </FormButton>
-        </div> -->
+        </div>
       </div>
     </template>
     <div
@@ -55,7 +58,9 @@
       >
         <button
           class="block w-full text-left hover:bg-primary-muted transition truncate rounded-md py-[1px]"
-          @click=";(activeFilter = filter), (showAllFilters = false)"
+          @click="
+            ;(activeFilter = filter), (showAllFilters = false), refreshColorsIfSet()
+          "
         >
           {{ filter.key }}
         </button>
@@ -123,6 +128,12 @@ const toggleColors = () => {
 
   if (colors.value) viewer.setColorFilter(activeFilter.value || speckleTypeFilter.value)
   else viewer.removeColorFilter()
+}
+
+const refreshColorsIfSet = async () => {
+  if (!colors.value) return
+  await viewer.removeColorFilter()
+  await viewer.setColorFilter(activeFilter.value || speckleTypeFilter.value)
 }
 
 const speckleTypeFilter = computed(
