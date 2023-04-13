@@ -5,14 +5,8 @@ import { IncomingMessage } from 'http'
 import { NextFunction, Response } from 'express'
 import pino, { SerializedResponse } from 'pino'
 import { GenReqId } from 'pino-http'
-import { X_SPECKLE_CLIENT_IP_HEADER } from '@/modules/shared/middleware'
-import { AuthContext } from '@/modules/shared/authz'
 
 const REQUEST_ID_HEADER = 'x-request-id'
-
-interface RawRequestWithAuthContext extends IncomingMessage {
-  context: AuthContext
-}
 
 const GenerateRequestId: GenReqId = (req: IncomingMessage) => DetermineRequestId(req)
 
@@ -51,25 +45,17 @@ export const LoggingExpressMiddleware = HttpLogger({
         path: req.raw.url?.split('?')[0], // Remove query params which might be sensitive
         // Allowlist useful headers
         headers: Object.fromEntries(
-          Object.entries(req.raw.headers).filter(([key]) => {
-            if (
-              (req.raw as RawRequestWithAuthContext).context?.userId &&
-              key.toLocaleLowerCase() === X_SPECKLE_CLIENT_IP_HEADER
-            ) {
-              // we cannot log the IP (even if hashed) if we also have a User ID
-              // Having both together could be used to link an IP to a specific User
-              // and that's a privacy issue.
-              return false
-            }
-            return ![
-              'cookie',
-              'authorization',
-              'cf-connecting-ip',
-              'true-client-ip',
-              'x-real-ip',
-              'x-forwarded-for'
-            ].includes(key.toLocaleLowerCase())
-          })
+          Object.entries(req.raw.headers).filter(
+            ([key]) =>
+              ![
+                'cookie',
+                'authorization',
+                'cf-connecting-ip',
+                'true-client-ip',
+                'x-real-ip',
+                'x-forwarded-for'
+              ].includes(key.toLocaleLowerCase())
+          )
         )
       }
     }),
@@ -94,6 +80,7 @@ export const DetermineRequestIdMiddleware = (
   next: NextFunction
 ) => {
   const id = DetermineRequestId(req)
+  req.headers[REQUEST_ID_HEADER] = id
   res.setHeader(REQUEST_ID_HEADER, id)
   next()
 }
