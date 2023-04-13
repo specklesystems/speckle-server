@@ -3,9 +3,9 @@ const getIpFromRequest = (req) => {
   try {
     ip =
       req.headers['cf-connecting-ip'] ||
-      req.headers['True-Client-IP'] ||
-      req.headers['X-Real-IP'] ||
-      req.headers['X-Forwarded-For'] ||
+      req.headers['true-client-ip'] ||
+      req.headers['x-real-ip'] ||
+      req.headers['x-forwarded-for'] ||
       req.ip ||
       req.connection.remoteAddress ||
       ''
