@@ -178,7 +178,7 @@ const previewUrl = computed(() =>
   isPendingModelFragment(props.model) ? null : props.model.previewUrl
 )
 const defaultLinkDisabled = computed(
-  () => props.disableDefaultLink || isPendingModelFragment(props.model)
+  () => props.disableDefaultLink || versionCount.value < 1
 )
 
 const updatedAt = computed(() => {
