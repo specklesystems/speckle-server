@@ -42,3 +42,7 @@ export type GraphQLContext = AuthContext & {
 }
 
 export { Nullable, Optional, MaybeNullOrUndefined, MaybeAsync, MaybeFalsy }
+
+declare const brand: unique symbol
+
+export type Brand<T, TBrand> = T & { [brand]: TBrand }

@@ -5240,6 +5240,7 @@ __metadata:
     "@speckle/shared": "workspace:^"
     "@swc/core": ^1.2.222
     "@tiptap/core": ^2.0.0-beta.176
+    "@types/bcrypt": ^5.0.0
     "@types/bull": ^3.15.9
     "@types/compression": ^1.7.2
     "@types/debug": ^4.1.7
@@ -5876,6 +5877,15 @@ __metadata:
     "@types/extract-files": "*"
     graphql: 14 - 16
   checksum: 07266f90fb0b3b0784e15bcd3f2cd567079a95f0362084e85b2d7c7fb10731cfbfa33d2015d295521e75e067b6f689b312acec8f29bbcff9fe88c70e9f545912
+  languageName: node
+  linkType: hard
+
+"@types/bcrypt@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "@types/bcrypt@npm:5.0.0"
+  dependencies:
+    "@types/node": "*"
+  checksum: 063c32c7a519d64768dfc0169a319b8244d6a6cb50a355c93992b3c5fee1dbc236526a1111f0e7bb25abc8b0473e5f40a5edfeb8b33cad2a6ea35aa2d7d7db14
   languageName: node
   linkType: hard
 

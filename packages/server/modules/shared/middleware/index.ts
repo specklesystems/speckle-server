@@ -8,7 +8,7 @@ import {
 import { Request, Response, NextFunction } from 'express'
 import { ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
-import { validateToken } from '@/modules/core/services/tokens'
+import { RawAuthToken, validateToken } from '@/modules/core/services/tokens'
 import { TokenValidationResult } from '@/modules/core/helpers/types'
 import { buildRequestLoaders } from '@/modules/core/loaders'
 import {
@@ -60,7 +60,7 @@ export const getTokenFromRequest = (req: Request | null | undefined): string | n
 export async function createAuthContextFromToken(
   rawToken: string | null,
   tokenValidator: (
-    tokenString: string
+    tokenString: RawAuthToken
   ) => Promise<TokenValidationResult> = validateToken
 ): Promise<AuthContext> {
   // null, undefined or empty string tokens can continue without errors and auth: false
@@ -70,7 +70,7 @@ export async function createAuthContextFromToken(
   if (token.startsWith('Bearer ')) token = token.split(' ')[1]
 
   try {
-    const tokenValidationResult = await tokenValidator(token)
+    const tokenValidationResult = await tokenValidator(token as RawAuthToken)
     // invalid tokens however will be rejected.
     if (!tokenValidationResult.valid)
       return { auth: false, err: new ForbiddenError('Your token is not valid.') }
