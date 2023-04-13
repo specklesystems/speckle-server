@@ -170,11 +170,11 @@ export const LIMITS: RateLimiterOptions = {
   },
   'POST /graphql': {
     regularOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_POST_GRAPHQL', '10'),
+      limitCount: getIntFromEnv('RATELIMIT_POST_GRAPHQL', '50'),
       duration: 1 * TIME.second
     },
     burstOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_BURST_POST_GRAPHQL', '20'),
+      limitCount: getIntFromEnv('RATELIMIT_BURST_POST_GRAPHQL', '200'),
       duration: 1 * TIME.minute
     }
   },
