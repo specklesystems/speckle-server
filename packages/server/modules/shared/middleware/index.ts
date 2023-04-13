@@ -158,8 +158,8 @@ export async function mixpanelTrackerHelperMiddleware(
 export const X_SPECKLE_CLIENT_IP_HEADER = 'x-speckle-client-ip'
 
 /**
- * Hash the IP address of the request source and adds it to the request object.
- * This is used to identify anonymous users.
+ * Determine the IP address of the request source and add it as a header to the request object.
+ * This is used to correlate anonymous/unauthenticated requests with external data sources.
  * @param req HTTP request object
  * @param _res HTTP response object
  * @param next Express middleware-compatible next function
