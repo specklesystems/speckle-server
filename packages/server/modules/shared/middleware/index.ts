@@ -22,6 +22,7 @@ import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { Observability } from '@speckle/shared'
 import { pino } from 'pino'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
+import { md5 } from '@/modules/shared/helpers/cryptoHelper'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -155,8 +156,7 @@ export async function mixpanelTrackerHelperMiddleware(
   next()
 }
 
-export const X_SPECKLE_CLIENT_IP_HEADER = 'x-speckle-client-ip'
-
+const X_SPECKLE_CLIENT_IP_HEADER = 'x-speckle-client-ip'
 /**
  * Determine the IP address of the request source and add it as a header to the request object.
  * This is used to correlate anonymous/unauthenticated requests with external data sources.
@@ -169,6 +169,7 @@ export async function determineClientIpAddressMiddleware(
   _res: Response,
   next: NextFunction
 ) {
-  req.headers[X_SPECKLE_CLIENT_IP_HEADER] = getIpFromRequest(req)
+  const ip = getIpFromRequest(req)
+  if (ip) req.headers[X_SPECKLE_CLIENT_IP_HEADER] = md5(ip)
   next()
 }

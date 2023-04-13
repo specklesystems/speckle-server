@@ -192,6 +192,7 @@ export async function init() {
   await knex.migrate.latest()
 
   app.use(DetermineRequestIdMiddleware)
+  app.use(determineClientIpAddressMiddleware)
   app.use(LoggingExpressMiddleware)
 
   if (process.env.COMPRESSION) {
@@ -206,7 +207,6 @@ export async function init() {
 
   // Log errors
   app.use(errorLoggingMiddleware)
-  app.use(determineClientIpAddressMiddleware)
   app.use(authContextMiddleware)
   app.use(createRateLimiterMiddleware())
   app.use(mixpanelTrackerHelperMiddleware)
