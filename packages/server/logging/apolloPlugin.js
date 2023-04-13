@@ -75,7 +75,7 @@ module.exports = {
             logger = logger.child({ 'query-path': err.path.join(' > ') })
           }
           if (err instanceof GraphQLError && err.extensions?.code === 'FORBIDDEN') {
-            logger.warn(err, 'graphql error')
+            logger.info(err, 'graphql error')
           } else {
             logger.error(err, 'graphql error')
           }
