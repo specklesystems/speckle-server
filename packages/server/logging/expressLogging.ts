@@ -61,7 +61,7 @@ export const LoggingExpressMiddleware = HttpLogger({
               // and that's a privacy issue.
               return false
             }
-            ![
+            return ![
               'cookie',
               'authorization',
               'cf-connecting-ip',
