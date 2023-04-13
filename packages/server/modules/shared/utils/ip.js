@@ -1,7 +1,14 @@
 const getIpFromRequest = (req) => {
   let ip
   try {
-    ip = req.headers['cf-connecting-ip'] || req.ip || req.connection.remoteAddress || ''
+    ip =
+      req.headers['cf-connecting-ip'] ||
+      req.headers['True-Client-IP'] ||
+      req.headers['X-Real-IP'] ||
+      req.headers['X-Forwarded-For'] ||
+      req.ip ||
+      req.connection.remoteAddress ||
+      ''
   } catch {
     ip = ''
   }
