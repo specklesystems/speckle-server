@@ -44,6 +44,7 @@ import { get, has, isString, toNumber } from 'lodash'
 import {
   authContextMiddleware,
   buildContext,
+  determineClientIpAddressMiddleware,
   mixpanelTrackerHelperMiddleware
 } from '@/modules/shared/middleware'
 
@@ -205,6 +206,7 @@ export async function init() {
 
   // Log errors
   app.use(errorLoggingMiddleware)
+  app.use(determineClientIpAddressMiddleware)
   app.use(authContextMiddleware)
   app.use(createRateLimiterMiddleware())
   app.use(mixpanelTrackerHelperMiddleware)
