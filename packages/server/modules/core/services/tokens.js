@@ -3,6 +3,11 @@ const bcrypt = require('bcrypt')
 const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
 const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
+const {
+  setAuthContextInCache,
+  removeAuthContextFromCache,
+  tryGetAuthContextFromCache
+} = require('@/modules/core/services/tokenCache')
 
 const ApiTokens = () => knex('api_tokens')
 const PersonalApiTokens = () => knex('personal_api_tokens')
@@ -74,6 +79,18 @@ module.exports = {
     const tokenId = tokenString.slice(0, 10)
     const tokenContent = tokenString.slice(10, 42)
 
+    // we store the auth context in the cache for a short period of time
+    // this is to avoid hitting the database for every request
+    try {
+      const authContext = await tryGetAuthContextFromCache(tokenId)
+      if (authContext) {
+        return authContext
+      }
+    } catch {
+      // ignore errors
+    }
+
+    // not in cache, so try database
     const token = await ApiTokens().where({ id: tokenId }).select('*').first()
 
     if (!token) {
@@ -95,17 +112,30 @@ module.exports = {
         .select('role')
         .where({ userId: token.owner })
         .first()
-      return {
+      const authContext = {
         valid: true,
         userId: token.owner,
         role,
         scopes: scopes.map((s) => s.scopeName)
       }
+      try {
+        await setAuthContextInCache(tokenId, authContext, 10) // expire in 10 seconds
+      } catch {
+        // ignore errors
+      }
+      return authContext
     } else return { valid: false }
   },
 
   async revokeToken(tokenId, userId) {
     tokenId = tokenId.slice(0, 10)
+    try {
+      await removeAuthContextFromCache(tokenId)
+    } catch {
+      // ignore errors.
+      // if we fail, it is perhaps because it has already expired from the cache
+      // or it will expire soon.
+    }
     const delCount = await ApiTokens().where({ id: tokenId, owner: userId }).del()
 
     if (delCount === 0) throw new Error('Did not revoke token')
@@ -113,6 +143,13 @@ module.exports = {
   },
 
   async revokeTokenById(tokenId) {
+    try {
+      await removeAuthContextFromCache(tokenId)
+    } catch {
+      // ignore errors.
+      // if we fail, it is perhaps because it has already expired from the cache
+      // or it will expire soon.
+    }
     const delCount = await ApiTokens()
       .where({ id: tokenId.slice(0, 10) })
       .del()
