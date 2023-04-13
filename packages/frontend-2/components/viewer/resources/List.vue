@@ -32,7 +32,7 @@
             :version-id="versionId"
             :last="index === modelsAndVersionIds.length - 1"
             :show-remove="showRemove"
-            @remove="(id) => removeResource(id as unknown as string)"
+            @remove="(id) => removeModel(id)"
           />
         </div>
       </template>
@@ -57,16 +57,21 @@ const { items } = useInjectedViewerRequestedResources()
 
 const open = ref(false)
 
-const removeResource = (id: string) => {
-  const remaining = items.value.filter((x) => {
-    if (x.type === SpeckleViewer.ViewerRoute.ViewerResourceType.Model)
-      return (x as SpeckleViewer.ViewerRoute.ViewerModelResource).modelId !== id
-    else if (x.type === SpeckleViewer.ViewerRoute.ViewerResourceType.Object)
-      return (x as SpeckleViewer.ViewerRoute.ViewerObjectResource).objectId !== id
-    else return true
-  })
+const removeModel = (modelId: string) => {
+  // Convert requested resource string to references to specific models
+  // to ensure remove works even when we have "all" or "$folder" in the URL
+  const builder = SpeckleViewer.ViewerRoute.resourceBuilder()
+  for (const loadedResource of resourceItems.value) {
+    if (loadedResource.modelId) {
+      if (loadedResource.modelId !== modelId) {
+        builder.addModel(loadedResource.modelId, loadedResource.versionId || undefined)
+      }
+    } else {
+      builder.addObject(loadedResource.objectId)
+    }
+  }
 
-  items.value = [...remaining]
+  items.value = builder.toResources()
 }
 
 watch(modelsAndVersionIds, (newVal) => {
