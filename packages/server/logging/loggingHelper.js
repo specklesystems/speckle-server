@@ -1,7 +1,19 @@
-const filterSensitiveVariables = (variables) => {
+const redactSensitiveVariables = (variables) => {
+  if (!variables) {
+    return variables
+  }
+
+  if (Array.isArray(variables)) {
+    return variables.map((v) => redactSensitiveVariables(v))
+  }
+
+  if (typeof variables !== 'object') {
+    return variables
+  }
+
   return Object.entries(variables).reduce((acc, [key, val]) => {
     if (typeof val === 'object') {
-      acc[key] = filterSensitiveVariables(val)
+      acc[key] = redactSensitiveVariables(val)
       return acc
     }
 
@@ -20,5 +32,5 @@ const filterSensitiveVariables = (variables) => {
 }
 
 module.exports = {
-  filterSensitiveVariables
+  redactSensitiveVariables
 }

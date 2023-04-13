@@ -4,7 +4,7 @@ const Sentry = require('@sentry/node')
 const { ApolloError } = require('apollo-server-express')
 const prometheusClient = require('prom-client')
 const { graphqlLogger } = require('@/logging/logging')
-const { filterSensitiveVariables } = require('@/logging/loggingHelper')
+const { redactSensitiveVariables } = require('@/logging/loggingHelper')
 
 const metricCallCount = new prometheusClient.Counter({
   name: 'speckle_server_apollo_calls',
@@ -33,7 +33,7 @@ module.exports = {
         logger = logger.child({
           graphql_operation_kind: kind,
           graphql_query: query,
-          graphql_variables: filterSensitiveVariables(variables),
+          graphql_variables: redactSensitiveVariables(variables),
           graphql_operation_value: op,
           grqphql_operation_name: name
         })

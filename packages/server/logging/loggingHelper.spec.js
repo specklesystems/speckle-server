@@ -1,5 +1,5 @@
 const expect = require('chai').expect
-const { filterSensitiveVariables } = require('@/logging/loggingHelper')
+const { redactSensitiveVariables } = require('@/logging/loggingHelper')
 
 describe('loggingHelper', () => {
   describe('filterSensitiveVariables', () => {
@@ -12,7 +12,7 @@ describe('loggingHelper', () => {
         emails: 'exampleValue',
         notsensitive: 'exampleValue'
       }
-      const result = filterSensitiveVariables(variables)
+      const result = redactSensitiveVariables(variables)
       expect(result).to.deep.equal({
         email: '[REDACTED]',
         emailaddress: '[REDACTED]',
@@ -32,7 +32,7 @@ describe('loggingHelper', () => {
           emails: 'exampleValue'
         }
       }
-      const result = filterSensitiveVariables(variables)
+      const result = redactSensitiveVariables(variables)
       expect(result).to.deep.equal({
         nest1: {
           email: '[REDACTED]',
@@ -58,7 +58,7 @@ describe('loggingHelper', () => {
           }
         }
       }
-      const result = filterSensitiveVariables(variables)
+      const result = redactSensitiveVariables(variables)
       expect(result).to.deep.equal({
         nest1: {
           nest2: {
