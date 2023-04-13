@@ -11,32 +11,59 @@ const redisOptions = {
   maxRetriesPerRequest: null
 }
 
-export async function tryGetAuthContextFromCache(token: string): Promise<AuthContext> {
+export async function tryGetAuthContextFromCache(
+  token: string
+): Promise<AuthContext | null> {
   const redisClient = createRedisClient(getRedisUrl(), redisOptions)
 
-  const result = redisClient.get(determineKey(token))
-  if (!result || typeof result !== 'string') {
-    return Promise.reject<AuthContext>(null)
+  try {
+    const result = await redisClient.get(determineKey(token))
+    if (!result || typeof result !== 'string') {
+      return Promise.resolve(null)
+    }
+
+    //TODO zod parse and validate?
+    return Promise.resolve<AuthContext>(JSON.parse(result))
+  } catch (err) {
+    // do nothing
   }
 
-  //TODO zod parse and validate
-  return Promise.resolve(JSON.parse(result))
+  return Promise.resolve(null)
 }
 
 export async function setAuthContextInCache(
   token: string,
   authContext: AuthContext,
   seconds: number
-): Promise<void> {
+): Promise<boolean> {
   const redisClient = createRedisClient(getRedisUrl(), redisOptions)
-  redisClient.set(determineKey(token), JSON.stringify(authContext), 'EX', seconds)
+  try {
+    const OK = await redisClient.set(
+      determineKey(token),
+      JSON.stringify(authContext),
+      'EX',
+      seconds
+    )
+    if (OK === 'OK') {
+      return Promise.resolve(true)
+    }
+  } catch (err) {
+    // do nothing
+  }
+
+  return Promise.resolve(false)
 }
 
-export async function removeAuthContextFromCache(token: string): Promise<void> {
+export async function removeAuthContextFromCache(token: string): Promise<boolean> {
   const redisClient = createRedisClient(getRedisUrl(), redisOptions)
-  const numberOfKeysRemoved = await redisClient.del(determineKey(token))
-  if (numberOfKeysRemoved === 0) {
-    return Promise.reject()
+  try {
+    const delCount = await redisClient.del(determineKey(token))
+    if (delCount > 0) {
+      return Promise.resolve(true)
+    }
+  } catch (err) {
+    // do nothing
   }
-  return Promise.resolve()
+
+  return Promise.resolve(false)
 }

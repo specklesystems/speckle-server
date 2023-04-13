@@ -81,13 +81,10 @@ module.exports = {
 
     // we store the auth context in the cache for a short period of time
     // this is to avoid hitting the database for every request
-    try {
-      const authContext = await tryGetAuthContextFromCache(tokenId)
-      if (authContext) {
-        return authContext
-      }
-    } catch {
-      // ignore errors
+
+    const authContext = await tryGetAuthContextFromCache(tokenId)
+    if (authContext) {
+      return authContext
     }
 
     // not in cache, so try database
@@ -118,24 +115,18 @@ module.exports = {
         role,
         scopes: scopes.map((s) => s.scopeName)
       }
-      try {
-        await setAuthContextInCache(tokenId, authContext, 10) // expire in 10 seconds
-      } catch {
-        // ignore errors
-      }
+
+      await setAuthContextInCache(tokenId, authContext, Math.min(10, token.lifespan)) //FIXME - check what the units of token lifespan are!!!
+
       return authContext
     } else return { valid: false }
   },
 
   async revokeToken(tokenId, userId) {
     tokenId = tokenId.slice(0, 10)
-    try {
-      await removeAuthContextFromCache(tokenId)
-    } catch {
-      // ignore errors.
-      // if we fail, it is perhaps because it has already expired from the cache
-      // or it will expire soon.
-    }
+    // we don't care if this fails, as it will expire soon anyway
+    await removeAuthContextFromCache(tokenId)
+
     const delCount = await ApiTokens().where({ id: tokenId, owner: userId }).del()
 
     if (delCount === 0) throw new Error('Did not revoke token')
@@ -143,13 +134,9 @@ module.exports = {
   },
 
   async revokeTokenById(tokenId) {
-    try {
-      await removeAuthContextFromCache(tokenId)
-    } catch {
-      // ignore errors.
-      // if we fail, it is perhaps because it has already expired from the cache
-      // or it will expire soon.
-    }
+    // we don't care if this fails, as it will expire soon anyway
+    await removeAuthContextFromCache(tokenId)
+
     const delCount = await ApiTokens()
       .where({ id: tokenId.slice(0, 10) })
       .del()
