@@ -619,6 +619,11 @@ type BaseUserStreamsQueryParams = {
    * Only return streams owned by userId
    */
   ownedOnly?: boolean
+
+  /**
+   * Only return streams where user has the specified roles
+   */
+  withRoles?: StreamRoles[]
 }
 
 export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
@@ -639,13 +644,23 @@ export type UserStreamsQueryCountParams = BaseUserStreamsQueryParams
  */
 function getUserStreamsQueryBase<
   S extends StreamRecord = StreamRecord & StreamAclRecord
->({ userId, searchQuery, forOtherUser, ownedOnly }: BaseUserStreamsQueryParams) {
+>({
+  userId,
+  searchQuery,
+  forOtherUser,
+  ownedOnly,
+  withRoles
+}: BaseUserStreamsQueryParams) {
   const query = StreamAcl.knex<Array<S>>()
     .where(StreamAcl.col.userId, userId)
     .join(Streams.name, StreamAcl.col.resourceId, Streams.col.id)
 
-  if (ownedOnly) {
-    query.where(StreamAcl.col.role, Roles.Stream.Owner)
+  if (ownedOnly || withRoles?.length) {
+    const roles: StreamRoles[] = [
+      ...(withRoles || []),
+      ...(ownedOnly ? [Roles.Stream.Owner] : [])
+    ]
+    query.whereIn(StreamAcl.col.role, roles)
   }
 
   if (forOtherUser) {

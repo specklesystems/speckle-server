@@ -53,7 +53,10 @@
 import { PropType } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
-import { FormSelectProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  FormSelectProjects_ProjectFragment,
+  StreamRole
+} from '~~/lib/common/generated/gql/graphql'
 import { useFormSelectChildInternals } from '~~/lib/form/composables/select'
 import { useApolloClient } from '@vue/apollo-composable'
 import { searchProjectsQuery } from '~~/lib/form/graphql/queries'
@@ -144,7 +147,7 @@ const invokeSearch = async (search: string) => {
     query: searchProjectsQuery,
     variables: {
       search: search.trim().length ? search : null,
-      ownedOnly: props.ownedOnly
+      onlyWithRoles: props.ownedOnly ? [StreamRole.StreamOwner] : null
     }
   })
   return results.data.activeUser?.projects.items || []

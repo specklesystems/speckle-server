@@ -1,5 +1,6 @@
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { ProjectVisibility, Resolvers } from '@/modules/core/graph/generated/graphql'
+import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles, Scopes } from '@/modules/core/helpers/mainConstants'
 import {
   getUserStreamsCount,
@@ -142,7 +143,7 @@ export = {
         userId: ctx.userId!,
         forOtherUser: false,
         searchQuery: args.filter?.search || undefined,
-        ownedOnly: args.filter?.ownedOnly || undefined
+        withRoles: (args.filter?.onlyWithRoles || []).map(mapStreamRoleToValue)
       })
 
       const { cursor, streams } = await getUserStreams({
@@ -151,7 +152,7 @@ export = {
         cursor: args.cursor || undefined,
         searchQuery: args.filter?.search || undefined,
         forOtherUser: false,
-        ownedOnly: args.filter?.ownedOnly || undefined
+        withRoles: (args.filter?.onlyWithRoles || []).map(mapStreamRoleToValue)
       })
 
       return { totalCount, cursor, items: streams }
