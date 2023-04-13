@@ -6,8 +6,13 @@ import { NextFunction, Response } from 'express'
 import pino, { SerializedResponse } from 'pino'
 import { GenReqId } from 'pino-http'
 import { X_SPECKLE_CLIENT_IP_HEADER } from '@/modules/shared/middleware'
+import { AuthContext } from '@/modules/shared/authz'
 
 const REQUEST_ID_HEADER = 'x-request-id'
+
+interface RawRequestWithAuthContext extends IncomingMessage {
+  context: AuthContext
+}
 
 const GenerateRequestId: GenReqId = (req: IncomingMessage) => DetermineRequestId(req)
 
@@ -48,7 +53,7 @@ export const LoggingExpressMiddleware = HttpLogger({
         headers: Object.fromEntries(
           Object.entries(req.raw.headers).filter(([key]) => {
             if (
-              req.context?.userId &&
+              (req.raw as RawRequestWithAuthContext).context?.userId &&
               key.toLocaleLowerCase() === X_SPECKLE_CLIENT_IP_HEADER
             ) {
               // we cannot log the IP (even if hashed) if we also have a User ID
