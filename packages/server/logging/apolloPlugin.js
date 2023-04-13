@@ -5,6 +5,7 @@ const { ApolloError } = require('apollo-server-express')
 const prometheusClient = require('prom-client')
 const { graphqlLogger } = require('@/logging/logging')
 const { redactSensitiveVariables } = require('@/logging/loggingHelper')
+const { GraphQLError } = require('graphql')
 
 const metricCallCount = new prometheusClient.Counter({
   name: 'speckle_server_apollo_calls',
@@ -73,7 +74,11 @@ module.exports = {
           if (err.path) {
             logger = logger.child({ 'query-path': err.path.join(' > ') })
           }
-          logger.error(err, 'graphql error')
+          if (err instanceof GraphQLError && err.extensions?.code === 'FORBIDDEN') {
+            logger.info(err, 'graphql error')
+          } else {
+            logger.error(err, 'graphql error')
+          }
 
           Sentry.withScope((scope) => {
             scope.setTag('kind', kind)
