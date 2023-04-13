@@ -22,7 +22,7 @@ import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { Observability } from '@speckle/shared'
 import { pino } from 'pino'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
-import { md5 } from '@/modules/shared/helpers/cryptoHelper'
+import { Netmask } from 'netmask'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -170,6 +170,9 @@ export async function determineClientIpAddressMiddleware(
   next: NextFunction
 ) {
   const ip = getIpFromRequest(req)
-  if (ip) req.headers[X_SPECKLE_CLIENT_IP_HEADER] = md5(ip)
+  if (ip) {
+    const mask = new Netmask(`${ip}/24`)
+    req.headers[X_SPECKLE_CLIENT_IP_HEADER] = mask.broadcast
+  }
   next()
 }

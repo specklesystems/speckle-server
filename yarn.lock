@@ -5251,6 +5251,7 @@ __metadata:
     "@types/mocha": ^10.0.0
     "@types/mock-require": ^2.0.1
     "@types/module-alias": ^2.0.1
+    "@types/netmask": ^2.0.0
     "@types/node-cron": ^3.0.2
     "@types/nodemailer": ^6.4.5
     "@types/pino-http": ^5.8.1
@@ -5301,6 +5302,7 @@ __metadata:
     mocha-junit-reporter: ^2.0.2
     mock-require: ^3.0.3
     module-alias: ^2.2.2
+    netmask: ^2.0.2
     node-cron: ^3.0.2
     node-machine-id: ^1.1.12
     node-mocks-http: ^1.12.1
@@ -6228,6 +6230,13 @@ __metadata:
   version: 0.7.31
   resolution: "@types/ms@npm:0.7.31"
   checksum: daadd354aedde024cce6f5aa873fefe7b71b22cd0e28632a69e8b677aeb48ae8caa1c60e5919bb781df040d116b01cb4316335167a3fc0ef6a63fa3614c0f6da
+  languageName: node
+  linkType: hard
+
+"@types/netmask@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "@types/netmask@npm:2.0.0"
+  checksum: 63301fb59f014cd03e1aa9d3b2f41334e2cd7a2620e4741222c7abdf0553fb0941f00cd6596506dee69f29e6c3b33cf9b9c84f2e10e3ec722691229051d83478
   languageName: node
   linkType: hard
 
