@@ -164,7 +164,7 @@ export const X_SPECKLE_CLIENT_IP_HEADER = 'x-speckle-client-ip'
  * @param _res HTTP response object
  * @param next Express middleware-compatible next function
  */
-export async function hashIpMiddleware(
+export async function determineClientIpAddressMiddleware(
   req: Request,
   _res: Response,
   next: NextFunction
