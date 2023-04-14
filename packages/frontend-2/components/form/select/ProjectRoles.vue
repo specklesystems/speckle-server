@@ -3,6 +3,7 @@
     v-model="selectedValue"
     :items="Object.values(Roles.Stream)"
     :multiple="multiple"
+    clearable
     name="projectRoles"
     label="Project roles"
     class="min-w-[150px]"
