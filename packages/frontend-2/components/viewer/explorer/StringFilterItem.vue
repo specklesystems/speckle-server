@@ -21,6 +21,8 @@
         One is set by the explorer, and the other one by the filters - this would allow for us to 
         enable isolate this level, and from the remaining objects, isolate the doors only. 
         Requires a larger rework of the viewer state composable & filtering methods.
+
+        There's v-if=false that's hiding the div below :)
       -->
       <div v-if="false" class="flex items-center flex-shrink-0">
         <button
@@ -85,10 +87,10 @@ const availableTargetIds = computed(() => {
   let targets = props.item.ids
 
   if (isolatedObjects.value && isolatedObjects.value?.length > 0)
-    targets = props.item.ids.filter((id) => isolatedObjects.value.includes(id))
+    targets = props.item.ids.filter((id) => isolatedObjects.value?.includes(id))
 
   if (hiddenObjects.value && hiddenObjects.value?.length > 0)
-    targets = props.item.ids.filter((id) => !hiddenObjects.value.includes(id))
+    targets = props.item.ids.filter((id) => !hiddenObjects.value?.includes(id))
   return targets
 })
 

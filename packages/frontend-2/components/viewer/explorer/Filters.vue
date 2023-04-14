@@ -8,6 +8,7 @@
             text
             size="xs"
             :icon-right="showAllFilters ? ChevronUpIcon : ChevronDownIcon"
+            class="capitalize"
             @click="showAllFilters = !showAllFilters"
           >
             {{ title.split('.').reverse()[0] || title || 'No Title' }}
@@ -49,6 +50,7 @@
           name="filter search"
           placeholder="Search for a property"
           size="sm"
+          :show-clear="!!searchString"
         />
       </div>
       <div
@@ -89,8 +91,17 @@
 import { ChevronDownIcon, ChevronUpIcon, SparklesIcon } from '@heroicons/vue/24/solid'
 import { SparklesIcon as SparklesIconOutline } from '@heroicons/vue/24/outline'
 import { PropertyInfo, StringPropertyInfo, NumericPropertyInfo } from '@speckle/viewer'
-import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewer,
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
 const { instance: viewer } = useInjectedViewer()
+
+const {
+  ui: {
+    filters: { setColorFilter, removeColorFilter, current }
+  }
+} = useInjectedViewerState()
 
 const showAllFilters = ref(false)
 
@@ -121,6 +132,11 @@ const relevantFilters = computed(() => {
       f.key.includes('displayMesh')
     ) {
       return false
+    }
+    // handle revit params: the actual one single value we're interested is in paramters.HOST_BLA BLA_.value, the rest are not needed
+    if (f.key.startsWith('parameters')) {
+      if (f.key.endsWith('.value')) return true
+      else return false
     }
     return true
   })
@@ -179,21 +195,19 @@ const title = computed(() => {
   return currentFilterKey
 })
 
-const colors = ref(false)
-const toggleColors = () => {
-  colors.value = !colors.value
+const colors = computed(() => !!current.value?.activePropFilterKey)
 
-  if (colors.value) {
-    viewer.setColorFilter(activeFilter.value)
-  } else viewer.removeColorFilter()
+const toggleColors = () => {
+  if (!colors.value) setColorFilter(activeFilter.value)
+  else removeColorFilter()
 }
 
+// Handles a rather complicated ux flow: user sets a numeric filter which only makes sense with colors on. we set the force colors flag in that scenario, so we can revert it if user selects a non-numeric filter afterwards.
 let forcedColors = false
 const refreshColorsIfSetOrActiveFilterIsNumeric = async () => {
   if (activeFilter.value.type === 'number' && !colors.value) {
     forcedColors = true
-    colors.value = true
-    await viewer.setColorFilter(activeFilter.value)
+    await setColorFilter(activeFilter.value)
     return
   }
 
@@ -201,8 +215,7 @@ const refreshColorsIfSetOrActiveFilterIsNumeric = async () => {
 
   if (forcedColors) {
     forcedColors = false
-    colors.value = false
-    await viewer.removeColorFilter()
+    await removeColorFilter()
     return
   }
 
