@@ -49,7 +49,10 @@
     <ProjectsDashboardEmptyState v-if="showEmptyState" />
     <template v-else-if="projects?.items?.length">
       <ProjectsDashboardFilled :projects="projects" />
-      <InfiniteLoading @infinite="infiniteLoad" />
+      <InfiniteLoading
+        :settings="{ identifier: infiniteLoaderId }"
+        @infinite="infiniteLoad"
+      />
     </template>
     <CommonEmptySearchState v-else-if="!showLoadingBar" @clear-search="clearSearch" />
     <ProjectsAddDialog v-model:open="openNewProject" />
@@ -95,6 +98,7 @@ const onUserProjectsUpdateSubscription = graphql(`
   }
 `)
 
+const infiniteLoaderId = ref('')
 const cursor = ref(null as Nullable<string>)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const search = ref('')
@@ -121,6 +125,7 @@ const {
 
 onProjectsResult((res) => {
   cursor.value = res.data?.activeUser?.projects.cursor || null
+  infiniteLoaderId.value = JSON.stringify(projectsVariables.value?.filter || {})
 })
 
 const { onResult: onUserProjectsUpdate } = useSubscription(
