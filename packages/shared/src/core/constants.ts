@@ -21,6 +21,10 @@ export const Roles = Object.freeze(<const>{
 export type ServerRoles = typeof Roles['Server'][keyof typeof Roles['Server']]
 export type StreamRoles = typeof Roles['Stream'][keyof typeof Roles['Stream']]
 
+export function isServerRoles(role: unknown): role is ServerRoles {
+  return typeof role === 'string' && Object.values<string>(Roles.Server).includes(role)
+}
+
 /**
  * Speckle scope constants
  * - Scopes define what kind of access has a user approved for a specific access token

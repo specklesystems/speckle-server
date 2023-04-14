@@ -10,6 +10,8 @@ import {
 } from '@/modules/core/services/tokenCache'
 import { Brand } from '@/modules/shared/helpers/typeHelper'
 import { TokenValidationResult } from '@/modules/core/helpers/types'
+import { ValidTokenResult } from '@/modules/core/helpers/types'
+import { isServerRoles } from '@speckle/shared'
 
 const ApiTokens = () => knex('api_tokens')
 const PersonalApiTokens = () => knex('personal_api_tokens')
@@ -21,11 +23,28 @@ type AuthTokenInput = {
   userId: UserId
   name: string
   scopes: string[]
-  lifespan: number
+  lifespan: LifespanMilliseconds
 }
 export type TokenId = Brand<string, 'TokenId'>
 export type UserId = Brand<string, 'UserId'>
 export type RawAuthToken = Brand<string, 'AuthToken'>
+export type LifespanMilliseconds = Brand<number, 'LifespanMilliseconds'>
+export type StoredToken = {
+  createdAt: Date
+  lifespan: LifespanMilliseconds
+  tokenDigest: string
+  owner: UserId
+}
+function isToken(token: unknown): token is StoredToken {
+  return (
+    !!token &&
+    typeof token === 'object' &&
+    'createdAt' in token &&
+    'lifespan' in token &&
+    'tokenDigest' in token &&
+    'owner' in token
+  )
+}
 
 /*
 
@@ -36,7 +55,7 @@ export type RawAuthToken = Brand<string, 'AuthToken'>
    */
 
 export async function createBareToken() {
-  const tokenId = crs({ length: 10 })
+  const tokenId = crs({ length: 10 }) as TokenId
   const tokenString = crs({ length: 32 })
   const tokenHash = await bcrypt.hash(tokenString, 10)
   const lastChars = tokenString.slice(tokenString.length - 6, tokenString.length)
@@ -50,8 +69,7 @@ export async function createToken({
   scopes,
   lifespan
 }: AuthTokenInput): Promise<{ id: TokenId; token: RawAuthToken }> {
-  const { tokenId, tokenString, tokenHash, lastChars } =
-    await module.exports.createBareToken()
+  const { tokenId, tokenString, tokenHash, lastChars } = await createBareToken()
 
   if (scopes.length === 0) throw new Error('No scopes provided')
 
@@ -68,17 +86,17 @@ export async function createToken({
   await ApiTokens().insert(token)
   await TokenScopes().insert(tokenScopes)
 
-  return { id: tokenId, token: tokenId + tokenString }
+  return { id: tokenId, token: `${tokenId}${tokenString}` as RawAuthToken }
 }
 
 // Creates a personal access token for a user with a set of given scopes.
 export async function createPersonalAccessToken(
-  userId: string,
+  userId: UserId,
   name: string,
   scopes: string[],
-  lifespan: number
+  lifespan: LifespanMilliseconds
 ) {
-  const { id, token } = await module.exports.createToken({
+  const { id, token } = await createToken({
     userId,
     name,
     scopes,
@@ -110,16 +128,16 @@ export async function validateToken(
   }
 
   // not in cache, so try database
-  const token = await ApiTokens().where({ id: tokenId }).select('*').first()
+  const token: unknown = await ApiTokens().where({ id: tokenId }).select('*').first()
 
-  if (!token) {
+  if (!isToken(token)) {
     return { valid: false }
   }
 
   const tokenCreatedAtMilliseconds = new Date(token.createdAt).getMilliseconds()
   const timeDiff = Math.abs(Date.now() - tokenCreatedAtMilliseconds)
   if (timeDiff > token.lifespan) {
-    await module.exports.revokeToken(tokenId, token.owner)
+    await revokeToken(tokenId, token.owner)
     return { valid: false }
   }
 
@@ -127,12 +145,18 @@ export async function validateToken(
 
   if (valid) {
     await ApiTokens().where({ id: tokenId }).update({ lastUsed: knex.fn.now() })
-    const scopes = await TokenScopes().select('scopeName').where({ tokenId })
+    const scopes: unknown = await TokenScopes().select('scopeName').where({ tokenId })
+
+    if (!scopes || !Array.isArray(scopes)) throw new Error('Scopes is invalid.')
+
     const { role } = await ServerRoles()
       .select('role')
       .where({ userId: token.owner })
       .first()
-    const authContext = {
+
+    if (!isServerRoles(role)) throw new Error('Role is invalid.')
+
+    const authContext: ValidTokenResult = {
       valid: true,
       userId: token.owner,
       role,

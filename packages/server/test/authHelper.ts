@@ -1,6 +1,10 @@
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { UserRecord } from '@/modules/core/helpers/types'
-import { createPersonalAccessToken } from '@/modules/core/services/tokens'
+import {
+  LifespanMilliseconds,
+  UserId,
+  createPersonalAccessToken
+} from '@/modules/core/services/tokens'
 import { createUser } from '@/modules/core/services/users'
 import { kebabCase, omit } from 'lodash'
 
@@ -48,5 +52,10 @@ export async function createAuthTokenForUser(
   userId: string,
   scopes: string[] = AllScopes
 ): Promise<string> {
-  return await createPersonalAccessToken(userId, 'test-runner-token', scopes)
+  return await createPersonalAccessToken(
+    userId as UserId,
+    'test-runner-token',
+    scopes,
+    180000 as LifespanMilliseconds
+  )
 }
