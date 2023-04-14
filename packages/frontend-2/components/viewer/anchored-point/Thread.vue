@@ -167,6 +167,7 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { ResourceType } from '~~/lib/common/generated/gql/graphql'
 import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
+import { ViewerSceneExplorerStateKey } from '~~/lib/common/helpers/constants'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -194,7 +195,7 @@ const comments = computed(() => [
 
 const {
   projectId,
-  ui: { sectionBox }
+  ui: { sectionBox, filters }
 } = useInjectedViewerState()
 const markThreadViewed = useMarkThreadViewed()
 const { usersTyping } = useViewerThreadTypingTracking(threadId)
@@ -374,6 +375,7 @@ onKeyDown('Escape', () => {
 
 // onKeyDown('ArrowRight', () => (isExpanded.value ? emit('prev', props.modelValue) : ''))
 // onKeyDown('ArrowLeft', () => (isExpanded.value ? emit('next', props.modelValue) : ''))
+const stateKey = ViewerSceneExplorerStateKey
 
 watch(
   () => <const>[isExpanded.value, isViewed.value],
@@ -387,6 +389,23 @@ watch(
 
     if (!newIsExpanded && props.modelValue.data?.sectionBox) {
       sectionBox.sectionBoxOff() // turn off section box if a comment had a section box
+    }
+
+    if (props.modelValue.data?.filters) {
+      const { isolatedIds, hiddenIds, propertyInfoKey, passMax, passMin } =
+        props.modelValue.data.filters
+
+      if (isolatedIds && isolatedIds.length > 0)
+        newIsExpanded
+          ? filters.isolateObjects(isolatedIds, stateKey)
+          : filters.unIsolateObjects(isolatedIds, stateKey)
+
+      if (hiddenIds && hiddenIds.length > 0)
+        newIsExpanded
+          ? filters.hideObjects(hiddenIds, stateKey)
+          : filters.showObjects(hiddenIds, stateKey)
+
+      // TODO: set filter based on propInfoKey, passMax and passMin
     }
 
     if (!newIsExpanded) {

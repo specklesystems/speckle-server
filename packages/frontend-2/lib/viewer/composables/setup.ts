@@ -202,7 +202,8 @@ export type InjectableViewerState = Readonly<{
       hideObjects: FilterAction
       showObjects: FilterAction
       resetFilters: () => Promise<void>
-      setColorFilter: (property: PropertyInfo) => void
+      setColorFilter: (property: PropertyInfo) => Promise<void>
+      removeColorFilter: () => Promise<void>
     }
     camera: {
       isPerspectiveProjection: Ref<boolean>
@@ -733,6 +734,11 @@ function setupInterfaceState(
     viewerBusy.value = false
   }
 
+  const removeColorFilter = async () => {
+    const result = await viewer.instance.removeColorFilter()
+    filteringState.value = markRaw(result)
+  }
+
   const resetFilters = async () => {
     viewerBusy.value = true
     await viewer.instance.resetFilters()
@@ -925,6 +931,7 @@ function setupInterfaceState(
         hideObjects,
         showObjects,
         setColorFilter,
+        removeColorFilter,
         resetFilters
       },
       selection: {
