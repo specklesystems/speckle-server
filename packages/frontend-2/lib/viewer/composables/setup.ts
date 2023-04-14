@@ -196,6 +196,7 @@ export type InjectableViewerState = Readonly<{
     spotlightUserId: Ref<Nullable<string>>
     filters: {
       current: ComputedRef<Nullable<FilteringState>>
+      userSelectedFilter: Ref<PropertyInfo | undefined>
       localFilterPropKey: ComputedRef<Nullable<string>>
       isolateObjects: FilterAction
       unIsolateObjects: FilterAction
@@ -690,48 +691,40 @@ function setupInterfaceState(
   // TODO: Do we maybe move isBusy toggles to the viewer side?
   const isolateObjects: FilterAction = async (...params) => {
     if (process.server) return
-    viewerBusy.value = true
 
     const result = await viewer.instance.isolateObjects(...params, false)
     filteringState.value = markRaw(result)
-    viewerBusy.value = false
   }
 
   const unIsolateObjects: FilterAction = async (...params) => {
     if (process.server) return
-    viewerBusy.value = true
 
     const result = await viewer.instance.unIsolateObjects(...params)
     filteringState.value = markRaw(result)
-    viewerBusy.value = false
   }
 
   const hideObjects: FilterAction = async (...params) => {
     if (process.server) return
-    viewerBusy.value = true
 
     const result = await viewer.instance.hideObjects(...params)
     filteringState.value = markRaw(result)
-    viewerBusy.value = false
   }
 
   const showObjects: FilterAction = async (...params) => {
     if (process.server) return
-    viewerBusy.value = true
 
     const result = await viewer.instance.showObjects(...params)
     filteringState.value = markRaw(result)
-    viewerBusy.value = false
   }
+
+  const userSelectedFilter = ref<PropertyInfo | undefined>()
 
   const setColorFilter = async (property: PropertyInfo) => {
     if (process.server) return
-    viewerBusy.value = true
 
     const result = await viewer.instance.setColorFilter(property)
     filteringState.value = markRaw(result)
     localFilterPropKey.value = property.key
-    viewerBusy.value = false
   }
 
   const removeColorFilter = async () => {
@@ -740,12 +733,11 @@ function setupInterfaceState(
   }
 
   const resetFilters = async () => {
-    viewerBusy.value = true
     await viewer.instance.resetFilters()
     viewer.instance.applyFilter(null)
     viewer.instance.resize() // Note: should not be needed in theory, but for some reason stuff doesn't re-render
     filteringState.value = null
-    viewerBusy.value = false
+    userSelectedFilter.value = undefined
   }
 
   const selectedObjects = ref<Raw<Record<string, unknown>>[]>([])
@@ -926,6 +918,7 @@ function setupInterfaceState(
       filters: {
         current: computed(() => filteringState.value),
         localFilterPropKey: computed(() => localFilterPropKey.value),
+        userSelectedFilter,
         isolateObjects,
         unIsolateObjects,
         hideObjects,

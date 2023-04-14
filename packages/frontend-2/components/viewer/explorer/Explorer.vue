@@ -75,8 +75,7 @@ const collapse = () => {
 const refHack = ref(1)
 
 onMounted(() => {
-  viewer.on(ViewerEvent.Busy, (isBusy) => {
-    if (isBusy) return
+  viewer.on(ViewerEvent.LoadComplete, () => {
     realTree = viewer.getWorldTree()
     filters.value = viewer.getObjectProperties()
     refHack.value++

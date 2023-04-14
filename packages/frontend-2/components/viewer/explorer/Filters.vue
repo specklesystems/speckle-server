@@ -18,7 +18,7 @@
             text
             size="xs"
             @click="
-              ;(userSelectedFilter = null),
+              ;(userSelectedFilter = undefined),
                 (showAllFilters = false),
                 refreshColorsIfSetOrActiveFilterIsNumeric()
             "
@@ -99,7 +99,7 @@ const { instance: viewer } = useInjectedViewer()
 
 const {
   ui: {
-    filters: { setColorFilter, removeColorFilter, current }
+    filters: { setColorFilter, removeColorFilter, current, userSelectedFilter }
   }
 } = useInjectedViewerState()
 
@@ -142,7 +142,7 @@ const relevantFilters = computed(() => {
   })
 })
 
-const userSelectedFilter = ref<PropertyInfo | null>(null)
+// const userSelectedFilter = ref<PropertyInfo | null>(null)
 
 const speckleTypeFilter = computed(
   () =>
