@@ -2411,7 +2411,7 @@ export type UserDeleteInput = {
 
 export type UserProjectsFilter = {
   /** Only include projects where user has the specified roles */
-  onlyWithRoles?: InputMaybe<Array<StreamRole>>;
+  onlyWithRoles?: InputMaybe<Array<Scalars['String']>>;
   /** Filter out projects by name */
   search?: InputMaybe<Scalars['String']>;
 };

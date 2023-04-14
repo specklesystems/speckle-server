@@ -14,24 +14,35 @@
         :invites="projectsPanelResult?.activeUser"
       />
     </div>
-    <div class="flex flex-col space-y-2 sm:flex-row sm:items-center mb-8 pt-4">
+    <div class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4">
       <h1 class="h4 font-bold">Projects</h1>
 
-      <div class="flex-grow flex items-center justify-end space-x-2">
+      <div
+        class="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-2 grow md:justify-end"
+      >
         <FormTextInput
           v-if="!showEmptyState"
           v-model="search"
           name="modelsearch"
           :show-label="false"
           placeholder="Search"
-          class="bg-foundation shadow w-60"
+          class="bg-foundation shadow"
+          wrapper-classes="grow md:grow-0 md:w-60"
           :show-clear="!!search"
           @change="updateSearchImmediately"
           @update:model-value="updateDebouncedSearch"
         ></FormTextInput>
-        <FormButton :icon-left="PlusIcon" @click="openNewProject = true">
-          New
-        </FormButton>
+        <div class="flex items-center space-x-2">
+          <FormSelectProjectRoles
+            v-if="!showEmptyState"
+            v-model="selectedRoles"
+            multiple
+            class="w-56 grow md:grow-0"
+          />
+          <FormButton :icon-left="PlusIcon" @click="openNewProject = true">
+            New
+          </FormButton>
+        </div>
       </div>
     </div>
     <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
@@ -40,10 +51,7 @@
       <ProjectsDashboardFilled :projects="projects" />
       <InfiniteLoading @infinite="infiniteLoad" />
     </template>
-    <CommonEmptySearchState
-      v-else-if="!showLoadingBar"
-      @clear-search=";(search = ''), updateSearchImmediately()"
-    />
+    <CommonEmptySearchState v-else-if="!showLoadingBar" @clear-search="clearSearch" />
     <ProjectsAddDialog v-model:open="openNewProject" />
   </div>
 </template>
@@ -59,19 +67,20 @@ import { PlusIcon } from '@heroicons/vue/24/solid'
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
-  updateCacheByFilter,
   getCacheId,
-  evictObjectFields
+  evictObjectFields,
+  modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
 import {
-  ProjectsDashboardQueryQueryVariables,
+  User,
+  UserProjectsArgs,
   UserProjectsUpdatedMessageType
 } from '~~/lib/common/generated/gql/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { projectRoute } from '~~/lib/common/helpers/route'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
-import { Nullable } from '@speckle/shared'
+import { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 
 const onUserProjectsUpdateSubscription = graphql(`
@@ -87,6 +96,7 @@ const onUserProjectsUpdateSubscription = graphql(`
 `)
 
 const cursor = ref(null as Nullable<string>)
+const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
 const search = ref('')
 const debouncedSearch = ref('')
 const openNewProject = ref(false)
@@ -100,14 +110,14 @@ const apollo = useApolloClient().client
 const {
   result: projectsPanelResult,
   fetchMore: fetchMoreProjects,
-  onResult: onProjectsResult
-} = useQuery(projectsDashboardQuery, () => {
-  return {
-    filter: {
-      search: (debouncedSearch.value || '').trim() || null
-    }
+  onResult: onProjectsResult,
+  variables: projectsVariables
+} = useQuery(projectsDashboardQuery, () => ({
+  filter: {
+    search: (debouncedSearch.value || '').trim() || null,
+    onlyWithRoles: selectedRoles.value?.length ? selectedRoles.value : null
   }
-})
+}))
 
 onProjectsResult((res) => {
   cursor.value = res.data?.activeUser?.projects.cursor || null
@@ -119,9 +129,15 @@ const { onResult: onUserProjectsUpdate } = useSubscription(
 
 const forceEmptyState = computed(() => !!route.query.forceEmpty)
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
-const showEmptyState = computed(
-  () => forceEmptyState.value || (projects.value && !projects.value.totalCount)
-)
+const showEmptyState = computed(() => {
+  if (forceEmptyState.value) return true
+  const isFiltering =
+    projectsVariables.value?.filter?.onlyWithRoles?.length ||
+    projectsVariables.value?.filter?.search?.length
+  if (isFiltering) return false
+
+  return projects.value && !projects.value.totalCount
+})
 
 const moreToLoad = computed(
   () =>
@@ -139,76 +155,55 @@ const updateSearchImmediately = () => {
 }
 
 onUserProjectsUpdate((res) => {
-  if (!res.data?.userProjectsUpdated) return
-
   const activeUserId = activeUser.value?.id
-  const event = res.data.userProjectsUpdated
+  const event = res.data?.userProjectsUpdated
+
+  if (!event) return
+  if (!activeUserId) return
+
   const isNewProject = event.type === UserProjectsUpdatedMessageType.Added
   const incomingProject = event.project
   const cache = apollo.cache
 
-  // Update main projects query (no search)
-  const variables: ProjectsDashboardQueryQueryVariables = {
-    filter: { search: null }
-  }
-  updateCacheByFilter(
-    cache,
-    {
-      query: {
-        query: projectsDashboardQuery,
-        variables
-      }
-    },
-    (data) => {
-      const projects = data.activeUser?.projects
-      if (!projects?.items) return
-
-      const newItems = [...projects.items]
-      let newTotalCount = projects.totalCount
-
-      if (isNewProject && incomingProject) {
-        newItems.unshift(incomingProject)
-        newTotalCount += 1
-      } else {
-        const idx = newItems.findIndex((i) => i.id === event.id)
-        if (idx !== -1) {
-          newItems.splice(idx, 1)
+  if (isNewProject && incomingProject) {
+    // Add to User.projects where possible
+    modifyObjectFields<UserProjectsArgs, User['projects']>(
+      cache,
+      getCacheId('User', activeUserId),
+      (fieldName, variables, value, { ref }) => {
+        if (fieldName !== 'projects') return
+        if (variables.filter?.search?.length) return
+        if (variables.filter?.onlyWithRoles?.length) {
+          const roles = variables.filter.onlyWithRoles
+          if (!roles.includes(incomingProject.role || '')) return
         }
-        newTotalCount -= 1
-      }
 
-      return {
-        ...data,
-        activeUser: data.activeUser
-          ? {
-              ...data.activeUser,
-              projects: {
-                ...data.activeUser.projects,
-                items: newItems,
-                totalCount: newTotalCount
-              }
-            }
-          : null
+        return {
+          ...value,
+          items: [ref('Project', incomingProject.id), ...(value.items || [])],
+          totalCount: (value.totalCount || 0) + 1
+        }
       }
-    }
-  )
+    )
 
-  // Update searches
+    // Elsewhere - just evict fields directly
+    evictObjectFields<UserProjectsArgs, User['projects']>(
+      cache,
+      getCacheId('User', activeUserId),
+      (fieldName, variables) => {
+        if (fieldName !== 'projects') return false
+        if (variables.filter?.search?.length) return true
+
+        return false
+      }
+    )
+  }
+
   if (!isNewProject) {
     // Evict old project from cache entirely to remove it from all searches
     cache.evict({
       id: getCacheId('Project', event.id)
     })
-  } else if (activeUserId) {
-    // Evict all User.projects searches, leave default query w/o any search string
-    evictObjectFields<ProjectsDashboardQueryQueryVariables>(
-      cache,
-      getCacheId('User', activeUserId),
-      (field, variables) => {
-        if (field !== 'projects') return false
-        return !!variables.filter?.search
-      }
-    )
   }
 
   // Emit toast notification
@@ -280,4 +275,10 @@ const showChecklist = computed(() => {
     return true
   return false
 })
+
+const clearSearch = () => {
+  search.value = ''
+  selectedRoles.value = []
+  updateSearchImmediately()
+}
 </script>

@@ -182,7 +182,7 @@ input UserProjectsFilter {
   """
   Only include projects where user has the specified roles
   """
-  onlyWithRoles: [StreamRole!]
+  onlyWithRoles: [String!]
 }
 
 enum UserProjectsUpdatedMessageType {
