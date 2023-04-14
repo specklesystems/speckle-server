@@ -5,12 +5,14 @@ import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
+import { WorldTree } from './modules/tree/WorldTree'
 import { Utils } from './modules/Utils'
 
 export interface ViewerParams {
   showStats: boolean
   environmentSrc: Asset | string
   verbose: boolean
+  keepGeometryData: boolean
 }
 export enum AssetType {
   TEXTURE_8BPP = 'png', // For now
@@ -37,6 +39,7 @@ export interface Asset {
 export const DefaultViewerParams: ViewerParams = {
   showStats: false,
   verbose: false,
+  keepGeometryData: false,
   environmentSrc: {
     src: sampleHdri,
     type: AssetType.TEXTURE_EXR
@@ -62,7 +65,7 @@ export type SelectionEvent = {
   event?: PointerEvent
   hits: Array<{
     guid?: string
-    object: Record<string, unknown>
+    object: Record<string, unknown> & { id: string }
     point: Vector3
   }>
 }
@@ -218,6 +221,7 @@ export interface IViewer {
   getDataTree(): DataTree
   query<T extends Query>(query: T): QueryArgsResultMap[T['operation']]
   queryAsync(query: Query): Promise<QueryResult>
+  getWorldTree(): WorldTree
   get Utils(): Utils
 
   dispose(): void

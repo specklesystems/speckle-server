@@ -108,7 +108,7 @@ viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
   }
 
   const ids = multiSelectList.map((val) => val.hits[0].object.id)
-  // console.log(ids[0])
+  console.log(selectionInfo)
   await viewer.selectObjects(ids as string[])
 })
 
@@ -180,6 +180,7 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/78bdd8eb76'
   // Point cloud
   // 'https://latest.speckle.dev/streams/2d19273d31/commits/9ceb423feb'
+  // 'https://latest.speckle.dev/streams/7707df6cae/commits/02bdf09092'
   // Luis sphere
   // 'https://speckle.xyz/streams/b85d53c3b4/commits/b47f21b707'
   // Crankshaft
@@ -249,9 +250,31 @@ await sandbox.loadUrl(
   // tekla 2
   // 'https://speckle.xyz/streams/be4813ccd2/commits/da85000921?c=%5B-1.12295,-2.60901,6.12402,4.77979,0.555,3.63346,0,1%5D'
   // 'https://latest.speckle.dev/streams/85bc4f61c6/commits/bb7b718a1a'
+
+  // large meshes
+  // 'https://speckle.xyz/streams/48e6e33aa6/commits/2cf892f1b0'
+  // large lines
+  // 'https://latest.speckle.dev/streams/444bfbd6e4/commits/8f297ad0cd'
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6b1b1195c4'
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/cef1e7527b'
+  // large lines
+  // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
+  // Instances Rhino
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/1fff853107'
+  // Instances Revit
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/92858681b7'
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/655771674e'
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/00dbbf4509'
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/46fd255010'
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/038a587267'
+  // 'https://latest.speckle.dev/streams/3f895e614f/commits/8a3e424997'
   // Big curves
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
   'https://latest.speckle.dev/streams/cdbe82b016/objects/c14d1a33fd68323193813ec215737472'
+  // 'https://speckle.xyz/streams/7ce9010d71/commits/afda4ffdf8'
+  // Jonathon's lines
+  // 'https://speckle.xyz/streams/7ce9010d71/commits/8cd9e7e4fc'
+  // 'https://speckle.xyz/streams/7ce9010d71/objects/f46f95746975591c18b0b854dab5b570 '
+  // 'https://speckle.xyz/streams/813b728084/commits/e2f5ac9775'
+  // 'https://speckle.xyz/streams/7ce9010d71/commits/b8bbfd0c05?c=%5B-4.50925,11.1348,5.38124,-0.23829,0.68512,-0.09006,0,1%5D'
 )

@@ -1,37 +1,17 @@
 'use strict'
 const knex = require(`@/db/knex`)
 const { ForbiddenError, ApolloError } = require('apollo-server-express')
-const { RedisPubSub } = require('graphql-redis-subscriptions')
+const {
+  pubsub,
+  StreamSubscriptions,
+  CommitSubscriptions,
+  BranchSubscriptions
+} = require('@/modules/shared/utils/subscriptions')
+const { Roles } = require('@speckle/shared')
+const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
+
 const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
 const ServerAcl = () => ServerAclSchema.knex()
-
-const { Roles } = require('@speckle/shared')
-const {
-  adminOverrideEnabled,
-  getRedisUrl
-} = require('@/modules/shared/helpers/envHelper')
-const { createRedisClient } = require('@/modules/shared/redis/redis')
-
-const StreamPubsubEvents = Object.freeze({
-  UserStreamAdded: 'USER_STREAM_ADDED',
-  UserStreamRemoved: 'USER_STREAM_REMOVED',
-  StreamUpdated: 'STREAM_UPDATED',
-  StreamDeleted: 'STREAM_DELETED'
-})
-
-const CommitPubsubEvents = Object.freeze({
-  CommitCreated: 'COMMIT_CREATED',
-  CommitUpdated: 'COMMIT_UPDATED',
-  CommitDeleted: 'COMMIT_DELETED'
-})
-
-/**
- * GraphQL Subscription PubSub instance
- */
-const pubsub = new RedisPubSub({
-  publisher: createRedisClient(getRedisUrl()),
-  subscriber: createRedisClient(getRedisUrl())
-})
 
 let roles
 
@@ -66,9 +46,9 @@ async function validateServerRole(context, requiredRole) {
 
 /**
  * Validates the scope against a list of scopes of the current session.
- * @param  {[type]} scopes [description]
- * @param  {[type]} scope  [description]
- * @return {[type]}        [description]
+ * @param  {string[]|undefined} scopes
+ * @param  {string} scope
+ * @return {void}
  */
 async function validateScopes(scopes, scope) {
   if (!scopes) throw new ForbiddenError('You do not have the required privileges.')
@@ -78,7 +58,7 @@ async function validateScopes(scopes, scope) {
 
 /**
  * Checks the userId against the resource's acl.
- * @param  {string} userId
+ * @param  {string | null | undefined} userId
  * @param  {string} resourceId
  * @param  {string} requiredRole
  */
@@ -154,6 +134,7 @@ module.exports = {
   authorizeResolver,
   pubsub,
   getRoles,
-  StreamPubsubEvents,
-  CommitPubsubEvents
+  StreamPubsubEvents: StreamSubscriptions,
+  CommitPubsubEvents: CommitSubscriptions,
+  BranchPubsubEvents: BranchSubscriptions
 }

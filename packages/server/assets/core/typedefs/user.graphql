@@ -40,7 +40,8 @@ extend type Query {
     limit: Int! = 25
     cursor: String
     archived: Boolean = false
-  ): UserSearchResultCollection
+    emailOnly: Boolean = false
+  ): UserSearchResultCollection!
 
   """
   Validate password strength
@@ -75,19 +76,24 @@ Full user type, should only be used in the context of admin operations or
 when a user is reading/writing info about himself
 """
 type User {
-  id: String!
+  id: ID!
   """
   E-mail can be null, if it's requested for a user other than the authenticated one
   and the user isn't an admin
   """
   email: String
-  name: String
+  name: String!
   bio: String
   company: String
   avatar: String
   verified: Boolean
   profiles: JSONObject
   role: String
+  """
+  Whether post-sign up onboarding has been finished or skipped entirely
+  """
+  isOnboardingFinished: Boolean @isOwner
+  createdAt: DateTime @isOwner
 }
 
 """
@@ -95,8 +101,8 @@ Limited user type, for showing public info about a user
 to another user
 """
 type LimitedUser {
-  id: String!
-  name: String
+  id: ID!
+  name: String!
   bio: String
   company: String
   avatar: String
@@ -121,7 +127,19 @@ type AdminUsersListCollection {
 
 type UserSearchResultCollection {
   cursor: String
-  items: [LimitedUser]
+  items: [LimitedUser!]!
+}
+
+type ActiveUserMutations {
+  """
+  Mark onboarding as complete
+  """
+  finishOnboarding: Boolean!
+
+  """
+  Edit a user's profile
+  """
+  update(user: UserUpdateInput!): User!
 }
 
 extend type Mutation {
@@ -129,6 +147,7 @@ extend type Mutation {
   Edits a user's profile.
   """
   userUpdate(user: UserUpdateInput!): Boolean!
+    @deprecated(reason: "Use activeUserMutations version")
 
   """
   Delete a user's account.
@@ -141,6 +160,11 @@ extend type Mutation {
     @hasRole(role: "server:admin")
 
   userRoleChange(userRoleInput: UserRoleInput!): Boolean! @hasRole(role: "server:admin")
+
+  """
+  Various Active User oriented mutations
+  """
+  activeUserMutations: ActiveUserMutations! @hasRole(role: "server:user")
 }
 
 input UserRoleInput {
@@ -156,5 +180,5 @@ input UserUpdateInput {
 }
 
 input UserDeleteInput {
-  email: String
+  email: String!
 }

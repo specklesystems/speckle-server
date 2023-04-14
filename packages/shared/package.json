@@ -22,7 +22,7 @@
   },
   "sideEffects": false,
   "engines": {
-    "node": "^18.14.0"
+    "node": "^18.15.0"
   },
   "author": "AEC Systems",
   "license": "Apache-2.0",
@@ -33,6 +33,7 @@
   ],
   "dependencies": {
     "lodash": "^4.17.0",
+    "lodash-es": "^4.17.21",
     "pino": "^8.7.0"
   },
   "peerDependencies": {

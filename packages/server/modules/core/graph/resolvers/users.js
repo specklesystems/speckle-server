@@ -4,14 +4,13 @@ const {
   getUser,
   getUserByEmail,
   getUserRole,
-  updateUser,
   deleteUser,
   searchUsers,
-  getUserById,
   makeUserAdmin,
   unmakeUserAdmin,
   archiveUser
 } = require('../../services/users')
+const { updateUserAndNotify } = require('@/modules/core/services/users/management')
 const { saveActivity } = require('@/modules/activitystream/services')
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { validateServerRole, validateScopes } = require(`@/modules/shared`)
@@ -20,6 +19,8 @@ const {
   getAdminUsersListCollection
 } = require('@/modules/core/services/users/adminUsersListService')
 const { Roles, Scopes } = require('@/modules/core/helpers/mainConstants')
+const { markOnboardingComplete } = require('@/modules/core/repositories/users')
+const { UsersMeta } = require('@/modules/core/dbSchema')
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -79,7 +80,8 @@ module.exports = {
         args.query,
         args.limit,
         args.cursor,
-        args.archived
+        args.archived,
+        args.emailOnly
       )
       return { cursor, items: users }
     },
@@ -113,6 +115,13 @@ module.exports = {
     },
     async role(parent) {
       return await getUserRole(parent.id)
+    },
+    async isOnboardingFinished(parent, _args, ctx) {
+      const metaVal = await ctx.loaders.users.getUserMeta.load({
+        userId: parent.id,
+        key: UsersMeta.metaKey.isOnboardingFinished
+      })
+      return !!metaVal?.value
     }
   },
   LimitedUser: {
@@ -123,21 +132,7 @@ module.exports = {
   Mutation: {
     async userUpdate(parent, args, context) {
       await validateServerRole(context, 'server:user')
-
-      const oldValue = await getUserById({ userId: context.userId })
-
-      await updateUser(context.userId, args.user)
-
-      await saveActivity({
-        streamId: null,
-        resourceType: 'user',
-        resourceId: context.userId,
-        actionType: ActionTypes.User.Update,
-        userId: context.userId,
-        info: { old: oldValue, new: args.user },
-        message: 'User updated'
-      })
-
+      await updateUserAndNotify(context.userId, args.user)
       return true
     },
 
@@ -185,6 +180,17 @@ module.exports = {
       })
 
       return true
+    },
+
+    activeUserMutations: () => ({})
+  },
+  ActiveUserMutations: {
+    async finishOnboarding(_parent, _args, ctx) {
+      return await markOnboardingComplete(ctx.userId || '')
+    },
+    async update(_parent, args, context) {
+      const newUser = await updateUserAndNotify(context.userId, args.user)
+      return newUser
     }
   }
 }

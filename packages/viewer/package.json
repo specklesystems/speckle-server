@@ -8,10 +8,10 @@
     "url": "https://github.com/specklesystems/speckle-server.git",
     "directory": "packages/viewer"
   },
-  "main": "dist/speckleviewer.js",
-  "module": "dist/speckleviewer.esm.js",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.js",
   "exports": {
-    ".": "./dist/speckleviewer.esm.js",
+    ".": "./dist/index.js",
     "./dist/assets/*": "./dist/assets/*",
     "./assets/*": "./dist/assets/*"
   },
@@ -21,7 +21,7 @@
     "dist"
   ],
   "engines": {
-    "node": "^18.14.0"
+    "node": "^18.15.0"
   },
   "scripts": {
     "build": "NODE_ENV=production rollup --config",
@@ -56,6 +56,7 @@
   "devDependencies": {
     "@babel/core": "^7.18.2",
     "@babel/eslint-parser": "^7.18.2",
+    "@babel/preset-env": "^7.20.2",
     "@rollup/plugin-babel": "^5.3.1",
     "@types/three": "^0.136.0",
     "@typescript-eslint/eslint-plugin": "^5.39.0",

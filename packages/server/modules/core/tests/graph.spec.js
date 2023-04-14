@@ -12,7 +12,6 @@ const {
   removeStreamCollaborator
 } = require('@/modules/core/services/streams/streamAccessService')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
-const { noop } = require('lodash')
 
 let app
 let server
@@ -547,7 +546,7 @@ describe('GraphQL API Core @core-api', () => {
 
       it('Should fail to delete a stream because of permissions', async () => {
         // Make sure user is no longer a stream collaborator
-        await removeStreamCollaborator(ts1, userB.id, userB.id).catch(noop)
+        await removeStreamCollaborator(ts1, userB.id, userB.id)
 
         const res = await sendRequest(userB.token, {
           query: `mutation { streamDelete( id:"${ts1}")}`
@@ -936,7 +935,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
-        expect(res.body.errors[0].message).to.equal('Branch not found.')
+        expect(res.body.errors[0].message).to.equal('Branch not found')
 
         const res1 = await sendRequest(userC.token, {
           query:
@@ -946,7 +945,7 @@ describe('GraphQL API Core @core-api', () => {
         expect(res1).to.be.json
         expect(res1.body.errors).to.exist
         expect(res1.body.errors[0].message).to.equal(
-          'Only the branch creator or stream owners are allowed to delete branches.'
+          'Only the branch creator or stream owners are allowed to delete branches'
         )
 
         const res2 = await sendRequest(userA.token, {
@@ -1020,7 +1019,7 @@ describe('GraphQL API Core @core-api', () => {
         expect(res2).to.be.json
         expect(res2.body.errors).to.exist
         expect(res2.body.errors[0].message).to.equal(
-          'The branch id and stream id do not match. Please check your inputs.'
+          'The branch ID and stream ID do not match, please check your inputs'
         )
       })
 
@@ -1038,7 +1037,7 @@ describe('GraphQL API Core @core-api', () => {
         expect(res).to.be.json
         expect(res.body.errors).to.exist
         expect(res.body.errors[0].message).to.equal(
-          'The branch id and stream id do not match. Please check your inputs.'
+          'The branch ID and stream ID do not match, please check your inputs'
         )
       })
     })

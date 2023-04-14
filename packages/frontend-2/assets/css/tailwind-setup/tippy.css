@@ -1,0 +1,15 @@
+/**
+ * Tippy mentions theme
+ */
+.tippy-box[data-theme='mention'] {
+  background: none;
+  pointer-events: none;
+
+  .tippy-arrow {
+    display: none;
+  }
+
+  .tippy-content > * {
+    pointer-events: auto;
+  }
+}

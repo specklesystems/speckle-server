@@ -24,8 +24,9 @@ import {
   ForbiddenError,
   ApolloServerExpressConfig
 } from 'apollo-server-express'
+import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core'
 
-import { SubscriptionServer } from 'subscriptions-transport-ws'
+import { ExecutionParams, SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
 
 import knex from '@/db/knex'
@@ -34,13 +35,18 @@ import { buildErrorFormatter } from '@/modules/core/graph/setup'
 import {
   getFileSizeLimitMB,
   isDevEnv,
-  isTestEnv
+  isTestEnv,
+  useNewFrontend
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
-import { Optional } from '@/modules/shared/helpers/typeHelper'
+import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
 import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
 import { get, has, isString, toNumber } from 'lodash'
+import { corsMiddleware } from '@/modules/core/configs/cors'
+// import { Roles } from '@speckle/shared'
+
+import { IMocks } from '@graphql-tools/mock'
 import { authContextMiddleware, buildContext } from '@/modules/shared/middleware'
 
 let graphqlServer: ApolloServer
@@ -119,6 +125,23 @@ function buildApolloSubscriptionServer(
       },
       onDisconnect: () => {
         metricConnectedClients.dec()
+      },
+      onOperation: (...params: [() => void, ExecutionParams]) => {
+        // kinda hacky, but we're using this as an "subscription event emitted"
+        // callback to clear subscription connection dataloaders to avoid stale cache
+        const baseParams = params[1]
+        const ctx = baseParams.context as GraphQLContext
+
+        baseParams.formatResponse = (val: unknown) => {
+          ctx.loaders.clearAll()
+          return val
+        }
+        baseParams.formatError = (e: Error) => {
+          ctx.loaders.clearAll()
+          return e
+        }
+
+        return baseParams
       }
     },
     {
@@ -126,6 +149,24 @@ function buildApolloSubscriptionServer(
       path: apolloServer.graphqlPath
     }
   )
+}
+
+/**
+ * Define mocking config in dev env
+ * https://www.apollographql.com/docs/apollo-server/v3/testing/mocking
+ */
+async function buildMocksConfig(): Promise<{
+  mocks: boolean | IMocks
+  mockEntireSchema: boolean
+}> {
+  const isDebugEnv = isDevEnv()
+  if (!isDebugEnv) return { mocks: false, mockEntireSchema: false } // we def don't want this on in prod
+
+  // feel free to define mocks for your dev env below
+  // const roles = Object.values(Roles.Stream)
+  // const { faker } = await import('@faker-js/faker')
+
+  return { mocks: false, mockEntireSchema: false }
 }
 
 /**
@@ -140,12 +181,17 @@ export async function buildApolloServer(
 ): Promise<ApolloServer> {
   const debug = optionOverrides?.debug || isDevEnv() || isTestEnv()
   const schema = ModulesSetup.graphSchema()
+  const { mockEntireSchema, mocks } = await buildMocksConfig()
 
   const server = new ApolloServer({
     schema,
     context: buildContext,
     plugins: [
       require('@/logging/apolloPlugin'),
+      ApolloServerPluginLandingPageLocalDefault({
+        embed: true,
+        includeCookies: true
+      }),
       ...(subscriptionServerResolver
         ? [
             {
@@ -166,6 +212,8 @@ export async function buildApolloServer(
     csrfPrevention: true,
     formatError: buildErrorFormatter(debug),
     debug,
+    mocks,
+    mockEntireSchema,
     ...optionOverrides
   })
   await server.start()
@@ -177,6 +225,10 @@ export async function buildApolloServer(
  * Initialises all server (express/subscription/http) instances
  */
 export async function init() {
+  if (useNewFrontend()) {
+    startupLogger.info('🖼️  Serving for frontend-2...')
+  }
+
   const app = express()
   app.disable('x-powered-by')
 
@@ -193,6 +245,7 @@ export async function init() {
     app.use(compression())
   }
 
+  app.use(corsMiddleware())
   app.use(express.json({ limit: '100mb' }))
   app.use(express.urlencoded({ limit: `${getFileSizeLimitMB()}mb`, extended: false }))
 
@@ -268,14 +321,12 @@ export async function startHttp(
   let bindAddress = process.env.BIND_ADDRESS || '127.0.0.1'
   let port = process.env.PORT ? toNumber(process.env.PORT) : 3000
 
-  // Handles frontend proxying:
-  // Dev mode -> proxy form the local webpack server
   if (customPortOverride || customPortOverride === 0) port = customPortOverride
   if (shouldUseFrontendProxy()) {
     // app.use('/', frontendProxy)
     app.use(await createFrontendProxy())
 
-    startupLogger.info('✨ Proxying frontend (dev mode):')
+    startupLogger.info('✨ Proxying frontend-1 (dev mode):')
     startupLogger.info(`👉 main application: http://localhost:${port}/`)
   }
 

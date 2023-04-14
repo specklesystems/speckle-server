@@ -182,6 +182,12 @@ export class NodeRenderView {
     }
   }
 
+  public disposeGeometry() {
+    for (const attr in this._renderData.geometry.attributes) {
+      this._renderData.geometry.attributes[attr] = []
+    }
+  }
+
   private renderMaterialToString() {
     return (
       this.renderData.renderMaterial.color.toString() +

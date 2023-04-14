@@ -1,0 +1,246 @@
+extend type Query {
+  """
+  Find a specific project. Will throw an authorization error if active user isn't authorized
+  to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
+  """
+  project(id: String!): Project
+}
+
+enum ProjectVisibility {
+  PRIVATE
+  UNLISTED
+  PUBLIC
+}
+
+"""
+Any values left null will be ignored, so only set the properties that you want updated
+"""
+input ProjectUpdateInput {
+  id: ID!
+  name: String
+  description: String
+  visibility: ProjectVisibility
+  allowPublicComments: Boolean
+}
+
+"""
+Any values left null will be ignored
+"""
+input ProjectCreateInput {
+  name: String
+  description: String
+  visibility: ProjectVisibility
+}
+
+input ProjectUpdateRoleInput {
+  projectId: String!
+  userId: String!
+  """
+  Leave role as null to revoke access entirely
+  """
+  role: String
+}
+
+input ProjectInviteCreateInput {
+  """
+  Either this or userId must be filled
+  """
+  email: String
+  """
+  Either this or email must be filled
+  """
+  userId: String
+  """
+  Defaults to the contributor role, if not specified
+  """
+  role: String
+}
+
+input ProjectInviteUseInput {
+  projectId: ID!
+  token: String!
+  accept: Boolean!
+}
+
+type ProjectInviteMutations {
+  """
+  Invite a new or registered user to be a project collaborator. Can only be invoked by a project owner.
+  """
+  create(projectId: ID!, input: ProjectInviteCreateInput!): Project!
+    @hasScope(scope: "users:invite")
+  """
+  Batch invite to project
+  """
+  batchCreate(projectId: ID!, input: [ProjectInviteCreateInput!]!): Project!
+    @hasScope(scope: "users:invite")
+
+  """
+  Accept or decline a project invite
+  """
+  use(input: ProjectInviteUseInput!): Boolean!
+
+  """
+  Cancel a pending stream invite. Can only be invoked by a project owner.
+  """
+  cancel(projectId: ID!, inviteId: String!): Project! @hasScope(scope: "users:invite")
+}
+
+type ProjectMutations {
+  """
+  Delete an existing project
+  """
+  delete(id: String!): Boolean!
+
+  """
+  Updates an existing project
+  """
+  update(update: ProjectUpdateInput!): Project!
+
+  """
+  Create onboarding/tutorial project
+  """
+  createForOnboarding: Project!
+
+  """
+  Create new project
+  """
+  create(input: ProjectCreateInput): Project!
+
+  """
+  Invite related mutations
+  """
+  invites: ProjectInviteMutations!
+
+  """
+  Update role for a collaborator
+  """
+  updateRole(input: ProjectUpdateRoleInput!): Project!
+
+  """
+  Leave a project. Only possible if you're not the last remaining owner.
+  """
+  leave(id: String!): Boolean!
+}
+
+extend type Mutation {
+  projectMutations: ProjectMutations!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "streams:write")
+}
+
+extend type User {
+  """
+  Get projects that the user participates in
+  """
+  projects(
+    limit: Int! = 25
+    cursor: String
+    filter: UserProjectsFilter
+  ): ProjectCollection! @isOwner
+}
+
+type ProjectCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Project!]!
+}
+
+type ProjectCollaborator {
+  role: String!
+  user: LimitedUser!
+}
+
+type Project {
+  id: ID!
+  name: String!
+  description: String
+  visibility: ProjectVisibility!
+  allowPublicComments: Boolean!
+  """
+  Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you.
+  """
+  role: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  team: [ProjectCollaborator!]!
+  """
+  Collaborators who have been invited, but not yet accepted.
+  """
+  invitedTeam: [PendingStreamCollaborator!] @hasStreamRole(role: STREAM_OWNER)
+  """
+  Source apps used in any models of this project
+  """
+  sourceApps: [String!]!
+}
+
+input UserProjectsFilter {
+  """
+  Filter out projects by name
+  """
+  search: String
+  """
+  Only return projects owned by the active user
+  """
+  ownedOnly: Boolean
+}
+
+enum UserProjectsUpdatedMessageType {
+  ADDED
+  REMOVED
+}
+
+type UserProjectsUpdatedMessage {
+  """
+  Message type
+  """
+  type: UserProjectsUpdatedMessageType!
+  """
+  Project ID
+  """
+  id: String!
+  """
+  Project entity, null if project was deleted
+  """
+  project: Project
+}
+
+enum ProjectUpdatedMessageType {
+  UPDATED
+  DELETED
+}
+
+type ProjectUpdatedMessage {
+  """
+  Message type
+  """
+  type: ProjectUpdatedMessageType!
+  """
+  Project ID
+  """
+  id: String!
+  """
+  Project entity, null if project was deleted
+  """
+  project: Project
+}
+
+extend type Subscription {
+  """
+  Track newly added or deleted projects owned by the active user
+  """
+  userProjectsUpdated: UserProjectsUpdatedMessage!
+  """
+  Track updates to a specific project
+  """
+  projectUpdated(id: String!): ProjectUpdatedMessage!
+}
+
+extend type User {
+  """
+  Get all invitations to projects that the active user has
+  """
+  projectInvites: [PendingStreamCollaborator!]!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "streams:read")
+    @isOwner
+}

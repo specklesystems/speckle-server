@@ -30,6 +30,7 @@ export const ActionTypes = Object.freeze(<const>{
     InviteAccepted: 'stream_permissions_invite_accepted',
     Delete: 'stream_delete',
     Create: 'stream_create',
+    Clone: 'stream_clone',
     InviteSent: 'stream_invite_sent',
     InviteDeclined: 'stream_invite_declined',
     AccessRequestSent: 'stream_access_request_sent',
@@ -50,7 +51,8 @@ export const ActionTypes = Object.freeze(<const>{
     Create: 'commit_create',
     Update: 'commit_update',
     Receive: 'commit_receive',
-    Delete: 'commit_delete'
+    Delete: 'commit_delete',
+    Move: 'commit_move'
   },
   User: {
     Create: 'user_create',

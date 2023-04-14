@@ -163,6 +163,9 @@ exports.down = async (knex) => {
     await knex.raw(`
       DELETE FROM objects WHERE "streamId" IS NOT NULL
     `)
+    await knex.raw(`
+      DELETE FROM commits WHERE "referencedObject" NOT IN (SELECT id FROM objects WHERE "referencedObject" = commits."referencedObject")
+    `)
 
     await knex.schema.alterTable('object_children_closure', (table) => {
       table.dropIndex(['streamId', 'parent'])
