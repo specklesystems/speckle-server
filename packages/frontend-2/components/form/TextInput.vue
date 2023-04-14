@@ -1,5 +1,5 @@
 <template>
-  <div :class="[fullWidth ? 'w-full' : '']">
+  <div :class="[fullWidth ? 'w-full' : '', wrapperClasses]">
     <label :for="name" :class="labelClasses">
       <span>{{ title }}</span>
     </label>
@@ -225,6 +225,10 @@ const props = defineProps({
   hideErrorMessage: {
     type: Boolean,
     default: false
+  },
+  wrapperClasses: {
+    type: String,
+    default: () => ''
   }
 })
 

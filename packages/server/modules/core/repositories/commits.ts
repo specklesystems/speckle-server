@@ -358,10 +358,12 @@ export async function getObjectCommitsWithStreamIds(objectIds: string[]) {
     .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
 }
 
-export async function getAllBranchCommits(
-  branchIds: string[]
-): Promise<Record<string, CommitRecord[]>> {
-  if (!branchIds.length) return {}
+export async function getAllBranchCommits(params: {
+  branchIds?: string[]
+  projectId?: string
+}): Promise<Record<string, CommitRecord[]>> {
+  const { branchIds, projectId } = params
+  if (!branchIds?.length && !projectId) return {}
 
   const q = BranchCommits.knex()
     .select<Array<CommitRecord & { branchId: string }>>([
@@ -369,7 +371,16 @@ export async function getAllBranchCommits(
       BranchCommits.col.branchId
     ])
     .innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
-    .whereIn(BranchCommits.col.branchId, branchIds)
+
+  if (branchIds?.length) {
+    q.whereIn(BranchCommits.col.branchId, branchIds)
+  }
+
+  if (projectId) {
+    q.innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+    q.andWhere(Branches.col.streamId, projectId)
+  }
+
   const res = await q
   return reduce(
     res,

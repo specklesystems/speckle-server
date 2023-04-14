@@ -2410,8 +2410,8 @@ export type UserDeleteInput = {
 };
 
 export type UserProjectsFilter = {
-  /** Only return projects owned by the active user */
-  ownedOnly?: InputMaybe<Scalars['Boolean']>;
+  /** Only include projects where user has the specified roles */
+  onlyWithRoles?: InputMaybe<Array<Scalars['String']>>;
   /** Filter out projects by name */
   search?: InputMaybe<Scalars['String']>;
 };

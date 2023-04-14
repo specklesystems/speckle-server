@@ -111,7 +111,7 @@ dayjs.extend(localizedFormat)
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
 defineEmits<{
-  (e: 'remove'): void
+  (e: 'remove', val: string): void
 }>()
 
 const props = defineProps<{

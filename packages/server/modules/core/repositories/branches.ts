@@ -130,8 +130,8 @@ export async function getBranchCommitCount(branchId: string) {
   return res?.count || 0
 }
 
-export async function getBranchLatestCommits(branchIds: string[]) {
-  if (!branchIds?.length) return []
+export async function getBranchLatestCommits(branchIds?: string[], streamId?: string) {
+  if (!branchIds?.length && !streamId) return []
 
   const q = Branches.knex()
     .select<Array<CommitRecord & { branchId: string }>>([
@@ -139,13 +139,20 @@ export async function getBranchLatestCommits(branchIds: string[]) {
       knex.raw(`?? as "branchId"`, [Branches.col.id])
     ])
     .distinctOn(Branches.col.id)
-    .whereIn(Branches.col.id, branchIds)
     .innerJoin(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
     .innerJoin(Commits.name, Commits.col.id, BranchCommits.col.commitId)
     .orderBy([
       { column: Branches.col.id },
       { column: Commits.col.createdAt, order: 'desc' }
     ])
+
+  if (branchIds?.length) {
+    q.whereIn(Branches.col.id, branchIds)
+  }
+
+  if (streamId?.length) {
+    q.where(Branches.col.streamId, streamId)
+  }
 
   return await q
 }

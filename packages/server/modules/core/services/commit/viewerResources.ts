@@ -87,7 +87,7 @@ async function getVersionResourceGroupsIncludingAllVersions(
   ]
 
   // get all versions of all referenced branches
-  const branchCommits = await getAllBranchCommits(allBranchIds)
+  const branchCommits = await getAllBranchCommits({ branchIds: allBranchIds })
 
   for (const folderResource of folderResources) {
     const prefix = folderResource.folderName
@@ -225,6 +225,22 @@ async function getVersionResourceGroupsLoadedVersionsOnly(
   return results
 }
 
+async function getAllModelsResourceGroup(
+  projectId: string
+): Promise<ViewerResourceGroup> {
+  const allBranchCommits = await getBranchLatestCommits(undefined, projectId)
+  return {
+    identifier: 'all',
+    items: allBranchCommits.map(
+      (c): ViewerResourceItem => ({
+        modelId: c.branchId,
+        versionId: c.id,
+        objectId: c.referencedObject
+      })
+    )
+  }
+}
+
 /**
  * Version resources can be resolved 2 ways:
  * * Default - Specific version IDs referenced in identifiers are ignored and the identifiers always
@@ -238,12 +254,19 @@ async function getVersionResourceGroups(
   params: {
     modelResources?: SpeckleViewer.ViewerRoute.ViewerModelResource[]
     folderResources?: SpeckleViewer.ViewerRoute.ViewerModelFolderResource[]
+    allModelsResource?: SpeckleViewer.ViewerRoute.ViewerAllModelsResource
   },
   loadedVersionsOnly?: boolean
 ) {
-  return loadedVersionsOnly
-    ? getVersionResourceGroupsLoadedVersionsOnly(projectId, params)
-    : getVersionResourceGroupsIncludingAllVersions(projectId, params)
+  const allModelsGroup = params.allModelsResource
+    ? await getAllModelsResourceGroup(projectId)
+    : null
+
+  const groups = loadedVersionsOnly
+    ? await getVersionResourceGroupsLoadedVersionsOnly(projectId, params)
+    : await getVersionResourceGroupsIncludingAllVersions(projectId, params)
+
+  return [...(allModelsGroup ? [allModelsGroup] : []), ...groups]
 }
 
 /**
@@ -257,6 +280,9 @@ export async function getViewerResourceGroups(
   if (!resourceIdString?.trim().length) return []
   const resources = SpeckleViewer.ViewerRoute.parseUrlParameters(resourceIdString)
 
+  const allModelsResource = resources.find(
+    SpeckleViewer.ViewerRoute.isAllModelsResource
+  )
   const objectResources = resources.filter(SpeckleViewer.ViewerRoute.isObjectResource)
   const modelResources = resources.filter(SpeckleViewer.ViewerRoute.isModelResource)
   const folderResources = resources.filter(
@@ -268,7 +294,7 @@ export async function getViewerResourceGroups(
       getObjectResourceGroups(projectId, objectResources),
       getVersionResourceGroups(
         projectId,
-        { modelResources, folderResources },
+        { modelResources, folderResources, allModelsResource },
         loadedVersionsOnly || false
       )
     ])
