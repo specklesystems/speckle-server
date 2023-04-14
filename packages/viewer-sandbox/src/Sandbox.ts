@@ -4,7 +4,6 @@ import {
   PropertyInfo,
   SelectionEvent,
   SunLightConfiguration,
-  Viewer,
   ViewerEvent
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
@@ -833,12 +832,11 @@ export default class Sandbox {
 
   public makeDiffUI() {
     const container = this.tabs.pages[4]
-    let diffResult: DiffResult = null
     const diffButton = container.addButton({
       title: 'Diff'
     })
     diffButton.on('click', async () => {
-      diffResult = await this.viewer.diff(
+      await this.viewer.diff(
         //building
         // 'https://latest.speckle.dev/streams/aea12cab71/objects/bcf37136dea9fe9397cdfd84012f616a',
         // 'https://latest.speckle.dev/streams/aea12cab71/objects/94af0a6b4eaa318647180f8c230cb867'
@@ -852,13 +850,12 @@ export default class Sandbox {
         'https://latest.speckle.dev/streams/cdbe82b016/objects/c14d1a33fd68323193813ec215737472',
         'https://latest.speckle.dev/streams/cdbe82b016/objects/16676fc95a9ead877f6a825d9e28cbe8'
       )
-      this.viewer.visualDiff(diffResult)
     })
     const unDiffButton = container.addButton({
       title: 'Undiff'
     })
     unDiffButton.on('click', async () => {
-      this.viewer.visualDiff(null)
+      this.viewer.undiff()
     })
 
     container
@@ -869,7 +866,7 @@ export default class Sandbox {
         step: 0.1
       })
       .on('change', (value) => {
-        ;(this.viewer as Viewer).setDiffTime(diffResult, value.value)
+        this.viewer.setDiffTime(value.value)
         this.viewer.requestRender()
       })
   }

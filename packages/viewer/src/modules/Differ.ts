@@ -4,17 +4,14 @@ import { FilteringManager } from './filtering/FilteringManager'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SpeckleObject = Record<string, any>
+
 export interface DiffResult {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  unchanged: Array<Record<string, any>>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  added: Array<Record<string, any>>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  removed: Array<Record<string, any>>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  modifiedNew: Array<Record<string, any>>
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  modifiedOld: Array<Record<string, any>>
+  unchanged: Array<SpeckleObject>
+  added: Array<SpeckleObject>
+  removed: Array<SpeckleObject>
+  modified: Array<Array<SpeckleObject>>
 }
 
 export class Differ {
@@ -94,13 +91,16 @@ export class Differ {
   }
 
   public diff(urlA: string, urlB: string): Promise<DiffResult> {
+    const modifiedNew: Array<SpeckleObject> = []
+    const modifiedOld: Array<SpeckleObject> = []
+
     const diffResult: DiffResult = {
       unchanged: [],
       added: [],
       removed: [],
-      modifiedNew: [],
-      modifiedOld: []
+      modified: []
     }
+
     const renderTreeA = WorldTree.getRenderTree(urlA)
     const renderTreeB = WorldTree.getRenderTree(urlB)
     const rootA = WorldTree.getInstance().findId(urlA)
@@ -122,7 +122,7 @@ export class Differ {
           return applicationId === node.model.raw.applicationId
         })
         if (res2) {
-          diffResult.modifiedNew.push(rvsB[k])
+          modifiedNew.push(rvsB[k])
         } else {
           diffResult.added.push(rvsB[k])
         }
@@ -141,9 +141,13 @@ export class Differ {
           return applicationId === node.model.raw.applicationId
         })
         if (!res2) diffResult.removed.push(rvsA[k])
-        else diffResult.modifiedOld.push(rvsA[k])
+        else modifiedOld.push(rvsA[k])
       }
     }
+
+    modifiedOld.forEach((value, index) => {
+      diffResult.modified.push([modifiedOld[index], modifiedNew[index]])
+    })
 
     console.warn(diffResult)
     return Promise.resolve(diffResult)
@@ -161,11 +165,11 @@ export class Differ {
         material: this.addedMaterial
       },
       {
-        objectIds: diffResult.modifiedNew.map((value) => value.model.raw.id),
+        objectIds: diffResult.modified.map((value) => value[1].model.raw.id),
         material: this.changedNewMaterial
       },
       {
-        objectIds: diffResult.modifiedOld.map((value) => value.model.raw.id),
+        objectIds: diffResult.modified.map((value) => value[0].model.raw.id),
         material: this.changedOldMateria
       },
       {

@@ -242,7 +242,7 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/aea12cab71/commits/bd783965a6?overlay=11a7bdc21e&c=%5B30.97006,62.90525,21.29233,7.61589,12.34646,2.355,0,1%5D'
   // 'https://latest.speckle.dev/streams/8d8c1b8e8f/commits/8f6d5b7cb0'
   // diff latest
-  'https://latest.speckle.dev/streams/cdbe82b016/commits/78218b1019?overlay=8e79cdb0ae'
+  // 'https://latest.speckle.dev/streams/cdbe82b016/commits/78218b1019?overlay=8e79cdb0ae'
   // 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb',
   // 'https://latest.speckle.dev/streams/efd2c6a31d/commits/4b495e1901'
   // 'https://latest.speckle.dev/streams/efd2c6a31d/commits/4b495e1901'
@@ -253,4 +253,5 @@ await sandbox.loadUrl(
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/cef1e7527b'
   // Big curves
   // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
+  'https://latest.speckle.dev/streams/cdbe82b016/objects/c14d1a33fd68323193813ec215737472'
 )
