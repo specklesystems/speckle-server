@@ -516,20 +516,37 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  public async diff(urlA: string, urlB: string): Promise<DiffResult> {
-    const diff = await this.speckleRenderer.differ.diff(urlA, urlB)
-    return Promise.resolve(diff)
-  }
+  public async diff(
+    urlA: string,
+    urlB: string,
+    authToken?: string
+  ): Promise<DiffResult> {
+    const loadPromises = []
+    if (!WorldTree.getInstance().findId(urlA))
+      loadPromises.push(this.loadObjectAsync(urlA, authToken, undefined, 1))
+    if (!WorldTree.getInstance().findId(urlB))
+      loadPromises.push(this.loadObjectAsync(urlB, authToken, undefined, 1))
+    await Promise.all(loadPromises)
 
-  public visualDiff(diffResult: DiffResult) {
+    const diffResult = await this.speckleRenderer.differ.diff(urlA, urlB)
+
     const pipelineOptions = this.speckleRenderer.pipelineOptions
-    pipelineOptions.depthSide = diffResult ? FrontSide : DoubleSide
+    pipelineOptions.depthSide = FrontSide
     this.speckleRenderer.pipelineOptions = pipelineOptions
     this.speckleRenderer.differ.visualDiff(diffResult, this.filteringManager)
     this.speckleRenderer.differ.setDiffTime(0)
+
+    return Promise.resolve(diffResult)
   }
 
-  public setDiffTime(diffResult: DiffResult, time: number) {
+  public undiff() {
+    const pipelineOptions = this.speckleRenderer.pipelineOptions
+    pipelineOptions.depthSide = DoubleSide
+    this.speckleRenderer.pipelineOptions = pipelineOptions
+    this.speckleRenderer.differ.visualDiff(null, this.filteringManager)
+  }
+
+  public setDiffTime(time: number) {
     this.speckleRenderer.differ.setDiffTime(time)
   }
 

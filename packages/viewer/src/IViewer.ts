@@ -166,8 +166,11 @@ export interface IViewer {
   cancelLoad(url: string, unload?: boolean): Promise<void>
   unloadObject(url: string): Promise<void>
   unloadAll(): Promise<void>
+
+  /** Diffing */
   diff(urlA: string, urlB: string): Promise<DiffResult>
-  visualDiff(diffResult: DiffResult): void
+  undiff(): void
+  setDiffTime(time: number): void
 
   screenshot(): Promise<string>
 
