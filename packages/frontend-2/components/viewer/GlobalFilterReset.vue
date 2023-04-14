@@ -27,7 +27,8 @@ const showResetButton = computed(() => {
     !!f?.activePropFilterKey ||
     (!!f?.hiddenObjects && f.hiddenObjects.length > 0) ||
     (!!f?.isolatedObjects && f.isolatedObjects.length > 0) ||
-    (!!f?.userColorGroups && f.userColorGroups.length > 0)
+    (!!f?.userColorGroups && f.userColorGroups.length > 0) ||
+    !!f?.activePropFilterKey
   )
 })
 
