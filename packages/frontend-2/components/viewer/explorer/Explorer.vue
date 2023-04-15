@@ -38,7 +38,7 @@
         </div>
       </div>
     </ViewerLayoutPanel>
-    <ViewerExplorerFilters :filters="filters" />
+    <ViewerExplorerFilters :filters="allFilters || []" />
   </div>
 </template>
 <script setup lang="ts">
@@ -47,6 +47,7 @@ import { ViewerEvent } from '@speckle/viewer'
 import { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
 import {
   useInjectedViewer,
+  useInjectedViewerInterfaceState,
   useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
@@ -59,10 +60,11 @@ const {
     response: { resourceItems }
   }
 } = useInjectedViewerState()
-const { instance: viewer } = useInjectedViewer()
-
-let realTree = viewer.getWorldTree()
-const filters = shallowRef(viewer.getObjectProperties())
+// const { instance: viewer } = useInjectedViewer()
+const {
+  worldTree,
+  filters: { all: allFilters }
+} = useInjectedViewerInterfaceState()
 
 const expandLevel = ref(-1)
 const manualExpandLevel = ref(-1)
@@ -72,22 +74,12 @@ const collapse = () => {
   if (manualExpandLevel.value > -1) manualExpandLevel.value--
 }
 
-const refHack = ref(1)
-
-onMounted(() => {
-  viewer.on(ViewerEvent.LoadComplete, () => {
-    realTree = viewer.getWorldTree()
-    filters.value = viewer.getObjectProperties()
-    refHack.value++
-  })
-})
-
 const rootNodes = computed(() => {
-  refHack.value
-
+  if (!worldTree.value) return []
   expandLevel.value = -1
+  const _worldTree = worldTree.value
   const nodes = []
-  const rootNodes = realTree._root.children as ExplorerNode[]
+  const rootNodes = _worldTree._root.children as ExplorerNode[]
   for (const node of rootNodes) {
     const objectId = ((node.model as Record<string, unknown>).id as string)
       .split('/')
@@ -107,6 +99,7 @@ const rootNodes = computed(() => {
     }
     nodes.push(node.model as ExplorerNode)
   }
+  console.log(nodes)
   return nodes
 })
 </script>

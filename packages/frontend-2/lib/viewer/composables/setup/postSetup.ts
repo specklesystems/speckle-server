@@ -1,4 +1,4 @@
-import { difference, uniq } from 'lodash-es'
+import { debounce, difference, uniq } from 'lodash-es'
 import { ViewerEvent } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import {
@@ -39,6 +39,31 @@ function useViewerIsBusyEventHandler() {
   })
 }
 
+function useViewerWorldTreeAndFilterRefreshOnLoadComplete() {
+  if (process.server) return
+
+  const {
+    ui,
+    viewer: { instance: viewer }
+  } = useInjectedViewerState()
+
+  const refreshWorldTreeAndFilters = () => {
+    ui.worldTree.value = viewer.getWorldTree()
+    ui.filters.all.value = viewer.getObjectProperties()
+    console.log('debounced post-setup')
+  }
+
+  const debouncedRefresh = debounce(refreshWorldTreeAndFilters, 1000)
+
+  onMounted(() => {
+    viewer.on(ViewerEvent.LoadComplete, debouncedRefresh)
+  })
+
+  onBeforeUnmount(() => {
+    viewer.removeListener(ViewerEvent.Busy, debouncedRefresh)
+  })
+}
+
 /**
  * Automatically loads & unloads objects into the viewer depending on the global URL resource identifier state
  */
@@ -55,7 +80,8 @@ function useViewerObjectAutoLoading() {
     },
     resources: {
       response: { resourceItems }
-    }
+    },
+    ui
   } = useInjectedViewerState()
 
   const loadObject = (objectId: string, unload?: boolean) => {
@@ -66,6 +92,11 @@ function useViewerObjectAutoLoading() {
       viewer.loadObjectAsync(objectUrl, authToken.value || undefined)
     }
   }
+
+  // const refreshWorldTreeAndFilters = () => {
+  //   ui.worldTree.value = viewer.getWorldTree()
+  //   ui.filters.all.value = viewer.getObjectProperties()
+  // }
 
   const getUniqueObjectIds = (resourceItems: ViewerResourceItem[]) =>
     uniq(resourceItems.map((i) => i.objectId))
@@ -82,6 +113,7 @@ function useViewerObjectAutoLoading() {
       if (newIsInitialized && !oldIsInitialized) {
         const allObjectIds = getUniqueObjectIds(newResources)
         await Promise.all(allObjectIds.map((i) => loadObject(i)))
+        // refreshWorldTreeAndFilters()
         return
       }
 
@@ -93,6 +125,10 @@ function useViewerObjectAutoLoading() {
 
       await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
       await Promise.all(addableObjectIds.map((i) => loadObject(i)))
+
+      // TODO: reset/refresh viewer tree for explorer
+      // TODO: reset/refresh available filters (viewer.getObjectProperties())
+      // refreshWorldTreeAndFilters()
     },
     { deep: true, immediate: true }
   )
@@ -207,6 +243,7 @@ function useViewerSubscriptionEventTracker() {
 
 export function useViewerPostSetup() {
   useViewerObjectAutoLoading()
+  useViewerWorldTreeAndFilterRefreshOnLoadComplete()
   useViewerSelectionEventHandler()
   useViewerIsBusyEventHandler()
   useViewerSubscriptionEventTracker()

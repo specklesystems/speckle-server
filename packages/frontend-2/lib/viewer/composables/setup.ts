@@ -5,7 +5,8 @@ import {
   FilteringState,
   PropertyInfo,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  TreeNode
+  TreeNode,
+  WorldTree
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -49,6 +50,7 @@ import {
   useViewerCommentBubbles
 } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
+import { ShallowRef } from 'vue'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -194,7 +196,9 @@ export type InjectableViewerState = Readonly<{
       hideBubbles: Ref<boolean>
     }
     spotlightUserId: Ref<Nullable<string>>
+    worldTree: ShallowRef<WorldTree | undefined>
     filters: {
+      all: ShallowRef<PropertyInfo[] | undefined>
       current: ComputedRef<Nullable<FilteringState>>
       userSelectedFilter: Ref<PropertyInfo | undefined>
       localFilterPropKey: ComputedRef<Nullable<string>>
@@ -880,11 +884,15 @@ function setupInterfaceState(
   const newThreadEditor = ref(false)
 
   const hideBubbles = ref(false)
+
+  const worldTree = shallowRef()
+  const allFilters = shallowRef()
   return {
     ...state,
     ui: {
       spotlightUserId,
       viewerBusy,
+      worldTree,
       threads: {
         items: commentThreads,
         openThread: {
@@ -916,6 +924,7 @@ function setupInterfaceState(
         }
       },
       filters: {
+        all: allFilters,
         current: computed(() => filteringState.value),
         localFilterPropKey: computed(() => localFilterPropKey.value),
         userSelectedFilter,
