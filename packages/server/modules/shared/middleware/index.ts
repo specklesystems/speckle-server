@@ -171,8 +171,17 @@ export async function determineClientIpAddressMiddleware(
 ) {
   const ip = getIpFromRequest(req)
   if (ip) {
-    const mask = new Netmask(`${ip}/24`)
-    req.headers[X_SPECKLE_CLIENT_IP_HEADER] = mask.broadcast
+    try {
+      const isV6 = ip.includes(':')
+      if (isV6) {
+        req.headers[X_SPECKLE_CLIENT_IP_HEADER] = ip
+      } else {
+        const mask = new Netmask(`${ip}/24`)
+        req.headers[X_SPECKLE_CLIENT_IP_HEADER] = mask.broadcast
+      }
+    } catch (e) {
+      req.headers[X_SPECKLE_CLIENT_IP_HEADER] = ip || 'ip-parse-error'
+    }
   }
   next()
 }
