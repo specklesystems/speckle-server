@@ -57,10 +57,14 @@ function useViewerWorldTreeAndFilterRefreshOnLoadComplete() {
 
   onMounted(() => {
     viewer.on(ViewerEvent.LoadComplete, debouncedRefresh)
+    viewer.on(ViewerEvent.UnloadComplete, debouncedRefresh)
+    viewer.on(ViewerEvent.UnloadAllComplete, debouncedRefresh)
   })
 
   onBeforeUnmount(() => {
-    viewer.removeListener(ViewerEvent.Busy, debouncedRefresh)
+    viewer.removeListener(ViewerEvent.LoadComplete, debouncedRefresh)
+    viewer.removeListener(ViewerEvent.UnloadComplete, debouncedRefresh)
+    viewer.removeListener(ViewerEvent.UnloadAllComplete, debouncedRefresh)
   })
 }
 
