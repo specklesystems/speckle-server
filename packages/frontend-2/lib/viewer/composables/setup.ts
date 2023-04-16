@@ -451,6 +451,7 @@ function setupResponseResourceItems(
     const modelItems: ViewerResourceItem[] = []
     const folderItems: ViewerResourceItem[] = []
     const objectItems: ViewerResourceItem[] = []
+    const allModelItems: ViewerResourceItem[] = []
     for (const group of resolvedResourceGroups.value) {
       const [resource] = SpeckleViewer.ViewerRoute.parseUrlParameters(group.identifier)
 
@@ -461,6 +462,8 @@ function setupResponseResourceItems(
           } else {
             modelItems.push(item)
           }
+        } else if (SpeckleViewer.ViewerRoute.isAllModelsResource(resource)) {
+          allModelItems.push(item)
         } else if (SpeckleViewer.ViewerRoute.isModelFolderResource(resource)) {
           folderItems.push(item)
         } else if (SpeckleViewer.ViewerRoute.isObjectResource(resource)) {
@@ -473,6 +476,7 @@ function setupResponseResourceItems(
       ...versionItems,
       ...modelItems,
       ...folderItems,
+      ...allModelItems,
       ...objectItems
     ]
 

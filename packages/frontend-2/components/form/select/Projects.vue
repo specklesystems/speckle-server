@@ -51,7 +51,7 @@
 </template>
 <script setup lang="ts">
 import { PropType } from 'vue'
-import { Nullable, Optional } from '@speckle/shared'
+import { Nullable, Optional, Roles } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { FormSelectProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { useFormSelectChildInternals } from '~~/lib/form/composables/select'
@@ -144,7 +144,7 @@ const invokeSearch = async (search: string) => {
     query: searchProjectsQuery,
     variables: {
       search: search.trim().length ? search : null,
-      ownedOnly: props.ownedOnly
+      onlyWithRoles: props.ownedOnly ? [Roles.Stream.Owner] : null
     }
   })
   return results.data.activeUser?.projects.items || []
