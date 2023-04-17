@@ -36,7 +36,6 @@
           <FormSelectProjectRoles
             v-if="!showEmptyState"
             v-model="selectedRoles"
-            multiple
             class="w-56 grow md:grow-0"
             fixed-height
           />
