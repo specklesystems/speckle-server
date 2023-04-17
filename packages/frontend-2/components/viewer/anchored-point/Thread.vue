@@ -168,6 +168,7 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { ResourceType } from '~~/lib/common/generated/gql/graphql'
 import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
 import { ViewerSceneExplorerStateKey } from '~~/lib/common/helpers/constants'
+import { NumericPropertyInfo, PropertyInfo } from '@speckle/viewer'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -288,6 +289,15 @@ const { triggerNotification } = useGlobalToast()
 const {
   resources: {
     response: { project }
+  },
+  ui: {
+    filters: {
+      setColorFilter,
+      removeColorFilter,
+      resetFilters,
+      all: allFilters,
+      userSelectedFilter
+    }
   }
 } = useInjectedViewerState()
 
@@ -379,7 +389,7 @@ const stateKey = ViewerSceneExplorerStateKey
 
 watch(
   () => <const>[isExpanded.value, isViewed.value],
-  (newVals, oldVals) => {
+  async (newVals, oldVals) => {
     const [newIsExpanded, newIsViewed] = newVals
     const [oldIsExpanded] = oldVals
 
@@ -391,9 +401,41 @@ watch(
       sectionBox.sectionBoxOff() // turn off section box if a comment had a section box
     }
 
+    // TODO: unsure whether this should make its way into a composable of some sorts.
+    // Behaviour:
+    // - any time we open a comment, we want to set its filters up;
+    // - any time we close a comment, we reset its filters
     if (props.modelValue.data?.filters) {
+      if (!newIsExpanded) {
+        resetFilters()
+        return
+      }
+
       const { isolatedIds, hiddenIds, propertyInfoKey, passMax, passMin } =
         props.modelValue.data.filters
+
+      if (propertyInfoKey) {
+        await removeColorFilter()
+        const filter = allFilters.value.find(
+          (f: PropertyInfo) => f.key === propertyInfoKey
+        )
+        if (!filter) {
+          console.warn('Error setting comment filter: no filter with that key found. ')
+          return
+        }
+
+        if (passMin || passMax) {
+          const numericFilter = { ...filter } as NumericPropertyInfo
+          numericFilter.passMin = passMin || numericFilter.min
+          numericFilter.passMax = passMax || numericFilter.max
+          await setColorFilter(numericFilter)
+          userSelectedFilter.value = numericFilter
+          return // Hiding objects is handled by the numeric filter pass min/max
+        }
+        userSelectedFilter.value = filter
+        await setColorFilter(filter)
+        // do not return, let's go through the vis of objects
+      }
 
       if (isolatedIds && isolatedIds.length > 0)
         newIsExpanded
@@ -404,8 +446,6 @@ watch(
         newIsExpanded
           ? filters.hideObjects(hiddenIds, stateKey)
           : filters.showObjects(hiddenIds, stateKey)
-
-      // TODO: set filter based on propInfoKey, passMax and passMin
     }
 
     if (!newIsExpanded) {

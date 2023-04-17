@@ -60,7 +60,7 @@ const {
     response: { resourceItems }
   }
 } = useInjectedViewerState()
-// const { instance: viewer } = useInjectedViewer()
+const { instance: viewer } = useInjectedViewer()
 const {
   worldTree,
   filters: { all: allFilters }
@@ -74,12 +74,24 @@ const collapse = () => {
   if (manualExpandLevel.value > -1) manualExpandLevel.value--
 }
 
+// TODO: worldTree being set in postSetup.ts (viewer) does not seem to create a reactive effect
+// in here (as i was expecting it to?). Therefore, refHack++ to trigger the computed prop rootNodes.
+// Possibly Fabs will know more :) 
+const refhack = ref(1)
+onMounted(() => {
+  viewer.on(ViewerEvent.Busy, (b) => {
+    if (b) return
+    refhack.value++
+  })
+})
+
 const rootNodes = computed(() => {
+  refhack.value
+
   if (!worldTree.value) return []
   expandLevel.value = -1
-  const _worldTree = worldTree.value
   const nodes = []
-  const rootNodes = _worldTree._root.children as ExplorerNode[]
+  const rootNodes = worldTree.value._root.children as ExplorerNode[]
   for (const node of rootNodes) {
     const objectId = ((node.model as Record<string, unknown>).id as string)
       .split('/')
@@ -99,7 +111,7 @@ const rootNodes = computed(() => {
     }
     nodes.push(node.model as ExplorerNode)
   }
-  console.log(nodes)
+
   return nodes
 })
 </script>

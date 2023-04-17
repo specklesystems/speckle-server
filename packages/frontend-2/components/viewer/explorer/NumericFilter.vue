@@ -49,15 +49,20 @@
 </template>
 <script setup lang="ts">
 import { NumericPropertyInfo } from '@speckle/viewer'
-import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
-const { instance: viewer } = useInjectedViewer()
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+
+const {
+  ui: {
+    filters: { setColorFilter }
+  }
+} = useInjectedViewerState()
 
 const props = defineProps<{
   filter: NumericPropertyInfo
 }>()
 
-const passMin = ref(props.filter.min)
-const passMax = ref(props.filter.max)
+const passMin = ref(props.filter.passMin || props.filter.min)
+const passMax = ref(props.filter.passMax || props.filter.max)
 
 const roundedValues = computed(() => {
   return {
@@ -72,6 +77,6 @@ const setFilterPass = () => {
   const max = Math.max(passMin.value, passMax.value)
   propInfo.passMin = min
   propInfo.passMax = max
-  viewer.setColorFilter(propInfo)
+  setColorFilter(propInfo)
 }
 </script>

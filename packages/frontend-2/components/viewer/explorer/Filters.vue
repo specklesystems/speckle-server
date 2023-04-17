@@ -219,7 +219,7 @@ const refreshColorsIfSetOrActiveFilterIsNumeric = async () => {
     return
   }
 
-  await viewer.removeColorFilter()
-  await viewer.setColorFilter(activeFilter.value)
+  await removeColorFilter()
+  await setColorFilter(activeFilter.value)
 }
 </script>

@@ -47,24 +47,22 @@ function useViewerWorldTreeAndFilterRefreshOnLoadComplete() {
     viewer: { instance: viewer }
   } = useInjectedViewerState()
 
-  const refreshWorldTreeAndFilters = () => {
+  const refreshWorldTreeAndFilters = (busy: boolean) => {
+    if (busy) return
     ui.worldTree.value = viewer.getWorldTree()
+
     ui.filters.all.value = viewer.getObjectProperties()
-    console.log('debounced post-setup')
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    // console.log('top level kids length: ', ui.worldTree.value._root.children.length)
   }
 
-  const debouncedRefresh = debounce(refreshWorldTreeAndFilters, 1000)
-
   onMounted(() => {
-    viewer.on(ViewerEvent.LoadComplete, debouncedRefresh)
-    viewer.on(ViewerEvent.UnloadComplete, debouncedRefresh)
-    viewer.on(ViewerEvent.UnloadAllComplete, debouncedRefresh)
+    viewer.on(ViewerEvent.Busy, refreshWorldTreeAndFilters)
   })
 
   onBeforeUnmount(() => {
-    viewer.removeListener(ViewerEvent.LoadComplete, debouncedRefresh)
-    viewer.removeListener(ViewerEvent.UnloadComplete, debouncedRefresh)
-    viewer.removeListener(ViewerEvent.UnloadAllComplete, debouncedRefresh)
+    viewer.removeListener(ViewerEvent.Busy, refreshWorldTreeAndFilters)
   })
 }
 
