@@ -76,7 +76,7 @@ const collapse = () => {
 
 // TODO: worldTree being set in postSetup.ts (viewer) does not seem to create a reactive effect
 // in here (as i was expecting it to?). Therefore, refHack++ to trigger the computed prop rootNodes.
-// Possibly Fabs will know more :) 
+// Possibly Fabs will know more :)
 const refhack = ref(1)
 onMounted(() => {
   viewer.on(ViewerEvent.Busy, (b) => {
