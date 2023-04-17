@@ -95,6 +95,7 @@ import {
   useInjectedViewer,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const { instance: viewer } = useInjectedViewer()
 
 const {
