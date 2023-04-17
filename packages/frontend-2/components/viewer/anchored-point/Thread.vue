@@ -291,6 +291,8 @@ const {
     response: { project }
   },
   ui: {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    viewerBusy,
     filters: {
       setColorFilter,
       removeColorFilter,
@@ -386,12 +388,55 @@ onKeyDown('Escape', () => {
 // onKeyDown('ArrowRight', () => (isExpanded.value ? emit('prev', props.modelValue) : ''))
 // onKeyDown('ArrowLeft', () => (isExpanded.value ? emit('next', props.modelValue) : ''))
 const stateKey = ViewerSceneExplorerStateKey
+const shouldSetFiltersUpPostLoad = ref(false)
+
+const setupFullFilters = async () => {
+  if (!props.modelValue.data) return
+
+  const { propertyInfoKey, passMax, passMin } = props.modelValue.data.filters
+
+  if (propertyInfoKey) {
+    await removeColorFilter()
+    const filter = allFilters.value?.find(
+      (f: PropertyInfo) => f.key === propertyInfoKey
+    )
+    if (!filter) {
+      shouldSetFiltersUpPostLoad.value = true
+      console.warn('Error setting comment filter: no filter with that key found. ')
+      return
+    }
+
+    if (passMin || passMax) {
+      const numericFilter = { ...filter } as NumericPropertyInfo
+      numericFilter.passMin = passMin || numericFilter.min
+      numericFilter.passMax = passMax || numericFilter.max
+      await setColorFilter(numericFilter)
+      userSelectedFilter.value = numericFilter
+      return // Hiding objects is handled by the numeric filter pass min/max
+    }
+    userSelectedFilter.value = filter
+    await setColorFilter(filter)
+    // do not return, let's go through the vis of objects
+  }
+
+  hideOrIsolateObjects()
+}
+
+const hideOrIsolateObjects = () => {
+  if (!props.modelValue.data) return
+  const { isolatedIds, hiddenIds } = props.modelValue.data.filters
+
+  if (isolatedIds && isolatedIds.length > 0)
+    filters.isolateObjects(isolatedIds, stateKey)
+
+  if (hiddenIds && hiddenIds.length > 0) filters.hideObjects(hiddenIds, stateKey)
+}
 
 watch(
   () => <const>[isExpanded.value, isViewed.value],
-  async (newVals, oldVals) => {
+  (newVals, oldVals) => {
     const [newIsExpanded, newIsViewed] = newVals
-    const [oldIsExpanded] = oldVals
+    const [oldIsExpanded] = oldVals || [false]
 
     if (newIsExpanded && newIsExpanded !== oldIsExpanded && !newIsViewed) {
       markThreadViewed(projectId.value, props.modelValue.id)
@@ -401,58 +446,71 @@ watch(
       sectionBox.sectionBoxOff() // turn off section box if a comment had a section box
     }
 
+    if (!newIsExpanded) {
+      isDragged.value = false
+    }
+
     // TODO: unsure whether this should make its way into a composable of some sorts.
     // Behaviour:
     // - any time we open a comment, we want to set its filters up;
     // - any time we close a comment, we reset its filters
-    if (props.modelValue.data?.filters) {
-      if (!newIsExpanded) {
-        resetFilters()
+    // We want to do this when the viewer busy event is done with, alternatively when the
+    // all filters is populated...
+
+    // If a thread is no longer expanded and it had filters, reset them to default.
+    if (!newIsExpanded && props.modelValue.data?.filters) {
+      resetFilters()
+      return
+    }
+
+    // If a thread is expanded and has filters, set them up.
+    if (props.modelValue.data?.filters && newIsExpanded) {
+      // If we do not have a custom filter for this thread, it means
+      // we might only have hidden/isolated objects.
+      if (!props.modelValue.data.filters.propertyInfoKey) {
+        hideOrIsolateObjects()
         return
       }
 
-      const { isolatedIds, hiddenIds, propertyInfoKey, passMax, passMin } =
-        props.modelValue.data.filters
-
-      if (propertyInfoKey) {
-        await removeColorFilter()
-        const filter = allFilters.value.find(
-          (f: PropertyInfo) => f.key === propertyInfoKey
-        )
-        if (!filter) {
-          console.warn('Error setting comment filter: no filter with that key found. ')
-          return
-        }
-
-        if (passMin || passMax) {
-          const numericFilter = { ...filter } as NumericPropertyInfo
-          numericFilter.passMin = passMin || numericFilter.min
-          numericFilter.passMax = passMax || numericFilter.max
-          await setColorFilter(numericFilter)
-          userSelectedFilter.value = numericFilter
-          return // Hiding objects is handled by the numeric filter pass min/max
-        }
-        userSelectedFilter.value = filter
-        await setColorFilter(filter)
-        // do not return, let's go through the vis of objects
-      }
-
-      if (isolatedIds && isolatedIds.length > 0)
-        newIsExpanded
-          ? filters.isolateObjects(isolatedIds, stateKey)
-          : filters.unIsolateObjects(isolatedIds, stateKey)
-
-      if (hiddenIds && hiddenIds.length > 0)
-        newIsExpanded
-          ? filters.hideObjects(hiddenIds, stateKey)
-          : filters.showObjects(hiddenIds, stateKey)
+      // If we do have a 'propertyInfoKey', try to find it in the all filters. It will be there,
+      // unless we're freshly opening a model and a thread at the same time.
+      const filter = allFilters.value?.find(
+        (f: PropertyInfo) => f.key === props.modelValue.data?.filters.propertyInfoKey
+      )
+      // If we don't find it, set a flag for the watcher below to pick up.
+      if (!filter) shouldSetFiltersUpPostLoad.value = true
+      // Full speed ahead otherwise.
+      else setupFullFilters()
     }
-
-    if (!newIsExpanded) {
-      isDragged.value = false
-    }
-  }
+  },
+  { immediate: true } // for triggering also when a comment is opened because of a thread link
 )
+
+watch(allFilters, (newValue) => {
+  if (!shouldSetFiltersUpPostLoad.value) return
+  const filter = newValue?.find(
+    (f: PropertyInfo) => f.key === props.modelValue.data?.filters.propertyInfoKey
+  )
+  if (!filter) return
+  shouldSetFiltersUpPostLoad.value = false
+  // NOTE: we still need to give the viewer some time to do its thing.
+  // TODOs:
+  // - check with Alex if there is a way to more accurately report the end of viewer operations.
+  //   (I get WebGL-000035F405EE6900] GL_INVALID_FRAMEBUFFER_OPERATION: Framebuffer is incomplete: Attachment has zero size., and WebGL-000035F405EE6900] GL_INVALID_FRAMEBUFFER_OPERATION: Draw framebuffer is incomplete, and REE.Material: 'vertexColors' parameter is undefined. errors if model is not fully 'loaded')
+  // - check if viewerBusy might be a better option (it's not, tried below.)
+  setTimeout(setupFullFilters, 2000)
+})
+
+// watch(viewerBusy, (newVal) => {
+//   if (newVal) return
+//   if (!shouldSetFiltersUpPostLoad.value) return
+//   const filter = allFilters.value?.find(
+//     (f: PropertyInfo) => f.key === props.modelValue.data?.filters.propertyInfoKey
+//   )
+//   if (!filter) return
+//   shouldSetFiltersUpPostLoad.value = false
+//   setupFullFilters()
+// })
 
 watch(
   () => usersTyping.value.length > 1,
