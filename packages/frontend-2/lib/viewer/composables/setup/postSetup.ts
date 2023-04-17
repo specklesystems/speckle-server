@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { debounce, difference, uniq } from 'lodash-es'
 import { ViewerEvent } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
@@ -39,6 +40,10 @@ function useViewerIsBusyEventHandler() {
   })
 }
 
+/**
+ * Should refresh the world tree (used in the explorer) and the filters (used by filters).
+ * Note some strange behaviour on the world tree reactivity: see comments in explorer component.
+ */
 function useViewerWorldTreeAndFilterRefreshOnLoadComplete() {
   if (process.server) return
 
@@ -52,9 +57,6 @@ function useViewerWorldTreeAndFilterRefreshOnLoadComplete() {
     ui.worldTree.value = viewer.getWorldTree()
 
     ui.filters.all.value = viewer.getObjectProperties()
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    // console.log('top level kids length: ', ui.worldTree.value._root.children.length)
   }
 
   onMounted(() => {
