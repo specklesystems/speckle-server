@@ -84,8 +84,7 @@ function useViewerObjectAutoLoading() {
     },
     resources: {
       response: { resourceItems }
-    },
-    ui
+    }
   } = useInjectedViewerState()
 
   const loadObject = (objectId: string, unload?: boolean) => {
@@ -96,11 +95,6 @@ function useViewerObjectAutoLoading() {
       viewer.loadObjectAsync(objectUrl, authToken.value || undefined)
     }
   }
-
-  // const refreshWorldTreeAndFilters = () => {
-  //   ui.worldTree.value = viewer.getWorldTree()
-  //   ui.filters.all.value = viewer.getObjectProperties()
-  // }
 
   const getUniqueObjectIds = (resourceItems: ViewerResourceItem[]) =>
     uniq(resourceItems.map((i) => i.objectId))
@@ -117,7 +111,6 @@ function useViewerObjectAutoLoading() {
       if (newIsInitialized && !oldIsInitialized) {
         const allObjectIds = getUniqueObjectIds(newResources)
         await Promise.all(allObjectIds.map((i) => loadObject(i)))
-        // refreshWorldTreeAndFilters()
         return
       }
 
@@ -129,10 +122,6 @@ function useViewerObjectAutoLoading() {
 
       await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
       await Promise.all(addableObjectIds.map((i) => loadObject(i)))
-
-      // TODO: reset/refresh viewer tree for explorer
-      // TODO: reset/refresh available filters (viewer.getObjectProperties())
-      // refreshWorldTreeAndFilters()
     },
     { deep: true, immediate: true }
   )
