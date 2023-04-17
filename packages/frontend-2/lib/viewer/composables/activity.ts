@@ -113,7 +113,7 @@ export function useCollectCommentData() {
         propertyInfoKey: filters?.activePropFilterKey || null,
         passMax: filters?.passMax || null,
         passMin: filters?.passMin || null,
-        sectionBox
+        sectionBox // possible duplicate, see above
       }
     }
   }

@@ -38,7 +38,7 @@
         </div>
       </div>
     </ViewerLayoutPanel>
-    <ViewerExplorerFilters :filters="filters" />
+    <ViewerExplorerFilters :filters="allFilters || []" />
   </div>
 </template>
 <script setup lang="ts">
@@ -47,6 +47,7 @@ import { ViewerEvent } from '@speckle/viewer'
 import { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
 import {
   useInjectedViewer,
+  useInjectedViewerInterfaceState,
   useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
@@ -60,9 +61,10 @@ const {
   }
 } = useInjectedViewerState()
 const { instance: viewer } = useInjectedViewer()
-
-let realTree = viewer.getWorldTree()
-const filters = shallowRef(viewer.getObjectProperties())
+const {
+  worldTree,
+  filters: { all: allFilters }
+} = useInjectedViewerInterfaceState()
 
 const expandLevel = ref(-1)
 const manualExpandLevel = ref(-1)
@@ -72,23 +74,24 @@ const collapse = () => {
   if (manualExpandLevel.value > -1) manualExpandLevel.value--
 }
 
-const refHack = ref(1)
-
+// TODO: worldTree being set in postSetup.ts (viewer) does not seem to create a reactive effect
+// in here (as i was expecting it to?). Therefore, refHack++ to trigger the computed prop rootNodes.
+// Possibly Fabs will know more :)
+const refhack = ref(1)
 onMounted(() => {
-  viewer.on(ViewerEvent.Busy, (isBusy) => {
-    if (isBusy) return
-    realTree = viewer.getWorldTree()
-    filters.value = viewer.getObjectProperties()
-    refHack.value++
+  viewer.on(ViewerEvent.Busy, (b) => {
+    if (b) return
+    refhack.value++
   })
 })
 
 const rootNodes = computed(() => {
-  refHack.value
+  refhack.value
 
+  if (!worldTree.value) return []
   expandLevel.value = -1
   const nodes = []
-  const rootNodes = realTree._root.children as ExplorerNode[]
+  const rootNodes = worldTree.value._root.children as ExplorerNode[]
   for (const node of rootNodes) {
     const objectId = ((node.model as Record<string, unknown>).id as string)
       .split('/')
@@ -108,6 +111,7 @@ const rootNodes = computed(() => {
     }
     nodes.push(node.model as ExplorerNode)
   }
+
   return nodes
 })
 </script>

@@ -310,6 +310,10 @@ const props = defineProps({
   help: {
     type: String as PropType<Optional<string>>,
     default: undefined
+  },
+  fixedHeight: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -351,6 +355,10 @@ const buttonsWrapperClasses = computed(() => {
   if (props.buttonStyle !== 'simple') {
     classParts.push('hover:shadow rounded-md')
     classParts.push('outline outline-2 outline-primary-muted')
+  }
+
+  if (props.fixedHeight) {
+    classParts.push('h-8')
   }
 
   return classParts.join(' ')

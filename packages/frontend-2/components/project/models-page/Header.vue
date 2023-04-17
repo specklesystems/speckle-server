@@ -45,7 +45,6 @@
           class="bg-foundation shadow"
           wrapper-classes="grow lg:grow-0 lg:ml-2 lg:w-40 xl:w-60"
           :show-clear="search !== ''"
-          size="lg"
           @change="($event) => updateSearchImmediately($event.value)"
           @update:model-value="updateDebouncedSearch"
         ></FormTextInput>
@@ -60,6 +59,7 @@
             label="Filter by members"
             class="grow shrink sm:w-[120px] md:w-44"
             clearable
+            fixed-height
           />
           <div class="flex items-center space-x-2 grow">
             <FormSelectSourceApps
@@ -70,6 +70,7 @@
               label="Filter by sources"
               class="grow shrink w-[120px] md:w-44"
               clearable
+              fixed-height
             />
             <LayoutGridListToggle
               v-model="finalGridOrList"

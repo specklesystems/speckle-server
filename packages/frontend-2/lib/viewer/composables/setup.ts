@@ -5,7 +5,8 @@ import {
   FilteringState,
   PropertyInfo,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  TreeNode
+  TreeNode,
+  WorldTree
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -49,6 +50,7 @@ import {
   useViewerCommentBubbles
 } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
+import { ShallowRef } from 'vue'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -194,15 +196,19 @@ export type InjectableViewerState = Readonly<{
       hideBubbles: Ref<boolean>
     }
     spotlightUserId: Ref<Nullable<string>>
+    worldTree: ShallowRef<WorldTree | undefined>
     filters: {
+      all: ShallowRef<PropertyInfo[] | undefined>
       current: ComputedRef<Nullable<FilteringState>>
+      userSelectedFilter: Ref<PropertyInfo | undefined>
       localFilterPropKey: ComputedRef<Nullable<string>>
       isolateObjects: FilterAction
       unIsolateObjects: FilterAction
       hideObjects: FilterAction
       showObjects: FilterAction
       resetFilters: () => Promise<void>
-      setColorFilter: (property: PropertyInfo) => void
+      setColorFilter: (property: PropertyInfo) => Promise<void>
+      removeColorFilter: () => Promise<void>
     }
     camera: {
       isPerspectiveProjection: Ref<boolean>
@@ -693,57 +699,53 @@ function setupInterfaceState(
   // TODO: Do we maybe move isBusy toggles to the viewer side?
   const isolateObjects: FilterAction = async (...params) => {
     if (process.server) return
-    viewerBusy.value = true
 
     const result = await viewer.instance.isolateObjects(...params, false)
     filteringState.value = markRaw(result)
-    viewerBusy.value = false
   }
 
   const unIsolateObjects: FilterAction = async (...params) => {
     if (process.server) return
-    viewerBusy.value = true
 
     const result = await viewer.instance.unIsolateObjects(...params)
     filteringState.value = markRaw(result)
-    viewerBusy.value = false
   }
 
   const hideObjects: FilterAction = async (...params) => {
     if (process.server) return
-    viewerBusy.value = true
 
     const result = await viewer.instance.hideObjects(...params)
     filteringState.value = markRaw(result)
-    viewerBusy.value = false
   }
 
   const showObjects: FilterAction = async (...params) => {
     if (process.server) return
-    viewerBusy.value = true
 
     const result = await viewer.instance.showObjects(...params)
     filteringState.value = markRaw(result)
-    viewerBusy.value = false
   }
+
+  const userSelectedFilter = ref<PropertyInfo | undefined>()
 
   const setColorFilter = async (property: PropertyInfo) => {
     if (process.server) return
-    viewerBusy.value = true
 
     const result = await viewer.instance.setColorFilter(property)
     filteringState.value = markRaw(result)
     localFilterPropKey.value = property.key
-    viewerBusy.value = false
+  }
+
+  const removeColorFilter = async () => {
+    const result = await viewer.instance.removeColorFilter()
+    filteringState.value = markRaw(result)
   }
 
   const resetFilters = async () => {
-    viewerBusy.value = true
     await viewer.instance.resetFilters()
     viewer.instance.applyFilter(null)
     viewer.instance.resize() // Note: should not be needed in theory, but for some reason stuff doesn't re-render
     filteringState.value = null
-    viewerBusy.value = false
+    userSelectedFilter.value = undefined
   }
 
   const selectedObjects = ref<Raw<Record<string, unknown>>[]>([])
@@ -886,11 +888,15 @@ function setupInterfaceState(
   const newThreadEditor = ref(false)
 
   const hideBubbles = ref(false)
+
+  const worldTree = shallowRef()
+  const allFilters = shallowRef()
   return {
     ...state,
     ui: {
       spotlightUserId,
       viewerBusy,
+      worldTree,
       threads: {
         items: commentThreads,
         openThread: {
@@ -922,13 +928,16 @@ function setupInterfaceState(
         }
       },
       filters: {
+        all: allFilters,
         current: computed(() => filteringState.value),
         localFilterPropKey: computed(() => localFilterPropKey.value),
+        userSelectedFilter,
         isolateObjects,
         unIsolateObjects,
         hideObjects,
         showObjects,
         setColorFilter,
+        removeColorFilter,
         resetFilters
       },
       selection: {
