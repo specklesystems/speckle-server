@@ -7,6 +7,10 @@ import {
   Operation
 } from '@apollo/client/core'
 import { Optional } from '@speckle/shared'
+import { merge } from 'lodash-es'
+import { PartialDeep } from 'type-fest'
+import { ApolloMockData } from '~~/lib/common/helpers/storybook'
+import { AddParameters } from '~~/lib/common/helpers/type'
 
 type MockedApolloRequestInput<TVariables = Record<string, any>> = {
   query: DocumentNode
@@ -19,9 +23,9 @@ export type MockedApolloRequest<
   TVariables = Record<string, any>
 > = {
   request: (input: MockedApolloRequestInput<TVariables>) => boolean
-  result:
-    | FetchResult<TData>
-    | ((input: MockedApolloRequestInput<TVariables>) => FetchResult<TData>)
+  result: (
+    input: MockedApolloRequestInput<TVariables>
+  ) => FetchResult<ApolloMockData<TData>>
 }
 
 export class BetterMockLink extends ApolloLink {
@@ -82,4 +86,48 @@ export class BetterMockLink extends ApolloLink {
       }
     })
   }
+}
+
+export const apolloMockRequest = <
+  TData = Record<string, any>,
+  TVariables = Record<string, any>
+>(
+  request: MockedApolloRequest<TData, TVariables>
+) => request
+
+export function apolloMockRequestWithDefaults<
+  TData = Record<string, any>,
+  TVariables = Record<string, any>,
+  ExtraValues = Record<string, any> | undefined
+>(defaults: {
+  request: AddParameters<
+    Parameters<typeof apolloMockRequest<TData, TVariables>>[0]['request'],
+    [extra: ExtraValues]
+  >
+  result: AddParameters<
+    Parameters<typeof apolloMockRequest<TData, TVariables>>[0]['result'],
+    [extra: ExtraValues]
+  >
+}) {
+  return (
+    values?: ExtraValues,
+    params?:
+      | Partial<{
+          request: Parameters<typeof apolloMockRequest<TData, TVariables>>[0]['request']
+          result: (
+            input: MockedApolloRequestInput<TVariables>
+          ) => PartialDeep<FetchResult<ApolloMockData<TData>>>
+        }>
+      | undefined
+  ) =>
+    apolloMockRequest<TData, TVariables>({
+      request: (input) => {
+        if (!defaults.request(input, values || ({} as ExtraValues))) return false
+        return params?.request ? params.request(input) : true
+      },
+      result: (input): FetchResult<ApolloMockData<TData>> => {
+        const ret = defaults.result(input, values || ({} as ExtraValues))
+        return params?.result ? merge(ret, params.result(input)) : ret
+      }
+    })
 }
