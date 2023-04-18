@@ -1,6 +1,6 @@
 import SemanticColorsComponent from '~~/stories/styling/semantic-colors/SemanticColors.vue'
 import SemanticColorsDocs from '~~/stories/styling/semantic-colors/SemanticColors.mdx'
-import { Story, Meta } from '@storybook/vue3'
+import { StoryObj, Meta } from '@storybook/vue3'
 
 export default {
   title: 'Overview/Styling/Semantic Colors',
@@ -12,7 +12,7 @@ export default {
   }
 } as Meta
 
-export const SemanticColors: Story = {
+export const SemanticColors: StoryObj = {
   render: () => ({
     components: { SemanticColorsComponent },
     template: `<semantic-colors-component/>`
@@ -20,7 +20,4 @@ export const SemanticColors: Story = {
   parameters: {
     viewMode: 'docs'
   }
-}
-SemanticColors.parameters = {
-  viewMode: 'docs'
 }

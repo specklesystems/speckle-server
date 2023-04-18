@@ -1,4 +1,4 @@
-import { Meta, Story } from '@storybook/vue3'
+import { Meta, StoryObj } from '@storybook/vue3'
 import CommonBadge from '~~/components/common/Badge.vue'
 import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { FaceSmileIcon } from '@heroicons/vue/24/outline'
@@ -23,7 +23,7 @@ export default {
   }
 } as Meta
 
-export const Default: Story = {
+export const Default: StoryObj = {
   render: (args) => ({
     components: { CommonBadge },
     setup: () => ({ args }),
@@ -37,35 +37,35 @@ export const Default: Story = {
   }
 }
 
-export const Large: Story = {
+export const Large: StoryObj = {
   ...Default,
   args: {
     size: 'lg'
   }
 }
 
-export const Rounded: Story = {
+export const Rounded: StoryObj = {
   ...Default,
   args: {
     rounded: true
   }
 }
 
-export const WithDot: Story = {
+export const WithDot: StoryObj = {
   ...Default,
   args: {
     dot: true
   }
 }
 
-export const WithIcon: Story = {
+export const WithIcon: StoryObj = {
   ...Default,
   args: {
     iconLeft: FaceSmileIcon
   }
 }
 
-export const WithClickableIcon: Story = {
+export const WithClickableIcon: StoryObj = {
   ...Default,
   args: {
     clickableIcon: true,
@@ -73,7 +73,7 @@ export const WithClickableIcon: Story = {
   }
 }
 
-export const WithCustomColors: Story = {
+export const WithCustomColors: StoryObj = {
   ...Default,
   args: {
     iconLeft: FaceSmileIcon,

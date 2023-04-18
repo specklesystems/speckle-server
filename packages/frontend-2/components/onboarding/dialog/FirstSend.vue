@@ -13,5 +13,5 @@
 <script setup lang="ts">
 import { PlayIcon } from '@heroicons/vue/24/solid'
 
-const emit = defineEmits(['done'])
+const emit = defineEmits(['done', 'close', 'cancel'])
 </script>

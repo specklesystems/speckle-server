@@ -35,9 +35,9 @@ export type StorybookParameters = Parameters & {
 /**
  * Combine multiple stories by merging them
  */
-export function mergeStories(
-  source: StoryObj,
-  ...targetsToApply: Partial<StoryObj>[]
-): StoryObj {
-  return merge({}, source, ...targetsToApply) as StoryObj
+export function mergeStories<S = StoryObj>(
+  source: S,
+  ...targetsToApply: Partial<S>[]
+): S {
+  return merge({}, source, ...targetsToApply) as S
 }

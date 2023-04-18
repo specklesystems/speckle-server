@@ -38,6 +38,7 @@
   </OnboardingDialogBase>
 </template>
 <script setup lang="ts">
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { PlayIcon } from '@heroicons/vue/24/solid'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -50,7 +51,8 @@ const getOs = () => {
   if (process.server) return 'unknown'
   const userAgent = window.navigator.userAgent
   const platform =
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     (window.navigator?.userAgentData?.platform as string) ||
     (window.navigator.platform as string)
   const macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K']

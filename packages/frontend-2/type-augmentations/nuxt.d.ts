@@ -26,4 +26,10 @@ declare module '#app' {
   }
 }
 
+declare module 'nuxt/dist/app/nuxt' {
+  interface NuxtApp extends SpeckleNuxtAppInjections {
+    $b: 0
+  }
+}
+
 export {}

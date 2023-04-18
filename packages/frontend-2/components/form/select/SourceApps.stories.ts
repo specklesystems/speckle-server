@@ -1,5 +1,11 @@
-import { Meta, Story } from '@storybook/vue3'
+import { Meta, StoryObj } from '@storybook/vue3'
 import FormSelectSourceApps from '~~/components/form/select/SourceApps.vue'
+
+type StoryType = StoryObj<
+  Record<string, unknown> & {
+    'update:modelValue': (val: unknown) => void
+  }
+>
 
 export default {
   component: FormSelectSourceApps,
@@ -16,7 +22,7 @@ export default {
   }
 } as Meta
 
-export const Default: Story = {
+export const Default: StoryType = {
   render: (args, ctx) => ({
     components: { FormSelectSourceApps },
     setup: () => {
@@ -44,7 +50,7 @@ export const Default: Story = {
   }
 }
 
-export const Multiple: Story = {
+export const Multiple: StoryType = {
   ...Default,
   args: {
     ...Default.args,
@@ -52,7 +58,7 @@ export const Multiple: Story = {
   }
 }
 
-export const WithSearch: Story = {
+export const WithSearch: StoryType = {
   ...Default,
   args: {
     ...Default.args,
@@ -60,7 +66,7 @@ export const WithSearch: Story = {
   }
 }
 
-export const Disabled: Story = {
+export const Disabled: StoryType = {
   ...Default,
   args: {
     ...Default.args,

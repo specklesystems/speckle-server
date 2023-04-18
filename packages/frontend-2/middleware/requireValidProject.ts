@@ -12,8 +12,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
 
   const { $apollo } = useNuxtApp()
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  const client = $apollo.default as ApolloClient<unknown>
+  const client = ($apollo as { default: ApolloClient<unknown> }).default
 
   const { data, errors } = await client
     .query({

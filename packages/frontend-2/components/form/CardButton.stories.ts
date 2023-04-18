@@ -1,8 +1,14 @@
 import { userEvent, within } from '@storybook/testing-library'
-import { Meta, Story } from '@storybook/vue3'
+import { Meta, StoryObj } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
 import FormCardButton from '~~/components/form/CardButton.vue'
 import { VuePlayFunction } from '~~/lib/common/helpers/storybook'
+
+type StoryType = StoryObj<
+  Record<string, unknown> & {
+    'update:modelValue': (val: boolean) => void
+  }
+>
 
 export default {
   component: FormCardButton,
@@ -43,7 +49,7 @@ const clickPlayBuilder: (rightClick?: boolean) => VuePlayFunction =
     userEvent.tab()
   }
 
-export const Default: Story = {
+export const Default: StoryType = {
   render: (args, ctx) => ({
     components: { FormCardButton },
     setup() {
@@ -65,14 +71,14 @@ export const Default: Story = {
   }
 }
 
-export const Disabled: Story = {
+export const Disabled: StoryType = {
   ...Default,
   args: {
     disabled: true
   }
 }
 
-export const Selected: Story = {
+export const Selected: StoryType = {
   ...Default,
   play: clickPlayBuilder(true),
   args: {
