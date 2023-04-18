@@ -324,7 +324,7 @@ export function buildRequestLoaders(ctx: AuthContext) {
        * Get meta values associated with one or more users
        */
       getUserMeta: new DataLoader<
-        { userId: string; key: keyof typeof Users['meta']['metaKey'] },
+        { userId: string; key: keyof (typeof Users)['meta']['metaKey'] },
         Nullable<UsersMetaRecord & { id: string }>,
         string
       >(

@@ -3,7 +3,7 @@ import { Nullable } from '@/modules/shared/helpers/typeHelper'
 export type StreamActivityRecord = {
   streamId: Nullable<string>
   time: Date
-  resourceType: Nullable<typeof ResourceTypes[keyof typeof ResourceTypes]>
+  resourceType: Nullable<(typeof ResourceTypes)[keyof typeof ResourceTypes]>
   resourceId: Nullable<string>
   actionType: Nullable<AllActivityTypes>
   userId: Nullable<string>
@@ -62,19 +62,19 @@ export const ActionTypes = Object.freeze(<const>{
 })
 
 export type StreamActivityType =
-  typeof ActionTypes['Stream'][keyof typeof ActionTypes['Stream']]
+  (typeof ActionTypes)['Stream'][keyof (typeof ActionTypes)['Stream']]
 
 export type CommentActivityType =
-  typeof ActionTypes['Comment'][keyof typeof ActionTypes['Comment']]
+  (typeof ActionTypes)['Comment'][keyof (typeof ActionTypes)['Comment']]
 
 export type BranchActivityType =
-  typeof ActionTypes['Branch'][keyof typeof ActionTypes['Branch']]
+  (typeof ActionTypes)['Branch'][keyof (typeof ActionTypes)['Branch']]
 
 export type CommitActivityType =
-  typeof ActionTypes['Commit'][keyof typeof ActionTypes['Commit']]
+  (typeof ActionTypes)['Commit'][keyof (typeof ActionTypes)['Commit']]
 
 export type UserActivityType =
-  typeof ActionTypes['User'][keyof typeof ActionTypes['User']]
+  (typeof ActionTypes)['User'][keyof (typeof ActionTypes)['User']]
 
 export type AllActivityTypes =
   | StreamActivityType
