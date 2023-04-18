@@ -18,14 +18,20 @@ type MockedApolloRequestInput<TVariables = Record<string, any>> = {
   operationName?: string
 }
 
+type MockedApolloResultInput<TVariables = Record<string, any>> = {
+  variables: TVariables
+}
+
+export type MockedApolloFetchResult<TData = Record<string, any>> = FetchResult<
+  ApolloMockData<TData>
+>
+
 export type MockedApolloRequest<
   TData = Record<string, any>,
   TVariables = Record<string, any>
 > = {
   request: (input: MockedApolloRequestInput<TVariables>) => boolean
-  result: (
-    input: MockedApolloRequestInput<TVariables>
-  ) => FetchResult<ApolloMockData<TData>>
+  result: (input: MockedApolloResultInput<TVariables>) => MockedApolloFetchResult<TData>
 }
 
 export class BetterMockLink extends ApolloLink {
@@ -115,7 +121,7 @@ export function apolloMockRequestWithDefaults<
       | Partial<{
           request: Parameters<typeof apolloMockRequest<TData, TVariables>>[0]['request']
           result: (
-            input: MockedApolloRequestInput<TVariables>
+            input: MockedApolloResultInput<TVariables>
           ) => PartialDeep<FetchResult<ApolloMockData<TData>>>
         }>
       | undefined
