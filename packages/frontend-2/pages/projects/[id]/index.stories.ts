@@ -1,5 +1,4 @@
 import { Meta, StoryObj } from '@storybook/vue3'
-import { StorybookParameters } from '~~/lib/common/helpers/storybook'
 import ProjectPage from '~~/pages/projects/[id]/index.vue'
 import DefaultLayout from '~~/layouts/default.vue'
 import {
@@ -50,7 +49,7 @@ export const Default: StoryObj = {
     vueRouter: {
       route: { params: { id: fakeProjectId }, query: {} }
     }
-  } as StorybookParameters
+  }
 }
 
 export const EmptyState: StoryObj = {
@@ -82,5 +81,5 @@ export const EmptyState: StoryObj = {
     vueRouter: {
       route: { params: { id: fakeProjectId }, query: {} }
     }
-  } as StorybookParameters
+  }
 }
