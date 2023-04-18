@@ -13,7 +13,7 @@ export type ConnectorTag = {
   description: string
   communityProvider?: string
   isCommunity: boolean
-  stable: boolean
+  stable?: string
   versions: ConnectorVersion[]
   directDownload: boolean
 } & Tag

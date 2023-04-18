@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-foundation p-4 rounded-lg group">
+  <div class="bg-foundation p-4 rounded-lg group shadow hover:shadow-md transition">
     <div class="flex flex-col justify-between space-y-4">
       <div class="text-xs flex items-center space-x-2">
         <ShieldCheckIcon
@@ -16,7 +16,7 @@
           v-if="lastUpdated"
           class="bg-primary-muted text-primary rounded-full px-2 py-1 -ml-1"
         >
-          last update {{ lastUpdated }}
+          updated {{ lastUpdated }}
         </span>
         <!-- <span v-else class="bg-primary-muted text-primary rounded-full px-2 py-1 -ml-1">
           No info
@@ -33,15 +33,15 @@
           <img :src="tag.feature_image" alt="featured image" class="w-12" />
         </div>
       </div>
-      <div class="text-xs text-foreground-2 flex-grow line-clamp-2 overflow-hidden">
+      <!-- <div class="text-xs text-foreground-2 flex-grow line-clamp-2 overflow-hidden">
         {{ tag.description }}
-      </div>
+      </div> -->
       <div class="flex space-x-2 items-center justify-between">
         <span
           v-if="lastUpdated"
           class="text-xs bg-primary-muted text-primary rounded-full px-2 py-1 -ml-1 truncate"
         >
-          {{ tag.versions[0].Number }}
+          {{ tag.stable ? tag.stable : tag.versions[0].Number }}
         </span>
         <div
           class="opacity-0 group-hover:opacity-100 transition flex items-center space-x-1"

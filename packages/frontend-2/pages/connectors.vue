@@ -9,18 +9,30 @@
         <h5 class="h4 font-bold">Connectors</h5>
         <p>Start scaffolding your interoperability and automation workflows.</p>
       </div>
+      <div class="pl-4 flex space-x-2 grow">
+        <!-- <FormButton color="card">Show Community Connectors</FormButton> -->
+        <div class="grow"></div>
+        <div>
+          <FormButton size="xl" class="shadow-md">Download</FormButton>
+        </div>
+      </div>
+    </div>
+    <div class="mb-4">
       <div>
         <FormTextInput
-          size="lg"
+          v-model="searchString"
+          size="xl"
           name="search"
-          class="bg-foundation"
+          :custom-icon="MagnifyingGlassIcon"
+          class="bg-foundation w-full"
           search
+          :show-clear="!!searchString"
           placeholder="Search for a connector"
         />
       </div>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div v-for="(tag, index) in connectorTags" :key="index">
+      <div v-for="(tag, index) in searchResults" :key="index">
         <ConnectorsCard :tag="tag" />
       </div>
     </div>
@@ -29,7 +41,7 @@
 <script setup lang="ts">
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ConnectorTag, ConnectorVersion, Tag } from '~~/lib/connectors'
-
+import { MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
 definePageMeta({
   title: 'Speckle Connectors'
 })
@@ -77,8 +89,10 @@ for (const tag of relevantTags) {
           new Date(b.Date).getTime() - new Date(a.Date).getTime()
       )
       connectorTag.versions = versions && versions.length > 0 ? versions : []
+      connectorTag.stable = versions.find((x) => !x.Prerelease)?.Number
     } else {
       connectorTag.directDownload = false
+      connectorTag.versions = []
     }
   } catch (e) {
     connectorTag.directDownload = false
@@ -89,47 +103,16 @@ for (const tag of relevantTags) {
   connectorTags.value.push(connectorTag)
 }
 
-// const connectorTags = computed(() => {
-//   const arr = (response.data.value as Record<string, unknown>).tags as Record<
-//     string,
-//     unknown
-//   >[]
-//   const relevantTags = arr.filter((tag: Record<string, unknown>) => {
-//     if (!tag.codeinjection_head) return false
-//     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, camelcase
-//     tag.codeinjection_head = (tag.codeinjection_head as string).replace(/\s/g, '')
-//     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-//     if ((tag.codeinjection_head as string).match(/(window.connectorTag=true)/))
-//       return true
-//   }) as Tag[]
+connectorTags.value = connectorTags.value.sort((a, b) => {
+  return b.versions.length - a.versions.length
+})
 
-//   const tags = [] as ConnectorTag[]
+const searchString = ref<string>()
 
-//   for (const tag of relevantTags) {
-//     const connectorTag = { ...tag } as ConnectorTag
-
-//     const installLink = tag.codeinjection_head.match(/window.installLink="([\s\S]*?)"/)
-//     connectorTag.installLink = installLink ? installLink[1] : null
-//     // try {
-//     //   if (installLink?.includes('SpeckleManager')) {
-//     //     connectorTag.directDownload = true
-//     //     // const { data } = await useFetch(`${spacesEndpoint}/manager2/feeds/${tag.slug}`)
-//     //     // // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-//     //     // const versions = data.value.Versions.sort(
-//     //     //   (a: { Date: string }, b: { Date: string }) =>
-//     //     //     new Date(b.Date).getTime() - new Date(a.Date).getTime()
-//     //     // )
-//     //     // console.log(versions)
-//     //   } else {
-//     //     connectorTag.directDownload = false
-//     //   }
-//     // } catch (e) {
-//     //   // gotta catch 'em all!
-//     // }
-
-//     tags.push(connectorTag)
-//   }
-
-//   return tags
-// })
+const searchResults = computed(() => {
+  if (!searchString.value) return connectorTags.value
+  return connectorTags.value.filter((t) =>
+    t.name.toLowerCase().includes(searchString.value?.toLowerCase())
+  )
+})
 </script>

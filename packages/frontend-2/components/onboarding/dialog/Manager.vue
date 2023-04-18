@@ -53,7 +53,7 @@ const getOs = () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     (window.navigator?.userAgentData?.platform as string) ||
     (window.navigator.platform as string)
-  const macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K']
+  const macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K', 'MacOS']
   const windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE']
   const iosPlatforms = ['iPhone', 'iPad', 'iPod']
   let os = 'unknown'
