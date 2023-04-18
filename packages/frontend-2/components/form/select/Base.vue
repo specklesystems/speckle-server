@@ -101,7 +101,7 @@
                 <ListboxOption
                   v-for="item in finalItems"
                   :key="itemKey(item)"
-                  v-slot="{ active, selected }"
+                  v-slot="{ active, selected }: { active: boolean, selected: boolean }"
                   :value="item"
                 >
                   <li
