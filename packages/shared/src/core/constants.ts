@@ -18,8 +18,8 @@ export const Roles = Object.freeze(<const>{
   }
 })
 
-export type ServerRoles = typeof Roles['Server'][keyof typeof Roles['Server']]
-export type StreamRoles = typeof Roles['Stream'][keyof typeof Roles['Stream']]
+export type ServerRoles = (typeof Roles)['Server'][keyof (typeof Roles)['Server']]
+export type StreamRoles = (typeof Roles)['Stream'][keyof (typeof Roles)['Stream']]
 
 /**
  * Speckle scope constants

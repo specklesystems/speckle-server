@@ -1,4 +1,4 @@
-import { Meta, Story } from '@storybook/vue3'
+import { Meta, StoryObj } from '@storybook/vue3'
 import DesignSystem from '~~/components/DesignSystem.vue'
 
 export default {
@@ -6,7 +6,7 @@ export default {
   component: DesignSystem
 } as Meta
 
-export const Default: Story = {
+export const Default: StoryObj = {
   render: () => ({
     components: { DesignSystem },
     template: `

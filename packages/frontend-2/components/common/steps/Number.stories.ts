@@ -1,9 +1,15 @@
 import { action } from '@storybook/addon-actions'
-import { Meta, Story } from '@storybook/vue3'
+import { Meta, StoryObj } from '@storybook/vue3'
 import CommonStepsNumber from '~~/components/common/steps/Number.vue'
 import { NumberStepType } from '~~/lib/common/helpers/components'
 import { mergeStories } from '~~/lib/common/helpers/storybook'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+
+type StoryType = StoryObj<
+  Record<string, unknown> & {
+    'update:modelValue': (val: boolean) => void
+  }
+>
 
 const testStepsWithDescription: NumberStepType[] = [
   {
@@ -59,7 +65,7 @@ export default {
   }
 } as Meta
 
-export const Default: Story = {
+export const Default: StoryType = {
   render: (args, ctx) => ({
     components: { CommonStepsNumber },
     setup: () => ({ args }),
@@ -79,13 +85,13 @@ export const Default: Story = {
   }
 }
 
-export const Vertical: Story = mergeStories(Default, {
+export const Vertical: StoryType = mergeStories(Default, {
   args: {
     orientation: 'vertical'
   }
 })
 
-export const StartOnNegativeStep: Story = mergeStories(Default, {
+export const StartOnNegativeStep: StoryType = mergeStories(Default, {
   args: {
     modelValue: -1
   },
@@ -98,7 +104,7 @@ export const StartOnNegativeStep: Story = mergeStories(Default, {
   }
 })
 
-export const NoDescription: Story = {
+export const NoDescription: StoryType = {
   ...Default,
   args: {
     ...Default.args,
@@ -106,7 +112,7 @@ export const NoDescription: Story = {
   }
 }
 
-export const GoVerticalBelowBreakpoint: Story = mergeStories(Default, {
+export const GoVerticalBelowBreakpoint: StoryType = mergeStories(Default, {
   args: {
     goVerticalBelow: TailwindBreakpoints.md
   }

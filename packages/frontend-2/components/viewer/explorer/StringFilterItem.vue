@@ -92,10 +92,10 @@ const availableTargetIds = computed(() => {
   let targets = props.item.ids
 
   if (isolatedObjects.value && isolatedObjects.value?.length > 0)
-    targets = props.item.ids.filter((id) => isolatedObjects.value?.includes(id))
+    targets = props.item.ids.filter((id) => (isolatedObjects.value || []).includes(id))
 
   if (hiddenObjects.value && hiddenObjects.value?.length > 0)
-    targets = props.item.ids.filter((id) => !hiddenObjects.value?.includes(id))
+    targets = props.item.ids.filter((id) => !(hiddenObjects.value || []).includes(id))
   return targets
 })
 

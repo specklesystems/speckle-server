@@ -1,6 +1,6 @@
 import { userEvent, within } from '@storybook/testing-library'
 import FormTextArea from '~~/components/form/TextArea.vue'
-import { Story, Meta } from '@storybook/vue3'
+import { StoryObj, Meta } from '@storybook/vue3'
 import { VuePlayFunction, mergeStories } from '~~/lib/common/helpers/storybook'
 import { wait } from '@speckle/shared'
 
@@ -40,7 +40,7 @@ const buildTextWriterPlayFunction =
     userEvent.tab()
   }
 
-export const Default: Story = {
+export const Default: StoryObj = {
   render: (args) => ({
     components: { FormTextArea },
     setup() {

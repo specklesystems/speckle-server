@@ -1,8 +1,8 @@
 import DemoNuxtFunctionality from '~~/components/DemoNuxtFunctionality.vue'
-import { Story, Meta } from '@storybook/vue3'
+import { StoryObj, Meta } from '@storybook/vue3'
 
 export default {
-  title: 'Test/Demo Nuxt Functionality (test)',
+  title: 'Appendix/Test/Demo Nuxt Functionality (test)',
   component: DemoNuxtFunctionality,
   parameters: {
     docs: {
@@ -14,7 +14,7 @@ export default {
   }
 } as Meta
 
-export const Default: Story = {
+export const Default: StoryObj = {
   render: () => ({
     components: { DemoNuxtFunctionality },
     template: `<demo-nuxt-functionality/>`

@@ -1,8 +1,15 @@
-import { Meta, Story } from '@storybook/vue3'
+import { Meta, StoryObj } from '@storybook/vue3'
 import FormSelectUsers from '~~/components/form/select/Users.vue'
 import { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
+import { ApolloMockData } from '~~/lib/common/helpers/storybook'
 
-export const fakeUsers: FormUsersSelectItemFragment[] = [
+type StoryType = StoryObj<
+  Record<string, unknown> & {
+    'update:modelValue': (val: FormUsersSelectItemFragment) => void
+  }
+>
+
+export const fakeUsers: ApolloMockData<FormUsersSelectItemFragment[]> = [
   {
     __typename: 'LimitedUser',
     id: '1',
@@ -81,7 +88,7 @@ export default {
   excludeStories: ['fakeUsers']
 } as Meta
 
-export const Default: Story = {
+export const Default: StoryType = {
   render: (args, ctx) => ({
     components: { FormSelectUsers },
     setup: () => {
@@ -111,7 +118,7 @@ export const Default: Story = {
   }
 }
 
-export const Multiple: Story = {
+export const Multiple: StoryType = {
   ...Default,
   args: {
     ...Default.args,
@@ -120,7 +127,7 @@ export const Multiple: Story = {
   }
 }
 
-export const WithSearch: Story = {
+export const WithSearch: StoryType = {
   ...Default,
   args: {
     ...Default.args,
@@ -128,7 +135,7 @@ export const WithSearch: Story = {
   }
 }
 
-export const Disabled: Story = {
+export const Disabled: StoryType = {
   ...Default,
   args: {
     ...Default.args,

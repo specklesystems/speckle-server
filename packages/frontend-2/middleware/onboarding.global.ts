@@ -22,7 +22,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Ignore if not logged in
   if (!data?.activeUser?.id) return
 
-  const isOnboardingFinished = data.activeUser.isOnboardingFinished
+  const isOnboardingFinished = data?.activeUser?.isOnboardingFinished
   const isGoingToOnboarding = to.path === onboardingRoute
 
   if (

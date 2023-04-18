@@ -51,6 +51,7 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
+import { markRaw } from 'vue'
 
 defineEmits(['close'])
 

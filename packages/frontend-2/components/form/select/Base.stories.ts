@@ -5,6 +5,12 @@ import { isRequired } from '~~/lib/common/helpers/validation'
 
 type FakeItemType = { id: string; name: string }
 
+type StoryType = StoryObj<
+  Record<string, unknown> & {
+    'update:modelValue': (val: FakeItemType) => void
+  }
+>
+
 const fakeItems: FakeItemType[] = [
   {
     id: '1',
@@ -82,7 +88,7 @@ export default {
   }
 } as Meta
 
-export const Default: StoryObj = {
+export const Default: StoryType = {
   render: (args, ctx) => ({
     components: { FormSelectBase },
     setup: () => {
@@ -119,7 +125,7 @@ export const Default: StoryObj = {
   }
 }
 
-export const LimitedWidth: StoryObj = {
+export const LimitedWidth: StoryType = {
   ...Default,
   render: (args, ctx) => ({
     components: { FormSelectBase },
@@ -140,7 +146,7 @@ export const LimitedWidth: StoryObj = {
   })
 }
 
-export const WithCustomSlots: StoryObj = {
+export const WithCustomSlots: StoryType = {
   render: (args, ctx) => ({
     components: { FormSelectBase },
     setup: () => {
@@ -177,7 +183,7 @@ export const WithCustomSlots: StoryObj = {
   }
 }
 
-export const Disabled: StoryObj = {
+export const Disabled: StoryType = {
   ...Default,
   args: {
     ...Default.args,
@@ -185,7 +191,7 @@ export const Disabled: StoryObj = {
   }
 }
 
-export const WithValidation: StoryObj = {
+export const WithValidation: StoryType = {
   render: (args, ctx) => ({
     components: { FormSelectBase },
     setup: () => {
@@ -219,7 +225,7 @@ export const WithValidation: StoryObj = {
   }
 }
 
-export const WithFilter: StoryObj = {
+export const WithFilter: StoryType = {
   ...Default,
   args: {
     ...Default.args,
@@ -227,7 +233,7 @@ export const WithFilter: StoryObj = {
   }
 }
 
-export const WithAsyncSearch: StoryObj = {
+export const WithAsyncSearch: StoryType = {
   ...WithFilter,
   args: {
     ...WithFilter.args,
@@ -243,7 +249,7 @@ export const WithAsyncSearch: StoryObj = {
   }
 }
 
-export const Empty: StoryObj = {
+export const Empty: StoryType = {
   ...WithAsyncSearch,
   args: {
     ...WithAsyncSearch.args,
@@ -251,7 +257,7 @@ export const Empty: StoryObj = {
   }
 }
 
-export const Simple: StoryObj = {
+export const Simple: StoryType = {
   ...Default,
   args: {
     ...Default.args,

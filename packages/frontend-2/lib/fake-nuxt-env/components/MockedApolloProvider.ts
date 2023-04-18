@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, vue/no-setup-props-destructure */
 import { ApolloClient, DefaultOptions } from '@apollo/client/core'
 import { InMemoryCache } from '@apollo/client/cache'
-import { MockLink, MockedResponse } from '@apollo/client/testing/core'
-import type { ApolloLink } from '@apollo/client/link/core'
 import type { Resolvers } from '@apollo/client/core'
 import type { ApolloCache } from '@apollo/client/cache'
 import { DefaultApolloClient } from '@vue/apollo-composable'
 import { defineComponent, h, provide, PropType } from 'vue'
 import { Optional } from '@speckle/shared'
+import {
+  BetterMockLink,
+  MockedApolloRequest
+} from '~~/lib/fake-nuxt-env/utils/betterMockLink'
 
 /**
  * Vue implementation of the Apollo Mocked Provider, allows us to completely mock out
@@ -20,14 +22,13 @@ import { Optional } from '@speckle/shared'
 export interface MockedApolloProviderOptions<
   TSerializedCache = Record<string, unknown>
 > {
-  mocks?: ReadonlyArray<MockedResponse>
+  mocks?: Array<MockedApolloRequest<any, any>>
   addTypename?: boolean
   defaultOptions?: DefaultOptions
   cache?: ApolloCache<TSerializedCache>
   resolvers?: Resolvers
   childProps?: object
   children?: any
-  link?: ApolloLink
 }
 
 export const MockedApolloProvider = defineComponent({
@@ -40,12 +41,12 @@ export const MockedApolloProvider = defineComponent({
   },
   setup(props, { slots }) {
     const { options } = props
-    const { mocks, addTypename, defaultOptions, cache, resolvers, link } = options || {}
+    const { mocks, addTypename, defaultOptions, cache, resolvers } = options || {}
 
     const client = new ApolloClient({
       cache: cache || new InMemoryCache({ addTypename }),
       defaultOptions,
-      link: link || new MockLink(mocks || [], addTypename),
+      link: new BetterMockLink(mocks || []),
       resolvers
     })
 

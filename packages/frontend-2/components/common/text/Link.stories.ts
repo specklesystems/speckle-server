@@ -1,5 +1,5 @@
 import { userEvent, within } from '@storybook/testing-library'
-import { Meta, Story } from '@storybook/vue3'
+import { Meta, StoryObj } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
 import CommonTextLink from '~~/components/common/text/Link.vue'
 import { mergeStories, VuePlayFunction } from '~~/lib/common/helpers/storybook'
@@ -53,7 +53,7 @@ const clickPlayBuilder: (rightClick: boolean) => VuePlayFunction =
 const rightClickPlay = clickPlayBuilder(true)
 const leftClickPlay = clickPlayBuilder(false)
 
-export const Default: Story = {
+export const Default: StoryObj = {
   render: (args) => ({
     components: { CommonTextLink },
     setup() {
@@ -77,31 +77,31 @@ export const Default: Story = {
   }
 }
 
-export const Small: Story = mergeStories(Default, {
+export const Small: StoryObj = mergeStories(Default, {
   args: {
     size: 'sm'
   }
 })
 
-export const ExtraSmall: Story = mergeStories(Default, {
+export const ExtraSmall: StoryObj = mergeStories(Default, {
   args: {
     size: 'xs'
   }
 })
 
-export const Large: Story = mergeStories(Default, {
+export const Large: StoryObj = mergeStories(Default, {
   args: {
     size: 'lg'
   }
 })
 
-export const ExtraLarge: Story = mergeStories(Default, {
+export const ExtraLarge: StoryObj = mergeStories(Default, {
   args: {
     size: 'xl'
   }
 })
 
-export const Disabled: Story = mergeStories(Default, {
+export const Disabled: StoryObj = mergeStories(Default, {
   play: leftClickPlay,
   args: {
     disabled: true
@@ -115,7 +115,7 @@ export const Disabled: Story = mergeStories(Default, {
   }
 })
 
-export const NoTarget: Story = mergeStories(Default, {
+export const NoTarget: StoryObj = mergeStories(Default, {
   play: leftClickPlay,
   args: {
     to: null,
@@ -123,7 +123,7 @@ export const NoTarget: Story = mergeStories(Default, {
   }
 })
 
-export const External: Story = mergeStories(Default, {
+export const External: StoryObj = mergeStories(Default, {
   args: {
     external: true,
     to: '/',

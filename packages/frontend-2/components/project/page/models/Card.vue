@@ -191,9 +191,9 @@ const finalShowVersions = computed(
   () => props.showVersions && !isPendingModelFragment(props.model)
 )
 const canEdit = computed(() => canModifyModels(props.project))
-const versionCount = computed(() =>
-  isPendingModelFragment(props.model) ? 0 : props.model.versionCount.totalCount
-)
+const versionCount = computed(() => {
+  return isPendingModelFragment(props.model) ? 0 : props.model.versionCount.totalCount
+})
 
 const pendingVersion = computed(() => {
   return isPendingModelFragment(props.model)

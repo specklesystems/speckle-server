@@ -1,6 +1,6 @@
 import FormCheckbox from '~~/components/form/Checkbox.vue'
 import FormButton from '~~/components/form/Button.vue'
-import { Meta, Story } from '@storybook/vue3'
+import { Meta, StoryObj } from '@storybook/vue3'
 import { action } from '@storybook/addon-actions'
 import { Form, SubmissionHandler } from 'vee-validate'
 import { VuePlayFunction } from '~~/lib/common/helpers/storybook'
@@ -44,7 +44,7 @@ const toggleCheckboxPlayFunction: VuePlayFunction = async (params) => {
   userEvent.click(checkbox)
 }
 
-export const Default: Story = {
+export const Default: StoryObj = {
   play: toggleCheckboxPlayFunction,
   render: (args) => ({
     components: { FormCheckbox },
@@ -74,7 +74,7 @@ export const Default: Story = {
   }
 }
 
-export const Group: Story = {
+export const Group: StoryObj = {
   render: (args) => ({
     components: { FormCheckbox, Form, FormButton },
     setup() {
@@ -130,7 +130,7 @@ export const Group: Story = {
   }
 }
 
-export const InlineDescription: Story = {
+export const InlineDescription: StoryObj = {
   ...Default,
   args: {
     name: 'inline1',
@@ -141,7 +141,7 @@ export const InlineDescription: Story = {
   }
 }
 
-export const Disabled: Story = {
+export const Disabled: StoryObj = {
   ...Default,
   play: (params) => {
     const canvas = within(params.canvasElement)
@@ -163,7 +163,7 @@ export const Disabled: Story = {
   }
 }
 
-export const Required: Story = {
+export const Required: StoryObj = {
   ...Default,
   args: {
     name: 'required1',

@@ -106,7 +106,7 @@ const inviteEmail = async (email: string, projectId: string) => {
     })
     .catch(convertThrowIntoFetchResult)
 
-  if (data?.projectMutations.invites.create.id) {
+  if (data?.projectMutations.invites.batchCreate.id) {
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Invite sent'

@@ -9,7 +9,7 @@
         <div class="space-y-2 flex flex-col items-center">
           <UserAvatar :user="activeUser" size="lg" />
           <div class="text-foreground h6">{{ activeUser.name }}</div>
-          <CommonTextLink size="xs" @click="logout">
+          <CommonTextLink size="xs" @click="() => logout()">
             Not you? Switch accounts
           </CommonTextLink>
         </div>

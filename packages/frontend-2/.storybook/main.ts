@@ -21,7 +21,7 @@ const nuxtViteConfigUtil = jitiImport(
 ) as typeof import('~~/lib/fake-nuxt-env/utils/nuxtViteConfig.mjs')
 const storyPaths = ['stories', 'components', 'pages', 'lib', 'layouts']
 const storiesPairs = storyPaths.map((p) => [
-  `../${p}/**/*.mdx`,
+  `../${p}/**/*.stories.mdx`,
   `../${p}/**/*.stories.@(js|ts)`
 ])
 const stories = flatten(storiesPairs)

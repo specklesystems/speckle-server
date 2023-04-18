@@ -1,6 +1,6 @@
 import { userEvent, within } from '@storybook/testing-library'
 import FormButton from '~~/components/form/Button.vue'
-import { Story, Meta } from '@storybook/vue3'
+import { StoryObj, Meta } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
 import { VuePlayFunction, mergeStories } from '~~/lib/common/helpers/storybook'
 import { XMarkIcon } from '@heroicons/vue/24/solid'
@@ -76,7 +76,7 @@ const clickPlayBuilder: (rightClick: boolean) => VuePlayFunction =
 const rightClickPlay = clickPlayBuilder(true)
 const leftClickPlay = clickPlayBuilder(false)
 
-export const Default: Story = {
+export const Default: StoryObj = {
   render: (args) => ({
     components: { FormButton },
     setup() {
@@ -110,32 +110,32 @@ export const Default: Story = {
   }
 }
 
-export const Rounded: Story = mergeStories(Default, {
+export const Rounded: StoryObj = mergeStories(Default, {
   args: {
     rounded: true
   }
 })
 
-export const WarningButton: Story = mergeStories(Default, {
+export const WarningButton: StoryObj = mergeStories(Default, {
   args: {
     color: 'warning'
   }
 })
 
-export const RoundedOutlined: Story = mergeStories(Default, {
+export const RoundedOutlined: StoryObj = mergeStories(Default, {
   args: {
     rounded: true,
     outlined: true
   }
 })
 
-export const Outline: Story = mergeStories(Default, {
+export const Outline: StoryObj = mergeStories(Default, {
   args: {
     outlined: true
   }
 })
 
-export const Link: Story = mergeStories(Default, {
+export const Link: StoryObj = mergeStories(Default, {
   args: {
     link: true
   },
@@ -148,37 +148,37 @@ export const Link: Story = mergeStories(Default, {
   }
 })
 
-export const Text: Story = mergeStories(Default, {
+export const Text: StoryObj = mergeStories(Default, {
   args: {
     text: true
   }
 })
 
-export const Small: Story = mergeStories(Default, {
+export const Small: StoryObj = mergeStories(Default, {
   args: {
     size: 'sm'
   }
 })
 
-export const ExtraSmall: Story = mergeStories(Default, {
+export const ExtraSmall: StoryObj = mergeStories(Default, {
   args: {
     size: 'xs'
   }
 })
 
-export const Large: Story = mergeStories(Default, {
+export const Large: StoryObj = mergeStories(Default, {
   args: {
     size: 'lg'
   }
 })
 
-export const ExtraLarge: Story = mergeStories(Default, {
+export const ExtraLarge: StoryObj = mergeStories(Default, {
   args: {
     size: 'xl'
   }
 })
 
-export const Disabled: Story = mergeStories(Default, {
+export const Disabled: StoryObj = mergeStories(Default, {
   play: leftClickPlay,
   args: {
     disabled: true
@@ -192,7 +192,7 @@ export const Disabled: Story = mergeStories(Default, {
   }
 })
 
-export const NoTarget: Story = mergeStories(Default, {
+export const NoTarget: StoryObj = mergeStories(Default, {
   play: leftClickPlay,
   args: {
     to: null,
@@ -200,14 +200,14 @@ export const NoTarget: Story = mergeStories(Default, {
   }
 })
 
-export const FullWidth: Story = mergeStories(Default, {
+export const FullWidth: StoryObj = mergeStories(Default, {
   args: {
     fullWidth: true,
     default: 'Full width button'
   }
 })
 
-export const External: Story = mergeStories(Default, {
+export const External: StoryObj = mergeStories(Default, {
   args: {
     external: true,
     to: '/',
@@ -222,7 +222,7 @@ export const External: Story = mergeStories(Default, {
   }
 })
 
-export const Submit: Story = mergeStories(Default, {
+export const Submit: StoryObj = mergeStories(Default, {
   play: leftClickPlay,
   args: {
     to: null,
@@ -238,26 +238,26 @@ export const Submit: Story = mergeStories(Default, {
   }
 })
 
-export const LeftIcon: Story = mergeStories(Default, {
+export const LeftIcon: StoryObj = mergeStories(Default, {
   args: {
     iconLeft: XMarkIcon
   }
 })
 
-export const RightIcon: Story = mergeStories(Default, {
+export const RightIcon: StoryObj = mergeStories(Default, {
   args: {
     iconRight: XMarkIcon
   }
 })
 
-export const IconOnBothSides: Story = mergeStories(Default, {
+export const IconOnBothSides: StoryObj = mergeStories(Default, {
   args: {
     iconRight: XMarkIcon,
     iconLeft: XMarkIcon
   }
 })
 
-export const IconOnly: Story = mergeStories(Default, {
+export const IconOnly: StoryObj = mergeStories(Default, {
   args: {
     iconLeft: XMarkIcon,
     hideText: true
