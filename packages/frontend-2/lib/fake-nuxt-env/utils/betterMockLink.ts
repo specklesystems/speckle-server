@@ -101,21 +101,22 @@ export const apolloMockRequest = <
   request: MockedApolloRequest<TData, TVariables>
 ) => request
 
-export function apolloMockRequestWithDefaults<
-  TData = Record<string, any>,
-  TVariables = Record<string, any>,
-  ExtraValues = Record<string, any> | undefined
->(defaults: {
-  request: AddParameters<
-    Parameters<typeof apolloMockRequest<TData, TVariables>>[0]['request'],
-    [extra: ExtraValues]
-  >
-  result: AddParameters<
-    Parameters<typeof apolloMockRequest<TData, TVariables>>[0]['result'],
-    [extra: ExtraValues]
-  >
-}) {
-  return (
+export const apolloMockRequestWithDefaults =
+  <
+    TData = Record<string, any>,
+    TVariables = Record<string, any>,
+    ExtraValues = Record<string, any> | undefined
+  >(defaults: {
+    request: AddParameters<
+      Parameters<typeof apolloMockRequest<TData, TVariables>>[0]['request'],
+      [extra: ExtraValues]
+    >
+    result: AddParameters<
+      Parameters<typeof apolloMockRequest<TData, TVariables>>[0]['result'],
+      [extra: ExtraValues]
+    >
+  }) =>
+  (
     values?: ExtraValues,
     params?:
       | Partial<{
@@ -136,4 +137,3 @@ export function apolloMockRequestWithDefaults<
         return params?.result ? merge(ret, params.result(input)) : ret
       }
     })
-}
