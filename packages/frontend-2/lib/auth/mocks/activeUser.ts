@@ -16,6 +16,7 @@ export const mockActiveUserQuery = apolloMockRequestWithDefaults<
   request: ({ operationName }) => operationName === 'ActiveUserMainMetadata',
   result: (_, values) => ({
     data: {
+      __typename: 'Query',
       activeUser: values?.forceGuest
         ? null
         : {

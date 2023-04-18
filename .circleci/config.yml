@@ -393,7 +393,12 @@ jobs:
           command: yarn build:public
 
       - run:
-          name: Install Playwrigth
+          name: Lint everything
+          command: yarn lint
+          working_directory: 'packages/frontend-2'
+
+      - run:
+          name: Install Playwright
           command: cd ~ && npx playwright install --with-deps
 
       - run:
