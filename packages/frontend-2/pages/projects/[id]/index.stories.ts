@@ -26,23 +26,10 @@ export default {
   }
 } as Meta
 
-export const Default = buildPageStory({
+const baseStory = buildPageStory({
   page: ProjectPage,
   story: {
     parameters: {
-      apolloClient: {
-        mocks: [
-          mockProjectPageQuery({
-            commentThreadCount: 20,
-            versionCount: 30,
-            modelCount: 40
-          }),
-          mockProjectLatestModelsQuery(),
-          mockProjectModelsTreeTopLevelQuery(),
-          mockProjectModelChildrenTreeQuery(),
-          mockProjectLatestCommentThreadsQuery()
-        ]
-      },
       vueRouter: {
         route: { params: { id: fakeProjectId }, query: {} }
       }
@@ -50,12 +37,34 @@ export const Default = buildPageStory({
   }
 })
 
+export const Default: StoryObj = {
+  ...baseStory,
+  parameters: {
+    ...baseStory.parameters,
+    apolloClient: {
+      mocks: [
+        ...(baseStory.parameters?.apolloClient?.mocks || []),
+        mockProjectPageQuery({
+          commentThreadCount: 20,
+          versionCount: 30,
+          modelCount: 40
+        }),
+        mockProjectLatestModelsQuery(),
+        mockProjectModelsTreeTopLevelQuery(),
+        mockProjectModelChildrenTreeQuery(),
+        mockProjectLatestCommentThreadsQuery()
+      ]
+    }
+  }
+}
+
 export const EmptyState: StoryObj = {
   ...Default,
   parameters: {
     ...Default.parameters,
     apolloClient: {
       mocks: [
+        ...(baseStory.parameters?.apolloClient?.mocks || []),
         mockProjectPageQuery(
           {
             versionCount: 0,
