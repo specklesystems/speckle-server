@@ -1,6 +1,5 @@
 import { Meta, StoryObj } from '@storybook/vue3'
 import ProjectPage from '~~/pages/projects/[id]/index.vue'
-import DefaultLayout from '~~/layouts/default.vue'
 import {
   mockProjectLatestCommentThreadsQuery,
   mockProjectLatestModelsQuery,
@@ -8,6 +7,7 @@ import {
   mockProjectModelsTreeTopLevelQuery,
   mockProjectPageQuery
 } from '~~/lib/projects/mocks/projectPage'
+import { buildPageStory } from '~~/lib/common/helpers/storybook'
 
 const fakeProjectId = 'some-fake-id'
 
@@ -26,35 +26,34 @@ export default {
   }
 } as Meta
 
-export const Default: StoryObj = {
-  render: (args) => ({
-    components: { ProjectPage, DefaultLayout },
-    setup: () => ({ args }),
-    template: `<DefaultLayout><ProjectPage v-bind="args"/></DefaultLayout>`
-  }),
-  parameters: {
-    apolloClient: {
-      mocks: [
-        mockProjectPageQuery({
-          commentThreadCount: 20,
-          versionCount: 30,
-          modelCount: 40
-        }),
-        mockProjectLatestModelsQuery(),
-        mockProjectModelsTreeTopLevelQuery(),
-        mockProjectModelChildrenTreeQuery(),
-        mockProjectLatestCommentThreadsQuery()
-      ]
-    },
-    vueRouter: {
-      route: { params: { id: fakeProjectId }, query: {} }
+export const Default = buildPageStory({
+  page: ProjectPage,
+  story: {
+    parameters: {
+      apolloClient: {
+        mocks: [
+          mockProjectPageQuery({
+            commentThreadCount: 20,
+            versionCount: 30,
+            modelCount: 40
+          }),
+          mockProjectLatestModelsQuery(),
+          mockProjectModelsTreeTopLevelQuery(),
+          mockProjectModelChildrenTreeQuery(),
+          mockProjectLatestCommentThreadsQuery()
+        ]
+      },
+      vueRouter: {
+        route: { params: { id: fakeProjectId }, query: {} }
+      }
     }
   }
-}
+})
 
 export const EmptyState: StoryObj = {
   ...Default,
   parameters: {
+    ...Default.parameters,
     apolloClient: {
       mocks: [
         mockProjectPageQuery(
@@ -77,9 +76,6 @@ export const EmptyState: StoryObj = {
         mockProjectModelsTreeTopLevelQuery({ resultCount: 0 }),
         mockProjectLatestCommentThreadsQuery({ resultCount: 0 })
       ]
-    },
-    vueRouter: {
-      route: { params: { id: fakeProjectId }, query: {} }
     }
   }
 }

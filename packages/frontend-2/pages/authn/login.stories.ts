@@ -1,7 +1,8 @@
-import { Meta, StoryObj } from '@storybook/vue3'
+import { Meta } from '@storybook/vue3'
 import LoginPage from '~~/pages/authn/login.vue'
 import LoginOrRegisterLayout from '~~/layouts/loginOrRegister.vue'
 import { mockLoginServerInfoQuery } from '~~/lib/auth/mocks/serverInfo'
+import { buildPageStory } from '~~/lib/common/helpers/storybook'
 
 export default {
   title: 'Pages/Authn/Login',
@@ -18,15 +19,17 @@ export default {
   }
 } as Meta
 
-export const Default: StoryObj = {
-  render: (args) => ({
-    components: { LoginPage, LoginOrRegisterLayout },
-    setup: () => ({ args }),
-    template: `<LoginOrRegisterLayout><LoginPage v-bind="args"/></LoginOrRegisterLayout>`
-  }),
-  parameters: {
-    apolloClient: {
-      mocks: [mockLoginServerInfoQuery()]
+export const Default = buildPageStory({
+  page: LoginPage,
+  layout: LoginOrRegisterLayout,
+  story: {
+    parameters: {
+      apolloClient: {
+        mocks: [mockLoginServerInfoQuery()]
+      }
     }
+  },
+  activeUserSettings: {
+    isLoggedIn: false
   }
-}
+})

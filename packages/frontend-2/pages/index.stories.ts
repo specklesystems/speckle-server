@@ -1,8 +1,7 @@
-import { Meta, StoryObj } from '@storybook/vue3'
+import { Meta } from '@storybook/vue3'
 import Homepage from '~~/pages/index.vue'
-import DefaultLayout from '~~/layouts/default.vue'
 import { mockProjectsDashboardPageQuery } from '~~/lib/projects/mocks/projectsPage'
-import { mockActiveUserQuery } from '~~/lib/auth/mocks/activeUser'
+import { buildPageStory } from '~~/lib/common/helpers/storybook'
 
 export default {
   title: 'Pages/Dashboard',
@@ -19,15 +18,13 @@ export default {
   }
 } as Meta
 
-export const Default: StoryObj = {
-  render: (args) => ({
-    components: { Homepage, DefaultLayout },
-    setup: () => ({ args }),
-    template: `<DefaultLayout><Homepage v-bind="args"/></DefaultLayout>`
-  }),
-  parameters: {
-    apolloClient: {
-      mocks: [mockProjectsDashboardPageQuery(), mockActiveUserQuery()]
+export const Default = buildPageStory({
+  page: Homepage,
+  story: {
+    parameters: {
+      apolloClient: {
+        mocks: [mockProjectsDashboardPageQuery()]
+      }
     }
   }
-}
+})

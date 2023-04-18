@@ -34,34 +34,36 @@ export const mockProjectPageQuery = apolloMockRequestWithDefaults<
   result: (input, values): FetchResult<ApolloMockData<ProjectPageQueryQuery>> => {
     return {
       data: {
-        project: {
-          __typename: 'Project',
-          id: input.variables.id,
-          createdAt: randomDate.toISOString(),
-          name: `Test project #${input.variables.id}`,
-          description: 'Test project description',
-          visibility: ProjectVisibility.Public,
-          allowPublicComments: true,
-          role: Roles.Stream.Owner,
-          commentThreadCount: {
-            __typename: 'ProjectCommentCollection',
-            totalCount: values?.commentThreadCount ?? 20
-          },
-          versionCount: {
-            __typename: 'VersionCollection',
-            totalCount: values?.versionCount ?? 15
-          },
-          modelCount: {
-            __typename: 'ModelCollection',
-            totalCount: values?.modelCount ?? 10
-          },
-          team: fakeUsers.map((u) => ({
-            __typename: 'ProjectCollaborator',
-            role: Roles.Stream.Contributor,
-            user: u
-          })),
-          invitedTeam: null
-        },
+        project: !input.variables.id
+          ? null
+          : {
+              __typename: 'Project',
+              id: input.variables.id,
+              createdAt: randomDate.toISOString(),
+              name: `Test project #${input.variables.id}`,
+              description: 'Test project description',
+              visibility: ProjectVisibility.Public,
+              allowPublicComments: true,
+              role: Roles.Stream.Owner,
+              commentThreadCount: {
+                __typename: 'ProjectCommentCollection',
+                totalCount: values?.commentThreadCount ?? 20
+              },
+              versionCount: {
+                __typename: 'VersionCollection',
+                totalCount: values?.versionCount ?? 15
+              },
+              modelCount: {
+                __typename: 'ModelCollection',
+                totalCount: values?.modelCount ?? 10
+              },
+              team: fakeUsers.map((u) => ({
+                __typename: 'ProjectCollaborator',
+                role: Roles.Stream.Contributor,
+                user: u
+              })),
+              invitedTeam: null
+            },
         projectInvite: null,
         __typename: 'Query'
       }
@@ -88,34 +90,36 @@ export const mockProjectLatestModelsQuery = apolloMockRequestWithDefaults<
 
     const data: ApolloMockData<ProjectLatestModelsQuery> = {
       __typename: 'Query',
-      project: {
-        __typename: 'Project',
-        id: variables.projectId,
-        models: {
-          __typename: 'ModelCollection',
-          totalCount: resultCount,
-          cursor: null,
-          items: times(resultCount).map((i) => ({
-            __typename: 'Model',
-            id: `model-${i}`,
-            name: `Model ${i}`,
-            displayName: `Model ${i}`,
-            versionCount: {
-              __typename: 'VersionCollection',
-              totalCount: 15
+      project: !variables.projectId
+        ? null
+        : {
+            __typename: 'Project',
+            id: variables.projectId,
+            models: {
+              __typename: 'ModelCollection',
+              totalCount: resultCount,
+              cursor: null,
+              items: times(resultCount).map((i) => ({
+                __typename: 'Model',
+                id: `model-${i}`,
+                name: `Model ${i}`,
+                displayName: `Model ${i}`,
+                versionCount: {
+                  __typename: 'VersionCollection',
+                  totalCount: 15
+                },
+                commentThreadCount: {
+                  __typename: 'CommentCollection',
+                  totalCount: 15
+                },
+                previewUrl: randomPreviewUrl,
+                createdAt: randomDate.toISOString(),
+                updatedAt: randomDate.toISOString(),
+                pendingImportedVersions: []
+              }))
             },
-            commentThreadCount: {
-              __typename: 'CommentCollection',
-              totalCount: 15
-            },
-            previewUrl: randomPreviewUrl,
-            createdAt: randomDate.toISOString(),
-            updatedAt: randomDate.toISOString(),
-            pendingImportedVersions: []
-          }))
-        },
-        pendingImportedModels: []
-      }
+            pendingImportedModels: []
+          }
     }
 
     return {
@@ -144,50 +148,52 @@ export const mockProjectModelsTreeTopLevelQuery = apolloMockRequestWithDefaults<
     return {
       data: {
         __typename: 'Query',
-        project: {
-          __typename: 'Project',
-          id: variables.projectId,
-          modelsTree: {
-            __typename: 'ModelsTreeItemCollection',
-            totalCount: resultCount,
-            cursor: null,
-            items: times(resultCount, (i) => {
-              const name = `Top level item ${i}`
-              const hasChildren = i % 3 === 0
-              const hasModel = i % 6 === 0
+        project: !variables.projectId
+          ? null
+          : {
+              __typename: 'Project',
+              id: variables.projectId,
+              modelsTree: {
+                __typename: 'ModelsTreeItemCollection',
+                totalCount: resultCount,
+                cursor: null,
+                items: times(resultCount, (i) => {
+                  const name = `Top level item ${i}`
+                  const hasChildren = i % 3 === 0
+                  const hasModel = i % 6 === 0
 
-              return {
-                __typename: 'ModelsTreeItem',
-                name,
-                id: `ModelsTreeItem-${i}`,
-                fullName: name,
-                hasChildren,
-                updatedAt: randomDate.toISOString(),
-                model: hasModel
-                  ? {
-                      __typename: 'Model',
-                      id: `model-${name}`,
-                      name,
-                      displayName: name,
-                      versionCount: {
-                        __typename: 'VersionCollection',
-                        totalCount: 16
-                      },
-                      commentThreadCount: {
-                        __typename: 'CommentCollection',
-                        totalCount: 20
-                      },
-                      previewUrl: randomPreviewUrl,
-                      createdAt: randomDate.toISOString(),
-                      updatedAt: randomDate.toISOString(),
-                      pendingImportedVersions: []
-                    }
-                  : null
-              }
-            })
-          },
-          pendingImportedModels: []
-        }
+                  return {
+                    __typename: 'ModelsTreeItem',
+                    name,
+                    id: `ModelsTreeItem-${i}`,
+                    fullName: name,
+                    hasChildren,
+                    updatedAt: randomDate.toISOString(),
+                    model: hasModel
+                      ? {
+                          __typename: 'Model',
+                          id: `model-${name}`,
+                          name,
+                          displayName: name,
+                          versionCount: {
+                            __typename: 'VersionCollection',
+                            totalCount: 16
+                          },
+                          commentThreadCount: {
+                            __typename: 'CommentCollection',
+                            totalCount: 20
+                          },
+                          previewUrl: randomPreviewUrl,
+                          createdAt: randomDate.toISOString(),
+                          updatedAt: randomDate.toISOString(),
+                          pendingImportedVersions: []
+                        }
+                      : null
+                  }
+                })
+              },
+              pendingImportedModels: []
+            }
       }
     }
   }
@@ -202,39 +208,41 @@ export const mockProjectModelChildrenTreeQuery = apolloMockRequestWithDefaults<
   result: ({ variables }, values) => ({
     data: {
       __typename: 'Query',
-      project: {
-        __typename: 'Project',
-        id: variables.projectId,
-        modelChildrenTree: times(values?.resultCount ?? 3, (i) => {
-          const name = `Child item ${i}`
-          return {
-            __typename: 'ModelsTreeItem',
-            id: `ModelsTreeItem-child-${variables.parentName}-${i}`,
-            name,
-            fullName: `${variables.parentName}/${name}`,
-            hasChildren: false,
-            updatedAt: randomDate.toISOString(),
-            model: {
-              __typename: 'Model',
-              id: `model-child-${name}`,
-              name: `${variables.parentName}/Child model ${i}`,
-              displayName: `Child model ${i}`,
-              versionCount: {
-                __typename: 'VersionCollection',
-                totalCount: 16
-              },
-              commentThreadCount: {
-                __typename: 'CommentCollection',
-                totalCount: 20
-              },
-              pendingImportedVersions: [],
-              previewUrl: randomPreviewUrl,
-              createdAt: randomDate.toISOString(),
-              updatedAt: randomDate.toISOString()
-            }
+      project: !variables.projectId
+        ? null
+        : {
+            __typename: 'Project',
+            id: variables.projectId,
+            modelChildrenTree: times(values?.resultCount ?? 3, (i) => {
+              const name = `Child item ${i}`
+              return {
+                __typename: 'ModelsTreeItem',
+                id: `ModelsTreeItem-child-${variables.parentName}-${i}`,
+                name,
+                fullName: `${variables.parentName}/${name}`,
+                hasChildren: false,
+                updatedAt: randomDate.toISOString(),
+                model: {
+                  __typename: 'Model',
+                  id: `model-child-${name}`,
+                  name: `${variables.parentName}/Child model ${i}`,
+                  displayName: `Child model ${i}`,
+                  versionCount: {
+                    __typename: 'VersionCollection',
+                    totalCount: 16
+                  },
+                  commentThreadCount: {
+                    __typename: 'CommentCollection',
+                    totalCount: 20
+                  },
+                  pendingImportedVersions: [],
+                  previewUrl: randomPreviewUrl,
+                  createdAt: randomDate.toISOString(),
+                  updatedAt: randomDate.toISOString()
+                }
+              }
+            })
           }
-        })
-      }
     }
   })
 })
@@ -254,35 +262,38 @@ export const mockProjectLatestCommentThreadsQuery = apolloMockRequestWithDefault
 
     const data: ApolloMockData<ProjectLatestCommentThreadsQuery> = {
       __typename: 'Query',
-      project: {
-        __typename: 'Project',
-        id: variables.projectId,
-        commentThreads: {
-          __typename: 'ProjectCommentCollection',
-          totalCount: resultCount,
-          cursor: null,
-          items: times(resultCount, (i) => ({
-            __typename: 'Comment',
-            id: `comment-${i}`,
-            author: fakeUsers[random(fakeUsers.length - 1)],
-            screenshot: fakeScreenshot,
-            rawText: 'Hello there, this is an example comment text. Do you like it?',
-            createdAt: randomDate.toISOString(),
-            updatedAt: randomDate.toISOString(),
-            repliesCount: {
-              __typename: 'CommentCollection',
-              totalCount: 100
-            },
-            replyAuthors: {
-              __typename: 'CommentReplyAuthorCollection',
-              items: fakeUsers.slice(0, 4),
-              totalCount: 100
-            },
-            archived: false,
-            viewerResources: []
-          }))
-        }
-      }
+      project: !variables.projectId
+        ? null
+        : {
+            __typename: 'Project',
+            id: variables.projectId,
+            commentThreads: {
+              __typename: 'ProjectCommentCollection',
+              totalCount: resultCount,
+              cursor: null,
+              items: times(resultCount, (i) => ({
+                __typename: 'Comment',
+                id: `comment-${i}`,
+                author: fakeUsers[random(fakeUsers.length - 1)],
+                screenshot: fakeScreenshot,
+                rawText:
+                  'Hello there, this is an example comment text. Do you like it?',
+                createdAt: randomDate.toISOString(),
+                updatedAt: randomDate.toISOString(),
+                repliesCount: {
+                  __typename: 'CommentCollection',
+                  totalCount: 100
+                },
+                replyAuthors: {
+                  __typename: 'CommentReplyAuthorCollection',
+                  items: fakeUsers.slice(0, 4),
+                  totalCount: 100
+                },
+                archived: false,
+                viewerResources: []
+              }))
+            }
+          }
     }
 
     return { data }
