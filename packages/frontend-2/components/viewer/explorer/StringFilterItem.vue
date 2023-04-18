@@ -10,6 +10,11 @@
       @click="setSelection()"
     >
       <div class="flex space-x-2 items-center flex-shrink truncate">
+        <span
+          v-if="color"
+          class="w-3 h-3 rounded"
+          :style="`background-color: #${color};`"
+        ></span>
         <span class="truncate">
           {{ item.value.split('.').reverse()[0] || item.value || 'No Name' }}
         </span>
@@ -21,6 +26,8 @@
         One is set by the explorer, and the other one by the filters - this would allow for us to 
         enable isolate this level, and from the remaining objects, isolate the doors only. 
         Requires a larger rework of the viewer state composable & filtering methods.
+
+        There's v-if=false that's hiding the div below :)
       -->
       <div v-if="false" class="flex items-center flex-shrink-0">
         <button
@@ -116,6 +123,11 @@ const isIsolated = computed(() => {
 })
 
 // const stateKey = ViewerSceneExplorerStateKey
+
+const color = computed(() => {
+  return filters.current.value?.colorGroups?.find((gr) => gr.value === props.item.value)
+    ?.color
+})
 
 const hideOrShowObject = () => {
   // const ids = props.item.ids

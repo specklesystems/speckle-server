@@ -8,6 +8,7 @@
             text
             size="xs"
             :icon-right="showAllFilters ? ChevronUpIcon : ChevronDownIcon"
+            class="capitalize"
             @click="showAllFilters = !showAllFilters"
           >
             {{ title.split('.').reverse()[0] || title || 'No Title' }}
@@ -16,13 +17,16 @@
             v-if="title !== 'Object Type'"
             text
             size="xs"
-            @click=";(activeFilter = null), (showAllFilters = false)"
+            @click="
+              ;(userSelectedFilter = undefined),
+                (showAllFilters = false),
+                refreshColorsIfSetOrActiveFilterIsNumeric()
+            "
           >
             Reset
           </FormButton>
         </div>
-        <!-- Disabling as something is wrong with colors -->
-        <!-- <div>
+        <div>
           <FormButton
             v-tippy="'Toggle coloring'"
             size="xs"
@@ -32,7 +36,7 @@
             <SparklesIconOutline v-if="!colors" class="w-3 h-3 text-primary" />
             <SparklesIcon v-else class="w-3 h-3 text-primary" />
           </FormButton>
-        </div> -->
+        </div>
       </div>
     </template>
     <div
@@ -46,39 +50,59 @@
           name="filter search"
           placeholder="Search for a property"
           size="sm"
+          :show-clear="!!searchString"
         />
       </div>
       <div
-        v-for="(filter, index) in stringFiltersLimited"
+        v-for="(filter, index) in relevantFiltersLimited"
         :key="index"
         class="text-xs px-1"
       >
         <button
           class="block w-full text-left hover:bg-primary-muted transition truncate rounded-md py-[1px]"
-          @click=";(activeFilter = filter), (showAllFilters = false)"
+          @click="
+            ;(userSelectedFilter = filter),
+              (showAllFilters = false),
+              refreshColorsIfSetOrActiveFilterIsNumeric()
+          "
         >
           {{ filter.key }}
         </button>
       </div>
-      <div v-if="itemCount < stringFiltersSearched.length" class="mb-2">
+      <div v-if="itemCount < relevantFiltersSearched.length" class="mb-2">
         <FormButton size="xs" text full-width @click="itemCount += 30">
-          View More ({{ stringFiltersSearched.length - itemCount }})
+          View More ({{ relevantFiltersSearched.length - itemCount }})
         </FormButton>
       </div>
     </div>
-    <div>
-      <ViewerExplorerStringFilter :filter="activeFilter || speckleTypeFilter" />
+    <div v-if="activeFilter">
+      <ViewerExplorerStringFilter
+        v-if="activeFilter.type === 'string'"
+        :filter="stringActiveFilter"
+      />
+      <ViewerExplorerNumericFilter
+        v-if="activeFilter.type === 'number'"
+        :filter="numericActiveFilter"
+      />
     </div>
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ChevronDownIcon, ChevronUpIcon, SparklesIcon } from '@heroicons/vue/24/solid'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { SparklesIcon as SparklesIconOutline } from '@heroicons/vue/24/outline'
-import { PropertyInfo, StringPropertyInfo } from '@speckle/viewer'
-import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+import { PropertyInfo, StringPropertyInfo, NumericPropertyInfo } from '@speckle/viewer'
+import {
+  useInjectedViewer,
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const { instance: viewer } = useInjectedViewer()
+
+const {
+  ui: {
+    filters: { setColorFilter, removeColorFilter, current, userSelectedFilter }
+  }
+} = useInjectedViewerState()
 
 const showAllFilters = ref(false)
 
@@ -110,50 +134,48 @@ const relevantFilters = computed(() => {
     ) {
       return false
     }
+    // handle revit params: the actual one single value we're interested is in paramters.HOST_BLA BLA_.value, the rest are not needed
+    if (f.key.startsWith('parameters')) {
+      if (f.key.endsWith('.value')) return true
+      else return false
+    }
     return true
   })
 })
 
-const activeFilter = ref<StringPropertyInfo | null>(null)
-
-const colors = ref(false)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const toggleColors = () => {
-  colors.value = !colors.value
-
-  if (colors.value) viewer.setColorFilter(activeFilter.value || speckleTypeFilter.value)
-  else viewer.removeColorFilter()
-}
+// const userSelectedFilter = ref<PropertyInfo | null>(null)
 
 const speckleTypeFilter = computed(
   () =>
     relevantFilters.value.find((f) => f.key === 'speckle_type') as StringPropertyInfo
 )
 
-const stringFilters = computed(
-  () => relevantFilters.value.filter((f) => f.type === 'string') as StringPropertyInfo[]
-)
+const activeFilter = computed(() => userSelectedFilter.value || speckleTypeFilter.value)
+
+// Using these as casting activeFilter as XXX in the prop causes some syntax highliting bug to show. Apologies :)
+const stringActiveFilter = computed(() => activeFilter.value as StringPropertyInfo)
+const numericActiveFilter = computed(() => activeFilter.value as NumericPropertyInfo)
 
 const searchString = ref<string | undefined>(undefined)
-const stringFiltersSearched = computed(() => {
-  if (!searchString.value) return stringFilters.value
+const relevantFiltersSearched = computed(() => {
+  if (!searchString.value) return relevantFilters.value
   itemCount.value = 30 // nasty, but yolo - reset max limit on search change
-  return stringFilters.value.filter((f) =>
+  return relevantFilters.value.filter((f) =>
     f.key.toLowerCase().includes((searchString.value as string).toLowerCase())
   )
 })
 
 const itemCount = ref(30)
-const stringFiltersLimited = computed(() => {
-  return stringFiltersSearched.value.slice(0, itemCount.value)
+const relevantFiltersLimited = computed(() => {
+  return relevantFiltersSearched.value
+    .slice(0, itemCount.value)
+    .sort((a, b) => a.key.length - b.key.length)
 })
-
-// const numericFilters = computed(() => props.filters.filter((f) => f.type === 'number'))
 
 // Too lazy to follow up in here for now, as i think we need a bit of a better strategy in connectors first :/
 const title = computed(() => {
   const currentFilterKey =
-    activeFilter.value?.key || speckleTypeFilter.value?.key || 'Loading'
+    userSelectedFilter.value?.key || speckleTypeFilter.value?.key || 'Loading'
 
   if (currentFilterKey === 'level.name') return 'Level Name'
   if (currentFilterKey === 'speckle_type') return 'Object Type'
@@ -173,4 +195,32 @@ const title = computed(() => {
 
   return currentFilterKey
 })
+
+const colors = computed(() => !!current.value?.activePropFilterKey)
+
+const toggleColors = () => {
+  if (!colors.value) setColorFilter(activeFilter.value)
+  else removeColorFilter()
+}
+
+// Handles a rather complicated ux flow: user sets a numeric filter which only makes sense with colors on. we set the force colors flag in that scenario, so we can revert it if user selects a non-numeric filter afterwards.
+let forcedColors = false
+const refreshColorsIfSetOrActiveFilterIsNumeric = async () => {
+  if (activeFilter.value.type === 'number' && !colors.value) {
+    forcedColors = true
+    await setColorFilter(activeFilter.value)
+    return
+  }
+
+  if (!colors.value) return
+
+  if (forcedColors) {
+    forcedColors = false
+    await removeColorFilter()
+    return
+  }
+
+  await removeColorFilter()
+  await setColorFilter(activeFilter.value)
+}
 </script>

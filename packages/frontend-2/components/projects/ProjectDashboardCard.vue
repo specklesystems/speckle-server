@@ -17,10 +17,11 @@
           <UserCircleIcon class="w-4 h-4 mr-1" />
           {{ project.role?.split(':').reverse()[0] }}
         </div>
-        <div class="text-xs text-foreground-2 flex items-center">
+        <!-- Note: commented out as we have the +x models indicator. Less clutter! -->
+        <!-- <div class="text-xs text-foreground-2 flex items-center">
           <CubeIcon class="w-4 h-4 mr-1" />
           {{ project.models.totalCount }} models
-        </div>
+        </div> -->
         <div class="text-xs text-foreground-2 flex items-center">
           <ClockIcon class="w-4 h-4 mr-1" />
           updated&nbsp;
@@ -66,6 +67,7 @@
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 import { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { UserCircleIcon, ClockIcon, CubeIcon } from '@heroicons/vue/24/outline'
 import { projectRoute } from '~~/lib/common/helpers/route'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
