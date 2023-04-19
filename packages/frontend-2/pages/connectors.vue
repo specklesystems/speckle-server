@@ -7,13 +7,17 @@
     <div class="flex mb-4 items-center justify-between">
       <div>
         <h5 class="h4 font-bold">Connectors</h5>
-        <p>Start scaffolding your interoperability and automation workflows.</p>
+        <!-- <p>Start scaffolding your interoperability and automation workflows.</p> -->
       </div>
       <div class="pl-4 flex space-x-2 grow">
         <!-- <FormButton color="card">Show Community Connectors</FormButton> -->
         <div class="grow"></div>
-        <div>
-          <FormButton size="xl" class="shadow-md">Download</FormButton>
+        <div class="flex space-x-2 items-center">
+          <div class="text-xs text-foreground-2 max-w- max-w-sm">
+            Most of our connectors are available through Speckle Manager. You can also
+            direct download the individual installers below.
+          </div>
+          <FormButton size="lg" class="shadow-md">Download Manager</FormButton>
         </div>
       </div>
     </div>
@@ -51,6 +55,8 @@ const { isLoggedIn } = useActiveUser()
 const response = await useFetch(
   'https://speckle.systems/ghost/api/v3/content/tags?key=c895981da23dbb5c87ee7192e2&limit=all'
 )
+
+// useLazyFetch
 
 const spacesEndpoint = 'https://releases.speckle.dev'
 
