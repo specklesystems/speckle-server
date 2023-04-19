@@ -98,7 +98,8 @@ export default class Sandbox {
         { title: 'General' },
         { title: 'Scene' },
         { title: 'Filtering' },
-        { title: 'Batches' }
+        { title: 'Batches' },
+        { title: 'Diff' }
       ]
     })
     this.properties = []
@@ -264,29 +265,8 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
+      console.warn(await this.viewer.screenshot())
       // this.viewer.getRenderer().updateShadowCatcher()
-      // const start = performance.now()
-      // await this.viewer.getWorldTree().walkAsync(
-      //   (node: unknown) => {
-      //     node
-      //     let plm = 0
-      //     for (let i = 0; i < 100000; i++) {
-      //       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      //       plm++
-      //     }
-      //     return true
-      //   },
-      //   undefined,
-      //   2
-      // )
-      // console.log('DOne: ', performance.now() - start)
-      const objUrl = (
-        await UrlHelper.getResourceUrls(
-          'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
-        )
-      )[0]
-      this.viewer.cancelLoad(objUrl)
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -848,6 +828,47 @@ export default class Sandbox {
       label: 'BVH Size(MB)',
       disabled: true
     })
+  }
+
+  public makeDiffUI() {
+    const container = this.tabs.pages[4]
+    const diffButton = container.addButton({
+      title: 'Diff'
+    })
+    diffButton.on('click', async () => {
+      await this.viewer.diff(
+        //building
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/bcf37136dea9fe9397cdfd84012f616a',
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/94af0a6b4eaa318647180f8c230cb867'
+        // cubes
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/d2510c59c203b73473f8bbfe637e0552',
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/1c327da824fdb04629eb48675101d7b7'
+        // sketchup
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/06bed1819e6c61d9df7196d424ab1eec',
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/9026f1d6495789b9eab31b5028c9a8ef'
+        //latest
+        'https://latest.speckle.dev/streams/cdbe82b016/objects/c14d1a33fd68323193813ec215737472',
+        'https://latest.speckle.dev/streams/cdbe82b016/objects/16676fc95a9ead877f6a825d9e28cbe8'
+      )
+    })
+    const unDiffButton = container.addButton({
+      title: 'Undiff'
+    })
+    unDiffButton.on('click', async () => {
+      this.viewer.undiff()
+    })
+
+    container
+      .addInput({ time: 0 }, 'time', {
+        label: 'Diff Time',
+        min: 0,
+        max: 1,
+        step: 0.1
+      })
+      .on('change', (value) => {
+        this.viewer.setDiffTime(value.value)
+        this.viewer.requestRender()
+      })
   }
 
   private getBVHSize() {

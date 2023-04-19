@@ -98,6 +98,17 @@ export default class Materials {
     return displayStyle
   }
 
+  public static isTransparent(material: Material) {
+    return material.transparent === true && material.opacity < 1
+  }
+
+  public static isOpaque(material: Material) {
+    return (
+      material.transparent === false ||
+      (material.transparent === true && material.opacity >= 1)
+    )
+  }
+
   private async createDefaultMeshMaterials() {
     this.meshHighlightMaterial = new SpeckleStandardMaterial(
       {
@@ -181,7 +192,6 @@ export default class Materials {
       {
         side: DoubleSide,
         transparent: false,
-        opacity: 1,
         wireframe: false
       },
       ['USE_RTE']

@@ -31,6 +31,7 @@ varying vec3 vViewPosition;
 attribute float gradientIndex;
 varying float vGradientIndex;
 
+
 vec4 computeRelativePositionSeparate(in vec3 position_low, in vec3 position_high, in vec3 relativeTo_low, in vec3 relativeTo_high){
     /* 
     Vector calculation for the high and low differences works on everything 
@@ -108,6 +109,7 @@ void main() {
         mvPosition = instanceMatrix * mvPosition;
 
     #endif
+
     mvPosition = modelViewMatrix * mvPosition;
     vGradientIndex = gradientIndex;
     gl_Position = projectionMatrix * mvPosition;

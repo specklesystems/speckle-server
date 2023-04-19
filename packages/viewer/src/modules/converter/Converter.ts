@@ -304,11 +304,25 @@ export default class Coverter {
     obj.target.units = obj.units
   }
 
+  // private hashCode = (input: string) => {
+  //   let hash = 0,
+  //     i,
+  //     chr
+  //   if (input.length === 0) return hash
+  //   for (i = 0; i < input.length; i++) {
+  //     chr = input.charCodeAt(i)
+  //     hash = (hash << 5) - hash + chr
+  //     hash |= 0 // Convert to 32bit integer
+  //   }
+  //   return hash
+  // }
+
   private async BlockInstanceToNode(obj, node) {
-    const definition = await this.resolveReference(obj.blockDefinition)
+    const definition = await this.resolveReference(obj['@blockDefinition'])
     node.model.raw.definition = definition
-    for (const def of definition.geometry) {
+    for (const def of definition['@geometry']) {
       const ref = await this.resolveReference(def)
+      ref.id = ref.id + node.model.raw.transform.id
       const childNode: TreeNode = WorldTree.getInstance().parse({
         id: this.getNodeId(ref),
         raw: Object.assign({}, ref),
