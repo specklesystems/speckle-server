@@ -68,6 +68,48 @@ type FilterAction = (
   includeDescendants?: boolean
 ) => Promise<void>
 
+// type NewUIThing = {
+//   /**
+//    * Read only viewer values
+//    * Maybe move to viewer state key instead?
+//    */
+//   viewerMetadata: {
+//     worldTree: ComputedRef<Optional<WorldTree>> //shallow
+//     availableFilters: ComputedRef<PropertyInfo[]>
+//   }
+//   /**
+//    * Extra composable for imperative way of working with this stuff
+//    *
+//    * spotlightedBy: string[] (later priority)
+//    */
+//   flteringState: ComputedRef() // read only,
+//   // shareable name doesnt make sense - shareable entire injectableviewerstate?
+//   sharableMayube: {
+//     // ??
+//     thread: {
+//       isTyping: boolean
+//       threadId: string
+//       newThreadEditor: boolean
+//     },
+//     camera: {
+//       position: THREE.Vector3
+//       target: THREE.Vector3
+//       isPerspectiveProjection: boolean
+//     }
+//     filters: {
+//       isolatedObjectIds: string[]
+//       hiddenObjectIds: string[]
+//       selectedObjects: {}[] // selectedObjectIds: string[] (in payload)
+//       propertyFilter: Nullable<PropertyInfo> // becomes obj w/ key & optional passMin, passMax
+//       isFilterApplied: boolean
+//     }
+//     sectionBox: Nullable<{
+//       min: THREE.Vector3
+//       max: THREE.Vector3
+//     }>
+//   }
+// }
+
 export type InjectableViewerState = Readonly<{
   /**
    * The project which we're opening in the viewer (all loaded models should belong to it)
@@ -182,7 +224,7 @@ export type InjectableViewerState = Readonly<{
    */
   ui: {
     /**
-     * Read/write active viewer filters
+     * Thread and their bubble state
      */
     threads: {
       items: Ref<Record<string, CommentBubbleModel>>
@@ -199,13 +241,26 @@ export type InjectableViewerState = Readonly<{
     worldTree: ShallowRef<WorldTree | undefined>
     filters: {
       all: ShallowRef<PropertyInfo[] | undefined>
+      /**
+       * FilteringState returned from last FilterManager operation
+       */
       current: ComputedRef<Nullable<FilteringState>>
+      /**
+       * Current user's selected filter.
+       * ()
+       */
       userSelectedFilter: Ref<PropertyInfo | undefined>
+      /**
+       * TODO: remove
+       */
       localFilterPropKey: ComputedRef<Nullable<string>>
       isolateObjects: FilterAction
       unIsolateObjects: FilterAction
       hideObjects: FilterAction
       showObjects: FilterAction
+      /**
+       * Clears isolated, hidden objects - everything basically
+       */
       resetFilters: () => Promise<void>
       setColorFilter: (property: PropertyInfo) => Promise<void>
       removeColorFilter: () => Promise<void>
