@@ -8,7 +8,7 @@ import { homeRoute, onboardingRoute } from '~~/lib/common/helpers/route'
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   // TODO: Re-enable once we figure out how to set up clonable stream on latest
-  return
+  // return
 
   const { $apollo } = useNuxtApp()
   const client = ($apollo as { default: ApolloClient<unknown> }).default
