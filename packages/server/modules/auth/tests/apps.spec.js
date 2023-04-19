@@ -217,7 +217,15 @@ describe('Services @apps-services', () => {
       .catch((err) => expect(err.message).to.equal('Access code not found.'))
   })
 
-  const defaultApps = ['spklwebapp', 'explorer', 'sdm', 'sca', 'spklexcel']
+  const defaultApps = [
+    'spklwebapp',
+    'explorer',
+    'sdm',
+    'sca',
+    'spklexcel',
+    'spklpwerbi',
+    'spklautoma'
+  ]
   defaultApps.forEach((speckleAppId) => {
     it(`Should not invalidate tokens, refresh tokens and access codes for default app: ${speckleAppId}, if updated`, async () => {
       const [unusedAccessCode, usedAccessCode] = await Promise.all([
