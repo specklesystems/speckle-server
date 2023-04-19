@@ -110,11 +110,7 @@ export function enableMixpanel() {
 }
 
 export function speckleAutomateUrl() {
-  const automateUrl = process.env.SPECKLE_AUTOMATE_URL
-  if (!automateUrl) {
-    throw new MisconfiguredEnvironmentError(
-      'SPECKLE_AUTOMATE_URL env var not configured'
-    )
-  }
+  const automateUrl =
+    process.env.SPECKLE_AUTOMATE_URL || 'https://automate.speckle.systems'
   return automateUrl
 }

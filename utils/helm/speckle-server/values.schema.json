@@ -441,6 +441,11 @@
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
         },
+        "speckleAutomateUrl": {
+          "type": "string",
+          "description": "The url where the associated Speckle Automate instance is running",
+          "default": "https://automate.speckle.systems"
+        },
         "adminOverrideEnabled": {
           "type": "boolean",
           "description": "Enables the server side admin authz override",
