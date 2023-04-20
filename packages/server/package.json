@@ -12,7 +12,7 @@
     "url": "https://github.com/specklesystems/Server.git"
   },
   "engines": {
-    "node": "^18.14.0"
+    "node": "^18.15.0"
   },
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json",
@@ -63,8 +63,10 @@
     "ioredis": "^5.2.2",
     "knex": "^2.4.1",
     "lodash": "^4.17.21",
+    "mixpanel": "^0.17.0",
     "mjml": "^4.13.0",
     "module-alias": "^2.2.2",
+    "netmask": "^2.0.2",
     "node-cron": "^3.0.2",
     "node-machine-id": "^1.1.12",
     "nodemailer": "^6.5.0",
@@ -114,6 +116,7 @@
     "@types/mocha": "^10.0.0",
     "@types/mock-require": "^2.0.1",
     "@types/module-alias": "^2.0.1",
+    "@types/netmask": "^2.0.0",
     "@types/node-cron": "^3.0.2",
     "@types/nodemailer": "^6.4.5",
     "@types/sanitize-html": "^2.6.2",

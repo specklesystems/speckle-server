@@ -4,12 +4,11 @@ import { getUser } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { EmailVerificationRequestError } from '@/modules/emails/errors'
 import { deleteOldAndInsertNewVerification } from '@/modules/emails/repositories'
-import { sendEmail } from '@/modules/emails/services/sending'
 import {
-  BasicEmailTemplateParams,
-  buildBasicTemplateEmail,
-  buildBasicTemplateServerInfo
-} from '@/modules/emails/services/templateFormatting'
+  EmailTemplateParams,
+  renderEmail
+} from '@/modules/emails/services/emailRendering'
+import { sendEmail } from '@/modules/emails/services/sending'
 import { getBaseUrl } from '@/modules/shared/helpers/envHelper'
 
 const EMAIL_SUBJECT = 'Speckle Account E-mail Verification'
@@ -39,8 +38,8 @@ async function createNewVerification(userId: string) {
 
 type NewEmailVerificationState = Awaited<ReturnType<typeof createNewVerification>>
 
-function buildHtmlBody() {
-  const bodyStart = `Hello,<br/><br/>You have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, click the button below:`
+function buildMjmlBody() {
+  const bodyStart = `<mj-text>Hello,<br/><br/>You have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, click the button below:</mj-text>`
   return { bodyStart, bodyEnd: undefined }
 }
 
@@ -58,21 +57,24 @@ function buildEmailLink(state: NewEmailVerificationState): string {
 
 function buildEmailTemplateParams(
   state: NewEmailVerificationState
-): BasicEmailTemplateParams {
+): EmailTemplateParams {
   return {
-    html: buildHtmlBody(),
+    mjml: buildMjmlBody(),
     text: buildTextBody(),
     cta: {
       title: 'Verify your E-mail',
       url: buildEmailLink(state)
-    },
-    server: buildBasicTemplateServerInfo(state.serverInfo)
+    }
   }
 }
 
 async function sendVerificationEmail(state: NewEmailVerificationState) {
   const emailTemplateParams = buildEmailTemplateParams(state)
-  const { html, text } = await buildBasicTemplateEmail(emailTemplateParams)
+  const { html, text } = await renderEmail(
+    emailTemplateParams,
+    state.serverInfo,
+    state.user
+  )
   await sendEmail({
     to: state.user.email,
     subject: EMAIL_SUBJECT,

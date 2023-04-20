@@ -87,7 +87,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         req.authRedirectPath = resolveAuthRedirectPath(validInvite)
 
         // return to the auth flow
-        return done(null, myUser)
+        return done(null, {
+          ...myUser,
+          isInvite: !!validInvite
+        })
       } catch (err) {
         switch (err.constructor) {
           case UserInputError:

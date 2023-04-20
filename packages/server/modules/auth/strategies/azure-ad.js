@@ -86,6 +86,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           })
           // ID is used later for verifying access token
           req.user.id = myUser.id
+          req.user.isNewUser = myUser.isNewUser
 
           // process invites
           if (myUser.isNewUser) {
@@ -110,6 +111,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
         // ID is used later for verifying access token
         req.user.id = myUser.id
+        req.user.isInvite = !!validInvite
         req.log = req.log.child({ userId: myUser.id })
 
         // use the invite

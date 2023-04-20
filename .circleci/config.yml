@@ -259,7 +259,7 @@ jobs:
 
   test-server:
     docker:
-      - image: cimg/node:18.14.0
+      - image: cimg/node:18.15.0
       - image: cimg/redis:7.0.7
       - image: 'cimg/postgres:14.5'
         environment:

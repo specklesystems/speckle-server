@@ -55,6 +55,9 @@ spec:
               # DNS lookup for sentry
               - matchPattern: "*.ingest.sentry.io"
 {{- end }}
+{{- if (ne "false" .Values.server.monitoring.mp.enabled) }}
+              - matchName: 'analytics.speckle.systems'
+{{- end }}
 {{- if .Values.server.email.enabled }}
               # email server
 {{ include "speckle.networkpolicy.dns.email.cilium" $ | indent 14 }}
@@ -119,6 +122,15 @@ spec:
     - toFQDNs:
         - matchName: 'accounts.google.com'
         - matchName: 'www.googleapis.com'
+      toPorts:
+        - ports:
+            - port: '443'
+              protocol: TCP
+{{- end }}
+{{- if (ne "false" .Values.server.monitoring.mp.enabled) }}
+    # monitoring
+    - toFQDNs:
+        - matchName: 'analytics.speckle.systems'
       toPorts:
         - ports:
             - port: '443'

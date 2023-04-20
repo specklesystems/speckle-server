@@ -11,7 +11,7 @@
     "directory": "packages/preview-service"
   },
   "engines": {
-    "node": "^18.14.0"
+    "node": "^18.15.0"
   },
   "scripts": {
     "dev": "LOG_PRETTY=true nodemon --trace-deprecation ./bin/www",
@@ -49,7 +49,7 @@
     "html-webpack-plugin": "^5.3.1",
     "nodemon": "^2.0.20",
     "prettier": "^2.5.1",
-    "webpack": "^5.69.1",
+    "webpack": "^5.76.0",
     "webpack-cli": "^4.6.0",
     "webpack-dev-server": "^4.6.0"
   }

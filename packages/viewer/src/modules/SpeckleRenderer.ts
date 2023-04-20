@@ -310,8 +310,8 @@ export default class SpeckleRenderer {
     })
 
     this._shadowcatcher = new Shadowcatcher(ObjectLayers.SHADOWCATCHER, [
-      ObjectLayers.STREAM_CONTENT_MESH,
-      ObjectLayers.STREAM_CONTENT_LINE
+      ObjectLayers.STREAM_CONTENT_MESH
+      // ObjectLayers.STREAM_CONTENT_LINE
     ])
     let restoreVisibility
     this._shadowcatcher.shadowcatcherPass.onBeforeRender = () => {
@@ -817,6 +817,28 @@ export default class SpeckleRenderer {
         parentNode = parentNode.parent
       }
       queryResult.push({ node: parentNode, point: points[k] })
+    }
+
+    return queryResult
+  }
+
+  public queryHitIds(
+    results: Array<Intersection>
+  ): Array<{ nodeId: string; point: Vector3 }> {
+    const queryResult = []
+    for (let k = 0; k < results.length; k++) {
+      const rv = this.batcher.getRenderView(
+        results[k].object.uuid,
+        results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
+      )
+      if (rv) {
+        queryResult.push({ nodeId: rv.renderData.id, point: results[k].point })
+      }
+    }
+
+    /** Batch rejected picking. This only happens with hidden lines */
+    if (queryResult.length === 0) {
+      return null
     }
 
     return queryResult
