@@ -78,28 +78,26 @@ export class SectionBoxOutlines {
     const tempLine = new Line3()
     const planeId = this.getPlaneId(_plane)
     const clipOutline = this.planeOutlines[planeId].renderable
-
     let index = 0
     let posAttr = (
       clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
     ).data
-
     /** Not a fan of this, but we have no choice. We can't know beforehand the resulting number of intersection points */
     const scratchBuffer = new Array<number>()
-
     for (let b = 0; b < batches.length; b++) {
       const plane = new Plane().copy(_plane)
-
-      batches[b].boundsTree.shapecast({
+      batches[b].mesh.BVH.shapecast({
         intersectsBounds: (box) => {
           const localPlane = plane
           return localPlane.intersectsBox(box)
         },
-
-        intersectsTriangle: (tri, i) => {
+        intersectsTriangle(tri, i, contained, depth, batchObject) {
+          i
+          contained
+          depth
           // check each triangle edge to see if it intersects with the plane. If so then
           // add it to the list of segments.
-          const material = batches[b].getMaterialAtIndex(i)
+          const material = batches[b].mesh.getBatchObjectMaterial(batchObject)
           if (
             material instanceof SpeckleGhostMaterial ||
             material.visible === false ||
@@ -121,7 +119,6 @@ export class SectionBoxOutlines {
             index++
             count++
           }
-
           tempLine.start.copy(tri.b)
           tempLine.end.copy(tri.c)
           if (localPlane.intersectLine(tempLine, tempVector)) {
@@ -134,7 +131,6 @@ export class SectionBoxOutlines {
             count++
             index++
           }
-
           tempLine.start.copy(tri.c)
           tempLine.end.copy(tri.a)
           if (localPlane.intersectLine(tempLine, tempVector)) {
@@ -147,7 +143,6 @@ export class SectionBoxOutlines {
             count++
             index++
           }
-
           // When the plane passes through a vertex and one of the edges of the triangle, there will be three intersections, two of which must be repeated
           if (count === 3) {
             tempVector1.set(
@@ -185,7 +180,6 @@ export class SectionBoxOutlines {
               index--
             }
           }
-
           // If we only intersected with one or three sides then just remove it. This could be handled
           // more gracefully.
           if (count !== 2) {

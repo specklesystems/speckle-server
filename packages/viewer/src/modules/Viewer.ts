@@ -31,6 +31,7 @@ import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
+import { BatchObject } from './batching/BatchObject'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -42,7 +43,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   /** Viewer components */
   private tree: WorldTree = new WorldTree()
-  private static world: World = new World()
+  private world: World = new World()
   public static Assets: Assets
   protected speckleRenderer: SpeckleRenderer
   private filteringManager: FilteringManager
@@ -59,7 +60,7 @@ export class Viewer extends EventEmitter implements IViewer {
   /** various utils/helpers */
   private utils: Utils
   /** Gets the World object. Currently it's used for info mostly */
-  public static get World(): World {
+  public get World(): World {
     return this.world
   }
 
@@ -85,7 +86,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.container = container || document.getElementById('renderer')
     if (params.showStats) {
       this.stats = Stats()
-      this.container.appendChild(this.stats.dom)
+      this.container.prepend(this.stats.dom)
       this.stats.dom.style.position = 'relative' // Mad CSS skills
     }
     this.loaders = {}
@@ -126,6 +127,10 @@ export class Viewer extends EventEmitter implements IViewer {
     this.on(ViewerEvent.LoadCancelled, (url: string) => {
       Logger.warn(`Cancelled load for ${url}`)
     })
+  }
+
+  public getObjects(id: string): BatchObject[] {
+    return this.speckleRenderer.getObjects(id)
   }
 
   public setSectionBox(
@@ -416,6 +421,10 @@ export class Viewer extends EventEmitter implements IViewer {
       }
       resolve(screenshot)
     })
+  }
+
+  public explode(time: number, range: number) {
+    this.speckleRenderer.setExplode(time, range)
   }
 
   /**

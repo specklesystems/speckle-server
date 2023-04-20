@@ -12,11 +12,12 @@ export enum GeometryType {
 export interface Batch {
   id: string
   subtreeId: string
-  bounds: Box3
   renderViews: NodeRenderView[]
   batchMaterial: Material
   renderObject: Object3D
   geometryType: GeometryType
+
+  get bounds(): Box3
 
   getCount(): number
   setBatchMaterial(material: Material): void

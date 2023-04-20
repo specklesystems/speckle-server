@@ -85,6 +85,9 @@ export class Pipeline {
   private _renderType: RenderType = RenderType.NORMAL
   private accumulationFrame = 0
 
+  private onBeforePipelineRender = null
+  private onAfterPipelineRender = null
+
   public set pipelineOptions(options: Partial<PipelineOptions>) {
     Object.assign(this._pipelineOptions, options)
     this.dynamicAoPass.setParams(options.dynamicAoParams)
@@ -250,41 +253,52 @@ export class Pipeline {
     ])
     this.stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
 
-    let restoreVisibility
-    this.depthPass.onBeforeRender = () => {
+    let restoreVisibility, opaque, stencil
+
+    this.onBeforePipelineRender = () => {
       restoreVisibility = this._batcher.saveVisiblity()
-      const opaque = this._batcher.getOpaque()
+      opaque = this._batcher.getOpaque()
+      stencil = this._batcher.getStencil()
+    }
+
+    this.onAfterPipelineRender = () => {
+      this._batcher.applyVisibility(restoreVisibility)
+    }
+
+    this.depthPass.onBeforeRender = () => {
       this._batcher.applyVisibility(opaque)
+      this._batcher.overrideMaterial(opaque, this.depthPass.material)
     }
     this.depthPass.onAfterRender = () => {
       this._batcher.applyVisibility(restoreVisibility)
+      this._batcher.restoreMaterial(opaque)
     }
 
     this.normalsPass.onBeforeRender = () => {
-      restoreVisibility = this._batcher.saveVisiblity()
-      const opaque = this._batcher.getOpaque()
       this._batcher.applyVisibility(opaque)
+      this._batcher.overrideMaterial(opaque, this.normalsPass.material)
     }
     this.normalsPass.onAfterRender = () => {
       this._batcher.applyVisibility(restoreVisibility)
+      this._batcher.restoreMaterial(restoreVisibility)
     }
 
     this.stencilPass.onBeforeRender = () => {
-      restoreVisibility = this._batcher.saveVisiblity()
-      const stencil = this._batcher.getStencil()
       this._batcher.applyVisibility(stencil)
+      this._batcher.overrideMaterial(stencil, this.stencilPass.material)
     }
     this.stencilPass.onAfterRender = () => {
       this._batcher.applyVisibility(restoreVisibility)
+      this._batcher.restoreMaterial(stencil)
     }
 
     this.stencilMaskPass.onBeforeRender = () => {
-      restoreVisibility = this._batcher.saveVisiblity()
-      const stencil = this._batcher.getStencil()
       this._batcher.applyVisibility(stencil)
+      this._batcher.overrideMaterial(stencil, this.stencilMaskPass.material)
     }
     this.stencilMaskPass.onAfterRender = () => {
       this._batcher.applyVisibility(restoreVisibility)
+      this._batcher.restoreMaterial(stencil)
     }
 
     this.setPipeline(this.getDefaultPipeline())
@@ -366,6 +380,9 @@ export class Pipeline {
     this._renderer.getDrawingBufferSize(this.drawingSize)
     if (this.drawingSize.length() === 0) return
 
+    if (this.onBeforePipelineRender) this.onBeforePipelineRender()
+
+    let retVal = false
     this._renderer.clear(true)
     if (this._renderType === RenderType.NORMAL) {
       this.composer.render()
@@ -374,13 +391,16 @@ export class Pipeline {
         this._resetFrame = false
         this.onStationaryBegin()
       }
-      return ret
+      retVal = ret
     } else {
       // console.warn('Rendering accumulation frame -> ', this.accumulationFrame)
       this.composer.render()
       this.accumulationFrame++
-      return this.accumulationFrame < Pipeline.ACCUMULATE_FRAMES
+      retVal = this.accumulationFrame < Pipeline.ACCUMULATE_FRAMES
     }
+
+    if (this.onAfterPipelineRender) this.onAfterPipelineRender()
+    return retVal
   }
 
   public resize(width: number, height: number) {

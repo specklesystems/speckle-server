@@ -35,8 +35,19 @@ const createViewer = async (container: HTMLElement, stream: string) => {
   )
 
   viewer.on(ViewerEvent.LoadComplete, () => {
-    Object.assign(sandbox.sceneParams.worldSize, Viewer.World.worldSize)
-    Object.assign(sandbox.sceneParams.worldOrigin, Viewer.World.worldOrigin)
+    Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
+    Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
+    sandbox.refresh()
+  })
+
+  viewer.on(ViewerEvent.UnloadComplete, () => {
+    Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
+    Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
+    sandbox.refresh()
+  })
+  viewer.on(ViewerEvent.UnloadAllComplete, () => {
+    Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
+    Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()
   })
 
@@ -222,7 +233,7 @@ const getStream = () => {
   )
 }
 
-const container0 = document.querySelector<HTMLElement>('#renderer')
+const container0 = document.querySelector<HTMLElement>('#renderer0')
 if (!container0) {
   throw new Error("Couldn't find app container!")
 }
