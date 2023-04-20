@@ -85,15 +85,12 @@
 </template>
 <script setup lang="ts">
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
-// import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
-
-// const { instance: viewer } = useInjectedViewer()
-// const viewerTree = viewer.getWorldTree()
 
 const props = withDefaults(
   defineProps<{
-    object: Record<string, unknown>
+    object: SpeckleObject
     title?: string
     unfold: boolean
     debug?: boolean

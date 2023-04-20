@@ -18,7 +18,7 @@ import {
   useViewerCameraRestTracker
 } from '~~/lib/viewer/composables/viewer'
 import { Nullable, Optional } from '@speckle/shared'
-import { Vector3 } from 'three'
+import { Box3, Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { broadcastViewerUserActivityMutation } from '~~/lib/viewer/graphql/mutations'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
@@ -31,6 +31,11 @@ import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import { useOnBeforeWindowUnload } from '~~/lib/common/composables/window'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { onViewerUserActivityBroadcastedSubscription } from '~~/lib/viewer/graphql/subscriptions'
+import {
+  useCameraUtilities,
+  useFilterUtilities,
+  useSectionBoxUtilities
+} from '~~/lib/viewer/composables/ui'
 
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
@@ -83,10 +88,10 @@ function useCollectSelection() {
 
     return {
       filteringState: {
-        ...(viewerState.ui.filters.current.value || {}),
-        selectedObjects: viewerState.ui.selection.objects.value.map(
-          (o) => o.id as string
-        )
+        ...(viewerState.viewer.metadata.filteringState || {}),
+        selectedObjects: viewerState.ui.filters.selectedObjects.value
+          .map((o) => o.id)
+          .filter((i): i is NonNullable<typeof i> => !!i)
       },
       selectionLocation: selectionLocation.value,
       sectionBox: viewer.getCurrentSectionBox(),
@@ -423,49 +428,52 @@ export function useViewerUserActivityTracking(params: {
 
 function useViewerSpotlightTracking() {
   const state = useInjectedViewerState()
-  return async (user: UserActivityModel) => {
-    state.viewer.instance.setView({
-      position: new Vector3(
-        user.selection.camera[0],
-        user.selection.camera[1],
-        user.selection.camera[2]
-      ),
-      target: new Vector3(
-        user.selection.camera[3],
-        user.selection.camera[4],
-        user.selection.camera[5]
-      )
-    })
+  const { sectionBox } = useSectionBoxUtilities()
+  const { camera } = useCameraUtilities()
+  const { resetFilters, hideObjects, isolateObjects } = useFilterUtilities()
+
+  return (user: UserActivityModel) => {
+    camera.position.value = new Vector3(
+      user.selection.camera[0],
+      user.selection.camera[1],
+      user.selection.camera[2]
+    )
+    camera.target.value = new Vector3(
+      user.selection.camera[3],
+      user.selection.camera[4],
+      user.selection.camera[5]
+    )
 
     if (user.selection.sectionBox) {
-      state.ui.sectionBox.setSectionBox(
-        user.selection.sectionBox as {
-          min: { x: number; y: number; z: number }
-          max: { x: number; y: number; z: number }
-        },
-        0
+      const selectionSectionBox = user.selection.sectionBox as {
+        min: { x: number; y: number; z: number }
+        max: { x: number; y: number; z: number }
+      }
+      sectionBox.value = new Box3(
+        new Vector3(
+          selectionSectionBox.min.x,
+          selectionSectionBox.min.y,
+          selectionSectionBox.min.z
+        ),
+        new Vector3(
+          selectionSectionBox.max.x,
+          selectionSectionBox.max.y,
+          selectionSectionBox.max.z
+        )
       )
-      if (!state.ui.sectionBox.isSectionBoxEnabled.value)
-        state.ui.sectionBox.sectionBoxOn()
     } else {
-      state.ui.sectionBox.sectionBoxOff()
+      sectionBox.value = null
     }
 
     if (user.selection.filteringState) {
       const fs = user.selection.filteringState as FilteringState
-      await state.ui.filters.resetFilters()
+      resetFilters()
 
-      if (fs.hiddenObjects)
-        await state.ui.filters.hideObjects(fs.hiddenObjects, 'tracking')
+      if (fs.hiddenObjects) hideObjects(fs.hiddenObjects)
 
-      if (fs.isolatedObjects)
-        await state.ui.filters.isolateObjects(fs.isolatedObjects, 'tracking')
+      if (fs.isolatedObjects) isolateObjects(fs.isolatedObjects)
 
-      if (fs.selectedObjects) {
-        state.viewer.instance.highlightObjects(fs.selectedObjects)
-      } else {
-        state.viewer.instance.highlightObjects([])
-      }
+      state.ui.highlightedObjectIds.value = fs.selectedObjects || []
 
       // Note: commented out as it's a bit "intrusive" behaviour, opted for the
       // highlight version above.

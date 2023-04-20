@@ -162,13 +162,15 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-// import { emojis } from '~~/lib/viewer/helpers/emojis'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { ResourceType } from '~~/lib/common/generated/gql/graphql'
 import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
-import { ViewerSceneExplorerStateKey } from '~~/lib/common/helpers/constants'
 import { NumericPropertyInfo, PropertyInfo } from '@speckle/viewer'
+import {
+  useFilterUtilities,
+  useSectionBoxUtilities
+} from '~~/lib/viewer/composables/ui'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -181,6 +183,36 @@ const props = defineProps<{
   modelValue: CommentBubbleModel
 }>()
 
+const threadId = computed(() => props.modelValue.id)
+const { copy } = useClipboard()
+const { activeUser } = useActiveUser()
+const archiveComment = useArchiveComment()
+const { triggerNotification } = useGlobalToast()
+const {
+  resources: {
+    response: { project }
+  }
+} = useInjectedViewerState()
+
+const {
+  projectId,
+  viewer: {
+    metadata: { availableFilters: allFilters }
+  }
+} = useInjectedViewerState()
+const { sectionBoxOff } = useSectionBoxUtilities()
+const {
+  removePropertyFilter,
+  setPropertyFilter,
+  resetFilters,
+  isolateObjects,
+  hideObjects
+} = useFilterUtilities()
+
+const markThreadViewed = useMarkThreadViewed()
+const { usersTyping } = useViewerThreadTypingTracking(threadId)
+const { ellipsis, controls } = useAnimatingEllipsis()
+
 const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const threadActivator = ref(null as Nullable<HTMLElement>)
@@ -188,19 +220,10 @@ const threadActivator = ref(null as Nullable<HTMLElement>)
 const handle = ref(null as Nullable<HTMLElement>)
 const justCreatedReply = ref(false)
 
-const threadId = computed(() => props.modelValue.id)
 const comments = computed(() => [
   props.modelValue,
   ...props.modelValue.replies.items.slice().reverse()
 ])
-
-const {
-  projectId,
-  ui: { sectionBox, filters }
-} = useInjectedViewerState()
-const markThreadViewed = useMarkThreadViewed()
-const { usersTyping } = useViewerThreadTypingTracking(threadId)
-const { ellipsis, controls } = useAnimatingEllipsis()
 
 // Note: conflicted with dragging styles, so took it out temporarily
 // const { style } = useExpandedThreadResponsiveLocation({
@@ -281,27 +304,6 @@ const changeExpanded = (newVal: boolean) => {
   })
   emit('update:expanded', newVal)
 }
-
-const { copy } = useClipboard()
-const { activeUser } = useActiveUser()
-const archiveComment = useArchiveComment()
-const { triggerNotification } = useGlobalToast()
-const {
-  resources: {
-    response: { project }
-  },
-  ui: {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    viewerBusy,
-    filters: {
-      setColorFilter,
-      removeColorFilter,
-      resetFilters,
-      all: allFilters,
-      userSelectedFilter
-    }
-  }
-} = useInjectedViewerState()
 
 const canArchiveOrUnarchive = computed(
   () =>
@@ -387,16 +389,15 @@ onKeyDown('Escape', () => {
 
 // onKeyDown('ArrowRight', () => (isExpanded.value ? emit('prev', props.modelValue) : ''))
 // onKeyDown('ArrowLeft', () => (isExpanded.value ? emit('next', props.modelValue) : ''))
-const stateKey = ViewerSceneExplorerStateKey
 const shouldSetFiltersUpPostLoad = ref(false)
 
-const setupFullFilters = async () => {
+const setupFullFilters = () => {
   if (!props.modelValue.data) return
 
   const { propertyInfoKey, passMax, passMin } = props.modelValue.data.filters
 
   if (propertyInfoKey) {
-    await removeColorFilter()
+    removePropertyFilter()
     const filter = allFilters.value?.find(
       (f: PropertyInfo) => f.key === propertyInfoKey
     )
@@ -410,12 +411,10 @@ const setupFullFilters = async () => {
       const numericFilter = { ...filter } as NumericPropertyInfo
       numericFilter.passMin = passMin || numericFilter.min
       numericFilter.passMax = passMax || numericFilter.max
-      await setColorFilter(numericFilter)
-      userSelectedFilter.value = numericFilter
+      setPropertyFilter(numericFilter)
       return // Hiding objects is handled by the numeric filter pass min/max
     }
-    userSelectedFilter.value = filter
-    await setColorFilter(filter)
+    setPropertyFilter(filter)
     // do not return, let's go through the vis of objects
   }
 
@@ -426,10 +425,9 @@ const hideOrIsolateObjects = () => {
   if (!props.modelValue.data) return
   const { isolatedIds, hiddenIds } = props.modelValue.data.filters
 
-  if (isolatedIds && isolatedIds.length > 0)
-    filters.isolateObjects(isolatedIds, stateKey)
+  if (isolatedIds && isolatedIds.length > 0) isolateObjects(isolatedIds)
 
-  if (hiddenIds && hiddenIds.length > 0) filters.hideObjects(hiddenIds, stateKey)
+  if (hiddenIds && hiddenIds.length > 0) hideObjects(hiddenIds)
 }
 
 watch(
@@ -443,7 +441,7 @@ watch(
     }
 
     if (!newIsExpanded && props.modelValue.data?.sectionBox) {
-      sectionBox.sectionBoxOff() // turn off section box if a comment had a section box
+      sectionBoxOff() // turn off section box if a comment had a section box
     }
 
     if (!newIsExpanded) {

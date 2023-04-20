@@ -1,5 +1,4 @@
-// NOTE TO FABS: I added this file as i'm using this func below quite a lot (containsAll)
-// not sure it's the right place :)
+import { intersection } from 'lodash-es'
 
 /**
  * Checks for inclusion of one array (target) into another (source)
@@ -8,3 +7,17 @@
  */
 export const containsAll = (target: unknown[], source: unknown[]) =>
   target.every((v) => source.includes(v))
+
+/**
+ * Whether or not arrays are equal with the order being ignored
+ */
+export const arraysEqual = (arr1: unknown[], arr2: unknown[]) => {
+  if (arr1.length !== arr2.length) return false
+  return intersection(arr1, arr2).length === arr1.length
+}
+
+/**
+ * Not nullable type guard, useful in `.filter()` calls for proper TS typed
+ * results
+ */
+export const isNonNullable = <V>(v: V): v is NonNullable<typeof v> => !!v

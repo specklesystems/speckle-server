@@ -1,6 +1,6 @@
 <template>
   <div
-    v-show="showResetButton"
+    v-show="hasAnyFiltersApplied"
     class="absolute bottom-4 left-0 w-screen p-2 bg-pink-300/0 flex justify-center pointer-events-none"
   >
     <Transition
@@ -18,21 +18,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
-const { filters } = useInjectedViewerInterfaceState()
-
-const showResetButton = computed(() => {
-  const f = filters.current.value
-  return (
-    !!f?.activePropFilterKey ||
-    (!!f?.hiddenObjects && f.hiddenObjects.length > 0) ||
-    (!!f?.isolatedObjects && f.isolatedObjects.length > 0) ||
-    (!!f?.userColorGroups && f.userColorGroups.length > 0) ||
-    !!f?.activePropFilterKey
-  )
-})
-
-async function resetFilters() {
-  await filters.resetFilters()
-}
+import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+const {
+  resetFilters,
+  filters: { hasAnyFiltersApplied }
+} = useFilterUtilities()
 </script>

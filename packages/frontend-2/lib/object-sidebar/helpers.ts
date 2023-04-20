@@ -1,10 +1,12 @@
+import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+
 export type HeaderSubheader = {
   header: string
   subheader: string
 }
 
 export function getHeaderAndSubheaderForSpeckleObject(
-  object: Record<string, unknown>
+  object: SpeckleObject
 ): HeaderSubheader {
   const rawSpeckleData = object
   const speckleData = object
@@ -50,7 +52,7 @@ export function getHeaderAndSubheaderForSpeckleObject(
 
   // Handle ifc objects
   if (speckleType.toLowerCase().includes('ifc')) {
-    const name = rawSpeckleData.Name || rawSpeckleData.name
+    const name = (rawSpeckleData.Name || rawSpeckleData.name) as string
     return {
       header: cleanName((name as string) || (rawSpeckleData.speckleType as string)),
       subheader: name ? rawSpeckleData.speckle_type : rawSpeckleData.id
@@ -88,7 +90,7 @@ function cleanName(name: string) {
  * Encodes a bunch of conventions around getting target object ids from random speckle objects or created
  * @param object
  */
-export function getTargetObjectIds(object: Record<string, unknown>) {
+export function getTargetObjectIds(object: Record<string, unknown> | SpeckleObject) {
   // Handle array collections (generated on the fly in the tree explorer)
   if (object.speckle_type === 'Array Collection' && Array.isArray(object.children)) {
     return object.children

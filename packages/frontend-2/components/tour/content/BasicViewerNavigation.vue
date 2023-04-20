@@ -17,9 +17,8 @@
 </template>
 <script setup lang="ts">
 import { CheckIcon } from '@heroicons/vue/24/solid'
-import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+import { useViewerCameraControlEndTracker } from '~~/lib/viewer/composables/viewer'
 
-const { instance: viewer } = useInjectedViewer()
 const hasMovedCamera = ref(false)
 const controlEndCounts = ref(-1)
 const encouragements = [
@@ -29,11 +28,12 @@ const encouragements = [
   "Don't get dizzy!"
 ]
 
-onMounted(() => {
-  viewer.cameraHandler.controls.addEventListener('controlend', () => {
-    hasMovedCamera.value = true
-    if (controlEndCounts.value === encouragements.length - 1) controlEndCounts.value = 0
-    else controlEndCounts.value++
-  })
+useViewerCameraControlEndTracker(() => {
+  hasMovedCamera.value = true
+  if (controlEndCounts.value === encouragements.length - 1) {
+    controlEndCounts.value = 0
+  } else {
+    controlEndCounts.value++
+  }
 })
 </script>

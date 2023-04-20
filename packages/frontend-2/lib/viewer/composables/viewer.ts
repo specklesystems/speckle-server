@@ -1,14 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   InitialStateWithRequestAndResponse,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
-import { debounce, throttle } from 'lodash-es'
+import { debounce, isArray, throttle } from 'lodash-es'
 import { MaybeAsync, Nullable } from '@speckle/shared'
 
 export function useViewerEventListener(
-  name: ViewerEvent,
-  listener: () => MaybeAsync<void>,
+  name: ViewerEvent | ViewerEvent[],
+  listener: (...args: any[]) => MaybeAsync<void>,
   options?: Partial<{
     state: InitialStateWithRequestAndResponse
   }>
@@ -16,13 +17,18 @@ export function useViewerEventListener(
   const {
     viewer: { instance }
   } = options?.state || useInjectedViewerState()
+  const names = isArray(name) ? name : [name]
 
   onMounted(() => {
-    instance.on(name, listener)
+    for (const n of names) {
+      instance.on(n, listener)
+    }
   })
 
   onBeforeUnmount(() => {
-    instance.removeListener(name, listener)
+    for (const n of names) {
+      instance.removeListener(n, listener)
+    }
   })
 }
 
@@ -62,6 +68,25 @@ export function useViewerCameraRestTracker(
 
   onMounted(() => {
     instance.cameraHandler.controls.addEventListener('rest', finalCallback)
+  })
+
+  onBeforeUnmount(() => {
+    removeListener()
+  })
+
+  return removeListener
+}
+
+export function useViewerCameraControlEndTracker(callback: () => void) {
+  const {
+    viewer: { instance }
+  } = useInjectedViewerState()
+
+  const removeListener = () =>
+    instance.cameraHandler.controls.removeEventListener('rest', callback)
+
+  onMounted(() => {
+    instance.cameraHandler.controls.addEventListener('rest', callback)
   })
 
   onBeforeUnmount(() => {

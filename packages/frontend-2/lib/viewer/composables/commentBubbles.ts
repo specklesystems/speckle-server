@@ -8,7 +8,7 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import { graphql } from '~~/lib/common/generated/gql'
 import { reduce, difference, debounce } from 'lodash-es'
-import { Vector3 } from 'three'
+import { Box3, Vector3 } from 'three'
 import {
   useSelectionEvents,
   useViewerCameraTracker,
@@ -309,17 +309,17 @@ export function useViewerThreadTracking() {
     }
 
     if (data.sectionBox) {
-      state.ui.sectionBox.setSectionBox(
-        data.sectionBox as {
-          min: { x: number; y: number; z: number }
-          max: { x: number; y: number; z: number }
-        },
-        0
+      const dataSectionBox = data.sectionBox as {
+        min: { x: number; y: number; z: number }
+        max: { x: number; y: number; z: number }
+      }
+
+      state.ui.sectionBox.value = new Box3(
+        new Vector3(dataSectionBox.min.x, dataSectionBox.min.y, dataSectionBox.min.z),
+        new Vector3(dataSectionBox.max.x, dataSectionBox.max.y, dataSectionBox.max.z)
       )
-      if (!state.ui.sectionBox.isSectionBoxEnabled.value)
-        state.ui.sectionBox.sectionBoxOn()
     } else {
-      state.ui.sectionBox.sectionBoxOff()
+      state.ui.sectionBox.value = null
     }
   }
 

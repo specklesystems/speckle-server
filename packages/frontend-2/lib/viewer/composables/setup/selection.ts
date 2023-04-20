@@ -3,6 +3,7 @@ import {
   InjectableViewerState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
+import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
 
 function getFirstVisibleSelectionHit(
@@ -10,23 +11,26 @@ function getFirstVisibleSelectionHit(
   state: InjectableViewerState
 ) {
   const {
-    ui: {
-      filters: { current }
+    viewer: {
+      metadata: { filteringState }
     }
   } = state
 
   const hasHiddenObjects =
-    !!current.value?.hiddenObjects && current.value?.hiddenObjects.length !== 0
+    !!filteringState.value?.hiddenObjects &&
+    filteringState.value?.hiddenObjects.length !== 0
   const hasIsolatedObjects =
-    !!current.value?.isolatedObjects && current.value?.isolatedObjects.length !== 0
+    !!filteringState.value?.isolatedObjects &&
+    filteringState.value?.isolatedObjects.length !== 0
 
   for (const hit of hits) {
     if (hasHiddenObjects) {
-      if (!current.value?.hiddenObjects?.includes(hit.object.id as string)) {
+      if (!filteringState.value?.hiddenObjects?.includes(hit.object.id as string)) {
         return hit
       }
     } else if (hasIsolatedObjects) {
-      if (current.value.isolatedObjects?.includes(hit.object.id as string)) return hit
+      if (filteringState.value.isolatedObjects?.includes(hit.object.id as string))
+        return hit
     } else {
       return hit
     }
@@ -36,17 +40,18 @@ function getFirstVisibleSelectionHit(
 
 export function useViewerSelectionEventHandler() {
   const state = useInjectedViewerState()
+  const { clearSelection, addToSelection } = useSelectionUtilities()
 
   useSelectionEvents(
     {
       singleClickCallback: (args) => {
-        if (!args) return state.ui.selection.clearSelection()
-        if (args.hits.length === 0) return state.ui.selection.clearSelection()
-        if (!args.multiple) state.ui.selection.clearSelection()
+        if (!args) return clearSelection()
+        if (args.hits.length === 0) return clearSelection()
+        if (!args.multiple) clearSelection()
 
         const firstVisHit = args ? getFirstVisibleSelectionHit(args, state) : null
-        if (!firstVisHit) return state.ui.selection.clearSelection()
-        state.ui.selection.addToSelection(firstVisHit.object)
+        if (!firstVisHit) return clearSelection()
+        addToSelection(firstVisHit.object)
       },
       doubleClickCallback: (args) => {
         if (!args) return state.viewer.instance.zoom()
@@ -54,7 +59,7 @@ export function useViewerSelectionEventHandler() {
         if (args.hits.length === 0) return state.viewer.instance.zoom()
 
         const firstVisHit = args ? getFirstVisibleSelectionHit(args, state) : null
-        if (!firstVisHit) return state.ui.selection.clearSelection()
+        if (!firstVisHit) return clearSelection()
 
         const objectId = args.hits[0].object.id
         state.viewer.instance.zoom([objectId])

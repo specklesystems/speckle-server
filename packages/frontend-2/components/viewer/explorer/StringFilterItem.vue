@@ -59,9 +59,9 @@
 <script setup lang="ts">
 import { EyeIcon, EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
-
 import { containsAll } from '~~/lib/common/helpers/utils'
-import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 // import { ViewerSceneExplorerStateKey } from '~~/lib/common/helpers/constants'
 
 const props = defineProps<{
@@ -72,15 +72,14 @@ const props = defineProps<{
 }>()
 
 const {
-  selection: {
-    // addToSelection,
-    clearSelection,
-    // removeFromSelection,
-    setSelectionFromObjectIds,
-    objects
+  ui: {
+    filters: { isolatedObjectIds, hiddenObjectIds }
   },
-  filters
-} = useInjectedViewerInterfaceState()
+  viewer: {
+    metadata: { filteringState }
+  }
+} = useInjectedViewerState()
+const { clearSelection, setSelectionFromObjectIds, objects } = useSelectionUtilities()
 
 const isSelected = computed(() => {
   const selObjsIds = objects.value.map((o) => o.id as string)
@@ -91,11 +90,11 @@ const isSelected = computed(() => {
 const availableTargetIds = computed(() => {
   let targets = props.item.ids
 
-  if (isolatedObjects.value && isolatedObjects.value?.length > 0)
-    targets = props.item.ids.filter((id) => (isolatedObjects.value || []).includes(id))
+  if (isolatedObjectIds.value.length)
+    targets = props.item.ids.filter((id) => isolatedObjectIds.value.includes(id))
 
-  if (hiddenObjects.value && hiddenObjects.value?.length > 0)
-    targets = props.item.ids.filter((id) => !(hiddenObjects.value || []).includes(id))
+  if (hiddenObjectIds.value.length)
+    targets = props.item.ids.filter((id) => !hiddenObjectIds.value.includes(id))
   return targets
 })
 
@@ -104,28 +103,20 @@ const setSelection = () => {
   setSelectionFromObjectIds(availableTargetIds.value)
 }
 
-const hiddenObjects = computed(() => filters.current.value?.hiddenObjects)
-const isolatedObjects = computed(() => filters.current.value?.isolatedObjects)
-
 const isHidden = computed(() => {
-  if (!hiddenObjects.value) return false
-  if (hiddenObjects.value.length === 0) return false
+  if (!hiddenObjectIds.value.length) return false
   const ids = props.item.ids
-  return containsAll(ids, hiddenObjects.value)
+  return containsAll(ids, hiddenObjectIds.value)
 })
 
 const isIsolated = computed(() => {
-  if (!isolatedObjects.value) return false
-  if (isolatedObjects.value.length === 0) return true
+  if (!isolatedObjectIds.value.length) return true
   const ids = props.item.ids
-  return isolatedObjects.value.some((id: string) => ids.includes(id))
-  // return containsAll(ids, isolatedObjects.value)
+  return isolatedObjectIds.value.some((id) => ids.includes(id))
 })
 
-// const stateKey = ViewerSceneExplorerStateKey
-
 const color = computed(() => {
-  return filters.current.value?.colorGroups?.find((gr) => gr.value === props.item.value)
+  return filteringState.value?.colorGroups?.find((gr) => gr.value === props.item.value)
     ?.color
 })
 

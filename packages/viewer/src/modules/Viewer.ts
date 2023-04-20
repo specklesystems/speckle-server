@@ -98,6 +98,12 @@ export class Viewer extends EventEmitter implements IViewer {
 
     new Assets(this.speckleRenderer.renderer)
     this.filteringManager = new FilteringManager(this.speckleRenderer)
+    this.filteringManager.on(
+      ViewerEvent.FilteringStateSet,
+      (newState: FilteringState) => {
+        this.emit(ViewerEvent.FilteringStateSet, newState)
+      }
+    )
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     // ;(window as any)._V = this // For debugging! ಠ_ಠ
@@ -141,8 +147,13 @@ export class Viewer extends EventEmitter implements IViewer {
     this.sectionBox.setBox(box, offset)
     this.speckleRenderer.updateSectionBoxCapper()
   }
+
+  public getSectionBoxFromObjects(objectIds: string[]) {
+    return this.speckleRenderer.boxFromObjects(objectIds)
+  }
+
   public setSectionBoxFromObjects(objectIds: string[], offset?: number) {
-    this.setSectionBox(this.speckleRenderer.boxFromObjects(objectIds), offset)
+    this.setSectionBox(this.getSectionBoxFromObjects(objectIds), offset)
   }
 
   public getCurrentSectionBox() {

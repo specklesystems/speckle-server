@@ -9,6 +9,8 @@ import {
   NumericPropertyInfo
 } from './PropertyManager'
 import SpeckleRenderer from '../SpeckleRenderer'
+import EventEmitter from '../EventEmitter'
+import { ViewerEvent } from '../../IViewer'
 
 export type FilteringState = {
   selectedObjects?: string[]
@@ -37,7 +39,7 @@ export interface FilterMaterial {
   rampTexture?: Texture
 }
 
-export class FilteringManager {
+export class FilteringManager extends EventEmitter {
   public WTI: WorldTree
   private Renderer: SpeckleRenderer
   private StateKey: string = null
@@ -51,6 +53,7 @@ export class FilteringManager {
   private ColorStringFilterState2: ColorStringFilterState = null
 
   public constructor(renderer: SpeckleRenderer) {
+    super()
     this.WTI = WorldTree.getInstance()
     this.Renderer = renderer
   }
@@ -516,6 +519,8 @@ export class FilteringManager {
 
     this.Renderer.endFilter()
     this.Renderer.viewer.requestRender()
+    this.emit(ViewerEvent.FilteringStateSet, returnState)
+
     return returnState
   }
 

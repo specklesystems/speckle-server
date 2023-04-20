@@ -120,16 +120,18 @@ import {
 } from '@heroicons/vue/24/outline'
 import { onKeyStroke } from '@vueuse/core'
 import { Nullable } from '@speckle/shared'
-// import { scrollToBottom } from '~~/lib/common/helpers/dom'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useTextInputGlobalFocus } from '~~/composables/states'
+import {
+  useCameraUtilities,
+  useSectionBoxUtilities
+} from '~~/lib/viewer/composables/ui'
 
 const {
-  ui: {
-    camera: { toggleProjection, isPerspectiveProjection, zoomExtentsOrSelection },
-    sectionBox: { toggleSectionBox, isSectionBoxEnabled }
-  }
-} = useInjectedViewerState()
+  zoomExtentsOrSelection,
+  toggleProjection,
+  camera: { isPerspectiveProjection }
+} = useCameraUtilities()
+const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 
 type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'discussions'
 

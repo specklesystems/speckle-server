@@ -4,9 +4,8 @@ import {
   DefaultViewerParams,
   FilteringState,
   PropertyInfo,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  TreeNode,
-  WorldTree
+  WorldTree,
+  ViewerEvent
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -43,14 +42,14 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { nanoid } from 'nanoid'
-import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import {
   CommentBubbleModel,
   useViewerCommentBubbles
 } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
-import { ShallowRef } from 'vue'
+import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import { Box3, Vector3 } from 'three'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -62,53 +61,11 @@ export type LoadedThreadsMetadata = NonNullable<
 
 export type LoadedCommentThread = NonNullable<Get<LoadedThreadsMetadata, 'items[0]'>>
 
-type FilterAction = (
-  objectIds: string[],
-  stateKey: string,
-  includeDescendants?: boolean
-) => Promise<void>
-
-// type NewUIThing = {
-//   /**
-//    * Read only viewer values
-//    * Maybe move to viewer state key instead?
-//    */
-//   viewerMetadata: {
-//     worldTree: ComputedRef<Optional<WorldTree>> //shallow
-//     availableFilters: ComputedRef<PropertyInfo[]>
-//   }
-//   /**
-//    * Extra composable for imperative way of working with this stuff
-//    *
-//    * spotlightedBy: string[] (later priority)
-//    */
-//   flteringState: ComputedRef() // read only,
-//   // shareable name doesnt make sense - shareable entire injectableviewerstate?
-//   sharableMayube: {
-//     // ??
-//     thread: {
-//       isTyping: boolean
-//       threadId: string
-//       newThreadEditor: boolean
-//     },
-//     camera: {
-//       position: THREE.Vector3
-//       target: THREE.Vector3
-//       isPerspectiveProjection: boolean
-//     }
-//     filters: {
-//       isolatedObjectIds: string[]
-//       hiddenObjectIds: string[]
-//       selectedObjects: {}[] // selectedObjectIds: string[] (in payload)
-//       propertyFilter: Nullable<PropertyInfo> // becomes obj w/ key & optional passMin, passMax
-//       isFilterApplied: boolean
-//     }
-//     sectionBox: Nullable<{
-//       min: THREE.Vector3
-//       max: THREE.Vector3
-//     }>
-//   }
-// }
+// export type FilterAction = (
+//   objectIds: string[],
+//   stateKey: string,
+//   includeDescendants?: boolean
+// ) => Promise<void>
 
 export type InjectableViewerState = Readonly<{
   /**
@@ -139,6 +96,18 @@ export type InjectableViewerState = Readonly<{
     init: {
       promise: Promise<void>
       ref: ComputedRef<boolean>
+    }
+    /**
+     * Various values that represent the current Viewer instance state
+     */
+    metadata: {
+      worldTree: ComputedRef<Optional<WorldTree>>
+      availableFilters: ComputedRef<Optional<PropertyInfo[]>>
+      /**
+       * TODO: Remove the need fore this
+       * TODO: Remove unnecessarfy imperativec viewer usages
+       */
+      filteringState: ComputedRef<Optional<FilteringState>>
     }
   }
   /**
@@ -227,9 +196,12 @@ export type InjectableViewerState = Readonly<{
      * Thread and their bubble state
      */
     threads: {
+      /**
+       * Comment bubble models keyed by comment ID
+       */
       items: Ref<Record<string, CommentBubbleModel>>
       openThread: {
-        thread: ComputedRef<CommentBubbleModel | undefined>
+        thread: ComputedRef<Optional<CommentBubbleModel>>
         isTyping: Ref<boolean>
         newThreadEditor: Ref<boolean>
       }
@@ -238,59 +210,77 @@ export type InjectableViewerState = Readonly<{
       hideBubbles: Ref<boolean>
     }
     spotlightUserId: Ref<Nullable<string>>
-    worldTree: ShallowRef<WorldTree | undefined>
+    // worldTree: ShallowRef<WorldTree | undefined>
     filters: {
-      all: ShallowRef<PropertyInfo[] | undefined>
-      /**
-       * FilteringState returned from last FilterManager operation
-       */
-      current: ComputedRef<Nullable<FilteringState>>
-      /**
-       * Current user's selected filter.
-       * ()
-       */
-      userSelectedFilter: Ref<PropertyInfo | undefined>
-      /**
-       * TODO: remove
-       */
-      localFilterPropKey: ComputedRef<Nullable<string>>
-      isolateObjects: FilterAction
-      unIsolateObjects: FilterAction
-      hideObjects: FilterAction
-      showObjects: FilterAction
-      /**
-       * Clears isolated, hidden objects - everything basically
-       */
-      resetFilters: () => Promise<void>
-      setColorFilter: (property: PropertyInfo) => Promise<void>
-      removeColorFilter: () => Promise<void>
+      isolatedObjectIds: Ref<string[]>
+      hiddenObjectIds: Ref<string[]>
+      selectedObjects: Ref<Raw<SpeckleObject>[]>
+      propertyFilter: {
+        filter: Ref<Nullable<PropertyInfo>>
+        isApplied: Ref<boolean>
+      }
+      hasAnyFiltersApplied: ComputedRef<boolean>
     }
     camera: {
+      position: Ref<Vector3>
+      target: Ref<Vector3>
       isPerspectiveProjection: Ref<boolean>
-      toggleProjection: () => void
-      zoomExtentsOrSelection: () => void
     }
-    sectionBox: {
-      isSectionBoxEnabled: Ref<boolean>
-      setSectionBox: (
-        box?: {
-          min: { x: number; y: number; z: number }
-          max: { x: number; y: number; z: number }
-        },
-        offset?: number
-      ) => void
-      toggleSectionBox: () => void
-      sectionBoxOff: () => void
-      sectionBoxOn: () => void
-    }
+    sectionBox: Ref<Nullable<Box3>>
+    highlightedObjectIds: Ref<string[]>
+
+    // filters: {
+    //   all: ShallowRef<PropertyInfo[] | undefined>
+    //   /**
+    //    * FilteringState returned from last FilterManager operation
+    //    */
+    //   current: ComputedRef<Nullable<FilteringState>>
+    //   /**
+    //    * Current user's selected filter.
+    //    * ()
+    //    */
+    //   userSelectedFilter: Ref<PropertyInfo | undefined>
+    //   /**
+    //    * TODO: remove
+    //    */
+    //   localFilterPropKey: ComputedRef<Nullable<string>>
+    //   isolateObjects: FilterAction
+    //   unIsolateObjects: FilterAction
+    //   hideObjects: FilterAction
+    //   showObjects: FilterAction
+    //   /**
+    //    * Clears isolated, hidden objects - everything basically
+    //    */
+    //   resetFilters: () => Promise<void>
+    //   setColorFilter: (property: PropertyInfo) => Promise<void>
+    //   removeColorFilter: () => Promise<void>
+    // }
+    // camera: {
+    //   isPerspectiveProjection: Ref<boolean>
+    //   toggleProjection: () => void
+    //   zoomExtentsOrSelection: () => void
+    // }
+    // sectionBox: {
+    //   isSectionBoxEnabled: Ref<boolean>
+    //   setSectionBox: (
+    //     box?: {
+    //       min: { x: number; y: number; z: number }
+    //       max: { x: number; y: number; z: number }
+    //     },
+    //     offset?: number
+    //   ) => void
+    //   toggleSectionBox: () => void
+    //   sectionBoxOff: () => void
+    //   sectionBoxOn: () => void
+    // }
     viewerBusy: WritableComputedRef<boolean>
-    selection: {
-      objects: ComputedRef<Raw<Record<string, unknown>>[]>
-      addToSelection: (object: Record<string, unknown>) => void
-      setSelectionFromObjectIds: (ids: string[]) => void
-      removeFromSelection: (object: Record<string, unknown> | string) => void
-      clearSelection: () => void
-    }
+    // selection: {
+    //   objects: ComputedRef<Raw<Record<string, unknown>>[]>
+    //   addToSelection: (object: Record<string, unknown>) => void
+    //   setSelectionFromObjectIds: (ids: string[]) => void
+    //   removeFromSelection: (object: Record<string, unknown> | string) => void
+    //   clearSelection: () => void
+    // }
   }
   /**
    * State stored in the anchor string of the URL
@@ -359,6 +349,41 @@ function createViewerData(): CachedViewerState {
   }
 }
 
+function setupViewerMetadata(params: {
+  viewer: Viewer
+}): InitialSetupState['viewer']['metadata'] {
+  const { viewer } = params
+
+  const worldTree = shallowRef(undefined as Optional<WorldTree>)
+  const availableFilters = shallowRef(undefined as Optional<PropertyInfo[]>)
+  const filteringState = shallowRef(undefined as Optional<FilteringState>)
+
+  const refreshWorldTreeAndFilters = (busy: boolean) => {
+    if (busy) return
+    worldTree.value = viewer.getWorldTree()
+    availableFilters.value = viewer.getObjectProperties()
+  }
+  const updateFilteringState = (newState: FilteringState) => {
+    filteringState.value = newState
+  }
+
+  onMounted(() => {
+    viewer.on(ViewerEvent.Busy, refreshWorldTreeAndFilters)
+    viewer.on(ViewerEvent.FilteringStateSet, updateFilteringState)
+  })
+
+  onBeforeUnmount(() => {
+    viewer.removeListener(ViewerEvent.Busy, refreshWorldTreeAndFilters)
+    viewer.removeListener(ViewerEvent.FilteringStateSet, updateFilteringState)
+  })
+
+  return {
+    worldTree: computed(() => worldTree.value),
+    availableFilters: computed(() => availableFilters.value),
+    filteringState: computed(() => filteringState.value)
+  }
+}
+
 /**
  * Setup actual viewer instance & related data
  */
@@ -384,7 +409,8 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
           init: {
             promise: initPromise,
             ref: computed(() => isInitialized.value)
-          }
+          },
+          metadata: setupViewerMetadata({ viewer: instance })
         }
   }
 }
@@ -738,8 +764,6 @@ function setupResourceResponse(
 function setupInterfaceState(
   state: InitialStateWithUrlHashState
 ): InitialStateWithInterface {
-  const { viewer } = state
-
   // Is viewer busy - Using writable computed so that we can always intercept these calls
   const isViewerBusy = ref(false)
   const viewerBusy = computed({
@@ -747,190 +771,20 @@ function setupInterfaceState(
     set: (newVal) => (isViewerBusy.value = !!newVal)
   })
 
-  // Filters
-  const filteringState = ref(null as Nullable<FilteringState>)
-  const localFilterPropKey = ref(null as Nullable<string>)
+  const isolatedObjectIds = ref([] as string[])
+  const hiddenObjectIds = ref([] as string[])
+  const selectedObjects = shallowRef<Raw<SpeckleObject>[]>([])
+  const propertyFilter = ref(null as Nullable<PropertyInfo>)
+  const isPropertyFilterApplied = ref(false)
+  const hasAnyFiltersApplied = computed(() => {
+    if (isolatedObjectIds.value.length) return true
+    if (hiddenObjectIds.value.length) return true
+    if (selectedObjects.value.length) return true
+    if (propertyFilter.value && isPropertyFilterApplied.value) return true
+    return false
+  })
 
-  // TODO: Do we maybe move isBusy toggles to the viewer side?
-  const isolateObjects: FilterAction = async (...params) => {
-    if (process.server) return
-
-    const result = await viewer.instance.isolateObjects(...params, false)
-    filteringState.value = markRaw(result)
-  }
-
-  const unIsolateObjects: FilterAction = async (...params) => {
-    if (process.server) return
-
-    const result = await viewer.instance.unIsolateObjects(...params)
-    filteringState.value = markRaw(result)
-  }
-
-  const hideObjects: FilterAction = async (...params) => {
-    if (process.server) return
-
-    const result = await viewer.instance.hideObjects(...params)
-    filteringState.value = markRaw(result)
-  }
-
-  const showObjects: FilterAction = async (...params) => {
-    if (process.server) return
-
-    const result = await viewer.instance.showObjects(...params)
-    filteringState.value = markRaw(result)
-  }
-
-  const userSelectedFilter = ref<PropertyInfo | undefined>()
-
-  const setColorFilter = async (property: PropertyInfo) => {
-    if (process.server) return
-
-    const result = await viewer.instance.setColorFilter(property)
-    filteringState.value = markRaw(result)
-    localFilterPropKey.value = property.key
-  }
-
-  const removeColorFilter = async () => {
-    const result = await viewer.instance.removeColorFilter()
-    filteringState.value = markRaw(result)
-  }
-
-  const resetFilters = async () => {
-    await viewer.instance.resetFilters()
-    viewer.instance.applyFilter(null)
-    viewer.instance.resize() // Note: should not be needed in theory, but for some reason stuff doesn't re-render
-    filteringState.value = null
-    userSelectedFilter.value = undefined
-  }
-
-  const selectedObjects = ref<Raw<Record<string, unknown>>[]>([])
-
-  const setViewerSelectionFilter = () => {
-    const v = state.viewer.instance
-    if (selectedObjects.value.length === 0) return v.resetSelection()
-    let ids = [] as string[]
-    for (const obj of selectedObjects.value) {
-      const objIds = getTargetObjectIds(obj)
-      ids.push(...objIds)
-    }
-    ids = [...new Set(ids.filter((id) => !!id))]
-
-    v.selectObjects(ids)
-  }
-
-  const addToSelection = (object: Record<string, unknown>) => {
-    const index = selectedObjects.value.findIndex((o) => o.id === object.id)
-    if (index >= 0) return
-    selectedObjects.value.unshift(markRaw(object))
-    setViewerSelectionFilter()
-  }
-
-  // NOTE: can be used for directly selecting objects coming from user tracking.
-  // commented out as not sure it's right behaviour.
-  const setSelectionFromObjectIds = (ids: string[]) => {
-    const tree = viewer.instance.getWorldTree()
-    const res = tree.findAll((node: Record<string, unknown>) => {
-      const t = node.model as Record<string, unknown>
-      const raw = t.raw as Record<string, unknown>
-      const id = raw.id as string
-      if (!raw || !id) return false
-      if (ids.includes(id)) return true
-      return false
-    })
-
-    const objs = res.map(
-      (node) => (node.model as Record<string, unknown>).raw as Record<string, unknown>
-    ) // as Record<string, unknown>[] //.map((node) => node.model?.raw as Record<string, unknown>)
-    selectedObjects.value = objs
-    setViewerSelectionFilter()
-  }
-
-  const removeFromSelection = (object: Record<string, unknown> | string) => {
-    const objectId = typeof object === 'string' ? object : (object.id as string)
-    const index = selectedObjects.value.findIndex((o) => o.id === objectId)
-    if (index >= 0) selectedObjects.value.splice(index, 1)
-    setViewerSelectionFilter()
-  }
-
-  const clearSelection = () => {
-    // Clear any vis/iso state
-    // NOTE: turned off, as not sure it's the behaviour we want.
-    // Worth keeping the code for future reference.
-    // if (selectedObjects.value.length > 0) {
-    //   let ids = [] as string[]
-    //   for (const obj of selectedObjects.value) {
-    //     const objIds = getTargetObjectIds(obj)
-    //     ids.push(...objIds)
-    //   }
-    //   ids = [...new Set(ids.filter((id) => !!id))]
-    //   // check if we actually have any isolated objects first from the selected object state
-    //   if (
-    //     filteringState.value?.isolatedObjects &&
-    //     containsAll(ids, filteringState.value?.isolatedObjects as string[])
-    //   )
-    //     unIsolateObjects(ids, 'object-selection', true)
-
-    //   // check if we actually have any isolated objects first from the hidden object state
-    //   if (
-    //     filteringState.value?.hiddenObjects &&
-    //     containsAll(ids, filteringState.value?.hiddenObjects as string[])
-    //   )
-    //     showObjects(ids, 'object-selection', true)
-    // }
-
-    selectedObjects.value = []
-    setViewerSelectionFilter()
-  }
-
-  const isPerspectiveProjection = ref(false)
-  const toggleProjection = () => {
-    state.viewer.instance.toggleCameraProjection()
-    isPerspectiveProjection.value = !isPerspectiveProjection.value
-  }
-
-  const zoomExtentsOrSelection = () => {
-    if (selectedObjects.value.length > 0) {
-      return state.viewer.instance.zoom(
-        selectedObjects.value.map((o) => o.id as string)
-      )
-    }
-
-    if (
-      filteringState.value?.isolatedObjects &&
-      filteringState.value.isolatedObjects?.length > 0
-    ) {
-      return state.viewer.instance.zoom(filteringState.value.isolatedObjects)
-    }
-    state.viewer.instance.zoom()
-  }
-
-  const isSectionBoxEnabled = ref(false)
-  const toggleSectionBox = () => {
-    if (isSectionBoxEnabled.value) {
-      isSectionBoxEnabled.value = false
-      state.viewer.instance.toggleSectionBox()
-      state.viewer.instance.requestRender()
-      return
-    }
-
-    isSectionBoxEnabled.value = true
-    const ids = selectedObjects.value.map((o) => o.id as string)
-    if (ids.length > 0) state.viewer.instance.setSectionBoxFromObjects(ids)
-    else state.viewer.instance.setSectionBox()
-
-    state.viewer.instance.toggleSectionBox()
-    state.viewer.instance.requestRender()
-  }
-  const setSectionBox = (
-    box?: {
-      min: { x: number; y: number; z: number }
-      max: { x: number; y: number; z: number }
-    },
-    offset?: number
-  ) => {
-    state.viewer.instance.setSectionBox(box, offset)
-  }
-
+  const highlightedObjectIds = ref([] as string[])
   const spotlightUserId = ref(null as Nullable<string>)
 
   /**
@@ -941,17 +795,13 @@ function setupInterfaceState(
   )
   const isTyping = ref(false)
   const newThreadEditor = ref(false)
-
   const hideBubbles = ref(false)
 
-  const worldTree = shallowRef()
-  const allFilters = shallowRef()
   return {
     ...state,
     ui: {
       spotlightUserId,
       viewerBusy,
-      worldTree,
       threads: {
         items: commentThreads,
         openThread: {
@@ -964,44 +814,22 @@ function setupInterfaceState(
         hideBubbles
       },
       camera: {
-        isPerspectiveProjection,
-        toggleProjection,
-        zoomExtentsOrSelection
+        position: ref(new Vector3()),
+        target: ref(new Vector3()),
+        isPerspectiveProjection: ref(false as boolean)
       },
-      sectionBox: {
-        isSectionBoxEnabled,
-        setSectionBox,
-        toggleSectionBox,
-        sectionBoxOff: () => {
-          state.viewer.instance.sectionBoxOff()
-          state.viewer.instance.requestRender() // TODO: seems render does not update on section box off
-          isSectionBoxEnabled.value = false
-        },
-        sectionBoxOn: () => {
-          state.viewer.instance.sectionBoxOn()
-          isSectionBoxEnabled.value = true
-        }
-      },
+      sectionBox: ref(null as Nullable<Box3>),
       filters: {
-        all: allFilters,
-        current: computed(() => filteringState.value),
-        localFilterPropKey: computed(() => localFilterPropKey.value),
-        userSelectedFilter,
-        isolateObjects,
-        unIsolateObjects,
-        hideObjects,
-        showObjects,
-        setColorFilter,
-        removeColorFilter,
-        resetFilters
+        isolatedObjectIds,
+        hiddenObjectIds,
+        selectedObjects,
+        propertyFilter: {
+          filter: propertyFilter,
+          isApplied: isPropertyFilterApplied
+        },
+        hasAnyFiltersApplied
       },
-      selection: {
-        objects: computed(() => selectedObjects.value.slice()),
-        addToSelection,
-        setSelectionFromObjectIds,
-        clearSelection,
-        removeFromSelection
-      }
+      highlightedObjectIds
     }
   }
 }

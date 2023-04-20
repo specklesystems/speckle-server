@@ -47,7 +47,6 @@ import { ViewerEvent } from '@speckle/viewer'
 import { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
 import {
   useInjectedViewer,
-  useInjectedViewerInterfaceState,
   useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
@@ -61,11 +60,10 @@ const {
     response: { resourceItems }
   }
 } = useInjectedViewerState()
-const { instance: viewer } = useInjectedViewer()
 const {
-  worldTree,
-  filters: { all: allFilters }
-} = useInjectedViewerInterfaceState()
+  instance: viewer,
+  metadata: { worldTree, availableFilters: allFilters }
+} = useInjectedViewer()
 
 const expandLevel = ref(-1)
 const manualExpandLevel = ref(-1)
