@@ -46,7 +46,15 @@ export const LoggingExpressMiddleware = HttpLogger({
         // Allowlist useful headers
         headers: Object.fromEntries(
           Object.entries(req.raw.headers).filter(
-            ([key]) => !['cookie', 'authorization'].includes(key.toLocaleLowerCase())
+            ([key]) =>
+              ![
+                'cookie',
+                'authorization',
+                'cf-connecting-ip',
+                'true-client-ip',
+                'x-real-ip',
+                'x-forwarded-for'
+              ].includes(key.toLocaleLowerCase())
           )
         )
       }
@@ -72,6 +80,7 @@ export const DetermineRequestIdMiddleware = (
   next: NextFunction
 ) => {
   const id = DetermineRequestId(req)
+  req.headers[REQUEST_ID_HEADER] = id
   res.setHeader(REQUEST_ID_HEADER, id)
   next()
 }
