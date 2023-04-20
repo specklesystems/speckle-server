@@ -44,6 +44,7 @@ import { get, has, isString, toNumber } from 'lodash'
 import {
   authContextMiddleware,
   buildContext,
+  determineClientIpAddressMiddleware,
   mixpanelTrackerHelperMiddleware
 } from '@/modules/shared/middleware'
 
@@ -191,6 +192,7 @@ export async function init() {
   await knex.migrate.latest()
 
   app.use(DetermineRequestIdMiddleware)
+  app.use(determineClientIpAddressMiddleware)
   app.use(LoggingExpressMiddleware)
 
   if (process.env.COMPRESSION) {

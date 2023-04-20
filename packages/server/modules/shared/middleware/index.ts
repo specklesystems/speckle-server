@@ -21,6 +21,8 @@ import { resolveMixpanelUserId } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { Observability } from '@speckle/shared'
 import { pino } from 'pino'
+import { getIpFromRequest } from '@/modules/shared/utils/ip'
+import { Netmask } from 'netmask'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -89,14 +91,18 @@ export async function authContextMiddleware(
 ) {
   const token = getTokenFromRequest(req)
   const authContext = await createAuthContextFromToken(token)
-  req.log = req.log.child({ authContext })
+  const loggedContext = Object.fromEntries(
+    Object.entries(authContext).filter(
+      ([key]) => !['token'].includes(key.toLocaleLowerCase())
+    )
+  )
+  req.log = req.log.child({ authContext: loggedContext })
   if (!authContext.auth && authContext.err) {
     let message = 'Unknown Auth context error'
     let status = 500
     message = authContext.err?.message || message
     if (authContext.err instanceof UnauthorizedError) status = 401
     if (authContext.err instanceof ForbiddenError) status = 403
-    req.log.warn('Auth context creation failed.')
     return res.status(status).json({ error: message })
   }
   req.context = authContext
@@ -147,5 +153,35 @@ export async function mixpanelTrackerHelperMiddleware(
   const mp = mixpanel({ mixpanelUserId })
 
   req.mixpanel = mp
+  next()
+}
+
+const X_SPECKLE_CLIENT_IP_HEADER = 'x-speckle-client-ip'
+/**
+ * Determine the IP address of the request source and add it as a header to the request object.
+ * This is used to correlate anonymous/unauthenticated requests with external data sources.
+ * @param req HTTP request object
+ * @param _res HTTP response object
+ * @param next Express middleware-compatible next function
+ */
+export async function determineClientIpAddressMiddleware(
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) {
+  const ip = getIpFromRequest(req)
+  if (ip) {
+    try {
+      const isV6 = ip.includes(':')
+      if (isV6) {
+        req.headers[X_SPECKLE_CLIENT_IP_HEADER] = ip
+      } else {
+        const mask = new Netmask(`${ip}/24`)
+        req.headers[X_SPECKLE_CLIENT_IP_HEADER] = mask.broadcast
+      }
+    } catch (e) {
+      req.headers[X_SPECKLE_CLIENT_IP_HEADER] = ip || 'ip-parse-error'
+    }
+  }
   next()
 }

@@ -1,8 +1,11 @@
+/* eslint-disable camelcase */
 /* istanbul ignore file */
 const Sentry = require('@sentry/node')
 const { ApolloError } = require('apollo-server-express')
 const prometheusClient = require('prom-client')
 const { graphqlLogger } = require('@/logging/logging')
+const { redactSensitiveVariables } = require('@/logging/loggingHelper')
+const { GraphQLError } = require('graphql')
 
 const metricCallCount = new prometheusClient.Counter({
   name: 'speckle_server_apollo_calls',
@@ -20,11 +23,21 @@ module.exports = {
           return
         }
 
-        let logger = ctx.log || graphqlLogger
+        let logger = ctx.context.log || graphqlLogger
 
         const op = `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
         const name = `GQL ${ctx.operation.selectionSet.selections[0].name.value}`
-        logger = logger.child({ op, name })
+        const kind = ctx.operation.operation
+        const query = ctx.request.query
+        const variables = ctx.request.variables
+
+        logger = logger.child({
+          graphql_operation_kind: kind,
+          graphql_query: query,
+          graphql_variables: redactSensitiveVariables(variables),
+          graphql_operation_value: op,
+          grqphql_operation_name: name
+        })
 
         const transaction = Sentry.startTransaction({
           op,
@@ -42,12 +55,12 @@ module.exports = {
 
         Sentry.configureScope((scope) => scope.setSpan(transaction))
         ctx.request.transaction = transaction
-        ctx.log = logger
+        ctx.context.log = logger
       },
       didEncounterErrors(ctx) {
         if (!ctx.operation) return
 
-        let logger = ctx.log || graphqlLogger
+        let logger = ctx.context.log || graphqlLogger
 
         for (const err of ctx.errors) {
           if (err instanceof ApolloError) {
@@ -58,15 +71,14 @@ module.exports = {
           const query = ctx.request.query
           const variables = ctx.request.variables
 
-          logger = logger.child({
-            kind,
-            query,
-            variables
-          })
           if (err.path) {
             logger = logger.child({ 'query-path': err.path.join(' > ') })
           }
-          logger.error(err, 'graphql error')
+          if (err instanceof GraphQLError && err.extensions?.code === 'FORBIDDEN') {
+            logger.info(err, 'graphql error')
+          } else {
+            logger.error(err, 'graphql error')
+          }
 
           Sentry.withScope((scope) => {
             scope.setTag('kind', kind)
@@ -85,7 +97,7 @@ module.exports = {
         }
       },
       willSendResponse(ctx) {
-        const logger = ctx.log || graphqlLogger
+        const logger = ctx.context.log || graphqlLogger
         logger.info('graphql response')
 
         if (ctx.request.transaction) {
