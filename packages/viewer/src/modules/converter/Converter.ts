@@ -410,7 +410,8 @@ export default class Coverter {
     return
   }
   private async LineToNode(obj, node) {
-    return
+    node.model.raw.start = Object.assign({}, obj.start)
+    node.model.raw.end = Object.assign({}, obj.end)
   }
 
   private async PolylineToNode(obj, node) {

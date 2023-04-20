@@ -33,6 +33,9 @@ export default class PointBatch implements Batch {
     this.subtreeId = subtreeId
     this.renderViews = renderViews
   }
+  updateBatchObjects() {
+    // TO DO
+  }
 
   public get renderObject(): Object3D {
     return this.mesh

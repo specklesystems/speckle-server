@@ -1,10 +1,13 @@
+import { Box3, Viewer, WorldTree } from '@speckle/viewer'
+import { Vector3 } from '@speckle/viewer'
 import {
   CanonicalView,
   DebugViewer,
   PropertyInfo,
   SelectionEvent,
   SunLightConfiguration,
-  ViewerEvent
+  ViewerEvent,
+  BatchObject
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
@@ -17,6 +20,8 @@ export default class Sandbox {
   private streams: { [url: string]: Array<unknown> } = {}
   private properties: PropertyInfo[]
   private selectionList: SelectionEvent[]
+  private objectControls
+  private batchesFolder
 
   public static urlParams = {
     url: 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
@@ -70,7 +75,10 @@ export default class Sandbox {
 
   public static batchesParams = {
     showBvh: false,
-    totalBvhSize: 0
+    totalBvhSize: 0,
+    explode: 0,
+    explodeRange: 100,
+    culling: true
   }
 
   public static filterParams = {
@@ -106,31 +114,50 @@ export default class Sandbox {
     viewer.on(ViewerEvent.LoadComplete, (url: string) => {
       this.addStreamControls(url)
       this.addViewControls()
+      this.addBatches()
       this.properties = this.viewer.getObjectProperties()
       Sandbox.batchesParams.totalBvhSize = this.getBVHSize()
       this.refresh()
-      // const dataTree = this.viewer.getDataTree()
-      // const objects = dataTree.findAll((guid, obj) => {
-      //   return obj.speckle_type === 'Objects.Geometry.Mesh'
-      // })
-      // console.log(objects)
     })
     viewer.on(ViewerEvent.UnloadComplete, (url: string) => {
       this.removeViewControls()
       this.addViewControls()
       this.properties = this.viewer.getObjectProperties()
-      url
+      Viewer.World.reduceWorld(WorldTree.getRenderTree(url).treeBounds)
     })
     viewer.on(ViewerEvent.UnloadAllComplete, (url: string) => {
       this.removeViewControls()
       this.addViewControls()
       this.properties = this.viewer.getObjectProperties()
+      Viewer.World.resetWorld()
       url
+    })
+    viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent) => {
+      if (selectionEvent && selectionEvent.hits) {
+        const objects = this.viewer.getObjects(selectionEvent.hits[0].guid)
+        this.addObjectControls(selectionEvent.hits[0].guid, objects)
+      }
     })
   }
 
   public refresh() {
     this.pane.refresh()
+  }
+
+  private addBatches() {
+    if (this.batchesFolder) this.batchesFolder.dispose()
+
+    this.batchesFolder = this.tabs.pages[3].addFolder({ title: 'Batches' })
+    const batchIds = this.viewer.getRenderer().getBatchIds()
+    for (let k = 0; k < batchIds.length; k++) {
+      const button = this.batchesFolder.addButton({
+        title: this.viewer.getRenderer().getBatchSize(batchIds[k]).toString()
+      })
+      button.on('click', () => {
+        this.viewer.getRenderer().isolateBatch(batchIds[k])
+        this.viewer.requestRender()
+      })
+    }
   }
 
   private addStreamControls(url: string) {
@@ -187,6 +214,73 @@ export default class Sandbox {
 
   private removeViewControls() {
     this.viewsFolder.dispose()
+  }
+
+  public addObjectControls(id: string, objects: BatchObject[]) {
+    if (this.objectControls) {
+      this.objectControls.dispose()
+    }
+    this.objectControls = this.tabs.pages[0].addFolder({
+      title: `Object: ${id}`
+    })
+
+    const position = { value: { x: 0, y: 0, z: 0 } }
+    const rotation = { value: { x: 0, y: 0, z: 0 } }
+    const scale = { value: { x: 1, y: 1, z: 1 } }
+    this.objectControls
+      .addInput(position, 'value', { label: 'Position' })
+      .on('change', () => {
+        const unionBox: Box3 = new Box3()
+        objects.forEach((obj: BatchObject) => {
+          unionBox.union(obj.renderView.aabb)
+        })
+        const origin = unionBox.getCenter(new Vector3())
+        objects.forEach((obj: BatchObject) => {
+          obj.transformTRS(position.value, rotation.value, scale.value, origin)
+          this.viewer.getRenderer().markTransformsDirty(obj.renderView.batchId)
+        })
+        this.viewer.requestRender()
+      })
+
+    this.objectControls
+      .addInput(rotation, 'value', {
+        label: 'Rotation Euler',
+        x: { step: 0.1 },
+        y: { step: 0.1 },
+        z: { step: 0.1 }
+      })
+      .on('change', () => {
+        const unionBox: Box3 = new Box3()
+        objects.forEach((obj: BatchObject) => {
+          unionBox.union(obj.renderView.aabb)
+        })
+        const origin = unionBox.getCenter(new Vector3())
+        objects.forEach((obj: BatchObject) => {
+          obj.transformTRS(position.value, rotation.value, scale.value, origin)
+          this.viewer.getRenderer().markTransformsDirty(obj.renderView.batchId)
+        })
+        this.viewer.requestRender()
+      })
+
+    this.objectControls
+      .addInput(scale, 'value', {
+        label: 'Scale',
+        x: { step: 0.1 },
+        y: { step: 0.1 },
+        z: { step: 0.1 }
+      })
+      .on('change', () => {
+        const unionBox: Box3 = new Box3()
+        objects.forEach((obj: BatchObject) => {
+          unionBox.union(obj.renderView.aabb)
+        })
+        const origin = unionBox.getCenter(new Vector3())
+        objects.forEach((obj: BatchObject) => {
+          obj.transformTRS(position.value, rotation.value, scale.value, origin)
+          this.viewer.getRenderer().markTransformsDirty(obj.renderView.batchId)
+        })
+        this.viewer.requestRender()
+      })
   }
 
   public makeGenericUI() {
@@ -264,29 +358,7 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
-      // this.viewer.getRenderer().updateShadowCatcher()
-      // const start = performance.now()
-      // await this.viewer.getWorldTree().walkAsync(
-      //   (node: unknown) => {
-      //     node
-      //     let plm = 0
-      //     for (let i = 0; i < 100000; i++) {
-      //       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      //       plm++
-      //     }
-      //     return true
-      //   },
-      //   undefined,
-      //   2
-      // )
-      // console.log('DOne: ', performance.now() - start)
-      const objUrl = (
-        await UrlHelper.getResourceUrls(
-          'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
-        )
-      )[0]
-      this.viewer.cancelLoad(objUrl)
+      console.warn(await this.viewer.screenshot())
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -848,6 +920,43 @@ export default class Sandbox {
       label: 'BVH Size(MB)',
       disabled: true
     })
+    container
+      .addInput(Sandbox.batchesParams, 'explode', {
+        label: 'Explode',
+        min: 0,
+        max: 0.25,
+        step: 0.001
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.explode(
+          Sandbox.batchesParams.explode,
+          Sandbox.batchesParams.explodeRange
+        )
+      })
+    container
+      .addInput(Sandbox.batchesParams, 'explodeRange', {
+        label: 'Explode Range',
+        min: 1,
+        max: 1000,
+        step: 1
+      })
+      .on('change', (value) => {
+        value
+        this.viewer.explode(
+          Sandbox.batchesParams.explode,
+          Sandbox.batchesParams.explodeRange
+        )
+      })
+    // container
+    //   .addInput(Sandbox.batchesParams, 'culling', {
+    //     label: 'Culling'
+    //   })
+    //   .on('change', (value) => {
+    //     this.viewer
+    //       .getRenderer()
+    //       .setExplodeTime(Sandbox.batchesParams.explode)
+    //   })
   }
 
   private getBVHSize() {

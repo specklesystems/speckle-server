@@ -89,6 +89,16 @@ viewer.on(ViewerEvent.LoadComplete, () => {
   Object.assign(Sandbox.sceneParams.worldOrigin, Viewer.World.worldOrigin)
   sandbox.refresh()
 })
+viewer.on(ViewerEvent.UnloadComplete, () => {
+  Object.assign(Sandbox.sceneParams.worldSize, Viewer.World.worldSize)
+  Object.assign(Sandbox.sceneParams.worldOrigin, Viewer.World.worldOrigin)
+  sandbox.refresh()
+})
+viewer.on(ViewerEvent.UnloadAllComplete, () => {
+  Object.assign(Sandbox.sceneParams.worldSize, Viewer.World.worldSize)
+  Object.assign(Sandbox.sceneParams.worldOrigin, Viewer.World.worldOrigin)
+  sandbox.refresh()
+})
 
 viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
   if (!selectionInfo) {
@@ -180,6 +190,7 @@ await sandbox.loadUrl(
   // Point cloud
   // 'https://latest.speckle.dev/streams/2d19273d31/commits/9ceb423feb'
   // 'https://latest.speckle.dev/streams/7707df6cae/commits/02bdf09092'
+  // 'https://latest.speckle.dev/streams/ca0378725b/commits/fbae00db5a'
   // Luis sphere
   // 'https://speckle.xyz/streams/b85d53c3b4/commits/b47f21b707'
   // Crankshaft
@@ -264,5 +275,13 @@ await sandbox.loadUrl(
   // 'https://speckle.xyz/streams/7ce9010d71/commits/8cd9e7e4fc'
   // 'https://speckle.xyz/streams/7ce9010d71/objects/f46f95746975591c18b0b854dab5b570 '
   // 'https://speckle.xyz/streams/813b728084/commits/e2f5ac9775'
-  'https://speckle.xyz/streams/7ce9010d71/commits/b8bbfd0c05?c=%5B-4.50925,11.1348,5.38124,-0.23829,0.68512,-0.09006,0,1%5D'
+  // Overlayhs
+  // 'https://latest.speckle.dev/streams/85b9f0b9f5/commits/cdfbf3e036?overlay=71f61af444,00fe449457,53a6692b79'
+  //'Rafinery'
+  // 'https://speckle.xyz/streams/b7cac6a6df/commits/2e42381302'
+  // 'https://speckle.xyz/streams/7ce9010d71/commits/b8bbfd0c05?c=%5B-4.50925,11.1348,5.38124,-0.23829,0.68512,-0.09006,0,1%5D'
+  // 'https://latest.speckle.dev/streams/caec6d6676/commits/588c731104'
+  // 'https://latest.speckle.dev/streams/f92e060177/commits/1fff853107'
+  'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
+  // 'https://latest.speckle.dev/streams/bbdf474833/commits/83d0eb7e06 '
 )
