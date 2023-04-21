@@ -92,22 +92,22 @@ const isIsolated = computed(() => {
 })
 
 const hideOrShowSelection = () => {
+  const targetIds = allTargetIds.value.slice()
   if (!isHidden.value) {
-    hideObjects(allTargetIds.value)
     clearSelection() // when hiding, the objects disappear. they can't really stay "selected"
+    hideObjects(targetIds)
     return
   }
 
-  showObjects(allTargetIds.value)
+  showObjects(targetIds)
 }
 
 const isolateOrUnisolateSelection = () => {
   if (!isIsolated.value) {
     isolateObjects(allTargetIds.value)
-    return
+  } else {
+    unIsolateObjects(allTargetIds.value)
   }
-
-  unIsolateObjects(allTargetIds.value)
 }
 
 onKeyStroke('Escape', () => {

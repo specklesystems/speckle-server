@@ -64,12 +64,6 @@ export type LoadedThreadsMetadata = NonNullable<
 
 export type LoadedCommentThread = NonNullable<Get<LoadedThreadsMetadata, 'items[0]'>>
 
-// export type FilterAction = (
-//   objectIds: string[],
-//   stateKey: string,
-//   includeDescendants?: boolean
-// ) => Promise<void>
-
 export type InjectableViewerState = Readonly<{
   /**
    * The project which we're opening in the viewer (all loaded models should belong to it)
@@ -107,10 +101,6 @@ export type InjectableViewerState = Readonly<{
       worldTree: ComputedRef<Optional<WorldTree>>
       availableFilters: ComputedRef<Optional<PropertyInfo[]>>
       availableViews: ComputedRef<SpeckleView[]>
-      /**
-       * TODO: Remove the need fore this
-       * TODO: Remove unnecessarfy imperativec viewer usages
-       */
       filteringState: ComputedRef<Optional<FilteringState>>
     }
   }

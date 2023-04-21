@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
 import { FilteringState, SunLightConfiguration, ViewerEvent } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
@@ -30,6 +29,8 @@ import {
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
+import { Vector3, PerspectiveCamera } from 'three'
+import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -214,11 +215,10 @@ function useViewerSubscriptionEventTracker() {
 
 /**
  * TODO: TWO WAY BINDING
- * - There are def some issues there
  * - Need to get rid of all direct viewer instance usages
  *  - so that we only interact with state abstraction
  *  - and possibly don't even need current FilteringState
- * - Light configuration in the state
+ * - Comment bubble orientation busted once clicked
  */
 
 export function useViewerSectionBoxIntegration() {
@@ -227,11 +227,17 @@ export function useViewerSectionBoxIntegration() {
     viewer: { instance }
   } = useInjectedViewerState()
 
+  /**
+   * Two-way bind can't work, because the Box3 we send to Viewer gets mutated
+   * there and so when the viewer "Section box updated" event gets triggered, we
+   * get back a different Box3 object from it which causes two-way sync to go into a loop
+   */
   // // viewer -> state
   // useViewerEventListener(
-  //   [ViewerEvent.SectionBoxChanged, ViewerEvent.SectionBoxUpdated],
-  //   () => {
-  //     const viewerSectionBox = instance.sectionBox.getCurrentBox()
+  //   [ViewerEvent.SectionBoxUpdated],
+  //   // debounced cause these updates interrupt state->viewer updates
+  //   debounce(() => {
+  //     const viewerSectionBox = instance.sectionBox.getCurrentBox() as Nullable<Box3>
   //     if (
   //       viewerSectionBox &&
   //       sectionBox.value &&
@@ -241,9 +247,9 @@ export function useViewerSectionBoxIntegration() {
   //     }
   //     if (!viewerSectionBox && !sectionBox.value) return
 
-  //     console.log('SECTION BOX UPD', sectionBox.value, viewerSectionBox)
+  //     // console.log('SECTION BOX UPD', sectionBox.value, viewerSectionBox)
   //     sectionBox.value = viewerSectionBox ? viewerSectionBox.clone() : null
-  //   }
+  //   }, 500)
   // )
 
   // state -> viewer
@@ -280,76 +286,79 @@ export function useViewerCameraIntegration() {
     }
   } = useInjectedViewerState()
 
-  // // viewer -> state
-  // useViewerCameraTracker(
-  //   () => {
-  //     const activeCam = instance.cameraHandler.activeCam
-  //     const isPerspective = activeCam.camera instanceof PerspectiveCamera
+  // viewer -> state
+  useViewerCameraTracker(
+    () => {
+      const activeCam = instance.cameraHandler.activeCam
+      const controls = activeCam.controls
+      const viewerPos = new Vector3()
+      const viewerTarget = new Vector3()
 
-  //     const controls = activeCam.controls
-  //     const viewerPos = new Vector3()
-  //     const viewerTarget = new Vector3()
+      controls.getPosition(viewerPos)
+      controls.getTarget(viewerTarget)
 
-  //     controls.getPosition(viewerPos)
-  //     controls.getTarget(viewerTarget)
+      if (!areVectorsLooselyEqual(position.value, viewerPos)) {
+        position.value = viewerPos.clone()
+      }
+      if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
+        target.value = viewerTarget.clone()
+      }
+    },
+    // to avoid jitteriness + don't think we need real-time sync from viewer currently
+    { debounceWait: 500 }
+  )
 
-  //     /**
-  //      * TODO:
-  //      * - Loose vector equality for less updates?
-  //      * - perspective update loop on hotreload
-  //      */
+  useViewerCameraTracker(() => {
+    const activeCam = instance.cameraHandler.activeCam
+    const isPerspective = activeCam.camera instanceof PerspectiveCamera
 
-  //     const dbg = JSON.stringify({
-  //       viewerPos,
-  //       position: position.value,
-  //       viewerTarget,
-  //       target: target.value,
-  //       isPerspective,
-  //       isPerspectiveProjection: isPerspectiveProjection.value
-  //     })
-  //     let updatesDone = false
-  //     if (!viewerPos.equals(position.value)) {
-  //       position.value = viewerPos.clone()
-  //       updatesDone = true
-  //     }
-  //     if (!viewerTarget.equals(target.value)) {
-  //       target.value = viewerTarget.clone()
-  //       updatesDone = true
-  //     }
-  //     if (isPerspectiveProjection.value !== isPerspective) {
-  //       isPerspectiveProjection.value = isPerspective
-  //       updatesDone = true
-  //     }
-
-  //     if (updatesDone) {
-  //       console.log('CAM UPD', JSON.parse(dbg), new Date().toISOString())
-  //     }
-  //   },
-  //   { throttleWait: 500 }
-  // )
+    if (isPerspectiveProjection.value !== isPerspective) {
+      isPerspectiveProjection.value = isPerspective
+    }
+  })
 
   // state -> viewer
-  watch(isPerspectiveProjection, (newVal, oldVal) => {
-    if (!!newVal !== !!oldVal) {
-      instance.toggleCameraProjection()
-    }
-  })
+  watch(
+    isPerspectiveProjection,
+    (newVal, oldVal) => {
+      if (!!newVal === !!oldVal) return
 
-  watch(position, (newVal, oldVal) => {
-    if ((!newVal && !oldVal) || (oldVal && newVal.equals(oldVal))) {
-      return
-    }
+      if (newVal) {
+        instance.setPerspectiveCamera()
+      } else {
+        instance.setOrthoCamera()
+      }
+    },
+    { flush: 'sync' }
+  )
 
-    instance.cameraHandler.activeCam.controls.setPosition(newVal.x, newVal.y, newVal.z)
-  })
+  watch(
+    position,
+    (newVal, oldVal) => {
+      if ((!newVal && !oldVal) || (oldVal && newVal.equals(oldVal))) {
+        return
+      }
 
-  watch(target, (newVal, oldVal) => {
-    if ((!newVal && !oldVal) || (oldVal && newVal.equals(oldVal))) {
-      return
-    }
+      instance.cameraHandler.activeCam.controls.setPosition(
+        newVal.x,
+        newVal.y,
+        newVal.z
+      )
+    },
+    { flush: 'sync' }
+  )
 
-    instance.cameraHandler.activeCam.controls.setTarget(newVal.x, newVal.y, newVal.z)
-  })
+  watch(
+    target,
+    (newVal, oldVal) => {
+      if ((!newVal && !oldVal) || (oldVal && newVal.equals(oldVal))) {
+        return
+      }
+
+      instance.cameraHandler.activeCam.controls.setTarget(newVal.x, newVal.y, newVal.z)
+    },
+    { flush: 'sync' }
+  )
 }
 
 export function useViewerFiltersIntegration() {
@@ -363,83 +372,78 @@ export function useViewerFiltersIntegration() {
 
   const stateKey = 'default'
 
-  // // viewer -> state
-  // useViewerEventListener(ViewerEvent.FilteringStateSet, (state: FilteringState) => {
-  //   const dbg = JSON.stringify({
-  //     viewerIsolated: state.isolatedObjects,
-  //     isolated: filters.isolatedObjectIds.value,
-  //     viewerHidden: state.hiddenObjects,
-  //     hidden: filters.hiddenObjectIds,
-  //     viewerFilterKey: state.activePropFilterKey,
-  //     currentFilterKey: filters.propertyFilter.filter.value?.key
-  //   })
-  //   let updatesMade = false
+  // viewer -> state
+  useViewerEventListener(ViewerEvent.FilteringStateSet, (state: FilteringState) => {
+    const viewerIsolated = state.isolatedObjects || []
+    const isolated = filters.isolatedObjectIds.value
+    if (!arraysEqual(viewerIsolated, isolated)) {
+      filters.isolatedObjectIds.value = viewerIsolated.slice()
+    }
 
-  //   const viewerIsolated = state.isolatedObjects || []
-  //   const isolated = filters.isolatedObjectIds.value
-  //   if (!arraysEqual(viewerIsolated, isolated)) {
-  //     filters.isolatedObjectIds.value = viewerIsolated.slice()
-  //     updatesMade = true
-  //   }
+    const viewerHidden = state.hiddenObjects || []
+    const hidden = filters.hiddenObjectIds.value
+    if (!arraysEqual(viewerHidden, hidden)) {
+      filters.hiddenObjectIds.value = viewerHidden.slice()
+    }
 
-  //   const viewerHidden = state.hiddenObjects || []
-  //   const hidden = filters.hiddenObjectIds.value
-  //   if (!arraysEqual(viewerHidden, hidden)) {
-  //     filters.hiddenObjectIds.value = viewerHidden.slice()
-  //     updatesMade = true
-  //   }
-
-  //   const viewerFilterKey = state.activePropFilterKey
-  //   const currentFilterKey = filters.propertyFilter.filter.value?.key
-  //   if (viewerFilterKey !== currentFilterKey) {
-  //     const property = (availableFilters.value || []).find(
-  //       (f) => f.key === viewerFilterKey
-  //     )
-  //     if (property) {
-  //       filters.propertyFilter.filter.value = property
-  //       updatesMade = true
-  //     }
-  //   }
-
-  //   if (updatesMade) {
-  //     console.log('FILTER UPD', dbg)
-  //   }
-  // })
+    const viewerFilterKey = state.activePropFilterKey
+    const currentFilterKey = filters.propertyFilter.filter.value?.key
+    if (viewerFilterKey !== currentFilterKey) {
+      const property = (availableFilters.value || []).find(
+        (f) => f.key === viewerFilterKey
+      )
+      if (property) {
+        filters.propertyFilter.filter.value = property
+      }
+    }
+  })
 
   // state -> viewer
-  watch(highlightedObjectIds, (newVal, oldVal) => {
-    if (arraysEqual(newVal, oldVal || [])) return
+  watch(
+    highlightedObjectIds,
+    (newVal, oldVal) => {
+      if (arraysEqual(newVal, oldVal || [])) return
 
-    instance.highlightObjects(newVal)
-  })
+      instance.highlightObjects(newVal)
+    },
+    { flush: 'sync' }
+  )
 
-  watch(filters.isolatedObjectIds, (newVal, oldVal) => {
-    if (arraysEqual(newVal, oldVal || [])) return
+  watch(
+    filters.isolatedObjectIds,
+    (newVal, oldVal) => {
+      if (arraysEqual(newVal, oldVal || [])) return
 
-    const isolatable = newVal
-    const unisolatable = difference(oldVal || [], newVal)
+      const isolatable = newVal
+      const unisolatable = difference(oldVal || [], newVal)
 
-    if (isolatable.length) {
-      instance.isolateObjects(isolatable, stateKey, true)
-    }
-    if (unisolatable.length) {
-      instance.unIsolateObjects(unisolatable, stateKey, true)
-    }
-  })
+      if (isolatable.length) {
+        instance.isolateObjects(isolatable, stateKey, true)
+      }
+      if (unisolatable.length) {
+        instance.unIsolateObjects(unisolatable, stateKey, true)
+      }
+    },
+    { flush: 'sync' }
+  )
 
-  watch(filters.hiddenObjectIds, (newVal, oldVal) => {
-    if (arraysEqual(newVal, oldVal || [])) return
+  watch(
+    filters.hiddenObjectIds,
+    (newVal, oldVal) => {
+      if (arraysEqual(newVal, oldVal || [])) return
 
-    const hidable = newVal
-    const showable = difference(oldVal || [], newVal)
+      const hidable = newVal
+      const showable = difference(oldVal || [], newVal)
 
-    if (hidable.length) {
-      instance.hideObjects(hidable, stateKey, true)
-    }
-    if (showable.length) {
-      instance.showObjects(showable, stateKey, true)
-    }
-  })
+      if (hidable.length) {
+        instance.hideObjects(hidable, stateKey, true)
+      }
+      if (showable.length) {
+        instance.showObjects(showable, stateKey, true)
+      }
+    },
+    { flush: 'sync' }
+  )
 
   watch(
     () =>
@@ -458,25 +462,30 @@ export function useViewerFiltersIntegration() {
       } else {
         instance.removeColorFilter()
       }
-    }
+    },
+    { flush: 'sync' }
   )
 
-  watch(filters.selectedObjects, (newVal, oldVal) => {
-    const newIds = flatten(newVal.map((v) => getTargetObjectIds({ ...v }))).filter(
-      isNonNullable
-    )
-    const oldIds = flatten(
-      (oldVal || []).map((v) => getTargetObjectIds({ ...v }))
-    ).filter(isNonNullable)
-    if (arraysEqual(newIds, oldIds)) return
+  watch(
+    filters.selectedObjects,
+    (newVal, oldVal) => {
+      const newIds = flatten(newVal.map((v) => getTargetObjectIds({ ...v }))).filter(
+        isNonNullable
+      )
+      const oldIds = flatten(
+        (oldVal || []).map((v) => getTargetObjectIds({ ...v }))
+      ).filter(isNonNullable)
+      if (arraysEqual(newIds, oldIds)) return
 
-    if (!newVal.length) {
-      instance.resetSelection()
-      return
-    }
+      if (!newVal.length) {
+        instance.resetSelection()
+        return
+      }
 
-    instance.selectObjects(newIds)
-  })
+      instance.selectObjects(newIds)
+    },
+    { flush: 'sync' }
+  )
 }
 
 function useViewerSunLightIntegration() {
@@ -503,7 +512,7 @@ function useViewerSunLightIntegration() {
       if (isEqual(newVal, oldVal)) return
       instance.setLightConfiguration(newVal)
     },
-    { immediate: true }
+    { immediate: true, flush: 'sync' }
   )
 }
 
