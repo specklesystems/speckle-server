@@ -96,47 +96,11 @@ varying vec3 vViewPosition;
 attribute float gradientIndex;
 varying float vGradientIndex;
 
-<<<<<<< HEAD
-
-vec4 computeRelativePositionSeparate(in vec3 position_low, in vec3 position_high, in vec3 relativeTo_low, in vec3 relativeTo_high){
-    /* 
-    Vector calculation for the high and low differences works on everything 
-    *BESIDES* Apple Silicon (or whatever they call it) GPUs
-
-    It would seem that when this code gets compiled, vector types get a lower precision(?)
-    which completely brakes the 2 float -> double reconstructio. Doing it separately for each 
-    vector component using floats works fine.
-    */
-    vec3 highDifference;
-    vec3 lowDifference;
-    float t1 = position_low.x - relativeTo_low.x;
-    float e = t1 - position_low.x;
-    float t2 = ((-relativeTo_low.x - e) + (position_low.x - (t1 - e))) + position_high.x - relativeTo_high.x;
-    highDifference.x = t1 + t2;
-    lowDifference.x = t2 - (highDifference.x - t1);
-
-    t1 = position_low.y - relativeTo_low.y;
-    e = t1 - position_low.y;
-    t2 = ((-relativeTo_low.y - e) + (position_low.y - (t1 - e))) + position_high.y - relativeTo_high.y;
-    highDifference.y = t1 + t2;
-    lowDifference.y = t2 - (highDifference.y - t1);
-
-    t1 = position_low.z - relativeTo_low.z;
-    e = t1 - position_low.z;
-    t2 = ((-relativeTo_low.z - e) + (position_low.z - (t1 - e))) + position_high.z - relativeTo_high.z;
-    highDifference.z = t1 + t2;
-    lowDifference.z = t2 - (highDifference.z - t1);
-
-    vec3 position = highDifference.xyz + lowDifference.xyz;
-    return vec4(position, 1.);
-}
-=======
 #ifdef USE_RTE
     vec4 computeRelativePositionSeparate(in vec3 position_low, in vec3 position_high, in vec3 relativeTo_low, in vec3 relativeTo_high){
         /* 
         Vector calculation for the high and low differences works on everything 
         *BESIDES* Apple Silicon (or whatever they call it) GPUs
->>>>>>> main
 
         It would seem that when this code gets compiled, vector types get a lower precision(?)
         which completely brakes the 2 float -> double reconstructio. Doing it separately for each 
