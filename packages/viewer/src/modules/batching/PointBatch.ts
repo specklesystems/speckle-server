@@ -8,7 +8,6 @@ import {
 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { Viewer } from '../Viewer'
 import {
   AllBatchUpdateRange,
   Batch,
@@ -27,6 +26,11 @@ export default class PointBatch implements Batch {
   private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: Points
+
+  public get bounds() {
+    if (!this.geometry.boundingBox) this.geometry.computeBoundingBox()
+    return this.geometry.boundingBox
+  }
 
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
     this.id = id
@@ -321,7 +325,6 @@ export default class PointBatch implements Batch {
     this.geometry.computeBoundingSphere()
     this.geometry.computeBoundingBox()
 
-    Viewer.World.expandWorld(this.geometry.boundingBox)
     Geometry.updateRTEGeometry(this.geometry, position)
 
     return this.geometry

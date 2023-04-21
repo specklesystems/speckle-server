@@ -1,4 +1,5 @@
 import {
+  Box3,
   BufferAttribute,
   BufferGeometry,
   DynamicDrawUsage,
@@ -13,7 +14,6 @@ import { Geometry } from '../converter/Geometry'
 import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
 import SpeckleMesh from '../objects/SpeckleMesh'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { Viewer } from '../Viewer'
 import {
   AllBatchUpdateRange,
   Batch,
@@ -40,6 +40,10 @@ export default class MeshBatch implements Batch {
   private indexBuffer0: BufferAttribute
   private indexBuffer1: BufferAttribute
   private indexBufferIndex = 0
+
+  public get bounds(): Box3 {
+    return this.mesh.BVH.getBoundingBox(new Box3())
+  }
 
   public constructor(
     id: string,
@@ -547,8 +551,6 @@ export default class MeshBatch implements Batch {
     Geometry.computeVertexNormals(this.geometry, position)
     this.geometry.computeBoundingSphere()
     this.geometry.computeBoundingBox()
-
-    Viewer.World.expandWorld(this.geometry.boundingBox)
 
     Geometry.updateRTEGeometry(this.geometry, position)
 

@@ -33,7 +33,7 @@ import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import { NodeRenderView } from './tree/NodeRenderView'
 import { Viewer } from './Viewer'
-import { TreeNode, WorldTree } from './tree/WorldTree'
+import { TreeNode } from './tree/WorldTree'
 import {
   CanonicalView,
   DefaultLightConfiguration,
@@ -482,7 +482,10 @@ export default class SpeckleRenderer {
   }
 
   public addRenderTree(subtreeId: string) {
-    this.batcher.makeBatches(subtreeId, SpeckleTypeAllRenderables)
+    this.batcher.makeBatches(
+      this.viewer.getWorldTree().getRenderTree(subtreeId),
+      SpeckleTypeAllRenderables
+    )
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
     subtreeGroup.layers.set(ObjectLayers.STREAM_CONTENT)
@@ -510,12 +513,14 @@ export default class SpeckleRenderer {
     this.rootGroup.add(subtreeGroup)
 
     const generator = this.batcher.makeBatchesAsync(
-      subtreeId,
+      this.viewer.getWorldTree().getRenderTree(subtreeId),
       SpeckleTypeAllRenderables,
       undefined,
       priority
     )
     for await (const batch of generator) {
+      if (!batch) continue
+
       this.addBatch(batch, subtreeGroup)
       this.zoom()
       if (batch.geometryType === GeometryType.MESH) {
@@ -572,6 +577,7 @@ export default class SpeckleRenderer {
         parent.add(bvhHelper)
       }
     }
+    this.viewer.World.expandWorld(batch.bounds)
   }
 
   public removeRenderTree(subtreeId: string) {
@@ -829,7 +835,7 @@ export default class SpeckleRenderer {
     const queryResult = []
     for (let k = 0; k < rvs.length; k++) {
       const hitId = rvs[k].renderData.id
-      const hitNode = WorldTree.getInstance().findId(hitId)
+      const hitNode = this.viewer.getWorldTree().findId(hitId)
       let parentNode = hitNode
       while (!parentNode.model.atomic && parentNode.parent) {
         parentNode = parentNode.parent
@@ -952,11 +958,16 @@ export default class SpeckleRenderer {
     let box = new Box3()
     const rvs: NodeRenderView[] = []
     if (objectIds.length > 0) {
-      WorldTree.getInstance().walk((node: TreeNode) => {
+      this.viewer.getWorldTree().walk((node: TreeNode) => {
         if (!node.model.atomic) return true
         if (!node.model.raw) return true
         if (objectIds.indexOf(node.model.raw.id) !== -1) {
-          rvs.push(...WorldTree.getRenderTree().getRenderViewsForNode(node, node))
+          rvs.push(
+            ...this.viewer
+              .getWorldTree()
+              .getRenderTree()
+              .getRenderViewsForNode(node, node)
+          )
         }
         return true
       })
@@ -1241,41 +1252,41 @@ export default class SpeckleRenderer {
   }
 
   /** DEBUG */
-  public onObjectClickDebug(e) {
-    const results: Array<Intersection> = this._intersections.intersect(
-      this._scene,
-      this.viewer.cameraHandler.activeCam.camera,
-      e,
-      true,
-      this.viewer.sectionBox.getCurrentBox()
-    )
-    if (!results) {
-      this.batcher.resetBatchesDrawRanges()
-      return
-    }
-    const result = results[0]
-    // console.warn(result)
-    const rv = this.batcher.getRenderView(
-      result.object.uuid,
-      result.faceIndex !== undefined ? result.faceIndex : result.index
-    )
-    const hitId = rv.renderData.id
+  // public onObjectClickDebug(e) {
+  //   const results: Array<Intersection> = this._intersections.intersect(
+  //     this._scene,
+  //     this.viewer.cameraHandler.activeCam.camera,
+  //     e,
+  //     true,
+  //     this.viewer.sectionBox.getCurrentBox()
+  //   )
+  //   if (!results) {
+  //     this.batcher.resetBatchesDrawRanges()
+  //     return
+  //   }
+  //   const result = results[0]
+  //   // console.warn(result)
+  //   const rv = this.batcher.getRenderView(
+  //     result.object.uuid,
+  //     result.faceIndex !== undefined ? result.faceIndex : result.index
+  //   )
+  //   const hitId = rv.renderData.id
 
-    // const hitNode = WorldTree.getInstance().findId(hitId)
-    // console.log(hitNode)
+  //   // const hitNode = WorldTree.getInstance(this.viewer.viewerGuid).findId(hitId)
+  //   // console.log(hitNode)
 
-    this.batcher.resetBatchesDrawRanges()
+  //   this.batcher.resetBatchesDrawRanges()
 
-    this.batcher.isolateRenderViewBatch(hitId)
-    if (this.SHOW_BVH) {
-      this.allObjects.traverse((obj) => {
-        if (obj.name.includes('_bvh')) {
-          obj.visible = false
-        }
-      })
-      this.scene.getObjectByName(result.object.id + '_bvh').visible = true
-    }
-  }
+  //   this.batcher.isolateRenderViewBatch(hitId)
+  //   if (this.SHOW_BVH) {
+  //     this.allObjects.traverse((obj) => {
+  //       if (obj.name.includes('_bvh')) {
+  //         obj.visible = false
+  //       }
+  //     })
+  //     this.scene.getObjectByName(result.object.id + '_bvh').visible = true
+  //   }
+  // }
 
   public debugShowBatches() {
     this.batcher.resetBatchesDrawRanges()
@@ -1318,7 +1329,7 @@ export default class SpeckleRenderer {
       const objects = batches[k].mesh.batchObjects
       for (let i = 0; i < objects.length; i++) {
         const center = objects[i].renderView.aabb.getCenter(new Vector3())
-        const dir = center.sub(Viewer.World.worldOrigin)
+        const dir = center.sub(this.viewer.World.worldOrigin)
         dir.normalize().multiplyScalar(time * range)
         objects[i].transformTRS(dir, undefined, undefined, undefined)
       }
@@ -1330,8 +1341,11 @@ export default class SpeckleRenderer {
   }
 
   public getObjects(id: string): BatchObject[] {
-    const node = WorldTree.getInstance().findId(id)
-    const rvs = WorldTree.getRenderTree().getRenderViewsForNode(node, node)
+    const node = this.viewer.getWorldTree().findId(id)
+    const rvs = this.viewer
+      .getWorldTree()
+      .getRenderTree()
+      .getRenderViewsForNode(node, node)
     const batches = this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
     const meshes = batches.map((batch: MeshBatch) => batch.mesh)
     const objects = meshes.flatMap((mesh) => mesh.batchObjects)

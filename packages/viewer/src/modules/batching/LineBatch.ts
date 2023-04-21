@@ -15,7 +15,6 @@ import { Geometry } from '../converter/Geometry'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { ObjectLayers } from '../SpeckleRenderer'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { Viewer } from '../Viewer'
 import {
   AllBatchUpdateRange,
   Batch,
@@ -33,6 +32,11 @@ export default class LineBatch implements Batch {
   private mesh: LineSegments2 | Line
   public colorBuffer: InstancedInterleavedBuffer
   private static readonly vector4Buffer: Vector4 = new Vector4()
+
+  public get bounds() {
+    if (!this.geometry.boundingBox) this.geometry.computeBoundingBox()
+    return this.geometry.boundingBox
+  }
 
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
     this.id = id
@@ -221,7 +225,6 @@ export default class LineBatch implements Batch {
   private makeLineGeometry(position: Float64Array) {
     this.geometry = this.makeLineGeometryTriangle(new Float32Array(position))
     Geometry.updateRTEGeometry(this.geometry, position)
-    Viewer.World.expandWorld(this.geometry.boundingBox)
   }
 
   private makeLineGeometryTriangle(position: Float32Array): LineSegmentsGeometry {

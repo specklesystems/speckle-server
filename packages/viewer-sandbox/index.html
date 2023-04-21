@@ -8,7 +8,30 @@
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body>
-    <div id="renderer"></div>
+    <div class="w-screen h-screen">
+      <div id="renderer" class="absolute w-full h-full"></div>
+      <div
+        id="renderer-controls"
+        class="relative overflow-y-scroll h-full pointer-events-none w-auto"
+      ></div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
+    <!-- <div class="w-screen h-screen flex flex-col" id="multi-root">
+      <div class="h-1/2">
+        <div class="absolute w-full h-1/2" id="renderer0"></div>
+        <div
+          id="renderer0-controls"
+          class="relative overflow-y-scroll h-full pointer-events-none w-auto"
+        ></div>
+      </div>
+      <div class="border-t-2 border-blue-500 h-1/2">
+        <div class="absolute w-full h-1/2" id="renderer1"></div>
+        <div
+          id="renderer1-controls"
+          class="relative overflow-y-scroll h-full pointer-events-none w-auto"
+        ></div>
+      </div>
+    </div>
+    <script type="module" src="/src/main-multi.ts"></script> -->
   </body>
 </html>

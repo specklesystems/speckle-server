@@ -6,6 +6,8 @@ import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
 import { Utils } from './modules/Utils'
+import { WorldTree } from './modules/tree/WorldTree'
+import { World } from './modules/World'
 
 export interface ViewerParams {
   showStats: boolean
@@ -213,9 +215,11 @@ export interface IViewer {
 
   /** Data ops */
   getDataTree(): DataTree
+  getWorldTree(): WorldTree
   query<T extends Query>(query: T): QueryArgsResultMap[T['operation']]
   queryAsync(query: Query): Promise<QueryResult>
   get Utils(): Utils
+  get World(): World
 
   getObjects(id: string): BatchObject[]
   explode(time: number, range: number)

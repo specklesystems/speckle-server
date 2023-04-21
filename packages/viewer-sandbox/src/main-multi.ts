@@ -9,9 +9,18 @@ import {
 import './style.css'
 import Sandbox from './Sandbox'
 
+// const container0 = document.querySelector<HTMLElement>('#renderer0')
+// if (!container0) {
+//   throw new Error("Couldn't find #app container!")
+// }
+
+// const container1 = document.querySelector<HTMLElement>('#renderer1')
+// if (!container1) {
+//   throw new Error("Couldn't find #app container!")
+// }
+
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
-
   const controlsContainer = document.querySelector<HTMLElement>(
     `${containerName}-controls`
   )
@@ -101,6 +110,12 @@ const createViewer = async (containerName: string, stream: string) => {
 
   await sandbox.loadUrl(stream)
 }
+
+createViewer(
+  '#renderer0',
+  'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
+)
+createViewer('#renderer1', 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8')
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getStream = () => {
@@ -244,10 +259,3 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/7ce9010d71/commits/b8bbfd0c05?c=%5B-4.50925,11.1348,5.38124,-0.23829,0.68512,-0.09006,0,1%5D'
   )
 }
-
-const container0 = document.querySelector<HTMLElement>('#renderer')
-if (!container0) {
-  throw new Error("Couldn't find app container!")
-}
-
-createViewer('#renderer', getStream())

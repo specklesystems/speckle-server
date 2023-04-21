@@ -1,4 +1,4 @@
-import { Box3, Viewer, WorldTree } from '@speckle/viewer'
+import { Box3, WorldTree } from '@speckle/viewer'
 import { Vector3 } from '@speckle/viewer'
 import {
   CanonicalView,
@@ -23,11 +23,11 @@ export default class Sandbox {
   private objectControls
   private batchesFolder
 
-  public static urlParams = {
+  public urlParams = {
     url: 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
   }
 
-  public static sceneParams = {
+  public sceneParams = {
     worldSize: { x: 0, y: 0, z: 0 },
     worldOrigin: { x: 0, y: 0, z: 0 },
     pixelThreshold: 0.5,
@@ -35,7 +35,7 @@ export default class Sandbox {
     tonemapping: 4 //'ACESFilmicToneMapping'
   }
 
-  public static pipelineParams = {
+  public pipelineParams = {
     pipelineOutput: 8,
     accumulationFrames: 16,
     dynamicAoEnabled: true,
@@ -61,7 +61,7 @@ export default class Sandbox {
     }
   }
 
-  public static lightParams: SunLightConfiguration = {
+  public lightParams: SunLightConfiguration = {
     enabled: true,
     castShadow: true,
     intensity: 5,
@@ -73,7 +73,7 @@ export default class Sandbox {
     shadowcatcher: true
   }
 
-  public static batchesParams = {
+  public batchesParams = {
     showBvh: false,
     totalBvhSize: 0,
     explode: 0,
@@ -81,11 +81,11 @@ export default class Sandbox {
     culling: true
   }
 
-  public static filterParams = {
+  public filterParams = {
     filterBy: 'Volume'
   }
 
-  public static shadowCatcherParams = {
+  public shadowCatcherParams = {
     textureSize: 512,
     weights: { x: 1, y: 1, z: 0, w: 1 },
     blurRadius: 16,
@@ -94,12 +94,17 @@ export default class Sandbox {
     sigmoidStrength: 2
   }
 
-  public constructor(viewer: DebugViewer, selectionList: SelectionEvent[]) {
+  public constructor(
+    container: HTMLElement,
+    viewer: DebugViewer,
+    selectionList: SelectionEvent[]
+  ) {
     this.viewer = viewer
     this.selectionList = selectionList
     this.pane = new Pane({ title: 'Speckle Sandbox', expanded: true })
-    this.pane['containerElem_'].style =
-      'position:fixed; top: 5px; right: 5px; width: 300px;'
+    // Mad HTML/CSS skills
+    container.appendChild(this.pane['containerElem_'])
+    this.pane['containerElem_'].style = 'pointer-events:auto;'
 
     this.tabs = this.pane.addTab({
       pages: [
@@ -116,20 +121,20 @@ export default class Sandbox {
       this.addViewControls()
       this.addBatches()
       this.properties = this.viewer.getObjectProperties()
-      Sandbox.batchesParams.totalBvhSize = this.getBVHSize()
+      this.batchesParams.totalBvhSize = this.getBVHSize()
       this.refresh()
     })
     viewer.on(ViewerEvent.UnloadComplete, (url: string) => {
       this.removeViewControls()
       this.addViewControls()
       this.properties = this.viewer.getObjectProperties()
-      Viewer.World.reduceWorld(WorldTree.getRenderTree(url).treeBounds)
+      viewer.World.reduceWorld(WorldTree.getRenderTree(url).treeBounds)
     })
     viewer.on(ViewerEvent.UnloadAllComplete, (url: string) => {
       this.removeViewControls()
       this.addViewControls()
       this.properties = this.viewer.getObjectProperties()
-      Viewer.World.resetWorld()
+      viewer.World.resetWorld()
       url
     })
     viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent) => {
@@ -284,7 +289,7 @@ export default class Sandbox {
   }
 
   public makeGenericUI() {
-    this.tabs.pages[0].addInput(Sandbox.urlParams, 'url', {
+    this.tabs.pages[0].addInput(this.urlParams, 'url', {
       title: 'url'
     })
 
@@ -293,7 +298,7 @@ export default class Sandbox {
     })
 
     loadButton.on('click', () => {
-      this.loadUrl(Sandbox.urlParams.url)
+      this.loadUrl(this.urlParams.url)
     })
 
     const clearButton = this.tabs.pages[0].addButton({
@@ -343,13 +348,19 @@ export default class Sandbox {
     })
     const dark = localStorage.getItem('dark') === 'dark'
     if (dark) {
+      console.log(document.getElementById('multi-root'))
+      document.getElementById('multi-root')?.classList.toggle('background-dark')
       document.getElementById('renderer')?.classList.toggle('background-dark')
     }
 
     darkModeToggle.on('click', () => {
-      const dark = document
-        .getElementById('renderer')
-        ?.classList.toggle('background-dark')
+      let dark = false
+      if (document.getElementById('renderer'))
+        dark = document.getElementById('renderer')?.classList.toggle('background-dark')
+      else
+        dark = document
+          .getElementById('multi-root')
+          ?.classList.toggle('background-dark')
 
       localStorage.setItem('dark', dark ? `dark` : `light`)
     })
@@ -397,31 +408,31 @@ export default class Sandbox {
       title: 'World',
       expanded: true
     })
-    worldFolder.addInput(Sandbox.sceneParams.worldSize, 'x', {
+    worldFolder.addInput(this.sceneParams.worldSize, 'x', {
       disabled: true,
       label: 'Size-x',
       step: 0.00000001
     })
-    worldFolder.addInput(Sandbox.sceneParams.worldSize, 'y', {
+    worldFolder.addInput(this.sceneParams.worldSize, 'y', {
       disabled: true,
       label: 'Size-y',
       step: 0.00000001
     })
-    worldFolder.addInput(Sandbox.sceneParams.worldSize, 'z', {
+    worldFolder.addInput(this.sceneParams.worldSize, 'z', {
       disabled: true,
       label: 'Size-z',
       step: 0.00000001
     })
     worldFolder.addSeparator()
-    worldFolder.addInput(Sandbox.sceneParams.worldOrigin, 'x', {
+    worldFolder.addInput(this.sceneParams.worldOrigin, 'x', {
       disabled: true,
       label: 'Origin-x'
     })
-    worldFolder.addInput(Sandbox.sceneParams.worldOrigin, 'y', {
+    worldFolder.addInput(this.sceneParams.worldOrigin, 'y', {
       disabled: true,
       label: 'Origin-y'
     })
-    worldFolder.addInput(Sandbox.sceneParams.worldOrigin, 'z', {
+    worldFolder.addInput(this.sceneParams.worldOrigin, 'z', {
       disabled: true,
       label: 'Origin-z'
     })
@@ -433,13 +444,13 @@ export default class Sandbox {
     })
 
     postFolder
-      .addInput(Sandbox.sceneParams, 'exposure', {
+      .addInput(this.sceneParams, 'exposure', {
         min: 0,
         max: 1
       })
       .on('change', () => {
         this.viewer.getRenderer().renderer.toneMappingExposure =
-          Sandbox.sceneParams.exposure
+          this.sceneParams.exposure
         this.viewer.requestRender()
       })
 
@@ -468,14 +479,14 @@ export default class Sandbox {
       })
 
     postFolder
-      .addInput(Sandbox.sceneParams, 'tonemapping', {
+      .addInput(this.sceneParams, 'tonemapping', {
         options: {
           Linear: 1,
           ACES: 4
         }
       })
       .on('change', () => {
-        this.viewer.getRenderer().renderer.toneMapping = Sandbox.sceneParams.tonemapping
+        this.viewer.getRenderer().renderer.toneMapping = this.sceneParams.tonemapping
         this.viewer.requestRender()
       })
 
@@ -484,7 +495,7 @@ export default class Sandbox {
       expanded: true
     })
     pipelineFolder
-      .addInput(Sandbox.pipelineParams, 'pipelineOutput', {
+      .addInput(this.pipelineParams, 'pipelineOutput', {
         options: {
           DEPTH_RGBA: 0,
           DEPTH: 1,
@@ -498,18 +509,18 @@ export default class Sandbox {
         }
       })
       .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
         this.viewer.requestRender()
       })
 
     pipelineFolder
-      .addInput(Sandbox.pipelineParams, 'accumulationFrames', {
+      .addInput(this.pipelineParams, 'accumulationFrames', {
         min: 1,
         max: 128,
         step: 1
       })
       .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
         this.viewer.requestRender()
       })
 
@@ -519,33 +530,33 @@ export default class Sandbox {
     })
 
     dynamicAoFolder
-      .addInput(Sandbox.pipelineParams.dynamicAoParams, 'intensity', { min: 0, max: 5 })
+      .addInput(this.pipelineParams.dynamicAoParams, 'intensity', { min: 0, max: 5 })
       .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
         this.viewer.requestRender()
       })
 
     dynamicAoFolder
-      .addInput(Sandbox.pipelineParams.dynamicAoParams, 'kernelRadius', {
+      .addInput(this.pipelineParams.dynamicAoParams, 'kernelRadius', {
         min: 0,
         max: 500
       })
       .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
         this.viewer.requestRender()
       })
 
     dynamicAoFolder
-      .addInput(Sandbox.pipelineParams.dynamicAoParams, 'bias', {
+      .addInput(this.pipelineParams.dynamicAoParams, 'bias', {
         min: -1,
         max: 1
       })
       .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
         this.viewer.requestRender()
       })
     dynamicAoFolder
-      .addInput(Sandbox.pipelineParams.dynamicAoParams, 'normalsType', {
+      .addInput(this.pipelineParams.dynamicAoParams, 'normalsType', {
         options: {
           DEFAULT: 0,
           ADVANCED: 1,
@@ -553,35 +564,35 @@ export default class Sandbox {
         }
       })
       .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
         this.viewer.requestRender()
       })
 
     dynamicAoFolder
-      .addInput(Sandbox.pipelineParams.dynamicAoParams, 'blurEnabled', {})
+      .addInput(this.pipelineParams.dynamicAoParams, 'blurEnabled', {})
       .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
         this.viewer.requestRender()
       })
 
     dynamicAoFolder
-      .addInput(Sandbox.pipelineParams.dynamicAoParams, 'blurRadius', {
+      .addInput(this.pipelineParams.dynamicAoParams, 'blurRadius', {
         min: 0,
         max: 10
       })
       .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
         this.viewer.requestRender()
       })
 
     dynamicAoFolder
-      .addInput(Sandbox.pipelineParams.dynamicAoParams, 'blurDepthCutoff', {
+      .addInput(this.pipelineParams.dynamicAoParams, 'blurDepthCutoff', {
         min: 0,
         max: 1,
         step: 0.00001
       })
       .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
         this.viewer.requestRender()
       })
 
@@ -596,13 +607,13 @@ export default class Sandbox {
     //     this.viewer.requestRender()
     //   })
     staticAoFolder
-      .addInput(Sandbox.pipelineParams.staticAoParams, 'intensity', {
+      .addInput(this.pipelineParams.staticAoParams, 'intensity', {
         min: 0,
         max: 5,
         step: 0.01
       })
       .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
         this.viewer.requestRender()
       })
     // staticAoFolder
@@ -627,34 +638,34 @@ export default class Sandbox {
     //     this.viewer.requestRender()
     //   })
     staticAoFolder
-      .addInput(Sandbox.pipelineParams.staticAoParams, 'kernelRadius', {
+      .addInput(this.pipelineParams.staticAoParams, 'kernelRadius', {
         min: 0,
         max: 1000
       })
       .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
         this.viewer.requestRender()
       })
 
     staticAoFolder
-      .addInput(Sandbox.pipelineParams.staticAoParams, 'bias', {
+      .addInput(this.pipelineParams.staticAoParams, 'bias', {
         min: -1,
         max: 1,
         step: 0.0001
       })
       .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
         this.viewer.requestRender()
       })
 
     staticAoFolder
-      .addInput(Sandbox.pipelineParams.staticAoParams, 'kernelSize', {
+      .addInput(this.pipelineParams.staticAoParams, 'kernelSize', {
         min: 1,
         max: 128,
         step: 1
       })
       .on('change', () => {
-        this.viewer.getRenderer().pipelineOptions = Sandbox.pipelineParams
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
         this.viewer.requestRender()
       })
 
@@ -667,62 +678,62 @@ export default class Sandbox {
       expanded: true
     })
     directLightFolder
-      .addInput(Sandbox.lightParams, 'enabled', {
+      .addInput(this.lightParams, 'enabled', {
         label: 'Sun Enabled'
       })
       .on('change', () => {
-        this.viewer.setLightConfiguration(Sandbox.lightParams)
+        this.viewer.setLightConfiguration(this.lightParams)
       })
     directLightFolder
-      .addInput(Sandbox.lightParams, 'castShadow', {
+      .addInput(this.lightParams, 'castShadow', {
         label: 'Sun Shadows'
       })
       .on('change', () => {
-        this.viewer.setLightConfiguration(Sandbox.lightParams)
+        this.viewer.setLightConfiguration(this.lightParams)
       })
     directLightFolder
-      .addInput(Sandbox.lightParams, 'intensity', {
+      .addInput(this.lightParams, 'intensity', {
         label: 'Sun Intensity',
         min: 0,
         max: 10
       })
       .on('change', () => {
-        this.viewer.setLightConfiguration(Sandbox.lightParams)
+        this.viewer.setLightConfiguration(this.lightParams)
       })
     directLightFolder
-      .addInput(Sandbox.lightParams, 'color', {
+      .addInput(this.lightParams, 'color', {
         view: 'color',
         label: 'Sun Color'
       })
       .on('change', () => {
-        this.viewer.setLightConfiguration(Sandbox.lightParams)
+        this.viewer.setLightConfiguration(this.lightParams)
       })
     directLightFolder
-      .addInput(Sandbox.lightParams, 'elevation', {
+      .addInput(this.lightParams, 'elevation', {
         label: 'Sun Elevation',
         min: 0,
         max: Math.PI
       })
       .on('change', () => {
-        this.viewer.setLightConfiguration(Sandbox.lightParams)
+        this.viewer.setLightConfiguration(this.lightParams)
       })
     directLightFolder
-      .addInput(Sandbox.lightParams, 'azimuth', {
+      .addInput(this.lightParams, 'azimuth', {
         label: 'Sun Azimuth',
         min: -Math.PI * 0.5,
         max: Math.PI * 0.5
       })
       .on('change', () => {
-        this.viewer.setLightConfiguration(Sandbox.lightParams)
+        this.viewer.setLightConfiguration(this.lightParams)
       })
     directLightFolder
-      .addInput(Sandbox.lightParams, 'radius', {
+      .addInput(this.lightParams, 'radius', {
         label: 'Sun Radius',
         min: 0,
         max: 1000
       })
       .on('change', () => {
-        this.viewer.setLightConfiguration(Sandbox.lightParams)
+        this.viewer.setLightConfiguration(this.lightParams)
       })
 
     directLightFolder
@@ -757,14 +768,14 @@ export default class Sandbox {
     })
 
     indirectLightsFolder
-      .addInput(Sandbox.lightParams, 'indirectLightIntensity', {
+      .addInput(this.lightParams, 'indirectLightIntensity', {
         label: 'Probe Intensity',
         min: 0,
         max: 10
       })
       .on('change', (value) => {
         value
-        this.viewer.setLightConfiguration(Sandbox.lightParams)
+        this.viewer.setLightConfiguration(this.lightParams)
       })
 
     const shadowcatcherFolder = this.tabs.pages[1].addFolder({
@@ -773,14 +784,14 @@ export default class Sandbox {
     })
 
     shadowcatcherFolder
-      .addInput(Sandbox.lightParams, 'shadowcatcher', { label: 'Enabled' })
+      .addInput(this.lightParams, 'shadowcatcher', { label: 'Enabled' })
       .on('change', (value) => {
         value
-        this.viewer.setLightConfiguration(Sandbox.lightParams)
+        this.viewer.setLightConfiguration(this.lightParams)
       })
 
     shadowcatcherFolder
-      .addInput(Sandbox.shadowCatcherParams, 'textureSize', {
+      .addInput(this.shadowCatcherParams, 'textureSize', {
         label: 'Texture Size',
         min: 1,
         max: 1024,
@@ -788,12 +799,11 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         value
-        this.viewer.getRenderer().shadowcatcher.configuration =
-          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
         this.viewer.getRenderer().updateShadowCatcher()
       })
     shadowcatcherFolder
-      .addInput(Sandbox.shadowCatcherParams, 'weights', {
+      .addInput(this.shadowCatcherParams, 'weights', {
         label: 'weights',
         x: { min: 0, max: 100 },
         y: { min: 0, max: 100 },
@@ -802,12 +812,11 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         value
-        this.viewer.getRenderer().shadowcatcher.configuration =
-          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
         this.viewer.getRenderer().updateShadowCatcher()
       })
     shadowcatcherFolder
-      .addInput(Sandbox.shadowCatcherParams, 'blurRadius', {
+      .addInput(this.shadowCatcherParams, 'blurRadius', {
         label: 'Blur Radius',
         min: 1,
         max: 128,
@@ -815,12 +824,11 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         value
-        this.viewer.getRenderer().shadowcatcher.configuration =
-          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
         this.viewer.getRenderer().updateShadowCatcher()
       })
     shadowcatcherFolder
-      .addInput(Sandbox.shadowCatcherParams, 'stdDeviation', {
+      .addInput(this.shadowCatcherParams, 'stdDeviation', {
         label: 'Blur Std Deviation',
         min: 1,
         max: 128,
@@ -828,12 +836,11 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         value
-        this.viewer.getRenderer().shadowcatcher.configuration =
-          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
         this.viewer.getRenderer().updateShadowCatcher()
       })
     shadowcatcherFolder
-      .addInput(Sandbox.shadowCatcherParams, 'sigmoidRange', {
+      .addInput(this.shadowCatcherParams, 'sigmoidRange', {
         label: 'Sigmoid Range',
         min: -10,
         max: 10,
@@ -841,12 +848,11 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         value
-        this.viewer.getRenderer().shadowcatcher.configuration =
-          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
         this.viewer.getRenderer().updateShadowCatcher()
       })
     shadowcatcherFolder
-      .addInput(Sandbox.shadowCatcherParams, 'sigmoidStrength', {
+      .addInput(this.shadowCatcherParams, 'sigmoidStrength', {
         label: 'Sigmoid Strength',
         min: -10,
         max: 10,
@@ -854,8 +860,7 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         value
-        this.viewer.getRenderer().shadowcatcher.configuration =
-          Sandbox.shadowCatcherParams
+        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
         this.viewer.getRenderer().updateShadowCatcher()
       })
   }
@@ -866,7 +871,7 @@ export default class Sandbox {
       expanded: true
     })
 
-    filteringFolder.addInput(Sandbox.filterParams, 'filterBy', {
+    filteringFolder.addInput(this.filterParams, 'filterBy', {
       options: {
         Volume: 'parameters.HOST_VOLUME_COMPUTED.value',
         Area: 'parameters.HOST_AREA_COMPUTED.value',
@@ -883,7 +888,7 @@ export default class Sandbox {
       })
       .on('click', () => {
         const data = this.properties.find((value) => {
-          return value.key === Sandbox.filterParams.filterBy
+          return value.key === this.filterParams.filterBy
         }) as PropertyInfo
         this.viewer.setColorFilter(data)
         this.pane.refresh()
@@ -909,19 +914,19 @@ export default class Sandbox {
     })
 
     container
-      .addInput(Sandbox.batchesParams, 'showBvh', {
+      .addInput(this.batchesParams, 'showBvh', {
         label: 'Show BVH'
       })
       .on('change', (ev) => {
         this.viewer.getRenderer().showBVH = ev.value
         this.viewer.requestRender()
       })
-    container.addInput(Sandbox.batchesParams, 'totalBvhSize', {
+    container.addInput(this.batchesParams, 'totalBvhSize', {
       label: 'BVH Size(MB)',
       disabled: true
     })
     container
-      .addInput(Sandbox.batchesParams, 'explode', {
+      .addInput(this.batchesParams, 'explode', {
         label: 'Explode',
         min: 0,
         max: 0.25,
@@ -929,13 +934,10 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         value
-        this.viewer.explode(
-          Sandbox.batchesParams.explode,
-          Sandbox.batchesParams.explodeRange
-        )
+        this.viewer.explode(this.batchesParams.explode, this.batchesParams.explodeRange)
       })
     container
-      .addInput(Sandbox.batchesParams, 'explodeRange', {
+      .addInput(this.batchesParams, 'explodeRange', {
         label: 'Explode Range',
         min: 1,
         max: 1000,
@@ -943,10 +945,7 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         value
-        this.viewer.explode(
-          Sandbox.batchesParams.explode,
-          Sandbox.batchesParams.explodeRange
-        )
+        this.viewer.explode(this.batchesParams.explode, this.batchesParams.explodeRange)
       })
     // container
     //   .addInput(Sandbox.batchesParams, 'culling', {

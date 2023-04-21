@@ -16,7 +16,7 @@ export default class Coverter {
   private activePromises: number
   private maxChildrenPromises: number
   private spoofIDs = true
-  private isRoot = true
+  private tree: WorldTree
 
   private readonly NodeConverterMapping: {
     [name: string]: ConverterNodeDelegate
@@ -38,7 +38,7 @@ export default class Coverter {
     RevitInstance: this.RevitInstanceToNode.bind(this)
   }
 
-  constructor(objectLoader: unknown) {
+  constructor(objectLoader: unknown, tree: WorldTree) {
     if (!objectLoader) {
       Logger.warn(
         'Converter initialized without a corresponding object loader. Any objects that include references will throw errors.'
@@ -46,11 +46,10 @@ export default class Coverter {
     }
 
     this.objectLoader = objectLoader
-
     this.lastAsyncPause = Date.now()
     this.activePromises = 0
     this.maxChildrenPromises = 200
-    WorldTree.getInstance()
+    this.tree = tree
   }
 
   public async asyncPause() {
@@ -99,20 +98,18 @@ export default class Coverter {
       return
     }
 
-    const childNode: TreeNode = WorldTree.getInstance().parse({
+    const childNode: TreeNode = this.tree.parse({
       id: !node ? objectURL : this.getNodeId(obj),
       raw: Object.assign({}, obj),
       atomic: true,
-      root: this.isRoot,
       children: []
     })
-    this.isRoot = false
 
     if (node === null) {
-      WorldTree.getInstance().addSubtree(childNode)
+      this.tree.addSubtree(childNode)
       // console.warn(`Added root node with id ${obj.id}`)
     } else {
-      WorldTree.getInstance().addNode(childNode, node)
+      this.tree.addNode(childNode, node)
       // console.warn(`Added child node with id ${obj.id} to parent node ${node.model.id}`)
     }
 
@@ -148,14 +145,14 @@ export default class Coverter {
         displayValue = await this.resolveReference(displayValue)
         if (!displayValue.units) displayValue.units = obj.units
         try {
-          const nestedNode: TreeNode = WorldTree.getInstance().parse({
+          const nestedNode: TreeNode = this.tree.parse({
             id: this.getNodeId(displayValue),
             raw: Object.assign({}, displayValue),
             atomic: false,
             children: []
           })
           await this.convertToNode(displayValue, nestedNode)
-          WorldTree.getInstance().addNode(nestedNode, childNode)
+          this.tree.addNode(nestedNode, childNode)
           await callback({}) // use the parent's metadata!
         } catch (e) {
           Logger.warn(
@@ -166,14 +163,14 @@ export default class Coverter {
         for (const element of displayValue) {
           const val = await this.resolveReference(element)
           if (!val.units) val.units = obj.units
-          const nestedNode: TreeNode = WorldTree.getInstance().parse({
+          const nestedNode: TreeNode = this.tree.parse({
             id: this.getNodeId(val),
             raw: Object.assign({}, val),
             atomic: false,
             children: []
           })
           await this.convertToNode(val, nestedNode)
-          WorldTree.getInstance().addNode(nestedNode, childNode)
+          this.tree.addNode(nestedNode, childNode)
           await callback({})
         }
       }
@@ -309,13 +306,13 @@ export default class Coverter {
     node.model.raw.definition = definition
     for (const def of definition.geometry) {
       const ref = await this.resolveReference(def)
-      const childNode: TreeNode = WorldTree.getInstance().parse({
+      const childNode: TreeNode = this.tree.parse({
         id: this.getNodeId(ref),
         raw: Object.assign({}, ref),
         atomic: true,
         children: []
       })
-      WorldTree.getInstance().addNode(childNode, node)
+      this.tree.addNode(childNode, node)
       // console.warn(
       //   `Added child node with id ${childNode.model.id} to parent node ${node.model.id}`
       // )
@@ -329,7 +326,7 @@ export default class Coverter {
       if (!list) return
       for (const def of list) {
         const ref = await this.resolveReference(def)
-        const childNode: TreeNode = WorldTree.getInstance().parse({
+        const childNode: TreeNode = this.tree.parse({
           id: this.getNodeId(ref),
           raw: Object.assign({}, ref),
           atomic: true,
@@ -338,7 +335,7 @@ export default class Coverter {
         if (hostId) {
           childNode.model.raw.host = hostId
         }
-        WorldTree.getInstance().addNode(childNode, node)
+        this.tree.addNode(childNode, node)
         await this.convertToNode(ref, childNode)
       }
     }
@@ -362,14 +359,14 @@ export default class Coverter {
       let displayValue = obj.displayValue || obj.displayMesh
       if (Array.isArray(displayValue)) displayValue = displayValue[0] //Just take the first display value for now (not ideal)
       const ref = await this.resolveReference(displayValue)
-      const nestedNode: TreeNode = WorldTree.getInstance().parse({
+      const nestedNode: TreeNode = this.tree.parse({
         id: this.getNodeId(ref),
         raw: Object.assign({}, ref),
         atomic: false,
         children: []
       })
       await this.convertToNode(ref, nestedNode)
-      WorldTree.getInstance().addNode(nestedNode, node)
+      this.tree.addNode(nestedNode, node)
 
       // deletes known unneeded fields
       delete obj.Edges
@@ -433,7 +430,7 @@ export default class Coverter {
           element = await this.resolveReference(element)
         }
       }
-      const nestedNode: TreeNode = WorldTree.getInstance().parse({
+      const nestedNode: TreeNode = this.tree.parse({
         id: this.getNodeId(element),
         raw: Object.assign({}, element),
         atomic: false,
@@ -442,7 +439,7 @@ export default class Coverter {
       await this.convertToNode(element, nestedNode)
       /** We're not adding the segments as children since they shouldn't exist as individual line elements */
       node.model.nestedNodes.push(nestedNode)
-      // WorldTree.getInstance().addNode(nestedNode, node)
+      // WorldTree.getInstance(this.treeInstaceId).addNode(nestedNode, node)
     }
   }
 
@@ -455,14 +452,14 @@ export default class Coverter {
     }
     const displayValue = await this.resolveReference(obj.displayValue)
     displayValue.units = displayValue.units || obj.units
-    const nestedNode: TreeNode = WorldTree.getInstance().parse({
+    const nestedNode: TreeNode = this.tree.parse({
       id: this.getNodeId(displayValue),
       raw: Object.assign({}, displayValue),
       atomic: false,
       children: []
     })
     await this.convertToNode(displayValue, nestedNode)
-    WorldTree.getInstance().addNode(nestedNode, node)
+    this.tree.addNode(nestedNode, node)
   }
 
   private async CircleToNode(obj, node) {

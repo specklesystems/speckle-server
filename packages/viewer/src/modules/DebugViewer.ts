@@ -1,4 +1,3 @@
-import { WorldTree } from './tree/WorldTree'
 import { Viewer } from './Viewer'
 
 export class DebugViewer extends Viewer {
@@ -8,9 +7,5 @@ export class DebugViewer extends Viewer {
 
   requestRenderShadowmap() {
     this.getRenderer().updateDirectLights()
-  }
-
-  getWorldTree() {
-    return WorldTree.getInstance()
   }
 }
