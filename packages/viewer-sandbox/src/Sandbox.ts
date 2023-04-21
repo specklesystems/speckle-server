@@ -104,8 +104,7 @@ export default class Sandbox {
     this.pane = new Pane({ title: 'Speckle Sandbox', expanded: true })
     // Mad HTML/CSS skills
     container.appendChild(this.pane['containerElem_'])
-    this.pane['containerElem_'].style =
-      'top: 5px; right: 5px; width: 300px; z-index: 20000;'
+    this.pane['containerElem_'].style = 'pointer-events:auto;'
 
     this.tabs = this.pane.addTab({
       pages: [
@@ -349,13 +348,19 @@ export default class Sandbox {
     })
     const dark = localStorage.getItem('dark') === 'dark'
     if (dark) {
+      console.log(document.getElementById('multi-root'))
+      document.getElementById('multi-root')?.classList.toggle('background-dark')
       document.getElementById('renderer')?.classList.toggle('background-dark')
     }
 
     darkModeToggle.on('click', () => {
-      const dark = document
-        .getElementById('renderer')
-        ?.classList.toggle('background-dark')
+      let dark = false
+      if (document.getElementById('renderer'))
+        dark = document.getElementById('renderer')?.classList.toggle('background-dark')
+      else
+        dark = document
+          .getElementById('multi-root')
+          ?.classList.toggle('background-dark')
 
       localStorage.setItem('dark', dark ? `dark` : `light`)
     })

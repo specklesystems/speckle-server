@@ -9,7 +9,19 @@ import {
 import './style.css'
 import Sandbox from './Sandbox'
 
-const createViewer = async (container: HTMLElement, stream: string) => {
+const createViewer = async (containerName: string, stream: string) => {
+  const container = document.querySelector<HTMLElement>(containerName)
+
+  const controlsContainer = document.querySelector<HTMLElement>(
+    `${containerName}-controls`
+  )
+  if (!container) {
+    throw new Error("Couldn't find #app container!")
+  }
+  if (!controlsContainer) {
+    throw new Error("Couldn't find #app controls container!")
+  }
+
   // Viewer setup
   const params = DefaultViewerParams
   params.showStats = true
@@ -19,7 +31,7 @@ const createViewer = async (container: HTMLElement, stream: string) => {
   const viewer: Viewer = new DebugViewer(container, params)
   await viewer.init()
 
-  const sandbox = new Sandbox(container, viewer as DebugViewer, multiSelectList)
+  const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
 
   window.addEventListener('load', () => {
     viewer.resize()
@@ -233,9 +245,9 @@ const getStream = () => {
   )
 }
 
-const container0 = document.querySelector<HTMLElement>('#renderer0')
+const container0 = document.querySelector<HTMLElement>('#renderer')
 if (!container0) {
   throw new Error("Couldn't find app container!")
 }
 
-createViewer(container0, getStream())
+createViewer('#renderer', getStream())

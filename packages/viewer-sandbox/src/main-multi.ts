@@ -9,18 +9,28 @@ import {
 import './style.css'
 import Sandbox from './Sandbox'
 
-const container0 = document.querySelector<HTMLElement>('#renderer0')
-if (!container0) {
-  throw new Error("Couldn't find #app container!")
-}
+// const container0 = document.querySelector<HTMLElement>('#renderer0')
+// if (!container0) {
+//   throw new Error("Couldn't find #app container!")
+// }
 
-const container1 = document.querySelector<HTMLElement>('#renderer1')
-if (!container1) {
-  throw new Error("Couldn't find #app container!")
-}
-document.body.appendChild(container1)
+// const container1 = document.querySelector<HTMLElement>('#renderer1')
+// if (!container1) {
+//   throw new Error("Couldn't find #app container!")
+// }
 
-const createViewer = async (container: HTMLElement, stream: string) => {
+const createViewer = async (containerName: string, stream: string) => {
+  const container = document.querySelector<HTMLElement>(containerName)
+  const controlsContainer = document.querySelector<HTMLElement>(
+    `${containerName}-controls`
+  )
+  if (!container) {
+    throw new Error("Couldn't find #app container!")
+  }
+  if (!controlsContainer) {
+    throw new Error("Couldn't find #app controls container!")
+  }
+
   // Viewer setup
   const params = DefaultViewerParams
   params.showStats = true
@@ -30,7 +40,7 @@ const createViewer = async (container: HTMLElement, stream: string) => {
   const viewer: Viewer = new DebugViewer(container, params)
   await viewer.init()
 
-  const sandbox = new Sandbox(container, viewer as DebugViewer, multiSelectList)
+  const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
 
   window.addEventListener('load', () => {
     viewer.resize()
@@ -102,10 +112,10 @@ const createViewer = async (container: HTMLElement, stream: string) => {
 }
 
 createViewer(
-  container0,
+  '#renderer0',
   'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
 )
-createViewer(container1, 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8')
+createViewer('#renderer1', 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8')
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getStream = () => {

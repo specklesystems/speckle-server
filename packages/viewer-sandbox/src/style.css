@@ -23,16 +23,15 @@
   width: 100%;
 }
 
-#renderer0 {
-  position: absolute;
-  height: 50%;
-  width: 100%;
+#renderer0-controls:first-child {
+  pointer-events: auto;
 }
-#renderer1 {
+#renderer1-controls:first-child {
+  pointer-events: auto;
+}
+
+canvas {
   position: absolute;
-  top: 50%;
-  height: 50%;
-  width: 100%;
 }
 
 .button {
