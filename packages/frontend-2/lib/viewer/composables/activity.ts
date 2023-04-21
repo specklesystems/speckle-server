@@ -56,7 +56,6 @@ const USER_REMOVABLE_AFTER_PERIOD = USER_STALE_AFTER_PERIOD * 2
 
 function useCollectSelection() {
   const viewerState = useInjectedViewerState()
-  const viewer = viewerState.viewer.instance
 
   const selectionLocation = ref(null as Nullable<Vector3>)
 
@@ -72,9 +71,10 @@ function useCollectSelection() {
   })
 
   return (): ViewerUserSelectionInfoInput => {
-    const controls = viewer.cameraHandler.activeCam.controls
-    const pos = controls.getPosition(new Vector3())
-    const target = controls.getTarget(new Vector3())
+    const controls = viewerState.viewer.instance.cameraHandler.controls
+    const pos = viewerState.ui.camera.position.value
+    const target = viewerState.ui.camera.target.value
+    const isPerspective = viewerState.ui.camera.isPerspectiveProjection.value
     const camera = [
       parseFloat(pos.x.toFixed(5)),
       parseFloat(pos.y.toFixed(5)),
@@ -82,8 +82,8 @@ function useCollectSelection() {
       parseFloat(target.x.toFixed(5)),
       parseFloat(target.y.toFixed(5)),
       parseFloat(target.z.toFixed(5)),
-      viewer.cameraHandler.activeCam.name === 'ortho' ? 1 : 0,
-      get(controls, '_zoom') // kinda hacky, _zoom is a protected prop
+      isPerspective ? 0 : 1,
+      get(controls, '_zoom') // TODO: we need a better way to do this
     ]
 
     return {
@@ -94,7 +94,7 @@ function useCollectSelection() {
           .filter((i): i is NonNullable<typeof i> => !!i)
       },
       selectionLocation: selectionLocation.value,
-      sectionBox: viewer.getCurrentSectionBox(),
+      sectionBox: viewerState.ui.sectionBox.value,
       camera
     }
   }
@@ -227,7 +227,8 @@ export function useViewerUserActivityTracking(params: {
     sessionId,
     resources: {
       request: { resourceIdString, threadFilters }
-    }
+    },
+    ui: { highlightedObjectIds }
   } = useInjectedViewerState()
   const { isLoggedIn } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
@@ -404,12 +405,14 @@ export function useViewerUserActivityTracking(params: {
     sendUpdate.emitDisconnected()
   })
 
-  const state = useInjectedViewerState()
-
   // Removes object highlights from user selection on tracking stop;
   // Sets initial user state on tracking start
   watch(spotlightUserId, (newVal) => {
-    if (!newVal) return state.viewer.instance.highlightObjects([])
+    if (!newVal) {
+      highlightedObjectIds.value = []
+      return
+    }
+
     const user = Object.values(users.value).find((u) => u.userId === newVal)
     if (!user) return
     spotlightTracker(user)

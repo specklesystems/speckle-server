@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import { FilteringState, ViewerEvent } from '@speckle/viewer'
+import { FilteringState, SunLightConfiguration, ViewerEvent } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import {
   Comment,
@@ -30,7 +30,6 @@ import {
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
-import { PerspectiveCamera, Vector3 } from 'three'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -216,10 +215,10 @@ function useViewerSubscriptionEventTracker() {
 /**
  * TODO: TWO WAY BINDING
  * - There are def some issues there
- * - SectionBoxes don't work correctly even without that
  * - Need to get rid of all direct viewer instance usages
  *  - so that we only interact with state abstraction
  *  - and possibly don't even need current FilteringState
+ * - Light configuration in the state
  */
 
 export function useViewerSectionBoxIntegration() {
@@ -252,10 +251,11 @@ export function useViewerSectionBoxIntegration() {
     sectionBox,
     (newVal, oldVal) => {
       if (newVal && oldVal && newVal.equals(oldVal)) return
-      if (newVal === oldVal) return
+      if (!newVal && !oldVal) return
 
       if (oldVal && !newVal) {
         instance.sectionBoxOff()
+        instance.requestRender()
         return
       }
 
@@ -263,14 +263,12 @@ export function useViewerSectionBoxIntegration() {
         newVal &&
         (!oldVal || !newVal.min.equals(oldVal.min) || !newVal.max.equals(oldVal.max))
       ) {
-        instance.setSectionBox({
-          min: newVal.min,
-          max: newVal.max
-        })
+        instance.setSectionBox(newVal.clone())
         instance.sectionBoxOn()
+        instance.requestRender()
       }
     },
-    { immediate: true, deep: true }
+    { deep: true }
   )
 }
 
@@ -331,49 +329,27 @@ export function useViewerCameraIntegration() {
   // )
 
   // state -> viewer
-  watch(
-    isPerspectiveProjection,
-    (newVal, oldVal) => {
-      if (newVal !== oldVal) {
-        instance.toggleCameraProjection()
-      }
-    },
-    { immediate: true }
-  )
+  watch(isPerspectiveProjection, (newVal, oldVal) => {
+    if (!!newVal !== !!oldVal) {
+      instance.toggleCameraProjection()
+    }
+  })
 
-  watch(
-    position,
-    (newVal, oldVal) => {
-      if (newVal === oldVal || (oldVal && newVal.equals(oldVal))) {
-        return
-      }
+  watch(position, (newVal, oldVal) => {
+    if ((!newVal && !oldVal) || (oldVal && newVal.equals(oldVal))) {
+      return
+    }
 
-      instance.cameraHandler.activeCam.controls.setPosition(
-        newVal.x,
-        newVal.y,
-        newVal.z,
-        true
-      )
-    },
-    { immediate: true }
-  )
+    instance.cameraHandler.activeCam.controls.setPosition(newVal.x, newVal.y, newVal.z)
+  })
 
-  watch(
-    target,
-    (newVal, oldVal) => {
-      if (newVal === oldVal || (oldVal && newVal.equals(oldVal))) {
-        return
-      }
+  watch(target, (newVal, oldVal) => {
+    if ((!newVal && !oldVal) || (oldVal && newVal.equals(oldVal))) {
+      return
+    }
 
-      instance.cameraHandler.activeCam.controls.setTarget(
-        newVal.x,
-        newVal.y,
-        newVal.z,
-        true
-      )
-    },
-    { immediate: true }
-  )
+    instance.cameraHandler.activeCam.controls.setTarget(newVal.x, newVal.y, newVal.z)
+  })
 }
 
 export function useViewerFiltersIntegration() {
@@ -431,51 +407,39 @@ export function useViewerFiltersIntegration() {
   // })
 
   // state -> viewer
-  watch(
-    highlightedObjectIds,
-    (newVal, oldVal) => {
-      if (arraysEqual(newVal, oldVal || [])) return
+  watch(highlightedObjectIds, (newVal, oldVal) => {
+    if (arraysEqual(newVal, oldVal || [])) return
 
-      instance.highlightObjects(newVal)
-    },
-    { immediate: true }
-  )
+    instance.highlightObjects(newVal)
+  })
 
-  watch(
-    filters.isolatedObjectIds,
-    (newVal, oldVal) => {
-      if (arraysEqual(newVal, oldVal || [])) return
+  watch(filters.isolatedObjectIds, (newVal, oldVal) => {
+    if (arraysEqual(newVal, oldVal || [])) return
 
-      const isolatable = newVal
-      const unisolatable = difference(oldVal || [], newVal)
+    const isolatable = newVal
+    const unisolatable = difference(oldVal || [], newVal)
 
-      if (isolatable.length) {
-        instance.isolateObjects(isolatable, stateKey, true)
-      }
-      if (unisolatable.length) {
-        instance.unIsolateObjects(unisolatable, stateKey, true)
-      }
-    },
-    { immediate: true }
-  )
+    if (isolatable.length) {
+      instance.isolateObjects(isolatable, stateKey, true)
+    }
+    if (unisolatable.length) {
+      instance.unIsolateObjects(unisolatable, stateKey, true)
+    }
+  })
 
-  watch(
-    filters.hiddenObjectIds,
-    (newVal, oldVal) => {
-      if (arraysEqual(newVal, oldVal || [])) return
+  watch(filters.hiddenObjectIds, (newVal, oldVal) => {
+    if (arraysEqual(newVal, oldVal || [])) return
 
-      const hidable = newVal
-      const showable = difference(oldVal || [], newVal)
+    const hidable = newVal
+    const showable = difference(oldVal || [], newVal)
 
-      if (hidable.length) {
-        instance.hideObjects(hidable, stateKey, true)
-      }
-      if (showable.length) {
-        instance.showObjects(showable, stateKey, true)
-      }
-    },
-    { immediate: true }
-  )
+    if (hidable.length) {
+      instance.hideObjects(hidable, stateKey, true)
+    }
+    if (showable.length) {
+      instance.showObjects(showable, stateKey, true)
+    }
+  })
 
   watch(
     () =>
@@ -494,27 +458,50 @@ export function useViewerFiltersIntegration() {
       } else {
         instance.removeColorFilter()
       }
-    },
-    { immediate: true }
+    }
   )
 
-  watch(
-    filters.selectedObjects,
-    (newVal, oldVal) => {
-      const newIds = flatten(newVal.map((v) => getTargetObjectIds({ ...v }))).filter(
-        isNonNullable
-      )
-      const oldIds = flatten(
-        (oldVal || []).map((v) => getTargetObjectIds({ ...v }))
-      ).filter(isNonNullable)
-      if (arraysEqual(newIds, oldIds)) return
+  watch(filters.selectedObjects, (newVal, oldVal) => {
+    const newIds = flatten(newVal.map((v) => getTargetObjectIds({ ...v }))).filter(
+      isNonNullable
+    )
+    const oldIds = flatten(
+      (oldVal || []).map((v) => getTargetObjectIds({ ...v }))
+    ).filter(isNonNullable)
+    if (arraysEqual(newIds, oldIds)) return
 
-      if (!newVal.length) {
-        instance.resetSelection()
-        return
+    if (!newVal.length) {
+      instance.resetSelection()
+      return
+    }
+
+    instance.selectObjects(newIds)
+  })
+}
+
+function useViewerSunLightIntegration() {
+  const {
+    viewer: { instance },
+    ui: { sunLightConfiguration }
+  } = useInjectedViewerState()
+
+  // viewer -> state
+  useViewerEventListener(
+    ViewerEvent.SunLightConfigurationUpdated,
+    (config: SunLightConfiguration) => {
+      if (!isEqual(config, sunLightConfiguration.value)) {
+        console.log('SUNLI UPD', config, sunLightConfiguration.value)
+        sunLightConfiguration.value = config
       }
+    }
+  )
 
-      instance.selectObjects(newIds)
+  // state -> viewer
+  watch(
+    sunLightConfiguration,
+    (newVal, oldVal) => {
+      if (isEqual(newVal, oldVal)) return
+      instance.setLightConfiguration(newVal)
     },
     { immediate: true }
   )
@@ -528,7 +515,9 @@ export function useViewerPostSetup() {
   useViewerSubscriptionEventTracker()
   useViewerThreadTracking()
   useViewerOpenedThreadUpdateEmitter()
+
   useViewerSectionBoxIntegration()
   useViewerCameraIntegration()
   useViewerFiltersIntegration()
+  useViewerSunLightIntegration()
 }

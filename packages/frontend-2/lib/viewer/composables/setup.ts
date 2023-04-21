@@ -5,7 +5,10 @@ import {
   FilteringState,
   PropertyInfo,
   WorldTree,
-  ViewerEvent
+  ViewerEvent,
+  SpeckleView,
+  SunLightConfiguration,
+  DefaultLightConfiguration
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -103,6 +106,7 @@ export type InjectableViewerState = Readonly<{
     metadata: {
       worldTree: ComputedRef<Optional<WorldTree>>
       availableFilters: ComputedRef<Optional<PropertyInfo[]>>
+      availableViews: ComputedRef<SpeckleView[]>
       /**
        * TODO: Remove the need fore this
        * TODO: Remove unnecessarfy imperativec viewer usages
@@ -228,6 +232,7 @@ export type InjectableViewerState = Readonly<{
     }
     sectionBox: Ref<Nullable<Box3>>
     highlightedObjectIds: Ref<string[]>
+    sunLightConfiguration: Ref<SunLightConfiguration>
 
     // filters: {
     //   all: ShallowRef<PropertyInfo[] | undefined>
@@ -357,8 +362,11 @@ function setupViewerMetadata(params: {
   const worldTree = shallowRef(undefined as Optional<WorldTree>)
   const availableFilters = shallowRef(undefined as Optional<PropertyInfo[]>)
   const filteringState = shallowRef(undefined as Optional<FilteringState>)
+  const views = ref<SpeckleView[]>([])
 
   const refreshWorldTreeAndFilters = (busy: boolean) => {
+    views.value = viewer.getViews()
+
     if (busy) return
     worldTree.value = viewer.getWorldTree()
     availableFilters.value = viewer.getObjectProperties()
@@ -380,7 +388,8 @@ function setupViewerMetadata(params: {
   return {
     worldTree: computed(() => worldTree.value),
     availableFilters: computed(() => availableFilters.value),
-    filteringState: computed(() => filteringState.value)
+    filteringState: computed(() => filteringState.value),
+    availableViews: computed(() => views.value)
   }
 }
 
@@ -784,6 +793,7 @@ function setupInterfaceState(
     return false
   })
 
+  const sunLightConfiguration = ref(DefaultLightConfiguration)
   const highlightedObjectIds = ref([] as string[])
   const spotlightUserId = ref(null as Nullable<string>)
 
@@ -829,7 +839,8 @@ function setupInterfaceState(
         },
         hasAnyFiltersApplied
       },
-      highlightedObjectIds
+      highlightedObjectIds,
+      sunLightConfiguration
     }
   }
 }

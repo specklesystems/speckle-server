@@ -51,6 +51,7 @@ import {
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { markRaw } from 'vue'
+import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
 
 defineEmits(['close'])
 
@@ -61,7 +62,6 @@ const {
   }
 } = useInjectedViewerState()
 const {
-  instance: viewer,
   metadata: { worldTree, availableFilters: allFilters }
 } = useInjectedViewer()
 
@@ -77,11 +77,9 @@ const collapse = () => {
 // in here (as i was expecting it to?). Therefore, refHack++ to trigger the computed prop rootNodes.
 // Possibly Fabs will know more :)
 const refhack = ref(1)
-onMounted(() => {
-  viewer.on(ViewerEvent.Busy, (b) => {
-    if (b) return
-    refhack.value++
-  })
+useViewerEventListener(ViewerEvent.Busy, (isBusy: boolean) => {
+  if (isBusy) return
+  refhack.value++
 })
 
 const rootNodes = computed(() => {

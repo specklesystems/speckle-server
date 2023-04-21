@@ -1,6 +1,5 @@
 import { PropertyInfo } from '@speckle/viewer'
 import { difference, isString, uniq } from 'lodash-es'
-import { Box3, Vector3 } from 'three'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
@@ -23,16 +22,16 @@ export function useSectionBoxUtilities() {
     }
 
     const objectIds = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
-    const box = objectIds.length
-      ? instance.getSectionBoxFromObjects(objectIds)
-      : new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
+    const box = instance.getSectionBoxFromObjects(objectIds)
     sectionBox.value = box
   }
+
   const sectionBoxOn = () => {
     if (!isSectionBoxEnabled.value) {
       toggleSectionBox()
     }
   }
+
   const sectionBoxOff = () => {
     sectionBox.value = null
   }
@@ -53,25 +52,37 @@ export function useCameraUtilities() {
     camera
   } = useInjectedViewerInterfaceState()
 
+  const zoom = (...args: Parameters<typeof instance.zoom>) => {
+    instance.zoom(...args)
+  }
+
   const zoomExtentsOrSelection = () => {
     const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
 
     if (ids.length > 0) {
-      return instance.zoom(ids)
+      return zoom(ids)
     }
 
     if (isolatedObjectIds.value.length) {
-      return instance.zoom(isolatedObjectIds.value)
+      return zoom(isolatedObjectIds.value)
     }
 
-    instance.zoom()
+    zoom()
   }
 
   const toggleProjection = () => {
     camera.isPerspectiveProjection.value = !camera.isPerspectiveProjection.value
   }
 
-  return { zoomExtentsOrSelection, toggleProjection, camera }
+  const setView = (...args: Parameters<typeof instance.setView>) => {
+    instance.setView(...args)
+  }
+
+  const truck = (...args: Parameters<typeof instance.cameraHandler.controls.truck>) => {
+    instance.cameraHandler.controls.truck(...args)
+  }
+
+  return { zoomExtentsOrSelection, toggleProjection, camera, setView, truck, zoom }
 }
 
 export function useFilterUtilities() {
@@ -104,10 +115,12 @@ export function useFilterUtilities() {
 
   const setPropertyFilter = (property: PropertyInfo) => {
     filters.propertyFilter.filter.value = property
+    filters.propertyFilter.isApplied.value = true
   }
 
   const removePropertyFilter = () => {
     filters.propertyFilter.filter.value = null
+    filters.propertyFilter.isApplied.value = false
   }
 
   const resetFilters = () => {

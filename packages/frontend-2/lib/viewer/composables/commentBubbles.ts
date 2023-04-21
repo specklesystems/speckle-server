@@ -296,16 +296,15 @@ export function useViewerThreadTracking() {
   const state = useInjectedViewerState()
   const {
     ui: {
-      threads: { openThread }
+      threads: { openThread },
+      camera: { position, target }
     }
   } = state
 
   const refocus = (data: CommentViewerData) => {
     if (data.camPos) {
-      state.viewer.instance.setView({
-        position: new Vector3(data.camPos[0], data.camPos[1], data.camPos[2]),
-        target: new Vector3(data.camPos[3], data.camPos[4], data.camPos[5])
-      })
+      position.value = new Vector3(data.camPos[0], data.camPos[1], data.camPos[2])
+      target.value = new Vector3(data.camPos[3], data.camPos[4], data.camPos[5])
     }
 
     if (data.sectionBox) {

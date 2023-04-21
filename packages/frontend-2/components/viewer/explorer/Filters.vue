@@ -144,13 +144,11 @@ const relevantFilters = computed(() => {
   })
 })
 
-// const userSelectedFilter = ref<PropertyInfo | null>(null)
-
 const speckleTypeFilter = computed(
   () =>
     relevantFilters.value.find((f) => f.key === 'speckle_type') as StringPropertyInfo
 )
-const userSelectedFilter = computed(() => propertyFilter.filter.value)
+const userSelectedFilter = propertyFilter.filter
 const activeFilter = computed(
   () => propertyFilter.filter.value || speckleTypeFilter.value
 )

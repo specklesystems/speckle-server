@@ -57,7 +57,6 @@ import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composa
 
 const {
   viewer: {
-    instance: viewerInstance,
     metadata: { filteringState }
   }
 } = useInjectedViewerState()
@@ -104,7 +103,6 @@ const hideOrShowSelection = () => {
 
 const isolateOrUnisolateSelection = () => {
   if (!isIsolated.value) {
-    viewerInstance.selectObjects([]) // bypassing the FE state, and resetting the viewer selection state only
     isolateObjects(allTargetIds.value)
     return
   }

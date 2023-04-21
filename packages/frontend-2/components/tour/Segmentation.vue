@@ -69,19 +69,17 @@ import {
   OnboardingState
 } from '~~/lib/auth/helpers/onboarding'
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
-import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 
 const { setMixpanelSegments } = useProcessOnboarding()
 
-const onboardingState = ref<OnboardingState>({ industry: undefined, role: undefined })
-
-const { instance: viewer } = useInjectedViewer()
-
-const { activeUser } = useActiveUser()
-
 const emit = defineEmits(['next'])
 
+const { activeUser } = useActiveUser()
+const { truck, setView } = useCameraUtilities()
+
 const step = ref(0)
+const onboardingState = ref<OnboardingState>({ industry: undefined, role: undefined })
 
 function setIndustry(val: OnboardingIndustry) {
   onboardingState.value.industry = val
@@ -109,13 +107,13 @@ const camPos = [
 
 let flip = 1
 const rotateGently = (factor = 1) => {
-  viewer.setView({ azimuth: (Math.PI / 12) * flip * factor, polar: 0 }, true)
-  viewer.cameraHandler.controls.truck(factor * flip, factor * flip, true)
+  setView({ azimuth: (Math.PI / 12) * flip * factor, polar: 0 }, true)
+  truck(factor * flip, factor * flip, true)
   flip *= -1
 }
 
 function nextView() {
-  viewer.setView({
+  setView({
     position: new Vector3(
       camPos[step.value][0],
       camPos[step.value][1],
