@@ -218,7 +218,6 @@ function useViewerSubscriptionEventTracker() {
  * - Need to get rid of all direct viewer instance usages
  *  - so that we only interact with state abstraction
  *  - and possibly don't even need current FilteringState
- * - Comment bubble orientation busted once clicked
  */
 
 export function useViewerSectionBoxIntegration() {
@@ -339,11 +338,10 @@ export function useViewerCameraIntegration() {
         return
       }
 
-      instance.cameraHandler.activeCam.controls.setPosition(
-        newVal.x,
-        newVal.y,
-        newVal.z
-      )
+      instance.setView({
+        position: newVal,
+        target: target.value
+      })
     },
     { flush: 'sync' }
   )
@@ -355,7 +353,10 @@ export function useViewerCameraIntegration() {
         return
       }
 
-      instance.cameraHandler.activeCam.controls.setTarget(newVal.x, newVal.y, newVal.z)
+      instance.setView({
+        position: position.value,
+        target: newVal
+      })
     },
     { flush: 'sync' }
   )
@@ -499,7 +500,6 @@ function useViewerSunLightIntegration() {
     ViewerEvent.SunLightConfigurationUpdated,
     (config: SunLightConfiguration) => {
       if (!isEqual(config, sunLightConfiguration.value)) {
-        console.log('SUNLI UPD', config, sunLightConfiguration.value)
         sunLightConfiguration.value = config
       }
     }
