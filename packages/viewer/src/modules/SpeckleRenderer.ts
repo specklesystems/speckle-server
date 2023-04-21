@@ -154,6 +154,10 @@ export default class SpeckleRenderer {
     this.pipeline.pipelineOptions = value
   }
 
+  public get pipelineOptions() {
+    return this.pipeline.pipelineOptions
+  }
+
   public set showBVH(value: boolean) {
     this.SHOW_BVH = value
     this.allObjects.traverse((obj) => {
@@ -603,6 +607,19 @@ export default class SpeckleRenderer {
   public applyFilter(ids: NodeRenderView[], filterMaterial: FilterMaterial) {
     this.filterBatchRecording.push(
       ...this.batcher.setObjectsFilterMaterial(ids, filterMaterial)
+    )
+  }
+
+  public applyMaterial(ids: NodeRenderView[], material: SpeckleStandardMaterial) {
+    this.filterBatchRecording.push(
+      ...this.batcher.setObjectsMaterial(ids, (rv: NodeRenderView) => {
+        return {
+          offset: rv.batchStart,
+          count: rv.batchCount,
+          material,
+          materialOptions: null
+        }
+      })
     )
   }
 

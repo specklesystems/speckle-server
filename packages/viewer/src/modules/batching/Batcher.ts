@@ -280,7 +280,6 @@ export default class Batcher {
     const visibilityRanges = {}
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
-      // if (batch.geometryType !== GeometryType.MESH) continue
       visibilityRanges[k] = batch.getVisibleRange()
     }
     return visibilityRanges
@@ -289,7 +288,6 @@ export default class Batcher {
   public applyVisibility(ranges: Record<string, BatchUpdateRange>) {
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
-      // if (batch.geometryType !== GeometryType.MESH) continue
       const range = ranges[k]
       if (!range) {
         batch.setVisibleRange(HideAllBatchUpdateRange)
@@ -303,17 +301,13 @@ export default class Batcher {
     const visibilityRanges = {}
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
-      // if (batch.geometryType !== GeometryType.MESH) {
-      //   visibilityRanges[k] = HideAllBatchUpdateRange
-      //   continue
-      // }
       const batchMesh: Mesh = batch.renderObject as Mesh
       if (batchMesh.geometry.groups.length === 0) {
-        if ((batchMesh.material as Material).transparent === true)
+        if (Materials.isTransparent(batchMesh.material as Material))
           visibilityRanges[k] = AllBatchUpdateRange
       } else {
         const transparentGroup = batchMesh.geometry.groups.find((value) => {
-          return batchMesh.material[value.materialIndex].visible === true
+          return Materials.isTransparent(batchMesh.material[value.materialIndex])
         })
         const hiddenGroup = batchMesh.geometry.groups.find((value) => {
           return batchMesh.material[value.materialIndex].visible === false
@@ -336,10 +330,6 @@ export default class Batcher {
     const visibilityRanges = {}
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
-      // if (batch.geometryType !== GeometryType.MESH) {
-      //   visibilityRanges[k] = HideAllBatchUpdateRange
-      //   continue
-      // }
       const batchMesh: Mesh = batch.renderObject as Mesh
       if (batchMesh.geometry.groups.length === 0) {
         if ((batchMesh.material as Material).stencilWrite === true)
@@ -363,18 +353,14 @@ export default class Batcher {
     const visibilityRanges = {}
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
-      // if (batch.geometryType !== GeometryType.MESH) {
-      //   visibilityRanges[k] = HideAllBatchUpdateRange
-      //   continue
-      // }
       const batchMesh: Mesh = batch.renderObject as Mesh
       if (batchMesh.geometry.groups.length === 0) {
-        if ((batchMesh.material as Material).transparent === false)
+        if (Materials.isOpaque(batchMesh.material as Material))
           visibilityRanges[k] = AllBatchUpdateRange
       } else {
         const transparentOrHiddenGroup = batchMesh.geometry.groups.find((value) => {
           return (
-            batchMesh.material[value.materialIndex].transparent === true ||
+            Materials.isTransparent(batchMesh.material[value.materialIndex]) ||
             batchMesh.material[value.materialIndex].visible === false
           )
         })
@@ -427,6 +413,12 @@ export default class Batcher {
     })
   }
 
+  public getBatch(rv: NodeRenderView) {
+    return Object.values(this.batches).find((value: Batch) => {
+      return value.renderViews.includes(rv)
+    })
+  }
+
   public getRenderView(batchId: string, index: number) {
     return this.batches[batchId].getRenderView(index)
   }
@@ -442,6 +434,28 @@ export default class Batcher {
     filterMaterial: FilterMaterial,
     uniqueRvsOnly = true
   ): string[] {
+    return this.setObjectsMaterial(
+      rvs,
+      (rv: NodeRenderView) => {
+        return {
+          offset: rv.batchStart,
+          count: rv.batchCount,
+          material: this.materials.getFilterMaterial(
+            rv,
+            filterMaterial.filterType
+          ) as Material,
+          materialOptions: this.materials.getFilterMaterialOptions(filterMaterial)
+        } as BatchUpdateRange
+      },
+      uniqueRvsOnly
+    )
+  }
+
+  public setObjectsMaterial(
+    rvs: NodeRenderView[],
+    batchRangeDelegate: (rv: NodeRenderView) => BatchUpdateRange,
+    uniqueRvsOnly = true
+  ): string[] {
     let renderViews = rvs
     if (uniqueRvsOnly) renderViews = [...Array.from(new Set(rvs.map((value) => value)))]
     const batchIds = [...Array.from(new Set(renderViews.map((value) => value.batchId)))]
@@ -452,17 +466,7 @@ export default class Batcher {
       const batch = this.batches[batchIds[i]]
       const views = renderViews
         .filter((value) => value.batchId === batchIds[i])
-        .map((rv: NodeRenderView) => {
-          return {
-            offset: rv.batchStart,
-            count: rv.batchCount,
-            material: this.materials.getFilterMaterial(
-              rv,
-              filterMaterial.filterType
-            ) as Material,
-            materialOptions: this.materials.getFilterMaterialOptions(filterMaterial)
-          } as BatchUpdateRange
-        })
+        .map(batchRangeDelegate)
       batch.setDrawRanges(...views)
     }
     return batchIds

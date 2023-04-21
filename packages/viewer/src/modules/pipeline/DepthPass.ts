@@ -10,6 +10,7 @@ import {
   Plane,
   RGBADepthPacking,
   Scene,
+  Side,
   Texture,
   WebGLRenderTarget
 } from 'three'
@@ -64,6 +65,10 @@ export class DepthPass extends BaseSpecklePass implements SpecklePass {
 
   public set depthSize(value: DepthSize) {
     this.depthBufferSize = value
+  }
+
+  public set depthSide(value: Side) {
+    this.depthMaterial.side = value
   }
 
   constructor() {

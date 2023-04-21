@@ -10,6 +10,11 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
   private clearAlpha = 0
   private clearDepth = true
 
+  public onBeforeRenderOpauqe: () => void = null
+  public onAfterRenderOpaque: () => void = null
+  public onBeforeRenderTransparent: () => void = null
+  public onAfterRenderTransparent: () => void = null
+
   public constructor() {
     super()
   }
@@ -26,8 +31,6 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
   }
 
   render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive */) {
-    // const shadowcatcher = this.scene.getObjectByName('Shadowcatcher')
-    // if (shadowcatcher) shadowcatcher.visible = false
     const oldAutoClear = renderer.autoClear
     renderer.autoClear = false
 
@@ -61,7 +64,12 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
         renderer.autoClearDepth,
         renderer.autoClearStencil
       )
+    if (this.onBeforeRenderOpauqe) this.onBeforeRenderOpauqe()
     renderer.render(this.scene, this.camera)
+    if (this.onAfterRenderOpaque) this.onAfterRenderOpaque()
+    if (this.onBeforeRenderTransparent) this.onBeforeRenderTransparent()
+    renderer.render(this.scene, this.camera)
+    if (this.onAfterRenderTransparent) this.onAfterRenderTransparent()
 
     if (this.clearColor) {
       renderer.setClearColor(this._oldClearColor, oldClearAlpha)

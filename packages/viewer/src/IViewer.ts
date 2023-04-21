@@ -1,5 +1,6 @@
 import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
+import { DiffResult } from './modules/Differ'
 import { BatchObject } from './modules/batching/BatchObject'
 import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
@@ -170,6 +171,11 @@ export interface IViewer {
   cancelLoad(url: string, unload?: boolean): Promise<void>
   unloadObject(url: string): Promise<void>
   unloadAll(): Promise<void>
+
+  /** Diffing */
+  diff(urlA: string, urlB: string): Promise<DiffResult>
+  undiff(): void
+  setDiffTime(diffResult: DiffResult, time: number): void
 
   screenshot(): Promise<string>
 

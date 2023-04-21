@@ -116,6 +116,8 @@ export default class SpeckleMesh extends Mesh {
   public getCachedMaterial(material: Material) {
     if (!this.materialCache[material.id]) {
       this.materialCache[material.id] = material.clone()
+    } else {
+      this.materialCache[material.id].copy(material)
     }
     return this.materialCache[material.id]
   }

@@ -9,6 +9,7 @@ import {
   NumericPropertyInfo
 } from './PropertyManager'
 import SpeckleRenderer from '../SpeckleRenderer'
+import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
 import { RenderTree } from '../tree/RenderTree'
 
 export type FilteringState = {
@@ -31,8 +32,10 @@ export enum FilterMaterialType {
   HIDDEN
 }
 
+/** This needs to be rethunked */
 export interface FilterMaterial {
   filterType: FilterMaterialType
+  userMaterial?: SpeckleStandardMaterial
   rampIndex?: number
   rampIndexColor?: Color
   rampTexture?: Texture
@@ -51,6 +54,7 @@ export class FilteringManager {
   private HighlightState = new GenericRvState()
   private UserspaceColorState = new UserspaceColorState()
   private ColorStringFilterState2: ColorStringFilterState = null
+  private UserMaterialState = new UserMaterialState()
 
   public constructor(renderer: SpeckleRenderer, tree: WorldTree) {
     this.WTI = tree
@@ -301,7 +305,7 @@ export class FilteringManager {
     return this.populateGenericState(objectIds, this.HighlightState)
   }
 
-  public setUserObjectColors(groups: [{ objectIds: string[]; color: string }]) {
+  public setUserObjectColors(groups: { objectIds: string[]; color: string }[]) {
     this.UserspaceColorState = new UserspaceColorState()
     // Resetting any other filtering color ops as they're not compatible
     this.ColorNumericFilterState = null
@@ -340,6 +344,42 @@ export class FilteringManager {
 
   public removeUserObjectColors() {
     this.UserspaceColorState = null
+    return this.setFilters()
+  }
+
+  public setUserMaterials(
+    groups: { objectIds: string[]; material: SpeckleStandardMaterial }[]
+  ) {
+    this.UserMaterialState = new UserMaterialState()
+    const localGroups: {
+      objectIds: string[]
+      material: SpeckleStandardMaterial
+      nodes: TreeNode[]
+      rvs: NodeRenderView[]
+    }[] = groups.map((g) => {
+      return { ...g, nodes: [], rvs: [] }
+    })
+
+    this.WTI.walk((node: TreeNode) => {
+      if (!node.model?.raw?.id) return true
+      for (const group of localGroups) {
+        if (group.objectIds.includes(node.model.raw.id)) {
+          group.nodes.push(node)
+          const rvsNodes = this.RTI.getRenderViewNodesForNode(node, node).map(
+            (rvNode) => rvNode.model.renderView
+          )
+          if (rvsNodes) group.rvs.push(...rvsNodes)
+        }
+      }
+      return true
+    })
+
+    this.UserMaterialState.groups = localGroups
+    return this.setFilters()
+  }
+
+  public removeUserMaterials() {
+    this.UserMaterialState = null
     return this.setFilters()
   }
 
@@ -402,6 +442,13 @@ export class FilteringManager {
 
     this.Renderer.clearFilter()
     this.Renderer.beginFilter()
+
+    //User materials
+    if (this.UserMaterialState) {
+      for (const group of this.UserMaterialState.groups) {
+        this.Renderer.applyMaterial(group.rvs, group.material)
+      }
+    }
 
     // String based colors
     if (this.ColorStringFilterState) {
@@ -610,6 +657,19 @@ class UserspaceColorState {
     rvs: NodeRenderView[]
   }[] = []
   public rampTexture: Texture
+  public reset() {
+    this.groups = []
+  }
+}
+
+class UserMaterialState {
+  public groups: {
+    objectIds: string[]
+    nodes: TreeNode[]
+    rvs: NodeRenderView[]
+    material: SpeckleStandardMaterial
+  }[] = []
+
   public reset() {
     this.groups = []
   }

@@ -1,4 +1,4 @@
-import { Box3, WorldTree } from '@speckle/viewer'
+import { Box3 } from '@speckle/viewer'
 import { Vector3 } from '@speckle/viewer'
 import {
   CanonicalView,
@@ -11,6 +11,7 @@ import {
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
+import { DiffResult } from '@speckle/viewer'
 
 export default class Sandbox {
   private viewer: DebugViewer
@@ -111,7 +112,8 @@ export default class Sandbox {
         { title: 'General' },
         { title: 'Scene' },
         { title: 'Filtering' },
-        { title: 'Batches' }
+        { title: 'Batches' },
+        { title: 'Diff' }
       ]
     })
     this.properties = []
@@ -128,7 +130,7 @@ export default class Sandbox {
       this.removeViewControls()
       this.addViewControls()
       this.properties = this.viewer.getObjectProperties()
-      viewer.World.reduceWorld(WorldTree.getRenderTree(url).treeBounds)
+      viewer.World.reduceWorld(this.viewer.getWorldTree().getRenderTree(url).treeBounds)
     })
     viewer.on(ViewerEvent.UnloadAllComplete, (url: string) => {
       this.removeViewControls()
@@ -956,6 +958,48 @@ export default class Sandbox {
     //       .getRenderer()
     //       .setExplodeTime(Sandbox.batchesParams.explode)
     //   })
+  }
+
+  public makeDiffUI() {
+    const container = this.tabs.pages[4]
+    const diffButton = container.addButton({
+      title: 'Diff'
+    })
+    let diffResult: DiffResult = null
+    diffButton.on('click', async () => {
+      diffResult = await this.viewer.diff(
+        //building
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/bcf37136dea9fe9397cdfd84012f616a',
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/94af0a6b4eaa318647180f8c230cb867'
+        // cubes
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/d2510c59c203b73473f8bbfe637e0552',
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/1c327da824fdb04629eb48675101d7b7'
+        // sketchup
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/06bed1819e6c61d9df7196d424ab1eec',
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/9026f1d6495789b9eab31b5028c9a8ef'
+        //latest
+        'https://latest.speckle.dev/streams/cdbe82b016/objects/c14d1a33fd68323193813ec215737472',
+        'https://latest.speckle.dev/streams/cdbe82b016/objects/16676fc95a9ead877f6a825d9e28cbe8'
+      )
+    })
+    const unDiffButton = container.addButton({
+      title: 'Undiff'
+    })
+    unDiffButton.on('click', async () => {
+      this.viewer.undiff()
+    })
+
+    container
+      .addInput({ time: 0 }, 'time', {
+        label: 'Diff Time',
+        min: 0,
+        max: 1,
+        step: 0.1
+      })
+      .on('change', (value) => {
+        this.viewer.setDiffTime(diffResult, value.value)
+        this.viewer.requestRender()
+      })
   }
 
   private getBVHSize() {

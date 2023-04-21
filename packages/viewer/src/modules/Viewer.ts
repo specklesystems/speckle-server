@@ -6,7 +6,7 @@ import EventEmitter from './EventEmitter'
 import CameraHandler from './context/CameraHanlder'
 
 import SectionBox, { SectionBoxEvent } from './SectionBox'
-import { Clock, Texture } from 'three'
+import { Clock, DoubleSide, FrontSide, Texture } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
 import {
@@ -31,6 +31,7 @@ import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
+import { DiffResult, Differ } from './Differ'
 import { BatchObject } from './batching/BatchObject'
 
 export class Viewer extends EventEmitter implements IViewer {
@@ -48,6 +49,7 @@ export class Viewer extends EventEmitter implements IViewer {
   protected speckleRenderer: SpeckleRenderer
   private filteringManager: FilteringManager
   private propertyManager: PropertyManager
+  public differ: Differ
   /** Legacy viewer components (will revisit soon) */
   public sectionBox: SectionBox
   public cameraHandler: CameraHandler
@@ -103,7 +105,7 @@ export class Viewer extends EventEmitter implements IViewer {
     new Assets()
     this.filteringManager = new FilteringManager(this.speckleRenderer, this.tree)
     this.propertyManager = new PropertyManager()
-
+    this.differ = new Differ()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     // ;(window as any)._V = this // For debugging! ಠ_ಠ
 
@@ -309,7 +311,7 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public setUserObjectColors(
-    groups: [{ objectIds: string[]; color: string }]
+    groups: { objectIds: string[]; color: string }[]
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
       resolve(this.filteringManager.setUserObjectColors(groups))
@@ -538,6 +540,77 @@ export class Viewer extends EventEmitter implements IViewer {
         ;(this as EventEmitter).emit(ViewerEvent.UnloadAllComplete)
       }
     }
+  }
+
+  public async diff(
+    urlA: string,
+    urlB: string,
+    authToken?: string
+  ): Promise<DiffResult> {
+    const loadPromises = []
+    if (!this.tree.findId(urlA))
+      loadPromises.push(this.loadObjectAsync(urlA, authToken, undefined, 1))
+    if (!this.tree.findId(urlB))
+      loadPromises.push(this.loadObjectAsync(urlB, authToken, undefined, 1))
+    await Promise.all(loadPromises)
+
+    const diffResult = await this.differ.diff(this.tree, urlA, urlB)
+
+    const pipelineOptions = this.speckleRenderer.pipelineOptions
+    pipelineOptions.depthSide = FrontSide
+    this.speckleRenderer.pipelineOptions = pipelineOptions
+
+    this.differ.setDiffTime(0)
+
+    this.filteringManager.setUserMaterials([
+      {
+        objectIds: diffResult.added.map((value) => value.model.raw.id),
+        material: this.differ.addedMaterial
+      },
+      {
+        objectIds: diffResult.modified.map((value) => value[1].model.raw.id),
+        material: this.differ.changedNewMaterial
+      },
+      {
+        objectIds: diffResult.modified.map((value) => value[0].model.raw.id),
+        material: this.differ.changedOldMateria
+      },
+      {
+        objectIds: diffResult.removed.map((value) => value.model.raw.id),
+        material: this.differ.removedMaterial
+      }
+    ])
+
+    return Promise.resolve(diffResult)
+  }
+
+  public undiff() {
+    const pipelineOptions = this.speckleRenderer.pipelineOptions
+    pipelineOptions.depthSide = DoubleSide
+    this.speckleRenderer.pipelineOptions = pipelineOptions
+    this.filteringManager.removeUserMaterials()
+  }
+
+  public setDiffTime(diffResult: DiffResult, time: number) {
+    this.differ.setDiffTime(time)
+    this.filteringManager.setUserMaterials([
+      {
+        objectIds: diffResult.added.map((value) => value.model.raw.id),
+        material: this.differ.addedMaterial
+      },
+      {
+        objectIds: diffResult.modified.map((value) => value[1].model.raw.id),
+        material: this.differ.changedNewMaterial
+      },
+      {
+        objectIds: diffResult.modified.map((value) => value[0].model.raw.id),
+        material: this.differ.changedOldMateria
+      },
+      {
+        objectIds: diffResult.removed.map((value) => value.model.raw.id),
+        material: this.differ.removedMaterial
+      }
+    ])
   }
 
   public dispose() {
