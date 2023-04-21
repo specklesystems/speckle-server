@@ -3,6 +3,7 @@ import { ViewerEvent } from '../IViewer'
 import Converter from './converter/Converter'
 import EventEmitter from './EventEmitter'
 import Logger from 'js-logger'
+import { Viewer } from './Viewer'
 /**
  * Helper wrapper around the ObjectLoader class, with some built in assumptions.
  */
@@ -22,8 +23,8 @@ export default class ViewerObjectLoader {
     return this._objectUrl
   }
 
-  constructor(parentEmitter: EventEmitter, objectUrl, authToken, enableCaching) {
-    this.emiter = parentEmitter
+  constructor(parent: Viewer, objectUrl, authToken, enableCaching) {
+    this.emiter = parent
     this._objectUrl = objectUrl
     this.token = null
     try {
@@ -64,7 +65,7 @@ export default class ViewerObjectLoader {
       options: { enableCaching, customLogger: (Logger as any).log }
     })
 
-    this.converter = new Converter(this.loader)
+    this.converter = new Converter(this.loader, parent.getWorldTree())
 
     this.cancel = false
   }

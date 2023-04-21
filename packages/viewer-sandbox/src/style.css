@@ -23,6 +23,17 @@
   width: 100%;
 }
 
+#renderer0-controls:first-child {
+  pointer-events: auto;
+}
+#renderer1-controls:first-child {
+  pointer-events: auto;
+}
+
+canvas {
+  position: absolute;
+}
+
 .button {
   border: 0;
   line-height: 1.5;

@@ -14,7 +14,6 @@ import { Geometry } from '../converter/Geometry'
 import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
 import SpeckleMesh from '../objects/SpeckleMesh'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { Viewer } from '../Viewer'
 import {
   AllBatchUpdateRange,
   Batch,
@@ -22,30 +21,40 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
-import Logger from 'js-logger'
-import { GeometryConverter } from '../converter/GeometryConverter'
-import { WorldTree } from '../tree/WorldTree'
-import { SpeckleMeshBVH } from '../objects/SpeckleMeshBVH'
 import { ObjectLayers } from '../SpeckleRenderer'
+import { TransformStorage } from './Batcher'
+import { BatchObject } from './BatchObject'
+import { GeometryConverter } from '../converter/GeometryConverter'
 
 export default class MeshBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
+  private transformStorage: TransformStorage
   private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: SpeckleMesh
-  public boundsTree: SpeckleMeshBVH
-  public bounds: Box3 = new Box3()
+
   private gradientIndexBuffer: BufferAttribute
+
   private indexBuffer0: BufferAttribute
   private indexBuffer1: BufferAttribute
   private indexBufferIndex = 0
 
-  public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
+  public get bounds(): Box3 {
+    return this.mesh.BVH.getBoundingBox(new Box3())
+  }
+
+  public constructor(
+    id: string,
+    subtreeId: string,
+    renderViews: NodeRenderView[],
+    transformStorage: TransformStorage
+  ) {
     this.id = id
     this.subtreeId = subtreeId
     this.renderViews = renderViews
+    this.transformStorage = transformStorage
   }
 
   public get geometryType(): GeometryType {
@@ -111,6 +120,11 @@ export default class MeshBatch implements Batch {
   }
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
+    ranges.forEach((value: BatchUpdateRange) => {
+      if (value.material) {
+        value.material = this.mesh.getCachedMaterial(value.material)
+      }
+    })
     const materials = ranges.map((val) => val.material)
     const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
     if (!Array.isArray(this.mesh.material)) {
@@ -419,12 +433,17 @@ export default class MeshBatch implements Batch {
     const attributeCount = this.renderViews.flatMap(
       (val: NodeRenderView) => val.renderData.geometry.attributes.POSITION
     ).length
+    const hasVertexColors =
+      this.renderViews[0].renderData.geometry.attributes.COLOR !== undefined
     const indices = new Uint32Array(indicesCount)
     const position = new Float64Array(attributeCount)
-    const color = new Float32Array(this.batchMaterial.vertexColors ? attributeCount : 0)
+    const color = new Float32Array(hasVertexColors ? attributeCount : 0)
     color.fill(1)
+    const batchIndices = new Float32Array(attributeCount / 3)
+
     let offset = 0
     let arrayOffset = 0
+    const batchObjects = []
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
       indices.set(
@@ -433,6 +452,11 @@ export default class MeshBatch implements Batch {
       )
       position.set(geometry.attributes.POSITION, offset)
       if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
+      batchIndices.fill(
+        k,
+        offset / 3,
+        offset / 3 + geometry.attributes.POSITION.length / 3
+      )
       this.renderViews[k].setBatchData(
         this.id,
         arrayOffset,
@@ -441,78 +465,51 @@ export default class MeshBatch implements Batch {
         offset / 3 + geometry.attributes.POSITION.length / 3
       )
 
+      const batchObject = new BatchObject(this.renderViews[k], k)
+      batchObject.buildBVH()
+      batchObjects.push(batchObject)
+
       offset += geometry.attributes.POSITION.length
       arrayOffset += geometry.attributes.INDEX.length
-
-      if (!GeometryConverter.keepGeometryData) {
-        this.renderViews[k].disposeGeometry()
-      }
     }
 
     this.makeMeshGeometry(
       indices,
       position,
-      this.batchMaterial.vertexColors ? color : null
+      batchIndices,
+      hasVertexColors ? color : null
     )
 
-    this.boundsTree = Geometry.buildBVH(
-      indices,
-      position,
-      WorldTree.getRenderTree(this.subtreeId).treeBounds
-    )
-    this.boundsTree.getBoundingBox(this.bounds)
-    this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial, this.boundsTree)
+    this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial)
+    this.mesh.setBatchObjects(batchObjects, this.transformStorage)
+    this.mesh.buildBVH()
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
+    this.mesh.frustumCulled = false
+
+    if (!GeometryConverter.keepGeometryData) {
+      batchObjects.forEach((element: BatchObject) => {
+        element.renderView.disposeGeometry()
+      })
+    }
   }
 
   public getRenderView(index: number): NodeRenderView {
-    for (let k = 0; k < this.renderViews.length; k++) {
-      // if (
-      //   index * 3 >= this.renderViews[k].batchStart &&
-      //   index * 3 < this.renderViews[k].batchEnd
-      // ) {
-      //   return this.renderViews[k]
-      // }
-      const vertIndex = this.boundsTree.geometry.index.array[index * 3]
-      if (
-        vertIndex >= this.renderViews[k].vertStart &&
-        vertIndex < this.renderViews[k].vertEnd
-      )
-        return this.renderViews[k]
-    }
+    index
+    console.warn('Deprecated! Do not call this anymore')
+    return null
   }
 
   public getMaterialAtIndex(index: number): Material {
-    for (let k = 0; k < this.renderViews.length; k++) {
-      const vertIndex = this.boundsTree.geometry.index.array[index * 3]
-      if (
-        vertIndex >= this.renderViews[k].vertStart &&
-        vertIndex < this.renderViews[k].vertEnd
-      ) {
-        const rv = this.renderViews[k]
-        const group = this.geometry.groups.find((value) => {
-          return (
-            rv.batchStart >= value.start &&
-            rv.batchStart + rv.batchCount <= value.count + value.start
-          )
-        })
-        if (!Array.isArray(this.mesh.material)) {
-          return this.mesh.material
-        } else {
-          if (!group) {
-            Logger.warn(`Malformed material index!`)
-            return null
-          }
-          return this.mesh.material[group.materialIndex]
-        }
-      }
-    }
+    index
+    console.warn('Deprecated! Do not call this anymore')
+    return null
   }
 
   private makeMeshGeometry(
     indices: Uint32Array | Uint16Array,
     position: Float64Array,
+    batchIndices: Float32Array,
     color?: Float32Array
   ): BufferGeometry {
     this.geometry = new BufferGeometry()
@@ -533,6 +530,13 @@ export default class MeshBatch implements Batch {
       this.geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
     }
 
+    if (batchIndices) {
+      this.geometry.setAttribute(
+        'objIndex',
+        new Float32BufferAttribute(batchIndices, 1)
+      )
+    }
+
     if (color) {
       this.geometry.setAttribute('color', new Float32BufferAttribute(color, 3))
     }
@@ -547,8 +551,6 @@ export default class MeshBatch implements Batch {
     Geometry.computeVertexNormals(this.geometry, position)
     this.geometry.computeBoundingSphere()
     this.geometry.computeBoundingBox()
-
-    Viewer.World.expandWorld(this.geometry.boundingBox)
 
     Geometry.updateRTEGeometry(this.geometry, position)
 

@@ -13,12 +13,6 @@ import Logger from 'js-logger'
 
 export class Assets {
   private static _cache: { [name: string]: Texture } = {}
-  private static pmremGenerator: PMREMGenerator
-
-  public constructor(renderer: WebGLRenderer) {
-    Assets.pmremGenerator = new PMREMGenerator(renderer)
-    Assets.pmremGenerator.compileEquirectangularShader()
-  }
 
   private static getLoader(src: string, assetType: AssetType): TextureLoader {
     if (assetType === undefined) assetType = src.split('.').pop() as AssetType
@@ -36,7 +30,10 @@ export class Assets {
     }
   }
 
-  public static getEnvironment(asset: Asset | string): Promise<Texture> {
+  public static getEnvironment(
+    asset: Asset | string,
+    renderer: WebGLRenderer
+  ): Promise<Texture> {
     let srcUrl: string = null
     let assetType: AssetType = undefined
     if ((<Asset>asset).src) {
@@ -55,9 +52,12 @@ export class Assets {
         loader.load(
           srcUrl,
           (texture) => {
-            const pmremRT = this.pmremGenerator.fromEquirectangular(texture)
+            const generator = new PMREMGenerator(renderer)
+            generator.compileEquirectangularShader()
+            const pmremRT = generator.fromEquirectangular(texture)
             this._cache[srcUrl] = pmremRT.texture
             texture.dispose()
+            generator.dispose()
             resolve(this._cache[srcUrl])
           },
           undefined,

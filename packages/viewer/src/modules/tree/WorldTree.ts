@@ -15,56 +15,42 @@ export interface NodeData {
   children: TreeNode[]
   nestedNodes: TreeNode[]
   atomic: boolean
-  /**
-   * Keeps track wether this the root commit object or not.
-   * TODO: Ask Alex wether this is somehow avoidable.
-   */
-  root: boolean
   renderView?: NodeRenderView
 }
 
 export class WorldTree {
-  private static instance: WorldTree
-  private static renderTreeInstances: { [id: string]: RenderTree } = {}
+  private renderTreeInstances: { [id: string]: RenderTree } = {}
   private readonly supressWarnings = true
+  public static readonly ROOT_ID = 'ROOT'
 
-  private constructor() {
+  public constructor() {
     this.tree = new TreeModel()
+    this._root = this.parse({
+      id: WorldTree.ROOT_ID,
+      raw: {},
+      atomic: true,
+      children: [],
+      renderView: null
+    })
   }
 
-  public static getInstance(): WorldTree {
-    if (!WorldTree.instance) {
-      WorldTree.instance = new WorldTree()
-      WorldTree.instance._root = WorldTree.getInstance().parse({
-        id: 'MOTHERSHIP',
-        raw: {},
-        atomic: true,
-        children: [],
-        renderView: null
-      })
-    }
-
-    return WorldTree.instance
-  }
-
-  public static getRenderTree(subtreeId?: string): RenderTree {
-    if (!WorldTree.getInstance()._root) {
+  public getRenderTree(subtreeId?: string): RenderTree {
+    if (!this._root) {
       console.error(`WorldTree not initialised`)
       return null
     }
 
-    const id = subtreeId ? subtreeId : WorldTree.getInstance().root.model.id
-    if (!WorldTree.renderTreeInstances[id]) {
-      WorldTree.renderTreeInstances[id] = new RenderTree(
-        WorldTree.getInstance().findId(id)
-      )
+    const id = subtreeId ? subtreeId : this.root.model.id
+
+    if (!this.renderTreeInstances[id]) {
+      this.renderTreeInstances[id] = new RenderTree(this, this.findId(id))
     }
 
-    return WorldTree.renderTreeInstances[id]
+    return this.renderTreeInstances[id]
   }
 
-  public static getDataTree(): DataTree {
-    return DataTreeBuilder.build(WorldTree.instance._root)
+  public getDataTree(): DataTree {
+    return DataTreeBuilder.build(this)
   }
 
   private tree: TreeModel
@@ -72,6 +58,10 @@ export class WorldTree {
 
   public get root(): TreeNode {
     return this._root
+  }
+
+  public isRoot(node: TreeNode) {
+    return node === this._root
   }
 
   public parse(model) {
@@ -155,19 +145,19 @@ export class WorldTree {
 
   public purge(subtreeId?: string) {
     if (subtreeId) {
-      delete WorldTree.renderTreeInstances[subtreeId]
+      delete this.renderTreeInstances[subtreeId]
       this.removeNode(this.findId(subtreeId))
       return
     }
 
-    Object.keys(WorldTree.renderTreeInstances).forEach(
-      (key) => delete WorldTree.renderTreeInstances[key]
+    Object.keys(this.renderTreeInstances).forEach(
+      (key) => delete this.renderTreeInstances[key]
     )
     this._root.drop()
     this._root.children.length = 0
     this.tree = new TreeModel()
-    this._root = WorldTree.getInstance().parse({
-      id: 'MOTHERSHIP',
+    this._root = this.tree.parse({
+      id: WorldTree.ROOT_ID,
       raw: {},
       atomic: true,
       children: []

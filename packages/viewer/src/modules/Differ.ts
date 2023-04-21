@@ -15,10 +15,10 @@ export interface DiffResult {
 }
 
 export class Differ {
-  private addedMaterial: SpeckleStandardMaterial = null
-  private changedNewMaterial: SpeckleStandardMaterial = null
-  private changedOldMateria: SpeckleStandardMaterial = null
-  private removedMaterial: SpeckleStandardMaterial = null
+  public addedMaterial: SpeckleStandardMaterial = null
+  public changedNewMaterial: SpeckleStandardMaterial = null
+  public changedOldMateria: SpeckleStandardMaterial = null
+  public removedMaterial: SpeckleStandardMaterial = null
 
   public constructor() {
     this.addedMaterial = new SpeckleStandardMaterial(
@@ -90,7 +90,7 @@ export class Differ {
     this.removedMaterial.color.convertSRGBToLinear()
   }
 
-  public diff(urlA: string, urlB: string): Promise<DiffResult> {
+  public diff(tree: WorldTree, urlA: string, urlB: string): Promise<DiffResult> {
     const modifiedNew: Array<SpeckleObject> = []
     const modifiedOld: Array<SpeckleObject> = []
 
@@ -101,10 +101,10 @@ export class Differ {
       modified: []
     }
 
-    const renderTreeA = WorldTree.getRenderTree(urlA)
-    const renderTreeB = WorldTree.getRenderTree(urlB)
-    const rootA = WorldTree.getInstance().findId(urlA)
-    const rootB = WorldTree.getInstance().findId(urlB)
+    const renderTreeA = tree.getRenderTree(urlA)
+    const renderTreeB = tree.getRenderTree(urlB)
+    const rootA = tree.findId(urlA)
+    const rootB = tree.findId(urlB)
     const rvsA = renderTreeA.getAtomicNodes(SpeckleType.Mesh)
     const rvsB = renderTreeB.getAtomicNodes(SpeckleType.Mesh)
 
@@ -146,6 +146,7 @@ export class Differ {
     }
 
     modifiedOld.forEach((value, index) => {
+      value
       diffResult.modified.push([modifiedOld[index], modifiedNew[index]])
     })
 
