@@ -3,6 +3,7 @@ export type Tag = {
   codeinjection_head: string
   feature_image: string
   slug: string
+  url: string
 }
 
 export type ConnectorTag = {

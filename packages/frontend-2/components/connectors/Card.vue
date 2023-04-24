@@ -49,7 +49,9 @@
           <FormButton v-if="tag.directDownload" size="xs" text>
             <CloudArrowDownIcon class="w-4 h-4" />
           </FormButton>
-          <FormButton size="sm">Tutorials & Docs</FormButton>
+          <FormButton size="sm" :to="tag.url" target="_blank">
+            Tutorials & Docs
+          </FormButton>
         </div>
       </div>
       <!-- <div>{{ tag.communityProvider }}, {{ tag.isCommunity }}</div> -->

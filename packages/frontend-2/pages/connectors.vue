@@ -8,16 +8,31 @@
       <div>
         <h5 class="h4 font-bold">Connectors</h5>
         <!-- <p>Start scaffolding your interoperability and automation workflows.</p> -->
+        <div class="text-xs text-foreground-2 max-w- max-w-sm">
+          Most of our connectors are available through Speckle Manager. You can also
+          direct download the individual installers below.
+        </div>
       </div>
       <div class="pl-4 flex space-x-2 grow">
         <!-- <FormButton color="card">Show Community Connectors</FormButton> -->
         <div class="grow"></div>
         <div class="flex space-x-2 items-center">
-          <div class="text-xs text-foreground-2 max-w- max-w-sm">
+          <!-- <div class="text-xs text-foreground-2 max-w- max-w-sm">
             Most of our connectors are available through Speckle Manager. You can also
             direct download the individual installers below.
-          </div>
-          <FormButton size="lg" class="shadow-md">Download Manager</FormButton>
+          </div> -->
+          <FormButton
+            size="lg"
+            class="shadow-md"
+            @click="showManagerDownloadDialog = true"
+          >
+            Download Manager
+          </FormButton>
+          <OnboardingDialogManager
+            v-show="showManagerDownloadDialog"
+            @done="showManagerDownloadDialog = false"
+            @cancel="showManagerDownloadDialog = false"
+          ></OnboardingDialogManager>
         </div>
       </div>
     </div>
@@ -57,6 +72,8 @@ const response = await useFetch(
 )
 
 // useLazyFetch
+
+const showManagerDownloadDialog = ref(false)
 
 const spacesEndpoint = 'https://releases.speckle.dev'
 
