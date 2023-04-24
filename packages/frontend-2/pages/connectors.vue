@@ -53,16 +53,16 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+// import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ConnectorTag, ConnectorVersion, Tag } from '~~/lib/connectors'
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
 definePageMeta({
   title: 'Speckle Connectors'
 })
 
-const { isLoggedIn } = useActiveUser()
+// const { isLoggedIn } = useActiveUser()
 
-const response = await useLazyFetch(
+const response = await useFetch(
   'https://speckle.systems/ghost/api/v3/content/tags?key=c895981da23dbb5c87ee7192e2&limit=all'
 )
 

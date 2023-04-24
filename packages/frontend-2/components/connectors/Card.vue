@@ -73,7 +73,7 @@ import {
   GlobeEuropeAfricaIcon,
   CloudArrowDownIcon
 } from '@heroicons/vue/24/solid'
-import { ConnectorTag, Tag } from '~~/lib/connectors'
+import { ConnectorTag } from '~~/lib/connectors'
 
 const props = defineProps<{
   tag: ConnectorTag
