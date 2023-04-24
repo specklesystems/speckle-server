@@ -46,9 +46,16 @@
         <div
           class="opacity-0 group-hover:opacity-100 transition flex items-center space-x-1"
         >
-          <FormButton v-if="tag.directDownload" size="xs" text>
+          <FormButton
+            v-if="tag.directDownload"
+            v-tippy="'Direct download'"
+            size="xs"
+            text
+            @click="dialogOpen = true"
+          >
             <CloudArrowDownIcon class="w-4 h-4" />
           </FormButton>
+          <ConnectorsVersionsDownloadDialog v-model:open="dialogOpen" :tag="tag" />
           <FormButton size="sm" :to="tag.url" target="_blank">
             Tutorials & Docs
           </FormButton>
@@ -71,6 +78,8 @@ import { ConnectorTag, Tag } from '~~/lib/connectors'
 const props = defineProps<{
   tag: ConnectorTag
 }>()
+
+const dialogOpen = ref(false)
 
 const lastUpdated = computed(() =>
   props.tag.versions?.length > 0

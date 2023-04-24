@@ -112,6 +112,7 @@ for (const tag of relevantTags) {
           new Date(b.Date).getTime() - new Date(a.Date).getTime()
       )
       connectorTag.versions = versions && versions.length > 0 ? versions : []
+      console.log(connectorTag.versions)
       connectorTag.stable = versions.find((x) => !x.Prerelease)?.Number
     } else {
       connectorTag.directDownload = false
@@ -135,7 +136,7 @@ const searchString = ref<string>()
 const searchResults = computed(() => {
   if (!searchString.value) return connectorTags.value
   return connectorTags.value.filter((t) =>
-    t.name.toLowerCase().includes(searchString.value?.toLowerCase())
+    t.name.toLowerCase().includes(searchString.value?.toLowerCase() as string)
   )
 })
 </script>
