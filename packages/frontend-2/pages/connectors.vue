@@ -8,7 +8,7 @@
       <div>
         <h5 class="h4 font-bold">Connectors</h5>
         <!-- <p>Start scaffolding your interoperability and automation workflows.</p> -->
-        <div class="text-xs text-foreground-2 max-w- max-w-sm">
+        <div class="text-sm text-foreground-2 max-w- max-w-sm">
           Most of our connectors are available through Speckle Manager. You can also
           direct download the individual installers below.
         </div>
@@ -54,6 +54,12 @@
       <div v-for="(tag, index) in searchResults" :key="index">
         <ConnectorsCard :tag="tag" />
       </div>
+    </div>
+    <div v-if="searchResults.length === 0" class="w-full">
+      No connector found.d Feel free to ask for it on our
+      <FormButton link to="https://speckle.community/" target="_blank">
+        community forum!
+      </FormButton>
     </div>
   </div>
 </template>

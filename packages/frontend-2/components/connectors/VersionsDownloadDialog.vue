@@ -1,14 +1,29 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md">
     <div class="flex flex-col space-y-2">
-      <div class="h4 font-bold">
-        {{ tag.name }}
+      <div class="h4 font-bold flex items-center space-x-2">
+        <img :src="tag.feature_image" alt="featured image" class="w-12" />
+        <span>{{ tag.name }}</span>
+      </div>
+      <div class="text-foreground-2">
+        {{ tag.description }}
       </div>
       <div class="flex flex-col space-y-2">
-        <FormButton v-if="latestStable" full-width>
-          Download Latest Stable ({{ latestStable.Number }})
+        <FormButton
+          v-if="latestStableVersions.win"
+          full-width
+          @click="downloadVersion(latestStableVersions.win as ConnectorVersion)"
+        >
+          Download Latest Stable ({{ latestStableVersions.win.Number }}) Windows
         </FormButton>
-        <!-- <FormButton full-width text size="sm">Download Latest Pre-release</FormButton> -->
+        <FormButton
+          v-if="latestStableVersions.mac"
+          full-width
+          text
+          @click="downloadVersion(latestStableVersions.mac as ConnectorVersion)"
+        >
+          Download Latest Stable ({{ latestStableVersions.mac.Number }}) Mac OS
+        </FormButton>
       </div>
       <div class="h6 font-bold">All releases</div>
       <div class="h-40 simple-scrollbar overflow-y-scroll space-y-2">
@@ -24,8 +39,8 @@
             </span>
           </div>
           <div class="px-4">
-            <FormButton size="sm" text>
-              <span class="text-foreground-2 text-xs font-bold">
+            <FormButton size="sm" text @click="downloadVersion(version)">
+              <span class="text-xs font-bold">
                 {{ version.Os === 0 ? 'Windows' : 'MacOS' }}
               </span>
               <CloudArrowDownIcon class="w-4 h-4" />
@@ -52,8 +67,13 @@ const props = defineProps<{
 
 const versions = computed(() => props.tag.versions)
 
-const latestStable = computed(() => {
-  return versions.value.find((v) => !v.Prerelease)
+const latestStableVersions = computed(() => {
+  const latest = versions.value.find((v) => !v.Prerelease)
+  const allLatest = versions.value.filter((v) => v.Number === latest?.Number)
+  return {
+    win: allLatest.find((v) => v.Os === 0),
+    mac: allLatest.find((v) => v.Os === 1)
+  }
 })
 
 const isOpen = computed({
