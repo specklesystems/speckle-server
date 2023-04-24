@@ -93,7 +93,9 @@
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="version">
-            <div class="px-2 py-3 text-xs text-foreground-2">Version {{ version }}</div>
+            <div class="px-2 pb-1 text-tiny text-foreground-2">
+              Version {{ version }}
+            </div>
           </MenuItem>
         </MenuItems>
       </Transition>

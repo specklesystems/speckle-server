@@ -39,7 +39,7 @@
         />
       </div>
     </div>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
       <div v-for="(tag, index) in searchResults" :key="index">
         <ConnectorsCard :tag="tag" />
       </div>
@@ -62,7 +62,7 @@ definePageMeta({
 
 const { isLoggedIn } = useActiveUser()
 
-const response = await useFetch(
+const response = await useLazyFetch(
   'https://speckle.systems/ghost/api/v3/content/tags?key=c895981da23dbb5c87ee7192e2&limit=all'
 )
 
