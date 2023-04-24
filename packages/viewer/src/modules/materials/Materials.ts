@@ -56,6 +56,8 @@ export default class Materials {
   private pointOverlayMaterial: Material = null
   private pointCloudOverlayMaterial: Material = null
 
+  private defaultGradientTextureData: ImageData = null
+
   public static renderMaterialFromNode(node: TreeNode): RenderMaterial {
     if (!node) return null
     let renderMaterial: RenderMaterial = null
@@ -504,6 +506,7 @@ export default class Materials {
     await this.createLineDefaultMaterials()
     await this.createDefaultPointMaterials()
     await this.createDefaultNullMaterials()
+    this.defaultGradientTextureData = await Assets.getTextureData(defaultGradient)
   }
 
   private makeMeshMaterial(materialData: RenderMaterial): Material {
@@ -670,7 +673,7 @@ export default class Materials {
           ? this.meshTransparentGradientMaterial
           : this.meshGradientMaterial
       case GeometryType.LINE:
-        return this.lineGhostMaterial
+        return this.lineColoredMaterial
       case GeometryType.POINT:
         return this.pointGhostMaterial
       case GeometryType.POINT_CLOUD:
@@ -832,6 +835,35 @@ export default class Materials {
             filterMaterial.rampIndex !== undefined
               ? filterMaterial.rampIndex
               : undefined,
+          rampIndexColor:
+            filterMaterial.rampIndexColor !== undefined
+              ? filterMaterial.rampIndexColor
+              : new Color()
+                  .setRGB(
+                    this.defaultGradientTextureData.data[
+                      Math.floor(
+                        filterMaterial.rampIndex *
+                          (this.defaultGradientTextureData.width - 1)
+                      ) * 4
+                    ] / 255,
+                    this.defaultGradientTextureData.data[
+                      Math.floor(
+                        filterMaterial.rampIndex *
+                          (this.defaultGradientTextureData.width - 1)
+                      ) *
+                        4 +
+                        1
+                    ] / 255,
+                    this.defaultGradientTextureData.data[
+                      Math.floor(
+                        filterMaterial.rampIndex *
+                          (this.defaultGradientTextureData.width - 1)
+                      ) *
+                        4 +
+                        2
+                    ] / 255
+                  )
+                  .convertSRGBToLinear(),
           rampTexture: filterMaterial.rampTexture
             ? filterMaterial.rampTexture
             : this.meshGradientMaterial.userData.gradientRamp.value,
