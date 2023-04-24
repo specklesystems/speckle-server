@@ -19,6 +19,19 @@
         <MenuItems
           class="absolute right-0 md:right-4 top-14 md:top-16 w-full md:w-64 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
+          <div class="px-1 my-1">
+            <MenuItem v-slot="{ active }">
+              <FormButton
+                full-width
+                color="card"
+                class="flex justify-between"
+                @click="goToConnectors()"
+              >
+                <span>Speckle Connectors</span>
+                <CloudArrowDownIcon class="w-5 h-5 text-foreground" />
+              </FormButton>
+            </MenuItem>
+          </div>
           <MenuItem v-if="activeUser" v-slot="{ active }">
             <NuxtLink
               :class="[
@@ -31,18 +44,7 @@
               <UserAvatar :user="activeUser" size="sm" class="mr-1" />
             </NuxtLink>
           </MenuItem>
-          <MenuItem v-slot="{ active }">
-            <NuxtLink
-              :class="[
-                active ? 'bg-foundation-focus' : '',
-                'flex items-center justify-between px-2 py-3 text-sm text-primary cursor-pointer transition'
-              ]"
-              @click="goToConnectors()"
-            >
-              Connectors
-              <CloudArrowDownIcon class="w-5 h-5 mr-2 text-primary" />
-            </NuxtLink>
-          </MenuItem>
+
           <MenuItem v-slot="{ active }">
             <NuxtLink
               :class="[

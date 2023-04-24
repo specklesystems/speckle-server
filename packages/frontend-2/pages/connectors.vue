@@ -4,8 +4,8 @@
       <HeaderNavLink :to="'/connectors'" name="Connectors"></HeaderNavLink>
     </Portal>
 
-    <div class="flex mb-4 items-center justify-between">
-      <div>
+    <div class="flex flex-col md:flex-row space-y-4 mb-4 items-center justify-between">
+      <div class="w-full">
         <h5 class="h4 font-bold">Connectors</h5>
         <!-- <p>Start scaffolding your interoperability and automation workflows.</p> -->
         <div class="text-sm text-foreground-2 max-w- max-w-sm">
