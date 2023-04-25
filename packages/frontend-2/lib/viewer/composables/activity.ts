@@ -81,7 +81,7 @@ function useCollectSelection() {
       parseFloat(target.x.toFixed(5)),
       parseFloat(target.y.toFixed(5)),
       parseFloat(target.z.toFixed(5)),
-      !viewerState.ui.camera.isPerspectiveProjection.value ? 1 : 0,
+      viewerState.ui.camera.isOrthoProjection.value ? 1 : 0,
       get(controls, '_zoom') // kinda hacky, _zoom is a protected prop
     ]
 

@@ -102,12 +102,11 @@ const hideOrShowSelection = () => {
 }
 
 const isolateOrUnisolateSelection = () => {
-  if (!isIsolated.value) {
+  if (isIsolated.value) {
+    unIsolateObjects(allTargetIds.value)
+  } else {
     isolateObjects(allTargetIds.value)
-    return
   }
-
-  unIsolateObjects(allTargetIds.value)
 }
 
 onKeyStroke('Escape', () => {

@@ -228,7 +228,7 @@ export type InjectableViewerState = Readonly<{
     camera: {
       position: Ref<Vector3>
       target: Ref<Vector3>
-      isPerspectiveProjection: Ref<boolean>
+      isOrthoProjection: Ref<boolean>
     }
     sectionBox: Ref<Nullable<Box3>>
     highlightedObjectIds: Ref<string[]>
@@ -826,7 +826,7 @@ function setupInterfaceState(
       camera: {
         position: ref(new Vector3()),
         target: ref(new Vector3()),
-        isPerspectiveProjection: ref(false as boolean)
+        isOrthoProjection: ref(false as boolean)
       },
       sectionBox: ref(null as Nullable<Box3>),
       filters: {

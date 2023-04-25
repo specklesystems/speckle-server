@@ -55,10 +55,10 @@
           v-tippy="'Projection (p)'"
           flat
           secondary
-          :active="isPerspectiveProjection"
+          :active="isOrthoProjection"
           @click="toggleProjection()"
         >
-          <IconPerspective v-if="!isPerspectiveProjection" class="h-4 w-4" />
+          <IconPerspective v-if="isOrthoProjection" class="h-4 w-4" />
           <IconPerspectiveMore v-else class="h-4 w-4" />
         </ViewerControlsButtonToggle>
 
@@ -129,7 +129,7 @@ import {
 const {
   zoomExtentsOrSelection,
   toggleProjection,
-  camera: { isPerspectiveProjection }
+  camera: { isOrthoProjection }
 } = useCameraUtilities()
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 

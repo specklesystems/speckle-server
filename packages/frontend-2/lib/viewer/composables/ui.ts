@@ -74,7 +74,7 @@ export function useCameraUtilities() {
   }
 
   const toggleProjection = () => {
-    camera.isPerspectiveProjection.value = !camera.isPerspectiveProjection.value
+    camera.isOrthoProjection.value = !camera.isOrthoProjection.value
   }
 
   return { zoomExtentsOrSelection, toggleProjection, camera, truck, setView, zoom }
@@ -121,7 +121,7 @@ export function useFilterUtilities() {
     filters.isolatedObjectIds.value = []
     filters.propertyFilter.filter.value = null
     filters.propertyFilter.isApplied.value = false
-    filters.selectedObjects.value = []
+    // filters.selectedObjects.value = []
   }
 
   return {

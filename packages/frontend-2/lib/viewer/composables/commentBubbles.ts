@@ -96,16 +96,16 @@ export function useViewerNewThreadBubble(params: {
   }
 
   useSelectionEvents({
-    singleClickCallback: (event) => {
+    singleClickCallback: (_event, { firstVisibleSelectionHit }) => {
       if (block?.value) return
 
       buttonState.value.isExpanded = false
-      if (!event || !event.hits.length) {
+      if (!firstVisibleSelectionHit) {
         closeNewThread()
         return
       }
 
-      buttonState.value.clickLocation = event.hits[0].point.clone()
+      buttonState.value.clickLocation = firstVisibleSelectionHit.point.clone()
       buttonState.value.isVisible = true
       updatePositions()
     }

@@ -1,11 +1,42 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   InitialStateWithRequestAndResponse,
+  InjectableViewerState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
 import { debounce, isArray, throttle } from 'lodash-es'
 import { MaybeAsync, Nullable } from '@speckle/shared'
+
+function getFirstVisibleSelectionHit(
+  { hits }: SelectionEvent,
+  state: Pick<InjectableViewerState, 'viewer'>
+) {
+  const {
+    viewer: {
+      metadata: { filteringState }
+    }
+  } = state
+
+  const hasHiddenObjects = (filteringState.value?.hiddenObjects || []).length !== 0
+  const hasIsolatedObjects =
+    !!filteringState.value?.isolatedObjects &&
+    filteringState.value?.isolatedObjects.length !== 0
+
+  for (const hit of hits) {
+    if (hasHiddenObjects) {
+      if (!filteringState.value?.hiddenObjects?.includes(hit.object.id as string)) {
+        return hit
+      }
+    } else if (hasIsolatedObjects) {
+      if (filteringState.value.isolatedObjects?.includes(hit.object.id as string))
+        return hit
+    } else {
+      return hit
+    }
+  }
+  return null
+}
 
 export function useViewerEventListener<A = any>(
   name: ViewerEvent | ViewerEvent[],
@@ -102,8 +133,14 @@ export function useViewerCameraControlEndTracker(callback: () => void) {
 
 export function useSelectionEvents(
   params: {
-    singleClickCallback?: (event: Nullable<SelectionEvent>) => void
-    doubleClickCallback?: (event: Nullable<SelectionEvent>) => void
+    singleClickCallback?: (
+      event: Nullable<SelectionEvent>,
+      extra: { firstVisibleSelectionHit: Nullable<SelectionEvent['hits'][0]> }
+    ) => void
+    doubleClickCallback?: (
+      event: Nullable<SelectionEvent>,
+      extra: { firstVisibleSelectionHit: Nullable<SelectionEvent['hits'][0]> }
+    ) => void
   },
   options?: Partial<{
     state: InitialStateWithRequestAndResponse
@@ -112,16 +149,27 @@ export function useSelectionEvents(
 ) {
   if (process.server) return
   const { singleClickCallback, doubleClickCallback } = params
+  const state = options?.state || useInjectedViewerState()
   const {
     viewer: { instance }
-  } = options?.state || useInjectedViewerState()
+  } = state
   const { debounceWait = 50 } = options || {}
 
   const debouncedSingleClickCallback = singleClickCallback
-    ? debounce(singleClickCallback, debounceWait)
+    ? debounce((event: Nullable<SelectionEvent>) => {
+        const firstVisibleSelectionHit = event
+          ? getFirstVisibleSelectionHit(event, state)
+          : null
+        return singleClickCallback(event, { firstVisibleSelectionHit })
+      }, debounceWait)
     : undefined
   const debouncedDoubleClickCallback = doubleClickCallback
-    ? debounce(doubleClickCallback, debounceWait)
+    ? debounce((event: Nullable<SelectionEvent>) => {
+        const firstVisibleSelectionHit = event
+          ? getFirstVisibleSelectionHit(event, state)
+          : null
+        return doubleClickCallback(event, { firstVisibleSelectionHit })
+      }, debounceWait)
     : undefined
 
   onMounted(() => {

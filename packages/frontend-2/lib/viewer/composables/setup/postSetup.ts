@@ -30,7 +30,7 @@ import {
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
-import { PerspectiveCamera, Vector3 } from 'three'
+import { Vector3, OrthographicCamera } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 
 function useViewerIsBusyEventHandler() {
@@ -216,11 +216,7 @@ function useViewerSubscriptionEventTracker() {
 
 /**
  * TODO: TWO WAY BINDING
- * - Weird camera zooming/positioning issue
- *  - Zooms out slowly on load
- *  - When client side routing to another model, the position/orientation/zoom seems off
  * - Need to get rid of all direct viewer instance usages
- *  - so that we only interact with state abstraction
  *  - and possibly don't even need current FilteringState
  */
 
@@ -263,7 +259,7 @@ export function useViewerCameraIntegration() {
   const {
     viewer: { instance },
     ui: {
-      camera: { isPerspectiveProjection, position, target }
+      camera: { isOrthoProjection, position, target }
     }
   } = useInjectedViewerState()
 
@@ -292,17 +288,17 @@ export function useViewerCameraIntegration() {
   useViewerCameraTracker(
     () => {
       const activeCam = instance.cameraHandler.activeCam
-      const isPerspective = activeCam.camera instanceof PerspectiveCamera
+      const isOrtho = activeCam.camera instanceof OrthographicCamera
 
-      if (isPerspectiveProjection.value !== isPerspective) {
-        isPerspectiveProjection.value = isPerspective
+      if (isOrthoProjection.value !== isOrtho) {
+        isOrthoProjection.value = isOrtho
       }
     },
     { throttleWait: 500 }
   )
 
   // state -> viewer
-  watch(isPerspectiveProjection, (newVal, oldVal) => {
+  watch(isOrthoProjection, (newVal, oldVal) => {
     if (!!newVal === !!oldVal) return
 
     if (newVal) {
@@ -346,33 +342,29 @@ export function useViewerFiltersIntegration() {
 
   const stateKey = 'default'
 
-  // // viewer -> state
+  // TODO: Hard to get working at this point in time, because the FilteringManager
+  // doesn't fully support this (strange bugs arise with isolate after hide not working etc.)
+  // viewer -> state
   // useViewerEventListener(ViewerEvent.FilteringStateSet, (state: FilteringState) => {
-  //   const dbg = JSON.stringify({
-  //     viewerIsolated: state.isolatedObjects,
-  //     isolated: filters.isolatedObjectIds.value,
-  //     viewerHidden: state.hiddenObjects,
-  //     hidden: filters.hiddenObjectIds,
-  //     viewerFilterKey: state.activePropFilterKey,
-  //     currentFilterKey: filters.propertyFilter.filter.value?.key
-  //   })
-  //   let updatesMade = false
+  //   // we do this weird stuff cause a change to filters might trigger another FilteringStateSet event
+  //   // with different values, but once it finishes, the old FilteringStateSet event handler will continue with the old
+  //   // data and possibly break things
+  //   latestState = state
+  //   const getLatestState = () => latestState || state
 
-  //   const viewerIsolated = state.isolatedObjects || []
+  //   const viewerIsolated = getLatestState().isolatedObjects || []
   //   const isolated = filters.isolatedObjectIds.value
   //   if (!arraysEqual(viewerIsolated, isolated)) {
   //     filters.isolatedObjectIds.value = viewerIsolated.slice()
-  //     updatesMade = true
   //   }
 
-  //   const viewerHidden = state.hiddenObjects || []
+  //   const viewerHidden = getLatestState().hiddenObjects || []
   //   const hidden = filters.hiddenObjectIds.value
   //   if (!arraysEqual(viewerHidden, hidden)) {
   //     filters.hiddenObjectIds.value = viewerHidden.slice()
-  //     updatesMade = true
   //   }
 
-  //   const viewerFilterKey = state.activePropFilterKey
+  //   const viewerFilterKey = getLatestState().activePropFilterKey
   //   const currentFilterKey = filters.propertyFilter.filter.value?.key
   //   if (viewerFilterKey !== currentFilterKey) {
   //     const property = (availableFilters.value || []).find(
@@ -380,12 +372,7 @@ export function useViewerFiltersIntegration() {
   //     )
   //     if (property) {
   //       filters.propertyFilter.filter.value = property
-  //       updatesMade = true
   //     }
-  //   }
-
-  //   if (updatesMade) {
-  //     console.log('FILTER UPD', dbg)
   //   }
   // })
 
@@ -411,6 +398,7 @@ export function useViewerFiltersIntegration() {
       if (isolatable.length) {
         instance.isolateObjects(isolatable, stateKey, true)
       }
+
       if (unisolatable.length) {
         instance.unIsolateObjects(unisolatable, stateKey, true)
       }
@@ -453,8 +441,8 @@ export function useViewerFiltersIntegration() {
       } else {
         instance.removeColorFilter()
       }
-    },
-    { immediate: true, flush: 'sync' }
+    }
+    // { immediate: true, flush: 'sync' }
   )
 
   watch(
@@ -474,8 +462,8 @@ export function useViewerFiltersIntegration() {
       }
 
       instance.selectObjects(newIds)
-    },
-    { immediate: true, flush: 'sync' }
+    }
+    // { immediate: true, flush: 'sync' }
   )
 }
 
