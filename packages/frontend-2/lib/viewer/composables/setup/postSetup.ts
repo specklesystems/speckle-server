@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import { FilteringState, ViewerEvent } from '@speckle/viewer'
+import { SunLightConfiguration, ViewerEvent } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import {
   Comment,
@@ -31,6 +31,7 @@ import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables
 import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { PerspectiveCamera, Vector3 } from 'three'
+import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -215,8 +216,9 @@ function useViewerSubscriptionEventTracker() {
 
 /**
  * TODO: TWO WAY BINDING
- * - There are def some issues there
- * - SectionBoxes don't work correctly even without that
+ * - Weird camera zooming/positioning issue
+ *  - Zooms out slowly on load
+ *  - When client side routing to another model, the position/orientation/zoom seems off
  * - Need to get rid of all direct viewer instance usages
  *  - so that we only interact with state abstraction
  *  - and possibly don't even need current FilteringState
@@ -228,49 +230,32 @@ export function useViewerSectionBoxIntegration() {
     viewer: { instance }
   } = useInjectedViewerState()
 
-  // // viewer -> state
-  // useViewerEventListener(
-  //   [ViewerEvent.SectionBoxChanged, ViewerEvent.SectionBoxUpdated],
-  //   () => {
-  //     const viewerSectionBox = instance.sectionBox.getCurrentBox()
-  //     if (
-  //       viewerSectionBox &&
-  //       sectionBox.value &&
-  //       sectionBox.value.equals(viewerSectionBox)
-  //     ) {
-  //       return
-  //     }
-  //     if (!viewerSectionBox && !sectionBox.value) return
-
-  //     console.log('SECTION BOX UPD', sectionBox.value, viewerSectionBox)
-  //     sectionBox.value = viewerSectionBox ? viewerSectionBox.clone() : null
-  //   }
-  // )
+  // No two-way sync for section boxes, because once you set a Box3 into the viewer
+  // the viewer transforms it into something else causing the updates going into an infinite loop
 
   // state -> viewer
   watch(
     sectionBox,
     (newVal, oldVal) => {
       if (newVal && oldVal && newVal.equals(oldVal)) return
-      if (newVal === oldVal) return
+      if (!newVal && !oldVal) return
 
       if (oldVal && !newVal) {
         instance.sectionBoxOff()
+        instance.requestRender()
         return
       }
 
-      if (
-        newVal &&
-        (!oldVal || !newVal.min.equals(oldVal.min) || !newVal.max.equals(oldVal.max))
-      ) {
+      if (newVal && (!oldVal || !newVal.equals(oldVal))) {
         instance.setSectionBox({
           min: newVal.min,
           max: newVal.max
         })
         instance.sectionBoxOn()
+        instance.requestRender()
       }
     },
-    { immediate: true, deep: true }
+    { immediate: true, deep: true, flush: 'sync' }
   )
 }
 
@@ -282,105 +267,89 @@ export function useViewerCameraIntegration() {
     }
   } = useInjectedViewerState()
 
-  // // viewer -> state
-  // useViewerCameraTracker(
-  //   () => {
-  //     const activeCam = instance.cameraHandler.activeCam
-  //     const isPerspective = activeCam.camera instanceof PerspectiveCamera
+  // viewer -> state
+  // debouncing pos/target updates to avoid jitteriness
+  useViewerCameraTracker(
+    () => {
+      const activeCam = instance.cameraHandler.activeCam
+      const controls = activeCam.controls
+      const viewerPos = new Vector3()
+      const viewerTarget = new Vector3()
 
-  //     const controls = activeCam.controls
-  //     const viewerPos = new Vector3()
-  //     const viewerTarget = new Vector3()
+      controls.getPosition(viewerPos)
+      controls.getTarget(viewerTarget)
 
-  //     controls.getPosition(viewerPos)
-  //     controls.getTarget(viewerTarget)
+      if (!areVectorsLooselyEqual(position.value, viewerPos)) {
+        position.value = viewerPos.clone()
+      }
+      if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
+        target.value = viewerTarget.clone()
+      }
+    },
+    { debounceWait: 500 }
+  )
 
-  //     /**
-  //      * TODO:
-  //      * - Loose vector equality for less updates?
-  //      * - perspective update loop on hotreload
-  //      */
+  useViewerCameraTracker(
+    () => {
+      const activeCam = instance.cameraHandler.activeCam
+      const isPerspective = activeCam.camera instanceof PerspectiveCamera
 
-  //     const dbg = JSON.stringify({
-  //       viewerPos,
-  //       position: position.value,
-  //       viewerTarget,
-  //       target: target.value,
-  //       isPerspective,
-  //       isPerspectiveProjection: isPerspectiveProjection.value
-  //     })
-  //     let updatesDone = false
-  //     if (!viewerPos.equals(position.value)) {
-  //       position.value = viewerPos.clone()
-  //       updatesDone = true
-  //     }
-  //     if (!viewerTarget.equals(target.value)) {
-  //       target.value = viewerTarget.clone()
-  //       updatesDone = true
-  //     }
-  //     if (isPerspectiveProjection.value !== isPerspective) {
-  //       isPerspectiveProjection.value = isPerspective
-  //       updatesDone = true
-  //     }
-
-  //     if (updatesDone) {
-  //       console.log('CAM UPD', JSON.parse(dbg), new Date().toISOString())
-  //     }
-  //   },
-  //   { throttleWait: 500 }
-  // )
+      if (isPerspectiveProjection.value !== isPerspective) {
+        isPerspectiveProjection.value = isPerspective
+      }
+    },
+    { throttleWait: 500 }
+  )
 
   // state -> viewer
   watch(
     isPerspectiveProjection,
-    (newVal, oldVal) => {
-      if (newVal !== oldVal) {
-        instance.toggleCameraProjection()
+    (newVal) => {
+      if (newVal) {
+        instance.setPerspectiveCameraOn()
+      } else {
+        instance.setOrthoCameraOn()
       }
     },
-    { immediate: true }
+    { immediate: true, flush: 'sync' }
   )
 
   watch(
     position,
     (newVal, oldVal) => {
-      if (newVal === oldVal || (oldVal && newVal.equals(oldVal))) {
+      if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
         return
       }
 
-      instance.cameraHandler.activeCam.controls.setPosition(
-        newVal.x,
-        newVal.y,
-        newVal.z,
-        true
-      )
+      instance.setView({
+        position: newVal,
+        target: target.value
+      })
     },
-    { immediate: true }
+    { flush: 'sync' }
   )
 
   watch(
     target,
     (newVal, oldVal) => {
-      if (newVal === oldVal || (oldVal && newVal.equals(oldVal))) {
+      if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
         return
       }
 
-      instance.cameraHandler.activeCam.controls.setTarget(
-        newVal.x,
-        newVal.y,
-        newVal.z,
-        true
-      )
+      instance.setView({
+        position: position.value,
+        target: newVal
+      })
     },
-    { immediate: true }
+    { flush: 'sync' }
   )
 }
 
 export function useViewerFiltersIntegration() {
   const {
     viewer: {
-      instance,
-      metadata: { availableFilters }
+      instance
+      // metadata: { availableFilters }
     },
     ui: { filters, highlightedObjectIds }
   } = useInjectedViewerState()
@@ -438,7 +407,7 @@ export function useViewerFiltersIntegration() {
 
       instance.highlightObjects(newVal)
     },
-    { immediate: true }
+    { immediate: true, flush: 'sync' }
   )
 
   watch(
@@ -456,7 +425,7 @@ export function useViewerFiltersIntegration() {
         instance.unIsolateObjects(unisolatable, stateKey, true)
       }
     },
-    { immediate: true }
+    { immediate: true, flush: 'sync' }
   )
 
   watch(
@@ -474,7 +443,7 @@ export function useViewerFiltersIntegration() {
         instance.showObjects(showable, stateKey, true)
       }
     },
-    { immediate: true }
+    { immediate: true, flush: 'sync' }
   )
 
   watch(
@@ -495,7 +464,7 @@ export function useViewerFiltersIntegration() {
         instance.removeColorFilter()
       }
     },
-    { immediate: true }
+    { immediate: true, flush: 'sync' }
   )
 
   watch(
@@ -516,7 +485,37 @@ export function useViewerFiltersIntegration() {
 
       instance.selectObjects(newIds)
     },
-    { immediate: true }
+    { immediate: true, flush: 'sync' }
+  )
+}
+
+export function useLightConfigIntegration() {
+  const {
+    ui: { lightConfig },
+    viewer: { instance }
+  } = useInjectedViewerState()
+
+  // viewer -> state
+  useViewerEventListener(
+    ViewerEvent.LightConfigUpdated,
+    (config: SunLightConfiguration) => {
+      if (isEqual(lightConfig.value, config)) return
+      lightConfig.value = config
+    }
+  )
+
+  // state -> viewer
+  watch(
+    lightConfig,
+    (newVal, oldVal) => {
+      if (newVal && oldVal && isEqual(newVal, oldVal)) return
+      instance.setLightConfiguration(newVal)
+    },
+    {
+      immediate: true,
+      deep: true,
+      flush: 'sync'
+    }
   )
 }
 
@@ -531,4 +530,5 @@ export function useViewerPostSetup() {
   useViewerSectionBoxIntegration()
   useViewerCameraIntegration()
   useViewerFiltersIntegration()
+  useLightConfigIntegration()
 }

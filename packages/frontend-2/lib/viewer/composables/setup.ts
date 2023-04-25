@@ -5,7 +5,10 @@ import {
   FilteringState,
   PropertyInfo,
   WorldTree,
-  ViewerEvent
+  ViewerEvent,
+  SunLightConfiguration,
+  DefaultLightConfiguration,
+  SpeckleView
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -103,6 +106,7 @@ export type InjectableViewerState = Readonly<{
     metadata: {
       worldTree: ComputedRef<Optional<WorldTree>>
       availableFilters: ComputedRef<Optional<PropertyInfo[]>>
+      views: ComputedRef<SpeckleView[]>
       /**
        * TODO: Remove the need fore this
        * TODO: Remove unnecessarfy imperativec viewer usages
@@ -228,6 +232,7 @@ export type InjectableViewerState = Readonly<{
     }
     sectionBox: Ref<Nullable<Box3>>
     highlightedObjectIds: Ref<string[]>
+    lightConfig: Ref<SunLightConfiguration>
 
     // filters: {
     //   all: ShallowRef<PropertyInfo[] | undefined>
@@ -357,11 +362,13 @@ function setupViewerMetadata(params: {
   const worldTree = shallowRef(undefined as Optional<WorldTree>)
   const availableFilters = shallowRef(undefined as Optional<PropertyInfo[]>)
   const filteringState = shallowRef(undefined as Optional<FilteringState>)
+  const views = ref([] as SpeckleView[])
 
   const refreshWorldTreeAndFilters = (busy: boolean) => {
     if (busy) return
     worldTree.value = viewer.getWorldTree()
     availableFilters.value = viewer.getObjectProperties()
+    views.value = viewer.getViews()
   }
   const updateFilteringState = (newState: FilteringState) => {
     filteringState.value = newState
@@ -380,7 +387,8 @@ function setupViewerMetadata(params: {
   return {
     worldTree: computed(() => worldTree.value),
     availableFilters: computed(() => availableFilters.value),
-    filteringState: computed(() => filteringState.value)
+    filteringState: computed(() => filteringState.value),
+    views: computed(() => views.value)
   }
 }
 
@@ -779,13 +787,14 @@ function setupInterfaceState(
   const hasAnyFiltersApplied = computed(() => {
     if (isolatedObjectIds.value.length) return true
     if (hiddenObjectIds.value.length) return true
-    if (selectedObjects.value.length) return true
     if (propertyFilter.value && isPropertyFilterApplied.value) return true
     return false
   })
 
   const highlightedObjectIds = ref([] as string[])
   const spotlightUserId = ref(null as Nullable<string>)
+
+  const lightConfig = ref(DefaultLightConfiguration)
 
   /**
    * THREADS
@@ -800,6 +809,7 @@ function setupInterfaceState(
   return {
     ...state,
     ui: {
+      lightConfig,
       spotlightUserId,
       viewerBusy,
       threads: {

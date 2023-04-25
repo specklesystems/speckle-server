@@ -1,6 +1,5 @@
 import { PropertyInfo } from '@speckle/viewer'
 import { difference, isString, uniq } from 'lodash-es'
-import { Box3, Vector3 } from 'three'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
@@ -23,9 +22,7 @@ export function useSectionBoxUtilities() {
     }
 
     const objectIds = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
-    const box = objectIds.length
-      ? instance.getSectionBoxFromObjects(objectIds)
-      : new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
+    const box = instance.getSectionBoxFromObjects(objectIds)
     sectionBox.value = box
   }
   const sectionBoxOn = () => {
@@ -53,6 +50,15 @@ export function useCameraUtilities() {
     camera
   } = useInjectedViewerInterfaceState()
 
+  const zoom = (...args: Parameters<typeof instance.zoom>) => instance.zoom(...args)
+
+  const setView = (...args: Parameters<typeof instance.setView>) => {
+    instance.setView(...args)
+  }
+
+  const truck = (...args: Parameters<typeof instance.cameraHandler.controls.truck>) =>
+    instance.cameraHandler.controls.truck(...args)
+
   const zoomExtentsOrSelection = () => {
     const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
 
@@ -71,7 +77,7 @@ export function useCameraUtilities() {
     camera.isPerspectiveProjection.value = !camera.isPerspectiveProjection.value
   }
 
-  return { zoomExtentsOrSelection, toggleProjection, camera }
+  return { zoomExtentsOrSelection, toggleProjection, camera, truck, setView, zoom }
 }
 
 export function useFilterUtilities() {

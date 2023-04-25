@@ -55,7 +55,7 @@
 <script setup lang="ts">
 import { Vector3 } from 'three'
 import { ArrowRightIcon, ArrowLeftIcon } from '@heroicons/vue/24/solid'
-import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { SlideshowItem } from '~~/lib/tour/slideshowItems'
 
 const { next, prev, toggle } = inject('slideshowActions') as {
@@ -71,7 +71,11 @@ const props = defineProps<{
   item: SlideshowItem
 }>()
 
-const { instance: viewer } = useInjectedViewer()
+const {
+  ui: {
+    camera: { position, target }
+  }
+} = useInjectedViewerState()
 
 watchEffect(() => {
   if (props.item.expanded) setView()
@@ -79,9 +83,7 @@ watchEffect(() => {
 
 function setView() {
   const camPos = props.item.camPos
-  viewer.setView({
-    position: new Vector3(camPos[0], camPos[1], camPos[2]),
-    target: new Vector3(camPos[3], camPos[4], camPos[5])
-  })
+  position.value = new Vector3(camPos[0], camPos[1], camPos[2])
+  target.value = new Vector3(camPos[3], camPos[4], camPos[5])
 }
 </script>

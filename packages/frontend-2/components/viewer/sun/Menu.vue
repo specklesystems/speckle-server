@@ -19,7 +19,7 @@
         <div class="flex items-center space-x-1">
           <input
             id="intensity"
-            v-model="config.intensity"
+            v-model="intensity"
             class="h-2 mr-2"
             type="range"
             name="intensity"
@@ -32,7 +32,7 @@
         <div class="flex items-center space-x-1">
           <input
             id="elevation"
-            v-model="config.elevation"
+            v-model="elevation"
             class="h-2 mr-2"
             type="range"
             name="elevation"
@@ -45,7 +45,7 @@
         <div class="flex items-center space-x-1">
           <input
             id="azimuth"
-            v-model="config.azimuth"
+            v-model="azimuth"
             class="h-2 mr-2"
             type="range"
             name="azimuth"
@@ -58,7 +58,7 @@
         <div class="flex items-center space-x-1">
           <input
             id="indirect"
-            v-model="config.indirectLightIntensity"
+            v-model="indirectLightIntensity"
             class="h-2 mr-2"
             type="range"
             name="indirect"
@@ -74,11 +74,26 @@
 </template>
 <script setup lang="ts">
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
-import { DefaultLightConfiguration } from '@speckle/viewer'
+import { SunLightConfiguration } from '@speckle/viewer'
 import { SunIcon } from '@heroicons/vue/24/outline'
-import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
-const { instance } = useInjectedViewer()
-const config = ref({ ...DefaultLightConfiguration })
-watch(config, (newVal) => instance.setLightConfiguration(newVal), { deep: true })
+const createLightConfigComputed = <K extends keyof SunLightConfiguration>(key: K) =>
+  computed({
+    get: () => lightConfig.value[key],
+    set: (newVal) =>
+      (lightConfig.value = {
+        ...lightConfig.value,
+        [key]: newVal
+      })
+  })
+
+const {
+  ui: { lightConfig }
+} = useInjectedViewerState()
+
+const intensity = createLightConfigComputed('intensity')
+const elevation = createLightConfigComputed('elevation')
+const azimuth = createLightConfigComputed('azimuth')
+const indirectLightIntensity = createLightConfigComputed('indirectLightIntensity')
 </script>

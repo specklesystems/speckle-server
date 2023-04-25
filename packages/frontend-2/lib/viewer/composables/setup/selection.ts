@@ -3,7 +3,7 @@ import {
   InjectableViewerState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { useCameraUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
 
 function getFirstVisibleSelectionHit(
@@ -41,6 +41,7 @@ function getFirstVisibleSelectionHit(
 export function useViewerSelectionEventHandler() {
   const state = useInjectedViewerState()
   const { clearSelection, addToSelection } = useSelectionUtilities()
+  const { zoom } = useCameraUtilities()
 
   useSelectionEvents(
     {
@@ -54,15 +55,15 @@ export function useViewerSelectionEventHandler() {
         addToSelection(firstVisHit.object)
       },
       doubleClickCallback: (args) => {
-        if (!args) return state.viewer.instance.zoom()
-        if (!args.hits) return state.viewer.instance.zoom()
-        if (args.hits.length === 0) return state.viewer.instance.zoom()
+        if (!args) return zoom()
+        if (!args.hits) return zoom()
+        if (args.hits.length === 0) return zoom()
 
         const firstVisHit = args ? getFirstVisibleSelectionHit(args, state) : null
         if (!firstVisHit) return clearSelection()
 
         const objectId = args.hits[0].object.id
-        state.viewer.instance.zoom([objectId])
+        zoom([objectId])
       }
     },
     { state }

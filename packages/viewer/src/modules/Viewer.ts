@@ -378,6 +378,16 @@ export class Viewer extends EventEmitter implements IViewer {
     this.cameraHandler.activeCam = mode
   }
 
+  public setOrthoCameraOn() {
+    this.cameraHandler.setOrthoCameraOn()
+    this.speckleRenderer.resetPipeline(true)
+  }
+
+  public setPerspectiveCameraOn() {
+    this.cameraHandler.setPerspectiveCameraOn()
+    this.speckleRenderer.resetPipeline(true)
+  }
+
   public toggleCameraProjection() {
     this.cameraHandler.toggleCameras()
     this.speckleRenderer.resetPipeline(true)

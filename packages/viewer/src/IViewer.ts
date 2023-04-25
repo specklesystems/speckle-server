@@ -57,7 +57,8 @@ export enum ViewerEvent {
   Busy = 'busy',
   SectionBoxChanged = 'section-box-changed',
   SectionBoxUpdated = 'section-box-updated',
-  FilteringStateSet = 'filtering-state-set'
+  FilteringStateSet = 'filtering-state-set',
+  LightConfigUpdated = 'light-config-updated'
 }
 
 export type SelectionEvent = {

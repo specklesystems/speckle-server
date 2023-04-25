@@ -7,9 +7,9 @@ import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
 import { debounce, isArray, throttle } from 'lodash-es'
 import { MaybeAsync, Nullable } from '@speckle/shared'
 
-export function useViewerEventListener(
+export function useViewerEventListener<A = any>(
   name: ViewerEvent | ViewerEvent[],
-  listener: (...args: any[]) => MaybeAsync<void>,
+  listener: (...args: A[]) => MaybeAsync<void>,
   options?: Partial<{
     state: InitialStateWithRequestAndResponse
   }>
@@ -34,14 +34,18 @@ export function useViewerEventListener(
 
 export function useViewerCameraTracker(
   callback: () => void,
-  options?: Partial<{ throttleWait: number }>
+  options?: Partial<{ throttleWait: number; debounceWait: number }>
 ): void {
   const {
     viewer: { instance }
   } = useInjectedViewerState()
-  const { throttleWait = 50 } = options || {}
+  const { throttleWait = 50, debounceWait } = options || {}
 
-  const finalCallback = throttleWait ? throttle(callback, throttleWait) : callback
+  const finalCallback = debounceWait
+    ? debounce(callback, debounceWait)
+    : throttleWait
+    ? throttle(callback, throttleWait)
+    : callback
 
   onMounted(() => {
     instance.cameraHandler.controls.addEventListener('update', finalCallback)
