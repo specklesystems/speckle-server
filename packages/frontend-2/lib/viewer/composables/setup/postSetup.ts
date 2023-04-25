@@ -341,6 +341,12 @@ export function useViewerFiltersIntegration() {
   } = useInjectedViewerState()
 
   const stateKey = 'default'
+  let preventFilterWatchers = false
+  const withWatchersDisabled = (fn: () => void) => {
+    preventFilterWatchers = true
+    fn()
+    preventFilterWatchers = false
+  }
 
   // TODO: Hard to get working at this point in time, because the FilteringManager
   // doesn't fully support this (strange bugs arise with isolate after hide not working etc.)
@@ -390,17 +396,24 @@ export function useViewerFiltersIntegration() {
   watch(
     filters.isolatedObjectIds,
     (newVal, oldVal) => {
+      if (preventFilterWatchers) return
       if (arraysEqual(newVal, oldVal || [])) return
 
       const isolatable = newVal
       const unisolatable = difference(oldVal || [], newVal)
 
       if (isolatable.length) {
-        instance.isolateObjects(isolatable, stateKey, true)
+        withWatchersDisabled(() => {
+          instance.isolateObjects(isolatable, stateKey, true)
+          filters.hiddenObjectIds.value = []
+        })
       }
 
       if (unisolatable.length) {
-        instance.unIsolateObjects(unisolatable, stateKey, true)
+        withWatchersDisabled(() => {
+          instance.unIsolateObjects(unisolatable, stateKey, true)
+          filters.hiddenObjectIds.value = []
+        })
       }
     },
     { immediate: true, flush: 'sync' }
@@ -409,16 +422,23 @@ export function useViewerFiltersIntegration() {
   watch(
     filters.hiddenObjectIds,
     (newVal, oldVal) => {
+      if (preventFilterWatchers) return
       if (arraysEqual(newVal, oldVal || [])) return
 
       const hidable = newVal
       const showable = difference(oldVal || [], newVal)
 
       if (hidable.length) {
-        instance.hideObjects(hidable, stateKey, true)
+        withWatchersDisabled(() => {
+          instance.hideObjects(hidable, stateKey, true)
+          filters.isolatedObjectIds.value = []
+        })
       }
       if (showable.length) {
-        instance.showObjects(showable, stateKey, true)
+        withWatchersDisabled(() => {
+          instance.showObjects(hidable, stateKey, true)
+          filters.isolatedObjectIds.value = []
+        })
       }
     },
     { immediate: true, flush: 'sync' }
@@ -441,8 +461,8 @@ export function useViewerFiltersIntegration() {
       } else {
         instance.removeColorFilter()
       }
-    }
-    // { immediate: true, flush: 'sync' }
+    },
+    { immediate: true, flush: 'sync' }
   )
 
   watch(
@@ -462,8 +482,8 @@ export function useViewerFiltersIntegration() {
       }
 
       instance.selectObjects(newIds)
-    }
-    // { immediate: true, flush: 'sync' }
+    },
+    { immediate: true, flush: 'sync' }
   )
 }
 
