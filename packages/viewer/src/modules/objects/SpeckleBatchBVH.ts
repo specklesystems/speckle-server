@@ -1,7 +1,19 @@
-import { Box3, FrontSide, Material, Ray, Side, Vector3 } from 'three'
+import {
+  Box3,
+  BoxGeometry,
+  FrontSide,
+  Intersection,
+  Material,
+  Matrix4,
+  Object3D,
+  Ray,
+  Side,
+  Vector3
+} from 'three'
 import { ShapecastIntersection, ExtendedTriangle } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
 import { ExtendedIntersection, ExtendedShapeCastCallbacks } from './SpeckleRaycaster'
+import { SpeckleMeshBVH } from './SpeckleMeshBVH'
 
 export class SpeckleBatchBVH {
   private static readonly vecBuff: Vector3 = new Vector3()
@@ -9,9 +21,47 @@ export class SpeckleBatchBVH {
   public batchObjects: BatchObject[] = []
   public bounds: Box3 = new Box3()
 
+  public boxGeometries: BoxGeometry[] = []
+  public tas: SpeckleMeshBVH = null
+
   public constructor(batchObjects: BatchObject[]) {
     this.batchObjects = batchObjects
     this.getBoundingBox(this.bounds)
+    this.buildBoxGeometry()
+  }
+
+  private buildBoxGeometry() {
+    const indices = new Int32Array(36 * this.batchObjects.length)
+    const vertices = new Float32Array(72 * this.batchObjects.length)
+    let indexOffset = 0
+    let vertOffset = 0
+    for (let k = 0; k < this.batchObjects.length; k++) {
+      const boxBounds: Box3 = this.batchObjects[k].bvh.getBoundingBox(new Box3())
+      const boxSize = boxBounds.getSize(new Vector3())
+      const boxCenter = boxBounds.getCenter(new Vector3())
+      const boxGeometry = new BoxGeometry(boxSize.x, boxSize.y, boxSize.z, 1, 1, 1)
+      boxGeometry.translate(boxCenter.x, boxCenter.y, boxCenter.z)
+
+      indices.set(
+        (boxGeometry.index.array as number[]).map((val) => val + vertOffset / 3),
+        indexOffset
+      )
+      vertices.set(boxGeometry.attributes.position.array, vertOffset)
+      this.batchObjects[k].tasVertIndexStart = vertOffset / 3
+      this.batchObjects[k].tasVertIndexEnd =
+        vertOffset / 3 + boxGeometry.attributes.position.array.length / 3
+
+      indexOffset += boxGeometry.index.array.length
+      vertOffset += boxGeometry.attributes.position.array.length
+
+      this.boxGeometries.push(boxGeometry)
+    }
+    // const batchBoxes = mergeBufferGeometries(this.boxGeometries)
+    this.tas = SpeckleMeshBVH.buildBVH(indices as unknown as number[], vertices)
+    this.tas.inputTransform = new Matrix4()
+    this.tas.outputTransform = new Matrix4()
+    this.tas.inputOriginTransform = new Matrix4()
+    this.tas.outputOriginTransfom = new Matrix4()
   }
 
   /* Core Cast Functions */
@@ -22,18 +72,40 @@ export class SpeckleBatchBVH {
     const res = []
     const rayBuff = new Ray()
     rayBuff.copy(ray)
-    if (!rayBuff.intersectBox(this.bounds, SpeckleBatchBVH.vecBuff)) {
-      return res
-    }
+    const tasResults: Intersection<Object3D>[] = this.tas.raycast(rayBuff, FrontSide)
+    // console.log('For Batch -> ', this.batchObjects[0].renderView.batchId)
+    if (!tasResults.length) return res
 
-    this.batchObjects.forEach((batchObject: BatchObject) => {
-      rayBuff.copy(ray)
-      const hits = batchObject.bvh.raycast(rayBuff, materialOrSide)
-      hits.forEach((hit) => {
-        ;(hit as ExtendedIntersection).batchObject = batchObject
-      })
-      res.push(...hits)
+    tasResults.forEach((tasRes: Intersection<Object3D>) => {
+      for (let k = 0; k < this.batchObjects.length; k++) {
+        const vertIndex = this.tas.geometry.index.array[tasRes.faceIndex * 3]
+        if (
+          vertIndex >= this.batchObjects[k].tasVertIndexStart &&
+          vertIndex < this.batchObjects[k].tasVertIndexEnd
+        ) {
+          rayBuff.copy(ray)
+          const hits = this.batchObjects[k].bvh.raycast(rayBuff, materialOrSide)
+          hits.forEach((hit) => {
+            ;(hit as ExtendedIntersection).batchObject = this.batchObjects[k]
+            // console.log(this.batchObjects[k].renderView.renderData.id)
+          })
+          res.push(...hits)
+        }
+      }
     })
+
+    // if (!rayBuff.intersectBox(this.bounds, SpeckleBatchBVH.vecBuff)) {
+    //   return res
+    // }
+
+    // this.batchObjects.forEach((batchObject: BatchObject) => {
+    //   rayBuff.copy(ray)
+    //   const hits = batchObject.bvh.raycast(rayBuff, materialOrSide)
+    //   hits.forEach((hit) => {
+    //     ;(hit as ExtendedIntersection).batchObject = batchObject
+    //   })
+    //   res.push(...hits)
+    // })
     return res
   }
 

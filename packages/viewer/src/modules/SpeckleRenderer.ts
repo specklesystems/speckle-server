@@ -580,6 +580,13 @@ export default class SpeckleRenderer {
         bvhHelper.update()
         parent.add(bvhHelper)
       }
+      // const speckleMesh = batchRenderable as SpeckleMesh
+      // speckleMesh.BVH.boxGeometries.forEach((box: BoxGeometry) => {
+      //   box.computeBoundingBox()
+      //   const helper = new Box3Helper(box.boundingBox)
+      //   helper.layers.set(ObjectLayers.PROPS)
+      //   this.scene.add(helper)
+      // })
     }
     this.viewer.World.expandWorld(batch.bounds)
   }
