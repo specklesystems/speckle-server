@@ -286,7 +286,7 @@ export function useViewerCameraIntegration() {
         target.value = viewerTarget.clone()
       }
     },
-    { debounceWait: 500 }
+    { debounceWait: 100 }
   )
 
   useViewerCameraTracker(
@@ -302,47 +302,37 @@ export function useViewerCameraIntegration() {
   )
 
   // state -> viewer
-  watch(
-    isPerspectiveProjection,
-    (newVal) => {
-      if (newVal) {
-        instance.setPerspectiveCameraOn()
-      } else {
-        instance.setOrthoCameraOn()
-      }
-    },
-    { immediate: true, flush: 'sync' }
-  )
+  watch(isPerspectiveProjection, (newVal, oldVal) => {
+    if (!!newVal === !!oldVal) return
 
-  watch(
-    position,
-    (newVal, oldVal) => {
-      if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
-        return
-      }
+    if (newVal) {
+      instance.setPerspectiveCameraOn()
+    } else {
+      instance.setOrthoCameraOn()
+    }
+  })
 
-      instance.setView({
-        position: newVal,
-        target: target.value
-      })
-    },
-    { flush: 'sync' }
-  )
+  watch(position, (newVal, oldVal) => {
+    if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
+      return
+    }
 
-  watch(
-    target,
-    (newVal, oldVal) => {
-      if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
-        return
-      }
+    instance.setView({
+      position: newVal,
+      target: target.value
+    })
+  })
 
-      instance.setView({
-        position: position.value,
-        target: newVal
-      })
-    },
-    { flush: 'sync' }
-  )
+  watch(target, (newVal, oldVal) => {
+    if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
+      return
+    }
+
+    instance.setView({
+      position: position.value,
+      target: newVal
+    })
+  })
 }
 
 export function useViewerFiltersIntegration() {
