@@ -25,10 +25,23 @@
           Download Latest Stable ({{ latestStableVersions.mac.Number }}) Mac OS
         </FormButton>
       </div>
-      <div class="h6 font-bold">All releases</div>
+      <div class="flex items-center py-2 space-x-2">
+        <div class="h6 font-bold">All releases</div>
+        <div class="grow">
+          <FormTextInput
+            v-model="searchString"
+            name="search"
+            :custom-icon="MagnifyingGlassIcon"
+            class="w-full"
+            search
+            :show-clear="!!searchString"
+            placeholder="Search for a version"
+          />
+        </div>
+      </div>
       <div class="h-40 simple-scrollbar overflow-y-scroll space-y-2">
         <div
-          v-for="version in versions"
+          v-for="version in searchedVersions"
           :key="version.Number"
           class="flex justify-between text-sm"
         >
@@ -47,13 +60,14 @@
             </FormButton>
           </div>
         </div>
+        <div v-if="searchedVersions.length === 0">No versions found.</div>
       </div>
     </div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { CloudArrowDownIcon } from '@heroicons/vue/24/solid'
+import { CloudArrowDownIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
 import { ConnectorTag, ConnectorVersion } from '~~/lib/connectors'
 
 const emit = defineEmits<{
@@ -65,7 +79,17 @@ const props = defineProps<{
   tag: ConnectorTag
 }>()
 
+const searchString = ref<string>()
+
 const versions = computed(() => props.tag.versions)
+
+const searchedVersions = computed(() =>
+  searchString.value
+    ? versions.value.filter((v) =>
+        v.Number.toLowerCase().includes((searchString.value as string).toLowerCase())
+      )
+    : versions.value
+)
 
 const latestStableVersions = computed(() => {
   const latest = versions.value.find((v) => !v.Prerelease)
