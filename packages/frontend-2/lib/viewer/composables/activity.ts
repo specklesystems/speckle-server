@@ -1,12 +1,8 @@
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
-import { FilteringState, SelectionEvent } from '@speckle/viewer'
 import {
-  CommentDataInput,
   OnViewerUserActivityBroadcastedSubscription,
   ViewerUserActivityMessageInput,
-  ViewerUserActivityStatus,
-  ViewerUserOpenThreadMessage,
-  ViewerUserSelectionInfoInput
+  ViewerUserActivityStatus
 } from '~~/lib/common/generated/gql/graphql'
 import {
   InjectableViewerState,
@@ -17,16 +13,14 @@ import {
   useSelectionEvents,
   useViewerCameraRestTracker
 } from '~~/lib/viewer/composables/viewer'
-import { Nullable, Optional } from '@speckle/shared'
+import { Nullable, SpeckleViewer } from '@speckle/shared'
 import { Box3, Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { broadcastViewerUserActivityMutation } from '~~/lib/viewer/graphql/mutations'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import dayjs, { Dayjs } from 'dayjs'
-import { get } from 'lodash-es'
 import { MaybeRef, useIntervalFn } from '@vueuse/core'
 import { CSSProperties, Ref } from 'vue'
-import { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import { useOnBeforeWindowUnload } from '~~/lib/common/composables/window'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
@@ -36,6 +30,8 @@ import {
   useFilterUtilities,
   useSectionBoxUtilities
 } from '~~/lib/viewer/composables/ui'
+import { useStateSerialization } from '~~/lib/viewer/composables/serialization'
+import { Merge } from 'type-fest'
 
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)
@@ -54,99 +50,85 @@ const USER_STALE_AFTER_PERIOD = 20 * OWN_ACTIVITY_UPDATE_INTERVAL
  */
 const USER_REMOVABLE_AFTER_PERIOD = USER_STALE_AFTER_PERIOD * 2
 
-function useCollectSelection() {
-  const viewerState = useInjectedViewerState()
+// function useCollectSelection() {
+//   const viewerState = useInjectedViewerState()
 
-  const selectionLocation = ref(null as Nullable<Vector3>)
+//   const selectionLocation = ref(null as Nullable<Vector3>)
 
-  const selectionCallback = (event: Nullable<SelectionEvent>) => {
-    if (!event) return (selectionLocation.value = null) // reset selection location
+//   const selectionCallback = (event: Nullable<SelectionEvent>) => {
+//     if (!event) return (selectionLocation.value = null) // reset selection location
 
-    const firstHit = event.hits[0]
-    selectionLocation.value = firstHit.point
-  }
-  useSelectionEvents({
-    singleClickCallback: selectionCallback,
-    doubleClickCallback: selectionCallback
-  })
+//     const firstHit = event.hits[0]
+//     selectionLocation.value = firstHit.point
+//   }
+//   useSelectionEvents({
+//     singleClickCallback: selectionCallback,
+//     doubleClickCallback: selectionCallback
+//   })
 
-  return (): ViewerUserSelectionInfoInput => {
-    const controls = viewerState.viewer.instance.cameraHandler.activeCam.controls
-    const pos = viewerState.ui.camera.position.value
-    const target = viewerState.ui.camera.target.value
-    const camera = [
-      parseFloat(pos.x.toFixed(5)),
-      parseFloat(pos.y.toFixed(5)),
-      parseFloat(pos.z.toFixed(5)),
-      parseFloat(target.x.toFixed(5)),
-      parseFloat(target.y.toFixed(5)),
-      parseFloat(target.z.toFixed(5)),
-      viewerState.ui.camera.isOrthoProjection.value ? 1 : 0,
-      get(controls, '_zoom') // kinda hacky, _zoom is a protected prop
-    ]
+//   return (): ViewerUserSelectionInfoInput => {
+//     const controls = viewerState.viewer.instance.cameraHandler.activeCam.controls
+//     const pos = viewerState.ui.camera.position.value
+//     const target = viewerState.ui.camera.target.value
+//     const camera = [
+//       parseFloat(pos.x.toFixed(5)),
+//       parseFloat(pos.y.toFixed(5)),
+//       parseFloat(pos.z.toFixed(5)),
+//       parseFloat(target.x.toFixed(5)),
+//       parseFloat(target.y.toFixed(5)),
+//       parseFloat(target.z.toFixed(5)),
+//       viewerState.ui.camera.isOrthoProjection.value ? 1 : 0,
+//       get(controls, '_zoom') // kinda hacky, _zoom is a protected prop
+//     ]
 
-    return {
-      filteringState: {
-        ...(viewerState.viewer.metadata.filteringState || {}),
-        selectedObjects: viewerState.ui.filters.selectedObjects.value
-          .map((o) => o.id)
-          .filter((i): i is NonNullable<typeof i> => !!i)
-      },
-      selectionLocation: selectionLocation.value,
-      sectionBox: viewerState.ui.sectionBox.value,
-      camera
-    }
-  }
-}
+//     return {
+//       filteringState: {
+//         ...(viewerState.viewer.metadata.filteringState || {}),
+//         selectedObjects: viewerState.ui.filters.selectedObjects.value
+//           .map((o) => o.id)
+//           .filter((i): i is NonNullable<typeof i> => !!i)
+//       },
+//       selectionLocation: selectionLocation.value,
+//       sectionBox: viewerState.ui.sectionBox.value,
+//       camera
+//     }
+//   }
+// }
 
-export function useCollectCommentData() {
-  const collectSelection = useCollectSelection()
-  return (): CommentDataInput => {
-    const { selectionLocation, camera, sectionBox, filteringState } = collectSelection()
-    const filters = filteringState as Nullable<FilteringState>
+// export function useCollectCommentData() {
+//   const collectSelection = useCollectSelection()
+//   return (): CommentDataInput => {
+//     const { selectionLocation, camera, sectionBox, filteringState } = collectSelection()
+//     const filters = filteringState as Nullable<FilteringState>
 
-    return {
-      location: selectionLocation || new Vector3(camera[3], camera[4], camera[5]),
-      camPos: camera,
-      sectionBox,
-      // In the future comments might keep track of selected objects
-      selection: null,
-      filters: {
-        hiddenIds: filters?.hiddenObjects || null,
-        isolatedIds: filters?.isolatedObjects || null,
-        propertyInfoKey: filters?.activePropFilterKey || null,
-        passMax: filters?.passMax || null,
-        passMin: filters?.passMin || null,
-        sectionBox // possible duplicate, see above
-      }
-    }
-  }
-}
+//     return {
+//       location: selectionLocation || new Vector3(camera[3], camera[4], camera[5]),
+//       camPos: camera,
+//       sectionBox,
+//       // In the future comments might keep track of selected objects
+//       selection: null,
+//       filters: {
+//         hiddenIds: filters?.hiddenObjects || null,
+//         isolatedIds: filters?.isolatedObjects || null,
+//         propertyInfoKey: filters?.activePropFilterKey || null,
+//         passMax: filters?.passMax || null,
+//         passMin: filters?.passMin || null,
+//         sectionBox // possible duplicate, see above
+//       }
+//     }
+//   }
+// }
 
 function useCollectMainMetadata() {
-  const {
-    sessionId,
-    resources: {
-      request: { resourceIdString }
-    },
-    ui: {
-      threads: { openThread }
-    }
-  } = useInjectedViewerState()
+  const { sessionId } = useInjectedViewerState()
   const { activeUser } = useActiveUser()
+  const { serialize } = useStateSerialization()
 
   return (): Omit<ViewerUserActivityMessageInput, 'status' | 'selection'> => ({
     userId: activeUser.value?.id || null,
     userName: activeUser.value?.name || 'Anonymous Viewer',
-    viewerSessionId: sessionId.value,
-    resourceIdString: resourceIdString.value,
-    thread:
-      openThread.thread.value || openThread.newThreadEditor
-        ? {
-            threadId: openThread.thread.value?.id || null,
-            isTyping: openThread.isTyping.value
-          }
-        : null
+    state: serialize(),
+    sessionId: sessionId.value
   })
 }
 
@@ -162,7 +144,6 @@ export function useViewerUserActivityBroadcasting(
     }
   } = options?.state || useInjectedViewerState()
   const { isLoggedIn } = useActiveUser()
-  const getSelection = useCollectSelection()
   const getMainMetadata = useCollectMainMetadata()
   const apollo = useApolloClient().client
 
@@ -186,22 +167,20 @@ export function useViewerUserActivityBroadcasting(
     emitDisconnected: async () =>
       invokeMutation({
         ...getMainMetadata(),
-        status: ViewerUserActivityStatus.Disconnected,
-        selection: null
+        status: ViewerUserActivityStatus.Disconnected
       }),
     emitViewing: async () => {
       await invokeMutation({
         ...getMainMetadata(),
-        status: ViewerUserActivityStatus.Viewing,
-        selection: getSelection()
+        status: ViewerUserActivityStatus.Viewing
       })
     }
   }
 }
 
-export type UserActivityModel = SetFullyRequired<
+export type UserActivityModel = Merge<
   OnViewerUserActivityBroadcastedSubscription['viewerUserActivityBroadcasted'],
-  'selection'
+  { state: SpeckleViewer.ViewerState.SerializedViewerState }
 > & {
   isStale: boolean
   isOccluded: boolean
@@ -258,10 +237,10 @@ export function useViewerUserActivityTracking(params: {
     if (!res.data?.viewerUserActivityBroadcasted) return
     const event = res.data.viewerUserActivityBroadcasted
     const status = event.status
-    const incomingSessionId = event.viewerSessionId
+    const incomingSessionId = event.sessionId
 
     if (sessionId.value === incomingSessionId) return
-    if (status === ViewerUserActivityStatus.Disconnected || !event.selection) {
+    if (status === ViewerUserActivityStatus.Disconnected) {
       triggerNotification({
         description: `${users.value[incomingSessionId].userName} left.`,
         type: ToastNotificationType.Info
@@ -270,6 +249,11 @@ export function useViewerUserActivityTracking(params: {
       delete users.value[incomingSessionId]
       return
     }
+
+    const state = SpeckleViewer.ViewerState.isSerializedViewerState(event.state)
+      ? event.state
+      : null
+    if (!state) return
 
     const userData: UserActivityModel = {
       ...(users.value[incomingSessionId]
@@ -281,7 +265,7 @@ export function useViewerUserActivityTracking(params: {
             isOccluded: false
           }),
       ...event,
-      selection: event.selection,
+      state,
       isStale: false,
       lastUpdate: dayjs()
     }
@@ -304,12 +288,10 @@ export function useViewerUserActivityTracking(params: {
     parentEl,
     points: computed(() => Object.values(users.value)),
     pointLocationGetter: (user) => {
-      const selection = user.selection
-      const selectionLocation = selection.selectionLocation as Optional<{
-        x: number
-        y: number
-        z: number
-      }>
+      const selection = user.state.ui.selection
+      const selectionVector = selection
+        ? new Vector3(selection[0], selection[1], selection[2])
+        : null
 
       function getPointInBetweenByPerc(
         pointA: Vector3,
@@ -324,21 +306,17 @@ export function useViewerUserActivityTracking(params: {
 
       // If there is no selection location, return to a blended location based on the camera's target and location.
       // This ensures that rotation and zoom will have an effect on the users' cursors and create a lively environment.
-      if (!selectionLocation) {
-        const loc = new Vector3(
-          selection.camera[0],
-          selection.camera[1],
-          selection.camera[2]
-        )
-        const camTarget = new Vector3(
-          selection.camera[3],
-          selection.camera[4],
-          selection.camera[5]
-        )
-        return getPointInBetweenByPerc(camTarget, loc, 0.2)
+      if (!selectionVector) {
+        const camPos = user.state.ui.camera.position
+        const camPosVector = new Vector3(camPos[0], camPos[1], camPos[2])
+
+        const camTarget = user.state.ui.camera.target
+        const camTargetVector = new Vector3(camTarget[0], camTarget[1], camTarget[2])
+
+        return getPointInBetweenByPerc(camTargetVector, camPosVector, 0.2)
       }
 
-      return new Vector3(selectionLocation.x, selectionLocation.y, selectionLocation.z)
+      return selectionVector.clone()
     },
     updatePositionCallback: (user, result, options) => {
       user.isOccluded = result.isOccluded
@@ -437,62 +415,61 @@ function useViewerSpotlightTracking() {
 
   return (user: UserActivityModel) => {
     camera.position.value = new Vector3(
-      user.selection.camera[0],
-      user.selection.camera[1],
-      user.selection.camera[2]
+      user.state.ui.camera.position[0],
+      user.state.ui.camera.position[1],
+      user.state.ui.camera.position[2]
     )
     camera.target.value = new Vector3(
-      user.selection.camera[3],
-      user.selection.camera[4],
-      user.selection.camera[5]
+      user.state.ui.camera.target[0],
+      user.state.ui.camera.target[1],
+      user.state.ui.camera.target[2]
     )
 
-    if (user.selection.sectionBox) {
-      const selectionSectionBox = user.selection.sectionBox as {
-        min: { x: number; y: number; z: number }
-        max: { x: number; y: number; z: number }
-      }
+    if (user.state.ui.sectionBox) {
       sectionBox.value = new Box3(
         new Vector3(
-          selectionSectionBox.min.x,
-          selectionSectionBox.min.y,
-          selectionSectionBox.min.z
+          user.state.ui.sectionBox.min[0],
+          user.state.ui.sectionBox.min[1],
+          user.state.ui.sectionBox.min[2]
         ),
         new Vector3(
-          selectionSectionBox.max.x,
-          selectionSectionBox.max.y,
-          selectionSectionBox.max.z
+          user.state.ui.sectionBox.max[0],
+          user.state.ui.sectionBox.max[1],
+          user.state.ui.sectionBox.max[2]
         )
       )
     } else {
       sectionBox.value = null
     }
 
-    if (user.selection.filteringState) {
-      const fs = user.selection.filteringState as FilteringState
+    const filters = user.state.ui.filters
+    if (filters.hiddenObjectIds.length) {
       resetFilters()
+      hideObjects(filters.hiddenObjectIds, { replace: true })
+    } else if (filters.isolatedObjectIds.length) {
+      resetFilters()
+      isolateObjects(filters.isolatedObjectIds, { replace: true })
+    }
 
-      if (fs.hiddenObjects) hideObjects(fs.hiddenObjects)
-
-      if (fs.isolatedObjects) isolateObjects(fs.isolatedObjects)
-
-      state.ui.highlightedObjectIds.value = fs.selectedObjects || []
-
+    if (filters.selectedObjectIds.length) {
       // Note: commented out as it's a bit "intrusive" behaviour, opted for the
       // highlight version above.
       // state.ui.selection.setSelectionFromObjectIds(fs.selectedObjects)
 
       // TODOs: filters implementation, once they are implemented in the FE
+      state.ui.highlightedObjectIds.value = filters.selectedObjectIds.slice()
     }
 
     // sync resourceIdString to ensure we have the same exact resources loaded
-    if (state.resources.request.resourceIdString.value !== user.resourceIdString) {
-      state.resources.request.resourceIdString.value = user.resourceIdString
+    const resourceIdString = user.state.resources.request.resourceIdString
+    if (state.resources.request.resourceIdString.value !== resourceIdString) {
+      state.resources.request.resourceIdString.value = resourceIdString
     }
 
     // sync opened thread
-    if (state.urlHashState.focusedThreadId.value !== user.thread?.threadId) {
-      state.urlHashState.focusedThreadId.value = user.thread?.threadId || null
+    const openThreadId = user.state.ui.threads.openThread.threadId
+    if (state.urlHashState.focusedThreadId.value !== openThreadId) {
+      state.urlHashState.focusedThreadId.value = openThreadId || null
     }
   }
 }
@@ -500,7 +477,7 @@ function useViewerSpotlightTracking() {
 type UserTypingInfo = {
   userId: string
   userName: string
-  thread: ViewerUserOpenThreadMessage
+  thread: SpeckleViewer.ViewerState.SerializedViewerState['ui']['threads']['openThread']
   lastSeen: Dayjs
 }
 
@@ -532,9 +509,7 @@ export function useViewerThreadTypingTracking(threadId: MaybeRef<string>) {
     if (!res.data?.viewerUserActivityBroadcasted) return
 
     const event = res.data.viewerUserActivityBroadcasted
-    const typingPayload = event.thread
-    const userId = event.userId || event.viewerSessionId
-
+    const userId = event.userId || event.sessionId
     const existingItemIdx = usersTyping.value.findIndex((i) => i.userId === userId)
 
     // remove existing data before (potentially) adding new
@@ -542,7 +517,12 @@ export function useViewerThreadTypingTracking(threadId: MaybeRef<string>) {
       usersTyping.value.splice(existingItemIdx, 1)
     }
 
-    if (typingPayload?.threadId !== unref(threadId)) {
+    const state = SpeckleViewer.ViewerState.isSerializedViewerState(event.state)
+      ? event.state
+      : null
+    if (!state) return
+    const typingPayload = state.ui.threads.openThread
+    if (typingPayload.threadId !== unref(threadId)) {
       return
     }
 

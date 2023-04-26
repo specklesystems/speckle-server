@@ -84,9 +84,14 @@ export function useFilterUtilities() {
   // const { instance } = useInjectedViewer()
   const { filters } = useInjectedViewerInterfaceState()
 
-  const isolateObjects = (objectIds: string[]) => {
+  const isolateObjects = (
+    objectIds: string[],
+    options?: Partial<{
+      replace: boolean
+    }>
+  ) => {
     filters.isolatedObjectIds.value = uniq([
-      ...filters.isolatedObjectIds.value,
+      ...(options?.replace ? [] : filters.isolatedObjectIds.value),
       ...objectIds
     ])
     // instance.isolateObjects(objectIds, 'utilities', true)
@@ -100,9 +105,14 @@ export function useFilterUtilities() {
     // instance.unIsolateObjects(objectIds, 'utilities', true)
   }
 
-  const hideObjects = (objectIds: string[]) => {
+  const hideObjects = (
+    objectIds: string[],
+    options?: Partial<{
+      replace: boolean
+    }>
+  ) => {
     filters.hiddenObjectIds.value = uniq([
-      ...filters.hiddenObjectIds.value,
+      ...(options?.replace ? [] : filters.hiddenObjectIds.value),
       ...objectIds
     ])
     // instance.hideObjects(objectIds, 'utilities', true)

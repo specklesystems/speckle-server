@@ -203,7 +203,11 @@ export type Comment = {
   author: LimitedUser;
   authorId: Scalars['String'];
   createdAt: Scalars['DateTime'];
-  data?: Maybe<CommentViewerData>;
+  /**
+   * Legacy comment viewer data field
+   * @deprecated Use the new viewerState field instead
+   */
+  data?: Maybe<LegacyCommentViewerData>;
   /** Whether or not comment is a reply to another comment */
   hasParent: Scalars['Boolean'];
   id: Scalars['String'];
@@ -296,22 +300,6 @@ export type CommentDataFiltersInput = {
   sectionBox?: InputMaybe<Scalars['JSONObject']>;
 };
 
-export type CommentDataInput = {
-  /**
-   * An array representing a user's camera position:
-   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
-   */
-  camPos: Array<Scalars['Float']>;
-  /** Old FE LocalFilterState type */
-  filters: CommentDataFiltersInput;
-  /** THREE.Vector3 {x, y, z} */
-  location: Scalars['JSONObject'];
-  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
-  sectionBox?: InputMaybe<Scalars['JSONObject']>;
-  /** Currently unused. Ideally comments should keep track of selected objects. */
-  selection?: InputMaybe<Scalars['JSONObject']>;
-};
-
 /** Deprecated: Used by old stream-based mutations */
 export type CommentEditInput = {
   /** IDs of uploaded blobs that should be attached to this comment */
@@ -368,23 +356,6 @@ export type CommentThreadActivityMessage = {
   data?: Maybe<Scalars['JSONObject']>;
   reply?: Maybe<Comment>;
   type: Scalars['String'];
-};
-
-export type CommentViewerData = {
-  __typename?: 'CommentViewerData';
-  /**
-   * An array representing a user's camera position:
-   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
-   */
-  camPos: Array<Scalars['Float']>;
-  /** Old FE LocalFilterState type */
-  filters: CommentDataFilters;
-  /** THREE.Vector3 {x, y, z} */
-  location: Scalars['JSONObject'];
-  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
-  sectionBox?: Maybe<Scalars['JSONObject']>;
-  /** Currently unused. Ideally comments should keep track of selected objects. */
-  selection?: Maybe<Scalars['JSONObject']>;
 };
 
 export type Commit = {
@@ -490,7 +461,11 @@ export type CreateCommentInput = {
   /** Resources that this comment should be attached to */
   resourceIdString: Scalars['String'];
   screenshot?: InputMaybe<Scalars['String']>;
-  viewerData: CommentDataInput;
+  /**
+   * SerializedViewerState. If omitted, comment won't render (correctly) inside the
+   * viewer, but will still be retrievable through the API
+   */
+  viewerState?: InputMaybe<Scalars['JSONObject']>;
 };
 
 export type CreateCommentReplyInput = {
@@ -554,6 +529,23 @@ export type FileUpload = {
   uploadDate: Scalars['DateTime'];
   /** The user's id that uploaded this file. */
   userId: Scalars['String'];
+};
+
+export type LegacyCommentViewerData = {
+  __typename?: 'LegacyCommentViewerData';
+  /**
+   * An array representing a user's camera position:
+   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
+   */
+  camPos: Array<Scalars['Float']>;
+  /** Old FE LocalFilterState type */
+  filters: CommentDataFilters;
+  /** THREE.Vector3 {x, y, z} */
+  location: Scalars['JSONObject'];
+  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
+  sectionBox?: Maybe<Scalars['JSONObject']>;
+  /** Currently unused. Ideally comments should keep track of selected objects. */
+  selection?: Maybe<Scalars['JSONObject']>;
 };
 
 /**
@@ -759,16 +751,31 @@ export type Mutation = {
   branchUpdate: Scalars['Boolean'];
   /** Broadcast user activity in the viewer */
   broadcastViewerUserActivity: Scalars['Boolean'];
-  /** Archives a comment. */
+  /**
+   * Archives a comment.
+   * @deprecated Use commentMutations version
+   */
   commentArchive: Scalars['Boolean'];
-  /** Creates a comment */
+  /**
+   * Creates a comment
+   * @deprecated Use commentMutations version
+   */
   commentCreate: Scalars['String'];
-  /** Edits a comment. */
+  /**
+   * Edits a comment.
+   * @deprecated Use commentMutations version
+   */
   commentEdit: Scalars['Boolean'];
   commentMutations: CommentMutations;
-  /** Adds a reply to a comment. */
+  /**
+   * Adds a reply to a comment.
+   * @deprecated Use commentMutations version
+   */
   commentReply: Scalars['String'];
-  /** Flags a comment as viewed by you (the logged in user). */
+  /**
+   * Flags a comment as viewed by you (the logged in user).
+   * @deprecated Use commentMutations version
+   */
   commentView: Scalars['Boolean'];
   commitCreate: Scalars['String'];
   commitDelete: Scalars['Boolean'];
@@ -2532,68 +2539,26 @@ export type ViewerUpdateTrackingTarget = {
 
 export type ViewerUserActivityMessage = {
   __typename?: 'ViewerUserActivityMessage';
-  resourceIdString: Scalars['String'];
-  selection?: Maybe<ViewerUserSelectionInfo>;
+  /** SerializedViewerState */
+  state: Scalars['JSONObject'];
   status: ViewerUserActivityStatus;
-  thread?: Maybe<ViewerUserOpenThreadMessage>;
-  user: LimitedUser;
-  userId: Scalars['String'];
+  user?: Maybe<LimitedUser>;
+  userId?: Maybe<Scalars['String']>;
   userName: Scalars['String'];
-  viewerSessionId: Scalars['String'];
 };
 
 export type ViewerUserActivityMessageInput = {
-  /** Resource identifier string from the URL that represents all of the actively loaded models and versions */
-  resourceIdString: Scalars['String'];
-  /** Must be set if status !== DISCONNECTED */
-  selection?: InputMaybe<ViewerUserSelectionInfoInput>;
+  /** SerializedViewerState */
+  state: Scalars['JSONObject'];
   status: ViewerUserActivityStatus;
-  /** Must be set if status !== DISCONNECTED & user has a thread or the "new thread" editor open */
-  thread?: InputMaybe<ViewerUserOpenThreadMessageInput>;
   userId?: InputMaybe<Scalars['String']>;
   userName: Scalars['String'];
-  /** The same user will have different session IDs across tabs where the viewer is open */
-  viewerSessionId: Scalars['String'];
 };
 
 export enum ViewerUserActivityStatus {
   Disconnected = 'DISCONNECTED',
   Viewing = 'VIEWING'
 }
-
-export type ViewerUserOpenThreadMessage = {
-  __typename?: 'ViewerUserOpenThreadMessage';
-  isTyping: Scalars['Boolean'];
-  threadId?: Maybe<Scalars['String']>;
-};
-
-export type ViewerUserOpenThreadMessageInput = {
-  isTyping: Scalars['Boolean'];
-  /** Set to null, if inside the "new thread" editor, not an existing thread */
-  threadId?: InputMaybe<Scalars['String']>;
-};
-
-export type ViewerUserSelectionInfo = {
-  __typename?: 'ViewerUserSelectionInfo';
-  camera: Array<Scalars['Float']>;
-  filteringState: Scalars['JSONObject'];
-  sectionBox?: Maybe<Scalars['JSONObject']>;
-  selectionLocation?: Maybe<Scalars['JSONObject']>;
-};
-
-export type ViewerUserSelectionInfoInput = {
-  /**
-   * An array representing a user's camera position:
-   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
-   */
-  camera: Array<Scalars['Float']>;
-  /** 'FilteringState' of @speckle/viewer. Represents the filters activated in the viewer by the user. */
-  filteringState: Scalars['JSONObject'];
-  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
-  sectionBox?: InputMaybe<Scalars['JSONObject']>;
-  /** THREE.Vector3 - the user's selection's focus point */
-  selectionLocation?: InputMaybe<Scalars['JSONObject']>;
-};
 
 export type Webhook = {
   __typename?: 'Webhook';

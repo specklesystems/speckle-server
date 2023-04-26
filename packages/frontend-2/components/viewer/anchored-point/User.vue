@@ -40,12 +40,14 @@ const props = defineProps<{
 }>()
 
 const isCreatingNewThread = computed(
-  () => props.user.thread?.isTyping && !props.user.thread.threadId
+  () =>
+    props.user.state.ui.threads.openThread.isTyping &&
+    !props.user.state.ui.threads.openThread.threadId
 )
 
 function setUserSpotlight() {
   if (spotlightUserId.value === props.user.userId) return (spotlightUserId.value = null)
-  spotlightUserId.value = props.user.userId
+  spotlightUserId.value = props.user.userId || null
 }
 
 watch(isCreatingNewThread, (isCreating) => {

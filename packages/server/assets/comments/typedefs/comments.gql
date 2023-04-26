@@ -90,7 +90,7 @@ type CommentDataFilters {
   sectionBox: JSONObject
 }
 
-type CommentViewerData {
+type LegacyCommentViewerData {
   """
   THREE.Vector3 {x, y, z}
   """
@@ -125,7 +125,6 @@ type Comment {
   Plain-text version of the comment text, ideal for previews
   """
   rawText: String!
-  data: CommentViewerData
   """
   Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects.
   """
@@ -229,30 +228,6 @@ input CommentDataFiltersInput {
   sectionBox: JSONObject
 }
 
-input CommentDataInput {
-  """
-  THREE.Vector3 {x, y, z}
-  """
-  location: JSONObject!
-  """
-  An array representing a user's camera position:
-  [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
-  """
-  camPos: [Float!]!
-  """
-  Viewer.getCurrentSectionBox(): THREE.Box3
-  """
-  sectionBox: JSONObject
-  """
-  Currently unused. Ideally comments should keep track of selected objects.
-  """
-  selection: JSONObject
-  """
-  Old FE LocalFilterState type
-  """
-  filters: CommentDataFiltersInput!
-}
-
 """
 Deprecated: Used by old stream-based mutations
 """
@@ -285,7 +260,11 @@ input CommentContentInput {
 input CreateCommentInput {
   projectId: String!
   content: CommentContentInput!
-  viewerData: CommentDataInput!
+  """
+  SerializedViewerState. If omitted, comment won't render (correctly) inside the
+  viewer, but will still be retrievable through the API
+  """
+  viewerState: JSONObject
   """
   Resources that this comment should be attached to
   """
@@ -336,84 +315,6 @@ input EditCommentInput {
   content: CommentContentInput!
 }
 
-input ViewerUserSelectionInfoInput {
-  """
-  'FilteringState' of @speckle/viewer. Represents the filters activated in the viewer by the user.
-  """
-  filteringState: JSONObject!
-  """
-  THREE.Vector3 - the user's selection's focus point
-  """
-  selectionLocation: JSONObject
-  """
-  Viewer.getCurrentSectionBox(): THREE.Box3
-  """
-  sectionBox: JSONObject
-  """
-  An array representing a user's camera position:
-  [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
-  """
-  camera: [Float!]!
-}
-
-input ViewerUserOpenThreadMessageInput {
-  isTyping: Boolean!
-  """
-  Set to null, if inside the "new thread" editor, not an existing thread
-  """
-  threadId: String
-}
-
-enum ViewerUserActivityStatus {
-  VIEWING
-  DISCONNECTED
-}
-
-input ViewerUserActivityMessageInput {
-  userName: String!
-  userId: String
-  """
-  The same user will have different session IDs across tabs where the viewer is open
-  """
-  viewerSessionId: String!
-  """
-  Resource identifier string from the URL that represents all of the actively loaded models and versions
-  """
-  resourceIdString: String!
-  status: ViewerUserActivityStatus!
-  """
-  Must be set if status !== DISCONNECTED
-  """
-  selection: ViewerUserSelectionInfoInput
-  """
-  Must be set if status !== DISCONNECTED & user has a thread or the "new thread" editor open
-  """
-  thread: ViewerUserOpenThreadMessageInput
-}
-
-type ViewerUserSelectionInfo {
-  filteringState: JSONObject!
-  selectionLocation: JSONObject
-  sectionBox: JSONObject
-  camera: [Float!]!
-}
-
-type ViewerUserOpenThreadMessage {
-  isTyping: Boolean!
-  threadId: String
-}
-
-type ViewerUserActivityMessage {
-  userName: String!
-  userId: String!
-  user: LimitedUser!
-  viewerSessionId: String!
-  resourceIdString: String!
-  status: ViewerUserActivityStatus!
-  selection: ViewerUserSelectionInfo
-  thread: ViewerUserOpenThreadMessage
-}
-
 type CommentMutations {
   markViewed(commentId: String!): Boolean!
   create(input: CreateCommentInput!): Comment!
@@ -424,15 +325,6 @@ type CommentMutations {
 
 extend type Mutation {
   commentMutations: CommentMutations! @hasServerRole(role: SERVER_USER)
-
-  """
-  Broadcast user activity in the viewer
-  """
-  broadcastViewerUserActivity(
-    projectId: String!
-    resourceIdString: String!
-    message: ViewerUserActivityMessageInput!
-  ): Boolean! @hasServerRole(role: SERVER_USER)
 
   """
   Used for broadcasting real time chat head bubbles and status. Does not persist any info.
@@ -462,6 +354,7 @@ extend type Mutation {
   commentCreate(input: CommentCreateInput!): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
+    @deprecated(reason: "Use commentMutations version")
 
   """
   Flags a comment as viewed by you (the logged in user).
@@ -469,6 +362,7 @@ extend type Mutation {
   commentView(streamId: String!, commentId: String!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
+    @deprecated(reason: "Use commentMutations version")
 
   """
   Archives a comment.
@@ -477,7 +371,10 @@ extend type Mutation {
     streamId: String!
     commentId: String!
     archived: Boolean! = true
-  ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
+  ): Boolean!
+    @hasRole(role: "server:user")
+    @hasScope(scope: "streams:read")
+    @deprecated(reason: "Use commentMutations version")
 
   """
   Edits a comment.
@@ -485,6 +382,7 @@ extend type Mutation {
   commentEdit(input: CommentEditInput!): Boolean!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
+    @deprecated(reason: "Use commentMutations version")
 
   """
   Adds a reply to a comment.
@@ -492,6 +390,7 @@ extend type Mutation {
   commentReply(input: ReplyCreateInput!): String!
     @hasRole(role: "server:user")
     @hasScope(scope: "streams:read")
+    @deprecated(reason: "Use commentMutations version")
 }
 
 type CommentActivityMessage {
@@ -538,13 +437,6 @@ input ViewerUpdateTrackingTarget {
 }
 
 extend type Subscription {
-  """
-  Track user activities in the viewer relating to the specified resources
-  """
-  viewerUserActivityBroadcasted(
-    target: ViewerUpdateTrackingTarget!
-  ): ViewerUserActivityMessage!
-
   """
   Subscribe to updates to resource comments/threads. Optionally specify resource ID string to only receive
   updates regarding comments for those resources.

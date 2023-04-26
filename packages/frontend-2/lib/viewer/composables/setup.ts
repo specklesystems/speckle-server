@@ -107,10 +107,6 @@ export type InjectableViewerState = Readonly<{
       worldTree: ComputedRef<Optional<WorldTree>>
       availableFilters: ComputedRef<Optional<PropertyInfo[]>>
       views: ComputedRef<SpeckleView[]>
-      /**
-       * TODO: Remove the need fore this
-       * TODO: Remove unnecessarfy imperativec viewer usages
-       */
       filteringState: ComputedRef<Optional<FilteringState>>
     }
   }
@@ -233,6 +229,7 @@ export type InjectableViewerState = Readonly<{
     highlightedObjectIds: Ref<string[]>
     lightConfig: Ref<SunLightConfiguration>
     viewerBusy: WritableComputedRef<boolean>
+    selection: Ref<Nullable<Vector3>>
   }
   /**
    * State stored in the anchor string of the URL
@@ -742,6 +739,7 @@ function setupInterfaceState(
   const spotlightUserId = ref(null as Nullable<string>)
 
   const lightConfig = ref(DefaultLightConfiguration)
+  const selection = ref(null as Nullable<Vector3>)
 
   /**
    * THREADS
@@ -756,6 +754,7 @@ function setupInterfaceState(
   return {
     ...state,
     ui: {
+      selection,
       lightConfig,
       spotlightUserId,
       viewerBusy,

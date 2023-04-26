@@ -8,19 +8,9 @@ export const onViewerUserActivityBroadcastedSubscription = graphql(`
       user {
         ...LimitedUserAvatar
       }
-      resourceIdString
-      viewerSessionId
+      state
       status
-      thread {
-        isTyping
-        threadId
-      }
-      selection {
-        filteringState
-        selectionLocation
-        sectionBox
-        camera
-      }
+      sessionId
     }
   }
 `)

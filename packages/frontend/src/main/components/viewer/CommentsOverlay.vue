@@ -257,7 +257,7 @@ export default {
           if (
             this.localComments.findIndex((lc) => c.id === lc.id) === -1 &&
             !c.archived &&
-            c.data.location
+            c.data?.location
           ) {
             this.localComments.push({ ...c })
           }

@@ -54,6 +54,12 @@ const {
   editCommentAndNotify,
   archiveCommentAndNotify
 } = require('@/modules/comments/services/management')
+const {
+  isLegacyData,
+  isDataStruct,
+  convertStateToLegacyData,
+  convertLegacyDataToState
+} = require('@/modules/comments/services/data')
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -138,13 +144,38 @@ module.exports = {
       const parentData = parent.data
       if (!parentData) return null
 
-      return {
-        location: parentData.location || {},
-        camPos: parentData.camPos || [],
-        sectionBox: parentData.sectionBox || null,
-        selection: parentData.selection || null,
-        filters: parentData.filters || {}
+      if (isLegacyData(parentData)) {
+        return {
+          location: parentData.location || {},
+          camPos: parentData.camPos || [],
+          sectionBox: parentData.sectionBox || null,
+          selection: parentData.selection || null,
+          filters: parentData.filters || {}
+        }
       }
+
+      if (isDataStruct(parentData)) {
+        return convertStateToLegacyData(parentData)
+      }
+
+      return null
+    },
+    /**
+     * SerializedViewerState
+     */
+    async viewerState(parent) {
+      const parentData = parent.data
+      if (!parentData) return null
+
+      if (isDataStruct(parentData)) {
+        return parentData.state
+      }
+
+      if (isLegacyData(parentData)) {
+        return convertLegacyDataToState(parentData)
+      }
+
+      return null
     }
   },
   CommentReplyAuthorCollection: {

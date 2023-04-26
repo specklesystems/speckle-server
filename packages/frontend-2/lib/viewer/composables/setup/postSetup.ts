@@ -214,12 +214,6 @@ function useViewerSubscriptionEventTracker() {
   )
 }
 
-/**
- * TODO: TWO WAY BINDING
- * - Need to get rid of all direct viewer instance usages
- *  - and possibly don't even need current FilteringState
- */
-
 export function useViewerSectionBoxIntegration() {
   const {
     ui: { sectionBox },
