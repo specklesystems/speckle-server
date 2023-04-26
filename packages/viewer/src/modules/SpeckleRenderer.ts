@@ -422,6 +422,7 @@ export default class SpeckleRenderer {
 
   private updateTransforms() {
     const meshBatches = this.batcher.getBatches(undefined, GeometryType.MESH)
+    let refitTime = 0
     for (let k = 0; k < meshBatches.length; k++) {
       const meshBatch: SpeckleMesh = meshBatches[k].renderObject as SpeckleMesh
       meshBatch.updateTransformsUniform()
@@ -430,7 +431,9 @@ export default class SpeckleRenderer {
       if (depthMaterial) {
         meshBatch.updateMaterialTransformsUniform(depthMaterial)
       }
+      refitTime += meshBatch.BVH.refitTime
     }
+    if (refitTime > 0) console.warn('Refit Time -> ', refitTime)
   }
 
   private updateFrustum() {
@@ -581,10 +584,7 @@ export default class SpeckleRenderer {
         parent.add(bvhHelper)
       }
       // const speckleMesh = batchRenderable as SpeckleMesh
-      // speckleMesh.BVH.boxGeometries.forEach((box: BoxGeometry) => {
-      //   box.computeBoundingBox()
-      //   const helper = new Box3Helper(box.boundingBox)
-      //   helper.layers.set(ObjectLayers.PROPS)
+      // speckleMesh.BVH.boxHelpers.forEach((helper: Box3Helper) => {
       //   this.scene.add(helper)
       // })
     }
