@@ -81,6 +81,7 @@ export function useCameraUtilities() {
 }
 
 export function useFilterUtilities() {
+  // const { instance } = useInjectedViewer()
   const { filters } = useInjectedViewerInterfaceState()
 
   const isolateObjects = (objectIds: string[]) => {
@@ -88,6 +89,7 @@ export function useFilterUtilities() {
       ...filters.isolatedObjectIds.value,
       ...objectIds
     ])
+    // instance.isolateObjects(objectIds, 'utilities', true)
   }
 
   const unIsolateObjects = (objectIds: string[]) => {
@@ -95,6 +97,7 @@ export function useFilterUtilities() {
       filters.isolatedObjectIds.value,
       objectIds
     )
+    // instance.unIsolateObjects(objectIds, 'utilities', true)
   }
 
   const hideObjects = (objectIds: string[]) => {
@@ -102,10 +105,12 @@ export function useFilterUtilities() {
       ...filters.hiddenObjectIds.value,
       ...objectIds
     ])
+    // instance.hideObjects(objectIds, 'utilities', true)
   }
 
   const showObjects = (objectIds: string[]) => {
     filters.hiddenObjectIds.value = difference(filters.hiddenObjectIds.value, objectIds)
+    // instance.showObjects(objectIds, 'utilities', true)
   }
 
   const setPropertyFilter = (property: PropertyInfo) => {

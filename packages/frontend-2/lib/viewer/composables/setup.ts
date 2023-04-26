@@ -214,7 +214,6 @@ export type InjectableViewerState = Readonly<{
       hideBubbles: Ref<boolean>
     }
     spotlightUserId: Ref<Nullable<string>>
-    // worldTree: ShallowRef<WorldTree | undefined>
     filters: {
       isolatedObjectIds: Ref<string[]>
       hiddenObjectIds: Ref<string[]>
@@ -233,59 +232,7 @@ export type InjectableViewerState = Readonly<{
     sectionBox: Ref<Nullable<Box3>>
     highlightedObjectIds: Ref<string[]>
     lightConfig: Ref<SunLightConfiguration>
-
-    // filters: {
-    //   all: ShallowRef<PropertyInfo[] | undefined>
-    //   /**
-    //    * FilteringState returned from last FilterManager operation
-    //    */
-    //   current: ComputedRef<Nullable<FilteringState>>
-    //   /**
-    //    * Current user's selected filter.
-    //    * ()
-    //    */
-    //   userSelectedFilter: Ref<PropertyInfo | undefined>
-    //   /**
-    //    * TODO: remove
-    //    */
-    //   localFilterPropKey: ComputedRef<Nullable<string>>
-    //   isolateObjects: FilterAction
-    //   unIsolateObjects: FilterAction
-    //   hideObjects: FilterAction
-    //   showObjects: FilterAction
-    //   /**
-    //    * Clears isolated, hidden objects - everything basically
-    //    */
-    //   resetFilters: () => Promise<void>
-    //   setColorFilter: (property: PropertyInfo) => Promise<void>
-    //   removeColorFilter: () => Promise<void>
-    // }
-    // camera: {
-    //   isPerspectiveProjection: Ref<boolean>
-    //   toggleProjection: () => void
-    //   zoomExtentsOrSelection: () => void
-    // }
-    // sectionBox: {
-    //   isSectionBoxEnabled: Ref<boolean>
-    //   setSectionBox: (
-    //     box?: {
-    //       min: { x: number; y: number; z: number }
-    //       max: { x: number; y: number; z: number }
-    //     },
-    //     offset?: number
-    //   ) => void
-    //   toggleSectionBox: () => void
-    //   sectionBoxOff: () => void
-    //   sectionBoxOn: () => void
-    // }
     viewerBusy: WritableComputedRef<boolean>
-    // selection: {
-    //   objects: ComputedRef<Raw<Record<string, unknown>>[]>
-    //   addToSelection: (object: Record<string, unknown>) => void
-    //   setSelectionFromObjectIds: (ids: string[]) => void
-    //   removeFromSelection: (object: Record<string, unknown> | string) => void
-    //   clearSelection: () => void
-    // }
   }
   /**
    * State stored in the anchor string of the URL

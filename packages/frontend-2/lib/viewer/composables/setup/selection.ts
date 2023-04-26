@@ -9,12 +9,13 @@ export function useViewerSelectionEventHandler() {
 
   useSelectionEvents(
     {
-      singleClickCallback: (_event, { firstVisibleSelectionHit }) => {
-        if (!firstVisibleSelectionHit) {
-          return clearSelection()
-        } else {
-          addToSelection(firstVisibleSelectionHit.object)
-        }
+      singleClickCallback: (args, { firstVisibleSelectionHit }) => {
+        if (!args) return clearSelection()
+        if (args.hits.length === 0) return clearSelection()
+        if (!args.multiple) clearSelection()
+
+        if (!firstVisibleSelectionHit) return clearSelection()
+        addToSelection(firstVisibleSelectionHit.object)
       },
       doubleClickCallback: (args, { firstVisibleSelectionHit }) => {
         if (!args) return zoom()

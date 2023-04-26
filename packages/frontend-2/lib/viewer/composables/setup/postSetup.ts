@@ -333,41 +333,44 @@ export function useViewerCameraIntegration() {
 
 export function useViewerFiltersIntegration() {
   const {
-    viewer: {
-      instance
-      // metadata: { availableFilters }
-    },
+    viewer: { instance },
     ui: { filters, highlightedObjectIds }
   } = useInjectedViewerState()
 
   const stateKey = 'default'
   let preventFilterWatchers = false
   const withWatchersDisabled = (fn: () => void) => {
+    const isAlreadyInPreventScope = !!preventFilterWatchers
     preventFilterWatchers = true
     fn()
-    preventFilterWatchers = false
+    if (!isAlreadyInPreventScope) preventFilterWatchers = false
   }
 
   // TODO: Hard to get working at this point in time, because the FilteringManager
   // doesn't fully support this (strange bugs arise with isolate after hide not working etc.)
   // viewer -> state
+  // let latestState: Optional<FilteringState> = undefined
   // useViewerEventListener(ViewerEvent.FilteringStateSet, (state: FilteringState) => {
   //   // we do this weird stuff cause a change to filters might trigger another FilteringStateSet event
   //   // with different values, but once it finishes, the old FilteringStateSet event handler will continue with the old
   //   // data and possibly break things
   //   latestState = state
-  //   const getLatestState = () => latestState || state
+  //   const getLatestState = () => state
 
   //   const viewerIsolated = getLatestState().isolatedObjects || []
   //   const isolated = filters.isolatedObjectIds.value
   //   if (!arraysEqual(viewerIsolated, isolated)) {
-  //     filters.isolatedObjectIds.value = viewerIsolated.slice()
+  //     withWatchersDisabled(() => {
+  //       filters.isolatedObjectIds.value = viewerIsolated.slice()
+  //     })
   //   }
 
   //   const viewerHidden = getLatestState().hiddenObjects || []
   //   const hidden = filters.hiddenObjectIds.value
   //   if (!arraysEqual(viewerHidden, hidden)) {
-  //     filters.hiddenObjectIds.value = viewerHidden.slice()
+  //     withWatchersDisabled(() => {
+  //       filters.hiddenObjectIds.value = viewerHidden.slice()
+  //     })
   //   }
 
   //   const viewerFilterKey = getLatestState().activePropFilterKey
@@ -399,7 +402,7 @@ export function useViewerFiltersIntegration() {
       if (preventFilterWatchers) return
       if (arraysEqual(newVal, oldVal || [])) return
 
-      const isolatable = newVal
+      const isolatable = difference(newVal, oldVal || [])
       const unisolatable = difference(oldVal || [], newVal)
 
       if (isolatable.length) {
@@ -425,7 +428,7 @@ export function useViewerFiltersIntegration() {
       if (preventFilterWatchers) return
       if (arraysEqual(newVal, oldVal || [])) return
 
-      const hidable = newVal
+      const hidable = difference(newVal, oldVal || [])
       const showable = difference(oldVal || [], newVal)
 
       if (hidable.length) {
@@ -436,7 +439,7 @@ export function useViewerFiltersIntegration() {
       }
       if (showable.length) {
         withWatchersDisabled(() => {
-          instance.showObjects(hidable, stateKey, true)
+          instance.showObjects(showable, stateKey, true)
           filters.isolatedObjectIds.value = []
         })
       }
