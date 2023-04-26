@@ -4,6 +4,14 @@ import { BatchObject } from '../batching/BatchObject'
 import { ObjectLayers } from '../SpeckleRenderer'
 
 export type ExtendedShapeCastCallbacks = {
+  intersectsTAS?: (
+    box: Box3,
+    isLeaf: boolean,
+    score: number | undefined,
+    depth: number,
+    nodeIndex: number
+  ) => ShapecastIntersection | boolean
+
   intersectsBounds: (
     box: Box3,
     isLeaf: boolean,

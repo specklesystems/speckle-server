@@ -10,7 +10,7 @@ import {
   Side,
   Vector3
 } from 'three'
-import { ShapecastIntersection, ExtendedTriangle } from 'three-mesh-bvh'
+import { ExtendedTriangle } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
 import { ExtendedIntersection, ExtendedShapeCastCallbacks } from './SpeckleRaycaster'
 import { SpeckleMeshBVH } from './SpeckleMeshBVH'
@@ -94,18 +94,6 @@ export class SpeckleBatchBVH {
       }
     })
 
-    // if (!rayBuff.intersectBox(this.bounds, SpeckleBatchBVH.vecBuff)) {
-    //   return res
-    // }
-
-    // this.batchObjects.forEach((batchObject: BatchObject) => {
-    //   rayBuff.copy(ray)
-    //   const hits = batchObject.bvh.raycast(rayBuff, materialOrSide)
-    //   hits.forEach((hit) => {
-    //     ;(hit as ExtendedIntersection).batchObject = batchObject
-    //   })
-    //   res.push(...hits)
-    // })
     return res
   }
 
@@ -130,39 +118,7 @@ export class SpeckleBatchBVH {
     }
   }
 
-  public shapecast(
-    callbacks: {
-      intersectsBounds: (
-        box: Box3,
-        isLeaf: boolean,
-        score: number | undefined,
-        depth: number,
-        nodeIndex: number
-      ) => ShapecastIntersection | boolean
-
-      traverseBoundsOrder?: (box: Box3) => number
-    } & (
-      | {
-          intersectsRange: (
-            triangleOffset: number,
-            triangleCount: number,
-            contained: boolean,
-            depth: number,
-            nodeIndex: number,
-            box: Box3
-          ) => boolean
-        }
-      | {
-          intersectsTriangle: (
-            triangle: ExtendedTriangle,
-            triangleIndex: number,
-            contained: boolean,
-            depth: number,
-            batchObject?: BatchObject
-          ) => boolean | void
-        }
-    )
-  ): boolean {
+  public shapecast(callbacks: ExtendedShapeCastCallbacks): boolean {
     const wrapCallbacks = (batchObject: BatchObject): ExtendedShapeCastCallbacks => {
       const newCallbacks: ExtendedShapeCastCallbacks = Object.create(null)
       if (callbacks.intersectsBounds) {
@@ -202,9 +158,27 @@ export class SpeckleBatchBVH {
     }
 
     let ret = false
-    this.batchObjects.forEach((batchObject: BatchObject) => {
-      ret ||= batchObject.bvh.shapecast(wrapCallbacks(batchObject))
+    this.tas.shapecast({
+      intersectsBounds: (box, isLeaf, score, depth, nodeIndex) => {
+        const res = callbacks.intersectsTAS(box, isLeaf, score, depth, nodeIndex)
+        // console.log(isLeaf, res)
+        return res
+      },
+      intersectsRange: (triangleOffset: number) => {
+        const vertIndex = this.tas.geometry.index.array[triangleOffset * 3]
+        this.batchObjects.forEach((batchObject: BatchObject) => {
+          if (
+            vertIndex >= batchObject.tasVertIndexStart &&
+            vertIndex < batchObject.tasVertIndexEnd
+          ) {
+            ret ||= batchObject.bvh.shapecast(wrapCallbacks(batchObject))
+          }
+        })
+
+        return false
+      }
     })
+
     return ret
   }
 
