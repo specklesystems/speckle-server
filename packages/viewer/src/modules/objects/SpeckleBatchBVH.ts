@@ -18,8 +18,7 @@ import { ObjectLayers } from '../SpeckleRenderer'
 import { Geometry } from '../converter/Geometry'
 
 export class SpeckleBatchBVH {
-  private static readonly vecBuff: Vector3 = new Vector3()
-  private static debugBoxes = false
+  private static debugBoxes = true
 
   public batchObjects: BatchObject[] = []
   public bounds: Box3 = new Box3()
@@ -32,29 +31,26 @@ export class SpeckleBatchBVH {
   public constructor(batchObjects: BatchObject[]) {
     this.batchObjects = batchObjects
     this.getBoundingBox(this.bounds)
-    this.buildBoxGeometry()
+    this.buildTAS()
   }
 
-  private buildBoxGeometry() {
-    const indices = new Int32Array(36 * this.batchObjects.length)
+  private buildTAS() {
+    const indices = []
     const vertices = new Float32Array(72 * this.batchObjects.length)
     this.tasVerts = new Float32Array(72 * this.batchObjects.length)
-    let indexOffset = 0
     let vertOffset = 0
     for (let k = 0; k < this.batchObjects.length; k++) {
       const boxBounds: Box3 = this.batchObjects[k].bvh.getBoundingBox(new Box3())
       const boxGeometry = Geometry.makeBoxGeometry(boxBounds)
 
-      indices.set(
-        (boxGeometry.index.array as number[]).map((val) => val + vertOffset / 3),
-        indexOffset
+      indices.push(
+        ...(boxGeometry.index.array as number[]).map((val) => val + vertOffset / 3)
       )
       vertices.set(boxGeometry.attributes.position.array, vertOffset)
       this.batchObjects[k].tasVertIndexStart = vertOffset / 3
       this.batchObjects[k].tasVertIndexEnd =
         vertOffset / 3 + boxGeometry.attributes.position.array.length / 3
 
-      indexOffset += boxGeometry.index.array.length
       vertOffset += boxGeometry.attributes.position.array.length
 
       if (SpeckleBatchBVH.debugBoxes) {
@@ -66,7 +62,7 @@ export class SpeckleBatchBVH {
       boxGeometry.dispose()
     }
     this.tasVerts.set(vertices)
-    this.tas = SpeckleMeshBVH.buildBVH(indices as unknown as number[], vertices)
+    this.tas = SpeckleMeshBVH.buildBVH(indices, vertices)
     this.tas.inputTransform = new Matrix4()
     this.tas.outputTransform = new Matrix4()
     this.tas.inputOriginTransform = new Matrix4()
@@ -103,7 +99,6 @@ export class SpeckleBatchBVH {
     const rayBuff = new Ray()
     rayBuff.copy(ray)
     const tasResults: Intersection<Object3D>[] = this.tas.raycast(rayBuff, FrontSide)
-    // console.log('For Batch -> ', this.batchObjects[0].renderView.batchId)
     if (!tasResults.length) return res
 
     tasResults.forEach((tasRes: Intersection<Object3D>) => {
@@ -117,7 +112,6 @@ export class SpeckleBatchBVH {
           const hits = this.batchObjects[k].bvh.raycast(rayBuff, materialOrSide)
           hits.forEach((hit) => {
             ;(hit as ExtendedIntersection).batchObject = this.batchObjects[k]
-            // console.log(this.batchObjects[k].renderView.renderData.id)
           })
           res.push(...hits)
         }
@@ -135,7 +129,6 @@ export class SpeckleBatchBVH {
     const rayBuff = new Ray()
     rayBuff.copy(ray)
     const tasRes: Intersection<Object3D> = this.tas.raycastFirst(rayBuff, FrontSide)
-    // console.log('For Batch -> ', this.batchObjects[0].renderView.batchId)
     if (!tasRes) return res
 
     for (let k = 0; k < this.batchObjects.length; k++) {
@@ -148,7 +141,6 @@ export class SpeckleBatchBVH {
         const hits = this.batchObjects[k].bvh.raycast(rayBuff, materialOrSide)
         hits.forEach((hit) => {
           ;(hit as ExtendedIntersection).batchObject = this.batchObjects[k]
-          // console.log(this.batchObjects[k].renderView.renderData.id)
         })
         res.push(...hits)
       }
