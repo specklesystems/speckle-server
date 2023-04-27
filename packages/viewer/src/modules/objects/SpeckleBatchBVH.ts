@@ -7,15 +7,13 @@ import {
   Matrix4,
   Object3D,
   Ray,
-  Side,
-  Vector3
+  Side
 } from 'three'
 import { ExtendedTriangle } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
 import { ExtendedIntersection, ExtendedShapeCastCallbacks } from './SpeckleRaycaster'
 import { SpeckleMeshBVH } from './SpeckleMeshBVH'
 import { ObjectLayers } from '../SpeckleRenderer'
-import { Geometry } from '../converter/Geometry'
 
 /** 
  * 
@@ -35,13 +33,27 @@ import { Geometry } from '../converter/Geometry'
  */
 export class SpeckleBatchBVH {
   private static debugBoxes = false
+  private static cubeIndices = [
+    // front
+    0, 1, 2, 2, 3, 0,
+    // right
+    1, 5, 6, 6, 2, 1,
+    // back
+    7, 6, 5, 5, 4, 7,
+    // left
+    4, 0, 3, 3, 7, 4,
+    // bottom
+    4, 5, 1, 1, 0, 4,
+    // top
+    3, 2, 6, 6, 7, 3
+  ]
+  private static CUBE_VERTS = 8
 
   public batchObjects: BatchObject[] = []
   public bounds: Box3 = new Box3()
 
   public boxHelpers: Box3Helper[] = []
   public tas: SpeckleMeshBVH = null
-  private tasVerts: Float32Array
   public lastRefitTime = 0
 
   public constructor(batchObjects: BatchObject[]) {
@@ -52,32 +64,25 @@ export class SpeckleBatchBVH {
 
   private buildTAS() {
     const indices = []
-    const vertices = new Float32Array(72 * this.batchObjects.length)
-    this.tasVerts = new Float32Array(72 * this.batchObjects.length)
+    const vertices = new Float32Array(
+      SpeckleBatchBVH.CUBE_VERTS * 3 * this.batchObjects.length
+    )
     let vertOffset = 0
     for (let k = 0; k < this.batchObjects.length; k++) {
       const boxBounds: Box3 = this.batchObjects[k].bvh.getBoundingBox(new Box3())
-      const boxGeometry = Geometry.makeBoxGeometry(boxBounds)
-
-      indices.push(
-        ...(boxGeometry.index.array as number[]).map((val) => val + vertOffset / 3)
-      )
-      vertices.set(boxGeometry.attributes.position.array, vertOffset)
+      this.updateVertArray(boxBounds, vertOffset, vertices)
+      indices.push(...SpeckleBatchBVH.cubeIndices.map((val) => val + vertOffset / 3))
       this.batchObjects[k].tasVertIndexStart = vertOffset / 3
-      this.batchObjects[k].tasVertIndexEnd =
-        vertOffset / 3 + boxGeometry.attributes.position.array.length / 3
+      this.batchObjects[k].tasVertIndexEnd = vertOffset / 3 + SpeckleBatchBVH.CUBE_VERTS
 
-      vertOffset += boxGeometry.attributes.position.array.length
+      vertOffset += SpeckleBatchBVH.CUBE_VERTS * 3
 
       if (SpeckleBatchBVH.debugBoxes) {
         const helper = new Box3Helper(boxBounds)
         helper.layers.set(ObjectLayers.PROPS)
         this.boxHelpers.push(helper)
       }
-
-      boxGeometry.dispose()
     }
-    this.tasVerts.set(vertices)
     this.tas = SpeckleMeshBVH.buildBVH(indices, vertices)
     this.tas.inputTransform = new Matrix4()
     this.tas.outputTransform = new Matrix4()
@@ -85,22 +90,50 @@ export class SpeckleBatchBVH {
     this.tas.outputOriginTransfom = new Matrix4()
   }
 
+  private updateVertArray(box: Box3, offset: number, outPositions: Float32Array) {
+    outPositions[offset] = box.min.x
+    outPositions[offset + 1] = box.min.y
+    outPositions[offset + 2] = box.max.z
+
+    outPositions[offset + 3] = box.max.x
+    outPositions[offset + 4] = box.min.y
+    outPositions[offset + 5] = box.max.z
+
+    outPositions[offset + 6] = box.max.x
+    outPositions[offset + 7] = box.max.y
+    outPositions[offset + 8] = box.max.z
+
+    outPositions[offset + 9] = box.min.x
+    outPositions[offset + 10] = box.max.y
+    outPositions[offset + 11] = box.max.z
+
+    outPositions[offset + 12] = box.min.x
+    outPositions[offset + 13] = box.min.y
+    outPositions[offset + 14] = box.min.z
+
+    outPositions[offset + 15] = box.max.x
+    outPositions[offset + 16] = box.min.y
+    outPositions[offset + 17] = box.min.z
+
+    outPositions[offset + 18] = box.max.x
+    outPositions[offset + 19] = box.max.y
+    outPositions[offset + 20] = box.min.z
+
+    outPositions[offset + 21] = box.min.x
+    outPositions[offset + 22] = box.max.y
+    outPositions[offset + 23] = box.min.z
+  }
+
   public refit() {
     const start = performance.now()
-    const vecBuff: Vector3 = new Vector3()
     const positions = this.tas.geometry.attributes.position.array
-    const positionsFrom = this.tasVerts
+    const boxBuffer: Box3 = new Box3()
     for (let k = 0; k < this.batchObjects.length; k++) {
       const start = this.batchObjects[k].tasVertIndexStart
-      const end = this.batchObjects[k].tasVertIndexEnd
-      for (let i = start; i <= end; i++) {
-        vecBuff.fromArray(positionsFrom, i * 3)
-        vecBuff.applyMatrix4(this.batchObjects[k].transform)
-        vecBuff.toArray(positions, i * 3)
-      }
+      const basBox = this.batchObjects[k].bvh.getBoundingBox(boxBuffer)
+      this.updateVertArray(basBox, start * 3, positions as Float32Array)
 
-      if (SpeckleBatchBVH.debugBoxes)
-        this.batchObjects[k].bvh.getBoundingBox(this.boxHelpers[k].box)
+      if (SpeckleBatchBVH.debugBoxes) this.boxHelpers[k].box.copy(basBox)
     }
     this.tas.refit()
     this.lastRefitTime = performance.now() - start
