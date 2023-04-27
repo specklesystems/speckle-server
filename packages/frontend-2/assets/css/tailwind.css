@@ -1,6 +1,6 @@
 /* stylelint-disable selector-id-pattern */
-@import './tailwind-setup/semantic-colors.css';
-@import './tailwind-setup/tippy.css';
+@import url('./tailwind-setup/semantic-colors.css');
+@import url('./tailwind-setup/tippy.css');
 
 @tailwind base;
 @tailwind components;
