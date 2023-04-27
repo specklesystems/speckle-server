@@ -1,4 +1,5 @@
 import { intersection } from 'lodash-es'
+export { isNonNullable } from '@speckle/shared'
 
 /**
  * Checks for inclusion of one array (target) into another (source)
@@ -15,9 +16,3 @@ export const arraysEqual = (arr1: unknown[], arr2: unknown[]) => {
   if (arr1.length !== arr2.length) return false
   return intersection(arr1, arr2).length === arr1.length
 }
-
-/**
- * Not nullable type guard, useful in `.filter()` calls for proper TS typed
- * results
- */
-export const isNonNullable = <V>(v: V): v is NonNullable<typeof v> => !!v
