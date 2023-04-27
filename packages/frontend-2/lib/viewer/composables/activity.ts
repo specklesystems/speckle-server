@@ -50,75 +50,6 @@ const USER_STALE_AFTER_PERIOD = 20 * OWN_ACTIVITY_UPDATE_INTERVAL
  */
 const USER_REMOVABLE_AFTER_PERIOD = USER_STALE_AFTER_PERIOD * 2
 
-// function useCollectSelection() {
-//   const viewerState = useInjectedViewerState()
-
-//   const selectionLocation = ref(null as Nullable<Vector3>)
-
-//   const selectionCallback = (event: Nullable<SelectionEvent>) => {
-//     if (!event) return (selectionLocation.value = null) // reset selection location
-
-//     const firstHit = event.hits[0]
-//     selectionLocation.value = firstHit.point
-//   }
-//   useSelectionEvents({
-//     singleClickCallback: selectionCallback,
-//     doubleClickCallback: selectionCallback
-//   })
-
-//   return (): ViewerUserSelectionInfoInput => {
-//     const controls = viewerState.viewer.instance.cameraHandler.activeCam.controls
-//     const pos = viewerState.ui.camera.position.value
-//     const target = viewerState.ui.camera.target.value
-//     const camera = [
-//       parseFloat(pos.x.toFixed(5)),
-//       parseFloat(pos.y.toFixed(5)),
-//       parseFloat(pos.z.toFixed(5)),
-//       parseFloat(target.x.toFixed(5)),
-//       parseFloat(target.y.toFixed(5)),
-//       parseFloat(target.z.toFixed(5)),
-//       viewerState.ui.camera.isOrthoProjection.value ? 1 : 0,
-//       get(controls, '_zoom') // kinda hacky, _zoom is a protected prop
-//     ]
-
-//     return {
-//       filteringState: {
-//         ...(viewerState.viewer.metadata.filteringState || {}),
-//         selectedObjects: viewerState.ui.filters.selectedObjects.value
-//           .map((o) => o.id)
-//           .filter((i): i is NonNullable<typeof i> => !!i)
-//       },
-//       selectionLocation: selectionLocation.value,
-//       sectionBox: viewerState.ui.sectionBox.value,
-//       camera
-//     }
-//   }
-// }
-
-// export function useCollectCommentData() {
-//   const collectSelection = useCollectSelection()
-//   return (): CommentDataInput => {
-//     const { selectionLocation, camera, sectionBox, filteringState } = collectSelection()
-//     const filters = filteringState as Nullable<FilteringState>
-
-//     return {
-//       location: selectionLocation || new Vector3(camera[3], camera[4], camera[5]),
-//       camPos: camera,
-//       sectionBox,
-//       // In the future comments might keep track of selected objects
-//       selection: null,
-//       filters: {
-//         hiddenIds: filters?.hiddenObjects || null,
-//         isolatedIds: filters?.isolatedObjects || null,
-//         propertyInfoKey: filters?.activePropFilterKey || null,
-//         passMax: filters?.passMax || null,
-//         passMin: filters?.passMin || null,
-//         sectionBox // possible duplicate, see above
-//       }
-//     }
-//   }
-// }
-
 function useCollectMainMetadata() {
   const { sessionId } = useInjectedViewerState()
   const { activeUser } = useActiveUser()
@@ -414,6 +345,7 @@ function useViewerSpotlightTracking() {
   const { resetFilters, hideObjects, isolateObjects } = useFilterUtilities()
 
   return (user: UserActivityModel) => {
+    // TODO: Restore more things @dim
     camera.position.value = new Vector3(
       user.state.ui.camera.position[0],
       user.state.ui.camera.position[1],

@@ -400,6 +400,7 @@ const shouldSetFiltersUpPostLoad = ref(false)
 const setupFullFilters = () => {
   if (!viewerState.value) return
 
+  // TODO: Restore more things @dim
   const propertyInfoKey = viewerState.value.ui.filters.propertyFilter.key
   const passMin = viewerState.value.viewer.metadata.filteringState?.passMin
   const passMax = viewerState.value.viewer.metadata.filteringState?.passMax

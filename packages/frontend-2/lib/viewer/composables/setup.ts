@@ -514,6 +514,7 @@ function setupResponseResourceItems(
     ]
 
     // Get rid of duplicates - only 1 resource per model & 1 resource per objectId
+    // TODO: @dim here you can remove the restriction to only have 1 model
     const encounteredModels = new Set<string>()
     const encounteredObjects = new Set<string>()
     const finalItems: ViewerResourceItem[] = []
