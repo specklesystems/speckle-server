@@ -7272,7 +7272,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@graphql-tools/json-file-loader@npm:7.4.1"
   dependencies:
-    "@speckle/viewer": "workspace:^"
     "@tweakpane/core": ^1.0.9
     "@typescript-eslint/eslint-plugin": ^5.39.0
     "@typescript-eslint/parser": ^5.39.0
