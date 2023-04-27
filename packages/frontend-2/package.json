@@ -27,7 +27,7 @@
   "dependencies": {
     "@apollo/client": "^3.7.0",
     "@headlessui/vue": "^1.7.3",
-    "@heroicons/vue": "^2.0.17",
+    "@heroicons/vue": "2.0.12",
     "@speckle/shared": "workspace:^",
     "@speckle/viewer": "workspace:^",
     "@speckle/vue-apollo-composable": "^4.0.0-beta.2",
@@ -48,7 +48,7 @@
     "@tiptap/suggestion": "2.0.0-beta.220",
     "@tiptap/vue-3": "2.0.0-beta.220",
     "@vue/apollo-composable": "4.0.0-beta.1",
-    "@vue/apollo-ssr": "^4.0.0-alpha.18",
+    "@vue/apollo-ssr": "4.0.0-alpha.18",
     "@vueuse/core": "^9.13.0",
     "apollo-upload-client": "^17.0.0",
     "dayjs": "^1.11.7",

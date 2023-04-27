@@ -4310,12 +4310,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@heroicons/vue@npm:^2.0.17":
-  version: 2.0.17
-  resolution: "@heroicons/vue@npm:2.0.17"
+"@heroicons/vue@npm:2.0.12":
+  version: 2.0.12
+  resolution: "@heroicons/vue@npm:2.0.12"
   peerDependencies:
     vue: ">= 3"
-  checksum: 6c0c0b07eaefa04e2d72dd9977e6c210ab5ee690780f7c9e9e3d3fea959a30457f760b226d9d453519ad1ad9859b85262ac54d8d53c5300bf66904ac7e0da0bc
+  checksum: 227bfd4f49e45ee57f731751d7a6e74a21562bd551ae9c36f77aa15cc4df0a05265171ecd157056adab23accf1b9638286d7ac9a032687895759036bc8dd7e6d
   languageName: node
   linkType: hard
 
@@ -6168,7 +6168,7 @@ __metadata:
     "@graphql-codegen/cli": ^2.13.6
     "@graphql-codegen/client-preset": ^1.2.5
     "@headlessui/vue": ^1.7.3
-    "@heroicons/vue": ^2.0.17
+    "@heroicons/vue": 2.0.12
     "@nuxt/devtools": ^0.2.5
     "@nuxtjs/tailwindcss": ^6.3.0
     "@speckle/shared": "workspace:^"
@@ -6210,7 +6210,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.38.1
     "@typescript-eslint/parser": ^5.38.1
     "@vue/apollo-composable": 4.0.0-beta.1
-    "@vue/apollo-ssr": ^4.0.0-alpha.18
+    "@vue/apollo-ssr": 4.0.0-alpha.18
     "@vueuse/core": ^9.13.0
     apollo-upload-client: ^17.0.0
     browserify-zlib: ^0.2.0
@@ -9715,12 +9715,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/apollo-ssr@npm:^4.0.0-alpha.18":
-  version: 4.0.0-beta.4
-  resolution: "@vue/apollo-ssr@npm:4.0.0-beta.4"
+"@vue/apollo-ssr@npm:4.0.0-alpha.18":
+  version: 4.0.0-alpha.18
+  resolution: "@vue/apollo-ssr@npm:4.0.0-alpha.18"
   dependencies:
     serialize-javascript: ^6.0.0
-  checksum: 22394de91fce1f586ef847f160243308013fd8327b7a517585050644085c1bd0e9f51ca34d40f18db547878a01187276adcb9570c7f5492833c71f252dde0c95
+  checksum: ec5ccabeffa09e32fd062d62a0b933530f95a45747488ddbfc3518338ba1c45eda4972084a43f3a0d23d23d7a6e3a631cbca373b8cd736fcadccdc0e53cc9819
   languageName: node
   linkType: hard
 
