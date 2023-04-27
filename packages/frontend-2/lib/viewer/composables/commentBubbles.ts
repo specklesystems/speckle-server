@@ -1,5 +1,5 @@
 import { CSSProperties, Ref } from 'vue'
-import { Nullable, Optional, SpeckleViewer } from '@speckle/shared'
+import { Nullable, SpeckleViewer } from '@speckle/shared'
 import {
   InitialStateWithUrlHashState,
   LoadedCommentThread,
@@ -20,7 +20,6 @@ import {
   useOnBeforeWindowUnload,
   useResponsiveHorizontalDirectionCalculation
 } from '~~/lib/common/composables/window'
-import { LegacyCommentViewerData } from '~~/lib/common/generated/gql/graphql'
 import { ViewerEvent } from '@speckle/viewer'
 import { useViewerUserActivityBroadcasting } from '~~/lib/viewer/composables/activity'
 import { useIntervalFn } from '@vueuse/core'
