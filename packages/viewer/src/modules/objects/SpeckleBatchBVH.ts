@@ -1,7 +1,6 @@
 import {
   Box3,
   Box3Helper,
-  BoxGeometry,
   FrontSide,
   Intersection,
   Material,
@@ -16,18 +15,19 @@ import { BatchObject } from '../batching/BatchObject'
 import { ExtendedIntersection, ExtendedShapeCastCallbacks } from './SpeckleRaycaster'
 import { SpeckleMeshBVH } from './SpeckleMeshBVH'
 import { ObjectLayers } from '../SpeckleRenderer'
+import { Geometry } from '../converter/Geometry'
 
 export class SpeckleBatchBVH {
   private static readonly vecBuff: Vector3 = new Vector3()
+  private static debugBoxes = false
 
   public batchObjects: BatchObject[] = []
   public bounds: Box3 = new Box3()
 
-  public boxGeometries: BoxGeometry[] = []
   public boxHelpers: Box3Helper[] = []
   public tas: SpeckleMeshBVH = null
   private tasVerts: Float32Array
-  public refitTime = 0
+  public lastRefitTime = 0
 
   public constructor(batchObjects: BatchObject[]) {
     this.batchObjects = batchObjects
@@ -43,10 +43,7 @@ export class SpeckleBatchBVH {
     let vertOffset = 0
     for (let k = 0; k < this.batchObjects.length; k++) {
       const boxBounds: Box3 = this.batchObjects[k].bvh.getBoundingBox(new Box3())
-      const boxSize = boxBounds.getSize(new Vector3())
-      const boxCenter = boxBounds.getCenter(new Vector3())
-      const boxGeometry = new BoxGeometry(boxSize.x, boxSize.y, boxSize.z, 1, 1, 1)
-      boxGeometry.translate(boxCenter.x, boxCenter.y, boxCenter.z)
+      const boxGeometry = Geometry.makeBoxGeometry(boxBounds)
 
       indices.set(
         (boxGeometry.index.array as number[]).map((val) => val + vertOffset / 3),
@@ -60,11 +57,13 @@ export class SpeckleBatchBVH {
       indexOffset += boxGeometry.index.array.length
       vertOffset += boxGeometry.attributes.position.array.length
 
-      this.boxGeometries.push(boxGeometry)
-      boxGeometry.computeBoundingBox()
-      const helper = new Box3Helper(boxGeometry.boundingBox)
-      helper.layers.set(ObjectLayers.PROPS)
-      this.boxHelpers.push(helper)
+      if (SpeckleBatchBVH.debugBoxes) {
+        const helper = new Box3Helper(boxBounds)
+        helper.layers.set(ObjectLayers.PROPS)
+        this.boxHelpers.push(helper)
+      }
+
+      boxGeometry.dispose()
     }
     this.tasVerts.set(vertices)
     this.tas = SpeckleMeshBVH.buildBVH(indices as unknown as number[], vertices)
@@ -88,10 +87,11 @@ export class SpeckleBatchBVH {
         vecBuff.toArray(positions, i * 3)
       }
 
-      this.batchObjects[k].bvh.getBoundingBox(this.boxHelpers[k].box)
+      if (SpeckleBatchBVH.debugBoxes)
+        this.batchObjects[k].bvh.getBoundingBox(this.boxHelpers[k].box)
     }
     this.tas.refit()
-    this.refitTime = performance.now() - start
+    this.lastRefitTime = performance.now() - start
   }
 
   /* Core Cast Functions */

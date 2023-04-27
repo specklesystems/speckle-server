@@ -147,7 +147,10 @@ export default class SpeckleMesh extends Mesh {
   }
 
   public updateTransformsUniform() {
-    if (!this.transformsDirty) return
+    if (!this.transformsDirty) {
+      if (this.bvh) this.bvh.lastRefitTime = 0
+      return
+    }
     if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
       this._batchObjects.forEach((batchObject: BatchObject) => {
         const index = batchObject.batchIndex * 16
