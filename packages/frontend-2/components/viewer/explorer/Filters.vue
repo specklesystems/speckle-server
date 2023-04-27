@@ -18,7 +18,7 @@
             text
             size="xs"
             @click="
-              ;(userSelectedFilter = undefined),
+              ;(userSelectedFilter = null),
                 (showAllFilters = false),
                 refreshColorsIfSetOrActiveFilterIsNumeric()
             "
@@ -91,16 +91,17 @@
 import { ChevronDownIcon, ChevronUpIcon, SparklesIcon } from '@heroicons/vue/24/solid'
 import { SparklesIcon as SparklesIconOutline } from '@heroicons/vue/24/outline'
 import { PropertyInfo, StringPropertyInfo, NumericPropertyInfo } from '@speckle/viewer'
-import {
-  useInjectedViewer,
-  useInjectedViewerState
-} from '~~/lib/viewer/composables/setup'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const { instance: viewer } = useInjectedViewer()
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 
 const {
-  ui: {
-    filters: { setColorFilter, removeColorFilter, current, userSelectedFilter }
+  setPropertyFilter,
+  removePropertyFilter,
+  filters: { propertyFilter }
+} = useFilterUtilities()
+const {
+  viewer: {
+    metadata: { filteringState }
   }
 } = useInjectedViewerState()
 
@@ -149,8 +150,10 @@ const speckleTypeFilter = computed(
   () =>
     relevantFilters.value.find((f) => f.key === 'speckle_type') as StringPropertyInfo
 )
-
-const activeFilter = computed(() => userSelectedFilter.value || speckleTypeFilter.value)
+const userSelectedFilter = computed(() => propertyFilter.filter.value)
+const activeFilter = computed(
+  () => propertyFilter.filter.value || speckleTypeFilter.value
+)
 
 // Using these as casting activeFilter as XXX in the prop causes some syntax highliting bug to show. Apologies :)
 const stringActiveFilter = computed(() => activeFilter.value as StringPropertyInfo)
@@ -175,7 +178,7 @@ const relevantFiltersLimited = computed(() => {
 // Too lazy to follow up in here for now, as i think we need a bit of a better strategy in connectors first :/
 const title = computed(() => {
   const currentFilterKey =
-    userSelectedFilter.value?.key || speckleTypeFilter.value?.key || 'Loading'
+    propertyFilter.filter.value?.key || speckleTypeFilter.value?.key || 'Loading'
 
   if (currentFilterKey === 'level.name') return 'Level Name'
   if (currentFilterKey === 'speckle_type') return 'Object Type'
@@ -196,19 +199,19 @@ const title = computed(() => {
   return currentFilterKey
 })
 
-const colors = computed(() => !!current.value?.activePropFilterKey)
+const colors = computed(() => !!filteringState.value?.activePropFilterKey)
 
 const toggleColors = () => {
-  if (!colors.value) setColorFilter(activeFilter.value)
-  else removeColorFilter()
+  if (!colors.value) setPropertyFilter(activeFilter.value)
+  else removePropertyFilter()
 }
 
 // Handles a rather complicated ux flow: user sets a numeric filter which only makes sense with colors on. we set the force colors flag in that scenario, so we can revert it if user selects a non-numeric filter afterwards.
 let forcedColors = false
-const refreshColorsIfSetOrActiveFilterIsNumeric = async () => {
+const refreshColorsIfSetOrActiveFilterIsNumeric = () => {
   if (activeFilter.value.type === 'number' && !colors.value) {
     forcedColors = true
-    await setColorFilter(activeFilter.value)
+    setPropertyFilter(activeFilter.value)
     return
   }
 
@@ -216,11 +219,11 @@ const refreshColorsIfSetOrActiveFilterIsNumeric = async () => {
 
   if (forcedColors) {
     forcedColors = false
-    await removeColorFilter()
+    removePropertyFilter()
     return
   }
 
-  await removeColorFilter()
-  await setColorFilter(activeFilter.value)
+  removePropertyFilter()
+  setPropertyFilter(activeFilter.value)
 }
 </script>

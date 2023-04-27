@@ -49,13 +49,9 @@
 </template>
 <script setup lang="ts">
 import { NumericPropertyInfo } from '@speckle/viewer'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 
-const {
-  ui: {
-    filters: { setColorFilter }
-  }
-} = useInjectedViewerState()
+const { setPropertyFilter } = useFilterUtilities()
 
 const props = defineProps<{
   filter: NumericPropertyInfo
@@ -77,6 +73,6 @@ const setFilterPass = () => {
   const max = Math.max(passMin.value, passMax.value)
   propInfo.passMin = min
   propInfo.passMax = max
-  setColorFilter(propInfo)
+  setPropertyFilter(propInfo)
 }
 </script>

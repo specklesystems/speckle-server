@@ -23,12 +23,11 @@ import {
 } from '~~/lib/viewer/graphql/mutations'
 import { onViewerCommentsUpdatedSubscription } from '~~/lib/viewer/graphql/subscriptions'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { useCollectCommentData } from '~~/lib/viewer/composables/activity'
-import type { Vector3 } from 'three'
-import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { MaybeNullOrUndefined } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { SuccessfullyUploadedFileItem } from '~~/lib/core/api/blobStorage'
 import { isValidCommentContentInput } from '~~/lib/viewer/helpers/comments'
+import { useStateSerialization } from '~~/lib/viewer/composables/serialization'
 
 export function useViewerCommentUpdateTracking(
   params: {
@@ -114,20 +113,12 @@ export function useSubmitComment() {
   } = useInjectedViewerState()
   const { isLoggedIn } = useActiveUser()
   const client = useApolloClient().client
-  const collectViewerData = useCollectCommentData()
   const { triggerNotification } = useGlobalToast()
+  const { serialize } = useStateSerialization()
 
-  return async (
-    content: CommentContentInput,
-    selectionLocation?: Nullable<Vector3>
-  ) => {
-    if (!isLoggedIn.value) return null //
+  return async (content: CommentContentInput) => {
+    if (!isLoggedIn.value) return null
     if (!isValidCommentContentInput(content)) return null
-
-    const viewerData = collectViewerData()
-    if (selectionLocation) {
-      viewerData.location = selectionLocation
-    }
     const screenshot = await viewerInstance.screenshot()
 
     const { data, errors } = await client
@@ -138,7 +129,7 @@ export function useSubmitComment() {
             projectId: projectId.value,
             resourceIdString: resourceIdString.value,
             content,
-            viewerData,
+            viewerState: serialize(),
             screenshot
           }
         }

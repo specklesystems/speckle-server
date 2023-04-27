@@ -55,10 +55,10 @@
           v-tippy="'Projection (p)'"
           flat
           secondary
-          :active="isPerspectiveProjection"
+          :active="isOrthoProjection"
           @click="toggleProjection()"
         >
-          <IconPerspective v-if="!isPerspectiveProjection" class="h-4 w-4" />
+          <IconPerspective v-if="isOrthoProjection" class="h-4 w-4" />
           <IconPerspectiveMore v-else class="h-4 w-4" />
         </ViewerControlsButtonToggle>
 
@@ -120,16 +120,18 @@ import {
 } from '@heroicons/vue/24/outline'
 import { onKeyStroke } from '@vueuse/core'
 import { Nullable } from '@speckle/shared'
-// import { scrollToBottom } from '~~/lib/common/helpers/dom'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useTextInputGlobalFocus } from '~~/composables/states'
+import {
+  useCameraUtilities,
+  useSectionBoxUtilities
+} from '~~/lib/viewer/composables/ui'
 
 const {
-  ui: {
-    camera: { toggleProjection, isPerspectiveProjection, zoomExtentsOrSelection },
-    sectionBox: { toggleSectionBox, isSectionBoxEnabled }
-  }
-} = useInjectedViewerState()
+  zoomExtentsOrSelection,
+  toggleProjection,
+  camera: { isOrthoProjection }
+} = useCameraUtilities()
+const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 
 type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'discussions'
 

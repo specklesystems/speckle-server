@@ -1,5 +1,5 @@
 import { CSSProperties, Ref } from 'vue'
-import { Nullable, Optional } from '@speckle/shared'
+import { Nullable, SpeckleViewer } from '@speckle/shared'
 import {
   InitialStateWithUrlHashState,
   LoadedCommentThread,
@@ -8,7 +8,7 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import { graphql } from '~~/lib/common/generated/gql'
 import { reduce, difference, debounce } from 'lodash-es'
-import { Vector3 } from 'three'
+import { Box3, Vector3 } from 'three'
 import {
   useSelectionEvents,
   useViewerCameraTracker,
@@ -20,7 +20,6 @@ import {
   useOnBeforeWindowUnload,
   useResponsiveHorizontalDirectionCalculation
 } from '~~/lib/common/composables/window'
-import { CommentViewerData } from '~~/lib/common/generated/gql/graphql'
 import { ViewerEvent } from '@speckle/viewer'
 import { useViewerUserActivityBroadcasting } from '~~/lib/viewer/composables/activity'
 import { useIntervalFn } from '@vueuse/core'
@@ -29,20 +28,7 @@ graphql(`
   fragment ViewerCommentBubblesData on Comment {
     id
     viewedAt
-    data {
-      location
-      camPos
-      sectionBox
-      selection
-      filters {
-        hiddenIds
-        isolatedIds
-        propertyInfoKey
-        passMax
-        passMin
-        sectionBox
-      }
-    }
+    viewerState
   }
 `)
 
@@ -96,16 +82,16 @@ export function useViewerNewThreadBubble(params: {
   }
 
   useSelectionEvents({
-    singleClickCallback: (event) => {
+    singleClickCallback: (_event, { firstVisibleSelectionHit }) => {
       if (block?.value) return
 
       buttonState.value.isExpanded = false
-      if (!event || !event.hits.length) {
+      if (!firstVisibleSelectionHit) {
         closeNewThread()
         return
       }
 
-      buttonState.value.clickLocation = event.hits[0].point.clone()
+      buttonState.value.clickLocation = firstVisibleSelectionHit.point.clone()
       buttonState.value.isVisible = true
       updatePositions()
     }
@@ -147,7 +133,15 @@ export function useViewerCommentBubblesProjection(params: {
   useViewerAnchoredPoints({
     parentEl,
     points: computed(() => Object.values(commentThreads.value)),
-    pointLocationGetter: (t) => t.data?.location as Optional<Vector3>,
+    pointLocationGetter: (t) => {
+      const state = SpeckleViewer.ViewerState.isSerializedViewerState(t.viewerState)
+        ? t.viewerState
+        : null
+      if (!state?.ui.selection) return undefined
+
+      const selection = state.ui.selection
+      return new Vector3(selection[0], selection[1], selection[2])
+    },
     updatePositionCallback: (thread, result) => {
       thread.isOccluded = result.isOccluded
       thread.style = {
@@ -300,26 +294,21 @@ export function useViewerThreadTracking() {
     }
   } = state
 
-  const refocus = (data: CommentViewerData) => {
-    if (data.camPos) {
-      state.viewer.instance.setView({
-        position: new Vector3(data.camPos[0], data.camPos[1], data.camPos[2]),
-        target: new Vector3(data.camPos[3], data.camPos[4], data.camPos[5])
-      })
-    }
+  const refocus = (commentState: SpeckleViewer.ViewerState.SerializedViewerState) => {
+    const camPos = commentState.ui.camera.position
+    const camTarget = commentState.ui.camera.target
 
-    if (data.sectionBox) {
-      state.ui.sectionBox.setSectionBox(
-        data.sectionBox as {
-          min: { x: number; y: number; z: number }
-          max: { x: number; y: number; z: number }
-        },
-        0
+    state.ui.camera.position.value = new Vector3(camPos[0], camPos[1], camPos[2])
+    state.ui.camera.target.value = new Vector3(camTarget[0], camTarget[1], camTarget[2])
+
+    const sectionBox = commentState.ui.sectionBox
+    if (sectionBox) {
+      state.ui.sectionBox.value = new Box3(
+        new Vector3(sectionBox.min[0], sectionBox.min[1], sectionBox.min[2]),
+        new Vector3(sectionBox.max[0], sectionBox.max[1], sectionBox.max[2])
       )
-      if (!state.ui.sectionBox.isSectionBoxEnabled.value)
-        state.ui.sectionBox.sectionBoxOn()
     } else {
-      state.ui.sectionBox.sectionBoxOff()
+      state.ui.sectionBox.value = null
     }
   }
 
@@ -327,8 +316,9 @@ export function useViewerThreadTracking() {
   useViewerEventListener(
     ViewerEvent.LoadComplete,
     () => {
-      if (openThread.thread.value?.data) {
-        refocus(openThread.thread.value.data)
+      const viewerState = openThread.thread.value?.viewerState
+      if (SpeckleViewer.ViewerState.isSerializedViewerState(viewerState)) {
+        refocus(viewerState)
       }
     },
     { state }
@@ -336,8 +326,11 @@ export function useViewerThreadTracking() {
 
   // Also do this when openThread changes
   watch(openThread.thread, (newThread, oldThread) => {
-    if (newThread?.id && newThread.id !== oldThread?.id && newThread.data) {
-      refocus(newThread.data)
+    if (newThread?.id && newThread.id !== oldThread?.id && newThread.viewerState) {
+      const viewerState = newThread.viewerState
+      if (SpeckleViewer.ViewerState.isSerializedViewerState(viewerState)) {
+        refocus(viewerState)
+      }
     }
   })
 }

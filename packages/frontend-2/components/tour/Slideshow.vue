@@ -51,15 +51,18 @@ import { Nullable } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { items as slideshowItemsRaw } from '~~/lib/tour/slideshowItems'
 import { ArrowRightIcon } from '@heroicons/vue/24/solid'
-import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 
 // Slideshow component imports
 import FirstTip from '~~/components/tour/content/FirstTip.vue'
 import BasicViewerNavigation from '~~/components/tour/content/BasicViewerNavigation.vue'
 import OverlayModel from '~~/components/tour/content/OverlayModel.vue'
+import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 
 const emit = defineEmits(['next'])
+
+const tourStage = useTourStageState()
+const { zoom, setView } = useCameraUtilities()
 
 // Drives the amount of slideshow items
 const tourItems = [FirstTip, BasicViewerNavigation, OverlayModel /* , LastTip */]
@@ -114,12 +117,9 @@ useViewerAnchoredPoints({
   }
 })
 
-const tourStage = useTourStageState()
-const { instance } = useInjectedViewer()
-
 const finishSlideshow = () => {
-  instance.zoom()
-  instance.setView('left')
+  zoom()
+  setView('left')
   tourStage.value.showNavbar = true
   tourStage.value.showViewerControls = true
   emit('next')

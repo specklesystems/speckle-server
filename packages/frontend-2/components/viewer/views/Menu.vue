@@ -29,7 +29,7 @@
               'text-foreground': !active,
               'text-sm py-2 transition': true
             }"
-            @click="instance.setView(view.name.toLowerCase() as CanonicalView)"
+            @click="setView(view.name.toLowerCase() as CanonicalView)"
           >
             {{ view.name }}
           </button>
@@ -50,7 +50,7 @@
               'text-foreground': !active,
               'text-sm py-2 transition xxx-truncate': true
             }"
-            @click="instance.setView(view)"
+            @click="setView(view)"
           >
             <!-- TODO: For some reason using the `truncate` class creates weird behaviour in the layout -->
             {{ view.name.length > 12 ? view.name.substring(0, 12) + '...' : view.name }}
@@ -63,14 +63,16 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { VideoCameraIcon } from '@heroicons/vue/24/outline'
-import { CanonicalView, SpeckleView } from '~~/../viewer/dist'
-import {
-  useInjectedViewer,
-  useInjectedViewerInterfaceState
-} from '~~/lib/viewer/composables/setup'
+import { CanonicalView } from '~~/../viewer/dist'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 
-const { instance } = useInjectedViewer()
-const { viewerBusy } = useInjectedViewerInterfaceState()
+const {
+  viewer: {
+    metadata: { views }
+  }
+} = useInjectedViewerState()
+const { setView } = useCameraUtilities()
 
 const canonicalViews = [
   { name: 'Top' },
@@ -79,14 +81,4 @@ const canonicalViews = [
   { name: 'Back' },
   { name: 'Right' }
 ]
-
-const views = ref<SpeckleView[]>([])
-
-watch(
-  viewerBusy,
-  () => {
-    views.value = instance.getViews()
-  },
-  { immediate: true }
-)
 </script>

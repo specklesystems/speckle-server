@@ -19,4 +19,6 @@ export interface SpeckleObject {
   elements?: SpeckleReference[]
   children?: SpeckleObject[] | SpeckleReference[]
   name?: string
+  speckle_type?: string
+  [key: string]: unknown
 }

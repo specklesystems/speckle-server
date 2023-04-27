@@ -1,65 +1,58 @@
+import { Nullable } from '@speckle/shared'
 import { SelectionEvent } from '@speckle/viewer'
-import {
-  InjectableViewerState,
-  useInjectedViewerState
-} from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useCameraUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
 
-function getFirstVisibleSelectionHit(
-  { hits }: SelectionEvent,
-  state: InjectableViewerState
-) {
+function useCollectSelection() {
   const {
-    ui: {
-      filters: { current }
-    }
-  } = state
+    ui: { selection }
+  } = useInjectedViewerState()
 
-  const hasHiddenObjects =
-    !!current.value?.hiddenObjects && current.value?.hiddenObjects.length !== 0
-  const hasIsolatedObjects =
-    !!current.value?.isolatedObjects && current.value?.isolatedObjects.length !== 0
+  const selectionCallback = (event: Nullable<SelectionEvent>) => {
+    if (!event) return (selection.value = null) // reset selection location
 
-  for (const hit of hits) {
-    if (hasHiddenObjects) {
-      if (!current.value?.hiddenObjects?.includes(hit.object.id as string)) {
-        return hit
-      }
-    } else if (hasIsolatedObjects) {
-      if (current.value.isolatedObjects?.includes(hit.object.id as string)) return hit
-    } else {
-      return hit
-    }
+    const firstHit = event.hits[0]
+    selection.value = firstHit.point
   }
-  return null
+  useSelectionEvents({
+    singleClickCallback: selectionCallback,
+    doubleClickCallback: selectionCallback
+  })
 }
 
-export function useViewerSelectionEventHandler() {
+function useSelectOrZoomOnSelection() {
   const state = useInjectedViewerState()
+  const { clearSelection, addToSelection } = useSelectionUtilities()
+  const { zoom } = useCameraUtilities()
 
   useSelectionEvents(
     {
-      singleClickCallback: (args) => {
-        if (!args) return state.ui.selection.clearSelection()
-        if (args.hits.length === 0) return state.ui.selection.clearSelection()
-        if (!args.multiple) state.ui.selection.clearSelection()
+      singleClickCallback: (args, { firstVisibleSelectionHit }) => {
+        if (!args) return clearSelection()
+        if (args.hits.length === 0) return clearSelection()
+        if (!args.multiple) clearSelection()
 
-        const firstVisHit = args ? getFirstVisibleSelectionHit(args, state) : null
-        if (!firstVisHit) return state.ui.selection.clearSelection()
-        state.ui.selection.addToSelection(firstVisHit.object)
+        if (!firstVisibleSelectionHit) return clearSelection()
+        addToSelection(firstVisibleSelectionHit.object)
       },
-      doubleClickCallback: (args) => {
-        if (!args) return state.viewer.instance.zoom()
-        if (!args.hits) return state.viewer.instance.zoom()
-        if (args.hits.length === 0) return state.viewer.instance.zoom()
+      doubleClickCallback: (args, { firstVisibleSelectionHit }) => {
+        if (!args) return zoom()
+        if (!args.hits) return zoom()
+        if (args.hits.length === 0) return zoom()
 
-        const firstVisHit = args ? getFirstVisibleSelectionHit(args, state) : null
-        if (!firstVisHit) return state.ui.selection.clearSelection()
+        const firstVisHit = firstVisibleSelectionHit
+        if (!firstVisHit) return clearSelection()
 
         const objectId = args.hits[0].object.id
-        state.viewer.instance.zoom([objectId])
+        zoom([objectId])
       }
     },
     { state }
   )
+}
+
+export function useViewerSelectionEventHandler() {
+  useCollectSelection()
+  useSelectOrZoomOnSelection()
 }

@@ -122,7 +122,8 @@ const onSubmit = (comment?: CommentEditorValue) => {
   if (!isValidCommentContentInput(content)) return
 
   // Intentionally not awaiting so that we emit close immediately
-  createThread(content, props.modelValue.clickLocation)
+  // createThread(content, props.modelValue.clickLocation)
+  createThread(content)
   updateIsTyping(false)
 
   // Marking all uploads as in use to prevent cleanup

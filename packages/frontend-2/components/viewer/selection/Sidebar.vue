@@ -53,25 +53,24 @@ import { onKeyStroke } from '@vueuse/core'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { containsAll } from '~~/lib/common/helpers/utils'
-import { ViewerSceneExplorerStateKey } from '~~/lib/common/helpers/constants'
+import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 
 const {
-  ui: {
-    selection: { objects, clearSelection },
-    filters
-  },
-  viewer: { instance: viewerInstance }
+  viewer: {
+    metadata: { filteringState }
+  }
 } = useInjectedViewerState()
-
-// const unfold = computed(() => objects.value.length === 1)
+const { objects, clearSelection } = useSelectionUtilities()
+const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
+  useFilterUtilities()
 
 const itemCount = ref(10)
 const objectsLimited = computed(() => {
   return objects.value.slice(0, itemCount.value)
 })
 
-const hiddenObjects = computed(() => filters.current.value?.hiddenObjects)
-const isolatedObjects = computed(() => filters.current.value?.isolatedObjects)
+const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)
+const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
 
 const allTargetIds = computed(() => {
   const ids = []
@@ -92,24 +91,22 @@ const isIsolated = computed(() => {
   return containsAll(allTargetIds.value, isolatedObjects.value)
 })
 
-const stateKey = ViewerSceneExplorerStateKey
-
 const hideOrShowSelection = () => {
   if (!isHidden.value) {
-    filters.hideObjects(allTargetIds.value, stateKey, true)
+    hideObjects(allTargetIds.value)
     clearSelection() // when hiding, the objects disappear. they can't really stay "selected"
     return
   }
-  return filters.showObjects(allTargetIds.value, stateKey, true)
+
+  showObjects(allTargetIds.value)
 }
 
 const isolateOrUnisolateSelection = () => {
-  if (!isIsolated.value) {
-    viewerInstance.selectObjects([]) // bypassing the FE state, and resetting the viewer selection state only
-    filters.isolateObjects(allTargetIds.value, stateKey, true)
-    return
+  if (isIsolated.value) {
+    unIsolateObjects(allTargetIds.value)
+  } else {
+    isolateObjects(allTargetIds.value)
   }
-  return filters.unIsolateObjects(allTargetIds.value, stateKey, true)
 }
 
 onKeyStroke('Escape', () => {

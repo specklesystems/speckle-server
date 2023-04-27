@@ -1,4 +1,4 @@
-import { ensureError, Roles } from '@speckle/shared'
+import { ensureError, Roles, SpeckleViewer } from '@speckle/shared'
 import { AuthContext } from '@/modules/shared/authz'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { getStream } from '@/modules/core/repositories/streams'
@@ -35,6 +35,7 @@ import {
   addCommentCreatedActivity,
   addReplyAddedActivity
 } from '@/modules/activitystream/services/commentActivity'
+import { inputToDataStruct } from '@/modules/comments/services/data'
 
 export async function authorizeProjectCommentsAccess(params: {
   projectId: string
@@ -100,6 +101,11 @@ export async function createCommentThreadAndNotify(
     )
   }
 
+  const state = SpeckleViewer.ViewerState.isSerializedViewerState(input.viewerState)
+    ? input.viewerState
+    : null
+  const dataStruct = inputToDataStruct(state)
+
   const commentPayload: InsertCommentPayload = {
     streamId: input.projectId,
     authorId: userId,
@@ -108,7 +114,7 @@ export async function createCommentThreadAndNotify(
       blobIds: input.content.blobIds || undefined
     }),
     screenshot: input.screenshot,
-    data: input.viewerData
+    data: dataStruct
   }
 
   let comment: CommentRecord
@@ -175,7 +181,8 @@ export async function createCommentReplyAndNotify(
       doc: input.content.doc,
       blobIds: input.content.blobIds || undefined
     }),
-    parentComment: thread.id
+    parentComment: thread.id,
+    data: null
   }
 
   let reply: CommentRecord

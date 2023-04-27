@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { debounce, difference, uniq } from 'lodash-es'
-import { ViewerEvent } from '@speckle/viewer'
+import { difference, flatten, isEqual, uniq } from 'lodash-es'
+import { SunLightConfiguration, ViewerEvent } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import {
   Comment,
@@ -11,7 +11,11 @@ import {
 } from '~~/lib/common/generated/gql/graphql'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
-import { useGetObjectUrl } from '~~/lib/viewer/composables/viewer'
+import {
+  useGetObjectUrl,
+  useViewerCameraTracker,
+  useViewerEventListener
+} from '~~/lib/viewer/composables/viewer'
 import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
 import {
   getCacheId,
@@ -24,6 +28,10 @@ import {
   useViewerThreadTracking
 } from '~~/lib/viewer/composables/commentBubbles'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
+import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
+import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
+import { Vector3, OrthographicCamera } from 'three'
+import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -37,34 +45,6 @@ function useViewerIsBusyEventHandler() {
 
   onBeforeUnmount(() => {
     state.viewer.instance.removeListener(ViewerEvent.Busy, callback)
-  })
-}
-
-/**
- * Should refresh the world tree (used in the explorer) and the filters (used by filters).
- * Note some strange behaviour on the world tree reactivity: see comments in explorer component.
- */
-function useViewerWorldTreeAndFilterRefreshOnLoadComplete() {
-  if (process.server) return
-
-  const {
-    ui,
-    viewer: { instance: viewer }
-  } = useInjectedViewerState()
-
-  const refreshWorldTreeAndFilters = (busy: boolean) => {
-    if (busy) return
-    ui.worldTree.value = viewer.getWorldTree()
-
-    ui.filters.all.value = viewer.getObjectProperties()
-  }
-
-  onMounted(() => {
-    viewer.on(ViewerEvent.Busy, refreshWorldTreeAndFilters)
-  })
-
-  onBeforeUnmount(() => {
-    viewer.removeListener(ViewerEvent.Busy, refreshWorldTreeAndFilters)
   })
 }
 
@@ -234,12 +214,316 @@ function useViewerSubscriptionEventTracker() {
   )
 }
 
+export function useViewerSectionBoxIntegration() {
+  const {
+    ui: { sectionBox },
+    viewer: { instance }
+  } = useInjectedViewerState()
+
+  // No two-way sync for section boxes, because once you set a Box3 into the viewer
+  // the viewer transforms it into something else causing the updates going into an infinite loop
+
+  // state -> viewer
+  watch(
+    sectionBox,
+    (newVal, oldVal) => {
+      if (newVal && oldVal && newVal.equals(oldVal)) return
+      if (!newVal && !oldVal) return
+
+      if (oldVal && !newVal) {
+        instance.sectionBoxOff()
+        instance.requestRender()
+        return
+      }
+
+      if (newVal && (!oldVal || !newVal.equals(oldVal))) {
+        instance.setSectionBox({
+          min: newVal.min,
+          max: newVal.max
+        })
+        instance.sectionBoxOn()
+        instance.requestRender()
+      }
+    },
+    { immediate: true, deep: true, flush: 'sync' }
+  )
+}
+
+export function useViewerCameraIntegration() {
+  const {
+    viewer: { instance },
+    ui: {
+      camera: { isOrthoProjection, position, target }
+    }
+  } = useInjectedViewerState()
+
+  // viewer -> state
+  // debouncing pos/target updates to avoid jitteriness
+  useViewerCameraTracker(
+    () => {
+      const activeCam = instance.cameraHandler.activeCam
+      const controls = activeCam.controls
+      const viewerPos = new Vector3()
+      const viewerTarget = new Vector3()
+
+      controls.getPosition(viewerPos)
+      controls.getTarget(viewerTarget)
+
+      if (!areVectorsLooselyEqual(position.value, viewerPos)) {
+        position.value = viewerPos.clone()
+      }
+      if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
+        target.value = viewerTarget.clone()
+      }
+    },
+    { debounceWait: 100 }
+  )
+
+  useViewerCameraTracker(
+    () => {
+      const activeCam = instance.cameraHandler.activeCam
+      const isOrtho = activeCam.camera instanceof OrthographicCamera
+
+      if (isOrthoProjection.value !== isOrtho) {
+        isOrthoProjection.value = isOrtho
+      }
+    },
+    { throttleWait: 500 }
+  )
+
+  // state -> viewer
+  watch(isOrthoProjection, (newVal, oldVal) => {
+    if (!!newVal === !!oldVal) return
+
+    if (newVal) {
+      instance.setPerspectiveCameraOn()
+    } else {
+      instance.setOrthoCameraOn()
+    }
+  })
+
+  watch(position, (newVal, oldVal) => {
+    if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
+      return
+    }
+
+    instance.setView({
+      position: newVal,
+      target: target.value
+    })
+  })
+
+  watch(target, (newVal, oldVal) => {
+    if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
+      return
+    }
+
+    instance.setView({
+      position: position.value,
+      target: newVal
+    })
+  })
+}
+
+export function useViewerFiltersIntegration() {
+  const {
+    viewer: { instance },
+    ui: { filters, highlightedObjectIds }
+  } = useInjectedViewerState()
+
+  const stateKey = 'default'
+  let preventFilterWatchers = false
+  const withWatchersDisabled = (fn: () => void) => {
+    const isAlreadyInPreventScope = !!preventFilterWatchers
+    preventFilterWatchers = true
+    fn()
+    if (!isAlreadyInPreventScope) preventFilterWatchers = false
+  }
+
+  // TODO: Hard to get working at this point in time, because the FilteringManager
+  // doesn't fully support this (strange bugs arise with isolate after hide not working etc.)
+  // viewer -> state
+  // let latestState: Optional<FilteringState> = undefined
+  // useViewerEventListener(ViewerEvent.FilteringStateSet, (state: FilteringState) => {
+  //   // we do this weird stuff cause a change to filters might trigger another FilteringStateSet event
+  //   // with different values, but once it finishes, the old FilteringStateSet event handler will continue with the old
+  //   // data and possibly break things
+  //   latestState = state
+  //   const getLatestState = () => state
+
+  //   const viewerIsolated = getLatestState().isolatedObjects || []
+  //   const isolated = filters.isolatedObjectIds.value
+  //   if (!arraysEqual(viewerIsolated, isolated)) {
+  //     withWatchersDisabled(() => {
+  //       filters.isolatedObjectIds.value = viewerIsolated.slice()
+  //     })
+  //   }
+
+  //   const viewerHidden = getLatestState().hiddenObjects || []
+  //   const hidden = filters.hiddenObjectIds.value
+  //   if (!arraysEqual(viewerHidden, hidden)) {
+  //     withWatchersDisabled(() => {
+  //       filters.hiddenObjectIds.value = viewerHidden.slice()
+  //     })
+  //   }
+
+  //   const viewerFilterKey = getLatestState().activePropFilterKey
+  //   const currentFilterKey = filters.propertyFilter.filter.value?.key
+  //   if (viewerFilterKey !== currentFilterKey) {
+  //     const property = (availableFilters.value || []).find(
+  //       (f) => f.key === viewerFilterKey
+  //     )
+  //     if (property) {
+  //       filters.propertyFilter.filter.value = property
+  //     }
+  //   }
+  // })
+
+  // state -> viewer
+  watch(
+    highlightedObjectIds,
+    (newVal, oldVal) => {
+      if (arraysEqual(newVal, oldVal || [])) return
+
+      instance.highlightObjects(newVal)
+    },
+    { immediate: true, flush: 'sync' }
+  )
+
+  watch(
+    filters.isolatedObjectIds,
+    (newVal, oldVal) => {
+      if (preventFilterWatchers) return
+      if (arraysEqual(newVal, oldVal || [])) return
+
+      const isolatable = difference(newVal, oldVal || [])
+      const unisolatable = difference(oldVal || [], newVal)
+
+      if (isolatable.length) {
+        withWatchersDisabled(() => {
+          instance.isolateObjects(isolatable, stateKey, true)
+          filters.hiddenObjectIds.value = []
+        })
+      }
+
+      if (unisolatable.length) {
+        withWatchersDisabled(() => {
+          instance.unIsolateObjects(unisolatable, stateKey, true)
+          filters.hiddenObjectIds.value = []
+        })
+      }
+    },
+    { immediate: true, flush: 'sync' }
+  )
+
+  watch(
+    filters.hiddenObjectIds,
+    (newVal, oldVal) => {
+      if (preventFilterWatchers) return
+      if (arraysEqual(newVal, oldVal || [])) return
+
+      const hidable = difference(newVal, oldVal || [])
+      const showable = difference(oldVal || [], newVal)
+
+      if (hidable.length) {
+        withWatchersDisabled(() => {
+          instance.hideObjects(hidable, stateKey, true)
+          filters.isolatedObjectIds.value = []
+        })
+      }
+      if (showable.length) {
+        withWatchersDisabled(() => {
+          instance.showObjects(showable, stateKey, true)
+          filters.isolatedObjectIds.value = []
+        })
+      }
+    },
+    { immediate: true, flush: 'sync' }
+  )
+
+  watch(
+    () =>
+      <const>[
+        filters.propertyFilter.filter.value,
+        filters.propertyFilter.isApplied.value
+      ],
+    (newVal, oldVal) => {
+      const [filter, isApplied] = newVal
+      const [oldFilter, oldIsApplied] = oldVal || [null, false]
+
+      if (isEqual(filter, oldFilter) && isEqual(isApplied, oldIsApplied)) return
+
+      if (filter && isApplied) {
+        instance.setColorFilter(filter)
+      } else {
+        instance.removeColorFilter()
+      }
+    },
+    { immediate: true, flush: 'sync' }
+  )
+
+  watch(
+    filters.selectedObjects,
+    (newVal, oldVal) => {
+      const newIds = flatten(newVal.map((v) => getTargetObjectIds({ ...v }))).filter(
+        isNonNullable
+      )
+      const oldIds = flatten(
+        (oldVal || []).map((v) => getTargetObjectIds({ ...v }))
+      ).filter(isNonNullable)
+      if (arraysEqual(newIds, oldIds)) return
+
+      if (!newVal.length) {
+        instance.resetSelection()
+        return
+      }
+
+      instance.selectObjects(newIds)
+    },
+    { immediate: true, flush: 'sync' }
+  )
+}
+
+export function useLightConfigIntegration() {
+  const {
+    ui: { lightConfig },
+    viewer: { instance }
+  } = useInjectedViewerState()
+
+  // viewer -> state
+  useViewerEventListener(
+    ViewerEvent.LightConfigUpdated,
+    (config: SunLightConfiguration) => {
+      if (isEqual(lightConfig.value, config)) return
+      lightConfig.value = config
+    }
+  )
+
+  // state -> viewer
+  watch(
+    lightConfig,
+    (newVal, oldVal) => {
+      if (newVal && oldVal && isEqual(newVal, oldVal)) return
+      instance.setLightConfiguration(newVal)
+    },
+    {
+      immediate: true,
+      deep: true,
+      flush: 'sync'
+    }
+  )
+}
+
 export function useViewerPostSetup() {
+  if (process.server) return
   useViewerObjectAutoLoading()
-  useViewerWorldTreeAndFilterRefreshOnLoadComplete()
   useViewerSelectionEventHandler()
   useViewerIsBusyEventHandler()
   useViewerSubscriptionEventTracker()
   useViewerThreadTracking()
   useViewerOpenedThreadUpdateEmitter()
+  useViewerSectionBoxIntegration()
+  useViewerCameraIntegration()
+  useViewerFiltersIntegration()
+  useLightConfigIntegration()
 }

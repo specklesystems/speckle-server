@@ -146,7 +146,7 @@ import {
 } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { ensureError, Nullable, Roles } from '@speckle/shared'
+import { ensureError, Nullable, Roles, SpeckleViewer } from '@speckle/shared'
 import { onKeyDown, useClipboard, useDraggable } from '@vueuse/core'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'
 import { useViewerThreadTypingTracking } from '~~/lib/viewer/composables/activity'
@@ -162,13 +162,15 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-// import { emojis } from '~~/lib/viewer/helpers/emojis'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { ResourceType } from '~~/lib/common/generated/gql/graphql'
 import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
-import { ViewerSceneExplorerStateKey } from '~~/lib/common/helpers/constants'
 import { NumericPropertyInfo, PropertyInfo } from '@speckle/viewer'
+import {
+  useFilterUtilities,
+  useSectionBoxUtilities
+} from '~~/lib/viewer/composables/ui'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -181,6 +183,36 @@ const props = defineProps<{
   modelValue: CommentBubbleModel
 }>()
 
+const threadId = computed(() => props.modelValue.id)
+const { copy } = useClipboard()
+const { activeUser } = useActiveUser()
+const archiveComment = useArchiveComment()
+const { triggerNotification } = useGlobalToast()
+const {
+  resources: {
+    response: { project }
+  }
+} = useInjectedViewerState()
+
+const {
+  projectId,
+  viewer: {
+    metadata: { availableFilters: allFilters }
+  }
+} = useInjectedViewerState()
+const { sectionBoxOff } = useSectionBoxUtilities()
+const {
+  removePropertyFilter,
+  setPropertyFilter,
+  resetFilters,
+  isolateObjects,
+  hideObjects
+} = useFilterUtilities()
+
+const markThreadViewed = useMarkThreadViewed()
+const { usersTyping } = useViewerThreadTypingTracking(threadId)
+const { ellipsis, controls } = useAnimatingEllipsis()
+
 const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const threadActivator = ref(null as Nullable<HTMLElement>)
@@ -188,19 +220,16 @@ const threadActivator = ref(null as Nullable<HTMLElement>)
 const handle = ref(null as Nullable<HTMLElement>)
 const justCreatedReply = ref(false)
 
-const threadId = computed(() => props.modelValue.id)
 const comments = computed(() => [
   props.modelValue,
   ...props.modelValue.replies.items.slice().reverse()
 ])
 
-const {
-  projectId,
-  ui: { sectionBox, filters }
-} = useInjectedViewerState()
-const markThreadViewed = useMarkThreadViewed()
-const { usersTyping } = useViewerThreadTypingTracking(threadId)
-const { ellipsis, controls } = useAnimatingEllipsis()
+const viewerState = computed(() => {
+  return SpeckleViewer.ViewerState.isSerializedViewerState(props.modelValue.viewerState)
+    ? props.modelValue.viewerState
+    : null
+})
 
 // Note: conflicted with dragging styles, so took it out temporarily
 // const { style } = useExpandedThreadResponsiveLocation({
@@ -281,27 +310,6 @@ const changeExpanded = (newVal: boolean) => {
   })
   emit('update:expanded', newVal)
 }
-
-const { copy } = useClipboard()
-const { activeUser } = useActiveUser()
-const archiveComment = useArchiveComment()
-const { triggerNotification } = useGlobalToast()
-const {
-  resources: {
-    response: { project }
-  },
-  ui: {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    viewerBusy,
-    filters: {
-      setColorFilter,
-      removeColorFilter,
-      resetFilters,
-      all: allFilters,
-      userSelectedFilter
-    }
-  }
-} = useInjectedViewerState()
 
 const canArchiveOrUnarchive = computed(
   () =>
@@ -387,16 +395,18 @@ onKeyDown('Escape', () => {
 
 // onKeyDown('ArrowRight', () => (isExpanded.value ? emit('prev', props.modelValue) : ''))
 // onKeyDown('ArrowLeft', () => (isExpanded.value ? emit('next', props.modelValue) : ''))
-const stateKey = ViewerSceneExplorerStateKey
 const shouldSetFiltersUpPostLoad = ref(false)
 
-const setupFullFilters = async () => {
-  if (!props.modelValue.data) return
+const setupFullFilters = () => {
+  if (!viewerState.value) return
 
-  const { propertyInfoKey, passMax, passMin } = props.modelValue.data.filters
+  // TODO: Restore more things @dim
+  const propertyInfoKey = viewerState.value.ui.filters.propertyFilter.key
+  const passMin = viewerState.value.viewer.metadata.filteringState?.passMin
+  const passMax = viewerState.value.viewer.metadata.filteringState?.passMax
 
   if (propertyInfoKey) {
-    await removeColorFilter()
+    removePropertyFilter()
     const filter = allFilters.value?.find(
       (f: PropertyInfo) => f.key === propertyInfoKey
     )
@@ -410,12 +420,10 @@ const setupFullFilters = async () => {
       const numericFilter = { ...filter } as NumericPropertyInfo
       numericFilter.passMin = passMin || numericFilter.min
       numericFilter.passMax = passMax || numericFilter.max
-      await setColorFilter(numericFilter)
-      userSelectedFilter.value = numericFilter
+      setPropertyFilter(numericFilter)
       return // Hiding objects is handled by the numeric filter pass min/max
     }
-    userSelectedFilter.value = filter
-    await setColorFilter(filter)
+    setPropertyFilter(filter)
     // do not return, let's go through the vis of objects
   }
 
@@ -423,13 +431,13 @@ const setupFullFilters = async () => {
 }
 
 const hideOrIsolateObjects = () => {
-  if (!props.modelValue.data) return
-  const { isolatedIds, hiddenIds } = props.modelValue.data.filters
+  if (!viewerState.value) return
 
-  if (isolatedIds && isolatedIds.length > 0)
-    filters.isolateObjects(isolatedIds, stateKey)
+  const isolatedIds = viewerState.value.ui.filters.isolatedObjectIds
+  const hiddenIds = viewerState.value.ui.filters.hiddenObjectIds
 
-  if (hiddenIds && hiddenIds.length > 0) filters.hideObjects(hiddenIds, stateKey)
+  if (isolatedIds.length) isolateObjects(isolatedIds, { replace: true })
+  if (hiddenIds.length) hideObjects(hiddenIds, { replace: true })
 }
 
 watch(
@@ -442,8 +450,8 @@ watch(
       markThreadViewed(projectId.value, props.modelValue.id)
     }
 
-    if (!newIsExpanded && props.modelValue.data?.sectionBox) {
-      sectionBox.sectionBoxOff() // turn off section box if a comment had a section box
+    if (!newIsExpanded && viewerState.value?.ui.sectionBox) {
+      sectionBoxOff() // turn off section box if a comment had a section box
     }
 
     if (!newIsExpanded) {
@@ -458,16 +466,20 @@ watch(
     // all filters is populated...
 
     // If a thread is no longer expanded and it had filters, reset them to default.
-    if (!newIsExpanded && props.modelValue.data?.filters) {
+    const isolatedIds = viewerState.value?.ui.filters.isolatedObjectIds || []
+    const hiddenIds = viewerState.value?.ui.filters.hiddenObjectIds || []
+    const propertyInfoKey = viewerState.value?.ui.filters.propertyFilter.key
+    const hasFilters = isolatedIds.length || hiddenIds.length || propertyInfoKey
+    if (!newIsExpanded && hasFilters) {
       resetFilters()
       return
     }
 
     // If a thread is expanded and has filters, set them up.
-    if (props.modelValue.data?.filters && newIsExpanded) {
+    if (hasFilters && newIsExpanded) {
       // If we do not have a custom filter for this thread, it means
       // we might only have hidden/isolated objects.
-      if (!props.modelValue.data.filters.propertyInfoKey) {
+      if (!propertyInfoKey) {
         hideOrIsolateObjects()
         return
       }
@@ -475,7 +487,7 @@ watch(
       // If we do have a 'propertyInfoKey', try to find it in the all filters. It will be there,
       // unless we're freshly opening a model and a thread at the same time.
       const filter = allFilters.value?.find(
-        (f: PropertyInfo) => f.key === props.modelValue.data?.filters.propertyInfoKey
+        (f: PropertyInfo) => f.key === propertyInfoKey
       )
       // If we don't find it, set a flag for the watcher below to pick up.
       if (!filter) shouldSetFiltersUpPostLoad.value = true
@@ -489,7 +501,7 @@ watch(
 watch(allFilters, (newValue) => {
   if (!shouldSetFiltersUpPostLoad.value) return
   const filter = newValue?.find(
-    (f: PropertyInfo) => f.key === props.modelValue.data?.filters.propertyInfoKey
+    (f: PropertyInfo) => f.key === viewerState.value?.ui.filters.propertyFilter.key
   )
   if (!filter) return
   shouldSetFiltersUpPostLoad.value = false

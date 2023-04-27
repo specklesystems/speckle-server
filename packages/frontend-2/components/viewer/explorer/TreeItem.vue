@@ -143,13 +143,13 @@ import {
   SpeckleObject,
   SpeckleReference
 } from '~~/lib/common/helpers/sceneExplorer'
-import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import {
   getHeaderAndSubheaderForSpeckleObject,
   getTargetObjectIds
 } from '~~/lib/object-sidebar/helpers'
 import { containsAll } from '~~/lib/common/helpers/utils'
-import { ViewerSceneExplorerStateKey } from '~~/lib/common/helpers/constants'
+import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 
 const props = withDefaults(
   defineProps<{
@@ -169,6 +169,16 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'expanded', depth: number): void
 }>()
+
+const {
+  viewer: {
+    metadata: { filteringState }
+  }
+} = useInjectedViewerState()
+const { addToSelection, clearSelection, removeFromSelection, objects } =
+  useSelectionUtilities()
+const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
+  useFilterUtilities()
 
 const isAtomic = computed(() => props.treeItem.atomic === true)
 const speckleData = props.treeItem?.raw as SpeckleObject
@@ -293,11 +303,6 @@ const manualUnfoldToggle = () => {
   if (unfold.value) emit('expanded', props.depth)
 }
 
-const {
-  selection: { addToSelection, clearSelection, removeFromSelection, objects },
-  filters
-} = useInjectedViewerInterfaceState()
-
 const isSelected = computed(() => {
   return !!objects.value.find((o) => o.id === speckleData.id)
 })
@@ -316,8 +321,8 @@ const setSelection = (e: MouseEvent) => {
   addToSelection(rawSpeckleData)
 }
 
-const hiddenObjects = computed(() => filters.current.value?.hiddenObjects)
-const isolatedObjects = computed(() => filters.current.value?.isolatedObjects)
+const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)
+const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
 
 const isHidden = computed(() => {
   if (!hiddenObjects.value) return false
@@ -336,23 +341,24 @@ const isIsolated = computed(() => {
   return containsAll(ids, isolatedObjects.value)
 })
 
-const stateKey = ViewerSceneExplorerStateKey
 const hideOrShowObject = () => {
   const ids = getTargetObjectIds(rawSpeckleData)
   if (!isHidden.value) {
     removeFromSelection(rawSpeckleData)
-    filters.hideObjects(ids, stateKey, true)
+    hideObjects(ids)
     return
   }
-  return filters.showObjects(ids, stateKey, true)
+
+  showObjects(ids)
 }
 
 const isolateOrUnisolateObject = () => {
   const ids = getTargetObjectIds(rawSpeckleData)
   if (!isIsolated.value) {
-    filters.isolateObjects(ids, stateKey, true)
+    isolateObjects(ids)
     return
   }
-  return filters.unIsolateObjects(ids, stateKey, true)
+
+  unIsolateObjects(ids)
 }
 </script>

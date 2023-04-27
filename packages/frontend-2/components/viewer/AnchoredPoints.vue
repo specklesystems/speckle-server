@@ -26,7 +26,7 @@
     <!-- Active users -->
     <ViewerAnchoredPointUser
       v-for="user in Object.values(users)"
-      :key="user.viewerSessionId"
+      :key="user.state.sessionId"
       :user="user"
       class="z-[10]"
     />
@@ -81,6 +81,7 @@
 </template>
 <script setup lang="ts">
 import { Nullable } from '@speckle/shared'
+import { isNonNullable } from '~~/lib/common/helpers/utils'
 
 import { useViewerUserActivityTracking } from '~~/lib/viewer/composables/activity'
 import {
@@ -158,7 +159,11 @@ const openPrevThread = (currentThread: CommentBubbleModel) => {
   open(nextThread.id)
 }
 
-const activeUserAvatars = computed(() => Object.values(users.value).map((u) => u.user))
+const activeUserAvatars = computed(() =>
+  Object.values(users.value)
+    .map((u) => u.user)
+    .filter(isNonNullable)
+)
 const spotlightUser = computed(() => {
   return Object.values(users.value).find((u) => u.userId === spotlightUserId.value)
 })

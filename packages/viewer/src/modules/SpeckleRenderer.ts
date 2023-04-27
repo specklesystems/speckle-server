@@ -772,6 +772,7 @@ export default class SpeckleRenderer {
     }
     this.updateDirectLights()
     this.updateShadowCatcher()
+    this.viewer.emit(ViewerEvent.LightConfigUpdated, { ...config })
   }
 
   public updateHelpers() {
