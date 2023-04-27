@@ -96,7 +96,8 @@ const isValidEmail = (val: string) =>
   isEmail(val || '', {
     field: '',
     value: '',
-    form: {}
+    form: {},
+    name: ''
   }) === true
     ? true
     : false

@@ -50,5 +50,6 @@ const props = defineProps<{
 }>()
 
 const ruleFits = (rule: GenericValidateFunction<string>) =>
-  rule(props.password, { field: '', form: {}, value: props.password }) === true
+  rule(props.password, { field: '', form: {}, value: props.password, name: '' }) ===
+  true
 </script>

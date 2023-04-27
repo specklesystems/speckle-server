@@ -59,7 +59,8 @@ export const scheduleExecution = (
     throw new InvalidArgumentError(
       `The given cron expression ${cronExpression} is not valid`
     )
-  return cron.schedule(cronExpression, async (scheduledTime: Date) => {
+  return cron.schedule(cronExpression, async (now) => {
+    const scheduledTime = now instanceof Date ? now : new Date()
     await scheduledCallbackWrapper(
       scheduledTime,
       taskName,
