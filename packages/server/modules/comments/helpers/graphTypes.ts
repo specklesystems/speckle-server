@@ -1,4 +1,3 @@
-import { Comment } from '@/modules/core/graph/generated/graphql'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 
 /**
@@ -14,19 +13,4 @@ export type CommentReplyAuthorCollectionGraphQLReturn = {
   authorIds: string[]
 }
 
-export type CommentGraphQLReturn = Omit<
-  Comment,
-  | 'author'
-  | 'rawText'
-  | 'resources'
-  | 'viewedAt'
-  | 'replies'
-  | 'repliesCount'
-  | 'replyAuthors'
-  | 'reactions'
-  | 'text'
-  | 'hasParent'
-  | 'parent'
-  | 'viewerResources'
-> &
-  CommentRecord
+export type CommentGraphQLReturn = CommentRecord
