@@ -148,7 +148,7 @@ export function useViewerCommentBubblesProjection(params: {
         ...thread.style,
         ...result.style,
         opacity: thread.isOccluded ? '0.5' : '1.0',
-        transition: 'all 0.1s ease'
+        transition: 'all 100ms ease'
       }
     }
   })

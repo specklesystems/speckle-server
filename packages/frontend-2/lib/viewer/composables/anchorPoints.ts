@@ -3,7 +3,7 @@ import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { IntersectionQuery, PointQuery } from '@speckle/viewer'
-import { isArray } from 'lodash-es'
+import { isArray, round } from 'lodash-es'
 import { useViewerCameraTracker } from '~~/lib/viewer/composables/viewer'
 import { useWindowResizeHandler } from '~~/lib/common/composables/window'
 
@@ -39,6 +39,14 @@ export function useViewerAnchoredPointCalculator(params: {
         parentEl.value.clientWidth,
         parentEl.value.clientHeight
       )
+
+      // round it out
+      if (targetLoc) {
+        targetLoc.x = round(targetLoc.x)
+        targetLoc.y = round(targetLoc.y)
+      }
+
+      // console.log(targetLoc, targetProjectionResult, target, new Date().toISOString())
     }
 
     const targetOcclusionRes = viewer.query<IntersectionQuery>({
@@ -126,8 +134,9 @@ export function useViewerAnchoredPoints<
     }
   }
 
-  useViewerCameraTracker(() => updatePositions())
-  useWindowResizeHandler(() => updatePositions())
+  // TODO: disabling throttle cause of jitteriness caused by (?) viewer queries, this needs to be looked at
+  useViewerCameraTracker(() => updatePositions(), { throttleWait: 0 })
+  useWindowResizeHandler(() => updatePositions(), { wait: 0 })
 
   watch(
     points,
