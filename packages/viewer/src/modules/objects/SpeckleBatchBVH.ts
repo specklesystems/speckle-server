@@ -17,6 +17,22 @@ import { SpeckleMeshBVH } from './SpeckleMeshBVH'
 import { ObjectLayers } from '../SpeckleRenderer'
 import { Geometry } from '../converter/Geometry'
 
+/** 
+ * 
+  _____                            _              _   
+ |_   _|                          | |            | |  
+   | |  _ __ ___  _ __   ___  _ __| |_ __ _ _ __ | |_ 
+   | | | '_ ` _ \| '_ \ / _ \| '__| __/ _` | '_ \| __|
+  _| |_| | | | | | |_) | (_) | |  | || (_| | | | | |_ 
+ |_____|_| |_| |_| .__/ \___/|_|   \__\__,_|_| |_|\__|
+                 | |                                  
+                 |_|                                  
+
+  Unlike the BVHs for the individual objects, which act as our BAS, the TAS *is not relative to the world origin*!
+  All coordinates are the final world coordinates derived from the BAS bounding boxes, after all transformations.
+  In theory this might mean the TAS is not 100% accurate for objects far away from origin, but I think it should do
+  fine as it is. If we really really really need that 100% accuracy, we'll just make it relative to the origin
+ */
 export class SpeckleBatchBVH {
   private static debugBoxes = false
 
@@ -30,8 +46,8 @@ export class SpeckleBatchBVH {
 
   public constructor(batchObjects: BatchObject[]) {
     this.batchObjects = batchObjects
-    this.getBoundingBox(this.bounds)
     this.buildTAS()
+    this.getBoundingBox(this.bounds)
   }
 
   private buildTAS() {
@@ -211,12 +227,7 @@ export class SpeckleBatchBVH {
   }
 
   public getBoundingBox(target: Box3): Box3 {
-    target.makeEmpty()
-    const scratchBox: Box3 = new Box3()
-    this.batchObjects.forEach((batchObject: BatchObject) => {
-      const objBounds = batchObject.bvh.getBoundingBox(scratchBox)
-      target.union(objBounds)
-    })
+    this.tas.getBoundingBox(target)
     return target
   }
 }
