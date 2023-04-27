@@ -231,6 +231,8 @@ export type Comment = {
   viewedAt?: Maybe<Scalars['DateTime']>;
   /** Resource identifiers as defined and implemented in the Viewer of the new frontend */
   viewerResources: Array<ViewerResourceItem>;
+  /** SerializedViewerState */
+  viewerState?: Maybe<Scalars['JSONObject']>;
 };
 
 
@@ -2539,8 +2541,9 @@ export type ViewerUpdateTrackingTarget = {
 
 export type ViewerUserActivityMessage = {
   __typename?: 'ViewerUserActivityMessage';
-  /** SerializedViewerState */
-  state: Scalars['JSONObject'];
+  sessionId: Scalars['String'];
+  /** SerializedViewerState, only null if DISCONNECTED */
+  state?: Maybe<Scalars['JSONObject']>;
   status: ViewerUserActivityStatus;
   user?: Maybe<LimitedUser>;
   userId?: Maybe<Scalars['String']>;
@@ -2548,8 +2551,9 @@ export type ViewerUserActivityMessage = {
 };
 
 export type ViewerUserActivityMessageInput = {
-  /** SerializedViewerState */
-  state: Scalars['JSONObject'];
+  sessionId: Scalars['String'];
+  /** SerializedViewerState, only null if DISCONNECTED */
+  state?: InputMaybe<Scalars['JSONObject']>;
   status: ViewerUserActivityStatus;
   userId?: InputMaybe<Scalars['String']>;
   userName: Scalars['String'];

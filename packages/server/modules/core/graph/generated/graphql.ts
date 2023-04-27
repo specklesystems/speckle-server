@@ -240,6 +240,8 @@ export type Comment = {
   viewedAt?: Maybe<Scalars['DateTime']>;
   /** Resource identifiers as defined and implemented in the Viewer of the new frontend */
   viewerResources: Array<ViewerResourceItem>;
+  /** SerializedViewerState */
+  viewerState?: Maybe<Scalars['JSONObject']>;
 };
 
 
@@ -2548,8 +2550,9 @@ export type ViewerUpdateTrackingTarget = {
 
 export type ViewerUserActivityMessage = {
   __typename?: 'ViewerUserActivityMessage';
-  /** SerializedViewerState */
-  state: Scalars['JSONObject'];
+  sessionId: Scalars['String'];
+  /** SerializedViewerState, only null if DISCONNECTED */
+  state?: Maybe<Scalars['JSONObject']>;
   status: ViewerUserActivityStatus;
   user?: Maybe<LimitedUser>;
   userId?: Maybe<Scalars['String']>;
@@ -2557,8 +2560,9 @@ export type ViewerUserActivityMessage = {
 };
 
 export type ViewerUserActivityMessageInput = {
-  /** SerializedViewerState */
-  state: Scalars['JSONObject'];
+  sessionId: Scalars['String'];
+  /** SerializedViewerState, only null if DISCONNECTED */
+  state?: InputMaybe<Scalars['JSONObject']>;
   status: ViewerUserActivityStatus;
   userId?: InputMaybe<Scalars['String']>;
   userName: Scalars['String'];
@@ -3164,6 +3168,7 @@ export type CommentResolvers<ContextType = GraphQLContext, ParentType extends Re
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   viewedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceItem']>, ParentType, ContextType>;
+  viewerState?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3854,7 +3859,8 @@ export type ViewerResourceItemResolvers<ContextType = GraphQLContext, ParentType
 };
 
 export type ViewerUserActivityMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ViewerUserActivityMessage'] = ResolversParentTypes['ViewerUserActivityMessage']> = {
-  state?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
+  sessionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  state?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['ViewerUserActivityStatus'], ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   userId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

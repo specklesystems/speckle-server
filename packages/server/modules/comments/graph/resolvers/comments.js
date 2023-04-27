@@ -172,7 +172,7 @@ module.exports = {
       }
 
       if (isLegacyData(parentData)) {
-        return convertLegacyDataToState(parentData)
+        return convertLegacyDataToState(parentData, parent)
       }
 
       return null
