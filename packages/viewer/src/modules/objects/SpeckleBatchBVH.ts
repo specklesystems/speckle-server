@@ -18,7 +18,7 @@ import { ObjectLayers } from '../SpeckleRenderer'
 import { Geometry } from '../converter/Geometry'
 
 export class SpeckleBatchBVH {
-  private static debugBoxes = true
+  private static debugBoxes = false
 
   public batchObjects: BatchObject[] = []
   public bounds: Box3 = new Box3()
