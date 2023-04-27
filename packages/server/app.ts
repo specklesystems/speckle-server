@@ -44,10 +44,13 @@ import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter
 
 import { get, has, isString, toNumber } from 'lodash'
 import { corsMiddleware } from '@/modules/core/configs/cors'
-// import { Roles } from '@speckle/shared'
-
 import { IMocks } from '@graphql-tools/mock'
-import { authContextMiddleware, buildContext } from '@/modules/shared/middleware'
+import {
+  authContextMiddleware,
+  buildContext,
+  determineClientIpAddressMiddleware,
+  mixpanelTrackerHelperMiddleware
+} from '@/modules/shared/middleware'
 
 let graphqlServer: ApolloServer
 
@@ -239,6 +242,7 @@ export async function init() {
   await knex.migrate.latest()
 
   app.use(DetermineRequestIdMiddleware)
+  app.use(determineClientIpAddressMiddleware)
   app.use(LoggingExpressMiddleware)
 
   if (process.env.COMPRESSION) {
@@ -256,6 +260,7 @@ export async function init() {
   app.use(errorLoggingMiddleware)
   app.use(authContextMiddleware)
   app.use(createRateLimiterMiddleware())
+  app.use(mixpanelTrackerHelperMiddleware)
 
   app.use(Sentry.Handlers.errorHandler())
 

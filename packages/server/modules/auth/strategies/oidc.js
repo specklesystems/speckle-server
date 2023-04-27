@@ -105,7 +105,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           req.authRedirectPath = resolveAuthRedirectPath(validInvite)
 
           // return to the auth flow
-          return done(null, myUser)
+          return done(null, {
+            ...myUser,
+            isInvite: !!validInvite
+          })
         } catch (err) {
           logger.error(err)
           return done(null, false, { message: err.message })

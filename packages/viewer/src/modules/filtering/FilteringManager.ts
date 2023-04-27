@@ -12,6 +12,7 @@ import SpeckleRenderer from '../SpeckleRenderer'
 import EventEmitter from '../EventEmitter'
 import { ViewerEvent } from '../../IViewer'
 import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
+import { RenderTree } from '../tree/RenderTree'
 
 export type FilteringState = {
   selectedObjects?: string[]
@@ -44,6 +45,7 @@ export interface FilterMaterial {
 
 export class FilteringManager extends EventEmitter {
   public WTI: WorldTree
+  public RTI: RenderTree
   private Renderer: SpeckleRenderer
   private StateKey: string = null
 
@@ -56,9 +58,10 @@ export class FilteringManager extends EventEmitter {
   private ColorStringFilterState2: ColorStringFilterState = null
   private UserMaterialState = new UserMaterialState()
 
-  public constructor(renderer: SpeckleRenderer) {
+  public constructor(renderer: SpeckleRenderer, tree: WorldTree) {
     super()
-    this.WTI = WorldTree.getInstance()
+    this.WTI = tree
+    this.RTI = tree.getRenderTree()
     this.Renderer = renderer
   }
 
@@ -180,16 +183,14 @@ export class FilteringManager extends EventEmitter {
   private visibilityWalk(node: TreeNode): boolean {
     if (!node.model.atomic) return true
     if (this.VisibilityState.ids.indexOf(node.model.raw.id) !== -1) {
-      this.VisibilityState.rvs.push(
-        ...WorldTree.getRenderTree().getRenderViewsForNode(node, node)
-      )
+      this.VisibilityState.rvs.push(...this.RTI.getRenderViewsForNode(node, node))
     }
     return true
   }
 
   private isolationWalk(node: TreeNode): boolean {
-    if (!node.model.atomic || node.model.id === 'MOTHERSHIP') return true
-    const rvs = WorldTree.getRenderTree().getRenderViewsForNode(node, node)
+    if (!node.model.atomic || this.WTI.isRoot(node)) return true
+    const rvs = this.RTI.getRenderViewsForNode(node, node)
     if (this.VisibilityState.ids.indexOf(node.model.raw.id) === -1) {
       this.VisibilityState.rvs.push(...rvs)
     } else {
@@ -230,10 +231,9 @@ export class FilteringManager extends EventEmitter {
     const nonMatchingRvs: NodeRenderView[] = []
     const colorGroups: ValueGroupColorItemNumericProps[] = []
 
-    WorldTree.getInstance().walk((node: TreeNode) => {
-      if (!node.model.atomic || node.model.id === 'MOTHERSHIP' || node.model.root)
-        return true
-      const rvs = WorldTree.getRenderTree().getRenderViewsForNode(node, node)
+    this.WTI.walk((node: TreeNode) => {
+      if (!node.model.atomic || this.WTI.isRoot(node)) return true
+      const rvs = this.RTI.getRenderViewsForNode(node, node)
       const idx = matchingIds.indexOf(node.model.raw.id)
       if (idx === -1) {
         nonMatchingRvs.push(...rvs)
@@ -274,11 +274,11 @@ export class FilteringManager extends EventEmitter {
     // windows (family instances) inside walls get the same color as the walls, even though
     // they are identified as a different category.
     this.WTI.walk((node: TreeNode) => {
-      if (!node.model.atomic || node.model.id === 'MOTHERSHIP') {
+      if (!node.model.atomic || this.WTI.isRoot(node)) {
         return true
       }
       const vg = valueGroupColors.find((v) => v.ids.indexOf(node.model.raw.id) !== -1)
-      const rvs = WorldTree.getRenderTree().getRenderViewsForNode(node, node)
+      const rvs = this.RTI.getRenderViewsForNode(node, node)
       if (!vg) {
         nonMatchingRvs.push(...rvs)
         return true
@@ -323,14 +323,14 @@ export class FilteringManager extends EventEmitter {
       return { ...g, nodes: [], rvs: [] }
     })
 
-    WorldTree.getInstance().walk((node: TreeNode) => {
+    this.WTI.walk((node: TreeNode) => {
       if (!node.model?.raw?.id) return true
       for (const group of localGroups) {
         if (group.objectIds.includes(node.model.raw.id)) {
           group.nodes.push(node)
-          const rvsNodes = WorldTree.getRenderTree()
-            .getRenderViewNodesForNode(node, node)
-            .map((rvNode) => rvNode.model.renderView)
+          const rvsNodes = this.RTI.getRenderViewNodesForNode(node, node).map(
+            (rvNode) => rvNode.model.renderView
+          )
           if (rvsNodes) group.rvs.push(...rvsNodes)
         }
       }
@@ -363,14 +363,14 @@ export class FilteringManager extends EventEmitter {
       return { ...g, nodes: [], rvs: [] }
     })
 
-    WorldTree.getInstance().walk((node: TreeNode) => {
+    this.WTI.walk((node: TreeNode) => {
       if (!node.model?.raw?.id) return true
       for (const group of localGroups) {
         if (group.objectIds.includes(node.model.raw.id)) {
           group.nodes.push(node)
-          const rvsNodes = WorldTree.getRenderTree()
-            .getRenderViewNodesForNode(node, node)
-            .map((rvNode) => rvNode.model.renderView)
+          const rvsNodes = this.RTI.getRenderViewNodesForNode(node, node).map(
+            (rvNode) => rvNode.model.renderView
+          )
           if (rvsNodes) group.rvs.push(...rvsNodes)
         }
       }
@@ -397,7 +397,7 @@ export class FilteringManager extends EventEmitter {
     const nodes = []
     if (ids.length !== 0) {
       /** This walk still takes longer than we'd like */
-      WorldTree.getInstance().walk((node: TreeNode) => {
+      this.WTI.walk((node: TreeNode) => {
         if (ids.indexOf(node.model.raw.id) !== -1) {
           nodes.push(node)
         }
@@ -407,10 +407,7 @@ export class FilteringManager extends EventEmitter {
         /** There's also quite a lot of redundancy here as well. The nodes coming are
          * hierarchical and we end up getting the same render views more than once.
          */
-        const rvs = WorldTree.getRenderTree().getRenderViewNodesForNode(
-          nodes[k],
-          nodes[k]
-        )
+        const rvs = this.RTI.getRenderViewNodesForNode(nodes[k], nodes[k])
         if (rvs) {
           state.rvs.push(...rvs.map((e) => e.model.renderView))
           state.ids.push(...rvs.map((e) => e.model.raw.id))

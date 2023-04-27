@@ -15,7 +15,6 @@ import {
   StringPropertyInfo,
   NumericPropertyInfo
 } from './modules/filtering/PropertyManager'
-
 import { SunLightConfiguration } from './IViewer'
 import { DataTree, ObjectPredicate, SpeckleObject } from './modules/tree/DataTree'
 import { World } from './modules/World'
@@ -31,6 +30,8 @@ import {
 import { Utils } from './modules/Utils'
 import { ObjectLayers } from './modules/SpeckleRenderer'
 import { DiffResult } from './modules/Differ'
+import { BatchObject } from './modules/batching/BatchObject'
+import { Box3, Vector3 } from 'three'
 
 export {
   Viewer,
@@ -39,6 +40,9 @@ export {
   ViewerEvent,
   DefaultLightConfiguration,
   World,
+  BatchObject,
+  Box3,
+  Vector3,
   WorldTree
 }
 

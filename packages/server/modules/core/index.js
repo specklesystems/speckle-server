@@ -4,6 +4,7 @@ const {
   setupResultListener,
   shutdownResultListener
 } = require('@/modules/core/utils/dbNotificationListener')
+const mp = require('@/modules/shared/utils/mixpanel')
 
 exports.init = async (app) => {
   moduleLogger.info('💥 Init core module')
@@ -32,6 +33,9 @@ exports.init = async (app) => {
 
   // Setup global pg notification listener
   setupResultListener()
+
+  // Init mp
+  mp.initialize()
 }
 
 exports.finalize = () => {}

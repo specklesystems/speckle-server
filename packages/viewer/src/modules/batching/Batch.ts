@@ -1,4 +1,4 @@
-import { Material, Object3D, WebGLRenderer } from 'three'
+import { Box3, Material, Object3D, WebGLRenderer } from 'three'
 import { MaterialOptions } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
 
@@ -16,6 +16,8 @@ export interface Batch {
   batchMaterial: Material
   renderObject: Object3D
   geometryType: GeometryType
+
+  get bounds(): Box3
 
   getCount(): number
   setBatchMaterial(material: Material): void

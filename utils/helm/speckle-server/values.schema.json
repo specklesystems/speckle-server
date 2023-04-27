@@ -441,6 +441,11 @@
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
         },
+        "speckleAutomateUrl": {
+          "type": "string",
+          "description": "The url where the associated Speckle Automate instance is running",
+          "default": "https://automate.speckle.systems"
+        },
         "adminOverrideEnabled": {
           "type": "boolean",
           "description": "Enables the server side admin authz override",
@@ -768,6 +773,121 @@
             }
           }
         },
+        "ratelimiting": {
+          "type": "object",
+          "properties": {
+            "all_requests": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server in a moving one second window.",
+              "default": 500
+            },
+            "burst_all_requests": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server in a moving one minute window.",
+              "default": 2000
+            },
+            "user_create": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to create a new user in a moving one second window.",
+              "default": 6
+            },
+            "burst_user_create": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to create a new user in a moving one minute window.",
+              "default": 1000
+            },
+            "stream_create": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to create a new stream in a moving one second window.",
+              "default": 1
+            },
+            "burst_stream_create": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to create a new stream in a moving one minute window.",
+              "default": 100
+            },
+            "commit_create": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to create a new commit in a moving one second window.",
+              "default": 1
+            },
+            "burst_commit_create": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to create a new commit in a moving one minute window.",
+              "default": 100
+            },
+            "post_getobjects_streamid": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to get a new object in a moving one second window.",
+              "default": 3
+            },
+            "burst_post_getobjects_streamid": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to get a new object in a moving one minute window.",
+              "default": 200
+            },
+            "post_diff_streamid": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to undertake a diff in a moving one second window.",
+              "default": 10
+            },
+            "burst_post_diff_streamid": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to undertake a diff in a moving one minute window.",
+              "default": 1000
+            },
+            "post_objects_streamid": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to post a new object in a moving one second window.",
+              "default": 6
+            },
+            "burst_post_objects_streamid": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to post a new object in a moving one minute window.",
+              "default": 400
+            },
+            "get_objects_streamid_objectid": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to get an object in a moving one second window.",
+              "default": 3
+            },
+            "burst_get_objects_streamid_objectid": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to get an object in a moving one minute window.",
+              "default": 200
+            },
+            "get_objects_streamid_objectid_single": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to get a single object in a moving one second window.",
+              "default": 3
+            },
+            "burst_get_objects_streamid_objectid_single": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to get a single object in a moving one minute window.",
+              "default": 200
+            },
+            "post_graphql": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the GraphQL API in a moving one second window.",
+              "default": 10
+            },
+            "burst_post_grapqhl": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the GraphQL API in a moving one minute window.",
+              "default": 20
+            },
+            "get_auth": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to authenticate in a moving one second window.",
+              "default": 2
+            },
+            "burst_get_auth": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to authenticate in a moving one minute window.",
+              "default": 20
+            }
+          }
+        },
         "serviceAccount": {
           "type": "object",
           "properties": {
@@ -820,6 +940,11 @@
                   }
                 }
               }
+            },
+            "mp": {
+              "type": "object",
+              "description": "(Optional) If server.monitoring.mp.enabled is set to false, metrics will not be collected by the Speckle server.",
+              "default": {}
             }
           }
         },

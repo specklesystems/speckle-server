@@ -2,6 +2,7 @@ import {
   Camera,
   Color,
   DoubleSide,
+  Material,
   NearestFilter,
   NoBlending,
   OrthographicCamera,
@@ -41,6 +42,10 @@ export class DepthPass extends BaseSpecklePass implements SpecklePass {
 
   get displayName(): string {
     return 'DEPTH'
+  }
+
+  get material(): Material {
+    return this.depthMaterial
   }
 
   get outputTexture(): Texture {
@@ -93,6 +98,7 @@ export class DepthPass extends BaseSpecklePass implements SpecklePass {
       },
       ['USE_RTE', 'ALPHATEST_REJECTION']
     )
+
     this.depthMaterial.blending = NoBlending
     this.depthMaterial.side = DoubleSide
   }
@@ -135,7 +141,7 @@ export class DepthPass extends BaseSpecklePass implements SpecklePass {
 
     const shadowmapEnabled = renderer.shadowMap.enabled
     const shadowmapNeedsUpdate = renderer.shadowMap.needsUpdate
-    this.scene.overrideMaterial = this.depthMaterial
+    // this.scene.overrideMaterial = this.depthMaterial
     renderer.shadowMap.enabled = false
     renderer.shadowMap.needsUpdate = false
     this.applyLayers(this.camera)

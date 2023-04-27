@@ -32,6 +32,12 @@ const config = {
       rules: {
         '@typescript-eslint/no-explicit-any': 'off'
       }
+    },
+    {
+      files: '*.mjs',
+      parserOptions: {
+        sourceType: 'module'
+      }
     }
   ]
 }

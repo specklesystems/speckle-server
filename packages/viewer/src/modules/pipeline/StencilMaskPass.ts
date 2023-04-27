@@ -46,6 +46,10 @@ export class StencilMaskPass extends BaseSpecklePass implements SpecklePass {
     return null
   }
 
+  public get material(): Material {
+    return this.overrideMaterial
+  }
+
   public update(scene: Scene, camera: Camera) {
     this.camera = camera
     this.scene = scene
@@ -69,7 +73,7 @@ export class StencilMaskPass extends BaseSpecklePass implements SpecklePass {
     if (this.overrideMaterial !== undefined) {
       oldOverrideMaterial = this.scene.overrideMaterial
 
-      this.scene.overrideMaterial = this.overrideMaterial
+      // this.scene.overrideMaterial = this.overrideMaterial
     }
 
     if (this.clearColor) {

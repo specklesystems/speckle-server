@@ -2,10 +2,36 @@
 import mixpanel, { OverridedMixpanel } from 'mixpanel-browser'
 import { Optional } from '@/helpers/typeHelpers'
 import { AppLocalStorage } from '@/utils/localStorage'
-import md5 from '@/helpers/md5'
 import * as ThemeStateManager from '@/main/utils/themeStateManager'
+import { intersection, mapKeys } from 'lodash'
+import { resolveMixpanelServerId } from '@speckle/shared'
 
 let mixpanelInitialized = false
+
+const campaignKeywords = [
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_content',
+  'utm_term'
+]
+
+function collectUtmTags() {
+  const currentUrl = new URL(window.location.href)
+  const foundParams = intersection(
+    [...currentUrl.searchParams.keys()],
+    campaignKeywords
+  )
+
+  const result: Record<string, string> = {}
+  for (const campaignParam of foundParams) {
+    const value = currentUrl.searchParams.get(campaignParam)
+    if (!value) continue
+    result[campaignParam] = value
+  }
+
+  return result
+}
 
 /**
  * Get mixpanel user ID, if user is authenticated and can be identified, or undefined otherwise
@@ -18,7 +44,7 @@ export function getMixpanelUserId(): Optional<string> {
  * Get mixpanel server identifier
  */
 export function getMixpanelServerId(): string {
-  return md5(window.location.hostname.toLowerCase()).toUpperCase()
+  return resolveMixpanelServerId(window.location.hostname)
 }
 
 /**
@@ -54,6 +80,17 @@ export function initialize(params: {
     mp.identify(userId)
     mp.people.set('Identified', true)
     mp.people.set('Theme Web', ThemeStateManager.isDarkTheme() ? 'dark' : 'light')
+  }
+
+  // Track UTM
+  const utmParams = collectUtmTags()
+  if (Object.values(utmParams).length) {
+    const firstTouch = mapKeys(utmParams, (_val, key) => `${key} [first touch]`)
+    const lastTouch = mapKeys(utmParams, (_val, key) => `${key} [last touch]`)
+
+    mp.people.set(lastTouch)
+    mp.people.set_once(firstTouch)
+    mp.register(lastTouch)
   }
 
   // Track app visit

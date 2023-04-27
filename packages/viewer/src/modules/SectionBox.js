@@ -376,11 +376,6 @@ export default class SectionBox extends EventEmitter {
     this.controls.showZ = true
   }
 
-  // setBoxFromObjects(objectIds: string[], offset = 0.05) {
-  // WorldTree.getInstance().walk() => Solved
-  // this.setBox(...)
-  // }
-
   setBox(targetBox, offset = 0.05) {
     let box
 

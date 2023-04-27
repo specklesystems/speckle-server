@@ -1,11 +1,11 @@
 import { mainUserDataQuery } from '@/graphql/user'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
-import md5 from '@/helpers/md5'
 import { InvalidAuthTokenError } from '@/main/lib/auth/errors'
 import { VALID_EMAIL_REGEX } from '@/main/lib/common/vuetify/validators'
 import { AppLocalStorage } from '@/utils/localStorage'
 import { has } from 'lodash'
 import { deletePostAuthRedirect } from '@/main/lib/auth/utils/postAuthRedirectManager'
+import { resolveMixpanelUserId } from '@speckle/shared'
 
 const appId = 'spklwebapp'
 const appSecret = 'spklwebapp'
@@ -46,7 +46,7 @@ export async function prefetchUserAndSetID(apolloClient) {
 
   const user = data.activeUser
   if (user) {
-    const distinctId = '@' + md5(user.email.toLowerCase()).toUpperCase()
+    const distinctId = resolveMixpanelUserId(user.email)
     AppLocalStorage.set('distinct_id', distinctId)
     AppLocalStorage.set('uuid', user.id)
     AppLocalStorage.set('stcount', user.streams.totalCount)

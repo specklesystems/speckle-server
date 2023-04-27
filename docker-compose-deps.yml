@@ -34,6 +34,7 @@ services:
       - '127.0.0.1:9001:9001'
 
   maildev:
+    restart: always
     image: maildev/maildev
     ports:
       - '127.0.0.1:1080:1080'

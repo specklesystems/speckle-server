@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 /**
  * Lightweight MD5 implementation.
  * @see http://www.myersdaily.org/joseph/javascript/md5-text.html
  */
 
-function md5cycle(x, k) {
+function md5cycle(x: any, k: any) {
   let a = x[0],
     b = x[1],
     c = x[2],
@@ -83,28 +85,28 @@ function md5cycle(x, k) {
   x[3] = add32(d, x[3])
 }
 
-function cmn(q, a, b, x, s, t) {
+function cmn(q: any, a: any, b: any, x: any, s: any, t: any) {
   a = add32(add32(a, q), add32(x, t))
   return add32((a << s) | (a >>> (32 - s)), b)
 }
 
-function ff(a, b, c, d, x, s, t) {
+function ff(a: any, b: any, c: any, d: any, x: any, s: any, t: any) {
   return cmn((b & c) | (~b & d), a, b, x, s, t)
 }
 
-function gg(a, b, c, d, x, s, t) {
+function gg(a: any, b: any, c: any, d: any, x: any, s: any, t: any) {
   return cmn((b & d) | (c & ~d), a, b, x, s, t)
 }
 
-function hh(a, b, c, d, x, s, t) {
+function hh(a: any, b: any, c: any, d: any, x: any, s: any, t: any) {
   return cmn(b ^ c ^ d, a, b, x, s, t)
 }
 
-function ii(a, b, c, d, x, s, t) {
+function ii(a: any, b: any, c: any, d: any, x: any, s: any, t: any) {
   return cmn(c ^ (b | ~d), a, b, x, s, t)
 }
 
-function md51(s) {
+function md51(s: any) {
   const n = s.length,
     state = [1732584193, -271733879, -1732584194, 271733878]
 
@@ -125,7 +127,7 @@ function md51(s) {
   return state
 }
 
-function md5blk(s) {
+function md5blk(s: any) {
   /* I figured global was faster.   */
   const md5blks = []
   let i
@@ -141,7 +143,7 @@ function md5blk(s) {
 
 const HEX_CHR = '0123456789abcdef'.split('')
 
-function rhex(n) {
+function rhex(n: any) {
   let s = '',
     j = 0
   for (; j < 4; j++)
@@ -149,12 +151,12 @@ function rhex(n) {
   return s
 }
 
-function hex(x) {
+function hex(x: any) {
   for (let i = 0; i < x.length; i++) x[i] = rhex(x[i])
   return x.join('')
 }
 
-let add32 = (a, b) => {
+let add32 = (a: any, b: any) => {
   return (a + b) & 0xffffffff
 }
 
@@ -163,7 +165,7 @@ let add32 = (a, b) => {
  * @param {string} s input string
  * @returns {string} md5 hash
  */
-function md5(s) {
+function md5(s: string): string {
   return hex(md51(s))
 }
 

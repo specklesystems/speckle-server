@@ -1,12 +1,14 @@
 import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
 import { DiffResult } from './modules/Differ'
+import { BatchObject } from './modules/batching/BatchObject'
 import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
 import { WorldTree } from './modules/tree/WorldTree'
 import { Utils } from './modules/Utils'
+import { World } from './modules/World'
 
 export interface ViewerParams {
   showStats: boolean
@@ -175,7 +177,7 @@ export interface IViewer {
   /** Diffing */
   diff(urlA: string, urlB: string): Promise<DiffResult>
   undiff(): void
-  setDiffTime(time: number): void
+  setDiffTime(diffResult: DiffResult, time: number): void
 
   screenshot(): Promise<string>
 
@@ -221,10 +223,14 @@ export interface IViewer {
 
   /** Data ops */
   getDataTree(): DataTree
+  getWorldTree(): WorldTree
   query<T extends Query>(query: T): QueryArgsResultMap[T['operation']]
   queryAsync(query: Query): Promise<QueryResult>
-  getWorldTree(): WorldTree
   get Utils(): Utils
+  get World(): World
+
+  getObjects(id: string): BatchObject[]
+  explode(time: number, range: number)
 
   dispose(): void
 }

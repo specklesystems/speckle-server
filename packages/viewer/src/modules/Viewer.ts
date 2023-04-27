@@ -31,7 +31,8 @@ import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
-import { DiffResult } from './Differ'
+import { DiffResult, Differ } from './Differ'
+import { BatchObject } from './batching/BatchObject'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -42,10 +43,13 @@ export class Viewer extends EventEmitter implements IViewer {
   private startupParams: ViewerParams
 
   /** Viewer components */
-  private static world: World = new World()
+  private tree: WorldTree = new WorldTree()
+  private world: World = new World()
   public static Assets: Assets
   protected speckleRenderer: SpeckleRenderer
   private filteringManager: FilteringManager
+  private propertyManager: PropertyManager
+  public differ: Differ
   /** Legacy viewer components (will revisit soon) */
   public sectionBox: SectionBox
   public cameraHandler: CameraHandler
@@ -58,7 +62,7 @@ export class Viewer extends EventEmitter implements IViewer {
   /** various utils/helpers */
   private utils: Utils
   /** Gets the World object. Currently it's used for info mostly */
-  public static get World(): World {
+  public get World(): World {
     return this.world
   }
 
@@ -84,7 +88,8 @@ export class Viewer extends EventEmitter implements IViewer {
     this.container = container || document.getElementById('renderer')
     if (params.showStats) {
       this.stats = Stats()
-      this.container.appendChild(this.stats.dom)
+      this.container.prepend(this.stats.dom)
+      this.stats.dom.style.position = 'relative' // Mad CSS skills
     }
     this.loaders = {}
     this.startupParams = params
@@ -97,14 +102,16 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer.create(this.container)
     window.addEventListener('resize', this.resize.bind(this), false)
 
-    new Assets(this.speckleRenderer.renderer)
-    this.filteringManager = new FilteringManager(this.speckleRenderer)
+    new Assets()
+    this.filteringManager = new FilteringManager(this.speckleRenderer, this.tree)
     this.filteringManager.on(
       ViewerEvent.FilteringStateSet,
       (newState: FilteringState) => {
         this.emit(ViewerEvent.FilteringStateSet, newState)
       }
     )
+    this.propertyManager = new PropertyManager()
+    this.differ = new Differ()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     // ;(window as any)._V = this // For debugging! ಠ_ಠ
@@ -129,6 +136,10 @@ export class Viewer extends EventEmitter implements IViewer {
     this.on(ViewerEvent.LoadCancelled, (url: string) => {
       Logger.warn(`Cancelled load for ${url}`)
     })
+  }
+
+  public getObjects(id: string): BatchObject[] {
+    return this.speckleRenderer.getObjects(id)
   }
 
   public setSectionBox(
@@ -190,7 +201,10 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public async init(): Promise<void> {
     if (this.startupParams.environmentSrc) {
-      Assets.getEnvironment(this.startupParams.environmentSrc)
+      Assets.getEnvironment(
+        this.startupParams.environmentSrc,
+        this.speckleRenderer.renderer
+      )
         .then((value: Texture) => {
           this.speckleRenderer.indirectIBL = value
         })
@@ -209,7 +223,7 @@ export class Viewer extends EventEmitter implements IViewer {
     resourceURL: string = null,
     bypassCache = true
   ): PropertyInfo[] {
-    return PropertyManager.getProperties(resourceURL, bypassCache)
+    return this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
   }
 
   public selectObjects(objectIds: string[]): Promise<FilteringState> {
@@ -332,11 +346,11 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public getDataTree(): DataTree {
-    return WorldTree.getDataTree()
+    return this.tree.getDataTree()
   }
 
   public getWorldTree(): WorldTree {
-    return WorldTree.getInstance()
+    return this.tree
   }
 
   public query<T extends Query>(query: T): QueryArgsResultMap[T['operation']] {
@@ -399,7 +413,7 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public getViews(): SpeckleView[] {
-    return WorldTree.getInstance()
+    return this.tree
       .findAll((node: TreeNode) => {
         return node.model.renderView?.speckleType === SpeckleType.View3D
       })
@@ -433,6 +447,10 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
+  public explode(time: number, range: number) {
+    this.speckleRenderer.setExplode(time, range)
+  }
+
   /**
    * OBJECT LOADING/UNLOADING
    */
@@ -459,7 +477,7 @@ export class Viewer extends EventEmitter implements IViewer {
     await this.downloadObject(url, token, enableCaching)
 
     let t0 = performance.now()
-    WorldTree.getRenderTree(url).buildRenderTree()
+    this.tree.getRenderTree(url).buildRenderTree()
     Logger.log('SYNC Tree build time -> ', performance.now() - t0)
 
     t0 = performance.now()
@@ -482,7 +500,7 @@ export class Viewer extends EventEmitter implements IViewer {
     await this.downloadObject(url, token, enableCaching)
 
     let t0 = performance.now()
-    const treeBuilt = await WorldTree.getRenderTree(url).buildRenderTreeAsync(priority)
+    const treeBuilt = await this.tree.getRenderTree(url).buildRenderTreeAsync(priority)
     Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
 
     if (treeBuilt) {
@@ -498,7 +516,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public async cancelLoad(url: string, unload = false) {
     this.loaders[url].cancelLoad()
-    WorldTree.getRenderTree(url).cancelBuild(url)
+    this.tree.getRenderTree(url).cancelBuild(url)
     this.speckleRenderer.cancelRenderTree(url)
     if (unload) {
       await this.unloadObject(url)
@@ -512,8 +530,8 @@ export class Viewer extends EventEmitter implements IViewer {
         (this as EventEmitter).emit(ViewerEvent.Busy, true)
       delete this.loaders[url]
       this.speckleRenderer.removeRenderTree(url)
-      WorldTree.getRenderTree(url).purge()
-      WorldTree.getInstance().purge(url)
+      this.tree.getRenderTree(url).purge()
+      this.tree.purge(url)
     } finally {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit(ViewerEvent.Busy, false)
@@ -531,12 +549,12 @@ export class Viewer extends EventEmitter implements IViewer {
         delete this.loaders[key]
       }
       this.filteringManager.reset()
-      WorldTree.getInstance().root.children.forEach((node) => {
+      this.tree.root.children.forEach((node) => {
         this.speckleRenderer.removeRenderTree(node.model.id)
-        WorldTree.getRenderTree().purge()
+        this.tree.getRenderTree().purge()
       })
 
-      WorldTree.getInstance().purge()
+      this.tree.purge()
     } finally {
       if (--this.inProgressOperations === 0) {
         ;(this as EventEmitter).emit(ViewerEvent.Busy, false)
@@ -552,19 +570,38 @@ export class Viewer extends EventEmitter implements IViewer {
     authToken?: string
   ): Promise<DiffResult> {
     const loadPromises = []
-    if (!WorldTree.getInstance().findId(urlA))
+    if (!this.tree.findId(urlA))
       loadPromises.push(this.loadObjectAsync(urlA, authToken, undefined, 1))
-    if (!WorldTree.getInstance().findId(urlB))
+    if (!this.tree.findId(urlB))
       loadPromises.push(this.loadObjectAsync(urlB, authToken, undefined, 1))
     await Promise.all(loadPromises)
 
-    const diffResult = await this.speckleRenderer.differ.diff(urlA, urlB)
+    const diffResult = await this.differ.diff(this.tree, urlA, urlB)
 
     const pipelineOptions = this.speckleRenderer.pipelineOptions
     pipelineOptions.depthSide = FrontSide
     this.speckleRenderer.pipelineOptions = pipelineOptions
-    this.speckleRenderer.differ.visualDiff(diffResult, this.filteringManager)
-    this.speckleRenderer.differ.setDiffTime(0)
+
+    this.differ.setDiffTime(0)
+
+    this.filteringManager.setUserMaterials([
+      {
+        objectIds: diffResult.added.map((value) => value.model.raw.id),
+        material: this.differ.addedMaterial
+      },
+      {
+        objectIds: diffResult.modified.map((value) => value[1].model.raw.id),
+        material: this.differ.changedNewMaterial
+      },
+      {
+        objectIds: diffResult.modified.map((value) => value[0].model.raw.id),
+        material: this.differ.changedOldMateria
+      },
+      {
+        objectIds: diffResult.removed.map((value) => value.model.raw.id),
+        material: this.differ.removedMaterial
+      }
+    ])
 
     return Promise.resolve(diffResult)
   }
@@ -573,11 +610,29 @@ export class Viewer extends EventEmitter implements IViewer {
     const pipelineOptions = this.speckleRenderer.pipelineOptions
     pipelineOptions.depthSide = DoubleSide
     this.speckleRenderer.pipelineOptions = pipelineOptions
-    this.speckleRenderer.differ.visualDiff(null, this.filteringManager)
+    this.filteringManager.removeUserMaterials()
   }
 
-  public setDiffTime(time: number) {
-    this.speckleRenderer.differ.setDiffTime(time)
+  public setDiffTime(diffResult: DiffResult, time: number) {
+    this.differ.setDiffTime(time)
+    this.filteringManager.setUserMaterials([
+      {
+        objectIds: diffResult.added.map((value) => value.model.raw.id),
+        material: this.differ.addedMaterial
+      },
+      {
+        objectIds: diffResult.modified.map((value) => value[1].model.raw.id),
+        material: this.differ.changedNewMaterial
+      },
+      {
+        objectIds: diffResult.modified.map((value) => value[0].model.raw.id),
+        material: this.differ.changedOldMateria
+      },
+      {
+        objectIds: diffResult.removed.map((value) => value.model.raw.id),
+        material: this.differ.removedMaterial
+      }
+    ])
   }
 
   public dispose() {
