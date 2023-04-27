@@ -19,13 +19,14 @@
 </template>
 <script setup lang="ts">
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
-import { modelRoute } from '~~/lib/common/helpers/route'
+import { homeRoute, modelRoute, projectRoute } from '~~/lib/common/helpers/route'
 
 definePageMeta({
   middleware: ['auth'],
   layout: 'onboarding'
 })
 
+const router = useRouter()
 const { createOnboardingProject, setUserOnboardingComplete } = useProcessOnboarding()
 const tourStage = useTourStageState()
 
@@ -44,7 +45,15 @@ onMounted(async () => {
   tourStage.value.showNavbar = false
   tourStage.value.showViewerControls = false
   tourStage.value.showTour = true
-  console.log(modelRoute(projectId as string, modelId as string))
-  useRouter().push({ path: modelRoute(projectId as string, modelId as string) })
+
+  if (projectId) {
+    if (modelId) {
+      router.push({ path: modelRoute(projectId, modelId) })
+    } else {
+      router.push({ path: projectRoute(projectId) })
+    }
+  } else {
+    router.push({ path: homeRoute })
+  }
 })
 </script>

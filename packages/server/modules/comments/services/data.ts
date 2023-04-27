@@ -9,6 +9,8 @@ import { has, get, intersection, isObjectLike } from 'lodash'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
+export type LegacyData = Partial<LegacyCommentViewerData>
+
 export type DataStruct = {
   version: number
   state: SerializedViewerState
@@ -37,9 +39,9 @@ export function isDataStruct(data: unknown): data is DataStruct {
   return SpeckleViewer.ViewerState.isSerializedViewerState(stateRaw)
 }
 
-export function isLegacyData(data: unknown): data is LegacyCommentViewerData {
+export function isLegacyData(data: unknown): data is LegacyData {
   if (!data) return false
-  const keys: Array<keyof LegacyCommentViewerData> = [
+  const keys: Array<keyof LegacyData> = [
     'camPos',
     'filters',
     'location',
@@ -54,9 +56,7 @@ export function isLegacyData(data: unknown): data is LegacyCommentViewerData {
   return true
 }
 
-export function convertStateToLegacyData(
-  state: SerializedViewerState
-): LegacyCommentViewerData {
+export function convertStateToLegacyData(state: SerializedViewerState): LegacyData {
   const camPos = state.ui.camera.position
   const camTarget = state.ui.camera.target
   const zoom = state.ui.camera.zoom
@@ -64,7 +64,7 @@ export function convertStateToLegacyData(
   const selection = state.ui.selection
   const selectionLocation = selection || camTarget
 
-  const ret: LegacyCommentViewerData = {
+  const ret: LegacyData = {
     camPos: [
       camPos[0] || 0,
       camPos[1] || 0,
@@ -95,11 +95,11 @@ export function convertStateToLegacyData(
 }
 
 export async function convertLegacyDataToState(
-  data: LegacyCommentViewerData,
+  data: LegacyData,
   comment: CommentRecord
 ): Promise<SerializedViewerState> {
   const resources = await getViewerResourcesForComments(comment.streamId, [comment.id])
-  const sectionBox = data.filters.sectionBox || data.sectionBox
+  const sectionBox = data.filters?.sectionBox || data.sectionBox
 
   const ret: SerializedViewerState = {
     projectId: comment.streamId,
@@ -107,8 +107,8 @@ export async function convertLegacyDataToState(
     viewer: {
       metadata: {
         filteringState: {
-          passMax: data.filters.passMax,
-          passMin: data.filters.passMin
+          passMax: data.filters?.passMax,
+          passMin: data.filters?.passMin
         }
       }
     },
@@ -131,18 +131,18 @@ export async function convertLegacyDataToState(
       },
       spotlightUserId: null,
       filters: {
-        isolatedObjectIds: data.filters.isolatedIds || [],
-        hiddenObjectIds: data.filters.hiddenIds || [],
+        isolatedObjectIds: data.filters?.isolatedIds || [],
+        hiddenObjectIds: data.filters?.hiddenIds || [],
         selectedObjectIds: [],
         propertyFilter: {
-          key: data.filters.propertyInfoKey || null
+          key: data.filters?.propertyInfoKey || null
         }
       },
       camera: {
-        position: [data.camPos[0] || 0, data.camPos[1] || 0, data.camPos[2] || 0],
-        target: [data.camPos[3] || 0, data.camPos[4] || 0, data.camPos[5] || 0],
-        isOrthoProjection: !!data.camPos[4],
-        zoom: data.camPos[5] || 1
+        position: [data.camPos?.[0] || 0, data.camPos?.[1] || 0, data.camPos?.[2] || 0],
+        target: [data.camPos?.[3] || 0, data.camPos?.[4] || 0, data.camPos?.[5] || 0],
+        isOrthoProjection: !!data.camPos?.[4],
+        zoom: data.camPos?.[5] || 1
       },
       sectionBox: sectionBox
         ? {

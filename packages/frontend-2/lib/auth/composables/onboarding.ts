@@ -83,7 +83,7 @@ export function useProcessOnboarding() {
     const newId = data?.projectMutations.createForOnboarding.id
     return {
       projectId: newId,
-      modelId: data?.projectMutations.createForOnboarding.models.items[0].id // TODO: less hardcoding maybe?
+      modelId: data?.projectMutations.createForOnboarding.models.items[0]?.id // TODO: less hardcoding maybe?
     }
   }
 
