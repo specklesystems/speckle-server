@@ -103,6 +103,9 @@ spec:
             {{- else }}
             value: http://{{ .Values.domain }}
             {{- end }}
+          
+          - name: ONBOARDING_STREAM_ID
+            value: {{ .Values.server.onboardingStreamId }}
 
           - name: SESSION_SECRET
             valueFrom:

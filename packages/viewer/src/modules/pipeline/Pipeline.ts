@@ -1,4 +1,4 @@
-import { Plane, Vector2, WebGLRenderer } from 'three'
+import { DoubleSide, Plane, Side, Vector2, WebGLRenderer } from 'three'
 import {
   EffectComposer,
   Pass
@@ -50,6 +50,7 @@ export interface PipelineOptions {
   dynamicAoParams: DynamicAOPassParams
   staticAoEnabled: boolean
   staticAoParams: StaticAoPassParams
+  depthSide: Side
 }
 
 export const DefaultPipelineOptions: PipelineOptions = {
@@ -58,7 +59,8 @@ export const DefaultPipelineOptions: PipelineOptions = {
   dynamicAoEnabled: true,
   dynamicAoParams: DefaultDynamicAOPassParams,
   staticAoEnabled: true,
-  staticAoParams: DefaultStaticAoPassParams
+  staticAoParams: DefaultStaticAoPassParams,
+  depthSide: DoubleSide
 }
 
 export class Pipeline {
@@ -69,7 +71,7 @@ export class Pipeline {
   private _pipelineOptions: PipelineOptions = Object.assign({}, DefaultPipelineOptions)
   private _needsProgressive = false
   private _resetFrame = false
-  private composer: EffectComposer = null
+  private _composer: EffectComposer = null
 
   private depthPass: DepthPass = null
   private normalsPass: NormalsPass = null
@@ -91,8 +93,13 @@ export class Pipeline {
     this.staticAoPass.setParams(options.staticAoParams)
     this.accumulationFrame = 0
     Pipeline.ACCUMULATE_FRAMES = options.accumulationFrames
+    this.depthPass.depthSide = options.depthSide
 
     this.pipelineOutput = options.pipelineOutput
+  }
+
+  public get pipelineOptions(): PipelineOptions {
+    return JSON.parse(JSON.stringify(this._pipelineOptions))
   }
 
   public set pipelineOutput(outputType: PipelineOutputType) {
@@ -216,12 +223,16 @@ export class Pipeline {
     return this._renderType
   }
 
+  public get composer() {
+    return this._composer
+  }
+
   public constructor(renderer: WebGLRenderer, batcher: Batcher) {
     this._renderer = renderer
     this._batcher = batcher
-    this.composer = new EffectComposer(renderer)
-    this.composer.readBuffer = null
-    this.composer.writeBuffer = null
+    this._composer = new EffectComposer(renderer)
+    this._composer.readBuffer = null
+    this._composer.writeBuffer = null
   }
 
   public configure() {
@@ -287,6 +298,21 @@ export class Pipeline {
       this._batcher.applyVisibility(restoreVisibility)
     }
 
+    this.renderPass.onBeforeRenderOpauqe = () => {
+      restoreVisibility = this._batcher.saveVisiblity()
+      const opaque = this._batcher.getOpaque()
+      this._batcher.applyVisibility(opaque)
+    }
+
+    this.renderPass.onBeforeRenderTransparent = () => {
+      const transparent = this._batcher.getTransparent()
+      this._batcher.applyVisibility(transparent)
+    }
+
+    this.renderPass.onAfterRenderTransparent = () => {
+      this._batcher.applyVisibility(restoreVisibility)
+    }
+
     this.setPipeline(this.getDefaultPipeline())
   }
 
@@ -326,14 +352,14 @@ export class Pipeline {
   }
 
   private clearPipeline() {
-    while (this.composer.passes.length > 0) {
-      this.composer.removePass(this.composer.passes[0])
+    while (this._composer.passes.length > 0) {
+      this._composer.removePass(this._composer.passes[0])
     }
   }
 
   private setPipeline(pipeline: Array<SpecklePass>) {
     for (let k = 0; k < pipeline.length; k++) {
-      this.composer.addPass(pipeline[k] as unknown as Pass)
+      this._composer.addPass(pipeline[k] as unknown as Pass)
     }
   }
 
@@ -368,7 +394,7 @@ export class Pipeline {
 
     this._renderer.clear(true)
     if (this._renderType === RenderType.NORMAL) {
-      this.composer.render()
+      this._composer.render()
       const ret = false || this._resetFrame
       if (this._resetFrame) {
         this._resetFrame = false
@@ -377,14 +403,14 @@ export class Pipeline {
       return ret
     } else {
       // console.warn('Rendering accumulation frame -> ', this.accumulationFrame)
-      this.composer.render()
+      this._composer.render()
       this.accumulationFrame++
       return this.accumulationFrame < Pipeline.ACCUMULATE_FRAMES
     }
   }
 
   public resize(width: number, height: number) {
-    this.composer.setSize(width, height)
+    this._composer.setSize(width, height)
     this.accumulationFrame = 0
   }
 

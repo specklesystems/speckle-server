@@ -19,6 +19,18 @@
         <MenuItems
           class="absolute right-0 md:right-4 top-14 md:top-16 w-full md:w-64 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
+          <MenuItem v-slot="{ active }">
+            <NuxtLink
+              :class="[
+                active ? 'bg-foundation-focus' : '',
+                'flex items-center justify-between px-2 py-3 text-sm text-primary cursor-pointer transition border-b border-primary'
+              ]"
+              @click="goToConnectors()"
+            >
+              Connectors
+              <CloudArrowDownIcon class="w-5 h-5 mr-2 text-primary" />
+            </NuxtLink>
+          </MenuItem>
           <MenuItem v-if="activeUser" v-slot="{ active }">
             <NuxtLink
               :class="[
@@ -31,6 +43,7 @@
               <UserAvatar :user="activeUser" size="sm" class="mr-1" />
             </NuxtLink>
           </MenuItem>
+
           <MenuItem v-slot="{ active }">
             <NuxtLink
               :class="[
@@ -80,7 +93,9 @@
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="version">
-            <div class="px-2 py-3 text-xs text-foreground-2">Version {{ version }}</div>
+            <div class="px-2 pb-1 text-tiny text-foreground-2">
+              Version {{ version }}
+            </div>
           </MenuItem>
         </MenuItems>
       </Transition>
@@ -97,7 +112,8 @@ import {
   ArrowRightOnRectangleIcon,
   SunIcon,
   MoonIcon,
-  EnvelopeIcon
+  EnvelopeIcon,
+  CloudArrowDownIcon
 } from '@heroicons/vue/24/solid'
 import { useQuery } from '@vue/apollo-composable'
 import { Optional } from '@speckle/shared'
@@ -131,6 +147,10 @@ const onThemeClick = () => {
   } else {
     setTheme(AppTheme.Dark)
   }
+}
+
+const goToConnectors = () => {
+  router.push('/connectors')
 }
 
 const loginUrl = computed(() =>

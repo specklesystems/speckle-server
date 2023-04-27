@@ -6,7 +6,7 @@ import EventEmitter from './EventEmitter'
 import CameraHandler from './context/CameraHanlder'
 
 import SectionBox, { SectionBoxEvent } from './SectionBox'
-import { Clock, Texture } from 'three'
+import { Clock, DoubleSide, FrontSide, Texture } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
 import {
@@ -31,6 +31,7 @@ import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
+import { DiffResult } from './Differ'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -308,7 +309,7 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public setUserObjectColors(
-    groups: [{ objectIds: string[]; color: string }]
+    groups: { objectIds: string[]; color: string }[]
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
       resolve(this.filteringManager.setUserObjectColors(groups))
@@ -543,6 +544,40 @@ export class Viewer extends EventEmitter implements IViewer {
         ;(this as EventEmitter).emit(ViewerEvent.UnloadAllComplete)
       }
     }
+  }
+
+  public async diff(
+    urlA: string,
+    urlB: string,
+    authToken?: string
+  ): Promise<DiffResult> {
+    const loadPromises = []
+    if (!WorldTree.getInstance().findId(urlA))
+      loadPromises.push(this.loadObjectAsync(urlA, authToken, undefined, 1))
+    if (!WorldTree.getInstance().findId(urlB))
+      loadPromises.push(this.loadObjectAsync(urlB, authToken, undefined, 1))
+    await Promise.all(loadPromises)
+
+    const diffResult = await this.speckleRenderer.differ.diff(urlA, urlB)
+
+    const pipelineOptions = this.speckleRenderer.pipelineOptions
+    pipelineOptions.depthSide = FrontSide
+    this.speckleRenderer.pipelineOptions = pipelineOptions
+    this.speckleRenderer.differ.visualDiff(diffResult, this.filteringManager)
+    this.speckleRenderer.differ.setDiffTime(0)
+
+    return Promise.resolve(diffResult)
+  }
+
+  public undiff() {
+    const pipelineOptions = this.speckleRenderer.pipelineOptions
+    pipelineOptions.depthSide = DoubleSide
+    this.speckleRenderer.pipelineOptions = pipelineOptions
+    this.speckleRenderer.differ.visualDiff(null, this.filteringManager)
+  }
+
+  public setDiffTime(time: number) {
+    this.speckleRenderer.differ.setDiffTime(time)
   }
 
   public dispose() {
