@@ -151,20 +151,17 @@ export class SpeckleBatchBVH {
     if (!tasResults.length) return res
 
     tasResults.forEach((tasRes: Intersection<Object3D>) => {
-      for (let k = 0; k < this.batchObjects.length; k++) {
-        const vertIndex = this.tas.geometry.index.array[tasRes.faceIndex * 3]
-        if (
-          vertIndex >= this.batchObjects[k].tasVertIndexStart &&
-          vertIndex < this.batchObjects[k].tasVertIndexEnd
-        ) {
-          rayBuff.copy(ray)
-          const hits = this.batchObjects[k].bvh.raycast(rayBuff, materialOrSide)
-          hits.forEach((hit) => {
-            ;(hit as ExtendedIntersection).batchObject = this.batchObjects[k]
-          })
-          res.push(...hits)
-        }
-      }
+      const vertIndex = this.tas.geometry.index.array[tasRes.faceIndex * 3]
+      const batchObjectIndex = Math.trunc(vertIndex / SpeckleBatchBVH.CUBE_VERTS)
+      rayBuff.copy(ray)
+      const hits = this.batchObjects[batchObjectIndex].bvh.raycast(
+        rayBuff,
+        materialOrSide
+      )
+      hits.forEach((hit) => {
+        ;(hit as ExtendedIntersection).batchObject = this.batchObjects[batchObjectIndex]
+      })
+      res.push(...hits)
     })
 
     return res
@@ -180,20 +177,17 @@ export class SpeckleBatchBVH {
     const tasRes: Intersection<Object3D> = this.tas.raycastFirst(rayBuff, FrontSide)
     if (!tasRes) return res
 
-    for (let k = 0; k < this.batchObjects.length; k++) {
-      const vertIndex = this.tas.geometry.index.array[tasRes.faceIndex * 3]
-      if (
-        vertIndex >= this.batchObjects[k].tasVertIndexStart &&
-        vertIndex < this.batchObjects[k].tasVertIndexEnd
-      ) {
-        rayBuff.copy(ray)
-        const hits = this.batchObjects[k].bvh.raycast(rayBuff, materialOrSide)
-        hits.forEach((hit) => {
-          ;(hit as ExtendedIntersection).batchObject = this.batchObjects[k]
-        })
-        res.push(...hits)
-      }
-    }
+    const vertIndex = this.tas.geometry.index.array[tasRes.faceIndex * 3]
+    const batchObjectIndex = Math.trunc(vertIndex / SpeckleBatchBVH.CUBE_VERTS)
+    rayBuff.copy(ray)
+    const hits = this.batchObjects[batchObjectIndex].bvh.raycast(
+      rayBuff,
+      materialOrSide
+    )
+    hits.forEach((hit) => {
+      ;(hit as ExtendedIntersection).batchObject = this.batchObjects[batchObjectIndex]
+    })
+    res.push(...hits)
   }
 
   public shapecast(callbacks: ExtendedShapeCastCallbacks): boolean {
