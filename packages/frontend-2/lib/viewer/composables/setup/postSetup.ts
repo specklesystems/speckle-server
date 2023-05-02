@@ -33,7 +33,7 @@ import {
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
-import { Vector3, OrthographicCamera } from 'three'
+import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 
 function useViewerIsBusyEventHandler() {
