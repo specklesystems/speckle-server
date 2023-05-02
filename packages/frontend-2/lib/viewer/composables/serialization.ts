@@ -1,6 +1,4 @@
-import {
-  useInjectedViewerState
-} from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import { SpeckleViewer } from '@speckle/shared'
 import { get } from 'lodash-es'
