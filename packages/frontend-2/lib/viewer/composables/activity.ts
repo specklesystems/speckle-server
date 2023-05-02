@@ -11,7 +11,7 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import {
   useSelectionEvents,
-  useViewerCameraRestTracker
+  useViewerCameraControlEndTracker
 } from '~~/lib/viewer/composables/viewer'
 import { Nullable, SpeckleViewer } from '@speckle/shared'
 import { Box3, Vector3 } from 'three'
@@ -300,7 +300,7 @@ export function useViewerUserActivityTracking(params: {
     doubleClickCallback: selectionCallback
   })
 
-  useViewerCameraRestTracker(() => sendUpdate.emitViewing())
+  useViewerCameraControlEndTracker(() => sendUpdate.emitViewing())
 
   useOnBeforeWindowUnload(async () => await sendUpdate.emitDisconnected())
 
