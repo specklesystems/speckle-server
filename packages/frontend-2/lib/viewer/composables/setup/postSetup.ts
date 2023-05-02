@@ -9,7 +9,10 @@ import {
   ProjectCommentThreadsArgs,
   ViewerResourceItem
 } from '~~/lib/common/generated/gql/graphql'
-import { useInjectedViewer, useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewer,
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 import {
   useGetObjectUrl,
@@ -278,8 +281,8 @@ export function useViewerCameraIntegration() {
     },
     { debounceWait: 100 }
   )
-  
-  // TODO: This caused an infinite loop of toggling ortho/perspective mode.  
+
+  // TODO: This caused an infinite loop of toggling ortho/perspective mode.
   // useViewerCameraTracker(
   //   () => {
   //     const activeCam = instance.cameraHandler.activeCam
@@ -332,7 +335,9 @@ export function useViewerFiltersIntegration() {
     ui: { filters, highlightedObjectIds }
   } = useInjectedViewerState()
 
-  const {metadata: { availableFilters: allFilters }} = useInjectedViewer()
+  const {
+    metadata: { availableFilters: allFilters }
+  } = useInjectedViewer()
 
   const stateKey = 'default'
   let preventFilterWatchers = false
@@ -343,8 +348,8 @@ export function useViewerFiltersIntegration() {
     if (!isAlreadyInPreventScope) preventFilterWatchers = false
   }
 
-  const speckleTypeFilter = computed( () =>
-    allFilters.value?.find((f) => f.key === 'speckle_type') as StringPropertyInfo
+  const speckleTypeFilter = computed(
+    () => allFilters.value?.find((f) => f.key === 'speckle_type') as StringPropertyInfo
   )
 
   // TODO: Hard to get working at this point in time, because the FilteringManager
@@ -457,9 +462,9 @@ export function useViewerFiltersIntegration() {
     (newVal) => {
       const [filter, isApplied] = newVal
       const targetFilter = filter || speckleTypeFilter.value
-      
-      if(isApplied && targetFilter) instance.setColorFilter(targetFilter)
-      if(!isApplied) instance.removeColorFilter()
+
+      if (isApplied && targetFilter) instance.setColorFilter(targetFilter)
+      if (!isApplied) instance.removeColorFilter()
     },
     { immediate: true, flush: 'sync' }
   )

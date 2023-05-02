@@ -148,7 +148,7 @@ export function useFilterUtilities() {
   /**
    * Unapplies the current property filter - removes object colouring
    */
-  const unApplyPropertyFilter = () =>  {
+  const unApplyPropertyFilter = () => {
     filters.propertyFilter.isApplied.value = false
   }
 

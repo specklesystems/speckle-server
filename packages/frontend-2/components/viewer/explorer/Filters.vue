@@ -18,7 +18,7 @@
             text
             size="xs"
             @click="
-                (showAllFilters = false),
+              ;(showAllFilters = false),
                 removePropertyFilter(),
                 refreshColorsIfSetOrActiveFilterIsNumeric()
             "
@@ -61,7 +61,7 @@
         <button
           class="block w-full text-left hover:bg-primary-muted transition truncate rounded-md py-[1px]"
           @click="
-              (showAllFilters = false),
+            ;(showAllFilters = false),
               setPropertyFilter(filter),
               refreshColorsIfSetOrActiveFilterIsNumeric()
           "
