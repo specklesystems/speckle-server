@@ -176,7 +176,8 @@ export function useViewerUserActivityTracking(params: {
         description: `${users.value[incomingSessionId].userName} left.`,
         type: ToastNotificationType.Info
       })
-      if (spotlightUserId.value === incomingSessionId) spotlightUserId.value = null // ensure we're not spotlighting disconnected users
+
+      if (spotlightUserId.value === event.userId) spotlightUserId.value = null // ensure we're not spotlighting disconnected users
       delete users.value[incomingSessionId]
       return
     }
