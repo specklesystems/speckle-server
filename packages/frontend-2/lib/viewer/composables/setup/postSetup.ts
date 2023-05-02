@@ -278,27 +278,28 @@ export function useViewerCameraIntegration() {
     },
     { debounceWait: 100 }
   )
+  
+  // TODO: This caused an infinite loop of toggling ortho/perspective mode.  
+  // useViewerCameraTracker(
+  //   () => {
+  //     const activeCam = instance.cameraHandler.activeCam
+  //     const isOrtho = activeCam.camera instanceof OrthographicCamera
 
-  useViewerCameraTracker(
-    () => {
-      const activeCam = instance.cameraHandler.activeCam
-      const isOrtho = activeCam.camera instanceof OrthographicCamera
-
-      if (isOrthoProjection.value !== isOrtho) {
-        isOrthoProjection.value = isOrtho
-      }
-    },
-    { throttleWait: 500 }
-  )
+  //     if (isOrthoProjection.value !== isOrtho) {
+  //       isOrthoProjection.value = isOrtho
+  //     }
+  //   },
+  //   { throttleWait: 500 }
+  // )
 
   // state -> viewer
   watch(isOrthoProjection, (newVal, oldVal) => {
     if (!!newVal === !!oldVal) return
 
     if (newVal) {
-      instance.setPerspectiveCameraOn()
-    } else {
       instance.setOrthoCameraOn()
+    } else {
+      instance.setPerspectiveCameraOn()
     }
   })
 
