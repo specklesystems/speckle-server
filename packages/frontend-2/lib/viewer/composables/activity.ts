@@ -384,12 +384,11 @@ function useViewerSpotlightTracking() {
       isolateObjects(filters.isolatedObjectIds, { replace: true })
     }
 
-    if (filters.selectedObjectIds.length) {
+    if (filters.selectedObjectIds) {
       // Note: commented out as it's a bit "intrusive" behaviour, opted for the
       // highlight version above.
       // state.ui.selection.setSelectionFromObjectIds(fs.selectedObjects)
 
-      // TODOs: filters implementation, once they are implemented in the FE
       state.ui.highlightedObjectIds.value = filters.selectedObjectIds.slice()
     }
 
