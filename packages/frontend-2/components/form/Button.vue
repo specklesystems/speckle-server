@@ -195,7 +195,7 @@ const bgAndBorderClasses = computed(() => {
         break
       case 'secondary':
         classParts.push(
-          props.outlined ? 'border-foreground-2' : 'bg-foreground-2 border-foreground-2'
+          props.outlined ? 'border-foundation' : 'bg-foundation border-foundation-2'
         )
         break
       case 'warning':
@@ -253,8 +253,8 @@ const foregroundClasses = computed(() => {
         case 'secondary':
           classParts.push(
             props.outlined
-              ? 'text-foreground-2'
-              : 'text-foundation dark:text-foreground'
+              ? 'text-foreground hover:text-primary'
+              : 'text-foreground hover:text-primary'
           )
           break
         case 'default':
