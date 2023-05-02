@@ -7,7 +7,8 @@ import {
   Matrix4,
   Object3D,
   Ray,
-  Side
+  Side,
+  Vector3
 } from 'three'
 import { ExtendedTriangle } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
@@ -50,7 +51,7 @@ export class SpeckleBatchBVH {
   private static CUBE_VERTS = 8
 
   public batchObjects: BatchObject[] = []
-  public bounds: Box3 = new Box3()
+  public bounds: Box3 = new Box3(new Vector3(0, 0, 0), new Vector3(0, 0, 0))
 
   public boxHelpers: Box3Helper[] = []
   public tas: SpeckleMeshBVH = null
