@@ -1,5 +1,4 @@
 import {
-  useInjectedViewer,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { isNonNullable } from '~~/lib/common/helpers/utils'

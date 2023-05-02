@@ -529,7 +529,7 @@ export function useExplodeFactorIntegration() {
 
   // state -> viewer only. we don't need the reverse.
   watch(explodeFactor, (newVal) => {
-    instance.explode(explodeFactor.value)
+    instance.explode(newVal)
   })
 }
 
