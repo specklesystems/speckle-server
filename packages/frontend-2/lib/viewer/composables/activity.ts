@@ -406,7 +406,7 @@ function useViewerSpotlightTracking() {
 
     // sync explode factor
     state.ui.explodeFactor.value = user.state.ui.explodeFactor
-    
+
     // sync lights
     state.ui.lightConfig.value = user.state.ui.lightConfig
   }

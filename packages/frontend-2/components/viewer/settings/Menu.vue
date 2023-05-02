@@ -18,8 +18,16 @@
       >
         <div class="text-sm text-foreground-2 text-left">Local Settings</div>
         <div class="flex items-center space-x-2 w-44">
-          <span class="text-xs text-left">Prevent camera from going under the model</span>
-          <FormButton size="xs" :outlined="!localViewerSettings.turntableMode" @click="toggleTurntableMode()">{{localViewerSettings.turntableMode ? 'ON' : 'OFF'}}</FormButton>
+          <span class="text-xs text-left">
+            Prevent camera from going under the model
+          </span>
+          <FormButton
+            size="xs"
+            :outlined="!localViewerSettings.turntableMode"
+            @click="toggleTurntableMode()"
+          >
+            {{ localViewerSettings.turntableMode ? 'ON' : 'OFF' }}
+          </FormButton>
         </div>
       </PopoverPanel>
     </Transition>
@@ -36,29 +44,36 @@ type ViewerUserSettings = {
 
 const localViewerSettings = useSynchronizedCookie<ViewerUserSettings>(
   `localViewerSettings`,
-  { default: () => { return { turntableMode: true}} }
-  )
-  
-const {instance} = useInjectedViewer()
+  {
+    default: () => {
+      return { turntableMode: true }
+    }
+  }
+)
+
+const { instance } = useInjectedViewer()
 
 const setViewerCameraHandlerControlsMaxPolarAngle = (angle: number) => {
   instance.cameraHandler.controls.maxPolarAngle = angle
 }
 
 const toggleTurntableMode = () => {
-  localViewerSettings.value = {...localViewerSettings.value, turntableMode: !localViewerSettings.value.turntableMode }
-  if(localViewerSettings.value.turntableMode) {
-    setViewerCameraHandlerControlsMaxPolarAngle( Math.PI / 2)
+  localViewerSettings.value = {
+    ...localViewerSettings.value,
+    turntableMode: !localViewerSettings.value.turntableMode
+  }
+  if (localViewerSettings.value.turntableMode) {
+    setViewerCameraHandlerControlsMaxPolarAngle(Math.PI / 2)
   } else {
-    setViewerCameraHandlerControlsMaxPolarAngle( Math.PI)
+    setViewerCameraHandlerControlsMaxPolarAngle(Math.PI)
   }
 }
 
-onMounted(() =>{
-  if(localViewerSettings.value.turntableMode) {
-    setViewerCameraHandlerControlsMaxPolarAngle( Math.PI / 2)
+onMounted(() => {
+  if (localViewerSettings.value.turntableMode) {
+    setViewerCameraHandlerControlsMaxPolarAngle(Math.PI / 2)
   } else {
-    setViewerCameraHandlerControlsMaxPolarAngle( Math.PI)
+    setViewerCameraHandlerControlsMaxPolarAngle(Math.PI)
   }
 })
 </script>
