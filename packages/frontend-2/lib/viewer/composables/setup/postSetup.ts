@@ -278,8 +278,8 @@ export function useViewerCameraIntegration() {
       if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
         target.value = viewerTarget.clone()
       }
-    },
-    { debounceWait: 100 }
+    }
+    // { debounceWait: 100 }
   )
 
   // TODO: This caused an infinite loop of toggling ortho/perspective mode.

@@ -57,23 +57,34 @@
       </ViewerScope>
     </Portal>
 
-    <!-- Active user tracking cancel -->
+    <!-- Active user tracking cancel & Follower count display -->
     <div
-      v-if="spotlightUserId && spotlightUser"
+      v-if="(spotlightUserId && spotlightUser) || followers.length !== 0"
       class="absolute w-screen mt-[3.5rem] h-[calc(100vh-3.5rem)] z-10 p-1"
     >
-      <div class="w-full h-full border-4 border-blue-500/50 rounded-xl">
+      <div
+        class="w-full h-full outline -outline-offset-0 outline-8 rounded-md outline-blue-500/40"
+      >
         <div class="absolute bottom-4 right-4 p-2 pointer-events-auto">
           <FormButton
-            size="sm"
-            class="group w-36 truncate"
+            v-if="spotlightUserId && spotlightUser"
+            size="xs"
+            class="truncate"
             @click="() => (spotlightUserId = null)"
           >
-            <span class="hidden group-hover:inline-block">Stop Following</span>
-            <span class="inline-block group-hover:hidden truncate">
-              {{ spotlightUser?.userName }}
-            </span>
+            <span>Stop Following {{ spotlightUser?.userName.split(' ')[0] }}</span>
           </FormButton>
+          <div
+            v-else
+            v-tippy="followers.map((u) => u.name).join(', ')"
+            class="text-xs p-2 font-bold text-primary"
+          >
+            Followed by {{ followers[0].name.split(' ')[0] }}
+            <span v-if="followers.length > 1">
+              & {{ followers.length - 1 }}
+              {{ followers.length - 1 === 1 ? 'other' : 'others' }}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -81,6 +92,8 @@
 </template>
 <script setup lang="ts">
 import { Nullable } from '@speckle/shared'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { LimitedUser } from '~~/lib/common/generated/gql/graphql'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 
 import { useViewerUserActivityTracking } from '~~/lib/viewer/composables/activity'
@@ -95,7 +108,20 @@ import {
 } from '~~/lib/viewer/composables/setup'
 
 const parentEl = ref(null as Nullable<HTMLElement>)
+const { activeUser, isLoggedIn } = useActiveUser()
 const { users } = useViewerUserActivityTracking({ parentEl })
+
+const followers = computed(() => {
+  if (!isLoggedIn.value) return []
+  const res = [] as LimitedUser[]
+  // users.value['test'].state.ui.spotlightUserId
+  Object.values(users.value).forEach((model) => {
+    if (model.state.ui.spotlightUserId === activeUser.value?.id)
+      res.push(model.user as LimitedUser)
+  })
+  return res
+})
+
 const {
   spotlightUserId,
   threads: {

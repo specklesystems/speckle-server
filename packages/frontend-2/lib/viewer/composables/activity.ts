@@ -11,7 +11,7 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import {
   useSelectionEvents,
-  useViewerCameraRestTracker
+  useViewerCameraControlEndTracker
 } from '~~/lib/viewer/composables/viewer'
 import { Nullable, SpeckleViewer } from '@speckle/shared'
 import { Box3, Vector3 } from 'three'
@@ -176,7 +176,8 @@ export function useViewerUserActivityTracking(params: {
         description: `${users.value[incomingSessionId].userName} left.`,
         type: ToastNotificationType.Info
       })
-      if (spotlightUserId.value === incomingSessionId) spotlightUserId.value = null // ensure we're not spotlighting disconnected users
+
+      if (spotlightUserId.value === event.userId) spotlightUserId.value = null // ensure we're not spotlighting disconnected users
       delete users.value[incomingSessionId]
       return
     }
@@ -300,7 +301,7 @@ export function useViewerUserActivityTracking(params: {
     doubleClickCallback: selectionCallback
   })
 
-  useViewerCameraRestTracker(() => sendUpdate.emitViewing())
+  useViewerCameraControlEndTracker(() => sendUpdate.emitViewing())
 
   useOnBeforeWindowUnload(async () => await sendUpdate.emitDisconnected())
 
