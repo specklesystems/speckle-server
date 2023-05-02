@@ -2,7 +2,8 @@
   <Popover as="div" class="relative z-30">
     <PopoverButton v-slot="{ open }" as="template">
       <ViewerControlsButtonToggle flat secondary :active="open">
-        <ChevronUpDownIcon class="w-5 h-5 rotate-45" />
+        <!-- <ChevronUpDownIcon class="w-5 h-5 rotate-45" /> -->
+        <span :class="`${explodeFactor > 0.01 ? '' : 'grayscale'}`">💥</span>
       </ViewerControlsButtonToggle>
     </PopoverButton>
     <Transition
@@ -35,7 +36,7 @@
 </template>
 <script setup lang="ts">
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
-import { ChevronUpDownIcon } from '@heroicons/vue/24/outline'
+// import { ChevronUpDownIcon } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
 const {
