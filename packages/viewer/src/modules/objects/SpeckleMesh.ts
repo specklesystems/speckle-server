@@ -147,7 +147,10 @@ export default class SpeckleMesh extends Mesh {
   }
 
   public updateTransformsUniform() {
-    if (!this.transformsDirty) return
+    if (!this.transformsDirty) {
+      if (this.bvh) this.bvh.lastRefitTime = 0
+      return
+    }
     if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
       this._batchObjects.forEach((batchObject: BatchObject) => {
         const index = batchObject.batchIndex * 16
@@ -195,6 +198,7 @@ export default class SpeckleMesh extends Mesh {
       })
     }
     if (this.bvh) {
+      this.bvh.refit()
       this.bvh.getBoundingBox(this.bvh.bounds)
       this.geometry.boundingBox.copy(this.bvh.bounds)
       this.geometry.boundingBox.getBoundingSphere(this.geometry.boundingSphere)

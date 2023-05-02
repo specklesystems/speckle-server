@@ -4,6 +4,9 @@ import SpeckleRenderer, { ObjectLayers } from '../SpeckleRenderer'
 import { IntersectionQuery, IntersectionQueryResult } from './Query'
 
 export class IntersectionQuerySolver {
+  private vecBuff0: Vector3 = new Vector3()
+  private vecBuff1: Vector3 = new Vector3()
+
   private renderer: SpeckleRenderer
 
   public setContext(renderer: SpeckleRenderer) {
@@ -23,8 +26,8 @@ export class IntersectionQuerySolver {
   }
 
   private solveOcclusion(query: IntersectionQuery): IntersectionQueryResult {
-    const target = new Vector3(query.point.x, query.point.y, query.point.z)
-    const dir = new Vector3().copy(target).sub(this.renderer.camera.position)
+    const target = this.vecBuff0.set(query.point.x, query.point.y, query.point.z)
+    const dir = this.vecBuff1.copy(target).sub(this.renderer.camera.position)
     dir.normalize()
     const ray = new Ray(this.renderer.camera.position, dir)
     const results: Array<Intersection> = this.renderer.intersections.intersectRay(
