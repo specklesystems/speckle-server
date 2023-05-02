@@ -228,6 +228,7 @@ export type InjectableViewerState = Readonly<{
     sectionBox: Ref<Nullable<Box3>>
     highlightedObjectIds: Ref<string[]>
     lightConfig: Ref<SunLightConfiguration>
+    explodeFactor: Ref<number>
     viewerBusy: WritableComputedRef<boolean>
     selection: Ref<Nullable<Vector3>>
   }
@@ -740,6 +741,7 @@ function setupInterfaceState(
   const spotlightUserId = ref(null as Nullable<string>)
 
   const lightConfig = ref(DefaultLightConfiguration)
+  const explodeFactor = ref(0)
   const selection = ref(null as Nullable<Vector3>)
 
   /**
@@ -757,6 +759,7 @@ function setupInterfaceState(
     ui: {
       selection,
       lightConfig,
+      explodeFactor,
       spotlightUserId,
       viewerBusy,
       threads: {

@@ -75,6 +75,7 @@
 
         <!-- Sun and lights -->
         <ViewerSunMenu v-tippy="'Light Controls'" />
+        <ViewerExplodeMenu vippy="'Explode'" />
 
         <!-- Views -->
         <ViewerViewsMenu v-tippy="'Views'" />

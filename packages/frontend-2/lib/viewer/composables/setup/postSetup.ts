@@ -521,6 +521,18 @@ export function useLightConfigIntegration() {
   )
 }
 
+export function useExplodeFactorIntegration() {
+    const {
+    ui: {  explodeFactor },
+    viewer: { instance }
+  } = useInjectedViewerState()
+
+  // state -> viewer only. we don't need the reverse.
+  watch(explodeFactor, newVal => {
+    instance.explode(explodeFactor.value)
+  })
+}
+
 export function useViewerPostSetup() {
   if (process.server) return
   useViewerObjectAutoLoading()
@@ -533,4 +545,5 @@ export function useViewerPostSetup() {
   useViewerCameraIntegration()
   useViewerFiltersIntegration()
   useLightConfigIntegration()
+  useExplodeFactorIntegration()
 }
