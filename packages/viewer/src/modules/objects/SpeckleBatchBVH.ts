@@ -7,7 +7,8 @@ import {
   Matrix4,
   Object3D,
   Ray,
-  Side
+  Side,
+  Vector3
 } from 'three'
 import { ExtendedTriangle } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
@@ -50,7 +51,7 @@ export class SpeckleBatchBVH {
   private static CUBE_VERTS = 8
 
   public batchObjects: BatchObject[] = []
-  public bounds: Box3 = new Box3()
+  public bounds: Box3 = new Box3(new Vector3(0, 0, 0), new Vector3(0, 0, 0))
 
   public boxHelpers: Box3Helper[] = []
   public tas: SpeckleMeshBVH = null
@@ -237,14 +238,10 @@ export class SpeckleBatchBVH {
       },
       intersectsRange: (triangleOffset: number) => {
         const vertIndex = this.tas.geometry.index.array[triangleOffset * 3]
-        this.batchObjects.forEach((batchObject: BatchObject) => {
-          if (
-            vertIndex >= batchObject.tasVertIndexStart &&
-            vertIndex < batchObject.tasVertIndexEnd
-          ) {
-            ret ||= batchObject.bvh.shapecast(wrapCallbacks(batchObject))
-          }
-        })
+        const batchObjectIndex = Math.trunc(vertIndex / SpeckleBatchBVH.CUBE_VERTS)
+        ret ||= this.batchObjects[batchObjectIndex].bvh.shapecast(
+          wrapCallbacks(this.batchObjects[batchObjectIndex])
+        )
 
         return false
       }

@@ -213,6 +213,10 @@ export default class SpeckleMesh extends Mesh {
 
   public buildBVH() {
     this.bvh = new SpeckleBatchBVH(this.batchObjects)
+    /** We do a refit here, because for some reason the bvh library incorrectly computes the total bvh bounds at creation,
+     *  so we force a refit in order to get the proper bounds value out of it
+     */
+    this.bvh.tas.refit()
   }
 
   public getBatchObjectMaterial(batchObject: BatchObject) {

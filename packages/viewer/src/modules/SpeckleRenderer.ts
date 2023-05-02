@@ -430,7 +430,6 @@ export default class SpeckleRenderer {
 
   private updateTransforms() {
     const meshBatches = this.batcher.getBatches(undefined, GeometryType.MESH)
-    let refitTime = 0
     for (let k = 0; k < meshBatches.length; k++) {
       const meshBatch: SpeckleMesh = meshBatches[k].renderObject as SpeckleMesh
       meshBatch.updateTransformsUniform()
@@ -439,9 +438,7 @@ export default class SpeckleRenderer {
       if (depthMaterial) {
         meshBatch.updateMaterialTransformsUniform(depthMaterial)
       }
-      refitTime += meshBatch.BVH.lastRefitTime
     }
-    if (refitTime > 0) console.warn('Refit Time -> ', refitTime)
   }
 
   private updateFrustum() {
@@ -1358,7 +1355,6 @@ export default class SpeckleRenderer {
   }
 
   private explode(time: number, range: number) {
-    const start = performance.now()
     const batches: MeshBatch[] = this.batcher.getBatches(
       undefined,
       GeometryType.MESH
@@ -1377,7 +1373,6 @@ export default class SpeckleRenderer {
     this.renderer.shadowMap.needsUpdate = true
     this.needsRender = true
     this.resetPipeline()
-    console.warn('Explode Time -> ', performance.now() - start)
   }
 
   public getObjects(id: string): BatchObject[] {
