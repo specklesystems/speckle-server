@@ -153,10 +153,9 @@ import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composa
 
 const props = withDefaults(
   defineProps<{
-    itemId: string
     treeItem: ExplorerNode
     parent?: ExplorerNode
-    depth: number
+    depth?: number
     debug?: boolean
     expandLevel: number
     manualExpandLevel: number
