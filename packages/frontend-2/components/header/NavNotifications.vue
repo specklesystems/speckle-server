@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="hasNotifications">
     <Menu as="div" class="flex items-center">
       <MenuButton v-slot="{ open: menuOpen }" as="div">
         <div class="cursor-pointer">
@@ -34,8 +34,6 @@
         >
           <div class="p-2 text-sm font-bold">Notifications</div>
           <div class="p-2 text-sm">TODO: project invites</div>
-          <div class="p-2 text-sm">TODO: manager download reminder</div>
-
           <MenuItem>
             <AuthVerificationReminderMenuNotice />
           </MenuItem>
