@@ -75,8 +75,8 @@
             <span>Stop Following {{ spotlightUser?.userName.split(' ')[0] }}</span>
           </FormButton>
           <div
-            v-tippy="followers.map((u) => u.name).join(', ')"
             v-else
+            v-tippy="followers.map((u) => u.name).join(', ')"
             class="text-xs p-2 font-bold text-primary"
           >
             Followed by {{ followers[0].name.split(' ')[0] }}
