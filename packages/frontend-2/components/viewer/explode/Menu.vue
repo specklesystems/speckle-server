@@ -41,5 +41,4 @@ import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 const {
   ui: { explodeFactor }
 } = useInjectedViewerState()
-
 </script>

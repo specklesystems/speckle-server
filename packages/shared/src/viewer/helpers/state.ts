@@ -55,8 +55,8 @@ export type SerializedViewerState = {
       indirectLightIntensity?: number
       elevation?: number
       azimuth?: number
-    },
-    explodeFactor: number,
+    }
+    explodeFactor: number
     selection: Nullable<number[]>
   }
 }

@@ -198,7 +198,7 @@ const {
   projectId,
   viewer: {
     metadata: { availableFilters: allFilters }
-  }, 
+  },
   ui: { explodeFactor, lightConfig }
 } = useInjectedViewerState()
 const { sectionBoxOff } = useSectionBoxUtilities()
@@ -481,10 +481,12 @@ watch(
       return
     }
 
-    if(!viewerState.value?.ui.explodeFactor && explodeFactor.value !== 0) explodeFactor.value = 0
-    if(viewerState.value?.ui.explodeFactor !== explodeFactor.value) explodeFactor.value = viewerState.value?.ui.explodeFactor || 0
+    if (!viewerState.value?.ui.explodeFactor && explodeFactor.value !== 0)
+      explodeFactor.value = 0
+    if (viewerState.value?.ui.explodeFactor !== explodeFactor.value)
+      explodeFactor.value = viewerState.value?.ui.explodeFactor || 0
 
-    if(viewerState.value?.ui.lightConfig) {
+    if (viewerState.value?.ui.lightConfig) {
       lightConfig.value = viewerState.value?.ui.lightConfig
     }
 
