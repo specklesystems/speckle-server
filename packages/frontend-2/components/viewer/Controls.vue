@@ -76,8 +76,14 @@
         <!-- Sun and lights -->
         <ViewerSunMenu v-tippy="'Light Controls'" />
 
+        <!-- Explosion -->
+        <ViewerExplodeMenu v-tippy="'Explode'" />
+
         <!-- Views -->
         <ViewerViewsMenu v-tippy="'Views'" />
+
+        <!-- Settings -->
+        <ViewerSettingsMenu />
       </ViewerControlsButtonGroup>
     </div>
     <div

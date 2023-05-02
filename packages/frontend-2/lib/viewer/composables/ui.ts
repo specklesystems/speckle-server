@@ -82,7 +82,7 @@ export function useCameraUtilities() {
 
 export function useFilterUtilities() {
   // const { instance } = useInjectedViewer()
-  const { filters } = useInjectedViewerInterfaceState()
+  const { filters, explodeFactor } = useInjectedViewerInterfaceState()
 
   const isolateObjects = (
     objectIds: string[],
@@ -157,6 +157,7 @@ export function useFilterUtilities() {
     filters.isolatedObjectIds.value = []
     filters.propertyFilter.filter.value = null
     filters.propertyFilter.isApplied.value = false
+    explodeFactor.value = 0
     // filters.selectedObjects.value = []
   }
 

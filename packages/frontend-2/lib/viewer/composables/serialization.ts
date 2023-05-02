@@ -1,4 +1,6 @@
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import { SpeckleViewer } from '@speckle/shared'
 import { get } from 'lodash-es'
@@ -10,6 +12,7 @@ export function useStateSerialization() {
 
   const serialize = (): SerializedViewerState => {
     const camControls = state.viewer.instance.cameraHandler.activeCam.controls
+    const box = state.viewer.instance.getCurrentSectionBox()
 
     const ret: SerializedViewerState = {
       projectId: state.projectId.value,
@@ -59,11 +62,12 @@ export function useStateSerialization() {
         },
         sectionBox: state.ui.sectionBox.value
           ? {
-              min: state.ui.sectionBox.value.min.toArray(),
-              max: state.ui.sectionBox.value.max.toArray()
+              min: box.min.toArray(),
+              max: box.max.toArray()
             }
           : null,
         lightConfig: { ...state.ui.lightConfig.value },
+        explodeFactor: state.ui.explodeFactor.value,
         selection: state.ui.selection.value?.toArray() || null
       }
     }

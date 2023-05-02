@@ -198,7 +198,8 @@ const {
   projectId,
   viewer: {
     metadata: { availableFilters: allFilters }
-  }
+  },
+  ui: { explodeFactor, lightConfig }
 } = useInjectedViewerState()
 const { sectionBoxOff } = useSectionBoxUtilities()
 const {
@@ -478,6 +479,15 @@ watch(
     if (!newIsExpanded && hasFilters) {
       resetFilters()
       return
+    }
+
+    if (!viewerState.value?.ui.explodeFactor && explodeFactor.value !== 0)
+      explodeFactor.value = 0
+    if (viewerState.value?.ui.explodeFactor !== explodeFactor.value)
+      explodeFactor.value = viewerState.value?.ui.explodeFactor || 0
+
+    if (viewerState.value?.ui.lightConfig) {
+      lightConfig.value = viewerState.value?.ui.lightConfig
     }
 
     // If a thread is expanded and has filters, set them up.

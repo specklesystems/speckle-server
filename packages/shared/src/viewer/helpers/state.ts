@@ -56,6 +56,7 @@ export type SerializedViewerState = {
       elevation?: number
       azimuth?: number
     }
+    explodeFactor: number
     selection: Nullable<number[]>
   }
 }
