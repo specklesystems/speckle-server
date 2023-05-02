@@ -230,7 +230,7 @@ export interface IViewer {
   get World(): World
 
   getObjects(id: string): BatchObject[]
-  explode(time: number, range: number)
+  explode(time: number)
 
   dispose(): void
 }

@@ -121,6 +121,20 @@ export class Assets {
     })
   }
 
+  /** To be used wisely */
+  public static async getTextureData(asset: Asset | string): Promise<ImageData> {
+    const texture = await Assets.getTexture(asset)
+    const canvas = document.createElement('canvas')
+    canvas.width = texture.image.width
+    canvas.height = texture.image.height
+
+    const context = canvas.getContext('2d')
+    context.drawImage(texture.image, 0, 0)
+
+    const data = context.getImageData(0, 0, canvas.width, canvas.height)
+    return Promise.resolve(data)
+  }
+
   public static generateGradientRampTexture(
     fromColor: string,
     toColor: string,

@@ -94,6 +94,9 @@ export default class SpeckleRenderer {
   private _differ: Differ = null
   private cancel: { [subtreeId: string]: boolean } = {}
 
+  private explodeTime = -1
+  private explodeRange = 0
+
   public get renderer(): WebGLRenderer {
     return this._renderer
   }
@@ -349,6 +352,11 @@ export default class SpeckleRenderer {
     if (this.sunConfiguration.shadowcatcher) {
       this._shadowcatcher.update(this._scene)
     }
+
+    if (this.explodeTime > -1) {
+      this.explode(this.explodeTime, this.explodeRange)
+      this.explodeTime = -1
+    }
   }
 
   private updateRTEShadows() {
@@ -588,6 +596,10 @@ export default class SpeckleRenderer {
         bvhHelper.update()
         parent.add(bvhHelper)
       }
+      const speckleMesh = batchRenderable as SpeckleMesh
+      speckleMesh.BVH.boxHelpers.forEach((helper: Box3Helper) => {
+        this.scene.add(helper)
+      })
     }
     this.viewer.World.expandWorld(batch.bounds)
   }
@@ -1347,14 +1359,20 @@ export default class SpeckleRenderer {
   }
 
   public setExplode(time: number, range: number) {
+    this.explodeTime = time
+    this.explodeRange = range
+  }
+
+  private explode(time: number, range: number) {
     const batches: MeshBatch[] = this.batcher.getBatches(
       undefined,
       GeometryType.MESH
     ) as MeshBatch[]
+    const vecBuff: Vector3 = new Vector3()
     for (let k = 0; k < batches.length; k++) {
       const objects = batches[k].mesh.batchObjects
       for (let i = 0; i < objects.length; i++) {
-        const center = objects[i].renderView.aabb.getCenter(new Vector3())
+        const center = objects[i].renderView.aabb.getCenter(vecBuff)
         const dir = center.sub(this.viewer.World.worldOrigin)
         dir.normalize().multiplyScalar(time * range)
         objects[i].transformTRS(dir, undefined, undefined, undefined)

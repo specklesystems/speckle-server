@@ -14,6 +14,9 @@ export class BatchObject {
   public transform: Matrix4
   public transformInv: Matrix4
 
+  public tasVertIndexStart: number
+  public tasVertIndexEnd: number
+
   public quaternion: Quaternion = new Quaternion()
   public pivot_High: Vector3 = new Vector3()
   public pivot_Low: Vector3 = new Vector3()
