@@ -18,8 +18,8 @@
             text
             size="xs"
             @click="
-              ;(userSelectedFilter = null),
-                (showAllFilters = false),
+              ;(showAllFilters = false),
+                removePropertyFilter(),
                 refreshColorsIfSetOrActiveFilterIsNumeric()
             "
           >
@@ -61,8 +61,8 @@
         <button
           class="block w-full text-left hover:bg-primary-muted transition truncate rounded-md py-[1px]"
           @click="
-            ;(userSelectedFilter = filter),
-              (showAllFilters = false),
+            ;(showAllFilters = false),
+              setPropertyFilter(filter),
               refreshColorsIfSetOrActiveFilterIsNumeric()
           "
         >
@@ -91,19 +91,15 @@
 import { ChevronDownIcon, ChevronUpIcon, SparklesIcon } from '@heroicons/vue/24/solid'
 import { SparklesIcon as SparklesIconOutline } from '@heroicons/vue/24/outline'
 import { PropertyInfo, StringPropertyInfo, NumericPropertyInfo } from '@speckle/viewer'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 
 const {
   setPropertyFilter,
   removePropertyFilter,
+  applyPropertyFilter,
+  unApplyPropertyFilter,
   filters: { propertyFilter }
 } = useFilterUtilities()
-const {
-  viewer: {
-    metadata: { filteringState }
-  }
-} = useInjectedViewerState()
 
 const showAllFilters = ref(false)
 
@@ -144,13 +140,10 @@ const relevantFilters = computed(() => {
   })
 })
 
-// const userSelectedFilter = ref<PropertyInfo | null>(null)
-
 const speckleTypeFilter = computed(
   () =>
     relevantFilters.value.find((f) => f.key === 'speckle_type') as StringPropertyInfo
 )
-const userSelectedFilter = computed(() => propertyFilter.filter.value)
 const activeFilter = computed(
   () => propertyFilter.filter.value || speckleTypeFilter.value
 )
@@ -199,11 +192,11 @@ const title = computed(() => {
   return currentFilterKey
 })
 
-const colors = computed(() => !!filteringState.value?.activePropFilterKey)
+const colors = computed(() => !!propertyFilter.isApplied.value)
 
 const toggleColors = () => {
-  if (!colors.value) setPropertyFilter(activeFilter.value)
-  else removePropertyFilter()
+  if (!colors.value) applyPropertyFilter()
+  else unApplyPropertyFilter()
 }
 
 // Handles a rather complicated ux flow: user sets a numeric filter which only makes sense with colors on. we set the force colors flag in that scenario, so we can revert it if user selects a non-numeric filter afterwards.
@@ -211,7 +204,7 @@ let forcedColors = false
 const refreshColorsIfSetOrActiveFilterIsNumeric = () => {
   if (activeFilter.value.type === 'number' && !colors.value) {
     forcedColors = true
-    setPropertyFilter(activeFilter.value)
+    applyPropertyFilter()
     return
   }
 
@@ -219,11 +212,11 @@ const refreshColorsIfSetOrActiveFilterIsNumeric = () => {
 
   if (forcedColors) {
     forcedColors = false
-    removePropertyFilter()
+    unApplyPropertyFilter()
     return
   }
 
-  removePropertyFilter()
-  setPropertyFilter(activeFilter.value)
+  // removePropertyFilter()
+  applyPropertyFilter()
 }
 </script>

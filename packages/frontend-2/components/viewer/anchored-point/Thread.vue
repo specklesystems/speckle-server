@@ -204,6 +204,8 @@ const { sectionBoxOff } = useSectionBoxUtilities()
 const {
   removePropertyFilter,
   setPropertyFilter,
+  applyPropertyFilter,
+  unApplyPropertyFilter,
   resetFilters,
   isolateObjects,
   hideObjects
@@ -407,6 +409,7 @@ const setupFullFilters = () => {
 
   if (propertyInfoKey) {
     removePropertyFilter()
+    unApplyPropertyFilter()
     const filter = allFilters.value?.find(
       (f: PropertyInfo) => f.key === propertyInfoKey
     )
@@ -421,9 +424,11 @@ const setupFullFilters = () => {
       numericFilter.passMin = passMin || numericFilter.min
       numericFilter.passMax = passMax || numericFilter.max
       setPropertyFilter(numericFilter)
+      applyPropertyFilter()
       return // Hiding objects is handled by the numeric filter pass min/max
     }
     setPropertyFilter(filter)
+    applyPropertyFilter()
     // do not return, let's go through the vis of objects
   }
 

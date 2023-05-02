@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import { SunLightConfiguration, ViewerEvent } from '@speckle/viewer'
+import { StringPropertyInfo, SunLightConfiguration, ViewerEvent } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import {
   Comment,
@@ -9,7 +9,10 @@ import {
   ProjectCommentThreadsArgs,
   ViewerResourceItem
 } from '~~/lib/common/generated/gql/graphql'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewer,
+  useInjectedViewerState
+} from '~~/lib/viewer/composables/setup'
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 import {
   useGetObjectUrl,
@@ -30,7 +33,7 @@ import {
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
-import { Vector3, OrthographicCamera } from 'three'
+import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 
 function useViewerIsBusyEventHandler() {
@@ -279,26 +282,27 @@ export function useViewerCameraIntegration() {
     { debounceWait: 100 }
   )
 
-  useViewerCameraTracker(
-    () => {
-      const activeCam = instance.cameraHandler.activeCam
-      const isOrtho = activeCam.camera instanceof OrthographicCamera
+  // TODO: This caused an infinite loop of toggling ortho/perspective mode.
+  // useViewerCameraTracker(
+  //   () => {
+  //     const activeCam = instance.cameraHandler.activeCam
+  //     const isOrtho = activeCam.camera instanceof OrthographicCamera
 
-      if (isOrthoProjection.value !== isOrtho) {
-        isOrthoProjection.value = isOrtho
-      }
-    },
-    { throttleWait: 500 }
-  )
+  //     if (isOrthoProjection.value !== isOrtho) {
+  //       isOrthoProjection.value = isOrtho
+  //     }
+  //   },
+  //   { throttleWait: 500 }
+  // )
 
   // state -> viewer
   watch(isOrthoProjection, (newVal, oldVal) => {
     if (!!newVal === !!oldVal) return
 
     if (newVal) {
-      instance.setPerspectiveCameraOn()
-    } else {
       instance.setOrthoCameraOn()
+    } else {
+      instance.setPerspectiveCameraOn()
     }
   })
 
@@ -331,6 +335,10 @@ export function useViewerFiltersIntegration() {
     ui: { filters, highlightedObjectIds }
   } = useInjectedViewerState()
 
+  const {
+    metadata: { availableFilters: allFilters }
+  } = useInjectedViewer()
+
   const stateKey = 'default'
   let preventFilterWatchers = false
   const withWatchersDisabled = (fn: () => void) => {
@@ -339,6 +347,10 @@ export function useViewerFiltersIntegration() {
     fn()
     if (!isAlreadyInPreventScope) preventFilterWatchers = false
   }
+
+  const speckleTypeFilter = computed(
+    () => allFilters.value?.find((f) => f.key === 'speckle_type') as StringPropertyInfo
+  )
 
   // TODO: Hard to get working at this point in time, because the FilteringManager
   // doesn't fully support this (strange bugs arise with isolate after hide not working etc.)
@@ -447,17 +459,12 @@ export function useViewerFiltersIntegration() {
         filters.propertyFilter.filter.value,
         filters.propertyFilter.isApplied.value
       ],
-    (newVal, oldVal) => {
+    (newVal) => {
       const [filter, isApplied] = newVal
-      const [oldFilter, oldIsApplied] = oldVal || [null, false]
+      const targetFilter = filter || speckleTypeFilter.value
 
-      if (isEqual(filter, oldFilter) && isEqual(isApplied, oldIsApplied)) return
-
-      if (filter && isApplied) {
-        instance.setColorFilter(filter)
-      } else {
-        instance.removeColorFilter()
-      }
+      if (isApplied && targetFilter) instance.setColorFilter(targetFilter)
+      if (!isApplied) instance.removeColorFilter()
     },
     { immediate: true, flush: 'sync' }
   )

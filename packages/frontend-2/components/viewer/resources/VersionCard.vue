@@ -64,16 +64,14 @@ dayjs.extend(localizedFormat)
 const props = withDefaults(
   defineProps<{
     version: ViewerModelVersionCardItemFragment
-    showMetadata: boolean
-    clickable: boolean
+    clickable?: boolean
     isLatestVersion: boolean
     isLoadedVersion: boolean
-    showTimeline: boolean
+    showTimeline?: boolean
     last: boolean
     lastLoaded: boolean
   }>(),
   {
-    showMetadata: true,
     clickable: true,
     default: false,
     showTimeline: true,

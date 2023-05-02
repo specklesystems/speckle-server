@@ -123,12 +123,33 @@ export function useFilterUtilities() {
     // instance.showObjects(objectIds, 'utilities', true)
   }
 
+  /**
+   * Sets the current filter property. Does not apply it (instruct viewer to color objects).
+   */
   const setPropertyFilter = (property: PropertyInfo) => {
     filters.propertyFilter.filter.value = property
   }
 
+  /**
+   * Instructs the viewer to apply the current property filter (color objects).
+   */
+  const applyPropertyFilter = () => {
+    filters.propertyFilter.isApplied.value = true
+  }
+
+  /**
+   * Unsets the current property filter.
+   */
   const removePropertyFilter = () => {
+    filters.propertyFilter.isApplied.value = false
     filters.propertyFilter.filter.value = null
+  }
+
+  /**
+   * Unapplies the current property filter - removes object colouring
+   */
+  const unApplyPropertyFilter = () => {
+    filters.propertyFilter.isApplied.value = false
   }
 
   const resetFilters = () => {
@@ -146,7 +167,9 @@ export function useFilterUtilities() {
     showObjects,
     filters,
     setPropertyFilter,
+    applyPropertyFilter,
     removePropertyFilter,
+    unApplyPropertyFilter,
     resetFilters
   }
 }
