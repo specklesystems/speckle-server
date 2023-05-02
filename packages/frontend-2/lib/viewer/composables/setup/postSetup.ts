@@ -278,7 +278,7 @@ export function useViewerCameraIntegration() {
       if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
         target.value = viewerTarget.clone()
       }
-    },
+    }
     // { debounceWait: 100 }
   )
 

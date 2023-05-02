@@ -59,22 +59,31 @@
 
     <!-- Active user tracking cancel & Follower count display -->
     <div
-      v-if="(spotlightUserId && spotlightUser) || followers.length!==0"
+      v-if="(spotlightUserId && spotlightUser) || followers.length !== 0"
       class="absolute w-screen mt-[3.5rem] h-[calc(100vh-3.5rem)] z-10 p-1"
     >
-      <div class="w-full h-full outline -outline-offset-0 outline-8 rounded-md outline-blue-500/40">
+      <div
+        class="w-full h-full outline -outline-offset-0 outline-8 rounded-md outline-blue-500/40"
+      >
         <div class="absolute bottom-4 right-4 p-2 pointer-events-auto">
           <FormButton
-            v-if="(spotlightUserId && spotlightUser)"
+            v-if="spotlightUserId && spotlightUser"
             size="xs"
             class="truncate"
             @click="() => (spotlightUserId = null)"
           >
             <span>Stop Following {{ spotlightUser?.userName.split(' ')[0] }}</span>
           </FormButton>
-          <div v-tippy="followers.map(u=>u.name).join(', ')" v-else class="text-xs p-2 font-bold text-primary">
+          <div
+            v-tippy="followers.map((u) => u.name).join(', ')"
+            v-else
+            class="text-xs p-2 font-bold text-primary"
+          >
             Followed by {{ followers[0].name.split(' ')[0] }}
-            <span v-if="followers.length > 1">& {{ followers.length - 1 }} {{ followers.length - 1 === 1 ? 'other' : 'others' }}</span>
+            <span v-if="followers.length > 1">
+              & {{ followers.length - 1 }}
+              {{ followers.length - 1 === 1 ? 'other' : 'others' }}
+            </span>
           </div>
         </div>
       </div>
@@ -102,13 +111,13 @@ const parentEl = ref(null as Nullable<HTMLElement>)
 const { activeUser, isLoggedIn } = useActiveUser()
 const { users } = useViewerUserActivityTracking({ parentEl })
 
-const followers = computed(()=> {
-  if(!isLoggedIn.value) return []
+const followers = computed(() => {
+  if (!isLoggedIn.value) return []
   const res = [] as LimitedUser[]
   // users.value['test'].state.ui.spotlightUserId
-  Object.values(users.value).forEach(model => {
-    if(model.state.ui.spotlightUserId === activeUser.value?.id)
-    res.push(model.user as LimitedUser)
+  Object.values(users.value).forEach((model) => {
+    if (model.state.ui.spotlightUserId === activeUser.value?.id)
+      res.push(model.user as LimitedUser)
   })
   return res
 })
