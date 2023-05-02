@@ -62,7 +62,7 @@
       v-if="spotlightUserId && spotlightUser"
       class="absolute w-screen mt-[3.5rem] h-[calc(100vh-3.5rem)] z-10 p-1"
     >
-      <div class="w-full h-full border-4 border-blue-500/50 rounded-xl">
+      <div class="w-full h-full outline -outline-offset-0 outline-8 rounded-md outline-blue-500/40">
         <div class="absolute bottom-4 right-4 p-2 pointer-events-auto">
           <FormButton
             size="sm"
