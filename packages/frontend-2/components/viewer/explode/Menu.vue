@@ -38,16 +38,8 @@ import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { ChevronUpDownIcon } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
-// const createLightConfigComputed = <K extends keyof SunLightConfiguration>(key: K) =>
-//   computed({
-//     get: () => lightConfig.value[key],
-//     set: (newVal) =>
-//       (lightConfig.value = {
-//         ...lightConfig.value,
-//         [key]: newVal
-//
 const {
-  ui: { lightConfig, explodeFactor }
+  ui: { explodeFactor }
 } = useInjectedViewerState()
 
 </script>
