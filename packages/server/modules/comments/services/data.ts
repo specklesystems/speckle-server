@@ -130,6 +130,7 @@ export async function convertLegacyDataToState(
         }
       },
       spotlightUserId: null,
+      explodeFactor: 0,
       filters: {
         isolatedObjectIds: data.filters?.isolatedIds || [],
         hiddenObjectIds: data.filters?.hiddenIds || [],
