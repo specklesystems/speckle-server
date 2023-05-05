@@ -47,7 +47,7 @@ RUN apt-get update && \
   libasound2=1.2.4-1.1 \
   libatk-bridge2.0-0=2.38.0-1 \
   libatk1.0-0=2.36.0-2 \
-  libatspi2.0-0=2.38.0-4 \
+  libatspi2.0-0=2.38.0-4+deb11u1 \
   libcairo2=1.16.0-5 \
   libcups2=2.3.3op2-3+deb11u2 \
   libdbus-1-3=1.12.24-0+deb11u1 \
@@ -56,7 +56,7 @@ RUN apt-get update && \
   libgbm1=20.3.5-1 \
   libglib2.0-0=2.66.8-1 \
   libnspr4=2:4.29-1 \
-  libnss3=2:3.61-1+deb11u2 \
+  libnss3=2:3.61-1+deb11u3 \
   libpango-1.0-0=1.46.2-3 \
   libx11-6=2:1.7.2-1 \
   libxcb1=1.14-3 \

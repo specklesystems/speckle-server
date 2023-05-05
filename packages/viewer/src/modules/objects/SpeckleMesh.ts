@@ -147,7 +147,10 @@ export default class SpeckleMesh extends Mesh {
   }
 
   public updateTransformsUniform() {
-    if (!this.transformsDirty) return
+    if (!this.transformsDirty) {
+      if (this.bvh) this.bvh.lastRefitTime = 0
+      return
+    }
     if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
       this._batchObjects.forEach((batchObject: BatchObject) => {
         const index = batchObject.batchIndex * 16
@@ -195,6 +198,7 @@ export default class SpeckleMesh extends Mesh {
       })
     }
     if (this.bvh) {
+      this.bvh.refit()
       this.bvh.getBoundingBox(this.bvh.bounds)
       this.geometry.boundingBox.copy(this.bvh.bounds)
       this.geometry.boundingBox.getBoundingSphere(this.geometry.boundingSphere)
@@ -209,6 +213,10 @@ export default class SpeckleMesh extends Mesh {
 
   public buildBVH() {
     this.bvh = new SpeckleBatchBVH(this.batchObjects)
+    /** We do a refit here, because for some reason the bvh library incorrectly computes the total bvh bounds at creation,
+     *  so we force a refit in order to get the proper bounds value out of it
+     */
+    this.bvh.tas.refit()
   }
 
   public getBatchObjectMaterial(batchObject: BatchObject) {

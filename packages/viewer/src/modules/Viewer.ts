@@ -425,8 +425,10 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
-  public explode(time: number, range: number) {
-    this.speckleRenderer.setExplode(time, range)
+  public explode(time: number) {
+    const size = this.world.worldSize
+    const worldSize = Math.sqrt(size.x * size.x + size.y * size.y + size.z * size.z)
+    this.speckleRenderer.setExplode(time, worldSize)
   }
 
   /**

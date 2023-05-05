@@ -78,7 +78,6 @@ export default class Sandbox {
     showBvh: false,
     totalBvhSize: 0,
     explode: 0,
-    explodeRange: 100,
     culling: true
   }
 
@@ -877,6 +876,7 @@ export default class Sandbox {
       options: {
         Volume: 'parameters.HOST_VOLUME_COMPUTED.value',
         Area: 'parameters.HOST_AREA_COMPUTED.value',
+        Elevation: 'Elevation',
         SpeckleType: 'speckle_type',
         DisplayName: 'DisplayName',
         EmbodiedCarbon: 'EmbodiedCarbon',
@@ -931,23 +931,12 @@ export default class Sandbox {
       .addInput(this.batchesParams, 'explode', {
         label: 'Explode',
         min: 0,
-        max: 0.25,
+        max: 1,
         step: 0.001
       })
       .on('change', (value) => {
         value
-        this.viewer.explode(this.batchesParams.explode, this.batchesParams.explodeRange)
-      })
-    container
-      .addInput(this.batchesParams, 'explodeRange', {
-        label: 'Explode Range',
-        min: 1,
-        max: 1000,
-        step: 1
-      })
-      .on('change', (value) => {
-        value
-        this.viewer.explode(this.batchesParams.explode, this.batchesParams.explodeRange)
+        this.viewer.explode(this.batchesParams.explode)
       })
     // container
     //   .addInput(Sandbox.batchesParams, 'culling', {

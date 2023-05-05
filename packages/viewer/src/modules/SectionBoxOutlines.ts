@@ -1,4 +1,5 @@
 import {
+  Box3,
   Color,
   DynamicDrawUsage,
   InterleavedBufferAttribute,
@@ -87,6 +88,17 @@ export class SectionBoxOutlines {
     for (let b = 0; b < batches.length; b++) {
       const plane = new Plane().copy(_plane)
       batches[b].mesh.BVH.shapecast({
+        intersectsTAS: (
+          box: Box3
+          // isLeaf: boolean,
+          // score: number | undefined,
+          // depth: number,
+          // nodeIndex: number
+        ) => {
+          const localPlane = plane
+          return localPlane.intersectsBox(box)
+        },
+
         intersectsBounds: (box) => {
           const localPlane = plane
           return localPlane.intersectsBox(box)
