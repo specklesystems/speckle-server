@@ -126,16 +126,16 @@ export default class Sandbox {
       this.refresh()
     })
     viewer.on(ViewerEvent.UnloadComplete, (url: string) => {
+      url
       this.removeViewControls()
       this.addViewControls()
       this.properties = this.viewer.getObjectProperties()
-      viewer.World.reduceWorld(this.viewer.getWorldTree().getRenderTree(url).treeBounds)
     })
     viewer.on(ViewerEvent.UnloadAllComplete, (url: string) => {
       this.removeViewControls()
       this.addViewControls()
       this.properties = this.viewer.getObjectProperties()
-      viewer.World.resetWorld()
+      // viewer.World.resetWorld()
       url
     })
     viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent) => {

@@ -600,6 +600,11 @@ export default class SpeckleRenderer {
     this.rootGroup.remove(this.rootGroup.getObjectByName(subtreeId))
     this.updateShadowCatcher()
 
+    const batches = this.batcher.getBatches(subtreeId)
+    batches.forEach((value) => {
+      this.viewer.World.reduceWorld(value.bounds)
+    })
+
     this.batcher.purgeBatches(subtreeId)
     this.updateDirectLights()
     this.updateHelpers()
