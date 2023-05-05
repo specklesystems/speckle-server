@@ -177,9 +177,10 @@ export default class Coverter {
 
       // If this is a built element and has a display value, only iterate through the "elements" prop if it exists.
       if (obj.speckle_type.toLowerCase().includes('builtelements')) {
-        if (obj['elements']) {
+        const elements = this.getElementsValue(obj)
+        if (elements) {
           childrenConversionPromisses.push(
-            this.traverse(objectURL, obj['elements'], callback, childNode)
+            this.traverse(objectURL, elements, callback, childNode)
           )
           this.activePromises += childrenConversionPromisses.length
           await Promise.all(childrenConversionPromisses)
@@ -306,6 +307,10 @@ export default class Coverter {
     )
   }
 
+  private getElementsValue(obj) {
+    return obj['elements'] || obj['@elements']
+  }
+
   /**
    * 
     NODES
@@ -314,6 +319,19 @@ export default class Coverter {
     obj.origin.units = obj.units
     obj.target.units = obj.units
   }
+
+  // private hashCode = (input: string) => {
+  //   let hash = 0,
+  //     i,
+  //     chr
+  //   if (input.length === 0) return hash
+  //   for (i = 0; i < input.length; i++) {
+  //     chr = input.charCodeAt(i)
+  //     hash = (hash << 5) - hash + chr
+  //     hash |= 0 // Convert to 32bit integer
+  //   }
+  //   return hash
+  // }
 
   // private hashCode = (input: string) => {
   //   let hash = 0,
