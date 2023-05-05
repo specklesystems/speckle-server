@@ -1035,6 +1035,14 @@ export default class SpeckleRenderer {
     }
 
     const box = new Box3().setFromObject(this.allObjects)
+    /** This is for special cases like when the stream will only have one point
+     *  which three will not consider it's size when computing the bounding box
+     *  resulting in a zero size bounding box. That's why we make sure the bounding
+     *  box is never zero in size
+     */
+    if (box.min.equals(box.max)) {
+      box.expandByVector(new Vector3(1, 1, 1))
+    }
     this.zoomToBox(box, fit, transition)
     // this.viewer.controls.setBoundary( box )
   }

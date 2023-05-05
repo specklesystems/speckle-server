@@ -257,17 +257,31 @@ export default class Coverter {
    * @return {[type]}     [description]
    */
   private getSpeckleType(obj): string {
-    let type = 'Base'
+    const typeChain = this.getSpeckleTypeChain(obj)
+    for (const type of typeChain) {
+      const nodeConverter = type in this.NodeConverterMapping
+      if (nodeConverter) return type
+    }
+    return 'Base'
+  }
+
+  private getSpeckleTypeChain(obj): string[] {
+    let type = ['Base']
     if (obj.data)
-      type = obj.data.speckle_type
-        ? obj.data.speckle_type.split('.').reverse()[0]
-        : type
-    else type = obj.speckle_type ? obj.speckle_type.split('.').reverse()[0] : type
-    return type
+      type = obj.data.speckle_type ? obj.data.speckle_type.split(':').reverse() : type
+    else type = obj.speckle_type ? obj.speckle_type.split(':').reverse() : type
+    return type.map<string>((value: string) => {
+      return value.split('.').reverse()[0]
+    })
   }
 
   private directNodeConverterExists(obj) {
-    return this.getSpeckleType(obj) in this.NodeConverterMapping
+    const typeChain = this.getSpeckleTypeChain(obj)
+    for (const type of typeChain) {
+      const nodeConverter = type in this.NodeConverterMapping
+      if (nodeConverter) return nodeConverter
+    }
+    return false
   }
 
   private async convertToNode(obj, node) {
