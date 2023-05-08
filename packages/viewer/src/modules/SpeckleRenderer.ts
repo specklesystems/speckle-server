@@ -55,6 +55,7 @@ import MeshBatch from './batching/MeshBatch'
 import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
 import { Shadowcatcher } from './Shadowcatcher'
 import Logger from 'js-logger'
+import { Differ } from './Differ'
 import SpeckleMesh from './objects/SpeckleMesh'
 import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 import { BatchObject } from './batching/BatchObject'
@@ -90,6 +91,7 @@ export default class SpeckleRenderer {
   private sectionPlanesChanged: Plane[] = []
   private sectionBoxOutlines: SectionBoxOutlines = null
   private _shadowcatcher: Shadowcatcher = null
+  private _differ: Differ = null
   private cancel: { [subtreeId: string]: boolean } = {}
 
   private explodeTime = -1
@@ -180,6 +182,10 @@ export default class SpeckleRenderer {
 
   public get currentSectionBox() {
     return this.viewer.sectionBox.getCurrentBox()
+  }
+
+  public get differ() {
+    return this._differ
   }
 
   public constructor(viewer: Viewer /** TEMPORARY */) {
@@ -328,6 +334,8 @@ export default class SpeckleRenderer {
     }
 
     this._scene.add(this._shadowcatcher.shadowcatcherMesh)
+
+    this._differ = new Differ()
   }
 
   public update(deltaTime: number) {
@@ -827,6 +835,7 @@ export default class SpeckleRenderer {
     }
     this.updateDirectLights()
     this.updateShadowCatcher()
+    this.viewer.emit(ViewerEvent.LightConfigUpdated, { ...config })
   }
 
   public updateHelpers() {

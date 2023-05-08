@@ -395,6 +395,28 @@ export default class Batcher {
     }
   }
 
+  public getByMaterialUUID(materialUUID: string) {
+    const visibilityRanges = {}
+    for (const k in this.batches) {
+      const batch: Batch = this.batches[k]
+      const batchMesh: Mesh = batch.renderObject as Mesh
+      if (batchMesh.geometry.groups.length === 0) {
+        if ((batchMesh.material as Material).uuid === materialUUID)
+          visibilityRanges[k] = AllBatchUpdateRange
+      } else {
+        const materialUUIDGroup = batchMesh.geometry.groups.find((value) => {
+          return batchMesh.material[value.materialIndex].uuid === materialUUID
+        })
+        visibilityRanges[k] = {
+          offset: 0,
+          count:
+            materialUUIDGroup !== undefined ? materialUUIDGroup.start : batch.getCount()
+        }
+      }
+    }
+    return visibilityRanges
+  }
+
   public purgeBatches(subtreeId: string) {
     for (const k in this.batches) {
       if (this.batches[k].subtreeId === subtreeId) {

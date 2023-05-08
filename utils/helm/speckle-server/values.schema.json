@@ -451,6 +451,11 @@
           "description": "Enables the server side admin authz override",
           "default": false
         },
+        "onboardingStreamId": {
+          "type": "string",
+          "description": "This stream/project on the server is used for the onboarding flow",
+          "default": ""
+        },
         "sessionSecret": {
           "type": "object",
           "properties": {

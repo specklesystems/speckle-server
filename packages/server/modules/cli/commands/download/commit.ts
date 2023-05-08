@@ -12,7 +12,6 @@ import { getBaseUrl, getServerVersion } from '@/modules/shared/helpers/envHelper
 import { Commit } from '@/test/graphql/generated/graphql'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
-import { createCommitByBranchId } from '@/modules/core/services/commits'
 import { Roles } from '@speckle/shared'
 import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
 import { createObject } from '@/modules/core/services/objects'
@@ -20,6 +19,7 @@ import { getObject } from '@/modules/core/repositories/objects'
 import ObjectLoader from '@speckle/objectloader'
 import { noop } from 'lodash'
 import { cliLogger } from '@/logging/logging'
+import { createCommitByBranchId } from '@/modules/core/services/commit/management'
 
 type LocalResources = Awaited<ReturnType<typeof getLocalResources>>
 type ParsedCommitUrl = ReturnType<typeof parseCommitUrl>
@@ -147,13 +147,13 @@ const saveNewCommit = async (commit: Commit, localResources: LocalResources) => 
   const { targetStream, targetBranch, owner } = localResources
 
   const streamId = targetStream.id
-  const message = commit.message
+  const message = commit.message || null
   const objectId = commit.referencedObject
-  const parents = commit.parents
-  const sourceApplication = commit.sourceApplication
+  const parents = (commit.parents || []).filter((p): p is NonNullable<typeof p> => !!p)
+  const sourceApplication = commit.sourceApplication || null
   const totalChildrenCount = commit.totalChildrenCount
 
-  const id = await createCommitByBranchId({
+  const newCommit = await createCommitByBranchId({
     streamId,
     branchId: targetBranch.id,
     objectId,
@@ -161,14 +161,15 @@ const saveNewCommit = async (commit: Commit, localResources: LocalResources) => 
     message,
     sourceApplication,
     totalChildrenCount,
-    parents
+    parents: parents.length ? parents : null
   })
+  const id = newCommit.id
 
   await addCommitCreatedActivity({
     commitId: id,
     streamId,
     userId: owner.id,
-    commit: {
+    input: {
       branchName: targetBranch.name,
       message,
       objectId,
@@ -177,7 +178,8 @@ const saveNewCommit = async (commit: Commit, localResources: LocalResources) => 
       streamId,
       totalChildrenCount
     },
-    branchName: targetBranch.name
+    branchName: targetBranch.name,
+    commit: newCommit
   })
 
   return id
@@ -198,7 +200,7 @@ const createNewObject = async (
     speckleType: newObject.speckleType || newObject.speckle_type || 'Base'
   })
 
-  const newRecord = await getObject(newObjectId)
+  const newRecord = await getObject(newObjectId, targetStreamId)
   if (!newRecord) {
     throw new Error("Unexpected error! Just inserted an object, but can't find it!")
   }

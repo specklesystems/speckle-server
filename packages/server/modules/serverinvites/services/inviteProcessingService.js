@@ -25,6 +25,7 @@ const {
 const {
   addStreamInviteDeclinedActivity
 } = require('@/modules/activitystream/services/streamActivity')
+const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
 
 /**
  * Resolve the relative auth redirect path, after registering with an invite
@@ -43,7 +44,7 @@ function resolveAuthRedirectPath(invite) {
   }
 
   // Fall-back to base URL (for server invites)
-  return process.env.CANONICAL_URL
+  return getFrontendOrigin()
 }
 
 /**

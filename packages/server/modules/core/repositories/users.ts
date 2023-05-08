@@ -2,6 +2,8 @@ import { ServerAcl, Users, knex } from '@/modules/core/dbSchema'
 import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { isArray } from 'lodash'
+import { metaHelpers } from '@/modules/core/helpers/meta'
+import { UserValidationError } from '@/modules/core/errors/user'
 
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**
@@ -16,6 +18,11 @@ export type GetUserParams = Partial<{
    * Join server_acl and get user role info
    */
   withRole: boolean
+
+  /**
+   * Skip record sanitization. ONLY use when you wish to work with a user's password digest
+   */
+  skipClean: boolean
 }>
 
 function sanitizeUserRecord<T extends Nullable<UserRecord>>(user: T): T {
@@ -31,7 +38,7 @@ export async function getUsers(
   userIds: string | string[],
   params?: GetUserParams
 ): Promise<UserWithOptionalRole[]> {
-  const { withRole } = params || {}
+  const { withRole, skipClean } = params || {}
   userIds = isArray(userIds) ? userIds : [userIds]
 
   const q = Users.knex<UserWithOptionalRole[]>().whereIn(Users.col.id, userIds)
@@ -45,7 +52,7 @@ export async function getUsers(
     q.groupBy(Users.col.id)
   }
 
-  return (await q).map(sanitizeUserRecord)
+  return (await q).map((u) => (skipClean ? u : sanitizeUserRecord(u)))
 }
 
 /**
@@ -60,10 +67,13 @@ export async function getUser(userId: string, params?: GetUserParams) {
 /**
  * Get user by e-mail address
  */
-export async function getUserByEmail(email: string) {
+export async function getUserByEmail(
+  email: string,
+  options?: Partial<{ skipClean: boolean }>
+) {
   const q = Users.knex<UserRecord[]>().whereRaw('lower(email) = lower(?)', [email])
   const user = await q.first()
-  return user ? sanitizeUserRecord(user) : null
+  return user ? (!options?.skipClean ? sanitizeUserRecord(user) : user) : null
 }
 
 /**
@@ -78,4 +88,49 @@ export async function markUserAsVerified(email: string) {
     })
 
   return !!(await q)
+}
+
+export async function markOnboardingComplete(userId: string) {
+  if (!userId) return false
+
+  const meta = metaHelpers(Users)
+  const newMeta = await meta.set(userId, 'isOnboardingFinished', true)
+
+  return !!newMeta.value
+}
+
+const cleanInputRecord = (
+  update: Partial<UserRecord & { password?: string }>
+): Partial<UserRecord> => {
+  delete update.id
+  delete update.passwordDigest
+  delete update.password
+  delete update.email
+  return update
+}
+
+const validateInputRecord = (input: Partial<UserRecord>) => {
+  if ((input.avatar?.length || 0) > 524288) {
+    throw new UserValidationError('User avatar is too big, please try a smaller one')
+  }
+
+  if (!Object.values(input).length) {
+    throw new UserValidationError('User update payload empty')
+  }
+}
+
+export async function updateUser(
+  userId: string,
+  update: Partial<UserRecord>,
+  options?: Partial<{
+    skipClean: boolean
+  }>
+) {
+  if (!options?.skipClean) {
+    update = cleanInputRecord(update)
+  }
+  validateInputRecord(update)
+
+  const [newUser] = await Users.knex().where(Users.col.id, userId).update(update, '*')
+  return newUser as Nullable<UserRecord>
 }

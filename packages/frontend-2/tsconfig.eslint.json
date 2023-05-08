@@ -1,0 +1,6 @@
+{
+  // https://v3.nuxtjs.org/concepts/typescript
+  "extends": "./tsconfig.json",
+  "exclude": ["./lib/core/nuxt-modules/**/templates/*.js"],
+  "include": ["./.nuxt/nuxt.d.ts", "**/*", ".storybook/**/*", ".*.js"]
+}

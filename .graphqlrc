@@ -1,4 +1,8 @@
 schema: 'http://localhost:3000/graphql'
+extensions:
+  languageService:
+    # Cause it's busted
+    enableValidation: false
 require:
   - ts-node/register
   - tsconfig-paths/register

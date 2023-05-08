@@ -26,6 +26,7 @@ const {
   addStreamInviteSentOutActivity
 } = require('@/modules/activitystream/services/streamActivity')
 const { renderEmail } = require('@/modules/emails/services/emailRendering')
+const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
 
 /**
  * @typedef {{
@@ -201,14 +202,14 @@ function buildInviteLink(invite) {
   if (isServerInvite(invite)) {
     return new URL(
       `${getRegistrationRoute()}?token=${token}`,
-      process.env.CANONICAL_URL
+      getFrontendOrigin()
     ).toString()
   }
 
   if (resourceTarget === 'streams') {
     return new URL(
       `${getStreamRoute(resourceId)}?token=${token}`,
-      process.env.CANONICAL_URL
+      getFrontendOrigin()
     ).toString()
   } else {
     throw new InviteCreateValidationError('Unexpected resource target type')

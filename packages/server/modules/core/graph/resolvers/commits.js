@@ -1,23 +1,27 @@
 'use strict'
 
-const { ForbiddenError, UserInputError, ApolloError } = require('apollo-server-express')
+const { UserInputError, ApolloError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
 const { authorizeResolver, pubsub, CommitPubsubEvents } = require('@/modules/shared')
-const { saveActivity } = require('@/modules/activitystream/services')
-const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 
 const {
-  createCommitByBranchName,
-  updateCommit,
-  deleteCommit,
   getCommitById,
-  getCommitsByBranchId,
   getCommitsByUserId,
   getCommitsByStreamId,
-  getCommitsTotalCountByStreamId,
-  getCommitsTotalCountByUserId,
-  getCommitsTotalCountByBranchId
+  getCommitsTotalCountByUserId
 } = require('../../services/commits')
+const {
+  getPaginatedStreamCommits,
+  getPaginatedBranchCommits
+} = require('@/modules/core/services/commit/retrieval')
+const {
+  createCommitByBranchName,
+  updateCommitAndNotify,
+  deleteCommitAndNotify
+} = require('@/modules/core/services/commit/management')
+const {
+  addCommitReceivedActivity
+} = require('@/modules/activitystream/services/commitActivity')
 
 const { getUser } = require('../../services/users')
 
@@ -35,9 +39,6 @@ const {
   validateStreamAccess
 } = require('@/modules/core/services/streams/streamAccessService')
 const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
-const {
-  addCommitCreatedActivity
-} = require('@/modules/activitystream/services/commitActivity')
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
@@ -90,26 +91,36 @@ module.exports = {
       const { id: commitId } = parent
       const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
       return stream?.name || null
+    },
+    /**
+     * The DB schema actually has the value under 'author', but some queries (not all)
+     * remap it to 'authorId'
+     */
+    async authorId(parent) {
+      return parent.authorId || parent.author
+    },
+    async authorName(parent, _args, ctx) {
+      const { authorId, authorName, author } = parent
+      if (authorName) return authorName
+
+      const authorEntity = await ctx.loaders.users.getUser.load(authorId || author)
+      return authorEntity?.name || null
+    },
+    async authorAvatar(parent, _args, ctx) {
+      const { authorId, authorAvatar, author } = parent
+      if (authorAvatar) return authorAvatar
+
+      const authorEntity = await ctx.loaders.users.getUser.load(authorId || author)
+      return authorEntity?.avatar || null
+    },
+    async branchName(parent, _args, ctx) {
+      const { id } = parent
+      return (await ctx.loaders.commits.getCommitBranch.load(id))?.name || null
     }
   },
   Stream: {
     async commits(parent, args) {
-      if (args.limit && args.limit > 100)
-        throw new UserInputError(
-          'Cannot return more than 100 items, please use pagination.'
-        )
-      const { commits: items, cursor } = await getCommitsByStreamId({
-        streamId: parent.id,
-        limit: args.limit,
-        cursor: args.cursor,
-        ignoreGlobalsBranch: true
-      })
-      const totalCount = await getCommitsTotalCountByStreamId({
-        streamId: parent.id,
-        ignoreGlobalsBranch: true
-      })
-
-      return { items, cursor, totalCount }
+      return await getPaginatedStreamCommits(parent.id, args)
     },
 
     async commit(parent, args) {
@@ -139,18 +150,11 @@ module.exports = {
   },
   Branch: {
     async commits(parent, args) {
-      if (args.limit && args.limit > 100)
-        throw new UserInputError(
-          'Cannot return more than 100 items, please use pagination.'
-        )
-      const { commits, cursor } = await getCommitsByBranchId({
+      return await getPaginatedBranchCommits({
         branchId: parent.id,
         limit: args.limit,
         cursor: args.cursor
       })
-      const totalCount = await getCommitsTotalCountByBranchId({ branchId: parent.id })
-
-      return { items: commits, totalCount, cursor }
     }
   },
   Mutation: {
@@ -169,121 +173,54 @@ module.exports = {
         throw new RateLimitError(rateLimitResult)
       }
 
-      const id = await createCommitByBranchName({
+      const { id } = await createCommitByBranchName({
         ...args.commit,
         authorId: context.userId
       })
-      if (id) {
-        await addCommitCreatedActivity({
-          commitId: id,
-          streamId: args.commit.streamId,
-          userId: context.userId,
-          commit: args.commit,
-          branchName: args.commit.branchName
-        })
-      }
 
       return id
     },
 
-    async commitUpdate(parent, args, context) {
-      const role = await authorizeResolver(
-        context.userId,
-        args.commit.streamId,
-        'stream:contributor'
-      )
-
-      if (!args.commit.message && !args.commit.newBranchName)
-        throw new UserInputError('Please provide a message and/or a new branch name.')
-
-      const commit = await getCommitById({
-        streamId: args.commit.streamId,
-        id: args.commit.id
-      })
-
-      if (commit.authorId !== context.userId && role !== 'stream:owner')
-        throw new ForbiddenError(
-          'Only the author of a commit or a stream owner may update it.'
-        )
-
-      const updated = await updateCommit({ ...args.commit })
-
-      if (updated) {
-        await saveActivity({
-          streamId: args.commit.streamId,
-          resourceType: 'commit',
-          resourceId: args.commit.id,
-          actionType: ActionTypes.Commit.Update,
-          userId: context.userId,
-          info: { old: commit, new: args.commit },
-          message: `Commit message changed: ${args.commit.id} (${args.commit.message})`
-        })
-        await pubsub.publish(COMMIT_UPDATED, {
-          commitUpdated: { ...args.commit },
-          streamId: args.commit.streamId,
-          commitId: args.commit.id
-        })
-      }
-
-      return updated
-    },
-
-    async commitReceive(parent, args, context) {
-      await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
-
-      await getCommitById({
-        streamId: args.input.streamId,
-        id: args.input.commitId
-      })
-      const user = await getUser(context.userId)
-
-      await saveActivity({
-        streamId: args.input.streamId,
-        resourceType: 'commit',
-        resourceId: args.input.commitId,
-        actionType: ActionTypes.Commit.Receive,
-        userId: context.userId,
-        info: {
-          sourceApplication: args.input.sourceApplication,
-          message: args.input.message
-        },
-        message: `Commit ${args.input.commitId} was received by ${user.name}`
-      })
-
-      return true
-    },
-
-    async commitDelete(parent, args, context) {
+    async commitUpdate(_parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
         'stream:contributor'
       )
 
-      const commit = await getCommitById({
-        streamId: args.commit.streamId,
-        id: args.commit.id
-      })
-      if (commit.authorId !== context.userId)
-        throw new ForbiddenError('Only the author of a commit may delete it.')
+      await updateCommitAndNotify(args.commit, context.userId)
+      return true
+    },
 
-      const deleted = await deleteCommit({ id: args.commit.id })
-      if (deleted) {
-        await saveActivity({
-          streamId: args.commit.streamId,
-          resourceType: 'commit',
-          resourceId: args.commit.id,
-          actionType: ActionTypes.Commit.Delete,
-          userId: context.userId,
-          info: { commit },
-          message: `Commit deleted: ${args.commit.id}`
-        })
-        await pubsub.publish(COMMIT_DELETED, {
-          commitDeleted: { ...args.commit },
-          streamId: args.commit.streamId
-        })
+    async commitReceive(parent, args, context) {
+      await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
+
+      const commit = await getCommitById({
+        streamId: args.input.streamId,
+        id: args.input.commitId
+      })
+      const user = await getUser(context.userId)
+
+      if (commit && user) {
+        await addCommitReceivedActivity({ input: args.input, userId: user.id })
+        return true
       }
 
+      return false
+    },
+
+    async commitDelete(_parent, args, context) {
+      await authorizeResolver(
+        context.userId,
+        args.commit.streamId,
+        'stream:contributor'
+      )
+
+      const deleted = await deleteCommitAndNotify(
+        args.commit.id,
+        args.commit.streamId,
+        context.userId
+      )
       return deleted
     },
 

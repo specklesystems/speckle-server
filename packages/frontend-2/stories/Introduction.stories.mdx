@@ -1,0 +1,29 @@
+import { Meta } from '@storybook/addon-docs'
+
+<Meta title="Overview/Introduction" />
+
+# Speckle Website Storybook
+
+You can find all of the available Speckle main website design system components here.
+
+## Theme configuration
+
+Our CSS theme (colors, spacings etc.) is configured through our Tailwind config. To see how it's configured check out `tailwind.config.js`, `~~/assets/css/tailwind.css` or open tailwind config viewer through `http://{NUXT_APP_HOST}/_viewer` when running the dev server
+
+### Semantic colors
+
+Our semantic color definitions don't render correctly in the tailwind viewer because they rely on CSS variables. Instead it's suggested that you look at the [Semantic colors](/docs/overview-styling-semantic-colors--semantic-colors) page in this storybook.
+
+## Component hierarchy
+
+The way components are organized in this Storybook is similar to the way they're organized in the codebase's `components` directory. [More info here](https://v3.nuxtjs.org/guide/directory-structure/components/).
+
+### Component naming convention
+
+Nuxt builds the final Vue component name by contatenating its ancestor folder names and the SFC's file name. So a component defined in `./components/foo/bar/Hello.vue` will be automatically named `FooBarHello`.
+
+## Useful docs
+
+- [Nuxt 3](https://v3.nuxtjs.org/guide/concepts/auto-imports/)
+- [Storybook](https://storybook.js.org/docs/7.0/vue/get-started/introduction)
+- [Vue 3](https://vuejs.org/guide/introduction.html)

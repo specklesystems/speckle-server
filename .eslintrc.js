@@ -23,10 +23,13 @@ const config = {
   ignorePatterns: [
     'node_modules',
     'dist',
+    'dist-*',
     'public',
     'events.json',
     '.*.{ts,js,vue,tsx,jsx}',
-    'generated/**/*'
+    'generated/**/*',
+    '.nuxt',
+    '.output'
   ]
 }
 

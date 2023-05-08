@@ -327,6 +327,21 @@ export class Pipeline {
       this._batcher.applyVisibility(restoreVisibility)
     }
 
+    this.renderPass.onBeforeRenderOpauqe = () => {
+      restoreVisibility = this._batcher.saveVisiblity()
+      const opaque = this._batcher.getOpaque()
+      this._batcher.applyVisibility(opaque)
+    }
+
+    this.renderPass.onBeforeRenderTransparent = () => {
+      const transparent = this._batcher.getTransparent()
+      this._batcher.applyVisibility(transparent)
+    }
+
+    this.renderPass.onAfterRenderTransparent = () => {
+      this._batcher.applyVisibility(restoreVisibility)
+    }
+
     this.setPipeline(this.getDefaultPipeline())
   }
 

@@ -89,6 +89,10 @@ async function doTask(task) {
     `,
       [metadata, task.streamId, task.objectId]
     )
+
+    await knex.raw(
+      `NOTIFY preview_generation_update, 'finished:${task.streamId}:${task.objectId}'`
+    )
   } catch (err) {
     // Update preview metadata
     await knex.raw(

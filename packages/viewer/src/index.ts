@@ -15,11 +15,11 @@ import {
   StringPropertyInfo,
   NumericPropertyInfo
 } from './modules/filtering/PropertyManager'
-
 import { SunLightConfiguration } from './IViewer'
 import { DataTree, ObjectPredicate, SpeckleObject } from './modules/tree/DataTree'
 import { World } from './modules/World'
 import { DebugViewer } from './modules/DebugViewer'
+import { NodeData, TreeNode, WorldTree } from './modules/tree/WorldTree'
 import {
   PointQuery,
   QueryResult,
@@ -32,7 +32,6 @@ import { ObjectLayers } from './modules/SpeckleRenderer'
 import { DiffResult } from './modules/Differ'
 import { BatchObject } from './modules/batching/BatchObject'
 import { Box3, Vector3 } from 'three'
-import { WorldTree } from './modules/tree/WorldTree'
 
 export {
   Viewer,
@@ -61,6 +60,8 @@ export type {
   SpeckleView,
   CanonicalView,
   InlineView,
+  TreeNode,
+  NodeData,
   ObjectLayers,
   PointQuery,
   IntersectionQuery,

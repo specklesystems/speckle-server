@@ -2,21 +2,47 @@ extend type Stream {
   """
   Returns a list of all the file uploads for this stream.
   """
-  fileUploads: [FileUpload]
+  fileUploads: [FileUpload!]!
   """
   Returns a specific file upload that belongs to this stream.
   """
   fileUpload(id: String!): FileUpload
 }
 
+extend type Project {
+  """
+  Returns a list models that are being created from a file import
+  """
+  pendingImportedModels(limit: Int = 25): [FileUpload!]!
+}
+
+extend type Model {
+  """
+  Returns a list of versions that are being created from a file import
+  """
+  pendingImportedVersions(limit: Int = 25): [FileUpload!]!
+}
+
 type FileUpload {
   id: String!
+  """
+  Alias for streamId
+  """
+  projectId: String!
+  """
+  Alias for branchName
+  """
+  modelName: String!
   streamId: String!
-  branchName: String
+  branchName: String!
   """
   If present, the conversion result is stored in this commit.
   """
   convertedCommitId: String
+  """
+  Alias for convertedCommitId
+  """
+  convertedVersionId: String
   """
   The user's id that uploaded this file.
   """
@@ -35,4 +61,48 @@ type FileUpload {
   uploadComplete: Boolean!
   uploadDate: DateTime!
   convertedLastUpdate: DateTime!
+
+  """
+  Model associated with the file upload, if it exists already
+  """
+  model: Model
+}
+
+enum ProjectPendingModelsUpdatedMessageType {
+  CREATED
+  UPDATED
+}
+
+type ProjectPendingModelsUpdatedMessage {
+  type: ProjectPendingModelsUpdatedMessageType!
+  """
+  Upload ID
+  """
+  id: String!
+  model: FileUpload!
+}
+
+enum ProjectPendingVersionsUpdatedMessageType {
+  CREATED
+  UPDATED
+}
+
+type ProjectPendingVersionsUpdatedMessage {
+  type: ProjectPendingVersionsUpdatedMessageType!
+  """
+  Upload ID
+  """
+  id: String!
+  version: FileUpload!
+}
+
+extend type Subscription {
+  """
+  Subscribe to changes to a project's pending models
+  """
+  projectPendingModelsUpdated(id: String!): ProjectPendingModelsUpdatedMessage!
+  """
+  Subscribe to changes to a project's pending versions
+  """
+  projectPendingVersionsUpdated(id: String!): ProjectPendingVersionsUpdatedMessage!
 }
