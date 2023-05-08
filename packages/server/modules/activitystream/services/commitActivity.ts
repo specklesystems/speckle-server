@@ -10,6 +10,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
+import { has } from 'lodash'
 
 /**
  * Save "new commit created" activity item
@@ -49,6 +50,10 @@ export async function addCommitCreatedActivity(params: {
   ])
 }
 
+const isOldVersionUpdateInput = (
+  i: CommitUpdateInput | UpdateVersionInput
+): i is CommitUpdateInput => has(i, 'streamId')
+
 export async function addCommitUpdatedActivity(params: {
   commitId: string
   streamId: string
@@ -58,6 +63,13 @@ export async function addCommitUpdatedActivity(params: {
   newCommit: CommitRecord
 }) {
   const { commitId, streamId, userId, originalCommit, update, newCommit } = params
+  const legacyUpdateStruct: CommitUpdateInput = isOldVersionUpdateInput(update)
+    ? update
+    : {
+        id: update.versionId,
+        message: update.message,
+        streamId
+      }
 
   await Promise.all([
     saveActivity({
@@ -70,7 +82,7 @@ export async function addCommitUpdatedActivity(params: {
       message: `Commit updated: ${commitId}`
     }),
     pubsub.publish(CommitPubsubEvents.CommitUpdated, {
-      commitUpdated: { ...update },
+      commitUpdated: { ...legacyUpdateStruct },
       streamId,
       commitId
     }),
@@ -136,7 +148,7 @@ export async function addCommitDeletedActivity(params: {
       message: `Commit deleted: ${commitId}`
     }),
     pubsub.publish(CommitPubsubEvents.CommitDeleted, {
-      commitDeleted: { commitId, streamId },
+      commitDeleted: { ...commit },
       streamId
     }),
     publish(ProjectSubscriptions.ProjectVersionsUpdated, {
