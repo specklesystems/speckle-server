@@ -43,17 +43,22 @@ export class GeometryConverter {
   public static keepGeometryData = false
 
   public static getSpeckleType(node: NodeData): SpeckleType {
-    let type = 'Base'
+    let typeChain = ['Base']
     if (node.raw.data)
-      type = node.raw.data.speckle_type
-        ? node.raw.data.speckle_type.split('.').reverse()[0]
-        : type
+      typeChain = node.raw.data.speckle_type
+        ? node.raw.data.speckle_type.split(':').reverse()
+        : typeChain
     else
-      type = node.raw.speckle_type
-        ? node.raw.speckle_type.split('.').reverse()[0]
-        : type
-    if (type in SpeckleType) return type as SpeckleType
-    else return SpeckleType.Unknown
+      typeChain = node.raw.speckle_type
+        ? node.raw.speckle_type.split(':').reverse()
+        : typeChain
+    typeChain = typeChain.map<string>((value: string) => {
+      return value.split('.').reverse()[0]
+    })
+    for (const type of typeChain) {
+      if (type in SpeckleType) return type as SpeckleType
+    }
+    return SpeckleType.Unknown
   }
 
   public static convertNodeToGeometryData(node: NodeData): GeometryData {
