@@ -13037,8 +13037,8 @@ __metadata:
 
 "@types/react@file:./packages/frontend-2/type-augmentations/stubs/types__react::locator=root%40workspace%3A.":
   version: 0.0.0
-  resolution: "@types/react@file:./packages/frontend-2/type-augmentations/stubs/types__react#./packages/frontend-2/type-augmentations/stubs/types__react::hash=2ea486&locator=root%40workspace%3A."
-  checksum: 500d185a1e5fc9e977520f4704194ad2e4391cfb8ef7747ca9f2a59bc7a52b555726e6d59e212f4a6b11ee08f06737615224031f80b7da3e216a8905642280fe
+  resolution: "@types/react@file:./packages/frontend-2/type-augmentations/stubs/types__react#./packages/frontend-2/type-augmentations/stubs/types__react::hash=a3dde0&locator=root%40workspace%3A."
+  checksum: e84b6c54914206359728178793dadaf5f1b75c98b5b5f6b64922115bcc073bf3caf00c4c2538940810bc40640081ff1b6135c465a9ec1ff2a7b18a5839379c3b
   languageName: node
   linkType: hard
 
@@ -18583,9 +18583,9 @@ __metadata:
   linkType: hard
 
 "decode-uri-component@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "decode-uri-component@npm:0.2.0"
-  checksum: f3749344ab9305ffcfe4bfe300e2dbb61fc6359e2b736812100a3b1b6db0a5668cba31a05e4b45d4d63dbf1a18dfa354cd3ca5bb3ededddabb8cd293f4404f94
+  version: 0.2.2
+  resolution: "decode-uri-component@npm:0.2.2"
+  checksum: 95476a7d28f267292ce745eac3524a9079058bbb35767b76e3ee87d42e34cd0275d2eb19d9d08c3e167f97556e8a2872747f5e65cbebcac8b0c98d83e285f139
   languageName: node
   linkType: hard
 
