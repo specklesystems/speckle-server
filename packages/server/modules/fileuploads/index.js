@@ -1,16 +1,19 @@
 /* istanbul ignore file */
-'use strict'
-
-const { saveUploadFile } = require('./services/fileuploads')
+const {
+  insertNewUploadAndNotify
+} = require('@/modules/fileuploads/services/management')
 const request = require('request')
 const { streamWritePermissions } = require('@/modules/shared/authz')
 const { authMiddlewareCreator } = require('@/modules/shared/middleware')
 const { moduleLogger } = require('@/logging/logging')
+const {
+  listenForImportUpdates
+} = require('@/modules/fileuploads/services/resultListener')
 
 const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) => {
   await Promise.all(
     uploadResults.map(async (upload) => {
-      await saveUploadFile({
+      await insertNewUploadAndNotify({
         fileId: upload.blobId,
         streamId,
         branchName,
@@ -35,10 +38,11 @@ exports.init = async (app) => {
     '/api/file/:fileType/:streamId/:branchName?',
     authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
+      const branchName = (req.params.branchName || 'main').toLowerCase()
       req.log = req.log.child({
         streamId: req.params.streamId,
         userId: req.context.userId,
-        branchName: req.params.branchName ?? 'main'
+        branchName
       })
       req.pipe(
         request(
@@ -54,7 +58,7 @@ exports.init = async (app) => {
               await saveFileUploads({
                 userId: req.context.userId,
                 streamId: req.params.streamId,
-                branchName: req.params.branchName ?? 'main',
+                branchName,
                 uploadResults
               })
             } else {
@@ -72,6 +76,8 @@ exports.init = async (app) => {
       )
     }
   )
+
+  listenForImportUpdates()
 }
 
 exports.finalize = () => {}

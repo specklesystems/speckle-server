@@ -1,6 +1,6 @@
 'use strict'
 const zlib = require('zlib')
-const cors = require('cors')
+const { corsMiddleware } = require('@/modules/core/configs/cors')
 const Busboy = require('busboy')
 
 const { validatePermissionsWriteStream } = require('./authUtils')
@@ -10,9 +10,9 @@ const { createObjectsBatched } = require('../services/objects')
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 
 module.exports = (app) => {
-  app.options('/objects/:streamId', cors())
+  app.options('/objects/:streamId', corsMiddleware())
 
-  app.post('/objects/:streamId', cors(), async (req, res) => {
+  app.post('/objects/:streamId', corsMiddleware(), async (req, res) => {
     req.log = req.log.child({
       userId: req.context.userId || '-',
       streamId: req.params.streamId

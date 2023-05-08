@@ -286,7 +286,7 @@ export class GeometryConverter {
     const vertices = node.raw.vertices
     const faces = node.raw.faces
     const colorsRaw = node.raw.colors
-    let colors = null
+    let colors = undefined
 
     let k = 0
     while (k < faces.length) {
@@ -326,7 +326,7 @@ export class GeometryConverter {
       attributes: {
         POSITION: vertices,
         INDEX: indices,
-        COLOR: colors
+        ...(colors && { COLOR: colors })
       },
       bakeTransform: new Matrix4().makeScale(
         conversionFactor,

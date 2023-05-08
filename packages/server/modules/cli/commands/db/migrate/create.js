@@ -36,7 +36,7 @@ const command = {
       directory: migrationDir,
       extension: 'ts'
     })
-    logger.info('migration is complete')
+    logger.info('Creation done')
   }
 }
 

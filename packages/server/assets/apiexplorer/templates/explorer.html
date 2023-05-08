@@ -66,6 +66,7 @@
 
         const TOKEN = 'Explorer.AuthToken'
         const REFRESH_TOKEN = 'Explorer.RefreshToken'
+        const FRONTEND_ORIGIN = window.location.origin
 
         function redirectToAuth() {
           localStorage.setItem(
@@ -73,9 +74,10 @@
             Math.random().toString(36).substring(2, 15) +
               Math.random().toString(36).substring(2, 15)
           )
-          window.location = `/authn/verify/explorer/${localStorage.getItem(
-            'challenge'
-          )}`
+          window.location = new URL(
+            `/authn/verify/explorer/${localStorage.getItem('challenge')}`,
+            FRONTEND_ORIGIN
+          ).toString()
         }
 
         async function accessCodeExchange(accessCode) {

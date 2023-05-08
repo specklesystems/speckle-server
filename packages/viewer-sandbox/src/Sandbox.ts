@@ -12,6 +12,7 @@ import {
 import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
 import { DiffResult } from '@speckle/viewer'
+import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
 
 export default class Sandbox {
   private viewer: DebugViewer
@@ -21,8 +22,8 @@ export default class Sandbox {
   private streams: { [url: string]: Array<unknown> } = {}
   private properties: PropertyInfo[]
   private selectionList: SelectionEvent[]
-  private objectControls
-  private batchesFolder
+  private objectControls: FolderApi | null = null
+  private batchesFolder: FolderApi | null = null
 
   public urlParams = {
     url: 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
@@ -60,7 +61,7 @@ export default class Sandbox {
       minDistance: 0,
       maxDistance: 0.008
     }
-  }
+  } as PipelineOptions
 
   public lightParams: SunLightConfiguration = {
     enabled: true,
@@ -126,22 +127,25 @@ export default class Sandbox {
       this.refresh()
     })
     viewer.on(ViewerEvent.UnloadComplete, (url: string) => {
+      url
       this.removeViewControls()
       this.addViewControls()
       this.properties = this.viewer.getObjectProperties()
-      viewer.World.reduceWorld(this.viewer.getWorldTree().getRenderTree(url).treeBounds)
     })
     viewer.on(ViewerEvent.UnloadAllComplete, (url: string) => {
       this.removeViewControls()
       this.addViewControls()
       this.properties = this.viewer.getObjectProperties()
-      viewer.World.resetWorld()
+      // viewer.World.resetWorld()
       url
     })
     viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent) => {
       if (selectionEvent && selectionEvent.hits) {
-        const objects = this.viewer.getObjects(selectionEvent.hits[0].guid)
-        this.addObjectControls(selectionEvent.hits[0].guid, objects)
+        const firstHitGuid = selectionEvent.hits[0].guid
+        if (firstHitGuid) {
+          const objects = this.viewer.getObjects(firstHitGuid)
+          this.addObjectControls(firstHitGuid, objects)
+        }
       }
     })
   }
@@ -357,11 +361,13 @@ export default class Sandbox {
     darkModeToggle.on('click', () => {
       let dark = false
       if (document.getElementById('renderer'))
-        dark = document.getElementById('renderer')?.classList.toggle('background-dark')
+        dark =
+          document.getElementById('renderer')?.classList.toggle('background-dark') ||
+          false
       else
-        dark = document
-          .getElementById('multi-root')
-          ?.classList.toggle('background-dark')
+        dark =
+          document.getElementById('multi-root')?.classList.toggle('background-dark') ||
+          false
 
       localStorage.setItem('dark', dark ? `dark` : `light`)
     })
@@ -954,7 +960,7 @@ export default class Sandbox {
     const diffButton = container.addButton({
       title: 'Diff'
     })
-    let diffResult: DiffResult = null
+    let diffResult: DiffResult | null = null
     diffButton.on('click', async () => {
       diffResult = await this.viewer.diff(
         //building
@@ -986,6 +992,7 @@ export default class Sandbox {
         step: 0.1
       })
       .on('change', (value) => {
+        if (!diffResult) return
         this.viewer.setDiffTime(diffResult, value.value)
         this.viewer.requestRender()
       })

@@ -250,7 +250,7 @@ export default {
   apollo: {
     adminStreams: {
       query: gql`
-        query Streams(
+        query AdminStreams(
           $offset: Int
           $limit: Int
           $orderBy: String

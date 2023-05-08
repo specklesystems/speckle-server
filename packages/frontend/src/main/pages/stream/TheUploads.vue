@@ -151,7 +151,7 @@ export default {
   apollo: {
     stream: {
       query: gql`
-        query stream($id: String!) {
+        query StreamUploadsMetadata($id: String!) {
           stream(id: $id) {
             id
             role

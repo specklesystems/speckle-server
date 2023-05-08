@@ -1,6 +1,9 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { StreamGraphQLReturn, LimitedUserGraphQLReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, VersionGraphQLReturn, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes';
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
+import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
+import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
+import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -23,6 +26,19 @@ export type Scalars = {
   EmailAddress: any;
   /** The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
   JSONObject: Record<string, unknown>;
+};
+
+export type ActiveUserMutations = {
+  __typename?: 'ActiveUserMutations';
+  /** Mark onboarding as complete */
+  finishOnboarding: Scalars['Boolean'];
+  /** Edit a user's profile */
+  update: User;
+};
+
+
+export type ActiveUserMutationsUpdateArgs = {
+  user: UserUpdateInput;
 };
 
 export type Activity = {
@@ -193,29 +209,50 @@ export type BranchUpdateInput = {
 export type Comment = {
   __typename?: 'Comment';
   archived: Scalars['Boolean'];
+  author: LimitedUser;
   authorId: Scalars['String'];
-  createdAt?: Maybe<Scalars['DateTime']>;
-  data?: Maybe<Scalars['JSONObject']>;
+  createdAt: Scalars['DateTime'];
+  /**
+   * Legacy comment viewer data field
+   * @deprecated Use the new viewerState field instead
+   */
+  data?: Maybe<LegacyCommentViewerData>;
+  /** Whether or not comment is a reply to another comment */
+  hasParent: Scalars['Boolean'];
   id: Scalars['String'];
+  /** Parent thread, if there's any */
+  parent?: Maybe<Comment>;
   /** Plain-text version of the comment text, ideal for previews */
   rawText: Scalars['String'];
+  /** @deprecated Not actually implemented */
   reactions?: Maybe<Array<Maybe<Scalars['String']>>>;
   /** Gets the replies to this comment. */
-  replies?: Maybe<CommentCollection>;
+  replies: CommentCollection;
+  /** Get authors of replies to this comment */
+  replyAuthors: CommentReplyAuthorCollection;
   /** Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects. */
   resources: Array<ResourceIdentifier>;
   screenshot?: Maybe<Scalars['String']>;
   text: SmartTextEditorValue;
   /** The time this comment was last updated. Corresponds also to the latest reply to this comment, if any. */
-  updatedAt?: Maybe<Scalars['DateTime']>;
+  updatedAt: Scalars['DateTime'];
   /** The last time you viewed this comment. Present only if an auth'ed request. Relevant only if a top level commit. */
   viewedAt?: Maybe<Scalars['DateTime']>;
+  /** Resource identifiers as defined and implemented in the Viewer of the new frontend */
+  viewerResources: Array<ViewerResourceItem>;
+  /** SerializedViewerState */
+  viewerState?: Maybe<Scalars['JSONObject']>;
 };
 
 
 export type CommentRepliesArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type CommentReplyAuthorsArgs = {
+  limit?: Scalars['Int'];
 };
 
 export type CommentActivityMessage = {
@@ -226,11 +263,17 @@ export type CommentActivityMessage = {
 
 export type CommentCollection = {
   __typename?: 'CommentCollection';
-  cursor?: Maybe<Scalars['DateTime']>;
+  cursor?: Maybe<Scalars['String']>;
   items: Array<Comment>;
   totalCount: Scalars['Int'];
 };
 
+export type CommentContentInput = {
+  blobIds?: InputMaybe<Array<Scalars['String']>>;
+  doc?: InputMaybe<Scalars['JSONObject']>;
+};
+
+/** Deprecated: Used by old stream-based mutations */
 export type CommentCreateInput = {
   /** IDs of uploaded blobs that should be attached to this comment */
   blobIds: Array<Scalars['String']>;
@@ -248,6 +291,27 @@ export type CommentCreateInput = {
   text?: InputMaybe<Scalars['JSONObject']>;
 };
 
+export type CommentDataFilters = {
+  __typename?: 'CommentDataFilters';
+  hiddenIds?: Maybe<Array<Scalars['String']>>;
+  isolatedIds?: Maybe<Array<Scalars['String']>>;
+  passMax?: Maybe<Scalars['Float']>;
+  passMin?: Maybe<Scalars['Float']>;
+  propertyInfoKey?: Maybe<Scalars['String']>;
+  sectionBox?: Maybe<Scalars['JSONObject']>;
+};
+
+/** Equivalent to frontend-1's LocalFilterState */
+export type CommentDataFiltersInput = {
+  hiddenIds?: InputMaybe<Array<Scalars['String']>>;
+  isolatedIds?: InputMaybe<Array<Scalars['String']>>;
+  passMax?: InputMaybe<Scalars['Float']>;
+  passMin?: InputMaybe<Scalars['Float']>;
+  propertyInfoKey?: InputMaybe<Scalars['String']>;
+  sectionBox?: InputMaybe<Scalars['JSONObject']>;
+};
+
+/** Deprecated: Used by old stream-based mutations */
 export type CommentEditInput = {
   /** IDs of uploaded blobs that should be attached to this comment */
   blobIds: Array<Scalars['String']>;
@@ -255,6 +319,47 @@ export type CommentEditInput = {
   streamId: Scalars['String'];
   /** ProseMirror document object */
   text?: InputMaybe<Scalars['JSONObject']>;
+};
+
+export type CommentMutations = {
+  __typename?: 'CommentMutations';
+  archive: Scalars['Boolean'];
+  create: Comment;
+  edit: Comment;
+  markViewed: Scalars['Boolean'];
+  reply: Comment;
+};
+
+
+export type CommentMutationsArchiveArgs = {
+  archived?: Scalars['Boolean'];
+  commentId: Scalars['String'];
+};
+
+
+export type CommentMutationsCreateArgs = {
+  input: CreateCommentInput;
+};
+
+
+export type CommentMutationsEditArgs = {
+  input: EditCommentInput;
+};
+
+
+export type CommentMutationsMarkViewedArgs = {
+  commentId: Scalars['String'];
+};
+
+
+export type CommentMutationsReplyArgs = {
+  input: CreateCommentReplyInput;
+};
+
+export type CommentReplyAuthorCollection = {
+  __typename?: 'CommentReplyAuthorCollection';
+  items: Array<LimitedUser>;
+  totalCount: Scalars['Int'];
 };
 
 export type CommentThreadActivityMessage = {
@@ -361,6 +466,38 @@ export type CommitsMoveInput = {
   targetBranch: Scalars['String'];
 };
 
+export type CreateCommentInput = {
+  content: CommentContentInput;
+  projectId: Scalars['String'];
+  /** Resources that this comment should be attached to */
+  resourceIdString: Scalars['String'];
+  screenshot?: InputMaybe<Scalars['String']>;
+  /**
+   * SerializedViewerState. If omitted, comment won't render (correctly) inside the
+   * viewer, but will still be retrievable through the API
+   */
+  viewerState?: InputMaybe<Scalars['JSONObject']>;
+};
+
+export type CreateCommentReplyInput = {
+  content: CommentContentInput;
+  threadId: Scalars['String'];
+};
+
+export type CreateModelInput = {
+  name: Scalars['String'];
+  projectId: Scalars['ID'];
+};
+
+export type DeleteModelInput = {
+  id: Scalars['ID'];
+  projectId: Scalars['ID'];
+};
+
+export type DeleteVersionsInput = {
+  versionIds: Array<Scalars['String']>;
+};
+
 export enum DiscoverableStreamsSortType {
   CreatedDate = 'CREATED_DATE',
   FavoritesCount = 'FAVORITES_COUNT'
@@ -371,9 +508,14 @@ export type DiscoverableStreamsSortingInput = {
   type: DiscoverableStreamsSortType;
 };
 
+export type EditCommentInput = {
+  commentId: Scalars['String'];
+  content: CommentContentInput;
+};
+
 export type FileUpload = {
   __typename?: 'FileUpload';
-  branchName?: Maybe<Scalars['String']>;
+  branchName: Scalars['String'];
   /** If present, the conversion result is stored in this commit. */
   convertedCommitId?: Maybe<Scalars['String']>;
   convertedLastUpdate: Scalars['DateTime'];
@@ -381,15 +523,40 @@ export type FileUpload = {
   convertedMessage?: Maybe<Scalars['String']>;
   /** 0 = queued, 1 = processing, 2 = success, 3 = error */
   convertedStatus: Scalars['Int'];
+  /** Alias for convertedCommitId */
+  convertedVersionId?: Maybe<Scalars['String']>;
   fileName: Scalars['String'];
   fileSize: Scalars['Int'];
   fileType: Scalars['String'];
   id: Scalars['String'];
+  /** Model associated with the file upload, if it exists already */
+  model?: Maybe<Model>;
+  /** Alias for branchName */
+  modelName: Scalars['String'];
+  /** Alias for streamId */
+  projectId: Scalars['String'];
   streamId: Scalars['String'];
   uploadComplete: Scalars['Boolean'];
   uploadDate: Scalars['DateTime'];
   /** The user's id that uploaded this file. */
   userId: Scalars['String'];
+};
+
+export type LegacyCommentViewerData = {
+  __typename?: 'LegacyCommentViewerData';
+  /**
+   * An array representing a user's camera position:
+   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
+   */
+  camPos: Array<Scalars['Float']>;
+  /** Old FE LocalFilterState type */
+  filters: CommentDataFilters;
+  /** THREE.Vector3 {x, y, z} */
+  location: Scalars['JSONObject'];
+  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
+  sectionBox?: Maybe<Scalars['JSONObject']>;
+  /** Currently unused. Ideally comments should keep track of selected objects. */
+  selection?: Maybe<Scalars['JSONObject']>;
 };
 
 /**
@@ -405,8 +572,8 @@ export type LimitedUser = {
   /** Get public stream commits authored by the user */
   commits?: Maybe<CommitCollection>;
   company?: Maybe<Scalars['String']>;
-  id: Scalars['String'];
-  name?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  name: Scalars['String'];
   role?: Maybe<Scalars['String']>;
   /** Returns all discoverable streams that the user is a collaborator on */
   streams: StreamCollection;
@@ -462,10 +629,121 @@ export type LimitedUserTimelineArgs = {
   limit?: Scalars['Int'];
 };
 
+export type Model = {
+  __typename?: 'Model';
+  author: LimitedUser;
+  /** Return a model tree of children */
+  childrenTree: Array<ModelsTreeItem>;
+  /** All comment threads in this model */
+  commentThreads: CommentCollection;
+  createdAt: Scalars['DateTime'];
+  description?: Maybe<Scalars['String']>;
+  /** The shortened/display name that doesn't include the names of parent models */
+  displayName: Scalars['String'];
+  id: Scalars['ID'];
+  /** Full name including the names of parent models delimited by forward slashes */
+  name: Scalars['String'];
+  /** Returns a list of versions that are being created from a file import */
+  pendingImportedVersions: Array<FileUpload>;
+  previewUrl?: Maybe<Scalars['String']>;
+  updatedAt: Scalars['DateTime'];
+  version?: Maybe<Version>;
+  versions: VersionCollection;
+};
+
+
+export type ModelCommentThreadsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+};
+
+
+export type ModelPendingImportedVersionsArgs = {
+  limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type ModelVersionArgs = {
+  id: Scalars['String'];
+};
+
+
+export type ModelVersionsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<ModelVersionsFilter>;
+  limit?: Scalars['Int'];
+};
+
+export type ModelCollection = {
+  __typename?: 'ModelCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Model>;
+  totalCount: Scalars['Int'];
+};
+
+export type ModelMutations = {
+  __typename?: 'ModelMutations';
+  create: Model;
+  delete: Scalars['Boolean'];
+  update: Model;
+};
+
+
+export type ModelMutationsCreateArgs = {
+  input: CreateModelInput;
+};
+
+
+export type ModelMutationsDeleteArgs = {
+  input: DeleteModelInput;
+};
+
+
+export type ModelMutationsUpdateArgs = {
+  input: UpdateModelInput;
+};
+
+export type ModelVersionsFilter = {
+  /** Make sure these specified versions are always loaded first */
+  priorityIds?: InputMaybe<Array<Scalars['String']>>;
+};
+
+export type ModelsTreeItem = {
+  __typename?: 'ModelsTreeItem';
+  children: Array<ModelsTreeItem>;
+  fullName: Scalars['String'];
+  /** Whether or not this item has nested children models */
+  hasChildren: Scalars['Boolean'];
+  id: Scalars['ID'];
+  /**
+   * Nullable cause the item can represent a parent that doesn't actually exist as a model on its own.
+   * E.g. A model named "foo/bar" is supposed to be a child of "foo" and will be represented as such,
+   * even if "foo" doesn't exist as its own model.
+   */
+  model?: Maybe<Model>;
+  name: Scalars['String'];
+  updatedAt: Scalars['DateTime'];
+};
+
+export type ModelsTreeItemCollection = {
+  __typename?: 'ModelsTreeItemCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<ModelsTreeItem>;
+  totalCount: Scalars['Int'];
+};
+
+export type MoveVersionsInput = {
+  /** If the name references a nonexistant model, it will be created */
+  targetModelName: Scalars['String'];
+  versionIds: Array<Scalars['String']>;
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   /** The void stares back. */
   _?: Maybe<Scalars['String']>;
+  /** Various Active User oriented mutations */
+  activeUserMutations: ActiveUserMutations;
   adminDeleteUser: Scalars['Boolean'];
   /** Creates an personal api token. */
   apiTokenCreate: Scalars['String'];
@@ -482,15 +760,33 @@ export type Mutation = {
   branchCreate: Scalars['String'];
   branchDelete: Scalars['Boolean'];
   branchUpdate: Scalars['Boolean'];
-  /** Archives a comment. */
+  /** Broadcast user activity in the viewer */
+  broadcastViewerUserActivity: Scalars['Boolean'];
+  /**
+   * Archives a comment.
+   * @deprecated Use commentMutations version
+   */
   commentArchive: Scalars['Boolean'];
-  /** Creates a comment */
+  /**
+   * Creates a comment
+   * @deprecated Use commentMutations version
+   */
   commentCreate: Scalars['String'];
-  /** Edits a comment. */
+  /**
+   * Edits a comment.
+   * @deprecated Use commentMutations version
+   */
   commentEdit: Scalars['Boolean'];
-  /** Adds a reply to a comment. */
+  commentMutations: CommentMutations;
+  /**
+   * Adds a reply to a comment.
+   * @deprecated Use commentMutations version
+   */
   commentReply: Scalars['String'];
-  /** Flags a comment as viewed by you (the logged in user). */
+  /**
+   * Flags a comment as viewed by you (the logged in user).
+   * @deprecated Use commentMutations version
+   */
   commentView: Scalars['Boolean'];
   commitCreate: Scalars['String'];
   commitDelete: Scalars['Boolean'];
@@ -504,7 +800,9 @@ export type Mutation = {
   inviteDelete: Scalars['Boolean'];
   /** Re-send a pending invite */
   inviteResend: Scalars['Boolean'];
+  modelMutations: ModelMutations;
   objectCreate: Array<Maybe<Scalars['String']>>;
+  projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean'];
   serverInfoUpdate?: Maybe<Scalars['Boolean']>;
@@ -536,16 +834,26 @@ export type Mutation = {
   /** Update permissions of a user on a given stream. */
   streamUpdatePermission?: Maybe<Scalars['Boolean']>;
   streamsDelete: Scalars['Boolean'];
-  /** Used for broadcasting real time typing status in comment threads. Does not persist any info. */
+  /**
+   * Used for broadcasting real time typing status in comment threads. Does not persist any info.
+   * @deprecated Use broadcastViewerUserActivity
+   */
   userCommentThreadActivityBroadcast: Scalars['Boolean'];
   /** Delete a user's account. */
   userDelete: Scalars['Boolean'];
   userNotificationPreferencesUpdate?: Maybe<Scalars['Boolean']>;
   userRoleChange: Scalars['Boolean'];
-  /** Edits a user's profile. */
+  /**
+   * Edits a user's profile.
+   * @deprecated Use activeUserMutations version
+   */
   userUpdate: Scalars['Boolean'];
-  /** Used for broadcasting real time chat head bubbles and status. Does not persist any info. */
+  /**
+   * Used for broadcasting real time chat head bubbles and status. Does not persist any info.
+   * @deprecated Use broadcastViewerUserActivity
+   */
   userViewerActivityBroadcast: Scalars['Boolean'];
+  versionMutations: VersionMutations;
   /** Creates a new webhook on a stream */
   webhookCreate: Scalars['String'];
   /** Deletes an existing webhook */
@@ -602,6 +910,13 @@ export type MutationBranchDeleteArgs = {
 
 export type MutationBranchUpdateArgs = {
   branch: BranchUpdateInput;
+};
+
+
+export type MutationBroadcastViewerUserActivityArgs = {
+  message: ViewerUserActivityMessageInput;
+  projectId: Scalars['String'];
+  resourceIdString: Scalars['String'];
 };
 
 
@@ -894,6 +1209,8 @@ export type PendingStreamCollaborator = {
   id: Scalars['String'];
   inviteId: Scalars['String'];
   invitedBy: LimitedUser;
+  projectId: Scalars['String'];
+  projectName: Scalars['String'];
   role: Scalars['String'];
   streamId: Scalars['String'];
   streamName: Scalars['String'];
@@ -904,6 +1221,368 @@ export type PendingStreamCollaborator = {
   /** Set only if user is registered */
   user?: Maybe<LimitedUser>;
 };
+
+export type Project = {
+  __typename?: 'Project';
+  allowPublicComments: Scalars['Boolean'];
+  /** All comment threads in this project */
+  commentThreads: ProjectCommentCollection;
+  createdAt: Scalars['DateTime'];
+  description?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  /** Collaborators who have been invited, but not yet accepted. */
+  invitedTeam?: Maybe<Array<PendingStreamCollaborator>>;
+  /** Returns a specific model by its ID */
+  model?: Maybe<Model>;
+  /** Return a model tree of children for the specified model name */
+  modelChildrenTree: Array<ModelsTreeItem>;
+  /** Returns a flat list of all models */
+  models: ModelCollection;
+  /**
+   * Return's a project's models in a tree view with submodels being nested under parent models
+   * real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
+   */
+  modelsTree: ModelsTreeItemCollection;
+  name: Scalars['String'];
+  /** Returns a list models that are being created from a file import */
+  pendingImportedModels: Array<FileUpload>;
+  /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
+  role?: Maybe<Scalars['String']>;
+  /** Source apps used in any models of this project */
+  sourceApps: Array<Scalars['String']>;
+  team: Array<ProjectCollaborator>;
+  updatedAt: Scalars['DateTime'];
+  /** Returns a flat list of all project versions */
+  versions: VersionCollection;
+  /** Return metadata about resources being requested in the viewer */
+  viewerResources: Array<ViewerResourceGroup>;
+  visibility: ProjectVisibility;
+};
+
+
+export type ProjectCommentThreadsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<ProjectCommentsFilter>;
+  limit?: Scalars['Int'];
+};
+
+
+export type ProjectModelArgs = {
+  id: Scalars['String'];
+};
+
+
+export type ProjectModelChildrenTreeArgs = {
+  fullName: Scalars['String'];
+};
+
+
+export type ProjectModelsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<ProjectModelsFilter>;
+  limit?: Scalars['Int'];
+};
+
+
+export type ProjectModelsTreeArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<ProjectModelsTreeFilter>;
+  limit?: Scalars['Int'];
+};
+
+
+export type ProjectPendingImportedModelsArgs = {
+  limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type ProjectVersionsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+};
+
+
+export type ProjectViewerResourcesArgs = {
+  loadedVersionsOnly?: InputMaybe<Scalars['Boolean']>;
+  resourceIdString: Scalars['String'];
+};
+
+export type ProjectCollaborator = {
+  __typename?: 'ProjectCollaborator';
+  role: Scalars['String'];
+  user: LimitedUser;
+};
+
+export type ProjectCollection = {
+  __typename?: 'ProjectCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Project>;
+  totalCount: Scalars['Int'];
+};
+
+export type ProjectCommentCollection = {
+  __typename?: 'ProjectCommentCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Comment>;
+  totalArchivedCount: Scalars['Int'];
+  totalCount: Scalars['Int'];
+};
+
+export type ProjectCommentsFilter = {
+  /** Whether or not to include archived/resolved threads */
+  includeArchived?: InputMaybe<Scalars['Boolean']>;
+  /**
+   * By default if resourceIdString is set, the "versionId" part of model resource identifiers will be ignored
+   * and all comments of all versions of any of the referenced models will be returned. If `loadedVersionsOnly` is
+   * enabled, then only comment threads of loaded/referenced versions in resourceIdString will be returned.
+   */
+  loadedVersionsOnly?: InputMaybe<Scalars['Boolean']>;
+  /**
+   * Only request comments belonging to the resources identified by this
+   * comma-delimited resouce string (same format that's used in the viewer URL)
+   */
+  resourceIdString?: InputMaybe<Scalars['String']>;
+};
+
+export type ProjectCommentsUpdatedMessage = {
+  __typename?: 'ProjectCommentsUpdatedMessage';
+  /** Null if deleted */
+  comment?: Maybe<Comment>;
+  id: Scalars['String'];
+  type: ProjectCommentsUpdatedMessageType;
+};
+
+export enum ProjectCommentsUpdatedMessageType {
+  Archived = 'ARCHIVED',
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
+
+/** Any values left null will be ignored */
+export type ProjectCreateInput = {
+  description?: InputMaybe<Scalars['String']>;
+  name?: InputMaybe<Scalars['String']>;
+  visibility?: InputMaybe<ProjectVisibility>;
+};
+
+export type ProjectInviteCreateInput = {
+  /** Either this or userId must be filled */
+  email?: InputMaybe<Scalars['String']>;
+  /** Defaults to the contributor role, if not specified */
+  role?: InputMaybe<Scalars['String']>;
+  /** Either this or email must be filled */
+  userId?: InputMaybe<Scalars['String']>;
+};
+
+export type ProjectInviteMutations = {
+  __typename?: 'ProjectInviteMutations';
+  /** Batch invite to project */
+  batchCreate: Project;
+  /** Cancel a pending stream invite. Can only be invoked by a project owner. */
+  cancel: Project;
+  /** Invite a new or registered user to be a project collaborator. Can only be invoked by a project owner. */
+  create: Project;
+  /** Accept or decline a project invite */
+  use: Scalars['Boolean'];
+};
+
+
+export type ProjectInviteMutationsBatchCreateArgs = {
+  input: Array<ProjectInviteCreateInput>;
+  projectId: Scalars['ID'];
+};
+
+
+export type ProjectInviteMutationsCancelArgs = {
+  inviteId: Scalars['String'];
+  projectId: Scalars['ID'];
+};
+
+
+export type ProjectInviteMutationsCreateArgs = {
+  input: ProjectInviteCreateInput;
+  projectId: Scalars['ID'];
+};
+
+
+export type ProjectInviteMutationsUseArgs = {
+  input: ProjectInviteUseInput;
+};
+
+export type ProjectInviteUseInput = {
+  accept: Scalars['Boolean'];
+  projectId: Scalars['ID'];
+  token: Scalars['String'];
+};
+
+export type ProjectModelsFilter = {
+  /** Filter by IDs of contributors who participated in models */
+  contributors?: InputMaybe<Array<Scalars['String']>>;
+  /** Excldue models w/ the specified IDs */
+  excludeIds?: InputMaybe<Array<Scalars['String']>>;
+  /** Only select models w/ the specified IDs */
+  ids?: InputMaybe<Array<Scalars['String']>>;
+  /** Filter out models that don't have any versions */
+  onlyWithVersions?: InputMaybe<Scalars['Boolean']>;
+  /** Filter by model names */
+  search?: InputMaybe<Scalars['String']>;
+  /** Filter by source apps used in models */
+  sourceApps?: InputMaybe<Array<Scalars['String']>>;
+};
+
+export type ProjectModelsTreeFilter = {
+  /** Filter by IDs of contributors who participated in models */
+  contributors?: InputMaybe<Array<Scalars['String']>>;
+  /** Search for specific models. If used, tree items from different levels may be mixed. */
+  search?: InputMaybe<Scalars['String']>;
+  /** Filter by source apps used in models */
+  sourceApps?: InputMaybe<Array<Scalars['String']>>;
+};
+
+export type ProjectModelsUpdatedMessage = {
+  __typename?: 'ProjectModelsUpdatedMessage';
+  /** Model ID */
+  id: Scalars['String'];
+  /** Null if model was deleted */
+  model?: Maybe<Model>;
+  type: ProjectModelsUpdatedMessageType;
+};
+
+export enum ProjectModelsUpdatedMessageType {
+  Created = 'CREATED',
+  Deleted = 'DELETED',
+  Updated = 'UPDATED'
+}
+
+export type ProjectMutations = {
+  __typename?: 'ProjectMutations';
+  /** Create new project */
+  create: Project;
+  /** Create onboarding/tutorial project */
+  createForOnboarding: Project;
+  /** Delete an existing project */
+  delete: Scalars['Boolean'];
+  /** Invite related mutations */
+  invites: ProjectInviteMutations;
+  /** Leave a project. Only possible if you're not the last remaining owner. */
+  leave: Scalars['Boolean'];
+  /** Updates an existing project */
+  update: Project;
+  /** Update role for a collaborator */
+  updateRole: Project;
+};
+
+
+export type ProjectMutationsCreateArgs = {
+  input?: InputMaybe<ProjectCreateInput>;
+};
+
+
+export type ProjectMutationsDeleteArgs = {
+  id: Scalars['String'];
+};
+
+
+export type ProjectMutationsLeaveArgs = {
+  id: Scalars['String'];
+};
+
+
+export type ProjectMutationsUpdateArgs = {
+  update: ProjectUpdateInput;
+};
+
+
+export type ProjectMutationsUpdateRoleArgs = {
+  input: ProjectUpdateRoleInput;
+};
+
+export type ProjectPendingModelsUpdatedMessage = {
+  __typename?: 'ProjectPendingModelsUpdatedMessage';
+  /** Upload ID */
+  id: Scalars['String'];
+  model: FileUpload;
+  type: ProjectPendingModelsUpdatedMessageType;
+};
+
+export enum ProjectPendingModelsUpdatedMessageType {
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
+
+export type ProjectPendingVersionsUpdatedMessage = {
+  __typename?: 'ProjectPendingVersionsUpdatedMessage';
+  /** Upload ID */
+  id: Scalars['String'];
+  type: ProjectPendingVersionsUpdatedMessageType;
+  version: FileUpload;
+};
+
+export enum ProjectPendingVersionsUpdatedMessageType {
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
+
+/** Any values left null will be ignored, so only set the properties that you want updated */
+export type ProjectUpdateInput = {
+  allowPublicComments?: InputMaybe<Scalars['Boolean']>;
+  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['ID'];
+  name?: InputMaybe<Scalars['String']>;
+  visibility?: InputMaybe<ProjectVisibility>;
+};
+
+export type ProjectUpdateRoleInput = {
+  projectId: Scalars['String'];
+  /** Leave role as null to revoke access entirely */
+  role?: InputMaybe<Scalars['String']>;
+  userId: Scalars['String'];
+};
+
+export type ProjectUpdatedMessage = {
+  __typename?: 'ProjectUpdatedMessage';
+  /** Project ID */
+  id: Scalars['String'];
+  /** Project entity, null if project was deleted */
+  project?: Maybe<Project>;
+  /** Message type */
+  type: ProjectUpdatedMessageType;
+};
+
+export enum ProjectUpdatedMessageType {
+  Deleted = 'DELETED',
+  Updated = 'UPDATED'
+}
+
+export type ProjectVersionsPreviewGeneratedMessage = {
+  __typename?: 'ProjectVersionsPreviewGeneratedMessage';
+  objectId: Scalars['String'];
+  projectId: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
+export type ProjectVersionsUpdatedMessage = {
+  __typename?: 'ProjectVersionsUpdatedMessage';
+  /** Version ID */
+  id: Scalars['String'];
+  /** Only set if version was deleted, in other scenarios can be queried from 'version' */
+  modelId?: Maybe<Scalars['String']>;
+  type: ProjectVersionsUpdatedMessageType;
+  /** Null if version was deleted */
+  version?: Maybe<Version>;
+};
+
+export enum ProjectVersionsUpdatedMessageType {
+  Created = 'CREATED',
+  Deleted = 'DELETED',
+  Updated = 'UPDATED'
+}
+
+export enum ProjectVisibility {
+  Private = 'PRIVATE',
+  Public = 'PUBLIC',
+  Unlisted = 'UNLISTED'
+}
 
 export type Query = {
   __typename?: 'Query';
@@ -927,12 +1606,23 @@ export type Query = {
    * This query can be used in the following ways:
    * - get all the comments for a stream: **do not pass in any resource identifiers**.
    * - get the comments targeting any of a set of provided resources (comments/objects): **pass in an array of resources.**
+   * @deprecated Use 'commentThreads' fields instead
    */
   comments?: Maybe<CommentCollection>;
   /** All of the discoverable streams of the server */
   discoverableStreams?: Maybe<StreamCollection>;
   /** Get the (limited) profile information of another server user */
   otherUser?: Maybe<LimitedUser>;
+  /**
+   * Find a specific project. Will throw an authorization error if active user isn't authorized
+   * to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
+   */
+  project?: Maybe<Project>;
+  /**
+   * Look for an invitation to a project, for the current user (authed or not). If token
+   * isn't specified, the server will look for any valid invite.
+   */
+  projectInvite?: Maybe<PendingStreamCollaborator>;
   serverInfo: ServerInfo;
   serverStats: ServerStats;
   /**
@@ -954,6 +1644,8 @@ export type Query = {
    * Pass in the `query` parameter to search by name, description or ID.
    */
   streams?: Maybe<StreamCollection>;
+  testList: Array<TestItem>;
+  testNumber?: Maybe<Scalars['Int']>;
   /**
    * Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
    * @deprecated To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user.
@@ -965,7 +1657,7 @@ export type Query = {
    * Search for users and return limited metadata about them, if you have the server:user role.
    * The query looks for matches in name & email
    */
-  userSearch?: Maybe<UserSearchResultCollection>;
+  userSearch: UserSearchResultCollection;
 };
 
 
@@ -1017,6 +1709,17 @@ export type QueryOtherUserArgs = {
 };
 
 
+export type QueryProjectArgs = {
+  id: Scalars['String'];
+};
+
+
+export type QueryProjectInviteArgs = {
+  projectId: Scalars['String'];
+  token?: InputMaybe<Scalars['String']>;
+};
+
+
 export type QueryStreamArgs = {
   id: Scalars['String'];
 };
@@ -1053,10 +1756,12 @@ export type QueryUserPwdStrengthArgs = {
 export type QueryUserSearchArgs = {
   archived?: InputMaybe<Scalars['Boolean']>;
   cursor?: InputMaybe<Scalars['String']>;
+  emailOnly?: InputMaybe<Scalars['Boolean']>;
   limit?: Scalars['Int'];
   query: Scalars['String'];
 };
 
+/** Deprecated: Used by old stream-based mutations */
 export type ReplyCreateInput = {
   /** IDs of uploaded blobs that should be attached to this reply */
   blobIds: Array<Scalars['String']>;
@@ -1110,7 +1815,7 @@ export type ServerApp = {
   name: Scalars['String'];
   public?: Maybe<Scalars['Boolean']>;
   redirectUrl: Scalars['String'];
-  scopes: Array<Maybe<Scope>>;
+  scopes: Array<Scope>;
   secret?: Maybe<Scalars['String']>;
   termsAndConditionsLink?: Maybe<Scalars['String']>;
   trustByDefault?: Maybe<Scalars['Boolean']>;
@@ -1133,7 +1838,7 @@ export type ServerInfo = {
   __typename?: 'ServerInfo';
   adminContact?: Maybe<Scalars['String']>;
   /** The authentication strategies available on this server. */
-  authStrategies?: Maybe<Array<Maybe<AuthStrategy>>>;
+  authStrategies: Array<AuthStrategy>;
   blobSizeLimitBytes: Scalars['Int'];
   canonicalUrl?: Maybe<Scalars['String']>;
   company?: Maybe<Scalars['String']>;
@@ -1166,6 +1871,12 @@ export type ServerInviteCreateInput = {
   email: Scalars['String'];
   message?: InputMaybe<Scalars['String']>;
 };
+
+export enum ServerRole {
+  ServerAdmin = 'SERVER_ADMIN',
+  ServerArchivedUser = 'SERVER_ARCHIVED_USER',
+  ServerUser = 'SERVER_USER'
+}
 
 export type ServerStats = {
   __typename?: 'ServerStats';
@@ -1235,7 +1946,7 @@ export type Stream = {
   /** Returns a specific file upload that belongs to this stream. */
   fileUpload?: Maybe<FileUpload>;
   /** Returns a list of all the file uploads for this stream. */
-  fileUploads?: Maybe<Array<Maybe<FileUpload>>>;
+  fileUploads: Array<FileUpload>;
   id: Scalars['String'];
   /**
    * Whether the stream (if public) can be found on public stream exploration pages
@@ -1411,12 +2122,14 @@ export type Subscription = {
    * Subscribe to new comment events. There's two ways to use this subscription:
    * - for a whole stream: do not pass in any resourceIds; this sub will get called whenever a comment (not reply) is added to any of the stream's resources.
    * - for a specific resource/set of resources: pass in a list of resourceIds (commit or object ids); this sub will get called when *any* of the resources provided get a comment.
+   * @deprecated Use projectCommentsUpdated
    */
   commentActivity: CommentActivityMessage;
   /**
    * Subscribes to events on a specific comment. Use to find out when:
    * - a top level comment is deleted (trigger a deletion event outside)
    * - a top level comment receives a reply.
+   * @deprecated Use projectCommentsUpdated or viewerUserActivityBroadcasted for reply status
    */
   commentThreadActivity: CommentThreadActivityMessage;
   /** Subscribe to commit created event */
@@ -1425,10 +2138,29 @@ export type Subscription = {
   commitDeleted?: Maybe<Scalars['JSONObject']>;
   /** Subscribe to commit updated event. */
   commitUpdated?: Maybe<Scalars['JSONObject']>;
+  /**
+   * Subscribe to updates to resource comments/threads. Optionally specify resource ID string to only receive
+   * updates regarding comments for those resources.
+   */
+  projectCommentsUpdated: ProjectCommentsUpdatedMessage;
+  /** Subscribe to changes to a project's models. Optionally specify modelIds to track. */
+  projectModelsUpdated: ProjectModelsUpdatedMessage;
+  /** Subscribe to changes to a project's pending models */
+  projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
+  /** Subscribe to changes to a project's pending versions */
+  projectPendingVersionsUpdated: ProjectPendingVersionsUpdatedMessage;
+  /** Track updates to a specific project */
+  projectUpdated: ProjectUpdatedMessage;
+  /** Subscribe to when a project's versions get their preview image fully generated. */
+  projectVersionsPreviewGenerated: ProjectVersionsPreviewGeneratedMessage;
+  /** Subscribe to changes to a project's versions. */
+  projectVersionsUpdated: ProjectVersionsUpdatedMessage;
   /** Subscribes to stream deleted event. Use this in clients/components that pertain only to this stream. */
   streamDeleted?: Maybe<Scalars['JSONObject']>;
   /** Subscribes to stream updated event. Use this in clients/components that pertain only to this stream. */
   streamUpdated?: Maybe<Scalars['JSONObject']>;
+  /** Track newly added or deleted projects owned by the active user */
+  userProjectsUpdated: UserProjectsUpdatedMessage;
   /**
    * Subscribes to new stream added event for your profile. Use this to display an up-to-date list of streams.
    * **NOTE**: If someone shares a stream with you, this subscription will be triggered with an extra value of `sharedBy` in the payload.
@@ -1439,8 +2171,13 @@ export type Subscription = {
    * **NOTE**: If someone revokes your permissions on a stream, this subscription will be triggered with an extra value of `revokedBy` in the payload.
    */
   userStreamRemoved?: Maybe<Scalars['JSONObject']>;
-  /** Broadcasts "real-time" location data for viewer users. */
+  /**
+   * Broadcasts "real-time" location data for viewer users.
+   * @deprecated Use viewerUserActivityBroadcasted
+   */
   userViewerActivity?: Maybe<Scalars['JSONObject']>;
+  /** Track user activities in the viewer relating to the specified resources */
+  viewerUserActivityBroadcasted: ViewerUserActivityMessage;
 };
 
 
@@ -1488,6 +2225,42 @@ export type SubscriptionCommitUpdatedArgs = {
 };
 
 
+export type SubscriptionProjectCommentsUpdatedArgs = {
+  target: ViewerUpdateTrackingTarget;
+};
+
+
+export type SubscriptionProjectModelsUpdatedArgs = {
+  id: Scalars['String'];
+  modelIds?: InputMaybe<Array<Scalars['String']>>;
+};
+
+
+export type SubscriptionProjectPendingModelsUpdatedArgs = {
+  id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectPendingVersionsUpdatedArgs = {
+  id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectUpdatedArgs = {
+  id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectVersionsPreviewGeneratedArgs = {
+  id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectVersionsUpdatedArgs = {
+  id: Scalars['String'];
+};
+
+
 export type SubscriptionStreamDeletedArgs = {
   streamId?: InputMaybe<Scalars['String']>;
 };
@@ -1501,6 +2274,29 @@ export type SubscriptionStreamUpdatedArgs = {
 export type SubscriptionUserViewerActivityArgs = {
   resourceId: Scalars['String'];
   streamId: Scalars['String'];
+};
+
+
+export type SubscriptionViewerUserActivityBroadcastedArgs = {
+  target: ViewerUpdateTrackingTarget;
+};
+
+export type TestItem = {
+  __typename?: 'TestItem';
+  bar: Scalars['String'];
+  foo: Scalars['String'];
+};
+
+export type UpdateModelInput = {
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  projectId: Scalars['ID'];
+};
+
+/** Only non-null values will be updated */
+export type UpdateVersionInput = {
+  message?: InputMaybe<Scalars['String']>;
+  versionId: Scalars['String'];
 };
 
 /**
@@ -1524,7 +2320,8 @@ export type User = {
   commits?: Maybe<CommitCollection>;
   company?: Maybe<Scalars['String']>;
   /** Returns the apps you have created. */
-  createdApps?: Maybe<Array<Maybe<ServerApp>>>;
+  createdApps?: Maybe<Array<ServerApp>>;
+  createdAt?: Maybe<Scalars['DateTime']>;
   /**
    * E-mail can be null, if it's requested for a user other than the authenticated one
    * and the user isn't an admin
@@ -1537,10 +2334,16 @@ export type User = {
   favoriteStreams: StreamCollection;
   /** Whether the user has a pending/active email verification token */
   hasPendingVerification?: Maybe<Scalars['Boolean']>;
-  id: Scalars['String'];
-  name?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  /** Whether post-sign up onboarding has been finished or skipped entirely */
+  isOnboardingFinished?: Maybe<Scalars['Boolean']>;
+  name: Scalars['String'];
   notificationPreferences: Scalars['JSONObject'];
   profiles?: Maybe<Scalars['JSONObject']>;
+  /** Get all invitations to projects that the active user has */
+  projectInvites: Array<PendingStreamCollaborator>;
+  /** Get projects that the user participates in */
+  projects: ProjectCollection;
   role?: Maybe<Scalars['String']>;
   /**
    * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
@@ -1592,6 +2395,17 @@ export type UserFavoriteStreamsArgs = {
  * Full user type, should only be used in the context of admin operations or
  * when a user is reading/writing info about himself
  */
+export type UserProjectsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<UserProjectsFilter>;
+  limit?: Scalars['Int'];
+};
+
+
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
 export type UserStreamsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
@@ -1610,8 +2424,30 @@ export type UserTimelineArgs = {
 };
 
 export type UserDeleteInput = {
-  email?: InputMaybe<Scalars['String']>;
+  email: Scalars['String'];
 };
+
+export type UserProjectsFilter = {
+  /** Only include projects where user has the specified roles */
+  onlyWithRoles?: InputMaybe<Array<Scalars['String']>>;
+  /** Filter out projects by name */
+  search?: InputMaybe<Scalars['String']>;
+};
+
+export type UserProjectsUpdatedMessage = {
+  __typename?: 'UserProjectsUpdatedMessage';
+  /** Project ID */
+  id: Scalars['String'];
+  /** Project entity, null if project was deleted */
+  project?: Maybe<Project>;
+  /** Message type */
+  type: UserProjectsUpdatedMessageType;
+};
+
+export enum UserProjectsUpdatedMessageType {
+  Added = 'ADDED',
+  Removed = 'REMOVED'
+}
 
 export type UserRoleInput = {
   id: Scalars['String'];
@@ -1621,7 +2457,7 @@ export type UserRoleInput = {
 export type UserSearchResultCollection = {
   __typename?: 'UserSearchResultCollection';
   cursor?: Maybe<Scalars['String']>;
-  items?: Maybe<Array<Maybe<LimitedUser>>>;
+  items: Array<LimitedUser>;
 };
 
 export type UserUpdateInput = {
@@ -1630,6 +2466,112 @@ export type UserUpdateInput = {
   company?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
 };
+
+export type Version = {
+  __typename?: 'Version';
+  authorUser?: Maybe<LimitedUser>;
+  /** All comment threads in this version */
+  commentThreads: CommentCollection;
+  createdAt: Scalars['DateTime'];
+  id: Scalars['ID'];
+  message?: Maybe<Scalars['String']>;
+  model: Model;
+  previewUrl: Scalars['String'];
+  referencedObject: Scalars['String'];
+  sourceApplication?: Maybe<Scalars['String']>;
+};
+
+
+export type VersionCommentThreadsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+};
+
+export type VersionCollection = {
+  __typename?: 'VersionCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Version>;
+  totalCount: Scalars['Int'];
+};
+
+export type VersionMutations = {
+  __typename?: 'VersionMutations';
+  delete: Scalars['Boolean'];
+  moveToModel: Model;
+  update: Version;
+};
+
+
+export type VersionMutationsDeleteArgs = {
+  input: DeleteVersionsInput;
+};
+
+
+export type VersionMutationsMoveToModelArgs = {
+  input: MoveVersionsInput;
+};
+
+
+export type VersionMutationsUpdateArgs = {
+  input: UpdateVersionInput;
+};
+
+export type ViewerResourceGroup = {
+  __typename?: 'ViewerResourceGroup';
+  /** Resource identifier used to refer to a collection of resource items */
+  identifier: Scalars['String'];
+  /** Viewer resources that the identifier refers to */
+  items: Array<ViewerResourceItem>;
+};
+
+export type ViewerResourceItem = {
+  __typename?: 'ViewerResourceItem';
+  /** Null if resource represents an object */
+  modelId?: Maybe<Scalars['String']>;
+  objectId: Scalars['String'];
+  /** Null if resource represents an object */
+  versionId?: Maybe<Scalars['String']>;
+};
+
+export type ViewerUpdateTrackingTarget = {
+  /**
+   * By default if resourceIdString is set, the "versionId" part of model resource identifiers will be ignored
+   * and all updates to of all versions of any of the referenced models will be returned. If `loadedVersionsOnly` is
+   * enabled, then only updates of loaded/referenced versions in resourceIdString will be returned.
+   */
+  loadedVersionsOnly?: InputMaybe<Scalars['Boolean']>;
+  projectId: Scalars['String'];
+  /**
+   * Only request updates to the resources identified by this
+   * comma-delimited resouce string (same format that's used in the viewer URL)
+   */
+  resourceIdString: Scalars['String'];
+};
+
+export type ViewerUserActivityMessage = {
+  __typename?: 'ViewerUserActivityMessage';
+  sessionId: Scalars['String'];
+  /** SerializedViewerState, only null if DISCONNECTED */
+  state?: Maybe<Scalars['JSONObject']>;
+  status: ViewerUserActivityStatus;
+  user?: Maybe<LimitedUser>;
+  userId?: Maybe<Scalars['String']>;
+  userName: Scalars['String'];
+};
+
+export type ViewerUserActivityMessageInput = {
+  sessionId: Scalars['String'];
+  /** SerializedViewerState, only null if DISCONNECTED */
+  state?: InputMaybe<Scalars['JSONObject']>;
+  status: ViewerUserActivityStatus;
+  userId?: InputMaybe<Scalars['String']>;
+  userName: Scalars['String'];
+};
+
+export enum ViewerUserActivityStatus {
+  Disconnected = 'DISCONNECTED',
+  Viewing = 'VIEWING'
+}
 
 export type Webhook = {
   __typename?: 'Webhook';
@@ -1763,6 +2705,7 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = {
+  ActiveUserMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   Activity: ResolverTypeWrapper<Activity>;
   ActivityCollection: ResolverTypeWrapper<ActivityCollection>;
   AdminUsersListCollection: ResolverTypeWrapper<Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversTypes['AdminUsersListItem']> }>;
@@ -1782,13 +2725,18 @@ export type ResolversTypes = {
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
-  Comment: ResolverTypeWrapper<Comment>;
-  CommentActivityMessage: ResolverTypeWrapper<CommentActivityMessage>;
-  CommentCollection: ResolverTypeWrapper<CommentCollection>;
+  Comment: ResolverTypeWrapper<CommentGraphQLReturn>;
+  CommentActivityMessage: ResolverTypeWrapper<Omit<CommentActivityMessage, 'comment'> & { comment: ResolversTypes['Comment'] }>;
+  CommentCollection: ResolverTypeWrapper<Omit<CommentCollection, 'items'> & { items: Array<ResolversTypes['Comment']> }>;
+  CommentContentInput: CommentContentInput;
   CommentCreateInput: CommentCreateInput;
+  CommentDataFilters: ResolverTypeWrapper<CommentDataFilters>;
+  CommentDataFiltersInput: CommentDataFiltersInput;
   CommentEditInput: CommentEditInput;
-  CommentThreadActivityMessage: ResolverTypeWrapper<CommentThreadActivityMessage>;
-  Commit: ResolverTypeWrapper<Omit<Commit, 'stream'> & { stream: ResolversTypes['Stream'] }>;
+  CommentMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  CommentReplyAuthorCollection: ResolverTypeWrapper<CommentReplyAuthorCollectionGraphQLReturn>;
+  CommentThreadActivityMessage: ResolverTypeWrapper<Omit<CommentThreadActivityMessage, 'reply'> & { reply?: Maybe<ResolversTypes['Comment']> }>;
+  Commit: ResolverTypeWrapper<CommitGraphQLReturn>;
   CommitCollection: ResolverTypeWrapper<Omit<CommitCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['Commit']>> }>;
   CommitCreateInput: CommitCreateInput;
   CommitDeleteInput: CommitDeleteInput;
@@ -1796,22 +2744,65 @@ export type ResolversTypes = {
   CommitUpdateInput: CommitUpdateInput;
   CommitsDeleteInput: CommitsDeleteInput;
   CommitsMoveInput: CommitsMoveInput;
+  CreateCommentInput: CreateCommentInput;
+  CreateCommentReplyInput: CreateCommentReplyInput;
+  CreateModelInput: CreateModelInput;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']>;
+  DeleteModelInput: DeleteModelInput;
+  DeleteVersionsInput: DeleteVersionsInput;
   DiscoverableStreamsSortType: DiscoverableStreamsSortType;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
+  EditCommentInput: EditCommentInput;
   EmailAddress: ResolverTypeWrapper<Scalars['EmailAddress']>;
-  FileUpload: ResolverTypeWrapper<FileUpload>;
+  FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
+  Float: ResolverTypeWrapper<Scalars['Float']>;
   ID: ResolverTypeWrapper<Scalars['ID']>;
   Int: ResolverTypeWrapper<Scalars['Int']>;
   JSONObject: ResolverTypeWrapper<Scalars['JSONObject']>;
+  LegacyCommentViewerData: ResolverTypeWrapper<LegacyCommentViewerData>;
   LimitedUser: ResolverTypeWrapper<LimitedUserGraphQLReturn>;
+  Model: ResolverTypeWrapper<ModelGraphQLReturn>;
+  ModelCollection: ResolverTypeWrapper<Omit<ModelCollection, 'items'> & { items: Array<ResolversTypes['Model']> }>;
+  ModelMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  ModelVersionsFilter: ModelVersionsFilter;
+  ModelsTreeItem: ResolverTypeWrapper<ModelsTreeItemGraphQLReturn>;
+  ModelsTreeItemCollection: ResolverTypeWrapper<Omit<ModelsTreeItemCollection, 'items'> & { items: Array<ResolversTypes['ModelsTreeItem']> }>;
+  MoveVersionsInput: MoveVersionsInput;
   Mutation: ResolverTypeWrapper<{}>;
   Object: ResolverTypeWrapper<Object>;
   ObjectCollection: ResolverTypeWrapper<ObjectCollection>;
   ObjectCreateInput: ObjectCreateInput;
   PasswordStrengthCheckFeedback: ResolverTypeWrapper<PasswordStrengthCheckFeedback>;
   PasswordStrengthCheckResults: ResolverTypeWrapper<PasswordStrengthCheckResults>;
-  PendingStreamCollaborator: ResolverTypeWrapper<Omit<PendingStreamCollaborator, 'invitedBy' | 'user'> & { invitedBy: ResolversTypes['LimitedUser'], user?: Maybe<ResolversTypes['LimitedUser']> }>;
+  PendingStreamCollaborator: ResolverTypeWrapper<PendingStreamCollaboratorGraphQLReturn>;
+  Project: ResolverTypeWrapper<ProjectGraphQLReturn>;
+  ProjectCollaborator: ResolverTypeWrapper<Omit<ProjectCollaborator, 'user'> & { user: ResolversTypes['LimitedUser'] }>;
+  ProjectCollection: ResolverTypeWrapper<Omit<ProjectCollection, 'items'> & { items: Array<ResolversTypes['Project']> }>;
+  ProjectCommentCollection: ResolverTypeWrapper<Omit<ProjectCommentCollection, 'items'> & { items: Array<ResolversTypes['Comment']> }>;
+  ProjectCommentsFilter: ProjectCommentsFilter;
+  ProjectCommentsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectCommentsUpdatedMessage, 'comment'> & { comment?: Maybe<ResolversTypes['Comment']> }>;
+  ProjectCommentsUpdatedMessageType: ProjectCommentsUpdatedMessageType;
+  ProjectCreateInput: ProjectCreateInput;
+  ProjectInviteCreateInput: ProjectInviteCreateInput;
+  ProjectInviteMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  ProjectInviteUseInput: ProjectInviteUseInput;
+  ProjectModelsFilter: ProjectModelsFilter;
+  ProjectModelsTreeFilter: ProjectModelsTreeFilter;
+  ProjectModelsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectModelsUpdatedMessage, 'model'> & { model?: Maybe<ResolversTypes['Model']> }>;
+  ProjectModelsUpdatedMessageType: ProjectModelsUpdatedMessageType;
+  ProjectMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  ProjectPendingModelsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectPendingModelsUpdatedMessage, 'model'> & { model: ResolversTypes['FileUpload'] }>;
+  ProjectPendingModelsUpdatedMessageType: ProjectPendingModelsUpdatedMessageType;
+  ProjectPendingVersionsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversTypes['FileUpload'] }>;
+  ProjectPendingVersionsUpdatedMessageType: ProjectPendingVersionsUpdatedMessageType;
+  ProjectUpdateInput: ProjectUpdateInput;
+  ProjectUpdateRoleInput: ProjectUpdateRoleInput;
+  ProjectUpdatedMessage: ResolverTypeWrapper<Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
+  ProjectUpdatedMessageType: ProjectUpdatedMessageType;
+  ProjectVersionsPreviewGeneratedMessage: ResolverTypeWrapper<ProjectVersionsPreviewGeneratedMessage>;
+  ProjectVersionsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectVersionsUpdatedMessage, 'version'> & { version?: Maybe<ResolversTypes['Version']> }>;
+  ProjectVersionsUpdatedMessageType: ProjectVersionsUpdatedMessageType;
+  ProjectVisibility: ProjectVisibility;
   Query: ResolverTypeWrapper<{}>;
   ReplyCreateInput: ReplyCreateInput;
   ResourceIdentifier: ResolverTypeWrapper<ResourceIdentifier>;
@@ -1825,6 +2816,7 @@ export type ResolversTypes = {
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ResolverTypeWrapper<Omit<ServerInvite, 'invitedBy'> & { invitedBy: ResolversTypes['LimitedUser'] }>;
   ServerInviteCreateInput: ServerInviteCreateInput;
+  ServerRole: ServerRole;
   ServerStats: ResolverTypeWrapper<ServerStats>;
   SmartTextEditorValue: ResolverTypeWrapper<SmartTextEditorValue>;
   SortDirection: SortDirection;
@@ -1840,11 +2832,26 @@ export type ResolversTypes = {
   StreamUpdatePermissionInput: StreamUpdatePermissionInput;
   String: ResolverTypeWrapper<Scalars['String']>;
   Subscription: ResolverTypeWrapper<{}>;
-  User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], streams: ResolversTypes['StreamCollection'] }>;
+  TestItem: ResolverTypeWrapper<TestItem>;
+  UpdateModelInput: UpdateModelInput;
+  UpdateVersionInput: UpdateVersionInput;
+  User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projectInvites: Array<ResolversTypes['PendingStreamCollaborator']>, projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'] }>;
   UserDeleteInput: UserDeleteInput;
+  UserProjectsFilter: UserProjectsFilter;
+  UserProjectsUpdatedMessage: ResolverTypeWrapper<Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
+  UserProjectsUpdatedMessageType: UserProjectsUpdatedMessageType;
   UserRoleInput: UserRoleInput;
-  UserSearchResultCollection: ResolverTypeWrapper<Omit<UserSearchResultCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversTypes['LimitedUser']>>> }>;
+  UserSearchResultCollection: ResolverTypeWrapper<Omit<UserSearchResultCollection, 'items'> & { items: Array<ResolversTypes['LimitedUser']> }>;
   UserUpdateInput: UserUpdateInput;
+  Version: ResolverTypeWrapper<VersionGraphQLReturn>;
+  VersionCollection: ResolverTypeWrapper<Omit<VersionCollection, 'items'> & { items: Array<ResolversTypes['Version']> }>;
+  VersionMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  ViewerResourceGroup: ResolverTypeWrapper<ViewerResourceGroup>;
+  ViewerResourceItem: ResolverTypeWrapper<ViewerResourceItem>;
+  ViewerUpdateTrackingTarget: ViewerUpdateTrackingTarget;
+  ViewerUserActivityMessage: ResolverTypeWrapper<Omit<ViewerUserActivityMessage, 'user'> & { user?: Maybe<ResolversTypes['LimitedUser']> }>;
+  ViewerUserActivityMessageInput: ViewerUserActivityMessageInput;
+  ViewerUserActivityStatus: ViewerUserActivityStatus;
   Webhook: ResolverTypeWrapper<Webhook>;
   WebhookCollection: ResolverTypeWrapper<WebhookCollection>;
   WebhookCreateInput: WebhookCreateInput;
@@ -1856,6 +2863,7 @@ export type ResolversTypes = {
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = {
+  ActiveUserMutations: MutationsObjectGraphQLReturn;
   Activity: Activity;
   ActivityCollection: ActivityCollection;
   AdminUsersListCollection: Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversParentTypes['AdminUsersListItem']> };
@@ -1875,13 +2883,18 @@ export type ResolversParentTypes = {
   BranchCreateInput: BranchCreateInput;
   BranchDeleteInput: BranchDeleteInput;
   BranchUpdateInput: BranchUpdateInput;
-  Comment: Comment;
-  CommentActivityMessage: CommentActivityMessage;
-  CommentCollection: CommentCollection;
+  Comment: CommentGraphQLReturn;
+  CommentActivityMessage: Omit<CommentActivityMessage, 'comment'> & { comment: ResolversParentTypes['Comment'] };
+  CommentCollection: Omit<CommentCollection, 'items'> & { items: Array<ResolversParentTypes['Comment']> };
+  CommentContentInput: CommentContentInput;
   CommentCreateInput: CommentCreateInput;
+  CommentDataFilters: CommentDataFilters;
+  CommentDataFiltersInput: CommentDataFiltersInput;
   CommentEditInput: CommentEditInput;
-  CommentThreadActivityMessage: CommentThreadActivityMessage;
-  Commit: Omit<Commit, 'stream'> & { stream: ResolversParentTypes['Stream'] };
+  CommentMutations: MutationsObjectGraphQLReturn;
+  CommentReplyAuthorCollection: CommentReplyAuthorCollectionGraphQLReturn;
+  CommentThreadActivityMessage: Omit<CommentThreadActivityMessage, 'reply'> & { reply?: Maybe<ResolversParentTypes['Comment']> };
+  Commit: CommitGraphQLReturn;
   CommitCollection: Omit<CommitCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['Commit']>> };
   CommitCreateInput: CommitCreateInput;
   CommitDeleteInput: CommitDeleteInput;
@@ -1889,21 +2902,57 @@ export type ResolversParentTypes = {
   CommitUpdateInput: CommitUpdateInput;
   CommitsDeleteInput: CommitsDeleteInput;
   CommitsMoveInput: CommitsMoveInput;
+  CreateCommentInput: CreateCommentInput;
+  CreateCommentReplyInput: CreateCommentReplyInput;
+  CreateModelInput: CreateModelInput;
   DateTime: Scalars['DateTime'];
+  DeleteModelInput: DeleteModelInput;
+  DeleteVersionsInput: DeleteVersionsInput;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
+  EditCommentInput: EditCommentInput;
   EmailAddress: Scalars['EmailAddress'];
-  FileUpload: FileUpload;
+  FileUpload: FileUploadGraphQLReturn;
+  Float: Scalars['Float'];
   ID: Scalars['ID'];
   Int: Scalars['Int'];
   JSONObject: Scalars['JSONObject'];
+  LegacyCommentViewerData: LegacyCommentViewerData;
   LimitedUser: LimitedUserGraphQLReturn;
+  Model: ModelGraphQLReturn;
+  ModelCollection: Omit<ModelCollection, 'items'> & { items: Array<ResolversParentTypes['Model']> };
+  ModelMutations: MutationsObjectGraphQLReturn;
+  ModelVersionsFilter: ModelVersionsFilter;
+  ModelsTreeItem: ModelsTreeItemGraphQLReturn;
+  ModelsTreeItemCollection: Omit<ModelsTreeItemCollection, 'items'> & { items: Array<ResolversParentTypes['ModelsTreeItem']> };
+  MoveVersionsInput: MoveVersionsInput;
   Mutation: {};
   Object: Object;
   ObjectCollection: ObjectCollection;
   ObjectCreateInput: ObjectCreateInput;
   PasswordStrengthCheckFeedback: PasswordStrengthCheckFeedback;
   PasswordStrengthCheckResults: PasswordStrengthCheckResults;
-  PendingStreamCollaborator: Omit<PendingStreamCollaborator, 'invitedBy' | 'user'> & { invitedBy: ResolversParentTypes['LimitedUser'], user?: Maybe<ResolversParentTypes['LimitedUser']> };
+  PendingStreamCollaborator: PendingStreamCollaboratorGraphQLReturn;
+  Project: ProjectGraphQLReturn;
+  ProjectCollaborator: Omit<ProjectCollaborator, 'user'> & { user: ResolversParentTypes['LimitedUser'] };
+  ProjectCollection: Omit<ProjectCollection, 'items'> & { items: Array<ResolversParentTypes['Project']> };
+  ProjectCommentCollection: Omit<ProjectCommentCollection, 'items'> & { items: Array<ResolversParentTypes['Comment']> };
+  ProjectCommentsFilter: ProjectCommentsFilter;
+  ProjectCommentsUpdatedMessage: Omit<ProjectCommentsUpdatedMessage, 'comment'> & { comment?: Maybe<ResolversParentTypes['Comment']> };
+  ProjectCreateInput: ProjectCreateInput;
+  ProjectInviteCreateInput: ProjectInviteCreateInput;
+  ProjectInviteMutations: MutationsObjectGraphQLReturn;
+  ProjectInviteUseInput: ProjectInviteUseInput;
+  ProjectModelsFilter: ProjectModelsFilter;
+  ProjectModelsTreeFilter: ProjectModelsTreeFilter;
+  ProjectModelsUpdatedMessage: Omit<ProjectModelsUpdatedMessage, 'model'> & { model?: Maybe<ResolversParentTypes['Model']> };
+  ProjectMutations: MutationsObjectGraphQLReturn;
+  ProjectPendingModelsUpdatedMessage: Omit<ProjectPendingModelsUpdatedMessage, 'model'> & { model: ResolversParentTypes['FileUpload'] };
+  ProjectPendingVersionsUpdatedMessage: Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversParentTypes['FileUpload'] };
+  ProjectUpdateInput: ProjectUpdateInput;
+  ProjectUpdateRoleInput: ProjectUpdateRoleInput;
+  ProjectUpdatedMessage: Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
+  ProjectVersionsPreviewGeneratedMessage: ProjectVersionsPreviewGeneratedMessage;
+  ProjectVersionsUpdatedMessage: Omit<ProjectVersionsUpdatedMessage, 'version'> & { version?: Maybe<ResolversParentTypes['Version']> };
   Query: {};
   ReplyCreateInput: ReplyCreateInput;
   ResourceIdentifier: ResourceIdentifier;
@@ -1929,11 +2978,24 @@ export type ResolversParentTypes = {
   StreamUpdatePermissionInput: StreamUpdatePermissionInput;
   String: Scalars['String'];
   Subscription: {};
-  User: Omit<User, 'commits' | 'favoriteStreams' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], streams: ResolversParentTypes['StreamCollection'] };
+  TestItem: TestItem;
+  UpdateModelInput: UpdateModelInput;
+  UpdateVersionInput: UpdateVersionInput;
+  User: Omit<User, 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projectInvites: Array<ResolversParentTypes['PendingStreamCollaborator']>, projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'] };
   UserDeleteInput: UserDeleteInput;
+  UserProjectsFilter: UserProjectsFilter;
+  UserProjectsUpdatedMessage: Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
   UserRoleInput: UserRoleInput;
-  UserSearchResultCollection: Omit<UserSearchResultCollection, 'items'> & { items?: Maybe<Array<Maybe<ResolversParentTypes['LimitedUser']>>> };
+  UserSearchResultCollection: Omit<UserSearchResultCollection, 'items'> & { items: Array<ResolversParentTypes['LimitedUser']> };
   UserUpdateInput: UserUpdateInput;
+  Version: VersionGraphQLReturn;
+  VersionCollection: Omit<VersionCollection, 'items'> & { items: Array<ResolversParentTypes['Version']> };
+  VersionMutations: MutationsObjectGraphQLReturn;
+  ViewerResourceGroup: ViewerResourceGroup;
+  ViewerResourceItem: ViewerResourceItem;
+  ViewerUpdateTrackingTarget: ViewerUpdateTrackingTarget;
+  ViewerUserActivityMessage: Omit<ViewerUserActivityMessage, 'user'> & { user?: Maybe<ResolversParentTypes['LimitedUser']> };
+  ViewerUserActivityMessageInput: ViewerUserActivityMessageInput;
   Webhook: Webhook;
   WebhookCollection: WebhookCollection;
   WebhookCreateInput: WebhookCreateInput;
@@ -1961,6 +3023,12 @@ export type HasScopesDirectiveArgs = {
 
 export type HasScopesDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = HasScopesDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
+export type HasServerRoleDirectiveArgs = {
+  role: ServerRole;
+};
+
+export type HasServerRoleDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = HasServerRoleDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
+
 export type HasStreamRoleDirectiveArgs = {
   role: StreamRole;
 };
@@ -1970,6 +3038,12 @@ export type HasStreamRoleDirectiveResolver<Result, Parent, ContextType = GraphQL
 export type IsOwnerDirectiveArgs = { };
 
 export type IsOwnerDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = IsOwnerDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
+
+export type ActiveUserMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ActiveUserMutations'] = ResolversParentTypes['ActiveUserMutations']> = {
+  finishOnboarding?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  update?: Resolver<ResolversTypes['User'], ParentType, ContextType, RequireFields<ActiveUserMutationsUpdateArgs, 'user'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
 
 export type ActivityResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Activity'] = ResolversParentTypes['Activity']> = {
   actionType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -2077,18 +3151,24 @@ export type BranchCollectionResolvers<ContextType = GraphQLContext, ParentType e
 
 export type CommentResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Comment'] = ResolversParentTypes['Comment']> = {
   archived?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  author?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   authorId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
-  data?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  data?: Resolver<Maybe<ResolversTypes['LegacyCommentViewerData']>, ParentType, ContextType>;
+  hasParent?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  parent?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType>;
   rawText?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   reactions?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  replies?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<CommentRepliesArgs, 'limit'>>;
+  replies?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<CommentRepliesArgs, 'limit'>>;
+  replyAuthors?: Resolver<ResolversTypes['CommentReplyAuthorCollection'], ParentType, ContextType, RequireFields<CommentReplyAuthorsArgs, 'limit'>>;
   resources?: Resolver<Array<ResolversTypes['ResourceIdentifier']>, ParentType, ContextType>;
   screenshot?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   text?: Resolver<ResolversTypes['SmartTextEditorValue'], ParentType, ContextType>;
-  updatedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   viewedAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceItem']>, ParentType, ContextType>;
+  viewerState?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2099,8 +3179,33 @@ export type CommentActivityMessageResolvers<ContextType = GraphQLContext, Parent
 };
 
 export type CommentCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommentCollection'] = ResolversParentTypes['CommentCollection']> = {
-  cursor?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   items?: Resolver<Array<ResolversTypes['Comment']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CommentDataFiltersResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommentDataFilters'] = ResolversParentTypes['CommentDataFilters']> = {
+  hiddenIds?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  isolatedIds?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  passMax?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  passMin?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  propertyInfoKey?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  sectionBox?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CommentMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommentMutations'] = ResolversParentTypes['CommentMutations']> = {
+  archive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<CommentMutationsArchiveArgs, 'archived' | 'commentId'>>;
+  create?: Resolver<ResolversTypes['Comment'], ParentType, ContextType, RequireFields<CommentMutationsCreateArgs, 'input'>>;
+  edit?: Resolver<ResolversTypes['Comment'], ParentType, ContextType, RequireFields<CommentMutationsEditArgs, 'input'>>;
+  markViewed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<CommentMutationsMarkViewedArgs, 'commentId'>>;
+  reply?: Resolver<ResolversTypes['Comment'], ParentType, ContextType, RequireFields<CommentMutationsReplyArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type CommentReplyAuthorCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['CommentReplyAuthorCollection'] = ResolversParentTypes['CommentReplyAuthorCollection']> = {
+  items?: Resolver<Array<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -2148,15 +3253,19 @@ export interface EmailAddressScalarConfig extends GraphQLScalarTypeConfig<Resolv
 }
 
 export type FileUploadResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['FileUpload'] = ResolversParentTypes['FileUpload']> = {
-  branchName?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  branchName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   convertedCommitId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   convertedLastUpdate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   convertedMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   convertedStatus?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  convertedVersionId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   fileName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   fileSize?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   fileType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
+  modelName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   streamId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   uploadComplete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   uploadDate?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
@@ -2168,14 +3277,23 @@ export interface JsonObjectScalarConfig extends GraphQLScalarTypeConfig<Resolver
   name: 'JSONObject';
 }
 
+export type LegacyCommentViewerDataResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LegacyCommentViewerData'] = ResolversParentTypes['LegacyCommentViewerData']> = {
+  camPos?: Resolver<Array<ResolversTypes['Float']>, ParentType, ContextType>;
+  filters?: Resolver<ResolversTypes['CommentDataFilters'], ParentType, ContextType>;
+  location?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
+  sectionBox?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  selection?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type LimitedUserResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['LimitedUser'] = ResolversParentTypes['LimitedUser']> = {
   activity?: Resolver<Maybe<ResolversTypes['ActivityCollection']>, ParentType, ContextType, RequireFields<LimitedUserActivityArgs, 'limit'>>;
   avatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   bio?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   commits?: Resolver<Maybe<ResolversTypes['CommitCollection']>, ParentType, ContextType, RequireFields<LimitedUserCommitsArgs, 'limit'>>;
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   streams?: Resolver<ResolversTypes['StreamCollection'], ParentType, ContextType, RequireFields<LimitedUserStreamsArgs, 'limit'>>;
   timeline?: Resolver<Maybe<ResolversTypes['ActivityCollection']>, ParentType, ContextType, RequireFields<LimitedUserTimelineArgs, 'limit'>>;
@@ -2184,8 +3302,58 @@ export type LimitedUserResolvers<ContextType = GraphQLContext, ParentType extend
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ModelResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Model'] = ResolversParentTypes['Model']> = {
+  author?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  childrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
+  commentThreads?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<ModelCommentThreadsArgs, 'limit'>>;
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  displayName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  pendingImportedVersions?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType, RequireFields<ModelPendingImportedVersionsArgs, 'limit'>>;
+  previewUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  version?: Resolver<Maybe<ResolversTypes['Version']>, ParentType, ContextType, RequireFields<ModelVersionArgs, 'id'>>;
+  versions?: Resolver<ResolversTypes['VersionCollection'], ParentType, ContextType, RequireFields<ModelVersionsArgs, 'limit'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ModelCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ModelCollection'] = ResolversParentTypes['ModelCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['Model']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ModelMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ModelMutations'] = ResolversParentTypes['ModelMutations']> = {
+  create?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<ModelMutationsCreateArgs, 'input'>>;
+  delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ModelMutationsDeleteArgs, 'input'>>;
+  update?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<ModelMutationsUpdateArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ModelsTreeItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ModelsTreeItem'] = ResolversParentTypes['ModelsTreeItem']> = {
+  children?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
+  fullName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  hasChildren?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ModelsTreeItemCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ModelsTreeItemCollection'] = ResolversParentTypes['ModelsTreeItemCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type MutationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = {
   _?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  activeUserMutations?: Resolver<ResolversTypes['ActiveUserMutations'], ParentType, ContextType>;
   adminDeleteUser?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationAdminDeleteUserArgs, 'userConfirmation'>>;
   apiTokenCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationApiTokenCreateArgs, 'token'>>;
   apiTokenRevoke?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationApiTokenRevokeArgs, 'token'>>;
@@ -2196,9 +3364,11 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   branchCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationBranchCreateArgs, 'branch'>>;
   branchDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationBranchDeleteArgs, 'branch'>>;
   branchUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationBranchUpdateArgs, 'branch'>>;
+  broadcastViewerUserActivity?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationBroadcastViewerUserActivityArgs, 'message' | 'projectId' | 'resourceIdString'>>;
   commentArchive?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommentArchiveArgs, 'archived' | 'commentId' | 'streamId'>>;
   commentCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationCommentCreateArgs, 'input'>>;
   commentEdit?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommentEditArgs, 'input'>>;
+  commentMutations?: Resolver<ResolversTypes['CommentMutations'], ParentType, ContextType>;
   commentReply?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationCommentReplyArgs, 'input'>>;
   commentView?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommentViewArgs, 'commentId' | 'streamId'>>;
   commitCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationCommitCreateArgs, 'commit'>>;
@@ -2209,7 +3379,9 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   commitsMove?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitsMoveArgs, 'input'>>;
   inviteDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteDeleteArgs, 'inviteId'>>;
   inviteResend?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteResendArgs, 'inviteId'>>;
+  modelMutations?: Resolver<ResolversTypes['ModelMutations'], ParentType, ContextType>;
   objectCreate?: Resolver<Array<Maybe<ResolversTypes['String']>>, ParentType, ContextType, RequireFields<MutationObjectCreateArgs, 'objectInput'>>;
+  projectMutations?: Resolver<ResolversTypes['ProjectMutations'], ParentType, ContextType>;
   requestVerification?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   serverInfoUpdate?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationServerInfoUpdateArgs, 'info'>>;
   serverInviteBatchCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationServerInviteBatchCreateArgs, 'input'>>;
@@ -2234,6 +3406,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   userRoleChange?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserRoleChangeArgs, 'userRoleInput'>>;
   userUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserUpdateArgs, 'user'>>;
   userViewerActivityBroadcast?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationUserViewerActivityBroadcastArgs, 'resourceId' | 'streamId'>>;
+  versionMutations?: Resolver<ResolversTypes['VersionMutations'], ParentType, ContextType>;
   webhookCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationWebhookCreateArgs, 'webhook'>>;
   webhookDelete?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationWebhookDeleteArgs, 'webhook'>>;
   webhookUpdate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationWebhookUpdateArgs, 'webhook'>>;
@@ -2274,12 +3447,127 @@ export type PendingStreamCollaboratorResolvers<ContextType = GraphQLContext, Par
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   inviteId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   invitedBy?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  projectName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   streamId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   streamName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   token?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Project'] = ResolversParentTypes['Project']> = {
+  allowPublicComments?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  commentThreads?: Resolver<ResolversTypes['ProjectCommentCollection'], ParentType, ContextType, RequireFields<ProjectCommentThreadsArgs, 'limit'>>;
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  invitedTeam?: Resolver<Maybe<Array<ResolversTypes['PendingStreamCollaborator']>>, ParentType, ContextType>;
+  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType, RequireFields<ProjectModelArgs, 'id'>>;
+  modelChildrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType, RequireFields<ProjectModelChildrenTreeArgs, 'fullName'>>;
+  models?: Resolver<ResolversTypes['ModelCollection'], ParentType, ContextType, RequireFields<ProjectModelsArgs, 'limit'>>;
+  modelsTree?: Resolver<ResolversTypes['ModelsTreeItemCollection'], ParentType, ContextType, RequireFields<ProjectModelsTreeArgs, 'limit'>>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  pendingImportedModels?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType, RequireFields<ProjectPendingImportedModelsArgs, 'limit'>>;
+  role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  sourceApps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  team?: Resolver<Array<ResolversTypes['ProjectCollaborator']>, ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  versions?: Resolver<ResolversTypes['VersionCollection'], ParentType, ContextType, RequireFields<ProjectVersionsArgs, 'limit'>>;
+  viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType, RequireFields<ProjectViewerResourcesArgs, 'loadedVersionsOnly' | 'resourceIdString'>>;
+  visibility?: Resolver<ResolversTypes['ProjectVisibility'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectCollaboratorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectCollaborator'] = ResolversParentTypes['ProjectCollaborator']> = {
+  role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  user?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectCollection'] = ResolversParentTypes['ProjectCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['Project']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectCommentCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectCommentCollection'] = ResolversParentTypes['ProjectCommentCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['Comment']>, ParentType, ContextType>;
+  totalArchivedCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectCommentsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectCommentsUpdatedMessage'] = ResolversParentTypes['ProjectCommentsUpdatedMessage']> = {
+  comment?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectCommentsUpdatedMessageType'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectInviteMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectInviteMutations'] = ResolversParentTypes['ProjectInviteMutations']> = {
+  batchCreate?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectInviteMutationsBatchCreateArgs, 'input' | 'projectId'>>;
+  cancel?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectInviteMutationsCancelArgs, 'inviteId' | 'projectId'>>;
+  create?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectInviteMutationsCreateArgs, 'input' | 'projectId'>>;
+  use?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectInviteMutationsUseArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectModelsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectModelsUpdatedMessage'] = ResolversParentTypes['ProjectModelsUpdatedMessage']> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectModelsUpdatedMessageType'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectMutations'] = ResolversParentTypes['ProjectMutations']> = {
+  create?: Resolver<ResolversTypes['Project'], ParentType, ContextType, Partial<ProjectMutationsCreateArgs>>;
+  createForOnboarding?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
+  delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsDeleteArgs, 'id'>>;
+  invites?: Resolver<ResolversTypes['ProjectInviteMutations'], ParentType, ContextType>;
+  leave?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsLeaveArgs, 'id'>>;
+  update?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateArgs, 'update'>>;
+  updateRole?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectMutationsUpdateRoleArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectPendingModelsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectPendingModelsUpdatedMessage'] = ResolversParentTypes['ProjectPendingModelsUpdatedMessage']> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  model?: Resolver<ResolversTypes['FileUpload'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectPendingModelsUpdatedMessageType'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectPendingVersionsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectPendingVersionsUpdatedMessage'] = ResolversParentTypes['ProjectPendingVersionsUpdatedMessage']> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectPendingVersionsUpdatedMessageType'], ParentType, ContextType>;
+  version?: Resolver<ResolversTypes['FileUpload'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectUpdatedMessage'] = ResolversParentTypes['ProjectUpdatedMessage']> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  project?: Resolver<Maybe<ResolversTypes['Project']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectUpdatedMessageType'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectVersionsPreviewGeneratedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectVersionsPreviewGeneratedMessage'] = ResolversParentTypes['ProjectVersionsPreviewGeneratedMessage']> = {
+  objectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  versionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectVersionsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectVersionsUpdatedMessage'] = ResolversParentTypes['ProjectVersionsUpdatedMessage']> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  modelId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectVersionsUpdatedMessageType'], ParentType, ContextType>;
+  version?: Resolver<Maybe<ResolversTypes['Version']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2294,6 +3582,8 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   comments?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<QueryCommentsArgs, 'archived' | 'limit' | 'streamId'>>;
   discoverableStreams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryDiscoverableStreamsArgs, 'limit'>>;
   otherUser?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType, RequireFields<QueryOtherUserArgs, 'id'>>;
+  project?: Resolver<Maybe<ResolversTypes['Project']>, ParentType, ContextType, RequireFields<QueryProjectArgs, 'id'>>;
+  projectInvite?: Resolver<Maybe<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType, RequireFields<QueryProjectInviteArgs, 'projectId'>>;
   serverInfo?: Resolver<ResolversTypes['ServerInfo'], ParentType, ContextType>;
   serverStats?: Resolver<ResolversTypes['ServerStats'], ParentType, ContextType>;
   stream?: Resolver<Maybe<ResolversTypes['Stream']>, ParentType, ContextType, RequireFields<QueryStreamArgs, 'id'>>;
@@ -2301,9 +3591,11 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   streamInvite?: Resolver<Maybe<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType, RequireFields<QueryStreamInviteArgs, 'streamId'>>;
   streamInvites?: Resolver<Array<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType>;
   streams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryStreamsArgs, 'limit'>>;
+  testList?: Resolver<Array<ResolversTypes['TestItem']>, ParentType, ContextType>;
+  testNumber?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, Partial<QueryUserArgs>>;
   userPwdStrength?: Resolver<ResolversTypes['PasswordStrengthCheckResults'], ParentType, ContextType, RequireFields<QueryUserPwdStrengthArgs, 'pwd'>>;
-  userSearch?: Resolver<Maybe<ResolversTypes['UserSearchResultCollection']>, ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'limit' | 'query'>>;
+  userSearch?: Resolver<ResolversTypes['UserSearchResultCollection'], ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'emailOnly' | 'limit' | 'query'>>;
 };
 
 export type ResourceIdentifierResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ResourceIdentifier'] = ResolversParentTypes['ResourceIdentifier']> = {
@@ -2334,7 +3626,7 @@ export type ServerAppResolvers<ContextType = GraphQLContext, ParentType extends 
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   public?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   redirectUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  scopes?: Resolver<Array<Maybe<ResolversTypes['Scope']>>, ParentType, ContextType>;
+  scopes?: Resolver<Array<ResolversTypes['Scope']>, ParentType, ContextType>;
   secret?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   termsAndConditionsLink?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   trustByDefault?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
@@ -2355,7 +3647,7 @@ export type ServerAppListItemResolvers<ContextType = GraphQLContext, ParentType 
 
 export type ServerInfoResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerInfo'] = ResolversParentTypes['ServerInfo']> = {
   adminContact?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  authStrategies?: Resolver<Maybe<Array<Maybe<ResolversTypes['AuthStrategy']>>>, ParentType, ContextType>;
+  authStrategies?: Resolver<Array<ResolversTypes['AuthStrategy']>, ParentType, ContextType>;
   blobSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   canonicalUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -2412,7 +3704,7 @@ export type StreamResolvers<ContextType = GraphQLContext, ParentType extends Res
   favoritedDate?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   favoritesCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   fileUpload?: Resolver<Maybe<ResolversTypes['FileUpload']>, ParentType, ContextType, RequireFields<StreamFileUploadArgs, 'id'>>;
-  fileUploads?: Resolver<Maybe<Array<Maybe<ResolversTypes['FileUpload']>>>, ParentType, ContextType>;
+  fileUploads?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   isDiscoverable?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   isPublic?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -2463,11 +3755,26 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   commitCreated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitCreated", ParentType, ContextType, RequireFields<SubscriptionCommitCreatedArgs, 'streamId'>>;
   commitDeleted?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitDeleted", ParentType, ContextType, RequireFields<SubscriptionCommitDeletedArgs, 'streamId'>>;
   commitUpdated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitUpdated", ParentType, ContextType, RequireFields<SubscriptionCommitUpdatedArgs, 'streamId'>>;
+  projectCommentsUpdated?: SubscriptionResolver<ResolversTypes['ProjectCommentsUpdatedMessage'], "projectCommentsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectCommentsUpdatedArgs, 'target'>>;
+  projectModelsUpdated?: SubscriptionResolver<ResolversTypes['ProjectModelsUpdatedMessage'], "projectModelsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectModelsUpdatedArgs, 'id'>>;
+  projectPendingModelsUpdated?: SubscriptionResolver<ResolversTypes['ProjectPendingModelsUpdatedMessage'], "projectPendingModelsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectPendingModelsUpdatedArgs, 'id'>>;
+  projectPendingVersionsUpdated?: SubscriptionResolver<ResolversTypes['ProjectPendingVersionsUpdatedMessage'], "projectPendingVersionsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectPendingVersionsUpdatedArgs, 'id'>>;
+  projectUpdated?: SubscriptionResolver<ResolversTypes['ProjectUpdatedMessage'], "projectUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectUpdatedArgs, 'id'>>;
+  projectVersionsPreviewGenerated?: SubscriptionResolver<ResolversTypes['ProjectVersionsPreviewGeneratedMessage'], "projectVersionsPreviewGenerated", ParentType, ContextType, RequireFields<SubscriptionProjectVersionsPreviewGeneratedArgs, 'id'>>;
+  projectVersionsUpdated?: SubscriptionResolver<ResolversTypes['ProjectVersionsUpdatedMessage'], "projectVersionsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectVersionsUpdatedArgs, 'id'>>;
   streamDeleted?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "streamDeleted", ParentType, ContextType, Partial<SubscriptionStreamDeletedArgs>>;
   streamUpdated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "streamUpdated", ParentType, ContextType, Partial<SubscriptionStreamUpdatedArgs>>;
+  userProjectsUpdated?: SubscriptionResolver<ResolversTypes['UserProjectsUpdatedMessage'], "userProjectsUpdated", ParentType, ContextType>;
   userStreamAdded?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "userStreamAdded", ParentType, ContextType>;
   userStreamRemoved?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "userStreamRemoved", ParentType, ContextType>;
   userViewerActivity?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "userViewerActivity", ParentType, ContextType, RequireFields<SubscriptionUserViewerActivityArgs, 'resourceId' | 'streamId'>>;
+  viewerUserActivityBroadcasted?: SubscriptionResolver<ResolversTypes['ViewerUserActivityMessage'], "viewerUserActivityBroadcasted", ParentType, ContextType, RequireFields<SubscriptionViewerUserActivityBroadcastedArgs, 'target'>>;
+};
+
+export type TestItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TestItem'] = ResolversParentTypes['TestItem']> = {
+  bar?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  foo?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type UserResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
@@ -2478,14 +3785,18 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   bio?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   commits?: Resolver<Maybe<ResolversTypes['CommitCollection']>, ParentType, ContextType, RequireFields<UserCommitsArgs, 'limit'>>;
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  createdApps?: Resolver<Maybe<Array<Maybe<ResolversTypes['ServerApp']>>>, ParentType, ContextType>;
+  createdApps?: Resolver<Maybe<Array<ResolversTypes['ServerApp']>>, ParentType, ContextType>;
+  createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   favoriteStreams?: Resolver<ResolversTypes['StreamCollection'], ParentType, ContextType, RequireFields<UserFavoriteStreamsArgs, 'limit'>>;
   hasPendingVerification?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  isOnboardingFinished?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   notificationPreferences?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
   profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  projectInvites?: Resolver<Array<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType>;
+  projects?: Resolver<ResolversTypes['ProjectCollection'], ParentType, ContextType, RequireFields<UserProjectsArgs, 'limit'>>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   streams?: Resolver<ResolversTypes['StreamCollection'], ParentType, ContextType, RequireFields<UserStreamsArgs, 'limit'>>;
   timeline?: Resolver<Maybe<ResolversTypes['ActivityCollection']>, ParentType, ContextType, RequireFields<UserTimelineArgs, 'limit'>>;
@@ -2494,9 +3805,66 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type UserProjectsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserProjectsUpdatedMessage'] = ResolversParentTypes['UserProjectsUpdatedMessage']> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  project?: Resolver<Maybe<ResolversTypes['Project']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['UserProjectsUpdatedMessageType'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type UserSearchResultCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserSearchResultCollection'] = ResolversParentTypes['UserSearchResultCollection']> = {
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  items?: Resolver<Maybe<Array<Maybe<ResolversTypes['LimitedUser']>>>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type VersionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Version'] = ResolversParentTypes['Version']> = {
+  authorUser?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  commentThreads?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<VersionCommentThreadsArgs, 'limit'>>;
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;
+  previewUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  referencedObject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  sourceApplication?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type VersionCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VersionCollection'] = ResolversParentTypes['VersionCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['Version']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type VersionMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VersionMutations'] = ResolversParentTypes['VersionMutations']> = {
+  delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<VersionMutationsDeleteArgs, 'input'>>;
+  moveToModel?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<VersionMutationsMoveToModelArgs, 'input'>>;
+  update?: Resolver<ResolversTypes['Version'], ParentType, ContextType, RequireFields<VersionMutationsUpdateArgs, 'input'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ViewerResourceGroupResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ViewerResourceGroup'] = ResolversParentTypes['ViewerResourceGroup']> = {
+  identifier?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['ViewerResourceItem']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ViewerResourceItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ViewerResourceItem'] = ResolversParentTypes['ViewerResourceItem']> = {
+  modelId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  objectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  versionId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ViewerUserActivityMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ViewerUserActivityMessage'] = ResolversParentTypes['ViewerUserActivityMessage']> = {
+  sessionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  state?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['ViewerUserActivityStatus'], ParentType, ContextType>;
+  user?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  userId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  userName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -2535,6 +3903,7 @@ export type WebhookEventCollectionResolvers<ContextType = GraphQLContext, Parent
 };
 
 export type Resolvers<ContextType = GraphQLContext> = {
+  ActiveUserMutations?: ActiveUserMutationsResolvers<ContextType>;
   Activity?: ActivityResolvers<ContextType>;
   ActivityCollection?: ActivityCollectionResolvers<ContextType>;
   AdminUsersListCollection?: AdminUsersListCollectionResolvers<ContextType>;
@@ -2550,6 +3919,9 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Comment?: CommentResolvers<ContextType>;
   CommentActivityMessage?: CommentActivityMessageResolvers<ContextType>;
   CommentCollection?: CommentCollectionResolvers<ContextType>;
+  CommentDataFilters?: CommentDataFiltersResolvers<ContextType>;
+  CommentMutations?: CommentMutationsResolvers<ContextType>;
+  CommentReplyAuthorCollection?: CommentReplyAuthorCollectionResolvers<ContextType>;
   CommentThreadActivityMessage?: CommentThreadActivityMessageResolvers<ContextType>;
   Commit?: CommitResolvers<ContextType>;
   CommitCollection?: CommitCollectionResolvers<ContextType>;
@@ -2557,13 +3929,32 @@ export type Resolvers<ContextType = GraphQLContext> = {
   EmailAddress?: GraphQLScalarType;
   FileUpload?: FileUploadResolvers<ContextType>;
   JSONObject?: GraphQLScalarType;
+  LegacyCommentViewerData?: LegacyCommentViewerDataResolvers<ContextType>;
   LimitedUser?: LimitedUserResolvers<ContextType>;
+  Model?: ModelResolvers<ContextType>;
+  ModelCollection?: ModelCollectionResolvers<ContextType>;
+  ModelMutations?: ModelMutationsResolvers<ContextType>;
+  ModelsTreeItem?: ModelsTreeItemResolvers<ContextType>;
+  ModelsTreeItemCollection?: ModelsTreeItemCollectionResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
   Object?: ObjectResolvers<ContextType>;
   ObjectCollection?: ObjectCollectionResolvers<ContextType>;
   PasswordStrengthCheckFeedback?: PasswordStrengthCheckFeedbackResolvers<ContextType>;
   PasswordStrengthCheckResults?: PasswordStrengthCheckResultsResolvers<ContextType>;
   PendingStreamCollaborator?: PendingStreamCollaboratorResolvers<ContextType>;
+  Project?: ProjectResolvers<ContextType>;
+  ProjectCollaborator?: ProjectCollaboratorResolvers<ContextType>;
+  ProjectCollection?: ProjectCollectionResolvers<ContextType>;
+  ProjectCommentCollection?: ProjectCommentCollectionResolvers<ContextType>;
+  ProjectCommentsUpdatedMessage?: ProjectCommentsUpdatedMessageResolvers<ContextType>;
+  ProjectInviteMutations?: ProjectInviteMutationsResolvers<ContextType>;
+  ProjectModelsUpdatedMessage?: ProjectModelsUpdatedMessageResolvers<ContextType>;
+  ProjectMutations?: ProjectMutationsResolvers<ContextType>;
+  ProjectPendingModelsUpdatedMessage?: ProjectPendingModelsUpdatedMessageResolvers<ContextType>;
+  ProjectPendingVersionsUpdatedMessage?: ProjectPendingVersionsUpdatedMessageResolvers<ContextType>;
+  ProjectUpdatedMessage?: ProjectUpdatedMessageResolvers<ContextType>;
+  ProjectVersionsPreviewGeneratedMessage?: ProjectVersionsPreviewGeneratedMessageResolvers<ContextType>;
+  ProjectVersionsUpdatedMessage?: ProjectVersionsUpdatedMessageResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   ResourceIdentifier?: ResourceIdentifierResolvers<ContextType>;
   Role?: RoleResolvers<ContextType>;
@@ -2579,8 +3970,16 @@ export type Resolvers<ContextType = GraphQLContext> = {
   StreamCollaborator?: StreamCollaboratorResolvers<ContextType>;
   StreamCollection?: StreamCollectionResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
+  TestItem?: TestItemResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
+  UserProjectsUpdatedMessage?: UserProjectsUpdatedMessageResolvers<ContextType>;
   UserSearchResultCollection?: UserSearchResultCollectionResolvers<ContextType>;
+  Version?: VersionResolvers<ContextType>;
+  VersionCollection?: VersionCollectionResolvers<ContextType>;
+  VersionMutations?: VersionMutationsResolvers<ContextType>;
+  ViewerResourceGroup?: ViewerResourceGroupResolvers<ContextType>;
+  ViewerResourceItem?: ViewerResourceItemResolvers<ContextType>;
+  ViewerUserActivityMessage?: ViewerUserActivityMessageResolvers<ContextType>;
   Webhook?: WebhookResolvers<ContextType>;
   WebhookCollection?: WebhookCollectionResolvers<ContextType>;
   WebhookEvent?: WebhookEventResolvers<ContextType>;
@@ -2591,6 +3990,7 @@ export type DirectiveResolvers<ContextType = GraphQLContext> = {
   hasRole?: HasRoleDirectiveResolver<any, any, ContextType>;
   hasScope?: HasScopeDirectiveResolver<any, any, ContextType>;
   hasScopes?: HasScopesDirectiveResolver<any, any, ContextType>;
+  hasServerRole?: HasServerRoleDirectiveResolver<any, any, ContextType>;
   hasStreamRole?: HasStreamRoleDirectiveResolver<any, any, ContextType>;
   isOwner?: IsOwnerDirectiveResolver<any, any, ContextType>;
 };

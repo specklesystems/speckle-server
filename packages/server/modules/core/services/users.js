@@ -6,6 +6,11 @@ const {
   ServerAcl: ServerAclSchema,
   Users: UsersSchema
 } = require('@/modules/core/dbSchema')
+const {
+  validateUserPassword,
+  updateUserAndNotify,
+  MINIMUM_PASSWORD_LENGTH
+} = require('@/modules/core/services/users/management')
 
 const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
@@ -13,14 +18,14 @@ const Acl = () => ServerAclSchema.knex()
 const { deleteStream } = require('./streams')
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const { deleteAllUserInvites } = require('@/modules/serverinvites/repositories')
+const { getUserByEmail } = require('@/modules/core/repositories/users')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
+const { pick } = require('lodash')
 const { dbLogger } = require('@/logging/logging')
 const {
   UserInputError,
   PasswordTooShortError
 } = require('@/modules/core/errors/userinput')
-
-const MINIMUM_PASSWORD_LENGTH = 8
 
 const changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -60,9 +65,17 @@ module.exports = {
 
   /**
    * @param {{}} user
+   * @param {{skipPropertyValidation: boolean } | undefined} options
    * @returns {Promise<string>}
    */
-  async createUser(user) {
+  async createUser(user, options = undefined) {
+    // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
+    const { skipPropertyValidation = false } = options || {}
+
+    user = skipPropertyValidation
+      ? user
+      : pick(user, ['id', 'bio', 'email', 'password', 'name', 'company'])
+
     const newId = crs({ length: 10 })
     user.id = newId
     user.email = user.email.toLowerCase()
@@ -142,14 +155,16 @@ module.exports = {
     return role
   },
 
+  /**
+   * @deprecated {Use updateUserAndNotify() or repo method directly}
+   */
   async updateUser(id, user) {
-    delete user.id
-    delete user.passwordDigest
-    delete user.password
-    delete user.email
-    await Users().where({ id }).update(user)
+    return await updateUserAndNotify(id, user)
   },
 
+  /**
+   * @deprecated {Use changePassword()}
+   */
   async updateUserPassword({ id, newPassword }) {
     if (newPassword.length < MINIMUM_PASSWORD_LENGTH)
       throw new PasswordTooShortError(MINIMUM_PASSWORD_LENGTH)
@@ -160,13 +175,13 @@ module.exports = {
   /**
    * User search available for normal server users. It's more limited because of the lower access level.
    */
-  async searchUsers(searchQuery, limit, cursor, archived = false) {
+  async searchUsers(searchQuery, limit, cursor, archived = false, emailOnly = false) {
     const query = Users()
       .join('server_acl', 'users.id', 'server_acl.userId')
       .select(...LIMITED_USER_FIELDS)
       .where((queryBuilder) => {
         queryBuilder.where({ email: searchQuery }) //match full email or partial name
-        queryBuilder.orWhere('name', 'ILIKE', `%${searchQuery}%`)
+        if (!emailOnly) queryBuilder.orWhere('name', 'ILIKE', `%${searchQuery}%`)
         if (!archived) queryBuilder.andWhere('role', '!=', 'server:archived-user')
       })
 
@@ -182,11 +197,16 @@ module.exports = {
     }
   },
 
+  /**
+   * @deprecated {Use validateUserPassword()}
+   */
   async validatePasssword({ email, password }) {
-    const { passwordDigest } = await userByEmailQuery(email)
-      .select('passwordDigest')
-      .first()
-    return bcrypt.compare(password, passwordDigest)
+    const user = await getUserByEmail(email, { skipClean: true })
+    if (!user) return false
+    return await validateUserPassword({
+      password,
+      user
+    })
   },
 
   async deleteUser(id) {
@@ -201,7 +221,7 @@ module.exports = {
         -- Compute (streamId, ownerCount) table for streams on which the user is owner
         SELECT acl."resourceId", count(*) as cnt
         FROM stream_acl acl
-        INNER JOIN 
+        INNER JOIN
           (
           -- Get streams ids on which the user is owner
           SELECT "resourceId" FROM stream_acl
