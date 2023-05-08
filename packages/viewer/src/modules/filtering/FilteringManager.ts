@@ -273,16 +273,22 @@ export class FilteringManager extends EventEmitter {
     // TODO: note that this does not handle well nested element categories. For example,
     // windows (family instances) inside walls get the same color as the walls, even though
     // they are identified as a different category.
+    // 07.05.2023: Attempt on fixing the issue described above. This fixes #1525, but it does
+    // add a bit of overhead. Not 100% sure if it breaks anything else tho'
     this.WTI.walk((node: TreeNode) => {
       if (!node.model.atomic || this.WTI.isRoot(node)) {
         return true
       }
       const vg = valueGroupColors.find((v) => v.ids.indexOf(node.model.raw.id) !== -1)
-      const rvs = this.RTI.getRenderViewsForNode(node, node)
+      const rvNodes = this.RTI.getRenderViewNodesForNode(node, node)
       if (!vg) {
-        nonMatchingRvs.push(...rvs)
+        nonMatchingRvs.push(...rvNodes.map((rvNode) => rvNode.model.renderView))
         return true
       }
+      const rvs = []
+      rvNodes.forEach((value: TreeNode) => {
+        if (this.RTI.getAtomicParent(value) === node) rvs.push(value.model.renderView)
+      })
       vg.rvs.push(...rvs)
       return true
     })
