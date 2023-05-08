@@ -11,6 +11,7 @@ COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
 
+COPY packages/frontend-2/type-augmentations/stubs ./packages/frontend-2/type-augmentations/stubs/
 COPY packages/webhook-service/package.json ./packages/webhook-service/
 COPY packages/shared/package.json ./packages/shared/
 
@@ -42,6 +43,7 @@ COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
 
+COPY packages/frontend-2/type-augmentations/stubs ./packages/frontend-2/type-augmentations/stubs/
 COPY packages/webhook-service/package.json ./packages/webhook-service/
 COPY packages/shared/package.json ./packages/shared/
 

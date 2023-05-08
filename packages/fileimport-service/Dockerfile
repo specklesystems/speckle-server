@@ -23,6 +23,8 @@ RUN chmod +x ./wait
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
+
+COPY packages/frontend-2/type-augmentations/stubs ./packages/frontend-2/type-augmentations/stubs/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/fileimport-service/package.json ./packages/fileimport-service/
 
@@ -55,8 +57,11 @@ WORKDIR /speckle-server
 COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
+
+COPY packages/frontend-2/type-augmentations/stubs ./packages/frontend-2/type-augmentations/stubs/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/fileimport-service/package.json ./packages/fileimport-service/
+
 WORKDIR /speckle-server/packages/fileimport-service
 RUN yarn workspaces focus --production
 
