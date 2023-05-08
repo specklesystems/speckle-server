@@ -148,7 +148,7 @@ export async function addCommitDeletedActivity(params: {
       message: `Commit deleted: ${commitId}`
     }),
     pubsub.publish(CommitPubsubEvents.CommitDeleted, {
-      commitDeleted: { ...commit, streamId },
+      commitDeleted: { ...commit, streamId, branchId },
       streamId
     }),
     publish(ProjectSubscriptions.ProjectVersionsUpdated, {
