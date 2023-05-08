@@ -393,7 +393,7 @@ export class FilteringManager extends EventEmitter {
   }
 
   private populateGenericState(objectIds, state) {
-    let ids = [...objectIds, ...this.getDescendantIds(objectIds)]
+    let ids = [...objectIds] //, ...this.getDescendantIds(objectIds)]
     /** There's a lot of duplicate ids coming in from 'getDescendantIds'. We remove them
      *  to avoid the large redundancy they incurr otherwise.
      */

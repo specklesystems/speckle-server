@@ -145,9 +145,8 @@ export class RenderTree {
       .all((node: TreeNode): boolean => {
         return (
           node.model.renderView !== null &&
-          types.includes(node.model.renderView.renderData.speckleType) &&
-          (node.model.atomic ||
-            (node.parent.model.atomic && !node.parent.model.renderView?.hasGeometry))
+          node.model.renderView.hasGeometry &&
+          types.includes(node.model.renderView.renderData.speckleType)
         )
       })
       .map((val: TreeNode) => val.model.renderView)
@@ -181,7 +180,12 @@ export class RenderTree {
   }
 
   public getRenderViewNodesForNode(node: TreeNode, parent?: TreeNode): TreeNode[] {
-    if (node.model.atomic && node.model.renderView) {
+    if (
+      node.model.atomic &&
+      node.model.renderView &&
+      GeometryConverter.getSpeckleType(node.model) !== SpeckleType.RevitInstance &&
+      GeometryConverter.getSpeckleType(node.model) !== SpeckleType.BlockInstance
+    ) {
       return [node]
     }
 
