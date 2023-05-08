@@ -91,7 +91,6 @@
 import { ChevronDownIcon, ChevronUpIcon, SparklesIcon } from '@heroicons/vue/24/solid'
 import { SparklesIcon as SparklesIconOutline } from '@heroicons/vue/24/outline'
 import { PropertyInfo, StringPropertyInfo, NumericPropertyInfo } from '@speckle/viewer'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 
 const {
@@ -99,11 +98,6 @@ const {
   removePropertyFilter,
   filters: { propertyFilter }
 } = useFilterUtilities()
-const {
-  viewer: {
-    metadata: { filteringState }
-  }
-} = useInjectedViewerState()
 
 const showAllFilters = ref(false)
 
@@ -197,7 +191,7 @@ const title = computed(() => {
   return currentFilterKey
 })
 
-const colors = computed(() => !!filteringState.value?.activePropFilterKey)
+const colors = computed(() => !!propertyFilter.isApplied.value)
 
 const toggleColors = () => {
   if (!colors.value) setPropertyFilter(activeFilter.value)

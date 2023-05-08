@@ -170,15 +170,15 @@ const emit = defineEmits<{
   (e: 'expanded', depth: number): void
 }>()
 
-const {
-  viewer: {
-    metadata: { filteringState }
-  }
-} = useInjectedViewerState()
 const { addToSelection, clearSelection, removeFromSelection, objects } =
   useSelectionUtilities()
-const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
-  useFilterUtilities()
+const {
+  hideObjects,
+  showObjects,
+  isolateObjects,
+  unIsolateObjects,
+  filters: { hiddenObjectIds, isolatedObjectIds }
+} = useFilterUtilities()
 
 const isAtomic = computed(() => props.treeItem.atomic === true)
 const speckleData = props.treeItem?.raw as SpeckleObject
@@ -321,8 +321,8 @@ const setSelection = (e: MouseEvent) => {
   addToSelection(rawSpeckleData)
 }
 
-const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)
-const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
+const hiddenObjects = computed(() => hiddenObjectIds.value)
+const isolatedObjects = computed(() => isolatedObjectIds.value)
 
 const isHidden = computed(() => {
   if (!hiddenObjects.value) return false

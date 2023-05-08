@@ -101,6 +101,9 @@ export type InjectableViewerState = Readonly<{
       worldTree: ComputedRef<Optional<WorldTree>>
       availableFilters: ComputedRef<Optional<PropertyInfo[]>>
       availableViews: ComputedRef<SpeckleView[]>
+      /**
+       * @deprecated We should get rid of this and just use ui.filters since there should be two-way binding for everything there
+       */
       filteringState: ComputedRef<Optional<FilteringState>>
     }
   }

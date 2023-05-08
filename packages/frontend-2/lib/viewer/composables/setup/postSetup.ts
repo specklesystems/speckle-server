@@ -215,9 +215,9 @@ function useViewerSubscriptionEventTracker() {
 
 /**
  * TODO: TWO WAY BINDING
- * - Need to get rid of all direct viewer instance usages
- *  - so that we only interact with state abstraction
- *  - and possibly don't even need current FilteringState
+ * - /home/fabis/Code/speckle/speckle-server/packages/frontend-2/components/viewer/explorer/Filters.vue
+ *  - is the conversion from userProp/colorProp to new filter + isApplied done correctly?
+ *  - there's some bugs there with trying to change filter type while coloring is turned on - doesnt happen
  */
 
 export function useViewerSectionBoxIntegration() {

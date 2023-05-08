@@ -50,27 +50,26 @@ import { EyeIcon, EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 
 import { onKeyStroke } from '@vueuse/core'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { containsAll } from '~~/lib/common/helpers/utils'
 import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 
-const {
-  viewer: {
-    metadata: { filteringState }
-  }
-} = useInjectedViewerState()
 const { objects, clearSelection } = useSelectionUtilities()
-const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
-  useFilterUtilities()
+const {
+  hideObjects,
+  showObjects,
+  isolateObjects,
+  unIsolateObjects,
+  filters: { hiddenObjectIds, isolatedObjectIds }
+} = useFilterUtilities()
 
 const itemCount = ref(10)
 const objectsLimited = computed(() => {
   return objects.value.slice(0, itemCount.value)
 })
 
-const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)
-const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
+const hiddenObjects = computed(() => hiddenObjectIds.value)
+const isolatedObjects = computed(() => isolatedObjectIds.value)
 
 const allTargetIds = computed(() => {
   const ids = []

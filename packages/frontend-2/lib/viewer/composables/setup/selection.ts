@@ -11,26 +11,21 @@ function getFirstVisibleSelectionHit(
   state: InjectableViewerState
 ) {
   const {
-    viewer: {
-      metadata: { filteringState }
+    ui: {
+      filters: { hiddenObjectIds, isolatedObjectIds }
     }
   } = state
 
-  const hasHiddenObjects =
-    !!filteringState.value?.hiddenObjects &&
-    filteringState.value?.hiddenObjects.length !== 0
-  const hasIsolatedObjects =
-    !!filteringState.value?.isolatedObjects &&
-    filteringState.value?.isolatedObjects.length !== 0
+  const hasHiddenObjects = !!hiddenObjectIds.value.length
+  const hasIsolatedObjects = !!isolatedObjectIds.value.length
 
   for (const hit of hits) {
     if (hasHiddenObjects) {
-      if (!filteringState.value?.hiddenObjects?.includes(hit.object.id as string)) {
+      if (!hiddenObjectIds.value.includes(hit.object.id as string)) {
         return hit
       }
     } else if (hasIsolatedObjects) {
-      if (filteringState.value.isolatedObjects?.includes(hit.object.id as string))
-        return hit
+      if (isolatedObjectIds.value.includes(hit.object.id as string)) return hit
     } else {
       return hit
     }
