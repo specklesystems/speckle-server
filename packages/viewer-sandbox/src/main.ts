@@ -247,6 +247,9 @@ const getStream = () => {
 
     // Lines with numeric filter
     // 'https://speckle.xyz/streams/16a7ca997a/commits/91d82f4ea1'
+
+    // Type inheritence
+    // 'https://speckle.xyz/streams/4063469c0b/objects/ce831723f2a3a56a30dfbca54a53c90f'
   )
 }
 

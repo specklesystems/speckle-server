@@ -104,8 +104,15 @@ export class Viewer extends EventEmitter implements IViewer {
 
     new Assets()
     this.filteringManager = new FilteringManager(this.speckleRenderer, this.tree)
+    this.filteringManager.on(
+      ViewerEvent.FilteringStateSet,
+      (newState: FilteringState) => {
+        this.emit(ViewerEvent.FilteringStateSet, newState)
+      }
+    )
     this.propertyManager = new PropertyManager()
     this.differ = new Differ()
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     // ;(window as any)._V = this // For debugging! ಠ_ಠ
 
@@ -152,8 +159,13 @@ export class Viewer extends EventEmitter implements IViewer {
     this.sectionBox.setBox(box, offset)
     this.speckleRenderer.updateSectionBoxCapper()
   }
+
+  public getSectionBoxFromObjects(objectIds: string[]) {
+    return this.speckleRenderer.boxFromObjects(objectIds)
+  }
+
   public setSectionBoxFromObjects(objectIds: string[], offset?: number) {
-    this.setSectionBox(this.speckleRenderer.boxFromObjects(objectIds), offset)
+    this.setSectionBox(this.getSectionBoxFromObjects(objectIds), offset)
   }
 
   public getCurrentSectionBox() {
@@ -379,6 +391,16 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public setProjectionMode(mode: typeof CameraHandler.prototype.activeCam) {
     this.cameraHandler.activeCam = mode
+  }
+
+  public setOrthoCameraOn() {
+    this.cameraHandler.setOrthoCameraOn()
+    this.speckleRenderer.resetPipeline(true)
+  }
+
+  public setPerspectiveCameraOn() {
+    this.cameraHandler.setPerspectiveCameraOn()
+    this.speckleRenderer.resetPipeline(true)
   }
 
   public toggleCameraProjection() {

@@ -11,7 +11,7 @@ import { NotificationValidationError } from '@/modules/notifications/errors'
 import { getStream } from '@/modules/core/repositories/streams'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
-  buildAbsoluteUrlFromRoute,
+  buildAbsoluteFrontendUrlFromPath,
   getStreamCollaboratorsRoute
 } from '@/modules/core/helpers/routeHelper'
 import { sendEmail } from '@/modules/emails/services/sending'
@@ -100,7 +100,7 @@ function buildEmailTemplateParams(state: ValidatedMessageState): EmailTemplatePa
     text: buildEmailTemplateText(state),
     cta: {
       title: 'Review Request',
-      url: buildAbsoluteUrlFromRoute(getStreamCollaboratorsRoute(stream.id))
+      url: buildAbsoluteFrontendUrlFromPath(getStreamCollaboratorsRoute(stream.id))
     }
   }
 }

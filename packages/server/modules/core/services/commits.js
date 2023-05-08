@@ -1,14 +1,22 @@
 'use strict'
-const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
 
-const Streams = () => knex('streams')
 const Commits = () => knex('commits')
 const StreamCommits = () => knex('stream_commits')
-const BranchCommits = () => knex('branch_commits')
 
 const { getBranchByNameAndStreamId } = require('./branches')
-const { getObject } = require('./objects')
+
+const {
+  getStreamCommitCount,
+  getPaginatedBranchCommits,
+  getBranchCommitsTotalCount
+} = require('@/modules/core/repositories/commits')
+const {
+  createCommitByBranchName: createCommitByBranchNameNew,
+  updateCommitAndNotify,
+  deleteCommitAndNotify
+} = require('@/modules/core/services/commit/management')
+const { clamp } = require('lodash')
 
 const getCommitsByUserIdBase = ({ userId, publicOnly }) => {
   publicOnly = publicOnly !== false
@@ -44,48 +52,8 @@ const getCommitsByUserIdBase = ({ userId, publicOnly }) => {
 
 module.exports = {
   /**
-   * @returns {Promise<string>}
+   * @deprecated Use 'createCommitByBranchName()' in 'management.ts'
    */
-  async createCommitByBranchId({
-    streamId,
-    branchId,
-    objectId,
-    authorId,
-    message,
-    sourceApplication,
-    totalChildrenCount,
-    parents
-  }) {
-    // If no total children count is passed in, get it from the original object
-    // that this commit references.
-    if (!totalChildrenCount) {
-      const { totalChildrenCount: tc } = await getObject({ streamId, objectId })
-      totalChildrenCount = tc || 1
-    }
-
-    // Create main table entry
-    const [{ id }] = await Commits()
-      .returning('id')
-      .insert({
-        id: crs({ length: 10 }),
-        referencedObject: objectId,
-        author: authorId,
-        sourceApplication,
-        totalChildrenCount,
-        parents,
-        message
-      })
-
-    // Link it to a branch
-    await BranchCommits().insert({ branchId, commitId: id })
-    // Link it to a stream
-    await StreamCommits().insert({ streamId, commitId: id })
-
-    // update stream updated at
-    await Streams().where({ id: streamId }).update({ updatedAt: knex.fn.now() })
-    return id
-  },
-
   async createCommitByBranchName({
     streamId,
     branchName,
@@ -96,14 +64,9 @@ module.exports = {
     totalChildrenCount,
     parents
   }) {
-    branchName = branchName.toLowerCase()
-    const myBranch = await getBranchByNameAndStreamId({ streamId, name: branchName })
-
-    if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
-
-    return await module.exports.createCommitByBranchId({
+    const { id } = await createCommitByBranchNameNew({
       streamId,
-      branchId: myBranch.id,
+      branchName,
       objectId,
       authorId,
       message,
@@ -111,32 +74,15 @@ module.exports = {
       totalChildrenCount,
       parents
     })
+
+    return id
   },
 
-  async updateCommit({ streamId, id, message, newBranchName }) {
-    if (newBranchName) {
-      try {
-        const newBranch = await getBranchByNameAndStreamId({
-          streamId,
-          name: newBranchName
-        })
-        const { branchName: oldBranchName } = await module.exports.getCommitById({
-          streamId,
-          id
-        })
-        const oldBranch = await getBranchByNameAndStreamId({
-          streamId,
-          name: oldBranchName
-        })
-
-        await BranchCommits()
-          .where({ branchId: oldBranch.id, commitId: id })
-          .update({ branchId: newBranch.id })
-      } catch (e) {
-        throw new Error('Failed to update commit branch. ')
-      }
-    }
-    if (message) await Commits().where({ id }).update({ message })
+  /**
+   * @deprecated Use 'updateCommitAndNotify()'
+   */
+  async updateCommit({ streamId, id, message, newBranchName, userId }) {
+    await updateCommitAndNotify({ streamId, id, message, newBranchName }, userId)
     return true
   },
 
@@ -165,14 +111,18 @@ module.exports = {
     return await query
   },
 
-  async deleteCommit({ id }) {
-    return await Commits().where({ id }).del()
+  /**
+   * @deprecated Use 'deleteCommitAndNotify()'
+   */
+  async deleteCommit({ commitId, streamId, userId }) {
+    return await deleteCommitAndNotify(commitId, streamId, userId)
   },
 
+  /**
+   * @deprecated Use `getBranchCommitsTotalCount()` instead
+   */
   async getCommitsTotalCountByBranchId({ branchId }) {
-    const [res] = await BranchCommits().count().where('branchId', branchId)
-
-    return parseInt(res.count)
+    return await getBranchCommitsTotalCount({ branchId })
   },
 
   async getCommitsTotalCountByBranchName({ streamId, branchName }) {
@@ -187,38 +137,11 @@ module.exports = {
     return module.exports.getCommitsTotalCountByBranchId({ branchId: myBranch.id })
   },
 
+  /**
+   * @deprecated Use `getPaginatedBranchCommits()` instead and `getBranchCommitsTotalCount()` for the total count
+   */
   async getCommitsByBranchId({ branchId, limit, cursor }) {
-    limit = limit || 25
-    const query = BranchCommits()
-      .columns([
-        { id: 'commitId' },
-        'message',
-        'referencedObject',
-        'sourceApplication',
-        'totalChildrenCount',
-        'parents',
-        'commits.createdAt',
-        { branchName: 'branches.name' },
-        { authorName: 'users.name' },
-        { authorId: 'users.id' },
-        { authorAvatar: 'users.avatar' }
-      ])
-      .select()
-      .join('commits', 'commits.id', 'branch_commits.commitId')
-      .join('branches', 'branches.id', 'branch_commits.branchId')
-      .leftJoin('users', 'commits.author', 'users.id')
-      .where('branchId', branchId)
-
-    if (cursor) query.andWhere('commits.createdAt', '<', cursor)
-
-    query.orderBy('commits.createdAt', 'desc').limit(limit)
-
-    const rows = await query
-
-    return {
-      commits: rows,
-      cursor: rows.length > 0 ? rows[rows.length - 1].createdAt.toISOString() : null
-    }
+    return await getPaginatedBranchCommits({ branchId, limit, cursor })
   },
 
   async getCommitsByBranchName({ streamId, branchName, limit, cursor }) {
@@ -234,21 +157,19 @@ module.exports = {
   },
 
   async getCommitsTotalCountByStreamId({ streamId, ignoreGlobalsBranch }) {
-    const query = StreamCommits()
-      .count()
-      .join('branch_commits', 'stream_commits.commitId', 'branch_commits.commitId')
-      .join('branches', 'branches.id', 'branch_commits.branchId')
-      .where('stream_commits.streamId', streamId)
-
-    if (ignoreGlobalsBranch) query.andWhere('branches.name', '!=', 'globals')
-
-    // let [ res ] = await StreamCommits( ).count( ).where( 'streamId', streamId )
-    const [res] = await query
-    return parseInt(res.count)
+    return await getStreamCommitCount(streamId, { ignoreGlobalsBranch })
   },
 
+  /**
+   * @returns {Promise<{
+   *  commits: import('@/modules/core/helpers/types').CommitRecord[],
+   *  cursor: string | null
+   * }>}
+   */
   async getCommitsByStreamId({ streamId, limit, cursor, ignoreGlobalsBranch }) {
-    limit = limit || 25
+    limit = clamp(limit || 25, 0, 100)
+    if (!limit) return { commits: [], cursor: null }
+
     const query = StreamCommits()
       .columns([
         { id: 'commits.id' },

@@ -1,5 +1,5 @@
 import {
-  buildAbsoluteUrlFromRoute,
+  buildAbsoluteFrontendUrlFromPath,
   getStreamRoute
 } from '@/modules/core/helpers/routeHelper'
 import { getStream } from '@/modules/core/repositories/streams'
@@ -82,7 +82,7 @@ function buildEmailTemplateParams(state: ValidatedMessageState): EmailTemplatePa
     text: buildEmailTemplateText(state),
     cta: {
       title: 'View Stream',
-      url: buildAbsoluteUrlFromRoute(getStreamRoute(stream.id))
+      url: buildAbsoluteFrontendUrlFromPath(getStreamRoute(stream.id))
     }
   }
 }

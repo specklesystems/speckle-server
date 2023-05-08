@@ -1,0 +1,26 @@
+{{- if (and (.Values.fileimport_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "frontend_2.name" $ }}
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "frontend_2.labels" . | indent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+{{ include "frontend_2.selectorLabels" . | indent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    # allow ingress from the loadbalancer
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.ingress.namespace }}
+          podSelector:
+            matchLabels:
+{{ include  "speckle.ingress.selector.pod" $ | indent 14 }}
+      ports:
+        - port: www
+{{- end -}}

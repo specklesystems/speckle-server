@@ -18,6 +18,9 @@ const {
 
 const { makeOgImage } = require('./ogImage')
 const { moduleLogger, logger } = require('@/logging/logging')
+const {
+  listenForPreviewGenerationUpdates
+} = require('@/modules/previews/services/resultListener')
 
 const httpErrorImage = (httpErrorCode) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
@@ -71,6 +74,7 @@ exports.init = (app) => {
       return {
         type: 'file',
         error: true,
+        errorCode: 'ANGLE_NOT_FOUND',
         file: previewErrorImage
       }
     }
@@ -110,6 +114,9 @@ exports.init = (app) => {
     }
     if (previewBufferOrFile.error) {
       res.set('X-Preview-Error', 'true')
+    }
+    if (previewBufferOrFile.errorCode) {
+      res.set('X-Preview-Error-Code', previewBufferOrFile.errorCode)
     }
     if (previewBufferOrFile.type === 'file') {
       res.sendFile(previewBufferOrFile.file)
@@ -257,6 +264,8 @@ exports.init = (app) => {
       req.params.angle || DEFAULT_ANGLE
     )
   })
+
+  listenForPreviewGenerationUpdates()
 }
 
 exports.finalize = () => {}

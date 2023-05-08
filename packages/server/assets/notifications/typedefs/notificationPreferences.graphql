@@ -1,7 +1,8 @@
 extend type User {
-  notificationPreferences: JSONObject!
+  notificationPreferences: JSONObject! @isOwner
 }
 
 extend type Mutation {
   userNotificationPreferencesUpdate(preferences: JSONObject!): Boolean
+    @hasRole(role: "server:user")
 }

@@ -904,7 +904,7 @@ describe('Comments @comments', () => {
       userId: user.id,
       streamId: stream.id
     })
-    expect(archiveResult).to.be.true
+    expect(archiveResult).to.be.ok
   })
 
   it('Should not query archived comments unless asked', async () => {

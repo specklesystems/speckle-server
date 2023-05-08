@@ -6,8 +6,8 @@ import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
-import { Utils } from './modules/Utils'
 import { WorldTree } from './modules/tree/WorldTree'
+import { Utils } from './modules/Utils'
 import { World } from './modules/World'
 
 export interface ViewerParams {
@@ -59,7 +59,9 @@ export enum ViewerEvent {
   UnloadAllComplete = 'unload-all-complete',
   Busy = 'busy',
   SectionBoxChanged = 'section-box-changed',
-  SectionBoxUpdated = 'section-box-updated'
+  SectionBoxUpdated = 'section-box-updated',
+  FilteringStateSet = 'filtering-state-set',
+  LightConfigUpdated = 'light-config-updated'
 }
 
 export type SelectionEvent = {
@@ -67,7 +69,7 @@ export type SelectionEvent = {
   event?: PointerEvent
   hits: Array<{
     guid?: string
-    object: Record<string, unknown>
+    object: Record<string, unknown> & { id: string }
     point: Vector3
   }>
 }

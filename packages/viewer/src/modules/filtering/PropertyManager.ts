@@ -88,23 +88,44 @@ export class PropertyManager {
   }
 }
 
+/**
+ * PropertyInfo types represent all of the properties that you can filter on in the viewer
+ */
+
 export interface PropertyInfo {
+  /**
+   * Property identifier, flattened
+   */
   key: string
-  count: number
+  /**
+   * Total number of objects that have this property
+   */
   objectCount: number
   type: 'number' | 'string'
 }
 
 export interface NumericPropertyInfo extends PropertyInfo {
   type: 'number'
+  /**
+   * Absolute min/max values that are available for this property
+   */
   min: number
   max: number
+  /**
+   * An array of pairs of object IDs and their actual values for that property
+   */
   valueGroups: { value: number; id: string }[]
+  /**
+   * User defined/filtered min/max that is bound within min/max above
+   */
   passMin: number | null
   passMax: number | null
 }
 
 export interface StringPropertyInfo extends PropertyInfo {
-  type: 'number'
+  type: 'string'
+  /**
+   * An array of pairs of object IDs and their actual values for that property
+   */
   valueGroups: { value: string; ids: string[] }[]
 }

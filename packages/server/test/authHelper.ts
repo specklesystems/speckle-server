@@ -28,7 +28,7 @@ export async function createTestUser(userObj: BasicTestUser) {
     userObj.email = `${kebabCase(userObj.name)}@someemail.com`
   }
 
-  const id = await createUser(omit(userObj, ['id']))
+  const id = await createUser(omit(userObj, ['id']), { skipPropertyValidation: true })
   userObj.id = id
 }
 

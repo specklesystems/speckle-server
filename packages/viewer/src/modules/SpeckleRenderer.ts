@@ -55,6 +55,7 @@ import MeshBatch from './batching/MeshBatch'
 import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
 import { Shadowcatcher } from './Shadowcatcher'
 import Logger from 'js-logger'
+import { Differ } from './Differ'
 import SpeckleMesh from './objects/SpeckleMesh'
 import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 import { BatchObject } from './batching/BatchObject'
@@ -90,6 +91,7 @@ export default class SpeckleRenderer {
   private sectionPlanesChanged: Plane[] = []
   private sectionBoxOutlines: SectionBoxOutlines = null
   private _shadowcatcher: Shadowcatcher = null
+  private _differ: Differ = null
   private cancel: { [subtreeId: string]: boolean } = {}
 
   private explodeTime = -1
@@ -180,6 +182,10 @@ export default class SpeckleRenderer {
 
   public get currentSectionBox() {
     return this.viewer.sectionBox.getCurrentBox()
+  }
+
+  public get differ() {
+    return this._differ
   }
 
   public constructor(viewer: Viewer /** TEMPORARY */) {
@@ -328,6 +334,8 @@ export default class SpeckleRenderer {
     }
 
     this._scene.add(this._shadowcatcher.shadowcatcherMesh)
+
+    this._differ = new Differ()
   }
 
   public update(deltaTime: number) {
@@ -827,6 +835,7 @@ export default class SpeckleRenderer {
     }
     this.updateDirectLights()
     this.updateShadowCatcher()
+    this.viewer.emit(ViewerEvent.LightConfigUpdated, { ...config })
   }
 
   public updateHelpers() {
@@ -1040,6 +1049,14 @@ export default class SpeckleRenderer {
     }
 
     const box = new Box3().setFromObject(this.allObjects)
+    /** This is for special cases like when the stream will only have one point
+     *  which three will not consider it's size when computing the bounding box
+     *  resulting in a zero size bounding box. That's why we make sure the bounding
+     *  box is never zero in size
+     */
+    if (box.min.equals(box.max)) {
+      box.expandByVector(new Vector3(1, 1, 1))
+    }
     this.zoomToBox(box, fit, transition)
     // this.viewer.controls.setBoundary( box )
   }

@@ -188,6 +188,7 @@ void main() {
         mvPosition = instanceMatrix * mvPosition;
     #endif
 
+
     mvPosition = modelViewMatrix * mvPosition;
 
     vGradientIndex = gradientIndex;
