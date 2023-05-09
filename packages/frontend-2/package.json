@@ -95,6 +95,7 @@
     "@types/mixpanel-browser": "^2.38.0",
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
+    "@vitejs/plugin-legacy": "^4.0.3",
     "browserify-zlib": "^0.2.0",
     "chromatic": "^6.11.4",
     "concurrently": "^7.5.0",

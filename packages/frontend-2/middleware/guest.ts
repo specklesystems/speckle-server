@@ -9,7 +9,8 @@ const exclusionList = ['authorize-app']
  * Apply this to a page to prevent authenticated access
  */
 export default defineNuxtRouteMiddleware(async (to) => {
-  const { $apollo } = useNuxtApp()
+  const nuxt = useNuxtApp()
+  const { $apollo } = nuxt
   const client = ($apollo as { default: ApolloClient<unknown> }).default
 
   // Skipping this on some auth sub-pages
@@ -24,6 +25,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // Redirect home, if not logged in
   if (data?.activeUser?.id) {
+    if (process.server && nuxt.ssrContext?.event.node.req.method === 'OPTIONS') {
+      // quickfix hack to prevent redirect in OPTIONS
+      return
+    }
     return navigateTo(homeRoute)
   }
 
