@@ -1,5 +1,4 @@
 /* stylelint-disable selector-id-pattern */
-@import './tailwind-setup/semantic-colors.css';
 @import './tailwind-setup/tippy.css';
 
 @tailwind base;
@@ -9,125 +8,6 @@
 /**
  * Don't pollute this - it's going to be bundled in all pages!
  */
-
-@layer components {
-  /**
-   * Heading weights & line heights can differ, which is why we only set the font size
-   */
-  .h1 {
-    @apply text-5xl leading-10;
-  }
-
-  .h2 {
-    @apply text-4xl leading-10;
-  }
-
-  .h3 {
-    @apply text-3xl leading-9;
-  }
-
-  .h4 {
-    @apply text-2xl leading-8;
-  }
-
-  .h5 {
-    @apply text-xl leading-7;
-  }
-
-  .h6 {
-    @apply text-lg leading-6;
-  }
-
-  .label {
-    @apply text-sm font-medium leading-5;
-
-    &--light {
-      @apply font-normal;
-    }
-  }
-
-  .label-light {
-    @apply label label--light;
-  }
-
-  .normal {
-    @apply text-base font-normal;
-  }
-
-  .caption {
-    @apply text-xs;
-  }
-
-  .text-tiny {
-    font-size: 0.6rem;
-    line-height: 1rem;
-  }
-
-  /**
-   * Grid/Layout container that limits max width to expected sizes that we use in our designs
-   * (see Figma - Design System - Foundations - Grid & Layout)
-   */
-  .layout-container {
-    @apply mx-auto;
-
-    /* base/mobile - fluid, no max width, just padding */
-    @apply px-4;
-
-    /* sm+ - also fluid, increased padding */
-    @media (min-width: theme('screens.sm')) {
-      @apply px-8;
-    }
-
-    /* lg+ (from this point on, no padding just limited max width) */
-    @media (min-width: theme('screens.lg')) {
-      /* @apply px-0 max-w-[928px]; */
-      @apply px-6 max-w-full;
-    }
-
-    /* xl+ */
-    @media (min-width: theme('screens.xl')) {
-      @apply max-w-[1216px];
-    }
-
-    /* 2xl+ */
-    @media (min-width: theme('screens.2xl')) {
-      @apply max-w-[1312px];
-    }
-  }
-
-  /* Simple scrollbar (OSX-like) to use instead of the ugly browser one */
-  .simple-scrollbar {
-    scrollbar-width: var(--simple-scrollbar-width);
-    scrollbar-color: var(--foreground-2);
-
-    &::-webkit-scrollbar {
-      width: var(--simple-scrollbar-width);
-      height: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-      border-radius: 15px;
-      background: var(--foundation-disabled);
-    }
-
-    &::-webkit-scrollbar-thumb {
-      border-radius: 15px;
-      background: var(--foreground-2);
-    }
-
-    &::-webkit-scrollbar-thumb:hover {
-      background: var(--foreground-2);
-    }
-
-    &::-webkit-scrollbar-thumb:active {
-      background: rgba(90 90 90 10100%);
-    }
-  }
-}
-
-:root {
-  --simple-scrollbar-width: 4px;
-}
 
 /**
  * Making sure page is always stretched to the bottom of the screen even if there's nothing in it
@@ -143,13 +23,4 @@ html,
 body,
 div#__nuxt {
   height: 100%;
-}
-
-body {
-  @apply font-sans;
-}
-
-[type='checkbox']:focus,
-[type='radio']:focus {
-  @apply ring-offset-foundation;
 }

@@ -1,0 +1,41 @@
+const mainExtends = ['eslint:recommended', 'prettier']
+
+/** @type {import("eslint").Linter.Config} */
+const config = {
+  env: {
+    node: true
+  },
+  parserOptions: {
+    ecmaVersion: 2022,
+    sourceType: 'module',
+    parser: '@typescript-eslint/parser',
+    tsconfigRootDir: __dirname,
+    project: ['./tsconfig.json']
+  },
+  extends: [...mainExtends],
+  plugins: ['@typescript-eslint'],
+  overrides: [
+    {
+      files: '*.ts',
+      extends: ['plugin:@typescript-eslint/recommended', ...mainExtends],
+      rules: {
+        '@typescript-eslint/no-explicit-any': ['error'],
+        '@typescript-eslint/no-unsafe-argument': ['error'],
+        '@typescript-eslint/no-unsafe-assignment': 'error',
+        '@typescript-eslint/no-unsafe-call': 'error',
+        '@typescript-eslint/no-unsafe-member-access': 'error',
+        '@typescript-eslint/no-unsafe-return': 'error',
+        '@typescript-eslint/no-for-in-array': ['error'],
+        '@typescript-eslint/restrict-template-expressions': ['error'],
+        '@typescript-eslint/restrict-plus-operands': ['error'],
+        '@typescript-eslint/await-thenable': ['warn'],
+        '@typescript-eslint/ban-types': ['warn'],
+        'require-await': 'off',
+        '@typescript-eslint/require-await': 'error',
+        'no-undef': 'off'
+      }
+    }
+  ]
+}
+
+module.exports = config

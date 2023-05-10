@@ -1,0 +1,33 @@
+{
+  "name": "@speckle/tailwind-theme",
+  "description": "Speckle tailwind theme used in frontend 2 and other apps",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "rimraf ./dist && rimraf ./dist-cjs && tsc -p . && tsc -p ./tsconfig.cjs.json && node finalize-dist.js"
+  },
+  "main": "./dist-cjs/plugin.js",
+  "types": "./dist/plugin.d.ts",
+  "module": "./dist/plugin.js",
+  "engines": {
+    "node": "^18.0.0"
+  },
+  "peerDependencies": {
+    "tailwindcss": "^3.3.2"
+  },
+  "dependencies": {
+    "@tailwindcss/forms": "^0.5.3"
+  },
+  "devDependencies": {
+    "@types/eslint": "^8.4.5",
+    "@typescript-eslint/eslint-plugin": "^5.38.1",
+    "@typescript-eslint/parser": "^5.38.1",
+    "eslint": "^8.24.0",
+    "eslint-config-prettier": "^8.5.0",
+    "prettier": "^2.7.1",
+    "rimraf": "^5.0.0",
+    "tailwindcss": "^3.3.2",
+    "typescript": "^5.0.4"
+  }
+}

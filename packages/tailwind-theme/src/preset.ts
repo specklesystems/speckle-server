@@ -1,11 +1,7 @@
-/**
- * This theme is largely based on the one we have for the Speckle website - similar color palette etc.
- *
- * IMPORTANT: Discuss any changes to the theme (extra colors, spacings etc.) with the team, cause we don't want too many options (colors/spacings/etc) to be available as that reduces consistency across the page
- */
+import type { Config } from 'tailwindcss'
+import FormsPlugin from '@tailwindcss/forms'
 
-/** @type {import('tailwindcss').Config} */
-const config = {
+const config: Config = {
   darkMode: 'class',
   content: [
     `./components/**/*.{vue,js,ts}`,
@@ -78,7 +74,7 @@ const config = {
       }
     }
   },
-  plugins: [require('@tailwindcss/forms'), require('@tailwindcss/line-clamp')]
+  plugins: [FormsPlugin]
 }
 
-module.exports = config
+export default config

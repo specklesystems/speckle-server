@@ -13,6 +13,10 @@
       "name": "🏬 frontend 2.0"
     },
     {
+      "path": "packages/tailwind-theme",
+      "name": "🎨 tailwind-theme"
+    },
+    {
       "path": "packages/preview-service",
       "name": "🖼️ preview-service"
     },
