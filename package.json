@@ -33,6 +33,7 @@
     "cm": "cz"
   },
   "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.0",
     "@swc/core": "^1.2.222",
     "@types/eslint": "^8.4.1",
     "commitizen": "^4.2.5",
