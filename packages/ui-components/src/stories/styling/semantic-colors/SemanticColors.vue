@@ -35,7 +35,7 @@ import { markClassesUsed } from '~~/src/helpers/tailwind'
 import { useClipboard } from '@vueuse/core'
 import { useGlobalToast } from '~~/src/stories/composables/toast'
 import { Ref, ref } from 'vue'
-import { ToastNotificationType } from '~~/src/helpers/toast'
+import { ToastNotificationType } from '~~/src/helpers/global/toast'
 import CommonTextLink from '~~/src/components/common/text/Link.vue'
 
 /** Suffix on top of the color base name (e.g., focus if danger-focus) or null if no suffix (e.g., danger) */

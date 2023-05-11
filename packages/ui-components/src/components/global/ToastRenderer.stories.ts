@@ -3,7 +3,7 @@ import { Meta, StoryObj } from '@storybook/vue3'
 import { ref } from 'vue'
 import ToastRenderer from '~~/src/components/global/ToastRenderer.vue'
 import FormButton from '~~/src/components/form/Button.vue'
-import { ToastNotification, ToastNotificationType } from '~~/src/helpers/toast'
+import { ToastNotification, ToastNotificationType } from '~~/src/helpers/global/toast'
 
 export default {
   component: ToastRenderer,
