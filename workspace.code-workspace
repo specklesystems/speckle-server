@@ -17,6 +17,10 @@
       "name": "🎨 tailwind-theme"
     },
     {
+      "path": "packages/ui-components",
+      "name": "🫧 ui-components"
+    },
+    {
       "path": "packages/preview-service",
       "name": "🖼️ preview-service"
     },

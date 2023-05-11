@@ -1,0 +1,31 @@
+{
+  "name": "@speckle/ui-components",
+  "description": "Speckle theme UI components built with Vue 3 & Tailwind",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "rollup --config rollup.config.cjs"
+  },
+  "type": "module",
+  "private": true,
+  "peerDependencies": {
+    "vue": "^3.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.0",
+    "@types/eslint": "^8.4.5",
+    "@typescript-eslint/eslint-plugin": "^5.38.1",
+    "@typescript-eslint/parser": "^5.38.1",
+    "eslint": "^8.24.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-storybook": "^0.6.6",
+    "eslint-plugin-vue": "^9.5.1",
+    "eslint-plugin-vuejs-accessibility": "^1.2.0",
+    "prettier": "^2.7.1",
+    "rollup": "^3.21.6",
+    "rollup-plugin-delete": "^2.0.0",
+    "rollup-plugin-typescript2": "^0.34.1",
+    "rollup-plugin-vue": "^6.0.0",
+    "typescript": "^5.0.4",
+    "vue": "^3.0.0"
+  }
+}

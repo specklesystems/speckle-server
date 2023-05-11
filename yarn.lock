@@ -9683,6 +9683,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@rollup/plugin-typescript@npm:^11.1.0":
+  version: 11.1.0
+  resolution: "@rollup/plugin-typescript@npm:11.1.0"
+  dependencies:
+    "@rollup/pluginutils": ^5.0.1
+    resolve: ^1.22.1
+  peerDependencies:
+    rollup: ^2.14.0||^3.0.0
+    tslib: "*"
+    typescript: ">=3.7.0"
+  peerDependenciesMeta:
+    rollup:
+      optional: true
+    tslib:
+      optional: true
+  checksum: 64ed5abbae392032fb190a5d3a29beb73f968919aed964ed5545e2732de6a1670f97131785e9376c06f784ae61545c5ad47352c126f3830aaa16b669bee2e9b9
+  languageName: node
+  linkType: hard
+
 "@rollup/plugin-wasm@npm:^6.1.2":
   version: 6.1.2
   resolution: "@rollup/plugin-wasm@npm:6.1.2"
@@ -10338,9 +10357,35 @@ __metadata:
     prettier: ^2.7.1
     rimraf: ^5.0.0
     tailwindcss: ^3.3.2
+    tsconfig-to-dual-package: ^1.2.0
     typescript: ^5.0.4
   peerDependencies:
     tailwindcss: ^3.3.2
+  languageName: unknown
+  linkType: soft
+
+"@speckle/ui-components@workspace:packages/ui-components":
+  version: 0.0.0-use.local
+  resolution: "@speckle/ui-components@workspace:packages/ui-components"
+  dependencies:
+    "@rollup/plugin-typescript": ^11.1.0
+    "@types/eslint": ^8.4.5
+    "@typescript-eslint/eslint-plugin": ^5.38.1
+    "@typescript-eslint/parser": ^5.38.1
+    eslint: ^8.24.0
+    eslint-config-prettier: ^8.5.0
+    eslint-plugin-storybook: ^0.6.6
+    eslint-plugin-vue: ^9.5.1
+    eslint-plugin-vuejs-accessibility: ^1.2.0
+    prettier: ^2.7.1
+    rollup: ^3.21.6
+    rollup-plugin-delete: ^2.0.0
+    rollup-plugin-typescript2: ^0.34.1
+    rollup-plugin-vue: ^6.0.0
+    typescript: ^5.0.4
+    vue: ^3.0.0
+  peerDependencies:
+    vue: ^3.0.0
   languageName: unknown
   linkType: soft
 
@@ -20952,6 +20997,13 @@ __metadata:
   version: 2.0.2
   resolution: "estree-walker@npm:2.0.2"
   checksum: 6151e6f9828abe2259e57f5fd3761335bb0d2ebd76dc1a01048ccee22fabcfef3c0859300f6d83ff0d1927849368775ec5a6d265dde2f6de5a1be1721cd94efc
+  languageName: node
+  linkType: hard
+
+"estree-walker@npm:^0.6.1":
+  version: 0.6.1
+  resolution: "estree-walker@npm:0.6.1"
+  checksum: 9d6f82a4921f11eec18f8089fb3cce6e53bcf45a8e545c42a2674d02d055fb30f25f90495f8be60803df6c39680c80dcee7f944526867eb7aa1fc9254883b23d
   languageName: node
   linkType: hard
 
@@ -33679,6 +33731,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"resolve-tsconfig@npm:^1.3.0":
+  version: 1.3.0
+  resolution: "resolve-tsconfig@npm:1.3.0"
+  peerDependencies:
+    typescript: "*"
+  checksum: 2598ee94049b9aedf2ef6a6060d27ad55a9022d2f93a9ae4e49bec4dbc8ed58dca860f25c1a279061b7d862881f6f36047c56601325d2f8ba356b5d7390ead94
+  languageName: node
+  linkType: hard
+
 "resolve.exports@npm:^1.1.0":
   version: 1.1.0
   resolution: "resolve.exports@npm:1.1.0"
@@ -34047,6 +34108,28 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rollup-plugin-vue@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "rollup-plugin-vue@npm:6.0.0"
+  dependencies:
+    debug: ^4.1.1
+    hash-sum: ^2.0.0
+    rollup-pluginutils: ^2.8.2
+  peerDependencies:
+    "@vue/compiler-sfc": "*"
+  checksum: daadad653e3a056a9596bfa63381e24e45ca3779eeac9db4a4ade7d16a53181da1086f66a89b6aab8488aa71ca10fe73454b6c4c6c20129c8a33adfd444c006f
+  languageName: node
+  linkType: hard
+
+"rollup-pluginutils@npm:^2.8.2":
+  version: 2.8.2
+  resolution: "rollup-pluginutils@npm:2.8.2"
+  dependencies:
+    estree-walker: ^0.6.1
+  checksum: 339fdf866d8f4ff6e408fa274c0525412f7edb01dc46b5ccda51f575b7e0d20ad72965773376fb5db95a77a7fcfcab97bf841ec08dbadf5d6b08af02b7a2cf5e
+  languageName: node
+  linkType: hard
+
 "rollup@npm:^2.25.0 || ^3.3.0, rollup@npm:^3.10.0, rollup@npm:^3.19.1, rollup@npm:^3.7.0":
   version: 3.19.1
   resolution: "rollup@npm:3.19.1"
@@ -34072,6 +34155,20 @@ __metadata:
   bin:
     rollup: dist/bin/rollup
   checksum: 6a2bf167b3587d4df709b37d149ad0300692cc5deb510f89ac7bdc77c8738c9546ae3de9322b0968e1ed2b0e984571f5f55aae28fa7de4cfcb1bc5402a4e2be6
+  languageName: node
+  linkType: hard
+
+"rollup@npm:^3.21.6":
+  version: 3.21.6
+  resolution: "rollup@npm:3.21.6"
+  dependencies:
+    fsevents: ~2.3.2
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    rollup: dist/bin/rollup
+  checksum: bb6786ee0d755f253d3aa3820b05806a482abe9c9fd6dad14df83b386a370d48af20c4be66f732a15b5e89c0ae6269a7b82736b64f34ae61552c58de0eecedeb
   languageName: node
   linkType: hard
 
@@ -36650,6 +36747,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tsconfig-to-dual-package@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "tsconfig-to-dual-package@npm:1.2.0"
+  dependencies:
+    resolve-tsconfig: ^1.3.0
+  peerDependencies:
+    typescript: ">=4.0.0"
+  bin:
+    tsconfig-to-dual-package: bin/cmd.mjs
+  checksum: 744f675bfbceab1611669f24c53f5c3c17481dc389a97a0cdb3b93f5625d3bd8d9fd4cf9d28b947d6b48844646ae2898620fce8adf10b9cb170c55a556cb356f
+  languageName: node
+  linkType: hard
+
 "tslib@npm:^2.3.1":
   version: 2.4.0
   resolution: "tslib@npm:2.4.0"
@@ -38378,7 +38488,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue@npm:^3.2.47":
+"vue@npm:^3.0.0, vue@npm:^3.2.47":
   version: 3.2.47
   resolution: "vue@npm:3.2.47"
   dependencies:

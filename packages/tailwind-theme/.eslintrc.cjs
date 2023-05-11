@@ -5,15 +5,7 @@ const config = {
   env: {
     node: true
   },
-  parserOptions: {
-    ecmaVersion: 2022,
-    sourceType: 'module',
-    parser: '@typescript-eslint/parser',
-    tsconfigRootDir: __dirname,
-    project: ['./tsconfig.json']
-  },
   extends: [...mainExtends],
-  plugins: ['@typescript-eslint'],
   overrides: [
     {
       files: '*.ts',
@@ -33,7 +25,15 @@ const config = {
         'require-await': 'off',
         '@typescript-eslint/require-await': 'error',
         'no-undef': 'off'
-      }
+      },
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: 'module',
+        parser: '@typescript-eslint/parser',
+        tsconfigRootDir: __dirname,
+        project: ['./tsconfig.json']
+      },
+      plugins: ['@typescript-eslint']
     }
   ]
 }
