@@ -56,7 +56,7 @@ const config = {
         sourceType: 'module',
         parser: '@typescript-eslint/parser',
         tsconfigRootDir: __dirname,
-        project: ['./tsconfig.json'],
+        project: ['./tsconfig.json', './tsconfig.node.json'],
         extraFileExtensions: ['.vue']
       },
       plugins: ['@typescript-eslint']
