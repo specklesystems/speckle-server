@@ -20,6 +20,12 @@ Develop & test your components in Storybook - `yarn storybook`
 Optionally you can also run `yarn dev` to run the Vite dev server which runs `App.vue` and in some special scenarios you might
 want to debug components there.
 
+### Troubleshooting
+
+#### Styles don't work
+
+Re-start storybook, it could be that you introduced a new tailwind class that was previously purged out
+
 ## TODO
 
 - Add export to Chromatic
