@@ -57,9 +57,6 @@ pushd "${GIT_ROOT}"
     --readme "${HELM_DIR}/README.md" \
     --schema "${JSON_SCHEMA_PATH}"
 
-    echo "🐛 Workaround for bug in generator for schema.json: https://github.com/bitnami-labs/readme-generator-for-helm/issues/34"
-    TMP_OUTPUT="$(mktemp -t speckle-server-json-schema)"
-    jq --arg replacement 'object' '(.. | .items? | select(.type == "")).type |= $replacement' "${JSON_SCHEMA_PATH}" > "${TMP_OUTPUT}" && mv "${TMP_OUTPUT}" "${JSON_SCHEMA_PATH}"
 popd
 
 pushd "${HELM_DIR}"

@@ -27,8 +27,11 @@ ssl_canonical_url: true
 cert_manager_issuer: letsencrypt-staging
 
 analytics:
+  ## @param analytics.enabled Enable or disable analytics
   enabled: true
+  ## @param analytics.mixpanel_token_id The Mixpanel token ID used to identify this Speckle deployment in MixPanel
   mixpanel_token_id: 'acd87c5a50b56df91a795e999812a3a4'
+  ## @param analytics.mixpanel_api_host The Mixpanel API host to which analytics data will be sent
   mixpanel_api_host: 'https://analytics.speckle.systems'
 
 ## @section Network Plugin configuration
@@ -372,7 +375,9 @@ server:
 
   ## @param server.adminOverrideEnabled Enables the server side admin authz override
   adminOverrideEnabled: false
+  ## @param server.onboardingStreamId The id of the stream to be used for onboarding new users
   onboardingStreamId: ''
+  ## @param server.speckleAutomateUrl The url of the Speckle Automate instance
   speckleAutomateUrl: 'https://automate.speckle.systems'
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
@@ -595,7 +600,7 @@ server:
     burst_get_objects_streamid_objectid_single: 200
     ## @param server.ratelimiting.post_graphql The maximum number of requests that can be made to the GraphQL API in a moving one second window.
     post_graphql: 50
-    ## @param server.ratelimiting.burst_post_grapqhl If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the GraphQL API in a moving one minute window.
+    ## @param server.ratelimiting.burst_post_graphql If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the GraphQL API in a moving one minute window.
     burst_post_graphql: 200
     ## @param server.ratelimiting.get_auth The maximum number of requests that can be made to the Speckle server to authenticate in a moving one second window.
     get_auth: 2
