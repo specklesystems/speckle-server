@@ -41,5 +41,13 @@ repos:
         args:
           - --ignore=E501 # ignoring error about lines that are too long
 
+  - repo: local
+    hooks:
+      - id: helm-documentation
+        name: Helm documentation
+        language: system
+        files: utils/helm/speckle-server/values.yaml
+        entry: utils/helm/update-documentation.sh
+
 ci:
   autoupdate_schedule: quarterly
