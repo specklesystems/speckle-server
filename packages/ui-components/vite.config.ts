@@ -20,5 +20,15 @@ export default defineConfig({
         }
       }
     }
+  },
+
+  resolve: {
+    alias: {
+      // We need browser polyfills for crypto & zlib cause they seem to be bundled for the web
+      // for some reason when running storybook. Doesn't appear that these
+      // actually appear in any client-side bundles tho!
+      crypto: 'rollup-plugin-node-builtins',
+      zlib: 'browserify-zlib'
+    }
   }
 })
