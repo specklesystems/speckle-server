@@ -30,7 +30,8 @@
     "@vueuse/core": "^9.13.0",
     "lodash-es": "^4.0.0",
     "nanoid": "^4.0.0",
-    "vee-validate": "^4.7.0"
+    "vee-validate": "^4.7.0",
+    "vue-tippy": "^6.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^11.1.0",

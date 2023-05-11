@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import '~~/src/assets/tailwind.css'
+import 'tippy.js/dist/tippy.css'
 import type { Parameters, Decorator } from '@storybook/vue3'
 import { useArgs, useGlobals } from '@storybook/preview-api'
 import SingletonManagers from '../src/stories/components/SingletonManagers.vue'

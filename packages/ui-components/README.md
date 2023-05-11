@@ -32,3 +32,5 @@ Re-start storybook, it could be that you introduced a new tailwind class that wa
 - Add test-storybook
 - Set up npmignore
 - fe-2 viewer modifier keys for events
+- Check for nuxtLink
+- Check form async search bug when clicking on search result item
