@@ -3,6 +3,7 @@ import type { OutputOptions } from 'rollup'
 import { withoutLeadingSlash } from 'ufo'
 import { sanitizeFilePath } from 'mlly'
 import { filename } from 'pathe/utils'
+import legacy from '@vitejs/plugin-legacy'
 
 // Copied out from nuxt vite-builder source to correctly build output chunk/entry/asset/etc file names
 const buildOutputFileName = (chunkName: string) =>
@@ -86,8 +87,18 @@ export default defineNuxtConfig({
             return buildOutputFileName(chunkInfo.name)
           }
         }
-      }
-    }
+      },
+      // older chrome version for CEF 65 support. all identifiers except the chrome one are default ones.
+      target: ['es2020', 'edge88', 'firefox78', 'chrome65', 'safari14']
+    },
+    plugins: [
+      // again - only for CEF 65
+      legacy({
+        renderLegacyChunks: false,
+        // only adding the specific polyfills we need to reduce bundle size
+        modernPolyfills: ['es.global-this', 'es/object', 'es/array']
+      })
+    ]
   },
 
   app: {
@@ -95,8 +106,15 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    // Necessary because of the auth redirect to `/?access_code=...` from the backend in auth flows
-    '/': { cors: true, headers: { 'access-control-allowed-methods': 'GET' } }
+    // Necessary because of redirects from backend in auth flows
+    '/': {
+      cors: true,
+      headers: { 'access-control-allow-methods': 'GET' }
+    },
+    '/authn/login': {
+      cors: true,
+      headers: { 'access-control-allow-methods': 'GET' }
+    }
   },
 
   build: {
@@ -110,5 +128,28 @@ export default defineNuxtConfig({
       '@vueuse/core',
       /prosemirror.*/
     ]
+  },
+  hooks: {
+    'build:manifest': (manifest) => {
+      // kinda hacky, vite polyfills are incorrectly being loaded last so we have to move them to appear first in the object.
+      // we can't replace `manifest` entirely, cause then we're only mutating a local variable, not the actual manifest
+      // which is why we have to mutate the reference.
+      // since ES2015 object string property order is more or less guaranteed - the order is chronological
+      const polyfillKey = 'vite/legacy-polyfills'
+      const polyfillEntry = manifest[polyfillKey]
+      if (!polyfillEntry) return
+
+      const oldManifest = { ...manifest }
+      delete oldManifest[polyfillKey]
+
+      for (const key in manifest) {
+        delete manifest[key]
+      }
+
+      manifest[polyfillKey] = polyfillEntry
+      for (const key in oldManifest) {
+        manifest[key] = oldManifest[key]
+      }
+    }
   }
 })
