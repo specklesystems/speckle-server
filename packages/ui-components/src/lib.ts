@@ -11,6 +11,7 @@ import {
 import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 import CommonStepsNumber from '~~/src/components/common/steps/Number.vue'
 import CommonStepsBullet from '~~/src/components/common/steps/Bullet.vue'
+import FormCardButton from '~~/src/components/form/CardButton.vue'
 
 export {
   GlobalToastRenderer,
@@ -20,6 +21,7 @@ export {
   CommonBadge,
   TailwindBreakpoints,
   CommonStepsBullet,
-  CommonStepsNumber
+  CommonStepsNumber,
+  FormCardButton
 }
 export type { ToastNotification, BulletStepType, NumberStepType, HorizontalOrVertical }
