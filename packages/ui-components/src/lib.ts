@@ -12,6 +12,7 @@ import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 import CommonStepsNumber from '~~/src/components/common/steps/Number.vue'
 import CommonStepsBullet from '~~/src/components/common/steps/Bullet.vue'
 import FormCardButton from '~~/src/components/form/CardButton.vue'
+import FormCheckbox from '~~/src/components/form/Checkbox.vue'
 
 export {
   GlobalToastRenderer,
@@ -22,6 +23,7 @@ export {
   TailwindBreakpoints,
   CommonStepsBullet,
   CommonStepsNumber,
-  FormCardButton
+  FormCardButton,
+  FormCheckbox
 }
 export type { ToastNotification, BulletStepType, NumberStepType, HorizontalOrVertical }

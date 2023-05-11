@@ -31,17 +31,11 @@
     </div>
   </div>
 </template>
-<script lang="ts">
-import { defineComponent } from 'vue'
-export default defineComponent({
-  inheritAttrs: false
-})
-</script>
 <script setup lang="ts">
-import { nanoid } from 'nanoid'
 import { RuleExpression, useField } from 'vee-validate'
-import { PropType } from 'vue'
+import { PropType, computed, ref } from 'vue'
 import { Optional } from '@speckle/shared'
+import { nanoid } from 'nanoid'
 
 /**
  * Troubleshooting:
@@ -53,6 +47,10 @@ import { Optional } from '@speckle/shared'
  */
 
 type ValueType = Optional<string | true> | string[]
+
+defineOptions({
+  inheritAttrs: false
+})
 
 const props = defineProps({
   /**
