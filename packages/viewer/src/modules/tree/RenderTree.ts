@@ -140,7 +140,7 @@ export class RenderTree {
     return transform
   }
 
-  public getAtomicRenderViews(...types: SpeckleType[]): NodeRenderView[] {
+  public getRenderableRenderViews(...types: SpeckleType[]): NodeRenderView[] {
     return this.root
       .all((node: TreeNode): boolean => {
         return (
@@ -168,7 +168,12 @@ export class RenderTree {
    *  we might want to.
    */
   public getRenderViewsForNode(node: TreeNode, parent?: TreeNode): NodeRenderView[] {
-    if (node.model.atomic && node.model.renderView) {
+    if (
+      node.model.atomic &&
+      node.model.renderView &&
+      GeometryConverter.getSpeckleType(node.model) !== SpeckleType.RevitInstance &&
+      GeometryConverter.getSpeckleType(node.model) !== SpeckleType.BlockInstance
+    ) {
       return [node.model.renderView]
     }
 
