@@ -13,6 +13,8 @@ import CommonStepsNumber from '~~/src/components/common/steps/Number.vue'
 import CommonStepsBullet from '~~/src/components/common/steps/Bullet.vue'
 import FormCardButton from '~~/src/components/form/CardButton.vue'
 import FormCheckbox from '~~/src/components/form/Checkbox.vue'
+import FormTextArea from '~~/src/components/form/TextArea.vue'
+import FormTextInput from '~~/src/components/form/TextInput.vue'
 
 export {
   GlobalToastRenderer,
@@ -24,6 +26,8 @@ export {
   CommonStepsBullet,
   CommonStepsNumber,
   FormCardButton,
-  FormCheckbox
+  FormCheckbox,
+  FormTextArea,
+  FormTextInput
 }
 export type { ToastNotification, BulletStepType, NumberStepType, HorizontalOrVertical }

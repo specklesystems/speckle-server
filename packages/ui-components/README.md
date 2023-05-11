@@ -31,3 +31,4 @@ Re-start storybook, it could be that you introduced a new tailwind class that wa
 - Add export to Chromatic
 - Add test-storybook
 - Set up npmignore
+- fe-2 viewer modifier keys for events

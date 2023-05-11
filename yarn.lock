@@ -10964,6 +10964,7 @@ __metadata:
     eslint-plugin-vue: ^9.5.1
     eslint-plugin-vuejs-accessibility: ^1.2.0
     lodash-es: ^4.0.0
+    nanoid: ^4.0.0
     postcss: ^8.4.23
     postcss-nesting: ^10.2.0
     prettier: ^2.7.1
