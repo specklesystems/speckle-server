@@ -19,10 +19,12 @@
           <div
             :class="['h-40 w-40', `bg-${buildColorString(colorBase, variation)}`]"
           ></div>
-          <!-- TODO: CommonTextLink -->
-          <a href="javascript:void;" @click="onVariationClick(colorBase, variation)">
+          <CommonTextLink
+            href="javascript:void;"
+            @click="onVariationClick(colorBase, variation)"
+          >
             {{ buildColorString(colorBase, variation) }}
-          </a>
+          </CommonTextLink>
         </div>
       </div>
     </div>
@@ -34,6 +36,7 @@ import { useClipboard } from '@vueuse/core'
 import { useGlobalToast } from '~~/src/stories/composables/toast'
 import { Ref, ref } from 'vue'
 import { ToastNotificationType } from '~~/src/helpers/toast'
+import CommonTextLink from '~~/src/components/common/text/Link.vue'
 
 /** Suffix on top of the color base name (e.g., focus if danger-focus) or null if no suffix (e.g., danger) */
 type ColorVariation = string | null

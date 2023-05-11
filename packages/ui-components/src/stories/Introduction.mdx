@@ -10,9 +10,19 @@ You can find all of the available Speckle main website design system components 
 
 Our CSS theme (colors, spacings etc.) is configured through our Tailwind config which can be found at `@speckle/tailwind-theme`.
 
-## Component hierarchy
+## Component hierarchy & naming
 
-The way components are organized in this Storybook is similar to the way they're organized in the codebase's `components` directory.
+The way components are organized in this Storybook is similar to the way they're organized in the codebase's `./src/components` directory.
+So, for example, './src/components/global/ToastRenderer.vue` will show up as 'global > ToastRenderer.vue' in StoryBook.
+
+In the library build exported component names use the full name including ancestor folder names, so to import `ToastRenderer.vue` in your
+app you would do:
+
+```js
+import { GlobalToastRenderer } from '@speckle/ui-components'
+```
+
+For more info check library typings or the `./src/lib.ts` file
 
 ## Useful docs
 

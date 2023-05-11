@@ -10927,6 +10927,8 @@ __metadata:
     tsconfig-to-dual-package: ^1.2.0
     typescript: ^5.0.4
   peerDependencies:
+    postcss: ^8.4.18
+    postcss-nesting: ^10.2.0
     tailwindcss: ^3.3.2
   languageName: unknown
   linkType: soft
@@ -10948,6 +10950,7 @@ __metadata:
     "@storybook/vue3": ^7.0.10
     "@storybook/vue3-vite": ^7.0.10
     "@types/eslint": ^8.4.5
+    "@types/lodash-es": ^4.17.7
     "@typescript-eslint/eslint-plugin": ^5.38.1
     "@typescript-eslint/parser": ^5.38.1
     "@vitejs/plugin-vue": ^4.1.0
@@ -10959,6 +10962,7 @@ __metadata:
     eslint-plugin-storybook: ^0.6.6
     eslint-plugin-vue: ^9.5.1
     eslint-plugin-vuejs-accessibility: ^1.2.0
+    lodash-es: ^4.0.0
     postcss: ^8.4.23
     postcss-nesting: ^10.2.0
     prettier: ^2.7.1
@@ -14414,6 +14418,15 @@ __metadata:
   dependencies:
     "@types/lodash": "*"
   checksum: 9bd239dd525086e278821949ce12fbdd4f100a060fed9323fc7ad5661113e1641f28a7ebab617230ed3474680d8f4de705c1928b48252bb684be6ec9eed715db
+  languageName: node
+  linkType: hard
+
+"@types/lodash-es@npm:^4.17.7":
+  version: 4.17.7
+  resolution: "@types/lodash-es@npm:4.17.7"
+  dependencies:
+    "@types/lodash": "*"
+  checksum: 4b1f39fd1d921311c37a846c0e0df9d1fa23e27448a6ad1efd7574e703abd2b2fa5e8f3b5037146000f167ba231d0d01e52747d902654151b4ceeff9f2a9b380
   languageName: node
   linkType: hard
 
@@ -28915,7 +28928,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash-es@npm:^4.17.21":
+"lodash-es@npm:^4.0.0, lodash-es@npm:^4.17.21":
   version: 4.17.21
   resolution: "lodash-es@npm:4.17.21"
   checksum: 05cbffad6e2adbb331a4e16fbd826e7faee403a1a04873b82b42c0f22090f280839f85b95393f487c1303c8a3d2a010048bf06151a6cbe03eee4d388fb0a12d2

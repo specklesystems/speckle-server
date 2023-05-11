@@ -17,7 +17,8 @@
     ".": {
       "import": "./dist/my-lib.js",
       "require": "./dist/my-lib.umd.cjs"
-    }
+    },
+    "./style.css": "./dist/style.css"
   },
   "peerDependencies": {
     "vue": "^3.0.0"
@@ -26,7 +27,8 @@
     "@headlessui/vue": "^1.7.3",
     "@heroicons/vue": "^2.0.12",
     "@speckle/shared": "workspace:^",
-    "@vueuse/core": "^9.13.0"
+    "@vueuse/core": "^9.13.0",
+    "lodash-es": "^4.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^11.1.0",
@@ -39,6 +41,7 @@
     "@storybook/vue3": "^7.0.10",
     "@storybook/vue3-vite": "^7.0.10",
     "@types/eslint": "^8.4.5",
+    "@types/lodash-es": "^4.17.7",
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
     "@vitejs/plugin-vue": "^4.1.0",

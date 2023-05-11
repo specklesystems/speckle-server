@@ -52,15 +52,14 @@
                   {{ notification.description }}
                 </p>
                 <div v-if="notification.cta" class="flex justify-start mt-2">
-                  <!-- TODO: CommonTextLink -->
-                  <a
-                    :href="notification.cta.url || 'javascript:void;'"
+                  <CommonTextLink
+                    :to="notification.cta.url"
                     class="label"
                     primary
                     @click="onCtaClick"
                   >
                     {{ notification.cta.title }}
-                  </a>
+                  </CommonTextLink>
                 </div>
               </div>
               <div
@@ -84,6 +83,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import CommonTextLink from '~~/src/components/common/text/Link.vue'
 import {
   CheckCircleIcon,
   XCircleIcon,

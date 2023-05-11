@@ -3,7 +3,7 @@
 </template>
 <script setup lang="ts">
 import { computed } from 'vue'
-import ToastRenderer from '~~/src/components/ToastRenderer.vue'
+import ToastRenderer from '~~/src/components/global/ToastRenderer.vue'
 import { useGlobalToastManager } from '~~/src/stories/composables/toast'
 
 const { currentNotification, dismiss } = useGlobalToastManager()
