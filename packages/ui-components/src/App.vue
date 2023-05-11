@@ -8,10 +8,12 @@
     </a>
   </div>
   <HelloWorld msg="Vite + Vue" />
+  <SingletonManagers />
 </template>
 
 <script setup lang="ts">
 import HelloWorld from './components/HelloWorld.vue'
+import SingletonManagers from '~~/src/stories/components/SingletonManagers.vue'
 </script>
 
 <style scoped>

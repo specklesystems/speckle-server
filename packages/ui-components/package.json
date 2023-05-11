@@ -22,8 +22,15 @@
   "peerDependencies": {
     "vue": "^3.0.0"
   },
+  "dependencies": {
+    "@headlessui/vue": "^1.7.3",
+    "@heroicons/vue": "^2.0.12",
+    "@speckle/shared": "workspace:^",
+    "@vueuse/core": "^9.13.0"
+  },
   "devDependencies": {
     "@rollup/plugin-typescript": "^11.1.0",
+    "@speckle/tailwind-theme": "workspace:^",
     "@storybook/addon-essentials": "^7.0.10",
     "@storybook/addon-interactions": "^7.0.10",
     "@storybook/addon-links": "^7.0.10",
@@ -35,22 +42,29 @@
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
     "@vitejs/plugin-vue": "^4.1.0",
+    "autoprefixer": "^10.4.14",
     "browserify-zlib": "^0.2.0",
     "eslint": "^8.24.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-storybook": "^0.6.6",
     "eslint-plugin-vue": "^9.5.1",
     "eslint-plugin-vuejs-accessibility": "^1.2.0",
+    "postcss": "^8.4.23",
+    "postcss-nesting": "^10.2.0",
     "prettier": "^2.7.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "rollup-plugin-node-builtins": "^2.1.2",
     "storybook": "^7.0.10",
+    "tailwindcss": "^3.3.2",
     "type-fest": "^2.13.1",
     "typescript": "^5.0.4",
     "vite": "^4.3.2",
     "vite-plugin-dts": "^2.3.0",
     "vue": "^3.0.0",
     "vue-tsc": "^1.4.2"
+  },
+  "installConfig": {
+    "hoistingLimits": "workspaces"
   }
 }

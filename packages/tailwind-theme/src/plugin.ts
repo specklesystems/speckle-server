@@ -125,11 +125,15 @@ export default plugin(function ({ addComponents, addBase }) {
     body: {
       '@apply font-sans': {}
     },
-    ':root': {
+    html: {
       '--simple-scrollbar-width': '4px',
-      ...lightThemeVariables
+      ...lightThemeVariables,
+      '&.dark': {
+        ...darkThemeVariables
+      }
     },
-    ':root.dark': {
+    // weird hack cause for some reason tailwind sometimes omits this if I use `.dark` selector instead (tailwind bug?)
+    [`html[class*="dark"]`]: {
       ...darkThemeVariables
     }
   })

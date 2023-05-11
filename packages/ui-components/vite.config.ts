@@ -3,9 +3,9 @@ import vue from '@vitejs/plugin-vue'
 import dts from 'vite-plugin-dts'
 import pkg from './package.json'
 import { resolve } from 'path'
+import { createRequire } from 'node:module'
 
-type SafePkg = typeof pkg & { [key: string]: unknown }
-const safePkg = pkg as SafePkg
+const require = createRequire(import.meta.url)
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -19,10 +19,8 @@ export default defineConfig({
     },
     rollupOptions: {
       external: [
-        ...Object.keys(safePkg.dependencies || {}).map(
-          (d) => new RegExp(`^${d}(\\/.*)?$`)
-        ),
-        ...Object.keys(safePkg.peerDependencies || {}).map(
+        ...Object.keys(pkg.dependencies || {}).map((d) => new RegExp(`^${d}(\\/.*)?$`)),
+        ...Object.keys(pkg.peerDependencies || {}).map(
           (d) => new RegExp(`^${d}(\\/.*)?$`)
         )
       ]
@@ -34,8 +32,9 @@ export default defineConfig({
       // We need browser polyfills for crypto & zlib cause they seem to be bundled for the web
       // for some reason when running storybook. Doesn't appear that these
       // actually appear in any client-side bundles tho!
-      crypto: 'rollup-plugin-node-builtins',
-      zlib: 'browserify-zlib'
+      crypto: require.resolve('rollup-plugin-node-builtins'),
+      zlib: require.resolve('browserify-zlib'),
+      '~~/src': resolve(__dirname, './src')
     }
   }
 })
