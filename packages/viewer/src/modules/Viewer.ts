@@ -114,7 +114,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.differ = new Differ()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // ;(window as any)._V = this // For debugging! ಠ_ಠ
+    ;(window as any)._V = this // For debugging! ಠ_ಠ
 
     this.sectionBox = new SectionBox(this)
     this.sectionBox.disable()

@@ -312,7 +312,12 @@ export default class Coverter {
   }
 
   private getBlockDefinition(obj) {
-    return obj['@blockDefinition'] || obj['blockDefinition']
+    return (
+      obj['@blockDefinition'] ||
+      obj['blockDefinition'] ||
+      obj['definition'] ||
+      obj['@definition']
+    )
   }
 
   private getBlockDefinitionGeometry(obj) {
@@ -363,7 +368,7 @@ export default class Coverter {
       const childNode: TreeNode = this.tree.parse({
         id: this.getNodeId(ref),
         raw: Object.assign({}, ref),
-        atomic: true,
+        atomic: false,
         children: []
       })
       this.tree.addNode(childNode, node)
@@ -383,7 +388,7 @@ export default class Coverter {
         const childNode: TreeNode = this.tree.parse({
           id: this.getNodeId(ref),
           raw: Object.assign({}, ref),
-          atomic: true,
+          atomic: false,
           children: []
         })
         if (hostId) {
