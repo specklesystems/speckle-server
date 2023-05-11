@@ -18,6 +18,10 @@ const config = {
     'no-console': 'off',
     'no-var': 'error'
   },
+  parserOptions: {
+    ecmaVersion: 2022,
+    sourceType: 'module'
+  },
   overrides: [
     {
       files: '*.test.{ts,js}',

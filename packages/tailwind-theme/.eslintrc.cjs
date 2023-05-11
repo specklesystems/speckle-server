@@ -6,6 +6,10 @@ const config = {
     node: true
   },
   extends: [...mainExtends],
+  parserOptions: {
+    ecmaVersion: 2022,
+    sourceType: 'module'
+  },
   overrides: [
     {
       files: '*.ts',
