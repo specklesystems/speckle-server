@@ -204,6 +204,11 @@ workflows:
             - docker-publish-monitor-container
             - docker-publish-test-container
 
+      - update-helm-documentation:
+          filters: *filters-publish
+          requires:
+            - publish-helm-chart
+
       - publish-npm:
           filters:
             tags:
@@ -663,3 +668,18 @@ jobs:
       - run:
           name: Publish Helm Chart
           command: ./.circleci/publish_helm_chart.sh
+
+  update-helm-documentation:
+    docker: *docker-image
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - add_ssh_keys:
+          fingerprints:
+            - '4d:68:70:66:49:97:ba:8b:8c:55:96:df:3d:be:6e:05'
+      - run:
+          name: Update Helm Documentation
+          command: ./.circleci/update_helm_documentation.sh

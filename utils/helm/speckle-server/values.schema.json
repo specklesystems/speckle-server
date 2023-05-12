@@ -27,6 +27,26 @@
       "description": "The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate",
       "default": "letsencrypt-staging"
     },
+    "analytics": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable or disable analytics",
+          "default": true
+        },
+        "mixpanel_token_id": {
+          "type": "string",
+          "description": "The Mixpanel token ID used to identify this Speckle deployment in MixPanel",
+          "default": "acd87c5a50b56df91a795e999812a3a4"
+        },
+        "mixpanel_api_host": {
+          "type": "string",
+          "description": "The Mixpanel API host to which analytics data will be sent",
+          "default": "https://analytics.speckle.systems"
+        }
+      }
+    },
     "networkPlugin": {
       "type": "object",
       "properties": {
@@ -55,7 +75,7 @@
     "docker_image_tag": {
       "type": "string",
       "description": "Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.",
-      "default": "v2.3.3"
+      "default": "2.13.3"
     },
     "imagePullPolicy": {
       "type": "string",
@@ -441,11 +461,6 @@
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
         },
-        "speckleAutomateUrl": {
-          "type": "string",
-          "description": "The url where the associated Speckle Automate instance is running",
-          "default": "https://automate.speckle.systems"
-        },
         "adminOverrideEnabled": {
           "type": "boolean",
           "description": "Enables the server side admin authz override",
@@ -453,8 +468,13 @@
         },
         "onboardingStreamId": {
           "type": "string",
-          "description": "This stream/project on the server is used for the onboarding flow",
+          "description": "The id of the stream to be used for onboarding new users",
           "default": ""
+        },
+        "speckleAutomateUrl": {
+          "type": "string",
+          "description": "The url of the Speckle Automate instance",
+          "default": "https://automate.speckle.systems"
         },
         "sessionSecret": {
           "type": "object",
@@ -869,12 +889,12 @@
             "post_graphql": {
               "type": "number",
               "description": "The maximum number of requests that can be made to the GraphQL API in a moving one second window.",
-              "default": 10
+              "default": 50
             },
-            "burst_post_grapqhl": {
+            "burst_post_graphql": {
               "type": "number",
               "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the GraphQL API in a moving one minute window.",
-              "default": 20
+              "default": 200
             },
             "get_auth": {
               "type": "number",
@@ -1009,6 +1029,93 @@
           "type": "string",
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
+        },
+        "requests": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "description": "The CPU that should be available on a node when scheduling this pod.",
+              "default": "250m"
+            },
+            "memory": {
+              "type": "string",
+              "description": "The Memory that should be available on a node when scheduling this pod.",
+              "default": "256Mi"
+            }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "description": "The maximum CPU that will be made available to the frontend Pod in a given period.",
+              "default": "1000m"
+            },
+            "memory": {
+              "type": "string",
+              "description": "The maximum Memory that will be made available to the frontend Pod.",
+              "default": "512Mi"
+            }
+          }
+        },
+        "networkPolicy": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.",
+              "default": false
+            }
+          }
+        },
+        "affinity": {
+          "type": "object",
+          "description": "Affinity for Speckle frontend pod scheduling",
+          "default": {}
+        },
+        "nodeSelector": {
+          "type": "object",
+          "description": "Node labels for Speckle frontend pods scheduling",
+          "default": {}
+        },
+        "tolerations": {
+          "type": "array",
+          "description": "Tolerations for Speckle frontend pods scheduling",
+          "default": [],
+          "items": {}
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "description": "Spread Constraints for Speckle frontend pod scheduling",
+          "default": [],
+          "items": {}
+        },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "create": {
+              "type": "boolean",
+              "description": "If enabled, a Kubernetes Service Account will be created for this pod.",
+              "default": true
+            }
+          }
+        }
+      }
+    },
+    "frontend_2": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Feature flag to enable running the new experimental frontend.",
+          "default": false
+        },
+        "replicas": {
+          "type": "number",
+          "description": "The number of instances of the Frontend 2 server prod to be deployed withing the cluster.",
+          "default": 1
         },
         "requests": {
           "type": "object",
