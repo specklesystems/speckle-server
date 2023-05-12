@@ -4,7 +4,6 @@ import speckleTheme, {
 import { tailwindContentEntry as uiLibEntry } from '@speckle/ui-components/tailwind-configure'
 
 import { createRequire } from 'module'
-
 const req = createRequire(import.meta.url)
 
 /** @type {import('tailwindcss').Config} */

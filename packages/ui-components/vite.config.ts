@@ -23,7 +23,7 @@ export default defineConfig({
       entry: resolve(__dirname, 'src/lib.ts'),
       name: 'SpeckleUiComponents',
       fileName: 'lib',
-      formats: ['es', 'cjs']
+      formats: ['es']
     },
     rollupOptions: {
       external: [

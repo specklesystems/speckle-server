@@ -11,13 +11,11 @@
   },
   "type": "module",
   "private": true,
-  "main": "./dist/lib.cjs",
   "module": "./dist/lib.js",
   "types": "./dist/lib.d.ts",
   "exports": {
     ".": {
       "import": "./dist/lib.js",
-      "require": "./dist/lib.cjs",
       "types": "./dist/lib.d.ts"
     },
     "./style.css": "./dist/style.css",
