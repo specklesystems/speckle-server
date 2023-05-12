@@ -28,6 +28,7 @@ pushd "${README_GENERATOR_DIR}"
   echo "✨ Updating to the latest version of readme-generator-for-helm"
   git switch main
   git pull origin main
+  npm install
 popd
 
 if [ ! -d "${HELM_DIR}" ]; then
