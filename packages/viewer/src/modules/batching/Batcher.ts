@@ -48,11 +48,13 @@ export default class Batcher {
     speckleType: SpeckleType[],
     batchType?: GeometryType
   ) {
-    const renderViews = renderTree.getAtomicRenderViews(...speckleType).sort((a, b) => {
-      if (a.renderMaterialHash === 0) return -1
-      if (b.renderMaterialHash === 0) return 1
-      return a.renderMaterialHash - b.renderMaterialHash
-    })
+    const renderViews = renderTree
+      .getRenderableRenderViews(...speckleType)
+      .sort((a, b) => {
+        if (a.renderMaterialHash === 0) return -1
+        if (b.renderMaterialHash === 0) return 1
+        return a.renderMaterialHash - b.renderMaterialHash
+      })
     const materialHashes = [
       ...Array.from(new Set(renderViews.map((value) => value.renderMaterialHash)))
     ]
@@ -94,11 +96,13 @@ export default class Batcher {
   ) {
     const pause = World.getPause(priority)
 
-    const renderViews = renderTree.getAtomicRenderViews(...speckleType).sort((a, b) => {
-      if (a.renderMaterialHash === 0) return -1
-      if (b.renderMaterialHash === 0) return 1
-      return a.renderMaterialHash - b.renderMaterialHash
-    })
+    const renderViews = renderTree
+      .getRenderableRenderViews(...speckleType)
+      .sort((a, b) => {
+        if (a.renderMaterialHash === 0) return -1
+        if (b.renderMaterialHash === 0) return 1
+        return a.renderMaterialHash - b.renderMaterialHash
+      })
     const materialHashes = [
       ...Array.from(new Set(renderViews.map((value) => value.renderMaterialHash)))
     ]
