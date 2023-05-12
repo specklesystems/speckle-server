@@ -1,5 +1,5 @@
 import FormCheckbox from '~~/components/form/Checkbox.vue'
-import FormButton from '~~/components/form/Button.vue'
+import { FormButton } from '@speckle/ui-components'
 import { Meta, StoryObj } from '@storybook/vue3'
 import { action } from '@storybook/addon-actions'
 import { Form, SubmissionHandler } from 'vee-validate'
