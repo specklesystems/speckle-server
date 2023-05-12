@@ -7,7 +7,7 @@ export default {
   parameters: {
     docs: {
       description: {
-        component: 'Speckle source application badge. Import'
+        component: 'Speckle source application badge.'
       }
     }
   },

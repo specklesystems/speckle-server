@@ -4,9 +4,9 @@ Speckle UI component library built with Vue 3 and relying on the Speckle Tailwin
 
 ## Setup
 
-1. Make sure you have `@speckle/tailwind-theme` installed
+1. Make sure you have `@speckle/tailwind-theme` installed and set up with Tailwind
 1. Install `@speckle/ui-components`
-1. Add `@speckle/ui-components/**/*.js` to the `contents` field in your Tailwind config
+1. Import `tailwindContentEntry` from '@speckle/ui-components/tailwind-configure' and invoke it in the `contents` field in your Tailwind config to ensure PurgeCSS is configured correctly. It requires the CJS `require` object as its only parameter. If it isn't available (in an ESM environment), you can use node's `createRequire()`.
 1. Import `@speckle/ui-components/style.css` in your app. If `exports` map isn't supported you can also import from `@speckle/ui-components/dist/style.css`
 
 ## Build
@@ -34,3 +34,6 @@ Re-start storybook, it could be that you introduced a new tailwind class that wa
 - fe-2 viewer modifier keys for events
 - Check for nuxtLink
 - Check form async search bug when clicking on search result item
+- CI/CD?
+- Checkbox clicked state should be blue/primary
+- FIx up Readmes

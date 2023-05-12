@@ -10524,6 +10524,7 @@ __metadata:
     "@nuxtjs/tailwindcss": ^6.3.0
     "@speckle/shared": "workspace:^"
     "@speckle/tailwind-theme": "workspace:^"
+    "@speckle/ui-components": "workspace:^"
     "@speckle/viewer": "workspace:^"
     "@speckle/vue-apollo-composable": ^4.0.0-beta.2
     "@storybook/addon-a11y": ^7.0.0-beta.54
@@ -10933,7 +10934,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@speckle/ui-components@workspace:packages/ui-components":
+"@speckle/ui-components@workspace:^, @speckle/ui-components@workspace:packages/ui-components":
   version: 0.0.0-use.local
   resolution: "@speckle/ui-components@workspace:packages/ui-components"
   dependencies:

@@ -11,14 +11,17 @@
   },
   "type": "module",
   "private": true,
-  "main": "./dist/lib.umd.cjs",
+  "main": "./dist/lib.cjs",
   "module": "./dist/lib.js",
+  "types": "./dist/lib.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/my-lib.js",
-      "require": "./dist/my-lib.umd.cjs"
+      "import": "./dist/lib.js",
+      "require": "./dist/lib.cjs",
+      "types": "./dist/lib.d.ts"
     },
-    "./style.css": "./dist/style.css"
+    "./style.css": "./dist/style.css",
+    "./tailwind-configure": "./tailwind-configure.js"
   },
   "peerDependencies": {
     "vue": "^3.0.0"

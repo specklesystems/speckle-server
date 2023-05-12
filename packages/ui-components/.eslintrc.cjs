@@ -11,7 +11,7 @@ const config = {
   },
 
   extends: [...mainExtends],
-  ignorePatterns: ['storybook-static', '!.storybook'],
+  ignorePatterns: ['storybook-static', '!.storybook', 'tailwind-configure.d.ts'],
   rules: {
     'no-alert': 'error',
     eqeqeq: ['error', 'always', { null: 'always' }],

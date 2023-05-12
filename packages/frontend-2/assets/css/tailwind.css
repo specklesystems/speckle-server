@@ -1,6 +1,5 @@
 /* stylelint-disable selector-id-pattern */
-@import './tailwind-setup/tippy.css';
-
+@import '@speckle/ui-components/style.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
