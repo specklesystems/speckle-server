@@ -28,7 +28,8 @@
   </Component>
 </template>
 <script setup lang="ts">
-import { ConcreteComponent, PropType, computed } from 'vue'
+import { isObjectLike } from 'lodash'
+import { ConcreteComponent, PropType, computed, resolveDynamicComponent } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
 
 type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
@@ -156,8 +157,9 @@ const props = defineProps({
     default: false
   },
   /**
-   * Customize component to be used when rendering links. You might want to set it to NuxtLink or RouterLink to
-   * enable client-side routing.
+   * Customize component to be used when rendering links.
+   *
+   * The component will try to dynamically resolve NuxtLink and RouterLink and use those, if this is set to null.
    */
   linkComponent: {
     type: [Object, Function] as PropType<Nullable<ConcreteComponent>>,
@@ -165,7 +167,14 @@ const props = defineProps({
   }
 })
 
-const linkComponent = computed(() => props.linkComponent || 'a')
+const NuxtLink = resolveDynamicComponent('NuxtLink')
+const RouterLink = resolveDynamicComponent('RouterLink')
+
+const linkComponent = computed(() => {
+  if (isObjectLike(NuxtLink)) return NuxtLink
+  if (isObjectLike(RouterLink)) return RouterLink
+  return props.linkComponent || 'a'
+})
 
 const buttonType = computed(() => {
   if (props.to) return undefined

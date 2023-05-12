@@ -52,8 +52,10 @@ export default defineNuxtConfig({
   vite: {
     resolve: {
       alias: [{ find: /^lodash$/, replacement: 'lodash-es' }],
-      // i've no idea why, but the same version of various prosemirror deps gets bundled twice
-      dedupe: ['prosemirror-state', '@tiptap/pm', 'prosemirror-model']
+      // i've no idea why, but the same version of various deps gets bundled twice
+      // in the case of vee-validate, this is just a guess, but maybe it gets confused cause there's a vee-validate install both under ui-components
+      // and also under frontend-2. they're the same version, but apparently that's not enough...
+      dedupe: ['prosemirror-state', '@tiptap/pm', 'prosemirror-model', 'vee-validate']
     },
     ...(process.env.IS_STORYBOOK_BUILD
       ? {}

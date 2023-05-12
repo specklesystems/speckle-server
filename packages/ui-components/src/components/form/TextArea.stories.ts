@@ -18,6 +18,10 @@ export default {
     rules: {
       type: 'function'
     },
+    color: {
+      options: ['page', 'foundation'],
+      control: { type: 'select' }
+    },
     'update:modelValue': {
       type: 'function',
       action: 'v-model'
@@ -60,7 +64,8 @@ export const Default: StoryObj = {
     showRequired: false,
     showLabel: true,
     disabled: false,
-    validateOnMount: false
+    validateOnMount: false,
+    color: 'page'
   },
   parameters: {
     docs: {
@@ -111,5 +116,20 @@ export const WithClear = mergeStories(Default, {
     name: generateRandomName('withclear'),
     label: 'Click on cross to clear',
     showClear: true
+  }
+})
+
+export const WithFoundationColor = mergeStories(Default, {
+  render: (args) => ({
+    components: { FormTextArea },
+    setup() {
+      return { args }
+    },
+    template: `<div class="bg-foundation-page p-5">
+    <form-text-area v-bind="args" @update:modelValue="args['update:modelValue']"/>
+    </div>`
+  }),
+  args: {
+    color: 'foundation'
   }
 })

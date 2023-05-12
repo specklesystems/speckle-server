@@ -32,7 +32,7 @@
             v-model="searchString"
             name="search"
             :custom-icon="MagnifyingGlassIcon"
-            class="w-full"
+            full-width
             search
             :show-clear="!!searchString"
             placeholder="Search for a version"

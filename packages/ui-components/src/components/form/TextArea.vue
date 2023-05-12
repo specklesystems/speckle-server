@@ -59,7 +59,7 @@ import { ExclamationCircleIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 import { Nullable } from '@speckle/shared'
 import { RuleExpression } from 'vee-validate'
 import { computed, ref, toRefs } from 'vue'
-import { useTextInputCore } from '~~/src/composables/form/textInput'
+import { InputColor, useTextInputCore } from '~~/src/composables/form/textInput'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: string): void
@@ -88,10 +88,12 @@ const props = withDefaults(
     showClear?: boolean
     fullWidth?: boolean
     showRequired?: boolean
+    color?: InputColor
   }>(),
   {
     useLabelInErrors: true,
-    modelValue: ''
+    modelValue: '',
+    color: 'page'
   }
 )
 

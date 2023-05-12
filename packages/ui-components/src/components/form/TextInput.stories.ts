@@ -20,6 +20,10 @@ export default {
       options: ['text', 'email', 'password', 'url', 'search'],
       control: { type: 'select' }
     },
+    color: {
+      options: ['page', 'foundation'],
+      control: { type: 'select' }
+    },
     rules: {
       type: 'function'
     },
@@ -67,7 +71,8 @@ export const Default: StoryObj = {
     showLabel: true,
     disabled: false,
     validateOnMount: false,
-    inputClasses: ''
+    inputClasses: '',
+    color: 'page'
   },
   parameters: {
     docs: {
@@ -160,5 +165,20 @@ export const WithCustomRightSlot = mergeStories(Default, {
     name: generateRandomName('withcustomrightslot'),
     label: 'Right side is customized with a button!',
     inputClasses: 'pr-20'
+  }
+})
+
+export const WithFoundationColor = mergeStories(Default, {
+  render: (args) => ({
+    components: { FormTextInput },
+    setup() {
+      return { args }
+    },
+    template: `<div class="bg-foundation-page p-5">
+    <form-text-input v-bind="args" @update:modelValue="args['update:modelValue']"/>
+    </div>`
+  }),
+  args: {
+    color: 'foundation'
   }
 })

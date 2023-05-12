@@ -93,6 +93,7 @@ import { useTextInputCore } from '~~/src/composables/form/textInput'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search'
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
+type InputColor = 'page' | 'foundation'
 
 defineOptions({
   inheritAttrs: false
@@ -224,6 +225,10 @@ const props = defineProps({
   wrapperClasses: {
     type: String,
     default: () => ''
+  },
+  color: {
+    type: String as PropType<InputColor>,
+    default: 'page'
   }
 })
 

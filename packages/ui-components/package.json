@@ -11,12 +11,14 @@
   },
   "type": "module",
   "private": true,
+  "main": "./dist/lib.cjs",
   "module": "./dist/lib.js",
   "types": "./dist/lib.d.ts",
   "exports": {
     ".": {
       "import": "./dist/lib.js",
-      "types": "./dist/lib.d.ts"
+      "types": "./dist/lib.d.ts",
+      "require": "./dist/lib.cjs"
     },
     "./style.css": "./dist/style.css",
     "./tailwind-configure": {

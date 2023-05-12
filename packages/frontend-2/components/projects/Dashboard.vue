@@ -26,7 +26,7 @@
           name="modelsearch"
           :show-label="false"
           placeholder="Search"
-          class="bg-foundation shadow"
+          color="foundation"
           wrapper-classes="grow md:grow-0 md:w-60"
           :show-clear="!!search"
           @change="updateSearchImmediately"

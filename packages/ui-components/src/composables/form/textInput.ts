@@ -3,6 +3,8 @@ import { Ref, ToRefs, computed, onMounted, ref, unref } from 'vue'
 import { Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
 
+export type InputColor = 'page' | 'foundation'
+
 /**
  * Common setup for text input & textarea fields
  */
@@ -20,6 +22,7 @@ export function useTextInputCore(params: {
     showClear?: boolean
     useLabelInErrors?: boolean
     hideErrorMessage?: boolean
+    color?: InputColor
   }>
   emit: {
     (e: 'change', val: { event?: Event; value: string }): void
@@ -46,7 +49,7 @@ export function useTextInputCore(params: {
 
   const coreClasses = computed(() => {
     const classParts = [
-      'block w-full rounded focus:outline-none bg-foundation-page text-foreground transition-all',
+      'block w-full rounded focus:outline-none text-foreground transition-all',
       'disabled:cursor-not-allowed disabled:bg-foundation-disabled disabled:text-disabled-muted',
       'placeholder:text-foreground-2'
     ]
@@ -57,6 +60,13 @@ export function useTextInputCore(params: {
       )
     } else {
       classParts.push('border-0 focus:ring-2 focus:ring-outline-2')
+    }
+
+    const color = unref(props.color)
+    if (color === 'foundation') {
+      classParts.push('bg-foundation shadow-sm hover:shadow')
+    } else {
+      classParts.push('bg-foundation-page')
     }
 
     return classParts.join(' ')
