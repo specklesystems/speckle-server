@@ -27,7 +27,8 @@ export default defineNuxtConfig({
           default: '~/lib/core/configs/apollo.ts'
         }
       }
-    ]
+    ],
+    '@speckle/ui-components-nuxt'
   ],
   runtimeConfig: {
     public: {

@@ -1,0 +1,23 @@
+{
+  "name": "@speckle/ui-components-nuxt",
+  "description": "Companion Nuxt module for @speckle/ui-components",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "module": "index.js",
+  "exports": {
+    ".": {
+      "import": "./index.js"
+    }
+  },
+  "peerDependencies": {
+    "@speckle/ui-components": "*"
+  },
+  "dependencies": {
+    "@nuxt/kit": "^3.2.0",
+    "lodash-es": "^4.0.0"
+  },
+  "devDependencies": {
+    "@speckle/ui-components": "workspace:^"
+  }
+}

@@ -1,6 +1,6 @@
 import { Nullable, Optional } from '@speckle/shared'
 import { useMutationObserver, useResizeObserver } from '@vueuse/core'
-import { isUndefined } from 'lodash-es'
+import { isUndefined } from 'lodash'
 import { Ref, ComputedRef, ref } from 'vue'
 
 /**

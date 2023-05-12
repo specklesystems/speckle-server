@@ -1,4 +1,4 @@
-import { isString, isUndefined } from 'lodash-es'
+import { isString, isUndefined } from 'lodash'
 import { GenericValidateFunction } from 'vee-validate'
 import { isNullOrUndefined } from '@speckle/shared'
 

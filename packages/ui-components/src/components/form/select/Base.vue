@@ -170,7 +170,7 @@ import {
   MagnifyingGlassIcon,
   XMarkIcon
 } from '@heroicons/vue/24/solid'
-import { debounce, isArray } from 'lodash-es'
+import { debounce, isArray } from 'lodash'
 import { PropType, computed, onMounted, ref, unref, watch } from 'vue'
 import { MaybeAsync, Nullable, Optional } from '@speckle/shared'
 import { RuleExpression, useField } from 'vee-validate'

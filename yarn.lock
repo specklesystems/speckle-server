@@ -10525,6 +10525,7 @@ __metadata:
     "@speckle/shared": "workspace:^"
     "@speckle/tailwind-theme": "workspace:^"
     "@speckle/ui-components": "workspace:^"
+    "@speckle/ui-components-nuxt": "workspace:^"
     "@speckle/viewer": "workspace:^"
     "@speckle/vue-apollo-composable": ^4.0.0-beta.2
     "@storybook/addon-a11y": ^7.0.0-beta.54
@@ -10934,6 +10935,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@speckle/ui-components-nuxt@workspace:^, @speckle/ui-components-nuxt@workspace:packages/ui-components-nuxt":
+  version: 0.0.0-use.local
+  resolution: "@speckle/ui-components-nuxt@workspace:packages/ui-components-nuxt"
+  dependencies:
+    "@nuxt/kit": ^3.2.0
+    "@speckle/ui-components": "workspace:^"
+    lodash-es: ^4.0.0
+  peerDependencies:
+    "@speckle/ui-components": "*"
+  languageName: unknown
+  linkType: soft
+
 "@speckle/ui-components@workspace:^, @speckle/ui-components@workspace:packages/ui-components":
   version: 0.0.0-use.local
   resolution: "@speckle/ui-components@workspace:packages/ui-components"
@@ -10952,7 +10965,7 @@ __metadata:
     "@storybook/vue3": ^7.0.10
     "@storybook/vue3-vite": ^7.0.10
     "@types/eslint": ^8.4.5
-    "@types/lodash-es": ^4.17.7
+    "@types/lodash": ^4.0.0
     "@typescript-eslint/eslint-plugin": ^5.38.1
     "@typescript-eslint/parser": ^5.38.1
     "@vitejs/plugin-vue": ^4.1.0
@@ -10964,8 +10977,8 @@ __metadata:
     eslint-plugin-storybook: ^0.6.6
     eslint-plugin-vue: ^9.5.1
     eslint-plugin-vuejs-accessibility: ^1.2.0
-    lodash-es: ^4.0.0
-    nanoid: ^4.0.0
+    lodash: ^4.0.0
+    nanoid: ^3.0.0
     postcss: ^8.4.23
     postcss-nesting: ^10.2.0
     prettier: ^2.7.1
@@ -14427,19 +14440,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash-es@npm:^4.17.7":
-  version: 4.17.7
-  resolution: "@types/lodash-es@npm:4.17.7"
-  dependencies:
-    "@types/lodash": "*"
-  checksum: 4b1f39fd1d921311c37a846c0e0df9d1fa23e27448a6ad1efd7574e703abd2b2fa5e8f3b5037146000f167ba231d0d01e52747d902654151b4ceeff9f2a9b380
-  languageName: node
-  linkType: hard
-
 "@types/lodash@npm:*, @types/lodash@npm:^4.14.167":
   version: 4.14.186
   resolution: "@types/lodash@npm:4.14.186"
   checksum: ee0c1368a8100bb6efb88335107473a41928fc307ff1ef4ff1278868ccddba9c04c68c36d1ffe3a0392ef4a956e1955f7de3203ec09df4f1655dd1b88485c549
+  languageName: node
+  linkType: hard
+
+"@types/lodash@npm:^4.0.0":
+  version: 4.14.194
+  resolution: "@types/lodash@npm:4.14.194"
+  checksum: 113f34831c461469d91feca2dde737f88487732898b4d25e9eb23b087bb193985f864d1e1e0f3b777edc5022e460443588b6000a3b2348c966f72d17eedc35ea
   languageName: node
   linkType: hard
 
@@ -29438,7 +29449,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash@npm:4.17.21, lodash@npm:^4.11.2, lodash@npm:^4.17.0, lodash@npm:^4.17.10, lodash@npm:^4.17.11, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.20, lodash@npm:^4.17.21, lodash@npm:^4.7.0, lodash@npm:~4.17.0, lodash@npm:~4.17.15":
+"lodash@npm:4.17.21, lodash@npm:^4.0.0, lodash@npm:^4.11.2, lodash@npm:^4.17.0, lodash@npm:^4.17.10, lodash@npm:^4.17.11, lodash@npm:^4.17.14, lodash@npm:^4.17.15, lodash@npm:^4.17.19, lodash@npm:^4.17.20, lodash@npm:^4.17.21, lodash@npm:^4.7.0, lodash@npm:~4.17.0, lodash@npm:~4.17.15":
   version: 4.17.21
   resolution: "lodash@npm:4.17.21"
   checksum: eb835a2e51d381e561e508ce932ea50a8e5a68f4ebdd771ea240d3048244a8d13658acbd502cd4829768c56f2e16bdd4340b9ea141297d472517b83868e677f7
@@ -31121,21 +31132,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nanoid@npm:^3.0.0, nanoid@npm:^3.3.6":
+  version: 3.3.6
+  resolution: "nanoid@npm:3.3.6"
+  bin:
+    nanoid: bin/nanoid.cjs
+  checksum: 7d0eda657002738aa5206107bd0580aead6c95c460ef1bdd0b1a87a9c7ae6277ac2e9b945306aaa5b32c6dcb7feaf462d0f552e7f8b5718abfc6ead5c94a71b3
+  languageName: node
+  linkType: hard
+
 "nanoid@npm:^3.3.1, nanoid@npm:^3.3.3, nanoid@npm:^3.3.4":
   version: 3.3.4
   resolution: "nanoid@npm:3.3.4"
   bin:
     nanoid: bin/nanoid.cjs
   checksum: 2fddd6dee994b7676f008d3ffa4ab16035a754f4bb586c61df5a22cf8c8c94017aadd360368f47d653829e0569a92b129979152ff97af23a558331e47e37cd9c
-  languageName: node
-  linkType: hard
-
-"nanoid@npm:^3.3.6":
-  version: 3.3.6
-  resolution: "nanoid@npm:3.3.6"
-  bin:
-    nanoid: bin/nanoid.cjs
-  checksum: 7d0eda657002738aa5206107bd0580aead6c95c460ef1bdd0b1a87a9c7ae6277ac2e9b945306aaa5b32c6dcb7feaf462d0f552e7f8b5718abfc6ead5c94a71b3
   languageName: node
   linkType: hard
 

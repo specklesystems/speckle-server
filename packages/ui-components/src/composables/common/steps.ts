@@ -1,6 +1,6 @@
 import { ToRefs, computed } from 'vue'
 import { HorizontalOrVertical, StepCoreType } from '~~/src/helpers/common/components'
-import { clamp } from 'lodash-es'
+import { clamp } from 'lodash'
 import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 
 export function useStepsInternals(params: {

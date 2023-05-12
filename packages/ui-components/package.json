@@ -21,7 +21,12 @@
       "types": "./dist/lib.d.ts"
     },
     "./style.css": "./dist/style.css",
-    "./tailwind-configure": "./tailwind-configure.js"
+    "./tailwind-configure": {
+      "import": "./utils/tailwind-configure.js",
+      "require": "./utils/tailwind-configure.cjs",
+      "types": "./utils/tailwind-configure.d.ts"
+    },
+    "./nuxt-module": "./nuxt-module.js"
   },
   "peerDependencies": {
     "vue": "^3.0.0"
@@ -31,8 +36,8 @@
     "@heroicons/vue": "^2.0.12",
     "@speckle/shared": "workspace:^",
     "@vueuse/core": "^9.13.0",
-    "lodash-es": "^4.0.0",
-    "nanoid": "^4.0.0",
+    "lodash": "^4.0.0",
+    "nanoid": "^3.0.0",
     "vee-validate": "^4.7.0",
     "vue-tippy": "^6.0.0"
   },
@@ -48,7 +53,7 @@
     "@storybook/vue3": "^7.0.10",
     "@storybook/vue3-vite": "^7.0.10",
     "@types/eslint": "^8.4.5",
-    "@types/lodash-es": "^4.17.7",
+    "@types/lodash": "^4.0.0",
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
     "@vitejs/plugin-vue": "^4.1.0",
