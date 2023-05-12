@@ -13,13 +13,26 @@ Speckle UI component library built with Vue 3 and relying on the Speckle Tailwin
 
 It's suggested that you also install the `@speckle/ui-components-nuxt` Nuxt module. It will ensure that all of the Vue components can be auto-imported like components in nuxt's `./components` directory. No need to import them manually anymore and you'll also get proper TS typing in your Vue templates out of the box!
 
+You'll also have to add the following to your `build.transpile` array in your nuxt config:
+
+```js
+// nuxt.config.js
+export default {
+  build: {
+    transpile: [
+      '@headlessui/vue',
+      /^@heroicons\/vue/,
+      '@vueuse/core',
+      '@vueuse/shared',
+      '@speckle/ui-components'
+    ]
+  }
+}
+```
+
 ### CommonJS support
 
 This package only emits an ESM build. If you need to run this in a CommonJS environment (e.g. nuxt server-side), then you should transpile this package.
-
-If you use Nuxt, you'll likely have to add the following to your `build.transpile` array in your nuxt config:
-
-- `@speckle/ui-components`
 
 ## Build
 

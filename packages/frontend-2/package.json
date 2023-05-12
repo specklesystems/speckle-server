@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "build": "nuxt build",
+    "dev:nuxt": "nuxt dev",
     "dev:app": "concurrently \"nuxt dev\" \"yarn gqlgen:watch\"",
     "dev": "concurrently \"yarn dev:app\" \"yarn gqlgen:watch\" \"yarn storybook --no-open\" -n nuxt,gqlgen,storybook",
     "preview": "nuxt preview",
@@ -26,7 +27,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.7.0",
-    "@headlessui/vue": "^1.7.3",
+    "@headlessui/vue": "^1.7.13",
     "@heroicons/vue": "^2.0.12",
     "@speckle/shared": "workspace:^",
     "@speckle/ui-components": "workspace:^",

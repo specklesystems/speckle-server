@@ -90,7 +90,9 @@ export default defineNuxtConfig({
         }
       },
       // older chrome version for CEF 65 support. all identifiers except the chrome one are default ones.
-      target: ['es2020', 'edge88', 'firefox78', 'chrome65', 'safari14']
+      target: ['es2020', 'edge88', 'firefox78', 'chrome65', 'safari14'],
+      // optionally disable minification for debugging
+      minify: false
     },
     plugins: [
       // again - only for CEF 65
@@ -125,8 +127,10 @@ export default defineNuxtConfig({
       '@vue/apollo-composable',
       '@speckle/vue-apollo-composable',
       '@headlessui/vue',
-      '@heroicons/vue',
+      /^@heroicons\/vue/,
       '@vueuse/core',
+      '@vueuse/shared',
+      '@speckle/ui-components',
       /prosemirror.*/
     ]
   },

@@ -8482,12 +8482,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@headlessui/vue@npm:^1.7.3":
-  version: 1.7.3
-  resolution: "@headlessui/vue@npm:1.7.3"
+"@headlessui/vue@npm:^1.7.13":
+  version: 1.7.13
+  resolution: "@headlessui/vue@npm:1.7.13"
   peerDependencies:
     vue: ^3.2.0
-  checksum: 6034b939acdf6c398629982b266d9d0dfcb59e5783e804ab620d96081c636d520c47071e996b09a56a4fb2995c839b7bef0e0d61f40d358cda770e2f3db58dd5
+  checksum: a8b68aec6003c1b0f298a5cca8aa1e37063322be000f0d730b6fc8580b78cccb22ac11fc3fabc5bea40998ed9cfc127328ee3519d803eda8a206b4d344338ab0
   languageName: node
   linkType: hard
 
@@ -10518,7 +10518,7 @@ __metadata:
     "@babel/preset-typescript": ^7.18.6
     "@graphql-codegen/cli": ^2.13.6
     "@graphql-codegen/client-preset": ^1.2.5
-    "@headlessui/vue": ^1.7.3
+    "@headlessui/vue": ^1.7.13
     "@heroicons/vue": ^2.0.12
     "@nuxt/devtools": ^0.2.5
     "@nuxtjs/tailwindcss": ^6.3.0
@@ -10585,7 +10585,7 @@ __metadata:
     lodash-es: ^4.17.21
     mitt: ^3.0.0
     mixpanel-browser: ^2.45.0
-    nanoid: ^4.0.0
+    nanoid: ^3.0.0
     nuxt: ^3.3.1
     portal-vue: ^3.0.0
     postcss: ^8.4.18
@@ -10951,7 +10951,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/ui-components@workspace:packages/ui-components"
   dependencies:
-    "@headlessui/vue": ^1.7.3
+    "@headlessui/vue": ^1.7.13
     "@heroicons/vue": ^2.0.12
     "@rollup/plugin-typescript": ^11.1.0
     "@speckle/shared": "workspace:^"
@@ -31147,15 +31147,6 @@ __metadata:
   bin:
     nanoid: bin/nanoid.cjs
   checksum: 2fddd6dee994b7676f008d3ffa4ab16035a754f4bb586c61df5a22cf8c8c94017aadd360368f47d653829e0569a92b129979152ff97af23a558331e47e37cd9c
-  languageName: node
-  linkType: hard
-
-"nanoid@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "nanoid@npm:4.0.0"
-  bin:
-    nanoid: bin/nanoid.js
-  checksum: 7d5946df5c6d383694195b781ae7b5067c149d164ec71e910d6b06676309c3459b68af570b944fb5ecd5065d19df464f05700d141d70bb712ff8ca06642fd8df
   languageName: node
   linkType: hard
 
