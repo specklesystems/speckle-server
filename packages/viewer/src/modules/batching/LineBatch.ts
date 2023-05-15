@@ -125,7 +125,8 @@ export default class LineBatch implements Batch {
         materialOptions && materialOptions.rampIndexColor
           ? materialOptions.rampIndexColor
           : material.color
-      const alpha: number = material.visible ? 1 : 0
+      const alpha: number = material.visible ? material.opacity : 0
+      this.batchMaterial.transparent = material.opacity < 1
       const start = ranges[i].offset * this.colorBuffer.stride
       const len =
         ranges[i].offset * this.colorBuffer.stride +

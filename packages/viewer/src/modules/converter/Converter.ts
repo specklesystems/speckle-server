@@ -509,6 +509,7 @@ export default class Coverter {
       )
       return
     }
+    node.model.nestedNodes = []
     const displayValue = await this.resolveReference(obj.displayValue)
     displayValue.units = displayValue.units || obj.units
     const nestedNode: TreeNode = this.tree.parse({
@@ -518,7 +519,9 @@ export default class Coverter {
       children: []
     })
     await this.convertToNode(displayValue, nestedNode)
-    this.tree.addNode(nestedNode, node)
+    /** We're not adding the segments as children since they shouldn't exist as individual line elements */
+    node.model.nestedNodes.push(nestedNode)
+    // this.tree.addNode(nestedNode, node)
   }
 
   private async CircleToNode(obj, node) {

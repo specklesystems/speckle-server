@@ -243,14 +243,17 @@ export class SectionBoxOutlines {
     ).data.setUsage(DynamicDrawUsage)
 
     Geometry.updateRTEGeometry(lineGeometry, buffer)
-    const material = new SpeckleLineMaterial({
-      color: 0x047efb,
-      linewidth: 2,
-      worldUnits: false,
-      vertexColors: false,
-      alphaToCoverage: false,
-      resolution: new Vector2(919, 848)
-    })
+    const material = new SpeckleLineMaterial(
+      {
+        color: 0x047efb,
+        linewidth: 2,
+        worldUnits: false,
+        vertexColors: false,
+        alphaToCoverage: false,
+        resolution: new Vector2(919, 848)
+      },
+      ['USE_RTE']
+    )
     material.color = new Color(0x047efb)
     material.color.convertSRGBToLinear()
     material.linewidth = 2

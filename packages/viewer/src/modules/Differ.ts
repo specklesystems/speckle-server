@@ -1,5 +1,5 @@
 import { Color, FrontSide } from 'three'
-import { SpeckleType } from './converter/GeometryConverter'
+import { SpeckleTypeAllRenderables } from './converter/GeometryConverter'
 import { FilteringManager } from './filtering/FilteringManager'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import { TreeNode, WorldTree } from './tree/WorldTree'
@@ -105,8 +105,8 @@ export class Differ {
     const renderTreeB = tree.getRenderTree(urlB)
     const rootA = tree.findId(urlA)
     const rootB = tree.findId(urlB)
-    const rvsA = renderTreeA.getAtomicNodes(SpeckleType.Mesh)
-    const rvsB = renderTreeB.getAtomicNodes(SpeckleType.Mesh)
+    const rvsA = renderTreeA.getRenderableNodes(...SpeckleTypeAllRenderables)
+    const rvsB = renderTreeB.getRenderableNodes(...SpeckleTypeAllRenderables)
 
     for (let k = 0; k < rvsB.length; k++) {
       const res = rootA.first((node: TreeNode) => {
@@ -115,7 +115,7 @@ export class Differ {
       if (res) {
         diffResult.unchanged.push(res)
       } else {
-        const applicationId = rvsB[k].model.applicationId
+        const applicationId = rvsB[k].model.raw.applicationId
           ? rvsB[k].model.raw.applicationId
           : rvsB[k].parent.model.raw.applicationId
         const res2 = rootA.first((node: TreeNode) => {
@@ -134,7 +134,7 @@ export class Differ {
         return rvsA[k].model.raw.id === node.model.raw.id
       })
       if (!res) {
-        const applicationId = rvsA[k].model.applicationId
+        const applicationId = rvsA[k].model.raw.applicationId
           ? rvsA[k].model.raw.applicationId
           : rvsA[k].parent.model.raw.applicationId
         const res2 = rootB.first((node: TreeNode) => {

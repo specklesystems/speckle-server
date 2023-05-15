@@ -152,13 +152,12 @@ export class RenderTree {
       .map((val: TreeNode) => val.model.renderView)
   }
 
-  public getAtomicNodes(...types: SpeckleType[]): TreeNode[] {
+  public getRenderableNodes(...types: SpeckleType[]): TreeNode[] {
     return this.root.all((node: TreeNode): boolean => {
       return (
         node.model.renderView !== null &&
-        types.includes(node.model.renderView.renderData.speckleType) &&
-        (node.model.atomic ||
-          (node.parent.model.atomic && !node.parent.model.renderView?.hasGeometry))
+        node.model.renderView.hasGeometry &&
+        types.includes(node.model.renderView.renderData.speckleType)
       )
     })
   }

@@ -8,6 +8,9 @@ export const speckleLineVert = /* glsl */ `
 		uniform float linewidth;
 		uniform vec2 resolution;
 		uniform float pixelThreshold;
+
+		varying float vAlpha;
+
 		#define SEARCH_STEPS 10
 
 		attribute vec3 instanceStart;
@@ -129,6 +132,8 @@ export const speckleLineVert = /* glsl */ `
 				return;
 			}
 			
+			vAlpha = instanceColorStart.w;
+
             vec3 computedPosition = position;
 			#ifdef USE_COLOR
 
