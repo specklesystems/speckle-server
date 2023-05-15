@@ -44,12 +44,7 @@
         *
       </div>
     </div>
-    <p
-      v-if="helpTipId"
-      :id="helpTipId"
-      class="mt-2 ml-3 text-sm"
-      :class="helpTipClasses"
-    >
+    <p v-if="helpTipId" :id="helpTipId" :class="helpTipClasses">
       {{ helpTip }}
     </p>
   </div>

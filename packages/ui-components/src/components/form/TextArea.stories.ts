@@ -97,7 +97,8 @@ export const Required = mergeStories(Default, {
     label: 'This one is required!',
     showRequired: true,
     rules: [(val: string) => (val ? true : 'This field is required')],
-    validateOnMount: true
+    validateOnMount: true,
+    validateOnValueUpdate: true
   }
 })
 

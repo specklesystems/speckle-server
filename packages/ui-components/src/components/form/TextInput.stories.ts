@@ -122,7 +122,8 @@ export const Required = mergeStories(Default, {
     label: 'This one is required!',
     showRequired: true,
     rules: [(val: string) => (val ? true : 'This field is required')],
-    validateOnMount: true
+    validateOnMount: true,
+    validateOnValueUpdate: true
   }
 })
 
@@ -179,6 +180,7 @@ export const WithFoundationColor = mergeStories(Default, {
     </div>`
   }),
   args: {
-    color: 'foundation'
+    color: 'foundation',
+    name: generateRandomName('withFoundationColor')
   }
 })

@@ -1,12 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import FormCheckbox from '~~/src/components/form/Checkbox.vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import { Meta, StoryObj } from '@storybook/vue3'
 import { action } from '@storybook/addon-actions'
-import { Form, SubmissionHandler } from 'vee-validate'
+import { Form, RuleExpression, SubmissionHandler } from 'vee-validate'
 import { userEvent, within } from '@storybook/testing-library'
-import { wait } from '@speckle/shared'
+import { Optional, wait } from '@speckle/shared'
 import { expect } from '@storybook/jest'
 import { VuePlayFunction } from '~~/src/stories/helpers/storybook'
+import { computed } from 'vue'
 
 export default {
   component: FormCheckbox,
@@ -37,23 +39,45 @@ export default {
 
 const toggleCheckboxPlayFunction: VuePlayFunction = async (params) => {
   const canvas = within(params.canvasElement)
-  const checkbox = canvas.getByRole('checkbox')
+  const checkbox = canvas.getByRole('checkbox') as HTMLInputElement
 
   userEvent.click(checkbox)
+  // expect(checkbox.checked).toBeTruthy()
   await wait(1000)
   userEvent.click(checkbox)
+  // expect(checkbox.checked).toBeFalsy()
 }
 
-export const Default: StoryObj = {
+const defaultArgs = {
+  name: 'test1',
+  label: 'Example Checkbox',
+  description: 'Some help description here',
+  showRequired: false,
+  validateOnMount: false,
+  inlineDescription: false,
+  value: 'test1' as string | true,
+  disabled: false,
+  modelValue: undefined as Optional<string | true>,
+  rules: undefined as Optional<RuleExpression<any>[]>
+}
+
+export const Default: StoryObj<typeof defaultArgs> = {
   play: toggleCheckboxPlayFunction,
-  render: (args) => ({
+  render: (args, ctx) => ({
     components: { FormCheckbox },
     setup() {
       const vModelAction = action('v-model')
+      const modelValue = computed({
+        get: () => args.modelValue,
+        set: (newVal) => {
+          ctx.updateArgs({ ...args, modelValue: newVal })
+          vModelAction(newVal)
+        }
+      })
 
-      return { args, vModelAction }
+      return { args, modelValue }
     },
-    template: `<FormCheckbox v-bind="args" @update:modelValue="vModelAction"/>`
+    template: `<FormCheckbox v-bind="args" v-model="modelValue" />`
   }),
   parameters: {
     docs: {
@@ -70,11 +94,12 @@ export const Default: StoryObj = {
     validateOnMount: false,
     inlineDescription: false,
     value: 'test1',
-    disabled: false
+    disabled: false,
+    modelValue: undefined
   }
 }
 
-export const Group: StoryObj = {
+export const Group: StoryObj<typeof defaultArgs> = {
   render: (args) => ({
     components: { FormCheckbox, Form, FormButton },
     setup() {
@@ -130,7 +155,7 @@ export const Group: StoryObj = {
   }
 }
 
-export const InlineDescription: StoryObj = {
+export const InlineDescription: StoryObj<typeof defaultArgs> = {
   ...Default,
   args: {
     name: 'inline1',
@@ -141,7 +166,7 @@ export const InlineDescription: StoryObj = {
   }
 }
 
-export const Disabled: StoryObj = {
+export const Disabled: StoryObj<typeof defaultArgs> = {
   ...Default,
   play: (params) => {
     const canvas = within(params.canvasElement)
@@ -163,7 +188,7 @@ export const Disabled: StoryObj = {
   }
 }
 
-export const Required: StoryObj = {
+export const Required: StoryObj<typeof defaultArgs> = {
   ...Default,
   args: {
     name: 'required1',
@@ -172,5 +197,23 @@ export const Required: StoryObj = {
     showRequired: true,
     rules: [(val: string | string[]) => (val ? true : 'This field is required')],
     validateOnMount: true
+  }
+}
+
+export const Single: StoryObj<typeof defaultArgs> = {
+  ...Default,
+  args: {
+    ...Default.args,
+    label: 'Single checkbox',
+    name: 'single1',
+    value: true
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Set `value` to `true` for non-grouped checkboxes. That way v-model will be `undefined` if unchecked or `true` if checked.'
+      }
+    }
   }
 }

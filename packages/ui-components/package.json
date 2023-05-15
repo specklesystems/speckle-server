@@ -25,8 +25,7 @@
       "import": "./utils/tailwind-configure.js",
       "require": "./utils/tailwind-configure.cjs",
       "types": "./utils/tailwind-configure.d.ts"
-    },
-    "./nuxt-module": "./nuxt-module.js"
+    }
   },
   "peerDependencies": {
     "vue": "^3.0.0"
@@ -37,6 +36,7 @@
     "@speckle/shared": "workspace:^",
     "@vueuse/core": "^9.13.0",
     "lodash": "^4.0.0",
+    "lodash-es": "^4.0.0",
     "nanoid": "^3.0.0",
     "vee-validate": "^4.7.0",
     "vue-tippy": "^6.0.0"

@@ -5,7 +5,7 @@ Tailwind theme used in frontend 2 and other apps.
 ## Setup
 
 1. Install the package
-1. Import the plugin from `@speckle/tailwind-theme` and use it in your tailwind config
+1. Import the plugins from `@speckle/tailwind-theme` and `@tailwindcss/forms` and use them in your tailwind config
 1. Import `tailwindContentEntry` and invoke it in the `contents` field in your Tailwind config to ensure PurgeCSS is configured correctly. It requires the CJS `require` object as its only parameter. If it isn't available (in an ESM environment), you can use node's `createRequire()`.
 
 ## Development

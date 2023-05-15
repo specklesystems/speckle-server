@@ -23,6 +23,12 @@ import FormSelectSourceApps from '~~/src/components/form/select/SourceApps.vue'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import SourceAppBadge from '~~/src/components/SourceAppBadge.vue'
+import { onKeyboardShortcut } from '~~/src/composables/form/input'
+import {
+  ModifierKeys,
+  getKeyboardShortcutTitle,
+  clientOs
+} from '~~/src/helpers/form/input'
 
 export {
   GlobalToastRenderer,
@@ -43,6 +49,10 @@ export {
   FormSelectBase,
   FormSelectSourceApps,
   CommonLoadingBar,
-  SourceAppBadge
+  SourceAppBadge,
+  onKeyboardShortcut,
+  ModifierKeys,
+  getKeyboardShortcutTitle,
+  clientOs
 }
 export type { ToastNotification, BulletStepType, NumberStepType, HorizontalOrVertical }

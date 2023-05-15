@@ -171,9 +171,10 @@ const NuxtLink = resolveDynamicComponent('NuxtLink')
 const RouterLink = resolveDynamicComponent('RouterLink')
 
 const linkComponent = computed(() => {
+  if (props.linkComponent) return props.linkComponent
   if (isObjectLike(NuxtLink)) return NuxtLink
   if (isObjectLike(RouterLink)) return RouterLink
-  return props.linkComponent || 'a'
+  return 'a'
 })
 
 const buttonType = computed(() => {

@@ -89,9 +89,11 @@ export function useTextInputCore(params: {
   const helpTipId = computed(() =>
     hasHelpTip.value ? `${unref(props.name)}-${internalHelpTipId.value}` : undefined
   )
-  const helpTipClasses = computed((): string =>
-    error.value ? 'text-danger' : 'text-foreground-2'
-  )
+  const helpTipClasses = computed((): string => {
+    const classParts = ['mt-2 text-sm']
+    classParts.push(error.value ? 'text-danger' : 'text-foreground-2')
+    return classParts.join(' ')
+  })
 
   const focus = () => {
     inputEl.value?.focus()

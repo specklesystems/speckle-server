@@ -69,12 +69,7 @@
         </div>
       </slot>
     </div>
-    <p
-      v-if="helpTipId && !hideHelpTip"
-      :id="helpTipId"
-      class="mt-2 ml-3 text-sm"
-      :class="helpTipClasses"
-    >
+    <p v-if="helpTipId && !hideHelpTip" :id="helpTipId" :class="helpTipClasses">
       {{ helpTip }}
     </p>
   </div>

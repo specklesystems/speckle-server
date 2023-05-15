@@ -80,7 +80,6 @@
                   type="text"
                   class="pl-9 w-full border-0 bg-foundation-page rounded placeholder:font-normal normal placeholder:text-foreground-2 focus:outline-none focus:ring-1 focus:border-outline-1 focus:ring-outline-1"
                   :placeholder="searchPlaceholder"
-                  @change="triggerSearch"
                   @keydown.stop
                 />
               </div>
@@ -493,6 +492,7 @@ const itemKey = (v: SingleItem): string | number =>
   props.by ? (v[props.by] as string) : v
 
 const triggerSearch = async () => {
+  console.log('triggerSearch')
   if (!isAsyncSearchMode.value || !props.getSearchResults) return
 
   isAsyncLoading.value = true

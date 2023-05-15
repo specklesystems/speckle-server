@@ -24,8 +24,6 @@
         :disable-invitation-cta="!canInvite"
         @submit="onSubmit"
         @created="$emit('created')"
-        @focusin="setGlobalFocus(true)"
-        @focusout="setGlobalFocus(false)"
       />
     </FormFileUploadZone>
     <FormFileUploadProgress
@@ -46,7 +44,6 @@ import { UniqueFileTypeSpecifier } from '~~/lib/core/helpers/file'
 import { useAttachments } from '~~/lib/core/composables/fileUpload'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { isSuccessfullyUploaded } from '~~/lib/core/api/blobStorage'
-import { useTextInputGlobalFocus } from '~~/composables/states'
 import { canInviteToProject } from '~~/lib/projects/helpers/permissions'
 
 const emit = defineEmits<{
@@ -70,7 +67,6 @@ const {
 } = useInjectedViewerState()
 const { onFilesSelected, uploads, onUploadDelete } = useAttachments({ projectId })
 const { maxSizeInBytes } = useServerFileUploadLimit()
-const globalTextInputFocus = useTextInputGlobalFocus()
 
 const uploadZone = ref(null as Nullable<{ triggerPicker: () => void }>)
 const acceptValue = ref(
@@ -131,10 +127,6 @@ const onSubmit = (val: { data: JSONContent }) =>
 
 const openFilePicker = () => {
   uploadZone.value?.triggerPicker()
-}
-
-function setGlobalFocus(status: boolean) {
-  globalTextInputFocus.value = status
 }
 
 // sync upload updates to modelValue
