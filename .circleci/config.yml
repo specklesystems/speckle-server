@@ -226,6 +226,9 @@ workflows:
             - npm-registry
           requires:
             - get-version
+            - test-server
+            - test-ui-components
+            - test-frontend-2
 
 jobs:
   get-version:
