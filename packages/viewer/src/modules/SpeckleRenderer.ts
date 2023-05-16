@@ -59,6 +59,7 @@ import { Differ } from './Differ'
 import SpeckleMesh from './objects/SpeckleMesh'
 import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 import { BatchObject } from './batching/BatchObject'
+import SpecklePointMaterial from './materials/SpecklePointMaterial'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -635,7 +636,10 @@ export default class SpeckleRenderer {
     )
   }
 
-  public applyMaterial(ids: NodeRenderView[], material: SpeckleStandardMaterial) {
+  public applyMaterial(
+    ids: NodeRenderView[],
+    material: SpeckleStandardMaterial | SpecklePointMaterial
+  ) {
     this.filterBatchRecording.push(
       ...this.batcher.setObjectsMaterial(ids, (rv: NodeRenderView) => {
         return {

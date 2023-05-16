@@ -586,24 +586,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     this.differ.setDiffTime(0)
 
-    this.filteringManager.setUserMaterials([
-      {
-        objectIds: diffResult.added.map((value) => value.model.raw.id),
-        material: this.differ.addedMaterial
-      },
-      {
-        objectIds: diffResult.modified.map((value) => value[1].model.raw.id),
-        material: this.differ.changedNewMaterial
-      },
-      {
-        objectIds: diffResult.modified.map((value) => value[0].model.raw.id),
-        material: this.differ.changedOldMateria
-      },
-      {
-        objectIds: diffResult.removed.map((value) => value.model.raw.id),
-        material: this.differ.removedMaterial
-      }
-    ])
+    this.filteringManager.setUserMaterials(this.differ.getMaterialGroups(diffResult))
 
     return Promise.resolve(diffResult)
   }
@@ -617,24 +600,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public setDiffTime(diffResult: DiffResult, time: number) {
     this.differ.setDiffTime(time)
-    this.filteringManager.setUserMaterials([
-      {
-        objectIds: diffResult.added.map((value) => value.model.raw.id),
-        material: this.differ.addedMaterial
-      },
-      {
-        objectIds: diffResult.modified.map((value) => value[1].model.raw.id),
-        material: this.differ.changedNewMaterial
-      },
-      {
-        objectIds: diffResult.modified.map((value) => value[0].model.raw.id),
-        material: this.differ.changedOldMateria
-      },
-      {
-        objectIds: diffResult.removed.map((value) => value.model.raw.id),
-        material: this.differ.removedMaterial
-      }
-    ])
+    this.filteringManager.setUserMaterials(this.differ.getMaterialGroups(diffResult))
   }
 
   public dispose() {

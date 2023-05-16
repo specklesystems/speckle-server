@@ -255,9 +255,11 @@ const getStream = () => {
     // Sum groups
     // 'https://latest.speckle.dev/streams/58b5648c4d/commits/7e2afe5535'
     // 'https://latest.speckle.dev/streams/58b5648c4d/objects/608bc2d53de17e3fd3a6ca9ef525ca79'
-    // 'https://latest.speckle.dev/streams/92b620fb17/commits/e2db7d277b'
-    'https://latest.speckle.dev/streams/92b620fb17/commits/4da17d07da'
-    // 'https://latest.speckle.dev/streams/92b620fb17/commits/e2db7d277b'
+
+    // 'https://latest.speckle.dev/streams/92b620fb17/commits/4da17d07da'
+    'https://latest.speckle.dev/streams/92b620fb17/commits/e2db7d277b'
+    // 'https://latest.speckle.dev/streams/92b620fb17/commits/0dee6dbd98'
+    // 'https://latest.speckle.dev/streams/92b620fb17/commits/f9063fe647'
   )
 }
 
