@@ -216,12 +216,11 @@ workflows:
             - publish-helm-chart
 
       - publish-npm:
-          # TODO: Remove
-          # filters:
-          #   tags:
-          #     only: *filters-tag
-          #   branches:
-          #     ignore: /.*/
+          filters:
+            tags:
+              only: *filters-tag
+            branches:
+              ignore: /.*/
           context:
             - npm-registry
           requires:
@@ -737,8 +736,7 @@ jobs:
       - run:
           name: bump all versions
           # bump all versions in dependency tree order but not in parallel
-          # TODO: Remove
-          command: yarn workspaces foreach -tv version 2.12.666
+          command: yarn workspaces foreach -tv version $IMAGE_VERSION_TAG
 
       - run:
           name: publish to npm

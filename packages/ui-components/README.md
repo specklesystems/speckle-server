@@ -53,8 +53,3 @@ Optionally you can also run `yarn dev` to run the Vite dev server which runs `Ap
 #### Styles don't work
 
 Re-start storybook, it could be that you introduced a new tailwind class that was previously purged out
-
-## TODO
-
-- Add export to Chromatic
-- CI/CD?
