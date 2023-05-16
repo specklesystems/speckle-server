@@ -11,6 +11,7 @@
   "scripts": {
     "build": "yarn workspaces foreach -ptv run build",
     "build:public": "yarn workspaces foreach -ptv --no-private run build",
+    "build:tailwind-deps": "yarn workspaces foreach -iv -j unlimited --include '{@speckle/tailwind-theme,@speckle/ui-components}' run build",
     "lint": "eslint . --ext .js,.ts,.vue --max-warnings=0",
     "helm:readme:generate": "./utils/helm/update-documentation.sh",
     "prettier:check": "prettier --check .",
