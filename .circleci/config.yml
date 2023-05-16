@@ -380,7 +380,7 @@ jobs:
 
   test-frontend-2:
     docker:
-      - image: cimg/node:16.15-browsers
+      - image: cimg/node:18.16.0-browsers
     resource_class: xlarge
     steps:
       - checkout
@@ -419,7 +419,7 @@ jobs:
 
   test-ui-components:
     docker:
-      - image: cimg/node:16.15-browsers
+      - image: cimg/node:18.16.0-browsers
     resource_class: xlarge
     steps:
       - checkout
@@ -469,7 +469,7 @@ jobs:
   frontend-2-chromatic:
     resource_class: medium+
     docker:
-      - image: cimg/node:16.15
+      - image: cimg/node:18.16.0
     steps:
       - checkout
       - restore_cache:
@@ -499,7 +499,7 @@ jobs:
   ui-components-chromatic:
     resource_class: medium+
     docker:
-      - image: cimg/node:16.15
+      - image: cimg/node:18.16.0
     steps:
       - checkout
       - restore_cache:
