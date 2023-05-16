@@ -2,11 +2,14 @@
   "name": "@speckle/tailwind-theme",
   "description": "Speckle tailwind theme used in frontend 2 and other apps",
   "version": "0.0.1",
-  "private": true,
   "type": "module",
   "scripts": {
     "build": "rimraf ./dist ./dist-cjs && tsc -p . && tsc -p ./tsconfig.cjs.json && tsconfig-to-dual-package",
-    "viewer": "tailwind-config-viewer -o -c tailwind.test.config.cjs"
+    "viewer": "tailwind-config-viewer -o -c tailwind.test.config.cjs",
+    "lint:js": "eslint --ext \".js,.ts,.vue\" .",
+    "lint:tsc": "tsc --noEmit",
+    "lint:prettier": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --check .",
+    "lint": "yarn lint:js && yarn lint:tsc && yarn lint:prettier"
   },
   "main": "./dist-cjs/index.js",
   "types": "./dist/index.d.ts",
