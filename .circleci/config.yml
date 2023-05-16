@@ -64,6 +64,7 @@ workflows:
       - docker-build-frontend-2:
           filters: *filters-build
           requires:
+            - test-frontend-2
             - get-version
 
       - docker-build-webhooks:

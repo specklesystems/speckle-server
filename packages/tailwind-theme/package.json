@@ -24,6 +24,11 @@
         "default": "./dist-cjs/index.js",
         "types": "./dist-cjs/index.d.ts"
       }
+    },
+    "./tailwind-configure": {
+      "import": "./utils/tailwind-configure.js",
+      "require": "./utils/tailwind-configure.cjs",
+      "types": "./utils/tailwind-configure.d.ts"
     }
   },
   "engines": {

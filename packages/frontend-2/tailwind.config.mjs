@@ -1,6 +1,5 @@
-import speckleTheme, {
-  tailwindContentEntry as themeEntry
-} from '@speckle/tailwind-theme'
+import speckleTheme from '@speckle/tailwind-theme'
+import { tailwindContentEntry as themeEntry } from '@speckle/tailwind-theme/tailwind-configure'
 import { tailwindContentEntry as uiLibEntry } from '@speckle/ui-components/tailwind-configure'
 import formsPlugin from '@tailwindcss/forms'
 

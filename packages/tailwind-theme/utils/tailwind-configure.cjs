@@ -1,4 +1,4 @@
-import { resolve, dirname } from 'path'
+const { resolve, dirname } = require('path')
 
 /**
  * Use this to generate an entry for the Tailwind 'content' config key that will ensure
@@ -6,8 +6,10 @@ import { resolve, dirname } from 'path'
  * @param {NodeRequire} req Feed in the 'require' object. It needs to be fed in because it may be
  * unavailable in certain environments and might need to be created manually with 'createRequire'
  */
-export function tailwindContentEntry(req: NodeRequire) {
+function tailwindContentEntry(req) {
   const packageLocaton = req.resolve('@speckle/tailwind-theme')
   const packageDir = dirname(packageLocaton)
   return resolve(packageDir, '**/*.{js,cjs,mjs}')
 }
+
+module.exports = { tailwindContentEntry }
