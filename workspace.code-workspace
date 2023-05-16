@@ -13,6 +13,14 @@
       "name": "🏬 frontend 2.0"
     },
     {
+      "path": "packages/tailwind-theme",
+      "name": "🎨 tailwind-theme"
+    },
+    {
+      "path": "packages/ui-components",
+      "name": "🫧 ui-components"
+    },
+    {
       "path": "packages/preview-service",
       "name": "🖼️ preview-service"
     },
@@ -43,6 +51,10 @@
     {
       "path": "utils/helm",
       "name": "⛵ helm"
+    },
+    {
+      "path": "packages/ui-components-nuxt",
+      "name": "🌟 ui-components-nuxt"
     },
     {
       "path": ".",

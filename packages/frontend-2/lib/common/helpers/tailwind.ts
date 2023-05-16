@@ -1,3 +1,5 @@
+import { TailwindBreakpoints } from '@speckle/ui-components'
+
 /**
  * If you use concatenation or variables to build tailwind classes, PurgeCSS won't pick up on them
  * during build and will not add them to the build. So you can use this function to just add string
@@ -12,13 +14,4 @@ export function markClassesUsed(classes: string[]) {
   false && classes
 }
 
-/**
- * Default tailwind breakpoint set. Each value is the minimum width (in pixels) expected for each breakpoint.
- */
-export enum TailwindBreakpoints {
-  sm = 640,
-  md = 746,
-  lg = 1024,
-  xl = 1280,
-  '2xl' = 1536
-}
+export { TailwindBreakpoints }

@@ -2,30 +2,8 @@ import { useTimeoutFn } from '@vueuse/core'
 import { Nullable } from '@speckle/shared'
 import { useScopedState } from '~/lib/common/composables/scopedState'
 import { Ref } from 'vue'
-
-export enum ToastNotificationType {
-  Success,
-  Warning,
-  Danger,
-  Info
-}
-
-export type ToastNotification = {
-  title?: string
-  /**
-   * Optionally provide extra text
-   */
-  description?: string
-  type: ToastNotificationType
-  /**
-   * Optionally specify a CTA link on the right
-   */
-  cta?: {
-    title: string
-    url?: string
-    onClick?: (e: MouseEvent) => void
-  }
-}
+import type { ToastNotification } from '@speckle/ui-components'
+import { ToastNotificationType } from '@speckle/ui-components'
 
 const useGlobalToastState = () =>
   useScopedState<Ref<Nullable<ToastNotification>>>('global-toast-state', () =>
@@ -89,3 +67,5 @@ export function useGlobalToast() {
 
   return { triggerNotification }
 }
+
+export { ToastNotification, ToastNotificationType }

@@ -5,6 +5,7 @@
     "paths": {
       "@speckle/shared": ["../shared/dist-esm/index"],
       "@speckle/viewer": ["../viewer/dist/index"],
+      "@speckle/ui-components": ["../ui-components/dist/lib"],
       "~~": ["."],
       "~~/*": ["./*"],
       "@@": ["."],

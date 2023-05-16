@@ -32,7 +32,8 @@
           size="xl"
           name="search"
           :custom-icon="MagnifyingGlassIcon"
-          class="bg-foundation w-full"
+          color="foundation"
+          full-width
           search
           :show-clear="!!searchString"
           placeholder="Search for a connector"

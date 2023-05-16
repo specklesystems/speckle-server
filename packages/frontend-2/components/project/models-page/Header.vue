@@ -42,7 +42,7 @@
           name="modelsearch"
           :show-label="false"
           placeholder="Search"
-          class="bg-foundation shadow"
+          color="foundation"
           wrapper-classes="grow lg:grow-0 lg:ml-2 lg:w-40 xl:w-60"
           :show-clear="search !== ''"
           @change="($event) => updateSearchImmediately($event.value)"

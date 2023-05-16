@@ -4,14 +4,14 @@
       class="absolute z-20 flex h-screen flex-col space-y-2 bg-green-300/0 px-2 pt-[4.2rem]"
     >
       <ViewerControlsButtonToggle
-        v-tippy="'Models (m)'"
+        v-tippy="modelsShortcut"
         :active="activeControl === 'models'"
         @click="toggleActiveControl('models')"
       >
         <CubeIcon class="h-5 w-5" />
       </ViewerControlsButtonToggle>
       <ViewerControlsButtonToggle
-        v-tippy="'Scene Explorer (e)'"
+        v-tippy="explorerShortcut"
         :active="activeControl === 'explorer'"
         @click="toggleActiveControl('explorer')"
       >
@@ -28,7 +28,7 @@
 
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
-        v-tippy="'Discussions (d)'"
+        v-tippy="discussionsShortcut"
         :active="activeControl === 'discussions'"
         @click="toggleActiveControl('discussions')"
       >
@@ -42,7 +42,7 @@
       <ViewerControlsButtonGroup>
         <!-- Zoom extents -->
         <ViewerControlsButtonToggle
-          v-tippy="'Zoom Extents (spacebar)'"
+          v-tippy="zoomExtentsShortcut"
           flat
           @click="zoomExtentsOrSelection()"
         >
@@ -52,7 +52,7 @@
         <!-- Projection type -->
         <!-- TODO (Question for fabs): How to persist state between page navigation? e.g., swap to iso mode, move out, move back, iso mode is still on in viewer but not in ui -->
         <ViewerControlsButtonToggle
-          v-tippy="'Projection (p)'"
+          v-tippy="projectionShortcut"
           flat
           secondary
           :active="isOrthoProjection"
@@ -64,7 +64,7 @@
 
         <!-- Section Box -->
         <ViewerControlsButtonToggle
-          v-tippy="'Section Box (s)'"
+          v-tippy="sectionBoxShortcut"
           flat
           secondary
           :active="isSectionBoxEnabled"
@@ -124,13 +124,16 @@ import {
   ArrowsPointingOutIcon,
   ScissorsIcon
 } from '@heroicons/vue/24/outline'
-import { onKeyStroke } from '@vueuse/core'
 import { Nullable } from '@speckle/shared'
-import { useTextInputGlobalFocus } from '~~/composables/states'
 import {
   useCameraUtilities,
   useSectionBoxUtilities
 } from '~~/lib/viewer/composables/ui'
+import {
+  onKeyboardShortcut,
+  ModifierKeys,
+  getKeyboardShortcutTitle
+} from '@speckle/ui-components'
 
 const {
   zoomExtentsOrSelection,
@@ -144,37 +147,52 @@ type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'discussions'
 const activeControl = ref<ActiveControl>('models')
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
 
+const modelsShortcut = ref(
+  `Models (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'm'])})`
+)
+const explorerShortcut = ref(
+  `Scene Explorer (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'e'])})`
+)
+const discussionsShortcut = ref(
+  `Discussions (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 't'])})`
+)
+const zoomExtentsShortcut = ref(
+  `Zoom Extents (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'Space'])})`
+)
+const projectionShortcut = ref(
+  `Projection (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'p'])})`
+)
+const sectionBoxShortcut = ref(
+  `Section Box (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'b'])})`
+)
+
 const toggleActiveControl = (control: ActiveControl) =>
   activeControl.value === control
     ? (activeControl.value = 'none')
     : (activeControl.value = control)
 
-const globalTextInputFocus = useTextInputGlobalFocus()
-
-// Main nav kbd shortcuts
-// TODO: better with modifier keys, and abstract away OS control/command stuff
-onKeyStroke('m', () => {
-  if (!globalTextInputFocus.value) toggleActiveControl('models')
+onKeyboardShortcut([ModifierKeys.AltOrOpt], 'm', () => {
+  toggleActiveControl('models')
 })
-onKeyStroke('e', () => {
-  if (!globalTextInputFocus.value) toggleActiveControl('explorer')
+onKeyboardShortcut([ModifierKeys.AltOrOpt], 'e', () => {
+  toggleActiveControl('explorer')
 })
-onKeyStroke('f', () => {
-  if (!globalTextInputFocus.value) toggleActiveControl('filters')
+onKeyboardShortcut([ModifierKeys.AltOrOpt], 'f', () => {
+  toggleActiveControl('filters')
 })
-onKeyStroke(['d', 'D'], () => {
-  if (!globalTextInputFocus.value) toggleActiveControl('discussions')
+onKeyboardShortcut([ModifierKeys.AltOrOpt], ['t'], () => {
+  toggleActiveControl('discussions')
 })
 
 // Viewer actions kbd shortcuts
-onKeyStroke(' ', () => {
-  if (!globalTextInputFocus.value) zoomExtentsOrSelection()
+onKeyboardShortcut([ModifierKeys.AltOrOpt], ' ', () => {
+  zoomExtentsOrSelection()
 })
-onKeyStroke('p', () => {
-  if (!globalTextInputFocus.value) toggleProjection()
+onKeyboardShortcut([ModifierKeys.AltOrOpt], 'p', () => {
+  toggleProjection()
 })
-onKeyStroke('s', () => {
-  if (!globalTextInputFocus.value) toggleSectionBox()
+onKeyboardShortcut([ModifierKeys.AltOrOpt], 'b', () => {
+  toggleSectionBox()
 })
 
 const scrollControlsToBottom = () => {
