@@ -737,7 +737,8 @@ jobs:
       - run:
           name: bump all versions
           # bump all versions in dependency tree order but not in parallel
-          command: yarn workspaces foreach -tv version $IMAGE_VERSION_TAG
+          # TODO: Remove
+          command: yarn workspaces foreach -tv version 2.12.666
 
       - run:
           name: publish to npm
