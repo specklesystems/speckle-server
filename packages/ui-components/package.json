@@ -7,7 +7,10 @@
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "storybook:test": "test-storybook",
+    "storybook:test:ci": "concurrently -k -s first -n \"SB,TEST\" -c \"magenta,blue\" \"yarn build-storybook --quiet && npx http-server storybook-static --port 6006 --silent\" \"wait-on tcp:6006 && yarn test-storybook --ci\"",
+    "storybook:test:watch": "test-storybook --watch"
   },
   "type": "module",
   "private": true,
@@ -42,6 +45,8 @@
     "vue-tippy": "^6.0.0"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.21.5",
+    "@babel/preset-react": "^7.18.6",
     "@rollup/plugin-typescript": "^11.1.0",
     "@speckle/tailwind-theme": "workspace:^",
     "@storybook/addon-essentials": "^7.0.10",
@@ -49,6 +54,7 @@
     "@storybook/addon-links": "^7.0.10",
     "@storybook/blocks": "^7.0.10",
     "@storybook/jest": "^0.0.11-next.0",
+    "@storybook/test-runner": "^0.10.0",
     "@storybook/testing-library": "^0.0.14-next.2",
     "@storybook/vue3": "^7.0.10",
     "@storybook/vue3-vite": "^7.0.10",
