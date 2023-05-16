@@ -24,6 +24,11 @@ if [ ! -d "${README_GENERATOR_DIR}" ]; then
   git clone git@github.com:bitnami-labs/readme-generator-for-helm.git "${README_GENERATOR_DIR}"
 fi
 
+if [ -n "${CI}" ]; then
+  git config --global user.email "devops+circleci@speckle.systems"
+  git config --global user.name "CI"
+fi
+
 pushd "${README_GENERATOR_DIR}"
   echo "✨ Updating to the latest version of readme-generator-for-helm"
   git switch main
