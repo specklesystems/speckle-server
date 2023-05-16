@@ -61,8 +61,11 @@ popd
 
 pushd "${HELM_DIR}"
   echo "🌳 Preparing commit to branch '${HELM_GIT_TARGET_BRANCH}' for Helm README..."
-  git add README.md
-  git commit -m "Updating README with revised parameters from values.yaml of Helm Chart."
-  git push --set-upstream origin "${HELM_GIT_TARGET_BRANCH}"
-  echo "✅ All done 🎉"
+  if [[ $(git status --porcelain) ]]; then
+    git add README.md
+    git commit -m "Updating README with revised parameters from values.yaml of Helm Chart."
+    git push --set-upstream origin "${HELM_GIT_TARGET_BRANCH}"
+  fi
 popd
+
+echo "✅ All done 🎉"
