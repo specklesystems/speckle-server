@@ -1,5 +1,5 @@
 'use strict'
-const { ApolloError, UserInputError } = require('apollo-server-express')
+const { UserInputError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
 
 const {
@@ -49,6 +49,7 @@ const {
 } = require('@/modules/core/services/streams/management')
 const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 const { Roles } = require('@speckle/shared')
+const { StreamNotFoundError } = require('@/modules/core/errors/stream')
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -80,7 +81,9 @@ module.exports = {
   Query: {
     async stream(_, args, context) {
       const stream = await getStream({ streamId: args.id, userId: context.userId })
-      if (!stream) throw new ApolloError('Stream not found')
+      if (!stream) {
+        throw new StreamNotFoundError('Stream not found')
+      }
 
       await authorizeResolver(context.userId, args.id, 'stream:reviewer')
 
