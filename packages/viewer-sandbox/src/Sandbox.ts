@@ -7,7 +7,8 @@ import {
   SelectionEvent,
   SunLightConfiguration,
   ViewerEvent,
-  BatchObject
+  BatchObject,
+  VisualDiffMode
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
@@ -960,6 +961,10 @@ export default class Sandbox {
     const diffButton = container.addButton({
       title: 'Diff'
     })
+    const diffParams = {
+      time: 0,
+      mode: VisualDiffMode.COLORED
+    }
     let diffResult: DiffResult | null = null
     diffButton.on('click', async () => {
       diffResult = await this.viewer.diff(
@@ -968,13 +973,13 @@ export default class Sandbox {
         // 'https://latest.speckle.dev/streams/aea12cab71/objects/94af0a6b4eaa318647180f8c230cb867'
         // cubes
         // 'https://latest.speckle.dev/streams/aea12cab71/objects/d2510c59c203b73473f8bbfe637e0552',
-        // 'https://latest.speckle.dev/streams/aea12cab71/objects/1c327da824fdb04629eb48675101d7b7'
+        // 'https://latest.speckle.dev/streams/aea12cab71/objects/1c327da824fdb04629eb48675101d7b7',
         // sketchup
         // 'https://latest.speckle.dev/streams/aea12cab71/objects/06bed1819e6c61d9df7196d424ab1eec',
         // 'https://latest.speckle.dev/streams/aea12cab71/objects/9026f1d6495789b9eab31b5028c9a8ef'
         //latest
-        // 'https://latest.speckle.dev/streams/cdbe82b016/objects/c14d1a33fd68323193813ec215737472',
-        // 'https://latest.speckle.dev/streams/cdbe82b016/objects/16676fc95a9ead877f6a825d9e28cbe8',
+        'https://latest.speckle.dev/streams/cdbe82b016/objects/c14d1a33fd68323193813ec215737472',
+        'https://latest.speckle.dev/streams/cdbe82b016/objects/16676fc95a9ead877f6a825d9e28cbe8',
         //lines
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/3b42d6ef51d3110b4e33b9f8cdc9f357',
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/774384d431fb34d447d4696abbc4b816',
@@ -982,8 +987,9 @@ export default class Sandbox {
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/7118603b197c00944f53be650ce721ec',
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/4ffcf75dc4a28ed52500df73d08058ee',
         // randos
-        'https://latest.speckle.dev/streams/3ed8357f29/objects/d8786c21f277be67a0ea2cd43a1930df',
-        'https://latest.speckle.dev/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216',
+        // 'https://latest.speckle.dev/streams/3ed8357f29/objects/d8786c21f277be67a0ea2cd43a1930df',
+        // 'https://latest.speckle.dev/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216',
+        diffParams.mode,
         localStorage.getItem('AuthTokenLatest') as string
       )
     })
@@ -995,7 +1001,7 @@ export default class Sandbox {
     })
 
     container
-      .addInput({ time: 0 }, 'time', {
+      .addInput(diffParams, 'time', {
         label: 'Diff Time',
         min: 0,
         max: 1,
@@ -1004,6 +1010,19 @@ export default class Sandbox {
       .on('change', (value) => {
         if (!diffResult) return
         this.viewer.setDiffTime(diffResult, value.value)
+        this.viewer.requestRender()
+      })
+    container
+      .addInput(diffParams, 'mode', {
+        options: {
+          COLORED: VisualDiffMode.COLORED,
+          PLAIN: VisualDiffMode.PLAIN
+        }
+      })
+      .on('change', (value) => {
+        if (!diffResult) return
+        this.viewer.setVisualDiffMode(diffResult, value.value)
+        this.viewer.setDiffTime(diffResult, diffParams.time)
         this.viewer.requestRender()
       })
   }

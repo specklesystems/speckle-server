@@ -60,6 +60,7 @@ import SpeckleMesh from './objects/SpeckleMesh'
 import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 import { BatchObject } from './batching/BatchObject'
 import SpecklePointMaterial from './materials/SpecklePointMaterial'
+import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -664,6 +665,14 @@ export default class SpeckleRenderer {
     }
     this.renderer.shadowMap.needsUpdate = true
     this.updateShadowCatcher()
+  }
+
+  public getBatchMaterials(): {
+    [id: string]: SpeckleStandardMaterial | SpecklePointMaterial | SpeckleLineMaterial
+  } {
+    return Object.keys(this.batcher.batches).reduce((accumulator, value) => {
+      return { ...accumulator, [value]: this.batcher.batches[value].batchMaterial }
+    }, {})
   }
 
   public updateClippingPlanes(planes: Plane[]) {

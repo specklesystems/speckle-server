@@ -4,9 +4,20 @@ import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpecklePointMaterial from './materials/SpecklePointMaterial'
 import { GeometryType } from './batching/Batch'
+import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
+import Logger from 'js-logger'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeckleObject = Record<string, any>
+type SpeckleMaterialType =
+  | SpeckleStandardMaterial
+  | SpecklePointMaterial
+  | SpeckleLineMaterial
+
+export enum VisualDiffMode {
+  PLAIN,
+  COLORED
+}
 
 export interface DiffResult {
   unchanged: Array<SpeckleObject>
@@ -16,15 +27,27 @@ export interface DiffResult {
 }
 
 export class Differ {
-  public addedMaterialMesh: SpeckleStandardMaterial = null
-  public changedNewMaterialMesh: SpeckleStandardMaterial = null
-  public changedOldMaterialMesh: SpeckleStandardMaterial = null
-  public removedMaterialMesh: SpeckleStandardMaterial = null
+  private addedMaterialMesh: SpeckleStandardMaterial = null
+  private changedNewMaterialMesh: SpeckleStandardMaterial = null
+  private changedOldMaterialMesh: SpeckleStandardMaterial = null
+  private removedMaterialMesh: SpeckleStandardMaterial = null
 
-  public addedMaterialPoint: SpecklePointMaterial = null
-  public changedNewMaterialPoint: SpecklePointMaterial = null
-  public changedOldMaterialPoint: SpecklePointMaterial = null
-  public removedMaterialPoint: SpecklePointMaterial = null
+  private addedMaterialPoint: SpecklePointMaterial = null
+  private changedNewMaterialPoint: SpecklePointMaterial = null
+  private changedOldMaterialPoint: SpecklePointMaterial = null
+  private removedMaterialPoint: SpecklePointMaterial = null
+
+  /** Urgh, state */
+  private addedMaterials: Array<SpeckleMaterialType> = []
+  private changedOldMaterials: Array<SpeckleMaterialType> = []
+  private changedNewMaterials: Array<SpeckleMaterialType> = []
+  private removedMaterials: Array<SpeckleMaterialType> = []
+
+  private _materialGroups = null
+
+  public get materialGroups() {
+    return this._materialGroups
+  }
 
   public constructor() {
     this.addedMaterialMesh = new SpeckleStandardMaterial(
@@ -216,26 +239,73 @@ export class Differ {
     const from = Math.min(Math.max(1 - time, 0.2), 1)
     const to = Math.min(Math.max(time, 0.2), 1)
 
-    this.addedMaterialMesh.opacity = from
-    this.changedNewMaterialMesh.opacity = from
-    this.changedOldMaterialMesh.opacity = to
-    this.removedMaterialMesh.opacity = to
-    this.addedMaterialMesh.depthWrite = from < 0.5 ? false : true
-    this.changedNewMaterialMesh.depthWrite = from < 0.5 ? false : true
-    this.changedOldMaterialMesh.depthWrite = to < 0.5 ? false : true
-    this.removedMaterialMesh.depthWrite = to < 0.5 ? false : true
+    this.addedMaterials.forEach((mat) => {
+      mat.opacity = from
+      mat.depthWrite = from < 0.5 ? false : true
+    })
 
-    this.addedMaterialPoint.opacity = from
-    this.changedNewMaterialPoint.opacity = from
-    this.changedOldMaterialPoint.opacity = to
-    this.removedMaterialPoint.opacity = to
-    this.addedMaterialPoint.depthWrite = from < 0.5 ? false : true
-    this.changedNewMaterialPoint.depthWrite = from < 0.5 ? false : true
-    this.changedOldMaterialPoint.depthWrite = to < 0.5 ? false : true
-    this.removedMaterialPoint.depthWrite = to < 0.5 ? false : true
+    this.changedOldMaterials.forEach((mat) => {
+      mat.opacity = to
+      mat.depthWrite = to < 0.5 ? false : true
+    })
+
+    this.changedNewMaterials.forEach((mat) => {
+      mat.opacity = from
+      mat.depthWrite = from < 0.5 ? false : true
+    })
+
+    this.removedMaterials.forEach((mat) => {
+      mat.opacity = to
+      mat.depthWrite = to < 0.5 ? false : true
+    })
+    // this.addedMaterialMesh.opacity = from
+    // this.changedNewMaterialMesh.opacity = from
+    // this.changedOldMaterialMesh.opacity = to
+    // this.removedMaterialMesh.opacity = to
+    // this.addedMaterialMesh.depthWrite = from < 0.5 ? false : true
+    // this.changedNewMaterialMesh.depthWrite = from < 0.5 ? false : true
+    // this.changedOldMaterialMesh.depthWrite = to < 0.5 ? false : true
+    // this.removedMaterialMesh.depthWrite = to < 0.5 ? false : true
+
+    // this.addedMaterialPoint.opacity = from
+    // this.changedNewMaterialPoint.opacity = from
+    // this.changedOldMaterialPoint.opacity = to
+    // this.removedMaterialPoint.opacity = to
+    // this.addedMaterialPoint.depthWrite = from < 0.5 ? false : true
+    // this.changedNewMaterialPoint.depthWrite = from < 0.5 ? false : true
+    // this.changedOldMaterialPoint.depthWrite = to < 0.5 ? false : true
+    // this.removedMaterialPoint.depthWrite = to < 0.5 ? false : true
   }
 
-  public getMaterialGroups(diffResult: DiffResult) {
+  public buildMaterialGroups(
+    mode: VisualDiffMode,
+    diffResult: DiffResult,
+    batchMaterials?: {
+      [id: string]: SpeckleStandardMaterial | SpecklePointMaterial | SpeckleLineMaterial
+    }
+  ) {
+    switch (mode) {
+      case VisualDiffMode.COLORED:
+        this._materialGroups = this.getColoredMaterialGroups(diffResult)
+        break
+      case VisualDiffMode.PLAIN:
+        this._materialGroups = this.getPlainMaterialGroups(diffResult, batchMaterials)
+        break
+      default:
+        Logger.error(`Unsupported visual diff mode ${mode}`)
+    }
+    return this._materialGroups
+  }
+
+  public resetMaterialGroups() {
+    this._materialGroups = null
+    this.addedMaterials = []
+    this.changedOldMaterials = []
+    this.changedNewMaterials = []
+    this.removedMaterials = []
+  }
+
+  private getColoredMaterialGroups(diffResult: DiffResult) {
     const groups = [
       // MESHES & LINES
       // Currently lines work with mesh specific materials due to how the LineBatch is implemented.
@@ -322,6 +392,66 @@ export class Differ {
         material: this.removedMaterialPoint
       }
     ]
+    this.addedMaterials.push(this.addedMaterialMesh, this.addedMaterialPoint)
+    this.changedOldMaterials.push(
+      this.changedOldMaterialMesh,
+      this.changedOldMaterialPoint
+    )
+    this.changedNewMaterials.push(
+      this.changedNewMaterialMesh,
+      this.changedNewMaterialPoint
+    )
+    this.removedMaterials.push(this.removedMaterialMesh, this.removedMaterialPoint)
+
     return groups.filter((value) => value.objectIds.length > 0)
+  }
+
+  private getPlainMaterialGroups(
+    diffResult: DiffResult,
+    batchMaterials: {
+      [id: string]: SpeckleStandardMaterial | SpecklePointMaterial | SpeckleLineMaterial
+    }
+  ) {
+    const added = this.getBatchesSubgroups(diffResult.added, batchMaterials)
+    const changedOld = this.getBatchesSubgroups(
+      diffResult.modified.map((value) => value[0]),
+      batchMaterials
+    )
+    const changedNew = this.getBatchesSubgroups(
+      diffResult.modified.map((value) => value[1]),
+      batchMaterials
+    )
+    const removed = this.getBatchesSubgroups(diffResult.removed, batchMaterials)
+    this.addedMaterials = added.map((value) => value.material)
+    this.changedOldMaterials = changedOld.map((value) => value.material)
+    this.changedNewMaterials = changedNew.map((value) => value.material)
+    this.removedMaterials = removed.map((value) => value.material)
+    return [...added, ...changedOld, ...changedNew, ...removed]
+  }
+
+  private getBatchesSubgroups(
+    subgroup: Array<SpeckleObject>,
+    batchMaterials: {
+      [id: string]: SpeckleStandardMaterial | SpecklePointMaterial | SpeckleLineMaterial
+    }
+  ) {
+    const groupBatches: Array<string> = [
+      ...Array.from(new Set(subgroup.map((value) => value.model.renderView.batchId)))
+    ] as Array<string>
+
+    const materialGroup = []
+    for (let k = 0; k < groupBatches.length; k++) {
+      const matClone = batchMaterials[groupBatches[k]].clone()
+      matClone.opacity = 0.5
+      matClone.transparent = true
+      materialGroup.push({
+        objectIds: subgroup
+          .filter((value) => value.model.renderView.batchId === groupBatches[k])
+          .map((value) => value.model.raw.id),
+        material: matClone
+      })
+    }
+
+    return materialGroup
   }
 }

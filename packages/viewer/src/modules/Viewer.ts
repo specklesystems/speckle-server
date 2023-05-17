@@ -31,7 +31,7 @@ import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
-import { DiffResult, Differ } from './Differ'
+import { DiffResult, Differ, VisualDiffMode } from './Differ'
 import { BatchObject } from './batching/BatchObject'
 
 export class Viewer extends EventEmitter implements IViewer {
@@ -569,6 +569,7 @@ export class Viewer extends EventEmitter implements IViewer {
   public async diff(
     urlA: string,
     urlB: string,
+    mode: VisualDiffMode,
     authToken?: string
   ): Promise<DiffResult> {
     const loadPromises = []
@@ -584,9 +585,14 @@ export class Viewer extends EventEmitter implements IViewer {
     pipelineOptions.depthSide = FrontSide
     this.speckleRenderer.pipelineOptions = pipelineOptions
 
+    this.differ.resetMaterialGroups()
+    this.differ.buildMaterialGroups(
+      mode,
+      diffResult,
+      this.speckleRenderer.getBatchMaterials()
+    )
     this.differ.setDiffTime(0)
-
-    this.filteringManager.setUserMaterials(this.differ.getMaterialGroups(diffResult))
+    this.filteringManager.setUserMaterials(this.differ.materialGroups)
 
     return Promise.resolve(diffResult)
   }
@@ -595,12 +601,23 @@ export class Viewer extends EventEmitter implements IViewer {
     const pipelineOptions = this.speckleRenderer.pipelineOptions
     pipelineOptions.depthSide = DoubleSide
     this.speckleRenderer.pipelineOptions = pipelineOptions
+    this.differ.resetMaterialGroups()
     this.filteringManager.removeUserMaterials()
   }
 
   public setDiffTime(diffResult: DiffResult, time: number) {
     this.differ.setDiffTime(time)
-    this.filteringManager.setUserMaterials(this.differ.getMaterialGroups(diffResult))
+    this.filteringManager.setUserMaterials(this.differ.materialGroups)
+  }
+
+  public setVisualDiffMode(diffResult: DiffResult, mode: VisualDiffMode) {
+    this.differ.resetMaterialGroups()
+    this.differ.buildMaterialGroups(
+      mode,
+      diffResult,
+      this.speckleRenderer.getBatchMaterials()
+    )
+    this.filteringManager.setUserMaterials(this.differ.materialGroups)
   }
 
   public dispose() {
