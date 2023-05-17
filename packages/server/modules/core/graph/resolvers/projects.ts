@@ -1,4 +1,5 @@
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { ProjectVisibility, Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
@@ -44,7 +45,9 @@ export = {
         streamId: args.id,
         userId: context.userId
       })
-      if (!stream) return null
+      if (!stream) {
+        throw new StreamNotFoundError('Project not found')
+      }
 
       await authorizeResolver(context.userId, args.id, Roles.Stream.Reviewer)
 

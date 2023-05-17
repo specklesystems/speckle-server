@@ -16,7 +16,7 @@ import {
 import { ApolloMockData } from '~~/lib/common/helpers/storybook'
 import { apolloMockRequestWithDefaults } from '~~/lib/fake-nuxt-env/utils/betterMockLink'
 import { fakeUsers } from '~~/components/form/select/Users.stories'
-import { isNumber, random, times } from 'lodash-es'
+import { isNumber, times } from 'lodash-es'
 import { fakeScreenshot } from '~~/stories/helpers/comments'
 
 const randomDate = new Date('01-01-2020')
@@ -274,7 +274,7 @@ export const mockProjectLatestCommentThreadsQuery = apolloMockRequestWithDefault
               items: times(resultCount, (i) => ({
                 __typename: 'Comment',
                 id: `comment-${i}`,
-                author: fakeUsers[random(fakeUsers.length - 1)],
+                author: fakeUsers[5],
                 screenshot: fakeScreenshot,
                 rawText:
                   'Hello there, this is an example comment text. Do you like it?',
