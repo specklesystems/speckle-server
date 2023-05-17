@@ -274,7 +274,7 @@ export const mockProjectLatestCommentThreadsQuery = apolloMockRequestWithDefault
               items: times(resultCount, (i) => ({
                 __typename: 'Comment',
                 id: `comment-${i}`,
-                author: fakeUsers[i % fakeUsers.length],
+                author: fakeUsers[5],
                 screenshot: fakeScreenshot,
                 rawText:
                   'Hello there, this is an example comment text. Do you like it?',
