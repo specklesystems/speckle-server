@@ -25,6 +25,8 @@ const getInvitesBaseQuery = () => {
     w1.whereNull(ServerInvites.col.resourceId).orWhereNotNull(Streams.col.id)
   })
 
+  q.orderBy(ServerInvites.col.createdAt)
+
   return q
 }
 
