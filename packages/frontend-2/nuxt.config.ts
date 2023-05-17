@@ -27,7 +27,8 @@ export default defineNuxtConfig({
           default: '~/lib/core/configs/apollo.ts'
         }
       }
-    ]
+    ],
+    '@speckle/ui-components-nuxt'
   ],
   runtimeConfig: {
     public: {
@@ -51,8 +52,10 @@ export default defineNuxtConfig({
   vite: {
     resolve: {
       alias: [{ find: /^lodash$/, replacement: 'lodash-es' }],
-      // i've no idea why, but the same version of various prosemirror deps gets bundled twice
-      dedupe: ['prosemirror-state', '@tiptap/pm', 'prosemirror-model']
+      // i've no idea why, but the same version of various deps gets bundled twice
+      // in the case of vee-validate, this is just a guess, but maybe it gets confused cause there's a vee-validate install both under ui-components
+      // and also under frontend-2. they're the same version, but apparently that's not enough...
+      dedupe: ['prosemirror-state', '@tiptap/pm', 'prosemirror-model', 'vee-validate']
     },
     ...(process.env.IS_STORYBOOK_BUILD
       ? {}
@@ -89,7 +92,9 @@ export default defineNuxtConfig({
         }
       },
       // older chrome version for CEF 65 support. all identifiers except the chrome one are default ones.
-      target: ['es2020', 'edge88', 'firefox78', 'chrome65', 'safari14']
+      target: ['es2020', 'edge88', 'firefox78', 'chrome65', 'safari14'],
+      // optionally disable minification for debugging
+      minify: false
     },
     plugins: [
       // again - only for CEF 65
@@ -124,8 +129,10 @@ export default defineNuxtConfig({
       '@vue/apollo-composable',
       '@speckle/vue-apollo-composable',
       '@headlessui/vue',
-      '@heroicons/vue',
+      /^@heroicons\/vue/,
       '@vueuse/core',
+      '@vueuse/shared',
+      '@speckle/ui-components',
       /prosemirror.*/
     ]
   },

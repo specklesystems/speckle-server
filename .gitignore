@@ -60,3 +60,4 @@ packages/server/.vscode/*.log
 .cache_ggshield
 
 storybook-static
+build-storybook.log

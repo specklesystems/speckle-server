@@ -6,7 +6,8 @@
         name="modelsearch"
         :show-label="false"
         placeholder="Search"
-        class="bg-foundation shadow w-60"
+        color="foundation"
+        class="w-60"
         :show-clear="search !== ''"
         auto-focus
         @change="updateSearchImmediately"

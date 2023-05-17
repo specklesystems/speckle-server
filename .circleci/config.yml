@@ -24,15 +24,20 @@ workflows:
               only: /.*/
 
       - test-frontend-2:
-          filters: &filters-frontend-2
-            tags:
-              # frontend-2 prefix only
-              only: /^frontend\-2.*/
+          filters: *filters-allow-all
 
-      - chromatic:
+      - test-ui-components:
+          filters: *filters-allow-all
+
+      - frontend-2-chromatic:
           context:
             - chromatic
-          filters: *filters-frontend-2
+          filters: *filters-allow-all
+
+      - ui-components-chromatic:
+          context:
+            - chromatic-ui-components
+          filters: *filters-allow-all
 
       - get-version:
           filters: *filters-allow-all
@@ -59,6 +64,7 @@ workflows:
       - docker-build-frontend-2:
           filters: *filters-build
           requires:
+            - test-frontend-2
             - get-version
 
       - docker-build-webhooks:
@@ -219,6 +225,9 @@ workflows:
             - npm-registry
           requires:
             - get-version
+            - test-server
+            - test-ui-components
+            - test-frontend-2
 
 jobs:
   get-version:
@@ -374,7 +383,7 @@ jobs:
 
   test-frontend-2:
     docker:
-      - image: cimg/node:16.15-browsers
+      - image: cimg/node:18.16.0-browsers
     resource_class: xlarge
     steps:
       - checkout
@@ -411,10 +420,59 @@ jobs:
           command: yarn storybook:test:ci
           working_directory: 'packages/frontend-2'
 
-  chromatic:
+  test-ui-components:
+    docker:
+      - image: cimg/node:18.16.0-browsers
+    resource_class: xlarge
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Build public packages
+          command: yarn build:public
+
+      - run:
+          name: Lint tailwind theme
+          command: yarn lint
+          working_directory: 'packages/tailwind-theme'
+
+      - run:
+          name: Lint ui components
+          command: yarn lint
+          working_directory: 'packages/ui-components'
+
+      - run:
+          name: Lint component nuxt package
+          command: yarn lint
+          working_directory: 'packages/ui-components-nuxt'
+
+      - run:
+          name: Install Playwright
+          command: cd ~ && npx playwright install --with-deps
+
+      - run:
+          name: Test via Storybook
+          command: yarn storybook:test:ci
+          working_directory: 'packages/ui-components'
+
+  frontend-2-chromatic:
     resource_class: medium+
     docker:
-      - image: cimg/node:16.15
+      - image: cimg/node:18.16.0
     steps:
       - checkout
       - restore_cache:
@@ -440,6 +498,36 @@ jobs:
           name: Run chromatic
           command: yarn chromatic
           working_directory: 'packages/frontend-2'
+
+  ui-components-chromatic:
+    resource_class: medium+
+    docker:
+      - image: cimg/node:18.16.0
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Build shared packages
+          command: yarn build:public
+
+      - run:
+          name: Run chromatic
+          command: yarn chromatic
+          working_directory: 'packages/ui-components'
 
   vulnerability-scan:
     # snyk can undertake most types of scans through GitHub integration

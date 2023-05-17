@@ -24,6 +24,11 @@ if [ ! -d "${README_GENERATOR_DIR}" ]; then
   git clone git@github.com:bitnami-labs/readme-generator-for-helm.git "${README_GENERATOR_DIR}"
 fi
 
+if [ -n "${CI}" ]; then
+  git config --global user.email "devops+circleci@speckle.systems"
+  git config --global user.name "CI"
+fi
+
 pushd "${README_GENERATOR_DIR}"
   echo "✨ Updating to the latest version of readme-generator-for-helm"
   git switch main
@@ -56,8 +61,11 @@ popd
 
 pushd "${HELM_DIR}"
   echo "🌳 Preparing commit to branch '${HELM_GIT_TARGET_BRANCH}' for Helm README..."
-  git add README.md
-  git commit -m "Updating README with revised parameters from values.yaml of Helm Chart."
-  git push --set-upstream origin "${HELM_GIT_TARGET_BRANCH}"
-  echo "✅ All done 🎉"
+  if [[ $(git status --porcelain) ]]; then
+    git add README.md
+    git commit -m "Updating README with revised parameters from values.yaml of Helm Chart."
+    git push --set-upstream origin "${HELM_GIT_TARGET_BRANCH}"
+  fi
 popd
+
+echo "✅ All done 🎉"

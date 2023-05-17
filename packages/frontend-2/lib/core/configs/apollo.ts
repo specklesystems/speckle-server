@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { ApolloLink, InMemoryCache, split } from '@apollo/client/core'
+import {
+  ApolloLink,
+  InMemoryCache,
+  split,
+  from,
+  ServerError
+} from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
 import type { ApolloConfigResolver } from '~~/lib/core/nuxt-modules/apollo/module'
@@ -16,6 +22,8 @@ import {
   buildArrayMergeFunction,
   incomingOverwritesExistingMergeFunction
 } from '~~/lib/core/helpers/apolloSetup'
+import { onError } from '@apollo/client/link/error'
+import { useNavigateToLogin } from '~~/lib/common/helpers/route'
 
 const appVersion = (import.meta.env.SPECKLE_SERVER_VERSION as string) || 'unknown'
 const appName = 'frontend-2'
@@ -256,12 +264,27 @@ async function createWsClient(params: {
   )
 }
 
+const isServerError = (e: Error): e is ServerError => e.name === 'ServerError'
+
 function createLink(params: {
   httpEndpoint: string
   wsClient?: SubscriptionClient
   authToken: CookieRef<Optional<string>>
 }): ApolloLink {
   const { httpEndpoint, wsClient, authToken } = params
+  const goToLogin = useNavigateToLogin()
+
+  const errorLink = onError((res) => {
+    const { networkError } = res
+    if (networkError && isServerError(networkError)) {
+      const isForbidden = networkError.statusCode === 403
+      if (isForbidden) {
+        // Reset auth
+        authToken.value = undefined
+        goToLogin()
+      }
+    }
+  })
 
   // Prepare links
   const httpLink = createUploadLink({
@@ -298,7 +321,7 @@ function createLink(params: {
     )
   }
 
-  return link
+  return from([errorLink, link])
 }
 
 const defaultConfigResolver: ApolloConfigResolver = async () => {
