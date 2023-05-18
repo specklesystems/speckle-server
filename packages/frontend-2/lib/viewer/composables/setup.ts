@@ -173,7 +173,7 @@ export type InjectableViewerState = Readonly<{
       /**
        * Project main metadata
        */
-      project: ComputedRef<Get<ViewerLoadedResourcesQuery, 'project'>>
+      project: ComputedRef<Optional<Get<ViewerLoadedResourcesQuery, 'project'>>>
       /**
        * Variables used to load the resource query. Relevant when making cache updates.
        */
