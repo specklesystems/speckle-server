@@ -96,11 +96,15 @@
     >
       <div v-show="activeControl === 'models'">
         <KeepAlive>
-          <ViewerResourcesList
-            class="pointer-events-auto"
-            @loaded-more="scrollControlsToBottom"
-            @close="activeControl = 'none'"
-          />
+          <div>
+            <ViewerResourcesList
+              v-show="!diffEnabled"
+              class="pointer-events-auto"
+              @loaded-more="scrollControlsToBottom"
+              @close="activeControl = 'none'"
+            />
+            <ViewerCompareChangesPanel v-show="diffEnabled" @close="activeControl = 'none'"/>
+          </div>
         </KeepAlive>
       </div>
       <div v-show="activeControl === 'explorer'">
@@ -134,6 +138,7 @@ import {
   ModifierKeys,
   getKeyboardShortcutTitle
 } from '@speckle/ui-components'
+import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 
 const {
   zoomExtentsOrSelection,
@@ -146,6 +151,7 @@ type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'discussions'
 
 const activeControl = ref<ActiveControl>('models')
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
+const { diff: { enabled: diffEnabled } } = useInjectedViewerInterfaceState()
 
 const modelsShortcut = ref(
   `Models (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'm'])})`

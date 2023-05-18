@@ -8,7 +8,8 @@ import {
   ViewerEvent,
   SunLightConfiguration,
   DefaultLightConfiguration,
-  SpeckleView
+  SpeckleView,
+DiffResult
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -19,7 +20,8 @@ import {
   ComputedRef,
   WritableComputedRef,
   Raw,
-  Ref
+  Ref,
+  ShallowRef
 } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 import { Nullable, Optional, SpeckleViewer } from '@speckle/shared'
@@ -37,7 +39,8 @@ import {
   ViewerLoadedThreadsQuery,
   ViewerResourceItem,
   ViewerLoadedThreadsQueryVariables,
-  ProjectCommentsFilter
+  ProjectCommentsFilter,
+ViewerModelVersionCardItemFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { SetNonNullable, Get } from 'type-fest'
 import {
@@ -53,6 +56,7 @@ import {
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { Box3, Vector3 } from 'three'
+import { ViewerResource } from '~~/../shared/dist-esm/viewer/helpers/route'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -138,6 +142,9 @@ export type InjectableViewerState = Readonly<{
        * Helper for switching model to a specific version (or just latest)
        */
       switchModelToVersion: (modelId: string, versionId?: string) => void
+      addModelVersion: (modelId: string, versionId: string) => void
+      removeModelVersion: (modelId: string, versionId: string) => void
+      setModelVersions: (newResources: ViewerResource[]) => void
     }
     /**
      * State of resolved, validated & de-duplicated resources that are loaded in the viewer. These
@@ -225,6 +232,13 @@ export type InjectableViewerState = Readonly<{
       target: Ref<Vector3>
       isOrthoProjection: Ref<boolean>
     }
+    diff: {
+      versionA: Ref<ViewerResourceItem | undefined>
+      versionB: Ref<ViewerResourceItem | undefined>
+      diffTime: Ref<number>
+      diffResult: ShallowRef<Optional<DiffResult>> //ComputedRef<Optional<DiffResult>>
+      enabled: Ref<boolean>
+    }
     sectionBox: Ref<Nullable<Box3>>
     highlightedObjectIds: Ref<string[]>
     lightConfig: Ref<SunLightConfiguration>
@@ -236,7 +250,8 @@ export type InjectableViewerState = Readonly<{
    * State stored in the anchor string of the URL
    */
   urlHashState: {
-    focusedThreadId: WritableComputedRef<Nullable<string>>
+    focusedThreadId: WritableComputedRef<Nullable<string>>,
+    compare:WritableComputedRef<Nullable<boolean>>,
   }
 }>
 
@@ -345,6 +360,7 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
 
   const sessionId = computed(() => nanoid())
   const isInitialized = ref(false)
+  const isLoading = ref(false)
   const { instance, initPromise, container } = useScopedState(
     GlobalViewerDataKey,
     createViewerData
@@ -415,12 +431,35 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
       resources.value = newResources
     } else {
       // Add new one and allow de-duplication to do its thing
+      // NOTE: deduplication not enforced anymore
       resources.value = [
         new SpeckleViewer.ViewerRoute.ViewerModelResource(modelId, versionId),
         ...resources.value
       ]
     }
   }
+
+  const addModelVersion = (modelId: string, versionId: string) => {
+    resources.value = [
+        new SpeckleViewer.ViewerRoute.ViewerModelResource(modelId, versionId),
+        ...resources.value
+    ]
+  }
+
+  const removeModelVersion = (modelId: string, versionId: string) => {
+    const resourceIdx = resources.value.findIndex(r => SpeckleViewer.ViewerRoute.isModelResource(r) && r.modelId === modelId && r.versionId === versionId)
+    if(resourceIdx === -1 ) return
+
+    const newResources = [...resources.value]
+    newResources.splice(resourceIdx, 1)
+
+    resources.value = newResources
+  }
+
+  const setModelVersions = (newResources: ViewerResource[]) => {
+    resources.value = newResources
+  } 
+
 
   return {
     ...state,
@@ -429,7 +468,10 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
         items: resources,
         resourceIdString,
         threadFilters,
-        switchModelToVersion
+        switchModelToVersion,
+        addModelVersion,
+        removeModelVersion,
+        setModelVersions
       }
     }
   }
@@ -523,7 +565,7 @@ function setupResponseResourceItems(
       const modelId = item.modelId
       const objectId = item.objectId
 
-      if (modelId && encounteredModels.has(modelId)) continue
+      // if (modelId && encounteredModels.has(modelId)) continue
       if (encounteredObjects.has(objectId)) continue
 
       finalItems.push(item)
@@ -754,10 +796,25 @@ function setupInterfaceState(
   const isTyping = ref(false)
   const newThreadEditor = ref(false)
   const hideBubbles = ref(false)
+  
 
+  /**
+   * Diffing
+   */
+  const versionA = ref<ViewerResourceItem>()
+  const versionB = ref<ViewerResourceItem>()
+  const diffResult = shallowRef(undefined as Optional<DiffResult>)
+  const diffEnabled = ref(false)
   return {
     ...state,
     ui: {
+      diff: {
+        versionA,
+        versionB,
+        diffTime: ref(0),
+        enabled: diffEnabled,
+        diffResult, //computed(()=> diffResult.value)
+      },
       selection,
       lightConfig,
       explodeFactor,

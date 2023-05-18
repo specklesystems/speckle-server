@@ -7,6 +7,9 @@ import {
 import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
 import { debounce, isArray, throttle } from 'lodash-es'
 import { MaybeAsync, Nullable } from '@speckle/shared'
+import { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
+import { until } from '@vueuse/core'
+import { ViewerResource } from '~~/../shared/dist-esm/viewer/helpers/route'
 
 function getFirstVisibleSelectionHit(
   { hits }: SelectionEvent,
@@ -198,4 +201,46 @@ export function useGetObjectUrl() {
   const config = useRuntimeConfig()
   return (projectId: string, objectId: string) =>
     `${config.public.apiOrigin}/streams/${projectId}/objects/${objectId}`
+}
+
+let preDiffResources = [] as ViewerResource[]
+export function useDiffing() {
+  const state = useInjectedViewerState()
+  const getObjectUrl = useGetObjectUrl()
+
+
+
+  const diff = async (modelId: string, versionA: string, versionB: string) => {
+    preDiffResources = [...state.resources.request.items.value]
+    state.resources.request.addModelVersion(modelId, versionA)
+    state.resources.request.addModelVersion(modelId, versionB)
+
+    await until(state.ui.viewerBusy).toBe(true)
+    await until(state.ui.viewerBusy).toBe(false)
+    
+    const A = state.resources.response.resourceItems.value.find(r => r.versionId === versionA)
+    const B = state.resources.response.resourceItems.value.find(r => r.versionId === versionB)
+
+    setTimeout(async () => {
+      state.ui.diff.diffResult.value = await state.viewer.instance.diff( getObjectUrl(state.projectId.value, B?.objectId as string), getObjectUrl(state.projectId.value, A?.objectId as string))
+    }, 1000)
+
+    state.urlHashState.compare.value = true
+    state.ui.diff.enabled.value = true
+  }
+
+  const endDiff = () => {
+    state.ui.diff.enabled.value = false
+    state.viewer.instance.undiff()
+    state.resources.request.setModelVersions(preDiffResources)
+    // Hack, for some reason they conflict :/ 
+    setTimeout(()=>{
+      state.urlHashState.compare.value = null
+    }, 100)
+  }
+
+  return {
+    diff, 
+    endDiff
+  }
 }

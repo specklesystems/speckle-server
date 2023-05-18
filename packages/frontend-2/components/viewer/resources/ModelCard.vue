@@ -75,6 +75,7 @@
         :last="index === props.model.versions.totalCount - 1"
         :last-loaded="index === props.model.versions.items.length - 1"
         @change-version="handleVersionChange"
+        @view-changes="handleViewChanges"
       />
       <div class="mt-4 px-2 py-2">
         <FormButton
@@ -105,6 +106,7 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
+import { useDiffing } from '~~/lib/viewer/composables/viewer'
 
 dayjs.extend(localizedFormat)
 
@@ -120,7 +122,7 @@ const props = defineProps<{
   showRemove: boolean
 }>()
 
-const { switchModelToVersion } = useInjectedViewerRequestedResources()
+const { switchModelToVersion, addModelVersion } = useInjectedViewerRequestedResources()
 const { loadMoreVersions } = useInjectedViewerLoadedResources()
 
 const showVersions = ref(false)
@@ -189,8 +191,18 @@ const modelName = computed(() => {
   }
 })
 
-function handleVersionChange(versionId: string) {
+function handleVersionChange(versionId: string) { 
   switchModelToVersion(props.model.id, versionId)
+}
+
+const {diff, endDiff} = useDiffing()
+function handleViewChanges(versionId: string) {
+  // TODO
+  if(!loadedVersion.value?.id) return
+
+  const currentVersion = loadedVersion.value?.id
+  const compareToVersion = versionId
+  diff(props.model.id, currentVersion, compareToVersion)
 }
 
 const onLoadMore = async () => {

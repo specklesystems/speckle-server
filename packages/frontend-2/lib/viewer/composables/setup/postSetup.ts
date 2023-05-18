@@ -63,7 +63,7 @@ function useViewerObjectAutoLoading() {
     projectId,
     viewer: {
       instance: viewer,
-      init: { ref: isInitialized }
+      init: { ref: isInitialized },
     },
     resources: {
       response: { resourceItems }
@@ -93,7 +93,9 @@ function useViewerObjectAutoLoading() {
       // Viewer initialized - load in all resources
       if (newIsInitialized && !oldIsInitialized) {
         const allObjectIds = getUniqueObjectIds(newResources)
+        
         await Promise.all(allObjectIds.map((i) => loadObject(i)))
+      
         return
       }
 
@@ -102,7 +104,8 @@ function useViewerObjectAutoLoading() {
       const oldObjectIds = getUniqueObjectIds(oldResources)
       const removableObjectIds = difference(oldObjectIds, newObjectIds)
       const addableObjectIds = difference(newObjectIds, oldObjectIds)
-
+      
+      
       await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
       await Promise.all(addableObjectIds.map((i) => loadObject(i)))
     },
