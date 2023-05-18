@@ -10993,17 +10993,27 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/dui3@workspace:packages/dui3"
   dependencies:
+    "@graphql-codegen/cli": ^2.13.6
+    "@graphql-codegen/client-preset": ^1.2.5
+    "@headlessui/vue": ^1.7.13
+    "@heroicons/vue": ^2.0.12
     "@nuxtjs/tailwindcss": ^6.7.0
     "@speckle/shared": "workspace:^"
     "@speckle/ui-components": "workspace:^"
     "@speckle/ui-components-nuxt": "workspace:^"
+    "@types/lodash-es": ^4.17.6
     "@types/node": ^18
+    "@vitejs/plugin-legacy": ^4.0.3
+    "@vueuse/core": ^9.13.0
+    concurrently: ^7.5.0
     eslint: ^8.24.0
     eslint-config-prettier: ^8.5.0
     eslint-plugin-nuxt: ^4.0.0
     eslint-plugin-vue: ^9.5.1
     eslint-plugin-vuejs-accessibility: ^1.2.0
+    lodash-es: ^4.17.21
     nuxt: ^3.5.0
+    portal-vue: ^3.0.0
     postcss: ^8.4.18
     postcss-custom-properties: ^12.1.9
     postcss-html: ^1.5.0

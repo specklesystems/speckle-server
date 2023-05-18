@@ -8,7 +8,8 @@
   },
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev:nuxt": "nuxt dev",
+    "dev": "concurrently \"nuxt dev\" \"yarn gqlgen:watch\"",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "yarn ensure:tailwind-deps && nuxt prepare",
@@ -16,16 +17,28 @@
     "lint:tsc": "vue-tsc --noEmit",
     "lint:prettier": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --check .",
     "lint:css": "stylelint \"**/*.{css,vue}\"",
-    "lint": "yarn lint:js && yarn lint:tsc && yarn lint:prettier && yarn lint:css"
+    "lint": "yarn lint:js && yarn lint:tsc && yarn lint:prettier && yarn lint:css",
+    "gqlgen": "graphql-codegen",
+    "gqlgen:watch": "graphql-codegen --watch"
   },
   "dependencies": {
+    "@headlessui/vue": "^1.7.13",
+    "@heroicons/vue": "^2.0.12",
     "@speckle/shared": "workspace:^",
     "@speckle/ui-components": "workspace:^",
-    "@speckle/ui-components-nuxt": "workspace:^"
+    "@speckle/ui-components-nuxt": "workspace:^",
+    "@vueuse/core": "^9.13.0",
+    "lodash-es": "^4.17.21",
+    "portal-vue": "^3.0.0"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^2.13.6",
+    "@graphql-codegen/client-preset": "^1.2.5",
     "@nuxtjs/tailwindcss": "^6.7.0",
+    "@types/lodash-es": "^4.17.6",
     "@types/node": "^18",
+    "@vitejs/plugin-legacy": "^4.0.3",
+    "concurrently": "^7.5.0",
     "eslint": "^8.24.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-nuxt": "^4.0.0",
