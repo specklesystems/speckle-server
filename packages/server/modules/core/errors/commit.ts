@@ -24,3 +24,8 @@ export class CommitDeleteError extends BaseError {
   static defaultMessage = 'An issue occurred while deleting a commit'
   static code = 'COMMIT_DELETE_ERROR'
 }
+
+export class CommitNotFoundError extends BaseError {
+  static defaultMessage = 'Attempting to work with a non-existant commit'
+  static code = 'COMMIT_NOT_FOUND'
+}

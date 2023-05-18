@@ -647,7 +647,7 @@ export type Model = {
   pendingImportedVersions: Array<FileUpload>;
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
-  version?: Maybe<Version>;
+  version: Version;
   versions: VersionCollection;
 };
 
@@ -1233,7 +1233,7 @@ export type Project = {
   /** Collaborators who have been invited, but not yet accepted. */
   invitedTeam?: Maybe<Array<PendingStreamCollaborator>>;
   /** Returns a specific model by its ID */
-  model?: Maybe<Model>;
+  model: Model;
   /** Return a model tree of children for the specified model name */
   modelChildrenTree: Array<ModelsTreeItem>;
   /** Returns a flat list of all models */
@@ -1617,7 +1617,7 @@ export type Query = {
    * Find a specific project. Will throw an authorization error if active user isn't authorized
    * to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
    */
-  project?: Maybe<Project>;
+  project: Project;
   /**
    * Look for an invitation to a project, for the current user (authed or not). If token
    * isn't specified, the server will look for any valid invite.
@@ -3314,7 +3314,7 @@ export type ModelResolvers<ContextType = GraphQLContext, ParentType extends Reso
   pendingImportedVersions?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType, RequireFields<ModelPendingImportedVersionsArgs, 'limit'>>;
   previewUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  version?: Resolver<Maybe<ResolversTypes['Version']>, ParentType, ContextType, RequireFields<ModelVersionArgs, 'id'>>;
+  version?: Resolver<ResolversTypes['Version'], ParentType, ContextType, RequireFields<ModelVersionArgs, 'id'>>;
   versions?: Resolver<ResolversTypes['VersionCollection'], ParentType, ContextType, RequireFields<ModelVersionsArgs, 'limit'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -3465,7 +3465,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   invitedTeam?: Resolver<Maybe<Array<ResolversTypes['PendingStreamCollaborator']>>, ParentType, ContextType>;
-  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType, RequireFields<ProjectModelArgs, 'id'>>;
+  model?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<ProjectModelArgs, 'id'>>;
   modelChildrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType, RequireFields<ProjectModelChildrenTreeArgs, 'fullName'>>;
   models?: Resolver<ResolversTypes['ModelCollection'], ParentType, ContextType, RequireFields<ProjectModelsArgs, 'limit'>>;
   modelsTree?: Resolver<ResolversTypes['ModelsTreeItemCollection'], ParentType, ContextType, RequireFields<ProjectModelsTreeArgs, 'limit'>>;
@@ -3582,7 +3582,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   comments?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<QueryCommentsArgs, 'archived' | 'limit' | 'streamId'>>;
   discoverableStreams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryDiscoverableStreamsArgs, 'limit'>>;
   otherUser?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType, RequireFields<QueryOtherUserArgs, 'id'>>;
-  project?: Resolver<Maybe<ResolversTypes['Project']>, ParentType, ContextType, RequireFields<QueryProjectArgs, 'id'>>;
+  project?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<QueryProjectArgs, 'id'>>;
   projectInvite?: Resolver<Maybe<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType, RequireFields<QueryProjectInviteArgs, 'projectId'>>;
   serverInfo?: Resolver<ResolversTypes['ServerInfo'], ParentType, ContextType>;
   serverStats?: Resolver<ResolversTypes['ServerStats'], ParentType, ContextType>;
