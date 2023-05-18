@@ -27,6 +27,8 @@ export interface DiffResult {
 }
 
 export class Differ {
+  private tree: WorldTree = null
+
   private addedMaterialMesh: SpeckleStandardMaterial = null
   private changedNewMaterialMesh: SpeckleStandardMaterial = null
   private changedOldMaterialMesh: SpeckleStandardMaterial = null
@@ -49,7 +51,9 @@ export class Differ {
     return this._materialGroups
   }
 
-  public constructor() {
+  public constructor(tree: WorldTree) {
+    this.tree = tree
+
     this.addedMaterialMesh = new SpeckleStandardMaterial(
       {
         color: new Color('#00ff00'),
@@ -171,7 +175,7 @@ export class Differ {
     this.removedMaterialPoint.toneMapped = false
   }
 
-  public diff(tree: WorldTree, urlA: string, urlB: string): Promise<DiffResult> {
+  public diff(urlA: string, urlB: string): Promise<DiffResult> {
     const modifiedNew: Array<SpeckleObject> = []
     const modifiedOld: Array<SpeckleObject> = []
 
@@ -182,12 +186,20 @@ export class Differ {
       modified: []
     }
 
-    const renderTreeA = tree.getRenderTree(urlA)
-    const renderTreeB = tree.getRenderTree(urlB)
-    const rootA = tree.findId(urlA)
-    const rootB = tree.findId(urlB)
-    const rvsA = renderTreeA.getRenderableNodes(...SpeckleTypeAllRenderables)
-    const rvsB = renderTreeB.getRenderableNodes(...SpeckleTypeAllRenderables)
+    const renderTreeA = this.tree.getRenderTree(urlA)
+    const renderTreeB = this.tree.getRenderTree(urlB)
+    const rootA = this.tree.findId(urlA)
+    const rootB = this.tree.findId(urlB)
+    let rvsA = renderTreeA.getRenderableNodes(...SpeckleTypeAllRenderables)
+    let rvsB = renderTreeB.getRenderableNodes(...SpeckleTypeAllRenderables)
+
+    rvsA = rvsA.map((value) => {
+      return renderTreeA.getAtomicParent(value)
+    })
+
+    rvsB = rvsB.map((value) => {
+      return renderTreeB.getAtomicParent(value)
+    })
 
     for (let k = 0; k < rvsB.length; k++) {
       const res = rootA.first((node: TreeNode) => {
@@ -258,23 +270,6 @@ export class Differ {
       mat.opacity = to
       mat.depthWrite = to < 0.5 ? false : true
     })
-    // this.addedMaterialMesh.opacity = from
-    // this.changedNewMaterialMesh.opacity = from
-    // this.changedOldMaterialMesh.opacity = to
-    // this.removedMaterialMesh.opacity = to
-    // this.addedMaterialMesh.depthWrite = from < 0.5 ? false : true
-    // this.changedNewMaterialMesh.depthWrite = from < 0.5 ? false : true
-    // this.changedOldMaterialMesh.depthWrite = to < 0.5 ? false : true
-    // this.removedMaterialMesh.depthWrite = to < 0.5 ? false : true
-
-    // this.addedMaterialPoint.opacity = from
-    // this.changedNewMaterialPoint.opacity = from
-    // this.changedOldMaterialPoint.opacity = to
-    // this.removedMaterialPoint.opacity = to
-    // this.addedMaterialPoint.depthWrite = from < 0.5 ? false : true
-    // this.changedNewMaterialPoint.depthWrite = from < 0.5 ? false : true
-    // this.changedOldMaterialPoint.depthWrite = to < 0.5 ? false : true
-    // this.removedMaterialPoint.depthWrite = to < 0.5 ? false : true
   }
 
   public buildMaterialGroups(
@@ -306,6 +301,7 @@ export class Differ {
   }
 
   private getColoredMaterialGroups(diffResult: DiffResult) {
+    const renderTree = this.tree.getRenderTree()
     const groups = [
       // MESHES & LINES
       // Currently lines work with mesh specific materials due to how the LineBatch is implemented.
@@ -313,40 +309,49 @@ export class Differ {
       // LineBatch a bit
       {
         objectIds: diffResult.added
-          .filter(
-            (value: TreeNode) =>
-              value.model.renderView.geometryType === GeometryType.MESH ||
-              value.model.renderView.geometryType === GeometryType.LINE
-          )
+          .filter((value: TreeNode) => {
+            const rv = renderTree.getRenderViewsForNode(value as TreeNode)[0]
+            return (
+              rv.geometryType === GeometryType.MESH ||
+              rv.geometryType === GeometryType.LINE
+            )
+          })
           .map((value): string => value.model.raw.id),
         material: this.addedMaterialMesh
       },
       {
         objectIds: diffResult.modified
-          .filter(
-            (value) =>
-              value[1].model.renderView.geometryType === GeometryType.MESH ||
-              value[1].model.renderView.geometryType === GeometryType.LINE
-          )
+          .filter((value) => {
+            const rv = renderTree.getRenderViewsForNode(value[1] as TreeNode)[0]
+            return (
+              rv.geometryType === GeometryType.MESH ||
+              rv.geometryType === GeometryType.LINE
+            )
+          })
           .map((value): string => value[1].model.raw.id),
         material: this.changedNewMaterialMesh
       },
       {
         objectIds: diffResult.modified
           .filter((value) => {
-            value[0].model.renderView.geometryType === GeometryType.MESH ||
-              value[0].model.renderView.geometryType === GeometryType.LINE
+            const rv = renderTree.getRenderViewsForNode(value[0] as TreeNode)[0]
+            return (
+              rv.geometryType === GeometryType.MESH ||
+              rv.geometryType === GeometryType.LINE
+            )
           })
           .map((value): string => value[0].model.raw.id),
         material: this.changedOldMaterialMesh
       },
       {
         objectIds: diffResult.removed
-          .filter(
-            (value: TreeNode) =>
-              value.model.renderView.geometryType === GeometryType.MESH ||
-              value.model.renderView.geometryType === GeometryType.LINE
-          )
+          .filter((value: TreeNode) => {
+            const rv = renderTree.getRenderViewsForNode(value as TreeNode)[0]
+            return (
+              rv.geometryType === GeometryType.MESH ||
+              rv.geometryType === GeometryType.LINE
+            )
+          })
           .map((value): string => value.model.raw.id),
         material: this.removedMaterialMesh
       },
@@ -354,40 +359,49 @@ export class Differ {
       // POINTS
       {
         objectIds: diffResult.added
-          .filter(
-            (value: TreeNode) =>
-              value.model.renderView.geometryType === GeometryType.POINT ||
-              value.model.renderView.geometryType === GeometryType.POINT_CLOUD
-          )
+          .filter((value: TreeNode) => {
+            const rv = renderTree.getRenderViewsForNode(value as TreeNode)[0]
+            return (
+              rv.geometryType === GeometryType.POINT ||
+              rv.geometryType === GeometryType.POINT_CLOUD
+            )
+          })
           .map((value): string => value.model.raw.id),
         material: this.addedMaterialPoint
       },
       {
         objectIds: diffResult.modified
-          .filter(
-            (value) =>
-              value[1].model.renderView.geometryType === GeometryType.POINT ||
-              value[1].model.renderView.geometryType === GeometryType.POINT_CLOUD
-          )
+          .filter((value) => {
+            const rv = renderTree.getRenderViewsForNode(value[1] as TreeNode)[0]
+            return (
+              rv.geometryType === GeometryType.POINT ||
+              rv.geometryType === GeometryType.POINT_CLOUD
+            )
+          })
           .map((value): string => value[1].model.raw.id),
         material: this.changedNewMaterialPoint
       },
       {
         objectIds: diffResult.modified
           .filter((value) => {
-            value[0].model.renderView.geometryType === GeometryType.POINT ||
-              value[0].model.renderView.geometryType === GeometryType.POINT_CLOUD
+            const rv = renderTree.getRenderViewsForNode(value[0] as TreeNode)[0]
+            return (
+              rv.geometryType === GeometryType.POINT ||
+              rv.geometryType === GeometryType.POINT_CLOUD
+            )
           })
           .map((value): string => value[0].model.raw.id),
         material: this.changedOldMaterialPoint
       },
       {
         objectIds: diffResult.removed
-          .filter(
-            (value: TreeNode) =>
-              value.model.renderView.geometryType === GeometryType.POINT ||
-              value.model.renderView.geometryType === GeometryType.POINT_CLOUD
-          )
+          .filter((value: TreeNode) => {
+            const rv = renderTree.getRenderViewsForNode(value as TreeNode)[0]
+            return (
+              rv.geometryType === GeometryType.POINT ||
+              rv.geometryType === GeometryType.POINT_CLOUD
+            )
+          })
           .map((value): string => value.model.raw.id),
         material: this.removedMaterialPoint
       }
@@ -435,8 +449,15 @@ export class Differ {
       [id: string]: SpeckleStandardMaterial | SpecklePointMaterial | SpeckleLineMaterial
     }
   ) {
+    const renderTree = this.tree.getRenderTree()
     const groupBatches: Array<string> = [
-      ...Array.from(new Set(subgroup.map((value) => value.model.renderView.batchId)))
+      ...Array.from(
+        new Set(
+          subgroup.flatMap(
+            (value) => renderTree.getRenderViewsForNode(value as TreeNode)[0].batchId
+          )
+        )
+      )
     ] as Array<string>
 
     const materialGroup = []
@@ -446,7 +467,11 @@ export class Differ {
       matClone.transparent = true
       materialGroup.push({
         objectIds: subgroup
-          .filter((value) => value.model.renderView.batchId === groupBatches[k])
+          .filter(
+            (value) =>
+              renderTree.getRenderViewsForNode(value as TreeNode)[0].batchId ===
+              groupBatches[k]
+          )
           .map((value) => value.model.raw.id),
         material: matClone
       })

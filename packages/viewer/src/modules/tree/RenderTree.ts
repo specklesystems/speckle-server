@@ -200,7 +200,7 @@ export class RenderTree {
 
   public getAtomicParent(node: TreeNode) {
     if (node.model.atomic) {
-      return node.model.renderView
+      return node
     }
     return this.tree.getAncestors(node).find((node) => node.model.atomic)
   }

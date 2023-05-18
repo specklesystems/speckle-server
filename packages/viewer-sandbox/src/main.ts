@@ -260,6 +260,8 @@ const getStream = () => {
     'https://latest.speckle.dev/streams/92b620fb17/commits/e2db7d277b'
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/0dee6dbd98'
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/f9063fe647'
+    // 'https://speckle.xyz/streams/be0f962efb/objects/37639741c363a123100eda8044f2fe3f'
+    // 'https://latest.speckle.dev/streams/92b620fb17/objects/a4e2fad01e69cd886ecbfedf221f5301'
   )
 }
 

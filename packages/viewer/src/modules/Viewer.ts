@@ -111,7 +111,7 @@ export class Viewer extends EventEmitter implements IViewer {
       }
     )
     this.propertyManager = new PropertyManager()
-    this.differ = new Differ()
+    this.differ = new Differ(this.tree)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any)._V = this // For debugging! ಠ_ಠ
@@ -579,7 +579,7 @@ export class Viewer extends EventEmitter implements IViewer {
       loadPromises.push(this.loadObjectAsync(urlB, authToken, undefined, 1))
     await Promise.all(loadPromises)
 
-    const diffResult = await this.differ.diff(this.tree, urlA, urlB)
+    const diffResult = await this.differ.diff(urlA, urlB)
 
     const pipelineOptions = this.speckleRenderer.pipelineOptions
     pipelineOptions.depthSide = FrontSide
