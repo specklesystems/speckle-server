@@ -19,7 +19,7 @@ extend type Project {
   """
   Returns a specific model by its ID
   """
-  model(id: String!): Model
+  model(id: String!): Model!
   """
   Return a model tree of children for the specified model name
   """
@@ -94,7 +94,7 @@ type Model {
   Return a model tree of children
   """
   childrenTree: [ModelsTreeItem!]!
-  version(id: String!): Version
+  version(id: String!): Version!
   versions(
     limit: Int! = 25
     cursor: String

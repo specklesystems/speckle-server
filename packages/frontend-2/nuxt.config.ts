@@ -92,9 +92,9 @@ export default defineNuxtConfig({
         }
       },
       // older chrome version for CEF 65 support. all identifiers except the chrome one are default ones.
-      target: ['es2020', 'edge88', 'firefox78', 'chrome65', 'safari14'],
+      target: ['es2020', 'edge88', 'firefox78', 'chrome65', 'safari14']
       // optionally disable minification for debugging
-      minify: false
+      // minify: false
     },
     plugins: [
       // again - only for CEF 65
