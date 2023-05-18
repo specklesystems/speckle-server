@@ -1,0 +1,13 @@
+{
+  "css.validate": false,
+  "less.validate": false,
+  "scss.validate": false,
+  "stylelint.validate": ["css", "scss", "vue", "postcss"],
+  "stylelint.enable": true,
+  "stylelint.configFile": "${workspaceFolder}/stylelint.config.js",
+  "volar.completion.preferredTagNameCase": "pascal",
+  "javascript.suggest.autoImports": true,
+  "typescript.suggest.autoImports": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "javascript.preferences.importModuleSpecifier": "non-relative"
+}

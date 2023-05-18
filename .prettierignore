@@ -10,8 +10,8 @@ packages/preview-service/public/render/**/*
 packages/objectloader/examples/browser/objectloader.web.js
 packages/viewer/example/speckleviewer.web.js
 
-packages/frontend-2/.output
-packages/frontend-2/.nuxt
+.output
+.nuxt
 packages/frontend-2/lib/core/nuxt-modules/**/templates/*.js
 packages/frontend-2/lib/common/generated/**/*
 
