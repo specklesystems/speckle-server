@@ -23,6 +23,8 @@ import {
   ProjectSubscriptions
 } from '@/modules/shared/utils/subscriptions'
 import { getModelTreeItems } from '@/modules/core/repositories/branches'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
+import { CommitNotFoundError } from '@/modules/core/errors/commit'
 
 export = {
   Project: {
@@ -30,7 +32,12 @@ export = {
       return await getPaginatedProjectModels(parent.id, args)
     },
     async model(_parent, args, ctx) {
-      return ctx.loaders.branches.getById.load(args.id)
+      const model = await ctx.loaders.branches.getById.load(args.id)
+      if (!model) {
+        throw new BranchNotFoundError('Model not found')
+      }
+
+      return model
     },
     async modelsTree(parent, args) {
       return await getProjectTopLevelModelsTree(parent.id, args)
@@ -85,10 +92,15 @@ export = {
       })
     },
     async version(parent, args, ctx) {
-      return await ctx.loaders.branches.getBranchCommit.load({
+      const version = await ctx.loaders.branches.getBranchCommit.load({
         branchId: parent.id,
         commitId: args.id
       })
+      if (!version) {
+        throw new CommitNotFoundError('Version not found')
+      }
+
+      return version
     }
   },
   ModelsTreeItem: {

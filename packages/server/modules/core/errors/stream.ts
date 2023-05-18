@@ -19,3 +19,8 @@ export class StreamUpdateError extends BaseError {
   static defaultMessage = 'An issue occurred while attempting to update a stream'
   static code = 'STREAM_UPDATE_ERROR'
 }
+
+export class StreamNotFoundError extends BaseError {
+  static defaultMessage = 'Attempting to work with a non-existant stream'
+  static code = 'STREAM_NOT_FOUND'
+}

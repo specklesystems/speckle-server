@@ -19,3 +19,8 @@ export class BranchDeleteError extends BaseError {
   static defaultMessage = 'An issue occured while deleting a branch'
   static code = 'BRANCH_DELETE_ERROR'
 }
+
+export class BranchNotFoundError extends BaseError {
+  static defaultMessage = 'Attempting to work with a non-existant branch'
+  static code = 'BRANCH_NOT_FOUND'
+}

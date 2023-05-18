@@ -4,10 +4,8 @@ import {
   StreamRole,
   Project,
   ServerRole,
-  Model,
   ModelsTreeItem,
-  Commit,
-  Version
+  Commit
 } from '@/modules/core/graph/generated/graphql'
 import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { BranchRecord, CommitRecord, StreamRecord } from '@/modules/core/helpers/types'
@@ -76,25 +74,9 @@ export type ProjectGraphQLReturn = StreamRecord &
     role?: string | null
   }
 
-export type ModelGraphQLReturn = Omit<
-  Model,
-  | 'versionCount'
-  | 'author'
-  | 'previewUrl'
-  | 'commentThreadCount'
-  | 'childrenTree'
-  | 'displayName'
-  | 'versions'
-  | 'commentThreads'
-  | 'pendingImportedVersions'
-> &
-  BranchRecord
+export type ModelGraphQLReturn = BranchRecord
 
-export type VersionGraphQLReturn = Omit<
-  Version,
-  'authorUser' | 'commentThreads' | 'model' | 'previewUrl' | 'commentThreadCount'
-> &
-  CommitRecord
+export type VersionGraphQLReturn = CommitRecord
 
 export type LimitedUserGraphQLReturn = Omit<
   LimitedUser,

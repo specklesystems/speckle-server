@@ -7,6 +7,7 @@
     ]"
   >
     <img
+      data-chromatic="ignore"
       src="~~/assets/images/comments_intro_320x248.webp"
       alt="Comments functionality preview animation"
       class="w-[75%] sm:w-auto sm:h-[164px]"

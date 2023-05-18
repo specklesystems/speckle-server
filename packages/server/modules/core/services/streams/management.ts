@@ -30,6 +30,7 @@ import {
   isStreamCollaborator,
   removeStreamCollaborator
 } from '@/modules/core/services/streams/streamAccessService'
+import { deleteAllStreamInvites } from '@/modules/serverinvites/repositories'
 
 export async function createStreamReturnRecord(
   params: (StreamCreateInput | ProjectCreateInput) & { ownerId: string },
@@ -80,7 +81,7 @@ export async function deleteStreamAndNotify(streamId: string, deleterId: string)
   await wait(250)
 
   // Delete after event so we can do authz
-  await deleteStream(streamId)
+  await Promise.all([deleteAllStreamInvites(streamId), deleteStream(streamId)])
   return true
 }
 
