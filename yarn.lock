@@ -15188,6 +15188,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/lockfile@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@types/lockfile@npm:1.0.2"
+  checksum: 65d1d7b37309d62ec81cb0a911207cec666df013223708ddd48c9145474463df4aa920d7b92c17ef5029c0539680dddbe667afc0df5b77edd93fd6b39ac0f560
+  languageName: node
+  linkType: hard
+
 "@types/lodash-es@npm:^4.17.6":
   version: 4.17.6
   resolution: "@types/lodash-es@npm:4.17.6"
@@ -30880,6 +30887,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lockfile@npm:^1.0.4":
+  version: 1.0.4
+  resolution: "lockfile@npm:1.0.4"
+  dependencies:
+    signal-exit: ^3.0.2
+  checksum: 8de35aace8acbe883cbca3cc3959e88904d57c79dccd4afffc64aea8f9cf7b4c63598d08b8add66fbf381f8fb3ce4fd4c518cd231c797c266b6c790eb7b33abc
+  languageName: node
+  linkType: hard
+
 "lodash-es@npm:^4.0.0, lodash-es@npm:^4.17.21":
   version: 4.17.21
   resolution: "lodash-es@npm:4.17.21"
@@ -38797,12 +38813,14 @@ __metadata:
     "@rollup/plugin-typescript": ^11.1.0
     "@swc/core": ^1.2.222
     "@types/eslint": ^8.4.1
+    "@types/lockfile": ^1.0.2
     commitizen: ^4.2.5
     cz-conventional-changelog: ^3.3.0
     eslint: ^8.11.0
     eslint-config-prettier: ^8.5.0
     husky: ^7.0.4
     lint-staged: ^12.3.7
+    lockfile: ^1.0.4
     pino-pretty: ^9.1.1
     prettier: ^2.5.1
     ts-node: ^10.9.1
