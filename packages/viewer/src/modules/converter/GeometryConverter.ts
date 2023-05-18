@@ -440,11 +440,11 @@ export class GeometryConverter {
    * CURVE
    */
   private static CurveToGeometryData(node) {
-    if (node.children.length === 0) {
+    if (node.nestedNodes.length === 0) {
       return null
     }
 
-    const polylineGeometry = this.PolylineToGeometryData(node.children[0])
+    const polylineGeometry = this.PolylineToGeometryData(node.nestedNodes[0].model)
     return {
       attributes: {
         POSITION: polylineGeometry.attributes.POSITION

@@ -55,10 +55,11 @@ import MeshBatch from './batching/MeshBatch'
 import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
 import { Shadowcatcher } from './Shadowcatcher'
 import Logger from 'js-logger'
-import { Differ } from './Differ'
 import SpeckleMesh from './objects/SpeckleMesh'
 import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 import { BatchObject } from './batching/BatchObject'
+import SpecklePointMaterial from './materials/SpecklePointMaterial'
+import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -91,7 +92,6 @@ export default class SpeckleRenderer {
   private sectionPlanesChanged: Plane[] = []
   private sectionBoxOutlines: SectionBoxOutlines = null
   private _shadowcatcher: Shadowcatcher = null
-  private _differ: Differ = null
   private cancel: { [subtreeId: string]: boolean } = {}
 
   private explodeTime = -1
@@ -182,10 +182,6 @@ export default class SpeckleRenderer {
 
   public get currentSectionBox() {
     return this.viewer.sectionBox.getCurrentBox()
-  }
-
-  public get differ() {
-    return this._differ
   }
 
   public constructor(viewer: Viewer /** TEMPORARY */) {
@@ -334,8 +330,6 @@ export default class SpeckleRenderer {
     }
 
     this._scene.add(this._shadowcatcher.shadowcatcherMesh)
-
-    this._differ = new Differ()
   }
 
   public update(deltaTime: number) {
@@ -635,7 +629,10 @@ export default class SpeckleRenderer {
     )
   }
 
-  public applyMaterial(ids: NodeRenderView[], material: SpeckleStandardMaterial) {
+  public applyMaterial(
+    ids: NodeRenderView[],
+    material: SpeckleStandardMaterial | SpecklePointMaterial
+  ) {
     this.filterBatchRecording.push(
       ...this.batcher.setObjectsMaterial(ids, (rv: NodeRenderView) => {
         return {
@@ -660,6 +657,14 @@ export default class SpeckleRenderer {
     }
     this.renderer.shadowMap.needsUpdate = true
     this.updateShadowCatcher()
+  }
+
+  public getBatchMaterials(): {
+    [id: string]: SpeckleStandardMaterial | SpecklePointMaterial | SpeckleLineMaterial
+  } {
+    return Object.keys(this.batcher.batches).reduce((accumulator, value) => {
+      return { ...accumulator, [value]: this.batcher.batches[value].batchMaterial }
+    }, {})
   }
 
   public updateClippingPlanes(planes: Plane[]) {

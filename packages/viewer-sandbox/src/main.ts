@@ -253,8 +253,15 @@ const getStream = () => {
     // Type inheritence
     // 'https://speckle.xyz/streams/4063469c0b/objects/ce831723f2a3a56a30dfbca54a53c90f'
     // Sum groups
-    'https://latest.speckle.dev/streams/58b5648c4d/commits/7e2afe5535'
+    // 'https://latest.speckle.dev/streams/58b5648c4d/commits/7e2afe5535'
     // 'https://latest.speckle.dev/streams/58b5648c4d/objects/608bc2d53de17e3fd3a6ca9ef525ca79'
+
+    // 'https://latest.speckle.dev/streams/92b620fb17/commits/4da17d07da'
+    'https://latest.speckle.dev/streams/92b620fb17/commits/e2db7d277b'
+    // 'https://latest.speckle.dev/streams/92b620fb17/commits/0dee6dbd98'
+    // 'https://latest.speckle.dev/streams/92b620fb17/commits/f9063fe647'
+    // 'https://speckle.xyz/streams/be0f962efb/objects/37639741c363a123100eda8044f2fe3f'
+    // 'https://latest.speckle.dev/streams/92b620fb17/objects/a4e2fad01e69cd886ecbfedf221f5301'
   )
 }
 

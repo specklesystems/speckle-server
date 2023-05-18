@@ -13,6 +13,7 @@ import EventEmitter from '../EventEmitter'
 import { ViewerEvent } from '../../IViewer'
 import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
 import { RenderTree } from '../tree/RenderTree'
+import SpecklePointMaterial from '../materials/SpecklePointMaterial'
 
 export type FilteringState = {
   selectedObjects?: string[]
@@ -357,12 +358,15 @@ export class FilteringManager extends EventEmitter {
   }
 
   public setUserMaterials(
-    groups: { objectIds: string[]; material: SpeckleStandardMaterial }[]
+    groups: {
+      objectIds: string[]
+      material: SpeckleStandardMaterial | SpecklePointMaterial
+    }[]
   ) {
     this.UserMaterialState = new UserMaterialState()
     const localGroups: {
       objectIds: string[]
-      material: SpeckleStandardMaterial
+      material: SpeckleStandardMaterial | SpecklePointMaterial
       nodes: TreeNode[]
       rvs: NodeRenderView[]
     }[] = groups.map((g) => {
@@ -678,7 +682,7 @@ class UserMaterialState {
     objectIds: string[]
     nodes: TreeNode[]
     rvs: NodeRenderView[]
-    material: SpeckleStandardMaterial
+    material: SpeckleStandardMaterial | SpecklePointMaterial
   }[] = []
 
   public reset() {
