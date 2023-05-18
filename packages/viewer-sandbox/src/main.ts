@@ -253,8 +253,9 @@ const getStream = () => {
     // Type inheritence
     // 'https://speckle.xyz/streams/4063469c0b/objects/ce831723f2a3a56a30dfbca54a53c90f'
     // Sum groups
-    'https://latest.speckle.dev/streams/58b5648c4d/commits/7e2afe5535'
+    // 'https://latest.speckle.dev/streams/58b5648c4d/commits/7e2afe5535'
     // 'https://latest.speckle.dev/streams/58b5648c4d/objects/608bc2d53de17e3fd3a6ca9ef525ca79'
+    'https://latest.speckle.dev/streams/3f895e614f/commits/7e16d2ab71'
   )
 }
 
