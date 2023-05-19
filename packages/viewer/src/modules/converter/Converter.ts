@@ -401,9 +401,9 @@ export default class Coverter {
     const definition = await this.resolveReference(obj.definition)
     node.model.raw.definition = definition
 
-    await traverseList(definition.elements)
-    await traverseList(definition.displayValue)
-    await traverseList(obj.elements, obj.id)
+    await traverseList(this.getElementsValue(definition))
+    await traverseList(this.getDisplayValue(definition))
+    await traverseList(this.getElementsValue(obj), obj.id)
   }
 
   private async PointcloudToNode(obj, node) {
