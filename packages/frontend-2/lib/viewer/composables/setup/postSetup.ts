@@ -256,7 +256,8 @@ export function useViewerCameraIntegration() {
   const {
     viewer: { instance },
     ui: {
-      camera: { isOrthoProjection, position, target }
+      camera: { isOrthoProjection, position, target },
+      spotlightUserId
     }
   } = useInjectedViewerState()
 
@@ -272,11 +273,19 @@ export function useViewerCameraIntegration() {
       controls.getPosition(viewerPos)
       controls.getTarget(viewerTarget)
 
+      let cameraManuallyChanged = false
       if (!areVectorsLooselyEqual(position.value, viewerPos)) {
         position.value = viewerPos.clone()
+        cameraManuallyChanged = true
       }
       if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
         target.value = viewerTarget.clone()
+        cameraManuallyChanged = true
+      }
+
+      if (cameraManuallyChanged) {
+        // Stop following
+        spotlightUserId.value = null
       }
     }
     // { debounceWait: 100 }
@@ -351,45 +360,6 @@ export function useViewerFiltersIntegration() {
   const speckleTypeFilter = computed(
     () => allFilters.value?.find((f) => f.key === 'speckle_type') as StringPropertyInfo
   )
-
-  // TODO: Hard to get working at this point in time, because the FilteringManager
-  // doesn't fully support this (strange bugs arise with isolate after hide not working etc.)
-  // viewer -> state
-  // let latestState: Optional<FilteringState> = undefined
-  // useViewerEventListener(ViewerEvent.FilteringStateSet, (state: FilteringState) => {
-  //   // we do this weird stuff cause a change to filters might trigger another FilteringStateSet event
-  //   // with different values, but once it finishes, the old FilteringStateSet event handler will continue with the old
-  //   // data and possibly break things
-  //   latestState = state
-  //   const getLatestState = () => state
-
-  //   const viewerIsolated = getLatestState().isolatedObjects || []
-  //   const isolated = filters.isolatedObjectIds.value
-  //   if (!arraysEqual(viewerIsolated, isolated)) {
-  //     withWatchersDisabled(() => {
-  //       filters.isolatedObjectIds.value = viewerIsolated.slice()
-  //     })
-  //   }
-
-  //   const viewerHidden = getLatestState().hiddenObjects || []
-  //   const hidden = filters.hiddenObjectIds.value
-  //   if (!arraysEqual(viewerHidden, hidden)) {
-  //     withWatchersDisabled(() => {
-  //       filters.hiddenObjectIds.value = viewerHidden.slice()
-  //     })
-  //   }
-
-  //   const viewerFilterKey = getLatestState().activePropFilterKey
-  //   const currentFilterKey = filters.propertyFilter.filter.value?.key
-  //   if (viewerFilterKey !== currentFilterKey) {
-  //     const property = (availableFilters.value || []).find(
-  //       (f) => f.key === viewerFilterKey
-  //     )
-  //     if (property) {
-  //       filters.propertyFilter.filter.value = property
-  //     }
-  //   }
-  // })
 
   // state -> viewer
   watch(
