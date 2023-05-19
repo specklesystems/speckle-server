@@ -13,7 +13,7 @@ const lockFileName = 'ensure-tailwind-deps.mjs.lock'
 const require = mod.createRequire(import.meta.url)
 const __dirname = fileURLToPath(dirname(import.meta.url))
 
-const lockFileOpts = { stale: 20 * 1000 }
+const lockFileOpts = { stale: 50 * 1000 }
 const lockFilePath = resolve(__dirname, lockFileName)
 
 async function checkForPresence() {
