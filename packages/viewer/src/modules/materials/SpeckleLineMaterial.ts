@@ -57,10 +57,10 @@ class SpeckleLineMaterial extends LineMaterial {
     }
 
     for (let k = 0; k < defines.length; k++) {
-      this.defines[defines[k]] = ''
+      this.defines[defines[k]] = ' '
     }
 
-    this.defines['USE_RTE'] = ' '
+    // this.defines['USE_RTE'] = ' '
   }
 
   copy(source) {

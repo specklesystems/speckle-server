@@ -31,7 +31,7 @@ import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
-import { DiffResult, Differ } from './Differ'
+import { DiffResult, Differ, VisualDiffMode } from './Differ'
 import { BatchObject } from './batching/BatchObject'
 
 export class Viewer extends EventEmitter implements IViewer {
@@ -111,7 +111,7 @@ export class Viewer extends EventEmitter implements IViewer {
       }
     )
     this.propertyManager = new PropertyManager()
-    this.differ = new Differ()
+    this.differ = new Differ(this.tree)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any)._V = this // For debugging! ಠ_ಠ
@@ -569,6 +569,7 @@ export class Viewer extends EventEmitter implements IViewer {
   public async diff(
     urlA: string,
     urlB: string,
+    mode: VisualDiffMode,
     authToken?: string
   ): Promise<DiffResult> {
     const loadPromises = []
@@ -578,32 +579,20 @@ export class Viewer extends EventEmitter implements IViewer {
       loadPromises.push(this.loadObjectAsync(urlB, authToken, undefined, 1))
     await Promise.all(loadPromises)
 
-    const diffResult = await this.differ.diff(this.tree, urlA, urlB)
+    const diffResult = await this.differ.diff(urlA, urlB)
 
     const pipelineOptions = this.speckleRenderer.pipelineOptions
     pipelineOptions.depthSide = FrontSide
     this.speckleRenderer.pipelineOptions = pipelineOptions
 
+    this.differ.resetMaterialGroups()
+    this.differ.buildMaterialGroups(
+      mode,
+      diffResult,
+      this.speckleRenderer.getBatchMaterials()
+    )
     this.differ.setDiffTime(0)
-
-    this.filteringManager.setUserMaterials([
-      {
-        objectIds: diffResult.added.map((value) => value.model.raw.id),
-        material: this.differ.addedMaterial
-      },
-      {
-        objectIds: diffResult.modified.map((value) => value[1].model.raw.id),
-        material: this.differ.changedNewMaterial
-      },
-      {
-        objectIds: diffResult.modified.map((value) => value[0].model.raw.id),
-        material: this.differ.changedOldMateria
-      },
-      {
-        objectIds: diffResult.removed.map((value) => value.model.raw.id),
-        material: this.differ.removedMaterial
-      }
-    ])
+    this.filteringManager.setUserMaterials(this.differ.materialGroups)
 
     return Promise.resolve(diffResult)
   }
@@ -612,29 +601,23 @@ export class Viewer extends EventEmitter implements IViewer {
     const pipelineOptions = this.speckleRenderer.pipelineOptions
     pipelineOptions.depthSide = DoubleSide
     this.speckleRenderer.pipelineOptions = pipelineOptions
+    this.differ.resetMaterialGroups()
     this.filteringManager.removeUserMaterials()
   }
 
   public setDiffTime(diffResult: DiffResult, time: number) {
     this.differ.setDiffTime(time)
-    this.filteringManager.setUserMaterials([
-      {
-        objectIds: diffResult.added.map((value) => value.model.raw.id),
-        material: this.differ.addedMaterial
-      },
-      {
-        objectIds: diffResult.modified.map((value) => value[1].model.raw.id),
-        material: this.differ.changedNewMaterial
-      },
-      {
-        objectIds: diffResult.modified.map((value) => value[0].model.raw.id),
-        material: this.differ.changedOldMateria
-      },
-      {
-        objectIds: diffResult.removed.map((value) => value.model.raw.id),
-        material: this.differ.removedMaterial
-      }
-    ])
+    this.filteringManager.setUserMaterials(this.differ.materialGroups)
+  }
+
+  public setVisualDiffMode(diffResult: DiffResult, mode: VisualDiffMode) {
+    this.differ.resetMaterialGroups()
+    this.differ.buildMaterialGroups(
+      mode,
+      diffResult,
+      this.speckleRenderer.getBatchMaterials()
+    )
+    this.filteringManager.setUserMaterials(this.differ.materialGroups)
   }
 
   public dispose() {

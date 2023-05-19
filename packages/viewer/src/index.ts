@@ -29,7 +29,7 @@ import {
 } from './modules/queries/Query'
 import { Utils } from './modules/Utils'
 import { ObjectLayers } from './modules/SpeckleRenderer'
-import { DiffResult } from './modules/Differ'
+import { DiffResult, VisualDiffMode } from './modules/Differ'
 import { BatchObject } from './modules/batching/BatchObject'
 import { Box3, Vector3 } from 'three'
 
@@ -43,7 +43,8 @@ export {
   BatchObject,
   Box3,
   Vector3,
-  WorldTree
+  WorldTree,
+  VisualDiffMode
 }
 
 export type {

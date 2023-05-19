@@ -13,6 +13,7 @@ import EventEmitter from '../EventEmitter'
 import { ViewerEvent } from '../../IViewer'
 import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
 import { RenderTree } from '../tree/RenderTree'
+import SpecklePointMaterial from '../materials/SpecklePointMaterial'
 
 export type FilteringState = {
   selectedObjects?: string[]
@@ -357,21 +358,27 @@ export class FilteringManager extends EventEmitter {
   }
 
   public setUserMaterials(
-    groups: { objectIds: string[]; material: SpeckleStandardMaterial }[]
+    groups: {
+      objectIds: string[]
+      material: SpeckleStandardMaterial | SpecklePointMaterial
+      rvs?: NodeRenderView[]
+    }[]
   ) {
     this.UserMaterialState = new UserMaterialState()
     const localGroups: {
       objectIds: string[]
-      material: SpeckleStandardMaterial
+      material: SpeckleStandardMaterial | SpecklePointMaterial
       nodes: TreeNode[]
       rvs: NodeRenderView[]
     }[] = groups.map((g) => {
-      return { ...g, nodes: [], rvs: [] }
+      return { ...g, nodes: [], rvs: g.rvs ? g.rvs : [] }
     })
 
     this.WTI.walk((node: TreeNode) => {
       if (!node.model?.raw?.id) return true
       for (const group of localGroups) {
+        if (group.rvs.length > 0) return true
+
         if (group.objectIds.includes(node.model.raw.id)) {
           group.nodes.push(node)
           const rvsNodes = this.RTI.getRenderViewNodesForNode(node, node).map(
@@ -678,7 +685,7 @@ class UserMaterialState {
     objectIds: string[]
     nodes: TreeNode[]
     rvs: NodeRenderView[]
-    material: SpeckleStandardMaterial
+    material: SpeckleStandardMaterial | SpecklePointMaterial
   }[] = []
 
   public reset() {
