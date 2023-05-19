@@ -61,3 +61,4 @@ packages/server/.vscode/*.log
 
 storybook-static
 build-storybook.log
+ensure-tailwind-deps.mjs.lock
