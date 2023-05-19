@@ -445,10 +445,6 @@ jobs:
             - .yarn/unplugged
 
       - run:
-          name: Build public packages
-          command: yarn build:public
-
-      - run:
           name: Lint everything
           command: yarn lint
           working_directory: 'packages/dui3'
