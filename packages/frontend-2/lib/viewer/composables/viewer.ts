@@ -10,6 +10,7 @@ import { MaybeAsync, Nullable } from '@speckle/shared'
 import { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
 import { until } from '@vueuse/core'
 import { ViewerResource } from '~~/../shared/dist-esm/viewer/helpers/route'
+import { VisualDiffMode } from '@speckle/viewer'
 
 function getFirstVisibleSelectionHit(
   { hits }: SelectionEvent,
@@ -208,8 +209,6 @@ export function useDiffing() {
   const state = useInjectedViewerState()
   const getObjectUrl = useGetObjectUrl()
 
-
-
   const diff = async (modelId: string, versionA: string, versionB: string) => {
     preDiffResources = [...state.resources.request.items.value]
     state.resources.request.addModelVersion(modelId, versionA)
@@ -222,10 +221,10 @@ export function useDiffing() {
     const B = state.resources.response.resourceItems.value.find(r => r.versionId === versionB)
 
     setTimeout(async () => {
-      state.ui.diff.diffResult.value = await state.viewer.instance.diff( getObjectUrl(state.projectId.value, B?.objectId as string), getObjectUrl(state.projectId.value, A?.objectId as string))
+      state.ui.diff.diffResult.value = await state.viewer.instance.diff( getObjectUrl(state.projectId.value, B?.objectId as string), getObjectUrl(state.projectId.value, A?.objectId as string), VisualDiffMode.COLORED)
     }, 1000)
 
-    state.urlHashState.compare.value = true
+    state.urlHashState.compare.value = true // could be one place
     state.ui.diff.enabled.value = true
   }
 

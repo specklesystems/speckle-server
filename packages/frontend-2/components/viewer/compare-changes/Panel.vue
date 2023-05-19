@@ -32,10 +32,10 @@
         />
         <!-- Old -->
       </div>
-      <div>added: {{ diffState.diffResult.value?.added.length }}</div>
-      <div>removed: {{ diffState.diffResult.value?.removed.length }}</div>
-      <div>modified: {{ diffState.diffResult.value?.modified.length }}</div>
-      <div>unchanged: {{ diffState.diffResult.value?.unchanged.length}}</div>
+      <div>unchanged: {{ unchanged.length}}</div>
+      <div>added: {{ added.length }}</div>
+      <div>removed: {{ removed.length }}</div>
+      <div>modified: {{ modified.length }}</div>
     </div>
   </ViewerLayoutPanel>
 </template>
@@ -49,6 +49,7 @@ import {
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
 import { useDiffing } from '~~/lib/viewer/composables/viewer'
+import { uniqBy } from 'lodash-es'
 
 const { diff: diffState } = useInjectedViewerInterfaceState()
 const { diff, endDiff } = useDiffing()
@@ -63,4 +64,23 @@ watch(localDiffTime, (newVal) => {
 watch(diffState, () => {
   localDiffTime.value = 0.5
 })
+
+const added = computed(() => {
+  const mapped = diffState.diffResult.value?.added.map( node => node.model.raw )
+  return uniqBy(mapped, (node => node.id))
+})
+const removed = computed(() => {
+  const mapped = diffState.diffResult.value?.removed.map( node => node.model.raw )
+  return uniqBy(mapped, (node => node.id))
+})
+const unchanged = computed(() => {
+  const mapped = diffState.diffResult.value?.unchanged.map( node => node.model.raw )
+  return uniqBy(mapped, (node => node.id))
+})
+
+const modified = computed(() => {
+  const mapped = diffState.diffResult.value?.modified.map( tuple => { return [tuple[0].model.raw, tuple[1].model.raw] }  )
+  return uniqBy(mapped, (tuple => tuple[0].id))
+})
+
 </script>
