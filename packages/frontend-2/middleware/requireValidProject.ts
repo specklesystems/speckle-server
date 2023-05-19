@@ -25,12 +25,21 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (data?.project?.id) return
 
   const isForbidden = (errors || []).find((e) => e.extensions['code'] === 'FORBIDDEN')
+  const isNotFound = (errors || []).find(
+    (e) => e.extensions['code'] === 'STREAM_NOT_FOUND'
+  )
   if (isForbidden) {
     return abortNavigation(
       createError({
         statusCode: 403,
         message: 'You do not have access to this project'
       })
+    )
+  }
+
+  if (isNotFound) {
+    return abortNavigation(
+      createError({ statusCode: 404, message: 'Project not found' })
     )
   }
 
@@ -41,12 +50,6 @@ export default defineNuxtRouteMiddleware(async (to) => {
         statusCode: 500,
         message: errMsg
       })
-    )
-  }
-
-  if (!data?.project) {
-    return abortNavigation(
-      createError({ statusCode: 404, message: 'Project not found' })
     )
   }
 })

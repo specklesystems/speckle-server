@@ -635,7 +635,7 @@ export type Model = {
   pendingImportedVersions: Array<FileUpload>;
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
-  version?: Maybe<Version>;
+  version: Version;
   versions: VersionCollection;
 };
 
@@ -1221,7 +1221,7 @@ export type Project = {
   /** Collaborators who have been invited, but not yet accepted. */
   invitedTeam?: Maybe<Array<PendingStreamCollaborator>>;
   /** Returns a specific model by its ID */
-  model?: Maybe<Model>;
+  model: Model;
   /** Return a model tree of children for the specified model name */
   modelChildrenTree: Array<ModelsTreeItem>;
   /** Returns a flat list of all models */
@@ -1605,7 +1605,7 @@ export type Query = {
    * Find a specific project. Will throw an authorization error if active user isn't authorized
    * to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
    */
-  project?: Maybe<Project>;
+  project: Project;
   /**
    * Look for an invitation to a project, for the current user (authed or not). If token
    * isn't specified, the server will look for any valid invite.
@@ -2650,11 +2650,11 @@ export type ProjectDiscussionsPageHeader_ProjectFragment = { __typename?: 'Proje
 
 export type ProjectDiscussionsPageResults_ProjectFragment = { __typename?: 'Project', id: string };
 
-export type ProjectModelPageHeaderProjectFragment = { __typename?: 'Project', id: string, name: string, model?: { __typename?: 'Model', id: string, name: string } | null };
+export type ProjectModelPageHeaderProjectFragment = { __typename?: 'Project', id: string, name: string, model: { __typename?: 'Model', id: string, name: string } };
 
-export type ProjectModelPageVersionsPaginationFragment = { __typename?: 'Project', id: string, model?: { __typename?: 'Model', id: string, versions: { __typename?: 'VersionCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Version', id: string, message?: string | null, createdAt: string, previewUrl: string, sourceApplication?: string | null, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number } }> } } | null };
+export type ProjectModelPageVersionsPaginationFragment = { __typename?: 'Project', id: string, model: { __typename?: 'Model', id: string, versions: { __typename?: 'VersionCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Version', id: string, message?: string | null, createdAt: string, previewUrl: string, sourceApplication?: string | null, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number } }> } } };
 
-export type ProjectModelPageVersionsProjectFragment = { __typename?: 'Project', id: string, role?: string | null, model?: { __typename?: 'Model', id: string, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, versions: { __typename?: 'VersionCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Version', id: string, message?: string | null, createdAt: string, previewUrl: string, sourceApplication?: string | null, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number } }> } } | null };
+export type ProjectModelPageVersionsProjectFragment = { __typename?: 'Project', id: string, role?: string | null, model: { __typename?: 'Model', id: string, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, versions: { __typename?: 'VersionCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Version', id: string, message?: string | null, createdAt: string, previewUrl: string, sourceApplication?: string | null, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number } }> } } };
 
 export type ProjectModelPageDialogDeleteVersionFragment = { __typename?: 'Version', id: string, message?: string | null };
 
@@ -2787,7 +2787,7 @@ export type ProjectModelsSelectorValuesQueryVariables = Exact<{
 }>;
 
 
-export type ProjectModelsSelectorValuesQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, models: { __typename?: 'ModelCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Model', id: string, name: string }> } } | null };
+export type ProjectModelsSelectorValuesQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, models: { __typename?: 'ModelCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Model', id: string, name: string }> } } };
 
 export type ServerVersionInfoQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -2917,7 +2917,7 @@ export type ProjectAccessCheckQueryVariables = Exact<{
 }>;
 
 
-export type ProjectAccessCheckQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string } | null };
+export type ProjectAccessCheckQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string } };
 
 export type ProjectsDashboardQueryQueryVariables = Exact<{
   filter?: InputMaybe<UserProjectsFilter>;
@@ -2933,7 +2933,7 @@ export type ProjectPageQueryQueryVariables = Exact<{
 }>;
 
 
-export type ProjectPageQueryQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, createdAt: string, role?: string | null, name: string, description?: string | null, visibility: ProjectVisibility, allowPublicComments: boolean, team: Array<{ __typename?: 'ProjectCollaborator', role: string, user: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }>, invitedTeam?: Array<{ __typename?: 'PendingStreamCollaborator', id: string, title: string, inviteId: string, role: string, user?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null }> | null, versionCount: { __typename?: 'VersionCollection', totalCount: number }, modelCount: { __typename?: 'ModelCollection', totalCount: number }, commentThreadCount: { __typename?: 'ProjectCommentCollection', totalCount: number } } | null, projectInvite?: { __typename?: 'PendingStreamCollaborator', id: string, projectId: string, projectName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } } | null };
+export type ProjectPageQueryQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, createdAt: string, role?: string | null, name: string, description?: string | null, visibility: ProjectVisibility, allowPublicComments: boolean, team: Array<{ __typename?: 'ProjectCollaborator', role: string, user: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }>, invitedTeam?: Array<{ __typename?: 'PendingStreamCollaborator', id: string, title: string, inviteId: string, role: string, user?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null }> | null, versionCount: { __typename?: 'VersionCollection', totalCount: number }, modelCount: { __typename?: 'ModelCollection', totalCount: number }, commentThreadCount: { __typename?: 'ProjectCommentCollection', totalCount: number } }, projectInvite?: { __typename?: 'PendingStreamCollaborator', id: string, projectId: string, projectName: string, token?: string | null, invitedBy: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } } | null };
 
 export type ProjectLatestModelsQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -2941,7 +2941,7 @@ export type ProjectLatestModelsQueryVariables = Exact<{
 }>;
 
 
-export type ProjectLatestModelsQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, models: { __typename?: 'ModelCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }> }> }, pendingImportedModels: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }> } | null };
+export type ProjectLatestModelsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, models: { __typename?: 'ModelCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }> }> }, pendingImportedModels: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }> } };
 
 export type ProjectLatestModelsPaginationQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -2950,7 +2950,7 @@ export type ProjectLatestModelsPaginationQueryVariables = Exact<{
 }>;
 
 
-export type ProjectLatestModelsPaginationQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, models: { __typename?: 'ModelCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }> }> } } | null };
+export type ProjectLatestModelsPaginationQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, models: { __typename?: 'ModelCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }> }> } } };
 
 export type ProjectModelsTreeTopLevelQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -2958,7 +2958,7 @@ export type ProjectModelsTreeTopLevelQueryVariables = Exact<{
 }>;
 
 
-export type ProjectModelsTreeTopLevelQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, modelsTree: { __typename?: 'ModelsTreeItemCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'ModelsTreeItem', id: string, name: string, fullName: string, hasChildren: boolean, updatedAt: string, model?: { __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }> } | null }> }, pendingImportedModels: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }> } | null };
+export type ProjectModelsTreeTopLevelQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, modelsTree: { __typename?: 'ModelsTreeItemCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'ModelsTreeItem', id: string, name: string, fullName: string, hasChildren: boolean, updatedAt: string, model?: { __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }> } | null }> }, pendingImportedModels: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }> } };
 
 export type ProjectModelsTreeTopLevelPaginationQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -2967,7 +2967,7 @@ export type ProjectModelsTreeTopLevelPaginationQueryVariables = Exact<{
 }>;
 
 
-export type ProjectModelsTreeTopLevelPaginationQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, modelsTree: { __typename?: 'ModelsTreeItemCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'ModelsTreeItem', id: string, name: string, fullName: string, hasChildren: boolean, updatedAt: string, model?: { __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }> } | null }> } } | null };
+export type ProjectModelsTreeTopLevelPaginationQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, modelsTree: { __typename?: 'ModelsTreeItemCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'ModelsTreeItem', id: string, name: string, fullName: string, hasChildren: boolean, updatedAt: string, model?: { __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }> } | null }> } } };
 
 export type ProjectModelChildrenTreeQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -2975,7 +2975,7 @@ export type ProjectModelChildrenTreeQueryVariables = Exact<{
 }>;
 
 
-export type ProjectModelChildrenTreeQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, modelChildrenTree: Array<{ __typename?: 'ModelsTreeItem', id: string, name: string, fullName: string, hasChildren: boolean, updatedAt: string, model?: { __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }> } | null }> } | null };
+export type ProjectModelChildrenTreeQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, modelChildrenTree: Array<{ __typename?: 'ModelsTreeItem', id: string, name: string, fullName: string, hasChildren: boolean, updatedAt: string, model?: { __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }> } | null }> } };
 
 export type ProjectLatestCommentThreadsQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -2984,7 +2984,7 @@ export type ProjectLatestCommentThreadsQueryVariables = Exact<{
 }>;
 
 
-export type ProjectLatestCommentThreadsQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, commentThreads: { __typename?: 'ProjectCommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, screenshot?: string | null, rawText: string, createdAt: string, updatedAt: string, archived: boolean, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, repliesCount: { __typename?: 'CommentCollection', totalCount: number }, replyAuthors: { __typename?: 'CommentReplyAuthorCollection', totalCount: number, items: Array<{ __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }> }, viewerResources: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }> }> } } | null };
+export type ProjectLatestCommentThreadsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, commentThreads: { __typename?: 'ProjectCommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, screenshot?: string | null, rawText: string, createdAt: string, updatedAt: string, archived: boolean, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, repliesCount: { __typename?: 'CommentCollection', totalCount: number }, replyAuthors: { __typename?: 'CommentReplyAuthorCollection', totalCount: number, items: Array<{ __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }> }, viewerResources: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }> }> } } };
 
 export type ProjectInviteQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -3000,7 +3000,7 @@ export type ProjectModelCheckQueryVariables = Exact<{
 }>;
 
 
-export type ProjectModelCheckQuery = { __typename?: 'Query', project?: { __typename?: 'Project', model?: { __typename?: 'Model', id: string } | null } | null };
+export type ProjectModelCheckQuery = { __typename?: 'Query', project: { __typename?: 'Project', model: { __typename?: 'Model', id: string } } };
 
 export type ProjectModelPageQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -3009,7 +3009,7 @@ export type ProjectModelPageQueryVariables = Exact<{
 }>;
 
 
-export type ProjectModelPageQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, name: string, role?: string | null, model?: { __typename?: 'Model', id: string, name: string, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, versions: { __typename?: 'VersionCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Version', id: string, message?: string | null, createdAt: string, previewUrl: string, sourceApplication?: string | null, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number } }> } } | null } | null };
+export type ProjectModelPageQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, role?: string | null, model: { __typename?: 'Model', id: string, name: string, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, versions: { __typename?: 'VersionCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Version', id: string, message?: string | null, createdAt: string, previewUrl: string, sourceApplication?: string | null, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number } }> } } } };
 
 export type ProjectModelVersionsQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -3018,21 +3018,21 @@ export type ProjectModelVersionsQueryVariables = Exact<{
 }>;
 
 
-export type ProjectModelVersionsQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, model?: { __typename?: 'Model', id: string, versions: { __typename?: 'VersionCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Version', id: string, message?: string | null, createdAt: string, previewUrl: string, sourceApplication?: string | null, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number } }> } } | null } | null };
+export type ProjectModelVersionsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, model: { __typename?: 'Model', id: string, versions: { __typename?: 'VersionCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'Version', id: string, message?: string | null, createdAt: string, previewUrl: string, sourceApplication?: string | null, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number } }> } } } };
 
 export type ProjectModelsPageQueryVariables = Exact<{
   projectId: Scalars['String'];
 }>;
 
 
-export type ProjectModelsPageQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, name: string, sourceApps: Array<string>, role?: string | null, team: Array<{ __typename?: 'ProjectCollaborator', user: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }>, modelCount: { __typename?: 'ModelCollection', totalCount: number } } | null };
+export type ProjectModelsPageQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, sourceApps: Array<string>, role?: string | null, team: Array<{ __typename?: 'ProjectCollaborator', user: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }>, modelCount: { __typename?: 'ModelCollection', totalCount: number } } };
 
 export type ProjectDiscussionsPageQueryVariables = Exact<{
   projectId: Scalars['String'];
 }>;
 
 
-export type ProjectDiscussionsPageQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, name: string } | null };
+export type ProjectDiscussionsPageQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string } };
 
 export type OnProjectUpdatedSubscriptionVariables = Exact<{
   id: Scalars['String'];
@@ -3159,7 +3159,7 @@ export type ProjectViewerResourcesQueryVariables = Exact<{
 }>;
 
 
-export type ProjectViewerResourcesQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, viewerResources: Array<{ __typename?: 'ViewerResourceGroup', identifier: string, items: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }> }> } | null };
+export type ProjectViewerResourcesQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, viewerResources: Array<{ __typename?: 'ViewerResourceGroup', identifier: string, items: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }> }> } };
 
 export type ViewerLoadedResourcesQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -3168,7 +3168,7 @@ export type ViewerLoadedResourcesQueryVariables = Exact<{
 }>;
 
 
-export type ViewerLoadedResourcesQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, role?: string | null, createdAt: string, name: string, models: { __typename?: 'ModelCollection', totalCount: number, items: Array<{ __typename?: 'Model', id: string, name: string, updatedAt: string, loadedVersion: { __typename?: 'VersionCollection', items: Array<{ __typename?: 'Version', id: string, message?: string | null, referencedObject: string, sourceApplication?: string | null, createdAt: string, previewUrl: string, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null }> }, versions: { __typename?: 'VersionCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Version', id: string, message?: string | null, referencedObject: string, sourceApplication?: string | null, createdAt: string, previewUrl: string, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null }> } }> }, modelCount: { __typename?: 'ModelCollection', totalCount: number } } | null };
+export type ViewerLoadedResourcesQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, role?: string | null, createdAt: string, name: string, models: { __typename?: 'ModelCollection', totalCount: number, items: Array<{ __typename?: 'Model', id: string, name: string, updatedAt: string, loadedVersion: { __typename?: 'VersionCollection', items: Array<{ __typename?: 'Version', id: string, message?: string | null, referencedObject: string, sourceApplication?: string | null, createdAt: string, previewUrl: string, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null }> }, versions: { __typename?: 'VersionCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Version', id: string, message?: string | null, referencedObject: string, sourceApplication?: string | null, createdAt: string, previewUrl: string, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null }> } }> }, modelCount: { __typename?: 'ModelCollection', totalCount: number } } };
 
 export type ViewerModelVersionsQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -3177,7 +3177,7 @@ export type ViewerModelVersionsQueryVariables = Exact<{
 }>;
 
 
-export type ViewerModelVersionsQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, role?: string | null, model?: { __typename?: 'Model', id: string, versions: { __typename?: 'VersionCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Version', id: string, message?: string | null, referencedObject: string, sourceApplication?: string | null, createdAt: string, previewUrl: string, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null }> } } | null } | null };
+export type ViewerModelVersionsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, role?: string | null, model: { __typename?: 'Model', id: string, versions: { __typename?: 'VersionCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Version', id: string, message?: string | null, referencedObject: string, sourceApplication?: string | null, createdAt: string, previewUrl: string, authorUser?: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } | null }> } } } };
 
 export type ViewerLoadedThreadsQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -3187,7 +3187,7 @@ export type ViewerLoadedThreadsQueryVariables = Exact<{
 }>;
 
 
-export type ViewerLoadedThreadsQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, commentThreads: { __typename?: 'ProjectCommentCollection', totalCount: number, totalArchivedCount: number, items: Array<{ __typename?: 'Comment', id: string, rawText: string, archived: boolean, createdAt: string, viewedAt?: string | null, viewerState?: {} | null, viewerResources: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }>, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, replies: { __typename?: 'CommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, archived: boolean, rawText: string, createdAt: string, text: { __typename?: 'SmartTextEditorValue', doc?: {} | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null }, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }> }, replyAuthors: { __typename?: 'CommentReplyAuthorCollection', totalCount: number, items: Array<{ __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }> }, resources: Array<{ __typename?: 'ResourceIdentifier', resourceId: string, resourceType: ResourceType }>, text: { __typename?: 'SmartTextEditorValue', doc?: {} | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null } }> } } | null };
+export type ViewerLoadedThreadsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, commentThreads: { __typename?: 'ProjectCommentCollection', totalCount: number, totalArchivedCount: number, items: Array<{ __typename?: 'Comment', id: string, rawText: string, archived: boolean, createdAt: string, viewedAt?: string | null, viewerState?: {} | null, viewerResources: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }>, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }, replies: { __typename?: 'CommentCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Comment', id: string, archived: boolean, rawText: string, createdAt: string, text: { __typename?: 'SmartTextEditorValue', doc?: {} | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null }, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } }> }, replyAuthors: { __typename?: 'CommentReplyAuthorCollection', totalCount: number, items: Array<{ __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null }> }, resources: Array<{ __typename?: 'ResourceIdentifier', resourceId: string, resourceType: ResourceType }>, text: { __typename?: 'SmartTextEditorValue', doc?: {} | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, fileType: string, fileSize?: number | null }> | null } }> } } };
 
 export type OnViewerUserActivityBroadcastedSubscriptionVariables = Exact<{
   target: ViewerUpdateTrackingTarget;

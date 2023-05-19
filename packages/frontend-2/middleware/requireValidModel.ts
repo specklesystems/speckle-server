@@ -26,6 +26,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (data?.project?.model?.id) return
 
   const isForbidden = (errors || []).find((e) => e.extensions['code'] === 'FORBIDDEN')
+  const isProjectNotFound = (errors || []).find(
+    (e) => e.extensions['code'] === 'STREAM_NOT_FOUND'
+  )
+  const isModelNotFound = (errors || []).find(
+    (e) => e.extensions['code'] === 'BRANCH_NOT_FOUND'
+  )
   if (isForbidden) {
     return abortNavigation(
       createError({
@@ -35,18 +41,18 @@ export default defineNuxtRouteMiddleware(async (to) => {
     )
   }
 
-  if (errors?.length) {
-    const errMsg = getFirstErrorMessage(errors)
-    return abortNavigation(errMsg)
-  }
-
-  if (!data?.project) {
+  if (isProjectNotFound) {
     return abortNavigation(
       createError({ statusCode: 404, message: 'Project not found' })
     )
   }
 
-  if (!data?.project.model) {
+  if (isModelNotFound) {
     return abortNavigation(createError({ statusCode: 404, message: 'Model not found' }))
+  }
+
+  if (errors?.length) {
+    const errMsg = getFirstErrorMessage(errors)
+    return abortNavigation(errMsg)
   }
 })
