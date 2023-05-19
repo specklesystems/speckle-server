@@ -89,6 +89,42 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@apollo/client@npm:^3.7.14":
+  version: 3.7.14
+  resolution: "@apollo/client@npm:3.7.14"
+  dependencies:
+    "@graphql-typed-document-node/core": ^3.1.1
+    "@wry/context": ^0.7.0
+    "@wry/equality": ^0.5.0
+    "@wry/trie": ^0.3.0
+    graphql-tag: ^2.12.6
+    hoist-non-react-statics: ^3.3.2
+    optimism: ^0.16.2
+    prop-types: ^15.7.2
+    response-iterator: ^0.2.6
+    symbol-observable: ^4.0.0
+    ts-invariant: ^0.10.3
+    tslib: ^2.3.0
+    zen-observable-ts: ^1.2.5
+  peerDependencies:
+    graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
+    graphql-ws: ^5.5.5
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+    subscriptions-transport-ws: ^0.9.0 || ^0.11.0
+  peerDependenciesMeta:
+    graphql-ws:
+      optional: true
+    react:
+      optional: true
+    react-dom:
+      optional: true
+    subscriptions-transport-ws:
+      optional: true
+  checksum: eaa8af74450fee4d4761d25fb8fe752788517b27ebb46a51b6496950c5b73f48b6ba3e4f3474b6e4a4f310916dc3fcf079306c35f16d4284b96c7fdbb8539fde
+  languageName: node
+  linkType: hard
+
 "@apollo/protobufjs@npm:1.2.4":
   version: 1.2.4
   resolution: "@apollo/protobufjs@npm:1.2.4"
@@ -10993,6 +11029,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/dui3@workspace:packages/dui3"
   dependencies:
+    "@apollo/client": ^3.7.14
     "@graphql-codegen/cli": ^2.13.6
     "@graphql-codegen/client-preset": ^1.2.5
     "@headlessui/vue": ^1.7.13
@@ -11001,16 +11038,21 @@ __metadata:
     "@speckle/shared": "workspace:^"
     "@speckle/ui-components": "workspace:^"
     "@speckle/ui-components-nuxt": "workspace:^"
+    "@types/apollo-upload-client": ^17.0.1
     "@types/lodash-es": ^4.17.6
     "@types/node": ^18
     "@vitejs/plugin-legacy": ^4.0.3
+    "@vue/apollo-composable": ^4.0.0-beta.5
     "@vueuse/core": ^9.13.0
+    apollo-upload-client: ^17.0.0
     concurrently: ^7.5.0
     eslint: ^8.24.0
     eslint-config-prettier: ^8.5.0
     eslint-plugin-nuxt: ^4.0.0
     eslint-plugin-vue: ^9.5.1
     eslint-plugin-vuejs-accessibility: ^1.2.0
+    graphql: ^16.6.0
+    graphql-tag: ^2.12.6
     lodash-es: ^4.17.21
     nuxt: ^3.5.0
     portal-vue: ^3.0.0
@@ -11023,6 +11065,7 @@ __metadata:
     stylelint-config-prettier: ^9.0.3
     stylelint-config-recommended-vue: ^1.4.0
     stylelint-config-standard: ^26.0.0
+    subscriptions-transport-ws: ^0.11.0
     tailwindcss: ^3.3.2
     type-fest: ^3.5.1
     typescript: ^4.8.3
@@ -16707,6 +16750,25 @@ __metadata:
     "@vue/composition-api":
       optional: true
   checksum: 6694690c00ba95186b743a182c869503a954402345df2262eb19638a6f2616a551897643588896153e0d61e6e3693888b11c5a293675ff1415ab157279903dff
+  languageName: node
+  linkType: hard
+
+"@vue/apollo-composable@npm:^4.0.0-beta.5":
+  version: 4.0.0-beta.5
+  resolution: "@vue/apollo-composable@npm:4.0.0-beta.5"
+  dependencies:
+    throttle-debounce: ^3.0.1
+    ts-essentials: ^9.1.2
+    vue-demi: ^0.13.1
+  peerDependencies:
+    "@apollo/client": ^3.4.13
+    "@vue/composition-api": ^1.0.0
+    graphql: ">=15"
+    vue: ^2.6.0 || ^3.1.0
+  peerDependenciesMeta:
+    "@vue/composition-api":
+      optional: true
+  checksum: df82fe2bfb4793f857c1e914b5661094c4fd0448ac8ff0c5b017f743aa82753327d1d9606d095846e21d3ab70948a407a50b081cd4a6ce6cf80b20b5ee19c3a4
   languageName: node
   linkType: hard
 
@@ -34284,6 +34346,16 @@ __metadata:
     "@wry/context": ^0.6.0
     "@wry/trie": ^0.3.0
   checksum: 7506a3e5e37b8945059ffacd68039e920ad121aab3eeff27483b7a8b594f6f694f2a3b61a198aeecc43b81753d35c8cb32b7f662d2b5e2d2449fe7068da678e1
+  languageName: node
+  linkType: hard
+
+"optimism@npm:^0.16.2":
+  version: 0.16.2
+  resolution: "optimism@npm:0.16.2"
+  dependencies:
+    "@wry/context": ^0.7.0
+    "@wry/trie": ^0.3.0
+  checksum: a98ed9a0b8ee2b031010222099b60860d52860bf8182889f2695a7cf2185f21aca59020f78e2b47c0ae7697843caa576798d792967314ff59f6aa7c5d9de7f3a
   languageName: node
   linkType: hard
 

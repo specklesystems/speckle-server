@@ -12,7 +12,7 @@ packages/viewer/example/speckleviewer.web.js
 
 .output
 .nuxt
-packages/frontend-2/lib/core/nuxt-modules/**/templates/*.js
+nuxt-modules/**/templates/*.js
 packages/frontend-2/lib/common/generated/**/*
 packages/dui3/lib/common/generated/**/*
 
