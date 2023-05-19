@@ -48,7 +48,7 @@ async function waitForUnlock() {
 }
 
 async function doWork() {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     lock(lockFilePath, lockFileOpts, async (err) => {
       if (err) {
         await waitForUnlock()
@@ -62,12 +62,23 @@ async function doWork() {
       // Trigger install
       const now = performance.now()
       console.log('Building tailwind deps...')
-      const proc = exec('yarn build:tailwind-deps', { cwd: __dirname }, (err) => {
-        if (err) {
-          console.error(err)
-          return resolve()
+      const proc = exec(
+        'yarn build:tailwind-deps',
+        { cwd: __dirname },
+        (err, stdout, stderr) => {
+          if (err) {
+            console.error(err)
+            return reject()
+          }
+
+          if (stdout) {
+            console.log(stdout)
+          }
+          if (stderr) {
+            console.error(stderr)
+          }
         }
-      })
+      )
       proc.on('exit', () => {
         console.log(`...done [${Math.round(performance.now() - now)}ms]`)
         return resolve()
