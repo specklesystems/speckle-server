@@ -21,15 +21,16 @@
       <div class="grow">
         <!-- New -->
         <input
-          id="intensity"
+          id="diffTime"
           v-model="localDiffTime"
           class="h-2 w-full"
           type="range"
-          name="intensity"
+          name="diffTime"
           min="0"
           max="1"
           step="0.01"
         />
+        <!-- TODO: add colour toggling button -->
         <!-- Old -->
       </div>
       <div>unchanged: {{ unchanged.length}}</div>
