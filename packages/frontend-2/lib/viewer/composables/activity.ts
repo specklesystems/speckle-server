@@ -339,6 +339,12 @@ export function useViewerUserActivityTracking(params: {
   }
 }
 
+/**
+ * TODO:
+ * - Extract common spotlight/thread open logic to a common composable
+ * - Move user activity/thread stuff to setup so that it isn't strewn about
+ */
+
 function useViewerSpotlightTracking() {
   const state = useInjectedViewerState()
   const { sectionBox } = useSectionBoxUtilities()
@@ -357,6 +363,10 @@ function useViewerSpotlightTracking() {
       user.state.ui.camera.target[1],
       user.state.ui.camera.target[2]
     )
+
+    if (camera.isOrthoProjection.value !== user.state.ui.camera.isOrthoProjection) {
+      camera.isOrthoProjection.value = user.state.ui.camera.isOrthoProjection
+    }
 
     if (user.state.ui.sectionBox) {
       sectionBox.value = new Box3(

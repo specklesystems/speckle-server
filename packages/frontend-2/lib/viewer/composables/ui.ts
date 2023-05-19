@@ -1,10 +1,12 @@
 import { PropertyInfo } from '@speckle/viewer'
+import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
   useInjectedViewer,
-  useInjectedViewerInterfaceState
+  useInjectedViewerInterfaceState,
+  useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 
 export function useSectionBoxUtilities() {
@@ -83,6 +85,11 @@ export function useCameraUtilities() {
 export function useFilterUtilities() {
   // const { instance } = useInjectedViewer()
   const { filters, explodeFactor } = useInjectedViewerInterfaceState()
+  const {
+    viewer: {
+      metadata: { availableFilters }
+    }
+  } = useInjectedViewerState()
 
   const isolateObjects = (
     objectIds: string[],
@@ -161,6 +168,27 @@ export function useFilterUtilities() {
     // filters.selectedObjects.value = []
   }
 
+  const waitForAvailableFilter = async (
+    key: string,
+    options?: Partial<{ timeout: number }>
+  ) => {
+    const timeout = options?.timeout || 10000
+
+    const res = await Promise.race([
+      until(availableFilters.value).toMatch(
+        (filters) => !!filters?.find((p) => p.key === key)
+      ),
+      new Promise<never>((_resolve, reject) => {
+        setTimeout(() => {
+          reject(new Error('Waiting for available filter timed out'))
+        }, timeout)
+      })
+    ])
+
+    const filter = res?.find((p) => p.key === key)
+    return filter as NonNullable<typeof filter>
+  }
+
   return {
     isolateObjects,
     unIsolateObjects,
@@ -171,7 +199,8 @@ export function useFilterUtilities() {
     applyPropertyFilter,
     removePropertyFilter,
     unApplyPropertyFilter,
-    resetFilters
+    resetFilters,
+    waitForAvailableFilter
   }
 }
 
