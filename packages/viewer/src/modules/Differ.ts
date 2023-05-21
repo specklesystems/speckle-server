@@ -262,8 +262,8 @@ export class Differ {
   }
 
   public setDiffTime(time: number) {
-    const from = Math.min(Math.max(1 - time, 0.2), 1)
-    const to = Math.min(Math.max(time, 0.2), 1)
+    const from = Math.min(Math.max(1 - time, 0), 1)
+    const to = Math.min(Math.max(time, 0), 1)
 
     this.addedMaterials.forEach((mat) => {
       mat.opacity =
