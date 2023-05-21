@@ -10,7 +10,6 @@
     <div class="relative mt-4 mx-2">
       <slot />
     </div>
-    <SingletonManagers />
   </main>
 </template>
 <script setup lang="ts">

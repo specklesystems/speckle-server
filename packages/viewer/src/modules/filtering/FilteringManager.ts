@@ -361,6 +361,7 @@ export class FilteringManager extends EventEmitter {
     groups: {
       objectIds: string[]
       material: SpeckleStandardMaterial | SpecklePointMaterial
+      rvs?: NodeRenderView[]
     }[]
   ) {
     this.UserMaterialState = new UserMaterialState()
@@ -370,12 +371,14 @@ export class FilteringManager extends EventEmitter {
       nodes: TreeNode[]
       rvs: NodeRenderView[]
     }[] = groups.map((g) => {
-      return { ...g, nodes: [], rvs: [] }
+      return { ...g, nodes: [], rvs: g.rvs ? g.rvs : [] }
     })
 
     this.WTI.walk((node: TreeNode) => {
       if (!node.model?.raw?.id) return true
       for (const group of localGroups) {
+        if (group.rvs.length > 0) return true
+
         if (group.objectIds.includes(node.model.raw.id)) {
           group.nodes.push(node)
           const rvsNodes = this.RTI.getRenderViewNodesForNode(node, node).map(

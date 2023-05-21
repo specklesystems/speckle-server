@@ -10,7 +10,7 @@
     "dev": "concurrently \"yarn dev:app\" \"yarn gqlgen:watch\" \"yarn storybook --no-open\" -n nuxt,gqlgen,storybook",
     "preview": "nuxt preview",
     "analyze": "nuxt analyze",
-    "postinstall": "yarn build:tailwind-deps && nuxt prepare",
+    "postinstall": "yarn ensure:tailwind-deps && nuxt prepare",
     "lint:js": "eslint --ext \".js,.ts,.vue\" .",
     "lint:tsc": "vue-tsc --noEmit",
     "lint:prettier": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --check .",

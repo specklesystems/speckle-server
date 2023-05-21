@@ -6,6 +6,7 @@ import SpecklePointMaterial from './materials/SpecklePointMaterial'
 import { GeometryType } from './batching/Batch'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import Logger from 'js-logger'
+import { NodeRenderView } from './tree/NodeRenderView'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeckleObject = Record<string, any>
@@ -24,6 +25,14 @@ export interface DiffResult {
   added: Array<SpeckleObject>
   removed: Array<SpeckleObject>
   modified: Array<Array<SpeckleObject>>
+}
+
+interface VisualDiffResult {
+  unchanged: Array<NodeRenderView>
+  added: Array<NodeRenderView>
+  removed: Array<NodeRenderView>
+  modifiedOld: Array<NodeRenderView>
+  modifiedNew: Array<NodeRenderView>
 }
 
 export class Differ {
@@ -201,6 +210,9 @@ export class Differ {
       return renderTreeB.getAtomicParent(value)
     })
 
+    rvsA = [...Array.from(new Set(rvsA))]
+    rvsB = [...Array.from(new Set(rvsB))]
+
     for (let k = 0; k < rvsB.length; k++) {
       const res = rootA.first((node: TreeNode) => {
         return rvsB[k].model.raw.id === node.model.raw.id
@@ -235,6 +247,8 @@ export class Differ {
         })
         if (!res2) diffResult.removed.push(rvsA[k])
         else modifiedOld.push(rvsA[k])
+      } else {
+        diffResult.unchanged.push(res)
       }
     }
 
@@ -252,22 +266,26 @@ export class Differ {
     const to = Math.min(Math.max(time, 0.2), 1)
 
     this.addedMaterials.forEach((mat) => {
-      mat.opacity = from
+      mat.opacity =
+        mat['clampOpacity'] !== undefined ? Math.min(from, mat['clampOpacity']) : from
       mat.depthWrite = from < 0.5 ? false : true
     })
 
     this.changedOldMaterials.forEach((mat) => {
-      mat.opacity = to
+      mat.opacity =
+        mat['clampOpacity'] !== undefined ? Math.min(to, mat['clampOpacity']) : to
       mat.depthWrite = to < 0.5 ? false : true
     })
 
     this.changedNewMaterials.forEach((mat) => {
-      mat.opacity = from
+      mat.opacity =
+        mat['clampOpacity'] !== undefined ? Math.min(from, mat['clampOpacity']) : from
       mat.depthWrite = from < 0.5 ? false : true
     })
 
     this.removedMaterials.forEach((mat) => {
-      mat.opacity = to
+      mat.opacity =
+        mat['clampOpacity'] !== undefined ? Math.min(to, mat['clampOpacity']) : to
       mat.depthWrite = to < 0.5 ? false : true
     })
   }
@@ -281,10 +299,15 @@ export class Differ {
   ) {
     switch (mode) {
       case VisualDiffMode.COLORED:
-        this._materialGroups = this.getColoredMaterialGroups(diffResult)
+        this._materialGroups = this.getColoredMaterialGroups(
+          this.getVisualDiffResult(diffResult)
+        )
         break
       case VisualDiffMode.PLAIN:
-        this._materialGroups = this.getPlainMaterialGroups(diffResult, batchMaterials)
+        this._materialGroups = this.getPlainMaterialGroups(
+          this.getVisualDiffResult(diffResult),
+          batchMaterials
+        )
         break
       default:
         Logger.error(`Unsupported visual diff mode ${mode}`)
@@ -300,109 +323,127 @@ export class Differ {
     this.removedMaterials = []
   }
 
-  private getColoredMaterialGroups(diffResult: DiffResult) {
+  private getVisualDiffResult(diffResult: DiffResult): VisualDiffResult {
     const renderTree = this.tree.getRenderTree()
+
+    const addedRvs = diffResult.added.flatMap((value) => {
+      return renderTree.getRenderViewsForNode(value as TreeNode, value as TreeNode)
+    })
+    const removedRvs = diffResult.removed.flatMap((value) => {
+      return renderTree.getRenderViewsForNode(value as TreeNode, value as TreeNode)
+    })
+    const unchangedRvs = diffResult.unchanged.flatMap((value) => {
+      return renderTree.getRenderViewsForNode(value as TreeNode, value as TreeNode)
+    })
+
+    const modifiedOldRvs = diffResult.modified
+      .flatMap((value) => {
+        return renderTree.getRenderViewsForNode(
+          value[0] as TreeNode,
+          value[0] as TreeNode
+        )
+      })
+      .filter((value) => {
+        return !unchangedRvs.includes(value) && !removedRvs.includes(value)
+      })
+    const modifiedNewRvs = diffResult.modified
+      .flatMap((value) => {
+        return renderTree.getRenderViewsForNode(
+          value[1] as TreeNode,
+          value[1] as TreeNode
+        )
+      })
+      .filter((value) => {
+        return !unchangedRvs.includes(value) && !addedRvs.includes(value)
+      })
+
+    return {
+      unchanged: unchangedRvs,
+      added: addedRvs,
+      removed: removedRvs,
+      modifiedOld: modifiedOldRvs,
+      modifiedNew: modifiedNewRvs
+    }
+  }
+
+  private getColoredMaterialGroups(visualDiffResult: VisualDiffResult) {
     const groups = [
       // MESHES & LINES
       // Currently lines work with mesh specific materials due to how the LineBatch is implemented.
       // We could use specific line materials, but it won't make a difference until we elevate the
       // LineBatch a bit
+
       {
-        objectIds: diffResult.added
-          .filter((value: TreeNode) => {
-            const rv = renderTree.getRenderViewsForNode(value as TreeNode)[0]
-            return (
-              rv.geometryType === GeometryType.MESH ||
-              rv.geometryType === GeometryType.LINE
-            )
-          })
-          .map((value): string => value.model.raw.id),
+        objectIds: [],
+        rvs: visualDiffResult.added.filter(
+          (value) =>
+            value.geometryType === GeometryType.MESH ||
+            value.geometryType === GeometryType.LINE
+        ),
         material: this.addedMaterialMesh
       },
       {
-        objectIds: diffResult.modified
-          .filter((value) => {
-            const rv = renderTree.getRenderViewsForNode(value[1] as TreeNode)[0]
-            return (
-              rv.geometryType === GeometryType.MESH ||
-              rv.geometryType === GeometryType.LINE
-            )
-          })
-          .map((value): string => value[1].model.raw.id),
+        objectIds: [],
+        rvs: visualDiffResult.modifiedNew.filter(
+          (value) =>
+            value.geometryType === GeometryType.MESH ||
+            value.geometryType === GeometryType.LINE
+        ),
         material: this.changedNewMaterialMesh
       },
       {
-        objectIds: diffResult.modified
-          .filter((value) => {
-            const rv = renderTree.getRenderViewsForNode(value[0] as TreeNode)[0]
-            return (
-              rv.geometryType === GeometryType.MESH ||
-              rv.geometryType === GeometryType.LINE
-            )
-          })
-          .map((value): string => value[0].model.raw.id),
+        objectIds: [],
+        rvs: visualDiffResult.modifiedOld.filter(
+          (value) =>
+            value.geometryType === GeometryType.MESH ||
+            value.geometryType === GeometryType.LINE
+        ),
         material: this.changedOldMaterialMesh
       },
       {
-        objectIds: diffResult.removed
-          .filter((value: TreeNode) => {
-            const rv = renderTree.getRenderViewsForNode(value as TreeNode)[0]
-            return (
-              rv.geometryType === GeometryType.MESH ||
-              rv.geometryType === GeometryType.LINE
-            )
-          })
-          .map((value): string => value.model.raw.id),
+        objectIds: [],
+        rvs: visualDiffResult.removed.filter(
+          (value) =>
+            value.geometryType === GeometryType.MESH ||
+            value.geometryType === GeometryType.LINE
+        ),
         material: this.removedMaterialMesh
       },
-
-      // POINTS
+      //POINTS
       {
-        objectIds: diffResult.added
-          .filter((value: TreeNode) => {
-            const rv = renderTree.getRenderViewsForNode(value as TreeNode)[0]
-            return (
-              rv.geometryType === GeometryType.POINT ||
-              rv.geometryType === GeometryType.POINT_CLOUD
-            )
-          })
-          .map((value): string => value.model.raw.id),
+        objectIds: [],
+        rvs: visualDiffResult.added.filter(
+          (value) =>
+            value.geometryType === GeometryType.POINT ||
+            value.geometryType === GeometryType.POINT_CLOUD
+        ),
         material: this.addedMaterialPoint
       },
       {
-        objectIds: diffResult.modified
-          .filter((value) => {
-            const rv = renderTree.getRenderViewsForNode(value[1] as TreeNode)[0]
-            return (
-              rv.geometryType === GeometryType.POINT ||
-              rv.geometryType === GeometryType.POINT_CLOUD
-            )
-          })
-          .map((value): string => value[1].model.raw.id),
+        objectIds: [],
+        rvs: visualDiffResult.modifiedNew.filter(
+          (value) =>
+            value.geometryType === GeometryType.POINT ||
+            value.geometryType === GeometryType.POINT_CLOUD
+        ),
         material: this.changedNewMaterialPoint
       },
       {
-        objectIds: diffResult.modified
-          .filter((value) => {
-            const rv = renderTree.getRenderViewsForNode(value[0] as TreeNode)[0]
-            return (
-              rv.geometryType === GeometryType.POINT ||
-              rv.geometryType === GeometryType.POINT_CLOUD
-            )
-          })
-          .map((value): string => value[0].model.raw.id),
+        objectIds: [],
+        rvs: visualDiffResult.modifiedOld.filter(
+          (value) =>
+            value.geometryType === GeometryType.POINT ||
+            value.geometryType === GeometryType.POINT_CLOUD
+        ),
         material: this.changedOldMaterialPoint
       },
       {
-        objectIds: diffResult.removed
-          .filter((value: TreeNode) => {
-            const rv = renderTree.getRenderViewsForNode(value as TreeNode)[0]
-            return (
-              rv.geometryType === GeometryType.POINT ||
-              rv.geometryType === GeometryType.POINT_CLOUD
-            )
-          })
-          .map((value): string => value.model.raw.id),
+        objectIds: [],
+        rvs: visualDiffResult.removed.filter(
+          (value) =>
+            value.geometryType === GeometryType.POINT ||
+            value.geometryType === GeometryType.POINT_CLOUD
+        ),
         material: this.removedMaterialPoint
       }
     ]
@@ -417,25 +458,25 @@ export class Differ {
     )
     this.removedMaterials.push(this.removedMaterialMesh, this.removedMaterialPoint)
 
-    return groups.filter((value) => value.objectIds.length > 0)
+    return groups.filter((value) => value.rvs.length > 0)
   }
 
   private getPlainMaterialGroups(
-    diffResult: DiffResult,
+    visualDiffResult: VisualDiffResult,
     batchMaterials: {
       [id: string]: SpeckleStandardMaterial | SpecklePointMaterial | SpeckleLineMaterial
     }
   ) {
-    const added = this.getBatchesSubgroups(diffResult.added, batchMaterials)
+    const added = this.getBatchesSubgroups(visualDiffResult.added, batchMaterials)
     const changedOld = this.getBatchesSubgroups(
-      diffResult.modified.map((value) => value[0]),
+      visualDiffResult.modifiedOld,
       batchMaterials
     )
     const changedNew = this.getBatchesSubgroups(
-      diffResult.modified.map((value) => value[1]),
+      visualDiffResult.modifiedNew,
       batchMaterials
     )
-    const removed = this.getBatchesSubgroups(diffResult.removed, batchMaterials)
+    const removed = this.getBatchesSubgroups(visualDiffResult.removed, batchMaterials)
     this.addedMaterials = added.map((value) => value.material)
     this.changedOldMaterials = changedOld.map((value) => value.material)
     this.changedNewMaterials = changedNew.map((value) => value.material)
@@ -444,35 +485,24 @@ export class Differ {
   }
 
   private getBatchesSubgroups(
-    subgroup: Array<SpeckleObject>,
+    subgroup: Array<NodeRenderView>,
     batchMaterials: {
       [id: string]: SpeckleStandardMaterial | SpecklePointMaterial | SpeckleLineMaterial
     }
   ) {
-    const renderTree = this.tree.getRenderTree()
     const groupBatches: Array<string> = [
-      ...Array.from(
-        new Set(
-          subgroup.flatMap(
-            (value) => renderTree.getRenderViewsForNode(value as TreeNode)[0].batchId
-          )
-        )
-      )
+      ...Array.from(new Set(subgroup.map((value) => value.batchId)))
     ] as Array<string>
 
     const materialGroup = []
     for (let k = 0; k < groupBatches.length; k++) {
       const matClone = batchMaterials[groupBatches[k]].clone()
+      matClone['clampOpacity'] = matClone.opacity
       matClone.opacity = 0.5
       matClone.transparent = true
       materialGroup.push({
-        objectIds: subgroup
-          .filter(
-            (value) =>
-              renderTree.getRenderViewsForNode(value as TreeNode)[0].batchId ===
-              groupBatches[k]
-          )
-          .map((value) => value.model.raw.id),
+        objectIds: [],
+        rvs: subgroup.filter((value) => value.batchId === groupBatches[k]),
         material: matClone
       })
     }

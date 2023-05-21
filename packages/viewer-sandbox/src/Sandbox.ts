@@ -993,10 +993,13 @@ export default class Sandbox {
         // 'https://speckle.xyz/streams/be0f962efb/objects/37639741c363a123100eda8044f2fe3f',
         // 'https://speckle.xyz/streams/be0f962efb/objects/746024a9d42eca632889ff9f7685d329',
         // blocks
-        'https://latest.speckle.dev/streams/92b620fb17/objects/a4e2fad01e69cd886ecbfedf221f5301',
-        'https://latest.speckle.dev/streams/92b620fb17/objects/a3c6c58ef9872b17125c9ab2b009e5cd',
+        // 'https://latest.speckle.dev/streams/92b620fb17/objects/a4e2fad01e69cd886ecbfedf221f5301',
+        // 'https://latest.speckle.dev/streams/92b620fb17/objects/a3c6c58ef9872b17125c9ab2b009e5cd',
+        // instances & hosting
+        'https://speckle.xyz/streams/be0f962efb/objects/fb4f291a13f05f325a5575fddd4276d0',
+        'https://speckle.xyz/streams/be0f962efb/objects/21cf63a1496e366b34501429ce7ad2f5',
         VisualDiffMode.COLORED,
-        localStorage.getItem('AuthTokenLatest') as string
+        localStorage.getItem('AuthToken') as string
       )
     })
     const unDiffButton = container.addButton({
