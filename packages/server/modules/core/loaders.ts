@@ -76,13 +76,13 @@ const buildDataLoaderCreator = (selfClearing = false) => {
     options?: DataLoader.Options<K, V, C>
   ) => {
     if (selfClearing) {
-      return new DataLoader<K, V, C>(batchLoadFn, options)
-    } else {
       return makeSelfClearingDataloader<K, V, C>(batchLoadFn, {
         ...(options || {}),
         cacheMap: null,
         cache: false
       })
+    } else {
+      return new DataLoader<K, V, C>(batchLoadFn, options)
     }
   }
 }
