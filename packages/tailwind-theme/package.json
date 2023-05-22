@@ -17,12 +17,12 @@
   "exports": {
     ".": {
       "import": {
-        "default": "./dist/index.js",
-        "types": "./dist/index.d.ts"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
       },
       "require": {
-        "default": "./dist-cjs/index.js",
-        "types": "./dist-cjs/index.d.ts"
+        "types": "./dist-cjs/index.d.ts",
+        "default": "./dist-cjs/index.js"
       }
     },
     "./tailwind-configure": {
