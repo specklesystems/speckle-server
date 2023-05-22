@@ -33,6 +33,7 @@ import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
 import { DiffResult, Differ, VisualDiffMode } from './Differ'
 import { BatchObject } from './batching/BatchObject'
+import { SpeckleText } from './objects/SpeckleText'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -213,6 +214,7 @@ export class Viewer extends EventEmitter implements IViewer {
           Logger.error('Fallback to null environment!')
         })
     }
+    await SpeckleText.init()
   }
 
   public on(eventType: ViewerEvent, listener: (arg) => void): void {

@@ -60,6 +60,7 @@ import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 import { BatchObject } from './batching/BatchObject'
 import SpecklePointMaterial from './materials/SpecklePointMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
+import { SpeckleText } from './objects/SpeckleText'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -558,6 +559,11 @@ export default class SpeckleRenderer {
       this.viewer.setSectionBox()
     }
     delete this.cancel[subtreeId]
+
+    const text = new SpeckleText()
+    text.layers.set(ObjectLayers.PROPS)
+    text.setText('PLM', this.viewer.World.worldSize.y)
+    this.rootGroup.add(text)
   }
 
   private addBatch(batch: Batch, parent: Object3D) {
