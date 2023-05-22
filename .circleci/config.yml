@@ -350,6 +350,10 @@ jobs:
           command: yarn run install
           working_directory: 'node_modules/farmhash'
 
+      - run:
+          name: Install Dependencies v2
+          command: yarn
+
       # - save_cache:
       #     name: Save Yarn Package Cache
       #     key: yarn-packages-server-{{ checksum "yarn.lock" }}
