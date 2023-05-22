@@ -1,70 +1,71 @@
-import { MaybeAsync, Optional } from '@speckle/shared'
-import { dbNotificationLogger, moduleLogger } from '@/logging/logging'
-import { knex } from '@/modules/core/dbSchema'
-import * as Knex from 'knex'
-import * as pg from 'pg'
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { MaybeAsync } from '@speckle/shared'
+// import { dbNotificationLogger } from '@/logging/logging'
+// import { knex } from '@/modules/core/dbSchema'
+// import * as Knex from 'knex'
+// import * as pg from 'pg'
 
 export type MessageType = { channel: string; payload: string }
 export type ListenerType = (msg: MessageType) => MaybeAsync<void>
 
-const shuttingDown = false
-let connection: Optional<pg.Connection> = undefined
-const listeners: Record<string, { setup: boolean; listener: ListenerType }> = {}
+// const shuttingDown = false
+// // let connection: Optional<pg.Connection> = undefined
+// const listeners: Record<string, { setup: boolean; listener: ListenerType }> = {}
 
-function messageProcessor(msg: MessageType) {
-  const listener = listeners[msg.channel]
-  dbNotificationLogger.info(
-    {
-      ...msg,
-      listenerRegistered: !!listener
-    },
-    'Message received'
-  )
-  if (!listener) return
+// function messageProcessor(msg: MessageType) {
+//   const listener = listeners[msg.channel]
+//   dbNotificationLogger.info(
+//     {
+//       ...msg,
+//       listenerRegistered: !!listener
+//     },
+//     'Message received'
+//   )
+//   if (!listener) return
 
-  return listener.listener(msg)
-}
+//   return listener.listener(msg)
+// }
 
-function setupListeners(connection: pg.Connection) {
-  for (const [key, val] of Object.entries(listeners)) {
-    if (val.setup) continue
+// function setupListeners(connection: pg.Connection) {
+//   for (const [key, val] of Object.entries(listeners)) {
+//     if (val.setup) continue
 
-    connection.query(`LISTEN ${key}`)
-    listeners[key].setup = true
-  }
-}
+//     connection.query(`LISTEN ${key}`)
+//     listeners[key].setup = true
+//   }
+// }
 
-function setupConnection(connection: pg.Connection) {
-  Object.values(listeners).forEach((l) => (l.setup = false))
-  connection.on('notification', messageProcessor)
+// function setupConnection(connection: pg.Connection) {
+//   Object.values(listeners).forEach((l) => (l.setup = false))
+//   connection.on('notification', messageProcessor)
 
-  connection.on('end', () => {
-    if (!shuttingDown) reconnectClient()
-  })
-  connection.on('error', (err: unknown) => {
-    dbNotificationLogger.error(err, 'Notification listener connection error')
-  })
-  setupListeners(connection)
-}
+//   connection.on('end', () => {
+//     if (!shuttingDown) reconnectClient()
+//   })
+//   connection.on('error', (err: unknown) => {
+//     dbNotificationLogger.error(err, 'Notification listener connection error')
+//   })
+//   setupListeners(connection)
+// }
 
-function reconnectClient() {
-  const interval = setInterval(async () => {
-    try {
-      const newConnection = await (
-        knex.client as Knex.Knex.Client
-      ).acquireRawConnection()
-      connection = newConnection
+// function reconnectClient() {
+//   const interval = setInterval(async () => {
+//     try {
+//       const newConnection = await (
+//         knex.client as Knex.Knex.Client
+//       ).acquireRawConnection()
+//       connection = newConnection
 
-      clearInterval(interval)
-      setupConnection(newConnection)
-    } catch (e: unknown) {
-      dbNotificationLogger.error(
-        e,
-        'Notification listener connection acquisition failed'
-      )
-    }
-  }, 3000)
-}
+//       clearInterval(interval)
+//       setupConnection(newConnection)
+//     } catch (e: unknown) {
+//       dbNotificationLogger.error(
+//         e,
+//         'Notification listener connection acquisition failed'
+//       )
+//     }
+//   }, 3000)
+// }
 
 export function setupResultListener() {
   return
