@@ -67,5 +67,8 @@
     "commitizen": {
       "path": "cz-conventional-changelog"
     }
+  },
+  "dependencies": {
+    "@mmarchini/observe": "^1.0.1"
   }
 }
