@@ -7,7 +7,7 @@ import * as pg from 'pg'
 export type MessageType = { channel: string; payload: string }
 export type ListenerType = (msg: MessageType) => MaybeAsync<void>
 
-let shuttingDown = false
+const shuttingDown = false
 let connection: Optional<pg.Connection> = undefined
 const listeners: Record<string, { setup: boolean; listener: ListenerType }> = {}
 
@@ -67,26 +67,29 @@ function reconnectClient() {
 }
 
 export function setupResultListener() {
-  moduleLogger.info('🔔 Initializing postgres notification listening...')
-  reconnectClient()
+  return
+  // moduleLogger.info('🔔 Initializing postgres notification listening...')
+  // reconnectClient()
 }
 
 export function shutdownResultListener() {
-  moduleLogger.info('...Shutting down postgres notification listening')
-  shuttingDown = true
-  if (connection) {
-    connection.end()
-    connection = undefined
-  }
+  return
+  // moduleLogger.info('...Shutting down postgres notification listening')
+  // shuttingDown = true
+  // if (connection) {
+  //   connection.end()
+  //   connection = undefined
+  // }
 }
 
 export function listenFor(eventName: string, cb: ListenerType) {
-  listeners[eventName] = {
-    setup: false,
-    listener: cb
-  }
+  return
+  // listeners[eventName] = {
+  //   setup: false,
+  //   listener: cb
+  // }
 
-  if (connection) {
-    setupListeners(connection)
-  }
+  // if (connection) {
+  //   setupListeners(connection)
+  // }
 }
