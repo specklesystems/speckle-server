@@ -426,7 +426,7 @@ jobs:
   test-dui-3:
     docker:
       - image: cimg/node:18.16.0
-    resource_class: medium
+    resource_class: medium+
     steps:
       - checkout
       - restore_cache:
