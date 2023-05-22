@@ -2,8 +2,7 @@ extend type Comment {
   """
   Legacy comment viewer data field
   """
-  data: LegacyCommentViewerData
-    @deprecated(reason: "Use the new viewerState field instead")
+  data: JSONObject @deprecated(reason: "Use the new viewerState field instead")
 
   """
   SerializedViewerState

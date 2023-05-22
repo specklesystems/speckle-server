@@ -109,8 +109,11 @@ export async function authContextMiddleware(
   next()
 }
 
-export function addLoadersToCtx(ctx: AuthContext): GraphQLContext {
-  const loaders = buildRequestLoaders(ctx)
+export function addLoadersToCtx(
+  ctx: AuthContext,
+  options?: Partial<{ cleanLoadersEarly: boolean }>
+): GraphQLContext {
+  const loaders = buildRequestLoaders(ctx, options)
   return { ...ctx, loaders }
 }
 
@@ -121,10 +124,12 @@ type ApolloContext = AuthContext & { log?: pino.Logger }
  */
 export async function buildContext({
   req,
-  token
+  token,
+  cleanLoadersEarly
 }: {
   req: MaybeNullOrUndefined<Request>
   token: Nullable<string>
+  cleanLoadersEarly?: boolean
 }): Promise<GraphQLContext> {
   const ctx: ApolloContext =
     req?.context ||
@@ -136,7 +141,7 @@ export async function buildContext({
   )
 
   // Adding request data loaders
-  return addLoadersToCtx(ctx)
+  return addLoadersToCtx(ctx, { cleanLoadersEarly })
 }
 
 /**

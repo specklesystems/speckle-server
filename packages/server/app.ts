@@ -121,7 +121,7 @@ function buildApolloSubscriptionServer(
         // Build context (Apollo Server v3 no longer triggers context building automatically
         // for subscriptions)
         try {
-          return await buildContext({ req: null, token })
+          return await buildContext({ req: null, token, cleanLoadersEarly: true })
         } catch (e) {
           throw new ForbiddenError('Subscription context build failed')
         }
