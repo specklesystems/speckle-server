@@ -16,6 +16,7 @@ import {
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 import {
   useGetObjectUrl,
+  useOnViewerLoadComplete,
   useViewerCameraTracker,
   useViewerEventListener
 } from '~~/lib/viewer/composables/viewer'
@@ -261,28 +262,33 @@ export function useViewerCameraIntegration() {
     }
   } = useInjectedViewerState()
 
+  const loadCameraDataFromViewer = () => {
+    const activeCam = instance.cameraHandler.activeCam
+    const controls = activeCam.controls
+    const viewerPos = new Vector3()
+    const viewerTarget = new Vector3()
+
+    controls.getPosition(viewerPos)
+    controls.getTarget(viewerTarget)
+
+    let cameraManuallyChanged = false
+    if (!areVectorsLooselyEqual(position.value, viewerPos)) {
+      position.value = viewerPos.clone()
+      cameraManuallyChanged = true
+    }
+    if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
+      target.value = viewerTarget.clone()
+      cameraManuallyChanged = true
+    }
+
+    return cameraManuallyChanged
+  }
+
   // viewer -> state
   // debouncing pos/target updates to avoid jitteriness
   useViewerCameraTracker(
     () => {
-      const activeCam = instance.cameraHandler.activeCam
-      const controls = activeCam.controls
-      const viewerPos = new Vector3()
-      const viewerTarget = new Vector3()
-
-      controls.getPosition(viewerPos)
-      controls.getTarget(viewerTarget)
-
-      let cameraManuallyChanged = false
-      if (!areVectorsLooselyEqual(position.value, viewerPos)) {
-        position.value = viewerPos.clone()
-        cameraManuallyChanged = true
-      }
-      if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
-        target.value = viewerTarget.clone()
-        cameraManuallyChanged = true
-      }
-
+      const cameraManuallyChanged = loadCameraDataFromViewer()
       if (cameraManuallyChanged) {
         // Stop following
         spotlightUserId.value = null
@@ -290,6 +296,12 @@ export function useViewerCameraIntegration() {
     }
     // { debounceWait: 100 }
   )
+
+  useOnViewerLoadComplete(() => {
+    // Load camera position so we can return to it correctly
+    loadCameraDataFromViewer()
+    console.log('camera data loaded', position.value, target.value)
+  })
 
   // TODO: This caused an infinite loop of toggling ortho/perspective mode.
   // useViewerCameraTracker(
@@ -305,37 +317,49 @@ export function useViewerCameraIntegration() {
   // )
 
   // state -> viewer
-  watch(isOrthoProjection, (newVal, oldVal) => {
-    if (!!newVal === !!oldVal) return
+  watch(
+    isOrthoProjection,
+    (newVal, oldVal) => {
+      if (newVal === oldVal) return
 
-    if (newVal) {
-      instance.setOrthoCameraOn()
-    } else {
-      instance.setPerspectiveCameraOn()
+      if (newVal) {
+        instance.setOrthoCameraOn()
+      } else {
+        instance.setPerspectiveCameraOn()
+      }
+    },
+    { immediate: true }
+  )
+
+  watch(
+    position,
+    (newVal, oldVal) => {
+      if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
+        return
+      }
+
+      instance.setView({
+        position: newVal,
+        target: target.value
+      })
     }
-  })
+    // { immediate: true }
+  )
 
-  watch(position, (newVal, oldVal) => {
-    if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
-      return
+  watch(
+    target,
+    (newVal, oldVal) => {
+      if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
+        return
+      }
+
+      instance.setView({
+        position: position.value,
+        target: newVal
+      })
     }
-
-    instance.setView({
-      position: newVal,
-      target: target.value
-    })
-  })
-
-  watch(target, (newVal, oldVal) => {
-    if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
-      return
-    }
-
-    instance.setView({
-      position: position.value,
-      target: newVal
-    })
-  })
+    // { immediate: true }
+  )
 }
 
 export function useViewerFiltersIntegration() {
@@ -489,6 +513,13 @@ export function useLightConfigIntegration() {
       flush: 'sync'
     }
   )
+
+  useOnViewerLoadComplete(
+    () => {
+      instance.setLightConfiguration(lightConfig.value)
+    },
+    { initialOnly: true }
+  )
 }
 
 export function useExplodeFactorIntegration() {
@@ -498,9 +529,20 @@ export function useExplodeFactorIntegration() {
   } = useInjectedViewerState()
 
   // state -> viewer only. we don't need the reverse.
-  watch(explodeFactor, (newVal) => {
-    instance.explode(newVal)
-  })
+  watch(
+    explodeFactor,
+    (newVal) => {
+      instance.explode(newVal)
+    },
+    { immediate: true }
+  )
+
+  useOnViewerLoadComplete(
+    () => {
+      instance.explode(explodeFactor.value)
+    },
+    { initialOnly: true }
+  )
 }
 
 export function useViewerPostSetup() {
@@ -516,4 +558,9 @@ export function useViewerPostSetup() {
   useViewerFiltersIntegration()
   useLightConfigIntegration()
   useExplodeFactorIntegration()
+
+  // // test
+  // for (const [key, val] of Object.entries(ViewerEvent)) {
+  //   useViewerEventListener(val, (...args) => console.log(key, ...args))
+  // }
 }

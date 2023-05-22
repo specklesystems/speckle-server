@@ -30,7 +30,11 @@ import {
   useFilterUtilities,
   useSectionBoxUtilities
 } from '~~/lib/viewer/composables/ui'
-import { useStateSerialization } from '~~/lib/viewer/composables/serialization'
+import {
+  StateApplyMode,
+  useApplySerializedState,
+  useStateSerialization
+} from '~~/lib/viewer/composables/serialization'
 import { Merge } from 'type-fest'
 
 /**
@@ -346,79 +350,82 @@ export function useViewerUserActivityTracking(params: {
  */
 
 function useViewerSpotlightTracking() {
+  const applyState = useApplySerializedState()
   const state = useInjectedViewerState()
   const { sectionBox } = useSectionBoxUtilities()
   const { camera } = useCameraUtilities()
   const { resetFilters, hideObjects, isolateObjects } = useFilterUtilities()
 
   return (user: UserActivityModel) => {
-    // TODO: Restore more things @dim
-    camera.position.value = new Vector3(
-      user.state.ui.camera.position[0],
-      user.state.ui.camera.position[1],
-      user.state.ui.camera.position[2]
-    )
-    camera.target.value = new Vector3(
-      user.state.ui.camera.target[0],
-      user.state.ui.camera.target[1],
-      user.state.ui.camera.target[2]
-    )
+    applyState(user.state, StateApplyMode.Spotlight)
 
-    if (camera.isOrthoProjection.value !== user.state.ui.camera.isOrthoProjection) {
-      camera.isOrthoProjection.value = user.state.ui.camera.isOrthoProjection
-    }
+    // // TODO: Restore more things @dim
+    // camera.position.value = new Vector3(
+    //   user.state.ui.camera.position[0],
+    //   user.state.ui.camera.position[1],
+    //   user.state.ui.camera.position[2]
+    // )
+    // camera.target.value = new Vector3(
+    //   user.state.ui.camera.target[0],
+    //   user.state.ui.camera.target[1],
+    //   user.state.ui.camera.target[2]
+    // )
 
-    if (user.state.ui.sectionBox) {
-      sectionBox.value = new Box3(
-        new Vector3(
-          user.state.ui.sectionBox.min[0],
-          user.state.ui.sectionBox.min[1],
-          user.state.ui.sectionBox.min[2]
-        ),
-        new Vector3(
-          user.state.ui.sectionBox.max[0],
-          user.state.ui.sectionBox.max[1],
-          user.state.ui.sectionBox.max[2]
-        )
-      )
-    } else {
-      sectionBox.value = null
-    }
+    // if (camera.isOrthoProjection.value !== user.state.ui.camera.isOrthoProjection) {
+    //   camera.isOrthoProjection.value = user.state.ui.camera.isOrthoProjection
+    // }
 
-    const filters = user.state.ui.filters
-    if (filters.hiddenObjectIds.length) {
-      resetFilters()
-      hideObjects(filters.hiddenObjectIds, { replace: true })
-    } else if (filters.isolatedObjectIds.length) {
-      resetFilters()
-      isolateObjects(filters.isolatedObjectIds, { replace: true })
-    }
+    // if (user.state.ui.sectionBox) {
+    //   sectionBox.value = new Box3(
+    //     new Vector3(
+    //       user.state.ui.sectionBox.min[0],
+    //       user.state.ui.sectionBox.min[1],
+    //       user.state.ui.sectionBox.min[2]
+    //     ),
+    //     new Vector3(
+    //       user.state.ui.sectionBox.max[0],
+    //       user.state.ui.sectionBox.max[1],
+    //       user.state.ui.sectionBox.max[2]
+    //     )
+    //   )
+    // } else {
+    //   sectionBox.value = null
+    // }
 
-    if (filters.selectedObjectIds) {
-      // Note: commented out as it's a bit "intrusive" behaviour, opted for the
-      // highlight version above.
-      // state.ui.selection.setSelectionFromObjectIds(fs.selectedObjects)
+    // const filters = user.state.ui.filters
+    // if (filters.hiddenObjectIds.length) {
+    //   resetFilters()
+    //   hideObjects(filters.hiddenObjectIds, { replace: true })
+    // } else if (filters.isolatedObjectIds.length) {
+    //   resetFilters()
+    //   isolateObjects(filters.isolatedObjectIds, { replace: true })
+    // }
 
-      state.ui.highlightedObjectIds.value = filters.selectedObjectIds.slice()
-    }
+    // if (filters.selectedObjectIds) {
+    //   // Note: commented out as it's a bit "intrusive" behaviour, opted for the
+    //   // highlight version above.
+    //   // state.ui.selection.setSelectionFromObjectIds(fs.selectedObjects)
 
-    // sync resourceIdString to ensure we have the same exact resources loaded
-    const resourceIdString = user.state.resources.request.resourceIdString
-    if (state.resources.request.resourceIdString.value !== resourceIdString) {
-      state.resources.request.resourceIdString.value = resourceIdString
-    }
+    //   state.ui.highlightedObjectIds.value = filters.selectedObjectIds.slice()
+    // }
 
-    // sync opened thread
-    const openThreadId = user.state.ui.threads.openThread.threadId
-    if (state.urlHashState.focusedThreadId.value !== openThreadId) {
-      state.urlHashState.focusedThreadId.value = openThreadId || null
-    }
+    // // sync resourceIdString to ensure we have the same exact resources loaded
+    // const resourceIdString = user.state.resources.request.resourceIdString
+    // if (state.resources.request.resourceIdString.value !== resourceIdString) {
+    //   state.resources.request.resourceIdString.value = resourceIdString
+    // }
 
-    // sync explode factor
-    state.ui.explodeFactor.value = user.state.ui.explodeFactor
+    // // sync opened thread
+    // const openThreadId = user.state.ui.threads.openThread.threadId
+    // if (state.urlHashState.focusedThreadId.value !== openThreadId) {
+    //   state.urlHashState.focusedThreadId.value = openThreadId || null
+    // }
 
-    // sync lights
-    state.ui.lightConfig.value = user.state.ui.lightConfig
+    // // sync explode factor
+    // state.ui.explodeFactor.value = user.state.ui.explodeFactor
+
+    // // sync lights
+    // state.ui.lightConfig.value = user.state.ui.lightConfig
   }
 }
 

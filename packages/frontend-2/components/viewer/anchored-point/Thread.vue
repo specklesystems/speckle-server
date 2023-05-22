@@ -456,77 +456,77 @@ watch(
       markThreadViewed(projectId.value, props.modelValue.id)
     }
 
-    if (!newIsExpanded && viewerState.value?.ui.sectionBox) {
-      sectionBoxOff() // turn off section box if a comment had a section box
-    }
+    // if (!newIsExpanded && viewerState.value?.ui.sectionBox) {
+    //   sectionBoxOff() // turn off section box if a comment had a section box
+    // }
 
     if (!newIsExpanded) {
       isDragged.value = false
     }
 
-    // TODO: unsure whether this should make its way into a composable of some sorts.
-    // Behaviour:
-    // - any time we open a comment, we want to set its filters up;
-    // - any time we close a comment, we reset its filters
-    // We want to do this when the viewer busy event is done with, alternatively when the
-    // all filters is populated...
+    // // TODO: unsure whether this should make its way into a composable of some sorts.
+    // // Behaviour:
+    // // - any time we open a comment, we want to set its filters up;
+    // // - any time we close a comment, we reset its filters
+    // // We want to do this when the viewer busy event is done with, alternatively when the
+    // // all filters is populated...
 
-    // If a thread is no longer expanded and it had filters, reset them to default.
-    const isolatedIds = viewerState.value?.ui.filters.isolatedObjectIds || []
-    const hiddenIds = viewerState.value?.ui.filters.hiddenObjectIds || []
-    const propertyInfoKey = viewerState.value?.ui.filters.propertyFilter.key
-    const hasFilters = isolatedIds.length || hiddenIds.length || propertyInfoKey
-    if (!newIsExpanded && hasFilters) {
-      resetFilters()
-      return
-    }
+    // // If a thread is no longer expanded and it had filters, reset them to default.
+    // const isolatedIds = viewerState.value?.ui.filters.isolatedObjectIds || []
+    // const hiddenIds = viewerState.value?.ui.filters.hiddenObjectIds || []
+    // const propertyInfoKey = viewerState.value?.ui.filters.propertyFilter.key
+    // const hasFilters = isolatedIds.length || hiddenIds.length || propertyInfoKey
+    // if (!newIsExpanded && hasFilters) {
+    //   resetFilters()
+    //   return
+    // }
 
-    if (!viewerState.value?.ui.explodeFactor && explodeFactor.value !== 0)
-      explodeFactor.value = 0
-    if (viewerState.value?.ui.explodeFactor !== explodeFactor.value)
-      explodeFactor.value = viewerState.value?.ui.explodeFactor || 0
+    // if (!viewerState.value?.ui.explodeFactor && explodeFactor.value !== 0)
+    //   explodeFactor.value = 0
+    // if (viewerState.value?.ui.explodeFactor !== explodeFactor.value)
+    //   explodeFactor.value = viewerState.value?.ui.explodeFactor || 0
 
-    if (viewerState.value?.ui.lightConfig) {
-      lightConfig.value = viewerState.value?.ui.lightConfig
-    }
+    // if (viewerState.value?.ui.lightConfig) {
+    //   lightConfig.value = viewerState.value?.ui.lightConfig
+    // }
 
-    // If a thread is expanded and has filters, set them up.
-    if (hasFilters && newIsExpanded) {
-      // If we do not have a custom filter for this thread, it means
-      // we might only have hidden/isolated objects.
-      if (!propertyInfoKey) {
-        hideOrIsolateObjects()
-        return
-      }
+    // // If a thread is expanded and has filters, set them up.
+    // if (hasFilters && newIsExpanded) {
+    //   // If we do not have a custom filter for this thread, it means
+    //   // we might only have hidden/isolated objects.
+    //   if (!propertyInfoKey) {
+    //     hideOrIsolateObjects()
+    //     return
+    //   }
 
-      // If we do have a 'propertyInfoKey', try to find it in the all filters. It will be there,
-      // unless we're freshly opening a model and a thread at the same time.
-      const filter = allFilters.value?.find(
-        (f: PropertyInfo) => f.key === propertyInfoKey
-      )
-      // If we don't find it, set a flag for the watcher below to pick up.
-      if (!filter) shouldSetFiltersUpPostLoad.value = true
-      // Full speed ahead otherwise.
-      else setupFullFilters()
-    }
+    //   // If we do have a 'propertyInfoKey', try to find it in the all filters. It will be there,
+    //   // unless we're freshly opening a model and a thread at the same time.
+    //   const filter = allFilters.value?.find(
+    //     (f: PropertyInfo) => f.key === propertyInfoKey
+    //   )
+    //   // If we don't find it, set a flag for the watcher below to pick up.
+    //   if (!filter) shouldSetFiltersUpPostLoad.value = true
+    //   // Full speed ahead otherwise.
+    //   else setupFullFilters()
+    // }
   },
   { immediate: true } // for triggering also when a comment is opened because of a thread link
 )
 
-watch(allFilters, (newValue) => {
-  if (!shouldSetFiltersUpPostLoad.value) return
-  const filter = newValue?.find(
-    (f: PropertyInfo) => f.key === viewerState.value?.ui.filters.propertyFilter.key
-  )
-  if (!filter) return
-  shouldSetFiltersUpPostLoad.value = false
-  // NOTE: we still need to give the viewer some time to do its thing.
-  // TODOs:
-  // - check with Alex if there is a way to more accurately report the end of viewer operations.
-  //   (I get WebGL-000035F405EE6900] GL_INVALID_FRAMEBUFFER_OPERATION: Framebuffer is incomplete: Attachment has zero size., and WebGL-000035F405EE6900] GL_INVALID_FRAMEBUFFER_OPERATION: Draw framebuffer is incomplete, and REE.Material: 'vertexColors' parameter is undefined. errors if model is not fully 'loaded')
-  // - check if viewerBusy might be a better option (it's not, tried below.)
-  setTimeout(setupFullFilters, 2000)
-})
+// watch(allFilters, (newValue) => {
+//   if (!shouldSetFiltersUpPostLoad.value) return
+//   const filter = newValue?.find(
+//     (f: PropertyInfo) => f.key === viewerState.value?.ui.filters.propertyFilter.key
+//   )
+//   if (!filter) return
+//   shouldSetFiltersUpPostLoad.value = false
+//   // NOTE: we still need to give the viewer some time to do its thing.
+//   // TODOs:
+//   // - check with Alex if there is a way to more accurately report the end of viewer operations.
+//   //   (I get WebGL-000035F405EE6900] GL_INVALID_FRAMEBUFFER_OPERATION: Framebuffer is incomplete: Attachment has zero size., and WebGL-000035F405EE6900] GL_INVALID_FRAMEBUFFER_OPERATION: Draw framebuffer is incomplete, and REE.Material: 'vertexColors' parameter is undefined. errors if model is not fully 'loaded')
+//   // - check if viewerBusy might be a better option (it's not, tried below.)
+//   setTimeout(setupFullFilters, 2000)
+// })
 
 // watch(viewerBusy, (newVal) => {
 //   if (newVal) return

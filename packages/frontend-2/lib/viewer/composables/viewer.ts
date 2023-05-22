@@ -5,8 +5,10 @@ import {
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
-import { debounce, isArray, throttle } from 'lodash-es'
-import { MaybeAsync, Nullable } from '@speckle/shared'
+import { debounce, isArray, throttle, isFunction } from 'lodash-es'
+import { MaybeAsync, Nullable, Optional } from '@speckle/shared'
+import { Merge } from 'type-fest'
+import { WatchSource } from 'vue'
 
 function getFirstVisibleSelectionHit(
   { hits }: SelectionEvent,
@@ -50,6 +52,12 @@ export function useViewerEventListener<A = any>(
   } = options?.state || useInjectedViewerState()
   const names = isArray(name) ? name : [name]
 
+  const unmount = () => {
+    for (const n of names) {
+      instance.removeListener(n, listener)
+    }
+  }
+
   onMounted(() => {
     for (const n of names) {
       instance.on(n, listener)
@@ -57,10 +65,10 @@ export function useViewerEventListener<A = any>(
   })
 
   onBeforeUnmount(() => {
-    for (const n of names) {
-      instance.removeListener(n, listener)
-    }
+    unmount
   })
+
+  return unmount
 }
 
 export function useViewerCameraTracker(
@@ -198,4 +206,24 @@ export function useGetObjectUrl() {
   const config = useRuntimeConfig()
   return (projectId: string, objectId: string) =>
     `${config.public.apiOrigin}/streams/${projectId}/objects/${objectId}`
+}
+
+export function useOnViewerLoadComplete(
+  listener: (params: { isInitial: boolean }) => MaybeAsync<void>,
+  options?: Partial<{
+    initialOnly: boolean
+  }>
+) {
+  const { initialOnly } = options || {}
+
+  const hasRun = ref(false)
+
+  const cancel = useViewerEventListener(ViewerEvent.LoadComplete, () => {
+    if (!initialOnly || !hasRun.value) {
+      listener({ isInitial: !hasRun.value })
+    }
+
+    hasRun.value = true
+    if (initialOnly) cancel()
+  })
 }

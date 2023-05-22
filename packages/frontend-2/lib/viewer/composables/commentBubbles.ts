@@ -10,6 +10,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { reduce, difference, debounce } from 'lodash-es'
 import { Box3, Vector3 } from 'three'
 import {
+  useOnViewerLoadComplete,
   useSelectionEvents,
   useViewerCameraTracker,
   useViewerEventListener
@@ -23,6 +24,11 @@ import {
 import { ViewerEvent } from '@speckle/viewer'
 import { useViewerUserActivityBroadcasting } from '~~/lib/viewer/composables/activity'
 import { useIntervalFn } from '@vueuse/core'
+import {
+  StateApplyMode,
+  useApplySerializedState,
+  useStateSerialization
+} from '~~/lib/viewer/composables/serialization'
 
 graphql(`
   fragment ViewerCommentBubblesData on Comment {
@@ -282,55 +288,81 @@ export function useViewerOpenedThreadUpdateEmitter() {
 }
 
 /**
- * Set up auto-focusing on opened thread
+ * Set up auto-focusing on opened thread and setting/unsetting viewer state
  */
 export function useViewerThreadTracking() {
   if (process.server) return
 
+  const applyState = useApplySerializedState()
+  const { serialize: serializeState } = useStateSerialization()
+
   const state = useInjectedViewerState()
   const {
     ui: {
-      threads: { openThread }
+      threads: { openThread },
+      camera: { position, target }
     }
   } = state
 
+  const oldState = ref(
+    null as Nullable<SpeckleViewer.ViewerState.SerializedViewerState>
+  )
+
   const refocus = (commentState: SpeckleViewer.ViewerState.SerializedViewerState) => {
-    const camPos = commentState.ui.camera.position
-    const camTarget = commentState.ui.camera.target
+    applyState(commentState, StateApplyMode.ThreadOpen)
+    // const camPos = commentState.ui.camera.position
+    // const camTarget = commentState.ui.camera.target
 
-    state.ui.camera.position.value = new Vector3(camPos[0], camPos[1], camPos[2])
-    state.ui.camera.target.value = new Vector3(camTarget[0], camTarget[1], camTarget[2])
+    // state.ui.camera.position.value = new Vector3(camPos[0], camPos[1], camPos[2])
+    // state.ui.camera.target.value = new Vector3(camTarget[0], camTarget[1], camTarget[2])
 
-    const sectionBox = commentState.ui.sectionBox
-    if (sectionBox) {
-      state.ui.sectionBox.value = new Box3(
-        new Vector3(sectionBox.min[0], sectionBox.min[1], sectionBox.min[2]),
-        new Vector3(sectionBox.max[0], sectionBox.max[1], sectionBox.max[2])
-      )
-    } else {
-      state.ui.sectionBox.value = null
-    }
+    // const sectionBox = commentState.ui.sectionBox
+    // if (sectionBox) {
+    //   state.ui.sectionBox.value = new Box3(
+    //     new Vector3(sectionBox.min[0], sectionBox.min[1], sectionBox.min[2]),
+    //     new Vector3(sectionBox.max[0], sectionBox.max[1], sectionBox.max[2])
+    //   )
+    // } else {
+    //   state.ui.sectionBox.value = null
+    // }
   }
 
   // Do this once viewer loads things
-  useViewerEventListener(
-    ViewerEvent.LoadComplete,
-    () => {
-      const viewerState = openThread.thread.value?.viewerState
-      if (SpeckleViewer.ViewerState.isSerializedViewerState(viewerState)) {
-        refocus(viewerState)
+  useOnViewerLoadComplete(({ isInitial }) => {
+    const viewerState = openThread.thread.value?.viewerState
+    if (SpeckleViewer.ViewerState.isSerializedViewerState(viewerState)) {
+      refocus(viewerState)
+    }
+
+    // On initial - rewrite old state coords cause they're not valid before initial load
+    if (isInitial) {
+      const old = oldState.value || serializeState()
+      oldState.value = {
+        ...old,
+        ui: {
+          ...old.ui,
+          camera: {
+            ...old.ui.camera,
+            position: position.value.toArray(),
+            target: position.value.toArray()
+          }
+        }
       }
-    },
-    { state }
-  )
+    }
+  })
 
   // Also do this when openThread changes
   watch(openThread.thread, (newThread, oldThread) => {
-    if (newThread?.id && newThread.id !== oldThread?.id && newThread.viewerState) {
-      const viewerState = newThread.viewerState
-      if (SpeckleViewer.ViewerState.isSerializedViewerState(viewerState)) {
-        refocus(viewerState)
+    if (newThread?.id !== oldThread?.id) {
+      const newOldState = serializeState()
+      const newState = newThread?.viewerState
+      if (newState && SpeckleViewer.ViewerState.isSerializedViewerState(newState)) {
+        refocus(newState)
+      } else if (oldState.value) {
+        refocus(oldState.value)
       }
+
+      oldState.value = newOldState
     }
   })
 }
