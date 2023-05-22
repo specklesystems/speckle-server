@@ -289,7 +289,9 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -337,29 +339,24 @@ jobs:
       S3_REGION: '' # optional, defaults to 'us-east-1'
     steps:
       - checkout
-      # - restore_cache:
-      #     name: Restore Yarn Package Cache
-      #     keys:
-      #       - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
           command: yarn
 
       - run:
-          name: Farmhash test
-          command: yarn run install
-          working_directory: 'node_modules/farmhash'
-
-      - run:
-          name: Install Dependencies v2
+          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
-      # - save_cache:
-      #     name: Save Yarn Package Cache
-      #     key: yarn-packages-server-{{ checksum "yarn.lock" }}
-      #     paths:
-      #       - .yarn/cache
-      #       - .yarn/unplugged
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
 
       - run:
           name: Build public packages
@@ -407,6 +404,10 @@ jobs:
           name: Install Dependencies
           command: yarn
 
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -446,6 +447,10 @@ jobs:
           name: Install Dependencies
           command: yarn
 
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -470,6 +475,10 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
+          command: yarn
+
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -521,6 +530,10 @@ jobs:
           name: Install Dependencies
           command: yarn
 
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -549,6 +562,10 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
+          command: yarn
+
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -585,6 +602,9 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
+          command: yarn
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
       - save_cache:
           name: Save Yarn Package Cache
@@ -751,7 +771,9 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
