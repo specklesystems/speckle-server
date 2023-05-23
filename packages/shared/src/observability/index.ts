@@ -43,3 +43,28 @@ export function extendLoggerComponent(
     .join('/')
   return otherChild.child(otherChildBindings)
 }
+
+export function simpleRpmCounter() {
+  const getTimestamp = () => new Date().getTime()
+  let lastDateTimestamp = getTimestamp()
+  let hits = 0
+
+  const validateHits = () => {
+    const timestamp = getTimestamp()
+    if (timestamp > lastDateTimestamp + 60 * 1000) {
+      hits = 0
+      lastDateTimestamp = timestamp
+    }
+  }
+
+  return {
+    hit: () => {
+      validateHits()
+      return ++hits
+    },
+    get: () => {
+      validateHits()
+      return hits
+    }
+  }
+}

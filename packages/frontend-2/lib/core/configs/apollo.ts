@@ -24,6 +24,11 @@ import {
 } from '~~/lib/core/helpers/apolloSetup'
 import { onError } from '@apollo/client/link/error'
 import { useNavigateToLogin } from '~~/lib/common/helpers/route'
+import { Observability } from '@speckle/shared'
+
+let subscriptionsStopped = false
+const errorRpm = Observability.simpleRpmCounter()
+const STOP_SUBSCRIPTIONS_AT_ERRORS_PER_MIN = 100
 
 const appVersion = (import.meta.env.SPECKLE_SERVER_VERSION as string) || 'unknown'
 const appName = 'frontend-2'
@@ -275,6 +280,8 @@ function createLink(params: {
   const goToLogin = useNavigateToLogin()
 
   const errorLink = onError((res) => {
+    console.error('Apollo Client error', res)
+
     const { networkError } = res
     if (networkError && isServerError(networkError)) {
       const isForbidden = networkError.statusCode === 403
@@ -283,6 +290,27 @@ function createLink(params: {
         authToken.value = undefined
         goToLogin()
       }
+    }
+
+    // Disable subscriptions if too many errors per minute
+    const rpm = errorRpm.hit()
+    if (
+      process.client &&
+      wsClient &&
+      !subscriptionsStopped &&
+      rpm > STOP_SUBSCRIPTIONS_AT_ERRORS_PER_MIN
+    ) {
+      subscriptionsStopped = true
+      console.error(
+        `Too many errors (${rpm} errors per minute), stopping subscriptions!`
+      )
+      wsClient.use([
+        {
+          applyMiddleware: () => {
+            // never invokes next() - essentially stuck
+          }
+        }
+      ])
     }
   })
 
