@@ -373,6 +373,12 @@ server:
   ##
   logLevel: 'info'
 
+  inspect:
+    ## @param server.inspect.enabled If enabled, indicates that the Speckle server should be deployed with the nodejs inspect feature enabled
+    enabled: false
+    ## @param server.inspect.port The port on which the nodejs inspect feature should be exposed
+    port: '7000'
+
   ## @param server.adminOverrideEnabled Enables the server side admin authz override
   adminOverrideEnabled: false
   ## @param server.onboardingStreamId The id of the stream to be used for onboarding new users
