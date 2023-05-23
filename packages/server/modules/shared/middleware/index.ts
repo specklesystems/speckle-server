@@ -17,12 +17,13 @@ import {
   Nullable
 } from '@/modules/shared/helpers/typeHelper'
 import { getUser } from '@/modules/core/repositories/users'
-import { resolveMixpanelUserId } from '@speckle/shared'
+import { Optional, resolveMixpanelUserId } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { Observability } from '@speckle/shared'
 import { pino } from 'pino'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { Netmask } from 'netmask'
+import { Merge } from 'type-fest'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -110,14 +111,14 @@ export async function authContextMiddleware(
 }
 
 export function addLoadersToCtx(
-  ctx: AuthContext,
+  ctx: Merge<Omit<GraphQLContext, 'loaders'>, { log?: Optional<pino.Logger> }>,
   options?: Partial<{ cleanLoadersEarly: boolean }>
 ): GraphQLContext {
+  const log =
+    ctx.log || Observability.extendLoggerComponent(Observability.getLogger(), 'graphql')
   const loaders = buildRequestLoaders(ctx, options)
-  return { ...ctx, loaders }
+  return { ...ctx, loaders, log }
 }
-
-type ApolloContext = AuthContext & { log?: pino.Logger }
 
 /**
  * Build context for GQL operations
@@ -131,17 +132,23 @@ export async function buildContext({
   token: Nullable<string>
   cleanLoadersEarly?: boolean
 }): Promise<GraphQLContext> {
-  const ctx: ApolloContext =
+  const ctx =
     req?.context ||
     (await createAuthContextFromToken(token ?? getTokenFromRequest(req)))
 
-  ctx.log = Observability.extendLoggerComponent(
+  const log = Observability.extendLoggerComponent(
     req?.log || Observability.getLogger(),
     'graphql'
   )
 
   // Adding request data loaders
-  return addLoadersToCtx(ctx, { cleanLoadersEarly })
+  return addLoadersToCtx(
+    {
+      ...ctx,
+      log
+    },
+    { cleanLoadersEarly }
+  )
 }
 
 /**

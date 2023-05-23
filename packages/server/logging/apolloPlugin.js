@@ -58,30 +58,27 @@ module.exports = {
         ctx.context.log = logger
       },
       didEncounterErrors(ctx) {
-        if (!ctx.operation) return
-
         let logger = ctx.context.log || graphqlLogger
 
         for (const err of ctx.errors) {
-          if (err instanceof ApolloError) {
-            continue
-          }
-
-          const kind = ctx.operation.operation
+          const operationName = ctx.request.operationName || null
           const query = ctx.request.query
           const variables = ctx.request.variables
 
           if (err.path) {
             logger = logger.child({ 'query-path': err.path.join(' > ') })
           }
-          if (err instanceof GraphQLError && err.extensions?.code === 'FORBIDDEN') {
+          if (
+            (err instanceof GraphQLError && err.extensions?.code === 'FORBIDDEN') ||
+            err instanceof ApolloError
+          ) {
             logger.info(err, 'graphql error')
           } else {
             logger.error(err, 'graphql error')
           }
 
           Sentry.withScope((scope) => {
-            scope.setTag('kind', kind)
+            scope.setTag('operationName', operationName)
             scope.setExtra('query', query)
             scope.setExtra('variables', variables)
             if (err.path) {

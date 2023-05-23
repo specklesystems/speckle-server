@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /* istanbul ignore file */
 import './bootstrap'
 import http from 'http'
@@ -22,7 +23,8 @@ import prometheusClient from 'prom-client'
 import {
   ApolloServer,
   ForbiddenError,
-  ApolloServerExpressConfig
+  ApolloServerExpressConfig,
+  ApolloError
 } from 'apollo-server-express'
 import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core'
 
@@ -51,8 +53,46 @@ import {
   determineClientIpAddressMiddleware,
   mixpanelTrackerHelperMiddleware
 } from '@/modules/shared/middleware'
+import { GraphQLError } from 'graphql'
+import { redactSensitiveVariables } from '@/logging/loggingHelper'
 
 let graphqlServer: ApolloServer
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SubscriptionResponse = { errors?: GraphQLError[]; data?: any }
+
+function logSubscriptionOperation(params: {
+  ctx: GraphQLContext
+  execParams: ExecutionParams
+  error?: Error
+  response?: SubscriptionResponse
+}) {
+  const { error, response, ctx, execParams } = params
+  if (!error && !response) return
+
+  const logger = ctx.log.child({
+    graphql_query: execParams.query.toString(),
+    graphql_variables: redactSensitiveVariables(execParams.variables),
+    graphql_operation_name: execParams.operationName,
+    graphql_operation_type: 'subscription'
+  })
+
+  const errors = response?.errors || (error ? [error] : [])
+  if (errors.length) {
+    for (const error of errors) {
+      if (
+        (error instanceof GraphQLError && error.extensions?.code === 'FORBIDDEN') ||
+        error instanceof ApolloError
+      ) {
+        logger.info(error, 'graphql error')
+      } else {
+        logger.error(error, 'graphql error')
+      }
+    }
+  } else if (response?.data) {
+    logger.info('graphql response')
+  }
+}
 
 /**
  * TODO: subscriptions-transport-ws is no longer maintained, we should migrate to graphql-ws insted. The problem
@@ -135,12 +175,15 @@ function buildApolloSubscriptionServer(
         const baseParams = params[1]
         const ctx = baseParams.context as GraphQLContext
 
-        baseParams.formatResponse = (val: unknown) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        baseParams.formatResponse = (val: SubscriptionResponse) => {
           ctx.loaders.clearAll()
+          logSubscriptionOperation({ ctx, execParams: baseParams, response: val })
           return val
         }
         baseParams.formatError = (e: Error) => {
           ctx.loaders.clearAll()
+          logSubscriptionOperation({ ctx, execParams: baseParams, error: e })
           return e
         }
 
