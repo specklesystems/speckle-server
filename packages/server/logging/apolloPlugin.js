@@ -1,3 +1,4 @@
+/* eslint-disable no-unreachable */
 /* eslint-disable camelcase */
 /* istanbul ignore file */
 const Sentry = require('@sentry/node')
@@ -19,9 +20,8 @@ module.exports = {
   requestDidStart(ctx) {
     return {
       didResolveOperation(ctx) {
-        if (!ctx.operation) {
-          return
-        }
+        // TODO: Re-enable
+        return
 
         let logger = ctx.context.log || graphqlLogger
 
@@ -58,6 +58,8 @@ module.exports = {
         ctx.context.log = logger
       },
       didEncounterErrors(ctx) {
+        // TODO: Re-enable
+        return
         let logger = ctx.context.log || graphqlLogger
 
         for (const err of ctx.errors) {
