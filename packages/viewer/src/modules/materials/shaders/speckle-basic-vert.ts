@@ -129,7 +129,7 @@ export const speckleBasicVert = /* glsl */ `
     }
 #endif
 
-
+uniform vec3 billboardPos;
 
 void main() {
 	#include <uv_vertex>
@@ -172,8 +172,9 @@ void main() {
     #endif
     
     mvPosition = modelViewMatrix * mvPosition;
+    
 
-    gl_Position = projectionMatrix * mvPosition;
+    gl_Position = projectionMatrix * (viewMatrix * vec4(billboardPos, 1.0) + vec4(position.x, position.y, 0., 0.0));//projectionMatrix * mvPosition;
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>
 	#include <worldpos_vertex>
