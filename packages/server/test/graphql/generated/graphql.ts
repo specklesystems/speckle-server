@@ -207,7 +207,7 @@ export type Comment = {
    * Legacy comment viewer data field
    * @deprecated Use the new viewerState field instead
    */
-  data?: Maybe<LegacyCommentViewerData>;
+  data?: Maybe<Scalars['JSONObject']>;
   /** Whether or not comment is a reply to another comment */
   hasParent: Scalars['Boolean'];
   id: Scalars['String'];

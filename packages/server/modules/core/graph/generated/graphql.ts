@@ -216,7 +216,7 @@ export type Comment = {
    * Legacy comment viewer data field
    * @deprecated Use the new viewerState field instead
    */
-  data?: Maybe<LegacyCommentViewerData>;
+  data?: Maybe<Scalars['JSONObject']>;
   /** Whether or not comment is a reply to another comment */
   hasParent: Scalars['Boolean'];
   id: Scalars['String'];
@@ -3154,7 +3154,7 @@ export type CommentResolvers<ContextType = GraphQLContext, ParentType extends Re
   author?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   authorId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  data?: Resolver<Maybe<ResolversTypes['LegacyCommentViewerData']>, ParentType, ContextType>;
+  data?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   hasParent?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   parent?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType>;

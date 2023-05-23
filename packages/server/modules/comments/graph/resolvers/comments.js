@@ -155,7 +155,7 @@ module.exports = {
       }
 
       if (isDataStruct(parentData)) {
-        return convertStateToLegacyData(parentData)
+        return convertStateToLegacyData(parentData.state)
       }
 
       return null

@@ -9597,18 +9597,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mmarchini/observe@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "@mmarchini/observe@npm:1.0.1"
-  dependencies:
-    commander: ^5.0.0
-    ws: ^7.2.3
-  bin:
-    observe: bin/observe.js
-  checksum: 8ac126913f70e3d49e8981d5b892fe2f3ead22740091e61f1cdc486c235d37fb70206408e33e1460004c6bef42046d71c126903765b65854bf0ff89da038be5d
-  languageName: node
-  linkType: hard
-
 "@msgpackr-extract/msgpackr-extract-darwin-arm64@npm:2.1.2":
   version: 2.1.2
   resolution: "@msgpackr-extract/msgpackr-extract-darwin-arm64@npm:2.1.2"
@@ -11379,7 +11367,6 @@ __metadata:
     "@graphql-codegen/typescript-operations": ^2.5.2
     "@graphql-codegen/typescript-resolvers": 2.7.2
     "@graphql-tools/schema": ^9.0.4
-    "@mmarchini/observe": ^1.0.1
     "@sentry/node": ^6.17.9
     "@sentry/tracing": ^6.17.9
     "@speckle/objectloader": "workspace:^"
@@ -20923,7 +20910,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"commander@npm:^5.0.0, commander@npm:^5.1.0":
+"commander@npm:^5.1.0":
   version: 5.1.0
   resolution: "commander@npm:5.1.0"
   checksum: 0b7fec1712fbcc6230fcb161d8d73b4730fa91a21dc089515489402ad78810547683f058e2a9835929c212fead1d6a6ade70db28bbb03edbc2829a9ab7d69447
@@ -38918,7 +38905,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "root@workspace:."
   dependencies:
-    "@mmarchini/observe": ^1.0.1
     "@rollup/plugin-typescript": ^11.1.0
     "@swc/core": ^1.2.222
     "@types/eslint": ^8.4.1
@@ -44636,7 +44622,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:^7.2.3, ws@npm:^7.4.6":
+"ws@npm:^7.4.6":
   version: 7.5.9
   resolution: "ws@npm:7.5.9"
   peerDependencies:

@@ -25,6 +25,13 @@ export type ActiveUserMutations = {
   __typename?: 'ActiveUserMutations';
   /** Mark onboarding as complete */
   finishOnboarding: Scalars['Boolean'];
+  /** Edit a user's profile */
+  update: User;
+};
+
+
+export type ActiveUserMutationsUpdateArgs = {
+  user: UserUpdateInput;
 };
 
 export type Activity = {
@@ -198,7 +205,11 @@ export type Comment = {
   author: LimitedUser;
   authorId: Scalars['String'];
   createdAt: Scalars['DateTime'];
-  data?: Maybe<CommentViewerData>;
+  /**
+   * Legacy comment viewer data field
+   * @deprecated Use the new viewerState field instead
+   */
+  data?: Maybe<Scalars['JSONObject']>;
   /** Whether or not comment is a reply to another comment */
   hasParent: Scalars['Boolean'];
   id: Scalars['String'];
@@ -222,6 +233,8 @@ export type Comment = {
   viewedAt?: Maybe<Scalars['DateTime']>;
   /** Resource identifiers as defined and implemented in the Viewer of the new frontend */
   viewerResources: Array<ViewerResourceItem>;
+  /** SerializedViewerState */
+  viewerState?: Maybe<Scalars['JSONObject']>;
 };
 
 
@@ -291,22 +304,6 @@ export type CommentDataFiltersInput = {
   sectionBox?: InputMaybe<Scalars['JSONObject']>;
 };
 
-export type CommentDataInput = {
-  /**
-   * An array representing a user's camera position:
-   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
-   */
-  camPos: Array<Scalars['Float']>;
-  /** Old FE LocalFilterState type */
-  filters: CommentDataFiltersInput;
-  /** THREE.Vector3 {x, y, z} */
-  location: Scalars['JSONObject'];
-  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
-  sectionBox?: InputMaybe<Scalars['JSONObject']>;
-  /** Currently unused. Ideally comments should keep track of selected objects. */
-  selection?: InputMaybe<Scalars['JSONObject']>;
-};
-
 /** Deprecated: Used by old stream-based mutations */
 export type CommentEditInput = {
   /** IDs of uploaded blobs that should be attached to this comment */
@@ -363,23 +360,6 @@ export type CommentThreadActivityMessage = {
   data?: Maybe<Scalars['JSONObject']>;
   reply?: Maybe<Comment>;
   type: Scalars['String'];
-};
-
-export type CommentViewerData = {
-  __typename?: 'CommentViewerData';
-  /**
-   * An array representing a user's camera position:
-   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
-   */
-  camPos: Array<Scalars['Float']>;
-  /** Old FE LocalFilterState type */
-  filters: CommentDataFilters;
-  /** THREE.Vector3 {x, y, z} */
-  location: Scalars['JSONObject'];
-  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
-  sectionBox?: Maybe<Scalars['JSONObject']>;
-  /** Currently unused. Ideally comments should keep track of selected objects. */
-  selection?: Maybe<Scalars['JSONObject']>;
 };
 
 export type Commit = {
@@ -495,7 +475,11 @@ export type CreateCommentInput = {
   /** Resources that this comment should be attached to */
   resourceIdString: Scalars['String'];
   screenshot?: InputMaybe<Scalars['String']>;
-  viewerData: CommentDataInput;
+  /**
+   * SerializedViewerState. If omitted, comment won't render (correctly) inside the
+   * viewer, but will still be retrievable through the API
+   */
+  viewerState?: InputMaybe<Scalars['JSONObject']>;
 };
 
 export type CreateCommentReplyInput = {
@@ -534,7 +518,7 @@ export type EditCommentInput = {
 
 export type FileUpload = {
   __typename?: 'FileUpload';
-  branchName?: Maybe<Scalars['String']>;
+  branchName: Scalars['String'];
   /** If present, the conversion result is stored in this commit. */
   convertedCommitId?: Maybe<Scalars['String']>;
   convertedLastUpdate: Scalars['DateTime'];
@@ -542,15 +526,40 @@ export type FileUpload = {
   convertedMessage?: Maybe<Scalars['String']>;
   /** 0 = queued, 1 = processing, 2 = success, 3 = error */
   convertedStatus: Scalars['Int'];
+  /** Alias for convertedCommitId */
+  convertedVersionId?: Maybe<Scalars['String']>;
   fileName: Scalars['String'];
   fileSize: Scalars['Int'];
   fileType: Scalars['String'];
   id: Scalars['String'];
+  /** Model associated with the file upload, if it exists already */
+  model?: Maybe<Model>;
+  /** Alias for branchName */
+  modelName: Scalars['String'];
+  /** Alias for streamId */
+  projectId: Scalars['String'];
   streamId: Scalars['String'];
   uploadComplete: Scalars['Boolean'];
   uploadDate: Scalars['DateTime'];
   /** The user's id that uploaded this file. */
   userId: Scalars['String'];
+};
+
+export type LegacyCommentViewerData = {
+  __typename?: 'LegacyCommentViewerData';
+  /**
+   * An array representing a user's camera position:
+   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
+   */
+  camPos: Array<Scalars['Float']>;
+  /** Old FE LocalFilterState type */
+  filters: CommentDataFilters;
+  /** THREE.Vector3 {x, y, z} */
+  location: Scalars['JSONObject'];
+  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
+  sectionBox?: Maybe<Scalars['JSONObject']>;
+  /** Currently unused. Ideally comments should keep track of selected objects. */
+  selection?: Maybe<Scalars['JSONObject']>;
 };
 
 /**
@@ -637,9 +646,11 @@ export type Model = {
   id: Scalars['ID'];
   /** Full name including the names of parent models delimited by forward slashes */
   name: Scalars['String'];
+  /** Returns a list of versions that are being created from a file import */
+  pendingImportedVersions: Array<FileUpload>;
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
-  version?: Maybe<Version>;
+  version: Version;
   versions: VersionCollection;
 };
 
@@ -647,6 +658,11 @@ export type Model = {
 export type ModelCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
+};
+
+
+export type ModelPendingImportedVersionsArgs = {
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
 
@@ -712,6 +728,13 @@ export type ModelsTreeItem = {
   updatedAt: Scalars['DateTime'];
 };
 
+export type ModelsTreeItemCollection = {
+  __typename?: 'ModelsTreeItemCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<ModelsTreeItem>;
+  totalCount: Scalars['Int'];
+};
+
 export type MoveVersionsInput = {
   /** If the name references a nonexistant model, it will be created */
   targetModelName: Scalars['String'];
@@ -742,16 +765,31 @@ export type Mutation = {
   branchUpdate: Scalars['Boolean'];
   /** Broadcast user activity in the viewer */
   broadcastViewerUserActivity: Scalars['Boolean'];
-  /** Archives a comment. */
+  /**
+   * Archives a comment.
+   * @deprecated Use commentMutations version
+   */
   commentArchive: Scalars['Boolean'];
-  /** Creates a comment */
+  /**
+   * Creates a comment
+   * @deprecated Use commentMutations version
+   */
   commentCreate: Scalars['String'];
-  /** Edits a comment. */
+  /**
+   * Edits a comment.
+   * @deprecated Use commentMutations version
+   */
   commentEdit: Scalars['Boolean'];
   commentMutations: CommentMutations;
-  /** Adds a reply to a comment. */
+  /**
+   * Adds a reply to a comment.
+   * @deprecated Use commentMutations version
+   */
   commentReply: Scalars['String'];
-  /** Flags a comment as viewed by you (the logged in user). */
+  /**
+   * Flags a comment as viewed by you (the logged in user).
+   * @deprecated Use commentMutations version
+   */
   commentView: Scalars['Boolean'];
   commitCreate: Scalars['String'];
   commitDelete: Scalars['Boolean'];
@@ -808,7 +846,10 @@ export type Mutation = {
   userDelete: Scalars['Boolean'];
   userNotificationPreferencesUpdate?: Maybe<Scalars['Boolean']>;
   userRoleChange: Scalars['Boolean'];
-  /** Edits a user's profile. */
+  /**
+   * Edits a user's profile.
+   * @deprecated Use activeUserMutations version
+   */
   userUpdate: Scalars['Boolean'];
   /**
    * Used for broadcasting real time chat head bubbles and status. Does not persist any info.
@@ -1195,7 +1236,7 @@ export type Project = {
   /** Collaborators who have been invited, but not yet accepted. */
   invitedTeam?: Maybe<Array<PendingStreamCollaborator>>;
   /** Returns a specific model by its ID */
-  model?: Maybe<Model>;
+  model: Model;
   /** Return a model tree of children for the specified model name */
   modelChildrenTree: Array<ModelsTreeItem>;
   /** Returns a flat list of all models */
@@ -1204,8 +1245,10 @@ export type Project = {
    * Return's a project's models in a tree view with submodels being nested under parent models
    * real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
    */
-  modelsTree: Array<ModelsTreeItem>;
+  modelsTree: ModelsTreeItemCollection;
   name: Scalars['String'];
+  /** Returns a list models that are being created from a file import */
+  pendingImportedModels: Array<FileUpload>;
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
   role?: Maybe<Scalars['String']>;
   /** Source apps used in any models of this project */
@@ -1241,6 +1284,18 @@ export type ProjectModelsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<ProjectModelsFilter>;
   limit?: Scalars['Int'];
+};
+
+
+export type ProjectModelsTreeArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<ProjectModelsTreeFilter>;
+  limit?: Scalars['Int'];
+};
+
+
+export type ProjectPendingImportedModelsArgs = {
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
 
@@ -1316,7 +1371,6 @@ export type ProjectCreateInput = {
 export type ProjectInviteCreateInput = {
   /** Either this or userId must be filled */
   email?: InputMaybe<Scalars['String']>;
-  projectId: Scalars['ID'];
   /** Defaults to the contributor role, if not specified */
   role?: InputMaybe<Scalars['String']>;
   /** Either this or email must be filled */
@@ -1325,12 +1379,20 @@ export type ProjectInviteCreateInput = {
 
 export type ProjectInviteMutations = {
   __typename?: 'ProjectInviteMutations';
+  /** Batch invite to project */
+  batchCreate: Project;
   /** Cancel a pending stream invite. Can only be invoked by a project owner. */
   cancel: Project;
   /** Invite a new or registered user to be a project collaborator. Can only be invoked by a project owner. */
   create: Project;
   /** Accept or decline a project invite */
   use: Scalars['Boolean'];
+};
+
+
+export type ProjectInviteMutationsBatchCreateArgs = {
+  input: Array<ProjectInviteCreateInput>;
+  projectId: Scalars['ID'];
 };
 
 
@@ -1342,6 +1404,7 @@ export type ProjectInviteMutationsCancelArgs = {
 
 export type ProjectInviteMutationsCreateArgs = {
   input: ProjectInviteCreateInput;
+  projectId: Scalars['ID'];
 };
 
 
@@ -1365,6 +1428,15 @@ export type ProjectModelsFilter = {
   /** Filter out models that don't have any versions */
   onlyWithVersions?: InputMaybe<Scalars['Boolean']>;
   /** Filter by model names */
+  search?: InputMaybe<Scalars['String']>;
+  /** Filter by source apps used in models */
+  sourceApps?: InputMaybe<Array<Scalars['String']>>;
+};
+
+export type ProjectModelsTreeFilter = {
+  /** Filter by IDs of contributors who participated in models */
+  contributors?: InputMaybe<Array<Scalars['String']>>;
+  /** Search for specific models. If used, tree items from different levels may be mixed. */
   search?: InputMaybe<Scalars['String']>;
   /** Filter by source apps used in models */
   sourceApps?: InputMaybe<Array<Scalars['String']>>;
@@ -1427,6 +1499,32 @@ export type ProjectMutationsUpdateArgs = {
 export type ProjectMutationsUpdateRoleArgs = {
   input: ProjectUpdateRoleInput;
 };
+
+export type ProjectPendingModelsUpdatedMessage = {
+  __typename?: 'ProjectPendingModelsUpdatedMessage';
+  /** Upload ID */
+  id: Scalars['String'];
+  model: FileUpload;
+  type: ProjectPendingModelsUpdatedMessageType;
+};
+
+export enum ProjectPendingModelsUpdatedMessageType {
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
+
+export type ProjectPendingVersionsUpdatedMessage = {
+  __typename?: 'ProjectPendingVersionsUpdatedMessage';
+  /** Upload ID */
+  id: Scalars['String'];
+  type: ProjectPendingVersionsUpdatedMessageType;
+  version: FileUpload;
+};
+
+export enum ProjectPendingVersionsUpdatedMessageType {
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
 
 /** Any values left null will be ignored, so only set the properties that you want updated */
 export type ProjectUpdateInput = {
@@ -1524,7 +1622,7 @@ export type Query = {
    * Find a specific project. Will throw an authorization error if active user isn't authorized
    * to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
    */
-  project?: Maybe<Project>;
+  project: Project;
   /**
    * Look for an invitation to a project, for the current user (authed or not). If token
    * isn't specified, the server will look for any valid invite.
@@ -1859,7 +1957,7 @@ export type Stream = {
   /** Returns a specific file upload that belongs to this stream. */
   fileUpload?: Maybe<FileUpload>;
   /** Returns a list of all the file uploads for this stream. */
-  fileUploads?: Maybe<Array<Maybe<FileUpload>>>;
+  fileUploads: Array<FileUpload>;
   id: Scalars['String'];
   /**
    * Whether the stream (if public) can be found on public stream exploration pages
@@ -2058,6 +2156,10 @@ export type Subscription = {
   projectCommentsUpdated: ProjectCommentsUpdatedMessage;
   /** Subscribe to changes to a project's models. Optionally specify modelIds to track. */
   projectModelsUpdated: ProjectModelsUpdatedMessage;
+  /** Subscribe to changes to a project's pending models */
+  projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
+  /** Subscribe to changes to a project's pending versions */
+  projectPendingVersionsUpdated: ProjectPendingVersionsUpdatedMessage;
   /** Track updates to a specific project */
   projectUpdated: ProjectUpdatedMessage;
   /** Subscribe to when a project's versions get their preview image fully generated. */
@@ -2142,6 +2244,16 @@ export type SubscriptionProjectCommentsUpdatedArgs = {
 export type SubscriptionProjectModelsUpdatedArgs = {
   id: Scalars['String'];
   modelIds?: InputMaybe<Array<Scalars['String']>>;
+};
+
+
+export type SubscriptionProjectPendingModelsUpdatedArgs = {
+  id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectPendingVersionsUpdatedArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -2323,10 +2435,12 @@ export type UserTimelineArgs = {
 };
 
 export type UserDeleteInput = {
-  email?: InputMaybe<Scalars['String']>;
+  email: Scalars['String'];
 };
 
 export type UserProjectsFilter = {
+  /** Only include projects where user has the specified roles */
+  onlyWithRoles?: InputMaybe<Array<Scalars['String']>>;
   /** Filter out projects by name */
   search?: InputMaybe<Scalars['String']>;
 };
@@ -2447,65 +2561,28 @@ export type ViewerUpdateTrackingTarget = {
 
 export type ViewerUserActivityMessage = {
   __typename?: 'ViewerUserActivityMessage';
-  selection?: Maybe<ViewerUserSelectionInfo>;
+  sessionId: Scalars['String'];
+  /** SerializedViewerState, only null if DISCONNECTED */
+  state?: Maybe<Scalars['JSONObject']>;
   status: ViewerUserActivityStatus;
-  typing?: Maybe<ViewerUserTypingMessage>;
-  user: LimitedUser;
-  userId: Scalars['String'];
+  user?: Maybe<LimitedUser>;
+  userId?: Maybe<Scalars['String']>;
   userName: Scalars['String'];
-  viewerSessionId: Scalars['String'];
 };
 
 export type ViewerUserActivityMessageInput = {
-  /** Must be set if status !== 'disconnected' */
-  selection?: InputMaybe<ViewerUserSelectionInfoInput>;
+  sessionId: Scalars['String'];
+  /** SerializedViewerState, only null if DISCONNECTED */
+  state?: InputMaybe<Scalars['JSONObject']>;
   status: ViewerUserActivityStatus;
-  /** Must be set if status === 'typing' */
-  typing?: InputMaybe<ViewerUserTypingMessageInput>;
   userId?: InputMaybe<Scalars['String']>;
   userName: Scalars['String'];
-  /** The same user will have different session IDs across tabs where the viewer is open */
-  viewerSessionId: Scalars['String'];
 };
 
 export enum ViewerUserActivityStatus {
   Disconnected = 'DISCONNECTED',
-  Typing = 'TYPING',
   Viewing = 'VIEWING'
 }
-
-export type ViewerUserSelectionInfo = {
-  __typename?: 'ViewerUserSelectionInfo';
-  camera: Array<Scalars['Float']>;
-  filteringState: Scalars['JSONObject'];
-  sectionBox?: Maybe<Scalars['JSONObject']>;
-  selectionLocation?: Maybe<Scalars['JSONObject']>;
-};
-
-export type ViewerUserSelectionInfoInput = {
-  /**
-   * An array representing a user's camera position:
-   * [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
-   */
-  camera: Array<Scalars['Float']>;
-  /** 'FilteringState' of @speckle/viewer. Represents the filters activated in the viewer by the user. */
-  filteringState: Scalars['JSONObject'];
-  /** Viewer.getCurrentSectionBox(): THREE.Box3 */
-  sectionBox?: InputMaybe<Scalars['JSONObject']>;
-  /** THREE.Vector3 - the user's selection's focus point */
-  selectionLocation?: InputMaybe<Scalars['JSONObject']>;
-};
-
-export type ViewerUserTypingMessage = {
-  __typename?: 'ViewerUserTypingMessage';
-  isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
-};
-
-export type ViewerUserTypingMessageInput = {
-  isTyping: Scalars['Boolean'];
-  threadId: Scalars['String'];
-};
 
 export type Webhook = {
   __typename?: 'Webhook';
@@ -2617,7 +2694,7 @@ export type StreamAllBranchesQueryVariables = Exact<{
 
 export type StreamAllBranchesQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', id: string, branches?: { __typename?: 'BranchCollection', totalCount: number, cursor?: string | null, items?: Array<{ __typename?: 'Branch', id: string, name: string, description?: string | null, createdAt?: string | null, author?: { __typename?: 'User', id: string, name: string } | null, commits?: { __typename?: 'CommitCollection', totalCount: number } | null }> | null } | null } | null };
 
-export type CommentFullInfoFragment = { __typename?: 'Comment', id: string, archived: boolean, authorId: string, screenshot?: string | null, createdAt: string, updatedAt: string, viewedAt?: string | null, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string, fileType: string, fileSize?: number | null }> | null }, data?: { __typename?: 'CommentViewerData', location: Record<string, unknown>, camPos: Array<number>, sectionBox?: Record<string, unknown> | null, selection?: Record<string, unknown> | null, filters: { __typename?: 'CommentDataFilters', hiddenIds?: Array<string> | null, isolatedIds?: Array<string> | null, propertyInfoKey?: string | null, passMax?: number | null, passMin?: number | null, sectionBox?: Record<string, unknown> | null } } | null, replies: { __typename?: 'CommentCollection', totalCount: number }, resources: Array<{ __typename?: 'ResourceIdentifier', resourceId: string, resourceType: ResourceType }> };
+export type CommentFullInfoFragment = { __typename?: 'Comment', id: string, archived: boolean, authorId: string, data?: Record<string, unknown> | null, screenshot?: string | null, createdAt: string, updatedAt: string, viewedAt?: string | null, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string, fileType: string, fileSize?: number | null }> | null }, replies: { __typename?: 'CommentCollection', totalCount: number }, resources: Array<{ __typename?: 'ResourceIdentifier', resourceId: string, resourceType: ResourceType }> };
 
 export type StreamCommitQueryQueryVariables = Exact<{
   streamId: Scalars['String'];
@@ -2981,20 +3058,7 @@ export const CommentFullInfo = gql`
       fileSize
     }
   }
-  data {
-    location
-    camPos
-    sectionBox
-    selection
-    filters {
-      hiddenIds
-      isolatedIds
-      propertyInfoKey
-      passMax
-      passMin
-      sectionBox
-    }
-  }
+  data
   screenshot
   replies {
     totalCount
@@ -3792,7 +3856,7 @@ export const Webhooks = gql`
   }
 }
     `;
-export const CommentFullInfoFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"CommentFullInfo"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"archived"}},{"kind":"Field","name":{"kind":"Name","value":"authorId"}},{"kind":"Field","name":{"kind":"Name","value":"text"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"doc"}},{"kind":"Field","name":{"kind":"Name","value":"attachments"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"fileName"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}},{"kind":"Field","name":{"kind":"Name","value":"fileType"}},{"kind":"Field","name":{"kind":"Name","value":"fileSize"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"data"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"location"}},{"kind":"Field","name":{"kind":"Name","value":"camPos"}},{"kind":"Field","name":{"kind":"Name","value":"sectionBox"}},{"kind":"Field","name":{"kind":"Name","value":"selection"}},{"kind":"Field","name":{"kind":"Name","value":"filters"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hiddenIds"}},{"kind":"Field","name":{"kind":"Name","value":"isolatedIds"}},{"kind":"Field","name":{"kind":"Name","value":"propertyInfoKey"}},{"kind":"Field","name":{"kind":"Name","value":"passMax"}},{"kind":"Field","name":{"kind":"Name","value":"passMin"}},{"kind":"Field","name":{"kind":"Name","value":"sectionBox"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"screenshot"}},{"kind":"Field","name":{"kind":"Name","value":"replies"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"resources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"resourceId"}},{"kind":"Field","name":{"kind":"Name","value":"resourceType"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"viewedAt"}}]}}]} as unknown as DocumentNode<CommentFullInfoFragment, unknown>;
+export const CommentFullInfoFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"CommentFullInfo"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"archived"}},{"kind":"Field","name":{"kind":"Name","value":"authorId"}},{"kind":"Field","name":{"kind":"Name","value":"text"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"doc"}},{"kind":"Field","name":{"kind":"Name","value":"attachments"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"fileName"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}},{"kind":"Field","name":{"kind":"Name","value":"fileType"}},{"kind":"Field","name":{"kind":"Name","value":"fileSize"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"data"}},{"kind":"Field","name":{"kind":"Name","value":"screenshot"}},{"kind":"Field","name":{"kind":"Name","value":"replies"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"resources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"resourceId"}},{"kind":"Field","name":{"kind":"Name","value":"resourceType"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"viewedAt"}}]}}]} as unknown as DocumentNode<CommentFullInfoFragment, unknown>;
 export const ActivityMainFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ActivityMainFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Activity"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"actionType"}},{"kind":"Field","name":{"kind":"Name","value":"info"}},{"kind":"Field","name":{"kind":"Name","value":"userId"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}},{"kind":"Field","name":{"kind":"Name","value":"resourceId"}},{"kind":"Field","name":{"kind":"Name","value":"resourceType"}},{"kind":"Field","name":{"kind":"Name","value":"time"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]} as unknown as DocumentNode<ActivityMainFieldsFragment, unknown>;
 export const LimitedCommitActivityFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LimitedCommitActivityFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Activity"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"info"}},{"kind":"Field","name":{"kind":"Name","value":"time"}},{"kind":"Field","name":{"kind":"Name","value":"userId"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]} as unknown as DocumentNode<LimitedCommitActivityFieldsFragment, unknown>;
 export const BasicStreamAccessRequestFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicStreamAccessRequestFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"StreamAccessRequest"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]} as unknown as DocumentNode<BasicStreamAccessRequestFieldsFragment, unknown>;
