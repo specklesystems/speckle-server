@@ -9,6 +9,7 @@ import {
 } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { WebSocketLink } from '@apollo/client/link/ws'
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
 import { createUploadLink } from 'apollo-upload-client'
@@ -22,6 +23,9 @@ import {
 import { merge } from 'lodash'
 import { statePolicies as commitObjectViewerStatePolicies } from '@/main/lib/viewer/commit-object-viewer/stateManagerCore'
 import { Optional } from '@speckle/shared'
+import { createClient } from 'graphql-ws'
+
+const USE_NEW_WS_IMPLEMENTATION = import.meta.env.VITE_NEW_WS_IMPLEMENTATION as boolean
 
 // Name of the localStorage item
 const AUTH_TOKEN = LocalStorageKeys.AuthToken
@@ -33,10 +37,6 @@ const wsEndpoint = `${window.location.origin.replace('http', 'ws')}/graphql`
 const appVersion = import.meta.env.SPECKLE_SERVER_VERSION || 'unknown'
 
 let instance: Optional<ApolloProvider> = undefined
-
-function hasAuthToken() {
-  return !!AppLocalStorage.get(AUTH_TOKEN)
-}
 
 function createCache(): InMemoryCache {
   return new InMemoryCache({
@@ -169,18 +169,7 @@ function createCache(): InMemoryCache {
   })
 }
 
-function createWsClient(): SubscriptionClient {
-  return new SubscriptionClient(wsEndpoint, {
-    reconnect: true,
-    connectionParams: () => {
-      const authToken = AppLocalStorage.get(AUTH_TOKEN)
-      const Authorization = authToken ? `Bearer ${authToken}` : null
-      return Authorization ? { Authorization, headers: { Authorization } } : {}
-    }
-  })
-}
-
-function createLink(wsClient?: SubscriptionClient): ApolloLink {
+function createLink(): ApolloLink {
   // Prepare links
   const httpLink = createUploadLink({
     uri: httpEndpoint
@@ -197,27 +186,49 @@ function createLink(wsClient?: SubscriptionClient): ApolloLink {
   })
   let link = authLink.concat(httpLink)
 
-  if (wsClient) {
-    const wsLink = new WebSocketLink(wsClient)
-    link = split(
-      ({ query }) => {
-        const definition = getMainDefinition(query) as OperationDefinitionNode
-        const { kind, operation } = definition
-
-        return kind === Kind.OPERATION_DEFINITION && operation === 'subscription'
-      },
-      wsLink,
-      link
+  // WS Setup
+  let wsLink: WebSocketLink | GraphQLWsLink
+  if (USE_NEW_WS_IMPLEMENTATION) {
+    wsLink = new GraphQLWsLink(
+      createClient({
+        url: wsEndpoint,
+        connectionParams: () => {
+          const authToken = AppLocalStorage.get(AUTH_TOKEN)
+          const Authorization = authToken ? `Bearer ${authToken}` : null
+          return Authorization ? { Authorization, headers: { Authorization } } : {}
+        }
+      })
     )
+  } else {
+    const wsClient = new SubscriptionClient(wsEndpoint, {
+      reconnect: true,
+      connectionParams: () => {
+        const authToken = AppLocalStorage.get(AUTH_TOKEN)
+        const Authorization = authToken ? `Bearer ${authToken}` : null
+        return Authorization ? { Authorization, headers: { Authorization } } : {}
+      }
+    })
+    wsLink = new WebSocketLink(wsClient)
   }
+
+  // Splitting WS/HTTP depending on operation type
+  link = split(
+    ({ query }) => {
+      const definition = getMainDefinition(query) as OperationDefinitionNode
+      const { kind, operation } = definition
+
+      return kind === Kind.OPERATION_DEFINITION && operation === 'subscription'
+    },
+    wsLink,
+    link
+  )
 
   return link
 }
 
 function createApolloClient() {
   const cache = createCache()
-  const wsClient = createWsClient()
-  const link = createLink(wsClient)
+  const link = createLink()
 
   const apolloClient = new ApolloClient({
     link,
@@ -229,8 +240,7 @@ function createApolloClient() {
   })
 
   return {
-    apolloClient,
-    wsClient
+    apolloClient
   }
 }
 
@@ -239,8 +249,7 @@ function createApolloClient() {
  */
 export function createProvider(): ApolloProvider {
   // Create apollo client
-  const { apolloClient, wsClient } = createApolloClient()
-  apolloClient.wsClient = hasAuthToken() ? wsClient : null
+  const { apolloClient } = createApolloClient()
 
   // Create vue apollo provider
   const apolloProvider = createApolloProvider({

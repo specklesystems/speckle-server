@@ -1,23 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import {
-  ApolloLink,
-  InMemoryCache,
-  split,
-  ApolloClientOptions
-} from '@apollo/client/core'
+import { ApolloLink, InMemoryCache, ApolloClientOptions } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
-import { SubscriptionClient } from 'subscriptions-transport-ws'
 import { createUploadLink } from 'apollo-upload-client'
-import { WebSocketLink } from '@apollo/client/link/ws'
-import { getMainDefinition } from '@apollo/client/utilities'
-import { OperationDefinitionNode, Kind } from 'graphql'
 import { Nullable } from '@speckle/shared'
 import {
   buildAbstractCollectionMergeFunction,
   buildArrayMergeFunction,
   incomingOverwritesExistingMergeFunction
 } from '~~/lib/core/helpers/apolloSetup'
+
+/**
+ * TODO: Subscriptions
+ */
 
 const appVersion = (import.meta.env.SPECKLE_SERVER_VERSION as string) || 'unknown'
 const appName = 'dui-3'
@@ -235,28 +230,11 @@ function createCache(): InMemoryCache {
   })
 }
 
-function createWsClient(params: {
-  wsEndpoint: string
-  authToken: () => Nullable<string>
-}): SubscriptionClient {
-  const { wsEndpoint, authToken } = params
-
-  return new SubscriptionClient(wsEndpoint, {
-    reconnect: true,
-    connectionParams: () => {
-      const token = authToken()
-      const Authorization = token?.length ? `Bearer ${token}` : null
-      return Authorization ? { Authorization, headers: { Authorization } } : {}
-    }
-  })
-}
-
 function createLink(params: {
   httpEndpoint: string
-  wsClient?: SubscriptionClient
   authToken: () => Nullable<string>
 }): ApolloLink {
-  const { httpEndpoint, wsClient, authToken } = params
+  const { httpEndpoint, authToken } = params
   // Prepare links
   const httpLink = createUploadLink({
     uri: httpEndpoint
@@ -273,21 +251,21 @@ function createLink(params: {
     }
   })
 
-  let link = authLink.concat(httpLink as unknown as ApolloLink)
+  const link = authLink.concat(httpLink as unknown as ApolloLink)
 
-  if (wsClient) {
-    const wsLink = new WebSocketLink(wsClient)
-    link = split(
-      ({ query }) => {
-        const definition = getMainDefinition(query) as OperationDefinitionNode
-        const { kind, operation } = definition
+  // if (wsClient) {
+  //   const wsLink = new WebSocketLink(wsClient)
+  //   link = split(
+  //     ({ query }) => {
+  //       const definition = getMainDefinition(query) as OperationDefinitionNode
+  //       const { kind, operation } = definition
 
-        return kind === Kind.OPERATION_DEFINITION && operation === 'subscription'
-      },
-      wsLink,
-      link
-    )
-  }
+  //       return kind === Kind.OPERATION_DEFINITION && operation === 'subscription'
+  //     },
+  //     wsLink,
+  //     link
+  //   )
+  // }
 
   return link
 }
@@ -301,12 +279,7 @@ export const resolveClientConfig = (
   params: ResolveClientConfigParams
 ): Pick<ApolloClientOptions<unknown>, 'cache' | 'link' | 'name' | 'version'> => {
   const { httpEndpoint, authToken } = params
-  const wsEndpoint = httpEndpoint.replace('http', 'ws')
-
-  const wsClient = process.client
-    ? createWsClient({ wsEndpoint, authToken })
-    : undefined
-  const link = createLink({ httpEndpoint, wsClient, authToken })
+  const link = createLink({ httpEndpoint, authToken })
 
   return {
     // If we don't markRaw the cache, sometimes we get cryptic internal Apollo Client errors that essentially

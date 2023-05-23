@@ -41,6 +41,7 @@
     "dompurify": "^2.3.6",
     "graphql": "^15.0.0",
     "graphql-tag": "^2.12.6",
+    "graphql-ws": "^5.13.1",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
     "numeral": "^2.0.6",

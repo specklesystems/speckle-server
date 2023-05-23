@@ -24,7 +24,10 @@ import {
 } from '~~/lib/core/helpers/apolloSetup'
 import { onError } from '@apollo/client/link/error'
 import { useNavigateToLogin } from '~~/lib/common/helpers/route'
+import { createClient } from 'graphql-ws'
+import { GraphQLWsLink } from '@apollo/client/link/subscriptions'
 
+//
 const appVersion = (import.meta.env.SPECKLE_SERVER_VERSION as string) || 'unknown'
 const appName = 'frontend-2'
 
@@ -241,37 +244,15 @@ function createCache(): InMemoryCache {
   })
 }
 
-async function createWsClient(params: {
-  wsEndpoint: string
-  authToken: CookieRef<Optional<string>>
-}): Promise<SubscriptionClient> {
-  const { wsEndpoint, authToken } = params
-
-  // WS IN SSR DOESN'T WORK CURRENTLY CAUSE OF SOME NUXT TRANSPILATION WEIRDNESS
-  // SO DON'T RUN createWsClient in SSR
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const wsImplementation = process.server ? (await import('ws')).default : undefined
-  return new SubscriptionClient(
-    wsEndpoint,
-    {
-      reconnect: true,
-      connectionParams: () => {
-        const Authorization = authToken.value ? `Bearer ${authToken.value}` : null
-        return Authorization ? { Authorization, headers: { Authorization } } : {}
-      }
-    },
-    wsImplementation
-  )
-}
-
 const isServerError = (e: Error): e is ServerError => e.name === 'ServerError'
 
-function createLink(params: {
+async function createLink(params: {
   httpEndpoint: string
   wsClient?: SubscriptionClient
   authToken: CookieRef<Optional<string>>
-}): ApolloLink {
-  const { httpEndpoint, wsClient, authToken } = params
+  newWsImplementation?: boolean
+}): Promise<ApolloLink> {
+  const { httpEndpoint, authToken, newWsImplementation } = params
   const goToLogin = useNavigateToLogin()
 
   const errorLink = onError((res) => {
@@ -307,36 +288,58 @@ function createLink(params: {
 
   let link = authLink.concat(httpLink)
 
-  if (wsClient) {
-    const wsLink = new WebSocketLink(wsClient)
-    link = split(
-      ({ query }) => {
-        const definition = getMainDefinition(query) as OperationDefinitionNode
-        const { kind, operation } = definition
-
-        return kind === Kind.OPERATION_DEFINITION && operation === 'subscription'
-      },
-      wsLink,
-      link
+  // WS Setup
+  const wsEndpoint = httpEndpoint.replace('http', 'ws')
+  const wsImplementation = process.server ? (await import('ws')).default : undefined
+  let wsLink: WebSocketLink | GraphQLWsLink
+  if (newWsImplementation) {
+    wsLink = new GraphQLWsLink(
+      createClient({
+        url: wsEndpoint,
+        connectionParams: () => {
+          const Authorization = authToken.value ? `Bearer ${authToken.value}` : null
+          return Authorization ? { Authorization, headers: { Authorization } } : {}
+        },
+        webSocketImpl: wsImplementation
+      })
     )
+  } else {
+    const wsClient = new SubscriptionClient(
+      wsEndpoint,
+      {
+        reconnect: true,
+        connectionParams: () => {
+          const Authorization = authToken.value ? `Bearer ${authToken.value}` : null
+          return Authorization ? { Authorization, headers: { Authorization } } : {}
+        }
+      },
+      wsImplementation
+    )
+    wsLink = new WebSocketLink(wsClient)
   }
+
+  link = split(
+    ({ query }) => {
+      const definition = getMainDefinition(query) as OperationDefinitionNode
+      const { kind, operation } = definition
+
+      return kind === Kind.OPERATION_DEFINITION && operation === 'subscription'
+    },
+    wsLink,
+    link
+  )
 
   return from([errorLink, link])
 }
 
 const defaultConfigResolver: ApolloConfigResolver = async () => {
   const {
-    public: { apiOrigin }
+    public: { apiOrigin, newWsImplementation }
   } = useRuntimeConfig()
 
   const httpEndpoint = `${apiOrigin}/graphql`
-  const wsEndpoint = httpEndpoint.replace('http', 'ws')
-
   const authToken = useAuthCookie()
-  const wsClient = process.client
-    ? await createWsClient({ wsEndpoint, authToken })
-    : undefined
-  const link = createLink({ httpEndpoint, wsClient, authToken })
+  const link = await createLink({ httpEndpoint, authToken, newWsImplementation })
 
   return {
     // If we don't markRaw the cache, sometimes we get cryptic internal Apollo Client errors that essentially

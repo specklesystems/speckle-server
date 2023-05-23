@@ -36,7 +36,8 @@ import {
   getFileSizeLimitMB,
   isDevEnv,
   isTestEnv,
-  useNewFrontend
+  useNewFrontend,
+  useNewWsImplementation
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -52,7 +53,89 @@ import {
   mixpanelTrackerHelperMiddleware
 } from '@/modules/shared/middleware'
 
-let graphqlServer: ApolloServer
+import { WebSocketServer } from 'ws'
+import { useServer } from 'graphql-ws/lib/use/ws'
+import { Disposable } from 'graphql-ws'
+
+const isDisposable = (v: SubscriptionServer | Disposable): v is Disposable =>
+  has(v, 'dispose')
+
+function buildApolloWebSocketServer(apolloServer: ApolloServer, server: http.Server) {
+  const schema = ModulesSetup.graphSchema()
+
+  // Init metrics
+  prometheusClient.register.removeSingleMetric('speckle_server_apollo_connect')
+  const metricConnectCounter = new prometheusClient.Counter({
+    name: 'speckle_server_apollo_connect',
+    help: 'Number of connects'
+  })
+  prometheusClient.register.removeSingleMetric('speckle_server_apollo_clients')
+  const metricConnectedClients = new prometheusClient.Gauge({
+    name: 'speckle_server_apollo_clients',
+    help: 'Number of currently connected clients'
+  })
+
+  const wsServer = new WebSocketServer({
+    server,
+    path: apolloServer.graphqlPath
+  })
+
+  const serverCleanup = useServer(
+    {
+      schema,
+      onConnect: () => {
+        metricConnectCounter.inc()
+        metricConnectedClients.inc()
+      },
+      onDisconnect: () => {
+        metricConnectedClients.dec()
+      },
+      context: async (ctx) => {
+        const { connectionParams } = ctx
+
+        // Resolve token
+        let token: string
+        try {
+          let header: Optional<string>
+
+          const possiblePaths = [
+            'Authorization',
+            'authorization',
+            'headers.Authorization',
+            'headers.authorization'
+          ]
+
+          for (const possiblePath of possiblePaths) {
+            if (has(connectionParams, possiblePath)) {
+              header = get(connectionParams, possiblePath) as string
+              if (header) break
+            }
+          }
+
+          if (!header) {
+            throw new Error("Couldn't resolve auth header for subscription")
+          }
+
+          token = header.split(' ')[1]
+          if (!token) {
+            throw new Error("Couldn't resolve token from auth header")
+          }
+        } catch (e) {
+          throw new ForbiddenError('You need a token to subscribe')
+        }
+
+        try {
+          return await buildContext({ req: null, token, cleanLoadersEarly: true })
+        } catch (e) {
+          throw new ForbiddenError('Subscription context build failed')
+        }
+      }
+    },
+    wsServer
+  )
+
+  return serverCleanup
+}
 
 /**
  * TODO: subscriptions-transport-ws is no longer maintained, we should migrate to graphql-ws insted. The problem
@@ -180,7 +263,7 @@ async function buildMocksConfig(): Promise<{
  */
 export async function buildApolloServer(
   optionOverrides?: Partial<ApolloServerExpressConfig>,
-  subscriptionServerResolver?: () => SubscriptionServer
+  subscriptionServerResolver?: () => SubscriptionServer | Disposable
 ): Promise<ApolloServer> {
   const debug = optionOverrides?.debug || isDevEnv() || isTestEnv()
   const schema = ModulesSetup.graphSchema()
@@ -201,7 +284,12 @@ export async function buildApolloServer(
               async serverWillStart() {
                 return {
                   async drainServer() {
-                    subscriptionServerResolver().close()
+                    const subServer = subscriptionServerResolver()
+                    if (isDisposable(subServer)) {
+                      await subServer.dispose()
+                    } else {
+                      subServer.close()
+                    }
                   }
                 }
               }
@@ -271,8 +359,8 @@ export async function init() {
   // (Apollo Server v3 has an ugly API here - the ApolloServer ctor needs SubscriptionServer,
   // and the SubscriptionServer ctor needs ApolloServer...hence the callback passed into buildApolloServer)
   // eslint-disable-next-line prefer-const
-  let subscriptionServer: SubscriptionServer
-  graphqlServer = await buildApolloServer(undefined, () => subscriptionServer)
+  let subscriptionServer: SubscriptionServer | Disposable
+  const graphqlServer = await buildApolloServer(undefined, () => subscriptionServer)
   graphqlServer.applyMiddleware({ app })
 
   // Expose prometheus metrics
@@ -287,9 +375,11 @@ export async function init() {
 
   // Init HTTP server & subscription server
   const server = http.createServer(app)
-  subscriptionServer = buildApolloSubscriptionServer(graphqlServer, server)
+  subscriptionServer = useNewWsImplementation()
+    ? buildApolloWebSocketServer(graphqlServer, server)
+    : buildApolloSubscriptionServer(graphqlServer, server)
 
-  return { app, graphqlServer, server, subscriptionServer }
+  return { app, graphqlServer, server }
 }
 
 export async function shutdown(): Promise<void> {
