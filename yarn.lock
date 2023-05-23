@@ -11435,6 +11435,7 @@ __metadata:
     eventemitter2: ^6.4.7
     express: ^4.17.3
     express-async-errors: ^3.1.1
+    express-prom-bundle: ^6.6.0
     express-session: ^1.17.1
     graphql: ^15
     graphql-redis-subscriptions: ^2.2.2
@@ -24830,6 +24831,18 @@ __metadata:
   peerDependencies:
     express: ^4.16.2
   checksum: 3a2a6df8ea957185df401a239189d617715c38fba13fac8ced7750b25fa95b0ae656e5d1385d12d0e4dcd7997e90d070b218e86abcf8e68bb6048830b53ba668
+  languageName: node
+  linkType: hard
+
+"express-prom-bundle@npm:^6.6.0":
+  version: 6.6.0
+  resolution: "express-prom-bundle@npm:6.6.0"
+  dependencies:
+    on-finished: ^2.3.0
+    url-value-parser: ^2.0.0
+  peerDependencies:
+    prom-client: ">=12.0.0"
+  checksum: 414451347abb7ed414fcecfbc35dd39ae6abf8f3d69824679640b539b5849dd53c8a94ce43c263bf6e78c3ec2646803ed843cfb5613b8385c0ded4b59465e9b7
   languageName: node
   linkType: hard
 
@@ -42842,6 +42855,13 @@ __metadata:
   version: 1.0.1
   resolution: "url-to-options@npm:1.0.1"
   checksum: 20e59f4578525fb0d30ffc22b13b5aa60bc9e57cefd4f5842720f5b57211b6dec54abeae2d675381ac4486fd1a2e987f1318725dea996e503ff89f8c8ce2c17e
+  languageName: node
+  linkType: hard
+
+"url-value-parser@npm:^2.0.0":
+  version: 2.2.0
+  resolution: "url-value-parser@npm:2.2.0"
+  checksum: d5fd52b3526bb5db20384c6ab95ff8f8d1f37daaadfb2a8d8c70f60810997a60d80dbff35de681850356d2117c948ca9cb9c5d903d75fb63f021c890d63440c6
   languageName: node
   linkType: hard
 

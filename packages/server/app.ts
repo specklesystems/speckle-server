@@ -2,6 +2,7 @@
 import './bootstrap'
 import http from 'http'
 import express, { Express } from 'express'
+import promBundle from 'express-prom-bundle'
 
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
 import 'express-async-errors'
@@ -236,6 +237,7 @@ export async function init() {
   app.disable('x-powered-by')
 
   Logging(app)
+  const expressMetricsMiddleware = promBundle({ includeMethod: true })
 
   // Moves things along automatically on restart.
   // Should perhaps be done manually?
@@ -244,6 +246,7 @@ export async function init() {
   app.use(DetermineRequestIdMiddleware)
   app.use(determineClientIpAddressMiddleware)
   app.use(LoggingExpressMiddleware)
+  app.use(expressMetricsMiddleware)
 
   if (process.env.COMPRESSION) {
     app.use(compression())
