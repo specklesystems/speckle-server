@@ -44,6 +44,10 @@ export function extendLoggerComponent(
   return otherChild.child(otherChildBindings)
 }
 
+/**
+ * Very simple RPM counter to catch extreme spam scenarios (e.g. a ton of errors being thrown). It's not going
+ * to always report accurately, but as long as hits are being registered consistently it should be accurate enough.
+ */
 export function simpleRpmCounter() {
   const getTimestamp = () => new Date().getTime()
   let lastDateTimestamp = getTimestamp()
