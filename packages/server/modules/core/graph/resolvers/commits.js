@@ -102,13 +102,14 @@ module.exports = {
     async authorName(parent, _args, ctx) {
       const { authorId, authorName, author } = parent
       if (authorName) return authorName
-
+      if (!authorId && !author) return null
       const authorEntity = await ctx.loaders.users.getUser.load(authorId || author)
       return authorEntity?.name || null
     },
     async authorAvatar(parent, _args, ctx) {
       const { authorId, authorAvatar, author } = parent
       if (authorAvatar) return authorAvatar
+      if (!authorId && !author) return null
 
       const authorEntity = await ctx.loaders.users.getUser.load(authorId || author)
       return authorEntity?.avatar || null
