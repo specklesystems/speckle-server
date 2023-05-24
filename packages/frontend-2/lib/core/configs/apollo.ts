@@ -24,11 +24,7 @@ import {
 } from '~~/lib/core/helpers/apolloSetup'
 import { onError } from '@apollo/client/link/error'
 import { useNavigateToLogin } from '~~/lib/common/helpers/route'
-import { Observability } from '@speckle/shared'
-
-let subscriptionsStopped = false
-const errorRpm = Observability.simpleRpmCounter()
-const STOP_SUBSCRIPTIONS_AT_ERRORS_PER_MIN = 100
+import { useAppErrorState } from '~~/lib/core/composables/appErrorState'
 
 const appVersion = (import.meta.env.SPECKLE_SERVER_VERSION as string) || 'unknown'
 const appName = 'frontend-2'
@@ -278,6 +274,7 @@ function createLink(params: {
 }): ApolloLink {
   const { httpEndpoint, wsClient, authToken } = params
   const goToLogin = useNavigateToLogin()
+  const { registerError, isErrorState } = useAppErrorState()
 
   const errorLink = onError((res) => {
     console.error('Apollo Client error', res)
@@ -292,26 +289,7 @@ function createLink(params: {
       }
     }
 
-    // Disable subscriptions if too many errors per minute
-    const rpm = errorRpm.hit()
-    if (
-      process.client &&
-      wsClient &&
-      !subscriptionsStopped &&
-      rpm > STOP_SUBSCRIPTIONS_AT_ERRORS_PER_MIN
-    ) {
-      subscriptionsStopped = true
-      console.error(
-        `Too many errors (${rpm} errors per minute), stopping subscriptions!`
-      )
-      wsClient.use([
-        {
-          applyMiddleware: () => {
-            // never invokes next() - essentially stuck
-          }
-        }
-      ])
-    }
+    registerError()
   })
 
   // Prepare links
@@ -347,6 +325,19 @@ function createLink(params: {
       wsLink,
       link
     )
+
+    // Stopping WS when in error state
+    wsClient.use([
+      {
+        applyMiddleware: (_opt, next) => {
+          if (isErrorState.value) {
+            return // never invokes next() - essentially stuck
+          }
+
+          next()
+        }
+      }
+    ])
   }
 
   return from([errorLink, link])

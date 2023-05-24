@@ -15,9 +15,7 @@ export const COMMENT_FULL_INFO_FRAGMENT = gql`
         fileSize
       }
     }
-    data {
-      data
-    }
+    data
     screenshot
     replies {
       totalCount
