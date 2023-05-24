@@ -8,12 +8,11 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import { graphql } from '~~/lib/common/generated/gql'
 import { reduce, difference, debounce } from 'lodash-es'
-import { Box3, Vector3 } from 'three'
+import { Vector3 } from 'three'
 import {
   useOnViewerLoadComplete,
   useSelectionEvents,
-  useViewerCameraTracker,
-  useViewerEventListener
+  useViewerCameraTracker
 } from '~~/lib/viewer/composables/viewer'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import {
@@ -21,7 +20,6 @@ import {
   useOnBeforeWindowUnload,
   useResponsiveHorizontalDirectionCalculation
 } from '~~/lib/common/composables/window'
-import { ViewerEvent } from '@speckle/viewer'
 import { useViewerUserActivityBroadcasting } from '~~/lib/viewer/composables/activity'
 import { useIntervalFn } from '@vueuse/core'
 import {
@@ -300,7 +298,7 @@ export function useViewerThreadTracking() {
   const {
     ui: {
       threads: { openThread },
-      camera: { position, target }
+      camera: { position }
     }
   } = state
 
@@ -310,21 +308,6 @@ export function useViewerThreadTracking() {
 
   const refocus = (commentState: SpeckleViewer.ViewerState.SerializedViewerState) => {
     applyState(commentState, StateApplyMode.ThreadOpen)
-    // const camPos = commentState.ui.camera.position
-    // const camTarget = commentState.ui.camera.target
-
-    // state.ui.camera.position.value = new Vector3(camPos[0], camPos[1], camPos[2])
-    // state.ui.camera.target.value = new Vector3(camTarget[0], camTarget[1], camTarget[2])
-
-    // const sectionBox = commentState.ui.sectionBox
-    // if (sectionBox) {
-    //   state.ui.sectionBox.value = new Box3(
-    //     new Vector3(sectionBox.min[0], sectionBox.min[1], sectionBox.min[2]),
-    //     new Vector3(sectionBox.max[0], sectionBox.max[1], sectionBox.max[2])
-    //   )
-    // } else {
-    //   state.ui.sectionBox.value = null
-    // }
   }
 
   // Do this once viewer loads things

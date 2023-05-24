@@ -300,7 +300,6 @@ export function useViewerCameraIntegration() {
   useOnViewerLoadComplete(() => {
     // Load camera position so we can return to it correctly
     loadCameraDataFromViewer()
-    console.log('camera data loaded', position.value, target.value)
   })
 
   // TODO: This caused an infinite loop of toggling ortho/perspective mode.

@@ -175,7 +175,7 @@ export function useFilterUtilities() {
     const timeout = options?.timeout || 10000
 
     const res = await Promise.race([
-      until(availableFilters.value).toMatch(
+      until(availableFilters).toMatch(
         (filters) => !!filters?.find((p) => p.key === key)
       ),
       new Promise<never>((_resolve, reject) => {
