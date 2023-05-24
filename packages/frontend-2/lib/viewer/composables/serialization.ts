@@ -50,9 +50,8 @@ export function useStateSerialization() {
             .map((o) => o.id)
             .filter(isNonNullable),
           propertyFilter: {
-            key: state.ui.filters.propertyFilter.isApplied.value
-              ? state.ui.filters.propertyFilter.filter.value?.key || null
-              : null
+            key: state.ui.filters.propertyFilter.filter.value?.key || null,
+            isApplied: state.ui.filters.propertyFilter.isApplied.value
           }
         },
         camera: {
@@ -105,6 +104,7 @@ export function useApplySerializedState() {
     removePropertyFilter,
     setPropertyFilter,
     applyPropertyFilter,
+    unApplyPropertyFilter,
     waitForAvailableFilter
   } = useFilterUtilities()
 
@@ -146,6 +146,13 @@ export function useApplySerializedState() {
       isolateObjects(filters.isolatedObjectIds, { replace: true })
     } else {
       resetFilters()
+    }
+
+    const propertyFilterApplied = state.ui.filters.propertyFilter.isApplied
+    if (propertyFilterApplied) {
+      applyPropertyFilter()
+    } else {
+      unApplyPropertyFilter()
     }
 
     const propertyInfoKey = state.ui.filters.propertyFilter.key

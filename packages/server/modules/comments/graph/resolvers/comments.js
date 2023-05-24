@@ -57,6 +57,7 @@ const {
 const {
   isLegacyData,
   isDataStruct,
+  formatSerializedViewerState,
   convertStateToLegacyData,
   convertLegacyDataToState
 } = require('@/modules/comments/services/data')
@@ -155,7 +156,8 @@ module.exports = {
       }
 
       if (isDataStruct(parentData)) {
-        return convertStateToLegacyData(parentData.state)
+        const formattedState = formatSerializedViewerState(parentData.state)
+        return convertStateToLegacyData(formattedState)
       }
 
       return null
@@ -168,7 +170,8 @@ module.exports = {
       if (!parentData) return null
 
       if (isDataStruct(parentData)) {
-        return parentData.state
+        const formattedState = formatSerializedViewerState(parentData.state)
+        return formattedState
       }
 
       if (isLegacyData(parentData)) {

@@ -218,7 +218,7 @@ function useViewerSubscriptionEventTracker() {
   )
 }
 
-export function useViewerSectionBoxIntegration() {
+function useViewerSectionBoxIntegration() {
   const {
     ui: { sectionBox },
     viewer: { instance }
@@ -253,7 +253,7 @@ export function useViewerSectionBoxIntegration() {
   )
 }
 
-export function useViewerCameraIntegration() {
+function useViewerCameraIntegration() {
   const {
     viewer: { instance },
     ui: {
@@ -361,7 +361,7 @@ export function useViewerCameraIntegration() {
   )
 }
 
-export function useViewerFiltersIntegration() {
+function useViewerFiltersIntegration() {
   const {
     viewer: { instance },
     ui: { filters, highlightedObjectIds }
@@ -462,6 +462,18 @@ export function useViewerFiltersIntegration() {
     { immediate: true, flush: 'sync' }
   )
 
+  useOnViewerLoadComplete(
+    () => {
+      const targetFilter =
+        filters.propertyFilter.filter.value || speckleTypeFilter.value
+      const isApplied = filters.propertyFilter.isApplied.value
+
+      if (isApplied && targetFilter) instance.setColorFilter(targetFilter)
+      if (!isApplied) instance.removeColorFilter()
+    },
+    { initialOnly: true }
+  )
+
   watch(
     filters.selectedObjects,
     (newVal, oldVal) => {
@@ -484,7 +496,7 @@ export function useViewerFiltersIntegration() {
   )
 }
 
-export function useLightConfigIntegration() {
+function useLightConfigIntegration() {
   const {
     ui: { lightConfig },
     viewer: { instance }
@@ -521,7 +533,7 @@ export function useLightConfigIntegration() {
   )
 }
 
-export function useExplodeFactorIntegration() {
+function useExplodeFactorIntegration() {
   const {
     ui: { explodeFactor },
     viewer: { instance }
@@ -544,6 +556,14 @@ export function useExplodeFactorIntegration() {
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function useDebugViewerEvents() {
+  for (const [key, val] of Object.entries(ViewerEvent)) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    useViewerEventListener(val, (...args) => console.log(key, ...args))
+  }
+}
+
 export function useViewerPostSetup() {
   if (process.server) return
   useViewerObjectAutoLoading()
@@ -558,8 +578,6 @@ export function useViewerPostSetup() {
   useLightConfigIntegration()
   useExplodeFactorIntegration()
 
-  // // test
-  // for (const [key, val] of Object.entries(ViewerEvent)) {
-  //   useViewerEventListener(val, (...args) => console.log(key, ...args))
-  // }
+  // test
+  // useDebugViewerEvents()
 }

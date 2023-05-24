@@ -1,3 +1,4 @@
+import { timeoutAt } from '@speckle/shared'
 import { PropertyInfo } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
@@ -178,11 +179,7 @@ export function useFilterUtilities() {
       until(availableFilters).toMatch(
         (filters) => !!filters?.find((p) => p.key === key)
       ),
-      new Promise<never>((_resolve, reject) => {
-        setTimeout(() => {
-          reject(new Error('Waiting for available filter timed out'))
-        }, timeout)
-      })
+      timeoutAt(timeout)
     ])
 
     const filter = res?.find((p) => p.key === key)

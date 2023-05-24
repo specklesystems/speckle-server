@@ -173,7 +173,7 @@ export function useViewerUserActivityTracking(params: {
     if (sessionId.value === incomingSessionId) return
     if (status === ViewerUserActivityStatus.Disconnected) {
       triggerNotification({
-        description: `${users.value[incomingSessionId].userName} left.`,
+        description: `${users.value[incomingSessionId]?.userName || 'A user'} left.`,
         type: ToastNotificationType.Info
       })
 

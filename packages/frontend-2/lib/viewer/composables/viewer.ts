@@ -1,14 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   InitialStateWithRequestAndResponse,
   InjectableViewerState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
-import { debounce, isArray, throttle, isFunction } from 'lodash-es'
-import { MaybeAsync, Nullable, Optional } from '@speckle/shared'
-import { Merge } from 'type-fest'
-import { WatchSource } from 'vue'
+import { debounce, isArray, throttle } from 'lodash-es'
+import { MaybeAsync, Nullable, TimeoutError, timeoutAt } from '@speckle/shared'
+import { until } from '@vueuse/shared'
 
 function getFirstVisibleSelectionHit(
   { hits }: SelectionEvent,
@@ -40,6 +38,7 @@ function getFirstVisibleSelectionHit(
   return null
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useViewerEventListener<A = any>(
   name: ViewerEvent | ViewerEvent[],
   listener: (...args: A[]) => MaybeAsync<void>,
@@ -211,19 +210,41 @@ export function useGetObjectUrl() {
 export function useOnViewerLoadComplete(
   listener: (params: { isInitial: boolean }) => MaybeAsync<void>,
   options?: Partial<{
+    /**
+     * Whether to only invoke the listener once on the very first LoadComplete event. Default: false
+     */
     initialOnly: boolean
+    /**
+     * If true, will trigger the listener after the next isBusy=false event that comes after LoadComplete. Default: true
+     */
+    waitForBusyOver: boolean
   }>
 ) {
-  const { initialOnly } = options || {}
+  const {
+    ui: { viewerBusy }
+  } = useInjectedViewerState()
+  const { initialOnly, waitForBusyOver = true } = options || {}
 
   const hasRun = ref(false)
 
-  const cancel = useViewerEventListener(ViewerEvent.LoadComplete, () => {
-    if (!initialOnly || !hasRun.value) {
-      listener({ isInitial: !hasRun.value })
+  const cancel = useViewerEventListener(ViewerEvent.LoadComplete, async () => {
+    if (initialOnly && hasRun.value) {
+      cancel()
+      return
     }
 
+    try {
+      await (waitForBusyOver
+        ? Promise.race([until(viewerBusy).toBe(false), timeoutAt(1000)])
+        : Promise.resolve())
+    } catch (e) {
+      if (!(e instanceof TimeoutError)) throw e
+      console.warn('Waiting for viewer business to be over post-LoadComplete timed out')
+    }
+
+    listener({ isInitial: !hasRun.value })
     hasRun.value = true
+
     if (initialOnly) cancel()
   })
 }
