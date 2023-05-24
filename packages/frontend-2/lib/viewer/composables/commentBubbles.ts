@@ -298,7 +298,7 @@ export function useViewerThreadTracking() {
   const {
     ui: {
       threads: { openThread },
-      camera: { position }
+      camera: { position, target }
     }
   } = state
 
@@ -327,7 +327,7 @@ export function useViewerThreadTracking() {
           camera: {
             ...old.ui.camera,
             position: position.value.toArray(),
-            target: position.value.toArray()
+            target: target.value.toArray()
           }
         }
       }

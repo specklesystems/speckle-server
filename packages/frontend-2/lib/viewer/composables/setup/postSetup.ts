@@ -1,6 +1,11 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import { StringPropertyInfo, SunLightConfiguration, ViewerEvent } from '@speckle/viewer'
+import {
+  PropertyInfo,
+  StringPropertyInfo,
+  SunLightConfiguration,
+  ViewerEvent
+} from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import {
   Comment,
@@ -36,6 +41,7 @@ import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
+import { Nullable } from '@speckle/shared'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -446,6 +452,16 @@ function useViewerFiltersIntegration() {
     { immediate: true, flush: 'sync' }
   )
 
+  const syncColorFilterToViewer = (
+    filter: Nullable<PropertyInfo>,
+    isApplied: boolean
+  ) => {
+    const targetFilter = filter || speckleTypeFilter.value
+
+    if (isApplied && targetFilter) instance.setColorFilter(targetFilter)
+    if (!isApplied) instance.removeColorFilter()
+  }
+
   watch(
     () =>
       <const>[
@@ -454,10 +470,7 @@ function useViewerFiltersIntegration() {
       ],
     (newVal) => {
       const [filter, isApplied] = newVal
-      const targetFilter = filter || speckleTypeFilter.value
-
-      if (isApplied && targetFilter) instance.setColorFilter(targetFilter)
-      if (!isApplied) instance.removeColorFilter()
+      syncColorFilterToViewer(filter, isApplied)
     },
     { immediate: true, flush: 'sync' }
   )
@@ -467,9 +480,7 @@ function useViewerFiltersIntegration() {
       const targetFilter =
         filters.propertyFilter.filter.value || speckleTypeFilter.value
       const isApplied = filters.propertyFilter.isApplied.value
-
-      if (isApplied && targetFilter) instance.setColorFilter(targetFilter)
-      if (!isApplied) instance.removeColorFilter()
+      syncColorFilterToViewer(targetFilter, isApplied)
     },
     { initialOnly: true }
   )
