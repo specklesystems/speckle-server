@@ -63,6 +63,12 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
     return this
   }
 
+  public copyOriginal(source) {
+    super.copy(source)
+    this.copyFrom(source)
+    return this
+  }
+
   /** Called by three.js render loop */
   public onBeforeRender(_this, scene, camera, geometry, object, group) {
     SpeckleBasicMaterial.matBuff.copy(camera.matrixWorldInverse)

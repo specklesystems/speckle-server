@@ -1422,34 +1422,33 @@ export default class SpeckleRenderer {
     ;(this.batcher.batches[batchId] as MeshBatch).mesh.transformsDirty = true
   }
 
-  public adnotate() {
+  public async adnotate() {
     const batches: Batch[] = Object.values(this.batcher.batches)
     let accumulator = 0
     let tris = 0
+    let count = 0
     for (let k = 0; k < batches.length; k++) {
       const rvs = batches[k].renderViews
       for (let i = 0; i < rvs.length; i++) {
         const speckleObject = this.viewer.getWorldTree().findId(rvs[i].renderData.id)
           .model.raw
         const text = new SpeckleText()
-        text.layers.set(ObjectLayers.PROPS)
         const start = performance.now()
-        text.setText(speckleObject.speckle_type.split('.').reverse()[0], 1)
+        await text.setText(speckleObject.speckle_type.split('.').reverse()[0], 1)
         tris += text.triCount
         accumulator += performance.now() - start
         const objSize = rvs[i].aabb.getSize(new Vector3())
         const objCenter = rvs[i].aabb.getCenter(new Vector3())
-        text.transform(
-          new Matrix4().makeTranslation(
-            objCenter.x,
-            objCenter.y + objSize.y * 0.5,
-            objCenter.z
-          )
+        text.setPosition(
+          new Vector3(objCenter.x, objCenter.y + objSize.y * 0.5, objCenter.z)
         )
-        this.rootGroup.add(text)
+        this.rootGroup.add(text.text)
+        this.rootGroup.add(text.background)
+        count++
       }
     }
     console.warn(accumulator)
     console.warn(tris / 3)
+    console.warn(count)
   }
 }
