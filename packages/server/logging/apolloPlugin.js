@@ -20,9 +20,6 @@ module.exports = {
   requestDidStart(ctx) {
     return {
       didResolveOperation(ctx) {
-        // TODO: Re-enable
-        return
-
         let logger = ctx.context.log || graphqlLogger
 
         const op = `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
@@ -58,8 +55,6 @@ module.exports = {
         ctx.context.log = logger
       },
       didEncounterErrors(ctx) {
-        // TODO: Re-enable
-        return
         let logger = ctx.context.log || graphqlLogger
 
         for (const err of ctx.errors) {
@@ -74,9 +69,10 @@ module.exports = {
             (err instanceof GraphQLError && err.extensions?.code === 'FORBIDDEN') ||
             err instanceof ApolloError
           ) {
-            logger.info(err, 'graphql error')
+            // TODO: Reenable
+            // logger.info(err, 'graphql error')
           } else {
-            logger.error(err, 'graphql error')
+            // logger.error(err, 'graphql error')
           }
 
           Sentry.withScope((scope) => {
