@@ -5,7 +5,8 @@ import {
   ApolloLink,
   InMemoryCache,
   split,
-  TypePolicies
+  TypePolicies,
+  from
 } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { WebSocketLink } from '@apollo/client/link/ws'
@@ -22,6 +23,8 @@ import {
 import { merge } from 'lodash'
 import { statePolicies as commitObjectViewerStatePolicies } from '@/main/lib/viewer/commit-object-viewer/stateManagerCore'
 import { Optional } from '@speckle/shared'
+import { onError } from '@apollo/client/link/error'
+import { registerError, isErrorState } from '@/main/lib/core/utils/appErrorStateManager'
 
 // Name of the localStorage item
 const AUTH_TOKEN = LocalStorageKeys.AuthToken
@@ -197,6 +200,7 @@ function createLink(wsClient?: SubscriptionClient): ApolloLink {
   })
   let link = authLink.concat(httpLink)
 
+  // WS link
   if (wsClient) {
     const wsLink = new WebSocketLink(wsClient)
     link = split(
@@ -209,9 +213,27 @@ function createLink(wsClient?: SubscriptionClient): ApolloLink {
       wsLink,
       link
     )
+
+    // Stopping WS when in error state
+    wsClient.use([
+      {
+        applyMiddleware: (_opt, next) => {
+          if (isErrorState()) {
+            return // never invokes next() - essentially stuck
+          }
+
+          next()
+        }
+      }
+    ])
   }
 
-  return link
+  // Global error handling
+  const errorLink = onError(() => {
+    registerError()
+  })
+
+  return from([errorLink, link])
 }
 
 function createApolloClient() {
