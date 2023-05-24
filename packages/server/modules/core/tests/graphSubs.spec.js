@@ -19,6 +19,9 @@ const {
 } = require('@/modules/core/services/streams/streamAccessService')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 const { getFreeServerPort } = require('@/test/serverHelper')
+const { useNewWsImplementation } = require('@/modules/shared/helpers/envHelper')
+const { createClient } = require('graphql-ws')
+const { GraphQLWsLink } = require('@apollo/client/link/subscriptions')
 
 let addr
 let wsAddr
@@ -44,21 +47,33 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
   /** @type {import('child_process').ChildProcessWithoutNullStreams} */
   let serverProcess
 
-  const getWsClient = (wsurl, authToken) => {
-    const client = new SubscriptionClient(
-      wsurl,
-      {
-        reconnect: true,
-        connectionParams: { headers: { Authorization: authToken } }
-      },
-      ws
-    )
-    return client
+  const getWsLink = (wsUrl, authToken) => {
+    if (useNewWsImplementation()) {
+      const link = new GraphQLWsLink(
+        createClient({
+          url: wsUrl,
+          connectionParams: { headers: { Authorization: authToken } },
+          webSocketImpl: ws
+        })
+      )
+      return link
+    } else {
+      const client = new SubscriptionClient(
+        wsUrl,
+        {
+          reconnect: true,
+          connectionParams: { headers: { Authorization: authToken } }
+        },
+        ws
+      )
+      const link = new WebSocketLink(client)
+      return link
+    }
   }
 
   const createSubscriptionObservable = (wsurl, authToken, query, variables) => {
     authToken = authToken || userA.token
-    const link = new WebSocketLink(getWsClient(wsurl, authToken))
+    const link = getWsLink(wsurl, authToken)
     return execute(link, { query, variables })
   }
 
@@ -370,10 +385,15 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
         }
       `
       const client = createSubscriptionObservable(wsAddr, 'faketoken123', query)
-      const consumer = client.subscribe((eventData) => {
-        expect(eventData.data).to.not.exist
-        eventNum++
-      })
+      const consumer = client.subscribe(
+        (eventData) => {
+          expect(eventData.data).to.not.exist
+          eventNum++
+        },
+        (error) => {
+          expect(error.message).to.contain('need a token to subscribe')
+        }
+      )
 
       await sleep(500)
 

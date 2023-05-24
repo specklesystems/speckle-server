@@ -156,3 +156,7 @@ export function speckleAutomateUrl() {
     process.env.SPECKLE_AUTOMATE_URL || 'https://automate.speckle.systems'
   return automateUrl
 }
+
+export function useNewWsImplementation() {
+  return ['1', 'true'].includes(process.env.NEW_WS_IMPLEMENTATION || 'false')
+}

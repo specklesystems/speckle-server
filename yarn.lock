@@ -11168,6 +11168,7 @@ __metadata:
     eslint-plugin-vue: ^9.5.1
     eslint-plugin-vuejs-accessibility: ^1.2.0
     graphql: ^16.6.0
+    graphql-ws: ^5.13.1
     jest: 27
     js-cookie: ^3.0.1
     lodash-es: ^4.17.21
@@ -11257,6 +11258,7 @@ __metadata:
     eslint-plugin-vue: ^9.2.0
     graphql: ^15.0.0
     graphql-tag: ^2.12.6
+    graphql-ws: ^5.13.1
     lodash: ^4.17.21
     lodash-es: ^4.17.21
     numeral: ^2.0.6
@@ -11427,6 +11429,7 @@ __metadata:
     graphql-redis-subscriptions: ^2.2.2
     graphql-scalars: ^1.18.0
     graphql-subscriptions: ^2.0.0
+    graphql-ws: ^5.13.1
     http-proxy-middleware: v3.0.0-beta.0
     ioredis: ^5.2.2
     knex: ^2.4.1
@@ -11471,7 +11474,7 @@ __metadata:
     typescript: ^4.6.4
     undici: ^5.19.1
     verror: ^1.10.1
-    ws: ^7.5.7
+    ws: ^8.13.0
     xml-escape: ^1.1.0
     yargs: ^17.3.1
     zxcvbn: ^4.4.2
@@ -26636,6 +26639,15 @@ __metadata:
   peerDependencies:
     graphql: ">=0.11 <=16"
   checksum: 2c94b06c1919217dc15a0556474673de7aabcc7179a2982a87ded51856c105e4f4ee6d54a6c135a0a7f55d85a5997a6a15cff514959258885814adec6a61ff00
+  languageName: node
+  linkType: hard
+
+"graphql-ws@npm:^5.13.1":
+  version: 5.13.1
+  resolution: "graphql-ws@npm:5.13.1"
+  peerDependencies:
+    graphql: ">=0.11 <=16"
+  checksum: 7a820c15d6d99f1b4c40b928131899a66edf2fdbca3db09a03dd7f6bde1e81f0a76ccda8e26254aabb0dc30f2a8c133cb0c5c5627c2dde8d032a8dc5a21f0ed3
   languageName: node
   linkType: hard
 
@@ -44578,7 +44590,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:^5.2.0 || ^6.0.0 || ^7.0.0, ws@npm:^7.5.7":
+"ws@npm:^5.2.0 || ^6.0.0 || ^7.0.0":
   version: 7.5.7
   resolution: "ws@npm:7.5.7"
   peerDependencies:
@@ -44614,6 +44626,21 @@ __metadata:
     utf-8-validate:
       optional: true
   checksum: c3c100a181b731f40b7f2fddf004aa023f79d64f489706a28bc23ff88e87f6a64b3c6651fbec3a84a53960b75159574d7a7385709847a62ddb7ad6af76f49138
+  languageName: node
+  linkType: hard
+
+"ws@npm:^8.13.0":
+  version: 8.13.0
+  resolution: "ws@npm:8.13.0"
+  peerDependencies:
+    bufferutil: ^4.0.1
+    utf-8-validate: ">=5.0.2"
+  peerDependenciesMeta:
+    bufferutil:
+      optional: true
+    utf-8-validate:
+      optional: true
+  checksum: 53e991bbf928faf5dc6efac9b8eb9ab6497c69feeb94f963d648b7a3530a720b19ec2e0ec037344257e05a4f35bd9ad04d9de6f289615ffb133282031b18c61c
   languageName: node
   linkType: hard
 

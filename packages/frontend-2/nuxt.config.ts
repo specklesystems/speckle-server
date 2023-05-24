@@ -34,7 +34,8 @@ export default defineNuxtConfig({
     public: {
       apiOrigin: 'UNDEFINED',
       mixpanelApiHost: 'UNDEFINED',
-      mixpanelTokenId: 'UNDEFINED'
+      mixpanelTokenId: 'UNDEFINED',
+      newWsImplementation: false
     }
   },
 
