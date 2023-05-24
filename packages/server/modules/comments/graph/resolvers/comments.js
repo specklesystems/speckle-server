@@ -569,6 +569,8 @@ module.exports = {
         ViewerSubscriptions.UserActivityBroadcasted,
         async (payload, variables, context) => {
           const target = variables.target
+          const sessionId = variables.sessionId
+
           if (!target.resourceIdString.trim().length) return false
           if (payload.projectId !== target.projectId) return false
 
@@ -584,7 +586,10 @@ module.exports = {
             throw new ApolloForbiddenError('You are not authorized.')
 
           // dont report users activity to himself
-          if (context.userId && context.userId === payload.userId) {
+          if (
+            sessionId &&
+            sessionId === payload.viewerUserActivityBroadcasted.sessionId
+          ) {
             return false
           }
 

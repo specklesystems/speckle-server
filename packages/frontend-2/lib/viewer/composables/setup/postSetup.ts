@@ -264,7 +264,7 @@ function useViewerCameraIntegration() {
     viewer: { instance },
     ui: {
       camera: { isOrthoProjection, position, target },
-      spotlightUserId
+      spotlightUserSessionId
     }
   } = useInjectedViewerState()
 
@@ -297,7 +297,7 @@ function useViewerCameraIntegration() {
       const cameraManuallyChanged = loadCameraDataFromViewer()
       if (cameraManuallyChanged) {
         // Stop following
-        spotlightUserId.value = null
+        spotlightUserSessionId.value = null
       }
     }
     // { debounceWait: 100 }

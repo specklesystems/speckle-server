@@ -133,7 +133,7 @@ export async function convertLegacyDataToState(
           newThreadEditor: true
         }
       },
-      spotlightUserId: null,
+      spotlightUserSessionId: null,
       explodeFactor: 0,
       filters: {
         isolatedObjectIds: data.filters?.isolatedIds || [],

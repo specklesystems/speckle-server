@@ -42,7 +42,7 @@ export function useStateSerialization() {
             newThreadEditor: state.ui.threads.openThread.newThreadEditor.value
           }
         },
-        spotlightUserId: state.ui.spotlightUserId.value,
+        spotlightUserSessionId: state.ui.spotlightUserSessionId.value,
         filters: {
           isolatedObjectIds: state.ui.filters.isolatedObjectIds.value,
           hiddenObjectIds: state.ui.filters.hiddenObjectIds.value,

@@ -31,7 +31,7 @@ export type SerializedViewerState = {
         newThreadEditor: boolean
       }
     }
-    spotlightUserId: Nullable<string>
+    spotlightUserSessionId: Nullable<string>
     filters: {
       isolatedObjectIds: string[]
       hiddenObjectIds: string[]
@@ -89,9 +89,14 @@ export const formatSerializedViewerState = (
   /**
    * v1 -> v1.1
    * - ui.filters.propertyFilter.isApplied field added
+   * - ui.spotlightUserId swapped for spotlightUserSessionId
    */
   if (!state.ui.filters.propertyFilter.isApplied) {
     state.ui.filters.propertyFilter.isApplied = false
+  }
+
+  if (!state.ui.spotlightUserSessionId) {
+    state.ui.spotlightUserSessionId = null
   }
 
   return state

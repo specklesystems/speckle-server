@@ -150,7 +150,8 @@ export function useViewerUserActivityTracking(params: {
         projectId: projectId.value,
         resourceIdString: resourceIdString.value,
         loadedVersionsOnly: threadFilters.value.loadedVersionsOnly
-      }
+      },
+      sessionId: sessionId.value
     }),
     () => ({
       enabled: isLoggedIn.value
@@ -158,7 +159,7 @@ export function useViewerUserActivityTracking(params: {
   )
 
   const users = ref({} as Record<string, UserActivityModel>)
-  const { spotlightUserId } = useInjectedViewerInterfaceState()
+  const { spotlightUserSessionId } = useInjectedViewerInterfaceState()
   const spotlightTracker = useViewerSpotlightTracking()
 
   onUserActivity((res) => {
@@ -177,7 +178,8 @@ export function useViewerUserActivityTracking(params: {
         type: ToastNotificationType.Info
       })
 
-      if (spotlightUserId.value === event.userId) spotlightUserId.value = null // ensure we're not spotlighting disconnected users
+      if (spotlightUserSessionId.value === incomingSessionId)
+        spotlightUserSessionId.value = null // ensure we're not spotlighting disconnected users
       delete users.value[incomingSessionId]
       return
     }
@@ -211,7 +213,7 @@ export function useViewerUserActivityTracking(params: {
 
     users.value[incomingSessionId] = userData
 
-    if (spotlightUserId.value === userData.userId) {
+    if (spotlightUserSessionId.value === userData.sessionId) {
       spotlightTracker(userData)
     }
   })
@@ -317,13 +319,13 @@ export function useViewerUserActivityTracking(params: {
 
   // Removes object highlights from user selection on tracking stop;
   // Sets initial user state on tracking start
-  watch(spotlightUserId, (newVal) => {
+  watch(spotlightUserSessionId, (newVal) => {
     if (!newVal) {
       state.ui.highlightedObjectIds.value = []
       return
     }
 
-    const user = Object.values(users.value).find((u) => u.userId === newVal)
+    const user = Object.values(users.value).find((u) => u.sessionId === newVal)
     if (!user) return
     spotlightTracker(user)
   })
@@ -363,6 +365,7 @@ export function useViewerThreadTypingTracking(threadId: MaybeRef<string>) {
   const usersTyping = ref([] as UserTypingInfo[])
 
   const {
+    sessionId,
     projectId,
     resources: {
       request: { resourceIdString, threadFilters }
@@ -376,7 +379,8 @@ export function useViewerThreadTypingTracking(threadId: MaybeRef<string>) {
         projectId: projectId.value,
         resourceIdString: resourceIdString.value,
         loadedVersionsOnly: threadFilters.value.loadedVersionsOnly
-      }
+      },
+      sessionId: sessionId.value
     }),
     () => ({
       enabled: isLoggedIn.value

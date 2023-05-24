@@ -209,7 +209,7 @@ export type InjectableViewerState = Readonly<{
       open: (id: string) => void
       hideBubbles: Ref<boolean>
     }
-    spotlightUserId: Ref<Nullable<string>>
+    spotlightUserSessionId: Ref<Nullable<string>>
     filters: {
       isolatedObjectIds: Ref<string[]>
       hiddenObjectIds: Ref<string[]>
@@ -739,7 +739,7 @@ function setupInterfaceState(
   })
 
   const highlightedObjectIds = ref([] as string[])
-  const spotlightUserId = ref(null as Nullable<string>)
+  const spotlightUserSessionId = ref(null as Nullable<string>)
 
   const lightConfig = ref(DefaultLightConfiguration)
   const explodeFactor = ref(0)
@@ -761,7 +761,7 @@ function setupInterfaceState(
       selection,
       lightConfig,
       explodeFactor,
-      spotlightUserId,
+      spotlightUserSessionId,
       viewerBusy,
       threads: {
         items: commentThreads,
