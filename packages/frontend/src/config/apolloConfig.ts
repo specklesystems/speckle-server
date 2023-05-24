@@ -23,12 +23,8 @@ import {
 import { merge } from 'lodash'
 import { statePolicies as commitObjectViewerStatePolicies } from '@/main/lib/viewer/commit-object-viewer/stateManagerCore'
 import { Optional } from '@speckle/shared'
-import { Observability } from '@speckle/shared'
 import { onError } from '@apollo/client/link/error'
-
-let subscriptionsStopped = false
-const errorRpm = Observability.simpleRpmCounter()
-const STOP_SUBSCRIPTIONS_AT_ERRORS_PER_MIN = 100
+import { registerError, isErrorState } from '@/main/lib/core/utils/appErrorStateManager'
 
 // Name of the localStorage item
 const AUTH_TOKEN = LocalStorageKeys.AuthToken
@@ -217,28 +213,24 @@ function createLink(wsClient?: SubscriptionClient): ApolloLink {
       wsLink,
       link
     )
+
+    // Stopping WS when in error state
+    wsClient.use([
+      {
+        applyMiddleware: (_opt, next) => {
+          if (isErrorState()) {
+            return // never invokes next() - essentially stuck
+          }
+
+          next()
+        }
+      }
+    ])
   }
 
   // Global error handling
   const errorLink = onError(() => {
-    const rpm = errorRpm.hit()
-    if (
-      wsClient &&
-      !subscriptionsStopped &&
-      rpm > STOP_SUBSCRIPTIONS_AT_ERRORS_PER_MIN
-    ) {
-      subscriptionsStopped = true
-      console.error(
-        `Too many errors (${rpm} errors per minute), stopping subscriptions!`
-      )
-      wsClient.use([
-        {
-          applyMiddleware: () => {
-            // never invokes next() - essentially stuck
-          }
-        }
-      ])
-    }
+    registerError()
   })
 
   return from([errorLink, link])
