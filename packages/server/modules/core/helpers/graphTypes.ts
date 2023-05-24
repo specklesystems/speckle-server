@@ -9,6 +9,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { BranchRecord, CommitRecord, StreamRecord } from '@/modules/core/helpers/types'
+import { Nullable } from '@speckle/shared'
 
 /**
  * The types of objects we return in resolvers often don't have the exact type as the object in the schema.
@@ -45,7 +46,7 @@ export type CommitGraphQLReturn = Commit & {
    * Commit DB schema actually has this as the author ID column, so we return it
    * for field resolvers to be able to resolve extra things about the author (like name/avatar)
    */
-  author: string
+  author: Nullable<string>
 }
 
 export type ProjectGraphQLReturn = StreamRecord &
