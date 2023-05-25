@@ -417,4 +417,11 @@ watch(
     }
   }
 )
+
+onMounted(() => {
+  if (isExpanded.value) {
+    // update won't emit if thread was mounted already expanded, so we emit this to close any open thread editors
+    emit('update:expanded', true)
+  }
+})
 </script>

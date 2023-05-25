@@ -34,6 +34,7 @@
             prompt="Press enter to comment"
             max-height="300px"
             autofocus
+            :disabled="isPostingNewThread"
             @submit="() => onSubmit()"
             @update:model-value="onInputUpdated"
           />
@@ -44,12 +45,14 @@
                 :icon-left="PaperClipIcon"
                 hide-text
                 text
+                :disabled="isPostingNewThread"
                 @click="editor?.openFilePicker"
               />
 
               <FormButton
                 :icon-left="PaperAirplaneIcon"
                 hide-text
+                :loading="isPostingNewThread"
                 @click="() => onSubmit()"
               />
             </div>
@@ -92,6 +95,7 @@ const { onInputUpdated, updateIsTyping } = useIsTypingUpdateEmitter()
 const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
 const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
 const threadContainer = ref(null as Nullable<HTMLElement>)
+const isPostingNewThread = ref(false)
 
 // const { style } = useExpandedThreadResponsiveLocation({
 //   threadContainer,
@@ -121,17 +125,22 @@ const onSubmit = (comment?: CommentEditorValue) => {
   const content = convertCommentEditorValueToInput(commentValue.value)
   if (!isValidCommentContentInput(content)) return
 
-  // Intentionally not awaiting so that we emit close immediately
-  // createThread(content, props.modelValue.clickLocation)
+  isPostingNewThread.value = true
   createThread(content)
+    .then((newThread) => {
+      const threadId = newThread?.id
+      if (!threadId) return
+
+      // switch to new thread
+      ui.threads.open(threadId)
+    })
+    .finally(() => (isPostingNewThread.value = false))
   updateIsTyping(false)
 
   // Marking all uploads as in use to prevent cleanup
   comment.attachments?.forEach((a) => {
     a.inUse = true
   })
-
-  emit('close')
 }
 
 onKeyDown('Escape', () => {
