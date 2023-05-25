@@ -276,14 +276,16 @@ module.exports = {
     async create(_parent, args, ctx) {
       await authorizeProjectCommentsAccess({
         projectId: args.input.projectId,
-        authCtx: ctx
+        authCtx: ctx,
+        requireProjectRole: true
       })
       return await createCommentThreadAndNotify(args.input, ctx.userId)
     },
     async reply(_parent, args, ctx) {
       await authorizeCommentAccess({
         commentId: args.input.threadId,
-        authCtx: ctx
+        authCtx: ctx,
+        requireProjectRole: true
       })
       return await createCommentReplyAndNotify(args.input, ctx.userId)
     },

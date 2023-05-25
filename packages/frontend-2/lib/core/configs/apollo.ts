@@ -277,7 +277,11 @@ function createLink(params: {
   const { registerError, isErrorState } = useAppErrorState()
 
   const errorLink = onError((res) => {
-    console.error('Apollo Client error', res)
+    const isSubTokenMissingError = (res.networkError?.message || '').includes(
+      'need a token to subscribe'
+    )
+
+    if (!isSubTokenMissingError) console.error('Apollo Client error', res)
 
     const { networkError } = res
     if (networkError && isServerError(networkError)) {

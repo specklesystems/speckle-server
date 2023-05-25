@@ -27,6 +27,7 @@ import {
   useApplySerializedState,
   useStateSerialization
 } from '~~/lib/viewer/composables/serialization'
+import { Merge } from 'type-fest'
 
 graphql(`
   fragment ViewerCommentBubblesData on Comment {
@@ -118,7 +119,10 @@ export function useViewerNewThreadBubble(params: {
   return { buttonState, closeNewThread }
 }
 
-export type CommentBubbleModel = LoadedCommentThread & {
+export type CommentBubbleModel = Merge<
+  LoadedCommentThread,
+  { viewerState: Nullable<SpeckleViewer.ViewerState.SerializedViewerState> }
+> & {
   isExpanded: boolean
   isOccluded: boolean
   style: Partial<CSSProperties> & { x?: number; y?: number }
@@ -138,9 +142,7 @@ export function useViewerCommentBubblesProjection(params: {
     parentEl,
     points: computed(() => Object.values(commentThreads.value)),
     pointLocationGetter: (t) => {
-      const state = SpeckleViewer.ViewerState.isSerializedViewerState(t.viewerState)
-        ? t.viewerState
-        : null
+      const state = t.viewerState
       if (!state?.ui.selection) return undefined
 
       const selection = state.ui.selection
@@ -213,7 +215,12 @@ export function useViewerCommentBubbles(
                   style: {}
                 }),
             ...item,
-            isExpanded: !!(focusedThreadId.value && id === focusedThreadId.value)
+            isExpanded: !!(focusedThreadId.value && id === focusedThreadId.value),
+            viewerState: SpeckleViewer.ViewerState.isSerializedViewerState(
+              item.viewerState
+            )
+              ? item.viewerState
+              : null
           }
           return results
         },
@@ -306,8 +313,31 @@ export function useViewerThreadTracking() {
     null as Nullable<SpeckleViewer.ViewerState.SerializedViewerState>
   )
 
-  const refocus = (commentState: SpeckleViewer.ViewerState.SerializedViewerState) => {
-    applyState(commentState, StateApplyMode.ThreadOpen)
+  const refocus = (
+    commentState: SpeckleViewer.ViewerState.SerializedViewerState,
+    isOldState = false
+  ) => {
+    const finalState = {
+      ...commentState,
+      ui: {
+        ...commentState.ui,
+        threads: {
+          ...commentState.ui.threads,
+          openThread: isOldState
+            ? {
+                threadId: null,
+                newThreadEditor: false,
+                isTyping: false
+              }
+            : commentState.ui.threads.openThread
+        }
+      }
+    }
+
+    applyState(
+      finalState,
+      isOldState ? StateApplyMode.Reset : StateApplyMode.ThreadOpen
+    )
   }
 
   // Do this once viewer loads things
@@ -342,10 +372,13 @@ export function useViewerThreadTracking() {
       if (newState && SpeckleViewer.ViewerState.isSerializedViewerState(newState)) {
         refocus(newState)
       } else if (oldState.value) {
-        refocus(oldState.value)
+        refocus(oldState.value, true)
+        console.log(oldState.value)
       }
 
-      oldState.value = newOldState
+      if (!oldThread?.id) {
+        oldState.value = newOldState
+      }
     }
   })
 }

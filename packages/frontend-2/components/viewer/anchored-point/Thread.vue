@@ -109,7 +109,14 @@
             class="pl-3 pr-1 py-1 mt-2 flex items-center justify-between text-xs text-primary bg-primary-muted"
           >
             <span>Conversation started in a different version.</span>
-            <ExclamationCircleIcon class="w-4 h-4" />
+            <FormButton
+              v-tippy="'Load thread context'"
+              size="xs"
+              text
+              @click="onLoadThreadContext"
+            >
+              <ArrowDownCircleIcon class="w-5 h-5" />
+            </FormButton>
           </div>
           <ViewerAnchoredPointThreadComment
             v-for="comment in comments"
@@ -126,7 +133,7 @@
           {{ isTypingMessage }}
         </div>
         <ViewerAnchoredPointThreadNewReply
-          v-if="!modelValue.archived"
+          v-if="!modelValue.archived && canReply"
           :model-value="modelValue"
           class="mt-2"
           @submit="onNewReply"
@@ -145,7 +152,7 @@ import {
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
-import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
+import { ArrowDownCircleIcon } from '@heroicons/vue/20/solid'
 import { ensureError, Nullable, Roles } from '@speckle/shared'
 import { onKeyDown, useClipboard, useDraggable } from '@vueuse/core'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'
@@ -156,6 +163,7 @@ import {
 } from '~~/lib/viewer/composables/commentBubbles'
 import {
   useArchiveComment,
+  useCheckViewerCommentingAccess,
   useMarkThreadViewed
 } from '~~/lib/viewer/composables/commentManagement'
 import {
@@ -166,6 +174,10 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { ResourceType } from '~~/lib/common/generated/gql/graphql'
 import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
+import {
+  StateApplyMode,
+  useApplySerializedState
+} from '~~/lib/viewer/composables/serialization'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -190,10 +202,12 @@ const {
 } = useInjectedViewerState()
 
 const { projectId } = useInjectedViewerState()
+const canReply = useCheckViewerCommentingAccess()
 
 const markThreadViewed = useMarkThreadViewed()
 const { usersTyping } = useViewerThreadTypingTracking(threadId)
 const { ellipsis, controls } = useAnimatingEllipsis()
+const applyState = useApplySerializedState()
 
 const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
@@ -339,6 +353,13 @@ const onCommentMounted = () => {
 
 const onThreadClick = () => {
   changeExpanded(!isExpanded.value)
+}
+
+const onLoadThreadContext = () => {
+  const state = props.modelValue.viewerState
+  if (!state) return
+
+  applyState(state, StateApplyMode.TheadFullContextOpen)
 }
 
 const onCopyLink = async () => {

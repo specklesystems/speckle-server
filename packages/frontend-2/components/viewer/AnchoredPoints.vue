@@ -5,6 +5,7 @@
   >
     <!-- Add new thread bubble -->
     <ViewerAnchoredPointNewThread
+      v-if="canPostComment"
       v-model="buttonState"
       class="z-[13]"
       @close="closeNewThread"
@@ -102,6 +103,7 @@ import {
   useViewerCommentBubblesProjection,
   useViewerNewThreadBubble
 } from '~~/lib/viewer/composables/commentBubbles'
+import { useCheckViewerCommentingAccess } from '~~/lib/viewer/composables/commentManagement'
 import {
   useInjectedViewerInterfaceState,
   useInjectedViewerState
@@ -111,6 +113,7 @@ const parentEl = ref(null as Nullable<HTMLElement>)
 const { isLoggedIn } = useActiveUser()
 const { sessionId } = useInjectedViewerState()
 const { users } = useViewerUserActivityTracking({ parentEl })
+const canPostComment = useCheckViewerCommentingAccess()
 
 const followers = computed(() => {
   if (!isLoggedIn.value) return []

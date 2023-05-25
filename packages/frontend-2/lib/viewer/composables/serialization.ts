@@ -80,7 +80,8 @@ export function useStateSerialization() {
 export enum StateApplyMode {
   Spotlight,
   ThreadOpen,
-  TheadFullContextOpen
+  TheadFullContextOpen,
+  Reset
 }
 
 export function useApplySerializedState() {
@@ -182,12 +183,22 @@ export function useApplySerializedState() {
       mode === StateApplyMode.Spotlight ? filters.selectedObjectIds.slice() : []
 
     if (
-      [StateApplyMode.Spotlight, StateApplyMode.TheadFullContextOpen].includes(mode)
+      [
+        StateApplyMode.Spotlight,
+        StateApplyMode.TheadFullContextOpen,
+        StateApplyMode.Reset
+      ].includes(mode)
     ) {
       resourceIdString.value = state.resources.request.resourceIdString
     }
 
-    if (mode === StateApplyMode.Spotlight) {
+    if (
+      [
+        StateApplyMode.Spotlight,
+        StateApplyMode.TheadFullContextOpen,
+        StateApplyMode.Reset
+      ].includes(mode)
+    ) {
       urlHashState.focusedThreadId.value = state.ui.threads.openThread.threadId
     }
 
