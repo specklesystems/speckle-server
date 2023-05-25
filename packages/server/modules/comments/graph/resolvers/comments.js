@@ -619,7 +619,7 @@ module.exports = {
             getViewerResourceItemsUngrouped(target)
           ])
 
-          if (!stream.allowPublicComments && !stream.role)
+          if (!(stream.isDiscoverable || stream.isPublic) && !stream.role)
             throw new ApolloForbiddenError('You are not authorized.')
 
           if (!target.resourceIdString) {
