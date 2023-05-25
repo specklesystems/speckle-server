@@ -733,7 +733,7 @@ function setupInterfaceState(
   const hasAnyFiltersApplied = computed(() => {
     if (isolatedObjectIds.value.length) return true
     if (hiddenObjectIds.value.length) return true
-    if (propertyFilter.value && isPropertyFilterApplied.value) return true
+    if (propertyFilter.value || isPropertyFilterApplied.value) return true
     if (explodeFactor.value !== 0) return true
     return false
   })
