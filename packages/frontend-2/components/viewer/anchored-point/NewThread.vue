@@ -36,7 +36,7 @@
             autofocus
             :disabled="isPostingNewThread"
             @submit="() => onSubmit()"
-            @update:model-value="onInputUpdated"
+            @keydown="onKeyDownHandler"
           />
           <div class="w-full flex justify-end p-2 space-x-2">
             <div class="space-x-2">
@@ -90,7 +90,8 @@ const props = defineProps<{
 }>()
 
 const ui = useInjectedViewerInterfaceState()
-const { onInputUpdated, updateIsTyping } = useIsTypingUpdateEmitter()
+const { onKeyDownHandler, updateIsTyping, pauseAutomaticUpdates } =
+  useIsTypingUpdateEmitter()
 
 const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
 const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
@@ -126,16 +127,21 @@ const onSubmit = (comment?: CommentEditorValue) => {
   if (!isValidCommentContentInput(content)) return
 
   isPostingNewThread.value = true
+  pauseAutomaticUpdates.value = true
+  updateIsTyping(true) // so that user shows up as typing until the new bubble appears
   createThread(content)
-    .then((newThread) => {
+    .then(async (newThread) => {
       const threadId = newThread?.id
       if (!threadId) return
 
       // switch to new thread
-      ui.threads.open(threadId)
+      await ui.threads.open(threadId)
     })
-    .finally(() => (isPostingNewThread.value = false))
-  updateIsTyping(false)
+    .finally(() => {
+      isPostingNewThread.value = false
+      updateIsTyping(false)
+      pauseAutomaticUpdates.value = false
+    })
 
   // Marking all uploads as in use to prevent cleanup
   comment.attachments?.forEach((a) => {

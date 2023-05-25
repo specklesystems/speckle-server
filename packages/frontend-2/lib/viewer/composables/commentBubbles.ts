@@ -21,7 +21,7 @@ import {
   useResponsiveHorizontalDirectionCalculation
 } from '~~/lib/common/composables/window'
 import { useViewerUserActivityBroadcasting } from '~~/lib/viewer/composables/activity'
-import { useIntervalFn } from '@vueuse/core'
+import { until, useIntervalFn } from '@vueuse/core'
 import {
   StateApplyMode,
   useApplySerializedState,
@@ -193,9 +193,13 @@ export function useViewerCommentBubbles(
     focusedThreadId.value = null
   }
 
-  const open = (id: string) => {
+  const open = async (id: string) => {
     if (id === focusedThreadId.value) return
     focusedThreadId.value = id
+    await Promise.all([
+      until(focusedThreadId).toBe(id),
+      until(openThread).toMatch((t) => t?.id === id)
+    ])
   }
 
   // Shallow watcher, only for mapping `commentThreadsBase` -> `commentThreads`
@@ -373,7 +377,6 @@ export function useViewerThreadTracking() {
         refocus(newState)
       } else if (oldState.value) {
         refocus(oldState.value, true)
-        console.log(oldState.value)
       }
 
       if (!oldThread?.id) {
@@ -429,35 +432,48 @@ export function useExpandedThreadResponsiveLocation(params: {
 
 export function useIsTypingUpdateEmitter() {
   const {
-    threads: {
-      openThread: { isTyping }
+    ui: {
+      threads: {
+        openThread: { isTyping }
+      }
     }
-  } = useInjectedViewerInterfaceState()
+  } = useInjectedViewerState()
   const { emitViewing } = useViewerUserActivityBroadcasting()
 
-  const debouncedMarkNoLongerTyping = debounce(() => (isTyping.value = false), 7000)
+  const debouncedMarkNoLongerTyping = debounce(
+    () => automaticUpdateIsTyping(false),
+    7000
+  )
+  const pauseAutomaticUpdates = ref(false)
+
+  const automaticUpdateIsTyping = (newVal: boolean) => {
+    if (pauseAutomaticUpdates.value) return
+    updateIsTyping(newVal)
+  }
 
   const updateIsTyping = (newVal: boolean) => {
     if (newVal === isTyping.value) return
-
     isTyping.value = newVal
-    emitViewing()
   }
 
-  const onInputUpdated = () => {
+  const onKeyDownHandler = () => {
     if (!isTyping.value) {
-      isTyping.value = true
+      automaticUpdateIsTyping(true)
     }
     debouncedMarkNoLongerTyping()
   }
 
-  watch(isTyping, emitViewing)
+  watch(isTyping, (newVal, oldVal) => {
+    if (!!newVal === !!oldVal) return
+    emitViewing()
+  })
   onBeforeUnmount(() => updateIsTyping(false))
   useOnBeforeWindowUnload(() => updateIsTyping(false))
 
   return {
-    onInputUpdated,
-    updateIsTyping
+    onKeyDownHandler,
+    updateIsTyping,
+    pauseAutomaticUpdates
   }
 }
 

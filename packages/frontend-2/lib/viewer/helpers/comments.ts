@@ -18,6 +18,11 @@ export function convertCommentEditorValueToInput(
   }
 }
 
+export function isValidCommentEditorValue(val: CommentEditorValue) {
+  const input = convertCommentEditorValueToInput(val)
+  return isValidCommentContentInput(input)
+}
+
 export function isValidCommentContentInput(input: CommentContentInput) {
   if (!input.doc && !(input.blobIds || []).length) return false
   if (input.doc && RichTextEditor.isDocEmpty(input.doc)) return false

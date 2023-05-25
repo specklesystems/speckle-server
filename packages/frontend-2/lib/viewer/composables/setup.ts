@@ -206,7 +206,7 @@ export type InjectableViewerState = Readonly<{
         newThreadEditor: Ref<boolean>
       }
       closeAllThreads: () => void
-      open: (id: string) => void
+      open: (id: string) => Promise<void>
       hideBubbles: Ref<boolean>
     }
     spotlightUserSessionId: Ref<Nullable<string>>
