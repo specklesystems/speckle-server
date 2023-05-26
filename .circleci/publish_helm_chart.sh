@@ -12,10 +12,6 @@ HELM_STABLE_BRANCH="${HELM_STABLE_BRANCH:-"main"}"
 
 echo "Releasing Helm Chart version ${RELEASE_VERSION}"
 
-git config --global user.email "devops+circleci@speckle.systems"
-git config --global user.name "CI"
-
-
 git clone git@github.com:specklesystems/helm.git "${HOME}/helm"
 
 yq e -i ".version = \"${RELEASE_VERSION}\"" "${GIT_REPO}/utils/helm/speckle-server/Chart.yaml"
@@ -47,5 +43,5 @@ fi
 cd ~/helm
 
 git add .
-git commit -m "CircleCI commit for version '${RELEASE_VERSION}'"
+git -c user.email="devops+circleci@speckle.systems" -c user.name="CI" commit -m "CircleCI commit for version '${RELEASE_VERSION}'"
 git push
