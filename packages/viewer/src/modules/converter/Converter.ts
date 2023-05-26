@@ -367,7 +367,12 @@ export default class Coverter {
     if (this.directNodeConverterExists(obj)) {
       await this.convertToNode(obj, node)
     } else {
-      const entries = [...this.getDisplayValue(obj), ...this.getElementsValue(obj)]
+      const displayValues = this.getDisplayValue(obj)
+      const elements = this.getElementsValue(obj)
+      const entries = [
+        ...(displayValues ? displayValues : []),
+        ...(elements ? elements : [])
+      ]
       for (const entry of entries) {
         const value = await this.resolveReference(entry)
         const valueNode: TreeNode = this.tree.parse({
