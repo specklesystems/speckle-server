@@ -290,18 +290,8 @@ export default class Coverter {
     try {
       if (this.directNodeConverterExists(obj)) {
         return await this.NodeConverterMapping[this.getSpeckleType(obj)](obj, node)
-      } else {
-        /** I'm not 100% on this */
-        return this.traverse(
-          undefined,
-          obj,
-          async () => {
-            await this.asyncPause()
-          },
-          node
-        )
       }
-      // return null
+      return null
     } catch (e) {
       Logger.warn(`(Direct convert) Failed to convert object with id: ${obj.id}`)
       throw e
