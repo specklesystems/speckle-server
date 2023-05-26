@@ -9,7 +9,8 @@ import {
   SunLightConfiguration,
   DefaultLightConfiguration,
   SpeckleView,
-DiffResult
+  DiffResult,
+VisualDiffMode
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -40,7 +41,7 @@ import {
   ViewerResourceItem,
   ViewerLoadedThreadsQueryVariables,
   ProjectCommentsFilter,
-ViewerModelVersionCardItemFragment
+  ViewerModelVersionCardItemFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { SetNonNullable, Get } from 'type-fest'
 import {
@@ -236,6 +237,7 @@ export type InjectableViewerState = Readonly<{
       versionA: Ref<ViewerResourceItem | undefined>
       versionB: Ref<ViewerResourceItem | undefined>
       diffTime: Ref<number>
+      diffMode: Ref<VisualDiffMode>
       diffResult: ShallowRef<Optional<DiffResult>> //ComputedRef<Optional<DiffResult>>
       enabled: Ref<boolean>
     }
@@ -250,8 +252,8 @@ export type InjectableViewerState = Readonly<{
    * State stored in the anchor string of the URL
    */
   urlHashState: {
-    focusedThreadId: WritableComputedRef<Nullable<string>>,
-    compare:WritableComputedRef<Nullable<boolean>>,
+    focusedThreadId: WritableComputedRef<Nullable<string>>
+    compare: WritableComputedRef<Nullable<boolean>>
   }
 }>
 
@@ -441,14 +443,34 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
 
   const addModelVersion = (modelId: string, versionId: string) => {
     resources.value = [
-        new SpeckleViewer.ViewerRoute.ViewerModelResource(modelId, versionId),
-        ...resources.value
+      new SpeckleViewer.ViewerRoute.ViewerModelResource(modelId, versionId),
+      ...resources.value
     ]
   }
 
-  const removeModelVersion = (modelId: string, versionId: string) => {
-    const resourceIdx = resources.value.findIndex(r => SpeckleViewer.ViewerRoute.isModelResource(r) && r.modelId === modelId && r.versionId === versionId)
-    if(resourceIdx === -1 ) return
+  /**
+   * Removes a model (version). If no version id is provided, we will remove the first resource that is loaded with the provided model id.
+   * @param modelId the model you want to remove
+   * @param versionId optional
+   */
+  const removeModelVersion = (modelId: string, versionId?: string) => {
+    let resourceIdx = -1
+    if (versionId)
+      resourceIdx = resources.value.findIndex(
+        (r) =>
+          SpeckleViewer.ViewerRoute.isModelResource(r) &&
+          r.modelId === modelId &&
+          r.versionId === versionId
+      )
+    else
+      resourceIdx = resources.value.findIndex(
+        (r) =>
+          SpeckleViewer.ViewerRoute.isModelResource(r) &&
+          r.modelId === modelId &&
+          !r.versionId
+      )
+
+    if (resourceIdx === -1) return
 
     const newResources = [...resources.value]
     newResources.splice(resourceIdx, 1)
@@ -458,8 +480,7 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
 
   const setModelVersions = (newResources: ViewerResource[]) => {
     resources.value = newResources
-  } 
-
+  }
 
   return {
     ...state,
@@ -796,7 +817,6 @@ function setupInterfaceState(
   const isTyping = ref(false)
   const newThreadEditor = ref(false)
   const hideBubbles = ref(false)
-  
 
   /**
    * Diffing
@@ -805,15 +825,19 @@ function setupInterfaceState(
   const versionB = ref<ViewerResourceItem>()
   const diffResult = shallowRef(undefined as Optional<DiffResult>)
   const diffEnabled = ref(false)
+  const diffTime = ref(0)
+  const diffMode = ref<VisualDiffMode>(VisualDiffMode.COLORED)
+
   return {
     ...state,
     ui: {
       diff: {
         versionA,
         versionB,
-        diffTime: ref(0),
+        diffTime,
+        diffMode,
         enabled: diffEnabled,
-        diffResult, //computed(()=> diffResult.value)
+        diffResult //computed(()=> diffResult.value)
       },
       selection,
       lightConfig,

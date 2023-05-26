@@ -19,8 +19,10 @@ export function setupUrlHashState(): InjectableViewerState['urlHashState'] {
   })
 
   const compare = computed({
-    get: () => hashState.value[ViewerHashStateKeys.Compare]?.toLowerCase() === 'true' || false,
-    set: (newVal) => (hashState.value = {
+    get: () =>
+      hashState.value[ViewerHashStateKeys.Compare]?.toLowerCase() === 'true' || false,
+    set: (newVal) =>
+      (hashState.value = {
         ...hashState.value,
         [ViewerHashStateKeys.Compare]: newVal ? 'true' : null
       })

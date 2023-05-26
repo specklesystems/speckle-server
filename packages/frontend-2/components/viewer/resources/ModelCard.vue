@@ -55,7 +55,7 @@
           color="danger"
           size="xs"
           class="rounded-full"
-          @click="$emit('remove', props.model.id)"
+          @click="handleRemoveModel()"
         >
           <XMarkIcon class="h-5 w-5" />
         </FormButton>
@@ -112,17 +112,14 @@ dayjs.extend(localizedFormat)
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
-defineEmits<{
-  (e: 'remove', val: string): void
-}>()
-
 const props = defineProps<{
   model: ModelItem
   versionId: string
   showRemove: boolean
 }>()
 
-const { switchModelToVersion, addModelVersion } = useInjectedViewerRequestedResources()
+const { switchModelToVersion, addModelVersion, removeModelVersion } =
+  useInjectedViewerRequestedResources()
 const { loadMoreVersions } = useInjectedViewerLoadedResources()
 
 const showVersions = ref(false)
@@ -191,14 +188,21 @@ const modelName = computed(() => {
   }
 })
 
-function handleVersionChange(versionId: string) { 
+function handleRemoveModel() {
+  if (latestVersion.value.id === loadedVersion.value?.id)
+    return removeModelVersion(props.model.id)
+
+  removeModelVersion(props.model.id, loadedVersion.value?.id as string)
+}
+
+function handleVersionChange(versionId: string) {
   switchModelToVersion(props.model.id, versionId)
 }
 
-const {diff, endDiff} = useDiffing()
+const { diff, endDiff } = useDiffing()
 function handleViewChanges(versionId: string) {
   // TODO
-  if(!loadedVersion.value?.id) return
+  if (!loadedVersion.value?.id) return
 
   const currentVersion = loadedVersion.value?.id
   const compareToVersion = versionId

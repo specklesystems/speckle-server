@@ -216,30 +216,43 @@ export function useDiffing() {
 
     await until(state.ui.viewerBusy).toBe(true)
     await until(state.ui.viewerBusy).toBe(false)
-    
-    const A = state.resources.response.resourceItems.value.find(r => r.versionId === versionA)
-    const B = state.resources.response.resourceItems.value.find(r => r.versionId === versionB)
+
+    const A = state.resources.response.resourceItems.value.find(
+      (r) => r.versionId === versionA
+    )
+    const B = state.resources.response.resourceItems.value.find(
+      (r) => r.versionId === versionB
+    )
 
     setTimeout(async () => {
-      state.ui.diff.diffResult.value = await state.viewer.instance.diff( getObjectUrl(state.projectId.value, B?.objectId as string), getObjectUrl(state.projectId.value, A?.objectId as string), VisualDiffMode.COLORED)
+      state.ui.diff.diffResult.value = await state.viewer.instance.diff(
+        getObjectUrl(state.projectId.value, B?.objectId as string),
+        getObjectUrl(state.projectId.value, A?.objectId as string),
+        state.ui.diff.diffMode.value
+      )
     }, 1000)
 
     state.urlHashState.compare.value = true // could be one place
     state.ui.diff.enabled.value = true
   }
 
+  watch(state.ui.diff.diffMode, val => {
+    if(!state.ui.diff.diffResult.value) return
+    state.viewer.instance.setVisualDiffMode(state.ui.diff.diffResult.value, val)
+  })
+
   const endDiff = () => {
     state.ui.diff.enabled.value = false
     state.viewer.instance.undiff()
     state.resources.request.setModelVersions(preDiffResources)
-    // Hack, for some reason they conflict :/ 
-    setTimeout(()=>{
+    // Hack, for some reason they conflict :/
+    setTimeout(() => {
       state.urlHashState.compare.value = null
     }, 100)
   }
 
   return {
-    diff, 
+    diff,
     endDiff
   }
 }

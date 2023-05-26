@@ -103,7 +103,10 @@
               @loaded-more="scrollControlsToBottom"
               @close="activeControl = 'none'"
             />
-            <ViewerCompareChangesPanel v-show="diffEnabled" @close="activeControl = 'none'"/>
+            <ViewerCompareChangesPanel
+              v-show="diffEnabled"
+              @close="activeControl = 'none'"
+            />
           </div>
         </KeepAlive>
       </div>
@@ -151,7 +154,9 @@ type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'discussions'
 
 const activeControl = ref<ActiveControl>('models')
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
-const { diff: { enabled: diffEnabled } } = useInjectedViewerInterfaceState()
+const {
+  diff: { enabled: diffEnabled }
+} = useInjectedViewerInterfaceState()
 
 const modelsShortcut = ref(
   `Models (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'm'])})`

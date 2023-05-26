@@ -8,24 +8,23 @@
  * Don't pollute this - it's going to be bundled in all pages!
  */
 
-
- @layer components {
-  input[type=range] {
+@layer components {
+  input[type='range'] {
     @apply appearance-none bg-transparent;
   }
 
-  input[type=range]::-webkit-slider-runnable-track {
-    @apply  bg-black/25 rounded-full;
-  }
-
-  input[type=range]::-moz-range-track {
+  input[type='range']::-webkit-slider-runnable-track {
     @apply bg-black/25 rounded-full;
   }
 
-  input[type=range]::-ms-track {
+  input[type='range']::-moz-range-track {
     @apply bg-black/25 rounded-full;
   }
- }
+
+  input[type='range']::-ms-track {
+    @apply bg-black/25 rounded-full;
+  }
+}
 /**
  * Making sure page is always stretched to the bottom of the screen even if there's nothing in it
  */

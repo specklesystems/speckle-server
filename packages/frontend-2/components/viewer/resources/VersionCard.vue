@@ -4,7 +4,7 @@
       clickable ? 'hover:bg-primary-muted' : 'cursor-default'
     }
     ${!showTimeline ? 'bg-primary-muted' : ''}
-    ${isLoaded ? '' :''}
+    ${isLoaded ? '' : ''}
     `"
     @click="handleClick"
   >
@@ -12,7 +12,9 @@
     <div
       v-if="showTimeline"
       :class="`absolute top-3 ml-[2px] h-[99%] w-1 ${
-        isLoaded ? 'border-primary border-r-4 border' : 'border-dashed border-outline-3 border-r-2'
+        isLoaded
+          ? 'border-primary border-r-4 border'
+          : 'border-dashed border-outline-3 border-r-2'
       } group-hover:border-primary left-[7px] z-10 transition-all`"
     ></div>
     <div
@@ -36,8 +38,26 @@
       >
         <span>{{ isLatest ? 'Latest' : timeAgoCreatedAt }}</span>
       </div>
-      <FormButton v-if="!isLoaded" v-tippy="'Shows a summary of added, deleted and changed elements.'" size="xs" text  class="opacity-0 group-hover:opacity-100 transition" @click.stop="emit('viewChanges', props.version.id)">View Changes</FormButton>
-      <FormButton v-else size="xs" text disabled class="" @click.stop="emit('viewChanges', props.version.id)">Currently Viewing</FormButton>
+      <FormButton
+        v-if="!isLoaded"
+        v-tippy="'Shows a summary of added, deleted and changed elements.'"
+        size="xs"
+        text
+        class="opacity-0 group-hover:opacity-100 transition"
+        @click.stop="emit('viewChanges', props.version.id)"
+      >
+        View Changes
+      </FormButton>
+      <FormButton
+        v-else
+        size="xs"
+        text
+        disabled
+        class=""
+        @click.stop="emit('viewChanges', props.version.id)"
+      >
+        Currently Viewing
+      </FormButton>
     </div>
     <!-- Main stuff -->
     <div class="flex items-center space-x-1 pl-5">
@@ -85,8 +105,8 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  (e: 'changeVersion', version: string): void,
-  (e: 'viewChanges', version:string): void
+  (e: 'changeVersion', version: string): void
+  (e: 'viewChanges', version: string): void
 }>()
 
 const isLoaded = computed(() => props.isLoadedVersion)
