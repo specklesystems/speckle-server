@@ -358,6 +358,24 @@ export default class Coverter {
   //   }
   //   return hash
   // }
+  private async displayValueLookup(obj, node) {
+    if (this.directNodeConverterExists(obj)) {
+      await this.convertToNode(obj, node)
+    } else {
+      const displayValue = [...this.getDisplayValue(obj)]
+      for (const entry of displayValue) {
+        const value = await this.resolveReference(entry)
+        const displayValueNode: TreeNode = this.tree.parse({
+          id: this.getNodeId(value),
+          raw: Object.assign({}, value),
+          atomic: false,
+          children: []
+        })
+        this.tree.addNode(displayValueNode, node)
+        await this.displayValueLookup(value, displayValueNode)
+      }
+    }
+  }
 
   private async BlockInstanceToNode(obj, node) {
     const definition = await this.resolveReference(this.getBlockDefinition(obj))
@@ -372,11 +390,8 @@ export default class Coverter {
         children: []
       })
       this.tree.addNode(childNode, node)
-      // console.warn(
-      //   `Added child node with id ${childNode.model.id} to parent node ${node.model.id}`
-      // )
 
-      await this.convertToNode(ref, childNode)
+      this.displayValueLookup(ref, childNode)
     }
   }
 
