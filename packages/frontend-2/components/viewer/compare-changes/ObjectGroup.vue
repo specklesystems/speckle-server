@@ -1,12 +1,12 @@
 <template>
   <div>
     <div
-      :class="`flex group pl-1 justify-between items-center text-foreground cursor-pointer w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 hover:bg-primary-muted hover:shadow-md transition-all ${
+      :class="`flex group justify-between items-center text-foreground cursor-pointer w-full max-w-full overflow-hidden select-none rounded border-l-4 hover:bg-primary-muted hover:shadow-md transition-all ${
         isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'
       }`"
       @click="setSelection()"
     >
-      <div class="flex space-x-2 items-center justify-left flex-shrink truncate">
+      <div class="flex space-x-2 items-center truncate">
         <span :class="`w-3 h-3 rounded ${colorClasses}`"></span>
         <span class="truncate">
           {{ name }}
@@ -34,9 +34,6 @@ const props = defineProps<{
   objectIds: string[]
 }>()
 
-// const isSelected = ref(false)
-const color = ref(false)
-
 const colorClasses = computed(() => {
   if (diffState.diffMode.value === VisualDiffMode.PLAIN) return 'hidden'
   switch (props.name) {
@@ -51,8 +48,6 @@ const colorClasses = computed(() => {
       return 'bg-neutral-500'
   }
 })
-
-const targetObjectIds = computed(() => {})
 
 const isSelected = computed(() => {
   const selObjsIds = selectedObjects.value.map((o) => o.id as string)

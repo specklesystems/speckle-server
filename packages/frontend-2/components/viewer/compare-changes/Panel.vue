@@ -10,19 +10,23 @@
         This is an experimental feature.
       </div>
       <div class="flex space-x-2">
-        <div
-          class="flex items-center justify-center h-20 grow bg-foundation-2 shadow rounded-md"
-        >
-          A
+        <div class="grow w-1/2">
+          <ViewerCompareChangesVersion
+            v-if="modelAVersion"
+            :version="modelAVersion"
+            @click="localDiffTime = 0"
+          />
         </div>
-        <div
-          class="flex items-center justify-center h-20 grow bg-foundation-2 shadow rounded-md"
-        >
-          B
+        <div class="grow w-1/2">
+          <ViewerCompareChangesVersion
+            v-if="modelBVersion && modelAVersion"
+            :version="modelBVersion"
+            :second-version-created-at-time="modelAVersion.createdAt"
+            @click="localDiffTime = 1"
+          />
         </div>
       </div>
       <div class="grow flex items-center space-x-2">
-        <!-- New -->
         <input
           id="diffTime"
           v-model="localDiffTime"
@@ -40,17 +44,12 @@
           />
           <SparklesIcon v-else class="w-3 h-3 text-primary" />
         </FormButton>
-        <!-- TODO: add colour toggling button -->
-        <!-- Old -->
       </div>
+      <div>Changes summary:</div>
       <ViewerCompareChangesObjectGroup name="unchanged" :objectIds="unchangedIds" />
       <ViewerCompareChangesObjectGroup name="added" :objectIds="addedIds" />
       <ViewerCompareChangesObjectGroup name="removed" :objectIds="removedIds" />
       <ViewerCompareChangesObjectGroup name="modified" :objectIds="modifiedIds" />
-      <!-- <div>unchanged: {{ unchanged.length }}</div>
-      <div>added: {{ added.length }}</div>
-      <div>removed: {{ removed.length }}</div>
-      <div>modified: {{ modified.length }}</div> -->
     </div>
   </ViewerLayoutPanel>
 </template>
@@ -69,12 +68,27 @@ import { useDiffing } from '~~/lib/viewer/composables/viewer'
 import { uniqBy } from 'lodash-es'
 
 const { diff: diffState } = useInjectedViewerInterfaceState()
-const { diff, endDiff } = useDiffing()
+const { endDiff } = useDiffing()
 const { instance } = useInjectedViewer()
 
-const localDiffTime = ref(0.5)
+const { modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
-const colors = ref(true)
+// NOTE: loaded version now returns the two loaded versions.
+// We might need to revisit this if we clean things up later.
+
+const modelAVersion = computed(() =>
+  modelsAndVersionIds.value.length > 0
+    ? modelsAndVersionIds.value[0].model.loadedVersion.items[0]
+    : undefined
+)
+
+const modelBVersion = computed(() =>
+  modelsAndVersionIds.value.length > 1
+    ? modelsAndVersionIds.value[1].model.loadedVersion.items[1]
+    : undefined
+)
+
+const localDiffTime = ref(0.5)
 
 watch(localDiffTime, (newVal) => {
   instance.setDiffTime(diffState.diffResult.value as DiffResult, newVal)
