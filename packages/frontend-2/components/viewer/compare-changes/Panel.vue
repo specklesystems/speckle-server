@@ -115,6 +115,9 @@ const modified = computed(() => {
   return uniqBy(mapped, (tuple) => tuple[0].id)
 })
 const modifiedIds = computed(() => {
-  return [...modified.value.map((t) => t[0]), modified.value.map((t) => t[1])]
+  return [
+    ...modified.value.map((t) => t[0].id as string),
+    ...modified.value.map((t) => t[1].id as string)
+  ]
 })
 </script>

@@ -6,7 +6,7 @@
       }`"
       @click="setSelection()"
     >
-      <div class="flex space-x-2 items-center flex-shrink truncate">
+      <div class="flex space-x-2 items-center justify-left flex-shrink truncate">
         <span :class="`w-3 h-3 rounded ${colorClasses}`"></span>
         <span class="truncate">
           {{ name }}
@@ -34,7 +34,7 @@ const props = defineProps<{
   objectIds: string[]
 }>()
 
-const isSelected = ref(false)
+// const isSelected = ref(false)
 const color = ref(false)
 
 const colorClasses = computed(() => {
@@ -54,13 +54,13 @@ const colorClasses = computed(() => {
 
 const targetObjectIds = computed(() => {})
 
-// const isSelected = computed(() => {
-//   const selObjsIds = objects.value.map((o) => o.id as string)
-//   return selObjsIds.some((id: string) => props.item.ids.includes(id))
-// })
+const isSelected = computed(() => {
+  const selObjsIds = selectedObjects.value.map((o) => o.id as string)
+  return selObjsIds.some((id: string) => props.objectIds.includes(id))
+})
 
 const setSelection = () => {
-  // if (isSelected.value) return clearSelection()
-  // setSelectionFromObjectIds(availableTargetIds.value)
+  if (isSelected.value) return clearSelection()
+  setSelectionFromObjectIds(props.objectIds)
 }
 </script>
