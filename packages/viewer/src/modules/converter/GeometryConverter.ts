@@ -1,4 +1,11 @@
-import { BoxBufferGeometry, EllipseCurve, Matrix4, Vector2, Vector3 } from 'three'
+import {
+  BoxBufferGeometry,
+  EllipseCurve,
+  Matrix4,
+  PlaneGeometry,
+  Vector2,
+  Vector3
+} from 'three'
 import { Geometry, GeometryData } from './Geometry'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
 import { getConversionFactor } from './Units'
@@ -21,6 +28,7 @@ export enum SpeckleType {
   Arc = 'Arc',
   Ellipse = 'Ellipse',
   RevitInstance = 'RevitInstance',
+  Text = 'Text',
   Unknown = 'Unknown'
 }
 
@@ -36,7 +44,8 @@ export const SpeckleTypeAllRenderables: SpeckleType[] = [
   SpeckleType.Curve,
   SpeckleType.Circle,
   SpeckleType.Arc,
-  SpeckleType.Ellipse
+  SpeckleType.Ellipse,
+  SpeckleType.Text
 ]
 
 export class GeometryConverter {
@@ -94,7 +103,8 @@ export class GeometryConverter {
         return GeometryConverter.View3DToGeometryData(node)
       case SpeckleType.RevitInstance:
         return GeometryConverter.RevitInstanceToGeometryData(node)
-      default:
+      case SpeckleType.Text:
+        return GeometryConverter.TextToGeometryData(node)
         // console.warn(`Skipping geometry conversion for ${type}`)
         return null
     }
@@ -334,6 +344,25 @@ export class GeometryConverter {
         conversionFactor
       ),
       transform: null
+    } as GeometryData
+  }
+
+  /**
+   * TEXT
+   */
+  private static TextToGeometryData(node: NodeData): GeometryData {
+    const dummyGeometry = new PlaneGeometry(2, 1)
+    const plane = node.raw.plane
+    const mat = new Matrix4().makeBasis(plane.xdir, plane.ydir, plane.normal)
+    mat.setPosition(new Vector3(plane.origin.x, plane.origin.y, plane.origin.z))
+    return {
+      attributes: {
+        POSITION: Array.from(dummyGeometry.attributes.position.array),
+        INDEX: Array.from(dummyGeometry.index.array)
+      },
+      bakeTransform: mat,
+      transform: null,
+      metaData: node.raw
     } as GeometryData
   }
 

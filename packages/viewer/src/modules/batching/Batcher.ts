@@ -19,6 +19,7 @@ import Logger from 'js-logger'
 import { World } from '../World'
 import { RenderTree } from '../tree/RenderTree'
 import SpeckleMesh from '../objects/SpeckleMesh'
+import TextBatch from './TextBatch'
 
 export enum TransformStorage {
   VERTEX_TEXTURE = 0,
@@ -234,6 +235,8 @@ export default class Batcher {
       matRef = renderViews[0].renderData.renderMaterial
     } else if (geometryType === GeometryType.POINT_CLOUD) {
       matRef = renderViews[0].renderData.renderMaterial
+    } else if (geometryType === GeometryType.TEXT) {
+      matRef = renderViews[0].renderData.renderMaterial
     }
 
     const material = this.materials.getMaterial(materialHash, matRef, geometryType)
@@ -259,6 +262,9 @@ export default class Batcher {
         break
       case GeometryType.POINT_CLOUD:
         geometryBatch = new PointBatch(batchID, renderTree.id, batch)
+        break
+      case GeometryType.TEXT:
+        geometryBatch = new TextBatch(batchID, renderTree.id, batch)
         break
     }
 

@@ -1,19 +1,11 @@
 import { Matrix4, Mesh, PlaneGeometry, Vector3 } from 'three'
-import defaultFont from '../../assets/defaultFont.png'
-import { Assets } from '../Assets'
-import { Font } from 'three/examples/jsm/loaders/FontLoader'
 import SpeckleBasicMaterial from '../materials/SpeckleBasicMaterial'
 import { Text, createTextDerivedMaterial } from 'troika-three-text'
 import { ObjectLayers } from '../SpeckleRenderer'
 
 export class SpeckleText extends Mesh {
-  private static font: Font = null
   public text: Text = null
   public background: Mesh = null
-
-  public static async init() {
-    SpeckleText.font = await Assets.getFont(defaultFont)
-  }
 
   public get vertCount() {
     return this.text.geometry.attributes.position.count
@@ -24,16 +16,6 @@ export class SpeckleText extends Mesh {
   }
 
   public async setText(text: string, size: number) {
-    // const shapes = SpeckleText.font.generateShapes(text, size)
-    // const geometry = new ShapeGeometry(shapes)
-    // // geometry.rotateX(Math.PI * 0.5)
-    // geometry.computeBoundingBox()
-    // // const xMid = -0.5 * (geometry.boundingBox.max.x - geometry.boundingBox.min.x)
-    // // geometry.translate(xMid, 0, 0)
-    // this.geometry = geometry
-    // this.material = new SpeckleBasicMaterial({ color: 0xff0000 }, ['USE_RTE'])
-    // this.material.side = DoubleSide
-    // this.frustumCulled = false
     return new Promise<void>((resolve) => {
       this.text = new Text()
       this.text.text = text

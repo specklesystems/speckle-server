@@ -35,7 +35,8 @@ export default class Coverter {
     Circle: this.CircleToNode.bind(this),
     Arc: this.ArcToNode.bind(this),
     Ellipse: this.EllipseToNode.bind(this),
-    RevitInstance: this.RevitInstanceToNode.bind(this)
+    RevitInstance: this.RevitInstanceToNode.bind(this),
+    Text: this.TextToNode.bind(this)
   }
 
   constructor(objectLoader: unknown, tree: WorldTree) {
@@ -460,6 +461,10 @@ export default class Coverter {
     node.model.raw.vertices = await this.dechunk(obj.vertices)
     node.model.raw.faces = await this.dechunk(obj.faces)
     node.model.raw.colors = await this.dechunk(obj.colors)
+  }
+
+  private async TextToNode(obj, node) {
+    return
   }
 
   private async PointToNode(obj, node) {

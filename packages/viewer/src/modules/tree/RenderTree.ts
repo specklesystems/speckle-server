@@ -52,17 +52,21 @@ export class RenderTree {
       (node: TreeNode): boolean => {
         const rendeNode = this.buildRenderNode(node)
         node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
-        if (node.model.renderView && node.model.renderView.hasGeometry) {
+        if (node.model.renderView) {
           const transform = this.computeTransform(node)
-          if (rendeNode.geometry.bakeTransform) {
-            transform.multiply(rendeNode.geometry.bakeTransform)
-          }
-          Geometry.transformGeometryData(rendeNode.geometry, transform)
-          node.model.renderView.computeAABB()
-          this._treeBounds.union(node.model.renderView.aabb)
+          if (node.model.renderView.hasGeometry) {
+            if (rendeNode.geometry.bakeTransform) {
+              transform.multiply(rendeNode.geometry.bakeTransform)
+            }
+            Geometry.transformGeometryData(rendeNode.geometry, transform)
+            node.model.renderView.computeAABB()
+            this._treeBounds.union(node.model.renderView.aabb)
 
-          if (!GeometryConverter.keepGeometryData) {
-            GeometryConverter.disposeNodeGeometryData(node.model)
+            if (!GeometryConverter.keepGeometryData) {
+              GeometryConverter.disposeNodeGeometryData(node.model)
+            }
+          } else if (node.model.renderView.hasMetadata) {
+            rendeNode.geometry.bakeTransform.premultiply(transform)
           }
         }
         return !this.cancel

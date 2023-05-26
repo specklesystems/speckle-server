@@ -619,6 +619,9 @@ export default class Materials {
       case GeometryType.POINT_CLOUD:
         mat = this.getPointCloudMaterial(hash, material as RenderMaterial)
         break
+      case GeometryType.TEXT:
+        mat = this.getMeshMaterial(hash, material as RenderMaterial)
+        break
     }
     // }
     /** There's a bug in three.js where it checks for the length of the planes without checking if they exist first
