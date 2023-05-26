@@ -56,6 +56,7 @@ import { Box3, Vector3 } from 'three'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { wrapRefWithTracking } from '~~/lib/common/helpers/debugging'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useQueuedRouting } from '~~/lib/common/composables/url'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -376,7 +377,7 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
  */
 function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest {
   const route = useRoute()
-  const router = useRouter()
+  const router = useQueuedRouting()
   const getParam = computed(() => route.params.modelId as string)
 
   const resources = computed({

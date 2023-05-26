@@ -345,7 +345,6 @@ function useViewerCameraIntegration() {
     (newVal, oldVal) => {
       if (newVal === oldVal) return
 
-      console.log('isOrthoProjection', newVal, oldVal)
       if (newVal) {
         instance.setOrthoCameraOn()
       } else {
