@@ -55,6 +55,7 @@ import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { Box3, Vector3 } from 'three'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { wrapRefWithTracking } from '~~/lib/common/helpers/debugging'
+import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -781,8 +782,8 @@ function setupInterfaceState(
         hideBubbles
       },
       camera: {
-        position: wrapRefWithTracking(position, 'position'),
-        target: wrapRefWithTracking(target, 'target'),
+        position,
+        target,
         isOrthoProjection
       },
       sectionBox: ref(null as Nullable<Box3>),
@@ -871,10 +872,10 @@ export function useResetUiState() {
       camera,
       sectionBox,
       highlightedObjectIds,
-      lightConfig,
-      explodeFactor
+      lightConfig
     }
   } = useInjectedViewerState()
+  const { resetFilters } = useFilterUtilities()
 
   return () => {
     threads.closeAllThreads()
@@ -883,6 +884,6 @@ export function useResetUiState() {
     sectionBox.value = null
     highlightedObjectIds.value = []
     lightConfig.value = { ...DefaultLightConfiguration }
-    explodeFactor.value = 0
+    resetFilters()
   }
 }
