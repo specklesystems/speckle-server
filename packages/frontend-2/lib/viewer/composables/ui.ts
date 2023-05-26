@@ -179,7 +179,7 @@ export function useFilterUtilities() {
       until(availableFilters).toMatch(
         (filters) => !!filters?.find((p) => p.key === key)
       ),
-      timeoutAt(timeout)
+      timeoutAt(timeout, 'Waiting for available filter timed out')
     ])
 
     const filter = res?.find((p) => p.key === key)

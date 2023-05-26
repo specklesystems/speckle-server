@@ -268,6 +268,8 @@ function useViewerCameraIntegration() {
     }
   } = useInjectedViewerState()
 
+  const startTrackingViewerCamera = ref(false)
+
   const loadCameraDataFromViewer = () => {
     const activeCam = instance.cameraHandler.activeCam
     const controls = activeCam.controls
@@ -279,11 +281,11 @@ function useViewerCameraIntegration() {
 
     let cameraManuallyChanged = false
     if (!areVectorsLooselyEqual(position.value, viewerPos)) {
-      position.value = viewerPos.clone()
+      if (startTrackingViewerCamera.value) position.value = viewerPos.clone()
       cameraManuallyChanged = true
     }
     if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
-      target.value = viewerTarget.clone()
+      if (startTrackingViewerCamera.value) target.value = viewerTarget.clone()
       cameraManuallyChanged = true
     }
 
@@ -303,9 +305,27 @@ function useViewerCameraIntegration() {
     // { debounceWait: 100 }
   )
 
-  useOnViewerLoadComplete(() => {
-    // Load camera position so we can return to it correctly
-    loadCameraDataFromViewer()
+  useOnViewerLoadComplete(({ isInitial }) => {
+    if (isInitial) {
+      startTrackingViewerCamera.value = true
+
+      // Load camera position so we can return to it correctly
+      // ONLY if we don't already have specific coordinates (e.g. from opened thread)
+      // otherwise - load current pos/target into viewer
+      const hasInitCoords =
+        position.value.equals(new Vector3()) && target.value.equals(new Vector3())
+      if (hasInitCoords) {
+        loadCameraDataFromViewer()
+      } else {
+        // forcing state->viewer sync
+        instance.setView({
+          position: position.value,
+          target: target.value
+        })
+      }
+    } else {
+      loadCameraDataFromViewer()
+    }
   })
 
   // TODO: This caused an infinite loop of toggling ortho/perspective mode.

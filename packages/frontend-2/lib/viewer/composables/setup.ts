@@ -54,6 +54,9 @@ import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { Box3, Vector3 } from 'three'
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { wrapRefWithTracking } from '~~/lib/common/helpers/debugging'
+
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
 >
@@ -755,6 +758,10 @@ function setupInterfaceState(
   const newThreadEditor = ref(false)
   const hideBubbles = ref(false)
 
+  const position = ref(new Vector3())
+  const target = ref(new Vector3())
+  const isOrthoProjection = ref(false as boolean)
+
   return {
     ...state,
     ui: {
@@ -775,9 +782,9 @@ function setupInterfaceState(
         hideBubbles
       },
       camera: {
-        position: ref(new Vector3()),
-        target: ref(new Vector3()),
-        isOrthoProjection: ref(false as boolean)
+        position,
+        target,
+        isOrthoProjection
       },
       sectionBox: ref(null as Nullable<Box3>),
       filters: {
@@ -855,4 +862,29 @@ export function useSetupViewerScope(
 ): InjectableViewerState {
   provide(InjectableViewerStateKey, state)
   return state
+}
+
+export function useResetUiState() {
+  const {
+    ui: {
+      threads,
+      spotlightUserSessionId,
+      camera,
+      sectionBox,
+      highlightedObjectIds,
+      lightConfig,
+      explodeFactor
+    }
+  } = useInjectedViewerState()
+
+  return () => {
+    console.log('reset state')
+    threads.closeAllThreads()
+    spotlightUserSessionId.value = null
+    camera.isOrthoProjection.value = false
+    sectionBox.value = null
+    highlightedObjectIds.value = []
+    lightConfig.value = { ...DefaultLightConfiguration }
+    explodeFactor.value = 0
+  }
 }

@@ -1,6 +1,9 @@
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewerState,
+  useResetUiState
+} from '~~/lib/viewer/composables/setup'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
-import { SpeckleViewer } from '@speckle/shared'
+import { SpeckleViewer, TimeoutError } from '@speckle/shared'
 import { get } from 'lodash-es'
 import { Vector3, Box3 } from 'three'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
@@ -108,8 +111,14 @@ export function useApplySerializedState() {
     unApplyPropertyFilter,
     waitForAvailableFilter
   } = useFilterUtilities()
+  const resetState = useResetUiState()
 
   return (state: SerializedViewerState, mode: StateApplyMode) => {
+    if (mode === StateApplyMode.Reset) {
+      resetState()
+      return
+    }
+
     position.value = new Vector3(
       state.ui.camera.position[0],
       state.ui.camera.position[1],
@@ -176,29 +185,27 @@ export function useApplySerializedState() {
             applyPropertyFilter()
           }
         })
-        .catch(console.error)
+        .catch((e) => {
+          if (e instanceof TimeoutError) {
+            console.warn(
+              `${e.message} - filter probably comes from a thread context that isn't currently loaded`
+            )
+          } else {
+            console.error(e)
+          }
+        })
     }
 
     highlightedObjectIds.value =
       mode === StateApplyMode.Spotlight ? filters.selectedObjectIds.slice() : []
 
     if (
-      [
-        StateApplyMode.Spotlight,
-        StateApplyMode.TheadFullContextOpen,
-        StateApplyMode.Reset
-      ].includes(mode)
+      [StateApplyMode.Spotlight, StateApplyMode.TheadFullContextOpen].includes(mode)
     ) {
       resourceIdString.value = state.resources.request.resourceIdString
     }
 
-    if (
-      [
-        StateApplyMode.Spotlight,
-        StateApplyMode.TheadFullContextOpen,
-        StateApplyMode.Reset
-      ].includes(mode)
-    ) {
+    if ([StateApplyMode.Spotlight].includes(mode)) {
       urlHashState.focusedThreadId.value = state.ui.threads.openThread.threadId
     }
 

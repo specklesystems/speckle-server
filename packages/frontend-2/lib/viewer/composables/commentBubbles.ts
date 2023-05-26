@@ -4,7 +4,8 @@ import {
   InitialStateWithUrlHashState,
   LoadedCommentThread,
   useInjectedViewerInterfaceState,
-  useInjectedViewerState
+  useInjectedViewerState,
+  useResetUiState
 } from '~~/lib/viewer/composables/setup'
 import { graphql } from '~~/lib/common/generated/gql'
 import { reduce, difference, debounce } from 'lodash-es'
@@ -304,6 +305,7 @@ export function useViewerThreadTracking() {
 
   const applyState = useApplySerializedState()
   const { serialize: serializeState } = useStateSerialization()
+  const resetState = useResetUiState()
 
   const state = useInjectedViewerState()
   const {
@@ -317,31 +319,8 @@ export function useViewerThreadTracking() {
     null as Nullable<SpeckleViewer.ViewerState.SerializedViewerState>
   )
 
-  const refocus = (
-    commentState: SpeckleViewer.ViewerState.SerializedViewerState,
-    isOldState = false
-  ) => {
-    const finalState = {
-      ...commentState,
-      ui: {
-        ...commentState.ui,
-        threads: {
-          ...commentState.ui.threads,
-          openThread: isOldState
-            ? {
-                threadId: null,
-                newThreadEditor: false,
-                isTyping: false
-              }
-            : commentState.ui.threads.openThread
-        }
-      }
-    }
-
-    applyState(
-      finalState,
-      isOldState ? StateApplyMode.Reset : StateApplyMode.ThreadOpen
-    )
+  const refocus = (commentState: SpeckleViewer.ViewerState.SerializedViewerState) => {
+    applyState(commentState, StateApplyMode.ThreadOpen)
   }
 
   // Do this once viewer loads things
@@ -371,16 +350,11 @@ export function useViewerThreadTracking() {
   // Also do this when openThread changes
   watch(openThread.thread, (newThread, oldThread) => {
     if (newThread?.id !== oldThread?.id) {
-      const newOldState = serializeState()
       const newState = newThread?.viewerState
       if (newState && SpeckleViewer.ViewerState.isSerializedViewerState(newState)) {
         refocus(newState)
-      } else if (oldState.value) {
-        refocus(oldState.value, true)
-      }
-
-      if (!oldThread?.id) {
-        oldState.value = newOldState
+      } else {
+        resetState()
       }
     }
   })

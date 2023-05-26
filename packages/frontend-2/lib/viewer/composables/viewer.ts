@@ -235,11 +235,17 @@ export function useOnViewerLoadComplete(
 
     try {
       await (waitForBusyOver
-        ? Promise.race([until(viewerBusy).toBe(false), timeoutAt(1000)])
+        ? Promise.race([
+            until(viewerBusy).toBe(false),
+            timeoutAt(
+              1000,
+              'Waiting for viewer business to be over post-LoadComplete timed out'
+            )
+          ])
         : Promise.resolve())
     } catch (e) {
       if (!(e instanceof TimeoutError)) throw e
-      console.warn('Waiting for viewer business to be over post-LoadComplete timed out')
+      console.warn(e.message)
     }
 
     listener({ isInitial: !hasRun.value })
