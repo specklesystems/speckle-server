@@ -385,7 +385,11 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     set: (newResources) => {
       const modelId =
         SpeckleViewer.ViewerRoute.createGetParamFromResources(newResources)
-      router.push({ params: { modelId }, query: route.query, hash: route.hash })
+      router.push((route) => ({
+        params: { modelId },
+        query: route.query,
+        hash: route.hash
+      }))
     }
   })
 

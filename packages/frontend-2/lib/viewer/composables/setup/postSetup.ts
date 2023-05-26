@@ -295,7 +295,7 @@ function useViewerCameraIntegration() {
   }
 
   // viewer -> state
-  // debouncing pos/target updates to avoid jitteriness
+  // debouncing pos/target updates to avoid jitteriness + spotlight mode unnecessarily disabling
   useViewerCameraTracker(
     () => {
       const cameraManuallyChanged = loadCameraDataFromViewer()

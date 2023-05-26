@@ -7,6 +7,8 @@ import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
 import { debounce, isArray, throttle } from 'lodash-es'
 import { MaybeAsync, Nullable, TimeoutError, timeoutAt } from '@speckle/shared'
 import { until } from '@vueuse/shared'
+import { Vector3 } from 'three'
+import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 
 function getFirstVisibleSelectionHit(
   { hits }: SelectionEvent,
@@ -72,18 +74,58 @@ export function useViewerEventListener<A = any>(
 
 export function useViewerCameraTracker(
   callback: () => void,
-  options?: Partial<{ throttleWait: number; debounceWait: number }>
+  options?: Partial<{
+    throttleWait: number
+    debounceWait: number
+    onlyInvokeOnMeaningfulChanges: boolean
+  }>
 ): void {
   const {
     viewer: { instance }
   } = useInjectedViewerState()
-  const { throttleWait = 50, debounceWait } = options || {}
+  const {
+    throttleWait = 50,
+    debounceWait,
+    onlyInvokeOnMeaningfulChanges
+  } = options || {}
+
+  const lastPos = ref(null as Nullable<Vector3>)
+  const lastTarget = ref(null as Nullable<Vector3>)
+
+  const callbackChangeTrackerWrapper = () => {
+    if (!onlyInvokeOnMeaningfulChanges) {
+      return callback()
+    }
+
+    // Only invoke callback if position/target changed in a meaningful way
+    const activeCam = instance.cameraHandler.activeCam
+    const controls = activeCam.controls
+    const viewerPos = new Vector3()
+    const viewerTarget = new Vector3()
+
+    controls.getPosition(viewerPos)
+    controls.getTarget(viewerTarget)
+
+    let meaningfulChangeFound = false
+    if (!lastPos.value || !areVectorsLooselyEqual(lastPos.value, viewerPos)) {
+      meaningfulChangeFound = true
+    }
+    if (!lastTarget.value || !areVectorsLooselyEqual(lastTarget.value, viewerTarget)) {
+      meaningfulChangeFound = true
+    }
+
+    if (meaningfulChangeFound) {
+      lastPos.value = viewerPos.clone()
+      lastTarget.value = viewerTarget.clone()
+      callback()
+    }
+  }
 
   const finalCallback = debounceWait
-    ? debounce(callback, debounceWait)
+    ? debounce(callbackChangeTrackerWrapper, debounceWait)
     : throttleWait
-    ? throttle(callback, throttleWait)
-    : callback
+    ? throttle(callbackChangeTrackerWrapper, throttleWait)
+    : callbackChangeTrackerWrapper
 
   onMounted(() => {
     instance.cameraHandler.controls.addEventListener('update', finalCallback)
