@@ -36,21 +36,23 @@
     <Portal to="secondary-actions">
       <ViewerScope :state="state">
         <div
-          v-show="activeUserAvatars.length > 0"
+          v-if="usersWithAvatars.length > 0"
           class="px-1 py-1 flex space-x-1 items-center"
         >
           <!-- <UserAvatarGroup :users="activeUserAvatars" :overlap="false" hover-effect /> -->
-          <template v-for="user in activeUserAvatars" :key="user.id">
-            <button @click="setUserSpotlight(user.id)">
+          <template v-for="user in usersWithAvatars" :key="user.id">
+            <button @click="setUserSpotlight(user.sessionId)">
               <UserAvatar
                 v-tippy="
                   `${
-                    user.id === spotlightUserSessionId ? 'Stop Following' : 'Follow'
-                  } ${user.name}`
+                    user.sessionId === spotlightUserSessionId
+                      ? 'Stop Following'
+                      : 'Follow'
+                  } ${user.user.name}`
                 "
-                :user="user"
+                :user="user.user"
                 hover-effect
-                :active="user.id === spotlightUserSessionId"
+                :active="user.sessionId === spotlightUserSessionId"
               />
             </button>
           </template>
@@ -95,8 +97,7 @@
 import { Nullable } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { LimitedUser } from '~~/lib/common/generated/gql/graphql'
-import { isNonNullable } from '~~/lib/common/helpers/utils'
-
+import { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { useViewerUserActivityTracking } from '~~/lib/viewer/composables/activity'
 import {
   CommentBubbleModel,
@@ -188,10 +189,10 @@ const openPrevThread = (currentThread: CommentBubbleModel) => {
   open(nextThread.id)
 }
 
-const activeUserAvatars = computed(() =>
-  Object.values(users.value)
-    .map((u) => u.user)
-    .filter(isNonNullable)
+const usersWithAvatars = computed(() =>
+  Object.values(users.value).filter(
+    (u): u is SetFullyRequired<typeof u, 'user'> => !!u.user
+  )
 )
 const spotlightUser = computed(() => {
   return Object.values(users.value).find(
@@ -199,13 +200,10 @@ const spotlightUser = computed(() => {
   )
 })
 
-function setUserSpotlight(userId: string) {
-  const user = Object.values(users.value).find((u) => u.userId === userId)
-  if (!user) return
-
-  const sessionId = user.sessionId
+function setUserSpotlight(sessionId: string) {
   if (spotlightUserSessionId.value === sessionId)
     return (spotlightUserSessionId.value = null)
+
   spotlightUserSessionId.value = sessionId
 }
 </script>
