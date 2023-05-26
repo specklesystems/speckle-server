@@ -53,7 +53,6 @@ import {
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { Box3, Vector3 } from 'three'
-
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { wrapRefWithTracking } from '~~/lib/common/helpers/debugging'
 
@@ -782,8 +781,8 @@ function setupInterfaceState(
         hideBubbles
       },
       camera: {
-        position,
-        target,
+        position: wrapRefWithTracking(position, 'position'),
+        target: wrapRefWithTracking(target, 'target'),
         isOrthoProjection
       },
       sectionBox: ref(null as Nullable<Box3>),
@@ -878,7 +877,6 @@ export function useResetUiState() {
   } = useInjectedViewerState()
 
   return () => {
-    console.log('reset state')
     threads.closeAllThreads()
     spotlightUserSessionId.value = null
     camera.isOrthoProjection.value = false

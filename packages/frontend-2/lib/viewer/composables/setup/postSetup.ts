@@ -42,6 +42,7 @@ import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { Nullable } from '@speckle/shared'
+import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -267,6 +268,7 @@ function useViewerCameraIntegration() {
       spotlightUserSessionId
     }
   } = useInjectedViewerState()
+  const { forceViewToViewerSync } = useCameraUtilities()
 
   const startTrackingViewerCamera = ref(false)
 
@@ -317,11 +319,7 @@ function useViewerCameraIntegration() {
       if (hasInitCoords) {
         loadCameraDataFromViewer()
       } else {
-        // forcing state->viewer sync
-        instance.setView({
-          position: position.value,
-          target: target.value
-        })
+        forceViewToViewerSync()
       }
     } else {
       loadCameraDataFromViewer()
@@ -347,11 +345,15 @@ function useViewerCameraIntegration() {
     (newVal, oldVal) => {
       if (newVal === oldVal) return
 
+      console.log('isOrthoProjection', newVal, oldVal)
       if (newVal) {
         instance.setOrthoCameraOn()
       } else {
         instance.setPerspectiveCameraOn()
       }
+
+      // reset camera pos, cause we've switched cameras now and it might not have the new ones
+      forceViewToViewerSync(false)
     },
     { immediate: true }
   )

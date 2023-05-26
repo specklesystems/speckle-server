@@ -80,7 +80,25 @@ export function useCameraUtilities() {
     camera.isOrthoProjection.value = !camera.isOrthoProjection.value
   }
 
-  return { zoomExtentsOrSelection, toggleProjection, camera, truck, setView, zoom }
+  const forceViewToViewerSync = (transition = true) => {
+    setView(
+      {
+        position: camera.position.value,
+        target: camera.target.value
+      },
+      transition
+    )
+  }
+
+  return {
+    zoomExtentsOrSelection,
+    toggleProjection,
+    camera,
+    truck,
+    setView,
+    zoom,
+    forceViewToViewerSync
+  }
 }
 
 export function useFilterUtilities() {
