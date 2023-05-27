@@ -60,12 +60,12 @@ import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 import { BatchObject } from './batching/BatchObject'
 import SpecklePointMaterial from './materials/SpecklePointMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
-import { SpeckleText } from './objects/SpeckleText'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
   STREAM_CONTENT_LINE = 11,
   STREAM_CONTENT_POINT = 12,
+  STREAM_CONTENT_TEXT = 13,
 
   STREAM_CONTENT = 1,
   PROPS = 2,
@@ -1423,32 +1423,32 @@ export default class SpeckleRenderer {
   }
 
   public async adnotate() {
-    const batches: Batch[] = Object.values(this.batcher.batches)
-    let accumulator = 0
-    let tris = 0
-    let count = 0
-    for (let k = 0; k < batches.length; k++) {
-      const rvs = batches[k].renderViews
-      for (let i = 0; i < rvs.length; i++) {
-        const speckleObject = this.viewer.getWorldTree().findId(rvs[i].renderData.id)
-          .model.raw
-        const text = new SpeckleText()
-        const start = performance.now()
-        await text.setText(speckleObject.speckle_type.split('.').reverse()[0], 1)
-        tris += text.triCount
-        accumulator += performance.now() - start
-        const objSize = rvs[i].aabb.getSize(new Vector3())
-        const objCenter = rvs[i].aabb.getCenter(new Vector3())
-        text.setPosition(
-          new Vector3(objCenter.x, objCenter.y + objSize.y * 0.5, objCenter.z)
-        )
-        this.rootGroup.add(text.text)
-        this.rootGroup.add(text.background)
-        count++
-      }
-    }
-    console.warn(accumulator)
-    console.warn(tris / 3)
-    console.warn(count)
+    // const batches: Batch[] = Object.values(this.batcher.batches)
+    // let accumulator = 0
+    // let tris = 0
+    // let count = 0
+    // for (let k = 0; k < batches.length; k++) {
+    //   const rvs = batches[k].renderViews
+    //   for (let i = 0; i < rvs.length; i++) {
+    //     const speckleObject = this.viewer.getWorldTree().findId(rvs[i].renderData.id)
+    //       .model.raw
+    //     const text = new SpeckleText()
+    //     const start = performance.now()
+    //     await text.setText(speckleObject.speckle_type.split('.').reverse()[0], 1)
+    //     tris += text.triCount
+    //     accumulator += performance.now() - start
+    //     const objSize = rvs[i].aabb.getSize(new Vector3())
+    //     const objCenter = rvs[i].aabb.getCenter(new Vector3())
+    //     text.setPosition(
+    //       new Vector3(objCenter.x, objCenter.y + objSize.y * 0.5, objCenter.z)
+    //     )
+    //     this.rootGroup.add(text.text)
+    //     this.rootGroup.add(text.background)
+    //     count++
+    //   }
+    // }
+    // console.warn(accumulator)
+    // console.warn(tris / 3)
+    // console.warn(count)
   }
 }

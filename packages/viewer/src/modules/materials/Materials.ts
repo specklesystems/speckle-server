@@ -22,6 +22,7 @@ import { Assets } from '../Assets'
 import { getConversionFactor } from '../converter/Units'
 import SpeckleGhostMaterial from './SpeckleGhostMaterial'
 import Logger from 'js-logger'
+import SpeckleTextMaterial from './SpeckleTextMaterial'
 
 export interface MaterialOptions {
   rampIndex?: number
@@ -600,6 +601,24 @@ export default class Materials {
     return mat
   }
 
+  private makeTextMaterial(materialData: RenderMaterial): Material {
+    const mat = new SpeckleTextMaterial(
+      {
+        color: 0x000000,
+        emissive: 0x0,
+        opacity: materialData.opacity,
+        side: DoubleSide
+      },
+      ['USE_RTE']
+    )
+    mat.transparent = mat.opacity < 1 ? true : false
+    mat.depthWrite = mat.transparent ? false : true
+    mat.toneMapped = false
+    mat.color.convertSRGBToLinear()
+
+    return mat.getDerivedMaterial()
+  }
+
   public getMaterial(
     hash: number,
     material: RenderMaterial | DisplayStyle,
@@ -620,7 +639,7 @@ export default class Materials {
         mat = this.getPointCloudMaterial(hash, material as RenderMaterial)
         break
       case GeometryType.TEXT:
-        mat = this.getMeshMaterial(hash, material as RenderMaterial)
+        mat = this.getTextMaterial(hash, material as RenderMaterial)
         break
     }
     // }
@@ -660,6 +679,10 @@ export default class Materials {
 
   private getPointCloudMaterial(hash: number, material: RenderMaterial) {
     return this.getPointMaterial(hash, material)
+  }
+
+  private getTextMaterial(hash: number, material: RenderMaterial) {
+    return this.makeTextMaterial(material)
   }
 
   public getHighlightMaterial(renderView: NodeRenderView): Material {

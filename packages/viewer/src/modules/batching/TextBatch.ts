@@ -7,6 +7,7 @@ import { AllBatchUpdateRange, Batch, BatchUpdateRange, GeometryType } from './Ba
 
 import { SpeckleText } from '../objects/SpeckleText'
 import { GlyphGeometry } from 'troika-three-text'
+import { ObjectLayers } from '../SpeckleRenderer'
 
 export default class TextBatch implements Batch {
   public id: string
@@ -27,7 +28,7 @@ export default class TextBatch implements Batch {
   }
 
   public get geometryType(): GeometryType {
-    return this.renderViews[0].geometryType
+    return GeometryType.TEXT
   }
 
   public get renderObject(): Object3D {
@@ -53,11 +54,7 @@ export default class TextBatch implements Batch {
   public setVisibleRange(...ranges: BatchUpdateRange[]) {}
 
   public getVisibleRange(): BatchUpdateRange {
-    if (this.geometry.groups.length === 0) return AllBatchUpdateRange
-    return {
-      offset: this.geometry.drawRange.start,
-      count: this.geometry.drawRange.count
-    }
+    return AllBatchUpdateRange
   }
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {}
@@ -65,15 +62,28 @@ export default class TextBatch implements Batch {
   public autoFillDrawRanges() {}
 
   public resetDrawRanges() {
-    this.mesh.material = this.batchMaterial
-    this.mesh.visible = true
-    this.geometry.clearGroups()
-    this.geometry.setDrawRange(0, Infinity)
+    // this.mesh.material = this.batchMaterial
+    // this.mesh.visible = true
+    // this.geometry.clearGroups()
+    // this.geometry.setDrawRange(0, Infinity)
   }
 
-  public buildBatch() {}
-
-  private makeMeshGeometry() {}
+  public buildBatch() {
+    this.mesh = new SpeckleText()
+    this.mesh.update(
+      SpeckleText.SpeckleTextParamsFromMetadata(
+        this.renderViews[0].renderData.geometry.metaData
+      ),
+      () => {
+        this.mesh.position.applyMatrix4(
+          this.renderViews[0].renderData.geometry.bakeTransform
+        )
+      }
+    )
+    this.mesh.textMesh.material = this.batchMaterial
+    this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_TEXT)
+    this.mesh.textMesh.layers.set(ObjectLayers.STREAM_CONTENT_TEXT)
+  }
 
   public getRenderView(index: number): NodeRenderView {
     index
