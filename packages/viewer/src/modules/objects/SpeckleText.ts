@@ -30,6 +30,7 @@ export class SpeckleText extends Mesh {
   public constructor() {
     super()
     this._text = new Text()
+    this._text.depthOffset = -0.01
     this.add(this._text)
   }
 

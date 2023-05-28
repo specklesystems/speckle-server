@@ -70,14 +70,13 @@ export default class TextBatch implements Batch {
 
   public buildBatch() {
     this.mesh = new SpeckleText()
+    this.mesh.matrixAutoUpdate = false
     this.mesh.update(
       SpeckleText.SpeckleTextParamsFromMetadata(
         this.renderViews[0].renderData.geometry.metaData
       ),
       () => {
-        this.mesh.position.applyMatrix4(
-          this.renderViews[0].renderData.geometry.bakeTransform
-        )
+        this.mesh.matrix.copy(this.renderViews[0].renderData.geometry.bakeTransform)
       }
     )
     this.mesh.textMesh.material = this.batchMaterial

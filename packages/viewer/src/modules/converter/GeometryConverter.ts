@@ -105,6 +105,7 @@ export class GeometryConverter {
         return GeometryConverter.RevitInstanceToGeometryData(node)
       case SpeckleType.Text:
         return GeometryConverter.TextToGeometryData(node)
+      case SpeckleType.Unknown:
         // console.warn(`Skipping geometry conversion for ${type}`)
         return null
     }

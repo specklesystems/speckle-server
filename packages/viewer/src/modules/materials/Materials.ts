@@ -601,12 +601,12 @@ export default class Materials {
     return mat
   }
 
-  private makeTextMaterial(materialData: RenderMaterial): Material {
+  private makeTextMaterial(materialData: DisplayStyle): Material {
     const mat = new SpeckleTextMaterial(
       {
-        color: 0x000000,
+        color: materialData.color,
         emissive: 0x0,
-        opacity: materialData.opacity,
+        opacity: 1,
         side: DoubleSide
       },
       ['USE_RTE']
@@ -639,7 +639,7 @@ export default class Materials {
         mat = this.getPointCloudMaterial(hash, material as RenderMaterial)
         break
       case GeometryType.TEXT:
-        mat = this.getTextMaterial(hash, material as RenderMaterial)
+        mat = this.getTextMaterial(hash, material)
         break
     }
     // }
@@ -681,8 +681,8 @@ export default class Materials {
     return this.getPointMaterial(hash, material)
   }
 
-  private getTextMaterial(hash: number, material: RenderMaterial) {
-    return this.makeTextMaterial(material)
+  private getTextMaterial(hash: number, material: RenderMaterial | DisplayStyle) {
+    return this.makeTextMaterial(material as DisplayStyle)
   }
 
   public getHighlightMaterial(renderView: NodeRenderView): Material {
