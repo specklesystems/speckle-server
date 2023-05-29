@@ -73,21 +73,19 @@ export default class TextBatch implements Batch {
     // this.geometry.setDrawRange(0, Infinity)
   }
 
-  public buildBatch() {
+  public async buildBatch() {
     this.mesh = new SpeckleText(this.id)
     this.mesh.matrixAutoUpdate = false
-    this.mesh.update(
+    await this.mesh.update(
       SpeckleText.SpeckleTextParamsFromMetadata(
         this.renderViews[0].renderData.geometry.metaData
-      ),
-      () => {
-        this.mesh.matrix.copy(this.renderViews[0].renderData.geometry.bakeTransform)
-        this.renderViews[0].setBatchData(
-          this.id,
-          0,
-          this.mesh.textMesh.geometry.index.length / 3
-        )
-      }
+      )
+    )
+    this.mesh.matrix.copy(this.renderViews[0].renderData.geometry.bakeTransform)
+    this.renderViews[0].setBatchData(
+      this.id,
+      0,
+      this.mesh.textMesh.geometry.index.length / 3
     )
     this.mesh.textMesh.material = this.batchMaterial
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_TEXT)

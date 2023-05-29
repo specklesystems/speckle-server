@@ -44,7 +44,7 @@ export default class Batcher {
     this.materials.createDefaultMaterials()
   }
 
-  public makeBatches(
+  public async makeBatches(
     renderTree: RenderTree,
     speckleType: SpeckleType[],
     batchType?: GeometryType
@@ -78,7 +78,7 @@ export default class Batcher {
       const batches = this.splitBatch(renderViewsBatch, vertCount)
       for (let k = 0; k < batches.length; k++) {
         const restrictedRvs = batches[k]
-        const batch = this.buildBatch(
+        const batch = await this.buildBatch(
           renderTree,
           restrictedRvs,
           materialHashes[i],
@@ -129,7 +129,7 @@ export default class Batcher {
       const batches = this.splitBatch(renderViewsBatch, vertCount)
       for (let k = 0; k < batches.length; k++) {
         const restrictedRvs = batches[k]
-        const batch = this.buildBatch(
+        const batch = await this.buildBatch(
           renderTree,
           restrictedRvs,
           materialHashes[i],
@@ -203,12 +203,12 @@ export default class Batcher {
     return vSplit
   }
 
-  private buildBatch(
+  private async buildBatch(
     renderTree: RenderTree,
     renderViews: NodeRenderView[],
     materialHash: number,
     batchType?: GeometryType
-  ): Batch {
+  ): Promise<Batch> {
     let batch = renderViews.filter((value) => value.renderMaterialHash === materialHash)
     /** Prune any meshes with no geometry data */
     batch = batch.filter((value) => value.validGeometry)
@@ -269,7 +269,7 @@ export default class Batcher {
     }
 
     geometryBatch.setBatchMaterial(material)
-    geometryBatch.buildBatch()
+    await geometryBatch.buildBatch()
 
     return geometryBatch
   }

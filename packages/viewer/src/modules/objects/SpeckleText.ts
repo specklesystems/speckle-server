@@ -50,7 +50,7 @@ export class SpeckleText extends Mesh {
   //   await this.update()
   // }
 
-  public async update(params: SpeckleTextParams, updateFinished: () => void) {
+  public async update(params: SpeckleTextParams, updateFinished?: () => void) {
     return new Promise<void>((resolve) => {
       if (params.textValue) {
         this._text.text = params.textValue
