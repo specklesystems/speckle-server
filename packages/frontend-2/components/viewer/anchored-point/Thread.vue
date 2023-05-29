@@ -32,112 +32,121 @@
     <div
       v-if="isExpanded"
       ref="threadContainer"
-      class="fixed hover:bg-foundation bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm rounded-lg shadow-md z-50 pointer-events-auto"
+      class="fixed z-50 pointer-events-auto"
       :style="threadStyle"
     >
-      <div class="relative w-80 flex pt-3">
-        <div class="flex-grow flex items-center">
-          <FormButton
-            v-tippy="'Previous'"
-            size="sm"
-            :icon-left="ChevronLeftIcon"
-            text
-            hide-text
-            @click="emit('prev', props.modelValue)"
-          ></FormButton>
-          <FormButton
-            v-tippy="'Next'"
-            size="sm"
-            :icon-left="ChevronRightIcon"
-            text
-            hide-text
-            @click="emit('next', props.modelValue)"
-          ></FormButton>
-          <div
-            ref="handle"
-            class="flex-grow cursor-move text-tiny rounded-xl bg-blue-500/0 hover:bg-blue-500/10 transition h-3"
-          >
-            <!-- handle {{ isDragged }} -->
-            <!-- {{ initialDragPosition }} -->
-          </div>
-          <FormButton
-            v-show="isDragged"
-            v-tippy="'Pop In'"
-            size="sm"
-            :icon-left="ArrowTopRightOnSquareIcon"
-            text
-            hide-text
-            class="rotate-180"
-            @click="isDragged = false"
-          ></FormButton>
-        </div>
-        <div>
-          <FormButton
-            v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
-            size="sm"
-            :icon-left="modelValue.archived ? CheckCircleIcon : CheckCircleIconOutlined"
-            text
-            hide-text
-            :color="modelValue.archived ? 'default' : 'default'"
-            :disabled="!canArchiveOrUnarchive"
-            @click="toggleCommentResolvedStatus()"
-          ></FormButton>
-          <FormButton
-            v-tippy="'Copy link'"
-            size="sm"
-            :icon-left="LinkIcon"
-            text
-            hide-text
-            @click="onCopyLink"
-          ></FormButton>
-          <FormButton
-            size="sm"
-            :icon-left="XMarkIcon"
-            text
-            hide-text
-            @click="changeExpanded(false)"
-          ></FormButton>
-        </div>
-      </div>
-      <div class="relative w-80 flex flex-col">
+      <div
+        ref="handle"
+        class="p-1.5 cursor-move rounded-lg group hover:bg-blue-500/50"
+        :class="{ 'is-dragging bg-blue-500/50': isDragging }"
+      >
         <div
-          ref="commentsContainer"
-          class="max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
+          :class="[
+            'bg-white/80 dark:bg-neutral-800/90 backdrop-blur-sm shadow-md cursor-auto rounded-lg',
+            'group-hover:bg-foundation dark:group-hover:bg-neutral-800 group-[.is-dragging]:bg-foundation dark:group-[.is-dragging]:bg-neutral-800'
+          ]"
         >
-          <div
-            v-if="!isThreadResourceLoaded"
-            class="pl-3 pr-1 py-1 mt-2 flex items-center justify-between text-xs text-primary bg-primary-muted"
-          >
-            <span>Conversation started in a different version.</span>
-            <FormButton
-              v-tippy="'Load thread context'"
-              size="xs"
-              text
-              @click="onLoadThreadContext"
+          <div class="relative w-80 flex pt-3">
+            <div class="flex-grow flex items-center">
+              <FormButton
+                v-tippy="'Previous'"
+                size="sm"
+                :icon-left="ChevronLeftIcon"
+                text
+                hide-text
+                @click="emit('prev', props.modelValue)"
+              ></FormButton>
+              <FormButton
+                v-tippy="'Next'"
+                size="sm"
+                :icon-left="ChevronRightIcon"
+                text
+                hide-text
+                @click="emit('next', props.modelValue)"
+              ></FormButton>
+              <div class="flex-grow"></div>
+              <FormButton
+                v-show="isDragged"
+                v-tippy="'Pop In'"
+                size="sm"
+                :icon-left="ArrowTopRightOnSquareIcon"
+                text
+                hide-text
+                class="rotate-180"
+                @click="isDragged = false"
+              ></FormButton>
+            </div>
+            <div>
+              <FormButton
+                v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
+                size="sm"
+                :icon-left="
+                  modelValue.archived ? CheckCircleIcon : CheckCircleIconOutlined
+                "
+                text
+                hide-text
+                :color="modelValue.archived ? 'default' : 'default'"
+                :disabled="!canArchiveOrUnarchive"
+                @click="toggleCommentResolvedStatus()"
+              ></FormButton>
+              <FormButton
+                v-tippy="'Copy link'"
+                size="sm"
+                :icon-left="LinkIcon"
+                text
+                hide-text
+                @click="onCopyLink"
+              ></FormButton>
+              <FormButton
+                size="sm"
+                :icon-left="XMarkIcon"
+                text
+                hide-text
+                @click="changeExpanded(false)"
+              ></FormButton>
+            </div>
+          </div>
+          <div class="relative w-80 flex flex-col">
+            <div
+              ref="commentsContainer"
+              class="max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
             >
-              <ArrowDownCircleIcon class="w-5 h-5" />
-            </FormButton>
+              <div
+                v-if="!isThreadResourceLoaded"
+                class="pl-3 pr-1 py-1 mt-2 flex items-center justify-between text-xs text-primary bg-primary-muted"
+              >
+                <span>Conversation started in a different version.</span>
+                <FormButton
+                  v-tippy="'Load thread context'"
+                  size="xs"
+                  text
+                  @click="onLoadThreadContext"
+                >
+                  <ArrowDownCircleIcon class="w-5 h-5" />
+                </FormButton>
+              </div>
+              <ViewerAnchoredPointThreadComment
+                v-for="comment in comments"
+                :key="comment.id"
+                :comment="comment"
+                :project-id="projectId"
+                @mounted="onCommentMounted"
+              />
+            </div>
+            <div
+              v-if="isTypingMessage"
+              class="bg-foundation rounded-full w-full p-2 caption mt-2"
+            >
+              {{ isTypingMessage }}
+            </div>
+            <ViewerAnchoredPointThreadNewReply
+              v-if="!modelValue.archived && canReply"
+              :model-value="modelValue"
+              class="mt-2"
+              @submit="onNewReply"
+            />
           </div>
-          <ViewerAnchoredPointThreadComment
-            v-for="comment in comments"
-            :key="comment.id"
-            :comment="comment"
-            :project-id="projectId"
-            @mounted="onCommentMounted"
-          />
         </div>
-        <div
-          v-if="isTypingMessage"
-          class="bg-foundation rounded-full w-full p-2 caption mt-2"
-        >
-          {{ isTypingMessage }}
-        </div>
-        <ViewerAnchoredPointThreadNewReply
-          v-if="!modelValue.archived && canReply"
-          :model-value="modelValue"
-          class="mt-2"
-          @submit="onNewReply"
-        />
       </div>
     </div>
   </div>
@@ -178,6 +187,7 @@ import {
   StateApplyMode,
   useApplySerializedState
 } from '~~/lib/viewer/composables/serialization'
+import { useDisableGlobalTextSelection } from '~~/lib/common/composables/window'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -203,6 +213,7 @@ const {
 
 const { projectId } = useInjectedViewerState()
 const canReply = useCheckViewerCommentingAccess()
+const { disableTextSelection } = useDisableGlobalTextSelection()
 
 const markThreadViewed = useMarkThreadViewed()
 const { usersTyping } = useViewerThreadTypingTracking(threadId)
@@ -248,28 +259,37 @@ const initialDragPosition = computed(() => {
 })
 
 const isDragged = ref(false)
-const { x, y } = useDraggable(threadContainer, {
+const { x, y, isDragging, position } = useDraggable(threadContainer, {
   stopPropagation: true,
-  handle, // note if linting error, this actually exists and is ok FFS
+  handle,
   initialValue: initialDragPosition,
-  onStart() {
+  onStart(_pos, event) {
+    // Only allow dragging by border
+    const target = event.target as HTMLElement
+    if (target !== handle.value) return false
+
+    // Reset pos, if starting dragging from scratch
+    if (!isDragged.value) position.value = { x: 0, y: 0 }
+
     isDragged.value = true
-  },
-  onEnd() {
-    // todo
   }
 })
 
 const threadStyle = computed(() => {
   if (!threadActivator.value) return props.modelValue.style
+
   const activatorRect = threadActivator.value?.getBoundingClientRect()
-  const xOffset = isDragged.value
-    ? x.value
-    : (props.modelValue.style.x as number) + activatorRect.width + 20
-  const threadHeigth = threadContainer.value?.getBoundingClientRect().height || 0
-  const yOffset = isDragged.value
-    ? y.value
-    : (props.modelValue.style.y as number) - threadHeigth / 2
+  const areDraggableCoordsInitialized = x.value && y.value
+  const xOffset =
+    isDragged.value && areDraggableCoordsInitialized
+      ? x.value
+      : (props.modelValue.style.x as number) + activatorRect.width + 20
+  const threadHeight = threadContainer.value?.getBoundingClientRect().height || 0
+  const yOffset =
+    isDragged.value && areDraggableCoordsInitialized
+      ? y.value
+      : (props.modelValue.style.y as number) - threadHeight / 2
+
   const transition = isDragged.value ? 'none' : props.modelValue.style.transition
   return {
     ...props.modelValue.style,
@@ -417,6 +437,13 @@ watch(
     }
   }
 )
+
+watch(isDragging, (newVal, oldVal) => {
+  if (!!newVal === !!oldVal) return
+
+  // Disable text selection while dragging around
+  disableTextSelection.value = newVal
+})
 
 onMounted(() => {
   if (isExpanded.value) {
