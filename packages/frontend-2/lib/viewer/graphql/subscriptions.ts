@@ -1,8 +1,11 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const onViewerUserActivityBroadcastedSubscription = graphql(`
-  subscription OnViewerUserActivityBroadcasted($target: ViewerUpdateTrackingTarget!) {
-    viewerUserActivityBroadcasted(target: $target) {
+  subscription OnViewerUserActivityBroadcasted(
+    $target: ViewerUpdateTrackingTarget!
+    $sessionId: String!
+  ) {
+    viewerUserActivityBroadcasted(target: $target, sessionId: $sessionId) {
       userName
       userId
       user {

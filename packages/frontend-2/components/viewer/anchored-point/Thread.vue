@@ -109,7 +109,14 @@
             class="pl-3 pr-1 py-1 mt-2 flex items-center justify-between text-xs text-primary bg-primary-muted"
           >
             <span>Conversation started in a different version.</span>
-            <ExclamationCircleIcon class="w-4 h-4" />
+            <FormButton
+              v-tippy="'Load thread context'"
+              size="xs"
+              text
+              @click="onLoadThreadContext"
+            >
+              <ArrowDownCircleIcon class="w-5 h-5" />
+            </FormButton>
           </div>
           <ViewerAnchoredPointThreadComment
             v-for="comment in comments"
@@ -126,7 +133,7 @@
           {{ isTypingMessage }}
         </div>
         <ViewerAnchoredPointThreadNewReply
-          v-if="!modelValue.archived"
+          v-if="!modelValue.archived && canReply"
           :model-value="modelValue"
           class="mt-2"
           @submit="onNewReply"
@@ -145,8 +152,8 @@ import {
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
-import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { ensureError, Nullable, Roles, SpeckleViewer } from '@speckle/shared'
+import { ArrowDownCircleIcon } from '@heroicons/vue/20/solid'
+import { ensureError, Nullable, Roles } from '@speckle/shared'
 import { onKeyDown, useClipboard, useDraggable } from '@vueuse/core'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'
 import { useViewerThreadTypingTracking } from '~~/lib/viewer/composables/activity'
@@ -156,6 +163,7 @@ import {
 } from '~~/lib/viewer/composables/commentBubbles'
 import {
   useArchiveComment,
+  useCheckViewerCommentingAccess,
   useMarkThreadViewed
 } from '~~/lib/viewer/composables/commentManagement'
 import {
@@ -166,11 +174,10 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { ResourceType } from '~~/lib/common/generated/gql/graphql'
 import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
-import { NumericPropertyInfo, PropertyInfo } from '@speckle/viewer'
 import {
-  useFilterUtilities,
-  useSectionBoxUtilities
-} from '~~/lib/viewer/composables/ui'
+  StateApplyMode,
+  useApplySerializedState
+} from '~~/lib/viewer/composables/serialization'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -194,27 +201,13 @@ const {
   }
 } = useInjectedViewerState()
 
-const {
-  projectId,
-  viewer: {
-    metadata: { availableFilters: allFilters }
-  },
-  ui: { explodeFactor, lightConfig }
-} = useInjectedViewerState()
-const { sectionBoxOff } = useSectionBoxUtilities()
-const {
-  removePropertyFilter,
-  setPropertyFilter,
-  applyPropertyFilter,
-  unApplyPropertyFilter,
-  resetFilters,
-  isolateObjects,
-  hideObjects
-} = useFilterUtilities()
+const { projectId } = useInjectedViewerState()
+const canReply = useCheckViewerCommentingAccess()
 
 const markThreadViewed = useMarkThreadViewed()
 const { usersTyping } = useViewerThreadTypingTracking(threadId)
 const { ellipsis, controls } = useAnimatingEllipsis()
+const applyState = useApplySerializedState()
 
 const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
@@ -227,12 +220,6 @@ const comments = computed(() => [
   props.modelValue,
   ...props.modelValue.replies.items.slice().reverse()
 ])
-
-const viewerState = computed(() => {
-  return SpeckleViewer.ViewerState.isSerializedViewerState(props.modelValue.viewerState)
-    ? props.modelValue.viewerState
-    : null
-})
 
 // Note: conflicted with dragging styles, so took it out temporarily
 // const { style } = useExpandedThreadResponsiveLocation({
@@ -368,6 +355,13 @@ const onThreadClick = () => {
   changeExpanded(!isExpanded.value)
 }
 
+const onLoadThreadContext = async () => {
+  const state = props.modelValue.viewerState
+  if (!state) return
+
+  await applyState(state, StateApplyMode.TheadFullContextOpen)
+}
+
 const onCopyLink = async () => {
   if (process.server) return
   const url = getLinkToThread(projectId.value, props.modelValue)
@@ -396,56 +390,6 @@ onKeyDown('Escape', () => {
   }
 })
 
-// onKeyDown('ArrowRight', () => (isExpanded.value ? emit('prev', props.modelValue) : ''))
-// onKeyDown('ArrowLeft', () => (isExpanded.value ? emit('next', props.modelValue) : ''))
-const shouldSetFiltersUpPostLoad = ref(false)
-
-const setupFullFilters = () => {
-  if (!viewerState.value) return
-
-  // TODO: Restore more things @dim
-  const propertyInfoKey = viewerState.value.ui.filters.propertyFilter.key
-  const passMin = viewerState.value.viewer.metadata.filteringState?.passMin
-  const passMax = viewerState.value.viewer.metadata.filteringState?.passMax
-
-  if (propertyInfoKey) {
-    removePropertyFilter()
-    unApplyPropertyFilter()
-    const filter = allFilters.value?.find(
-      (f: PropertyInfo) => f.key === propertyInfoKey
-    )
-    if (!filter) {
-      shouldSetFiltersUpPostLoad.value = true
-      console.warn('Error setting comment filter: no filter with that key found. ')
-      return
-    }
-
-    if (passMin || passMax) {
-      const numericFilter = { ...filter } as NumericPropertyInfo
-      numericFilter.passMin = passMin || numericFilter.min
-      numericFilter.passMax = passMax || numericFilter.max
-      setPropertyFilter(numericFilter)
-      applyPropertyFilter()
-      return // Hiding objects is handled by the numeric filter pass min/max
-    }
-    setPropertyFilter(filter)
-    applyPropertyFilter()
-    // do not return, let's go through the vis of objects
-  }
-
-  hideOrIsolateObjects()
-}
-
-const hideOrIsolateObjects = () => {
-  if (!viewerState.value) return
-
-  const isolatedIds = viewerState.value.ui.filters.isolatedObjectIds
-  const hiddenIds = viewerState.value.ui.filters.hiddenObjectIds
-
-  if (isolatedIds.length) isolateObjects(isolatedIds, { replace: true })
-  if (hiddenIds.length) hideObjects(hiddenIds, { replace: true })
-}
-
 watch(
   () => <const>[isExpanded.value, isViewed.value],
   (newVals, oldVals) => {
@@ -456,88 +400,12 @@ watch(
       markThreadViewed(projectId.value, props.modelValue.id)
     }
 
-    if (!newIsExpanded && viewerState.value?.ui.sectionBox) {
-      sectionBoxOff() // turn off section box if a comment had a section box
-    }
-
     if (!newIsExpanded) {
       isDragged.value = false
-    }
-
-    // TODO: unsure whether this should make its way into a composable of some sorts.
-    // Behaviour:
-    // - any time we open a comment, we want to set its filters up;
-    // - any time we close a comment, we reset its filters
-    // We want to do this when the viewer busy event is done with, alternatively when the
-    // all filters is populated...
-
-    // If a thread is no longer expanded and it had filters, reset them to default.
-    const isolatedIds = viewerState.value?.ui.filters.isolatedObjectIds || []
-    const hiddenIds = viewerState.value?.ui.filters.hiddenObjectIds || []
-    const propertyInfoKey = viewerState.value?.ui.filters.propertyFilter.key
-    const hasFilters = isolatedIds.length || hiddenIds.length || propertyInfoKey
-    if (!newIsExpanded && hasFilters) {
-      resetFilters()
-      return
-    }
-
-    if (!viewerState.value?.ui.explodeFactor && explodeFactor.value !== 0)
-      explodeFactor.value = 0
-    if (viewerState.value?.ui.explodeFactor !== explodeFactor.value)
-      explodeFactor.value = viewerState.value?.ui.explodeFactor || 0
-
-    if (viewerState.value?.ui.lightConfig) {
-      lightConfig.value = viewerState.value?.ui.lightConfig
-    }
-
-    // If a thread is expanded and has filters, set them up.
-    if (hasFilters && newIsExpanded) {
-      // If we do not have a custom filter for this thread, it means
-      // we might only have hidden/isolated objects.
-      if (!propertyInfoKey) {
-        hideOrIsolateObjects()
-        return
-      }
-
-      // If we do have a 'propertyInfoKey', try to find it in the all filters. It will be there,
-      // unless we're freshly opening a model and a thread at the same time.
-      const filter = allFilters.value?.find(
-        (f: PropertyInfo) => f.key === propertyInfoKey
-      )
-      // If we don't find it, set a flag for the watcher below to pick up.
-      if (!filter) shouldSetFiltersUpPostLoad.value = true
-      // Full speed ahead otherwise.
-      else setupFullFilters()
     }
   },
   { immediate: true } // for triggering also when a comment is opened because of a thread link
 )
-
-watch(allFilters, (newValue) => {
-  if (!shouldSetFiltersUpPostLoad.value) return
-  const filter = newValue?.find(
-    (f: PropertyInfo) => f.key === viewerState.value?.ui.filters.propertyFilter.key
-  )
-  if (!filter) return
-  shouldSetFiltersUpPostLoad.value = false
-  // NOTE: we still need to give the viewer some time to do its thing.
-  // TODOs:
-  // - check with Alex if there is a way to more accurately report the end of viewer operations.
-  //   (I get WebGL-000035F405EE6900] GL_INVALID_FRAMEBUFFER_OPERATION: Framebuffer is incomplete: Attachment has zero size., and WebGL-000035F405EE6900] GL_INVALID_FRAMEBUFFER_OPERATION: Draw framebuffer is incomplete, and REE.Material: 'vertexColors' parameter is undefined. errors if model is not fully 'loaded')
-  // - check if viewerBusy might be a better option (it's not, tried below.)
-  setTimeout(setupFullFilters, 2000)
-})
-
-// watch(viewerBusy, (newVal) => {
-//   if (newVal) return
-//   if (!shouldSetFiltersUpPostLoad.value) return
-//   const filter = allFilters.value?.find(
-//     (f: PropertyInfo) => f.key === props.modelValue.data?.filters.propertyInfoKey
-//   )
-//   if (!filter) return
-//   shouldSetFiltersUpPostLoad.value = false
-//   setupFullFilters()
-// })
 
 watch(
   () => usersTyping.value.length > 1,
@@ -549,4 +417,11 @@ watch(
     }
   }
 )
+
+onMounted(() => {
+  if (isExpanded.value) {
+    // update won't emit if thread was mounted already expanded, so we emit this to close any open thread editors
+    emit('update:expanded', true)
+  }
+})
 </script>

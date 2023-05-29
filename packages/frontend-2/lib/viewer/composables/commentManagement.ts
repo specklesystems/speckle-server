@@ -214,3 +214,13 @@ export function useArchiveComment() {
     return false
   }
 }
+
+export function useCheckViewerCommentingAccess() {
+  const {
+    resources: {
+      response: { project }
+    }
+  } = useInjectedViewerState()
+  const { activeUser } = useActiveUser()
+  return computed(() => activeUser.value && !!project.value?.role)
+}

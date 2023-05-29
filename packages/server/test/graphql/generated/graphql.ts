@@ -2269,6 +2269,7 @@ export type SubscriptionUserViewerActivityArgs = {
 
 
 export type SubscriptionViewerUserActivityBroadcastedArgs = {
+  sessionId?: InputMaybe<Scalars['String']>;
   target: ViewerUpdateTrackingTarget;
 };
 
