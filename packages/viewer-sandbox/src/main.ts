@@ -262,7 +262,10 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/f9063fe647'
     // 'https://speckle.xyz/streams/be0f962efb/objects/37639741c363a123100eda8044f2fe3f'
     // 'https://latest.speckle.dev/streams/92b620fb17/objects/a4e2fad01e69cd886ecbfedf221f5301'
-    'https://latest.speckle.dev/streams/3f895e614f/commits/7e16d2ab71'
+    // 'https://latest.speckle.dev/streams/3f895e614f/commits/7e16d2ab71'
+    // 'https://latest.speckle.dev/streams/c1faab5c62/objects/d3466547df9df86397eb4dff7ac9713f'
+    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/140c443886'
+    'https://latest.speckle.dev/streams/e258b0e8db/commits/108971810d'
   )
 }
 
