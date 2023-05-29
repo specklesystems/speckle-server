@@ -2,7 +2,6 @@
   <div>
     <SingletonToastManager />
     <SingletonAppErrorStateManager />
-    <SingletonQueuedRoutingManager />
   </div>
 </template>
 <script setup lang="ts">
