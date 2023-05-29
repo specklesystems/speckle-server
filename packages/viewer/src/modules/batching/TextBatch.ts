@@ -59,6 +59,9 @@ export default class TextBatch implements Batch {
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
     this.mesh.textMesh.material = ranges[0].material
+    if (ranges[0].materialOptions && ranges[0].materialOptions.rampIndexColor) {
+      this.mesh.textMesh.material.color.copy(ranges[0].materialOptions.rampIndexColor)
+    }
   }
 
   public autoFillDrawRanges() {}

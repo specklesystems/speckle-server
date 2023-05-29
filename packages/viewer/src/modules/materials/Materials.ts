@@ -58,6 +58,10 @@ export default class Materials {
   private pointCloudOverlayMaterial: Material = null
 
   private textHighlightMaterial: Material = null
+  private textGhostMaterial: Material = null
+  private textColoredMaterial: Material = null
+  private textOverlayMaterial: Material = null
+  private textHiddenMaterial: Material = null
 
   private defaultGradientTextureData: ImageData = null
 
@@ -433,6 +437,104 @@ export default class Materials {
     ;(this.pointGhostMaterial as SpecklePointMaterial).toneMapped = false
   }
 
+  private async createDefaultTextMaterials() {
+    this.textHighlightMaterial = new SpeckleTextMaterial(
+      {
+        color: 0x047efb,
+        opacity: 1,
+        side: DoubleSide
+      },
+      ['USE_RTE']
+    )
+    this.textHighlightMaterial.transparent =
+      this.textHighlightMaterial.opacity < 1 ? true : false
+    this.textHighlightMaterial.depthWrite = this.textHighlightMaterial.transparent
+      ? false
+      : true
+    this.textHighlightMaterial.toneMapped = false
+    ;(this.textHighlightMaterial as SpeckleTextMaterial).color.convertSRGBToLinear()
+
+    this.textHighlightMaterial = (
+      this.textHighlightMaterial as SpeckleTextMaterial
+    ).getDerivedMaterial()
+
+    this.textGhostMaterial = new SpeckleTextMaterial(
+      {
+        color: 0xffffff,
+        opacity: 0.1,
+        side: DoubleSide
+      },
+      ['USE_RTE']
+    )
+    this.textGhostMaterial.transparent =
+      this.textGhostMaterial.opacity < 1 ? true : false
+    this.textGhostMaterial.depthWrite = this.textGhostMaterial.transparent
+      ? false
+      : true
+    this.textGhostMaterial.toneMapped = false
+    ;(this.textGhostMaterial as SpeckleTextMaterial).color.convertSRGBToLinear()
+
+    this.textGhostMaterial = (
+      this.textGhostMaterial as SpeckleTextMaterial
+    ).getDerivedMaterial()
+
+    this.textColoredMaterial = new SpeckleTextMaterial(
+      {
+        color: 0xffffff,
+        opacity: 1,
+        side: DoubleSide
+      },
+      ['USE_RTE']
+    )
+    this.textColoredMaterial.transparent =
+      this.textColoredMaterial.opacity < 1 ? true : false
+    this.textColoredMaterial.depthWrite = this.textColoredMaterial.transparent
+      ? false
+      : true
+    this.textColoredMaterial.toneMapped = false
+    ;(this.textColoredMaterial as SpeckleTextMaterial).color.convertSRGBToLinear()
+
+    this.textColoredMaterial = (
+      this.textColoredMaterial as SpeckleTextMaterial
+    ).getDerivedMaterial()
+
+    this.textOverlayMaterial = new SpeckleTextMaterial(
+      {
+        color: 0x04cbfb,
+        opacity: 1,
+        side: DoubleSide
+      },
+      ['USE_RTE']
+    )
+    this.textOverlayMaterial.transparent =
+      this.textOverlayMaterial.opacity < 1 ? true : false
+    this.textOverlayMaterial.depthWrite = this.textOverlayMaterial.transparent
+      ? false
+      : true
+    this.textOverlayMaterial.toneMapped = false
+    ;(this.textOverlayMaterial as SpeckleTextMaterial).color.convertSRGBToLinear()
+
+    this.textOverlayMaterial = (
+      this.textOverlayMaterial as SpeckleTextMaterial
+    ).getDerivedMaterial()
+
+    this.textHiddenMaterial = new SpeckleTextMaterial(
+      {
+        color: 0xffffff,
+        opacity: 1,
+        side: DoubleSide
+      },
+      ['USE_RTE']
+    )
+    this.textHiddenMaterial.visible = false
+    this.textHiddenMaterial.toneMapped = false
+    ;(this.textHiddenMaterial as SpeckleTextMaterial).color.convertSRGBToLinear()
+
+    this.textHiddenMaterial = (
+      this.textHiddenMaterial as SpeckleTextMaterial
+    ).getDerivedMaterial()
+  }
+
   private async createDefaultNullMaterials() {
     this.materialMap[NodeRenderView.NullRenderMaterialHash] =
       new SpeckleStandardMaterial(
@@ -520,28 +622,6 @@ export default class Materials {
         },
         ['USE_RTE']
       )
-  }
-
-  private async createDefaultTextMaterials() {
-    this.textHighlightMaterial = new SpeckleTextMaterial(
-      {
-        color: 0x047efb,
-        opacity: 1,
-        side: DoubleSide
-      },
-      ['USE_RTE']
-    )
-    this.textHighlightMaterial.transparent =
-      this.textHighlightMaterial.opacity < 1 ? true : false
-    this.textHighlightMaterial.depthWrite = this.textHighlightMaterial.transparent
-      ? false
-      : true
-    this.textHighlightMaterial.toneMapped = false
-    ;(this.textHighlightMaterial as SpeckleTextMaterial).color.convertSRGBToLinear()
-
-    this.textHighlightMaterial = (
-      this.textHighlightMaterial as SpeckleTextMaterial
-    ).getDerivedMaterial()
   }
 
   public async createDefaultMaterials() {
@@ -736,6 +816,8 @@ export default class Materials {
         return this.pointGhostMaterial
       case GeometryType.POINT_CLOUD:
         return this.pointGhostMaterial
+      case GeometryType.TEXT:
+        return this.textGhostMaterial
     }
   }
 
@@ -751,6 +833,8 @@ export default class Materials {
         return this.pointGhostMaterial
       case GeometryType.POINT_CLOUD:
         return this.pointGhostMaterial
+      case GeometryType.TEXT:
+        return this.textColoredMaterial
     }
   }
 
@@ -766,6 +850,8 @@ export default class Materials {
         return this.pointGhostMaterial
       case GeometryType.POINT_CLOUD:
         return this.pointGhostMaterial
+      case GeometryType.TEXT:
+        return this.textColoredMaterial
     }
   }
 
@@ -781,6 +867,8 @@ export default class Materials {
         return this.pointOverlayMaterial
       case GeometryType.POINT_CLOUD:
         return this.pointCloudOverlayMaterial
+      case GeometryType.TEXT:
+        return this.textOverlayMaterial
     }
   }
 
@@ -794,6 +882,8 @@ export default class Materials {
         return this.meshHiddenMaterial
       case GeometryType.POINT_CLOUD:
         return this.meshHiddenMaterial
+      case GeometryType.TEXT:
+        return this.textHiddenMaterial
     }
   }
 
@@ -851,6 +941,20 @@ export default class Materials {
           },
           ['USE_RTE']
         )
+      case GeometryType.TEXT: {
+        const mat = new SpeckleTextMaterial(
+          {
+            color,
+            opacity: 1,
+            side: DoubleSide
+          },
+          ['USE_RTE']
+        )
+        mat.toneMapped = false
+        mat.color.convertSRGBToLinear()
+
+        return mat.getDerivedMaterial()
+      }
     }
   }
 

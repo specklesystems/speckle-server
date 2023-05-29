@@ -883,7 +883,7 @@ export default class Sandbox {
     filteringFolder.addInput(this.filterParams, 'filterBy', {
       options: {
         Volume: 'parameters.HOST_VOLUME_COMPUTED.value',
-        Area: 'parameters.HOST_AREA_COMPUTED.value',
+        Area: 'area',
         Elevation: 'Elevation',
         SpeckleType: 'speckle_type',
         DisplayName: 'DisplayName',
