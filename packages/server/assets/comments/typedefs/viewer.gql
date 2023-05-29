@@ -55,5 +55,6 @@ extend type Subscription {
   """
   viewerUserActivityBroadcasted(
     target: ViewerUpdateTrackingTarget!
+    sessionId: String
   ): ViewerUserActivityMessage!
 }

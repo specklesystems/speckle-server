@@ -189,8 +189,8 @@ const modelName = computed(() => {
   }
 })
 
-function handleVersionChange(versionId: string) {
-  switchModelToVersion(props.model.id, versionId)
+async function handleVersionChange(versionId: string) {
+  await switchModelToVersion(props.model.id, versionId)
 }
 
 const onLoadMore = async () => {

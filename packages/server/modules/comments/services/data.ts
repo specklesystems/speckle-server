@@ -39,6 +39,10 @@ export function isDataStruct(data: unknown): data is DataStruct {
   return SpeckleViewer.ViewerState.isSerializedViewerState(stateRaw)
 }
 
+export function formatSerializedViewerState(state: SerializedViewerState) {
+  return SpeckleViewer.ViewerState.formatSerializedViewerState(state)
+}
+
 export function isLegacyData(data: unknown): data is LegacyData {
   if (!data) return false
   const keys: Array<keyof LegacyData> = [
@@ -129,14 +133,15 @@ export async function convertLegacyDataToState(
           newThreadEditor: true
         }
       },
-      spotlightUserId: null,
+      spotlightUserSessionId: null,
       explodeFactor: 0,
       filters: {
         isolatedObjectIds: data.filters?.isolatedIds || [],
         hiddenObjectIds: data.filters?.hiddenIds || [],
         selectedObjectIds: [],
         propertyFilter: {
-          key: data.filters?.propertyInfoKey || null
+          key: data.filters?.propertyInfoKey || null,
+          isApplied: true
         }
       },
       camera: {
