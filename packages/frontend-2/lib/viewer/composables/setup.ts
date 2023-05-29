@@ -814,8 +814,10 @@ function setupInterfaceState(
         hideBubbles
       },
       camera: {
-        position: wrapRefWithTracking(position, 'position'),
-        target: wrapRefWithTracking(target, 'target'),
+        // position: wrapRefWithTracking(position, 'position'),
+        // target: wrapRefWithTracking(target, 'target'),
+        position,
+        target,
         isOrthoProjection
       },
       sectionBox: ref(null as Nullable<Box3>),

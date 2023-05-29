@@ -270,7 +270,7 @@ function useViewerCameraIntegration() {
   } = useInjectedViewerState()
   const { forceViewToViewerSync } = useCameraUtilities()
 
-  const startTrackingViewerCamera = ref(false)
+  const hasInitialLoadFired = ref(false)
 
   const loadCameraDataFromViewer = () => {
     const activeCam = instance.cameraHandler.activeCam
@@ -283,15 +283,15 @@ function useViewerCameraIntegration() {
 
     let cameraManuallyChanged = false
     if (!areVectorsLooselyEqual(position.value, viewerPos)) {
-      if (startTrackingViewerCamera.value) position.value = viewerPos.clone()
+      if (hasInitialLoadFired.value) position.value = viewerPos.clone()
       cameraManuallyChanged = true
     }
     if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
-      if (startTrackingViewerCamera.value) target.value = viewerTarget.clone()
+      if (hasInitialLoadFired.value) target.value = viewerTarget.clone()
       cameraManuallyChanged = true
     }
 
-    console.log('incomingCamera', viewerPos, viewerTarget)
+    // console.log('incomingCamera', viewerPos, viewerTarget)
 
     return cameraManuallyChanged
   }
@@ -311,7 +311,7 @@ function useViewerCameraIntegration() {
 
   useOnViewerLoadComplete(({ isInitial }) => {
     if (isInitial) {
-      startTrackingViewerCamera.value = true
+      hasInitialLoadFired.value = true
 
       // Load camera position so we can return to it correctly
       // ONLY if we don't already have specific coordinates (e.g. from opened thread)
@@ -323,6 +323,9 @@ function useViewerCameraIntegration() {
       } else {
         forceViewToViewerSync()
       }
+
+      // Only now set projection, we can't do it too early
+      orthoProjectionUpdate(isOrthoProjection.value)
     } else {
       loadCameraDataFromViewer()
     }
@@ -341,20 +344,27 @@ function useViewerCameraIntegration() {
   //   { throttleWait: 500 }
   // )
 
+  const orthoProjectionUpdate = (newVal: boolean) => {
+    if (!hasInitialLoadFired.value) {
+      throw new Error('Attempting to set projection too early')
+    }
+
+    if (newVal) {
+      instance.setOrthoCameraOn()
+    } else {
+      instance.setPerspectiveCameraOn()
+    }
+
+    // reset camera pos, cause we've switched cameras now and it might not have the new ones
+    forceViewToViewerSync(false)
+  }
+
   // state -> viewer
   watch(
     isOrthoProjection,
     (newVal, oldVal) => {
-      if (newVal === oldVal) return
-
-      if (newVal) {
-        instance.setOrthoCameraOn()
-      } else {
-        instance.setPerspectiveCameraOn()
-      }
-
-      // reset camera pos, cause we've switched cameras now and it might not have the new ones
-      forceViewToViewerSync(false)
+      if (newVal === oldVal || !hasInitialLoadFired.value) return
+      orthoProjectionUpdate(newVal)
     },
     { immediate: true }
   )
@@ -602,6 +612,8 @@ function useDebugViewerEvents() {
     useViewerEventListener(val, (...args) => console.log(key, ...args))
   }
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   window.VIEWER = instance
 }
 
@@ -620,5 +632,5 @@ export function useViewerPostSetup() {
   useExplodeFactorIntegration()
 
   // test
-  useDebugViewerEvents()
+  // useDebugViewerEvents()
 }
