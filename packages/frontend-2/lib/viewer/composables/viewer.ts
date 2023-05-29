@@ -136,6 +136,25 @@ export function useViewerCameraTracker(
   })
 }
 
+export function useViewerCameraControlStartTracker(callback: () => void) {
+  const {
+    viewer: { instance }
+  } = useInjectedViewerState()
+
+  const removeListener = () =>
+    instance.cameraHandler.controls.removeEventListener('controlstart', callback)
+
+  onMounted(() => {
+    instance.cameraHandler.controls.addEventListener('controlstart', callback)
+  })
+
+  onBeforeUnmount(() => {
+    removeListener()
+  })
+
+  return removeListener
+}
+
 export function useViewerCameraRestTracker(
   callback: () => void,
   options?: Partial<{ debounceWait: number }>

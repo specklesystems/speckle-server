@@ -22,6 +22,7 @@ import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/
 import {
   useGetObjectUrl,
   useOnViewerLoadComplete,
+  useViewerCameraControlStartTracker,
   useViewerCameraTracker,
   useViewerEventListener
 } from '~~/lib/viewer/composables/viewer'
@@ -264,8 +265,8 @@ function useViewerCameraIntegration() {
   const {
     viewer: { instance },
     ui: {
-      camera: { isOrthoProjection, position, target }
-      // spotlightUserSessionId
+      camera: { isOrthoProjection, position, target },
+      spotlightUserSessionId
     }
   } = useInjectedViewerState()
   const { forceViewToViewerSync } = useCameraUtilities()
@@ -331,18 +332,11 @@ function useViewerCameraIntegration() {
     }
   })
 
-  // TODO: This caused an infinite loop of toggling ortho/perspective mode.
-  // useViewerCameraTracker(
-  //   () => {
-  //     const activeCam = instance.cameraHandler.activeCam
-  //     const isOrtho = activeCam.camera instanceof OrthographicCamera
-
-  //     if (isOrthoProjection.value !== isOrtho) {
-  //       isOrthoProjection.value = isOrtho
-  //     }
-  //   },
-  //   { throttleWait: 500 }
-  // )
+  useViewerCameraControlStartTracker(() => {
+    if (spotlightUserSessionId.value) {
+      spotlightUserSessionId.value = null // cancel
+    }
+  })
 
   const orthoProjectionUpdate = (newVal: boolean) => {
     if (!hasInitialLoadFired.value) {

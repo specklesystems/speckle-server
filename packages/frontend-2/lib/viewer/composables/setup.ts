@@ -397,28 +397,6 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     initialState: []
   })
 
-  // const resources = computed({
-  //   get: () => SpeckleViewer.ViewerRoute.parseUrlParameters(getParam.value),
-  //   set: (newResources) => {
-  //     const modelId =
-  //       SpeckleViewer.ViewerRoute.createGetParamFromResources(newResources)
-  //     router.push((route) => ({
-  //       params: { modelId },
-  //       query: route.query,
-  //       hash: route.hash
-  //     }))
-  //   }
-  // })
-
-  // // we could use getParam, but `createGetParamFromResources` does sorting and de-duplication AFAIK
-  // const resourceIdString = computed({
-  //   get: () => SpeckleViewer.ViewerRoute.createGetParamFromResources(resources.value),
-  //   set: (newVal) => {
-  //     const newResources = SpeckleViewer.ViewerRoute.parseUrlParameters(newVal)
-  //     resources.value = newResources
-  //   }
-  // })
-
   // we could use getParam, but `createGetParamFromResources` does sorting and de-duplication AFAIK
   const resourceIdString = writableAsyncComputed({
     get: () => SpeckleViewer.ViewerRoute.createGetParamFromResources(resources.value),
