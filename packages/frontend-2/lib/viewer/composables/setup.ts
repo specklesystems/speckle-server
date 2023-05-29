@@ -778,10 +778,7 @@ function setupInterfaceState(
       selection,
       lightConfig,
       explodeFactor,
-      spotlightUserSessionId: wrapRefWithTracking(
-        spotlightUserSessionId,
-        'spotlightUserId'
-      ),
+      spotlightUserSessionId,
       viewerBusy,
       threads: {
         items: commentThreads,
