@@ -80,14 +80,11 @@ export function useCameraUtilities() {
     camera.isOrthoProjection.value = !camera.isOrthoProjection.value
   }
 
-  const forceViewToViewerSync = (transition = true) => {
-    setView(
-      {
-        position: camera.position.value,
-        target: camera.target.value
-      },
-      transition
-    )
+  const forceViewToViewerSync = () => {
+    setView({
+      position: camera.position.value,
+      target: camera.target.value
+    })
   }
 
   return {

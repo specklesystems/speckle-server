@@ -356,7 +356,7 @@ function useViewerCameraIntegration() {
     }
 
     // reset camera pos, cause we've switched cameras now and it might not have the new ones
-    forceViewToViewerSync(false)
+    forceViewToViewerSync()
   }
 
   // state -> viewer
