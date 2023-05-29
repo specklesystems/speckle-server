@@ -27,9 +27,10 @@ export class SpeckleText extends Mesh {
     return this._background
   }
 
-  public constructor() {
+  public constructor(uuid: string) {
     super()
     this._text = new Text()
+    this._text.uuid = uuid
     this._text.depthOffset = -0.01
     this.add(this._text)
   }

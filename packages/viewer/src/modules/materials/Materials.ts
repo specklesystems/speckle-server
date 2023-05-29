@@ -57,6 +57,8 @@ export default class Materials {
   private pointOverlayMaterial: Material = null
   private pointCloudOverlayMaterial: Material = null
 
+  private textHighlightMaterial: Material = null
+
   private defaultGradientTextureData: ImageData = null
 
   public static renderMaterialFromNode(node: TreeNode): RenderMaterial {
@@ -520,10 +522,33 @@ export default class Materials {
       )
   }
 
+  private async createDefaultTextMaterials() {
+    this.textHighlightMaterial = new SpeckleTextMaterial(
+      {
+        color: 0x047efb,
+        opacity: 1,
+        side: DoubleSide
+      },
+      ['USE_RTE']
+    )
+    this.textHighlightMaterial.transparent =
+      this.textHighlightMaterial.opacity < 1 ? true : false
+    this.textHighlightMaterial.depthWrite = this.textHighlightMaterial.transparent
+      ? false
+      : true
+    this.textHighlightMaterial.toneMapped = false
+    ;(this.textHighlightMaterial as SpeckleTextMaterial).color.convertSRGBToLinear()
+
+    this.textHighlightMaterial = (
+      this.textHighlightMaterial as SpeckleTextMaterial
+    ).getDerivedMaterial()
+  }
+
   public async createDefaultMaterials() {
     await this.createDefaultMeshMaterials()
     await this.createLineDefaultMaterials()
     await this.createDefaultPointMaterials()
+    await this.createDefaultTextMaterials()
     await this.createDefaultNullMaterials()
     this.defaultGradientTextureData = await Assets.getTextureData(defaultGradient)
   }
@@ -605,7 +630,6 @@ export default class Materials {
     const mat = new SpeckleTextMaterial(
       {
         color: materialData.color,
-        emissive: 0x0,
         opacity: 1,
         side: DoubleSide
       },
@@ -697,6 +721,8 @@ export default class Materials {
         return this.pointHighlightMaterial
       case GeometryType.POINT_CLOUD:
         return this.pointCloudHighlightMaterial
+      case GeometryType.TEXT:
+        return this.textHighlightMaterial
     }
   }
 

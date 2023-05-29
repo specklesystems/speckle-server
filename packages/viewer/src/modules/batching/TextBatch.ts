@@ -57,19 +57,21 @@ export default class TextBatch implements Batch {
     return AllBatchUpdateRange
   }
 
-  public setDrawRanges(...ranges: BatchUpdateRange[]) {}
+  public setDrawRanges(...ranges: BatchUpdateRange[]) {
+    this.mesh.textMesh.material = ranges[0].material
+  }
 
   public autoFillDrawRanges() {}
 
   public resetDrawRanges() {
-    // this.mesh.material = this.batchMaterial
-    // this.mesh.visible = true
+    this.mesh.textMesh.material = this.batchMaterial
+    this.mesh.textMesh.visible = true
     // this.geometry.clearGroups()
     // this.geometry.setDrawRange(0, Infinity)
   }
 
   public buildBatch() {
-    this.mesh = new SpeckleText()
+    this.mesh = new SpeckleText(this.id)
     this.mesh.matrixAutoUpdate = false
     this.mesh.update(
       SpeckleText.SpeckleTextParamsFromMetadata(
@@ -77,6 +79,11 @@ export default class TextBatch implements Batch {
       ),
       () => {
         this.mesh.matrix.copy(this.renderViews[0].renderData.geometry.bakeTransform)
+        this.renderViews[0].setBatchData(
+          this.id,
+          0,
+          this.mesh.textMesh.geometry.index.length / 3
+        )
       }
     )
     this.mesh.textMesh.material = this.batchMaterial
@@ -85,9 +92,7 @@ export default class TextBatch implements Batch {
   }
 
   public getRenderView(index: number): NodeRenderView {
-    index
-    console.warn('Deprecated! Do not call this anymore')
-    return null
+    return this.renderViews[0]
   }
 
   public getMaterialAtIndex(index: number): Material {
