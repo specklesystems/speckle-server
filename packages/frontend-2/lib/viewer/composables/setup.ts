@@ -800,7 +800,10 @@ function setupInterfaceState(
       selection,
       lightConfig,
       explodeFactor,
-      spotlightUserSessionId,
+      spotlightUserSessionId: wrapRefWithTracking(
+        spotlightUserSessionId,
+        'spotlightUserId'
+      ),
       viewerBusy,
       threads: {
         items: commentThreads,
@@ -900,20 +903,12 @@ export function useSetupViewerScope(
 
 export function useResetUiState() {
   const {
-    ui: {
-      threads,
-      spotlightUserSessionId,
-      camera,
-      sectionBox,
-      highlightedObjectIds,
-      lightConfig
-    }
+    ui: { threads, camera, sectionBox, highlightedObjectIds, lightConfig }
   } = useInjectedViewerState()
   const { resetFilters } = useFilterUtilities()
 
   return async () => {
     await threads.closeAllThreads()
-    spotlightUserSessionId.value = null
     camera.isOrthoProjection.value = false
     sectionBox.value = null
     highlightedObjectIds.value = []
