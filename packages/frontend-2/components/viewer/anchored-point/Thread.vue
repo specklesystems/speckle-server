@@ -355,11 +355,11 @@ const onThreadClick = () => {
   changeExpanded(!isExpanded.value)
 }
 
-const onLoadThreadContext = () => {
+const onLoadThreadContext = async () => {
   const state = props.modelValue.viewerState
   if (!state) return
 
-  applyState(state, StateApplyMode.TheadFullContextOpen)
+  await applyState(state, StateApplyMode.TheadFullContextOpen)
 }
 
 const onCopyLink = async () => {

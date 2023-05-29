@@ -349,8 +349,8 @@ export function useViewerUserActivityTracking(params: {
 function useViewerSpotlightTracking() {
   const applyState = useApplySerializedState()
 
-  return (user: UserActivityModel) => {
-    applyState(user.state, StateApplyMode.Spotlight)
+  return async (user: UserActivityModel) => {
+    await applyState(user.state, StateApplyMode.Spotlight)
   }
 }
 

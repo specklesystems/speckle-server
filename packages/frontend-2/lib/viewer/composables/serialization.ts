@@ -113,9 +113,9 @@ export function useApplySerializedState() {
   } = useFilterUtilities()
   const resetState = useResetUiState()
 
-  return (state: SerializedViewerState, mode: StateApplyMode) => {
+  return async (state: SerializedViewerState, mode: StateApplyMode) => {
     if (mode === StateApplyMode.Reset) {
-      resetState()
+      await resetState()
       return
     }
 
@@ -202,11 +202,11 @@ export function useApplySerializedState() {
     if (
       [StateApplyMode.Spotlight, StateApplyMode.TheadFullContextOpen].includes(mode)
     ) {
-      resourceIdString.value = state.resources.request.resourceIdString
+      await resourceIdString.update(state.resources.request.resourceIdString)
     }
 
     if ([StateApplyMode.Spotlight].includes(mode)) {
-      urlHashState.focusedThreadId.value = state.ui.threads.openThread.threadId
+      await urlHashState.focusedThreadId.update(state.ui.threads.openThread.threadId)
     }
 
     explodeFactor.value = state.ui.explodeFactor

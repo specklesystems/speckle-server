@@ -45,14 +45,14 @@ const id = project.value?.id as string
 const { result: models } = useQuery(latestModelsQuery, () => ({ projectId: id }))
 
 const hasAddedOverlay = ref(false)
-function addOverlay() {
+async function addOverlay() {
   const allmodels = models.value?.project?.models.items
   const currentModelId = modelsAndVersionIds.value[0].model.id
   const otherModelId = allmodels?.find((m) => m.id !== currentModelId)?.id as string
-  items.value = [
+  await items.update([
     ...items.value,
     ...SpeckleViewer.ViewerRoute.resourceBuilder().addModel(otherModelId).toResources()
-  ]
+  ])
 
   hasAddedOverlay.value = true
 }

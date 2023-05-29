@@ -291,6 +291,8 @@ function useViewerCameraIntegration() {
       cameraManuallyChanged = true
     }
 
+    console.log('incomingCamera', viewerPos, viewerTarget)
+
     return cameraManuallyChanged
   }
 
@@ -590,10 +592,17 @@ function useExplodeFactorIntegration() {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function useDebugViewerEvents() {
+  if (process.server) return
+  const {
+    viewer: { instance }
+  } = useInjectedViewerState()
+
   for (const [key, val] of Object.entries(ViewerEvent)) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     useViewerEventListener(val, (...args) => console.log(key, ...args))
   }
+
+  window.VIEWER = instance
 }
 
 export function useViewerPostSetup() {
@@ -611,5 +620,5 @@ export function useViewerPostSetup() {
   useExplodeFactorIntegration()
 
   // test
-  // useDebugViewerEvents()
+  useDebugViewerEvents()
 }

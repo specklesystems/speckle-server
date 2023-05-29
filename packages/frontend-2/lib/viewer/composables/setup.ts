@@ -56,7 +56,10 @@ import { Box3, Vector3 } from 'three'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { wrapRefWithTracking } from '~~/lib/common/helpers/debugging'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
-import { useQueuedRouting } from '~~/lib/common/composables/url'
+import {
+  AsyncWritableComputedRef,
+  writableAsyncComputed
+} from '~~/lib/common/composables/async'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -126,12 +129,12 @@ export type InjectableViewerState = Readonly<{
        * All currently requested identifiers. You
        * can write to this to change which resources should be loaded.
        */
-      items: WritableComputedRef<SpeckleViewer.ViewerRoute.ViewerResource[]>
+      items: AsyncWritableComputedRef<SpeckleViewer.ViewerRoute.ViewerResource[]>
       /**
        * All currently requested identifiers in a comma-delimited string, the way it's
        * represented in the URL. Is writable also.
        */
-      resourceIdString: WritableComputedRef<string>
+      resourceIdString: AsyncWritableComputedRef<string>
 
       /**
        * Writable computed for reading/writing current thread filters
@@ -141,7 +144,7 @@ export type InjectableViewerState = Readonly<{
       /**
        * Helper for switching model to a specific version (or just latest)
        */
-      switchModelToVersion: (modelId: string, versionId?: string) => void
+      switchModelToVersion: (modelId: string, versionId?: string) => Promise<void>
     }
     /**
      * State of resolved, validated & de-duplicated resources that are loaded in the viewer. These
@@ -209,7 +212,7 @@ export type InjectableViewerState = Readonly<{
         isTyping: Ref<boolean>
         newThreadEditor: Ref<boolean>
       }
-      closeAllThreads: () => void
+      closeAllThreads: () => Promise<void>
       open: (id: string) => Promise<void>
       hideBubbles: Ref<boolean>
     }
@@ -240,7 +243,7 @@ export type InjectableViewerState = Readonly<{
    * State stored in the anchor string of the URL
    */
   urlHashState: {
-    focusedThreadId: WritableComputedRef<Nullable<string>>
+    focusedThreadId: AsyncWritableComputedRef<Nullable<string>>
   }
 }>
 
@@ -377,34 +380,58 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
  */
 function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest {
   const route = useRoute()
-  const router = useQueuedRouting()
+  const router = useRouter()
   const getParam = computed(() => route.params.modelId as string)
 
-  const resources = computed({
+  const resources = writableAsyncComputed({
     get: () => SpeckleViewer.ViewerRoute.parseUrlParameters(getParam.value),
-    set: (newResources) => {
+    set: async (newResources) => {
       const modelId =
         SpeckleViewer.ViewerRoute.createGetParamFromResources(newResources)
-      router.push((route) => ({
+      await router.push({
         params: { modelId },
         query: route.query,
         hash: route.hash
-      }))
-    }
+      })
+    },
+    initialState: []
   })
 
+  // const resources = computed({
+  //   get: () => SpeckleViewer.ViewerRoute.parseUrlParameters(getParam.value),
+  //   set: (newResources) => {
+  //     const modelId =
+  //       SpeckleViewer.ViewerRoute.createGetParamFromResources(newResources)
+  //     router.push((route) => ({
+  //       params: { modelId },
+  //       query: route.query,
+  //       hash: route.hash
+  //     }))
+  //   }
+  // })
+
+  // // we could use getParam, but `createGetParamFromResources` does sorting and de-duplication AFAIK
+  // const resourceIdString = computed({
+  //   get: () => SpeckleViewer.ViewerRoute.createGetParamFromResources(resources.value),
+  //   set: (newVal) => {
+  //     const newResources = SpeckleViewer.ViewerRoute.parseUrlParameters(newVal)
+  //     resources.value = newResources
+  //   }
+  // })
+
   // we could use getParam, but `createGetParamFromResources` does sorting and de-duplication AFAIK
-  const resourceIdString = computed({
+  const resourceIdString = writableAsyncComputed({
     get: () => SpeckleViewer.ViewerRoute.createGetParamFromResources(resources.value),
-    set: (newVal) => {
+    set: async (newVal) => {
       const newResources = SpeckleViewer.ViewerRoute.parseUrlParameters(newVal)
-      resources.value = newResources
-    }
+      await resources.update(newResources)
+    },
+    initialState: ''
   })
 
   const threadFilters = ref({} as Omit<ProjectCommentsFilter, 'resourceIdString'>)
 
-  const switchModelToVersion = (modelId: string, versionId?: string) => {
+  const switchModelToVersion = async (modelId: string, versionId?: string) => {
     const resourceArr = resources.value.slice()
 
     const resourceIdx = resourceArr.findIndex(
@@ -420,13 +447,13 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
         new SpeckleViewer.ViewerRoute.ViewerModelResource(modelId, versionId)
       )
 
-      resources.value = newResources
+      await resources.update(newResources)
     } else {
       // Add new one and allow de-duplication to do its thing
-      resources.value = [
+      await resources.update([
         new SpeckleViewer.ViewerRoute.ViewerModelResource(modelId, versionId),
         ...resources.value
-      ]
+      ])
     }
   }
 
@@ -787,8 +814,8 @@ function setupInterfaceState(
         hideBubbles
       },
       camera: {
-        position,
-        target,
+        position: wrapRefWithTracking(position, 'position'),
+        target: wrapRefWithTracking(target, 'target'),
         isOrthoProjection
       },
       sectionBox: ref(null as Nullable<Box3>),
@@ -882,8 +909,8 @@ export function useResetUiState() {
   } = useInjectedViewerState()
   const { resetFilters } = useFilterUtilities()
 
-  return () => {
-    threads.closeAllThreads()
+  return async () => {
+    await threads.closeAllThreads()
     spotlightUserSessionId.value = null
     camera.isOrthoProjection.value = false
     sectionBox.value = null

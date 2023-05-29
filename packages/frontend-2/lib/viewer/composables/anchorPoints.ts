@@ -56,7 +56,7 @@ export function useViewerAnchoredPointCalculator(params: {
     })
 
     return {
-      screenLocation: targetLoc,
+      screenLocation: targetLoc?.x && targetLoc?.y ? targetLoc : null,
       isOccluded: !!targetOcclusionRes.objects?.length,
       style: <Partial<CSSProperties>>{
         ...(targetLoc?.x && targetLoc?.y
@@ -65,7 +65,8 @@ export function useViewerAnchoredPointCalculator(params: {
               // transform: `translate(-50%, -50%) translate(${targetLoc.x}px,${targetLoc.y}px)`,
               transformOrigin: 'center',
               x: targetLoc.x,
-              y: targetLoc.y
+              y: targetLoc.y,
+              display: 'block'
             }
           : {
               display: 'none'

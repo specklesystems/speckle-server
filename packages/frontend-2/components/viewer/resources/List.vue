@@ -57,7 +57,7 @@ const { items } = useInjectedViewerRequestedResources()
 
 const open = ref(false)
 
-const removeModel = (modelId: string) => {
+const removeModel = async (modelId: string) => {
   // Convert requested resource string to references to specific models
   // to ensure remove works even when we have "all" or "$folder" in the URL
   const builder = SpeckleViewer.ViewerRoute.resourceBuilder()
@@ -71,7 +71,7 @@ const removeModel = (modelId: string) => {
     }
   }
 
-  items.value = builder.toResources()
+  await items.update(builder.toResources())
 }
 
 watch(modelsAndVersionIds, (newVal) => {

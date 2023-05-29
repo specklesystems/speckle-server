@@ -190,13 +190,13 @@ export function useViewerCommentBubbles(
     { state: options?.state }
   )
 
-  const closeAllThreads = () => {
-    focusedThreadId.value = null
+  const closeAllThreads = async () => {
+    await focusedThreadId.update(null)
   }
 
   const open = async (id: string) => {
     if (id === focusedThreadId.value) return
-    focusedThreadId.value = id
+    await focusedThreadId.update(id)
     await Promise.all([
       until(focusedThreadId).toBe(id),
       until(openThread).toMatch((t) => t?.id === id)
@@ -242,7 +242,7 @@ export function useViewerCommentBubbles(
       Object.values(commentThreads.value)
         .filter((t) => t.isExpanded)
         .map((t) => t.id),
-    (newExpandedThreadIds, oldExpandedThreadIds) => {
+    async (newExpandedThreadIds, oldExpandedThreadIds) => {
       const completelyNewIds = difference(
         newExpandedThreadIds,
         oldExpandedThreadIds || []
@@ -259,7 +259,7 @@ export function useViewerCommentBubbles(
       }
 
       if (focusedThreadId.value !== finalOpenThreadId) {
-        focusedThreadId.value = finalOpenThreadId
+        await focusedThreadId.update(finalOpenThreadId)
       }
     },
     { deep: true }
@@ -319,8 +319,10 @@ export function useViewerThreadTracking() {
     null as Nullable<SpeckleViewer.ViewerState.SerializedViewerState>
   )
 
-  const refocus = (commentState: SpeckleViewer.ViewerState.SerializedViewerState) => {
-    applyState(commentState, StateApplyMode.ThreadOpen)
+  const refocus = async (
+    commentState: SpeckleViewer.ViewerState.SerializedViewerState
+  ) => {
+    await applyState(commentState, StateApplyMode.ThreadOpen)
   }
 
   // Do this once viewer loads things
@@ -348,13 +350,13 @@ export function useViewerThreadTracking() {
   })
 
   // Also do this when openThread changes
-  watch(openThread.thread, (newThread, oldThread) => {
+  watch(openThread.thread, async (newThread, oldThread) => {
     if (newThread?.id !== oldThread?.id) {
       const newState = newThread?.viewerState
       if (newState && SpeckleViewer.ViewerState.isSerializedViewerState(newState)) {
-        refocus(newState)
+        await refocus(newState)
       } else {
-        resetState()
+        await resetState()
       }
     }
   })

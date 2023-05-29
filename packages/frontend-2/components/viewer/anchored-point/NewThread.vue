@@ -157,9 +157,9 @@ onKeyDown('Escape', () => {
 
 watch(
   () => props.modelValue.isExpanded,
-  (newVal) => {
+  async (newVal) => {
     if (newVal) {
-      ui.threads.closeAllThreads()
+      await ui.threads.closeAllThreads()
     }
     commentValue.value = {
       doc: undefined,

@@ -3,6 +3,7 @@ import { Nullable, Optional } from '@speckle/shared'
 import { createControllablePromise } from '~~/lib/common/helpers/promise'
 import type { RouteLocationRaw, RouteLocationNormalizedLoaded } from 'vue-router'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
+import { writableAsyncComputed } from '~~/lib/common/composables/async'
 
 type PushParameters = [
   RouteLocationRaw | ((route: RouteLocationNormalizedLoaded) => RouteLocationRaw)
@@ -65,9 +66,9 @@ export function serializeHashState(
  */
 export function useRouteHashState() {
   const route = useRoute()
-  const router = useQueuedRouting()
+  const router = useRouter()
 
-  const hashState = computed({
+  const hashState = writableAsyncComputed({
     get: () => {
       const hash = route.hash
       if (hash.length < 2 || !hash.startsWith('#')) return {}
@@ -85,13 +86,14 @@ export function useRouteHashState() {
         {} as Record<string, Nullable<string>>
       )
     },
-    set: (newVal) => {
+    set: async (newVal) => {
       const hashString = serializeHashState(newVal)
-      router.push((route) => ({
+      await router.push({
         query: route.query,
         hash: hashString
-      }))
-    }
+      })
+    },
+    initialState: {}
   })
 
   return { hashState }
