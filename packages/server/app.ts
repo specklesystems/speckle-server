@@ -61,8 +61,6 @@ let graphqlServer: ApolloServer
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SubscriptionResponse = { errors?: GraphQLError[]; data?: any }
 
-// TODO: Re-enable
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function logSubscriptionOperation(params: {
   ctx: GraphQLContext
   execParams: ExecutionParams
@@ -163,7 +161,7 @@ function buildApolloSubscriptionServer(
         // Build context (Apollo Server v3 no longer triggers context building automatically
         // for subscriptions)
         try {
-          return await buildContext({ req: null, token, cleanLoadersEarly: true })
+          return await buildContext({ req: null, token, cleanLoadersEarly: false })
         } catch (e) {
           throw new ForbiddenError('Subscription context build failed')
         }
@@ -180,12 +178,12 @@ function buildApolloSubscriptionServer(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         baseParams.formatResponse = (val: SubscriptionResponse) => {
           ctx.loaders.clearAll()
-          // logSubscriptionOperation({ ctx, execParams: baseParams, response: val })
+          logSubscriptionOperation({ ctx, execParams: baseParams, response: val })
           return val
         }
         baseParams.formatError = (e: Error) => {
           ctx.loaders.clearAll()
-          // logSubscriptionOperation({ ctx, execParams: baseParams, error: e })
+          logSubscriptionOperation({ ctx, execParams: baseParams, error: e })
           return e
         }
 
