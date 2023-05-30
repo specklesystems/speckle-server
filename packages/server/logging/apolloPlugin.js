@@ -69,10 +69,9 @@ module.exports = {
             (err instanceof GraphQLError && err.extensions?.code === 'FORBIDDEN') ||
             err instanceof ApolloError
           ) {
-            // TODO: Reenable
-            // logger.info(err, 'graphql error')
+            logger.info(err, 'graphql error')
           } else {
-            // logger.error(err, 'graphql error')
+            logger.error(err, 'graphql error')
           }
 
           Sentry.withScope((scope) => {
