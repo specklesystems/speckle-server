@@ -7,7 +7,7 @@
       prompt="Press enter to reply"
       autofocus
       max-height="150px"
-      @update:model-value="onInputUpdated"
+      @keydown="onKeyDownHandler"
       @submit="onSubmit"
     />
     <div class="w-full flex justify-end pt-2 space-x-2 p-2">
@@ -54,7 +54,7 @@ const emit = defineEmits<{
 }>()
 
 const createReply = useSubmitReply()
-const { onInputUpdated, updateIsTyping } = useIsTypingUpdateEmitter()
+const { onKeyDownHandler, updateIsTyping } = useIsTypingUpdateEmitter()
 
 const loading = ref(false)
 const editor = ref(null as Nullable<{ openFilePicker: () => void }>)

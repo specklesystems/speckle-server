@@ -34,8 +34,9 @@
             prompt="Press enter to comment"
             max-height="300px"
             autofocus
+            :disabled="isPostingNewThread"
             @submit="() => onSubmit()"
-            @update:model-value="onInputUpdated"
+            @keydown="onKeyDownHandler"
           />
           <div class="w-full flex justify-end p-2 space-x-2">
             <div class="space-x-2">
@@ -44,12 +45,14 @@
                 :icon-left="PaperClipIcon"
                 hide-text
                 text
+                :disabled="isPostingNewThread"
                 @click="editor?.openFilePicker"
               />
 
               <FormButton
                 :icon-left="PaperAirplaneIcon"
                 hide-text
+                :loading="isPostingNewThread"
                 @click="() => onSubmit()"
               />
             </div>
@@ -87,11 +90,13 @@ const props = defineProps<{
 }>()
 
 const ui = useInjectedViewerInterfaceState()
-const { onInputUpdated, updateIsTyping } = useIsTypingUpdateEmitter()
+const { onKeyDownHandler, updateIsTyping, pauseAutomaticUpdates } =
+  useIsTypingUpdateEmitter()
 
 const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
 const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
 const threadContainer = ref(null as Nullable<HTMLElement>)
+const isPostingNewThread = ref(false)
 
 // const { style } = useExpandedThreadResponsiveLocation({
 //   threadContainer,
@@ -121,17 +126,27 @@ const onSubmit = (comment?: CommentEditorValue) => {
   const content = convertCommentEditorValueToInput(commentValue.value)
   if (!isValidCommentContentInput(content)) return
 
-  // Intentionally not awaiting so that we emit close immediately
-  // createThread(content, props.modelValue.clickLocation)
+  isPostingNewThread.value = true
+  pauseAutomaticUpdates.value = true
+  updateIsTyping(true) // so that user shows up as typing until the new bubble appears
   createThread(content)
-  updateIsTyping(false)
+    .then(async (newThread) => {
+      const threadId = newThread?.id
+      if (!threadId) return
+
+      // switch to new thread
+      await ui.threads.open(threadId)
+    })
+    .finally(() => {
+      isPostingNewThread.value = false
+      updateIsTyping(false)
+      pauseAutomaticUpdates.value = false
+    })
 
   // Marking all uploads as in use to prevent cleanup
   comment.attachments?.forEach((a) => {
     a.inUse = true
   })
-
-  emit('close')
 }
 
 onKeyDown('Escape', () => {
@@ -142,9 +157,9 @@ onKeyDown('Escape', () => {
 
 watch(
   () => props.modelValue.isExpanded,
-  (newVal) => {
+  async (newVal) => {
     if (newVal) {
-      ui.threads.closeAllThreads()
+      await ui.threads.closeAllThreads()
     }
     commentValue.value = {
       doc: undefined,

@@ -1,10 +1,13 @@
+import { timeoutAt } from '@speckle/shared'
 import { PropertyInfo } from '@speckle/viewer'
+import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
   useInjectedViewer,
-  useInjectedViewerInterfaceState
+  useInjectedViewerInterfaceState,
+  useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 
 export function useSectionBoxUtilities() {
@@ -77,12 +80,32 @@ export function useCameraUtilities() {
     camera.isOrthoProjection.value = !camera.isOrthoProjection.value
   }
 
-  return { zoomExtentsOrSelection, toggleProjection, camera, truck, setView, zoom }
+  const forceViewToViewerSync = () => {
+    setView({
+      position: camera.position.value,
+      target: camera.target.value
+    })
+  }
+
+  return {
+    zoomExtentsOrSelection,
+    toggleProjection,
+    camera,
+    truck,
+    setView,
+    zoom,
+    forceViewToViewerSync
+  }
 }
 
 export function useFilterUtilities() {
   // const { instance } = useInjectedViewer()
   const { filters, explodeFactor } = useInjectedViewerInterfaceState()
+  const {
+    viewer: {
+      metadata: { availableFilters }
+    }
+  } = useInjectedViewerState()
 
   const isolateObjects = (
     objectIds: string[],
@@ -161,6 +184,23 @@ export function useFilterUtilities() {
     // filters.selectedObjects.value = []
   }
 
+  const waitForAvailableFilter = async (
+    key: string,
+    options?: Partial<{ timeout: number }>
+  ) => {
+    const timeout = options?.timeout || 10000
+
+    const res = await Promise.race([
+      until(availableFilters).toMatch(
+        (filters) => !!filters?.find((p) => p.key === key)
+      ),
+      timeoutAt(timeout, 'Waiting for available filter timed out')
+    ])
+
+    const filter = res?.find((p) => p.key === key)
+    return filter as NonNullable<typeof filter>
+  }
+
   return {
     isolateObjects,
     unIsolateObjects,
@@ -171,7 +211,8 @@ export function useFilterUtilities() {
     applyPropertyFilter,
     removePropertyFilter,
     unApplyPropertyFilter,
-    resetFilters
+    resetFilters,
+    waitForAvailableFilter
   }
 }
 

@@ -4,6 +4,11 @@ import { knex } from '@/modules/core/dbSchema'
 import * as Knex from 'knex'
 import * as pg from 'pg'
 
+/**
+ * TODO: This currently will emit duplicate events when there are multiple server instances running. Not a big deal currently while there aren't that many events,
+ * but we need to figure this out
+ */
+
 export type MessageType = { channel: string; payload: string }
 export type ListenerType = (msg: MessageType) => MaybeAsync<void>
 

@@ -1,6 +1,11 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import { StringPropertyInfo, SunLightConfiguration, ViewerEvent } from '@speckle/viewer'
+import {
+  PropertyInfo,
+  StringPropertyInfo,
+  SunLightConfiguration,
+  ViewerEvent
+} from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import {
   Comment,
@@ -16,6 +21,8 @@ import {
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
 import {
   useGetObjectUrl,
+  useOnViewerLoadComplete,
+  useViewerCameraControlStartTracker,
   useViewerCameraTracker,
   useViewerEventListener
 } from '~~/lib/viewer/composables/viewer'
@@ -35,6 +42,8 @@ import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
+import { Nullable } from '@speckle/shared'
+import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -217,7 +226,7 @@ function useViewerSubscriptionEventTracker() {
   )
 }
 
-export function useViewerSectionBoxIntegration() {
+function useViewerSectionBoxIntegration() {
   const {
     ui: { sectionBox },
     viewer: { instance }
@@ -252,84 +261,140 @@ export function useViewerSectionBoxIntegration() {
   )
 }
 
-export function useViewerCameraIntegration() {
+function useViewerCameraIntegration() {
   const {
     viewer: { instance },
     ui: {
-      camera: { isOrthoProjection, position, target }
+      camera: { isOrthoProjection, position, target },
+      spotlightUserSessionId
     }
   } = useInjectedViewerState()
+  const { forceViewToViewerSync } = useCameraUtilities()
+
+  const hasInitialLoadFired = ref(false)
+
+  const loadCameraDataFromViewer = () => {
+    const activeCam = instance.cameraHandler.activeCam
+    const controls = activeCam.controls
+    const viewerPos = new Vector3()
+    const viewerTarget = new Vector3()
+
+    controls.getPosition(viewerPos)
+    controls.getTarget(viewerTarget)
+
+    let cameraManuallyChanged = false
+    if (!areVectorsLooselyEqual(position.value, viewerPos)) {
+      if (hasInitialLoadFired.value) position.value = viewerPos.clone()
+      cameraManuallyChanged = true
+    }
+    if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
+      if (hasInitialLoadFired.value) target.value = viewerTarget.clone()
+      cameraManuallyChanged = true
+    }
+
+    // console.log('incomingCamera', viewerPos, viewerTarget)
+
+    return cameraManuallyChanged
+  }
 
   // viewer -> state
-  // debouncing pos/target updates to avoid jitteriness
+  // debouncing pos/target updates to avoid jitteriness + spotlight mode unnecessarily disabling
   useViewerCameraTracker(
     () => {
-      const activeCam = instance.cameraHandler.activeCam
-      const controls = activeCam.controls
-      const viewerPos = new Vector3()
-      const viewerTarget = new Vector3()
-
-      controls.getPosition(viewerPos)
-      controls.getTarget(viewerTarget)
-
-      if (!areVectorsLooselyEqual(position.value, viewerPos)) {
-        position.value = viewerPos.clone()
-      }
-      if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
-        target.value = viewerTarget.clone()
+      const cameraManuallyChanged = loadCameraDataFromViewer()
+      if (cameraManuallyChanged) {
+        // Stop following TODO: Doesn't work very well
+        // spotlightUserSessionId.value = null
       }
     }
     // { debounceWait: 100 }
   )
 
-  // TODO: This caused an infinite loop of toggling ortho/perspective mode.
-  // useViewerCameraTracker(
-  //   () => {
-  //     const activeCam = instance.cameraHandler.activeCam
-  //     const isOrtho = activeCam.camera instanceof OrthographicCamera
+  useOnViewerLoadComplete(({ isInitial }) => {
+    if (isInitial) {
+      hasInitialLoadFired.value = true
 
-  //     if (isOrthoProjection.value !== isOrtho) {
-  //       isOrthoProjection.value = isOrtho
-  //     }
-  //   },
-  //   { throttleWait: 500 }
-  // )
+      // Load camera position so we can return to it correctly
+      // ONLY if we don't already have specific coordinates (e.g. from opened thread)
+      // otherwise - load current pos/target into viewer
+      const hasInitCoords =
+        position.value.equals(new Vector3()) && target.value.equals(new Vector3())
+      if (hasInitCoords) {
+        loadCameraDataFromViewer()
+      } else {
+        forceViewToViewerSync()
+      }
 
-  // state -> viewer
-  watch(isOrthoProjection, (newVal, oldVal) => {
-    if (!!newVal === !!oldVal) return
+      // Only now set projection, we can't do it too early
+      orthoProjectionUpdate(isOrthoProjection.value)
+    } else {
+      loadCameraDataFromViewer()
+    }
+  })
+
+  useViewerCameraControlStartTracker(() => {
+    if (spotlightUserSessionId.value) {
+      spotlightUserSessionId.value = null // cancel
+    }
+  })
+
+  const orthoProjectionUpdate = (newVal: boolean) => {
+    if (!hasInitialLoadFired.value) {
+      throw new Error('Attempting to set projection too early')
+    }
 
     if (newVal) {
       instance.setOrthoCameraOn()
     } else {
       instance.setPerspectiveCameraOn()
     }
-  })
 
-  watch(position, (newVal, oldVal) => {
-    if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
-      return
+    // reset camera pos, cause we've switched cameras now and it might not have the new ones
+    forceViewToViewerSync()
+  }
+
+  // state -> viewer
+  watch(
+    isOrthoProjection,
+    (newVal, oldVal) => {
+      if (newVal === oldVal || !hasInitialLoadFired.value) return
+      orthoProjectionUpdate(newVal)
+    },
+    { immediate: true }
+  )
+
+  watch(
+    position,
+    (newVal, oldVal) => {
+      if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
+        return
+      }
+
+      instance.setView({
+        position: newVal,
+        target: target.value
+      })
     }
+    // { immediate: true }
+  )
 
-    instance.setView({
-      position: newVal,
-      target: target.value
-    })
-  })
+  watch(
+    target,
+    (newVal, oldVal) => {
+      if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
+        return
+      }
 
-  watch(target, (newVal, oldVal) => {
-    if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
-      return
+      instance.setView({
+        position: position.value,
+        target: newVal
+      })
     }
-
-    instance.setView({
-      position: position.value,
-      target: newVal
-    })
-  })
+    // { immediate: true }
+  )
 }
 
-export function useViewerFiltersIntegration() {
+function useViewerFiltersIntegration() {
   const {
     viewer: { instance },
     ui: { filters, highlightedObjectIds }
@@ -351,45 +416,6 @@ export function useViewerFiltersIntegration() {
   const speckleTypeFilter = computed(
     () => allFilters.value?.find((f) => f.key === 'speckle_type') as StringPropertyInfo
   )
-
-  // TODO: Hard to get working at this point in time, because the FilteringManager
-  // doesn't fully support this (strange bugs arise with isolate after hide not working etc.)
-  // viewer -> state
-  // let latestState: Optional<FilteringState> = undefined
-  // useViewerEventListener(ViewerEvent.FilteringStateSet, (state: FilteringState) => {
-  //   // we do this weird stuff cause a change to filters might trigger another FilteringStateSet event
-  //   // with different values, but once it finishes, the old FilteringStateSet event handler will continue with the old
-  //   // data and possibly break things
-  //   latestState = state
-  //   const getLatestState = () => state
-
-  //   const viewerIsolated = getLatestState().isolatedObjects || []
-  //   const isolated = filters.isolatedObjectIds.value
-  //   if (!arraysEqual(viewerIsolated, isolated)) {
-  //     withWatchersDisabled(() => {
-  //       filters.isolatedObjectIds.value = viewerIsolated.slice()
-  //     })
-  //   }
-
-  //   const viewerHidden = getLatestState().hiddenObjects || []
-  //   const hidden = filters.hiddenObjectIds.value
-  //   if (!arraysEqual(viewerHidden, hidden)) {
-  //     withWatchersDisabled(() => {
-  //       filters.hiddenObjectIds.value = viewerHidden.slice()
-  //     })
-  //   }
-
-  //   const viewerFilterKey = getLatestState().activePropFilterKey
-  //   const currentFilterKey = filters.propertyFilter.filter.value?.key
-  //   if (viewerFilterKey !== currentFilterKey) {
-  //     const property = (availableFilters.value || []).find(
-  //       (f) => f.key === viewerFilterKey
-  //     )
-  //     if (property) {
-  //       filters.propertyFilter.filter.value = property
-  //     }
-  //   }
-  // })
 
   // state -> viewer
   watch(
@@ -453,6 +479,16 @@ export function useViewerFiltersIntegration() {
     { immediate: true, flush: 'sync' }
   )
 
+  const syncColorFilterToViewer = (
+    filter: Nullable<PropertyInfo>,
+    isApplied: boolean
+  ) => {
+    const targetFilter = filter || speckleTypeFilter.value
+
+    if (isApplied && targetFilter) instance.setColorFilter(targetFilter)
+    if (!isApplied) instance.removeColorFilter()
+  }
+
   watch(
     () =>
       <const>[
@@ -461,12 +497,19 @@ export function useViewerFiltersIntegration() {
       ],
     (newVal) => {
       const [filter, isApplied] = newVal
-      const targetFilter = filter || speckleTypeFilter.value
-
-      if (isApplied && targetFilter) instance.setColorFilter(targetFilter)
-      if (!isApplied) instance.removeColorFilter()
+      syncColorFilterToViewer(filter, isApplied)
     },
     { immediate: true, flush: 'sync' }
+  )
+
+  useOnViewerLoadComplete(
+    () => {
+      const targetFilter =
+        filters.propertyFilter.filter.value || speckleTypeFilter.value
+      const isApplied = filters.propertyFilter.isApplied.value
+      syncColorFilterToViewer(targetFilter, isApplied)
+    },
+    { initialOnly: true }
   )
 
   watch(
@@ -491,7 +534,7 @@ export function useViewerFiltersIntegration() {
   )
 }
 
-export function useLightConfigIntegration() {
+function useLightConfigIntegration() {
   const {
     ui: { lightConfig },
     viewer: { instance }
@@ -519,18 +562,53 @@ export function useLightConfigIntegration() {
       flush: 'sync'
     }
   )
+
+  useOnViewerLoadComplete(
+    () => {
+      instance.setLightConfiguration(lightConfig.value)
+    },
+    { initialOnly: true }
+  )
 }
 
-export function useExplodeFactorIntegration() {
+function useExplodeFactorIntegration() {
   const {
     ui: { explodeFactor },
     viewer: { instance }
   } = useInjectedViewerState()
 
   // state -> viewer only. we don't need the reverse.
-  watch(explodeFactor, (newVal) => {
-    instance.explode(newVal)
-  })
+  watch(
+    explodeFactor,
+    (newVal) => {
+      instance.explode(newVal)
+    },
+    { immediate: true }
+  )
+
+  useOnViewerLoadComplete(
+    () => {
+      instance.explode(explodeFactor.value)
+    },
+    { initialOnly: true }
+  )
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function useDebugViewerEvents() {
+  if (process.server) return
+  const {
+    viewer: { instance }
+  } = useInjectedViewerState()
+
+  for (const [key, val] of Object.entries(ViewerEvent)) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    useViewerEventListener(val, (...args) => console.log(key, ...args))
+  }
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  window.VIEWER = instance
 }
 
 export function useViewerPostSetup() {
@@ -546,4 +624,7 @@ export function useViewerPostSetup() {
   useViewerFiltersIntegration()
   useLightConfigIntegration()
   useExplodeFactorIntegration()
+
+  // test
+  // useDebugViewerEvents()
 }
