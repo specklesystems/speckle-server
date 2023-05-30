@@ -14,7 +14,7 @@ export class SpeckleText extends Mesh {
 
   public static SpeckleTextParamsFromMetadata(metadata: SpeckleObject) {
     return {
-      textValue: metadata.value,
+      textValue: metadata.value ? metadata.value : 'N/A',
       height: metadata.height
     } as SpeckleTextParams
   }

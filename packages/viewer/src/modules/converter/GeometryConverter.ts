@@ -1,11 +1,4 @@
-import {
-  BoxBufferGeometry,
-  EllipseCurve,
-  Matrix4,
-  PlaneGeometry,
-  Vector2,
-  Vector3
-} from 'three'
+import { BoxBufferGeometry, EllipseCurve, Matrix4, Vector2, Vector3 } from 'three'
 import { Geometry, GeometryData } from './Geometry'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
 import { getConversionFactor } from './Units'
@@ -352,15 +345,19 @@ export class GeometryConverter {
    * TEXT
    */
   private static TextToGeometryData(node: NodeData): GeometryData {
-    const dummyGeometry = new PlaneGeometry(2, 1)
+    const conversionFactor = getConversionFactor(node.raw.units)
     const plane = node.raw.plane
+    const position = new Vector3(plane.origin.x, plane.origin.y, plane.origin.z)
+    const scale = new Matrix4().makeScale(
+      conversionFactor,
+      conversionFactor,
+      conversionFactor
+    )
     const mat = new Matrix4().makeBasis(plane.xdir, plane.ydir, plane.normal)
-    mat.setPosition(new Vector3(plane.origin.x, plane.origin.y, plane.origin.z))
+    mat.setPosition(position)
+    mat.premultiply(scale)
     return {
-      attributes: {
-        POSITION: Array.from(dummyGeometry.attributes.position.array),
-        INDEX: Array.from(dummyGeometry.index.array)
-      },
+      attributes: null,
       bakeTransform: mat,
       transform: null,
       metaData: node.raw

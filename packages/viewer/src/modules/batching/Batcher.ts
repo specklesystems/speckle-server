@@ -73,7 +73,7 @@ export default class Batcher {
         if (valid) {
           vertCount += value.renderData.geometry.attributes.POSITION.length / 3
         }
-        return valid
+        return valid || value.hasMetadata
       })
       const batches = this.splitBatch(renderViewsBatch, vertCount)
       for (let k = 0; k < batches.length; k++) {
@@ -124,7 +124,7 @@ export default class Batcher {
         if (valid) {
           vertCount += value.renderData.geometry.attributes.POSITION.length / 3
         }
-        return valid
+        return valid || value.hasMetadata
       })
       const batches = this.splitBatch(renderViewsBatch, vertCount)
       for (let k = 0; k < batches.length; k++) {
@@ -209,9 +209,9 @@ export default class Batcher {
     materialHash: number,
     batchType?: GeometryType
   ): Promise<Batch> {
-    let batch = renderViews.filter((value) => value.renderMaterialHash === materialHash)
-    /** Prune any meshes with no geometry data */
-    batch = batch.filter((value) => value.validGeometry)
+    const batch = renderViews.filter(
+      (value) => value.renderMaterialHash === materialHash
+    )
 
     if (!batch.length) {
       /** This is for the case when all renderviews have invalid geometries, and it generally

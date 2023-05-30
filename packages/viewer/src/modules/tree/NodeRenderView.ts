@@ -135,6 +135,7 @@ export class NodeRenderView {
 
   public get validGeometry() {
     return (
+      this._renderData.geometry.attributes &&
       this._renderData.geometry.attributes.POSITION &&
       this._renderData.geometry.attributes.POSITION.length > 0 &&
       (this._geometryType === GeometryType.MESH
