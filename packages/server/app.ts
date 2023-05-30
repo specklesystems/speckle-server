@@ -28,7 +28,8 @@ import {
 } from 'apollo-server-express'
 import {
   ApolloServerPluginLandingPageLocalDefault,
-  ApolloServerPluginUsageReportingDisabled
+  ApolloServerPluginUsageReportingDisabled,
+  ApolloServerPluginUsageReporting
 } from 'apollo-server-core'
 
 import { ExecutionParams, SubscriptionServer } from 'subscriptions-transport-ws'
@@ -256,7 +257,12 @@ export async function buildApolloServer(
           ]
         : []),
       ...(isApolloMonitoringEnabled()
-        ? []
+        ? [
+            ApolloServerPluginUsageReporting({
+              // send all headers (except auth ones)
+              sendHeaders: { all: true }
+            })
+          ]
         : [ApolloServerPluginUsageReportingDisabled()])
     ],
     introspection: true,
