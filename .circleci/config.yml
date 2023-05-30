@@ -384,7 +384,7 @@ jobs:
 
       - run:
           name: Introspect GQL schema for subsequent checks
-          command: 'yarn cli graphql introspect'
+          command: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
           working_directory: 'packages/server'
 
       - run:

@@ -156,3 +156,10 @@ export function speckleAutomateUrl() {
     process.env.SPECKLE_AUTOMATE_URL || 'https://automate.speckle.systems'
   return automateUrl
 }
+
+/**
+ * Useful in some CLI scenarios when you aren't doing anything with the DB
+ */
+export function ignoreMissingMigrations() {
+  return ['1', 'true'].includes(process.env.IGNORE_MISSING_MIRATIONS || 'false')
+}

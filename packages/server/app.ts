@@ -26,7 +26,10 @@ import {
   ApolloServerExpressConfig,
   ApolloError
 } from 'apollo-server-express'
-import { ApolloServerPluginLandingPageLocalDefault } from 'apollo-server-core'
+import {
+  ApolloServerPluginLandingPageLocalDefault,
+  ApolloServerPluginUsageReportingDisabled
+} from 'apollo-server-core'
 
 import { ExecutionParams, SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
@@ -38,7 +41,8 @@ import {
   getFileSizeLimitMB,
   isDevEnv,
   isTestEnv,
-  useNewFrontend
+  useNewFrontend,
+  isApolloMonitoringEnabled
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
@@ -250,7 +254,10 @@ export async function buildApolloServer(
               }
             }
           ]
-        : [])
+        : []),
+      ...(isApolloMonitoringEnabled()
+        ? []
+        : [ApolloServerPluginUsageReportingDisabled()])
     ],
     introspection: true,
     cache: 'bounded',
