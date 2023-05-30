@@ -129,7 +129,7 @@ export function useSubmitComment() {
             projectId: projectId.value,
             resourceIdString: resourceIdString.value,
             content,
-            viewerState: serialize(),
+            viewerState: serialize({ concreteResourceIdString: true }),
             screenshot
           }
         }

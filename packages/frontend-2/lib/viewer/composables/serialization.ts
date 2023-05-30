@@ -14,7 +14,37 @@ type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 export function useStateSerialization() {
   const state = useInjectedViewerState()
 
-  const serialize = (): SerializedViewerState => {
+  /**
+   * We don't want to save a comment w/ implicit identifiers like ones that only have a model ID or a folder prefix, because
+   * those can resolve to completely different versions/objects as time goes on
+   */
+  const buildConcreteResourceIdString = () => {
+    const resources = state.resources.response.resourceItems
+    const builder = SpeckleViewer.ViewerRoute.resourceBuilder()
+
+    for (const resource of resources.value) {
+      if (resource.modelId && resource.versionId) {
+        builder.addModel(resource.modelId, resource.versionId)
+      } else {
+        builder.addObject(resource.objectId)
+      }
+    }
+
+    const finalString = builder.toString()
+    return finalString || state.resources.request.resourceIdString.value
+  }
+
+  const serialize = (
+    options?: Partial<{
+      /**
+       * Instead of saving the current resourceIdString value, build a more concrete one that specifies exact version & object ids, so that the
+       * string doesn't resolve to different objects in the future. Useful when serializing state for posterity (e.g. for new comment threads)
+       */
+      concreteResourceIdString: boolean
+    }>
+  ): SerializedViewerState => {
+    const { concreteResourceIdString } = options || {}
+
     const camControls = state.viewer.instance.cameraHandler.activeCam.controls
     const box = state.viewer.instance.getCurrentSectionBox()
 
@@ -33,7 +63,9 @@ export function useStateSerialization() {
       },
       resources: {
         request: {
-          resourceIdString: state.resources.request.resourceIdString.value,
+          resourceIdString: concreteResourceIdString
+            ? buildConcreteResourceIdString()
+            : state.resources.request.resourceIdString.value,
           threadFilters: { ...state.resources.request.threadFilters.value }
         }
       },
