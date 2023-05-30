@@ -382,6 +382,21 @@ jobs:
           command: 'bash <(curl -s https://codecov.io/bash)'
           working_directory: 'packages/server'
 
+      - run:
+          name: Introspect GQL schema for subsequent checks
+          command: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
+          working_directory: 'packages/server'
+
+      - run:
+          name: Checking for GQL schema breakages against speckle.xyz
+          command: 'yarn rover graph check Speckle-Server@speckle-xyz --schema ./introspected-schema.graphql'
+          working_directory: 'packages/server'
+
+      - run:
+          name: Checking for GQL schema breakages against latest.speckle.systems
+          command: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
+          working_directory: 'packages/server'
+
       - store_test_results:
           path: packages/server/reports
 
