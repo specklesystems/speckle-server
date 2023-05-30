@@ -3,7 +3,7 @@ extend type Query {
   Find a specific project. Will throw an authorization error if active user isn't authorized
   to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
   """
-  project(id: String!, test: String!): Project!
+  project(id: String!): Project!
 }
 
 enum ProjectVisibility {
