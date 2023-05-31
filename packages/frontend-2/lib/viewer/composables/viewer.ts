@@ -214,8 +214,8 @@ export function useDiffing() {
     state.resources.request.addModelVersion(modelId, versionA)
     state.resources.request.addModelVersion(modelId, versionB)
 
-    await until(state.ui.viewerBusy).toBe(true)
-    await until(state.ui.viewerBusy).toBe(false)
+    await until(state.ui.viewerBusy).toBe(true) // wait for autoloading to kick in
+    await until(state.ui.viewerBusy).toBe(false) // wait for it to finish
 
     const A = state.resources.response.resourceItems.value.find(
       (r) => r.versionId === versionA
@@ -230,15 +230,23 @@ export function useDiffing() {
         getObjectUrl(state.projectId.value, A?.objectId as string),
         state.ui.diff.diffMode.value
       )
+      state.ui.diff.diffTime.value = 0.5
+      state.ui.diff.diffMode.value = VisualDiffMode.COLORED
+      state.viewer.instance.setDiffTime(state.ui.diff.diffResult.value, 0.5)
     }, 1000)
 
     state.urlHashState.compare.value = true // could be one place
     state.ui.diff.enabled.value = true
   }
 
-  watch(state.ui.diff.diffMode, val => {
-    if(!state.ui.diff.diffResult.value) return
+  watch(state.ui.diff.diffMode, (val) => {
+    if (!state.ui.diff.diffResult.value) return
     state.viewer.instance.setVisualDiffMode(state.ui.diff.diffResult.value, val)
+  })
+
+  watch(state.ui.diff.diffTime, (val) => {
+    if (!state.ui.diff.diffResult.value) return
+    state.viewer.instance.setDiffTime(state.ui.diff.diffResult.value, val)
   })
 
   const endDiff = () => {

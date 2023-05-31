@@ -14,7 +14,7 @@
           <ViewerCompareChangesVersion
             v-if="modelAVersion"
             :version="modelAVersion"
-            @click="localDiffTime = 0"
+            @click="localDiffTime = 1"
           />
         </div>
         <div class="grow w-1/2">
@@ -22,11 +22,11 @@
             v-if="modelBVersion && modelAVersion"
             :version="modelBVersion"
             :second-version-created-at-time="modelAVersion.createdAt"
-            @click="localDiffTime = 1"
+            @click="localDiffTime = 0"
           />
         </div>
       </div>
-      <div class="grow flex items-center space-x-2">
+      <div class="grow flex items-center space-x-2 py-2">
         <input
           id="diffTime"
           v-model="localDiffTime"
@@ -37,32 +37,35 @@
           max="1"
           step="0.01"
         />
-        <FormButton v-tippy="'Toggle coloring'" size="xs" text @click="swapDiffMode()">
-          <SparklesIconOutline
-            v-if="diffState.diffMode.value !== VisualDiffMode.COLORED"
-            class="w-3 h-3 text-primary"
-          />
-          <SparklesIcon v-else class="w-3 h-3 text-primary" />
+      </div>
+      <div class="flex items-center justify-between w-full px-1">
+        <span class="text-xs text-left">Color objects by status</span>
+        <FormButton
+          size="xs"
+          :outlined="diffState.diffMode.value !== VisualDiffMode.COLORED"
+          @click="swapDiffMode()"
+        >
+          {{ diffState.diffMode.value === VisualDiffMode.COLORED ? 'ON' : 'OFF' }}
         </FormButton>
       </div>
-      <div>Changes summary:</div>
-      <ViewerCompareChangesObjectGroup name="unchanged" :objectIds="unchangedIds" />
-      <ViewerCompareChangesObjectGroup name="added" :objectIds="addedIds" />
-      <ViewerCompareChangesObjectGroup name="removed" :objectIds="removedIds" />
-      <ViewerCompareChangesObjectGroup name="modified" :objectIds="modifiedIds" />
+      <!-- <div class="ml-1">Change summary:</div> -->
+      <div class="grid grid-cols-2 gap-2">
+        <ViewerCompareChangesObjectGroup name="unchanged" :objectIds="unchangedIds" />
+        <ViewerCompareChangesObjectGroup name="modified" :objectIds="modifiedIds" />
+        <ViewerCompareChangesObjectGroup name="added" :objectIds="addedIds" />
+        <ViewerCompareChangesObjectGroup name="removed" :objectIds="removedIds" />
+      </div>
     </div>
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
-import { ChevronLeftIcon, SparklesIcon } from '@heroicons/vue/24/solid'
-import { SparklesIcon as SparklesIconOutline } from '@heroicons/vue/24/outline'
+import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 
 import { DiffResult, VisualDiffMode } from '@speckle/viewer'
 import {
   useInjectedViewer,
   useInjectedViewerInterfaceState,
-  useInjectedViewerLoadedResources,
-  useInjectedViewerRequestedResources
+  useInjectedViewerLoadedResources
 } from '~~/lib/viewer/composables/setup'
 import { useDiffing } from '~~/lib/viewer/composables/viewer'
 import { uniqBy } from 'lodash-es'
@@ -74,29 +77,28 @@ const { instance } = useInjectedViewer()
 const { modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
 // NOTE: loaded version now returns the two loaded versions.
-// We might need to revisit this if we clean things up later.
-
+// Tripping up on which goes first or last :/
 const modelAVersion = computed(() =>
-  modelsAndVersionIds.value.length > 0
-    ? modelsAndVersionIds.value[0].model.loadedVersion.items[0]
-    : undefined
-)
-
-const modelBVersion = computed(() =>
   modelsAndVersionIds.value.length > 1
     ? modelsAndVersionIds.value[1].model.loadedVersion.items[1]
     : undefined
 )
 
-const localDiffTime = ref(0.5)
+const modelBVersion = computed(() =>
+  modelsAndVersionIds.value.length > 0
+    ? modelsAndVersionIds.value[0].model.loadedVersion.items[0]
+    : undefined
+)
 
-watch(localDiffTime, (newVal) => {
-  instance.setDiffTime(diffState.diffResult.value as DiffResult, newVal)
-})
+const localDiffTime = ref(diffState.diffTime.value)
 
-watch(diffState, () => {
-  localDiffTime.value = 0.5
-})
+watch(
+  localDiffTime,
+  (newVal) => {
+    diffState.diffTime.value = newVal
+  },
+  { immediate: true }
+)
 
 function swapDiffMode() {
   if (diffState.diffMode.value === VisualDiffMode.COLORED)

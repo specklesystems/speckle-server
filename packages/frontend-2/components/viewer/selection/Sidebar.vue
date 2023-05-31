@@ -31,6 +31,7 @@
             :key="(object.id as string)"
             :object="object"
             :unfold="false"
+            :root="true"
           />
         </div>
         <div v-if="itemCount <= objects.length" class="mb-2">
@@ -54,19 +55,29 @@ import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { containsAll } from '~~/lib/common/helpers/utils'
 import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { uniqWith } from 'lodash-es'
 
 const {
   viewer: {
     metadata: { filteringState }
-  }
+  },
+  ui: { diff }
 } = useInjectedViewerState()
 const { objects, clearSelection } = useSelectionUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
 
-const itemCount = ref(10)
+const itemCount = ref(42)
+
+const objectsUniqueByAppId = computed(() => {
+  if (!diff.enabled.value) return objects.value
+  return uniqWith(objects.value, (a, b) => {
+    return a.applicationId === b.applicationId
+  })
+})
+
 const objectsLimited = computed(() => {
-  return objects.value.slice(0, itemCount.value)
+  return objectsUniqueByAppId.value.slice(0, itemCount.value)
 })
 
 const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)

@@ -10,7 +10,7 @@ import {
   DefaultLightConfiguration,
   SpeckleView,
   DiffResult,
-VisualDiffMode
+  VisualDiffMode
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -825,7 +825,7 @@ function setupInterfaceState(
   const versionB = ref<ViewerResourceItem>()
   const diffResult = shallowRef(undefined as Optional<DiffResult>)
   const diffEnabled = ref(false)
-  const diffTime = ref(0)
+  const diffTime = ref(0.5)
   const diffMode = ref<VisualDiffMode>(VisualDiffMode.COLORED)
 
   return {

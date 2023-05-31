@@ -8,7 +8,7 @@
         <ChevronDownIcon
           :class="`h-3 w-3 transition ${!unfold ? '-rotate-90' : 'rotate-0'}`"
         />
-        <div class="truncate text-xs font-bold">
+        <div :class="`truncate text-xs font-bold ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
         </div>
       </button>
@@ -87,18 +87,66 @@
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+const {
+  ui: {
+    diff: { diffResult, enabled: diffEnabled }
+  }
+} = useInjectedViewerState()
 
 const props = withDefaults(
   defineProps<{
     object: SpeckleObject
+    root?: boolean
     title?: string
     unfold: boolean
     debug?: boolean
   }>(),
-  { debug: false, unfold: true }
+  { debug: false, unfold: true, root: false }
 )
 
 const unfold = ref(props.unfold)
+
+const isAdded = computed(() => {
+  if (!diffEnabled.value) return false
+  return (
+    diffResult.value?.added.findIndex(
+      (o) => o.model.raw.applicationId === props.object.applicationId
+    ) !== -1
+  )
+})
+
+const isRemoved = computed(() => {
+  if (!diffEnabled.value) return false
+  return (
+    diffResult.value?.removed.findIndex(
+      (o) => o.model.raw.applicationId === props.object.applicationId
+    ) !== -1
+  )
+})
+
+const isUnchanged = computed(() => {
+  if (!diffEnabled.value) return false
+  return (
+    diffResult.value?.unchanged.findIndex(
+      (o) => o.model.raw.applicationId === props.object.applicationId
+    ) !== -1
+  )
+})
+
+const headerClasses = computed(() => {
+  if (!props.root) return ''
+  if (!diffEnabled.value) return ''
+  if (!Object.keys(props.object).includes('applicationId')) return ''
+
+  if (isAdded.value) return 'text-green-500'
+
+  if (isRemoved.value) return 'text-red-500'
+
+  if (isUnchanged.value) return 'text-foreground'
+
+  return 'text-amber-500'
+})
 
 const headerAndSubheader = computed(() => {
   return getHeaderAndSubheaderForSpeckleObject(props.object)

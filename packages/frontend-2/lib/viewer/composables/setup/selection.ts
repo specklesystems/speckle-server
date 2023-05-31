@@ -35,6 +35,25 @@ function useSelectOrZoomOnSelection() {
 
         if (!firstVisibleSelectionHit) return clearSelection()
         addToSelection(firstVisibleSelectionHit.object)
+        // TODO: add modified pair if element is modified
+        if (
+          state.ui.diff.enabled.value &&
+          state.ui.diff.diffResult.value &&
+          firstVisibleSelectionHit.object.applicationId
+        ) {
+          const modifiedObjectPairs = state.ui.diff.diffResult.value.modified
+          const obj = firstVisibleSelectionHit.object
+          const pairedItems = modifiedObjectPairs.find(
+            (item) => item[0].model.raw.id === obj.id || item[1].model.raw.id === obj.id
+          )
+          if (!pairedItems) return
+          const pair =
+            pairedItems[0].model.raw.id === obj.id
+              ? pairedItems[1].model.raw
+              : pairedItems[0].model.raw
+          if (!pair) return
+          addToSelection(pair)
+        }
       },
       doubleClickCallback: (args, { firstVisibleSelectionHit }) => {
         if (!args) return zoom()
