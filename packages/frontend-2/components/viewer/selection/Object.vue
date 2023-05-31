@@ -113,7 +113,7 @@ const props = withDefaults(
     object: SpeckleObject
     root?: boolean
     title?: string
-    unfold: boolean
+    unfold?: boolean
     debug?: boolean
     modifiedSibling?: boolean
   }>(),
