@@ -7,9 +7,9 @@
       class="bg-foundation-focus inline-block rounded-md px-2 text-xs font-bold truncate text-center py-1"
       v-tippy="createdAt"
     >
-      {{ secondVersionCreatedAtTime ? 'B' : 'A' }}: {{ time }}
+      {{ isNewest ? 'A' : 'B' }}: {{ timeAgoCreatedAt }}
       <br />
-      {{ secondVersionCreatedAtTime ? 'New' : 'Old' }} Version
+      {{ isNewest ? 'New' : 'Old' }} Version
     </div>
   </div>
 </template>
@@ -22,23 +22,12 @@ dayjs.extend(localizedFormat)
 
 const props = defineProps<{
   version: ViewerModelVersionCardItemFragment
-  secondVersionCreatedAtTime?: string
+  isNewest: Boolean
 }>()
 
 const timeAgoCreatedAt = computed(() => dayjs(props.version.createdAt).from(dayjs()))
 
 const createdAt = computed(() => {
   return dayjs(props.version.createdAt).format('LLL')
-})
-
-const time = computed(() => {
-  // if (props.secondVersionCreatedAtTime) {
-  //   // TODO
-  //   const t0 = dayjs(props.version.createdAt)
-  //   const t1 = dayjs(props.secondVersionCreatedAtTime)
-  //   const isBefore = t1.isAfter(t0)
-  //   return `${t0.to(t1, true)} ${isBefore ? 'earlier' : 'later'}`
-  // }
-  return timeAgoCreatedAt.value
 })
 </script>

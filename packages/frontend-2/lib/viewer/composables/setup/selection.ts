@@ -35,7 +35,9 @@ function useSelectOrZoomOnSelection() {
 
         if (!firstVisibleSelectionHit) return clearSelection()
         addToSelection(firstVisibleSelectionHit.object)
-        // TODO: add modified pair if element is modified
+        // Expands default viewer selection behaviour with a special case in diff mode.
+        // In diff mode, if we select via a mouse click an object, and that object is
+        // "modified", we want to select its pair as well.
         if (
           state.ui.diff.enabled.value &&
           state.ui.diff.diffResult.value &&

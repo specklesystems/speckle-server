@@ -242,6 +242,10 @@ export function useDiffing() {
   watch(state.ui.diff.diffMode, (val) => {
     if (!state.ui.diff.diffResult.value) return
     state.viewer.instance.setVisualDiffMode(state.ui.diff.diffResult.value, val)
+    state.viewer.instance.setDiffTime(
+      state.ui.diff.diffResult.value,
+      state.ui.diff.diffTime.value
+    ) // hmm
   })
 
   watch(state.ui.diff.diffTime, (val) => {

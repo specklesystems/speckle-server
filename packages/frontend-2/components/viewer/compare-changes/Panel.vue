@@ -12,17 +12,18 @@
       <div class="flex space-x-2">
         <div class="grow w-1/2">
           <ViewerCompareChangesVersion
-            v-if="modelAVersion"
-            :version="modelAVersion"
-            @click="localDiffTime = 1"
+            v-if="newVersion"
+            :version="newVersion"
+            :is-newest="true"
+            @click="localDiffTime = 0"
           />
         </div>
         <div class="grow w-1/2">
           <ViewerCompareChangesVersion
-            v-if="modelBVersion && modelAVersion"
-            :version="modelBVersion"
-            :second-version-created-at-time="modelAVersion.createdAt"
-            @click="localDiffTime = 0"
+            v-if="oldVersion"
+            :version="oldVersion"
+            :is-newest="false"
+            @click="localDiffTime = 1"
           />
         </div>
       </div>
@@ -61,9 +62,8 @@
 <script setup lang="ts">
 import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 
-import { DiffResult, VisualDiffMode } from '@speckle/viewer'
+import { VisualDiffMode } from '@speckle/viewer'
 import {
-  useInjectedViewer,
   useInjectedViewerInterfaceState,
   useInjectedViewerLoadedResources
 } from '~~/lib/viewer/composables/setup'
@@ -72,23 +72,17 @@ import { uniqBy } from 'lodash-es'
 
 const { diff: diffState } = useInjectedViewerInterfaceState()
 const { endDiff } = useDiffing()
-const { instance } = useInjectedViewer()
 
 const { modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
-// NOTE: loaded version now returns the two loaded versions.
-// Tripping up on which goes first or last :/
-const modelAVersion = computed(() =>
-  modelsAndVersionIds.value.length > 1
-    ? modelsAndVersionIds.value[1].model.loadedVersion.items[1]
-    : undefined
-)
-
-const modelBVersion = computed(() =>
-  modelsAndVersionIds.value.length > 0
-    ? modelsAndVersionIds.value[0].model.loadedVersion.items[0]
-    : undefined
-)
+const versions = computed(() => {
+  if (modelsAndVersionIds.value.length <= 0) return
+  return [...modelsAndVersionIds.value[0].model.loadedVersion.items].sort((a, b) => {
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  })
+})
+const oldVersion = computed(() => (versions.value ? versions.value[0] : undefined))
+const newVersion = computed(() => (versions.value ? versions.value[1] : undefined))
 
 const localDiffTime = ref(diffState.diffTime.value)
 
