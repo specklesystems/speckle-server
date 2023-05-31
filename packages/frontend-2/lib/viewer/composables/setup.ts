@@ -144,7 +144,7 @@ export type InjectableViewerState = Readonly<{
        */
       switchModelToVersion: (modelId: string, versionId?: string) => void
       addModelVersion: (modelId: string, versionId: string) => void
-      removeModelVersion: (modelId: string, versionId: string) => void
+      removeModelVersion: (modelId: string, versionId?: string) => void
       setModelVersions: (newResources: ViewerResource[]) => void
     }
     /**

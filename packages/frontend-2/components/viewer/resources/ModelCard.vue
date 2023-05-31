@@ -100,7 +100,10 @@ import {
   ArrowPathRoundedSquareIcon,
   ChevronUpIcon
 } from '@heroicons/vue/24/solid'
-import { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
+import {
+  ViewerLoadedResourcesQuery,
+  ViewerModelVersionCardItemFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { Get } from 'type-fest'
 import {
   useInjectedViewerLoadedResources,
@@ -118,7 +121,7 @@ const props = defineProps<{
   showRemove: boolean
 }>()
 
-const { switchModelToVersion, addModelVersion, removeModelVersion } =
+const { switchModelToVersion, removeModelVersion } =
   useInjectedViewerRequestedResources()
 const { loadMoreVersions } = useInjectedViewerLoadedResources()
 
@@ -200,12 +203,18 @@ function handleVersionChange(versionId: string) {
 }
 
 const { diff, endDiff } = useDiffing()
-function handleViewChanges(versionId: string) {
+function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
   // TODO
   if (!loadedVersion.value?.id) return
 
+  // let sortedVersionsForDiff = [loadedVersion.value, version].sort((a, b) => {
+  //   return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  // })
+  // diff(props.model.id, sortedVersionsForDiff[0].id, sortedVersionsForDiff[1].id)
+
+  // TODO: set correct version order when calling the diff api
   const currentVersion = loadedVersion.value?.id
-  const compareToVersion = versionId
+  const compareToVersion = version.id
   diff(props.model.id, currentVersion, compareToVersion)
 }
 

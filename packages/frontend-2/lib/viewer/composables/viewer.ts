@@ -9,7 +9,7 @@ import { debounce, isArray, throttle } from 'lodash-es'
 import { MaybeAsync, Nullable } from '@speckle/shared'
 import { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
 import { until } from '@vueuse/core'
-import { ViewerResource } from '~~/../shared/dist-esm/viewer/helpers/route'
+import { SpeckleViewer } from '@speckle/shared'
 import { VisualDiffMode } from '@speckle/viewer'
 
 function getFirstVisibleSelectionHit(
@@ -204,13 +204,14 @@ export function useGetObjectUrl() {
     `${config.public.apiOrigin}/streams/${projectId}/objects/${objectId}`
 }
 
-let preDiffResources = [] as ViewerResource[]
+let preDiffResources = [] as SpeckleViewer.ViewerRoute.ViewerResource[]
 export function useDiffing() {
   const state = useInjectedViewerState()
   const getObjectUrl = useGetObjectUrl()
 
   const diff = async (modelId: string, versionA: string, versionB: string) => {
     preDiffResources = [...state.resources.request.items.value]
+    // TODO: does not work if version order is reversed, for some reason :/
     state.resources.request.addModelVersion(modelId, versionA)
     state.resources.request.addModelVersion(modelId, versionB)
 

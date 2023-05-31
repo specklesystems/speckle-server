@@ -44,20 +44,11 @@
         size="xs"
         text
         class="opacity-0 group-hover:opacity-100 transition"
-        @click.stop="emit('viewChanges', props.version.id)"
+        @click.stop="emit('viewChanges', props.version)"
       >
         View Changes
       </FormButton>
-      <FormButton
-        v-else
-        size="xs"
-        text
-        disabled
-        class=""
-        @click.stop="emit('viewChanges', props.version.id)"
-      >
-        Currently Viewing
-      </FormButton>
+      <FormButton v-else size="xs" text disabled>Currently Viewing</FormButton>
     </div>
     <!-- Main stuff -->
     <div class="flex items-center space-x-1 pl-5">
@@ -106,7 +97,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'changeVersion', version: string): void
-  (e: 'viewChanges', version: string): void
+  (e: 'viewChanges', version: ViewerModelVersionCardItemFragment): void
 }>()
 
 const isLoaded = computed(() => props.isLoadedVersion)
