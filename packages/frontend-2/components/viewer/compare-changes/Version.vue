@@ -7,7 +7,7 @@
       class="bg-foundation-focus inline-block rounded-md px-2 text-xs font-bold truncate text-center py-1"
       v-tippy="createdAt"
     >
-      {{ isNewest ? 'A' : 'B' }}: {{ timeAgoCreatedAt }}
+      {{ timeAgoCreatedAt }}
       <br />
       {{ isNewest ? 'New' : 'Old' }} Version
     </div>

@@ -57,13 +57,13 @@ const objectCount = computed(() => {
 const description = computed(() => {
   switch (props.name) {
     case 'added':
-      return 'In A, but not in B'
+      return 'in new version'
     case 'removed':
-      return 'In B, but not in A'
+      return 'from old version'
     case 'modified':
-      return 'objects (in A and B)'
+      return 'across both versions'
     default:
-      return 'objects (in A and B)'
+      return 'across both versions'
   }
 })
 

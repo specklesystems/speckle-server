@@ -1,15 +1,26 @@
 <template>
-  <div>
+  <div
+    :class="`${
+      isModifiedQuery.modified && root
+        ? 'outline outline-2 rounded py-1 px-1 outline-amber-500'
+        : ''
+    }`"
+  >
     <div class="mb-1 flex items-center">
       <button
         class="hover:bg-primary-muted hover:text-primary flex h-full min-w-0 items-center space-x-1 rounded"
         @click="unfold = !unfold"
       >
         <ChevronDownIcon
-          :class="`h-3 w-3 transition ${!unfold ? '-rotate-90' : 'rotate-0'}`"
+          :class="`h-3 w-3 transition ${headerClasses} ${
+            !unfold ? '-rotate-90' : 'rotate-0'
+          }`"
         />
         <div :class="`truncate text-xs font-bold ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
+          <span v-if="props.root || props.modifiedSibling">
+            {{ isModifiedQuery.isNew ? '(New)' : '(Old)' }}
+          </span>
         </div>
       </button>
     </div>
@@ -81,6 +92,9 @@
         </div>
       </div>
     </div>
+    <div v-if="isModifiedQuery.modified && isModifiedQuery.pair && root" class="mt-2">
+      <ViewerSelectionObject :object="isModifiedQuery.pair" :modified-sibling="true" />
+    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -101,8 +115,9 @@ const props = withDefaults(
     title?: string
     unfold: boolean
     debug?: boolean
+    modifiedSibling?: boolean
   }>(),
-  { debug: false, unfold: true, root: false }
+  { debug: false, unfold: false, root: false, modifiedSibling: false }
 )
 
 const unfold = ref(props.unfold)
@@ -134,7 +149,29 @@ const isUnchanged = computed(() => {
   )
 })
 
+const isModifiedQuery = computed(() => {
+  // if (props.modifiedSibling) return { modified: false } // prevent recursion?
+  if (!diffEnabled.value) return { modified: false }
+  const modifiedObjectPairs = diffResult.value?.modified.map((pair) => {
+    return [pair[0].model.raw, pair[1].model.raw]
+  })
+  if (!modifiedObjectPairs) return { modified: false }
+  const obj = props.object
+  const pairedItems = modifiedObjectPairs.find(
+    (item) => item[0].id === obj.id || item[1].id === obj.id
+  )
+  if (!pairedItems) return { modified: false }
+  const pair = pairedItems[0].id === obj.id ? pairedItems[1] : pairedItems[0]
+  if (!pair) return { modified: false }
+  return {
+    modified: true,
+    pair,
+    isNew: pairedItems[0].id !== obj.id
+  }
+})
+
 const headerClasses = computed(() => {
+  if (props.modifiedSibling) return 'text-amber-500'
   if (!props.root) return ''
   if (!diffEnabled.value) return ''
   if (!Object.keys(props.object).includes('applicationId')) return ''
