@@ -401,7 +401,7 @@ export default class Coverter {
       })
       this.tree.addNode(childNode, node)
 
-      this.displayableLookup(ref, childNode)
+      await this.displayableLookup(ref, childNode)
     }
   }
 
