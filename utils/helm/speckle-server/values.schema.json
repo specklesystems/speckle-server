@@ -461,6 +461,21 @@
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
         },
+        "inspect": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, indicates that the Speckle server should be deployed with the nodejs inspect feature enabled",
+              "default": false
+            },
+            "port": {
+              "type": "string",
+              "description": "The port on which the nodejs inspect feature should be exposed",
+              "default": "7000"
+            }
+          }
+        },
         "adminOverrideEnabled": {
           "type": "boolean",
           "description": "Enables the server side admin authz override",

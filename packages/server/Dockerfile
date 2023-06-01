@@ -77,4 +77,5 @@ COPY --from=build-stage /speckle-server/packages/server/dist ./dist
 COPY --from=build-stage /speckle-server/packages/server/assets ./assets
 COPY --from=build-stage /speckle-server/packages/server/bin ./bin
 
-CMD ["node", "--inspect=7000", "bin/www"]
+ENTRYPOINT ["node"]
+CMD ["bin/www"]
