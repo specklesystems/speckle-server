@@ -20,9 +20,6 @@ module.exports = {
   requestDidStart(ctx) {
     return {
       didResolveOperation(ctx) {
-        // TODO: Re-enable
-        return
-
         let logger = ctx.context.log || graphqlLogger
 
         const op = `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
@@ -58,8 +55,6 @@ module.exports = {
         ctx.context.log = logger
       },
       didEncounterErrors(ctx) {
-        // TODO: Re-enable
-        return
         let logger = ctx.context.log || graphqlLogger
 
         for (const err of ctx.errors) {

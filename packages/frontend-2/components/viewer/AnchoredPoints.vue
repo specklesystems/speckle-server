@@ -5,6 +5,7 @@
   >
     <!-- Add new thread bubble -->
     <ViewerAnchoredPointNewThread
+      v-if="canPostComment"
       v-model="buttonState"
       class="z-[13]"
       @close="closeNewThread"
@@ -35,21 +36,23 @@
     <Portal to="secondary-actions">
       <ViewerScope :state="state">
         <div
-          v-show="activeUserAvatars.length > 0"
+          v-if="usersWithAvatars.length > 0"
           class="px-1 py-1 flex space-x-1 items-center"
         >
           <!-- <UserAvatarGroup :users="activeUserAvatars" :overlap="false" hover-effect /> -->
-          <template v-for="user in activeUserAvatars" :key="user.id">
-            <button @click="setUserSpotlight(user.id)">
+          <template v-for="user in usersWithAvatars" :key="user.id">
+            <button @click="setUserSpotlight(user.sessionId)">
               <UserAvatar
                 v-tippy="
-                  `${user.id === spotlightUserId ? 'Stop Following' : 'Follow'} ${
-                    user.name
-                  }`
+                  `${
+                    user.sessionId === spotlightUserSessionId
+                      ? 'Stop Following'
+                      : 'Follow'
+                  } ${user.user.name}`
                 "
-                :user="user"
+                :user="user.user"
                 hover-effect
-                :active="user.id === spotlightUserId"
+                :active="user.sessionId === spotlightUserSessionId"
               />
             </button>
           </template>
@@ -59,7 +62,7 @@
 
     <!-- Active user tracking cancel & Follower count display -->
     <div
-      v-if="(spotlightUserId && spotlightUser) || followers.length !== 0"
+      v-if="(spotlightUserSessionId && spotlightUser) || followers.length !== 0"
       class="absolute w-screen mt-[3.5rem] h-[calc(100vh-3.5rem)] z-10 p-1"
     >
       <div
@@ -67,10 +70,10 @@
       >
         <div class="absolute bottom-4 right-4 p-2 pointer-events-auto">
           <FormButton
-            v-if="spotlightUserId && spotlightUser"
+            v-if="spotlightUserSessionId && spotlightUser"
             size="xs"
             class="truncate"
-            @click="() => (spotlightUserId = null)"
+            @click="() => (spotlightUserSessionId = null)"
           >
             <span>Stop Following {{ spotlightUser?.userName.split(' ')[0] }}</span>
           </FormButton>
@@ -94,36 +97,37 @@
 import { Nullable } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { LimitedUser } from '~~/lib/common/generated/gql/graphql'
-import { isNonNullable } from '~~/lib/common/helpers/utils'
-
+import { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { useViewerUserActivityTracking } from '~~/lib/viewer/composables/activity'
 import {
   CommentBubbleModel,
   useViewerCommentBubblesProjection,
   useViewerNewThreadBubble
 } from '~~/lib/viewer/composables/commentBubbles'
+import { useCheckViewerCommentingAccess } from '~~/lib/viewer/composables/commentManagement'
 import {
   useInjectedViewerInterfaceState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 
 const parentEl = ref(null as Nullable<HTMLElement>)
-const { activeUser, isLoggedIn } = useActiveUser()
+const { isLoggedIn } = useActiveUser()
+const { sessionId } = useInjectedViewerState()
 const { users } = useViewerUserActivityTracking({ parentEl })
+const canPostComment = useCheckViewerCommentingAccess()
 
 const followers = computed(() => {
   if (!isLoggedIn.value) return []
   const res = [] as LimitedUser[]
-  // users.value['test'].state.ui.spotlightUserId
   Object.values(users.value).forEach((model) => {
-    if (model.state.ui.spotlightUserId === activeUser.value?.id)
+    if (model.state.ui.spotlightUserSessionId === sessionId.value)
       res.push(model.user as LimitedUser)
   })
   return res
 })
 
 const {
-  spotlightUserId,
+  spotlightUserSessionId,
   threads: {
     openThread: { thread: openThread },
     items: commentThreads,
@@ -185,17 +189,21 @@ const openPrevThread = (currentThread: CommentBubbleModel) => {
   open(nextThread.id)
 }
 
-const activeUserAvatars = computed(() =>
-  Object.values(users.value)
-    .map((u) => u.user)
-    .filter(isNonNullable)
+const usersWithAvatars = computed(() =>
+  Object.values(users.value).filter(
+    (u): u is SetFullyRequired<typeof u, 'user'> => !!u.user
+  )
 )
 const spotlightUser = computed(() => {
-  return Object.values(users.value).find((u) => u.userId === spotlightUserId.value)
+  return Object.values(users.value).find(
+    (u) => u.sessionId === spotlightUserSessionId.value
+  )
 })
 
-function setUserSpotlight(userId: string) {
-  if (spotlightUserId.value === userId) return (spotlightUserId.value = null)
-  spotlightUserId.value = userId
+function setUserSpotlight(sessionId: string) {
+  if (spotlightUserSessionId.value === sessionId)
+    return (spotlightUserSessionId.value = null)
+
+  spotlightUserSessionId.value = sessionId
 }
 </script>

@@ -4,7 +4,8 @@ import {
   ApolloLink,
   InMemoryCache,
   split,
-  ApolloClientOptions
+  ApolloClientOptions,
+  from
 } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
@@ -18,6 +19,12 @@ import {
   buildArrayMergeFunction,
   incomingOverwritesExistingMergeFunction
 } from '~~/lib/core/helpers/apolloSetup'
+import { onError } from '@apollo/client/link/error'
+import { Observability } from '@speckle/shared'
+
+let subscriptionsStopped = false
+const errorRpm = Observability.simpleRpmCounter()
+const STOP_SUBSCRIPTIONS_AT_ERRORS_PER_MIN = 100
 
 const appVersion = (import.meta.env.SPECKLE_SERVER_VERSION as string) || 'unknown'
 const appName = 'dui-3'
@@ -289,7 +296,32 @@ function createLink(params: {
     )
   }
 
-  return link
+  const errorLink = onError((res) => {
+    console.error('Apollo Client error', res)
+
+    // Disable subscriptions if too many errors per minute
+    const rpm = errorRpm.hit()
+    if (
+      process.client &&
+      wsClient &&
+      !subscriptionsStopped &&
+      rpm > STOP_SUBSCRIPTIONS_AT_ERRORS_PER_MIN
+    ) {
+      subscriptionsStopped = true
+      console.error(
+        `Too many errors (${rpm} errors per minute), stopping subscriptions!`
+      )
+      wsClient.use([
+        {
+          applyMiddleware: () => {
+            // never invokes next() - essentially stuck
+          }
+        }
+      ])
+    }
+  })
+
+  return from([errorLink, link])
 }
 
 type ResolveClientConfigParams = {

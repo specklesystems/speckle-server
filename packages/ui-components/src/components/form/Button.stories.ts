@@ -99,7 +99,8 @@ export const Default: StoryObj = {
     color: 'default',
     disabled: false,
     submit: false,
-    hideText: false
+    hideText: false,
+    loading: false
   },
   parameters: {
     docs: {
@@ -261,5 +262,19 @@ export const IconOnly: StoryObj = mergeStories(Default, {
   args: {
     iconLeft: XMarkIcon,
     hideText: true
+  }
+})
+
+export const LoadingStateBasic: StoryObj = mergeStories(Default, {
+  args: {
+    loading: true,
+    hideText: true
+  }
+})
+
+export const LoadingStateWithText: StoryObj = mergeStories(Default, {
+  args: {
+    loading: true,
+    default: 'Custom text'
   }
 })

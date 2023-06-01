@@ -359,6 +359,34 @@ export default class Coverter {
   //   return hash
   // }
 
+  /** This is only used for Blocks to search for convertible objects, without using the main 'traverse' function
+   *  It's only looking for 'elements' and 'displayValues'
+   *  I think it can be used for RevitInstances as well to replace it's current lookup, but I'm afraid to do it
+   */
+  private async displayableLookup(obj, node) {
+    if (this.directNodeConverterExists(obj)) {
+      await this.convertToNode(obj, node)
+    } else {
+      const displayValues = this.getDisplayValue(obj)
+      const elements = this.getElementsValue(obj)
+      const entries = [
+        ...(displayValues ? displayValues : []),
+        ...(elements ? elements : [])
+      ]
+      for (const entry of entries) {
+        const value = await this.resolveReference(entry)
+        const valueNode: TreeNode = this.tree.parse({
+          id: this.getNodeId(value),
+          raw: Object.assign({}, value),
+          atomic: false,
+          children: []
+        })
+        this.tree.addNode(valueNode, node)
+        await this.displayableLookup(value, valueNode)
+      }
+    }
+  }
+
   private async BlockInstanceToNode(obj, node) {
     const definition = await this.resolveReference(this.getBlockDefinition(obj))
     node.model.raw.definition = definition
@@ -372,11 +400,8 @@ export default class Coverter {
         children: []
       })
       this.tree.addNode(childNode, node)
-      // console.warn(
-      //   `Added child node with id ${childNode.model.id} to parent node ${node.model.id}`
-      // )
 
-      await this.convertToNode(ref, childNode)
+      await this.displayableLookup(ref, childNode)
     }
   }
 

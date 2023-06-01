@@ -24,6 +24,7 @@ import {
 } from '~~/lib/core/helpers/apolloSetup'
 import { onError } from '@apollo/client/link/error'
 import { useNavigateToLogin } from '~~/lib/common/helpers/route'
+import { useAppErrorState } from '~~/lib/core/composables/appErrorState'
 
 const appVersion = (import.meta.env.SPECKLE_SERVER_VERSION as string) || 'unknown'
 const appName = 'frontend-2'
@@ -273,8 +274,15 @@ function createLink(params: {
 }): ApolloLink {
   const { httpEndpoint, wsClient, authToken } = params
   const goToLogin = useNavigateToLogin()
+  const { registerError, isErrorState } = useAppErrorState()
 
   const errorLink = onError((res) => {
+    const isSubTokenMissingError = (res.networkError?.message || '').includes(
+      'need a token to subscribe'
+    )
+
+    if (!isSubTokenMissingError) console.error('Apollo Client error', res)
+
     const { networkError } = res
     if (networkError && isServerError(networkError)) {
       const isForbidden = networkError.statusCode === 403
@@ -284,6 +292,8 @@ function createLink(params: {
         goToLogin()
       }
     }
+
+    registerError()
   })
 
   // Prepare links
@@ -319,6 +329,19 @@ function createLink(params: {
       wsLink,
       link
     )
+
+    // Stopping WS when in error state
+    wsClient.use([
+      {
+        applyMiddleware: (_opt, next) => {
+          if (isErrorState.value) {
+            return // never invokes next() - essentially stuck
+          }
+
+          next()
+        }
+      }
+    ])
   }
 
   return from([errorLink, link])

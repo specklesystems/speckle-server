@@ -10,13 +10,13 @@
   >
     <IconCursor
       :class="`fill-primary ${
-        user.isOccluded && spotlightUserId !== user.userId ? 'grayscale' : ''
+        user.isOccluded && spotlightUserSessionId !== user.sessionId ? 'grayscale' : ''
       }`"
     />
     <button
       :class="`relative left-5 -top-0 py-0 px-2 rounded ${
-        user.isOccluded && spotlightUserId !== user.userId ? 'grayscale' : ''
-      } ${spotlightUserId === user.userId ? 'border-2 border-rose-500' : ''}
+        user.isOccluded && spotlightUserSessionId !== user.sessionId ? 'grayscale' : ''
+      } ${spotlightUserSessionId === user.sessionId ? 'border-2 border-rose-500' : ''}
       bg-primary text-foreground-on-primary hover:bg-primary-focus hover:text-foreground-on-primary transition select-none flex items-center h-6`"
       @click="() => setUserSpotlight()"
     >
@@ -32,7 +32,7 @@ import { UserActivityModel } from '~~/lib/viewer/composables/activity'
 import { useAnimatingEllipsis } from '~~/lib/viewer/composables/commentBubbles'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 
-const { spotlightUserId } = useInjectedViewerInterfaceState()
+const { spotlightUserSessionId } = useInjectedViewerInterfaceState()
 const { ellipsis, controls } = useAnimatingEllipsis()
 
 const props = defineProps<{
@@ -46,8 +46,9 @@ const isCreatingNewThread = computed(
 )
 
 function setUserSpotlight() {
-  if (spotlightUserId.value === props.user.userId) return (spotlightUserId.value = null)
-  spotlightUserId.value = props.user.userId || null
+  if (spotlightUserSessionId.value === props.user.sessionId)
+    return (spotlightUserSessionId.value = null)
+  spotlightUserSessionId.value = props.user.sessionId || null
 }
 
 watch(isCreatingNewThread, (isCreating) => {
