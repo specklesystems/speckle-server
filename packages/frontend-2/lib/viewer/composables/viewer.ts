@@ -211,9 +211,9 @@ export function useDiffing() {
 
   const diff = async (modelId: string, versionA: string, versionB: string) => {
     preDiffResources = [...state.resources.request.items.value]
-    // TODO: does not work if version order is reversed, for some reason :/
-    state.resources.request.addModelVersion(modelId, versionA)
+
     state.resources.request.addModelVersion(modelId, versionB)
+    state.resources.request.addModelVersion(modelId, versionA)
 
     await until(state.ui.viewerBusy).toBe(true) // wait for autoloading to kick in
     await until(state.ui.viewerBusy).toBe(false) // wait for it to finish
@@ -225,6 +225,7 @@ export function useDiffing() {
       (r) => r.versionId === versionB
     )
 
+    if (!A || !B) throw new Error('Version not loaded')
     setTimeout(async () => {
       state.ui.diff.diffResult.value = await state.viewer.instance.diff(
         getObjectUrl(state.projectId.value, B?.objectId as string),
@@ -246,7 +247,7 @@ export function useDiffing() {
     state.viewer.instance.setDiffTime(
       state.ui.diff.diffResult.value,
       state.ui.diff.diffTime.value
-    ) // hmm
+    ) // hmm, why do i need to call diff time again?
   })
 
   watch(state.ui.diff.diffTime, (val) => {

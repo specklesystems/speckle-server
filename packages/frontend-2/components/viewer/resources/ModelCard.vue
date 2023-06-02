@@ -213,8 +213,18 @@ function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
   // diff(props.model.id, sortedVersionsForDiff[0].id, sortedVersionsForDiff[1].id)
 
   // TODO: set correct version order when calling the diff api
-  const currentVersion = loadedVersion.value?.id
-  const compareToVersion = version.id
+  const currentVersion =
+    new Date(loadedVersion.value.createdAt).getTime() -
+      new Date(version.createdAt).getTime() >
+    0
+      ? loadedVersion.value?.id
+      : version.id
+  const compareToVersion =
+    new Date(loadedVersion.value.createdAt).getTime() -
+      new Date(version.createdAt).getTime() >
+    0
+      ? version.id
+      : loadedVersion.value?.id
   diff(props.model.id, currentVersion, compareToVersion)
 }
 
