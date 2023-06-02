@@ -77,5 +77,4 @@ COPY --from=build-stage /speckle-server/packages/server/dist ./dist
 COPY --from=build-stage /speckle-server/packages/server/assets ./assets
 COPY --from=build-stage /speckle-server/packages/server/bin ./bin
 
-ENTRYPOINT ["node"]
-CMD ["bin/www"]
+CMD ["node", "bin/www"]

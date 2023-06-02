@@ -22,11 +22,12 @@ spec:
       - name: main
         image: speckle/speckle-server:{{ .Values.docker_image_tag }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
-        args: #overwrites the Dockerfile CMD statement
         {{- if .Values.server.inspect.enabled }}
+        args: #overwrites the Dockerfile CMD statement
+          - "node"
           - {{ printf "--inspect=%s" .Values.server.inspect.port }}
-        {{- end }}
           - "bin/www"
+        {{- end }}
         ports:
           - name: http
             containerPort: {{ include "server.port" $ }}
