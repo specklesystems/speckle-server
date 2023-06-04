@@ -1,16 +1,23 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   InitialStateWithRequestAndResponse,
   InjectableViewerState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
-import { debounce, isArray, throttle } from 'lodash-es'
-import { MaybeAsync, Nullable } from '@speckle/shared'
+import { debounce, isArray, result, throttle } from 'lodash-es'
 import { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
 import { until } from '@vueuse/core'
 import { SpeckleViewer } from '@speckle/shared'
 import { VisualDiffMode } from '@speckle/viewer'
+import { MaybeAsync, Nullable, TimeoutError, timeoutAt } from '@speckle/shared'
+import { Vector3 } from 'three'
+import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
+import { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
+import { useAuthCookie } from '~~/lib/auth/composables/auth'
+import { viewerDiffVersionsQuery } from '~~/lib/viewer/graphql/queries'
+import { useQuery, useApolloClient } from '@vue/apollo-composable'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { getFirstErrorMessage } from '~~/lib/common/helpers/graphql'
 
 function getFirstVisibleSelectionHit(
   { hits }: SelectionEvent,
@@ -42,6 +49,7 @@ function getFirstVisibleSelectionHit(
   return null
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useViewerEventListener<A = any>(
   name: ViewerEvent | ViewerEvent[],
   listener: (...args: A[]) => MaybeAsync<void>,
@@ -54,6 +62,12 @@ export function useViewerEventListener<A = any>(
   } = options?.state || useInjectedViewerState()
   const names = isArray(name) ? name : [name]
 
+  const unmount = () => {
+    for (const n of names) {
+      instance.removeListener(n, listener)
+    }
+  }
+
   onMounted(() => {
     for (const n of names) {
       instance.on(n, listener)
@@ -61,26 +75,66 @@ export function useViewerEventListener<A = any>(
   })
 
   onBeforeUnmount(() => {
-    for (const n of names) {
-      instance.removeListener(n, listener)
-    }
+    unmount
   })
+
+  return unmount
 }
 
 export function useViewerCameraTracker(
   callback: () => void,
-  options?: Partial<{ throttleWait: number; debounceWait: number }>
+  options?: Partial<{
+    throttleWait: number
+    debounceWait: number
+    onlyInvokeOnMeaningfulChanges: boolean
+  }>
 ): void {
   const {
     viewer: { instance }
   } = useInjectedViewerState()
-  const { throttleWait = 50, debounceWait } = options || {}
+  const {
+    throttleWait = 50,
+    debounceWait,
+    onlyInvokeOnMeaningfulChanges
+  } = options || {}
+
+  const lastPos = ref(null as Nullable<Vector3>)
+  const lastTarget = ref(null as Nullable<Vector3>)
+
+  const callbackChangeTrackerWrapper = () => {
+    if (!onlyInvokeOnMeaningfulChanges) {
+      return callback()
+    }
+
+    // Only invoke callback if position/target changed in a meaningful way
+    const activeCam = instance.cameraHandler.activeCam
+    const controls = activeCam.controls
+    const viewerPos = new Vector3()
+    const viewerTarget = new Vector3()
+
+    controls.getPosition(viewerPos)
+    controls.getTarget(viewerTarget)
+
+    let meaningfulChangeFound = false
+    if (!lastPos.value || !areVectorsLooselyEqual(lastPos.value, viewerPos)) {
+      meaningfulChangeFound = true
+    }
+    if (!lastTarget.value || !areVectorsLooselyEqual(lastTarget.value, viewerTarget)) {
+      meaningfulChangeFound = true
+    }
+
+    if (meaningfulChangeFound) {
+      lastPos.value = viewerPos.clone()
+      lastTarget.value = viewerTarget.clone()
+      callback()
+    }
+  }
 
   const finalCallback = debounceWait
-    ? debounce(callback, debounceWait)
+    ? debounce(callbackChangeTrackerWrapper, debounceWait)
     : throttleWait
-    ? throttle(callback, throttleWait)
-    : callback
+    ? throttle(callbackChangeTrackerWrapper, throttleWait)
+    : callbackChangeTrackerWrapper
 
   onMounted(() => {
     instance.cameraHandler.controls.addEventListener('update', finalCallback)
@@ -89,6 +143,25 @@ export function useViewerCameraTracker(
   onBeforeUnmount(() => {
     instance.cameraHandler.controls.removeEventListener('update', finalCallback)
   })
+}
+
+export function useViewerCameraControlStartTracker(callback: () => void) {
+  const {
+    viewer: { instance }
+  } = useInjectedViewerState()
+
+  const removeListener = () =>
+    instance.cameraHandler.controls.removeEventListener('controlstart', callback)
+
+  onMounted(() => {
+    instance.cameraHandler.controls.addEventListener('controlstart', callback)
+  })
+
+  onBeforeUnmount(() => {
+    removeListener()
+  })
+
+  return removeListener
 }
 
 export function useViewerCameraRestTracker(
@@ -204,69 +277,50 @@ export function useGetObjectUrl() {
     `${config.public.apiOrigin}/streams/${projectId}/objects/${objectId}`
 }
 
-let preDiffResources = [] as SpeckleViewer.ViewerRoute.ViewerResource[]
-export function useDiffing() {
-  const state = useInjectedViewerState()
-  const getObjectUrl = useGetObjectUrl()
+export function useOnViewerLoadComplete(
+  listener: (params: { isInitial: boolean }) => MaybeAsync<void>,
+  options?: Partial<{
+    /**
+     * Whether to only invoke the listener once on the very first LoadComplete event. Default: false
+     */
+    initialOnly: boolean
+    /**
+     * If true, will trigger the listener after the next isBusy=false event that comes after LoadComplete. Default: true
+     */
+    waitForBusyOver: boolean
+  }>
+) {
+  const {
+    ui: { viewerBusy }
+  } = useInjectedViewerState()
+  const { initialOnly, waitForBusyOver = true } = options || {}
 
-  const diff = async (modelId: string, versionA: string, versionB: string) => {
-    preDiffResources = [...state.resources.request.items.value]
+  const hasRun = ref(false)
 
-    state.resources.request.addModelVersion(modelId, versionB)
-    state.resources.request.addModelVersion(modelId, versionA)
+  const cancel = useViewerEventListener(ViewerEvent.LoadComplete, async () => {
+    if (initialOnly && hasRun.value) {
+      cancel()
+      return
+    }
 
-    await until(state.ui.viewerBusy).toBe(true) // wait for autoloading to kick in
-    await until(state.ui.viewerBusy).toBe(false) // wait for it to finish
+    try {
+      await (waitForBusyOver
+        ? Promise.race([
+            until(viewerBusy).toBe(false),
+            timeoutAt(
+              1000,
+              'Waiting for viewer business to be over post-LoadComplete timed out'
+            )
+          ])
+        : Promise.resolve())
+    } catch (e) {
+      if (!(e instanceof TimeoutError)) throw e
+      console.warn(e.message)
+    }
 
-    const A = state.resources.response.resourceItems.value.find(
-      (r) => r.versionId === versionA
-    )
-    const B = state.resources.response.resourceItems.value.find(
-      (r) => r.versionId === versionB
-    )
+    listener({ isInitial: !hasRun.value })
+    hasRun.value = true
 
-    if (!A || !B) throw new Error('Version not loaded')
-    setTimeout(async () => {
-      state.ui.diff.diffResult.value = await state.viewer.instance.diff(
-        getObjectUrl(state.projectId.value, B?.objectId as string),
-        getObjectUrl(state.projectId.value, A?.objectId as string),
-        state.ui.diff.diffMode.value
-      )
-      state.ui.diff.diffTime.value = 0.5
-      state.ui.diff.diffMode.value = VisualDiffMode.COLORED
-      state.viewer.instance.setDiffTime(state.ui.diff.diffResult.value, 0.5)
-    }, 1000)
-
-    state.urlHashState.compare.value = true // could be one place
-    state.ui.diff.enabled.value = true
-  }
-
-  watch(state.ui.diff.diffMode, (val) => {
-    if (!state.ui.diff.diffResult.value) return
-    state.viewer.instance.setVisualDiffMode(state.ui.diff.diffResult.value, val)
-    state.viewer.instance.setDiffTime(
-      state.ui.diff.diffResult.value,
-      state.ui.diff.diffTime.value
-    ) // hmm, why do i need to call diff time again?
+    if (initialOnly) cancel()
   })
-
-  watch(state.ui.diff.diffTime, (val) => {
-    if (!state.ui.diff.diffResult.value) return
-    state.viewer.instance.setDiffTime(state.ui.diff.diffResult.value, val)
-  })
-
-  const endDiff = () => {
-    state.ui.diff.enabled.value = false
-    state.viewer.instance.undiff()
-    state.resources.request.setModelVersions(preDiffResources)
-    // Hack, for some reason they conflict :/
-    setTimeout(() => {
-      state.urlHashState.compare.value = null
-    }, 100)
-  }
-
-  return {
-    diff,
-    endDiff
-  }
 }

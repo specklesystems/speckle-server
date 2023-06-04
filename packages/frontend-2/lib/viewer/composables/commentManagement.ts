@@ -129,7 +129,7 @@ export function useSubmitComment() {
             projectId: projectId.value,
             resourceIdString: resourceIdString.value,
             content,
-            viewerState: serialize(),
+            viewerState: serialize({ concreteResourceIdString: true }),
             screenshot
           }
         }
@@ -213,4 +213,14 @@ export function useArchiveComment() {
 
     return false
   }
+}
+
+export function useCheckViewerCommentingAccess() {
+  const {
+    resources: {
+      response: { project }
+    }
+  } = useInjectedViewerState()
+  const { activeUser } = useActiveUser()
+  return computed(() => activeUser.value && !!project.value?.role)
 }

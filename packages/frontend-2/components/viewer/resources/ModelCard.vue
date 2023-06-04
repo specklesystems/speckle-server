@@ -55,7 +55,7 @@
           color="danger"
           size="xs"
           class="rounded-full"
-          @click="handleRemoveModel()"
+          @click="$emit('remove', props.model.id)"
         >
           <XMarkIcon class="h-5 w-5" />
         </FormButton>
@@ -106,14 +106,20 @@ import {
 } from '~~/lib/common/generated/gql/graphql'
 import { Get } from 'type-fest'
 import {
+  useInjectedViewerState,
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
-import { useDiffing } from '~~/lib/viewer/composables/viewer'
+
+import { useDiffing } from '~~/lib/viewer/composables/diffs'
 
 dayjs.extend(localizedFormat)
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
+
+defineEmits<{
+  (e: 'remove', val: string): void
+}>()
 
 const props = defineProps<{
   model: ModelItem
@@ -121,8 +127,7 @@ const props = defineProps<{
   showRemove: boolean
 }>()
 
-const { switchModelToVersion, removeModelVersion } =
-  useInjectedViewerRequestedResources()
+const { switchModelToVersion } = useInjectedViewerRequestedResources()
 const { loadMoreVersions } = useInjectedViewerLoadedResources()
 
 const showVersions = ref(false)
@@ -191,44 +196,22 @@ const modelName = computed(() => {
   }
 })
 
-function handleRemoveModel() {
-  if (latestVersion.value.id === loadedVersion.value?.id)
-    return removeModelVersion(props.model.id)
-
-  removeModelVersion(props.model.id, loadedVersion.value?.id as string)
-}
-
-function handleVersionChange(versionId: string) {
-  switchModelToVersion(props.model.id, versionId)
-}
-
-const { diff, endDiff } = useDiffing()
-function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
-  // TODO
-  if (!loadedVersion.value?.id) return
-
-  // let sortedVersionsForDiff = [loadedVersion.value, version].sort((a, b) => {
-  //   return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  // })
-  // diff(props.model.id, sortedVersionsForDiff[0].id, sortedVersionsForDiff[1].id)
-
-  // TODO: set correct version order when calling the diff api
-  const currentVersion =
-    new Date(loadedVersion.value.createdAt).getTime() -
-      new Date(version.createdAt).getTime() >
-    0
-      ? loadedVersion.value?.id
-      : version.id
-  const compareToVersion =
-    new Date(loadedVersion.value.createdAt).getTime() -
-      new Date(version.createdAt).getTime() >
-    0
-      ? version.id
-      : loadedVersion.value?.id
-  diff(props.model.id, currentVersion, compareToVersion)
+async function handleVersionChange(versionId: string) {
+  await switchModelToVersion(props.model.id, versionId)
 }
 
 const onLoadMore = async () => {
   await loadMoreVersions(props.model.id)
+}
+
+const { formatDiffString } = useDiffing()
+const state = useInjectedViewerState()
+function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
+  if (!loadedVersion.value?.id) return
+  state.ui.diff.diffString.value = formatDiffString(
+    modelId.value,
+    loadedVersion.value.id,
+    version.id
+  )
 }
 </script>

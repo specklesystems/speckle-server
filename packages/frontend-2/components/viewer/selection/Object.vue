@@ -18,7 +18,9 @@
         />
         <div :class="`truncate text-xs font-bold ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
-          <span v-if="props.root || props.modifiedSibling">
+          <span
+            v-if="(props.root || props.modifiedSibling) && isModifiedQuery.modified"
+          >
             {{ isModifiedQuery.isNew ? '(New)' : '(Old)' }}
           </span>
         </div>

@@ -1,34 +1,38 @@
+import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import { useRouteHashState } from '~~/lib/common/composables/url'
 import type { InjectableViewerState } from '~~/lib/viewer/composables/setup'
 
 export enum ViewerHashStateKeys {
   FocusedThreadId = 'threadId',
-  Compare = 'compare'
+  Diff = 'diff'
 }
 
 export function setupUrlHashState(): InjectableViewerState['urlHashState'] {
   const { hashState } = useRouteHashState()
 
-  const focusedThreadId = computed({
+  const focusedThreadId = writableAsyncComputed({
     get: () => hashState.value[ViewerHashStateKeys.FocusedThreadId] || null,
-    set: (newVal) =>
-      (hashState.value = {
+    set: async (newVal) => {
+      await hashState.update({
         ...hashState.value,
         [ViewerHashStateKeys.FocusedThreadId]: newVal
       })
+    },
+    initialState: null
   })
 
-  const compare = computed({
-    get: () =>
-      hashState.value[ViewerHashStateKeys.Compare]?.toLowerCase() === 'true' || false,
-    set: (newVal) =>
-      (hashState.value = {
+  const diff = writableAsyncComputed({
+    get: () => hashState.value[ViewerHashStateKeys.Diff],
+    set: async (newVal) =>
+      await hashState.update({
         ...hashState.value,
-        [ViewerHashStateKeys.Compare]: newVal ? 'true' : null
-      })
+        [ViewerHashStateKeys.Diff]: newVal
+      }),
+    initialState: null
   })
+
   return {
     focusedThreadId,
-    compare
+    diff
   }
 }

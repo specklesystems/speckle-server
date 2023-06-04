@@ -173,6 +173,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@apollo/rover@npm:^0.14.1":
+  version: 0.14.1
+  resolution: "@apollo/rover@npm:0.14.1"
+  dependencies:
+    axios-proxy-builder: ^0.1.1
+    binary-install: ^1.0.6
+    console.table: ^0.10.0
+    detect-libc: ^2.0.0
+  bin:
+    rover: run.js
+  checksum: e797e6490606b1e20cfd5333e13c460815b42d05e64e03c54158615d8d6bb9580d7b28f79eb3e99f79e57354aaf7065da396755204615ee119584f68858a246b
+  languageName: node
+  linkType: hard
+
 "@apollo/utils.dropunuseddefinitions@npm:^1.1.0":
   version: 1.1.0
   resolution: "@apollo/utils.dropunuseddefinitions@npm:1.1.0"
@@ -11045,6 +11059,7 @@ __metadata:
     "@vue/apollo-composable": ^4.0.0-beta.5
     "@vueuse/core": ^9.13.0
     apollo-upload-client: ^17.0.0
+    autoprefixer: ^10.4.14
     concurrently: ^7.5.0
     eslint: ^8.24.0
     eslint-config-prettier: ^8.5.0
@@ -11157,6 +11172,7 @@ __metadata:
     "@vue/apollo-ssr": ^4.0.0-alpha.18
     "@vueuse/core": ^9.13.0
     apollo-upload-client: ^17.0.0
+    autoprefixer: ^10.4.14
     browserify-zlib: ^0.2.0
     chromatic: ^6.11.4
     concurrently: ^7.5.0
@@ -11357,6 +11373,7 @@ __metadata:
   resolution: "@speckle/server@workspace:packages/server"
   dependencies:
     "@apollo/client": ^3.7.0
+    "@apollo/rover": ^0.14.1
     "@aws-sdk/client-s3": ^3.276.0
     "@aws-sdk/lib-storage": ^3.100.0
     "@bull-board/express": ^4.2.2
@@ -18825,6 +18842,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"axios-proxy-builder@npm:^0.1.1":
+  version: 0.1.2
+  resolution: "axios-proxy-builder@npm:0.1.2"
+  dependencies:
+    tunnel: ^0.0.6
+  checksum: 17e000cdf30dc7b03aaed4afb3e0c3daf0bcce08117b1f6626bcfaa9cbe247d205c9ea78ee1dccbd28ed3e5ccda409242816071e8a33c1fd605ea8443370707c
+  languageName: node
+  linkType: hard
+
 "axios@npm:^0.21.1":
   version: 0.21.4
   resolution: "axios@npm:0.21.4"
@@ -18840,6 +18866,15 @@ __metadata:
   dependencies:
     follow-redirects: ^1.14.7
   checksum: 2a8a3787c05f2a0c9c3878f49782357e2a9f38945b93018fb0c4fd788171c43dceefbb577988628e09fea53952744d1ecebde234b561f1e703aa43e0a598a3ad
+  languageName: node
+  linkType: hard
+
+"axios@npm:^0.26.1":
+  version: 0.26.1
+  resolution: "axios@npm:0.26.1"
+  dependencies:
+    follow-redirects: ^1.14.8
+  checksum: d9eb58ff4bc0b36a04783fc9ff760e9245c829a5a1052ee7ca6013410d427036b1d10d04e7380c02f3508c5eaf3485b1ae67bd2adbfec3683704745c8d7a6e1a
   languageName: node
   linkType: hard
 
@@ -19239,6 +19274,17 @@ __metadata:
   version: 2.2.0
   resolution: "binary-extensions@npm:2.2.0"
   checksum: ccd267956c58d2315f5d3ea6757cf09863c5fc703e50fbeb13a7dc849b812ef76e3cf9ca8f35a0c48498776a7478d7b4a0418e1e2b8cb9cb9731f2922aaad7f8
+  languageName: node
+  linkType: hard
+
+"binary-install@npm:^1.0.6":
+  version: 1.1.0
+  resolution: "binary-install@npm:1.1.0"
+  dependencies:
+    axios: ^0.26.1
+    rimraf: ^3.0.2
+    tar: ^6.1.11
+  checksum: 271344b49f42460f5e3ec29d681cd4b749aaf9592040d49f6ae86d267b997b5fd094fd7a710df4d477fc299a51833b8cb94206595db6c46edea3f1603266a0d2
   languageName: node
   linkType: hard
 
@@ -21163,6 +21209,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"console.table@npm:^0.10.0":
+  version: 0.10.0
+  resolution: "console.table@npm:0.10.0"
+  dependencies:
+    easy-table: 1.1.0
+  checksum: 4c1460e3105a5f7df5bfa372844104a20e487fc0fccc5821c169a39def3249759554fc132621074ad6695664a1a8d558dd385c0e7f290acb2eaca51466474bb9
+  languageName: node
+  linkType: hard
+
 "constant-case@npm:^3.0.4":
   version: 3.0.4
   resolution: "constant-case@npm:3.0.4"
@@ -23043,6 +23098,18 @@ __metadata:
   version: 1.1.1
   resolution: "easy-bem@npm:1.1.1"
   checksum: c4d44a8cd792fddf9e1869bba543b7ec958080d56ea4764bb6e53b8238a0c2d075f0ee46b95f9dca40032b3e56e5bfc794a5da286eaf424d9db730c5ae91d656
+  languageName: node
+  linkType: hard
+
+"easy-table@npm:1.1.0":
+  version: 1.1.0
+  resolution: "easy-table@npm:1.1.0"
+  dependencies:
+    wcwidth: ">=1.0.1"
+  dependenciesMeta:
+    wcwidth:
+      optional: true
+  checksum: 49b960fefe5670076773824386f22070dce185ebc0a99542035496700cc39a0b9346f65fd4307f5fe3dbbe7e6d9c4b59966e77e32f915e0fe71de71c3d0efcf7
   languageName: node
   linkType: hard
 
@@ -25513,7 +25580,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:^1.14.0":
+"follow-redirects@npm:^1.14.0, follow-redirects@npm:^1.14.8":
   version: 1.15.2
   resolution: "follow-redirects@npm:1.15.2"
   peerDependenciesMeta:
@@ -44002,7 +44069,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"wcwidth@npm:^1.0.1":
+"wcwidth@npm:>=1.0.1, wcwidth@npm:^1.0.1":
   version: 1.0.1
   resolution: "wcwidth@npm:1.0.1"
   dependencies:

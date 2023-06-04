@@ -55,7 +55,6 @@ workflows:
             tags:
               only: /.*/
           requires:
-            - test-server
             - get-version
 
       - docker-build-frontend:
@@ -67,7 +66,6 @@ workflows:
       - docker-build-frontend-2:
           filters: *filters-build
           requires:
-            - test-frontend-2
             - get-version
 
       - docker-build-webhooks:
@@ -75,28 +73,24 @@ workflows:
           filters: *filters-build
           requires:
             - get-version
-            - test-server
 
       - docker-build-file-imports:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - test-server
 
       - docker-build-previews:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - test-server
 
       - docker-build-test-container:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - test-server
 
       - docker-build-monitor-container:
           context: *build-context
@@ -126,6 +120,7 @@ workflows:
             - get-version
             - publish-approval
             - docker-build-server
+            - test-server
             - pre-commit
 
       - docker-publish-frontend:
@@ -136,6 +131,7 @@ workflows:
             - publish-approval
             - docker-build-frontend
             - pre-commit
+            - test-server
 
       - docker-publish-frontend-2:
           context: *docker-hub-context
@@ -155,6 +151,7 @@ workflows:
             - publish-approval
             - docker-build-webhooks
             - pre-commit
+            - test-server
 
       - docker-publish-file-imports:
           context: *docker-hub-context
@@ -164,6 +161,7 @@ workflows:
             - publish-approval
             - docker-build-file-imports
             - pre-commit
+            - test-server
 
       - docker-publish-previews:
           context: *docker-hub-context
@@ -173,6 +171,7 @@ workflows:
             - publish-approval
             - docker-build-previews
             - pre-commit
+            - test-server
 
       - docker-publish-test-container:
           context: *docker-hub-context
@@ -289,7 +288,9 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}
@@ -345,6 +346,10 @@ jobs:
           name: Install Dependencies
           command: yarn
 
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -377,6 +382,21 @@ jobs:
           command: 'bash <(curl -s https://codecov.io/bash)'
           working_directory: 'packages/server'
 
+      - run:
+          name: Introspect GQL schema for subsequent checks
+          command: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
+          working_directory: 'packages/server'
+
+      - run:
+          name: Checking for GQL schema breakages against speckle.xyz
+          command: 'yarn rover graph check Speckle-Server@speckle-xyz --schema ./introspected-schema.graphql'
+          working_directory: 'packages/server'
+
+      - run:
+          name: Checking for GQL schema breakages against latest.speckle.systems
+          command: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
+          working_directory: 'packages/server'
+
       - store_test_results:
           path: packages/server/reports
 
@@ -396,6 +416,10 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
+          command: yarn
+
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -426,7 +450,7 @@ jobs:
   test-dui-3:
     docker:
       - image: cimg/node:18.16.0
-    resource_class: medium
+    resource_class: medium+
     steps:
       - checkout
       - restore_cache:
@@ -435,6 +459,10 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
+          command: yarn
+
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -461,6 +489,10 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
+          command: yarn
+
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -512,6 +544,10 @@ jobs:
           name: Install Dependencies
           command: yarn
 
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
@@ -540,6 +576,10 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
+          command: yarn
+
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
 
       - save_cache:
@@ -576,6 +616,9 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
+          command: yarn
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
           command: yarn
       - save_cache:
           name: Save Yarn Package Cache
@@ -742,7 +785,9 @@ jobs:
       - run:
           name: Install Dependencies
           command: yarn
-
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-{{ checksum "yarn.lock" }}

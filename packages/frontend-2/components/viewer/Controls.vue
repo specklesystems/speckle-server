@@ -98,13 +98,13 @@
         <KeepAlive>
           <div>
             <ViewerResourcesList
-              v-show="!diffEnabled"
+              v-show="!diffString"
               class="pointer-events-auto"
               @loaded-more="scrollControlsToBottom"
               @close="activeControl = 'none'"
             />
             <ViewerCompareChangesPanel
-              v-show="diffEnabled"
+              v-show="diffString"
               @close="activeControl = 'none'"
             />
           </div>
@@ -155,7 +155,7 @@ type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'discussions'
 const activeControl = ref<ActiveControl>('models')
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
 const {
-  diff: { enabled: diffEnabled }
+  diff: { diffString }
 } = useInjectedViewerInterfaceState()
 
 const modelsShortcut = ref(

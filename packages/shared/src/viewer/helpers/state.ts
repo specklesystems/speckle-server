@@ -1,7 +1,7 @@
 import { intersection, isObjectLike } from 'lodash'
 import { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes'
-
-export const SERIALIZED_VIEWER_STATE_VERSION = 1.0
+import { VisualDiffMode } from '@speckle/viewer'
+export const SERIALIZED_VIEWER_STATE_VERSION = 1.1
 
 export type SerializedViewerState = {
   projectId: string
@@ -31,13 +31,19 @@ export type SerializedViewerState = {
         newThreadEditor: boolean
       }
     }
-    spotlightUserId: Nullable<string>
+    diff: {
+      diffString: Nullable<string>
+      diffTime: Number
+      diffMode: VisualDiffMode
+    }
+    spotlightUserSessionId: Nullable<string>
     filters: {
       isolatedObjectIds: string[]
       hiddenObjectIds: string[]
       selectedObjectIds: string[]
       propertyFilter: {
         key: Nullable<string>
+        isApplied: boolean
       }
     }
     camera: {
@@ -77,4 +83,26 @@ export const isSerializedViewerState = (val: unknown): val is SerializedViewerSt
   if (intersection(valKeys, keys).length !== keys.length) return false
 
   return true
+}
+
+/**
+ * Formats SerializedViewerState by bringing it up to date with the structure of the latest version
+ */
+export const formatSerializedViewerState = (
+  state: SerializedViewerState
+): SerializedViewerState => {
+  /**
+   * v1 -> v1.1
+   * - ui.filters.propertyFilter.isApplied field added
+   * - ui.spotlightUserId swapped for spotlightUserSessionId
+   */
+  if (!state.ui.filters.propertyFilter.isApplied) {
+    state.ui.filters.propertyFilter.isApplied = false
+  }
+
+  if (!state.ui.spotlightUserSessionId) {
+    state.ui.spotlightUserSessionId = null
+  }
+
+  return state
 }

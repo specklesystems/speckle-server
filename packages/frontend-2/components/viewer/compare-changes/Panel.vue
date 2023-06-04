@@ -1,7 +1,12 @@
 <template>
   <ViewerLayoutPanel @close="$emit('close')">
     <template #actions>
-      <FormButton size="xs" text :icon-left="ChevronLeftIcon" @click="endDiff()">
+      <FormButton
+        size="xs"
+        text
+        :icon-left="ChevronLeftIcon"
+        @click="diffState.diffString.value = null"
+      >
         Back
       </FormButton>
     </template>
@@ -12,16 +17,16 @@
       <div class="flex space-x-2">
         <div class="grow w-1/2">
           <ViewerCompareChangesVersion
-            v-if="newVersion"
-            :version="newVersion"
+            v-if="diffState.newVersion.value"
+            :version="diffState.newVersion.value"
             :is-newest="true"
             @click="localDiffTime = 0"
           />
         </div>
         <div class="grow w-1/2">
           <ViewerCompareChangesVersion
-            v-if="oldVersion"
-            :version="oldVersion"
+            v-if="diffState.oldVersion.value"
+            :version="diffState.oldVersion.value"
             :is-newest="false"
             @click="localDiffTime = 1"
           />
@@ -63,26 +68,11 @@
 import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 
 import { VisualDiffMode } from '@speckle/viewer'
-import {
-  useInjectedViewerInterfaceState,
-  useInjectedViewerLoadedResources
-} from '~~/lib/viewer/composables/setup'
-import { useDiffing } from '~~/lib/viewer/composables/viewer'
+import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 import { uniqBy } from 'lodash-es'
+import { useDiffing } from '~~/lib/viewer/composables/diffs'
 
 const { diff: diffState } = useInjectedViewerInterfaceState()
-const { endDiff } = useDiffing()
-
-const { modelsAndVersionIds } = useInjectedViewerLoadedResources()
-
-const versions = computed(() => {
-  if (modelsAndVersionIds.value.length <= 0) return
-  return [...modelsAndVersionIds.value[0].model.loadedVersion.items].sort((a, b) => {
-    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-  })
-})
-const oldVersion = computed(() => (versions.value ? versions.value[0] : undefined))
-const newVersion = computed(() => (versions.value ? versions.value[1] : undefined))
 
 const localDiffTime = ref(diffState.diffTime.value)
 
@@ -91,7 +81,7 @@ watch(
   (newVal) => {
     diffState.diffTime.value = newVal
   },
-  { immediate: true }
+  { immediate: false }
 )
 
 function swapDiffMode() {

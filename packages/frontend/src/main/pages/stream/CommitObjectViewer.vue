@@ -444,7 +444,8 @@ export default defineComponent({
     }
   },
   watch: {
-    'viewerState.currentFilterState'() {
+    'viewerState.currentFilterState'(newVal, oldVal) {
+      if (!newVal && !oldVal) return
       this.updateUrl()
     }
   },

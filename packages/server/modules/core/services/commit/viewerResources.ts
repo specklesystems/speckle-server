@@ -404,8 +404,8 @@ export function doViewerResourcesFit(
 export function viewerResourcesToString(resources: ViewerResourceItem[]): string {
   const builder = SpeckleViewer.ViewerRoute.resourceBuilder()
   for (const resource of resources) {
-    if (resource.modelId) {
-      builder.addModel(resource.modelId, resource.versionId || undefined)
+    if (resource.modelId && resource.versionId) {
+      builder.addModel(resource.modelId, resource.versionId)
     } else {
       builder.addObject(resource.objectId)
     }

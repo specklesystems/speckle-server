@@ -32,105 +32,121 @@
     <div
       v-if="isExpanded"
       ref="threadContainer"
-      class="fixed hover:bg-foundation bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm rounded-lg shadow-md z-50 pointer-events-auto"
+      class="fixed z-50 pointer-events-auto"
       :style="threadStyle"
     >
-      <div class="relative w-80 flex pt-3">
-        <div class="flex-grow flex items-center">
-          <FormButton
-            v-tippy="'Previous'"
-            size="sm"
-            :icon-left="ChevronLeftIcon"
-            text
-            hide-text
-            @click="emit('prev', props.modelValue)"
-          ></FormButton>
-          <FormButton
-            v-tippy="'Next'"
-            size="sm"
-            :icon-left="ChevronRightIcon"
-            text
-            hide-text
-            @click="emit('next', props.modelValue)"
-          ></FormButton>
-          <div
-            ref="handle"
-            class="flex-grow cursor-move text-tiny rounded-xl bg-blue-500/0 hover:bg-blue-500/10 transition h-3"
-          >
-            <!-- handle {{ isDragged }} -->
-            <!-- {{ initialDragPosition }} -->
-          </div>
-          <FormButton
-            v-show="isDragged"
-            v-tippy="'Pop In'"
-            size="sm"
-            :icon-left="ArrowTopRightOnSquareIcon"
-            text
-            hide-text
-            class="rotate-180"
-            @click="isDragged = false"
-          ></FormButton>
-        </div>
-        <div>
-          <FormButton
-            v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
-            size="sm"
-            :icon-left="modelValue.archived ? CheckCircleIcon : CheckCircleIconOutlined"
-            text
-            hide-text
-            :color="modelValue.archived ? 'default' : 'default'"
-            :disabled="!canArchiveOrUnarchive"
-            @click="toggleCommentResolvedStatus()"
-          ></FormButton>
-          <FormButton
-            v-tippy="'Copy link'"
-            size="sm"
-            :icon-left="LinkIcon"
-            text
-            hide-text
-            @click="onCopyLink"
-          ></FormButton>
-          <FormButton
-            size="sm"
-            :icon-left="XMarkIcon"
-            text
-            hide-text
-            @click="changeExpanded(false)"
-          ></FormButton>
-        </div>
-      </div>
-      <div class="relative w-80 flex flex-col">
+      <div
+        ref="handle"
+        class="p-1.5 cursor-move rounded-lg group hover:bg-blue-500/50 transition"
+        :class="{ 'is-dragging bg-blue-500/50': isDragging }"
+      >
         <div
-          ref="commentsContainer"
-          class="max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
+          :class="[
+            'bg-white/80 dark:bg-neutral-800/90 backdrop-blur-sm shadow-md cursor-auto rounded-lg',
+            'group-hover:bg-foundation dark:group-hover:bg-neutral-800 group-[.is-dragging]:bg-foundation dark:group-[.is-dragging]:bg-neutral-800'
+          ]"
         >
-          <div
-            v-if="!isThreadResourceLoaded"
-            class="pl-3 pr-1 py-1 mt-2 flex items-center justify-between text-xs text-primary bg-primary-muted"
-          >
-            <span>Conversation started in a different version.</span>
-            <ExclamationCircleIcon class="w-4 h-4" />
+          <div class="relative w-80 flex pt-3">
+            <div class="flex-grow flex items-center">
+              <FormButton
+                v-tippy="'Previous'"
+                size="sm"
+                :icon-left="ChevronLeftIcon"
+                text
+                hide-text
+                @click="emit('prev', props.modelValue)"
+              ></FormButton>
+              <FormButton
+                v-tippy="'Next'"
+                size="sm"
+                :icon-left="ChevronRightIcon"
+                text
+                hide-text
+                @click="emit('next', props.modelValue)"
+              ></FormButton>
+              <div class="flex-grow"></div>
+              <FormButton
+                v-show="isDragged"
+                v-tippy="'Pop In'"
+                size="sm"
+                :icon-left="ArrowTopRightOnSquareIcon"
+                text
+                hide-text
+                class="rotate-180"
+                @click="isDragged = false"
+              ></FormButton>
+            </div>
+            <div>
+              <FormButton
+                v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
+                size="sm"
+                :icon-left="
+                  modelValue.archived ? CheckCircleIcon : CheckCircleIconOutlined
+                "
+                text
+                hide-text
+                :color="modelValue.archived ? 'default' : 'default'"
+                :disabled="!canArchiveOrUnarchive"
+                @click="toggleCommentResolvedStatus()"
+              ></FormButton>
+              <FormButton
+                v-tippy="'Copy link'"
+                size="sm"
+                :icon-left="LinkIcon"
+                text
+                hide-text
+                @click="onCopyLink"
+              ></FormButton>
+              <FormButton
+                size="sm"
+                :icon-left="XMarkIcon"
+                text
+                hide-text
+                @click="changeExpanded(false)"
+              ></FormButton>
+            </div>
           </div>
-          <ViewerAnchoredPointThreadComment
-            v-for="comment in comments"
-            :key="comment.id"
-            :comment="comment"
-            :project-id="projectId"
-            @mounted="onCommentMounted"
-          />
+          <div class="relative w-80 flex flex-col">
+            <div
+              ref="commentsContainer"
+              class="max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
+            >
+              <div
+                v-if="!isThreadResourceLoaded"
+                class="pl-3 pr-1 py-1 mt-2 flex items-center justify-between text-xs text-primary bg-primary-muted"
+              >
+                <span>Conversation started in a different version.</span>
+                <FormButton
+                  v-tippy="'Load thread context'"
+                  size="xs"
+                  text
+                  @click="onLoadThreadContext"
+                >
+                  <ArrowDownCircleIcon class="w-5 h-5" />
+                </FormButton>
+              </div>
+              <ViewerAnchoredPointThreadComment
+                v-for="comment in comments"
+                :key="comment.id"
+                :comment="comment"
+                :project-id="projectId"
+                @mounted="onCommentMounted"
+              />
+            </div>
+            <div
+              v-if="isTypingMessage"
+              class="bg-foundation rounded-full w-full p-2 caption mt-2"
+            >
+              {{ isTypingMessage }}
+            </div>
+            <ViewerAnchoredPointThreadNewReply
+              v-if="!modelValue.archived && canReply"
+              :model-value="modelValue"
+              class="mt-2"
+              @submit="onNewReply"
+            />
+          </div>
         </div>
-        <div
-          v-if="isTypingMessage"
-          class="bg-foundation rounded-full w-full p-2 caption mt-2"
-        >
-          {{ isTypingMessage }}
-        </div>
-        <ViewerAnchoredPointThreadNewReply
-          v-if="!modelValue.archived"
-          :model-value="modelValue"
-          class="mt-2"
-          @submit="onNewReply"
-        />
       </div>
     </div>
   </div>
@@ -145,8 +161,8 @@ import {
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
-import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { ensureError, Nullable, Roles, SpeckleViewer } from '@speckle/shared'
+import { ArrowDownCircleIcon } from '@heroicons/vue/20/solid'
+import { ensureError, Nullable, Roles } from '@speckle/shared'
 import { onKeyDown, useClipboard, useDraggable } from '@vueuse/core'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'
 import { useViewerThreadTypingTracking } from '~~/lib/viewer/composables/activity'
@@ -156,6 +172,7 @@ import {
 } from '~~/lib/viewer/composables/commentBubbles'
 import {
   useArchiveComment,
+  useCheckViewerCommentingAccess,
   useMarkThreadViewed
 } from '~~/lib/viewer/composables/commentManagement'
 import {
@@ -166,11 +183,11 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { ResourceType } from '~~/lib/common/generated/gql/graphql'
 import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
-import { NumericPropertyInfo, PropertyInfo } from '@speckle/viewer'
 import {
-  useFilterUtilities,
-  useSectionBoxUtilities
-} from '~~/lib/viewer/composables/ui'
+  StateApplyMode,
+  useApplySerializedState
+} from '~~/lib/viewer/composables/serialization'
+import { useDisableGlobalTextSelection } from '~~/lib/common/composables/window'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -194,27 +211,14 @@ const {
   }
 } = useInjectedViewerState()
 
-const {
-  projectId,
-  viewer: {
-    metadata: { availableFilters: allFilters }
-  },
-  ui: { explodeFactor, lightConfig }
-} = useInjectedViewerState()
-const { sectionBoxOff } = useSectionBoxUtilities()
-const {
-  removePropertyFilter,
-  setPropertyFilter,
-  applyPropertyFilter,
-  unApplyPropertyFilter,
-  resetFilters,
-  isolateObjects,
-  hideObjects
-} = useFilterUtilities()
+const { projectId } = useInjectedViewerState()
+const canReply = useCheckViewerCommentingAccess()
+const { disableTextSelection } = useDisableGlobalTextSelection()
 
 const markThreadViewed = useMarkThreadViewed()
 const { usersTyping } = useViewerThreadTypingTracking(threadId)
 const { ellipsis, controls } = useAnimatingEllipsis()
+const applyState = useApplySerializedState()
 
 const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
@@ -227,12 +231,6 @@ const comments = computed(() => [
   props.modelValue,
   ...props.modelValue.replies.items.slice().reverse()
 ])
-
-const viewerState = computed(() => {
-  return SpeckleViewer.ViewerState.isSerializedViewerState(props.modelValue.viewerState)
-    ? props.modelValue.viewerState
-    : null
-})
 
 // Note: conflicted with dragging styles, so took it out temporarily
 // const { style } = useExpandedThreadResponsiveLocation({
@@ -261,28 +259,37 @@ const initialDragPosition = computed(() => {
 })
 
 const isDragged = ref(false)
-const { x, y } = useDraggable(threadContainer, {
+const { x, y, isDragging, position } = useDraggable(threadContainer, {
   stopPropagation: true,
-  handle, // note if linting error, this actually exists and is ok FFS
+  handle,
   initialValue: initialDragPosition,
-  onStart() {
+  onStart(_pos, event) {
+    // Only allow dragging by border
+    const target = event.target as HTMLElement
+    if (target !== handle.value) return false
+
+    // Reset pos, if starting dragging from scratch
+    if (!isDragged.value) position.value = { x: 0, y: 0 }
+
     isDragged.value = true
-  },
-  onEnd() {
-    // todo
   }
 })
 
 const threadStyle = computed(() => {
   if (!threadActivator.value) return props.modelValue.style
+
   const activatorRect = threadActivator.value?.getBoundingClientRect()
-  const xOffset = isDragged.value
-    ? x.value
-    : (props.modelValue.style.x as number) + activatorRect.width + 20
-  const threadHeigth = threadContainer.value?.getBoundingClientRect().height || 0
-  const yOffset = isDragged.value
-    ? y.value
-    : (props.modelValue.style.y as number) - threadHeigth / 2
+  const areDraggableCoordsInitialized = x.value && y.value
+  const xOffset =
+    isDragged.value && areDraggableCoordsInitialized
+      ? x.value
+      : (props.modelValue.style.x as number) + activatorRect.width + 20
+  const threadHeight = threadContainer.value?.getBoundingClientRect().height || 0
+  const yOffset =
+    isDragged.value && areDraggableCoordsInitialized
+      ? y.value
+      : (props.modelValue.style.y as number) - threadHeight / 2
+
   const transition = isDragged.value ? 'none' : props.modelValue.style.transition
   return {
     ...props.modelValue.style,
@@ -368,6 +375,13 @@ const onThreadClick = () => {
   changeExpanded(!isExpanded.value)
 }
 
+const onLoadThreadContext = async () => {
+  const state = props.modelValue.viewerState
+  if (!state) return
+
+  await applyState(state, StateApplyMode.TheadFullContextOpen)
+}
+
 const onCopyLink = async () => {
   if (process.server) return
   const url = getLinkToThread(projectId.value, props.modelValue)
@@ -396,56 +410,6 @@ onKeyDown('Escape', () => {
   }
 })
 
-// onKeyDown('ArrowRight', () => (isExpanded.value ? emit('prev', props.modelValue) : ''))
-// onKeyDown('ArrowLeft', () => (isExpanded.value ? emit('next', props.modelValue) : ''))
-const shouldSetFiltersUpPostLoad = ref(false)
-
-const setupFullFilters = () => {
-  if (!viewerState.value) return
-
-  // TODO: Restore more things @dim
-  const propertyInfoKey = viewerState.value.ui.filters.propertyFilter.key
-  const passMin = viewerState.value.viewer.metadata.filteringState?.passMin
-  const passMax = viewerState.value.viewer.metadata.filteringState?.passMax
-
-  if (propertyInfoKey) {
-    removePropertyFilter()
-    unApplyPropertyFilter()
-    const filter = allFilters.value?.find(
-      (f: PropertyInfo) => f.key === propertyInfoKey
-    )
-    if (!filter) {
-      shouldSetFiltersUpPostLoad.value = true
-      console.warn('Error setting comment filter: no filter with that key found. ')
-      return
-    }
-
-    if (passMin || passMax) {
-      const numericFilter = { ...filter } as NumericPropertyInfo
-      numericFilter.passMin = passMin || numericFilter.min
-      numericFilter.passMax = passMax || numericFilter.max
-      setPropertyFilter(numericFilter)
-      applyPropertyFilter()
-      return // Hiding objects is handled by the numeric filter pass min/max
-    }
-    setPropertyFilter(filter)
-    applyPropertyFilter()
-    // do not return, let's go through the vis of objects
-  }
-
-  hideOrIsolateObjects()
-}
-
-const hideOrIsolateObjects = () => {
-  if (!viewerState.value) return
-
-  const isolatedIds = viewerState.value.ui.filters.isolatedObjectIds
-  const hiddenIds = viewerState.value.ui.filters.hiddenObjectIds
-
-  if (isolatedIds.length) isolateObjects(isolatedIds, { replace: true })
-  if (hiddenIds.length) hideObjects(hiddenIds, { replace: true })
-}
-
 watch(
   () => <const>[isExpanded.value, isViewed.value],
   (newVals, oldVals) => {
@@ -456,88 +420,12 @@ watch(
       markThreadViewed(projectId.value, props.modelValue.id)
     }
 
-    if (!newIsExpanded && viewerState.value?.ui.sectionBox) {
-      sectionBoxOff() // turn off section box if a comment had a section box
-    }
-
     if (!newIsExpanded) {
       isDragged.value = false
-    }
-
-    // TODO: unsure whether this should make its way into a composable of some sorts.
-    // Behaviour:
-    // - any time we open a comment, we want to set its filters up;
-    // - any time we close a comment, we reset its filters
-    // We want to do this when the viewer busy event is done with, alternatively when the
-    // all filters is populated...
-
-    // If a thread is no longer expanded and it had filters, reset them to default.
-    const isolatedIds = viewerState.value?.ui.filters.isolatedObjectIds || []
-    const hiddenIds = viewerState.value?.ui.filters.hiddenObjectIds || []
-    const propertyInfoKey = viewerState.value?.ui.filters.propertyFilter.key
-    const hasFilters = isolatedIds.length || hiddenIds.length || propertyInfoKey
-    if (!newIsExpanded && hasFilters) {
-      resetFilters()
-      return
-    }
-
-    if (!viewerState.value?.ui.explodeFactor && explodeFactor.value !== 0)
-      explodeFactor.value = 0
-    if (viewerState.value?.ui.explodeFactor !== explodeFactor.value)
-      explodeFactor.value = viewerState.value?.ui.explodeFactor || 0
-
-    if (viewerState.value?.ui.lightConfig) {
-      lightConfig.value = viewerState.value?.ui.lightConfig
-    }
-
-    // If a thread is expanded and has filters, set them up.
-    if (hasFilters && newIsExpanded) {
-      // If we do not have a custom filter for this thread, it means
-      // we might only have hidden/isolated objects.
-      if (!propertyInfoKey) {
-        hideOrIsolateObjects()
-        return
-      }
-
-      // If we do have a 'propertyInfoKey', try to find it in the all filters. It will be there,
-      // unless we're freshly opening a model and a thread at the same time.
-      const filter = allFilters.value?.find(
-        (f: PropertyInfo) => f.key === propertyInfoKey
-      )
-      // If we don't find it, set a flag for the watcher below to pick up.
-      if (!filter) shouldSetFiltersUpPostLoad.value = true
-      // Full speed ahead otherwise.
-      else setupFullFilters()
     }
   },
   { immediate: true } // for triggering also when a comment is opened because of a thread link
 )
-
-watch(allFilters, (newValue) => {
-  if (!shouldSetFiltersUpPostLoad.value) return
-  const filter = newValue?.find(
-    (f: PropertyInfo) => f.key === viewerState.value?.ui.filters.propertyFilter.key
-  )
-  if (!filter) return
-  shouldSetFiltersUpPostLoad.value = false
-  // NOTE: we still need to give the viewer some time to do its thing.
-  // TODOs:
-  // - check with Alex if there is a way to more accurately report the end of viewer operations.
-  //   (I get WebGL-000035F405EE6900] GL_INVALID_FRAMEBUFFER_OPERATION: Framebuffer is incomplete: Attachment has zero size., and WebGL-000035F405EE6900] GL_INVALID_FRAMEBUFFER_OPERATION: Draw framebuffer is incomplete, and REE.Material: 'vertexColors' parameter is undefined. errors if model is not fully 'loaded')
-  // - check if viewerBusy might be a better option (it's not, tried below.)
-  setTimeout(setupFullFilters, 2000)
-})
-
-// watch(viewerBusy, (newVal) => {
-//   if (newVal) return
-//   if (!shouldSetFiltersUpPostLoad.value) return
-//   const filter = allFilters.value?.find(
-//     (f: PropertyInfo) => f.key === props.modelValue.data?.filters.propertyInfoKey
-//   )
-//   if (!filter) return
-//   shouldSetFiltersUpPostLoad.value = false
-//   setupFullFilters()
-// })
 
 watch(
   () => usersTyping.value.length > 1,
@@ -549,4 +437,18 @@ watch(
     }
   }
 )
+
+watch(isDragging, (newVal, oldVal) => {
+  if (!!newVal === !!oldVal) return
+
+  // Disable text selection while dragging around
+  disableTextSelection.value = newVal
+})
+
+onMounted(() => {
+  if (isExpanded.value) {
+    // update won't emit if thread was mounted already expanded, so we emit this to close any open thread editors
+    emit('update:expanded', true)
+  }
+})
 </script>

@@ -462,20 +462,14 @@ export class Viewer extends EventEmitter implements IViewer {
     token: string = null,
     enableCaching = true
   ) {
-    try {
-      if (++this.inProgressOperations === 1)
-        (this as EventEmitter).emit(ViewerEvent.Busy, true)
-
-      const loader = new ViewerObjectLoader(this, url, token, enableCaching)
-      this.loaders[url] = loader
-      await loader.load()
-    } finally {
-      if (--this.inProgressOperations === 0)
-        (this as EventEmitter).emit(ViewerEvent.Busy, false)
-    }
+    const loader = new ViewerObjectLoader(this, url, token, enableCaching)
+    this.loaders[url] = loader
+    await loader.load()
   }
 
   public async loadObject(url: string, token: string = null, enableCaching = true) {
+    if (++this.inProgressOperations === 1)
+      (this as EventEmitter).emit(ViewerEvent.Busy, true)
     await this.downloadObject(url, token, enableCaching)
 
     let t0 = performance.now()
@@ -491,6 +485,8 @@ export class Viewer extends EventEmitter implements IViewer {
     this.emit(ViewerEvent.LoadComplete, url)
     this.loaders[url].dispose()
     delete this.loaders[url]
+    if (--this.inProgressOperations === 0)
+      (this as EventEmitter).emit(ViewerEvent.Busy, false)
   }
 
   public async loadObjectAsync(
@@ -499,6 +495,8 @@ export class Viewer extends EventEmitter implements IViewer {
     enableCaching = true,
     priority = 1
   ) {
+    if (++this.inProgressOperations === 1)
+      (this as EventEmitter).emit(ViewerEvent.Busy, true)
     await this.downloadObject(url, token, enableCaching)
 
     let t0 = performance.now()
@@ -514,6 +512,8 @@ export class Viewer extends EventEmitter implements IViewer {
     }
     this.loaders[url].dispose()
     delete this.loaders[url]
+    if (--this.inProgressOperations === 0)
+      (this as EventEmitter).emit(ViewerEvent.Busy, false)
   }
 
   public async cancelLoad(url: string, unload = false) {
@@ -522,8 +522,10 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer.cancelRenderTree(url)
     if (unload) {
       await this.unloadObject(url)
+    } else {
+      if (--this.inProgressOperations === 0)
+        (this as EventEmitter).emit(ViewerEvent.Busy, false)
     }
-    return
   }
 
   public async unloadObject(url: string) {
@@ -566,6 +568,10 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
+  // Note: Alex, don't kill me over this one - it's making things in the FE much easier...
+  // I know this probably screws up showing multiple diffs at the same time, but for the
+  // time being it's probs a good compromise
+  private dynamicallyLoadedDiffResources = [] as string[]
   public async diff(
     urlA: string,
     urlB: string,
@@ -573,10 +579,16 @@ export class Viewer extends EventEmitter implements IViewer {
     authToken?: string
   ): Promise<DiffResult> {
     const loadPromises = []
-    if (!this.tree.findId(urlA))
+    this.dynamicallyLoadedDiffResources = []
+
+    if (!this.tree.findId(urlA)) {
       loadPromises.push(this.loadObjectAsync(urlA, authToken, undefined, 1))
-    if (!this.tree.findId(urlB))
+      this.dynamicallyLoadedDiffResources.push(urlA)
+    }
+    if (!this.tree.findId(urlB)) {
       loadPromises.push(this.loadObjectAsync(urlB, authToken, undefined, 1))
+      this.dynamicallyLoadedDiffResources.push(urlB)
+    }
     await Promise.all(loadPromises)
 
     const diffResult = await this.differ.diff(urlA, urlB)
@@ -597,12 +609,20 @@ export class Viewer extends EventEmitter implements IViewer {
     return Promise.resolve(diffResult)
   }
 
-  public undiff() {
+  public async undiff() {
     const pipelineOptions = this.speckleRenderer.pipelineOptions
     pipelineOptions.depthSide = DoubleSide
     this.speckleRenderer.pipelineOptions = pipelineOptions
     this.differ.resetMaterialGroups()
     this.filteringManager.removeUserMaterials()
+
+    const unloadPromises = []
+    if (this.dynamicallyLoadedDiffResources.length !== 0) {
+      for (let id of this.dynamicallyLoadedDiffResources)
+        unloadPromises.push(this.unloadObject(id))
+    }
+    this.dynamicallyLoadedDiffResources = []
+    await Promise.all(unloadPromises)
   }
 
   public setDiffTime(diffResult: DiffResult, time: number) {

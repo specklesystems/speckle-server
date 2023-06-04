@@ -82,6 +82,28 @@ export const viewerModelVersionsQuery = graphql(`
   }
 `)
 
+export const viewerDiffVersionsQuery = graphql(`
+  query ViewerDiffVersions(
+    $projectId: String!
+    $modelId: String!
+    $versionAId: String!
+    $versionBId: String!
+  ) {
+    project(id: $projectId) {
+      id
+      model(id: $modelId) {
+        id
+        versionA: version(id: $versionAId) {
+          ...ViewerModelVersionCardItem
+        }
+        versionB: version(id: $versionBId) {
+          ...ViewerModelVersionCardItem
+        }
+      }
+    }
+  }
+`)
+
 export const viewerLoadedThreadsQuery = graphql(`
   query ViewerLoadedThreads(
     $projectId: String!
