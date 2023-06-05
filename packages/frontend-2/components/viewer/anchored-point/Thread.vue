@@ -42,7 +42,7 @@
       >
         <div
           :class="[
-            'bg-white/80 dark:bg-neutral-800/90 backdrop-blur-sm shadow-md cursor-auto rounded-lg',
+            'bg-white dark:bg-neutral-800 backdrop-blur-sm shadow-md cursor-auto rounded-lg',
             'group-hover:bg-foundation dark:group-hover:bg-neutral-800 group-[.is-dragging]:bg-foundation dark:group-[.is-dragging]:bg-neutral-800'
           ]"
         >

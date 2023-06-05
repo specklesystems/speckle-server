@@ -57,7 +57,6 @@ import {
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { Box3, Vector3 } from 'three'
-import { ViewerResource } from '~~/../shared/dist-esm/viewer/helpers/route'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { wrapRefWithTracking } from '~~/lib/common/helpers/debugging'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
@@ -150,9 +149,9 @@ export type InjectableViewerState = Readonly<{
        * Helper for switching model to a specific version (or just latest)
        */
       switchModelToVersion: (modelId: string, versionId?: string) => void
-      addModelVersion: (modelId: string, versionId: string) => void
-      removeModelVersion: (modelId: string, versionId?: string) => void
-      setModelVersions: (newResources: ViewerResource[]) => void
+      // addModelVersion: (modelId: string, versionId: string) => void
+      // removeModelVersion: (modelId: string, versionId?: string) => void
+      // setModelVersions: (newResources: ViewerResource[]) => void
     }
     /**
      * State of resolved, validated & de-duplicated resources that are loaded in the viewer. These
@@ -370,7 +369,6 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
 
   const sessionId = computed(() => nanoid())
   const isInitialized = ref(false)
-  const isLoading = ref(false)
   const { instance, initPromise, container } = useScopedState(
     GlobalViewerDataKey,
     createViewerData
@@ -454,47 +452,6 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     }
   }
 
-  const addModelVersion = (modelId: string, versionId: string) => {
-    resources.value = [
-      new SpeckleViewer.ViewerRoute.ViewerModelResource(modelId, versionId),
-      ...resources.value
-    ]
-  }
-
-  /**
-   * Removes a model (version). If no version id is provided, we will remove the first resource that is loaded with the provided model id.
-   * @param modelId the model you want to remove
-   * @param versionId optional
-   */
-  const removeModelVersion = (modelId: string, versionId?: string) => {
-    let resourceIdx = -1
-    if (versionId)
-      resourceIdx = resources.value.findIndex(
-        (r) =>
-          SpeckleViewer.ViewerRoute.isModelResource(r) &&
-          r.modelId === modelId &&
-          r.versionId === versionId
-      )
-    else
-      resourceIdx = resources.value.findIndex(
-        (r) =>
-          SpeckleViewer.ViewerRoute.isModelResource(r) &&
-          r.modelId === modelId &&
-          !r.versionId
-      )
-
-    if (resourceIdx === -1) return
-
-    const newResources = [...resources.value]
-    newResources.splice(resourceIdx, 1)
-
-    resources.value = newResources
-  }
-
-  const setModelVersions = (newResources: ViewerResource[]) => {
-    resources.value = newResources
-  }
-
   return {
     ...state,
     resources: {
@@ -502,10 +459,7 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
         items: resources,
         resourceIdString,
         threadFilters,
-        switchModelToVersion,
-        addModelVersion,
-        removeModelVersion,
-        setModelVersions
+        switchModelToVersion
       }
     }
   }

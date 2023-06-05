@@ -270,7 +270,8 @@ function useViewerCameraIntegration() {
     viewer: { instance },
     ui: {
       camera: { isOrthoProjection, position, target },
-      spotlightUserSessionId
+      spotlightUserSessionId,
+      diff
     }
   } = useInjectedViewerState()
   const { forceViewToViewerSync } = useCameraUtilities()
@@ -332,7 +333,7 @@ function useViewerCameraIntegration() {
       // Only now set projection, we can't do it too early
       orthoProjectionUpdate(isOrthoProjection.value)
     } else {
-      loadCameraDataFromViewer()
+      if (!diff.diffString.value) loadCameraDataFromViewer() // NOTE: a bit of a hack
     }
   })
 
@@ -373,7 +374,6 @@ function useViewerCameraIntegration() {
       if ((!newVal && !oldVal) || (oldVal && areVectorsLooselyEqual(newVal, oldVal))) {
         return
       }
-
       instance.setView({
         position: newVal,
         target: target.value
@@ -599,7 +599,7 @@ function useExplodeFactorIntegration() {
 }
 
 function useDiffingIntegration() {
-  const { unpackDiffString, formatDiffString, diff, endDiff } = useDiffing()
+  const { unpackDiffString, diff, endDiff } = useDiffing()
   const state = useInjectedViewerState()
 
   watch(state.ui.diff.diffString, async (newVal, oldVal) => {
