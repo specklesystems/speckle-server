@@ -76,21 +76,13 @@ export function useDiffing() {
       authToken.value
     )
 
-    setTimeout(() => {
-      state.ui.diff.diffTime.value = 0.5
-    }, 1000)
-
-    setTimeout(() => {
-      state.ui.diff.diffTime.value = 0.5
-    }, 2000)
-
-    state.urlHashState.diff.value = state.ui.diff.diffString.value
+    if (!state.urlHashState.focusedThreadId.value)
+      state.urlHashState.diff.update(state.ui.diff.diffString.value)
   }
 
-  const endDiff = () => {
-    state.viewer.instance.undiff()
-    state.ui.diff.diffString.value = null
-    state.urlHashState.diff.value = null
+  const endDiff = async () => {
+    await state.viewer.instance.undiff()
+    state.urlHashState.diff.update(null)
   }
 
   const formatDiffString = (modelId: string, versionAId: string, versionBId: string) =>

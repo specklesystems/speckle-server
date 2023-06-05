@@ -4,7 +4,8 @@ import {
   PropertyInfo,
   StringPropertyInfo,
   SunLightConfiguration,
-  ViewerEvent
+  ViewerEvent,
+  VisualDiffMode
 } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import {
@@ -601,35 +602,58 @@ function useDiffingIntegration() {
   const { unpackDiffString, formatDiffString, diff, endDiff } = useDiffing()
   const state = useInjectedViewerState()
 
-  watch(state.ui.diff.diffString, (newVal, oldVal) => {
+  watch(state.ui.diff.diffString, async (newVal, oldVal) => {
     if (newVal === oldVal) return
     if (!newVal) {
-      endDiff()
+      await endDiff()
       return
+    }
+    if (oldVal) {
+      await endDiff()
     }
     const { modelId, versionA, versionB } = unpackDiffString(newVal)
     diff(modelId, versionA, versionB)
   })
 
+  let preventWatchers = 0
+  watch(state.ui.diff.diffResult, (val) => {
+    if (!val) return
+    // reset visual diff time and mode on new diff result
+    state.viewer.instance.setDiffTime(val, 0.5)
+    state.viewer.instance.setVisualDiffMode(val, VisualDiffMode.COLORED)
+    preventWatchers = 0 // prevents the two watchers below from running on init
+    state.ui.diff.diffMode.value = VisualDiffMode.COLORED
+    state.ui.diff.diffTime.value = 0.5
+  })
+
   watch(state.ui.diff.diffTime, (val) => {
     if (!state.ui.diff.diffResult.value) return
+    if (preventWatchers < 2) {
+      preventWatchers++
+      return
+    }
     state.viewer.instance.setDiffTime(state.ui.diff.diffResult.value, val)
   })
 
   watch(state.ui.diff.diffMode, (val) => {
     if (!state.ui.diff.diffResult.value) return
+    if (preventWatchers < 2) {
+      preventWatchers++
+      return
+    }
     state.viewer.instance.setVisualDiffMode(state.ui.diff.diffResult.value, val)
     state.viewer.instance.setDiffTime(
       state.ui.diff.diffResult.value,
       state.ui.diff.diffTime.value
-    ) // hmm, why do i need to call diff time again?
+    ) // hmm, why do i need to call diff time again? seems like a minor viewer bug
   })
 
   useOnViewerLoadComplete(({ isInitial }) => {
-    // TODO: initial setup if present, etc. etc. etc.
-    console.log(state.urlHashState.diff.value, 'diffs? mayne')
-    console.log(state.urlHashState.focusedThreadId.value, 'thread? maybe')
-    if (!state.urlHashState.focusedThreadId.value && state.urlHashState.diff.value) {
+    if (
+      isInitial &&
+      !state.urlHashState.focusedThreadId.value &&
+      state.urlHashState.diff.value
+    ) {
       state.ui.diff.diffString.value = state.urlHashState.diff.value
     }
   })
