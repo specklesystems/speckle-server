@@ -84,6 +84,10 @@ watch(
   { immediate: false }
 )
 
+watch(diffState.diffResult, () => {
+  localDiffTime.value = 0.5
+})
+
 function swapDiffMode() {
   if (diffState.diffMode.value === VisualDiffMode.COLORED)
     return (diffState.diffMode.value = VisualDiffMode.PLAIN)
