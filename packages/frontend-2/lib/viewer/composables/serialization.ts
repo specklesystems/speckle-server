@@ -247,11 +247,13 @@ export function useApplySerializedState() {
       await urlHashState.focusedThreadId.update(state.ui.threads.openThread.threadId)
     }
 
-    if (state.ui.diff) diff.diffString.value = state.ui.diff.diffString
-    else diff.diffString.value = null
-
-    if (state.ui.diff) diff.diffTime.value = state.ui.diff.diffTime as number // FML
-    if (state.ui.diff) diff.diffMode.value = state.ui.diff.diffMode
+    if (state.ui.diff) {
+      diff.diffString.value = state.ui.diff.diffString
+      diff.diffTime.value = state.ui.diff.diffTime
+      diff.diffMode.value = state.ui.diff.diffMode
+    } else {
+      diff.diffString.value = null
+    }
 
     explodeFactor.value = state.ui.explodeFactor
     lightConfig.value = {

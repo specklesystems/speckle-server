@@ -82,6 +82,8 @@ export function useDiffing() {
     await state.urlHashState.diff.update(null)
   }
 
+  // TODO: Confusing that this looks identical to the resourceIdString pattern, which would
+  // resolve this string differently (2 models, 1 with a specific version ID)
   const formatDiffString = (modelId: string, versionAId: string, versionBId: string) =>
     `${modelId}@${versionAId},${versionBId}`
 
