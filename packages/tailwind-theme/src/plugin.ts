@@ -122,6 +122,21 @@ export default plugin(function ({ addComponents, addBase }) {
     "[type='checkbox']:focus, [type='radio']:focus": {
       '@apply ring-offset-foundation': {}
     },
+    "input[type='range']": {
+      '@apply appearance-none bg-transparent': {},
+      '&::-webkit-slider-runnable-track, &::-moz-range-track, &::-ms-track': {
+        '@apply bg-black/25 rounded-full': {}
+      }
+    },
+    "input[type='range']::-webkit-slider-runnable-track": {
+      '@apply bg-black/25 rounded-full': {}
+    },
+    "input[type='range']::-moz-range-track": {
+      '@apply bg-black/25 rounded-full': {}
+    },
+    "input[type='range']::-ms-track": {
+      '@apply bg-black/25 rounded-full': {}
+    },
     body: {
       '@apply font-sans': {}
     },

@@ -5,26 +5,9 @@
 @tailwind utilities;
 
 /**
- * Don't pollute this - it's going to be bundled in all pages!
+ * Don't pollute this - it's going to be bundled in all pages! If it's a global style change to what can be
+ considered the "speckle tailwind theme" then make this change in @speckle/tailwind-theme instead
  */
-
-@layer components {
-  input[type='range'] {
-    @apply appearance-none bg-transparent;
-  }
-
-  input[type='range']::-webkit-slider-runnable-track {
-    @apply bg-black/25 rounded-full;
-  }
-
-  input[type='range']::-moz-range-track {
-    @apply bg-black/25 rounded-full;
-  }
-
-  input[type='range']::-ms-track {
-    @apply bg-black/25 rounded-full;
-  }
-}
 
 /**
  * Making sure page is always stretched to the bottom of the screen even if there's nothing in it
