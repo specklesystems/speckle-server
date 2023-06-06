@@ -163,7 +163,12 @@ export async function convertLegacyDataToState(
             data.location.y as number,
             data.location.z as number
           ]
-        : null
+        : null,
+      diff: {
+        diffString: null,
+        diffMode: 1,
+        diffTime: 0.5
+      }
     }
   }
   return ret

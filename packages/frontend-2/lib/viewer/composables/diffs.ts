@@ -1,4 +1,3 @@
-import { SpeckleViewer } from '@speckle/shared'
 import { ToastNotificationType } from '@speckle/ui-components'
 import { useApolloClient } from '@vue/apollo-composable'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
@@ -7,8 +6,6 @@ import { getFirstErrorMessage } from '~~/lib/common/helpers/graphql'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useGetObjectUrl } from '~~/lib/viewer/composables/viewer'
 import { viewerDiffVersionsQuery } from '~~/lib/viewer/graphql/queries'
-
-let preDiffResources = [] as SpeckleViewer.ViewerRoute.ViewerResource[]
 
 export function useDiffing() {
   const state = useInjectedViewerState()
@@ -22,7 +19,7 @@ export function useDiffing() {
       query: viewerDiffVersionsQuery,
       variables: {
         projectId: state.projectId.value,
-        modelId: modelId,
+        modelId,
         versionAId: versionA,
         versionBId: versionB
       },
@@ -77,12 +74,12 @@ export function useDiffing() {
     )
 
     if (!state.urlHashState.focusedThreadId.value)
-      state.urlHashState.diff.update(state.ui.diff.diffString.value)
+      await state.urlHashState.diff.update(state.ui.diff.diffString.value)
   }
 
   const endDiff = async () => {
     await state.viewer.instance.undiff()
-    state.urlHashState.diff.update(null)
+    await state.urlHashState.diff.update(null)
   }
 
   const formatDiffString = (modelId: string, versionAId: string, versionBId: string) =>

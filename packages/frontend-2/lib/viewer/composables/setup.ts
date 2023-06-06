@@ -259,8 +259,8 @@ export type InjectableViewerState = Readonly<{
    * State stored in the anchor string of the URL
    */
   urlHashState: {
-    focusedThreadId: WritableComputedRef<Nullable<string>>
-    diff: WritableComputedRef<Nullable<string>>
+    focusedThreadId: AsyncWritableComputedRef<Nullable<string>>
+    diff: AsyncWritableComputedRef<Nullable<string>>
   }
 }>
 
@@ -544,8 +544,7 @@ function setupResponseResourceItems(
       ...objectItems
     ]
 
-    // Get rid of duplicates - only 1 resource per model & 1 resource per objectId
-    // TODO: @dim here you can remove the restriction to only have 1 model
+    // Get rid of duplicates - only 1 resource per objectId
     const encounteredModels = new Set<string>()
     const encounteredObjects = new Set<string>()
     const finalItems: ViewerResourceItem[] = []
@@ -553,6 +552,7 @@ function setupResponseResourceItems(
       const modelId = item.modelId
       const objectId = item.objectId
 
+      // In case we want to go back to 1 resource per model:
       // if (modelId && encounteredModels.has(modelId)) continue
       if (encounteredObjects.has(objectId)) continue
 
