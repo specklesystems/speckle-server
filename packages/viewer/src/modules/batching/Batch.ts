@@ -6,7 +6,8 @@ export enum GeometryType {
   MESH,
   LINE,
   POINT,
-  POINT_CLOUD
+  POINT_CLOUD,
+  TEXT
 }
 
 export interface Batch {

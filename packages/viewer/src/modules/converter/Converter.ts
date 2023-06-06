@@ -35,7 +35,9 @@ export default class Coverter {
     Circle: this.CircleToNode.bind(this),
     Arc: this.ArcToNode.bind(this),
     Ellipse: this.EllipseToNode.bind(this),
-    RevitInstance: this.RevitInstanceToNode.bind(this)
+    RevitInstance: this.RevitInstanceToNode.bind(this),
+    Text: this.TextToNode.bind(this),
+    Dimension: this.DimensionToNode.bind(this)
   }
 
   constructor(objectLoader: unknown, tree: WorldTree) {
@@ -485,6 +487,53 @@ export default class Coverter {
     node.model.raw.vertices = await this.dechunk(obj.vertices)
     node.model.raw.faces = await this.dechunk(obj.faces)
     node.model.raw.colors = await this.dechunk(obj.colors)
+  }
+
+  private async TextToNode(obj, node) {
+    return
+  }
+
+  private async DimensionToNode(obj, node) {
+    const displayValues = [...this.getDisplayValue(obj)]
+    for (const displayValue of displayValues) {
+      const childNode: TreeNode = this.tree.parse({
+        id: this.getNodeId(displayValue),
+        raw: Object.assign({}, displayValue),
+        atomic: false,
+        children: []
+      })
+      this.tree.addNode(childNode, node)
+      await this.convertToNode(displayValue, childNode)
+    }
+    /**
+     * YOLO
+     * - Dimensions of all types do not have information about text size
+     * - Positioning of the text is not consistent across dimension types
+     * - Angular Dimensions are broken
+     */
+    const textObj = JSON.parse(JSON.stringify(obj))
+    textObj.plane = textObj.RhinoProps.plane
+    const derivedType = this.getSpeckleTypeChain(textObj)[0]
+    switch (derivedType) {
+      case 'LengthDimension':
+        textObj.plane.origin = textObj.position
+        break
+      case 'DistanceDimension':
+        textObj.plane.origin = textObj.textPosition
+        break
+      case 'AngleDimension':
+        textObj.plane.origin = textObj.textPosition
+        break
+    }
+    textObj['speckle_type'] = 'Objects.Other.Text'
+    const textNode: TreeNode = this.tree.parse({
+      id: this.getNodeId(textObj),
+      raw: textObj,
+      atomic: false,
+      children: []
+    })
+    this.tree.addNode(textNode, node)
+    await this.convertToNode(textObj, textNode)
   }
 
   private async PointToNode(obj, node) {

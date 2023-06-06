@@ -57,6 +57,7 @@ export class SpeckleRaycaster extends Raycaster {
     this.layers.enable(ObjectLayers.STREAM_CONTENT)
     this.layers.enable(ObjectLayers.STREAM_CONTENT_MESH)
     this.layers.enable(ObjectLayers.STREAM_CONTENT_LINE)
+    this.layers.enable(ObjectLayers.STREAM_CONTENT_TEXT)
     // OFF by default
     // this.layers.enable(ObjectLayers.STREAM_CONTENT_POINT)
   }

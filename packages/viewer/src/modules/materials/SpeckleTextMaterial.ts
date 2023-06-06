@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
-import { speckleBasicVert } from './shaders/speckle-basic-vert'
-import { speckleBasicFrag } from './shaders/speckle-basic-frag'
+import { speckleTextVert } from './shaders/speckle-text-vert'
+import { speckleTextFrag } from './shaders/speckle-text-frag'
 import {
   UniformsUtils,
   ShaderLib,
@@ -17,19 +17,20 @@ import SpeckleMesh from '../objects/SpeckleMesh'
 
 import { Uniforms } from './SpeckleStandardMaterial'
 import { ExtendedMeshBasicMaterial } from './SpeckleMaterial'
+import { createTextDerivedMaterial } from 'troika-three-text'
 
-class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
+class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()
   protected static readonly vecBuff0: Vector3 = new Vector3()
   protected static readonly vecBuff1: Vector3 = new Vector3()
   protected static readonly vecBuff2: Vector3 = new Vector3()
 
   protected get vertexShader(): string {
-    return speckleBasicVert
+    return speckleTextVert
   }
 
   protected get fragmentShader(): string {
-    return speckleBasicFrag
+    return speckleTextFrag
   }
 
   protected get baseUniforms(): { [uniform: string]: IUniform } {
@@ -63,34 +64,38 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
     return this
   }
 
+  public getDerivedMaterial() {
+    const derived = createTextDerivedMaterial(this)
+    /** We rebind the uniforms */
+    for (const k in this.userData) {
+      derived.uniforms[k] = this.userData[k]
+    }
+
+    return derived
+  }
+
   /** Called by three.js render loop */
   public onBeforeRender(_this, scene, camera, geometry, object, group) {
-    SpeckleBasicMaterial.matBuff.copy(camera.matrixWorldInverse)
-    SpeckleBasicMaterial.matBuff.elements[12] = 0
-    SpeckleBasicMaterial.matBuff.elements[13] = 0
-    SpeckleBasicMaterial.matBuff.elements[14] = 0
-    object.modelViewMatrix.copy(SpeckleBasicMaterial.matBuff)
-
-    SpeckleBasicMaterial.vecBuff0.set(
-      camera.matrixWorld.elements[12],
-      camera.matrixWorld.elements[13],
-      camera.matrixWorld.elements[14]
-    )
-
-    Geometry.DoubleToHighLowVector(
-      SpeckleBasicMaterial.vecBuff0,
-      SpeckleBasicMaterial.vecBuff1,
-      SpeckleBasicMaterial.vecBuff2
-    )
-
-    this.userData.uViewer_low.value.copy(SpeckleBasicMaterial.vecBuff1)
-    this.userData.uViewer_high.value.copy(SpeckleBasicMaterial.vecBuff2)
-
-    if (object instanceof SpeckleMesh)
-      (object as SpeckleMesh).updateMaterialTransformsUniform(this)
-
-    this.needsUpdate = true
+    /** TO ENABLE */
+    // SpeckleTextMaterial.matBuff.copy(camera.matrixWorldInverse)
+    // SpeckleTextMaterial.matBuff.elements[12] = 0
+    // SpeckleTextMaterial.matBuff.elements[13] = 0
+    // SpeckleTextMaterial.matBuff.elements[14] = 0
+    // object.modelViewMatrix.copy(SpeckleTextMaterial.matBuff)
+    // SpeckleTextMaterial.vecBuff0.set(
+    //   camera.matrixWorld.elements[12],
+    //   camera.matrixWorld.elements[13],
+    //   camera.matrixWorld.elements[14]
+    // )
+    // Geometry.DoubleToHighLowVector(
+    //   SpeckleTextMaterial.vecBuff0,
+    //   SpeckleTextMaterial.vecBuff1,
+    //   SpeckleTextMaterial.vecBuff2
+    // )
+    // this.userData.uViewer_low.value.copy(SpeckleTextMaterial.vecBuff1)
+    // this.userData.uViewer_high.value.copy(SpeckleTextMaterial.vecBuff2)
+    // this.needsUpdate = true
   }
 }
 
-export default SpeckleBasicMaterial
+export default SpeckleTextMaterial
