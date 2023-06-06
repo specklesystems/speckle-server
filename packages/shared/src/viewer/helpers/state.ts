@@ -33,7 +33,7 @@ export type SerializedViewerState = {
     }
     diff: {
       diffString: Nullable<string>
-      diffTime: Number
+      diffTime: number
       diffMode: VisualDiffMode
     }
     spotlightUserSessionId: Nullable<string>
