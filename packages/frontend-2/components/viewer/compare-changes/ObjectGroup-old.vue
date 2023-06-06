@@ -5,6 +5,7 @@
         isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'
       }`"
       @click="setSelection()"
+      @keypress="keyboardClick(setSelection)"
     >
       <div class="flex space-x-2 items-center truncate">
         <span :class="`w-3 h-3 rounded ${colorClasses}`"></span>
@@ -17,12 +18,9 @@
   </div>
 </template>
 <script setup lang="ts">
+import { keyboardClick } from '~~/lib/common/helpers/accessibility'
 import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { VisualDiffMode } from '@speckle/viewer'
-const {
-  ui: { diff: diffState }
-} = useInjectedViewerState()
+
 const {
   clearSelection,
   setSelectionFromObjectIds,

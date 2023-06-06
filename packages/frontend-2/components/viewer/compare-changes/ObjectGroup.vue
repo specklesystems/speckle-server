@@ -4,6 +4,7 @@
     border-b-4 hover:bg-primary-muted
     ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}`"
     @click="setSelection()"
+    @keypress="keyboardClick(setSelection)"
   >
     <div :class="`h2 font-bold truncate max-w-full ${color}`">
       {{ objectCount }}
@@ -14,11 +15,8 @@
 </template>
 <script setup lang="ts">
 import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { VisualDiffMode } from '@speckle/viewer'
-const {
-  ui: { diff: diffState }
-} = useInjectedViewerState()
+import { keyboardClick } from '~~/lib/common/helpers/accessibility'
+
 const {
   clearSelection,
   setSelectionFromObjectIds,

@@ -4,20 +4,11 @@ import {
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
-import { debounce, isArray, result, throttle } from 'lodash-es'
-import { ViewerResourceItem } from '~~/lib/common/generated/gql/graphql'
+import { debounce, isArray, throttle } from 'lodash-es'
 import { until } from '@vueuse/core'
-import { SpeckleViewer } from '@speckle/shared'
-import { VisualDiffMode } from '@speckle/viewer'
 import { MaybeAsync, Nullable, TimeoutError, timeoutAt } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
-import { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
-import { useAuthCookie } from '~~/lib/auth/composables/auth'
-import { viewerDiffVersionsQuery } from '~~/lib/viewer/graphql/queries'
-import { useQuery, useApolloClient } from '@vue/apollo-composable'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { getFirstErrorMessage } from '~~/lib/common/helpers/graphql'
 
 function getFirstVisibleSelectionHit(
   { hits }: SelectionEvent,

@@ -100,6 +100,7 @@
   </div>
 </template>
 <script setup lang="ts">
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
@@ -128,7 +129,7 @@ const isAdded = computed(() => {
   if (!diffEnabled.value) return false
   return (
     diffResult.value?.added.findIndex(
-      (o) => o.model.raw.applicationId === props.object.applicationId
+      (o) => (o.model.raw as SpeckleObject).applicationId === props.object.applicationId
     ) !== -1
   )
 })
@@ -137,7 +138,7 @@ const isRemoved = computed(() => {
   if (!diffEnabled.value) return false
   return (
     diffResult.value?.removed.findIndex(
-      (o) => o.model.raw.applicationId === props.object.applicationId
+      (o) => (o.model.raw as SpeckleObject).applicationId === props.object.applicationId
     ) !== -1
   )
 })
@@ -146,7 +147,7 @@ const isUnchanged = computed(() => {
   if (!diffEnabled.value) return false
   return (
     diffResult.value?.unchanged.findIndex(
-      (o) => o.model.raw.applicationId === props.object.applicationId
+      (o) => (o.model.raw as SpeckleObject).applicationId === props.object.applicationId
     ) !== -1
   )
 })
@@ -155,7 +156,7 @@ const isModifiedQuery = computed(() => {
   // if (props.modifiedSibling) return { modified: false } // prevent recursion?
   if (!diffEnabled.value) return { modified: false }
   const modifiedObjectPairs = diffResult.value?.modified.map((pair) => {
-    return [pair[0].model.raw, pair[1].model.raw]
+    return [pair[0].model.raw as SpeckleObject, pair[1].model.raw as SpeckleObject]
   })
   if (!modifiedObjectPairs) return { modified: false }
   const obj = props.object

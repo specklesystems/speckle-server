@@ -4,8 +4,8 @@
       <PreviewImage :preview-url="version.previewUrl" />
     </div>
     <div
-      class="bg-foundation-focus inline-block rounded-md px-2 text-xs font-bold truncate text-center py-1"
       v-tippy="createdAt"
+      class="bg-foundation-focus inline-block rounded-md px-2 text-xs font-bold truncate text-center py-1"
     >
       {{ timeAgoCreatedAt }}
       <br />
@@ -15,14 +15,11 @@
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import localizedFormat from 'dayjs/plugin/localizedFormat'
 import { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
-
-dayjs.extend(localizedFormat)
 
 const props = defineProps<{
   version: ViewerModelVersionCardItemFragment
-  isNewest: Boolean
+  isNewest: boolean
 }>()
 
 const timeAgoCreatedAt = computed(() => dayjs(props.version.createdAt).from(dayjs()))

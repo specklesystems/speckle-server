@@ -33,6 +33,8 @@
         </div>
       </div>
       <div class="grow flex items-center space-x-2 py-2">
+        <label for="diffTime" class="sr-only">Diff Time</label>
+        {{ /* TODO: This should be a standard range component */ }}
         <input
           id="diffTime"
           v-model="localDiffTime"
@@ -56,21 +58,25 @@
       </div>
       <!-- <div class="ml-1">Change summary:</div> -->
       <div class="grid grid-cols-2 gap-2">
-        <ViewerCompareChangesObjectGroup name="unchanged" :objectIds="unchangedIds" />
-        <ViewerCompareChangesObjectGroup name="modified" :objectIds="modifiedIds" />
-        <ViewerCompareChangesObjectGroup name="added" :objectIds="addedIds" />
-        <ViewerCompareChangesObjectGroup name="removed" :objectIds="removedIds" />
+        <ViewerCompareChangesObjectGroup name="unchanged" :object-ids="unchangedIds" />
+        <ViewerCompareChangesObjectGroup name="modified" :object-ids="modifiedIds" />
+        <ViewerCompareChangesObjectGroup name="added" :object-ids="addedIds" />
+        <ViewerCompareChangesObjectGroup name="removed" :object-ids="removedIds" />
       </div>
     </div>
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
-
 import { VisualDiffMode } from '@speckle/viewer'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 import { uniqBy } from 'lodash-es'
-import { useDiffing } from '~~/lib/viewer/composables/diffs'
+import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+
+defineEmits<{
+  (e: 'close'): void
+}>()
 
 const { diff: diffState } = useInjectedViewerInterfaceState()
 
@@ -96,25 +102,32 @@ function swapDiffMode() {
 
 // NOTE: deduping will not be needed anymore
 const added = computed(() => {
-  const mapped = diffState.diffResult.value?.added.map((node) => node.model.raw)
+  const mapped = diffState.diffResult.value?.added.map(
+    (node) => node.model.raw as SpeckleObject
+  )
   return uniqBy(mapped, (node) => node.id)
 })
 const addedIds = computed(() => added.value.map((o) => o.id as string))
 
 const removed = computed(() => {
-  const mapped = diffState.diffResult.value?.removed.map((node) => node.model.raw)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  const mapped = diffState.diffResult.value?.removed.map(
+    (node) => node.model.raw as SpeckleObject
+  )
   return uniqBy(mapped, (node) => node.id)
 })
 const removedIds = computed(() => removed.value.map((o) => o.id as string))
 
 const unchanged = computed(() => {
-  const mapped = diffState.diffResult.value?.unchanged.map((node) => node.model.raw)
+  const mapped = diffState.diffResult.value?.unchanged.map(
+    (node) => node.model.raw as SpeckleObject
+  )
   return uniqBy(mapped, (node) => node.id)
 })
 const unchangedIds = computed(() => unchanged.value.map((o) => o.id as string))
 const modified = computed(() => {
   const mapped = diffState.diffResult.value?.modified.map((tuple) => {
-    return [tuple[0].model.raw, tuple[1].model.raw]
+    return [tuple[0].model.raw as SpeckleObject, tuple[1].model.raw as SpeckleObject]
   })
   return uniqBy(mapped, (tuple) => tuple[0].id)
 })

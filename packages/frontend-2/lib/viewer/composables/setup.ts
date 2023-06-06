@@ -148,7 +148,7 @@ export type InjectableViewerState = Readonly<{
       /**
        * Helper for switching model to a specific version (or just latest)
        */
-      switchModelToVersion: (modelId: string, versionId?: string) => void
+      switchModelToVersion: (modelId: string, versionId?: string) => Promise<void>
       // addModelVersion: (modelId: string, versionId: string) => void
       // removeModelVersion: (modelId: string, versionId?: string) => void
       // setModelVersions: (newResources: ViewerResource[]) => void
