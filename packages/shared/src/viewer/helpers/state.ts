@@ -1,6 +1,5 @@
 import { intersection, isObjectLike } from 'lodash'
 import { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes'
-import { VisualDiffMode } from '@speckle/viewer'
 export const SERIALIZED_VIEWER_STATE_VERSION = 1.1
 
 export type SerializedViewerState = {
@@ -34,7 +33,7 @@ export type SerializedViewerState = {
     diff: {
       diffString: Nullable<string>
       diffTime: number
-      diffMode: VisualDiffMode
+      diffMode: number
     }
     spotlightUserSessionId: Nullable<string>
     filters: {
