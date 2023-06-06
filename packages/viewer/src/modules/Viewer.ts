@@ -467,7 +467,12 @@ export class Viewer extends EventEmitter implements IViewer {
     await loader.load()
   }
 
-  public async loadObject(url: string, token: string = null, enableCaching = true) {
+  public async loadObject(
+    url: string,
+    token: string = null,
+    enableCaching = true,
+    zoomToObject = true
+  ) {
     if (++this.inProgressOperations === 1)
       (this as EventEmitter).emit(ViewerEvent.Busy, true)
     await this.downloadObject(url, token, enableCaching)
@@ -480,7 +485,8 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer.addRenderTree(url)
     Logger.log('SYNC batch build time -> ', performance.now() - t0)
 
-    this.zoom()
+    if (zoomToObject) this.zoom()
+
     this.speckleRenderer.resetPipeline(true)
     this.emit(ViewerEvent.LoadComplete, url)
     this.loaders[url].dispose()
@@ -493,7 +499,8 @@ export class Viewer extends EventEmitter implements IViewer {
     url: string,
     token: string = null,
     enableCaching = true,
-    priority = 1
+    priority = 1,
+    zoomToObject = true
   ) {
     if (++this.inProgressOperations === 1)
       (this as EventEmitter).emit(ViewerEvent.Busy, true)
@@ -505,7 +512,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     if (treeBuilt) {
       t0 = performance.now()
-      await this.speckleRenderer.addRenderTreeAsync(url, priority)
+      await this.speckleRenderer.addRenderTreeAsync(url, priority, zoomToObject)
       Logger.log('ASYNC batch build time -> ', performance.now() - t0)
       this.speckleRenderer.resetPipeline(true)
       this.emit(ViewerEvent.LoadComplete, url)

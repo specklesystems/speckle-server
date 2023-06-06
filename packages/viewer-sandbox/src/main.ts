@@ -173,7 +173,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/1c2b3db9fb/commits/1015d417ea'
     // Jedd's views
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/e6632fe057'
-    // 'https://latest.speckle.dev/streams/7d051a6449/commits/7632757a33'
+    'https://latest.speckle.dev/streams/7d051a6449/commits/7632757a33'
     // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
     // MEPs (whatever they are)
     // 'https://latest.speckle.dev/streams/85bc4f61c6/commits/8575fe2978'
@@ -266,7 +266,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/c1faab5c62/objects/d3466547df9df86397eb4dff7ac9713f'
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/140c443886'
     // 'https://latest.speckle.dev/streams/e258b0e8db/commits/108971810d'
-    'https://latest.speckle.dev/streams/e258b0e8db/objects/3fcd63d80cf791c3f554a795846e62f6'
+    // 'https://latest.speckle.dev/streams/e258b0e8db/objects/3fcd63d80cf791c3f554a795846e62f6'
   )
 }
 
