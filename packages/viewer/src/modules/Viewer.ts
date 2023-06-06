@@ -618,7 +618,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     const unloadPromises = []
     if (this.dynamicallyLoadedDiffResources.length !== 0) {
-      for (let id of this.dynamicallyLoadedDiffResources)
+      for (const id of this.dynamicallyLoadedDiffResources)
         unloadPromises.push(this.unloadObject(id))
     }
     this.dynamicallyLoadedDiffResources = []
