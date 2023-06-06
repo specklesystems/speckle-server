@@ -101,6 +101,7 @@
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
     "@vitejs/plugin-legacy": "^4.0.3",
+    "autoprefixer": "^10.4.14",
     "browserify-zlib": "^0.2.0",
     "chromatic": "^6.11.4",
     "concurrently": "^7.5.0",

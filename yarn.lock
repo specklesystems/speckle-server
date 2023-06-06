@@ -11059,6 +11059,7 @@ __metadata:
     "@vue/apollo-composable": ^4.0.0-beta.5
     "@vueuse/core": ^9.13.0
     apollo-upload-client: ^17.0.0
+    autoprefixer: ^10.4.14
     concurrently: ^7.5.0
     eslint: ^8.24.0
     eslint-config-prettier: ^8.5.0
@@ -11171,6 +11172,7 @@ __metadata:
     "@vue/apollo-ssr": ^4.0.0-alpha.18
     "@vueuse/core": ^9.13.0
     apollo-upload-client: ^17.0.0
+    autoprefixer: ^10.4.14
     browserify-zlib: ^0.2.0
     chromatic: ^6.11.4
     concurrently: ^7.5.0
