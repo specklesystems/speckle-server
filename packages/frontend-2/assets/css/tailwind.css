@@ -25,6 +25,7 @@
     @apply bg-black/25 rounded-full;
   }
 }
+
 /**
  * Making sure page is always stretched to the bottom of the screen even if there's nothing in it
  */

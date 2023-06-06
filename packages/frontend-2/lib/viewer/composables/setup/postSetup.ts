@@ -333,7 +333,9 @@ function useViewerCameraIntegration() {
       // Only now set projection, we can't do it too early
       orthoProjectionUpdate(isOrthoProjection.value)
     } else {
-      if (!diff.diffString.value) loadCameraDataFromViewer() // NOTE: a bit of a hack
+      // for some reason, threads with diffs, when opened up fail to set the correct view
+      // IF there's another model loaded in the scene besides the ones being diffed..
+      if (!diff.diffString.value) loadCameraDataFromViewer()
     }
   })
 

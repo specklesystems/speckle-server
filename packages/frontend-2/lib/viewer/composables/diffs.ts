@@ -14,6 +14,8 @@ export function useDiffing() {
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
 
+  // TODO: Instead of managing separate queries and separate stores of versions, this should
+  // all just be sourced from state.resources.response
   const diff = async (modelId: string, versionA: string, versionB: string) => {
     const { data, errors } = await apollo.query({
       query: viewerDiffVersionsQuery,
@@ -84,6 +86,8 @@ export function useDiffing() {
 
   // TODO: Confusing that this looks identical to the resourceIdString pattern, which would
   // resolve this string differently (2 models, 1 with a specific version ID)
+  // + Now we have 2 conflicting sources of truth from which to pull "loaded version" information from:
+  // - diffState AND resourceIdString. It should just be the one.
   const formatDiffString = (modelId: string, versionAId: string, versionBId: string) =>
     `${modelId}@${versionAId},${versionBId}`
 
