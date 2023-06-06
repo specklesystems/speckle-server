@@ -477,7 +477,7 @@ export class Viewer extends EventEmitter implements IViewer {
     Logger.log('SYNC Tree build time -> ', performance.now() - t0)
 
     t0 = performance.now()
-    this.speckleRenderer.addRenderTree(url)
+    await this.speckleRenderer.addRenderTree(url)
     Logger.log('SYNC batch build time -> ', performance.now() - t0)
 
     this.zoom()

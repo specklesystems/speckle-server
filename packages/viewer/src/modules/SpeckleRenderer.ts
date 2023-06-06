@@ -496,8 +496,8 @@ export default class SpeckleRenderer {
     this._needsRender = true
   }
 
-  public addRenderTree(subtreeId: string) {
-    this.batcher.makeBatches(
+  public async addRenderTree(subtreeId: string) {
+    await this.batcher.makeBatches(
       this.viewer.getWorldTree().getRenderTree(subtreeId),
       SpeckleTypeAllRenderables
     )
