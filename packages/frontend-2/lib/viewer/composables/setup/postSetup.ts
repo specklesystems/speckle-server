@@ -46,6 +46,7 @@ import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { Nullable } from '@speckle/shared'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 import { useDiffing } from '~~/lib/viewer/composables/diffs'
+import { watchTriggerable } from '@vueuse/core'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -270,8 +271,7 @@ function useViewerCameraIntegration() {
     viewer: { instance },
     ui: {
       camera: { isOrthoProjection, position, target },
-      spotlightUserSessionId,
-      diff
+      spotlightUserSessionId
     }
   } = useInjectedViewerState()
   const { forceViewToViewerSync } = useCameraUtilities()
@@ -333,9 +333,7 @@ function useViewerCameraIntegration() {
       // Only now set projection, we can't do it too early
       orthoProjectionUpdate(isOrthoProjection.value)
     } else {
-      // for some reason, threads with diffs, when opened up fail to set the correct view
-      // IF there's another model loaded in the scene besides the ones being diffed..
-      if (!diff.diffString.value) loadCameraDataFromViewer()
+      loadCameraDataFromViewer()
     }
   })
 
@@ -604,60 +602,86 @@ function useDiffingIntegration() {
   const { unpackDiffString, diff, endDiff } = useDiffing()
   const state = useInjectedViewerState()
 
-  watch(state.ui.diff.diffString, async (newVal, oldVal) => {
-    if (newVal === oldVal) return
-    if (!newVal) {
-      await endDiff()
-      return
-    }
-    if (oldVal) {
-      await endDiff()
-    }
-    const { modelId, versionA, versionB } = unpackDiffString(newVal)
-    diff(modelId, versionA, versionB)
-  })
+  const hasInitialLoadFired = ref(false)
 
-  let preventWatchers = 0
+  const { trigger: triggerDiffStringWatch } = watchTriggerable(
+    state.urlHashState.diff,
+    async (newVal, oldVal) => {
+      if (!hasInitialLoadFired.value) return
+      if ((newVal && newVal === oldVal) || !!newVal === !!oldVal) return
+
+      if (!newVal) {
+        await endDiff()
+        return
+      }
+
+      if (oldVal) {
+        await endDiff()
+      }
+
+      const { modelId, versionA, versionB } = unpackDiffString(newVal)
+      diff(modelId, versionA, versionB)
+    },
+    { immediate: true }
+  )
+
+  // const preventWatchers = 0
   watch(state.ui.diff.diffResult, (val) => {
     if (!val) return
     // reset visual diff time and mode on new diff result
-    state.viewer.instance.setDiffTime(val, 0.5)
-    state.viewer.instance.setVisualDiffMode(val, VisualDiffMode.COLORED)
-    preventWatchers = 0 // prevents the two watchers below from running on init
-    state.ui.diff.diffMode.value = VisualDiffMode.COLORED
-    state.ui.diff.diffTime.value = 0.5
+    // state.viewer.instance.setDiffTime(val, 0.5)
+    // state.viewer.instance.setVisualDiffMode(val, VisualDiffMode.COLORED)
+    // preventWatchers = 0 // prevents the two watchers below from running on init
+
+    // sometimes the watcher won't fire even when the values are updated, because they're updated to
+    // the same values that they were already. because of that we're manually & forcefully running
+    // the relevant watchers when diffResult changes
+    ignoreDiffModeUpdates(() => {
+      ignoreDiffTimeUpdates(() => {
+        state.ui.diff.diffTime.value = 0.5
+        state.ui.diff.diffMode.value = VisualDiffMode.COLORED
+
+        // this watcher also updates diffTime, so no need to invoke that separately
+        triggerDiffModeWatch()
+      })
+    })
   })
 
-  watch(state.ui.diff.diffTime, (val) => {
-    if (!state.ui.diff.diffResult.value) return
-    if (preventWatchers < 2) {
-      preventWatchers++
-      return
-    }
-    state.viewer.instance.setDiffTime(state.ui.diff.diffResult.value, val)
-  })
+  const { ignoreUpdates: ignoreDiffTimeUpdates } = watchTriggerable(
+    state.ui.diff.diffTime,
+    (val) => {
+      if (!hasInitialLoadFired.value) return
+      if (!state.ui.diff.diffResult.value) return
+      // if (preventWatchers < 2) {
+      //   preventWatchers++
+      //   return
+      // }
 
-  watch(state.ui.diff.diffMode, (val) => {
-    if (!state.ui.diff.diffResult.value) return
-    if (preventWatchers < 2) {
-      preventWatchers++
-      return
+      state.viewer.instance.setDiffTime(state.ui.diff.diffResult.value, val)
     }
-    state.viewer.instance.setVisualDiffMode(state.ui.diff.diffResult.value, val)
-    state.viewer.instance.setDiffTime(
-      state.ui.diff.diffResult.value,
-      state.ui.diff.diffTime.value
-    ) // hmm, why do i need to call diff time again? seems like a minor viewer bug
-  })
+  )
+
+  const { trigger: triggerDiffModeWatch, ignoreUpdates: ignoreDiffModeUpdates } =
+    watchTriggerable(state.ui.diff.diffMode, (val) => {
+      if (!hasInitialLoadFired.value) return
+      if (!state.ui.diff.diffResult.value) return
+      // if (preventWatchers < 2) {
+      //   preventWatchers++
+      //   return
+      // }
+
+      state.viewer.instance.setVisualDiffMode(state.ui.diff.diffResult.value, val)
+      state.viewer.instance.setDiffTime(
+        state.ui.diff.diffResult.value,
+        state.ui.diff.diffTime.value
+      ) // hmm, why do i need to call diff time again? seems like a minor viewer bug
+    })
 
   useOnViewerLoadComplete(({ isInitial }) => {
-    if (
-      isInitial &&
-      !state.urlHashState.focusedThreadId.value &&
-      state.urlHashState.diff.value
-    ) {
-      state.ui.diff.diffString.value = state.urlHashState.diff.value
-    }
+    if (!isInitial) return
+    hasInitialLoadFired.value = true
+
+    triggerDiffStringWatch()
   })
 }
 
@@ -680,6 +704,7 @@ function useDebugViewerEvents() {
 
 export function useViewerPostSetup() {
   if (process.server) return
+  console.log('setupp')
   useViewerObjectAutoLoading()
   useViewerSelectionEventHandler()
   useViewerIsBusyEventHandler()

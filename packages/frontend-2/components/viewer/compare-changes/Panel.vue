@@ -1,12 +1,7 @@
 <template>
   <ViewerLayoutPanel @close="$emit('close')">
     <template #actions>
-      <FormButton
-        size="xs"
-        text
-        :icon-left="ChevronLeftIcon"
-        @click="diffState.diffString.value = null"
-      >
+      <FormButton size="xs" text :icon-left="ChevronLeftIcon" @click="clearDiff">
         Back
       </FormButton>
     </template>
@@ -69,7 +64,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 import { VisualDiffMode } from '@speckle/viewer'
-import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { uniqBy } from 'lodash-es'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 
@@ -77,7 +72,10 @@ defineEmits<{
   (e: 'close'): void
 }>()
 
-const { diff: diffState } = useInjectedViewerInterfaceState()
+const {
+  ui: { diff: diffState },
+  urlHashState: { diff }
+} = useInjectedViewerState()
 
 const localDiffTime = ref(diffState.diffTime.value)
 
@@ -136,4 +134,8 @@ const modifiedIds = computed(() => {
     ...modified.value.map((t) => t[1].id as string)
   ]
 })
+
+const clearDiff = async () => {
+  await diff.update(null)
+}
 </script>

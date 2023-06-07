@@ -64,6 +64,7 @@ import {
   AsyncWritableComputedRef,
   writableAsyncComputed
 } from '~~/lib/common/composables/async'
+import { setupUiDiffState } from '~~/lib/viewer/composables/setup/diff'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -74,12 +75,6 @@ export type LoadedThreadsMetadata = NonNullable<
 >
 
 export type LoadedCommentThread = NonNullable<Get<LoadedThreadsMetadata, 'items[0]'>>
-
-// export type FilterAction = (
-//   objectIds: string[],
-//   stateKey: string,
-//   includeDescendants?: boolean
-// ) => Promise<void>
 
 export type InjectableViewerState = Readonly<{
   /**
@@ -240,7 +235,6 @@ export type InjectableViewerState = Readonly<{
       isOrthoProjection: Ref<boolean>
     }
     diff: {
-      diffString: Ref<Nullable<string>>
       newVersion: Ref<ViewerModelVersionCardItemFragment | undefined>
       oldVersion: Ref<ViewerModelVersionCardItemFragment | undefined>
       diffTime: Ref<number>
@@ -411,7 +405,8 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
         hash: route.hash
       })
     },
-    initialState: []
+    initialState: [],
+    asyncRead: false
   })
 
   // we could use getParam, but `createGetParamFromResources` does sorting and de-duplication AFAIK
@@ -421,7 +416,8 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
       const newResources = SpeckleViewer.ViewerRoute.parseUrlParameters(newVal)
       await resources.update(newResources)
     },
-    initialState: ''
+    initialState: '',
+    asyncRead: false
   })
 
   const threadFilters = ref({} as Omit<ProjectCommentsFilter, 'resourceIdString'>)
@@ -788,13 +784,7 @@ function setupInterfaceState(
   /**
    * Diffing
    */
-  const diffString = ref<Nullable<string>>(null)
-  const newVersion = ref<ViewerModelVersionCardItemFragment>()
-  const oldVersion = ref<ViewerModelVersionCardItemFragment>()
-  const diffResult = shallowRef(undefined as Optional<DiffResult>)
-  const diffEnabled = computed(() => !!diffString.value)
-  const diffTime = ref(0.5)
-  const diffMode = ref<VisualDiffMode>(VisualDiffMode.COLORED)
+  const diffState = setupUiDiffState(state)
 
   const position = ref(new Vector3())
   const target = ref(new Vector3())
@@ -804,13 +794,7 @@ function setupInterfaceState(
     ...state,
     ui: {
       diff: {
-        diffString,
-        newVersion,
-        oldVersion,
-        diffTime,
-        diffMode,
-        enabled: diffEnabled,
-        diffResult //computed(()=> diffResult.value)
+        ...diffState
       },
       selection,
       lightConfig,

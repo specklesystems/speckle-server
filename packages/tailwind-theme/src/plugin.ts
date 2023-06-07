@@ -123,10 +123,7 @@ export default plugin(function ({ addComponents, addBase }) {
       '@apply ring-offset-foundation': {}
     },
     "input[type='range']": {
-      '@apply appearance-none bg-transparent': {},
-      '&::-webkit-slider-runnable-track, &::-moz-range-track, &::-ms-track': {
-        '@apply bg-black/25 rounded-full': {}
-      }
+      '@apply appearance-none bg-transparent': {}
     },
     "input[type='range']::-webkit-slider-runnable-track": {
       '@apply bg-black/25 rounded-full': {}

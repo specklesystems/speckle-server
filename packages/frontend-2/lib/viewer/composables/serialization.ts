@@ -78,7 +78,7 @@ export function useStateSerialization() {
           }
         },
         diff: {
-          diffString: state.ui.diff.diffString.value,
+          diffString: state.urlHashState.diff.value,
           diffTime: state.ui.diff.diffTime.value,
           diffMode: state.ui.diff.diffMode.value
         },
@@ -248,11 +248,11 @@ export function useApplySerializedState() {
     }
 
     if (state.ui.diff) {
-      diff.diffString.value = state.ui.diff.diffString
       diff.diffTime.value = state.ui.diff.diffTime
       diff.diffMode.value = state.ui.diff.diffMode
+      await urlHashState.diff.update(state.ui.diff.diffString)
     } else {
-      diff.diffString.value = null
+      await urlHashState.diff.update(null)
     }
 
     explodeFactor.value = state.ui.explodeFactor

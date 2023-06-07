@@ -18,7 +18,8 @@ export function setupUrlHashState(): InjectableViewerState['urlHashState'] {
         [ViewerHashStateKeys.FocusedThreadId]: newVal
       })
     },
-    initialState: null
+    initialState: null,
+    asyncRead: false
   })
 
   const diff = writableAsyncComputed({
@@ -28,7 +29,8 @@ export function setupUrlHashState(): InjectableViewerState['urlHashState'] {
         ...hashState.value,
         [ViewerHashStateKeys.Diff]: newVal
       }),
-    initialState: null
+    initialState: null,
+    asyncRead: false
   })
 
   return {

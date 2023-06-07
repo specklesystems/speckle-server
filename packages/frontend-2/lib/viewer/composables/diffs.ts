@@ -75,8 +75,8 @@ export function useDiffing() {
       authToken.value
     )
 
-    if (!state.urlHashState.focusedThreadId.value)
-      await state.urlHashState.diff.update(state.ui.diff.diffString.value)
+    // if (!state.urlHashState.focusedThreadId.value)
+    //   await state.urlHashState.diff.update(state.ui.diff.diffString.value)
   }
 
   const endDiff = async () => {

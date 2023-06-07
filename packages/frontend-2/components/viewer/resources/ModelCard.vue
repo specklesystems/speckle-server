@@ -93,7 +93,6 @@
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import localizedFormat from 'dayjs/plugin/localizedFormat'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
   XMarkIcon,
@@ -113,8 +112,6 @@ import {
 
 import { useDiffing } from '~~/lib/viewer/composables/diffs'
 
-dayjs.extend(localizedFormat)
-
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
 defineEmits<{
@@ -129,6 +126,7 @@ const props = defineProps<{
 
 const { switchModelToVersion } = useInjectedViewerRequestedResources()
 const { loadMoreVersions } = useInjectedViewerLoadedResources()
+const state = useInjectedViewerState()
 
 const showVersions = ref(false)
 
@@ -205,13 +203,10 @@ const onLoadMore = async () => {
 }
 
 const { formatDiffString } = useDiffing()
-const state = useInjectedViewerState()
-function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
+async function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
   if (!loadedVersion.value?.id) return
-  state.ui.diff.diffString.value = formatDiffString(
-    modelId.value,
-    loadedVersion.value.id,
-    version.id
+  await state.urlHashState.diff.update(
+    formatDiffString(modelId.value, loadedVersion.value.id, version.id)
   )
 }
 </script>
