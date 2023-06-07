@@ -46,7 +46,10 @@
       </div>
     </div>
     <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
-    <ProjectsDashboardEmptyState v-if="showEmptyState" />
+    <ProjectsDashboardEmptyState
+      v-if="showEmptyState"
+      @create-project="openNewProject = true"
+    />
     <template v-else-if="projects?.items?.length">
       <ProjectsDashboardFilled :projects="projects" />
       <InfiniteLoading
