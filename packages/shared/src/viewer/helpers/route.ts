@@ -38,6 +38,22 @@ export class ViewerModelResource implements ViewerResource {
   }
 }
 
+export class ViewerVersionResource extends ViewerModelResource {
+  public versionId: string
+
+  constructor(modelId: string, versionId: string) {
+    super(modelId, versionId)
+    this.versionId = versionId
+  }
+
+  toJSON() {
+    return {
+      modelId: this.modelId,
+      versionId: this.versionId
+    }
+  }
+}
+
 export class ViewerObjectResource implements ViewerResource {
   public type: ViewerResourceType
   public objectId: string

@@ -35,7 +35,9 @@ export const viewerLoadedResourcesQuery = graphql(`
           id
           name
           updatedAt
-          loadedVersion: versions(filter: { priorityIds: $versionIds }, limit: 2) {
+          loadedVersion: versions(
+            filter: { priorityIds: $versionIds, priorityIdsOnly: true }
+          ) {
             items {
               ...ViewerModelVersionCardItem
             }

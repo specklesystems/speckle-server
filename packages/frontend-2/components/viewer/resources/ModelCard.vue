@@ -105,12 +105,10 @@ import {
 } from '~~/lib/common/generated/gql/graphql'
 import { Get } from 'type-fest'
 import {
-  useInjectedViewerState,
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
-
-import { useDiffing } from '~~/lib/viewer/composables/diffs'
+import { useDiffUtilities } from '~~/lib/viewer/composables/ui'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
@@ -126,7 +124,7 @@ const props = defineProps<{
 
 const { switchModelToVersion } = useInjectedViewerRequestedResources()
 const { loadMoreVersions } = useInjectedViewerLoadedResources()
-const state = useInjectedViewerState()
+const { diffModelVersions } = useDiffUtilities()
 
 const showVersions = ref(false)
 
@@ -202,11 +200,8 @@ const onLoadMore = async () => {
   await loadMoreVersions(props.model.id)
 }
 
-const { formatDiffString } = useDiffing()
 async function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
   if (!loadedVersion.value?.id) return
-  await state.urlHashState.diff.update(
-    formatDiffString(modelId.value, loadedVersion.value.id, version.id)
-  )
+  await diffModelVersions(modelId.value, loadedVersion.value.id, version.id)
 }
 </script>

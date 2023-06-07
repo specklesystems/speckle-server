@@ -6,13 +6,18 @@ import { isNonNullable } from '~~/lib/common/helpers/utils'
 import { SpeckleViewer, TimeoutError } from '@speckle/shared'
 import { get } from 'lodash-es'
 import { Vector3, Box3 } from 'three'
-import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { NumericPropertyInfo } from '@speckle/viewer'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
+/**
+ * TODO: Update state to support multiple diffs in the future
+ */
+
 export function useStateSerialization() {
   const state = useInjectedViewerState()
+  const { serializeDiffCommand } = useDiffUtilities()
 
   /**
    * We don't want to save a comment w/ implicit identifiers like ones that only have a model ID or a folder prefix, because
@@ -78,7 +83,9 @@ export function useStateSerialization() {
           }
         },
         diff: {
-          diffString: state.urlHashState.diff.value,
+          diffString: state.urlHashState.diff.value
+            ? serializeDiffCommand(state.urlHashState.diff.value)
+            : null,
           diffTime: state.ui.diff.diffTime.value,
           diffMode: state.ui.diff.diffMode.value
         },
@@ -150,6 +157,7 @@ export function useApplySerializedState() {
     waitForAvailableFilter
   } = useFilterUtilities()
   const resetState = useResetUiState()
+  const { diffModelVersions, deserializeDiffCommand, endDiff } = useDiffUtilities()
 
   return async (state: SerializedViewerState, mode: StateApplyMode) => {
     if (mode === StateApplyMode.Reset) {
@@ -247,12 +255,19 @@ export function useApplySerializedState() {
       await urlHashState.focusedThreadId.update(state.ui.threads.openThread.threadId)
     }
 
-    if (state.ui.diff) {
+    const command = deserializeDiffCommand(state.ui.diff.diffString)
+    if (command && command.diffs.length) {
       diff.diffTime.value = state.ui.diff.diffTime
       diff.diffMode.value = state.ui.diff.diffMode
-      await urlHashState.diff.update(state.ui.diff.diffString)
+
+      const instruction = command.diffs[0]
+      await diffModelVersions(
+        instruction.previousVersion.modelId,
+        instruction.previousVersion.versionId,
+        instruction.newVersion.versionId
+      )
     } else {
-      await urlHashState.diff.update(null)
+      await endDiff()
     }
 
     explodeFactor.value = state.ui.explodeFactor

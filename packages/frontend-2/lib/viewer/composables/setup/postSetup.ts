@@ -45,7 +45,6 @@ import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { Nullable } from '@speckle/shared'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
-import { useDiffing } from '~~/lib/viewer/composables/diffs'
 import { watchTriggerable } from '@vueuse/core'
 
 function useViewerIsBusyEventHandler() {
@@ -483,14 +482,14 @@ function useViewerFiltersIntegration() {
     { immediate: true, flush: 'sync' }
   )
 
-  const syncColorFilterToViewer = (
+  const syncColorFilterToViewer = async (
     filter: Nullable<PropertyInfo>,
     isApplied: boolean
   ) => {
     const targetFilter = filter || speckleTypeFilter.value
 
-    if (isApplied && targetFilter) instance.setColorFilter(targetFilter)
-    if (!isApplied) instance.removeColorFilter()
+    if (isApplied && targetFilter) await instance.setColorFilter(targetFilter)
+    if (!isApplied) await instance.removeColorFilter()
   }
 
   watch(
@@ -499,19 +498,19 @@ function useViewerFiltersIntegration() {
         filters.propertyFilter.filter.value,
         filters.propertyFilter.isApplied.value
       ],
-    (newVal) => {
+    async (newVal) => {
       const [filter, isApplied] = newVal
-      syncColorFilterToViewer(filter, isApplied)
+      await syncColorFilterToViewer(filter, isApplied)
     },
     { immediate: true, flush: 'sync' }
   )
 
   useOnViewerLoadComplete(
-    () => {
+    async () => {
       const targetFilter =
         filters.propertyFilter.filter.value || speckleTypeFilter.value
       const isApplied = filters.propertyFilter.isApplied.value
-      syncColorFilterToViewer(targetFilter, isApplied)
+      await syncColorFilterToViewer(targetFilter, isApplied)
     },
     { initialOnly: true }
   )
@@ -599,28 +598,59 @@ function useExplodeFactorIntegration() {
 }
 
 function useDiffingIntegration() {
-  const { unpackDiffString, diff, endDiff } = useDiffing()
   const state = useInjectedViewerState()
+  const authCookie = useAuthCookie()
+  const getObjectUrl = useGetObjectUrl()
 
   const hasInitialLoadFired = ref(false)
 
-  const { trigger: triggerDiffStringWatch } = watchTriggerable(
-    state.urlHashState.diff,
+  const { trigger: triggerDiffCommandWatch } = watchTriggerable(
+    () => <const>[state.ui.diff.oldVersion.value, state.ui.diff.newVersion.value],
     async (newVal, oldVal) => {
       if (!hasInitialLoadFired.value) return
-      if ((newVal && newVal === oldVal) || !!newVal === !!oldVal) return
+      const [oldVersion, newVersion] = newVal
+      const [oldOldVersion, oldNewVersion] = oldVal || [null, null]
 
-      if (!newVal) {
-        await endDiff()
+      const versionId = (version: typeof oldOldVersion) => version?.id || null
+      const commandId = (
+        oldVersion: typeof oldOldVersion,
+        newVersion: typeof oldOldVersion
+      ) => {
+        const oldId = versionId(oldVersion)
+        const newId = versionId(newVersion)
+        return oldId && newId ? `${oldId}->${newId}` : null
+      }
+
+      const newCommand = commandId(oldVersion, newVersion)
+      const oldCommand = commandId(oldOldVersion, oldNewVersion)
+
+      if ((newCommand && oldCommand === newCommand) || !!newCommand === !!oldCommand)
         return
+
+      if (!newCommand || oldVal) {
+        await state.viewer.instance.undiff()
+        if (!newCommand) return
       }
 
-      if (oldVal) {
-        await endDiff()
-      }
+      // values shouldn't be undefined cause commandId() generation succeeded
+      const oldObjUrl = getObjectUrl(
+        state.projectId.value,
+        oldVersion?.referencedObject as string
+      )
+      const newObjUrl = getObjectUrl(
+        state.projectId.value,
+        newVersion?.referencedObject as string
+      )
 
-      const { modelId, versionA, versionB } = unpackDiffString(newVal)
-      diff(modelId, versionA, versionB)
+      state.ui.diff.diffResult.value = await state.viewer.instance.diff(
+        oldObjUrl,
+        newObjUrl,
+        state.ui.diff.diffMode.value,
+        authCookie.value
+      )
+
+      // const { modelId, versionA, versionB } = unpackDiffString(newVal)
+      // diff(modelId, versionA, versionB)
     },
     { immediate: true }
   )
@@ -681,7 +711,7 @@ function useDiffingIntegration() {
     if (!isInitial) return
     hasInitialLoadFired.value = true
 
-    triggerDiffStringWatch()
+    triggerDiffCommandWatch()
   })
 }
 
@@ -704,7 +734,6 @@ function useDebugViewerEvents() {
 
 export function useViewerPostSetup() {
   if (process.server) return
-  console.log('setupp')
   useViewerObjectAutoLoading()
   useViewerSelectionEventHandler()
   useViewerIsBusyEventHandler()
@@ -717,6 +746,7 @@ export function useViewerPostSetup() {
   useLightConfigIntegration()
   useExplodeFactorIntegration()
   useDiffingIntegration()
+
   // test
   // useDebugViewerEvents()
 }

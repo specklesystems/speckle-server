@@ -59,12 +59,16 @@ import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { Box3, Vector3 } from 'three'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { wrapRefWithTracking } from '~~/lib/common/helpers/debugging'
-import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import {
   AsyncWritableComputedRef,
   writableAsyncComputed
 } from '~~/lib/common/composables/async'
-import { setupUiDiffState } from '~~/lib/viewer/composables/setup/diff'
+import {
+  DiffStateCommand,
+  setupUiDiffState
+} from '~~/lib/viewer/composables/setup/diff'
+import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { reduce } from 'lodash-es'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -168,6 +172,12 @@ export type InjectableViewerState = Readonly<{
        */
       modelsAndVersionIds: ComputedRef<Array<{ model: LoadedModel; versionId: string }>>
       /**
+       * All available (retrieved from GQL) models and their versions
+       */
+      availableModelsAndVersions: ComputedRef<
+        Array<{ model: LoadedModel; versions: LoadedModel['versions']['items'] }>
+      >
+      /**
        * Detached objects (not models/versions)
        */
       objects: ComputedRef<ViewerResourceItem[]>
@@ -235,8 +245,8 @@ export type InjectableViewerState = Readonly<{
       isOrthoProjection: Ref<boolean>
     }
     diff: {
-      newVersion: Ref<ViewerModelVersionCardItemFragment | undefined>
-      oldVersion: Ref<ViewerModelVersionCardItemFragment | undefined>
+      newVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
+      oldVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
       diffTime: Ref<number>
       diffMode: Ref<VisualDiffMode>
       diffResult: ShallowRef<Optional<DiffResult>> //ComputedRef<Optional<DiffResult>>
@@ -254,7 +264,7 @@ export type InjectableViewerState = Readonly<{
    */
   urlHashState: {
     focusedThreadId: AsyncWritableComputedRef<Nullable<string>>
-    diff: AsyncWritableComputedRef<Nullable<string>>
+    diff: AsyncWritableComputedRef<Nullable<DiffStateCommand>>
   }
 }>
 
@@ -628,6 +638,24 @@ function setupResponseResourceData(
       .filter((o): o is SetNonNullable<typeof o, 'model'> => !!(o.versionId && o.model))
   )
 
+  const availableModelsAndVersions = computed(() => {
+    const modelItems = models.value
+    return reduce(
+      modelItems,
+      (res, entry) => {
+        res.push({
+          model: entry,
+          versions: [...entry.loadedVersion.items, ...entry.versions.items]
+        })
+        return res
+      },
+      [] as Array<{
+        model: (typeof modelItems)[0]
+        versions: (typeof modelItems)[0]['versions']['items']
+      }>
+    )
+  })
+
   onViewerLoadedResourcesError((err) => {
     globalError.value = createError({
       statusCode: 500,
@@ -711,6 +739,7 @@ function setupResponseResourceData(
     commentThreads,
     commentThreadsMetadata,
     modelsAndVersionIds,
+    availableModelsAndVersions,
     project,
     resourceQueryVariables: computed(() => viewerLoadedResourcesVariables.value),
     threadsQueryVariables: computed(() => threadsQueryVariables.value),
