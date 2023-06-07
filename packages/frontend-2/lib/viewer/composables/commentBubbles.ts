@@ -175,7 +175,9 @@ export function useViewerCommentBubbles(
 
   const commentThreads = ref({} as Record<string, CommentBubbleModel>)
   const openThread = computed(() =>
-    Object.values(commentThreads.value).find((t) => t.isExpanded)
+    Object.values(commentThreads.value).find(
+      (t) => t.isExpanded && t.id === focusedThreadId.value
+    )
   )
 
   useSelectionEvents(

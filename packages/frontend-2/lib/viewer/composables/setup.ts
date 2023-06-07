@@ -67,7 +67,7 @@ import {
   DiffStateCommand,
   setupUiDiffState
 } from '~~/lib/viewer/composables/setup/diff'
-import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { reduce } from 'lodash-es'
 
 export type LoadedModel = NonNullable<
@@ -931,6 +931,7 @@ export function useResetUiState() {
     ui: { threads, camera, sectionBox, highlightedObjectIds, lightConfig }
   } = useInjectedViewerState()
   const { resetFilters } = useFilterUtilities()
+  const { endDiff } = useDiffUtilities()
 
   return async () => {
     await threads.closeAllThreads()
@@ -939,5 +940,6 @@ export function useResetUiState() {
     highlightedObjectIds.value = []
     lightConfig.value = { ...DefaultLightConfiguration }
     resetFilters()
+    endDiff()
   }
 }

@@ -108,7 +108,7 @@ export const formatSerializedViewerState = (
    * v1.1 -> v1.2
    * - ui.diff added
    */
-  if (!state.ui.diff || !get(state.ui.diff, 'commands')) {
+  if (!state.ui.diff || !get(state.ui.diff, 'command')) {
     state.ui.diff = {
       command: null,
       mode: 1,
