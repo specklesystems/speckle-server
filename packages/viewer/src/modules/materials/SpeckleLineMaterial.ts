@@ -84,7 +84,7 @@ class SpeckleLineMaterial extends LineMaterial {
     SpeckleLineMaterial.matBuff.elements[12] = 0
     SpeckleLineMaterial.matBuff.elements[13] = 0
     SpeckleLineMaterial.matBuff.elements[14] = 0
-    SpeckleLineMaterial.matBuff.multiply(object.matrixWorld)
+    // SpeckleLineMaterial.matBuff.multiply(object.matrixWorld)
     object.modelViewMatrix.copy(SpeckleLineMaterial.matBuff)
 
     SpeckleLineMaterial.vecBuff0.set(

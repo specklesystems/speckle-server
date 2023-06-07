@@ -60,6 +60,7 @@ import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 import { BatchObject } from './batching/BatchObject'
 import SpecklePointMaterial from './materials/SpecklePointMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
+import { Measurements } from './measurements/Measurements'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -82,7 +83,7 @@ export default class SpeckleRenderer {
   private rootGroup: Group
   private batcher: Batcher
   private _intersections: Intersections
-  private input: Input
+  public input: Input
   private sun: DirectionalLight
   private sunTarget: Object3D
   private sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
@@ -93,6 +94,7 @@ export default class SpeckleRenderer {
   private sectionPlanesChanged: Plane[] = []
   private sectionBoxOutlines: SectionBoxOutlines = null
   private _shadowcatcher: Shadowcatcher = null
+  private _measurements: Measurements = null
   private cancel: { [subtreeId: string]: boolean } = {}
 
   private explodeTime = -1
@@ -331,6 +333,8 @@ export default class SpeckleRenderer {
     }
 
     this._scene.add(this._shadowcatcher.shadowcatcherMesh)
+
+    this._measurements = new Measurements(this)
   }
 
   public update(deltaTime: number) {
@@ -921,6 +925,8 @@ export default class SpeckleRenderer {
   }
 
   private onObjectClick(e) {
+    if (e.event.ctrlKey) return
+
     const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.viewer.cameraHandler.activeCam.camera,
@@ -968,6 +974,8 @@ export default class SpeckleRenderer {
   }
 
   private onObjectDoubleClick(e) {
+    if (e.event.ctrlKey) return
+
     const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.viewer.cameraHandler.activeCam.camera,

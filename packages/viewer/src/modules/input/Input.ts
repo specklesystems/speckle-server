@@ -70,6 +70,12 @@ export default class Input extends EventEmitter {
       this.emit(ViewerEvent.ObjectDoubleClicked, this._getNormalisedClickPosition(e))
     })
 
+    this.container.addEventListener('pointermove', (e) => {
+      const data = this._getNormalisedClickPosition(e)
+      ;(data as unknown as Record<string, unknown>).event = e
+      this.emit('pointer-move', data)
+    })
+
     // Handle multiple object selection
     // document.addEventListener('keydown', (e) => {
     //   if (e.isComposing || e.keyCode === 229) return
