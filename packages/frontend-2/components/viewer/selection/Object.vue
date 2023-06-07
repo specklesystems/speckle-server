@@ -107,7 +107,7 @@ import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/hel
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 const {
   ui: {
-    diff: { diffResult, enabled: diffEnabled }
+    diff: { result, enabled: diffEnabled }
   }
 } = useInjectedViewerState()
 
@@ -128,7 +128,7 @@ const unfold = ref(props.unfold)
 const isAdded = computed(() => {
   if (!diffEnabled.value) return false
   return (
-    diffResult.value?.added.findIndex(
+    result.value?.added.findIndex(
       (o) => (o.model.raw as SpeckleObject).applicationId === props.object.applicationId
     ) !== -1
   )
@@ -137,7 +137,7 @@ const isAdded = computed(() => {
 const isRemoved = computed(() => {
   if (!diffEnabled.value) return false
   return (
-    diffResult.value?.removed.findIndex(
+    result.value?.removed.findIndex(
       (o) => (o.model.raw as SpeckleObject).applicationId === props.object.applicationId
     ) !== -1
   )
@@ -146,7 +146,7 @@ const isRemoved = computed(() => {
 const isUnchanged = computed(() => {
   if (!diffEnabled.value) return false
   return (
-    diffResult.value?.unchanged.findIndex(
+    result.value?.unchanged.findIndex(
       (o) => (o.model.raw as SpeckleObject).applicationId === props.object.applicationId
     ) !== -1
   )
@@ -155,7 +155,7 @@ const isUnchanged = computed(() => {
 const isModifiedQuery = computed(() => {
   // if (props.modifiedSibling) return { modified: false } // prevent recursion?
   if (!diffEnabled.value) return { modified: false }
-  const modifiedObjectPairs = diffResult.value?.modified.map((pair) => {
+  const modifiedObjectPairs = result.value?.modified.map((pair) => {
     return [pair[0].model.raw as SpeckleObject, pair[1].model.raw as SpeckleObject]
   })
   if (!modifiedObjectPairs) return { modified: false }

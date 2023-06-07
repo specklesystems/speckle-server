@@ -11,10 +11,6 @@ import { NumericPropertyInfo } from '@speckle/viewer'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
-/**
- * TODO: Update state to support multiple diffs in the future
- */
-
 export function useStateSerialization() {
   const state = useInjectedViewerState()
   const { serializeDiffCommand } = useDiffUtilities()
@@ -83,11 +79,11 @@ export function useStateSerialization() {
           }
         },
         diff: {
-          diffString: state.urlHashState.diff.value
+          command: state.urlHashState.diff.value
             ? serializeDiffCommand(state.urlHashState.diff.value)
             : null,
-          diffTime: state.ui.diff.diffTime.value,
-          diffMode: state.ui.diff.diffMode.value
+          time: state.ui.diff.time.value,
+          mode: state.ui.diff.mode.value
         },
         spotlightUserSessionId: state.ui.spotlightUserSessionId.value,
         filters: {
@@ -255,10 +251,12 @@ export function useApplySerializedState() {
       await urlHashState.focusedThreadId.update(state.ui.threads.openThread.threadId)
     }
 
-    const command = deserializeDiffCommand(state.ui.diff.diffString)
+    const command = state.ui.diff.command
+      ? deserializeDiffCommand(state.ui.diff.command)
+      : null
     if (command && command.diffs.length) {
-      diff.diffTime.value = state.ui.diff.diffTime
-      diff.diffMode.value = state.ui.diff.diffMode
+      diff.time.value = state.ui.diff.time
+      diff.mode.value = state.ui.diff.mode
 
       const instruction = command.diffs[0]
       await diffModelVersions(

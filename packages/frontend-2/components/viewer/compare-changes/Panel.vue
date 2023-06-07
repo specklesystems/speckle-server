@@ -44,10 +44,10 @@
         <span class="text-xs text-left">Color objects by status</span>
         <FormButton
           size="xs"
-          :outlined="diffState.diffMode.value !== VisualDiffMode.COLORED"
+          :outlined="diffState.mode.value !== VisualDiffMode.COLORED"
           @click="swapDiffMode()"
         >
-          {{ diffState.diffMode.value === VisualDiffMode.COLORED ? 'ON' : 'OFF' }}
+          {{ diffState.mode.value === VisualDiffMode.COLORED ? 'ON' : 'OFF' }}
         </FormButton>
       </div>
       <!-- <div class="ml-1">Change summary:</div> -->
@@ -77,29 +77,30 @@ const {
   urlHashState: { diff }
 } = useInjectedViewerState()
 
-const localDiffTime = ref(diffState.diffTime.value)
+const localDiffTime = ref(diffState.time.value)
 
 watch(
   localDiffTime,
   (newVal) => {
-    diffState.diffTime.value = newVal
+    diffState.time.value = newVal
   },
   { immediate: false }
 )
 
-watch(diffState.diffResult, () => {
+watch(diffState.result, () => {
   localDiffTime.value = 0.5
 })
 
 function swapDiffMode() {
-  if (diffState.diffMode.value === VisualDiffMode.COLORED)
-    return (diffState.diffMode.value = VisualDiffMode.PLAIN)
-  diffState.diffMode.value = VisualDiffMode.COLORED
+  if (diffState.mode.value === VisualDiffMode.COLORED)
+    return (diffState.mode.value = VisualDiffMode.PLAIN)
+
+  diffState.mode.value = VisualDiffMode.COLORED
 }
 
 // NOTE: deduping will not be needed anymore
 const added = computed(() => {
-  const mapped = diffState.diffResult.value?.added.map(
+  const mapped = diffState.result.value?.added.map(
     (node) => node.model.raw as SpeckleObject
   )
   return uniqBy(mapped, (node) => node.id)
@@ -108,7 +109,7 @@ const addedIds = computed(() => added.value.map((o) => o.id as string))
 
 const removed = computed(() => {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-  const mapped = diffState.diffResult.value?.removed.map(
+  const mapped = diffState.result.value?.removed.map(
     (node) => node.model.raw as SpeckleObject
   )
   return uniqBy(mapped, (node) => node.id)
@@ -116,14 +117,14 @@ const removed = computed(() => {
 const removedIds = computed(() => removed.value.map((o) => o.id as string))
 
 const unchanged = computed(() => {
-  const mapped = diffState.diffResult.value?.unchanged.map(
+  const mapped = diffState.result.value?.unchanged.map(
     (node) => node.model.raw as SpeckleObject
   )
   return uniqBy(mapped, (node) => node.id)
 })
 const unchangedIds = computed(() => unchanged.value.map((o) => o.id as string))
 const modified = computed(() => {
-  const mapped = diffState.diffResult.value?.modified.map((tuple) => {
+  const mapped = diffState.result.value?.modified.map((tuple) => {
     return [tuple[0].model.raw as SpeckleObject, tuple[1].model.raw as SpeckleObject]
   })
   return uniqBy(mapped, (tuple) => tuple[0].id)

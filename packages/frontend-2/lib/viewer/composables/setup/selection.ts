@@ -42,10 +42,10 @@ function useSelectOrZoomOnSelection() {
         // "modified", we want to select its pair as well.
         if (
           state.ui.diff.enabled.value &&
-          state.ui.diff.diffResult.value &&
+          state.ui.diff.result.value &&
           firstVisibleSelectionHit.object.applicationId
         ) {
-          const modifiedObjectPairs = state.ui.diff.diffResult.value.modified
+          const modifiedObjectPairs = state.ui.diff.result.value.modified
           const obj = firstVisibleSelectionHit.object
           const pairedItems = modifiedObjectPairs.find(
             (item) =>

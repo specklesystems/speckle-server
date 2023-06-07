@@ -305,11 +305,7 @@ function useViewerCameraIntegration() {
   // debouncing pos/target updates to avoid jitteriness + spotlight mode unnecessarily disabling
   useViewerCameraTracker(
     () => {
-      const cameraManuallyChanged = loadCameraDataFromViewer()
-      if (cameraManuallyChanged) {
-        // Stop following TODO: Doesn't work very well
-        // spotlightUserSessionId.value = null
-      }
+      loadCameraDataFromViewer()
     }
     // { debounceWait: 100 }
   )
@@ -642,34 +638,27 @@ function useDiffingIntegration() {
         newVersion?.referencedObject as string
       )
 
-      state.ui.diff.diffResult.value = await state.viewer.instance.diff(
+      state.ui.diff.result.value = await state.viewer.instance.diff(
         oldObjUrl,
         newObjUrl,
-        state.ui.diff.diffMode.value,
+        state.ui.diff.mode.value,
         authCookie.value
       )
-
-      // const { modelId, versionA, versionB } = unpackDiffString(newVal)
-      // diff(modelId, versionA, versionB)
     },
     { immediate: true }
   )
 
   // const preventWatchers = 0
-  watch(state.ui.diff.diffResult, (val) => {
+  watch(state.ui.diff.result, (val) => {
     if (!val) return
     // reset visual diff time and mode on new diff result
-    // state.viewer.instance.setDiffTime(val, 0.5)
-    // state.viewer.instance.setVisualDiffMode(val, VisualDiffMode.COLORED)
-    // preventWatchers = 0 // prevents the two watchers below from running on init
-
     // sometimes the watcher won't fire even when the values are updated, because they're updated to
     // the same values that they were already. because of that we're manually & forcefully running
     // the relevant watchers when diffResult changes
     ignoreDiffModeUpdates(() => {
       ignoreDiffTimeUpdates(() => {
-        state.ui.diff.diffTime.value = 0.5
-        state.ui.diff.diffMode.value = VisualDiffMode.COLORED
+        state.ui.diff.time.value = 0.5
+        state.ui.diff.mode.value = VisualDiffMode.COLORED
 
         // this watcher also updates diffTime, so no need to invoke that separately
         triggerDiffModeWatch()
@@ -678,32 +667,24 @@ function useDiffingIntegration() {
   })
 
   const { ignoreUpdates: ignoreDiffTimeUpdates } = watchTriggerable(
-    state.ui.diff.diffTime,
+    state.ui.diff.time,
     (val) => {
       if (!hasInitialLoadFired.value) return
-      if (!state.ui.diff.diffResult.value) return
-      // if (preventWatchers < 2) {
-      //   preventWatchers++
-      //   return
-      // }
+      if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setDiffTime(state.ui.diff.diffResult.value, val)
+      state.viewer.instance.setDiffTime(state.ui.diff.result.value, val)
     }
   )
 
   const { trigger: triggerDiffModeWatch, ignoreUpdates: ignoreDiffModeUpdates } =
-    watchTriggerable(state.ui.diff.diffMode, (val) => {
+    watchTriggerable(state.ui.diff.mode, (val) => {
       if (!hasInitialLoadFired.value) return
-      if (!state.ui.diff.diffResult.value) return
-      // if (preventWatchers < 2) {
-      //   preventWatchers++
-      //   return
-      // }
+      if (!state.ui.diff.result.value) return
 
-      state.viewer.instance.setVisualDiffMode(state.ui.diff.diffResult.value, val)
+      state.viewer.instance.setVisualDiffMode(state.ui.diff.result.value, val)
       state.viewer.instance.setDiffTime(
-        state.ui.diff.diffResult.value,
-        state.ui.diff.diffTime.value
+        state.ui.diff.result.value,
+        state.ui.diff.time.value
       ) // hmm, why do i need to call diff time again? seems like a minor viewer bug
     })
 

@@ -165,9 +165,9 @@ export async function convertLegacyDataToState(
           ]
         : null,
       diff: {
-        diffString: null,
-        diffMode: 1,
-        diffTime: 0.5
+        command: null,
+        mode: 1,
+        time: 0.5
       }
     }
   }

@@ -16,9 +16,9 @@ export function setupUiDiffState(
       response: { availableModelsAndVersions }
     }
   } = state
-  const diffResult = shallowRef(undefined as Optional<DiffResult>)
-  const diffTime = ref(0.5)
-  const diffMode = ref<VisualDiffMode>(VisualDiffMode.COLORED)
+  const result = shallowRef(undefined as Optional<DiffResult>)
+  const time = ref(0.5)
+  const mode = ref<VisualDiffMode>(VisualDiffMode.COLORED)
 
   // TODO: Only single diff for now
   const getVersion = (type: keyof DiffInstruction) => {
@@ -51,15 +51,15 @@ export function setupUiDiffState(
     }
   })
 
-  const isEnabled = computed(() => !!(diff.value && sortedActiveVersions.value))
+  const enabled = computed(() => !!(diff.value && sortedActiveVersions.value))
 
   return {
     newVersion: computed(() => sortedActiveVersions.value?.newVersion),
     oldVersion: computed(() => sortedActiveVersions.value?.oldVersion),
-    diffTime,
-    diffMode,
-    enabled: isEnabled,
-    diffResult
+    time,
+    mode,
+    enabled,
+    result
   }
 }
 

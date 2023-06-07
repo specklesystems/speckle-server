@@ -33,7 +33,6 @@ const props = defineProps<{
 }>()
 
 const colorClasses = computed(() => {
-  // if (diffState.diffMode.value === VisualDiffMode.PLAIN) return 'hidden'
   switch (props.name) {
     case 'added':
       return 'bg-green-500'

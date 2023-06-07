@@ -247,9 +247,9 @@ export type InjectableViewerState = Readonly<{
     diff: {
       newVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
       oldVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
-      diffTime: Ref<number>
-      diffMode: Ref<VisualDiffMode>
-      diffResult: ShallowRef<Optional<DiffResult>> //ComputedRef<Optional<DiffResult>>
+      time: Ref<number>
+      mode: Ref<VisualDiffMode>
+      result: ShallowRef<Optional<DiffResult>> //ComputedRef<Optional<DiffResult>>
       enabled: Ref<boolean>
     }
     sectionBox: Ref<Nullable<Box3>>
