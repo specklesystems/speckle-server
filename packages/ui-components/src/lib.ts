@@ -45,6 +45,7 @@ import { LayoutMenuItem, LayoutTabItem } from '~~/src/helpers/layout/components'
 import LayoutTabs from '~~/src/components/layout/Tabs.vue'
 import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
 import { InfiniteLoaderState } from '~~/src/helpers/global/components'
+import LayoutPanel from '~~/src/components/layout/Panel.vue'
 
 export {
   GlobalToastRenderer,
@@ -81,7 +82,8 @@ export {
   useResponsiveHorizontalDirectionCalculation,
   LayoutMenu,
   LayoutTabs,
-  InfiniteLoading
+  InfiniteLoading,
+  LayoutPanel
 }
 export type {
   ToastNotification,
