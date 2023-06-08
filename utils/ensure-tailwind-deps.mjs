@@ -52,6 +52,7 @@ async function doWork() {
     lock(lockFilePath, lockFileOpts, async (err) => {
       if (err) {
         await waitForUnlock()
+        return
       }
 
       const depsExist = await checkForPresence()
