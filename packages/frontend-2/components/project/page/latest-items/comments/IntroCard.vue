@@ -39,6 +39,9 @@
   </div>
 </template>
 <script setup lang="ts">
+import { useTheme } from '~~/lib/core/composables/theme'
+const { isDarkTheme } = useTheme()
+
 withDefaults(
   defineProps<{
     small?: boolean
@@ -47,7 +50,4 @@ withDefaults(
     small: false
   }
 )
-
-import { useTheme } from '~~/lib/core/composables/theme'
-const { isDarkTheme } = useTheme()
 </script>
