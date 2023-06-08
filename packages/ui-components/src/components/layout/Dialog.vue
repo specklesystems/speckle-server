@@ -53,6 +53,7 @@
 <script setup lang="ts">
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { computed } from 'vue'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 

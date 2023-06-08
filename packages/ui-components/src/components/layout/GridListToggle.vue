@@ -1,14 +1,15 @@
 <template>
-  <NuxtLink
+  <button
     class="flex items-center justify-center rounded bg-foundation h-8 w-8 shadow cursor-pointer text-foreground"
     @click="onClick"
   >
     <Component :is="currentIcon" class="h-6 w-6" />
-  </NuxtLink>
+  </button>
 </template>
 <script setup lang="ts">
 import { Bars3Icon, Squares2X2Icon } from '@heroicons/vue/24/solid'
-import { GridListToggleValue } from '~~/lib/layout/helpers/components'
+import { computed } from 'vue'
+import { GridListToggleValue } from '~~/src/helpers/layout/components'
 
 const emit = defineEmits<{
   (e: 'click', v: MouseEvent): void
