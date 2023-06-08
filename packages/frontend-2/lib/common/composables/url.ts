@@ -26,7 +26,7 @@ export function useRouteHashState() {
       if (hash.length < 2 || !hash.startsWith('#')) return {}
 
       const keyValuePairs = hash.substring(1).split('&')
-      return reduce(
+      const result = reduce(
         keyValuePairs,
         (result, item) => {
           const [key, value] = item.split('=')
@@ -37,6 +37,7 @@ export function useRouteHashState() {
         },
         {} as Record<string, Nullable<string>>
       )
+      return result
     },
     set: async (newVal) => {
       const hashString = serializeHashState(newVal)
@@ -45,7 +46,8 @@ export function useRouteHashState() {
         hash: hashString
       })
     },
-    initialState: {}
+    initialState: {},
+    asyncRead: false
   })
 
   return { hashState }

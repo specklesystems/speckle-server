@@ -75,6 +75,7 @@
         :last="index === props.model.versions.totalCount - 1"
         :last-loaded="index === props.model.versions.items.length - 1"
         @change-version="handleVersionChange"
+        @view-changes="handleViewChanges"
       />
       <div class="mt-4 px-2 py-2">
         <FormButton
@@ -92,21 +93,22 @@
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import localizedFormat from 'dayjs/plugin/localizedFormat'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
   XMarkIcon,
   ArrowPathRoundedSquareIcon,
   ChevronUpIcon
 } from '@heroicons/vue/24/solid'
-import { ViewerLoadedResourcesQuery } from '~~/lib/common/generated/gql/graphql'
+import {
+  ViewerLoadedResourcesQuery,
+  ViewerModelVersionCardItemFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { Get } from 'type-fest'
 import {
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
-
-dayjs.extend(localizedFormat)
+import { useDiffUtilities } from '~~/lib/viewer/composables/ui'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
@@ -122,6 +124,7 @@ const props = defineProps<{
 
 const { switchModelToVersion } = useInjectedViewerRequestedResources()
 const { loadMoreVersions } = useInjectedViewerLoadedResources()
+const { diffModelVersions } = useDiffUtilities()
 
 const showVersions = ref(false)
 
@@ -195,5 +198,10 @@ async function handleVersionChange(versionId: string) {
 
 const onLoadMore = async () => {
   await loadMoreVersions(props.model.id)
+}
+
+async function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
+  if (!loadedVersion.value?.id) return
+  await diffModelVersions(modelId.value, loadedVersion.value.id, version.id)
 }
 </script>

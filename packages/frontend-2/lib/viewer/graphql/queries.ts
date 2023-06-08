@@ -35,7 +35,9 @@ export const viewerLoadedResourcesQuery = graphql(`
           id
           name
           updatedAt
-          loadedVersion: versions(filter: { priorityIds: $versionIds }, limit: 1) {
+          loadedVersion: versions(
+            filter: { priorityIds: $versionIds, priorityIdsOnly: true }
+          ) {
             items {
               ...ViewerModelVersionCardItem
             }
@@ -76,6 +78,28 @@ export const viewerModelVersionsQuery = graphql(`
           items {
             ...ViewerModelVersionCardItem
           }
+        }
+      }
+    }
+  }
+`)
+
+export const viewerDiffVersionsQuery = graphql(`
+  query ViewerDiffVersions(
+    $projectId: String!
+    $modelId: String!
+    $versionAId: String!
+    $versionBId: String!
+  ) {
+    project(id: $projectId) {
+      id
+      model(id: $modelId) {
+        id
+        versionA: version(id: $versionAId) {
+          ...ViewerModelVersionCardItem
+        }
+        versionB: version(id: $versionBId) {
+          ...ViewerModelVersionCardItem
         }
       }
     }

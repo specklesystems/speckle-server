@@ -41,18 +41,17 @@
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
-import { SpeckleViewer } from '@speckle/shared'
 import {
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
 import { PlusIcon, CheckIcon, MinusIcon } from '@heroicons/vue/24/solid'
+import { SpeckleViewer } from '@speckle/shared'
 
 defineEmits(['close'])
 
 const showRemove = ref(false)
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
-
 const { items } = useInjectedViewerRequestedResources()
 
 const open = ref(false)

@@ -14,7 +14,11 @@ export default defineNuxtModule({
   async setup() {
     // Add all @speckle/ui-components components
     for (const [key, val] of Object.entries(SpeckleUiComponents)) {
-      if (!isVueComponent(val)) return
+      const isVue = isVueComponent(val)
+      if (!isVue) {
+        continue
+      }
+
       addComponent({
         name: key,
         filePath: '@speckle/ui-components',

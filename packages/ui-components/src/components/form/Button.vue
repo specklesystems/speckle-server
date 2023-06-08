@@ -180,6 +180,7 @@ const RouterLink = resolveDynamicComponent('RouterLink')
 
 const linkComponent = computed(() => {
   if (props.linkComponent) return props.linkComponent
+  if (props.external) return 'a'
   if (isObjectLike(NuxtLink)) return NuxtLink
   if (isObjectLike(RouterLink)) return RouterLink
   return 'a'

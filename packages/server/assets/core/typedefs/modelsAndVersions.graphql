@@ -239,6 +239,11 @@ input ModelVersionsFilter {
   Make sure these specified versions are always loaded first
   """
   priorityIds: [String!]
+
+  """
+  Only return versions specified in `priorityIds`
+  """
+  priorityIdsOnly: Boolean
 }
 
 enum ProjectModelsUpdatedMessageType {
