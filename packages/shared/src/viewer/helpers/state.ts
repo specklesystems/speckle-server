@@ -1,7 +1,7 @@
-import { intersection, isObjectLike } from 'lodash'
+import { get, intersection, isObjectLike } from 'lodash'
 import { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes'
 
-export const SERIALIZED_VIEWER_STATE_VERSION = 1.1
+export const SERIALIZED_VIEWER_STATE_VERSION = 1.2
 
 export type SerializedViewerState = {
   projectId: string
@@ -30,6 +30,11 @@ export type SerializedViewerState = {
         isTyping: boolean
         newThreadEditor: boolean
       }
+    }
+    diff: {
+      command: Nullable<string>
+      time: number
+      mode: number
     }
     spotlightUserSessionId: Nullable<string>
     filters: {
@@ -97,6 +102,18 @@ export const formatSerializedViewerState = (
 
   if (!state.ui.spotlightUserSessionId) {
     state.ui.spotlightUserSessionId = null
+  }
+
+  /**
+   * v1.1 -> v1.2
+   * - ui.diff added
+   */
+  if (!state.ui.diff || !get(state.ui.diff, 'command')) {
+    state.ui.diff = {
+      command: null,
+      mode: 1,
+      time: 0.5
+    }
   }
 
   return state

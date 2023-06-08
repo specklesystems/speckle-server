@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Nullable } from '@speckle/shared'
 import { SelectionEvent } from '@speckle/viewer'
+import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useCameraUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
@@ -35,6 +37,30 @@ function useSelectOrZoomOnSelection() {
 
         if (!firstVisibleSelectionHit) return clearSelection()
         addToSelection(firstVisibleSelectionHit.object)
+        // Expands default viewer selection behaviour with a special case in diff mode.
+        // In diff mode, if we select via a mouse click an object, and that object is
+        // "modified", we want to select its pair as well.
+        if (
+          state.ui.diff.enabled.value &&
+          state.ui.diff.result.value &&
+          firstVisibleSelectionHit.object.applicationId
+        ) {
+          const modifiedObjectPairs = state.ui.diff.result.value.modified
+          const obj = firstVisibleSelectionHit.object
+          const pairedItems = modifiedObjectPairs.find(
+            (item) =>
+              (item[0].model.raw as SpeckleObject).id === obj.id ||
+              (item[1].model.raw as SpeckleObject).id === obj.id
+          )
+          if (!pairedItems) return
+
+          const pair =
+            (pairedItems[0].model.raw as SpeckleObject).id === obj.id
+              ? (pairedItems[1].model.raw as SpeckleObject)
+              : (pairedItems[0].model.raw as SpeckleObject)
+          if (!pair) return
+          addToSelection(pair)
+        }
       },
       doubleClickCallback: (args, { firstVisibleSelectionHit }) => {
         if (!args) return zoom()
