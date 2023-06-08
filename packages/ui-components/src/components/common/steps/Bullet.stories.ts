@@ -33,6 +33,10 @@ export default {
       options: ['horizontal', 'vertical'],
       control: { type: 'select' }
     },
+    stepsPadding: {
+      options: ['base', 'xs', 'sm'],
+      control: { type: 'select' }
+    },
     'update:modelValue': {
       type: 'function',
       action: 'v-model'
@@ -65,7 +69,8 @@ export const Default: StoryType = {
     orientation: 'horizontal',
     steps: testSteps,
     modelValue: 1,
-    nonInteractive: false
+    nonInteractive: false,
+    stepsPadding: 'base'
   }
 }
 
