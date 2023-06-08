@@ -56,7 +56,13 @@
         :key="thread.id"
         :thread="thread"
       />
-      <div v-if="commentThreads.length === 0">TODO: Empty state</div>
+      <div v-if="commentThreads.length === 0">
+        <ProjectPageLatestItemsCommentsIntroCard small />
+      </div>
+      <!-- TODO: new thread on click in centre of screen, I can't figure out how -->
+      <!-- <div class="py-2 text-center">
+        <FormButton>New Discussion</FormButton>
+      </div> -->
     </div>
   </ViewerLayoutPanel>
 </template>

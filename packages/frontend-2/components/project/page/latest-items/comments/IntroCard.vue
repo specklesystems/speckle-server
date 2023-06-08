@@ -1,15 +1,14 @@
 <template>
-  <div
-    :class="[
-      'p-4',
-      'flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:space-x-6 sm:items-center'
-    ]"
-  >
-    <div class="w-42 h-42 group transition-[margin-right] mr-0 hover:mr-12">
+  <div :class="['p-4', 'flex flex-col justify-center items-center space-y-8']">
+    <div
+      :class="`w-42 h-42 group transition-[margin-right] mr-0 hover:mr-12 ${
+        small ? 'scale-75' : ''
+      }`"
+    >
       <template v-if="!isDarkTheme">
         <img
           src="~~/assets/images/discussions/d-w-1.png"
-          class="opacity-80 w-36 h-auto shadow-md relative transition grayscale blur-none group-hover:blur-sm group-hover:grayscale-0 group-hover:-translate-x-10 group-hover:-translate-y-3 group-hover:scale-105"
+          class="opacity-80 w-36 h-auto shadow-md relative transition grayscale blur-[1px] group-hover:blur-[2px] group-hover:grayscale-0 group-hover:-translate-x-10 group-hover:-translate-y-3 group-hover:scale-105"
           alt="discussions image"
         />
         <img
@@ -21,7 +20,7 @@
       <template v-else>
         <img
           src="~~/assets/images/discussions/d-d-1.png"
-          class="opacity-80 w-36 h-auto shadow-md relative transition grayscale blur-none group-hover:blur-sm group-hover:grayscale-0 group-hover:-translate-x-10 group-hover:-translate-y-3 group-hover:scale-105"
+          class="opacity-80 w-36 h-auto shadow-md relative transition grayscale blur-[1px] group-hover:blur-[2px] group-hover:grayscale-0 group-hover:-translate-x-10 group-hover:-translate-y-3 group-hover:scale-105"
           alt="discussions image"
         />
         <img
@@ -31,15 +30,24 @@
         />
       </template>
     </div>
-    <div class="text-foreground">
+    <div class="text-foreground text-center">
       <div>Speckle allows for real time discussions straight in your 3D model.</div>
-      <div class="text-xs text-foreground-2">
+      <div v-if="!small" class="text-xs text-foreground-2">
         Head over to a model and start coordinating right away!
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
+withDefaults(
+  defineProps<{
+    small?: boolean
+  }>(),
+  {
+    small: false
+  }
+)
+
 import { useTheme } from '~~/lib/core/composables/theme'
 const { isDarkTheme } = useTheme()
 </script>

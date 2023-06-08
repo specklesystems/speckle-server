@@ -15,8 +15,8 @@
       />
     </div>
     <div
-      class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4"
       v-if="!showEmptyState"
+      class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4"
     >
       <h1 class="h4 font-bold">Projects</h1>
 
