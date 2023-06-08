@@ -113,7 +113,6 @@ const showLoadingBar = ref(false)
 
 const { activeUser } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
-const route = useRoute()
 const areQueriesLoading = useQueryLoading()
 const apollo = useApolloClient().client
 const {
