@@ -94,7 +94,10 @@
     "vue-syntactic-server.trace.server": "off",
     "svg.preview.background": "transparent",
     "editor.tabSize": 2,
-    "typescript.tsdk": "node_modules/typescript/lib"
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "[vue]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
   },
   "extensions": {
     // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.
