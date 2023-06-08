@@ -47,10 +47,7 @@ export class ViewerVersionResource extends ViewerModelResource {
   }
 
   toJSON() {
-    return {
-      modelId: this.modelId,
-      versionId: this.versionId
-    }
+    return this.toString()
   }
 }
 

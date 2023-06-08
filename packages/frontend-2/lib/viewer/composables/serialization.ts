@@ -260,9 +260,9 @@ export function useApplySerializedState() {
 
       const instruction = command.diffs[0]
       await diffModelVersions(
-        instruction.previousVersion.modelId,
-        instruction.previousVersion.versionId,
-        instruction.newVersion.versionId
+        instruction.versionA.modelId,
+        instruction.versionA.versionId,
+        instruction.versionB.versionId
       )
     } else {
       await endDiff()

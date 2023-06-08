@@ -290,11 +290,11 @@ export function useDiffUtilities() {
     await state.urlHashState.diff.update({
       diffs: [
         {
-          previousVersion: new SpeckleViewer.ViewerRoute.ViewerVersionResource(
+          versionA: new SpeckleViewer.ViewerRoute.ViewerVersionResource(
             modelId,
             versionA
           ),
-          newVersion: new SpeckleViewer.ViewerRoute.ViewerVersionResource(
+          versionB: new SpeckleViewer.ViewerRoute.ViewerVersionResource(
             modelId,
             versionB
           )

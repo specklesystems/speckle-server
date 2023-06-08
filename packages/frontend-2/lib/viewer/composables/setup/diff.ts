@@ -5,7 +5,15 @@ import {
   InitialStateWithUrlHashState,
   InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
-import { isObjectLike, has, get, isArray, differenceBy, sortBy } from 'lodash-es'
+import {
+  isObjectLike,
+  has,
+  get,
+  isArray,
+  differenceBy,
+  sortBy,
+  isString
+} from 'lodash-es'
 
 export function setupUiDiffState(
   state: InitialStateWithUrlHashState
@@ -33,10 +41,10 @@ export function setupUiDiffState(
   }
 
   const versionA = computed(
-    (): Optional<ViewerModelVersionCardItemFragment> => getVersion('previousVersion')
+    (): Optional<ViewerModelVersionCardItemFragment> => getVersion('versionA')
   )
   const versionB = computed(
-    (): Optional<ViewerModelVersionCardItemFragment> => getVersion('newVersion')
+    (): Optional<ViewerModelVersionCardItemFragment> => getVersion('versionB')
   )
 
   const sortedActiveVersions = computed(() => {
@@ -64,8 +72,8 @@ export function setupUiDiffState(
 }
 
 export type DiffInstruction = {
-  previousVersion: SpeckleViewer.ViewerRoute.ViewerVersionResource
-  newVersion: SpeckleViewer.ViewerRoute.ViewerVersionResource
+  versionA: SpeckleViewer.ViewerRoute.ViewerVersionResource
+  versionB: SpeckleViewer.ViewerRoute.ViewerVersionResource
 }
 
 export type DiffStateCommand = {
@@ -94,20 +102,27 @@ export function useDiffBuilderUtilities() {
         const getResource = (
           val: unknown
         ): Nullable<SpeckleViewer.ViewerRoute.ViewerVersionResource> => {
-          const modelId = get(val, 'modelId') as string
-          const versionId = get(val, 'versionId') as string
+          const valString = isString(val) ? val : null
+          if (!valString) return null
+
+          const [resource] = SpeckleViewer.ViewerRoute.parseUrlParameters(valString)
+          if (!resource || !SpeckleViewer.ViewerRoute.isModelResource(resource))
+            return null
+
+          const modelId = resource.modelId
+          const versionId = resource.versionId
           if (!modelId || !versionId) return null
 
           return new SpeckleViewer.ViewerRoute.ViewerVersionResource(modelId, versionId)
         }
 
-        const previousVersion = getResource(get(diff, 'previousVersion'))
-        const newVersion = getResource(get(diff, 'newVersion'))
-        if (!previousVersion || !newVersion) continue
+        const versionA = getResource(get(diff, 'versionA'))
+        const versionB = getResource(get(diff, 'versionB'))
+        if (!versionA || !versionB) continue
 
         finalDiffs.push({
-          newVersion,
-          previousVersion
+          versionB,
+          versionA
         })
       }
 
@@ -124,7 +139,7 @@ export function useDiffBuilderUtilities() {
       a.diffs,
       b.diffs,
       (instruction) =>
-        `${instruction.previousVersion.toString()}->${instruction.newVersion.toString()}`
+        `${instruction.versionA.toString()}->${instruction.versionB.toString()}`
     )
     return differentInstructions.length < 1
   }
