@@ -133,5 +133,9 @@ markClassesUsed([
   'sm:space-x-2',
   'md:space-x-2',
   'lg:space-x-2',
-  'xl:space-x-2'
+  'xl:space-x-2',
+  'sm:space-x-4',
+  'md:space-x-4',
+  'lg:space-x-4',
+  'xl:space-x-4'
 ])
