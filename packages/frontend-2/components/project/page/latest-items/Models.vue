@@ -64,10 +64,10 @@
             <FormButton
               v-if="canContribute"
               class="grow"
-              :icon-right="PlusIcon"
+              :icon-left="PlusIcon"
               @click="showNewDialog = true"
             >
-              New Model
+              New
             </FormButton>
           </div>
         </div>

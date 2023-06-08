@@ -14,14 +14,16 @@
         :invites="projectsPanelResult?.activeUser"
       />
     </div>
-    <div class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4">
+    <div
+      class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4"
+      v-if="!showEmptyState"
+    >
       <h1 class="h4 font-bold">Projects</h1>
 
       <div
         class="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-2 grow md:justify-end"
       >
         <FormTextInput
-          v-if="!showEmptyState"
           v-model="search"
           name="modelsearch"
           :show-label="false"
@@ -135,10 +137,8 @@ const { onResult: onUserProjectsUpdate } = useSubscription(
   onUserProjectsUpdateSubscription
 )
 
-const forceEmptyState = computed(() => !!route.query.forceEmpty)
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
 const showEmptyState = computed(() => {
-  if (forceEmptyState.value) return true
   const isFiltering =
     projectsVariables.value?.filter?.onlyWithRoles?.length ||
     projectsVariables.value?.filter?.search?.length
