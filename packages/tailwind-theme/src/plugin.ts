@@ -31,7 +31,7 @@ export const lightThemeVariables = {
   /* focused primary color */
   '--primary-focus': '#2563eb',
   /* muted primary color */
-  '--primary-muted': '#3b82f60d',
+  '--primary-muted': '#e8eff8',
 
   /* outline variations */
   '--outline-1': '#3b82f6',
@@ -89,7 +89,7 @@ export const darkThemeVariables = {
   /* focused primary color */
   '--primary-focus': '#60a5fa',
   /* muted primary color */
-  '--primary-muted': '#71717a0d',
+  '--primary-muted': '#1d1d20',
 
   /* outline variations */
   '--outline-1': '#a1a1aa',

@@ -125,6 +125,31 @@ export const Default: StoryType = {
   }
 }
 
+export const WithLabel: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    showLabel: true
+  }
+}
+
+export const WithLabelAndHelp: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    showLabel: true,
+    help: 'Some help text'
+  }
+}
+
+export const Tinted: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    buttonStyle: 'tinted'
+  }
+}
+
 export const LimitedWidth: StoryType = {
   ...Default,
   render: (args, ctx) => ({
