@@ -161,7 +161,10 @@ import {
   getKeyboardShortcutTitle
 } from '@speckle/ui-components'
 
-import { useInjectedViewerLoadedResources, useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewerLoadedResources,
+  useInjectedViewerInterfaceState
+} from '~~/lib/viewer/composables/setup'
 
 const {
   zoomExtentsOrSelection,
