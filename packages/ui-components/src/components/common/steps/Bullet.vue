@@ -1,6 +1,6 @@
 <template>
   <nav class="flex justify-center" :aria-label="ariaLabel || 'Progress steps'">
-    <ol :class="[listClasses, basic ? 'basic' : '']">
+    <ol :class="[listClasses, extraListClasses]">
       <li v-for="(step, i) in steps" :key="step.name">
         <a
           v-if="isFinishedStep(i)"
@@ -112,9 +112,14 @@ const labelClasses = computed(() => {
 
   return classParts.join(' ')
 })
+
+const extraListClasses = computed(() => {
+  const classParts: string[] = []
+
+  if (props.basic) {
+    classParts.push('basic')
+  }
+
+  return classParts.join(' ')
+})
 </script>
-<style scoped>
-.basic {
-  @apply space-x-4 !important;
-}
-</style>

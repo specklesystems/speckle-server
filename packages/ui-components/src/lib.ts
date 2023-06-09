@@ -46,6 +46,7 @@ import LayoutTabs from '~~/src/components/layout/Tabs.vue'
 import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
 import { InfiniteLoaderState } from '~~/src/helpers/global/components'
 import LayoutPanel from '~~/src/components/layout/Panel.vue'
+import CommonAlert from '~~/src/components/common/Alert.vue'
 
 export {
   GlobalToastRenderer,
@@ -83,7 +84,8 @@ export {
   LayoutMenu,
   LayoutTabs,
   InfiniteLoading,
-  LayoutPanel
+  LayoutPanel,
+  CommonAlert
 }
 export type {
   ToastNotification,

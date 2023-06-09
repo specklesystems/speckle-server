@@ -86,6 +86,13 @@ export const VersionBasic: StoryType = mergeStories(Default, {
   }
 })
 
+export const BasicVertical: StoryType = mergeStories(Default, {
+  args: {
+    basic: true,
+    orientation: 'vertical'
+  }
+})
+
 export const StartOnNegativeStep: StoryType = mergeStories(Default, {
   args: {
     modelValue: -1
