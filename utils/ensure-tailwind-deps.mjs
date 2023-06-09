@@ -68,9 +68,7 @@ async function doWork() {
         (err, stdout, stderr) => {
           if (err) {
             console.error(err)
-            return reject()
           }
-
           if (stdout) {
             console.log(stdout)
           }
@@ -79,9 +77,15 @@ async function doWork() {
           }
         }
       )
-      proc.on('exit', () => {
-        console.log(`...done [${Math.round(performance.now() - now)}ms]`)
-        return resolve()
+      proc.on('exit', (code) => {
+        console.log(
+          `...done w/ status ${code} [${Math.round(performance.now() - now)}ms]`
+        )
+        if (!code) {
+          resolve()
+        } else {
+          reject(new Error('Failed with non-0 status code'))
+        }
       })
     })
   })

@@ -222,7 +222,16 @@ export class Differ {
       } else {
         const applicationId = rvsB[k].model.raw.applicationId
           ? rvsB[k].model.raw.applicationId
-          : rvsB[k].parent.model.raw.applicationId
+          : this.tree
+              .getAncestors(rvsB[k])
+              .find((value) => value.model.raw.applicationId)
+        if (!applicationId) {
+          Logger.error(
+            `No application ID found. Object id:${rvsB[k].model.raw.id} is considered 'added'!`
+          )
+          diffResult.added.push(rvsB[k])
+          continue
+        }
         const res2 = rootA.first((node: TreeNode) => {
           return applicationId === node.model.raw.applicationId
         })
@@ -241,12 +250,24 @@ export class Differ {
       if (!res) {
         const applicationId = rvsA[k].model.raw.applicationId
           ? rvsA[k].model.raw.applicationId
-          : rvsA[k].parent.model.raw.applicationId
+          : this.tree
+              .getAncestors(rvsA[k])
+              .find((value) => value.model.raw.applicationId)
+        if (!applicationId) {
+          Logger.error(
+            `No application ID found. Object id:${rvsA[k].model.raw.id} is considered 'removed'!`
+          )
+          diffResult.removed.push(rvsA[k])
+          continue
+        }
         const res2 = rootB.first((node: TreeNode) => {
           return applicationId === node.model.raw.applicationId
         })
-        if (!res2) diffResult.removed.push(rvsA[k])
-        else modifiedOld.push(rvsA[k])
+        if (!res2) {
+          diffResult.removed.push(rvsA[k])
+        } else {
+          modifiedOld.push(rvsA[k])
+        }
       } else {
         diffResult.unchanged.push(res)
       }
@@ -262,8 +283,8 @@ export class Differ {
   }
 
   public setDiffTime(time: number) {
-    const from = Math.min(Math.max(1 - time, 0.2), 1)
-    const to = Math.min(Math.max(time, 0.2), 1)
+    const from = Math.min(Math.max(1 - time, 0), 1)
+    const to = Math.min(Math.max(time, 0), 1)
 
     this.addedMaterials.forEach((mat) => {
       mat.opacity =

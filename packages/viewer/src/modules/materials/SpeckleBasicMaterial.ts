@@ -42,7 +42,8 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
       uViewer_low: new Vector3(),
       uTransforms: [new Matrix4()],
       tTransforms: null,
-      objCount: 1
+      objCount: 1,
+      billboardPos: new Vector3()
     }
   }
 

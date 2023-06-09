@@ -377,7 +377,8 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      console.warn(await this.viewer.screenshot())
+      // console.warn(await this.viewer.screenshot())
+      this.viewer.getRenderer().adnotate()
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -882,7 +883,7 @@ export default class Sandbox {
     filteringFolder.addInput(this.filterParams, 'filterBy', {
       options: {
         Volume: 'parameters.HOST_VOLUME_COMPUTED.value',
-        Area: 'parameters.HOST_AREA_COMPUTED.value',
+        Area: 'area',
         Elevation: 'Elevation',
         SpeckleType: 'speckle_type',
         DisplayName: 'DisplayName',
@@ -996,10 +997,17 @@ export default class Sandbox {
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/a4e2fad01e69cd886ecbfedf221f5301',
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/a3c6c58ef9872b17125c9ab2b009e5cd',
         // instances & hosting
-        'https://speckle.xyz/streams/be0f962efb/objects/fb4f291a13f05f325a5575fddd4276d0',
-        'https://speckle.xyz/streams/be0f962efb/objects/21cf63a1496e366b34501429ce7ad2f5',
+        // 'https://speckle.xyz/streams/be0f962efb/objects/fb4f291a13f05f325a5575fddd4276d0',
+        // 'https://speckle.xyz/streams/be0f962efb/objects/21cf63a1496e366b34501429ce7ad2f5',
+        // bug
+        // 'https://latest.speckle.dev/streams/92b620fb17/objects/91d69894f2ac7b3b2b6de4616d89e478',
+        // 'https://latest.speckle.dev/streams/92b620fb17/objects/ce55c0fb40e77fbfc894d4c27568f1f9',
+        // bug
+        'https://latest.speckle.dev/streams/0c6ad366c4/objects/03f0a8bf0ed8064865eda87a865c7212',
+        'https://latest.speckle.dev/streams/0c6ad366c4/objects/33ef6b9b547dc9688eb40157b967eab9',
+
         VisualDiffMode.COLORED,
-        localStorage.getItem('AuthToken') as string
+        localStorage.getItem('AuthTokenLatest') as string
       )
     })
     const unDiffButton = container.addButton({

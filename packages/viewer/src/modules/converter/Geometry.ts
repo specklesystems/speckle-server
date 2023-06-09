@@ -8,6 +8,7 @@ import {
   Matrix4,
   Vector3
 } from 'three'
+import { SpeckleObject } from '../tree/DataTree'
 
 export enum GeometryAttributes {
   POSITION = 'POSITION',
@@ -22,6 +23,7 @@ export interface GeometryData {
   attributes: Partial<Record<GeometryAttributes, number[]>>
   bakeTransform: Matrix4
   transform: Matrix4
+  metaData?: SpeckleObject
 }
 
 export class Geometry {

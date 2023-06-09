@@ -29,20 +29,7 @@ export class RenderTree {
     this.tree.walk((node: TreeNode): boolean => {
       const rendeNode = this.buildRenderNode(node)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
-      if (node.model.renderView && node.model.renderView.hasGeometry) {
-        const transform = this.computeTransform(node)
-        if (rendeNode.geometry.bakeTransform) {
-          transform.multiply(rendeNode.geometry.bakeTransform)
-        }
-        Geometry.transformGeometryData(rendeNode.geometry, transform)
-        node.model.renderView.computeAABB()
-        this._treeBounds.union(node.model.renderView.aabb)
-
-        if (!GeometryConverter.keepGeometryData) {
-          GeometryConverter.disposeNodeGeometryData(node.model)
-        }
-      }
-
+      this.applyTransforms(node)
       return true
     })
   }
@@ -52,25 +39,36 @@ export class RenderTree {
       (node: TreeNode): boolean => {
         const rendeNode = this.buildRenderNode(node)
         node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
-        if (node.model.renderView && node.model.renderView.hasGeometry) {
-          const transform = this.computeTransform(node)
-          if (rendeNode.geometry.bakeTransform) {
-            transform.multiply(rendeNode.geometry.bakeTransform)
-          }
-          Geometry.transformGeometryData(rendeNode.geometry, transform)
-          node.model.renderView.computeAABB()
-          this._treeBounds.union(node.model.renderView.aabb)
-
-          if (!GeometryConverter.keepGeometryData) {
-            GeometryConverter.disposeNodeGeometryData(node.model)
-          }
-        }
+        this.applyTransforms(node)
         return !this.cancel
       },
       this.root,
       priority
     )
     return p
+  }
+
+  private applyTransforms(node: TreeNode) {
+    if (node.model.renderView) {
+      const transform = this.computeTransform(node)
+      if (node.model.renderView.hasGeometry) {
+        if (node.model.renderView.renderData.geometry.bakeTransform) {
+          transform.multiply(node.model.renderView.renderData.geometry.bakeTransform)
+        }
+        Geometry.transformGeometryData(
+          node.model.renderView.renderData.geometry,
+          transform
+        )
+        node.model.renderView.computeAABB()
+        this._treeBounds.union(node.model.renderView.aabb)
+
+        if (!GeometryConverter.keepGeometryData) {
+          GeometryConverter.disposeNodeGeometryData(node.model)
+        }
+      } else if (node.model.renderView.hasMetadata) {
+        node.model.renderView.renderData.geometry.bakeTransform.premultiply(transform)
+      }
+    }
   }
 
   private buildRenderNode(node: TreeNode): NodeRenderData {
@@ -145,7 +143,7 @@ export class RenderTree {
       .all((node: TreeNode): boolean => {
         return (
           node.model.renderView !== null &&
-          node.model.renderView.hasGeometry &&
+          (node.model.renderView.hasGeometry || node.model.renderView.hasMetadata) &&
           types.includes(node.model.renderView.renderData.speckleType)
         )
       })
@@ -156,7 +154,7 @@ export class RenderTree {
     return this.root.all((node: TreeNode): boolean => {
       return (
         node.model.renderView !== null &&
-        node.model.renderView.hasGeometry &&
+        (node.model.renderView.hasGeometry || node.model.renderView.hasMetadata) &&
         types.includes(node.model.renderView.renderData.speckleType)
       )
     })

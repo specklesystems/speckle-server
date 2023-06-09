@@ -5,7 +5,8 @@
 @tailwind utilities;
 
 /**
- * Don't pollute this - it's going to be bundled in all pages!
+ * Don't pollute this - it's going to be bundled in all pages! If it's a global style change to what can be
+ considered the "speckle tailwind theme" then make this change in @speckle/tailwind-theme instead
  */
 
 /**

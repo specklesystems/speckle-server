@@ -260,6 +260,7 @@ export class Pipeline {
       ObjectLayers.STREAM_CONTENT_MESH,
       ObjectLayers.STREAM_CONTENT_LINE,
       ObjectLayers.STREAM_CONTENT_POINT,
+      ObjectLayers.STREAM_CONTENT_TEXT,
       ObjectLayers.SHADOWCATCHER
     ])
     this.stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
