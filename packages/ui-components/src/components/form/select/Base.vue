@@ -284,7 +284,7 @@ const props = defineProps({
    * Validation stuff
    */
   rules: {
-    type: [String, Object, Function, Array] as PropType<RuleExpression<string>>,
+    type: [String, Object, Function, Array] as PropType<RuleExpression<ValueType>>,
     default: undefined
   },
   /**
