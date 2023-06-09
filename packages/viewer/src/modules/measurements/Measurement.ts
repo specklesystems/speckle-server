@@ -1,4 +1,4 @@
-import { Matrix4, Vector3 } from 'three'
+import { Camera, Matrix4, Vector3 } from 'three'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo'
 
 export enum MeasurementState {
@@ -22,6 +22,13 @@ export class Measurement {
 
   private _state: MeasurementState = MeasurementState.HIDDEN
 
+  private vecBuff0: Vector3 = new Vector3()
+  private vecBuff1: Vector3 = new Vector3()
+  private vecBuff2: Vector3 = new Vector3()
+  private vecBuff3: Vector3 = new Vector3()
+  private vecBuff4: Vector3 = new Vector3()
+  private matBuff: Matrix4 = new Matrix4()
+
   public set state(value: MeasurementState) {
     this._state = value
   }
@@ -32,9 +39,13 @@ export class Measurement {
 
   public constructor() {
     this.startGizmo = new MeasurementPointGizmo()
-    this.endGizmo = new MeasurementPointGizmo()
-    this.endGizmo.dashed = true
+    this.endGizmo = new MeasurementPointGizmo({ dashedLine: true })
     this.startLineLength = 0.25
+  }
+
+  public frameUpdate(camera: Camera) {
+    this.startGizmo.frameUpdate(camera)
+    this.endGizmo.frameUpdate(camera)
   }
 
   public update() {
@@ -43,25 +54,26 @@ export class Measurement {
     this.endGizmo.updateDisc(this.endPoint, this.endNormal)
 
     if (this._state === MeasurementState.DANGLING_START) {
-      const startLine0 = new Vector3().copy(this.startPoint)
-      const startLine1 = new Vector3()
+      const startLine0 = this.vecBuff0.copy(this.startPoint)
+      const startLine1 = this.vecBuff1
         .copy(this.startPoint)
-        .add(new Vector3().copy(this.startNormal).multiplyScalar(this.startLineLength))
+        .add(this.vecBuff2.copy(this.startNormal).multiplyScalar(this.startLineLength))
       this.startGizmo.updateLine([startLine0, startLine1])
     }
+
     if (this._state === MeasurementState.DANGLING_END) {
       const startEndDist = this.startPoint.distanceTo(this.endPoint)
-      const endStartDir = new Vector3()
+      const endStartDir = this.vecBuff0
         .copy(this.startPoint)
         .sub(this.endPoint)
         .normalize()
       const angle = Math.acos(this.startNormal.dot(endStartDir))
       this.startLineLength = Math.abs(startEndDist * Math.cos(angle))
 
-      const intersectPoint = new Vector3()
+      const intersectPoint = this.vecBuff0
         .copy(this.startPoint)
-        .add(new Vector3().copy(this.startNormal).multiplyScalar(this.startLineLength))
-      const endLineNormal = new Vector3()
+        .add(this.vecBuff1.copy(this.startNormal).multiplyScalar(this.startLineLength))
+      const endLineNormal = this.vecBuff1
         .copy(intersectPoint)
         .sub(this.endPoint)
         .normalize()
@@ -71,17 +83,17 @@ export class Measurement {
       const angle1 = Math.acos(this.endNormal.dot(endLineNormal))
       const dist1 = this.endLineLength * Math.cos(angle1)
 
-      const endLine3 = new Vector3()
+      const endLine3 = this.vecBuff1
         .copy(this.endPoint)
-        .add(new Vector3().copy(this.endNormal).multiplyScalar(dist1))
+        .add(this.vecBuff2.copy(this.endNormal).multiplyScalar(dist1))
 
-      const startLine0 = new Vector3().copy(this.startPoint)
-      const startLine1 = new Vector3()
+      const startLine0 = this.vecBuff2.copy(this.startPoint)
+      const startLine1 = this.vecBuff3
         .copy(this.startPoint)
-        .add(new Vector3().copy(this.startNormal).multiplyScalar(this.startLineLength))
+        .add(this.vecBuff4.copy(this.startNormal).multiplyScalar(this.startLineLength))
       this.startGizmo.updateLine([startLine0, startLine1])
 
-      const endLine0 = new Vector3().copy(this.endPoint)
+      const endLine0 = this.vecBuff3.copy(this.endPoint)
 
       this.endGizmo.updateLine([
         endLine0,
@@ -93,14 +105,14 @@ export class Measurement {
       ])
       this.endGizmo.updatePoint(intersectPoint)
 
-      const textPos = new Vector3()
+      const textPos = this.vecBuff0
         .copy(this.startPoint)
         .add(
-          new Vector3()
+          this.vecBuff1
             .copy(this.startNormal)
             .multiplyScalar(this.startLineLength * 0.5)
         )
-      const textTransform = new Matrix4().makeTranslation(
+      const textTransform = this.matBuff.makeTranslation(
         textPos.x,
         textPos.y,
         textPos.z

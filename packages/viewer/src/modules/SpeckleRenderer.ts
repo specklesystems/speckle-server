@@ -345,6 +345,7 @@ export default class SpeckleRenderer {
     this.updateRTEShadows()
     this.updateTransforms()
     this.updateFrustum()
+    this._measurements.update()
 
     this.pipeline.update(this)
 

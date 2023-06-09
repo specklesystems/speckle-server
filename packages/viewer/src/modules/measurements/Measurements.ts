@@ -7,16 +7,15 @@ import { Ray, Vector3 } from 'three'
 export class Measurements {
   private renderer: SpeckleRenderer = null
   private measurement: Measurement = null
-  private clickTimeout
 
   public constructor(renderer: SpeckleRenderer) {
     this.renderer = renderer
     this.renderer.input.on('pointer-move', this.onPointerMove.bind(this))
     this.renderer.input.on(ViewerEvent.ObjectClicked, this.onPointerClick.bind(this))
-    this.renderer.input.on(
-      ViewerEvent.ObjectDoubleClicked,
-      this.onPointerDoubleClick.bind(this)
-    )
+  }
+
+  public update() {
+    if (this.measurement) this.measurement.frameUpdate(this.renderer.camera)
   }
 
   private onPointerMove(data) {
@@ -54,21 +53,22 @@ export class Measurements {
 
   private onPointerClick(data) {
     if (!data.event.ctrlKey) return
-    this.clickTimeout = setTimeout(() => {
-      if (this.measurement.state === MeasurementState.DANGLING_START)
-        this.measurement.state = MeasurementState.DANGLING_END
-      else if (this.measurement.state === MeasurementState.DANGLING_END) {
-        this.measurement.state = MeasurementState.COMPLETE
-        this.measurement.update()
-        this.measurement = null
-      }
-    }, 300)
+
+    if (data.event.shiftKey) {
+      this.autoMeasure(data)
+      return
+    }
+
+    if (this.measurement.state === MeasurementState.DANGLING_START)
+      this.measurement.state = MeasurementState.DANGLING_END
+    else if (this.measurement.state === MeasurementState.DANGLING_END) {
+      this.measurement.state = MeasurementState.COMPLETE
+      this.measurement.update()
+      this.measurement = null
+    }
   }
 
-  private onPointerDoubleClick(data) {
-    if (!data.event.ctrlKey) return
-    clearTimeout(this.clickTimeout)
-
+  private autoMeasure(data) {
     if (this.measurement.state === MeasurementState.DANGLING_START) {
       const result = this.renderer.intersections.intersect(
         this.renderer.scene,

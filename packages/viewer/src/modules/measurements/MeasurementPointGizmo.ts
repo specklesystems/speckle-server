@@ -1,4 +1,5 @@
 import {
+  Camera,
   CircleGeometry,
   Color,
   DoubleSide,
@@ -7,7 +8,7 @@ import {
   InterleavedBufferAttribute,
   Matrix4,
   Mesh,
-  MeshBasicMaterial,
+  PerspectiveCamera,
   SphereGeometry,
   Vector2,
   Vector3
@@ -19,18 +20,51 @@ import { Geometry } from '../converter/Geometry'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { SpeckleText } from '../objects/SpeckleText'
 import SpeckleTextMaterial from '../materials/SpeckleTextMaterial'
+import SpeckleBasicMaterial from '../materials/SpeckleBasicMaterial'
+
+export interface MeasurementPointGizmoStyle {
+  fixedSize?: number | boolean
+  dashedLine?: boolean
+  discColor?: number
+  lineColor?: number
+  pointColor?: number
+  textColor?: number
+}
+
+const DefaultMeasurementPointGizmoStyle = {
+  fixedSize: false,
+  dashedLine: false,
+  discColor: 0x047efb,
+  lineColor: 0x047efb,
+  pointColor: 0x047efb,
+  textColor: 0x222222
+}
 
 export class MeasurementPointGizmo extends Group {
   private disc: Mesh
   private line: LineSegments2
   private point: Mesh
   private text: SpeckleText
+  private _style: MeasurementPointGizmoStyle = Object.assign(
+    {},
+    DefaultMeasurementPointGizmoStyle
+  )
 
-  public set dashed(value: boolean) {
-    this.line.material = this.getLineMaterial(value)
+  public set style(value: MeasurementPointGizmoStyle) {
+    Object.assign(this._style, value)
+    this.updateStyle()
   }
 
-  private getLineMaterial(dashed: boolean) {
+  private getDiscMaterial() {
+    const material = new SpeckleBasicMaterial({ color: this._style.discColor })
+    material.color.convertSRGBToLinear()
+    material.polygonOffset = true
+    material.polygonOffsetFactor = -5
+    material.polygonOffsetUnits = 5
+    return material
+  }
+
+  private getLineMaterial() {
     const lineMaterial = new SpeckleLineMaterial(
       {
         color: 0x047efb,
@@ -40,11 +74,11 @@ export class MeasurementPointGizmo extends Group {
         alphaToCoverage: false,
         resolution: new Vector2(919, 848)
       },
-      ['USE_RTE'].concat(dashed ? ['USE_DASH'] : [])
+      ['USE_RTE'].concat(this._style.dashedLine ? ['USE_DASH'] : [])
     )
-    lineMaterial.color = new Color(0x047efb)
+    lineMaterial.color = new Color(this._style.lineColor)
     lineMaterial.color.convertSRGBToLinear()
-    if (dashed) {
+    if (this._style.dashedLine) {
       lineMaterial.dashSize = 1
       lineMaterial.gapSize = 1
       lineMaterial.dashScale = 10
@@ -55,10 +89,14 @@ export class MeasurementPointGizmo extends Group {
     return lineMaterial
   }
 
+  private getPointMaterial() {
+    return new SpeckleBasicMaterial({ color: this._style.pointColor })
+  }
+
   private getTextMaterial() {
     const mat = new SpeckleTextMaterial(
       {
-        color: 0x222222,
+        color: this._style.textColor,
         opacity: 1,
         side: DoubleSide
       },
@@ -70,15 +108,13 @@ export class MeasurementPointGizmo extends Group {
     return mat.getDerivedMaterial()
   }
 
-  public constructor() {
+  public constructor(style?: MeasurementPointGizmoStyle) {
     super()
     const geometry = new CircleGeometry(0.25, 16)
-    const material = new MeshBasicMaterial({ color: 0x047efb })
-    material.color.convertSRGBToLinear()
-    material.polygonOffset = true
-    material.polygonOffsetFactor = -5
-    material.polygonOffsetUnits = 5
-    this.disc = new Mesh(geometry, material)
+    const doublePositions = new Float64Array(geometry.attributes.position.array)
+    Geometry.updateRTEGeometry(geometry, doublePositions)
+
+    this.disc = new Mesh(geometry, null)
     this.disc.layers.set(ObjectLayers.PROPS)
 
     const buffer = new Float64Array(18)
@@ -90,7 +126,7 @@ export class MeasurementPointGizmo extends Group {
 
     Geometry.updateRTEGeometry(lineGeometry, buffer)
 
-    this.line = new LineSegments2(lineGeometry, this.getLineMaterial(false))
+    this.line = new LineSegments2(lineGeometry, null)
     this.line.computeLineDistances()
     this.line.name = `test-mesurements-line`
     this.line.frustumCulled = false
@@ -98,12 +134,13 @@ export class MeasurementPointGizmo extends Group {
     this.line.layers.set(ObjectLayers.PROPS)
 
     const sphereGeometry = new SphereGeometry(0.1, 32, 16)
-    const sphereMaterial = new MeshBasicMaterial({ color: 0x047efb })
-    this.point = new Mesh(sphereGeometry, sphereMaterial)
+
+    this.point = new Mesh(sphereGeometry, null)
     this.point.layers.set(ObjectLayers.PROPS)
+    this.point.visible = false
 
     this.text = new SpeckleText('test-text')
-    this.text.textMesh.material = this.getTextMaterial()
+    this.text.textMesh.material = null
     this.text.matrixAutoUpdate = false
     this.text.layers.set(ObjectLayers.PROPS)
     this.text.textMesh.layers.set(ObjectLayers.PROPS)
@@ -112,6 +149,8 @@ export class MeasurementPointGizmo extends Group {
     this.add(this.disc)
     this.add(this.line)
     this.add(this.text)
+
+    this.style = style
   }
 
   public enable(disc: boolean, line: boolean, point: boolean, text: boolean) {
@@ -120,6 +159,16 @@ export class MeasurementPointGizmo extends Group {
     this.point.visible = point
     this.text.visible = text
     this.text.textMesh.visible = text
+  }
+
+  public frameUpdate(camera: Camera) {
+    if (camera.type === 'PerspectiveCamera' && +this._style.fixedSize > 0) {
+      const cam = camera as PerspectiveCamera
+      const cameraObjectDistance = cam.position.distanceTo(this.disc.position)
+      const worldSize = Math.abs(2 * Math.tan(cam.fov / 2.0) * cameraObjectDistance)
+      const size = 0.025 * worldSize
+      this.disc.scale.copy(new Vector3(size, size, size))
+    }
   }
 
   public updateDisc(position: Vector3, normal: Vector3) {
@@ -172,5 +221,12 @@ export class MeasurementPointGizmo extends Group {
         this.text.matrix.copy(transform)
         this.text.matrixWorldNeedsUpdate = true
       })
+  }
+
+  public updateStyle() {
+    this.disc.material = this.getDiscMaterial()
+    this.line.material = this.getLineMaterial()
+    this.point.material = this.getPointMaterial()
+    this.text.textMesh.material = this.getTextMaterial()
   }
 }

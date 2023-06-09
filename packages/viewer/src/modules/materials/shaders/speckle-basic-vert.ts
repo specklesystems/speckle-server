@@ -172,8 +172,9 @@ void main() {
     #endif
     
     mvPosition = modelViewMatrix * mvPosition;
-
+    
     gl_Position = projectionMatrix * mvPosition;
+
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>
 	#include <worldpos_vertex>
