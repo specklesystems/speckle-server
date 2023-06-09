@@ -32,6 +32,7 @@ import { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
 import { graphql } from '~~/lib/common/generated/gql'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 graphql(`
   fragment ProjectPageModelsActions on Model {
@@ -94,6 +95,8 @@ const isDeleteDialogOpen = computed({
   set: (isOpen) => (openDialog.value = isOpen ? ActionTypes.Delete : null)
 })
 
+const mp = useMixpanel()
+
 const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => {
   const { item } = params
 
@@ -103,6 +106,7 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       openDialog.value = item.id
       break
     case ActionTypes.Share:
+      mp.track('Branch Action', { type: 'action', name: 'share' })
       copyModelLink(props.projectId, props.model.id)
       break
     case ActionTypes.UploadVersion:

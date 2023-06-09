@@ -45,6 +45,7 @@ import {
   useModelNameValidationRules
 } from '~~/lib/projects/composables/modelManagement'
 import { trim } from 'lodash-es'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
   projectId: string
@@ -60,12 +61,14 @@ const { handleSubmit } = useForm<{ name: string }>()
 const anyMutationsLoading = useMutationLoading()
 const rules = useModelNameValidationRules()
 const createModel = useCreateNewModel()
+const mp = useMixpanel()
 
 const onSubmit = handleSubmit(async (formValues) => {
   await createModel({
     name: createFinalName(formValues.name),
     projectId: props.projectId
   })
+  mp.track('Branch Action', { type: 'action', name: 'create', mode: 'nested' })
   showNewModelCard.value = false
   name.value = ''
 })

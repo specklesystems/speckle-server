@@ -81,6 +81,7 @@ import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 import { TrashIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
 import { GenericValidateFunction, useForm } from 'vee-validate'
 import { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import {
   useDeleteProject,
   useLeaveProject
@@ -102,14 +103,17 @@ const { handleSubmit: handleDeleteSubmit, errors: deleteErrors } = useForm<{
 const { isOwner, canLeaveProject } = useTeamDialogInternals({ props: toRefs(props) })
 const deleteProject = useDeleteProject()
 const leaveProject = useLeaveProject()
+const mp = useMixpanel()
 
 const onDelete = handleDeleteSubmit(async () => {
   if (!isOwner.value) return
   await deleteProject(props.project.id, { goHome: true })
+  mp.track('Stream Action', { type: 'action', name: 'delete' })
 })
 
 const onLeave = async () => {
   if (!canLeaveProject.value) return
   await leaveProject(props.project.id, { goHome: true })
+  mp.track('Stream Action', { type: 'action', name: 'leave' })
 }
 </script>
