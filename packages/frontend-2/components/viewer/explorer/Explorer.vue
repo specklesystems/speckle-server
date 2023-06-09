@@ -20,7 +20,7 @@
           Collapse
         </FormButton>
       </template>
-      <div class="relative flex flex-col space-y-2 py-2">
+      <div v-if="rootNodes.length !== 0" class="relative flex flex-col space-y-2 py-2">
         <div
           v-for="(rootNode, idx) in rootNodes"
           :key="idx"

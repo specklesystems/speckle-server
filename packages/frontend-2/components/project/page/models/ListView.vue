@@ -21,7 +21,9 @@
     "
     @clear-search="$emit('clear-search')"
   />
-  <div v-else>TODO: List empty state</div>
+  <div v-else>
+    <ProjectCardImportFileArea :project-id="project.id" class="h-36 col-span-4" />
+  </div>
   <InfiniteLoading
     v-if="topLevelItems?.length && !disablePagination"
     :settings="{ identifier: infiniteLoaderId }"

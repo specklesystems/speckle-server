@@ -14,14 +14,16 @@
         :invites="projectsPanelResult?.activeUser"
       />
     </div>
-    <div class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4">
+    <div
+      v-if="!showEmptyState"
+      class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4"
+    >
       <h1 class="h4 font-bold">Projects</h1>
 
       <div
         class="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-2 grow md:justify-end"
       >
         <FormTextInput
-          v-if="!showEmptyState"
           v-model="search"
           name="modelsearch"
           :show-label="false"
@@ -46,7 +48,10 @@
       </div>
     </div>
     <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
-    <ProjectsDashboardEmptyState v-if="showEmptyState" />
+    <ProjectsDashboardEmptyState
+      v-if="showEmptyState"
+      @create-project="openNewProject = true"
+    />
     <template v-else-if="projects?.items?.length">
       <ProjectsDashboardFilled :projects="projects" />
       <InfiniteLoading
@@ -108,7 +113,6 @@ const showLoadingBar = ref(false)
 
 const { activeUser } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
-const route = useRoute()
 const areQueriesLoading = useQueryLoading()
 const apollo = useApolloClient().client
 const {
@@ -132,10 +136,8 @@ const { onResult: onUserProjectsUpdate } = useSubscription(
   onUserProjectsUpdateSubscription
 )
 
-const forceEmptyState = computed(() => !!route.query.forceEmpty)
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
 const showEmptyState = computed(() => {
-  if (forceEmptyState.value) return true
   const isFiltering =
     projectsVariables.value?.filter?.onlyWithRoles?.length ||
     projectsVariables.value?.filter?.search?.length

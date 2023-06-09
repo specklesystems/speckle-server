@@ -94,7 +94,7 @@
           : '-translate-x-[100%] opacity-0'
       }`"
     >
-      <div v-show="activeControl === 'models'">
+      <div v-show="resourceItems.length !== 0 && activeControl === 'models'">
         <KeepAlive>
           <div>
             <ViewerResourcesList
@@ -107,17 +107,38 @@
           </div>
         </KeepAlive>
       </div>
-      <div v-show="activeControl === 'explorer'">
+      <div v-show="resourceItems.length !== 0 && activeControl === 'explorer'">
         <KeepAlive>
           <ViewerExplorer class="pointer-events-auto" @close="activeControl = 'none'" />
         </KeepAlive>
       </div>
       <ViewerComments
-        v-if="activeControl === 'discussions'"
+        v-if="resourceItems.length !== 0 && activeControl === 'discussions'"
         class="pointer-events-auto"
         @close="activeControl = 'none'"
       />
-      <ViewerFilters v-if="activeControl === 'filters'" class="pointer-events-auto" />
+      <ViewerFilters
+        v-if="resourceItems.length !== 0 && activeControl === 'filters'"
+        class="pointer-events-auto"
+      />
+
+      <!-- Empty state -->
+      <div v-if="resourceItems.length === 0">
+        <div class="flex items-center py-3 px-2">
+          <div class="text-sm text-foreground-2">No models loaded.</div>
+          <div>
+            <FormButton
+              size="xs"
+              text
+              :icon-left="PlusIcon"
+              @click="openAddModel = true"
+            >
+              Add
+            </FormButton>
+            <ViewerResourcesAddModelDialog v-model:open="openAddModel" />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -126,7 +147,8 @@ import {
   CubeIcon,
   ChatBubbleLeftRightIcon,
   ArrowsPointingOutIcon,
-  ScissorsIcon
+  ScissorsIcon,
+  PlusIcon
 } from '@heroicons/vue/24/outline'
 import { Nullable } from '@speckle/shared'
 import {
@@ -138,16 +160,23 @@ import {
   ModifierKeys,
   getKeyboardShortcutTitle
 } from '@speckle/ui-components'
-import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+
+import {
+  useInjectedViewerLoadedResources,
+  useInjectedViewerInterfaceState
+} from '~~/lib/viewer/composables/setup'
 
 const {
   zoomExtentsOrSelection,
   toggleProjection,
   camera: { isOrthoProjection }
 } = useCameraUtilities()
+const { resourceItems } = useInjectedViewerLoadedResources()
+
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 
 type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'discussions'
+const openAddModel = ref(false)
 
 const activeControl = ref<ActiveControl>('models')
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
