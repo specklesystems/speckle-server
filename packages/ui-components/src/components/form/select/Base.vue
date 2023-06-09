@@ -492,7 +492,6 @@ const itemKey = (v: SingleItem): string | number =>
   props.by ? (v[props.by] as string) : v
 
 const triggerSearch = async () => {
-  console.log('triggerSearch')
   if (!isAsyncSearchMode.value || !props.getSearchResults) return
 
   isAsyncLoading.value = true

@@ -11494,6 +11494,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@speckle/shared@npm:^2.14.7":
+  version: 2.14.7
+  resolution: "@speckle/shared@npm:2.14.7"
+  dependencies:
+    lodash: ^4.17.0
+    lodash-es: ^4.17.21
+    pino: ^8.7.0
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.176
+  checksum: b39aa37b5d94846e8c4e1e52325ba414fb10d72d34125842f04b06ddbe5d7329fa36299414f48692eeceb3cf4d262b55fabb7cb9a13014ed74e8fc349392229e
+  languageName: node
+  linkType: hard
+
 "@speckle/shared@workspace:^, @speckle/shared@workspace:packages/shared":
   version: 0.0.0-use.local
   resolution: "@speckle/shared@workspace:packages/shared"
@@ -11515,6 +11528,19 @@ __metadata:
     "@tiptap/core": ^2.0.0-beta.176
   languageName: unknown
   linkType: soft
+
+"@speckle/tailwind-theme@npm:^2.14.7":
+  version: 2.14.7
+  resolution: "@speckle/tailwind-theme@npm:2.14.7"
+  dependencies:
+    "@tailwindcss/forms": ^0.5.3
+  peerDependencies:
+    postcss: ^8.4.18
+    postcss-nesting: ^10.2.0
+    tailwindcss: ^3.3.2
+  checksum: 8673adfc1a7bbffc8842255e7e6a9a366d63f3b161e6c6afcaab9f863028893db6ff9d3e1e5f470e30fd60a6cb157ab02a35bbbf9435e33c98a8da8b07cbe230
+  languageName: node
+  linkType: hard
 
 "@speckle/tailwind-theme@workspace:^, @speckle/tailwind-theme@workspace:packages/tailwind-theme":
   version: 0.0.0-use.local
@@ -11563,8 +11589,8 @@ __metadata:
     "@headlessui/vue": ^1.7.13
     "@heroicons/vue": ^2.0.12
     "@rollup/plugin-typescript": ^11.1.0
-    "@speckle/shared": "workspace:^"
-    "@speckle/tailwind-theme": "workspace:^"
+    "@speckle/shared": ^2.14.7
+    "@speckle/tailwind-theme": ^2.14.7
     "@storybook/addon-essentials": ^7.0.10
     "@storybook/addon-interactions": ^7.0.10
     "@storybook/addon-links": ^7.0.10
