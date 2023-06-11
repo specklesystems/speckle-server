@@ -92,6 +92,7 @@ import { ChevronDownIcon, ChevronUpIcon, SparklesIcon } from '@heroicons/vue/24/
 import { SparklesIcon as SparklesIconOutline } from '@heroicons/vue/24/outline'
 import { PropertyInfo, StringPropertyInfo, NumericPropertyInfo } from '@speckle/viewer'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const {
   setPropertyFilter,
@@ -148,6 +149,17 @@ const activeFilter = computed(
   () => propertyFilter.filter.value || speckleTypeFilter.value
 )
 
+const mp = useMixpanel()
+watch(activeFilter, (newVal) => {
+  if (!newVal) return
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'filters',
+    action: 'set-active-filter',
+    value: newVal.key
+  })
+})
+
 // Using these as casting activeFilter as XXX in the prop causes some syntax highliting bug to show. Apologies :)
 const stringActiveFilter = computed(() => activeFilter.value as StringPropertyInfo)
 const numericActiveFilter = computed(() => activeFilter.value as NumericPropertyInfo)
@@ -197,6 +209,12 @@ const colors = computed(() => !!propertyFilter.isApplied.value)
 const toggleColors = () => {
   if (!colors.value) applyPropertyFilter()
   else unApplyPropertyFilter()
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'filters',
+    action: 'toggle-colors',
+    value: colors.value
+  })
 }
 
 // Handles a rather complicated ux flow: user sets a numeric filter which only makes sense with colors on. we set the force colors flag in that scenario, so we can revert it if user selects a non-numeric filter afterwards.

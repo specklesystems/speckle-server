@@ -32,7 +32,7 @@
             :version-id="versionId"
             :last="index === modelsAndVersionIds.length - 1"
             :show-remove="showRemove"
-            @remove="(id) => removeModel(id)"
+            @remove="(id:string) => removeModel(id)"
           />
         </div>
       </template>
@@ -47,6 +47,7 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import { PlusIcon, CheckIcon, MinusIcon } from '@heroicons/vue/24/solid'
 import { SpeckleViewer } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 defineEmits(['close'])
 
@@ -56,6 +57,7 @@ const { items } = useInjectedViewerRequestedResources()
 
 const open = ref(false)
 
+const mp = useMixpanel()
 const removeModel = async (modelId: string) => {
   // Convert requested resource string to references to specific models
   // to ensure remove works even when we have "all" or "$folder" in the URL
@@ -69,7 +71,7 @@ const removeModel = async (modelId: string) => {
       builder.addObject(loadedResource.objectId)
     }
   }
-
+  mp.track('Viewer Action', { type: 'action', name: 'federation', action: 'remove' })
   await items.update(builder.toResources())
 }
 

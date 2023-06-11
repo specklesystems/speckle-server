@@ -14,6 +14,7 @@
 </template>
 <script setup lang="ts">
 import { SpeckleViewer } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import { LayoutTabItem } from '~~/lib/layout/helpers/components'
 import { useInjectedViewerRequestedResources } from '~~/lib/viewer/composables/setup'
 
@@ -37,12 +38,22 @@ const open = computed({
   set: (newVal) => emit('update:open', newVal)
 })
 
+const mp = useMixpanel()
+
 const onModelChosen = async (params: { modelId: string }) => {
   const { modelId } = params
   await items.update([
     ...items.value,
     ...SpeckleViewer.ViewerRoute.resourceBuilder().addModel(modelId).toResources()
   ])
+
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'federation',
+    action: 'add',
+    resource: 'model'
+  })
+
   open.value = false
 }
 
@@ -55,6 +66,14 @@ const onObjectsChosen = async (params: { objectIds: string[] }) => {
   }
 
   await items.update([...items.value, ...resourcesApi.toResources()])
+
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'federation',
+    action: 'add',
+    resource: 'object'
+  })
+
   open.value = false
 }
 </script>

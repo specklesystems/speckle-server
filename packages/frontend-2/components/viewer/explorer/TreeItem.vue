@@ -25,7 +25,7 @@
           :class="`hover:bg-primary-muted group flex flex-grow cursor-pointer items-center space-x-1 overflow-hidden rounded border-l-4 pl-2 pr-1 transition hover:shadow-md
             ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}
           `"
-          @click="(e) => setSelection(e)"
+          @click="(e:MouseEvent) => setSelection(e)"
         >
           <div
             :class="`truncate ${unfold ? 'font-semibold' : ''} ${

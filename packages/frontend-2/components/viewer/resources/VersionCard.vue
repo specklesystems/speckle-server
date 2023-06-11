@@ -44,7 +44,7 @@
         size="xs"
         text
         class="opacity-0 group-hover:opacity-100 transition"
-        @click.stop="emit('viewChanges', props.version)"
+        @click.stop="handleViewChanges"
       >
         View Changes
       </FormButton>
@@ -73,6 +73,7 @@ import { ChevronDownIcon } from '@heroicons/vue/24/solid'
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 import { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 dayjs.extend(localizedFormat)
 
@@ -110,8 +111,22 @@ const createdAt = computed(() => {
   return dayjs(props.version.createdAt).format('LLL')
 })
 
-function handleClick() {
-  console.log('wot')
+const mp = useMixpanel()
+
+const handleClick = () => {
   if (props.clickable) emit('changeVersion', props.version.id)
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'change-version'
+  })
+}
+
+const handleViewChanges = () => {
+  emit('viewChanges', props.version)
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'diffs',
+    action: 'enable'
+  })
 }
 </script>
