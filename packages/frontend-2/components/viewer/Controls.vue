@@ -44,7 +44,7 @@
         <ViewerControlsButtonToggle
           v-tippy="zoomExtentsShortcut"
           flat
-          @click="zoomExtentsOrSelection()"
+          @click="trackAndzoomExtentsOrSelection()"
         >
           <ArrowsPointingOutIcon class="h-5 w-5" />
         </ViewerControlsButtonToggle>
@@ -56,7 +56,7 @@
           flat
           secondary
           :active="isOrthoProjection"
-          @click="toggleProjection()"
+          @click="trackAndtoggleProjection()"
         >
           <IconPerspective v-if="isOrthoProjection" class="h-4 w-4" />
           <IconPerspectiveMore v-else class="h-4 w-4" />
@@ -165,6 +165,7 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerInterfaceState
 } from '~~/lib/viewer/composables/setup'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const {
   zoomExtentsOrSelection,
@@ -223,13 +224,40 @@ onKeyboardShortcut([ModifierKeys.AltOrOpt], ['t'], () => {
 
 // Viewer actions kbd shortcuts
 onKeyboardShortcut([ModifierKeys.AltOrOpt], ' ', () => {
-  zoomExtentsOrSelection()
+  trackAndzoomExtentsOrSelection()
 })
 onKeyboardShortcut([ModifierKeys.AltOrOpt], 'p', () => {
   toggleProjection()
 })
 onKeyboardShortcut([ModifierKeys.AltOrOpt], 'b', () => {
   toggleSectionBox()
+})
+
+const mp = useMixpanel()
+watch(activeControl, (newVal) => {
+  mp.track('Viewer Action', { type: 'action', name: 'controls-toggle', action: newVal })
+})
+
+const trackAndzoomExtentsOrSelection = () => {
+  zoomExtentsOrSelection()
+  mp.track('Viewer Action', { type: 'action', name: 'zoom', source: 'button' })
+}
+
+const trackAndtoggleProjection = () => {
+  toggleProjection()
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'camera',
+    camera: isOrthoProjection ? 'ortho' : 'perspective'
+  })
+}
+
+watch(isSectionBoxEnabled, (val) => {
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'section-box',
+    status: val
+  })
 })
 
 const scrollControlsToBottom = () => {

@@ -58,6 +58,7 @@
               :icon-right="CubeIcon"
               :to="allModelsRoute"
               class="grow"
+              @click="test"
             >
               View all in 3D
             </FormButton>
@@ -100,6 +101,8 @@ graphql(`
 const props = defineProps<{
   project: ProjectPageLatestItemsModelsFragment
 }>()
+
+const test = () => console.log('test')
 
 const queryLoading = ref(false)
 const search = ref('')

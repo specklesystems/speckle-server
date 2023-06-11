@@ -16,6 +16,7 @@
 <script setup lang="ts">
 import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { keyboardClick } from '~~/lib/common/helpers/accessibility'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const {
   clearSelection,
@@ -64,8 +65,15 @@ const description = computed(() => {
       return 'across both versions'
   }
 })
-
+const mp = useMixpanel()
 const setSelection = () => {
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'diffs',
+    action: 'select-group',
+    group: props.name
+  })
+
   if (isSelected.value) return clearSelection()
   setSelectionFromObjectIds(props.objectIds)
 }

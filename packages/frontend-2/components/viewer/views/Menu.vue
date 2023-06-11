@@ -63,7 +63,8 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { VideoCameraIcon } from '@heroicons/vue/24/outline'
-import { CanonicalView } from '~~/../viewer/dist'
+import { CanonicalView, SpeckleView } from '~~/../viewer/dist'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 
@@ -72,7 +73,17 @@ const {
     metadata: { views }
   }
 } = useInjectedViewerState()
-const { setView } = useCameraUtilities()
+const { setView: setViewRaw } = useCameraUtilities()
+const mp = useMixpanel()
+
+const setView = (v: CanonicalView | SpeckleView) => {
+  setViewRaw(v)
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'set-view',
+    view: (v as SpeckleView)?.name || v
+  })
+}
 
 const canonicalViews = [
   { name: 'Top' },

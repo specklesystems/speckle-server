@@ -6,7 +6,7 @@
         : 'translate-x-[120%] opacity-0'
     }`"
   >
-    <ViewerLayoutPanel @close="clearSelection()">
+    <ViewerLayoutPanel @close="trackAndClearSelection()">
       <template #actions>
         <button
           class="hover:text-primary px-1 py-2 transition"
@@ -56,6 +56,7 @@ import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { containsAll } from '~~/lib/common/helpers/utils'
 import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { uniqWith } from 'lodash-es'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const {
   viewer: {
@@ -102,26 +103,66 @@ const isIsolated = computed(() => {
   return containsAll(allTargetIds.value, isolatedObjects.value)
 })
 
+const mp = useMixpanel()
+
 const hideOrShowSelection = () => {
   if (!isHidden.value) {
     hideObjects(allTargetIds.value)
     clearSelection() // when hiding, the objects disappear. they can't really stay "selected"
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'selection',
+      action: 'hide'
+    })
     return
   }
 
   showObjects(allTargetIds.value)
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'selection',
+    action: 'show'
+  })
 }
 
 const isolateOrUnisolateSelection = () => {
   if (isIsolated.value) {
     unIsolateObjects(allTargetIds.value)
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'selection',
+      action: 'unisolate'
+    })
   } else {
     isolateObjects(allTargetIds.value)
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'selection',
+      action: 'isolate'
+    })
   }
+}
+
+const trackAndClearSelection = () => {
+  clearSelection()
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'selection',
+    action: 'clear',
+    source: 'sidebar-x-button'
+  })
 }
 
 onKeyStroke('Escape', () => {
   // Cleareance of any vis/iso state coming from here should happen in clearSelection()
+  // Note: we're not using the trackAndClearSelection method beacuse
+  // we want to track whether people press buttons or keys
   clearSelection()
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'selection',
+    action: 'clear',
+    source: 'keypress-escape'
+  })
 })
 </script>

@@ -188,6 +188,7 @@ import {
   useApplySerializedState
 } from '~~/lib/viewer/composables/serialization'
 import { useDisableGlobalTextSelection } from '~~/lib/common/composables/window'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -258,6 +259,8 @@ const initialDragPosition = computed(() => {
   }
 })
 
+const mp = useMixpanel()
+
 const isDragged = ref(false)
 const { x, y, isDragging, position } = useDraggable(threadContainer, {
   stopPropagation: true,
@@ -272,6 +275,7 @@ const { x, y, isDragging, position } = useDraggable(threadContainer, {
     if (!isDragged.value) position.value = { x: 0, y: 0 }
 
     isDragged.value = true
+    mp.track('Comment Action', { type: 'action', name: 'drag' })
   }
 })
 
@@ -319,6 +323,7 @@ const changeExpanded = (newVal: boolean) => {
     isExpanded: newVal
   })
   emit('update:expanded', newVal)
+  mp.track('Comment Action', { type: 'action', name: 'toggle', status: newVal })
 }
 
 const canArchiveOrUnarchive = computed(
@@ -351,6 +356,11 @@ const isThreadResourceLoaded = computed(() => {
 
 const toggleCommentResolvedStatus = async () => {
   await archiveComment(props.modelValue.id, !props.modelValue.archived)
+  mp.track('Comment Action', {
+    type: 'action',
+    name: 'archive',
+    status: props.modelValue.archived
+  })
   triggerNotification({
     description: `Thread ${props.modelValue.archived ? 'reopened.' : 'resolved.'}`,
     type: ToastNotificationType.Info
@@ -359,6 +369,7 @@ const toggleCommentResolvedStatus = async () => {
 
 const onNewReply = () => {
   justCreatedReply.value = true
+  mp.track('Comment Action', { type: 'action', name: 'reply' })
 }
 
 const onCommentMounted = () => {
@@ -397,6 +408,8 @@ const onCopyLink = async () => {
     })
     throw e
   }
+
+  mp.track('Comment Action', { type: 'action', name: 'share' })
 
   triggerNotification({
     type: ToastNotificationType.Info,

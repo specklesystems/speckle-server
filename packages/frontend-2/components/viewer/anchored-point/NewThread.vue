@@ -46,7 +46,7 @@
                 hide-text
                 text
                 :disabled="isPostingNewThread"
-                @click="editor?.openFilePicker"
+                @click="trackAttachAndOpenFilePicker()"
               />
 
               <FormButton
@@ -79,6 +79,7 @@ import {
   convertCommentEditorValueToInput
 } from '~~/lib/viewer/helpers/comments'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ViewerNewThreadBubbleModel): void
@@ -118,6 +119,7 @@ const onThreadClick = () => {
 // NOTE: will be used later, keep
 // const submitEmoji = (emoji: string) =>
 //   onSubmit({ doc: RichTextEditor.convertBasicStringToDocument(emoji) })
+const mp = useMixpanel()
 
 const onSubmit = (comment?: CommentEditorValue) => {
   comment ||= comment || commentValue.value
@@ -143,10 +145,16 @@ const onSubmit = (comment?: CommentEditorValue) => {
       pauseAutomaticUpdates.value = false
     })
 
+  mp.track('Comment Action', { type: 'action', name: 'create' })
   // Marking all uploads as in use to prevent cleanup
   comment.attachments?.forEach((a) => {
     a.inUse = true
   })
+}
+
+const trackAttachAndOpenFilePicker = () => {
+  editor.value?.openFilePicker()
+  mp.track('Comment Action', { type: 'action', name: 'attach' })
 }
 
 onKeyDown('Escape', () => {

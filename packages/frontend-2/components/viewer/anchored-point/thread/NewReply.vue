@@ -17,7 +17,7 @@
           hide-text
           text
           :disabled="loading"
-          @click="editor?.openFilePicker"
+          @click="trackAttachAndOpenFilePicker()"
         />
         <FormButton
           :icon-left="PaperAirplaneIcon"
@@ -32,6 +32,7 @@
 <script setup lang="ts">
 import { PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
 import { Nullable } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import {
   CommentBubbleModel,
   useIsTypingUpdateEmitter
@@ -60,6 +61,12 @@ const loading = ref(false)
 const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
 const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
 const threadId = computed(() => props.modelValue.id)
+
+const mp = useMixpanel()
+const trackAttachAndOpenFilePicker = () => {
+  editor.value?.openFilePicker()
+  mp.track('Comment Action', { type: 'action', name: 'attach' })
+}
 
 const onSubmit = async () => {
   if (!commentValue.value || loading.value) return

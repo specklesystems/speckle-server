@@ -36,10 +36,16 @@
 </template>
 <script setup lang="ts">
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 // import { ChevronUpDownIcon } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
 const {
   ui: { explodeFactor }
 } = useInjectedViewerState()
+
+const mp = useMixpanel()
+watch(explodeFactor, (val) => {
+  mp.track('Viewer Action', { type: 'action', name: 'explode', value: val })
+})
 </script>
