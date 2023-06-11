@@ -80,7 +80,6 @@ const onSubmit = handleSubmit((payload) => {
   const { objectIdsOrUrl } = payload
   const ids = removeRedundantIds(extractObjectIds(objectIdsOrUrl) || [])
   if (!ids?.length) return
-
   emit('chosen', { objectIds: ids })
 })
 </script>

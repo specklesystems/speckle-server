@@ -67,6 +67,7 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useArchiveComment } from '~~/lib/viewer/composables/commentManagement'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { Roles } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
   thread: LoadedCommentThread
@@ -74,8 +75,19 @@ const props = defineProps<{
 
 const { resourceItems } = useInjectedViewerLoadedResources()
 const {
-  threads: { open, openThread }
+  threads: { open: openThreadRaw, openThread }
 } = useInjectedViewerInterfaceState()
+
+const mp = useMixpanel()
+const open = (id: string) => {
+  openThreadRaw(id)
+  mp.track('Comment Action', {
+    type: 'action',
+    name: 'toggle',
+    status: !isOpenInViewer.value,
+    source: 'sidebar'
+  })
+}
 
 const formattedDate = computed(() => dayjs(props.thread.createdAt).from(dayjs()))
 
@@ -127,6 +139,11 @@ const canArchiveOrUnarchive = computed(
 
 const toggleCommentResolvedStatus = async () => {
   await archiveComment(props.thread.id, !props.thread.archived)
+  mp.track('Comment Action', {
+    type: 'action',
+    name: 'archive',
+    status: !props.thread.archived
+  })
   triggerNotification({
     description: `Thread ${props.thread.archived ? 'reopened.' : 'resolved.'}`,
     type: ToastNotificationType.Info

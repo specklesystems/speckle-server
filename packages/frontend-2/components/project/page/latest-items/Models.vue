@@ -105,7 +105,12 @@ const props = defineProps<{
 
 const mp = useMixpanel()
 const trackFederateAll = () =>
-  mp.track('Viewer Action', { type: 'action', name: 'view-all-models' })
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'federation',
+    action: 'view-all',
+    source: 'all models page'
+  })
 
 const queryLoading = ref(false)
 const search = ref('')

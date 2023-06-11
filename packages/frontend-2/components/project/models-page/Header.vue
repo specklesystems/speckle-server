@@ -155,7 +155,12 @@ const search = ref('')
 
 const mp = useMixpanel()
 const trackFederateAll = () =>
-  mp.track('Viewer Action', { type: 'action', name: 'view-all-models' })
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'federation',
+    action: 'view-all',
+    source: 'project page'
+  })
 
 const canContribute = computed(() => canModifyModels(props.project))
 const showNewDialog = ref(false)

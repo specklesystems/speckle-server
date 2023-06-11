@@ -28,6 +28,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import { UserActivityModel } from '~~/lib/viewer/composables/activity'
 import { useAnimatingEllipsis } from '~~/lib/viewer/composables/commentBubbles'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
@@ -45,10 +46,25 @@ const isCreatingNewThread = computed(
     !props.user.state.ui.threads.openThread.threadId
 )
 
+const mp = useMixpanel()
 function setUserSpotlight() {
-  if (spotlightUserSessionId.value === props.user.sessionId)
-    return (spotlightUserSessionId.value = null)
+  if (spotlightUserSessionId.value === props.user.sessionId) {
+    spotlightUserSessionId.value = null
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'spotlight-mode',
+      action: 'stop',
+      source: 'cursor'
+    })
+    return
+  }
   spotlightUserSessionId.value = props.user.sessionId || null
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'spotlight-mode',
+    action: 'start',
+    source: 'cursor'
+  })
 }
 
 watch(isCreatingNewThread, (isCreating) => {

@@ -77,15 +77,27 @@ import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
 import { SunLightConfiguration } from '@speckle/viewer'
 import { SunIcon } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useMixpanel } from '~~/lib/core/composables/mp'
+import { debounce } from 'lodash-es'
+
+const mp = useMixpanel()
+const debounceTrackLightConfigChange = debounce(() => {
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'light-config-change'
+  })
+}, 1000)
 
 const createLightConfigComputed = <K extends keyof SunLightConfiguration>(key: K) =>
   computed({
     get: () => lightConfig.value[key],
-    set: (newVal) =>
-      (lightConfig.value = {
+    set: (newVal) => {
+      lightConfig.value = {
         ...lightConfig.value,
         [key]: newVal
-      })
+      }
+      debounceTrackLightConfigChange()
+    }
   })
 
 const {

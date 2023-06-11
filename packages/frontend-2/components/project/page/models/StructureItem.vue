@@ -284,7 +284,12 @@ const importArea = ref(
 
 const mp = useMixpanel()
 const trackFederateModels = () =>
-  mp.track('Viewer Action', { type: 'action', name: 'view-all-submodels' })
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'federation',
+    action: 'view-all',
+    source: 'model grid item'
+  })
 
 const expanded = ref(false)
 const showActionsMenu = ref(false)

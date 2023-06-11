@@ -323,7 +323,12 @@ const changeExpanded = (newVal: boolean) => {
     isExpanded: newVal
   })
   emit('update:expanded', newVal)
-  mp.track('Comment Action', { type: 'action', name: 'toggle', status: newVal })
+  mp.track('Comment Action', {
+    type: 'action',
+    name: 'toggle',
+    status: newVal,
+    source: 'bubble'
+  })
 }
 
 const canArchiveOrUnarchive = computed(

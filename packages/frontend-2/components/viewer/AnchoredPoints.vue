@@ -98,6 +98,7 @@ import { Nullable } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { LimitedUser } from '~~/lib/common/generated/gql/graphql'
 import { SetFullyRequired } from '~~/lib/common/helpers/type'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useViewerUserActivityTracking } from '~~/lib/viewer/composables/activity'
 import {
   CommentBubbleModel,
@@ -200,10 +201,25 @@ const spotlightUser = computed(() => {
   )
 })
 
+const mp = useMixpanel()
 function setUserSpotlight(sessionId: string) {
-  if (spotlightUserSessionId.value === sessionId)
-    return (spotlightUserSessionId.value = null)
+  if (spotlightUserSessionId.value === sessionId) {
+    spotlightUserSessionId.value = null
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'spotlight-mode',
+      action: 'stop',
+      source: 'navbar'
+    })
+    return
+  }
 
   spotlightUserSessionId.value = sessionId
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'spotlight-mode',
+    action: 'start',
+    source: 'navbar'
+  })
 }
 </script>
