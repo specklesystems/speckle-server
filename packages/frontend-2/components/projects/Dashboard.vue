@@ -2,7 +2,7 @@
   <div>
     <Portal to="primary-actions"></Portal>
     <div
-      class="w-[calc(100vw-8px)] ml-[calc(50%-50vw+4px)] mr-[calc(50%-50vw+4px)] -mt-6 mb-10 bg-blue-500/10 rounded-b-md"
+      class="w-[calc(100vw-8px)] ml-[calc(50%-50vw+4px)] mr-[calc(50%-50vw+4px)] -mt-6 mb-10 rounded-b-xl bg-foundation transition shadow-md hover:shadow-xl divide-y divide-outline-3"
     >
       <ClientOnly>
         <div v-if="showChecklist">
@@ -265,6 +265,11 @@ const hasDismissedChecklistTime = useSynchronizedCookie<string | undefined>(
   { default: () => undefined }
 )
 
+const hasDismissedChecklistForever = useSynchronizedCookie<boolean | undefined>(
+  `hasDismissedChecklistForever`,
+  { default: () => false }
+)
+
 const hasDismissedChecklistTimeAgo = computed(() => {
   return (
     new Date().getTime() -
@@ -273,6 +278,7 @@ const hasDismissedChecklistTimeAgo = computed(() => {
 })
 
 const showChecklist = computed(() => {
+  if (hasDismissedChecklistForever.value) return false
   if (hasCompletedChecklistV1.value) return false
   if (hasDismissedChecklistTime.value === undefined) return true
   if (

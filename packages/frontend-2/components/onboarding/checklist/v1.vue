@@ -11,9 +11,17 @@
           <div class="text-sm text-foreground-2">
             Become a Speckle pro in four steps!
           </div>
-          <div>
+          <div class="space-x-1">
             <FormButton v-if="!allCompleted" size="sm" @click="dismissChecklist()">
               I'll do it later
+            </FormButton>
+            <FormButton
+              v-if="!allCompleted"
+              text
+              size="xs"
+              @click="dismissChecklistForever()"
+            >
+              Don't show again
             </FormButton>
           </div>
         </div>
@@ -190,6 +198,7 @@ import {
 } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as OutlineCheckCircleIcon } from '@heroicons/vue/24/outline'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 withDefaults(
   defineProps<{ showIntro: boolean; showBottomEscape: boolean; background: boolean }>(),
@@ -199,6 +208,8 @@ withDefaults(
     background: false
   }
 )
+
+const mp = useMixpanel()
 
 const emit = defineEmits(['dismiss'])
 
@@ -228,6 +239,20 @@ const hasDismissedChecklistTime = useSynchronizedCookie<string | undefined>(
   { default: () => undefined }
 )
 
+const hasDismissedChecklistForever = useSynchronizedCookie<boolean | undefined>(
+  `hasDismissedChecklistForever`,
+  { default: () => false }
+)
+
+const getStatus = () => {
+  return {
+    hasDownloadedManager: hasDownloadedManager.value,
+    hasLinkedAccount: hasLinkedAccount.value,
+    hasViewedFirstSend: hasViewedFirstSend.value,
+    hasSharedProject: hasSharedProject.value
+  }
+}
+
 const steps = ref([
   {
     title: 'Get Connectors',
@@ -241,6 +266,12 @@ const steps = ref([
     completionAction: () => {
       showManagerDownloadDialog.value = false
       hasDownloadedManager.value = true
+      mp.track('Onboarding Action', {
+        type: 'action',
+        name: 'checklist',
+        action: 'step-completed',
+        stepName: 'download manager'
+      })
     },
     completed: hasDownloadedManager.value,
     icon: ComputerDesktopIcon
@@ -257,6 +288,12 @@ const steps = ref([
     completionAction: () => {
       showAccountLinkDialog.value = false
       hasLinkedAccount.value = true
+      mp.track('Onboarding Action', {
+        type: 'action',
+        name: 'checklist',
+        action: 'step-completed',
+        stepName: 'manager login'
+      })
     },
     completed: hasLinkedAccount.value,
     icon: UserPlusIcon
@@ -273,6 +310,12 @@ const steps = ref([
     completionAction: () => {
       showFirstSendDialog.value = false
       hasViewedFirstSend.value = true
+      mp.track('Onboarding Action', {
+        type: 'action',
+        name: 'checklist',
+        action: 'step-completed',
+        stepName: 'first send'
+      })
     },
     completed: hasViewedFirstSend.value,
     icon: CloudArrowUpIcon
@@ -290,6 +333,12 @@ const steps = ref([
     completionAction: () => {
       showServerInviteDialog.value = false
       hasSharedProject.value = true
+      mp.track('Onboarding Action', {
+        type: 'action',
+        name: 'checklist',
+        action: 'step-completed',
+        stepName: 'first share'
+      })
     },
     completed: hasSharedProject.value,
     icon: ShareIcon
@@ -304,11 +353,24 @@ const markComplete = (idx: number) => {
   steps.value[idx].completed = true
   steps.value[idx].active = false
   steps.value[idx].completionAction()
+  mp.track('Onboarding Action', {
+    type: 'action',
+    name: 'checklist',
+    action: 'mark-complete',
+    step: idx,
+    status: getStatus()
+  })
   activateStep(idx + 1)
 }
 
 const goToFirstUncompletedStep = () => {
   const firstNonCompleteStepIndex = steps.value.findIndex((s) => s.completed === false)
+  mp.track('Onboarding Action', {
+    type: 'action',
+    name: 'checklist',
+    action: 'goto-uncompleted-step',
+    status: getStatus()
+  })
   activateStep(firstNonCompleteStepIndex)
 }
 
@@ -319,9 +381,25 @@ const closeChecklist = () => {
 }
 
 const dismissChecklist = () => {
-  // TODO
   hasDismissedChecklistTime.value = Date.now().toString()
   emit('dismiss')
+  mp.track('Onboarding Action', {
+    type: 'action',
+    name: 'checklist',
+    action: 'dismiss',
+    status: getStatus()
+  })
+}
+
+const dismissChecklistForever = () => {
+  hasDismissedChecklistForever.value = true
+  emit('dismiss')
+  mp.track('Onboarding Action', {
+    type: 'action',
+    name: 'checklist',
+    action: 'dismiss-forever',
+    status: getStatus()
+  })
 }
 
 goToFirstUncompletedStep()
