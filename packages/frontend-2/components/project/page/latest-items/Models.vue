@@ -58,7 +58,7 @@
               :icon-right="CubeIcon"
               :to="allModelsRoute"
               class="grow"
-              @click="test"
+              @click="trackFederateAll"
             >
               View all in 3D
             </FormButton>
@@ -87,6 +87,7 @@ import { PlusIcon } from '@heroicons/vue/24/solid'
 import { CubeIcon } from '@heroicons/vue/24/outline'
 import { allProjectModelsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { SpeckleViewer } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 graphql(`
   fragment ProjectPageLatestItemsModels on Project {
@@ -102,7 +103,9 @@ const props = defineProps<{
   project: ProjectPageLatestItemsModelsFragment
 }>()
 
-const test = () => console.log('test')
+const mp = useMixpanel()
+const trackFederateAll = () =>
+  mp.track('Viewer Action', { type: 'action', name: 'view-all-models' })
 
 const queryLoading = ref(false)
 const search = ref('')

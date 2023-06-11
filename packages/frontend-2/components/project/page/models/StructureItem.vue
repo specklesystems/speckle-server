@@ -168,6 +168,7 @@
               :icon-right="ArrowTopRightOnSquareIcon"
               :to="viewAllUrl"
               :disabled="!viewAllUrl"
+              @click="trackFederateModels"
             >
               View All
             </FormButton>
@@ -232,6 +233,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { projectModelChildrenTreeQuery } from '~~/lib/projects/graphql/queries'
 import { has } from 'lodash-es'
 import { Nullable } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -279,6 +281,11 @@ const importArea = ref(
     triggerPicker: () => void
   }>
 )
+
+const mp = useMixpanel()
+const trackFederateModels = () =>
+  mp.track('Viewer Action', { type: 'action', name: 'view-all-submodels' })
+
 const expanded = ref(false)
 const showActionsMenu = ref(false)
 
