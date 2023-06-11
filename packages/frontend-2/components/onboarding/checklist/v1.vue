@@ -148,18 +148,19 @@
         <div class="w-6 h-6">
           <!-- <CheckCircleIcon class="absolute w-6 h-6 text-primary" /> -->
           <CheckCircleIcon
-            class="absolute w-6 h-6 text-primary animate-ping animate-bounce"
+            class="absolute w-6 h-6 text-primary animate-ping animate-pulse"
           />
         </div>
-        <div class="text-sm max-w-xl text-center">
+        <div class="text-sm max-w-lg">
           <b>All done!</b>
           <br />
           Don't forget to join us in the
           <FormButton
             to="https://speckle.community"
             target="_blank"
-            size="xs"
+            size="sm"
             :icon-right="ArrowTopRightOnSquareIcon"
+            link
           >
             Community Forum
           </FormButton>
@@ -167,8 +168,9 @@
           <FormButton
             to="https://speckle.systems/tutorials"
             target="_blank"
-            size="xs"
+            size="sm"
             :icon-right="ArrowTopRightOnSquareIcon"
+            link
           >
             Tutorials
           </FormButton>
