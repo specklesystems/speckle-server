@@ -4,9 +4,12 @@
     <div :class="`${background ? 'px-2 bg-foundation rounded-md shadow-xl' : ''}`">
       <div
         v-if="!allCompleted"
-        :class="`grid  gap-2 ${showIntro ? 'px-4 grid-cols-5' : 'grid-cols-4'}`"
+        :class="`grid gap-2 ${showIntro ? 'px-4 grid-cols-5' : 'grid-cols-4'}`"
       >
-        <div v-if="showIntro" class="flex flex-col justify-around px-2 h-full py-2">
+        <div
+          v-if="showIntro"
+          class="flex-col justify-around px-2 h-full py-2 md:col-span-1 hidden lg:flex"
+        >
           <div>Quickstart Checklist</div>
           <div class="text-sm text-foreground-2">
             Become a Speckle pro in four steps!
@@ -25,93 +28,117 @@
             </FormButton>
           </div>
         </div>
-        <div v-for="(step, idx) in steps" :key="idx" class="py-2 col-span-1">
+        <div class="grid grid-cols-4 grow col-span-5 lg:col-span-4">
           <div
-            :class="`
+            v-for="(step, idx) in steps"
+            :key="idx"
+            class="py-2 col-span-4 sm:col-span-2 lg:col-span-1"
+          >
+            <div
+              :class="`
           ${
             step.active
               ? 'bg-primary text-foreground-on-primary shadow hover:shadow-md scale-100'
               : 'text-foreground-2 hover:bg-primary-muted scale-95'
           } 
           transition rounded-md flex flex-col justify-between px-2 cursor-pointer h-full`"
-            @click.stop="
-              !step.active
-                ? activateStep(idx)
-                : idx === 0 || steps[idx - 1].completed
-                ? step.action()
-                : goToFirstUncompletedStep()
-            "
-          >
-            <div
-              :class="`text-xl font-bold flex items-center justify-between ${
-                step.active ? 'text-foreground-on-primary' : 'text-foreground-2'
-              }`"
+              @click.stop="
+                !step.active
+                  ? activateStep(idx)
+                  : idx === 0 || steps[idx - 1].completed
+                  ? step.action()
+                  : goToFirstUncompletedStep()
+              "
             >
-              <span>{{ idx + 1 }}</span>
-              <Component
-                :is="step.icon"
-                v-if="!step.completed"
-                :class="`w-4 h-4 mt-1`"
-              />
-              <CheckCircleIcon v-else class="w-4 h-4 mt-1 text-primary" />
-            </div>
-            <div
-              :class="`${step.active ? 'font-bold text-forergound-on-primary' : ''}`"
-            >
-              {{ step.title }}
-            </div>
-            <div class="text-xs mt-[2px]">{{ step.blurb }}</div>
-            <div class="h-10 flex items-center justify-between">
               <div
-                v-if="idx === 0 || steps[idx - 1].completed"
-                class="flex justify-between items-center py-2 w-full"
+                :class="`text-xl font-bold flex items-center justify-between ${
+                  step.active ? 'text-foreground-on-primary' : 'text-foreground-2'
+                }`"
               >
-                <FormButton
-                  v-if="!step.completed && step.active"
-                  size="sm"
-                  :disabled="!step.active"
-                  color="invert"
-                  @click.stop="step.action"
-                >
-                  {{ step.cta }}
-                </FormButton>
-
-                <FormButton
-                  v-if="step.active && !step.completed"
-                  v-tippy="'Mark completed'"
-                  text
-                  link
-                  size="xs"
-                  color="invert"
-                  @click.stop="markComplete(idx)"
-                >
-                  <!-- Mark as complete -->
-                  <OutlineCheckCircleIcon class="w-4 h-4" />
-                </FormButton>
-                <span v-if="step.completed" class="text-xs font-bold">Completed!</span>
-                <FormButton
-                  v-if="step.completed && step.active"
-                  text
-                  link
-                  size="xs"
-                  color="invert"
-                  @click.stop="step.action"
-                >
-                  {{ step.postCompletionCta }}
-                </FormButton>
+                <span>{{ idx + 1 }}</span>
+                <Component
+                  :is="step.icon"
+                  v-if="!step.completed"
+                  :class="`w-4 h-4 mt-1`"
+                />
+                <CheckCircleIcon v-else class="w-4 h-4 mt-1 text-primary" />
               </div>
-              <div v-else-if="step.active" class="text-sm">
-                <FormButton
-                  link
-                  size="xs"
-                  color="invert"
-                  @click.stop="goToFirstUncompletedStep()"
+              <div
+                :class="`${step.active ? 'font-bold text-forergound-on-primary' : ''}`"
+              >
+                {{ step.title }}
+              </div>
+              <div class="text-xs mt-[2px]">{{ step.blurb }}</div>
+              <div class="h-10 flex items-center justify-between">
+                <div
+                  v-if="idx === 0 || steps[idx - 1].completed"
+                  class="flex justify-between items-center py-2 w-full"
                 >
-                  Complete the previous step!
-                </FormButton>
+                  <FormButton
+                    v-if="!step.completed && step.active"
+                    size="sm"
+                    :disabled="!step.active"
+                    color="invert"
+                    @click.stop="step.action"
+                  >
+                    {{ step.cta }}
+                  </FormButton>
+
+                  <FormButton
+                    v-if="step.active && !step.completed"
+                    v-tippy="'Mark completed'"
+                    text
+                    link
+                    size="xs"
+                    color="invert"
+                    @click.stop="markComplete(idx)"
+                  >
+                    <!-- Mark as complete -->
+                    <OutlineCheckCircleIcon class="w-4 h-4" />
+                  </FormButton>
+                  <span v-if="step.completed" class="text-xs font-bold">
+                    Completed!
+                  </span>
+                  <FormButton
+                    v-if="step.completed && step.active"
+                    text
+                    link
+                    size="xs"
+                    color="invert"
+                    @click.stop="step.action"
+                  >
+                    {{ step.postCompletionCta }}
+                  </FormButton>
+                </div>
+                <div v-else-if="step.active" class="text-sm">
+                  <FormButton
+                    link
+                    size="xs"
+                    color="invert"
+                    @click.stop="goToFirstUncompletedStep()"
+                  >
+                    Complete the previous step!
+                  </FormButton>
+                </div>
               </div>
             </div>
           </div>
+        </div>
+        <div
+          v-if="showIntro"
+          class="lg:hidden col-span-5 pb-3 pt-2 text-center space-x-2"
+        >
+          <FormButton v-if="!allCompleted" size="sm" @click="dismissChecklist()">
+            I'll do it later
+          </FormButton>
+          <FormButton
+            v-if="!allCompleted"
+            text
+            size="xs"
+            @click="dismissChecklistForever()"
+          >
+            Don't show again
+          </FormButton>
         </div>
       </div>
       <div
