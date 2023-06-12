@@ -55,6 +55,17 @@ export class MeasurementPointGizmo extends Group {
     this.updateStyle()
   }
 
+  public set highlight(value: boolean) {
+    if (value) {
+      ;(this.disc.material as SpeckleBasicMaterial).color = new Color(0xff0000)
+      ;(this.line.material as SpeckleLineMaterial).color = new Color(0xff0000)
+      ;(this.point.material as SpeckleBasicMaterial).color = new Color(0xff0000)
+      ;(this.text.textMesh.material as SpeckleTextMaterial).color.copy(
+        new Color(0xff0000)
+      )
+    } else this.updateStyle()
+  }
+
   private getDiscMaterial() {
     const material = new SpeckleBasicMaterial({ color: this._style.discColor })
     material.color.convertSRGBToLinear()
@@ -110,12 +121,14 @@ export class MeasurementPointGizmo extends Group {
 
   public constructor(style?: MeasurementPointGizmoStyle) {
     super()
+    this.layers.set(ObjectLayers.MEASUREMENTS)
+
     const geometry = new CircleGeometry(0.25, 16)
     const doublePositions = new Float64Array(geometry.attributes.position.array)
     Geometry.updateRTEGeometry(geometry, doublePositions)
 
     this.disc = new Mesh(geometry, null)
-    this.disc.layers.set(ObjectLayers.PROPS)
+    this.disc.layers.set(ObjectLayers.MEASUREMENTS)
 
     const buffer = new Float64Array(18)
     const lineGeometry = new LineSegmentsGeometry()
@@ -131,19 +144,19 @@ export class MeasurementPointGizmo extends Group {
     this.line.name = `test-mesurements-line`
     this.line.frustumCulled = false
     this.line.renderOrder = 1
-    this.line.layers.set(ObjectLayers.PROPS)
+    this.line.layers.set(ObjectLayers.MEASUREMENTS)
 
     const sphereGeometry = new SphereGeometry(0.1, 32, 16)
 
     this.point = new Mesh(sphereGeometry, null)
-    this.point.layers.set(ObjectLayers.PROPS)
+    this.point.layers.set(ObjectLayers.MEASUREMENTS)
     this.point.visible = false
 
     this.text = new SpeckleText('test-text')
     this.text.textMesh.material = null
     this.text.matrixAutoUpdate = false
-    this.text.layers.set(ObjectLayers.PROPS)
-    this.text.textMesh.layers.set(ObjectLayers.PROPS)
+    this.text.layers.set(ObjectLayers.MEASUREMENTS)
+    this.text.textMesh.layers.set(ObjectLayers.MEASUREMENTS)
 
     this.add(this.point)
     this.add(this.disc)
@@ -228,5 +241,12 @@ export class MeasurementPointGizmo extends Group {
     this.line.material = this.getLineMaterial()
     this.point.material = this.getPointMaterial()
     this.text.textMesh.material = this.getTextMaterial()
+  }
+
+  public raycast(raycaster, intersects) {
+    this.disc.raycast(raycaster, intersects)
+    this.line.raycast(raycaster, intersects)
+    this.point.raycast(raycaster, intersects)
+    this.text.textMesh.raycast(raycaster, intersects)
   }
 }

@@ -1,5 +1,6 @@
-import { Camera, Matrix4, Vector3 } from 'three'
+import { Camera, Matrix4, Object3D, Vector3 } from 'three'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo'
+import { ObjectLayers } from '../SpeckleRenderer'
 
 export enum MeasurementState {
   HIDDEN,
@@ -8,7 +9,7 @@ export enum MeasurementState {
   COMPLETE
 }
 
-export class Measurement {
+export class Measurement extends Object3D {
   public startPoint: Vector3 = new Vector3()
   public endPoint: Vector3 = new Vector3()
   public startNormal: Vector3 = new Vector3()
@@ -17,8 +18,8 @@ export class Measurement {
   public endLineLength: number
   public value = 0
 
-  public startGizmo: MeasurementPointGizmo = null
-  public endGizmo: MeasurementPointGizmo = null
+  private startGizmo: MeasurementPointGizmo = null
+  private endGizmo: MeasurementPointGizmo = null
 
   private _state: MeasurementState = MeasurementState.HIDDEN
 
@@ -37,10 +38,20 @@ export class Measurement {
     return this._state
   }
 
+  public set isVisible(value: boolean) {
+    this.startGizmo.enable(value, value, value, value)
+    this.endGizmo.enable(value, value, value, value)
+  }
+
   public constructor() {
+    super()
+    this.type = 'Measurement'
     this.startGizmo = new MeasurementPointGizmo()
     this.endGizmo = new MeasurementPointGizmo({ dashedLine: true })
     this.startLineLength = 0.25
+    this.add(this.startGizmo)
+    this.add(this.endGizmo)
+    this.layers.set(ObjectLayers.MEASUREMENTS)
   }
 
   public frameUpdate(camera: Camera) {
@@ -124,5 +135,26 @@ export class Measurement {
       this.startGizmo.enable(false, true, true, true)
       this.endGizmo.enable(false, false, true, false)
     }
+  }
+
+  public raycast(raycaster, intersects) {
+    const results = []
+    this.startGizmo.raycast(raycaster, results)
+    this.endGizmo.raycast(raycaster, results)
+    if (results.length) {
+      intersects.push({
+        distance: results[0].distance,
+        face: results[0].face,
+        faceIndex: results[0].faceIndex,
+        object: this,
+        point: results[0].point,
+        uv: results[0].uv
+      })
+    }
+  }
+
+  public highlight(value: boolean) {
+    this.startGizmo.highlight = value
+    this.endGizmo.highlight = value
   }
 }

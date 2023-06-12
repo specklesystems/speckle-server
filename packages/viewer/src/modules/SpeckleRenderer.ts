@@ -70,7 +70,8 @@ export enum ObjectLayers {
 
   STREAM_CONTENT = 1,
   PROPS = 2,
-  SHADOWCATCHER = 3
+  SHADOWCATCHER = 3,
+  MEASUREMENTS = 4
 }
 
 export default class SpeckleRenderer {
@@ -926,6 +927,12 @@ export default class SpeckleRenderer {
   }
 
   private onObjectClick(e) {
+    const measurement = this._measurements.pickMeasurement(e)
+    if (measurement) {
+      this._measurements.highlightMeasurement(measurement, true)
+      return
+    }
+
     if (e.event.ctrlKey) return
 
     const results: Array<Intersection> = this._intersections.intersect(

@@ -82,6 +82,10 @@ export default class Input extends EventEmitter {
       this.emit('pointer-move', data)
     })
 
+    document.addEventListener('keyup', (e) => {
+      this.emit('key-up', e)
+    })
+
     // Handle multiple object selection
     // document.addEventListener('keydown', (e) => {
     //   if (e.isComposing || e.keyCode === 229) return
