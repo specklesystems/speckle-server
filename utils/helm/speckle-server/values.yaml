@@ -22,6 +22,10 @@ domain: localhost
 ##
 ssl_canonical_url: true
 
+## @param tlsRejectUnauthorized If '1' (true), Speckle will reject any SSL certificates that are not signed by a trusted Certificate Authority. Should only be disabled in a trusted local development environment. https://nodejs.org/api/cli.html#node_tls_reject_unauthorizedvalue
+##
+tlsRejectUnauthorized: '1'
+
 ## @param cert_manager_issuer The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate
 ##
 cert_manager_issuer: letsencrypt-staging
