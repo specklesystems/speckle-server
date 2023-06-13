@@ -47,7 +47,7 @@ export class Measurement extends Object3D {
     super()
     this.type = 'Measurement'
     this.startGizmo = new MeasurementPointGizmo()
-    this.endGizmo = new MeasurementPointGizmo({ dashedLine: true })
+    this.endGizmo = new MeasurementPointGizmo({ dashedLine: true, lineOpacity: 0.25 })
     this.startLineLength = 0.25
     this.add(this.startGizmo)
     this.add(this.endGizmo)

@@ -10,6 +10,7 @@ export class Measurements {
   private measurement: Measurement = null
   private selectedMeasurement: Measurement = null
   private raycaster: Raycaster = null
+  private frameLock = false
 
   public constructor(renderer: SpeckleRenderer) {
     this.renderer = renderer
@@ -22,11 +23,16 @@ export class Measurements {
   }
 
   public update() {
+    this.frameLock = false
     if (this.measurement) this.measurement.frameUpdate(this.renderer.camera)
   }
 
   private onPointerMove(data) {
     if (!data.event.ctrlKey) return
+
+    if (this.frameLock) {
+      return
+    }
 
     const result = this.renderer.intersections.intersect(
       this.renderer.scene,
@@ -56,6 +62,7 @@ export class Measurements {
 
     this.renderer.needsRender = true
     this.renderer.resetPipeline()
+    this.frameLock = true
   }
 
   private onPointerClick(data) {

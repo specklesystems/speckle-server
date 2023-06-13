@@ -26,18 +26,26 @@ export interface MeasurementPointGizmoStyle {
   fixedSize?: number | boolean
   dashedLine?: boolean
   discColor?: number
+  discOpacity?: number
   lineColor?: number
+  lineOpacity?: number
   pointColor?: number
+  pointOpacity?: number
   textColor?: number
+  textOpacity?: number
 }
 
 const DefaultMeasurementPointGizmoStyle = {
-  fixedSize: false,
+  fixedSize: true,
   dashedLine: false,
   discColor: 0x047efb,
+  discOpacity: 1,
   lineColor: 0x047efb,
+  lineOpacity: 1,
   pointColor: 0x047efb,
-  textColor: 0x222222
+  pointOpacity: 1,
+  textColor: 0x222222,
+  textOpacity: 1
 }
 
 export class MeasurementPointGizmo extends Group {
@@ -72,6 +80,8 @@ export class MeasurementPointGizmo extends Group {
     material.polygonOffset = true
     material.polygonOffsetFactor = -5
     material.polygonOffsetUnits = 5
+    material.opacity = this._style.discOpacity
+    material.transparent = material.opacity < 1
     return material
   }
 
@@ -85,7 +95,7 @@ export class MeasurementPointGizmo extends Group {
         alphaToCoverage: false,
         resolution: new Vector2(919, 848)
       },
-      ['USE_RTE'].concat(this._style.dashedLine ? ['USE_DASH'] : [])
+      ['USE_RTE', 'UNIFORM_OPACITY'].concat(this._style.dashedLine ? ['USE_DASH'] : [])
     )
     lineMaterial.color = new Color(this._style.lineColor)
     lineMaterial.color.convertSRGBToLinear()
@@ -97,15 +107,20 @@ export class MeasurementPointGizmo extends Group {
     lineMaterial.linewidth = 2
     lineMaterial.worldUnits = false
     lineMaterial.resolution = new Vector2(1513, 1306)
+    lineMaterial.opacity = this._style.lineOpacity
+    lineMaterial.transparent = lineMaterial.opacity < 1
     return lineMaterial
   }
 
   private getPointMaterial() {
-    return new SpeckleBasicMaterial({ color: this._style.pointColor })
+    const material = new SpeckleBasicMaterial({ color: this._style.pointColor })
+    material.opacity = this._style.pointOpacity
+    material.transparent = material.opacity < 1
+    return material
   }
 
   private getTextMaterial() {
-    const mat = new SpeckleTextMaterial(
+    const material = new SpeckleTextMaterial(
       {
         color: this._style.textColor,
         opacity: 1,
@@ -113,10 +128,12 @@ export class MeasurementPointGizmo extends Group {
       },
       ['USE_RTE']
     )
-    mat.toneMapped = false
-    mat.color.convertSRGBToLinear()
+    material.toneMapped = false
+    material.color.convertSRGBToLinear()
+    material.opacity = this._style.textOpacity
+    material.transparent = material.opacity < 1
 
-    return mat.getDerivedMaterial()
+    return material.getDerivedMaterial()
   }
 
   public constructor(style?: MeasurementPointGizmoStyle) {
