@@ -39,9 +39,8 @@ export function isDataStruct(data: unknown): data is DataStruct {
   return SpeckleViewer.ViewerState.isSerializedViewerState(stateRaw)
 }
 
-export function formatSerializedViewerState(state: SerializedViewerState) {
-  return SpeckleViewer.ViewerState.formatSerializedViewerState(state)
-}
+export const formatSerializedViewerState =
+  SpeckleViewer.ViewerState.formatSerializedViewerState
 
 export function isLegacyData(data: unknown): data is LegacyData {
   if (!data) return false

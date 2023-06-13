@@ -11517,6 +11517,7 @@ __metadata:
     rollup: ^2.79.1
     rollup-plugin-delete: ^2.0.0
     rollup-plugin-typescript2: ^0.34.1
+    type-fest: ^3.11.1
     typescript: ^4.5.4
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.176
@@ -41927,6 +41928,13 @@ __metadata:
   version: 3.1.0
   resolution: "type-fest@npm:3.1.0"
   checksum: 22a0402afafab05edb7b45456d6ebfdcfc616f84a98266857e89bd656a14b5007e86d1a50b12746624b6aafb17dad3f437065df8adfa1b04bb970894db1fe940
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^3.11.1":
+  version: 3.11.1
+  resolution: "type-fest@npm:3.11.1"
+  checksum: 33be49e3b671c2ff3b5e320ef8c160c488205b08ab7631369116909a1baf2aebfcf45234c045e6902b8aa35730ac2bfd0655ea9e0fe3f8d26af9d99a16b07abd
   languageName: node
   linkType: hard
 
