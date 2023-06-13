@@ -143,7 +143,7 @@ const showEmptyState = computed(() => {
     projectsVariables.value?.filter?.search?.length
   if (isFiltering) return false
 
-  return projects.value && !projects.value.totalCount
+  return projects.value && !projects.value.items.length
 })
 
 const moreToLoad = computed(

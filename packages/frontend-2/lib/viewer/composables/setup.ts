@@ -928,13 +928,12 @@ export function useSetupViewerScope(
 
 export function useResetUiState() {
   const {
-    ui: { threads, camera, sectionBox, highlightedObjectIds, lightConfig }
+    ui: { camera, sectionBox, highlightedObjectIds, lightConfig }
   } = useInjectedViewerState()
   const { resetFilters } = useFilterUtilities()
   const { endDiff } = useDiffUtilities()
 
-  return async () => {
-    await threads.closeAllThreads()
+  return () => {
     camera.isOrthoProjection.value = false
     sectionBox.value = null
     highlightedObjectIds.value = []

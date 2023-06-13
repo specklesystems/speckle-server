@@ -8,6 +8,13 @@ export interface AsyncWritableComputedOptions<T> {
   initialState: T
   readOptions?: AsyncComputedOptions
   asyncRead?: boolean
+  debugging?: Partial<{
+    log: {
+      name: string
+      writesOnly?: boolean
+      readsOnly?: boolean
+    }
+  }>
 }
 
 export type AsyncWritableComputedRef<T> = ComputedRef<T> & {
@@ -23,13 +30,37 @@ export type AsyncWritableComputedRef<T> = ComputedRef<T> & {
 export function writableAsyncComputed<T>(
   params: AsyncWritableComputedOptions<T>
 ): AsyncWritableComputedRef<T> {
-  const { get, initialState, readOptions, set, asyncRead = true } = params
+  const { get, initialState, readOptions, set, asyncRead = true, debugging } = params
+  const logSettings = debugging?.log
+  const getTrace = () => (new Error('Trace:').stack || '').substring(7)
+
+  const finalGet: typeof get =
+    logSettings && !logSettings.writesOnly
+      ? () => {
+          const res = get()
+          console.debug(`debugging: '${logSettings.name}' read`, res, getTrace())
+          return res
+        }
+      : get
+
+  const finalSet: typeof set =
+    logSettings && !logSettings.readsOnly
+      ? (newVal) => {
+          console.debug(
+            `debugging: '${logSettings.name}' written to`,
+            newVal,
+            getTrace()
+          )
+          return set(newVal)
+        }
+      : set
+
   const readValue = asyncRead
-    ? computedAsync(get, initialState, readOptions)
-    : computed(get)
+    ? computedAsync(finalGet, initialState, readOptions)
+    : computed(finalGet)
 
   const getter = computed(() => readValue.value) as AsyncWritableComputedRef<T>
-  getter.update = set
+  getter.update = finalSet
 
   return getter
 }
