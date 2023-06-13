@@ -57,6 +57,7 @@ export class MeasurementPointGizmo extends Group {
     {},
     DefaultMeasurementPointGizmoStyle
   )
+  private static vecBuff0: Vector3 = new Vector3()
 
   public set style(value: MeasurementPointGizmoStyle) {
     Object.assign(this._style, value)
@@ -197,13 +198,16 @@ export class MeasurementPointGizmo extends Group {
       const cameraObjectDistance = cam.position.distanceTo(this.disc.position)
       const worldSize = Math.abs(2 * Math.tan(cam.fov / 2.0) * cameraObjectDistance)
       const size = 0.025 * worldSize
-      this.disc.scale.copy(new Vector3(size, size, size))
+      MeasurementPointGizmo.vecBuff0.set(size, size, size)
+      this.disc.scale.copy(MeasurementPointGizmo.vecBuff0)
+      this.point.scale.copy(MeasurementPointGizmo.vecBuff0)
     }
   }
 
   public updateDisc(position: Vector3, normal: Vector3) {
     this.disc.position.copy(position)
-    this.disc.quaternion.setFromUnitVectors(new Vector3(0, 0, 1), normal)
+    MeasurementPointGizmo.vecBuff0.set(0, 0, 1)
+    this.disc.quaternion.setFromUnitVectors(MeasurementPointGizmo.vecBuff0, normal)
   }
 
   public updatePoint(position: Vector3) {
