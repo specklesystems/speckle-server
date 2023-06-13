@@ -147,8 +147,8 @@ export async function convertLegacyDataToState(
       camera: {
         position: [data.camPos?.[0] || 0, data.camPos?.[1] || 0, data.camPos?.[2] || 0],
         target: [data.camPos?.[3] || 0, data.camPos?.[4] || 0, data.camPos?.[5] || 0],
-        isOrthoProjection: !!data.camPos?.[4],
-        zoom: data.camPos?.[5] || 1
+        isOrthoProjection: !!data.camPos?.[6],
+        zoom: data.camPos?.[7] || 1
       },
       sectionBox: sectionBox
         ? {
