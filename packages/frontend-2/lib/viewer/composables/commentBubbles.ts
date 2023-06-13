@@ -358,7 +358,7 @@ export function useViewerThreadTracking() {
       if (newState && SpeckleViewer.ViewerState.isSerializedViewerState(newState)) {
         await refocus(newState)
       } else {
-        await resetState()
+        resetState()
       }
     }
   })

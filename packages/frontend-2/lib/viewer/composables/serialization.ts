@@ -157,7 +157,7 @@ export function useApplySerializedState() {
 
   return async (state: SerializedViewerState, mode: StateApplyMode) => {
     if (mode === StateApplyMode.Reset) {
-      await resetState()
+      resetState()
       return
     }
 
