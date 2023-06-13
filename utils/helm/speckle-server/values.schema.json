@@ -701,6 +701,11 @@
               "description": "The port on the server for the email service.",
               "default": ""
             },
+            "from": {
+              "type": "string",
+              "description": "The email address from which Speckle will send emails. Defaults to 'no-reply@speckle.systems' if left blank.",
+              "default": ""
+            },
             "username": {
               "type": "string",
               "description": "The username with which Speckle will authenticate with the email service.",
