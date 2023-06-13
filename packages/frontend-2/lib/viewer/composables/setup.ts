@@ -833,7 +833,7 @@ function setupInterfaceState(
       threads: {
         items: commentThreads,
         openThread: {
-          thread: wrapRefWithTracking(openThread, 'openThread'),
+          thread: openThread,
           isTyping,
           newThreadEditor
         },

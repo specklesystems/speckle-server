@@ -21,8 +21,8 @@ export function setupUrlHashState(): InjectableViewerState['urlHashState'] {
       })
     },
     initialState: null,
-    asyncRead: false,
-    debugging: { log: { name: 'focusedThreadId' } }
+    asyncRead: false
+    // debugging: { log: { name: 'focusedThreadId' } }
   })
 
   const diff = writableAsyncComputed({
