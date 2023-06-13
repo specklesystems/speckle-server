@@ -1,6 +1,6 @@
 <template>
   <nav class="flex justify-center" :aria-label="ariaLabel || 'Progress steps'">
-    <ol :class="[listClasses, basic ? 'basic' : '']">
+    <ol :class="[listClasses, extraListClasses]">
       <li v-for="(step, i) in steps" :key="step.name">
         <a
           v-if="isFinishedStep(i)"
@@ -67,7 +67,7 @@
 <script setup lang="ts">
 import { CheckCircleIcon } from '@heroicons/vue/20/solid'
 import { computed, toRefs } from 'vue'
-import { useStepsInternals } from '~~/src/composables/common/steps'
+import { StepsPadding, useStepsInternals } from '~~/src/composables/common/steps'
 import { BulletStepType, HorizontalOrVertical } from '~~/src/helpers/common/components'
 import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 
@@ -83,6 +83,7 @@ const props = defineProps<{
   modelValue?: number
   goVerticalBelow?: TailwindBreakpoints
   nonInteractive?: boolean
+  stepsPadding?: StepsPadding
 }>()
 
 const { isCurrentStep, isFinishedStep, switchStep, listClasses, linkClasses } =
@@ -92,7 +93,18 @@ const { isCurrentStep, isFinishedStep, switchStep, listClasses, linkClasses } =
   })
 
 const labelClasses = computed(() => {
-  const classParts: string[] = ['ml-3 h6 font-medium leading-7']
+  const classParts: string[] = ['h6 font-medium leading-7']
+
+  let leftMargin: string
+  if (props.stepsPadding === 'xs') {
+    leftMargin = 'ml-1'
+  } else if (props.stepsPadding === 'sm') {
+    leftMargin = 'ml-2'
+  } else {
+    leftMargin = 'ml-3'
+  }
+
+  classParts.push(leftMargin)
 
   if (props.basic) {
     classParts.push('sr-only')
@@ -100,9 +112,14 @@ const labelClasses = computed(() => {
 
   return classParts.join(' ')
 })
+
+const extraListClasses = computed(() => {
+  const classParts: string[] = []
+
+  if (props.basic) {
+    classParts.push('basic')
+  }
+
+  return classParts.join(' ')
+})
 </script>
-<style scoped>
-.basic {
-  @apply space-x-4 !important;
-}
-</style>

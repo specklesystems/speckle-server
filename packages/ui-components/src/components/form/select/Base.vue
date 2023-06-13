@@ -9,7 +9,7 @@
       as="div"
     >
       <ListboxLabel
-        class="block label text-foreground"
+        class="block label text-foreground-2 mb-2"
         :class="{ 'sr-only': !showLabel }"
       >
         {{ label }}
@@ -138,12 +138,7 @@
         </Transition>
       </div>
     </Listbox>
-    <p
-      v-if="helpTipId"
-      :id="helpTipId"
-      class="mt-2 ml-3 text-sm"
-      :class="helpTipClasses"
-    >
+    <p v-if="helpTipId" :id="helpTipId" class="mt-2 text-sm" :class="helpTipClasses">
       {{ helpTip }}
     </p>
   </div>
@@ -180,7 +175,7 @@ import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 // @ts-ignore
 import { directive as vTippy } from 'vue-tippy'
 
-type ButtonStyle = 'base' | 'simple'
+type ButtonStyle = 'base' | 'simple' | 'tinted'
 type SingleItem = any
 type ValueType = SingleItem | SingleItem[] | undefined
 
@@ -284,7 +279,7 @@ const props = defineProps({
    * Validation stuff
    */
   rules: {
-    type: [String, Object, Function, Array] as PropType<RuleExpression<string>>,
+    type: [String, Object, Function, Array] as PropType<RuleExpression<ValueType>>,
     default: undefined
   },
   /**
@@ -354,7 +349,7 @@ const renderClearButton = computed(
 )
 
 const buttonsWrapperClasses = computed(() => {
-  const classParts: string[] = ['relative flex group', props.showLabel ? 'mt-1' : '']
+  const classParts: string[] = ['relative flex group']
 
   if (props.buttonStyle !== 'simple') {
     classParts.push('hover:shadow rounded-md')
@@ -389,13 +384,19 @@ const clearButtonClasses = computed(() => {
     'relative z-[1]',
     'flex items-center justify-center text-center shrink-0',
     'rounded-r-md overflow-hidden transition-all',
+    'text-foreground',
     hasValueSelected.value ? `w-6 ${commonButtonClasses.value}` : 'w-0'
   ]
 
   if (!isDisabled.value) {
     classParts.push(
-      'bg-primary-muted hover:bg-primary hover:text-foreground-on-primary'
+      'hover:bg-primary hover:text-foreground-on-primary dark:text-foreground-on-primary'
     )
+    if (props.buttonStyle === 'tinted') {
+      classParts.push('bg-outline-3')
+    } else {
+      classParts.push('bg-primary-muted')
+    }
   }
 
   return classParts.join(' ')
@@ -413,7 +414,11 @@ const buttonClasses = computed(() => {
     classParts.push('py-2 px-3')
 
     if (!isDisabled.value) {
-      classParts.push('bg-foundation text-foreground')
+      if (props.buttonStyle === 'tinted') {
+        classParts.push('bg-foundation-page text-foreground')
+      } else {
+        classParts.push('bg-foundation text-foreground')
+      }
     }
   }
 
@@ -492,7 +497,6 @@ const itemKey = (v: SingleItem): string | number =>
   props.by ? (v[props.by] as string) : v
 
 const triggerSearch = async () => {
-  console.log('triggerSearch')
   if (!isAsyncSearchMode.value || !props.getSearchResults) return
 
   isAsyncLoading.value = true

@@ -13,25 +13,6 @@ Speckle UI component library built with Vue 3 and relying on the Speckle Tailwin
 
 It's suggested that you also install the `@speckle/ui-components-nuxt` Nuxt module. It will ensure that all of the Vue components can be auto-imported like components in nuxt's `./components` directory. No need to import them manually anymore and you'll also get proper TS typing in your Vue templates out of the box!
 
-Additionally you should add the following to your `build.transpile` array in your nuxt config:
-
-```js
-// nuxt.config.js
-export default {
-  build: {
-    transpile: [
-      '@headlessui/vue',
-      /^@heroicons\/vue/,
-      '@vueuse/core',
-      '@vueuse/shared',
-      '@speckle/ui-components'
-    ]
-  }
-}
-```
-
-This will ensure that some dependencies are transpiled properly so that they work correctly both during SSR & CSR.
-
 ### Troubleshooting
 
 #### Form validation doesn't work

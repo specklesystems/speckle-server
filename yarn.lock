@@ -11216,7 +11216,6 @@ __metadata:
     tailwindcss: ^3.3.2
     type-fest: ^3.5.1
     typescript: ^4.8.3
-    v3-infinite-loading: ^1.2.2
     vee-validate: ^4.7.0
     vue-advanced-cropper: ^2.8.8
     vue-tippy: ^6.0.0
@@ -11611,6 +11610,7 @@ __metadata:
     type-fest: ^2.13.1
     typescript: ^5.0.4
     unplugin-vue-macros: ^2.1.4
+    v3-infinite-loading: ^1.2.2
     vee-validate: ^4.7.0
     vite: ^4.3.9
     vite-plugin-dts: ^2.3.0
