@@ -6,7 +6,11 @@ import { isNonNullable } from '~~/lib/common/helpers/utils'
 import { SpeckleViewer, TimeoutError } from '@speckle/shared'
 import { get } from 'lodash-es'
 import { Vector3, Box3 } from 'three'
-import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useDiffUtilities,
+  useFilterUtilities,
+  useSelectionUtilities
+} from '~~/lib/viewer/composables/ui'
 import { NumericPropertyInfo } from '@speckle/viewer'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
@@ -154,6 +158,7 @@ export function useApplySerializedState() {
   } = useFilterUtilities()
   const resetState = useResetUiState()
   const { diffModelVersions, deserializeDiffCommand, endDiff } = useDiffUtilities()
+  const { setSelectionFromObjectIds } = useSelectionUtilities()
 
   return async (state: SerializedViewerState, mode: StateApplyMode) => {
     if (mode === StateApplyMode.Reset) {
@@ -238,8 +243,13 @@ export function useApplySerializedState() {
         })
     }
 
-    highlightedObjectIds.value =
-      mode === StateApplyMode.Spotlight ? filters.selectedObjectIds.slice() : []
+    if (mode === StateApplyMode.Spotlight) {
+      highlightedObjectIds.value = filters.selectedObjectIds.slice()
+    } else {
+      if (filters.selectedObjectIds.length) {
+        setSelectionFromObjectIds(filters.selectedObjectIds)
+      }
+    }
 
     if (
       [StateApplyMode.Spotlight, StateApplyMode.TheadFullContextOpen].includes(mode)
