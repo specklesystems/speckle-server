@@ -143,38 +143,23 @@
       </div>
       <div
         v-else
-        class="flex flex-col items-center justify-center flex-1 space-y-2 py-4"
+        class="flex flex-col sm:flex-row items-center justify-center flex-1 space-x-2 py-4"
       >
         <div class="w-6 h-6">
           <!-- <CheckCircleIcon class="absolute w-6 h-6 text-primary" /> -->
-          <CheckCircleIcon
-            class="absolute w-6 h-6 text-primary animate-ping animate-bounce"
-          />
+          <CheckCircleIcon class="w-6 h-6 text-primary animate-ping animate-pulse" />
         </div>
-        <div class="text-sm max-w-xl text-center">
+        <div class="text-sm max-w-lg grow">
           <b>All done!</b>
-          <br />
-          Don't forget to join us in the
-          <FormButton
-            to="https://speckle.community"
-            target="_blank"
-            size="xs"
-            :icon-right="ArrowTopRightOnSquareIcon"
-          >
+          PS: the
+          <FormButton to="https://speckle.community" target="_blank" size="sm" link>
             Community Forum
           </FormButton>
-          , or check out the
-          <FormButton
-            to="https://speckle.systems/tutorials"
-            target="_blank"
-            size="xs"
-            :icon-right="ArrowTopRightOnSquareIcon"
-          >
-            Tutorials
-          </FormButton>
-          page for more inisghts.
+          is there to help!
         </div>
-        <FormButton text size="sm" @click="closeChecklist()">Close</FormButton>
+        <div>
+          <FormButton text size="sm" @click="closeChecklist()">Close</FormButton>
+        </div>
       </div>
     </div>
 
@@ -190,19 +175,19 @@
     </div>
 
     <OnboardingDialogManager
-      v-show="showManagerDownloadDialog"
+      v-model:open="showManagerDownloadDialog"
       @done="markComplete(0)"
       @cancel="showManagerDownloadDialog = false"
     ></OnboardingDialogManager>
     <OnboardingDialogAccountLink
-      v-show="showAccountLinkDialog"
+      v-model:open="showAccountLinkDialog"
       @done="markComplete(1)"
       @cancel="showAccountLinkDialog = false"
     >
       <template #header>Desktop Login</template>
     </OnboardingDialogAccountLink>
     <OnboardingDialogFirstSend
-      v-show="showFirstSendDialog"
+      v-model:open="showFirstSendDialog"
       @done="markComplete(2)"
       @cancel="showFirstSendDialog = false"
     >
@@ -220,8 +205,7 @@ import {
   ShareIcon,
   ComputerDesktopIcon,
   UserPlusIcon,
-  CloudArrowUpIcon,
-  ArrowTopRightOnSquareIcon
+  CloudArrowUpIcon
 } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as OutlineCheckCircleIcon } from '@heroicons/vue/24/outline'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
@@ -282,7 +266,7 @@ const getStatus = () => {
 
 const steps = ref([
   {
-    title: 'Get Connectors',
+    title: 'Install Manager ⚙️',
     blurb: 'Use Manager to install the Speckle Connectors for your apps!',
     active: false,
     cta: "Let's go!",
@@ -304,7 +288,7 @@ const steps = ref([
     icon: ComputerDesktopIcon
   },
   {
-    title: 'Desktop Login',
+    title: 'Log In 🔑',
     blurb: 'Authorise our application connectors to send data to Speckle.',
     active: false,
     cta: "Let's go!",
@@ -326,7 +310,7 @@ const steps = ref([
     icon: UserPlusIcon
   },
   {
-    title: 'Send your first model',
+    title: 'Your First Model Upload ⬆️',
     blurb: 'Use your favourite design app to send your first model to Speckle.',
     active: false,
     cta: "Let's go!",
@@ -348,7 +332,7 @@ const steps = ref([
     icon: CloudArrowUpIcon
   },
   {
-    title: 'Enable Multiplayer',
+    title: 'Enable Multiplayer 📢',
     blurb: 'Share your project with your colleagues!',
     active: false,
     cta: "Let's go!",
