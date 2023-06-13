@@ -270,6 +270,8 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.server.email.password.secretName }}
                 key: {{ default "email_password" .Values.server.email.password.secretKey }}
+          - name: EMAIL_FROM
+            value: "{{ .Values.server.email.from }}"
           {{- end }}
 
           # *** Tracking / Tracing ***

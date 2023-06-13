@@ -492,6 +492,9 @@ server:
     ## @param server.email.port The port on the server for the email service.
     ##
     port: ''
+    ## @param server.email.from The email address from which Speckle will send emails. Defaults to 'no-reply@speckle.systems' if left blank.
+    ##
+    from: ''
     ## @param server.email.username The username with which Speckle will authenticate with the email service.
     ## Note that the `email_password` is expected to be provided in the Kubernetes Secret with the name provided in the `secretName` parameter.
     ##
