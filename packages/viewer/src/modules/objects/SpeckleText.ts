@@ -55,7 +55,7 @@ export class SpeckleText extends Mesh {
     super()
     this._text = new Text()
     this._text.uuid = uuid
-    this._text.depthOffset = -0.01
+    this._text.depthOffset = -0.1
     this.add(this._text)
   }
 

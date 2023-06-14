@@ -255,14 +255,14 @@ export class MeasurementPointGizmo extends Group {
   }
 
   public updateText(
-    value: number,
+    value: string,
     position?: Vector3,
     quaternion?: Quaternion,
     scale?: Vector3
   ) {
     this.text
       .update({
-        textValue: value.toFixed(2) + 'm',
+        textValue: value,
         height: 0.5
       })
       .then(() => {

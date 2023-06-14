@@ -1,6 +1,7 @@
 import { Box3, Camera, Matrix4, Object3D, Quaternion, Vector3, Vector4 } from 'three'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo'
 import { ObjectLayers } from '../SpeckleRenderer'
+import { getConversionFactor } from '../converter/Units'
 
 export enum MeasurementState {
   HIDDEN,
@@ -17,6 +18,8 @@ export class Measurement extends Object3D {
   public startLineLength: number
   public endLineLength: number
   public value = 0
+  public units = 'm'
+  public precision = 2
 
   private startGizmo: MeasurementPointGizmo = null
   private endGizmo: MeasurementPointGizmo = null
@@ -161,7 +164,9 @@ export class Measurement extends Object3D {
 
       const textValue = intersectPoint.distanceTo(this.startPoint)
       this.startGizmo.updateText(
-        textValue,
+        `${(textValue * getConversionFactor('m', this.units)).toFixed(
+          this.precision
+        )} ${this.units}`,
         textPos,
         new Quaternion().setFromRotationMatrix(basisCS)
       )
