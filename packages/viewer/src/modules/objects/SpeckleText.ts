@@ -1,6 +1,8 @@
-import { Mesh } from 'three'
+import { Color, Mesh, PlaneGeometry, Vector3 } from 'three'
 import { Text } from 'troika-three-text'
 import { SpeckleObject } from '../tree/DataTree'
+import SpeckleBasicMaterial from '../materials/SpeckleBasicMaterial'
+import { ObjectLayers } from '../SpeckleRenderer'
 
 export interface SpeckleTextParams {
   textValue?: string
@@ -8,9 +10,26 @@ export interface SpeckleTextParams {
   height?: number
 }
 
+export interface SpeckleTextStyle {
+  backgroundColor?: Color
+  textColor?: Color
+  billboard?: boolean
+  anchorX?: string
+  anchorY?: string
+}
+
+const DefaultSpeckleTextStyle: SpeckleTextStyle = {
+  backgroundColor: null,
+  textColor: new Color(0xffffff),
+  billboard: false,
+  anchorX: '50%',
+  anchorY: '50%'
+}
+
 export class SpeckleText extends Mesh {
   private _text: Text = null
   private _background: Mesh = null
+  private _style: SpeckleTextStyle = Object.assign({}, DefaultSpeckleTextStyle)
 
   public static SpeckleTextParamsFromMetadata(metadata: SpeckleObject) {
     return {
@@ -25,6 +44,11 @@ export class SpeckleText extends Mesh {
 
   public get backgroundMesh() {
     return this._background
+  }
+
+  public set style(value: SpeckleTextStyle) {
+    Object.assign(this._style, value)
+    this.updateStyle()
   }
 
   public constructor(uuid: string) {
@@ -61,12 +85,18 @@ export class SpeckleText extends Mesh {
       if (params.height) {
         this._text.fontSize = params.height
       }
+      this._text.anchorX = this._style.anchorX
+      this._text.anchorY = this._style.anchorY
 
       this._text.sync(() => {
         resolve()
         if (updateFinished) updateFinished()
       })
     })
+  }
+
+  private updateStyle() {
+    this.updateBackground(this._style.backgroundColor)
   }
   // public get vertCount() {
   //   return this.text.geometry.attributes.position.count
@@ -96,17 +126,29 @@ export class SpeckleText extends Mesh {
   //   })
   // }
 
-  // private setBackground() {
-  //   this.text.geometry.computeBoundingBox()
-  //   const sizeBox = this.text.geometry.boundingBox.getSize(new Vector3())
-  //   const geometry = new PlaneGeometry(sizeBox.x, sizeBox.y)
-  //   const material = new SpeckleBasicMaterial({ color: 0xff0000 }, ['USE_RTE'])
-  //   material.toneMapped = false
-  //   this.background = new Mesh(geometry, material)
-  //   this.background.layers.set(ObjectLayers.PROPS)
-  //   this.background.frustumCulled = false
-  //   this.background.renderOrder = 1
-  // }
+  private updateBackground(backgroundColor: Color) {
+    if (!backgroundColor) {
+      this.remove(this._background)
+      this._background = null
+      return
+    }
+
+    if (this._background === null) {
+      this._text.geometry.computeBoundingBox()
+      const sizeBox = this._text.geometry.boundingBox.getSize(new Vector3())
+      const geometry = new PlaneGeometry(sizeBox.x, sizeBox.y)
+
+      const material = new SpeckleBasicMaterial({}, [])
+      material.toneMapped = false
+      this._background = new Mesh(geometry, material)
+      this._background.layers.set(ObjectLayers.PROPS)
+      this._background.frustumCulled = false
+      this._background.renderOrder = 1
+      this.add(this._background)
+    }
+    const color = new Color(backgroundColor).convertSRGBToLinear()
+    ;(this._background.material as SpeckleBasicMaterial).color = color
+  }
 
   // public transform(matrix: Matrix4) {
   //   this.geometry.applyMatrix4(matrix)

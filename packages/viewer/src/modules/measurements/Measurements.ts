@@ -24,7 +24,11 @@ export class Measurements {
 
   public update() {
     this.frameLock = false
-    if (this.measurement) this.measurement.frameUpdate(this.renderer.camera)
+    if (this.measurement)
+      this.measurement.frameUpdate(this.renderer.camera, this.renderer.sceneBox)
+    this.measurements.forEach((value: Measurement) => {
+      value.frameUpdate(this.renderer.camera, this.renderer.sceneBox)
+    })
   }
 
   private onPointerMove(data) {
@@ -58,7 +62,7 @@ export class Measurements {
       this.measurement.endPoint.copy(result[0].point)
       this.measurement.endNormal.copy(result[0].face.normal)
     }
-    this.measurement.update()
+    this.measurement.update(this.renderer.camera)
 
     this.renderer.needsRender = true
     this.renderer.resetPipeline()
@@ -77,7 +81,7 @@ export class Measurements {
       this.measurement.state = MeasurementState.DANGLING_END
     else if (this.measurement.state === MeasurementState.DANGLING_END) {
       this.measurement.state = MeasurementState.COMPLETE
-      this.measurement.update()
+      this.measurement.update(this.renderer.camera)
       this.measurements.push(this.measurement)
       this.measurement = null
     }
@@ -137,9 +141,9 @@ export class Measurements {
       this.measurement.endPoint.copy(perpResult[0].point)
       this.measurement.endNormal.copy(perpResult[0].face.normal)
       this.measurement.state = MeasurementState.DANGLING_END
-      this.measurement.update()
+      this.measurement.update(this.renderer.camera)
       this.measurement.state = MeasurementState.COMPLETE
-      this.measurement.update()
+      this.measurement.update(this.renderer.camera)
       this.measurements.push(this.measurement)
       this.measurement = null
     }

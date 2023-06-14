@@ -1,4 +1,5 @@
 import {
+  Box3,
   Camera,
   CircleGeometry,
   Color,
@@ -6,9 +7,9 @@ import {
   DynamicDrawUsage,
   Group,
   InterleavedBufferAttribute,
-  Matrix4,
   Mesh,
   PerspectiveCamera,
+  Quaternion,
   SphereGeometry,
   Vector2,
   Vector3
@@ -44,7 +45,7 @@ const DefaultMeasurementPointGizmoStyle = {
   lineOpacity: 1,
   pointColor: 0x047efb,
   pointOpacity: 1,
-  textColor: 0x222222,
+  textColor: 0xffffff,
   textOpacity: 1
 }
 
@@ -78,6 +79,7 @@ export class MeasurementPointGizmo extends Group {
   private getDiscMaterial() {
     const material = new SpeckleBasicMaterial({ color: this._style.discColor })
     material.color.convertSRGBToLinear()
+    material.toneMapped = false
     material.polygonOffset = true
     material.polygonOffsetFactor = -5
     material.polygonOffsetUnits = 5
@@ -100,6 +102,7 @@ export class MeasurementPointGizmo extends Group {
     )
     lineMaterial.color = new Color(this._style.lineColor)
     lineMaterial.color.convertSRGBToLinear()
+    lineMaterial.toneMapped = false
     if (this._style.dashedLine) {
       lineMaterial.dashSize = 1
       lineMaterial.gapSize = 1
@@ -172,7 +175,7 @@ export class MeasurementPointGizmo extends Group {
 
     this.text = new SpeckleText('test-text')
     this.text.textMesh.material = null
-    this.text.matrixAutoUpdate = false
+    // this.text.matrixAutoUpdate = false
     this.text.layers.set(ObjectLayers.MEASUREMENTS)
     this.text.textMesh.layers.set(ObjectLayers.MEASUREMENTS)
 
@@ -192,15 +195,21 @@ export class MeasurementPointGizmo extends Group {
     this.text.textMesh.visible = text
   }
 
-  public frameUpdate(camera: Camera) {
+  public frameUpdate(camera: Camera, bounds: Box3) {
     if (camera.type === 'PerspectiveCamera' && +this._style.fixedSize > 0) {
       const cam = camera as PerspectiveCamera
       const cameraObjectDistance = cam.position.distanceTo(this.disc.position)
       const worldSize = Math.abs(2 * Math.tan(cam.fov / 2.0) * cameraObjectDistance)
-      const size = 0.025 * worldSize
+      const maxWorldSize = bounds.min.distanceTo(bounds.max) * 2
+      // console.log(worldSize, maxWorldSize)
+      const size = 0.025 * Math.min(worldSize, maxWorldSize)
       MeasurementPointGizmo.vecBuff0.set(size, size, size)
       this.disc.scale.copy(MeasurementPointGizmo.vecBuff0)
       this.point.scale.copy(MeasurementPointGizmo.vecBuff0)
+      this.text.scale.copy(MeasurementPointGizmo.vecBuff0)
+      this.disc.matrixWorldNeedsUpdate = true
+      this.point.matrixWorldNeedsUpdate = true
+      this.text.matrixWorldNeedsUpdate = true
     }
   }
 
@@ -245,15 +254,22 @@ export class MeasurementPointGizmo extends Group {
     this.line.computeLineDistances()
   }
 
-  public updateText(value: number, transform: Matrix4) {
+  public updateText(
+    value: number,
+    position?: Vector3,
+    quaternion?: Quaternion,
+    scale?: Vector3
+  ) {
     this.text
       .update({
         textValue: value.toFixed(2) + 'm',
         height: 0.5
       })
       .then(() => {
-        this.text.matrix.copy(transform)
-        this.text.matrixWorldNeedsUpdate = true
+        this.text.style = { backgroundColor: new Color(0x047efb), billboard: false }
+        if (position) this.text.position.copy(position)
+        if (quaternion) this.text.quaternion.copy(quaternion)
+        if (scale) this.text.scale.copy(scale)
       })
   }
 

@@ -1,4 +1,4 @@
-import { Camera, Matrix4, Object3D, Vector3 } from 'three'
+import { Box3, Camera, Matrix4, Object3D, Quaternion, Vector3, Vector4 } from 'three'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo'
 import { ObjectLayers } from '../SpeckleRenderer'
 
@@ -54,12 +54,42 @@ export class Measurement extends Object3D {
     this.layers.set(ObjectLayers.MEASUREMENTS)
   }
 
-  public frameUpdate(camera: Camera) {
-    this.startGizmo.frameUpdate(camera)
-    this.endGizmo.frameUpdate(camera)
+  public frameUpdate(camera: Camera, bounds: Box3) {
+    this.startGizmo.frameUpdate(camera, bounds)
+    this.endGizmo.frameUpdate(camera, bounds)
+
+    // const intersectPoint = this.vecBuff0
+    //   .copy(this.startPoint)
+    //   .add(this.vecBuff1.copy(this.startNormal).multiplyScalar(this.startLineLength))
+    // const view = new Matrix4().copy(camera.matrixWorldInverse)
+    // const invView = new Matrix4().copy(view).invert()
+    // const lineDir = new Vector3().copy(intersectPoint).sub(this.startPoint).normalize()
+    // const lineDirCS4 = new Vector4(lineDir.x, lineDir.y, lineDir.z, 0)
+    //   .applyMatrix4(view)
+    //   .normalize()
+    // const rightCS4 = new Vector4(0, 0, 1, 0).applyMatrix4(view).normalize()
+
+    // const lineDirCS = new Vector3(lineDirCS4.x, lineDirCS4.y, lineDirCS4.z)
+    // const rightCS = new Vector3(rightCS4.x, rightCS4.y, rightCS4.z)
+
+    // const upCS = new Vector3().crossVectors(rightCS, lineDirCS).normalize()
+    // const forwardCS = new Vector3().crossVectors(lineDirCS, upCS).normalize()
+
+    // const basisCS = new Matrix4().makeBasis(lineDirCS, upCS, forwardCS)
+    // basisCS.premultiply(invView)
+
+    // const textPos = this.vecBuff0
+    //   .copy(this.startPoint)
+    //   .add(
+    //     this.vecBuff1.copy(this.startNormal).multiplyScalar(this.startLineLength * 0.5)
+    //   )
+    // basisCS.setPosition(textPos)
+    // const textValue = intersectPoint.distanceTo(this.startPoint)
+    // this.startGizmo.updateText(textValue, basisCS)
+    // console.log(basisCS)
   }
 
-  public update() {
+  public update(camera: Camera) {
     this.startGizmo.updateDisc(this.startPoint, this.startNormal)
     this.startGizmo.updatePoint(this.startPoint)
     this.endGizmo.updateDisc(this.endPoint, this.endNormal)
@@ -116,6 +146,41 @@ export class Measurement extends Object3D {
       ])
       this.endGizmo.updatePoint(intersectPoint)
 
+      const view = new Matrix4().copy(camera.matrixWorldInverse)
+      const invView = new Matrix4().copy(view).invert()
+      const lineDir = new Vector3()
+        .copy(intersectPoint)
+        .sub(this.startPoint)
+        .normalize()
+      const lineDirCS4 = new Vector4(lineDir.x, lineDir.y, lineDir.z, 0)
+        .applyMatrix4(view)
+        .normalize()
+      const sign = Math.sign(
+        new Vector3(0, 0, -1)
+          .applyQuaternion(camera.quaternion)
+          .dot(new Vector3(1, 0, 0))
+      )
+
+      const rightCS4 = new Vector4(-sign, 0, 0, 0).applyMatrix4(view).normalize()
+      // console.log(lineDirCS4)
+      const lineDirCS = new Vector3(lineDirCS4.x, lineDirCS4.y, lineDirCS4.z)
+      // if (lineDirCS.x < 0) {
+      //   lineDirCS
+      //     .applyMatrix4(invView)
+      //     .applyQuaternion(
+      //       new Quaternion().setFromEuler(new Euler(0, Math.PI, 0), true)
+      //     )
+      //     .applyMatrix4(view)
+      //     .normalize()
+      // }
+      const rightCS = new Vector3(rightCS4.x, rightCS4.y, rightCS4.z)
+
+      const upCS = new Vector3().crossVectors(rightCS, lineDirCS).normalize()
+      const forwardCS = new Vector3().crossVectors(lineDirCS, upCS).normalize()
+
+      const basisCS = new Matrix4().makeBasis(lineDirCS, upCS, forwardCS)
+      basisCS.premultiply(invView)
+
       const textPos = this.vecBuff0
         .copy(this.startPoint)
         .add(
@@ -123,13 +188,13 @@ export class Measurement extends Object3D {
             .copy(this.startNormal)
             .multiplyScalar(this.startLineLength * 0.5)
         )
-      const textTransform = this.matBuff.makeTranslation(
-        textPos.x,
-        textPos.y,
-        textPos.z
-      )
+
       const textValue = intersectPoint.distanceTo(this.startPoint)
-      this.startGizmo.updateText(textValue, textTransform)
+      this.startGizmo.updateText(
+        textValue,
+        textPos,
+        new Quaternion().setFromRotationMatrix(basisCS)
+      )
     }
     if (this._state === MeasurementState.COMPLETE) {
       this.startGizmo.enable(false, true, true, true)
