@@ -57,36 +57,6 @@ export class Measurement extends Object3D {
   public frameUpdate(camera: Camera, bounds: Box3) {
     this.startGizmo.frameUpdate(camera, bounds)
     this.endGizmo.frameUpdate(camera, bounds)
-
-    // const intersectPoint = this.vecBuff0
-    //   .copy(this.startPoint)
-    //   .add(this.vecBuff1.copy(this.startNormal).multiplyScalar(this.startLineLength))
-    // const view = new Matrix4().copy(camera.matrixWorldInverse)
-    // const invView = new Matrix4().copy(view).invert()
-    // const lineDir = new Vector3().copy(intersectPoint).sub(this.startPoint).normalize()
-    // const lineDirCS4 = new Vector4(lineDir.x, lineDir.y, lineDir.z, 0)
-    //   .applyMatrix4(view)
-    //   .normalize()
-    // const rightCS4 = new Vector4(0, 0, 1, 0).applyMatrix4(view).normalize()
-
-    // const lineDirCS = new Vector3(lineDirCS4.x, lineDirCS4.y, lineDirCS4.z)
-    // const rightCS = new Vector3(rightCS4.x, rightCS4.y, rightCS4.z)
-
-    // const upCS = new Vector3().crossVectors(rightCS, lineDirCS).normalize()
-    // const forwardCS = new Vector3().crossVectors(lineDirCS, upCS).normalize()
-
-    // const basisCS = new Matrix4().makeBasis(lineDirCS, upCS, forwardCS)
-    // basisCS.premultiply(invView)
-
-    // const textPos = this.vecBuff0
-    //   .copy(this.startPoint)
-    //   .add(
-    //     this.vecBuff1.copy(this.startNormal).multiplyScalar(this.startLineLength * 0.5)
-    //   )
-    // basisCS.setPosition(textPos)
-    // const textValue = intersectPoint.distanceTo(this.startPoint)
-    // this.startGizmo.updateText(textValue, basisCS)
-    // console.log(basisCS)
   }
 
   public update(camera: Camera) {

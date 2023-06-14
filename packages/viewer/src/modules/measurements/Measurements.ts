@@ -73,7 +73,7 @@ export class Measurements {
     if (!data.event.ctrlKey) return
 
     if (data.event.shiftKey) {
-      this.autoMeasure(data)
+      this.autoLazerMeasure(data)
       return
     }
 
@@ -111,7 +111,7 @@ export class Measurements {
     }
   }
 
-  private autoMeasure(data) {
+  private autoLazerMeasure(data) {
     if (this.measurement.state === MeasurementState.DANGLING_START) {
       const result = this.renderer.intersections.intersect(
         this.renderer.scene,
@@ -134,7 +134,19 @@ export class Measurements {
         undefined,
         [ObjectLayers.STREAM_CONTENT_MESH]
       )
-      if (!perpResult || !perpResult.length) return
+      if (!perpResult || !perpResult.length) {
+        let flashCount = 0
+        const maxFlashCount = 5
+        const handle = setInterval(() => {
+          this.measurement.highlight(Boolean(flashCount++ % 2))
+          if (flashCount >= maxFlashCount) {
+            clearInterval(handle)
+          }
+          this.renderer.needsRender = true
+          this.renderer.resetPipeline()
+        }, 100)
+        return
+      }
 
       this.measurement.startPoint.copy(startPoint)
       this.measurement.startNormal.copy(startNormal)
