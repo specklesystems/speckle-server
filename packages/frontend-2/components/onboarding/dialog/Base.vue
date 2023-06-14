@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialog max-width="md">
+  <LayoutDialog v-model:open="openState" max-width="md">
     <div>
       <div class="max-w-2xl w-full flex flex-col justify-center pointer-events-auto">
         <div class="space-y-4 w-full">
@@ -12,4 +12,20 @@
     </div>
   </LayoutDialog>
 </template>
-<script setup lang="ts"></script>
+<script setup lang="ts">
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { CubeIcon } from '@heroicons/vue/24/solid'
+
+const props = defineProps<{
+  open: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:open', val: boolean): void
+}>()
+
+const openState = computed({
+  get: () => props.open,
+  set: (newVal) => emit('update:open', newVal)
+})
+</script>
