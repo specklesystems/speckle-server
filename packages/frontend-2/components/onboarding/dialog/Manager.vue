@@ -1,5 +1,5 @@
 <template>
-  <OnboardingDialogBase>
+  <OnboardingDialogBase v-model:open="openState">
     <template #header>Install Manager ⚙️</template>
     <div
       class="w-full h-[351px] bg-primary rounded-xl flex items-center justify-center overflow-hidden"
@@ -42,9 +42,6 @@
         </p>
       </div>
     </div>
-    <!-- <div v-if="hasDownloadedManager" class="flex justify-center flex-col space-y-2">
-      <FormButton size="xl" class="shadow-md" @click.stop="close">Close</FormButton>
-    </div> -->
   </OnboardingDialogBase>
 </template>
 <script setup lang="ts">
@@ -52,7 +49,19 @@
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
-const emit = defineEmits(['done'])
+const props = defineProps<{
+  open: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:open', val: boolean): void
+  (e: 'done'): void
+}>()
+
+const openState = computed({
+  get: () => props.open,
+  set: (newVal) => emit('update:open', newVal)
+})
 
 const hasDownloadedManager = useSynchronizedCookie<boolean>(`hasDownloadedManager`)
 
@@ -119,8 +128,4 @@ const downloadManager = (ext: string | null = null) => {
   hasDownloadedManager.value = true
   emit('done')
 }
-
-// const close = () => {
-//   emit('done')
-// }
 </script>

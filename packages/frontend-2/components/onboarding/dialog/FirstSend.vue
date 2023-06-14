@@ -1,5 +1,5 @@
 <template>
-  <OnboardingDialogBase>
+  <OnboardingDialogBase v-model:open="openState">
     <template #header>Your First Model Upload ⬆️</template>
     <div
       class="w-full h-[351px] bg-primary rounded-xl flex items-center justify-center overflow-hidden"
@@ -20,5 +20,19 @@
   </OnboardingDialogBase>
 </template>
 <script setup lang="ts">
-const emit = defineEmits(['done', 'close', 'cancel'])
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { CubeIcon } from '@heroicons/vue/24/solid'
+const props = defineProps<{
+  open: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:open', val: boolean): void
+  (e: 'done'): void
+}>()
+
+const openState = computed({
+  get: () => props.open,
+  set: (newVal) => emit('update:open', newVal)
+})
 </script>
