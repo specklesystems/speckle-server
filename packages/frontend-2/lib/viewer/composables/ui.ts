@@ -311,3 +311,31 @@ export function useDiffUtilities() {
     areDiffsEqual
   }
 }
+
+export function useThreadUtilities() {
+  const {
+    urlHashState: { focusedThreadId },
+    ui: {
+      threads: {
+        openThread: { thread: openThread }
+      }
+    }
+  } = useInjectedViewerState()
+
+  const isOpenThread = (id: string) => focusedThreadId.value === id
+
+  const closeAllThreads = async () => {
+    await focusedThreadId.update(null)
+  }
+
+  const open = async (id: string) => {
+    if (id === focusedThreadId.value) return
+    await focusedThreadId.update(id)
+    await Promise.all([
+      until(focusedThreadId).toBe(id),
+      until(openThread).toMatch((t) => t?.id === id)
+    ])
+  }
+
+  return { closeAllThreads, open, isOpenThread }
+}

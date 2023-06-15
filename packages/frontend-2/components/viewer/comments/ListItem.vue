@@ -68,6 +68,7 @@ import { useArchiveComment } from '~~/lib/viewer/composables/commentManagement'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { Roles } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 
 const props = defineProps<{
   thread: LoadedCommentThread
@@ -75,8 +76,9 @@ const props = defineProps<{
 
 const { resourceItems } = useInjectedViewerLoadedResources()
 const {
-  threads: { open: openThreadRaw, openThread }
+  threads: { openThread }
 } = useInjectedViewerInterfaceState()
+const { open: openThreadRaw } = useThreadUtilities()
 
 const mp = useMixpanel()
 const open = (id: string) => {
