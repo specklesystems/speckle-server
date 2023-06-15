@@ -24,6 +24,9 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
   protected static readonly vecBuff0: Vector3 = new Vector3()
   protected static readonly vecBuff1: Vector3 = new Vector3()
   protected static readonly vecBuff2: Vector3 = new Vector3()
+  protected static readonly vecBuff3: Vector2 = new Vector2()
+
+  private _billboardPixelHeight: number
 
   protected get vertexShader(): string {
     return speckleBasicVert
@@ -43,8 +46,14 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
       uViewer_low: new Vector3(),
       uTransforms: [new Matrix4()],
       tTransforms: null,
+      billboardPos: new Vector3(),
+      billboardSize: new Vector2(),
       objCount: 1
     }
+  }
+
+  public set billboardPixelHeight(value: number) {
+    this._billboardPixelHeight = value
   }
 
   constructor(parameters, defines = []) {
@@ -65,6 +74,15 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
 
   /** Called by three.js render loop */
   public onBeforeRender(_this, scene, camera, geometry, object, group) {
+    if (this.defines['BILLBOARD_FIXED']) {
+      const resolution = _this.getDrawingBufferSize(SpeckleBasicMaterial.vecBuff3)
+      SpeckleBasicMaterial.vecBuff3.set(
+        (this._billboardPixelHeight / resolution.x) * 2,
+        (this._billboardPixelHeight / resolution.y) * 2
+      )
+      this.userData.billboardSize.value.copy(SpeckleBasicMaterial.vecBuff3)
+    }
+
     if (this.defines['USE_RTE']) {
       SpeckleBasicMaterial.matBuff.copy(camera.matrixWorldInverse)
       SpeckleBasicMaterial.matBuff.elements[12] = 0

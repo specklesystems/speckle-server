@@ -10,7 +10,6 @@ import {
   Mesh,
   PerspectiveCamera,
   Quaternion,
-  SphereGeometry,
   Vector2,
   Vector3
 } from 'three'
@@ -113,13 +112,22 @@ export class MeasurementPointGizmo extends Group {
     lineMaterial.resolution = new Vector2(1513, 1306)
     lineMaterial.opacity = this._style.lineOpacity
     lineMaterial.transparent = lineMaterial.opacity < 1
+    lineMaterial.depthTest = false
     return lineMaterial
   }
 
-  private getPointMaterial() {
-    const material = new SpeckleBasicMaterial({ color: this._style.pointColor })
+  private getPointMaterial(color?: number) {
+    const material = new SpeckleBasicMaterial(
+      { color: color ? color : this._style.pointColor },
+      ['BILLBOARD_FIXED']
+    )
     material.opacity = this._style.pointOpacity
     material.transparent = material.opacity < 1
+    material.color.convertSRGBToLinear()
+    material.toneMapped = false
+    material.depthTest = false
+    material.billboardPixelHeight = 7
+    material.userData.billboardPos.value.copy(this.point.position)
     return material
   }
 
@@ -130,12 +138,15 @@ export class MeasurementPointGizmo extends Group {
         opacity: 1,
         side: DoubleSide
       },
-      ['USE_RTE']
+      ['USE_RTE', 'BILLBOARD_FIXED']
     )
     material.toneMapped = false
     material.color.convertSRGBToLinear()
     material.opacity = this._style.textOpacity
     material.transparent = material.opacity < 1
+    material.depthTest = false
+    material.billboardPixelHeight = 20
+    material.userData.billboardPos.value.copy(this.text.position)
 
     return material.getDerivedMaterial()
   }
@@ -164,14 +175,20 @@ export class MeasurementPointGizmo extends Group {
     this.line.computeLineDistances()
     this.line.name = `test-mesurements-line`
     this.line.frustumCulled = false
-    this.line.renderOrder = 1
+    this.line.renderOrder = 2
     this.line.layers.set(ObjectLayers.MEASUREMENTS)
 
-    const sphereGeometry = new SphereGeometry(0.1, 32, 16)
+    const sphereGeometry = new CircleGeometry(1, 16)
 
     this.point = new Mesh(sphereGeometry, null)
     this.point.layers.set(ObjectLayers.MEASUREMENTS)
     this.point.visible = false
+
+    const point2 = new Mesh(sphereGeometry, this.getPointMaterial(0xffffff))
+    point2.renderOrder = 1
+    point2.material.billboardPixelHeight = 5
+    point2.layers.set(ObjectLayers.MEASUREMENTS)
+    this.point.add(point2)
 
     this.text = new SpeckleText('test-text')
     this.text.textMesh.material = null
@@ -205,11 +222,9 @@ export class MeasurementPointGizmo extends Group {
       const size = 0.025 * Math.min(worldSize, maxWorldSize)
       MeasurementPointGizmo.vecBuff0.set(size, size, size)
       this.disc.scale.copy(MeasurementPointGizmo.vecBuff0)
-      this.point.scale.copy(MeasurementPointGizmo.vecBuff0)
-      this.text.scale.copy(MeasurementPointGizmo.vecBuff0)
+      // this.point.scale.copy(MeasurementPointGizmo.vecBuff0)
       this.disc.matrixWorldNeedsUpdate = true
-      this.point.matrixWorldNeedsUpdate = true
-      this.text.matrixWorldNeedsUpdate = true
+      // this.point.matrixWorldNeedsUpdate = true
     }
   }
 
@@ -221,6 +236,12 @@ export class MeasurementPointGizmo extends Group {
 
   public updatePoint(position: Vector3) {
     this.point.position.copy(position)
+    ;(this.point.material as SpeckleBasicMaterial).userData.billboardPos.value.copy(
+      this.point.position
+    )
+    ;(
+      (this.point.children[0] as Mesh).material as SpeckleBasicMaterial
+    ).userData.billboardPos.value.copy(this.point.position)
   }
 
   public updateLine(points: Vector3[]) {
@@ -263,13 +284,14 @@ export class MeasurementPointGizmo extends Group {
     this.text
       .update({
         textValue: value,
-        height: 0.5
+        height: 1
       })
       .then(() => {
-        this.text.style = { backgroundColor: new Color(0x047efb), billboard: false }
-        if (position) this.text.position.copy(position)
-        if (quaternion) this.text.quaternion.copy(quaternion)
-        if (scale) this.text.scale.copy(scale)
+        this.text.style = {
+          backgroundColor: new Color(0x047efb),
+          billboard: true
+        }
+        this.text.setTransform(position, quaternion, scale)
       })
   }
 

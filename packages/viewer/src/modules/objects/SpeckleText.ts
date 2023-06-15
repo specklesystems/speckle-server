@@ -1,4 +1,12 @@
-import { Color, Mesh, PlaneGeometry, Vector3 } from 'three'
+import {
+  BufferAttribute,
+  BufferGeometry,
+  Color,
+  DoubleSide,
+  Mesh,
+  Quaternion,
+  Vector3
+} from 'three'
 import { Text } from 'troika-three-text'
 import { SpeckleObject } from '../tree/DataTree'
 import SpeckleBasicMaterial from '../materials/SpeckleBasicMaterial'
@@ -12,6 +20,7 @@ export interface SpeckleTextParams {
 
 export interface SpeckleTextStyle {
   backgroundColor?: Color
+  backgroundCornerRadius?: number
   textColor?: Color
   billboard?: boolean
   anchorX?: string
@@ -20,6 +29,7 @@ export interface SpeckleTextStyle {
 
 const DefaultSpeckleTextStyle: SpeckleTextStyle = {
   backgroundColor: null,
+  backgroundCornerRadius: 1,
   textColor: new Color(0xffffff),
   billboard: false,
   anchorX: '50%',
@@ -95,8 +105,21 @@ export class SpeckleText extends Mesh {
     })
   }
 
+  public setTransform(position: Vector3, quaternion: Quaternion, scale: Vector3) {
+    if (this._style.billboard) {
+      this.textMesh.material.userData.billboardPos.value.copy(position)
+      ;(
+        this._background.material as SpeckleBasicMaterial
+      ).userData.billboardPos.value.copy(position)
+    }
+
+    if (position) this.position.copy(position)
+    if (quaternion) this.quaternion.copy(quaternion)
+    if (scale) this.scale.copy(scale)
+  }
+
   private updateStyle() {
-    this.updateBackground(this._style.backgroundColor)
+    this.updateBackground()
   }
   // public get vertCount() {
   //   return this.text.geometry.attributes.position.count
@@ -126,8 +149,8 @@ export class SpeckleText extends Mesh {
   //   })
   // }
 
-  private updateBackground(backgroundColor: Color) {
-    if (!backgroundColor) {
+  private updateBackground() {
+    if (!this._style.backgroundColor) {
       this.remove(this._background)
       this._background = null
       return
@@ -136,18 +159,62 @@ export class SpeckleText extends Mesh {
     if (this._background === null) {
       this._text.geometry.computeBoundingBox()
       const sizeBox = this._text.geometry.boundingBox.getSize(new Vector3())
-      const geometry = new PlaneGeometry(sizeBox.x, sizeBox.y)
 
-      const material = new SpeckleBasicMaterial({}, [])
+      const geometry = this.RectangleRounded(sizeBox.x * 1.2, sizeBox.y * 1.2, 0.5, 5)
+
+      const material = new SpeckleBasicMaterial({}, ['BILLBOARD_FIXED'])
       material.toneMapped = false
+      material.side = DoubleSide
+      material.depthTest = false
+      material.billboardPixelHeight = 20
       this._background = new Mesh(geometry, material)
-      this._background.layers.set(ObjectLayers.PROPS)
+      this._background.layers.set(ObjectLayers.MEASUREMENTS)
       this._background.frustumCulled = false
       this._background.renderOrder = 1
       this.add(this._background)
     }
-    const color = new Color(backgroundColor).convertSRGBToLinear()
+    const color = new Color(this._style.backgroundColor).convertSRGBToLinear()
     ;(this._background.material as SpeckleBasicMaterial).color = color
+  }
+
+  /** From https://discourse.threejs.org/t/roundedrectangle-squircle/28645  */
+  // width, height, radiusCorner, smoothness
+  private RectangleRounded(w: number, h: number, r: number, s: number) {
+    // width, height, radiusCorner, smoothness
+
+    const pi2 = Math.PI * 2
+    const n = (s + 1) * 4 // number of segments
+    const indices = []
+    const positions = []
+    const uvs = []
+    let qu, sgx, sgy, x, y
+
+    for (let j = 1; j < n + 1; j++) indices.push(0, j, j + 1) // 0 is center
+    indices.push(0, n, 1)
+    positions.push(0, 0, 0) // rectangle center
+    uvs.push(0.5, 0.5)
+    for (let j = 0; j < n; j++) contour(j)
+
+    const geometry = new BufferGeometry()
+    geometry.setIndex(new BufferAttribute(new Uint32Array(indices), 1))
+    geometry.setAttribute(
+      'position',
+      new BufferAttribute(new Float32Array(positions), 3)
+    )
+    geometry.setAttribute('uv', new BufferAttribute(new Float32Array(uvs), 2))
+
+    return geometry
+
+    function contour(j) {
+      qu = Math.trunc((4 * j) / n) + 1 // quadrant  qu: 1..4
+      sgx = qu === 1 || qu === 4 ? 1 : -1 // signum left/right
+      sgy = qu < 3 ? 1 : -1 // signum  top / bottom
+      x = sgx * (w / 2 - r) + r * Math.cos((pi2 * (j - qu + 1)) / (n - 4)) // corner center + circle
+      y = sgy * (h / 2 - r) + r * Math.sin((pi2 * (j - qu + 1)) / (n - 4))
+
+      positions.push(x, y, 0)
+      uvs.push(0.5 + x / w, 0.5 + y / h)
+    }
   }
 
   // public transform(matrix: Matrix4) {

@@ -129,7 +129,12 @@ export const speckleBasicVert = /* glsl */ `
     }
 #endif
 
-
+#if defined(BILLBOARD) || defined(BILLBOARD_FIXED)
+    uniform vec3 billboardPos;
+#endif
+#ifdef BILLBOARD_FIXED
+    uniform vec2 billboardSize;
+#endif
 
 void main() {
 	#include <uv_vertex>
@@ -173,7 +178,16 @@ void main() {
     
     mvPosition = modelViewMatrix * mvPosition;
     
-    gl_Position = projectionMatrix * mvPosition;
+    #if defined(BILLBOARD)
+        gl_Position = projectionMatrix * (viewMatrix * vec4(billboardPos, 1.0) + vec4(position.x, position.y, 0., 0.0));
+    #elif defined(BILLBOARD_FIXED)
+        gl_Position = projectionMatrix * (viewMatrix * vec4(billboardPos, 1.0));
+        gl_Position /= gl_Position.w;
+        gl_Position.xy += position.xy * billboardSize;
+    #else
+        gl_Position = projectionMatrix * mvPosition;
+    #endif
+
 
 	#include <logdepthbuf_vertex>
 	#include <clipping_planes_vertex>

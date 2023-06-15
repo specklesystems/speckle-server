@@ -9,7 +9,8 @@ import {
   Vector3,
   MeshBasicMaterial,
   Material,
-  IUniform
+  IUniform,
+  Vector2
 } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
@@ -24,6 +25,9 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
   protected static readonly vecBuff0: Vector3 = new Vector3()
   protected static readonly vecBuff1: Vector3 = new Vector3()
   protected static readonly vecBuff2: Vector3 = new Vector3()
+  protected static readonly vecBuff3: Vector2 = new Vector2()
+
+  private _billboardPixelHeight: number
 
   protected get vertexShader(): string {
     return speckleTextVert
@@ -44,8 +48,13 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
       uTransforms: [new Matrix4()],
       tTransforms: null,
       objCount: 1,
-      billboardPos: new Vector3()
+      billboardPos: new Vector3(),
+      billboardSize: new Vector2()
     }
+  }
+
+  public set billboardPixelHeight(value: number) {
+    this._billboardPixelHeight = value
   }
 
   constructor(parameters, defines = []) {
@@ -76,6 +85,14 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
 
   /** Called by three.js render loop */
   public onBeforeRender(_this, scene, camera, geometry, object, group) {
+    if (this.defines['BILLBOARD_FIXED']) {
+      const resolution = _this.getDrawingBufferSize(SpeckleTextMaterial.vecBuff3)
+      SpeckleTextMaterial.vecBuff3.set(
+        (this._billboardPixelHeight / resolution.x) * 2,
+        (this._billboardPixelHeight / resolution.y) * 2
+      )
+      this.userData.billboardSize.value.copy(SpeckleTextMaterial.vecBuff3)
+    }
     /** TO ENABLE */
     // SpeckleTextMaterial.matBuff.copy(camera.matrixWorldInverse)
     // SpeckleTextMaterial.matBuff.elements[12] = 0
