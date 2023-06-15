@@ -933,7 +933,7 @@ export default class SpeckleRenderer {
       return
     }
 
-    if (e.event.ctrlKey) return
+    if (e.event.ctrlKey || e.event.altKey) return
 
     const results: Array<Intersection> = this._intersections.intersect(
       this._scene,

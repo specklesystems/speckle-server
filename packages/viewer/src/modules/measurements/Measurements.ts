@@ -1,8 +1,10 @@
 import SpeckleRenderer, { ObjectLayers } from '../SpeckleRenderer'
 
 import { ViewerEvent } from '../../IViewer'
-import { Measurement, MeasurementState } from './Measurement'
+import { PerpendicularMeasurement } from './PerpendicularMeasurement'
 import { Ray, Raycaster, Vector3 } from 'three'
+import { PointToPointMeasurement } from './PointToPointMeasurement'
+import { Measurement, MeasurementState } from './Measurement'
 
 export class Measurements {
   private renderer: SpeckleRenderer = null
@@ -32,7 +34,7 @@ export class Measurements {
   }
 
   private onPointerMove(data) {
-    if (!data.event.ctrlKey) return
+    if (!data.event.ctrlKey && !data.event.altKey) return
 
     if (this.frameLock) {
       return
@@ -49,7 +51,8 @@ export class Measurements {
     if (!result || !result.length) return
 
     if (!this.measurement) {
-      this.measurement = new Measurement()
+      if (data.event.ctrlKey) this.measurement = new PerpendicularMeasurement()
+      else if (data.event.altKey) this.measurement = new PointToPointMeasurement()
       this.measurement.state = MeasurementState.DANGLING_START
       this.renderer.scene.add(this.measurement)
     }
@@ -62,7 +65,7 @@ export class Measurements {
       this.measurement.endPoint.copy(result[0].point)
       this.measurement.endNormal.copy(result[0].face.normal)
     }
-    this.measurement.update(this.renderer.camera)
+    this.measurement.update()
 
     this.renderer.needsRender = true
     this.renderer.resetPipeline()
@@ -70,7 +73,7 @@ export class Measurements {
   }
 
   private onPointerClick(data) {
-    if (!data.event.ctrlKey) return
+    if (!data.event.ctrlKey && !data.event.altKey) return
 
     if (data.event.shiftKey) {
       this.autoLazerMeasure(data)
@@ -81,7 +84,7 @@ export class Measurements {
       this.measurement.state = MeasurementState.DANGLING_END
     else if (this.measurement.state === MeasurementState.DANGLING_END) {
       this.measurement.state = MeasurementState.COMPLETE
-      this.measurement.update(this.renderer.camera)
+      this.measurement.update()
       this.measurements.push(this.measurement)
       this.measurement = null
     }
@@ -153,24 +156,24 @@ export class Measurements {
       this.measurement.endPoint.copy(perpResult[0].point)
       this.measurement.endNormal.copy(perpResult[0].face.normal)
       this.measurement.state = MeasurementState.DANGLING_END
-      this.measurement.update(this.renderer.camera)
+      this.measurement.update()
       this.measurement.state = MeasurementState.COMPLETE
-      this.measurement.update(this.renderer.camera)
+      this.measurement.update()
       this.measurements.push(this.measurement)
       this.measurement = null
     }
   }
 
-  public pickMeasurement(data): Measurement {
+  public pickMeasurement(data): PerpendicularMeasurement {
     this.measurements.forEach((value) => {
       value.highlight(false)
     })
     this.raycaster.setFromCamera(data, this.renderer.camera)
     const res = this.raycaster.intersectObjects(this.measurements, false)
-    return res[0]?.object as Measurement
+    return res[0]?.object as PerpendicularMeasurement
   }
 
-  public highlightMeasurement(measurement: Measurement, value: boolean) {
+  public highlightMeasurement(measurement: PerpendicularMeasurement, value: boolean) {
     measurement.highlight(value)
     this.selectedMeasurement = measurement
   }
