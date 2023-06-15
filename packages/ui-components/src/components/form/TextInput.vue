@@ -36,7 +36,6 @@
         :disabled="disabled"
         :aria-invalid="errorMessage ? 'true' : 'false'"
         :aria-describedby="helpTipId"
-        role="textbox"
         v-bind="$attrs"
         @change="$emit('change', { event: $event, value })"
         @input="$emit('input', { event: $event, value })"
