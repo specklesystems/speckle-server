@@ -14,7 +14,7 @@
     <!-- Comment bubbles -->
     <ViewerAnchoredPointThread
       v-for="thread in Object.values(commentThreads)"
-      v-show="!hideBubbles || thread.isExpanded"
+      v-show="!hideBubbles || isOpenThread(thread.id)"
       :key="thread.id"
       :model-value="thread"
       :class="openThread?.id === thread.id ? 'z-[12]' : 'z-[11]'"
@@ -110,11 +110,14 @@ import {
   useInjectedViewerInterfaceState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
+import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 
 const parentEl = ref(null as Nullable<HTMLElement>)
 const { isLoggedIn } = useActiveUser()
 const { sessionId } = useInjectedViewerState()
 const { users } = useViewerUserActivityTracking({ parentEl })
+const { isOpenThread, open } = useThreadUtilities()
+
 const canPostComment = useCheckViewerCommentingAccess()
 
 const followers = computed(() => {
@@ -132,8 +135,7 @@ const {
   threads: {
     openThread: { thread: openThread },
     items: commentThreads,
-    hideBubbles,
-    open
+    hideBubbles
   }
 } = useInjectedViewerInterfaceState()
 

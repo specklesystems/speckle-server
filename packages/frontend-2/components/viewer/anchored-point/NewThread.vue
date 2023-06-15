@@ -78,8 +78,8 @@ import {
   isValidCommentContentInput,
   convertCommentEditorValueToInput
 } from '~~/lib/viewer/helpers/comments'
-import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ViewerNewThreadBubbleModel): void
@@ -90,9 +90,9 @@ const props = defineProps<{
   modelValue: ViewerNewThreadBubbleModel
 }>()
 
-const ui = useInjectedViewerInterfaceState()
 const { onKeyDownHandler, updateIsTyping, pauseAutomaticUpdates } =
   useIsTypingUpdateEmitter()
+const { closeAllThreads, open } = useThreadUtilities()
 
 const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
 const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
@@ -137,7 +137,7 @@ const onSubmit = (comment?: CommentEditorValue) => {
       if (!threadId) return
 
       // switch to new thread
-      await ui.threads.open(threadId)
+      await open(threadId)
     })
     .finally(() => {
       isPostingNewThread.value = false
@@ -167,7 +167,7 @@ watch(
   () => props.modelValue.isExpanded,
   async (newVal) => {
     if (newVal) {
-      await ui.threads.closeAllThreads()
+      await closeAllThreads()
     }
     commentValue.value = {
       doc: undefined,

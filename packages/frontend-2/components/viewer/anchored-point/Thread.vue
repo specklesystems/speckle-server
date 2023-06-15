@@ -189,6 +189,7 @@ import {
 } from '~~/lib/viewer/composables/serialization'
 import { useDisableGlobalTextSelection } from '~~/lib/common/composables/window'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -220,6 +221,7 @@ const markThreadViewed = useMarkThreadViewed()
 const { usersTyping } = useViewerThreadTypingTracking(threadId)
 const { ellipsis, controls } = useAnimatingEllipsis()
 const applyState = useApplySerializedState()
+const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
 
 const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
@@ -239,7 +241,7 @@ const comments = computed(() => [
 //   width: 320
 // })
 
-const isExpanded = computed(() => props.modelValue.isExpanded)
+const isExpanded = computed(() => isOpenThread(props.modelValue.id))
 
 const isTypingMessage = computed(() => {
   if (!usersTyping.value.length) return null
@@ -317,11 +319,13 @@ const threadAuthors = computed(() => {
   return authors
 })
 
-const changeExpanded = (newVal: boolean) => {
-  emit('update:modelValue', {
-    ...props.modelValue,
-    isExpanded: newVal
-  })
+const changeExpanded = async (newVal: boolean) => {
+  if (newVal) {
+    await open(props.modelValue.id)
+  } else {
+    await closeAllThreads()
+  }
+
   emit('update:expanded', newVal)
   mp.track('Comment Action', {
     type: 'action',
