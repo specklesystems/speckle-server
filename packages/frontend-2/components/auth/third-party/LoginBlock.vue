@@ -48,7 +48,7 @@ const {
   public: { apiOrigin }
 } = useRuntimeConfig()
 const mixpanel = useMixpanel()
-const { inviteToken } = useAuthManager()
+const { inviteToken, newsletterConsent } = useAuthManager()
 
 const NuxtLink = resolveComponent('NuxtLink')
 const GoogleButton = resolveComponent('AuthThirdPartyLoginButtonGoogle')
@@ -66,6 +66,10 @@ const buildAuthUrl = (strat: StrategyType) => {
 
   if (inviteToken.value) {
     url.searchParams.set('token', inviteToken.value)
+  }
+
+  if (newsletterConsent.value) {
+    url.searchParams.set('newsletter', 'true')
   }
 
   return url.toString()

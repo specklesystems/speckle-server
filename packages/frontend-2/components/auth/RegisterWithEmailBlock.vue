@@ -44,6 +44,23 @@
     />
     <FormButton submit full-width class="mt-4" :disabled="loading">Sign up</FormButton>
     <div
+      class="mt-3 text-xs flex items-center justify-center text-foreground-2 space-x-2"
+    >
+      <!-- 
+        Note the newsletter consent box is here because i got very confused re layout of the panel
+        and didn't figure out a better way to put it where i needed it to be
+       -->
+      <label for="newsletter" class="sxxr-only">
+        I want to receive tips and tricks on how to use Speckle
+      </label>
+      <input
+        id="newsletter"
+        v-model="newsletterConsent"
+        type="checkbox"
+        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+      />
+    </div>
+    <div
       v-if="serverInfo.termsOfService"
       class="mt-2 text-xs text-foreground-2 text-center linkify-tos"
       v-html="serverInfo.termsOfService"
@@ -96,7 +113,7 @@ const password = ref('')
 const emailRules = [isEmail]
 const nameRules = [isRequired]
 
-const { signUpWithEmail, inviteToken } = useAuthManager()
+const { signUpWithEmail, inviteToken, newsletterConsent } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 
 const pwdFocused = ref(false)
@@ -116,7 +133,8 @@ const onSubmit = handleSubmit(async (fullUser) => {
     await signUpWithEmail({
       user,
       challenge: props.challenge,
-      inviteToken: inviteToken.value
+      inviteToken: inviteToken.value,
+      newsletter: newsletterConsent.value
     })
   } catch (e) {
     triggerNotification({
