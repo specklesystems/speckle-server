@@ -6,7 +6,7 @@ import { ScheduledTaskRecord } from '@/modules/core/helpers/types'
 import { activitiesLogger } from '@/logging/logging'
 
 export const scheduledCallbackWrapper = async (
-  scheduledTime: Date,
+  scheduledTime: Date | 'init' | 'manual',
   taskName: string,
   lockTimeout: number,
   callback: (scheduledTime: Date) => Promise<void>,
@@ -15,8 +15,14 @@ export const scheduledCallbackWrapper = async (
   ) => Promise<ScheduledTaskRecord | null>
 ) => {
   const boundLogger = activitiesLogger.child({ taskName })
+
+  let triggeredDate = Date.now()
+  if (scheduledTime !== 'init' && scheduledTime !== 'manual') {
+    triggeredDate = scheduledTime.getTime()
+  }
+
   // try to acquire the task lock with the function name and a new expiration date
-  const lockExpiresAt = new Date(scheduledTime.getTime() + lockTimeout)
+  const lockExpiresAt = new Date(triggeredDate + lockTimeout)
   try {
     const lock = await acquireLock({ taskName, lockExpiresAt })
 
@@ -29,13 +35,15 @@ export const scheduledCallbackWrapper = async (
     }
 
     // else continue executing the callback...
-    boundLogger.info(`Executing scheduled function ${taskName} at ${scheduledTime}`)
-    await callback(scheduledTime)
+    boundLogger.info(
+      `Executing scheduled function ${taskName} at ${new Date(triggeredDate)}`
+    )
+    await callback(new Date(triggeredDate))
     // update lock as succeeded
     const finishDate = new Date()
     boundLogger.info(
       `Finished scheduled function ${taskName} execution in ${
-        (finishDate.getTime() - scheduledTime.getTime()) / 1000
+        (finishDate.getTime() - triggeredDate) / 1000
       } seconds`
     )
   } catch (error) {
@@ -59,13 +67,16 @@ export const scheduleExecution = (
     throw new InvalidArgumentError(
       `The given cron expression ${cronExpression} is not valid`
     )
-  return cron.schedule(cronExpression, async (scheduledTime: Date) => {
-    await scheduledCallbackWrapper(
-      scheduledTime,
-      taskName,
-      lockTimeout,
-      callback,
-      acquireTaskLock
-    )
-  })
+  return cron.schedule(
+    cronExpression,
+    async (scheduledTime: Date | 'init' | 'manual') => {
+      await scheduledCallbackWrapper(
+        scheduledTime,
+        taskName,
+        lockTimeout,
+        callback,
+        acquireTaskLock
+      )
+    }
+  )
 }
