@@ -4,7 +4,7 @@ const { withFilter } = require('graphql-subscriptions')
 
 const { authorizeResolver, pubsub, BranchPubsubEvents } = require('@/modules/shared')
 
-const { getBranchByNameAndStreamId } = require('../../services/branches')
+const { getBranchByNameAndStreamId, getBranchById } = require('../../services/branches')
 const {
   createBranchAndNotify,
   updateBranchAndNotify,
@@ -30,7 +30,24 @@ module.exports = {
     },
 
     async branch(parent, args) {
-      return await getBranchByNameAndStreamId({ streamId: parent.id, name: args.name })
+      // TODO: TEMPORARY HACK
+      // Temporary "Forwards" compatibility layer to allow .NET and PY clients
+      // to use FE2 urls without major changes.
+      // When getting a branch by name, if not found, we try to do a 'hail mary' attempt
+      // and get it by id as well (this would be coming from a FE2 url).
+
+      const branchByName = await getBranchByNameAndStreamId({
+        streamId: parent.id,
+        name: args.name
+      })
+      if (branchByName) return branchByName
+
+      const branchByIdRes = await getBranchById({ id: args.name })
+      if (!branchByIdRes) return null
+
+      // Extra validation to check if it actually belongs to the stream
+      if (branchByIdRes.streamId !== parent.id) return null
+      return branchByIdRes
     }
   },
   Branch: {
