@@ -150,10 +150,13 @@ export class Measurements {
       const startPoint = new Vector3().copy(result[0].point)
       const startNormal = new Vector3().copy(result[0].face.normal)
 
+      const offsetPoint = new Vector3()
+        .copy(startPoint)
+        .add(new Vector3().copy(startNormal).multiplyScalar(0.000001))
       const perpResult = this.renderer.intersections.intersectRay(
         this.renderer.scene,
         this.renderer.camera,
-        new Ray(startPoint, startNormal),
+        new Ray(offsetPoint, startNormal),
         true,
         undefined,
         [ObjectLayers.STREAM_CONTENT_MESH]
