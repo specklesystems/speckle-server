@@ -81,6 +81,22 @@ export function getOidcName() {
   return process.env.OIDC_NAME
 }
 
+export function getMailchimpConfig() {
+  if (
+    !process.env.MAILCHIMP_API_KEY ||
+    !process.env.MAILCHIMP_SERVER_PREFIX ||
+    !process.env.MAILCHIMP_LIST_ID
+  ) {
+    throw new MisconfiguredEnvironmentError('Mailchimp is not configured')
+  }
+
+  return {
+    apiKey: process.env.MAILCHIMP_API_KEY,
+    serverPrefix: process.env.MAILCHIMP_SERVER_PREFIX,
+    listId: process.env.MAILCHIMP_LIST_ID
+  }
+}
+
 /**
  * Get app base url / canonical url / origin
  * TODO: Go over all getBaseUrl() usages and move them to getXOrigin() instead

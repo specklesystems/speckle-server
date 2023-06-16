@@ -93,9 +93,7 @@ module.exports = async (app) => {
       }
 
       if (newsletterConsent) {
-        // TODO send out mailchimp stuff
-        console.log('YOLO WE WANT NEWS', req.user.email)
-        addToMailchimpAudience(req.user.email)
+        await addToMailchimpAudience(req.user.id)
       }
 
       const redirectUrl = urlObj.toString()
