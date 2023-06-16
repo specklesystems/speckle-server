@@ -62,5 +62,5 @@ packages/server/.vscode/*.log
 storybook-static
 build-storybook.log
 ensure-tailwind-deps.mjs.lock
-
+vite.config.ts.timestamp-*.mjs
 introspected-schema.graphql

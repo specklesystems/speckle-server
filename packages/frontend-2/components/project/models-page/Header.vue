@@ -21,6 +21,7 @@
             :icon-right="CubeIcon"
             :to="allModelsRoute"
             class="grow inline-flex sm:grow-0 lg:hidden"
+            @click="trackFederateAll"
           >
             View all in 3D
           </FormButton>
@@ -83,6 +84,7 @@
             :icon-right="CubeIcon"
             :to="allModelsRoute"
             class="hidden lg:inline-flex shrink-0"
+            @click="trackFederateAll"
           >
             View all in 3D
           </FormButton>
@@ -117,6 +119,7 @@ import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { PlusIcon } from '@heroicons/vue/24/solid'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { CubeIcon } from '@heroicons/vue/24/outline'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const emit = defineEmits<{
   (e: 'update:selected-members', val: FormUsersSelectItemFragment[]): void
@@ -149,6 +152,15 @@ const props = defineProps<{
 }>()
 
 const search = ref('')
+
+const mp = useMixpanel()
+const trackFederateAll = () =>
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'federation',
+    action: 'view-all',
+    source: 'project page'
+  })
 
 const canContribute = computed(() => canModifyModels(props.project))
 const showNewDialog = ref(false)

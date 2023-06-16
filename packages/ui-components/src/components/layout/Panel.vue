@@ -12,51 +12,68 @@
       ]"
       @submit="emit('submit', $event)"
     >
-      <div v-if="$slots.header" class="px-4 py-4 sm:px-6">
+      <div v-if="$slots.header" :class="secondarySlotPaddingClasses">
         <slot name="header" />
       </div>
-      <div class="grow px-4 py-4 sm:p-6">
+      <div :class="['grow', defaultSlotPaddingClasses]">
         <slot />
       </div>
-      <div v-if="$slots.footer" class="px-4 py-4 sm:px-6">
+      <div v-if="$slots.footer" :class="secondarySlotPaddingClasses">
         <slot name="footer" />
       </div>
     </Component>
   </div>
 </template>
 <script setup lang="ts">
-import { PropType } from 'vue'
+import { computed } from 'vue'
 
 const emit = defineEmits<{ (e: 'submit', val: SubmitEvent): void }>()
 
-type RoundedBorderSize = '2xl' | 'base'
-
 const props = defineProps({
+  /**
+   * Use a `<form/>` element as a wrapper that will emit 'submit' events out from the component when they occur
+   */
   form: {
     type: Boolean,
     default: false
   },
-  roundedBorderSize: {
-    type: String as PropType<RoundedBorderSize>,
-    default: '2xl'
+  /**
+   * Add a ring outline on hover
+   */
+  ring: {
+    type: Boolean,
+    default: false
   },
+  /**
+   * Add a primary-colored glow on hover
+   */
   fancyGlow: {
+    type: Boolean,
+    default: false
+  },
+  customPadding: {
+    type: Boolean,
+    default: false
+  },
+  noShadow: {
     type: Boolean,
     default: false
   }
 })
 
+const secondarySlotPaddingClasses = computed(() =>
+  props.customPadding ? '' : 'px-4 py-4 sm:px-6'
+)
+const defaultSlotPaddingClasses = computed(() =>
+  props.customPadding ? '' : 'px-4 py-4 sm:p-6'
+)
+
 const computedClasses = computed(() => {
-  const classParts: string[] = []
-  if (!props.fancyGlow) classParts.push('shadow')
-  switch (props.roundedBorderSize) {
-    case 'base':
-      classParts.push('rounded-md')
-      break
-    case '2xl':
-    default:
-      classParts.push('rounded-md')
-      break
+  const classParts: string[] = ['rounded-lg']
+
+  if (!props.noShadow) classParts.push('shadow')
+  if (props.ring) {
+    classParts.push('ring-outline-2 hover:ring-2')
   }
 
   return classParts.join(' ')

@@ -7,6 +7,7 @@ import {
   HttpLink,
   ApolloQueryResult
 } from '@apollo/client/core'
+import { setContext } from '@apollo/client/link/context'
 import { CommandModule } from 'yargs'
 import { getBaseUrl, getServerVersion } from '@/modules/shared/helpers/envHelper'
 import { Commit } from '@/test/graphql/generated/graphql'
@@ -95,10 +96,24 @@ const getLocalResources = async (targetStreamId: string, branchName: string) => 
   return { targetStream, targetBranch, owner }
 }
 
-const createApolloClient = async (origin: string): Promise<GraphQLClient> => {
+const createApolloClient = async (
+  origin: string,
+  params?: { token?: string }
+): Promise<GraphQLClient> => {
   const cache = new InMemoryCache()
+
+  const baseLink = new HttpLink({ uri: `${origin}/graphql`, fetch })
+  const authLink = setContext((_, { headers }) => {
+    return {
+      headers: {
+        ...headers,
+        authorization: params?.token ? `Bearer ${params.token}` : ''
+      }
+    }
+  })
+
   const client = new ApolloClient({
-    link: new HttpLink({ uri: `${origin}/graphql`, fetch }),
+    link: authLink.concat(baseLink),
     cache,
     name: 'cli',
     version: getServerVersion(),
@@ -241,9 +256,9 @@ const loadAllObjectsFromParent = async (params: {
 
 const command: CommandModule<
   unknown,
-  { commitUrl: string; targetStreamId: string; branchName: string }
+  { commitUrl: string; targetStreamId: string; branchName: string; token?: string }
 > = {
-  command: 'commit <commitUrl> <targetStreamId> [branchName]',
+  command: 'commit <commitUrl> <targetStreamId> [branchName] [token]',
   describe: 'Download a commit from an external Speckle server instance',
   builder: {
     commitUrl: {
@@ -259,10 +274,15 @@ const command: CommandModule<
       describe: 'Stream branch that should receive the commit',
       type: 'string',
       default: 'main'
+    },
+    token: {
+      describe: 'Target server auth token, in case the stream is private',
+      type: 'string',
+      default: ''
     }
   },
   handler: async (argv) => {
-    const { commitUrl, targetStreamId, branchName } = argv
+    const { commitUrl, targetStreamId, branchName, token } = argv
     cliLogger.info(`Process started at: ${new Date().toISOString()}`)
 
     const localResources = await getLocalResources(targetStreamId, branchName)
@@ -273,7 +293,7 @@ const command: CommandModule<
     const parsedCommitUrl = parseCommitUrl(commitUrl)
     cliLogger.info('Loading the following commit: %s', parsedCommitUrl)
 
-    const client = await createApolloClient(parsedCommitUrl.origin)
+    const client = await createApolloClient(parsedCommitUrl.origin, { token })
     const commit = await getCommitMetadata(client, parsedCommitUrl)
     cliLogger.info('Loaded commit metadata: %s', commit)
 

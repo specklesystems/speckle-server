@@ -39,6 +39,7 @@
 import { useForm } from 'vee-validate'
 import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useCreateProject } from '~~/lib/projects/composables/projectManagement'
 
 type FormValues = {
@@ -65,12 +66,15 @@ const open = computed({
   set: (newVal) => emit('update:open', newVal)
 })
 
+const mp = useMixpanel()
+
 const onSubmit = handleSubmit(async (values) => {
   await createProject({
     ...values,
     visibility: visibility.value
   })
   emit('created')
+  mp.track('Stream Action', { type: 'action', name: 'create' })
   open.value = false
 })
 </script>

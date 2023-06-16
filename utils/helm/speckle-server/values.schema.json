@@ -22,6 +22,11 @@
       "description": "HTTPS protocol will be the preferred protocol for serving this Speckle deployment",
       "default": true
     },
+    "tlsRejectUnauthorized": {
+      "type": "string",
+      "description": "If '1' (true), Speckle will reject any SSL certificates that are not signed by a trusted Certificate Authority. Should only be disabled in a trusted local development environment. https://nodejs.org/api/cli.html#node_tls_reject_unauthorizedvalue",
+      "default": "1"
+    },
     "cert_manager_issuer": {
       "type": "string",
       "description": "The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate",
@@ -699,6 +704,11 @@
             "port": {
               "type": "string",
               "description": "The port on the server for the email service.",
+              "default": ""
+            },
+            "from": {
+              "type": "string",
+              "description": "The email address from which Speckle will send emails. Defaults to 'no-reply@speckle.systems' if left blank.",
               "default": ""
             },
             "username": {

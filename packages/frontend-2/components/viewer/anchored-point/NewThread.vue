@@ -46,7 +46,7 @@
                 hide-text
                 text
                 :disabled="isPostingNewThread"
-                @click="editor?.openFilePicker"
+                @click="trackAttachAndOpenFilePicker()"
               />
 
               <FormButton
@@ -78,7 +78,8 @@ import {
   isValidCommentContentInput,
   convertCommentEditorValueToInput
 } from '~~/lib/viewer/helpers/comments'
-import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ViewerNewThreadBubbleModel): void
@@ -89,9 +90,9 @@ const props = defineProps<{
   modelValue: ViewerNewThreadBubbleModel
 }>()
 
-const ui = useInjectedViewerInterfaceState()
 const { onKeyDownHandler, updateIsTyping, pauseAutomaticUpdates } =
   useIsTypingUpdateEmitter()
+const { closeAllThreads, open } = useThreadUtilities()
 
 const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
 const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
@@ -118,6 +119,7 @@ const onThreadClick = () => {
 // NOTE: will be used later, keep
 // const submitEmoji = (emoji: string) =>
 //   onSubmit({ doc: RichTextEditor.convertBasicStringToDocument(emoji) })
+const mp = useMixpanel()
 
 const onSubmit = (comment?: CommentEditorValue) => {
   comment ||= comment || commentValue.value
@@ -135,7 +137,7 @@ const onSubmit = (comment?: CommentEditorValue) => {
       if (!threadId) return
 
       // switch to new thread
-      await ui.threads.open(threadId)
+      await open(threadId)
     })
     .finally(() => {
       isPostingNewThread.value = false
@@ -143,10 +145,16 @@ const onSubmit = (comment?: CommentEditorValue) => {
       pauseAutomaticUpdates.value = false
     })
 
+  mp.track('Comment Action', { type: 'action', name: 'create' })
   // Marking all uploads as in use to prevent cleanup
   comment.attachments?.forEach((a) => {
     a.inUse = true
   })
+}
+
+const trackAttachAndOpenFilePicker = () => {
+  editor.value?.openFilePicker()
+  mp.track('Comment Action', { type: 'action', name: 'attach' })
 }
 
 onKeyDown('Escape', () => {
@@ -159,7 +167,7 @@ watch(
   () => props.modelValue.isExpanded,
   async (newVal) => {
     if (newVal) {
-      await ui.threads.closeAllThreads()
+      await closeAllThreads()
     }
     commentValue.value = {
       doc: undefined,

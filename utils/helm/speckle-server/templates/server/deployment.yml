@@ -163,6 +163,9 @@ spec:
             value: {{ default "true" ( .Values.server.monitoring.mp.enabled | quote) }}
           {{- end }}
 
+          - name: NODE_TLS_REJECT_UNAUTHORIZED
+            value: {{ .Values.tlsRejectUnauthorized | quote }}
+
           # *** S3 Object Storage ***
           {{- if (or .Values.s3.configMap.enabled .Values.s3.endpoint) }}
           {{- $s3values := ((include "server.s3Values" .) | fromJson ) }}
@@ -270,6 +273,8 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.server.email.password.secretName }}
                 key: {{ default "email_password" .Values.server.email.password.secretKey }}
+          - name: EMAIL_FROM
+            value: "{{ .Values.server.email.from }}"
           {{- end }}
 
           # *** Tracking / Tracing ***

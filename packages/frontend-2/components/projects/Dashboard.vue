@@ -2,7 +2,7 @@
   <div>
     <Portal to="primary-actions"></Portal>
     <div
-      class="w-[calc(100vw-8px)] ml-[calc(50%-50vw+4px)] mr-[calc(50%-50vw+4px)] -mt-6 mb-10 bg-blue-500/10 rounded-b-md"
+      class="w-[calc(100vw-8px)] ml-[calc(50%-50vw+4px)] mr-[calc(50%-50vw+4px)] -mt-6 mb-10 rounded-b-xl bg-foundation transition shadow-md hover:shadow-xl divide-y divide-outline-3"
     >
       <ClientOnly>
         <div v-if="showChecklist">
@@ -14,14 +14,16 @@
         :invites="projectsPanelResult?.activeUser"
       />
     </div>
-    <div class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4">
+    <div
+      v-if="!showEmptyState"
+      class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4"
+    >
       <h1 class="h4 font-bold">Projects</h1>
 
       <div
         class="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-2 grow md:justify-end"
       >
         <FormTextInput
-          v-if="!showEmptyState"
           v-model="search"
           name="modelsearch"
           :show-label="false"
@@ -46,7 +48,10 @@
       </div>
     </div>
     <CommonLoadingBar :loading="showLoadingBar" class="my-2" />
-    <ProjectsDashboardEmptyState v-if="showEmptyState" />
+    <ProjectsDashboardEmptyState
+      v-if="showEmptyState"
+      @create-project="openNewProject = true"
+    />
     <template v-else-if="projects?.items?.length">
       <ProjectsDashboardFilled :projects="projects" />
       <InfiniteLoading
@@ -108,7 +113,6 @@ const showLoadingBar = ref(false)
 
 const { activeUser } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
-const route = useRoute()
 const areQueriesLoading = useQueryLoading()
 const apollo = useApolloClient().client
 const {
@@ -132,16 +136,14 @@ const { onResult: onUserProjectsUpdate } = useSubscription(
   onUserProjectsUpdateSubscription
 )
 
-const forceEmptyState = computed(() => !!route.query.forceEmpty)
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
 const showEmptyState = computed(() => {
-  if (forceEmptyState.value) return true
   const isFiltering =
     projectsVariables.value?.filter?.onlyWithRoles?.length ||
     projectsVariables.value?.filter?.search?.length
   if (isFiltering) return false
 
-  return projects.value && !projects.value.totalCount
+  return projects.value && !projects.value.items.length
 })
 
 const moreToLoad = computed(
@@ -263,6 +265,11 @@ const hasDismissedChecklistTime = useSynchronizedCookie<string | undefined>(
   { default: () => undefined }
 )
 
+const hasDismissedChecklistForever = useSynchronizedCookie<boolean | undefined>(
+  `hasDismissedChecklistForever`,
+  { default: () => false }
+)
+
 const hasDismissedChecklistTimeAgo = computed(() => {
   return (
     new Date().getTime() -
@@ -271,6 +278,7 @@ const hasDismissedChecklistTimeAgo = computed(() => {
 })
 
 const showChecklist = computed(() => {
+  if (hasDismissedChecklistForever.value) return false
   if (hasCompletedChecklistV1.value) return false
   if (hasDismissedChecklistTime.value === undefined) return true
   if (

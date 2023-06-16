@@ -54,6 +54,7 @@ import {
   isOneOrMultipleEmails,
   isStringOfLength
 } from '~~/lib/common/helpers/validation'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useInviteUserToServer } from '~~/lib/server/composables/invites'
 
@@ -77,6 +78,7 @@ const isOpen = computed({
   set: (newVal) => emit('update:open', newVal)
 })
 
+const mp = useMixpanel()
 const onSubmit = handleSubmit(async (values) => {
   const emails = values.emailsString.split(',').map((i) => i.trim())
   const project = selectedProject.value
@@ -97,6 +99,14 @@ const onSubmit = handleSubmit(async (values) => {
   if (success) {
     isOpen.value = false
     selectedProject.value = undefined
+    mp.track('Invite Action', {
+      type: 'server invite',
+      name: 'send',
+      multiple: emails.length !== 1,
+      count: emails.length,
+      hasProject: !!project,
+      to: 'email'
+    })
   }
 })
 </script>

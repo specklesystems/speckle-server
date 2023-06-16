@@ -34,7 +34,8 @@
   "dependencies": {
     "lodash": "^4.17.0",
     "lodash-es": "^4.17.21",
-    "pino": "^8.7.0"
+    "pino": "^8.7.0",
+    "type-fest": "^3.11.1"
   },
   "peerDependencies": {
     "@tiptap/core": "^2.0.0-beta.176"

@@ -31,8 +31,12 @@
 <script setup lang="ts">
 import InternalInfiniteLoading from 'v3-infinite-loading'
 import { ExclamationTriangleIcon, CheckIcon } from '@heroicons/vue/24/outline'
-import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import { InfiniteLoaderState } from '~~/src/helpers/global/components'
 import { Nullable } from '@speckle/shared'
+import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
+import { onMounted, ref } from 'vue'
+import { isClient } from '@vueuse/core'
+import FormButton from '~~/src/components/form/Button.vue'
 
 defineEmits<{
   (e: 'infinite', $state: InfiniteLoaderState): void
@@ -50,6 +54,9 @@ defineProps<{
     identifier?: any
     firstload?: boolean
   }
+  /**
+   * Whether to allow retry and show a retry button when loading fails
+   */
   allowRetry?: boolean
 }>()
 
@@ -57,7 +64,7 @@ const wrapper = ref(null as Nullable<HTMLElement>)
 const initializeLoader = ref(false)
 
 // This hack is necessary cause sometimes v3-infinite-loading initializes too early and doesnt trigger
-if (process.client) {
+if (isClient) {
   onMounted(() => {
     const int = setInterval(() => {
       if (wrapper.value?.isConnected) {

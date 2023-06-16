@@ -5,6 +5,7 @@ import { UploadableFileItem, UploadFileItem } from '~~/lib/form/composables/file
 import { importFile } from '~~/lib/core/api/fileImport'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { BlobUploadStatus } from '~~/lib/core/api/blobStorage'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 export function useFileImport(params: {
   projectId: MaybeRef<string>
@@ -27,6 +28,7 @@ export function useFileImport(params: {
     onFileUploadedCb = cb
   }
 
+  const mp = useMixpanel()
   const onFilesSelected = async (params: { files: UploadableFileItem[] }) => {
     if (isUploading.value || !authToken.value) return
 
@@ -66,6 +68,13 @@ export function useFileImport(params: {
         }
       )
       upload.value.result = res
+
+      mp.track('Upload Action', {
+        type: 'action',
+        name: 'create',
+        source: unref(modelName) ? 'model card' : 'empty card'
+      })
+
       onFileUploadedCb?.(upload.value)
     } catch (e) {
       upload.value.result = {

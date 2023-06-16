@@ -50,10 +50,7 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { nanoid } from 'nanoid'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import {
-  CommentBubbleModel,
-  useViewerCommentBubbles
-} from '~~/lib/viewer/composables/commentBubbles'
+import { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { Box3, Vector3 } from 'three'
@@ -69,6 +66,7 @@ import {
 } from '~~/lib/viewer/composables/setup/diff'
 import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { reduce } from 'lodash-es'
+import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -224,8 +222,6 @@ export type InjectableViewerState = Readonly<{
         isTyping: Ref<boolean>
         newThreadEditor: Ref<boolean>
       }
-      closeAllThreads: () => Promise<void>
-      open: (id: string) => Promise<void>
       hideBubbles: Ref<boolean>
     }
     spotlightUserSessionId: Ref<Nullable<string>>
@@ -803,9 +799,7 @@ function setupInterfaceState(
   /**
    * THREADS
    */
-  const { commentThreads, openThread, closeAllThreads, open } = useViewerCommentBubbles(
-    { state }
-  )
+  const { commentThreads, openThread } = setupViewerCommentBubbles({ state })
   const isTyping = ref(false)
   const newThreadEditor = ref(false)
   const hideBubbles = ref(false)
@@ -837,8 +831,6 @@ function setupInterfaceState(
           isTyping,
           newThreadEditor
         },
-        closeAllThreads,
-        open,
         hideBubbles
       },
       camera: {
@@ -928,13 +920,12 @@ export function useSetupViewerScope(
 
 export function useResetUiState() {
   const {
-    ui: { threads, camera, sectionBox, highlightedObjectIds, lightConfig }
+    ui: { camera, sectionBox, highlightedObjectIds, lightConfig }
   } = useInjectedViewerState()
   const { resetFilters } = useFilterUtilities()
   const { endDiff } = useDiffUtilities()
 
-  return async () => {
-    await threads.closeAllThreads()
+  return () => {
     camera.isOrthoProjection.value = false
     sectionBox.value = null
     highlightedObjectIds.value = []

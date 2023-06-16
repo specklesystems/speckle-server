@@ -54,7 +54,7 @@ export function getHeaderAndSubheaderForSpeckleObject(
   if (speckleType.toLowerCase().includes('ifc')) {
     const name = (rawSpeckleData.Name || rawSpeckleData.name) as string
     return {
-      header: cleanName((name as string) || (rawSpeckleData.speckleType as string)),
+      header: cleanName((name as string) || (rawSpeckleData.speckle_type as string)),
       subheader: name ? rawSpeckleData.speckle_type : rawSpeckleData.id
     } as HeaderSubheader
   }
@@ -79,6 +79,7 @@ export function getHeaderAndSubheaderForSpeckleObject(
 }
 
 function cleanName(name: string) {
+  // if (!name) return 'Unnamed'
   let cleanName = name.trim()
 
   if (cleanName.startsWith('@')) cleanName = cleanName.substring(1) // remove "@" signs

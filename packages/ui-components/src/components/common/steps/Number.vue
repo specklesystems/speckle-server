@@ -76,7 +76,7 @@
 <script setup lang="ts">
 import { CheckIcon } from '@heroicons/vue/20/solid'
 import { toRefs } from 'vue'
-import { useStepsInternals } from '~~/src/composables/common/steps'
+import { StepsPadding, useStepsInternals } from '~~/src/composables/common/steps'
 import { HorizontalOrVertical, NumberStepType } from '~~/src/helpers/common/components'
 import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 
@@ -91,6 +91,7 @@ const props = defineProps<{
   modelValue?: number
   goVerticalBelow?: TailwindBreakpoints
   nonInteractive?: boolean
+  stepsPadding?: StepsPadding
 }>()
 
 const {

@@ -34,12 +34,13 @@
       </div>
       <span
         v-else
-        class="text-foreground-2 text-center"
-        :class="isModelCardVariant ? 'text-xs opacity-50 group-hover:opacity-100' : ''"
+        class="text-foreground-2 text-center leading-7"
+        :class="isModelCardVariant ? ' opacity-50 group-hover:opacity-100' : ''"
       >
         Use our
-        <b>connectors</b>
-        to send data to this model, or drag and drop a IFC/OBJ/STL file here.
+        <FormButton link size="sm" to="/downloads">connectors</FormButton>
+        to publish a {{ modelName ? '' : 'new model' }} version to
+        {{ modelName || 'this project' }}, or drag and drop a IFC/OBJ/STL file here.
       </span>
     </div>
   </FormFileUploadZone>

@@ -54,6 +54,10 @@ export default {
     'update:modelValue': {
       type: 'function',
       action: 'v-model'
+    },
+    stepsPadding: {
+      options: ['base', 'xs', 'sm'],
+      control: { type: 'select' }
     }
   },
   parameters: {
@@ -81,7 +85,8 @@ export const Default: StoryType = {
     ariaLabel: 'Steps ARIA title!',
     orientation: 'horizontal',
     steps: testStepsWithDescription,
-    modelValue: 1
+    modelValue: 1,
+    stepsPadding: 'base'
   }
 }
 

@@ -104,7 +104,8 @@
     },
     "[vue]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode"
-    }
+    },
+    "prettier.prettierPath": "./node_modules/prettier"
   },
   "extensions": {
     // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.

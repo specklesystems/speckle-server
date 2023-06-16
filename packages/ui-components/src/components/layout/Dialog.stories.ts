@@ -42,6 +42,15 @@ export const Default: StoryObj = {
   }),
   args: {
     maxWidth: 'sm',
-    hideCloser: false
+    hideCloser: false,
+    preventCloseOnClickOutside: false
+  }
+}
+
+export const ManualCloseOnly = {
+  ...Default,
+  args: {
+    ...Default.args,
+    preventCloseOnClickOutside: true
   }
 }

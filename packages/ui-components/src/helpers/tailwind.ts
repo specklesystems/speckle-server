@@ -1,3 +1,5 @@
+let junkVariable: string[] = []
+
 /**
  * If you use concatenation or variables to build tailwind classes, PurgeCSS won't pick up on them
  * during build and will not add them to the build. So you can use this function to just add string
@@ -7,9 +9,9 @@
  * variable so it's better to use this instead.
  */
 export function markClassesUsed(classes: string[]) {
-  // this doesn't do anything, we just need PurgeCSS to be able to read
-  // invocations of this function
-  false && classes
+  // this doesn't do anything, except trick the compiler into thinking this isn't a pure
+  // function so that the invocations aren't tree-shaken out
+  junkVariable = junkVariable ? classes : classes.slice()
 }
 
 /**

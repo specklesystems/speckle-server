@@ -42,6 +42,7 @@ type FormButtonColor =
   | 'success'
   | 'card'
   | 'secondary'
+  | 'info'
 
 const emit = defineEmits<{
   /**
@@ -232,6 +233,9 @@ const bgAndBorderClasses = computed(() => {
       case 'warning':
         classParts.push(props.outlined ? 'border-warning' : 'bg-warning border-warning')
         break
+      case 'info':
+        classParts.push(props.outlined ? 'border-info' : 'bg-info border-info')
+        break
       case 'success':
         classParts.push(props.outlined ? 'border-success' : 'bg-success border-success')
         break
@@ -276,6 +280,11 @@ const foregroundClasses = computed(() => {
             props.outlined ? 'text-warning' : 'text-foundation dark:text-foreground'
           )
           break
+        case 'info':
+          classParts.push(
+            props.outlined ? 'text-info' : 'text-foundation dark:text-foreground'
+          )
+          break
         case 'success':
           classParts.push(
             props.outlined ? 'text-success' : 'text-foundation dark:text-foreground'
@@ -312,6 +321,8 @@ const foregroundClasses = computed(() => {
         classParts.push('text-success')
       } else if (props.color === 'warning') {
         classParts.push('text-warning')
+      } else if (props.color === 'info') {
+        classParts.push('text-info')
       } else if (props.color === 'danger') {
         classParts.push('text-danger')
       } else {
@@ -340,6 +351,9 @@ const ringClasses = computed(() => {
         break
       case 'warning':
         classParts.push('hover:ring-4 ring-warning-lighter dark:ring-warning-darker')
+        break
+      case 'info':
+        classParts.push('hover:ring-4 ring-info-lighter dark:ring-info-darker')
         break
       case 'success':
         classParts.push('hover:ring-4 ring-success-lighter dark:ring-success-darker')

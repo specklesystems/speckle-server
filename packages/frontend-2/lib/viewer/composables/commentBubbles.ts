@@ -1,14 +1,13 @@
 import { CSSProperties, Ref } from 'vue'
 import { Nullable, SpeckleViewer } from '@speckle/shared'
 import {
-  InitialStateWithUrlHashState,
   LoadedCommentThread,
   useInjectedViewerInterfaceState,
   useInjectedViewerState,
   useResetUiState
 } from '~~/lib/viewer/composables/setup'
 import { graphql } from '~~/lib/common/generated/gql'
-import { reduce, difference, debounce } from 'lodash-es'
+import { debounce } from 'lodash-es'
 import { Vector3 } from 'three'
 import {
   useOnViewerLoadComplete,
@@ -22,7 +21,7 @@ import {
   useResponsiveHorizontalDirectionCalculation
 } from '~~/lib/common/composables/window'
 import { useViewerUserActivityBroadcasting } from '~~/lib/viewer/composables/activity'
-import { until, useIntervalFn } from '@vueuse/core'
+import { useIntervalFn } from '@vueuse/core'
 import {
   StateApplyMode,
   useApplySerializedState,
@@ -124,7 +123,6 @@ export type CommentBubbleModel = Merge<
   LoadedCommentThread,
   { viewerState: Nullable<SpeckleViewer.ViewerState.SerializedViewerState> }
 > & {
-  isExpanded: boolean
   isOccluded: boolean
   style: Partial<CSSProperties> & { x?: number; y?: number }
 }
@@ -159,129 +157,6 @@ export function useViewerCommentBubblesProjection(params: {
       }
     }
   })
-}
-
-export function useViewerCommentBubbles(
-  options?: Partial<{
-    state: InitialStateWithUrlHashState
-  }>
-) {
-  const {
-    resources: {
-      response: { commentThreads: commentThreadsBase }
-    },
-    urlHashState: { focusedThreadId }
-  } = options?.state || useInjectedViewerState()
-
-  const commentThreads = ref({} as Record<string, CommentBubbleModel>)
-  const openThread = computed(() =>
-    Object.values(commentThreads.value).find(
-      (t) => t.isExpanded && t.id === focusedThreadId.value
-    )
-  )
-
-  useSelectionEvents(
-    {
-      singleClickCallback: (eventInfo) => {
-        if ((eventInfo && eventInfo?.hits.length === 0) || !eventInfo) {
-          // Close open thread
-          // Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
-        }
-      }
-    },
-    { state: options?.state }
-  )
-
-  const closeAllThreads = async () => {
-    await focusedThreadId.update(null)
-  }
-
-  const open = async (id: string) => {
-    if (id === focusedThreadId.value) return
-    await focusedThreadId.update(id)
-    await Promise.all([
-      until(focusedThreadId).toBe(id),
-      until(openThread).toMatch((t) => t?.id === id)
-    ])
-  }
-
-  // Shallow watcher, only for mapping `commentThreadsBase` -> `commentThreads`
-  watch(
-    commentThreadsBase,
-    (newCommentThreads) => {
-      const newModels = reduce(
-        newCommentThreads,
-        (results, item) => {
-          const id = item.id
-          results[id] = {
-            ...(commentThreads.value[id]
-              ? commentThreads.value[id]
-              : {
-                  isExpanded: false,
-                  isOccluded: false,
-                  style: {}
-                }),
-            ...item,
-            isExpanded: !!(focusedThreadId.value && id === focusedThreadId.value),
-            viewerState: SpeckleViewer.ViewerState.isSerializedViewerState(
-              item.viewerState
-            )
-              ? item.viewerState
-              : null
-          }
-          return results
-        },
-        {} as Record<string, CommentBubbleModel>
-      )
-      commentThreads.value = newModels
-    },
-    { immediate: true }
-  )
-
-  // Making sure there's only ever 1 expanded thread & focusedThreadId is linked to these values
-  watch(
-    () =>
-      Object.values(commentThreads.value)
-        .filter((t) => t.isExpanded)
-        .map((t) => t.id),
-    async (newExpandedThreadIds, oldExpandedThreadIds) => {
-      const completelyNewIds = difference(
-        newExpandedThreadIds,
-        oldExpandedThreadIds || []
-      )
-      const finalOpenThreadId =
-        (completelyNewIds.length ? completelyNewIds[0] : newExpandedThreadIds[0]) ||
-        null
-
-      for (const commentThread of Object.values(commentThreads.value)) {
-        const shouldBeExpanded = commentThread.id === finalOpenThreadId
-        if (commentThread.isExpanded !== shouldBeExpanded) {
-          commentThreads.value[commentThread.id].isExpanded = shouldBeExpanded
-        }
-      }
-
-      if (focusedThreadId.value !== finalOpenThreadId) {
-        await focusedThreadId.update(finalOpenThreadId)
-      }
-    },
-    { deep: true }
-  )
-
-  // Toggling isExpanded when threadIdToOpen changes
-  watch(focusedThreadId, (id) => {
-    if (id) {
-      if (commentThreads.value[id]) commentThreads.value[id].isExpanded = true
-    } else {
-      Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
-    }
-  })
-
-  return {
-    commentThreads,
-    openThread,
-    closeAllThreads,
-    open
-  }
 }
 
 export function useViewerOpenedThreadUpdateEmitter() {
@@ -358,7 +233,7 @@ export function useViewerThreadTracking() {
       if (newState && SpeckleViewer.ViewerState.isSerializedViewerState(newState)) {
         await refocus(newState)
       } else {
-        await resetState()
+        resetState()
       }
     }
   })

@@ -1,7 +1,9 @@
 import { ToRefs, computed } from 'vue'
 import { HorizontalOrVertical, StepCoreType } from '~~/src/helpers/common/components'
 import { clamp } from 'lodash'
-import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
+import { TailwindBreakpoints, markClassesUsed } from '~~/src/helpers/tailwind'
+
+export type StepsPadding = 'base' | 'xs' | 'sm'
 
 export function useStepsInternals(params: {
   props: ToRefs<{
@@ -10,13 +12,21 @@ export function useStepsInternals(params: {
     modelValue?: number
     goVerticalBelow?: TailwindBreakpoints
     nonInteractive?: boolean
+    stepsPadding?: StepsPadding
   }>
   emit: {
     (e: 'update:modelValue', val: number): void
   }
 }) {
   const {
-    props: { modelValue, steps, orientation, goVerticalBelow, nonInteractive },
+    props: {
+      modelValue,
+      steps,
+      orientation,
+      goVerticalBelow,
+      nonInteractive,
+      stepsPadding
+    },
     emit
   } = params
 
@@ -51,29 +61,42 @@ export function useStepsInternals(params: {
   const listClasses = computed(() => {
     const classParts: string[] = ['flex']
 
+    let paddingHorizontal: string
+    let paddingVertical: string
+    if (stepsPadding?.value === 'xs') {
+      paddingHorizontal = 'space-x-2'
+      paddingVertical = 'space-y-1'
+    } else if (stepsPadding?.value === 'sm') {
+      paddingHorizontal = 'space-x-4'
+      paddingVertical = 'space-y-1'
+    } else {
+      paddingHorizontal = 'space-x-8'
+      paddingVertical = 'space-y-4'
+    }
+
     classParts.push('flex')
     if (finalOrientation.value === 'vertical' || goVerticalBelow?.value) {
-      classParts.push('flex-col space-y-4 justify-center')
+      classParts.push(`flex-col ${paddingVertical} justify-center`)
 
       if (goVerticalBelow?.value === TailwindBreakpoints.sm) {
         classParts.push(
-          'sm:flex-row sm:space-y-0 sm:justify-start sm:space-x-8 sm:items-center'
+          `sm:flex-row sm:space-y-0 sm:justify-start sm:${paddingHorizontal} sm:items-center`
         )
       } else if (goVerticalBelow?.value === TailwindBreakpoints.md) {
         classParts.push(
-          'md:flex-row md:space-y-0 md:justify-start md:space-x-8 md:items-center'
+          `md:flex-row md:space-y-0 md:justify-start md:${paddingHorizontal} md:items-center`
         )
       } else if (goVerticalBelow?.value === TailwindBreakpoints.lg) {
         classParts.push(
-          'lg:flex-row lg:space-y-0 lg:justify-start lg:space-x-8 lg:items-center'
+          `lg:flex-row lg:space-y-0 lg:justify-start lg:${paddingHorizontal} lg:items-center`
         )
       } else if (goVerticalBelow?.value === TailwindBreakpoints.xl) {
         classParts.push(
-          'xl:flex-row xl:space-y-0 xl:justify-start xl:space-x-8 xl:items-center'
+          `xl:flex-row xl:space-y-0 xl:justify-start xl:${paddingHorizontal} xl:items-center`
         )
       }
     } else {
-      classParts.push('flex-row space-x-8 items-center')
+      classParts.push(`flex-row ${paddingHorizontal} items-center`)
     }
 
     return classParts.join(' ')
@@ -100,3 +123,19 @@ export function useStepsInternals(params: {
     orientation: finalOrientation
   }
 }
+
+// to allow for dynamic class building above:
+markClassesUsed([
+  'sm:space-x-8',
+  'md:space-x-8',
+  'lg:space-x-8',
+  'xl:space-x-8',
+  'sm:space-x-2',
+  'md:space-x-2',
+  'lg:space-x-2',
+  'xl:space-x-2',
+  'sm:space-x-4',
+  'md:space-x-4',
+  'lg:space-x-4',
+  'xl:space-x-4'
+])

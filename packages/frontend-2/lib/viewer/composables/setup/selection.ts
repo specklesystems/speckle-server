@@ -2,6 +2,7 @@
 import { Nullable } from '@speckle/shared'
 import { SelectionEvent } from '@speckle/viewer'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useCameraUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
@@ -27,13 +28,22 @@ function useSelectOrZoomOnSelection() {
   const state = useInjectedViewerState()
   const { clearSelection, addToSelection } = useSelectionUtilities()
   const { zoom } = useCameraUtilities()
-
+  const mp = useMixpanel()
+  const trackAndClearSelection = () => {
+    clearSelection()
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'selection',
+      action: 'clear',
+      source: 'viewer'
+    })
+  }
   useSelectionEvents(
     {
       singleClickCallback: (args, { firstVisibleSelectionHit }) => {
-        if (!args) return clearSelection()
-        if (args.hits.length === 0) return clearSelection()
-        if (!args.multiple) clearSelection()
+        if (!args) return trackAndClearSelection()
+        if (args.hits.length === 0) return trackAndClearSelection()
+        if (!args.multiple) clearSelection() // note we're not tracking selectino clearing here
 
         if (!firstVisibleSelectionHit) return clearSelection()
         addToSelection(firstVisibleSelectionHit.object)
@@ -61,6 +71,12 @@ function useSelectOrZoomOnSelection() {
           if (!pair) return
           addToSelection(pair)
         }
+        mp.track('Viewer Action', {
+          type: 'action',
+          name: 'selection',
+          action: 'select',
+          multiple: args.multiple
+        })
       },
       doubleClickCallback: (args, { firstVisibleSelectionHit }) => {
         if (!args) return zoom()
@@ -72,6 +88,11 @@ function useSelectOrZoomOnSelection() {
 
         const objectId = args.hits[0].object.id
         zoom([objectId])
+        mp.track('Viewer Action', {
+          type: 'action',
+          name: 'zoom',
+          source: 'object-double-click'
+        })
       }
     },
     { state }
