@@ -118,10 +118,9 @@ export default class CameraHandler {
 
     const lineOfSight = new THREE.Vector3()
     this.camera.getWorldDirection(lineOfSight)
-    const target = new THREE.Vector3()
-    this.controls.getTarget(target)
+    const target = new THREE.Vector3().copy(this.viewer.World.worldOrigin)
     const distance = target.clone().sub(this.camera.position)
-    const depth = distance.dot(lineOfSight)
+    const depth = distance.length()
     const dims = {
       x: this.viewer.container.offsetWidth,
       y: this.viewer.container.offsetHeight
@@ -141,21 +140,22 @@ export default class CameraHandler {
     this.orthoCamera.updateProjectionMatrix()
     this.orthoCamera.position.copy(this.camera.position)
     this.orthoCamera.quaternion.copy(this.camera.quaternion)
+    this.orthoCamera.updateProjectionMatrix()
 
     this.controls.camera = this.orthoCamera
 
     // fit the camera inside, so we don't have clipping plane issues.
     // WIP implementation
-    const camPos = this.orthoCamera.position
-    const box = new THREE.Box3().setFromObject(this.viewer.speckleRenderer.allObjects)
-    const sphere = new THREE.Sphere()
-    box.getBoundingSphere(sphere)
+    // const camPos = this.orthoCamera.position
+    // const box = new THREE.Box3().setFromObject(this.viewer.speckleRenderer.allObjects)
+    // const sphere = new THREE.Sphere()
+    // box.getBoundingSphere(sphere)
 
-    let dist = sphere.distanceToPoint(camPos)
-    if (dist < 0) {
-      dist *= -1
-      this.controls.setPosition(camPos.x + dist, camPos.y + dist, camPos.z + dist)
-    }
+    // let dist = sphere.distanceToPoint(camPos)
+    // if (dist < 0) {
+    //   dist *= -1
+    //   this.controls.setPosition(camPos.x + dist, camPos.y + dist, camPos.z + dist)
+    // }
 
     this.viewer.emit('projection-change', 'ortho')
   }
@@ -165,7 +165,7 @@ export default class CameraHandler {
     this.camera.position.copy(this.orthoCamera.position)
     this.camera.quaternion.copy(this.orthoCamera.quaternion)
     this.camera.updateProjectionMatrix()
-    this.controls.distance = this.previousDistance
+    // this.controls.distance = this.previousDistance
     this.controls.camera = this.camera
     this.controls.zoomTo(1)
     this.enableRotations()

@@ -47,6 +47,7 @@ export class SpeckleCameraControls extends CameraControls {
   private _didZoom = false
   private overrideDollyLerpRatio = 0
   private overrideZoomLerpRatio = 0
+
   static install() {
     _v3A = new Vector3()
     _v3B = new Vector3()
@@ -101,6 +102,10 @@ export class SpeckleCameraControls extends CameraControls {
 
   protected _zoomInternal = (delta: number, x: number, y: number): void => {
     const zoomScale = Math.pow(0.95, delta * this.dollySpeed)
+    /** We need to move the camera as well when zooming in orthographic mode */
+    const dollyScale = Math.pow(0.95, -delta * this.dollySpeed)
+    const distance = this._sphericalEnd.radius * dollyScale
+    this.dollyTo(distance, true, 0.9)
 
     // for both PerspectiveCamera and OrthographicCamera
     this.zoomTo(this._zoom * zoomScale, false, 1)
