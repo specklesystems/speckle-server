@@ -282,16 +282,13 @@ export const useAuthManager = () => {
     goToLogin()
   }
 
-  const newsletterConsent = ref(false)
-
   return {
     authToken,
     loginWithEmail,
     signUpWithEmail,
     logout,
     watchAuthQueryString,
-    inviteToken,
-    newsletterConsent
+    inviteToken
   }
 }
 

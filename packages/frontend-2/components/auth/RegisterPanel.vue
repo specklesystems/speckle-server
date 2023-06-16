@@ -63,6 +63,10 @@ graphql(`
   }
 `)
 
+const newsletterConsent = ref(false)
+
+provide('newsletterconsent', newsletterConsent)
+
 const { result } = useQuery(loginServerInfoQuery)
 const { appId, challenge, inviteToken } = useLoginOrRegisterUtils()
 

@@ -28,7 +28,7 @@ async function addToMailchimpAudience(userId: string) {
 
     // NOTE: using setListMember (NOT addListMember) to prevent errors for previously
     // registered members.
-    await mailchimp.lists.setListMember(config.listId + 'fail', subscriberHash, {
+    await mailchimp.lists.setListMember(config.listId, subscriberHash, {
       status_if_new: 'subscribed',
       email_address: user.email,
       merge_fields: {

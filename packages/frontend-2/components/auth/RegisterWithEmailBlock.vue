@@ -113,8 +113,10 @@ const password = ref('')
 const emailRules = [isEmail]
 const nameRules = [isRequired]
 
-const { signUpWithEmail, inviteToken, newsletterConsent } = useAuthManager()
+const { signUpWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
+
+const newsletterConsent = inject<Ref<boolean>>('newsletterconsent')
 
 const pwdFocused = ref(false)
 
@@ -134,7 +136,7 @@ const onSubmit = handleSubmit(async (fullUser) => {
       user,
       challenge: props.challenge,
       inviteToken: inviteToken.value,
-      newsletter: newsletterConsent.value
+      newsletter: newsletterConsent?.value
     })
   } catch (e) {
     triggerNotification({
