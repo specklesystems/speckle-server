@@ -38,6 +38,17 @@ export class Measurements {
     })
   }
 
+  public fromMeasurementData(startPoint: Vector3, endPoint: Vector3) {
+    const measurement = new PointToPointMeasurement()
+    measurement.startPoint.copy(startPoint)
+    measurement.endPoint.copy(endPoint)
+    measurement.state = MeasurementState.DANGLING_END
+    measurement.update()
+    measurement.state = MeasurementState.COMPLETE
+    measurement.update()
+    this.measurements.push(this.measurement)
+  }
+
   private onPointerMove(data) {
     if (!data.event.ctrlKey && !data.event.altKey) return
 
