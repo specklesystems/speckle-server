@@ -44,6 +44,7 @@ export class PerpendicularMeasurement extends Measurement {
             .multiplyScalar(this.startLineLength)
         )
       this.startGizmo.updateLine([startLine0, startLine1])
+      this.endGizmo.enable(false, false, false, false)
     }
 
     if (this._state === MeasurementState.DANGLING_END) {
@@ -113,6 +114,7 @@ export class PerpendicularMeasurement extends Measurement {
         )} ${this.units}`,
         textPos
       )
+      this.endGizmo.enable(true, true, true, true)
     }
     if (this._state === MeasurementState.COMPLETE) {
       this.startGizmo.enable(false, true, true, true)
