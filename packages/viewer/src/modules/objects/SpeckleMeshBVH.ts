@@ -256,4 +256,11 @@ export class SpeckleMeshBVH extends MeshBVH {
     super.getBoundingBox(target)
     return this.transformOutput(target)
   }
+
+  public getVertexAtIndex(index: number): Vector3 {
+    const array = this.geometry.attributes.position.array
+    return this.transformOutput(
+      new Vector3(array[index * 3], array[index * 3 + 1], array[index * 3 + 2])
+    )
+  }
 }

@@ -2,9 +2,10 @@ import SpeckleRenderer, { ObjectLayers } from '../SpeckleRenderer'
 
 import { ViewerEvent } from '../../IViewer'
 import { PerpendicularMeasurement } from './PerpendicularMeasurement'
-import { Ray, Raycaster, Vector3 } from 'three'
+import { Ray, Raycaster, Vector2, Vector3 } from 'three'
 import { PointToPointMeasurement } from './PointToPointMeasurement'
 import { Measurement, MeasurementState } from './Measurement'
+import { ExtendedIntersection } from '../objects/SpeckleRaycaster'
 
 export class Measurements {
   private renderer: SpeckleRenderer = null
@@ -13,6 +14,10 @@ export class Measurements {
   private selectedMeasurement: Measurement = null
   private raycaster: Raycaster = null
   private frameLock = false
+  private pointBuff: Vector3 = new Vector3()
+  private normalBuff: Vector3 = new Vector3()
+  private screenBuff0: Vector2 = new Vector2()
+  private screenBuff1: Vector2 = new Vector2()
 
   public constructor(renderer: SpeckleRenderer) {
     this.renderer = renderer
@@ -58,12 +63,17 @@ export class Measurements {
     }
     this.measurement.isVisible = true
 
+    this.pointBuff.copy(result[0].point)
+    this.normalBuff.copy(result[0].face.normal)
+    if (data.event.altKey && data.event.shiftKey) {
+      this.snap(result[0], this.pointBuff, this.normalBuff)
+    }
     if (this.measurement.state === MeasurementState.DANGLING_START) {
-      this.measurement.startPoint.copy(result[0].point)
-      this.measurement.startNormal.copy(result[0].face.normal)
+      this.measurement.startPoint.copy(this.pointBuff)
+      this.measurement.startNormal.copy(this.normalBuff)
     } else if (this.measurement.state === MeasurementState.DANGLING_END) {
-      this.measurement.endPoint.copy(result[0].point)
-      this.measurement.endNormal.copy(result[0].face.normal)
+      this.measurement.endPoint.copy(this.pointBuff)
+      this.measurement.endNormal.copy(this.normalBuff)
     }
     this.measurement.update()
 
@@ -75,7 +85,7 @@ export class Measurements {
   private onPointerClick(data) {
     if (!data.event.ctrlKey && !data.event.altKey) return
 
-    if (data.event.shiftKey) {
+    if (data.event.shiftKey && data.event.ctrlKey) {
       this.autoLazerMeasure(data)
       return
     }
@@ -104,7 +114,7 @@ export class Measurements {
       this.renderer.needsRender = true
       this.renderer.resetPipeline()
     }
-    if (data.code === 'ControlLeft') {
+    if (data.code === 'ControlLeft' || data.code === 'AltLeft') {
       if (
         this.measurement &&
         this.measurement.state === MeasurementState.DANGLING_START
@@ -161,6 +171,39 @@ export class Measurements {
       this.measurement.update()
       this.measurements.push(this.measurement)
       this.measurement = null
+    }
+  }
+
+  private snap(
+    intersection: ExtendedIntersection,
+    outPoint: Vector3,
+    outNormal: Vector3
+  ) {
+    const v0 = intersection.batchObject.bvh
+      .getVertexAtIndex(intersection.face.a)
+      .project(this.renderer.camera)
+    const v1 = intersection.batchObject.bvh
+      .getVertexAtIndex(intersection.face.b)
+      .project(this.renderer.camera)
+    const v2 = intersection.batchObject.bvh
+      .getVertexAtIndex(intersection.face.c)
+      .project(this.renderer.camera)
+
+    const projectedIntersection = intersection.point.project(this.renderer.camera)
+    const tri = [v0, v1, v2]
+    tri.sort((a, b) => {
+      return projectedIntersection.distanceTo(a) - projectedIntersection.distanceTo(b)
+    })
+    const closestScreen = this.renderer.NDCToScreen(tri[0].x, tri[0].y)
+    const intersectionScreen = this.renderer.NDCToScreen(
+      projectedIntersection.x,
+      projectedIntersection.y
+    )
+    this.screenBuff0.set(closestScreen.x, closestScreen.y)
+    this.screenBuff1.set(intersectionScreen.x, intersectionScreen.y)
+    if (this.screenBuff0.distanceTo(this.screenBuff1) < 10 * window.devicePixelRatio) {
+      outPoint.copy(tri[0].unproject(this.renderer.camera))
+      outNormal.copy(intersection.face.normal)
     }
   }
 

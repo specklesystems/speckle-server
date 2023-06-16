@@ -39,6 +39,7 @@ const DefaultSpeckleTextStyle: SpeckleTextStyle = {
 export class SpeckleText extends Mesh {
   private _text: Text = null
   private _background: Mesh = null
+  private _backgroundSize: Vector3 = new Vector3()
   private _style: SpeckleTextStyle = Object.assign({}, DefaultSpeckleTextStyle)
 
   public static SpeckleTextParamsFromMetadata(metadata: SpeckleObject) {
@@ -156,12 +157,17 @@ export class SpeckleText extends Mesh {
       return
     }
 
+    this._text.geometry.computeBoundingBox()
+    const sizeBox = this._text.geometry.boundingBox.getSize(new Vector3())
+    const sizeDelta = sizeBox.distanceTo(this._backgroundSize)
+    let geometry = this._background?.geometry
+    if (sizeDelta > 0.1) {
+      geometry = this.RectangleRounded(sizeBox.x * 1.2, sizeBox.y * 1.2, 0.5, 5)
+      geometry.computeBoundingBox()
+      this._backgroundSize.copy(sizeBox)
+      if (this._background) this._background.geometry = geometry
+    }
     if (this._background === null) {
-      this._text.geometry.computeBoundingBox()
-      const sizeBox = this._text.geometry.boundingBox.getSize(new Vector3())
-
-      const geometry = this.RectangleRounded(sizeBox.x * 1.2, sizeBox.y * 1.2, 0.5, 5)
-
       const material = new SpeckleBasicMaterial({}, ['BILLBOARD_FIXED'])
       material.toneMapped = false
       material.side = DoubleSide
