@@ -53,7 +53,8 @@ export class PerpendicularMeasurement extends Measurement {
         .copy(this.startPoint)
         .sub(this.endPoint)
         .normalize()
-      const angle = Math.acos(this.startNormal.dot(endStartDir))
+      let dot = this.startNormal.dot(endStartDir)
+      const angle = Math.acos(Math.min(Math.max(dot, -1), 1))
       this.startLineLength = Math.abs(startEndDist * Math.cos(angle))
 
       const intersectPoint = Measurement.vecBuff0
@@ -70,7 +71,8 @@ export class PerpendicularMeasurement extends Measurement {
 
       this.endLineLength = intersectPoint.distanceTo(this.endPoint)
 
-      const angle1 = Math.acos(this.endNormal.dot(endLineNormal))
+      dot = this.endNormal.dot(endLineNormal)
+      const angle1 = Math.acos(Math.min(Math.max(dot, -1), 1))
       const dist1 = this.endLineLength * Math.cos(angle1)
 
       const endLine3 = Measurement.vecBuff1

@@ -208,6 +208,8 @@ export class Measurements {
   }
 
   public pickMeasurement(data): PerpendicularMeasurement {
+    if (data.event.ctrlKey || data.event.altKey) return
+
     this.measurements.forEach((value) => {
       value.highlight(false)
     })
