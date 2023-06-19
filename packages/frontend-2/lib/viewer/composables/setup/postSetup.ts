@@ -699,9 +699,10 @@ function useDiffingIntegration() {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function useDebugViewerEvents() {
   if (process.server) return
+  const state = useInjectedViewerState()
   const {
     viewer: { instance }
-  } = useInjectedViewerState()
+  } = state
 
   for (const [key, val] of Object.entries(ViewerEvent)) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
@@ -709,8 +710,11 @@ function useDebugViewerEvents() {
   }
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
+  // @ts-expect-error
   window.VIEWER = instance
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-expect-error
+  window.VIEWER_STATE = () => ({ ...state })
 }
 
 export function useViewerPostSetup() {
