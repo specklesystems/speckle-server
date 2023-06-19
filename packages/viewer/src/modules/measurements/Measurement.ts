@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-empty-function */
-import { Box3, Camera, Object3D, Vector3 } from 'three'
+import { Box3, Camera, Object3D, Plane, Vector3 } from 'three'
 
 export enum MeasurementState {
   HIDDEN,
@@ -42,4 +42,5 @@ export abstract class Measurement extends Object3D {
   public update() {}
   public raycast(raycaster, intersects) {}
   public highlight(value: boolean) {}
+  public updateClippingPlanes(planes: Plane[]) {}
 }

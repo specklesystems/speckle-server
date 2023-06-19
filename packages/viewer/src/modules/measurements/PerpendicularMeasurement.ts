@@ -1,4 +1,4 @@
-import { Box3, Camera } from 'three'
+import { Box3, Camera, Plane } from 'three'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo'
 import { ObjectLayers } from '../SpeckleRenderer'
 import { getConversionFactor } from '../converter/Units'
@@ -143,5 +143,10 @@ export class PerpendicularMeasurement extends Measurement {
   public highlight(value: boolean) {
     this.startGizmo.highlight = value
     this.endGizmo.highlight = value
+  }
+
+  public updateClippingPlanes(planes: Plane[]) {
+    this.startGizmo.updateClippingPlanes(planes)
+    this.endGizmo.updateClippingPlanes(planes)
   }
 }

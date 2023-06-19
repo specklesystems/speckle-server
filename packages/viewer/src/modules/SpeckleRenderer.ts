@@ -691,6 +691,7 @@ export default class SpeckleRenderer {
     this.pipeline.updateClippingPlanes(planes)
     this.sectionBoxOutlines.updateClippingPlanes(planes)
     this._shadowcatcher.updateClippingPlanes(planes)
+    this._measurements.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
     this.resetPipeline()
     // console.log('Updated planes -> ', this.viewer.sectionBox.planes[2])

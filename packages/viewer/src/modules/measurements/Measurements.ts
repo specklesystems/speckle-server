@@ -2,7 +2,7 @@ import SpeckleRenderer, { ObjectLayers } from '../SpeckleRenderer'
 
 import { ViewerEvent } from '../../IViewer'
 import { PerpendicularMeasurement } from './PerpendicularMeasurement'
-import { Ray, Raycaster, Vector2, Vector3 } from 'three'
+import { Plane, Ray, Raycaster, Vector2, Vector3 } from 'three'
 import { PointToPointMeasurement } from './PointToPointMeasurement'
 import { Measurement, MeasurementState } from './Measurement'
 import { ExtendedIntersection } from '../objects/SpeckleRaycaster'
@@ -47,6 +47,12 @@ export class Measurements {
     measurement.state = MeasurementState.COMPLETE
     measurement.update()
     this.measurements.push(this.measurement)
+  }
+
+  public updateClippingPlanes(planes: Plane[]) {
+    this.measurements.forEach((value) => {
+      value.updateClippingPlanes(planes)
+    })
   }
 
   private onPointerMove(data) {

@@ -48,6 +48,7 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
       tTransforms: null,
       billboardPos: new Vector3(),
       billboardSize: new Vector2(),
+      invProjection: new Matrix4(),
       objCount: 1
     }
   }
@@ -81,6 +82,8 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
         (this._billboardPixelHeight / resolution.y) * 2
       )
       this.userData.billboardSize.value.copy(SpeckleBasicMaterial.vecBuff3)
+      SpeckleBasicMaterial.matBuff.copy(camera.projectionMatrix).invert()
+      this.userData.invProjection.value.copy(SpeckleBasicMaterial.matBuff)
     }
 
     if (this.defines['USE_RTE']) {

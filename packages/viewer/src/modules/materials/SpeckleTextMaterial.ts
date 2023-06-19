@@ -49,7 +49,8 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
       tTransforms: null,
       objCount: 1,
       billboardPos: new Vector3(),
-      billboardSize: new Vector2()
+      billboardSize: new Vector2(),
+      invProjection: new Matrix4()
     }
   }
 
@@ -92,6 +93,8 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
         (this._billboardPixelHeight / resolution.y) * 2
       )
       this.userData.billboardSize.value.copy(SpeckleTextMaterial.vecBuff3)
+      SpeckleTextMaterial.matBuff.copy(camera.projectionMatrix).invert()
+      this.userData.invProjection.value.copy(SpeckleTextMaterial.matBuff)
     }
     /** TO ENABLE */
     // SpeckleTextMaterial.matBuff.copy(camera.matrixWorldInverse)

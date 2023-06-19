@@ -7,8 +7,10 @@ import {
   DynamicDrawUsage,
   Group,
   InterleavedBufferAttribute,
+  Material,
   Mesh,
   PerspectiveCamera,
+  Plane,
   Quaternion,
   Vector2,
   Vector3
@@ -310,5 +312,18 @@ export class MeasurementPointGizmo extends Group {
     this.line.raycast(raycaster, intersects)
     this.point.raycast(raycaster, intersects)
     this.text.textMesh.raycast(raycaster, intersects)
+  }
+
+  public updateClippingPlanes(planes: Plane[]) {
+    ;(this.disc.material as Material).clippingPlanes = planes
+    ;(this.point.material as Material).clippingPlanes = planes
+    ;((this.point.children[0] as Mesh).material as Material).clippingPlanes = planes
+    ;(this.line.material as Material).clippingPlanes = planes
+    if (this.text.backgroundMesh) {
+      ;(this.text.backgroundMesh.material as Material).clippingPlanes = planes
+    }
+    if (this.text.textMesh) {
+      ;(this.text.textMesh?.material as Material).clippingPlanes = planes
+    }
   }
 }
