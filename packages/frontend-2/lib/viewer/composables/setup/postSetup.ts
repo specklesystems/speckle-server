@@ -46,6 +46,7 @@ import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { Nullable } from '@speckle/shared'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 import { watchTriggerable } from '@vueuse/core'
+import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -696,27 +697,6 @@ function useDiffingIntegration() {
   })
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function useDebugViewerEvents() {
-  if (process.server) return
-  const state = useInjectedViewerState()
-  const {
-    viewer: { instance }
-  } = state
-
-  for (const [key, val] of Object.entries(ViewerEvent)) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    useViewerEventListener(val, (...args) => console.log(key, ...args))
-  }
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-  window.VIEWER = instance
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-  window.VIEWER_STATE = () => ({ ...state })
-}
-
 export function useViewerPostSetup() {
   if (process.server) return
   useViewerObjectAutoLoading()
@@ -731,7 +711,5 @@ export function useViewerPostSetup() {
   useLightConfigIntegration()
   useExplodeFactorIntegration()
   useDiffingIntegration()
-
-  // test
-  // useDebugViewerEvents()
+  setupDebugMode()
 }
