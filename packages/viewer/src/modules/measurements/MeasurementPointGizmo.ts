@@ -175,7 +175,7 @@ export class MeasurementPointGizmo extends Group {
     this.line.computeLineDistances()
     this.line.name = `test-mesurements-line`
     this.line.frustumCulled = false
-    this.line.renderOrder = 2
+    this.line.renderOrder = 0
     this.line.layers.set(ObjectLayers.MEASUREMENTS)
 
     const sphereGeometry = new CircleGeometry(1, 16)
@@ -183,18 +183,19 @@ export class MeasurementPointGizmo extends Group {
     this.point = new Mesh(sphereGeometry, null)
     this.point.layers.set(ObjectLayers.MEASUREMENTS)
     this.point.visible = false
+    this.point.renderOrder = 1
 
     const point2 = new Mesh(sphereGeometry, this.getPointMaterial(0xffffff))
-    point2.renderOrder = 1
+    point2.renderOrder = 2
     point2.material.billboardPixelHeight = 5
     point2.layers.set(ObjectLayers.MEASUREMENTS)
     this.point.add(point2)
 
     this.text = new SpeckleText('test-text')
     this.text.textMesh.material = null
-    // this.text.matrixAutoUpdate = false
     this.text.layers.set(ObjectLayers.MEASUREMENTS)
     this.text.textMesh.layers.set(ObjectLayers.MEASUREMENTS)
+    this.text.backgroundMesh
 
     this.add(this.point)
     this.add(this.disc)
@@ -292,6 +293,8 @@ export class MeasurementPointGizmo extends Group {
           billboard: true
         }
         this.text.setTransform(position, quaternion, scale)
+        this.text.backgroundMesh.renderOrder = 3
+        this.text.textMesh.renderOrder = 4
       })
   }
 
