@@ -6,6 +6,7 @@ import { Plane, Ray, Raycaster, Vector2, Vector3 } from 'three'
 import { PointToPointMeasurement } from './PointToPointMeasurement'
 import { Measurement, MeasurementState } from './Measurement'
 import { ExtendedIntersection } from '../objects/SpeckleRaycaster'
+import Logger from 'js-logger'
 
 export class Measurements {
   private renderer: SpeckleRenderer = null
@@ -110,10 +111,7 @@ export class Measurements {
     if (this.measurement.state === MeasurementState.DANGLING_START)
       this.measurement.state = MeasurementState.DANGLING_END
     else if (this.measurement.state === MeasurementState.DANGLING_END) {
-      this.measurement.state = MeasurementState.COMPLETE
-      this.measurement.update()
-      this.measurements.push(this.measurement)
-      this.measurement = null
+      this.finishMeasurement()
     }
   }
 
@@ -187,11 +185,20 @@ export class Measurements {
       this.measurement.endNormal.copy(perpResult[0].face.normal)
       this.measurement.state = MeasurementState.DANGLING_END
       this.measurement.update()
-      this.measurement.state = MeasurementState.COMPLETE
-      this.measurement.update()
-      this.measurements.push(this.measurement)
-      this.measurement = null
+      this.finishMeasurement()
     }
+  }
+
+  private finishMeasurement() {
+    this.measurement.state = MeasurementState.COMPLETE
+    this.measurement.update()
+    if (this.measurement.value > 0) {
+      this.measurements.push(this.measurement)
+    } else {
+      this.renderer.scene.remove(this.measurement)
+      Logger.error('Ignoring zero value measurement!')
+    }
+    this.measurement = null
   }
 
   private snap(

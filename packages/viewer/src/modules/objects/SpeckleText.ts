@@ -3,9 +3,14 @@ import {
   BufferGeometry,
   Color,
   DoubleSide,
+  Matrix4,
   Mesh,
+  MeshBasicMaterial,
+  PlaneGeometry,
   Quaternion,
-  Vector3
+  Vector2,
+  Vector3,
+  Vector4
 } from 'three'
 import { Text } from 'troika-three-text'
 import { SpeckleObject } from '../tree/DataTree'
@@ -41,6 +46,23 @@ export class SpeckleText extends Mesh {
   private _background: Mesh = null
   private _backgroundSize: Vector3 = new Vector3()
   private _style: SpeckleTextStyle = Object.assign({}, DefaultSpeckleTextStyle)
+  private _resolution: Vector2 = new Vector2()
+
+  private defaultMaterial = /*#__PURE__*/ new MeshBasicMaterial({
+    color: 0xffffff,
+    side: DoubleSide,
+    transparent: true
+  })
+  private getFlatRaycastMesh = () => {
+    const mesh = new Mesh(new PlaneGeometry(1, 1), this.defaultMaterial)
+    this.getFlatRaycastMesh = () => mesh
+    return mesh
+  }
+  private getCurvedRaycastMesh = () => {
+    const mesh = new Mesh(new PlaneGeometry(1, 1, 32, 1), this.defaultMaterial)
+    this.getCurvedRaycastMesh = () => mesh
+    return mesh
+  }
 
   public static SpeckleTextParamsFromMetadata(metadata: SpeckleObject) {
     return {
@@ -68,22 +90,11 @@ export class SpeckleText extends Mesh {
     this._text.uuid = uuid
     this._text.depthOffset = -0.1
     this.add(this._text)
-  }
 
-  // public async build() {
-  //   this._text = new Text()
-  //   this._text.text = text
-  //   this.text.fontSize = size
-  //   this.text.color = 0xffffff
-  //   const material = new SpeckleBasicMaterial({ color: 0xff0000 }, ['USE_RTE'])
-  //   // material.side = DoubleSide
-  //   this.text.frustumCulled = false
-  //   this.text.layers.set(ObjectLayers.PROPS)
-  //   this.text.material = createTextDerivedMaterial(material)
-  //   this.text.material.uniforms['billboardPos'] = material.userData.billboardPos
-  //   this.text.material.toneMapped = false
-  //   await this.update()
-  // }
+    this.onBeforeRender = (renderer) => {
+      renderer.getDrawingBufferSize(this._resolution)
+    }
+  }
 
   public async update(params: SpeckleTextParams, updateFinished?: () => void) {
     return new Promise<void>((resolve) => {
@@ -119,36 +130,77 @@ export class SpeckleText extends Mesh {
     if (scale) this.scale.copy(scale)
   }
 
+  public raycast(raycaster, intersects) {
+    const { textRenderInfo, curveRadius } = this.textMesh
+    if (textRenderInfo) {
+      const bounds = textRenderInfo.blockBounds
+      const raycastMesh = curveRadius
+        ? this.getCurvedRaycastMesh()
+        : this.getFlatRaycastMesh()
+      const geom = raycastMesh.geometry
+      const { position, uv } = geom.attributes
+      for (let i = 0; i < uv.count; i++) {
+        let x = bounds[0] + uv.getX(i) * (bounds[2] - bounds[0])
+        const y = bounds[1] + uv.getY(i) * (bounds[3] - bounds[1])
+        let z = 0
+        if (curveRadius) {
+          z = curveRadius - Math.cos(x / curveRadius) * curveRadius
+          x = Math.sin(x / curveRadius) * curveRadius
+        }
+        if (this.textMesh.material.defines['BILLBOARD_FIXED']) {
+          const billboardSize = new Vector2().set(
+            (this.textMesh.material.billboardPixelHeight / this._resolution.x) * 2,
+            (this.textMesh.material.billboardPixelHeight / this._resolution.y) * 2
+          )
+
+          const invProjection = new Matrix4()
+            .copy(raycaster.camera.projectionMatrix)
+            .invert()
+          const invView = new Matrix4()
+            .copy(raycaster.camera.matrixWorldInverse)
+            .invert()
+
+          const clip = new Vector4(
+            this.position.x,
+            this.position.y,
+            this.position.z,
+            1.0
+          )
+            .applyMatrix4(raycaster.camera.matrixWorldInverse)
+            .applyMatrix4(raycaster.camera.projectionMatrix)
+          const pDiv = clip.w
+          clip.multiplyScalar(1 / pDiv)
+          clip.add(new Vector4(x * billboardSize.x, y * billboardSize.y, 0, 0))
+          clip.multiplyScalar(pDiv)
+          clip.applyMatrix4(invProjection)
+          clip.applyMatrix4(invView)
+          position.setXYZ(i, clip.x, clip.y, clip.z)
+        } else {
+          position.setXYZ(i, x, y, z)
+        }
+      }
+      if (this.textMesh.material.defines['BILLBOARD_FIXED']) {
+        geom.computeBoundingBox()
+        geom.computeBoundingSphere()
+        raycastMesh.matrixWorld.identity()
+      } else {
+        geom.boundingSphere = this.textMesh.geometry.boundingSphere
+        geom.boundingBox = this.textMesh.geometry.boundingBox
+        raycastMesh.matrixWorld = this.textMesh.matrixWorld
+      }
+      raycastMesh.material.side = this.textMesh.material.side
+      const tempArray = []
+      raycastMesh.raycast(raycaster, tempArray)
+      for (let i = 0; i < tempArray.length; i++) {
+        tempArray[i].object = this
+        intersects.push(tempArray[i])
+      }
+    }
+  }
+
   private updateStyle() {
     this.updateBackground()
   }
-  // public get vertCount() {
-  //   return this.text.geometry.attributes.position.count
-  // }
-
-  // public get triCount() {
-  //   return this.text.geometry.index.count
-  // }
-
-  // public async setText(text: string, size: number) {
-  //   return new Promise<void>((resolve) => {
-  //     this.text = new Text()
-  //     this.text.text = text
-  //     this.text.fontSize = size
-  //     this.text.color = 0xffffff
-  //     const material = new SpeckleBasicMaterial({ color: 0xff0000 }, ['USE_RTE'])
-  //     // material.side = DoubleSide
-  //     this.text.frustumCulled = false
-  //     this.text.layers.set(ObjectLayers.PROPS)
-  //     this.text.material = createTextDerivedMaterial(material)
-  //     this.text.material.uniforms['billboardPos'] = material.userData.billboardPos
-  //     this.text.material.toneMapped = false
-  //     this.text.sync(() => {
-  //       this.setBackground()
-  //       resolve()
-  //     })
-  //   })
-  // }
 
   private updateBackground() {
     if (!this._style.backgroundColor) {
@@ -222,33 +274,4 @@ export class SpeckleText extends Mesh {
       uvs.push(0.5 + x / w, 0.5 + y / h)
     }
   }
-
-  // public transform(matrix: Matrix4) {
-  //   this.geometry.applyMatrix4(matrix)
-  //   this.geometry.computeBoundingBox()
-  //   const center = this.geometry.boundingBox.getCenter(new Vector3())
-  //   ;(this.material as SpeckleBasicMaterial).userData.billboardPos.value = new Vector3(
-  //     center.x,
-  //     center.y,
-  //     center.z
-  //   )
-  //   ;(this.material as SpeckleBasicMaterial).needsUpdate = true
-  // }
-
-  // public setPosition(pos: Vector3) {
-  //   // this.text.position.copy(pos)
-  //   const mat = this.text.material
-  //   ;(mat as SpeckleBasicMaterial).userData.billboardPos.value = pos
-  //   ;(mat as SpeckleBasicMaterial).needsUpdate = true
-
-  //   const backgroundPos = new Vector3().copy(pos)
-  //   // backgroundPos.x += sizeBox.x * 0.5
-  //   // backgroundPos.y += sizeBox.y * 0.5
-  //   ;(this.background.material as SpeckleBasicMaterial).userData.billboardPos.value =
-  //     backgroundPos
-  //   ;(this.background.material as SpeckleBasicMaterial).needsUpdate = true
-  //   this.text.anchorX = '50%'
-  //   this.text.anchorY = '50%'
-  //   this.text.sync()
-  // }
 }

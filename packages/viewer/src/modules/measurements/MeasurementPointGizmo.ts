@@ -308,10 +308,10 @@ export class MeasurementPointGizmo extends Group {
   }
 
   public raycast(raycaster, intersects) {
-    this.disc.raycast(raycaster, intersects)
+    // this.disc.raycast(raycaster, intersects)
     this.line.raycast(raycaster, intersects)
-    this.point.raycast(raycaster, intersects)
-    this.text.textMesh.raycast(raycaster, intersects)
+    // this.point.raycast(raycaster, intersects)
+    this.text.raycast(raycaster, intersects)
   }
 
   public updateClippingPlanes(planes: Plane[]) {

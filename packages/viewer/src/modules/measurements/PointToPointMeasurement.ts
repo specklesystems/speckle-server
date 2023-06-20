@@ -49,6 +49,8 @@ export class PointToPointMeasurement extends Measurement {
     }
     if (this._state === MeasurementState.DANGLING_END) {
       this.startLineLength = this.startPoint.distanceTo(this.endPoint)
+      this.value = this.startLineLength
+
       const endStartDir = Measurement.vecBuff0
         .copy(this.endPoint)
         .sub(this.startPoint)
@@ -69,9 +71,8 @@ export class PointToPointMeasurement extends Measurement {
 
       this.startGizmo.updateLine([this.startPoint, lineEndPoint])
       this.endGizmo.updatePoint(lineEndPoint)
-      const textValue = this.startLineLength
       this.startGizmo.updateText(
-        `${(textValue * getConversionFactor('m', this.units)).toFixed(
+        `${(this.value * getConversionFactor('m', this.units)).toFixed(
           this.precision
         )} ${this.units}`,
         textPos

@@ -58,6 +58,10 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
     this._billboardPixelHeight = value
   }
 
+  public get billboardPixelHeight() {
+    return this._billboardPixelHeight
+  }
+
   constructor(parameters, defines = []) {
     super(parameters)
     this.init(defines)

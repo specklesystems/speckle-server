@@ -109,9 +109,9 @@ export class PerpendicularMeasurement extends Measurement {
             .multiplyScalar(this.startLineLength * 0.5)
         )
 
-      const textValue = intersectPoint.distanceTo(this.startPoint)
+      this.value = intersectPoint.distanceTo(this.startPoint)
       this.startGizmo.updateText(
-        `${(textValue * getConversionFactor('m', this.units)).toFixed(
+        `${(this.value * getConversionFactor('m', this.units)).toFixed(
           this.precision
         )} ${this.units}`,
         textPos
