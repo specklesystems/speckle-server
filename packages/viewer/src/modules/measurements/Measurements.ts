@@ -67,7 +67,7 @@ export class Measurements {
       this.renderer.camera,
       data,
       true,
-      undefined,
+      this.renderer.currentSectionBox,
       [ObjectLayers.STREAM_CONTENT_MESH]
     )
     if (!result || !result.length) return
@@ -148,7 +148,7 @@ export class Measurements {
         this.renderer.camera,
         data,
         true,
-        undefined,
+        this.renderer.currentSectionBox,
         [ObjectLayers.STREAM_CONTENT_MESH]
       )
       if (!result || !result.length) return
@@ -164,7 +164,7 @@ export class Measurements {
         this.renderer.camera,
         new Ray(offsetPoint, startNormal),
         true,
-        undefined,
+        this.renderer.currentSectionBox,
         [ObjectLayers.STREAM_CONTENT_MESH]
       )
       if (!perpResult || !perpResult.length) {
@@ -221,8 +221,9 @@ export class Measurements {
     )
     this.screenBuff0.set(closestScreen.x, closestScreen.y)
     this.screenBuff1.set(intersectionScreen.x, intersectionScreen.y)
+    const unprojectedPoint = tri[0].unproject(this.renderer.camera)
     if (this.screenBuff0.distanceTo(this.screenBuff1) < 10 * window.devicePixelRatio) {
-      outPoint.copy(tri[0].unproject(this.renderer.camera))
+      outPoint.copy(unprojectedPoint)
       outNormal.copy(intersection.face.normal)
     }
   }
