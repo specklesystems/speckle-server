@@ -983,6 +983,12 @@ export default class SpeckleRenderer {
   }
 
   private onObjectDoubleClick(e) {
+    const measurement = this._measurements.pickMeasurement(e)
+    if (measurement) {
+      this.zoomToBox(measurement.bounds)
+      return
+    }
+
     if (e.event.ctrlKey) return
 
     const results: Array<Intersection> = this._intersections.intersect(

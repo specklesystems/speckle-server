@@ -38,6 +38,9 @@ export abstract class Measurement extends Object3D {
 
   public set isVisible(value: boolean) {}
 
+  public get bounds(): Box3 {
+    return new Box3().expandByPoint(this.startPoint).expandByPoint(this.endPoint)
+  }
   public frameUpdate(camera: Camera, bounds: Box3) {}
   public update() {}
   public raycast(raycaster, intersects) {}

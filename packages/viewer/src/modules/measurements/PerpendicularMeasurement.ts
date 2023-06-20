@@ -1,4 +1,4 @@
-import { Box3, Camera, Plane } from 'three'
+import { Box3, Camera, Plane, Vector3 } from 'three'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo'
 import { ObjectLayers } from '../SpeckleRenderer'
 import { getConversionFactor } from '../converter/Units'
@@ -7,10 +7,15 @@ import { Measurement, MeasurementState } from './Measurement'
 export class PerpendicularMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo = null
   private endGizmo: MeasurementPointGizmo = null
+  private midPoint: Vector3 = new Vector3()
 
   public set isVisible(value: boolean) {
     this.startGizmo.enable(value, value, value, value)
     this.endGizmo.enable(value, value, value, value)
+  }
+
+  public get bounds(): Box3 {
+    return new Box3().expandByPoint(this.startPoint).expandByPoint(this.midPoint)
   }
 
   public constructor() {
@@ -57,19 +62,21 @@ export class PerpendicularMeasurement extends Measurement {
       const angle = Math.acos(Math.min(Math.max(dot, -1), 1))
       this.startLineLength = Math.abs(startEndDist * Math.cos(angle))
 
-      const intersectPoint = Measurement.vecBuff0
-        .copy(this.startPoint)
-        .add(
-          Measurement.vecBuff1
-            .copy(this.startNormal)
-            .multiplyScalar(this.startLineLength)
-        )
+      this.midPoint.copy(
+        Measurement.vecBuff0
+          .copy(this.startPoint)
+          .add(
+            Measurement.vecBuff1
+              .copy(this.startNormal)
+              .multiplyScalar(this.startLineLength)
+          )
+      )
       const endLineNormal = Measurement.vecBuff1
-        .copy(intersectPoint)
+        .copy(this.midPoint)
         .sub(this.endPoint)
         .normalize()
 
-      this.endLineLength = intersectPoint.distanceTo(this.endPoint)
+      this.endLineLength = this.midPoint.distanceTo(this.endPoint)
 
       dot = this.endNormal.dot(endLineNormal)
       const angle1 = Math.acos(Math.min(Math.max(dot, -1), 1))
@@ -95,11 +102,11 @@ export class PerpendicularMeasurement extends Measurement {
         endLine0,
         endLine3,
         endLine3,
-        intersectPoint,
-        intersectPoint,
+        this.midPoint,
+        this.midPoint,
         endLine0
       ])
-      this.endGizmo.updatePoint(intersectPoint)
+      this.endGizmo.updatePoint(this.midPoint)
 
       const textPos = Measurement.vecBuff0
         .copy(this.startPoint)
@@ -109,7 +116,7 @@ export class PerpendicularMeasurement extends Measurement {
             .multiplyScalar(this.startLineLength * 0.5)
         )
 
-      this.value = intersectPoint.distanceTo(this.startPoint)
+      this.value = this.midPoint.distanceTo(this.startPoint)
       this.startGizmo.updateText(
         `${(this.value * getConversionFactor('m', this.units)).toFixed(
           this.precision

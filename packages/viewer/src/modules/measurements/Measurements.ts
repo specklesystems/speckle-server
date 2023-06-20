@@ -235,7 +235,7 @@ export class Measurements {
     }
   }
 
-  public pickMeasurement(data): PerpendicularMeasurement {
+  public pickMeasurement(data): Measurement {
     if (data.event.ctrlKey || data.event.altKey) return
 
     this.measurements.forEach((value) => {
@@ -243,10 +243,10 @@ export class Measurements {
     })
     this.raycaster.setFromCamera(data, this.renderer.camera)
     const res = this.raycaster.intersectObjects(this.measurements, false)
-    return res[0]?.object as PerpendicularMeasurement
+    return res[0]?.object as Measurement
   }
 
-  public highlightMeasurement(measurement: PerpendicularMeasurement, value: boolean) {
+  public highlightMeasurement(measurement: Measurement, value: boolean) {
     measurement.highlight(value)
     this.selectedMeasurement = measurement
   }
