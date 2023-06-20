@@ -488,7 +488,6 @@ export class Viewer extends EventEmitter implements IViewer {
     if (zoomToObject) this.zoom()
 
     this.speckleRenderer.resetPipeline(true)
-    this.filteringManager.invalidateCache()
     this.emit(ViewerEvent.LoadComplete, url)
     this.loaders[url].dispose()
     delete this.loaders[url]
@@ -518,7 +517,6 @@ export class Viewer extends EventEmitter implements IViewer {
       this.speckleRenderer.resetPipeline(true)
       this.emit(ViewerEvent.LoadComplete, url)
     }
-    this.filteringManager.invalidateCache()
     this.loaders[url].dispose()
     delete this.loaders[url]
     if (--this.inProgressOperations === 0)

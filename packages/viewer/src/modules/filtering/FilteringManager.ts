@@ -600,10 +600,6 @@ export class FilteringManager extends EventEmitter {
     this.idCache[key] = allIds
     return allIds
   }
-
-  public invalidateCache() {
-    this.idCache = {}
-  }
 }
 
 enum Command {
