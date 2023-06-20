@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Nullable } from '@speckle/shared'
-import { SelectionEvent } from '@speckle/viewer'
+
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
@@ -12,11 +11,11 @@ function useCollectSelection() {
     ui: { selection }
   } = useInjectedViewerState()
 
-  const selectionCallback = (event: Nullable<SelectionEvent>) => {
-    if (!event) return (selection.value = null) // reset selection location
-
-    const firstHit = event.hits[0]
-    selection.value = firstHit.point
+  const selectionCallback: Parameters<
+    typeof useSelectionEvents
+  >[0]['singleClickCallback'] = (_event, { firstVisibleSelectionHit }) => {
+    if (!firstVisibleSelectionHit) return (selection.value = null) // reset selection location
+    selection.value = firstVisibleSelectionHit.point
   }
   useSelectionEvents({
     singleClickCallback: selectionCallback,

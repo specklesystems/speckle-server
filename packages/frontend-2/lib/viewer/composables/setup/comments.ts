@@ -24,7 +24,6 @@ export function setupViewerCommentBubbles(
     const ot = Object.values(commentThreads.value).find(
       (t) => t.id === focusedThreadId.value
     )
-    console.log('ot', ot, commentThreads.value, focusedThreadId.value)
     return ot
   })
 
