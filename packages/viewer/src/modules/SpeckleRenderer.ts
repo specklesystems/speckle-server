@@ -188,6 +188,10 @@ export default class SpeckleRenderer {
     return this.viewer.sectionBox.getCurrentBox()
   }
 
+  public get measurements() {
+    return this._measurements
+  }
+
   public constructor(viewer: Viewer /** TEMPORARY */) {
     this._scene = new Scene()
     this.rootGroup = new Group()
@@ -293,6 +297,7 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.controls.addEventListener('rest', () => {
       this._needsRender = true
       this.pipeline.onStationaryBegin()
+      this._measurements.paused = false
     })
     this.viewer.cameraHandler.controls.addEventListener('controlstart', () => {
       this._needsRender = true
@@ -303,11 +308,13 @@ export default class SpeckleRenderer {
       this._needsRender = true
       if (this.viewer.cameraHandler.controls.hasRested)
         this.pipeline.onStationaryBegin()
+      this._measurements.paused = false
     })
 
     this.viewer.cameraHandler.controls.addEventListener('control', () => {
       this._needsRender = true
       this.pipeline.onStationaryEnd()
+      this._measurements.paused = true
     })
     this.viewer.cameraHandler.controls.addEventListener('update', () => {
       if (
@@ -930,11 +937,11 @@ export default class SpeckleRenderer {
   private onObjectClick(e) {
     const measurement = this._measurements.pickMeasurement(e)
     if (measurement) {
-      this._measurements.highlightMeasurement(measurement, true)
+      this._measurements.selectMeasurement(measurement, true)
       return
     }
 
-    if (e.event.ctrlKey || e.event.altKey) return
+    if (this._measurements.enabled) return
 
     const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
@@ -989,7 +996,7 @@ export default class SpeckleRenderer {
       return
     }
 
-    if (e.event.ctrlKey) return
+    if (this._measurements.enabled) return
 
     const results: Array<Intersection> = this._intersections.intersect(
       this._scene,

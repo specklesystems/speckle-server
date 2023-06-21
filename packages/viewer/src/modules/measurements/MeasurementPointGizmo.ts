@@ -35,6 +35,8 @@ export interface MeasurementPointGizmoStyle {
   pointOpacity?: number
   textColor?: number
   textOpacity?: number
+  textPixelHeight?: number
+  pointPixelHeight?: number
 }
 
 const DefaultMeasurementPointGizmoStyle = {
@@ -47,12 +49,14 @@ const DefaultMeasurementPointGizmoStyle = {
   pointColor: 0x047efb,
   pointOpacity: 1,
   textColor: 0xffffff,
-  textOpacity: 1
+  textOpacity: 1,
+  textPixelHeight: 17,
+  pointPixelHeight: 5
 }
 
 export class MeasurementPointGizmo extends Group {
   private disc: Mesh
-  private line: LineSegments2
+  public line: LineSegments2
   private point: Mesh
   private text: SpeckleText
   private _style: MeasurementPointGizmoStyle = Object.assign(
@@ -93,11 +97,11 @@ export class MeasurementPointGizmo extends Group {
     const lineMaterial = new SpeckleLineMaterial(
       {
         color: 0x047efb,
-        linewidth: 2,
+        linewidth: 1,
         worldUnits: false,
         vertexColors: false,
         alphaToCoverage: false,
-        resolution: new Vector2(919, 848)
+        resolution: new Vector2(1, 1)
       },
       ['USE_RTE', 'UNIFORM_OPACITY'].concat(this._style.dashedLine ? ['USE_DASH'] : [])
     )
@@ -128,7 +132,7 @@ export class MeasurementPointGizmo extends Group {
     material.color.convertSRGBToLinear()
     material.toneMapped = false
     material.depthTest = false
-    material.billboardPixelHeight = 7
+    material.billboardPixelHeight = this._style.pointPixelHeight
     material.userData.billboardPos.value.copy(this.point.position)
     return material
   }
@@ -147,7 +151,7 @@ export class MeasurementPointGizmo extends Group {
     material.opacity = this._style.textOpacity
     material.transparent = material.opacity < 1
     material.depthTest = false
-    material.billboardPixelHeight = 20
+    material.billboardPixelHeight = this._style.textPixelHeight
     material.userData.billboardPos.value.copy(this.text.position)
 
     return material.getDerivedMaterial()
@@ -157,7 +161,7 @@ export class MeasurementPointGizmo extends Group {
     super()
     this.layers.set(ObjectLayers.MEASUREMENTS)
 
-    const geometry = new CircleGeometry(0.25, 16)
+    const geometry = new CircleGeometry(0.15, 16)
     const doublePositions = new Float64Array(geometry.attributes.position.array)
     Geometry.updateRTEGeometry(geometry, doublePositions)
 
@@ -189,7 +193,7 @@ export class MeasurementPointGizmo extends Group {
 
     const point2 = new Mesh(sphereGeometry, this.getPointMaterial(0xffffff))
     point2.renderOrder = 2
-    point2.material.billboardPixelHeight = 5
+    point2.material.billboardPixelHeight = this._style.pointPixelHeight - 2
     point2.layers.set(ObjectLayers.MEASUREMENTS)
     this.point.add(point2)
 
@@ -213,6 +217,7 @@ export class MeasurementPointGizmo extends Group {
     this.point.visible = point
     this.text.visible = text
     this.text.textMesh.visible = text
+    this.line.material.visible = line
   }
 
   public frameUpdate(camera: Camera, bounds: Box3) {
@@ -292,7 +297,9 @@ export class MeasurementPointGizmo extends Group {
       .then(() => {
         this.text.style = {
           backgroundColor: new Color(0x047efb),
-          billboard: true
+          billboard: true,
+          anchorX: '50%',
+          anchorY: '43%' // Apparently this makes it vertically centered
         }
         this.text.setTransform(position, quaternion, scale)
         this.text.backgroundMesh.renderOrder = 3

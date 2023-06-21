@@ -109,23 +109,28 @@ export class SpeckleText extends Mesh {
       }
       this._text.anchorX = this._style.anchorX
       this._text.anchorY = this._style.anchorY
-
-      this._text.sync(() => {
+      if (this._text._needsSync) {
+        this._text.sync(() => {
+          resolve()
+          if (updateFinished) updateFinished()
+        })
+      } else {
         resolve()
         if (updateFinished) updateFinished()
-      })
+      }
     })
   }
 
-  public setTransform(position: Vector3, quaternion: Quaternion, scale: Vector3) {
-    if (this._style.billboard) {
-      this.textMesh.material.userData.billboardPos.value.copy(position)
-      ;(
-        this._background.material as SpeckleBasicMaterial
-      ).userData.billboardPos.value.copy(position)
+  public setTransform(position?: Vector3, quaternion?: Quaternion, scale?: Vector3) {
+    if (position) {
+      if (this._style.billboard) {
+        this.textMesh.material.userData.billboardPos.value.copy(position)
+        ;(
+          this._background.material as SpeckleBasicMaterial
+        ).userData.billboardPos.value.copy(position)
+      }
+      this.position.copy(position)
     }
-
-    if (position) this.position.copy(position)
     if (quaternion) this.quaternion.copy(quaternion)
     if (scale) this.scale.copy(scale)
   }

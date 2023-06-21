@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Box3 } from '@speckle/viewer'
 import { Vector3 } from '@speckle/viewer'
 import {
@@ -8,12 +9,14 @@ import {
   SunLightConfiguration,
   ViewerEvent,
   BatchObject,
-  VisualDiffMode
+  VisualDiffMode,
+  MeasurementType
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
 import { DiffResult } from '@speckle/viewer'
 import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
+import { Units } from '@speckle/viewer'
 
 export default class Sandbox {
   private viewer: DebugViewer
@@ -96,6 +99,14 @@ export default class Sandbox {
     sigmoidStrength: 2
   }
 
+  public measurementsParams = {
+    enabled: false,
+    type: MeasurementType.POINTTOPOINT,
+    vertexSnap: true,
+    units: 'm',
+    precision: 2
+  }
+
   public constructor(
     container: HTMLElement,
     viewer: DebugViewer,
@@ -114,7 +125,8 @@ export default class Sandbox {
         { title: 'Scene' },
         { title: 'Filtering' },
         { title: 'Batches' },
-        { title: 'Diff' }
+        { title: 'Diff' },
+        { title: 'Measurements' }
       ]
     })
     this.properties = []
@@ -377,8 +389,7 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
-      this.viewer.getRenderer().adnotate()
+      console.warn(await this.viewer.screenshot())
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -1034,6 +1045,62 @@ export default class Sandbox {
         this.viewer.setVisualDiffMode(diffResult, value.value)
         this.viewer.setDiffTime(diffResult, diffParams.time)
         this.viewer.requestRender()
+      })
+  }
+
+  public makeMeasurementsUI() {
+    const container = this.tabs.pages[5]
+    container
+      .addInput(this.measurementsParams, 'enabled', {
+        label: 'Enabled'
+      })
+      .on('change', (e) => {
+        this.viewer.enableMeasurements(this.measurementsParams.enabled)
+      })
+
+    container
+      .addInput(this.measurementsParams, 'type', {
+        label: 'Type',
+        options: {
+          PERPENDICULAR: MeasurementType.PERPENDICULAR,
+          POINTTOPOINT: MeasurementType.POINTTOPOINT
+        }
+      })
+      .on('change', (value) => {
+        this.viewer.setMeasurementOptions(this.measurementsParams)
+      })
+    container
+      .addInput(this.measurementsParams, 'vertexSnap', {
+        label: 'Snap'
+      })
+      .on('change', (e) => {
+        this.viewer.setMeasurementOptions(this.measurementsParams)
+      })
+
+    container
+      .addInput(this.measurementsParams, 'units', {
+        label: 'Units',
+        options: Units
+      })
+      .on('change', (e) => {
+        this.viewer.setMeasurementOptions(this.measurementsParams)
+      })
+    container
+      .addInput(this.measurementsParams, 'precision', {
+        label: 'Precision',
+        step: 1,
+        min: 1,
+        max: 5
+      })
+      .on('change', (e) => {
+        this.viewer.setMeasurementOptions(this.measurementsParams)
+      })
+    container
+      .addButton({
+        title: 'Delete'
+      })
+      .on('click', (e) => {
+        this.viewer.removeMeasurement()
       })
   }
 

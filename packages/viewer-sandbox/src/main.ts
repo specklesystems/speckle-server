@@ -99,6 +99,7 @@ const createViewer = async (containerName: string, stream: string) => {
   sandbox.makeFilteringUI()
   sandbox.makeBatchesUI()
   sandbox.makeDiffUI()
+  sandbox.makeMeasurementsUI()
 
   await sandbox.loadUrl(stream)
 }

@@ -11,7 +11,6 @@ import {
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
 import { SpeckleRaycaster } from './objects/SpeckleRaycaster'
-import Logger from 'js-logger'
 import { ObjectLayers } from './SpeckleRenderer'
 
 export class Intersections {
@@ -121,9 +120,9 @@ export class Intersections {
 
     let results = []
     if (target) {
-      const start = performance.now()
+      // const start = performance.now()
       results = this.raycaster.intersectObjects(target.children)
-      Logger.warn('Interesct time -> ', performance.now() - start)
+      // Logger.warn('Interesct time -> ', performance.now() - start)
     }
     this.raycaster.layers.mask = preserveMask
 

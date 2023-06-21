@@ -33,6 +33,7 @@ import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
 import { DiffResult, Differ, VisualDiffMode } from './Differ'
 import { BatchObject } from './batching/BatchObject'
+import { MeasurementOptions } from './measurements/Measurements'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -620,6 +621,18 @@ export class Viewer extends EventEmitter implements IViewer {
       this.speckleRenderer.getBatchMaterials()
     )
     this.filteringManager.setUserMaterials(this.differ.materialGroups)
+  }
+
+  public enableMeasurements(value: boolean) {
+    this.speckleRenderer.measurements.enabled = value
+  }
+
+  public setMeasurementOptions(options: MeasurementOptions) {
+    this.speckleRenderer.measurements.options = options
+  }
+
+  public removeMeasurement() {
+    this.speckleRenderer.measurements.removeMeasurement()
   }
 
   public dispose() {

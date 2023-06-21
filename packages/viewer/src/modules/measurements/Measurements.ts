@@ -8,13 +8,35 @@ import { Measurement, MeasurementState } from './Measurement'
 import { ExtendedIntersection } from '../objects/SpeckleRaycaster'
 import Logger from 'js-logger'
 
+export enum MeasurementType {
+  PERPENDICULAR,
+  POINTTOPOINT
+}
+
+export interface MeasurementOptions {
+  type?: MeasurementType
+  vertexSnap?: boolean
+  units?: string
+  precision?: number
+}
+
+const DefaultMeasurementsOptions = {
+  type: MeasurementType.POINTTOPOINT,
+  vertexSnap: true,
+  units: 'm',
+  precision: 2
+}
+
 export class Measurements {
   private renderer: SpeckleRenderer = null
   private measurements: Measurement[] = []
   private measurement: Measurement = null
   private selectedMeasurement: Measurement = null
   private raycaster: Raycaster = null
+  private _options: MeasurementOptions = Object.assign({}, DefaultMeasurementsOptions)
   private frameLock = false
+  private _enabled = false
+  private _paused = false
   private pointBuff: Vector3 = new Vector3()
   private normalBuff: Vector3 = new Vector3()
   private screenBuff0: Vector2 = new Vector2()
@@ -28,9 +50,38 @@ export class Measurements {
     this.renderer.input.on('pointer-move', this.onPointerMove.bind(this))
     this.renderer.input.on(ViewerEvent.ObjectClicked, this.onPointerClick.bind(this))
     this.renderer.input.on('key-up', this.onKeyUp.bind(this))
+    this.renderer.input.on(
+      ViewerEvent.ObjectDoubleClicked,
+      this.onPointerDoubleClick.bind(this)
+    )
+  }
+
+  public get enabled(): boolean {
+    return this._enabled
+  }
+
+  public set enabled(value: boolean) {
+    this._enabled = value
+    if (this.measurement) {
+      this.measurement.isVisible = value
+      this.measurement.update()
+    }
+    this.renderer.needsRender = true
+    this.renderer.resetPipeline()
+  }
+
+  public set paused(value: boolean) {
+    this._paused = value
+  }
+
+  public set options(options: MeasurementOptions) {
+    Object.assign(this._options, options)
+    this.applyOptions()
   }
 
   public update() {
+    if (!this._enabled) return
+
     this.frameLock = false
     if (this.measurement)
       this.measurement.frameUpdate(this.renderer.camera, this.renderer.sceneBox)
@@ -57,7 +108,7 @@ export class Measurements {
   }
 
   private onPointerMove(data) {
-    if (!data.event.ctrlKey && !data.event.altKey) return
+    if (!this._enabled || this._paused) return
 
     if (this.frameLock) {
       return
@@ -74,16 +125,13 @@ export class Measurements {
     if (!result || !result.length) return
 
     if (!this.measurement) {
-      if (data.event.ctrlKey) this.measurement = new PerpendicularMeasurement()
-      else if (data.event.altKey) this.measurement = new PointToPointMeasurement()
-      this.measurement.state = MeasurementState.DANGLING_START
-      this.renderer.scene.add(this.measurement)
+      this.startMeasurement()
     }
     this.measurement.isVisible = true
 
     this.pointBuff.copy(result[0].point)
     this.normalBuff.copy(result[0].face.normal)
-    if (data.event.altKey && data.event.shiftKey) {
+    if (this._options.vertexSnap) {
       this.snap(result[0], this.pointBuff, this.normalBuff)
     }
     if (this.measurement.state === MeasurementState.DANGLING_START) {
@@ -101,12 +149,14 @@ export class Measurements {
   }
 
   private onPointerClick(data) {
-    if (!data.event.ctrlKey && !data.event.altKey) return
+    if (!this._enabled) return
 
-    if (data.event.shiftKey && data.event.ctrlKey) {
-      this.autoLazerMeasure(data)
+    if (data.event.button === 2) {
+      this.cancelMeasurement()
       return
     }
+
+    if (!this.measurement) return
 
     if (this.measurement.state === MeasurementState.DANGLING_START)
       this.measurement.state = MeasurementState.DANGLING_END
@@ -115,19 +165,21 @@ export class Measurements {
     }
   }
 
+  private onPointerDoubleClick(data) {
+    if (this._options.type === MeasurementType.PERPENDICULAR) {
+      this.autoLazerMeasure(data)
+      return
+    }
+  }
+
   private onKeyUp(data) {
+    if (!this._enabled) return
+
     if (data.code === 'Escape') {
-      this.renderer.scene.remove(this.measurement)
-      this.measurement = null
-      this.renderer.needsRender = true
-      this.renderer.resetPipeline()
+      this.cancelMeasurement()
     }
     if (data.code === 'Delete') {
-      this.measurements.splice(this.measurements.indexOf(this.selectedMeasurement), 1)
-      this.renderer.scene.remove(this.selectedMeasurement)
-      this.selectedMeasurement = null
-      this.renderer.needsRender = true
-      this.renderer.resetPipeline()
+      this.removeMeasurement()
     }
     if (data.code === 'ControlLeft' || data.code === 'AltLeft') {
       if (
@@ -140,53 +192,69 @@ export class Measurements {
   }
 
   private autoLazerMeasure(data) {
-    if (this.measurement.state === MeasurementState.DANGLING_START) {
-      const result = this.renderer.intersections.intersect(
-        this.renderer.scene,
-        this.renderer.camera,
-        data,
-        true,
-        this.renderer.currentSectionBox,
-        [ObjectLayers.STREAM_CONTENT_MESH]
-      )
-      if (!result || !result.length) return
+    this.measurement.state = MeasurementState.DANGLING_START
+    const result = this.renderer.intersections.intersect(
+      this.renderer.scene,
+      this.renderer.camera,
+      data,
+      true,
+      this.renderer.currentSectionBox,
+      [ObjectLayers.STREAM_CONTENT_MESH]
+    )
+    if (!result || !result.length) return
 
-      const startPoint = new Vector3().copy(result[0].point)
-      const startNormal = new Vector3().copy(result[0].face.normal)
+    const startPoint = new Vector3().copy(result[0].point)
+    const startNormal = new Vector3().copy(result[0].face.normal)
 
-      const offsetPoint = new Vector3()
-        .copy(startPoint)
-        .add(new Vector3().copy(startNormal).multiplyScalar(0.000001))
-      const perpResult = this.renderer.intersections.intersectRay(
-        this.renderer.scene,
-        this.renderer.camera,
-        new Ray(offsetPoint, startNormal),
-        true,
-        this.renderer.currentSectionBox,
-        [ObjectLayers.STREAM_CONTENT_MESH]
-      )
-      if (!perpResult || !perpResult.length) {
-        let flashCount = 0
-        const maxFlashCount = 5
-        const handle = setInterval(() => {
-          this.measurement.highlight(Boolean(flashCount++ % 2))
-          if (flashCount >= maxFlashCount) {
-            clearInterval(handle)
-          }
-          this.renderer.needsRender = true
-          this.renderer.resetPipeline()
-        }, 100)
-        return
-      }
-
-      this.measurement.startPoint.copy(startPoint)
-      this.measurement.startNormal.copy(startNormal)
-      this.measurement.endPoint.copy(perpResult[0].point)
-      this.measurement.endNormal.copy(perpResult[0].face.normal)
-      this.measurement.state = MeasurementState.DANGLING_END
-      this.measurement.update()
-      this.finishMeasurement()
+    const offsetPoint = new Vector3()
+      .copy(startPoint)
+      .add(new Vector3().copy(startNormal).multiplyScalar(0.000001))
+    const perpResult = this.renderer.intersections.intersectRay(
+      this.renderer.scene,
+      this.renderer.camera,
+      new Ray(offsetPoint, startNormal),
+      true,
+      this.renderer.currentSectionBox,
+      [ObjectLayers.STREAM_CONTENT_MESH]
+    )
+    if (!perpResult || !perpResult.length) {
+      let flashCount = 0
+      const maxFlashCount = 5
+      const handle = setInterval(() => {
+        this.measurement.highlight(Boolean(flashCount++ % 2))
+        if (flashCount >= maxFlashCount) {
+          clearInterval(handle)
+        }
+        this.renderer.needsRender = true
+        this.renderer.resetPipeline()
+      }, 100)
+      return
     }
+
+    this.measurement.startPoint.copy(startPoint)
+    this.measurement.startNormal.copy(startNormal)
+    this.measurement.endPoint.copy(perpResult[0].point)
+    this.measurement.endNormal.copy(perpResult[0].face.normal)
+    this.measurement.state = MeasurementState.DANGLING_END
+    this.measurement.update()
+    this.finishMeasurement()
+  }
+
+  private startMeasurement() {
+    if (this._options.type === MeasurementType.PERPENDICULAR)
+      this.measurement = new PerpendicularMeasurement()
+    else if (this._options.type === MeasurementType.POINTTOPOINT)
+      this.measurement = new PointToPointMeasurement()
+
+    this.measurement.state = MeasurementState.DANGLING_START
+    this.renderer.scene.add(this.measurement)
+  }
+
+  private cancelMeasurement() {
+    this.renderer.scene.remove(this.measurement)
+    this.measurement = null
+    this.renderer.needsRender = true
+    this.renderer.resetPipeline()
   }
 
   private finishMeasurement() {
@@ -236,8 +304,6 @@ export class Measurements {
   }
 
   public pickMeasurement(data): Measurement {
-    if (data.event.ctrlKey || data.event.altKey) return
-
     this.measurements.forEach((value) => {
       value.highlight(false)
     })
@@ -246,8 +312,34 @@ export class Measurements {
     return res[0]?.object as Measurement
   }
 
-  public highlightMeasurement(measurement: Measurement, value: boolean) {
+  public selectMeasurement(measurement: Measurement, value: boolean) {
+    this.cancelMeasurement()
     measurement.highlight(value)
     this.selectedMeasurement = measurement
+  }
+
+  public removeMeasurement() {
+    if (this.selectedMeasurement) {
+      this.measurements.splice(this.measurements.indexOf(this.selectedMeasurement), 1)
+      this.renderer.scene.remove(this.selectedMeasurement)
+      this.selectedMeasurement = null
+      this.renderer.needsRender = true
+      this.renderer.resetPipeline()
+    } else {
+      this.cancelMeasurement()
+    }
+  }
+
+  private applyOptions() {
+    const all = [this.measurement, ...this.measurements]
+    all.forEach((value) => {
+      if (value) {
+        value.units = this._options.units
+        value.precision = this._options.precision
+        value.update()
+      }
+    })
+    this.renderer.needsRender = true
+    this.renderer.resetPipeline()
   }
 }

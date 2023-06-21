@@ -11,6 +11,7 @@ export const InputOptionsDefault = {
 }
 
 export default class Input extends EventEmitter {
+  private static readonly MAX_DOUBLE_CLICK_TIMING = 500
   private tapTimeout
   private lastTap = 0
   private lastClick = 0
@@ -35,7 +36,7 @@ export default class Input extends EventEmitter {
       const delta = now - mdTime
       const deltaClick = now - this.lastClick
 
-      if (delta > 250 || deltaClick < 300) return
+      if (delta > 250 || deltaClick < Input.MAX_DOUBLE_CLICK_TIMING) return
 
       const loc = this._getNormalisedClickPosition(e)
       ;(loc as unknown as Record<string, unknown>).event = e

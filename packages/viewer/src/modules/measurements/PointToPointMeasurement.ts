@@ -82,6 +82,11 @@ export class PointToPointMeasurement extends Measurement {
     if (this._state === MeasurementState.COMPLETE) {
       this.startGizmo.enable(false, true, true, true)
       this.endGizmo.enable(false, false, true, false)
+      this.startGizmo.updateText(
+        `${(this.value * getConversionFactor('m', this.units)).toFixed(
+          this.precision
+        )} ${this.units}`
+      )
     }
   }
 

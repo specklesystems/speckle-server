@@ -32,6 +32,11 @@ import { ObjectLayers } from './modules/SpeckleRenderer'
 import { DiffResult, VisualDiffMode } from './modules/Differ'
 import { BatchObject } from './modules/batching/BatchObject'
 import { Box3, Vector3 } from 'three'
+import {
+  MeasurementOptions,
+  MeasurementType
+} from './modules/measurements/Measurements'
+import { Units } from './modules/converter/Units'
 
 export {
   Viewer,
@@ -44,7 +49,9 @@ export {
   Box3,
   Vector3,
   WorldTree,
-  VisualDiffMode
+  VisualDiffMode,
+  MeasurementType,
+  Units
 }
 
 export type {
@@ -70,5 +77,6 @@ export type {
   PointQueryResult,
   IntersectionQueryResult,
   Utils,
-  DiffResult
+  DiffResult,
+  MeasurementOptions
 }
