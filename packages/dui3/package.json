@@ -52,7 +52,7 @@
     "eslint-plugin-nuxt": "^4.0.0",
     "eslint-plugin-vue": "^9.5.1",
     "eslint-plugin-vuejs-accessibility": "^1.2.0",
-    "nuxt": "^3.5.0",
+    "nuxt": "^3.4.3",
     "postcss": "^8.4.18",
     "postcss-custom-properties": "^12.1.9",
     "postcss-html": "^1.5.0",
