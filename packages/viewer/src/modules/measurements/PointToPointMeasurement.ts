@@ -1,5 +1,5 @@
 /* eslint-disable no-empty */
-import { Box3, Camera, Plane } from 'three'
+import { Box3, Camera, Plane, Vector2 } from 'three'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo'
 import { ObjectLayers } from '../SpeckleRenderer'
 import { getConversionFactor } from '../converter/Units'
@@ -25,7 +25,8 @@ export class PointToPointMeasurement extends Measurement {
     this.layers.set(ObjectLayers.MEASUREMENTS)
   }
 
-  public frameUpdate(camera: Camera, bounds: Box3) {
+  public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {
+    super.frameUpdate(camera, size, bounds)
     this.startGizmo.frameUpdate(camera, bounds)
     this.endGizmo.frameUpdate(camera, bounds)
   }
@@ -36,11 +37,11 @@ export class PointToPointMeasurement extends Measurement {
     this.endGizmo.updateDisc(this.endPoint, this.endNormal)
 
     if (this._state === MeasurementState.DANGLING_START) {
-      const startLine0 = Measurement.vecBuff0.copy(this.startPoint)
-      const startLine1 = Measurement.vecBuff1
+      const startLine0 = Measurement.vec3Buff0.copy(this.startPoint)
+      const startLine1 = Measurement.vec3Buff1
         .copy(this.startPoint)
         .add(
-          Measurement.vecBuff2
+          Measurement.vec3Buff2
             .copy(this.startNormal)
             .multiplyScalar(this.startLineLength)
         )
@@ -51,20 +52,20 @@ export class PointToPointMeasurement extends Measurement {
       this.startLineLength = this.startPoint.distanceTo(this.endPoint)
       this.value = this.startLineLength
 
-      const endStartDir = Measurement.vecBuff0
+      const endStartDir = Measurement.vec3Buff0
         .copy(this.endPoint)
         .sub(this.startPoint)
         .normalize()
-      const lineEndPoint = Measurement.vecBuff1
+      const lineEndPoint = Measurement.vec3Buff1
         .copy(this.startPoint)
         .add(
-          Measurement.vecBuff2.copy(endStartDir).multiplyScalar(this.startLineLength)
+          Measurement.vec3Buff2.copy(endStartDir).multiplyScalar(this.startLineLength)
         )
 
-      const textPos = Measurement.vecBuff3
+      const textPos = Measurement.vec3Buff3
         .copy(this.startPoint)
         .add(
-          Measurement.vecBuff4
+          Measurement.vec3Buff4
             .copy(endStartDir)
             .multiplyScalar(this.startLineLength * 0.5)
         )

@@ -49,7 +49,6 @@ export class Measurements {
 
     this.renderer.input.on('pointer-move', this.onPointerMove.bind(this))
     this.renderer.input.on(ViewerEvent.ObjectClicked, this.onPointerClick.bind(this))
-    this.renderer.input.on('key-up', this.onKeyUp.bind(this))
     this.renderer.input.on(
       ViewerEvent.ObjectDoubleClicked,
       this.onPointerDoubleClick.bind(this)
@@ -91,10 +90,15 @@ export class Measurements {
     if (!this._enabled) return
 
     this.frameLock = false
+    this.renderer.renderer.getDrawingBufferSize(this.screenBuff0)
     if (this.measurement)
-      this.measurement.frameUpdate(this.renderer.camera, this.renderer.sceneBox)
+      this.measurement.frameUpdate(
+        this.renderer.camera,
+        this.screenBuff0,
+        this.renderer.sceneBox
+      )
     this.measurements.forEach((value: Measurement) => {
-      value.frameUpdate(this.renderer.camera, this.renderer.sceneBox)
+      value.frameUpdate(this.renderer.camera, this.screenBuff0, this.renderer.sceneBox)
     })
   }
 
@@ -180,25 +184,6 @@ export class Measurements {
     }
   }
 
-  private onKeyUp(data) {
-    if (!this._enabled) return
-
-    if (data.code === 'Escape') {
-      this.cancelMeasurement()
-    }
-    if (data.code === 'Delete') {
-      this.removeMeasurement()
-    }
-    if (data.code === 'ControlLeft' || data.code === 'AltLeft') {
-      if (
-        this.measurement &&
-        this.measurement.state === MeasurementState.DANGLING_START
-      ) {
-        this.measurement.isVisible = false
-      }
-    }
-  }
-
   private autoLazerMeasure(data) {
     if (!this.measurement) return
 
@@ -257,6 +242,11 @@ export class Measurements {
       this.measurement = new PointToPointMeasurement()
 
     this.measurement.state = MeasurementState.DANGLING_START
+    this.measurement.frameUpdate(
+      this.renderer.camera,
+      this.screenBuff0,
+      this.renderer.sceneBox
+    )
     this.renderer.scene.add(this.measurement)
   }
 
