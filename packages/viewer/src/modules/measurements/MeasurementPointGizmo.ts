@@ -132,7 +132,8 @@ export class MeasurementPointGizmo extends Group {
     material.color.convertSRGBToLinear()
     material.toneMapped = false
     material.depthTest = false
-    material.billboardPixelHeight = this._style.pointPixelHeight
+    material.billboardPixelHeight =
+      this._style.pointPixelHeight * window.devicePixelRatio
     material.userData.billboardPos.value.copy(this.point.position)
     return material
   }
@@ -151,7 +152,8 @@ export class MeasurementPointGizmo extends Group {
     material.opacity = this._style.textOpacity
     material.transparent = material.opacity < 1
     material.depthTest = false
-    material.billboardPixelHeight = this._style.textPixelHeight
+    material.billboardPixelHeight =
+      this._style.textPixelHeight * window.devicePixelRatio
     material.userData.billboardPos.value.copy(this.text.position)
 
     return material.getDerivedMaterial()
@@ -193,7 +195,9 @@ export class MeasurementPointGizmo extends Group {
 
     const point2 = new Mesh(sphereGeometry, this.getPointMaterial(0xffffff))
     point2.renderOrder = 2
-    point2.material.billboardPixelHeight = this._style.pointPixelHeight - 2
+    point2.material.billboardPixelHeight =
+      this._style.pointPixelHeight * window.devicePixelRatio -
+      2 * window.devicePixelRatio
     point2.layers.set(ObjectLayers.MEASUREMENTS)
     this.point.add(point2)
 
@@ -298,6 +302,7 @@ export class MeasurementPointGizmo extends Group {
         this.text.style = {
           backgroundColor: new Color(0x047efb),
           billboard: true,
+          backgroundPixelHeight: 20,
           anchorX: '50%',
           anchorY: '43%' // Apparently this makes it vertically centered
         }

@@ -26,6 +26,7 @@ export interface SpeckleTextParams {
 export interface SpeckleTextStyle {
   backgroundColor?: Color
   backgroundCornerRadius?: number
+  backgroundPixelHeight?: number
   textColor?: Color
   billboard?: boolean
   anchorX?: string
@@ -35,6 +36,7 @@ export interface SpeckleTextStyle {
 const DefaultSpeckleTextStyle: SpeckleTextStyle = {
   backgroundColor: null,
   backgroundCornerRadius: 1,
+  backgroundPixelHeight: 50,
   textColor: new Color(0xffffff),
   billboard: false,
   anchorX: '50%',
@@ -229,7 +231,7 @@ export class SpeckleText extends Mesh {
       material.toneMapped = false
       material.side = DoubleSide
       material.depthTest = false
-      material.billboardPixelHeight = 20
+
       this._background = new Mesh(geometry, material)
       this._background.layers.set(ObjectLayers.MEASUREMENTS)
       this._background.frustumCulled = false
@@ -238,6 +240,8 @@ export class SpeckleText extends Mesh {
     }
     const color = new Color(this._style.backgroundColor).convertSRGBToLinear()
     ;(this._background.material as SpeckleBasicMaterial).color = color
+    ;(this._background.material as SpeckleBasicMaterial).billboardPixelHeight =
+      this._style.backgroundPixelHeight * window.devicePixelRatio
   }
 
   /** From https://discourse.threejs.org/t/roundedrectangle-squircle/28645  */
@@ -252,7 +256,7 @@ export class SpeckleText extends Mesh {
     const uvs = []
     let qu, sgx, sgy, x, y
 
-    for (let j = 1; j < n + 1; j++) indices.push(0, j, j + 1) // 0 is center
+    for (let j = 1; j < n; j++) indices.push(0, j, j + 1) // 0 is center
     indices.push(0, n, 1)
     positions.push(0, 0, 0) // rectangle center
     uvs.push(0.5, 0.5)
