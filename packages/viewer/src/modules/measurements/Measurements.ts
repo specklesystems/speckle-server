@@ -192,6 +192,8 @@ export class Measurements {
   }
 
   private autoLazerMeasure(data) {
+    if (!this.measurement) return
+
     this.measurement.state = MeasurementState.DANGLING_START
     const result = this.renderer.intersections.intersect(
       this.renderer.scene,
