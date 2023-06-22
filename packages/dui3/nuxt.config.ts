@@ -28,9 +28,17 @@ export default defineNuxtConfig({
       legacy({
         renderLegacyChunks: false,
         // only adding the specific polyfills we need to reduce bundle size
-        modernPolyfills: ['es.global-this', 'es/object', 'es/array']
+        // modernPolyfills: ['es.global-this', 'es/object', 'es/array', 'features/bigint']
+        modernPolyfills: true
       })
-    ]
+    ],
+    optimizeDeps: {
+      esbuildOptions: {
+        supported: {
+          bigint: true
+        }
+      }
+    }
   },
   ssr: false,
   build: {
