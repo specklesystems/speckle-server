@@ -36,10 +36,10 @@ export const LoggingExpressMiddleware = HttpLogger({
   redact: {
     paths: [
       'req.headers.cookie',
-      'req.headers.cf-connecting-ip',
-      'req.headers.true-client-ip',
-      'req.headers.x-real-ip',
-      'req.headers.x-forwarded-for'
+      'req.headers["cf-connecting-ip"]',
+      'req.headers["true-client-ip"]',
+      'req.headers["x-real-ip"]',
+      'req.headers["x-forwarded-for"]'
     ],
     censor: (value: string) => `[REDACTED(length:${value.length})]`
   },
