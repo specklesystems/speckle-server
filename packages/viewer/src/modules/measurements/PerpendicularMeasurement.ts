@@ -126,6 +126,11 @@ export class PerpendicularMeasurement extends Measurement {
       this.endGizmo.enable(true, true, true, true)
     }
     if (this._state === MeasurementState.COMPLETE) {
+      this.startGizmo.updateText(
+        `${(this.value * getConversionFactor('m', this.units)).toFixed(
+          this.precision
+        )} ${this.units}`
+      )
       this.startGizmo.enable(false, true, true, true)
       this.endGizmo.enable(false, false, true, false)
     }
