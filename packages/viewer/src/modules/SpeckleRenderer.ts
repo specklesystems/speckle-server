@@ -520,7 +520,11 @@ export default class SpeckleRenderer {
     this._needsRender = true
   }
 
-  public async addRenderTreeAsync(subtreeId: string, priority = 1) {
+  public async addRenderTreeAsync(
+    subtreeId: string,
+    priority = 1,
+    zoomToObject = true
+  ) {
     this.cancel[subtreeId] = false
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
@@ -537,11 +541,9 @@ export default class SpeckleRenderer {
       if (!batch) continue
 
       this.addBatch(batch, subtreeGroup)
-      this.zoom()
+      if (zoomToObject) this.zoom()
       if (batch.geometryType === GeometryType.MESH) {
         this.updateDirectLights()
-        /** Updating the shadowcatcher after each batch is a bit too much. Stalls a lot */
-        // this.updateShadowCatcher()
       }
       this._needsRender = true
       if (this.cancel[subtreeId]) {
@@ -1176,6 +1178,7 @@ export default class SpeckleRenderer {
       view.view.target['z'],
       transition
     )
+    this.viewer.cameraHandler.enableRotations()
   }
 
   /**
@@ -1191,12 +1194,14 @@ export default class SpeckleRenderer {
 
     switch (side) {
       case 'front':
+        this.zoomExtents()
         this.viewer.cameraHandler.controls.rotateTo(0, DEG90, transition)
         if (this.viewer.cameraHandler.activeCam.name === 'ortho')
           this.viewer.cameraHandler.disableRotations()
         break
 
       case 'back':
+        this.zoomExtents()
         this.viewer.cameraHandler.controls.rotateTo(DEG180, DEG90, transition)
         if (this.viewer.cameraHandler.activeCam.name === 'ortho')
           this.viewer.cameraHandler.disableRotations()
@@ -1204,6 +1209,7 @@ export default class SpeckleRenderer {
 
       case 'up':
       case 'top':
+        this.zoomExtents()
         this.viewer.cameraHandler.controls.rotateTo(0, 0, transition)
         if (this.viewer.cameraHandler.activeCam.name === 'ortho')
           this.viewer.cameraHandler.disableRotations()
@@ -1211,18 +1217,21 @@ export default class SpeckleRenderer {
 
       case 'down':
       case 'bottom':
+        this.zoomExtents()
         this.viewer.cameraHandler.controls.rotateTo(0, DEG180, transition)
         if (this.viewer.cameraHandler.activeCam.name === 'ortho')
           this.viewer.cameraHandler.disableRotations()
         break
 
       case 'right':
+        this.zoomExtents()
         this.viewer.cameraHandler.controls.rotateTo(DEG90, DEG90, transition)
         if (this.viewer.cameraHandler.activeCam.name === 'ortho')
           this.viewer.cameraHandler.disableRotations()
         break
 
       case 'left':
+        this.zoomExtents()
         this.viewer.cameraHandler.controls.rotateTo(-DEG90, DEG90, transition)
         if (this.viewer.cameraHandler.activeCam.name === 'ortho')
           this.viewer.cameraHandler.disableRotations()
@@ -1261,10 +1270,12 @@ export default class SpeckleRenderer {
       view.target.z,
       transition
     )
+    this.viewer.cameraHandler.enableRotations()
   }
 
   private setViewPolar(view: PolarView, transition = true) {
     this.viewer.cameraHandler.controls.rotate(view.azimuth, view.polar, transition)
+    this.viewer.cameraHandler.enableRotations()
   }
 
   public screenToNDC(

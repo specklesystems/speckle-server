@@ -21,7 +21,7 @@
     </div>
 
     <OnboardingDialogManager
-      v-show="showManagerDownloadDialog"
+      v-model:open="showManagerDownloadDialog"
       @done="showManagerDownloadDialog = false"
       @cancel="showManagerDownloadDialog = false"
     ></OnboardingDialogManager>

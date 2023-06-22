@@ -526,4 +526,6 @@ onMounted(() => {
     triggerSearch()
   }
 })
+
+defineExpose({ triggerSearch })
 </script>
