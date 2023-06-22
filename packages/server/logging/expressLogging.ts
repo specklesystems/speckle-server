@@ -35,13 +35,23 @@ export const LoggingExpressMiddleware = HttpLogger({
   },
   redact: {
     paths: [
+      'req.headers.authorization',
       'req.headers.cookie',
       'req.headers["cf-connecting-ip"]',
       'req.headers["true-client-ip"]',
       'req.headers["x-real-ip"]',
       'req.headers["x-forwarded-for"]'
     ],
-    censor: (value: string) => `[REDACTED(length:${value.length})]`
+    censor: (value, path) => {
+      if (
+        path.includes('req.headers.authorization') &&
+        typeof value === 'string' &&
+        value.startsWith('bearer')
+      ) {
+        return `${value.slice(0, 17)}[TRUNCATED(original_length:${value.length})]`
+      }
+      return `[REDACTED(length:${value.length})]`
+    }
   },
 
   // we need to redact any potential sensitive data from being logged.
@@ -53,21 +63,8 @@ export const LoggingExpressMiddleware = HttpLogger({
         id: req.raw.id,
         method: req.raw.method,
         path: req.raw.url?.split('?')[0], // Remove query params which might be sensitive
-        // Allowlist useful headers
-        headers: Object.keys(req.raw.headers).reduce((obj, key) => {
-          let valueToPrint = req.raw.headers[key]
-          if (key.toLocaleLowerCase() === 'authorization') {
-            if (typeof valueToPrint === 'string' && valueToPrint.startsWith('bearer')) {
-              valueToPrint = `${valueToPrint?.slice(0, 17)}...` // 'bearer ' is 7 chars, plus 10 more
-            } else {
-              valueToPrint = `[REDACTED(length:${valueToPrint?.length})]`
-            }
-          }
-          return {
-            ...obj,
-            [key]: valueToPrint
-          }
-        }, {})
+        // headers are managed by the redact config above
+        headers: req.raw.headers
       }
     }),
     res: pino.stdSerializers.wrapResponseSerializer((res) => {
