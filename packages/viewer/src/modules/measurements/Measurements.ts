@@ -75,7 +75,15 @@ export class Measurements {
   }
 
   public set options(options: MeasurementOptions) {
+    const resetMeasurement =
+      this._options.type !== options.type &&
+      this.measurement &&
+      this.measurement.state === MeasurementState.DANGLING_START
     Object.assign(this._options, options)
+    if (resetMeasurement) {
+      this.cancelMeasurement()
+      this.startMeasurement()
+    }
     this.applyOptions()
   }
 
