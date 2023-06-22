@@ -81,6 +81,10 @@ export function getOidcName() {
   return process.env.OIDC_NAME
 }
 
+export function getMailchimpStatus() {
+  return [true, 'true'].includes(process.env.MAILCHIMP_ENABLED || false)
+}
+
 export function getMailchimpConfig() {
   if (
     !process.env.MAILCHIMP_API_KEY ||
