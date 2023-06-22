@@ -8,6 +8,14 @@ import { GenReqId } from 'pino-http'
 
 const REQUEST_ID_HEADER = 'x-request-id'
 
+const truncatedHeaders = ['authorization']
+const redactedHeaders = [
+  'cookie',
+  'cf-connecting-ip',
+  'true-client-ip',
+  'x-real-ip',
+  'x-forwarded-for'
+]
 const GenerateRequestId: GenReqId = (req: IncomingMessage) => DetermineRequestId(req)
 
 const DetermineRequestId = (
@@ -44,19 +52,18 @@ export const LoggingExpressMiddleware = HttpLogger({
         method: req.raw.method,
         path: req.raw.url?.split('?')[0], // Remove query params which might be sensitive
         // Allowlist useful headers
-        headers: Object.fromEntries(
-          Object.entries(req.raw.headers).filter(
-            ([key]) =>
-              ![
-                'cookie',
-                'authorization',
-                'cf-connecting-ip',
-                'true-client-ip',
-                'x-real-ip',
-                'x-forwarded-for'
-              ].includes(key.toLocaleLowerCase())
-          )
-        )
+        headers: Object.keys(req.raw.headers).reduce((obj, key) => {
+          let valueToPrint = req.raw.headers[key]
+          if (redactedHeaders.includes(key.toLocaleLowerCase())) {
+            valueToPrint = `REDACTED[length: ${valueToPrint ? valueToPrint.length : 0}]`
+          } else if (truncatedHeaders.includes(key.toLocaleLowerCase())) {
+            valueToPrint = `${valueToPrint?.slice(0, 17)}...` // 'bearer ' is 7 chars, plus 10 more
+          }
+          return {
+            ...obj,
+            [key]: valueToPrint
+          }
+        }, {})
       }
     }),
     res: pino.stdSerializers.wrapResponseSerializer((res) => {
