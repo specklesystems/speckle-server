@@ -44,9 +44,12 @@ export const LoggingExpressMiddleware = HttpLogger({
     ],
     censor: (value, path) => {
       if (
-        path.includes('req.headers.authorization') &&
+        path.length === 3 &&
+        path[0] === 'req' &&
+        path[1] === 'headers' &&
+        path[2] === 'authorization' &&
         typeof value === 'string' &&
-        value.startsWith('bearer')
+        value.toLocaleLowerCase().includes('bearer ')
       ) {
         return `${value.slice(0, 17)}[TRUNCATED(original_length:${value.length})]`
       }
@@ -76,7 +79,7 @@ export const LoggingExpressMiddleware = HttpLogger({
       return {
         statusCode: res.raw.statusCode,
         // Allowlist useful headers
-        headers: resRaw.raw.headers
+        headers: resRaw.headers
       }
     })
   }
