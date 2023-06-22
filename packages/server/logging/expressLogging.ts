@@ -8,14 +8,6 @@ import { GenReqId } from 'pino-http'
 
 const REQUEST_ID_HEADER = 'x-request-id'
 
-const truncatedHeaders = ['authorization']
-const redactedHeaders = [
-  'cookie',
-  'cf-connecting-ip',
-  'true-client-ip',
-  'x-real-ip',
-  'x-forwarded-for'
-]
 const GenerateRequestId: GenReqId = (req: IncomingMessage) => DetermineRequestId(req)
 
 const DetermineRequestId = (
@@ -41,6 +33,16 @@ export const LoggingExpressMiddleware = HttpLogger({
     }
     return 'info'
   },
+  redact: {
+    paths: [
+      'req.headers.cookie',
+      'req.headers.cf-connecting-ip',
+      'req.headers.true-client-ip',
+      'req.headers.x-real-ip',
+      'req.headers.x-forwarded-for'
+    ],
+    censor: (value: string) => `[REDACTED(length:${value.length})]`
+  },
 
   // we need to redact any potential sensitive data from being logged.
   // as we do not know what headers may be sent in a request by a user or client
@@ -54,10 +56,12 @@ export const LoggingExpressMiddleware = HttpLogger({
         // Allowlist useful headers
         headers: Object.keys(req.raw.headers).reduce((obj, key) => {
           let valueToPrint = req.raw.headers[key]
-          if (redactedHeaders.includes(key.toLocaleLowerCase())) {
-            valueToPrint = `REDACTED[length: ${valueToPrint ? valueToPrint.length : 0}]`
-          } else if (truncatedHeaders.includes(key.toLocaleLowerCase())) {
-            valueToPrint = `${valueToPrint?.slice(0, 17)}...` // 'bearer ' is 7 chars, plus 10 more
+          if (key.toLocaleLowerCase() === 'authorization') {
+            if (typeof valueToPrint === 'string' && valueToPrint.startsWith('bearer')) {
+              valueToPrint = `${valueToPrint?.slice(0, 17)}...` // 'bearer ' is 7 chars, plus 10 more
+            } else {
+              valueToPrint = `[REDACTED(length:${valueToPrint?.length})]`
+            }
           }
           return {
             ...obj,
