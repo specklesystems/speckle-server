@@ -10,6 +10,16 @@ import { MaybeAsync, Nullable, TimeoutError, timeoutAt } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 
+const cacheTimeoutMs = 250
+let hitCache: Nullable<{
+  guid?: string | undefined
+  object: Record<string, unknown> & {
+    id: string
+  }
+  point: Vector3
+}> = null
+let lastCacheRefresh: number = Date.now()
+
 function getFirstVisibleSelectionHit(
   { hits }: SelectionEvent,
   state: Pick<InjectableViewerState, 'viewer'>
@@ -20,6 +30,12 @@ function getFirstVisibleSelectionHit(
     }
   } = state
 
+  if (Date.now() - lastCacheRefresh < cacheTimeoutMs && hitCache) {
+    return hitCache
+  }
+  hitCache = null
+  lastCacheRefresh = Date.now()
+
   const hasHiddenObjects = (filteringState.value?.hiddenObjects || []).length !== 0
   const hasIsolatedObjects =
     !!filteringState.value?.isolatedObjects &&
@@ -28,13 +44,17 @@ function getFirstVisibleSelectionHit(
   for (const hit of hits) {
     if (hasHiddenObjects) {
       if (!filteringState.value?.hiddenObjects?.includes(hit.object.id as string)) {
-        return hit
+        hitCache = hit
+        return hitCache
       }
     } else if (hasIsolatedObjects) {
-      if (filteringState.value.isolatedObjects?.includes(hit.object.id as string))
-        return hit
+      if (filteringState.value.isolatedObjects?.includes(hit.object.id as string)) {
+        hitCache = hit
+        return hitCache
+      }
     } else {
-      return hit
+      hitCache = hit
+      return hitCache
     }
   }
   return null
@@ -229,7 +249,7 @@ export function useSelectionEvents(
           ? getFirstVisibleSelectionHit(event, state)
           : null
         return singleClickCallback(event, { firstVisibleSelectionHit })
-      }, debounceWait)
+      }, 0)
     : undefined
   const debouncedDoubleClickCallback = doubleClickCallback
     ? debounce((event: Nullable<SelectionEvent>) => {
@@ -237,7 +257,7 @@ export function useSelectionEvents(
           ? getFirstVisibleSelectionHit(event, state)
           : null
         return doubleClickCallback(event, { firstVisibleSelectionHit })
-      }, debounceWait)
+      }, 0)
     : undefined
 
   onMounted(() => {
