@@ -1,4 +1,4 @@
-import { Box3, Camera, Plane, Vector2, Vector3 } from 'three'
+import { Box3, Camera, PerspectiveCamera, Plane, Vector2, Vector3 } from 'three'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo'
 import { ObjectLayers } from '../SpeckleRenderer'
 import { getConversionFactor } from '../converter/Units'
@@ -72,11 +72,11 @@ export class PerpendicularMeasurement extends Measurement {
         .applyMatrix4(this.renderingCamera.projectionMatrix)
         .normalize()
       // Move to NDC
-      const normalpDiv = normalNDC.w
-      normalNDC
-        .multiplyScalar(1 / normalpDiv)
-        .normalize()
-        .negate()
+      const normalpDiv = normalNDC.w === 0 ? 1 : normalNDC.w
+      normalNDC.multiplyScalar(1 / normalpDiv).normalize()
+      if (this.renderingCamera instanceof PerspectiveCamera) {
+        normalNDC.negate()
+      }
       const pixelScale = Measurement.vec2Buff0.set(
         (this.normalIndicatorPixelSize / this.renderingSize.x) * 2,
         (this.normalIndicatorPixelSize / this.renderingSize.y) * 2

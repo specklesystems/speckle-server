@@ -9,6 +9,7 @@ import {
   InterleavedBufferAttribute,
   Material,
   Mesh,
+  OrthographicCamera,
   PerspectiveCamera,
   Plane,
   Quaternion,
@@ -163,7 +164,7 @@ export class MeasurementPointGizmo extends Group {
     super()
     this.layers.set(ObjectLayers.MEASUREMENTS)
 
-    const geometry = new CircleGeometry(0.15, 16)
+    const geometry = new CircleGeometry(1, 16)
     const doublePositions = new Float64Array(geometry.attributes.position.array)
     Geometry.updateRTEGeometry(geometry, doublePositions)
 
@@ -230,13 +231,16 @@ export class MeasurementPointGizmo extends Group {
       const cameraObjectDistance = cam.position.distanceTo(this.disc.position)
       const worldSize = Math.abs(2 * Math.tan(cam.fov / 2.0) * cameraObjectDistance)
       const maxWorldSize = bounds.min.distanceTo(bounds.max) * 2
-      // console.log(worldSize, maxWorldSize)
-      const size = 0.025 * Math.min(worldSize, maxWorldSize)
-      MeasurementPointGizmo.vecBuff0.set(size, size, size)
-      this.disc.scale.copy(MeasurementPointGizmo.vecBuff0)
-      // this.point.scale.copy(MeasurementPointGizmo.vecBuff0)
+      const size = 0.0035 * Math.min(worldSize, maxWorldSize)
+      this.disc.scale.set(size, size, size)
       this.disc.matrixWorldNeedsUpdate = true
-      // this.point.matrixWorldNeedsUpdate = true
+    }
+    if (camera.type === 'OrthographicCamera' && +this._style.fixedSize > 0) {
+      const cam = camera as OrthographicCamera
+      const orthoSize = cam.top - cam.bottom
+      const size = (orthoSize / cam.zoom) * 0.0075
+      this.disc.scale.set(size, size, size)
+      this.disc.matrixWorldNeedsUpdate = true
     }
   }
 
