@@ -48,10 +48,12 @@ export const LoggingExpressMiddleware = HttpLogger({
         path[0] === 'req' &&
         path[1] === 'headers' &&
         path[2] === 'authorization' &&
-        typeof value === 'string' &&
-        value.toLocaleLowerCase().includes('bearer ')
+        typeof value === 'string'
       ) {
-        return `${value.slice(0, 17)}[TRUNCATED(original_length:${value.length})]`
+        if (value.toLocaleLowerCase().startsWith('bearer ')) {
+          return `${value.slice(0, 17)}[TRUNCATED(original_length:${value.length})]`
+        }
+        return `${value.slice(0, 10)}[TRUNCATED(original_length:${value.length})]`
       }
       return `[REDACTED(length:${value.length})]`
     }
@@ -67,7 +69,7 @@ export const LoggingExpressMiddleware = HttpLogger({
         method: req.raw.method,
         path: req.raw.url?.split('?')[0], // Remove query params which might be sensitive
         // headers are managed by the redact config above
-        headers: req.raw.headers
+        headers: req.headers
       }
     }),
     res: pino.stdSerializers.wrapResponseSerializer((res) => {
