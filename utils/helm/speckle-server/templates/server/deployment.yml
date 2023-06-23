@@ -276,6 +276,27 @@ spec:
           - name: EMAIL_FROM
             value: "{{ .Values.server.email.from }}"
           {{- end }}
+          
+          # *** Newsletter ***
+          {{- if (default false (.Values.server.mailchimp).enabled) }}
+          - name: MAILCHIMP_ENABLED
+            value: {{ default false (.Values.server.mailchimp).enabled }}
+          - name: MAILCHIMP_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName ((.Values.server.mailchimp).apikey).secretName }}
+                key: {{ default "mailchimp_apikey" ((.Values.server.mailchimp).apikey).secretKey }}
+          - name: MAILCHIMP_SERVER_PREFIX
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName ((.Values.server.mailchimp).serverprefix).secretName }}
+                key: {{ default "mailchimp_serverprefix" ((.Values.server.mailchimp).serverprefix).secretKey }}
+          - name: MAILCHIMP_LIST_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName ((.Values.server.mailchimp).listid).secretName }}
+                key: {{ default "mailchimp_listid" ((.Values.server.mailchimp).listid).secretKey }}
+          {{- end }}
 
           # *** Tracking / Tracing ***
           - name: SENTRY_DSN

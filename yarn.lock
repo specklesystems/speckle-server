@@ -9344,6 +9344,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mailchimp/mailchimp_marketing@npm:^3.0.80":
+  version: 3.0.80
+  resolution: "@mailchimp/mailchimp_marketing@npm:3.0.80"
+  dependencies:
+    dotenv: ^8.2.0
+    superagent: 3.8.1
+  checksum: a43f69334766bf02fccf4f6076fa38b7e6a53d9d99485547e1e11d23f9188349ac2831a329f15bb8e31be46cca5e22275a120d0d108b80212ed92ad12df709e4
+  languageName: node
+  linkType: hard
+
 "@mapbox/node-pre-gyp@npm:^1.0.0":
   version: 1.0.9
   resolution: "@mapbox/node-pre-gyp@npm:1.0.9"
@@ -11237,6 +11247,7 @@ __metadata:
     "@graphql-codegen/typescript-operations": ^2.5.2
     "@graphql-codegen/typescript-resolvers": 2.7.2
     "@graphql-tools/schema": ^9.0.4
+    "@mailchimp/mailchimp_marketing": ^3.0.80
     "@sentry/node": ^6.17.9
     "@sentry/tracing": ^6.17.9
     "@speckle/objectloader": "workspace:^"
@@ -11251,6 +11262,7 @@ __metadata:
     "@types/ejs": ^3.1.1
     "@types/express": ^4.17.13
     "@types/lodash": ^4.14.180
+    "@types/mailchimp__mailchimp_marketing": ^3.0.9
     "@types/mjml": ^4.7.0
     "@types/mocha": ^10.0.0
     "@types/mock-require": ^2.0.1
@@ -15318,6 +15330,13 @@ __metadata:
   version: 4.0.2
   resolution: "@types/long@npm:4.0.2"
   checksum: d16cde7240d834cf44ba1eaec49e78ae3180e724cd667052b194a372f350d024cba8dd3f37b0864931683dab09ca935d52f0c4c1687178af5ada9fc85b0635f4
+  languageName: node
+  linkType: hard
+
+"@types/mailchimp__mailchimp_marketing@npm:^3.0.9":
+  version: 3.0.9
+  resolution: "@types/mailchimp__mailchimp_marketing@npm:3.0.9"
+  checksum: 3bf413367a77a331fd87552096ce42f23baee3f34309c91766d26095bc686fa541aa1ce5d72061fd66e9e2b8bb3589542b4709e04043c1ca54e28e71e4480934
   languageName: node
   linkType: hard
 
@@ -25534,7 +25553,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"formidable@npm:^1.2.0":
+"formidable@npm:^1.1.1, formidable@npm:^1.2.0":
   version: 1.2.6
   resolution: "formidable@npm:1.2.6"
   checksum: 2b68ed07ba88302b9c63f8eda94f19a460cef6017bfda48348f09f41d2a36660c9353137991618e0e4c3db115b41e4b8f6fa63bc973b7a7c91dec66acdd02a56
@@ -40203,6 +40222,24 @@ __metadata:
   peerDependencies:
     postcss: ^8.3.3
   checksum: 9dd4c89fd00d885e415f74759e02f477b2cc5ab833935124e23ed26e07adbb9319afa3cb15d050aa65f4c8d78a0ca87b03efbf96eb12ba333469cbdb6ddb0f7d
+  languageName: node
+  linkType: hard
+
+"superagent@npm:3.8.1":
+  version: 3.8.1
+  resolution: "superagent@npm:3.8.1"
+  dependencies:
+    component-emitter: ^1.2.0
+    cookiejar: ^2.1.0
+    debug: ^3.1.0
+    extend: ^3.0.0
+    form-data: ^2.3.1
+    formidable: ^1.1.1
+    methods: ^1.1.1
+    mime: ^1.4.1
+    qs: ^6.5.1
+    readable-stream: ^2.0.5
+  checksum: 42895e220fb5aab303edeef7ec4d9c38fef31638d18254fe57329366e7a74624dffe20acd682a9a27df4f62fe4acb953b33d16be9611f184284815c2492d35cf
   languageName: node
   linkType: hard
 
