@@ -19,7 +19,7 @@ export class PointToPointMeasurement extends Measurement {
     this.type = 'PointToPointMeasurement'
     this.startGizmo = new MeasurementPointGizmo()
     this.endGizmo = new MeasurementPointGizmo({ dashedLine: true, lineOpacity: 0.25 })
-    this.startLineLength = 0.25
+    this.startLineLength = 0
     this.add(this.startGizmo)
     this.add(this.endGizmo)
     this.layers.set(ObjectLayers.MEASUREMENTS)

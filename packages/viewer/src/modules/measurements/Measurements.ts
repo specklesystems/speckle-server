@@ -7,6 +7,8 @@ import { PointToPointMeasurement } from './PointToPointMeasurement'
 import { Measurement, MeasurementState } from './Measurement'
 import { ExtendedIntersection } from '../objects/SpeckleRaycaster'
 import Logger from 'js-logger'
+import SpeckleMesh from '../objects/SpeckleMesh'
+import SpeckleGhostMaterial from '../materials/SpeckleGhostMaterial'
 
 export enum MeasurementType {
   PERPENDICULAR,
@@ -126,15 +128,24 @@ export class Measurements {
       return
     }
 
-    const result = this.renderer.intersections.intersect(
-      this.renderer.scene,
-      this.renderer.camera,
-      data,
-      true,
-      this.renderer.currentSectionBox,
-      [ObjectLayers.STREAM_CONTENT_MESH]
-    )
-    if (!result || !result.length) return
+    let result =
+      (this.renderer.intersections.intersect(
+        this.renderer.scene,
+        this.renderer.camera,
+        data,
+        true,
+        this.renderer.currentSectionBox,
+        [ObjectLayers.STREAM_CONTENT_MESH]
+      ) as ExtendedIntersection[]) || []
+
+    result = result.filter((value: ExtendedIntersection) => {
+      const material = (value.object as unknown as SpeckleMesh).getBatchObjectMaterial(
+        value.batchObject
+      )
+      return !(material instanceof SpeckleGhostMaterial) && material.visible
+    })
+
+    if (!result.length) return
 
     if (!this.measurement) {
       this.startMeasurement()
@@ -188,15 +199,24 @@ export class Measurements {
     if (!this.measurement) return
 
     this.measurement.state = MeasurementState.DANGLING_START
-    const result = this.renderer.intersections.intersect(
-      this.renderer.scene,
-      this.renderer.camera,
-      data,
-      true,
-      this.renderer.currentSectionBox,
-      [ObjectLayers.STREAM_CONTENT_MESH]
-    )
-    if (!result || !result.length) return
+    let result =
+      (this.renderer.intersections.intersect(
+        this.renderer.scene,
+        this.renderer.camera,
+        data,
+        true,
+        this.renderer.currentSectionBox,
+        [ObjectLayers.STREAM_CONTENT_MESH]
+      ) as ExtendedIntersection[]) || []
+
+    result = result.filter((value) => {
+      const material = (value.object as unknown as SpeckleMesh).getBatchObjectMaterial(
+        value.batchObject
+      )
+      return !(material instanceof SpeckleGhostMaterial) && material.visible
+    })
+
+    if (!result.length) return
 
     const startPoint = new Vector3().copy(result[0].point)
     const startNormal = new Vector3().copy(result[0].face.normal)
@@ -204,25 +224,25 @@ export class Measurements {
     const offsetPoint = new Vector3()
       .copy(startPoint)
       .add(new Vector3().copy(startNormal).multiplyScalar(0.000001))
-    const perpResult = this.renderer.intersections.intersectRay(
-      this.renderer.scene,
-      this.renderer.camera,
-      new Ray(offsetPoint, startNormal),
-      true,
-      this.renderer.currentSectionBox,
-      [ObjectLayers.STREAM_CONTENT_MESH]
-    )
-    if (!perpResult || !perpResult.length) {
-      let flashCount = 0
-      const maxFlashCount = 5
-      const handle = setInterval(() => {
-        this.measurement.highlight(Boolean(flashCount++ % 2))
-        if (flashCount >= maxFlashCount) {
-          clearInterval(handle)
-        }
-        this.renderer.needsRender = true
-        this.renderer.resetPipeline()
-      }, 100)
+    let perpResult =
+      (this.renderer.intersections.intersectRay(
+        this.renderer.scene,
+        this.renderer.camera,
+        new Ray(offsetPoint, startNormal),
+        true,
+        this.renderer.currentSectionBox,
+        [ObjectLayers.STREAM_CONTENT_MESH]
+      ) as ExtendedIntersection[]) || []
+
+    perpResult = perpResult.filter((value) => {
+      const material = (value.object as unknown as SpeckleMesh).getBatchObjectMaterial(
+        value.batchObject
+      )
+      return !(material instanceof SpeckleGhostMaterial) && material.visible
+    })
+
+    if (!perpResult.length) {
+      this.flashMeasurement()
       return
     }
 
@@ -301,6 +321,19 @@ export class Measurements {
       outPoint.copy(unprojectedPoint)
       outNormal.copy(intersection.face.normal)
     }
+  }
+
+  private flashMeasurement() {
+    let flashCount = 0
+    const maxFlashCount = 5
+    const handle = setInterval(() => {
+      this.measurement.highlight(Boolean(flashCount++ % 2))
+      if (flashCount >= maxFlashCount) {
+        clearInterval(handle)
+      }
+      this.renderer.needsRender = true
+      this.renderer.resetPipeline()
+    }, 100)
   }
 
   public pickMeasurement(data): Measurement {
