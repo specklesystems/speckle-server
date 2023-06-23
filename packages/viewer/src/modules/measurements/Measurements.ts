@@ -167,7 +167,10 @@ export class Measurements {
     this.measurement.update()
 
     this.renderer.needsRender = true
-    this.renderer.resetPipeline()
+    this.renderer.resetPipeline(
+      /* Because of the camera controller library*/ this.renderer.camera.type ===
+        'OrthographicCamera'
+    )
     this.frameLock = true
   }
 
