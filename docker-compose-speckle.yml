@@ -74,3 +74,4 @@ services:
       LOG_LEVEL: 'info'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
       SPECKLE_SERVER_URL: 'http://speckle-server:3000'
+      FILE_IMPORT_TIME_LIMIT_MIN: 10
