@@ -50,14 +50,10 @@
         Note the newsletter consent box is here because i got very confused re layout of the panel
         and didn't figure out a better way to put it where i needed it to be
        -->
-      <label for="newsletter" class="sxxr-only">
-        I want to receive tips and tricks on how to use Speckle
-      </label>
-      <input
-        id="newsletter"
+      <FormCheckbox
         v-model="newsletterConsent"
-        type="checkbox"
-        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+        name="test"
+        label="I want to receive tips and tricks on how to use Speckle"
       />
     </div>
     <div
