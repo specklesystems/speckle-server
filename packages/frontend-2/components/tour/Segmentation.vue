@@ -19,14 +19,14 @@
         </p>
         <div class="grid grid-cols-2 gap-4">
           <FormButton
-            v-for="(val, title) in OnboardingIndustry"
+            v-for="val in OnboardingIndustry"
             :key="val"
-            class="text-xs hover:scale-[1.05]"
+            class="text-xs hover:scale-[1.05] capitalize"
             @click="setIndustry(val)"
             @mouseenter="rotateGently(Math.random() * 2)"
             @focus="rotateGently(Math.random() * 2)"
           >
-            {{ title }}
+            {{ val }}
           </FormButton>
         </div>
       </div>
