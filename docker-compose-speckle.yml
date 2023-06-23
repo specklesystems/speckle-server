@@ -17,6 +17,16 @@ services:
       dockerfile: packages/server/Dockerfile
     image: speckle/speckle-server:local
     restart: always
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/graphql?query={serverInfo{version}}', method: 'GET' }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end();"
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
     environment:
       # TODO: Change this to the URL of the speckle server, as accessed from the network
       CANONICAL_URL: 'http://localhost'
