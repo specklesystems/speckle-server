@@ -8,7 +8,15 @@ import {
   MeshStandardMaterial,
   UniformsUtils
 } from 'three'
-import { Uniforms } from './SpeckleStandardMaterial'
+
+class SpeckleUserData {
+  toJSON() {
+    return {}
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type Uniforms = Record<string, any>
 
 export class SpeckleMaterial {
   protected _internalUniforms
@@ -34,6 +42,7 @@ export class SpeckleMaterial {
   }
 
   protected init(defines = []) {
+    this['userData'] = new SpeckleUserData()
     this.setUniforms(this.uniformsDef)
     this.setDefines(defines)
     this['onBeforeCompile'] = this.onCompile
@@ -73,7 +82,7 @@ export class SpeckleMaterial {
   }
 
   protected copyFrom(source) {
-    this['userData'] = {}
+    this['userData'] = new SpeckleUserData()
     this.setUniforms(this.uniformsDef)
     this.copyUniforms(source)
     this.bindUniforms()
