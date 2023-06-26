@@ -17,6 +17,8 @@ import { UseQueryReturn, useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import { ServerInfoTestQuery } from '~/lib/common/generated/gql/graphql'
 
+defineNuxtPlugin({})
+
 const versionQuery = graphql(`
   query ServerInfoTest {
     serverInfo {
