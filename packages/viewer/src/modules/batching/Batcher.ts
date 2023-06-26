@@ -452,6 +452,11 @@ export default class Batcher {
   }
 
   public getRenderView(batchId: string, index: number) {
+    if (!this.batches[batchId]) {
+      Logger.error('Invalid batch id!')
+      return null
+    }
+
     return this.batches[batchId].getRenderView(index)
   }
 

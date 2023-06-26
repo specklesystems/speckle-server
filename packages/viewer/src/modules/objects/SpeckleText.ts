@@ -21,6 +21,8 @@ export interface SpeckleTextParams {
   textValue?: string
   richTextValue?: string
   height?: number
+  anchorX?: string
+  anchorY?: string
 }
 
 export interface SpeckleTextStyle {
@@ -29,8 +31,6 @@ export interface SpeckleTextStyle {
   backgroundPixelHeight?: number
   textColor?: Color
   billboard?: boolean
-  anchorX?: string
-  anchorY?: string
 }
 
 const DefaultSpeckleTextStyle: SpeckleTextStyle = {
@@ -38,9 +38,7 @@ const DefaultSpeckleTextStyle: SpeckleTextStyle = {
   backgroundCornerRadius: 1,
   backgroundPixelHeight: 50,
   textColor: new Color(0xffffff),
-  billboard: false,
-  anchorX: '50%',
-  anchorY: '50%'
+  billboard: false
 }
 
 export class SpeckleText extends Mesh {
@@ -88,9 +86,15 @@ export class SpeckleText extends Mesh {
 
   public constructor(uuid: string) {
     super()
+    this.uuid = uuid
     this._text = new Text()
-    this._text.uuid = uuid
     this._text.depthOffset = -0.1
+    this._text.raycast = () => {
+      /** We're erasing the child's raycast so we don't raycast twice
+       * Not the best approach but until we figure out text batching it will have to suffice
+       */
+    }
+
     this.add(this._text)
 
     this.onBeforeRender = (renderer) => {
@@ -109,8 +113,8 @@ export class SpeckleText extends Mesh {
       if (params.height) {
         this._text.fontSize = params.height
       }
-      this._text.anchorX = this._style.anchorX
-      this._text.anchorY = this._style.anchorY
+      this._text.anchorX = params.anchorX
+      this._text.anchorY = params.anchorY
       if (this._text._needsSync) {
         this._text.sync(() => {
           resolve()

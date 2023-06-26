@@ -300,15 +300,15 @@ export class MeasurementPointGizmo extends Group {
     this.text
       .update({
         textValue: value,
-        height: 1
+        height: 1,
+        anchorX: '50%',
+        anchorY: '43%' // Apparently this makes it vertically centered
       })
       .then(() => {
         this.text.style = {
           backgroundColor: new Color(0x047efb),
           billboard: true,
-          backgroundPixelHeight: 20,
-          anchorX: '50%',
-          anchorY: '43%' // Apparently this makes it vertically centered
+          backgroundPixelHeight: 20
         }
         this.text.setTransform(position, quaternion, scale)
         this.text.backgroundMesh.renderOrder = 3
