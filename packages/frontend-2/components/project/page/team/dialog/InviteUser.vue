@@ -60,6 +60,7 @@ import { isArray, isString } from 'lodash-es'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
 import { UserPlusIcon } from '@heroicons/vue/24/solid'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 type InvitableUser = NonNullable<Get<typeof searchUsers.value, '[0]'>> | string
 
@@ -101,6 +102,7 @@ const isValidEmail = (val: string) =>
     ? true
     : false
 
+const mp = useMixpanel()
 const onInviteUser = async (user: InvitableUser | InvitableUser[]) => {
   const users = isArray(user) ? user : [user]
   const inputs: ProjectInviteCreateInput[] = users
@@ -117,9 +119,21 @@ const onInviteUser = async (user: InvitableUser | InvitableUser[]) => {
     }))
   if (!inputs.length) return
 
+  const isEmail = !!inputs.find((u) => !!u.email)
+
   // Invite email
   loading.value = true
   await createInvite(props.project.id, inputs)
+
+  mp.track('Invite Action', {
+    type: 'project invite',
+    name: 'send',
+    multiple: inputs.length !== 1,
+    count: inputs.length,
+    hasProject: true,
+    to: isEmail ? 'email' : 'existing user'
+  })
+
   loading.value = false
 }
 

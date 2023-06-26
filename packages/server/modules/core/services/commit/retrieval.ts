@@ -48,7 +48,8 @@ export async function getPaginatedBranchCommits(
   // Load priority commits first
   let priorityCommitPromise: Optional<ReturnType<typeof getSpecificBranchCommits>> =
     undefined
-  if (params.filter?.priorityIds && !params.cursor) {
+  const loadPriorityIds = params.filter?.priorityIds && !params.cursor
+  if (params.filter?.priorityIds && loadPriorityIds) {
     priorityCommitPromise = getSpecificBranchCommits(
       params.filter.priorityIds.map((i) => ({
         branchId: params.branchId,
@@ -57,16 +58,23 @@ export async function getPaginatedBranchCommits(
     )
   }
 
+  const priorityIdsOnly = loadPriorityIds && params.filter?.priorityIdsOnly
   const [results, totalCount, priorityCommits] = await Promise.all([
-    getPaginatedBranchCommitsDb({
-      ...params,
-      filter: {
-        ...(params.filter || {}),
-        // If we loaded priority commits first, exclude them from base results
-        excludeIds: params.filter?.priorityIds || undefined
-      }
-    }),
-    getBranchCommitsTotalCount(params),
+    !priorityIdsOnly
+      ? getPaginatedBranchCommitsDb({
+          ...params,
+          filter: {
+            ...(params.filter || {}),
+            // If we loaded priority commits first, exclude them from base results
+            excludeIds: params.filter?.priorityIds || undefined
+          }
+        })
+      : { commits: [], cursor: null },
+    !priorityIdsOnly
+      ? getBranchCommitsTotalCount(params)
+      : (priorityCommitPromise || Promise.resolve([])).then(
+          (commits) => commits.length
+        ),
     priorityCommitPromise || Promise.resolve([])
   ])
 

@@ -31,6 +31,7 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectModelPageDialogMoveToVersionFragment } from '~~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import { LayoutTabItem } from '~~/lib/layout/helpers/components'
 import { useMoveVersions } from '~~/lib/projects/composables/versionManagement'
 
@@ -66,6 +67,8 @@ const isOpen = computed({
   set: (newVal) => emit('update:open', newVal)
 })
 
+const mp = useMixpanel()
+
 const onMove = async (targetModelName: string, newModelCreated?: boolean) => {
   loading.value = true
   const success = await moveVersions(
@@ -76,7 +79,12 @@ const onMove = async (targetModelName: string, newModelCreated?: boolean) => {
     { previousModelId: props.modelId, newModelCreated, projectId: props.projectId }
   )
   loading.value = false
-
+  mp.track('Commit Action', {
+    type: 'action',
+    name: 'move',
+    model: newModelCreated ? 'new model' : 'existing model',
+    bulk: props.versions.length !== 1
+  })
   if (success) isOpen.value = false
 }
 </script>

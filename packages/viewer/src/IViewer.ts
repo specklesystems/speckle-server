@@ -165,12 +165,18 @@ export interface IViewer {
     transition?: boolean
   )
 
-  loadObject(url: string, token?: string, enableCaching?: boolean): Promise<void>
+  loadObject(
+    url: string,
+    token?: string,
+    enableCaching?: boolean,
+    zoomToObject?: boolean
+  ): Promise<void>
   loadObjectAsync(
     url: string,
     token?: string,
     enableCaching?: boolean,
-    priority?: number
+    priority?: number,
+    zoomToObject?: boolean
   ): Promise<void>
   cancelLoad(url: string, unload?: boolean): Promise<void>
   unloadObject(url: string): Promise<void>

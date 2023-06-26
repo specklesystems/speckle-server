@@ -51,6 +51,7 @@ import { CommentPermissions } from '~~/lib/projects/helpers/components'
 import { useUpdateProject } from '~~/lib/projects/composables/projectManagement'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
 import { LockClosedIcon, LockOpenIcon, LinkIcon } from '@heroicons/vue/24/solid'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
   project: ProjectPageTeamDialogFragment
@@ -60,11 +61,18 @@ const { isOwner, canLeaveProject } = useTeamDialogInternals({ props: toRefs(prop
 const updateProject = useUpdateProject()
 
 const loading = ref(false)
+const mp = useMixpanel()
 
 const onChangeVisibility = async (visibility: ProjectVisibility) => {
   loading.value = true
   await updateProject({ visibility, id: props.project.id })
   loading.value = false
+  mp.track('Stream Action', {
+    type: 'action',
+    name: 'update',
+    action: 'project-access',
+    to: visibility
+  })
 }
 
 const onChangeCommentPermissions = async (newVal: CommentPermissions) => {
@@ -72,6 +80,12 @@ const onChangeCommentPermissions = async (newVal: CommentPermissions) => {
   await updateProject({
     id: props.project.id,
     allowPublicComments: newVal === CommentPermissions.Anyone
+  })
+  mp.track('Stream Action', {
+    type: 'action',
+    name: 'update',
+    action: 'comment-access',
+    to: newVal
   })
   loading.value = false
 }

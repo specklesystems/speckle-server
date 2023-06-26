@@ -37,12 +37,12 @@
     >
       <div
         ref="handle"
-        class="p-1.5 cursor-move rounded-lg group hover:bg-blue-500/50"
+        class="p-1.5 cursor-move rounded-lg group hover:bg-blue-500/50 transition"
         :class="{ 'is-dragging bg-blue-500/50': isDragging }"
       >
         <div
           :class="[
-            'bg-white/80 dark:bg-neutral-800/90 backdrop-blur-sm shadow-md cursor-auto rounded-lg',
+            'bg-white dark:bg-neutral-800 backdrop-blur-sm shadow-md cursor-auto rounded-lg',
             'group-hover:bg-foundation dark:group-hover:bg-neutral-800 group-[.is-dragging]:bg-foundation dark:group-[.is-dragging]:bg-neutral-800'
           ]"
         >
@@ -188,6 +188,8 @@ import {
   useApplySerializedState
 } from '~~/lib/viewer/composables/serialization'
 import { useDisableGlobalTextSelection } from '~~/lib/common/composables/window'
+import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -219,6 +221,7 @@ const markThreadViewed = useMarkThreadViewed()
 const { usersTyping } = useViewerThreadTypingTracking(threadId)
 const { ellipsis, controls } = useAnimatingEllipsis()
 const applyState = useApplySerializedState()
+const { isOpenThread, open, closeAllThreads } = useThreadUtilities()
 
 const commentsContainer = ref(null as Nullable<HTMLElement>)
 const threadContainer = ref(null as Nullable<HTMLElement>)
@@ -238,7 +241,7 @@ const comments = computed(() => [
 //   width: 320
 // })
 
-const isExpanded = computed(() => props.modelValue.isExpanded)
+const isExpanded = computed(() => isOpenThread(props.modelValue.id))
 
 const isTypingMessage = computed(() => {
   if (!usersTyping.value.length) return null
@@ -258,6 +261,8 @@ const initialDragPosition = computed(() => {
   }
 })
 
+const mp = useMixpanel()
+
 const isDragged = ref(false)
 const { x, y, isDragging, position } = useDraggable(threadContainer, {
   stopPropagation: true,
@@ -272,6 +277,7 @@ const { x, y, isDragging, position } = useDraggable(threadContainer, {
     if (!isDragged.value) position.value = { x: 0, y: 0 }
 
     isDragged.value = true
+    mp.track('Comment Action', { type: 'action', name: 'drag' })
   }
 })
 
@@ -313,12 +319,20 @@ const threadAuthors = computed(() => {
   return authors
 })
 
-const changeExpanded = (newVal: boolean) => {
-  emit('update:modelValue', {
-    ...props.modelValue,
-    isExpanded: newVal
-  })
+const changeExpanded = async (newVal: boolean) => {
+  if (newVal) {
+    await open(props.modelValue.id)
+  } else {
+    await closeAllThreads()
+  }
+
   emit('update:expanded', newVal)
+  mp.track('Comment Action', {
+    type: 'action',
+    name: 'toggle',
+    status: newVal,
+    source: 'bubble'
+  })
 }
 
 const canArchiveOrUnarchive = computed(
@@ -351,6 +365,11 @@ const isThreadResourceLoaded = computed(() => {
 
 const toggleCommentResolvedStatus = async () => {
   await archiveComment(props.modelValue.id, !props.modelValue.archived)
+  mp.track('Comment Action', {
+    type: 'action',
+    name: 'archive',
+    status: props.modelValue.archived
+  })
   triggerNotification({
     description: `Thread ${props.modelValue.archived ? 'reopened.' : 'resolved.'}`,
     type: ToastNotificationType.Info
@@ -359,6 +378,7 @@ const toggleCommentResolvedStatus = async () => {
 
 const onNewReply = () => {
   justCreatedReply.value = true
+  mp.track('Comment Action', { type: 'action', name: 'reply' })
 }
 
 const onCommentMounted = () => {
@@ -397,6 +417,8 @@ const onCopyLink = async () => {
     })
     throw e
   }
+
+  mp.track('Comment Action', { type: 'action', name: 'share' })
 
   triggerNotification({
     type: ToastNotificationType.Info,

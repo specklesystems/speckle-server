@@ -1,15 +1,2 @@
-export enum GridListToggleValue {
-  Grid = 'grid',
-  List = 'list'
-}
-
-export type LayoutTabItem<I extends string = string> = {
-  title: string
-  id: I
-}
-
-export type LayoutMenuItem<I extends string = string> = {
-  title: string
-  id: I
-  disabled?: boolean
-}
+export { GridListToggleValue } from '@speckle/ui-components'
+export type { LayoutTabItem, LayoutMenuItem } from '@speckle/ui-components'

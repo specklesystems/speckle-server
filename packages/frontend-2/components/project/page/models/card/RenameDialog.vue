@@ -29,6 +29,7 @@ import {
   ProjectPageModelsCardRenameDialogFragment,
   UpdateModelMutation
 } from '~~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import {
   useModelNameValidationRules,
   useUpdateModel
@@ -63,7 +64,7 @@ const isOpen = computed({
   get: () => props.open,
   set: (newVal) => emit('update:open', newVal)
 })
-
+const mp = useMixpanel()
 const onSubmit = handleSubmit(async (vals) => {
   loading.value = true
   const updatedModel = await updateModel({
@@ -72,6 +73,7 @@ const onSubmit = handleSubmit(async (vals) => {
     projectId: props.projectId
   }).finally(() => (loading.value = false))
   isOpen.value = false
+  mp.track('Branch Action', { type: 'action', name: 'edit' })
 
   if (updatedModel) emit('updated', updatedModel)
 })

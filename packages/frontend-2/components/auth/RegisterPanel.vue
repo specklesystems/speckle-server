@@ -1,5 +1,5 @@
 <template>
-  <LayoutPanel fancy-glow class="max-w-lg mx-auto w-full">
+  <LayoutPanel fancy-glow no-shadow class="max-w-lg mx-auto w-full">
     <div class="space-y-4">
       <div class="flex flex-col items-center space-y-2">
         <h1
@@ -62,6 +62,10 @@ graphql(`
     inviteOnly
   }
 `)
+
+const newsletterConsent = ref(false)
+
+provide('newsletterconsent', newsletterConsent)
 
 const { result } = useQuery(loginServerInfoQuery)
 const { appId, challenge, inviteToken } = useLoginOrRegisterUtils()

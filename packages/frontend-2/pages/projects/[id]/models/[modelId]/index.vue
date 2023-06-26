@@ -28,7 +28,7 @@
           <TourOnboarding />
         </div>
         <!-- Viewer host -->
-        <div class="special-gradient absolute w-screen h-screen z-10">
+        <div class="special-gradient absolute w-screen h-screen z-10 overflow-hidden">
           <ViewerBase />
           <Transition
             enter-from-class="opacity-0"

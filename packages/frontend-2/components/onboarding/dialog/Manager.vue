@@ -1,49 +1,67 @@
 <template>
-  <OnboardingDialogBase>
-    <template #header>Ready to send your first model?</template>
-    <div class="w-full h-72 bg-primary rounded-xl flex items-center justify-center">
-      <PlayIcon class="w-10 h-10 text-white" />
-      <span class="text-xs">How and why to download manager</span>
+  <OnboardingDialogBase v-model:open="openState">
+    <template #header>Install Manager ⚙️</template>
+    <div
+      class="w-full h-[351px] bg-primary rounded-xl flex items-center justify-center overflow-hidden"
+    >
+      <iframe
+        width="560"
+        height="315"
+        src="https://www.youtube-nocookie.com/embed/ckP97qTGXDQ?rel=0&autoplay=1&"
+        title="YouTube video player"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        class="w-full h-full"
+      ></iframe>
     </div>
-    <div v-if="hasSupportedOs" class="flex justify-center flex-col space-y-2">
-      <FormButton
-        size="xl"
-        class="shadow-md"
-        @click.stop="downloadManager(os === 'Windows' ? 'exe' : 'dmg')"
-      >
-        Download For {{ os }}
-      </FormButton>
-      <FormButton
-        size="xs"
-        text
-        @click.stop="downloadManager(os === 'Windows' ? 'dmg' : 'exe')"
-      >
-        Download for {{ os === 'Windows' ? 'Mac OS' : 'Windows' }}
-      </FormButton>
-    </div>
-    <div v-else class="flex justify-center flex-col space-y-2">
-      <p>
-        Speckle Connectors exist only for applications running on Windows or Mac OS. If
-        you want, you can still go ahead and download Speckle Manager for
-        <FormButton link color="invert" @click="downloadManager('exe')">
-          Windows
+    <div>
+      <div v-if="hasSupportedOs" class="flex justify-center flex-col space-y-2">
+        <FormButton
+          size="xl"
+          class="shadow-md"
+          @click.stop="downloadManager(os === 'Windows' ? 'exe' : 'dmg')"
+        >
+          Download For {{ os }}
         </FormButton>
-        or
-        <FormButton link color="invert" @click="downloadManager('dmg')">
-          Mac OS
+        <FormButton
+          size="xs"
+          text
+          @click.stop="downloadManager(os === 'Windows' ? 'dmg' : 'exe')"
+        >
+          Download for {{ os === 'Windows' ? 'Mac OS' : 'Windows' }}
         </FormButton>
-        .
-      </p>
+      </div>
+      <div v-else class="flex justify-center flex-col space-y-2">
+        <p>
+          Speckle Connectors exist only for applications running on Windows or Mac OS.
+          If you want, you can still go ahead and download Speckle Manager for
+          <FormButton link @click="downloadManager('exe')">Windows</FormButton>
+          or
+          <FormButton link @click="downloadManager('dmg')">Mac OS</FormButton>
+          .
+        </p>
+      </div>
     </div>
   </OnboardingDialogBase>
 </template>
 <script setup lang="ts">
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { PlayIcon } from '@heroicons/vue/24/solid'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
-const emit = defineEmits(['done'])
+const props = defineProps<{
+  open: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:open', val: boolean): void
+  (e: 'done'): void
+}>()
+
+const openState = computed({
+  get: () => props.open,
+  set: (newVal) => emit('update:open', newVal)
+})
 
 const hasDownloadedManager = useSynchronizedCookie<boolean>(`hasDownloadedManager`)
 
@@ -55,7 +73,7 @@ const getOs = () => {
     // @ts-ignore
     (window.navigator?.userAgentData?.platform as string) ||
     (window.navigator.platform as string)
-  const macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K', 'MacOS']
+  const macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K', 'MacOS', 'macOS']
   const windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE']
   const iosPlatforms = ['iPhone', 'iPad', 'iPod']
   let os = 'unknown'

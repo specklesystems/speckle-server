@@ -1,15 +1,28 @@
 <template>
-  <div>
+  <div
+    :class="`${
+      isModifiedQuery.modified && root
+        ? 'outline outline-2 rounded py-1 px-1 outline-amber-500'
+        : ''
+    }`"
+  >
     <div class="mb-1 flex items-center">
       <button
         class="hover:bg-primary-muted hover:text-primary flex h-full min-w-0 items-center space-x-1 rounded"
         @click="unfold = !unfold"
       >
         <ChevronDownIcon
-          :class="`h-3 w-3 transition ${!unfold ? '-rotate-90' : 'rotate-0'}`"
+          :class="`h-3 w-3 transition ${headerClasses} ${
+            !unfold ? '-rotate-90' : 'rotate-0'
+          }`"
         />
-        <div class="truncate text-xs font-bold">
+        <div :class="`truncate text-xs font-bold ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
+          <span
+            v-if="(props.root || props.modifiedSibling) && isModifiedQuery.modified"
+          >
+            {{ isModifiedQuery.isNew ? '(New)' : '(Old)' }}
+          </span>
         </div>
       </button>
     </div>
@@ -81,24 +94,99 @@
         </div>
       </div>
     </div>
+    <div v-if="isModifiedQuery.modified && isModifiedQuery.pair && root" class="mt-2">
+      <ViewerSelectionObject :object="isModifiedQuery.pair" :modified-sibling="true" />
+    </div>
   </div>
 </template>
 <script setup lang="ts">
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+const {
+  ui: {
+    diff: { result, enabled: diffEnabled }
+  }
+} = useInjectedViewerState()
 
 const props = withDefaults(
   defineProps<{
     object: SpeckleObject
+    root?: boolean
     title?: string
-    unfold: boolean
+    unfold?: boolean
     debug?: boolean
+    modifiedSibling?: boolean
   }>(),
-  { debug: false, unfold: true }
+  { debug: false, unfold: false, root: false, modifiedSibling: false }
 )
 
 const unfold = ref(props.unfold)
+
+const isAdded = computed(() => {
+  if (!diffEnabled.value) return false
+  return (
+    result.value?.added.findIndex(
+      (o) => (o.model.raw as SpeckleObject).applicationId === props.object.applicationId
+    ) !== -1
+  )
+})
+
+const isRemoved = computed(() => {
+  if (!diffEnabled.value) return false
+  return (
+    result.value?.removed.findIndex(
+      (o) => (o.model.raw as SpeckleObject).applicationId === props.object.applicationId
+    ) !== -1
+  )
+})
+
+const isUnchanged = computed(() => {
+  if (!diffEnabled.value) return false
+  return (
+    result.value?.unchanged.findIndex(
+      (o) => (o.model.raw as SpeckleObject).applicationId === props.object.applicationId
+    ) !== -1
+  )
+})
+
+const isModifiedQuery = computed(() => {
+  // if (props.modifiedSibling) return { modified: false } // prevent recursion?
+  if (!diffEnabled.value) return { modified: false }
+  const modifiedObjectPairs = result.value?.modified.map((pair) => {
+    return [pair[0].model.raw as SpeckleObject, pair[1].model.raw as SpeckleObject]
+  })
+  if (!modifiedObjectPairs) return { modified: false }
+  const obj = props.object
+  const pairedItems = modifiedObjectPairs.find(
+    (item) => item[0].id === obj.id || item[1].id === obj.id
+  )
+  if (!pairedItems) return { modified: false }
+  const pair = pairedItems[0].id === obj.id ? pairedItems[1] : pairedItems[0]
+  if (!pair) return { modified: false }
+  return {
+    modified: true,
+    pair,
+    isNew: pairedItems[0].id !== obj.id
+  }
+})
+
+const headerClasses = computed(() => {
+  if (props.modifiedSibling) return 'text-amber-500'
+  if (!props.root) return ''
+  if (!diffEnabled.value) return ''
+  if (!Object.keys(props.object).includes('applicationId')) return ''
+
+  if (isAdded.value) return 'text-green-500'
+
+  if (isRemoved.value) return 'text-red-500'
+
+  if (isUnchanged.value) return 'text-foreground'
+
+  return 'text-amber-500'
+})
 
 const headerAndSubheader = computed(() => {
   return getHeaderAndSubheaderForSpeckleObject(props.object)

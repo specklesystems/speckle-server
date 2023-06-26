@@ -586,7 +586,7 @@ export class FilteringManager extends EventEmitter {
     const allIds: string[] = []
     const key = objectIds.join(',')
 
-    if (this.idCache[key]) return this.idCache[key]
+    if (this.idCache[key] && this.idCache[key].length) return this.idCache[key]
 
     this.WTI.walk((node: TreeNode) => {
       if (objectIds.includes(node.model.raw.id) && node.model.raw.__closure) {

@@ -50,7 +50,14 @@
         />
       </template>
     </div>
-    <div v-else>TODO: Versions Empty state</div>
+    <div v-else>
+      <ProjectCardImportFileArea
+        ref="importArea"
+        :project-id="project.id"
+        :model-name="project.model.name"
+        class="h-full w-full"
+      />
+    </div>
     <InfiniteLoading v-if="items?.length" @infinite="infiniteLoad" />
     <ProjectModelPageDialogDelete
       v-model:open="isDeleteDialogOpen"
@@ -113,6 +120,7 @@ graphql(`
     role
     model(id: $modelId) {
       id
+      name
       pendingImportedVersions {
         ...PendingFileUpload
       }
@@ -148,6 +156,12 @@ const dialogState = ref(
     type: VersionActionTypes
     items: SingleVersion[]
     closed?: boolean
+  }>
+)
+
+const importArea = ref(
+  null as Nullable<{
+    triggerPicker: () => void
   }>
 )
 

@@ -12,7 +12,7 @@ export const projectRoute = (id: string) => `/projects/${id}`
 export const modelRoute = (
   projectId: string,
   resourceIdString: string,
-  hashState?: Record<ViewerHashStateKeys, string>
+  hashState?: Partial<Record<ViewerHashStateKeys, string>>
 ) =>
   `/projects/${projectId}/models/${encodeURIComponent(resourceIdString)}${
     hashState ? serializeHashState(hashState) || '' : ''

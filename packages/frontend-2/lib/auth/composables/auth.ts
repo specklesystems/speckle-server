@@ -239,14 +239,16 @@ export const useAuthManager = () => {
     }
     challenge: string
     inviteToken?: string
+    newsletter?: boolean
   }) => {
-    const { user, challenge, inviteToken } = params
+    const { user, challenge, inviteToken, newsletter } = params
 
     const { accessCode } = await registerAndGetAccessCode({
       apiOrigin,
       challenge,
       user,
-      inviteToken
+      inviteToken,
+      newsletter
     })
 
     // eslint-disable-next-line camelcase

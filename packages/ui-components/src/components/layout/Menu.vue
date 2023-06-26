@@ -44,11 +44,12 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { Nullable } from '@speckle/shared'
+import { computed, ref, watch } from 'vue'
 import {
   HorizontalDirection,
   useResponsiveHorizontalDirectionCalculation
-} from '~~/lib/common/composables/window'
-import { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+} from '~~/src/composables/common/window'
+import { LayoutMenuItem } from '~~/src/helpers/layout/components'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void

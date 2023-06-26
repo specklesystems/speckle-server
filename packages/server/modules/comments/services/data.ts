@@ -39,9 +39,8 @@ export function isDataStruct(data: unknown): data is DataStruct {
   return SpeckleViewer.ViewerState.isSerializedViewerState(stateRaw)
 }
 
-export function formatSerializedViewerState(state: SerializedViewerState) {
-  return SpeckleViewer.ViewerState.formatSerializedViewerState(state)
-}
+export const formatSerializedViewerState =
+  SpeckleViewer.ViewerState.formatSerializedViewerState
 
 export function isLegacyData(data: unknown): data is LegacyData {
   if (!data) return false
@@ -147,8 +146,8 @@ export async function convertLegacyDataToState(
       camera: {
         position: [data.camPos?.[0] || 0, data.camPos?.[1] || 0, data.camPos?.[2] || 0],
         target: [data.camPos?.[3] || 0, data.camPos?.[4] || 0, data.camPos?.[5] || 0],
-        isOrthoProjection: !!data.camPos?.[4],
-        zoom: data.camPos?.[5] || 1
+        isOrthoProjection: !!data.camPos?.[6],
+        zoom: data.camPos?.[7] || 1
       },
       sectionBox: sectionBox
         ? {
@@ -163,7 +162,12 @@ export async function convertLegacyDataToState(
             data.location.y as number,
             data.location.z as number
           ]
-        : null
+        : null,
+      diff: {
+        command: null,
+        mode: 1,
+        time: 0.5
+      }
     }
   }
   return ret

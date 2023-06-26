@@ -1,6 +1,6 @@
 <template>
   <TransitionRoot as="template" :show="open">
-    <Dialog as="div" class="relative z-40" @close="open = false">
+    <Dialog as="div" class="relative z-40" @close="onClose">
       <TransitionChild
         as="template"
         enter="ease-out duration-300"
@@ -53,6 +53,7 @@
 <script setup lang="ts">
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { computed } from 'vue'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -65,6 +66,10 @@ const props = defineProps<{
   open: boolean
   maxWidth?: MaxWidthValue
   hideCloser?: boolean
+  /**
+   * Prevent modal from closing when the user clicks outside of the modal or presses Esc
+   */
+  preventCloseOnClickOutside?: boolean
 }>()
 
 const open = computed({
@@ -111,4 +116,9 @@ const widthClasses = computed(() => {
 
   return classParts.join(' ')
 })
+
+const onClose = () => {
+  if (props.preventCloseOnClickOutside) return
+  open.value = false
+}
 </script>

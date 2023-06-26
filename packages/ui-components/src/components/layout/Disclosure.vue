@@ -19,13 +19,16 @@
 <script setup lang="ts">
 import { DisclosureButton, Disclosure, DisclosurePanel } from '@headlessui/vue'
 import { ChevronUpIcon } from '@heroicons/vue/24/solid'
-import { ConcreteComponent } from 'vue'
+import { ConcreteComponent, computed } from 'vue'
 
 type DisclosureColor = 'default' | 'danger'
 
 const props = withDefaults(
   defineProps<{
     title: string
+    /**
+     * HeadlessUI icon component to use
+     */
     icon?: ConcreteComponent
     color?: DisclosureColor
   }>(),

@@ -1,13 +1,16 @@
 import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import { useRouteHashState } from '~~/lib/common/composables/url'
 import type { InjectableViewerState } from '~~/lib/viewer/composables/setup'
+import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
 
 export enum ViewerHashStateKeys {
-  FocusedThreadId = 'threadId'
+  FocusedThreadId = 'threadId',
+  Diff = 'diff'
 }
 
 export function setupUrlHashState(): InjectableViewerState['urlHashState'] {
   const { hashState } = useRouteHashState()
+  const { deserializeDiffCommand, serializeDiffCommand } = useDiffBuilderUtilities()
 
   const focusedThreadId = writableAsyncComputed({
     get: () => hashState.value[ViewerHashStateKeys.FocusedThreadId] || null,
@@ -17,10 +20,27 @@ export function setupUrlHashState(): InjectableViewerState['urlHashState'] {
         [ViewerHashStateKeys.FocusedThreadId]: newVal
       })
     },
-    initialState: null
+    initialState: null,
+    asyncRead: false
+    // debugging: { log: { name: 'focusedThreadId' } }
+  })
+
+  const diff = writableAsyncComputed({
+    get: () => {
+      const urlValue = hashState.value[ViewerHashStateKeys.Diff]
+      return deserializeDiffCommand(urlValue)
+    },
+    set: async (newVal) =>
+      await hashState.update({
+        ...hashState.value,
+        [ViewerHashStateKeys.Diff]: newVal ? serializeDiffCommand(newVal) : null
+      }),
+    initialState: null,
+    asyncRead: false
   })
 
   return {
-    focusedThreadId
+    focusedThreadId,
+    diff
   }
 }

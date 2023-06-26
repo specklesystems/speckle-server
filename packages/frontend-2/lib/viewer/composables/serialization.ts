@@ -6,13 +6,18 @@ import { isNonNullable } from '~~/lib/common/helpers/utils'
 import { SpeckleViewer, TimeoutError } from '@speckle/shared'
 import { get } from 'lodash-es'
 import { Vector3, Box3 } from 'three'
-import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useDiffUtilities,
+  useFilterUtilities,
+  useSelectionUtilities
+} from '~~/lib/viewer/composables/ui'
 import { NumericPropertyInfo } from '@speckle/viewer'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
 export function useStateSerialization() {
   const state = useInjectedViewerState()
+  const { serializeDiffCommand } = useDiffUtilities()
 
   /**
    * We don't want to save a comment w/ implicit identifiers like ones that only have a model ID or a folder prefix, because
@@ -77,6 +82,13 @@ export function useStateSerialization() {
             newThreadEditor: state.ui.threads.openThread.newThreadEditor.value
           }
         },
+        diff: {
+          command: state.urlHashState.diff.value
+            ? serializeDiffCommand(state.urlHashState.diff.value)
+            : null,
+          time: state.ui.diff.time.value,
+          mode: state.ui.diff.mode.value
+        },
         spotlightUserSessionId: state.ui.spotlightUserSessionId.value,
         filters: {
           isolatedObjectIds: state.ui.filters.isolatedObjectIds.value,
@@ -126,7 +138,8 @@ export function useApplySerializedState() {
       sectionBox,
       highlightedObjectIds,
       explodeFactor,
-      lightConfig
+      lightConfig,
+      diff
     },
     resources: {
       request: { resourceIdString }
@@ -144,10 +157,12 @@ export function useApplySerializedState() {
     waitForAvailableFilter
   } = useFilterUtilities()
   const resetState = useResetUiState()
+  const { diffModelVersions, deserializeDiffCommand, endDiff } = useDiffUtilities()
+  const { setSelectionFromObjectIds } = useSelectionUtilities()
 
   return async (state: SerializedViewerState, mode: StateApplyMode) => {
     if (mode === StateApplyMode.Reset) {
-      await resetState()
+      resetState()
       return
     }
 
@@ -228,8 +243,13 @@ export function useApplySerializedState() {
         })
     }
 
-    highlightedObjectIds.value =
-      mode === StateApplyMode.Spotlight ? filters.selectedObjectIds.slice() : []
+    if (mode === StateApplyMode.Spotlight) {
+      highlightedObjectIds.value = filters.selectedObjectIds.slice()
+    } else {
+      if (filters.selectedObjectIds.length) {
+        setSelectionFromObjectIds(filters.selectedObjectIds)
+      }
+    }
 
     if (
       [StateApplyMode.Spotlight, StateApplyMode.TheadFullContextOpen].includes(mode)
@@ -239,6 +259,23 @@ export function useApplySerializedState() {
 
     if ([StateApplyMode.Spotlight].includes(mode)) {
       await urlHashState.focusedThreadId.update(state.ui.threads.openThread.threadId)
+    }
+
+    const command = state.ui.diff.command
+      ? deserializeDiffCommand(state.ui.diff.command)
+      : null
+    if (command && command.diffs.length) {
+      diff.time.value = state.ui.diff.time
+      diff.mode.value = state.ui.diff.mode
+
+      const instruction = command.diffs[0]
+      await diffModelVersions(
+        instruction.versionA.modelId,
+        instruction.versionA.versionId,
+        instruction.versionB.versionId
+      )
+    } else {
+      await endDiff()
     }
 
     explodeFactor.value = state.ui.explodeFactor
