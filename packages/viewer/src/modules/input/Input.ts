@@ -11,8 +11,10 @@ export const InputOptionsDefault = {
 }
 
 export default class Input extends EventEmitter {
+  private static readonly MAX_DOUBLE_CLICK_TIMING = 500
   private tapTimeout
   private lastTap = 0
+  private lastClick = 0
   private touchLocation: Touch
   private container
 
@@ -30,14 +32,17 @@ export default class Input extends EventEmitter {
 
     this.container.addEventListener('pointerup', (e) => {
       e.preventDefault()
-      const delta = new Date().getTime() - mdTime
+      const now = new Date().getTime()
+      const delta = now - mdTime
+      const deltaClick = now - this.lastClick
 
-      if (delta > 250) return
+      if (delta > 250 || deltaClick < Input.MAX_DOUBLE_CLICK_TIMING) return
 
       const loc = this._getNormalisedClickPosition(e)
       ;(loc as unknown as Record<string, unknown>).event = e
       if (e.shiftKey) (loc as unknown as Record<string, unknown>).multiSelect = true
       this.emit(ViewerEvent.ObjectClicked, loc)
+      this.lastClick = new Date().getTime()
     })
 
     // Doubleclicks on touch devices
@@ -67,7 +72,19 @@ export default class Input extends EventEmitter {
     })
 
     this.container.addEventListener('dblclick', (e) => {
-      this.emit(ViewerEvent.ObjectDoubleClicked, this._getNormalisedClickPosition(e))
+      const data = this._getNormalisedClickPosition(e)
+      ;(data as unknown as Record<string, unknown>).event = e
+      this.emit(ViewerEvent.ObjectDoubleClicked, data)
+    })
+
+    this.container.addEventListener('pointermove', (e) => {
+      const data = this._getNormalisedClickPosition(e)
+      ;(data as unknown as Record<string, unknown>).event = e
+      this.emit('pointer-move', data)
+    })
+
+    document.addEventListener('keyup', (e) => {
+      this.emit('key-up', e)
     })
 
     // Handle multiple object selection

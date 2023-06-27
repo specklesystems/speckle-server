@@ -99,6 +99,7 @@ const createViewer = async (containerName: string, stream: string) => {
   sandbox.makeFilteringUI()
   sandbox.makeBatchesUI()
   sandbox.makeDiffUI()
+  sandbox.makeMeasurementsUI()
 
   await sandbox.loadUrl(stream)
 }
@@ -274,7 +275,9 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/55cc1cbf0a/objects/d7ae178fb6a7b1f599a177486e14f9a6'
     // 'https://latest.speckle.dev/streams/e258b0e8db/objects/3fcd63d80cf791c3f554a795846e62f6'
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/6adbcfa8dc'
-    // 'https://latest.speckle.dev/streams/92b620fb17/commits/6adbcfa8dc'
+    // 'https://latest.speckle.dev/streams/b68abcbf2e/commits/4e94ecad62'
+    // Big ass mafa'
+    // 'https://speckle.xyz/streams/88307505eb/objects/a232d760059046b81ff97e6c4530c985'
   )
 }
 

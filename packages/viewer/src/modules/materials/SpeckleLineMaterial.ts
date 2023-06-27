@@ -3,7 +3,7 @@
 /* eslint-disable camelcase */
 import { speckleLineVert } from './shaders/speckle-line-vert'
 import { speckleLineFrag } from './shaders/speckle-line-frag'
-import { UniformsUtils, ShaderLib, Vector3 } from 'three'
+import { UniformsUtils, ShaderLib, Vector3, Vector2 } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
@@ -84,7 +84,7 @@ class SpeckleLineMaterial extends LineMaterial {
     SpeckleLineMaterial.matBuff.elements[12] = 0
     SpeckleLineMaterial.matBuff.elements[13] = 0
     SpeckleLineMaterial.matBuff.elements[14] = 0
-    SpeckleLineMaterial.matBuff.multiply(object.matrixWorld)
+    // SpeckleLineMaterial.matBuff.multiply(object.matrixWorld)
     object.modelViewMatrix.copy(SpeckleLineMaterial.matBuff)
 
     SpeckleLineMaterial.vecBuff0.set(
@@ -100,6 +100,7 @@ class SpeckleLineMaterial extends LineMaterial {
     )
     this.userData.uViewer_low.value.copy(SpeckleLineMaterial.vecBuff1)
     this.userData.uViewer_high.value.copy(SpeckleLineMaterial.vecBuff2)
+    _this.getDrawingBufferSize(this.resolution)
     this.needsUpdate = true
   }
 }
