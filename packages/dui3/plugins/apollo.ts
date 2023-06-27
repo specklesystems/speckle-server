@@ -29,7 +29,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 
       apolloClients[name] = new ApolloClient(
         resolveClientConfig({
-          httpEndpoint: `${account.serverInfo.name}/graphql`,
+          httpEndpoint: `${account.serverInfo.url}/graphql`,
           authToken: () => account.token
         })
       )

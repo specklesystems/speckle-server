@@ -209,7 +209,7 @@ export type Comment = {
    * Legacy comment viewer data field
    * @deprecated Use the new viewerState field instead
    */
-  data?: Maybe<LegacyCommentViewerData>;
+  data?: Maybe<Scalars['JSONObject']>;
   /** Whether or not comment is a reply to another comment */
   hasParent: Scalars['Boolean'];
   id: Scalars['String'];
@@ -635,7 +635,7 @@ export type Model = {
   pendingImportedVersions: Array<FileUpload>;
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
-  version?: Maybe<Version>;
+  version: Version;
   versions: VersionCollection;
 };
 
@@ -694,6 +694,8 @@ export type ModelMutationsUpdateArgs = {
 export type ModelVersionsFilter = {
   /** Make sure these specified versions are always loaded first */
   priorityIds?: InputMaybe<Array<Scalars['String']>>;
+  /** Only return versions specified in `priorityIds` */
+  priorityIdsOnly?: InputMaybe<Scalars['Boolean']>;
 };
 
 export type ModelsTreeItem = {
@@ -1221,7 +1223,7 @@ export type Project = {
   /** Collaborators who have been invited, but not yet accepted. */
   invitedTeam?: Maybe<Array<PendingStreamCollaborator>>;
   /** Returns a specific model by its ID */
-  model?: Maybe<Model>;
+  model: Model;
   /** Return a model tree of children for the specified model name */
   modelChildrenTree: Array<ModelsTreeItem>;
   /** Returns a flat list of all models */
@@ -1605,7 +1607,7 @@ export type Query = {
    * Find a specific project. Will throw an authorization error if active user isn't authorized
    * to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
    */
-  project?: Maybe<Project>;
+  project: Project;
   /**
    * Look for an invitation to a project, for the current user (authed or not). If token
    * isn't specified, the server will look for any valid invite.
@@ -2266,6 +2268,7 @@ export type SubscriptionUserViewerActivityArgs = {
 
 
 export type SubscriptionViewerUserActivityBroadcastedArgs = {
+  sessionId?: InputMaybe<Scalars['String']>;
   target: ViewerUpdateTrackingTarget;
 };
 
