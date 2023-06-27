@@ -12,11 +12,8 @@ import {
   IUniform
 } from 'three'
 import { Matrix4 } from 'three'
-import { Geometry } from '../converter/Geometry'
-import SpeckleMesh from '../objects/SpeckleMesh'
 
-import { Uniforms } from './SpeckleStandardMaterial'
-import { ExtendedMeshBasicMaterial } from './SpeckleMaterial'
+import { ExtendedMeshBasicMaterial, Uniforms } from './SpeckleMaterial'
 import { createTextDerivedMaterial } from 'troika-three-text'
 
 class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {

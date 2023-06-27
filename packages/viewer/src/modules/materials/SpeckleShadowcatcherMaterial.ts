@@ -5,7 +5,7 @@ import { speckleShadowcatcherVert } from './shaders/speckle-shadowcatcher-vert'
 import { speckleShadowcatcherFrag } from './shaders/speckle-shadowcatche-frag'
 import SpeckleBasicMaterial from './SpeckleBasicMaterial'
 import { Vector4 } from 'three'
-import { Uniforms } from './SpeckleStandardMaterial'
+import { Uniforms } from './SpeckleMaterial'
 
 class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
   protected get vertexShader(): string {
