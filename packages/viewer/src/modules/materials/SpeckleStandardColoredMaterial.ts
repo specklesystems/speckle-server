@@ -4,9 +4,10 @@
 import { speckleStandardColoredVert } from './shaders/speckle-standard-colored-vert'
 import { speckleStandardColoredFrag } from './shaders/speckle-standard-colored-frag'
 import { UniformsUtils, Texture, NearestFilter } from 'three'
-import SpeckleStandardMaterial, { Uniforms } from './SpeckleStandardMaterial'
+import SpeckleStandardMaterial from './SpeckleStandardMaterial'
 import { Geometry } from '../converter/Geometry'
 import SpeckleMesh from '../objects/SpeckleMesh'
+import { Uniforms } from './SpeckleMaterial'
 
 class SpeckleStandardColoredMaterial extends SpeckleStandardMaterial {
   protected get vertexShader(): string {

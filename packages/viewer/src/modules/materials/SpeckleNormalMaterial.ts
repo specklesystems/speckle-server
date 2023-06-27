@@ -6,9 +6,8 @@ import { speckleNormalFrag } from './shaders/speckle-normal-frag'
 import { UniformsUtils, ShaderLib, Vector3, MeshNormalMaterial, IUniform } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
-import { Uniforms } from './SpeckleStandardMaterial'
 import SpeckleMesh from '../objects/SpeckleMesh'
-import { ExtendedMeshNormalMaterial } from './SpeckleMaterial'
+import { ExtendedMeshNormalMaterial, Uniforms } from './SpeckleMaterial'
 
 class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()

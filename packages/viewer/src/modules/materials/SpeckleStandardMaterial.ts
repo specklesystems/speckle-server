@@ -15,9 +15,7 @@ import {
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import SpeckleMesh from '../objects/SpeckleMesh'
-import { ExtendedMeshStandardMaterial } from './SpeckleMaterial'
-
-export type Uniforms = Record<string, any>
+import { ExtendedMeshStandardMaterial, Uniforms } from './SpeckleMaterial'
 
 class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()
