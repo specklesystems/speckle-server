@@ -74,7 +74,6 @@ const buildAuthUrl = (strat: StrategyType) => {
     url.searchParams.set('newsletter', 'true')
   }
 
-  console.log(url)
   return url.toString()
 }
 

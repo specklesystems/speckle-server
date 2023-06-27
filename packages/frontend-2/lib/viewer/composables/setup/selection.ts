@@ -43,7 +43,7 @@ function useSelectOrZoomOnSelection() {
         if (!args) return trackAndClearSelection()
         if (args.hits.length === 0) return trackAndClearSelection()
         if (!args.multiple) clearSelection() // note we're not tracking selectino clearing here
-        console.log('yay', firstVisibleSelectionHit)
+
         if (!firstVisibleSelectionHit) return clearSelection()
         addToSelection(firstVisibleSelectionHit.object)
         // Expands default viewer selection behaviour with a special case in diff mode.
