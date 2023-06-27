@@ -21,6 +21,7 @@ export async function addCommitCreatedActivity(params: {
   userId: string
   input: CommitCreateInput
   branchName: string
+  modelId: string
   commit: CommitRecord
 }) {
   const { commitId, input, streamId, userId, branchName, commit } = params
@@ -31,7 +32,15 @@ export async function addCommitCreatedActivity(params: {
       resourceId: commitId,
       actionType: ActionTypes.Commit.Create,
       userId,
-      info: { id: commitId, commit: input },
+      info: {
+        id: commitId,
+        commit: {
+          ...input,
+          projectId: streamId,
+          modelId: params.modelId,
+          versionId: commit.id
+        }
+      },
       message: `Commit created on branch ${branchName}: ${commitId} (${input.message})`
     }),
     pubsub.publish(CommitPubsubEvents.CommitCreated, {

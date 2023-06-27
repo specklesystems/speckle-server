@@ -141,7 +141,14 @@ export async function createCommitByBranchName(
       streamId,
       userId: authorId,
       branchName,
-      input: { ...commit, branchName, objectId, streamId },
+      input: {
+        ...commit,
+        branchName,
+        objectId,
+        streamId
+      },
+      // the new FE2 term for a branchId
+      modelId: myBranch.id,
       commit
     })
   }
