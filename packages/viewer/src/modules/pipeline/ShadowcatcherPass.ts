@@ -19,11 +19,11 @@ import {
   Vector4,
   WebGLRenderTarget
 } from 'three'
-import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass'
+import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js'
 import {
   BlurShaderUtils,
   DepthLimitedBlurShader
-} from 'three/examples/jsm/shaders/DepthLimitedBlurShader'
+} from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
 import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
 import SpeckleShadowcatcherMaterial from '../materials/SpeckleShadowcatcherMaterial'
 import { DefaultShadowcatcherConfig, ShadowcatcherConfig } from '../Shadowcatcher'

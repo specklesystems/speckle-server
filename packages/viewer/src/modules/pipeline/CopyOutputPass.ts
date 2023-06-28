@@ -1,5 +1,5 @@
 import { NoBlending, ShaderMaterial, Texture, UniformsUtils } from 'three'
-import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass'
+import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js'
 import { speckleCopyOutputFrag } from '../materials/shaders/speckle-copy-output-frag'
 import { speckleCopyOutputVert } from '../materials/shaders/speckle-copy-output-vert'

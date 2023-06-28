@@ -14,7 +14,7 @@ const config = {
   parserOptions: {
     sourceType: 'module',
     babelOptions: {
-      configFile: path.resolve(__dirname, './babel.config.js')
+      configFile: path.resolve(__dirname, './babel.config.cjs')
     }
   },
   rules: {

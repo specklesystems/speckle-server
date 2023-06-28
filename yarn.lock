@@ -11508,6 +11508,7 @@ __metadata:
     "@babel/preset-env": ^7.20.2
     "@rollup/plugin-babel": ^5.3.1
     "@speckle/objectloader": "workspace:^"
+    "@types/babel__core": ^7.20.1
     "@types/flat": ^5.0.2
     "@types/three": ^0.136.0
     "@typescript-eslint/eslint-plugin": ^5.39.0
@@ -14805,6 +14806,19 @@ __metadata:
     "@types/babel__template": "*"
     "@types/babel__traverse": "*"
   checksum: 8c9fa87a1c2224cbec251683a58bebb0d74c497118034166aaa0491a4e2627998a6621fc71f8a60ffd27d9c0c52097defedf7637adc6618d0331c15adb302338
+  languageName: node
+  linkType: hard
+
+"@types/babel__core@npm:^7.20.1":
+  version: 7.20.1
+  resolution: "@types/babel__core@npm:7.20.1"
+  dependencies:
+    "@babel/parser": ^7.20.7
+    "@babel/types": ^7.20.7
+    "@types/babel__generator": "*"
+    "@types/babel__template": "*"
+    "@types/babel__traverse": "*"
+  checksum: 9fcd9691a33074802d9057ff70b0e3ff3778f52470475b68698a0f6714fbe2ccb36c16b43dc924eb978cd8a81c1f845e5ff4699e7a47606043b539eb8c6331a8
   languageName: node
   linkType: hard
 

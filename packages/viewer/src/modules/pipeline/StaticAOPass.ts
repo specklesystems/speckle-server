@@ -22,7 +22,7 @@ import {
   WebGLRenderer,
   WebGLRenderTarget
 } from 'three'
-import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass'
+import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 
 import { speckleStaticAoGenerateVert } from '../materials/shaders/speckle-static-ao-generate-vert'
 import { speckleStaticAoGenerateFrag } from '../materials/shaders/speckle-static-ao-generate-frag'
