@@ -15,7 +15,6 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
-import Logger from 'js-logger'
 import { GeometryConverter } from '../converter/GeometryConverter'
 import { ObjectLayers } from '../SpeckleRenderer'
 
@@ -109,7 +108,7 @@ export default class PointBatch implements Batch {
     for (let k = 0; k < sortedRanges.length; k++) {
       const collidingGroup = this.getDrawRangeCollision(sortedRanges[k])
       if (collidingGroup) {
-        Logger.warn(`Draw range collision @ ${this.id} overwritting...`)
+        // Logger.warn(`Draw range collision @ ${this.id} overwritting...`)
         collidingGroup.materialIndex = this.mesh.material.indexOf(
           sortedRanges[k].material
         )

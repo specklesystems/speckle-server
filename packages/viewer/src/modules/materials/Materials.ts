@@ -109,6 +109,13 @@ export default class Materials {
     return displayStyle
   }
 
+  public static fastCopy(from: Material, to: Material) {
+    to.setValues(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+      (({ uuid, uniforms, userData, onBeforeCompile, version, ...o }) => o)(from as any)
+    )
+  }
+
   public static isTransparent(material: Material) {
     return material.transparent === true && material.opacity < 1
   }

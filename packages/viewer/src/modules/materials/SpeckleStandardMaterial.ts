@@ -16,6 +16,7 @@ import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import SpeckleMesh from '../objects/SpeckleMesh'
 import { ExtendedMeshStandardMaterial, Uniforms } from './SpeckleMaterial'
+import Materials from './Materials'
 
 class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()

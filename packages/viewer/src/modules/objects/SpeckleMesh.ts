@@ -22,6 +22,7 @@ import { TransformStorage } from '../batching/Batcher'
 import { BatchObject } from '../batching/BatchObject'
 import { SpeckleBatchBVH } from './SpeckleBatchBVH'
 import { ObjectLayers } from '../SpeckleRenderer'
+import Materials from '../materials/Materials'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -117,7 +118,7 @@ export default class SpeckleMesh extends Mesh {
     if (!this.materialCache[material.id]) {
       this.materialCache[material.id] = material.clone()
     } else {
-      this.materialCache[material.id].copy(material)
+      Materials.fastCopy(material, this.materialCache[material.id])
     }
     return this.materialCache[material.id]
   }
