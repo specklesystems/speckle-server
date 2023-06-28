@@ -249,7 +249,7 @@ export function useSelectionEvents(
           ? getFirstVisibleSelectionHit(event, state)
           : null
         return singleClickCallback(event, { firstVisibleSelectionHit })
-      }, 0)
+      }, debounceWait)
     : undefined
   const debouncedDoubleClickCallback = doubleClickCallback
     ? debounce((event: Nullable<SelectionEvent>) => {
@@ -257,7 +257,7 @@ export function useSelectionEvents(
           ? getFirstVisibleSelectionHit(event, state)
           : null
         return doubleClickCallback(event, { firstVisibleSelectionHit })
-      }, 0)
+      }, debounceWait)
     : undefined
 
   onMounted(() => {
