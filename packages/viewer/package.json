@@ -13,12 +13,12 @@
   "exports": {
     ".": {
       "import": {
-        "default": "./dist/index.js",
-        "types": "./dist/index.d.ts"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
       },
       "require": {
-        "default": "./dist/index.cjs",
-        "types": "./dist/index.d.ts"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
       }
     },
     "./dist/assets/*": "./dist/assets/*",
@@ -26,7 +26,6 @@
   },
   "types": "./dist/index.d.ts",
   "sourceType": "module",
-  "type": "module",
   "files": [
     "dist"
   ],
