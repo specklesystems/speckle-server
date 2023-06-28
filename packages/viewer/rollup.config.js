@@ -20,7 +20,7 @@ const config = {
       sourcemap
     },
     {
-      file: 'dist/index.cjs.js',
+      file: 'dist/index.cjs',
       format: 'cjs',
       sourcemap
     }
@@ -38,7 +38,8 @@ const config = {
     }),
     babel({
       extensions: [...DEFAULT_EXTENSIONS, '.ts', '.tsx'],
-      babelHelpers: 'bundled'
+      babelHelpers: 'bundled',
+      configFile: './babel.config.cjs'
     }),
     ...(isProd ? [terser()] : [])
   ],

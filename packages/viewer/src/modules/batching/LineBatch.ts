@@ -9,8 +9,8 @@ import {
   Vector4,
   WebGLRenderer
 } from 'three'
-import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
-import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
+import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
+import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
 import { Geometry } from '../converter/Geometry'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { ObjectLayers } from '../SpeckleRenderer'

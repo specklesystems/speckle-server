@@ -1061,7 +1061,7 @@ export default class Sandbox {
       .addInput(this.measurementsParams, 'enabled', {
         label: 'Enabled'
       })
-      .on('change', (e) => {
+      .on('change', () => {
         this.viewer.enableMeasurements(this.measurementsParams.enabled)
       })
 
@@ -1073,14 +1073,14 @@ export default class Sandbox {
           POINTTOPOINT: MeasurementType.POINTTOPOINT
         }
       })
-      .on('change', (value) => {
+      .on('change', () => {
         this.viewer.setMeasurementOptions(this.measurementsParams)
       })
     container
       .addInput(this.measurementsParams, 'vertexSnap', {
         label: 'Snap'
       })
-      .on('change', (e) => {
+      .on('change', () => {
         this.viewer.setMeasurementOptions(this.measurementsParams)
       })
 
@@ -1089,7 +1089,7 @@ export default class Sandbox {
         label: 'Units',
         options: Units
       })
-      .on('change', (e) => {
+      .on('change', () => {
         this.viewer.setMeasurementOptions(this.measurementsParams)
       })
     container
@@ -1099,14 +1099,14 @@ export default class Sandbox {
         min: 1,
         max: 5
       })
-      .on('change', (e) => {
+      .on('change', () => {
         this.viewer.setMeasurementOptions(this.measurementsParams)
       })
     container
       .addButton({
         title: 'Delete'
       })
-      .on('click', (e) => {
+      .on('click', () => {
         this.viewer.removeMeasurement()
       })
   }
