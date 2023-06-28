@@ -54,7 +54,8 @@ export function useViewerNewThreadBubble(params: {
   const {
     threads: {
       openThread: { newThreadEditor }
-    }
+    },
+    camera: { target }
   } = useInjectedViewerInterfaceState()
 
   const buttonState = ref({
@@ -116,6 +117,20 @@ export function useViewerNewThreadBubble(params: {
     }
   )
 
+  watch(newThreadEditor, (isNewThread, oldIsNewThread) => {
+    if (isNewThread && !!isNewThread !== !!oldIsNewThread) {
+      if (!buttonState.value.clickLocation && !target.value) return
+
+      if (!buttonState.value.clickLocation) {
+        buttonState.value.clickLocation = target.value.clone()
+      }
+
+      buttonState.value.isExpanded = true
+      buttonState.value.isVisible = true
+      updatePositions()
+    }
+  })
+
   return { buttonState, closeNewThread }
 }
 
@@ -142,10 +157,18 @@ export function useViewerCommentBubblesProjection(params: {
     points: computed(() => Object.values(commentThreads.value)),
     pointLocationGetter: (t) => {
       const state = t.viewerState
-      if (!state?.ui.selection) return undefined
 
-      const selection = state.ui.selection
-      return new Vector3(selection[0], selection[1], selection[2])
+      const selection = state?.ui.selection
+      if (selection?.length) {
+        return new Vector3(selection[0], selection[1], selection[2])
+      }
+
+      const target = state?.ui.camera.target
+      if (target?.length) {
+        return new Vector3(target[0], target[1], target[2])
+      }
+
+      return undefined
     },
     updatePositionCallback: (thread, result) => {
       thread.isOccluded = result.isOccluded

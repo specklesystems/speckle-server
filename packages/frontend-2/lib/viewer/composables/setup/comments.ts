@@ -19,6 +19,7 @@ export function setupViewerCommentBubbles(
     urlHashState: { focusedThreadId }
   } = options?.state || useInjectedViewerState()
 
+  const newThreadEditor = ref(false)
   const commentThreads = ref({} as Record<string, CommentBubbleModel>)
   const openThread = computed(() => {
     const ot = Object.values(commentThreads.value).find(
@@ -70,8 +71,15 @@ export function setupViewerCommentBubbles(
     { immediate: true }
   )
 
+  watch(newThreadEditor, async (isNewThread, oldIsNewThread) => {
+    if (isNewThread && !!isNewThread !== !!oldIsNewThread) {
+      await focusedThreadId.update(null)
+    }
+  })
+
   return {
     commentThreads,
-    openThread
+    openThread,
+    newThreadEditor
   }
 }

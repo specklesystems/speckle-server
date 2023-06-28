@@ -799,9 +799,10 @@ function setupInterfaceState(
   /**
    * THREADS
    */
-  const { commentThreads, openThread } = setupViewerCommentBubbles({ state })
+  const { commentThreads, openThread, newThreadEditor } = setupViewerCommentBubbles({
+    state
+  })
   const isTyping = ref(false)
-  const newThreadEditor = ref(false)
   const hideBubbles = ref(false)
 
   /**
