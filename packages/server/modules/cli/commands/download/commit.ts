@@ -194,6 +194,7 @@ const saveNewCommit = async (commit: Commit, localResources: LocalResources) => 
       totalChildrenCount
     },
     branchName: targetBranch.name,
+    modelId: targetBranch.id,
     commit: newCommit
   })
 
