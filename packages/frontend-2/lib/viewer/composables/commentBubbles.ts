@@ -126,7 +126,11 @@ export function useViewerNewThreadBubble(params: {
 
   watch(newThreadEditor, (isNewThread, oldIsNewThread) => {
     if (isNewThread && !!isNewThread !== !!oldIsNewThread) {
-      if (!buttonState.value.clickLocation && !target.value && !selection.value) return
+      if (!buttonState.value.clickLocation && !target.value && !selection.value) {
+        console.warn('Unable to enable new thread editor due to missing position data')
+        newThreadEditor.value = false
+        return
+      }
 
       // Set "new thread bubble" location & enable it
       if (!buttonState.value.clickLocation) {
