@@ -102,19 +102,12 @@ describe('Upload/Download Routes @api-rest', () => {
     // create some objects
     const objBatches = [createManyObjects(20), createManyObjects(20)]
 
-    await request(app)
-      .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
-      .set('Content-type', 'multipart/form-data')
-      .attach('batch1', Buffer.from(JSON.stringify(objBatches[0]), 'utf8'))
-      .attach('batch2', Buffer.from(JSON.stringify(objBatches[1]), 'utf8'))
-
     // should not allow a non-multipart/form-data request, even if it has a valid header
     res = await request(app)
       .post(`/objects/${testStream.id}`)
       .set('Authorization', userA.token)
       .set('Content-type', 'multipart/form-data')
-      .send(Buffer.from(JSON.stringify(objBatches[2]), 'utf8'))
+      .send(Buffer.from(JSON.stringify(objBatches[0]), 'utf8'))
     expect(res).to.have.status(400)
 
     // should not allow non-buffered requests
@@ -122,8 +115,15 @@ describe('Upload/Download Routes @api-rest', () => {
       .post(`/objects/${testStream.id}`)
       .set('Authorization', userA.token)
       .set('Content-type', 'multipart/form-data')
-      .send(JSON.stringify(objBatches[3], 'utf8'))
+      .send(JSON.stringify(objBatches[0], 'utf8'))
     expect(res).to.have.status(400)
+
+    await request(app)
+      .post(`/objects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .set('Content-type', 'multipart/form-data')
+      .attach('batch1', Buffer.from(JSON.stringify(objBatches[0]), 'utf8'))
+      .attach('batch2', Buffer.from(JSON.stringify(objBatches[1]), 'utf8'))
 
     // should allow invalid tokens (treat them the same as no tokens?)
     // no, we're treating invalid tokens as invalid tokens
