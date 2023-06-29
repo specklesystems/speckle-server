@@ -14,7 +14,10 @@ import {
   useSelectionEvents,
   useViewerCameraTracker
 } from '~~/lib/viewer/composables/viewer'
-import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
+import {
+  useGetScreenCenterObjectId,
+  useViewerAnchoredPoints
+} from '~~/lib/viewer/composables/anchorPoints'
 import {
   HorizontalDirection,
   useOnBeforeWindowUnload,
@@ -28,6 +31,7 @@ import {
   useStateSerialization
 } from '~~/lib/viewer/composables/serialization'
 import { Merge } from 'type-fest'
+import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 
 graphql(`
   fragment ViewerCommentBubblesData on Comment {
@@ -55,8 +59,11 @@ export function useViewerNewThreadBubble(params: {
     threads: {
       openThread: { newThreadEditor }
     },
-    camera: { target }
+    camera: { target },
+    selection
   } = useInjectedViewerInterfaceState()
+  const getCamCenterObjId = useGetScreenCenterObjectId()
+  const { setSelectionFromObjectIds } = useSelectionUtilities()
 
   const buttonState = ref({
     isExpanded: false,
@@ -119,15 +126,27 @@ export function useViewerNewThreadBubble(params: {
 
   watch(newThreadEditor, (isNewThread, oldIsNewThread) => {
     if (isNewThread && !!isNewThread !== !!oldIsNewThread) {
-      if (!buttonState.value.clickLocation && !target.value) return
+      if (!buttonState.value.clickLocation && !target.value && !selection.value) return
 
+      // Set "new thread bubble" location & enable it
       if (!buttonState.value.clickLocation) {
-        buttonState.value.clickLocation = target.value.clone()
+        if (target.value) {
+          buttonState.value.clickLocation = target.value.clone()
+        } else if (selection.value) {
+          buttonState.value.clickLocation = selection.value.clone()
+        }
       }
 
       buttonState.value.isExpanded = true
       buttonState.value.isVisible = true
       updatePositions()
+
+      // Also invoke selection, if needed
+      if (selection.value) return
+
+      const oid = getCamCenterObjId()
+      if (!oid) return
+      setSelectionFromObjectIds([oid])
     }
   })
 
