@@ -46,6 +46,9 @@ module.exports = (app) => {
         })
 
         file.on('end', async () => {
+          req.log.info(
+            `File upload of the multipart form has reached an end of file (EOF) boundary. The mimetype of the file is '${mimeType}'.`
+          )
           if (requestDropped) return
           const t0 = Date.now()
           let objs = []
@@ -125,7 +128,6 @@ module.exports = (app) => {
         mimeType === 'application/octet-stream'
       ) {
         let buffer = ''
-
         file.on('data', (data) => {
           if (data) buffer += data
         })
@@ -150,12 +152,26 @@ module.exports = (app) => {
             objs = JSON.parse(buffer)
           } catch (e) {
             req.log.error(`Upload error: Batch not in JSON format`)
-            if (!requestDropped) res.status(400).send('Failed to parse data.')
+            if (!requestDropped)
+              res.status(400).send('Failed to parse data. Batch is not in JSON format.')
             requestDropped = true
           }
+          if (!Array.isArray(objs)) {
+            req.log.error(`Upload error: Batch not an array`)
+            if (!requestDropped)
+              res
+                .status(400)
+                .send(
+                  'Failed to parse data. Batch is expected to be wrapped in a JSON array.'
+                )
+            requestDropped = true
+          }
+          //FIXME should we exit here if requestDropped is true
 
           totalProcessed += objs.length
-
+          req.log.debug(
+            `total objects, including current pending batch, processed so far is ${totalProcessed}`
+          )
           let previouslyAwaitedPromises = 0
           while (previouslyAwaitedPromises !== promises.length) {
             previouslyAwaitedPromises = promises.length
