@@ -59,7 +59,6 @@ services:
       start_period: 5s
     ports:
       - '127.0.0.1:3000:3000'
-    command: ['bash', '-c', '/wait && node bin/www']
     environment:
       CANONICAL_URL: 'TODO: change'
       SESSION_SECRET: 'TODO: change'
@@ -98,7 +97,6 @@ services:
     restart: always
     mem_limit: '1000m'
     memswap_limit: '1000m'
-    command: ['bash', '-c', '/wait && node bin/www']
 
     environment:
       LOG_LEVEL: 'info'
@@ -108,7 +106,6 @@ services:
   speckle-webhook-service:
     image: speckle/speckle-webhook-service:2
     restart: always
-    command: ['bash', '-c', '/wait && node main.js']
     environment:
       LOG_LEVEL: 'info'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
@@ -117,7 +114,6 @@ services:
   fileimport-service:
     image: speckle/speckle-fileimport-service:2
     restart: always
-    command: ['bash', '-c', '/wait && node src/daemon.js']
     environment:
       LOG_LEVEL: 'info'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
