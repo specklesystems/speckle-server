@@ -38,21 +38,26 @@ import {
   useInjectedViewerLoadedResources
 } from '~~/lib/viewer/composables/setup'
 
+import { SECOND_MODEL_NAME } from '~~/lib/auth/composables/onboarding'
+
 const { items } = useInjectedViewerRequestedResources()
-const { project, modelsAndVersionIds } = useInjectedViewerLoadedResources()
+const { project } = useInjectedViewerLoadedResources()
 const id = project.value?.id as string
 
-const { result: models } = useQuery(latestModelsQuery, () => ({ projectId: id }))
+const { result } = useQuery(latestModelsQuery, () => ({ projectId: id }))
 
 const hasAddedOverlay = ref(false)
 async function addOverlay() {
-  const allmodels = models.value?.project?.models.items
-  const currentModelId = modelsAndVersionIds.value[0].model.id
-  const otherModelId = allmodels?.find((m) => m.id !== currentModelId)?.id as string
-  await items.update([
-    ...items.value,
-    ...SpeckleViewer.ViewerRoute.resourceBuilder().addModel(otherModelId).toResources()
-  ])
+  const models = result.value?.project?.models.items
+  const otherModel = models?.find((m) => m.name === SECOND_MODEL_NAME)
+
+  if (otherModel)
+    await items.update([
+      ...items.value,
+      ...SpeckleViewer.ViewerRoute.resourceBuilder()
+        .addModel(otherModel?.id)
+        .toResources()
+    ])
 
   hasAddedOverlay.value = true
 }

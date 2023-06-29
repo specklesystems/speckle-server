@@ -1,9 +1,9 @@
 export enum OnboardingIndustry {
-  Architecture = 'architecture',
+  Architecture = 'architecture & planning',
   Engineering = 'engineering',
   Construction = 'construction',
-  Design = 'design',
-  Software = 'software',
+  Software = 'software development',
+  Edu = 'higher education',
   Other = 'other'
 }
 
