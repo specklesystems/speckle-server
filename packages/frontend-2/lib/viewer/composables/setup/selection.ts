@@ -89,6 +89,11 @@ function useSelectOrZoomOnSelection() {
           const ids = state.ui.filters.selectedObjects.value.map((o) => o.id as string)
           zoom(ids)
         } // else somethingn is weird.
+        else {
+          console.warn(
+            "Got a double click event but there's no selected object in the state - this should be impossible :)"
+          )
+        }
         mp.track('Viewer Action', {
           type: 'action',
           name: 'zoom',

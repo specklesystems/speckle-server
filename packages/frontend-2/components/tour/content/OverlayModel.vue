@@ -50,7 +50,7 @@ const hasAddedOverlay = ref(false)
 async function addOverlay() {
   const models = result.value?.project?.models.items
   const otherModel = models?.find((m) => m.name === SECOND_MODEL_NAME)
-  console.log(otherModel)
+
   if (otherModel)
     await items.update([
       ...items.value,

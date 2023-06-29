@@ -10,6 +10,11 @@ import { MaybeAsync, Nullable, TimeoutError, timeoutAt } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 
+// NOTE: this is a preformance optimisation - this function is hot, and has to do
+// potentially large searches if many elements are hidden/isolated. We cache the
+// result for 250ms, which represents a single click.
+// NOTE: in the near future, this will hopefully not be needed as we'll have
+// viewer bound modules to help us with selection and visibility state management.
 const cacheTimeoutMs = 250
 let hitCache: Nullable<{
   guid?: string | undefined

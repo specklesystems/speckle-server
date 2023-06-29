@@ -51,7 +51,6 @@ onMounted(async () => {
   const firstModelToLoad = project?.models.items.find(
     (model) => model.name === FIRST_MODEL_NAME
   )
-  // console.log(firstModelToLoad)
 
   if (projectId) {
     if (firstModelToLoad) {
