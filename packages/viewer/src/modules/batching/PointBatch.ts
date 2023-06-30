@@ -36,6 +36,10 @@ export default class PointBatch implements Batch {
     this.subtreeId = subtreeId
     this.renderViews = renderViews
   }
+  insertDrawRanges(...ranges: BatchUpdateRange[]) {
+    ranges
+  }
+
   updateBatchObjects() {
     // TO DO
   }
@@ -123,6 +127,10 @@ export default class PointBatch implements Batch {
         this.mesh.material.indexOf(newGroups[i].material)
       )
     }
+  }
+
+  removeDrawRanges(id: string) {
+    id
   }
 
   private getDrawRangeCollision(range: BatchUpdateRange): {

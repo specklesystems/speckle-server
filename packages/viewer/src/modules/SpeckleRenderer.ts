@@ -89,7 +89,7 @@ export default class SpeckleRenderer {
   private sunTarget: Object3D
   private sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
   public viewer: Viewer // TEMPORARY
-  private filterBatchRecording: string[]
+  private filterBatchRecording: string[] = []
   private pipeline: Pipeline
   private lastSectionPlanes: Plane[] = []
   private sectionPlanesChanged: Plane[] = []
@@ -643,6 +643,14 @@ export default class SpeckleRenderer {
     this.filterBatchRecording.push(
       ...this.batcher.setObjectsFilterMaterial(ids, filterMaterial)
     )
+  }
+
+  public applyDirectFilter(ids: NodeRenderView[], filterMaterial: FilterMaterial) {
+    return this.batcher.insertObjectsFilterMaterial(ids, filterMaterial)
+  }
+
+  public removeDirectFilter(id: string) {
+    this.batcher.removeObjectsMaterial(id)
   }
 
   public applyMaterial(

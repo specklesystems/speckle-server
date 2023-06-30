@@ -43,6 +43,10 @@ export default class LineBatch implements Batch {
     this.subtreeId = subtreeId
     this.renderViews = renderViews
   }
+  insertDrawRanges(...ranges: BatchUpdateRange[]) {
+    ranges
+  }
+
   updateBatchObjects() {
     // TO DO
   }
@@ -143,6 +147,10 @@ export default class LineBatch implements Batch {
     this.colorBuffer.needsUpdate = true
     this.geometry.attributes['instanceColorStart'].needsUpdate = true
     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
+  }
+
+  removeDrawRanges(id: string) {
+    id
   }
 
   autoFillDrawRanges() {

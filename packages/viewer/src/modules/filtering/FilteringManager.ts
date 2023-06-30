@@ -58,6 +58,7 @@ export class FilteringManager extends EventEmitter {
   private UserspaceColorState = new UserspaceColorState()
   private ColorStringFilterState2: ColorStringFilterState = null
   private UserMaterialState = new UserMaterialState()
+  private CurrentFilteringState: FilteringState = {} as FilteringState
 
   public constructor(renderer: SpeckleRenderer, tree: WorldTree) {
     super()
@@ -308,8 +309,21 @@ export class FilteringManager extends EventEmitter {
   }
 
   public selectObjects(objectIds: string[]) {
-    return this.populateGenericState(objectIds, this.SelectionState)
+    this.resetSelection()
+    this.populateState(objectIds, this.SelectionState)
+    if (this.SelectionState.rvs.length !== 0) {
+      this.SelectionState.id = this.Renderer.applyDirectFilter(
+        this.SelectionState.rvs,
+        {
+          filterType: FilterMaterialType.SELECT
+        }
+      )
+    }
+    this.Renderer.viewer.requestRender()
+    this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
+    return this.CurrentFilteringState
   }
+
   public highlightObjects(objectIds: string[], ghost = false) {
     this.HighlightState.ghost = ghost
     return this.populateGenericState(objectIds, this.HighlightState)
@@ -431,9 +445,44 @@ export class FilteringManager extends EventEmitter {
     return this.setFilters()
   }
 
+  private populateState(objectIds, state) {
+    let ids = [...objectIds] //, ...this.getDescendantIds(objectIds)]
+    /** There's a lot of duplicate ids coming in from 'getDescendantIds'. We remove them
+     *  to avoid the large redundancy they incurr otherwise.
+     */
+    ids = [...Array.from(new Set(ids.map((value) => value)))]
+    state.rvs = []
+    state.ids = []
+    const nodes = []
+    if (ids.length !== 0) {
+      /** This walk still takes longer than we'd like */
+      this.WTI.walk((node: TreeNode) => {
+        if (ids.indexOf(node.model.raw.id) !== -1) {
+          nodes.push(node)
+        }
+        return true
+      })
+      for (let k = 0; k < nodes.length; k++) {
+        /** There's also quite a lot of redundancy here as well. The nodes coming are
+         * hierarchical and we end up getting the same render views more than once.
+         */
+        const rvs = this.RTI.getRenderViewNodesForNode(nodes[k], nodes[k])
+        if (rvs) {
+          state.rvs.push(...rvs.map((e) => e.model.renderView))
+          state.ids.push(...rvs.map((e) => e.model.raw.id))
+        }
+      }
+    }
+  }
+
   public resetSelection() {
+    if (this.SelectionState.rvs.length > 0) {
+      this.Renderer.removeDirectFilter(this.SelectionState.id)
+    }
     this.SelectionState = new GenericRvState()
-    return this.setFilters()
+    this.Renderer.viewer.requestRender()
+    this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
+    return this.CurrentFilteringState
   }
 
   public resetHighlight() {
@@ -454,7 +503,7 @@ export class FilteringManager extends EventEmitter {
   }
 
   private setFilters(): FilteringState {
-    const returnState: FilteringState = {}
+    this.CurrentFilteringState = {}
 
     this.Renderer.clearFilter()
     this.Renderer.beginFilter()
@@ -468,7 +517,7 @@ export class FilteringManager extends EventEmitter {
 
     // String based colors
     if (this.ColorStringFilterState) {
-      returnState.colorGroups = []
+      this.CurrentFilteringState.colorGroups = []
       let k = -1
       for (const group of this.ColorStringFilterState.colorGroups) {
         k++
@@ -478,12 +527,13 @@ export class FilteringManager extends EventEmitter {
           rampIndexColor: group.color,
           rampTexture: this.ColorStringFilterState.rampTexture
         })
-        returnState.colorGroups.push({
+        this.CurrentFilteringState.colorGroups.push({
           value: group.value,
           color: group.color.getHexString(),
           ids: group.ids
         })
-        returnState.activePropFilterKey = this.ColorStringFilterState.currentProp.key
+        this.CurrentFilteringState.activePropFilterKey =
+          this.ColorStringFilterState.currentProp.key
       }
     }
     // Number based colors
@@ -494,15 +544,17 @@ export class FilteringManager extends EventEmitter {
           rampIndex: group.value
         })
       }
-      returnState.activePropFilterKey = this.ColorNumericFilterState.currentProp.key
-      returnState.passMin =
+      this.CurrentFilteringState.activePropFilterKey =
+        this.ColorNumericFilterState.currentProp.key
+      this.CurrentFilteringState.passMin =
         this.ColorNumericFilterState.currentProp.passMin ||
         this.ColorNumericFilterState.currentProp.min
-      returnState.passMax =
+      this.CurrentFilteringState.passMax =
         this.ColorNumericFilterState.currentProp.passMax ||
         this.ColorNumericFilterState.currentProp.max
 
-      returnState.isolatedObjects = this.ColorNumericFilterState.matchingIds
+      this.CurrentFilteringState.isolatedObjects =
+        this.ColorNumericFilterState.matchingIds
     }
 
     const isShowHide =
@@ -519,8 +571,10 @@ export class FilteringManager extends EventEmitter {
           : FilterMaterialType.HIDDEN
       })
 
-      if (isShowHide) returnState.hiddenObjects = this.VisibilityState.ids
-      if (isIsolate) returnState.isolatedObjects = this.VisibilityState.ids
+      if (isShowHide)
+        this.CurrentFilteringState.hiddenObjects = this.VisibilityState.ids
+      if (isIsolate)
+        this.CurrentFilteringState.isolatedObjects = this.VisibilityState.ids
     }
 
     const nonMatchingRvs =
@@ -542,7 +596,7 @@ export class FilteringManager extends EventEmitter {
     }
 
     if (this.UserspaceColorState) {
-      returnState.userColorGroups = []
+      this.CurrentFilteringState.userColorGroups = []
       let m = -1
       for (const group of this.UserspaceColorState.groups) {
         m++
@@ -553,7 +607,7 @@ export class FilteringManager extends EventEmitter {
           rampTexture: this.UserspaceColorState.rampTexture
         })
 
-        returnState.userColorGroups.push({
+        this.CurrentFilteringState.userColorGroups.push({
           ids: group.objectIds,
           color: group.color //.getHexString()
         })
@@ -568,17 +622,17 @@ export class FilteringManager extends EventEmitter {
       })
     }
 
-    if (this.SelectionState.rvs.length !== 0) {
-      this.Renderer.applyFilter(this.SelectionState.rvs, {
-        filterType: FilterMaterialType.SELECT
-      })
-    }
+    // if (this.SelectionState.rvs.length !== 0) {
+    //   this.Renderer.applyFilter(this.SelectionState.rvs, {
+    //     filterType: FilterMaterialType.SELECT
+    //   })
+    // }
 
     this.Renderer.endFilter()
     this.Renderer.viewer.requestRender()
-    this.emit(ViewerEvent.FilteringStateSet, returnState)
+    this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
 
-    return returnState
+    return this.CurrentFilteringState
   }
 
   private idCache = {} as Record<string, string[]>
@@ -658,6 +712,7 @@ type ValueGroupColorItemNumericProps = {
 }
 
 class GenericRvState {
+  public id: string
   public ids: string[] = []
   public rvs: NodeRenderView[] = []
   public ghost = false

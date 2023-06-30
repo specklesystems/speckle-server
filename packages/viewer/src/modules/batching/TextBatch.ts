@@ -26,6 +26,9 @@ export default class TextBatch implements Batch {
     this.subtreeId = subtreeId
     this.renderViews = renderViews
   }
+  insertDrawRanges(...ranges: BatchUpdateRange[]) {
+    throw new Error('Method not implemented.')
+  }
 
   public get geometryType(): GeometryType {
     return GeometryType.TEXT
@@ -62,6 +65,10 @@ export default class TextBatch implements Batch {
     if (ranges[0].materialOptions && ranges[0].materialOptions.rampIndexColor) {
       this.mesh.textMesh.material.color.copy(ranges[0].materialOptions.rampIndexColor)
     }
+  }
+
+  removeDrawRanges(id: string) {
+    throw new Error('Method not implemented.')
   }
 
   public autoFillDrawRanges() {}
