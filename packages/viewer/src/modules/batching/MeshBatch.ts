@@ -314,7 +314,6 @@ export default class MeshBatch implements Batch {
   }
 
   private autoFillDrawRangesShuffleIBO() {
-    /** Temporary */
     const fullRangeIndex = this.geometry.groups.findIndex((value) => {
       return (
         value.start === 0 &&

@@ -622,13 +622,18 @@ export class FilteringManager extends EventEmitter {
       })
     }
 
-    // if (this.SelectionState.rvs.length !== 0) {
-    //   this.Renderer.applyFilter(this.SelectionState.rvs, {
-    //     filterType: FilterMaterialType.SELECT
-    //   })
-    // }
-
     this.Renderer.endFilter()
+
+    /** We apply any preexisting selections after finishing the filter batch */
+    if (this.SelectionState.rvs.length !== 0) {
+      this.SelectionState.id = this.Renderer.applyDirectFilter(
+        this.SelectionState.rvs,
+        {
+          filterType: FilterMaterialType.SELECT
+        }
+      )
+    }
+
     this.Renderer.viewer.requestRender()
     this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
 
