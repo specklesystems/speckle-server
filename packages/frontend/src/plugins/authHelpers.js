@@ -83,16 +83,20 @@ export async function getTokenFromAccessCode(accessCode) {
  * @return {null}
  */
 export async function signOut(mixpanelInstance) {
+  const logoutBody = JSON.stringify({
+    token: AppLocalStorage.get(LocalStorageKeys.AuthToken),
+    refreshToken: AppLocalStorage.get(LocalStorageKeys.RefreshToken)
+  })
+
   await fetch('/auth/logout', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      token: AppLocalStorage.get(LocalStorageKeys.AuthToken),
-      refreshToken: AppLocalStorage.get(LocalStorageKeys.RefreshToken)
-    })
+    body: logoutBody
   })
+    // Catching it cause we want to continue with logout even if tokens are invalid
+    .catch(console.error)
 
   AppLocalStorage.remove(LocalStorageKeys.AuthToken)
   AppLocalStorage.remove(LocalStorageKeys.RefreshToken)

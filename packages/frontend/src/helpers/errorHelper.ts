@@ -1,3 +1,7 @@
+import { ApolloError, ServerError, ServerParseError } from '@apollo/client/core'
+import { NetworkError } from '@apollo/client/errors'
+import { has } from 'lodash'
+
 /**
  * Base application error
  */
@@ -11,4 +15,21 @@ export abstract class BaseError extends Error {
     message ||= new.target.defaultMessage
     super(message, options)
   }
+}
+
+const isServerError = (err: Error): err is ServerError =>
+  has(err, 'response') && has(err, 'result') && has(err, 'statusCode')
+const isServerParseError = (err: Error): err is ServerParseError =>
+  has(err, 'response') && has(err, 'bodyText') && has(err, 'statusCode')
+
+export function isInvalidAuth(error: ApolloError | NetworkError) {
+  const networkError = error instanceof ApolloError ? error.networkError : error
+  if (
+    !networkError ||
+    (!isServerError(networkError) && !isServerParseError(networkError))
+  )
+    return false
+
+  const statusCode = networkError.statusCode
+  return [401, 403].includes(statusCode)
 }
