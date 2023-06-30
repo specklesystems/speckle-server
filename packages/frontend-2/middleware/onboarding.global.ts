@@ -1,5 +1,5 @@
-import { ApolloClient } from '@apollo/client/core'
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
+import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { homeRoute, onboardingRoute } from '~~/lib/common/helpers/route'
 
@@ -7,12 +7,7 @@ import { homeRoute, onboardingRoute } from '~~/lib/common/helpers/route'
  * Redirect user to /onboarding, if they haven't done it yet
  */
 export default defineNuxtRouteMiddleware(async (to) => {
-  // TODO: Re-enable once we figure out how to set up clonable stream on latest
-  // return
-
-  const { $apollo } = useNuxtApp()
-  const client = ($apollo as { default: ApolloClient<unknown> }).default
-
+  const client = useApolloClientFromNuxt()
   const { data } = await client
     .query({
       query: activeUserQuery

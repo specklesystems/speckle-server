@@ -5,6 +5,10 @@
 const route = useRoute()
 const token = ref('')
 
+definePageMeta({
+  name: 'reset-password'
+})
+
 onMounted(() => {
   if (route.query.token) {
     token.value = route.query.token as string
