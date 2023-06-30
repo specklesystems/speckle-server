@@ -6,6 +6,7 @@ import { AppLocalStorage } from '@/utils/localStorage'
 import { has } from 'lodash'
 import { deletePostAuthRedirect } from '@/main/lib/auth/utils/postAuthRedirectManager'
 import { resolveMixpanelUserId } from '@speckle/shared'
+import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 
 const appId = 'spklwebapp'
 const appSecret = 'spklwebapp'
@@ -40,11 +41,13 @@ export async function prefetchUserAndSetID(apolloClient) {
   if (!token) return
 
   // Pull user info (& remember it in the Apollo cache)
-  const { data } = await apolloClient.query({
-    query: mainUserDataQuery
-  })
+  const { data } = await apolloClient
+    .query({
+      query: mainUserDataQuery
+    })
+    .catch(convertThrowIntoFetchResult)
 
-  const user = data.activeUser
+  const user = data?.activeUser
   if (user) {
     const distinctId = resolveMixpanelUserId(user.email)
     AppLocalStorage.set('distinct_id', distinctId)
@@ -52,7 +55,7 @@ export async function prefetchUserAndSetID(apolloClient) {
     AppLocalStorage.set('stcount', user.streams.totalCount)
     return data
   } else {
-    await signOut()
+    await signOut().catch(console.error)
     throw new InvalidAuthTokenError()
   }
 }
