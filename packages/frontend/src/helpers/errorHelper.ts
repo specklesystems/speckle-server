@@ -31,5 +31,9 @@ export function isInvalidAuth(error: ApolloError | NetworkError) {
     return false
 
   const statusCode = networkError.statusCode
-  return [401, 403].includes(statusCode)
+  const hasCorrectCode = [401, 403].includes(statusCode)
+  if (!hasCorrectCode) return false
+
+  // TODO: IN FE2 to, also test out 401 streram pages
+  return networkError.message.toLowerCase().includes('invalid token')
 }
