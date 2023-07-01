@@ -7,12 +7,12 @@
         <div class="flex items-center">
           <HeaderLogoBlock :active="false" class="mr-0" />
           <div class="flex flex-shrink-0 items-center -ml-2 md:ml-0">
-            <HeaderNavLink
+            <!-- <HeaderNavLink
               to="/"
               name="Dashboard"
               :separator="true"
               class="hidden md:inline-block"
-            />
+            /> -->
             <PortalTarget name="navigation"></PortalTarget>
           </div>
         </div>
