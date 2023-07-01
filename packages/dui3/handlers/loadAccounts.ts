@@ -1,9 +1,9 @@
 import { Account } from '../types/account'
 
 export const loadAccounts = (accounts: Account[]) => {
-  localStorage.setItem('localAccounts', JSON.stringify(accounts))
-  const uuid = localStorage.getItem('uuid')
   if (accounts.length !== 0) {
+    localStorage.setItem('localAccounts', JSON.stringify(accounts))
+    const uuid = localStorage.getItem('uuid')
     let account: Account | undefined
     if (uuid) {
       account = accounts.find((acct: Account) => acct.userInfo.id === uuid)
