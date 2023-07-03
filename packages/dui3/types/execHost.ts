@@ -9,6 +9,11 @@ import { CallbackFunction } from '~/types/callbackFunction'
  */
 export const execHost: CallbackFunction = (msg: CallbackMessage) => {
   if (window.sketchup) {
+    console.log('sketchup called')
     return window.sketchup.exec(msg)
+  } else if (window.chrome.webview.hostObjects.webviewBindings) {
+    console.log('webview called')
+    return window.chrome.webview.hostObjects.webviewBindings.exec(msg.name, msg.data)
   }
+  console.log('message not called to any host!')
 }
