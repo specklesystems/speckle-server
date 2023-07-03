@@ -61,7 +61,14 @@ export function isInvalidAuth(error: ApolloError | NetworkError) {
     return false
 
   const statusCode = networkError.statusCode
-  return [401, 403].includes(statusCode)
+  const hasCorrectCode = [403].includes(statusCode)
+  if (!hasCorrectCode) return false
+
+  const message: string | undefined = isServerError(networkError)
+    ? networkError.result?.error
+    : networkError.bodyText
+
+  return (message || '').toLowerCase().includes('token')
 }
 
 /**
