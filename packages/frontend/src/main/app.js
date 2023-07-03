@@ -75,7 +75,12 @@ async function init() {
 
   // no auth token - check if we can resolve it from access code
   if (!authToken) {
-    await checkAccessCodeAndGetTokens()
+    const gotToken = await checkAccessCodeAndGetTokens()
+    if (gotToken) {
+      // token was retrieved - remove access code
+      window.location.href = '/'
+      return
+    }
   }
 
   // try to retrieve user info with auth token
