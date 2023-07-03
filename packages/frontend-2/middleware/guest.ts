@@ -1,17 +1,16 @@
-import { ApolloClient } from '@apollo/client/core'
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
+import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { homeRoute } from '~~/lib/common/helpers/route'
 
-const exclusionList = ['authorize-app']
+const exclusionList = ['authorize-app', 'reset-password']
 
 /**
  * Apply this to a page to prevent authenticated access
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const nuxt = useNuxtApp()
-  const { $apollo } = nuxt
-  const client = ($apollo as { default: ApolloClient<unknown> }).default
+  const client = useApolloClientFromNuxt()
 
   // Skipping this on some auth sub-pages
   const routeName = to.name
