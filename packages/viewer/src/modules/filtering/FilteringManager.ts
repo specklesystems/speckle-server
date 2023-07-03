@@ -223,29 +223,56 @@ export class FilteringManager extends EventEmitter {
     const passMin = numProp.passMin || numProp.min
     const passMax = numProp.passMax || numProp.max
 
-    const matchingIds = numProp.valueGroups
-      .filter((p) => p.value >= passMin && p.value <= passMax)
-      .map((v) => v.id)
-    const matchingValues = numProp.valueGroups
-      .filter((p) => p.value >= passMin && p.value <= passMax)
-      .map((v) => v.value)
+    /** This is the original implementation. Building the ids and values array was not slow per se
+     *  but it forced us to use indexOf inside the walk function which was IMMENSELY slow
+     */
+    // const matchingIds = numProp.valueGroups
+    //   .filter((p) => p.value >= passMin && p.value <= passMax)
+    //   .map((v) => v.id)
+
+    // const matchingValues = numProp.valueGroups
+    //   .filter((p) => p.value >= passMin && p.value <= passMax)
+    //   .map((v) => v.value)
+
+    /** This is 'un-functionally' slow to build */
+    // let matchingIds = {}
+    // matchingIds = numProp.valueGroups.reduce((obj, item) => {
+    //   return {
+    //     ...obj,
+    //     [item['id']]: item.value
+    //   }
+    // }, matchingIds)
+
+    /** This is very fast to build. It does suffer from the same issue as the original implementation
+     *  as in, if there is an id clash (which will happen for instances), the old implementation's indexOf
+     *  would return the first value. Here we choose to do the same
+     */
+    const matchingIds = {}
+    for (let k = 0; k < numProp.valueGroups.length; k++) {
+      if (matchingIds[numProp.valueGroups[k].id]) {
+        continue
+      }
+      matchingIds[numProp.valueGroups[k].id] = numProp.valueGroups[k].value
+    }
 
     const nonMatchingRvs: NodeRenderView[] = []
     const colorGroups: ValueGroupColorItemNumericProps[] = []
 
     this.WTI.walk((node: TreeNode) => {
       if (!node.model.atomic || this.WTI.isRoot(node)) return true
+
       const rvs = this.RTI.getRenderViewsForNode(node, node)
-      const idx = matchingIds.indexOf(node.model.raw.id)
-      if (idx === -1) {
+      const idx = matchingIds[node.model.raw.id]
+      if (!idx) {
         nonMatchingRvs.push(...rvs)
       } else {
         colorGroups.push({
           rvs,
-          value: (matchingValues[idx] - passMin) / (passMax - passMin)
+          value: (idx - passMin) / (passMax - passMin)
         })
       }
     })
+
     this.ColorNumericFilterState.colorGroups = colorGroups
     this.ColorNumericFilterState.nonMatchingRvs = nonMatchingRvs
     this.ColorNumericFilterState.ghost = ghost
@@ -253,20 +280,23 @@ export class FilteringManager extends EventEmitter {
     return this.setFilters()
   }
 
-  // private hashCode = (str): number =>
-  //   str.split('').reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0)
-
   private setStringColorFilter(stringProp: StringPropertyInfo, ghost) {
     this.ColorStringFilterState.currentProp = stringProp
 
     const valueGroupColors: ValueGroupColorItemStringProps[] = []
     for (const vg of stringProp.valueGroups) {
       const col = stc(vg.value) // TODO: smarter way needed.
-      valueGroupColors.push({
+      const entry = {
         ...vg,
         color: new Color(col),
         rvs: []
-      })
+      }
+      /** This is to avoid indexOf inside the walk callback which is ridiculously slow */
+      entry['idMap'] = {}
+      for (let k = 0; k < vg.ids.length; k++) {
+        entry['idMap'][vg.ids[k]] = 1
+      }
+      valueGroupColors.push(entry)
     }
     const rampTexture = Assets.generateDiscreetRampTexture(
       valueGroupColors.map((v) => v.color.getHex())
@@ -281,7 +311,9 @@ export class FilteringManager extends EventEmitter {
       if (!node.model.atomic || this.WTI.isRoot(node)) {
         return true
       }
-      const vg = valueGroupColors.find((v) => v.ids.indexOf(node.model.raw.id) !== -1)
+      const vg = valueGroupColors.find((v) => {
+        return v['idMap'][node.model.raw.id]
+      })
       const rvNodes = this.RTI.getRenderViewNodesForNode(node, node)
       if (!vg) {
         nonMatchingRvs.push(...rvNodes.map((rvNode) => rvNode.model.renderView))
@@ -294,7 +326,10 @@ export class FilteringManager extends EventEmitter {
       vg.rvs.push(...rvs)
       return true
     })
-
+    /** Deleting this since we're not going to use it further */
+    for (const vg of valueGroupColors) {
+      delete vg['idMap']
+    }
     this.ColorStringFilterState.colorGroups = valueGroupColors
     this.ColorStringFilterState.rampTexture = rampTexture
     this.ColorStringFilterState.nonMatchingRvs = nonMatchingRvs
