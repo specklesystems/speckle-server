@@ -77,9 +77,10 @@ async function init() {
   if (!authToken) {
     const gotToken = await checkAccessCodeAndGetTokens()
     if (gotToken) {
-      // token was retrieved - remove access code
-      window.location.href = '/'
-      return
+      // Remove access_code get param from current url
+      const url = new URL(window.location.href)
+      url.searchParams.delete('access_code')
+      window.history.replaceState({}, document.title, url.toString())
     }
   }
 
