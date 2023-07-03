@@ -132,6 +132,7 @@ export class FilteringManager extends EventEmitter {
     includeDescendants = false,
     ghost = false
   ): FilteringState {
+    const start = performance.now()
     if (
       stateKey !== this.StateKey ||
       Math.abs(command - this.VisibilityState.command) > 1
@@ -149,20 +150,34 @@ export class FilteringManager extends EventEmitter {
     }
 
     if (command === Command.SHOW || command === Command.UNISOLATE) {
-      this.VisibilityState.ids = this.VisibilityState.ids.filter(
-        (id) => objectIds.indexOf(id) === -1
+      const t0 = performance.now()
+
+      this.VisibilityState.ids = objectIds.reduce(
+        (acc, curr) => ((acc[curr] = 1), acc),
+        {}
       )
+
+      // this.VisibilityState.ids = this.VisibilityState.ids.filter(
+      //   (id) => objectIds.indexOf(id) === -1
+      // )
+      console.warn('Filter -> ', performance.now() - t0)
     }
 
     if (command === Command.HIDE || command === Command.ISOLATE) {
-      this.VisibilityState.ids = [
-        ...new Set([...objectIds, ...this.VisibilityState.ids])
-      ]
+      const t0 = performance.now()
+      Object.assign(
+        this.VisibilityState.ids,
+        objectIds.reduce((acc, curr) => ((acc[curr] = 1), acc), {})
+      )
+      // this.VisibilityState.ids = [
+      //   ...new Set([...objectIds, ...this.VisibilityState.ids])
+      // ]
+      console.warn('Assign -> ', performance.now() - t0)
     }
 
-    this.VisibilityState.ids = this.VisibilityState.ids.filter(
-      (id) => id !== undefined && id !== null
-    )
+    // this.VisibilityState.ids = this.VisibilityState.ids.filter(
+    //   (id) => id !== undefined && id !== null
+    // )
 
     const enabled = this.VisibilityState.ids.length !== 0
     if (!enabled) {
@@ -177,14 +192,16 @@ export class FilteringManager extends EventEmitter {
       walkFunc = this.visibilityWalk
     if (command === Command.ISOLATE || command === Command.UNISOLATE)
       walkFunc = this.isolationWalk
-
+    const t0 = performance.now()
     this.WTI.walk(walkFunc.bind(this))
+    console.warn('Walk -> ', performance.now() - t0)
+    console.warn('Time -> ', performance.now() - start)
     return this.setFilters()
   }
 
   private visibilityWalk(node: TreeNode): boolean {
     if (!node.model.atomic) return true
-    if (this.VisibilityState.ids.indexOf(node.model.raw.id) !== -1) {
+    if (this.VisibilityState.ids[node.model.raw.id]) {
       this.VisibilityState.rvs.push(...this.RTI.getRenderViewsForNode(node, node))
     }
     return true
@@ -193,7 +210,7 @@ export class FilteringManager extends EventEmitter {
   private isolationWalk(node: TreeNode): boolean {
     if (!node.model.atomic || this.WTI.isRoot(node)) return true
     const rvs = this.RTI.getRenderViewsForNode(node, node)
-    if (this.VisibilityState.ids.indexOf(node.model.raw.id) === -1) {
+    if (!this.VisibilityState.ids[node.model.raw.id]) {
       this.VisibilityState.rvs.push(...rvs)
     } else {
       // take out rvs that do not match our ids
@@ -607,9 +624,11 @@ export class FilteringManager extends EventEmitter {
       })
 
       if (isShowHide)
-        this.CurrentFilteringState.hiddenObjects = this.VisibilityState.ids
+        this.CurrentFilteringState.hiddenObjects = Object.keys(this.VisibilityState.ids)
       if (isIsolate)
-        this.CurrentFilteringState.isolatedObjects = this.VisibilityState.ids
+        this.CurrentFilteringState.isolatedObjects = Object.keys(
+          this.VisibilityState.ids
+        )
     }
 
     const nonMatchingRvs =
@@ -707,12 +726,12 @@ enum Command {
 class VisibilityState {
   public command = Command.NONE
   public ghost = true
-  public ids: string[] = []
+  public ids: { [id: string]: number } = {}
   public rvs: NodeRenderView[] = []
 
   public reset() {
     this.ghost = true
-    this.ids = []
+    this.ids = {}
     this.rvs = []
   }
 }
