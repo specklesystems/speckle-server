@@ -132,7 +132,6 @@ export class FilteringManager extends EventEmitter {
     includeDescendants = false,
     ghost = false
   ): FilteringState {
-    const start = performance.now()
     if (
       stateKey !== this.StateKey ||
       Math.abs(command - this.VisibilityState.command) > 1
@@ -150,7 +149,6 @@ export class FilteringManager extends EventEmitter {
     }
 
     if (command === Command.SHOW || command === Command.UNISOLATE) {
-      const t0 = performance.now()
       /** Not the most elegant, but fast */
       for (let k = 0; k < objectIds.length; k++) {
         if (this.VisibilityState.ids[objectIds[k]])
@@ -160,12 +158,9 @@ export class FilteringManager extends EventEmitter {
       //   (acc, curr) => ((acc[curr] = 1), acc),
       //   {}
       // )
-
-      console.warn('Filter -> ', performance.now() - t0)
     }
 
     if (command === Command.HIDE || command === Command.ISOLATE) {
-      const t0 = performance.now()
       Object.assign(
         this.VisibilityState.ids,
         objectIds.reduce((acc, curr) => ((acc[curr] = 1), acc), {})
@@ -173,9 +168,9 @@ export class FilteringManager extends EventEmitter {
       // this.VisibilityState.ids = [
       //   ...new Set([...objectIds, ...this.VisibilityState.ids])
       // ]
-      console.warn('Assign -> ', performance.now() - t0)
     }
 
+    /** Not needed anymore */
     // this.VisibilityState.ids = this.VisibilityState.ids.filter(
     //   (id) => id !== undefined && id !== null
     // )
@@ -193,10 +188,7 @@ export class FilteringManager extends EventEmitter {
       walkFunc = this.visibilityWalk
     if (command === Command.ISOLATE || command === Command.UNISOLATE)
       walkFunc = this.isolationWalk
-    const t0 = performance.now()
     this.WTI.walk(walkFunc.bind(this))
-    console.warn('Walk -> ', performance.now() - t0)
-    console.warn('Time -> ', performance.now() - start)
     return this.setFilters()
   }
 
