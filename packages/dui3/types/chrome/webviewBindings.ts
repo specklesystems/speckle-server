@@ -1,3 +1,3 @@
 export type WebviewBindings = {
-  exec: (name: string, data: object) => void
+  exec: (viewId: string | undefined, name: string, data?: object) => void
 }
