@@ -57,7 +57,10 @@
         :thread="thread"
       />
       <div v-if="commentThreads.length === 0">
-        <ProjectPageLatestItemsCommentsIntroCard small />
+        <ProjectPageLatestItemsCommentsIntroCard
+          small
+          @new-discussion="onNewDiscussion"
+        />
       </div>
       <!-- TODO: new thread on click in centre of screen, I can't figure out how -->
       <!-- <div class="py-2 text-center">
@@ -116,7 +119,10 @@ graphql(`
 const { commentThreads, commentThreadsMetadata } = useInjectedViewerLoadedResources()
 const { threadFilters } = useInjectedViewerRequestedResources()
 const {
-  threads: { hideBubbles }
+  threads: {
+    hideBubbles,
+    openThread: { newThreadEditor }
+  }
 } = useInjectedViewerInterfaceState()
 
 const showVisibilityOptions = ref(false)
@@ -156,4 +162,8 @@ watch(includeArchived, (newVal) =>
     includeArchived: newVal
   })
 )
+
+const onNewDiscussion = () => {
+  newThreadEditor.value = true
+}
 </script>

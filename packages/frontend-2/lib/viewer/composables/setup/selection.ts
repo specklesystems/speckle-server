@@ -85,8 +85,15 @@ function useSelectOrZoomOnSelection() {
         const firstVisHit = firstVisibleSelectionHit
         if (!firstVisHit) return clearSelection()
 
-        const objectId = args.hits[0].object.id
-        zoom([objectId])
+        if (state.ui.filters.selectedObjects.value.length !== 0) {
+          const ids = state.ui.filters.selectedObjects.value.map((o) => o.id as string)
+          zoom(ids)
+        } // else somethingn is weird.
+        else {
+          console.warn(
+            "Got a double click event but there's no selected object in the state - this should be impossible :)"
+          )
+        }
         mp.track('Viewer Action', {
           type: 'action',
           name: 'zoom',

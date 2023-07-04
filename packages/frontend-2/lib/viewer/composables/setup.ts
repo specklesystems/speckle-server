@@ -65,7 +65,7 @@ import {
   setupUiDiffState
 } from '~~/lib/viewer/composables/setup/diff'
 import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
-import { reduce } from 'lodash-es'
+import { flatten, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
 
 export type LoadedModel = NonNullable<
@@ -273,7 +273,7 @@ type CachedViewerState = Pick<
 
 type InitialSetupState = Pick<
   InjectableViewerState,
-  'projectId' | 'viewer' | 'sessionId'
+  'projectId' | 'viewer' | 'sessionId' | 'urlHashState'
 >
 
 type InitialStateWithRequest = InitialSetupState & {
@@ -283,8 +283,7 @@ type InitialStateWithRequest = InitialSetupState & {
 export type InitialStateWithRequestAndResponse = InitialSetupState &
   Pick<InjectableViewerState, 'resources'>
 
-export type InitialStateWithUrlHashState = InitialStateWithRequestAndResponse &
-  Pick<InjectableViewerState, 'urlHashState'>
+export type InitialStateWithUrlHashState = InitialStateWithRequestAndResponse
 
 export type InitialStateWithInterface = InitialStateWithUrlHashState &
   Pick<InjectableViewerState, 'ui'>
@@ -388,7 +387,8 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
             ref: computed(() => isInitialized.value)
           },
           metadata: setupViewerMetadata({ viewer: instance })
-        }
+        },
+    urlHashState: setupUrlHashState()
   }
 }
 
@@ -587,7 +587,8 @@ function setupResponseResourceData(
     projectId,
     resources: {
       request: { resourceIdString, threadFilters }
-    }
+    },
+    urlHashState: { diff }
   } = state
   const { resourceItems } = resourceItemsData
 
@@ -601,8 +602,21 @@ function setupResponseResourceData(
         !!r.modelId
     )
   )
+
+  const diffVersionIds = computed(() =>
+    flatten(
+      (diff.value?.diffs || []).map((d) => [d.versionA.versionId, d.versionB.versionId])
+    )
+  )
+
+  // model.loadedVersion will be the actually currently loaded version +
+  // any diff versions, if they're requested. the naming is confusing, but
+  // model.loadedVersion = all currently loaded versions of that model, altho there's usually only 1
   const versionIds = computed(() =>
-    nonObjectResourceItems.value.map((r) => r.versionId).sort()
+    [
+      ...nonObjectResourceItems.value.map((r) => r.versionId),
+      ...diffVersionIds.value
+    ].sort()
   )
   const versionCursors = ref({} as Record<string, Nullable<string>>)
 
@@ -799,9 +813,10 @@ function setupInterfaceState(
   /**
    * THREADS
    */
-  const { commentThreads, openThread } = setupViewerCommentBubbles({ state })
+  const { commentThreads, openThread, newThreadEditor } = setupViewerCommentBubbles({
+    state
+  })
   const isTyping = ref(false)
-  const newThreadEditor = ref(false)
   const hideBubbles = ref(false)
 
   /**
@@ -864,11 +879,7 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   const initState = setupInitialState(params)
   const initialStateWithRequest = setupResourceRequest(initState)
   const stateWithResources = setupResourceResponse(initialStateWithRequest)
-  const stateWithUrlHashState: InitialStateWithUrlHashState = {
-    ...stateWithResources,
-    urlHashState: setupUrlHashState()
-  }
-  const state: InjectableViewerState = setupInterfaceState(stateWithUrlHashState)
+  const state: InjectableViewerState = setupInterfaceState(stateWithResources)
 
   // Inject it into descendant components
   provide(InjectableViewerStateKey, state)

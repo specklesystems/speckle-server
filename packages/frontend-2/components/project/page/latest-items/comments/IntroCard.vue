@@ -35,12 +35,21 @@
       <div v-if="!small" class="text-xs text-foreground-2">
         Head over to a model and start coordinating right away!
       </div>
+      <div v-else class="mt-2">
+        <FormButton :icon-left="PlusIcon" @click="() => $emit('new-discussion')">
+          New discussion
+        </FormButton>
+      </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
+import { PlusIcon } from '@heroicons/vue/24/solid'
 import { useTheme } from '~~/lib/core/composables/theme'
-const { isDarkTheme } = useTheme()
+
+defineEmits<{
+  (e: 'new-discussion'): void
+}>()
 
 withDefaults(
   defineProps<{
@@ -50,4 +59,6 @@ withDefaults(
     small: false
   }
 )
+
+const { isDarkTheme } = useTheme()
 </script>

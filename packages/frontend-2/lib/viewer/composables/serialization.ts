@@ -264,6 +264,7 @@ export function useApplySerializedState() {
     const command = state.ui.diff.command
       ? deserializeDiffCommand(state.ui.diff.command)
       : null
+    const activeDiffEnabled = !!diff.enabled.value
     if (command && command.diffs.length) {
       diff.time.value = state.ui.diff.time
       diff.mode.value = state.ui.diff.mode
@@ -274,7 +275,7 @@ export function useApplySerializedState() {
         instruction.versionA.versionId,
         instruction.versionB.versionId
       )
-    } else {
+    } else if (!activeDiffEnabled) {
       await endDiff()
     }
 
