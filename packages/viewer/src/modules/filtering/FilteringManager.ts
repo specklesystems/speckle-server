@@ -215,6 +215,9 @@ export class FilteringManager extends EventEmitter {
       this.VisibilityState.rvs.push(...rvs)
     } else {
       // take out rvs that do not match our ids
+      /** 'includes' still eats up more CPU than we'd like, but improving it
+       *  would require too many "risky" changes
+       */
       this.VisibilityState.rvs = this.VisibilityState.rvs.filter(
         (rv) => !rvs.includes(rv)
       )
@@ -363,7 +366,7 @@ export class FilteringManager extends EventEmitter {
 
   public selectObjects(objectIds: string[]) {
     this.resetSelection()
-    this.populateState(objectIds, this.SelectionState)
+    this.populateGenericState(objectIds, this.SelectionState)
     if (this.SelectionState.rvs.length !== 0) {
       this.SelectionState.id = this.Renderer.applyDirectFilter(
         this.SelectionState.rvs,
@@ -378,8 +381,20 @@ export class FilteringManager extends EventEmitter {
   }
 
   public highlightObjects(objectIds: string[], ghost = false) {
+    this.resetHighlight()
     this.HighlightState.ghost = ghost
-    return this.populateGenericState(objectIds, this.HighlightState)
+    this.populateGenericState(objectIds, this.HighlightState)
+    if (this.HighlightState.rvs.length !== 0) {
+      this.HighlightState.id = this.Renderer.applyDirectFilter(
+        this.HighlightState.rvs,
+        {
+          filterType: FilterMaterialType.OVERLAY
+        }
+      )
+    }
+    this.Renderer.viewer.requestRender()
+    this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
+    return this.CurrentFilteringState
   }
 
   public setUserObjectColors(groups: { objectIds: string[]; color: string }[]) {
@@ -494,38 +509,6 @@ export class FilteringManager extends EventEmitter {
         }
       }
     }
-
-    return this.setFilters()
-  }
-
-  private populateState(objectIds, state) {
-    let ids = [...objectIds] //, ...this.getDescendantIds(objectIds)]
-    /** There's a lot of duplicate ids coming in from 'getDescendantIds'. We remove them
-     *  to avoid the large redundancy they incurr otherwise.
-     */
-    ids = [...Array.from(new Set(ids.map((value) => value)))]
-    state.rvs = []
-    state.ids = []
-    const nodes = []
-    if (ids.length !== 0) {
-      /** This walk still takes longer than we'd like */
-      this.WTI.walk((node: TreeNode) => {
-        if (ids.indexOf(node.model.raw.id) !== -1) {
-          nodes.push(node)
-        }
-        return true
-      })
-      for (let k = 0; k < nodes.length; k++) {
-        /** There's also quite a lot of redundancy here as well. The nodes coming are
-         * hierarchical and we end up getting the same render views more than once.
-         */
-        const rvs = this.RTI.getRenderViewNodesForNode(nodes[k], nodes[k])
-        if (rvs) {
-          state.rvs.push(...rvs.map((e) => e.model.renderView))
-          state.ids.push(...rvs.map((e) => e.model.raw.id))
-        }
-      }
-    }
   }
 
   public resetSelection() {
@@ -539,8 +522,13 @@ export class FilteringManager extends EventEmitter {
   }
 
   public resetHighlight() {
+    if (this.HighlightState.rvs.length > 0) {
+      this.Renderer.removeDirectFilter(this.HighlightState.id)
+    }
     this.HighlightState = new GenericRvState()
-    return this.setFilters()
+    this.Renderer.viewer.requestRender()
+    this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
+    return this.CurrentFilteringState
   }
 
   public reset(): FilteringState {
@@ -669,15 +657,19 @@ export class FilteringManager extends EventEmitter {
       }
     }
 
-    if (this.HighlightState.rvs.length !== 0) {
-      this.Renderer.applyFilter(this.HighlightState.rvs, {
-        filterType: this.HighlightState.ghost
-          ? FilterMaterialType.GHOST
-          : FilterMaterialType.OVERLAY
-      })
-    }
-
     this.Renderer.endFilter()
+
+    /** We apply any preexisting highlights after finishing the filter batch */
+    if (this.HighlightState.rvs.length !== 0) {
+      this.HighlightState.id = this.Renderer.applyDirectFilter(
+        this.HighlightState.rvs,
+        {
+          filterType: this.HighlightState.ghost
+            ? FilterMaterialType.GHOST
+            : FilterMaterialType.OVERLAY
+        }
+      )
+    }
 
     /** We apply any preexisting selections after finishing the filter batch */
     if (this.SelectionState.rvs.length !== 0) {
@@ -691,7 +683,6 @@ export class FilteringManager extends EventEmitter {
 
     this.Renderer.viewer.requestRender()
     this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
-
     return this.CurrentFilteringState
   }
 
