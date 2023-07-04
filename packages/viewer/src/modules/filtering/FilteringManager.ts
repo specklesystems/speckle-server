@@ -179,7 +179,7 @@ export class FilteringManager extends EventEmitter {
     //   (id) => id !== undefined && id !== null
     // )
 
-    const enabled = this.VisibilityState.ids.length !== 0
+    const enabled = Object.keys(this.VisibilityState.ids).length !== 0
     if (!enabled) {
       this.VisibilityState.command = Command.NONE
       return this.setFilters()
