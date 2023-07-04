@@ -151,15 +151,16 @@ export class FilteringManager extends EventEmitter {
 
     if (command === Command.SHOW || command === Command.UNISOLATE) {
       const t0 = performance.now()
-
-      this.VisibilityState.ids = objectIds.reduce(
-        (acc, curr) => ((acc[curr] = 1), acc),
-        {}
-      )
-
-      // this.VisibilityState.ids = this.VisibilityState.ids.filter(
-      //   (id) => objectIds.indexOf(id) === -1
+      /** Not the most elegant, but fast */
+      for (let k = 0; k < objectIds.length; k++) {
+        if (this.VisibilityState.ids[objectIds[k]])
+          delete this.VisibilityState.ids[objectIds[k]]
+      }
+      // this.VisibilityState.ids = objectIds.reduce(
+      //   (acc, curr) => ((acc[curr] = 1), acc),
+      //   {}
       // )
+
       console.warn('Filter -> ', performance.now() - t0)
     }
 
