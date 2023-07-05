@@ -31,6 +31,7 @@ export default class LineBatch implements Batch {
   public batchMaterial: SpeckleLineMaterial
   private mesh: LineSegments2 | Line
   public colorBuffer: InstancedInterleavedBuffer
+  private insertedRanges: BatchUpdateRange[] = []
   private static readonly vector4Buffer: Vector4 = new Vector4()
 
   public get bounds() {
@@ -42,9 +43,6 @@ export default class LineBatch implements Batch {
     this.id = id
     this.subtreeId = subtreeId
     this.renderViews = renderViews
-  }
-  insertDrawRanges(...ranges: BatchUpdateRange[]) {
-    ranges
   }
 
   updateBatchObjects() {
@@ -149,8 +147,31 @@ export default class LineBatch implements Batch {
     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
   }
 
+  insertDrawRanges(...ranges: BatchUpdateRange[]) {
+    for (let k = 0; k < ranges.length; k++) {
+      const start = ranges[k].offset * this.colorBuffer.stride
+      const data = this.colorBuffer.array as number[]
+      const materialOptions = {
+        rampIndexColor: new Color(data[start], data[start + 1], data[start + 2])
+      }
+      this.insertedRanges.push({
+        offset: ranges[k].offset,
+        count: ranges[k].count,
+        material: ranges[k].material,
+        materialOptions,
+        id: ranges[k].id
+      })
+    }
+    this.setDrawRanges(...ranges)
+  }
+
   removeDrawRanges(id: string) {
-    id
+    const ranges = this.insertedRanges.filter((value) => value.id === id)
+    if (!ranges.length) {
+      return
+    }
+    this.setDrawRanges(...ranges)
+    this.insertedRanges = this.insertedRanges.filter((value) => !ranges.includes(value))
   }
 
   autoFillDrawRanges() {

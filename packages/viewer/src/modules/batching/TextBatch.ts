@@ -27,7 +27,7 @@ export default class TextBatch implements Batch {
     this.renderViews = renderViews
   }
   insertDrawRanges(...ranges: BatchUpdateRange[]) {
-    throw new Error('Method not implemented.')
+    ranges
   }
 
   public get geometryType(): GeometryType {
@@ -68,7 +68,7 @@ export default class TextBatch implements Batch {
   }
 
   removeDrawRanges(id: string) {
-    throw new Error('Method not implemented.')
+    id
   }
 
   public autoFillDrawRanges() {}
