@@ -586,8 +586,9 @@ export class FilteringManager extends EventEmitter {
         this.ColorNumericFilterState.currentProp.passMax ||
         this.ColorNumericFilterState.currentProp.max
 
-      this.CurrentFilteringState.isolatedObjects =
+      this.CurrentFilteringState.isolatedObjects = Object.keys(
         this.ColorNumericFilterState.matchingIds
+      )
     }
 
     const isShowHide =
