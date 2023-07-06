@@ -522,8 +522,11 @@ export default class Batcher {
         continue
       }
       const batch = this.batches[batchIds[i]]
-      const opaqueRvs = renderViews.filter((rv) => !rv.transparent)
-      const transparentRvs = renderViews.filter((rv) => rv.transparent)
+      const batchRenderViews = renderViews.filter(
+        (value) => value.batchId === batchIds[i]
+      )
+      const opaqueRvs = batchRenderViews.filter((rv) => !rv.transparent)
+      const transparentRvs = batchRenderViews.filter((rv) => rv.transparent)
       let opaqueMaterial, transparentMaterial
       if (opaqueRvs.length)
         opaqueMaterial = this.materials
@@ -533,17 +536,15 @@ export default class Batcher {
         transparentMaterial = this.materials
           .getFilterMaterial(transparentRvs[0], filterMaterial.filterType)
           .clone() as Material
-      const views = renderViews
-        .filter((value) => value.batchId === batchIds[i])
-        .map((rv: NodeRenderView) => {
-          return {
-            offset: rv.batchStart,
-            count: rv.batchCount,
-            material: rv.transparent ? transparentMaterial : opaqueMaterial,
-            materialOptions: this.materials.getFilterMaterialOptions(filterMaterial),
-            id
-          } as BatchUpdateRange
-        })
+      const views = batchRenderViews.map((rv: NodeRenderView) => {
+        return {
+          offset: rv.batchStart,
+          count: rv.batchCount,
+          material: rv.transparent ? transparentMaterial : opaqueMaterial,
+          materialOptions: this.materials.getFilterMaterialOptions(filterMaterial),
+          id
+        } as BatchUpdateRange
+      })
       batch.insertDrawRanges(...views)
     }
     return id
