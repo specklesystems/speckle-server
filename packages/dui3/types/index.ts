@@ -21,10 +21,19 @@ export interface ICefSharp {
   BindObjectAsync: (arg: string) => Promise<void>
 }
 
+export interface IWebViev {
+  webview: {
+    hostObjects: {
+      WebUIBinding: WebUiBindingType
+    }
+  }
+}
+
 export type WebUiBindingType = {
   getAccounts: () => Promise<string>
   sayHi: (name: string) => Promise<string>
   getSourceAppName: () => Promise<string>
+  openDevTools: () => Promise<void>
 }
 
 export const MockedBindings: WebUiBindingType = {
@@ -36,5 +45,8 @@ export const MockedBindings: WebUiBindingType = {
   },
   async getSourceAppName() {
     return 'Mocked App'
+  },
+  async openDevTools() {
+    console.log('Open it yourself. I am just a set of mocked bindings!!!')
   }
 }

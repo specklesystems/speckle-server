@@ -14,10 +14,15 @@
               class="hidden md:inline-block"
             /> -->
             <PortalTarget name="navigation"></PortalTarget>
+            <FormButton size="xs" color="card" @click="$bindings.openDevTools()">
+              Show Dev Tools
+            </FormButton>
           </div>
         </div>
       </div>
     </div>
   </nav>
 </template>
-<script setup lang="ts"></script>
+<script setup lang="ts">
+const { $bindings } = useNuxtApp()
+</script>

@@ -5,7 +5,9 @@ import { resolveClientConfig } from '~/lib/core/configs/apollo'
 import { Account } from '~/types'
 
 export type DUIAccount = {
+  /** account info coming from the host app */
   accountInfo: Account
+  /** the graphql client; a bit superflous */
   client: ApolloClient<unknown>
 }
 
