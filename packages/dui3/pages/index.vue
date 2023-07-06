@@ -6,7 +6,7 @@
         <strong>{{ clientId }}:</strong>
         {{ res.result.value?.serverInfo.version || '' }}
       </div>
-      <button @click="onSendStream">Send Stream</button>
+      <button style="border-width: 5px" @click="onInitMapper">Init Mapper</button>
     </div>
     <Portal to="navigation">
       <HeaderNavLink :to="'/'" :name="'Home'"></HeaderNavLink>
@@ -18,7 +18,7 @@ import { UseQueryReturn, useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import { ServerInfoTestQuery } from '~/lib/common/generated/gql/graphql'
 import { execHost } from '../types/execHost'
-import { sendStream } from '../commands/sendStream'
+import { initMapper } from '../commands/initMapper'
 
 defineNuxtPlugin({})
 
@@ -30,9 +30,9 @@ const versionQuery = graphql(`
   }
 `)
 
-const onSendStream = () => {
-  console.log('send stream')
-  execHost(sendStream)
+const onInitMapper = () => {
+  console.log('init mapper')
+  execHost(initMapper)
 }
 
 /**
