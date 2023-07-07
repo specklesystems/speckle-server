@@ -61,6 +61,7 @@ import { BatchObject } from './batching/BatchObject'
 import SpecklePointMaterial from './materials/SpecklePointMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import { Measurements } from './measurements/Measurements'
+import { MaterialOptions } from './materials/Materials'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -657,13 +658,14 @@ export default class SpeckleRenderer {
     ids: NodeRenderView[],
     material: SpeckleStandardMaterial | SpecklePointMaterial
   ) {
+    const materialOptions = { needsCopy: true } as MaterialOptions
     this.filterBatchRecording.push(
       ...this.batcher.setObjectsMaterial(ids, (rv: NodeRenderView) => {
         return {
           offset: rv.batchStart,
           count: rv.batchCount,
           material,
-          materialOptions: null
+          materialOptions
         }
       })
     )

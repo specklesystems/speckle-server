@@ -23,12 +23,14 @@ import { getConversionFactor } from '../converter/Units'
 import SpeckleGhostMaterial from './SpeckleGhostMaterial'
 import Logger from 'js-logger'
 import SpeckleTextMaterial from './SpeckleTextMaterial'
+import { SpeckleMaterial } from './SpeckleMaterial'
 
 export interface MaterialOptions {
   rampIndex?: number
   rampIndexColor?: Color
   rampTexture?: Texture
   rampWidth?: number
+  needsCopy?: boolean
 }
 
 export default class Materials {
@@ -110,10 +112,12 @@ export default class Materials {
   }
 
   public static fastCopy(from: Material, to: Material) {
-    to.setValues(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
-      (({ uuid, uniforms, userData, onBeforeCompile, version, ...o }) => o)(from as any)
-    )
+    ;(to as unknown as SpeckleMaterial).fastCopy(from, to)
+    /** Doing it via three.js is slow as hell */
+    // to.setValues(
+    //   // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+    //   (({ uuid, uniforms, userData, onBeforeCompile, version, ...o }) => o)(from as any)
+    // )
   }
 
   public static isTransparent(material: Material) {

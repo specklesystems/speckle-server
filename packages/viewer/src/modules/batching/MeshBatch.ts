@@ -122,7 +122,10 @@ export default class MeshBatch implements Batch {
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
-        value.material = this.mesh.getCachedMaterial(value.material)
+        value.material = this.mesh.getCachedMaterial(
+          value.material,
+          value.materialOptions?.needsCopy
+        )
       }
     })
     const materials = ranges.map((val) => val.material)

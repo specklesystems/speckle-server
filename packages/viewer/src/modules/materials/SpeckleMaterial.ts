@@ -96,6 +96,48 @@ export class SpeckleMaterial {
     shader.vertexShader = this.vertexShader
     shader.fragmentShader = this.fragmentShader
   }
+
+  public fastCopy(from: Material, to: Material) {
+    to.alphaTest = from.alphaTest
+    to.alphaToCoverage = from.alphaToCoverage
+    to.blendDst = from.blendDst
+    to.blendDstAlpha = from.blendDstAlpha
+    to.blendEquation = from.blendEquation
+    to.blendEquationAlpha = from.blendEquationAlpha
+    to.blending = from.blending
+    to.blendSrc = from.blendSrc
+    to.blendSrcAlpha = from.blendSrcAlpha
+    to.clipIntersection = from.clipIntersection
+    to.clippingPlanes = from.clippingPlanes
+    to.clipShadows = from.clipShadows
+    to.colorWrite = from.colorWrite
+    Object.assign(to.defines, from.defines)
+    to.depthFunc = from.depthFunc
+    to.depthTest = from.depthTest
+    to.depthWrite = from.depthWrite
+    to.fog = from.fog
+    to.format = from.format
+    to.stencilWrite = from.stencilWrite
+    to.stencilFunc = from.stencilFunc
+    to.stencilRef = from.stencilRef
+    to.stencilWriteMask = from.stencilWriteMask
+    to.stencilFuncMask = from.stencilFuncMask
+    to.stencilFail = from.stencilFail
+    to.stencilZFail = from.stencilZFail
+    to.stencilZPass = from.stencilZPass
+    to.opacity = from.opacity
+    to.polygonOffset = from.polygonOffset
+    to.polygonOffsetFactor = from.polygonOffsetFactor
+    to.polygonOffsetUnits = from.polygonOffsetUnits
+    to.premultipliedAlpha = from.premultipliedAlpha
+    to.dithering = from.dithering
+    to.side = from.side
+    to.shadowSide = from.shadowSide
+    to.toneMapped = from.toneMapped
+    to.transparent = from.transparent
+    to.vertexColors = from.vertexColors
+    to.visible = from.visible
+  }
 }
 
 export class ExtendedMeshStandardMaterial extends MeshStandardMaterial {}
