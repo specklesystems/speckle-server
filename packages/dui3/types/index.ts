@@ -17,36 +17,45 @@ export type Account = {
   }
 }
 
-export interface ICefSharp {
-  BindObjectAsync: (arg: string) => Promise<void>
+type FileState = {
+  models: ModelCard[]
 }
 
-export interface IWebViev {
-  webview: {
-    hostObjects: {
-      WebUIBinding: WebUiBindingType
-    }
-  }
+type ModelCard = {
+  serverUrl: string
+  modelId: string
+  projectId: string
+  type: 'sender' | 'receiver'
+  lastUpdatedAt: Date
+  // settings: Record<string,unknown>???
+  // report: Record<string,unknown>???
+  // progress: Record<string,unknown>???
 }
 
-export type WebUiBindingType = {
-  getAccounts: () => Promise<string>
+export type IWebUiBinding = {
   sayHi: (name: string) => Promise<string>
-  getSourceAppName: () => Promise<string>
   openDevTools: () => Promise<void>
+  getAccounts: () => Promise<Account[]>
+  getSourceAppName: () => Promise<string>
+  // etc.
+  getFileState: () => Promise<FileState>
 }
 
-export const MockedBindings: WebUiBindingType = {
-  async getAccounts() {
-    return '[]'
-  },
+export const MockedBindings: IWebUiBinding = {
   async sayHi(name: string) {
     return `Hi ${name} from (mocked bindings)!`
+  },
+  async openDevTools() {
+    // eslint-disable-next-line no-alert
+    window.alert('Mocked bindings cannot do this. Sorry :(')
+  },
+  async getAccounts() {
+    return []
   },
   async getSourceAppName() {
     return 'Mocked App'
   },
-  async openDevTools() {
-    console.log('Open it yourself. I am just a set of mocked bindings!!!')
+  async getFileState() {
+    return { models: [] }
   }
 }
