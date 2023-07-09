@@ -29,7 +29,7 @@ export async function useAccountsSetup() {
 
   // Matches local accounts coming from the host app to app state.
   const refreshAccounts = async () => {
-    const accs = JSON.parse(await $bindings.getAccounts()) as Account[]
+    const accs = await $bindings.getAccounts()
     const newAccs = [] as DUIAccount[]
     for (const acc of accs) {
       const existing = accounts.value.find((a) => a.accountInfo.id === acc.id)
@@ -53,10 +53,16 @@ export async function useAccountsSetup() {
     accounts.value = newAccs
   }
 
+  // Call this one first to initialize the account state
   await refreshAccounts()
+
+  const defaultAccount = computed(() =>
+    accounts.value.find((acc) => acc.accountInfo.isDefault)
+  )
 
   const accState = {
     accounts,
+    defaultAccount,
     refreshAccounts
   }
 

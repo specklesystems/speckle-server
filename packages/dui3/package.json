@@ -34,6 +34,7 @@
     "graphql": "^16.6.0",
     "graphql-tag": "^2.12.6",
     "lodash-es": "^4.17.21",
+    "nanoevents": "^8.0.0",
     "portal-vue": "^3.0.0",
     "subscriptions-transport-ws": "^0.11.0"
   },

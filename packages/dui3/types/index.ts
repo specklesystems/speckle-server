@@ -1,3 +1,4 @@
+import { createNanoEvents, Emitter } from 'nanoevents'
 /* eslint-disable @typescript-eslint/require-await */
 export type Account = {
   id: string
@@ -30,17 +31,46 @@ type ModelCard = {
   // settings: Record<string,unknown>???
   // report: Record<string,unknown>???
   // progress: Record<string,unknown>???
+  status: 'idle' | 'inprogress' | 'error' | 'warning' | 'disabled'
 }
 
-export type IWebUiBinding = {
+type TestData = {
+  foo: number
+  bar: string
+  baz: boolean
+}
+
+export interface HostAppEvents {
+  test: (data: TestData) => void
+  documentChanged: () => void
+  selectionChanged: () => void
+  documentClosed: () => void
+  updateModelCardState: () => void
+  displayToastNotification: () => void // bla bla bla
+}
+
+export interface IWebUiBinding {
   sayHi: (name: string) => Promise<string>
   openDevTools: () => Promise<void>
   getAccounts: () => Promise<Account[]>
   getSourceAppName: () => Promise<string>
-  // etc.
-  getFileState: () => Promise<FileState>
+  // getFileState: () => Promise<FileState>
+  // addModelCard(string modelId, string projectId), removeModelCard(...) // etc. etc.
+  /**
+   * Subscribe to messages from the host application.
+   * @param event
+   * @param callback
+   */
+  on: <E extends keyof HostAppEvents>(event: E, callback: HostAppEvents[E]) => void
+  /**
+   * Used by the host application to notify/send data to the web app. Do not use from the frontend.
+   * @param eventName
+   * @param args
+   */
+  emit?: (eventName: string, args: Record<string, unknown>) => void
 }
 
+const mockedEmitter = createNanoEvents<HostAppEvents>()
 export const MockedBindings: IWebUiBinding = {
   async sayHi(name: string) {
     return `Hi ${name} from (mocked bindings)!`
@@ -57,5 +87,8 @@ export const MockedBindings: IWebUiBinding = {
   },
   async getFileState() {
     return { models: [] }
+  },
+  on<E extends keyof HostAppEvents>(event: E, callback: HostAppEvents[E]) {
+    return mockedEmitter.on(event, callback)
   }
 }

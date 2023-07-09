@@ -18,6 +18,7 @@
           {{ acc.accountInfo.serverInfo.name }}
         </div>
       </div>
+      <div>Your default account is {{ defaultAccount?.accountInfo }}</div>
       <div>
         <div v-for="(res, clientId) in queries" :key="clientId">
           <strong>{{ clientId }}:</strong>
@@ -38,7 +39,7 @@ import { ServerInfoTestQuery } from '~/lib/common/generated/gql/graphql'
 
 const { $bindings } = useNuxtApp()
 const appName = await $bindings.getSourceAppName()
-const { accounts, refreshAccounts } = await useAccountsSetup()
+const { accounts, refreshAccounts, defaultAccount } = await useAccountsSetup()
 
 const versionQuery = graphql(`
   query ServerInfoTest {
