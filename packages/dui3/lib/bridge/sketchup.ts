@@ -1,12 +1,15 @@
 // TODO
-import { rejects } from 'assert'
 import { uniqueId } from 'lodash-es'
-import { resolve } from 'path'
 
 declare let sketchup: {
   exec: (data: Record<string, unknown>) => void
 }
 
+/**
+ * This class operates in different way than the others, because calls into Sketchup are one way only.
+ * E.g., we cannot return values from internal calls to it (e.g., const test = sketchup.rubyCall() does not work ).
+ * Values are passed back
+ */
 export class SketchupBridge {
   private requests = {} as Record<
     string,
@@ -19,38 +22,51 @@ export class SketchupBridge {
   private bindingsName: string
   private TIMEOUT_MS = 2000 // 2s
   public isInitalized: Promise<void>
-  private isInitializedResolved!: () => unknown
+  private resolveIsInitializedPromise!: () => unknown
 
   constructor(bindingsName: string) {
-    // window.sketchup
     this.bindingsName = bindingsName || 'default_bindings'
 
+    // Initialization continues in the receiveCommandsAndInitializeBridge function,
+    // where we expect sketchup to return to us the command names.
     sketchup.exec({ name: 'get_commands' })
-    // Initialization continues in the receiveCommandsAndInitializeBridge function
 
     this.isInitalized = new Promise((resolve, reject) => {
-      // TODO
-      this.isInitializedResolved = resolve
+      this.resolveIsInitializedPromise = resolve
+      setTimeout(
+        () =>
+          reject(
+            `Failed to get command names from Sketchup; timed out after ${this.TIMEOUT_MS}ms.`
+          ),
+        this.TIMEOUT_MS
+      )
     })
   }
 
-  // executeScript(...) from skp
+  /**
+   * Will be called by `executeScript('bindings.receiveCommandsAndInitializeBridge()')` from sketchup. This is where the hoisting happens.
+   * NOTE: Oguhzan, we can defintively have commandNames be a string, and not a string[]
+   * And do JSON.parse() here to get them out properly.
+   * @param commandNames
+   */
   private receiveCommandsAndInitializeBridge(commandNames: string[]) {
     const hoistTarget = this as unknown as Record<string, unknown>
-
     for (const commandName of commandNames) {
       hoistTarget[commandName] = (...args: unknown[]) =>
         this.runMethod(commandName, args)
     }
 
-    // this.isInitalized = true
-    this.isInitializedResolved()
+    this.resolveIsInitializedPromise()
   }
 
+  /**
+   * Internal calls to Sketchup.
+   * @param methodName
+   * @param args
+   */
   private async runMethod(methodName: string, args: unknown[]): Promise<unknown> {
     const requestId = uniqueId(this.bindingsName)
 
-    // The single exec way
     sketchup.exec({ name: methodName, requestId, args })
 
     return new Promise((resolve, reject) => {
@@ -59,22 +75,22 @@ export class SketchupBridge {
         reject,
         rejectTimerId: window.setTimeout(() => {
           reject(
-            'Sketchup response timed out - did not receive anything back in good time.'
+            `Sketchup response timed out - did not receive anything back in good time (${this.TIMEOUT_MS}ms).`
           )
-          // TODO: clear request from requests object
+          delete this.requests[requestId]
         }, this.TIMEOUT_MS)
       }
     })
   }
 
   private receiveResponse(requestId: string, data: string) {
-    // TODO
-    if (!this.requests[requestId]) return // throw new error?
+    if (!this.requests[requestId])
+      throw new Error(
+        `Sketchup Bridge found no request to resolve with the id of ${requestId}. Something is weird!`
+      )
     const request = this.requests[requestId]
     try {
-      // TODO: resolve also if data is null, it means it's a
-      // 'void' function call (does not return anything)
-      const parsedData = JSON.parse(data) as Record<string, unknown>
+      const parsedData = JSON.parse(data) as Record<string, unknown> // TODO: check if data is undefined
       request.resolve(parsedData)
     } catch (e) {
       request.reject(e as Error)

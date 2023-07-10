@@ -1,5 +1,6 @@
-import { createNanoEvents, Emitter } from 'nanoevents'
 /* eslint-disable @typescript-eslint/require-await */
+import { createNanoEvents } from 'nanoevents'
+
 export type Account = {
   id: string
   isDefault: boolean

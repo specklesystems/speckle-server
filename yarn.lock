@@ -10933,6 +10933,7 @@ __metadata:
     graphql: ^16.6.0
     graphql-tag: ^2.12.6
     lodash-es: ^4.17.21
+    nanoevents: ^8.0.0
     nuxt: ^3.5.0
     portal-vue: ^3.0.0
     postcss: ^8.4.18
@@ -32759,6 +32760,13 @@ __metadata:
   dependencies:
     node-gyp: latest
   checksum: 33e1bb4dfca447fe37d4bb5889be55de154828632c8d38646db67293a21afd61ed9909cdf1b886214a64707d935926c4e60e2b09de9edfc2ad58de31d6ce8f39
+  languageName: node
+  linkType: hard
+
+"nanoevents@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "nanoevents@npm:8.0.0"
+  checksum: 46806fb1bca823de1dac0ec38352c9ebd25dd9f2186eada6357f2941983203c1c77fc383e460852a139b4ced569af2a2777f82cb574f705fd6f8402497f4bfc2
   languageName: node
   linkType: hard
 
