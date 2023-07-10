@@ -290,24 +290,28 @@ export class Differ {
       mat.opacity =
         mat['clampOpacity'] !== undefined ? Math.min(from, mat['clampOpacity']) : from
       mat.depthWrite = from < 0.5 ? false : true
+      mat.transparent = mat.opacity < 1
     })
 
     this.changedOldMaterials.forEach((mat) => {
       mat.opacity =
         mat['clampOpacity'] !== undefined ? Math.min(to, mat['clampOpacity']) : to
       mat.depthWrite = to < 0.5 ? false : true
+      mat.transparent = mat.opacity < 1
     })
 
     this.changedNewMaterials.forEach((mat) => {
       mat.opacity =
         mat['clampOpacity'] !== undefined ? Math.min(from, mat['clampOpacity']) : from
       mat.depthWrite = from < 0.5 ? false : true
+      mat.transparent = mat.opacity < 1
     })
 
     this.removedMaterials.forEach((mat) => {
       mat.opacity =
         mat['clampOpacity'] !== undefined ? Math.min(to, mat['clampOpacity']) : to
       mat.depthWrite = to < 0.5 ? false : true
+      mat.transparent = mat.opacity < 1
     })
   }
 
