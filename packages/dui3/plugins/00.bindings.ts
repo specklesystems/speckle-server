@@ -1,6 +1,7 @@
 import { IWebUiBinding, MockedBindings } from '~/types'
 import { WebView2Bridge } from '~/lib/bridge/webview'
 import { CefSharpBridge } from '~/lib/bridge/cefSharp'
+import { SketchupBridge } from '~/lib/bridge/sketchup'
 
 interface ICefSharp {
   BindObjectAsync: (arg: string) => Promise<void>
@@ -49,6 +50,10 @@ export default defineNuxtPlugin(async () => {
     if (!sketchup) throw new Error('No global sketchup object found.')
     console.info('Found Sketchup. Hi SketchUp! We have yet... a lot of work to do :) ')
     // TODO
+    const skpBindings = new SketchupBridge('default_bindings')
+    await skpBindings.isInitalized // resolve({...})
+
+    bindings = skpBindings as unknown as IWebUiBinding
   } catch (e) {
     console.warn('Failed to bind sketchup.')
     console.warn(e)
@@ -61,9 +66,14 @@ export default defineNuxtPlugin(async () => {
 
   ;(globalThis as Record<string, unknown>).bindings = bindings
 
-  bindings.on('test', (args) => {
-    console.log(args)
-  })
+  // bindings.on('test', (args) => {
+  //   console.log(args)
+  // })
+
+  // bindings.on('documentChanged', (args) => {
+  //   // do somethings
+  //   args.x
+  // })
 
   return {
     provide: {

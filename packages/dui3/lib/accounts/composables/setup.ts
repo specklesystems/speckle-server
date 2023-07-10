@@ -1,6 +1,6 @@
 import { ApolloClient } from '@apollo/client/core'
 import { ApolloClients } from '@vue/apollo-composable'
-import { ShallowRef } from 'vue'
+import { ShallowRef, ComputedRef } from 'vue'
 import { resolveClientConfig } from '~/lib/core/configs/apollo'
 import { Account } from '~/types'
 
@@ -14,15 +14,16 @@ export type DUIAccount = {
 export type DUIAccountsState = {
   accounts: ShallowRef<DUIAccount[]>
   refreshAccounts: () => Promise<void>
+  defaultAccount: ComputedRef<DUIAccount | undefined>
 }
 
 const AccountsInjectionKey = 'DUI_ACCOUNTS_STATE'
 
-export async function useAccountsSetup() {
+export async function useAccountsSetup(): Promise<DUIAccountsState> {
   const app = useNuxtApp()
   const $bindings = app.$bindings
 
-  // Using a shallow ref as we don't need inner values reactive
+  // Using a shallow ref as we don't need inner values reactive (could be a needlessly big return from host app)
   const accounts = shallowRef([] as DUIAccount[])
 
   const apolloClients = {} as Record<string, ApolloClient<unknown>>
@@ -54,6 +55,7 @@ export async function useAccountsSetup() {
   }
 
   // Call this one first to initialize the account state
+  // QUESTION: could be flopped in a iife so as not to block and drop the asyncness of this setup function?
   await refreshAccounts()
 
   const defaultAccount = computed(() =>
@@ -71,7 +73,7 @@ export async function useAccountsSetup() {
   return accState
 }
 
-export function useInjectedAccounts() {
+export function useInjectedAccounts(): DUIAccountsState {
   const state = inject(AccountsInjectionKey) as DUIAccountsState
   return state
 }

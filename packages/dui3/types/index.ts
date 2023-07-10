@@ -23,8 +23,8 @@ type FileState = {
 }
 
 type ModelCard = {
-  serverUrl: string
-  modelId: string
+  serverUrl: string // we need to select the correct account
+  modelId: string // we need to assemble the gql query properly
   projectId: string
   type: 'sender' | 'receiver'
   lastUpdatedAt: Date
@@ -40,15 +40,17 @@ type TestData = {
   baz: boolean
 }
 
+// .NET/Host App -> JS
 export interface HostAppEvents {
   test: (data: TestData) => void
-  documentChanged: () => void
+  documentChanged: (data: { x: number; y: boolean }) => void
   selectionChanged: () => void
   documentClosed: () => void
   updateModelCardState: () => void
   displayToastNotification: () => void // bla bla bla
 }
 
+// JS -> asks for something form host app
 export interface IWebUiBinding {
   sayHi: (name: string) => Promise<string>
   openDevTools: () => Promise<void>
@@ -56,6 +58,7 @@ export interface IWebUiBinding {
   getSourceAppName: () => Promise<string>
   // getFileState: () => Promise<FileState>
   // addModelCard(string modelId, string projectId), removeModelCard(...) // etc. etc.
+
   /**
    * Subscribe to messages from the host application.
    * @param event

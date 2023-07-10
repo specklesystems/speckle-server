@@ -50,11 +50,9 @@ const versionQuery = graphql(`
 `)
 
 watch(accounts, () => {
-  console.log('accs ref')
+  console.log('accounts were refreshed, shallow ref does its job')
 })
-/**
- * Imagine these come from window or something
- */
+
 const clientIds = accounts.value.map((a) => a.accountInfo.id)
 
 const queries: Record<
