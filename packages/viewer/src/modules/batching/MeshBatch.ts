@@ -279,9 +279,23 @@ export default class MeshBatch implements Batch {
   }
 
   public removeDrawRanges(id: string) {
+    const materialCount = (this.mesh.material as Material[]).length
+    const materialIndex = this.geometry.groups.find(
+      (value) => value['id'] === id
+    )?.materialIndex
+    if (!materialIndex) {
+      return
+    }
+
     this.geometry.groups = this.geometry.groups.filter((value) => {
       return !(value['id'] && value['id'] === id)
     })
+    ;(this.mesh.material as Material[]).splice(materialIndex, 1)
+    if (materialIndex !== materialCount - 1) {
+      this.geometry.groups.forEach((value) => {
+        if (value.materialIndex > materialIndex) value.materialIndex--
+      })
+    }
   }
 
   private getDrawRangeCollision(range: BatchUpdateRange): {
