@@ -61,6 +61,7 @@ import { BatchObject } from './batching/BatchObject'
 import SpecklePointMaterial from './materials/SpecklePointMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import { Measurements } from './measurements/Measurements'
+import { MaterialOptions } from './materials/Materials'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -89,7 +90,7 @@ export default class SpeckleRenderer {
   private sunTarget: Object3D
   private sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
   public viewer: Viewer // TEMPORARY
-  private filterBatchRecording: string[]
+  private filterBatchRecording: string[] = []
   private pipeline: Pipeline
   private lastSectionPlanes: Plane[] = []
   private sectionPlanesChanged: Plane[] = []
@@ -645,17 +646,26 @@ export default class SpeckleRenderer {
     )
   }
 
+  public applyDirectFilter(ids: NodeRenderView[], filterMaterial: FilterMaterial) {
+    return this.batcher.insertObjectsFilterMaterial(ids, filterMaterial)
+  }
+
+  public removeDirectFilter(id: string) {
+    this.batcher.removeObjectsMaterial(id)
+  }
+
   public applyMaterial(
     ids: NodeRenderView[],
     material: SpeckleStandardMaterial | SpecklePointMaterial
   ) {
+    const materialOptions = { needsCopy: true } as MaterialOptions
     this.filterBatchRecording.push(
       ...this.batcher.setObjectsMaterial(ids, (rv: NodeRenderView) => {
         return {
           offset: rv.batchStart,
           count: rv.batchCount,
           material,
-          materialOptions: null
+          materialOptions
         }
       })
     )

@@ -509,6 +509,55 @@ export default class Batcher {
     return batchIds
   }
 
+  public insertObjectsFilterMaterial(
+    rvs: NodeRenderView[],
+    filterMaterial: FilterMaterial
+  ): string {
+    let renderViews = rvs
+    renderViews = [...Array.from(new Set(rvs.map((value) => value)))]
+    const batchIds = [...Array.from(new Set(renderViews.map((value) => value.batchId)))]
+    const id = generateUUID()
+    for (let i = 0; i < batchIds.length; i++) {
+      if (!batchIds[i]) {
+        continue
+      }
+      const batch = this.batches[batchIds[i]]
+      const batchRenderViews = renderViews.filter(
+        (value) => value.batchId === batchIds[i]
+      )
+      const opaqueRvs = batchRenderViews.filter((rv) => !rv.transparent)
+      const transparentRvs = batchRenderViews.filter((rv) => rv.transparent)
+      let opaqueMaterial, transparentMaterial
+      if (opaqueRvs.length)
+        opaqueMaterial = this.materials
+          .getFilterMaterial(opaqueRvs[0], filterMaterial.filterType)
+          .clone() as Material
+      if (transparentRvs.length)
+        transparentMaterial = this.materials
+          .getFilterMaterial(transparentRvs[0], filterMaterial.filterType)
+          .clone() as Material
+      const views = batchRenderViews.map((rv: NodeRenderView) => {
+        return {
+          offset: rv.batchStart,
+          count: rv.batchCount,
+          material: rv.transparent ? transparentMaterial : opaqueMaterial,
+          materialOptions: this.materials.getFilterMaterialOptions(filterMaterial),
+          id
+        } as BatchUpdateRange
+      })
+      batch.insertDrawRanges(...views)
+    }
+    return id
+  }
+
+  public removeObjectsMaterial(id: string) {
+    for (const k in this.batches) {
+      if (this.batches[k]) {
+        this.batches[k].removeDrawRanges(id)
+      }
+    }
+  }
+
   public autoFillDrawRanges(batchIds: string[]) {
     const uniqueBatches = [...Array.from(new Set(batchIds.map((value) => value)))]
     uniqueBatches.forEach((value) => {
