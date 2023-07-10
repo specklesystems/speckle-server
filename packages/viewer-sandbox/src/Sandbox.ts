@@ -1016,6 +1016,8 @@ export default class Sandbox {
         // bug
         // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/03f0a8bf0ed8064865eda87a865c7212',
         // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/33ef6b9b547dc9688eb40157b967eab9',
+        // 'https://speckle.xyz/streams/e6f9156405/objects/650f358d8aac50168d9e9226ef6f5cbc',
+        // 'https://latest.speckle.dev/streams/92b620fb17/objects/1154ca1d997ac631571db55f84cb703d',
 
         VisualDiffMode.COLORED,
         localStorage.getItem('AuthTokenLatest') as string
