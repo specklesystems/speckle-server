@@ -693,8 +693,9 @@ export default class SpeckleRenderer {
     }, {})
   }
 
-  public updateClippingPlanes(planes: Plane[]) {
+  public updateClippingPlanes(planes?: Plane[]) {
     if (!this.allObjects) return
+    if (!planes) planes = this.viewer.sectionBox.planes
     /** This will be done via the batches in the near future */
     this.allObjects.traverse((object) => {
       const material = (object as unknown as { material }).material

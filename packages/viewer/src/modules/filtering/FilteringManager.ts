@@ -367,6 +367,7 @@ export class FilteringManager extends EventEmitter {
         }
       )
     }
+    this.Renderer.updateClippingPlanes()
     this.Renderer.viewer.requestRender()
     this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
     return this.CurrentFilteringState
@@ -508,6 +509,7 @@ export class FilteringManager extends EventEmitter {
       this.Renderer.removeDirectFilter(this.SelectionState.id)
     }
     this.SelectionState = new GenericRvState()
+    this.Renderer.updateClippingPlanes()
     this.Renderer.viewer.requestRender()
     this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
     return this.CurrentFilteringState
