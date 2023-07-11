@@ -276,7 +276,7 @@ export function useApplySerializedState() {
         instruction.versionA.versionId,
         instruction.versionB.versionId
       )
-    } else if (!activeDiffEnabled) {
+    } else if (!activeDiffEnabled || mode === StateApplyMode.Spotlight) {
       await endDiff()
     }
 
