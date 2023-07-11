@@ -57,6 +57,8 @@ spec:
             value: {{ .Values.analytics.mixpanel_token_id }}
           - name: NUXT_PUBLIC_MIXPANEL_API_HOST
             value: {{ .Values.analytics.mixpanel_api_host }}
+          - name: NUXT_PUBLIC_LOG_LEVEL
+            value: {{ .Values.frontend_2.logLevel }}
 
       priorityClassName: high-priority
       {{- if .Values.frontend_2.affinity }}
