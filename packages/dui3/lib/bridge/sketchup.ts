@@ -8,7 +8,9 @@ declare let sketchup: {
 /**
  * This class operates in different way than the others, because calls into Sketchup are one way only.
  * E.g., we cannot return values from internal calls to it (e.g., const test = sketchup.rubyCall() does not work ).
- * Values are passed back
+ * This class basically makes the sketchup bindings work in the same way as cef/webview by returning a promise
+ * on each method call. That promise is either resolved once sketchup sends back (via receiveResponse) a corresponding
+ * reply, or it's rejected after a given TIMEOUT_MS (currently 2s).
  */
 export class SketchupBridge {
   private requests = {} as Record<
@@ -27,10 +29,6 @@ export class SketchupBridge {
   constructor(bindingsName: string) {
     this.bindingsName = bindingsName || 'default_bindings'
 
-    // Initialization continues in the receiveCommandsAndInitializeBridge function,
-    // where we expect sketchup to return to us the command names.
-    sketchup.exec({ name: 'get_commands' })
-
     this.isInitalized = new Promise((resolve, reject) => {
       this.resolveIsInitializedPromise = resolve
       setTimeout(
@@ -41,6 +39,12 @@ export class SketchupBridge {
         this.TIMEOUT_MS
       )
     })
+    // NOTE: we need to hoist the bindings in global scope here, before
+    ;(globalThis as Record<string, unknown>).bindings = this
+
+    // Initialization continues in the receiveCommandsAndInitializeBridge function,
+    // where we expect sketchup to return to us the command names.
+    sketchup.exec({ name: 'get_commands' })
   }
 
   /**
@@ -49,7 +53,8 @@ export class SketchupBridge {
    * And do JSON.parse() here to get them out properly.
    * @param commandNames
    */
-  private receiveCommandsAndInitializeBridge(commandNames: string[]) {
+  private receiveCommandsAndInitializeBridge(commandNamesString: string) {
+    const commandNames = JSON.parse(commandNamesString) as string[]
     const hoistTarget = this as unknown as Record<string, unknown>
     for (const commandName of commandNames) {
       hoistTarget[commandName] = (...args: unknown[]) =>
