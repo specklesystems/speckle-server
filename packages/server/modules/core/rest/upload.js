@@ -26,7 +26,20 @@ module.exports = (app) => {
       return res.status(hasStreamAccess.status).end()
     }
 
-    const busboy = Busboy({ headers: req.headers })
+    let busboy
+    try {
+      busboy = Busboy({ headers: req.headers })
+    } catch (e) {
+      req.log.warn(
+        e,
+        'Failed to parse request headers and body content as valid multipart/form-data.'
+      )
+      return res
+        .status(400)
+        .send(
+          'Failed to parse request headers and body content as valid multipart/form-data.'
+        )
+    }
     let totalProcessed = 0
     // let last = {}
 
