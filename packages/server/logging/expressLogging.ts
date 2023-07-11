@@ -33,6 +33,31 @@ export const LoggingExpressMiddleware = HttpLogger({
     }
     return 'info'
   },
+  redact: {
+    paths: [
+      'req.headers.authorization',
+      'req.headers.cookie',
+      'req.headers["cf-connecting-ip"]',
+      'req.headers["true-client-ip"]',
+      'req.headers["x-real-ip"]',
+      'req.headers["x-forwarded-for"]'
+    ],
+    censor: (value, path) => {
+      if (
+        path.length === 3 &&
+        path[0] === 'req' &&
+        path[1] === 'headers' &&
+        path[2] === 'authorization' &&
+        typeof value === 'string'
+      ) {
+        if (value.toLocaleLowerCase().startsWith('bearer ')) {
+          return `${value.slice(0, 17)}[TRUNCATED(original_length:${value.length})]`
+        }
+        return `${value.slice(0, 10)}[TRUNCATED(original_length:${value.length})]`
+      }
+      return `[REDACTED(length:${value.length})]`
+    }
+  },
 
   // we need to redact any potential sensitive data from being logged.
   // as we do not know what headers may be sent in a request by a user or client
@@ -43,20 +68,8 @@ export const LoggingExpressMiddleware = HttpLogger({
         id: req.raw.id,
         method: req.raw.method,
         path: req.raw.url?.split('?')[0], // Remove query params which might be sensitive
-        // Allowlist useful headers
-        headers: Object.fromEntries(
-          Object.entries(req.raw.headers).filter(
-            ([key]) =>
-              ![
-                'cookie',
-                'authorization',
-                'cf-connecting-ip',
-                'true-client-ip',
-                'x-real-ip',
-                'x-forwarded-for'
-              ].includes(key.toLocaleLowerCase())
-          )
-        )
+        // headers are managed by the redact config above
+        headers: req.headers
       }
     }),
     res: pino.stdSerializers.wrapResponseSerializer((res) => {
@@ -68,7 +81,7 @@ export const LoggingExpressMiddleware = HttpLogger({
       return {
         statusCode: res.raw.statusCode,
         // Allowlist useful headers
-        headers: resRaw.raw.headers
+        headers: resRaw.headers
       }
     })
   }
