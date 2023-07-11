@@ -48,6 +48,8 @@
     "@typescript-eslint/parser": "^5.59.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
+    "pino": "^8.7.0",
+    "pino-http": "^8.0.0",
     "rollup": "^2.79.1",
     "rollup-plugin-delete": "^2.0.0",
     "rollup-plugin-typescript2": "^0.34.1",

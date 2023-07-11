@@ -11404,6 +11404,8 @@ __metadata:
     eslint-config-prettier: ^8.5.0
     lodash: ^4.17.0
     lodash-es: ^4.17.21
+    pino: ^8.7.0
+    pino-http: ^8.0.0
     rollup: ^2.79.1
     rollup-plugin-delete: ^2.0.0
     rollup-plugin-typescript2: ^0.34.1
@@ -35124,6 +35126,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pino-http@npm:^8.0.0, pino-http@npm:^8.3.3":
+  version: 8.3.3
+  resolution: "pino-http@npm:8.3.3"
+  dependencies:
+    get-caller-file: ^2.0.5
+    pino: ^8.0.0
+    pino-std-serializers: ^6.0.0
+    process-warning: ^2.0.0
+  checksum: 6d9fb4f9230dce04d934b3d6179b2b9a14654e8e0e6cb7344cd1d8baeb53d5c42e1d169dffe350379bfeb9e41b59dc0ec417fe86eb01d49a21e2bac031c2803e
+  languageName: node
+  linkType: hard
+
 "pino-http@npm:^8.2.1":
   version: 8.2.1
   resolution: "pino-http@npm:8.2.1"
@@ -35134,18 +35148,6 @@ __metadata:
     pino-std-serializers: ^6.0.0
     process-warning: ^2.0.0
   checksum: 7eb0d72a1986c16ab7ca22f193f9a5d1b26dc6614fddd4f7859065a410d86ab9cbb96a70a5758fa432dd1dd01c02a6e5774bba90f9a2e08ea0c1ac242af7ea0d
-  languageName: node
-  linkType: hard
-
-"pino-http@npm:^8.3.3":
-  version: 8.3.3
-  resolution: "pino-http@npm:8.3.3"
-  dependencies:
-    get-caller-file: ^2.0.5
-    pino: ^8.0.0
-    pino-std-serializers: ^6.0.0
-    process-warning: ^2.0.0
-  checksum: 6d9fb4f9230dce04d934b3d6179b2b9a14654e8e0e6cb7344cd1d8baeb53d5c42e1d169dffe350379bfeb9e41b59dc0ec417fe86eb01d49a21e2bac031c2803e
   languageName: node
   linkType: hard
 
