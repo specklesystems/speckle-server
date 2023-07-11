@@ -47,6 +47,8 @@ export default defineNuxtPlugin(async () => {
     console.warn(e)
   }
 
+  // The sketchup ruby side is in flux. We know though that
+  // this part will work! Nevertheless, it will currently throw if loaded in sketchup.
   try {
     if (!sketchup) throw new Error('No global sketchup object found.')
     console.info('Found Sketchup. Hi SketchUp! We have yet... a lot of work to do :) ')

@@ -39,11 +39,14 @@ export class SketchupBridge {
         this.TIMEOUT_MS
       )
     })
-    // NOTE: we need to hoist the bindings in global scope here, before
+
+    // NOTE: we need to hoist the bindings in global scope BEFORE we call sketchup exec get comands below.
     ;(globalThis as Record<string, unknown>).bindings = this
 
     // Initialization continues in the receiveCommandsAndInitializeBridge function,
     // where we expect sketchup to return to us the command names.
+    // NOTE: as we want to have multiple sketchup bindings in the future, we will
+    // most likely change this method to specify which view/plugin/bindings we want.
     sketchup.exec({ name: 'get_commands' })
   }
 
@@ -72,7 +75,13 @@ export class SketchupBridge {
   private async runMethod(methodName: string, args: unknown[]): Promise<unknown> {
     const requestId = uniqueId(this.bindingsName)
 
-    sketchup.exec({ name: methodName, requestId, args })
+    // TODO: more on the ruby end, but for now Oguzhan seems happy with this.
+    // Changes might be needed in the future.
+    sketchup.exec({
+      name: methodName,
+      // eslint-disable-next-line camelcase
+      data: { request_id: requestId, arguments: args }
+    })
 
     return new Promise((resolve, reject) => {
       this.requests[requestId] = {
