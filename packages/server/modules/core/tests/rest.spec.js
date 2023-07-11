@@ -214,7 +214,7 @@ describe('Upload/Download Routes @api-rest', () => {
       .attach('batch1', Buffer.from(JSON.stringify([objectToPost]), 'utf8'))
 
     expect(res).to.have.status(400)
-    expect(res.body.message).contains('Object too large')
+    expect(res.text).contains('Object too large')
   })
 
   let parentId
