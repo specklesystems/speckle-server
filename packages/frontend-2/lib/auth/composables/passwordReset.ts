@@ -1,17 +1,17 @@
 import { ensureError } from '@speckle/shared'
+import { useAuthManager } from '~~/lib/auth/composables/auth'
 import {
   requestResetEmail,
   finalizePasswordReset
 } from '~~/lib/auth/services/resetPassword'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { useNavigateToLogin } from '~~/lib/common/helpers/route'
 
 export function usePasswordReset() {
   const {
     public: { apiOrigin }
   } = useRuntimeConfig()
   const { triggerNotification } = useGlobalToast()
-  const goToLogin = useNavigateToLogin()
+  const { logout } = useAuthManager()
 
   const loading = ref(false)
 
@@ -44,7 +44,7 @@ export function usePasswordReset() {
         title: 'Password successfully changed',
         description: `You can now log in with your new password`
       })
-      goToLogin()
+      await logout({ skipToast: true })
     } catch (e) {
       triggerNotification({
         type: ToastNotificationType.Danger,

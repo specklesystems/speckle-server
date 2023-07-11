@@ -79,15 +79,26 @@ function useViewerObjectAutoLoading() {
     },
     resources: {
       response: { resourceItems }
-    }
+    },
+    urlHashState: { focusedThreadId }
   } = useInjectedViewerState()
 
-  const loadObject = (objectId: string, unload?: boolean) => {
+  const loadObject = (
+    objectId: string,
+    unload?: boolean,
+    options?: Partial<{ zoomToObject: boolean }>
+  ) => {
     const objectUrl = getObjectUrl(projectId.value, objectId)
     if (unload) {
       viewer.unloadObject(objectUrl)
     } else {
-      viewer.loadObjectAsync(objectUrl, authToken.value || undefined)
+      viewer.loadObjectAsync(
+        objectUrl,
+        authToken.value || undefined,
+        undefined,
+        undefined,
+        options?.zoomToObject
+      )
     }
   }
 
@@ -101,12 +112,15 @@ function useViewerObjectAutoLoading() {
       if (!newIsInitialized) return
 
       const [oldResources, oldIsInitialized] = oldData || [[], false]
+      const zoomToObject = !focusedThreadId.value // we want to zoom to the thread instead
 
       // Viewer initialized - load in all resources
       if (newIsInitialized && !oldIsInitialized) {
         const allObjectIds = getUniqueObjectIds(newResources)
 
-        await Promise.all(allObjectIds.map((i) => loadObject(i)))
+        await Promise.all(
+          allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
+        )
 
         return
       }
@@ -118,7 +132,9 @@ function useViewerObjectAutoLoading() {
       const addableObjectIds = difference(newObjectIds, oldObjectIds)
 
       await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
-      await Promise.all(addableObjectIds.map((i) => loadObject(i)))
+      await Promise.all(
+        addableObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
+      )
     },
     { deep: true, immediate: true }
   )
@@ -296,8 +312,6 @@ function useViewerCameraIntegration() {
       if (hasInitialLoadFired.value) target.value = viewerTarget.clone()
       cameraManuallyChanged = true
     }
-
-    // console.log('incomingCamera', viewerPos, viewerTarget)
 
     return cameraManuallyChanged
   }

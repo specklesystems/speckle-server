@@ -122,7 +122,10 @@ export default class MeshBatch implements Batch {
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
-        value.material = this.mesh.getCachedMaterial(value.material)
+        value.material = this.mesh.getCachedMaterial(
+          value.material,
+          value.materialOptions?.needsCopy
+        )
       }
     })
     const materials = ranges.map((val) => val.material)
@@ -193,6 +196,108 @@ export default class MeshBatch implements Batch {
     }
   }
 
+  public insertDrawRanges(...ranges: BatchUpdateRange[]) {
+    const materials = ranges.map((val) => val.material)
+    const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
+    if (!Array.isArray(this.mesh.material)) {
+      this.mesh.material = [this.mesh.material]
+    }
+    for (let k = 0; k < uniqueMaterials.length; k++) {
+      if (!this.mesh.material.includes(uniqueMaterials[k]))
+        this.mesh.material.push(uniqueMaterials[k])
+    }
+
+    const sortedRanges = ranges.sort((a, b) => {
+      return a.offset - b.offset
+    })
+
+    for (let i = 0; i < sortedRanges.length; i++) {
+      const group = {
+        start: sortedRanges[i].offset,
+        count: sortedRanges[i].count,
+        materialIndex: this.mesh.material.indexOf(sortedRanges[i].material),
+        id: sortedRanges[i].id
+      }
+      this.geometry.groups.push(group)
+    }
+
+    /** We're flattening sequential groups to avoid redundant draw calls.
+     *  ! Not thoroughly tested !
+     */
+    const materialOrder = []
+    this.geometry.groups.reduce((previousValue, currentValue) => {
+      if (previousValue.indexOf(currentValue.materialIndex) === -1) {
+        previousValue.push(currentValue.materialIndex)
+      }
+      return previousValue
+    }, materialOrder)
+    const grouped = []
+    for (let k = 0; k < materialOrder.length; k++) {
+      grouped.push(
+        this.geometry.groups.filter((val) => {
+          return val.materialIndex === materialOrder[k]
+        })
+      )
+    }
+    this.geometry.groups = []
+    for (let matIndex = 0; matIndex < grouped.length; matIndex++) {
+      const matGroup = grouped[matIndex]
+      for (let k = 0; k < matGroup.length; ) {
+        let offset = matGroup[k].start
+        let count = matGroup[k].count
+        let runningCount = matGroup[k].count
+        let n = k + 1
+        for (; n < matGroup.length; n++) {
+          if (offset + count === matGroup[n].start) {
+            offset = matGroup[n].start
+            count = matGroup[n].count
+            runningCount += matGroup[n].count
+          } else {
+            const group = {
+              start: matGroup[k].start,
+              count: runningCount,
+              materialIndex: matGroup[k].materialIndex,
+              id: matGroup[k].id
+            }
+            this.geometry.groups.push(group)
+            break
+          }
+        }
+        if (n === matGroup.length) {
+          const group = {
+            start: matGroup[k].start,
+            count: runningCount,
+            materialIndex: matGroup[k].materialIndex,
+            id: matGroup[k].id
+          }
+          this.geometry.groups.push(group)
+        }
+        k = n
+      }
+    }
+    // console.log(`Batch ${this.id} -> ${this.geometry.groups.length}`)
+  }
+
+  public removeDrawRanges(id: string) {
+    const materialCount = (this.mesh.material as Material[]).length
+    const materialIndex = this.geometry.groups.find(
+      (value) => value['id'] === id
+    )?.materialIndex
+    if (!materialIndex) {
+      return
+    }
+
+    this.geometry.groups = this.geometry.groups.filter((value) => {
+      return !(value['id'] && value['id'] === id)
+    })
+    ;(this.mesh.material as Material[]).splice(materialIndex, 1)
+    if (materialIndex !== materialCount - 1) {
+      this.geometry.groups.forEach((value) => {
+        if (value.materialIndex > materialIndex) value.materialIndex--
+      })
+    }
+  }
+
   private getDrawRangeCollision(range: BatchUpdateRange): {
     start: number
     count: number
@@ -200,7 +305,10 @@ export default class MeshBatch implements Batch {
   } {
     if (this.geometry.groups.length > 0) {
       for (let i = 0; i < this.geometry.groups.length; i++) {
-        if (range.offset === this.geometry.groups[i].start) {
+        if (
+          range.offset === this.geometry.groups[i].start &&
+          range.count === this.geometry.groups[i].count
+        ) {
           return this.geometry.groups[i]
         }
       }
@@ -218,11 +326,20 @@ export default class MeshBatch implements Batch {
   }
 
   public autoFillDrawRanges() {
-    // this.autoFillDrawRangesBasic()
     this.autoFillDrawRangesShuffleIBO()
+    // this.autoFillDrawRangesBasic()
   }
 
   private autoFillDrawRangesShuffleIBO() {
+    const fullRangeIndex = this.geometry.groups.findIndex((value) => {
+      return (
+        value.start === 0 &&
+        value.count === this.getCount() &&
+        value.materialIndex === 0
+      )
+    })
+    if (fullRangeIndex !== -1) this.geometry.groups.splice(fullRangeIndex, 1)
+
     const groups = this.geometry.groups
       .sort((a, b) => {
         return a.start - b.start
@@ -261,19 +378,6 @@ export default class MeshBatch implements Batch {
       }
       return previousValue
     }, materialOrder)
-
-    // if (materialOrder.length > 1) {
-    //   for (let m = 0; m < materialOrder.length; m++) {
-    //     if (!this.mesh.material[materialOrder[m]].visible)
-    //       console.log(
-    //         `Batch ${this.id} material: Hidden -> ${!this.mesh.material[
-    //           materialOrder[m]
-    //         ].visible}, Transparent -> ${
-    //           this.mesh.material[materialOrder[m]].transparent
-    //         }`
-    //       )
-    //   }
-    // }
 
     const grouped = []
     for (let k = 0; k < materialOrder.length; k++) {
@@ -411,6 +515,7 @@ export default class MeshBatch implements Batch {
     }
   }
   */
+
   private createRenderViewMapping(): { [index: number]: NodeRenderView } {
     const mapping: { [index: number]: NodeRenderView } = {}
     for (let k = 0; k < this.renderViews.length; k++) {
@@ -420,9 +525,10 @@ export default class MeshBatch implements Batch {
   }
 
   public resetDrawRanges() {
-    this.mesh.material = this.batchMaterial
+    this.mesh.material = [this.batchMaterial]
     this.mesh.visible = true
     this.geometry.clearGroups()
+    this.geometry.addGroup(0, this.getCount(), 0)
     this.geometry.setDrawRange(0, Infinity)
   }
 
@@ -486,6 +592,8 @@ export default class MeshBatch implements Batch {
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
     this.mesh.frustumCulled = false
+    this.mesh.material = [this.batchMaterial]
+    this.mesh.geometry.addGroup(0, this.getCount(), 0)
 
     if (!GeometryConverter.keepGeometryData) {
       batchObjects.forEach((element: BatchObject) => {

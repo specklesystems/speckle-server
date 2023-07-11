@@ -1,5 +1,5 @@
-import { ApolloClient } from '@apollo/client/core'
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
+import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { loginRoute } from '~~/lib/common/helpers/route'
 
@@ -7,9 +7,8 @@ import { loginRoute } from '~~/lib/common/helpers/route'
  * Redirect unauthenticated users to the login page
  */
 export default defineNuxtRouteMiddleware(async (to) => {
+  const client = useApolloClientFromNuxt()
   const nuxt = useNuxtApp()
-  const { $apollo } = nuxt
-  const client = ($apollo as { default: ApolloClient<unknown> }).default
 
   const { data } = await client
     .query({

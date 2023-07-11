@@ -25,6 +25,8 @@ import { statePolicies as commitObjectViewerStatePolicies } from '@/main/lib/vie
 import { Optional } from '@speckle/shared'
 import { onError } from '@apollo/client/link/error'
 import { registerError, isErrorState } from '@/main/lib/core/utils/appErrorStateManager'
+import { isInvalidAuth } from '@/helpers/errorHelper'
+import { signOut } from '@/plugins/authHelpers'
 
 // Name of the localStorage item
 const AUTH_TOKEN = LocalStorageKeys.AuthToken
@@ -229,7 +231,13 @@ function createLink(wsClient?: SubscriptionClient): ApolloLink {
   }
 
   // Global error handling
-  const errorLink = onError(() => {
+  const errorLink = onError((res) => {
+    const { networkError } = res
+    if (networkError && isInvalidAuth(networkError)) {
+      // Logout
+      void signOut()
+    }
+
     registerError()
   })
 
