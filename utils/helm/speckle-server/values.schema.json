@@ -1132,6 +1132,11 @@
     "frontend_2": {
       "type": "object",
       "properties": {
+        "logLevel": {
+          "type": "string",
+          "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
+          "default": "info"
+        },
         "enabled": {
           "type": "boolean",
           "description": "Feature flag to enable running the new experimental frontend.",
