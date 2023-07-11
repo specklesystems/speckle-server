@@ -171,6 +171,46 @@ describe('Upload/Download Routes @api-rest', () => {
     expect(res).to.have.status(401)
   })
 
+  it('Should not allow upload with invalid body (not contained within array)', async () => {
+    //creating a single valid object
+    const objectToPost = {
+      name: 'yet again cannot believe i have to create this'
+    }
+    const objectId = crypto
+      .createHash('md5')
+      .update(JSON.stringify(objectToPost))
+      .digest('hex')
+    objectToPost.id = objectId
+
+    const res = await request(app)
+      .post(`/objects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .set('Content-type', 'multipart/form-data')
+      .attach('batch1', Buffer.from(JSON.stringify(objectToPost), 'utf8'))
+
+    expect(res).to.have.status(400)
+  })
+
+  it('Should not allow upload with invalid body (invalid json)', async () => {
+    const res = await request(app)
+      .post(`/objects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .set('Content-type', 'multipart/form-data')
+      .attach('batch1', Buffer.from(JSON.stringify('this is not json'), 'utf8'))
+
+    expect(res).to.have.status(400)
+  })
+
+  it('Should not allow upload with invalid body (invalid object in array)', async () => {
+    const res = await request(app)
+      .post(`/objects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .set('Content-type', 'multipart/form-data')
+      .attach('batch1', Buffer.from(JSON.stringify([{ foo: 'bar' }]), 'utf8'))
+
+    expect(res).to.have.status(400)
+  })
+
   let parentId
   const numObjs = 5000
   const objBatches = [
