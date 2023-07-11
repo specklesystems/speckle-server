@@ -11412,6 +11412,7 @@ __metadata:
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.176
     pino: ^8.7.0
+    pino-http: ^8.0.0
   languageName: unknown
   linkType: soft
 
