@@ -136,6 +136,9 @@ describe('Upload/Download Routes @api-rest', () => {
       .set('Content-type', 'multipart/form-data')
       .send(Buffer.from(JSON.stringify(objBatches[0]), 'utf8')) //sent, not attached, so no boundary will be added to Content-type header.
     expect(res).to.have.status(400)
+    expect(res.text).to.equal(
+      'Failed to parse request headers and body content as valid multipart/form-data.'
+    )
   })
 
   it('should not allow a non-multipart/form-data request, even if it has a valid header', async () => {
@@ -145,6 +148,9 @@ describe('Upload/Download Routes @api-rest', () => {
       .set('Content-type', 'application/json')
       .attach(Buffer.from(JSON.stringify(objBatches[0]), 'utf8'))
     expect(res).to.have.status(400)
+    expect(res.text).to.equal(
+      'Failed to parse request headers and body content as valid multipart/form-data.'
+    )
   })
 
   it('should not allow non-buffered requests', async () => {
@@ -154,6 +160,9 @@ describe('Upload/Download Routes @api-rest', () => {
       .set('Content-type', 'multipart/form-data')
       .attach(JSON.stringify(objBatches[0], 'utf8'))
     expect(res).to.have.status(400)
+    expect(res.text).to.equal(
+      'Failed to parse request headers and body content as valid multipart/form-data.'
+    )
   })
 
   it('Should not allow getting an object that is not part of the stream', async () => {
