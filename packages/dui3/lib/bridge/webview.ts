@@ -1,6 +1,5 @@
 // github.com/johot/WebView2-better-bridge/blob/master/web-ui/src/betterBridge.ts
-import { createNanoEvents, Emitter } from 'nanoevents'
-import { HostAppEvents } from '~/types'
+import { BaseBridge } from '~/lib/bridge/base'
 
 type IWebView2 = {
   webview: {
@@ -17,11 +16,11 @@ type IRawBridge = {
 
 declare let chrome: IWebView2
 
-export class WebView2Bridge {
+export class WebView2Bridge extends BaseBridge {
   private webViewBridge: IRawBridge
-  private emitter: Emitter
 
   constructor(bridgeName: string) {
+    super()
     this.webViewBridge = chrome.webview.hostObjects[bridgeName]
 
     // NOTE: GetMethods is a call to the .NET side.
@@ -36,8 +35,6 @@ export class WebView2Bridge {
       hoistTarget[lowercasedMethodName] = (...args: unknown[]) =>
         this.runMethod(methodName, args)
     }
-
-    this.emitter = createNanoEvents<HostAppEvents>()
   }
 
   private async runMethod(methodName: string, args: unknown[]): Promise<unknown> {
@@ -49,15 +46,6 @@ export class WebView2Bridge {
     )
 
     return JSON.parse(result) as unknown
-  }
-
-  on<E extends keyof HostAppEvents>(event: E, callback: HostAppEvents[E]) {
-    return this.emitter.on(event, callback)
-  }
-
-  emit(eventName: string, payload: string) {
-    const parsedPayload = JSON.parse(payload) as unknown
-    this.emitter.emit(eventName, parsedPayload)
   }
 }
 

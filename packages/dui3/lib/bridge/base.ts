@@ -1,0 +1,24 @@
+import { createNanoEvents, Emitter } from 'nanoevents'
+
+/**
+ * A simple (typed) event emitter base class that host applications can use to send messages (and data) to the web ui,
+ * e.g. via `browser.executeScriptAsync("myBindings.on('eventName', serializedData)")`.
+
+ */
+export class BaseBridge {
+  private emitter: Emitter
+
+  constructor() {
+    this.emitter = createNanoEvents()
+  }
+
+  // NOTE: these do not need to be typed extra in here, as they will be properly typed on the specific binding's interface.
+  on(event: string | number, callback: (...args: unknown[]) => void) {
+    return this.emitter.on(event, callback)
+  }
+
+  emit(eventName: string, payload: string) {
+    const parsedPayload = JSON.parse(payload) as unknown
+    this.emitter.emit(eventName, parsedPayload)
+  }
+}

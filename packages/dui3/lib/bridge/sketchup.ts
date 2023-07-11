@@ -1,5 +1,5 @@
-// TODO
 import { uniqueId } from 'lodash-es'
+import { BaseBridge } from './base'
 
 declare let sketchup: {
   exec: (data: Record<string, unknown>) => void
@@ -11,8 +11,9 @@ declare let sketchup: {
  * This class basically makes the sketchup bindings work in the same way as cef/webview by returning a promise
  * on each method call. That promise is either resolved once sketchup sends back (via receiveResponse) a corresponding
  * reply, or it's rejected after a given TIMEOUT_MS (currently 2s).
+ * TODO: implement the event dispatcher side as well.
  */
-export class SketchupBridge {
+export class SketchupBridge extends BaseBridge {
   private requests = {} as Record<
     string,
     {
@@ -27,6 +28,7 @@ export class SketchupBridge {
   private resolveIsInitializedPromise!: () => unknown
 
   constructor(bindingsName: string) {
+    super()
     this.bindingsName = bindingsName || 'default_bindings'
 
     this.isInitalized = new Promise((resolve, reject) => {
@@ -104,8 +106,9 @@ export class SketchupBridge {
       )
     const request = this.requests[requestId]
     try {
-      const parsedData = JSON.parse(data) as Record<string, unknown> // TODO: check if data is undefined
-      request.resolve(parsedData)
+      // NOTE/TODO: does not need parsing
+      // const parsedData = JSON.parse(data) as Record<string, unknown> // TODO: check if data is undefined
+      request.resolve(data)
     } catch (e) {
       request.reject(e as Error)
     } finally {
