@@ -13,8 +13,8 @@ const runtimeConfig = useRuntimeConfig()
 const nuxt = useNuxtApp()
 
 // onMounted(() => {
-//     console.log(counter.value)
-//     console.log(runtimeConfig)
-//     console.log(nuxt)
+//     logger.info(counter.value)
+//     logger.info(runtimeConfig)
+//     logger.info(nuxt)
 // })
 </script>

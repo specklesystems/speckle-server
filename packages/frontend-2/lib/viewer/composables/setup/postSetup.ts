@@ -297,7 +297,7 @@ function useViewerCameraIntegration() {
       cameraManuallyChanged = true
     }
 
-    // console.log('incomingCamera', viewerPos, viewerTarget)
+    // logger.debug('incomingCamera', viewerPos, viewerTarget)
 
     return cameraManuallyChanged
   }

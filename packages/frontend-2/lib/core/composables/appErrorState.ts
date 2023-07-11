@@ -8,6 +8,7 @@ export function useAppErrorState() {
     inErrorState: ref(false),
     errorRpm: Observability.simpleRpmCounter()
   }))
+  const logger = useLogger()
 
   return {
     isErrorState: computed(() => state.inErrorState.value),
@@ -15,7 +16,7 @@ export function useAppErrorState() {
       const epm = state.errorRpm.hit()
 
       if (!state.inErrorState.value && epm >= ENTER_STATE_AT_ERRORS_PER_MIN) {
-        console.error(
+        logger.error(
           `Too many errors (${epm} errors per minute), entering app error state!`
         )
         state.inErrorState.value = true

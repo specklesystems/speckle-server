@@ -582,6 +582,7 @@ function setupResponseResourceData(
   const apollo = useApolloClient().client
   const globalError = useError()
   const { triggerNotification } = useGlobalToast()
+  const logger = useLogger()
 
   const {
     projectId,
@@ -741,7 +742,7 @@ function setupResponseResourceData(
       title: 'Comment loading failed',
       description: `${err.message}`
     })
-    console.error(err)
+    logger.error(err)
   })
 
   return {
