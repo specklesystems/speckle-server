@@ -15759,8 +15759,8 @@ __metadata:
 
 "@types/react@file:./packages/frontend-2/type-augmentations/stubs/types__react::locator=root%40workspace%3A.":
   version: 0.0.0
-  resolution: "@types/react@file:./packages/frontend-2/type-augmentations/stubs/types__react#./packages/frontend-2/type-augmentations/stubs/types__react::hash=a3dde0&locator=root%40workspace%3A."
-  checksum: e84b6c54914206359728178793dadaf5f1b75c98b5b5f6b64922115bcc073bf3caf00c4c2538940810bc40640081ff1b6135c465a9ec1ff2a7b18a5839379c3b
+  resolution: "@types/react@file:./packages/frontend-2/type-augmentations/stubs/types__react#./packages/frontend-2/type-augmentations/stubs/types__react::hash=2ea486&locator=root%40workspace%3A."
+  checksum: 500d185a1e5fc9e977520f4704194ad2e4391cfb8ef7747ca9f2a59bc7a52b555726e6d59e212f4a6b11ee08f06737615224031f80b7da3e216a8905642280fe
   languageName: node
   linkType: hard
 
