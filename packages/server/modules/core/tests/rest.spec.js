@@ -204,7 +204,7 @@ describe('Upload/Download Routes @api-rest', () => {
   it('Should not allow upload with invalid body (object too large)', async () => {
     //creating a single valid object larger than 10MB
     const objectToPost = {
-      name: 'x'.repeat(10 * 1024 * 1024 - 1)
+      name: 'x'.repeat(10 * 1024 * 1024 + 1)
     }
 
     const res = await request(app)
@@ -214,6 +214,7 @@ describe('Upload/Download Routes @api-rest', () => {
       .attach('batch1', Buffer.from(JSON.stringify([objectToPost]), 'utf8'))
 
     expect(res).to.have.status(400)
+    expect(res.body.message).contains('Object too large')
   })
 
   let parentId

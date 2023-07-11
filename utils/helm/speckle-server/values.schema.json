@@ -491,6 +491,11 @@
           "description": "The id of the stream to be used for onboarding new users",
           "default": ""
         },
+        "max_object_size_mb": {
+          "type": "number",
+          "description": "The maximum size of an individual object which can be uploaded to the server",
+          "default": 10
+        },
         "speckleAutomateUrl": {
           "type": "string",
           "description": "The url of the Speckle Automate instance",

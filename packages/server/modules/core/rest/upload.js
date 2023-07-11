@@ -5,7 +5,8 @@ const Busboy = require('busboy')
 
 const { validatePermissionsWriteStream } = require('./authUtils')
 
-const { createObjectsBatched } = require('../services/objects')
+const { createObjectsBatched } = require('@/modules/core/services/objects')
+const { ObjectHandlingError } = require('@/modules/core/errors/object')
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 
@@ -100,12 +101,21 @@ module.exports = (app) => {
 
           const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
             req.log.error(e, `Upload error.`)
-            if (!requestDropped)
-              res
-                .status(400)
-                .send(
-                  'Error inserting object in the database. Check server logs for details'
-                )
+            if (!requestDropped) {
+              switch (e.constructor) {
+                case ObjectHandlingError:
+                  res
+                    .status(400)
+                    .send(`Error inserting object in the database: ${e.message}`)
+                  break
+                default:
+                  res
+                    .status(400)
+                    .send(
+                      'Error inserting object in the database. Check server logs for details'
+                    )
+              }
+            }
             requestDropped = true
           })
           promises.push(promise)
