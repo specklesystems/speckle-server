@@ -5,6 +5,7 @@ const { set, get, chunk } = require('lodash')
 
 const knex = require(`@/db/knex`)
 const { servicesLogger } = require('@/logging/logging')
+const { getMaximumObjectSizeMB } = require('@/modules/shared/helpers/envHelper')
 
 const Objects = () => knex('objects')
 const Closures = () => knex('object_children_closure')
@@ -595,7 +596,7 @@ module.exports = {
 // we cannot provide a full response back including all object hashes.
 function prepInsertionObject(streamId, obj) {
   // let memNow = process.memoryUsage().heapUsed / 1024 / 1024
-  const MAX_OBJECT_SIZE = 10 * 1024 * 1024
+  const MAX_OBJECT_SIZE = getMaximumObjectSizeMB() * 1024 * 1024
 
   if (obj.hash) obj.id = obj.hash
   else

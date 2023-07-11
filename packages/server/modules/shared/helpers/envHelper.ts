@@ -37,6 +37,10 @@ export function getFileSizeLimitMB() {
   return getIntFromEnv('FILE_SIZE_LIMIT_MB', '100')
 }
 
+export function getMaximumObjectSizeMB() {
+  return getIntFromEnv('MAX_OBJECT_SIZE_MB', '10')
+}
+
 export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
   return parseInt(process.env[envVarKey] || aDefault)
 }
