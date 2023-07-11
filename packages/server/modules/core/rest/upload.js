@@ -191,11 +191,19 @@ module.exports = (app) => {
           const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
             req.log.error(e, `Upload error.`)
             if (!requestDropped)
-              res
-                .status(400)
-                .send(
-                  'Error inserting object in the database. Check server logs for details'
-                )
+              switch (e.constructor) {
+                case ObjectHandlingError:
+                  res
+                    .status(400)
+                    .send(`Error inserting object in the database. ${e.message}`)
+                  break
+                default:
+                  res
+                    .status(400)
+                    .send(
+                      'Error inserting object in the database. Check server logs for details'
+                    )
+              }
             requestDropped = true
           })
           promises.push(promise)
