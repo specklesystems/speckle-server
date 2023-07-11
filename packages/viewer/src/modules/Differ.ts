@@ -186,17 +186,41 @@ export class Differ {
     this.removedMaterialPoint.toneMapped = false
   }
 
-  intersection(o1, o2) {
+  private intersection(o1, o2) {
     const [k1, k2] = [Object.keys(o1), Object.keys(o2)]
     const [first, next] = k1.length > k2.length ? [k2, o1] : [k1, o2]
     return first.filter((k) => k in next)
   }
 
-  public diff(urlA: string, urlB: string): Promise<DiffResult> {
-    const all = performance.now()
-    // const modifiedNew: Array<SpeckleObject> = []
-    // const modifiedOld: Array<SpeckleObject> = []
+  private buildIdMaps(
+    rvs: Array<TreeNode>,
+    idMap: { [id: string]: { node: TreeNode; applicationId: string } },
+    appIdMap: { [id: string]: number }
+  ) {
+    for (let k = 0; k < rvs.length; k++) {
+      const atomicRv = rvs[k]
+      const applicationId = atomicRv.model.raw.applicationId
+        ? atomicRv.model.raw.applicationId
+        : this.tree
+            .getAncestors(atomicRv)
+            .find((value) => value.model.raw.applicationId)?.model.raw.applicationId
 
+      idMap[atomicRv.model.raw.id] = {
+        node: atomicRv,
+        applicationId
+      }
+      if (applicationId) {
+        appIdMap[applicationId] = 1
+      }
+    }
+  }
+
+  public diff(urlA: string, urlB: string): Promise<DiffResult> {
+    return this.diffIterative(urlA, urlB)
+  }
+
+  private diffBoolean(urlA: string, urlB: string): Promise<DiffResult> {
+    const start = performance.now()
     const diffResult: DiffResult = {
       unchanged: [],
       added: [],
@@ -206,167 +230,79 @@ export class Differ {
 
     const renderTreeA = this.tree.getRenderTree(urlA)
     const renderTreeB = this.tree.getRenderTree(urlB)
-    // const rootA = this.tree.findId(urlA)
-    // const rootB = this.tree.findId(urlB)
     let rvsA = renderTreeA.getRenderableNodes(...SpeckleTypeAllRenderables)
     let rvsB = renderTreeB.getRenderableNodes(...SpeckleTypeAllRenderables)
 
-    const idMapA = {}
-    const appIdMapA = {}
     rvsA = rvsA.map((value) => {
-      const atomicRv = renderTreeA.getAtomicParent(value)
-
-      const applicationId = atomicRv.model.raw.applicationId
-        ? atomicRv.model.raw.applicationId
-        : this.tree
-            .getAncestors(atomicRv)
-            .find((value) => value.model.raw.applicationId)?.model.raw.applicationId
-      if (applicationId) {
-        appIdMapA[applicationId] = 1
-      }
-      idMapA[atomicRv.model.raw.id] = {
-        node: atomicRv,
-        applicationId
-      }
-      return atomicRv
+      return renderTreeA.getAtomicParent(value)
     })
 
-    const idMapB = {}
-    const appIdMapB = {}
     rvsB = rvsB.map((value) => {
-      const atomicRv = renderTreeB.getAtomicParent(value)
-
-      const applicationId = atomicRv.model.raw.applicationId
-        ? atomicRv.model.raw.applicationId
-        : this.tree
-            .getAncestors(atomicRv)
-            .find((value) => value.model.raw.applicationId)?.model.raw.applicationId
-      if (applicationId) {
-        appIdMapB[applicationId] = 1
-      }
-      idMapB[atomicRv.model.raw.id] = {
-        node: atomicRv,
-        applicationId
-      }
-      return atomicRv
+      return renderTreeB.getAtomicParent(value)
     })
 
     rvsA = [...Array.from(new Set(rvsA))]
     rvsB = [...Array.from(new Set(rvsB))]
 
-    const start = performance.now()
+    const idMapA = {}
+    const appIdMapA = {}
+    this.buildIdMaps(rvsA, idMapA, appIdMapA)
 
-    const unchanged = this.intersection(idMapA, idMapB)
-    const addedModified = _.omit(_.omit(idMapB, unchanged), Object.keys(idMapA))
-    const removedModified = _.omit(_.omit(idMapA, unchanged), Object.keys(idMapB))
-    const modifiedA = _.omit(addedModified, function (value, key, object) {
+    const idMapB = {}
+    const appIdMapB = {}
+    this.buildIdMaps(rvsB, idMapB, appIdMapB)
+
+    /** Get the ids which are common between the two maps. This will be objects
+     *  which have not changed
+     */
+    const unchanged: Array<string> = this.intersection(idMapA, idMapB)
+    /** We remove the unchanged objects from B and end up with changed + added */
+    const addedModified = _.omit(idMapB, unchanged)
+    /** We remove the unchanged objects from A and end up with changed + removed */
+    const removedModified = _.omit(idMapA, unchanged)
+    /** We remove the changed objects from B. An object from B is changed if
+     *  it's application ID exists in A
+     */
+    const added = _.omit(addedModified, function (value, key, object) {
       return value.applicationId && appIdMapA[value.applicationId] !== undefined
     })
-    const modifiedB = _.omit(removedModified, function (value, key, object) {
+    /** We remove the changed objects from A. An object from A is changed if
+     *  it's application ID exists in B
+     */
+    const removed = _.omit(removedModified, function (value, key, object) {
       return value.applicationId && appIdMapB[value.applicationId] !== undefined
     })
-    // const added = _.omit(addedModified, Object.keys(modifiedA))
-    // const removed = _.omit(removedModified, Object.keys(modifiedB))
+    /** We remove the removed objects from A, leaving us only changed objects */
+    const modifiedRemoved = _.omit(removedModified, Object.keys(removed))
+    /** We remove the removed objects from B, leaving us only changed objects */
+    const modifiedAdded = _.omit(addedModified, Object.keys(added))
 
-    const modifiedOld = Object.values(modifiedA).map(
+    /** We fill the arrays from here on out */
+    const modifiedOld = Object.values(modifiedRemoved).map(
       (value: { node: TreeNode }) => value.node
     )
-    const modifiedNew = Object.values(modifiedB).map(
+    const modifiedNew = Object.values(modifiedAdded).map(
       (value: { node: TreeNode }) => value.node
     )
-    diffResult.unchanged.push(
-      ...Object.values(unchanged).map((value) => idMapA[value].node)
-    )
+    diffResult.unchanged.push(...unchanged.map((value) => idMapA[value].node))
+    diffResult.unchanged.push(...unchanged.map((value) => idMapB[value].node))
     diffResult.removed.push(
-      ...Object.values(removedModified).map((value: { node: TreeNode }) => value.node)
+      ...Object.values(removed).map((value: { node: TreeNode }) => value.node)
     )
     diffResult.added.push(
-      ...Object.values(addedModified).map((value: { node: TreeNode }) => value.node)
+      ...Object.values(added).map((value: { node: TreeNode }) => value.node)
     )
 
-    console.warn('Boolean ops -> ', performance.now() - start)
-    console.warn(unchanged)
-    console.warn(modifiedOld)
-    console.warn(modifiedNew)
-
-    // start = performance.now()
-    // for (let k = 0; k < rvsB.length; k++) {
-    //   // const res = rootA.first((node: TreeNode) => {
-    //   //   return rvsB[k].model.raw.id === node.model.raw.id
-    //   // })
-    //   const res = idMapA[rvsB[k].model.raw.id]
-
-    //   if (res) {
-    //     diffResult.unchanged.push(res)
-    //   } else {
-    //     const applicationId = rvsB[k].model.raw.applicationId
-    //       ? rvsB[k].model.raw.applicationId
-    //       : this.tree
-    //           .getAncestors(rvsB[k])
-    //           .find((value) => value.model.raw.applicationId)?.model.raw.applicationId
-    //     if (!applicationId) {
-    //       Logger.error(
-    //         `No application ID found. Object id:${rvsB[k].model.raw.id} is considered 'added'!`
-    //       )
-    //       diffResult.added.push(rvsB[k])
-    //       continue
-    //     }
-    //     // const res2 = rootA.first((node: TreeNode) => {
-    //     //   return applicationId === node.model.raw.applicationId
-    //     // })
-    //     const res2 = appIdMapA[applicationId]
-    //     if (res2) {
-    //       modifiedNew.push(rvsB[k])
-    //     } else {
-    //       diffResult.added.push(rvsB[k])
-    //     }
-    //   }
-    // }
-    // console.log('First pass -> ', performance.now() - start)
-    // start = performance.now()
-    // for (let k = 0; k < rvsA.length; k++) {
-    //   // const res = rootB.first((node: TreeNode) => {
-    //   //   return rvsA[k].model.raw.id === node.model.raw.id
-    //   // })
-    //   const res = idMapB[rvsA[k].model.raw.id]
-    //   if (!res) {
-    //     const applicationId = rvsA[k].model.raw.applicationId
-    //       ? rvsA[k].model.raw.applicationId
-    //       : this.tree
-    //           .getAncestors(rvsA[k])
-    //           .find((value) => value.model.raw.applicationId)?.model.raw.applicationId
-    //     if (!applicationId) {
-    //       Logger.error(
-    //         `No application ID found. Object id:${rvsA[k].model.raw.id} is considered 'removed'!`
-    //       )
-    //       diffResult.removed.push(rvsA[k])
-    //       continue
-    //     }
-    //     // const res2 = rootB.first((node: TreeNode) => {
-    //     //   return applicationId === node.model.raw.applicationId
-    //     // })
-    //     const res2 = appIdMapB[applicationId]
-    //     if (!res2) {
-    //       diffResult.removed.push(rvsA[k])
-    //     } else {
-    //       modifiedOld.push(rvsA[k])
-    //     }
-    //   } else {
-    //     diffResult.unchanged.push(res)
-    //   }
-    // }
-    // console.log('Second pass -> ', performance.now() - start)
-    // modifiedNew.forEach((value, index) => {
-    //   value
-    //   diffResult.modified.push([modifiedOld[index], modifiedNew[index]])
-    // })
-    console.warn('Total time -> ', performance.now() - all)
-    console.warn(diffResult)
+    modifiedOld.forEach((value, index) => {
+      value
+      diffResult.modified.push([modifiedOld[index], modifiedNew[index]])
+    })
+    console.warn('Boolean Time -> ', performance.now() - start)
     return Promise.resolve(diffResult)
   }
 
-  public diffOld(urlA: string, urlB: string): Promise<DiffResult> {
-    const all = performance.now()
+  private diffIterative(urlA: string, urlB: string): Promise<DiffResult> {
+    const start = performance.now()
     const modifiedNew: Array<SpeckleObject> = []
     const modifiedOld: Array<SpeckleObject> = []
 
@@ -379,60 +315,35 @@ export class Differ {
 
     const renderTreeA = this.tree.getRenderTree(urlA)
     const renderTreeB = this.tree.getRenderTree(urlB)
-    const rootA = this.tree.findId(urlA)
-    const rootB = this.tree.findId(urlB)
     let rvsA = renderTreeA.getRenderableNodes(...SpeckleTypeAllRenderables)
     let rvsB = renderTreeB.getRenderableNodes(...SpeckleTypeAllRenderables)
 
-    const idMapA = {}
-    const appIdMapA = {}
     rvsA = rvsA.map((value) => {
-      const atomicRv = renderTreeA.getAtomicParent(value)
-      idMapA[atomicRv.model.raw.id] = atomicRv
-      const applicationId = atomicRv.model.raw.applicationId
-        ? atomicRv.model.raw.applicationId
-        : this.tree
-            .getAncestors(atomicRv)
-            .find((value) => value.model.raw.applicationId)?.model.raw.applicationId
-      if (applicationId) {
-        appIdMapA[applicationId] = 1
-      }
-      return atomicRv
+      return renderTreeA.getAtomicParent(value)
     })
 
-    const idMapB = {}
-    const appIdMapB = {}
     rvsB = rvsB.map((value) => {
-      const atomicRv = renderTreeB.getAtomicParent(value)
-      idMapB[atomicRv.model.raw.id] = atomicRv
-      const applicationId = atomicRv.model.raw.applicationId
-        ? atomicRv.model.raw.applicationId
-        : this.tree
-            .getAncestors(atomicRv)
-            .find((value) => value.model.raw.applicationId)?.model.raw.applicationId
-      if (applicationId) {
-        appIdMapB[applicationId] = 1
-      }
-      return atomicRv
+      return renderTreeB.getAtomicParent(value)
     })
 
     rvsA = [...Array.from(new Set(rvsA))]
     rvsB = [...Array.from(new Set(rvsB))]
-    let start = performance.now()
+
+    const idMapA = {}
+    const appIdMapA = {}
+    this.buildIdMaps(rvsA, idMapA, appIdMapA)
+
+    const idMapB = {}
+    const appIdMapB = {}
+    this.buildIdMaps(rvsB, idMapB, appIdMapB)
+
     for (let k = 0; k < rvsB.length; k++) {
-      const res = rootA.first((node: TreeNode) => {
-        return rvsB[k].model.raw.id === node.model.raw.id
-      })
-      // const res = idMapA[rvsB[k].model.raw.id]
+      const res = idMapA[rvsB[k].model.raw.id]?.node
 
       if (res) {
         diffResult.unchanged.push(res)
       } else {
-        const applicationId = rvsB[k].model.raw.applicationId
-          ? rvsB[k].model.raw.applicationId
-          : this.tree
-              .getAncestors(rvsB[k])
-              .find((value) => value.model.raw.applicationId)?.model.raw.applicationId
+        const applicationId = idMapB[rvsB[k].model.raw.id].applicationId
         if (!applicationId) {
           Logger.error(
             `No application ID found. Object id:${rvsB[k].model.raw.id} is considered 'added'!`
@@ -440,10 +351,7 @@ export class Differ {
           diffResult.added.push(rvsB[k])
           continue
         }
-        const res2 = rootA.first((node: TreeNode) => {
-          return applicationId === node.model.raw.applicationId
-        })
-        // const res2 = appIdMapA[applicationId]
+        const res2 = appIdMapA[applicationId]
         if (res2) {
           modifiedNew.push(rvsB[k])
         } else {
@@ -451,19 +359,10 @@ export class Differ {
         }
       }
     }
-    console.warn('First pass -> ', performance.now() - start)
-    start = performance.now()
     for (let k = 0; k < rvsA.length; k++) {
-      const res = rootB.first((node: TreeNode) => {
-        return rvsA[k].model.raw.id === node.model.raw.id
-      })
-      // const res = idMapB[rvsA[k].model.raw.id]
+      const res = idMapB[rvsA[k].model.raw.id]?.node
       if (!res) {
-        const applicationId = rvsA[k].model.raw.applicationId
-          ? rvsA[k].model.raw.applicationId
-          : this.tree
-              .getAncestors(rvsA[k])
-              .find((value) => value.model.raw.applicationId)?.model.raw.applicationId
+        const applicationId = idMapA[rvsA[k].model.raw.id].applicationId
         if (!applicationId) {
           Logger.error(
             `No application ID found. Object id:${rvsA[k].model.raw.id} is considered 'removed'!`
@@ -471,10 +370,7 @@ export class Differ {
           diffResult.removed.push(rvsA[k])
           continue
         }
-        const res2 = rootB.first((node: TreeNode) => {
-          return applicationId === node.model.raw.applicationId
-        })
-        // const res2 = appIdMapB[applicationId]
+        const res2 = appIdMapB[applicationId]
         if (!res2) {
           diffResult.removed.push(rvsA[k])
         } else {
@@ -484,13 +380,11 @@ export class Differ {
         diffResult.unchanged.push(res)
       }
     }
-    console.warn('Second pass -> ', performance.now() - start)
     modifiedOld.forEach((value, index) => {
       value
       diffResult.modified.push([modifiedOld[index], modifiedNew[index]])
     })
-    console.warn('Total time -> ', performance.now() - all)
-    console.warn(diffResult)
+    console.warn('Interative Time -> ', performance.now() - start)
     return Promise.resolve(diffResult)
   }
 
