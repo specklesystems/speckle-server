@@ -1,12 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import {
-  ApolloLink,
-  InMemoryCache,
-  split,
-  from,
-  ServerError
-} from '@apollo/client/core'
+import { ApolloLink, InMemoryCache, split, from } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
 import type { ApolloConfigResolver } from '~~/lib/core/nuxt-modules/apollo/module'
@@ -23,8 +17,9 @@ import {
   incomingOverwritesExistingMergeFunction
 } from '~~/lib/core/helpers/apolloSetup'
 import { onError } from '@apollo/client/link/error'
-import { useNavigateToLogin } from '~~/lib/common/helpers/route'
+import { useNavigateToLogin, loginRoute } from '~~/lib/common/helpers/route'
 import { useAppErrorState } from '~~/lib/core/composables/appErrorState'
+import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
 
 const appVersion = (import.meta.env.SPECKLE_SERVER_VERSION as string) || 'unknown'
 const appName = 'frontend-2'
@@ -265,8 +260,6 @@ async function createWsClient(params: {
   )
 }
 
-const isServerError = (e: Error): e is ServerError => e.name === 'ServerError'
-
 function createLink(params: {
   httpEndpoint: string
   wsClient?: SubscriptionClient
@@ -284,11 +277,14 @@ function createLink(params: {
     if (!isSubTokenMissingError) console.error('Apollo Client error', res)
 
     const { networkError } = res
-    if (networkError && isServerError(networkError)) {
-      const isForbidden = networkError.statusCode === 403
-      if (isForbidden) {
-        // Reset auth
-        authToken.value = undefined
+    if (networkError && isInvalidAuth(networkError)) {
+      // Reset auth
+      authToken.value = undefined
+
+      // A bit hacky, but since this may happen mid-routing, a standard router.push call may not work
+      if (process.client) {
+        window.location.href = loginRoute
+      } else {
         goToLogin()
       }
     }
