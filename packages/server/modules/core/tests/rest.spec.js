@@ -201,16 +201,6 @@ describe('Upload/Download Routes @api-rest', () => {
     expect(res).to.have.status(400)
   })
 
-  it.skip('Should not allow upload with invalid body (invalid object in array)', async () => {
-    const res = await request(app)
-      .post(`/objects/${testStream.id}`)
-      .set('Authorization', userA.token)
-      .set('Content-type', 'multipart/form-data')
-      .attach('batch1', Buffer.from(JSON.stringify([{ foo: 'bar' }]), 'utf8'))
-
-    expect(res).to.have.status(400)
-  })
-
   let parentId
   const numObjs = 5000
   const objBatches = [
