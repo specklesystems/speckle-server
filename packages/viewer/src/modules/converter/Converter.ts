@@ -405,17 +405,19 @@ export default class Coverter {
 
       await this.displayableLookup(ref, childNode)
       const elements = this.getElementsValue(obj)
-      for (const element of elements) {
-        const ref = await this.resolveReference(element)
-        const childNode: TreeNode = this.tree.parse({
-          id: this.getNodeId(ref),
-          raw: Object.assign({}, ref),
-          atomic: false,
-          children: []
-        })
-        childNode.model.raw.host = obj.id
-        this.tree.addNode(childNode, node)
-        await this.displayableLookup(ref, childNode)
+      if (elements) {
+        for (const element of elements) {
+          const ref = await this.resolveReference(element)
+          const childNode: TreeNode = this.tree.parse({
+            id: this.getNodeId(ref),
+            raw: Object.assign({}, ref),
+            atomic: false,
+            children: []
+          })
+          childNode.model.raw.host = obj.id
+          this.tree.addNode(childNode, node)
+          await this.displayableLookup(ref, childNode)
+        }
       }
     }
   }
