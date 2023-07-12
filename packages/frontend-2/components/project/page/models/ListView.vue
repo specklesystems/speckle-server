@@ -64,6 +64,8 @@ const props = defineProps<{
   contributors?: FormUsersSelectItemFragment[]
 }>()
 
+const logger = useLogger()
+
 const infiniteLoadCacheBuster = ref(0)
 const newSubmodelParent = ref('')
 const showNewDialog = computed({
@@ -177,7 +179,7 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
       }
     })
   } catch (e) {
-    console.error(e)
+    logger.error(e)
     state.error()
     return
   }

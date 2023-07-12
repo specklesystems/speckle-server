@@ -426,7 +426,9 @@
 <script setup lang="ts">
 import { Form } from 'vee-validate'
 import { XMarkIcon, ArrowRightCircleIcon } from '@heroicons/vue/24/solid'
-const onSubmit = (values: unknown) => console.log(values)
+
+const logger = useLogger()
+const onSubmit = (values: unknown) => logger.info(values)
 type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
 type FormButtonColor = 'default' | 'invert' | 'danger' | 'warning'
 const sizes: FormButtonSize[] = ['xs', 'sm', 'base', 'lg', 'xl']

@@ -72,6 +72,14 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
     return this
   }
 
+  public fastCopy(from: Material, to: Material) {
+    super.fastCopy(from, to)
+    const toStandard = to as SpeckleBasicMaterial
+    const fromStandard = from as SpeckleBasicMaterial
+    toStandard.color.copy(fromStandard.color)
+    toStandard.refractionRatio = fromStandard.refractionRatio
+  }
+
   /** Called by three.js render loop */
   public onBeforeRender(_this, scene, camera, geometry, object, group) {
     if (this.defines['BILLBOARD_FIXED']) {

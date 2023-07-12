@@ -64,6 +64,7 @@ workflows:
             - get-version
 
       - docker-build-frontend-2:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version
@@ -310,7 +311,7 @@ jobs:
 
   test-server:
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:18.16.1
       - image: cimg/redis:7.0.7
       - image: 'cimg/postgres:14.5'
         environment:
@@ -406,7 +407,7 @@ jobs:
 
   test-frontend-2:
     docker:
-      - image: cimg/node:18.16.0-browsers
+      - image: cimg/node:18.16.1-browsers
     resource_class: xlarge
     steps:
       - checkout
@@ -449,7 +450,7 @@ jobs:
 
   test-dui-3:
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:18.16.1
     resource_class: medium+
     steps:
       - checkout
@@ -479,7 +480,7 @@ jobs:
 
   test-ui-components:
     docker:
-      - image: cimg/node:18.16.0-browsers
+      - image: cimg/node:18.16.1-browsers
     resource_class: xlarge
     steps:
       - checkout
@@ -533,7 +534,7 @@ jobs:
   frontend-2-chromatic:
     resource_class: medium+
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:18.16.1
     steps:
       - checkout
       - restore_cache:
@@ -567,7 +568,7 @@ jobs:
   ui-components-chromatic:
     resource_class: medium+
     docker:
-      - image: cimg/node:18.16.0
+      - image: cimg/node:18.16.1
     steps:
       - checkout
       - restore_cache:

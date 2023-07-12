@@ -12,6 +12,7 @@
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { debounce } from 'lodash-es'
 const { activeUser } = useActiveUser()
+const logger = useLogger()
 
 const showDialog = ref(false)
 const clickyCounts = ref(0)
@@ -26,7 +27,11 @@ watch(clickyCounts, (newVal) => {
 })
 
 const countClicks = () => {
-  console.log(clickyCounts.value, clicksToOpenDialog, dialogOpenCount.value)
+  logger.debug({
+    clickyCounts: clickyCounts.value,
+    clicksToOpenDialog,
+    dialogOpenCount: dialogOpenCount.value
+  })
   clickyCounts.value++
 }
 

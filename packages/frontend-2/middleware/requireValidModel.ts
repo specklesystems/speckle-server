@@ -1,4 +1,4 @@
-import { ApolloClient } from '@apollo/client/core'
+import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
@@ -12,8 +12,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
   const modelId = to.params.modelId as string
 
-  const { $apollo } = useNuxtApp()
-  const client = ($apollo as { default: ApolloClient<unknown> }).default
+  const client = useApolloClientFromNuxt()
 
   const { data, errors } = await client
     .query({

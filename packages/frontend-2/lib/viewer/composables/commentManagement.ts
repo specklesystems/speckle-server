@@ -67,6 +67,7 @@ export function useViewerCommentUpdateTracking(
 export function useMarkThreadViewed() {
   const apollo = useApolloClient().client
   const { isLoggedIn } = useActiveUser()
+  const logger = useLogger()
 
   return async (projectId: string, threadId: string) => {
     if (!isLoggedIn.value) return false
@@ -91,7 +92,7 @@ export function useMarkThreadViewed() {
       .catch(convertThrowIntoFetchResult)
 
     if (errors) {
-      console.error('Marking thread as viewed failed', errors)
+      logger.error('Marking thread as viewed failed', errors)
     }
 
     return !!data?.commentMutations.markViewed

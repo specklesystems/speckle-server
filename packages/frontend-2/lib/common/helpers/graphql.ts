@@ -6,12 +6,20 @@ import {
   DataProxy,
   ApolloCache,
   defaultDataIdFromObject,
-  TypedDocumentNode
+  TypedDocumentNode,
+  ServerError,
+  ServerParseError
 } from '@apollo/client/core'
 import { DocumentNode, GraphQLError } from 'graphql'
-import { flatten, isUndefined } from 'lodash-es'
+import { flatten, isUndefined, has } from 'lodash-es'
 import { Modifier } from '@apollo/client/cache'
 import { PartialDeep } from 'type-fest'
+import { NetworkError } from '@apollo/client/errors'
+
+export const isServerError = (err: Error): err is ServerError =>
+  has(err, 'response') && has(err, 'result') && has(err, 'statusCode')
+export const isServerParseError = (err: Error): err is ServerParseError =>
+  has(err, 'response') && has(err, 'bodyText') && has(err, 'statusCode')
 
 /**
  * Utility type for typing cached data in Apollo modify functions.
@@ -44,13 +52,36 @@ export function getCacheId(typeName: string, id: string) {
   return cachedId
 }
 
+export function isInvalidAuth(error: ApolloError | NetworkError) {
+  const networkError = error instanceof ApolloError ? error.networkError : error
+  if (
+    !networkError ||
+    (!isServerError(networkError) && !isServerParseError(networkError))
+  )
+    return false
+
+  const statusCode = networkError.statusCode
+  const hasCorrectCode = [403].includes(statusCode)
+  if (!hasCorrectCode) return false
+
+  const message: string | undefined = isServerError(networkError)
+    ? networkError.result?.error
+    : networkError.bodyText
+
+  return (message || '').toLowerCase().includes('token')
+}
+
 /**
  * Convert an error thrown during $apollo.mutate() into a fetch result
  */
-export function convertThrowIntoFetchResult(err: unknown): FetchResult<undefined> {
+export function convertThrowIntoFetchResult(
+  err: unknown
+): FetchResult<undefined> & { apolloError?: ApolloError; isInvalidAuth: boolean } {
   let gqlErrors: readonly GraphQLError[]
+  let apolloError: Optional<ApolloError> = undefined
   if (err instanceof ApolloError) {
     gqlErrors = err.graphQLErrors
+    apolloError = err
   } else if (err instanceof Error) {
     gqlErrors = [new GraphQLError(err.message)]
   } else {
@@ -58,9 +89,13 @@ export function convertThrowIntoFetchResult(err: unknown): FetchResult<undefined
     gqlErrors = [new GraphQLError(`${err}`)]
   }
 
+  const hasAuthIssue = apolloError && isInvalidAuth(apolloError)
+
   return {
     data: undefined,
-    errors: gqlErrors
+    errors: gqlErrors,
+    apolloError,
+    isInvalidAuth: !!hasAuthIssue
   }
 }
 
@@ -109,6 +144,7 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
 ): boolean {
   const { fragment, query } = filter
   const { ignoreCacheErrors = true, overwrite = true } = options
+  const logger = useLogger()
 
   if (!fragment && !query) {
     throw new Error(
@@ -155,7 +191,7 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
     }
 
     if (ignoreCacheErrors) {
-      console.warn('Failed Apollo cache update:', e)
+      logger.warn('Failed Apollo cache update:', e)
       return false
     }
     throw e
