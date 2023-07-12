@@ -237,6 +237,22 @@ describe('Upload/Download Routes @api-rest', () => {
     expect(res).to.have.status(400)
   })
 
+  it('Should not allow upload with invalid body (object too large)', async () => {
+    //creating a single valid object larger than 10MB
+    const objectToPost = {
+      name: 'x'.repeat(10 * 1024 * 1024 + 1)
+    }
+
+    const res = await request(app)
+      .post(`/objects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .set('Content-type', 'multipart/form-data')
+      .attach('batch1', Buffer.from(JSON.stringify([objectToPost]), 'utf8'))
+
+    expect(res).to.have.status(400)
+    expect(res.text).contains('Object too large')
+  })
+
   let parentId
   const numObjs = 5000
   const objBatches = [

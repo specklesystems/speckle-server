@@ -5,6 +5,8 @@ const { set, get, chunk } = require('lodash')
 
 const knex = require(`@/db/knex`)
 const { servicesLogger } = require('@/logging/logging')
+const { getMaximumObjectSizeMB } = require('@/modules/shared/helpers/envHelper')
+const { ObjectHandlingError } = require('@/modules/core/errors/object')
 
 const Objects = () => knex('objects')
 const Closures = () => knex('object_children_closure')
@@ -586,7 +588,7 @@ module.exports = {
 
   // NOTE: Derive Object
   async updateObject() {
-    throw new Error('not implemeneted')
+    throw new Error('Updating object is not implemented')
   }
 }
 
@@ -595,7 +597,7 @@ module.exports = {
 // we cannot provide a full response back including all object hashes.
 function prepInsertionObject(streamId, obj) {
   // let memNow = process.memoryUsage().heapUsed / 1024 / 1024
-  const MAX_OBJECT_SIZE = 10 * 1024 * 1024
+  const MAX_OBJECT_SIZE = getMaximumObjectSizeMB() * 1024 * 1024
 
   if (obj.hash) obj.id = obj.hash
   else
@@ -604,7 +606,9 @@ function prepInsertionObject(streamId, obj) {
 
   const stringifiedObj = JSON.stringify(obj)
   if (stringifiedObj.length > MAX_OBJECT_SIZE) {
-    throw new Error(`Object too large (${stringifiedObj.length} > ${MAX_OBJECT_SIZE})`)
+    throw new ObjectHandlingError(
+      `Object too large. (${stringifiedObj.length} > ${MAX_OBJECT_SIZE})`
+    )
   }
   // let memAfter = process.memoryUsage().heapUsed / 1024 / 1024
 
