@@ -268,14 +268,15 @@ function createLink(params: {
   const { httpEndpoint, wsClient, authToken } = params
   const goToLogin = useNavigateToLogin()
   const { registerError, isErrorState } = useAppErrorState()
-  const logger = useLogger()
 
   const errorLink = onError((res) => {
+    const logger = useLogger()
+
     const isSubTokenMissingError = (res.networkError?.message || '').includes(
       'need a token to subscribe'
     )
 
-    if (!isSubTokenMissingError) logger.error('Apollo Client error', res)
+    if (!isSubTokenMissingError) logger?.error('Apollo Client error', res)
 
     const { networkError } = res
     if (networkError && isInvalidAuth(networkError)) {
