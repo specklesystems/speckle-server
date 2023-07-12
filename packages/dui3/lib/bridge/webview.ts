@@ -10,7 +10,7 @@ type IWebView2 = {
 }
 
 type IRawBridge = {
-  GetMethods: () => string[]
+  GetBindingsMethodNames: () => string[]
   RunMethod: (methodName: string, args: string) => Promise<string>
 }
 
@@ -25,7 +25,7 @@ export class WebView2Bridge extends BaseBridge {
 
     // NOTE: GetMethods is a call to the .NET side.
     const availableMethodNames =
-      chrome.webview.hostObjects.sync[bridgeName].GetMethods()
+      chrome.webview.hostObjects.sync[bridgeName].GetBindingsMethodNames()
 
     // NOTE: hoisting original calls as lowerCasedMethodNames, but using the UpperCasedName for the .NET call
     // This allows us to follow js convetions and keep .NET ones too (eg. bindings.sayHi('') => public string SayHi(string name) {}

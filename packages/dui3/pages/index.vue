@@ -38,7 +38,7 @@ import { graphql } from '~/lib/common/generated/gql'
 import { ServerInfoTestQuery } from '~/lib/common/generated/gql/graphql'
 
 const { $bindings } = useNuxtApp()
-const appName = await $bindings.getSourceAppName()
+const appName = await $bindings.getSourceApplicationName()
 const { accounts, refreshAccounts, defaultAccount } = await useAccountsSetup()
 
 const versionQuery = graphql(`

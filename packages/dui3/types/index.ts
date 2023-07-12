@@ -44,19 +44,14 @@ type TestData = {
 // .NET/Host App -> JS
 export interface HostAppEvents {
   test: (data: TestData) => void
-  documentChanged: (data: { x: number; y: boolean }) => void
-  selectionChanged: () => void
-  documentClosed: () => void
-  updateModelCardState: () => void
-  displayToastNotification: () => void // bla bla bla
 }
 
 // JS -> asks for something form host app
 export interface IWebUiBinding {
-  sayHi: (name: string) => Promise<string>
   openDevTools: () => Promise<void>
   getAccounts: () => Promise<Account[]>
-  getSourceAppName: () => Promise<string>
+  getSourceApplicationName: () => Promise<string>
+  getSourceApplicationVersion: () => Promise<string>
   // getFileState: () => Promise<FileState>
   // addModelCard(string modelId, string projectId), removeModelCard(...) // etc. etc.
 

@@ -3,7 +3,6 @@ import { createNanoEvents, Emitter } from 'nanoevents'
 /**
  * A simple (typed) event emitter base class that host applications can use to send messages (and data) to the web ui,
  * e.g. via `browser.executeScriptAsync("myBindings.on('eventName', serializedData)")`.
-
  */
 export class BaseBridge {
   private emitter: Emitter
