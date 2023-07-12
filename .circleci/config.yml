@@ -93,6 +93,12 @@ workflows:
           requires:
             - get-version
 
+      - docker-build-monitor-container:
+          context: *build-context
+          filters: *filters-build
+          requires:
+            - get-version
+
       - test-deployments:
           filters: *filters-build
           requires:
@@ -104,12 +110,7 @@ workflows:
             - docker-build-file-imports
             - docker-build-previews
             - docker-build-test-container
-
-      - docker-build-monitor-container:
-          context: *build-context
-          filters: *filters-build
-          requires:
-            - get-version
+            - docker-build-monitor-container
 
       - publish-approval:
           type: approval
