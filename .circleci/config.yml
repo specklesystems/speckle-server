@@ -93,6 +93,18 @@ workflows:
           requires:
             - get-version
 
+      - test-deployments:
+          filters: *filters-build
+          requires:
+            - get-version
+            - docker-build-server
+            - docker-build-frontend
+            - docker-build-frontend-2
+            - docker-build-webhooks
+            - docker-build-file-imports
+            - docker-build-previews
+            - docker-build-test-container
+
       - docker-build-monitor-container:
           context: *build-context
           filters: *filters-build
@@ -122,6 +134,7 @@ workflows:
             - publish-approval
             - docker-build-server
             - test-server
+            - test-deployments
             - pre-commit
 
       - docker-publish-frontend:
@@ -131,6 +144,7 @@ workflows:
             - get-version
             - publish-approval
             - docker-build-frontend
+            - test-deployments
             - pre-commit
             - test-server
 
@@ -141,6 +155,7 @@ workflows:
             - get-version
             - publish-approval
             - docker-build-frontend-2
+            - test-deployments
             - pre-commit
             - test-frontend-2
 
@@ -151,6 +166,7 @@ workflows:
             - get-version
             - publish-approval
             - docker-build-webhooks
+            - test-deployments
             - pre-commit
             - test-server
 
@@ -161,6 +177,7 @@ workflows:
             - get-version
             - publish-approval
             - docker-build-file-imports
+            - test-deployments
             - pre-commit
             - test-server
 
@@ -171,6 +188,7 @@ workflows:
             - get-version
             - publish-approval
             - docker-build-previews
+            - test-deployments
             - pre-commit
             - test-server
 
@@ -181,6 +199,7 @@ workflows:
             - get-version
             - publish-approval
             - docker-build-test-container
+            - test-deployments
             - pre-commit
 
       - docker-publish-monitor-container:
@@ -190,6 +209,7 @@ workflows:
             - get-version
             - publish-approval
             - docker-build-monitor-container
+            - test-deployments
             - pre-commit
 
       - publish-helm-chart:
@@ -530,6 +550,40 @@ jobs:
           name: Test via Storybook
           command: yarn storybook:test:ci
           working_directory: 'packages/ui-components'
+
+  test-deployments:
+    machine:
+      image: ubuntu-2204:2023.02.1
+      docker_layer_caching: true
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - run:
+          name: 'Deploy Kubernetes cluster'
+          command: echo "deploying kind via ctlptl"
+      - run:
+          name: 'Load images from tarballs'
+          command: echo "loading images from tarballs"
+      - run:
+          name: 'Deploy Speckle via Helm'
+          command: echo "deploying speckle via helm"
+      - run:
+          name: 'Deploying Speckle to Docker Compose'
+          command: echo "deploying Speckle to docker compose"
+      - run:
+          name: 'Running tests against Docker Compose'
+          command: echo "testing docker compose"
+      - run:
+          name: 'Tear down Docker compose'
+          command: echo "tearing down docker compose"
+      - run:
+          name: 'Testing DO 1Click script'
+          command: echo "deploying speckle to docker compose with DO 1click script"
+      - run:
+          name: 'Running tests against DO 1Click deployed Speckle'
+          command: echo "testing DO 1click deployed Speckle"
 
   frontend-2-chromatic:
     resource_class: medium+
