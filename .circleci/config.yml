@@ -64,6 +64,7 @@ workflows:
             - get-version
 
       - docker-build-frontend-2:
+          context: *build-context
           filters: *filters-build
           requires:
             - get-version

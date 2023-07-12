@@ -6,6 +6,7 @@ const getIpFromRequest = (req) => {
       req.headers['true-client-ip'] ||
       req.headers['x-real-ip'] ||
       req.headers['x-forwarded-for'] ||
+      req.headers['x-original-forwarded-for'] ||
       req.ip ||
       req.connection.remoteAddress ||
       ''

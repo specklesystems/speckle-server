@@ -28,6 +28,8 @@ function useSelectOrZoomOnSelection() {
   const { clearSelection, addToSelection } = useSelectionUtilities()
   const { zoom } = useCameraUtilities()
   const mp = useMixpanel()
+  const logger = useLogger()
+
   const trackAndClearSelection = () => {
     clearSelection()
     mp.track('Viewer Action', {
@@ -90,7 +92,7 @@ function useSelectOrZoomOnSelection() {
           zoom(ids)
         } // else somethingn is weird.
         else {
-          console.warn(
+          logger.warn(
             "Got a double click event but there's no selected object in the state - this should be impossible :)"
           )
         }

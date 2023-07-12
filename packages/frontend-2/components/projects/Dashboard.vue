@@ -103,6 +103,8 @@ const onUserProjectsUpdateSubscription = graphql(`
   }
 `)
 
+const logger = useLogger()
+
 const infiniteLoaderId = ref('')
 const cursor = ref(null as Nullable<string>)
 const selectedRoles = ref(undefined as Optional<StreamRoles[]>)
@@ -237,7 +239,7 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
       }
     })
   } catch (e) {
-    console.error(e)
+    logger.error(e)
     state.error()
     return
   }

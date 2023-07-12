@@ -46,7 +46,7 @@ export function useViewerAnchoredPointCalculator(params: {
         targetLoc.y = round(targetLoc.y)
       }
 
-      // console.log(targetLoc, targetProjectionResult, target, new Date().toISOString())
+      // logger.debug(targetLoc, targetProjectionResult, target, new Date().toISOString())
     }
 
     const targetOcclusionRes = viewer.query<IntersectionQuery>({

@@ -4,9 +4,11 @@ import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function useDebugViewerEvents() {
+  const logger = useLogger()
+
   for (const [key, val] of Object.entries(ViewerEvent)) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    useViewerEventListener(val, (...args) => console.log(key, ...args))
+    useViewerEventListener(val, (...args) => logger.debug(key, ...args))
   }
 }
 

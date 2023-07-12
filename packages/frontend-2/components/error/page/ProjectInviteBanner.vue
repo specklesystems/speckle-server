@@ -16,6 +16,7 @@ import { projectInviteQuery } from '~~/lib/projects/graphql/queries'
 
 const route = useRoute()
 const goToProject = useNavigateToProject()
+const logger = useLogger()
 
 const token = computed(() => route.query.token as Optional<string>)
 const projectId = computed(() => route.params.id as Optional<string>)
@@ -31,7 +32,7 @@ const { result } = useQuery(
 
 const invite = computed(() => result.value?.projectInvite)
 
-const onError = (err: unknown) => console.error(err)
+const onError = (err: unknown) => logger.error(err)
 
 const onProcessed = (val: { accepted: boolean }) => {
   const { accepted } = val

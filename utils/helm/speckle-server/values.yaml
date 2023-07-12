@@ -752,6 +752,9 @@ frontend:
 ## @descriptionStart
 ## Defines parameters related to the new frontend_2 component of Speckle
 frontend_2:
+  ## @param frontend_2.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
+  ##
+  logLevel: 'info'
   ## @param frontend_2.enabled Feature flag to enable running the new experimental frontend.
   enabled: false
   ## @param frontend_2.replicas The number of instances of the Frontend 2 server prod to be deployed withing the cluster.

@@ -270,11 +270,13 @@ function createLink(params: {
   const { registerError, isErrorState } = useAppErrorState()
 
   const errorLink = onError((res) => {
+    const logger = useLogger()
+
     const isSubTokenMissingError = (res.networkError?.message || '').includes(
       'need a token to subscribe'
     )
 
-    if (!isSubTokenMissingError) console.error('Apollo Client error', res)
+    if (!isSubTokenMissingError) logger?.error('Apollo Client error', res)
 
     const { networkError } = res
     if (networkError && isInvalidAuth(networkError)) {
