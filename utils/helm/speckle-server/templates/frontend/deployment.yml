@@ -6,7 +6,11 @@ metadata:
   labels:
 {{ include "frontend.labels" . | indent 4 }}
 spec:
+  {{ if .Values.frontend_2.enabled}}
+  replicas: 0
+  {{ else }}
   replicas: {{ .Values.frontend.replicas }}
+  {{ end }}
   selector:
     matchLabels:
       app: speckle-frontend
