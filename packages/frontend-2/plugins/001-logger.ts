@@ -11,7 +11,8 @@ export default defineNuxtPlugin(async () => {
       logPretty,
       logClientApiToken,
       speckleServerVersion,
-      logClientApiEndpoint
+      logClientApiEndpoint,
+      serverName
     }
   } = useRuntimeConfig()
 
@@ -51,7 +52,8 @@ export default defineNuxtPlugin(async () => {
             errorMessage: event.message,
             browser: true,
             frontendType: 'frontend-2',
-            speckleServerVersion
+            speckleServerVersion,
+            serverName
           },
           // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
           exception: event.error instanceof Error ? event.error.stack : `${event.error}`
