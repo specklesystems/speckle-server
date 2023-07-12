@@ -11057,6 +11057,7 @@ __metadata:
     "@types/js-cookie": ^3.0.2
     "@types/lodash-es": ^4.17.6
     "@types/mixpanel-browser": ^2.38.0
+    "@types/pino-http": ^5.8.1
     "@typescript-eslint/eslint-plugin": ^5.38.1
     "@typescript-eslint/parser": ^5.38.1
     "@vitejs/plugin-legacy": ^4.0.3
@@ -11083,6 +11084,9 @@ __metadata:
     mixpanel-browser: ^2.45.0
     nanoid: ^3.0.0
     nuxt: ^3.3.1
+    pino: ^8.14.1
+    pino-http: ^8.3.3
+    pino-pretty: ^10.0.1
     portal-vue: ^3.0.0
     postcss: ^8.4.18
     postcss-custom-properties: ^12.1.9
@@ -11401,6 +11405,7 @@ __metadata:
     lodash: ^4.17.0
     lodash-es: ^4.17.21
     pino: ^8.7.0
+    pino-http: ^8.0.0
     rollup: ^2.79.1
     rollup-plugin-delete: ^2.0.0
     rollup-plugin-typescript2: ^0.34.1
@@ -11408,6 +11413,8 @@ __metadata:
     typescript: ^4.5.4
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.176
+    pino: ^8.7.0
+    pino-http: ^8.0.0
   languageName: unknown
   linkType: soft
 
@@ -35119,6 +35126,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pino-http@npm:^8.0.0, pino-http@npm:^8.3.3":
+  version: 8.3.3
+  resolution: "pino-http@npm:8.3.3"
+  dependencies:
+    get-caller-file: ^2.0.5
+    pino: ^8.0.0
+    pino-std-serializers: ^6.0.0
+    process-warning: ^2.0.0
+  checksum: 6d9fb4f9230dce04d934b3d6179b2b9a14654e8e0e6cb7344cd1d8baeb53d5c42e1d169dffe350379bfeb9e41b59dc0ec417fe86eb01d49a21e2bac031c2803e
+  languageName: node
+  linkType: hard
+
 "pino-http@npm:^8.2.1":
   version: 8.2.1
   resolution: "pino-http@npm:8.2.1"
@@ -35129,6 +35148,30 @@ __metadata:
     pino-std-serializers: ^6.0.0
     process-warning: ^2.0.0
   checksum: 7eb0d72a1986c16ab7ca22f193f9a5d1b26dc6614fddd4f7859065a410d86ab9cbb96a70a5758fa432dd1dd01c02a6e5774bba90f9a2e08ea0c1ac242af7ea0d
+  languageName: node
+  linkType: hard
+
+"pino-pretty@npm:^10.0.1":
+  version: 10.0.1
+  resolution: "pino-pretty@npm:10.0.1"
+  dependencies:
+    colorette: ^2.0.7
+    dateformat: ^4.6.3
+    fast-copy: ^3.0.0
+    fast-safe-stringify: ^2.1.1
+    help-me: ^4.0.1
+    joycon: ^3.1.1
+    minimist: ^1.2.6
+    on-exit-leak-free: ^2.1.0
+    pino-abstract-transport: ^1.0.0
+    pump: ^3.0.0
+    readable-stream: ^4.0.0
+    secure-json-parse: ^2.4.0
+    sonic-boom: ^3.0.0
+    strip-json-comments: ^3.1.1
+  bin:
+    pino-pretty: bin.js
+  checksum: b156c066c106026cb6a555c1f6ebb6b15636ce5516917cc979a179dcb17fdaaf7361cbe6242ae8f3661e9cfa6c18c35906afde3f9511bd2ec80dc39b6693fdde
   languageName: node
   linkType: hard
 
@@ -35181,6 +35224,27 @@ __metadata:
   bin:
     pino: bin.js
   checksum: 4aa2e320aa88f4a90fd25884ee4e3b9ef7963b3c59c514f3693b5a5c987b112cf3ab4e39a8c51efe32c861f5c058d7cfa7fcda59d964ed878f842fdbc6ab2876
+  languageName: node
+  linkType: hard
+
+"pino@npm:^8.14.1":
+  version: 8.14.1
+  resolution: "pino@npm:8.14.1"
+  dependencies:
+    atomic-sleep: ^1.0.0
+    fast-redact: ^3.1.1
+    on-exit-leak-free: ^2.1.0
+    pino-abstract-transport: v1.0.0
+    pino-std-serializers: ^6.0.0
+    process-warning: ^2.0.0
+    quick-format-unescaped: ^4.0.3
+    real-require: ^0.2.0
+    safe-stable-stringify: ^2.3.1
+    sonic-boom: ^3.1.0
+    thread-stream: ^2.0.0
+  bin:
+    pino: bin.js
+  checksum: 72dcae8f550d375695bb8745f11b30c42aaa20d0bcab8f546ca5af0684d784453850949fe1b244206793e813a46d72cbbf0dda8aed2cee86e9491ba44a643e3e
   languageName: node
   linkType: hard
 

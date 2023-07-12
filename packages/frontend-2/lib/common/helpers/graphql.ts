@@ -144,6 +144,7 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
 ): boolean {
   const { fragment, query } = filter
   const { ignoreCacheErrors = true, overwrite = true } = options
+  const logger = useLogger()
 
   if (!fragment && !query) {
     throw new Error(
@@ -190,7 +191,7 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
     }
 
     if (ignoreCacheErrors) {
-      console.warn('Failed Apollo cache update:', e)
+      logger.warn('Failed Apollo cache update:', e)
       return false
     }
     throw e

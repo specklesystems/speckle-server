@@ -84,10 +84,8 @@ export function useProcessOnboarding() {
       .catch(convertThrowIntoFetchResult)
 
     const newId = data?.projectMutations.createForOnboarding.id
-    console.log(data?.projectMutations.createForOnboarding.models)
     return {
       projectId: newId,
-      // modelId: data?.projectMutations.createForOnboarding.models.items[0]?.id, // TODO: less hardcoding maybe?
       project: data?.projectMutations.createForOnboarding
     }
   }
