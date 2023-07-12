@@ -10993,6 +10993,8 @@ __metadata:
     knex: ^2.4.1
     nodemon: ^2.0.20
     pg: ^8.7.3
+    pino: ^8.7.0
+    pino-http: ^8.0.0
     pino-pretty: ^9.1.1
     prettier: ^2.5.1
     prom-client: ^14.0.1
@@ -11249,6 +11251,7 @@ __metadata:
     nodemon: ^2.0.20
     pg: ^8.7.3
     pg-query-stream: ^4.2.3
+    pino: ^8.7.0
     pino-http: ^8.2.1
     pino-pretty: ^9.1.1
     prettier: ^2.5.1
@@ -11604,6 +11607,8 @@ __metadata:
     knex: ^2.4.1
     node-fetch: ^2.6.1
     pg: ^8.7.3
+    pino: ^8.7.0
+    pino-http: ^8.0.0
     pino-pretty: ^9.1.1
     prettier: ^2.5.1
     private-ip: ^2.3.3
