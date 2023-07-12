@@ -24,7 +24,9 @@
     "storybook:test": "test-storybook",
     "storybook:test:ci": "concurrently -k -s first -n \"SB,TEST\" -c \"magenta,blue\" \"yarn build-storybook --quiet && npx http-server storybook-static --port 6006 --silent\" \"wait-on tcp:6006 && yarn test-storybook --ci\"",
     "storybook:test:watch": "test-storybook --watch",
-    "chromatic": "chromatic --exit-zero-on-changes --exit-once-uploaded"
+    "chromatic": "chromatic --exit-zero-on-changes --exit-once-uploaded",
+    "test:e2e:dev": "TEST_IS_E2E=1 vitest",
+    "test:e2e:static": "TEST_SKIP_BUILD=true yarn test:e2e:dev"
   },
   "dependencies": {
     "@apollo/client": "^3.7.0",
