@@ -752,8 +752,14 @@ frontend:
 
 ## @section frontend_2
 ## @descriptionStart
-## Defines parameters related to the new frontend_2 component of Speckle
+## Defines parameters related to the frontend_2 component of Speckle
 frontend_2:
+  ## @param frontend_2.logClientApiToken SEQ API token
+  ##
+  logClientApiToken: ''
+  ## @param frontend_2.logClientApiEndpoint SEQ endpoint URL
+  ##
+  logClientApiEndpoint: ''
   ## @param frontend_2.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'

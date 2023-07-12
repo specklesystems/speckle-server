@@ -1137,6 +1137,16 @@
     "frontend_2": {
       "type": "object",
       "properties": {
+        "logClientApiToken": {
+          "type": "string",
+          "description": "SEQ API token",
+          "default": ""
+        },
+        "logClientApiEndpoint": {
+          "type": "string",
+          "description": "SEQ endpoint URL",
+          "default": ""
+        },
         "logLevel": {
           "type": "string",
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
