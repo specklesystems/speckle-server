@@ -293,7 +293,11 @@ export async function init() {
   app.disable('x-powered-by')
 
   Logging(app)
-  const expressMetricsMiddleware = promBundle({ includeMethod: true })
+  const expressMetricsMiddleware = promBundle({
+    includeMethod: true,
+    includePath: true,
+    httpDurationMetricName: 'speckle_server_http_request_duration_seconds'
+  })
 
   // Moves things along automatically on restart.
   // Should perhaps be done manually?
