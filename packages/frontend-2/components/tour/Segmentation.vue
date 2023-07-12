@@ -19,14 +19,14 @@
         </p>
         <div class="grid grid-cols-2 gap-4">
           <FormButton
-            v-for="(val, title) in OnboardingIndustry"
+            v-for="val in OnboardingIndustry"
             :key="val"
-            class="text-xs hover:scale-[1.05]"
+            class="text-xs hover:scale-[1.05] capitalize"
             @click="setIndustry(val)"
             @mouseenter="rotateGently(Math.random() * 2)"
             @focus="rotateGently(Math.random() * 2)"
           >
-            {{ title }}
+            {{ val }}
           </FormButton>
         </div>
       </div>
@@ -43,11 +43,14 @@
         @mouseleave="rotateGently(Math.random() * 2)"
       >
         <h2 class="text-center text-2xl font-bold">Thanks!</h2>
-        <p class="text-center">One last thing. What's your job title?</p>
+        <p class="text-center">
+          Last thing! Please select the role that best describes you:
+        </p>
         <div class="grid grid-cols-2 gap-4">
           <FormButton
             v-for="val in OnboardingRole"
             :key="val"
+            class="text-xs hover:scale-[1.05]"
             @click="setRole(val)"
             @mouseenter="rotateGently(Math.random() * 2)"
             @focus="rotateGently(Math.random() * 2)"

@@ -58,6 +58,7 @@ import FirstTip from '~~/components/tour/content/FirstTip.vue'
 import BasicViewerNavigation from '~~/components/tour/content/BasicViewerNavigation.vue'
 import OverlayModel from '~~/components/tour/content/OverlayModel.vue'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const emit = defineEmits(['next'])
 
@@ -74,6 +75,8 @@ const slideshowItems = ref(slideshowItemsRaw.slice(0, tourItems.length))
 provide('slideshowItems', slideshowItems)
 
 const lastOpenIndex = ref(0)
+const mp = useMixpanel()
+
 const next = (currentIndex: number) => {
   if (currentIndex + 1 >= slideshowItems.value.length) {
     finishSlideshow()
@@ -83,17 +86,38 @@ const next = (currentIndex: number) => {
   slideshowItems.value[currentIndex].viewed = true
   slideshowItems.value[currentIndex + 1].expanded = true
   lastOpenIndex.value = currentIndex + 1
+  mp.track('Onboarding Action', {
+    type: 'action',
+    name: 'slideshow',
+    action: 'next',
+    step: currentIndex
+  })
 }
+
 const prev = (currentIndex: number) => {
   if (currentIndex - 1 < 0) return
   slideshowItems.value[currentIndex].expanded = false
   slideshowItems.value[currentIndex - 1].expanded = true
   lastOpenIndex.value = currentIndex - 1
+  mp.track('Onboarding Action', {
+    type: 'action',
+    name: 'slideshow',
+    action: 'previous',
+    step: currentIndex
+  })
 }
+
 const toggle = (index: number) => {
   if (!slideshowItems.value[index]) return
   slideshowItems.value[index].expanded = !slideshowItems.value[index].expanded
   if (slideshowItems.value[index].expanded) lastOpenIndex.value = index
+
+  mp.track('Onboarding Action', {
+    type: 'action',
+    name: 'slideshow',
+    action: 'toggle',
+    step: index
+  })
 }
 
 provide('slideshowActions', { next, prev, toggle })

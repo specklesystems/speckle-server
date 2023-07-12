@@ -57,6 +57,7 @@ const {
 const {
   isLegacyData,
   isDataStruct,
+  formatSerializedViewerState,
   convertStateToLegacyData,
   convertLegacyDataToState
 } = require('@/modules/comments/services/data')
@@ -155,7 +156,8 @@ module.exports = {
       }
 
       if (isDataStruct(parentData)) {
-        return convertStateToLegacyData(parentData.state)
+        const formattedState = formatSerializedViewerState(parentData.state)
+        return convertStateToLegacyData(formattedState)
       }
 
       return null
@@ -168,7 +170,8 @@ module.exports = {
       if (!parentData) return null
 
       if (isDataStruct(parentData)) {
-        return parentData.state
+        const formattedState = formatSerializedViewerState(parentData.state)
+        return formattedState
       }
 
       if (isLegacyData(parentData)) {
@@ -273,14 +276,16 @@ module.exports = {
     async create(_parent, args, ctx) {
       await authorizeProjectCommentsAccess({
         projectId: args.input.projectId,
-        authCtx: ctx
+        authCtx: ctx,
+        requireProjectRole: true
       })
       return await createCommentThreadAndNotify(args.input, ctx.userId)
     },
     async reply(_parent, args, ctx) {
       await authorizeCommentAccess({
         commentId: args.input.threadId,
-        authCtx: ctx
+        authCtx: ctx,
+        requireProjectRole: true
       })
       return await createCommentReplyAndNotify(args.input, ctx.userId)
     },
@@ -566,6 +571,8 @@ module.exports = {
         ViewerSubscriptions.UserActivityBroadcasted,
         async (payload, variables, context) => {
           const target = variables.target
+          const sessionId = variables.sessionId
+
           if (!target.resourceIdString.trim().length) return false
           if (payload.projectId !== target.projectId) return false
 
@@ -581,7 +588,10 @@ module.exports = {
             throw new ApolloForbiddenError('You are not authorized.')
 
           // dont report users activity to himself
-          if (context.userId && context.userId === payload.userId) {
+          if (
+            sessionId &&
+            sessionId === payload.viewerUserActivityBroadcasted.sessionId
+          ) {
             return false
           }
 
@@ -609,7 +619,7 @@ module.exports = {
             getViewerResourceItemsUngrouped(target)
           ])
 
-          if (!stream.allowPublicComments && !stream.role)
+          if (!(stream.isDiscoverable || stream.isPublic) && !stream.role)
             throw new ApolloForbiddenError('You are not authorized.')
 
           if (!target.resourceIdString) {

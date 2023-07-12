@@ -8,6 +8,7 @@
       :editor="editor"
       :style="maxHeight ? `max-height: ${maxHeight}; overflow-y: auto;` : ''"
       @click="onEditorContentClick"
+      @keydown="onKeyDownHandler"
     />
     <div v-if="$slots.actions && !readonly">
       <slot name="actions" />
@@ -30,6 +31,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', val: JSONContent): void
   (e: 'submit', val: { data: JSONContent }): void
   (e: 'created'): void
+  (e: 'keydown', val: KeyboardEvent): void
 }>()
 
 const props = defineProps<{
@@ -82,6 +84,7 @@ const onEnter = () => {
   if (isMultiLine.value || props.readonly) return
   emit('submit', { data: getData() })
 }
+const onKeyDownHandler = (e: KeyboardEvent) => emit('keydown', e)
 const onEditorContentClick = (e: MouseEvent) => {
   const closestSelectorTarget = (e.target as HTMLElement).closest(
     '.editor-mention'

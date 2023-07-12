@@ -57,7 +57,7 @@ export function getConversionFactor(from, to = Units.Meters) {
         case Units.Centimeters:
           return 100
         case Units.Kilometers:
-          return 1000
+          return 1e-3
         case Units.Inches:
           return 39.3701
         case Units.Feet:
@@ -182,6 +182,9 @@ export function normaliseName(unit) {
     case 'mile':
     case 'mi':
       return Units.Miles
+    case 'km':
+    case 'kilometers':
+      return Units.Kilometers
     default:
       return Units.Meters
   }

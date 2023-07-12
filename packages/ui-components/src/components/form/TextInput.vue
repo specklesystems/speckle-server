@@ -86,7 +86,7 @@ import { ConcreteComponent, PropType, computed, ref, toRefs, useSlots } from 'vu
 import { Nullable, Optional } from '@speckle/shared'
 import { useTextInputCore } from '~~/src/composables/form/textInput'
 
-type InputType = 'text' | 'email' | 'password' | 'url' | 'search'
+type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | string
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
 type InputColor = 'page' | 'foundation'
 

@@ -22,6 +22,10 @@ domain: localhost
 ##
 ssl_canonical_url: true
 
+## @param tlsRejectUnauthorized If '1' (true), Speckle will reject any SSL certificates that are not signed by a trusted Certificate Authority. Should only be disabled in a trusted local development environment. https://nodejs.org/api/cli.html#node_tls_reject_unauthorizedvalue
+##
+tlsRejectUnauthorized: '1'
+
 ## @param cert_manager_issuer The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate
 ##
 cert_manager_issuer: letsencrypt-staging
@@ -373,10 +377,18 @@ server:
   ##
   logLevel: 'info'
 
+  inspect:
+    ## @param server.inspect.enabled If enabled, indicates that the Speckle server should be deployed with the nodejs inspect feature enabled
+    enabled: false
+    ## @param server.inspect.port The port on which the nodejs inspect feature should be exposed
+    port: '7000'
+
   ## @param server.adminOverrideEnabled Enables the server side admin authz override
   adminOverrideEnabled: false
   ## @param server.onboardingStreamId The id of the stream to be used for onboarding new users
   onboardingStreamId: ''
+  ## @param server.max_object_size_mb The maximum size of an individual object which can be uploaded to the server
+  max_object_size_mb: 10
   ## @param server.speckleAutomateUrl The url of the Speckle Automate instance
   speckleAutomateUrl: 'https://automate.speckle.systems'
   sessionSecret:
@@ -486,6 +498,9 @@ server:
     ## @param server.email.port The port on the server for the email service.
     ##
     port: ''
+    ## @param server.email.from The email address from which Speckle will send emails. Defaults to 'no-reply@speckle.systems' if left blank.
+    ##
+    from: ''
     ## @param server.email.username The username with which Speckle will authenticate with the email service.
     ## Note that the `email_password` is expected to be provided in the Kubernetes Secret with the name provided in the `secretName` parameter.
     ##
@@ -739,6 +754,9 @@ frontend:
 ## @descriptionStart
 ## Defines parameters related to the new frontend_2 component of Speckle
 frontend_2:
+  ## @param frontend_2.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
+  ##
+  logLevel: 'info'
   ## @param frontend_2.enabled Feature flag to enable running the new experimental frontend.
   enabled: false
   ## @param frontend_2.replicas The number of instances of the Frontend 2 server prod to be deployed withing the cluster.

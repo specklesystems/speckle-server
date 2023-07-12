@@ -56,7 +56,16 @@
         :key="thread.id"
         :thread="thread"
       />
-      <div v-if="commentThreads.length === 0">TODO: Empty state</div>
+      <div v-if="commentThreads.length === 0">
+        <ProjectPageLatestItemsCommentsIntroCard
+          small
+          @new-discussion="onNewDiscussion"
+        />
+      </div>
+      <!-- TODO: new thread on click in centre of screen, I can't figure out how -->
+      <!-- <div class="py-2 text-center">
+        <FormButton>New Discussion</FormButton>
+      </div> -->
     </div>
   </ViewerLayoutPanel>
 </template>
@@ -73,6 +82,7 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 defineEmits(['close'])
 
@@ -109,7 +119,10 @@ graphql(`
 const { commentThreads, commentThreadsMetadata } = useInjectedViewerLoadedResources()
 const { threadFilters } = useInjectedViewerRequestedResources()
 const {
-  threads: { hideBubbles }
+  threads: {
+    hideBubbles,
+    openThread: { newThreadEditor }
+  }
 } = useInjectedViewerInterfaceState()
 
 const showVisibilityOptions = ref(false)
@@ -126,4 +139,31 @@ const includeArchived = computed({
     threadFilters.value.includeArchived || false ? 'includeArchived' : undefined,
   set: (newVal) => (threadFilters.value.includeArchived = !!newVal)
 })
+
+const mp = useMixpanel()
+watch(loadedVersionsOnly, (newVal) =>
+  mp.track('Comment Action', {
+    type: 'action',
+    name: 'settings-change',
+    loadedVersionsOnly: newVal
+  })
+)
+watch(includeArchived, (newVal) =>
+  mp.track('Comment Action', {
+    type: 'action',
+    name: 'settings-change',
+    includeArchived: newVal
+  })
+)
+watch(includeArchived, (newVal) =>
+  mp.track('Comment Action', {
+    type: 'action',
+    name: 'settings-change',
+    includeArchived: newVal
+  })
+)
+
+const onNewDiscussion = () => {
+  newThreadEditor.value = true
+}
 </script>

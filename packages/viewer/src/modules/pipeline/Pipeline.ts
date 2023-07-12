@@ -25,6 +25,7 @@ import { SpecklePass } from './SpecklePass'
 import { ColorPass } from './ColorPass'
 import { StencilPass } from './StencilPass'
 import { StencilMaskPass } from './StencilMaskPass'
+import { OverlayPass } from './OverlayPass'
 
 export enum RenderType {
   NORMAL,
@@ -82,6 +83,7 @@ export class Pipeline {
   private applySaoPass: ApplySAOPass = null
   private copyOutputPass: CopyOutputPass = null
   private staticAoPass: StaticAOPass = null
+  private overlayPass: OverlayPass = null
 
   private drawingSize: Vector2 = new Vector2()
   private _renderType: RenderType = RenderType.NORMAL
@@ -247,6 +249,7 @@ export class Pipeline {
     this.stencilMaskPass = new StencilMaskPass()
     this.applySaoPass = new ApplySAOPass()
     this.staticAoPass = new StaticAOPass()
+    this.overlayPass = new OverlayPass()
 
     this.copyOutputPass = new CopyOutputPass()
     this.copyOutputPass.renderToScreen = true
@@ -260,10 +263,11 @@ export class Pipeline {
       ObjectLayers.STREAM_CONTENT_MESH,
       ObjectLayers.STREAM_CONTENT_LINE,
       ObjectLayers.STREAM_CONTENT_POINT,
+      ObjectLayers.STREAM_CONTENT_TEXT,
       ObjectLayers.SHADOWCATCHER
     ])
     this.stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-
+    this.overlayPass.setLayers([ObjectLayers.MEASUREMENTS])
     let restoreVisibility, opaque, stencil
 
     this.onBeforePipelineRender = () => {
@@ -327,21 +331,6 @@ export class Pipeline {
       this._batcher.applyVisibility(restoreVisibility)
     }
 
-    this.renderPass.onBeforeRenderOpauqe = () => {
-      restoreVisibility = this._batcher.saveVisiblity()
-      const opaque = this._batcher.getOpaque()
-      this._batcher.applyVisibility(opaque)
-    }
-
-    this.renderPass.onBeforeRenderTransparent = () => {
-      const transparent = this._batcher.getTransparent()
-      this._batcher.applyVisibility(transparent)
-    }
-
-    this.renderPass.onAfterRenderTransparent = () => {
-      this._batcher.applyVisibility(restoreVisibility)
-    }
-
     this.setPipeline(this.getDefaultPipeline())
   }
 
@@ -375,6 +364,7 @@ export class Pipeline {
     pipeline.push(this.renderPass)
     pipeline.push(this.stencilMaskPass)
     pipeline.push(this.applySaoPass)
+    pipeline.push(this.overlayPass)
 
     this.needsProgressive = true
     return pipeline
@@ -412,6 +402,7 @@ export class Pipeline {
     this.normalsPass.update(renderer.scene, renderer.camera)
     this.staticAoPass.update(renderer.scene, renderer.camera)
     this.applySaoPass.update(renderer.scene, renderer.camera)
+    this.overlayPass.update(renderer.scene, renderer.camera)
 
     this.staticAoPass.setFrameIndex(this.accumulationFrame)
     this.applySaoPass.setFrameIndex(this.accumulationFrame)

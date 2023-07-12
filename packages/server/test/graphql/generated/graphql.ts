@@ -697,6 +697,8 @@ export type ModelMutationsUpdateArgs = {
 export type ModelVersionsFilter = {
   /** Make sure these specified versions are always loaded first */
   priorityIds?: InputMaybe<Array<Scalars['String']>>;
+  /** Only return versions specified in `priorityIds` */
+  priorityIdsOnly?: InputMaybe<Scalars['Boolean']>;
 };
 
 export type ModelsTreeItem = {
@@ -2269,6 +2271,7 @@ export type SubscriptionUserViewerActivityArgs = {
 
 
 export type SubscriptionViewerUserActivityBroadcastedArgs = {
+  sessionId?: InputMaybe<Scalars['String']>;
   target: ViewerUpdateTrackingTarget;
 };
 

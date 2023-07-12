@@ -60,15 +60,19 @@ import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 import { BatchObject } from './batching/BatchObject'
 import SpecklePointMaterial from './materials/SpecklePointMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
+import { Measurements } from './measurements/Measurements'
+import { MaterialOptions } from './materials/Materials'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
   STREAM_CONTENT_LINE = 11,
   STREAM_CONTENT_POINT = 12,
+  STREAM_CONTENT_TEXT = 13,
 
   STREAM_CONTENT = 1,
   PROPS = 2,
-  SHADOWCATCHER = 3
+  SHADOWCATCHER = 3,
+  MEASUREMENTS = 4
 }
 
 export default class SpeckleRenderer {
@@ -81,17 +85,18 @@ export default class SpeckleRenderer {
   private rootGroup: Group
   private batcher: Batcher
   private _intersections: Intersections
-  private input: Input
+  public input: Input
   private sun: DirectionalLight
   private sunTarget: Object3D
   private sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
   public viewer: Viewer // TEMPORARY
-  private filterBatchRecording: string[]
+  private filterBatchRecording: string[] = []
   private pipeline: Pipeline
   private lastSectionPlanes: Plane[] = []
   private sectionPlanesChanged: Plane[] = []
   private sectionBoxOutlines: SectionBoxOutlines = null
   private _shadowcatcher: Shadowcatcher = null
+  private _measurements: Measurements = null
   private cancel: { [subtreeId: string]: boolean } = {}
 
   private explodeTime = -1
@@ -182,6 +187,10 @@ export default class SpeckleRenderer {
 
   public get currentSectionBox() {
     return this.viewer.sectionBox.getCurrentBox()
+  }
+
+  public get measurements() {
+    return this._measurements
   }
 
   public constructor(viewer: Viewer /** TEMPORARY */) {
@@ -289,6 +298,7 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.controls.addEventListener('rest', () => {
       this._needsRender = true
       this.pipeline.onStationaryBegin()
+      this._measurements.paused = false
     })
     this.viewer.cameraHandler.controls.addEventListener('controlstart', () => {
       this._needsRender = true
@@ -299,11 +309,13 @@ export default class SpeckleRenderer {
       this._needsRender = true
       if (this.viewer.cameraHandler.controls.hasRested)
         this.pipeline.onStationaryBegin()
+      this._measurements.paused = false
     })
 
     this.viewer.cameraHandler.controls.addEventListener('control', () => {
       this._needsRender = true
       this.pipeline.onStationaryEnd()
+      this._measurements.paused = true
     })
     this.viewer.cameraHandler.controls.addEventListener('update', () => {
       if (
@@ -330,6 +342,8 @@ export default class SpeckleRenderer {
     }
 
     this._scene.add(this._shadowcatcher.shadowcatcherMesh)
+
+    this._measurements = new Measurements(this)
   }
 
   public update(deltaTime: number) {
@@ -340,6 +354,7 @@ export default class SpeckleRenderer {
     this.updateRTEShadows()
     this.updateTransforms()
     this.updateFrustum()
+    this._measurements.update()
 
     this.pipeline.update(this)
 
@@ -495,8 +510,8 @@ export default class SpeckleRenderer {
     this._needsRender = true
   }
 
-  public addRenderTree(subtreeId: string) {
-    this.batcher.makeBatches(
+  public async addRenderTree(subtreeId: string) {
+    await this.batcher.makeBatches(
       this.viewer.getWorldTree().getRenderTree(subtreeId),
       SpeckleTypeAllRenderables
     )
@@ -519,7 +534,11 @@ export default class SpeckleRenderer {
     this._needsRender = true
   }
 
-  public async addRenderTreeAsync(subtreeId: string, priority = 1) {
+  public async addRenderTreeAsync(
+    subtreeId: string,
+    priority = 1,
+    zoomToObject = true
+  ) {
     this.cancel[subtreeId] = false
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
@@ -536,11 +555,9 @@ export default class SpeckleRenderer {
       if (!batch) continue
 
       this.addBatch(batch, subtreeGroup)
-      this.zoom()
+      if (zoomToObject) this.zoom()
       if (batch.geometryType === GeometryType.MESH) {
         this.updateDirectLights()
-        /** Updating the shadowcatcher after each batch is a bit too much. Stalls a lot */
-        // this.updateShadowCatcher()
       }
       this._needsRender = true
       if (this.cancel[subtreeId]) {
@@ -629,17 +646,26 @@ export default class SpeckleRenderer {
     )
   }
 
+  public applyDirectFilter(ids: NodeRenderView[], filterMaterial: FilterMaterial) {
+    return this.batcher.insertObjectsFilterMaterial(ids, filterMaterial)
+  }
+
+  public removeDirectFilter(id: string) {
+    this.batcher.removeObjectsMaterial(id)
+  }
+
   public applyMaterial(
     ids: NodeRenderView[],
     material: SpeckleStandardMaterial | SpecklePointMaterial
   ) {
+    const materialOptions = { needsCopy: true } as MaterialOptions
     this.filterBatchRecording.push(
       ...this.batcher.setObjectsMaterial(ids, (rv: NodeRenderView) => {
         return {
           offset: rv.batchStart,
           count: rv.batchCount,
           material,
-          materialOptions: null
+          materialOptions
         }
       })
     )
@@ -667,8 +693,9 @@ export default class SpeckleRenderer {
     }, {})
   }
 
-  public updateClippingPlanes(planes: Plane[]) {
+  public updateClippingPlanes(planes?: Plane[]) {
     if (!this.allObjects) return
+    if (!planes) planes = this.viewer.sectionBox.planes
     /** This will be done via the batches in the near future */
     this.allObjects.traverse((object) => {
       const material = (object as unknown as { material }).material
@@ -684,6 +711,7 @@ export default class SpeckleRenderer {
     this.pipeline.updateClippingPlanes(planes)
     this.sectionBoxOutlines.updateClippingPlanes(planes)
     this._shadowcatcher.updateClippingPlanes(planes)
+    this._measurements.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
     this.resetPipeline()
     // console.log('Updated planes -> ', this.viewer.sectionBox.planes[2])
@@ -920,6 +948,14 @@ export default class SpeckleRenderer {
   }
 
   private onObjectClick(e) {
+    const measurement = this._measurements.pickMeasurement(e)
+    if (measurement) {
+      this._measurements.selectMeasurement(measurement, true)
+      return
+    }
+
+    if (this._measurements.enabled) return
+
     const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.viewer.cameraHandler.activeCam.camera,
@@ -967,6 +1003,14 @@ export default class SpeckleRenderer {
   }
 
   private onObjectDoubleClick(e) {
+    const measurement = this._measurements.pickMeasurement(e)
+    if (measurement) {
+      this.zoomToBox(measurement.bounds)
+      return
+    }
+
+    if (this._measurements.enabled) return
+
     const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.viewer.cameraHandler.activeCam.camera,
@@ -1175,6 +1219,7 @@ export default class SpeckleRenderer {
       view.view.target['z'],
       transition
     )
+    this.viewer.cameraHandler.enableRotations()
   }
 
   /**
@@ -1190,12 +1235,14 @@ export default class SpeckleRenderer {
 
     switch (side) {
       case 'front':
+        this.zoomExtents()
         this.viewer.cameraHandler.controls.rotateTo(0, DEG90, transition)
         if (this.viewer.cameraHandler.activeCam.name === 'ortho')
           this.viewer.cameraHandler.disableRotations()
         break
 
       case 'back':
+        this.zoomExtents()
         this.viewer.cameraHandler.controls.rotateTo(DEG180, DEG90, transition)
         if (this.viewer.cameraHandler.activeCam.name === 'ortho')
           this.viewer.cameraHandler.disableRotations()
@@ -1203,6 +1250,7 @@ export default class SpeckleRenderer {
 
       case 'up':
       case 'top':
+        this.zoomExtents()
         this.viewer.cameraHandler.controls.rotateTo(0, 0, transition)
         if (this.viewer.cameraHandler.activeCam.name === 'ortho')
           this.viewer.cameraHandler.disableRotations()
@@ -1210,18 +1258,21 @@ export default class SpeckleRenderer {
 
       case 'down':
       case 'bottom':
+        this.zoomExtents()
         this.viewer.cameraHandler.controls.rotateTo(0, DEG180, transition)
         if (this.viewer.cameraHandler.activeCam.name === 'ortho')
           this.viewer.cameraHandler.disableRotations()
         break
 
       case 'right':
+        this.zoomExtents()
         this.viewer.cameraHandler.controls.rotateTo(DEG90, DEG90, transition)
         if (this.viewer.cameraHandler.activeCam.name === 'ortho')
           this.viewer.cameraHandler.disableRotations()
         break
 
       case 'left':
+        this.zoomExtents()
         this.viewer.cameraHandler.controls.rotateTo(-DEG90, DEG90, transition)
         if (this.viewer.cameraHandler.activeCam.name === 'ortho')
           this.viewer.cameraHandler.disableRotations()
@@ -1260,10 +1311,12 @@ export default class SpeckleRenderer {
       view.target.z,
       transition
     )
+    this.viewer.cameraHandler.enableRotations()
   }
 
   private setViewPolar(view: PolarView, transition = true) {
     this.viewer.cameraHandler.controls.rotate(view.azimuth, view.polar, transition)
+    this.viewer.cameraHandler.enableRotations()
   }
 
   public screenToNDC(

@@ -27,7 +27,7 @@
               ]"
               @click="goToConnectors()"
             >
-              Connectors
+              Connector Downloads
               <CloudArrowDownIcon class="w-5 h-5 mr-2 text-primary" />
             </NuxtLink>
           </MenuItem>
@@ -150,7 +150,7 @@ const onThemeClick = () => {
 }
 
 const goToConnectors = () => {
-  router.push('/connectors')
+  router.push('/downloads')
 }
 
 const loginUrl = computed(() =>

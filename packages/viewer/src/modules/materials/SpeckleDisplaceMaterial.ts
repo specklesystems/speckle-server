@@ -5,7 +5,7 @@ import { speckleDisplaceVert } from './shaders/speckle-displace.vert'
 import { speckleDisplaceFrag } from './shaders/speckle-displace-frag'
 import { Vector2 } from 'three'
 import SpeckleBasicMaterial from './SpeckleBasicMaterial'
-import { Uniforms } from './SpeckleStandardMaterial'
+import { Uniforms } from './SpeckleMaterial'
 
 class SpeckleDisplaceMaterial extends SpeckleBasicMaterial {
   protected get vertexShader(): string {

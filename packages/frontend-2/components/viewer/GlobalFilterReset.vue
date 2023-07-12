@@ -11,16 +11,23 @@
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <FormButton size="sm" class="pointer-events-auto" @click="resetFilters">
+      <FormButton size="sm" class="pointer-events-auto" @click="trackAndResetFilters">
         Reset Filters
       </FormButton>
     </Transition>
   </div>
 </template>
 <script setup lang="ts">
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 const {
   resetFilters,
   filters: { hasAnyFiltersApplied }
 } = useFilterUtilities()
+
+const mp = useMixpanel()
+const trackAndResetFilters = () => {
+  resetFilters()
+  mp.track('Viewer Action', { type: 'action', name: 'filters', action: 'reset' })
+}
 </script>

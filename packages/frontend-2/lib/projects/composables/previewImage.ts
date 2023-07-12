@@ -18,6 +18,8 @@ class AngleNotFoundError extends Error {}
  */
 export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefined>) {
   const authToken = useAuthCookie()
+  const logger = useLogger()
+
   const url = ref(null as Nullable<string>)
   const panoramaUrl = ref(null as Nullable<string>)
   const isLoadingPanorama = ref(false)
@@ -104,7 +106,7 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
       const blobUrl = URL.createObjectURL(blob)
       url.value = blobUrl
     } catch (e) {
-      console.error('Preview image load error', e)
+      logger.error('Preview image load error', e)
       url.value = basePreviewUrl || null
     }
   }
@@ -138,7 +140,7 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
       panoramaUrl.value = blobUrl
     } catch (e) {
       if (!(e instanceof AngleNotFoundError)) {
-        console.error('Panorama preview image load error:', e)
+        logger.error('Panorama preview image load error:', e)
       }
 
       panoramaUrl.value = basePreviewUrl || null

@@ -1,14 +1,19 @@
 <template>
-  <LayoutPanel fancy-glow class="max-w-lg mx-auto w-full">
+  <Component
+    :is="concreteComponent"
+    fancy-glow
+    no-shadow
+    class="max-w-lg mx-auto w-full"
+  >
     <div class="space-y-4">
       <div class="flex flex-col items-center space-y-2">
         <h1
           class="text-center h3 font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
         >
-          Speckle Login
+          {{ title }}
         </h1>
         <h2 class="text-center text-foreground-2">
-          Interoperability, Collaboration and Automation for 3D
+          {{ subtitle }}
         </h2>
       </div>
       <AuthThirdPartyLoginBlock
@@ -28,13 +33,31 @@
         <AuthLoginWithEmailBlock v-if="hasLocalStrategy" :challenge="challenge" />
       </div>
     </div>
-  </LayoutPanel>
+  </Component>
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { useLoginOrRegisterUtils } from '~~/lib/auth/composables/auth'
 import { loginServerInfoQuery } from '~~/lib/auth/graphql/queries'
+import { LayoutDialog, LayoutPanel } from '@speckle/ui-components'
+
+const props = withDefaults(
+  defineProps<{
+    dialogMode?: boolean
+    title?: string
+    subtitle?: string
+  }>(),
+  {
+    dialogMode: false,
+    title: 'Speckle Login',
+    subtitle: 'Interoperability, Collaboration and Automation for 3D'
+  }
+)
+
+const concreteComponent = computed(() => {
+  return props.dialogMode ? LayoutDialog : LayoutPanel
+})
 
 const { result } = useQuery(loginServerInfoQuery)
 const { appId, challenge } = useLoginOrRegisterUtils()

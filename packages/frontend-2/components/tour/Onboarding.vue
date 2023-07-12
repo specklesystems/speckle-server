@@ -20,10 +20,24 @@
 </template>
 <script setup lang="ts">
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const step = ref(0)
 const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
   `hasCompletedChecklistV1`,
   { default: () => false }
 )
+
+const mp = useMixpanel()
+watch(step, (val) => {
+  let stepName = 'segmentation'
+  if (val === 1) stepName = 'slideshow'
+  if (val === 2) stepName = 'checklist'
+  mp.track('Onboarding Action', {
+    type: 'action',
+    name: 'step-activation',
+    step: val,
+    stepName
+  })
+})
 </script>

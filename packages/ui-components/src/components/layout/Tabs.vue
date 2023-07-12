@@ -17,7 +17,9 @@
 <script setup lang="ts">
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Nullable } from '@speckle/shared'
-import { LayoutTabItem } from '~~/lib/layout/helpers/components'
+import { computed, ref } from 'vue'
+import { LayoutTabItem } from '~~/src/helpers/layout/components'
+import FormButton from '~~/src/components/form/Button.vue'
 
 const props = defineProps<{
   items: LayoutTabItem<any>[]

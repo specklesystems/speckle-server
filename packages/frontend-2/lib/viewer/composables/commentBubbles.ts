@@ -1,28 +1,37 @@
 import { CSSProperties, Ref } from 'vue'
 import { Nullable, SpeckleViewer } from '@speckle/shared'
 import {
-  InitialStateWithUrlHashState,
   LoadedCommentThread,
   useInjectedViewerInterfaceState,
-  useInjectedViewerState
+  useInjectedViewerState,
+  useResetUiState
 } from '~~/lib/viewer/composables/setup'
 import { graphql } from '~~/lib/common/generated/gql'
-import { reduce, difference, debounce } from 'lodash-es'
-import { Box3, Vector3 } from 'three'
+import { debounce } from 'lodash-es'
+import { Vector3 } from 'three'
 import {
+  useOnViewerLoadComplete,
   useSelectionEvents,
-  useViewerCameraTracker,
-  useViewerEventListener
+  useViewerCameraTracker
 } from '~~/lib/viewer/composables/viewer'
-import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
+import {
+  useGetScreenCenterObjectId,
+  useViewerAnchoredPoints
+} from '~~/lib/viewer/composables/anchorPoints'
 import {
   HorizontalDirection,
   useOnBeforeWindowUnload,
   useResponsiveHorizontalDirectionCalculation
 } from '~~/lib/common/composables/window'
-import { ViewerEvent } from '@speckle/viewer'
 import { useViewerUserActivityBroadcasting } from '~~/lib/viewer/composables/activity'
 import { useIntervalFn } from '@vueuse/core'
+import {
+  StateApplyMode,
+  useApplySerializedState,
+  useStateSerialization
+} from '~~/lib/viewer/composables/serialization'
+import { Merge } from 'type-fest'
+import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 
 graphql(`
   fragment ViewerCommentBubblesData on Comment {
@@ -49,8 +58,13 @@ export function useViewerNewThreadBubble(params: {
   const {
     threads: {
       openThread: { newThreadEditor }
-    }
+    },
+    camera: { target },
+    selection
   } = useInjectedViewerInterfaceState()
+  const getCamCenterObjId = useGetScreenCenterObjectId()
+  const { setSelectionFromObjectIds } = useSelectionUtilities()
+  const logger = useLogger()
 
   const buttonState = ref({
     isExpanded: false,
@@ -111,11 +125,43 @@ export function useViewerNewThreadBubble(params: {
     }
   )
 
+  watch(newThreadEditor, (isNewThread, oldIsNewThread) => {
+    if (isNewThread && !!isNewThread !== !!oldIsNewThread) {
+      if (!buttonState.value.clickLocation && !target.value && !selection.value) {
+        logger.warn('Unable to enable new thread editor due to missing position data')
+        newThreadEditor.value = false
+        return
+      }
+
+      // Set "new thread bubble" location & enable it
+      if (!buttonState.value.clickLocation) {
+        if (target.value) {
+          buttonState.value.clickLocation = target.value.clone()
+        } else if (selection.value) {
+          buttonState.value.clickLocation = selection.value.clone()
+        }
+      }
+
+      buttonState.value.isExpanded = true
+      buttonState.value.isVisible = true
+      updatePositions()
+
+      // Also invoke selection, if needed
+      if (selection.value) return
+
+      const oid = getCamCenterObjId()
+      if (!oid) return
+      setSelectionFromObjectIds([oid])
+    }
+  })
+
   return { buttonState, closeNewThread }
 }
 
-export type CommentBubbleModel = LoadedCommentThread & {
-  isExpanded: boolean
+export type CommentBubbleModel = Merge<
+  LoadedCommentThread,
+  { viewerState: Nullable<SpeckleViewer.ViewerState.SerializedViewerState> }
+> & {
   isOccluded: boolean
   style: Partial<CSSProperties> & { x?: number; y?: number }
 }
@@ -134,13 +180,19 @@ export function useViewerCommentBubblesProjection(params: {
     parentEl,
     points: computed(() => Object.values(commentThreads.value)),
     pointLocationGetter: (t) => {
-      const state = SpeckleViewer.ViewerState.isSerializedViewerState(t.viewerState)
-        ? t.viewerState
-        : null
-      if (!state?.ui.selection) return undefined
+      const state = t.viewerState
 
-      const selection = state.ui.selection
-      return new Vector3(selection[0], selection[1], selection[2])
+      const selection = state?.ui.selection
+      if (selection?.length) {
+        return new Vector3(selection[0], selection[1], selection[2])
+      }
+
+      const target = state?.ui.camera.target
+      if (target?.length) {
+        return new Vector3(target[0], target[1], target[2])
+      }
+
+      return undefined
     },
     updatePositionCallback: (thread, result) => {
       thread.isOccluded = result.isOccluded
@@ -152,118 +204,6 @@ export function useViewerCommentBubblesProjection(params: {
       }
     }
   })
-}
-
-export function useViewerCommentBubbles(
-  options?: Partial<{
-    state: InitialStateWithUrlHashState
-  }>
-) {
-  const {
-    resources: {
-      response: { commentThreads: commentThreadsBase }
-    },
-    urlHashState: { focusedThreadId }
-  } = options?.state || useInjectedViewerState()
-
-  const commentThreads = ref({} as Record<string, CommentBubbleModel>)
-  const openThread = computed(() =>
-    Object.values(commentThreads.value).find((t) => t.isExpanded)
-  )
-
-  useSelectionEvents(
-    {
-      singleClickCallback: (eventInfo) => {
-        if ((eventInfo && eventInfo?.hits.length === 0) || !eventInfo) {
-          // Close open thread
-          // Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
-        }
-      }
-    },
-    { state: options?.state }
-  )
-
-  const closeAllThreads = () => {
-    focusedThreadId.value = null
-  }
-
-  const open = (id: string) => {
-    if (id === focusedThreadId.value) return
-    focusedThreadId.value = id
-  }
-
-  // Shallow watcher, only for mapping `commentThreadsBase` -> `commentThreads`
-  watch(
-    commentThreadsBase,
-    (newCommentThreads) => {
-      const newModels = reduce(
-        newCommentThreads,
-        (results, item) => {
-          const id = item.id
-          results[id] = {
-            ...(commentThreads.value[id]
-              ? commentThreads.value[id]
-              : {
-                  isExpanded: false,
-                  isOccluded: false,
-                  style: {}
-                }),
-            ...item,
-            isExpanded: !!(focusedThreadId.value && id === focusedThreadId.value)
-          }
-          return results
-        },
-        {} as Record<string, CommentBubbleModel>
-      )
-      commentThreads.value = newModels
-    },
-    { immediate: true }
-  )
-
-  // Making sure there's only ever 1 expanded thread & focusedThreadId is linked to these values
-  watch(
-    () =>
-      Object.values(commentThreads.value)
-        .filter((t) => t.isExpanded)
-        .map((t) => t.id),
-    (newExpandedThreadIds, oldExpandedThreadIds) => {
-      const completelyNewIds = difference(
-        newExpandedThreadIds,
-        oldExpandedThreadIds || []
-      )
-      const finalOpenThreadId =
-        (completelyNewIds.length ? completelyNewIds[0] : newExpandedThreadIds[0]) ||
-        null
-
-      for (const commentThread of Object.values(commentThreads.value)) {
-        const shouldBeExpanded = commentThread.id === finalOpenThreadId
-        if (commentThread.isExpanded !== shouldBeExpanded) {
-          commentThreads.value[commentThread.id].isExpanded = shouldBeExpanded
-        }
-      }
-
-      if (focusedThreadId.value !== finalOpenThreadId) {
-        focusedThreadId.value = finalOpenThreadId
-      }
-    },
-    { deep: true }
-  )
-
-  // Toggling isExpanded when threadIdToOpen changes
-  watch(focusedThreadId, (id) => {
-    if (id) {
-      if (commentThreads.value[id]) commentThreads.value[id].isExpanded = true
-    } else {
-      Object.values(commentThreads.value).forEach((t) => (t.isExpanded = false))
-    }
-  })
-
-  return {
-    commentThreads,
-    openThread,
-    closeAllThreads,
-    open
-  }
 }
 
 export function useViewerOpenedThreadUpdateEmitter() {
@@ -282,54 +222,65 @@ export function useViewerOpenedThreadUpdateEmitter() {
 }
 
 /**
- * Set up auto-focusing on opened thread
+ * Set up auto-focusing on opened thread and setting/unsetting viewer state
  */
 export function useViewerThreadTracking() {
   if (process.server) return
 
+  const applyState = useApplySerializedState()
+  const { serialize: serializeState } = useStateSerialization()
+  const resetState = useResetUiState()
+
   const state = useInjectedViewerState()
   const {
     ui: {
-      threads: { openThread }
+      threads: { openThread },
+      camera: { position, target }
     }
   } = state
 
-  const refocus = (commentState: SpeckleViewer.ViewerState.SerializedViewerState) => {
-    const camPos = commentState.ui.camera.position
-    const camTarget = commentState.ui.camera.target
+  const oldState = ref(
+    null as Nullable<SpeckleViewer.ViewerState.SerializedViewerState>
+  )
 
-    state.ui.camera.position.value = new Vector3(camPos[0], camPos[1], camPos[2])
-    state.ui.camera.target.value = new Vector3(camTarget[0], camTarget[1], camTarget[2])
-
-    const sectionBox = commentState.ui.sectionBox
-    if (sectionBox) {
-      state.ui.sectionBox.value = new Box3(
-        new Vector3(sectionBox.min[0], sectionBox.min[1], sectionBox.min[2]),
-        new Vector3(sectionBox.max[0], sectionBox.max[1], sectionBox.max[2])
-      )
-    } else {
-      state.ui.sectionBox.value = null
-    }
+  const refocus = async (
+    commentState: SpeckleViewer.ViewerState.SerializedViewerState
+  ) => {
+    await applyState(commentState, StateApplyMode.ThreadOpen)
   }
 
   // Do this once viewer loads things
-  useViewerEventListener(
-    ViewerEvent.LoadComplete,
-    () => {
-      const viewerState = openThread.thread.value?.viewerState
-      if (SpeckleViewer.ViewerState.isSerializedViewerState(viewerState)) {
-        refocus(viewerState)
+  useOnViewerLoadComplete(({ isInitial }) => {
+    const viewerState = openThread.thread.value?.viewerState
+    if (SpeckleViewer.ViewerState.isSerializedViewerState(viewerState)) {
+      refocus(viewerState)
+    }
+
+    // On initial - rewrite old state coords cause they're not valid before initial load
+    if (isInitial) {
+      const old = oldState.value || serializeState()
+      oldState.value = {
+        ...old,
+        ui: {
+          ...old.ui,
+          camera: {
+            ...old.ui.camera,
+            position: position.value.toArray(),
+            target: target.value.toArray()
+          }
+        }
       }
-    },
-    { state }
-  )
+    }
+  })
 
   // Also do this when openThread changes
-  watch(openThread.thread, (newThread, oldThread) => {
-    if (newThread?.id && newThread.id !== oldThread?.id && newThread.viewerState) {
-      const viewerState = newThread.viewerState
-      if (SpeckleViewer.ViewerState.isSerializedViewerState(viewerState)) {
-        refocus(viewerState)
+  watch(openThread.thread, async (newThread, oldThread) => {
+    if (newThread?.id !== oldThread?.id) {
+      const newState = newThread?.viewerState
+      if (newState && SpeckleViewer.ViewerState.isSerializedViewerState(newState)) {
+        await refocus(newState)
+      } else {
+        resetState()
       }
     }
   })
@@ -381,35 +332,48 @@ export function useExpandedThreadResponsiveLocation(params: {
 
 export function useIsTypingUpdateEmitter() {
   const {
-    threads: {
-      openThread: { isTyping }
+    ui: {
+      threads: {
+        openThread: { isTyping }
+      }
     }
-  } = useInjectedViewerInterfaceState()
+  } = useInjectedViewerState()
   const { emitViewing } = useViewerUserActivityBroadcasting()
 
-  const debouncedMarkNoLongerTyping = debounce(() => (isTyping.value = false), 7000)
+  const debouncedMarkNoLongerTyping = debounce(
+    () => automaticUpdateIsTyping(false),
+    7000
+  )
+  const pauseAutomaticUpdates = ref(false)
+
+  const automaticUpdateIsTyping = (newVal: boolean) => {
+    if (pauseAutomaticUpdates.value) return
+    updateIsTyping(newVal)
+  }
 
   const updateIsTyping = (newVal: boolean) => {
     if (newVal === isTyping.value) return
-
     isTyping.value = newVal
-    emitViewing()
   }
 
-  const onInputUpdated = () => {
+  const onKeyDownHandler = () => {
     if (!isTyping.value) {
-      isTyping.value = true
+      automaticUpdateIsTyping(true)
     }
     debouncedMarkNoLongerTyping()
   }
 
-  watch(isTyping, emitViewing)
+  watch(isTyping, (newVal, oldVal) => {
+    if (!!newVal === !!oldVal) return
+    emitViewing()
+  })
   onBeforeUnmount(() => updateIsTyping(false))
   useOnBeforeWindowUnload(() => updateIsTyping(false))
 
   return {
-    onInputUpdated,
-    updateIsTyping
+    onKeyDownHandler,
+    updateIsTyping,
+    pauseAutomaticUpdates
   }
 }
 

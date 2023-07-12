@@ -27,6 +27,7 @@ type RegisterParams = {
   apiOrigin: string
   challenge: string
   inviteToken?: string
+  newsletter?: boolean
   user: {
     email: string
     password: string
@@ -85,7 +86,7 @@ export async function getAccessCode(params: LoginParams) {
 }
 
 export async function registerAndGetAccessCode(params: RegisterParams) {
-  const { apiOrigin, challenge, user, inviteToken } = params
+  const { apiOrigin, challenge, user, inviteToken, newsletter } = params
   if (!user.email || !user.password || !user.name) {
     throw new InvalidRegisterParametersError(
       "Can't register without a valid email, password and name!"
@@ -96,6 +97,10 @@ export async function registerAndGetAccessCode(params: RegisterParams) {
   registerUrl.searchParams.append('challenge', challenge)
   if (inviteToken) {
     registerUrl.searchParams.append('token', inviteToken)
+  }
+
+  if (newsletter) {
+    registerUrl.searchParams.append('newsletter', 'true')
   }
 
   const res = await fetch(registerUrl, {

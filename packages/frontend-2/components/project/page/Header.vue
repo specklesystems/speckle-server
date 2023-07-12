@@ -186,7 +186,12 @@ const save = async () => {
   if (!anythingToUpdate.value || anyMutationsLoading.value) return
   const update = currentUpdate.value
 
-  mp.track('Stream Action', { type: 'action', name: 'update' })
+  mp.track('Stream Action', {
+    type: 'action',
+    name: 'update',
+    action: 'name or description',
+    source: 'header'
+  })
   const res = await updateProject(update, {
     optimisticResponse: {
       projectMutations: {

@@ -41,5 +41,5 @@
 </template>
 <script setup lang="ts">
 const tourState = useTourStageState()
-const debug = ref(true)
+const debug = ref(false)
 </script>

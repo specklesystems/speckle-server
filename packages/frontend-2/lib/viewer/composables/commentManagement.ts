@@ -67,6 +67,7 @@ export function useViewerCommentUpdateTracking(
 export function useMarkThreadViewed() {
   const apollo = useApolloClient().client
   const { isLoggedIn } = useActiveUser()
+  const logger = useLogger()
 
   return async (projectId: string, threadId: string) => {
     if (!isLoggedIn.value) return false
@@ -91,7 +92,7 @@ export function useMarkThreadViewed() {
       .catch(convertThrowIntoFetchResult)
 
     if (errors) {
-      console.error('Marking thread as viewed failed', errors)
+      logger.error('Marking thread as viewed failed', errors)
     }
 
     return !!data?.commentMutations.markViewed
@@ -129,7 +130,7 @@ export function useSubmitComment() {
             projectId: projectId.value,
             resourceIdString: resourceIdString.value,
             content,
-            viewerState: serialize(),
+            viewerState: serialize({ concreteResourceIdString: true }),
             screenshot
           }
         }
@@ -213,4 +214,14 @@ export function useArchiveComment() {
 
     return false
   }
+}
+
+export function useCheckViewerCommentingAccess() {
+  const {
+    resources: {
+      response: { project }
+    }
+  } = useInjectedViewerState()
+  const { activeUser } = useActiveUser()
+  return computed(() => activeUser.value && !!project.value?.role)
 }

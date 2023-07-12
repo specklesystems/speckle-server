@@ -12,7 +12,7 @@
     "url": "https://github.com/specklesystems/Server.git"
   },
   "engines": {
-    "node": "^18.16.0"
+    "node": "^18.16.1"
   },
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json",
@@ -36,9 +36,11 @@
     "@aws-sdk/lib-storage": "^3.100.0",
     "@godaddy/terminus": "^4.9.0",
     "@graphql-tools/schema": "^9.0.4",
+    "@mailchimp/mailchimp_marketing": "^3.0.80",
     "@sentry/node": "^6.17.9",
     "@sentry/tracing": "^6.17.9",
     "@speckle/shared": "workspace:^",
+    "@types/mailchimp__mailchimp_marketing": "^3.0.9",
     "@types/pino-http": "^5.8.1",
     "@types/uuid": "^9.0.0",
     "apollo-server-express": "^3.10.2",
@@ -98,6 +100,7 @@
   },
   "devDependencies": {
     "@apollo/client": "^3.7.0",
+    "@apollo/rover": "^0.14.1",
     "@bull-board/express": "^4.2.2",
     "@faker-js/faker": "^7.1.0",
     "@graphql-codegen/cli": "^2.16.3",

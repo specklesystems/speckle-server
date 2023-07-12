@@ -129,7 +129,13 @@ export const speckleBasicVert = /* glsl */ `
     }
 #endif
 
-
+#if defined(BILLBOARD) || defined(BILLBOARD_FIXED)
+    uniform vec3 billboardPos;
+    uniform mat4 invProjection;
+#endif
+#ifdef BILLBOARD_FIXED
+    uniform vec2 billboardSize;
+#endif
 
 void main() {
 	#include <uv_vertex>
@@ -172,10 +178,30 @@ void main() {
     #endif
     
     mvPosition = modelViewMatrix * mvPosition;
+    
+    #if defined(BILLBOARD)
+        float div = 1.;
+        gl_Position = projectionMatrix * (viewMatrix * vec4(billboardPos, 1.0) + vec4(position.x, position.y, 0., 0.0));
+    #elif defined(BILLBOARD_FIXED)
+        gl_Position = projectionMatrix * (viewMatrix * vec4(billboardPos, 1.0));
+        float div = gl_Position.w;
+        gl_Position /= gl_Position.w;
+        gl_Position.xy += position.xy * billboardSize;
+    #else
+        gl_Position = projectionMatrix * mvPosition;
+    #endif
 
-    gl_Position = projectionMatrix * mvPosition;
+
 	#include <logdepthbuf_vertex>
-	#include <clipping_planes_vertex>
+	// #include <clipping_planes_vertex> COMMENTED CHUNK
+    #if NUM_CLIPPING_PLANES > 0
+        #if defined(BILLBOARD) || defined(BILLBOARD_FIXED)
+            vec4 movelViewProjection = gl_Position * div;
+            vClipPosition = - (invProjection * movelViewProjection).xyz;
+        #else
+	        vClipPosition = - mvPosition.xyz;
+        #endif
+    #endif
 	#include <worldpos_vertex>
 	#include <envmap_vertex>
 	#include <fog_vertex>

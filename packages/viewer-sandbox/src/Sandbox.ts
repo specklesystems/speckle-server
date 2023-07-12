@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Box3 } from '@speckle/viewer'
 import { Vector3 } from '@speckle/viewer'
 import {
@@ -8,12 +9,14 @@ import {
   SunLightConfiguration,
   ViewerEvent,
   BatchObject,
-  VisualDiffMode
+  VisualDiffMode,
+  MeasurementType
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
 import { DiffResult } from '@speckle/viewer'
 import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
+import { Units } from '@speckle/viewer'
 
 export default class Sandbox {
   private viewer: DebugViewer
@@ -96,6 +99,14 @@ export default class Sandbox {
     sigmoidStrength: 2
   }
 
+  public measurementsParams = {
+    enabled: false,
+    type: MeasurementType.POINTTOPOINT,
+    vertexSnap: true,
+    units: 'm',
+    precision: 2
+  }
+
   public constructor(
     container: HTMLElement,
     viewer: DebugViewer,
@@ -114,7 +125,8 @@ export default class Sandbox {
         { title: 'Scene' },
         { title: 'Filtering' },
         { title: 'Batches' },
-        { title: 'Diff' }
+        { title: 'Diff' },
+        { title: 'Measurements' }
       ]
     })
     this.properties = []
@@ -978,8 +990,8 @@ export default class Sandbox {
         // 'https://latest.speckle.dev/streams/aea12cab71/objects/06bed1819e6c61d9df7196d424ab1eec',
         // 'https://latest.speckle.dev/streams/aea12cab71/objects/9026f1d6495789b9eab31b5028c9a8ef'
         //latest
-        // 'https://latest.speckle.dev/streams/cdbe82b016/objects/c14d1a33fd68323193813ec215737472',
-        // 'https://latest.speckle.dev/streams/cdbe82b016/objects/16676fc95a9ead877f6a825d9e28cbe8',
+        'https://latest.speckle.dev/streams/cdbe82b016/objects/c14d1a33fd68323193813ec215737472',
+        'https://latest.speckle.dev/streams/cdbe82b016/objects/16676fc95a9ead877f6a825d9e28cbe8',
         //lines
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/3b42d6ef51d3110b4e33b9f8cdc9f357',
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/774384d431fb34d447d4696abbc4b816',
@@ -996,10 +1008,17 @@ export default class Sandbox {
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/a4e2fad01e69cd886ecbfedf221f5301',
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/a3c6c58ef9872b17125c9ab2b009e5cd',
         // instances & hosting
-        'https://speckle.xyz/streams/be0f962efb/objects/fb4f291a13f05f325a5575fddd4276d0',
-        'https://speckle.xyz/streams/be0f962efb/objects/21cf63a1496e366b34501429ce7ad2f5',
+        // 'https://speckle.xyz/streams/be0f962efb/objects/fb4f291a13f05f325a5575fddd4276d0',
+        // 'https://speckle.xyz/streams/be0f962efb/objects/21cf63a1496e366b34501429ce7ad2f5',
+        // bug
+        // 'https://latest.speckle.dev/streams/92b620fb17/objects/91d69894f2ac7b3b2b6de4616d89e478',
+        // 'https://latest.speckle.dev/streams/92b620fb17/objects/ce55c0fb40e77fbfc894d4c27568f1f9',
+        // bug
+        // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/03f0a8bf0ed8064865eda87a865c7212',
+        // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/33ef6b9b547dc9688eb40157b967eab9',
+
         VisualDiffMode.COLORED,
-        localStorage.getItem('AuthToken') as string
+        localStorage.getItem('AuthTokenLatest') as string
       )
     })
     const unDiffButton = container.addButton({
@@ -1033,6 +1052,62 @@ export default class Sandbox {
         this.viewer.setVisualDiffMode(diffResult, value.value)
         this.viewer.setDiffTime(diffResult, diffParams.time)
         this.viewer.requestRender()
+      })
+  }
+
+  public makeMeasurementsUI() {
+    const container = this.tabs.pages[5]
+    container
+      .addInput(this.measurementsParams, 'enabled', {
+        label: 'Enabled'
+      })
+      .on('change', () => {
+        this.viewer.enableMeasurements(this.measurementsParams.enabled)
+      })
+
+    container
+      .addInput(this.measurementsParams, 'type', {
+        label: 'Type',
+        options: {
+          PERPENDICULAR: MeasurementType.PERPENDICULAR,
+          POINTTOPOINT: MeasurementType.POINTTOPOINT
+        }
+      })
+      .on('change', () => {
+        this.viewer.setMeasurementOptions(this.measurementsParams)
+      })
+    container
+      .addInput(this.measurementsParams, 'vertexSnap', {
+        label: 'Snap'
+      })
+      .on('change', () => {
+        this.viewer.setMeasurementOptions(this.measurementsParams)
+      })
+
+    container
+      .addInput(this.measurementsParams, 'units', {
+        label: 'Units',
+        options: Units
+      })
+      .on('change', () => {
+        this.viewer.setMeasurementOptions(this.measurementsParams)
+      })
+    container
+      .addInput(this.measurementsParams, 'precision', {
+        label: 'Precision',
+        step: 1,
+        min: 1,
+        max: 5
+      })
+      .on('change', () => {
+        this.viewer.setMeasurementOptions(this.measurementsParams)
+      })
+    container
+      .addButton({
+        title: 'Delete'
+      })
+      .on('click', () => {
+        this.viewer.removeMeasurement()
       })
   }
 

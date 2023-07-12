@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col space-y-4 sm:space-y-0 sm:space-x-2 sm:items-center sm:flex-row py-5 sm:py-2"
+    class="flex flex-col space-y-4 sm:space-y-0 sm:space-x-2 sm:items-center sm:flex-row px-4 py-5 sm:py-2 transition hover:bg-primary-muted"
   >
     <div class="flex space-x-2 items-center grow text-sm">
       <UserAvatar :user="invite.invitedBy" />
@@ -42,6 +42,7 @@ import { useProcessProjectInvite } from '~~/lib/projects/composables/projectMana
 import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
 import { Optional } from '@speckle/shared'
 import { CheckIcon } from '@heroicons/vue/24/solid'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 graphql(`
   fragment ProjectsInviteBanner on PendingStreamCollaborator {
@@ -74,7 +75,7 @@ const postAuthRedirect = usePostAuthRedirect()
 const goToLogin = useNavigateToLogin()
 
 const loading = ref(false)
-
+const mp = useMixpanel()
 const token = computed(
   () => props.invite.token || (route.query.token as Optional<string>)
 )
@@ -96,6 +97,11 @@ const useInvite = async (accept: boolean) => {
   if (success) {
     emit('processed', { accepted: accept })
   }
+
+  mp.track('Invite Action', {
+    type: 'project invite',
+    accepted: accept
+  })
 }
 
 const onLoginClick = () => {

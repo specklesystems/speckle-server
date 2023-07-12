@@ -21,7 +21,9 @@
     "
     @clear-search="$emit('clear-search')"
   />
-  <div v-else>TODO: List empty state</div>
+  <div v-else>
+    <ProjectCardImportFileArea :project-id="project.id" class="h-36 col-span-4" />
+  </div>
   <InfiniteLoading
     v-if="topLevelItems?.length && !disablePagination"
     :settings="{ identifier: infiniteLoaderId }"
@@ -61,6 +63,8 @@ const props = defineProps<{
   sourceApps?: SourceAppDefinition[]
   contributors?: FormUsersSelectItemFragment[]
 }>()
+
+const logger = useLogger()
 
 const infiniteLoadCacheBuster = ref(0)
 const newSubmodelParent = ref('')
@@ -175,7 +179,7 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
       }
     })
   } catch (e) {
-    console.error(e)
+    logger.error(e)
     state.error()
     return
   }

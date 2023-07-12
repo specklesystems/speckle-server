@@ -14,6 +14,7 @@
 </template>
 <script setup lang="ts">
 import { SpeckleViewer } from '@speckle/shared'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import { LayoutTabItem } from '~~/lib/layout/helpers/components'
 import { useInjectedViewerRequestedResources } from '~~/lib/viewer/composables/setup'
 
@@ -37,16 +38,26 @@ const open = computed({
   set: (newVal) => emit('update:open', newVal)
 })
 
-const onModelChosen = (params: { modelId: string }) => {
+const mp = useMixpanel()
+
+const onModelChosen = async (params: { modelId: string }) => {
   const { modelId } = params
-  items.value = [
+  await items.update([
     ...items.value,
     ...SpeckleViewer.ViewerRoute.resourceBuilder().addModel(modelId).toResources()
-  ]
+  ])
+
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'federation',
+    action: 'add',
+    resource: 'model'
+  })
+
   open.value = false
 }
 
-const onObjectsChosen = (params: { objectIds: string[] }) => {
+const onObjectsChosen = async (params: { objectIds: string[] }) => {
   const { objectIds } = params
 
   const resourcesApi = SpeckleViewer.ViewerRoute.resourceBuilder()
@@ -54,7 +65,15 @@ const onObjectsChosen = (params: { objectIds: string[] }) => {
     resourcesApi.addObject(oid)
   }
 
-  items.value = [...items.value, ...resourcesApi.toResources()]
+  await items.update([...items.value, ...resourcesApi.toResources()])
+
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'federation',
+    action: 'add',
+    resource: 'object'
+  })
+
   open.value = false
 }
 </script>

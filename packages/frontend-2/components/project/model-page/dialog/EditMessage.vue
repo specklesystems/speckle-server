@@ -27,6 +27,7 @@ import { useForm } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectModelPageDialogDeleteVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import { isRequired } from '~~/lib/common/helpers/validation'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useUpdateVersion } from '~~/lib/projects/composables/versionManagement'
 
 graphql(`
@@ -64,7 +65,7 @@ watch(
   },
   { deep: true }
 )
-
+const mp = useMixpanel()
 const onSubmit = handleSubmit(async ({ newMessage }) => {
   if (!props.version) return
 
@@ -74,7 +75,10 @@ const onSubmit = handleSubmit(async ({ newMessage }) => {
     message: newMessage
   }))
   loading.value = false
-
+  mp.track('Commit Action', {
+    type: 'action',
+    name: 'edit'
+  })
   if (success) isOpen.value = false
 })
 </script>

@@ -44,7 +44,7 @@ repos:
   - repo: local
     hooks:
       - id: helm-documentation
-        name: Helm documentation
+        name: Helm Json Schema
         language: system
         files: utils/helm/speckle-server/values.yaml
         entry: utils/helm/update-schema-json.sh

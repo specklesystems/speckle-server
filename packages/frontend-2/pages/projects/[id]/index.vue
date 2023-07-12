@@ -23,7 +23,7 @@
         <!-- Latest comments -->
         <ProjectPageLatestItemsComments :project="project" />
         <!-- More actions -->
-        <ProjectPageMoreActions />
+        <!-- <ProjectPageMoreActions /> -->
       </div>
     </div>
   </div>

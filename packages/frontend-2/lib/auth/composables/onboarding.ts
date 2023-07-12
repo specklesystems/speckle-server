@@ -18,6 +18,9 @@ import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
 const ONBOARDING_PROP_INDUSTRY = 'onboarding_v1_industry'
 const ONBOARDING_PROP_ROLE = 'onboarding_v1_role'
 
+export const FIRST_MODEL_NAME = 'base design'
+export const SECOND_MODEL_NAME = 'building wrapper'
+
 export function useProcessOnboarding() {
   const mixpanel = useMixpanel()
   const { distinctId, activeUser } = useActiveUser()
@@ -83,7 +86,7 @@ export function useProcessOnboarding() {
     const newId = data?.projectMutations.createForOnboarding.id
     return {
       projectId: newId,
-      modelId: data?.projectMutations.createForOnboarding.models.items[0]?.id // TODO: less hardcoding maybe?
+      project: data?.projectMutations.createForOnboarding
     }
   }
 

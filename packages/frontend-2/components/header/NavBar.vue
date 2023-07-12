@@ -30,6 +30,10 @@
         </div>
       </div>
     </div>
+    <PopupsSignIn v-if="!activeUser" />
   </nav>
 </template>
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+const { activeUser } = useActiveUser()
+</script>

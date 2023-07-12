@@ -1,11 +1,15 @@
+import { SpeckleViewer, timeoutAt } from '@speckle/shared'
 import { PropertyInfo } from '@speckle/viewer'
+import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
   useInjectedViewer,
-  useInjectedViewerInterfaceState
+  useInjectedViewerInterfaceState,
+  useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
+import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -77,12 +81,32 @@ export function useCameraUtilities() {
     camera.isOrthoProjection.value = !camera.isOrthoProjection.value
   }
 
-  return { zoomExtentsOrSelection, toggleProjection, camera, truck, setView, zoom }
+  const forceViewToViewerSync = () => {
+    setView({
+      position: camera.position.value,
+      target: camera.target.value
+    })
+  }
+
+  return {
+    zoomExtentsOrSelection,
+    toggleProjection,
+    camera,
+    truck,
+    setView,
+    zoom,
+    forceViewToViewerSync
+  }
 }
 
 export function useFilterUtilities() {
   // const { instance } = useInjectedViewer()
   const { filters, explodeFactor } = useInjectedViewerInterfaceState()
+  const {
+    viewer: {
+      metadata: { availableFilters }
+    }
+  } = useInjectedViewerState()
 
   const isolateObjects = (
     objectIds: string[],
@@ -161,6 +185,23 @@ export function useFilterUtilities() {
     // filters.selectedObjects.value = []
   }
 
+  const waitForAvailableFilter = async (
+    key: string,
+    options?: Partial<{ timeout: number }>
+  ) => {
+    const timeout = options?.timeout || 10000
+
+    const res = await Promise.race([
+      until(availableFilters).toMatch(
+        (filters) => !!filters?.find((p) => p.key === key)
+      ),
+      timeoutAt(timeout, 'Waiting for available filter timed out')
+    ])
+
+    const filter = res?.find((p) => p.key === key)
+    return filter as NonNullable<typeof filter>
+  }
+
   return {
     isolateObjects,
     unIsolateObjects,
@@ -171,7 +212,8 @@ export function useFilterUtilities() {
     applyPropertyFilter,
     removePropertyFilter,
     unApplyPropertyFilter,
-    resetFilters
+    resetFilters,
+    waitForAvailableFilter
   }
 }
 
@@ -229,4 +271,71 @@ export function useSelectionUtilities() {
     setSelectionFromObjectIds,
     objects: selectedObjects
   }
+}
+
+export function useDiffUtilities() {
+  const state = useInjectedViewerState()
+  const { serializeDiffCommand, deserializeDiffCommand, areDiffsEqual } =
+    useDiffBuilderUtilities()
+
+  const endDiff = async () => {
+    await state.urlHashState.diff.update(null)
+  }
+
+  const diffModelVersions = async (
+    modelId: string,
+    versionA: string,
+    versionB: string
+  ) => {
+    await state.urlHashState.diff.update({
+      diffs: [
+        {
+          versionA: new SpeckleViewer.ViewerRoute.ViewerVersionResource(
+            modelId,
+            versionA
+          ),
+          versionB: new SpeckleViewer.ViewerRoute.ViewerVersionResource(
+            modelId,
+            versionB
+          )
+        }
+      ]
+    })
+  }
+
+  return {
+    serializeDiffCommand,
+    deserializeDiffCommand,
+    endDiff,
+    diffModelVersions,
+    areDiffsEqual
+  }
+}
+
+export function useThreadUtilities() {
+  const {
+    urlHashState: { focusedThreadId },
+    ui: {
+      threads: {
+        openThread: { thread: openThread }
+      }
+    }
+  } = useInjectedViewerState()
+
+  const isOpenThread = (id: string) => focusedThreadId.value === id
+
+  const closeAllThreads = async () => {
+    await focusedThreadId.update(null)
+  }
+
+  const open = async (id: string) => {
+    if (id === focusedThreadId.value) return
+    await focusedThreadId.update(id)
+    await Promise.all([
+      until(focusedThreadId).toBe(id),
+      until(openThread).toMatch((t) => t?.id === id)
+    ])
+  }
+
+  return { closeAllThreads, open, isOpenThread }
 }

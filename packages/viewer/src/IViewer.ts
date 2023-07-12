@@ -9,6 +9,7 @@ import { DataTree } from './modules/tree/DataTree'
 import { WorldTree } from './modules/tree/WorldTree'
 import { Utils } from './modules/Utils'
 import { World } from './modules/World'
+import { MeasurementOptions } from './modules/measurements/Measurements'
 
 export interface ViewerParams {
   showStats: boolean
@@ -19,7 +20,8 @@ export interface ViewerParams {
 export enum AssetType {
   TEXTURE_8BPP = 'png', // For now
   TEXTURE_HDR = 'hdr',
-  TEXTURE_EXR = 'exr'
+  TEXTURE_EXR = 'exr',
+  FONT_JSON = 'font-json'
 }
 
 export interface Asset {
@@ -163,12 +165,18 @@ export interface IViewer {
     transition?: boolean
   )
 
-  loadObject(url: string, token?: string, enableCaching?: boolean): Promise<void>
+  loadObject(
+    url: string,
+    token?: string,
+    enableCaching?: boolean,
+    zoomToObject?: boolean
+  ): Promise<void>
   loadObjectAsync(
     url: string,
     token?: string,
     enableCaching?: boolean,
-    priority?: number
+    priority?: number,
+    zoomToObject?: boolean
   ): Promise<void>
   cancelLoad(url: string, unload?: boolean): Promise<void>
   unloadObject(url: string): Promise<void>
@@ -232,6 +240,10 @@ export interface IViewer {
 
   getObjects(id: string): BatchObject[]
   explode(time: number)
+
+  enableMeasurements(value: boolean)
+  setMeasurementOptions(options: MeasurementOptions)
+  removeMeasurement()
 
   dispose(): void
 }

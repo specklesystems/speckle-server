@@ -1,13 +1,13 @@
 <template>
   <div>
     <Portal to="navigation">
-      <HeaderNavLink :to="'/connectors'" name="Connectors"></HeaderNavLink>
+      <HeaderNavLink :to="'/connectors'" name="Connector Downloads"></HeaderNavLink>
     </Portal>
     <div
       class="flex flex-col md:flex-row space-y-2 space-x-2 justify-between mb-4 md:items-center"
     >
       <div>
-        <h5 class="h4 font-bold">Connectors</h5>
+        <h5 class="h4 font-bold">Connector Downloads</h5>
         <div class="text-sm text-foreground-2 max-w- max-w-sm">
           Most of our connectors are available through Speckle Manager. You can also
           direct download the individual installers below.
@@ -21,7 +21,7 @@
     </div>
 
     <OnboardingDialogManager
-      v-show="showManagerDownloadDialog"
+      v-model:open="showManagerDownloadDialog"
       @done="showManagerDownloadDialog = false"
       @cancel="showManagerDownloadDialog = false"
     ></OnboardingDialogManager>

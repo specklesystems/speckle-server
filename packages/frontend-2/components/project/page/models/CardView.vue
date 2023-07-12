@@ -17,7 +17,9 @@
     v-else-if="isFiltering && items.length === 0"
     @clear-search="() => $emit('clear-search')"
   />
-  <div v-else>TODO: Grid empty state</div>
+  <div v-else>
+    <ProjectCardImportFileArea :project-id="project.id" class="h-36 col-span-4" />
+  </div>
   <InfiniteLoading
     v-if="items?.length && !disablePagination"
     :settings="{ identifier: infiniteLoaderId }"
@@ -63,6 +65,7 @@ const props = withDefaults(
   }
 )
 
+const logger = useLogger()
 const areQueriesLoading = useQueryLoading()
 
 const latestModelsQueryVariables = computed(
@@ -150,7 +153,7 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
       }
     })
   } catch (e) {
-    console.error(e)
+    logger.error(e)
     state.error()
     return
   }

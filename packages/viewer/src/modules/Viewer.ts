@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import Stats from 'three/examples/jsm/libs/stats.module'
+import Stats from 'three/examples/jsm/libs/stats.module.js'
 
 import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
@@ -33,6 +33,7 @@ import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
 import { DiffResult, Differ, VisualDiffMode } from './Differ'
 import { BatchObject } from './batching/BatchObject'
+import { MeasurementOptions } from './measurements/Measurements'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -467,7 +468,12 @@ export class Viewer extends EventEmitter implements IViewer {
     await loader.load()
   }
 
-  public async loadObject(url: string, token: string = null, enableCaching = true) {
+  public async loadObject(
+    url: string,
+    token: string = null,
+    enableCaching = true,
+    zoomToObject = true
+  ) {
     if (++this.inProgressOperations === 1)
       (this as EventEmitter).emit(ViewerEvent.Busy, true)
     await this.downloadObject(url, token, enableCaching)
@@ -477,10 +483,11 @@ export class Viewer extends EventEmitter implements IViewer {
     Logger.log('SYNC Tree build time -> ', performance.now() - t0)
 
     t0 = performance.now()
-    this.speckleRenderer.addRenderTree(url)
+    await this.speckleRenderer.addRenderTree(url)
     Logger.log('SYNC batch build time -> ', performance.now() - t0)
 
-    this.zoom()
+    if (zoomToObject) this.zoom()
+
     this.speckleRenderer.resetPipeline(true)
     this.emit(ViewerEvent.LoadComplete, url)
     this.loaders[url].dispose()
@@ -493,7 +500,8 @@ export class Viewer extends EventEmitter implements IViewer {
     url: string,
     token: string = null,
     enableCaching = true,
-    priority = 1
+    priority = 1,
+    zoomToObject = true
   ) {
     if (++this.inProgressOperations === 1)
       (this as EventEmitter).emit(ViewerEvent.Busy, true)
@@ -505,7 +513,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     if (treeBuilt) {
       t0 = performance.now()
-      await this.speckleRenderer.addRenderTreeAsync(url, priority)
+      await this.speckleRenderer.addRenderTreeAsync(url, priority, zoomToObject)
       Logger.log('ASYNC batch build time -> ', performance.now() - t0)
       this.speckleRenderer.resetPipeline(true)
       this.emit(ViewerEvent.LoadComplete, url)
@@ -568,6 +576,10 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
+  // Note: Alex, don't kill me over this one - it's making things in the FE much easier...
+  // I know this probably screws up showing multiple diffs at the same time, but for the
+  // time being it's probs a good compromise
+  private dynamicallyLoadedDiffResources = [] as string[]
   public async diff(
     urlA: string,
     urlB: string,
@@ -575,10 +587,16 @@ export class Viewer extends EventEmitter implements IViewer {
     authToken?: string
   ): Promise<DiffResult> {
     const loadPromises = []
-    if (!this.tree.findId(urlA))
+    this.dynamicallyLoadedDiffResources = []
+
+    if (!this.tree.findId(urlA)) {
       loadPromises.push(this.loadObjectAsync(urlA, authToken, undefined, 1))
-    if (!this.tree.findId(urlB))
+      this.dynamicallyLoadedDiffResources.push(urlA)
+    }
+    if (!this.tree.findId(urlB)) {
       loadPromises.push(this.loadObjectAsync(urlB, authToken, undefined, 1))
+      this.dynamicallyLoadedDiffResources.push(urlB)
+    }
     await Promise.all(loadPromises)
 
     const diffResult = await this.differ.diff(urlA, urlB)
@@ -599,12 +617,20 @@ export class Viewer extends EventEmitter implements IViewer {
     return Promise.resolve(diffResult)
   }
 
-  public undiff() {
+  public async undiff() {
     const pipelineOptions = this.speckleRenderer.pipelineOptions
     pipelineOptions.depthSide = DoubleSide
     this.speckleRenderer.pipelineOptions = pipelineOptions
     this.differ.resetMaterialGroups()
     this.filteringManager.removeUserMaterials()
+
+    const unloadPromises = []
+    if (this.dynamicallyLoadedDiffResources.length !== 0) {
+      for (const id of this.dynamicallyLoadedDiffResources)
+        unloadPromises.push(this.unloadObject(id))
+    }
+    this.dynamicallyLoadedDiffResources = []
+    await Promise.all(unloadPromises)
   }
 
   public setDiffTime(diffResult: DiffResult, time: number) {
@@ -620,6 +646,18 @@ export class Viewer extends EventEmitter implements IViewer {
       this.speckleRenderer.getBatchMaterials()
     )
     this.filteringManager.setUserMaterials(this.differ.materialGroups)
+  }
+
+  public enableMeasurements(value: boolean) {
+    this.speckleRenderer.measurements.enabled = value
+  }
+
+  public setMeasurementOptions(options: MeasurementOptions) {
+    this.speckleRenderer.measurements.options = options
+  }
+
+  public removeMeasurement() {
+    this.speckleRenderer.measurements.removeMeasurement()
   }
 
   public dispose() {

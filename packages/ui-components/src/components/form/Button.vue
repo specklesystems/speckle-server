@@ -6,13 +6,13 @@
     :type="buttonType"
     :external="external"
     :class="buttonClasses"
-    :disabled="disabled"
+    :disabled="isDisabled"
     role="button"
     @click="onClick"
   >
     <Component
-      :is="iconLeft"
-      v-if="iconLeft"
+      :is="finalLeftIcon"
+      v-if="finalLeftIcon"
       :class="`${iconClasses} ${hideText ? '' : 'mr-2'}`"
     />
     <slot v-if="!hideText">Button</slot>
@@ -22,7 +22,7 @@
     </div>
     <Component
       :is="iconRight"
-      v-if="iconRight"
+      v-if="iconRight || !loading"
       :class="`${iconClasses} ${hideText ? '' : 'ml-2'}`"
     />
   </Component>
@@ -31,6 +31,7 @@
 import { isObjectLike } from 'lodash'
 import { ConcreteComponent, PropType, computed, resolveDynamicComponent } from 'vue'
 import { Nullable, Optional } from '@speckle/shared'
+import { ArrowPathIcon } from '@heroicons/vue/24/solid'
 
 type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
 type FormButtonColor =
@@ -41,6 +42,7 @@ type FormButtonColor =
   | 'success'
   | 'card'
   | 'secondary'
+  | 'info'
 
 const emit = defineEmits<{
   /**
@@ -164,6 +166,13 @@ const props = defineProps({
   linkComponent: {
     type: [Object, Function] as PropType<Nullable<ConcreteComponent>>,
     default: null
+  },
+  /**
+   * Disables the button and shows a spinning loader
+   */
+  loading: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -172,6 +181,7 @@ const RouterLink = resolveDynamicComponent('RouterLink')
 
 const linkComponent = computed(() => {
   if (props.linkComponent) return props.linkComponent
+  if (props.external) return 'a'
   if (isObjectLike(NuxtLink)) return NuxtLink
   if (isObjectLike(RouterLink)) return RouterLink
   return 'a'
@@ -183,11 +193,14 @@ const buttonType = computed(() => {
   return 'button'
 })
 
+const isDisabled = computed(() => props.disabled || props.loading)
+const finalLeftIcon = computed(() => (props.loading ? ArrowPathIcon : props.iconLeft))
+
 const bgAndBorderClasses = computed(() => {
   const classParts: string[] = []
 
   classParts.push('border-2')
-  if (props.disabled) {
+  if (isDisabled.value) {
     classParts.push(
       props.outlined
         ? 'border-foreground-disabled'
@@ -220,6 +233,9 @@ const bgAndBorderClasses = computed(() => {
       case 'warning':
         classParts.push(props.outlined ? 'border-warning' : 'bg-warning border-warning')
         break
+      case 'info':
+        classParts.push(props.outlined ? 'border-info' : 'bg-info border-info')
+        break
       case 'success':
         classParts.push(props.outlined ? 'border-success' : 'bg-success border-success')
         break
@@ -240,7 +256,7 @@ const bgAndBorderClasses = computed(() => {
 const foregroundClasses = computed(() => {
   const classParts: string[] = []
   if (!props.text && !props.link) {
-    if (props.disabled) {
+    if (isDisabled.value) {
       classParts.push(
         props.outlined ? 'text-foreground-disabled' : 'text-foreground-disabled'
       )
@@ -262,6 +278,11 @@ const foregroundClasses = computed(() => {
         case 'warning':
           classParts.push(
             props.outlined ? 'text-warning' : 'text-foundation dark:text-foreground'
+          )
+          break
+        case 'info':
+          classParts.push(
+            props.outlined ? 'text-info' : 'text-foundation dark:text-foreground'
           )
           break
         case 'success':
@@ -287,7 +308,7 @@ const foregroundClasses = computed(() => {
       }
     }
   } else {
-    if (props.disabled) {
+    if (isDisabled.value) {
       classParts.push('text-foreground-disabled')
     } else {
       if (props.color === 'invert') {
@@ -300,6 +321,8 @@ const foregroundClasses = computed(() => {
         classParts.push('text-success')
       } else if (props.color === 'warning') {
         classParts.push('text-warning')
+      } else if (props.color === 'info') {
+        classParts.push('text-info')
       } else if (props.color === 'danger') {
         classParts.push('text-danger')
       } else {
@@ -318,7 +341,7 @@ const roundedClasses = computed(() => {
 
 const ringClasses = computed(() => {
   const classParts: string[] = []
-  if (!props.disabled) {
+  if (!isDisabled.value) {
     switch (props.color) {
       case 'invert':
         classParts.push('hover:ring-4 ring-white/50')
@@ -328,6 +351,9 @@ const ringClasses = computed(() => {
         break
       case 'warning':
         classParts.push('hover:ring-4 ring-warning-lighter dark:ring-warning-darker')
+        break
+      case 'info':
+        classParts.push('hover:ring-4 ring-info-lighter dark:ring-info-darker')
         break
       case 'success':
         classParts.push('hover:ring-4 ring-success-lighter dark:ring-success-darker')
@@ -380,7 +406,7 @@ const generalClasses = computed(() => {
     classParts.push('w-full')
   }
 
-  if (props.disabled) {
+  if (isDisabled.value) {
     classParts.push('cursor-not-allowed')
   }
 
@@ -389,11 +415,11 @@ const generalClasses = computed(() => {
 
 const decoratorClasses = computed(() => {
   const classParts: string[] = []
-  if (!props.disabled && !props.link && !props.text) {
+  if (!isDisabled.value && !props.link && !props.text) {
     classParts.push('active:scale-[0.97]')
   }
 
-  if (!props.disabled && props.link) {
+  if (!isDisabled.value && props.link) {
     classParts.push(
       'underline decoration-transparent decoration-2 underline-offset-4	hover:decoration-inherit'
     )
@@ -420,6 +446,10 @@ const buttonClasses = computed(() => {
 const iconClasses = computed(() => {
   const classParts: string[] = ['']
 
+  if (props.loading) {
+    classParts.push('animate-spin')
+  }
+
   switch (props.size) {
     case 'xs':
       classParts.push('h-3 w-3')
@@ -443,7 +473,7 @@ const iconClasses = computed(() => {
 })
 
 const onClick = (e: MouseEvent) => {
-  if (props.disabled) {
+  if (isDisabled.value) {
     e.preventDefault()
     e.stopPropagation()
     e.stopImmediatePropagation()

@@ -34,7 +34,9 @@ export default defineNuxtConfig({
     public: {
       apiOrigin: 'UNDEFINED',
       mixpanelApiHost: 'UNDEFINED',
-      mixpanelTokenId: 'UNDEFINED'
+      mixpanelTokenId: 'UNDEFINED',
+      logLevel: 'info',
+      logPretty: false
     }
   },
 

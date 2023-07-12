@@ -37,6 +37,10 @@ export function getFileSizeLimitMB() {
   return getIntFromEnv('FILE_SIZE_LIMIT_MB', '100')
 }
 
+export function getMaximumObjectSizeMB() {
+  return getIntFromEnv('MAX_OBJECT_SIZE_MB', '10')
+}
+
 export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
   return parseInt(process.env[envVarKey] || aDefault)
 }
@@ -79,6 +83,26 @@ export function getOidcName() {
   }
 
   return process.env.OIDC_NAME
+}
+
+export function getMailchimpStatus() {
+  return [true, 'true'].includes(process.env.MAILCHIMP_ENABLED || false)
+}
+
+export function getMailchimpConfig() {
+  if (
+    !process.env.MAILCHIMP_API_KEY ||
+    !process.env.MAILCHIMP_SERVER_PREFIX ||
+    !process.env.MAILCHIMP_LIST_ID
+  ) {
+    throw new MisconfiguredEnvironmentError('Mailchimp is not configured')
+  }
+
+  return {
+    apiKey: process.env.MAILCHIMP_API_KEY,
+    serverPrefix: process.env.MAILCHIMP_SERVER_PREFIX,
+    listId: process.env.MAILCHIMP_LIST_ID
+  }
 }
 
 /**
@@ -155,4 +179,11 @@ export function speckleAutomateUrl() {
   const automateUrl =
     process.env.SPECKLE_AUTOMATE_URL || 'https://automate.speckle.systems'
   return automateUrl
+}
+
+/**
+ * Useful in some CLI scenarios when you aren't doing anything with the DB
+ */
+export function ignoreMissingMigrations() {
+  return ['1', 'true'].includes(process.env.IGNORE_MISSING_MIRATIONS || 'false')
 }

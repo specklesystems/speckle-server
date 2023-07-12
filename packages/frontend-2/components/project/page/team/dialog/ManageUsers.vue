@@ -73,6 +73,7 @@ import {
   roleSelectItems
 } from '~~/lib/projects/helpers/components'
 import { UsersIcon } from '@heroicons/vue/24/solid'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
   project: ProjectPageTeamDialogFragment
@@ -85,6 +86,7 @@ const { activeUser } = useActiveUser()
 const { collaboratorListItems, isOwner } = useTeamDialogInternals({
   props: toRefs(props)
 })
+const mp = useMixpanel()
 
 const loading = ref(false)
 
@@ -101,6 +103,12 @@ const onCollaboratorRoleChange = async (
     role: newRole
   })
   loading.value = false
+
+  mp.track('Stream Action', {
+    type: 'action',
+    name: 'update',
+    action: 'team member role'
+  })
 
   if (!newRole) {
     // Remove from team

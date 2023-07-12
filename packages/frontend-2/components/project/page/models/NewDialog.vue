@@ -27,6 +27,7 @@
 import { CubeIcon } from '@heroicons/vue/24/solid'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import {
   useCreateNewModel,
   useModelNameValidationRules
@@ -51,6 +52,7 @@ const { handleSubmit } = useForm<{ name: string }>()
 const anyMutationsLoading = useMutationLoading()
 const rules = useModelNameValidationRules()
 const createModel = useCreateNewModel()
+const mp = useMixpanel()
 
 const newModelName = ref('')
 
@@ -61,6 +63,9 @@ const openState = computed({
 
 const onSubmit = handleSubmit(async ({ name }) => {
   await createModel({ name, projectId: props.projectId })
+
+  mp.track('Branch Action', { type: 'action', name: 'create', mode: 'dialog' })
+
   openState.value = false
   newModelName.value = ''
 })

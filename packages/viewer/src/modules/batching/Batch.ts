@@ -6,7 +6,8 @@ export enum GeometryType {
   MESH,
   LINE,
   POINT,
-  POINT_CLOUD
+  POINT_CLOUD,
+  TEXT
 }
 
 export interface Batch {
@@ -24,6 +25,8 @@ export interface Batch {
   setVisibleRange(...range: BatchUpdateRange[])
   getVisibleRange(): BatchUpdateRange
   setDrawRanges(...ranges: BatchUpdateRange[])
+  insertDrawRanges(...ranges: BatchUpdateRange[])
+  removeDrawRanges(id: string)
   autoFillDrawRanges()
   resetDrawRanges()
   buildBatch()
@@ -38,6 +41,7 @@ export interface BatchUpdateRange {
   count: number
   material?: Material
   materialOptions?: MaterialOptions
+  id?: string
 }
 
 export const HideAllBatchUpdateRange = {

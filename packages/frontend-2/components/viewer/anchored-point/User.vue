@@ -10,13 +10,13 @@
   >
     <IconCursor
       :class="`fill-primary ${
-        user.isOccluded && spotlightUserId !== user.userId ? 'grayscale' : ''
+        user.isOccluded && spotlightUserSessionId !== user.sessionId ? 'grayscale' : ''
       }`"
     />
     <button
       :class="`relative left-5 -top-0 py-0 px-2 rounded ${
-        user.isOccluded && spotlightUserId !== user.userId ? 'grayscale' : ''
-      } ${spotlightUserId === user.userId ? 'border-2 border-rose-500' : ''}
+        user.isOccluded && spotlightUserSessionId !== user.sessionId ? 'grayscale' : ''
+      } ${spotlightUserSessionId === user.sessionId ? 'border-2 border-rose-500' : ''}
       bg-primary text-foreground-on-primary hover:bg-primary-focus hover:text-foreground-on-primary transition select-none flex items-center h-6`"
       @click="() => setUserSpotlight()"
     >
@@ -28,11 +28,12 @@
   </div>
 </template>
 <script setup lang="ts">
+import { useMixpanel } from '~~/lib/core/composables/mp'
 import { UserActivityModel } from '~~/lib/viewer/composables/activity'
 import { useAnimatingEllipsis } from '~~/lib/viewer/composables/commentBubbles'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 
-const { spotlightUserId } = useInjectedViewerInterfaceState()
+const { spotlightUserSessionId } = useInjectedViewerInterfaceState()
 const { ellipsis, controls } = useAnimatingEllipsis()
 
 const props = defineProps<{
@@ -45,9 +46,25 @@ const isCreatingNewThread = computed(
     !props.user.state.ui.threads.openThread.threadId
 )
 
+const mp = useMixpanel()
 function setUserSpotlight() {
-  if (spotlightUserId.value === props.user.userId) return (spotlightUserId.value = null)
-  spotlightUserId.value = props.user.userId || null
+  if (spotlightUserSessionId.value === props.user.sessionId) {
+    spotlightUserSessionId.value = null
+    mp.track('Viewer Action', {
+      type: 'action',
+      name: 'spotlight-mode',
+      action: 'stop',
+      source: 'cursor'
+    })
+    return
+  }
+  spotlightUserSessionId.value = props.user.sessionId || null
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'spotlight-mode',
+    action: 'start',
+    source: 'cursor'
+  })
 }
 
 watch(isCreatingNewThread, (isCreating) => {

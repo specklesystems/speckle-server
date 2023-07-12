@@ -11,7 +11,9 @@
         @infinite="infiniteLoad"
       />
     </template>
-    <div v-else>TODO: No threads</div>
+    <div v-else class="mt-20">
+      <ProjectPageLatestItemsCommentsIntroCard />
+    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -36,6 +38,8 @@ const props = defineProps<{
   gridOrList: GridListToggleValue
   includeArchived: boolean
 }>()
+
+const logger = useLogger()
 
 const queryFilterVariables = computed(
   (): ProjectCommentsFilter => ({
@@ -76,7 +80,7 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
       }
     })
   } catch (e) {
-    console.error(e)
+    logger.error(e)
     state.error()
     return
   }

@@ -1,5 +1,6 @@
 import { reduce } from 'lodash-es'
 import { Nullable, Optional } from '@speckle/shared'
+import { writableAsyncComputed } from '~~/lib/common/composables/async'
 
 export function serializeHashState(
   state: Record<string, Nullable<string>>
@@ -19,13 +20,13 @@ export function useRouteHashState() {
   const route = useRoute()
   const router = useRouter()
 
-  const hashState = computed({
+  const hashState = writableAsyncComputed({
     get: () => {
       const hash = route.hash
       if (hash.length < 2 || !hash.startsWith('#')) return {}
 
       const keyValuePairs = hash.substring(1).split('&')
-      return reduce(
+      const result = reduce(
         keyValuePairs,
         (result, item) => {
           const [key, value] = item.split('=')
@@ -36,14 +37,17 @@ export function useRouteHashState() {
         },
         {} as Record<string, Nullable<string>>
       )
+      return result
     },
-    set: (newVal) => {
+    set: async (newVal) => {
       const hashString = serializeHashState(newVal)
-      router.push({
+      await router.push({
         query: route.query,
         hash: hashString
       })
-    }
+    },
+    initialState: {},
+    asyncRead: false
   })
 
   return { hashState }

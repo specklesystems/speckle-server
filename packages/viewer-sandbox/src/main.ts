@@ -99,6 +99,7 @@ const createViewer = async (containerName: string, stream: string) => {
   sandbox.makeFilteringUI()
   sandbox.makeBatchesUI()
   sandbox.makeDiffUI()
+  sandbox.makeMeasurementsUI()
 
   await sandbox.loadUrl(stream)
 }
@@ -109,7 +110,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+    'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6c6e43e5f3'
     // 'https://latest.speckle.dev/streams/58b5648c4d/commits/60371ecb2d'
     // 'Super' heavy revit shit
@@ -262,7 +263,26 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/f9063fe647'
     // 'https://speckle.xyz/streams/be0f962efb/objects/37639741c363a123100eda8044f2fe3f'
     // 'https://latest.speckle.dev/streams/92b620fb17/objects/a4e2fad01e69cd886ecbfedf221f5301'
-    'https://latest.speckle.dev/streams/3f895e614f/commits/7e16d2ab71'
+    // 'https://latest.speckle.dev/streams/3f895e614f/commits/7e16d2ab71'
+    // 'https://latest.speckle.dev/streams/55cc1cbf0a/commits/aa72674507'
+    // 'https://latest.speckle.dev/streams/55cc1cbf0a/objects/44aa4bad23591f90484a9a63814b9dc9'
+    // 'https://latest.speckle.dev/streams/55cc1cbf0a/objects/3a21694b533826cf551d4e2ff9963397'
+    // 'https://latest.speckle.dev/streams/55cc1cbf0a/commits/a7f74b6524'
+    // 'https://latest.speckle.dev/streams/c1faab5c62/objects/d3466547df9df86397eb4dff7ac9713f'
+    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/140c443886'
+    // 'https://latest.speckle.dev/streams/e258b0e8db/commits/108971810d'
+    // 'https://latest.speckle.dev/streams/e258b0e8db/objects/3fcd63d80cf791c3f554a795846e62f6'
+    // 'https://latest.speckle.dev/streams/55cc1cbf0a/objects/d7ae178fb6a7b1f599a177486e14f9a6'
+    // 'https://latest.speckle.dev/streams/e258b0e8db/objects/3fcd63d80cf791c3f554a795846e62f6'
+    // 'https://latest.speckle.dev/streams/92b620fb17/commits/6adbcfa8dc'
+    // 'https://latest.speckle.dev/streams/b68abcbf2e/commits/4e94ecad62'
+    // Big ass mafa'
+    // 'https://speckle.xyz/streams/88307505eb/objects/a232d760059046b81ff97e6c4530c985'
+    // 'https://latest.speckle.dev/streams/92b620fb17/commits/dfb9ca025d'
+    // 'Blocks with elements
+    // 'https://latest.speckle.dev/streams/e258b0e8db/commits/00e165cc1c'
+    // 'https://latest.speckle.dev/streams/e258b0e8db/commits/e48cf53add'
+    // 'https://latest.speckle.dev/streams/e258b0e8db/commits/c19577c7d6?c=%5B15.88776,-8.2182,12.17095,18.64059,1.48552,0.6025,0,1%5D'
   )
 }
 

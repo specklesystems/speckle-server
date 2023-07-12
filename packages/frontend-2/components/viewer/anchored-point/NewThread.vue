@@ -34,8 +34,9 @@
             prompt="Press enter to comment"
             max-height="300px"
             autofocus
+            :disabled="isPostingNewThread"
             @submit="() => onSubmit()"
-            @update:model-value="onInputUpdated"
+            @keydown="onKeyDownHandler"
           />
           <div class="w-full flex justify-end p-2 space-x-2">
             <div class="space-x-2">
@@ -44,12 +45,14 @@
                 :icon-left="PaperClipIcon"
                 hide-text
                 text
-                @click="editor?.openFilePicker"
+                :disabled="isPostingNewThread"
+                @click="trackAttachAndOpenFilePicker()"
               />
 
               <FormButton
                 :icon-left="PaperAirplaneIcon"
                 hide-text
+                :loading="isPostingNewThread"
                 @click="() => onSubmit()"
               />
             </div>
@@ -75,7 +78,8 @@ import {
   isValidCommentContentInput,
   convertCommentEditorValueToInput
 } from '~~/lib/viewer/helpers/comments'
-import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ViewerNewThreadBubbleModel): void
@@ -86,12 +90,14 @@ const props = defineProps<{
   modelValue: ViewerNewThreadBubbleModel
 }>()
 
-const ui = useInjectedViewerInterfaceState()
-const { onInputUpdated, updateIsTyping } = useIsTypingUpdateEmitter()
+const { onKeyDownHandler, updateIsTyping, pauseAutomaticUpdates } =
+  useIsTypingUpdateEmitter()
+const { closeAllThreads, open } = useThreadUtilities()
 
 const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
 const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
 const threadContainer = ref(null as Nullable<HTMLElement>)
+const isPostingNewThread = ref(false)
 
 // const { style } = useExpandedThreadResponsiveLocation({
 //   threadContainer,
@@ -113,6 +119,7 @@ const onThreadClick = () => {
 // NOTE: will be used later, keep
 // const submitEmoji = (emoji: string) =>
 //   onSubmit({ doc: RichTextEditor.convertBasicStringToDocument(emoji) })
+const mp = useMixpanel()
 
 const onSubmit = (comment?: CommentEditorValue) => {
   comment ||= comment || commentValue.value
@@ -121,17 +128,33 @@ const onSubmit = (comment?: CommentEditorValue) => {
   const content = convertCommentEditorValueToInput(commentValue.value)
   if (!isValidCommentContentInput(content)) return
 
-  // Intentionally not awaiting so that we emit close immediately
-  // createThread(content, props.modelValue.clickLocation)
+  isPostingNewThread.value = true
+  pauseAutomaticUpdates.value = true
+  updateIsTyping(true) // so that user shows up as typing until the new bubble appears
   createThread(content)
-  updateIsTyping(false)
+    .then(async (newThread) => {
+      const threadId = newThread?.id
+      if (!threadId) return
 
+      // switch to new thread
+      await open(threadId)
+    })
+    .finally(() => {
+      isPostingNewThread.value = false
+      updateIsTyping(false)
+      pauseAutomaticUpdates.value = false
+    })
+
+  mp.track('Comment Action', { type: 'action', name: 'create' })
   // Marking all uploads as in use to prevent cleanup
   comment.attachments?.forEach((a) => {
     a.inUse = true
   })
+}
 
-  emit('close')
+const trackAttachAndOpenFilePicker = () => {
+  editor.value?.openFilePicker()
+  mp.track('Comment Action', { type: 'action', name: 'attach' })
 }
 
 onKeyDown('Escape', () => {
@@ -142,9 +165,9 @@ onKeyDown('Escape', () => {
 
 watch(
   () => props.modelValue.isExpanded,
-  (newVal) => {
+  async (newVal) => {
     if (newVal) {
-      ui.threads.closeAllThreads()
+      await closeAllThreads()
     }
     commentValue.value = {
       doc: undefined,

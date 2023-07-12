@@ -35,7 +35,10 @@ import {
   addCommentCreatedActivity,
   addReplyAddedActivity
 } from '@/modules/activitystream/services/commentActivity'
-import { inputToDataStruct } from '@/modules/comments/services/data'
+import {
+  formatSerializedViewerState,
+  inputToDataStruct
+} from '@/modules/comments/services/data'
 
 export async function authorizeProjectCommentsAccess(params: {
   projectId: string
@@ -102,7 +105,7 @@ export async function createCommentThreadAndNotify(
   }
 
   const state = SpeckleViewer.ViewerState.isSerializedViewerState(input.viewerState)
-    ? input.viewerState
+    ? formatSerializedViewerState(input.viewerState)
     : null
   const dataStruct = inputToDataStruct(state)
 

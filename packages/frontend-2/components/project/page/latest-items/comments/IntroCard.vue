@@ -1,30 +1,64 @@
 <template>
-  <div
-    :class="[
-      'p-4 w-full shadow rounded-lg bg-foundation',
-      'flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:space-x-6 sm:items-center',
-      'hover:shadow-md ring-outline-2 hover:ring-2'
-    ]"
-  >
-    <img
-      data-chromatic="ignore"
-      src="~~/assets/images/comments_intro_320x248.webp"
-      alt="Comments functionality preview animation"
-      class="w-[75%] sm:w-auto sm:h-[164px]"
-      height="248"
-      decoding="async"
-    />
-    <div class="flex flex-col space-y-1 grow items-start">
-      <div class="caption text-foreground-2">No comments to show</div>
-      <FormButton text>
-        <span class="inline-flex items-center space-x-1 text-left">
-          <span>Read this tutorial and be the first person to comment</span>
-          <ChevronRightIcon class="w-6 h-6 text-foreground" />
-        </span>
-      </FormButton>
+  <div :class="['p-4', 'flex flex-col justify-center items-center space-y-8']">
+    <div
+      :class="`w-42 h-42 group transition-[margin-right] mr-0 hover:mr-12 ${
+        small ? 'scale-75' : ''
+      }`"
+    >
+      <template v-if="!isDarkTheme">
+        <img
+          src="~~/assets/images/discussions/d-w-1.png"
+          class="opacity-80 w-36 h-auto shadow-md relative transition grayscale blur-[1px] group-hover:blur-[2px] group-hover:grayscale-0 group-hover:-translate-x-10 group-hover:-translate-y-3 group-hover:scale-105"
+          alt="discussions image"
+        />
+        <img
+          src="~~/assets/images/discussions/d-w-2.png"
+          class="w-36 shadow-md relative ml-10 -mt-20 transition grayscale group-hover:grayscale-0 group-hover:translate-x-5 group-hover:scale-150 group-hover:shadow-xl"
+          alt="discussions image"
+        />
+      </template>
+      <template v-else>
+        <img
+          src="~~/assets/images/discussions/d-d-1.png"
+          class="opacity-80 w-36 h-auto shadow-md relative transition grayscale blur-[1px] group-hover:blur-[2px] group-hover:grayscale-0 group-hover:-translate-x-10 group-hover:-translate-y-3 group-hover:scale-105"
+          alt="discussions image"
+        />
+        <img
+          src="~~/assets/images/discussions/d-d-2.png"
+          class="w-36 shadow-md relative ml-10 -mt-20 transition grayscale group-hover:grayscale-0 group-hover:translate-x-5 group-hover:scale-150 group-hover:shadow-xl"
+          alt="discussions image"
+        />
+      </template>
+    </div>
+    <div class="text-foreground text-center">
+      <div>Speckle allows for real time discussions straight in your 3D model.</div>
+      <div v-if="!small" class="text-xs text-foreground-2">
+        Head over to a model and start coordinating right away!
+      </div>
+      <div v-else class="mt-2">
+        <FormButton :icon-left="PlusIcon" @click="() => $emit('new-discussion')">
+          New discussion
+        </FormButton>
+      </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronRightIcon } from '@heroicons/vue/24/solid'
+import { PlusIcon } from '@heroicons/vue/24/solid'
+import { useTheme } from '~~/lib/core/composables/theme'
+
+defineEmits<{
+  (e: 'new-discussion'): void
+}>()
+
+withDefaults(
+  defineProps<{
+    small?: boolean
+  }>(),
+  {
+    small: false
+  }
+)
+
+const { isDarkTheme } = useTheme()
 </script>

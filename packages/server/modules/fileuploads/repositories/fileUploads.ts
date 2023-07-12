@@ -50,25 +50,39 @@ export async function saveUploadFile({
   return newRecord as FileUploadRecord
 }
 
-export async function getStreamPendingModels(
+const getPendingUploadsBaseQuery = (
   streamId: string,
-  options?: Partial<{ limit: number; branchNamePattern: string }>
-) {
+  options?: Partial<{ ignoreOld: boolean; limit: number }>
+) => {
+  const { ignoreOld = true, limit } = options || {}
+
   const q = FileUploads.knex<FileUploadRecord[]>()
     .where(FileUploads.col.streamId, streamId)
     .whereIn(FileUploads.col.convertedStatus, [
       FileUploadConvertedStatus.Queued,
       FileUploadConvertedStatus.Converting
     ])
-    .whereNotIn(
-      FileUploads.col.branchName,
-      Branches.knex().select(Branches.col.name).where(Branches.col.streamId, streamId)
-    )
     .orderBy(FileUploads.col.uploadDate, 'desc')
 
-  if (options?.limit) {
-    q.limit(options.limit)
+  if (ignoreOld) {
+    q.andWhere(FileUploads.col.uploadDate, '>=', knex.raw(`now()-'1 day'::interval`))
   }
+
+  if (limit) {
+    q.limit(limit)
+  }
+
+  return q
+}
+
+export async function getStreamPendingModels(
+  streamId: string,
+  options?: Partial<{ limit: number; branchNamePattern: string }>
+) {
+  const q = getPendingUploadsBaseQuery(streamId, { limit: options?.limit }).whereNotIn(
+    FileUploads.col.branchName,
+    Branches.knex().select(Branches.col.name).where(Branches.col.streamId, streamId)
+  )
 
   if (options?.branchNamePattern) {
     q.whereRaw(
@@ -84,22 +98,12 @@ export async function getBranchPendingVersions(
   branchName: string,
   options?: Partial<{ limit: number }>
 ) {
-  const q = FileUploads.knex<FileUploadRecord[]>()
-    .where(FileUploads.col.streamId, streamId)
+  const q = getPendingUploadsBaseQuery(streamId, { limit: options?.limit })
     .where(FileUploads.col.branchName, branchName)
-    .whereIn(FileUploads.col.convertedStatus, [
-      FileUploadConvertedStatus.Queued,
-      FileUploadConvertedStatus.Converting
-    ])
     .whereIn(
       FileUploads.col.branchName,
       Branches.knex().select(Branches.col.name).where(Branches.col.streamId, streamId)
     )
-    .orderBy(FileUploads.col.uploadDate, 'desc')
-
-  if (options?.limit) {
-    q.limit(options.limit)
-  }
 
   return await q
 }

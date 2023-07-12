@@ -9,7 +9,7 @@ export default {
   component: FormButton,
   argTypes: {
     color: {
-      options: ['default', 'invert', 'danger', 'warning', 'secondary'],
+      options: ['default', 'invert', 'danger', 'warning', 'secondary', 'info'],
       control: { type: 'select' }
     },
     outlined: {
@@ -99,7 +99,8 @@ export const Default: StoryObj = {
     color: 'default',
     disabled: false,
     submit: false,
-    hideText: false
+    hideText: false,
+    loading: false
   },
   parameters: {
     docs: {
@@ -119,6 +120,42 @@ export const Rounded: StoryObj = mergeStories(Default, {
 export const WarningButton: StoryObj = mergeStories(Default, {
   args: {
     color: 'warning'
+  }
+})
+
+export const InfoButton: StoryObj = mergeStories(Default, {
+  args: {
+    color: 'info'
+  }
+})
+
+export const DangerButton: StoryObj = mergeStories(Default, {
+  args: {
+    color: 'danger'
+  }
+})
+
+export const SuccessButton: StoryObj = mergeStories(Default, {
+  args: {
+    color: 'success'
+  }
+})
+
+export const SecondaryButton: StoryObj = mergeStories(Default, {
+  args: {
+    color: 'secondary'
+  }
+})
+
+export const InvertButton: StoryObj = mergeStories(Default, {
+  args: {
+    color: 'invert'
+  }
+})
+
+export const CardButton: StoryObj = mergeStories(Default, {
+  args: {
+    color: 'card'
   }
 })
 
@@ -261,5 +298,19 @@ export const IconOnly: StoryObj = mergeStories(Default, {
   args: {
     iconLeft: XMarkIcon,
     hideText: true
+  }
+})
+
+export const LoadingStateBasic: StoryObj = mergeStories(Default, {
+  args: {
+    loading: true,
+    hideText: true
+  }
+})
+
+export const LoadingStateWithText: StoryObj = mergeStories(Default, {
+  args: {
+    loading: true,
+    default: 'Custom text'
   }
 })

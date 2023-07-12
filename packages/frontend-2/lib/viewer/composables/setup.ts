@@ -8,7 +8,9 @@ import {
   ViewerEvent,
   SunLightConfiguration,
   DefaultLightConfiguration,
-  SpeckleView
+  SpeckleView,
+  DiffResult,
+  VisualDiffMode
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -19,7 +21,8 @@ import {
   ComputedRef,
   WritableComputedRef,
   Raw,
-  Ref
+  Ref,
+  ShallowRef
 } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 import { Nullable, Optional, SpeckleViewer } from '@speckle/shared'
@@ -37,7 +40,8 @@ import {
   ViewerLoadedThreadsQuery,
   ViewerResourceItem,
   ViewerLoadedThreadsQueryVariables,
-  ProjectCommentsFilter
+  ProjectCommentsFilter,
+  ViewerModelVersionCardItemFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { SetNonNullable, Get } from 'type-fest'
 import {
@@ -46,13 +50,23 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { nanoid } from 'nanoid'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import {
-  CommentBubbleModel,
-  useViewerCommentBubbles
-} from '~~/lib/viewer/composables/commentBubbles'
+import { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { Box3, Vector3 } from 'three'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { wrapRefWithTracking } from '~~/lib/common/helpers/debugging'
+import {
+  AsyncWritableComputedRef,
+  writableAsyncComputed
+} from '~~/lib/common/composables/async'
+import {
+  DiffStateCommand,
+  setupUiDiffState
+} from '~~/lib/viewer/composables/setup/diff'
+import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { flatten, reduce } from 'lodash-es'
+import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -63,12 +77,6 @@ export type LoadedThreadsMetadata = NonNullable<
 >
 
 export type LoadedCommentThread = NonNullable<Get<LoadedThreadsMetadata, 'items[0]'>>
-
-// export type FilterAction = (
-//   objectIds: string[],
-//   stateKey: string,
-//   includeDescendants?: boolean
-// ) => Promise<void>
 
 export type InjectableViewerState = Readonly<{
   /**
@@ -122,12 +130,12 @@ export type InjectableViewerState = Readonly<{
        * All currently requested identifiers. You
        * can write to this to change which resources should be loaded.
        */
-      items: WritableComputedRef<SpeckleViewer.ViewerRoute.ViewerResource[]>
+      items: AsyncWritableComputedRef<SpeckleViewer.ViewerRoute.ViewerResource[]>
       /**
        * All currently requested identifiers in a comma-delimited string, the way it's
        * represented in the URL. Is writable also.
        */
-      resourceIdString: WritableComputedRef<string>
+      resourceIdString: AsyncWritableComputedRef<string>
 
       /**
        * Writable computed for reading/writing current thread filters
@@ -137,7 +145,10 @@ export type InjectableViewerState = Readonly<{
       /**
        * Helper for switching model to a specific version (or just latest)
        */
-      switchModelToVersion: (modelId: string, versionId?: string) => void
+      switchModelToVersion: (modelId: string, versionId?: string) => Promise<void>
+      // addModelVersion: (modelId: string, versionId: string) => void
+      // removeModelVersion: (modelId: string, versionId?: string) => void
+      // setModelVersions: (newResources: ViewerResource[]) => void
     }
     /**
      * State of resolved, validated & de-duplicated resources that are loaded in the viewer. These
@@ -158,6 +169,12 @@ export type InjectableViewerState = Readonly<{
        * Model GQL objects paired with their loaded version IDs
        */
       modelsAndVersionIds: ComputedRef<Array<{ model: LoadedModel; versionId: string }>>
+      /**
+       * All available (retrieved from GQL) models and their versions
+       */
+      availableModelsAndVersions: ComputedRef<
+        Array<{ model: LoadedModel; versions: LoadedModel['versions']['items'] }>
+      >
       /**
        * Detached objects (not models/versions)
        */
@@ -205,11 +222,9 @@ export type InjectableViewerState = Readonly<{
         isTyping: Ref<boolean>
         newThreadEditor: Ref<boolean>
       }
-      closeAllThreads: () => void
-      open: (id: string) => void
       hideBubbles: Ref<boolean>
     }
-    spotlightUserId: Ref<Nullable<string>>
+    spotlightUserSessionId: Ref<Nullable<string>>
     filters: {
       isolatedObjectIds: Ref<string[]>
       hiddenObjectIds: Ref<string[]>
@@ -225,6 +240,14 @@ export type InjectableViewerState = Readonly<{
       target: Ref<Vector3>
       isOrthoProjection: Ref<boolean>
     }
+    diff: {
+      newVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
+      oldVersion: ComputedRef<ViewerModelVersionCardItemFragment | undefined>
+      time: Ref<number>
+      mode: Ref<VisualDiffMode>
+      result: ShallowRef<Optional<DiffResult>> //ComputedRef<Optional<DiffResult>>
+      enabled: Ref<boolean>
+    }
     sectionBox: Ref<Nullable<Box3>>
     highlightedObjectIds: Ref<string[]>
     lightConfig: Ref<SunLightConfiguration>
@@ -236,7 +259,8 @@ export type InjectableViewerState = Readonly<{
    * State stored in the anchor string of the URL
    */
   urlHashState: {
-    focusedThreadId: WritableComputedRef<Nullable<string>>
+    focusedThreadId: AsyncWritableComputedRef<Nullable<string>>
+    diff: AsyncWritableComputedRef<Nullable<DiffStateCommand>>
   }
 }>
 
@@ -249,7 +273,7 @@ type CachedViewerState = Pick<
 
 type InitialSetupState = Pick<
   InjectableViewerState,
-  'projectId' | 'viewer' | 'sessionId'
+  'projectId' | 'viewer' | 'sessionId' | 'urlHashState'
 >
 
 type InitialStateWithRequest = InitialSetupState & {
@@ -259,8 +283,7 @@ type InitialStateWithRequest = InitialSetupState & {
 export type InitialStateWithRequestAndResponse = InitialSetupState &
   Pick<InjectableViewerState, 'resources'>
 
-export type InitialStateWithUrlHashState = InitialStateWithRequestAndResponse &
-  Pick<InjectableViewerState, 'urlHashState'>
+export type InitialStateWithUrlHashState = InitialStateWithRequestAndResponse
 
 export type InitialStateWithInterface = InitialStateWithUrlHashState &
   Pick<InjectableViewerState, 'ui'>
@@ -364,7 +387,8 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
             ref: computed(() => isInitialized.value)
           },
           metadata: setupViewerMetadata({ viewer: instance })
-        }
+        },
+    urlHashState: setupUrlHashState()
   }
 }
 
@@ -376,27 +400,35 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
   const router = useRouter()
   const getParam = computed(() => route.params.modelId as string)
 
-  const resources = computed({
+  const resources = writableAsyncComputed({
     get: () => SpeckleViewer.ViewerRoute.parseUrlParameters(getParam.value),
-    set: (newResources) => {
+    set: async (newResources) => {
       const modelId =
         SpeckleViewer.ViewerRoute.createGetParamFromResources(newResources)
-      router.push({ params: { modelId }, query: route.query, hash: route.hash })
-    }
+      await router.push({
+        params: { modelId },
+        query: route.query,
+        hash: route.hash
+      })
+    },
+    initialState: [],
+    asyncRead: false
   })
 
   // we could use getParam, but `createGetParamFromResources` does sorting and de-duplication AFAIK
-  const resourceIdString = computed({
+  const resourceIdString = writableAsyncComputed({
     get: () => SpeckleViewer.ViewerRoute.createGetParamFromResources(resources.value),
-    set: (newVal) => {
+    set: async (newVal) => {
       const newResources = SpeckleViewer.ViewerRoute.parseUrlParameters(newVal)
-      resources.value = newResources
-    }
+      await resources.update(newResources)
+    },
+    initialState: '',
+    asyncRead: false
   })
 
   const threadFilters = ref({} as Omit<ProjectCommentsFilter, 'resourceIdString'>)
 
-  const switchModelToVersion = (modelId: string, versionId?: string) => {
+  const switchModelToVersion = async (modelId: string, versionId?: string) => {
     const resourceArr = resources.value.slice()
 
     const resourceIdx = resourceArr.findIndex(
@@ -412,13 +444,13 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
         new SpeckleViewer.ViewerRoute.ViewerModelResource(modelId, versionId)
       )
 
-      resources.value = newResources
+      await resources.update(newResources)
     } else {
       // Add new one and allow de-duplication to do its thing
-      resources.value = [
+      await resources.update([
         new SpeckleViewer.ViewerRoute.ViewerModelResource(modelId, versionId),
         ...resources.value
-      ]
+      ])
     }
   }
 
@@ -514,8 +546,7 @@ function setupResponseResourceItems(
       ...objectItems
     ]
 
-    // Get rid of duplicates - only 1 resource per model & 1 resource per objectId
-    // TODO: @dim here you can remove the restriction to only have 1 model
+    // Get rid of duplicates - only 1 resource per objectId
     const encounteredModels = new Set<string>()
     const encounteredObjects = new Set<string>()
     const finalItems: ViewerResourceItem[] = []
@@ -523,7 +554,8 @@ function setupResponseResourceItems(
       const modelId = item.modelId
       const objectId = item.objectId
 
-      if (modelId && encounteredModels.has(modelId)) continue
+      // In case we want to go back to 1 resource per model:
+      // if (modelId && encounteredModels.has(modelId)) continue
       if (encounteredObjects.has(objectId)) continue
 
       finalItems.push(item)
@@ -550,12 +582,14 @@ function setupResponseResourceData(
   const apollo = useApolloClient().client
   const globalError = useError()
   const { triggerNotification } = useGlobalToast()
+  const logger = useLogger()
 
   const {
     projectId,
     resources: {
       request: { resourceIdString, threadFilters }
-    }
+    },
+    urlHashState: { diff }
   } = state
   const { resourceItems } = resourceItemsData
 
@@ -569,8 +603,21 @@ function setupResponseResourceData(
         !!r.modelId
     )
   )
+
+  const diffVersionIds = computed(() =>
+    flatten(
+      (diff.value?.diffs || []).map((d) => [d.versionA.versionId, d.versionB.versionId])
+    )
+  )
+
+  // model.loadedVersion will be the actually currently loaded version +
+  // any diff versions, if they're requested. the naming is confusing, but
+  // model.loadedVersion = all currently loaded versions of that model, altho there's usually only 1
   const versionIds = computed(() =>
-    nonObjectResourceItems.value.map((r) => r.versionId).sort()
+    [
+      ...nonObjectResourceItems.value.map((r) => r.versionId),
+      ...diffVersionIds.value
+    ].sort()
   )
   const versionCursors = ref({} as Record<string, Nullable<string>>)
 
@@ -601,6 +648,24 @@ function setupResponseResourceData(
       }))
       .filter((o): o is SetNonNullable<typeof o, 'model'> => !!(o.versionId && o.model))
   )
+
+  const availableModelsAndVersions = computed(() => {
+    const modelItems = models.value
+    return reduce(
+      modelItems,
+      (res, entry) => {
+        res.push({
+          model: entry,
+          versions: [...entry.loadedVersion.items, ...entry.versions.items]
+        })
+        return res
+      },
+      [] as Array<{
+        model: (typeof modelItems)[0]
+        versions: (typeof modelItems)[0]['versions']['items']
+      }>
+    )
+  })
 
   onViewerLoadedResourcesError((err) => {
     globalError.value = createError({
@@ -677,7 +742,7 @@ function setupResponseResourceData(
       title: 'Comment loading failed',
       description: `${err.message}`
     })
-    console.error(err)
+    logger.error(err)
   })
 
   return {
@@ -685,6 +750,7 @@ function setupResponseResourceData(
     commentThreads,
     commentThreadsMetadata,
     modelsAndVersionIds,
+    availableModelsAndVersions,
     project,
     resourceQueryVariables: computed(() => viewerLoadedResourcesVariables.value),
     threadsQueryVariables: computed(() => threadsQueryVariables.value),
@@ -733,13 +799,13 @@ function setupInterfaceState(
   const hasAnyFiltersApplied = computed(() => {
     if (isolatedObjectIds.value.length) return true
     if (hiddenObjectIds.value.length) return true
-    if (propertyFilter.value && isPropertyFilterApplied.value) return true
+    if (propertyFilter.value || isPropertyFilterApplied.value) return true
     if (explodeFactor.value !== 0) return true
     return false
   })
 
   const highlightedObjectIds = ref([] as string[])
-  const spotlightUserId = ref(null as Nullable<string>)
+  const spotlightUserSessionId = ref(null as Nullable<string>)
 
   const lightConfig = ref(DefaultLightConfiguration)
   const explodeFactor = ref(0)
@@ -748,20 +814,31 @@ function setupInterfaceState(
   /**
    * THREADS
    */
-  const { commentThreads, openThread, closeAllThreads, open } = useViewerCommentBubbles(
-    { state }
-  )
+  const { commentThreads, openThread, newThreadEditor } = setupViewerCommentBubbles({
+    state
+  })
   const isTyping = ref(false)
-  const newThreadEditor = ref(false)
   const hideBubbles = ref(false)
+
+  /**
+   * Diffing
+   */
+  const diffState = setupUiDiffState(state)
+
+  const position = ref(new Vector3())
+  const target = ref(new Vector3())
+  const isOrthoProjection = ref(false as boolean)
 
   return {
     ...state,
     ui: {
+      diff: {
+        ...diffState
+      },
       selection,
       lightConfig,
       explodeFactor,
-      spotlightUserId,
+      spotlightUserSessionId,
       viewerBusy,
       threads: {
         items: commentThreads,
@@ -770,14 +847,14 @@ function setupInterfaceState(
           isTyping,
           newThreadEditor
         },
-        closeAllThreads,
-        open,
         hideBubbles
       },
       camera: {
-        position: ref(new Vector3()),
-        target: ref(new Vector3()),
-        isOrthoProjection: ref(false as boolean)
+        // position: wrapRefWithTracking(position, 'position'),
+        // target: wrapRefWithTracking(target, 'target'),
+        position,
+        target,
+        isOrthoProjection
       },
       sectionBox: ref(null as Nullable<Box3>),
       filters: {
@@ -803,11 +880,7 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   const initState = setupInitialState(params)
   const initialStateWithRequest = setupResourceRequest(initState)
   const stateWithResources = setupResourceResponse(initialStateWithRequest)
-  const stateWithUrlHashState: InitialStateWithUrlHashState = {
-    ...stateWithResources,
-    urlHashState: setupUrlHashState()
-  }
-  const state: InjectableViewerState = setupInterfaceState(stateWithUrlHashState)
+  const state: InjectableViewerState = setupInterfaceState(stateWithResources)
 
   // Inject it into descendant components
   provide(InjectableViewerStateKey, state)
@@ -855,4 +928,21 @@ export function useSetupViewerScope(
 ): InjectableViewerState {
   provide(InjectableViewerStateKey, state)
   return state
+}
+
+export function useResetUiState() {
+  const {
+    ui: { camera, sectionBox, highlightedObjectIds, lightConfig }
+  } = useInjectedViewerState()
+  const { resetFilters } = useFilterUtilities()
+  const { endDiff } = useDiffUtilities()
+
+  return () => {
+    camera.isOrthoProjection.value = false
+    sectionBox.value = null
+    highlightedObjectIds.value = []
+    lightConfig.value = { ...DefaultLightConfiguration }
+    resetFilters()
+    endDiff()
+  }
 }

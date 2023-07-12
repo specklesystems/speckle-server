@@ -8,10 +8,19 @@
     "url": "https://github.com/specklesystems/speckle-server.git",
     "directory": "packages/viewer"
   },
-  "main": "dist/index.cjs.js",
+  "main": "dist/index.cjs",
   "module": "dist/index.js",
   "exports": {
-    ".": "./dist/index.js",
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.cjs"
+      }
+    },
     "./dist/assets/*": "./dist/assets/*",
     "./assets/*": "./dist/assets/*"
   },
@@ -21,7 +30,7 @@
     "dist"
   ],
   "engines": {
-    "node": "^18.16.0"
+    "node": "^18.16.1"
   },
   "scripts": {
     "build": "NODE_ENV=production rollup --config",
@@ -51,13 +60,15 @@
     "string-to-color": "^2.2.2",
     "three": "^0.140.0",
     "three-mesh-bvh": "0.5.17",
-    "tree-model": "1.0.7"
+    "tree-model": "1.0.7",
+    "troika-three-text": "0.47.2"
   },
   "devDependencies": {
     "@babel/core": "^7.18.2",
     "@babel/eslint-parser": "^7.18.2",
     "@babel/preset-env": "^7.20.2",
     "@rollup/plugin-babel": "^5.3.1",
+    "@types/babel__core": "^7.20.1",
     "@types/three": "^0.136.0",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "@typescript-eslint/parser": "^5.39.0",

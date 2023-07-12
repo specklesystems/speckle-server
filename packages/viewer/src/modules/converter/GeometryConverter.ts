@@ -21,6 +21,7 @@ export enum SpeckleType {
   Arc = 'Arc',
   Ellipse = 'Ellipse',
   RevitInstance = 'RevitInstance',
+  Text = 'Text',
   Unknown = 'Unknown'
 }
 
@@ -36,7 +37,8 @@ export const SpeckleTypeAllRenderables: SpeckleType[] = [
   SpeckleType.Curve,
   SpeckleType.Circle,
   SpeckleType.Arc,
-  SpeckleType.Ellipse
+  SpeckleType.Ellipse,
+  SpeckleType.Text
 ]
 
 export class GeometryConverter {
@@ -94,7 +96,9 @@ export class GeometryConverter {
         return GeometryConverter.View3DToGeometryData(node)
       case SpeckleType.RevitInstance:
         return GeometryConverter.RevitInstanceToGeometryData(node)
-      default:
+      case SpeckleType.Text:
+        return GeometryConverter.TextToGeometryData(node)
+      case SpeckleType.Unknown:
         // console.warn(`Skipping geometry conversion for ${type}`)
         return null
     }
@@ -334,6 +338,29 @@ export class GeometryConverter {
         conversionFactor
       ),
       transform: null
+    } as GeometryData
+  }
+
+  /**
+   * TEXT
+   */
+  private static TextToGeometryData(node: NodeData): GeometryData {
+    const conversionFactor = getConversionFactor(node.raw.units)
+    const plane = node.raw.plane
+    const position = new Vector3(plane.origin.x, plane.origin.y, plane.origin.z)
+    const scale = new Matrix4().makeScale(
+      conversionFactor,
+      conversionFactor,
+      conversionFactor
+    )
+    const mat = new Matrix4().makeBasis(plane.xdir, plane.ydir, plane.normal)
+    mat.setPosition(position)
+    mat.premultiply(scale)
+    return {
+      attributes: null,
+      bakeTransform: mat,
+      transform: null,
+      metaData: node.raw
     } as GeometryData
   }
 
