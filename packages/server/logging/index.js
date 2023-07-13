@@ -3,8 +3,8 @@ const Sentry = require('@sentry/node')
 const Tracing = require('@sentry/tracing')
 const { getMachineId } = require('./machineId')
 const prometheusClient = require('prom-client')
+const promBundle = require('express-prom-bundle')
 
-const { createRequestDurationMiddleware } = require('./expressMonitoring')
 const { initKnexPrometheusMetrics } = require('./knexMonitoring')
 
 let prometheusInitialized = false
@@ -22,9 +22,16 @@ module.exports = function (app) {
     prometheusClient.collectDefaultMetrics()
 
     initKnexPrometheusMetrics()
-  }
+    const expressMetricsMiddleware = promBundle({
+      includeMethod: true,
+      includePath: true,
+      httpDurationMetricName: 'speckle_server_request_duration',
+      metricType: 'summary',
+      autoregister: false
+    })
 
-  app.use(createRequestDurationMiddleware())
+    app.use(expressMetricsMiddleware)
+  }
 
   if (process.env.DISABLE_TRACING !== 'true' && process.env.SENTRY_DSN) {
     Sentry.setUser({ id })
