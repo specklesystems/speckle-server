@@ -83,7 +83,7 @@ module.exports = class IFCParser {
 
   async populateSpatialNode(node, chunks, closures, depth) {
     depth++
-    process.stdout.write(`${this.spatialNodeCount++} nodes generated \r`)
+    this.logger.debug(`${this.spatialNodeCount++} nodes generated.`)
     closures.push([])
     await this.getChildren(node, chunks, PropNames.aggregates, closures, depth)
     await this.getChildren(node, chunks, PropNames.spatial, closures, depth)
@@ -247,7 +247,7 @@ module.exports = class IFCParser {
     const allLinesIDs = await this.ifcapi.GetAllLines(this.modelId)
     const allLinesCount = allLinesIDs.size()
     for (let i = 0; i < allLinesCount; i++) {
-      process.stdout.write(`${((i / allLinesCount) * 100).toFixed(3)}% props \r`)
+      this.logger.debug(`${((i / allLinesCount) * 100).toFixed(3)}% props.`)
       const id = allLinesIDs.get(i)
       if (!geometryIds.has(id)) {
         const props = await this.getItemProperty(id)
@@ -380,7 +380,7 @@ module.exports = class IFCParser {
           speckle_type: 'reference',
           referencedId: speckleMesh.id
         })
-        process.stdout.write(`${(count++).toFixed(3)} geoms generated\r`)
+        this.logger.debug(`${(count++).toFixed(3)} geoms generated.`)
       }
     })
 
