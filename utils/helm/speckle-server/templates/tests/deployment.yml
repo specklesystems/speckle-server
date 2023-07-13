@@ -27,9 +27,9 @@ spec:
               value: {{ .Values.docker_image_tag }}
             - name: FRONTEND_VERSION
               {{- if .Values.frontend_2.enabled }}
-              value: 2
+              value: "2"
               {{- else }}
-              value: 1
+              value: "1"
               {{- end }}
           resources:
             requests:
