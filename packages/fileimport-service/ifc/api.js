@@ -123,7 +123,7 @@ module.exports = class ServerAPI {
     // step 1: insert objects
     if (objsToInsert.length > 0) {
       const batches = chunk(objsToInsert, objectsBatchSize)
-      for (const [index, batch] of batches) {
+      for (const [index, batch] of batches.entries()) {
         this.prepInsertionObjectBatch(batch)
         await knex.transaction(async (trx) => {
           const q = Objects().insert(batch).toString() + ' on conflict do nothing'
@@ -141,7 +141,7 @@ module.exports = class ServerAPI {
     if (closures.length > 0) {
       const batches = chunk(closures, closureBatchSize)
 
-      for (const [index, batch] of batches) {
+      for (const [index, batch] of batches.entries()) {
         this.prepInsertionClosureBatch(batch)
         await knex.transaction(async (trx) => {
           const q = Closures().insert(batch).toString() + ' on conflict do nothing'
