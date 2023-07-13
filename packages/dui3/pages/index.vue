@@ -37,8 +37,8 @@ import { useAccountsSetup } from '~/lib/accounts/composables/setup'
 import { graphql } from '~/lib/common/generated/gql'
 import { ServerInfoTestQuery } from '~/lib/common/generated/gql/graphql'
 
-const { $bindings } = useNuxtApp()
-const appName = await $bindings.getSourceApplicationName()
+const { $baseBinding } = useNuxtApp()
+const appName = await $baseBinding.getSourceApplicationName()
 const { accounts, refreshAccounts, defaultAccount } = await useAccountsSetup()
 
 const versionQuery = graphql(`

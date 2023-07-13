@@ -1,8 +1,13 @@
-export interface IBaseBindings {
-  sayHi: (name: string) => Promise<string>
+// Needs to be agreed between Frontend and Rhino
+export interface IRhinoRandomBinding {
+  makeGreeting: (name: string) => Promise<string>
+}
+
+// Needs to be agreed between Frontend and Core
+export interface IBaseBinding {
   getAccounts: () => Promise<Account[]>
-  getSourceAppName: () => Promise<string>
-  getSourceAppVersion: () => Promise<string>
+  getSourceApplicationName: () => Promise<string>
+  getSourceApplicationVersion: () => Promise<string>
   getDocumentInfo: () => Promise<DocumentInfo>
 
   // TODO:
@@ -14,13 +19,13 @@ export interface IBaseBindings {
    * @param event
    * @param callback
    */
-  on: <E extends keyof IBaseBindingsHostEvents>(
+  on: <E extends keyof IBaseBindingHostEvents>(
     event: E,
-    callback: IBaseBindingsHostEvents[E]
+    callback: IBaseBindingHostEvents[E]
   ) => void
 }
 
-export interface IBaseBindingsHostEvents {
+export interface IBaseBindingHostEvents {
   displayToastNotification: (args: ToastInfo) => void
   documentChanged: () => void
   selectionChanged: (args: SelectionChangedInfo) => void
