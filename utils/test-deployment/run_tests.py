@@ -23,6 +23,13 @@ if not SPECKLE_SERVER:
     )
     exit(1)
 
+FRONTEND_VERSION = os.getenv("FRONTEND_VERSION", "")
+if not FRONTEND_VERSION:
+    print(
+        "Error: No frontend version specified. Use FRONTEND_VERSION environment variable."
+    )
+    exit(1)
+
 if not SPECKLE_SERVER.startswith("http://") and not SPECKLE_SERVER.startswith(
     "https://"
 ):
@@ -31,12 +38,21 @@ if not SPECKLE_SERVER.startswith("http://") and not SPECKLE_SERVER.startswith(
 print(f"Using Speckle server '{SPECKLE_SERVER}'")
 
 # Test if frontend is accessible
-frontend_response = requests.get(urllib.parse.urljoin(SPECKLE_SERVER, "logo.svg"))
-# don't check for status code, the frontend app will server the 404 page with a status code 200
-# even if the rote doesn't exist
-assert frontend_response.headers.get("Content-Type", "").startswith(
-    "image/"
-), "Frontend logo Content-Type is not an image"
+if FRONTEND_VERSION == "1":
+    frontend_response = requests.get(urllib.parse.urljoin(SPECKLE_SERVER, "logo.svg"))
+    # don't check for status code, the frontend app will server the 404 page with a status code 200
+    # even if the rote doesn't exist
+    assert frontend_response.headers.get("Content-Type", "").startswith(
+        "image/"
+    ), "Frontend logo Content-Type is not an image"
+elif FRONTEND_VERSION == "2":
+    frontend_response = requests.get(SPECKLE_SERVER)
+    assert (
+        frontend_response.status_code == 200
+    ), "Frontend did not return a 200 status code"
+else:
+    print(f"Unknown frontend version '{FRONTEND_VERSION}'")
+    exit(1)
 print("Frontend accessible")
 
 # Test basic unauthenticated operation using specklepy

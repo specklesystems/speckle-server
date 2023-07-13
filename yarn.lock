@@ -11098,6 +11098,7 @@ __metadata:
     react: ^18.2.0
     react-dom: ^18.2.0
     rollup-plugin-node-builtins: ^2.1.2
+    seq-logging: ^2.1.1
     storybook: ^7.0.0-beta.54
     stylelint: ^15.10.1
     stylelint-config-prettier: ^9.0.3
@@ -33253,6 +33254,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"node-fetch@npm:^2.6.9":
+  version: 2.6.12
+  resolution: "node-fetch@npm:2.6.12"
+  dependencies:
+    whatwg-url: ^5.0.0
+  peerDependencies:
+    encoding: ^0.1.0
+  peerDependenciesMeta:
+    encoding:
+      optional: true
+  checksum: 3bc1655203d47ee8e313c0d96664b9673a3d4dd8002740318e9d27d14ef306693a4b2ef8d6525775056fd912a19e23f3ac0d7111ad8925877b7567b29a625592
+  languageName: node
+  linkType: hard
+
 "node-fetch@npm:^3.3.0":
   version: 3.3.0
   resolution: "node-fetch@npm:3.3.0"
@@ -39118,6 +39133,16 @@ __metadata:
     tslib: ^2.0.3
     upper-case-first: ^2.0.2
   checksum: 3cfe6c0143e649132365695706702d7f729f484fa7b25f43435876efe7af2478243eefb052bacbcce10babf9319fd6b5b6bc59b94c80a1c819bcbb40651465d5
+  languageName: node
+  linkType: hard
+
+"seq-logging@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "seq-logging@npm:2.1.1"
+  dependencies:
+    abort-controller: ^3.0.0
+    node-fetch: ^2.6.9
+  checksum: e905b2bd7a2a5e99b331510edad9b3da278fbc997f3f15bdc059a023fbce8e90254cc0ce88b40b02413f89e1be4eced3642e3a159eae8cf254ffdfdad09ef1b6
   languageName: node
   linkType: hard
 

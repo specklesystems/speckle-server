@@ -65,6 +65,7 @@
     "pino": "^8.14.1",
     "pino-http": "^8.3.3",
     "portal-vue": "^3.0.0",
+    "seq-logging": "^2.1.1",
     "subscriptions-transport-ws": "^0.11.0",
     "vee-validate": "^4.7.0",
     "vue-advanced-cropper": "^2.8.8",
