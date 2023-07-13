@@ -10,7 +10,12 @@ import {
 import { setContext } from '@apollo/client/link/context'
 import { CommandModule } from 'yargs'
 import { getFrontendOrigin, getServerVersion } from '@/modules/shared/helpers/envHelper'
-import { Commit, ViewerResourceGroup } from '@/test/graphql/generated/graphql'
+import {
+  Commit,
+  ViewerResourceGroup,
+  Comment,
+  CreateCommentInput
+} from '@/test/graphql/generated/graphql'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import { Roles } from '@speckle/shared'
@@ -21,8 +26,15 @@ import ObjectLoader from '@speckle/objectloader'
 import { noop } from 'lodash'
 import { cliLogger } from '@/logging/logging'
 import { createCommitByBranchId } from '@/modules/core/services/commit/management'
+import { getUser } from '@/modules/core/repositories/users'
+import type { SpeckleViewer } from '@speckle/shared'
+import {
+  createCommentThreadAndNotify,
+  createCommentReplyAndNotify
+} from '@/modules/comments/services/management'
 
 type LocalResources = Awaited<ReturnType<typeof getLocalResources>>
+type LocalResourcesWithCommit = LocalResources & { newCommitId: string }
 type ParsedCommitUrl = Awaited<ReturnType<typeof parseIncomingUrl>>
 type GraphQLClient = ApolloClient<NormalizedCacheObject>
 type ObjectLoaderObject = Record<string, unknown> & {
@@ -91,6 +103,40 @@ const viewerResourcesQuery = gql`
         }
       }
     }
+  }
+`
+
+const viewerThreadsQuery = gql`
+  query DownloadableCommitViewerThreads(
+    $projectId: String!
+    $filter: ProjectCommentsFilter!
+    $cursor: String
+    $limit: Int = 25
+  ) {
+    project(id: $projectId) {
+      id
+      commentThreads(filter: $filter, cursor: $cursor, limit: $limit) {
+        totalCount
+        totalArchivedCount
+        items {
+          ...DownloadbleCommentMetadata
+          replies(limit: $limit) {
+            items {
+              ...DownloadbleCommentMetadata
+            }
+          }
+        }
+      }
+    }
+  }
+
+  fragment DownloadbleCommentMetadata on Comment {
+    id
+    text {
+      doc
+    }
+    viewerState
+    screenshot
   }
 `
 
@@ -211,7 +257,11 @@ const parseIncomingUrl = async (url: string, token?: string) => {
   throw new Error(`Couldn't parse commit URL: ${url}`)
 }
 
-const getLocalResources = async (targetStreamId: string, branchName: string) => {
+const getLocalResources = async (
+  targetStreamId: string,
+  branchName: string,
+  commentAuthorId?: string
+) => {
   const targetStream = await getStream({ streamId: targetStreamId })
   if (!targetStream) {
     throw new Error(`Couldn't find local stream with id ${targetStreamId}`)
@@ -227,7 +277,9 @@ const getLocalResources = async (targetStreamId: string, branchName: string) => 
   const streamOwners = await getStreamCollaborators(targetStreamId, Roles.Stream.Owner)
   const owner = streamOwners[0]
 
-  return { targetStream, targetBranch, owner }
+  const commentAuthor = commentAuthorId ? await getUser(commentAuthorId) : null
+
+  return { targetStream, targetBranch, owner, commentAuthor }
 }
 
 const getViewerResources = async (
@@ -292,6 +344,118 @@ const getCommitMetadata = async (client: GraphQLClient, params: ParsedCommitUrl)
   }
 
   return commit as Commit
+}
+
+const getViewerThreads = async (client: GraphQLClient, params: ParsedCommitUrl) => {
+  const { streamId, branchId, commitId } = params
+
+  const results = await client.query({
+    query: viewerThreadsQuery,
+    variables: {
+      projectId: streamId,
+      filter: {
+        resourceIdString: `${branchId}@${commitId}`,
+        includeArchived: false,
+        loadedVersionsOnly: true
+      },
+      limit: 100
+    }
+  })
+  assertValidGraphQLResult(results, 'Viewer Threads Query')
+
+  const threads = results.data?.project?.commentThreads?.items
+  if (!threads) {
+    throw new Error('Unexpectedly received invalid viewer threads structure')
+  }
+
+  return threads as Comment[]
+}
+
+const cleanViewerState = (
+  state: SpeckleViewer.ViewerState.SerializedViewerState,
+  localResources: LocalResourcesWithCommit
+): SpeckleViewer.ViewerState.SerializedViewerState => ({
+  ...state,
+  projectId: localResources.targetStream.id,
+  resources: {
+    ...state.resources,
+    request: {
+      ...state.resources.request,
+      resourceIdString: `${localResources.targetBranch.id}@${localResources.newCommitId}`
+    }
+  },
+  ui: {
+    ...state.ui,
+    diff: {
+      ...state.ui.diff,
+      command: null // not supported currently
+    }
+  }
+})
+
+const saveNewThreads = async (
+  threads: Comment[],
+  localResources: LocalResourcesWithCommit
+) => {
+  const { commentAuthor, targetStream } = localResources
+  if (!commentAuthor) return
+
+  const threadInputs: { originalComment: Comment; input: CreateCommentInput }[] =
+    threads.map((t) => ({
+      originalComment: t,
+      input: {
+        projectId: targetStream.id,
+        content: {
+          doc: t.text.doc,
+          blobIds: []
+        },
+        viewerState: t.viewerState
+          ? cleanViewerState(
+              t.viewerState as SpeckleViewer.ViewerState.SerializedViewerState,
+              localResources
+            )
+          : null,
+        screenshot: t.screenshot,
+        resourceIdString: `${localResources.targetBranch.id}@${localResources.newCommitId}`
+      }
+    }))
+
+  cliLogger.info(`Creating ${threadInputs.length} new comment threads...`)
+  const res = await Promise.all(
+    threadInputs.map((i) =>
+      createCommentThreadAndNotify(i.input, commentAuthor.id).then((c) => ({
+        originalData: i,
+        newComment: c
+      }))
+    )
+  )
+  cliLogger.info(`...created ${res.length} new comment threads!`)
+
+  for (const resItem of res) {
+    const { originalData, newComment } = resItem
+    const { originalComment } = originalData
+    const { replies } = originalComment
+    if (!replies) continue
+
+    cliLogger.info(
+      `Creating ${replies.items.length} new replies for comment thread ${originalComment.id}...`
+    )
+    await Promise.all(
+      replies.items.map((r) =>
+        createCommentReplyAndNotify(
+          {
+            content: {
+              doc: r.text.doc,
+              blobIds: []
+            },
+            threadId: newComment.id
+          },
+          commentAuthor.id
+        )
+      )
+    )
+    cliLogger.info(`...created ${replies.items.length} new replies!`)
+  }
 }
 
 const saveNewCommit = async (commit: Commit, localResources: LocalResources) => {
@@ -393,9 +557,15 @@ const loadAllObjectsFromParent = async (params: {
 
 const command: CommandModule<
   unknown,
-  { commitUrl: string; targetStreamId: string; branchName: string; token?: string }
+  {
+    commitUrl: string
+    targetStreamId: string
+    branchName: string
+    token?: string
+    commentAuthorId?: string
+  }
 > = {
-  command: 'commit <commitUrl> <targetStreamId> [branchName] [token]',
+  command: 'commit <commitUrl> <targetStreamId> [branchName] [token] [commentAuthorId]',
   describe: 'Download a commit from an external Speckle server instance',
   builder: {
     commitUrl: {
@@ -416,13 +586,23 @@ const command: CommandModule<
       describe: 'Target server auth token, in case the stream is private',
       type: 'string',
       default: ''
+    },
+    commentAuthorId: {
+      describe:
+        'The local user ID that should be used as the author of comments. If not specified, comments wont be pulled',
+      type: 'string',
+      default: ''
     }
   },
   handler: async (argv) => {
-    const { commitUrl, targetStreamId, branchName, token } = argv
+    const { commitUrl, targetStreamId, branchName, token, commentAuthorId } = argv
     cliLogger.info(`Process started at: ${new Date().toISOString()}`)
 
-    const localResources = await getLocalResources(targetStreamId, branchName)
+    const localResources = await getLocalResources(
+      targetStreamId,
+      branchName,
+      commentAuthorId
+    )
     cliLogger.info(
       `Using local branch ${branchName} of stream ${targetStreamId} to dump the incoming commit`
     )
@@ -435,6 +615,11 @@ const command: CommandModule<
     cliLogger.info('Loaded commit metadata: %s', JSON.stringify(commit))
 
     const newCommitId = await saveNewCommit(commit, localResources)
+    const newResources = {
+      ...localResources,
+      newCommitId
+    }
+
     cliLogger.info(`Created new local commit: ${newCommitId}`)
 
     cliLogger.info(`Pulling & saving all objects! (${commit.totalChildrenCount})`)
@@ -443,6 +628,12 @@ const command: CommandModule<
       sourceCommit: commit,
       parsedCommitUrl
     })
+
+    if (localResources.commentAuthor) {
+      cliLogger.info(`Pulling & saving all comments w/ #${commentAuthorId} as author!`)
+      const threads = await getViewerThreads(client, parsedCommitUrl)
+      await saveNewThreads(threads, newResources)
+    }
 
     const linkToNewCommit = parsedCommitUrl.isFe2
       ? `${getFrontendOrigin(true)}/projects/${targetStreamId}/models/${
