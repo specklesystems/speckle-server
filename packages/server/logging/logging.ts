@@ -28,3 +28,4 @@ export const dbNotificationLogger = extendLoggerComponent(logger, 'db-notificati
 export const mixpanelLogger = extendLoggerComponent(logger, 'mixpanel')
 export const graphqlLogger = extendLoggerComponent(logger, 'graphql')
 export const authLogger = extendLoggerComponent(logger, 'auth')
+export { extendLoggerComponent }

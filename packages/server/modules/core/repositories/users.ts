@@ -134,3 +134,7 @@ export async function updateUser(
   const [newUser] = await Users.knex().where(Users.col.id, userId).update(update, '*')
   return newUser as Nullable<UserRecord>
 }
+
+export async function getFirstUser() {
+  return await Users.knex<UserRecord>().first()
+}

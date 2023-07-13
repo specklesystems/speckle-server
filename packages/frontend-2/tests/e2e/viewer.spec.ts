@@ -1,6 +1,6 @@
 import { createPage } from '@nuxt/test-utils'
 import { describe, it, expect, beforeAll } from 'vitest'
-import { setupE2eTest, ensureServerRunning } from '../helpers/e2e'
+import { setupE2eTest, ensureServerRunning, ensureE2eTestProject } from '../helpers/e2e'
 
 // Basic nuxt e2e test with vitest
 describe('viewer', async () => {
@@ -8,7 +8,7 @@ describe('viewer', async () => {
 
   beforeAll(async () => {
     await ensureServerRunning()
-    // TODO: Ensure proj exists
+    await ensureE2eTestProject()
   })
 
   it('renders the viewer', async () => {
