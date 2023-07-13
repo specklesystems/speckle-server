@@ -233,11 +233,21 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
 
     boundLogger = boundLogger.child({ pid: childProc.pid })
     childProc.stdout.on('data', (data) => {
-      boundLogger.info('Parser: %s', data.toString())
+      try {
+        JSON.parse(data.toString()) // data is already in JSON format
+        process.stdout.write(data.string())
+      } catch {
+        boundLogger.info('Parser: %s', data.toString())
+      }
     })
 
     childProc.stderr.on('data', (data) => {
-      boundLogger.info('Parser: %s', data.toString())
+      try {
+        JSON.parse(data.toString()) // data is already in JSON format
+        process.stderr.write(data.string())
+      } catch {
+        boundLogger.info('Parser: %s', data.toString())
+      }
     })
 
     let timedOut = false
