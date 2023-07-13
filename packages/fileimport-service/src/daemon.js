@@ -257,13 +257,21 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
 
       timedOut = true
       childProc.kill(9)
-      reject(`Timeout: Process took longer than ${timeoutMs} ms to execute`)
+      const rejectionReason = `Timeout: Process took longer than ${timeoutMs} milliseconds to execute.`
+      const output = {
+        success: false,
+        error: rejectionReason
+      }
+      fs.writeFileSync(TMP_RESULTS_PATH, JSON.stringify(output))
+      reject(rejectionReason)
     }, timeoutMs)
 
     childProc.on('close', (code) => {
       boundLogger.info({ exitCode: code }, `Process exited with code ${code}`)
 
-      if (timedOut) return // ignore `close` calls after killing (the promise was already rejected)
+      if (timedOut) {
+        return // ignore `close` calls after killing (the promise was already rejected)
+      }
 
       clearTimeout(timeout)
 
