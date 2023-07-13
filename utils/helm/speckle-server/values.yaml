@@ -753,6 +753,8 @@ frontend:
 ## @section frontend_2
 ## @descriptionStart
 ## Defines parameters related to the frontend_2 component of Speckle
+## @descriptionEnd
+##
 frontend_2:
   ## @param frontend_2.logClientApiToken SEQ API token
   ##
@@ -764,8 +766,10 @@ frontend_2:
   ##
   logLevel: 'info'
   ## @param frontend_2.enabled Feature flag to enable running the new experimental frontend.
+  ##
   enabled: false
   ## @param frontend_2.replicas The number of instances of the Frontend 2 server prod to be deployed withing the cluster.
+  ##
   replicas: 1
   requests:
     ## @param frontend_2.requests.cpu The CPU that should be available on a node when scheduling this pod.
