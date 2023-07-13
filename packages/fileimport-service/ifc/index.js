@@ -2,7 +2,7 @@ const { performance } = require('perf_hooks')
 const { fetch } = require('undici')
 const Parser = require('./parser_v2')
 const ServerAPI = require('./api.js')
-const { logger } = require('../observability/logging')
+const { logger: parentLogger } = require('../observability/logging')
 
 async function parseAndCreateCommit({
   data,
@@ -12,13 +12,14 @@ async function parseAndCreateCommit({
   message = 'Manual IFC file upload',
   fileId
 }) {
+  const logger = parentLogger.child({ streamId, branchName, userId, fileId })
   const serverApi = new ServerAPI({ streamId })
   const myParser = new Parser({ serverApi, fileId })
 
   const start = performance.now()
   const { id, tCount } = await myParser.parse(data)
   const end = performance.now()
-  console.log(`Total processing time V2: ${(end - start).toFixed(2)}ms`)
+  logger.info(`Total processing time V2: ${(end - start).toFixed(2)}ms`)
 
   const commit = {
     streamId,
@@ -35,6 +36,7 @@ async function parseAndCreateCommit({
   })
 
   if (!branch) {
+    logger.info('Branch not found, creating it.')
     await serverApi.createBranch({
       name: branchName,
       streamId,
@@ -46,6 +48,7 @@ async function parseAndCreateCommit({
   const userToken = process.env.USER_TOKEN
 
   const serverBaseUrl = process.env.SPECKLE_SERVER_URL || 'http://localhost:3000'
+  logger.info(`Creating commit for object (${id}), with message "${message}"`)
   const response = await fetch(serverBaseUrl + '/graphql', {
     method: 'POST',
     headers: {
