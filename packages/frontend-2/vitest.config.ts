@@ -8,7 +8,8 @@ const config = defineConfig({
       // we want nuxt init to be run before anything else, so that we can get the nuxt
       // instance in our own beforeAll hooks
       hooks: IS_E2E ? 'stack' : 'parallel'
-    }
+    },
+    testTimeout: IS_E2E ? 100000 : 5000
   }
 })
 

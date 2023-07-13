@@ -69,3 +69,11 @@ export async function setupE2eTest() {
     ...(useBrowser ? { browser: true, browserOptions: { type: 'chromium' } } : {})
   })
 }
+
+export const buildTestProjectHelpers = (metadata: TestProjectMetadata) => ({
+  get modelPagePath() {
+    return `/projects/${metadata.streamId}/models/${metadata.commits[0].branchId}`
+  }
+})
+
+export type TestProjectHelpers = ReturnType<typeof buildTestProjectHelpers>
