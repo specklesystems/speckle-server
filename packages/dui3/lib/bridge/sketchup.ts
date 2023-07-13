@@ -3,6 +3,7 @@ import { BaseBridge } from './base'
 
 declare let sketchup: {
   exec: (data: Record<string, unknown>) => void
+  getCommands: (viewId: string) => void
 }
 
 /**
@@ -24,8 +25,9 @@ export class SketchupBridge extends BaseBridge {
   >
   private bindingsName: string
   private TIMEOUT_MS = 2000 // 2s
-  public isInitalized: Promise<void>
-  private resolveIsInitializedPromise!: () => unknown
+  public isInitalized: Promise<boolean>
+  private resolveIsInitializedPromise!: (v: boolean) => unknown
+  private rejectIsInitializedPromise!: (message: string) => unknown
 
   constructor(bindingsName: string) {
     super()
@@ -33,6 +35,7 @@ export class SketchupBridge extends BaseBridge {
 
     this.isInitalized = new Promise((resolve, reject) => {
       this.resolveIsInitializedPromise = resolve
+      this.rejectIsInitializedPromise = reject
       setTimeout(
         () =>
           reject(
@@ -46,10 +49,12 @@ export class SketchupBridge extends BaseBridge {
     ;(globalThis as Record<string, unknown>).bindings = this
 
     // Initialization continues in the receiveCommandsAndInitializeBridge function,
-    // where we expect sketchup to return to us the command names.
+    // where we expect sketchup to return to us the command names for related bindings/views.
     // NOTE: as we want to have multiple sketchup bindings in the future, we will
     // most likely change this method to specify which view/plugin/bindings we want.
-    sketchup.exec({ name: 'get_commands' })
+    // eslint-disable-next-line camelcase
+    // sketchup.exec({ name: 'getCommands', view_id: this.bindingsName })
+    sketchup.getCommands(this.bindingsName)
   }
 
   /**
@@ -66,7 +71,16 @@ export class SketchupBridge extends BaseBridge {
         this.runMethod(commandName, args)
     }
 
-    this.resolveIsInitializedPromise()
+    this.resolveIsInitializedPromise(true)
+  }
+
+  /**
+   * Will be called by `executeScript('bindings.rejectBindings()')` from sketchup.
+   * @param message
+   */
+  private rejectBindings(message: string) {
+    this.resolveIsInitializedPromise(false)
+    this.rejectIsInitializedPromise(message)
   }
 
   /**
@@ -82,7 +96,10 @@ export class SketchupBridge extends BaseBridge {
     sketchup.exec({
       name: methodName,
       // eslint-disable-next-line camelcase
-      data: { request_id: requestId, arguments: args }
+      request_id: requestId,
+      // eslint-disable-next-line camelcase
+      view_id: this.bindingsName,
+      data: { args }
     })
 
     return new Promise((resolve, reject) => {
