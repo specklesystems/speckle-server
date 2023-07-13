@@ -40,6 +40,27 @@ const testQuery = gql`
   }
 `
 
+const commitBranchMetadataQuery = gql`
+  query CommitBranchMetadata($streamId: String!, $commitId: String!) {
+    stream(id: $streamId) {
+      commit(id: $commitId) {
+        id
+        branchName
+      }
+    }
+  }
+`
+
+const branchMetadataQuery = gql`
+  query BranchMetadata($streamId: String!, $branchName: String!) {
+    stream(id: $streamId) {
+      branch(name: $branchName) {
+        id
+      }
+    }
+  }
+`
+
 const commitMetadataQuery = gql`
   query CommitDownloadMetadata($streamId: String!, $commitId: String!) {
     stream(id: $streamId) {
@@ -83,71 +104,6 @@ const assertValidGraphQLResult = (
         JSON.stringify(res.errors)
     )
   }
-}
-
-const parseCommitUrl = (url: string) => {
-  const [, origin, , streamId, commitId] = COMMIT_URL_RGX.exec(url) || []
-  if (origin && streamId && commitId) {
-    return { origin, streamId, commitId, isFe2: false }
-  }
-
-  return undefined
-}
-
-const parseModelUrl = async (url: string, token?: string) => {
-  const [, origin, , streamId, resourceUrlString] = MODEL_URL_RGX.exec(url) || []
-  if (!origin || !streamId || !resourceUrlString) {
-    return undefined
-  }
-
-  const client = await createApolloClient(origin, { token })
-  const resources = await getViewerResources(client, {
-    projectId: streamId,
-    resourceUrlString
-  })
-
-  const firstCommitGroup = resources.find(
-    (r) => r.items.length && r.items.find((i) => !!i.versionId)
-  )
-  if (!firstCommitGroup) return undefined
-
-  const resource = firstCommitGroup.items.find((i) => i.versionId)
-  if (!resource?.versionId) return undefined
-
-  return { origin, streamId, commitId: resource.versionId as string, isFe2: true }
-}
-
-const parseIncomingUrl = async (url: string, token?: string) => {
-  const commitUrl = parseCommitUrl(url)
-  if (commitUrl) {
-    return commitUrl
-  }
-
-  const modelUrl = await parseModelUrl(url, token)
-  if (modelUrl) {
-    return modelUrl
-  }
-
-  throw new Error(`Couldn't parse commit URL: ${url}`)
-}
-
-const getLocalResources = async (targetStreamId: string, branchName: string) => {
-  const targetStream = await getStream({ streamId: targetStreamId })
-  if (!targetStream) {
-    throw new Error(`Couldn't find local stream with id ${targetStreamId}`)
-  }
-
-  const targetBranch = await getStreamBranchByName(targetStreamId, branchName)
-  if (!targetBranch) {
-    throw new Error(
-      `Couldn't find local branch ${branchName} in stream ${targetStreamId}`
-    )
-  }
-
-  const streamOwners = await getStreamCollaborators(targetStreamId, Roles.Stream.Owner)
-  const owner = streamOwners[0]
-
-  return { targetStream, targetBranch, owner }
 }
 
 const createApolloClient = async (
@@ -196,6 +152,84 @@ const createApolloClient = async (
   return client
 }
 
+const parseCommitUrl = async (url: string, token?: string) => {
+  const [, origin, , streamId, commitId] = COMMIT_URL_RGX.exec(url) || []
+  if (!origin || !streamId || !commitId) {
+    return undefined
+  }
+
+  // find branch id
+  const client = await createApolloClient(origin, { token })
+  const branchId = await getCommitBranchId(client, { streamId, commitId })
+  if (!branchId) {
+    return undefined
+  }
+
+  return { origin, streamId, commitId, isFe2: false, branchId }
+}
+
+const parseModelUrl = async (url: string, token?: string) => {
+  const [, origin, , streamId, resourceUrlString] = MODEL_URL_RGX.exec(url) || []
+  if (!origin || !streamId || !resourceUrlString) {
+    return undefined
+  }
+
+  const client = await createApolloClient(origin, { token })
+  const resources = await getViewerResources(client, {
+    projectId: streamId,
+    resourceUrlString
+  })
+
+  const firstCommitGroup = resources.find(
+    (r) => r.items.length && r.items.find((i) => !!i.versionId && !!i.modelId)
+  )
+  if (!firstCommitGroup) return undefined
+
+  const resource = firstCommitGroup.items.find((i) => !!i.versionId && !!i.modelId)
+  if (!resource) return undefined
+
+  return {
+    origin,
+    streamId,
+    commitId: resource.versionId as string,
+    branchId: resource.modelId as string,
+    isFe2: true
+  }
+}
+
+const parseIncomingUrl = async (url: string, token?: string) => {
+  const commitUrl = await parseCommitUrl(url, token)
+  if (commitUrl) {
+    return commitUrl
+  }
+
+  const modelUrl = await parseModelUrl(url, token)
+  if (modelUrl) {
+    return modelUrl
+  }
+
+  throw new Error(`Couldn't parse commit URL: ${url}`)
+}
+
+const getLocalResources = async (targetStreamId: string, branchName: string) => {
+  const targetStream = await getStream({ streamId: targetStreamId })
+  if (!targetStream) {
+    throw new Error(`Couldn't find local stream with id ${targetStreamId}`)
+  }
+
+  const targetBranch = await getStreamBranchByName(targetStreamId, branchName)
+  if (!targetBranch) {
+    throw new Error(
+      `Couldn't find local branch ${branchName} in stream ${targetStreamId}`
+    )
+  }
+
+  const streamOwners = await getStreamCollaborators(targetStreamId, Roles.Stream.Owner)
+  const owner = streamOwners[0]
+
+  return { targetStream, targetBranch, owner }
+}
+
 const getViewerResources = async (
   client: GraphQLClient,
   params: { projectId: string; resourceUrlString: string }
@@ -212,6 +246,36 @@ const getViewerResources = async (
   }
 
   return viewerResources as ViewerResourceGroup[]
+}
+
+const getCommitBranchId = async (
+  client: GraphQLClient,
+  params: { streamId: string; commitId: string }
+) => {
+  const { streamId, commitId } = params
+  const commitBranchMetadataRes = await client.query({
+    query: commitBranchMetadataQuery,
+    variables: { streamId, commitId }
+  })
+  assertValidGraphQLResult(commitBranchMetadataRes, 'Commit Branch Metadata Query')
+
+  const branchName = commitBranchMetadataRes.data?.stream?.commit?.branchName
+  if (!branchName) {
+    throw new Error('Could not resolve commit branch name')
+  }
+
+  const branchMetadataRes = await client.query({
+    query: branchMetadataQuery,
+    variables: { streamId, branchName }
+  })
+  assertValidGraphQLResult(branchMetadataRes, 'Branch Metadata Query')
+
+  const branchId = branchMetadataRes.data?.stream?.branch?.id
+  if (!branchId) {
+    throw new Error('Could not resolve commit branch id')
+  }
+
+  return branchId as string
 }
 
 const getCommitMetadata = async (client: GraphQLClient, params: ParsedCommitUrl) => {
@@ -364,11 +428,11 @@ const command: CommandModule<
     )
 
     const parsedCommitUrl = await parseIncomingUrl(commitUrl, token)
-    cliLogger.info('Loading the following commit: %s', parsedCommitUrl)
+    cliLogger.info('Loading the following commit: %s', JSON.stringify(parsedCommitUrl))
 
     const client = await createApolloClient(parsedCommitUrl.origin, { token })
     const commit = await getCommitMetadata(client, parsedCommitUrl)
-    cliLogger.info('Loaded commit metadata: %s', commit)
+    cliLogger.info('Loaded commit metadata: %s', JSON.stringify(commit))
 
     const newCommitId = await saveNewCommit(commit, localResources)
     cliLogger.info(`Created new local commit: ${newCommitId}`)
