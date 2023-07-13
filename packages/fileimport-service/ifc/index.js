@@ -2,8 +2,8 @@ const { performance } = require('perf_hooks')
 const { fetch } = require('undici')
 const Parser = require('./parser_v2')
 const ServerAPI = require('./api.js')
-const { logger: parentLogger } = require('../observability/logging')
 const { Observability } = require('@speckle/shared')
+const { logger: parentLogger } = require('../observability/logging')
 
 async function parseAndCreateCommit({
   data,
@@ -11,14 +11,17 @@ async function parseAndCreateCommit({
   branchName = 'uploads',
   userId,
   message = 'Manual IFC file upload',
-  fileId
+  fileId,
+  logger
 }) {
-  const logger = Observability.extendLoggerComponent(
-    parentLogger.child({ streamId, branchName, userId, fileId }),
-    'ifc'
-  )
-  const serverApi = new ServerAPI({ streamId })
-  const myParser = new Parser({ serverApi, fileId })
+  if (!logger) {
+    logger = Observability.extendLoggerComponent(
+      parentLogger.child({ streamId, branchName, userId, fileId }),
+      'ifc'
+    )
+  }
+  const serverApi = new ServerAPI({ streamId, logger })
+  const myParser = new Parser({ serverApi, fileId, logger })
 
   const start = performance.now()
   const { id, tCount } = await myParser.parse(data)

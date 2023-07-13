@@ -80,7 +80,7 @@ async function doTask(task) {
     })
     fs.mkdirSync(TMP_INPUT_DIR, { recursive: true })
 
-    serverApi = new ServerAPI({ streamId: info.streamId })
+    serverApi = new ServerAPI({ streamId: info.streamId, logger: taskLogger })
 
     branchMetadata = {
       branchName: info.branchName,

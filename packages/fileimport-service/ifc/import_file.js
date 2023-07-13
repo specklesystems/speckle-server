@@ -1,15 +1,19 @@
 const fs = require('fs')
-const { logger } = require('../observability/logging')
+const { logger: parentLogger } = require('../observability/logging')
 
 const TMP_RESULTS_PATH = '/tmp/import_result.json'
 
 const { parseAndCreateCommit } = require('./index')
+const { Observability } = require('@speckle/shared')
 
 async function main() {
   const cmdArgs = process.argv.slice(2)
 
   const [filePath, userId, streamId, branchName, commitMessage, fileId] = cmdArgs
-
+  const logger = Observability.extendLoggerComponent(
+    parentLogger.child({ streamId, branchName, userId, fileId, filePath }),
+    'ifc'
+  )
   // eslint-disable-next-line no-console
   logger.info('ARGV: ', filePath, userId, streamId, branchName, commitMessage)
 
@@ -20,7 +24,8 @@ async function main() {
     streamId,
     userId,
     message: commitMessage || ' Imported file',
-    fileId
+    fileId,
+    logger
   }
   if (branchName) ifcInput.branchName = branchName
 
@@ -36,7 +41,7 @@ async function main() {
       commitId
     }
   } catch (err) {
-    console.log(err)
+    logger.error(err, 'Error while parsing IFC file or creating commit.')
     output = {
       success: false,
       error: err.toString()

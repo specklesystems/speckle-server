@@ -1,6 +1,5 @@
 const { performance } = require('perf_hooks')
 const WebIFC = require('web-ifc/web-ifc-api-node')
-const { logger: parentLogger } = require('../observability/logging')
 const {
   getHash,
   IfcElements,
@@ -8,6 +7,8 @@ const {
   GeometryTypes,
   IfcTypesMap
 } = require('./utils')
+const { Observability } = require('@speckle/shared')
+const { logger: parentLogger } = require('../observability/logging')
 
 module.exports = class IFCParser {
   constructor({ serverApi, fileId, logger }) {
@@ -15,20 +16,16 @@ module.exports = class IFCParser {
     this.ifcapi.SetWasmPath('./', false)
     this.serverApi = serverApi
     this.fileId = fileId
-    this.logger = logger || parentLogger.child({ fileId })
+    this.logger =
+      logger ||
+      Observability.extendLoggerComponent(parentLogger.child({ fileId }), 'ifc')
   }
 
   async parse(data) {
-    this.logger.debug('Parsing IFC file')
     await this.ifcapi.Init()
-    try {
-      this.modelId = this.ifcapi.OpenModel(new Uint8Array(data), {
-        USE_FAST_BOOLS: true
-      })
-    } catch (e) {
-      this.logger.error(e, 'Error opening IFC model')
-      throw e
-    }
+    this.modelId = this.ifcapi.OpenModel(new Uint8Array(data), {
+      USE_FAST_BOOLS: true
+    })
 
     this.startTime = performance.now()
 
@@ -53,13 +50,8 @@ module.exports = class IFCParser {
     // create and save the spatial tree, populating both properties and geometry references
     // where appropriate
     this.spatialNodeCount = 0
-    try {
-      const structure = await this.createSpatialStructure()
-      return { id: structure.id, tCount: structure.closureLen }
-    } catch (e) {
-      this.logger.error(e, 'Error creating spatial structure')
-      throw e
-    }
+    const structure = await this.createSpatialStructure()
+    return { id: structure.id, tCount: structure.closureLen }
   }
 
   async createSpatialStructure() {
@@ -280,7 +272,7 @@ module.exports = class IFCParser {
       this.inPlaceFormatItemProperties(props)
       return props
     } catch (e) {
-      console.log(`There was an issue getting props of id ${id}`)
+      this.logger.error(e, `There was an issue getting props of id ${id}`)
     }
   }
 
