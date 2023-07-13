@@ -1,18 +1,28 @@
 import { createPage } from '@nuxt/test-utils'
 import { describe, it, expect, beforeAll } from 'vitest'
-import { setupE2eTest, ensureServerRunning, ensureE2eTestProject } from '../helpers/e2e'
+import {
+  setupE2eTest,
+  ensureServerRunning,
+  ensureE2eTestProject,
+  TestProjectMetadata
+} from '../helpers/e2e'
 
 // Basic nuxt e2e test with vitest
 describe('viewer', async () => {
   await setupE2eTest()
 
+  let testProjectMetadata: TestProjectMetadata
+
   beforeAll(async () => {
     await ensureServerRunning()
-    await ensureE2eTestProject()
+    testProjectMetadata = await ensureE2eTestProject()
   })
 
   it('renders the viewer', async () => {
-    const page = await createPage('/projects/9387e7e4c2/models/51c7c5b8eb')
+    const projectId = testProjectMetadata.streamId
+    const modelId = testProjectMetadata.commits[0].branchId
+
+    const page = await createPage(`/projects/${projectId}/models/${modelId}`)
     await page.waitForSelector('.viewer-anchored-points')
     const content = await page.content()
 

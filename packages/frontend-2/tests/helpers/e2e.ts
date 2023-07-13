@@ -3,17 +3,32 @@ import path from 'path'
 
 const outputDir = path.resolve(__dirname, '../../.output')
 
+export type TestProjectMetadata = {
+  streamId: string
+  commits: { commitId: string; branchId: string }[]
+}
+
 export async function ensureE2eTestProject() {
   const testCtx = useTestContext()
   const apiOrigin = testCtx.nuxt?.options.runtimeConfig.public.apiOrigin as string
-  const { status } = await fetch(new URL('/e2e/seed', apiOrigin), {
-    method: 'POST'
+  const res = await fetch(new URL('/api/e2e/seed', apiOrigin), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' }
   }).catch(() => ({
     status: -1
   }))
-  if (status !== 200) {
+
+  if (res.status !== 200 || !('body' in res)) {
+    if ('body' in res) {
+      const body = (await res.text()) as string
+      throw new Error(`Test project creation failed: ${body}`)
+    }
+
     throw new Error(`Test project creation failed!`)
   }
+
+  const body = (await res.json()) as TestProjectMetadata
+  return body
 }
 
 export async function ensureServerRunning() {
