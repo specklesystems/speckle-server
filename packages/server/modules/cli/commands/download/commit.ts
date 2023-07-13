@@ -9,8 +9,8 @@ import {
 } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { CommandModule } from 'yargs'
-import { getBaseUrl, getServerVersion } from '@/modules/shared/helpers/envHelper'
-import { Commit } from '@/test/graphql/generated/graphql'
+import { getFrontendOrigin, getServerVersion } from '@/modules/shared/helpers/envHelper'
+import { Commit, ViewerResourceGroup } from '@/test/graphql/generated/graphql'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import { Roles } from '@speckle/shared'
@@ -23,7 +23,7 @@ import { cliLogger } from '@/logging/logging'
 import { createCommitByBranchId } from '@/modules/core/services/commit/management'
 
 type LocalResources = Awaited<ReturnType<typeof getLocalResources>>
-type ParsedCommitUrl = ReturnType<typeof parseCommitUrl>
+type ParsedCommitUrl = Awaited<ReturnType<typeof parseIncomingUrl>>
 type GraphQLClient = ApolloClient<NormalizedCacheObject>
 type ObjectLoaderObject = Record<string, unknown> & {
   id: string
@@ -32,6 +32,7 @@ type ObjectLoaderObject = Record<string, unknown> & {
 }
 
 const COMMIT_URL_RGX = /((https?:\/\/)?[\w.]+)\/streams\/([\w]+)\/commits\/([\w]+)/i
+const MODEL_URL_RGX = /((https?:\/\/)?[\w.]+)\/projects\/([\w]+)\/models\/([\w@,]+)/i
 
 const testQuery = gql`
   query CommitDownloadTest {
@@ -56,6 +57,22 @@ const commitMetadataQuery = gql`
   }
 `
 
+const viewerResourcesQuery = gql`
+  query ProjectViewerResources($projectId: String!, $resourceUrlString: String!) {
+    project(id: $projectId) {
+      id
+      viewerResources(resourceIdString: $resourceUrlString) {
+        identifier
+        items {
+          modelId
+          versionId
+          objectId
+        }
+      }
+    }
+  }
+`
+
 const assertValidGraphQLResult = (
   res: ApolloQueryResult<unknown>,
   operationName: string
@@ -70,11 +87,48 @@ const assertValidGraphQLResult = (
 
 const parseCommitUrl = (url: string) => {
   const [, origin, , streamId, commitId] = COMMIT_URL_RGX.exec(url) || []
-  if (!origin || !streamId || !commitId) {
-    throw new Error("Couldn't parse commit URL! Does it follow the expected format?")
+  if (origin && streamId && commitId) {
+    return { origin, streamId, commitId, isFe2: false }
   }
 
-  return { origin, streamId, commitId }
+  return undefined
+}
+
+const parseModelUrl = async (url: string, token?: string) => {
+  const [, origin, , streamId, resourceUrlString] = MODEL_URL_RGX.exec(url) || []
+  if (!origin || !streamId || !resourceUrlString) {
+    return undefined
+  }
+
+  const client = await createApolloClient(origin, { token })
+  const resources = await getViewerResources(client, {
+    projectId: streamId,
+    resourceUrlString
+  })
+
+  const firstCommitGroup = resources.find(
+    (r) => r.items.length && r.items.find((i) => !!i.versionId)
+  )
+  if (!firstCommitGroup) return undefined
+
+  const resource = firstCommitGroup.items.find((i) => i.versionId)
+  if (!resource?.versionId) return undefined
+
+  return { origin, streamId, commitId: resource.versionId as string, isFe2: true }
+}
+
+const parseIncomingUrl = async (url: string, token?: string) => {
+  const commitUrl = parseCommitUrl(url)
+  if (commitUrl) {
+    return commitUrl
+  }
+
+  const modelUrl = await parseModelUrl(url, token)
+  if (modelUrl) {
+    return modelUrl
+  }
+
+  throw new Error(`Couldn't parse commit URL: ${url}`)
 }
 
 const getLocalResources = async (targetStreamId: string, branchName: string) => {
@@ -140,6 +194,24 @@ const createApolloClient = async (
   }
 
   return client
+}
+
+const getViewerResources = async (
+  client: GraphQLClient,
+  params: { projectId: string; resourceUrlString: string }
+) => {
+  const results = await client.query({
+    query: viewerResourcesQuery,
+    variables: params
+  })
+  assertValidGraphQLResult(results, 'Viewer Resources Query')
+
+  const viewerResources = results.data?.project?.viewerResources
+  if (!viewerResources) {
+    throw new Error('Unexpectedly received invalid viewer resources structure')
+  }
+
+  return viewerResources as ViewerResourceGroup[]
 }
 
 const getCommitMetadata = async (client: GraphQLClient, params: ParsedCommitUrl) => {
@@ -291,7 +363,7 @@ const command: CommandModule<
       `Using local branch ${branchName} of stream ${targetStreamId} to dump the incoming commit`
     )
 
-    const parsedCommitUrl = parseCommitUrl(commitUrl)
+    const parsedCommitUrl = await parseIncomingUrl(commitUrl, token)
     cliLogger.info('Loading the following commit: %s', parsedCommitUrl)
 
     const client = await createApolloClient(parsedCommitUrl.origin, { token })
@@ -308,7 +380,11 @@ const command: CommandModule<
       parsedCommitUrl
     })
 
-    const linkToNewCommit = `${getBaseUrl()}/streams/${targetStreamId}/commits/${newCommitId}`
+    const linkToNewCommit = parsedCommitUrl.isFe2
+      ? `${getFrontendOrigin(true)}/projects/${targetStreamId}/models/${
+          localResources.targetBranch.id
+        }@${newCommitId}`
+      : `${getFrontendOrigin()}/streams/${targetStreamId}/commits/${newCommitId}`
     cliLogger.info(`All done! Find your commit here: ${linkToNewCommit}`)
   }
 }
