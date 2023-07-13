@@ -7,18 +7,26 @@ const {
   GeometryTypes,
   IfcTypesMap
 } = require('./utils')
+const { Observability } = require('@speckle/shared')
+const { logger: parentLogger } = require('../observability/logging')
 
 module.exports = class IFCParser {
-  constructor({ serverApi, fileId }) {
+  constructor({ serverApi, fileId, logger }) {
     this.ifcapi = new WebIFC.IfcAPI()
     this.ifcapi.SetWasmPath('./', false)
     this.serverApi = serverApi
     this.fileId = fileId
+    this.logger =
+      logger ||
+      Observability.extendLoggerComponent(parentLogger.child({ fileId }), 'ifc')
   }
 
   async parse(data) {
     await this.ifcapi.Init()
-    this.modelId = this.ifcapi.OpenModel(new Uint8Array(data), { USE_FAST_BOOLS: true })
+    this.modelId = this.ifcapi.OpenModel(new Uint8Array(data), {
+      USE_FAST_BOOLS: true
+    })
+
     this.startTime = performance.now()
 
     // prepoulate types
@@ -264,7 +272,7 @@ module.exports = class IFCParser {
       this.inPlaceFormatItemProperties(props)
       return props
     } catch (e) {
-      console.log(`There was an issue getting props of id ${id}`)
+      this.logger.error(e, `There was an issue getting props of id ${id}`)
     }
   }
 

@@ -3,8 +3,10 @@ const crypto = require('crypto')
 const crs = require('crypto-random-string')
 const bcrypt = require('bcrypt')
 const { chunk } = require('lodash')
+const { logger: parentLogger } = require('../observability/logging')
 
 const knex = require('../knex')
+const { Observability } = require('@speckle/shared')
 const Streams = () => knex('streams')
 const Branches = () => knex('branches')
 const Objects = () => knex('objects')
@@ -13,10 +15,13 @@ const ApiTokens = () => knex('api_tokens')
 const TokenScopes = () => knex('token_scopes')
 
 module.exports = class ServerAPI {
-  constructor({ streamId }) {
+  constructor({ streamId, logger }) {
     this.streamId = streamId
     this.isSending = false
     this.buffer = []
+    this.logger =
+      logger ||
+      Observability.extendLoggerComponent(parentLogger.child({ streamId }), 'ifc')
   }
 
   async saveObject(obj) {
@@ -124,7 +129,7 @@ module.exports = class ServerAPI {
           const q = Objects().insert(batch).toString() + ' on conflict do nothing'
           await trx.raw(q)
         })
-        console.log(`Inserted ${batch.length} objects`)
+        this.logger.info(`Inserted ${batch.length} objects`)
       }
     }
 
@@ -138,7 +143,7 @@ module.exports = class ServerAPI {
           const q = Closures().insert(batch).toString() + ' on conflict do nothing'
           await trx.raw(q)
         })
-        console.log(`Inserted ${batch.length} closures`)
+        this.logger.info(`Inserted ${batch.length} closures`)
       }
     }
     return ids
