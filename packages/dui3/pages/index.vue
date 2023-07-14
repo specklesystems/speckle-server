@@ -4,7 +4,6 @@
       <div class="mx-2 py-1 px-2 rounded text-xs bg-primary text-white font-bold">
         for {{ appName }}
       </div>
-      <!-- <HeaderNavLink :to="'/'" :name="'Home'"></HeaderNavLink> -->
     </Portal>
     <div class="space-y-2">
       <div>
@@ -18,13 +17,17 @@
           {{ acc.accountInfo.serverInfo.name }}
         </div>
       </div>
-      <div>Your default account is {{ defaultAccount?.accountInfo }}</div>
+      <div>
+        Your default account is at {{ defaultAccount?.accountInfo.serverInfo.url }}
+      </div>
       <div>
         <div v-for="(res, clientId) in queries" :key="clientId">
           <strong>{{ clientId }}:</strong>
           {{ res.result.value?.serverInfo.version || res.error }}
         </div>
       </div>
+      <div>Doc info:</div>
+      <div>{{ documentInfo }}</div>
       <div>
         <FormButton @click="refreshAccounts()">Refresh Accounts</FormButton>
       </div>
@@ -36,10 +39,13 @@ import { UseQueryReturn, useQuery } from '@vue/apollo-composable'
 import { useAccountsSetup } from '~/lib/accounts/composables/setup'
 import { graphql } from '~/lib/common/generated/gql'
 import { ServerInfoTestQuery } from '~/lib/common/generated/gql/graphql'
+import { useDocumentInfoSetup } from '~/lib/document-info'
 
 const { $baseBinding } = useNuxtApp()
 const appName = await $baseBinding.getSourceApplicationName()
 const { accounts, refreshAccounts, defaultAccount } = await useAccountsSetup()
+
+const documentInfo = await useDocumentInfoSetup()
 
 const versionQuery = graphql(`
   query ServerInfoTest {
@@ -48,10 +54,6 @@ const versionQuery = graphql(`
     }
   }
 `)
-
-watch(accounts, () => {
-  console.log('accounts were refreshed, shallow ref does its job')
-})
 
 const clientIds = accounts.value.map((a) => a.accountInfo.id)
 

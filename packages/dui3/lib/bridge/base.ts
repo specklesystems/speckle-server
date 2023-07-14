@@ -18,7 +18,7 @@ export class BaseBridge {
 
   // NOTE: this could be private - as it should be only used by the host application.
   emit(eventName: string, payload: string) {
-    const parsedPayload = JSON.parse(payload) as unknown
+    const parsedPayload = payload ? (JSON.parse(payload) as unknown) : null
     this.emitter.emit(eventName, parsedPayload)
   }
 }

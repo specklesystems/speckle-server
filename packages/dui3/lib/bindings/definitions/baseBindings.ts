@@ -28,7 +28,6 @@ export interface IBaseBinding {
 export interface IBaseBindingHostEvents {
   displayToastNotification: (args: ToastInfo) => void
   documentChanged: () => void
-  selectionChanged: (args: SelectionChangedInfo) => void
 }
 
 export type Account = {

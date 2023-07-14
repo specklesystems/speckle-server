@@ -1,12 +1,8 @@
-// github.com/johot/WebView2-better-bridge/blob/master/web-ui/src/betterBridge.ts
 import { BaseBridge } from '~/lib/bridge/base'
-
-export type IRawBridge = {
-  GetBindingsMethodNames: () => Promise<string[]>
-  RunMethod: (methodName: string, args: string) => Promise<string>
-  ShowDevTools: () => Promise<void>
-}
-
+import { IRawBridge } from '~/lib/bridge/definitions'
+/**
+ * A generic bridge class for Webivew2 or CefSharp.
+ */
 export class GenericBridge extends BaseBridge {
   private bridge: IRawBridge
 
