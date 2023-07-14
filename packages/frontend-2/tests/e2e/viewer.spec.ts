@@ -19,6 +19,7 @@ const initializePage = async (testProjectHelpers: TestProjectHelpers) => {
     const viewerBaseInitialized = page.locator('.viewer-base--initialized')
     await viewerBaseInitialized.waitFor()
   } catch (e) {
+    console.error('Waiting for viewer initialization failed:')
     console.error(await page.evaluate(() => document.body.innerHTML))
     throw e
   }
@@ -27,7 +28,7 @@ const initializePage = async (testProjectHelpers: TestProjectHelpers) => {
 }
 
 // Basic nuxt e2e test with vitest
-describe('Viewer', async () => {
+describe.concurrent('Viewer', async () => {
   await setupE2eTest()
 
   let testProjectMetadata: TestProjectMetadata
@@ -47,7 +48,7 @@ describe('Viewer', async () => {
     expect(canvas).toBeTruthy()
   }, 100000)
 
-  describe('thread bubbles', () => {
+  describe.concurrent('thread bubbles', () => {
     it('get rendered', async () => {
       const page = await initializePage(testProjectHelpers)
 

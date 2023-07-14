@@ -66,7 +66,12 @@ export async function setupE2eTest() {
           }
         }
       : { dev: true }),
-    ...(useBrowser ? { browser: true, browserOptions: { type: 'chromium' } } : {})
+    ...(useBrowser
+      ? {
+          browser: true,
+          browserOptions: { type: 'chromium', launch: { headless: false } }
+        }
+      : {})
   })
 }
 

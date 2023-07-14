@@ -26,7 +26,8 @@
     "storybook:test:watch": "test-storybook --watch",
     "chromatic": "chromatic --exit-zero-on-changes --exit-once-uploaded",
     "test:e2e": "TEST_IS_E2E=1 vitest",
-    "test:e2e:static": "TEST_SKIP_BUILD=true yarn test:e2e"
+    "test:e2e:static": "TEST_SKIP_BUILD=true yarn test:e2e",
+    "test:e2e:static:browser": "TEST_WITH_BROWSER=1 yarn test:e2e:static"
   },
   "dependencies": {
     "@apollo/client": "^3.7.0",
