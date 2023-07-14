@@ -5,7 +5,7 @@ import { createNanoEvents, Emitter } from 'nanoevents'
  * e.g. via `browser.executeScriptAsync("myBindings.on('eventName', serializedData)")`.
  */
 export class BaseBridge {
-  private emitter: Emitter
+  public emitter: Emitter
 
   constructor() {
     this.emitter = createNanoEvents()
@@ -18,8 +18,6 @@ export class BaseBridge {
 
   // NOTE: this could be private - as it should be only used by the host application.
   emit(eventName: string, payload: string) {
-    console.log(payload)
-
     const parsedPayload = payload ? (JSON.parse(payload) as unknown) : null
     this.emitter.emit(eventName, parsedPayload)
   }

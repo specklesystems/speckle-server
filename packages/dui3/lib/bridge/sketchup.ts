@@ -49,6 +49,13 @@ export class SketchupBridge extends BaseBridge {
     ;(globalThis as Record<string, unknown>).bindings = this
   }
 
+  // NOTE: Overriden function for now, need to be checked later payload can be unified or not.
+  // From sketchup we receive beatiful JSON object that we do not need to parse.
+  // This should be checked with .NET
+  emit(eventName: string, payload: string): void {
+    this.emitter.emit(eventName, payload)
+  }
+
   public async create(): Promise<boolean> {
     // Initialization continues in the receiveCommandsAndInitializeBridge function,
     // where we expect sketchup to return to us the command names for related bindings/views.
@@ -125,9 +132,6 @@ export class SketchupBridge extends BaseBridge {
   }
 
   private receiveResponse(requestId: string, data: string) {
-    console.log(requestId)
-    console.log(data)
-
     if (!this.requests[requestId])
       throw new Error(
         `Sketchup Bridge found no request to resolve with the id of ${requestId}. Something is weird!`
