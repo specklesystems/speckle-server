@@ -10,6 +10,9 @@
         Hello world! You have
         {{ accounts.length }} accounts.
       </div>
+      <div>
+        <FormButton to="/test">Go To Test Bindings Page</FormButton>
+      </div>
       <div v-for="acc in accounts" :key="acc.accountInfo.id">
         <div class="truncate text-xs">
           {{ acc.accountInfo.userInfo.email }} @

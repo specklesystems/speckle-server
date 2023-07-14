@@ -2,6 +2,7 @@ export interface ITestBinding {
   sayHi: (name: string, count: number, sayHelloNotHi: boolean) => Promise<string[]>
   goAway: () => Promise<void>
   getComplexType: () => Promise<ComplexType>
+  triggerEvent: (eventName: string) => Promise<void>
   on: <E extends keyof ITestBindingEvents>(
     event: E,
     callback: ITestBindingEvents[E]
