@@ -1,11 +1,9 @@
 import { GenericBridge } from '~/lib/bridge/generic'
 import { IRawBridge } from '~/lib/bridge/definitions'
 
-import {
-  IBaseBinding,
-  IRhinoRandomBinding
-} from '~/lib/bindings/definitions/baseBindings'
+import { IBaseBinding } from '~/lib/bindings/definitions/baseBindings'
 import { SketchupBridge } from '~/lib/bridge/sketchup'
+import { ITestBinding } from '~/lib/bindings/definitions/testBindings'
 
 // Makes TS happy
 declare let globalThis: Record<string, unknown> & {
@@ -20,21 +18,16 @@ declare let globalThis: Record<string, unknown> & {
  * strip or customize functionality from the ui itself.
  */
 export default defineNuxtPlugin(async () => {
-  const baseBinding = await tryHoistBinding<IBaseBinding>('baseBinding')
-
+  const testBindings = await tryHoistBinding<ITestBinding>('testBindings')
   const nonExistantBindings = await tryHoistBinding<IBaseBinding>('nonExistantBindings')
 
-  const rhinoRandomBinding = await tryHoistBinding<IRhinoRandomBinding>(
-    'rhinoRandomBinding'
-  )
-
-  const sketchupRandomBinding = await tryHoistBinding<unknown>('sketchupRandomBinding')
+  const baseBinding = await tryHoistBinding<IBaseBinding>('baseBinding')
 
   return {
     provide: {
-      baseBinding,
-      rhinoRandomBinding,
-      sketchupRandomBinding
+      testBindings,
+      nonExistantBindings,
+      baseBinding
     }
   }
 })
