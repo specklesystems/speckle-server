@@ -11,9 +11,15 @@ export class GenericBridge extends BaseBridge {
     this.bridge = object
   }
 
-  public async create() {
+  public async create(): Promise<boolean> {
     // NOTE: GetMethods is a call to the .NET side.
-    const availableMethodNames = await this.bridge.GetBindingsMethodNames()
+    let availableMethodNames = [] as string[]
+
+    try {
+      availableMethodNames = await this.bridge.GetBindingsMethodNames()
+    } catch {
+      return false
+    }
 
     // NOTE: hoisting original calls as lowerCasedMethodNames, but using the UpperCasedName for the .NET call
     // This allows us to follow js convetions and keep .NET ones too (eg. bindings.sayHi('') => public string SayHi(string name) {}
@@ -23,6 +29,8 @@ export class GenericBridge extends BaseBridge {
       hoistTarget[lowercasedMethodName] = (...args: unknown[]) =>
         this.runMethod(methodName, args)
     }
+
+    return true
   }
 
   private async runMethod(methodName: string, args: unknown[]): Promise<unknown> {

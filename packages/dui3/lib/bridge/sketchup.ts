@@ -47,7 +47,9 @@ export class SketchupBridge extends BaseBridge {
 
     // NOTE: we need to hoist the bindings in global scope BEFORE we call sketchup exec get comands below.
     ;(globalThis as Record<string, unknown>).bindings = this
+  }
 
+  public async create(): Promise<boolean> {
     // Initialization continues in the receiveCommandsAndInitializeBridge function,
     // where we expect sketchup to return to us the command names for related bindings/views.
     // NOTE: as we want to have multiple sketchup bindings in the future, we will
@@ -55,6 +57,13 @@ export class SketchupBridge extends BaseBridge {
     // eslint-disable-next-line camelcase
     // sketchup.exec({ name: 'getCommands', view_id: this.bindingsName })
     sketchup.getCommands(this.bindingsName)
+
+    try {
+      await this.isInitalized
+      return true
+    } catch {
+      return false
+    }
   }
 
   /**
@@ -79,7 +88,6 @@ export class SketchupBridge extends BaseBridge {
    * @param message
    */
   private rejectBindings(message: string) {
-    this.resolveIsInitializedPromise(false)
     this.rejectIsInitializedPromise(message)
   }
 

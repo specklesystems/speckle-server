@@ -54,8 +54,6 @@ export async function useAccountsSetup(): Promise<DUIAccountsState> {
     accounts.value = newAccs
   }
 
-  // Call this one first to initialize the account state
-  // QUESTION: could be flopped in a iife so as not to block and drop the asyncness of this setup function?
   await refreshAccounts()
 
   const defaultAccount = computed(() =>
