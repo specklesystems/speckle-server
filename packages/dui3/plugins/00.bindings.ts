@@ -5,6 +5,7 @@ import {
   IBaseBinding,
   IRhinoRandomBinding
 } from '~/lib/bindings/definitions/baseBindings'
+import { SketchupBridge } from '~/lib/bridge/sketchup'
 
 // Makes TS happy
 declare let globalThis: Record<string, unknown> & {
@@ -25,10 +26,13 @@ export default defineNuxtPlugin(async () => {
     'rhinoRandomBinding'
   )
 
+  const sketchupRandomBinding = await tryHoistBinding<unknown>('sketchupRandomBinding')
+
   return {
     provide: {
       baseBinding,
-      rhinoRandomBinding
+      rhinoRandomBinding,
+      sketchupRandomBinding
     }
   }
 })
@@ -40,7 +44,7 @@ export default defineNuxtPlugin(async () => {
  * @returns null if the binding was not found, or the binding.
  */
 const tryHoistBinding = async <T>(name: string) => {
-  let bridge: GenericBridge | null = null
+  let bridge: GenericBridge | SketchupBridge | null = null
 
   if (globalThis.CefSharp) {
     await globalThis.CefSharp.BindObjectAsync(name)
@@ -48,13 +52,15 @@ const tryHoistBinding = async <T>(name: string) => {
     await bridge.create()
   }
 
-  if (globalThis.chrome && !bridge) {
+  if (globalThis.chrome && globalThis.chrome.webview && !bridge) {
     bridge = new GenericBridge(globalThis.chrome.webview.hostObjects[name])
     await bridge.create()
   }
 
   if (globalThis.sketchup && !bridge) {
-    // TODO
+    bridge = new SketchupBridge(name)
+    const res = await bridge.isInitalized
+    if (!res) bridge = null
   }
 
   if (!bridge) console.warn(`Failed to bind ${name} binding.`)

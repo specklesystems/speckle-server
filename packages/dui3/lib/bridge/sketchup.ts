@@ -117,6 +117,9 @@ export class SketchupBridge extends BaseBridge {
   }
 
   private receiveResponse(requestId: string, data: string) {
+    console.log(requestId)
+    console.log(data)
+
     if (!this.requests[requestId])
       throw new Error(
         `Sketchup Bridge found no request to resolve with the id of ${requestId}. Something is weird!`
