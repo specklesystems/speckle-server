@@ -14,7 +14,15 @@ import {
 
 const initializePage = async (testProjectHelpers: TestProjectHelpers) => {
   const page = await createPage(testProjectHelpers.modelPagePath)
-  await page.waitForSelector('.viewer-base--initialized')
+
+  try {
+    const viewerBaseInitialized = page.locator('.viewer-base--initialized')
+    await viewerBaseInitialized.waitFor()
+  } catch (e) {
+    console.error(await page.evaluate(() => document.body.innerHTML))
+    throw e
+  }
+
   return page
 }
 
@@ -43,12 +51,18 @@ describe('Viewer', async () => {
     it('get rendered', async () => {
       const page = await initializePage(testProjectHelpers)
 
+      const anchoredPoints = page.locator('.viewer-anchored-points')
+      await anchoredPoints.waitFor()
+
       const bubbleButtons = await page.$$('.anchored-point-thread-button')
       expect(bubbleButtons.length).toBeGreaterThan(0)
     })
 
     it('open thread when clicked', async () => {
       const page = await initializePage(testProjectHelpers)
+
+      const anchoredPoints = page.locator('.viewer-anchored-points')
+      await anchoredPoints.waitFor()
 
       const bubbleButton = await page.$('.anchored-point-thread-button')
       expect(bubbleButton).toBeTruthy()
@@ -57,9 +71,11 @@ describe('Viewer', async () => {
       expect(threadId).toBeTruthy()
 
       await bubbleButton!.click()
-      await page.waitForSelector(
+
+      const openedThread = page.locator(
         `.anchored-point-thread-contents[data-thread-id="${threadId!}"]`
       )
+      await openedThread.waitFor()
     })
   })
 })
