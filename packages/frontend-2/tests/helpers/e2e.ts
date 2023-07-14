@@ -48,6 +48,7 @@ export async function ensureServerRunning() {
 }
 
 export async function setupE2eTest() {
+  const isCI = !!process.env.CI
   const skipBuild = !!process.env.TEST_SKIP_BUILD
   const useBrowser = !!process.env.TEST_WITH_BROWSER
 
@@ -65,6 +66,8 @@ export async function setupE2eTest() {
             }
           }
         }
+      : isCI
+      ? { build: true }
       : { dev: true }),
     ...(useBrowser
       ? {

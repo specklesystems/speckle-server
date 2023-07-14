@@ -1,10 +1,11 @@
 <template>
   <div>
     <div
-      class="absolute z-20 flex h-screen flex-col space-y-2 bg-green-300/0 px-2 pt-[4.2rem]"
+      class="viewer-controls absolute z-20 flex h-screen flex-col space-y-2 bg-green-300/0 px-2 pt-[4.2rem]"
     >
       <ViewerControlsButtonToggle
         v-tippy="modelsShortcut"
+        data-button-type="models"
         :active="activeControl === 'models'"
         @click="toggleActiveControl('models')"
       >
@@ -12,6 +13,7 @@
       </ViewerControlsButtonToggle>
       <ViewerControlsButtonToggle
         v-tippy="explorerShortcut"
+        data-button-type="explorer"
         :active="activeControl === 'explorer'"
         @click="toggleActiveControl('explorer')"
       >
@@ -29,6 +31,7 @@
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
         v-tippy="discussionsShortcut"
+        data-button-type="discussions"
         :active="activeControl === 'discussions'"
         @click="toggleActiveControl('discussions')"
       >
@@ -43,6 +46,7 @@
         <!-- Zoom extents -->
         <ViewerControlsButtonToggle
           v-tippy="zoomExtentsShortcut"
+          data-button-type="zoom-extents"
           flat
           @click="trackAndzoomExtentsOrSelection()"
         >
@@ -55,6 +59,7 @@
           v-tippy="projectionShortcut"
           flat
           secondary
+          data-button-type="projection"
           :active="isOrthoProjection"
           @click="trackAndtoggleProjection()"
         >
@@ -67,6 +72,7 @@
           v-tippy="sectionBoxShortcut"
           flat
           secondary
+          data-button-type="section-box"
           :active="isSectionBoxEnabled"
           @click="toggleSectionBox()"
         >

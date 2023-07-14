@@ -28,7 +28,7 @@ const initializePage = async (testProjectHelpers: TestProjectHelpers) => {
 }
 
 // Basic nuxt e2e test with vitest
-describe.concurrent('Viewer', async () => {
+describe('Viewer', async () => {
   await setupE2eTest()
 
   let testProjectMetadata: TestProjectMetadata
@@ -48,7 +48,27 @@ describe.concurrent('Viewer', async () => {
     expect(canvas).toBeTruthy()
   }, 100000)
 
-  describe.concurrent('thread bubbles', () => {
+  it.only('side tabs can be toggled', async () => {
+    const page = await initializePage(testProjectHelpers)
+
+    const controls = page.locator('.viewer-controls')
+    await controls.waitFor()
+
+    // Models opened up by default
+    const modelsBtn = controls.locator(
+      'button[data-button-type="models"][data-is-active="true"]'
+    )
+    expect(await modelsBtn.evaluate((el) => el !== null)).toBe(true)
+
+    // Clicking it sets data-is-active to false
+    await modelsBtn.click()
+    const activeBtns = controls.locator(
+      'button[data-button-type][data-is-active="true"]'
+    )
+    expect(await activeBtns.count()).toBe(0)
+  })
+
+  describe('thread bubbles', () => {
     it('get rendered', async () => {
       const page = await initializePage(testProjectHelpers)
 
