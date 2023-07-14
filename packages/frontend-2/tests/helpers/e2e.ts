@@ -71,7 +71,9 @@ export async function setupE2eTest() {
           browser: true,
           browserOptions: { type: 'chromium', launch: { headless: false } }
         }
-      : {})
+      : {
+          browserOptions: { type: 'chromium', launch: { args: ['--use-gl=egl'] } }
+        })
   })
 }
 
