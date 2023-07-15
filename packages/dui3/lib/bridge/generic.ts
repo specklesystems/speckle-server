@@ -35,13 +35,24 @@ export class GenericBridge extends BaseBridge {
 
   private async runMethod(methodName: string, args: unknown[]): Promise<unknown> {
     const preserializedArgs = args.map((a) => JSON.stringify(a))
+
     // NOTE: RunMethod is a call to the .NET side.
     const result = await this.bridge.RunMethod(
       methodName,
       JSON.stringify(preserializedArgs)
     )
 
-    return JSON.parse(result) as unknown
+    const parsed = result ? (JSON.parse(result) as Record<string, unknown>) : null
+
+    if (parsed && parsed['error']) {
+      throw new Error(parsed['error'] as string)
+    }
+
+    return parsed
+  }
+
+  public showDevTools() {
+    this.bridge.ShowDevTools()
   }
 }
 

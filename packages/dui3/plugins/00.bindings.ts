@@ -3,7 +3,7 @@ import { IRawBridge } from '~/lib/bridge/definitions'
 
 import { IBaseBinding } from '~/lib/bindings/definitions/baseBindings'
 import { SketchupBridge } from '~/lib/bridge/sketchup'
-import { ITestBinding } from '~/lib/bindings/definitions/testBindings'
+import { ITestBinding, ITestBindingKey } from '~/lib/bindings/definitions/testBindings'
 
 // Makes TS happy
 declare let globalThis: Record<string, unknown> & {
@@ -18,16 +18,23 @@ declare let globalThis: Record<string, unknown> & {
  * strip or customize functionality from the ui itself.
  */
 export default defineNuxtPlugin(async () => {
-  const testBindings = await tryHoistBinding<ITestBinding>('testBindings')
+  // Registers some default test bindings.
+  const testBindings = await tryHoistBinding<ITestBinding>(ITestBindingKey)
+  // Tries to register some non-existant bindings.
   const nonExistantBindings = await tryHoistBinding<IBaseBinding>('nonExistantBindings')
-
+  // Registers a set of default bindings.
   const baseBinding = await tryHoistBinding<IBaseBinding>('baseBinding')
+
+  const showDevTools = () => {
+    baseBinding.showDevTools()
+  }
 
   return {
     provide: {
       testBindings,
       nonExistantBindings,
-      baseBinding
+      baseBinding,
+      showDevTools
     }
   }
 })

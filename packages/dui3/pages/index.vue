@@ -44,9 +44,10 @@ import { graphql } from '~/lib/common/generated/gql'
 import { ServerInfoTestQuery } from '~/lib/common/generated/gql/graphql'
 import { useDocumentInfoSetup } from '~/lib/document-info'
 
+const { accounts, refreshAccounts, defaultAccount } = await useAccountsSetup()
+
 const { $baseBinding } = useNuxtApp()
 const appName = await $baseBinding.getSourceApplicationName()
-const { accounts, refreshAccounts, defaultAccount } = await useAccountsSetup()
 
 const documentInfo = await useDocumentInfoSetup()
 

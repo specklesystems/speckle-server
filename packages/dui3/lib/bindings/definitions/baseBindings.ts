@@ -14,6 +14,11 @@ export interface IBaseBinding {
     event: E,
     callback: IBaseBindingHostEvents[E]
   ) => void
+  /**
+   * Note: this method does not need to be implemented in the .NET host application base bindings,
+   * it is served by the DUI3 bridge.
+   */
+  showDevTools: () => Promise<void>
 }
 
 export interface IBaseBindingHostEvents {
@@ -21,6 +26,7 @@ export interface IBaseBindingHostEvents {
   documentChanged: () => void
 }
 
+// An almost 1-1 mapping of what we need from the Core accounts class.
 export type Account = {
   id: string
   isDefault: boolean

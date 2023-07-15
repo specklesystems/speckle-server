@@ -1,7 +1,16 @@
+/**
+ * The name under which this binding will be registered.
+ */
+export const ITestBindingKey = 'testBinding'
+
+/**
+ * A test binding interface to ensure compatbility. Ideally all host environments would implement and register it.
+ */
 export interface ITestBinding {
   sayHi: (name: string, count: number, sayHelloNotHi: boolean) => Promise<string[]>
   goAway: () => Promise<void>
   getComplexType: () => Promise<ComplexType>
+  shouldThrow: () => Promise<void>
   triggerEvent: (eventName: string) => Promise<void>
   on: <E extends keyof ITestBindingEvents>(
     event: E,

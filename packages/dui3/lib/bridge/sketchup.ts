@@ -49,22 +49,17 @@ export class SketchupBridge extends BaseBridge {
     ;(globalThis as Record<string, unknown>).bindings = this
   }
 
-  // NOTE: Overriden function for now, need to be checked later payload can be unified or not.
-  // From sketchup we receive beatiful JSON object that we do not need to parse.
-  // This should be checked with .NET
+  // NOTE: Overriden emit as we do not need to parse the data back - the Sketchup bridge already parses it for us.
   emit(eventName: string, payload: string): void {
-    this.emitter.emit(eventName, payload)
+    this.emitter.emit(eventName, payload as unknown as Record<string, unknown>)
   }
 
   public async create(): Promise<boolean> {
     // Initialization continues in the receiveCommandsAndInitializeBridge function,
     // where we expect sketchup to return to us the command names for related bindings/views.
-    // NOTE: as we want to have multiple sketchup bindings in the future, we will
-    // most likely change this method to specify which view/plugin/bindings we want.
-    // eslint-disable-next-line camelcase
-    // sketchup.exec({ name: 'getCommands', view_id: this.bindingsName })
     sketchup.getCommands(this.bindingsName)
 
+    //
     try {
       await this.isInitalized
       return true
@@ -147,5 +142,12 @@ export class SketchupBridge extends BaseBridge {
       window.clearTimeout(request.rejectTimerId)
       delete this.requests[requestId]
     }
+  }
+
+  public showDevTools() {
+    // eslint-disable-next-line no-alert
+    window.alert(
+      'Sketchup cannot do this. The dev tools menu is accessible via a right click.'
+    )
   }
 }

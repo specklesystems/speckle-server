@@ -21,16 +21,12 @@ import { ComplexType, TestEventArgs } from '~/lib/bindings/definitions/testBindi
 const { $testBindings } = useNuxtApp()
 
 $testBindings.on('emptyTestEvent', () => {
-  setTimeout(() => {
-    console.log('empty test event catched!')
-  }, 500)
+  console.log('empty test event catched!')
 })
 
 $testBindings.on('testEvent', (args: TestEventArgs) => {
-  setTimeout(() => {
-    console.log('test event catched!')
-    console.log(args)
-  }, 500)
+  console.log('test event catched!')
+  console.log(args)
 })
 
 async function triggerEmptyEvent() {
