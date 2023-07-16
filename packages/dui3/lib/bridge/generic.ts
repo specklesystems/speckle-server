@@ -45,7 +45,12 @@ export class GenericBridge extends BaseBridge {
     const parsed = result ? (JSON.parse(result) as Record<string, unknown>) : null
 
     if (parsed && parsed['error']) {
-      throw new Error(parsed['error'] as string)
+      console.error(parsed)
+      throw new Error(
+        `Failed to run ${methodName} with args ${JSON.stringify(
+          args
+        )}. The host app error is logged above.`
+      )
     }
 
     return parsed

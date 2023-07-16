@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-full">
     <HeaderNavBar />
-    <main class="my-4 layout-container pb-20 mt-20">
+    <main class="px-1 pb-4 mt-16">
       <slot />
     </main>
   </div>
