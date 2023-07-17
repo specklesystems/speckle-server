@@ -13,6 +13,9 @@
             </FormButton>
           </div>
         </div>
+        <div>
+          <HeaderUserMenu />
+        </div>
       </div>
     </div>
   </nav>

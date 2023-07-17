@@ -6,6 +6,12 @@
   </div>
 </template>
 <script setup lang="ts">
+import { useAccountsSetup } from '~/lib/accounts/composables/setup'
+import { useDocumentInfoSetup } from '~/lib/document-info'
+
+useAccountsSetup()
+useDocumentInfoSetup()
+
 useHead({
   // Title suffix
   titleTemplate: (titleChunk) =>

@@ -39,17 +39,17 @@
 </template>
 <script setup lang="ts">
 import { UseQueryReturn, useQuery } from '@vue/apollo-composable'
-import { useAccountsSetup } from '~/lib/accounts/composables/setup'
+import { useInjectedAccounts } from '~/lib/accounts/composables/setup'
 import { graphql } from '~/lib/common/generated/gql'
 import { ServerInfoTestQuery } from '~/lib/common/generated/gql/graphql'
-import { useDocumentInfoSetup } from '~/lib/document-info'
+import { useInjectedDocumentInfo } from '~/lib/document-info'
 
-const { accounts, refreshAccounts, defaultAccount } = await useAccountsSetup()
+const { accounts, refreshAccounts, defaultAccount } = useInjectedAccounts()
 
 const { $baseBinding } = useNuxtApp()
 const appName = await $baseBinding.getSourceApplicationName()
 
-const documentInfo = await useDocumentInfoSetup()
+const documentInfo = useInjectedDocumentInfo()
 
 const versionQuery = graphql(`
   query ServerInfoTest {

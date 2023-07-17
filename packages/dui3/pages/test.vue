@@ -38,10 +38,8 @@
 
 <script setup lang="ts">
 import { TestEventArgs } from '~/lib/bindings/definitions/testBindings'
-import { useAccountsSetup } from '~/lib/accounts/composables/setup'
 import { CheckIcon, MinusIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 const { $testBindings } = useNuxtApp()
-// const { accounts } = await useAccountsSetup()
 
 const tests = ref([
   {
@@ -97,7 +95,7 @@ const tests = ref([
       return 'not ok'
     },
     status: 0,
-    result: 'asdf' as unknown
+    result: 'not run yet' as unknown
   },
   {
     name: 'Event capture with args',
@@ -106,7 +104,7 @@ const tests = ref([
       return 'not ok'
     },
     status: 0,
-    result: 'asdf' as unknown
+    result: 'not run yet' as unknown
   }
 ])
 

@@ -18,8 +18,10 @@ export type DUIAccountsState = {
 }
 
 const AccountsInjectionKey = 'DUI_ACCOUNTS_STATE'
-
-export async function useAccountsSetup(): Promise<DUIAccountsState> {
+/**
+ * Use this composable to set up the account bindings and graphql clients at the top of the app.
+ */
+export function useAccountsSetup(): DUIAccountsState {
   const app = useNuxtApp()
   const $baseBinding = app.$baseBinding
 
@@ -31,6 +33,8 @@ export async function useAccountsSetup(): Promise<DUIAccountsState> {
   // Matches local accounts coming from the host app to app state.
   const refreshAccounts = async () => {
     const accs = await $baseBinding.getAccounts()
+    // We create a whole new list of accounts that will replace the old list. This way we ensure we drop
+    // out of scope old accounts that not exist anymore (TODO: test), and we don't need to do complex diffing.
     const newAccs = [] as DUIAccount[]
     for (const acc of accs) {
       const existing = accounts.value.find((a) => a.accountInfo.id === acc.id)
@@ -45,7 +49,9 @@ export async function useAccountsSetup(): Promise<DUIAccountsState> {
           authToken: () => acc.token
         })
       )
+
       apolloClients[acc.id] = client
+
       newAccs.push({
         accountInfo: acc,
         client
@@ -54,7 +60,7 @@ export async function useAccountsSetup(): Promise<DUIAccountsState> {
     accounts.value = newAccs
   }
 
-  await refreshAccounts()
+  ;(async () => await refreshAccounts())()
 
   const defaultAccount = computed(() =>
     accounts.value.find((acc) => acc.accountInfo.isDefault)
@@ -71,6 +77,9 @@ export async function useAccountsSetup(): Promise<DUIAccountsState> {
   return accState
 }
 
+/**
+ * Use this composable to access the users' local accounts and their corresponding graphql client.
+ */
 export function useInjectedAccounts(): DUIAccountsState {
   const state = inject(AccountsInjectionKey) as DUIAccountsState
   return state
