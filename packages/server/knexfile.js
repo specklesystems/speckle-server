@@ -9,6 +9,7 @@ const {
   isTestEnv,
   ignoreMissingMigrations
 } = require('@/modules/shared/helpers/envHelper')
+const { isTsNode } = require('@/bootstrap')
 
 function walk(dir) {
   let results = []
@@ -73,7 +74,7 @@ const commonConfig = {
   client: 'pg',
   migrations: {
     extension: 'ts',
-    loadExtensions: isTestEnv() ? ['.js', '.ts'] : ['.js'],
+    loadExtensions: isTestEnv() && isTsNode ? ['.ts'] : ['.js'],
     directory: migrationDirs
   },
   pool: { min: 0, max: postgresMaxConnections }

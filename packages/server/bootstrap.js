@@ -47,5 +47,6 @@ dotenv.config({ path: `${packageRoot}/.env` })
 
 module.exports = {
   appRoot,
-  packageRoot
+  packageRoot,
+  isTsNode
 }
