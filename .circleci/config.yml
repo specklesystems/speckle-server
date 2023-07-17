@@ -480,7 +480,7 @@ jobs:
 
       - run:
           name: Start up server
-          command: yarn dev
+          command: yarn build && node ./bin/www
           working_directory: 'packages/server'
           background: true
 
