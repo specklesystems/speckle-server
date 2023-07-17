@@ -26,6 +26,9 @@ workflows:
       - test-frontend-2:
           filters: *filters-allow-all
 
+      - test-frontend-2-e2e:
+          filters: *filters-allow-all
+
       - test-dui-3:
           filters: *filters-allow-all
 
