@@ -479,8 +479,19 @@ jobs:
           command: yarn build:public
 
       - run:
+          name: Start up server
+          command: yarn dev
+          working_directory: 'packages/server'
+          background: true
+
+      - run:
           name: Wait for dependencies to start
-          command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
+          command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -wait http://127.0.0.1:3000/graphql?query=query{_} -timeout 1m'
+
+      - run:
+          name: Setup .env file
+          command: cp .env.example .env
+          working_directory: 'packages/frontend-2'
 
       - run:
           name: Run E2E tests

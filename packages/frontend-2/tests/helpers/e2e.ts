@@ -34,7 +34,7 @@ export async function ensureE2eTestProject() {
 export async function ensureServerRunning() {
   const testCtx = useTestContext()
   const apiOrigin = testCtx.nuxt?.options.runtimeConfig.public.apiOrigin as string
-  const res = await fetch(new URL('/graphql?query=query { _ }', apiOrigin), {
+  const res = await fetch(new URL('/graphql?query=query{_}', apiOrigin), {
     headers: { 'content-type': 'application/json' }
   }).catch(() => ({
     status: -1
