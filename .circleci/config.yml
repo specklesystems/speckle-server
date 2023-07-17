@@ -483,8 +483,13 @@ jobs:
           working_directory: 'packages/server'
 
       - run:
+          name: Build server
+          command: yarn build
+          working_directory: 'packages/server'
+
+      - run:
           name: Start up server
-          command: yarn build && node ./bin/www
+          command: node ./bin/www
           working_directory: 'packages/server'
           background: true
 
