@@ -495,7 +495,11 @@ jobs:
 
       - run:
           name: Wait for dependencies to start
-          command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -wait http://127.0.0.1:3000/static/logo-slab-white.png -timeout 1m'
+          command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
+
+      - run:
+          name: Wait for server to start (after deps started)
+          command: 'dockerize -wait http://127.0.0.1:3000/static/logo-slab-white.png -timeout 1m'
 
       - run:
           name: Setup .env file
