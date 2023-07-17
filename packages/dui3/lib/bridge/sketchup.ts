@@ -126,13 +126,20 @@ export class SketchupBridge extends BaseBridge {
     })
   }
 
-  private receiveResponse(requestId: string, data: string) {
+  private receiveResponse(requestId: string, data: object) {
     if (!this.requests[requestId])
       throw new Error(
         `Sketchup Bridge found no request to resolve with the id of ${requestId}. Something is weird!`
       )
     const request = this.requests[requestId]
     try {
+      if (data && data.hasOwnProperty('error')) {
+        console.error(data)
+        throw new Error(
+          `Failed to run ${requestId}. The host app error is logged above.`
+        )
+      }
+
       // NOTE/TODO: does not need parsing
       // const parsedData = JSON.parse(data) as Record<string, unknown> // TODO: check if data is undefined
       request.resolve(data)

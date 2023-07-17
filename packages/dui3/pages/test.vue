@@ -74,7 +74,7 @@ const tests = ref([
     name: 'Simple function call with no args and no result',
     test: async (): Promise<unknown> => {
       const res = await $testBindings.goAway()
-      return res === null ? 'ok' : 'not ok'
+      return res === null || res === undefined ? 'ok' : 'not ok'
     },
     status: 0,
     result: {} as unknown
@@ -133,7 +133,10 @@ const runTests = async () => {
 
 $testBindings.on('emptyTestEvent', () => {
   setTimeout(() => {
+    console.log('sketchup sent event back', 'emptyTestEvent')
+
     const myTest = tests.value.find((t) => t.name === 'Simple event capture')
+    console.log(myTest, 'myTest')
 
     if (!myTest) return
     myTest.status = 1
@@ -143,7 +146,9 @@ $testBindings.on('emptyTestEvent', () => {
 
 $testBindings.on('testEvent', (args: TestEventArgs) => {
   setTimeout(() => {
+    console.log(args, 'testEvent')
     const myTest = tests.value.find((t) => t.name === 'Event capture with args')
+    console.log(myTest, 'myTest')
     if (!myTest) return
     myTest.status = 1
     myTest.result = args
