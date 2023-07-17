@@ -488,14 +488,14 @@ jobs:
           working_directory: 'packages/server'
 
       - run:
+          name: Wait for dependencies to start
+          command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
+
+      - run:
           name: Start up server
           command: node ./bin/www
           working_directory: 'packages/server'
           background: true
-
-      - run:
-          name: Wait for dependencies to start
-          command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
 
       - run:
           name: Wait for server to start (after deps started)
