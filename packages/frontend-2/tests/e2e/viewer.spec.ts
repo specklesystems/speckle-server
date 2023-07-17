@@ -48,7 +48,7 @@ describe('Viewer', async () => {
     expect(canvas).toBeTruthy()
   }, 100000)
 
-  it.only('side tabs can be toggled', async () => {
+  it('side tabs can be toggled', async () => {
     const page = await initializePage(testProjectHelpers)
 
     const controls = page.locator('.viewer-controls')

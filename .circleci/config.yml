@@ -309,9 +309,9 @@ jobs:
           name: git diff
           when: on_fail
 
-  test-server:
+  test-server: &test-server-job
     docker:
-      - image: cimg/node:18.16.1
+      - image: cimg/node:18.16.1-browsers
       - image: cimg/redis:7.0.7
       - image: 'cimg/postgres:14.5'
         environment:
@@ -446,6 +446,42 @@ jobs:
       - run:
           name: Test via Storybook
           command: yarn storybook:test:ci
+          working_directory: 'packages/frontend-2'
+
+  test-frontend-2-e2e:
+    <<: *test-server-job
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Build public packages
+          command: yarn build:public
+
+      - run:
+          name: Wait for dependencies to start
+          command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
+
+      - run:
+          name: Run E2E tests
+          command: yarn test:e2e
           working_directory: 'packages/frontend-2'
 
   test-dui-3:
