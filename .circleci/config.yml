@@ -479,8 +479,12 @@ jobs:
           command: yarn build:public
 
       - run:
+          command: touch .env.test
+          working_directory: 'packages/server'
+
+      - run:
           name: Start up server
-          command: yarn build && NODE_ENV=development node ./bin/www
+          command: yarn build && node ./bin/www
           working_directory: 'packages/server'
           background: true
 
