@@ -1,3 +1,4 @@
+import { moduleLogger } from '@/logging/logging'
 import { seedViewerE2eTestStream } from '@/modules/core/services/e2e'
 import { isDevEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { ensureError } from '@speckle/shared'
@@ -15,6 +16,7 @@ module.exports = (app: express.Application) => {
       const results = await seedViewerE2eTestStream()
       res.json(results).status(200)
     } catch (e) {
+      moduleLogger.error(e)
       res
         .json({ error: ensureError(e).message, stack: ensureError(e).stack })
         .status(500)
