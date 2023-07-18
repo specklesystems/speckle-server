@@ -370,10 +370,6 @@ jobs:
           command: yarn build:public
 
       - run:
-          name: Run docker deps
-          command: yarn dev:docker:up
-
-      - run:
           name: Wait for dependencies to start
           command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
 
