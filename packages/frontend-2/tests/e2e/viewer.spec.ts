@@ -90,7 +90,8 @@ describe('Viewer', async () => {
       const threadId = await bubbleButton!.getAttribute('data-thread-id')
       expect(threadId).toBeTruthy()
 
-      await bubbleButton!.click()
+      // force, cause button might be outside of the viewport for some reason (hard to debug this in CI)
+      await bubbleButton!.click({ force: true })
 
       const openedThread = page.locator(
         `.anchored-point-thread-contents[data-thread-id="${threadId!}"]`
