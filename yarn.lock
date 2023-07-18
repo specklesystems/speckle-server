@@ -44116,10 +44116,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"word-wrap@npm:^1.0.3, word-wrap@npm:^1.2.3, word-wrap@npm:~1.2.3":
-  version: 1.2.3
-  resolution: "word-wrap@npm:1.2.3"
-  checksum: 30b48f91fcf12106ed3186ae4fa86a6a1842416df425be7b60485de14bec665a54a68e4b5156647dec3a70f25e84d270ca8bc8cd23182ed095f5c7206a938c1f
+"word-wrap@npm:@aashutoshrathi/word-wrap@^1.2.4":
+  version: 1.2.6
+  resolution: "@aashutoshrathi/word-wrap@npm:1.2.6"
+  checksum: ada901b9e7c680d190f1d012c84217ce0063d8f5c5a7725bb91ec3c5ed99bb7572680eb2d2938a531ccbaec39a95422fcd8a6b4a13110c7d98dd75402f66a0cd
   languageName: node
   linkType: hard
 
