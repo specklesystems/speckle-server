@@ -1,3 +1,4 @@
+{{- if .Values.frontend_2.enabled -}}
 {{- if (and (.Values.fileimport_service.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -23,4 +24,5 @@ spec:
 {{ include  "speckle.ingress.selector.pod" $ | indent 14 }}
       ports:
         - port: www
+{{- end -}}
 {{- end -}}

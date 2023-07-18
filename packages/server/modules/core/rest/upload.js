@@ -5,7 +5,8 @@ const Busboy = require('busboy')
 
 const { validatePermissionsWriteStream } = require('./authUtils')
 
-const { createObjectsBatched } = require('../services/objects')
+const { createObjectsBatched } = require('@/modules/core/services/objects')
+const { ObjectHandlingError } = require('@/modules/core/errors/object')
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 
@@ -26,7 +27,20 @@ module.exports = (app) => {
       return res.status(hasStreamAccess.status).end()
     }
 
-    const busboy = Busboy({ headers: req.headers })
+    let busboy
+    try {
+      busboy = Busboy({ headers: req.headers })
+    } catch (e) {
+      req.log.warn(
+        e,
+        'Failed to parse request headers and body content as valid multipart/form-data.'
+      )
+      return res
+        .status(400)
+        .send(
+          'Failed to parse request headers and body content as valid multipart/form-data.'
+        )
+    }
     let totalProcessed = 0
     // let last = {}
 
@@ -46,6 +60,9 @@ module.exports = (app) => {
         })
 
         file.on('end', async () => {
+          req.log.info(
+            `File upload of the multipart form has reached an end of file (EOF) boundary. The mimetype of the file is '${mimeType}'.`
+          )
           if (requestDropped) return
           const t0 = Date.now()
           let objs = []
@@ -97,12 +114,21 @@ module.exports = (app) => {
 
           const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
             req.log.error(e, `Upload error.`)
-            if (!requestDropped)
-              res
-                .status(400)
-                .send(
-                  'Error inserting object in the database. Check server logs for details'
-                )
+            if (!requestDropped) {
+              switch (e.constructor) {
+                case ObjectHandlingError:
+                  res
+                    .status(400)
+                    .send(`Error inserting object in the database: ${e.message}`)
+                  break
+                default:
+                  res
+                    .status(400)
+                    .send(
+                      'Error inserting object in the database. Check server logs for details'
+                    )
+              }
+            }
             requestDropped = true
           })
           promises.push(promise)
@@ -125,7 +151,6 @@ module.exports = (app) => {
         mimeType === 'application/octet-stream'
       ) {
         let buffer = ''
-
         file.on('data', (data) => {
           if (data) buffer += data
         })
@@ -150,12 +175,26 @@ module.exports = (app) => {
             objs = JSON.parse(buffer)
           } catch (e) {
             req.log.error(`Upload error: Batch not in JSON format`)
-            if (!requestDropped) res.status(400).send('Failed to parse data.')
+            if (!requestDropped)
+              res.status(400).send('Failed to parse data. Batch is not in JSON format.')
             requestDropped = true
           }
+          if (!Array.isArray(objs)) {
+            req.log.error(`Upload error: Batch not an array`)
+            if (!requestDropped)
+              res
+                .status(400)
+                .send(
+                  'Failed to parse data. Batch is expected to be wrapped in a JSON array.'
+                )
+            requestDropped = true
+          }
+          //FIXME should we exit here if requestDropped is true
 
           totalProcessed += objs.length
-
+          req.log.debug(
+            `total objects, including current pending batch, processed so far is ${totalProcessed}`
+          )
           let previouslyAwaitedPromises = 0
           while (previouslyAwaitedPromises !== promises.length) {
             previouslyAwaitedPromises = promises.length
@@ -165,11 +204,19 @@ module.exports = (app) => {
           const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
             req.log.error(e, `Upload error.`)
             if (!requestDropped)
-              res
-                .status(400)
-                .send(
-                  'Error inserting object in the database. Check server logs for details'
-                )
+              switch (e.constructor) {
+                case ObjectHandlingError:
+                  res
+                    .status(400)
+                    .send(`Error inserting object in the database. ${e.message}`)
+                  break
+                default:
+                  res
+                    .status(400)
+                    .send(
+                      'Error inserting object in the database. Check server logs for details'
+                    )
+              }
             requestDropped = true
           })
           promises.push(promise)

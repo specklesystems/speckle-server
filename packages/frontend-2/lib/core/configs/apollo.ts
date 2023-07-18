@@ -21,7 +21,6 @@ import { useNavigateToLogin, loginRoute } from '~~/lib/common/helpers/route'
 import { useAppErrorState } from '~~/lib/core/composables/appErrorState'
 import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
 
-const appVersion = (import.meta.env.SPECKLE_SERVER_VERSION as string) || 'unknown'
 const appName = 'frontend-2'
 
 function createCache(): InMemoryCache {
@@ -270,11 +269,13 @@ function createLink(params: {
   const { registerError, isErrorState } = useAppErrorState()
 
   const errorLink = onError((res) => {
+    const logger = useLogger()
+
     const isSubTokenMissingError = (res.networkError?.message || '').includes(
       'need a token to subscribe'
     )
 
-    if (!isSubTokenMissingError) console.error('Apollo Client error', res)
+    if (!isSubTokenMissingError) logger.error('Apollo Client error', res)
 
     const { networkError } = res
     if (networkError && isInvalidAuth(networkError)) {
@@ -345,7 +346,7 @@ function createLink(params: {
 
 const defaultConfigResolver: ApolloConfigResolver = async () => {
   const {
-    public: { apiOrigin }
+    public: { apiOrigin, speckleServerVersion = 'unknown' }
   } = useRuntimeConfig()
 
   const httpEndpoint = `${apiOrigin}/graphql`
@@ -363,7 +364,7 @@ const defaultConfigResolver: ApolloConfigResolver = async () => {
     cache: markRaw(createCache()),
     link,
     name: appName,
-    version: appVersion
+    version: speckleServerVersion
   }
 }
 

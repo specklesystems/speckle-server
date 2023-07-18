@@ -75,6 +75,7 @@ export function useAttachments(params: {
 }) {
   const { projectId } = params
   const { uploadFiles, deleteFile } = useFileUpload()
+  const logger = useLogger()
 
   const currentFiles = ref([] as UploadFileItem[])
   const blobIds = computed(() =>
@@ -82,7 +83,7 @@ export function useAttachments(params: {
   )
 
   const deleteBlobInBg = (blobId: string) => {
-    deleteFile(blobId, { streamId: unref(projectId) }).catch(console.error)
+    deleteFile(blobId, { streamId: unref(projectId) }).catch(logger.error)
   }
 
   const deleteUpload = (fileId: string) => {
