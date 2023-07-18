@@ -61,7 +61,7 @@
     "@typescript-eslint/parser": "^5.59.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
-    "levelup/semver": ">=4.3.2",
+    "levelup/semver": ">=5.7.2",
     "@microsoft/api-extractor/semver": "^7.5.4",
     "@rushstack/node-core-library/semver": "^7.5.4",
     "@types/react": "file:./packages/frontend-2/type-augmentations/stubs/types__react"
