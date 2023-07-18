@@ -64,7 +64,8 @@
     "levelup/semver": ">=5.7.2",
     "@microsoft/api-extractor/semver": "^7.5.4",
     "@rushstack/node-core-library/semver": "^7.5.4",
-    "@types/react": "file:./packages/frontend-2/type-augmentations/stubs/types__react"
+    "@types/react": "file:./packages/frontend-2/type-augmentations/stubs/types__react",
+    "tough-cookie": ">=4.1.3"
   },
   "config": {
     "commitizen": {
