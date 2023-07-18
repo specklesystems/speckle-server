@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import { Observability } from '@speckle/shared'
 
 export function buildFakePinoLogger() {
@@ -11,7 +15,6 @@ export function buildFakePinoLogger() {
     silent: noop
   } as unknown as ReturnType<typeof Observability.getLogger>
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
   logger.child = () => logger as any
 
   return logger
