@@ -3,11 +3,12 @@ import {
   getViewerE2eTestStream,
   markStreamViewerE2eTest
 } from '@/modules/core/repositories/streams'
-import { getFirstUser } from '@/modules/core/repositories/users'
+import { getUser, getUserByEmail } from '@/modules/core/repositories/users'
 import { ProjectVisibility } from '@/test/graphql/generated/graphql'
 import { downloadCommit } from '@/modules/cli/services/download/commit'
 import { getStreamCommitsWithBranchId } from '@/modules/core/repositories/commits'
 import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
+import { createUser } from '@/modules/core/services/users'
 
 const version = '1.0'
 const commits = [
@@ -15,6 +16,12 @@ const commits = [
   'https://latest.speckle.systems/projects/92b620fb17/models/76fd8a01c8@91048318e8',
   'https://latest.speckle.systems/projects/92b620fb17/models/76fd8a01c8@bb744f570b'
 ]
+
+const userData = {
+  email: 'e2e@e2e.com',
+  name: 'E2E Created user',
+  password: 'e2ee2ee2e'
+}
 
 /**
  * Used to seed in a standard test stream for viewer e2e tests
@@ -33,9 +40,17 @@ export async function seedViewerE2eTestStream() {
   }
 
   logger.debug('Creating viewer e2e test stream...')
-  const author = await getFirstUser()
+  let author = await getUserByEmail(userData.email)
   if (!author) {
-    throw new Error('Could not find first server user')
+    // Creating e2e user
+    logger.debug('Creating e2e user...')
+    const uid = await createUser(userData, { forceBaseUserRole: true })
+
+    author = await getUser(uid)
+
+    if (!author) {
+      throw new Error('Could not find or create e2e test user')
+    }
   }
 
   const newStream = await createStreamReturnRecord({
