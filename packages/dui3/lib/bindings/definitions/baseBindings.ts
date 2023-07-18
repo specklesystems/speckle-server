@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/require-await */
+
+import { BaseBridge } from '~~/lib/bridge/base'
+
 // Needs to be agreed between Frontend and Core
 export interface IBaseBinding {
   getAccounts: () => Promise<Account[]>
@@ -56,4 +60,34 @@ export type ToastInfo = {
   text: string
   details?: string
   type: 'info' | 'error' | 'warning'
+}
+
+export class MockedBaseBinding extends BaseBridge {
+  constructor() {
+    super()
+  }
+
+  public async getAccounts() {
+    return []
+  }
+
+  public async getSourceApplicationName() {
+    return 'Mocks'
+  }
+
+  public async getSourceApplicationVersion() {
+    return '1'
+  }
+
+  public async getDocumentInfo() {
+    return {
+      name: 'Mocked File',
+      location: 'www',
+      id: '42'
+    }
+  }
+
+  public async showDevTools() {
+    console.log('Mocked bindings cannot do this')
+  }
 }

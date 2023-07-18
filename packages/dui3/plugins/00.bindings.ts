@@ -1,9 +1,16 @@
 import { GenericBridge } from '~/lib/bridge/generic'
 import { IRawBridge } from '~/lib/bridge/definitions'
 
-import { IBaseBinding } from '~/lib/bindings/definitions/baseBindings'
+import {
+  IBaseBinding,
+  MockedBaseBinding
+} from '~/lib/bindings/definitions/baseBindings'
 import { SketchupBridge } from '~/lib/bridge/sketchup'
-import { ITestBinding, ITestBindingKey } from '~/lib/bindings/definitions/testBindings'
+import {
+  ITestBinding,
+  ITestBindingKey,
+  MockedTestBinding
+} from '~/lib/bindings/definitions/testBindings'
 
 // Makes TS happy
 declare let globalThis: Record<string, unknown> & {
@@ -19,11 +26,15 @@ declare let globalThis: Record<string, unknown> & {
  */
 export default defineNuxtPlugin(async () => {
   // Registers some default test bindings.
-  const testBindings = await tryHoistBinding<ITestBinding>(ITestBindingKey)
+  const testBindings =
+    (await tryHoistBinding<ITestBinding>(ITestBindingKey)) || new MockedTestBinding()
+
   // Tries to register some non-existant bindings.
   const nonExistantBindings = await tryHoistBinding<IBaseBinding>('nonExistantBindings')
+
   // Registers a set of default bindings.
-  const baseBinding = await tryHoistBinding<IBaseBinding>('baseBinding')
+  const baseBinding =
+    (await tryHoistBinding<IBaseBinding>('baseBinding')) || new MockedBaseBinding()
 
   const showDevTools = () => {
     baseBinding.showDevTools()
