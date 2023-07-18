@@ -107,7 +107,7 @@ spec:
             {{- else }}
             value: http://{{ .Values.domain }}
             {{- end }}
-          
+
           - name: ONBOARDING_STREAM_ID
             value: {{ .Values.server.onboardingStreamId }}
 
@@ -119,6 +119,9 @@ spec:
 
           - name: FILE_SIZE_LIMIT_MB
             value: {{ .Values.file_size_limit_mb | quote }}
+
+          - name: MAX_OBJECT_SIZE_MB
+            value: {{ .Values.server.max_object_size_mb | quote }}
 
           - name: SPECKLE_AUTOMATE_URL
             value: {{ .Values.server.speckleAutomateUrl }}
@@ -276,7 +279,7 @@ spec:
           - name: EMAIL_FROM
             value: "{{ .Values.server.email.from }}"
           {{- end }}
-          
+
           # *** Newsletter ***
           {{- if (default false (.Values.server.mailchimp).enabled) }}
           - name: MAILCHIMP_ENABLED

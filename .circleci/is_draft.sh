@@ -4,8 +4,13 @@
 
 set -euf -o pipefail
 
-if [[ -z "$CIRCLE_PULL_REQUEST" ]]; then
+if [[ -z "${CIRCLE_PULL_REQUEST}" ]]; then
   echo "FALSE"
+fi
+
+if [[ -z "${GITHUB_TOKEN}" ]]; then
+  echo "GITHUB_TOKEN is not set"
+  exit 1
 fi
 
 PR_NUMBER="${CIRCLE_PULL_REQUEST//[!0-9]/}"

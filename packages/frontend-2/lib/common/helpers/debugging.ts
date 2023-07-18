@@ -11,18 +11,19 @@ export function wrapRefWithTracking<R extends Ref<unknown>>(
 ): R {
   const { writesOnly, readsOnly } = options || {}
   const getTrace = () => (new Error('Trace:').stack || '').substring(7)
+  const logger = useLogger()
 
   return computed({
     get: () => {
       if (!writesOnly) {
-        console.debug(`debugging: '${name}' read`, ref.value, getTrace())
+        logger.debug(`debugging: '${name}' read`, ref.value, getTrace())
       }
 
       return ref.value
     },
     set: (newVal) => {
       if (!readsOnly) {
-        console.debug(`debugging: '${name}' written to`, newVal, getTrace())
+        logger.debug(`debugging: '${name}' written to`, newVal, getTrace())
       }
 
       ref.value = newVal

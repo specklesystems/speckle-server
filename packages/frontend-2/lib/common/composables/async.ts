@@ -33,12 +33,13 @@ export function writableAsyncComputed<T>(
   const { get, initialState, readOptions, set, asyncRead = true, debugging } = params
   const logSettings = debugging?.log
   const getTrace = () => (new Error('Trace:').stack || '').substring(7)
+  const logger = useLogger()
 
   const finalGet: typeof get =
     logSettings && !logSettings.writesOnly
       ? () => {
           const res = get()
-          console.debug(`debugging: '${logSettings.name}' read`, res, getTrace())
+          logger.debug(`debugging: '${logSettings.name}' read`, res, getTrace())
           return res
         }
       : get
@@ -46,7 +47,7 @@ export function writableAsyncComputed<T>(
   const finalSet: typeof set =
     logSettings && !logSettings.readsOnly
       ? (newVal) => {
-          console.debug(
+          logger.debug(
             `debugging: '${logSettings.name}' written to`,
             newVal,
             getTrace()
