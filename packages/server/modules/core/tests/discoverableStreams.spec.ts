@@ -87,6 +87,7 @@ describe('Discoverable streams', () => {
       }
       readableDiscoverableStreams.push(newStream)
       await createTestStream(newStream, owner)
+      await wait(5)
     }
 
     // Favoriting some of them - stream with 5 favorites, stream with 4 favorites, then 3 and so on...
@@ -106,7 +107,7 @@ describe('Discoverable streams', () => {
           userId: favoriter.id,
           favorited: true
         })
-        await wait(1)
+        await wait(5)
       }
     }
 
