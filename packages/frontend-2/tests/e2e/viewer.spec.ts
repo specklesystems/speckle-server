@@ -5,11 +5,12 @@ import {
   ensureServerRunning,
   ensureE2eTestProject,
   TestProjectMetadata,
-  buildTestProjectHelpers
+  buildTestProjectHelpers,
+  waitToBeInViewport
 } from '../helpers/e2e'
 
 // TODO: Page creation in beforeAll doesn't seem to work
-// TODO: Re-use page between tests for quicker runtime
+// TODO: Re-use page between tests for quicker runtime?
 
 const initializePage = async (testProjectMetadata: TestProjectMetadata) => {
   const testProjectHelpers = buildTestProjectHelpers(testProjectMetadata)
@@ -45,6 +46,8 @@ describe('Viewer', async () => {
     // Check if child element is a canvas
     const canvas = await page.$('.viewer-base--initialized > div > canvas')
     expect(canvas).toBeTruthy()
+
+    page.close()
   }, 100000)
 
   it('side tabs can be toggled', async () => {
@@ -65,6 +68,8 @@ describe('Viewer', async () => {
       'button[data-button-type][data-is-active="true"]'
     )
     expect(await activeBtns.count()).toBe(0)
+
+    page.close()
   })
 
   describe('thread bubbles', () => {
@@ -76,6 +81,10 @@ describe('Viewer', async () => {
 
       const bubbleButtons = await page.$$('.anchored-point-thread-button')
       expect(bubbleButtons.length).toBeGreaterThan(0)
+
+      await waitToBeInViewport(page, `.anchored-point-thread-button`)
+
+      page.close()
     })
 
     // TODO: Goes to login page? wtf...slow down and check what's going on
@@ -91,13 +100,20 @@ describe('Viewer', async () => {
       const threadId = await bubbleButton!.getAttribute('data-thread-id')
       expect(threadId).toBeTruthy()
 
-      // force, cause button might be outside of the viewport for some reason (hard to debug this in CI)
-      await bubbleButton!.click({ force: true })
+      await waitToBeInViewport(
+        page,
+        `.anchored-point-thread-button[data-thread-id="${threadId!}"]`
+      )
+
+      // dispatchEvent, cause .click() causes scrolling which might move the button out from the viewport
+      await bubbleButton!.dispatchEvent('click')
 
       const openedThread = page.locator(
         `.anchored-point-thread-contents[data-thread-id="${threadId!}"]`
       )
       await openedThread.waitFor()
+
+      page.close()
     })
   })
 })

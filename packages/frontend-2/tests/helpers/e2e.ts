@@ -1,4 +1,5 @@
 import { setup, useTestContext } from '@nuxt/test-utils'
+import { Page } from 'playwright'
 import path from 'path'
 
 const outputDir = path.resolve(__dirname, '../../.output')
@@ -72,7 +73,10 @@ export async function setupE2eTest() {
     ...(useBrowser
       ? {
           browser: true,
-          browserOptions: { type: 'chromium', launch: { headless: false } }
+          browserOptions: {
+            type: 'chromium',
+            launch: { headless: false }
+          }
         }
       : isCI
       ? {}
@@ -90,3 +94,23 @@ export const buildTestProjectHelpers = (metadata: TestProjectMetadata) => ({
 })
 
 export type TestProjectHelpers = ReturnType<typeof buildTestProjectHelpers>
+
+export const waitToBeInViewport = async (page: Page, selector: string) =>
+  page.waitForFunction(async (selectorParam: string) => {
+    const element = document.querySelector(selectorParam)
+    const visibleRatio: number = await new Promise((resolve, reject) => {
+      const observer = new IntersectionObserver((entries) => {
+        resolve(entries[0].intersectionRatio)
+        observer.disconnect()
+      })
+
+      if (!element) {
+        reject(new Error('waitToBeInViewport element with selector not found'))
+        return
+      }
+
+      observer.observe(element)
+      requestAnimationFrame(() => void 0)
+    })
+    return visibleRatio > 0 // where 0 - element has just appeared, and 1 - element fully visible;
+  }, selector)
