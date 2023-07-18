@@ -358,7 +358,7 @@ jobs:
 
       - run:
           name: Install dockerize
-          command: wget -O - https://github.com/jwilder/dockerize/releases/download/v0.7.0/dockerize-linux-amd64-v0.7.0.tar.gz | tar xzf - -C /usr/local/bin
+          command: wget -O - https://github.com/jwilder/dockerize/releases/download/v0.7.0/dockerize-linux-amd64-v0.7.0.tar.gz | sudo tar xzf - -C /usr/local/bin
 
       - run:
           name: Install Dependencies
@@ -438,10 +438,6 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
 
       - run:
-          name: Install dockerize
-          command: wget -O - https://github.com/jwilder/dockerize/releases/download/v0.7.0/dockerize-linux-amd64-v0.7.0.tar.gz | tar xzf - -C /usr/local/bin
-
-      - run:
           name: Install Dependencies
           command: yarn
 
@@ -483,6 +479,11 @@ jobs:
           name: Restore Yarn Package Cache
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
+
+      - run:
+          name: Install dockerize
+          command: wget -O - https://github.com/jwilder/dockerize/releases/download/v0.7.0/dockerize-linux-amd64-v0.7.0.tar.gz | sudo tar xzf - -C /usr/local/bin
+
       - run:
           name: Install Dependencies
           command: yarn
