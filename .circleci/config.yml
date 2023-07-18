@@ -493,7 +493,7 @@ jobs:
 
       - run:
           name: Run migrations
-          command: yarn migrate latest
+          command: yarn migrate:test latest
           working_directory: 'packages/server'
 
       - run:
