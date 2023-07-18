@@ -492,11 +492,6 @@ jobs:
           command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
 
       - run:
-          name: Run migrations
-          command: yarn migrate:test latest
-          working_directory: 'packages/server'
-
-      - run:
           name: Start up server
           command: node ./bin/www
           working_directory: 'packages/server'
