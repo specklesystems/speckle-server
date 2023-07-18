@@ -5,8 +5,7 @@ import {
   ensureServerRunning,
   ensureE2eTestProject,
   TestProjectMetadata,
-  buildTestProjectHelpers,
-  TestProjectHelpers
+  buildTestProjectHelpers
 } from '../helpers/e2e'
 
 // TODO: Page creation in beforeAll doesn't seem to work
@@ -34,16 +33,14 @@ describe('Viewer', async () => {
   await setupE2eTest()
 
   let testProjectMetadata: TestProjectMetadata
-  let testProjectHelpers: TestProjectHelpers
 
   beforeAll(async () => {
     await ensureServerRunning()
     testProjectMetadata = await ensureE2eTestProject()
-    testProjectHelpers = buildTestProjectHelpers(testProjectMetadata)
   })
 
   it('gets rendered', async () => {
-    const page = await initializePage(testProjectHelpers)
+    const page = await initializePage(testProjectMetadata)
 
     // Check if child element is a canvas
     const canvas = await page.$('.viewer-base--initialized > div > canvas')
@@ -51,7 +48,7 @@ describe('Viewer', async () => {
   }, 100000)
 
   it('side tabs can be toggled', async () => {
-    const page = await initializePage(testProjectHelpers)
+    const page = await initializePage(testProjectMetadata)
 
     const controls = page.locator('.viewer-controls')
     await controls.waitFor()
@@ -72,7 +69,7 @@ describe('Viewer', async () => {
 
   describe('thread bubbles', () => {
     it('get rendered', async () => {
-      const page = await initializePage(testProjectHelpers)
+      const page = await initializePage(testProjectMetadata)
 
       const anchoredPoints = page.locator('.viewer-anchored-points')
       await anchoredPoints.waitFor()
@@ -82,7 +79,7 @@ describe('Viewer', async () => {
     })
 
     it('open thread when clicked', async () => {
-      const page = await initializePage(testProjectHelpers)
+      const page = await initializePage(testProjectMetadata)
 
       const anchoredPoints = page.locator('.viewer-anchored-points')
       await anchoredPoints.waitFor()
