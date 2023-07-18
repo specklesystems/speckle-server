@@ -9,7 +9,8 @@ const config = defineConfig({
       // instance in our own beforeAll hooks
       hooks: IS_E2E ? 'stack' : 'parallel'
     },
-    testTimeout: IS_E2E ? 100000 : 5000
+    testTimeout: IS_E2E ? 100000 : 5000,
+    hookTimeout: IS_E2E ? 100000 : 10000
   }
 })
 
