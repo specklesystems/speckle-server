@@ -313,23 +313,31 @@ jobs:
           when: on_fail
 
   test-server: &test-server-job
-    docker:
-      - image: cimg/node:18.16.1-browsers
-      - image: cimg/redis:7.0.7
-      - image: 'cimg/postgres:14.5'
-        environment:
-          POSTGRES_DB: speckle2_test
-          POSTGRES_PASSWORD: speckle
-          POSTGRES_USER: speckle
-      - image: 'minio/minio'
-        command: server /data --console-address ":9001"
-        # environment:
+    machine:
+      image: ubuntu-2204:2023.02.1
+      docker_layer_caching: true
 
+    # docker:
+    #   - image: cimg/node:18.16.1-browsers
+    #   - image: cimg/redis:7.0.7
+    #   - image: 'cimg/postgres:14.5'
+    #     environment:
+    #       POSTGRES_DB: speckle2_test
+    #       POSTGRES_PASSWORD: speckle
+    #       POSTGRES_USER: speckle
+    #   - image: 'minio/minio'
+    #     command: server /data --console-address ":9001"
+    #     # environment:
+
+    # TODO: Clean up PGUSER and others?
     environment:
       NODE_ENV: test
-      DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
-      PGDATABASE: speckle2_test
+      DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle'
+      PGDATABASE: speckle
       PGUSER: speckle
+      POSTGRES_USER: speckle
+      POSTGRES_PASSWORD: speckle
+      POSTGRES_DB: speckle
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: 'true'
       CANONICAL_URL: 'http://127.0.0.1:3000'
@@ -365,6 +373,10 @@ jobs:
       - run:
           name: Build public packages
           command: yarn build:public
+
+      - run:
+          name: Run docker deps
+          command: yarn dev:docker:up
 
       - run:
           name: Wait for dependencies to start
@@ -488,6 +500,10 @@ jobs:
           name: Build server
           command: yarn build
           working_directory: 'packages/server'
+
+      - run:
+          name: Run docker deps
+          command: yarn dev:docker:up
 
       - run:
           name: Wait for dependencies to start
