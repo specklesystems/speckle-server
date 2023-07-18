@@ -23,15 +23,15 @@ export class SketchupBridge extends BaseBridge {
       rejectTimerId: number
     }
   >
-  private bindingsName: string
+  private bindingName: string
   private TIMEOUT_MS = 2000 // 2s
   public isInitalized: Promise<boolean>
   private resolveIsInitializedPromise!: (v: boolean) => unknown
   private rejectIsInitializedPromise!: (message: string) => unknown
 
-  constructor(bindingsName: string) {
+  constructor(bindingName: string) {
     super()
-    this.bindingsName = bindingsName || 'default_bindings'
+    this.bindingName = bindingName || 'default_bindings'
 
     this.isInitalized = new Promise((resolve, reject) => {
       this.resolveIsInitializedPromise = resolve
@@ -57,7 +57,7 @@ export class SketchupBridge extends BaseBridge {
   public async create(): Promise<boolean> {
     // Initialization continues in the receiveCommandsAndInitializeBridge function,
     // where we expect sketchup to return to us the command names for related bindings/views.
-    sketchup.getCommands(this.bindingsName)
+    sketchup.getCommands(this.bindingName)
 
     //
     try {
@@ -99,7 +99,7 @@ export class SketchupBridge extends BaseBridge {
    * @param args
    */
   private async runMethod(methodName: string, args: unknown[]): Promise<unknown> {
-    const requestId = uniqueId(this.bindingsName)
+    const requestId = uniqueId(this.bindingName)
 
     // TODO: more on the ruby end, but for now Oguzhan seems happy with this.
     // Changes might be needed in the future.
@@ -108,7 +108,7 @@ export class SketchupBridge extends BaseBridge {
       // eslint-disable-next-line camelcase
       request_id: requestId,
       // eslint-disable-next-line camelcase
-      view_id: this.bindingsName,
+      binding_name: this.bindingName,
       data: { args }
     })
 
