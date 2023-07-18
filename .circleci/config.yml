@@ -314,7 +314,7 @@ jobs:
 
   test-server: &test-server-job
     machine:
-      image: ubuntu-2204:2023.02.1
+      image: ubuntu-2004-cuda-11.4:202110-01
       docker_layer_caching: true
 
     # docker:
@@ -473,8 +473,9 @@ jobs:
 
   test-frontend-2-e2e:
     <<: *test-server-job
-    resource_class: large
+    resource_class: gpu.nvidia.small
     steps:
+      - run: nvidia-smi
       - checkout
       - restore_cache:
           name: Restore Yarn Package Cache
