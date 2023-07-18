@@ -74,7 +74,10 @@ export async function setupE2eTest() {
           browser: true,
           browserOptions: { type: 'chromium', launch: { headless: false } }
         }
+      : isCI
+      ? {}
       : {
+          // Using GPUs only in local env, cause we don't have them in CI
           browserOptions: { type: 'chromium', launch: { args: ['--use-gl=egl'] } }
         })
   })
