@@ -78,7 +78,8 @@ describe('Viewer', async () => {
       expect(bubbleButtons.length).toBeGreaterThan(0)
     })
 
-    it('open thread when clicked', async () => {
+    // TODO: Goes to login page? wtf...slow down and check what's going on
+    it.only('open thread when clicked', async () => {
       const page = await initializePage(testProjectMetadata)
 
       const anchoredPoints = page.locator('.viewer-anchored-points')
