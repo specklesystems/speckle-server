@@ -76,14 +76,14 @@ export class MockedBaseBinding extends BaseBridge {
   }
 
   public async getSourceApplicationVersion() {
-    return '1'
+    return Math.random().toString()
   }
 
   public async getDocumentInfo() {
     return {
       name: 'Mocked File',
       location: 'www',
-      id: '42'
+      id: Math.random().toString()
     }
   }
 
