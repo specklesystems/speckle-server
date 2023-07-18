@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { Observability } from '@speckle/shared'
+import { noop } from 'lodash-es'
 
 export function buildFakePinoLogger() {
   const logger = {
