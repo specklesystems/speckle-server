@@ -1,3 +1,4 @@
+{{- if .Values.frontend_2.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -83,3 +84,4 @@ spec:
       {{- if .Values.frontend_2.serviceAccount.create }}
       serviceAccountName: {{ include "frontend-2.name" $ }}
       {{- end }}
+{{- end }}
