@@ -473,7 +473,6 @@ jobs:
 
   test-frontend-2-e2e:
     <<: *test-server-job
-    resource_class: gpu.nvidia.small
     steps:
       - run: nvidia-smi
       - checkout
