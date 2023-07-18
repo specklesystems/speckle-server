@@ -338,6 +338,7 @@ jobs:
       POSTGRES_USER: speckle
       POSTGRES_PASSWORD: speckle
       POSTGRES_DB: speckle
+      POSTGRES_URL: 127.0.0.1:5432
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: 'true'
       CANONICAL_URL: 'http://127.0.0.1:3000'
