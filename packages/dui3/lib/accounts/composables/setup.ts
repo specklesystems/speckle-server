@@ -60,7 +60,7 @@ export function useAccountsSetup(): DUIAccountsState {
     accounts.value = newAccs
   }
 
-  ;(async () => await refreshAccounts())()
+  void refreshAccounts() // Promise that we do not want to await (convention with void)
 
   const defaultAccount = computed(() =>
     accounts.value.find((acc) => acc.accountInfo.isDefault)
