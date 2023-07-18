@@ -275,7 +275,7 @@ function createLink(params: {
       'need a token to subscribe'
     )
 
-    if (!isSubTokenMissingError) logger?.error('Apollo Client error', res)
+    if (!isSubTokenMissingError) logger.error('Apollo Client error', res)
 
     const { networkError } = res
     if (networkError && isInvalidAuth(networkError)) {

@@ -1,4 +1,4 @@
-import { noop } from 'lodash-es'
+import { buildFakePinoLogger } from '~~/lib/core/helpers/observability'
 
 /**
  * Pino logger in SSR, basic console.log fallback in CSR
@@ -21,18 +21,7 @@ export default defineNuxtPlugin(async () => {
     const { Observability } = await import('@speckle/shared')
     logger = Observability.getLogger(logLevel, logPretty)
   } else {
-    logger = {
-      debug: console.debug,
-      info: console.info,
-      warn: console.warn,
-      error: console.error,
-      fatal: console.error,
-      trace: console.debug,
-      silent: noop
-    } as ReturnType<typeof import('@speckle/shared').Observability.getLogger>
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any
-    logger.child = () => logger as any
+    logger = buildFakePinoLogger()
 
     // set up seq ingestion
     if (!process.dev && logClientApiToken?.length && logClientApiEndpoint?.length) {
