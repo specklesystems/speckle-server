@@ -454,6 +454,7 @@ jobs:
 
   test-frontend-2-e2e:
     <<: *test-server-job
+    resource_class: large
     steps:
       - checkout
       - restore_cache:
@@ -509,7 +510,7 @@ jobs:
 
       - run:
           name: Run E2E tests
-          command: yarn test:e2e
+          command: yarn test:e2e run
           working_directory: 'packages/frontend-2'
 
   test-dui-3:

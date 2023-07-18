@@ -12,9 +12,8 @@ import { createUser } from '@/modules/core/services/users'
 
 const version = '1.0'
 const commits = [
-  'https://latest.speckle.systems/projects/92b620fb17/models/76fd8a01c8@eb39048a8e',
-  'https://latest.speckle.systems/projects/92b620fb17/models/76fd8a01c8@91048318e8',
-  'https://latest.speckle.systems/projects/92b620fb17/models/76fd8a01c8@bb744f570b'
+  'https://latest.speckle.systems/projects/594d657cdd/models/f8c11d8ab9@d958a68e22',
+  'https://latest.speckle.systems/projects/594d657cdd/models/f8c11d8ab9@774aed24e4'
 ]
 
 const userData = {
