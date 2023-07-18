@@ -12,7 +12,8 @@ import {
 // TODO: Page creation in beforeAll doesn't seem to work
 // TODO: Re-use page between tests for quicker runtime
 
-const initializePage = async (testProjectHelpers: TestProjectHelpers) => {
+const initializePage = async (testProjectMetadata: TestProjectMetadata) => {
+  const testProjectHelpers = buildTestProjectHelpers(testProjectMetadata)
   const page = await createPage(testProjectHelpers.modelPagePath)
 
   try {
@@ -21,6 +22,7 @@ const initializePage = async (testProjectHelpers: TestProjectHelpers) => {
   } catch (e) {
     console.error('Waiting for viewer initialization failed:')
     console.error(await page.evaluate(() => document.body.innerHTML))
+    console.error(testProjectMetadata)
     throw e
   }
 
