@@ -65,6 +65,7 @@ const props = withDefaults(
   }
 )
 
+const logger = useLogger()
 const areQueriesLoading = useQueryLoading()
 
 const latestModelsQueryVariables = computed(
@@ -152,7 +153,7 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
       }
     })
   } catch (e) {
-    console.error(e)
+    logger.error(e)
     state.error()
     return
   }

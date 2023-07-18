@@ -28,6 +28,8 @@
     "crypto-random-string": "^3.3.1",
     "knex": "^2.4.1",
     "pg": "^8.7.3",
+    "pino": "^8.7.0",
+    "pino-http": "^8.0.0",
     "pino-pretty": "^9.1.1",
     "prom-client": "^14.0.1",
     "undici": "^5.19.1",

@@ -35,13 +35,13 @@ const { result: activeUserResult } = useQuery(activeUserQuery)
 //   (newUser, oldUser) => {
 //     // if (process.server) return
 
-//     console.log('WATCHER', newUser, oldUser)
+//     logger.debug('WATCHER', newUser, oldUser)
 //   },
 //   { deep: true, immediate: true }
 // )
 
 // const renderName = () => {
-//   console.log('renderName', user.value)
+//   logger.debug('renderName', user.value)
 //   return `${user.value?.name || 'guest'}`
 // }
 </script>

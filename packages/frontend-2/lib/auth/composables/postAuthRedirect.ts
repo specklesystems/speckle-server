@@ -12,6 +12,7 @@ export const usePostAuthRedirect = () => {
   const cookie = usePostAuthRedirectCookie()
   const router = useRouter()
   const route = useRoute()
+  const logger = useLogger()
 
   const hadPendingRedirect = computed(() => !!cookie.value?.length)
 
@@ -44,7 +45,7 @@ export const usePostAuthRedirect = () => {
             {} as Record<string, string>
           )
         })
-        .catch(console.error)
+        .catch(logger.error)
     } else {
       // cause nuxt doesn't show error page for some reason
       window.location.href = pathWithQuery

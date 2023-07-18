@@ -309,6 +309,7 @@ export function useOnViewerLoadComplete(
   const {
     ui: { viewerBusy }
   } = useInjectedViewerState()
+  const logger = useLogger()
   const { initialOnly, waitForBusyOver = true } = options || {}
 
   const hasRun = ref(false)
@@ -331,7 +332,7 @@ export function useOnViewerLoadComplete(
         : Promise.resolve())
     } catch (e) {
       if (!(e instanceof TimeoutError)) throw e
-      console.warn(e.message)
+      logger.warn(e.message)
     }
 
     listener({ isInitial: !hasRun.value })

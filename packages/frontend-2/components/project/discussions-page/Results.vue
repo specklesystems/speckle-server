@@ -39,6 +39,8 @@ const props = defineProps<{
   includeArchived: boolean
 }>()
 
+const logger = useLogger()
+
 const queryFilterVariables = computed(
   (): ProjectCommentsFilter => ({
     includeArchived: !!props.includeArchived
@@ -78,7 +80,7 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
       }
     })
   } catch (e) {
-    console.error(e)
+    logger.error(e)
     state.error()
     return
   }

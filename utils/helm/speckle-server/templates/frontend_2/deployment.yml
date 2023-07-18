@@ -1,3 +1,4 @@
+{{- if .Values.frontend_2.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -57,6 +58,15 @@ spec:
             value: {{ .Values.analytics.mixpanel_token_id }}
           - name: NUXT_PUBLIC_MIXPANEL_API_HOST
             value: {{ .Values.analytics.mixpanel_api_host }}
+          - name: NUXT_PUBLIC_LOG_LEVEL
+            value: {{ .Values.frontend_2.logLevel }}
+          - name: NUXT_PUBLIC_SERVER_NAME
+            value: {{ .Release.Name }}
+          - name: NUXT_PUBLIC_LOG_CLIENT_API_TOKEN
+            value: {{ .Values.frontend_2.logClientApiToken }}
+          - name: NUXT_PUBLIC_LOG_CLIENT_API_ENDPOINT
+            value: {{ .Values.frontend_2.logClientApiEndpoint }}
+
 
       priorityClassName: high-priority
       {{- if .Values.frontend_2.affinity }}
@@ -74,3 +84,4 @@ spec:
       {{- if .Values.frontend_2.serviceAccount.create }}
       serviceAccountName: {{ include "frontend-2.name" $ }}
       {{- end }}
+{{- end }}

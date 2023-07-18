@@ -53,7 +53,8 @@ export const LoggingExpressMiddleware = HttpLogger({
                 'cf-connecting-ip',
                 'true-client-ip',
                 'x-real-ip',
-                'x-forwarded-for'
+                'x-forwarded-for',
+                'x-original-forwarded-for'
               ].includes(key.toLocaleLowerCase())
           )
         )

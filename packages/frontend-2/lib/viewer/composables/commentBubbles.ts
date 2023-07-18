@@ -64,6 +64,7 @@ export function useViewerNewThreadBubble(params: {
   } = useInjectedViewerInterfaceState()
   const getCamCenterObjId = useGetScreenCenterObjectId()
   const { setSelectionFromObjectIds } = useSelectionUtilities()
+  const logger = useLogger()
 
   const buttonState = ref({
     isExpanded: false,
@@ -127,7 +128,7 @@ export function useViewerNewThreadBubble(params: {
   watch(newThreadEditor, (isNewThread, oldIsNewThread) => {
     if (isNewThread && !!isNewThread !== !!oldIsNewThread) {
       if (!buttonState.value.clickLocation && !target.value && !selection.value) {
-        console.warn('Unable to enable new thread editor due to missing position data')
+        logger.warn('Unable to enable new thread editor due to missing position data')
         newThreadEditor.value = false
         return
       }

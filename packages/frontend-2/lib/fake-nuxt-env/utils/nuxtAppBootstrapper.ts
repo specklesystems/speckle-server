@@ -67,8 +67,19 @@ const initNuxtApp = (vueApp?: App<Element>) => {
   nuxtApp['_route'] = { query: {}, params: {} } as RouteLocationNormalizedLoaded
   nuxtApp['$router'] = { resolve: (to: unknown) => to } as Router
 
-  // TODO: Fake mixpanel through nuxtApp.$mixpanel
+  // Fake mixpanel through nuxtApp.$mixpanel
   nuxtApp['$mixpanel'] = (() => ({ track: noop })) as (typeof nuxtApp)['$mixpanel']
+
+  // Fake logger
+  nuxtApp['$logger'] = {
+    debug: console.debug,
+    info: console.info,
+    warn: console.warn,
+    error: console.error,
+    fatal: console.error,
+    trace: console.debug,
+    silent: noop
+  } as (typeof nuxtApp)['$logger']
 
   // This sets up the global Nuxt singleton, so that it's accessible in `useNuxtApp` etc.
   callWithNuxt(nuxtApp, () => void 0)
