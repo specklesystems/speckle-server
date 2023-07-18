@@ -74,7 +74,7 @@ const commonConfig = {
   client: 'pg',
   migrations: {
     extension: 'ts',
-    loadExtensions: isTestEnv() && isTsNode ? ['.ts'] : ['.js'],
+    loadExtensions: isTestEnv() && isTsNode ? ['.ts', '.js'] : ['.js'],
     directory: migrationDirs
   },
   pool: { min: 0, max: postgresMaxConnections }
