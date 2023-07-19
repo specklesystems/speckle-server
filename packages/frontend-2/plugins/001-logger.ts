@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
+import { isString } from 'lodash-es'
 import { isObjectLike } from '~~/lib/common/helpers/type'
 import { buildFakePinoLogger } from '~~/lib/core/helpers/observability'
 
@@ -17,13 +18,13 @@ export default defineNuxtPlugin(async () => {
       serverName
     }
   } = useRuntimeConfig()
+  const route = useRoute()
 
   let logger: ReturnType<typeof import('@speckle/shared').Observability.getLogger>
   if (process.server) {
     const { buildLogger } = await import('~/server/lib/core/helpers/observability')
     logger = buildLogger(logLevel, logPretty)
   } else {
-    // set up seq ingestion
     if (logClientApiToken?.length && logClientApiEndpoint?.length) {
       const seq = await import('seq-logging/browser')
       const seqLogger = new seq.Logger({
@@ -32,52 +33,79 @@ export default defineNuxtPlugin(async () => {
         onError: console.error
       })
 
-      const errorListener = (
-        event: ErrorEvent | PromiseRejectionEvent | string | Error | unknown
-      ) => {
-        const isUnhandledRejection = isObjectLike(event) && 'reason' in event
-        let err: Error
-        let objData: Record<string, unknown> = {}
+      const collectBrowserInfo = () => {
+        const {
+          userAgent,
+          platform: navigatorPlatform,
+          vendor: navigatorVendor
+        } = navigator
+        const url = window.location.href
 
-        if (event instanceof Error) {
-          err = event
-        } else if (isObjectLike(event)) {
-          if ('reason' in event && event.reason instanceof Error) {
-            err = event.reason
-          } else if ('error' in event && event.error instanceof Error) {
-            err = event.error
-          } else {
-            err = new Error(`Object logged, see extraData property`)
-            objData = event
-          }
-        } else {
-          err = new Error(`${event}`)
-          objData = {
-            reportedValue: event
-          }
+        return { userAgent, navigatorPlatform, navigatorVendor, url }
+      }
+
+      const collectMainInfo = () => {
+        return {
+          browser: true,
+          speckleServerVersion,
+          serverName,
+          frontendType: 'frontend-2',
+          route: route.path,
+          routeDefinition: route.matched[route.matched.length - 1].path,
+          ...collectBrowserInfo()
         }
+      }
+
+      const errorListener = (event: ErrorEvent | PromiseRejectionEvent) => {
+        const isUnhandledRejection = isObjectLike(event) && 'reason' in event
+        const err = ('reason' in event ? event.reason : event.error) as unknown
+        const msg = err instanceof Error ? err.message : `${err}`
 
         seqLogger.emit({
           timestamp: new Date(),
           level: 'error',
           messageTemplate: 'Client-side error: {errorMessage}',
           properties: {
-            errorMessage: err.message,
-            browser: true,
-            frontendType: 'frontend-2',
-            speckleServerVersion,
-            serverName,
+            errorMessage: msg,
             isUnhandledRejection,
-            extraData: objData
+            ...collectMainInfo()
           },
-          exception: err.stack
+          exception: err instanceof Error ? err.stack : `${err}`
+        })
+      }
+
+      const customLogger = (...args: unknown[]) => {
+        if (!args.length) return
+        const firstString = args.find(isString)
+        const firstError = args.find((arg): arg is Error => arg instanceof Error)
+        const otherData: unknown[] = args.filter(
+          (o) => !(o instanceof Error) && o !== firstString
+        )
+
+        const errorMessage = firstError?.message ?? firstString ?? `Unknown error`
+        const exception =
+          firstError?.stack ??
+          new Error(
+            'No Error instance was thrown, thus the following stack trace is synthesized manually'
+          ).stack
+
+        seqLogger.emit({
+          timestamp: new Date(),
+          level: 'error',
+          messageTemplate: 'Client-side error: {errorMessage}',
+          properties: {
+            errorMessage,
+            extraData: otherData,
+            ...collectMainInfo()
+          },
+          exception
         })
       }
 
       window.addEventListener('error', errorListener)
       window.addEventListener('unhandledrejection', errorListener)
 
-      logger = buildFakePinoLogger({ onError: errorListener })
+      logger = buildFakePinoLogger({ onError: customLogger })
       logger.debug('Set up seq ingestion...')
     } else {
       logger = buildFakePinoLogger()
