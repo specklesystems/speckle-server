@@ -37,6 +37,8 @@ export default defineNuxtPlugin(async () => {
       ) => {
         const isUnhandledRejection = isObjectLike(event) && 'reason' in event
         let err: Error
+        let objData: Record<string, unknown> = {}
+
         if (event instanceof Error) {
           err = event
         } else if (isObjectLike(event)) {
@@ -45,10 +47,14 @@ export default defineNuxtPlugin(async () => {
           } else if ('error' in event && event.error instanceof Error) {
             err = event.error
           } else {
-            err = new Error(`${JSON.stringify(event)}`)
+            err = new Error(`Object logged, see extraData property`)
+            objData = event
           }
         } else {
           err = new Error(`${event}`)
+          objData = {
+            reportedValue: event
+          }
         }
 
         seqLogger.emit({
@@ -61,7 +67,8 @@ export default defineNuxtPlugin(async () => {
             frontendType: 'frontend-2',
             speckleServerVersion,
             serverName,
-            isUnhandledRejection
+            isUnhandledRejection,
+            extraData: objData
           },
           exception: err.stack
         })
