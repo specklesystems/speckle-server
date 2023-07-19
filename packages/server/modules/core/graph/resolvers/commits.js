@@ -117,6 +117,10 @@ module.exports = {
     async branchName(parent, _args, ctx) {
       const { id } = parent
       return (await ctx.loaders.commits.getCommitBranch.load(id))?.name || null
+    },
+    async branch(parent, _args, ctx) {
+      const { id } = parent
+      return await ctx.loaders.commits.getCommitBranch.load(id)
     }
   },
   Stream: {

@@ -215,17 +215,28 @@ function buildMetaTableHelper<T extends string, C extends string, MK extends str
  * Largely the same, but also hold extra props like `metaKeys` that store allowed meta keys
  */
 
-export const Streams = buildTableHelper('streams', [
-  'id',
-  'name',
-  'description',
-  'isPublic',
-  'clonedFrom',
-  'createdAt',
-  'updatedAt',
-  'allowPublicComments',
-  'isDiscoverable'
-])
+export const StreamsMeta = buildMetaTableHelper(
+  'streams_meta',
+  ['streamId', 'key', 'value', 'createdAt', 'updatedAt'],
+  ['viewerE2eTestStreamVersion'],
+  'streamId'
+)
+
+export const Streams = buildTableHelper(
+  'streams',
+  [
+    'id',
+    'name',
+    'description',
+    'isPublic',
+    'clonedFrom',
+    'createdAt',
+    'updatedAt',
+    'allowPublicComments',
+    'isDiscoverable'
+  ],
+  StreamsMeta
+)
 
 export const StreamAcl = buildTableHelper('stream_acl', [
   'userId',
