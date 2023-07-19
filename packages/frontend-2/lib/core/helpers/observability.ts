@@ -5,13 +5,21 @@
 import { Observability } from '@speckle/shared'
 import { noop } from 'lodash-es'
 
-export function buildFakePinoLogger() {
+export function buildFakePinoLogger(
+  options?: Partial<{ onError: (...args: any[]) => void }>
+) {
+  const errLogger = (...args: unknown[]) => {
+    const { onError } = options || {}
+    if (onError) onError(...args)
+    console.error(...args)
+  }
+
   const logger = {
     debug: console.debug,
     info: console.info,
     warn: console.warn,
-    error: console.error,
-    fatal: console.error,
+    error: errLogger,
+    fatal: errLogger,
     trace: console.debug,
     silent: noop
   } as unknown as ReturnType<typeof Observability.getLogger>

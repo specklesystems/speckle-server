@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { isObjectLike as lodashIsObjectLike } from 'lodash-es'
 import { SetNonNullable, SetRequired } from 'type-fest'
 
 export type NonUndefined<T> = T extends undefined ? never : T
@@ -15,3 +16,6 @@ export type AddParameters<
   TFunction extends (...args: any) => any,
   TParameters extends [...args: any]
 > = (...args: [...Parameters<TFunction>, ...TParameters]) => ReturnType<TFunction>
+
+export const isObjectLike = (value: unknown): value is Record<string, unknown> =>
+  lodashIsObjectLike(value)
