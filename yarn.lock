@@ -19556,6 +19556,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"bl@npm:>=1.2.3":
+  version: 6.0.3
+  resolution: "bl@npm:6.0.3"
+  dependencies:
+    buffer: ^6.0.3
+    inherits: ^2.0.4
+    readable-stream: ^4.2.0
+  checksum: 67a60ccfb7b2378d78a98c56d3d23021a10a9d3aa90c399bdf88979c3faf03c9780fb7e99b85a3acc92b2395b62bd2810d8641a125134fb76278f83442b09e43
+  languageName: node
+  linkType: hard
+
 "bl@npm:^4.0.3, bl@npm:^4.1.0":
   version: 4.1.0
   resolution: "bl@npm:4.1.0"
@@ -19575,15 +19586,6 @@ __metadata:
     inherits: ^2.0.4
     readable-stream: ^3.4.0
   checksum: a7a438ee0bc540e80b8eb68cc1ad759a9c87df06874a99411d701d01cc0b36f30cd20050512ac3e77090138890960e07bfee724f3ee6619bb39a569f5cc3b1bc
-  languageName: node
-  linkType: hard
-
-"bl@npm:~0.8.1":
-  version: 0.8.2
-  resolution: "bl@npm:0.8.2"
-  dependencies:
-    readable-stream: ~1.0.26
-  checksum: 18767c5c861ae1cdbb000bb346e9e8e29137225e8eef97f39db78beeb236beca609f465580c5c1b177d621505f57400834fb4a17a66d264f33a0237293ec2ac5
   languageName: node
   linkType: hard
 
@@ -25413,25 +25415,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-xml-parser@npm:4.2.4":
-  version: 4.2.4
-  resolution: "fast-xml-parser@npm:4.2.4"
+"fast-xml-parser@npm:>=4.2.5":
+  version: 4.2.6
+  resolution: "fast-xml-parser@npm:4.2.6"
   dependencies:
     strnum: ^1.0.5
   bin:
     fxparser: src/cli/cli.js
-  checksum: d3b4d0c0152c09f98def792769fca6bb3fa1d597f9745d9564451c239089bd86bdf573c9263b4944860028cb7edb81752d64399c1aff8b87c9225ecef96905f7
-  languageName: node
-  linkType: hard
-
-"fast-xml-parser@npm:^4.0.8":
-  version: 4.2.5
-  resolution: "fast-xml-parser@npm:4.2.5"
-  dependencies:
-    strnum: ^1.0.5
-  bin:
-    fxparser: src/cli/cli.js
-  checksum: d32b22005504eeb207249bf40dc82d0994b5bb9ca9dcc731d335a1f425e47fe085b3cace3cf9d32172dd1a5544193c49e8615ca95b4bf95a4a4920a226b06d80
+  checksum: 1628e4b2c5ae01fe35eb920f09c6def7e29fd455f307fc44c3372c78114504643f34b28e87c13a4f1657c10498dbb6729a341507044dc7cba498e457e8fe2573
   languageName: node
   linkType: hard
 
@@ -38124,6 +38115,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"readable-stream@npm:^4.2.0":
+  version: 4.4.2
+  resolution: "readable-stream@npm:4.4.2"
+  dependencies:
+    abort-controller: ^3.0.0
+    buffer: ^6.0.3
+    events: ^3.3.0
+    process: ^0.11.10
+    string_decoder: ^1.3.0
+  checksum: 6f4063763dbdb52658d22d3f49ca976420e1fbe16bbd241f744383715845350b196a2f08b8d6330f8e219153dff34b140aeefd6296da828e1041a7eab1f20d5e
+  languageName: node
+  linkType: hard
+
 "readable-stream@npm:~1.0.26, readable-stream@npm:~1.0.26-4":
   version: 1.0.34
   resolution: "readable-stream@npm:1.0.34"
@@ -39377,15 +39381,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:7.0.0, semver@npm:~7.0.0":
-  version: 7.0.0
-  resolution: "semver@npm:7.0.0"
-  bin:
-    semver: bin/semver.js
-  checksum: 272c11bf8d083274ef79fe40a81c55c184dff84dd58e3c325299d0927ba48cece1f020793d138382b85f89bab5002a35a5ba59a3a68a7eebbb597eb733838778
-  languageName: node
-  linkType: hard
-
 "semver@npm:>=5.7.2, semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.1.2, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.6, semver@npm:^7.3.7, semver@npm:^7.3.8, semver@npm:^7.5.0, semver@npm:^7.5.1, semver@npm:^7.5.4":
   version: 7.5.4
   resolution: "semver@npm:7.5.4"
@@ -40496,7 +40491,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"string_decoder@npm:^1.1.1":
+"string_decoder@npm:^1.1.1, string_decoder@npm:^1.3.0":
   version: 1.3.0
   resolution: "string_decoder@npm:1.3.0"
   dependencies:
@@ -44926,13 +44921,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xml2js@npm:^0.4.19":
-  version: 0.4.23
-  resolution: "xml2js@npm:0.4.23"
+"xml2js@npm:>=0.5.0":
+  version: 0.6.0
+  resolution: "xml2js@npm:0.6.0"
   dependencies:
     sax: ">=0.6.0"
     xmlbuilder: ~11.0.0
-  checksum: ca0cf2dfbf6deeaae878a891c8fbc0db6fd04398087084edf143cdc83d0509ad0fe199b890f62f39c4415cf60268a27a6aed0d343f0658f8779bd7add690fa98
+  checksum: 437f353fd66d367bf158e9555a0625df9965d944e499728a5c6bc92a54a2763179b144f14b7e1c725040f56bbd22b0fa6cfcb09ec4faf39c45ce01efe631f40b
   languageName: node
   linkType: hard
 
