@@ -126,8 +126,8 @@ export function shouldDisableNotificationsConsumption() {
 /**
  * Get frontend app origin/base URL
  */
-export function getFrontendOrigin() {
-  const envKey = useNewFrontend() ? 'FRONTEND_ORIGIN' : 'CANONICAL_URL'
+export function getFrontendOrigin(forceFe2?: boolean) {
+  const envKey = useNewFrontend() || forceFe2 ? 'FRONTEND_ORIGIN' : 'CANONICAL_URL'
   const trimmedOrigin = trimEnd(process.env[envKey], '/')
 
   if (!trimmedOrigin) {

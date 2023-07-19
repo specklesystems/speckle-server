@@ -29,5 +29,8 @@ module.exports = {
     })
   ],
   // Externalizing all deps, we don't want to bundle them in cause this is a library
-  external: Object.keys(pkg.dependencies || {}).map((d) => new RegExp(`^${d}(\\/.*)?$`))
+  external: Object.keys({
+    ...(pkg.dependencies || {}),
+    ...(pkg.peerDependencies || {})
+  }).map((d) => new RegExp(`^${d}(\\/.*)?$`))
 }

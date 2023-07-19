@@ -367,6 +367,7 @@ export type Commit = {
   authorAvatar?: Maybe<Scalars['String']>;
   authorId?: Maybe<Scalars['String']>;
   authorName?: Maybe<Scalars['String']>;
+  branch?: Maybe<Branch>;
   branchName?: Maybe<Scalars['String']>;
   /**
    * The total number of comments for this commit. To actually get the comments, use the comments query and pass in a resource array consisting of of this commit's id.

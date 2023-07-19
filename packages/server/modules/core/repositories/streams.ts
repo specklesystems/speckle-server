@@ -47,6 +47,7 @@ import { Knex } from 'knex'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
 import { SetRequired } from 'type-fest'
 import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
+import { metaHelpers } from '@/modules/core/helpers/meta'
 
 export type StreamWithOptionalRole = StreamRecord & {
   /**
@@ -960,4 +961,31 @@ export async function revokeStreamPermissions(params: {
     .update({ updatedAt: knex.fn.now() }, '*')
 
   return stream as StreamRecord
+}
+
+/**
+ * Marking stream as being used for a specific version of viewer e2e tests
+ */
+export async function markStreamViewerE2eTest(streamId: string, version: string) {
+  const stream = await getStream({ streamId })
+  if (!stream) {
+    throw new Error(`Stream ${streamId} not found`)
+  }
+
+  const meta = metaHelpers(Streams)
+  await meta.set(streamId, 'viewerE2eTestStreamVersion', version)
+}
+
+/**
+ * Get stream used for a specific version of viewer e2e tests
+ */
+export async function getViewerE2eTestStream(version: string) {
+  const q = Streams.knex()
+    .select<StreamRecord[]>(Streams.cols)
+    .innerJoin(Streams.meta.name, Streams.meta.col.streamId, Streams.col.id)
+    .where(Streams.meta.col.key, 'viewerE2eTestStreamVersion')
+    .andWhereRaw(`${Streams.meta.col.value}::text = ?`, JSON.stringify(version))
+    .first()
+
+  return await q
 }
