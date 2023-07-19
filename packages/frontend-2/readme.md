@@ -42,6 +42,18 @@ Restart the ESLint plugin through VSCode's command palette, this is a bug with t
 
 Sometimes the codegen throws misleading errors and the issue is actually something completely different so I suggest removing the new graphql fragments/operations you've added one by one until the generation works again, to isolate the problematic graphql code. And then thoroughly investigate the fragments/operations you've added, because you might have a syntax error somewhere.
 
+### Testing
+
+We have some E2E tests here. You can run them the following way:
+
+1. `yarn test:e2e` - Run tests on dev server. Can be slow since it will re-build the app on each test run.
+1. `yarn test:e2e:static` - Run tests on static build. This is faster since it doesn't need to rebuild the app on each test run.
+1. `yarn test:e2e:browser` - Run tests on static build in a headed browser with GUI. Can be useful for debugging.
+
+#### Running E2E tests in a browser
+
+Make sure you run this to ensure deps are available: `npx playwright install-deps`
+
 ## Production
 
 Build the application for production:

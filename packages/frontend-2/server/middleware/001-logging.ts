@@ -90,4 +90,9 @@ export const LoggingMiddleware = pinoHttp({
   }
 })
 
-export default defineEventHandler(fromNodeMiddleware(LoggingMiddleware))
+export default defineEventHandler(
+  fromNodeMiddleware(
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    process.env.VITEST ? (_req, _res, next) => next() : LoggingMiddleware
+  )
+)

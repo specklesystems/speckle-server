@@ -122,6 +122,15 @@ const config = {
         // storybook types suck and can't be augmented
         '@typescript-eslint/no-unsafe-call': 'off'
       }
+    },
+    {
+      files: '*.spec.{js,ts}',
+      env: {
+        mocha: true
+      },
+      rules: {
+        '@typescript-eslint/no-non-null-assertion': 'off'
+      }
     }
   ]
 }

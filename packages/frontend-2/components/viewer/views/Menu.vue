@@ -1,7 +1,12 @@
 <template>
   <Menu as="div" class="relative z-30">
     <MenuButton v-slot="{ open }" as="template">
-      <ViewerControlsButtonToggle flat secondary :active="open">
+      <ViewerControlsButtonToggle
+        flat
+        secondary
+        :active="open"
+        data-button-type="views"
+      >
         <VideoCameraIcon class="w-5 h-5" />
       </ViewerControlsButtonToggle>
     </MenuButton>

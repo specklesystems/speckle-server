@@ -1,7 +1,12 @@
 <template>
   <Popover as="div" class="relative z-30">
     <PopoverButton v-slot="{ open }" as="template">
-      <ViewerControlsButtonToggle flat secondary :active="open">
+      <ViewerControlsButtonToggle
+        flat
+        secondary
+        :active="open"
+        data-button-type="local-settings"
+      >
         <CogIcon class="w-5 h-5" />
       </ViewerControlsButtonToggle>
     </PopoverButton>

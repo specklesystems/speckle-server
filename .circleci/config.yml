@@ -27,6 +27,9 @@ workflows:
       - test-frontend-2:
           filters: *filters-allow-all
 
+      - test-frontend-2-e2e:
+          filters: *filters-allow-all
+
       - test-dui-3:
           filters: *filters-allow-all
 
@@ -320,9 +323,9 @@ jobs:
           name: git diff
           when: on_fail
 
-  test-server:
+  test-server: &test-server-job
     docker:
-      - image: cimg/node:18.16.1
+      - image: cimg/node:18.16.1-browsers
       - image: cimg/redis:7.0.7
       - image: 'cimg/postgres:14.5'
         environment:
@@ -333,6 +336,7 @@ jobs:
         command: server /data --console-address ":9001"
         # environment:
 
+    # TODO: Clean up PGUSER and others?
     environment:
       NODE_ENV: test
       DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
@@ -341,6 +345,7 @@ jobs:
       SESSION_SECRET: 'keyboard cat'
       STRATEGY_LOCAL: 'true'
       CANONICAL_URL: 'http://127.0.0.1:3000'
+      FRONTEND_ORIGIN: 'http://127.0.0.1:3000'
       S3_ENDPOINT: 'http://127.0.0.1:9000'
       S3_ACCESS_KEY: 'minioadmin'
       S3_SECRET_KEY: 'minioadmin'
@@ -348,12 +353,14 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
+
     steps:
       - checkout
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
+
       - run:
           name: Install Dependencies
           command: yarn
@@ -425,6 +432,7 @@ jobs:
           name: Restore Yarn Package Cache
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
+
       - run:
           name: Install Dependencies
           command: yarn
@@ -456,6 +464,68 @@ jobs:
       - run:
           name: Test via Storybook
           command: yarn storybook:test:ci
+          working_directory: 'packages/frontend-2'
+
+  test-frontend-2-e2e:
+    <<: *test-server-job
+    resource_class: large
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+
+      - run:
+          name: Install Dependencies
+          command: yarn
+
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Build public packages
+          command: yarn build:public
+
+      - run:
+          command: touch .env.test
+          working_directory: 'packages/server'
+
+      - run:
+          name: Build server
+          command: yarn build
+          working_directory: 'packages/server'
+
+      - run:
+          name: Wait for dependencies to start
+          command: 'dockerize -wait tcp://localhost:5432 -wait tcp://localhost:6379 -timeout 1m'
+
+      - run:
+          name: Start up server
+          command: node ./bin/www
+          working_directory: 'packages/server'
+          background: true
+
+      - run:
+          name: Wait for server to start (after deps started)
+          command: 'dockerize -wait http://127.0.0.1:3000/static/logo-slab-white.png -timeout 1m'
+
+      - run:
+          name: Setup .env file
+          command: cp .env.example .env
+          working_directory: 'packages/frontend-2'
+
+      - run:
+          name: Run E2E tests
+          command: yarn test:e2e run
           working_directory: 'packages/frontend-2'
 
   test-dui-3:

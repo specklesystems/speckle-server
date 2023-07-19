@@ -1,5 +1,6 @@
 <template>
   <button
+    :data-is-active="props.active"
     :class="`transition rounded-lg w-10 h-10 flex items-center justify-center ${shadowClasses} ${colorClasses} active:scale-[0.9] outline-none`"
   >
     <slot></slot>

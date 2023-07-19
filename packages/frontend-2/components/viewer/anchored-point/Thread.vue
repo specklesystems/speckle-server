@@ -1,5 +1,5 @@
 <template>
-  <div class="relative">
+  <div class="relative" data-test-id="helloworld">
     <div
       class="absolute pointer-events-auto"
       :style="{
@@ -10,6 +10,7 @@
       <div ref="threadActivator" class="relative">
         <button
           :class="`
+          anchored-point-thread-button
         ${
           modelValue.isOccluded && !isExpanded
             ? 'grayscale opacity-80 hover:grayscale-0 hover:opacity-100'
@@ -17,6 +18,7 @@
         }
         ${isExpanded ? 'outline outline-2 outline-primary' : ''}  
         transition bg-foundation shadow hover:shadow-xl flex -space-x-2 items-center p-[2px] rounded-tr-full rounded-tl-full rounded-br-full`"
+          :data-thread-id="threadId"
           @click="onThreadClick"
         >
           <!-- 
@@ -32,7 +34,8 @@
     <div
       v-if="isExpanded"
       ref="threadContainer"
-      class="fixed z-50 pointer-events-auto"
+      class="anchored-point-thread-contents fixed z-50 pointer-events-auto"
+      :data-thread-id="threadId"
       :style="threadStyle"
     >
       <div
