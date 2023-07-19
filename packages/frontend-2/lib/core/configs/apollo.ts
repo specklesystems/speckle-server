@@ -279,7 +279,7 @@ function createLink(params: {
     if (!isSubTokenMissingError) {
       logger.error(
         {
-          ...omit(res, ['forward']),
+          ...omit(res, ['forward', 'response']),
           networkErrorMessage: res.networkError?.message,
           gqlErrorMessages: res.graphQLErrors?.map((e) => e.message)
         },
