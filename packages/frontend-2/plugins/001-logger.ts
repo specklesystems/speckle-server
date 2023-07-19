@@ -2,12 +2,13 @@
 import { isString } from 'lodash-es'
 import { isObjectLike } from '~~/lib/common/helpers/type'
 import { buildFakePinoLogger } from '~~/lib/core/helpers/observability'
+import { H3Error } from 'h3'
 
 /**
  * Pino logger in SSR, basic console.log fallback in CSR
  */
 
-export default defineNuxtPlugin(async () => {
+export default defineNuxtPlugin(async (nuxtApp) => {
   const {
     public: {
       logLevel,
@@ -19,7 +20,9 @@ export default defineNuxtPlugin(async () => {
     }
   } = useRuntimeConfig()
   const route = useRoute()
+  const router = useRouter()
 
+  // Set up logger
   let logger: ReturnType<typeof import('@speckle/shared').Observability.getLogger>
   if (process.server) {
     const { buildLogger } = await import('~/server/lib/core/helpers/observability')
@@ -89,6 +92,10 @@ export default defineNuxtPlugin(async () => {
             'No Error instance was thrown, thus the following stack trace is synthesized manually'
           ).stack
 
+        if (errorMessage !== firstString) {
+          otherData.unshift(firstString)
+        }
+
         seqLogger.emit({
           timestamp: new Date(),
           level: 'error',
@@ -111,6 +118,24 @@ export default defineNuxtPlugin(async () => {
       logger = buildFakePinoLogger()
     }
   }
+
+  // Set up global error handler
+  nuxtApp.vueApp.config.errorHandler = (err, _vm, info) => {
+    logger.error(err, 'Unhandled error in Vue app', info)
+  }
+
+  // Uncaught routing error handler
+  router.onError((err, to, from) => {
+    // skip 404
+    if (err instanceof H3Error) {
+      if ([404].includes(err.statusCode)) return
+    }
+
+    logger.error(err, 'Unhandled error in routing', {
+      to: to.path,
+      from: from?.path
+    })
+  })
 
   return {
     provide: {

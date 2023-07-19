@@ -16,7 +16,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const { data, errors } = await client
     .query({
       query: projectAccessCheckQuery,
-      variables: { id: projectId }
+      variables: { id: projectId },
+      context: {
+        skipLoggingErrors: true
+      }
     })
     .catch(convertThrowIntoFetchResult)
 

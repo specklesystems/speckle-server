@@ -276,7 +276,8 @@ function createLink(params: {
       'need a token to subscribe'
     )
 
-    if (!isSubTokenMissingError) {
+    const shouldSkip = !!res.operation.getContext().skipLoggingErrors
+    if (!isSubTokenMissingError && !shouldSkip) {
       logger.error(
         {
           ...omit(res, ['forward', 'response']),
