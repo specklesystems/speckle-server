@@ -8,11 +8,12 @@ import {
 } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { getServerVersion } from '@/modules/shared/helpers/envHelper'
+import { CrossSyncClientTestQuery } from '@/modules/cross-server-sync/graph/generated/graphql'
 
 export type GraphQLClient = ApolloClient<NormalizedCacheObject>
 
 const testQuery = gql`
-  query CommitDownloadTest {
+  query CrossSyncClientTest {
     _
   }
 `
@@ -59,7 +60,7 @@ export const createApolloClient = async (
   })
 
   // Test it out
-  const res = await client.query({
+  const res = await client.query<CrossSyncClientTestQuery>({
     query: testQuery
   })
 

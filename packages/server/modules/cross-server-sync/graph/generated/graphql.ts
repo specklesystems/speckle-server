@@ -2631,39 +2631,39 @@ export type WebhookUpdateInput = {
   url?: InputMaybe<Scalars['String']>;
 };
 
-export type CommitBranchMetadataQueryVariables = Exact<{
+export type CrossSyncCommitBranchMetadataQueryVariables = Exact<{
   streamId: Scalars['String'];
   commitId: Scalars['String'];
 }>;
 
 
-export type CommitBranchMetadataQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', commit?: { __typename?: 'Commit', id: string, branchName?: string | null } | null } | null };
+export type CrossSyncCommitBranchMetadataQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', commit?: { __typename?: 'Commit', id: string, branchName?: string | null } | null } | null };
 
-export type BranchMetadataQueryVariables = Exact<{
+export type CrossSyncBranchMetadataQueryVariables = Exact<{
   streamId: Scalars['String'];
   branchName: Scalars['String'];
 }>;
 
 
-export type BranchMetadataQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', branch?: { __typename?: 'Branch', id: string } | null } | null };
+export type CrossSyncBranchMetadataQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', branch?: { __typename?: 'Branch', id: string } | null } | null };
 
-export type CommitDownloadMetadataQueryVariables = Exact<{
+export type CrossSyncCommitDownloadMetadataQueryVariables = Exact<{
   streamId: Scalars['String'];
   commitId: Scalars['String'];
 }>;
 
 
-export type CommitDownloadMetadataQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', commit?: { __typename?: 'Commit', id: string, referencedObject: string, authorId?: string | null, message?: string | null, createdAt?: string | null, sourceApplication?: string | null, totalChildrenCount?: number | null, parents?: Array<string | null> | null } | null } | null };
+export type CrossSyncCommitDownloadMetadataQuery = { __typename?: 'Query', stream?: { __typename?: 'Stream', commit?: { __typename?: 'Commit', id: string, referencedObject: string, authorId?: string | null, message?: string | null, createdAt?: string | null, sourceApplication?: string | null, totalChildrenCount?: number | null, parents?: Array<string | null> | null } | null } | null };
 
-export type ProjectViewerResourcesQueryVariables = Exact<{
+export type CrossSyncProjectViewerResourcesQueryVariables = Exact<{
   projectId: Scalars['String'];
   resourceUrlString: Scalars['String'];
 }>;
 
 
-export type ProjectViewerResourcesQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, viewerResources: Array<{ __typename?: 'ViewerResourceGroup', identifier: string, items: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }> }> } };
+export type CrossSyncProjectViewerResourcesQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, viewerResources: Array<{ __typename?: 'ViewerResourceGroup', identifier: string, items: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }> }> } };
 
-export type DownloadableCommitViewerThreadsQueryVariables = Exact<{
+export type CrossSyncDownloadableCommitViewerThreadsQueryVariables = Exact<{
   projectId: Scalars['String'];
   filter: ProjectCommentsFilter;
   cursor?: InputMaybe<Scalars['String']>;
@@ -2671,7 +2671,7 @@ export type DownloadableCommitViewerThreadsQueryVariables = Exact<{
 }>;
 
 
-export type DownloadableCommitViewerThreadsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, commentThreads: { __typename?: 'ProjectCommentCollection', totalCount: number, totalArchivedCount: number, items: Array<{ __typename?: 'Comment', id: string, viewerState?: Record<string, unknown> | null, screenshot?: string | null, replies: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, viewerState?: Record<string, unknown> | null, screenshot?: string | null, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null } }> }, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null } }> } } };
+export type CrossSyncDownloadableCommitViewerThreadsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, commentThreads: { __typename?: 'ProjectCommentCollection', totalCount: number, totalArchivedCount: number, items: Array<{ __typename?: 'Comment', id: string, viewerState?: Record<string, unknown> | null, screenshot?: string | null, replies: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, viewerState?: Record<string, unknown> | null, screenshot?: string | null, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null } }> }, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null } }> } } };
 
 export type DownloadbleCommentMetadataFragment = { __typename?: 'Comment', id: string, viewerState?: Record<string, unknown> | null, screenshot?: string | null, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null } };
 
@@ -2683,7 +2683,7 @@ export type CrossSyncProjectMetadataQueryVariables = Exact<{
 
 export type CrossSyncProjectMetadataQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: ProjectVisibility, versions: { __typename?: 'VersionCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Version', id: string, model: { __typename?: 'Model', id: string } }> } } };
 
-export type CommitDownloadTestQueryVariables = Exact<{ [key: string]: never; }>;
+export type CrossSyncClientTestQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type CommitDownloadTestQuery = { __typename?: 'Query', _?: string | null };
+export type CrossSyncClientTestQuery = { __typename?: 'Query', _?: string | null };

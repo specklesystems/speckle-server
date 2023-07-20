@@ -1,12 +1,7 @@
 import fetch from 'cross-fetch'
 import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import {
-  Commit,
-  ViewerResourceGroup,
-  Comment,
-  CreateCommentInput
-} from '@/test/graphql/generated/graphql'
+import { CreateCommentInput } from '@/test/graphql/generated/graphql'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
 import { Roles } from '@speckle/shared'
@@ -28,6 +23,13 @@ import {
   assertValidGraphQLResult
 } from '@/modules/cross-server-sync/utils/graphqlClient'
 import { CrossServerCommitSyncError } from '@/modules/cross-server-sync/errors'
+import {
+  CrossSyncBranchMetadataQuery,
+  CrossSyncCommitBranchMetadataQuery,
+  CrossSyncCommitDownloadMetadataQuery,
+  CrossSyncDownloadableCommitViewerThreadsQuery,
+  CrossSyncProjectViewerResourcesQuery
+} from '@/modules/cross-server-sync/graph/generated/graphql'
 
 type LocalResources = Awaited<ReturnType<typeof getLocalResources>>
 type LocalResourcesWithCommit = LocalResources & { newCommitId: string }
@@ -39,11 +41,14 @@ type ObjectLoaderObject = Record<string, unknown> & {
   totalChildrenCount: number
 }
 
+type CommitMetadata = Awaited<ReturnType<typeof getCommitMetadata>>
+type ViewerThread = Awaited<ReturnType<typeof getViewerThreads>>[0]
+
 const COMMIT_URL_RGX = /((https?:\/\/)?[\w.]+)\/streams\/([\w]+)\/commits\/([\w]+)/i
 const MODEL_URL_RGX = /((https?:\/\/)?[\w.]+)\/projects\/([\w]+)\/models\/([\w@,]+)/i
 
 const commitBranchMetadataQuery = gql`
-  query CommitBranchMetadata($streamId: String!, $commitId: String!) {
+  query CrossSyncCommitBranchMetadata($streamId: String!, $commitId: String!) {
     stream(id: $streamId) {
       commit(id: $commitId) {
         id
@@ -54,7 +59,7 @@ const commitBranchMetadataQuery = gql`
 `
 
 const branchMetadataQuery = gql`
-  query BranchMetadata($streamId: String!, $branchName: String!) {
+  query CrossSyncBranchMetadata($streamId: String!, $branchName: String!) {
     stream(id: $streamId) {
       branch(name: $branchName) {
         id
@@ -64,7 +69,7 @@ const branchMetadataQuery = gql`
 `
 
 const commitMetadataQuery = gql`
-  query CommitDownloadMetadata($streamId: String!, $commitId: String!) {
+  query CrossSyncCommitDownloadMetadata($streamId: String!, $commitId: String!) {
     stream(id: $streamId) {
       commit(id: $commitId) {
         id
@@ -81,7 +86,10 @@ const commitMetadataQuery = gql`
 `
 
 const viewerResourcesQuery = gql`
-  query ProjectViewerResources($projectId: String!, $resourceUrlString: String!) {
+  query CrossSyncProjectViewerResources(
+    $projectId: String!
+    $resourceUrlString: String!
+  ) {
     project(id: $projectId) {
       id
       viewerResources(resourceIdString: $resourceUrlString) {
@@ -97,7 +105,7 @@ const viewerResourcesQuery = gql`
 `
 
 const viewerThreadsQuery = gql`
-  query DownloadableCommitViewerThreads(
+  query CrossSyncDownloadableCommitViewerThreads(
     $projectId: String!
     $filter: ProjectCommentsFilter!
     $cursor: String
@@ -220,7 +228,7 @@ const getViewerResources = async (
   client: GraphQLClient,
   params: { projectId: string; resourceUrlString: string }
 ) => {
-  const results = await client.query({
+  const results = await client.query<CrossSyncProjectViewerResourcesQuery>({
     query: viewerResourcesQuery,
     variables: params
   })
@@ -233,7 +241,7 @@ const getViewerResources = async (
     )
   }
 
-  return viewerResources as ViewerResourceGroup[]
+  return viewerResources
 }
 
 const getCommitBranchId = async (
@@ -241,10 +249,11 @@ const getCommitBranchId = async (
   params: { streamId: string; commitId: string }
 ) => {
   const { streamId, commitId } = params
-  const commitBranchMetadataRes = await client.query({
-    query: commitBranchMetadataQuery,
-    variables: { streamId, commitId }
-  })
+  const commitBranchMetadataRes =
+    await client.query<CrossSyncCommitBranchMetadataQuery>({
+      query: commitBranchMetadataQuery,
+      variables: { streamId, commitId }
+    })
   assertValidGraphQLResult(commitBranchMetadataRes, 'Commit Branch Metadata Query')
 
   const branchName = commitBranchMetadataRes.data?.stream?.commit?.branchName
@@ -252,7 +261,7 @@ const getCommitBranchId = async (
     throw new CrossServerCommitSyncError('Could not resolve commit branch name')
   }
 
-  const branchMetadataRes = await client.query({
+  const branchMetadataRes = await client.query<CrossSyncBranchMetadataQuery>({
     query: branchMetadataQuery,
     variables: { streamId, branchName }
   })
@@ -263,12 +272,12 @@ const getCommitBranchId = async (
     throw new CrossServerCommitSyncError('Could not resolve commit branch id')
   }
 
-  return branchId as string
+  return branchId
 }
 
 const getCommitMetadata = async (client: GraphQLClient, params: ParsedCommitUrl) => {
   const { streamId, commitId } = params
-  const results = await client.query({
+  const results = await client.query<CrossSyncCommitDownloadMetadataQuery>({
     query: commitMetadataQuery,
     variables: { streamId, commitId }
   })
@@ -281,13 +290,13 @@ const getCommitMetadata = async (client: GraphQLClient, params: ParsedCommitUrl)
     )
   }
 
-  return commit as Commit
+  return commit
 }
 
 const getViewerThreads = async (client: GraphQLClient, params: ParsedCommitUrl) => {
   const { streamId, branchId, commitId } = params
 
-  const results = await client.query({
+  const results = await client.query<CrossSyncDownloadableCommitViewerThreadsQuery>({
     query: viewerThreadsQuery,
     variables: {
       projectId: streamId,
@@ -308,7 +317,7 @@ const getViewerThreads = async (client: GraphQLClient, params: ParsedCommitUrl) 
     )
   }
 
-  return threads as Comment[]
+  return threads
 }
 
 const cleanViewerState = (
@@ -334,7 +343,7 @@ const cleanViewerState = (
 })
 
 const saveNewThreads = async (
-  threads: Comment[],
+  threads: ViewerThread[],
   localResources: LocalResourcesWithCommit,
   options?: Partial<{
     logger: typeof crossServerSyncLogger
@@ -344,7 +353,7 @@ const saveNewThreads = async (
   const { commentAuthor, targetStream } = localResources
   if (!commentAuthor) return
 
-  const threadInputs: { originalComment: Comment; input: CreateCommentInput }[] =
+  const threadInputs: { originalComment: ViewerThread; input: CreateCommentInput }[] =
     threads.map((t) => ({
       originalComment: t,
       input: {
@@ -404,7 +413,10 @@ const saveNewThreads = async (
   }
 }
 
-const saveNewCommit = async (commit: Commit, localResources: LocalResources) => {
+const saveNewCommit = async (
+  commit: CommitMetadata,
+  localResources: LocalResources
+) => {
   const { targetStream, targetBranch, owner } = localResources
 
   const streamId = targetStream.id
@@ -479,7 +491,7 @@ const createNewObject = async (
 const loadAllObjectsFromParent = async (
   params: {
     targetStreamId: string
-    sourceCommit: Commit
+    sourceCommit: CommitMetadata
     parsedCommitUrl: ParsedCommitUrl
   },
   options?: Partial<{

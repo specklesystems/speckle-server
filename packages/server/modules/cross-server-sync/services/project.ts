@@ -11,6 +11,7 @@ import { CrossSyncProjectMetadataQuery } from '@/modules/cross-server-sync/graph
 import { omit } from 'lodash'
 import { createStream } from '@/modules/core/repositories/streams'
 import { downloadCommit } from '@/modules/cross-server-sync/services/commit'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
 
@@ -169,4 +170,16 @@ export const downloadProject = async (
     origin: parsedUrl.origin,
     syncComments
   })
+  logger.debug(`Project download completed at: ${new Date().toISOString()}`)
+
+  const newProjectUrl = new URL(
+    `/projects/${project.id}`,
+    getFrontendOrigin(true)
+  ).toString()
+  logger.debug(`New Project URL: ${newProjectUrl}`)
+
+  return {
+    newProjectUrl,
+    projectId: project.id
+  }
 }
