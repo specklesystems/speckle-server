@@ -1,11 +1,14 @@
-import { GenericBridge } from '~/lib/bridge/generic'
 import { IRawBridge } from '~/lib/bridge/definitions'
 
+import { GenericBridge } from '~/lib/bridge/generic'
+import { SketchupBridge } from '~/lib/bridge/sketchup'
+
 import {
-  IBaseBinding,
+  IBasicConnectorBinding,
+  IBasicConnectorBindingKey,
   MockedBaseBinding
 } from '~/lib/bindings/definitions/baseBindings'
-import { SketchupBridge } from '~/lib/bridge/sketchup'
+
 import {
   ITestBinding,
   ITestBindingKey,
@@ -30,11 +33,12 @@ export default defineNuxtPlugin(async () => {
     (await tryHoistBinding<ITestBinding>(ITestBindingKey)) || new MockedTestBinding()
 
   // Tries to register some non-existant bindings.
-  const nonExistantBindings = await tryHoistBinding<IBaseBinding>('nonExistantBindings')
+  const nonExistantBindings = await tryHoistBinding('nonExistantBindings')
 
   // Registers a set of default bindings.
   const baseBinding =
-    (await tryHoistBinding<IBaseBinding>('baseBinding')) || new MockedBaseBinding()
+    (await tryHoistBinding<IBasicConnectorBinding>(IBasicConnectorBindingKey)) ||
+    new MockedBaseBinding()
 
   const showDevTools = () => {
     baseBinding.showDevTools()
