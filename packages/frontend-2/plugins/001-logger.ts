@@ -2,7 +2,6 @@
 import { isString } from 'lodash-es'
 import { isObjectLike } from '~~/lib/common/helpers/type'
 import { buildFakePinoLogger } from '~~/lib/core/helpers/observability'
-import { H3Error } from 'h3'
 
 /**
  * Pino logger in SSR, basic console.log fallback in CSR
@@ -127,8 +126,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   // Uncaught routing error handler
   router.onError((err, to, from) => {
     // skip 404
-    if (err instanceof H3Error) {
-      if ([404].includes(err.statusCode)) return
+    if (isObjectLike(err) && 'statusCode' in err) {
+      if ([404].includes(err.statusCode as number)) return
     }
 
     logger.error(err, 'Unhandled error in routing', {
