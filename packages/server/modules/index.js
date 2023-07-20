@@ -56,7 +56,8 @@ async function getSpeckleModules() {
     './notifications',
     './activitystream',
     './accessrequests',
-    './webhooks'
+    './webhooks',
+    './cross-server-sync'
   ]
 
   for (const dir of moduleDirs) {
