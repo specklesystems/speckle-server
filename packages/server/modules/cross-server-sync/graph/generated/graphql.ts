@@ -2681,7 +2681,7 @@ export type CrossSyncProjectMetadataQueryVariables = Exact<{
 }>;
 
 
-export type CrossSyncProjectMetadataQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: ProjectVisibility, versions: { __typename?: 'VersionCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Version', id: string, model: { __typename?: 'Model', id: string } }> } } };
+export type CrossSyncProjectMetadataQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, description?: string | null, visibility: ProjectVisibility, versions: { __typename?: 'VersionCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Version', id: string, model: { __typename?: 'Model', id: string, name: string } }> } } };
 
 export type CrossSyncClientTestQueryVariables = Exact<{ [key: string]: never; }>;
 

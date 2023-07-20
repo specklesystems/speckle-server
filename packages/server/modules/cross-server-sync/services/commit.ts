@@ -354,24 +354,26 @@ const saveNewThreads = async (
   if (!commentAuthor) return
 
   const threadInputs: { originalComment: ViewerThread; input: CreateCommentInput }[] =
-    threads.map((t) => ({
-      originalComment: t,
-      input: {
-        projectId: targetStream.id,
-        content: {
-          doc: t.text.doc,
-          blobIds: []
-        },
-        viewerState: t.viewerState
-          ? cleanViewerState(
-              t.viewerState as SpeckleViewer.ViewerState.SerializedViewerState,
-              localResources
-            )
-          : null,
-        screenshot: t.screenshot,
-        resourceIdString: `${localResources.targetBranch.id}@${localResources.newCommitId}`
-      }
-    }))
+    threads
+      .filter((t) => !!t.text.doc)
+      .map((t) => ({
+        originalComment: t,
+        input: {
+          projectId: targetStream.id,
+          content: {
+            doc: t.text.doc,
+            blobIds: []
+          },
+          viewerState: t.viewerState
+            ? cleanViewerState(
+                t.viewerState as SpeckleViewer.ViewerState.SerializedViewerState,
+                localResources
+              )
+            : null,
+          screenshot: t.screenshot,
+          resourceIdString: `${localResources.targetBranch.id}@${localResources.newCommitId}`
+        }
+      }))
 
   logger.info(`Creating ${threadInputs.length} new comment threads...`)
   const res = await Promise.all(

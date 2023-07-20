@@ -9,9 +9,11 @@ import {
 } from '@/modules/cross-server-sync/utils/graphqlClient'
 import { CrossSyncProjectMetadataQuery } from '@/modules/cross-server-sync/graph/generated/graphql'
 import { omit } from 'lodash'
-import { createStream } from '@/modules/core/repositories/streams'
 import { downloadCommit } from '@/modules/cross-server-sync/services/commit'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
+import { createBranchAndNotify } from '@/modules/core/services/branch/management'
+import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
 
@@ -31,6 +33,7 @@ const projectMetadataQuery = gql`
           id
           model {
             id
+            name
           }
         }
       }
@@ -94,6 +97,27 @@ const getProjectMetadata = async (params: {
   return { projectInfo, versions }
 }
 
+const ensureBranch = async (params: {
+  streamId: string
+  branchName: string
+  authorId: string
+}) => {
+  const { streamId, branchName, authorId } = params
+  const existingBranch = await getStreamBranchByName(streamId, branchName)
+  if (!existingBranch) {
+    const newBranch = await createBranchAndNotify(
+      {
+        streamId,
+        name: branchName
+      },
+      authorId
+    )
+    return newBranch
+  }
+
+  return existingBranch
+}
+
 const importVersions = async (params: {
   logger: Logger
   projectInfo: ProjectMetadata
@@ -108,6 +132,15 @@ const importVersions = async (params: {
 
   logger.debug(`Serially downloading ${projectInfo.versions.length} versions...`)
   for (const version of projectInfo.versions) {
+    // Ensure branch exists
+    const branchName = version.model.name
+    await ensureBranch({
+      streamId: localProjectId,
+      branchName,
+      authorId: localAuthorId
+    })
+
+    // Actually download
     const url = new URL(
       `/projects/${projectId}/models/${version.model.id}@${version.id}`,
       origin
@@ -116,7 +149,8 @@ const importVersions = async (params: {
       {
         commitUrl: url.toString(),
         targetStreamId: localProjectId,
-        commentAuthorId: syncComments ? localAuthorId : undefined
+        commentAuthorId: syncComments ? localAuthorId : undefined,
+        branchName
       },
       { logger }
     )
@@ -158,7 +192,8 @@ export const downloadProject = async (
   })
 
   logger.debug(`Creating project locally...`)
-  const project = await createStream(projectInfo.projectInfo, {
+  const project = await createStreamReturnRecord({
+    ...projectInfo.projectInfo,
     ownerId: localResources.user.id
   })
 
