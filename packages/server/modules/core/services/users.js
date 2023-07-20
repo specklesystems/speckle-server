@@ -65,12 +65,12 @@ module.exports = {
 
   /**
    * @param {{}} user
-   * @param {{skipPropertyValidation: boolean } | undefined} options
+   * @param {Partial<{skipPropertyValidation: boolean, forceBaseUserRole: boolean }> | undefined} options
    * @returns {Promise<string>}
    */
   async createUser(user, options = undefined) {
     // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
-    const { skipPropertyValidation = false } = options || {}
+    const { skipPropertyValidation = false, forceBaseUserRole = false } = options || {}
 
     user = skipPropertyValidation
       ? user
@@ -93,7 +93,10 @@ module.exports = {
     const [newUser] = (await Users().insert(user, UsersSchema.cols)) || []
     if (!newUser) throw new Error("Couldn't create user")
 
-    const userRole = (await countAdminUsers()) === 0 ? 'server:admin' : 'server:user'
+    const userRole =
+      (await countAdminUsers()) === 0 && !forceBaseUserRole
+        ? 'server:admin'
+        : 'server:user'
 
     await Acl().insert({ userId: newId, role: userRole })
 

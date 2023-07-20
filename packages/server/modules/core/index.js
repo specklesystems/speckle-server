@@ -19,6 +19,9 @@ exports.init = async (app) => {
   require('./rest/diffUpload')(app)
   require('./rest/diffDownload')(app)
 
+  // E2E test utility endpoints (only in dev / test mode)
+  require('./rest/e2e')(app)
+
   // Register core-based scoeps
   const scopes = require('./scopes.js')
   for (const scope of scopes) {

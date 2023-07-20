@@ -1,7 +1,7 @@
 <template>
   <div
     ref="parentEl"
-    class="absolute w-full h-full pointer-events-none overflow-hidden"
+    class="viewer-anchored-points absolute w-full h-full pointer-events-none overflow-hidden"
   >
     <!-- Add new thread bubble -->
     <ViewerAnchoredPointNewThread

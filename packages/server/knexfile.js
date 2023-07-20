@@ -2,13 +2,10 @@
 /* istanbul ignore file */
 'use strict'
 
-const { packageRoot } = require('./bootstrap')
+const { packageRoot, isTsNode } = require('./bootstrap')
 const fs = require('fs')
 const path = require('path')
-const {
-  isTestEnv,
-  ignoreMissingMigrations
-} = require('@/modules/shared/helpers/envHelper')
+const { ignoreMissingMigrations } = require('@/modules/shared/helpers/envHelper')
 
 function walk(dir) {
   let results = []
@@ -30,7 +27,7 @@ function walk(dir) {
 // run them through ts-node anyway, so it doesn't make sense forcing the app to be built
 const migrationModulesDir = path.resolve(
   packageRoot,
-  isTestEnv() ? './modules' : './dist/modules'
+  isTsNode ? './modules' : './dist/modules'
 )
 const migrationDirsExist = fs.existsSync(migrationModulesDir)
 if (!migrationDirsExist && !ignoreMissingMigrations()) {
@@ -73,7 +70,7 @@ const commonConfig = {
   client: 'pg',
   migrations: {
     extension: 'ts',
-    loadExtensions: isTestEnv() ? ['.js', '.ts'] : ['.js'],
+    loadExtensions: isTsNode ? ['.ts', '.js'] : ['.js'],
     directory: migrationDirs
   },
   pool: { min: 0, max: postgresMaxConnections }
