@@ -51,7 +51,7 @@ describe('ChunkInsertionObjectArray', () => {
     // use 4 chars, thats 8 bytes
     const object = { data: 'fake' }
     // using 16 bytes as limit should result in chunks of 2 objects
-    const chunkSizeLimitMb = 16 / 1_000_000
+    const chunkSizeLimitMb = 8 / 1_000_000
     const chunkLengthLimit = 10000
     const insertionChunks = chunkInsertionObjectArray({
       objects: Array(11).fill(object),

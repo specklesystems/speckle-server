@@ -14,7 +14,7 @@ export class ArgumentError extends BaseError {
 }
 
 // Js uses utf16 so string size in byes is length * 2
-export const calculateStringByteSize = (str: string) => str.length * 2
+export const calculateStringByteSize = (str: string) => new Blob([str]).size
 export const calculateStringMegabyteSize = (str: string) =>
   calculateStringByteSize(str) / 1_000_000
 
