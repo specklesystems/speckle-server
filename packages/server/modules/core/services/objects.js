@@ -7,6 +7,10 @@ const knex = require(`@/db/knex`)
 const { servicesLogger } = require('@/logging/logging')
 const { getMaximumObjectSizeMB } = require('@/modules/shared/helpers/envHelper')
 const { ObjectHandlingError } = require('@/modules/core/errors/object')
+const {
+  chunkInsertionObjectArray,
+  calculateStringMegabyteSize
+} = require('@/modules/core/utils/chunking')
 
 const Objects = () => knex('objects')
 const Closures = () => knex('object_children_closure')
@@ -97,9 +101,15 @@ module.exports = {
 
     // step 1: insert objects
     if (objsToInsert.length > 0) {
-      const batches = chunk(objsToInsert, objectsBatchSize)
+      // const batches = chunk(objsToInsert, objectsBatchSize)
+      const batches = chunkInsertionObjectArray({
+        objects: objsToInsert,
+        chunkLengthLimit: objectsBatchSize,
+        chunkSizeLimitMb: 2
+      })
       for (const batch of batches) {
         prepInsertionObjectBatch(batch)
+        // await Objects().insert(batch).onConflict('id').ignore()
         await knex.transaction(async (trx) => {
           const q = Objects().insert(batch).toString() + ' on conflict do nothing'
           await trx.raw(q)
@@ -113,6 +123,7 @@ module.exports = {
       const batches = chunk(closures, closureBatchSize)
 
       for (const batch of batches) {
+        //await Closures().insert(batch).onConflict('id').ignore()
         prepInsertionClosureBatch(batch)
         await knex.transaction(async (trx) => {
           const q = Closures().insert(batch).toString() + ' on conflict do nothing'
@@ -596,8 +607,7 @@ module.exports = {
 // limitations when doing upserts - ignored fields are not always returned, hence
 // we cannot provide a full response back including all object hashes.
 function prepInsertionObject(streamId, obj) {
-  // let memNow = process.memoryUsage().heapUsed / 1024 / 1024
-  const MAX_OBJECT_SIZE = getMaximumObjectSizeMB() * 1024 * 1024
+  const MAX_OBJECT_SIZE = getMaximumObjectSizeMB()
 
   if (obj.hash) obj.id = obj.hash
   else
@@ -605,13 +615,12 @@ function prepInsertionObject(streamId, obj) {
       obj.id || crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex') // generate a hash if none is present
 
   const stringifiedObj = JSON.stringify(obj)
-  if (stringifiedObj.length > MAX_OBJECT_SIZE) {
+  const objectByteSize = calculateStringMegabyteSize(stringifiedObj)
+  if (objectByteSize > MAX_OBJECT_SIZE) {
     throw new ObjectHandlingError(
-      `Object too large. (${stringifiedObj.length} > ${MAX_OBJECT_SIZE})`
+      `Object too large. (${objectByteSize} MB is > than limit, ${MAX_OBJECT_SIZE} MB)`
     )
   }
-  // let memAfter = process.memoryUsage().heapUsed / 1024 / 1024
-
   return {
     data: stringifiedObj, // stored in jsonb column
     streamId,

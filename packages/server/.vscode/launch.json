@@ -33,7 +33,7 @@
       "console": "integratedTerminal"
     },
     {
-      "args": ["-g='@comments'", "--timeout=10000", "--exit"],
+      "args": ["-g='@ChunkInsertionObject'", "--timeout=10000", "--exit"],
       // "envFile": "${workspaceFolder}/.env",
       "env": {
         "PORT": "0",
@@ -48,7 +48,7 @@
       "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
       "request": "launch",
       "skipFiles": ["<node_internals>/**"],
-      "type": "pwa-node"
+      "type": "node"
     },
     {
       "name": "NPM test",
@@ -65,10 +65,10 @@
       // "envFile": "${workspaceFolder}/.env",
       "runtimeExecutable": "npm",
       "skipFiles": ["<node_internals>/**"],
-      "type": "pwa-node"
+      "type": "node"
     },
     {
-      "type": "pwa-node",
+      "type": "node",
       "request": "launch",
       "name": "Launch Program",
       "skipFiles": ["<node_internals>/**"],
