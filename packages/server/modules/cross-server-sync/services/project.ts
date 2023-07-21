@@ -31,6 +31,7 @@ const projectMetadataQuery = gql`
         cursor
         items {
           id
+          createdAt
           model {
             id
             name
@@ -93,6 +94,11 @@ const getProjectMetadata = async (params: {
     versions.push(...res.data.project.versions.items)
     cursor = res.data.project.versions.cursor
   }
+
+  // Sort versions by descending creation data
+  versions.sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  )
 
   return { projectInfo, versions }
 }

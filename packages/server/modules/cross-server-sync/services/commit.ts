@@ -374,6 +374,7 @@ const saveNewThreads = async (
           resourceIdString: `${localResources.targetBranch.id}@${localResources.newCommitId}`
         }
       }))
+  if (!threadInputs.length) return
 
   logger.info(`Creating ${threadInputs.length} new comment threads...`)
   const res = await Promise.all(
