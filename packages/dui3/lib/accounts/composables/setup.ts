@@ -1,7 +1,7 @@
 import { ApolloClient } from '@apollo/client/core'
 import { ApolloClients } from '@vue/apollo-composable'
 import { ShallowRef, ComputedRef } from 'vue'
-import { Account } from '~/lib/bindings/definitions/baseBindings'
+import { Account } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 import { resolveClientConfig } from '~/lib/core/configs/apollo'
 
 export type DUIAccount = {

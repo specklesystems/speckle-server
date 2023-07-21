@@ -1,10 +1,5 @@
 <template>
   <div>
-    <Portal to="navigation">
-      <div class="mx-2 py-1 px-2 rounded text-xs bg-primary text-white font-bold">
-        for {{ appName }}
-      </div>
-    </Portal>
     <div class="space-y-2">
       <div>
         Hello world! You have

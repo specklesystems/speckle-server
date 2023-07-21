@@ -8,9 +8,9 @@
           <HeaderLogoBlock :active="false" class="mr-0" />
           <div class="flex flex-shrink-0 items-center -ml-2 md:ml-0">
             <PortalTarget name="navigation"></PortalTarget>
-            <FormButton size="xs" color="card" @click="$showDevTools()">
+            <!-- <FormButton size="xs" color="card" @click="$showDevTools()">
               Show Dev Tools
-            </FormButton>
+            </FormButton> -->
           </div>
         </div>
         <div>
