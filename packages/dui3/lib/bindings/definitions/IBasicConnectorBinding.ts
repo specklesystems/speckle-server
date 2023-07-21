@@ -1,17 +1,13 @@
 /* eslint-disable @typescript-eslint/require-await */
 
 import { BaseBridge } from '~~/lib/bridge/base'
-
-export interface Event<T> {
-  on: <E extends keyof T>(event: E, callback: T[E]) => void
-  showDevTools: () => Promise<void>
-}
+import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 
 export const IBasicConnectorBindingKey = 'baseBinding'
 
 // Needs to be agreed between Frontend and Core
 export interface IBasicConnectorBinding
-  extends Event<IBasicConnectorBindingHostEvents> {
+  extends IBinding<IBasicConnectorBindingHostEvents> {
   getAccounts: () => Promise<Account[]>
   getSourceApplicationName: () => Promise<string>
   getSourceApplicationVersion: () => Promise<string>

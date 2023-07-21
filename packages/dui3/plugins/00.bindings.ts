@@ -7,13 +7,13 @@ import {
   IBasicConnectorBinding,
   IBasicConnectorBindingKey,
   MockedBaseBinding
-} from '~/lib/bindings/definitions/baseBindings'
+} from '~/lib/bindings/definitions/IBasicConnectorBinding'
 
 import {
   ITestBinding,
   ITestBindingKey,
   MockedTestBinding
-} from '~/lib/bindings/definitions/testBindings'
+} from '~/lib/bindings/definitions/ITestBinding'
 
 // Makes TS happy
 declare let globalThis: Record<string, unknown> & {
