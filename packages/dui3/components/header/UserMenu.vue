@@ -45,6 +45,17 @@
               Test Page
             </NuxtLink>
           </MenuItem>
+          <MenuItem as="div" class="p-2">
+            <FormButton
+              full-width
+              size="sm"
+              color="card"
+              :icon-right="CogIcon"
+              @click="$showDevTools"
+            >
+              Show Dev Tools
+            </FormButton>
+          </MenuItem>
           <MenuItem as="div" class="border border-t-1">Hai</MenuItem>
         </MenuItems>
       </Transition>
@@ -52,14 +63,16 @@
   </div>
 </template>
 <script setup lang="ts">
-import { XMarkIcon } from '@heroicons/vue/20/solid'
+import { XMarkIcon, CogIcon } from '@heroicons/vue/20/solid'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { useInjectedAccounts } from '~/lib/accounts/composables/setup'
+
+const { $showDevTools } = useNuxtApp()
 
 const { defaultAccount } = useInjectedAccounts()
 
 const user = computed(() => {
-  if (!defaultAccount.value) return { name: 'loading', avatar: undefined }
+  if (!defaultAccount.value) return undefined
   return {
     name: defaultAccount.value?.accountInfo.userInfo.name,
     avatar: defaultAccount.value?.accountInfo.userInfo.avatar

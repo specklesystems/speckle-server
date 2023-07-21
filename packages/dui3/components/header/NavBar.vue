@@ -20,6 +20,4 @@
     </div>
   </nav>
 </template>
-<script setup lang="ts">
-const { $showDevTools } = useNuxtApp()
-</script>
+<script setup lang="ts"></script>

@@ -26,6 +26,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { UserCircleIcon } from '@heroicons/vue/20/solid'
 type UserAvatar = {
   name: string
   avatar?: string
