@@ -81,7 +81,12 @@ export const speckleLineFrag = /* glsl */ `
 
 			#endif
 
-			float alpha = vAlpha;//opacity;
+			float alpha;
+			#ifdef UNIFORM_OPACITY
+				alpha = opacity;
+			#else
+				alpha = vAlpha;
+			#endif
 
 
 			#ifdef WORLD_UNITS

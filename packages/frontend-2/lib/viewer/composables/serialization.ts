@@ -159,6 +159,7 @@ export function useApplySerializedState() {
   const resetState = useResetUiState()
   const { diffModelVersions, deserializeDiffCommand, endDiff } = useDiffUtilities()
   const { setSelectionFromObjectIds } = useSelectionUtilities()
+  const logger = useLogger()
 
   return async (state: SerializedViewerState, mode: StateApplyMode) => {
     if (mode === StateApplyMode.Reset) {
@@ -234,11 +235,11 @@ export function useApplySerializedState() {
         })
         .catch((e) => {
           if (e instanceof TimeoutError) {
-            console.warn(
+            logger.warn(
               `${e.message} - filter probably comes from a thread context that isn't currently loaded`
             )
           } else {
-            console.error(e)
+            logger.error(e)
           }
         })
     }
@@ -264,6 +265,7 @@ export function useApplySerializedState() {
     const command = state.ui.diff.command
       ? deserializeDiffCommand(state.ui.diff.command)
       : null
+    const activeDiffEnabled = !!diff.enabled.value
     if (command && command.diffs.length) {
       diff.time.value = state.ui.diff.time
       diff.mode.value = state.ui.diff.mode
@@ -274,7 +276,7 @@ export function useApplySerializedState() {
         instruction.versionA.versionId,
         instruction.versionB.versionId
       )
-    } else {
+    } else if (!activeDiffEnabled || mode === StateApplyMode.Spotlight) {
       await endDiff()
     }
 

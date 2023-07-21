@@ -1,5 +1,5 @@
 /**
- * Taken from apollo-server-core source code. Loads the Apollo Studip sandbox at /graphql.
+ * Taken from apollo-server-core source code. Loads the Apollo Studio sandbox at /graphql.
  * Won't work in production, because in production the backend /graphql route takes precedence.
  */
 

@@ -1,4 +1,4 @@
-import { ApolloClient } from '@apollo/client/core'
+import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
@@ -11,13 +11,15 @@ import { projectAccessCheckQuery } from '~~/lib/projects/graphql/queries'
 export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
 
-  const { $apollo } = useNuxtApp()
-  const client = ($apollo as { default: ApolloClient<unknown> }).default
+  const client = useApolloClientFromNuxt()
 
   const { data, errors } = await client
     .query({
       query: projectAccessCheckQuery,
-      variables: { id: projectId }
+      variables: { id: projectId },
+      context: {
+        skipLoggingErrors: true
+      }
     })
     .catch(convertThrowIntoFetchResult)
 

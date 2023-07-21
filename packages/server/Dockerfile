@@ -1,7 +1,7 @@
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
 
-FROM node:18.16.0-bullseye-slim as build-stage
+FROM node:18.16.1-bullseye-slim as build-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 WORKDIR /speckle-server
@@ -39,7 +39,7 @@ RUN yarn workspaces foreach run build
 
 # install only production dependencies
 # we need a clean environment, free of build dependencies
-FROM node:18.16.0-bullseye-slim as dependency-stage
+FROM node:18.16.1-bullseye-slim as dependency-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 
@@ -56,12 +56,14 @@ COPY packages/objectloader/package.json ./packages/objectloader/
 WORKDIR /speckle-server/packages/server
 RUN yarn workspaces focus --production
 
-FROM node:18.16.0-bullseye-slim as production-stage
+FROM node:18.16.1-bullseye-slim as production-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 ARG FILE_SIZE_LIMIT_MB=100
+ARG MAX_OBJECT_SIZE_MB=10
 
 ENV FILE_SIZE_LIMIT_MB=${FILE_SIZE_LIMIT_MB} \
+    MAX_OBJECT_SIZE_MB=${MAX_OBJECT_SIZE_MB} \
     NODE_ENV=${NODE_ENV} \
     SPECKLE_SERVER_VERSION=${SPECKLE_SERVER_VERSION}
 

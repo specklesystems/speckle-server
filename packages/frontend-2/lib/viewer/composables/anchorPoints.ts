@@ -46,7 +46,7 @@ export function useViewerAnchoredPointCalculator(params: {
         targetLoc.y = round(targetLoc.y)
       }
 
-      // console.log(targetLoc, targetProjectionResult, target, new Date().toISOString())
+      // logger.debug(targetLoc, targetProjectionResult, target, new Date().toISOString())
     }
 
     const targetOcclusionRes = viewer.query<IntersectionQuery>({
@@ -150,5 +150,39 @@ export function useViewerAnchoredPoints<
   return {
     updatePositions,
     calculate
+  }
+}
+
+export function useGetScreenCenterObjectId() {
+  const {
+    viewer: {
+      instance,
+      metadata: { filteringState }
+    }
+  } = useInjectedViewerState()
+
+  return () => {
+    const res = instance.query<IntersectionQuery>({
+      point: { x: 0, y: 0 },
+      operation: 'Pick'
+    })
+    const obj = (res?.objects || []).find((o) => {
+      const oid = o.object?.id as Optional<string>
+      if (!oid) return false
+
+      const hasHiddenObjects = (filteringState.value?.hiddenObjects || []).length !== 0
+      const hasIsolatedObjects =
+        !!filteringState.value?.isolatedObjects &&
+        filteringState.value?.isolatedObjects.length !== 0
+
+      if (hasHiddenObjects && filteringState.value?.hiddenObjects?.includes(oid))
+        return false
+      if (hasIsolatedObjects && !filteringState.value?.isolatedObjects?.includes(oid))
+        return false
+
+      return true
+    })
+
+    return obj ? (obj.object?.id as string) : null
   }
 }

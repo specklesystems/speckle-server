@@ -81,6 +81,8 @@ export type DiffStateCommand = {
 }
 
 export function useDiffBuilderUtilities() {
+  const logger = useLogger()
+
   const serializeDiffCommand = (command: DiffStateCommand): string =>
     JSON.stringify(command)
 
@@ -129,7 +131,7 @@ export function useDiffBuilderUtilities() {
       if (!finalDiffs.length) throw new Error('No valid resource referneces found')
       return { diffs: finalDiffs }
     } catch (e) {
-      console.warn('Diff command deserialization failed', e)
+      logger.warn('Diff command deserialization failed', e)
       return null
     }
   }

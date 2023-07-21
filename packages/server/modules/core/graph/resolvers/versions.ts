@@ -17,6 +17,7 @@ export = {
   Version: {
     async authorUser(parent, _args, ctx) {
       const { author } = parent
+      if (!author) return null
       return (await ctx.loaders.users.getUser.load(author)) || null
     },
     async model(parent, _args, ctx) {

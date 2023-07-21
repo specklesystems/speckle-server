@@ -123,9 +123,10 @@ export class RenderTree {
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.renderView) {
         const renderNode: NodeRenderData = ancestors[k].model.renderView.renderData
-        if (renderNode.speckleType === SpeckleType.BlockInstance) {
-          transform.premultiply(renderNode.geometry.transform)
-        } else if (renderNode.speckleType === SpeckleType.RevitInstance) {
+        if (
+          renderNode.speckleType === SpeckleType.RevitInstance ||
+          renderNode.speckleType === SpeckleType.BlockInstance
+        ) {
           /** Revit Instances *hosted* on other instances do not stack the host's transform */
           if (k > 0) {
             const curentAncestorId = ancestors[k].model.raw.id
@@ -176,7 +177,10 @@ export class RenderTree {
 
     return (parent ? parent : node.parent)
       .all((_node: TreeNode): boolean => {
-        return _node.model.renderView && _node.model.renderView.hasGeometry
+        return (
+          _node.model.renderView &&
+          (_node.model.renderView.hasGeometry || _node.model.renderView.hasMetadata)
+        )
       })
       .map((val: TreeNode) => val.model.renderView)
   }
@@ -192,7 +196,10 @@ export class RenderTree {
     }
 
     return (parent ? parent : node.parent).all((_node: TreeNode): boolean => {
-      return _node.model.renderView && _node.model.renderView.hasGeometry
+      return (
+        _node.model.renderView &&
+        (_node.model.renderView.hasGeometry || _node.model.renderView.hasMetadata)
+      )
     })
   }
 

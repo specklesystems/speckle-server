@@ -1,3 +1,4 @@
+{{- if not .Values.frontend_2.enabled -}}
 {{- if (and (.Values.frontend.networkPolicy.enabled) (eq .Values.networkPlugin.type "cilium")) -}}
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -23,3 +24,4 @@ spec:
     - toEntities:
         - "all"
 {{- end }}
+{{- end -}}

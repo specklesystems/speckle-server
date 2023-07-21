@@ -36,6 +36,7 @@ type Commit {
   sourceApplication: String
   totalChildrenCount: Int
   branchName: String
+  branch: Branch
   parents: [String]
   authorName: String
   authorId: String

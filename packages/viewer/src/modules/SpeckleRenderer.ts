@@ -60,6 +60,8 @@ import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 import { BatchObject } from './batching/BatchObject'
 import SpecklePointMaterial from './materials/SpecklePointMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
+import { Measurements } from './measurements/Measurements'
+import { MaterialOptions } from './materials/Materials'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -69,7 +71,8 @@ export enum ObjectLayers {
 
   STREAM_CONTENT = 1,
   PROPS = 2,
-  SHADOWCATCHER = 3
+  SHADOWCATCHER = 3,
+  MEASUREMENTS = 4
 }
 
 export default class SpeckleRenderer {
@@ -82,17 +85,18 @@ export default class SpeckleRenderer {
   private rootGroup: Group
   private batcher: Batcher
   private _intersections: Intersections
-  private input: Input
+  public input: Input
   private sun: DirectionalLight
   private sunTarget: Object3D
   private sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
   public viewer: Viewer // TEMPORARY
-  private filterBatchRecording: string[]
+  private filterBatchRecording: string[] = []
   private pipeline: Pipeline
   private lastSectionPlanes: Plane[] = []
   private sectionPlanesChanged: Plane[] = []
   private sectionBoxOutlines: SectionBoxOutlines = null
   private _shadowcatcher: Shadowcatcher = null
+  private _measurements: Measurements = null
   private cancel: { [subtreeId: string]: boolean } = {}
 
   private explodeTime = -1
@@ -183,6 +187,10 @@ export default class SpeckleRenderer {
 
   public get currentSectionBox() {
     return this.viewer.sectionBox.getCurrentBox()
+  }
+
+  public get measurements() {
+    return this._measurements
   }
 
   public constructor(viewer: Viewer /** TEMPORARY */) {
@@ -290,6 +298,7 @@ export default class SpeckleRenderer {
     this.viewer.cameraHandler.controls.addEventListener('rest', () => {
       this._needsRender = true
       this.pipeline.onStationaryBegin()
+      this._measurements.paused = false
     })
     this.viewer.cameraHandler.controls.addEventListener('controlstart', () => {
       this._needsRender = true
@@ -300,11 +309,13 @@ export default class SpeckleRenderer {
       this._needsRender = true
       if (this.viewer.cameraHandler.controls.hasRested)
         this.pipeline.onStationaryBegin()
+      this._measurements.paused = false
     })
 
     this.viewer.cameraHandler.controls.addEventListener('control', () => {
       this._needsRender = true
       this.pipeline.onStationaryEnd()
+      this._measurements.paused = true
     })
     this.viewer.cameraHandler.controls.addEventListener('update', () => {
       if (
@@ -331,6 +342,8 @@ export default class SpeckleRenderer {
     }
 
     this._scene.add(this._shadowcatcher.shadowcatcherMesh)
+
+    this._measurements = new Measurements(this)
   }
 
   public update(deltaTime: number) {
@@ -341,6 +354,7 @@ export default class SpeckleRenderer {
     this.updateRTEShadows()
     this.updateTransforms()
     this.updateFrustum()
+    this._measurements.update()
 
     this.pipeline.update(this)
 
@@ -632,17 +646,26 @@ export default class SpeckleRenderer {
     )
   }
 
+  public applyDirectFilter(ids: NodeRenderView[], filterMaterial: FilterMaterial) {
+    return this.batcher.insertObjectsFilterMaterial(ids, filterMaterial)
+  }
+
+  public removeDirectFilter(id: string) {
+    this.batcher.removeObjectsMaterial(id)
+  }
+
   public applyMaterial(
     ids: NodeRenderView[],
     material: SpeckleStandardMaterial | SpecklePointMaterial
   ) {
+    const materialOptions = { needsCopy: true } as MaterialOptions
     this.filterBatchRecording.push(
       ...this.batcher.setObjectsMaterial(ids, (rv: NodeRenderView) => {
         return {
           offset: rv.batchStart,
           count: rv.batchCount,
           material,
-          materialOptions: null
+          materialOptions
         }
       })
     )
@@ -670,8 +693,9 @@ export default class SpeckleRenderer {
     }, {})
   }
 
-  public updateClippingPlanes(planes: Plane[]) {
+  public updateClippingPlanes(planes?: Plane[]) {
     if (!this.allObjects) return
+    if (!planes) planes = this.viewer.sectionBox.planes
     /** This will be done via the batches in the near future */
     this.allObjects.traverse((object) => {
       const material = (object as unknown as { material }).material
@@ -687,6 +711,7 @@ export default class SpeckleRenderer {
     this.pipeline.updateClippingPlanes(planes)
     this.sectionBoxOutlines.updateClippingPlanes(planes)
     this._shadowcatcher.updateClippingPlanes(planes)
+    this._measurements.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
     this.resetPipeline()
     // console.log('Updated planes -> ', this.viewer.sectionBox.planes[2])
@@ -923,6 +948,14 @@ export default class SpeckleRenderer {
   }
 
   private onObjectClick(e) {
+    const measurement = this._measurements.pickMeasurement(e)
+    if (measurement) {
+      this._measurements.selectMeasurement(measurement, true)
+      return
+    }
+
+    if (this._measurements.enabled) return
+
     const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.viewer.cameraHandler.activeCam.camera,
@@ -970,6 +1003,14 @@ export default class SpeckleRenderer {
   }
 
   private onObjectDoubleClick(e) {
+    const measurement = this._measurements.pickMeasurement(e)
+    if (measurement) {
+      this.zoomToBox(measurement.bounds)
+      return
+    }
+
+    if (this._measurements.enabled) return
+
     const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.viewer.cameraHandler.activeCam.camera,
@@ -1431,35 +1472,5 @@ export default class SpeckleRenderer {
 
   public markTransformsDirty(batchId: string) {
     ;(this.batcher.batches[batchId] as MeshBatch).mesh.transformsDirty = true
-  }
-
-  public async adnotate() {
-    // const batches: Batch[] = Object.values(this.batcher.batches)
-    // let accumulator = 0
-    // let tris = 0
-    // let count = 0
-    // for (let k = 0; k < batches.length; k++) {
-    //   const rvs = batches[k].renderViews
-    //   for (let i = 0; i < rvs.length; i++) {
-    //     const speckleObject = this.viewer.getWorldTree().findId(rvs[i].renderData.id)
-    //       .model.raw
-    //     const text = new SpeckleText()
-    //     const start = performance.now()
-    //     await text.setText(speckleObject.speckle_type.split('.').reverse()[0], 1)
-    //     tris += text.triCount
-    //     accumulator += performance.now() - start
-    //     const objSize = rvs[i].aabb.getSize(new Vector3())
-    //     const objCenter = rvs[i].aabb.getCenter(new Vector3())
-    //     text.setPosition(
-    //       new Vector3(objCenter.x, objCenter.y + objSize.y * 0.5, objCenter.z)
-    //     )
-    //     this.rootGroup.add(text.text)
-    //     this.rootGroup.add(text.background)
-    //     count++
-    //   }
-    // }
-    // console.warn(accumulator)
-    // console.warn(tris / 3)
-    // console.warn(count)
   }
 }

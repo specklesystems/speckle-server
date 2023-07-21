@@ -133,6 +133,8 @@ const props = defineProps<{
   project: ProjectModelPageVersionsProjectFragment
 }>()
 
+const logger = useLogger()
+
 const modelId = computed(() => props.project.model?.id || '')
 
 // we're not using versions off props, cause 'versions' should already have those
@@ -235,7 +237,7 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
   try {
     await loadMore()
   } catch (e) {
-    console.error(e)
+    logger.error(e)
     state.error()
     return
   }

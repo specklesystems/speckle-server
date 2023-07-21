@@ -7,18 +7,26 @@ const {
   GeometryTypes,
   IfcTypesMap
 } = require('./utils')
+const { Observability } = require('@speckle/shared')
+const { logger: parentLogger } = require('../observability/logging')
 
 module.exports = class IFCParser {
-  constructor({ serverApi, fileId }) {
+  constructor({ serverApi, fileId, logger }) {
     this.ifcapi = new WebIFC.IfcAPI()
     this.ifcapi.SetWasmPath('./', false)
     this.serverApi = serverApi
     this.fileId = fileId
+    this.logger =
+      logger ||
+      Observability.extendLoggerComponent(parentLogger.child({ fileId }), 'ifc')
   }
 
   async parse(data) {
     await this.ifcapi.Init()
-    this.modelId = this.ifcapi.OpenModel(new Uint8Array(data), { USE_FAST_BOOLS: true })
+    this.modelId = this.ifcapi.OpenModel(new Uint8Array(data), {
+      USE_FAST_BOOLS: true
+    })
+
     this.startTime = performance.now()
 
     // prepoulate types
@@ -75,7 +83,7 @@ module.exports = class IFCParser {
 
   async populateSpatialNode(node, chunks, closures, depth) {
     depth++
-    process.stdout.write(`${this.spatialNodeCount++} nodes generated \r`)
+    this.logger.debug(`${this.spatialNodeCount++} nodes generated.`)
     closures.push([])
     await this.getChildren(node, chunks, PropNames.aggregates, closures, depth)
     await this.getChildren(node, chunks, PropNames.spatial, closures, depth)
@@ -239,7 +247,7 @@ module.exports = class IFCParser {
     const allLinesIDs = await this.ifcapi.GetAllLines(this.modelId)
     const allLinesCount = allLinesIDs.size()
     for (let i = 0; i < allLinesCount; i++) {
-      process.stdout.write(`${((i / allLinesCount) * 100).toFixed(3)}% props \r`)
+      this.logger.debug(`${((i / allLinesCount) * 100).toFixed(3)}% props.`)
       const id = allLinesIDs.get(i)
       if (!geometryIds.has(id)) {
         const props = await this.getItemProperty(id)
@@ -264,7 +272,7 @@ module.exports = class IFCParser {
       this.inPlaceFormatItemProperties(props)
       return props
     } catch (e) {
-      console.log(`There was an issue getting props of id ${id}`)
+      this.logger.error(e, `There was an issue getting props of id ${id}`)
     }
   }
 
@@ -372,7 +380,7 @@ module.exports = class IFCParser {
           speckle_type: 'reference',
           referencedId: speckleMesh.id
         })
-        process.stdout.write(`${(count++).toFixed(3)} geoms generated\r`)
+        this.logger.debug(`${(count++).toFixed(3)} geoms generated.`)
       }
     })
 

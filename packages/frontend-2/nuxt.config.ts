@@ -11,6 +11,8 @@ const buildOutputFileName = (chunkName: string) =>
     join('/_nuxt/', `${sanitizeFilePath(filename(chunkName))}.[hash].js`)
   )
 
+const { SPECKLE_SERVER_VERSION } = process.env
+
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
   typescript: {
@@ -34,19 +36,20 @@ export default defineNuxtConfig({
     public: {
       apiOrigin: 'UNDEFINED',
       mixpanelApiHost: 'UNDEFINED',
-      mixpanelTokenId: 'UNDEFINED'
+      mixpanelTokenId: 'UNDEFINED',
+      logLevel: 'info',
+      logPretty: false,
+      logClientApiToken: '',
+      logClientApiEndpoint: '',
+      speckleServerVersion: SPECKLE_SERVER_VERSION || 'unknown',
+      serverName: 'UNDEFINED'
     }
   },
 
   alias: {
     // Rewriting all lodash calls to lodash-es for proper tree-shaking & chunk splitting
     lodash: 'lodash-es',
-    '@vue/apollo-composable': '@speckle/vue-apollo-composable',
-    // We need browser polyfills for crypto & zlib cause they seem to be bundled for the web
-    // for some reason when running the dev server or storybook. Doesn't appear that these
-    // actually appear in any client-side bundles tho!
-    crypto: require.resolve('rollup-plugin-node-builtins'),
-    zlib: require.resolve('browserify-zlib')
+    '@vue/apollo-composable': '@speckle/vue-apollo-composable'
   },
 
   vite: {

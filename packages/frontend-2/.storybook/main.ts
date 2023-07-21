@@ -63,6 +63,12 @@ const config: StorybookConfig = {
       },
       build: {
         sourcemap: false
+      },
+      resolve: {
+        alias: {
+          crypto: require.resolve('rollup-plugin-node-builtins'),
+          zlib: require.resolve('browserify-zlib')
+        }
       }
     }
     let final = mergeConfig(config, resolvedViteConfig)

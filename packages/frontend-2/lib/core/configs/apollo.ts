@@ -1,12 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import {
-  ApolloLink,
-  InMemoryCache,
-  split,
-  from,
-  ServerError
-} from '@apollo/client/core'
+import { ApolloLink, InMemoryCache, split, from } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
 import type { ApolloConfigResolver } from '~~/lib/core/nuxt-modules/apollo/module'
@@ -14,7 +8,7 @@ import { createUploadLink } from 'apollo-upload-client'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { getMainDefinition } from '@apollo/client/utilities'
 import { OperationDefinitionNode, Kind } from 'graphql'
-import { CookieRef } from '#app'
+import { CookieRef, NuxtApp } from '#app'
 import { Optional } from '@speckle/shared'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import {
@@ -23,10 +17,11 @@ import {
   incomingOverwritesExistingMergeFunction
 } from '~~/lib/core/helpers/apolloSetup'
 import { onError } from '@apollo/client/link/error'
-import { useNavigateToLogin } from '~~/lib/common/helpers/route'
+import { useNavigateToLogin, loginRoute } from '~~/lib/common/helpers/route'
 import { useAppErrorState } from '~~/lib/core/composables/appErrorState'
+import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
+import { omit } from 'lodash-es'
 
-const appVersion = (import.meta.env.SPECKLE_SERVER_VERSION as string) || 'unknown'
 const appName = 'frontend-2'
 
 function createCache(): InMemoryCache {
@@ -265,30 +260,43 @@ async function createWsClient(params: {
   )
 }
 
-const isServerError = (e: Error): e is ServerError => e.name === 'ServerError'
-
 function createLink(params: {
   httpEndpoint: string
   wsClient?: SubscriptionClient
   authToken: CookieRef<Optional<string>>
+  nuxtApp: NuxtApp
 }): ApolloLink {
-  const { httpEndpoint, wsClient, authToken } = params
+  const { httpEndpoint, wsClient, authToken, nuxtApp } = params
   const goToLogin = useNavigateToLogin()
   const { registerError, isErrorState } = useAppErrorState()
 
   const errorLink = onError((res) => {
+    const logger = nuxtApp.$logger
     const isSubTokenMissingError = (res.networkError?.message || '').includes(
       'need a token to subscribe'
     )
 
-    if (!isSubTokenMissingError) console.error('Apollo Client error', res)
+    const shouldSkip = !!res.operation.getContext().skipLoggingErrors
+    if (!isSubTokenMissingError && !shouldSkip) {
+      logger.error(
+        {
+          ...omit(res, ['forward', 'response']),
+          networkErrorMessage: res.networkError?.message,
+          gqlErrorMessages: res.graphQLErrors?.map((e) => e.message)
+        },
+        'Apollo Client error'
+      )
+    }
 
     const { networkError } = res
-    if (networkError && isServerError(networkError)) {
-      const isForbidden = networkError.statusCode === 403
-      if (isForbidden) {
-        // Reset auth
-        authToken.value = undefined
+    if (networkError && isInvalidAuth(networkError)) {
+      // Reset auth
+      authToken.value = undefined
+
+      // A bit hacky, but since this may happen mid-routing, a standard router.push call may not work
+      if (process.client) {
+        window.location.href = loginRoute
+      } else {
         goToLogin()
       }
     }
@@ -349,8 +357,9 @@ function createLink(params: {
 
 const defaultConfigResolver: ApolloConfigResolver = async () => {
   const {
-    public: { apiOrigin }
+    public: { apiOrigin, speckleServerVersion = 'unknown' }
   } = useRuntimeConfig()
+  const nuxtApp = useNuxtApp()
 
   const httpEndpoint = `${apiOrigin}/graphql`
   const wsEndpoint = httpEndpoint.replace('http', 'ws')
@@ -359,7 +368,7 @@ const defaultConfigResolver: ApolloConfigResolver = async () => {
   const wsClient = process.client
     ? await createWsClient({ wsEndpoint, authToken })
     : undefined
-  const link = createLink({ httpEndpoint, wsClient, authToken })
+  const link = createLink({ httpEndpoint, wsClient, authToken, nuxtApp })
 
   return {
     // If we don't markRaw the cache, sometimes we get cryptic internal Apollo Client errors that essentially
@@ -367,7 +376,7 @@ const defaultConfigResolver: ApolloConfigResolver = async () => {
     cache: markRaw(createCache()),
     link,
     name: appName,
-    version: appVersion
+    version: speckleServerVersion
   }
 }
 
