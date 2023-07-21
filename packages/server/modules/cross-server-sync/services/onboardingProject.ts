@@ -19,6 +19,15 @@ const getMetadata = () => {
   return { url, cacheBustNumber, version }
 }
 
+export async function getOnboardingBaseProject() {
+  const metadata = getMetadata()
+  if (!metadata) {
+    return undefined
+  }
+
+  return await getOnboardingBaseStream(metadata.version)
+}
+
 export async function ensureOnboardingProject() {
   const logger = crossServerSyncLogger
   logger.info('Ensuring onboarding project is present...')
