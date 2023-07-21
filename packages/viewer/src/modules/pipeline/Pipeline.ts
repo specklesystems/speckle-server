@@ -1,4 +1,4 @@
-import { DoubleSide, Plane, Side, Vector2, WebGLRenderer } from 'three'
+import { DoubleSide, Plane, Scene, Side, Vector2, WebGLRenderer } from 'three'
 import {
   EffectComposer,
   Pass
@@ -268,7 +268,7 @@ export class Pipeline {
     ])
     this.stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     this.overlayPass.setLayers([ObjectLayers.MEASUREMENTS])
-    let restoreVisibility, opaque, stencil
+    let restoreVisibility, opaque, stencil, nonContentVisibility
 
     this.onBeforePipelineRender = () => {
       restoreVisibility = this._batcher.saveVisiblity()
@@ -316,19 +316,45 @@ export class Pipeline {
       this._batcher.restoreMaterial(stencil)
     }
 
-    this.renderPass.onBeforeRenderOpauqe = () => {
+    this.renderPass.onBeforeRenderOpauqe = (scene?: Scene) => {
       restoreVisibility = this._batcher.saveVisiblity()
       const opaque = this._batcher.getOpaque()
       this._batcher.applyVisibility(opaque)
+      nonContentVisibility = {}
+      scene.getObjectByName('SectionBoxOutlines').traverse((obj) => {
+        if (!obj['material']) return
+        nonContentVisibility[obj.uuid] = obj.visible
+      })
+      scene.getObjectByName('Shadowcatcher').traverse((obj) => {
+        if (!obj['material']) return
+        nonContentVisibility[obj.uuid] = obj.visible
+        obj.visible = false
+      })
     }
 
-    this.renderPass.onBeforeRenderTransparent = () => {
+    this.renderPass.onBeforeRenderTransparent = (scene?: Scene) => {
       const transparent = this._batcher.getTransparent()
       this._batcher.applyVisibility(transparent)
+      scene.getObjectByName('SectionBoxOutlines').traverse((obj) => {
+        if (!obj['material']) return
+        obj.visible = false
+      })
+      scene.getObjectByName('Shadowcatcher').traverse((obj) => {
+        if (!obj['material']) return
+        obj.visible = nonContentVisibility[obj.uuid] && true
+      })
     }
 
-    this.renderPass.onAfterRenderTransparent = () => {
+    this.renderPass.onAfterRenderTransparent = (scene?: Scene) => {
       this._batcher.applyVisibility(restoreVisibility)
+      scene.getObjectByName('SectionBoxOutlines').traverse((obj) => {
+        if (!obj['material']) return
+        obj.visible = nonContentVisibility[obj.uuid]
+      })
+      scene.getObjectByName('Shadowcatcher').traverse((obj) => {
+        if (!obj['material']) return
+        obj.visible = nonContentVisibility[obj.uuid]
+      })
     }
 
     this.setPipeline(this.getDefaultPipeline())

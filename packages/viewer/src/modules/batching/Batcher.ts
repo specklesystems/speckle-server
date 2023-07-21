@@ -383,6 +383,10 @@ export default class Batcher {
         }
       }
     }
+    for (const k in visibilityRanges) {
+      if (visibilityRanges[k].offset === 0 && visibilityRanges[k].count === 0)
+        delete visibilityRanges[k]
+    }
     return visibilityRanges
   }
 
