@@ -1,3 +1,4 @@
+import ObjectLoader from '@speckle/objectloader'
 import { uniqueId } from 'lodash-es'
 import { BaseBridge } from './base'
 
@@ -156,5 +157,48 @@ export class SketchupBridge extends BaseBridge {
     window.alert(
       'Sketchup cannot do this. The dev tools menu is accessible via a right click.'
     )
+  }
+
+  public async testReceiveOperationSketchup() {
+    // const objectId = '05aa4ebaf0862ba59a358dc97422df02'
+    // const streamId = '811a4f3ca4'
+    // const objectId = '3deca1f9a24e1730b4630c5376b5adf1'
+    // const streamId = '142e45c288'
+    const objectId = '745ea505d154c09e2317121bd263a2b2'
+    const streamId = '1ce562e99a'
+
+    const loader = new ObjectLoader({
+      serverUrl: 'https://speckle.xyz',
+      streamId,
+      objectId
+    })
+
+    let t = 0
+
+    for await (const obj of loader.getObjectIterator()) {
+      console.log(obj.id, ++t)
+
+      // sketchup.exec({
+      //   name: 'collectObjectsForReceive',
+      //   // eslint-disable-next-line camelcase
+      //   request_id: '1',
+      //   // eslint-disable-next-line camelcase
+      //   binding_name: 'receiveBinding',
+      //   data: { streamId, rootId: objectId, obj }
+      // })
+    }
+
+    // const c = await loader.getAndConstructObject((arg) => console.log(arg))
+    // console.log(c)
+    // sketchup.exec({
+    //   name: 'startConvert',
+    //   // eslint-disable-next-line camelcase
+    //   request_id: '1',
+    //   // eslint-disable-next-line camelcase
+    //   binding_name: 'receiveBinding',
+    //   data: { streamId, rootId: objectId }
+    // })
+
+    console.log('done receiving')
   }
 }
