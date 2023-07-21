@@ -33,7 +33,7 @@ http {
 
   sendfile        on;
   keepalive_timeout  65;
-  access_log /dev/stdout;
+  access_log /dev/stdout json_combined;
 
   # Speckle configuration
   server_tokens off;
@@ -105,7 +105,7 @@ http {
       add_header Cache-Control "no-store, no-cache, must-revalidate";
     }
 
-    location ~* ^/authn/.* {
+    location ~ ^/authn/.* {
       root   /app;
       index index.html;
       try_files $uri $uri/ /index.html;
