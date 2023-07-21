@@ -37,6 +37,10 @@ export function getFileSizeLimitMB() {
   return getIntFromEnv('FILE_SIZE_LIMIT_MB', '100')
 }
 
+export function getMaximumObjectSizeMB() {
+  return getIntFromEnv('MAX_OBJECT_SIZE_MB', '10')
+}
+
 export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
   return parseInt(process.env[envVarKey] || aDefault)
 }
@@ -122,8 +126,8 @@ export function shouldDisableNotificationsConsumption() {
 /**
  * Get frontend app origin/base URL
  */
-export function getFrontendOrigin() {
-  const envKey = useNewFrontend() ? 'FRONTEND_ORIGIN' : 'CANONICAL_URL'
+export function getFrontendOrigin(forceFe2?: boolean) {
+  const envKey = useNewFrontend() || forceFe2 ? 'FRONTEND_ORIGIN' : 'CANONICAL_URL'
   const trimmedOrigin = trimEnd(process.env[envKey], '/')
 
   if (!trimmedOrigin) {

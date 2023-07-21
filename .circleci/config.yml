@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   snyk: snyk/snyk@1.4.0
+  codecov: codecov/codecov@3.2.5
 
 workflows:
   version: 2
@@ -118,79 +119,89 @@ workflows:
             tags:
               only: /.*/
           requires:
-            - get-version
-            - publish-approval
             - docker-build-server
-            - test-server
+            - get-version
             - pre-commit
+            - publish-approval
+            - test-frontend-2
+            - test-server
 
       - docker-publish-frontend:
           context: *docker-hub-context
           filters: *filters-publish
           requires:
-            - get-version
-            - publish-approval
             - docker-build-frontend
+            - get-version
             - pre-commit
+            - publish-approval
+            - test-frontend-2
             - test-server
 
       - docker-publish-frontend-2:
           context: *docker-hub-context
           filters: *filters-publish
           requires:
-            - get-version
-            - publish-approval
             - docker-build-frontend-2
+            - get-version
             - pre-commit
+            - publish-approval
             - test-frontend-2
+            - test-server
 
       - docker-publish-webhooks:
           context: *docker-hub-context
           filters: *filters-publish
           requires:
-            - get-version
-            - publish-approval
             - docker-build-webhooks
+            - get-version
             - pre-commit
+            - publish-approval
+            - test-frontend-2
             - test-server
 
       - docker-publish-file-imports:
           context: *docker-hub-context
           filters: *filters-publish
           requires:
-            - get-version
-            - publish-approval
             - docker-build-file-imports
+            - get-version
             - pre-commit
+            - publish-approval
+            - test-frontend-2
             - test-server
 
       - docker-publish-previews:
           context: *docker-hub-context
           filters: *filters-publish
           requires:
-            - get-version
-            - publish-approval
             - docker-build-previews
+            - get-version
             - pre-commit
+            - publish-approval
+            - test-frontend-2
             - test-server
 
       - docker-publish-test-container:
           context: *docker-hub-context
           filters: *filters-publish
           requires:
-            - get-version
-            - publish-approval
             - docker-build-test-container
+            - get-version
             - pre-commit
+            - publish-approval
+            - test-frontend-2
+            - test-server
 
       - docker-publish-monitor-container:
           context: *docker-hub-context
           filters: *filters-publish
           requires:
-            - get-version
-            - publish-approval
             - docker-build-monitor-container
+            - get-version
             - pre-commit
+            - publish-approval
+            - test-frontend-2
+            - test-server
 
       - publish-helm-chart:
           filters: &filters-publish
@@ -202,16 +213,16 @@ workflows:
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
-            - get-version
-            - publish-approval
-            - docker-publish-server
+            - docker-publish-file-imports
             - docker-publish-frontend
             - docker-publish-frontend-2
-            - docker-publish-webhooks
-            - docker-publish-file-imports
-            - docker-publish-previews
             - docker-publish-monitor-container
+            - docker-publish-previews
+            - docker-publish-server
             - docker-publish-test-container
+            - docker-publish-webhooks
+            - get-version
+            - publish-approval
 
       - update-helm-documentation:
           filters: *filters-publish
@@ -379,9 +390,8 @@ jobs:
           command: yarn test:report
           working_directory: 'packages/server'
 
-      - run:
-          command: 'bash <(curl -s https://codecov.io/bash)'
-          working_directory: 'packages/server'
+      - codecov/upload:
+          file: packages/server/coverage/lcov.info
 
       - run:
           name: Introspect GQL schema for subsequent checks

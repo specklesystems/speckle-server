@@ -95,6 +95,20 @@ export async function deleteCommit(commitId: string) {
   return !!delCount
 }
 
+export async function getStreamCommitsWithBranchId(streamId: string) {
+  const baseQuery = Commits.knex<CommitRecord[]>()
+    .select<Array<CommitRecord & { branchId: string }>>([
+      ...Commits.cols,
+      BranchCommits.col.branchId
+    ])
+    .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
+    .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+    .where(StreamCommits.col.streamId, streamId)
+    .orderBy(Commits.col.createdAt)
+
+  return await baseQuery
+}
+
 export function getBatchedStreamCommits(
   streamId: string,
   options?: Partial<BatchedSelectOptions>

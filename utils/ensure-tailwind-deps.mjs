@@ -18,8 +18,17 @@ const lockFilePath = resolve(__dirname, lockFileName)
 
 async function checkForPresence() {
   try {
-    require('@speckle/tailwind-theme')
     require('@speckle/ui-components')
+  } catch (e) {
+    // We can't properly require this package from a node environment, so as long as we
+    // get to the expected error, we at least know that the package is built and exists
+    if (!(e instanceof Error) || !e.message.includes('v3-infinite-loading')) {
+      return false
+    }
+  }
+
+  try {
+    require('@speckle/tailwind-theme')
     require('@speckle/shared')
   } catch (e) {
     return false
