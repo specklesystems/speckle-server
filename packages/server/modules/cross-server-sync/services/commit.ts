@@ -521,7 +521,7 @@ const loadAllObjectsFromParent = async (
   let processedObjectCount = 1
   for await (const obj of objectLoader.getObjectIterator()) {
     const typedObj = obj as ObjectLoaderObject
-    logger.info(`Processing ${obj.id} - ${processedObjectCount++}/${totalObjectCount}`)
+    logger.debug(`Processing ${obj.id} - ${processedObjectCount++}/${totalObjectCount}`)
     await createNewObject(typedObj, targetStreamId, { logger })
   }
 }
@@ -592,11 +592,14 @@ export const downloadCommit = async (
   logger.debug(`Created new local commit: ${newCommitId}`)
 
   logger.debug(`Pulling & saving all objects! (${commit.totalChildrenCount})`)
-  await loadAllObjectsFromParent({
-    targetStreamId,
-    sourceCommit: commit,
-    parsedCommitUrl
-  })
+  await loadAllObjectsFromParent(
+    {
+      targetStreamId,
+      sourceCommit: commit,
+      parsedCommitUrl
+    },
+    { logger }
+  )
 
   if (localResources.commentAuthor) {
     logger.debug(`Pulling & saving all comments w/ #${commentAuthorId} as author!`)

@@ -187,3 +187,28 @@ export function speckleAutomateUrl() {
 export function ignoreMissingMigrations() {
   return ['1', 'true'].includes(process.env.IGNORE_MISSING_MIRATIONS || 'false')
 }
+
+/**
+ * URL of a project on any FE2 speckle server that will be pulled in and used as the onboarding stream
+ */
+export function getOnboardingStreamUrl() {
+  const val = process.env.ONBOARDING_STREAM_URL
+  if (!val?.length) return null
+
+  try {
+    // validating that the URL is valid
+    return new URL(val).toString()
+  } catch (e) {
+    // suppress
+  }
+
+  return null
+}
+
+/**
+ * Increase this value to re-sync the onboarding stream
+ */
+export function getOnboardingStreamCacheBustNumber() {
+  const val = process.env.ONBOARDING_STREAM_CACHE_BUST_NUMBER || '1'
+  return parseInt(val) || 1
+}

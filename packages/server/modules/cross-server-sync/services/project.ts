@@ -221,6 +221,7 @@ export const downloadProject = async (
 
   return {
     newProjectUrl,
-    projectId: project.id
+    projectId: project.id,
+    project
   }
 }
