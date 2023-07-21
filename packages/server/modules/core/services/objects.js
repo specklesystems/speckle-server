@@ -607,7 +607,7 @@ module.exports = {
 // limitations when doing upserts - ignored fields are not always returned, hence
 // we cannot provide a full response back including all object hashes.
 function prepInsertionObject(streamId, obj) {
-  const MAX_OBJECT_SIZE = getMaximumObjectSizeMB()
+  const MAX_OBJECT_SIZE_MB = getMaximumObjectSizeMB()
 
   if (obj.hash) obj.id = obj.hash
   else
@@ -616,9 +616,9 @@ function prepInsertionObject(streamId, obj) {
 
   const stringifiedObj = JSON.stringify(obj)
   const objectByteSize = calculateStringMegabyteSize(stringifiedObj)
-  if (objectByteSize > MAX_OBJECT_SIZE) {
+  if (objectByteSize > MAX_OBJECT_SIZE_MB) {
     throw new ObjectHandlingError(
-      `Object too large. (${objectByteSize} MB is > than limit, ${MAX_OBJECT_SIZE} MB)`
+      `Object too large. (${objectByteSize} MB is > than limit, ${MAX_OBJECT_SIZE_MB} MB)`
     )
   }
   return {
