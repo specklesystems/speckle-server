@@ -11068,6 +11068,7 @@ __metadata:
     "@vueuse/core": ^9.13.0
     apollo-upload-client: ^17.0.0
     autoprefixer: ^10.4.14
+    browserify-zlib: ^0.2.0
     chromatic: ^6.11.4
     concurrently: ^7.5.0
     dayjs: ^1.11.7
@@ -11096,6 +11097,7 @@ __metadata:
     prettier: ^2.7.1
     react: ^18.2.0
     react-dom: ^18.2.0
+    rollup-plugin-node-builtins: ^2.1.2
     seq-logging: ^2.1.1
     storybook: ^7.0.0-beta.54
     stylelint: ^15.10.1
