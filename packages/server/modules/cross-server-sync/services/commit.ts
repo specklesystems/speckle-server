@@ -362,7 +362,7 @@ const saveNewThreads = async (
           projectId: targetStream.id,
           content: {
             doc: t.text.doc,
-            blobIds: []
+            blobIds: [] // TODO: Currently not supported
           },
           viewerState: t.viewerState
             ? cleanViewerState(

@@ -179,7 +179,7 @@ export const downloadProject = async (
   const { projectUrl, authorId, syncComments } = params
   const { logger = crossServerSyncLogger } = options || {}
 
-  logger.debug(`Project download started at: ${new Date().toISOString()}`)
+  logger.info(`Project download started at: ${new Date().toISOString()}`)
 
   const localResources = await getLocalResources({ authorId })
   const parsedUrl = parseIncomingUrl(projectUrl)
@@ -205,13 +205,13 @@ export const downloadProject = async (
     origin: parsedUrl.origin,
     syncComments
   })
-  logger.debug(`Project download completed at: ${new Date().toISOString()}`)
+  logger.info(`Project download completed at: ${new Date().toISOString()}`)
 
   const newProjectUrl = new URL(
     `/projects/${project.id}`,
     getFrontendOrigin(true)
   ).toString()
-  logger.debug(`New Project URL: ${newProjectUrl}`)
+  logger.info(`New Project URL: ${newProjectUrl}`)
 
   return {
     newProjectUrl,
