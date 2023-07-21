@@ -18,6 +18,19 @@ http {
   uwsgi_temp_path       /bitnami/openresty/nginx-uwsgi;
   scgi_temp_path        /bitnami/openresty/nginx-scgi;
 
+  log_format json_combined escape=json
+    '{'
+      '"time_local":"$time_local",'
+      '"remote_addr":"$remote_addr",'
+      '"remote_user":"$remote_user",'
+      '"request":"$request",'
+      '"status": "$status",'
+      '"body_bytes_sent":"$body_bytes_sent",'
+      '"request_time":"$request_time",'
+      '"http_referrer":"$http_referer",'
+      '"http_user_agent":"$http_user_agent"'
+    '}';
+
   sendfile        on;
   keepalive_timeout  65;
   access_log /dev/stdout;
@@ -92,12 +105,12 @@ http {
       add_header Cache-Control "no-store, no-cache, must-revalidate";
     }
 
-    location ~* ^/(authn/.*) {
+    location ~* ^/authn/.* {
       root   /app;
       index index.html;
       try_files $uri $uri/ /index.html;
       add_header Cache-Control "no-store, no-cache, must-revalidate";
-      add_header X-Frame-Options "DENY" always;
+      add_header X-Frame-Options DENY always;
     }
 
     location ~* ^/(favicon.ico|logo.svg|loadingImage.png|og_image.png) {
