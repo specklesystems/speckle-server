@@ -102,17 +102,7 @@ http {
       root   /app;
       index index.html;
       try_files $uri $uri/ /index.html;
-      add_header debug "2 $uri";
       add_header Cache-Control "no-store, no-cache, must-revalidate";
-    }
-
-    location ^~ /authn/ {
-      root   /app;
-      index index.html;
-      try_files $uri $uri/ /index.html;
-      add_header debug "1 $uri";
-      add_header Cache-Control "no-store, no-cache, must-revalidate";
-      add_header X-Frame-Options DENY always;
     }
 
     location ~* ^/(favicon.ico|logo.svg|loadingImage.png|og_image.png) {
