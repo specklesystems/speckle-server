@@ -102,6 +102,7 @@ http {
       root   /app;
       index index.html;
       try_files $uri $uri/ /index.html;
+      add_header debug 1;
       add_header Cache-Control "no-store, no-cache, must-revalidate";
       add_header X-Frame-Options DENY always;
     }
@@ -110,6 +111,7 @@ http {
       root   /app;
       index index.html;
       try_files $uri $uri/ /index.html;
+      add_header debug 2;
       add_header Cache-Control "no-store, no-cache, must-revalidate";
     }
 
