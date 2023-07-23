@@ -1,7 +1,7 @@
 <template>
   <button
     v-tippy="tip"
-    :class="`block min-w-0 w-full max-w-full text-left items-center justify-between space-x-2 hover:bg-primary-muted transition p-2 select-none group hover:cursor-pointer hover:text-primary ${
+    :class="`block w-full  text-left items-center space-x-2 hover:bg-primary-muted transition p-2 select-none group hover:cursor-pointer hover:text-primary ${
       !account.isValid ? 'text-danger bg-rose-500/10' : ''
     } ${account.accountInfo.isDefault ? 'bg-blue-500/5' : ''}`"
     @click="$openUrl(account.accountInfo.serverInfo.url)"

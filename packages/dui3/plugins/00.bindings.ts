@@ -15,6 +15,12 @@ import {
   MockedTestBinding
 } from '~/lib/bindings/definitions/ITestBinding'
 
+import {
+  IConfigBinding,
+  IConfigBindingKey,
+  MockedConfigBinding
+} from '~/lib/bindings/definitions/IConfigBinding'
+
 // Makes TS happy
 declare let globalThis: Record<string, unknown> & {
   CefSharp?: { BindObjectAsync: (name: string) => Promise<void> }
@@ -40,6 +46,9 @@ export default defineNuxtPlugin(async () => {
     (await tryHoistBinding<IBasicConnectorBinding>(IBasicConnectorBindingKey)) ||
     new MockedBaseBinding()
 
+  // UI configuration bindings.
+  const configBinding = await tryHoistBinding<IConfigBinding>(IConfigBindingKey)
+
   const showDevTools = () => {
     baseBinding.showDevTools()
   }
@@ -53,6 +62,7 @@ export default defineNuxtPlugin(async () => {
       testBindings,
       nonExistantBindings,
       baseBinding,
+      configBinding,
       showDevTools,
       openUrl
     }
