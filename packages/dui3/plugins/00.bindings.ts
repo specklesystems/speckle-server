@@ -14,6 +14,10 @@ import {
   ITestBindingKey,
   MockedTestBinding
 } from '~/lib/bindings/definitions/ITestBinding'
+import {
+  ISketchupReceiveBinding,
+  ISketchupReceiveBindingKey
+} from '~/lib/bindings/definitions/ISketchupReceiveBinding'
 
 import {
   IConfigBinding,
@@ -46,6 +50,11 @@ export default defineNuxtPlugin(async () => {
     (await tryHoistBinding<IBasicConnectorBinding>(IBasicConnectorBindingKey)) ||
     new MockedBaseBinding()
 
+  // Register sketchup receive binding
+  const sketchupReceiveBinding = await tryHoistBinding<ISketchupReceiveBinding>(
+    ISketchupReceiveBindingKey
+  )
+
   // UI configuration bindings.
   const configBinding = await tryHoistBinding<IConfigBinding>(IConfigBindingKey)
 
@@ -62,6 +71,7 @@ export default defineNuxtPlugin(async () => {
       testBindings,
       nonExistantBindings,
       baseBinding,
+      sketchupReceiveBinding,
       configBinding,
       showDevTools,
       openUrl

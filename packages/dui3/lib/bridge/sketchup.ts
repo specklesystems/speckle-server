@@ -25,7 +25,7 @@ export class SketchupBridge extends BaseBridge {
     }
   >
   private bindingName: string
-  private TIMEOUT_MS = 2000 // 2s
+  private TIMEOUT_MS = 10000 // 2s
   public isInitalized: Promise<boolean>
   private resolveIsInitializedPromise!: (v: boolean) => unknown
   private rejectIsInitializedPromise!: (message: string) => unknown
