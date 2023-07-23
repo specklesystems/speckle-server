@@ -45,7 +45,7 @@
             </div>
           </MenuItem>
           <MenuItem v-slot="{ close }" as="div">
-            <div class="py-3 flex space-x-2 border-t-1 justify-around">
+            <div class="px-2 py-3 flex space-x-2 border-t-1 justify-between">
               <div class="">
                 <button
                   class="text-xs text-foreground-2 hover:text-primary transition"
