@@ -20,56 +20,63 @@
         <MenuItems
           class="absolute right-0 md:right-4 top-14 md:top-16 w-full md:w-64 origin-top-right bg-foundation sm:rounded-t-md rounded-b-md shadow-lg overflow-hidden"
         >
-          <MenuItem v-slot="{ active, close }" as="div">
-            <NuxtLink
-              :class="[
-                active ? 'bg-foundation-focus' : '',
-                'flex items-center justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
-              ]"
-              to="/"
-              @click="close"
-            >
-              Home
-            </NuxtLink>
+          <MenuItem>
+            <div class="border border-t-1">
+              <div v-if="loading" class="p-2">Loading accounts...</div>
+              <div v-else class="p-2 flex items-center justify-between">
+                <div class="text-xs text-foreground-2">Your accounts</div>
+                <div>
+                  <FormButton
+                    text
+                    size="xs"
+                    @click.stop="accountStore.refreshAccounts()"
+                  >
+                    Refresh
+                  </FormButton>
+                </div>
+              </div>
+              <div class="space-y-0">
+                <HeaderUserAccount
+                  v-for="acc in accounts"
+                  :key="acc.accountInfo.id"
+                  :account="(acc as DUIAccount)"
+                />
+              </div>
+            </div>
           </MenuItem>
-
-          <MenuItem v-slot="{ active, close }" as="div">
-            <NuxtLink
-              :class="[
-                active ? 'bg-foundation-focus' : '',
-                'flex items-center justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
-              ]"
-              to="/test"
-              @click="close"
-            >
-              Test Page
-            </NuxtLink>
+          <MenuItem v-slot="{ close }" as="div">
+            <div class="p-2 flex space-x-2 border-t-1">
+              <button
+                class="text-xs text-foreground-2 hover:text-primary transition"
+                @click="$showDevTools"
+              >
+                Dev tools
+              </button>
+              <NuxtLink
+                class="text-xs text-foreground-2 hover:text-primary transition"
+                to="/test"
+                @click="close()"
+              >
+                Test Page
+              </NuxtLink>
+            </div>
           </MenuItem>
-          <MenuItem as="div" class="p-2">
-            <FormButton
-              full-width
-              size="sm"
-              color="card"
-              :icon-right="CogIcon"
-              @click="$showDevTools"
-            >
-              Show Dev Tools
-            </FormButton>
-          </MenuItem>
-          <MenuItem as="div" class="border border-t-1">Hai</MenuItem>
         </MenuItems>
       </Transition>
     </Menu>
   </div>
 </template>
 <script setup lang="ts">
-import { XMarkIcon, CogIcon } from '@heroicons/vue/20/solid'
+import { XMarkIcon } from '@heroicons/vue/20/solid'
+import { storeToRefs } from 'pinia'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { useInjectedAccounts } from '~/lib/accounts/composables/setup'
+import { useAccountStore } from '~/store/accounts'
+import { DUIAccount } from 'lib/accounts/composables/setup'
+
+const accountStore = useAccountStore()
+const { accounts, defaultAccount, loading } = storeToRefs(accountStore)
 
 const { $showDevTools } = useNuxtApp()
-
-const { defaultAccount } = useInjectedAccounts()
 
 const user = computed(() => {
   if (!defaultAccount.value) return undefined

@@ -44,12 +44,17 @@ export default defineNuxtPlugin(async () => {
     baseBinding.showDevTools()
   }
 
+  const openUrl = (url: string) => {
+    baseBinding.openUrl(url)
+  }
+
   return {
     provide: {
       testBindings,
       nonExistantBindings,
       baseBinding,
-      showDevTools
+      showDevTools,
+      openUrl
     }
   }
 })

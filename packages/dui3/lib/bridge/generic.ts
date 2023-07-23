@@ -60,6 +60,10 @@ export class GenericBridge extends BaseBridge {
   public showDevTools() {
     this.bridge.ShowDevTools()
   }
+
+  public openUrl(url: string) {
+    this.bridge.OpenUrl(url)
+  }
 }
 
 const lowercaseMethodName = (name: string) =>

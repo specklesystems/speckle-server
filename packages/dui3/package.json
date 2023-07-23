@@ -25,6 +25,7 @@
     "@apollo/client": "^3.7.14",
     "@headlessui/vue": "^1.7.13",
     "@heroicons/vue": "^2.0.12",
+    "@pinia/nuxt": "^0.4.11",
     "@speckle/shared": "workspace:^",
     "@speckle/ui-components": "workspace:^",
     "@speckle/ui-components-nuxt": "workspace:^",
@@ -35,8 +36,10 @@
     "graphql-tag": "^2.12.6",
     "lodash-es": "^4.17.21",
     "nanoevents": "^8.0.0",
+    "pinia": "^2.1.4",
     "portal-vue": "^3.0.0",
-    "subscriptions-transport-ws": "^0.11.0"
+    "subscriptions-transport-ws": "^0.11.0",
+    "vue-tippy": "^6.2.0"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^2.13.6",

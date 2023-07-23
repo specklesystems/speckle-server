@@ -1,16 +1,18 @@
 <template>
   <div>
     <div class="space-y-2">
-      <div>
+      <div v-if="!loading">
         Hello world! You have
-        {{ accounts.length }} accounts.
+        {{ accounts.length }} accounts, out of which {{ validAccounts.length }} are
+        valid.
       </div>
+      <div v-else>Loading Accounts...</div>
       <div>
         <FormButton to="/test">Go To Test Bindings Page</FormButton>
       </div>
       <div v-for="acc in accounts" :key="acc.accountInfo.id">
         <div class="truncate text-xs">
-          {{ acc.accountInfo.userInfo.email }} @
+          {{ acc.isValid }} // {{ acc.accountInfo.userInfo.email }} @
           <b>{{ acc.accountInfo.serverInfo.url }}</b>
           {{ acc.accountInfo.serverInfo.name }}
         </div>
@@ -27,24 +29,24 @@
       <div>Doc info:</div>
       <div>{{ documentInfo }}</div>
       <div>
-        <FormButton @click="refreshAccounts()">Refresh Accounts</FormButton>
+        <FormButton @click="accountStore.refreshAccounts()">
+          Refresh Accounts
+        </FormButton>
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { UseQueryReturn, useQuery } from '@vue/apollo-composable'
-import { useInjectedAccounts } from '~/lib/accounts/composables/setup'
+import { storeToRefs } from 'pinia'
 import { graphql } from '~/lib/common/generated/gql'
 import { ServerInfoTestQuery } from '~/lib/common/generated/gql/graphql'
-import { useInjectedDocumentInfo } from '~/lib/document-info'
+import { useAccountStore } from '~/store/accounts'
+import { useDocumentInfoStore } from '~/store/documentInfo'
 
-const { accounts, refreshAccounts, defaultAccount } = useInjectedAccounts()
-
-const { $baseBinding } = useNuxtApp()
-const appName = await $baseBinding.getSourceApplicationName()
-
-const documentInfo = useInjectedDocumentInfo()
+const accountStore = useAccountStore()
+const { accounts, defaultAccount, loading, validAccounts } = storeToRefs(accountStore)
+const { documentInfo } = storeToRefs(useDocumentInfoStore())
 
 const versionQuery = graphql(`
   query ServerInfoTest {
@@ -54,7 +56,7 @@ const versionQuery = graphql(`
   }
 `)
 
-const clientIds = accounts.value.map((a) => a.accountInfo.id)
+const clientIds = validAccounts.value.map((a) => a.accountInfo.id)
 
 const queries: Record<
   string,
