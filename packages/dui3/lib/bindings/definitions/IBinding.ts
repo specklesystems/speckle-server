@@ -11,4 +11,8 @@ export interface IBinding<T> {
    * Currently needed for CefSharp, as right click inspect doesn't exist.
    */
   showDevTools: () => Promise<void>
+  /**
+   * Opens an url in the OS's default browser.
+   */
+  openUrl: (url: string) => Promise<void>
 }

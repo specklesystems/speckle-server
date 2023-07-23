@@ -1,5 +1,10 @@
 <template>
   <div class="flex flex-col space-y-2">
+    <Portal to="navigation">
+      <FormButton to="/" size="sm" :icon-left="ArrowLeftIcon" class="ml-2">
+        Back home
+      </FormButton>
+    </Portal>
     <div>
       <p class="text-sm text-foreground-2 py-2 px-2">
         Do not expect these to save the day. They are just some
@@ -37,7 +42,8 @@
 </template>
 
 <script setup lang="ts">
-import { TestEventArgs } from '~/lib/bindings/definitions/testBindings'
+import { ArrowLeftIcon } from '@heroicons/vue/20/solid'
+import { TestEventArgs } from '~/lib/bindings/definitions/ITestBinding'
 import { CheckIcon, MinusIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 const { $testBindings } = useNuxtApp()
 

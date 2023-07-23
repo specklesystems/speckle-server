@@ -18,7 +18,7 @@ export class GenericBridge extends BaseBridge {
     try {
       availableMethodNames = await this.bridge.GetBindingsMethodNames()
     } catch (e) {
-      console.error(e)
+      console.warn(`Failed to get method names.`)
       return false
     }
 
@@ -59,6 +59,10 @@ export class GenericBridge extends BaseBridge {
 
   public showDevTools() {
     this.bridge.ShowDevTools()
+  }
+
+  public openUrl(url: string) {
+    this.bridge.OpenUrl(url)
   }
 }
 
