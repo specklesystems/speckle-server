@@ -30,7 +30,7 @@
     "dist"
   ],
   "engines": {
-    "node": "^18.16.1"
+    "node": "^18.17.0"
   },
   "scripts": {
     "build": "NODE_ENV=production rollup --config",
