@@ -46,13 +46,20 @@ async function sketchupReceive() {
 
   const t0 = Date.now()
 
+  const batches = []
   for await (const obj of loader.getObjectIterator()) {
-    $sketchupReceiveBinding.receiveObject(streamId, objectId, obj)
+    batches.push(obj)
   }
+
+  // const rootObj = await loader.getAndConstructObject(() => {})
+  // await $sketchupReceiveBinding.receiveObject(streamId, objectId, rootObj)
+  // console.log(rootObj)
+
+  await $sketchupReceiveBinding.receiveObject(streamId, objectId, batches)
 
   const t1 = Date.now()
   const elapsedTime = (t1 - t0) / 1000
-  console.log(`Receive time: ${elapsedTime} second`)
+  console.log(`receive time: ${elapsedTime} second`)
 
   await $sketchupReceiveBinding.afterReceive(streamId, objectId)
 }

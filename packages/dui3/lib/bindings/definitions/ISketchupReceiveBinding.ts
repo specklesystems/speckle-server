@@ -17,7 +17,7 @@ export interface ISketchupReceiveBinding
   receiveObject: (
     streamId: string,
     rootId: string,
-    object: SpeckleObject
+    object: SpeckleObject[] | SpeckleObject
   ) => Promise<void>
   afterReceive: (streamId: string, rootId: string) => Promise<void>
 }
