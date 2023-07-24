@@ -265,7 +265,11 @@ export class FilteringManager extends EventEmitter {
       if (matchingIds[numProp.valueGroups[k].id]) {
         continue
       }
-      matchingIds[numProp.valueGroups[k].id] = numProp.valueGroups[k].value
+      if (
+        numProp.valueGroups[k].value >= passMin &&
+        numProp.valueGroups[k].value <= passMax
+      )
+        matchingIds[numProp.valueGroups[k].id] = numProp.valueGroups[k].value
     }
 
     const nonMatchingRvs: NodeRenderView[] = []
@@ -333,9 +337,11 @@ export class FilteringManager extends EventEmitter {
         return true
       }
       const rvs = []
+
       rvNodes.forEach((value: TreeNode) => {
         if (this.RTI.getAtomicParent(value) === node) rvs.push(value.model.renderView)
       })
+
       vg.rvs.push(...rvs)
       return true
     })
