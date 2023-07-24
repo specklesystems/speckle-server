@@ -12354,8 +12354,8 @@ __metadata:
     "@headlessui/vue": ^1.7.13
     "@heroicons/vue": ^2.0.12
     "@nuxtjs/tailwindcss": ^6.7.0
-    "@speckle/objectloader": "workspace:^"
     "@pinia/nuxt": ^0.4.11
+    "@speckle/objectloader": "workspace:^"
     "@speckle/shared": "workspace:^"
     "@speckle/ui-components": "workspace:^"
     "@speckle/ui-components-nuxt": "workspace:^"
