@@ -1,4 +1,4 @@
-import { Resolvers, ServerRole } from '@/modules/core/graph/generated/graphql'
+import { ServerRole } from '@/modules/core/graph/generated/graphql'
 import { mapServerRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { adminProjectList, adminUserList } from '@/modules/core/services/admin'
 import { getTotalStreamCount, getTotalUserCount } from '@/modules/stats/services'
@@ -28,18 +28,18 @@ export = {
     admin: () => ({})
   },
   AdminQueries: {
-    async userList(_parent, { limit, cursor, query, role }: UserListArgs) {
+    async userList(_parent: unknown, { limit, cursor, query, role }: UserListArgs) {
       return await adminUserList({
         limit,
         cursor,
         query,
-        role: mapServerRoleToValue(role)
+        role: role ? mapServerRoleToValue(role) : null
       })
     },
     // async inviteList() {
 
     // }
-    async projectList(_parent, args: ProjectListArgs) {
+    async projectList(_parent: unknown, args: ProjectListArgs) {
       return await adminProjectList(args)
     },
     serverStatistics: () => ({})
@@ -56,4 +56,4 @@ export = {
       return 0
     }
   }
-} as Resolvers
+} //TODO: add back `as Resolvers` to the types
