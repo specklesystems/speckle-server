@@ -13,6 +13,9 @@ const {
 
 module.exports = {
   Query: {
+    /**
+     * @deprecated('Use admin.serverStatistics')
+     */
     async serverStats(parent, args, context) {
       await validateServerRole(context, 'server:admin')
       await validateScopes(context.scopes, 'server:stats')

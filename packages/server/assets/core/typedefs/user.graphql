@@ -28,6 +28,7 @@ extend type Query {
     offset: Int! = 0
     query: String = null
   ): AdminUsersListCollection
+    @deprecated(reason: "use admin.UserList instead")
     @hasRole(role: "server:admin")
     @hasScope(scope: "users:read")
 
@@ -69,6 +70,28 @@ type PasswordStrengthCheckResults {
 type PasswordStrengthCheckFeedback {
   warning: String
   suggestions: [String!]!
+}
+
+# TODO: this is a blatant duplication, should we have interfaces for this?
+type BaseUser {
+  id: ID!
+  """
+  E-mail can be null, if it's requested for a user other than the authenticated one
+  and the user isn't an admin
+  """
+  email: String
+  name: String!
+  bio: String
+  company: String
+  avatar: String
+  verified: Boolean
+  profiles: JSONObject
+  role: String
+  """
+  Whether post-sign up onboarding has been finished or skipped entirely
+  """
+  isOnboardingFinished: Boolean @isOwner
+  createdAt: DateTime @isOwner
 }
 
 """

@@ -52,6 +52,37 @@ export type ActivityCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type AdminQueries = {
+  __typename?: 'AdminQueries';
+  projectList: ProjectCollection;
+  serverStatistics: ServerStatistics;
+  userList: AdminUserList;
+};
+
+
+export type AdminQueriesProjectListArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+  orderBy?: InputMaybe<Scalars['String']>;
+  query?: InputMaybe<Scalars['String']>;
+  visibility?: InputMaybe<Scalars['String']>;
+};
+
+
+export type AdminQueriesUserListArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+  query?: InputMaybe<Scalars['String']>;
+  role?: InputMaybe<ServerRole>;
+};
+
+export type AdminUserList = {
+  __typename?: 'AdminUserList';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<BaseUser>;
+  totalCount: Scalars['Int'];
+};
+
 export type AdminUsersListCollection = {
   __typename?: 'AdminUsersListCollection';
   items: Array<AdminUsersListItem>;
@@ -121,6 +152,26 @@ export type AuthStrategy = {
   id: Scalars['String'];
   name: Scalars['String'];
   url: Scalars['String'];
+};
+
+export type BaseUser = {
+  __typename?: 'BaseUser';
+  avatar?: Maybe<Scalars['String']>;
+  bio?: Maybe<Scalars['String']>;
+  company?: Maybe<Scalars['String']>;
+  createdAt?: Maybe<Scalars['DateTime']>;
+  /**
+   * E-mail can be null, if it's requested for a user other than the authenticated one
+   * and the user isn't an admin
+   */
+  email?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  /** Whether post-sign up onboarding has been finished or skipped entirely */
+  isOnboardingFinished?: Maybe<Scalars['Boolean']>;
+  name: Scalars['String'];
+  profiles?: Maybe<Scalars['JSONObject']>;
+  role?: Maybe<Scalars['String']>;
+  verified?: Maybe<Scalars['Boolean']>;
 };
 
 export type BlobMetadata = {
@@ -1584,6 +1635,7 @@ export type Query = {
   _?: Maybe<Scalars['String']>;
   /** Gets the profile of the authenticated user or null if not authenticated */
   activeUser?: Maybe<User>;
+  admin: AdminQueries;
   /** All the streams of the server. Available to admins only. */
   adminStreams?: Maybe<StreamCollection>;
   /**
@@ -1871,6 +1923,13 @@ export enum ServerRole {
   ServerArchivedUser = 'SERVER_ARCHIVED_USER',
   ServerUser = 'SERVER_USER'
 }
+
+export type ServerStatistics = {
+  __typename?: 'ServerStatistics';
+  totalPendingInvites: Scalars['Int'];
+  totalProjectCount: Scalars['Int'];
+  totalUserCount: Scalars['Int'];
+};
 
 export type ServerStats = {
   __typename?: 'ServerStats';

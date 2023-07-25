@@ -73,16 +73,8 @@ module.exports = {
     return await deleteStreamFromDb(streamId)
   },
 
-  async getStreams({ offset, limit, orderBy, visibility, searchQuery }) {
-    const query = knex
-      .column(
-        'streams.*',
-        knex.raw('coalesce(sum(pg_column_size(objects.data)),0) as size')
-      )
-      .select()
-      .from('streams')
-      .leftJoin('objects', 'streams.id', 'objects.streamId')
-      .groupBy('streams.id')
+  async getStreams({ cursor, limit, orderBy, visibility, searchQuery }) {
+    const query = knex.select().from('streams')
 
     const countQuery = Streams.knex()
 
@@ -116,9 +108,12 @@ module.exports = {
 
     const [columnName, order] = orderBy.split(',')
 
-    const rows = await query.orderBy(`${columnName}`, order).offset(offset).limit(limit)
+    if (cursor) query.where(columnName, order === 'desc' ? '<' : '>', cursor)
 
-    return { streams: rows, totalCount: count }
+    const rows = await query.orderBy(`${columnName}`, order).limit(limit)
+
+    const cursorDate = rows.length ? rows.slice(-1)[0][columnName] : null
+    return { streams: rows, totalCount: count, cursorDate }
   },
 
   async getStreamUsers({ streamId }) {
