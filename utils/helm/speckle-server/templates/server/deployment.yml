@@ -72,18 +72,18 @@ spec:
               command:
                 - "node"
                 - "-e"
-                - "var fs = require('fs'); fs.mkdirSync('/usr/local/share/ca-certificates', { recursive: true })"
+                - 'var fs = require("fs"); fs.mkdirSync("/usr/local/share/ca-certificates", { recursive: true })'
                 - ";"
                 {{- if .Values.db.useCertificate }}
                 - "node"
                 - "-e"
-                - "var fs = require('fs'); var w = fs.createWriteStream('/usr/local/share/ca-certificates/extra-ca.crt', {flags: 'a'}); var r = fs.createReadStream('/postgres-certificate/ca-certificate.crt'); r.pipe(w);"
+                - 'var fs = require("fs"); var w = fs.createWriteStream("/usr/local/share/ca-certificates/extra-ca.crt", {flags: "a"}); var r = fs.createReadStream("/postgres-certificate/ca-certificate.crt"); r.pipe(w);'
                 - ";"
                 {{- end }}
                 {{- if .Values.selfSignedCertificate.caCertificate.enabled }}
                 - "node"
                 - "-e"
-                - "var fs = require('fs'); var w = fs.createWriteStream('/usr/local/share/ca-certificates/extra-ca.crt', {flags: 'a'}); var r = fs.createReadStream('/self-signed-certificate/ca-certificate.crt'); r.pipe(w);"
+                - 'var fs = require("fs"); var w = fs.createWriteStream("/usr/local/share/ca-certificates/extra-ca.crt", {flags: "a"}); var r = fs.createReadStream("/self-signed-certificate/ca-certificate.crt"); r.pipe(w);'
                 - ";"
                 {{- end }}
           preStop:
