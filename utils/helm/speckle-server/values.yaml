@@ -26,9 +26,21 @@ ssl_canonical_url: true
 ##
 tlsRejectUnauthorized: '1'
 
-## @param cert_manager_issuer The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate
+## @param cert_manager_issuer The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate. Leave blank '' if you are not using cert-manager. This parameter will be ignored if selfSignedCertificate.enabled is true.
 ##
 cert_manager_issuer: letsencrypt-staging
+
+selfSignedCertificate:
+  ## @param selfSignedCertificate.enabled If enabled, Speckle will use a self-signed certificate for SSL connections. The cert_manager_issuer parameter will be ignored.
+  ##
+  enabled: false
+  caCertificate:
+    ## @param selfSignedCertificate.caCertificate.secretName The name of the Kubernetes Secret containing the CA certificate of the self-signed certificate.
+    ##
+    secretName: 'server-tls-ca'
+    ## @param selfSignedCertificate.caCertificate.secretKey The key within the Kubernetes Secret holding the CA certificate self-signed certificate.
+    ##
+    secretKey: 'ca.crt'
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics

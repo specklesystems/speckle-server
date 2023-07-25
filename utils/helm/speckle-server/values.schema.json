@@ -29,8 +29,33 @@
     },
     "cert_manager_issuer": {
       "type": "string",
-      "description": "The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate",
+      "description": "The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate. Leave blank '' if you are not using cert-manager. This parameter will be ignored if selfSignedCertificate.enabled is true.",
       "default": "letsencrypt-staging"
+    },
+    "selfSignedCertificate": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "If enabled, Speckle will use a self-signed certificate for SSL connections. The cert_manager_issuer parameter will be ignored.",
+          "default": false
+        },
+        "caCertificate": {
+          "type": "object",
+          "properties": {
+            "secretName": {
+              "type": "string",
+              "description": "The name of the Kubernetes Secret containing the CA certificate of the self-signed certificate.",
+              "default": "server-tls-ca"
+            },
+            "secretKey": {
+              "type": "string",
+              "description": "The key within the Kubernetes Secret holding the CA certificate self-signed certificate.",
+              "default": "ca.crt"
+            }
+          }
+        }
+      }
     },
     "analytics": {
       "type": "object",

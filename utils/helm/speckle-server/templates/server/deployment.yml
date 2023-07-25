@@ -27,6 +27,29 @@ spec:
           - {{ printf "--inspect=%s" .Values.server.inspect.port }}
         {{- end }}
           - "bin/www"
+
+        # we need to merge all CA certificate files into a single file
+        lifecycle:
+          postStart:
+            exec:
+              command:
+                - "node"
+                - "-e"
+                - "var fs = require('fs'); fs.mkdirSync('/usr/local/share/ca-certificates', { recursive: true })"
+                - ";"
+                {{- if .Values.db.useCertificate }}
+                - "node"
+                - "-e"
+                - "var fs = require('fs'); var w = fs.createWriteStream('/usr/local/share/ca-certificates/extra-ca.crt', {flags: 'a'}); var r = fs.createReadStream('/postgres-certificate/ca-certificate.crt'); r.pipe(w);"
+                - ";"
+                {{- end }}
+                {{- if .Values.selfSignedCertificate.caCertificate.enabled }}
+                - "node"
+                - "-e"
+                - "var fs = require('fs'); var w = fs.createWriteStream('/usr/local/share/ca-certificates/extra-ca.crt', {flags: 'a'}); var r = fs.createReadStream('/self-signed-certificate/ca-certificate.crt'); r.pipe(w);"
+                - ";"
+                {{- end }}
+
         ports:
           - name: http
             containerPort: {{ include "server.port" $ }}
@@ -56,6 +79,11 @@ spec:
         {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
+        {{- end }}
+        {{- if .Values.selfSignedCertificate.caCertificate.enabled }}
+          - name: ca-certificate
+            mountPath: /self-signed-certificate
+            readOnly: true
         {{- end }}
 
         # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
@@ -145,10 +173,14 @@ spec:
           - name: PGSSLMODE
             value: "{{ .Values.db.PGSSLMODE }}"
 
-          {{- if .Values.db.useCertificate }}
+          {{/*
+          NODE_EXTRA_CA_CERTS can only accept one file but we may have multiple potential certificate files.
+          We merge them all into a single file (extra-ca.crt) in the postStart command (see lifecycle, above).
+          That file is referenced here.
+          The file may be empty if no certificates are provided, which is fine.
+          */}}
           - name: NODE_EXTRA_CA_CERTS
-            value: "/postgres-certificate/ca-certificate.crt"
-          {{- end }}
+            value: /usr/local/share/ca-certificates/extra-ca.crt
 
           {{- if .Values.server.fileUploads.enabled }}
           {{ else }}
@@ -459,4 +491,12 @@ spec:
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
+      {{- end }}
+      {{- if .Values.selfSignedCertificate.caCertificate.enabled }}
+        - name: ca-certificate
+          secret:
+            secretName: {{ .Values.selfSignedCertificate.caCertificate.secretName }}
+            items:
+            - key: {{ .Values.selfSignedCertificate.caCertificate.secretKey }}
+              path: ca-certificate.crt
       {{- end }}
