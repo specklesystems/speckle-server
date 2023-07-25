@@ -1,9 +1,10 @@
 <template>
   <button
     :class="`bg-foundation group relative block w-full space-y-2 rounded-md pb-2 text-left transition ${
-      clickable ? 'hover:bg-primary-muted' : 'cursor-default'
+      clickable
+        ? 'hover:bg-gray-100 dark:hover:bg-gray-700'
+        : ' bg-primary-muted cursor-default'
     }
-    ${!showTimeline ? 'bg-primary-muted' : ''}
     ${isLoaded ? '' : ''}
     `"
     @click="handleClick"

@@ -2,17 +2,17 @@
   <div class="relative">
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <div
-      :class="`group rounded-md border-l-4 transition hover:shadow-md ${
+      :class="`rounded-md border-l-4 transition  ${
         showVersions
-          ? 'border-primary max-h-96'
+          ? 'border-primary max-h-96 shadow-md'
           : 'hover:border-primary border-transparent'
-      } cursor-pointer`"
+      }`"
     >
       <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
       <div
         :class="`${
-          showVersions ? 'bg-primary-muted' : 'bg-foundation'
-        } hover:bg-primary-muted sticky top-0 z-20 flex h-20 min-w-0 max-w-full items-center justify-between space-x-2 p-2 transition`"
+          showVersions ? 'bg-primary' : 'bg-foundation hover:bg-primary-muted'
+        } group sticky cursor-pointer top-0 z-20 flex h-20 min-w-0 max-w-full items-center justify-between space-x-2 p-2 transition select-none`"
         @click="showVersions = !showVersions"
       >
         <div>
@@ -21,12 +21,15 @@
         <div class="flex min-w-0 flex-grow flex-col space-y-0">
           <div
             v-tippy="modelName.subheader ? model.name : null"
-            class="font-bold truncate min-w-0"
+            :class="`${showVersions ? 'text-white' : ''} font-bold truncate min-w-0`"
           >
             {{ modelName.header }}
           </div>
           <div class="text-foreground-2 truncate text-xs">
-            <span v-tippy="createdAt" class="text-xs font-semibold">
+            <span
+              v-tippy="createdAt"
+              :class="`${showVersions ? 'text-white/70' : ''} text-xs font-semibold`"
+            >
               {{ isLatest ? 'latest version' : timeAgoCreatedAt }}
             </span>
           </div>
@@ -40,11 +43,17 @@
         </div>
         <div
           v-else
-          class="flex flex-none items-center space-x-2 text-xs font-bold opacity-0 transition-opacity group-hover:opacity-100"
+          :class="`${
+            showVersions ? 'text-white' : ''
+          } flex flex-none items-center space-x-2 text-xs font-bold opacity-0 transition-opacity group-hover:opacity-100`"
         >
           <ChevronUpIcon class="h-4 w-4" />
         </div>
       </div>
+      <ActiveVersionCard
+        v-if="loadedVersion && showVersions"
+        :version="loadedVersion"
+      />
     </div>
     <Transition>
       <div
@@ -74,6 +83,7 @@
         :is-loaded-version="version.id === loadedVersion?.id"
         :last="index === props.model.versions.totalCount - 1"
         :last-loaded="index === props.model.versions.items.length - 1"
+        :clickable="version.id !== loadedVersion?.id"
         @change-version="handleVersionChange"
         @view-changes="handleViewChanges"
       />
@@ -109,6 +119,7 @@ import {
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
 import { useDiffUtilities } from '~~/lib/viewer/composables/ui'
+import ActiveVersionCard from './ActiveVersionCard.vue'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
