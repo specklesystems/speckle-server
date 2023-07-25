@@ -28,28 +28,6 @@ spec:
         {{- end }}
           - "bin/www"
 
-        # we need to merge all CA certificate files into a single file
-        lifecycle:
-          postStart:
-            exec:
-              command:
-                - "node"
-                - "-e"
-                - "var fs = require('fs'); fs.mkdirSync('/usr/local/share/ca-certificates', { recursive: true })"
-                - ";"
-                {{- if .Values.db.useCertificate }}
-                - "node"
-                - "-e"
-                - "var fs = require('fs'); var w = fs.createWriteStream('/usr/local/share/ca-certificates/extra-ca.crt', {flags: 'a'}); var r = fs.createReadStream('/postgres-certificate/ca-certificate.crt'); r.pipe(w);"
-                - ";"
-                {{- end }}
-                {{- if .Values.selfSignedCertificate.caCertificate.enabled }}
-                - "node"
-                - "-e"
-                - "var fs = require('fs'); var w = fs.createWriteStream('/usr/local/share/ca-certificates/extra-ca.crt', {flags: 'a'}); var r = fs.createReadStream('/self-signed-certificate/ca-certificate.crt'); r.pipe(w);"
-                - ";"
-                {{- end }}
-
         ports:
           - name: http
             containerPort: {{ include "server.port" $ }}
@@ -88,6 +66,26 @@ spec:
 
         # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
         lifecycle:
+          postStart:
+            # we need to merge all CA certificate files into a single file
+            exec:
+              command:
+                - "node"
+                - "-e"
+                - "var fs = require('fs'); fs.mkdirSync('/usr/local/share/ca-certificates', { recursive: true })"
+                - ";"
+                {{- if .Values.db.useCertificate }}
+                - "node"
+                - "-e"
+                - "var fs = require('fs'); var w = fs.createWriteStream('/usr/local/share/ca-certificates/extra-ca.crt', {flags: 'a'}); var r = fs.createReadStream('/postgres-certificate/ca-certificate.crt'); r.pipe(w);"
+                - ";"
+                {{- end }}
+                {{- if .Values.selfSignedCertificate.caCertificate.enabled }}
+                - "node"
+                - "-e"
+                - "var fs = require('fs'); var w = fs.createWriteStream('/usr/local/share/ca-certificates/extra-ca.crt', {flags: 'a'}); var r = fs.createReadStream('/self-signed-certificate/ca-certificate.crt'); r.pipe(w);"
+                - ";"
+                {{- end }}
           preStop:
             exec:
               command: ["sleep", "5"]
