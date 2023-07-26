@@ -333,7 +333,7 @@ jobs:
         command: server /data --console-address ":9001"
         # environment:
 
-    resource_class: medium+
+    resource_class: large
     environment:
       NODE_ENV: test
       DATABASE_URL: 'postgres://speckle:speckle@127.0.0.1:5432/speckle2_test'
