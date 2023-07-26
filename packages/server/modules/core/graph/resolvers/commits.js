@@ -199,7 +199,11 @@ module.exports = {
     },
 
     async commitReceive(parent, args, context) {
-      await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
+      await authorizeResolver(
+        context.userId,
+        args.input.streamId,
+        Roles.Stream.Reviewer
+      )
 
       const commit = await getCommitById({
         streamId: args.input.streamId,
@@ -245,7 +249,11 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([COMMIT_CREATED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer
+          )
           return payload.streamId === variables.streamId
         }
       )
@@ -255,7 +263,11 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([COMMIT_UPDATED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer
+          )
 
           const streamMatch = payload.streamId === variables.streamId
           if (streamMatch && variables.commitId) {
@@ -271,7 +283,11 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([COMMIT_DELETED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer
+          )
 
           return payload.streamId === variables.streamId
         }

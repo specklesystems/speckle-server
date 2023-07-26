@@ -33,7 +33,7 @@ module.exports = {
       }
 
       try {
-        await authorizeResolver(req.context.userId, streamId, 'stream:reviewer')
+        await authorizeResolver(req.context.userId, streamId, Roles.Stream.Reviewer)
       } catch (err) {
         return { result: false, status: 401 }
       }

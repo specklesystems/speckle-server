@@ -85,7 +85,7 @@ module.exports = {
         throw new StreamNotFoundError('Stream not found')
       }
 
-      await authorizeResolver(context.userId, args.id, 'stream:reviewer')
+      await authorizeResolver(context.userId, args.id, Roles.Stream.Reviewer)
 
       if (!stream.isPublic) {
         await validateServerRole(context, Roles.Server.User)
@@ -310,7 +310,7 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([STREAM_UPDATED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.id, 'stream:reviewer')
+          await authorizeResolver(context.userId, payload.id, Roles.Stream.Reviewer)
           return payload.id === variables.streamId
         }
       )
@@ -320,7 +320,11 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([STREAM_DELETED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer
+          )
           return payload.streamId === variables.streamId
         }
       )
