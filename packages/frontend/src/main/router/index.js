@@ -19,6 +19,13 @@ const routes = [
     name: 'Auth',
     redirect: '/authn/login',
     component: () => import('@/main/layouts/TheAuth.vue'),
+    beforeEnter: (to, from, next) => {
+      // If we're in an iframe, we should not render any auth routes.
+      if (window.self !== window.top) {
+        return next('/error')
+      }
+      next()
+    },
     children: [
       {
         path: 'login',

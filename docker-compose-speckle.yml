@@ -26,7 +26,7 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
-      start_period: 5s
+      start_period: 90s
     environment:
       # TODO: Change this to the URL of the speckle server, as accessed from the network
       CANONICAL_URL: 'http://localhost'
