@@ -103,7 +103,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
       Scopes.Streams.Read,
       Scopes.Streams.Write,
       Scopes.Users.Read,
-      'users:email',
+      Scopes.Users.Email,
       'tokens:write',
       'tokens:read',
       'profile:read',
@@ -119,7 +119,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
         Scopes.Streams.Read,
         Scopes.Streams.Write,
         Scopes.Users.Read,
-        'users:email',
+        Scopes.Users.Email,
         'tokens:write',
         'tokens:read',
         'profile:read',
@@ -131,7 +131,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
     userC.token = `Bearer ${await createPersonalAccessToken(
       userC.id,
       'test token user B',
-      [Scopes.Streams.Read, Scopes.Streams.Write, Scopes.Users.Read, 'users:email']
+      [Scopes.Streams.Read, Scopes.Streams.Write, Scopes.Users.Read, Scopes.Users.Email]
     )}`
   })
 

@@ -82,7 +82,7 @@ describe('Activity @activity', () => {
       Scopes.Streams.Read,
       Scopes.Streams.Write,
       Scopes.Users.Read,
-      'users:email',
+      Scopes.Users.Email,
       'tokens:write',
       'tokens:read',
       'profile:read',

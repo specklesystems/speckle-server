@@ -372,7 +372,7 @@ describe('Actors & Tokens @user-services', () => {
         Scopes.Streams.Read,
         Scopes.Streams.Write,
         'profile:read',
-        'users:email'
+        Scopes.Users.Email
       ])
       revokedToken = await createPersonalAccessToken(myTestActor.id, 'Mr. Revoked', [
         Scopes.Streams.Read
