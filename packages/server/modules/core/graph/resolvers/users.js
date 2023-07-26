@@ -65,7 +65,7 @@ module.exports = {
 
     async userSearch(parent, args, context) {
       await validateServerRole(context, Roles.Server.User)
-      await validateScopes(context.scopes, 'profile:read')
+      await validateScopes(context.scopes, Scopes.Profile.Read)
       await validateScopes(context.scopes, Scopes.Users.Read)
 
       if (args.query.length < 3)

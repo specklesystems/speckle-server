@@ -106,7 +106,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
       Scopes.Users.Email,
       Scopes.Tokens.Write,
       Scopes.Tokens.Read,
-      'profile:read',
+      Scopes.Profile.Read,
       'profile:email'
     ])
     userA.token = `Bearer ${token}`
@@ -122,7 +122,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
         Scopes.Users.Email,
         Scopes.Tokens.Write,
         Scopes.Tokens.Read,
-        'profile:read',
+        Scopes.Profile.Read,
         'profile:email'
       ]
     )}`
