@@ -43,7 +43,7 @@ describe('Upload/Download Routes @api-rest', () => {
       [
         Scopes.Streams.Read,
         Scopes.Streams.Write,
-        'users:read',
+        Scopes.Users.Read,
         'users:email',
         'tokens:write',
         'tokens:read',
@@ -59,7 +59,7 @@ describe('Upload/Download Routes @api-rest', () => {
       [
         Scopes.Streams.Read,
         Scopes.Streams.Write,
-        'users:read',
+        Scopes.Users.Read,
         'users:email',
         'tokens:write',
         'tokens:read',

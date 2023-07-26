@@ -47,7 +47,7 @@ describe('GraphQL API Core @core-api', () => {
         Scopes.Server.Setup,
         Scopes.Streams.Read,
         Scopes.Streams.Write,
-        'users:read',
+        Scopes.Users.Read,
         'users:email',
         'tokens:write',
         'tokens:read',
@@ -62,7 +62,7 @@ describe('GraphQL API Core @core-api', () => {
       [
         Scopes.Streams.Read,
         Scopes.Streams.Write,
-        'users:read',
+        Scopes.Users.Read,
         'users:email',
         'tokens:write',
         'tokens:read',
@@ -77,7 +77,7 @@ describe('GraphQL API Core @core-api', () => {
       [
         Scopes.Streams.Read,
         Scopes.Streams.Write,
-        'users:read',
+        Scopes.Users.Read,
         'users:email',
         'tokens:write',
         'tokens:read',
@@ -245,7 +245,7 @@ describe('GraphQL API Core @core-api', () => {
           [
             Scopes.Streams.Read,
             Scopes.Streams.Write,
-            'users:read',
+            Scopes.Users.Read,
             'users:email',
             'tokens:write',
             'tokens:read',
@@ -273,7 +273,7 @@ describe('GraphQL API Core @core-api', () => {
           [
             Scopes.Streams.Read,
             Scopes.Streams.Write,
-            'users:read',
+            Scopes.Users.Read,
             'users:email',
             'tokens:write',
             'tokens:read',
@@ -1695,7 +1695,7 @@ describe('GraphQL API Core @core-api', () => {
         [
           Scopes.Streams.Read,
           Scopes.Streams.Write,
-          'users:read',
+          Scopes.Users.Read,
           'users:email',
           'tokens:write',
           'tokens:read',
