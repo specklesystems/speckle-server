@@ -1703,7 +1703,7 @@ describe('GraphQL API Core @core-api', () => {
           Scopes.Profile.Email,
           Scopes.Apps.Read,
           Scopes.Apps.Write,
-          'users:invite'
+          Scopes.Users.Invite
         ]
       )}`
       await archiveUser({ userId: archivedUser.id })
