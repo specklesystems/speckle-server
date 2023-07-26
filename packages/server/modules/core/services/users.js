@@ -227,9 +227,9 @@ module.exports = {
           (
           -- Get streams ids on which the user is owner
           SELECT "resourceId" FROM stream_acl
-          WHERE role = 'stream:owner' AND "userId" = ?
+          WHERE role = ${Roles.Stream.Owner} AND "userId" = ?
           ) AS us ON acl."resourceId" = us."resourceId"
-        WHERE acl.role = 'stream:owner'
+        WHERE acl.role = ${Roles.Stream.Owner}
         GROUP BY (acl."resourceId")
       ) AS soc
       WHERE cnt = 1

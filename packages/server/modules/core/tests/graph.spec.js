@@ -1277,7 +1277,7 @@ describe('GraphQL API Core @core-api', () => {
         expect(stream.name).to.equal('TS1 (u A) Private UPDATED')
         expect(stream.collaborators).to.have.lengthOf(2)
         expect(stream.collaborators[0].role).to.equal('stream:contributor')
-        expect(stream.collaborators[1].role).to.equal('stream:owner')
+        expect(stream.collaborators[1].role).to.equal(Roles.Stream.Owner)
       })
 
       it('Should retrieve a public stream even if not authenticated', async () => {

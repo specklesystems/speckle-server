@@ -221,13 +221,13 @@ module.exports = {
     },
 
     async streamUpdate(parent, args, context) {
-      await authorizeResolver(context.userId, args.stream.id, 'stream:owner')
+      await authorizeResolver(context.userId, args.stream.id, Roles.Stream.Owner)
       await updateStreamAndNotify(args.stream, context.userId)
       return true
     },
 
     async streamDelete(parent, args, context, info) {
-      await authorizeResolver(context.userId, args.id, 'stream:owner')
+      await authorizeResolver(context.userId, args.id, Roles.Stream.Owner)
       return await _deleteStream(parent, args, context, info)
     },
 
@@ -246,7 +246,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.permissionParams.streamId,
-        'stream:owner'
+        Roles.Stream.Owner
       )
 
       const result = await updateStreamRoleAndNotify(
@@ -260,7 +260,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.permissionParams.streamId,
-        'stream:owner'
+        Roles.Stream.Owner
       )
 
       const result = await updateStreamRoleAndNotify(

@@ -154,7 +154,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
         myStream.id,
         'stream:contributor'
       )
-      expect(role).to.equal('stream:owner')
+      expect(role).to.equal(Roles.Stream.Owner)
     })
 
     it('should get the passed in role for server:admins if override enabled', async () => {

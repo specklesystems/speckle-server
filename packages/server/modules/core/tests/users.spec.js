@@ -41,7 +41,7 @@ const {
 
 const { createObject } = require('../services/objects')
 const { beforeEachContext } = require('@/test/hooks')
-const { Scopes } = require('@speckle/shared')
+const { Scopes, Roles } = require('@speckle/shared')
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
@@ -194,7 +194,7 @@ describe('Actors & Tokens @user-services', () => {
       await grantPermissionsStream({
         streamId: multiOwnerStream.id,
         userId: myTestActor.id,
-        role: 'stream:owner'
+        role: Roles.Stream.Owner
       })
 
       // create a branch for ballmer on the multiowner stream
