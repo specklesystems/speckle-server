@@ -187,3 +187,7 @@ export function speckleAutomateUrl() {
 export function ignoreMissingMigrations() {
   return ['1', 'true'].includes(process.env.IGNORE_MISSING_MIRATIONS || 'false')
 }
+
+export function enableServerGuests() {
+  return ['1', 'true'].includes(process.env.ENABLE_SERVER_GUESTS || 'false')
+}
