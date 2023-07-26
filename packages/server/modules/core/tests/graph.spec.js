@@ -279,7 +279,7 @@ describe('GraphQL API Core @core-api', () => {
             Scopes.Tokens.Read,
             Scopes.Profile.Read,
             Scopes.Profile.Email,
-            'profile:delete'
+            Scopes.Profile.Delete
           ]
         )}`
 

@@ -165,7 +165,7 @@ module.exports = {
       // directives in the graphql schema itself.
       // Since I am paranoid, I'll leave them here too.
       await validateServerRole(context, Roles.Server.User)
-      await validateScopes(context.scopes, 'profile:delete')
+      await validateScopes(context.scopes, Scopes.Profile.Delete)
 
       await deleteUser(context.userId, args.user)
 
