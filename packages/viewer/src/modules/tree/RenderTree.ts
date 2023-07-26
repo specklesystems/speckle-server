@@ -216,7 +216,7 @@ export class RenderTree {
       Logger.warn(`Id ${id} does not exist`)
       return null
     }
-    return this.getRenderViewsForNode(node)
+    return this.getRenderViewsForNode(node, node)
   }
 
   public getRenderViewForNodeId(id: string): NodeRenderView {

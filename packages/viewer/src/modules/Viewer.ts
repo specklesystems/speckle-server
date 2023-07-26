@@ -47,7 +47,7 @@ export class Viewer extends EventEmitter implements IViewer {
   private tree: WorldTree = new WorldTree()
   private world: World = new World()
   public static Assets: Assets
-  protected speckleRenderer: SpeckleRenderer
+  public speckleRenderer: SpeckleRenderer
   private filteringManager: FilteringManager
   private propertyManager: PropertyManager
   public differ: Differ
@@ -139,6 +139,10 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
+  public getRenderer() {
+    return this.speckleRenderer
+  }
+
   public getObjects(id: string): BatchObject[] {
     return this.speckleRenderer.getObjects(id)
   }
@@ -227,17 +231,17 @@ export class Viewer extends EventEmitter implements IViewer {
     return this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
   }
 
-  public selectObjects(objectIds: string[]): Promise<FilteringState> {
-    return new Promise<FilteringState>((resolve) => {
-      resolve(this.filteringManager.selectObjects(objectIds))
-    })
-  }
+  // public selectObjects(objectIds: string[]): Promise<FilteringState> {
+  //   return new Promise<FilteringState>((resolve) => {
+  //     resolve(this.filteringManager.selectObjects(objectIds))
+  //   })
+  // }
 
-  public resetSelection(): Promise<FilteringState> {
-    return new Promise<FilteringState>((resolve) => {
-      resolve(this.filteringManager.resetSelection())
-    })
-  }
+  // public resetSelection(): Promise<FilteringState> {
+  //   return new Promise<FilteringState>((resolve) => {
+  //     resolve(this.filteringManager.resetSelection())
+  //   })
+  // }
 
   public hideObjects(
     objectIds: string[],

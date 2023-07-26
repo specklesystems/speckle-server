@@ -37,7 +37,6 @@ export enum FilterMaterialType {
 /** This needs to be rethunked */
 export interface FilterMaterial {
   filterType: FilterMaterialType
-  userMaterial?: SpeckleStandardMaterial
   rampIndex?: number
   rampIndexColor?: Color
   rampTexture?: Texture
@@ -51,7 +50,7 @@ export class FilteringManager extends EventEmitter {
   private VisibilityState = new VisibilityState()
   private ColorStringFilterState = null
   private ColorNumericFilterState = null
-  private SelectionState = new GenericRvState()
+  // private SelectionState = new GenericRvState()
   private HighlightState = new GenericRvState()
   private UserspaceColorState = new UserspaceColorState()
   private ColorStringFilterState2: ColorStringFilterState = null
@@ -362,22 +361,22 @@ export class FilteringManager extends EventEmitter {
     return this.setFilters()
   }
 
-  public selectObjects(objectIds: string[]) {
-    this.resetSelection()
-    this.populateGenericState(objectIds, this.SelectionState)
-    if (this.SelectionState.rvs.length !== 0) {
-      this.SelectionState.id = this.Renderer.applyDirectFilter(
-        this.SelectionState.rvs,
-        {
-          filterType: FilterMaterialType.SELECT
-        }
-      )
-    }
-    this.Renderer.updateClippingPlanes()
-    this.Renderer.viewer.requestRender()
-    this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
-    return this.CurrentFilteringState
-  }
+  // public selectObjects(objectIds: string[]) {
+  //   this.resetSelection()
+  //   this.populateGenericState(objectIds, this.SelectionState)
+  //   if (this.SelectionState.rvs.length !== 0) {
+  //     this.SelectionState.id = this.Renderer.applyDirectFilter(
+  //       this.SelectionState.rvs,
+  //       {
+  //         filterType: FilterMaterialType.SELECT
+  //       }
+  //     )
+  //   }
+  //   this.Renderer.updateClippingPlanes()
+  //   this.Renderer.viewer.requestRender()
+  //   this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
+  //   return this.CurrentFilteringState
+  // }
 
   public highlightObjects(objectIds: string[], ghost = false) {
     this.resetHighlight()
@@ -513,16 +512,16 @@ export class FilteringManager extends EventEmitter {
     }
   }
 
-  public resetSelection() {
-    if (this.SelectionState.rvs.length > 0) {
-      this.Renderer.removeDirectFilter(this.SelectionState.id)
-    }
-    this.SelectionState = new GenericRvState()
-    this.Renderer.updateClippingPlanes()
-    this.Renderer.viewer.requestRender()
-    this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
-    return this.CurrentFilteringState
-  }
+  // public resetSelection() {
+  //   if (this.SelectionState.rvs.length > 0) {
+  //     this.Renderer.removeDirectFilter(this.SelectionState.id)
+  //   }
+  //   this.SelectionState = new GenericRvState()
+  //   this.Renderer.updateClippingPlanes()
+  //   this.Renderer.viewer.requestRender()
+  //   this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
+  //   return this.CurrentFilteringState
+  // }
 
   public resetHighlight() {
     if (this.HighlightState.rvs.length > 0) {
@@ -539,7 +538,7 @@ export class FilteringManager extends EventEmitter {
     this.VisibilityState = new VisibilityState()
     this.ColorStringFilterState = null
     this.ColorNumericFilterState = null
-    this.SelectionState = new GenericRvState()
+    // this.SelectionState = new GenericRvState()
     this.HighlightState = new GenericRvState()
     this.UserspaceColorState = null
     this.StateKey = null
@@ -676,14 +675,14 @@ export class FilteringManager extends EventEmitter {
     }
 
     /** We apply any preexisting selections after finishing the filter batch */
-    if (this.SelectionState.rvs.length !== 0) {
-      this.SelectionState.id = this.Renderer.applyDirectFilter(
-        this.SelectionState.rvs,
-        {
-          filterType: FilterMaterialType.SELECT
-        }
-      )
-    }
+    // if (this.SelectionState.rvs.length !== 0) {
+    //   this.SelectionState.id = this.Renderer.applyDirectFilter(
+    //     this.SelectionState.rvs,
+    //     {
+    //       filterType: FilterMaterialType.SELECT
+    //     }
+    //   )
+    // }
 
     this.Renderer.viewer.requestRender()
     this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)

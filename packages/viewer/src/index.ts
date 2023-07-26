@@ -37,6 +37,7 @@ import {
   MeasurementType
 } from './modules/measurements/Measurements'
 import { Units } from './modules/converter/Units'
+import { SelectionExtension } from './modules/extensions/SelectionExtension'
 
 export {
   Viewer,
@@ -51,7 +52,8 @@ export {
   WorldTree,
   VisualDiffMode,
   MeasurementType,
-  Units
+  Units,
+  SelectionExtension
 }
 
 export type {

@@ -6,10 +6,11 @@ import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
-import { WorldTree } from './modules/tree/WorldTree'
+import { TreeNode, WorldTree } from './modules/tree/WorldTree'
 import { Utils } from './modules/Utils'
 import { World } from './modules/World'
 import { MeasurementOptions } from './modules/measurements/Measurements'
+import SpeckleRenderer from './modules/SpeckleRenderer'
 
 export interface ViewerParams {
   showStats: boolean
@@ -70,8 +71,7 @@ export type SelectionEvent = {
   multiple: boolean
   event?: PointerEvent
   hits: Array<{
-    guid?: string
-    object: Record<string, unknown> & { id: string }
+    node: TreeNode
     point: Vector3
   }>
 }
@@ -218,8 +218,8 @@ export interface IViewer {
     includeDescendants?
   ): Promise<FilteringState>
 
-  selectObjects(objectIds: string[]): Promise<FilteringState>
-  resetSelection(): Promise<FilteringState>
+  // selectObjects(objectIds: string[]): Promise<FilteringState>
+  // resetSelection(): Promise<FilteringState>
   highlightObjects(objectIds: string[], ghost?: boolean): Promise<FilteringState>
   resetHighlight(): Promise<FilteringState>
 
@@ -246,4 +246,6 @@ export interface IViewer {
   removeMeasurement()
 
   dispose(): void
+
+  getRenderer(): SpeckleRenderer
 }

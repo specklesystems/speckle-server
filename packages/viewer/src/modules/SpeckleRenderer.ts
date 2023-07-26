@@ -993,8 +993,7 @@ export default class SpeckleRenderer {
       event: e.event,
       hits: queryResults.map((value) => {
         return {
-          guid: value.node.model.id,
-          object: value.node.model.raw,
+          node: value.node,
           point: value.point
         }
       })
@@ -1036,8 +1035,7 @@ export default class SpeckleRenderer {
       multiple: multiSelect,
       hits: queryResults.map((value) => {
         return {
-          guid: value.node.model.id,
-          object: value.node.model.raw,
+          node: value.node,
           point: value.point
         }
       })
