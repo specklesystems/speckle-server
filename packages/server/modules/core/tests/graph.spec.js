@@ -1701,7 +1701,7 @@ describe('GraphQL API Core @core-api', () => {
           Scopes.Tokens.Read,
           Scopes.Profile.Read,
           Scopes.Profile.Email,
-          'apps:read',
+          Scopes.Apps.Read,
           'apps:write',
           'users:invite'
         ]
