@@ -35,7 +35,7 @@ const main = async () => {
       Scopes.Streams.Write,
       Scopes.Users.Read,
       Scopes.Users.Email,
-      'tokens:write',
+      Scopes.Tokens.Write,
       'tokens:read',
       'profile:read',
       'profile:email'

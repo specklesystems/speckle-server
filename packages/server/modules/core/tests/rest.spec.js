@@ -45,7 +45,7 @@ describe('Upload/Download Routes @api-rest', () => {
         Scopes.Streams.Write,
         Scopes.Users.Read,
         Scopes.Users.Email,
-        'tokens:write',
+        Scopes.Tokens.Write,
         'tokens:read',
         'profile:read',
         'profile:email'
@@ -61,7 +61,7 @@ describe('Upload/Download Routes @api-rest', () => {
         Scopes.Streams.Write,
         Scopes.Users.Read,
         Scopes.Users.Email,
-        'tokens:write',
+        Scopes.Tokens.Write,
         'tokens:read',
         'profile:read',
         'profile:email'

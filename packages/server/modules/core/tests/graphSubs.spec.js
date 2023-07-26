@@ -104,7 +104,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
       Scopes.Streams.Write,
       Scopes.Users.Read,
       Scopes.Users.Email,
-      'tokens:write',
+      Scopes.Tokens.Write,
       'tokens:read',
       'profile:read',
       'profile:email'
@@ -120,7 +120,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
         Scopes.Streams.Write,
         Scopes.Users.Read,
         Scopes.Users.Email,
-        'tokens:write',
+        Scopes.Tokens.Write,
         'tokens:read',
         'profile:read',
         'profile:email'
