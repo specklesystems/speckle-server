@@ -19,6 +19,7 @@ module.exports = {
         enum ServerRole {
           SERVER_USER
           SERVER_ADMIN
+          SERVER_GUEST
           SERVER_ARCHIVED_USER
         }
 

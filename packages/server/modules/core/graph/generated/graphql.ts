@@ -1878,6 +1878,7 @@ export type ServerInviteCreateInput = {
 export enum ServerRole {
   ServerAdmin = 'SERVER_ADMIN',
   ServerArchivedUser = 'SERVER_ARCHIVED_USER',
+  ServerGuest = 'SERVER_GUEST',
   ServerUser = 'SERVER_USER'
 }
 
