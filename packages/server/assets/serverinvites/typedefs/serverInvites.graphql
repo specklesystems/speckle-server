@@ -3,49 +3,49 @@ extend type Mutation {
   Invite a new user to the speckle server and return the invite ID
   """
   serverInviteCreate(input: ServerInviteCreateInput!): Boolean!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "users:invite")
 
   """
   Invite a new or registered user to the specified stream
   """
   streamInviteCreate(input: StreamInviteCreateInput!): Boolean!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "users:invite")
 
   serverInviteBatchCreate(input: [ServerInviteCreateInput!]!): Boolean!
-    @hasRole(role: "server:admin")
+    @hasServerRole(role: SERVER_ADMIN)
     @hasScope(scope: "users:invite")
 
   streamInviteBatchCreate(input: [StreamInviteCreateInput!]!): Boolean!
-    @hasRole(role: "server:admin")
+    @hasServerRole(role: SERVER_ADMIN)
     @hasScope(scope: "users:invite")
 
   """
   Accept or decline a stream invite
   """
   streamInviteUse(accept: Boolean!, streamId: String!, token: String!): Boolean!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_USER)
 
   """
   Cancel a pending stream invite. Can only be invoked by a stream owner.
   """
   streamInviteCancel(streamId: String!, inviteId: String!): Boolean!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "users:invite")
 
   """
   Re-send a pending invite
   """
   inviteResend(inviteId: String!): Boolean!
-    @hasRole(role: "server:admin")
+    @hasServerRole(role: SERVER_ADMIN)
     @hasScope(scope: "users:invite")
 
   """
   Delete a pending invite
   """
   inviteDelete(inviteId: String!): Boolean!
-    @hasRole(role: "server:admin")
+    @hasServerRole(role: SERVER_ADMIN)
     @hasScope(scope: "users:invite")
 }
 
@@ -66,7 +66,7 @@ extend type Query {
   Get all invitations to streams that the active user has
   """
   streamInvites: [PendingStreamCollaborator!]!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:read")
 }
 
