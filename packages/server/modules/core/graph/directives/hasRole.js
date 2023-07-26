@@ -49,41 +49,6 @@ module.exports = {
   },
 
   /**
-   * Ensure that the user has the specified SERVER role (e.g. server user, admin etc.)
-   * @deprecated Use `hasServerRole` instead, as it relies on proper GQL enums
-   * @type {import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder}
-   */
-  hasRole: () => {
-    const directiveName = 'hasRole'
-    return {
-      typeDefs: `
-        """
-        Ensure that the user has the specified SERVER role (e.g. server user, admin etc.)
-        """
-        directive @${directiveName}(role: String!) on FIELD_DEFINITION
-      `,
-      schemaTransformer: (schema) =>
-        mapSchema(schema, {
-          [MapperKind.OBJECT_FIELD]: (fieldConfig) => {
-            const directive = getDirective(schema, fieldConfig, directiveName)?.[0]
-            if (!directive) return undefined
-
-            const { role: requiredRole } = directive
-            const { resolve = defaultFieldResolver } = fieldConfig
-            fieldConfig.resolve = async function (...args) {
-              const context = args[2]
-              await validateServerRole(context, requiredRole)
-
-              return await resolve.apply(this, args)
-            }
-
-            return fieldConfig
-          }
-        })
-    }
-  },
-
-  /**
    * Ensure that the user has the specified STREAM role for a target stream (e.g. owner)
    *
    * Note: Only supported on Stream type fields!

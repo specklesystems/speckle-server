@@ -3009,12 +3009,6 @@ export type ResolversParentTypes = {
   WebhookUpdateInput: WebhookUpdateInput;
 };
 
-export type HasRoleDirectiveArgs = {
-  role: Scalars['String'];
-};
-
-export type HasRoleDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = HasRoleDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
-
 export type HasScopeDirectiveArgs = {
   scope: Scalars['String'];
 };
@@ -3992,7 +3986,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
 };
 
 export type DirectiveResolvers<ContextType = GraphQLContext> = {
-  hasRole?: HasRoleDirectiveResolver<any, any, ContextType>;
   hasScope?: HasScopeDirectiveResolver<any, any, ContextType>;
   hasScopes?: HasScopesDirectiveResolver<any, any, ContextType>;
   hasServerRole?: HasServerRoleDirectiveResolver<any, any, ContextType>;

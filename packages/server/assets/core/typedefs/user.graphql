@@ -8,7 +8,7 @@ extend type Query {
   Get the (limited) profile information of another server user
   """
   otherUser(id: String!): LimitedUser
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "users:read")
 
   """
@@ -28,7 +28,7 @@ extend type Query {
     offset: Int! = 0
     query: String = null
   ): AdminUsersListCollection
-    @hasRole(role: "server:admin")
+    @hasServerRole(role: SERVER_ADMIN)
     @hasScope(scope: "users:read")
 
   """
@@ -153,18 +153,19 @@ extend type Mutation {
   Delete a user's account.
   """
   userDelete(userConfirmation: UserDeleteInput!): Boolean!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "profile:delete")
 
   adminDeleteUser(userConfirmation: UserDeleteInput!): Boolean!
-    @hasRole(role: "server:admin")
+    @hasServerRole(role: SERVER_ADMIN)
 
-  userRoleChange(userRoleInput: UserRoleInput!): Boolean! @hasRole(role: "server:admin")
+  userRoleChange(userRoleInput: UserRoleInput!): Boolean!
+    @hasServerRole(role: SERVER_ADMIN)
 
   """
   Various Active User oriented mutations
   """
-  activeUserMutations: ActiveUserMutations! @hasRole(role: "server:user")
+  activeUserMutations: ActiveUserMutations! @hasServerRole(role: SERVER_USER)
 }
 
 input UserRoleInput {
