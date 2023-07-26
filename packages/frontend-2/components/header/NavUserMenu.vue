@@ -43,7 +43,18 @@
               <UserAvatar :user="activeUser" size="sm" class="mr-1" />
             </NuxtLink>
           </MenuItem>
-
+          <MenuItem v-if="isAdmin" v-slot="{ active }">
+            <NuxtLink
+              :class="[
+                active ? 'bg-foundation-focus' : '',
+                'flex items-center  justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
+              ]"
+              @click="goToServerManagement"
+            >
+              Server Management
+              <Cog6ToothIcon class="w-5 h-5 mr-2" />
+            </NuxtLink>
+          </MenuItem>
           <MenuItem v-slot="{ active }">
             <NuxtLink
               :class="[
@@ -113,7 +124,8 @@ import {
   SunIcon,
   MoonIcon,
   EnvelopeIcon,
-  CloudArrowDownIcon
+  CloudArrowDownIcon,
+  Cog6ToothIcon
 } from '@heroicons/vue/24/solid'
 import { useQuery } from '@vue/apollo-composable'
 import { Optional } from '@speckle/shared'
@@ -137,6 +149,8 @@ const token = computed(() => route.query.token as Optional<string>)
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
 const version = computed(() => result.value?.serverInfo.version)
 
+const isAdmin = computed(() => activeUser.value?.role === 'admin')
+
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
 }
@@ -151,6 +165,10 @@ const onThemeClick = () => {
 
 const goToConnectors = () => {
   router.push('/downloads')
+}
+
+const goToServerManagement = () => {
+  router.push('/server-management')
 }
 
 const loginUrl = computed(() =>
