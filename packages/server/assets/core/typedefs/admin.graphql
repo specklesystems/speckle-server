@@ -27,11 +27,6 @@ type AdminQueries {
   ): ProjectCollection!
 
   serverStatistics: ServerStatistics! @hasScope(scope: "server:stats")
-
-  # inviteList(
-  #   limit: Int! = 25
-  #   offset: Int! = 0
-  # )
 }
 
 extend type Query {
