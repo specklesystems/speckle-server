@@ -97,7 +97,7 @@ module.exports = {
       // NOTE: we're redacting the field (returning null) rather than throwing a full error which would invalidate the request.
       if (context.userId === parent.id) {
         try {
-          await validateScopes(context.scopes, 'profile:email')
+          await validateScopes(context.scopes, Scopes.Profile.Email)
           return parent.email
         } catch (err) {
           return null

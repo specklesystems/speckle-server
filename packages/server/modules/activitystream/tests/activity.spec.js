@@ -86,7 +86,7 @@ describe('Activity @activity', () => {
       Scopes.Tokens.Write,
       Scopes.Tokens.Read,
       Scopes.Profile.Read,
-      'profile:email'
+      Scopes.Profile.Email
     ]
 
     // create users

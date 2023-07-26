@@ -48,7 +48,7 @@ describe('Upload/Download Routes @api-rest', () => {
         Scopes.Tokens.Write,
         Scopes.Tokens.Read,
         Scopes.Profile.Read,
-        'profile:email'
+        Scopes.Profile.Email
       ]
     )}`
 
@@ -64,7 +64,7 @@ describe('Upload/Download Routes @api-rest', () => {
         Scopes.Tokens.Write,
         Scopes.Tokens.Read,
         Scopes.Profile.Read,
-        'profile:email'
+        Scopes.Profile.Email
       ]
     )}`
 

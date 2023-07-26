@@ -52,7 +52,7 @@ describe('GraphQL API Core @core-api', () => {
         Scopes.Tokens.Write,
         Scopes.Tokens.Read,
         Scopes.Profile.Read,
-        'profile:email'
+        Scopes.Profile.Email
       ]
     )}`
     userB.id = await createUser(userB)
@@ -67,7 +67,7 @@ describe('GraphQL API Core @core-api', () => {
         Scopes.Tokens.Write,
         Scopes.Tokens.Read,
         Scopes.Profile.Read,
-        'profile:email'
+        Scopes.Profile.Email
       ]
     )}`
     userC.id = await createUser(userC)
@@ -82,7 +82,7 @@ describe('GraphQL API Core @core-api', () => {
         Scopes.Tokens.Write,
         Scopes.Tokens.Read,
         Scopes.Profile.Read,
-        'profile:email'
+        Scopes.Profile.Email
       ]
     )}`
 
@@ -250,7 +250,7 @@ describe('GraphQL API Core @core-api', () => {
             Scopes.Tokens.Write,
             Scopes.Tokens.Read,
             Scopes.Profile.Read,
-            'profile:email'
+            Scopes.Profile.Email
           ]
         )}`
 
@@ -278,7 +278,7 @@ describe('GraphQL API Core @core-api', () => {
             Scopes.Tokens.Write,
             Scopes.Tokens.Read,
             Scopes.Profile.Read,
-            'profile:email',
+            Scopes.Profile.Email,
             'profile:delete'
           ]
         )}`
@@ -1700,7 +1700,7 @@ describe('GraphQL API Core @core-api', () => {
           Scopes.Tokens.Write,
           Scopes.Tokens.Read,
           Scopes.Profile.Read,
-          'profile:email',
+          Scopes.Profile.Email,
           'apps:read',
           'apps:write',
           'users:invite'
