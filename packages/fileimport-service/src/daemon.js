@@ -17,6 +17,7 @@ const { spawn } = require('child_process')
 const ServerAPI = require('../ifc/api')
 const objDependencies = require('./objDependencies')
 const { logger } = require('../observability/logging')
+const { Scopes } = require('@speckle/shared')
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -97,7 +98,7 @@ async function doTask(task) {
     const { token } = await serverApi.createToken({
       userId: info.userId,
       name: 'temp upload token',
-      scopes: ['streams:write', 'streams:read'],
+      scopes: ['streams:write', Scopes.Streams.Read],
       lifespan: 1000000
     })
     tempUserToken = token

@@ -20,7 +20,7 @@ const {
 } = require('@/modules/shared')
 const { buildContext } = require('@/modules/shared/middleware')
 const { ForbiddenError } = require('apollo-server-express')
-const { Roles } = require('@speckle/shared')
+const { Roles, Scopes } = require('@speckle/shared')
 
 describe('Generic AuthN & AuthZ controller tests', () => {
   before(async () => {
@@ -99,7 +99,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       .catch((err) => expect('Unknown role: bar').to.equal(err.message))
 
     // this caught me out, but streams:read is not a valid role for now
-    await authorizeResolver('foo', 'bar', 'streams:read')
+    await authorizeResolver('foo', 'bar', Scopes.Streams.Read)
       .then(() => {
         throw new Error('This should have been rejected')
       })

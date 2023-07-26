@@ -11,6 +11,7 @@ const { createManyObjects } = require('@/test/helpers')
 const { createUser } = require('../services/users')
 const { createPersonalAccessToken } = require('../services/tokens')
 const { createStream } = require('../services/streams')
+const { Scopes } = require('@speckle/shared')
 
 describe('Upload/Download Routes @api-rest', () => {
   const userA = {
@@ -40,7 +41,7 @@ describe('Upload/Download Routes @api-rest', () => {
       userA.id,
       'test token user A',
       [
-        'streams:read',
+        Scopes.Streams.Read,
         'streams:write',
         'users:read',
         'users:email',
@@ -56,7 +57,7 @@ describe('Upload/Download Routes @api-rest', () => {
       userB.id,
       'test token user B',
       [
-        'streams:read',
+        Scopes.Streams.Read,
         'streams:write',
         'users:read',
         'users:email',

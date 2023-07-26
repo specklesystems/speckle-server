@@ -17,7 +17,7 @@ const { packageRoot } = require('@/bootstrap')
 const {
   addOrUpdateStreamCollaborator
 } = require('@/modules/core/services/streams/streamAccessService')
-const { Roles } = require('@/modules/core/helpers/mainConstants')
+const { Roles, Scopes } = require('@speckle/shared')
 const { getFreeServerPort } = require('@/test/serverHelper')
 
 let addr
@@ -100,7 +100,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
     userA.id = await createUser(userA)
     const token = await createPersonalAccessToken(userA.id, 'test token user A', [
-      'streams:read',
+      Scopes.Streams.Read,
       'streams:write',
       'users:read',
       'users:email',
@@ -116,7 +116,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
       userB.id,
       'test token user B',
       [
-        'streams:read',
+        Scopes.Streams.Read,
         'streams:write',
         'users:read',
         'users:email',
@@ -131,7 +131,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
     userC.token = `Bearer ${await createPersonalAccessToken(
       userC.id,
       'test token user B',
-      ['streams:read', 'streams:write', 'users:read', 'users:email']
+      [Scopes.Streams.Read, 'streams:write', 'users:read', 'users:email']
     )}`
   })
 

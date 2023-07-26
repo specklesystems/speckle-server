@@ -11,6 +11,7 @@ const {
   createAuthorizationCode,
   createAppTokenFromAccessCode
 } = require('../services/apps')
+const { Scopes } = require('@speckle/shared')
 
 let sendRequest
 let server
@@ -67,7 +68,7 @@ describe('GraphQL @apps-api', () => {
         name: 'Test App',
         public: true,
         description: 'Test App Description',
-        scopes: ['streams:read'],
+        scopes: [Scopes.Streams.Read],
         redirectUrl: 'lol://what'
       }
     }
@@ -88,7 +89,7 @@ describe('GraphQL @apps-api', () => {
       myApp: {
         name: 'Test App',
         description: 'Test App Description',
-        scopes: ['streams:read'],
+        scopes: [Scopes.Streams.Read],
         redirectUrl: 'lol://what'
       }
     }
@@ -160,7 +161,7 @@ describe('GraphQL @apps-api', () => {
         id: testAppId,
         name: 'Updated Test App',
         description: 'Test App Description',
-        scopes: ['streams:read'],
+        scopes: [Scopes.Streams.Read],
         redirectUrl: 'lol://what'
       }
     }
@@ -192,7 +193,7 @@ describe('GraphQL @apps-api', () => {
         name: 'Another Test App',
         public: false,
         description: 'Test App Description',
-        scopes: ['streams:read'],
+        scopes: [Scopes.Streams.Read],
         redirectUrl: 'lol://what'
       }
     }
@@ -203,7 +204,7 @@ describe('GraphQL @apps-api', () => {
         name: 'The n-th Test App',
         public: false,
         description: 'Test App Description',
-        scopes: ['streams:read'],
+        scopes: [Scopes.Streams.Read],
         redirectUrl: 'lol://what'
       }
     }

@@ -11,7 +11,7 @@ const {
   addOrUpdateStreamCollaborator,
   removeStreamCollaborator
 } = require('@/modules/core/services/streams/streamAccessService')
-const { Roles } = require('@speckle/shared')
+const { Roles, Scopes } = require('@speckle/shared')
 
 let app
 let server
@@ -44,8 +44,8 @@ describe('GraphQL API Core @core-api', () => {
       userA.id,
       'test token user A',
       [
-        'server:setup',
-        'streams:read',
+        Scopes.Server.Setup,
+        Scopes.Streams.Read,
         'streams:write',
         'users:read',
         'users:email',
@@ -60,7 +60,7 @@ describe('GraphQL API Core @core-api', () => {
       userB.id,
       'test token user B',
       [
-        'streams:read',
+        Scopes.Streams.Read,
         'streams:write',
         'users:read',
         'users:email',
@@ -75,7 +75,7 @@ describe('GraphQL API Core @core-api', () => {
       userC.id,
       'test token user B',
       [
-        'streams:read',
+        Scopes.Streams.Read,
         'streams:write',
         'users:read',
         'users:email',
@@ -243,7 +243,7 @@ describe('GraphQL API Core @core-api', () => {
           userDelete.id,
           'fail token user del',
           [
-            'streams:read',
+            Scopes.Streams.Read,
             'streams:write',
             'users:read',
             'users:email',
@@ -271,7 +271,7 @@ describe('GraphQL API Core @core-api', () => {
           userDelete.id,
           'test token user del',
           [
-            'streams:read',
+            Scopes.Streams.Read,
             'streams:write',
             'users:read',
             'users:email',
@@ -1693,7 +1693,7 @@ describe('GraphQL API Core @core-api', () => {
         archivedUser.id,
         'this will be archived',
         [
-          'streams:read',
+          Scopes.Streams.Read,
           'streams:write',
           'users:read',
           'users:email',
@@ -1735,7 +1735,7 @@ describe('GraphQL API Core @core-api', () => {
         query,
         variables: {
           tokenInput: {
-            scopes: ['streams:read'],
+            scopes: [Scopes.Streams.Read],
             name: 'thisWillNotBeCreated',
             lifespan: 1000000
           }
@@ -1840,7 +1840,7 @@ describe('GraphQL API Core @core-api', () => {
           name: 'Test App',
           public: true,
           description: 'Test App Description',
-          scopes: ['streams:read'],
+          scopes: [Scopes.Streams.Read],
           redirectUrl: 'lol://what'
         }
       }

@@ -41,6 +41,7 @@ const {
 
 const { createObject } = require('../services/objects')
 const { beforeEachContext } = require('@/test/hooks')
+const { Scopes } = require('@speckle/shared')
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
@@ -368,18 +369,18 @@ describe('Actors & Tokens @user-services', () => {
 
     before(async () => {
       pregeneratedToken = await createPersonalAccessToken(myTestActor.id, 'Whabadub', [
-        'streams:read',
+        Scopes.Streams.Read,
         'streams:write',
         'profile:read',
         'users:email'
       ])
       revokedToken = await createPersonalAccessToken(myTestActor.id, 'Mr. Revoked', [
-        'streams:read'
+        Scopes.Streams.Read
       ])
       expireSoonToken = await createPersonalAccessToken(
         myTestActor.id,
         'Mayfly',
-        ['streams:read'],
+        [Scopes.Streams.Read],
         1
       ) // 1ms lifespan
     })

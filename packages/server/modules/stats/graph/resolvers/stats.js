@@ -10,13 +10,13 @@ const {
   getTotalObjectCount,
   getTotalUserCount
 } = require('../../services')
-const { Roles } = require('@speckle/shared')
+const { Roles, Scopes } = require('@speckle/shared')
 
 module.exports = {
   Query: {
     async serverStats(parent, args, context) {
       await validateServerRole(context, Roles.Server.Admin)
-      await validateScopes(context.scopes, 'server:stats')
+      await validateScopes(context.scopes, Scopes.Server.Stats)
       return {}
     }
   },

@@ -16,6 +16,7 @@ const {
 } = require('../services/webhooks')
 const { createUser } = require('../../core/services/users')
 const { createStream, grantPermissionsStream } = require('../../core/services/streams')
+const { Scopes } = require('@speckle/shared')
 
 describe('Webhooks @webhooks', () => {
   let server, sendRequest, app
@@ -139,12 +140,12 @@ describe('Webhooks @webhooks', () => {
       userOne.token = `Bearer ${await createPersonalAccessToken(
         userOne.id,
         'userOne test token',
-        ['streams:read', 'streams:write']
+        [Scopes.Streams.Read, 'streams:write']
       )}`
       userTwo.token = `Bearer ${await createPersonalAccessToken(
         userTwo.id,
         'userTwo test token',
-        ['streams:read', 'streams:write']
+        [Scopes.Streams.Read, 'streams:write']
       )}`
       await grantPermissionsStream({
         streamId: streamTwo.id,

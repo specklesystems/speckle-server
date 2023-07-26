@@ -6,7 +6,7 @@ const {
 } = require('@/modules/shared')
 
 const { getStream } = require('../services/streams')
-const { Roles } = require('@speckle/shared')
+const { Roles, Scopes } = require('@speckle/shared')
 
 module.exports = {
   async validatePermissionsReadStream(streamId, req) {
@@ -27,7 +27,7 @@ module.exports = {
 
     if (!stream.isPublic) {
       try {
-        await validateScopes(req.context.scopes, 'streams:read')
+        await validateScopes(req.context.scopes, Scopes.Streams.Read)
       } catch (err) {
         return { result: false, status: 401 }
       }
