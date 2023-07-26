@@ -46,7 +46,7 @@ describe('GraphQL API Core @core-api', () => {
       [
         Scopes.Server.Setup,
         Scopes.Streams.Read,
-        'streams:write',
+        Scopes.Streams.Write,
         'users:read',
         'users:email',
         'tokens:write',
@@ -61,7 +61,7 @@ describe('GraphQL API Core @core-api', () => {
       'test token user B',
       [
         Scopes.Streams.Read,
-        'streams:write',
+        Scopes.Streams.Write,
         'users:read',
         'users:email',
         'tokens:write',
@@ -76,7 +76,7 @@ describe('GraphQL API Core @core-api', () => {
       'test token user B',
       [
         Scopes.Streams.Read,
-        'streams:write',
+        Scopes.Streams.Write,
         'users:read',
         'users:email',
         'tokens:write',
@@ -244,7 +244,7 @@ describe('GraphQL API Core @core-api', () => {
           'fail token user del',
           [
             Scopes.Streams.Read,
-            'streams:write',
+            Scopes.Streams.Write,
             'users:read',
             'users:email',
             'tokens:write',
@@ -272,7 +272,7 @@ describe('GraphQL API Core @core-api', () => {
           'test token user del',
           [
             Scopes.Streams.Read,
-            'streams:write',
+            Scopes.Streams.Write,
             'users:read',
             'users:email',
             'tokens:write',
@@ -1694,7 +1694,7 @@ describe('GraphQL API Core @core-api', () => {
         'this will be archived',
         [
           Scopes.Streams.Read,
-          'streams:write',
+          Scopes.Streams.Write,
           'users:read',
           'users:email',
           'tokens:write',

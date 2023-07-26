@@ -11,7 +11,7 @@ const {
   getObjectChildren,
   getObjectChildrenQuery
 } = require('../../services/objects')
-const { Roles } = require('@speckle/shared')
+const { Roles, Scopes } = require('@speckle/shared')
 
 module.exports = {
   Stream: {
@@ -61,7 +61,7 @@ module.exports = {
   Mutation: {
     async objectCreate(parent, args, context) {
       await validateServerRole(context, Roles.Server.User)
-      await validateScopes(context.scopes, 'streams:write')
+      await validateScopes(context.scopes, Scopes.Streams.Write)
       await authorizeResolver(
         context.userId,
         args.objectInput.streamId,

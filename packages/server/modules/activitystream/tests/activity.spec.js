@@ -80,7 +80,7 @@ describe('Activity @activity', () => {
 
     const normalScopesList = [
       Scopes.Streams.Read,
-      'streams:write',
+      Scopes.Streams.Write,
       'users:read',
       'users:email',
       'tokens:write',
@@ -107,7 +107,7 @@ describe('Activity @activity', () => {
       ),
       createPersonalAccessToken(userX.id, 'no users:read test token', [
         Scopes.Streams.Read,
-        'streams:write'
+        Scopes.Streams.Write
       ]).then((token) => (userX.token = `Bearer ${token}`))
       // streams
       // createStream({ ...collaboratorTestStream, ownerId: userIz.id }).then(

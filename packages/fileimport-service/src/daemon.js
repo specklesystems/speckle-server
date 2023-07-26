@@ -98,7 +98,7 @@ async function doTask(task) {
     const { token } = await serverApi.createToken({
       userId: info.userId,
       name: 'temp upload token',
-      scopes: ['streams:write', Scopes.Streams.Read],
+      scopes: [Scopes.Streams.Write, Scopes.Streams.Read],
       lifespan: 1000000
     })
     tempUserToken = token

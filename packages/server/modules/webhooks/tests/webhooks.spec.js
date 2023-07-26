@@ -140,12 +140,12 @@ describe('Webhooks @webhooks', () => {
       userOne.token = `Bearer ${await createPersonalAccessToken(
         userOne.id,
         'userOne test token',
-        [Scopes.Streams.Read, 'streams:write']
+        [Scopes.Streams.Read, Scopes.Streams.Write]
       )}`
       userTwo.token = `Bearer ${await createPersonalAccessToken(
         userTwo.id,
         'userTwo test token',
-        [Scopes.Streams.Read, 'streams:write']
+        [Scopes.Streams.Read, Scopes.Streams.Write]
       )}`
       await grantPermissionsStream({
         streamId: streamTwo.id,

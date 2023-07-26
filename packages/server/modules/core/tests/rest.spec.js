@@ -42,7 +42,7 @@ describe('Upload/Download Routes @api-rest', () => {
       'test token user A',
       [
         Scopes.Streams.Read,
-        'streams:write',
+        Scopes.Streams.Write,
         'users:read',
         'users:email',
         'tokens:write',
@@ -58,7 +58,7 @@ describe('Upload/Download Routes @api-rest', () => {
       'test token user B',
       [
         Scopes.Streams.Read,
-        'streams:write',
+        Scopes.Streams.Write,
         'users:read',
         'users:email',
         'tokens:write',

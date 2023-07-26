@@ -53,7 +53,7 @@ module.exports = {
     }
 
     try {
-      await validateScopes(req.context.scopes, 'streams:write')
+      await validateScopes(req.context.scopes, Scopes.Streams.Write)
     } catch (err) {
       return { result: false, status: 401 }
     }

@@ -370,7 +370,7 @@ describe('Actors & Tokens @user-services', () => {
     before(async () => {
       pregeneratedToken = await createPersonalAccessToken(myTestActor.id, 'Whabadub', [
         Scopes.Streams.Read,
-        'streams:write',
+        Scopes.Streams.Write,
         'profile:read',
         'users:email'
       ])
@@ -386,7 +386,7 @@ describe('Actors & Tokens @user-services', () => {
     })
 
     it('Should create a personal api token', async () => {
-      const scopes = ['streams:write', 'profile:read']
+      const scopes = [Scopes.Streams.Write, 'profile:read']
       const name = 'My Test Token'
 
       myFirstToken = await createPersonalAccessToken(myTestActor.id, name, scopes)
