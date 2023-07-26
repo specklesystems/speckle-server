@@ -17,6 +17,7 @@ import {
 } from './Batch'
 import { GeometryConverter } from '../converter/GeometryConverter'
 import { ObjectLayers } from '../SpeckleRenderer'
+import Logger from 'js-logger'
 
 export default class PointBatch implements Batch {
   public id: string
@@ -349,6 +350,32 @@ export default class PointBatch implements Batch {
         index < this.renderViews[k].batchEnd
       ) {
         return this.renderViews[k]
+      }
+    }
+  }
+
+  public getMaterialAtIndex(index: number): Material {
+    for (let k = 0; k < this.renderViews.length; k++) {
+      if (
+        index >= this.renderViews[k].batchStart &&
+        index < this.renderViews[k].batchEnd
+      ) {
+        const rv = this.renderViews[k]
+        const group = this.geometry.groups.find((value) => {
+          return (
+            rv.batchStart >= value.start &&
+            rv.batchStart + rv.batchCount <= value.count + value.start
+          )
+        })
+        if (!Array.isArray(this.mesh.material)) {
+          return this.mesh.material
+        } else {
+          if (!group) {
+            Logger.warn(`Malformed material index!`)
+            return null
+          }
+          return this.mesh.material[group.materialIndex]
+        }
       }
     }
   }

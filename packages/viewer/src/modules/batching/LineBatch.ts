@@ -5,6 +5,7 @@ import {
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
   Line,
+  Material,
   Object3D,
   Vector4,
   WebGLRenderer
@@ -251,6 +252,11 @@ export default class LineBatch implements Batch {
         return this.renderViews[k]
       }
     }
+  }
+
+  public getMaterialAtIndex(index: number): Material {
+    index
+    return this.batchMaterial
   }
 
   private makeLineGeometry(position: Float64Array) {
