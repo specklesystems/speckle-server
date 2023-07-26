@@ -14,6 +14,7 @@ export const Roles = Object.freeze(<const>{
   Server: {
     Admin: 'server:admin',
     User: 'server:user',
+    Guest: 'server:guest',
     ArchivedUser: 'server:archived-user'
   }
 })
