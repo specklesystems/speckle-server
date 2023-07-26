@@ -36,7 +36,7 @@ describe('GraphQL @apps-api', () => {
     testToken = `Bearer ${await createPersonalAccessToken(testUser.id, 'test token', [
       Scopes.Profile.Read,
       Scopes.Apps.Read,
-      'apps:write'
+      Scopes.Apps.Write
     ])}`
 
     testUser2 = {
@@ -49,7 +49,7 @@ describe('GraphQL @apps-api', () => {
     testToken2 = `Bearer ${await createPersonalAccessToken(testUser2.id, 'test token', [
       Scopes.Profile.Read,
       Scopes.Apps.Read,
-      'apps:write'
+      Scopes.Apps.Write
     ])}`
   })
 

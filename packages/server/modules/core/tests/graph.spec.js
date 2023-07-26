@@ -1702,7 +1702,7 @@ describe('GraphQL API Core @core-api', () => {
           Scopes.Profile.Read,
           Scopes.Profile.Email,
           Scopes.Apps.Read,
-          'apps:write',
+          Scopes.Apps.Write,
           'users:invite'
         ]
       )}`

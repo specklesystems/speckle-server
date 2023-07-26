@@ -49,7 +49,8 @@ export const Scopes = Object.freeze(<const>{
     Write: 'tokens:write'
   },
   Apps: {
-    Read: 'apps:read'
+    Read: 'apps:read',
+    Write: 'apps:write'
   }
 })
 

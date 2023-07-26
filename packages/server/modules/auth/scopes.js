@@ -9,7 +9,7 @@ module.exports = [
     public: false
   },
   {
-    name: 'apps:write',
+    name: Scopes.Apps.Write,
     description: 'Register applications on your behalf.',
     public: false
   }
