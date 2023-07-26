@@ -39,6 +39,7 @@ const {
   validateStreamAccess
 } = require('@/modules/core/services/streams/streamAccessService')
 const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
+const { Roles } = require('@speckle/shared')
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
@@ -167,7 +168,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
       const rateLimitResult = await getRateLimitResult(
@@ -190,7 +191,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
       await updateCommitAndNotify(args.commit, context.userId)
@@ -218,7 +219,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
       const deleted = await deleteCommitAndNotify(

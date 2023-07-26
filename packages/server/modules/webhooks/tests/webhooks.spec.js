@@ -16,7 +16,7 @@ const {
 } = require('../services/webhooks')
 const { createUser } = require('../../core/services/users')
 const { createStream, grantPermissionsStream } = require('../../core/services/streams')
-const { Scopes } = require('@speckle/shared')
+const { Scopes, Roles } = require('@speckle/shared')
 
 describe('Webhooks @webhooks', () => {
   let server, sendRequest, app
@@ -150,7 +150,7 @@ describe('Webhooks @webhooks', () => {
       await grantPermissionsStream({
         streamId: streamTwo.id,
         userId: userOne.id,
-        role: 'stream:contributor'
+        role: Roles.Stream.Contributor
       })
     })
 

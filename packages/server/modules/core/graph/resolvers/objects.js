@@ -65,7 +65,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.objectInput.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
       const ids = await createObjects(

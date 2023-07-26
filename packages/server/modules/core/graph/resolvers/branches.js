@@ -15,6 +15,7 @@ const {
 } = require('@/modules/core/services/branch/retrieval')
 
 const { getUserById } = require('../../services/users')
+const { Roles } = require('@speckle/shared')
 
 // subscription events
 const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
@@ -62,7 +63,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
       const { id } = await createBranchAndNotify(args.branch, context.userId)
@@ -74,7 +75,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
       const newBranch = await updateBranchAndNotify(args.branch, context.userId)
@@ -85,7 +86,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
       const deleted = await deleteBranchAndNotify(args.branch, context.userId)

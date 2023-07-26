@@ -59,7 +59,7 @@ module.exports = {
     }
 
     try {
-      await authorizeResolver(req.context.userId, streamId, 'stream:contributor')
+      await authorizeResolver(req.context.userId, streamId, Roles.Stream.Contributor)
     } catch (err) {
       return { result: false, status: 401 }
     }

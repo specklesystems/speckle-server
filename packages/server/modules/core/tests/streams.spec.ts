@@ -253,7 +253,7 @@ describe('Streams @core-streams', () => {
       await grantPermissionsStream({
         streamId: updatableStream.id,
         userId: userTwo.id,
-        role: 'stream:contributor'
+        role: Roles.Stream.Contributor
       })
 
       // await sleep(100)
