@@ -209,6 +209,11 @@ spec:
                 key: {{ default "google_client_secret" .Values.server.auth.google.clientSecret.secretKey }}
           {{- end }}
 
+          {{- if .Values.serverGuestsEnabled }}
+          - name: ENABLE_SERVER_GUESTS 
+            value: true
+          {{- end }}
+
           # Github Auth
           {{- if .Values.server.auth.github.enabled }}
           - name: STRATEGY_GITHUB

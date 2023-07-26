@@ -97,6 +97,9 @@ file_size_limit_mb: 100
 ##
 enable_prometheus_monitoring: false
 
+## @param serverGuestsEnabled Enables users to join the server as Guests, having limiter permissions
+serverGuestsEnabled: false
+
 prometheusMonitoring:
   ## @param prometheusMonitoring.namespace If provided, deploys Speckle's Prometheus resources (e.g. ServiceMonitor) in the given namespace
   ## Prometheus prior to v0.19.0, or any version when deployed with default parameters, expects ServiceMonitors to be deployed within the same namespace.
