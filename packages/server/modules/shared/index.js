@@ -38,7 +38,7 @@ async function validateServerRole(context, requiredRole) {
   if (!myRole)
     throw new ForbiddenError('You do not have the required server role (null)')
 
-  if (context.role === 'server:admin') return true
+  if (context.role === Roles.Server.Admin) return true
   if (myRole.weight >= role.weight) return true
 
   throw new ForbiddenError('You do not have the required server role')

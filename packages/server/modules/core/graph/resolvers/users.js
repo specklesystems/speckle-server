@@ -18,7 +18,7 @@ const zxcvbn = require('zxcvbn')
 const {
   getAdminUsersListCollection
 } = require('@/modules/core/services/users/adminUsersListService')
-const { Roles, Scopes } = require('@/modules/core/helpers/mainConstants')
+const { Roles, Scopes } = require('@speckle/shared')
 const { markOnboardingComplete } = require('@/modules/core/repositories/users')
 const { UsersMeta } = require('@/modules/core/dbSchema')
 
@@ -33,8 +33,8 @@ module.exports = {
       if (!activeUserId) return null
 
       // Only if authenticated - check for server roles & scopes
-      await validateServerRole(context, 'server:user')
-      await validateScopes(context.scopes, 'profile:read')
+      await validateServerRole(context, Roles.Server.User)
+      await validateScopes(context.scopes, Scopes.Profile.Read)
 
       return await getUser(activeUserId)
     },
@@ -47,10 +47,10 @@ module.exports = {
       // User wants info about himself and he's not authenticated - just return null
       if (!context.auth && !args.id) return null
 
-      await validateServerRole(context, 'server:user')
+      await validateServerRole(context, Roles.Server.User)
 
-      if (!args.id) await validateScopes(context.scopes, 'profile:read')
-      else await validateScopes(context.scopes, 'users:read')
+      if (!args.id) await validateScopes(context.scopes, Scopes.Profile.Read)
+      else await validateScopes(context.scopes, Scopes.Users.Read)
 
       if (!args.id && !context.userId) {
         throw new UserInputError('You must provide an user id.')
@@ -64,7 +64,7 @@ module.exports = {
     },
 
     async userSearch(parent, args, context) {
-      await validateServerRole(context, 'server:user')
+      await validateServerRole(context, Roles.Server.User)
       await validateScopes(context.scopes, 'profile:read')
       await validateScopes(context.scopes, 'users:read')
 
@@ -131,16 +131,16 @@ module.exports = {
   },
   Mutation: {
     async userUpdate(parent, args, context) {
-      await validateServerRole(context, 'server:user')
+      await validateServerRole(context, Roles.Server.User)
       await updateUserAndNotify(context.userId, args.user)
       return true
     },
 
     async userRoleChange(parent, args) {
       const roleChangers = {
-        'server:admin': makeUserAdmin,
-        'server:user': unmakeUserAdmin,
-        'server:archived-user': archiveUser
+        [Roles.Server.Admin]: makeUserAdmin,
+        [Roles.Server.User]: unmakeUserAdmin,
+        [Roles.Server.ArchivedUser]: archiveUser
       }
       const roleChanger = roleChangers[args.userRoleInput.role]
       await roleChanger({ userId: args.userRoleInput.id })
@@ -148,7 +148,7 @@ module.exports = {
     },
 
     async adminDeleteUser(parent, args, context) {
-      await validateServerRole(context, 'server:admin')
+      await validateServerRole(context, Roles.Server.Admin)
       const user = await getUserByEmail({ email: args.userConfirmation.email })
       await deleteUser(user.id)
       return true
@@ -164,7 +164,7 @@ module.exports = {
       // The below are not really needed anymore as we've added the hasRole and hasScope
       // directives in the graphql schema itself.
       // Since I am paranoid, I'll leave them here too.
-      await validateServerRole(context, 'server:user')
+      await validateServerRole(context, Roles.Server.User)
       await validateScopes(context.scopes, 'profile:delete')
 
       await deleteUser(context.userId, args.user)

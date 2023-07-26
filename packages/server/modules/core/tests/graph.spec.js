@@ -11,7 +11,7 @@ const {
   addOrUpdateStreamCollaborator,
   removeStreamCollaborator
 } = require('@/modules/core/services/streams/streamAccessService')
-const { Roles } = require('@/modules/core/helpers/mainConstants')
+const { Roles } = require('@speckle/shared')
 
 let app
 let server
@@ -303,30 +303,30 @@ describe('GraphQL API Core @core-api', () => {
         let queriedUserB = await sendRequest(userA.token, {
           query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
-        expect(queriedUserB.body.data.otherUser.role).to.equal('server:user')
-        let query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:admin"})}`
+        expect(queriedUserB.body.data.otherUser.role).to.equal(Roles.Server.User)
+        let query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "${Roles.Server.Admin}"})}`
         await sendRequest(userA.token, { query })
         queriedUserB = await sendRequest(userA.token, {
           query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
-        expect(queriedUserB.body.data.otherUser.role).to.equal('server:admin')
+        expect(queriedUserB.body.data.otherUser.role).to.equal(Roles.Server.Admin)
         expect(queriedUserB.body.data)
-        query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:user"})}`
+        query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "${Roles.Server.User}"})}`
         await sendRequest(userA.token, { query })
         queriedUserB = await sendRequest(userA.token, {
           query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
-        expect(queriedUserB.body.data.otherUser.role).to.equal('server:user')
+        expect(queriedUserB.body.data.otherUser.role).to.equal(Roles.Server.User)
       })
 
       it('Only admins can change user role', async () => {
-        const query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:admin"})}`
+        const query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "${Roles.Server.Admin}"})}`
         const res = await sendRequest(userB.token, { query })
         const queriedUserB = await sendRequest(userA.token, {
           query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
         expect(res.body.errors).to.exist
-        expect(queriedUserB.body.data.otherUser.role).to.equal('server:user')
+        expect(queriedUserB.body.data.otherUser.role).to.equal(Roles.Server.User)
       })
     })
 
@@ -1054,7 +1054,7 @@ describe('GraphQL API Core @core-api', () => {
         expect(res.body.data).to.have.property('user')
         expect(res.body.data.user.name).to.equal('Miticå')
         expect(res.body.data.user.email).to.equal('d.1@speckle.systems')
-        expect(res.body.data.user.role).to.equal('server:admin')
+        expect(res.body.data.user.role).to.equal(Roles.Server.Admin)
       })
 
       it('Should retrieve my streams', async () => {

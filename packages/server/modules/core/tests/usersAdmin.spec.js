@@ -11,6 +11,7 @@ const {
   makeUserAdmin
 } = require('../services/users')
 const { beforeEachContext } = require('@/test/hooks')
+const { Roles } = require('@speckle/shared')
 
 describe('User admin @user-services', () => {
   const myTestActor = {
@@ -33,7 +34,7 @@ describe('User admin @user-services', () => {
     const firstUser = users[0]
 
     const userRole = await getUserRole(firstUser.id)
-    expect(userRole).to.equal('server:admin')
+    expect(userRole).to.equal(Roles.Server.Admin)
   })
 
   it('Count user knows how to count', async () => {
@@ -93,20 +94,20 @@ describe('User admin @user-services', () => {
     const [user] = await getUsers(1, 10)
 
     const oldRole = await getUserRole(user.id)
-    expect(oldRole).to.equal('server:user')
+    expect(oldRole).to.equal(Roles.Server.User)
 
     await makeUserAdmin({ userId: user.id })
     let newRole = await getUserRole(user.id)
-    expect(newRole).to.equal('server:admin')
+    expect(newRole).to.equal(Roles.Server.Admin)
 
     await unmakeUserAdmin({ userId: user.id })
     newRole = await getUserRole(user.id)
-    expect(newRole).to.equal('server:user')
+    expect(newRole).to.equal(Roles.Server.User)
   })
 
   it('Ensure at least one admin remains in the server', async () => {
     try {
-      await unmakeUserAdmin({ userId: myTestActor.id, role: 'server:admin' })
+      await unmakeUserAdmin({ userId: myTestActor.id, role: Roles.Server.Admin })
       assert.fail('This should have failed')
     } catch (err) {
       expect(err.message).to.equal('Cannot remove the last admin role from the server')

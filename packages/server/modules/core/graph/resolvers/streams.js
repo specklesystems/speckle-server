@@ -48,7 +48,7 @@ const {
   updateStreamRoleAndNotify
 } = require('@/modules/core/services/streams/management')
 const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
-const { Roles } = require('@speckle/shared')
+const { Roles, Scopes } = require('@speckle/shared')
 const { StreamNotFoundError } = require('@/modules/core/errors/stream')
 
 // subscription events
@@ -88,8 +88,8 @@ module.exports = {
       await authorizeResolver(context.userId, args.id, 'stream:reviewer')
 
       if (!stream.isPublic) {
-        await validateServerRole(context, 'server:user')
-        await validateScopes(context.scopes, 'streams:read')
+        await validateServerRole(context, Roles.Server.User)
+        await validateScopes(context.scopes, Scopes.Streams.Read)
       }
 
       return stream
