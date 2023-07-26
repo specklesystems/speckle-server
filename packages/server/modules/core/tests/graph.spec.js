@@ -50,7 +50,7 @@ describe('GraphQL API Core @core-api', () => {
         Scopes.Users.Read,
         Scopes.Users.Email,
         Scopes.Tokens.Write,
-        'tokens:read',
+        Scopes.Tokens.Read,
         'profile:read',
         'profile:email'
       ]
@@ -65,7 +65,7 @@ describe('GraphQL API Core @core-api', () => {
         Scopes.Users.Read,
         Scopes.Users.Email,
         Scopes.Tokens.Write,
-        'tokens:read',
+        Scopes.Tokens.Read,
         'profile:read',
         'profile:email'
       ]
@@ -80,7 +80,7 @@ describe('GraphQL API Core @core-api', () => {
         Scopes.Users.Read,
         Scopes.Users.Email,
         Scopes.Tokens.Write,
-        'tokens:read',
+        Scopes.Tokens.Read,
         'profile:read',
         'profile:email'
       ]
@@ -248,7 +248,7 @@ describe('GraphQL API Core @core-api', () => {
             Scopes.Users.Read,
             Scopes.Users.Email,
             Scopes.Tokens.Write,
-            'tokens:read',
+            Scopes.Tokens.Read,
             'profile:read',
             'profile:email'
           ]
@@ -276,7 +276,7 @@ describe('GraphQL API Core @core-api', () => {
             Scopes.Users.Read,
             Scopes.Users.Email,
             Scopes.Tokens.Write,
-            'tokens:read',
+            Scopes.Tokens.Read,
             'profile:read',
             'profile:email',
             'profile:delete'
@@ -1698,7 +1698,7 @@ describe('GraphQL API Core @core-api', () => {
           Scopes.Users.Read,
           Scopes.Users.Email,
           Scopes.Tokens.Write,
-          'tokens:read',
+          Scopes.Tokens.Read,
           'profile:read',
           'profile:email',
           'apps:read',
