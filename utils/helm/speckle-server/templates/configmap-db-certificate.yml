@@ -1,5 +1,11 @@
-{{ if ( and .Values.db.useCertificate .Values.db.certificate ) }}
+{{- if (and ( and .Values.db.useCertificate .Values.db.certificate ) .Values.extraCACertificates.enabled ) -}}
+{{- fail "It is not possible to use the deprecated 'db.certificate' value if you have defined and enabled the 'extraCACertificates' value. 'db.certificate' is deprecated and may be removed in a future version." -}}
+{{- end -}}
+{{- if (and .Values.db.useCertificate (not .Values.extraCACertificates.enabled)) -}}
+{{- fail "If you are using a DB Certificate ('db.useCertificate' == true), you need to provide it by also enabling extra CA Certificates ('extraCACertificates.enabled' must also be true, and the required ConfigMap provided prior to deployment of the Helm Chart.)." -}}
+{{- end -}}
 
+{{ if (and ( and .Values.db.useCertificate .Values.db.certificate ) (not .Values.extraCACertificates.enabled )) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,5 +16,4 @@ metadata:
 data:
   ca-certificate.crt: |
 {{ .Values.db.certificate | indent 4 }}
-
 {{ end }}

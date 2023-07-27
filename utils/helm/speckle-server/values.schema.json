@@ -29,31 +29,26 @@
     },
     "cert_manager_issuer": {
       "type": "string",
-      "description": "The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate. Leave blank '' if you are not using cert-manager. This parameter will be ignored if selfSignedCertificate.enabled is true.",
+      "description": "**DEPRECATED** Please use 'ingress.certManagerIssuer' instead. The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate. Leave blank '' if you are not using cert-manager or are providing your own certificate.",
       "default": "letsencrypt-staging"
     },
-    "selfSignedCertificate": {
+    "extraCACertificates": {
       "type": "object",
       "properties": {
         "enabled": {
           "type": "boolean",
-          "description": "If enabled, Speckle will use a self-signed certificate for SSL connections. The cert_manager_issuer parameter will be ignored.",
+          "description": "If enabled, Speckle will load these CA certificates and use them when making connections.",
           "default": false
         },
-        "caCertificate": {
-          "type": "object",
-          "properties": {
-            "secretName": {
-              "type": "string",
-              "description": "The name of the Kubernetes Secret containing the CA certificate of the self-signed certificate.",
-              "default": "server-tls-ca"
-            },
-            "secretKey": {
-              "type": "string",
-              "description": "The key within the Kubernetes Secret holding the CA certificate self-signed certificate.",
-              "default": "ca.crt"
-            }
-          }
+        "configMapName": {
+          "type": "string",
+          "description": "The name of the Kubernetes ConfigMap containing all of the required extra CA certificates.",
+          "default": "extra-ca-certs"
+        },
+        "configMapKey": {
+          "type": "string",
+          "description": "The key within the Kubernetes ConfigMap containing all of the required extra CA certificates.",
+          "default": "ca.crt"
         }
       }
     },
@@ -99,6 +94,21 @@
           "type": "string",
           "description": "The name of the Kubernetes pod in which the ingress controller is deployed.",
           "default": "ingress-nginx"
+        },
+        "certManagerIssuer": {
+          "type": "string",
+          "description": "The name of the ClusterIssuer Kubernetes resource that provides the SSL Certificate, if any.",
+          "default": "letsencrypt-staging"
+        },
+        "existingCertificate": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, Speckle will use an existing certificate for the ingress. The Kubernetes Secret resource must be named 'server-tls' and exist within the same namespace as this Helm Release. This secret must contain `tls.crt` and `tls.key` keys, containing the TLS public certificate and private key, respectively.",
+              "default": false
+            }
+          }
         }
       }
     },
@@ -193,7 +203,7 @@
         },
         "certificate": {
           "type": "string",
-          "description": "The x509 public certificate for SSL connections to the Postgres database. Use of this certificate requires db.useCertificate to be enabled and an appropriate value for db.PGSSLMODE provided.",
+          "description": "**DEPRECATED**. Please instead append the certificate to the ConfigMap referenced in `extraCACertificates` parameter.",
           "default": ""
         },
         "PGSSLMODE": {

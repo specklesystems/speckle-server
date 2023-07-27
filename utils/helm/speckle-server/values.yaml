@@ -26,21 +26,22 @@ ssl_canonical_url: true
 ##
 tlsRejectUnauthorized: '1'
 
-## @param cert_manager_issuer The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate. Leave blank '' if you are not using cert-manager. This parameter will be ignored if selfSignedCertificate.enabled is true.
+## @param cert_manager_issuer **DEPRECATED** Please use 'ingress.certManagerIssuer' instead. The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate. Leave blank '' if you are not using cert-manager or are providing your own certificate.
+## If both this and 'ingress.certManagerIssuer' are provided, 'ingress.certManagerIssuer' will take precedence.
 ##
 cert_manager_issuer: letsencrypt-staging
 
-selfSignedCertificate:
-  ## @param selfSignedCertificate.enabled If enabled, Speckle will use a self-signed certificate for SSL connections. The cert_manager_issuer parameter will be ignored.
+extraCACertificates:
+  ## @param extraCACertificates.enabled If enabled, Speckle will load these CA certificates and use them when making connections.
+  ## This is intended for connections to Postgres or to a server with a self-signed certificate.
   ##
   enabled: false
-  caCertificate:
-    ## @param selfSignedCertificate.caCertificate.secretName The name of the Kubernetes Secret containing the CA certificate of the self-signed certificate.
-    ##
-    secretName: 'server-tls-ca'
-    ## @param selfSignedCertificate.caCertificate.secretKey The key within the Kubernetes Secret holding the CA certificate self-signed certificate.
-    ##
-    secretKey: 'ca.crt'
+  ## @param extraCACertificates.configMapName The name of the Kubernetes ConfigMap containing all of the required extra CA certificates.
+  ##
+  configMapName: 'extra-ca-certs'
+  ## @param extraCACertificates.configMapKey The key within the Kubernetes ConfigMap containing all of the required extra CA certificates.
+  ##
+  configMapKey: 'ca.crt'
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
@@ -60,18 +61,36 @@ networkPlugin:
   ## @param networkPlugin.type (Optional) Used to configure which type of NetworkPolicy is deployed. Options are 'kubernetes' or 'cilium'.
   type: 'kubernetes'
 
-## @section Ingress metadata for NetworkPolicy
-## @descriptionStart
-## This section is ignored unless networkPolicy is enabled for frontend or server.
-## The NetworkPolicy uses this value to enable connections from the ingress controller pod in this namespace to reach Speckle.
-## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
-## @descriptionEnd
+## @section Ingress metadata for Certificate Management and NetworkPolicy
 ##
 ingress:
   ## @param ingress.namespace The namespace in which the ingress controller is deployed.
+  ## @descriptionStart
+  ## This parameter is ignored unless networkPolicy is enabled for frontend or server.
+  ## The NetworkPolicy uses this value to enable connections from the ingress controller pod in this namespace to reach Speckle.
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+  ## @descriptionEnd
+  ##
   namespace: ingress-nginx
   ## @param ingress.controllerName The name of the Kubernetes pod in which the ingress controller is deployed.
+  ## @descriptionStart
+  ## This parameter is ignored unless networkPolicy is enabled for frontend or server.
+  ## The NetworkPolicy uses this value to enable connections from the ingress controller pod in this namespace to reach Speckle.
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+  ## @descriptionEnd
+  ##
   controllerName: ingress-nginx
+  ## @param ingress.certManagerIssuer The name of the ClusterIssuer Kubernetes resource that provides the SSL Certificate, if any.
+  ## If both this and 'cert_manager_issuer' are provided, this value will take precedence.
+  ## Leave blank, '', if you are not using cert-manager or are providing your own existing certificate.
+  ##
+  certManagerIssuer: letsencrypt-staging
+
+  existingCertificate:
+    ## @param ingress.existingCertificate.enabled If enabled, Speckle will use an existing certificate for the ingress. The Kubernetes Secret resource must be named 'server-tls' and exist within the same namespace as this Helm Release. This secret must contain `tls.crt` and `tls.key` keys, containing the TLS public certificate and private key, respectively.
+    ## If the existing certificate is self-signed, you will need to provide the CA certificate in a ConfigMap and reference the ConfigMap in the `extraCACertificates` section of this values.yaml file.
+    ##
+    enabled: false
 
 ## @section Common parameters
 ##
@@ -163,9 +182,11 @@ db:
   ## @param db.maxConnectionsServer The number of connections to the Postgres database to provide in the connection pool
   ##
   maxConnectionsServer: 4
-  ## @param db.certificate The x509 public certificate for SSL connections to the Postgres database. Use of this certificate requires db.useCertificate to be enabled and an appropriate value for db.PGSSLMODE provided.
+  ## @param db.certificate **DEPRECATED**. Please instead append the certificate to the ConfigMap referenced in `extraCACertificates` parameter.
+  ## The x509 public certificate for SSL connections to the Postgres database. Use of this certificate requires db.useCertificate to be enabled and an appropriate value for db.PGSSLMODE provided.
   ## The value must be formatted as a multi-line string.  We recommend using the pipe-symbol and taking care to
   ##  indent all lines of the value correctly.
+  ## If this value is left blank, the Helm Chart will not render the ConfigMap and you may instead provide the necessary certificate in a ConfigMap named `postgres-certificate`.
   ## ref: https://helm.sh/docs/chart_template_guide/yaml_techniques/#strings-in-yaml
   ##
   certificate: '' # Multi-line string with the contents of `ca-certificate.crt`

@@ -56,33 +56,16 @@ spec:
             name: tmp
         {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
-            mountPath: /postgres-certificate
+            mountPath: /usr/local/share/ca-certificates
         {{- end }}
-        {{- if .Values.selfSignedCertificate.caCertificate.enabled }}
-          - name: ca-certificate
-            mountPath: /self-signed-certificate
+        {{- if .Values.extraCACertificates.enabled }}
+          - name: extra-ca-certificates
+            mountPath: /usr/local/share/ca-certificates
             readOnly: true
         {{- end }}
 
         # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
         lifecycle:
-          postStart:
-            # we need to merge all CA certificate files into a single file
-            exec:
-              command:
-                #- ";node" # not required as the entrypoint to the image is 'node'
-                - "-e"
-                - 'var fs = require("fs"); fs.mkdirSync("/usr/local/share/ca-certificates", { recursive: true })'
-                {{- if .Values.db.useCertificate }}
-                - ";node"
-                - "-e"
-                - 'var fs = require("fs"); var w = fs.createWriteStream("/usr/local/share/ca-certificates/extra-ca.crt", {flags: "a"}); var r = fs.createReadStream("/postgres-certificate/ca-certificate.crt"); r.pipe(w);'
-                {{- end }}
-                {{- if .Values.selfSignedCertificate.caCertificate.enabled }}
-                - ";node"
-                - "-e"
-                - 'var fs = require("fs"); var w = fs.createWriteStream("/usr/local/share/ca-certificates/extra-ca.crt", {flags: "a"}); var r = fs.createReadStream("/self-signed-certificate/ca-certificate.crt"); r.pipe(w);'
-                {{- end }}
           preStop:
             exec:
               command: ["sleep", "5"]
@@ -482,16 +465,19 @@ spec:
       volumes:
         - name: tmp
           emptyDir: {}
-      {{- if .Values.db.useCertificate }}
+      {{- if (and .Values.db.useCertificate (not .Values.extraCACertificates.enabled)) }}
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
-      {{- end }}
-      {{- if .Values.selfSignedCertificate.caCertificate.enabled }}
-        - name: ca-certificate
-          secret:
-            secretName: {{ .Values.selfSignedCertificate.caCertificate.secretName }}
             items:
-            - key: {{ .Values.selfSignedCertificate.caCertificate.secretKey }}
-              path: ca-certificate.crt
+            - key: postgres.crt
+              path: extra-ca.crt
+      {{- end }}
+      {{- if .Values.extraCACertificates.enabled }}
+        - name: extra-ca-certificates
+          configMap:
+            name: {{ .Values.extraCACertificates.configMapName }}
+            items:
+            - key: {{ .Values.extraCACertificates.configMapKey }}
+              path: extra-ca.crt
       {{- end }}

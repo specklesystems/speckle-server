@@ -1,3 +1,13 @@
+{{- if (and .Values.ingress.existingCertificate.enabled (or .Values.ingress.certManagerIssuer .Values.cert_manager_issuer)) -}}
+{{- fail "Neither 'ingress.certManagerIssuer' or 'cert_manager_issuer' can be defined (non-empty) if you are using an existing certificate ('ingress.existingCertificate.enabled' is true)." -}}
+{{- end }}
+{{/*
+# If using an existing certificate, it does not necessarily imply that it is a self-signed certificate so we should not check that extraCACertificates is also enabled.
+{{- if (and .Values.ingress.existingCertificate.enabled (not .Values.extraCACertificates.enabled) )-}}
+INCORRECT: {{ fail "'extraCACertificates' must be enabled if you are using an existing certificate ('ingress.existingCertificate.enabled' is true)" }}
+{{- end -}}
+{{- end -}}
+*/}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -6,15 +16,15 @@ metadata:
   labels:
 {{ include "speckle.labels" . | indent 4 }}
   annotations:
-    {{- if (and .Values.cert_manager_issuer (not .Values.selfSignedCertificate.enabled)) }}
-    cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer }}
+    {{- if (or .Values.ingress.certManagerIssuer .Values.cert_manager_issuer) }}
+    cert-manager.io/cluster-issuer: {{ (empty .Values.ingress.certManagerIssuer) | ternary .Values.cert_manager_issuer .Values.ingress.certManagerIssuer  }}
     {{- end }}
     nginx.ingress.kubernetes.io/proxy-body-size: {{ (printf "%dm" (int .Values.file_size_limit_mb)) | quote }}
     nginx.org/client-max-body-size: {{ (printf "%dm" (int .Values.file_size_limit_mb)) | quote }}
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
-  {{- if (or .Values.cert_manager_issuer .Values.selfSignedCertificate.enabled) }}
+  {{- if (or .Values.cert_manager_issuer .Values.ingress.existingCertificate.enabled) }}
   tls:
   - hosts:
     - {{ .Values.domain }}

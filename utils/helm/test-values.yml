@@ -17,7 +17,7 @@ s3:
 server:
   adminOverrideEnabled: true
 
-cert_manager_issuer: ~
+cert_manager_issuer: ''
 enable_prometheus_monitoring: true
 file_size_limit_mb: 300
 

@@ -31,7 +31,7 @@ spec:
               {{- else }}
               value: "1"
               {{- end }}
-            {{- if .Values.selfSignedCertificate.caCertificate.enabled }}
+            {{- if .Values.extraCACertificates.enabled }}
             - name: REQUESTS_CA_BUNDLE
               value: /usr/local/share/ca-certificates/extra-ca.crt
             {{- end }}
@@ -51,7 +51,7 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 20000
-          {{- if .Values.selfSignedCertificate.caCertificate.enabled }}
+          {{- if .Values.extraCACertificates.enabled }}
           volumeMounts:
             - name: ca-certificate
               mountPath: /usr/local/share/ca-certificates
@@ -68,13 +68,13 @@ spec:
       {{- if .Values.test.serviceAccount.create }}
       serviceAccountName: {{ include "test.name" $ }}
       {{- end }}
-      {{- if .Values.selfSignedCertificate.caCertificate.enabled }}
+      {{- if .Values.extraCACertificates.enabled }}
       volumes:
         - name: ca-certificate
           secret:
-            secretName: {{ .Values.selfSignedCertificate.caCertificate.secretName }}
+            secretName: {{ .Values.extraCACertificates.configMapName }}
             items:
-            - key: {{ .Values.selfSignedCertificate.caCertificate.secretKey }}
+            - key: {{ .Values.extraCACertificates.configMapKey }}
               path: extra-ca.crt
       {{- end }}
 {{- end }}
