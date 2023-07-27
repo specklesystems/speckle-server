@@ -7,7 +7,7 @@ const assert = require('assert')
 const knex = require('@/db/knex')
 
 const {
-  archiveUser,
+  changeUserRole,
   createUser,
   findOrCreateUser,
   getUser,
@@ -293,7 +293,7 @@ describe('Actors & Tokens @user-services', () => {
         password: 'nanananananaaaa'
       })
 
-      await archiveUser({ userId: toBeArchivedId })
+      await changeUserRole({ userId: toBeArchivedId, role: Roles.Server.ArchivedUser })
 
       let { users } = await searchUsers('Library', 20, null)
       expect(users).to.have.lengthOf(1)

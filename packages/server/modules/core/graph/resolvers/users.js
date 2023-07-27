@@ -6,10 +6,8 @@ const {
   getUserRole,
   deleteUser,
   searchUsers,
-  makeUserAdmin,
-  unmakeUserAdmin,
-  archiveUser
-} = require('../../services/users')
+  changeUserRole
+} = require('@/modules/core/services/users')
 const { updateUserAndNotify } = require('@/modules/core/services/users/management')
 const { saveActivity } = require('@/modules/activitystream/services')
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
@@ -21,6 +19,7 @@ const {
 const { Roles, Scopes } = require('@speckle/shared')
 const { markOnboardingComplete } = require('@/modules/core/repositories/users')
 const { UsersMeta } = require('@/modules/core/dbSchema')
+const { guestServerRoleEnabled } = require('@/modules/shared/helpers/envHelper')
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -130,24 +129,22 @@ module.exports = {
     }
   },
   Mutation: {
-    async userUpdate(parent, args, context) {
+    async userUpdate(_parent, args, context) {
       await validateServerRole(context, Roles.Server.User)
       await updateUserAndNotify(context.userId, args.user)
       return true
     },
 
-    async userRoleChange(parent, args) {
-      const roleChangers = {
-        [Roles.Server.Admin]: makeUserAdmin,
-        [Roles.Server.User]: unmakeUserAdmin,
-        [Roles.Server.ArchivedUser]: archiveUser
-      }
-      const roleChanger = roleChangers[args.userRoleInput.role]
-      await roleChanger({ userId: args.userRoleInput.id })
+    async userRoleChange(_parent, args) {
+      await changeUserRole({
+        role: args.userRoleInput.role,
+        userId: args.userRoleInput.id,
+        guestRoleEnabled: guestServerRoleEnabled()
+      })
       return true
     },
 
-    async adminDeleteUser(parent, args, context) {
+    async adminDeleteUser(_parent, args, context) {
       await validateServerRole(context, Roles.Server.Admin)
       const user = await getUserByEmail({ email: args.userConfirmation.email })
       await deleteUser(user.id)

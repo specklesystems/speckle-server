@@ -6,12 +6,12 @@ const {
   getUsers,
   countUsers,
   deleteUser,
-  getUserRole,
-  unmakeUserAdmin,
-  makeUserAdmin
-} = require('../services/users')
+  changeUserRole,
+  getUserRole
+} = require('@/modules/core/services/users')
 const { beforeEachContext } = require('@/test/hooks')
 const { Roles } = require('@speckle/shared')
+const cryptoRandomString = require('crypto-random-string')
 
 describe('User admin @user-services', () => {
   const myTestActor = {
@@ -53,14 +53,6 @@ describe('User admin @user-services', () => {
   })
 
   it('Get users query limit is sanitized to upper limit', async () => {
-    const createNewDroid = (number) => {
-      return {
-        name: `${number}`,
-        email: `${number}@droidarmy.com`,
-        password: 'sn3aky-1337-b1m'
-      }
-    }
-
     const userInputs = Array(250)
       .fill()
       .map((v, i) => createNewDroid(i))
@@ -90,27 +82,66 @@ describe('User admin @user-services', () => {
     expect(await countUsers('droid')).to.equal(250)
   })
 
-  it('Change user role modifies role', async () => {
-    const [user] = await getUsers(1, 10)
+  describe('changeUserRole', () => {
+    it('throws for invalid role value', async () => {
+      const role = 'shadow:lurker'
+      try {
+        await changeUserRole({ userId: myTestActor.id, role })
+        assert.fail('This should have failed')
+      } catch (err) {
+        expect(err.message).to.equal(`Invalid role specified: ${role}`)
+      }
+    })
+    it('throws if guest role not enabled, but trying to change user role to guest', async () => {
+      const role = Roles.Server.Guest
+      try {
+        await changeUserRole({ userId: myTestActor.id, role })
+        assert.fail('This should have failed')
+      } catch (err) {
+        expect(err.message).to.equal('Guest role is not enabled')
+      }
+    })
+    it('modifies role', async () => {
+      const userId = await createUser(
+        createNewDroid(cryptoRandomString({ length: 13 }))
+      )
 
-    const oldRole = await getUserRole(user.id)
-    expect(oldRole).to.equal(Roles.Server.User)
+      const oldRole = await getUserRole(userId)
+      expect(oldRole).to.equal(Roles.Server.User)
 
-    await makeUserAdmin({ userId: user.id })
-    let newRole = await getUserRole(user.id)
-    expect(newRole).to.equal(Roles.Server.Admin)
+      await changeUserRole({ userId, role: Roles.Server.Admin })
+      let newRole = await getUserRole(userId)
+      expect(newRole).to.equal(Roles.Server.Admin)
 
-    await unmakeUserAdmin({ userId: user.id })
-    newRole = await getUserRole(user.id)
-    expect(newRole).to.equal(Roles.Server.User)
-  })
+      await changeUserRole({ userId, role: Roles.Server.User })
+      newRole = await getUserRole(userId)
+      expect(newRole).to.equal(Roles.Server.User)
 
-  it('Ensure at least one admin remains in the server', async () => {
-    try {
-      await unmakeUserAdmin({ userId: myTestActor.id, role: Roles.Server.Admin })
-      assert.fail('This should have failed')
-    } catch (err) {
-      expect(err.message).to.equal('Cannot remove the last admin role from the server')
-    }
+      await changeUserRole({
+        userId,
+        role: Roles.Server.Guest,
+        guestRoleEnabled: true
+      })
+      newRole = await getUserRole(userId)
+      expect(newRole).to.equal(Roles.Server.Guest)
+    })
+    it('Ensures at least one admin remains in the server', async () => {
+      try {
+        await changeUserRole({ userId: myTestActor.id, role: Roles.Server.User })
+        assert.fail('This should have failed')
+      } catch (err) {
+        expect(err.message).to.equal(
+          'Cannot remove the last admin role from the server'
+        )
+      }
+    })
   })
 })
+
+const createNewDroid = (number) => {
+  return {
+    name: `${number}`,
+    email: `${number}@droidarmy.com`,
+    password: 'sn3aky-1337-b1m'
+  }
+}
