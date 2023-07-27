@@ -28,7 +28,7 @@ const {
 } = require('@/modules/core/errors/userinput')
 const { Roles } = require('@speckle/shared')
 
-const changeUserRole = async ({ userId, role }) =>
+const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
 
 const countAdminUsers = async () => {
@@ -264,25 +264,18 @@ module.exports = {
     return users
   },
 
-  async makeUserAdmin({ userId }) {
-    await changeUserRole({ userId, role: Roles.Server.Admin })
-  },
-
-  async unmakeUserAdmin({ userId }) {
-    // dont delete last admin role
-    await _ensureAtleastOneAdminRemains(userId)
-    await changeUserRole({ userId, role: Roles.Server.User })
-  },
-
-  async archiveUser({ userId }) {
-    // dont change last admin to archived
-    await _ensureAtleastOneAdminRemains(userId)
-    await changeUserRole({ userId, role: Roles.Server.ArchivedUser })
-  },
-
   async countUsers(searchQuery = null) {
     const query = getUsersBaseQuery(searchQuery)
     const [userCount] = await query.count()
     return parseInt(userCount.count)
+  },
+
+  async changeUserRole({ userId, role, guestRoleEnabled = false }) {
+    if (!Object.values(Roles.Server).includes(role))
+      throw new UserInputError(`Invalid role specified: ${role}`)
+    if (!guestRoleEnabled && role === Roles.Server.Guest)
+      throw new UserInputError('Guest role is not enabled')
+    if (role !== Roles.Server.Admin) await _ensureAtleastOneAdminRemains(userId)
+    await _changeUserRole({ userId, role })
   }
 }

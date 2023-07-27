@@ -5,7 +5,11 @@ const request = require('supertest')
 const { beforeEachContext, initializeTestServer } = require(`@/test/hooks`)
 const { generateManyObjects } = require(`@/test/helpers`)
 
-const { createUser, getUsers, archiveUser } = require('../services/users')
+const {
+  createUser,
+  getUsers,
+  changeUserRole
+} = require('@/modules/core/services/users')
 const { createPersonalAccessToken } = require('../services/tokens')
 const {
   addOrUpdateStreamCollaborator,
@@ -1706,7 +1710,7 @@ describe('GraphQL API Core @core-api', () => {
           Scopes.Users.Invite
         ]
       )}`
-      await archiveUser({ userId: archivedUser.id })
+      await changeUserRole({ userId: archivedUser.id, role: Roles.Server.ArchivedUser })
     })
 
     it('Should be able to read public streams', async () => {
