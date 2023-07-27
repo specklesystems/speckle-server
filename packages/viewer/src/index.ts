@@ -38,6 +38,7 @@ import {
 } from './modules/measurements/Measurements'
 import { Units } from './modules/converter/Units'
 import { SelectionExtension } from './modules/extensions/SelectionExtension'
+import { CameraController } from './modules/extensions/core-extensions/CameraController'
 
 export {
   Viewer,
@@ -53,7 +54,8 @@ export {
   VisualDiffMode,
   MeasurementType,
   Units,
-  SelectionExtension
+  SelectionExtension,
+  CameraController
 }
 
 export type {

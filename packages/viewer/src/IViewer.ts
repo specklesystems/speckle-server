@@ -1,4 +1,4 @@
-import { Vector3 } from 'three'
+import { Box3, Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
 import { DiffResult, VisualDiffMode } from './modules/Differ'
 import { BatchObject } from './modules/batching/BatchObject'
@@ -11,6 +11,8 @@ import { Utils } from './modules/Utils'
 import { World } from './modules/World'
 import { MeasurementOptions } from './modules/measurements/Measurements'
 import SpeckleRenderer from './modules/SpeckleRenderer'
+import EventEmitter from './modules/EventEmitter'
+import { Extension } from './modules/extensions/Extension'
 
 export interface ViewerParams {
   showStats: boolean
@@ -154,16 +156,16 @@ export interface IViewer {
   sectionBoxOff(): void
   sectionBoxOn(): void
 
-  zoom(objectIds?: string[], fit?: number, transition?: boolean): void
+  // zoom(objectIds?: string[], fit?: number, transition?: boolean): void
 
-  toggleCameraProjection(): void
+  // toggleCameraProjection(): void
   setLightConfiguration(config: LightConfiguration): void
 
   getViews(): SpeckleView[]
-  setView(
-    view: CanonicalView | SpeckleView | InlineView | PolarView,
-    transition?: boolean
-  )
+  // setView(
+  //   view: CanonicalView | SpeckleView | InlineView | PolarView,
+  //   transition?: boolean
+  // )
 
   loadObject(
     url: string,
@@ -248,4 +250,9 @@ export interface IViewer {
   dispose(): void
 
   getRenderer(): SpeckleRenderer
+  getContainer(): HTMLElement
+  get emiter(): EventEmitter
+  get clippingVolume(): Box3
+
+  addExtension(extension: Extension)
 }

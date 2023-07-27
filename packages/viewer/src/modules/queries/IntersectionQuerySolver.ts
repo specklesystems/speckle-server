@@ -27,12 +27,12 @@ export class IntersectionQuerySolver {
 
   private solveOcclusion(query: IntersectionQuery): IntersectionQueryResult {
     const target = this.vecBuff0.set(query.point.x, query.point.y, query.point.z)
-    const dir = this.vecBuff1.copy(target).sub(this.renderer.camera.position)
+    const dir = this.vecBuff1.copy(target).sub(this.renderer.renderingCamera.position)
     dir.normalize()
-    const ray = new Ray(this.renderer.camera.position, dir)
+    const ray = new Ray(this.renderer.renderingCamera.position, dir)
     const results: Array<Intersection> = this.renderer.intersections.intersectRay(
       this.renderer.scene,
-      this.renderer.camera,
+      this.renderer.renderingCamera,
       ray,
       true,
       this.renderer.currentSectionBox,
@@ -41,7 +41,7 @@ export class IntersectionQuerySolver {
     if (!results || results.length === 0) return { objects: null }
     const hits = this.renderer.queryHitIds(results)
     if (!hits) return { objects: null }
-    let targetDistance = this.renderer.camera.position.distanceTo(target)
+    let targetDistance = this.renderer.renderingCamera.position.distanceTo(target)
     targetDistance -= query.tolerance
 
     if (targetDistance < results[0].distance) {
@@ -61,7 +61,7 @@ export class IntersectionQuerySolver {
   private solvePick(query: IntersectionQuery): IntersectionQueryResult {
     const results: Array<Intersection> = this.renderer.intersections.intersect(
       this.renderer.scene,
-      this.renderer.camera,
+      this.renderer.renderingCamera,
       new Vector2(query.point.x, query.point.y),
       true,
       this.renderer.currentSectionBox

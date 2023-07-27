@@ -25,6 +25,10 @@ export class SelectionExtension extends Extension {
     // UNIMPLEMENTED
   }
 
+  public onResize() {
+    //UNIMPLEMENTED
+  }
+
   public getSelectedObjects() {
     return this.selectionList.map((v) => v.model.raw)
   }

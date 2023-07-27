@@ -8,7 +8,7 @@ import {
 
 import './style.css'
 import Sandbox from './Sandbox'
-import { SelectionExtension } from '@speckle/viewer'
+import { SelectionExtension, CameraController } from '@speckle/viewer'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -31,8 +31,14 @@ const createViewer = async (containerName: string, stream: string) => {
   const multiSelectList: SelectionEvent[] = []
   const viewer: Viewer = new DebugViewer(container, params)
   await viewer.init()
+
+  const cameraController = new CameraController(viewer)
+  cameraController.init()
+  viewer.speckleRenderer.cameraProvider = cameraController
   const selection = new SelectionExtension(viewer)
   selection.init()
+  viewer.addExtension(cameraController)
+  viewer.addExtension(selection)
 
   const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
 

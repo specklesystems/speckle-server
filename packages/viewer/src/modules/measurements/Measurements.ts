@@ -95,12 +95,16 @@ export class Measurements {
     this.renderer.renderer.getDrawingBufferSize(this.screenBuff0)
     if (this.measurement)
       this.measurement.frameUpdate(
-        this.renderer.camera,
+        this.renderer.renderingCamera,
         this.screenBuff0,
         this.renderer.sceneBox
       )
     this.measurements.forEach((value: Measurement) => {
-      value.frameUpdate(this.renderer.camera, this.screenBuff0, this.renderer.sceneBox)
+      value.frameUpdate(
+        this.renderer.renderingCamera,
+        this.screenBuff0,
+        this.renderer.sceneBox
+      )
     })
   }
 
@@ -131,7 +135,7 @@ export class Measurements {
     let result =
       (this.renderer.intersections.intersect(
         this.renderer.scene,
-        this.renderer.camera,
+        this.renderer.renderingCamera,
         data,
         true,
         this.renderer.currentSectionBox,
@@ -168,8 +172,8 @@ export class Measurements {
 
     this.renderer.needsRender = true
     this.renderer.resetPipeline(
-      /* Because of the camera controller library*/ this.renderer.camera.type ===
-        'OrthographicCamera'
+      /* Because of the camera controller library*/ this.renderer.renderingCamera
+        .type === 'OrthographicCamera'
     )
     this.frameLock = true
   }
@@ -205,7 +209,7 @@ export class Measurements {
     let result =
       (this.renderer.intersections.intersect(
         this.renderer.scene,
-        this.renderer.camera,
+        this.renderer.renderingCamera,
         data,
         true,
         this.renderer.currentSectionBox,
@@ -230,7 +234,7 @@ export class Measurements {
     let perpResult =
       (this.renderer.intersections.intersectRay(
         this.renderer.scene,
-        this.renderer.camera,
+        this.renderer.renderingCamera,
         new Ray(offsetPoint, startNormal),
         true,
         this.renderer.currentSectionBox,
@@ -266,7 +270,7 @@ export class Measurements {
 
     this.measurement.state = MeasurementState.DANGLING_START
     this.measurement.frameUpdate(
-      this.renderer.camera,
+      this.renderer.renderingCamera,
       this.screenBuff0,
       this.renderer.sceneBox
     )
@@ -299,15 +303,17 @@ export class Measurements {
   ) {
     const v0 = intersection.batchObject.bvh
       .getVertexAtIndex(intersection.face.a)
-      .project(this.renderer.camera)
+      .project(this.renderer.renderingCamera)
     const v1 = intersection.batchObject.bvh
       .getVertexAtIndex(intersection.face.b)
-      .project(this.renderer.camera)
+      .project(this.renderer.renderingCamera)
     const v2 = intersection.batchObject.bvh
       .getVertexAtIndex(intersection.face.c)
-      .project(this.renderer.camera)
+      .project(this.renderer.renderingCamera)
 
-    const projectedIntersection = intersection.point.project(this.renderer.camera)
+    const projectedIntersection = intersection.point.project(
+      this.renderer.renderingCamera
+    )
     const tri = [v0, v1, v2]
     tri.sort((a, b) => {
       return projectedIntersection.distanceTo(a) - projectedIntersection.distanceTo(b)
@@ -319,7 +325,7 @@ export class Measurements {
     )
     this.screenBuff0.set(closestScreen.x, closestScreen.y)
     this.screenBuff1.set(intersectionScreen.x, intersectionScreen.y)
-    const unprojectedPoint = tri[0].unproject(this.renderer.camera)
+    const unprojectedPoint = tri[0].unproject(this.renderer.renderingCamera)
     if (this.screenBuff0.distanceTo(this.screenBuff1) < 10 * window.devicePixelRatio) {
       outPoint.copy(unprojectedPoint)
       outNormal.copy(intersection.face.normal)
@@ -343,7 +349,7 @@ export class Measurements {
     this.measurements.forEach((value) => {
       value.highlight(false)
     })
-    this.raycaster.setFromCamera(data, this.renderer.camera)
+    this.raycaster.setFromCamera(data, this.renderer.renderingCamera)
     const res = this.raycaster.intersectObjects(this.measurements, false)
     return res[0]?.object as Measurement
   }

@@ -72,7 +72,7 @@ export default class SectionBox extends EventEmitter {
     this.display.add(this.hoverPlane)
 
     this.dragging = false
-    this._setupControls()
+    // this._setupControls()
 
     this.sidesSimple = {
       256: { verts: [1, 2, 5, 6], axis: 'x' },
@@ -105,11 +105,11 @@ export default class SectionBox extends EventEmitter {
       // TODO: cannot get this to work reliably
       // if( !this.attachedToBox ) return
       // if( objs.length === 0 ) {
-      //   this.controls.visible = false
+      //   this.controls?.visible = false
       //   this.viewer.needsRender = true
       // }
       // else if( objs.length !== 0 ) {
-      //   this.controls.visible = true
+      //   this.controls?.visible = true
       //   this.viewer.needsRender = true
       // }
     })
@@ -135,19 +135,19 @@ export default class SectionBox extends EventEmitter {
     this.controls?.dispose()
     this.controls?.detach()
     this.controls = new TransformControls(
-      this.viewer.cameraHandler.activeCam.camera,
+      this.viewer.speckleRenderer.renderingCamera,
       this.viewer.speckleRenderer.renderer.domElement
     )
-    for (let k = 0; k < this.controls.children.length; k++) {
-      this.controls.children[k].traverse((obj) => {
+    for (let k = 0; k < this.controls?.children.length; k++) {
+      this.controls?.children[k].traverse((obj) => {
         obj.layers.set(ObjectLayers.PROPS)
       })
     }
-    this.controls.getRaycaster().layers.set(ObjectLayers.PROPS)
-    this.controls.setSize(0.75)
+    this.controls?.getRaycaster().layers.set(ObjectLayers.PROPS)
+    this.controls?.setSize(0.75)
     this.display.add(this.controls)
-    this.controls.addEventListener('change', this._draggingChangeHandler.bind(this))
-    this.controls.addEventListener('dragging-changed', (event) => {
+    this.controls?.addEventListener('change', this._draggingChangeHandler.bind(this))
+    this.controls?.addEventListener('dragging-changed', (event) => {
       if (!this.display.visible) return
       const val = !!event.value
       if (val) {
@@ -235,9 +235,9 @@ export default class SectionBox extends EventEmitter {
     this.boxHelper.material.opacity = 0.3
     this.hoverPlane.visible = true
     const side = this.sidesSimple[`${args[0].face.a}${args[0].face.b}${args[0].face.c}`]
-    this.controls.showX = side.axis === 'x'
-    this.controls.showY = side.axis === 'y'
-    this.controls.showZ = side.axis === 'z'
+    // this.controls?.showX = side.axis === 'x'
+    // this.controls?.showY = side.axis === 'y'
+    // this.controls?.showZ = side.axis === 'z'
 
     this.currentRange = side.verts
 
@@ -278,9 +278,9 @@ export default class SectionBox extends EventEmitter {
     this.plane.attributes.position.needsUpdate = true
     this.plane.computeBoundingSphere()
     this.plane.computeBoundingBox()
-    this.controls.detach()
-    this.controls.attach(this.hoverPlane)
-    this.controls.updateMatrixWorld()
+    this.controls?.detach()
+    this.controls?.attach(this.hoverPlane)
+    this.controls?.updateMatrixWorld()
   }
 
   _generateSimpleCube(width = 0.5, depth = 0.5, height = 0.5) {
@@ -357,7 +357,7 @@ export default class SectionBox extends EventEmitter {
   }
 
   _attachControlsToBox() {
-    this.controls.detach()
+    this.controls?.detach()
 
     const centre = new THREE.Vector3()
     const boxArr = this.boxGeometry.attributes.position.array
@@ -369,13 +369,13 @@ export default class SectionBox extends EventEmitter {
 
     this.cube.geometry.computeBoundingSphere()
     this.cube.geometry.computeBoundingBox()
-    this.controls.attach(this.sphere)
+    this.controls?.attach(this.sphere)
     this.currentRange = null
     this.prevPosition = null
     this.hoverPlane.visible = false
-    this.controls.showX = true
-    this.controls.showY = true
-    this.controls.showZ = true
+    // this.controls?.showX = true
+    // this.controls?.showY = true
+    // this.controls?.showZ = true
   }
 
   setBox(targetBox, offset = 0.05) {

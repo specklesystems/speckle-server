@@ -50,7 +50,7 @@ export default class _SelectionHelper extends EventEmitter {
       'pointerup',
       (e) => {
         e.preventDefault()
-        if (this.viewer.cameraHandler.orbiting) return
+        if (this.viewer.cameraHandler?.orbiting) return
 
         const delta = new Date().getTime() - mdTime
         this.pointerDown = false

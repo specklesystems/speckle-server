@@ -3,18 +3,15 @@ import Stats from 'three/examples/jsm/libs/stats.module.js'
 
 import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
-import CameraHandler from './context/CameraHanlder'
+// import CameraHandler from './context/CameraHanlder'
 
 import SectionBox, { SectionBoxEvent } from './SectionBox'
-import { Clock, DoubleSide, FrontSide, Texture } from 'three'
+import { Box3, Clock, DoubleSide, FrontSide, Texture } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
 import {
-  CanonicalView,
   DefaultViewerParams,
-  InlineView,
   IViewer,
-  PolarView,
   SpeckleView,
   SunLightConfiguration,
   ViewerEvent,
@@ -34,6 +31,7 @@ import { Utils } from './Utils'
 import { DiffResult, Differ, VisualDiffMode } from './Differ'
 import { BatchObject } from './batching/BatchObject'
 import { MeasurementOptions } from './measurements/Measurements'
+import { Extension } from './extensions/Extension'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -53,12 +51,14 @@ export class Viewer extends EventEmitter implements IViewer {
   public differ: Differ
   /** Legacy viewer components (will revisit soon) */
   public sectionBox: SectionBox
-  public cameraHandler: CameraHandler
+  // public cameraHandler: CameraHandler
 
   /** Misc members */
   private inProgressOperations: number
   private clock: Clock
   private loaders: { [id: string]: ViewerObjectLoader } = {}
+
+  private extensions: Array<Extension> = []
 
   /** various utils/helpers */
   private utils: Utils
@@ -75,6 +75,18 @@ export class Viewer extends EventEmitter implements IViewer {
       }
     }
     return this.utils
+  }
+
+  public get emiter(): EventEmitter {
+    return this
+  }
+
+  public get clippingVolume(): Box3 {
+    return this.sectionBox.cube.geometry.boundingBox
+  }
+
+  public addExtension(extension: Extension) {
+    this.extensions.push(extension)
   }
 
   public constructor(
@@ -97,7 +109,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.clock = new THREE.Clock()
     this.inProgressOperations = 0
 
-    this.cameraHandler = new CameraHandler(this)
+    // this.cameraHandler = new CameraHandler(this)
 
     this.speckleRenderer = new SpeckleRenderer(this)
     this.speckleRenderer.create(this.container)
@@ -137,6 +149,10 @@ export class Viewer extends EventEmitter implements IViewer {
     this.on(ViewerEvent.LoadCancelled, (url: string) => {
       Logger.warn(`Cancelled load for ${url}`)
     })
+  }
+
+  public getContainer() {
+    return this.container
   }
 
   public getRenderer() {
@@ -196,12 +212,18 @@ export class Viewer extends EventEmitter implements IViewer {
   private update() {
     const delta = this.clock.getDelta()
     this.speckleRenderer.update(delta)
+    this.extensions.forEach((ext: Extension) => {
+      ext.onUpdate(delta)
+    })
     this.stats?.update()
     requestAnimationFrame(this.frame.bind(this))
   }
 
   private render() {
     this.speckleRenderer.render()
+    this.extensions.forEach((ext: Extension) => {
+      ext.onRender()
+    })
   }
 
   public async init(): Promise<void> {
@@ -390,28 +412,24 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer.updateSectionBoxCapper()
   }
 
-  public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
-    this.speckleRenderer.zoom(objectIds, fit, transition)
-  }
+  // public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
+  //   this.speckleRenderer.zoom(objectIds, fit, transition)
+  // }
 
-  public setProjectionMode(mode: typeof CameraHandler.prototype.activeCam) {
-    this.cameraHandler.activeCam = mode
-  }
+  // public setOrthoCameraOn() {
+  //   this.cameraHandler.setOrthoCameraOn()
+  //   this.speckleRenderer.resetPipeline(true)
+  // }
 
-  public setOrthoCameraOn() {
-    this.cameraHandler.setOrthoCameraOn()
-    this.speckleRenderer.resetPipeline(true)
-  }
+  // public setPerspectiveCameraOn() {
+  //   this.cameraHandler.setPerspectiveCameraOn()
+  //   this.speckleRenderer.resetPipeline(true)
+  // }
 
-  public setPerspectiveCameraOn() {
-    this.cameraHandler.setPerspectiveCameraOn()
-    this.speckleRenderer.resetPipeline(true)
-  }
-
-  public toggleCameraProjection() {
-    this.cameraHandler.toggleCameras()
-    this.speckleRenderer.resetPipeline(true)
-  }
+  // public toggleCameraProjection() {
+  //   this.cameraHandler.toggleCameras()
+  //   this.speckleRenderer.resetPipeline(true)
+  // }
 
   public setLightConfiguration(config: SunLightConfiguration): void {
     this.speckleRenderer.setSunLightConfiguration(config)
@@ -431,12 +449,12 @@ export class Viewer extends EventEmitter implements IViewer {
       })
   }
 
-  public setView(
-    view: CanonicalView | SpeckleView | InlineView | PolarView,
-    transition = true
-  ): void {
-    this.speckleRenderer.setView(view, transition)
-  }
+  // public setView(
+  //   view: CanonicalView | SpeckleView | InlineView | PolarView,
+  //   transition = true
+  // ): void {
+  //   this.speckleRenderer.setView(view, transition)
+  // }
 
   public screenshot(): Promise<string> {
     return new Promise((resolve) => {
@@ -478,6 +496,7 @@ export class Viewer extends EventEmitter implements IViewer {
     enableCaching = true,
     zoomToObject = true
   ) {
+    zoomToObject
     if (++this.inProgressOperations === 1)
       (this as EventEmitter).emit(ViewerEvent.Busy, true)
     await this.downloadObject(url, token, enableCaching)
@@ -490,7 +509,7 @@ export class Viewer extends EventEmitter implements IViewer {
     await this.speckleRenderer.addRenderTree(url)
     Logger.log('SYNC batch build time -> ', performance.now() - t0)
 
-    if (zoomToObject) this.zoom()
+    // if (zoomToObject) this.zoom()
 
     this.speckleRenderer.resetPipeline(true)
     this.emit(ViewerEvent.LoadComplete, url)

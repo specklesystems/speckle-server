@@ -35,12 +35,8 @@ import { NodeRenderView } from './tree/NodeRenderView'
 import { Viewer } from './Viewer'
 import { TreeNode } from './tree/WorldTree'
 import {
-  CanonicalView,
   DefaultLightConfiguration,
-  InlineView,
-  PolarView,
   SelectionEvent,
-  SpeckleView,
   SunLightConfiguration,
   ViewerEvent
 } from '../IViewer'
@@ -62,6 +58,7 @@ import SpecklePointMaterial from './materials/SpecklePointMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import { Measurements } from './measurements/Measurements'
 import { MaterialOptions } from './materials/Materials'
+import { ICameraController } from './extensions/core-extensions/CameraController'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -101,6 +98,8 @@ export default class SpeckleRenderer {
 
   private explodeTime = -1
   private explodeRange = 0
+
+  private _cameraProvider: ICameraController = null
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -152,8 +151,17 @@ export default class SpeckleRenderer {
     return this.sun
   }
 
-  public get camera() {
-    return this.viewer.cameraHandler.activeCam.camera
+  public get cameraProvider() {
+    return this._cameraProvider
+  }
+
+  public set cameraProvider(value: ICameraController) {
+    this._cameraProvider = value
+    this._cameraProvider.cameraDeltaUpdate = this.onCameraDeltaUpdate.bind(this)
+  }
+
+  public get renderingCamera() {
+    return this._cameraProvider.getRenderingCamera()
   }
 
   public get scene() {
@@ -294,39 +302,6 @@ export default class SpeckleRenderer {
       helpers.add(camHelper)
     }
 
-    this.viewer.cameraHandler.controls.restThreshold = 0.001
-    this.viewer.cameraHandler.controls.addEventListener('rest', () => {
-      this._needsRender = true
-      this.pipeline.onStationaryBegin()
-      this._measurements.paused = false
-    })
-    this.viewer.cameraHandler.controls.addEventListener('controlstart', () => {
-      this._needsRender = true
-      this.pipeline.onStationaryEnd()
-    })
-
-    this.viewer.cameraHandler.controls.addEventListener('controlend', () => {
-      this._needsRender = true
-      if (this.viewer.cameraHandler.controls.hasRested)
-        this.pipeline.onStationaryBegin()
-      this._measurements.paused = false
-    })
-
-    this.viewer.cameraHandler.controls.addEventListener('control', () => {
-      this._needsRender = true
-      this.pipeline.onStationaryEnd()
-      this._measurements.paused = true
-    })
-    this.viewer.cameraHandler.controls.addEventListener('update', () => {
-      if (
-        !this.viewer.cameraHandler.controls.hasRested &&
-        this.pipeline.renderType === RenderType.ACCUMULATION
-      ) {
-        this._needsRender = true
-        this.pipeline.onStationaryEnd()
-      }
-    })
-
     this._shadowcatcher = new Shadowcatcher(ObjectLayers.SHADOWCATCHER, [
       ObjectLayers.STREAM_CONTENT_MESH
       // ObjectLayers.STREAM_CONTENT_LINE
@@ -346,8 +321,41 @@ export default class SpeckleRenderer {
     this._measurements = new Measurements(this)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public onCameraDeltaUpdate(type: string, data?: any) {
+    switch (type) {
+      case 'rest':
+        this._needsRender = true
+        this.pipeline.onStationaryBegin()
+        this._measurements.paused = false
+        break
+      case 'controlstart':
+        this._needsRender = true
+        this.pipeline.onStationaryEnd()
+        break
+      case 'controlend':
+        this._needsRender = true
+        if (data) this.pipeline.onStationaryBegin()
+        this._measurements.paused = false
+        break
+      case 'control':
+        this._needsRender = true
+        this.pipeline.onStationaryEnd()
+        this._measurements.paused = true
+        break
+      case 'update':
+        if (!data && this.pipeline.renderType === RenderType.ACCUMULATION) {
+          this._needsRender = true
+          this.pipeline.onStationaryEnd()
+        }
+        break
+      case 'frameUpdate':
+        this._needsRender = data
+    }
+  }
+
   public update(deltaTime: number) {
-    this.needsRender = this.viewer.cameraHandler.controls.update(deltaTime)
+    if (!this._cameraProvider) return
 
     this.batcher.update(deltaTime)
 
@@ -461,9 +469,7 @@ export default class SpeckleRenderer {
   private updateFrustum() {
     const v = new Vector3()
     const box = this.sceneBox
-    const camPos = new Vector3().copy(
-      this.viewer.cameraHandler.activeCam.camera.position
-    )
+    const camPos = new Vector3().copy(this.renderingCamera.position)
     let d = 0
     v.set(box.min.x, box.min.y, box.min.z) // 000
     d = Math.max(camPos.distanceTo(v), d)
@@ -481,15 +487,15 @@ export default class SpeckleRenderer {
     d = Math.max(camPos.distanceTo(v), d)
     v.set(box.max.x, box.max.y, box.max.z) // 111
     d = Math.max(camPos.distanceTo(v), d)
-    this.viewer.cameraHandler.camera.far = d
-    this.viewer.cameraHandler.activeCam.camera.far = d * 2
-    this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
-    this.viewer.cameraHandler.camera.updateProjectionMatrix()
+    this.renderingCamera.far = d * 2
+    this.renderingCamera.updateProjectionMatrix()
+    this.renderingCamera.updateProjectionMatrix()
   }
 
   public resetPipeline(force = false) {
     this._needsRender = true
-    if (this.viewer.cameraHandler.controls.hasRested || force) this.pipeline.reset()
+    this.pipeline.reset()
+    if (/*this.viewer.cameraHandler.controls.hasRested ||*/ force) this.pipeline.reset()
   }
 
   public render(): void {
@@ -539,6 +545,7 @@ export default class SpeckleRenderer {
     priority = 1,
     zoomToObject = true
   ) {
+    zoomToObject
     this.cancel[subtreeId] = false
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
@@ -555,7 +562,7 @@ export default class SpeckleRenderer {
       if (!batch) continue
 
       this.addBatch(batch, subtreeGroup)
-      if (zoomToObject) this.zoom()
+      // if (zoomToObject) this.zoom()
       if (batch.geometryType === GeometryType.MESH) {
         this.updateDirectLights()
       }
@@ -958,7 +965,7 @@ export default class SpeckleRenderer {
 
     const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
-      this.viewer.cameraHandler.activeCam.camera,
+      this.renderingCamera,
       e,
       true,
       this.viewer.sectionBox.getCurrentBox()
@@ -1002,17 +1009,18 @@ export default class SpeckleRenderer {
   }
 
   private onObjectDoubleClick(e) {
-    const measurement = this._measurements.pickMeasurement(e)
-    if (measurement) {
-      this.zoomToBox(measurement.bounds)
-      return
-    }
+    // REVISIT
+    // const measurement = this._measurements.pickMeasurement(e)
+    // if (measurement) {
+    //   this.zoomToBox(measurement.bounds)
+    //   return
+    // }
 
     if (this._measurements.enabled) return
 
     const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
-      this.viewer.cameraHandler.activeCam.camera,
+      this.renderingCamera,
       e,
       true,
       this.viewer.sectionBox.getCurrentBox()
@@ -1072,249 +1080,6 @@ export default class SpeckleRenderer {
       console.error(`object selection resulted in empty box`)
     }
     return box
-  }
-  public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
-    if (!objectIds) {
-      this.zoomExtents(fit, transition)
-      this.pipeline.onStationaryEnd()
-      return
-    }
-    this.zoomToBox(this.boxFromObjects(objectIds), fit, transition)
-    this.pipeline.onStationaryEnd()
-  }
-
-  /** Taken from InteractionsHandler. Will revisit in the future */
-  private zoomExtents(fit = 1.2, transition = true) {
-    if (this.viewer.sectionBox.display.visible) {
-      this.zoomToBox(this.viewer.sectionBox.cube.geometry.boundingBox, 1.2, true)
-      return
-    }
-    if (this.allObjects.children.length === 0) {
-      const box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
-      this.zoomToBox(box, fit, transition)
-      return
-    }
-
-    const box = new Box3().setFromObject(this.allObjects)
-    /** This is for special cases like when the stream will only have one point
-     *  which three will not consider it's size when computing the bounding box
-     *  resulting in a zero size bounding box. That's why we make sure the bounding
-     *  box is never zero in size
-     */
-    if (box.min.equals(box.max)) {
-      box.expandByVector(new Vector3(1, 1, 1))
-    }
-    this.zoomToBox(box, fit, transition)
-    // this.viewer.controls.setBoundary( box )
-  }
-
-  /** Taken from InteractionsHandler. Will revisit in the future */
-  public zoomToBox(box, fit = 1.2, transition = true) {
-    if (box.max.x === Infinity || box.max.x === -Infinity) {
-      box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
-    }
-    const fitOffset = fit
-
-    const size = box.getSize(new Vector3())
-    const target = new Sphere()
-    box.getBoundingSphere(target)
-    target.radius = target.radius * fitOffset
-
-    const maxSize = Math.max(size.x, size.y, size.z)
-    const camFov = this.viewer.cameraHandler.camera.fov
-      ? this.viewer.cameraHandler.camera.fov
-      : 55
-    const camAspect = this.viewer.cameraHandler.camera.aspect
-      ? this.viewer.cameraHandler.camera.aspect
-      : 1.2
-    const fitHeightDistance = maxSize / (2 * Math.atan((Math.PI * camFov) / 360))
-    const fitWidthDistance = fitHeightDistance / camAspect
-    const distance = fitOffset * Math.max(fitHeightDistance, fitWidthDistance)
-
-    this.viewer.cameraHandler.controls.fitToSphere(target, transition)
-
-    this.viewer.cameraHandler.controls.minDistance = distance / 100
-    this.viewer.cameraHandler.controls.maxDistance = distance * 100
-    this.viewer.cameraHandler.camera.near = Math.max(distance / 100, 0.1)
-    this.viewer.cameraHandler.camera.far = distance * 100
-    this.viewer.cameraHandler.camera.updateProjectionMatrix()
-
-    if (this.viewer.cameraHandler.activeCam.name === 'ortho') {
-      this.viewer.cameraHandler.orthoCamera.far = distance * 100
-      this.viewer.cameraHandler.orthoCamera.updateProjectionMatrix()
-
-      // fit the camera inside, so we don't have clipping plane issues.
-      // WIP implementation
-      const camPos = this.viewer.cameraHandler.orthoCamera.position
-      let dist = target.distanceToPoint(camPos)
-      if (dist < 0) {
-        dist *= -1
-        this.viewer.cameraHandler.controls.setPosition(
-          camPos.x + dist,
-          camPos.y + dist,
-          camPos.z + dist
-        )
-      }
-    }
-  }
-
-  private isSpeckleView(
-    view: CanonicalView | SpeckleView | InlineView | PolarView
-  ): view is SpeckleView {
-    return (view as SpeckleView).name !== undefined
-  }
-
-  private isCanonicalView(
-    view: CanonicalView | SpeckleView | InlineView | PolarView
-  ): view is CanonicalView {
-    return typeof (view as CanonicalView) === 'string'
-  }
-
-  private isInlineView(
-    view: CanonicalView | SpeckleView | InlineView | PolarView
-  ): view is InlineView {
-    return (
-      (view as InlineView).position !== undefined &&
-      (view as InlineView).target !== undefined
-    )
-  }
-
-  private isPolarView(
-    view: CanonicalView | SpeckleView | InlineView | PolarView
-  ): view is PolarView {
-    return (
-      (view as PolarView).azimuth !== undefined &&
-      (view as PolarView).polar !== undefined
-    )
-  }
-
-  public setView(
-    view: CanonicalView | SpeckleView | InlineView | PolarView,
-    transition = true
-  ): void {
-    if (this.isSpeckleView(view)) {
-      this.setViewSpeckle(view, transition)
-    }
-    if (this.isCanonicalView(view)) {
-      this.setViewCanonical(view, transition)
-    }
-    if (this.isInlineView(view)) {
-      this.setViewInline(view, transition)
-    }
-    if (this.isPolarView(view)) {
-      this.setViewPolar(view, transition)
-    }
-    this.pipeline.onStationaryEnd()
-  }
-
-  private setViewSpeckle(view: SpeckleView, transition = true) {
-    this.viewer.cameraHandler.activeCam.controls.setLookAt(
-      view.view.origin['x'],
-      view.view.origin['y'],
-      view.view.origin['z'],
-      view.view.target['x'],
-      view.view.target['y'],
-      view.view.target['z'],
-      transition
-    )
-    this.viewer.cameraHandler.enableRotations()
-  }
-
-  /**
-   * Rotates camera to some canonical views
-   * @param  {string}  side       Can be any of front, back, up (top), down (bottom), right, left.
-   * @param  {Number}  fit        [description]
-   * @param  {Boolean} transition [description]
-   * @return {[type]}             [description]
-   */
-  private setViewCanonical(side: string, transition = true) {
-    const DEG90 = Math.PI * 0.5
-    const DEG180 = Math.PI
-
-    switch (side) {
-      case 'front':
-        this.zoomExtents()
-        this.viewer.cameraHandler.controls.rotateTo(0, DEG90, transition)
-        if (this.viewer.cameraHandler.activeCam.name === 'ortho')
-          this.viewer.cameraHandler.disableRotations()
-        break
-
-      case 'back':
-        this.zoomExtents()
-        this.viewer.cameraHandler.controls.rotateTo(DEG180, DEG90, transition)
-        if (this.viewer.cameraHandler.activeCam.name === 'ortho')
-          this.viewer.cameraHandler.disableRotations()
-        break
-
-      case 'up':
-      case 'top':
-        this.zoomExtents()
-        this.viewer.cameraHandler.controls.rotateTo(0, 0, transition)
-        if (this.viewer.cameraHandler.activeCam.name === 'ortho')
-          this.viewer.cameraHandler.disableRotations()
-        break
-
-      case 'down':
-      case 'bottom':
-        this.zoomExtents()
-        this.viewer.cameraHandler.controls.rotateTo(0, DEG180, transition)
-        if (this.viewer.cameraHandler.activeCam.name === 'ortho')
-          this.viewer.cameraHandler.disableRotations()
-        break
-
-      case 'right':
-        this.zoomExtents()
-        this.viewer.cameraHandler.controls.rotateTo(DEG90, DEG90, transition)
-        if (this.viewer.cameraHandler.activeCam.name === 'ortho')
-          this.viewer.cameraHandler.disableRotations()
-        break
-
-      case 'left':
-        this.zoomExtents()
-        this.viewer.cameraHandler.controls.rotateTo(-DEG90, DEG90, transition)
-        if (this.viewer.cameraHandler.activeCam.name === 'ortho')
-          this.viewer.cameraHandler.disableRotations()
-        break
-
-      case '3d':
-      case '3D':
-      default: {
-        let box
-        if (this.allObjects.children.length === 0)
-          box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
-        else box = new Box3().setFromObject(this.allObjects)
-        if (box.max.x === Infinity || box.max.x === -Infinity) {
-          box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
-        }
-        this.viewer.cameraHandler.controls.setPosition(
-          box.max.x,
-          box.max.y,
-          box.max.z,
-          transition
-        )
-        this.zoomExtents()
-        this.viewer.cameraHandler.enableRotations()
-        break
-      }
-    }
-  }
-
-  private setViewInline(view: InlineView, transition = true) {
-    this.viewer.cameraHandler.activeCam.controls.setLookAt(
-      view.position.x,
-      view.position.y,
-      view.position.z,
-      view.target.x,
-      view.target.y,
-      view.target.z,
-      transition
-    )
-    this.viewer.cameraHandler.enableRotations()
-  }
-
-  private setViewPolar(view: PolarView, transition = true) {
-    this.viewer.cameraHandler.controls.rotate(view.azimuth, view.polar, transition)
-    this.viewer.cameraHandler.enableRotations()
   }
 
   public screenToNDC(

@@ -394,15 +394,15 @@ export class Pipeline {
   }
 
   public update(renderer: SpeckleRenderer) {
-    this.stencilPass.update(renderer.scene, renderer.camera)
-    this.renderPass.update(renderer.scene, renderer.camera)
-    this.stencilMaskPass.update(renderer.scene, renderer.camera)
-    this.depthPass.update(renderer.scene, renderer.camera)
-    this.dynamicAoPass.update(renderer.scene, renderer.camera)
-    this.normalsPass.update(renderer.scene, renderer.camera)
-    this.staticAoPass.update(renderer.scene, renderer.camera)
-    this.applySaoPass.update(renderer.scene, renderer.camera)
-    this.overlayPass.update(renderer.scene, renderer.camera)
+    this.stencilPass.update(renderer.scene, renderer.renderingCamera)
+    this.renderPass.update(renderer.scene, renderer.renderingCamera)
+    this.stencilMaskPass.update(renderer.scene, renderer.renderingCamera)
+    this.depthPass.update(renderer.scene, renderer.renderingCamera)
+    this.dynamicAoPass.update(renderer.scene, renderer.renderingCamera)
+    this.normalsPass.update(renderer.scene, renderer.renderingCamera)
+    this.staticAoPass.update(renderer.scene, renderer.renderingCamera)
+    this.applySaoPass.update(renderer.scene, renderer.renderingCamera)
+    this.overlayPass.update(renderer.scene, renderer.renderingCamera)
 
     this.staticAoPass.setFrameIndex(this.accumulationFrame)
     this.applySaoPass.setFrameIndex(this.accumulationFrame)
