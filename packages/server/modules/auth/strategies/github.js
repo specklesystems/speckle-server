@@ -30,6 +30,9 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
       clientID: process.env.GITHUB_CLIENT_ID,
       clientSecret: process.env.GITHUB_CLIENT_SECRET,
       callbackURL: new URL(strategy.callbackUrl, process.env.CANONICAL_URL).toString(),
+      // WARNING, the 'user:email' scope belongs to the GITHUB scopes
+      // DO NOT change it to our internal scope definitions !!!
+      // You have been warned.
       scope: ['profile', 'user:email'],
       passReqToCallback: true
     },

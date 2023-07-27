@@ -15,6 +15,7 @@ const {
 } = require('@/modules/core/services/branch/retrieval')
 
 const { getUserById } = require('../../services/users')
+const { Roles } = require('@speckle/shared')
 
 // subscription events
 const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
@@ -62,7 +63,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
       const { id } = await createBranchAndNotify(args.branch, context.userId)
@@ -74,7 +75,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
       const newBranch = await updateBranchAndNotify(args.branch, context.userId)
@@ -85,7 +86,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
       const deleted = await deleteBranchAndNotify(args.branch, context.userId)
@@ -97,7 +98,11 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([BRANCH_CREATED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer
+          )
 
           return payload.streamId === variables.streamId
         }
@@ -108,7 +113,11 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([BRANCH_UPDATED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer
+          )
 
           const streamMatch = payload.streamId === variables.streamId
           if (streamMatch && variables.branchId) {
@@ -124,7 +133,11 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([BRANCH_DELETED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer
+          )
 
           return payload.streamId === variables.streamId
         }

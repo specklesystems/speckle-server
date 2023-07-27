@@ -26,17 +26,18 @@ const {
   UserInputError,
   PasswordTooShortError
 } = require('@/modules/core/errors/userinput')
+const { Roles } = require('@speckle/shared')
 
 const changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
 
 const countAdminUsers = async () => {
-  const [{ count }] = await Acl().where({ role: 'server:admin' }).count()
+  const [{ count }] = await Acl().where({ role: Roles.Server.Admin }).count()
   return parseInt(count)
 }
 const _ensureAtleastOneAdminRemains = async (userId) => {
   if ((await countAdminUsers()) === 1) {
-    const currentAdmin = await Acl().where({ role: 'server:admin' }).first()
+    const currentAdmin = await Acl().where({ role: Roles.Server.Admin }).first()
     if (currentAdmin.userId === userId) {
       throw new UserInputError('Cannot remove the last admin role from the server')
     }
@@ -93,7 +94,8 @@ module.exports = {
     const [newUser] = (await Users().insert(user, UsersSchema.cols)) || []
     if (!newUser) throw new Error("Couldn't create user")
 
-    const userRole = (await countAdminUsers()) === 0 ? 'server:admin' : 'server:user'
+    const userRole =
+      (await countAdminUsers()) === 0 ? Roles.Server.Admin : Roles.Server.User
 
     await Acl().insert({ userId: newId, role: userRole })
 
@@ -182,7 +184,7 @@ module.exports = {
       .where((queryBuilder) => {
         queryBuilder.where({ email: searchQuery }) //match full email or partial name
         if (!emailOnly) queryBuilder.orWhere('name', 'ILIKE', `%${searchQuery}%`)
-        if (!archived) queryBuilder.andWhere('role', '!=', 'server:archived-user')
+        if (!archived) queryBuilder.andWhere('role', '!=', Roles.Server.ArchivedUser)
       })
 
     if (cursor) query.andWhere('users.createdAt', '<', cursor)
@@ -225,9 +227,9 @@ module.exports = {
           (
           -- Get streams ids on which the user is owner
           SELECT "resourceId" FROM stream_acl
-          WHERE role = 'stream:owner' AND "userId" = ?
+          WHERE role = '${Roles.Stream.Owner}' AND "userId" = ?
           ) AS us ON acl."resourceId" = us."resourceId"
-        WHERE acl.role = 'stream:owner'
+        WHERE acl.role = '${Roles.Stream.Owner}'
         GROUP BY (acl."resourceId")
       ) AS soc
       WHERE cnt = 1
@@ -263,19 +265,19 @@ module.exports = {
   },
 
   async makeUserAdmin({ userId }) {
-    await changeUserRole({ userId, role: 'server:admin' })
+    await changeUserRole({ userId, role: Roles.Server.Admin })
   },
 
   async unmakeUserAdmin({ userId }) {
     // dont delete last admin role
     await _ensureAtleastOneAdminRemains(userId)
-    await changeUserRole({ userId, role: 'server:user' })
+    await changeUserRole({ userId, role: Roles.Server.User })
   },
 
   async archiveUser({ userId }) {
     // dont change last admin to archived
     await _ensureAtleastOneAdminRemains(userId)
-    await changeUserRole({ userId, role: 'server:archived-user' })
+    await changeUserRole({ userId, role: Roles.Server.ArchivedUser })
   },
 
   async countUsers(searchQuery = null) {

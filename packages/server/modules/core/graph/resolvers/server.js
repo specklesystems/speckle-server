@@ -6,6 +6,7 @@ const {
   getPublicScopes,
   getPublicRoles
 } = require('../../services/generic')
+const { Roles, Scopes } = require('@speckle/shared')
 
 module.exports = {
   Query: {
@@ -26,8 +27,8 @@ module.exports = {
 
   Mutation: {
     async serverInfoUpdate(parent, args, context) {
-      await validateServerRole(context, 'server:admin')
-      await validateScopes(context.scopes, 'server:setup')
+      await validateServerRole(context, Roles.Server.Admin)
+      await validateScopes(context.scopes, Scopes.Server.Setup)
 
       await updateServerInfo(args.info)
       return true
