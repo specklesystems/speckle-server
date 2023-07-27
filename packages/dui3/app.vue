@@ -6,7 +6,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { storeToRefs } from 'pinia'
 import { useAccountsSetup } from '~/lib/accounts/composables/setup'
 import { useUiConfigStore } from '~/store/uiConfig'
 

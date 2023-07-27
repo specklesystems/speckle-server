@@ -5,8 +5,9 @@
         Back home
       </FormButton>
     </Portal>
-    <div>
-      <p class="text-sm text-foreground-2 py-2 px-2">
+    <div class="px-2">
+      <p class="h5">Document info</p>
+      <p class="text-sm text-foreground-2 py-2">
         Current document info. This should change on document swaps, closure, opening,
         etc.
       </p>
@@ -14,8 +15,19 @@
         <pre>{{ documentInfo }}</pre>
       </div>
     </div>
-    <div>
-      <p class="text-sm text-foreground-2 py-2 px-2">
+    <div class="px-2">
+      <p class="h5">Selection info</p>
+      <p class="text-sm text-foreground-2 py-2">
+        Current document info. This should change on document swaps, closure, opening,
+        etc.
+      </p>
+      <div class="text-xs mx-3 p-4 rounded shadow-inner overflow-auto simple-scrollbar">
+        <pre>{{ selectionInfo }}</pre>
+      </div>
+    </div>
+    <div class="px-2">
+      <p class="h5">Binding tests</p>
+      <p class="text-sm text-foreground-2 py-2">
         Do not expect these to save the day. They are just some
         <b class="text-foreground-primary">minor sanity checks</b>
         .
@@ -54,10 +66,15 @@ import { ArrowLeftIcon } from '@heroicons/vue/20/solid'
 import { TestEventArgs } from '~/lib/bindings/definitions/ITestBinding'
 import { CheckIcon, MinusIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 import { useDocumentInfoStore } from '~/store/documentInfo'
+import { useSelectionStore } from '~/store/selection'
+
 const { $testBindings } = useNuxtApp()
 
 const docInfoStore = useDocumentInfoStore()
 const { documentInfo } = storeToRefs(docInfoStore)
+
+const selectionStore = useSelectionStore()
+const { selectionInfo } = storeToRefs(selectionStore)
 
 const tests = ref([
   {
