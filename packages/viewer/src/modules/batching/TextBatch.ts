@@ -131,9 +131,7 @@ export default class TextBatch implements Batch {
   }
 
   public getMaterialAtIndex(index: number): Material {
-    index
-    console.warn('Deprecated! Do not call this anymore')
-    return null
+    return this.batchMaterial
   }
 
   public purge() {
