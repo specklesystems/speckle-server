@@ -15,6 +15,7 @@ type ServerInfo {
   roles: [Role]!
   scopes: [Scope]!
   inviteOnly: Boolean
+  guestModeEnabled: Boolean!
   version: String
 }
 
@@ -48,4 +49,5 @@ input ServerInfoUpdateInput {
   adminContact: String
   termsOfService: String
   inviteOnly: Boolean
+  guestModeEnabled: Boolean
 }
