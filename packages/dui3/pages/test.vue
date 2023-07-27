@@ -7,13 +7,21 @@
     </Portal>
     <div>
       <p class="text-sm text-foreground-2 py-2 px-2">
+        Current document info. This should change on document swaps, closure, opening,
+        etc.
+      </p>
+      <div class="text-xs mx-3 p-4 rounded shadow-inner overflow-auto simple-scrollbar">
+        <pre>{{ documentInfo }}</pre>
+      </div>
+    </div>
+    <div>
+      <p class="text-sm text-foreground-2 py-2 px-2">
         Do not expect these to save the day. They are just some
         <b class="text-foreground-primary">minor sanity checks</b>
         .
       </p>
     </div>
     <FormButton
-      size="xl"
       color="card"
       full-width
       class="sticky top-10 top-16"
@@ -45,7 +53,11 @@
 import { ArrowLeftIcon } from '@heroicons/vue/20/solid'
 import { TestEventArgs } from '~/lib/bindings/definitions/ITestBinding'
 import { CheckIcon, MinusIcon, XMarkIcon } from '@heroicons/vue/20/solid'
+import { useDocumentInfoStore } from '~/store/documentInfo'
 const { $testBindings } = useNuxtApp()
+
+const docInfoStore = useDocumentInfoStore()
+const { documentInfo } = storeToRefs(docInfoStore)
 
 const tests = ref([
   {
@@ -137,7 +149,7 @@ const runTests = async () => {
 
 $testBindings.on('emptyTestEvent', () => {
   setTimeout(() => {
-    console.log('sketchup sent event back', 'emptyTestEvent')
+    console.log('host app sent event back', 'emptyTestEvent')
 
     const myTest = tests.value.find((t) => t.name === 'Simple event capture')
     console.log(myTest, 'myTest')

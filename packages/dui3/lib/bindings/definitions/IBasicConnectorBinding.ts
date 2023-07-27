@@ -12,11 +12,26 @@ export interface IBasicConnectorBinding
   getSourceApplicationName: () => Promise<string>
   getSourceApplicationVersion: () => Promise<string>
   getDocumentInfo: () => Promise<DocumentInfo>
+  getDocumentModelState: () => Promise<ModelState>
+  saveDocumentModelState: (state: ModelState) => Promise<void>
 }
 
 export interface IBasicConnectorBindingHostEvents {
   displayToastNotification: (args: ToastInfo) => void
   documentChanged: () => void
+}
+
+export type ModelState = {
+  modelCards: ModelCard[]
+}
+
+export type ModelCard = {
+  guid: string
+}
+
+export type SendProgressArgs = {
+  id: string
+  etc: unknown
 }
 
 // An almost 1-1 mapping of what we need from the Core accounts class.

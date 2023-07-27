@@ -80,16 +80,15 @@
 </template>
 <script setup lang="ts">
 import { XMarkIcon } from '@heroicons/vue/20/solid'
-import { storeToRefs } from 'pinia'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { useAccountStore } from '~/store/accounts'
 import { DUIAccount } from '~/lib/accounts/composables/setup'
-import { useDocumentInfoStore } from '~/store/uiConfig'
+import { useUiConfigStore } from '~/store/uiConfig'
 
 const accountStore = useAccountStore()
 const { accounts, defaultAccount, loading } = storeToRefs(accountStore)
 
-const uiConfigStore = useDocumentInfoStore()
+const uiConfigStore = useUiConfigStore()
 const { isDarkTheme, hasConfigBindings } = storeToRefs(uiConfigStore)
 const { toggleTheme } = uiConfigStore
 

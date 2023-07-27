@@ -1,7 +1,6 @@
-import { defineStore } from 'pinia'
 import { Config } from 'lib/bindings/definitions/IConfigBinding'
 
-export const useDocumentInfoStore = defineStore('documentInfoStore', () => {
+export const useUiConfigStore = defineStore('uiConfigStore', () => {
   const { $configBinding } = useNuxtApp()
 
   const hasConfigBindings = ref(!!$configBinding)

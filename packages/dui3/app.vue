@@ -8,9 +8,9 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { useAccountsSetup } from '~/lib/accounts/composables/setup'
-import { useDocumentInfoStore } from '~/store/uiConfig'
+import { useUiConfigStore } from '~/store/uiConfig'
 
-const uiConfigStore = useDocumentInfoStore()
+const uiConfigStore = useUiConfigStore()
 const { isDarkTheme } = storeToRefs(uiConfigStore)
 
 useAccountsSetup()
