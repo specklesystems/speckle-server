@@ -6,6 +6,8 @@ const { validatePermissionsWriteStream } = require('./authUtils')
 
 const { hasObjects } = require('../services/objects')
 
+const MAXIMUM_OBJECTS = 65536
+
 module.exports = (app) => {
   app.options('/api/diff/:streamId', corsMiddleware())
 
@@ -23,6 +25,12 @@ module.exports = (app) => {
     }
 
     const objectList = JSON.parse(req.body.objects)
+    if (objectList.length > MAXIMUM_OBJECTS) {
+      req.log.warn(
+        `User ${req.context.userId} tried to diff ${objectList.length} objects, which is greater than the maximum of ${MAXIMUM_OBJECTS}.`
+      )
+      return res.status(400).end(`Too many objects. Maximum ${MAXIMUM_OBJECTS}.`)
+    }
 
     req.log.info(`Diffing ${objectList.length} objects.`)
 
