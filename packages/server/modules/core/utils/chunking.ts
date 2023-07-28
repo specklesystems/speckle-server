@@ -20,7 +20,7 @@ export class ArgumentError extends BaseError {
 // since our data is mostly ascii characters, its prob safe to use
 // string.length is a slight underestimation of the actual size
 export const estimateStringByteSize = (str: string) => str.length
-export const calculateStringMegabyteSize = (str: string) =>
+export const estimateStringMegabyteSize = (str: string) =>
   estimateStringByteSize(str) / 1_000_000
 
 export const chunkInsertionObjectArray = ({
@@ -63,7 +63,7 @@ export const chunkInsertionObjectArray = ({
     // do some proper chunking here
     // insert the batch to returned chunks
     currentChunkLength++
-    currentChunkSize += calculateStringMegabyteSize(obj.data)
+    currentChunkSize += estimateStringMegabyteSize(obj.data)
     currentBatch.push(obj)
   }
   // do not forget to push the final batch

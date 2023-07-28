@@ -9,7 +9,7 @@ const { getMaximumObjectSizeMB } = require('@/modules/shared/helpers/envHelper')
 const { ObjectHandlingError } = require('@/modules/core/errors/object')
 const {
   chunkInsertionObjectArray,
-  calculateStringMegabyteSize
+  estimateStringMegabyteSize
 } = require('@/modules/core/utils/chunking')
 
 const Objects = () => knex('objects')
@@ -602,7 +602,7 @@ function prepInsertionObject(streamId, obj) {
       obj.id || crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex') // generate a hash if none is present
 
   const stringifiedObj = JSON.stringify(obj)
-  const objectByteSize = calculateStringMegabyteSize(stringifiedObj)
+  const objectByteSize = estimateStringMegabyteSize(stringifiedObj)
   if (objectByteSize > MAX_OBJECT_SIZE_MB) {
     throw new ObjectHandlingError(
       `Object too large. (${objectByteSize} MB is > than limit, ${MAX_OBJECT_SIZE_MB} MB)`

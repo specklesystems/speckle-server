@@ -7,7 +7,7 @@ const { validatePermissionsWriteStream } = require('./authUtils')
 
 const { createObjectsBatched } = require('@/modules/core/services/objects')
 const { ObjectHandlingError } = require('@/modules/core/errors/object')
-const { calculateStringMegabyteSize } = require('@/modules/core/utils/chunking')
+const { estimateStringMegabyteSize } = require('@/modules/core/utils/chunking')
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 
@@ -84,7 +84,7 @@ module.exports = (app) => {
 
           const gunzippedBuffer = zlib.gunzipSync(gzippedBuffer).toString()
           const gunzippedBufferMegabyteSize =
-            calculateStringMegabyteSize(gunzippedBuffer)
+            estimateStringMegabyteSize(gunzippedBuffer)
           if (gunzippedBufferMegabyteSize > MAX_FILE_SIZE) {
             req.log.error(
               `upload error: batch size too large (${gunzippedBufferMegabyteSize} > ${MAX_FILE_SIZE})`
@@ -227,7 +227,7 @@ module.exports = (app) => {
           await promise
           req.log.info(
             {
-              uploadedSizeMB: calculateStringMegabyteSize(buffer),
+              uploadedSizeMB: estimateStringMegabyteSize(buffer),
               durationSeconds: (Date.now() - t0) / 1000,
               crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
               requestDropped
