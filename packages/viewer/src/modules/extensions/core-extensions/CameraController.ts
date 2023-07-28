@@ -4,13 +4,9 @@ import { Extension } from '../Extension'
 import { SpeckleCameraControls } from '../../objects/SpeckleCameraControls'
 import { OrthographicCamera, PerspectiveCamera, Vector3 } from 'three'
 import { KeyboardKeyHold, HOLD_EVENT_TYPE } from 'hold-event'
-import { CanonicalView, SpeckleView, InlineView } from '../../..'
+import { CanonicalView, SpeckleView, InlineView, IViewer } from '../../..'
 import { PolarView } from '../../../IViewer'
-
-export interface ICameraController {
-  getRenderingCamera(): PerspectiveCamera | OrthographicCamera
-  cameraDeltaUpdate: (type: CameraDeltaEvent, data?) => void
-}
+import { CameraDeltaEvent, ICameraProvider } from './Providers'
 
 export enum CameraProjection {
   PERSPECTIVE,
@@ -21,14 +17,8 @@ export enum CameraControllerEvent {
   ProjectionChanged
 }
 
-export enum CameraDeltaEvent {
-  Stationary,
-  Dynamic,
-  FrameUpdate
-}
-
-export class CameraController extends Extension implements ICameraController {
-  protected cameras = []
+export class CameraController extends Extension implements ICameraProvider {
+  protected _renderingCamera: PerspectiveCamera | OrthographicCamera = null
   protected perspectiveCamera: PerspectiveCamera = null
   protected orthographicCamera: OrthographicCamera = null
   protected controls: SpeckleCameraControls = null
@@ -36,14 +26,12 @@ export class CameraController extends Extension implements ICameraController {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public cameraDeltaUpdate: (type: CameraDeltaEvent, data?: any) => void = null
 
-  public get activeCamera(): PerspectiveCamera | OrthographicCamera {
-    return this.cameras[0].active ? this.cameras[0].camera : this.cameras[1].camera
+  get renderingCamera(): PerspectiveCamera | OrthographicCamera {
+    return this._renderingCamera
   }
 
-  public get activeProjection(): CameraProjection {
-    return this.activeCamera instanceof PerspectiveCamera
-      ? CameraProjection.PERSPECTIVE
-      : CameraProjection.ORTHOGRAPHIC
+  set renderingCamera(value: PerspectiveCamera | OrthographicCamera) {
+    this._renderingCamera = value
   }
 
   public set enabled(val) {
@@ -63,7 +51,9 @@ export class CameraController extends Extension implements ICameraController {
     return this.perspectiveCamera.aspect
   }
 
-  public init() {
+  public constructor(viewer: IViewer) {
+    super(viewer)
+    /** Create the default perspective camera */
     this.perspectiveCamera = new PerspectiveCamera(
       55,
       window.innerWidth / window.innerHeight
@@ -74,6 +64,8 @@ export class CameraController extends Extension implements ICameraController {
 
     const aspect =
       this.viewer.getContainer().offsetWidth / this.viewer.getContainer().offsetHeight
+
+    /** Create the defaultorthographic camera */
     const fustrumSize = 50
     this.orthographicCamera = new OrthographicCamera(
       (-fustrumSize * aspect) / 2,
@@ -87,6 +79,10 @@ export class CameraController extends Extension implements ICameraController {
     this.orthographicCamera.position.set(100, 100, 100)
     this.orthographicCamera.updateProjectionMatrix()
 
+    /** Perspective camera as default on startup */
+    this.renderingCamera = this.perspectiveCamera
+
+    /** Setup the controls library (urgh...) */
     CameraControls.install({ THREE })
     SpeckleCameraControls.install()
     this.controls = new SpeckleCameraControls(
@@ -96,21 +92,6 @@ export class CameraController extends Extension implements ICameraController {
     this.controls.maxPolarAngle = Math.PI / 2
     this.controls.restThreshold = 0.001
     this.setupWASDControls()
-
-    this.cameras = [
-      {
-        camera: this.perspectiveCamera,
-        controls: this.controls,
-        name: 'perspective',
-        active: true
-      },
-      {
-        camera: this.orthographicCamera,
-        controls: this.controls,
-        name: 'ortho',
-        active: false
-      }
-    ]
 
     this.orbiting = false
     this.controls.addEventListener('transitionstart', () => {
@@ -122,46 +103,19 @@ export class CameraController extends Extension implements ICameraController {
       setTimeout(() => {
         this.orbiting = false
       }, 400)
-      //   this._needsRender = true
-      //   this.pipeline.onStationaryBegin()
-      //   this._measurements.paused = false
     })
     this.controls.addEventListener('controlstart', () => {
       if (this.cameraDeltaUpdate) this.cameraDeltaUpdate(CameraDeltaEvent.Dynamic)
-      //   this._needsRender = true
-      //   this.pipeline.onStationaryEnd()
     })
 
     this.controls.addEventListener('controlend', () => {
       if (this.cameraDeltaUpdate)
         if (this.controls.hasRested) this.cameraDeltaUpdate(CameraDeltaEvent.Stationary)
-      //   this._needsRender = true
-      //   if (this.viewer.cameraHandler.controls.hasRested)
-      //     this.pipeline.onStationaryBegin()
-      //   this._measurements.paused = false
     })
 
     this.controls.addEventListener('control', () => {
       if (this.cameraDeltaUpdate) this.cameraDeltaUpdate(CameraDeltaEvent.Dynamic)
-      //   this._needsRender = true
-      //   this.pipeline.onStationaryEnd()
-      //   this._measurements.paused = true
     })
-    // this.controls.addEventListener('update', () => {
-    //   if (this.cameraDeltaUpdate)
-    //     this.cameraDeltaUpdate(CameraDeltaEvent.Dynamic, this.controls.hasRested)
-    //   //   if (
-    //   //     !this.viewer.cameraHandler.controls.hasRested &&
-    //   //     this.pipeline.renderType === RenderType.ACCUMULATION
-    //   //   ) {
-    //   //     this._needsRender = true
-    //   //     this.pipeline.onStationaryEnd()
-    //   //   }
-    // })
-  }
-
-  getRenderingCamera(): THREE.PerspectiveCamera | THREE.OrthographicCamera {
-    return this.activeCamera
   }
 
   public onUpdate(deltaTime: number) {
@@ -203,25 +157,21 @@ export class CameraController extends Extension implements ICameraController {
   }
 
   public setPerspectiveCameraOn() {
-    if (this.cameras[0].active) return
-    this.cameras[0].active = true
-    this.cameras[1].active = false
-
+    if (this._renderingCamera === this.perspectiveCamera) return
+    this.renderingCamera = this.perspectiveCamera
     this.setupPerspectiveCamera()
     this.viewer.requestRender()
   }
 
   public setOrthoCameraOn() {
-    if (this.cameras[1].active) return
-    this.cameras[0].active = false
-    this.cameras[1].active = true
-
+    if (this._renderingCamera === this.orthographicCamera) return
+    this.renderingCamera = this.orthographicCamera
     this.setupOrthoCamera()
     this.viewer.requestRender()
   }
 
   public toggleCameras() {
-    if (this.cameras[0].active) this.setOrthoCameraOn()
+    if (this._renderingCamera === this.perspectiveCamera) this.setOrthoCameraOn()
     else this.setPerspectiveCameraOn()
   }
 
@@ -440,9 +390,9 @@ export class CameraController extends Extension implements ICameraController {
 
     const maxSize = Math.max(size.x, size.y, size.z)
     const camFov =
-      this.activeProjection === CameraProjection.PERSPECTIVE ? this.fieldOfView : 55
+      this._renderingCamera === this.perspectiveCamera ? this.fieldOfView : 55
     const camAspect =
-      this.activeProjection === CameraProjection.PERSPECTIVE ? this.aspect : 1.2
+      this._renderingCamera === this.perspectiveCamera ? this.aspect : 1.2
     const fitHeightDistance = maxSize / (2 * Math.atan((Math.PI * camFov) / 360))
     const fitWidthDistance = fitHeightDistance / camAspect
     const distance = fitOffset * Math.max(fitHeightDistance, fitWidthDistance)
@@ -451,17 +401,17 @@ export class CameraController extends Extension implements ICameraController {
 
     this.controls.minDistance = distance / 100
     this.controls.maxDistance = distance * 100
-    this.activeCamera.near = Math.max(distance / 100, 0.1)
-    this.activeCamera.far = distance * 100
-    this.activeCamera.updateProjectionMatrix()
+    this._renderingCamera.near = Math.max(distance / 100, 0.1)
+    this._renderingCamera.far = distance * 100
+    this._renderingCamera.updateProjectionMatrix()
 
-    if (this.activeProjection === CameraProjection.ORTHOGRAPHIC) {
-      this.activeCamera.far = distance * 100
-      this.activeCamera.updateProjectionMatrix()
+    if (this._renderingCamera === this.orthographicCamera) {
+      this._renderingCamera.far = distance * 100
+      this._renderingCamera.updateProjectionMatrix()
 
       // fit the camera inside, so we don't have clipping plane issues.
       // WIP implementation
-      const camPos = this.activeCamera.position
+      const camPos = this._renderingCamera.position
       let dist = target.distanceToPoint(camPos)
       if (dist < 0) {
         dist *= -1
@@ -548,45 +498,39 @@ export class CameraController extends Extension implements ICameraController {
       case 'front':
         this.zoomExtents()
         this.controls.rotateTo(0, DEG90, transition)
-        if (this.activeProjection === CameraProjection.ORTHOGRAPHIC)
-          this.disableRotations()
+        if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'back':
         this.zoomExtents()
         this.controls.rotateTo(DEG180, DEG90, transition)
-        if (this.activeProjection === CameraProjection.ORTHOGRAPHIC)
-          this.disableRotations()
+        if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'up':
       case 'top':
         this.zoomExtents()
         this.controls.rotateTo(0, 0, transition)
-        if (this.activeProjection === CameraProjection.ORTHOGRAPHIC)
-          this.disableRotations()
+        if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'down':
       case 'bottom':
         this.zoomExtents()
         this.controls.rotateTo(0, DEG180, transition)
-        if (this.activeProjection === CameraProjection.ORTHOGRAPHIC)
-          this.disableRotations()
+        if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'right':
         this.zoomExtents()
         this.controls.rotateTo(DEG90, DEG90, transition)
-        if (this.activeProjection === CameraProjection.ORTHOGRAPHIC)
-          this.disableRotations()
+        if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'left':
         this.zoomExtents()
         this.controls.rotateTo(-DEG90, DEG90, transition)
-        if (this.activeProjection === CameraProjection.ORTHOGRAPHIC)
-          this.disableRotations()
+        if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case '3d':

@@ -9,7 +9,7 @@ export abstract class Extension extends EventEmitter {
     this.viewer = viewer
   }
 
-  public abstract init()
+  public async init?()
   public abstract onUpdate(deltaTime: number)
   public abstract onRender()
   public abstract onResize()

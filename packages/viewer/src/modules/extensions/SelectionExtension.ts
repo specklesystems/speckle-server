@@ -1,4 +1,4 @@
-import { SelectionEvent, TreeNode, ViewerEvent } from '../..'
+import { IViewer, SelectionEvent, TreeNode, ViewerEvent } from '../..'
 import { FilterMaterialType } from '../filtering/FilteringManager'
 import { Extension } from './Extension'
 
@@ -15,7 +15,8 @@ export class SelectionExtension extends Extension {
   protected selectionId: string
   protected options: SelectionExtensionOptions = DefaultSelectionExtensionOptions
 
-  public init() {
+  public constructor(viewer: IViewer) {
+    super(viewer)
     this.viewer.on(ViewerEvent.ObjectClicked, this.onObjectClicked.bind(this))
   }
   public onUpdate() {

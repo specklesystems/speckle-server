@@ -54,9 +54,9 @@ import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import { Measurements } from './measurements/Measurements'
 import { MaterialOptions } from './materials/Materials'
 import {
-  CameraDeltaEvent,
-  ICameraController
-} from './extensions/core-extensions/CameraController'
+  ICameraProvider,
+  CameraDeltaEvent
+} from './extensions/core-extensions/Providers'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -97,7 +97,7 @@ export default class SpeckleRenderer {
   private explodeTime = -1
   private explodeRange = 0
 
-  private _cameraProvider: ICameraController = null
+  private _cameraProvider: ICameraProvider = null
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -153,13 +153,13 @@ export default class SpeckleRenderer {
     return this._cameraProvider
   }
 
-  public set cameraProvider(value: ICameraController) {
+  public set cameraProvider(value: ICameraProvider) {
     this._cameraProvider = value
     this._cameraProvider.cameraDeltaUpdate = this.onCameraDeltaUpdate.bind(this)
   }
 
   public get renderingCamera() {
-    return this._cameraProvider.getRenderingCamera()
+    return this._cameraProvider.renderingCamera
   }
 
   public get scene() {

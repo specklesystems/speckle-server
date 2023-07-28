@@ -33,12 +33,8 @@ const createViewer = async (containerName: string, stream: string) => {
   await viewer.init()
 
   const cameraController = new CameraController(viewer)
-  cameraController.init()
-  viewer.speckleRenderer.cameraProvider = cameraController
   const selection = new SelectionExtension(viewer)
-  selection.init()
-  viewer.addExtension(cameraController)
-  viewer.addExtension(selection)
+  viewer.addExtension(cameraController, selection)
 
   const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
 
@@ -94,14 +90,14 @@ const createViewer = async (containerName: string, stream: string) => {
   //   await viewer.selectObjects(ids as string[])
   // })
 
-  viewer.on(ViewerEvent.ObjectDoubleClicked, async (selectionInfo: SelectionEvent) => {
-    if (!selectionInfo) {
-      viewer.zoom()
-      return
-    }
+  // viewer.on(ViewerEvent.ObjectDoubleClicked, async (selectionInfo: SelectionEvent) => {
+  //   if (!selectionInfo) {
+  //     viewer.zoom()
+  //     return
+  //   }
 
-    viewer.zoom([selectionInfo.hits[0].object.id as string])
-  })
+  //   viewer.zoom([selectionInfo.hits[0].object.id as string])
+  // })
 
   sandbox.makeGenericUI()
   sandbox.makeSceneUI()

@@ -32,6 +32,7 @@ import { DiffResult, Differ, VisualDiffMode } from './Differ'
 import { BatchObject } from './batching/BatchObject'
 import { MeasurementOptions } from './measurements/Measurements'
 import { Extension } from './extensions/Extension'
+import { isCameraProvider } from './extensions/core-extensions/Providers'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -85,8 +86,13 @@ export class Viewer extends EventEmitter implements IViewer {
     return this.sectionBox.cube.geometry.boundingBox
   }
 
-  public addExtension(extension: Extension) {
-    this.extensions.push(extension)
+  public addExtension(...extensions: Extension[]) {
+    this.extensions.push(...extensions)
+    extensions.forEach((extension) => {
+      if (isCameraProvider(extension)) {
+        this.speckleRenderer.cameraProvider = extension
+      }
+    })
   }
 
   public constructor(
