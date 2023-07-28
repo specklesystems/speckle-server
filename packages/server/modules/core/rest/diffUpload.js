@@ -31,15 +31,15 @@ module.exports = (app) => {
     const chunkSize = 65536 // maximum size of unsigned 16 bit integer
     const objectListChunks = chunk(objectList, chunkSize)
     const response = {}
-    await Promise.all(
-      objectListChunks.map(async (objectListChunk) => {
-        const checkedObjects = await hasObjects({
+    const mappedObjects = await Promise.all(
+      objectListChunks.map(async (objectListChunk) =>
+        hasObjects({
           streamId: req.params.streamId,
           objectIds: objectListChunk
         })
-        Object.assign(response, checkedObjects)
-      })
+      )
     )
+    Object.assign(response, ...mappedObjects)
 
     req.log.debug(response)
     res.writeHead(200, {
