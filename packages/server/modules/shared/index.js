@@ -8,6 +8,10 @@ const {
   BranchSubscriptions
 } = require('@/modules/shared/utils/subscriptions')
 const { Roles } = require('@speckle/shared')
+const {
+  validateServerRole: authPipelineValidateServerRole,
+  authHasFailed
+} = require('@/modules/shared/authz')
 const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 
 const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
@@ -27,21 +31,11 @@ const getRoles = async () => {
  * @param  {string} requiredRole
  */
 async function validateServerRole(context, requiredRole) {
-  const roles = await getRoles()
-
-  if (!context.auth) throw new ForbiddenError('You must provide an auth token.')
-
-  const role = roles.find((r) => r.name === requiredRole)
-  const myRole = roles.find((r) => r.name === context.role)
-
-  if (!role) throw new ApolloError('Invalid server role specified')
-  if (!myRole)
-    throw new ForbiddenError('You do not have the required server role (null)')
-
-  if (context.role === Roles.Server.Admin) return true
-  if (myRole.weight >= role.weight) return true
-
-  throw new ForbiddenError('You do not have the required server role')
+  const { authResult } = await authPipelineValidateServerRole({ requiredRole })({
+    context
+  })
+  if (authHasFailed(authResult)) throw authResult.error
+  return true
 }
 
 /**
