@@ -232,7 +232,7 @@ describe('Streams @core-streams', () => {
       await changeUserRole({
         userId: guestGuy.id,
         role: Roles.Server.Guest,
-        guestRoleEnabled: true
+        guestModeEnabled: true
       })
 
       await addOrUpdateStreamCollaborator(
