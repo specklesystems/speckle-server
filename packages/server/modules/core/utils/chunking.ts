@@ -13,10 +13,15 @@ export class ArgumentError extends BaseError {
   }
 }
 
-// Js uses utf16 so string size in byes is length * 2
-export const calculateStringByteSize = (str: string) => new Blob([str]).size
+// since we're mostly using this for an artificial limit calculation
+// we can live with a somewhat imprecise but fast estimate
+// Js uses utf16 so the in memory string size in bytes is length * 2
+// this is just the in memory string size, not the utf-8 encoded byte size
+// since our data is mostly ascii characters, its prob safe to use
+// string.length is a slight underestimation of the actual size
+export const estimateStringByteSize = (str: string) => str.length
 export const calculateStringMegabyteSize = (str: string) =>
-  calculateStringByteSize(str) / 1_000_000
+  estimateStringByteSize(str) / 1_000_000
 
 export const chunkInsertionObjectArray = ({
   objects,
