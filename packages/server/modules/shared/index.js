@@ -34,7 +34,8 @@ async function validateServerRole(context, requiredRole) {
   const { authResult } = await authPipelineValidateServerRole({ requiredRole })({
     context
   })
-  if (authHasFailed(authResult)) throw authResult.error
+  if (authHasFailed(authResult))
+    throw authResult.error ?? new Error('Auth failed without an error')
   return true
 }
 
