@@ -1,5 +1,5 @@
-import { IViewer } from '../..'
-import EventEmitter from '../EventEmitter'
+import { IViewer } from '../../..'
+import EventEmitter from '../../EventEmitter'
 
 export abstract class Extension extends EventEmitter {
   protected viewer: IViewer

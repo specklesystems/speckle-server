@@ -1,4 +1,4 @@
-import { Extension } from './Extension'
+import { Extension } from './core-extensions/Extension'
 
 export class FilteringExtension extends Extension {
   public onResize() {

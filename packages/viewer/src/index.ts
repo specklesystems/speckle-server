@@ -1,9 +1,7 @@
 import { Viewer } from './modules/Viewer'
 import {
-  CanonicalView,
   DefaultLightConfiguration,
   DefaultViewerParams,
-  InlineView,
   IViewer,
   SelectionEvent,
   SpeckleView,
@@ -39,6 +37,11 @@ import {
 import { Units } from './modules/converter/Units'
 import { SelectionExtension } from './modules/extensions/SelectionExtension'
 import { CameraController } from './modules/extensions/core-extensions/CameraController'
+import {
+  CanonicalView,
+  ICameraProvider,
+  InlineView
+} from './modules/extensions/core-extensions/Providers'
 
 export {
   Viewer,
@@ -82,5 +85,6 @@ export type {
   IntersectionQueryResult,
   Utils,
   DiffResult,
-  MeasurementOptions
+  MeasurementOptions,
+  ICameraProvider
 }

@@ -1,12 +1,11 @@
 import * as THREE from 'three'
 import CameraControls from 'camera-controls'
-import { Extension } from '../Extension'
+import { Extension } from './Extension'
 import { SpeckleCameraControls } from '../../objects/SpeckleCameraControls'
 import { OrthographicCamera, PerspectiveCamera, Vector3 } from 'three'
 import { KeyboardKeyHold, HOLD_EVENT_TYPE } from 'hold-event'
 import { CanonicalView, SpeckleView, InlineView, IViewer } from '../../..'
-import { PolarView } from '../../../IViewer'
-import { CameraDeltaEvent, ICameraProvider } from './Providers'
+import { CameraDeltaEvent, ICameraProvider, PolarView } from './Providers'
 
 export enum CameraProjection {
   PERSPECTIVE,
@@ -18,6 +17,10 @@ export enum CameraControllerEvent {
 }
 
 export class CameraController extends Extension implements ICameraProvider {
+  get provide() {
+    return ICameraProvider.Symbol
+  }
+
   protected _renderingCamera: PerspectiveCamera | OrthographicCamera = null
   protected perspectiveCamera: PerspectiveCamera = null
   protected orthographicCamera: OrthographicCamera = null
@@ -116,6 +119,23 @@ export class CameraController extends Extension implements ICameraProvider {
     this.controls.addEventListener('control', () => {
       if (this.cameraDeltaUpdate) this.cameraDeltaUpdate(CameraDeltaEvent.Dynamic)
     })
+  }
+
+  setCameraView(objectIds: string[], transition: boolean, fit?: number): void
+  setCameraView(
+    view: CanonicalView | SpeckleView | InlineView | PolarView,
+    transition: boolean
+  ): void
+  setCameraView(
+    arg0: string[] | CanonicalView | SpeckleView | InlineView | PolarView,
+    arg1 = true,
+    arg2 = 1.2
+  ): void {
+    if (Array.isArray(arg0)) {
+      this.zoom(arg0, arg2, arg1)
+    } else {
+      this.setView(arg0, arg1)
+    }
   }
 
   public onUpdate(deltaTime: number) {
@@ -376,8 +396,7 @@ export class CameraController extends Extension implements ICameraProvider {
     // this.viewer.controls.setBoundary( box )
   }
 
-  /** Taken from InteractionsHandler. Will revisit in the future */
-  public zoomToBox(box, fit = 1.2, transition = true) {
+  private zoomToBox(box, fit = 1.2, transition = true) {
     if (box.max.x === Infinity || box.max.x === -Infinity) {
       box = new THREE.Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
     }

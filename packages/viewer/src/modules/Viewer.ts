@@ -31,8 +31,8 @@ import { Utils } from './Utils'
 import { DiffResult, Differ, VisualDiffMode } from './Differ'
 import { BatchObject } from './batching/BatchObject'
 import { MeasurementOptions } from './measurements/Measurements'
-import { Extension } from './extensions/Extension'
-import { isCameraProvider } from './extensions/core-extensions/Providers'
+import { Extension } from './extensions/core-extensions/Extension'
+import { ICameraProvider, IProvider } from './extensions/core-extensions/Providers'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -59,7 +59,7 @@ export class Viewer extends EventEmitter implements IViewer {
   private clock: Clock
   private loaders: { [id: string]: ViewerObjectLoader } = {}
 
-  private extensions: Array<Extension> = []
+  private extensions: Array<Extension | IProvider> = []
 
   /** various utils/helpers */
   private utils: Utils
@@ -86,13 +86,22 @@ export class Viewer extends EventEmitter implements IViewer {
     return this.sectionBox.cube.geometry.boundingBox
   }
 
-  public addExtension(...extensions: Extension[]) {
-    this.extensions.push(...extensions)
-    extensions.forEach((extension) => {
-      if (isCameraProvider(extension)) {
-        this.speckleRenderer.cameraProvider = extension
-      }
+  public createExtension<T extends Extension>(
+    type: new (viewer: IViewer, ...args) => T
+  ): T {
+    const providersToInject = type.prototype.inject
+    const providers = []
+    this.extensions.forEach((extension: IProvider) => {
+      const provides = extension.provide
+      if (provides && providersToInject.includes(provides)) providers.push(extension)
     })
+    const extension = new type(this, ...providers)
+    /** Temporary until we implement proper providing for core */
+    if (ICameraProvider.isCameraProvider(extension)) {
+      this.speckleRenderer.cameraProvider = extension
+    }
+    this.extensions.push(extension)
+    return extension
   }
 
   public constructor(
@@ -203,6 +212,9 @@ export class Viewer extends EventEmitter implements IViewer {
     const width = this.container.offsetWidth
     const height = this.container.offsetHeight
     this.speckleRenderer.resize(width, height)
+    this.extensions.forEach((value: Extension) => {
+      value.onResize()
+    })
   }
 
   public requestRender() {

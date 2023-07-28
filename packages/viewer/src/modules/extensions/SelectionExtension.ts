@@ -1,6 +1,7 @@
 import { IViewer, SelectionEvent, TreeNode, ViewerEvent } from '../..'
 import { FilterMaterialType } from '../filtering/FilteringManager'
-import { Extension } from './Extension'
+import { Extension } from './core-extensions/Extension'
+import { ICameraProvider } from './core-extensions/Providers'
 
 export interface SelectionExtensionOptions {
   selectionColor: number
@@ -11,17 +12,24 @@ const DefaultSelectionExtensionOptions = {
 }
 
 export class SelectionExtension extends Extension {
+  public get inject() {
+    return [ICameraProvider.Symbol]
+  }
+
   protected selectionList: Array<TreeNode> = []
   protected selectionId: string
   protected options: SelectionExtensionOptions = DefaultSelectionExtensionOptions
 
-  public constructor(viewer: IViewer) {
+  public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
     super(viewer)
     this.viewer.on(ViewerEvent.ObjectClicked, this.onObjectClicked.bind(this))
+    this.viewer.on(ViewerEvent.ObjectDoubleClicked, this.onObjectDoubleClick.bind(this))
   }
+
   public onUpdate() {
     // UNIMPLEMENTED
   }
+
   public onRender() {
     // UNIMPLEMENTED
   }
@@ -63,6 +71,17 @@ export class SelectionExtension extends Extension {
       this.selectionList = [selection.hits[0].node]
     }
     this.applySelection()
+  }
+
+  protected onObjectDoubleClick(selectionInfo: SelectionEvent) {
+    if (!selectionInfo) {
+      this.cameraProvider.setCameraView([], true)
+      return
+    }
+    this.cameraProvider.setCameraView(
+      [selectionInfo.hits[0].node.model.raw.id as string],
+      true
+    )
   }
 
   protected applySelection(clearCurrent = true) {

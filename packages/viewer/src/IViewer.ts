@@ -12,7 +12,7 @@ import { World } from './modules/World'
 import { MeasurementOptions } from './modules/measurements/Measurements'
 import SpeckleRenderer from './modules/SpeckleRenderer'
 import EventEmitter from './modules/EventEmitter'
-import { Extension } from './modules/extensions/Extension'
+import { Extension } from './modules/extensions/core-extensions/Extension'
 
 export interface ViewerParams {
   showStats: boolean
@@ -69,6 +69,12 @@ export enum ViewerEvent {
   LightConfigUpdated = 'light-config-updated'
 }
 
+export type SpeckleView = {
+  name: string
+  id: string
+  view: Record<string, unknown>
+}
+
 export type SelectionEvent = {
   multiple: boolean
   event?: PointerEvent
@@ -103,36 +109,6 @@ export const DefaultLightConfiguration: SunLightConfiguration = {
   radius: 0,
   indirectLightIntensity: 1.2,
   shadowcatcher: true
-}
-
-export type CanonicalView =
-  | 'front'
-  | 'back'
-  | 'up'
-  | 'top'
-  | 'down'
-  | 'bottom'
-  | 'right'
-  | 'left'
-  | '3d'
-  | '3D'
-
-export type SpeckleView = {
-  name: string
-  id: string
-  view: Record<string, unknown>
-}
-
-export type InlineView = {
-  position: Vector3
-  target: Vector3
-}
-
-export type PolarView = {
-  azimuth: number
-  polar: number
-  radius?: number
-  origin?: Vector3
 }
 
 export interface IViewer {
@@ -254,5 +230,6 @@ export interface IViewer {
   get emiter(): EventEmitter
   get clippingVolume(): Box3
 
-  addExtension(extension: Extension)
+  // addExtension(extension: Extension)
+  createExtension<T extends Extension>(type: new () => T): T
 }

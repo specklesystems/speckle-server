@@ -32,9 +32,10 @@ const createViewer = async (containerName: string, stream: string) => {
   const viewer: Viewer = new DebugViewer(container, params)
   await viewer.init()
 
-  const cameraController = new CameraController(viewer)
-  const selection = new SelectionExtension(viewer)
-  viewer.addExtension(cameraController, selection)
+  const cameraController = viewer.createExtension(CameraController)
+  const selection = viewer.createExtension(SelectionExtension)
+  cameraController // use it
+  selection // use it
 
   const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
 
