@@ -47,12 +47,10 @@ module.exports = {
       totalChildrenCountByDepth
     )
 
-    const q1 = Objects().insert(insertionObject).toString() + ' on conflict do nothing'
-    await knex.raw(q1)
+    await Objects().insert(insertionObject).onConflict().ignore()
 
     if (closures.length > 0) {
-      const q2 = `${Closures().insert(closures).toString()} on conflict do nothing`
-      await knex.raw(q2)
+      await Closures().insert(closures).onConflict().ignore()
     }
 
     return insertionObject.id
@@ -109,11 +107,7 @@ module.exports = {
       })
       for (const batch of batches) {
         prepInsertionObjectBatch(batch)
-        // await Objects().insert(batch).onConflict('id').ignore()
-        await knex.transaction(async (trx) => {
-          const q = Objects().insert(batch).toString() + ' on conflict do nothing'
-          await trx.raw(q)
-        })
+        await Objects().insert(batch).onConflict().ignore()
         servicesLogger.info(`Inserted ${batch.length} objects`)
       }
     }
@@ -123,12 +117,8 @@ module.exports = {
       const batches = chunk(closures, closureBatchSize)
 
       for (const batch of batches) {
-        //await Closures().insert(batch).onConflict('id').ignore()
         prepInsertionClosureBatch(batch)
-        await knex.transaction(async (trx) => {
-          const q = Closures().insert(batch).toString() + ' on conflict do nothing'
-          await trx.raw(q)
-        })
+        await Closures().insert(batch).onConflict().ignore()
         servicesLogger.info(`Inserted ${batch.length} closures`)
       }
     }
@@ -191,14 +181,11 @@ module.exports = {
       })
 
       if (objsToInsert.length > 0) {
-        const queryObjs =
-          Objects().insert(objsToInsert).toString() + ' on conflict do nothing'
-        await knex.raw(queryObjs)
+        await Objects().insert(objsToInsert).onConflict().ignore()
       }
 
       if (closures.length > 0) {
-        const q2 = `${Closures().insert(closures).toString()} on conflict do nothing`
-        await knex.raw(q2)
+        await Closures().insert(closures).onConflict().ignore()
       }
 
       const t1 = performance.now()

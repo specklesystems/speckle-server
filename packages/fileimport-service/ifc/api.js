@@ -68,12 +68,10 @@ module.exports = class ServerAPI {
       totalChildrenCountByDepth
     )
 
-    const q1 = Objects().insert(insertionObject).toString() + ' on conflict do nothing'
-    await knex.raw(q1)
+    await Objects().insert(insertionObject).onConflict().ignore()
 
     if (closures.length > 0) {
-      const q2 = `${Closures().insert(closures).toString()} on conflict do nothing`
-      await knex.raw(q2)
+      await Closures().insert(closures).onConflict().ignore()
     }
 
     return insertionObject.id
@@ -125,10 +123,7 @@ module.exports = class ServerAPI {
       const batches = chunk(objsToInsert, objectsBatchSize)
       for (const [index, batch] of batches.entries()) {
         this.prepInsertionObjectBatch(batch)
-        await knex.transaction(async (trx) => {
-          const q = Objects().insert(batch).toString() + ' on conflict do nothing'
-          await trx.raw(q)
-        })
+        await Objects().insert(batch).onConflict().ignore()
         this.logger.info(
           `Inserted ${batch.length} objects from batch ${index + 1} of ${
             batches.length
@@ -143,10 +138,7 @@ module.exports = class ServerAPI {
 
       for (const [index, batch] of batches.entries()) {
         this.prepInsertionClosureBatch(batch)
-        await knex.transaction(async (trx) => {
-          const q = Closures().insert(batch).toString() + ' on conflict do nothing'
-          await trx.raw(q)
-        })
+        await Closures().insert(batch).onConflict().ignore()
         this.logger.info(
           `Inserted ${batch.length} closures from batch ${index + 1} of ${
             batches.length
