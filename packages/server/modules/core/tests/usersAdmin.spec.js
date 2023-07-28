@@ -120,7 +120,7 @@ describe('User admin @user-services', () => {
       await changeUserRole({
         userId,
         role: Roles.Server.Guest,
-        guestRoleEnabled: true
+        guestModeEnabled: true
       })
       newRole = await getUserRole(userId)
       expect(newRole).to.equal(Roles.Server.Guest)

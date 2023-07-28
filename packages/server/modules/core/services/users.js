@@ -270,10 +270,10 @@ module.exports = {
     return parseInt(userCount.count)
   },
 
-  async changeUserRole({ userId, role, guestRoleEnabled = false }) {
+  async changeUserRole({ userId, role, guestModeEnabled = false }) {
     if (!Object.values(Roles.Server).includes(role))
       throw new UserInputError(`Invalid role specified: ${role}`)
-    if (!guestRoleEnabled && role === Roles.Server.Guest)
+    if (!guestModeEnabled && role === Roles.Server.Guest)
       throw new UserInputError('Guest role is not enabled')
     if (role !== Roles.Server.Admin) await _ensureAtleastOneAdminRemains(userId)
     await _changeUserRole({ userId, role })

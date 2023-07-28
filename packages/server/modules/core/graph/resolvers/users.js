@@ -19,7 +19,7 @@ const {
 const { Roles, Scopes } = require('@speckle/shared')
 const { markOnboardingComplete } = require('@/modules/core/repositories/users')
 const { UsersMeta } = require('@/modules/core/dbSchema')
-const { guestServerRoleEnabled } = require('@/modules/shared/helpers/envHelper')
+const { getServerInfo } = require('@/modules/core/services/generic')
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -136,10 +136,11 @@ module.exports = {
     },
 
     async userRoleChange(_parent, args) {
+      const { guestModeEnabled } = await getServerInfo()
       await changeUserRole({
         role: args.userRoleInput.role,
         userId: args.userRoleInput.id,
-        guestRoleEnabled: guestServerRoleEnabled()
+        guestModeEnabled
       })
       return true
     },

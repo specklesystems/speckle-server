@@ -1837,6 +1837,7 @@ export type ServerInfo = {
   canonicalUrl?: Maybe<Scalars['String']>;
   company?: Maybe<Scalars['String']>;
   description?: Maybe<Scalars['String']>;
+  guestModeEnabled: Scalars['Boolean'];
   inviteOnly?: Maybe<Scalars['Boolean']>;
   name: Scalars['String'];
   roles: Array<Maybe<Role>>;
@@ -1849,6 +1850,7 @@ export type ServerInfoUpdateInput = {
   adminContact?: InputMaybe<Scalars['String']>;
   company?: InputMaybe<Scalars['String']>;
   description?: InputMaybe<Scalars['String']>;
+  guestModeEnabled?: InputMaybe<Scalars['Boolean']>;
   inviteOnly?: InputMaybe<Scalars['Boolean']>;
   name: Scalars['String'];
   termsOfService?: InputMaybe<Scalars['String']>;
