@@ -6,6 +6,8 @@ const { validatePermissionsWriteStream } = require('./authUtils')
 
 const { hasObjects } = require('../services/objects')
 
+const { chunk } = require('lodash')
+
 module.exports = (app) => {
   app.options('/api/diff/:streamId', corsMiddleware())
 
@@ -27,15 +29,17 @@ module.exports = (app) => {
     req.log.info(`Diffing ${objectList.length} objects.`)
 
     const chunkSize = 65536 // maximum size of unsigned 16 bit integer
-    let response = {}
-    for (let i = 0; i < objectList.length; i += chunkSize) {
-      const chunk = objectList.slice(i, i + chunkSize)
-      const chunkedResponse = await hasObjects({
-        streamId: req.params.streamId,
-        objectIds: chunk
+    const objectListChunks = chunk(objectList, chunkSize)
+    const response = {}
+    await Promise.all(
+      objectListChunks.map(async (objectListChunk) => {
+        const checkedObjects = await hasObjects({
+          streamId: req.params.streamId,
+          objectIds: objectListChunk
+        })
+        Object.assign(response, checkedObjects)
       })
-      response = { ...response, ...chunkedResponse }
-    }
+    )
 
     req.log.debug(response)
     res.writeHead(200, {
