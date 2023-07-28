@@ -40,12 +40,7 @@ import {
   SunLightConfiguration,
   ViewerEvent
 } from '../IViewer'
-import {
-  DefaultPipelineOptions,
-  Pipeline,
-  PipelineOptions,
-  RenderType
-} from './pipeline/Pipeline'
+import { DefaultPipelineOptions, Pipeline, PipelineOptions } from './pipeline/Pipeline'
 import { MeshBVHVisualizer } from 'three-mesh-bvh'
 import MeshBatch from './batching/MeshBatch'
 import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
@@ -58,7 +53,10 @@ import SpecklePointMaterial from './materials/SpecklePointMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import { Measurements } from './measurements/Measurements'
 import { MaterialOptions } from './materials/Materials'
-import { ICameraController } from './extensions/core-extensions/CameraController'
+import {
+  CameraDeltaEvent,
+  ICameraController
+} from './extensions/core-extensions/CameraController'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -322,35 +320,18 @@ export default class SpeckleRenderer {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public onCameraDeltaUpdate(type: string, data?: any) {
+  public onCameraDeltaUpdate(type: CameraDeltaEvent, data?: any) {
     switch (type) {
-      case 'rest':
+      case CameraDeltaEvent.Dynamic:
+        this._needsRender = true
+        this.pipeline.onStationaryEnd()
+        break
+      case CameraDeltaEvent.Stationary:
         this._needsRender = true
         this.pipeline.onStationaryBegin()
-        this._measurements.paused = false
         break
-      case 'controlstart':
-        this._needsRender = true
-        this.pipeline.onStationaryEnd()
-        break
-      case 'controlend':
-        this._needsRender = true
-        if (data) this.pipeline.onStationaryBegin()
-        this._measurements.paused = false
-        break
-      case 'control':
-        this._needsRender = true
-        this.pipeline.onStationaryEnd()
-        this._measurements.paused = true
-        break
-      case 'update':
-        if (!data && this.pipeline.renderType === RenderType.ACCUMULATION) {
-          this._needsRender = true
-          this.pipeline.onStationaryEnd()
-        }
-        break
-      case 'frameUpdate':
-        this._needsRender = data
+      case CameraDeltaEvent.FrameUpdate:
+        this.needsRender = data
     }
   }
 
@@ -499,10 +480,10 @@ export default class SpeckleRenderer {
   }
 
   public render(): void {
-    if (this._needsRender) {
+    if (!this._cameraProvider) return
+    if (this._needsRender || this.pipeline.needsAccumulation) {
       this.batcher.render(this.renderer)
       this._needsRender = this.pipeline.render()
-      // this.renderer.render(this.scene, this.viewer.cameraHandler.activeCam.camera)
       // this._needsRender = true
       if (this.sunConfiguration.shadowcatcher) {
         this._shadowcatcher.render(this._renderer)

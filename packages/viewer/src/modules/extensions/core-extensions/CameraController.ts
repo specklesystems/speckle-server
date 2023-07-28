@@ -9,7 +9,7 @@ import { PolarView } from '../../../IViewer'
 
 export interface ICameraController {
   getRenderingCamera(): PerspectiveCamera | OrthographicCamera
-  cameraDeltaUpdate: (type: string, data?) => void
+  cameraDeltaUpdate: (type: CameraDeltaEvent, data?) => void
 }
 
 export enum CameraProjection {
@@ -21,6 +21,12 @@ export enum CameraControllerEvent {
   ProjectionChanged
 }
 
+export enum CameraDeltaEvent {
+  Stationary,
+  Dynamic,
+  FrameUpdate
+}
+
 export class CameraController extends Extension implements ICameraController {
   protected cameras = []
   protected perspectiveCamera: PerspectiveCamera = null
@@ -28,7 +34,7 @@ export class CameraController extends Extension implements ICameraController {
   protected controls: SpeckleCameraControls = null
   public orbiting = false
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public cameraDeltaUpdate: (type: string, data?: any) => void = null
+  public cameraDeltaUpdate: (type: CameraDeltaEvent, data?: any) => void = null
 
   public get activeCamera(): PerspectiveCamera | OrthographicCamera {
     return this.cameras[0].active ? this.cameras[0].camera : this.cameras[1].camera
@@ -112,7 +118,7 @@ export class CameraController extends Extension implements ICameraController {
     })
 
     this.controls.addEventListener('rest', () => {
-      if (this.cameraDeltaUpdate) this.cameraDeltaUpdate('rest')
+      if (this.cameraDeltaUpdate) this.cameraDeltaUpdate(CameraDeltaEvent.Stationary)
       setTimeout(() => {
         this.orbiting = false
       }, 400)
@@ -121,14 +127,14 @@ export class CameraController extends Extension implements ICameraController {
       //   this._measurements.paused = false
     })
     this.controls.addEventListener('controlstart', () => {
-      if (this.cameraDeltaUpdate) this.cameraDeltaUpdate('controlstart')
+      if (this.cameraDeltaUpdate) this.cameraDeltaUpdate(CameraDeltaEvent.Dynamic)
       //   this._needsRender = true
       //   this.pipeline.onStationaryEnd()
     })
 
     this.controls.addEventListener('controlend', () => {
       if (this.cameraDeltaUpdate)
-        this.cameraDeltaUpdate('controlend', this.controls.hasRested)
+        if (this.controls.hasRested) this.cameraDeltaUpdate(CameraDeltaEvent.Stationary)
       //   this._needsRender = true
       //   if (this.viewer.cameraHandler.controls.hasRested)
       //     this.pipeline.onStationaryBegin()
@@ -136,22 +142,22 @@ export class CameraController extends Extension implements ICameraController {
     })
 
     this.controls.addEventListener('control', () => {
-      if (this.cameraDeltaUpdate) this.cameraDeltaUpdate('control')
+      if (this.cameraDeltaUpdate) this.cameraDeltaUpdate(CameraDeltaEvent.Dynamic)
       //   this._needsRender = true
       //   this.pipeline.onStationaryEnd()
       //   this._measurements.paused = true
     })
-    this.controls.addEventListener('update', () => {
-      if (this.cameraDeltaUpdate)
-        this.cameraDeltaUpdate('update', this.controls.hasRested)
-      //   if (
-      //     !this.viewer.cameraHandler.controls.hasRested &&
-      //     this.pipeline.renderType === RenderType.ACCUMULATION
-      //   ) {
-      //     this._needsRender = true
-      //     this.pipeline.onStationaryEnd()
-      //   }
-    })
+    // this.controls.addEventListener('update', () => {
+    //   if (this.cameraDeltaUpdate)
+    //     this.cameraDeltaUpdate(CameraDeltaEvent.Dynamic, this.controls.hasRested)
+    //   //   if (
+    //   //     !this.viewer.cameraHandler.controls.hasRested &&
+    //   //     this.pipeline.renderType === RenderType.ACCUMULATION
+    //   //   ) {
+    //   //     this._needsRender = true
+    //   //     this.pipeline.onStationaryEnd()
+    //   //   }
+    // })
   }
 
   getRenderingCamera(): THREE.PerspectiveCamera | THREE.OrthographicCamera {
@@ -160,7 +166,8 @@ export class CameraController extends Extension implements ICameraController {
 
   public onUpdate(deltaTime: number) {
     const changed = this.controls.update(deltaTime)
-    if (this.cameraDeltaUpdate) this.cameraDeltaUpdate('frameUpdate', changed)
+    if (this.cameraDeltaUpdate)
+      this.cameraDeltaUpdate(CameraDeltaEvent.FrameUpdate, changed)
   }
 
   public onRender() {
@@ -385,12 +392,12 @@ export class CameraController extends Extension implements ICameraController {
   public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
     if (!objectIds) {
       this.zoomExtents(fit, transition)
-      if (this.cameraDeltaUpdate) this.cameraDeltaUpdate('controlstart')
+      if (this.cameraDeltaUpdate) this.cameraDeltaUpdate(CameraDeltaEvent.Dynamic)
       //   this.pipeline.onStationaryEnd()
       return
     }
     this.zoomToBox(this.viewer.getRenderer().boxFromObjects(objectIds), fit, transition)
-    if (this.cameraDeltaUpdate) this.cameraDeltaUpdate('controlstart')
+    if (this.cameraDeltaUpdate) this.cameraDeltaUpdate(CameraDeltaEvent.Dynamic)
     // this.pipeline.onStationaryEnd()
   }
 
@@ -510,7 +517,7 @@ export class CameraController extends Extension implements ICameraController {
       this.setViewPolar(view, transition)
     }
     // this.pipeline.onStationaryEnd()
-    if (this.cameraDeltaUpdate) this.cameraDeltaUpdate('controlstart')
+    if (this.cameraDeltaUpdate) this.cameraDeltaUpdate(CameraDeltaEvent.Dynamic)
   }
 
   private setViewSpeckle(view: SpeckleView, transition = true) {

@@ -218,10 +218,17 @@ export class Pipeline {
 
   public set needsProgressive(value: boolean) {
     this._needsProgressive = value
-    if (!value) this._renderType = RenderType.NORMAL
-    if (value && this._renderType === RenderType.NORMAL)
-      this._renderType = RenderType.ACCUMULATION
+    // if (!value) this._renderType = RenderType.NORMAL
+    // if (value && this._renderType === RenderType.NORMAL)
+    //   this._renderType = RenderType.ACCUMULATION
     this.accumulationFrame = 0
+  }
+
+  public get needsAccumulation() {
+    return (
+      this._renderType === RenderType.ACCUMULATION &&
+      this.accumulationFrame < Pipeline.ACCUMULATE_FRAMES
+    )
   }
 
   public get renderType() {
@@ -366,7 +373,7 @@ export class Pipeline {
     pipeline.push(this.applySaoPass)
     pipeline.push(this.overlayPass)
 
-    this.needsProgressive = true
+    // this.needsProgressive = true
     return pipeline
   }
 
@@ -425,10 +432,10 @@ export class Pipeline {
       }
       retVal = ret
     } else {
-      // console.warn('Rendering accumulation frame -> ', this.accumulationFrame)
+      console.warn('Rendering accumulation frame -> ', this.accumulationFrame)
       this._composer.render()
       this.accumulationFrame++
-      retVal = this.accumulationFrame < Pipeline.ACCUMULATE_FRAMES
+      retVal = this.needsAccumulation
     }
 
     if (this.onAfterPipelineRender) this.onAfterPipelineRender()
@@ -459,7 +466,7 @@ export class Pipeline {
     this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
     this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
-    // console.warn('Starting stationary')
+    console.warn('Starting stationary')
   }
 
   public onStationaryEnd() {
@@ -474,6 +481,6 @@ export class Pipeline {
     this.dynamicAoPass.enabled = true
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
-    // console.warn('Ending stationary')
+    console.warn('Ending stationary')
   }
 }
