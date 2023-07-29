@@ -28,17 +28,17 @@ module.exports = (app) => {
 
     req.log.info(`Diffing ${objectList.length} objects.`)
 
-    const chunkSize = 65536 // maximum size of unsigned 16 bit integer
+    const chunkSize = 1000
     const objectListChunks = chunk(objectList, chunkSize)
-    const response = {}
     const mappedObjects = await Promise.all(
-      objectListChunks.map(async (objectListChunk) =>
+      objectListChunks.map((objectListChunk) =>
         hasObjects({
           streamId: req.params.streamId,
           objectIds: objectListChunk
         })
       )
     )
+    const response = {}
     Object.assign(response, ...mappedObjects)
 
     req.log.debug(response)
