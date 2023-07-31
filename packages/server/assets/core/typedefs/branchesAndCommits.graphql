@@ -48,7 +48,7 @@ type Commit {
   Will throw an authorization error if active user isn't authorized to see it, for example,
   if a stream isn't public and the user doesn't have the appropriate rights.
   """
-  stream: Stream! @hasServerRole(role: SERVER_USER) @hasScope(scope: "streams:read")
+  stream: Stream! @hasServerRole(role: SERVER_GUEST) @hasScope(scope: "streams:read")
 }
 
 type BranchCollection {
@@ -65,40 +65,40 @@ type CommitCollection {
 
 extend type Mutation {
   branchCreate(branch: BranchCreateInput!): String!
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:write")
   branchUpdate(branch: BranchUpdateInput!): Boolean!
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:write")
   branchDelete(branch: BranchDeleteInput!): Boolean!
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:write")
 
   commitCreate(commit: CommitCreateInput!): String!
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:write")
   commitUpdate(commit: CommitUpdateInput!): Boolean!
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:write")
   commitReceive(input: CommitReceivedInput!): Boolean!
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
   commitDelete(commit: CommitDeleteInput!): Boolean!
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:write")
 
   """
   Move a batch of commits to a new branch
   """
   commitsMove(input: CommitsMoveInput!): Boolean!
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:write")
 
   """
   Delete a batch of commits
   """
   commitsDelete(input: CommitsDeleteInput!): Boolean!
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:write")
 }
 
@@ -108,38 +108,38 @@ extend type Subscription {
   Subscribe to branch created event
   """
   branchCreated(streamId: String!): JSONObject
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
   """
   Subscribe to branch updated event.
   """
   branchUpdated(streamId: String!, branchId: String): JSONObject
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
   """
   Subscribe to branch deleted event
   """
   branchDeleted(streamId: String!): JSONObject
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
 
   """
   Subscribe to commit created event
   """
   commitCreated(streamId: String!): JSONObject
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
   """
   Subscribe to commit updated event.
   """
   commitUpdated(streamId: String!, commitId: String): JSONObject
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
   """
   Subscribe to commit deleted event
   """
   commitDeleted(streamId: String!): JSONObject
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
 }
 

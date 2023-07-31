@@ -47,14 +47,14 @@ extend type User {
   Returns the apps you have authorized.
   """
   authorizedApps: [ServerAppListItem]
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "apps:read")
 
   """
   Returns the apps you have created.
   """
   createdApps: [ServerApp!]
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "apps:read")
 }
 
@@ -84,7 +84,7 @@ extend type Mutation {
   Revokes (de-authorizes) an application that you have previously authorized.
   """
   appRevokeAccess(appId: String!): Boolean
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "apps:write")
 }
 
