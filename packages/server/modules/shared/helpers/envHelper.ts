@@ -206,5 +206,5 @@ export function getOnboardingStreamCacheBustNumber() {
 }
 
 export function getEmailFromAddress() {
-  return process.env.EMAIL_FROM_ADDRESS || 'no-reply@example.org'
+  return process.env.EMAIL_FROM || 'no-reply@example.org'
 }
