@@ -8,7 +8,9 @@ extend type User {
     before: DateTime
     cursor: DateTime
     limit: Int! = 25
-  ): ActivityCollection @hasServerRole(role: SERVER_USER) @hasScope(scope: "users:read")
+  ): ActivityCollection
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "users:read")
 
   """
   The user's timeline in chronological order
@@ -19,7 +21,7 @@ extend type User {
     cursor: DateTime
     limit: Int! = 25
   ): ActivityCollection
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScopes(scopes: ["users:read", "streams:read"])
 }
 
@@ -33,7 +35,9 @@ extend type LimitedUser {
     before: DateTime
     cursor: DateTime
     limit: Int! = 25
-  ): ActivityCollection @hasServerRole(role: SERVER_USER) @hasScope(scope: "users:read")
+  ): ActivityCollection
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "users:read")
 
   """
   The user's timeline in chronological order
@@ -44,7 +48,7 @@ extend type LimitedUser {
     cursor: DateTime
     limit: Int! = 25
   ): ActivityCollection
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScopes(scopes: ["users:read", "streams:read"])
 }
 
@@ -59,7 +63,7 @@ extend type Stream {
     cursor: DateTime
     limit: Int! = 25
   ): ActivityCollection
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
 }
 
@@ -74,7 +78,7 @@ extend type Branch {
     cursor: DateTime
     limit: Int! = 25
   ): ActivityCollection
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
 }
 
@@ -89,7 +93,7 @@ extend type Commit {
     cursor: DateTime
     limit: Int! = 25
   ): ActivityCollection
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
 }
 

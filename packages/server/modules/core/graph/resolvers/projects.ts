@@ -52,7 +52,7 @@ export = {
       await authorizeResolver(context.userId, args.id, Roles.Stream.Reviewer)
 
       if (!stream.isPublic) {
-        await validateServerRole(context, Roles.Server.User)
+        await validateServerRole(context, Roles.Server.Guest)
         validateScopes(context.scopes, Scopes.Streams.Read)
       }
 
