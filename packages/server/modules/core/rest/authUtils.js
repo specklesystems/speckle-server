@@ -14,7 +14,7 @@ module.exports = {
     if (stream?.isPublic) return { result: true, status: 200 }
 
     try {
-      await validateServerRole(req.context, Roles.Server.User)
+      await validateServerRole(req.context, Roles.Server.Guest)
     } catch (err) {
       return { result: false, status: 401 }
     }
@@ -47,7 +47,7 @@ module.exports = {
     }
 
     try {
-      await validateServerRole(req.context, Roles.Server.User)
+      await validateServerRole(req.context, Roles.Server.Guest)
     } catch (err) {
       return { result: false, status: 401 }
     }
