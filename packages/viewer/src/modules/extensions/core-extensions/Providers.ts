@@ -25,25 +25,30 @@ export type PolarView = {
   origin?: Vector3
 }
 
-export enum CameraDeltaEvent {
-  Stationary,
-  Dynamic,
-  FrameUpdate
+export enum CameraProjection {
+  PERSPECTIVE,
+  ORTHOGRAPHIC
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export enum CameraControllerEvent {
+  Stationary,
+  Dynamic,
+  FrameUpdate,
+  ProjectionChanged
+}
+
 export interface IProvider {
   get provide(): string
 }
 
 export interface ICameraProvider extends IProvider {
   get renderingCamera(): PerspectiveCamera | OrthographicCamera
-  cameraDeltaUpdate: (type: CameraDeltaEvent, data?) => void
   setCameraView(objectIds: string[], transition: boolean, fit?: number)
   setCameraView(
     view: CanonicalView | SpeckleView | InlineView | PolarView,
     transition: boolean
   )
+  on(e: CameraControllerEvent, handler: (data: boolean) => void)
 }
 
 export abstract class ICameraProvider {

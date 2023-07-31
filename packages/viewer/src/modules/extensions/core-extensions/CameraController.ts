@@ -5,16 +5,12 @@ import { SpeckleCameraControls } from '../../objects/SpeckleCameraControls'
 import { OrthographicCamera, PerspectiveCamera, Vector3 } from 'three'
 import { KeyboardKeyHold, HOLD_EVENT_TYPE } from 'hold-event'
 import { CanonicalView, SpeckleView, InlineView, IViewer } from '../../..'
-import { CameraDeltaEvent, ICameraProvider, PolarView } from './Providers'
-
-export enum CameraProjection {
-  PERSPECTIVE,
-  ORTHOGRAPHIC
-}
-
-export enum CameraControllerEvent {
-  ProjectionChanged
-}
+import {
+  CameraControllerEvent,
+  CameraProjection,
+  ICameraProvider,
+  PolarView
+} from './Providers'
 
 export class CameraController extends Extension implements ICameraProvider {
   get provide() {
@@ -25,9 +21,6 @@ export class CameraController extends Extension implements ICameraProvider {
   protected perspectiveCamera: PerspectiveCamera = null
   protected orthographicCamera: OrthographicCamera = null
   protected controls: SpeckleCameraControls = null
-  public orbiting = false
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public cameraDeltaUpdate: (type: CameraDeltaEvent, data?: any) => void = null
 
   get renderingCamera(): PerspectiveCamera | OrthographicCamera {
     return this._renderingCamera
@@ -96,28 +89,19 @@ export class CameraController extends Extension implements ICameraProvider {
     this.controls.restThreshold = 0.001
     this.setupWASDControls()
 
-    this.orbiting = false
-    this.controls.addEventListener('transitionstart', () => {
-      this.orbiting = true
-    })
-
     this.controls.addEventListener('rest', () => {
-      if (this.cameraDeltaUpdate) this.cameraDeltaUpdate(CameraDeltaEvent.Stationary)
-      setTimeout(() => {
-        this.orbiting = false
-      }, 400)
+      this.emit(CameraControllerEvent.Stationary)
     })
     this.controls.addEventListener('controlstart', () => {
-      if (this.cameraDeltaUpdate) this.cameraDeltaUpdate(CameraDeltaEvent.Dynamic)
+      this.emit(CameraControllerEvent.Dynamic)
     })
 
     this.controls.addEventListener('controlend', () => {
-      if (this.cameraDeltaUpdate)
-        if (this.controls.hasRested) this.cameraDeltaUpdate(CameraDeltaEvent.Stationary)
+      if (this.controls.hasRested) this.emit(CameraControllerEvent.Stationary)
     })
 
     this.controls.addEventListener('control', () => {
-      if (this.cameraDeltaUpdate) this.cameraDeltaUpdate(CameraDeltaEvent.Dynamic)
+      this.emit(CameraControllerEvent.Dynamic)
     })
   }
 
@@ -140,8 +124,7 @@ export class CameraController extends Extension implements ICameraProvider {
 
   public onUpdate(deltaTime: number) {
     const changed = this.controls.update(deltaTime)
-    if (this.cameraDeltaUpdate)
-      this.cameraDeltaUpdate(CameraDeltaEvent.FrameUpdate, changed)
+    this.emit(CameraControllerEvent.FrameUpdate, changed)
   }
 
   public onRender() {
@@ -225,10 +208,7 @@ export class CameraController extends Extension implements ICameraProvider {
     this.orthographicCamera.updateProjectionMatrix()
 
     this.controls.camera = this.orthographicCamera
-    this.viewer.emiter.emit(
-      CameraControllerEvent.ProjectionChanged,
-      CameraProjection.ORTHOGRAPHIC
-    )
+    this.emit(CameraControllerEvent.ProjectionChanged, CameraProjection.ORTHOGRAPHIC)
   }
 
   protected setupPerspectiveCamera() {
@@ -362,12 +342,12 @@ export class CameraController extends Extension implements ICameraProvider {
   public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
     if (!objectIds) {
       this.zoomExtents(fit, transition)
-      if (this.cameraDeltaUpdate) this.cameraDeltaUpdate(CameraDeltaEvent.Dynamic)
+      this.emit(CameraControllerEvent.Dynamic)
       //   this.pipeline.onStationaryEnd()
       return
     }
     this.zoomToBox(this.viewer.getRenderer().boxFromObjects(objectIds), fit, transition)
-    if (this.cameraDeltaUpdate) this.cameraDeltaUpdate(CameraDeltaEvent.Dynamic)
+    this.emit(CameraControllerEvent.Dynamic)
     // this.pipeline.onStationaryEnd()
   }
 
@@ -486,7 +466,7 @@ export class CameraController extends Extension implements ICameraProvider {
       this.setViewPolar(view, transition)
     }
     // this.pipeline.onStationaryEnd()
-    if (this.cameraDeltaUpdate) this.cameraDeltaUpdate(CameraDeltaEvent.Dynamic)
+    this.emit(CameraControllerEvent.Dynamic)
   }
 
   private setViewSpeckle(view: SpeckleView, transition = true) {

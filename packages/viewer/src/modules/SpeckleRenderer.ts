@@ -55,7 +55,7 @@ import { Measurements } from './measurements/Measurements'
 import { MaterialOptions } from './materials/Materials'
 import {
   ICameraProvider,
-  CameraDeltaEvent
+  CameraControllerEvent
 } from './extensions/core-extensions/Providers'
 
 export enum ObjectLayers {
@@ -155,7 +155,17 @@ export default class SpeckleRenderer {
 
   public set cameraProvider(value: ICameraProvider) {
     this._cameraProvider = value
-    this._cameraProvider.cameraDeltaUpdate = this.onCameraDeltaUpdate.bind(this)
+    this._cameraProvider.on(CameraControllerEvent.Dynamic, () => {
+      this._needsRender = true
+      this.pipeline.onStationaryEnd()
+    })
+    this._cameraProvider.on(CameraControllerEvent.Stationary, () => {
+      this._needsRender = true
+      this.pipeline.onStationaryBegin()
+    })
+    this._cameraProvider.on(CameraControllerEvent.FrameUpdate, (data: boolean) => {
+      this.needsRender = data
+    })
   }
 
   public get renderingCamera() {
@@ -317,22 +327,6 @@ export default class SpeckleRenderer {
     this._scene.add(this._shadowcatcher.shadowcatcherMesh)
 
     this._measurements = new Measurements(this)
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public onCameraDeltaUpdate(type: CameraDeltaEvent, data?: any) {
-    switch (type) {
-      case CameraDeltaEvent.Dynamic:
-        this._needsRender = true
-        this.pipeline.onStationaryEnd()
-        break
-      case CameraDeltaEvent.Stationary:
-        this._needsRender = true
-        this.pipeline.onStationaryBegin()
-        break
-      case CameraDeltaEvent.FrameUpdate:
-        this.needsRender = data
-    }
   }
 
   public update(deltaTime: number) {
