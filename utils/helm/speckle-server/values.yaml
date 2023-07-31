@@ -771,6 +771,13 @@ frontend_2:
   ## @param frontend_2.replicas The number of instances of the Frontend 2 server prod to be deployed withing the cluster.
   ##
   replicas: 1
+  onboarding:
+    ## @param frontend_2.onboarding.stream_url The (cross-server) URL to the project/stream that should be used as the onboarding project base.
+    ##
+    stream_url: 'https://latest.speckle.systems/projects/843d07eb10'
+    ## @param frontend_2.onboarding.stream_cache_bust_number Increase this number to trigger the re-pulling of the base stream
+    ##
+    stream_cache_bust_number: 1
   requests:
     ## @param frontend_2.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/

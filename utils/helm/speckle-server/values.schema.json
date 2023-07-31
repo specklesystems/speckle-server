@@ -1162,6 +1162,21 @@
           "description": "The number of instances of the Frontend 2 server prod to be deployed withing the cluster.",
           "default": 1
         },
+        "onboarding": {
+          "type": "object",
+          "properties": {
+            "stream_url": {
+              "type": "string",
+              "description": "The (cross-server) URL to the project/stream that should be used as the onboarding project base.",
+              "default": "https://latest.speckle.systems/projects/843d07eb10"
+            },
+            "stream_cache_bust_number": {
+              "type": "number",
+              "description": "Increase this number to trigger the re-pulling of the base stream",
+              "default": 1
+            }
+          }
+        },
         "requests": {
           "type": "object",
           "properties": {
