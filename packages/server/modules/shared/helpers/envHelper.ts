@@ -204,3 +204,7 @@ export function getOnboardingStreamCacheBustNumber() {
   const val = process.env.ONBOARDING_STREAM_CACHE_BUST_NUMBER || '1'
   return parseInt(val) || 1
 }
+
+export function getEmailFromAddress() {
+  return process.env.EMAIL_FROM_ADDRESS || 'no-reply@example.org'
+}
