@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Color, FrontSide } from 'three'
 import { SpeckleTypeAllRenderables } from './converter/GeometryConverter'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
@@ -7,6 +8,7 @@ import { GeometryType } from './batching/Batch'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import Logger from 'js-logger'
 import { NodeRenderView } from './tree/NodeRenderView'
+import _, { omit } from 'underscore'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeckleObject = Record<string, any>
@@ -184,10 +186,41 @@ export class Differ {
     this.removedMaterialPoint.toneMapped = false
   }
 
-  public diff(urlA: string, urlB: string): Promise<DiffResult> {
-    const modifiedNew: Array<SpeckleObject> = []
-    const modifiedOld: Array<SpeckleObject> = []
+  private intersection(o1, o2) {
+    const [k1, k2] = [Object.keys(o1), Object.keys(o2)]
+    const [first, next] = k1.length > k2.length ? [k2, o1] : [k1, o2]
+    return first.filter((k) => k in next)
+  }
 
+  private buildIdMaps(
+    rvs: Array<TreeNode>,
+    idMap: { [id: string]: { node: TreeNode; applicationId: string } },
+    appIdMap: { [id: string]: number }
+  ) {
+    for (let k = 0; k < rvs.length; k++) {
+      const atomicRv = rvs[k]
+      const applicationId = atomicRv.model.raw.applicationId
+        ? atomicRv.model.raw.applicationId
+        : this.tree
+            .getAncestors(atomicRv)
+            .find((value) => value.model.raw.applicationId)?.model.raw.applicationId
+
+      idMap[atomicRv.model.raw.id] = {
+        node: atomicRv,
+        applicationId
+      }
+      if (applicationId) {
+        appIdMap[applicationId] = 1
+      }
+    }
+  }
+
+  public diff(urlA: string, urlB: string): Promise<DiffResult> {
+    return this.diffIterative(urlA, urlB)
+  }
+
+  private diffBoolean(urlA: string, urlB: string): Promise<DiffResult> {
+    const start = performance.now()
     const diffResult: DiffResult = {
       unchanged: [],
       added: [],
@@ -197,8 +230,6 @@ export class Differ {
 
     const renderTreeA = this.tree.getRenderTree(urlA)
     const renderTreeB = this.tree.getRenderTree(urlB)
-    const rootA = this.tree.findId(urlA)
-    const rootB = this.tree.findId(urlB)
     let rvsA = renderTreeA.getRenderableNodes(...SpeckleTypeAllRenderables)
     let rvsB = renderTreeB.getRenderableNodes(...SpeckleTypeAllRenderables)
 
@@ -213,18 +244,106 @@ export class Differ {
     rvsA = [...Array.from(new Set(rvsA))]
     rvsB = [...Array.from(new Set(rvsB))]
 
+    const idMapA = {}
+    const appIdMapA = {}
+    this.buildIdMaps(rvsA, idMapA, appIdMapA)
+
+    const idMapB = {}
+    const appIdMapB = {}
+    this.buildIdMaps(rvsB, idMapB, appIdMapB)
+
+    /** Get the ids which are common between the two maps. This will be objects
+     *  which have not changed
+     */
+    const unchanged: Array<string> = this.intersection(idMapA, idMapB)
+    /** We remove the unchanged objects from B and end up with changed + added */
+    const addedModified = _.omit(idMapB, unchanged)
+    /** We remove the unchanged objects from A and end up with changed + removed */
+    const removedModified = _.omit(idMapA, unchanged)
+    /** We remove the changed objects from B. An object from B is changed if
+     *  it's application ID exists in A
+     */
+    const added = _.omit(addedModified, function (value, key, object) {
+      return value.applicationId && appIdMapA[value.applicationId] !== undefined
+    })
+    /** We remove the changed objects from A. An object from A is changed if
+     *  it's application ID exists in B
+     */
+    const removed = _.omit(removedModified, function (value, key, object) {
+      return value.applicationId && appIdMapB[value.applicationId] !== undefined
+    })
+    /** We remove the removed objects from A, leaving us only changed objects */
+    const modifiedRemoved = _.omit(removedModified, Object.keys(removed))
+    /** We remove the removed objects from B, leaving us only changed objects */
+    const modifiedAdded = _.omit(addedModified, Object.keys(added))
+
+    /** We fill the arrays from here on out */
+    const modifiedOld = Object.values(modifiedRemoved).map(
+      (value: { node: TreeNode }) => value.node
+    )
+    const modifiedNew = Object.values(modifiedAdded).map(
+      (value: { node: TreeNode }) => value.node
+    )
+    diffResult.unchanged.push(...unchanged.map((value) => idMapA[value].node))
+    diffResult.unchanged.push(...unchanged.map((value) => idMapB[value].node))
+    diffResult.removed.push(
+      ...Object.values(removed).map((value: { node: TreeNode }) => value.node)
+    )
+    diffResult.added.push(
+      ...Object.values(added).map((value: { node: TreeNode }) => value.node)
+    )
+
+    modifiedOld.forEach((value, index) => {
+      value
+      diffResult.modified.push([modifiedOld[index], modifiedNew[index]])
+    })
+    console.warn('Boolean Time -> ', performance.now() - start)
+    return Promise.resolve(diffResult)
+  }
+
+  private diffIterative(urlA: string, urlB: string): Promise<DiffResult> {
+    const start = performance.now()
+    const modifiedNew: Array<SpeckleObject> = []
+    const modifiedOld: Array<SpeckleObject> = []
+
+    const diffResult: DiffResult = {
+      unchanged: [],
+      added: [],
+      removed: [],
+      modified: []
+    }
+
+    const renderTreeA = this.tree.getRenderTree(urlA)
+    const renderTreeB = this.tree.getRenderTree(urlB)
+    let rvsA = renderTreeA.getRenderableNodes(...SpeckleTypeAllRenderables)
+    let rvsB = renderTreeB.getRenderableNodes(...SpeckleTypeAllRenderables)
+
+    rvsA = rvsA.map((value) => {
+      return renderTreeA.getAtomicParent(value)
+    })
+
+    rvsB = rvsB.map((value) => {
+      return renderTreeB.getAtomicParent(value)
+    })
+
+    rvsA = [...Array.from(new Set(rvsA))]
+    rvsB = [...Array.from(new Set(rvsB))]
+
+    const idMapA = {}
+    const appIdMapA = {}
+    this.buildIdMaps(rvsA, idMapA, appIdMapA)
+
+    const idMapB = {}
+    const appIdMapB = {}
+    this.buildIdMaps(rvsB, idMapB, appIdMapB)
+
     for (let k = 0; k < rvsB.length; k++) {
-      const res = rootA.first((node: TreeNode) => {
-        return rvsB[k].model.raw.id === node.model.raw.id
-      })
+      const res = idMapA[rvsB[k].model.raw.id]?.node
+
       if (res) {
         diffResult.unchanged.push(res)
       } else {
-        const applicationId = rvsB[k].model.raw.applicationId
-          ? rvsB[k].model.raw.applicationId
-          : this.tree
-              .getAncestors(rvsB[k])
-              .find((value) => value.model.raw.applicationId)
+        const applicationId = idMapB[rvsB[k].model.raw.id].applicationId
         if (!applicationId) {
           Logger.error(
             `No application ID found. Object id:${rvsB[k].model.raw.id} is considered 'added'!`
@@ -232,9 +351,7 @@ export class Differ {
           diffResult.added.push(rvsB[k])
           continue
         }
-        const res2 = rootA.first((node: TreeNode) => {
-          return applicationId === node.model.raw.applicationId
-        })
+        const res2 = appIdMapA[applicationId]
         if (res2) {
           modifiedNew.push(rvsB[k])
         } else {
@@ -242,17 +359,10 @@ export class Differ {
         }
       }
     }
-
     for (let k = 0; k < rvsA.length; k++) {
-      const res = rootB.first((node: TreeNode) => {
-        return rvsA[k].model.raw.id === node.model.raw.id
-      })
+      const res = idMapB[rvsA[k].model.raw.id]?.node
       if (!res) {
-        const applicationId = rvsA[k].model.raw.applicationId
-          ? rvsA[k].model.raw.applicationId
-          : this.tree
-              .getAncestors(rvsA[k])
-              .find((value) => value.model.raw.applicationId)
+        const applicationId = idMapA[rvsA[k].model.raw.id].applicationId
         if (!applicationId) {
           Logger.error(
             `No application ID found. Object id:${rvsA[k].model.raw.id} is considered 'removed'!`
@@ -260,9 +370,7 @@ export class Differ {
           diffResult.removed.push(rvsA[k])
           continue
         }
-        const res2 = rootB.first((node: TreeNode) => {
-          return applicationId === node.model.raw.applicationId
-        })
+        const res2 = appIdMapB[applicationId]
         if (!res2) {
           diffResult.removed.push(rvsA[k])
         } else {
@@ -272,13 +380,11 @@ export class Differ {
         diffResult.unchanged.push(res)
       }
     }
-
     modifiedOld.forEach((value, index) => {
       value
       diffResult.modified.push([modifiedOld[index], modifiedNew[index]])
     })
-
-    console.warn(diffResult)
+    console.warn('Interative Time -> ', performance.now() - start)
     return Promise.resolve(diffResult)
   }
 
@@ -322,6 +428,7 @@ export class Differ {
       [id: string]: SpeckleStandardMaterial | SpecklePointMaterial | SpeckleLineMaterial
     }
   ) {
+    const start = performance.now()
     switch (mode) {
       case VisualDiffMode.COLORED:
         this._materialGroups = this.getColoredMaterialGroups(
@@ -337,6 +444,7 @@ export class Differ {
       default:
         Logger.error(`Unsupported visual diff mode ${mode}`)
     }
+    console.warn('Material groups -> ', performance.now() - start)
     return this._materialGroups
   }
 

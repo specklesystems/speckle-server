@@ -4,8 +4,8 @@ import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { clamp, isArray } from 'lodash'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { UserValidationError } from '@/modules/core/errors/user'
-import { ServerRoles } from '@speckle/shared'
 import { Knex } from 'knex'
+import { Roles, ServerRoles } from '@speckle/shared'
 
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**
@@ -195,4 +195,13 @@ export async function updateUser(
 
   const [newUser] = await Users.knex().where(Users.col.id, userId).update(update, '*')
   return newUser as Nullable<UserRecord>
+}
+
+export async function getFirstAdmin() {
+  const q = Users.knex()
+    .select<UserRecord[]>(Users.cols)
+    .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+    .where(ServerAcl.col.role, Roles.Server.Admin)
+
+  return await q.first()
 }

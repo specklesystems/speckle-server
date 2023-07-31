@@ -77,6 +77,7 @@ export enum ObjectLayers {
 
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
+  private readonly IGNORE_ZERO_OPACITY_OBJECTS = true
   public SHOW_BVH = false
   private container: HTMLElement
   private _renderer: WebGLRenderer
@@ -890,13 +891,28 @@ export default class SpeckleRenderer {
     const rvs = []
     const points = []
     for (let k = 0; k < results.length; k++) {
-      let rv = results[k].batchObject?.renderView
-      if (!rv) {
+      const batchObject = results[k].batchObject
+      let rv = null
+      if (batchObject) {
+        rv = batchObject.renderView
+        const material = (results[k].object as SpeckleMesh).getBatchObjectMaterial(
+          results[k].batchObject
+        )
+        if (material.opacity === 0 && this.IGNORE_ZERO_OPACITY_OBJECTS) continue
+      } else {
         rv = this.batcher.getRenderView(
           results[k].object.uuid,
           results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
         )
+        if (rv) {
+          const material = this.batcher.getRenderViewMaterial(
+            results[k].object.uuid,
+            results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
+          )
+          if (material.opacity === 0 && this.IGNORE_ZERO_OPACITY_OBJECTS) continue
+        }
       }
+
       if (rv) {
         rvs.push(rv)
         points.push(results[k].point)

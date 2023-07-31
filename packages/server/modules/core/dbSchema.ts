@@ -66,7 +66,7 @@ type MetaInnerSchemaConfig<
    * Get meta keys individually
    */
   metaKey: {
-    [keyName in MK]: string
+    [keyName in MK]: keyName
   }
 
   /**
@@ -186,8 +186,8 @@ function buildMetaTableHelper<T extends string, C extends string, MK extends str
         prev[curr] = curr
         return prev
       },
-      {} as Record<keyof BaseMetaRecord | MK, string>
-    ),
+      {} as Record<keyof BaseMetaRecord | MK, keyof BaseMetaRecord | MK>
+    ) as { [keyName in MK]: keyName },
     parentIdentityCol
   })
 
@@ -218,7 +218,7 @@ function buildMetaTableHelper<T extends string, C extends string, MK extends str
 export const StreamsMeta = buildMetaTableHelper(
   'streams_meta',
   ['streamId', 'key', 'value', 'createdAt', 'updatedAt'],
-  ['viewerE2eTestStreamVersion'],
+  ['onboardingBaseStream'],
   'streamId'
 )
 
