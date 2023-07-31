@@ -60,7 +60,7 @@ module.exports = {
   },
   Mutation: {
     async objectCreate(parent, args, context) {
-      await validateServerRole(context, Roles.Server.User)
+      await validateServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Streams.Write)
       await authorizeResolver(
         context.userId,

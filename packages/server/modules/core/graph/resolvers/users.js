@@ -32,7 +32,7 @@ module.exports = {
       if (!activeUserId) return null
 
       // Only if authenticated - check for server roles & scopes
-      await validateServerRole(context, Roles.Server.User)
+      await validateServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Read)
 
       return await getUser(activeUserId)
@@ -46,7 +46,7 @@ module.exports = {
       // User wants info about himself and he's not authenticated - just return null
       if (!context.auth && !args.id) return null
 
-      await validateServerRole(context, Roles.Server.User)
+      await validateServerRole(context, Roles.Server.Guest)
 
       if (!args.id) await validateScopes(context.scopes, Scopes.Profile.Read)
       else await validateScopes(context.scopes, Scopes.Users.Read)
@@ -63,7 +63,7 @@ module.exports = {
     },
 
     async userSearch(parent, args, context) {
-      await validateServerRole(context, Roles.Server.User)
+      await validateServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Read)
       await validateScopes(context.scopes, Scopes.Users.Read)
 
@@ -130,7 +130,7 @@ module.exports = {
   },
   Mutation: {
     async userUpdate(_parent, args, context) {
-      await validateServerRole(context, Roles.Server.User)
+      await validateServerRole(context, Roles.Server.Guest)
       await updateUserAndNotify(context.userId, args.user)
       return true
     },
@@ -162,7 +162,7 @@ module.exports = {
       // The below are not really needed anymore as we've added the hasRole and hasScope
       // directives in the graphql schema itself.
       // Since I am paranoid, I'll leave them here too.
-      await validateServerRole(context, Roles.Server.User)
+      await validateServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Delete)
 
       await deleteUser(context.userId, args.user)
