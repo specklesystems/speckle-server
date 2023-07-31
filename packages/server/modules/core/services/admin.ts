@@ -42,7 +42,7 @@ export const adminUserList = async (
       role: args.role,
       cursor: parsedCursor,
       limit: args.limit,
-      query: args.query
+      query: args.query ?? null
     }),
     countUsers(args)
   ])
@@ -52,8 +52,8 @@ export const adminUserList = async (
 
 type AdminProjectListArgs = HasCursor & {
   query: string | null
-  orderBy: string
-  visibility: string
+  orderBy: string | null
+  visibility: string | null
   limit: number
 }
 

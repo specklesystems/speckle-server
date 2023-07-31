@@ -1,5 +1,5 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, VersionGraphQLReturn, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, VersionGraphQLReturn, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn, GraphQLEmptyReturn } from '@/modules/core/helpers/graphTypes';
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
@@ -1645,11 +1645,15 @@ export type Query = {
   /** Gets the profile of the authenticated user or null if not authenticated */
   activeUser?: Maybe<User>;
   admin: AdminQueries;
-  /** All the streams of the server. Available to admins only. */
+  /**
+   * All the streams of the server. Available to admins only.
+   * @deprecated use admin.projectList instead
+   */
   adminStreams?: Maybe<StreamCollection>;
   /**
    * Get all (or search for specific) users, registered or invited, from the server in a paginated view.
    * The query looks for matches in name, company and email.
+   * @deprecated use admin.UserList instead
    */
   adminUsers?: Maybe<AdminUsersListCollection>;
   /** Gets a specific app from the server. */
@@ -1679,6 +1683,7 @@ export type Query = {
    */
   projectInvite?: Maybe<PendingStreamCollaborator>;
   serverInfo: ServerInfo;
+  /** @deprecated use admin.serverStatistics instead */
   serverStats: ServerStats;
   /**
    * Returns a specific stream. Will throw an authorization error if active user isn't authorized
@@ -2771,7 +2776,7 @@ export type ResolversTypes = {
   ActiveUserMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   Activity: ResolverTypeWrapper<Activity>;
   ActivityCollection: ResolverTypeWrapper<ActivityCollection>;
-  AdminQueries: ResolverTypeWrapper<Omit<AdminQueries, 'projectList'> & { projectList: ResolversTypes['ProjectCollection'] }>;
+  AdminQueries: ResolverTypeWrapper<GraphQLEmptyReturn>;
   AdminUserList: ResolverTypeWrapper<AdminUserList>;
   AdminUsersListCollection: ResolverTypeWrapper<Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversTypes['AdminUsersListItem']> }>;
   AdminUsersListItem: ResolverTypeWrapper<Omit<AdminUsersListItem, 'invitedUser' | 'registeredUser'> & { invitedUser?: Maybe<ResolversTypes['ServerInvite']>, registeredUser?: Maybe<ResolversTypes['User']> }>;
@@ -2883,7 +2888,7 @@ export type ResolversTypes = {
   ServerInvite: ResolverTypeWrapper<Omit<ServerInvite, 'invitedBy'> & { invitedBy: ResolversTypes['LimitedUser'] }>;
   ServerInviteCreateInput: ServerInviteCreateInput;
   ServerRole: ServerRole;
-  ServerStatistics: ResolverTypeWrapper<ServerStatistics>;
+  ServerStatistics: ResolverTypeWrapper<GraphQLEmptyReturn>;
   ServerStats: ResolverTypeWrapper<ServerStats>;
   SmartTextEditorValue: ResolverTypeWrapper<SmartTextEditorValue>;
   SortDirection: SortDirection;
@@ -2933,7 +2938,7 @@ export type ResolversParentTypes = {
   ActiveUserMutations: MutationsObjectGraphQLReturn;
   Activity: Activity;
   ActivityCollection: ActivityCollection;
-  AdminQueries: Omit<AdminQueries, 'projectList'> & { projectList: ResolversParentTypes['ProjectCollection'] };
+  AdminQueries: GraphQLEmptyReturn;
   AdminUserList: AdminUserList;
   AdminUsersListCollection: Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversParentTypes['AdminUsersListItem']> };
   AdminUsersListItem: Omit<AdminUsersListItem, 'invitedUser' | 'registeredUser'> & { invitedUser?: Maybe<ResolversParentTypes['ServerInvite']>, registeredUser?: Maybe<ResolversParentTypes['User']> };
@@ -3035,7 +3040,7 @@ export type ResolversParentTypes = {
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: Omit<ServerInvite, 'invitedBy'> & { invitedBy: ResolversParentTypes['LimitedUser'] };
   ServerInviteCreateInput: ServerInviteCreateInput;
-  ServerStatistics: ServerStatistics;
+  ServerStatistics: GraphQLEmptyReturn;
   ServerStats: ServerStats;
   SmartTextEditorValue: SmartTextEditorValue;
   Stream: StreamGraphQLReturn;

@@ -1636,11 +1636,15 @@ export type Query = {
   /** Gets the profile of the authenticated user or null if not authenticated */
   activeUser?: Maybe<User>;
   admin: AdminQueries;
-  /** All the streams of the server. Available to admins only. */
+  /**
+   * All the streams of the server. Available to admins only.
+   * @deprecated use admin.projectList instead
+   */
   adminStreams?: Maybe<StreamCollection>;
   /**
    * Get all (or search for specific) users, registered or invited, from the server in a paginated view.
    * The query looks for matches in name, company and email.
+   * @deprecated use admin.UserList instead
    */
   adminUsers?: Maybe<AdminUsersListCollection>;
   /** Gets a specific app from the server. */
@@ -1670,6 +1674,7 @@ export type Query = {
    */
   projectInvite?: Maybe<PendingStreamCollaborator>;
   serverInfo: ServerInfo;
+  /** @deprecated use admin.serverStatistics instead */
   serverStats: ServerStats;
   /**
    * Returns a specific stream. Will throw an authorization error if active user isn't authorized
