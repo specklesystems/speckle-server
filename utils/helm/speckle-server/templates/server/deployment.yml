@@ -111,7 +111,7 @@ spec:
           - name: ONBOARDING_STREAM_URL
             value: {{ .Values.server.onboarding.stream_url }}
           - name: ONBOARDING_STREAM_CACHE_BUST_NUMBER
-            value: {{ .Values.server.onboarding.stream_cache_bust_number }}
+            value: {{ .Values.server.onboarding.stream_cache_bust_number | quote }}
 
           - name: SESSION_SECRET
             valueFrom:
