@@ -28,6 +28,16 @@ generates:
         Comment: '@/modules/comments/helpers/graphTypes#CommentGraphQLReturn'
         PendingStreamCollaborator: '@/modules/serverinvites/helpers/graphTypes#PendingStreamCollaboratorGraphQLReturn'
         FileUpload: '@/modules/fileuploads/helpers/types#FileUploadGraphQLReturn'
+  modules/cross-server-sync/graph/generated/graphql.ts:
+    plugins:
+      - 'typescript'
+      - 'typescript-operations'
+    documents:
+      - 'modules/cross-server-sync/**/*.{js,ts}'
+    config:
+      scalars:
+        JSONObject: Record<string, unknown>
+        DateTime: string
   test/graphql/generated/graphql.ts:
     plugins:
       - 'typescript'

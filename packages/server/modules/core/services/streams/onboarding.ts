@@ -1,34 +1,28 @@
-import { Nullable, Optional } from '@speckle/shared'
-import { getOnboardingStreamId } from '@/modules/shared/helpers/envHelper'
+import { Optional } from '@speckle/shared'
 import { StreamCloneError } from '@/modules/core/errors/stream'
 import { cloneStream } from '@/modules/core/services/streams/clone'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { logger } from '@/logging/logging'
 import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
-
-async function cloneOnboardingStream(userId: string, sourceStreamId: Nullable<string>) {
-  if (!sourceStreamId) {
-    throw new StreamCloneError('Onboarding stream ID undefined, check env vars')
-  }
-
-  return await cloneStream(userId, sourceStreamId)
-}
+import { getOnboardingBaseProject } from '@/modules/cross-server-sync/services/onboardingProject'
 
 export async function createOnboardingStream(targetUserId: string) {
-  const sourceStreamId = getOnboardingStreamId()
+  const sourceStream = await getOnboardingBaseProject()
 
-  let newStream: Optional<StreamRecord> = undefined
-  try {
-    newStream = await cloneOnboardingStream(targetUserId, sourceStreamId)
-  } catch (e) {
-    if (!(e instanceof StreamCloneError)) {
-      throw e
-    } else {
-      logger.warn(e, 'Stream clone failed')
+  if (sourceStream) {
+    let newStream: Optional<StreamRecord> = undefined
+    try {
+      newStream = await cloneStream(targetUserId, sourceStream.id)
+    } catch (e) {
+      if (!(e instanceof StreamCloneError)) {
+        throw e
+      } else {
+        logger.warn(e, 'Stream clone failed')
+      }
     }
-  }
 
-  if (newStream) return newStream
+    if (newStream) return newStream
+  }
 
   // clone failed, just create empty stream
   return await createStreamReturnRecord({ ownerId: targetUserId })
