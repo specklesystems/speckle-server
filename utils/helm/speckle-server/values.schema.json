@@ -80,7 +80,7 @@
     "docker_image_tag": {
       "type": "string",
       "description": "Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.",
-      "default": "2.13.3"
+      "default": "2"
     },
     "imagePullPolicy": {
       "type": "string",
