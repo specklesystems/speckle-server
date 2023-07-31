@@ -9,7 +9,7 @@ export const useSelectionStore = defineStore('selectionStore', () => {
     objectIds: [] as string[]
   })
 
-  $selectionBinding.on('setSelection', (selInfo) => {
+  $selectionBinding?.on('setSelection', (selInfo) => {
     selectionInfo.value = selInfo
   })
 

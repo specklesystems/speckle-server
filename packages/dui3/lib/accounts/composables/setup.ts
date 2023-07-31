@@ -8,7 +8,7 @@ export type DUIAccount = {
   /** account info coming from the host app */
   accountInfo: Account
   /** the graphql client; a bit superflous */
-  client?: ApolloClient<unknown>
+  client: ApolloClient<unknown>
   /** whether an intial serverinfo query succeeded. */
   isValid: boolean
 }
@@ -17,7 +17,7 @@ export type DUIAccountsState = {
   accounts: Ref<DUIAccount[]>
   validAccounts: ComputedRef<DUIAccount[]>
   refreshAccounts: () => Promise<void>
-  defaultAccount: ComputedRef<DUIAccount | undefined>
+  defaultAccount: ComputedRef<DUIAccount>
   loading: Ref<boolean>
 }
 
@@ -97,7 +97,7 @@ export function useAccountsSetup(): DUIAccountsState {
       })
     }
     // We test accounts here so we try to prevent the app from querying/using invalid accounts.
-    await testAccounts(newAccs)
+    void testAccounts(newAccs)
     // Once we have tested the new accounts, finally set them.
     accounts.value = newAccs
     loading.value = false

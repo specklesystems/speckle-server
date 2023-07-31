@@ -1,14 +1,19 @@
 <template>
-  <!-- <div class="flex items-center justify-center h-[calc(100vh-14rem)]">
-    <div
-      class="p-2 bg-primary text-foreground-on-primary shadow-md rounded-md font-bold text-center"
-    >
-      TODO: Everything
+  <div>
+    <div class="space-x-2">
+      <FormButton text size="sm" to="/onboarding/v1">Onboarding v1</FormButton>
+      <FormButton text size="sm" to="/test">Tests Page</FormButton>
     </div>
-  </div> -->
-  <div class="space-x-2">
-    <FormButton to="/onboarding/v1">Onboarding v1</FormButton>
-    <FormButton to="/test">Tests Page</FormButton>
+    <div class="mt-2 space-y-4">
+      <!-- <div>{{ projectModelGroups }}</div> -->
+      <div v-for="project in projectModelGroups" :key="project.projectId" class="">
+        <CommonProjectModelGroup :project="project" />
+      </div>
+    </div>
   </div>
 </template>
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { useDocumentStateStore } from '~~/store/documentState'
+const store = useDocumentStateStore()
+const { projectModelGroups } = storeToRefs(store)
+</script>

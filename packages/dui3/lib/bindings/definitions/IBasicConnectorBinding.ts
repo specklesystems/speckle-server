@@ -8,12 +8,17 @@ export const IBasicConnectorBindingKey = 'baseBinding'
 // Needs to be agreed between Frontend and Core
 export interface IBasicConnectorBinding
   extends IBinding<IBasicConnectorBindingHostEvents> {
+  // ACCOUNTS
   getAccounts: () => Promise<Account[]>
+  // VARIOUS
   getSourceApplicationName: () => Promise<string>
   getSourceApplicationVersion: () => Promise<string>
   getDocumentInfo: () => Promise<DocumentInfo>
-  getDocumentModelState: () => Promise<ModelState>
-  saveDocumentModelState: (state: ModelState) => Promise<void>
+  // DOC STATE
+  getDocumentState: () => Promise<DocumentState>
+  saveDocumentState: (state: DocumentState) => Promise<void>
+  addModelToDocumentState: (model: ModelCard) => Promise<void>
+  removeModelFromDocumentState: (model: ModelCard) => Promise<void>
 }
 
 export interface IBasicConnectorBindingHostEvents {
@@ -21,17 +26,29 @@ export interface IBasicConnectorBindingHostEvents {
   documentChanged: () => void
 }
 
-export type ModelState = {
-  modelCards: ModelCard[]
+export type DocumentState = {
+  models: ModelCard[]
 }
 
 export type ModelCard = {
-  guid: string
+  id: string
+  modelId: string
+  projectId: string
+  accountId: string
 }
 
-export type SendProgressArgs = {
-  id: string
-  etc: unknown
+export type SenderCard = ModelCard & {
+  type: 'sender'
+  sendFilter: ISendFilter
+}
+
+export interface ISendFilter {
+  name: string
+  summary: string
+}
+
+export interface ISelectionFilter extends ISendFilter {
+  objectIds: string[]
 }
 
 // An almost 1-1 mapping of what we need from the Core accounts class.

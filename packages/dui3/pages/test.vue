@@ -18,10 +18,15 @@
     <div class="px-2">
       <p class="h5">Selection info</p>
       <p class="text-sm text-foreground-2 py-2">
-        Current document info. This should change on document swaps, closure, opening,
-        etc.
+        Selection info. This should change in real time based on user selection, but
+        there's an imperative method too in case that's impossible.
       </p>
-      <div class="text-xs mx-3 p-4 rounded shadow-inner overflow-auto simple-scrollbar">
+      <div
+        class="text-xs mx-3 p-4 rounded shadow-inner overflow-auto simple-scrollbar max-h-40"
+      >
+        <div v-if="!hasSelectionBinding" class="text-danger mb-2">
+          No selection binding registered.
+        </div>
         <pre>{{ selectionInfo }}</pre>
       </div>
     </div>
@@ -74,8 +79,7 @@ const docInfoStore = useDocumentInfoStore()
 const { documentInfo } = storeToRefs(docInfoStore)
 
 const selectionStore = useSelectionStore()
-const { selectionInfo } = storeToRefs(selectionStore)
-
+const { selectionInfo, hasBinding: hasSelectionBinding } = storeToRefs(selectionStore)
 const tests = ref([
   {
     name: 'Simple call with parameters',
