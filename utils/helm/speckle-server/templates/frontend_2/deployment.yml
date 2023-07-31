@@ -66,11 +66,6 @@ spec:
             value: {{ .Values.frontend_2.logClientApiToken }}
           - name: NUXT_PUBLIC_LOG_CLIENT_API_ENDPOINT
             value: {{ .Values.frontend_2.logClientApiEndpoint }}
-          - name: ONBOARDING_STREAM_URL
-            value: {{ .Values.frontend_2.onboarding.stream_url }}
-          - name: ONBOARDING_STREAM_CACHE_BUST_NUMBER
-            value: {{ .Values.frontend_2.onboarding.stream_cache_bust_number }}
-
 
       priorityClassName: high-priority
       {{- if .Values.frontend_2.affinity }}

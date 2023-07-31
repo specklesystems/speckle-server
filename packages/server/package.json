@@ -40,6 +40,7 @@
     "@mailchimp/mailchimp_marketing": "^3.0.80",
     "@sentry/node": "^6.17.9",
     "@sentry/tracing": "^6.17.9",
+    "@speckle/objectloader": "workspace:^",
     "@speckle/shared": "workspace:^",
     "@types/mailchimp__mailchimp_marketing": "^3.0.9",
     "@types/pino-http": "^5.8.1",
@@ -98,8 +99,7 @@
     "undici": "^5.19.1",
     "verror": "^1.10.1",
     "xml-escape": "^1.1.0",
-    "zxcvbn": "^4.4.2",
-    "@speckle/objectloader": "workspace:^"
+    "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
     "@apollo/rover": "^0.14.1",
