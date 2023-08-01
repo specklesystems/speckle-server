@@ -47,11 +47,6 @@ export const chunkInsertionObjectArray = ({
       currentChunkSize >= chunkSizeLimitMb ||
       currentChunkLength >= chunkLengthLimit
     ) {
-      console.log(
-        `chunking on ${
-          currentChunkSize >= chunkSizeLimitMb ? 'object size' : 'chunk length'
-        }`
-      )
       // push the current batch into the final chunks
       chunkedObjects.push(currentBatch)
       // reset the current batch
