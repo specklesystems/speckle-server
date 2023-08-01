@@ -79,7 +79,7 @@ export type AdminQueriesUserListArgs = {
 export type AdminUserList = {
   __typename?: 'AdminUserList';
   cursor?: Maybe<Scalars['String']>;
-  items: Array<BaseUser>;
+  items: Array<LimitedUser>;
   totalCount: Scalars['Int'];
 };
 
@@ -152,26 +152,6 @@ export type AuthStrategy = {
   id: Scalars['String'];
   name: Scalars['String'];
   url: Scalars['String'];
-};
-
-export type BaseUser = {
-  __typename?: 'BaseUser';
-  avatar?: Maybe<Scalars['String']>;
-  bio?: Maybe<Scalars['String']>;
-  company?: Maybe<Scalars['String']>;
-  createdAt?: Maybe<Scalars['DateTime']>;
-  /**
-   * E-mail can be null, if it's requested for a user other than the authenticated one
-   * and the user isn't an admin
-   */
-  email?: Maybe<Scalars['String']>;
-  id: Scalars['ID'];
-  /** Whether post-sign up onboarding has been finished or skipped entirely */
-  isOnboardingFinished?: Maybe<Scalars['Boolean']>;
-  name: Scalars['String'];
-  profiles?: Maybe<Scalars['JSONObject']>;
-  role?: Maybe<Scalars['String']>;
-  verified?: Maybe<Scalars['Boolean']>;
 };
 
 export type BlobMetadata = {

@@ -1,5 +1,5 @@
 type AdminUserList {
-  items: [BaseUser!]!
+  items: [LimitedUser!]!
   cursor: String
   totalCount: Int!
 }

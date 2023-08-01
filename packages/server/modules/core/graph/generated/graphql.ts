@@ -88,7 +88,7 @@ export type AdminQueriesUserListArgs = {
 export type AdminUserList = {
   __typename?: 'AdminUserList';
   cursor?: Maybe<Scalars['String']>;
-  items: Array<BaseUser>;
+  items: Array<LimitedUser>;
   totalCount: Scalars['Int'];
 };
 
@@ -161,26 +161,6 @@ export type AuthStrategy = {
   id: Scalars['String'];
   name: Scalars['String'];
   url: Scalars['String'];
-};
-
-export type BaseUser = {
-  __typename?: 'BaseUser';
-  avatar?: Maybe<Scalars['String']>;
-  bio?: Maybe<Scalars['String']>;
-  company?: Maybe<Scalars['String']>;
-  createdAt?: Maybe<Scalars['DateTime']>;
-  /**
-   * E-mail can be null, if it's requested for a user other than the authenticated one
-   * and the user isn't an admin
-   */
-  email?: Maybe<Scalars['String']>;
-  id: Scalars['ID'];
-  /** Whether post-sign up onboarding has been finished or skipped entirely */
-  isOnboardingFinished?: Maybe<Scalars['Boolean']>;
-  name: Scalars['String'];
-  profiles?: Maybe<Scalars['JSONObject']>;
-  role?: Maybe<Scalars['String']>;
-  verified?: Maybe<Scalars['Boolean']>;
 };
 
 export type BlobMetadata = {
@@ -2777,7 +2757,7 @@ export type ResolversTypes = {
   Activity: ResolverTypeWrapper<Activity>;
   ActivityCollection: ResolverTypeWrapper<ActivityCollection>;
   AdminQueries: ResolverTypeWrapper<GraphQLEmptyReturn>;
-  AdminUserList: ResolverTypeWrapper<AdminUserList>;
+  AdminUserList: ResolverTypeWrapper<Omit<AdminUserList, 'items'> & { items: Array<ResolversTypes['LimitedUser']> }>;
   AdminUsersListCollection: ResolverTypeWrapper<Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversTypes['AdminUsersListItem']> }>;
   AdminUsersListItem: ResolverTypeWrapper<Omit<AdminUsersListItem, 'invitedUser' | 'registeredUser'> & { invitedUser?: Maybe<ResolversTypes['ServerInvite']>, registeredUser?: Maybe<ResolversTypes['User']> }>;
   ApiToken: ResolverTypeWrapper<ApiToken>;
@@ -2786,7 +2766,6 @@ export type ResolversTypes = {
   AppCreateInput: AppCreateInput;
   AppUpdateInput: AppUpdateInput;
   AuthStrategy: ResolverTypeWrapper<AuthStrategy>;
-  BaseUser: ResolverTypeWrapper<BaseUser>;
   BigInt: ResolverTypeWrapper<Scalars['BigInt']>;
   BlobMetadata: ResolverTypeWrapper<BlobMetadata>;
   BlobMetadataCollection: ResolverTypeWrapper<BlobMetadataCollection>;
@@ -2939,7 +2918,7 @@ export type ResolversParentTypes = {
   Activity: Activity;
   ActivityCollection: ActivityCollection;
   AdminQueries: GraphQLEmptyReturn;
-  AdminUserList: AdminUserList;
+  AdminUserList: Omit<AdminUserList, 'items'> & { items: Array<ResolversParentTypes['LimitedUser']> };
   AdminUsersListCollection: Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversParentTypes['AdminUsersListItem']> };
   AdminUsersListItem: Omit<AdminUsersListItem, 'invitedUser' | 'registeredUser'> & { invitedUser?: Maybe<ResolversParentTypes['ServerInvite']>, registeredUser?: Maybe<ResolversParentTypes['User']> };
   ApiToken: ApiToken;
@@ -2948,7 +2927,6 @@ export type ResolversParentTypes = {
   AppCreateInput: AppCreateInput;
   AppUpdateInput: AppUpdateInput;
   AuthStrategy: AuthStrategy;
-  BaseUser: BaseUser;
   BigInt: Scalars['BigInt'];
   BlobMetadata: BlobMetadata;
   BlobMetadataCollection: BlobMetadataCollection;
@@ -3150,7 +3128,7 @@ export type AdminQueriesResolvers<ContextType = GraphQLContext, ParentType exten
 
 export type AdminUserListResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AdminUserList'] = ResolversParentTypes['AdminUserList']> = {
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  items?: Resolver<Array<ResolversTypes['BaseUser']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -3192,21 +3170,6 @@ export type AuthStrategyResolvers<ContextType = GraphQLContext, ParentType exten
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type BaseUserResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BaseUser'] = ResolversParentTypes['BaseUser']> = {
-  avatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  bio?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
-  email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  isOnboardingFinished?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
-  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
-  role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  verified?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -4027,7 +3990,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ApiToken?: ApiTokenResolvers<ContextType>;
   AppAuthor?: AppAuthorResolvers<ContextType>;
   AuthStrategy?: AuthStrategyResolvers<ContextType>;
-  BaseUser?: BaseUserResolvers<ContextType>;
   BigInt?: GraphQLScalarType;
   BlobMetadata?: BlobMetadataResolvers<ContextType>;
   BlobMetadataCollection?: BlobMetadataCollectionResolvers<ContextType>;
