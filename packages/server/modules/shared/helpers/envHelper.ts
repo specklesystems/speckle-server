@@ -144,7 +144,7 @@ export function getFrontendOrigin(forceFe2?: boolean) {
 export function getServerOrigin() {
   if (!process.env.CANONICAL_URL) {
     throw new MisconfiguredEnvironmentError(
-      'Server origin env var (CANONICAL_URL) not configured'
+      'Server origin environment variable (CANONICAL_URL) not configured'
     )
   }
 
@@ -203,4 +203,13 @@ export function getOnboardingStreamUrl() {
 export function getOnboardingStreamCacheBustNumber() {
   const val = process.env.ONBOARDING_STREAM_CACHE_BUST_NUMBER || '1'
   return parseInt(val) || 1
+}
+
+export function getEmailFromAddress() {
+  if (!process.env.EMAIL_FROM) {
+    throw new MisconfiguredEnvironmentError(
+      'Email From environment variable (EMAIL_FROM) is not configured'
+    )
+  }
+  return process.env.EMAIL_FROM
 }
