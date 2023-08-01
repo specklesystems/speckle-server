@@ -4,5 +4,5 @@ extend type User {
 
 extend type Mutation {
   userNotificationPreferencesUpdate(preferences: JSONObject!): Boolean
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
 }

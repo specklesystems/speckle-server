@@ -1883,6 +1883,7 @@ export type ServerInfo = {
   canonicalUrl?: Maybe<Scalars['String']>;
   company?: Maybe<Scalars['String']>;
   description?: Maybe<Scalars['String']>;
+  guestModeEnabled: Scalars['Boolean'];
   inviteOnly?: Maybe<Scalars['Boolean']>;
   name: Scalars['String'];
   roles: Array<Maybe<Role>>;
@@ -1895,6 +1896,7 @@ export type ServerInfoUpdateInput = {
   adminContact?: InputMaybe<Scalars['String']>;
   company?: InputMaybe<Scalars['String']>;
   description?: InputMaybe<Scalars['String']>;
+  guestModeEnabled?: InputMaybe<Scalars['Boolean']>;
   inviteOnly?: InputMaybe<Scalars['Boolean']>;
   name: Scalars['String'];
   termsOfService?: InputMaybe<Scalars['String']>;
@@ -1915,6 +1917,7 @@ export type ServerInviteCreateInput = {
 export enum ServerRole {
   ServerAdmin = 'SERVER_ADMIN',
   ServerArchivedUser = 'SERVER_ARCHIVED_USER',
+  ServerGuest = 'SERVER_GUEST',
   ServerUser = 'SERVER_USER'
 }
 
@@ -3059,12 +3062,6 @@ export type ResolversParentTypes = {
   WebhookUpdateInput: WebhookUpdateInput;
 };
 
-export type HasRoleDirectiveArgs = {
-  role: Scalars['String'];
-};
-
-export type HasRoleDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = HasRoleDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
-
 export type HasScopeDirectiveArgs = {
   scope: Scalars['String'];
 };
@@ -3722,6 +3719,7 @@ export type ServerInfoResolvers<ContextType = GraphQLContext, ParentType extends
   canonicalUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  guestModeEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   inviteOnly?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   roles?: Resolver<Array<Maybe<ResolversTypes['Role']>>, ParentType, ContextType>;
@@ -4067,7 +4065,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
 };
 
 export type DirectiveResolvers<ContextType = GraphQLContext> = {
-  hasRole?: HasRoleDirectiveResolver<any, any, ContextType>;
   hasScope?: HasScopeDirectiveResolver<any, any, ContextType>;
   hasScopes?: HasScopesDirectiveResolver<any, any, ContextType>;
   hasServerRole?: HasServerRoleDirectiveResolver<any, any, ContextType>;

@@ -21,6 +21,7 @@ const { moduleLogger, logger } = require('@/logging/logging')
 const {
   listenForPreviewGenerationUpdates
 } = require('@/modules/previews/services/resultListener')
+const { Scopes, Roles } = require('@speckle/shared')
 
 const httpErrorImage = (httpErrorCode) =>
   require.resolve(`#/assets/previews/images/preview_${httpErrorCode}.png`)
@@ -144,7 +145,7 @@ exports.init = (app) => {
 
     if (!stream.isPublic) {
       try {
-        await validateScopes(req.context.scopes, 'streams:read')
+        await validateScopes(req.context.scopes, Scopes.Streams.Read)
       } catch (err) {
         return { hasPermissions: false, httpErrorCode: 401 }
       }
@@ -153,7 +154,7 @@ exports.init = (app) => {
         await authorizeResolver(
           req.context.userId,
           req.params.streamId,
-          'stream:reviewer'
+          Roles.Stream.Reviewer
         )
       } catch (err) {
         return { hasPermissions: false, httpErrorCode: 401 }

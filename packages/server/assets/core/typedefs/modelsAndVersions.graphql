@@ -164,11 +164,11 @@ type VersionMutations {
 
 extend type Mutation {
   modelMutations: ModelMutations!
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:write")
 
   versionMutations: VersionMutations!
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:write")
 }
 

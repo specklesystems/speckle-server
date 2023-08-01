@@ -930,7 +930,7 @@ export async function revokeStreamPermissions(params: {
     .select<StreamAclRecord[]>('*')
     .first()
 
-  if (aclEntry?.role === 'stream:owner') {
+  if (aclEntry?.role === Roles.Stream.Owner) {
     const [countObj] = await StreamAcl.knex()
       .where({
         resourceId: streamId,

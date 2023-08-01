@@ -1,6 +1,9 @@
 import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
-import { CommitPubsubEvents, pubsub } from '@/modules/shared'
+import {
+  CommitSubscriptions as CommitPubsubEvents,
+  pubsub
+} from '@/modules/shared/utils/subscriptions'
 import {
   CommitCreateInput,
   CommitReceivedInput,

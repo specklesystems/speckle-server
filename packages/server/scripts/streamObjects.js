@@ -9,6 +9,7 @@ const { init } = require(`@/app`)
 const request = require('supertest')
 const { exit } = require('yargs')
 const { logger } = require('@/logging/logging')
+const { Scopes } = require('@speckle/shared')
 
 const main = async () => {
   const testStream = {
@@ -30,14 +31,14 @@ const main = async () => {
     userA.id,
     'test token user A',
     [
-      'streams:read',
-      'streams:write',
-      'users:read',
-      'users:email',
-      'tokens:write',
-      'tokens:read',
-      'profile:read',
-      'profile:email'
+      Scopes.Streams.Read,
+      Scopes.Streams.Write,
+      Scopes.Users.Read,
+      Scopes.Users.Email,
+      Scopes.Tokens.Write,
+      Scopes.Tokens.Read,
+      Scopes.Profile.Read,
+      Scopes.Profile.Email
     ]
   )}`
 

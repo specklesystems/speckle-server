@@ -2,7 +2,11 @@
 
 const { UserInputError, ApolloError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
-const { authorizeResolver, pubsub, CommitPubsubEvents } = require('@/modules/shared')
+const {
+  pubsub,
+  CommitSubscriptions: CommitPubsubEvents
+} = require('@/modules/shared/utils/subscriptions')
+const { authorizeResolver } = require('@/modules/shared')
 
 const {
   getCommitById,
@@ -39,6 +43,7 @@ const {
   validateStreamAccess
 } = require('@/modules/core/services/streams/streamAccessService')
 const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
+const { Roles } = require('@speckle/shared')
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
@@ -167,7 +172,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
       const rateLimitResult = await getRateLimitResult(
@@ -190,7 +195,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
       await updateCommitAndNotify(args.commit, context.userId)
@@ -198,7 +203,11 @@ module.exports = {
     },
 
     async commitReceive(parent, args, context) {
-      await authorizeResolver(context.userId, args.input.streamId, 'stream:reviewer')
+      await authorizeResolver(
+        context.userId,
+        args.input.streamId,
+        Roles.Stream.Reviewer
+      )
 
       const commit = await getCommitById({
         streamId: args.input.streamId,
@@ -218,7 +227,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
       const deleted = await deleteCommitAndNotify(
@@ -244,7 +253,11 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([COMMIT_CREATED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer
+          )
           return payload.streamId === variables.streamId
         }
       )
@@ -254,7 +267,11 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([COMMIT_UPDATED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer
+          )
 
           const streamMatch = payload.streamId === variables.streamId
           if (streamMatch && variables.commitId) {
@@ -270,7 +287,11 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([COMMIT_DELETED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer
+          )
 
           return payload.streamId === variables.streamId
         }

@@ -11,38 +11,8 @@ const { Roles } = require('@speckle/shared')
 const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 
 const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
+const { getRoles } = require('@/modules/shared/roles')
 const ServerAcl = () => ServerAclSchema.knex()
-
-let roles
-
-const getRoles = async () => {
-  if (roles) return roles
-  roles = await knex('user_roles').select('*')
-  return roles
-}
-
-/**
- * Validates a server role against the req's context object.
- * @param  {import('@/modules/shared/helpers/typeHelper').GraphQLContext} context
- * @param  {string} requiredRole
- */
-async function validateServerRole(context, requiredRole) {
-  const roles = await getRoles()
-
-  if (!context.auth) throw new ForbiddenError('You must provide an auth token.')
-
-  const role = roles.find((r) => r.name === requiredRole)
-  const myRole = roles.find((r) => r.name === context.role)
-
-  if (!role) throw new ApolloError('Invalid server role specified')
-  if (!myRole)
-    throw new ForbiddenError('You do not have the required server role (null)')
-
-  if (context.role === 'server:admin') return true
-  if (myRole.weight >= role.weight) return true
-
-  throw new ForbiddenError('You do not have the required server role')
-}
 
 /**
  * Validates the scope against a list of scopes of the current session.
@@ -65,7 +35,7 @@ async function validateScopes(scopes, scope) {
 async function authorizeResolver(userId, resourceId, requiredRole) {
   userId = userId || null
 
-  if (!roles) roles = await knex('user_roles').select('*')
+  const roles = await getRoles()
 
   // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
 
@@ -129,7 +99,7 @@ async function registerOrUpdateRole(role) {
 module.exports = {
   registerOrUpdateScope,
   registerOrUpdateRole,
-  validateServerRole,
+  // validateServerRole,
   validateScopes,
   authorizeResolver,
   pubsub,
