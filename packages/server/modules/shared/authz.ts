@@ -4,7 +4,7 @@ import {
   ServerRoles,
   StreamRoles
 } from '@/modules/core/helpers/mainConstants'
-import { getRoles } from '@/modules/shared'
+import { getRoles } from '@/modules/shared/roles'
 import { getStream } from '@/modules/core/services/streams'
 
 import {

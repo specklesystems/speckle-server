@@ -15,15 +15,8 @@ const {
 const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 
 const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
+const { getRoles } = require('@/modules/shared/roles')
 const ServerAcl = () => ServerAclSchema.knex()
-
-let roles
-
-const getRoles = async () => {
-  if (roles) return roles
-  roles = await knex('user_roles').select('*')
-  return roles
-}
 
 /**
  * Validates a server role against the req's context object.
@@ -60,7 +53,7 @@ async function validateScopes(scopes, scope) {
 async function authorizeResolver(userId, resourceId, requiredRole) {
   userId = userId || null
 
-  if (!roles) roles = await knex('user_roles').select('*')
+  const roles = getRoles()
 
   // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
 

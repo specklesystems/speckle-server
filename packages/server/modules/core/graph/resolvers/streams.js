@@ -14,9 +14,12 @@ const {
 } = require('@/modules/core/services/streams')
 
 const {
-  authorizeResolver,
   pubsub,
-  StreamPubsubEvents,
+  StreamSubscriptions: StreamPubsubEvents
+} = require(`@/modules/shared/utils/subscriptions`)
+
+const {
+  authorizeResolver,
   validateScopes,
   validateServerRole
 } = require(`@/modules/shared`)

@@ -2,7 +2,11 @@
 
 const { withFilter } = require('graphql-subscriptions')
 
-const { authorizeResolver, pubsub, BranchPubsubEvents } = require('@/modules/shared')
+const {
+  pubsub,
+  BranchSubscriptions: BranchPubsubEvents
+} = require('@/modules/shared/utils/subscriptions')
+const { authorizeResolver } = require('@/modules/shared')
 
 const { getBranchByNameAndStreamId, getBranchById } = require('../../services/branches')
 const {
