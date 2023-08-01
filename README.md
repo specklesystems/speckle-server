@@ -117,9 +117,9 @@ Essentially, ensure you have **Volar** enabled, and the built in **TypeScript an
 
 We have a [Maildev](https://github.com/maildev/maildev) container available that you can use to see all e-mails sent out from the app. Make sure your `server` .env file is configured properly to use it:
 
-```
+```bash
 EMAIL=true
-EMAIL_FROM="speckle@speckle.local"
+EMAIL_FROM="no-reply@example.org"
 EMAIL_HOST="localhost"
 EMAIL_PORT="1025"
 ```
