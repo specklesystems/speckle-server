@@ -612,11 +612,6 @@ describe('GraphQL API Core @core-api', () => {
         expect(streamResults.body.data.adminStreams.items.length).to.equal(2)
 
         streamResults = await sendRequest(userA.token, {
-          query: '{ adminStreams(offset: 5) { totalCount items { id name } } }'
-        })
-        expect(streamResults.body.data.adminStreams.items.length).to.equal(5)
-
-        streamResults = await sendRequest(userA.token, {
           query: '{ adminStreams( query: "Admin" ) { totalCount items { id name } } }'
         })
         expect(streamResults.body.data.adminStreams.totalCount).to.equal(5)

@@ -37,7 +37,13 @@ export function buildCommentTextFromInput({
 }>) {
   if ((!isTextEditorDoc(doc) || isDocEmpty(doc)) && !blobIds.length) {
     throw new RichTextParseError(
-      'Attempting to build comment text without document & attachments!'
+      'Attempting to build comment text without document & attachments!',
+      {
+        info: {
+          doc,
+          blobIds
+        }
+      }
     )
   }
 

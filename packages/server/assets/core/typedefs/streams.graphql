@@ -22,7 +22,9 @@ extend type Query {
     orderBy: String
     visibility: String
     limit: Int = 25
-  ): StreamCollection @hasServerRole(role: SERVER_ADMIN)
+  ): StreamCollection
+    @hasServerRole(role: SERVER_ADMIN)
+    @deprecated(reason: "use admin.projectList instead")
 
   """
   All of the discoverable streams of the server

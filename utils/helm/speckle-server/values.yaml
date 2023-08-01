@@ -65,7 +65,7 @@ ingress:
 ##
 ## @param docker_image_tag Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.
 ##
-docker_image_tag: 2.13.3
+docker_image_tag: '2'
 
 ## @param imagePullPolicy Determines the conditions when the Docker Images for Speckle should be pulled from the Image registry.
 ## ref: https://kubernetes.io/docs/concepts/containers/images/#image-pull-policy
@@ -376,7 +376,13 @@ server:
   ## @param server.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
-
+  onboarding:
+    ## @param server.onboarding.stream_url The (cross-server) URL to the project/stream that should be used as the onboarding project base.
+    ##
+    stream_url: 'https://latest.speckle.systems/projects/843d07eb10'
+    ## @param server.onboarding.stream_cache_bust_number Increase this number to trigger the re-pulling of the base stream
+    ##
+    stream_cache_bust_number: 1
   inspect:
     ## @param server.inspect.enabled If enabled, indicates that the Speckle server should be deployed with the nodejs inspect feature enabled
     enabled: false

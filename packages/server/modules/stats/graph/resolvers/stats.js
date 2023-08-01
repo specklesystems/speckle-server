@@ -15,6 +15,9 @@ const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 
 module.exports = {
   Query: {
+    /**
+     * @deprecated('Use admin.serverStatistics')
+     */
     async serverStats(parent, args, context) {
       await throwForNotHavingServerRole(context, Roles.Server.Admin)
       await validateScopes(context.scopes, Scopes.Server.Stats)

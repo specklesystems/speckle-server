@@ -29,6 +29,7 @@ extend type Query {
     query: String = null
   ): AdminUsersListCollection
     @hasServerRole(role: SERVER_ADMIN)
+    @deprecated(reason: "use admin.UserList instead")
     @hasScope(scope: "users:read")
 
   """
