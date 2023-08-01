@@ -32,6 +32,7 @@
     "gqlgen:watch": "graphql-codegen --config codegen.yml --watch \"assets/**/*.graphql\""
   },
   "dependencies": {
+    "@apollo/client": "^3.7.0",
     "@aws-sdk/client-s3": "^3.276.0",
     "@aws-sdk/lib-storage": "^3.100.0",
     "@godaddy/terminus": "^4.9.0",
@@ -39,6 +40,7 @@
     "@mailchimp/mailchimp_marketing": "^3.0.80",
     "@sentry/node": "^6.17.9",
     "@sentry/tracing": "^6.17.9",
+    "@speckle/objectloader": "workspace:^",
     "@speckle/shared": "workspace:^",
     "@types/mailchimp__mailchimp_marketing": "^3.0.9",
     "@types/pino-http": "^5.8.1",
@@ -50,6 +52,7 @@
     "compression": "^1.7.4",
     "connect-redis": "^6.1.1",
     "cors": "^2.8.5",
+    "cross-fetch": "^3.1.5",
     "crypto-random-string": "^3.2.0",
     "dataloader": "^2.0.0",
     "dayjs": "^1.11.5",
@@ -99,7 +102,6 @@
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
-    "@apollo/client": "^3.7.0",
     "@apollo/rover": "^0.14.1",
     "@bull-board/express": "^4.2.2",
     "@faker-js/faker": "^7.1.0",
@@ -107,7 +109,6 @@
     "@graphql-codegen/typescript": "2.7.2",
     "@graphql-codegen/typescript-operations": "^2.5.2",
     "@graphql-codegen/typescript-resolvers": "2.7.2",
-    "@speckle/objectloader": "workspace:^",
     "@swc/core": "^1.2.222",
     "@tiptap/core": "^2.0.0-beta.176",
     "@types/bcrypt": "^5.0.0",
@@ -138,7 +139,6 @@
     "chai-http": "^4.3.0",
     "concurrently": "^7.0.0",
     "cross-env": "^7.0.3",
-    "cross-fetch": "^3.1.5",
     "deep-equal-in-any-order": "^1.1.15",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
