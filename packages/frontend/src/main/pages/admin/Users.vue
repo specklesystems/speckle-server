@@ -143,7 +143,8 @@ export default {
       roleLookupTable: {
         [Roles.Server.User]: 'User',
         [Roles.Server.Admin]: 'Admin',
-        [Roles.Server.ArchivedUser]: 'Archived'
+        [Roles.Server.ArchivedUser]: 'Archived',
+        [Roles.Server.Guest]: 'Guest'
       },
       adminUsers: {
         items: [],
