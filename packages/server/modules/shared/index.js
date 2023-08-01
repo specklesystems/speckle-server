@@ -14,20 +14,6 @@ const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
 const { getRoles } = require('@/modules/shared/roles')
 const ServerAcl = () => ServerAclSchema.knex()
 
-// /**
-//  * Validates a server role against the req's context object.
-//  * @param  {import('@/modules/shared/helpers/typeHelper').GraphQLContext} context
-//  * @param  {string} requiredRole
-//  */
-// async function validateServerRole(context, requiredRole) {
-//   const { authResult } = await authPipelineValidateServerRole({ requiredRole })({
-//     context
-//   })
-//   if (authHasFailed(authResult))
-//     throw authResult.error ?? new Error('Auth failed without an error')
-//   return true
-// }
-
 /**
  * Validates the scope against a list of scopes of the current session.
  * @param  {string[]|undefined} scopes
