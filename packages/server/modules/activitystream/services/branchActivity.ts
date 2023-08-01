@@ -1,7 +1,10 @@
 import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import { BranchRecord } from '@/modules/core/helpers/types'
-import { pubsub, BranchPubsubEvents } from '@/modules/shared'
+import {
+  pubsub,
+  BranchSubscriptions as BranchPubsubEvents
+} from '@/modules/shared/utils/subscriptions'
 import {
   BranchDeleteInput,
   BranchUpdateInput,

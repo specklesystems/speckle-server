@@ -2,7 +2,11 @@
 
 const { UserInputError, ApolloError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
-const { authorizeResolver, pubsub, CommitPubsubEvents } = require('@/modules/shared')
+const {
+  pubsub,
+  CommitSubscriptions: CommitPubsubEvents
+} = require('@/modules/shared/utils/subscriptions')
+const { authorizeResolver } = require('@/modules/shared')
 
 const {
   getCommitById,

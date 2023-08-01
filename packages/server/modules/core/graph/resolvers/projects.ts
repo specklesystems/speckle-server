@@ -30,7 +30,8 @@ import {
   createStreamInviteAndNotify,
   useStreamInviteAndNotify
 } from '@/modules/serverinvites/services/management'
-import { authorizeResolver, validateScopes, validateServerRole } from '@/modules/shared'
+import { authorizeResolver, validateScopes } from '@/modules/shared'
+import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import {
   filteredSubscribe,
   ProjectSubscriptions,
@@ -52,7 +53,7 @@ export = {
       await authorizeResolver(context.userId, args.id, Roles.Stream.Reviewer)
 
       if (!stream.isPublic) {
-        await validateServerRole(context, Roles.Server.Guest)
+        await throwForNotHavingServerRole(context, Roles.Server.Guest)
         validateScopes(context.scopes, Scopes.Streams.Read)
       }
 

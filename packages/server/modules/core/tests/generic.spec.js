@@ -13,14 +13,11 @@ const { beforeEachContext } = require('@/test/hooks')
 const { createStream } = require('@/modules/core/services/streams')
 const { createUser } = require('@/modules/core/services/users')
 
-const {
-  validateServerRole,
-  validateScopes,
-  authorizeResolver
-} = require('@/modules/shared')
+const { validateScopes, authorizeResolver } = require('@/modules/shared')
 const { buildContext } = require('@/modules/shared/middleware')
 const { ForbiddenError } = require('apollo-server-express')
 const { Roles, Scopes } = require('@speckle/shared')
+const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 
 describe('Generic AuthN & AuthZ controller tests', () => {
   before(async () => {
@@ -61,7 +58,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
   )
 
   it('Should validate server role', async () => {
-    await validateServerRole(
+    await throwForNotHavingServerRole(
       { auth: true, role: Roles.Server.User },
       Roles.Server.Admin
     )
@@ -72,19 +69,26 @@ describe('Generic AuthN & AuthZ controller tests', () => {
         expect('You do not have the required server role').to.equal(err.message)
       )
 
-    await validateServerRole({ auth: true, role: 'HACZOR' }, '133TCR3w')
+    await throwForNotHavingServerRole({ auth: true, role: 'HACZOR' }, '133TCR3w')
       .then(() => {
         throw new Error('This should have been rejected')
       })
-      .catch((err) => expect('Invalid server role specified').to.equal(err.message))
+      .catch((err) =>
+        expect('Invalid role requirement specified').to.equal(err.message)
+      )
 
-    await validateServerRole({ auth: true, role: Roles.Server.Admin }, '133TCR3w')
+    await throwForNotHavingServerRole(
+      { auth: true, role: Roles.Server.Admin },
+      '133TCR3w'
+    )
       .then(() => {
         throw new Error('This should have been rejected')
       })
-      .catch((err) => expect('Invalid server role specified').to.equal(err.message))
+      .catch((err) =>
+        expect('Invalid role requirement specified').to.equal(err.message)
+      )
 
-    const test = await validateServerRole(
+    const test = await throwForNotHavingServerRole(
       { auth: true, role: Roles.Server.Admin },
       Roles.Server.User
     )

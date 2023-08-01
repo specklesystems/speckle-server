@@ -14,12 +14,11 @@ const {
 } = require('@/modules/core/services/streams')
 
 const {
-  authorizeResolver,
   pubsub,
-  StreamPubsubEvents,
-  validateScopes,
-  validateServerRole
-} = require(`@/modules/shared`)
+  StreamSubscriptions: StreamPubsubEvents
+} = require(`@/modules/shared/utils/subscriptions`)
+
+const { authorizeResolver, validateScopes } = require(`@/modules/shared`)
 const {
   RateLimitError,
   RateLimitAction,
@@ -50,6 +49,7 @@ const {
 const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 const { Roles, Scopes } = require('@speckle/shared')
 const { StreamNotFoundError } = require('@/modules/core/errors/stream')
+const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -88,7 +88,7 @@ module.exports = {
       await authorizeResolver(context.userId, args.id, Roles.Stream.Reviewer)
 
       if (!stream.isPublic) {
-        await validateServerRole(context, Roles.Server.Guest)
+        await throwForNotHavingServerRole(context, Roles.Server.Guest)
         await validateScopes(context.scopes, Scopes.Streams.Read)
       }
 
