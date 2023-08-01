@@ -116,21 +116,21 @@ export interface IViewer {
   resize(): void
   on(eventType: ViewerEvent, handler: (arg) => void)
   requestRender(): void
-  setSectionBox(
-    box?: {
-      min: { x: number; y: number; z: number }
-      max: { x: number; y: number; z: number }
-    },
-    offset?: number
-  )
-  setSectionBoxFromObjects(objectIds: string[], offset?: number)
-  getCurrentSectionBox(): {
-    min: { x: number; y: number; z: number }
-    max: { x: number; y: number; z: number }
-  } | null
-  toggleSectionBox(): void
-  sectionBoxOff(): void
-  sectionBoxOn(): void
+  // setSectionBox(
+  //   box?: {
+  //     min: { x: number; y: number; z: number }
+  //     max: { x: number; y: number; z: number }
+  //   },
+  //   offset?: number
+  // )
+  // setSectionBoxFromObjects(objectIds: string[], offset?: number)
+  // getCurrentSectionBox(): {
+  //   min: { x: number; y: number; z: number }
+  //   max: { x: number; y: number; z: number }
+  // } | null
+  // toggleSectionBox(): void
+  // sectionBoxOff(): void
+  // sectionBoxOn(): void
 
   // zoom(objectIds?: string[], fit?: number, transition?: boolean): void
 
@@ -232,4 +232,5 @@ export interface IViewer {
 
   // addExtension(extension: Extension)
   createExtension<T extends Extension>(type: new () => T): T
+  getExtension<T extends Extension>(type: new () => T): T
 }

@@ -8,7 +8,7 @@ import {
 
 import './style.css'
 import Sandbox from './Sandbox'
-import { SelectionExtension, CameraController } from '@speckle/viewer'
+import { SelectionExtension, CameraController, SectionTool } from '@speckle/viewer'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -34,8 +34,10 @@ const createViewer = async (containerName: string, stream: string) => {
 
   const cameraController = viewer.createExtension(CameraController)
   const selection = viewer.createExtension(SelectionExtension)
+  const sections = viewer.createExtension(SectionTool)
   cameraController // use it
   selection // use it
+  sections // use it
 
   const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
 
@@ -120,7 +122,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6c6e43e5f3'
     // 'https://latest.speckle.dev/streams/58b5648c4d/commits/60371ecb2d'
     // 'Super' heavy revit shit
-    'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
+    // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
     // IFC building (good for a tree based structure)
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/2ebd336223'
     // IFC story, a subtree of the above
@@ -185,7 +187,7 @@ const getStream = () => {
     // MEPs (whatever they are)
     // 'https://latest.speckle.dev/streams/85bc4f61c6/commits/8575fe2978'
     // Alex cubes
-    // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
+    'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
     // Tekla
     // 'https://latest.speckle.dev/streams/caec6d6676/commits/588c731104'
     // Purple market square

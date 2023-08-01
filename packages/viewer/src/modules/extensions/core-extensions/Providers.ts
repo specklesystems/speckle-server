@@ -42,6 +42,8 @@ export interface IProvider {
 }
 
 export interface ICameraProvider extends IProvider {
+  get enabled(): boolean
+  set enabled(val: boolean)
   get renderingCamera(): PerspectiveCamera | OrthographicCamera
   setCameraView(objectIds: string[], transition: boolean, fit?: number)
   setCameraView(

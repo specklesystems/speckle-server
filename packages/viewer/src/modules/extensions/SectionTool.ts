@@ -1,4 +1,4 @@
-import THREE, {
+import {
   Group,
   Box3,
   BufferGeometry,
@@ -10,13 +10,17 @@ import THREE, {
   Vector3,
   Plane,
   Material,
-  BufferAttribute
+  BufferAttribute,
+  Raycaster,
+  DoubleSide,
+  SphereGeometry
 } from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
 import { IViewer } from '../../IViewer'
 import { ObjectLayers } from '../SpeckleRenderer'
 import { Extension } from './core-extensions/Extension'
 import { CameraControllerEvent, ICameraProvider } from './core-extensions/Providers'
+import { InputEvent } from '../input/Input'
 
 export enum SectionToolEvent {
   DragStart = 'section-box-drag-start',
@@ -51,6 +55,8 @@ export class SectionTool extends Extension {
   protected controls: TransformControls
   protected allowSelection: boolean
 
+  protected raycaster: Raycaster
+
   constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
     super(viewer)
     this.viewer = viewer
@@ -65,19 +71,19 @@ export class SectionTool extends Extension {
 
     // box
     this.boxGeometry = this._generateSimpleCube(5, 5, 5)
-    this.boxMaterial = new THREE.MeshStandardMaterial({
+    this.boxMaterial = new MeshStandardMaterial({
       color: 0x00ffff,
       opacity: 0,
       wireframe: false,
-      side: THREE.DoubleSide
+      side: DoubleSide
     })
-    this.boxMesh = new THREE.Mesh(this.boxGeometry, this.boxMaterial)
+    this.boxMesh = new Mesh(this.boxGeometry, this.boxMaterial)
     this.boxMesh.visible = false
     this.boxMesh.layers.set(ObjectLayers.PROPS)
 
     this.display.add(this.boxMesh)
 
-    this.boxMeshHelper = new THREE.Box3Helper(this.boxGeometry.boundingBox)
+    this.boxMeshHelper = new Box3Helper(this.boxGeometry.boundingBox)
     this.boxMeshHelper.material = new LineBasicMaterial({
       color: 0x0a66ff,
       opacity: 0.4
@@ -87,22 +93,19 @@ export class SectionTool extends Extension {
     this.display.add(this.boxMeshHelper)
 
     // we're attaching the gizmo mover to this sphere in the box centre
-    const sphere = new THREE.SphereGeometry(0.01, 10, 10)
-    this.sphere = new THREE.Mesh(
-      sphere,
-      new THREE.MeshStandardMaterial({ color: 0x00ffff })
-    )
+    const sphere = new SphereGeometry(0.01, 10, 10)
+    this.sphere = new Mesh(sphere, new MeshStandardMaterial({ color: 0x00ffff }))
     this.sphere.layers.set(ObjectLayers.PROPS)
     this.sphere.visible = false
     this.display.add(this.sphere)
 
     // plane
-    this.plane = new THREE.PlaneGeometry(1, 1)
-    this.hoverPlane = new THREE.Mesh(
+    this.plane = new PlaneGeometry(1, 1)
+    this.hoverPlane = new Mesh(
       this.plane,
-      new THREE.MeshStandardMaterial({
+      new MeshStandardMaterial({
         transparent: true,
-        side: THREE.DoubleSide,
+        side: DoubleSide,
         opacity: 0.1,
         wireframe: false,
         color: 0x0a66ff,
@@ -113,6 +116,9 @@ export class SectionTool extends Extension {
     this.hoverPlane.visible = false
     this.hoverPlane.layers.set(ObjectLayers.PROPS)
     this.display.add(this.hoverPlane)
+
+    this.raycaster = new Raycaster()
+    this.raycaster.layers.set(ObjectLayers.PROPS)
 
     this.sidesSimple = {
       '256': { verts: [1, 2, 5, 6], axis: 'x' },
@@ -159,7 +165,7 @@ export class SectionTool extends Extension {
     //     this._attachControlsToBox()
     //   }
     // })
-
+    this._setupControls()
     this._attachControlsToBox()
 
     this.cameraProvider.on(CameraControllerEvent.ProjectionChanged, () => {
@@ -169,6 +175,7 @@ export class SectionTool extends Extension {
     this.cameraProvider.on(CameraControllerEvent.FrameUpdate, (data: boolean) => {
       this.allowSelection = !data
     })
+    this.viewer.getRenderer().input.on(InputEvent.Click, this._clickHandler.bind(this))
   }
 
   public onUpdate(deltaTime: number) {
@@ -187,7 +194,7 @@ export class SectionTool extends Extension {
     this.controls?.detach()
     this.controls = new TransformControls(
       this.viewer.getRenderer().renderingCamera,
-      this.viewer.getContainer()
+      this.viewer.getRenderer().renderer.domElement
     )
     for (let k = 0; k < this.controls?.children.length; k++) {
       this.controls?.children[k].traverse((obj) => {
@@ -207,7 +214,7 @@ export class SectionTool extends Extension {
         //@Dim: Not sure what this needs to do in the new viewer
         //@Alex: this prevents(?) involuntary selection happening on mobile
         // this.viewer.interactions.preventSelection = val
-        // this.viewer.cameraHandler.enabled = !val
+        this.cameraProvider.enabled = !val
       } else {
         this.emit(SectionToolEvent.DragEnd)
         setTimeout(() => {
@@ -215,7 +222,7 @@ export class SectionTool extends Extension {
           //@Dim: Not sure what this needs to do in the new viewer
           //@Alex: this prevents(?) involuntary selection happening on mobile
           // this.viewer.interactions.preventSelection = val
-          // this.viewer.cameraHandler.enabled = !val
+          this.cameraProvider.enabled = !val
         }, 100)
       }
     })
@@ -276,7 +283,14 @@ export class SectionTool extends Extension {
 
   _clickHandler(args) {
     if (!this.allowSelection || this.dragging) return
-    if (args.length === 0 && !this.dragging) {
+
+    this.raycaster.setFromCamera(args, this.cameraProvider.renderingCamera)
+    let intersectedObjects = []
+    if (this.display.visible) {
+      intersectedObjects = this.raycaster.intersectObject(this.boxMesh)
+    }
+
+    if (intersectedObjects.length === 0 && !this.dragging) {
       this._attachControlsToBox()
       ;(this.boxMeshHelper.material as Material).opacity = 0.5
       this.attachedToBox = true
@@ -285,17 +299,20 @@ export class SectionTool extends Extension {
     this.attachedToBox = false
     ;(this.boxMeshHelper.material as Material).opacity = 0.3
     this.hoverPlane.visible = true
-    const side = this.sidesSimple[`${args[0].face.a}${args[0].face.b}${args[0].face.c}`]
-    // this.controls?.showX = side.axis === 'x'
-    // this.controls?.showY = side.axis === 'y'
-    // this.controls?.showZ = side.axis === 'z'
+    const side =
+      this.sidesSimple[
+        `${intersectedObjects[0].face.a}${intersectedObjects[0].face.b}${intersectedObjects[0].face.c}`
+      ]
+    this.controls.showX = side.axis === 'x'
+    this.controls.showY = side.axis === 'y'
+    this.controls.showZ = side.axis === 'z'
 
     this.currentRange = side.verts
 
     const boxArr = this.boxGeometry.attributes.position
     let index = 0
     const planeArr = this.plane.attributes.position.array as number[]
-    const centre = new THREE.Vector3()
+    const centre = new Vector3()
 
     const tempArr = []
     for (let i = 0; i < planeArr.length; i++) {
@@ -305,7 +322,7 @@ export class SectionTool extends Extension {
         tempArr.push(boxArr.getY(this.currentRange[index]))
       } else if (i % 3 === 2) {
         tempArr.push(boxArr.getZ(this.currentRange[index]))
-        centre.add(new THREE.Vector3(tempArr[i - 2], tempArr[i - 1], tempArr[i]))
+        centre.add(new Vector3(tempArr[i - 2], tempArr[i - 1], tempArr[i]))
         index++
       }
     }
@@ -356,11 +373,8 @@ export class SectionTool extends Extension {
       positions.push(...vert)
     }
 
-    const g = new THREE.BufferGeometry()
-    g.setAttribute(
-      'position',
-      new THREE.BufferAttribute(new Float32Array(positions), 3)
-    )
+    const g = new BufferGeometry()
+    g.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3))
     g.setIndex(indexes)
     g.computeBoundingBox()
     g.computeVertexNormals()
@@ -369,12 +383,12 @@ export class SectionTool extends Extension {
 
   _generateOrUpdatePlanes() {
     this.planes = this.planes || [
-      new THREE.Plane(),
-      new THREE.Plane(),
-      new THREE.Plane(),
-      new THREE.Plane(),
-      new THREE.Plane(),
-      new THREE.Plane()
+      new Plane(),
+      new Plane(),
+      new Plane(),
+      new Plane(),
+      new Plane(),
+      new Plane()
     ]
 
     let index = 0
@@ -385,17 +399,17 @@ export class SectionTool extends Extension {
     ]
 
     for (let i = 0; i < indexes.length; i += 6) {
-      const a = new THREE.Vector3(
+      const a = new Vector3(
         boxArr.getX(indexes[i]),
         boxArr.getY(indexes[i]),
         boxArr.getZ(indexes[i])
       )
-      const b = new THREE.Vector3(
+      const b = new Vector3(
         boxArr.getX(indexes[i + 1]),
         boxArr.getY(indexes[i + 1]),
         boxArr.getZ(indexes[i + 1])
       )
-      const c = new THREE.Vector3(
+      const c = new Vector3(
         boxArr.getX(indexes[i + 2]),
         boxArr.getY(indexes[i + 2]),
         boxArr.getZ(indexes[i + 2])
@@ -410,10 +424,10 @@ export class SectionTool extends Extension {
   _attachControlsToBox() {
     this.controls?.detach()
 
-    const centre = new THREE.Vector3()
+    const centre = new Vector3()
     const boxArr = this.boxGeometry.attributes.position.array
     for (let i = 0; i < boxArr.length; i += 3) {
-      centre.add(new THREE.Vector3(boxArr[i], boxArr[i + 1], boxArr[i + 2]))
+      centre.add(new Vector3(boxArr[i], boxArr[i + 1], boxArr[i + 2]))
     }
     centre.multiplyScalar(1 / 8)
     this.sphere.position.copy(centre)
@@ -424,9 +438,9 @@ export class SectionTool extends Extension {
     this.currentRange = null
     this.prevPosition = null
     this.hoverPlane.visible = false
-    // this.controls?.showX = true
-    // this.controls?.showY = true
-    // this.controls?.showZ = true
+    this.controls.showX = true
+    this.controls.showY = true
+    this.controls.showZ = true
   }
 
   setBox(targetBox, offset = 0.05) {
@@ -443,11 +457,11 @@ export class SectionTool extends Extension {
       //   box = new THREE.Box3().setFromObject(this.viewer.speckleRenderer.allObjects)
       // } else {
       // box = this.viewer.world.worldBox.clone()
-      box = new Box3(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
+      box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
     }
 
     if (box.min.x === Infinity) {
-      box = new Box3(new THREE.Vector3(-1, -1, -1), new THREE.Vector3(1, 1, 1))
+      box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
     }
 
     const x1 = box.min.x - (box.max.x - box.min.x) * offset
@@ -531,7 +545,7 @@ export class SectionTool extends Extension {
 
   getCurrentBox() {
     if (!this.display.visible) return null
-    const box = new THREE.Box3().setFromBufferAttribute(
+    const box = new Box3().setFromBufferAttribute(
       this.boxGeometry.attributes.position as BufferAttribute
     )
     return box

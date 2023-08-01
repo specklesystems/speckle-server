@@ -10,6 +10,15 @@ export const InputOptionsDefault = {
   hover: false
 }
 
+export enum InputEvent {
+  PointerDown,
+  PointerUp,
+  PointerMove,
+  Click,
+  DoubleClick,
+  KeyUp
+}
+
 export default class Input extends EventEmitter {
   private static readonly MAX_DOUBLE_CLICK_TIMING = 500
   private tapTimeout
@@ -28,10 +37,12 @@ export default class Input extends EventEmitter {
     this.container.addEventListener('pointerdown', (e) => {
       e.preventDefault()
       mdTime = new Date().getTime()
+      this.emit(InputEvent.PointerDown)
     })
 
     this.container.addEventListener('pointerup', (e) => {
       e.preventDefault()
+      this.emit(InputEvent.PointerUp)
       const now = new Date().getTime()
       const delta = now - mdTime
       const deltaClick = now - this.lastClick
@@ -42,6 +53,7 @@ export default class Input extends EventEmitter {
       ;(loc as unknown as Record<string, unknown>).event = e
       if (e.shiftKey) (loc as unknown as Record<string, unknown>).multiSelect = true
       this.emit(ViewerEvent.ObjectClicked, loc)
+      this.emit(InputEvent.Click, loc)
       this.lastClick = new Date().getTime()
     })
 
@@ -59,10 +71,9 @@ export default class Input extends EventEmitter {
       const tapLength = currentTime - this.lastTap
       clearTimeout(this.tapTimeout)
       if (tapLength < 500 && tapLength > 0) {
-        this.emit(
-          ViewerEvent.ObjectDoubleClicked,
-          this._getNormalisedClickPosition(this.touchLocation)
-        )
+        const loc = this._getNormalisedClickPosition(this.touchLocation)
+        this.emit(ViewerEvent.ObjectDoubleClicked, loc)
+        this.emit(InputEvent.DoubleClick, loc)
       } else {
         this.tapTimeout = setTimeout(function () {
           clearTimeout(this.tapTimeout)
@@ -75,16 +86,19 @@ export default class Input extends EventEmitter {
       const data = this._getNormalisedClickPosition(e)
       ;(data as unknown as Record<string, unknown>).event = e
       this.emit(ViewerEvent.ObjectDoubleClicked, data)
+      this.emit(InputEvent.DoubleClick, data)
     })
 
     this.container.addEventListener('pointermove', (e) => {
       const data = this._getNormalisedClickPosition(e)
       ;(data as unknown as Record<string, unknown>).event = e
       this.emit('pointer-move', data)
+      this.emit(InputEvent.PointerMove, data)
     })
 
     document.addEventListener('keyup', (e) => {
       this.emit('key-up', e)
+      this.emit(InputEvent.KeyUp, e)
     })
 
     // Handle multiple object selection

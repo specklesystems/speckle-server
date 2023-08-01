@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Box3 } from '@speckle/viewer'
+import { Box3, SectionTool } from '@speckle/viewer'
 import { Vector3 } from '@speckle/viewer'
 import {
   CanonicalView,
@@ -334,10 +334,16 @@ export default class Sandbox {
       title: 'Toggle Section Box'
     })
     toggleSectionBox.on('click', () => {
-      this.viewer.setSectionBoxFromObjects(
-        this.selectionList.map((val) => val.hits[0].object.id) as string[]
-      )
-      this.viewer.toggleSectionBox()
+      let box = this.viewer
+        .getRenderer()
+        .boxFromObjects(
+          this.selectionList.map((val) => val.hits[0].node.model.raw.id) as string[]
+        )
+      if (!box) {
+        box = this.viewer.getRenderer().sceneBox
+      }
+      this.viewer.getExtension<SectionTool>(SectionTool).setBox(box)
+      this.viewer.getExtension<SectionTool>(SectionTool).toggle()
     })
 
     const toggleProjection = this.tabs.pages[0].addButton({

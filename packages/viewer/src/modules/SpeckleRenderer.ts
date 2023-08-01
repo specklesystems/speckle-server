@@ -202,7 +202,7 @@ export default class SpeckleRenderer {
   }
 
   public get currentSectionBox() {
-    return this.viewer.sectionBox.getCurrentBox()
+    return new Box3() //this.viewer.sectionBox.getCurrentBox()
   }
 
   public get measurements() {
@@ -508,9 +508,10 @@ export default class SpeckleRenderer {
 
     this.updateDirectLights()
     this.updateHelpers()
-    if (this.viewer.sectionBox.display.visible) {
-      this.viewer.setSectionBox()
-    }
+    // REVISIT
+    // if (this.viewer.sectionBox.display.visible) {
+    //   this.viewer.setSectionBox()
+    // }
     this.updateShadowCatcher()
     this._needsRender = true
   }
@@ -553,9 +554,10 @@ export default class SpeckleRenderer {
 
     /** We'll just update the shadowcatcher after all batches are loaded */
     this.updateShadowCatcher()
-    if (this.viewer.sectionBox.display.visible) {
-      this.viewer.setSectionBox()
-    }
+    // REVISIT
+    // if (this.viewer.sectionBox.display.visible) {
+    //   this.viewer.setSectionBox()
+    // }
     delete this.cancel[subtreeId]
   }
 
@@ -659,10 +661,11 @@ export default class SpeckleRenderer {
 
   public endFilter() {
     this.batcher.autoFillDrawRanges(this.filterBatchRecording)
-    this.updateClippingPlanes(this.viewer.sectionBox.planes)
-    if (this.viewer.sectionBox.display.visible) {
-      this.updateSectionBoxCapper()
-    }
+    // REVISIT
+    // this.updateClippingPlanes(this.viewer.sectionBox.planes)
+    // if (this.viewer.sectionBox.display.visible) {
+    //   this.updateSectionBoxCapper()
+    // }
     this.renderer.shadowMap.needsUpdate = true
     this.updateShadowCatcher()
   }
@@ -677,7 +680,8 @@ export default class SpeckleRenderer {
 
   public updateClippingPlanes(planes?: Plane[]) {
     if (!this.allObjects) return
-    if (!planes) planes = this.viewer.sectionBox.planes
+    // REVISIT
+    // if (!planes) planes = this.viewer.sectionBox.planes
     /** This will be done via the batches in the near future */
     this.allObjects.traverse((object) => {
       const material = (object as unknown as { material }).material
@@ -714,7 +718,8 @@ export default class SpeckleRenderer {
 
   public onSectionBoxDragEnd() {
     const generate = () => {
-      this.setSectionPlaneChanged(this.viewer.sectionBox.planes)
+      //REVISIT
+      // this.setSectionPlaneChanged(this.viewer.sectionBox.planes)
       this.updateSectionBoxCapper(this.sectionPlanesChanged)
       this.updateShadowCatcher()
       this.viewer.removeListener(ViewerEvent.SectionBoxUpdated, generate)
@@ -724,14 +729,16 @@ export default class SpeckleRenderer {
 
   public updateSectionBoxCapper(planes?: Plane[]) {
     const start = performance.now()
-    if (!planes) planes = this.viewer.sectionBox.planes
+    // REVISIT
+    // if (!planes) planes = this.viewer.sectionBox.planes
     for (let k = 0; k < planes.length; k++) {
       this.sectionBoxOutlines.updatePlaneOutline(
         this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[],
         planes[k]
       )
     }
-    this.sectionBoxOutlines.enable(this.viewer.sectionBox.display.visible)
+    // REVISIT
+    // this.sectionBoxOutlines.enable(this.viewer.sectionBox.display.visible)
     Logger.warn('Outline time: ', performance.now() - start)
   }
 
@@ -943,7 +950,8 @@ export default class SpeckleRenderer {
       this.renderingCamera,
       e,
       true,
-      this.viewer.sectionBox.getCurrentBox()
+      // REVISIT
+      this.sceneBox // this.viewer.sectionBox.getCurrentBox()
     )
 
     if (!results) {
@@ -998,7 +1006,8 @@ export default class SpeckleRenderer {
       this.renderingCamera,
       e,
       true,
-      this.viewer.sectionBox.getCurrentBox()
+      // REVISIT
+      this.sceneBox // this.viewer.sectionBox.getCurrentBox()
     )
     if (!results) {
       this.viewer.emit(ViewerEvent.ObjectDoubleClicked, null)

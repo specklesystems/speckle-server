@@ -30,6 +30,10 @@ export class CameraController extends Extension implements ICameraProvider {
     this._renderingCamera = value
   }
 
+  public get enabled() {
+    return this.controls.enabled
+  }
+
   public set enabled(val) {
     this.controls.enabled = val
   }

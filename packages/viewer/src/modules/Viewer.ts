@@ -5,7 +5,6 @@ import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
 // import CameraHandler from './context/CameraHanlder'
 
-import SectionBox, { SectionBoxEvent } from './SectionBox'
 import { Box3, Clock, DoubleSide, FrontSide, Texture } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
@@ -51,7 +50,7 @@ export class Viewer extends EventEmitter implements IViewer {
   private propertyManager: PropertyManager
   public differ: Differ
   /** Legacy viewer components (will revisit soon) */
-  public sectionBox: SectionBox
+  // public sectionBox: SectionBox
   // public cameraHandler: CameraHandler
 
   /** Misc members */
@@ -59,7 +58,9 @@ export class Viewer extends EventEmitter implements IViewer {
   private clock: Clock
   private loaders: { [id: string]: ViewerObjectLoader } = {}
 
-  private extensions: Array<Extension | IProvider> = []
+  private extensions: {
+    [id: string]: Extension | IProvider
+  } = {}
 
   /** various utils/helpers */
   private utils: Utils
@@ -83,7 +84,7 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public get clippingVolume(): Box3 {
-    return this.sectionBox.cube.geometry.boundingBox
+    return new Box3() //this.sectionBox.cube.geometry.boundingBox
   }
 
   public createExtension<T extends Extension>(
@@ -91,7 +92,7 @@ export class Viewer extends EventEmitter implements IViewer {
   ): T {
     const providersToInject = type.prototype.inject
     const providers = []
-    this.extensions.forEach((extension: IProvider) => {
+    Object.values(this.extensions).forEach((extension: IProvider) => {
       const provides = extension.provide
       if (provides && providersToInject.includes(provides)) providers.push(extension)
     })
@@ -100,8 +101,14 @@ export class Viewer extends EventEmitter implements IViewer {
     if (ICameraProvider.isCameraProvider(extension)) {
       this.speckleRenderer.cameraProvider = extension
     }
-    this.extensions.push(extension)
+    this.extensions[type.name] = extension
     return extension
+  }
+
+  public getExtension<T extends Extension | IProvider>(
+    type: new (viewer: IViewer, ...args) => T
+  ): T {
+    return this.extensions[type.name] as T
   }
 
   public constructor(
@@ -144,19 +151,19 @@ export class Viewer extends EventEmitter implements IViewer {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any)._V = this // For debugging! ಠ_ಠ
 
-    this.sectionBox = new SectionBox(this)
-    this.sectionBox.disable()
-    this.on(ViewerEvent.SectionBoxUpdated, () => {
-      this.speckleRenderer.updateClippingPlanes(this.sectionBox.planes)
-    })
-    this.sectionBox.on(
-      SectionBoxEvent.DRAG_START,
-      this.speckleRenderer.onSectionBoxDragStart.bind(this.speckleRenderer)
-    )
-    this.sectionBox.on(
-      SectionBoxEvent.DRAG_END,
-      this.speckleRenderer.onSectionBoxDragEnd.bind(this.speckleRenderer)
-    )
+    // this.sectionBox = new SectionBox(this)
+    // this.sectionBox.disable()
+    // this.on(ViewerEvent.SectionBoxUpdated, () => {
+    //   this.speckleRenderer.updateClippingPlanes(this.sectionBox.planes)
+    // })
+    // this.sectionBox.on(
+    //   SectionBoxEvent.DRAG_START,
+    //   this.speckleRenderer.onSectionBoxDragStart.bind(this.speckleRenderer)
+    // )
+    // this.sectionBox.on(
+    //   SectionBoxEvent.DRAG_END,
+    //   this.speckleRenderer.onSectionBoxDragEnd.bind(this.speckleRenderer)
+    // )
 
     this.frame()
     this.resize()
@@ -178,41 +185,41 @@ export class Viewer extends EventEmitter implements IViewer {
     return this.speckleRenderer.getObjects(id)
   }
 
-  public setSectionBox(
-    box?: {
-      min: {
-        x: number
-        y: number
-        z: number
-      }
-      max: { x: number; y: number; z: number }
-    },
-    offset?: number
-  ) {
-    if (!box) {
-      box = this.speckleRenderer.sceneBox
-    }
-    this.sectionBox.setBox(box, offset)
-    this.speckleRenderer.updateSectionBoxCapper()
-  }
+  // public setSectionBox(
+  //   box?: {
+  //     min: {
+  //       x: number
+  //       y: number
+  //       z: number
+  //     }
+  //     max: { x: number; y: number; z: number }
+  //   },
+  //   offset?: number
+  // ) {
+  //   if (!box) {
+  //     box = this.speckleRenderer.sceneBox
+  //   }
+  //   this.sectionBox.setBox(box, offset)
+  //   this.speckleRenderer.updateSectionBoxCapper()
+  // }
 
-  public getSectionBoxFromObjects(objectIds: string[]) {
-    return this.speckleRenderer.boxFromObjects(objectIds)
-  }
+  // public getSectionBoxFromObjects(objectIds: string[]) {
+  //   return this.speckleRenderer.boxFromObjects(objectIds)
+  // }
 
-  public setSectionBoxFromObjects(objectIds: string[], offset?: number) {
-    this.setSectionBox(this.getSectionBoxFromObjects(objectIds), offset)
-  }
+  // public setSectionBoxFromObjects(objectIds: string[], offset?: number) {
+  //   this.setSectionBox(this.getSectionBoxFromObjects(objectIds), offset)
+  // }
 
-  public getCurrentSectionBox() {
-    return this.sectionBox.getCurrentBox()
-  }
+  // public getCurrentSectionBox() {
+  //   return this.sectionBox.getCurrentBox()
+  // }
 
   public resize() {
     const width = this.container.offsetWidth
     const height = this.container.offsetHeight
     this.speckleRenderer.resize(width, height)
-    this.extensions.forEach((value: Extension) => {
+    Object.values(this.extensions).forEach((value: Extension) => {
       value.onResize()
     })
   }
@@ -230,7 +237,7 @@ export class Viewer extends EventEmitter implements IViewer {
   private update() {
     const delta = this.clock.getDelta()
     this.speckleRenderer.update(delta)
-    this.extensions.forEach((ext: Extension) => {
+    Object.values(this.extensions).forEach((ext: Extension) => {
       ext.onUpdate(delta)
     })
     this.stats?.update()
@@ -239,7 +246,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   private render() {
     this.speckleRenderer.render()
-    this.extensions.forEach((ext: Extension) => {
+    Object.values(this.extensions).forEach((ext: Extension) => {
       ext.onRender()
     })
   }
@@ -415,20 +422,20 @@ export class Viewer extends EventEmitter implements IViewer {
     return null
   }
 
-  public toggleSectionBox() {
-    this.sectionBox.toggle()
-    this.speckleRenderer.updateSectionBoxCapper()
-  }
+  // public toggleSectionBox() {
+  //   this.sectionBox.toggle()
+  //   this.speckleRenderer.updateSectionBoxCapper()
+  // }
 
-  public sectionBoxOff() {
-    this.sectionBox.disable()
-    this.speckleRenderer.updateSectionBoxCapper()
-  }
+  // public sectionBoxOff() {
+  //   this.sectionBox.disable()
+  //   this.speckleRenderer.updateSectionBoxCapper()
+  // }
 
-  public sectionBoxOn() {
-    this.sectionBox.enable()
-    this.speckleRenderer.updateSectionBoxCapper()
-  }
+  // public sectionBoxOn() {
+  //   this.sectionBox.enable()
+  //   this.speckleRenderer.updateSectionBoxCapper()
+  // }
 
   // public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
   //   this.speckleRenderer.zoom(objectIds, fit, transition)
@@ -476,14 +483,14 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public screenshot(): Promise<string> {
     return new Promise((resolve) => {
-      const sectionBoxVisible = this.sectionBox.display.visible
-      if (sectionBoxVisible) {
-        this.sectionBox.displayOff()
-      }
+      // const sectionBoxVisible = this.sectionBox.display.visible
+      // if (sectionBoxVisible) {
+      //   this.sectionBox.displayOff()
+      // }
       const screenshot = this.speckleRenderer.renderer.domElement.toDataURL('image/png')
-      if (sectionBoxVisible) {
-        this.sectionBox.displayOn()
-      }
+      // if (sectionBoxVisible) {
+      //   this.sectionBox.displayOn()
+      // }
       resolve(screenshot)
     })
   }

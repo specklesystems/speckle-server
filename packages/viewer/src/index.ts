@@ -42,6 +42,7 @@ import {
   ICameraProvider,
   InlineView
 } from './modules/extensions/core-extensions/Providers'
+import { SectionTool } from './modules/extensions/SectionTool'
 
 export {
   Viewer,
@@ -58,7 +59,8 @@ export {
   MeasurementType,
   Units,
   SelectionExtension,
-  CameraController
+  CameraController,
+  SectionTool
 }
 
 export type {
