@@ -1,6 +1,5 @@
 import { logger } from '@/logging/logging'
 import { getTransporter } from '@/modules/emails/utils/transporter'
-import { getEmailFromAddress } from '@/modules/shared/helpers/envHelper'
 
 export type SendEmailParams = {
   from?: string
@@ -26,7 +25,7 @@ export async function sendEmail({
     return false
   }
   try {
-    const emailFrom = getEmailFromAddress()
+    const emailFrom = process.env.EMAIL_FROM || 'no-reply@speckle.systems'
     await transporter.sendMail({
       from: from || `"Speckle" <${emailFrom}>`,
       to,

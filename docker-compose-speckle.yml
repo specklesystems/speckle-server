@@ -51,7 +51,6 @@ services:
       S3_CREATE_BUCKET: 'true'
       S3_REGION: '' # optional, defaults to 'us-east-1'
       FILE_SIZE_LIMIT_MB: 100
-      EMAIL_FROM: 'no-reply@example.org'
 
   preview-service:
     build:
