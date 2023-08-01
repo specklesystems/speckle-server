@@ -1,17 +1,22 @@
 import { ServerAcl, Users, knex } from '@/modules/core/dbSchema'
 import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { isArray } from 'lodash'
+import { clamp, isArray } from 'lodash'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { UserValidationError } from '@/modules/core/errors/user'
-import { Roles } from '@speckle/shared'
+import { Knex } from 'knex'
+import { Roles, ServerRoles } from '@speckle/shared'
 
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**
    * Available, if query joined this data from server_acl
    * (this can be the server role or stream role depending on how and where this was retrieved)
    */
-  role?: string
+  role?: ServerRoles
+}
+
+export type UserWithRole<User extends LimitedUserRecord = UserRecord> = User & {
+  role: ServerRoles
 }
 
 export type GetUserParams = Partial<{
@@ -54,6 +59,62 @@ export async function getUsers(
   }
 
   return (await q).map((u) => (skipClean ? u : sanitizeUserRecord(u)))
+}
+
+type UserQuery = {
+  query: string | null
+  role: ServerRoles | null
+}
+
+const getUsersBaseQuery = (q: Knex.QueryBuilder, { query, role }: UserQuery) => {
+  if (query) {
+    q.where((queryBuilder) => {
+      queryBuilder
+        .where('email', 'ILIKE', `%${query}%`)
+        .orWhere('name', 'ILIKE', `%${query}%`)
+        .orWhere('company', 'ILIKE', `%${query}%`)
+    })
+  }
+  if (role) q.where({ role })
+  return q
+}
+/**
+ * List users
+ */
+export async function listUsers({
+  limit,
+  cursor,
+  query,
+  role
+}: {
+  limit: number
+  cursor: Date | null
+} & UserQuery): Promise<UserWithRole[]> {
+  const sanitizedLimit = clamp(limit, 1, 200)
+  const q = Users.knex<UserWithRole[]>()
+    .orderBy(Users.col.createdAt, 'desc')
+    .limit(sanitizedLimit)
+    .columns([
+      ...Object.values(Users.col),
+      // Getting first role from grouped results
+      knex.raw(`(array_agg("server_acl"."role"))[1] as role`)
+    ])
+    .leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+    .groupBy(Users.col.id)
+  if (cursor) q.where(Users.col.createdAt, '<', cursor)
+  const users: UserWithRole[] = await getUsersBaseQuery(q, { query, role })
+  return users.map((u) => sanitizeUserRecord(u))
+}
+
+export async function countUsers(args: UserQuery): Promise<number> {
+  // const result = await getUsersBaseQuery(Users.knex(), args).countDistinct(Users.col.id)
+  const q = Users.knex()
+    .leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+    .countDistinct(Users.col.id)
+  const result = await getUsersBaseQuery(q, args)
+  // .groupBy(Users.col.id)
+  // const result = await q
+  return parseInt(result[0]['count'])
 }
 
 /**

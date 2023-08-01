@@ -1,5 +1,5 @@
 extend type Query {
-  serverStats: ServerStats!
+  serverStats: ServerStats! @deprecated(reason: "use admin.serverStatistics instead")
 }
 
 type ServerStats {

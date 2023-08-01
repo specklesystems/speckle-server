@@ -24,6 +24,8 @@ generates:
         ModelMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         VersionMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         CommentMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        AdminQueries: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
+        ServerStatistics: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
         CommentReplyAuthorCollection: '@/modules/comments/helpers/graphTypes#CommentReplyAuthorCollectionGraphQLReturn'
         Comment: '@/modules/comments/helpers/graphTypes#CommentGraphQLReturn'
         PendingStreamCollaborator: '@/modules/serverinvites/helpers/graphTypes#PendingStreamCollaboratorGraphQLReturn'
