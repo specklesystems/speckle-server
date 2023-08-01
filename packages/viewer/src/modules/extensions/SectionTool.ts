@@ -141,30 +141,6 @@ export class SectionTool extends Extension {
     this.prevPosition = null
     this.attachedToBox = true
 
-    // this.selectionHelper = new SelectionHelper(this.viewer, {
-    //   subset: [this.cube],
-    //   hover: false,
-    //   checkForSectionBoxInclusion: false
-    // })
-    // this.selectionHelper.on(ViewerEvent.ObjectClicked, this._clickHandler.bind(this))
-    // this.selectionHelper.on('hovered', () => {
-    // TODO: cannot get this to work reliably
-    // if( !this.attachedToBox ) return
-    // if( objs.length === 0 ) {
-    //   this.controls?.visible = false
-    //   this.viewer.needsRender = true
-    // }
-    // else if( objs.length !== 0 ) {
-    //   this.controls?.visible = true
-    //   this.viewer.needsRender = true
-    // }
-    // })
-
-    // document.addEventListener('keydown', (e) => {
-    //   if (e.key === 'Escape' && this.viewer.mouseOverRenderer) {
-    //     this._attachControlsToBox()
-    //   }
-    // })
     this._setupControls()
     this._attachControlsToBox()
 
@@ -189,7 +165,7 @@ export class SectionTool extends Extension {
     // UNIMPLEMENTED
   }
 
-  _setupControls() {
+  private _setupControls() {
     this.controls?.dispose()
     this.controls?.detach()
     this.controls = new TransformControls(
@@ -211,17 +187,11 @@ export class SectionTool extends Extension {
       if (val) {
         this.emit(SectionToolEvent.DragStart)
         this.dragging = val
-        //@Dim: Not sure what this needs to do in the new viewer
-        //@Alex: this prevents(?) involuntary selection happening on mobile
-        // this.viewer.interactions.preventSelection = val
         this.cameraProvider.enabled = !val
       } else {
         this.emit(SectionToolEvent.DragEnd)
         setTimeout(() => {
           this.dragging = val
-          //@Dim: Not sure what this needs to do in the new viewer
-          //@Alex: this prevents(?) involuntary selection happening on mobile
-          // this.viewer.interactions.preventSelection = val
           this.cameraProvider.enabled = !val
         }, 100)
       }
@@ -229,11 +199,10 @@ export class SectionTool extends Extension {
     this.viewer.requestRender()
   }
 
-  _draggingChangeHandler() {
+  private _draggingChangeHandler() {
     if (!this.display.visible) return
     this.boxGeometry.computeBoundingBox()
     this.boxMeshHelper.box.copy(this.boxGeometry.boundingBox)
-    // this._generateOrUpdatePlanes()
 
     // Dragging a side / plane
     if (this.dragging && this.currentRange) {
@@ -281,7 +250,7 @@ export class SectionTool extends Extension {
     this.viewer.requestRender()
   }
 
-  _clickHandler(args) {
+  private _clickHandler(args) {
     if (!this.allowSelection || this.dragging) return
 
     this.raycaster.setFromCamera(args, this.cameraProvider.renderingCamera)
@@ -351,7 +320,7 @@ export class SectionTool extends Extension {
     this.controls?.updateMatrixWorld()
   }
 
-  _generateSimpleCube(width = 0.5, depth = 0.5, height = 0.5) {
+  private _generateSimpleCube(width = 0.5, depth = 0.5, height = 0.5) {
     const vertices = [
       [-1 * width, -1 * depth, -1 * height],
       [1 * width, -1 * depth, -1 * height],
@@ -381,7 +350,7 @@ export class SectionTool extends Extension {
     return g
   }
 
-  _generateOrUpdatePlanes() {
+  private _generateOrUpdatePlanes() {
     this.planes = this.planes || [
       new Plane(),
       new Plane(),
@@ -421,7 +390,7 @@ export class SectionTool extends Extension {
     this.emit(SectionToolEvent.Updated, this.getCurrentBox())
   }
 
-  _attachControlsToBox() {
+  private _attachControlsToBox() {
     this.controls?.detach()
 
     const centre = new Vector3()
@@ -443,20 +412,11 @@ export class SectionTool extends Extension {
     this.controls.showZ = true
   }
 
-  setBox(targetBox, offset = 0.05) {
+  public setBox(targetBox, offset = 0.05) {
     let box
 
-    if (targetBox) box = targetBox // targetbox = { min: {x, y, z}, max: {x, y, z} }
+    if (targetBox) box = targetBox
     else {
-      // // @Alex: part of the old behaviour: if a selected object is present, we set the box to it
-      // // if no selection is present, we set the box to whole scene. TBD re API, etc.
-      // /* //@Dim: Not sure what this needs to do in the new viewer
-      // if (this.viewer.interactions.selectedObjects.children.length !== 0) {
-      //   box = new THREE.Box3().setFromObject(this.viewer.interactions.selectedObjects)
-      // } else*/ if (this.viewer.speckleRenderer.allObjects.children.length !== 0) {
-      //   box = new THREE.Box3().setFromObject(this.viewer.speckleRenderer.allObjects)
-      // } else {
-      // box = this.viewer.world.worldBox.clone()
       box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
     }
 
@@ -514,36 +474,36 @@ export class SectionTool extends Extension {
     this.viewer.requestRender()
   }
 
-  toggle() {
+  public toggle() {
     this.display.visible = !this.display.visible
     this.viewer.getRenderer().renderer.localClippingEnabled = this.display.visible
     this.emit(SectionToolEvent.Changed, this.getCurrentBox())
     this.viewer.requestRender()
   }
 
-  disable() {
+  public disable() {
     this.display.visible = false
     this.viewer.getRenderer().renderer.localClippingEnabled = false
     this.emit(SectionToolEvent.Changed, this.getCurrentBox())
     this.viewer.requestRender()
   }
 
-  enable() {
+  public enable() {
     this.display.visible = true
     this.viewer.getRenderer().renderer.localClippingEnabled = true
     this.emit(SectionToolEvent.Changed, this.getCurrentBox())
     this.viewer.requestRender()
   }
 
-  displayOff() {
+  public displayOff() {
     this.display.visible = false
   }
 
-  displayOn() {
+  public displayOn() {
     this.display.visible = true
   }
 
-  getCurrentBox() {
+  public getCurrentBox() {
     if (!this.display.visible) return null
     const box = new Box3().setFromBufferAttribute(
       this.boxGeometry.attributes.position as BufferAttribute
