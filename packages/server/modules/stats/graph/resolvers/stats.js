@@ -1,5 +1,5 @@
 'use strict'
-const { validateServerRole, validateScopes } = require('@/modules/shared')
+const { validateScopes } = require('@/modules/shared')
 const {
   getStreamHistory,
   getCommitHistory,
@@ -11,11 +11,12 @@ const {
   getTotalUserCount
 } = require('../../services')
 const { Roles, Scopes } = require('@speckle/shared')
+const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 
 module.exports = {
   Query: {
     async serverStats(parent, args, context) {
-      await validateServerRole(context, Roles.Server.Admin)
+      await throwForNotHavingServerRole(context, Roles.Server.Admin)
       await validateScopes(context.scopes, Scopes.Server.Stats)
       return {}
     }

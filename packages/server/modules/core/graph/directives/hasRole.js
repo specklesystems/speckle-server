@@ -1,11 +1,12 @@
 const { defaultFieldResolver } = require('graphql')
-const { validateServerRole, authorizeResolver } = require('@/modules/shared')
+const { authorizeResolver } = require('@/modules/shared')
 const { ForbiddenError } = require('@/modules/shared/errors')
 const { mapSchema, getDirective, MapperKind } = require('@graphql-tools/utils')
 const {
   mapStreamRoleToValue,
   mapServerRoleToValue
 } = require('@/modules/core/helpers/graphTypes')
+const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 
 module.exports = {
   /**
@@ -38,7 +39,10 @@ module.exports = {
             const { resolve = defaultFieldResolver } = fieldConfig
             fieldConfig.resolve = async function (...args) {
               const context = args[2]
-              await validateServerRole(context, mapServerRoleToValue(requiredRole))
+              await throwForNotHavingServerRole(
+                context,
+                mapServerRoleToValue(requiredRole)
+              )
 
               return await resolve.apply(this, args)
             }

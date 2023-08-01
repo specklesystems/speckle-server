@@ -1,5 +1,5 @@
 'use strict'
-const { validateServerRole, validateScopes } = require('@/modules/shared')
+const { validateScopes } = require('@/modules/shared')
 const {
   updateServerInfo,
   getServerInfo,
@@ -7,6 +7,7 @@ const {
   getPublicRoles
 } = require('../../services/generic')
 const { Roles, Scopes } = require('@speckle/shared')
+const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 
 module.exports = {
   Query: {
@@ -27,7 +28,7 @@ module.exports = {
 
   Mutation: {
     async serverInfoUpdate(parent, args, context) {
-      await validateServerRole(context, Roles.Server.Admin)
+      await throwForNotHavingServerRole(context, Roles.Server.Admin)
       await validateScopes(context.scopes, Scopes.Server.Setup)
 
       await updateServerInfo(args.info)

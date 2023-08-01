@@ -8,29 +8,25 @@ const {
   BranchSubscriptions
 } = require('@/modules/shared/utils/subscriptions')
 const { Roles } = require('@speckle/shared')
-const {
-  validateServerRole: authPipelineValidateServerRole,
-  authHasFailed
-} = require('@/modules/shared/authz')
 const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 
 const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
 const { getRoles } = require('@/modules/shared/roles')
 const ServerAcl = () => ServerAclSchema.knex()
 
-/**
- * Validates a server role against the req's context object.
- * @param  {import('@/modules/shared/helpers/typeHelper').GraphQLContext} context
- * @param  {string} requiredRole
- */
-async function validateServerRole(context, requiredRole) {
-  const { authResult } = await authPipelineValidateServerRole({ requiredRole })({
-    context
-  })
-  if (authHasFailed(authResult))
-    throw authResult.error ?? new Error('Auth failed without an error')
-  return true
-}
+// /**
+//  * Validates a server role against the req's context object.
+//  * @param  {import('@/modules/shared/helpers/typeHelper').GraphQLContext} context
+//  * @param  {string} requiredRole
+//  */
+// async function validateServerRole(context, requiredRole) {
+//   const { authResult } = await authPipelineValidateServerRole({ requiredRole })({
+//     context
+//   })
+//   if (authHasFailed(authResult))
+//     throw authResult.error ?? new Error('Auth failed without an error')
+//   return true
+// }
 
 /**
  * Validates the scope against a list of scopes of the current session.
@@ -53,7 +49,7 @@ async function validateScopes(scopes, scope) {
 async function authorizeResolver(userId, resourceId, requiredRole) {
   userId = userId || null
 
-  const roles = getRoles()
+  const roles = await getRoles()
 
   // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
 
@@ -117,7 +113,7 @@ async function registerOrUpdateRole(role) {
 module.exports = {
   registerOrUpdateScope,
   registerOrUpdateRole,
-  validateServerRole,
+  // validateServerRole,
   validateScopes,
   authorizeResolver,
   pubsub,
