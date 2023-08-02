@@ -93,7 +93,6 @@ export const SourceApps: SourceAppDefinition[] = [
   { searchKey: 'excel', name: 'Excel', short: 'XLSX', bgColor: '#72c076' },
   { searchKey: 'unity', name: 'Unity', short: 'UNITY', bgColor: '#149e91' },
   { searchKey: 'unreal', name: 'Unreal', short: 'UE', bgColor: '#846256' },
-  { searchKey: 'python', name: 'Python', short: 'PY', bgColor: '#fddb45' },
   { searchKey: '.net', name: '.NET', short: '.NET', bgColor: '#8531a9' },
   { searchKey: 'ifc', name: 'IFC', short: 'IFC', bgColor: '#bd2e2e' },
   { searchKey: 'qgis', name: 'QGIS', short: 'QGIS', bgColor: '#70e029' },
@@ -125,5 +124,6 @@ export const SourceApps: SourceAppDefinition[] = [
     short: 'MICRO',
     bgColor: '#846256'
   },
-  { searchKey: 'navisworks', name: 'Navisworks', bgColor: '#3e8742', short: 'NAVIS' }
+  { searchKey: 'navisworks', name: 'Navisworks', bgColor: '#3e8742', short: 'NAVIS' },
+  { searchKey: 'python', name: 'Python', short: 'PY', bgColor: '#fddb45' }
 ]
