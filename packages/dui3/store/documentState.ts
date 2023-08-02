@@ -1,12 +1,13 @@
 import {
   DocumentState,
-  ModelCard
+  IModelCard,
+  ISendFilter
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
 
 export type ProjectModelGroup = {
   projectId: string
   accountId: string
-  models: ModelCard[]
+  models: IModelCard[]
 }
 
 export const useDocumentStateStore = defineStore('documentStateStore', () => {
@@ -30,12 +31,20 @@ export const useDocumentStateStore = defineStore('documentStateStore', () => {
     return projectModelGroups
   })
 
-  const addModel = async (model: ModelCard) => {
+  const addModel = async (model: IModelCard) => {
     await $baseBinding.addModelToDocumentState(model)
     documentState.value.models.push(model)
   }
 
-  const removeModel = async (model: ModelCard) => {
+  const updateModel = async () => {
+    // TODO
+  }
+
+  const updateModelFilter = async (modelId: string, filter: ISendFilter) => {
+    const model = documentState.value.models.find((m) => m.id === modelId)
+  }
+
+  const removeModel = async (model: IModelCard) => {
     await $baseBinding.removeModelFromDocumentState(model)
     const index = documentState.value.models.findIndex((m) => m.id === model.id)
     documentState.value.models.splice(index, 1)

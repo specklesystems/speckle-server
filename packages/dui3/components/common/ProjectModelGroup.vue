@@ -7,32 +7,48 @@
           @click="showModels = !showModels"
         >
           <ChevronDownIcon
-            :class="`w-4 ${showModels ? '' : '-rotate-90'} transition`"
+            :class="`w-4 ${showModels ? '' : '-rotate-90'} transition mt-1`"
           />
           <div>{{ projectDetails.name }}</div>
         </button>
-        <div class="rounded-md bg-foundation px-2 flex items-center space-x-2">
+
+        <div
+          class="rounded-md bg-foundation px-2 flex items-center space-x-2 justify-end"
+        >
           <span class="text-xs">
             {{ projectDetails.role?.split(':').reverse()[0] }}
           </span>
-          <span class="text-xs">Project Members</span>
+          <!-- <span class="text-xs"></span> -->
           <UserAvatar
             v-for="user in projectDetails.team"
             :key="user.user.id"
             size="xs"
             :user="user.user"
           />
+          <div>
+            <button>
+              <ArrowTopRightOnSquareIcon class="w-3" @click="$openUrl(projectUrl)" />
+            </button>
+          </div>
         </div>
       </div>
-      <div v-show="showModels" class="ml-0 space-y-2">
+
+      <div v-show="showModels" class="ml-2 pl-2 space-y-2 border-l-2">
         <template v-for="model in project.models">
           <CommonModelSender
-            v-if="model.type === 'sender'"
+            v-if="model.typeDiscriminator === 'SenderModelCard'"
             :key="model.modelId"
             :model="model"
             :project="project"
           />
         </template>
+        <div>
+          <button
+            class="flex w-full text-xs text-center justify-center bg-primary-muted hover:bg-primary transition rounded-md"
+          >
+            +
+          </button>
+        </div>
       </div>
     </div>
     <template #fallback>
@@ -41,9 +57,12 @@
   </Suspense>
 </template>
 <script setup lang="ts">
-import { ChevronDownIcon } from '@heroicons/vue/20/solid'
+import { ChevronDownIcon, ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
 import { ProjectModelGroup } from '~~/store/documentState'
 import { useGetProjectDetails } from '~~/lib/graphql/composables'
+import { useAccountStore } from '~~/store/accounts'
+const accountStore = useAccountStore()
+const { $openUrl } = useNuxtApp()
 
 const props = defineProps<{
   project: ProjectModelGroup
@@ -54,4 +73,13 @@ const getProjectDetails = useGetProjectDetails(props.project.accountId)
 const projectDetails = await getProjectDetails({ projectId: props.project.projectId })
 
 const showModels = ref(true)
+
+const projectUrl = computed(() => {
+  const acc = accountStore.accounts.find(
+    (acc) => acc.accountInfo.id === props.project.accountId
+  )
+  return `${acc?.accountInfo.serverInfo.url as string}/projects/${
+    props.project.projectId
+  }`
+})
 </script>

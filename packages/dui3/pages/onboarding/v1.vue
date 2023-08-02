@@ -5,14 +5,17 @@
     <!-- STEP 0 -->
     <div v-if="step === 0" class="space-y-4 w-full">
       <div class="h3">Let's publish our first model to Speckle.</div>
-      <div v-if="!hasSelectedSomethingNow" class="h4 text-primary">
+      <div
+        v-if="!hasSelectedSomethingNow && selectionInfo.selectedObjectIds?.length === 0"
+        class="h4 text-primary"
+      >
         First: select a part of your model.
       </div>
       <div
-        v-if="hasSelectedSomethingNow"
+        v-if="hasSelectedSomethingNow || selectionInfo.selectedObjectIds?.length !== 0"
         class="h4 text-primary flex items-center space-x-2"
       >
-        <span>Great selection! {{ selectionInfo.summary }}</span>
+        <span>Great object selection! {{ selectionInfo.summary }}</span>
       </div>
       <div v-if="!hasSelectedSomethingNow" class="text-foreground-2 text-xs">
         Or continue with publishing
@@ -28,7 +31,7 @@
           :icon-right="ChevronRightIcon"
           @click="saveSelectionAndNext"
         >
-          Next
+          Let's publish!
         </FormButton>
       </div>
     </div>
@@ -38,6 +41,9 @@
         What shall we call this
         <b class="text-primary">model</b>
         ?
+      </div>
+      <div class="text-sm text-foreground-2">
+        Models in speckle are bla bla, bla bla. Lorem ipsum, painful amet
       </div>
       <div>
         <FormTextInput
@@ -66,6 +72,10 @@
         <b class="text-primary">project</b>
         is this model part of?
       </div>
+      <div class="text-sm text-foreground-2">
+        Projects in speckle are bla bla, bla bla. Lorem ipsum, painful amet
+      </div>
+
       <div class="h4">
         <FormTextInput
           v-model="projectName"
@@ -87,7 +97,7 @@
       </div>
     </div>
     <div class="text-xs text-foreground-2 w-full">
-      Current state:
+      Debug Current state:
       <br />
       - selection info: {{ selectionFilterCopy?.summary }}
       <br />
@@ -105,8 +115,8 @@ import { useCreateNewProject, useCreateNewModel } from '~~/lib/graphql/composabl
 import { useAccountStore } from '~~/store/accounts'
 import { useDocumentStateStore } from '~~/store/documentState'
 import {
-  SenderCard,
-  ISelectionFilter
+  ISenderModelCard,
+  ISendFilter
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
 import { nanoid } from 'nanoid'
 
@@ -125,7 +135,7 @@ const modelName = ref('')
 const projectName = ref('')
 
 watch(selectionInfo, (newVal) => {
-  hasSelectedSomethingNow.value = newVal?.objectIds?.length !== 0
+  hasSelectedSomethingNow.value = newVal?.selectedObjectIds?.length !== 0
 })
 
 const saveSelectionAndNext = () => {
@@ -145,16 +155,17 @@ const publish = async () => {
 
   const sendFilter = {
     name: 'Selection',
+    typeDiscriminator: 'RhinoSelectionFilter',
     ...selectionFilterCopy.value
   }
 
-  const modelCard: SenderCard = {
+  const modelCard: ISenderModelCard = {
+    typeDiscriminator: 'SenderModelCard',
     id: nanoid(),
     modelId: modelRes.data?.modelMutations.create.id as string,
     projectId: projectRes.data?.projectMutations.create.id as string,
     accountId: defaultAccount.value.accountInfo.id,
-    type: 'sender',
-    sendFilter: sendFilter as ISelectionFilter
+    sendFilter: sendFilter as ISendFilter
   }
 
   await addModel(modelCard)

@@ -12,5 +12,5 @@ export interface ISelectionBindingHostEvents {
 
 export type SelectionInfo = {
   summary?: string
-  objectIds: string[]
+  selectedObjectIds: string[]
 }

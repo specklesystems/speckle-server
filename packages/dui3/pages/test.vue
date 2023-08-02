@@ -16,6 +16,30 @@
       </div>
     </div>
     <div class="px-2">
+      <p class="h5">Send Filters</p>
+      <p class="text-sm text-foreground-2 space-x-2">Available send filters:</p>
+      <div class="space-y-2 my-2">
+        <div v-for="filter in sendFilters" :key="filter.name">
+          <div>
+            <span
+              class="rounded-full text-xs px-2 bg-primary text-foreground-on-primary mr-2"
+            >
+              {{ filter.name }}
+            </span>
+            <span class="text-xs text-foreground-2">{{ filter.summary }}</span>
+          </div>
+          <div v-if="filter.name === 'Layers'" class="text-xs">
+            {{ (filter as IListSendFilter).options }}
+          </div>
+        </div>
+      </div>
+      <div
+        class="text-xs mx-3 p-4 rounded shadow-inner overflow-auto simple-scrollbar max-h-20"
+      >
+        <pre>{{ sendFilters }}</pre>
+      </div>
+    </div>
+    <div class="px-2">
       <p class="h5">Selection info</p>
       <p class="text-sm text-foreground-2 py-2">
         Selection info. This should change in real time based on user selection, but
@@ -28,6 +52,20 @@
           No selection binding registered.
         </div>
         <pre>{{ selectionInfo }}</pre>
+      </div>
+    </div>
+    <div class="px-2">
+      <p class="h5">Document State</p>
+      <p class="text-sm text-foreground-2 py-2">
+        What state is in this document (currently just model cards).
+      </p>
+      <div
+        class="text-xs mx-3 p-4 rounded shadow-inner overflow-auto simple-scrollbar max-h-40"
+      >
+        <div class="text-info mb-2">
+          There are currently {{ documentStateStore.models.length }} model card(s).
+        </div>
+        <pre>{{ documentStateStore.projectModelGroups }}</pre>
       </div>
     </div>
     <div class="px-2">
@@ -71,7 +109,10 @@ import { ArrowLeftIcon } from '@heroicons/vue/20/solid'
 import { TestEventArgs } from '~/lib/bindings/definitions/ITestBinding'
 import { CheckIcon, MinusIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 import { useDocumentInfoStore } from '~/store/documentInfo'
+import { useDocumentStateStore } from '~/store/documentState'
 import { useSelectionStore } from '~/store/selection'
+import { useSendFilterStore } from '~/store/sendFilter'
+import { IListSendFilter } from 'lib/bindings/definitions/IBasicConnectorBinding'
 
 const { $testBindings } = useNuxtApp()
 
@@ -80,6 +121,13 @@ const { documentInfo } = storeToRefs(docInfoStore)
 
 const selectionStore = useSelectionStore()
 const { selectionInfo, hasBinding: hasSelectionBinding } = storeToRefs(selectionStore)
+
+const sendFilterStore = useSendFilterStore()
+const { sendFilters } = storeToRefs(sendFilterStore)
+await sendFilterStore.updateSendFilters()
+
+const documentStateStore = useDocumentStateStore()
+
 const tests = ref([
   {
     name: 'Simple call with parameters',

@@ -10,45 +10,75 @@ export interface IBasicConnectorBinding
   extends IBinding<IBasicConnectorBindingHostEvents> {
   // ACCOUNTS
   getAccounts: () => Promise<Account[]>
+
   // VARIOUS
   getSourceApplicationName: () => Promise<string>
   getSourceApplicationVersion: () => Promise<string>
   getDocumentInfo: () => Promise<DocumentInfo>
+
   // DOC STATE
   getDocumentState: () => Promise<DocumentState>
   saveDocumentState: (state: DocumentState) => Promise<void>
-  addModelToDocumentState: (model: ModelCard) => Promise<void>
-  removeModelFromDocumentState: (model: ModelCard) => Promise<void>
+  addModelToDocumentState: (model: IModelCard) => Promise<void>
+  removeModelFromDocumentState: (model: IModelCard) => Promise<void>
+
+  // FILTERS AND TYPES
+  getSendFilters: () => Promise<ISendFilter[]>
 }
 
 export interface IBasicConnectorBindingHostEvents {
   displayToastNotification: (args: ToastInfo) => void
   documentChanged: () => void
+  filtersNeedRefresh: () => void
+}
+
+interface IDiscriminatedObject {
+  typeDiscriminator: string
 }
 
 export type DocumentState = {
-  models: ModelCard[]
+  models: IModelCard[]
 }
 
-export type ModelCard = {
+//
+// Model cards
+//
+export interface IModelCard extends IDiscriminatedObject {
   id: string
   modelId: string
   projectId: string
   accountId: string
+  lastLocalUpdate?: string
 }
 
-export type SenderCard = ModelCard & {
-  type: 'sender'
+export type ModelCardTypeDiscriminators = 'SenderModelCard' | 'ReceiverModelCard'
+
+export interface ISenderModelCard extends IModelCard {
+  typeDiscriminator: 'SenderModelCard'
   sendFilter: ISendFilter
 }
 
-export interface ISendFilter {
+export interface IReceiverModelCard extends IModelCard {
+  typeDiscriminator: 'ReceiverModelCard'
+  todo: string
+}
+
+//
+// Filters
+//
+export interface ISendFilter extends IDiscriminatedObject {
   name: string
   summary: string
 }
 
-export interface ISelectionFilter extends ISendFilter {
-  objectIds: string[]
+export interface IDirectSelectionSendFilter extends ISendFilter {
+  selectedObjectIds: string[]
+}
+
+export interface IListSendFilter extends ISendFilter {
+  options: string[]
+  selectedOptions: string[]
+  singleSelection: boolean
 }
 
 // An almost 1-1 mapping of what we need from the Core accounts class.

@@ -7,24 +7,41 @@
         <UserAvatar :user="modelDetails.author" />
         <span>{{ modelDetails.displayName }}</span>
       </div>
-      {{ modelDetails.versions.totalCount }}
-      <CloudArrowUpIcon class="text-primary w-8 h-8" />
+      <!-- {{ modelDetails.versions.totalCount }} -->
+      <div class="flex items-center space-x-2">
+        <FormButton
+          v-tippy="'Change or edit filter'"
+          size="xs"
+          text
+          :icon-left="FunnelIcon"
+          @click="openFilterDialog = true"
+        >
+          {{ model.sendFilter.name }}
+        </FormButton>
+        <CloudArrowUpIcon class="text-primary w-8 h-8" />
+      </div>
     </div>
+    <LayoutDialog v-model:open="openFilterDialog">
+      <FilterEditDialog :model="model" />
+    </LayoutDialog>
   </div>
 </template>
 <script setup lang="ts">
-import { CloudArrowUpIcon } from '@heroicons/vue/24/outline'
+import { CloudArrowUpIcon, FunnelIcon } from '@heroicons/vue/24/outline'
 import { useGetModelDetails } from '~~/lib/graphql/composables'
-import { ModelCard } from '~~/lib/bindings/definitions/IBasicConnectorBinding'
+import { ISenderModelCard } from '~~/lib/bindings/definitions/IBasicConnectorBinding'
 import { ProjectModelGroup } from '~~/store/documentState'
 const props = defineProps<{
-  model: ModelCard
+  model: ISenderModelCard
   project: ProjectModelGroup
 }>()
 
 const getModelDetails = useGetModelDetails(props.project.accountId)
+
 const modelDetails = await getModelDetails({
   projectId: props.model.projectId,
   modelId: props.model.modelId
 })
+
+const openFilterDialog = ref(false)
 </script>
