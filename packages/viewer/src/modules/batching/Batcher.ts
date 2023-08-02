@@ -460,6 +460,15 @@ export default class Batcher {
     return this.batches[batchId].getRenderView(index)
   }
 
+  public getRenderViewMaterial(batchId: string, index: number) {
+    if (!this.batches[batchId]) {
+      Logger.error('Invalid batch id!')
+      return null
+    }
+
+    return this.batches[batchId].getMaterialAtIndex(index)
+  }
+
   public resetBatchesDrawRanges() {
     for (const k in this.batches) {
       this.batches[k].resetDrawRanges()
@@ -576,7 +585,7 @@ export default class Batcher {
       if (k !== rv.batchId) {
         this.batches[k].setDrawRanges({
           offset: 0,
-          count: Infinity,
+          count: this.batches[k].getCount(),
           material: this.materials.getFilterMaterial(
             this.batches[k].renderViews[0],
             FilterMaterialType.GHOST
@@ -591,7 +600,7 @@ export default class Batcher {
       if (k !== batchId) {
         this.batches[k].setDrawRanges({
           offset: 0,
-          count: Infinity,
+          count: this.batches[k].getCount(),
           material: this.materials.getFilterMaterial(
             this.batches[k].renderViews[0],
             FilterMaterialType.GHOST

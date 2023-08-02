@@ -14,7 +14,7 @@ import {
   getViewerResourcesForComment,
   getViewerResourcesFromLegacyIdentifiers
 } from '@/modules/core/services/commit/viewerResources'
-import { pubsub } from '@/modules/shared'
+import { pubsub } from '@/modules/shared/utils/subscriptions'
 import {
   CommentSubscriptions,
   ProjectSubscriptions,

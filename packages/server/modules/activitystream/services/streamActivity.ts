@@ -1,7 +1,10 @@
 import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import { StreamRoles } from '@/modules/core/helpers/mainConstants'
-import { pubsub, StreamPubsubEvents } from '@/modules/shared'
+import {
+  pubsub,
+  StreamSubscriptions as StreamPubsubEvents
+} from '@/modules/shared/utils/subscriptions'
 import { StreamCreateInput } from '@/test/graphql/generated/graphql'
 import { Knex } from 'knex'
 import { getStreamCollaborators } from '@/modules/core/repositories/streams'

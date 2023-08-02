@@ -38,7 +38,8 @@ module.exports = {
     description,
     adminContact,
     termsOfService,
-    inviteOnly
+    inviteOnly,
+    guestModeEnabled
   }) {
     const serverInfo = await Info().select('*').first()
     if (!serverInfo)
@@ -49,6 +50,7 @@ module.exports = {
         adminContact,
         termsOfService,
         inviteOnly,
+        guestModeEnabled,
         completed: true
       })
     else
@@ -59,6 +61,7 @@ module.exports = {
         adminContact,
         termsOfService,
         inviteOnly,
+        guestModeEnabled,
         completed: true
       })
   }

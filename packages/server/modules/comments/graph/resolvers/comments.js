@@ -1,4 +1,4 @@
-const { pubsub } = require('@/modules/shared')
+const { pubsub } = require('@/modules/shared/utils/subscriptions')
 const { ForbiddenError: ApolloForbiddenError } = require('apollo-server-express')
 const { ForbiddenError } = require('@/modules/shared/errors')
 const { getStream } = require('@/modules/core/services/streams')

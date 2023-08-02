@@ -658,12 +658,25 @@ export class FilteringManager extends EventEmitter {
     const key = objectIds.join(',')
 
     if (this.idCache[key] && this.idCache[key].length) return this.idCache[key]
-
+    /** This doesn't return descendants correctly for some streams like:
+     * https://speckle.xyz/streams/2f9f2f3021/commits/75bd13f513
+     */
+    // this.WTI.walk((node: TreeNode) => {
+    //   if (objectIds.includes(node.model.raw.id) && node.model.raw.__closure) {
+    //     const ids = Object.keys(node.model.raw.__closure)
+    //     allIds.push(...ids)
+    //     this.idCache[node.model.raw.id] = ids
+    //   }
+    //   return true
+    // })
     this.WTI.walk((node: TreeNode) => {
-      if (objectIds.includes(node.model.raw.id) && node.model.raw.__closure) {
-        const ids = Object.keys(node.model.raw.__closure)
-        allIds.push(...ids)
-        this.idCache[node.model.raw.id] = ids
+      if (objectIds.includes(node.model.raw.id)) {
+        const subtree = node.all((node) => {
+          return node.model.raw !== undefined
+        })
+        const idList = subtree.map((node) => node.model.raw.id)
+        allIds.push(...idList)
+        this.idCache[node.model.raw.id] = idList
       }
       return true
     })
