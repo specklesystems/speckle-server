@@ -115,7 +115,7 @@
     "docker_image_tag": {
       "type": "string",
       "description": "Speckle is published as a Docker Image.  The version of the image which will be deployed is specified by this tag.",
-      "default": "2.13.3"
+      "default": "2"
     },
     "imagePullPolicy": {
       "type": "string",
@@ -500,6 +500,21 @@
           "type": "string",
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
+        },
+        "onboarding": {
+          "type": "object",
+          "properties": {
+            "stream_url": {
+              "type": "string",
+              "description": "The (cross-server) URL to the project/stream that should be used as the onboarding project base.",
+              "default": "https://latest.speckle.systems/projects/843d07eb10"
+            },
+            "stream_cache_bust_number": {
+              "type": "number",
+              "description": "Increase this number to trigger the re-pulling of the base stream",
+              "default": 1
+            }
+          }
         },
         "inspect": {
           "type": "object",

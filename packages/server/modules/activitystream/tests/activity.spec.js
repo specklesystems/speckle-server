@@ -11,7 +11,7 @@ const { noErrors } = require('@/test/helpers')
 const {
   addOrUpdateStreamCollaborator
 } = require('@/modules/core/services/streams/streamAccessService')
-const { Roles } = require('@/modules/core/helpers/mainConstants')
+const { Roles, Scopes } = require('@speckle/shared')
 
 let sendRequest
 
@@ -79,14 +79,14 @@ describe('Activity @activity', () => {
     ;({ sendRequest } = await initializeTestServer(server, app))
 
     const normalScopesList = [
-      'streams:read',
-      'streams:write',
-      'users:read',
-      'users:email',
-      'tokens:write',
-      'tokens:read',
-      'profile:read',
-      'profile:email'
+      Scopes.Streams.Read,
+      Scopes.Streams.Write,
+      Scopes.Users.Read,
+      Scopes.Users.Email,
+      Scopes.Tokens.Write,
+      Scopes.Tokens.Read,
+      Scopes.Profile.Read,
+      Scopes.Profile.Email
     ]
 
     // create users
@@ -106,8 +106,8 @@ describe('Activity @activity', () => {
         (token) => (userCr.token = `Bearer ${token}`)
       ),
       createPersonalAccessToken(userX.id, 'no users:read test token', [
-        'streams:read',
-        'streams:write'
+        Scopes.Streams.Read,
+        Scopes.Streams.Write
       ]).then((token) => (userX.token = `Bearer ${token}`))
       // streams
       // createStream({ ...collaboratorTestStream, ownerId: userIz.id }).then(

@@ -1,5 +1,6 @@
 import { CommandModule } from 'yargs'
-import { downloadCommit } from '@/modules/cli/services/download/commit'
+import { downloadCommit } from '@/modules/cross-server-sync/services/commit'
+import { cliLogger } from '@/logging/logging'
 
 const command: CommandModule<
   unknown,
@@ -41,7 +42,7 @@ const command: CommandModule<
     }
   },
   handler: async (argv) => {
-    await downloadCommit(argv)
+    await downloadCommit(argv, { logger: cliLogger })
   }
 }
 

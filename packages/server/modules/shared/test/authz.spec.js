@@ -66,7 +66,7 @@ describe('AuthZ @shared', () => {
   describe('Role validation', () => {
     const rolesLookup = async () => [
       { name: '1', weight: 1 },
-      { name: '2', weight: 2 },
+      { name: 'server:2', weight: 2 },
       { name: '3', weight: 3 },
       { name: 'goku', weight: 9001 },
       { name: '42', weight: 42 }
@@ -75,15 +75,18 @@ describe('AuthZ @shared', () => {
     const testData = [
       {
         name: 'Having lower privileged role than required results auth failed',
-        requiredRole: '2',
+        requiredRole: 'server:2',
         context: { auth: true, role: '1' },
-        expectedResult: authFailed(null, new SFE('You do not have the required role'))
+        expectedResult: authFailed(
+          null,
+          new SFE('You do not have the required server role')
+        )
       },
       {
         name: 'Not having auth fails role validation',
-        requiredRole: '2',
+        requiredRole: 'server:2',
         context: { auth: false },
-        expectedResult: authFailed(null, new SUE('Cannot validate role without auth'))
+        expectedResult: authFailed(null, new SUE('Must provide an auth token'))
       },
       {
         name: 'Requiring a junk role fails auth',
@@ -93,7 +96,7 @@ describe('AuthZ @shared', () => {
       },
       {
         name: 'Having a junk role fails auth',
-        requiredRole: '2',
+        requiredRole: 'server:2',
         context: { auth: true, role: 'iddqd' },
         expectedResult: authFailed(null, new SFE('Your role is not valid'))
       },
@@ -101,7 +104,10 @@ describe('AuthZ @shared', () => {
         name: 'Not having the required level fails',
         requiredRole: 'goku',
         context: { auth: true, role: '3' },
-        expectedResult: authFailed(null, new SFE('You do not have the required role'))
+        expectedResult: authFailed(
+          null,
+          new SFE('You do not have the required goku role')
+        )
       },
       {
         name: 'Having the god mode role defeats even higher privilege requirement',

@@ -7,7 +7,7 @@ const assert = require('assert')
 const knex = require('@/db/knex')
 
 const {
-  archiveUser,
+  changeUserRole,
   createUser,
   findOrCreateUser,
   getUser,
@@ -41,6 +41,7 @@ const {
 
 const { createObject } = require('../services/objects')
 const { beforeEachContext } = require('@/test/hooks')
+const { Scopes, Roles } = require('@speckle/shared')
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {
@@ -193,7 +194,7 @@ describe('Actors & Tokens @user-services', () => {
       await grantPermissionsStream({
         streamId: multiOwnerStream.id,
         userId: myTestActor.id,
-        role: 'stream:owner'
+        role: Roles.Stream.Owner
       })
 
       // create a branch for ballmer on the multiowner stream
@@ -292,7 +293,7 @@ describe('Actors & Tokens @user-services', () => {
         password: 'nanananananaaaa'
       })
 
-      await archiveUser({ userId: toBeArchivedId })
+      await changeUserRole({ userId: toBeArchivedId, role: Roles.Server.ArchivedUser })
 
       let { users } = await searchUsers('Library', 20, null)
       expect(users).to.have.lengthOf(1)
@@ -368,24 +369,24 @@ describe('Actors & Tokens @user-services', () => {
 
     before(async () => {
       pregeneratedToken = await createPersonalAccessToken(myTestActor.id, 'Whabadub', [
-        'streams:read',
-        'streams:write',
-        'profile:read',
-        'users:email'
+        Scopes.Streams.Read,
+        Scopes.Streams.Write,
+        Scopes.Profile.Read,
+        Scopes.Users.Email
       ])
       revokedToken = await createPersonalAccessToken(myTestActor.id, 'Mr. Revoked', [
-        'streams:read'
+        Scopes.Streams.Read
       ])
       expireSoonToken = await createPersonalAccessToken(
         myTestActor.id,
         'Mayfly',
-        ['streams:read'],
+        [Scopes.Streams.Read],
         1
       ) // 1ms lifespan
     })
 
     it('Should create a personal api token', async () => {
-      const scopes = ['streams:write', 'profile:read']
+      const scopes = [Scopes.Streams.Write, Scopes.Profile.Read]
       const name = 'My Test Token'
 
       myFirstToken = await createPersonalAccessToken(myTestActor.id, name, scopes)

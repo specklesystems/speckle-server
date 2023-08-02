@@ -14,6 +14,7 @@ export const Roles = Object.freeze(<const>{
   Server: {
     Admin: 'server:admin',
     User: 'server:user',
+    Guest: 'server:guest',
     ArchivedUser: 'server:archived-user'
   }
 })
@@ -47,6 +48,10 @@ export const Scopes = Object.freeze(<const>{
   Tokens: {
     Read: 'tokens:read',
     Write: 'tokens:write'
+  },
+  Apps: {
+    Read: 'apps:read',
+    Write: 'apps:write'
   }
 })
 

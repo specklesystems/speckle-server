@@ -324,7 +324,7 @@ type CommentMutations {
 }
 
 extend type Mutation {
-  commentMutations: CommentMutations! @hasServerRole(role: SERVER_USER)
+  commentMutations: CommentMutations! @hasServerRole(role: SERVER_GUEST)
 
   """
   Used for broadcasting real time chat head bubbles and status. Does not persist any info.
@@ -334,7 +334,7 @@ extend type Mutation {
     resourceId: String!
     data: JSONObject
   ): Boolean!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @deprecated(reason: "Use broadcastViewerUserActivity")
 
   """
@@ -345,14 +345,14 @@ extend type Mutation {
     commentId: String!
     data: JSONObject
   ): Boolean!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @deprecated(reason: "Use broadcastViewerUserActivity")
 
   """
   Creates a comment
   """
   commentCreate(input: CommentCreateInput!): String!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
     @deprecated(reason: "Use commentMutations version")
 
@@ -360,7 +360,7 @@ extend type Mutation {
   Flags a comment as viewed by you (the logged in user).
   """
   commentView(streamId: String!, commentId: String!): Boolean!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
     @deprecated(reason: "Use commentMutations version")
 
@@ -372,7 +372,7 @@ extend type Mutation {
     commentId: String!
     archived: Boolean! = true
   ): Boolean!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
     @deprecated(reason: "Use commentMutations version")
 
@@ -380,7 +380,7 @@ extend type Mutation {
   Edits a comment.
   """
   commentEdit(input: CommentEditInput!): Boolean!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
     @deprecated(reason: "Use commentMutations version")
 
@@ -388,7 +388,7 @@ extend type Mutation {
   Adds a reply to a comment.
   """
   commentReply(input: ReplyCreateInput!): String!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
     @deprecated(reason: "Use commentMutations version")
 }
@@ -457,7 +457,7 @@ extend type Subscription {
   - for a specific resource/set of resources: pass in a list of resourceIds (commit or object ids); this sub will get called when *any* of the resources provided get a comment.
   """
   commentActivity(streamId: String!, resourceIds: [String]): CommentActivityMessage!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
     @deprecated(reason: "Use projectCommentsUpdated")
 
@@ -470,7 +470,7 @@ extend type Subscription {
     streamId: String!
     commentId: String!
   ): CommentThreadActivityMessage!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
     @deprecated(
       reason: "Use projectCommentsUpdated or viewerUserActivityBroadcasted for reply status"
