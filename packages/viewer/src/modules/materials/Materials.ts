@@ -46,6 +46,8 @@ export default class Materials {
   private meshHiddenMaterial: Material = null
   private meshOverlayMaterial: Material = null
   private meshTransparentOverlayMaterial: Material = null
+  private meshHoverMaterial: Material = null
+  private meshTransparentHoverMaterial: Material = null
 
   private lineHighlightMaterial: Material = null
   private lineGhostMaterial: Material = null
@@ -266,6 +268,33 @@ export default class Materials {
       ['USE_RTE']
     )
 
+    this.meshHoverMaterial = new SpeckleStandardMaterial(
+      {
+        color: 0xffffff,
+        emissive: 0x0,
+        roughness: 0.5,
+        metalness: 0.5,
+        side: FrontSide,
+        envMapIntensity: 2
+      },
+      ['USE_RTE']
+    )
+    this.meshHoverMaterial.clipShadows = true
+
+    this.meshTransparentHoverMaterial = new SpeckleStandardMaterial(
+      {
+        color: 0xffffff,
+        emissive: 0x0,
+        roughness: 0.5,
+        metalness: 0.5,
+        side: DoubleSide,
+        transparent: true,
+        opacity: 0.5,
+        envMapIntensity: 2
+      },
+      ['USE_RTE']
+    )
+
     // Jesus prettier... o_0
     ;(
       this.meshTransparentHighlightMaterial as SpeckleStandardMaterial
@@ -275,6 +304,11 @@ export default class Materials {
     // Jesus prettier... o_0
     ;(
       this.meshTransparentOverlayMaterial as SpeckleStandardMaterial
+    ).color.convertSRGBToLinear()
+    ;(this.meshHoverMaterial as SpeckleStandardMaterial).color.convertSRGBToLinear()
+    // Jesus prettier... o_0
+    ;(
+      this.meshTransparentHoverMaterial as SpeckleStandardMaterial
     ).color.convertSRGBToLinear()
   }
 
@@ -381,7 +415,6 @@ export default class Materials {
         vertexColors: true,
         size: 2,
         sizeAttenuation: false
-        // clippingPlanes: this.viewer.sectionBox.planes
       },
       ['USE_RTE']
     )
@@ -392,7 +425,6 @@ export default class Materials {
         vertexColors: false,
         size: 2,
         sizeAttenuation: false
-        // clippingPlanes: this.viewer.sectionBox.planes
       },
       ['USE_RTE']
     )
@@ -404,7 +436,6 @@ export default class Materials {
         size: 2,
         opacity: 0.01,
         sizeAttenuation: false
-        // clippingPlanes: this.viewer.sectionBox.planes
       },
       ['USE_RTE']
     )
@@ -415,7 +446,6 @@ export default class Materials {
         vertexColors: true,
         size: 2,
         sizeAttenuation: false
-        // clippingPlanes: this.viewer.sectionBox.planes
       },
       ['USE_RTE']
     )
@@ -426,7 +456,6 @@ export default class Materials {
         vertexColors: false,
         size: 2,
         sizeAttenuation: false
-        // clippingPlanes: this.viewer.sectionBox.planes
       },
       ['USE_RTE']
     )
@@ -898,6 +927,30 @@ export default class Materials {
     }
   }
 
+  public getHoverMaterial(renderView: NodeRenderView): Material {
+    let mat
+    switch (renderView.geometryType) {
+      case GeometryType.MESH:
+        mat = renderView.transparent
+          ? this.meshTransparentHoverMaterial.clone()
+          : this.meshHoverMaterial.clone()
+        ;(mat as SpeckleStandardMaterial).color.set(
+          renderView.renderData.renderMaterial
+            ? renderView.renderData.renderMaterial.color
+            : 0xffffff
+        )
+        return mat
+      case GeometryType.LINE:
+        return this.lineOverlayMaterial
+      case GeometryType.POINT:
+        return this.pointOverlayMaterial
+      case GeometryType.POINT_CLOUD:
+        return this.pointCloudOverlayMaterial
+      case GeometryType.TEXT:
+        return this.textOverlayMaterial
+    }
+  }
+
   public getDebugBatchMaterial(renderView: NodeRenderView) {
     const color = new Color(MathUtils.randInt(0, 0xffffff))
     color.convertSRGBToLinear()
@@ -993,6 +1046,8 @@ export default class Materials {
       case FilterMaterialType.HIDDEN:
         retMaterial = this.getHiddenMaterial(renderView)
         break
+      case FilterMaterialType.HOVER:
+        retMaterial = this.getHoverMaterial(renderView)
     }
     /** There's a bug in three.js where it checks for the length of the planes without checking if they exist first
      *  It's been allegedly fixed in a later version but until we update we'll just assing an empty array

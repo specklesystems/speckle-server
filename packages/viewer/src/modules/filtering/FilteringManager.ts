@@ -31,7 +31,8 @@ export enum FilterMaterialType {
   GRADIENT,
   COLORED,
   OVERLAY,
-  HIDDEN
+  HIDDEN,
+  HOVER
 }
 
 /** This needs to be rethunked */
@@ -361,23 +362,6 @@ export class FilteringManager extends EventEmitter {
     return this.setFilters()
   }
 
-  // public selectObjects(objectIds: string[]) {
-  //   this.resetSelection()
-  //   this.populateGenericState(objectIds, this.SelectionState)
-  //   if (this.SelectionState.rvs.length !== 0) {
-  //     this.SelectionState.id = this.Renderer.applyDirectFilter(
-  //       this.SelectionState.rvs,
-  //       {
-  //         filterType: FilterMaterialType.SELECT
-  //       }
-  //     )
-  //   }
-  //   this.Renderer.updateClippingPlanes()
-  //   this.Renderer.viewer.requestRender()
-  //   this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
-  //   return this.CurrentFilteringState
-  // }
-
   public highlightObjects(objectIds: string[], ghost = false) {
     this.resetHighlight()
     this.HighlightState.ghost = ghost
@@ -511,17 +495,6 @@ export class FilteringManager extends EventEmitter {
       }
     }
   }
-
-  // public resetSelection() {
-  //   if (this.SelectionState.rvs.length > 0) {
-  //     this.Renderer.removeDirectFilter(this.SelectionState.id)
-  //   }
-  //   this.SelectionState = new GenericRvState()
-  //   this.Renderer.updateClippingPlanes()
-  //   this.Renderer.viewer.requestRender()
-  //   this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
-  //   return this.CurrentFilteringState
-  // }
 
   public resetHighlight() {
     if (this.HighlightState.rvs.length > 0) {
@@ -673,16 +646,6 @@ export class FilteringManager extends EventEmitter {
         }
       )
     }
-
-    /** We apply any preexisting selections after finishing the filter batch */
-    // if (this.SelectionState.rvs.length !== 0) {
-    //   this.SelectionState.id = this.Renderer.applyDirectFilter(
-    //     this.SelectionState.rvs,
-    //     {
-    //       filterType: FilterMaterialType.SELECT
-    //     }
-    //   )
-    // }
 
     this.Renderer.viewer.requestRender()
     this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
