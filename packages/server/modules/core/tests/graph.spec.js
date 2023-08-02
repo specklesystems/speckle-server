@@ -5,14 +5,17 @@ const request = require('supertest')
 const { beforeEachContext, initializeTestServer } = require(`@/test/hooks`)
 const { generateManyObjects } = require(`@/test/helpers`)
 
-const { createUser, getUsers, archiveUser } = require('../services/users')
+const {
+  createUser,
+  getUsers,
+  changeUserRole
+} = require('@/modules/core/services/users')
 const { createPersonalAccessToken } = require('../services/tokens')
 const {
   addOrUpdateStreamCollaborator,
   removeStreamCollaborator
 } = require('@/modules/core/services/streams/streamAccessService')
-const { Roles } = require('@/modules/core/helpers/mainConstants')
-const { noop } = require('lodash')
+const { Roles, Scopes } = require('@speckle/shared')
 
 let app
 let server
@@ -45,15 +48,15 @@ describe('GraphQL API Core @core-api', () => {
       userA.id,
       'test token user A',
       [
-        'server:setup',
-        'streams:read',
-        'streams:write',
-        'users:read',
-        'users:email',
-        'tokens:write',
-        'tokens:read',
-        'profile:read',
-        'profile:email'
+        Scopes.Server.Setup,
+        Scopes.Streams.Read,
+        Scopes.Streams.Write,
+        Scopes.Users.Read,
+        Scopes.Users.Email,
+        Scopes.Tokens.Write,
+        Scopes.Tokens.Read,
+        Scopes.Profile.Read,
+        Scopes.Profile.Email
       ]
     )}`
     userB.id = await createUser(userB)
@@ -61,14 +64,14 @@ describe('GraphQL API Core @core-api', () => {
       userB.id,
       'test token user B',
       [
-        'streams:read',
-        'streams:write',
-        'users:read',
-        'users:email',
-        'tokens:write',
-        'tokens:read',
-        'profile:read',
-        'profile:email'
+        Scopes.Streams.Read,
+        Scopes.Streams.Write,
+        Scopes.Users.Read,
+        Scopes.Users.Email,
+        Scopes.Tokens.Write,
+        Scopes.Tokens.Read,
+        Scopes.Profile.Read,
+        Scopes.Profile.Email
       ]
     )}`
     userC.id = await createUser(userC)
@@ -76,14 +79,14 @@ describe('GraphQL API Core @core-api', () => {
       userC.id,
       'test token user B',
       [
-        'streams:read',
-        'streams:write',
-        'users:read',
-        'users:email',
-        'tokens:write',
-        'tokens:read',
-        'profile:read',
-        'profile:email'
+        Scopes.Streams.Read,
+        Scopes.Streams.Write,
+        Scopes.Users.Read,
+        Scopes.Users.Email,
+        Scopes.Tokens.Write,
+        Scopes.Tokens.Read,
+        Scopes.Profile.Read,
+        Scopes.Profile.Email
       ]
     )}`
 
@@ -244,14 +247,14 @@ describe('GraphQL API Core @core-api', () => {
           userDelete.id,
           'fail token user del',
           [
-            'streams:read',
-            'streams:write',
-            'users:read',
-            'users:email',
-            'tokens:write',
-            'tokens:read',
-            'profile:read',
-            'profile:email'
+            Scopes.Streams.Read,
+            Scopes.Streams.Write,
+            Scopes.Users.Read,
+            Scopes.Users.Email,
+            Scopes.Tokens.Write,
+            Scopes.Tokens.Read,
+            Scopes.Profile.Read,
+            Scopes.Profile.Email
           ]
         )}`
 
@@ -272,15 +275,15 @@ describe('GraphQL API Core @core-api', () => {
           userDelete.id,
           'test token user del',
           [
-            'streams:read',
-            'streams:write',
-            'users:read',
-            'users:email',
-            'tokens:write',
-            'tokens:read',
-            'profile:read',
-            'profile:email',
-            'profile:delete'
+            Scopes.Streams.Read,
+            Scopes.Streams.Write,
+            Scopes.Users.Read,
+            Scopes.Users.Email,
+            Scopes.Tokens.Write,
+            Scopes.Tokens.Read,
+            Scopes.Profile.Read,
+            Scopes.Profile.Email,
+            Scopes.Profile.Delete
           ]
         )}`
 
@@ -304,30 +307,30 @@ describe('GraphQL API Core @core-api', () => {
         let queriedUserB = await sendRequest(userA.token, {
           query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
-        expect(queriedUserB.body.data.otherUser.role).to.equal('server:user')
-        let query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:admin"})}`
+        expect(queriedUserB.body.data.otherUser.role).to.equal(Roles.Server.User)
+        let query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "${Roles.Server.Admin}"})}`
         await sendRequest(userA.token, { query })
         queriedUserB = await sendRequest(userA.token, {
           query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
-        expect(queriedUserB.body.data.otherUser.role).to.equal('server:admin')
+        expect(queriedUserB.body.data.otherUser.role).to.equal(Roles.Server.Admin)
         expect(queriedUserB.body.data)
-        query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:user"})}`
+        query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "${Roles.Server.User}"})}`
         await sendRequest(userA.token, { query })
         queriedUserB = await sendRequest(userA.token, {
           query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
-        expect(queriedUserB.body.data.otherUser.role).to.equal('server:user')
+        expect(queriedUserB.body.data.otherUser.role).to.equal(Roles.Server.User)
       })
 
       it('Only admins can change user role', async () => {
-        const query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "server:admin"})}`
+        const query = `mutation { userRoleChange(userRoleInput: {id: "${userB.id}", role: "${Roles.Server.Admin}"})}`
         const res = await sendRequest(userB.token, { query })
         const queriedUserB = await sendRequest(userA.token, {
           query: ` { otherUser(id:"${userB.id}") { id name role } }`
         })
         expect(res.body.errors).to.exist
-        expect(queriedUserB.body.data.otherUser.role).to.equal('server:user')
+        expect(queriedUserB.body.data.otherUser.role).to.equal(Roles.Server.User)
       })
     })
 
@@ -547,7 +550,7 @@ describe('GraphQL API Core @core-api', () => {
 
       it('Should fail to delete a stream because of permissions', async () => {
         // Make sure user is no longer a stream collaborator
-        await removeStreamCollaborator(ts1, userB.id, userB.id).catch(noop)
+        await removeStreamCollaborator(ts1, userB.id, userB.id)
 
         const res = await sendRequest(userB.token, {
           query: `mutation { streamDelete( id:"${ts1}")}`
@@ -607,11 +610,6 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(streamResults.body.data.adminStreams.totalCount).to.equal(10)
         expect(streamResults.body.data.adminStreams.items.length).to.equal(2)
-
-        streamResults = await sendRequest(userA.token, {
-          query: '{ adminStreams(offset: 5) { totalCount items { id name } } }'
-        })
-        expect(streamResults.body.data.adminStreams.items.length).to.equal(5)
 
         streamResults = await sendRequest(userA.token, {
           query: '{ adminStreams( query: "Admin" ) { totalCount items { id name } } }'
@@ -936,7 +934,7 @@ describe('GraphQL API Core @core-api', () => {
         })
         expect(res).to.be.json
         expect(res.body.errors).to.exist
-        expect(res.body.errors[0].message).to.equal('Branch not found.')
+        expect(res.body.errors[0].message).to.equal('Branch not found')
 
         const res1 = await sendRequest(userC.token, {
           query:
@@ -946,7 +944,7 @@ describe('GraphQL API Core @core-api', () => {
         expect(res1).to.be.json
         expect(res1.body.errors).to.exist
         expect(res1.body.errors[0].message).to.equal(
-          'Only the branch creator or stream owners are allowed to delete branches.'
+          'Only the branch creator or stream owners are allowed to delete branches'
         )
 
         const res2 = await sendRequest(userA.token, {
@@ -1020,7 +1018,7 @@ describe('GraphQL API Core @core-api', () => {
         expect(res2).to.be.json
         expect(res2.body.errors).to.exist
         expect(res2.body.errors[0].message).to.equal(
-          'The branch id and stream id do not match. Please check your inputs.'
+          'The branch ID and stream ID do not match, please check your inputs'
         )
       })
 
@@ -1038,7 +1036,7 @@ describe('GraphQL API Core @core-api', () => {
         expect(res).to.be.json
         expect(res.body.errors).to.exist
         expect(res.body.errors[0].message).to.equal(
-          'The branch id and stream id do not match. Please check your inputs.'
+          'The branch ID and stream ID do not match, please check your inputs'
         )
       })
     })
@@ -1055,7 +1053,7 @@ describe('GraphQL API Core @core-api', () => {
         expect(res.body.data).to.have.property('user')
         expect(res.body.data.user.name).to.equal('Miticå')
         expect(res.body.data.user.email).to.equal('d.1@speckle.systems')
-        expect(res.body.data.user.role).to.equal('server:admin')
+        expect(res.body.data.user.role).to.equal(Roles.Server.Admin)
       })
 
       it('Should retrieve my streams', async () => {
@@ -1277,8 +1275,8 @@ describe('GraphQL API Core @core-api', () => {
 
         expect(stream.name).to.equal('TS1 (u A) Private UPDATED')
         expect(stream.collaborators).to.have.lengthOf(2)
-        expect(stream.collaborators[0].role).to.equal('stream:contributor')
-        expect(stream.collaborators[1].role).to.equal('stream:owner')
+        expect(stream.collaborators[0].role).to.equal(Roles.Stream.Contributor)
+        expect(stream.collaborators[1].role).to.equal(Roles.Stream.Owner)
       })
 
       it('Should retrieve a public stream even if not authenticated', async () => {
@@ -1694,20 +1692,20 @@ describe('GraphQL API Core @core-api', () => {
         archivedUser.id,
         'this will be archived',
         [
-          'streams:read',
-          'streams:write',
-          'users:read',
-          'users:email',
-          'tokens:write',
-          'tokens:read',
-          'profile:read',
-          'profile:email',
-          'apps:read',
-          'apps:write',
-          'users:invite'
+          Scopes.Streams.Read,
+          Scopes.Streams.Write,
+          Scopes.Users.Read,
+          Scopes.Users.Email,
+          Scopes.Tokens.Write,
+          Scopes.Tokens.Read,
+          Scopes.Profile.Read,
+          Scopes.Profile.Email,
+          Scopes.Apps.Read,
+          Scopes.Apps.Write,
+          Scopes.Users.Invite
         ]
       )}`
-      await archiveUser({ userId: archivedUser.id })
+      await changeUserRole({ userId: archivedUser.id, role: Roles.Server.ArchivedUser })
     })
 
     it('Should be able to read public streams', async () => {
@@ -1736,7 +1734,7 @@ describe('GraphQL API Core @core-api', () => {
         query,
         variables: {
           tokenInput: {
-            scopes: ['streams:read'],
+            scopes: [Scopes.Streams.Read],
             name: 'thisWillNotBeCreated',
             lifespan: 1000000
           }
@@ -1841,7 +1839,7 @@ describe('GraphQL API Core @core-api', () => {
           name: 'Test App',
           public: true,
           description: 'Test App Description',
-          scopes: ['streams:read'],
+          scopes: [Scopes.Streams.Read],
           redirectUrl: 'lol://what'
         }
       }

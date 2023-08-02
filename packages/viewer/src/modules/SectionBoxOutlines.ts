@@ -1,4 +1,5 @@
 import {
+  Box3,
   Color,
   DynamicDrawUsage,
   InterleavedBufferAttribute,
@@ -7,8 +8,8 @@ import {
   Vector2,
   Vector3
 } from 'three'
-import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
-import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
+import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
+import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
 import MeshBatch from './batching/MeshBatch'
 import { Geometry } from './converter/Geometry'
 import SpeckleGhostMaterial from './materials/SpeckleGhostMaterial'
@@ -78,28 +79,37 @@ export class SectionBoxOutlines {
     const tempLine = new Line3()
     const planeId = this.getPlaneId(_plane)
     const clipOutline = this.planeOutlines[planeId].renderable
-
     let index = 0
     let posAttr = (
       clipOutline.geometry.attributes['instanceStart'] as InterleavedBufferAttribute
     ).data
-
     /** Not a fan of this, but we have no choice. We can't know beforehand the resulting number of intersection points */
     const scratchBuffer = new Array<number>()
-
     for (let b = 0; b < batches.length; b++) {
       const plane = new Plane().copy(_plane)
-
-      batches[b].boundsTree.shapecast({
-        intersectsBounds: (box) => {
+      batches[b].mesh.BVH.shapecast({
+        intersectsTAS: (
+          box: Box3
+          // isLeaf: boolean,
+          // score: number | undefined,
+          // depth: number,
+          // nodeIndex: number
+        ) => {
           const localPlane = plane
           return localPlane.intersectsBox(box)
         },
 
-        intersectsTriangle: (tri, i) => {
+        intersectsBounds: (box) => {
+          const localPlane = plane
+          return localPlane.intersectsBox(box)
+        },
+        intersectsTriangle(tri, i, contained, depth, batchObject) {
+          i
+          contained
+          depth
           // check each triangle edge to see if it intersects with the plane. If so then
           // add it to the list of segments.
-          const material = batches[b].getMaterialAtIndex(i)
+          const material = batches[b].mesh.getBatchObjectMaterial(batchObject)
           if (
             material instanceof SpeckleGhostMaterial ||
             material.visible === false ||
@@ -121,7 +131,6 @@ export class SectionBoxOutlines {
             index++
             count++
           }
-
           tempLine.start.copy(tri.b)
           tempLine.end.copy(tri.c)
           if (localPlane.intersectLine(tempLine, tempVector)) {
@@ -134,7 +143,6 @@ export class SectionBoxOutlines {
             count++
             index++
           }
-
           tempLine.start.copy(tri.c)
           tempLine.end.copy(tri.a)
           if (localPlane.intersectLine(tempLine, tempVector)) {
@@ -147,7 +155,6 @@ export class SectionBoxOutlines {
             count++
             index++
           }
-
           // When the plane passes through a vertex and one of the edges of the triangle, there will be three intersections, two of which must be repeated
           if (count === 3) {
             tempVector1.set(
@@ -185,7 +192,6 @@ export class SectionBoxOutlines {
               index--
             }
           }
-
           // If we only intersected with one or three sides then just remove it. This could be handled
           // more gracefully.
           if (count !== 2) {
@@ -237,14 +243,17 @@ export class SectionBoxOutlines {
     ).data.setUsage(DynamicDrawUsage)
 
     Geometry.updateRTEGeometry(lineGeometry, buffer)
-    const material = new SpeckleLineMaterial({
-      color: 0x047efb,
-      linewidth: 2,
-      worldUnits: false,
-      vertexColors: false,
-      alphaToCoverage: false,
-      resolution: new Vector2(919, 848)
-    })
+    const material = new SpeckleLineMaterial(
+      {
+        color: 0x047efb,
+        linewidth: 2,
+        worldUnits: false,
+        vertexColors: false,
+        alphaToCoverage: false,
+        resolution: new Vector2(919, 848)
+      },
+      ['USE_RTE']
+    )
     material.color = new Color(0x047efb)
     material.color.convertSRGBToLinear()
     material.linewidth = 2

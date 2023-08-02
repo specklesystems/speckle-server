@@ -11,6 +11,7 @@ const { createManyObjects } = require('@/test/helpers')
 const { createUser } = require('../services/users')
 const { createPersonalAccessToken } = require('../services/tokens')
 const { createStream } = require('../services/streams')
+const { Scopes } = require('@speckle/shared')
 
 describe('Upload/Download Routes @api-rest', () => {
   const userA = {
@@ -40,14 +41,14 @@ describe('Upload/Download Routes @api-rest', () => {
       userA.id,
       'test token user A',
       [
-        'streams:read',
-        'streams:write',
-        'users:read',
-        'users:email',
-        'tokens:write',
-        'tokens:read',
-        'profile:read',
-        'profile:email'
+        Scopes.Streams.Read,
+        Scopes.Streams.Write,
+        Scopes.Users.Read,
+        Scopes.Users.Email,
+        Scopes.Tokens.Write,
+        Scopes.Tokens.Read,
+        Scopes.Profile.Read,
+        Scopes.Profile.Email
       ]
     )}`
 
@@ -56,14 +57,14 @@ describe('Upload/Download Routes @api-rest', () => {
       userB.id,
       'test token user B',
       [
-        'streams:read',
-        'streams:write',
-        'users:read',
-        'users:email',
-        'tokens:write',
-        'tokens:read',
-        'profile:read',
-        'profile:email'
+        Scopes.Streams.Read,
+        Scopes.Streams.Write,
+        Scopes.Users.Read,
+        Scopes.Users.Email,
+        Scopes.Tokens.Write,
+        Scopes.Tokens.Read,
+        Scopes.Profile.Read,
+        Scopes.Profile.Email
       ]
     )}`
 
@@ -129,6 +130,42 @@ describe('Upload/Download Routes @api-rest', () => {
     expect(res).to.have.status(401)
   })
 
+  it('should not allow a non-multipart/form-data request without a boundary', async () => {
+    const res = await request(app)
+      .post(`/objects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .set('Content-type', 'multipart/form-data')
+      .send(Buffer.from(JSON.stringify(objBatches[0]), 'utf8')) //sent, not attached, so no boundary will be added to Content-type header.
+    expect(res).to.have.status(400)
+    expect(res.text).to.equal(
+      'Failed to parse request headers and body content as valid multipart/form-data.'
+    )
+  })
+
+  it('should not allow a non-multipart/form-data request, even if it has a valid header', async () => {
+    const res = await request(app)
+      .post(`/objects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .set('Content-type', 'application/json')
+      .attach(Buffer.from(JSON.stringify(objBatches[0]), 'utf8'))
+    expect(res).to.have.status(400)
+    expect(res.text).to.equal(
+      'Failed to parse request headers and body content as valid multipart/form-data.'
+    )
+  })
+
+  it('should not allow non-buffered requests', async () => {
+    const res = await request(app)
+      .post(`/objects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .set('Content-type', 'multipart/form-data')
+      .attach(JSON.stringify(objBatches[0], 'utf8'))
+    expect(res).to.have.status(400)
+    expect(res.text).to.equal(
+      'Failed to parse request headers and body content as valid multipart/form-data.'
+    )
+  })
+
   it('Should not allow getting an object that is not part of the stream', async () => {
     const objBatch = createManyObjects(20)
 
@@ -169,6 +206,52 @@ describe('Upload/Download Routes @api-rest', () => {
       .post(`/objects/${'thisDoesNotExist'}`)
       .set('Authorization', userA.token)
     expect(res).to.have.status(401)
+  })
+
+  it('Should not allow upload with invalid body (not contained within array)', async () => {
+    //creating a single valid object
+    const objectToPost = {
+      name: 'yet again cannot believe i have to create this'
+    }
+    const objectId = crypto
+      .createHash('md5')
+      .update(JSON.stringify(objectToPost))
+      .digest('hex')
+    objectToPost.id = objectId
+
+    const res = await request(app)
+      .post(`/objects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .set('Content-type', 'multipart/form-data')
+      .attach('batch1', Buffer.from(JSON.stringify(objectToPost), 'utf8'))
+
+    expect(res).to.have.status(400)
+  })
+
+  it('Should not allow upload with invalid body (invalid json)', async () => {
+    const res = await request(app)
+      .post(`/objects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .set('Content-type', 'multipart/form-data')
+      .attach('batch1', Buffer.from(JSON.stringify('this is not json'), 'utf8'))
+
+    expect(res).to.have.status(400)
+  })
+
+  it('Should not allow upload with invalid body (object too large)', async () => {
+    //creating a single valid object larger than 10MB
+    const objectToPost = {
+      name: 'x'.repeat(10 * 1024 * 1024 + 1)
+    }
+
+    const res = await request(app)
+      .post(`/objects/${testStream.id}`)
+      .set('Authorization', userA.token)
+      .set('Content-type', 'multipart/form-data')
+      .attach('batch1', Buffer.from(JSON.stringify([objectToPost]), 'utf8'))
+
+    expect(res).to.have.status(400)
+    expect(res.text).contains('Object too large')
   })
 
   let parentId

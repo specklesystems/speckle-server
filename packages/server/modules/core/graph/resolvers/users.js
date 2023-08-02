@@ -4,22 +4,23 @@ const {
   getUser,
   getUserByEmail,
   getUserRole,
-  updateUser,
   deleteUser,
   searchUsers,
-  getUserById,
-  makeUserAdmin,
-  unmakeUserAdmin,
-  archiveUser
-} = require('../../services/users')
+  changeUserRole
+} = require('@/modules/core/services/users')
+const { updateUserAndNotify } = require('@/modules/core/services/users/management')
 const { saveActivity } = require('@/modules/activitystream/services')
 const { ActionTypes } = require('@/modules/activitystream/helpers/types')
-const { validateServerRole, validateScopes } = require(`@/modules/shared`)
+const { validateScopes } = require(`@/modules/shared`)
 const zxcvbn = require('zxcvbn')
 const {
   getAdminUsersListCollection
 } = require('@/modules/core/services/users/adminUsersListService')
-const { Roles, Scopes } = require('@/modules/core/helpers/mainConstants')
+const { Roles, Scopes } = require('@speckle/shared')
+const { markOnboardingComplete } = require('@/modules/core/repositories/users')
+const { UsersMeta } = require('@/modules/core/dbSchema')
+const { getServerInfo } = require('@/modules/core/services/generic')
+const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -32,8 +33,8 @@ module.exports = {
       if (!activeUserId) return null
 
       // Only if authenticated - check for server roles & scopes
-      await validateServerRole(context, 'server:user')
-      await validateScopes(context.scopes, 'profile:read')
+      await throwForNotHavingServerRole(context, Roles.Server.Guest)
+      await validateScopes(context.scopes, Scopes.Profile.Read)
 
       return await getUser(activeUserId)
     },
@@ -46,10 +47,10 @@ module.exports = {
       // User wants info about himself and he's not authenticated - just return null
       if (!context.auth && !args.id) return null
 
-      await validateServerRole(context, 'server:user')
+      await throwForNotHavingServerRole(context, Roles.Server.Guest)
 
-      if (!args.id) await validateScopes(context.scopes, 'profile:read')
-      else await validateScopes(context.scopes, 'users:read')
+      if (!args.id) await validateScopes(context.scopes, Scopes.Profile.Read)
+      else await validateScopes(context.scopes, Scopes.Users.Read)
 
       if (!args.id && !context.userId) {
         throw new UserInputError('You must provide an user id.')
@@ -63,9 +64,9 @@ module.exports = {
     },
 
     async userSearch(parent, args, context) {
-      await validateServerRole(context, 'server:user')
-      await validateScopes(context.scopes, 'profile:read')
-      await validateScopes(context.scopes, 'users:read')
+      await throwForNotHavingServerRole(context, Roles.Server.Guest)
+      await validateScopes(context.scopes, Scopes.Profile.Read)
+      await validateScopes(context.scopes, Scopes.Users.Read)
 
       if (args.query.length < 3)
         throw new UserInputError('Search query must be at least 3 carachters.')
@@ -79,7 +80,8 @@ module.exports = {
         args.query,
         args.limit,
         args.cursor,
-        args.archived
+        args.archived,
+        args.emailOnly
       )
       return { cursor, items: users }
     },
@@ -95,7 +97,7 @@ module.exports = {
       // NOTE: we're redacting the field (returning null) rather than throwing a full error which would invalidate the request.
       if (context.userId === parent.id) {
         try {
-          await validateScopes(context.scopes, 'profile:email')
+          await validateScopes(context.scopes, Scopes.Profile.Email)
           return parent.email
         } catch (err) {
           return null
@@ -104,7 +106,7 @@ module.exports = {
 
       try {
         // you should only have access to other users email if you have elevated privileges
-        await validateServerRole(context, Roles.Server.Admin)
+        await throwForNotHavingServerRole(context, Roles.Server.Admin)
         await validateScopes(context.scopes, Scopes.Users.Email)
         return parent.email
       } catch (err) {
@@ -113,6 +115,13 @@ module.exports = {
     },
     async role(parent) {
       return await getUserRole(parent.id)
+    },
+    async isOnboardingFinished(parent, _args, ctx) {
+      const metaVal = await ctx.loaders.users.getUserMeta.load({
+        userId: parent.id,
+        key: UsersMeta.metaKey.isOnboardingFinished
+      })
+      return !!metaVal?.value
     }
   },
   LimitedUser: {
@@ -121,39 +130,24 @@ module.exports = {
     }
   },
   Mutation: {
-    async userUpdate(parent, args, context) {
-      await validateServerRole(context, 'server:user')
+    async userUpdate(_parent, args, context) {
+      await throwForNotHavingServerRole(context, Roles.Server.Guest)
+      await updateUserAndNotify(context.userId, args.user)
+      return true
+    },
 
-      const oldValue = await getUserById({ userId: context.userId })
-
-      await updateUser(context.userId, args.user)
-
-      await saveActivity({
-        streamId: null,
-        resourceType: 'user',
-        resourceId: context.userId,
-        actionType: ActionTypes.User.Update,
-        userId: context.userId,
-        info: { old: oldValue, new: args.user },
-        message: 'User updated'
+    async userRoleChange(_parent, args) {
+      const { guestModeEnabled } = await getServerInfo()
+      await changeUserRole({
+        role: args.userRoleInput.role,
+        userId: args.userRoleInput.id,
+        guestModeEnabled
       })
-
       return true
     },
 
-    async userRoleChange(parent, args) {
-      const roleChangers = {
-        'server:admin': makeUserAdmin,
-        'server:user': unmakeUserAdmin,
-        'server:archived-user': archiveUser
-      }
-      const roleChanger = roleChangers[args.userRoleInput.role]
-      await roleChanger({ userId: args.userRoleInput.id })
-      return true
-    },
-
-    async adminDeleteUser(parent, args, context) {
-      await validateServerRole(context, 'server:admin')
+    async adminDeleteUser(_parent, args, context) {
+      await throwForNotHavingServerRole(context, Roles.Server.Admin)
       const user = await getUserByEmail({ email: args.userConfirmation.email })
       await deleteUser(user.id)
       return true
@@ -169,8 +163,8 @@ module.exports = {
       // The below are not really needed anymore as we've added the hasRole and hasScope
       // directives in the graphql schema itself.
       // Since I am paranoid, I'll leave them here too.
-      await validateServerRole(context, 'server:user')
-      await validateScopes(context.scopes, 'profile:delete')
+      await throwForNotHavingServerRole(context, Roles.Server.Guest)
+      await validateScopes(context.scopes, Scopes.Profile.Delete)
 
       await deleteUser(context.userId, args.user)
 
@@ -185,6 +179,17 @@ module.exports = {
       })
 
       return true
+    },
+
+    activeUserMutations: () => ({})
+  },
+  ActiveUserMutations: {
+    async finishOnboarding(_parent, _args, ctx) {
+      return await markOnboardingComplete(ctx.userId || '')
+    },
+    async update(_parent, args, context) {
+      const newUser = await updateUserAndNotify(context.userId, args.user)
+      return newUser
     }
   }
 }

@@ -59,7 +59,7 @@ export const DefaultBVHOptions = {
 
 We've made this wrapper around the original implementation to hide the transformations we do behind the scenes
 in order to avoid storing vertex positions as Float64. Instead we store them as Float32, but the whole BVH is 
-re-centered around world origin (0,0,0). We use the resulting transformations to transform anything that comes
+re-centered around the mesh local origin as (0,0,0). We use the resulting transformations to transform anything that comes
 in or out of the BVH in order to keep this re-centering opaque.
 
 We've implemented auto-transformation for raycasting and shapecasting. Other functionalities like bvhcast or geometrycast
@@ -69,14 +69,15 @@ Otherwise, keep in mind that if you use this class for any other purposes, you c
 to get the correct values for Vectors, Rays, Boxes, etc
  */
 export class SpeckleMeshBVH extends MeshBVH {
-  private relativeBounds: Box3
-  private localTransform: Matrix4
-  private localTransformInv: Matrix4
+  private static readonly MatBuff: Matrix4 = new Matrix4()
+  public inputTransform: Matrix4
+  public outputTransform: Matrix4
+  public inputOriginTransform: Matrix4
+  public outputOriginTransfom: Matrix4
 
   public static buildBVH(
-    indices: Uint32Array | Uint16Array,
-    position: Float64Array,
-    relativeBounds: Box3 = null,
+    indices: number[],
+    position: Float32Array,
     options: BVHOptions = DefaultBVHOptions
   ): SpeckleMeshBVH {
     const bvhGeometry = new BufferGeometry()
@@ -90,33 +91,15 @@ export class SpeckleMeshBVH extends MeshBVH {
       ;(bvhIndices as Uint16Array).set(indices, 0)
       bvhGeometry.setIndex(new Uint16BufferAttribute(bvhIndices, 1))
     }
-    const boundsCenter = relativeBounds.getCenter(new Vector3())
-    const transform = new Matrix4().makeTranslation(
-      boundsCenter.x,
-      boundsCenter.y,
-      boundsCenter.z
-    )
-    transform.invert()
-    const localPositions = new Float32Array(position.length)
-    const vecBuff = new Vector3()
-    for (let k = 0; k < position.length; k += 3) {
-      vecBuff.set(position[k], position[k + 1], position[k + 2])
-      vecBuff.applyMatrix4(transform)
-      localPositions[k] = vecBuff.x
-      localPositions[k + 1] = vecBuff.y
-      localPositions[k + 2] = vecBuff.z
-    }
 
-    bvhGeometry.setAttribute('position', new Float32BufferAttribute(localPositions, 3))
+    bvhGeometry.setAttribute('position', new Float32BufferAttribute(position, 3))
+    bvhGeometry.computeBoundingBox()
+
     const bvh = new SpeckleMeshBVH(bvhGeometry, options)
-    bvh.localTransform = transform
-    bvh.localTransformInv = new Matrix4().copy(transform).invert()
-    bvh.relativeBounds = relativeBounds
-    bvh.geometry.boundingBox = bvh.getBoundingBox(new Box3())
     return bvh
   }
 
-  constructor(geometry, options = {}) {
+  private constructor(geometry, options = {}) {
     super(geometry, options)
   }
 
@@ -256,15 +239,28 @@ export class SpeckleMeshBVH extends MeshBVH {
   }
 
   public transformInput<T extends Vector3 | Ray | Box3>(input: T): T {
-    return input.applyMatrix4(this.localTransform) as T
+    SpeckleMeshBVH.MatBuff.copy(this.inputOriginTransform).premultiply(
+      this.inputTransform
+    )
+    return input.applyMatrix4(SpeckleMeshBVH.MatBuff) as T
   }
 
   public transformOutput<T extends Vector3 | Ray | Box3>(output: T): T {
-    return output.applyMatrix4(this.localTransformInv) as T
+    SpeckleMeshBVH.MatBuff.copy(this.outputOriginTransfom).multiply(
+      this.outputTransform
+    )
+    return output.applyMatrix4(SpeckleMeshBVH.MatBuff) as T
   }
 
   public getBoundingBox(target) {
     super.getBoundingBox(target)
     return this.transformOutput(target)
+  }
+
+  public getVertexAtIndex(index: number): Vector3 {
+    const array = this.geometry.attributes.position.array
+    return this.transformOutput(
+      new Vector3(array[index * 3], array[index * 3 + 1], array[index * 3 + 2])
+    )
   }
 }

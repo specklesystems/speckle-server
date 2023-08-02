@@ -1,22 +1,33 @@
 const { defaultFieldResolver } = require('graphql')
-const { validateServerRole, authorizeResolver } = require('@/modules/shared')
+const { authorizeResolver } = require('@/modules/shared')
 const { ForbiddenError } = require('@/modules/shared/errors')
 const { mapSchema, getDirective, MapperKind } = require('@graphql-tools/utils')
-const { mapStreamRoleToValue } = require('@/modules/core/helpers/graphTypes')
+const {
+  mapStreamRoleToValue,
+  mapServerRoleToValue
+} = require('@/modules/core/helpers/graphTypes')
+const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 
 module.exports = {
   /**
    * Ensure that the user has the specified SERVER role (e.g. server user, admin etc.)
    * @type {import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder}
    */
-  hasRole: () => {
-    const directiveName = 'hasRole'
+  hasServerRole: () => {
+    const directiveName = 'hasServerRole'
     return {
       typeDefs: `
+        enum ServerRole {
+          SERVER_USER
+          SERVER_ADMIN
+          SERVER_GUEST
+          SERVER_ARCHIVED_USER
+        }
+
         """
         Ensure that the user has the specified SERVER role (e.g. server user, admin etc.)
         """
-        directive @${directiveName}(role: String!) on FIELD_DEFINITION
+        directive @${directiveName}(role: ServerRole!) on FIELD_DEFINITION
       `,
       schemaTransformer: (schema) =>
         mapSchema(schema, {
@@ -28,7 +39,10 @@ module.exports = {
             const { resolve = defaultFieldResolver } = fieldConfig
             fieldConfig.resolve = async function (...args) {
               const context = args[2]
-              await validateServerRole(context, requiredRole)
+              await throwForNotHavingServerRole(
+                context,
+                mapServerRoleToValue(requiredRole)
+              )
 
               return await resolve.apply(this, args)
             }
@@ -76,7 +90,7 @@ module.exports = {
               const [parent, , context, info] = args
 
               // Validate stream role only if parent is a Stream type
-              if (info.parentType?.name === 'Stream' && parent) {
+              if (['Stream', 'Project'].includes(info.parentType?.name) && parent) {
                 if (!parent.id) {
                   // This should never happen as long as our resolvers always return streams with their IDs
                   throw new ForbiddenError('Unexpected access of unidentifiable stream')

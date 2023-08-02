@@ -1,7 +1,7 @@
 import { packageRoot } from '@/bootstrap'
 import path from 'path'
 import ejs from 'ejs'
-import { getBaseUrl } from '@/modules/shared/helpers/envHelper'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { ServerInfo } from '@/modules/core/helpers/types'
 
@@ -47,7 +47,7 @@ export function buildBasicTemplateServerInfo(
 ): EmailTemplateServerInfo {
   return {
     name: serverInfo.name,
-    url: getBaseUrl(),
+    url: getFrontendOrigin(),
     company: serverInfo.company,
     contact: serverInfo.adminContact
   }

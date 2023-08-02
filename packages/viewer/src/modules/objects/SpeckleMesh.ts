@@ -1,19 +1,28 @@
+import Logger from 'js-logger'
 import {
   BackSide,
+  Box3Helper,
   BufferGeometry,
+  Color,
+  DataTexture,
   DoubleSide,
+  FloatType,
   Material,
   Matrix4,
   Mesh,
   Ray,
   Raycaster,
+  RGBAFormat,
   Sphere,
   Triangle,
   Vector2,
   Vector3
 } from 'three'
-import { estimateMemoryInBytes } from 'three-mesh-bvh'
-import { SpeckleMeshBVH } from './SpeckleMeshBVH'
+import { TransformStorage } from '../batching/Batcher'
+import { BatchObject } from '../batching/BatchObject'
+import { SpeckleBatchBVH } from './SpeckleBatchBVH'
+import { ObjectLayers } from '../SpeckleRenderer'
+import Materials from '../materials/Materials'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -42,22 +51,194 @@ const ray = /* @__PURE__ */ new Ray()
 const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
 
 export default class SpeckleMesh extends Mesh {
-  private boundsTree: SpeckleMeshBVH = null
-  public boundsTreeSizeInBytes = 0
+  public static MeshBatchNumber = 0
+
+  private bvh: SpeckleBatchBVH = null
   private batchMaterial: Material = null
+  private materialCache: { [id: string]: Material } = {}
+  private materialStack: Array<Material | Material[]> = []
+
+  private _batchObjects: BatchObject[]
+  private transformsBuffer: Float32Array = null
+  private transformStorage: TransformStorage
+  public transformsDirty = true
+
+  public transformsTextureUniform: DataTexture = null
+  public transformsArrayUniforms: Matrix4[] = null
+
+  private debugBatchBox = false
+  private boxHelper: Box3Helper
 
   public get BVH() {
-    return this.boundsTree
+    return this.bvh
   }
 
-  constructor(geometry: BufferGeometry, material: Material, bvh: SpeckleMeshBVH) {
+  public get batchObjects(): BatchObject[] {
+    return this._batchObjects
+  }
+
+  constructor(geometry: BufferGeometry, material: Material) {
     super(geometry, material)
     this.batchMaterial = material
-    this.boundsTree = bvh
-    this.geometry.boundsTree = this.boundsTree
-    this.boundsTreeSizeInBytes =
-      estimateMemoryInBytes(this.boundsTree) -
-      (this.geometry.attributes['position'].array as unknown as ArrayBuffer).byteLength
+  }
+
+  public setBatchObjects(
+    batchObjects: BatchObject[],
+    transformStorage: TransformStorage
+  ) {
+    this._batchObjects = batchObjects
+    this.transformStorage = transformStorage
+
+    if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
+      this.transformsBuffer = new Float32Array(this._batchObjects.length * 4 * 4)
+      this.transformsTextureUniform = new DataTexture(
+        this.transformsBuffer,
+        this.transformsBuffer.length / 4,
+        1,
+        RGBAFormat,
+        FloatType
+      )
+    } else if (this.transformStorage === TransformStorage.UNIFORM_ARRAY) {
+      this.transformsArrayUniforms = this._batchObjects.map(() => new Matrix4())
+    }
+    this.updateTransformsUniform()
+  }
+
+  public setOverrideMaterial(material: Material) {
+    this.materialStack.push(this.material)
+    if (!this.materialCache[material.id]) {
+      this.materialCache[material.id] = material.clone()
+    }
+    this.materialCache[material.id].copy(material)
+    this.material = this.materialCache[material.id]
+    this.material.needsUpdate = true
+  }
+
+  public getCachedMaterial(material: Material, copy = false) {
+    if (!this.materialCache[material.id]) {
+      this.materialCache[material.id] = material.clone()
+    } else if (copy) {
+      Materials.fastCopy(material, this.materialCache[material.id])
+    }
+    return this.materialCache[material.id]
+  }
+
+  public restoreMaterial() {
+    if (this.materialStack.length > 0) this.material = this.materialStack.pop()
+  }
+
+  public updateMaterialTransformsUniform(material: Material) {
+    material.defines['TRANSFORM_STORAGE'] = this.transformStorage
+
+    if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
+      material.userData.tTransforms.value = this.transformsTextureUniform
+      if (material.userData.objCount)
+        material.userData.objCount.value = this._batchObjects.length
+    } else if (this.transformStorage === TransformStorage.UNIFORM_ARRAY) {
+      if (
+        !material.defines['OBJ_COUNT'] ||
+        material.defines['OBJ_COUNT'] !== this._batchObjects.length
+      ) {
+        material.defines['OBJ_COUNT'] = this._batchObjects.length
+      }
+      material.userData.uTransforms.value = this.transformsArrayUniforms
+    }
+
+    material.needsUpdate = true
+  }
+
+  public updateTransformsUniform() {
+    if (!this.transformsDirty) {
+      if (this.bvh) this.bvh.lastRefitTime = 0
+      return
+    }
+    if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
+      this._batchObjects.forEach((batchObject: BatchObject) => {
+        const index = batchObject.batchIndex * 16
+        this.transformsBuffer[index] = batchObject.quaternion.x
+        this.transformsBuffer[index + 1] = batchObject.quaternion.y
+        this.transformsBuffer[index + 2] = batchObject.quaternion.z
+        this.transformsBuffer[index + 3] = batchObject.quaternion.w
+
+        this.transformsBuffer[index + 4] = batchObject.pivot_Low.x
+        this.transformsBuffer[index + 5] = batchObject.pivot_Low.y
+        this.transformsBuffer[index + 6] = batchObject.pivot_Low.z
+        this.transformsBuffer[index + 7] = batchObject.scale.x
+
+        this.transformsBuffer[index + 8] = batchObject.pivot_High.x
+        this.transformsBuffer[index + 9] = batchObject.pivot_High.y
+        this.transformsBuffer[index + 10] = batchObject.pivot_High.z
+        this.transformsBuffer[index + 11] = batchObject.scale.y
+
+        this.transformsBuffer[index + 12] = batchObject.translation.x
+        this.transformsBuffer[index + 13] = batchObject.translation.y
+        this.transformsBuffer[index + 14] = batchObject.translation.z
+        this.transformsBuffer[index + 15] = batchObject.scale.z
+      })
+      this.transformsTextureUniform.needsUpdate = true
+    } else {
+      this._batchObjects.forEach((batchObject: BatchObject, index: number) => {
+        this.transformsArrayUniforms[index].set(
+          batchObject.quaternion.x,
+          batchObject.pivot_Low.x,
+          batchObject.pivot_High.x,
+          batchObject.translation.x,
+          batchObject.quaternion.y,
+          batchObject.pivot_Low.y,
+          batchObject.pivot_High.y,
+          batchObject.translation.y,
+          batchObject.quaternion.z,
+          batchObject.pivot_Low.z,
+          batchObject.pivot_High.z,
+          batchObject.translation.z,
+          batchObject.quaternion.w,
+          batchObject.scale.x,
+          batchObject.scale.y,
+          batchObject.scale.z
+        )
+      })
+    }
+    if (this.bvh) {
+      this.bvh.refit()
+      this.bvh.getBoundingBox(this.bvh.bounds)
+      this.geometry.boundingBox.copy(this.bvh.bounds)
+      this.geometry.boundingBox.getBoundingSphere(this.geometry.boundingSphere)
+      if (!this.boxHelper && this.debugBatchBox) {
+        this.boxHelper = new Box3Helper(this.bvh.bounds, new Color(0xff0000))
+        this.boxHelper.layers.set(ObjectLayers.PROPS)
+        this.parent.add(this.boxHelper)
+      }
+    }
+    this.transformsDirty = false
+  }
+
+  public buildBVH() {
+    this.bvh = new SpeckleBatchBVH(this.batchObjects)
+    /** We do a refit here, because for some reason the bvh library incorrectly computes the total bvh bounds at creation,
+     *  so we force a refit in order to get the proper bounds value out of it
+     */
+    this.bvh.tas.refit()
+  }
+
+  public getBatchObjectMaterial(batchObject: BatchObject) {
+    const rv = batchObject.renderView
+    const group = this.geometry.groups.find((value) => {
+      return (
+        rv.batchStart >= value.start &&
+        rv.batchStart + rv.batchCount <= value.count + value.start
+      )
+    })
+    if (!Array.isArray(this.material)) {
+      return this.material
+    } else {
+      if (!group) {
+        Logger.warn(
+          `Could not get material for ${batchObject.renderView.renderData.id}`
+        )
+        return null
+      }
+      return this.material[group.materialIndex]
+    }
   }
 
   // converts the given BVH raycast intersection to align with the three.js raycast
@@ -79,13 +260,13 @@ export default class SpeckleMesh extends Mesh {
   }
 
   raycast(raycaster: Raycaster, intersects) {
-    if (this.boundsTree) {
+    if (this.bvh) {
       if (this.batchMaterial === undefined) return
 
       tmpInverseMatrix.copy(this.matrixWorld).invert()
       ray.copy(raycaster.ray).applyMatrix4(tmpInverseMatrix)
 
-      const bvh = this.boundsTree
+      const bvh = this.bvh
       if (raycaster.firstHitOnly === true) {
         const hit = this.convertRaycastIntersect(
           bvh.raycastFirst(ray, this.batchMaterial),

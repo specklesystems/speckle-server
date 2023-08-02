@@ -6,13 +6,15 @@ const passport = require('passport')
 
 const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
+const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
 const { isSSLServer, getRedisUrl } = require('@/modules/shared/helpers/envHelper')
 const { authLogger } = require('@/logging/logging')
 const { createRedisClient } = require('@/modules/shared/redis/redis')
 const { mixpanel, resolveMixpanelUserId } = require('@/modules/shared/utils/mixpanel')
-
+const { addToMailchimpAudience } = require('./services/mailchimp')
 /**
  * TODO: Get rid of session entirely, we don't use it for the app and it's not really necessary for the auth flow, so it only complicates things
+ * NOTE: it does seem used!
  */
 
 module.exports = async (app) => {
@@ -48,6 +50,11 @@ module.exports = async (app) => {
       req.session.token = token
     }
 
+    const newsletterConsent = req.query.newsletter || null
+    if (newsletterConsent) {
+      req.session.newsletterConsent = true
+    }
+
     next()
   }
 
@@ -63,10 +70,13 @@ module.exports = async (app) => {
         challenge: req.session.challenge
       })
 
+      let newsletterConsent = false
+      if (req.session.newsletterConsent) newsletterConsent = true // NOTE: it's only set if it's true
+
       if (req.session) req.session.destroy()
 
       // Resolve redirect URL
-      const urlObj = new URL(req.authRedirectPath || '/', process.env.CANONICAL_URL)
+      const urlObj = new URL(req.authRedirectPath || '/', getFrontendOrigin())
       urlObj.searchParams.set('access_code', ac)
 
       if (req.user.isNewUser) {
@@ -80,6 +90,10 @@ module.exports = async (app) => {
             isInvite
           })
         }
+      }
+
+      if (newsletterConsent) {
+        await addToMailchimpAudience(req.user.id)
       }
 
       const redirectUrl = urlObj.toString()

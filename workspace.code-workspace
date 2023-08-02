@@ -9,6 +9,22 @@
       "name": "🪟 frontend"
     },
     {
+      "path": "packages/frontend-2",
+      "name": "🏬 frontend 2.0"
+    },
+    {
+      "path": "packages/dui3",
+      "name": "🥉 dui 3.0"
+    },
+    {
+      "path": "packages/tailwind-theme",
+      "name": "🎨 tailwind-theme"
+    },
+    {
+      "path": "packages/ui-components",
+      "name": "🫧 ui-components"
+    },
+    {
       "path": "packages/preview-service",
       "name": "🖼️ preview-service"
     },
@@ -41,6 +57,10 @@
       "name": "⛵ helm"
     },
     {
+      "path": "packages/ui-components-nuxt",
+      "name": "🌟 ui-components-nuxt"
+    },
+    {
       "path": ".",
       "name": "🏡 root"
     }
@@ -65,10 +85,26 @@
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "files.eol": "\n",
-    "volar.completion.preferredTagNameCase": "kebab",
     "volar.vueserver.maxOldSpaceSize": 4000,
-    "vscode-graphql.cacheSchemaFileForLookup": true,
-    "cSpell.words": ["Bursty", "mjml"]
+    "cSpell.words": ["Bursty", "mjml"],
+    "tailwindCSS.experimental.configFile": {
+      "packages/frontend-2/tailwind.config.mjs": "packages/frontend-2/**"
+    },
+    "vue-semantic-server.trace.server": "off",
+    "vue-syntactic-server.trace.server": "off",
+    "svg.preview.background": "transparent",
+    "editor.tabSize": 2,
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/bower_components": true,
+      "**/*.code-search": true,
+      "**/.nuxt": true,
+      "**/.output": true
+    },
+    "[vue]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
   },
   "extensions": {
     // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.
@@ -78,11 +114,14 @@
     "recommendations": [
       "dbaeumer.vscode-eslint",
       "esbenp.prettier-vscode",
-      "octref.vetur",
       "hbenl.vscode-mocha-test-adapter",
-      "ryanluker.vscode-coverage-gutters"
+      "ryanluker.vscode-coverage-gutters",
+      "Vue.volar",
+      "bradlc.vscode-tailwindcss",
+      "stylelint.vscode-stylelint",
+      "cpylua.language-postcss"
     ],
     // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
-    "unwantedRecommendations": []
+    "unwantedRecommendations": ["octref.vetur", "vscode.typescript-language-features"]
   }
 }

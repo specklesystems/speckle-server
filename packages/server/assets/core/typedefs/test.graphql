@@ -1,0 +1,9 @@
+extend type Query {
+  testList: [TestItem!]!
+  testNumber: Int
+}
+
+type TestItem {
+  foo: String!
+  bar: String!
+}

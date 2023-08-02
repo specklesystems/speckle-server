@@ -16,7 +16,7 @@ export default class Coverter {
   private activePromises: number
   private maxChildrenPromises: number
   private spoofIDs = true
-  private isRoot = true
+  private tree: WorldTree
 
   private readonly NodeConverterMapping: {
     [name: string]: ConverterNodeDelegate
@@ -35,10 +35,12 @@ export default class Coverter {
     Circle: this.CircleToNode.bind(this),
     Arc: this.ArcToNode.bind(this),
     Ellipse: this.EllipseToNode.bind(this),
-    RevitInstance: this.RevitInstanceToNode.bind(this)
+    RevitInstance: this.RevitInstanceToNode.bind(this),
+    Text: this.TextToNode.bind(this),
+    Dimension: this.DimensionToNode.bind(this)
   }
 
-  constructor(objectLoader: unknown) {
+  constructor(objectLoader: unknown, tree: WorldTree) {
     if (!objectLoader) {
       Logger.warn(
         'Converter initialized without a corresponding object loader. Any objects that include references will throw errors.'
@@ -46,11 +48,10 @@ export default class Coverter {
     }
 
     this.objectLoader = objectLoader
-
     this.lastAsyncPause = Date.now()
     this.activePromises = 0
     this.maxChildrenPromises = 200
-    WorldTree.getInstance()
+    this.tree = tree
   }
 
   public async asyncPause() {
@@ -99,20 +100,18 @@ export default class Coverter {
       return
     }
 
-    const childNode: TreeNode = WorldTree.getInstance().parse({
+    const childNode: TreeNode = this.tree.parse({
       id: !node ? objectURL : this.getNodeId(obj),
       raw: Object.assign({}, obj),
       atomic: true,
-      root: this.isRoot,
       children: []
     })
-    this.isRoot = false
 
     if (node === null) {
-      WorldTree.getInstance().addSubtree(childNode)
+      this.tree.addSubtree(childNode)
       // console.warn(`Added root node with id ${obj.id}`)
     } else {
-      WorldTree.getInstance().addNode(childNode, node)
+      this.tree.addNode(childNode, node)
       // console.warn(`Added child node with id ${obj.id} to parent node ${node.model.id}`)
     }
 
@@ -148,14 +147,14 @@ export default class Coverter {
         displayValue = await this.resolveReference(displayValue)
         if (!displayValue.units) displayValue.units = obj.units
         try {
-          const nestedNode: TreeNode = WorldTree.getInstance().parse({
+          const nestedNode: TreeNode = this.tree.parse({
             id: this.getNodeId(displayValue),
             raw: Object.assign({}, displayValue),
             atomic: false,
             children: []
           })
           await this.convertToNode(displayValue, nestedNode)
-          WorldTree.getInstance().addNode(nestedNode, childNode)
+          this.tree.addNode(nestedNode, childNode)
           await callback({}) // use the parent's metadata!
         } catch (e) {
           Logger.warn(
@@ -166,23 +165,24 @@ export default class Coverter {
         for (const element of displayValue) {
           const val = await this.resolveReference(element)
           if (!val.units) val.units = obj.units
-          const nestedNode: TreeNode = WorldTree.getInstance().parse({
+          const nestedNode: TreeNode = this.tree.parse({
             id: this.getNodeId(val),
             raw: Object.assign({}, val),
             atomic: false,
             children: []
           })
           await this.convertToNode(val, nestedNode)
-          WorldTree.getInstance().addNode(nestedNode, childNode)
+          this.tree.addNode(nestedNode, childNode)
           await callback({})
         }
       }
 
       // If this is a built element and has a display value, only iterate through the "elements" prop if it exists.
       if (obj.speckle_type.toLowerCase().includes('builtelements')) {
-        if (obj['elements']) {
+        const elements = this.getElementsValue(obj)
+        if (elements) {
           childrenConversionPromisses.push(
-            this.traverse(objectURL, obj['elements'], callback, childNode)
+            this.traverse(objectURL, elements, callback, childNode)
           )
           this.activePromises += childrenConversionPromisses.length
           await Promise.all(childrenConversionPromisses)
@@ -260,17 +260,31 @@ export default class Coverter {
    * @return {[type]}     [description]
    */
   private getSpeckleType(obj): string {
-    let type = 'Base'
+    const typeChain = this.getSpeckleTypeChain(obj)
+    for (const type of typeChain) {
+      const nodeConverter = type in this.NodeConverterMapping
+      if (nodeConverter) return type
+    }
+    return 'Base'
+  }
+
+  private getSpeckleTypeChain(obj): string[] {
+    let type = ['Base']
     if (obj.data)
-      type = obj.data.speckle_type
-        ? obj.data.speckle_type.split('.').reverse()[0]
-        : type
-    else type = obj.speckle_type ? obj.speckle_type.split('.').reverse()[0] : type
-    return type
+      type = obj.data.speckle_type ? obj.data.speckle_type.split(':').reverse() : type
+    else type = obj.speckle_type ? obj.speckle_type.split(':').reverse() : type
+    return type.map<string>((value: string) => {
+      return value.split('.').reverse()[0]
+    })
   }
 
   private directNodeConverterExists(obj) {
-    return this.getSpeckleType(obj) in this.NodeConverterMapping
+    const typeChain = this.getSpeckleTypeChain(obj)
+    for (const type of typeChain) {
+      const nodeConverter = type in this.NodeConverterMapping
+      if (nodeConverter) return nodeConverter
+    }
+    return false
   }
 
   private async convertToNode(obj, node) {
@@ -295,6 +309,23 @@ export default class Coverter {
     )
   }
 
+  private getElementsValue(obj) {
+    return obj['elements'] || obj['@elements']
+  }
+
+  private getBlockDefinition(obj) {
+    return (
+      obj['@blockDefinition'] ||
+      obj['blockDefinition'] ||
+      obj['definition'] ||
+      obj['@definition']
+    )
+  }
+
+  private getBlockDefinitionGeometry(obj) {
+    return obj['@geometry'] || obj['geometry']
+  }
+
   /**
    * 
     NODES
@@ -304,23 +335,90 @@ export default class Coverter {
     obj.target.units = obj.units
   }
 
+  // private hashCode = (input: string) => {
+  //   let hash = 0,
+  //     i,
+  //     chr
+  //   if (input.length === 0) return hash
+  //   for (i = 0; i < input.length; i++) {
+  //     chr = input.charCodeAt(i)
+  //     hash = (hash << 5) - hash + chr
+  //     hash |= 0 // Convert to 32bit integer
+  //   }
+  //   return hash
+  // }
+
+  // private hashCode = (input: string) => {
+  //   let hash = 0,
+  //     i,
+  //     chr
+  //   if (input.length === 0) return hash
+  //   for (i = 0; i < input.length; i++) {
+  //     chr = input.charCodeAt(i)
+  //     hash = (hash << 5) - hash + chr
+  //     hash |= 0 // Convert to 32bit integer
+  //   }
+  //   return hash
+  // }
+
+  /** This is only used for Blocks to search for convertible objects, without using the main 'traverse' function
+   *  It's only looking for 'elements' and 'displayValues'
+   *  I think it can be used for RevitInstances as well to replace it's current lookup, but I'm afraid to do it
+   */
+  private async displayableLookup(obj, node) {
+    if (this.directNodeConverterExists(obj)) {
+      await this.convertToNode(obj, node)
+    } else {
+      const displayValues = this.getDisplayValue(obj)
+      const elements = this.getElementsValue(obj)
+      const entries = [
+        ...(displayValues ? displayValues : []),
+        ...(elements ? elements : [])
+      ]
+      for (const entry of entries) {
+        const value = await this.resolveReference(entry)
+        const valueNode: TreeNode = this.tree.parse({
+          id: this.getNodeId(value),
+          raw: Object.assign({}, value),
+          atomic: false,
+          children: []
+        })
+        this.tree.addNode(valueNode, node)
+        await this.displayableLookup(value, valueNode)
+      }
+    }
+  }
+
   private async BlockInstanceToNode(obj, node) {
-    const definition = await this.resolveReference(obj.blockDefinition)
+    const definition = await this.resolveReference(this.getBlockDefinition(obj))
     node.model.raw.definition = definition
-    for (const def of definition.geometry) {
+    for (const def of this.getBlockDefinitionGeometry(definition)) {
       const ref = await this.resolveReference(def)
-      const childNode: TreeNode = WorldTree.getInstance().parse({
+      ref.id = ref.id + node.model.raw.transform.id
+      const childNode: TreeNode = this.tree.parse({
         id: this.getNodeId(ref),
         raw: Object.assign({}, ref),
-        atomic: true,
+        atomic: false,
         children: []
       })
-      WorldTree.getInstance().addNode(childNode, node)
-      // console.warn(
-      //   `Added child node with id ${childNode.model.id} to parent node ${node.model.id}`
-      // )
+      this.tree.addNode(childNode, node)
 
-      await this.convertToNode(ref, childNode)
+      await this.displayableLookup(ref, childNode)
+      const elements = this.getElementsValue(obj)
+      if (elements) {
+        for (const element of elements) {
+          const ref = await this.resolveReference(element)
+          const childNode: TreeNode = this.tree.parse({
+            id: this.getNodeId(ref),
+            raw: Object.assign({}, ref),
+            atomic: false,
+            children: []
+          })
+          childNode.model.raw.host = obj.id
+          this.tree.addNode(childNode, node)
+          await this.displayableLookup(ref, childNode)
+        }
+      }
     }
   }
 
@@ -329,25 +427,25 @@ export default class Coverter {
       if (!list) return
       for (const def of list) {
         const ref = await this.resolveReference(def)
-        const childNode: TreeNode = WorldTree.getInstance().parse({
+        const childNode: TreeNode = this.tree.parse({
           id: this.getNodeId(ref),
           raw: Object.assign({}, ref),
-          atomic: true,
+          atomic: false,
           children: []
         })
         if (hostId) {
           childNode.model.raw.host = hostId
         }
-        WorldTree.getInstance().addNode(childNode, node)
+        this.tree.addNode(childNode, node)
         await this.convertToNode(ref, childNode)
       }
     }
     const definition = await this.resolveReference(obj.definition)
     node.model.raw.definition = definition
 
-    await traverseList(definition.elements)
-    await traverseList(definition.displayValue)
-    await traverseList(obj.elements, obj.id)
+    await traverseList(this.getElementsValue(definition))
+    await traverseList(this.getDisplayValue(definition))
+    await traverseList(this.getElementsValue(obj), obj.id)
   }
 
   private async PointcloudToNode(obj, node) {
@@ -362,14 +460,14 @@ export default class Coverter {
       let displayValue = obj.displayValue || obj.displayMesh
       if (Array.isArray(displayValue)) displayValue = displayValue[0] //Just take the first display value for now (not ideal)
       const ref = await this.resolveReference(displayValue)
-      const nestedNode: TreeNode = WorldTree.getInstance().parse({
+      const nestedNode: TreeNode = this.tree.parse({
         id: this.getNodeId(ref),
         raw: Object.assign({}, ref),
         atomic: false,
         children: []
       })
       await this.convertToNode(ref, nestedNode)
-      WorldTree.getInstance().addNode(nestedNode, node)
+      this.tree.addNode(nestedNode, node)
 
       // deletes known unneeded fields
       delete obj.Edges
@@ -406,11 +504,59 @@ export default class Coverter {
     node.model.raw.colors = await this.dechunk(obj.colors)
   }
 
+  private async TextToNode(obj, node) {
+    return
+  }
+
+  private async DimensionToNode(obj, node) {
+    const displayValues = [...this.getDisplayValue(obj)]
+    for (const displayValue of displayValues) {
+      const childNode: TreeNode = this.tree.parse({
+        id: this.getNodeId(displayValue),
+        raw: Object.assign({}, displayValue),
+        atomic: false,
+        children: []
+      })
+      this.tree.addNode(childNode, node)
+      await this.convertToNode(displayValue, childNode)
+    }
+    /**
+     * YOLO
+     * - Dimensions of all types do not have information about text size
+     * - Positioning of the text is not consistent across dimension types
+     * - Angular Dimensions are broken
+     */
+    const textObj = JSON.parse(JSON.stringify(obj))
+    textObj.plane = textObj.RhinoProps.plane
+    const derivedType = this.getSpeckleTypeChain(textObj)[0]
+    switch (derivedType) {
+      case 'LengthDimension':
+        textObj.plane.origin = textObj.position
+        break
+      case 'DistanceDimension':
+        textObj.plane.origin = textObj.textPosition
+        break
+      case 'AngleDimension':
+        textObj.plane.origin = textObj.textPosition
+        break
+    }
+    textObj['speckle_type'] = 'Objects.Other.Text'
+    const textNode: TreeNode = this.tree.parse({
+      id: this.getNodeId(textObj),
+      raw: textObj,
+      atomic: false,
+      children: []
+    })
+    this.tree.addNode(textNode, node)
+    await this.convertToNode(textObj, textNode)
+  }
+
   private async PointToNode(obj, node) {
     return
   }
   private async LineToNode(obj, node) {
-    return
+    node.model.raw.start = Object.assign({}, obj.start)
+    node.model.raw.end = Object.assign({}, obj.end)
   }
 
   private async PolylineToNode(obj, node) {
@@ -432,7 +578,7 @@ export default class Coverter {
           element = await this.resolveReference(element)
         }
       }
-      const nestedNode: TreeNode = WorldTree.getInstance().parse({
+      const nestedNode: TreeNode = this.tree.parse({
         id: this.getNodeId(element),
         raw: Object.assign({}, element),
         atomic: false,
@@ -441,7 +587,7 @@ export default class Coverter {
       await this.convertToNode(element, nestedNode)
       /** We're not adding the segments as children since they shouldn't exist as individual line elements */
       node.model.nestedNodes.push(nestedNode)
-      // WorldTree.getInstance().addNode(nestedNode, node)
+      // WorldTree.getInstance(this.treeInstaceId).addNode(nestedNode, node)
     }
   }
 
@@ -452,16 +598,19 @@ export default class Coverter {
       )
       return
     }
+    node.model.nestedNodes = []
     const displayValue = await this.resolveReference(obj.displayValue)
     displayValue.units = displayValue.units || obj.units
-    const nestedNode: TreeNode = WorldTree.getInstance().parse({
+    const nestedNode: TreeNode = this.tree.parse({
       id: this.getNodeId(displayValue),
       raw: Object.assign({}, displayValue),
       atomic: false,
       children: []
     })
     await this.convertToNode(displayValue, nestedNode)
-    WorldTree.getInstance().addNode(nestedNode, node)
+    /** We're not adding the segments as children since they shouldn't exist as individual line elements */
+    node.model.nestedNodes.push(nestedNode)
+    // this.tree.addNode(nestedNode, node)
   }
 
   private async CircleToNode(obj, node) {

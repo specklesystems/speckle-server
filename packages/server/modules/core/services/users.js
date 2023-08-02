@@ -6,6 +6,11 @@ const {
   ServerAcl: ServerAclSchema,
   Users: UsersSchema
 } = require('@/modules/core/dbSchema')
+const {
+  validateUserPassword,
+  updateUserAndNotify,
+  MINIMUM_PASSWORD_LENGTH
+} = require('@/modules/core/services/users/management')
 
 const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
@@ -13,25 +18,26 @@ const Acl = () => ServerAclSchema.knex()
 const { deleteStream } = require('./streams')
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const { deleteAllUserInvites } = require('@/modules/serverinvites/repositories')
+const { getUserByEmail } = require('@/modules/core/repositories/users')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
+const { pick } = require('lodash')
 const { dbLogger } = require('@/logging/logging')
 const {
   UserInputError,
   PasswordTooShortError
 } = require('@/modules/core/errors/userinput')
+const { Roles } = require('@speckle/shared')
 
-const MINIMUM_PASSWORD_LENGTH = 8
-
-const changeUserRole = async ({ userId, role }) =>
+const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
 
 const countAdminUsers = async () => {
-  const [{ count }] = await Acl().where({ role: 'server:admin' }).count()
+  const [{ count }] = await Acl().where({ role: Roles.Server.Admin }).count()
   return parseInt(count)
 }
 const _ensureAtleastOneAdminRemains = async (userId) => {
   if ((await countAdminUsers()) === 1) {
-    const currentAdmin = await Acl().where({ role: 'server:admin' }).first()
+    const currentAdmin = await Acl().where({ role: Roles.Server.Admin }).first()
     if (currentAdmin.userId === userId) {
       throw new UserInputError('Cannot remove the last admin role from the server')
     }
@@ -60,9 +66,17 @@ module.exports = {
 
   /**
    * @param {{}} user
+   * @param {{skipPropertyValidation: boolean } | undefined} options
    * @returns {Promise<string>}
    */
-  async createUser(user) {
+  async createUser(user, options = undefined) {
+    // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
+    const { skipPropertyValidation = false } = options || {}
+
+    user = skipPropertyValidation
+      ? user
+      : pick(user, ['id', 'bio', 'email', 'password', 'name', 'company'])
+
     const newId = crs({ length: 10 })
     user.id = newId
     user.email = user.email.toLowerCase()
@@ -80,7 +94,8 @@ module.exports = {
     const [newUser] = (await Users().insert(user, UsersSchema.cols)) || []
     if (!newUser) throw new Error("Couldn't create user")
 
-    const userRole = (await countAdminUsers()) === 0 ? 'server:admin' : 'server:user'
+    const userRole =
+      (await countAdminUsers()) === 0 ? Roles.Server.Admin : Roles.Server.User
 
     await Acl().insert({ userId: newId, role: userRole })
 
@@ -142,14 +157,16 @@ module.exports = {
     return role
   },
 
+  /**
+   * @deprecated {Use updateUserAndNotify() or repo method directly}
+   */
   async updateUser(id, user) {
-    delete user.id
-    delete user.passwordDigest
-    delete user.password
-    delete user.email
-    await Users().where({ id }).update(user)
+    return await updateUserAndNotify(id, user)
   },
 
+  /**
+   * @deprecated {Use changePassword()}
+   */
   async updateUserPassword({ id, newPassword }) {
     if (newPassword.length < MINIMUM_PASSWORD_LENGTH)
       throw new PasswordTooShortError(MINIMUM_PASSWORD_LENGTH)
@@ -160,14 +177,14 @@ module.exports = {
   /**
    * User search available for normal server users. It's more limited because of the lower access level.
    */
-  async searchUsers(searchQuery, limit, cursor, archived = false) {
+  async searchUsers(searchQuery, limit, cursor, archived = false, emailOnly = false) {
     const query = Users()
       .join('server_acl', 'users.id', 'server_acl.userId')
       .select(...LIMITED_USER_FIELDS)
       .where((queryBuilder) => {
         queryBuilder.where({ email: searchQuery }) //match full email or partial name
-        queryBuilder.orWhere('name', 'ILIKE', `%${searchQuery}%`)
-        if (!archived) queryBuilder.andWhere('role', '!=', 'server:archived-user')
+        if (!emailOnly) queryBuilder.orWhere('name', 'ILIKE', `%${searchQuery}%`)
+        if (!archived) queryBuilder.andWhere('role', '!=', Roles.Server.ArchivedUser)
       })
 
     if (cursor) query.andWhere('users.createdAt', '<', cursor)
@@ -182,11 +199,16 @@ module.exports = {
     }
   },
 
+  /**
+   * @deprecated {Use validateUserPassword()}
+   */
   async validatePasssword({ email, password }) {
-    const { passwordDigest } = await userByEmailQuery(email)
-      .select('passwordDigest')
-      .first()
-    return bcrypt.compare(password, passwordDigest)
+    const user = await getUserByEmail(email, { skipClean: true })
+    if (!user) return false
+    return await validateUserPassword({
+      password,
+      user
+    })
   },
 
   async deleteUser(id) {
@@ -201,13 +223,13 @@ module.exports = {
         -- Compute (streamId, ownerCount) table for streams on which the user is owner
         SELECT acl."resourceId", count(*) as cnt
         FROM stream_acl acl
-        INNER JOIN 
+        INNER JOIN
           (
           -- Get streams ids on which the user is owner
           SELECT "resourceId" FROM stream_acl
-          WHERE role = 'stream:owner' AND "userId" = ?
+          WHERE role = '${Roles.Stream.Owner}' AND "userId" = ?
           ) AS us ON acl."resourceId" = us."resourceId"
-        WHERE acl.role = 'stream:owner'
+        WHERE acl.role = '${Roles.Stream.Owner}'
         GROUP BY (acl."resourceId")
       ) AS soc
       WHERE cnt = 1
@@ -242,25 +264,18 @@ module.exports = {
     return users
   },
 
-  async makeUserAdmin({ userId }) {
-    await changeUserRole({ userId, role: 'server:admin' })
-  },
-
-  async unmakeUserAdmin({ userId }) {
-    // dont delete last admin role
-    await _ensureAtleastOneAdminRemains(userId)
-    await changeUserRole({ userId, role: 'server:user' })
-  },
-
-  async archiveUser({ userId }) {
-    // dont change last admin to archived
-    await _ensureAtleastOneAdminRemains(userId)
-    await changeUserRole({ userId, role: 'server:archived-user' })
-  },
-
   async countUsers(searchQuery = null) {
     const query = getUsersBaseQuery(searchQuery)
     const [userCount] = await query.count()
     return parseInt(userCount.count)
+  },
+
+  async changeUserRole({ userId, role, guestModeEnabled = false }) {
+    if (!Object.values(Roles.Server).includes(role))
+      throw new UserInputError(`Invalid role specified: ${role}`)
+    if (!guestModeEnabled && role === Roles.Server.Guest)
+      throw new UserInputError('Guest role is not enabled')
+    if (role !== Roles.Server.Admin) await _ensureAtleastOneAdminRemains(userId)
+    await _changeUserRole({ userId, role })
   }
 }

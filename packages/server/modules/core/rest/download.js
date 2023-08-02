@@ -1,6 +1,6 @@
 'use strict'
 const zlib = require('zlib')
-const cors = require('cors')
+const { corsMiddleware } = require('@/modules/core/configs/cors')
 
 const { validatePermissionsReadStream } = require('./authUtils')
 
@@ -9,9 +9,9 @@ const { SpeckleObjectsStream } = require('./speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
 const { logger } = require('@/logging/logging')
 module.exports = (app) => {
-  app.options('/objects/:streamId/:objectId', cors())
+  app.options('/objects/:streamId/:objectId', corsMiddleware())
 
-  app.get('/objects/:streamId/:objectId', cors(), async (req, res) => {
+  app.get('/objects/:streamId/:objectId', corsMiddleware(), async (req, res) => {
     const boundLogger = logger.child({
       userId: req.context.userId || '-',
       streamId: req.params.streamId,
@@ -69,8 +69,8 @@ module.exports = (app) => {
     )
   })
 
-  app.options('/objects/:streamId/:objectId/single', cors())
-  app.get('/objects/:streamId/:objectId/single', cors(), async (req, res) => {
+  app.options('/objects/:streamId/:objectId/single', corsMiddleware())
+  app.get('/objects/:streamId/:objectId/single', corsMiddleware(), async (req, res) => {
     const boundLogger = logger.child({
       userId: req.context.userId || '-',
       streamId: req.params.streamId,

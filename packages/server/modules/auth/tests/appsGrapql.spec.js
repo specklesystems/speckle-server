@@ -11,6 +11,7 @@ const {
   createAuthorizationCode,
   createAppTokenFromAccessCode
 } = require('../services/apps')
+const { Scopes } = require('@speckle/shared')
 
 let sendRequest
 let server
@@ -33,9 +34,9 @@ describe('GraphQL @apps-api', () => {
 
     testUser.id = await createUser(testUser)
     testToken = `Bearer ${await createPersonalAccessToken(testUser.id, 'test token', [
-      'profile:read',
-      'apps:read',
-      'apps:write'
+      Scopes.Profile.Read,
+      Scopes.Apps.Read,
+      Scopes.Apps.Write
     ])}`
 
     testUser2 = {
@@ -46,9 +47,9 @@ describe('GraphQL @apps-api', () => {
 
     testUser2.id = await createUser(testUser2)
     testToken2 = `Bearer ${await createPersonalAccessToken(testUser2.id, 'test token', [
-      'profile:read',
-      'apps:read',
-      'apps:write'
+      Scopes.Profile.Read,
+      Scopes.Apps.Read,
+      Scopes.Apps.Write
     ])}`
   })
 
@@ -67,7 +68,7 @@ describe('GraphQL @apps-api', () => {
         name: 'Test App',
         public: true,
         description: 'Test App Description',
-        scopes: ['streams:read'],
+        scopes: [Scopes.Streams.Read],
         redirectUrl: 'lol://what'
       }
     }
@@ -88,7 +89,7 @@ describe('GraphQL @apps-api', () => {
       myApp: {
         name: 'Test App',
         description: 'Test App Description',
-        scopes: ['streams:read'],
+        scopes: [Scopes.Streams.Read],
         redirectUrl: 'lol://what'
       }
     }
@@ -132,7 +133,7 @@ describe('GraphQL @apps-api', () => {
     expect(res).to.be.json
     expect(res.body.errors).to.not.exist
     expect(res.body.data.apps).to.be.an('array')
-    expect(res.body.data.apps.length).to.equal(7)
+    expect(res.body.data.apps.length).to.equal(8)
   })
 
   it('Should get app info without secret if not authenticated and owner', async () => {
@@ -160,7 +161,7 @@ describe('GraphQL @apps-api', () => {
         id: testAppId,
         name: 'Updated Test App',
         description: 'Test App Description',
-        scopes: ['streams:read'],
+        scopes: [Scopes.Streams.Read],
         redirectUrl: 'lol://what'
       }
     }
@@ -192,7 +193,7 @@ describe('GraphQL @apps-api', () => {
         name: 'Another Test App',
         public: false,
         description: 'Test App Description',
-        scopes: ['streams:read'],
+        scopes: [Scopes.Streams.Read],
         redirectUrl: 'lol://what'
       }
     }
@@ -203,7 +204,7 @@ describe('GraphQL @apps-api', () => {
         name: 'The n-th Test App',
         public: false,
         description: 'Test App Description',
-        scopes: ['streams:read'],
+        scopes: [Scopes.Streams.Read],
         redirectUrl: 'lol://what'
       }
     }

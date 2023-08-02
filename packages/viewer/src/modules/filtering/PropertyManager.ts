@@ -2,9 +2,7 @@ import flatten from '../../helpers/flatten'
 import { TreeNode, WorldTree } from '../tree/WorldTree'
 
 export class PropertyManager {
-  private static WT: WorldTree = WorldTree.getInstance()
-
-  private static propCache = {} as Record<string, PropertyInfo[]>
+  private propCache = {} as Record<string, PropertyInfo[]>
 
   /**
    *
@@ -12,11 +10,12 @@ export class PropertyManager {
    * @param bypassCache Forces a full rescan if set to true.
    * @returns a list of property infos containing basic information for filtering purposes.
    */
-  public static getProperties(
+  public getProperties(
+    tree: WorldTree,
     resourceUrl: string = null,
     bypassCache = false
   ): PropertyInfo[] {
-    let rootNode: TreeNode = PropertyManager.WT.root
+    let rootNode: TreeNode = tree.root
 
     if (!bypassCache && this.propCache[resourceUrl ? resourceUrl : rootNode.model.id])
       return this.propCache[resourceUrl ? resourceUrl : rootNode.model.id]
@@ -31,7 +30,7 @@ export class PropertyManager {
 
     const propValues = {}
 
-    PropertyManager.WT.walk((node: TreeNode) => {
+    tree.walk((node: TreeNode) => {
       if (!node.model.atomic) return true
       const obj = flatten(node.model.raw)
       for (const key in obj) {
@@ -89,23 +88,44 @@ export class PropertyManager {
   }
 }
 
+/**
+ * PropertyInfo types represent all of the properties that you can filter on in the viewer
+ */
+
 export interface PropertyInfo {
+  /**
+   * Property identifier, flattened
+   */
   key: string
-  count: number
+  /**
+   * Total number of objects that have this property
+   */
   objectCount: number
   type: 'number' | 'string'
 }
 
 export interface NumericPropertyInfo extends PropertyInfo {
   type: 'number'
+  /**
+   * Absolute min/max values that are available for this property
+   */
   min: number
   max: number
+  /**
+   * An array of pairs of object IDs and their actual values for that property
+   */
   valueGroups: { value: number; id: string }[]
+  /**
+   * User defined/filtered min/max that is bound within min/max above
+   */
   passMin: number | null
   passMax: number | null
 }
 
 export interface StringPropertyInfo extends PropertyInfo {
-  type: 'number'
+  type: 'string'
+  /**
+   * An array of pairs of object IDs and their actual values for that property
+   */
   valueGroups: { value: string; ids: string[] }[]
 }

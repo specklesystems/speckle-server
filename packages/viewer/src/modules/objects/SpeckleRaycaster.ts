@@ -1,5 +1,52 @@
-import { Object3D, Raycaster } from 'three'
+import { Box3, Intersection, Material, Object3D, Raycaster } from 'three'
+import { ExtendedTriangle, ShapecastIntersection } from 'three-mesh-bvh'
+import { BatchObject } from '../batching/BatchObject'
 import { ObjectLayers } from '../SpeckleRenderer'
+
+export type ExtendedShapeCastCallbacks = {
+  intersectsTAS?: (
+    box: Box3,
+    isLeaf: boolean,
+    score: number | undefined,
+    depth: number,
+    nodeIndex: number
+  ) => ShapecastIntersection | boolean
+
+  intersectsBounds: (
+    box: Box3,
+    isLeaf: boolean,
+    score: number | undefined,
+    depth: number,
+    nodeIndex: number
+  ) => ShapecastIntersection | boolean
+
+  traverseBoundsOrder?: (box: Box3) => number
+} & (
+  | {
+      intersectsRange: (
+        triangleOffset: number,
+        triangleCount: number,
+        contained: boolean,
+        depth: number,
+        nodeIndex: number,
+        box: Box3
+      ) => boolean
+    }
+  | {
+      intersectsTriangle: (
+        triangle: ExtendedTriangle,
+        triangleIndex: number,
+        contained: boolean,
+        depth: number,
+        batchObject?: BatchObject
+      ) => boolean | void
+    }
+)
+
+export interface ExtendedIntersection extends Intersection {
+  batchObject?: BatchObject
+  material?: Material
+}
 
 export class SpeckleRaycaster extends Raycaster {
   public onObjectIntersectionTest: (object: Object3D) => void = null
@@ -10,6 +57,7 @@ export class SpeckleRaycaster extends Raycaster {
     this.layers.enable(ObjectLayers.STREAM_CONTENT)
     this.layers.enable(ObjectLayers.STREAM_CONTENT_MESH)
     this.layers.enable(ObjectLayers.STREAM_CONTENT_LINE)
+    this.layers.enable(ObjectLayers.STREAM_CONTENT_TEXT)
     // OFF by default
     // this.layers.enable(ObjectLayers.STREAM_CONTENT_POINT)
   }

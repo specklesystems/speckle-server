@@ -8,6 +8,13 @@ import {
 import { RequestDataLoaders } from '@/modules/core/loaders'
 import { AuthContext } from '@/modules/shared/authz'
 import { Express } from 'express'
+import { ConditionalKeys, SetRequired } from 'type-fest'
+import pino from 'pino'
+
+export type MarkNullableOptional<T> = SetRequired<
+  Partial<T>,
+  ConditionalKeys<T, NonNullable<unknown>>
+>
 
 export type SpeckleModule<T extends Record<string, unknown> = Record<string, unknown>> =
   {
@@ -17,7 +24,7 @@ export type SpeckleModule<T extends Record<string, unknown> = Record<string, unk
      * @param isInitial Whether this initialization method is being invoked for the first time in this
      * process. In tests modules can be initialized multiple times.
      */
-    init: (app: Express, isInitial: boolean) => MaybeAsync<void>
+    init?: (app: Express, isInitial: boolean) => MaybeAsync<void>
     /**
      * Finalize initialization. This is only invoked once all of the other modules' `init()`
      * hooks are run.
@@ -39,6 +46,8 @@ export type GraphQLContext = AuthContext & {
    * @see https://github.com/graphql/dataloader
    */
   loaders: RequestDataLoaders
+
+  log: pino.Logger
 }
 
 export { Nullable, Optional, MaybeNullOrUndefined, MaybeAsync, MaybeFalsy }

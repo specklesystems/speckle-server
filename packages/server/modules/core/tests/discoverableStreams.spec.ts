@@ -17,6 +17,7 @@ import {
   buildUnauthenticatedApolloServer
 } from '@/test/serverHelper'
 import { BasicTestStream, createTestStream } from '@/test/speckle-helpers/streamHelper'
+import { wait } from '@speckle/shared'
 import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
 import dayjs from 'dayjs'
@@ -86,12 +87,12 @@ describe('Discoverable streams', () => {
       }
       readableDiscoverableStreams.push(newStream)
       await createTestStream(newStream, owner)
+      await wait(5)
     }
 
     // Favoriting some of them - stream with 5 favorites, stream with 4 favorites, then 3 and so on...
     const favoriters = shuffle(allUsers.slice())
     const favoritableStreams = shuffle(readableDiscoverableStreams.slice())
-    const favoritePromises: Promise<unknown>[] = []
 
     for (let i = favoriters.length; i > 0; i--) {
       const currentFavoriters = favoriters.slice(0, i)
@@ -101,16 +102,14 @@ describe('Discoverable streams', () => {
         const favoriter = currentFavoriters.pop()
         if (!favoriter) break
 
-        favoritePromises.push(
-          setStreamFavorited({
-            streamId: currentStream.id,
-            userId: favoriter.id,
-            favorited: true
-          })
-        )
+        await setStreamFavorited({
+          streamId: currentStream.id,
+          userId: favoriter.id,
+          favorited: true
+        })
+        await wait(5)
       }
     }
-    await Promise.all(favoritePromises)
 
     apollo = await buildUnauthenticatedApolloServer()
   })

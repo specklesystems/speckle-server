@@ -1,4 +1,4 @@
-version: '2'
+version: '2.3'
 services:
   ####
   # Speckle Server dependencies
@@ -47,9 +47,18 @@ services:
   speckle-server:
     image: speckle/speckle-server:2
     restart: always
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "try { require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/graphql?query={serverInfo{version}}', method: 'GET', timeout: 2000 }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end(); } catch { process.exit(1); }"
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
     ports:
       - '127.0.0.1:3000:3000'
-    command: ['bash', '-c', '/wait && node bin/www']
     environment:
       CANONICAL_URL: 'TODO: change'
       SESSION_SECRET: 'TODO: change'
@@ -88,7 +97,6 @@ services:
     restart: always
     mem_limit: '1000m'
     memswap_limit: '1000m'
-    command: ['bash', '-c', '/wait && node bin/www']
 
     environment:
       LOG_LEVEL: 'info'
@@ -98,7 +106,6 @@ services:
   speckle-webhook-service:
     image: speckle/speckle-webhook-service:2
     restart: always
-    command: ['bash', '-c', '/wait && node main.js']
     environment:
       LOG_LEVEL: 'info'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
@@ -107,7 +114,6 @@ services:
   fileimport-service:
     image: speckle/speckle-fileimport-service:2
     restart: always
-    command: ['bash', '-c', '/wait && node src/daemon.js']
     environment:
       LOG_LEVEL: 'info'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'

@@ -1,0 +1,308 @@
+extend type Project {
+  """
+  Returns a flat list of all models
+  """
+  models(
+    cursor: String
+    limit: Int! = 25
+    filter: ProjectModelsFilter
+  ): ModelCollection!
+  """
+  Return's a project's models in a tree view with submodels being nested under parent models
+  real or fake (e.g., with a foo/bar model, it will be nested under foo even if such a model doesn't actually exist)
+  """
+  modelsTree(
+    cursor: String
+    limit: Int! = 25
+    filter: ProjectModelsTreeFilter
+  ): ModelsTreeItemCollection!
+  """
+  Returns a specific model by its ID
+  """
+  model(id: String!): Model!
+  """
+  Return a model tree of children for the specified model name
+  """
+  modelChildrenTree(fullName: String!): [ModelsTreeItem!]!
+  """
+  Return metadata about resources being requested in the viewer
+  """
+  viewerResources(
+    resourceIdString: String!
+    loadedVersionsOnly: Boolean = true
+  ): [ViewerResourceGroup!]!
+  """
+  Returns a flat list of all project versions
+  """
+  versions(limit: Int! = 25, cursor: String): VersionCollection!
+}
+
+input ProjectModelsTreeFilter {
+  """
+  Search for specific models. If used, tree items from different levels may be mixed.
+  """
+  search: String
+  """
+  Filter by source apps used in models
+  """
+  sourceApps: [String!]
+  """
+  Filter by IDs of contributors who participated in models
+  """
+  contributors: [String!]
+}
+
+type ViewerResourceGroup {
+  """
+  Resource identifier used to refer to a collection of resource items
+  """
+  identifier: String!
+  """
+  Viewer resources that the identifier refers to
+  """
+  items: [ViewerResourceItem!]!
+}
+
+type ViewerResourceItem {
+  """
+  Null if resource represents an object
+  """
+  modelId: String
+  """
+  Null if resource represents an object
+  """
+  versionId: String
+  objectId: String!
+}
+
+type Model {
+  id: ID!
+  """
+  Full name including the names of parent models delimited by forward slashes
+  """
+  name: String!
+  """
+  The shortened/display name that doesn't include the names of parent models
+  """
+  displayName: String!
+  author: LimitedUser!
+  description: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  previewUrl: String
+  """
+  Return a model tree of children
+  """
+  childrenTree: [ModelsTreeItem!]!
+  version(id: String!): Version!
+  versions(
+    limit: Int! = 25
+    cursor: String
+    filter: ModelVersionsFilter
+  ): VersionCollection!
+}
+
+type ModelCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Model!]!
+}
+
+type ModelsTreeItemCollection {
+  totalCount: Int!
+  cursor: String
+  items: [ModelsTreeItem!]!
+}
+
+input CreateModelInput {
+  projectId: ID!
+  name: String!
+}
+
+input UpdateModelInput {
+  projectId: ID!
+  id: ID!
+  name: String!
+}
+
+input DeleteModelInput {
+  projectId: ID!
+  id: ID!
+}
+
+type ModelMutations {
+  create(input: CreateModelInput!): Model!
+  update(input: UpdateModelInput!): Model!
+  delete(input: DeleteModelInput!): Boolean!
+}
+
+input MoveVersionsInput {
+  versionIds: [String!]!
+  """
+  If the name references a nonexistant model, it will be created
+  """
+  targetModelName: String!
+}
+
+input DeleteVersionsInput {
+  versionIds: [String!]!
+}
+
+"""
+Only non-null values will be updated
+"""
+input UpdateVersionInput {
+  versionId: String!
+  message: String
+}
+
+type VersionMutations {
+  moveToModel(input: MoveVersionsInput!): Model!
+  delete(input: DeleteVersionsInput!): Boolean!
+  update(input: UpdateVersionInput!): Version!
+}
+
+extend type Mutation {
+  modelMutations: ModelMutations!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:write")
+
+  versionMutations: VersionMutations!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:write")
+}
+
+type ModelsTreeItem {
+  id: ID!
+  name: String!
+  fullName: String!
+  """
+  Nullable cause the item can represent a parent that doesn't actually exist as a model on its own.
+  E.g. A model named "foo/bar" is supposed to be a child of "foo" and will be represented as such,
+  even if "foo" doesn't exist as its own model.
+  """
+  model: Model
+  """
+  Whether or not this item has nested children models
+  """
+  hasChildren: Boolean!
+  children: [ModelsTreeItem!]!
+  updatedAt: DateTime!
+}
+
+type Version {
+  id: ID!
+  referencedObject: String!
+  message: String
+  sourceApplication: String
+  authorUser: LimitedUser
+  createdAt: DateTime!
+  model: Model!
+  previewUrl: String!
+}
+
+type VersionCollection {
+  totalCount: Int!
+  cursor: String
+  items: [Version!]!
+}
+
+input ProjectModelsFilter {
+  """
+  Filter by model names
+  """
+  search: String
+  """
+  Filter by source apps used in models
+  """
+  sourceApps: [String!]
+  """
+  Filter by IDs of contributors who participated in models
+  """
+  contributors: [String!]
+  """
+  Filter out models that don't have any versions
+  """
+  onlyWithVersions: Boolean
+  """
+  Only select models w/ the specified IDs
+  """
+  ids: [String!]
+  """
+  Excldue models w/ the specified IDs
+  """
+  excludeIds: [String!]
+}
+
+input ModelVersionsFilter {
+  """
+  Make sure these specified versions are always loaded first
+  """
+  priorityIds: [String!]
+
+  """
+  Only return versions specified in `priorityIds`
+  """
+  priorityIdsOnly: Boolean
+}
+
+enum ProjectModelsUpdatedMessageType {
+  CREATED
+  UPDATED
+  DELETED
+}
+
+type ProjectModelsUpdatedMessage {
+  type: ProjectModelsUpdatedMessageType!
+  """
+  Model ID
+  """
+  id: String!
+  """
+  Null if model was deleted
+  """
+  model: Model
+}
+
+enum ProjectVersionsUpdatedMessageType {
+  CREATED
+  UPDATED
+  DELETED
+}
+
+type ProjectVersionsUpdatedMessage {
+  type: ProjectVersionsUpdatedMessageType!
+  """
+  Version ID
+  """
+  id: String!
+  """
+  Null if version was deleted
+  """
+  version: Version
+  """
+  Only set if version was deleted, in other scenarios can be queried from 'version'
+  """
+  modelId: String
+}
+
+type ProjectVersionsPreviewGeneratedMessage {
+  projectId: String!
+  objectId: String!
+  versionId: String!
+}
+
+extend type Subscription {
+  """
+  Subscribe to changes to a project's models. Optionally specify modelIds to track.
+  """
+  projectModelsUpdated(id: String!, modelIds: [String!]): ProjectModelsUpdatedMessage!
+  """
+  Subscribe to changes to a project's versions.
+  """
+  projectVersionsUpdated(id: String!): ProjectVersionsUpdatedMessage!
+  """
+  Subscribe to when a project's versions get their preview image fully generated.
+  """
+  projectVersionsPreviewGenerated(id: String!): ProjectVersionsPreviewGeneratedMessage!
+}

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { BaseMetaRecord } from '@/modules/core/helpers/meta'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerRoles } from '@speckle/shared'
 
@@ -26,6 +28,10 @@ export type LimitedUserRecord = Pick<
   UserRecord,
   'id' | 'name' | 'bio' | 'company' | 'verified' | 'avatar' | 'createdAt'
 >
+
+export type UsersMetaRecord<V = any> = {
+  userId: string
+} & BaseMetaRecord<V>
 
 export type ServerAclRecord = {
   userId: string
@@ -67,6 +73,7 @@ export type ServerConfigRecord = {
   canonicalUrl: string
   completed: boolean
   inviteOnly: boolean
+  guestModeEnabled: boolean
 }
 
 export type ServerInfo = ServerConfigRecord & {
@@ -79,12 +86,12 @@ export type ServerInfo = ServerConfigRecord & {
 export type CommitRecord = {
   id: string
   referencedObject: string
-  author: string
-  message: string
+  author: Nullable<string>
+  message: Nullable<string>
   createdAt: Date
   sourceApplication: Nullable<string>
   totalChildrenCount: Nullable<number>
-  parents: Nullable<string>
+  parents: Nullable<string[]>
 }
 
 export type BranchCommitRecord = {

@@ -11,7 +11,7 @@ import {
   Vector2,
   WebGLRenderTarget
 } from 'three'
-import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass'
+import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 import { speckleSaoFrag } from '../materials/shaders/speckle-sao-frag'
 import { speckleSaoVert } from '../materials/shaders/speckle-sao-vert'
 import { SAOShader } from 'three/examples/jsm/shaders/SAOShader.js'

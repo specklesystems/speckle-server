@@ -5,7 +5,7 @@ export const branchCreatedSubscription = gql`
     branchCreated(streamId: $streamId)
   }
 `
-
+// TODO: Reusable composable
 export const streamNavBranchesQuery = gql`
   query StreamAllBranches($streamId: String!, $cursor: String) {
     stream(id: $streamId) {

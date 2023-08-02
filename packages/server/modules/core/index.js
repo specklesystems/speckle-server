@@ -1,5 +1,9 @@
 const { registerOrUpdateScope, registerOrUpdateRole } = require('@/modules/shared')
 const { moduleLogger } = require('@/logging/logging')
+const {
+  setupResultListener,
+  shutdownResultListener
+} = require('@/modules/core/utils/dbNotificationListener')
 const mp = require('@/modules/shared/utils/mixpanel')
 
 exports.init = async (app) => {
@@ -27,8 +31,15 @@ exports.init = async (app) => {
     await registerOrUpdateRole(role)
   }
 
+  // Setup global pg notification listener
+  setupResultListener()
+
   // Init mp
   mp.initialize()
 }
 
 exports.finalize = () => {}
+
+exports.shutdown = () => {
+  shutdownResultListener()
+}

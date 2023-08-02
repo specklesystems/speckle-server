@@ -11,8 +11,35 @@ generates:
       contextType: '@/modules/shared/helpers/typeHelper#GraphQLContext'
       mappers:
         Stream: '@/modules/core/helpers/graphTypes#StreamGraphQLReturn'
+        Commit: '@/modules/core/helpers/graphTypes#CommitGraphQLReturn'
+        Project: '@/modules/core/helpers/graphTypes#ProjectGraphQLReturn'
+        Version: '@/modules/core/helpers/graphTypes#VersionGraphQLReturn'
+        Model: '@/modules/core/helpers/graphTypes#ModelGraphQLReturn'
+        ModelsTreeItem: '@/modules/core/helpers/graphTypes#ModelsTreeItemGraphQLReturn'
         StreamAccessRequest: '@/modules/accessrequests/helpers/graphTypes#StreamAccessRequestGraphQLReturn'
         LimitedUser: '@/modules/core/helpers/graphTypes#LimitedUserGraphQLReturn'
+        ActiveUserMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        ProjectMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        ProjectInviteMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        ModelMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        VersionMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        CommentMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        AdminQueries: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
+        ServerStatistics: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
+        CommentReplyAuthorCollection: '@/modules/comments/helpers/graphTypes#CommentReplyAuthorCollectionGraphQLReturn'
+        Comment: '@/modules/comments/helpers/graphTypes#CommentGraphQLReturn'
+        PendingStreamCollaborator: '@/modules/serverinvites/helpers/graphTypes#PendingStreamCollaboratorGraphQLReturn'
+        FileUpload: '@/modules/fileuploads/helpers/types#FileUploadGraphQLReturn'
+  modules/cross-server-sync/graph/generated/graphql.ts:
+    plugins:
+      - 'typescript'
+      - 'typescript-operations'
+    documents:
+      - 'modules/cross-server-sync/**/*.{js,ts}'
+    config:
+      scalars:
+        JSONObject: Record<string, unknown>
+        DateTime: string
   test/graphql/generated/graphql.ts:
     plugins:
       - 'typescript'

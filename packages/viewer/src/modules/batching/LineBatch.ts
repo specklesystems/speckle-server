@@ -5,17 +5,17 @@ import {
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
   Line,
+  Material,
   Object3D,
   Vector4,
   WebGLRenderer
 } from 'three'
-import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2'
-import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry'
+import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
+import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
 import { Geometry } from '../converter/Geometry'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { ObjectLayers } from '../SpeckleRenderer'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { Viewer } from '../Viewer'
 import {
   AllBatchUpdateRange,
   Batch,
@@ -32,12 +32,22 @@ export default class LineBatch implements Batch {
   public batchMaterial: SpeckleLineMaterial
   private mesh: LineSegments2 | Line
   public colorBuffer: InstancedInterleavedBuffer
+  private insertedRanges: BatchUpdateRange[] = []
   private static readonly vector4Buffer: Vector4 = new Vector4()
+
+  public get bounds() {
+    if (!this.geometry.boundingBox) this.geometry.computeBoundingBox()
+    return this.geometry.boundingBox
+  }
 
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
     this.id = id
     this.subtreeId = subtreeId
     this.renderViews = renderViews
+  }
+
+  updateBatchObjects() {
+    // TO DO
   }
 
   public get renderObject(): Object3D {
@@ -118,7 +128,8 @@ export default class LineBatch implements Batch {
         materialOptions && materialOptions.rampIndexColor
           ? materialOptions.rampIndexColor
           : material.color
-      const alpha: number = material.visible ? 1 : 0
+      const alpha: number = material.visible ? material.opacity : 0
+      this.batchMaterial.transparent ||= material.opacity < 1
       const start = ranges[i].offset * this.colorBuffer.stride
       const len =
         ranges[i].offset * this.colorBuffer.stride +
@@ -137,6 +148,33 @@ export default class LineBatch implements Batch {
     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
   }
 
+  insertDrawRanges(...ranges: BatchUpdateRange[]) {
+    for (let k = 0; k < ranges.length; k++) {
+      const start = ranges[k].offset * this.colorBuffer.stride
+      const data = this.colorBuffer.array as number[]
+      const materialOptions = {
+        rampIndexColor: new Color(data[start], data[start + 1], data[start + 2])
+      }
+      this.insertedRanges.push({
+        offset: ranges[k].offset,
+        count: ranges[k].count,
+        material: ranges[k].material,
+        materialOptions,
+        id: ranges[k].id
+      })
+    }
+    this.setDrawRanges(...ranges)
+  }
+
+  removeDrawRanges(id: string) {
+    const ranges = this.insertedRanges.filter((value) => value.id === id)
+    if (!ranges.length) {
+      return
+    }
+    this.setDrawRanges(...ranges)
+    this.insertedRanges = this.insertedRanges.filter((value) => !ranges.includes(value))
+  }
+
   autoFillDrawRanges() {
     // to do
   }
@@ -149,6 +187,7 @@ export default class LineBatch implements Batch {
     })
     this.mesh.material = this.batchMaterial
     this.mesh.visible = true
+    this.batchMaterial.transparent = false
   }
 
   public buildBatch() {
@@ -215,10 +254,14 @@ export default class LineBatch implements Batch {
     }
   }
 
+  public getMaterialAtIndex(index: number): Material {
+    index
+    return this.batchMaterial
+  }
+
   private makeLineGeometry(position: Float64Array) {
     this.geometry = this.makeLineGeometryTriangle(new Float32Array(position))
     Geometry.updateRTEGeometry(this.geometry, position)
-    Viewer.World.expandWorld(this.geometry.boundingBox)
   }
 
   private makeLineGeometryTriangle(position: Float32Array): LineSegmentsGeometry {

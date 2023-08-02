@@ -22,7 +22,11 @@ spec:
       - name: main
         image: speckle/speckle-server:{{ .Values.docker_image_tag }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
-
+        args: #overwrites the Dockerfile CMD statement
+        {{- if .Values.server.inspect.enabled }}
+          - {{ printf "--inspect=%s" .Values.server.inspect.port }}
+        {{- end }}
+          - "bin/www"
         ports:
           - name: http
             containerPort: {{ include "server.port" $ }}
@@ -60,7 +64,6 @@ spec:
             exec:
               command: ["sleep", "5"]
 
-
         livenessProbe:
           # account for long-running migrations
           initialDelaySeconds: 600
@@ -70,7 +73,7 @@ spec:
             command:
               - node
               - -e
-              - "require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/graphql?query={serverInfo{version}}', method: 'GET' }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end();"
+              - "try { require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/graphql?query={serverInfo{version}}', method: 'GET', timeout: 2000 }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end(); } catch { process.exit(1); }"
 
         readinessProbe:
           initialDelaySeconds: 5
@@ -80,7 +83,7 @@ spec:
             command:
               - node
               - -e
-              - "require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/graphql?query={serverInfo{version}}', method: 'GET' }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end();"
+              - "try { require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/graphql?query={serverInfo{version}}', method: 'GET', timeout: 2000 }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end(); } catch { process.exit(1); }"
 
         env:
           - name: CANONICAL_URL
@@ -95,6 +98,21 @@ spec:
           - name: LOG_LEVEL
             value: {{ .Values.server.logLevel }}
 
+          - name: USE_FRONTEND_2
+            value: {{ .Values.frontend_2.enabled | quote }}
+
+          - name: FRONTEND_ORIGIN
+            {{- if .Values.ssl_canonical_url }}
+            value: https://{{ .Values.domain }}
+            {{- else }}
+            value: http://{{ .Values.domain }}
+            {{- end }}
+
+          - name: ONBOARDING_STREAM_URL
+            value: {{ .Values.server.onboarding.stream_url }}
+          - name: ONBOARDING_STREAM_CACHE_BUST_NUMBER
+            value: {{ .Values.server.onboarding.stream_cache_bust_number | quote }}
+
           - name: SESSION_SECRET
             valueFrom:
               secretKeyRef:
@@ -103,6 +121,12 @@ spec:
 
           - name: FILE_SIZE_LIMIT_MB
             value: {{ .Values.file_size_limit_mb | quote }}
+
+          - name: MAX_OBJECT_SIZE_MB
+            value: {{ .Values.server.max_object_size_mb | quote }}
+
+          - name: SPECKLE_AUTOMATE_URL
+            value: {{ .Values.server.speckleAutomateUrl }}
 
           # *** Redis ***
           - name: REDIS_URL
@@ -143,6 +167,9 @@ spec:
           - name: ENABLE_MP
             value: {{ default "true" ( .Values.server.monitoring.mp.enabled | quote) }}
           {{- end }}
+
+          - name: NODE_TLS_REJECT_UNAUTHORIZED
+            value: {{ .Values.tlsRejectUnauthorized | quote }}
 
           # *** S3 Object Storage ***
           {{- if (or .Values.s3.configMap.enabled .Values.s3.endpoint) }}
@@ -251,6 +278,29 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.server.email.password.secretName }}
                 key: {{ default "email_password" .Values.server.email.password.secretKey }}
+          - name: EMAIL_FROM
+            value: "{{ .Values.server.email.from }}"
+          {{- end }}
+
+          # *** Newsletter ***
+          {{- if (default false (.Values.server.mailchimp).enabled) }}
+          - name: MAILCHIMP_ENABLED
+            value: {{ default false (.Values.server.mailchimp).enabled }}
+          - name: MAILCHIMP_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName ((.Values.server.mailchimp).apikey).secretName }}
+                key: {{ default "mailchimp_apikey" ((.Values.server.mailchimp).apikey).secretKey }}
+          - name: MAILCHIMP_SERVER_PREFIX
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName ((.Values.server.mailchimp).serverprefix).secretName }}
+                key: {{ default "mailchimp_serverprefix" ((.Values.server.mailchimp).serverprefix).secretKey }}
+          - name: MAILCHIMP_LIST_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName ((.Values.server.mailchimp).listid).secretName }}
+                key: {{ default "mailchimp_listid" ((.Values.server.mailchimp).listid).secretKey }}
           {{- end }}
 
           # *** Tracking / Tracing ***
@@ -286,6 +336,96 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.server.monitoring.apollo.key.secretName }}
                 key: {{ default "apollo_key" .Values.server.monitoring.apollo.key.secretKey }}
+          {{- end }}
+
+          # Rate Limiting
+          {{- if .Values.server.ratelimiting.all_requests }}
+          - name: RATELIMIT_ALL_REQUESTS
+            value: "{{ .Values.server.ratelimiting.all_requests }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_all_requests }}
+          - name: RATELIMIT_BURST_ALL_REQUESTS
+            value: "{{ .Values.server.ratelimiting.burst_all_requests }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.user_create }}
+          - name: RATELIMIT_USER_CREATE
+            value: "{{ .Values.server.ratelimiting.user_create }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_user_create }}
+          - name: RATELIMIT_BURST_USER_CREATE
+            value: "{{ .Values.server.ratelimiting.burst_user_create }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.stream_create }}
+          - name: RATELIMIT_STREAM_CREATE
+            value: "{{ .Values.server.ratelimiting.stream_create }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_stream_create }}
+          - name: RATELIMIT_BURST_STREAM_CREATE
+            value: "{{ .Values.server.ratelimiting.burst_stream_create }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.commit_create }}
+          - name: RATELIMIT_COMMIT_CREATE
+            value: "{{ .Values.server.ratelimiting.commit_create }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_commit_create }}
+          - name: RATELIMIT_BURST_COMMIT_CREATE
+            value: "{{ .Values.server.ratelimiting.burst_commit_create }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.post_getobjects_streamid }}
+          - name: RATELIMIT_POST_GETOBJECTS_STREAMID
+            value: "{{ .Values.server.ratelimiting.post_getobjects_streamid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_post_getobjects_streamid }}
+          - name: RATELIMIT_BURST_POST_GETOBJECTS_STREAMID
+            value: "{{ .Values.server.ratelimiting.burst_post_getobjects_streamid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.post_diff_streamid }}
+          - name: RATELIMIT_POST_DIFF_STREAMID
+            value: "{{ .Values.server.ratelimiting.post_diff_streamid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_post_diff_streamid }}
+          - name: RATELIMIT_BURST_POST_DIFF_STREAMID
+            value: "{{ .Values.server.ratelimiting.burst_post_diff_streamid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.post_objects_streamid }}
+          - name: RATELIMIT_POST_OBJECTS_STREAMID
+            value: "{{ .Values.server.ratelimiting.post_objects_streamid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_post_objects_streamid }}
+          - name: RATELIMIT_BURST_POST_OBJECTS_STREAMID
+            value: "{{ .Values.server.ratelimiting.burst_post_objects_streamid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.get_objects_streamid_objectid }}
+          - name: RATELIMIT_GET_OBJECTS_STREAMID_OBJECTID
+            value: "{{ .Values.server.ratelimiting.get_objects_streamid_objectid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_get_objects_streamid_objectid }}
+          - name: RATELIMIT_BURST_GET_OBJECTS_STREAMID_OBJECTID
+            value: "{{ .Values.server.ratelimiting.burst_get_objects_streamid_objectid }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.get_objects_streamid_objectid_single }}
+          - name: RATELIMIT_GET_OBJECTS_STREAMID_OBJECTID_SINGLE
+            value: "{{ .Values.server.ratelimiting.get_objects_streamid_objectid_single }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_get_objects_streamid_objectid_single }}
+          - name: RATELIMIT_BURST_GET_OBJECTS_STREAMID_OBJECTID_SINGLE
+            value: "{{ .Values.server.ratelimiting.burst_get_objects_streamid_objectid_single }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.post_graphql }}
+          - name: RATELIMIT_POST_GRAPHQL
+            value: "{{ .Values.server.ratelimiting.post_graphql }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_post_graphql }}
+          - name: RATELIMIT_BURST_POST_GRAPHQL
+            value: "{{ .Values.server.ratelimiting.burst_post_graphql }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.get_auth }}
+          - name: RATELIMIT_GET_AUTH
+            value: "{{ .Values.server.ratelimiting.get_auth }}"
+          {{- end }}
+          {{- if .Values.server.ratelimiting.burst_get_auth }}
+          - name: RATELIMIT_BURST_GET_AUTH
+            value: "{{ .Values.server.ratelimiting.burst_get_auth }}"
           {{- end }}
       {{- if .Values.server.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.server.affinity "context" $) | nindent 8 }}

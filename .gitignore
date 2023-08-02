@@ -58,3 +58,9 @@ packages/server/.vscode/*.log
 
 # GitGuardian
 .cache_ggshield
+
+storybook-static
+build-storybook.log
+ensure-tailwind-deps.mjs.lock
+vite.config.ts.timestamp-*.mjs
+introspected-schema.graphql

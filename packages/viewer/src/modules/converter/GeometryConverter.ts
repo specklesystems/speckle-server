@@ -21,6 +21,7 @@ export enum SpeckleType {
   Arc = 'Arc',
   Ellipse = 'Ellipse',
   RevitInstance = 'RevitInstance',
+  Text = 'Text',
   Unknown = 'Unknown'
 }
 
@@ -36,24 +37,30 @@ export const SpeckleTypeAllRenderables: SpeckleType[] = [
   SpeckleType.Curve,
   SpeckleType.Circle,
   SpeckleType.Arc,
-  SpeckleType.Ellipse
+  SpeckleType.Ellipse,
+  SpeckleType.Text
 ]
 
 export class GeometryConverter {
   public static keepGeometryData = false
 
   public static getSpeckleType(node: NodeData): SpeckleType {
-    let type = 'Base'
+    let typeChain = ['Base']
     if (node.raw.data)
-      type = node.raw.data.speckle_type
-        ? node.raw.data.speckle_type.split('.').reverse()[0]
-        : type
+      typeChain = node.raw.data.speckle_type
+        ? node.raw.data.speckle_type.split(':').reverse()
+        : typeChain
     else
-      type = node.raw.speckle_type
-        ? node.raw.speckle_type.split('.').reverse()[0]
-        : type
-    if (type in SpeckleType) return type as SpeckleType
-    else return SpeckleType.Unknown
+      typeChain = node.raw.speckle_type
+        ? node.raw.speckle_type.split(':').reverse()
+        : typeChain
+    typeChain = typeChain.map<string>((value: string) => {
+      return value.split('.').reverse()[0]
+    })
+    for (const type of typeChain) {
+      if (type in SpeckleType) return type as SpeckleType
+    }
+    return SpeckleType.Unknown
   }
 
   public static convertNodeToGeometryData(node: NodeData): GeometryData {
@@ -89,7 +96,9 @@ export class GeometryConverter {
         return GeometryConverter.View3DToGeometryData(node)
       case SpeckleType.RevitInstance:
         return GeometryConverter.RevitInstanceToGeometryData(node)
-      default:
+      case SpeckleType.Text:
+        return GeometryConverter.TextToGeometryData(node)
+      case SpeckleType.Unknown:
         // console.warn(`Skipping geometry conversion for ${type}`)
         return null
     }
@@ -281,7 +290,7 @@ export class GeometryConverter {
     const vertices = node.raw.vertices
     const faces = node.raw.faces
     const colorsRaw = node.raw.colors
-    let colors = null
+    let colors = undefined
 
     let k = 0
     while (k < faces.length) {
@@ -321,7 +330,7 @@ export class GeometryConverter {
       attributes: {
         POSITION: vertices,
         INDEX: indices,
-        COLOR: colors
+        ...(colors && { COLOR: colors })
       },
       bakeTransform: new Matrix4().makeScale(
         conversionFactor,
@@ -329,6 +338,29 @@ export class GeometryConverter {
         conversionFactor
       ),
       transform: null
+    } as GeometryData
+  }
+
+  /**
+   * TEXT
+   */
+  private static TextToGeometryData(node: NodeData): GeometryData {
+    const conversionFactor = getConversionFactor(node.raw.units)
+    const plane = node.raw.plane
+    const position = new Vector3(plane.origin.x, plane.origin.y, plane.origin.z)
+    const scale = new Matrix4().makeScale(
+      conversionFactor,
+      conversionFactor,
+      conversionFactor
+    )
+    const mat = new Matrix4().makeBasis(plane.xdir, plane.ydir, plane.normal)
+    mat.setPosition(position)
+    mat.premultiply(scale)
+    return {
+      attributes: null,
+      bakeTransform: mat,
+      transform: null,
+      metaData: node.raw
     } as GeometryData
   }
 
@@ -435,11 +467,11 @@ export class GeometryConverter {
    * CURVE
    */
   private static CurveToGeometryData(node) {
-    if (node.children.length === 0) {
+    if (node.nestedNodes.length === 0) {
       return null
     }
 
-    const polylineGeometry = this.PolylineToGeometryData(node.children[0])
+    const polylineGeometry = this.PolylineToGeometryData(node.nestedNodes[0].model)
     return {
       attributes: {
         POSITION: polylineGeometry.attributes.POSITION

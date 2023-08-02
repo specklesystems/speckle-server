@@ -3,8 +3,10 @@ const crypto = require('crypto')
 const crs = require('crypto-random-string')
 const bcrypt = require('bcrypt')
 const { chunk } = require('lodash')
+const { logger: parentLogger } = require('../observability/logging')
 
 const knex = require('../knex')
+const { Observability } = require('@speckle/shared')
 const Streams = () => knex('streams')
 const Branches = () => knex('branches')
 const Objects = () => knex('objects')
@@ -13,10 +15,13 @@ const ApiTokens = () => knex('api_tokens')
 const TokenScopes = () => knex('token_scopes')
 
 module.exports = class ServerAPI {
-  constructor({ streamId }) {
+  constructor({ streamId, logger }) {
     this.streamId = streamId
     this.isSending = false
     this.buffer = []
+    this.logger =
+      logger ||
+      Observability.extendLoggerComponent(parentLogger.child({ streamId }), 'ifc')
   }
 
   async saveObject(obj) {
@@ -63,12 +68,10 @@ module.exports = class ServerAPI {
       totalChildrenCountByDepth
     )
 
-    const q1 = Objects().insert(insertionObject).toString() + ' on conflict do nothing'
-    await knex.raw(q1)
+    await Objects().insert(insertionObject).onConflict().ignore()
 
     if (closures.length > 0) {
-      const q2 = `${Closures().insert(closures).toString()} on conflict do nothing`
-      await knex.raw(q2)
+      await Closures().insert(closures).onConflict().ignore()
     }
 
     return insertionObject.id
@@ -118,13 +121,14 @@ module.exports = class ServerAPI {
     // step 1: insert objects
     if (objsToInsert.length > 0) {
       const batches = chunk(objsToInsert, objectsBatchSize)
-      for (const batch of batches) {
+      for (const [index, batch] of batches.entries()) {
         this.prepInsertionObjectBatch(batch)
-        await knex.transaction(async (trx) => {
-          const q = Objects().insert(batch).toString() + ' on conflict do nothing'
-          await trx.raw(q)
-        })
-        console.log(`Inserted ${batch.length} objects`)
+        await Objects().insert(batch).onConflict().ignore()
+        this.logger.info(
+          `Inserted ${batch.length} objects from batch ${index + 1} of ${
+            batches.length
+          }`
+        )
       }
     }
 
@@ -132,13 +136,14 @@ module.exports = class ServerAPI {
     if (closures.length > 0) {
       const batches = chunk(closures, closureBatchSize)
 
-      for (const batch of batches) {
+      for (const [index, batch] of batches.entries()) {
         this.prepInsertionClosureBatch(batch)
-        await knex.transaction(async (trx) => {
-          const q = Closures().insert(batch).toString() + ' on conflict do nothing'
-          await trx.raw(q)
-        })
-        console.log(`Inserted ${batch.length} closures`)
+        await Closures().insert(batch).onConflict().ignore()
+        this.logger.info(
+          `Inserted ${batch.length} closures from batch ${index + 1} of ${
+            batches.length
+          }`
+        )
       }
     }
     return ids

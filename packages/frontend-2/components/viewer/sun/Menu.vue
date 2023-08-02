@@ -1,0 +1,111 @@
+<template>
+  <Popover as="div" class="relative z-30">
+    <PopoverButton v-slot="{ open }" as="template">
+      <ViewerControlsButtonToggle flat secondary :active="open">
+        <SunIcon class="w-5 h-5" />
+      </ViewerControlsButtonToggle>
+    </PopoverButton>
+    <Transition
+      enter-active-class="transform ease-out duration-300 transition"
+      enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+      enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
+      leave-active-class="transition ease-in duration-100"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <PopoverPanel
+        class="absolute translate-x-0 left-12 top-2 p-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col space-y-2"
+      >
+        <div class="flex items-center space-x-1">
+          <input
+            id="intensity"
+            v-model="intensity"
+            class="h-2 mr-2"
+            type="range"
+            name="intensity"
+            min="1"
+            max="10"
+            step="0.05"
+          />
+          <label class="text-sm text-foreground-2" for="intensity">Intensity</label>
+        </div>
+        <div class="flex items-center space-x-1">
+          <input
+            id="elevation"
+            v-model="elevation"
+            class="h-2 mr-2"
+            type="range"
+            name="elevation"
+            min="0"
+            :max="Math.PI"
+            step="0.05"
+          />
+          <label class="text-sm text-foreground-2" for="elevation">Elevation</label>
+        </div>
+        <div class="flex items-center space-x-1">
+          <input
+            id="azimuth"
+            v-model="azimuth"
+            class="h-2 mr-2"
+            type="range"
+            name="azimuth"
+            :min="-Math.PI * 0.5"
+            :max="Math.PI * 0.5"
+            step="0.05"
+          />
+          <label class="text-sm text-foreground-2" for="azimuth">Azimuth</label>
+        </div>
+        <div class="flex items-center space-x-1">
+          <input
+            id="indirect"
+            v-model="indirectLightIntensity"
+            class="h-2 mr-2"
+            type="range"
+            name="indirect"
+            min="0"
+            max="5"
+            step="0.05"
+          />
+          <label class="text-sm text-foreground-2" for="indirect">Indirect</label>
+        </div>
+      </PopoverPanel>
+    </Transition>
+  </Popover>
+</template>
+<script setup lang="ts">
+import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
+import { SunLightConfiguration } from '@speckle/viewer'
+import { SunIcon } from '@heroicons/vue/24/outline'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useMixpanel } from '~~/lib/core/composables/mp'
+import { debounce } from 'lodash-es'
+
+const mp = useMixpanel()
+const debounceTrackLightConfigChange = debounce(() => {
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'light-config-change'
+  })
+}, 1000)
+
+const createLightConfigComputed = <K extends keyof SunLightConfiguration>(key: K) =>
+  computed({
+    get: () => lightConfig.value[key],
+    set: (newVal) => {
+      lightConfig.value = {
+        ...lightConfig.value,
+        [key]: newVal
+      }
+      debounceTrackLightConfigChange()
+    }
+  })
+
+const {
+  ui: { lightConfig }
+} = useInjectedViewerState()
+
+const intensity = createLightConfigComputed('intensity')
+const elevation = createLightConfigComputed('elevation')
+const azimuth = createLightConfigComputed('azimuth')
+const indirectLightIntensity = createLightConfigComputed('indirectLightIntensity')
+</script>

@@ -376,7 +376,10 @@ export default defineComponent({
     const { result: viewerStateResult } = useQuery(gql`
       query {
         commitObjectViewerState @client {
-          selectedCommentMetaData
+          selectedCommentMetaData {
+            id
+            selectionLocation
+          }
           selectedObjects
           currentFilterState
           sectionBox
@@ -441,7 +444,8 @@ export default defineComponent({
     }
   },
   watch: {
-    'viewerState.currentFilterState'() {
+    'viewerState.currentFilterState'(newVal, oldVal) {
+      if (!newVal && !oldVal) return
       this.updateUrl()
     }
   },

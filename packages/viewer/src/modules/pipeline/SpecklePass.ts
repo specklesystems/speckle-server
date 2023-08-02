@@ -1,5 +1,5 @@
 import { Camera, Plane, Scene, Texture } from 'three'
-import { Pass } from 'three/examples/jsm/postprocessing/Pass'
+import { Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 import { ObjectLayers } from '../SpeckleRenderer'
 import { RenderType } from './Pipeline'
 

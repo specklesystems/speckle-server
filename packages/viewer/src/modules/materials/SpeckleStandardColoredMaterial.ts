@@ -3,114 +3,27 @@
 /* eslint-disable camelcase */
 import { speckleStandardColoredVert } from './shaders/speckle-standard-colored-vert'
 import { speckleStandardColoredFrag } from './shaders/speckle-standard-colored-frag'
-import {
-  UniformsUtils,
-  ShaderLib,
-  Vector3,
-  MeshStandardMaterial,
-  Texture,
-  NearestFilter
-} from 'three'
-import { Matrix4 } from 'three'
+import { UniformsUtils, Texture, NearestFilter } from 'three'
+import SpeckleStandardMaterial from './SpeckleStandardMaterial'
 import { Geometry } from '../converter/Geometry'
+import SpeckleMesh from '../objects/SpeckleMesh'
+import { Uniforms } from './SpeckleMaterial'
 
-class SpeckleStandardColoredMaterial extends MeshStandardMaterial {
-  private static readonly matBuff: Matrix4 = new Matrix4()
-  private static readonly vecBuff0: Vector3 = new Vector3()
-  private static readonly vecBuff1: Vector3 = new Vector3()
-  private static readonly vecBuff2: Vector3 = new Vector3()
-
-  constructor(parameters, defines = []) {
-    super(parameters)
-
-    this.userData.uViewer_high = {
-      value: new Vector3()
-    }
-    this.userData.uViewer_low = {
-      value: new Vector3()
-    }
-    this.userData.gradientRamp = {
-      value: null
-    }
-    this.userData.rteShadowMatrix = {
-      value: new Matrix4()
-    }
-    this.userData.uShadowViewer_high = {
-      value: new Vector3()
-    }
-    this.userData.uShadowViewer_low = {
-      value: new Vector3()
-    }
-    ;(this as any).vertProgram = speckleStandardColoredVert
-    ;(this as any).fragProgram = speckleStandardColoredFrag
-    ;(this as any).uniforms = UniformsUtils.merge([
-      ShaderLib.standard.uniforms,
-      {
-        uViewer_high: {
-          value: this.userData.uViewer_high.value
-        },
-        uViewer_low: {
-          value: this.userData.uViewer_low.value
-        },
-        gradientRamp: {
-          value: this.userData.gradientRamp
-        },
-        rteShadowMatrix: {
-          value: this.userData.rteShadowMatrix.value
-        },
-        uShdowViewer_high: {
-          value: this.userData.uShadowViewer_high.value
-        },
-        uShadowViewer_low: {
-          value: this.userData.uShadowViewer_low.value
-        }
-      }
-    ])
-
-    this.onBeforeCompile = function (shader) {
-      shader.uniforms.uViewer_high = this.userData.uViewer_high
-      shader.uniforms.uViewer_low = this.userData.uViewer_low
-      shader.uniforms.gradientRamp = this.userData.gradientRamp
-      shader.uniforms.rteShadowMatrix = this.userData.rteShadowMatrix
-      shader.uniforms.uShadowViewer_high = this.userData.uShadowViewer_high
-      shader.uniforms.uShadowViewer_low = this.userData.uShadowViewer_low
-      shader.vertexShader = this.vertProgram
-      shader.fragmentShader = this.fragProgram
-    }
-
-    if (defines) {
-      this.defines = {}
-    }
-    for (let k = 0; k < defines.length; k++) {
-      this.defines[defines[k]] = ' '
-    }
+class SpeckleStandardColoredMaterial extends SpeckleStandardMaterial {
+  protected get vertexShader(): string {
+    return speckleStandardColoredVert
   }
 
-  copy(source) {
-    super.copy(source)
-    this.userData = {}
-    this.userData.uViewer_high = {
-      value: new Vector3()
-    }
-    this.userData.uViewer_low = {
-      value: new Vector3()
-    }
-    this.userData.gradientRamp = {
-      value: null
-    }
-    this.userData.rteShadowMatrix = {
-      value: new Matrix4()
-    }
-    this.userData.uShadowViewer_high = {
-      value: new Vector3()
-    }
-    this.userData.uShadowViewer_low = {
-      value: new Vector3()
-    }
+  protected get fragmentShader(): string {
+    return speckleStandardColoredFrag
+  }
 
-    this.defines['USE_RTE'] = ' '
+  protected get uniformsDef(): Uniforms {
+    return { ...super.uniformsDef, gradientRamp: null }
+  }
 
-    return this
+  constructor(parameters, defines = []) {
+    super(parameters, defines)
   }
 
   public setGradientTexture(texture: Texture) {
@@ -121,28 +34,32 @@ class SpeckleStandardColoredMaterial extends MeshStandardMaterial {
     this.needsUpdate = true
   }
 
-  onBeforeRender(_this, scene, camera, geometry, object, group) {
-    SpeckleStandardColoredMaterial.matBuff.copy(camera.matrixWorldInverse)
-    SpeckleStandardColoredMaterial.matBuff.elements[12] = 0
-    SpeckleStandardColoredMaterial.matBuff.elements[13] = 0
-    SpeckleStandardColoredMaterial.matBuff.elements[14] = 0
-    SpeckleStandardColoredMaterial.matBuff.multiply(object.matrixWorld)
-    object.modelViewMatrix.copy(SpeckleStandardColoredMaterial.matBuff)
+  /** Called by three.js render loop */
+  public onBeforeRender(_this, scene, camera, geometry, object, group) {
+    SpeckleStandardMaterial.matBuff.copy(camera.matrixWorldInverse)
+    SpeckleStandardMaterial.matBuff.elements[12] = 0
+    SpeckleStandardMaterial.matBuff.elements[13] = 0
+    SpeckleStandardMaterial.matBuff.elements[14] = 0
+    object.modelViewMatrix.copy(SpeckleStandardMaterial.matBuff)
 
-    SpeckleStandardColoredMaterial.vecBuff0.set(
+    SpeckleStandardMaterial.vecBuff0.set(
       camera.matrixWorld.elements[12],
       camera.matrixWorld.elements[13],
       camera.matrixWorld.elements[14]
     )
 
     Geometry.DoubleToHighLowVector(
-      SpeckleStandardColoredMaterial.vecBuff0,
-      SpeckleStandardColoredMaterial.vecBuff1,
-      SpeckleStandardColoredMaterial.vecBuff2
+      SpeckleStandardMaterial.vecBuff0,
+      SpeckleStandardMaterial.vecBuff1,
+      SpeckleStandardMaterial.vecBuff2
     )
 
-    this.userData.uViewer_low.value.copy(SpeckleStandardColoredMaterial.vecBuff1)
-    this.userData.uViewer_high.value.copy(SpeckleStandardColoredMaterial.vecBuff2)
+    this.userData.uViewer_low.value.copy(SpeckleStandardMaterial.vecBuff1)
+    this.userData.uViewer_high.value.copy(SpeckleStandardMaterial.vecBuff2)
+
+    if (object instanceof SpeckleMesh)
+      (object as SpeckleMesh).updateMaterialTransformsUniform(this)
+
     this.needsUpdate = true
   }
 }

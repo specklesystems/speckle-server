@@ -5,9 +5,9 @@ import {
   updateStream,
   deleteStream,
   getStreamUsers,
-  grantPermissionsStream,
-  revokePermissionsStream
+  grantPermissionsStream
 } from '../services/streams'
+
 import {
   createBranch,
   getBranchByNameAndStreamId,
@@ -37,7 +37,10 @@ import {
   createTestStream,
   createTestStreams
 } from '@/test/speckle-helpers/streamHelper'
-import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
+import {
+  StreamWithOptionalRole,
+  revokeStreamPermissions
+} from '@/modules/core/repositories/streams'
 import { has, times } from 'lodash'
 import { Streams } from '@/modules/core/dbSchema'
 import { ApolloServer } from 'apollo-server-express'
@@ -49,6 +52,7 @@ import {
   GetUserStreamsQuery
 } from '@/test/graphql/generated/graphql'
 import { Get } from 'type-fest'
+import { changeUserRole } from '@/modules/core/services/users'
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {
@@ -174,7 +178,7 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should revoke permissions on stream', async () => {
-      await revokePermissionsStream({ streamId: testStream.id, userId: userTwo.id })
+      await revokeStreamPermissions({ streamId: testStream.id, userId: userTwo.id })
       const streamWithRole = await getStream({
         streamId: testStream.id,
         userId: userTwo.id
@@ -183,7 +187,7 @@ describe('Streams @core-streams', () => {
     })
 
     it('Should not revoke owner permissions', async () => {
-      await revokePermissionsStream({ streamId: testStream.id, userId: userOne.id })
+      await revokeStreamPermissions({ streamId: testStream.id, userId: userOne.id })
         .then(() => {
           throw new Error('This should have thrown')
         })
@@ -214,6 +218,35 @@ describe('Streams @core-streams', () => {
 
       const userIsCollaborator = await isStreamCollaborator(userTwo.id, streamId)
       expect(userIsCollaborator).to.not.be.ok
+    })
+    it('Server guests cannot be stream owners', async () => {
+      const guestGuy: BasicTestUser = {
+        name: 'Some we do not fully trust',
+        email: 'shady@contractor.company',
+        password: 'foobar123',
+        id: ''
+      }
+
+      await createTestUsers([guestGuy])
+
+      await changeUserRole({
+        userId: guestGuy.id,
+        role: Roles.Server.Guest,
+        guestModeEnabled: true
+      })
+
+      await addOrUpdateStreamCollaborator(
+        testStream.id,
+        guestGuy.id,
+        Roles.Stream.Owner,
+        userOne.id
+      )
+        .then(() => {
+          throw new Error('This should have thrown')
+        })
+        .catch((err) => {
+          expect(err.message).to.include('Server guests cannot own streams')
+        })
     })
   })
 
@@ -253,7 +286,7 @@ describe('Streams @core-streams', () => {
       await grantPermissionsStream({
         streamId: updatableStream.id,
         userId: userTwo.id,
-        role: 'stream:contributor'
+        role: Roles.Stream.Contributor
       })
 
       // await sleep(100)
@@ -262,7 +295,7 @@ describe('Streams @core-streams', () => {
       expect(su!.updatedAt).to.not.equal(lastUpdatedAt)
       lastUpdatedAt = su!.updatedAt
 
-      await revokePermissionsStream({
+      await revokeStreamPermissions({
         streamId: updatableStream.id,
         userId: userTwo.id
       })
@@ -295,7 +328,11 @@ describe('Streams @core-streams', () => {
         streamId: updatableStream.id,
         name: 'dim/lol'
       })
-      await deleteBranchById({ id: b!.id, streamId: updatableStream.id })
+      await deleteBranchById({
+        id: b!.id,
+        streamId: updatableStream.id,
+        userId: userOne.id
+      })
 
       const su2 = await getStream({ streamId: updatableStream.id })
       expect(su2?.updatedAt).to.be.ok

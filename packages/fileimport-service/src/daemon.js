@@ -17,6 +17,7 @@ const { spawn } = require('child_process')
 const ServerAPI = require('../ifc/api')
 const objDependencies = require('./objDependencies')
 const { logger } = require('../observability/logging')
+const { Scopes } = require('@speckle/shared')
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
@@ -57,12 +58,16 @@ async function doTask(task) {
   let fileSizeForMetric = 0
 
   const metricDurationEnd = metricDuration.startTimer()
+  let newBranchCreated = false
+  let branchMetadata = { streamId: null, branchName: null }
+
   try {
     taskLogger.info('Doing task.')
     const info = await FileUploads().where({ id: task.id }).first()
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
     }
+
     fileTypeForMetric = info.fileType || 'missing_info'
     fileSizeForMetric = Number(info.fileSize) || 0
     taskLogger = taskLogger.child({
@@ -76,11 +81,24 @@ async function doTask(task) {
     })
     fs.mkdirSync(TMP_INPUT_DIR, { recursive: true })
 
-    serverApi = new ServerAPI({ streamId: info.streamId })
+    serverApi = new ServerAPI({ streamId: info.streamId, logger: taskLogger })
+
+    branchMetadata = {
+      branchName: info.branchName,
+      streamId: info.streamId
+    }
+    const existingBranch = await serverApi.getBranchByNameAndStreamId({
+      streamId: info.streamId,
+      name: info.branchName
+    })
+    if (!existingBranch) {
+      newBranchCreated = true
+    }
+
     const { token } = await serverApi.createToken({
       userId: info.userId,
       name: 'temp upload token',
-      scopes: ['streams:write', 'streams:read'],
+      scopes: [Scopes.Streams.Write, Scopes.Streams.Read],
       lifespan: 1000000
     })
     tempUserToken = token
@@ -189,6 +207,13 @@ async function doTask(task) {
       [err.toString(), task.id]
     )
     metricOperationErrors.labels(fileTypeForMetric).inc()
+  } finally {
+    const { streamId, branchName } = branchMetadata
+    await knex.raw(
+      `NOTIFY file_import_update, '${task.id}:::${streamId}:::${branchName}:::${
+        newBranchCreated ? 1 : 0
+      }'`
+    )
   }
   metricDurationEnd({ op: fileTypeForMetric })
   metricInputFileSize.labels(fileTypeForMetric).observe(fileSizeForMetric)
@@ -209,11 +234,21 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
 
     boundLogger = boundLogger.child({ pid: childProc.pid })
     childProc.stdout.on('data', (data) => {
-      boundLogger.debug('Parser: %s', data.toString())
+      try {
+        JSON.parse(data.toString()) // data is already in JSON format
+        process.stdout.write(data.string())
+      } catch {
+        boundLogger.info('Parser: %s', data.toString())
+      }
     })
 
     childProc.stderr.on('data', (data) => {
-      boundLogger.debug('Parser: %s', data.toString())
+      try {
+        JSON.parse(data.toString()) // data is already in JSON format
+        process.stderr.write(data.string())
+      } catch {
+        boundLogger.info('Parser: %s', data.toString())
+      }
     })
 
     let timedOut = false
@@ -223,13 +258,21 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
 
       timedOut = true
       childProc.kill(9)
-      reject(`Timeout: Process took longer than ${timeoutMs} ms to execute`)
+      const rejectionReason = `Timeout: Process took longer than ${timeoutMs} milliseconds to execute.`
+      const output = {
+        success: false,
+        error: rejectionReason
+      }
+      fs.writeFileSync(TMP_RESULTS_PATH, JSON.stringify(output))
+      reject(rejectionReason)
     }, timeoutMs)
 
     childProc.on('close', (code) => {
       boundLogger.info({ exitCode: code }, `Process exited with code ${code}`)
 
-      if (timedOut) return // ignore `close` calls after killing (the promise was already rejected)
+      if (timedOut) {
+        return // ignore `close` calls after killing (the promise was already rejected)
+      }
 
       clearTimeout(timeout)
 

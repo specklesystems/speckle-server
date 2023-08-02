@@ -11,7 +11,32 @@ extend type Query {
     limit: Int = 25
     cursor: String
     archived: Boolean! = false
-  ): CommentCollection
+  ): CommentCollection @deprecated(reason: "Use 'commentThreads' fields instead")
+}
+
+extend type Project {
+  """
+  All comment threads in this project
+  """
+  commentThreads(
+    cursor: String
+    limit: Int! = 25
+    filter: ProjectCommentsFilter
+  ): ProjectCommentCollection!
+}
+
+extend type Version {
+  """
+  All comment threads in this version
+  """
+  commentThreads(cursor: String, limit: Int! = 25): CommentCollection!
+}
+
+extend type Model {
+  """
+  All comment threads in this model
+  """
+  commentThreads(cursor: String, limit: Int! = 25): CommentCollection!
 }
 
 extend type Stream {
@@ -56,8 +81,42 @@ extend type Object {
   commentCount: Int!
 }
 
+type CommentDataFilters {
+  hiddenIds: [String!]
+  isolatedIds: [String!]
+  propertyInfoKey: String
+  passMax: Float
+  passMin: Float
+  sectionBox: JSONObject
+}
+
+type LegacyCommentViewerData {
+  """
+  THREE.Vector3 {x, y, z}
+  """
+  location: JSONObject!
+  """
+  An array representing a user's camera position:
+  [camPos.x, camPos.y, camPos.z, camTarget.x, camTarget.y, camTarget.z, isOrtho, zoomNumber]
+  """
+  camPos: [Float!]!
+  """
+  Viewer.getCurrentSectionBox(): THREE.Box3
+  """
+  sectionBox: JSONObject
+  """
+  Currently unused. Ideally comments should keep track of selected objects.
+  """
+  selection: JSONObject
+  """
+  Old FE LocalFilterState type
+  """
+  filters: CommentDataFilters!
+}
+
 type Comment {
   id: String!
+  author: LimitedUser!
   authorId: String!
   archived: Boolean!
   screenshot: String
@@ -66,16 +125,19 @@ type Comment {
   Plain-text version of the comment text, ideal for previews
   """
   rawText: String!
-  data: JSONObject
   """
   Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects.
   """
   resources: [ResourceIdentifier!]!
-  createdAt: DateTime
+  """
+  Resource identifiers as defined and implemented in the Viewer of the new frontend
+  """
+  viewerResources: [ViewerResourceItem!]!
+  createdAt: DateTime!
   """
   The time this comment was last updated. Corresponds also to the latest reply to this comment, if any.
   """
-  updatedAt: DateTime
+  updatedAt: DateTime!
   """
   The last time you viewed this comment. Present only if an auth'ed request. Relevant only if a top level commit.
   """
@@ -83,14 +145,58 @@ type Comment {
   """
   Gets the replies to this comment.
   """
-  replies(limit: Int = 25, cursor: String): CommentCollection
-  reactions: [String]
+  replies(limit: Int = 25, cursor: String): CommentCollection!
+  """
+  Get authors of replies to this comment
+  """
+  replyAuthors(limit: Int! = 25): CommentReplyAuthorCollection!
+  reactions: [String] @deprecated(reason: "Not actually implemented")
+  """
+  Whether or not comment is a reply to another comment
+  """
+  hasParent: Boolean!
+  """
+  Parent thread, if there's any
+  """
+  parent: Comment
+}
+
+type CommentReplyAuthorCollection {
+  items: [LimitedUser!]!
+  totalCount: Int!
 }
 
 type CommentCollection {
   totalCount: Int!
-  cursor: DateTime
+  cursor: String
   items: [Comment!]!
+}
+
+type ProjectCommentCollection {
+  totalCount: Int!
+  totalArchivedCount: Int!
+  cursor: String
+  items: [Comment!]!
+}
+
+input ProjectCommentsFilter {
+  """
+  Only request comments belonging to the resources identified by this
+  comma-delimited resouce string (same format that's used in the viewer URL)
+  """
+  resourceIdString: String
+
+  """
+  By default if resourceIdString is set, the "versionId" part of model resource identifiers will be ignored
+  and all comments of all versions of any of the referenced models will be returned. If `loadedVersionsOnly` is
+  enabled, then only comment threads of loaded/referenced versions in resourceIdString will be returned.
+  """
+  loadedVersionsOnly: Boolean
+
+  """
+  Whether or not to include archived/resolved threads
+  """
+  includeArchived: Boolean
 }
 
 type ResourceIdentifier {
@@ -110,6 +216,21 @@ enum ResourceType {
   stream
 }
 
+"""
+Equivalent to frontend-1's LocalFilterState
+"""
+input CommentDataFiltersInput {
+  hiddenIds: [String!]
+  isolatedIds: [String!]
+  propertyInfoKey: String
+  passMax: Float
+  passMin: Float
+  sectionBox: JSONObject
+}
+
+"""
+Deprecated: Used by old stream-based mutations
+"""
 input CommentCreateInput {
   streamId: String!
   """
@@ -131,6 +252,29 @@ input CommentCreateInput {
   screenshot: String
 }
 
+input CommentContentInput {
+  doc: JSONObject
+  blobIds: [String!]
+}
+
+input CreateCommentInput {
+  projectId: String!
+  content: CommentContentInput!
+  """
+  SerializedViewerState. If omitted, comment won't render (correctly) inside the
+  viewer, but will still be retrievable through the API
+  """
+  viewerState: JSONObject
+  """
+  Resources that this comment should be attached to
+  """
+  resourceIdString: String!
+  screenshot: String
+}
+
+"""
+Deprecated: Used by old stream-based mutations
+"""
 input ReplyCreateInput {
   streamId: String!
   parentComment: String!
@@ -145,6 +289,14 @@ input ReplyCreateInput {
   data: JSONObject
 }
 
+input CreateCommentReplyInput {
+  content: CommentContentInput!
+  threadId: String!
+}
+
+"""
+Deprecated: Used by old stream-based mutations
+"""
 input CommentEditInput {
   streamId: String!
   id: String!
@@ -158,7 +310,22 @@ input CommentEditInput {
   blobIds: [String!]!
 }
 
+input EditCommentInput {
+  commentId: String!
+  content: CommentContentInput!
+}
+
+type CommentMutations {
+  markViewed(commentId: String!): Boolean!
+  create(input: CreateCommentInput!): Comment!
+  reply(input: CreateCommentReplyInput!): Comment!
+  edit(input: EditCommentInput!): Comment!
+  archive(commentId: String!, archived: Boolean! = true): Boolean!
+}
+
 extend type Mutation {
+  commentMutations: CommentMutations! @hasServerRole(role: SERVER_GUEST)
+
   """
   Used for broadcasting real time chat head bubbles and status. Does not persist any info.
   """
@@ -166,7 +333,9 @@ extend type Mutation {
     streamId: String!
     resourceId: String!
     data: JSONObject
-  ): Boolean! @hasRole(role: "server:user")
+  ): Boolean!
+    @hasServerRole(role: SERVER_GUEST)
+    @deprecated(reason: "Use broadcastViewerUserActivity")
 
   """
   Used for broadcasting real time typing status in comment threads. Does not persist any info.
@@ -175,21 +344,25 @@ extend type Mutation {
     streamId: String!
     commentId: String!
     data: JSONObject
-  ): Boolean! @hasRole(role: "server:user")
+  ): Boolean!
+    @hasServerRole(role: SERVER_GUEST)
+    @deprecated(reason: "Use broadcastViewerUserActivity")
 
   """
   Creates a comment
   """
   commentCreate(input: CommentCreateInput!): String!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
+    @deprecated(reason: "Use commentMutations version")
 
   """
   Flags a comment as viewed by you (the logged in user).
   """
   commentView(streamId: String!, commentId: String!): Boolean!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
+    @deprecated(reason: "Use commentMutations version")
 
   """
   Archives a comment.
@@ -198,21 +371,26 @@ extend type Mutation {
     streamId: String!
     commentId: String!
     archived: Boolean! = true
-  ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "streams:read")
+  ): Boolean!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
+    @deprecated(reason: "Use commentMutations version")
 
   """
   Edits a comment.
   """
   commentEdit(input: CommentEditInput!): Boolean!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
+    @deprecated(reason: "Use commentMutations version")
 
   """
   Adds a reply to a comment.
   """
   commentReply(input: ReplyCreateInput!): String!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
+    @deprecated(reason: "Use commentMutations version")
 }
 
 type CommentActivityMessage {
@@ -226,11 +404,52 @@ type CommentThreadActivityMessage {
   reply: Comment
 }
 
+enum ProjectCommentsUpdatedMessageType {
+  CREATED
+  UPDATED
+  ARCHIVED
+}
+
+type ProjectCommentsUpdatedMessage {
+  type: ProjectCommentsUpdatedMessageType!
+  id: String!
+  """
+  Null if deleted
+  """
+  comment: Comment
+}
+
+input ViewerUpdateTrackingTarget {
+  projectId: String!
+
+  """
+  Only request updates to the resources identified by this
+  comma-delimited resouce string (same format that's used in the viewer URL)
+  """
+  resourceIdString: String!
+
+  """
+  By default if resourceIdString is set, the "versionId" part of model resource identifiers will be ignored
+  and all updates to of all versions of any of the referenced models will be returned. If `loadedVersionsOnly` is
+  enabled, then only updates of loaded/referenced versions in resourceIdString will be returned.
+  """
+  loadedVersionsOnly: Boolean
+}
+
 extend type Subscription {
+  """
+  Subscribe to updates to resource comments/threads. Optionally specify resource ID string to only receive
+  updates regarding comments for those resources.
+  """
+  projectCommentsUpdated(
+    target: ViewerUpdateTrackingTarget!
+  ): ProjectCommentsUpdatedMessage!
+
   """
   Broadcasts "real-time" location data for viewer users.
   """
   userViewerActivity(streamId: String!, resourceId: String!): JSONObject
+    @deprecated(reason: "Use viewerUserActivityBroadcasted")
 
   """
   Subscribe to new comment events. There's two ways to use this subscription:
@@ -238,8 +457,9 @@ extend type Subscription {
   - for a specific resource/set of resources: pass in a list of resourceIds (commit or object ids); this sub will get called when *any* of the resources provided get a comment.
   """
   commentActivity(streamId: String!, resourceIds: [String]): CommentActivityMessage!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
+    @deprecated(reason: "Use projectCommentsUpdated")
 
   """
   Subscribes to events on a specific comment. Use to find out when:
@@ -250,6 +470,9 @@ extend type Subscription {
     streamId: String!
     commentId: String!
   ): CommentThreadActivityMessage!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
+    @deprecated(
+      reason: "Use projectCommentsUpdated or viewerUserActivityBroadcasted for reply status"
+    )
 }

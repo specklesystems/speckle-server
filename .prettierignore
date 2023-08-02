@@ -2,11 +2,20 @@ node_modules
 build
 dist
 dist2
+dist-*
 coverage
 .nyc_output
 packages/server/reports*
+packages/preview-service/public/render/**/*
 packages/objectloader/examples/browser/objectloader.web.js
 packages/viewer/example/speckleviewer.web.js
+
+.output
+.nuxt
+**/nuxt-modules/**/templates/*.js
+packages/frontend-2/lib/common/generated/**/*
+packages/dui3/lib/common/generated/**/*
+
 package-lock.json
 yarn.lock
 .yarn
@@ -25,3 +34,5 @@ venv
 .*.{ts,js,vue,tsx,jsx}
 **/generated/**/*
 **/generated/graphql.ts
+
+storybook-static

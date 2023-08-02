@@ -76,6 +76,10 @@ export class NodeRenderView {
     return this._renderData.geometry && this._renderData.geometry.attributes
   }
 
+  public get hasMetadata() {
+    return this._renderData.geometry && this._renderData.geometry.metaData
+  }
+
   public get speckleType() {
     return this._renderData.speckleType
   }
@@ -131,8 +135,13 @@ export class NodeRenderView {
 
   public get validGeometry() {
     return (
+      this._renderData.geometry.attributes &&
       this._renderData.geometry.attributes.POSITION &&
-      this._renderData.geometry.attributes.POSITION.length > 0
+      this._renderData.geometry.attributes.POSITION.length > 0 &&
+      (this._geometryType === GeometryType.MESH
+        ? this._renderData.geometry.attributes.INDEX &&
+          this._renderData.geometry.attributes.INDEX.length > 0
+        : true)
     )
   }
 
@@ -176,6 +185,8 @@ export class NodeRenderView {
         return GeometryType.POINT
       case SpeckleType.Pointcloud:
         return GeometryType.POINT_CLOUD
+      case SpeckleType.Text:
+        return GeometryType.TEXT
 
       default:
         return GeometryType.LINE
@@ -216,7 +227,8 @@ export class NodeRenderView {
     const mat =
       this.renderData.renderMaterial &&
       (this.geometryType === GeometryType.MESH ||
-        this.geometryType === GeometryType.POINT)
+        this.geometryType === GeometryType.POINT ||
+        this.geometryType === GeometryType.TEXT)
         ? this.renderMaterialToString()
         : this.renderData.displayStyle &&
           this.geometryType !== GeometryType.MESH &&
@@ -227,7 +239,11 @@ export class NodeRenderView {
     if (this.renderData.geometry.attributes)
       geometry = this.renderData.geometry.attributes.COLOR ? 'vertexColors' : ''
 
-    const s = this.geometryType.toString() + geometry + mat
+    const s =
+      this.geometryType.toString() +
+      geometry +
+      mat +
+      (this.geometryType === GeometryType.TEXT ? this._renderData.id : '')
     return NodeRenderView.hashCode(s)
   }
 }

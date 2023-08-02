@@ -2,6 +2,7 @@ export const speckleLineFrag = /* glsl */ `
 		uniform vec3 diffuse;
 		uniform float opacity;
 		uniform float linewidth;
+		varying float vAlpha;
 		// varying vec3 debugColor;
 
 		#ifdef USE_DASH
@@ -80,7 +81,13 @@ export const speckleLineFrag = /* glsl */ `
 
 			#endif
 
-			float alpha = opacity;
+			float alpha;
+			#ifdef UNIFORM_OPACITY
+				alpha = opacity;
+			#else
+				alpha = vAlpha;
+			#endif
+
 
 			#ifdef WORLD_UNITS
 

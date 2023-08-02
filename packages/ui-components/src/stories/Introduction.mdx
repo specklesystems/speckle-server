@@ -1,0 +1,30 @@
+import { Meta } from '@storybook/addon-docs'
+
+<Meta title="Overview/Introduction" />
+
+# Speckle UI Components
+
+You can find all of the available Speckle main website design system components here. See the `frontend-2` storybook for FE2 specific page stories.
+
+## Theme configuration
+
+Our CSS theme (colors, spacings etc.) is configured through our Tailwind config which can be found at `@speckle/tailwind-theme`.
+
+## Component hierarchy & naming
+
+The way components are organized in this Storybook is similar to the way they're organized in the codebase's `./src/components` directory.
+So, for example, './src/components/global/ToastRenderer.vue` will show up as 'global > ToastRenderer.vue' in StoryBook.
+
+In the library build exported component names use the full name including ancestor folder names, so to import `ToastRenderer.vue` in your
+app you would do:
+
+```js
+import { GlobalToastRenderer } from '@speckle/ui-components'
+```
+
+For more info check library typings or the `./src/lib.ts` file
+
+## Useful docs
+
+- [Storybook](https://storybook.js.org/docs/7.0/vue/get-started/introduction)
+- [Vue 3](https://vuejs.org/guide/introduction.html)

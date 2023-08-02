@@ -38,7 +38,7 @@ export default class SectionBox extends EventEmitter {
 
     this.display.add(this.cube)
 
-    this.boxHelper = new THREE.BoxHelper(this.cube, 0x0a66ff)
+    this.boxHelper = new THREE.Box3Helper(this.boxGeometry.boundingBox, 0x0a66ff)
     this.boxHelper.material.opacity = 0.4
     this.boxHelper.layers.set(ObjectLayers.PROPS)
     this.display.add(this.boxHelper)
@@ -173,7 +173,8 @@ export default class SectionBox extends EventEmitter {
 
   _draggingChangeHandler() {
     if (!this.display.visible) return
-    this.boxHelper.update()
+    this.boxGeometry.computeBoundingBox()
+    this.boxHelper.box.copy(this.boxGeometry.boundingBox)
     // this._generateOrUpdatePlanes()
 
     // Dragging a side / plane
@@ -310,6 +311,7 @@ export default class SectionBox extends EventEmitter {
       new THREE.BufferAttribute(new Float32Array(positions), 3)
     )
     g.setIndex(indexes)
+    g.computeBoundingBox()
     g.computeVertexNormals()
     return g
   }
@@ -375,11 +377,6 @@ export default class SectionBox extends EventEmitter {
     this.controls.showY = true
     this.controls.showZ = true
   }
-
-  // setBoxFromObjects(objectIds: string[], offset = 0.05) {
-  // WorldTree.getInstance().walk() => Solved
-  // this.setBox(...)
-  // }
 
   setBox(targetBox, offset = 0.05) {
     let box
@@ -447,7 +444,7 @@ export default class SectionBox extends EventEmitter {
     this.boxGeometry.computeBoundingSphere()
     this._generateOrUpdatePlanes()
     this._attachControlsToBox()
-    this.boxHelper.update()
+    this.boxHelper.box.copy(this.boxGeometry.boundingBox)
     this.viewer.emit('section-box-changed', this.getCurrentBox())
     this.viewer.needsRender = true
   }

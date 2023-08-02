@@ -94,7 +94,7 @@
 
                 <v-btn
                   v-if="
-                    (lastActivity.actionType === `stream_create` ||
+                    (STREAM_CREATED_TYPES.includes(lastActivity.actionType) ||
                       lastActivity.actionType === `stream_update`) &&
                     $vuetify.breakpoint.mdAndUp
                   "
@@ -286,6 +286,7 @@ import SourceAppAvatar from '@/main/components/common/SourceAppAvatar'
 import PreviewImage from '@/main/components/common/PreviewImage'
 import { gql } from '@apollo/client/core'
 import ListItemActivityDescription from '@/main/components/activity/ListItemActivityDescription.vue'
+import { STREAM_CREATED_TYPES } from '@/main/lib/feed/helpers/activityStream'
 
 export default {
   components: {
@@ -301,6 +302,7 @@ export default {
       default: () => []
     }
   },
+  setup: () => ({ STREAM_CREATED_TYPES }),
   apollo: {
     you: {
       query: gql`
@@ -454,6 +456,7 @@ export default {
     lastActivityBrief() {
       switch (this.lastActivity.actionType) {
         case 'stream_create':
+        case 'stream_clone':
           return {
             captionText: 'created',
             actionText: 'new stream'

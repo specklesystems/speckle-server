@@ -11,7 +11,7 @@
     "directory": "packages/preview-service"
   },
   "engines": {
-    "node": "^18.15.0"
+    "node": "^18.17.0"
   },
   "scripts": {
     "dev": "LOG_PRETTY=true nodemon --trace-deprecation ./bin/www",
@@ -32,6 +32,7 @@
     "node-fetch": "^2.6.1",
     "pg": "^8.7.3",
     "pg-query-stream": "^4.2.3",
+    "pino": "^8.7.0",
     "pino-http": "^8.2.1",
     "pino-pretty": "^9.1.1",
     "prom-client": "^14.0.1",

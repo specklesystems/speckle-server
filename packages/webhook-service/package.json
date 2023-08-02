@@ -13,7 +13,7 @@
   },
   "homepage": "https://github.com/specklesystems/speckle-server#readme",
   "engines": {
-    "node": "^18.15.0"
+    "node": "^18.17.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -25,6 +25,8 @@
     "knex": "^2.4.1",
     "node-fetch": "^2.6.1",
     "pg": "^8.7.3",
+    "pino": "^8.7.0",
+    "pino-http": "^8.0.0",
     "pino-pretty": "^9.1.1",
     "private-ip": "^2.3.3",
     "prom-client": "^14.0.1",

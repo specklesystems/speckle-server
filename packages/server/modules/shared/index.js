@@ -1,74 +1,24 @@
 'use strict'
 const knex = require(`@/db/knex`)
 const { ForbiddenError, ApolloError } = require('apollo-server-express')
-const { RedisPubSub } = require('graphql-redis-subscriptions')
-const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
-const ServerAcl = () => ServerAclSchema.knex()
-
-const { Roles } = require('@speckle/shared')
 const {
-  adminOverrideEnabled,
-  getRedisUrl
-} = require('@/modules/shared/helpers/envHelper')
-const { createRedisClient } = require('@/modules/shared/redis/redis')
+  pubsub,
+  StreamSubscriptions,
+  CommitSubscriptions,
+  BranchSubscriptions
+} = require('@/modules/shared/utils/subscriptions')
+const { Roles } = require('@speckle/shared')
+const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 
-const StreamPubsubEvents = Object.freeze({
-  UserStreamAdded: 'USER_STREAM_ADDED',
-  UserStreamRemoved: 'USER_STREAM_REMOVED',
-  StreamUpdated: 'STREAM_UPDATED',
-  StreamDeleted: 'STREAM_DELETED'
-})
-
-const CommitPubsubEvents = Object.freeze({
-  CommitCreated: 'COMMIT_CREATED',
-  CommitUpdated: 'COMMIT_UPDATED',
-  CommitDeleted: 'COMMIT_DELETED'
-})
-
-/**
- * GraphQL Subscription PubSub instance
- */
-const pubsub = new RedisPubSub({
-  publisher: createRedisClient(getRedisUrl()),
-  subscriber: createRedisClient(getRedisUrl())
-})
-
-let roles
-
-const getRoles = async () => {
-  if (roles) return roles
-  roles = await knex('user_roles').select('*')
-  return roles
-}
-
-/**
- * Validates a server role against the req's context object.
- * @param  {import('@/modules/shared/helpers/typeHelper').GraphQLContext} context
- * @param  {string} requiredRole
- */
-async function validateServerRole(context, requiredRole) {
-  const roles = await getRoles()
-
-  if (!context.auth) throw new ForbiddenError('You must provide an auth token.')
-
-  const role = roles.find((r) => r.name === requiredRole)
-  const myRole = roles.find((r) => r.name === context.role)
-
-  if (!role) throw new ApolloError('Invalid server role specified')
-  if (!myRole)
-    throw new ForbiddenError('You do not have the required server role (null)')
-
-  if (context.role === 'server:admin') return true
-  if (myRole.weight >= role.weight) return true
-
-  throw new ForbiddenError('You do not have the required server role')
-}
+const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
+const { getRoles } = require('@/modules/shared/roles')
+const ServerAcl = () => ServerAclSchema.knex()
 
 /**
  * Validates the scope against a list of scopes of the current session.
- * @param  {[type]} scopes [description]
- * @param  {[type]} scope  [description]
- * @return {[type]}        [description]
+ * @param  {string[]|undefined} scopes
+ * @param  {string} scope
+ * @return {void}
  */
 async function validateScopes(scopes, scope) {
   if (!scopes) throw new ForbiddenError('You do not have the required privileges.')
@@ -78,14 +28,14 @@ async function validateScopes(scopes, scope) {
 
 /**
  * Checks the userId against the resource's acl.
- * @param  {string} userId
+ * @param  {string | null | undefined} userId
  * @param  {string} resourceId
  * @param  {string} requiredRole
  */
 async function authorizeResolver(userId, resourceId, requiredRole) {
   userId = userId || null
 
-  if (!roles) roles = await knex('user_roles').select('*')
+  const roles = await getRoles()
 
   // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
 
@@ -149,11 +99,12 @@ async function registerOrUpdateRole(role) {
 module.exports = {
   registerOrUpdateScope,
   registerOrUpdateRole,
-  validateServerRole,
+  // validateServerRole,
   validateScopes,
   authorizeResolver,
   pubsub,
   getRoles,
-  StreamPubsubEvents,
-  CommitPubsubEvents
+  StreamPubsubEvents: StreamSubscriptions,
+  CommitPubsubEvents: CommitSubscriptions,
+  BranchPubsubEvents: BranchSubscriptions
 }

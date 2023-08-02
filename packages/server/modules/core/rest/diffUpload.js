@@ -1,15 +1,17 @@
 'use strict'
 const zlib = require('zlib')
-const cors = require('cors')
+const { corsMiddleware } = require('@/modules/core/configs/cors')
 
 const { validatePermissionsWriteStream } = require('./authUtils')
 
 const { hasObjects } = require('../services/objects')
 
-module.exports = (app) => {
-  app.options('/api/diff/:streamId', cors())
+const { chunk } = require('lodash')
 
-  app.post('/api/diff/:streamId', cors(), async (req, res) => {
+module.exports = (app) => {
+  app.options('/api/diff/:streamId', corsMiddleware())
+
+  app.post('/api/diff/:streamId', corsMiddleware(), async (req, res) => {
     req.log = req.log.child({
       userId: req.context.userId || '-',
       streamId: req.params.streamId
@@ -26,10 +28,19 @@ module.exports = (app) => {
 
     req.log.info(`Diffing ${objectList.length} objects.`)
 
-    const response = await hasObjects({
-      streamId: req.params.streamId,
-      objectIds: objectList
-    })
+    const chunkSize = 1000
+    const objectListChunks = chunk(objectList, chunkSize)
+    const mappedObjects = await Promise.all(
+      objectListChunks.map((objectListChunk) =>
+        hasObjects({
+          streamId: req.params.streamId,
+          objectIds: objectListChunk
+        })
+      )
+    )
+    const response = {}
+    Object.assign(response, ...mappedObjects)
+
     req.log.debug(response)
     res.writeHead(200, {
       'Content-Encoding': 'gzip',

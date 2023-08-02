@@ -7,6 +7,7 @@ import { Geometry } from '../converter/Geometry'
 import Logger from 'js-logger'
 
 export class RenderTree {
+  private tree: WorldTree
   private root: TreeNode
   private _treeBounds: Box3 = new Box3()
   private cancel = false
@@ -15,56 +16,59 @@ export class RenderTree {
     return this._treeBounds
   }
 
-  public constructor(root: TreeNode) {
-    this.root = root
+  public get id(): string {
+    return this.root.model.id
+  }
+
+  public constructor(tree: WorldTree, subtreeRoot: TreeNode) {
+    this.tree = tree
+    this.root = subtreeRoot
   }
 
   public buildRenderTree() {
-    this.root.walk((node: TreeNode): boolean => {
+    this.tree.walk((node: TreeNode): boolean => {
       const rendeNode = this.buildRenderNode(node)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
-      if (node.model.renderView && node.model.renderView.hasGeometry) {
-        const transform = this.computeTransform(node)
-        if (rendeNode.geometry.bakeTransform) {
-          transform.multiply(rendeNode.geometry.bakeTransform)
-        }
-        Geometry.transformGeometryData(rendeNode.geometry, transform)
-        node.model.renderView.computeAABB()
-        this._treeBounds.union(node.model.renderView.aabb)
-
-        if (!GeometryConverter.keepGeometryData) {
-          GeometryConverter.disposeNodeGeometryData(node.model)
-        }
-      }
-
+      this.applyTransforms(node)
       return true
     })
   }
 
   public buildRenderTreeAsync(priority: number): Promise<boolean> {
-    const p = WorldTree.getInstance().walkAsync(
+    const p = this.tree.walkAsync(
       (node: TreeNode): boolean => {
         const rendeNode = this.buildRenderNode(node)
         node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
-        if (node.model.renderView && node.model.renderView.hasGeometry) {
-          const transform = this.computeTransform(node)
-          if (rendeNode.geometry.bakeTransform) {
-            transform.multiply(rendeNode.geometry.bakeTransform)
-          }
-          Geometry.transformGeometryData(rendeNode.geometry, transform)
-          node.model.renderView.computeAABB()
-          this._treeBounds.union(node.model.renderView.aabb)
-
-          if (!GeometryConverter.keepGeometryData) {
-            GeometryConverter.disposeNodeGeometryData(node.model)
-          }
-        }
+        this.applyTransforms(node)
         return !this.cancel
       },
       this.root,
       priority
     )
     return p
+  }
+
+  private applyTransforms(node: TreeNode) {
+    if (node.model.renderView) {
+      const transform = this.computeTransform(node)
+      if (node.model.renderView.hasGeometry) {
+        if (node.model.renderView.renderData.geometry.bakeTransform) {
+          transform.multiply(node.model.renderView.renderData.geometry.bakeTransform)
+        }
+        Geometry.transformGeometryData(
+          node.model.renderView.renderData.geometry,
+          transform
+        )
+        node.model.renderView.computeAABB()
+        this._treeBounds.union(node.model.renderView.aabb)
+
+        if (!GeometryConverter.keepGeometryData) {
+          GeometryConverter.disposeNodeGeometryData(node.model)
+        }
+      } else if (node.model.renderView.hasMetadata) {
+        node.model.renderView.renderData.geometry.bakeTransform.premultiply(transform)
+      }
+    }
   }
 
   private buildRenderNode(node: TreeNode): NodeRenderData {
@@ -93,7 +97,7 @@ export class RenderTree {
     if (node.model.raw.renderMaterial) {
       return node
     }
-    const ancestors = WorldTree.getInstance().getAncestors(node)
+    const ancestors = this.tree.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.raw.renderMaterial) {
         return ancestors[k]
@@ -105,7 +109,7 @@ export class RenderTree {
     if (node.model.raw.displayStyle) {
       return node
     }
-    const ancestors = WorldTree.getInstance().getAncestors(node)
+    const ancestors = this.tree.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.raw.displayStyle) {
         return ancestors[k]
@@ -115,13 +119,14 @@ export class RenderTree {
 
   public computeTransform(node: TreeNode): Matrix4 {
     const transform = new Matrix4()
-    const ancestors = WorldTree.getInstance().getAncestors(node)
+    const ancestors = this.tree.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.renderView) {
         const renderNode: NodeRenderData = ancestors[k].model.renderView.renderData
-        if (renderNode.speckleType === SpeckleType.BlockInstance) {
-          transform.premultiply(renderNode.geometry.transform)
-        } else if (renderNode.speckleType === SpeckleType.RevitInstance) {
+        if (
+          renderNode.speckleType === SpeckleType.RevitInstance ||
+          renderNode.speckleType === SpeckleType.BlockInstance
+        ) {
           /** Revit Instances *hosted* on other instances do not stack the host's transform */
           if (k > 0) {
             const curentAncestorId = ancestors[k].model.raw.id
@@ -134,17 +139,26 @@ export class RenderTree {
     return transform
   }
 
-  public getAtomicRenderViews(...types: SpeckleType[]): NodeRenderView[] {
+  public getRenderableRenderViews(...types: SpeckleType[]): NodeRenderView[] {
     return this.root
       .all((node: TreeNode): boolean => {
         return (
           node.model.renderView !== null &&
-          types.includes(node.model.renderView.renderData.speckleType) &&
-          (node.model.atomic ||
-            (node.parent.model.atomic && !node.parent.model.renderView?.hasGeometry))
+          (node.model.renderView.hasGeometry || node.model.renderView.hasMetadata) &&
+          types.includes(node.model.renderView.renderData.speckleType)
         )
       })
       .map((val: TreeNode) => val.model.renderView)
+  }
+
+  public getRenderableNodes(...types: SpeckleType[]): TreeNode[] {
+    return this.root.all((node: TreeNode): boolean => {
+      return (
+        node.model.renderView !== null &&
+        (node.model.renderView.hasGeometry || node.model.renderView.hasMetadata) &&
+        types.includes(node.model.renderView.renderData.speckleType)
+      )
+    })
   }
 
   /** This gets the render views for a particular node/id.
@@ -152,38 +166,52 @@ export class RenderTree {
    *  we might want to.
    */
   public getRenderViewsForNode(node: TreeNode, parent?: TreeNode): NodeRenderView[] {
-    if (node.model.atomic && node.model.renderView) {
+    if (
+      node.model.atomic &&
+      node.model.renderView &&
+      GeometryConverter.getSpeckleType(node.model) !== SpeckleType.RevitInstance &&
+      GeometryConverter.getSpeckleType(node.model) !== SpeckleType.BlockInstance
+    ) {
       return [node.model.renderView]
     }
 
     return (parent ? parent : node.parent)
       .all((_node: TreeNode): boolean => {
-        return _node.model.renderView && _node.model.renderView.hasGeometry
+        return (
+          _node.model.renderView &&
+          (_node.model.renderView.hasGeometry || _node.model.renderView.hasMetadata)
+        )
       })
       .map((val: TreeNode) => val.model.renderView)
   }
 
   public getRenderViewNodesForNode(node: TreeNode, parent?: TreeNode): TreeNode[] {
-    if (node.model.atomic && node.model.renderView) {
+    if (
+      node.model.atomic &&
+      node.model.renderView &&
+      GeometryConverter.getSpeckleType(node.model) !== SpeckleType.RevitInstance &&
+      GeometryConverter.getSpeckleType(node.model) !== SpeckleType.BlockInstance
+    ) {
       return [node]
     }
 
     return (parent ? parent : node.parent).all((_node: TreeNode): boolean => {
-      return _node.model.renderView && _node.model.renderView.hasGeometry
+      return (
+        _node.model.renderView &&
+        (_node.model.renderView.hasGeometry || _node.model.renderView.hasMetadata)
+      )
     })
   }
 
   public getAtomicParent(node: TreeNode) {
     if (node.model.atomic) {
-      return node.model.renderView
+      return node
     }
-    return WorldTree.getInstance()
-      .getAncestors(node)
-      .find((node) => node.model.atomic)
+    return this.tree.getAncestors(node).find((node) => node.model.atomic)
   }
 
   public getRenderViewsForNodeId(id: string): NodeRenderView[] {
-    const node = WorldTree.getInstance().findId(id)
+    const node = this.tree.findId(id)
     if (!node) {
       Logger.warn(`Id ${id} does not exist`)
       return null
@@ -192,7 +220,7 @@ export class RenderTree {
   }
 
   public getRenderViewForNodeId(id: string): NodeRenderView {
-    const node = WorldTree.getInstance().findId(id)
+    const node = this.tree.findId(id)
     if (!node) {
       Logger.warn(`Id ${id} does not exist`)
       return null
@@ -201,12 +229,12 @@ export class RenderTree {
   }
 
   public purge() {
-    this.root = null
+    this.tree = null
   }
 
-  public cancelBuild(id: string) {
+  public cancelBuild(subtreeId: string) {
     this.cancel = true
-    WorldTree.getInstance().purge(id)
+    this.tree.purge(subtreeId)
     this.purge()
   }
 }

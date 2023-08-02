@@ -9,7 +9,11 @@ module.exports = {
       // Filter out generated folder files
       `**/generated/**/*`,
       // Filter out types in object loader
-      '**/packages/objectloader/types/**/*'
+      '**/packages/objectloader/types/**/*',
+      // Filter out nuxt plugin templates
+      '**/templates/plugin.js',
+      // ui-components ignore
+      '**/packages/ui-components/utils/tailwind-configure.d.ts'
     ])
 
     return 'eslint --cache --max-warnings=0 ' + finalFiles.join(' ')

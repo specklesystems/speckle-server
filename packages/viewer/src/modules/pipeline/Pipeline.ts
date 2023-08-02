@@ -1,4 +1,4 @@
-import { Plane, Vector2, WebGLRenderer } from 'three'
+import { DoubleSide, Plane, Side, Vector2, WebGLRenderer } from 'three'
 import {
   EffectComposer,
   Pass
@@ -25,6 +25,7 @@ import { SpecklePass } from './SpecklePass'
 import { ColorPass } from './ColorPass'
 import { StencilPass } from './StencilPass'
 import { StencilMaskPass } from './StencilMaskPass'
+import { OverlayPass } from './OverlayPass'
 
 export enum RenderType {
   NORMAL,
@@ -50,6 +51,7 @@ export interface PipelineOptions {
   dynamicAoParams: DynamicAOPassParams
   staticAoEnabled: boolean
   staticAoParams: StaticAoPassParams
+  depthSide: Side
 }
 
 export const DefaultPipelineOptions: PipelineOptions = {
@@ -58,7 +60,8 @@ export const DefaultPipelineOptions: PipelineOptions = {
   dynamicAoEnabled: true,
   dynamicAoParams: DefaultDynamicAOPassParams,
   staticAoEnabled: true,
-  staticAoParams: DefaultStaticAoPassParams
+  staticAoParams: DefaultStaticAoPassParams,
+  depthSide: DoubleSide
 }
 
 export class Pipeline {
@@ -69,7 +72,7 @@ export class Pipeline {
   private _pipelineOptions: PipelineOptions = Object.assign({}, DefaultPipelineOptions)
   private _needsProgressive = false
   private _resetFrame = false
-  private composer: EffectComposer = null
+  private _composer: EffectComposer = null
 
   private depthPass: DepthPass = null
   private normalsPass: NormalsPass = null
@@ -80,10 +83,14 @@ export class Pipeline {
   private applySaoPass: ApplySAOPass = null
   private copyOutputPass: CopyOutputPass = null
   private staticAoPass: StaticAOPass = null
+  private overlayPass: OverlayPass = null
 
   private drawingSize: Vector2 = new Vector2()
   private _renderType: RenderType = RenderType.NORMAL
   private accumulationFrame = 0
+
+  private onBeforePipelineRender = null
+  private onAfterPipelineRender = null
 
   public set pipelineOptions(options: Partial<PipelineOptions>) {
     Object.assign(this._pipelineOptions, options)
@@ -91,8 +98,13 @@ export class Pipeline {
     this.staticAoPass.setParams(options.staticAoParams)
     this.accumulationFrame = 0
     Pipeline.ACCUMULATE_FRAMES = options.accumulationFrames
+    this.depthPass.depthSide = options.depthSide
 
     this.pipelineOutput = options.pipelineOutput
+  }
+
+  public get pipelineOptions(): PipelineOptions {
+    return JSON.parse(JSON.stringify(this._pipelineOptions))
   }
 
   public set pipelineOutput(outputType: PipelineOutputType) {
@@ -216,12 +228,16 @@ export class Pipeline {
     return this._renderType
   }
 
+  public get composer() {
+    return this._composer
+  }
+
   public constructor(renderer: WebGLRenderer, batcher: Batcher) {
     this._renderer = renderer
     this._batcher = batcher
-    this.composer = new EffectComposer(renderer)
-    this.composer.readBuffer = null
-    this.composer.writeBuffer = null
+    this._composer = new EffectComposer(renderer)
+    this._composer.readBuffer = null
+    this._composer.writeBuffer = null
   }
 
   public configure() {
@@ -233,6 +249,7 @@ export class Pipeline {
     this.stencilMaskPass = new StencilMaskPass()
     this.applySaoPass = new ApplySAOPass()
     this.staticAoPass = new StaticAOPass()
+    this.overlayPass = new OverlayPass()
 
     this.copyOutputPass = new CopyOutputPass()
     this.copyOutputPass.renderToScreen = true
@@ -246,44 +263,71 @@ export class Pipeline {
       ObjectLayers.STREAM_CONTENT_MESH,
       ObjectLayers.STREAM_CONTENT_LINE,
       ObjectLayers.STREAM_CONTENT_POINT,
+      ObjectLayers.STREAM_CONTENT_TEXT,
       ObjectLayers.SHADOWCATCHER
     ])
     this.stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+    this.overlayPass.setLayers([ObjectLayers.MEASUREMENTS])
+    let restoreVisibility, opaque, stencil
 
-    let restoreVisibility
-    this.depthPass.onBeforeRender = () => {
+    this.onBeforePipelineRender = () => {
       restoreVisibility = this._batcher.saveVisiblity()
-      const opaque = this._batcher.getOpaque()
+      opaque = this._batcher.getOpaque()
+      stencil = this._batcher.getStencil()
+    }
+
+    this.onAfterPipelineRender = () => {
+      this._batcher.applyVisibility(restoreVisibility)
+    }
+
+    this.depthPass.onBeforeRender = () => {
       this._batcher.applyVisibility(opaque)
+      this._batcher.overrideMaterial(opaque, this.depthPass.material)
     }
     this.depthPass.onAfterRender = () => {
       this._batcher.applyVisibility(restoreVisibility)
+      this._batcher.restoreMaterial(opaque)
     }
 
     this.normalsPass.onBeforeRender = () => {
+      this._batcher.applyVisibility(opaque)
+      this._batcher.overrideMaterial(opaque, this.normalsPass.material)
+    }
+    this.normalsPass.onAfterRender = () => {
+      this._batcher.applyVisibility(restoreVisibility)
+      this._batcher.restoreMaterial(restoreVisibility)
+    }
+
+    this.stencilPass.onBeforeRender = () => {
+      this._batcher.applyVisibility(stencil)
+      this._batcher.overrideMaterial(stencil, this.stencilPass.material)
+    }
+    this.stencilPass.onAfterRender = () => {
+      this._batcher.applyVisibility(restoreVisibility)
+      this._batcher.restoreMaterial(stencil)
+    }
+
+    this.stencilMaskPass.onBeforeRender = () => {
+      this._batcher.applyVisibility(stencil)
+      this._batcher.overrideMaterial(stencil, this.stencilMaskPass.material)
+    }
+    this.stencilMaskPass.onAfterRender = () => {
+      this._batcher.applyVisibility(restoreVisibility)
+      this._batcher.restoreMaterial(stencil)
+    }
+
+    this.renderPass.onBeforeRenderOpauqe = () => {
       restoreVisibility = this._batcher.saveVisiblity()
       const opaque = this._batcher.getOpaque()
       this._batcher.applyVisibility(opaque)
     }
-    this.normalsPass.onAfterRender = () => {
-      this._batcher.applyVisibility(restoreVisibility)
+
+    this.renderPass.onBeforeRenderTransparent = () => {
+      const transparent = this._batcher.getTransparent()
+      this._batcher.applyVisibility(transparent)
     }
 
-    this.stencilPass.onBeforeRender = () => {
-      restoreVisibility = this._batcher.saveVisiblity()
-      const stencil = this._batcher.getStencil()
-      this._batcher.applyVisibility(stencil)
-    }
-    this.stencilPass.onAfterRender = () => {
-      this._batcher.applyVisibility(restoreVisibility)
-    }
-
-    this.stencilMaskPass.onBeforeRender = () => {
-      restoreVisibility = this._batcher.saveVisiblity()
-      const stencil = this._batcher.getStencil()
-      this._batcher.applyVisibility(stencil)
-    }
-    this.stencilMaskPass.onAfterRender = () => {
+    this.renderPass.onAfterRenderTransparent = () => {
       this._batcher.applyVisibility(restoreVisibility)
     }
 
@@ -320,20 +364,21 @@ export class Pipeline {
     pipeline.push(this.renderPass)
     pipeline.push(this.stencilMaskPass)
     pipeline.push(this.applySaoPass)
+    pipeline.push(this.overlayPass)
 
     this.needsProgressive = true
     return pipeline
   }
 
   private clearPipeline() {
-    while (this.composer.passes.length > 0) {
-      this.composer.removePass(this.composer.passes[0])
+    while (this._composer.passes.length > 0) {
+      this._composer.removePass(this._composer.passes[0])
     }
   }
 
   private setPipeline(pipeline: Array<SpecklePass>) {
     for (let k = 0; k < pipeline.length; k++) {
-      this.composer.addPass(pipeline[k] as unknown as Pass)
+      this._composer.addPass(pipeline[k] as unknown as Pass)
     }
   }
 
@@ -357,6 +402,7 @@ export class Pipeline {
     this.normalsPass.update(renderer.scene, renderer.camera)
     this.staticAoPass.update(renderer.scene, renderer.camera)
     this.applySaoPass.update(renderer.scene, renderer.camera)
+    this.overlayPass.update(renderer.scene, renderer.camera)
 
     this.staticAoPass.setFrameIndex(this.accumulationFrame)
     this.applySaoPass.setFrameIndex(this.accumulationFrame)
@@ -366,25 +412,31 @@ export class Pipeline {
     this._renderer.getDrawingBufferSize(this.drawingSize)
     if (this.drawingSize.length() === 0) return
 
+    if (this.onBeforePipelineRender) this.onBeforePipelineRender()
+
+    let retVal = false
     this._renderer.clear(true)
     if (this._renderType === RenderType.NORMAL) {
-      this.composer.render()
+      this._composer.render()
       const ret = false || this._resetFrame
       if (this._resetFrame) {
         this._resetFrame = false
         this.onStationaryBegin()
       }
-      return ret
+      retVal = ret
     } else {
       // console.warn('Rendering accumulation frame -> ', this.accumulationFrame)
-      this.composer.render()
+      this._composer.render()
       this.accumulationFrame++
-      return this.accumulationFrame < Pipeline.ACCUMULATE_FRAMES
+      retVal = this.accumulationFrame < Pipeline.ACCUMULATE_FRAMES
     }
+
+    if (this.onAfterPipelineRender) this.onAfterPipelineRender()
+    return retVal
   }
 
   public resize(width: number, height: number) {
-    this.composer.setSize(width, height)
+    this._composer.setSize(width, height)
     this.accumulationFrame = 0
   }
 

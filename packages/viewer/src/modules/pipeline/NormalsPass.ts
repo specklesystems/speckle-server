@@ -2,6 +2,7 @@ import {
   Camera,
   Color,
   DoubleSide,
+  Material,
   NoBlending,
   Plane,
   Scene,
@@ -28,6 +29,10 @@ export class NormalsPass extends BaseSpecklePass implements SpecklePass {
 
   get outputTexture(): Texture {
     return this.renderTarget.texture
+  }
+
+  get material(): Material {
+    return this.normalsMaterial
   }
 
   constructor() {
@@ -73,7 +78,7 @@ export class NormalsPass extends BaseSpecklePass implements SpecklePass {
 
     const shadowmapEnabled = renderer.shadowMap.enabled
     const shadowmapNeedsUpdate = renderer.shadowMap.needsUpdate
-    this.scene.overrideMaterial = this.normalsMaterial
+    // this.scene.overrideMaterial = this.normalsMaterial
     renderer.shadowMap.enabled = false
     renderer.shadowMap.needsUpdate = false
     this.applyLayers(this.camera)

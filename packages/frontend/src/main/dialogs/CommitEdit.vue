@@ -1,5 +1,5 @@
 <template>
-  <v-card :loading="loading">
+  <v-card :loading="isLoading">
     <template slot="progress">
       <v-progress-linear indeterminate></v-progress-linear>
     </template>
@@ -49,7 +49,7 @@
       </v-card-actions>
     </v-form>
     <v-dialog v-model="showDeleteDialog" width="500">
-      <v-card class="pa-0" :loading="loading">
+      <v-card class="pa-0" :loading="isLoading">
         <template slot="progress">
           <v-progress-linear indeterminate></v-progress-linear>
         </template>
@@ -193,7 +193,7 @@ export default {
       try {
         await this.$apollo.mutate({
           mutation: gql`
-            mutation commitUpdate($myCommit: CommitDeleteInput!) {
+            mutation commitDelete($myCommit: CommitDeleteInput!) {
               commitDelete(commit: $myCommit)
             }
           `,

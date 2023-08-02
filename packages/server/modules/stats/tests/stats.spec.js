@@ -20,6 +20,7 @@ const {
   getTotalObjectCount,
   getTotalUserCount
 } = require('../services')
+const { Scopes } = require('@speckle/shared')
 
 const params = { numUsers: 25, numStreams: 30, numObjects: 100, numCommits: 100 }
 
@@ -126,24 +127,24 @@ describe('Server stats api @stats-api', function () {
     adminUser.goodToken = `Bearer ${await createPersonalAccessToken(
       adminUser.id,
       'test token user A',
-      ['server:stats']
+      [Scopes.Server.Stats]
     )}`
     adminUser.badToken = `Bearer ${await createPersonalAccessToken(
       adminUser.id,
       'test token user A',
-      ['streams:read']
+      [Scopes.Streams.Read]
     )}`
 
     notAdminUser.id = await createUser(notAdminUser)
     notAdminUser.goodToken = `Bearer ${await createPersonalAccessToken(
       notAdminUser.id,
       'test token user A',
-      ['server:stats']
+      [Scopes.Server.Stats]
     )}`
     notAdminUser.badToken = `Bearer ${await createPersonalAccessToken(
       notAdminUser.id,
       'test token user A',
-      ['streams:read']
+      [Scopes.Streams.Read]
     )}`
 
     await seedDb(params)

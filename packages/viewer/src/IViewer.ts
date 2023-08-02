@@ -1,10 +1,15 @@
 import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
+import { DiffResult, VisualDiffMode } from './modules/Differ'
+import { BatchObject } from './modules/batching/BatchObject'
 import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
+import { WorldTree } from './modules/tree/WorldTree'
 import { Utils } from './modules/Utils'
+import { World } from './modules/World'
+import { MeasurementOptions } from './modules/measurements/Measurements'
 
 export interface ViewerParams {
   showStats: boolean
@@ -15,7 +20,8 @@ export interface ViewerParams {
 export enum AssetType {
   TEXTURE_8BPP = 'png', // For now
   TEXTURE_HDR = 'hdr',
-  TEXTURE_EXR = 'exr'
+  TEXTURE_EXR = 'exr',
+  FONT_JSON = 'font-json'
 }
 
 export interface Asset {
@@ -55,7 +61,9 @@ export enum ViewerEvent {
   UnloadAllComplete = 'unload-all-complete',
   Busy = 'busy',
   SectionBoxChanged = 'section-box-changed',
-  SectionBoxUpdated = 'section-box-updated'
+  SectionBoxUpdated = 'section-box-updated',
+  FilteringStateSet = 'filtering-state-set',
+  LightConfigUpdated = 'light-config-updated'
 }
 
 export type SelectionEvent = {
@@ -63,7 +71,7 @@ export type SelectionEvent = {
   event?: PointerEvent
   hits: Array<{
     guid?: string
-    object: Record<string, unknown>
+    object: Record<string, unknown> & { id: string }
     point: Vector3
   }>
 }
@@ -157,16 +165,28 @@ export interface IViewer {
     transition?: boolean
   )
 
-  loadObject(url: string, token?: string, enableCaching?: boolean): Promise<void>
+  loadObject(
+    url: string,
+    token?: string,
+    enableCaching?: boolean,
+    zoomToObject?: boolean
+  ): Promise<void>
   loadObjectAsync(
     url: string,
     token?: string,
     enableCaching?: boolean,
-    priority?: number
+    priority?: number,
+    zoomToObject?: boolean
   ): Promise<void>
   cancelLoad(url: string, unload?: boolean): Promise<void>
   unloadObject(url: string): Promise<void>
   unloadAll(): Promise<void>
+
+  /** Diffing */
+  diff(urlA: string, urlB: string, mode: VisualDiffMode): Promise<DiffResult>
+  undiff(): void
+  setDiffTime(diffResult: DiffResult, time: number): void
+  setVisualDiffMode(diffResult: DiffResult, mode: VisualDiffMode)
 
   screenshot(): Promise<string>
 
@@ -212,9 +232,18 @@ export interface IViewer {
 
   /** Data ops */
   getDataTree(): DataTree
+  getWorldTree(): WorldTree
   query<T extends Query>(query: T): QueryArgsResultMap[T['operation']]
   queryAsync(query: Query): Promise<QueryResult>
   get Utils(): Utils
+  get World(): World
+
+  getObjects(id: string): BatchObject[]
+  explode(time: number)
+
+  enableMeasurements(value: boolean)
+  setMeasurementOptions(options: MeasurementOptions)
+  removeMeasurement()
 
   dispose(): void
 }

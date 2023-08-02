@@ -15,12 +15,12 @@ const config = {
   input: 'src/index.ts',
   output: [
     {
-      file: 'dist/speckleviewer.esm.js',
+      file: 'dist/index.js',
       format: 'esm',
       sourcemap
     },
     {
-      file: 'dist/speckleviewer.js',
+      file: 'dist/index.cjs',
       format: 'cjs',
       sourcemap
     }
@@ -38,7 +38,8 @@ const config = {
     }),
     babel({
       extensions: [...DEFAULT_EXTENSIONS, '.ts', '.tsx'],
-      babelHelpers: 'bundled'
+      babelHelpers: 'bundled',
+      configFile: './babel.config.cjs'
     }),
     ...(isProd ? [terser()] : [])
   ],

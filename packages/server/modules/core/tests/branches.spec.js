@@ -70,28 +70,38 @@ describe('Branches @core-branches', () => {
       await createBranch({ name: '/pasta', streamId: stream.id, authorId: user.id })
       assert.fail('Illegal branch name passed through.')
     } catch (err) {
-      expect(err.message).to.contain('Bad name for branch.')
+      expect(err.message).to.contain('Branch names cannot start with')
     }
 
     try {
       await createBranch({ name: '#rice', streamId: stream.id, authorId: user.id })
       assert.fail('Illegal branch name passed through.')
     } catch (err) {
-      expect(err.message).to.contain('Bad name for branch.')
+      expect(err.message).to.contain('Branch names cannot start with')
     }
 
     try {
-      await updateBranch({ id: branch.id, name: '/super/part/two' })
+      await updateBranch({
+        id: branch.id,
+        name: '/super/part/two',
+        streamId: stream.id,
+        userId: user.id
+      })
       assert.fail('Illegal branch name passed through in update operation.')
     } catch (err) {
-      expect(err.message).to.contain('Bad name for branch.')
+      expect(err.message).to.contain('Branch names cannot start with')
     }
 
     try {
-      await updateBranch({ id: branch.id, name: '#super#part#three' })
+      await updateBranch({
+        id: branch.id,
+        name: '#super#part#three',
+        streamId: stream.id,
+        userId: user.id
+      })
       assert.fail('Illegal branch name passed through in update operation.')
     } catch (err) {
-      expect(err.message).to.contain('Bad name for branch.')
+      expect(err.message).to.contain('Branch names cannot start with')
     }
 
     try {
@@ -102,7 +112,7 @@ describe('Branches @core-branches', () => {
       })
       assert.fail('Illegal branch name passed through.')
     } catch (err) {
-      expect(err.message).to.contain('Bad name for branch.')
+      expect(err.message).to.contain('Branch names cannot start with')
     }
   })
 
@@ -132,7 +142,7 @@ describe('Branches @core-branches', () => {
     expect(bbb.name).to.equal('casesensitive')
 
     // cleanup
-    await deleteBranchById({ id, streamId: stream.id })
+    await deleteBranchById({ id, streamId: stream.id, userId: user.id })
   })
 
   it('Should get a branch', async () => {
@@ -142,7 +152,12 @@ describe('Branches @core-branches', () => {
   })
 
   it('Should update a branch', async () => {
-    await updateBranch({ id: branch.id, description: 'lorem ipsum' })
+    await updateBranch({
+      id: branch.id,
+      description: 'lorem ipsum',
+      streamId: stream.id,
+      userId: user.id
+    })
 
     const b1 = await getBranchById({ id: branch.id })
     expect(b1.description).to.equal('lorem ipsum')
@@ -168,7 +183,7 @@ describe('Branches @core-branches', () => {
   })
 
   it('Should delete a branch', async () => {
-    await deleteBranchById({ id: branch.id, streamId: stream.id })
+    await deleteBranchById({ id: branch.id, streamId: stream.id, userId: user.id })
     const { items } = await getBranchesByStreamId({ streamId: stream.id })
     expect(items).to.have.lengthOf(4)
   })
@@ -176,7 +191,7 @@ describe('Branches @core-branches', () => {
   it('Should NOT delete the main branch', async () => {
     const b = await getBranchByNameAndStreamId({ streamId: stream.id, name: 'main' })
     try {
-      await deleteBranchById({ id: b.id, streamId: stream.id })
+      await deleteBranchById({ id: b.id, streamId: stream.id, userId: user.id })
       assert.fail()
     } catch (e) {
       // pass

@@ -1,0 +1,60 @@
+extend type Comment {
+  """
+  Legacy comment viewer data field
+  """
+  data: JSONObject @deprecated(reason: "Use the new viewerState field instead")
+
+  """
+  SerializedViewerState
+  """
+  viewerState: JSONObject
+}
+
+type ViewerUserActivityMessage {
+  userName: String!
+  userId: String
+  sessionId: String!
+  """
+  SerializedViewerState, only null if DISCONNECTED
+  """
+  state: JSONObject
+  user: LimitedUser
+  status: ViewerUserActivityStatus!
+}
+
+enum ViewerUserActivityStatus {
+  VIEWING
+  DISCONNECTED
+}
+
+input ViewerUserActivityMessageInput {
+  userName: String!
+  userId: String
+  sessionId: String!
+  """
+  SerializedViewerState, only null if DISCONNECTED
+  """
+  state: JSONObject
+  status: ViewerUserActivityStatus!
+}
+
+extend type Mutation {
+  """
+  Broadcast user activity in the viewer
+  """
+  broadcastViewerUserActivity(
+    projectId: String!
+    resourceIdString: String!
+    message: ViewerUserActivityMessageInput!
+  ): Boolean! @hasServerRole(role: SERVER_GUEST)
+}
+
+extend type Subscription {
+  """
+  Track user activities in the viewer relating to the specified resources
+  """
+  viewerUserActivityBroadcasted(
+    target: ViewerUpdateTrackingTarget!
+    sessionId: String
+  ): ViewerUserActivityMessage!
+}

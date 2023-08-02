@@ -22,7 +22,7 @@
   },
   "sideEffects": false,
   "engines": {
-    "node": "^18.15.0"
+    "node": "^18.17.0"
   },
   "author": "AEC Systems",
   "license": "Apache-2.0",
@@ -33,18 +33,23 @@
   ],
   "dependencies": {
     "lodash": "^4.17.0",
-    "pino": "^8.7.0"
+    "lodash-es": "^4.17.21",
+    "type-fest": "^3.11.1"
   },
   "peerDependencies": {
-    "@tiptap/core": "^2.0.0-beta.176"
+    "@tiptap/core": "^2.0.0-beta.176",
+    "pino": "^8.7.0",
+    "pino-http": "^8.0.0"
   },
   "devDependencies": {
     "@tiptap/core": "^2.0.0-beta.176",
     "@types/lodash": "^4.14.184",
-    "@typescript-eslint/eslint-plugin": "^5.39.0",
-    "@typescript-eslint/parser": "^5.39.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.0",
+    "@typescript-eslint/parser": "^5.59.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
+    "pino": "^8.7.0",
+    "pino-http": "^8.0.0",
     "rollup": "^2.79.1",
     "rollup-plugin-delete": "^2.0.0",
     "rollup-plugin-typescript2": "^0.34.1",

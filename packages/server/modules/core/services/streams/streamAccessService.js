@@ -1,19 +1,21 @@
-const {
-  revokePermissionsStream,
-  grantPermissionsStream
-} = require('@/modules/core/services/streams')
 const { authorizeResolver } = require(`@/modules/shared`)
 
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 const { LogicError } = require('@/modules/shared/errors')
-const { ForbiddenError } = require('apollo-server-express')
+const { ForbiddenError, UserInputError } = require('apollo-server-express')
 const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
 const {
   addStreamPermissionsAddedActivity,
   addStreamPermissionsRevokedActivity,
   addStreamInviteAcceptedActivity
 } = require('@/modules/activitystream/services/streamActivity')
-const { getStream } = require('@/modules/core/repositories/streams')
+const {
+  getStream,
+  revokeStreamPermissions,
+  grantStreamPermissions
+} = require('@/modules/core/repositories/streams')
+
+const { ServerAcl } = require('@/modules/core/dbSchema')
 
 /**
  * Check if user is a stream collaborator
@@ -85,13 +87,15 @@ async function removeStreamCollaborator(streamId, userId, removedById) {
     await isStreamCollaborator(userId, streamId)
   }
 
-  await revokePermissionsStream({ streamId, userId })
+  const stream = await revokeStreamPermissions({ streamId, userId })
 
   await addStreamPermissionsRevokedActivity({
     streamId,
     activityUserId: removedById,
     removedUserId: userId
   })
+
+  return stream
 }
 
 /**
@@ -127,7 +131,14 @@ async function addOrUpdateStreamCollaborator(
 
   await validateStreamAccess(addedById, streamId, Roles.Stream.Owner)
 
-  await grantPermissionsStream({
+  // make sure server guests cannot be stream owners
+  if (role === Roles.Stream.Owner) {
+    const userServerRole = await ServerAcl.knex().where({ userId }).first()
+    if (userServerRole.role === Roles.Server.Guest)
+      throw new UserInputError('Server guests cannot own streams')
+  }
+
+  const stream = await grantStreamPermissions({
     streamId,
     userId,
     role
@@ -138,16 +149,20 @@ async function addOrUpdateStreamCollaborator(
       streamId,
       inviterId: addedById,
       inviteTargetId: userId,
-      role
+      role,
+      stream
     })
   } else {
     await addStreamPermissionsAddedActivity({
       streamId,
       activityUserId: addedById,
       targetUserId: userId,
-      role
+      role,
+      stream
     })
   }
+
+  return stream
 }
 
 module.exports = {

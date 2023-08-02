@@ -1,47 +1,58 @@
 'use strict'
 
-const { ForbiddenError, UserInputError, ApolloError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
 
-const { authorizeResolver, pubsub } = require('@/modules/shared')
-
 const {
-  createBranch,
-  updateBranch,
-  getBranchById,
-  getBranchesByStreamId,
-  getBranchByNameAndStreamId,
-  deleteBranchById
-} = require('../../services/branches')
+  pubsub,
+  BranchSubscriptions: BranchPubsubEvents
+} = require('@/modules/shared/utils/subscriptions')
+const { authorizeResolver } = require('@/modules/shared')
+
+const { getBranchByNameAndStreamId, getBranchById } = require('../../services/branches')
+const {
+  createBranchAndNotify,
+  updateBranchAndNotify,
+  deleteBranchAndNotify
+} = require('@/modules/core/services/branch/management')
+const {
+  getPaginatedStreamBranches
+} = require('@/modules/core/services/branch/retrieval')
 
 const { getUserById } = require('../../services/users')
-const { saveActivity } = require('@/modules/activitystream/services')
-const { ActionTypes } = require('@/modules/activitystream/helpers/types')
+const { Roles } = require('@speckle/shared')
 
 // subscription events
-const BRANCH_CREATED = 'BRANCH_CREATED'
-const BRANCH_UPDATED = 'BRANCH_UPDATED'
-const BRANCH_DELETED = 'BRANCH_DELETED'
+const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
+const BRANCH_UPDATED = BranchPubsubEvents.BranchUpdated
+const BRANCH_DELETED = BranchPubsubEvents.BranchDeleted
 
+/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
   Query: {},
   Stream: {
     async branches(parent, args) {
-      if (args.limit && args.limit > 100)
-        throw new UserInputError(
-          'Cannot return more than 100 items, please use pagination.'
-        )
-      const { items, cursor, totalCount } = await getBranchesByStreamId({
-        streamId: parent.id,
-        limit: args.limit,
-        cursor: args.cursor
-      })
-
-      return { totalCount, cursor, items }
+      return await getPaginatedStreamBranches(parent.id, args)
     },
 
     async branch(parent, args) {
-      return await getBranchByNameAndStreamId({ streamId: parent.id, name: args.name })
+      // TODO: TEMPORARY HACK
+      // Temporary "Forwards" compatibility layer to allow .NET and PY clients
+      // to use FE2 urls without major changes.
+      // When getting a branch by name, if not found, we try to do a 'hail mary' attempt
+      // and get it by id as well (this would be coming from a FE2 url).
+
+      const branchByName = await getBranchByNameAndStreamId({
+        streamId: parent.id,
+        name: args.name
+      })
+      if (branchByName) return branchByName
+
+      const branchByIdRes = await getBranchById({ id: args.name })
+      if (!branchByIdRes) return null
+
+      // Extra validation to check if it actually belongs to the stream
+      if (branchByIdRes.streamId !== parent.id) return null
+      return branchByIdRes
     }
   },
   Branch: {
@@ -56,26 +67,10 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
-      const id = await createBranch({ ...args.branch, authorId: context.userId })
-
-      if (id) {
-        await saveActivity({
-          streamId: args.branch.streamId,
-          resourceType: 'branch',
-          resourceId: id,
-          actionType: ActionTypes.Branch.Create,
-          userId: context.userId,
-          info: { branch: { ...args.branch, id } },
-          message: `Branch created: '${args.branch.name}' (${id})`
-        })
-        await pubsub.publish(BRANCH_CREATED, {
-          branchCreated: { ...args.branch, id, authorId: context.userId },
-          streamId: args.branch.streamId
-        })
-      }
+      const { id } = await createBranchAndNotify(args.branch, context.userId)
 
       return id
     },
@@ -84,83 +79,21 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
-      const oldValue = await getBranchById({ id: args.branch.id })
-      if (!oldValue) {
-        throw new ApolloError('Branch not found.')
-      }
-
-      if (oldValue.streamId !== args.branch.streamId)
-        throw new ForbiddenError(
-          'The branch id and stream id do not match. Please check your inputs.'
-        )
-
-      const updated = await updateBranch({ ...args.branch })
-
-      if (updated) {
-        await saveActivity({
-          streamId: args.branch.streamId,
-          resourceType: 'branch',
-          resourceId: args.branch.id,
-          actionType: ActionTypes.Branch.Update,
-          userId: context.userId,
-          info: { old: oldValue, new: args.branch },
-          message: `Branch metadata changed: '${args.branch.name}' (${args.branch.id})`
-        })
-        await pubsub.publish(BRANCH_UPDATED, {
-          branchUpdated: { ...args.branch },
-          streamId: args.branch.streamId,
-          branchId: args.branch.id
-        })
-      }
-
-      return updated
+      const newBranch = await updateBranchAndNotify(args.branch, context.userId)
+      return !!newBranch
     },
 
     async branchDelete(parent, args, context) {
-      const role = await authorizeResolver(
+      await authorizeResolver(
         context.userId,
         args.branch.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
-      const branch = await getBranchById({ id: args.branch.id })
-      if (!branch) {
-        throw new ApolloError('Branch not found.')
-      }
-
-      if (branch.streamId !== args.branch.streamId)
-        throw new ForbiddenError(
-          'The branch id and stream id do not match. Please check your inputs.'
-        )
-
-      if (branch.authorId !== context.userId && role !== 'stream:owner')
-        throw new ForbiddenError(
-          'Only the branch creator or stream owners are allowed to delete branches.'
-        )
-
-      const deleted = await deleteBranchById({
-        id: args.branch.id,
-        streamId: args.branch.streamId
-      })
-      if (deleted) {
-        await saveActivity({
-          streamId: args.branch.streamId,
-          resourceType: 'branch',
-          resourceId: args.branch.id,
-          actionType: ActionTypes.Branch.Delete,
-          userId: context.userId,
-          info: { branch: { ...args.branch, name: branch.name } },
-          message: `Branch deleted: '${branch.name}' (${args.branch.id})`
-        })
-        await pubsub.publish(BRANCH_DELETED, {
-          branchDeleted: { ...args.branch },
-          streamId: args.branch.streamId
-        })
-      }
-
+      const deleted = await deleteBranchAndNotify(args.branch, context.userId)
       return deleted
     }
   },
@@ -169,7 +102,11 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([BRANCH_CREATED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer
+          )
 
           return payload.streamId === variables.streamId
         }
@@ -180,7 +117,11 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([BRANCH_UPDATED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer
+          )
 
           const streamMatch = payload.streamId === variables.streamId
           if (streamMatch && variables.branchId) {
@@ -196,7 +137,11 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([BRANCH_DELETED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer
+          )
 
           return payload.streamId === variables.streamId
         }

@@ -152,7 +152,7 @@ export default {
   apollo: {
     stream: {
       query: gql`
-        query Stream($id: String!) {
+        query StreamHomeMetadata($id: String!) {
           stream(id: $id) {
             id
             isPublic

@@ -1,0 +1,25 @@
+/* stylelint-disable selector-id-pattern */
+@import '@speckle/ui-components/style.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Don't pollute this - it's going to be bundled in all pages!
+ */
+
+/**
+ * Making sure page is always stretched to the bottom of the screen even if there's nothing in it
+ */
+html,
+body,
+div#__nuxt,
+div#__nuxt > div {
+  min-height: 100%;
+}
+
+html,
+body,
+div#__nuxt {
+  height: 100%;
+}

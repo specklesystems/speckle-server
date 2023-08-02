@@ -1,13 +1,10 @@
 'use strict'
-const { ApolloError, ForbiddenError, UserInputError } = require('apollo-server-express')
+const { UserInputError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
 
 const {
-  createStream,
   getStream,
   getStreams,
-  updateStream,
-  deleteStream,
   getStreamUsers,
   favoriteStream,
   getFavoriteStreamsCollection,
@@ -17,14 +14,11 @@ const {
 } = require('@/modules/core/services/streams')
 
 const {
-  authorizeResolver,
   pubsub,
-  StreamPubsubEvents,
-  validateScopes,
-  validateServerRole
-} = require(`@/modules/shared`)
-const { saveActivity } = require(`@/modules/activitystream/services`)
-const { ActionTypes } = require('@/modules/activitystream/helpers/types')
+  StreamSubscriptions: StreamPubsubEvents
+} = require(`@/modules/shared/utils/subscriptions`)
+
+const { authorizeResolver, validateScopes } = require(`@/modules/shared`)
 const {
   RateLimitError,
   RateLimitAction,
@@ -36,11 +30,8 @@ const {
 } = require('@/modules/serverinvites/services/inviteRetrievalService')
 const { removePrivateFields } = require('@/modules/core/helpers/userHelper')
 const {
-  removeStreamCollaborator,
-  addOrUpdateStreamCollaborator,
-  isStreamCollaborator
+  removeStreamCollaborator
 } = require('@/modules/core/services/streams/streamAccessService')
-const { Roles } = require('@/modules/core/helpers/mainConstants')
 const {
   getDiscoverableStreams
 } = require('@/modules/core/services/streams/discoverableStreams')
@@ -49,7 +40,16 @@ const {
   getUserStreamsCount,
   getUserStreams
 } = require('@/modules/core/repositories/streams')
+const {
+  deleteStreamAndNotify,
+  updateStreamAndNotify,
+  createStreamReturnRecord,
+  updateStreamRoleAndNotify
+} = require('@/modules/core/services/streams/management')
 const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
+const { Roles, Scopes } = require('@speckle/shared')
+const { StreamNotFoundError } = require('@/modules/core/errors/stream')
+const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -57,45 +57,8 @@ const USER_STREAM_REMOVED = StreamPubsubEvents.UserStreamRemoved
 const STREAM_UPDATED = StreamPubsubEvents.StreamUpdated
 const STREAM_DELETED = StreamPubsubEvents.StreamDeleted
 
-function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
-
-const _deleteStream = async (parent, args, context) => {
-  await saveActivity({
-    streamId: args.id,
-    resourceType: 'stream',
-    resourceId: args.id,
-    actionType: ActionTypes.Stream.Delete,
-    userId: context.userId,
-    info: {},
-    message: 'Stream deleted'
-  })
-
-  // Notify any listeners on the streamId
-  await pubsub.publish(STREAM_DELETED, {
-    streamDeleted: { streamId: args.id },
-    streamId: args.id
-  })
-
-  // Notify all stream users
-  const users = await getStreamUsers({ streamId: args.id })
-
-  for (const user of users) {
-    await pubsub.publish(USER_STREAM_REMOVED, {
-      userStreamRemoved: { id: args.id },
-      ownerId: user.id
-    })
-  }
-
-  // delay deletion by a bit so we can do auth checks
-  await sleep(250)
-
-  // Delete after event so we can do authz
-  await deleteStream({ streamId: args.id })
-  return true
+const _deleteStream = async (_parent, args, context) => {
+  return await deleteStreamAndNotify(args.id, context.userId)
 }
 
 const getUserStreamsCore = async (forOtherUser, parent, args) => {
@@ -118,13 +81,15 @@ module.exports = {
   Query: {
     async stream(_, args, context) {
       const stream = await getStream({ streamId: args.id, userId: context.userId })
-      if (!stream) throw new ApolloError('Stream not found')
+      if (!stream) {
+        throw new StreamNotFoundError('Stream not found')
+      }
 
-      await authorizeResolver(context.userId, args.id, 'stream:reviewer')
+      await authorizeResolver(context.userId, args.id, Roles.Stream.Reviewer)
 
       if (!stream.isPublic) {
-        await validateServerRole(context, 'server:user')
-        await validateScopes(context.scopes, 'streams:read')
+        await throwForNotHavingServerRole(context, Roles.Server.Guest)
+        await validateScopes(context.scopes, Scopes.Streams.Read)
       }
 
       return stream
@@ -247,55 +212,22 @@ module.exports = {
         throw new RateLimitError(rateLimitResult)
       }
 
-      const id = await createStream({ ...args.stream, ownerId: context.userId })
+      const { id } = await createStreamReturnRecord(
+        { ...args.stream, ownerId: context.userId },
+        { createActivity: true }
+      )
 
-      await saveActivity({
-        streamId: id,
-        resourceType: 'stream',
-        resourceId: id,
-        actionType: ActionTypes.Stream.Create,
-        userId: context.userId,
-        info: { stream: args.stream },
-        message: `Stream '${args.stream.name}' created`
-      })
-      await pubsub.publish(USER_STREAM_ADDED, {
-        userStreamAdded: { id, ...args.stream },
-        ownerId: context.userId
-      })
       return id
     },
 
     async streamUpdate(parent, args, context) {
-      await authorizeResolver(context.userId, args.stream.id, 'stream:owner')
-
-      const oldValue = await getStream({ streamId: args.stream.id })
-
-      const { stream } = args
-      await updateStream(stream)
-
-      await saveActivity({
-        streamId: args.stream.id,
-        resourceType: 'stream',
-        resourceId: args.stream.id,
-        actionType: ActionTypes.Stream.Update,
-        userId: context.userId,
-        info: { old: oldValue, new: args.stream },
-        message: 'Stream metadata changed'
-      })
-      await pubsub.publish(STREAM_UPDATED, {
-        streamUpdated: {
-          id: args.stream.id,
-          name: args.stream.name,
-          description: args.stream.description
-        },
-        id: args.stream.id
-      })
-
+      await authorizeResolver(context.userId, args.stream.id, Roles.Stream.Owner)
+      await updateStreamAndNotify(args.stream, context.userId)
       return true
     },
 
     async streamDelete(parent, args, context, info) {
-      await authorizeResolver(context.userId, args.id, 'stream:owner')
+      await authorizeResolver(context.userId, args.id, Roles.Stream.Owner)
       return await _deleteStream(parent, args, context, info)
     },
 
@@ -314,51 +246,28 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.permissionParams.streamId,
-        'stream:owner'
+        Roles.Stream.Owner
       )
 
-      const smallestStreamRole = Roles.Stream.Reviewer
-      const params = {
-        streamId: args.permissionParams.streamId,
-        userId: args.permissionParams.userId,
-        role: args.permissionParams.role.toLowerCase() || smallestStreamRole
-      }
-
-      // We only allow changing roles, not adding access - for that the user must use stream invites
-      const isCollaboratorAlready = await isStreamCollaborator(
-        params.userId,
-        params.streamId
-      )
-      if (!isCollaboratorAlready) {
-        throw new ForbiddenError(
-          "Cannot grant permissions to users who aren't collaborators already - invite the user to the stream first"
-        )
-      }
-
-      await addOrUpdateStreamCollaborator(
-        params.streamId,
-        params.userId,
-        params.role,
+      const result = await updateStreamRoleAndNotify(
+        args.permissionParams,
         context.userId
       )
-
-      return true
+      return !!result
     },
 
     async streamRevokePermission(parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.permissionParams.streamId,
-        'stream:owner'
+        Roles.Stream.Owner
       )
 
-      await removeStreamCollaborator(
-        args.permissionParams.streamId,
-        args.permissionParams.userId,
+      const result = await updateStreamRoleAndNotify(
+        args.permissionParams,
         context.userId
       )
-
-      return true
+      return !!result
     },
 
     async streamFavorite(_parent, args, ctx) {
@@ -401,7 +310,7 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([STREAM_UPDATED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.id, 'stream:reviewer')
+          await authorizeResolver(context.userId, payload.id, Roles.Stream.Reviewer)
           return payload.id === variables.streamId
         }
       )
@@ -411,7 +320,11 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([STREAM_DELETED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer
+          )
           return payload.streamId === variables.streamId
         }
       )

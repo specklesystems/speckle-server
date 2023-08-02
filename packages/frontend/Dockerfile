@@ -2,7 +2,7 @@
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
 # build stage
-FROM node:18.15.0-bullseye-slim as build-stage
+FROM node:18.17.0-bullseye-slim as build-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 
@@ -14,6 +14,7 @@ COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
 
 # Onyl copy in the relevant package.json files for the dependencies
+COPY packages/frontend-2/type-augmentations/stubs ./packages/frontend-2/type-augmentations/stubs/
 COPY packages/frontend/package.json ./packages/frontend/
 COPY packages/viewer/package.json ./packages/viewer/
 COPY packages/objectloader/package.json ./packages/objectloader/
