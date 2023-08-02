@@ -21,6 +21,11 @@ import {
   MockedConfigBinding
 } from '~/lib/bindings/definitions/IConfigBinding'
 
+import {
+  ISelectionBindingKey,
+  ISelectionBinding
+} from '~/lib/bindings/definitions/ISelectionBinding'
+
 // Makes TS happy
 declare let globalThis: Record<string, unknown> & {
   CefSharp?: { BindObjectAsync: (name: string) => Promise<void> }
@@ -49,6 +54,11 @@ export default defineNuxtPlugin(async () => {
   // UI configuration bindings.
   const configBinding = await tryHoistBinding<IConfigBinding>(IConfigBindingKey)
 
+  // Selection binding
+  const selectionBinding = await tryHoistBinding<ISelectionBinding>(
+    ISelectionBindingKey
+  )
+
   const showDevTools = () => {
     baseBinding.showDevTools()
   }
@@ -63,6 +73,7 @@ export default defineNuxtPlugin(async () => {
       nonExistantBindings,
       baseBinding,
       configBinding,
+      selectionBinding,
       showDevTools,
       openUrl
     }

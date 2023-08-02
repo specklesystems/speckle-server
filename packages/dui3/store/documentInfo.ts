@@ -1,12 +1,10 @@
-import { defineStore } from 'pinia'
 import { DocumentInfo } from 'lib/bindings/definitions/IBasicConnectorBinding'
 
 export const useDocumentInfoStore = defineStore('documentInfoStore', () => {
   const app = useNuxtApp()
-  const documentInfo = ref<DocumentInfo>()
+  const documentInfo = ref<DocumentInfo>({ location: 'pasta', id: 'nuuu', name: 'aa' })
 
   app.$baseBinding.on('documentChanged', () => {
-    console.log('doc changed')
     setTimeout(async () => {
       const docInfo = await app.$baseBinding.getDocumentInfo()
       documentInfo.value = docInfo
