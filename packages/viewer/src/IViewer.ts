@@ -1,4 +1,4 @@
-import { Box3, Vector3 } from 'three'
+import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
 import { DiffResult, VisualDiffMode } from './modules/Differ'
 import { BatchObject } from './modules/batching/BatchObject'
@@ -11,7 +11,6 @@ import { Utils } from './modules/Utils'
 import { World } from './modules/World'
 import { MeasurementOptions } from './modules/measurements/Measurements'
 import SpeckleRenderer from './modules/SpeckleRenderer'
-import EventEmitter from './modules/EventEmitter'
 import { Extension } from './modules/extensions/core-extensions/Extension'
 
 export interface ViewerParams {
@@ -63,8 +62,6 @@ export enum ViewerEvent {
   LoadCancelled = 'load-cancelled',
   UnloadAllComplete = 'unload-all-complete',
   Busy = 'busy',
-  SectionBoxChanged = 'section-box-changed',
-  SectionBoxUpdated = 'section-box-updated',
   FilteringStateSet = 'filtering-state-set',
   LightConfigUpdated = 'light-config-updated'
 }
@@ -227,8 +224,6 @@ export interface IViewer {
 
   getRenderer(): SpeckleRenderer
   getContainer(): HTMLElement
-  get emiter(): EventEmitter
-  get clippingVolume(): Box3
 
   // addExtension(extension: Extension)
   createExtension<T extends Extension>(type: new () => T): T

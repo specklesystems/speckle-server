@@ -138,7 +138,7 @@ export class Measurements {
         this.renderer.renderingCamera,
         data,
         true,
-        this.renderer.currentSectionBox,
+        this.renderer.clippingVolume,
         [ObjectLayers.STREAM_CONTENT_MESH]
       ) as ExtendedIntersection[]) || []
 
@@ -212,7 +212,7 @@ export class Measurements {
         this.renderer.renderingCamera,
         data,
         true,
-        this.renderer.currentSectionBox,
+        this.renderer.clippingVolume,
         [ObjectLayers.STREAM_CONTENT_MESH]
       ) as ExtendedIntersection[]) || []
 
@@ -237,7 +237,7 @@ export class Measurements {
         this.renderer.renderingCamera,
         new Ray(offsetPoint, startNormal),
         true,
-        this.renderer.currentSectionBox,
+        this.renderer.clippingVolume,
         [ObjectLayers.STREAM_CONTENT_MESH]
       ) as ExtendedIntersection[]) || []
 

@@ -35,7 +35,7 @@ export class IntersectionQuerySolver {
       this.renderer.renderingCamera,
       ray,
       true,
-      this.renderer.currentSectionBox,
+      this.renderer.clippingVolume,
       [ObjectLayers.STREAM_CONTENT_MESH]
     )
     if (!results || results.length === 0) return { objects: null }
@@ -64,7 +64,7 @@ export class IntersectionQuerySolver {
       this.renderer.renderingCamera,
       new Vector2(query.point.x, query.point.y),
       true,
-      this.renderer.currentSectionBox
+      this.renderer.clippingVolume
     )
     if (!results) return null
     const hits = this.renderer.queryHits(results)

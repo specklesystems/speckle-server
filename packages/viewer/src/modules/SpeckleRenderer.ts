@@ -43,9 +43,7 @@ import {
 import { DefaultPipelineOptions, Pipeline, PipelineOptions } from './pipeline/Pipeline'
 import { MeshBVHVisualizer } from 'three-mesh-bvh'
 import MeshBatch from './batching/MeshBatch'
-import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
 import { Shadowcatcher } from './Shadowcatcher'
-import Logger from 'js-logger'
 import SpeckleMesh from './objects/SpeckleMesh'
 import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 import { BatchObject } from './batching/BatchObject'
@@ -78,7 +76,7 @@ export default class SpeckleRenderer {
   public _scene: Scene
   private _needsRender: boolean
   private rootGroup: Group
-  private batcher: Batcher
+  public batcher: Batcher
   private _intersections: Intersections
   public input: Input
   private sun: DirectionalLight
@@ -87,9 +85,7 @@ export default class SpeckleRenderer {
   public viewer: Viewer // TEMPORARY
   private filterBatchRecording: string[] = []
   private pipeline: Pipeline
-  private lastSectionPlanes: Plane[] = []
-  private sectionPlanesChanged: Plane[] = []
-  private sectionBoxOutlines: SectionBoxOutlines = null
+
   private _shadowcatcher: Shadowcatcher = null
   private _measurements: Measurements = null
   private cancel: { [subtreeId: string]: boolean } = {}
@@ -98,6 +94,8 @@ export default class SpeckleRenderer {
   private explodeRange = 0
 
   private _cameraProvider: ICameraProvider = null
+  private _clippingPlanes: Plane[] = []
+  private _clippingVolume: Box3
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -201,12 +199,22 @@ export default class SpeckleRenderer {
     return this._intersections
   }
 
-  public get currentSectionBox() {
-    return new Box3() //this.viewer.sectionBox.getCurrentBox()
-  }
-
   public get measurements() {
     return this._measurements
+  }
+
+  public get clippingVolume(): Box3 {
+    // This needs to be computed from the clipping plane's intersection with the scene box
+    return this.sceneBox
+  }
+
+  public get clippingPlanes(): Plane[] {
+    return this._clippingPlanes
+  }
+
+  public set clippingPlanes(value: Plane[]) {
+    this._clippingPlanes = value.map((value: Plane) => new Plane().copy(value))
+    this.updateClippingPlanes()
   }
 
   public constructor(viewer: Viewer /** TEMPORARY */) {
@@ -218,14 +226,6 @@ export default class SpeckleRenderer {
 
     this._intersections = new Intersections()
     this.viewer = viewer
-    this.lastSectionPlanes.push(
-      new Plane(),
-      new Plane(),
-      new Plane(),
-      new Plane(),
-      new Plane(),
-      new Plane()
-    )
   }
 
   public create(container: HTMLElement) {
@@ -259,29 +259,6 @@ export default class SpeckleRenderer {
     this.pipeline = new Pipeline(this._renderer, this.batcher)
     this.pipeline.configure()
     this.pipeline.pipelineOptions = DefaultPipelineOptions
-
-    this.sectionBoxOutlines = new SectionBoxOutlines()
-    const sectionBoxCapperGroup = new Group()
-    sectionBoxCapperGroup.name = 'SectionBoxOutlines'
-    this.scene.add(sectionBoxCapperGroup)
-    sectionBoxCapperGroup.add(
-      this.sectionBoxOutlines.getPlaneOutline(PlaneId.NEGATIVE_Z).renderable
-    )
-    sectionBoxCapperGroup.add(
-      this.sectionBoxOutlines.getPlaneOutline(PlaneId.POSITIVE_Z).renderable
-    )
-    sectionBoxCapperGroup.add(
-      this.sectionBoxOutlines.getPlaneOutline(PlaneId.POSITIVE_X).renderable
-    )
-    sectionBoxCapperGroup.add(
-      this.sectionBoxOutlines.getPlaneOutline(PlaneId.NEGATIVE_X).renderable
-    )
-    sectionBoxCapperGroup.add(
-      this.sectionBoxOutlines.getPlaneOutline(PlaneId.POSITIVE_Y).renderable
-    )
-    sectionBoxCapperGroup.add(
-      this.sectionBoxOutlines.getPlaneOutline(PlaneId.NEGATIVE_Y).renderable
-    )
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
     this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
@@ -678,10 +655,9 @@ export default class SpeckleRenderer {
     }, {})
   }
 
-  public updateClippingPlanes(planes?: Plane[]) {
+  protected updateClippingPlanes(planes?: Plane[]) {
     if (!this.allObjects) return
-    // REVISIT
-    // if (!planes) planes = this.viewer.sectionBox.planes
+    if (!planes) planes = this._clippingPlanes
     /** This will be done via the batches in the near future */
     this.allObjects.traverse((object) => {
       const material = (object as unknown as { material }).material
@@ -695,55 +671,11 @@ export default class SpeckleRenderer {
       }
     })
     this.pipeline.updateClippingPlanes(planes)
-    this.sectionBoxOutlines.updateClippingPlanes(planes)
+    // this.sectionBoxOutlines.updateClippingPlanes(planes)
     this._shadowcatcher.updateClippingPlanes(planes)
     this._measurements.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
     this.resetPipeline()
-    // console.log('Updated planes -> ', this.viewer.sectionBox.planes[2])
-  }
-
-  private setSectionPlaneChanged(planes: Plane[]) {
-    this.sectionPlanesChanged.length = 0
-    for (let k = 0; k < planes.length; k++) {
-      if (Math.abs(this.lastSectionPlanes[k].constant - planes[k].constant) > 0.0001)
-        this.sectionPlanesChanged.push(planes[k])
-      this.lastSectionPlanes[k].copy(planes[k])
-    }
-  }
-
-  public onSectionBoxDragStart() {
-    this.sectionBoxOutlines.enable(false)
-  }
-
-  public onSectionBoxDragEnd() {
-    const generate = () => {
-      //REVISIT
-      // this.setSectionPlaneChanged(this.viewer.sectionBox.planes)
-      this.updateSectionBoxCapper(this.sectionPlanesChanged)
-      this.updateShadowCatcher()
-      this.viewer.removeListener(ViewerEvent.SectionBoxUpdated, generate)
-    }
-    this.viewer.on(ViewerEvent.SectionBoxUpdated, generate)
-  }
-
-  public updateSectionBoxCapper(planes?: Plane[]) {
-    const start = performance.now()
-    // REVISIT
-    // if (!planes) planes = this.viewer.sectionBox.planes
-    for (let k = 0; k < planes.length; k++) {
-      this.sectionBoxOutlines.updatePlaneOutline(
-        this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[],
-        planes[k]
-      )
-    }
-    // REVISIT
-    // this.sectionBoxOutlines.enable(this.viewer.sectionBox.display.visible)
-    Logger.warn('Outline time: ', performance.now() - start)
-  }
-
-  public enableSectionBoxCapper(value: boolean) {
-    this.sectionBoxOutlines.enable(value)
   }
 
   public updateShadowCatcher() {

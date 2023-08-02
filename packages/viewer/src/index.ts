@@ -43,6 +43,7 @@ import {
   InlineView
 } from './modules/extensions/core-extensions/Providers'
 import { SectionTool } from './modules/extensions/SectionTool'
+import { SectionOutlines } from './modules/extensions/SectionOutlines'
 
 export {
   Viewer,
@@ -60,7 +61,8 @@ export {
   Units,
   SelectionExtension,
   CameraController,
-  SectionTool
+  SectionTool,
+  SectionOutlines
 }
 
 export type {

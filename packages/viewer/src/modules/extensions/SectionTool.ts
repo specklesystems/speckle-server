@@ -21,17 +21,21 @@ import { ObjectLayers } from '../SpeckleRenderer'
 import { Extension } from './core-extensions/Extension'
 import { CameraControllerEvent, ICameraProvider } from './core-extensions/Providers'
 import { InputEvent } from '../input/Input'
+import { ISectionProvider } from './core-extensions/Providers'
 
 export enum SectionToolEvent {
   DragStart = 'section-box-drag-start',
   DragEnd = 'section-box-drag-end',
-  Changed = 'section-box-changed',
-  Updated = 'section-box-updated'
+  Updated = 'section-box-changed'
 }
 
-export class SectionTool extends Extension {
+export class SectionTool extends Extension implements ISectionProvider {
   public get inject() {
     return [ICameraProvider.Symbol]
+  }
+
+  public get provide(): string {
+    return ISectionProvider.Symbol
   }
 
   protected dragging = false
@@ -56,6 +60,19 @@ export class SectionTool extends Extension {
   protected allowSelection: boolean
 
   protected raycaster: Raycaster
+
+  private _enabled = false
+  public get enabled() {
+    return this._enabled
+  }
+
+  public set enabled(value: boolean) {
+    this._enabled = value
+    this.display.visible = value
+    this.viewer.getRenderer().renderer.localClippingEnabled = value
+    this.emit(SectionToolEvent.Updated, this.planes)
+    this.viewer.requestRender()
+  }
 
   constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
     super(viewer)
@@ -245,8 +262,8 @@ export class SectionTool extends Extension {
 
       this.prevPosition = this.sphere.position.clone()
     }
-    this.viewer.requestRender()
-    this.emit(SectionToolEvent.Changed, this.getCurrentBox())
+    this.viewer.getRenderer().clippingPlanes = this.planes
+    this.emit(SectionToolEvent.Updated, this.planes)
     this.viewer.requestRender()
   }
 
@@ -387,7 +404,6 @@ export class SectionTool extends Extension {
       plane.setFromCoplanarPoints(a, b, c)
       index++
     }
-    this.emit(SectionToolEvent.Updated, this.getCurrentBox())
   }
 
   private _attachControlsToBox() {
@@ -470,29 +486,13 @@ export class SectionTool extends Extension {
     this._generateOrUpdatePlanes()
     this._attachControlsToBox()
     this.boxMeshHelper.box.copy(this.boxGeometry.boundingBox)
-    this.emit(SectionToolEvent.Changed, this.getCurrentBox())
+    this.emit(SectionToolEvent.Updated, this.planes)
+    this.viewer.getRenderer().clippingPlanes = this.planes
     this.viewer.requestRender()
   }
 
   public toggle() {
-    this.display.visible = !this.display.visible
-    this.viewer.getRenderer().renderer.localClippingEnabled = this.display.visible
-    this.emit(SectionToolEvent.Changed, this.getCurrentBox())
-    this.viewer.requestRender()
-  }
-
-  public disable() {
-    this.display.visible = false
-    this.viewer.getRenderer().renderer.localClippingEnabled = false
-    this.emit(SectionToolEvent.Changed, this.getCurrentBox())
-    this.viewer.requestRender()
-  }
-
-  public enable() {
-    this.display.visible = true
-    this.viewer.getRenderer().renderer.localClippingEnabled = true
-    this.emit(SectionToolEvent.Changed, this.getCurrentBox())
-    this.viewer.requestRender()
+    this.enabled = !this._enabled
   }
 
   public displayOff() {
@@ -501,13 +501,5 @@ export class SectionTool extends Extension {
 
   public displayOn() {
     this.display.visible = true
-  }
-
-  public getCurrentBox() {
-    if (!this.display.visible) return null
-    const box = new Box3().setFromBufferAttribute(
-      this.boxGeometry.attributes.position as BufferAttribute
-    )
-    return box
   }
 }

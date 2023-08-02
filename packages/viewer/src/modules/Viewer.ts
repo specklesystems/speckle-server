@@ -5,7 +5,7 @@ import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
 // import CameraHandler from './context/CameraHanlder'
 
-import { Box3, Clock, DoubleSide, FrontSide, Texture } from 'three'
+import { Clock, DoubleSide, FrontSide, Texture } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
 import {
@@ -49,9 +49,6 @@ export class Viewer extends EventEmitter implements IViewer {
   private filteringManager: FilteringManager
   private propertyManager: PropertyManager
   public differ: Differ
-  /** Legacy viewer components (will revisit soon) */
-  // public sectionBox: SectionBox
-  // public cameraHandler: CameraHandler
 
   /** Misc members */
   private inProgressOperations: number
@@ -77,14 +74,6 @@ export class Viewer extends EventEmitter implements IViewer {
       }
     }
     return this.utils
-  }
-
-  public get emiter(): EventEmitter {
-    return this
-  }
-
-  public get clippingVolume(): Box3 {
-    return new Box3() //this.sectionBox.cube.geometry.boundingBox
   }
 
   public createExtension<T extends Extension>(
@@ -151,20 +140,6 @@ export class Viewer extends EventEmitter implements IViewer {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any)._V = this // For debugging! ಠ_ಠ
 
-    // this.sectionBox = new SectionBox(this)
-    // this.sectionBox.disable()
-    // this.on(ViewerEvent.SectionBoxUpdated, () => {
-    //   this.speckleRenderer.updateClippingPlanes(this.sectionBox.planes)
-    // })
-    // this.sectionBox.on(
-    //   SectionBoxEvent.DRAG_START,
-    //   this.speckleRenderer.onSectionBoxDragStart.bind(this.speckleRenderer)
-    // )
-    // this.sectionBox.on(
-    //   SectionBoxEvent.DRAG_END,
-    //   this.speckleRenderer.onSectionBoxDragEnd.bind(this.speckleRenderer)
-    // )
-
     this.frame()
     this.resize()
 
@@ -184,36 +159,6 @@ export class Viewer extends EventEmitter implements IViewer {
   public getObjects(id: string): BatchObject[] {
     return this.speckleRenderer.getObjects(id)
   }
-
-  // public setSectionBox(
-  //   box?: {
-  //     min: {
-  //       x: number
-  //       y: number
-  //       z: number
-  //     }
-  //     max: { x: number; y: number; z: number }
-  //   },
-  //   offset?: number
-  // ) {
-  //   if (!box) {
-  //     box = this.speckleRenderer.sceneBox
-  //   }
-  //   this.sectionBox.setBox(box, offset)
-  //   this.speckleRenderer.updateSectionBoxCapper()
-  // }
-
-  // public getSectionBoxFromObjects(objectIds: string[]) {
-  //   return this.speckleRenderer.boxFromObjects(objectIds)
-  // }
-
-  // public setSectionBoxFromObjects(objectIds: string[], offset?: number) {
-  //   this.setSectionBox(this.getSectionBoxFromObjects(objectIds), offset)
-  // }
-
-  // public getCurrentSectionBox() {
-  //   return this.sectionBox.getCurrentBox()
-  // }
 
   public resize() {
     const width = this.container.offsetWidth
@@ -277,18 +222,6 @@ export class Viewer extends EventEmitter implements IViewer {
   ): PropertyInfo[] {
     return this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
   }
-
-  // public selectObjects(objectIds: string[]): Promise<FilteringState> {
-  //   return new Promise<FilteringState>((resolve) => {
-  //     resolve(this.filteringManager.selectObjects(objectIds))
-  //   })
-  // }
-
-  // public resetSelection(): Promise<FilteringState> {
-  //   return new Promise<FilteringState>((resolve) => {
-  //     resolve(this.filteringManager.resetSelection())
-  //   })
-  // }
 
   public hideObjects(
     objectIds: string[],
@@ -422,40 +355,6 @@ export class Viewer extends EventEmitter implements IViewer {
     return null
   }
 
-  // public toggleSectionBox() {
-  //   this.sectionBox.toggle()
-  //   this.speckleRenderer.updateSectionBoxCapper()
-  // }
-
-  // public sectionBoxOff() {
-  //   this.sectionBox.disable()
-  //   this.speckleRenderer.updateSectionBoxCapper()
-  // }
-
-  // public sectionBoxOn() {
-  //   this.sectionBox.enable()
-  //   this.speckleRenderer.updateSectionBoxCapper()
-  // }
-
-  // public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
-  //   this.speckleRenderer.zoom(objectIds, fit, transition)
-  // }
-
-  // public setOrthoCameraOn() {
-  //   this.cameraHandler.setOrthoCameraOn()
-  //   this.speckleRenderer.resetPipeline(true)
-  // }
-
-  // public setPerspectiveCameraOn() {
-  //   this.cameraHandler.setPerspectiveCameraOn()
-  //   this.speckleRenderer.resetPipeline(true)
-  // }
-
-  // public toggleCameraProjection() {
-  //   this.cameraHandler.toggleCameras()
-  //   this.speckleRenderer.resetPipeline(true)
-  // }
-
   public setLightConfiguration(config: SunLightConfiguration): void {
     this.speckleRenderer.setSunLightConfiguration(config)
   }
@@ -473,13 +372,6 @@ export class Viewer extends EventEmitter implements IViewer {
         } as SpeckleView
       })
   }
-
-  // public setView(
-  //   view: CanonicalView | SpeckleView | InlineView | PolarView,
-  //   transition = true
-  // ): void {
-  //   this.speckleRenderer.setView(view, transition)
-  // }
 
   public screenshot(): Promise<string> {
     return new Promise((resolve) => {

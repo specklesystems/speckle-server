@@ -1,5 +1,6 @@
-import { PerspectiveCamera, OrthographicCamera, Vector3 } from 'three'
+import { PerspectiveCamera, OrthographicCamera, Vector3, Plane } from 'three'
 import { SpeckleView } from '../../..'
+import { SectionToolEvent } from '../SectionTool'
 
 export type CanonicalView =
   | 'front'
@@ -51,6 +52,7 @@ export interface ICameraProvider extends IProvider {
     transition: boolean
   )
   on(e: CameraControllerEvent, handler: (data: boolean) => void)
+  removeListener(e: SectionToolEvent, handler: (data: Plane[]) => void)
 }
 
 export abstract class ICameraProvider {
@@ -58,4 +60,15 @@ export abstract class ICameraProvider {
   public static isCameraProvider(extension): extension is ICameraProvider {
     return 'renderingCamera' in extension
   }
+}
+
+export interface ISectionProvider extends IProvider {
+  get enabled(): boolean
+  set enabled(val: boolean)
+  on(e: SectionToolEvent, handler: (data: Plane[]) => void)
+  removeListener(e: SectionToolEvent, handler: (data: Plane[]) => void)
+}
+
+export abstract class ISectionProvider {
+  public static readonly Symbol = 'ISectionProvider'
 }

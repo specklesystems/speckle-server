@@ -2,6 +2,7 @@ import {
   Box3,
   Color,
   DynamicDrawUsage,
+  Group,
   InterleavedBufferAttribute,
   Line3,
   Plane,
@@ -10,11 +11,17 @@ import {
 } from 'three'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
-import MeshBatch from './batching/MeshBatch'
-import { Geometry } from './converter/Geometry'
-import SpeckleGhostMaterial from './materials/SpeckleGhostMaterial'
-import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
-import { ObjectLayers } from './SpeckleRenderer'
+import MeshBatch from '../batching/MeshBatch'
+import { Geometry } from '../converter/Geometry'
+import SpeckleGhostMaterial from '../materials/SpeckleGhostMaterial'
+import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
+import { ObjectLayers } from '../SpeckleRenderer'
+import { Extension } from './core-extensions/Extension'
+import { IViewer } from '../..'
+import { ISectionProvider } from './core-extensions/Providers'
+import { SectionToolEvent } from './SectionTool'
+import { GeometryType } from '../batching/Batch'
+import Logger from 'js-logger'
 
 export enum PlaneId {
   POSITIVE_X = 'POSITIVE_X',
@@ -29,7 +36,10 @@ export interface PlaneOutline {
   renderable: LineSegments2
 }
 
-export class SectionBoxOutlines {
+export class SectionOutlines extends Extension {
+  public get inject() {
+    return [ISectionProvider.Symbol]
+  }
   private static readonly INITIAL_BUFFER_SIZE = 60000 // Must be a multiple of 6
   private static readonly Z_OFFSET = -0.001
 
@@ -43,14 +53,58 @@ export class SectionBoxOutlines {
   private back: Vector3 = new Vector3(0, 0, -1)
 
   private planeOutlines: Record<string, PlaneOutline> = {}
+  private lastSectionPlanes: Plane[] = []
+  private sectionPlanesChanged: Plane[] = []
+  private _enabled = false
 
-  public constructor() {
+  public constructor(viewer: IViewer, protected sectionProvider: ISectionProvider) {
+    super(viewer)
     this.planeOutlines[PlaneId.POSITIVE_X] = this.createPlaneOutline(PlaneId.POSITIVE_X)
     this.planeOutlines[PlaneId.NEGATIVE_X] = this.createPlaneOutline(PlaneId.NEGATIVE_X)
     this.planeOutlines[PlaneId.POSITIVE_Y] = this.createPlaneOutline(PlaneId.POSITIVE_Y)
     this.planeOutlines[PlaneId.NEGATIVE_Y] = this.createPlaneOutline(PlaneId.NEGATIVE_Y)
     this.planeOutlines[PlaneId.NEGATIVE_Z] = this.createPlaneOutline(PlaneId.NEGATIVE_Z)
     this.planeOutlines[PlaneId.POSITIVE_Z] = this.createPlaneOutline(PlaneId.POSITIVE_Z)
+
+    const sectionOutlinesGroup = new Group()
+    sectionOutlinesGroup.name = 'SectionBoxOutlines'
+    this.viewer.getRenderer().scene.add(sectionOutlinesGroup)
+    sectionOutlinesGroup.add(this.getPlaneOutline(PlaneId.NEGATIVE_Z).renderable)
+    sectionOutlinesGroup.add(this.getPlaneOutline(PlaneId.POSITIVE_Z).renderable)
+    sectionOutlinesGroup.add(this.getPlaneOutline(PlaneId.POSITIVE_X).renderable)
+    sectionOutlinesGroup.add(this.getPlaneOutline(PlaneId.NEGATIVE_X).renderable)
+    sectionOutlinesGroup.add(this.getPlaneOutline(PlaneId.POSITIVE_Y).renderable)
+    sectionOutlinesGroup.add(this.getPlaneOutline(PlaneId.NEGATIVE_Y).renderable)
+
+    this.lastSectionPlanes.push(
+      new Plane(),
+      new Plane(),
+      new Plane(),
+      new Plane(),
+      new Plane(),
+      new Plane()
+    )
+
+    this.sectionProvider.on(
+      SectionToolEvent.DragStart,
+      this.onSectionBoxDragStart.bind(this)
+    )
+    this.sectionProvider.on(
+      SectionToolEvent.DragEnd,
+      this.onSectionBoxDragEnd.bind(this)
+    )
+    this.sectionProvider.on(SectionToolEvent.Updated, this.sectionUpdated.bind(this))
+  }
+
+  public onUpdate(deltaTime: number) {
+    deltaTime
+    // UNIMPLEMENTED
+  }
+  public onRender() {
+    // UNIMPLEMENTED
+  }
+  public onResize() {
+    // UNIMPLEMENTED
   }
 
   public getPlaneOutline(planeId: PlaneId) {
@@ -58,19 +112,21 @@ export class SectionBoxOutlines {
   }
 
   public enable(value: boolean) {
+    this._enabled = value
     for (const k in this.planeOutlines) {
       this.planeOutlines[k].renderable.visible = value
     }
   }
 
-  public updateClippingPlanes(planes: Plane[]) {
+  public sectionUpdated(planes: Plane[]) {
+    if (!this.sectionProvider.enabled) this.enable(false)
     for (const plane in this.planeOutlines) {
       const clippingPlanes = planes.filter((value) => this.getPlaneId(value) !== plane)
       this.planeOutlines[plane].renderable.material.clippingPlanes = clippingPlanes
     }
   }
 
-  public updatePlaneOutline(batches: MeshBatch[], _plane: Plane) {
+  private updatePlaneOutline(batches: MeshBatch[], _plane: Plane) {
     const tempVector = new Vector3()
     const tempVector1 = new Vector3()
     const tempVector2 = new Vector3()
@@ -123,7 +179,7 @@ export class SectionBoxOutlines {
           tempLine.end.copy(tri.b)
           if (localPlane.intersectLine(tempLine, tempVector)) {
             tempVector.add(
-              tempVector4.copy(plane.normal).multiplyScalar(SectionBoxOutlines.Z_OFFSET)
+              tempVector4.copy(plane.normal).multiplyScalar(SectionOutlines.Z_OFFSET)
             )
             scratchBuffer[index * 3] = tempVector.x
             scratchBuffer[index * 3 + 1] = tempVector.y
@@ -135,7 +191,7 @@ export class SectionBoxOutlines {
           tempLine.end.copy(tri.c)
           if (localPlane.intersectLine(tempLine, tempVector)) {
             tempVector.add(
-              tempVector4.copy(plane.normal).multiplyScalar(SectionBoxOutlines.Z_OFFSET)
+              tempVector4.copy(plane.normal).multiplyScalar(SectionOutlines.Z_OFFSET)
             )
             scratchBuffer[index * 3] = tempVector.x
             scratchBuffer[index * 3 + 1] = tempVector.y
@@ -147,7 +203,7 @@ export class SectionBoxOutlines {
           tempLine.end.copy(tri.a)
           if (localPlane.intersectLine(tempLine, tempVector)) {
             tempVector.add(
-              tempVector4.copy(plane.normal).multiplyScalar(SectionBoxOutlines.Z_OFFSET)
+              tempVector4.copy(plane.normal).multiplyScalar(SectionOutlines.Z_OFFSET)
             )
             scratchBuffer[index * 3] = tempVector.x
             scratchBuffer[index * 3 + 1] = tempVector.y
@@ -181,9 +237,7 @@ export class SectionBoxOutlines {
               // Set the penultimate point as a distinct point and delete the last point
               tempVector3.set(tempVector.x, tempVector.y, tempVector.z)
               tempVector3.add(
-                tempVector4
-                  .copy(plane.normal)
-                  .multiplyScalar(SectionBoxOutlines.Z_OFFSET)
+                tempVector4.copy(plane.normal).multiplyScalar(SectionOutlines.Z_OFFSET)
               )
               scratchBuffer[(index - 2) * 3] = tempVector3.x
               scratchBuffer[(index - 2) * 3 + 1] = tempVector3.y
@@ -235,7 +289,7 @@ export class SectionBoxOutlines {
   }
 
   private createPlaneOutline(planeId: string): PlaneOutline {
-    const buffer = new Float64Array(SectionBoxOutlines.INITIAL_BUFFER_SIZE)
+    const buffer = new Float64Array(SectionOutlines.INITIAL_BUFFER_SIZE)
     const lineGeometry = new LineSegmentsGeometry()
     lineGeometry.setPositions(new Float32Array(buffer))
     ;(
@@ -269,6 +323,42 @@ export class SectionBoxOutlines {
     return {
       renderable: clipOutline
     }
+  }
+
+  private onSectionBoxDragStart() {
+    this.enable(false)
+  }
+
+  private onSectionBoxDragEnd() {
+    const generate = () => {
+      this.setSectionPlaneChanged(this.viewer.getRenderer().clippingPlanes)
+      this.updateOutlines(this.sectionPlanesChanged)
+      this.sectionProvider.removeListener(SectionToolEvent.Updated, generate)
+    }
+    this.sectionProvider.on(SectionToolEvent.Updated, generate)
+  }
+
+  private setSectionPlaneChanged(planes: Plane[]) {
+    this.sectionPlanesChanged.length = 0
+    for (let k = 0; k < planes.length; k++) {
+      if (Math.abs(this.lastSectionPlanes[k].constant - planes[k].constant) > 0.0001)
+        this.sectionPlanesChanged.push(planes[k])
+      this.lastSectionPlanes[k].copy(planes[k])
+    }
+  }
+
+  private updateOutlines(planes: Plane[]) {
+    const start = performance.now()
+    for (let k = 0; k < planes.length; k++) {
+      this.updatePlaneOutline(
+        this.viewer
+          .getRenderer()
+          .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[],
+        planes[k]
+      )
+    }
+    this.enable(this.sectionProvider.enabled)
+    Logger.warn('Outline time: ', performance.now() - start)
   }
 
   private resizeGeometryBuffer(outline: PlaneOutline, size: number) {

@@ -223,10 +223,7 @@ export class CameraController extends Extension implements ICameraProvider {
     this.controls.camera = this.perspectiveCamera
     this.controls.zoomTo(1)
     this.enableRotations()
-    this.viewer.emiter.emit(
-      CameraControllerEvent.ProjectionChanged,
-      CameraProjection.PERSPECTIVE
-    )
+    this.emit(CameraControllerEvent.ProjectionChanged, CameraProjection.PERSPECTIVE)
   }
 
   public disableRotations() {
