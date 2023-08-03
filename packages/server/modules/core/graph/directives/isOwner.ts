@@ -3,6 +3,7 @@ import { ForbiddenError } from '@/modules/shared/errors'
 import { getDirective } from '@graphql-tools/utils'
 import { mapSchema } from '@graphql-tools/utils'
 import { MapperKind } from '@graphql-tools/utils'
+import { Roles } from '@speckle/shared'
 import { defaultFieldResolver } from 'graphql'
 
 /**
@@ -50,7 +51,8 @@ export const isOwner: GraphqlDirectiveBuilder = () => {
             const authUserId = context.userId
 
             if (info.parentType?.name === 'User') {
-              if (parentId !== authUserId) {
+              // allow admins to query private user fields
+              if (parentId !== authUserId && context.role !== Roles.Server.Admin) {
                 throw new ForbiddenError(
                   `You must be authenticated as the user whose '${fieldName}' value you wish to retrieve`
                 )

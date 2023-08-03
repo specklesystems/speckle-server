@@ -930,7 +930,7 @@ export async function revokeStreamPermissions(params: {
     .select<StreamAclRecord[]>('*')
     .first()
 
-  if (aclEntry?.role === 'stream:owner') {
+  if (aclEntry?.role === Roles.Stream.Owner) {
     const [countObj] = await StreamAcl.knex()
       .where({
         resourceId: streamId,
@@ -964,26 +964,26 @@ export async function revokeStreamPermissions(params: {
 }
 
 /**
- * Marking stream as being used for a specific version of viewer e2e tests
+ * Mark stream as the onboarding base stream from which user onboarding streams will be cloned
  */
-export async function markStreamViewerE2eTest(streamId: string, version: string) {
+export async function markOnboardingBaseStream(streamId: string, version: string) {
   const stream = await getStream({ streamId })
   if (!stream) {
     throw new Error(`Stream ${streamId} not found`)
   }
 
   const meta = metaHelpers(Streams)
-  await meta.set(streamId, 'viewerE2eTestStreamVersion', version)
+  await meta.set(streamId, Streams.meta.metaKey.onboardingBaseStream, version)
 }
 
 /**
- * Get stream used for a specific version of viewer e2e tests
+ * Get onboarding base stream, if any
  */
-export async function getViewerE2eTestStream(version: string) {
+export async function getOnboardingBaseStream(version: string) {
   const q = Streams.knex()
     .select<StreamRecord[]>(Streams.cols)
     .innerJoin(Streams.meta.name, Streams.meta.col.streamId, Streams.col.id)
-    .where(Streams.meta.col.key, 'viewerE2eTestStreamVersion')
+    .where(Streams.meta.col.key, Streams.meta.metaKey.onboardingBaseStream)
     .andWhereRaw(`${Streams.meta.col.value}::text = ?`, JSON.stringify(version))
     .first()
 

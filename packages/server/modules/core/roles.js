@@ -27,6 +27,18 @@ module.exports = [
     weight: 100,
     public: false
   },
+  // TODO: should this be dynamically pushed if guest role is enabled?
+  // feels risky, since feature can be toggled on and off,
+  // but user roles are not updated
+  // can leave the guest users in a broken state
+  {
+    name: Roles.Server.Guest,
+    description: 'Has limited access to the server.',
+    resourceTarget: 'server',
+    aclTableName: 'server_acl',
+    weight: 50,
+    public: false
+  },
   {
     name: Roles.Server.ArchivedUser,
     description: 'No longer has access to the server.',

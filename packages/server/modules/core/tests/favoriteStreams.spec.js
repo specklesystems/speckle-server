@@ -373,7 +373,7 @@ describe('Favorite streams', () => {
 
       expect(result.data.streamFavorite).to.not.be.ok
       expect(result.errors).to.have.lengthOf(1)
-      expect(result.errors.at(0).message).to.contain('must provide an auth token')
+      expect(result.errors.at(0).message).to.contain('Must provide an auth token')
     })
 
     it("can't be retrieved", async () => {

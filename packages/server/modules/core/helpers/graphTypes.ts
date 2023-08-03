@@ -97,6 +97,12 @@ export type ModelsTreeItemGraphQLReturn = Omit<ModelsTreeItem, 'model' | 'childr
 export type MutationsObjectGraphQLReturn = Record<string, never>
 
 /**
+ * Use this to override the generated graphql type, in cases like graphql resolver
+ * collection objects
+ */
+export type GraphQLEmptyReturn = Record<string, never>
+
+/**
  * Map GQL StreamRole enum to the value types we use in the backend
  */
 export function mapStreamRoleToValue(graphqlStreamRole: StreamRole): StreamRoles {
@@ -121,5 +127,7 @@ export function mapServerRoleToValue(graphqlServerRole: ServerRole): ServerRoles
       return Roles.Server.Admin
     case ServerRole.ServerArchivedUser:
       return Roles.Server.ArchivedUser
+    case ServerRole.ServerGuest:
+      return Roles.Server.Guest
   }
 }

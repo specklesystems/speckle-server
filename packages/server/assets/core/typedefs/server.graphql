@@ -15,6 +15,7 @@ type ServerInfo {
   roles: [Role]!
   scopes: [Scope]!
   inviteOnly: Boolean
+  guestModeEnabled: Boolean!
   version: String
 }
 
@@ -37,7 +38,7 @@ type Scope {
 
 extend type Mutation {
   serverInfoUpdate(info: ServerInfoUpdateInput!): Boolean
-    @hasRole(role: "server:admin")
+    @hasServerRole(role: SERVER_ADMIN)
     @hasScope(scope: "server:setup")
 }
 
@@ -48,4 +49,5 @@ input ServerInfoUpdateInput {
   adminContact: String
   termsOfService: String
   inviteOnly: Boolean
+  guestModeEnabled: Boolean
 }
