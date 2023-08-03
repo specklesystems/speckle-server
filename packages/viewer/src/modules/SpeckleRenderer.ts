@@ -613,7 +613,7 @@ export default class SpeckleRenderer {
   }
 
   public removeDirectFilter(id: string) {
-    this.batcher.removeObjectsMaterial(id)
+    if (id) this.batcher.removeObjectsMaterial(id)
   }
 
   public applyMaterial(
