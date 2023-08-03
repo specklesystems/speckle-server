@@ -67,7 +67,7 @@ describe('Services @apps-services', () => {
       name: 'test application',
       public: true,
       scopes: [Scopes.Streams.Read],
-      redirectUrl: 'http://localhost:1335'
+      redirectUrl: 'http://127.0.0.1:1335'
     })
 
     expect(res).to.have.property('id')
@@ -88,7 +88,7 @@ describe('Services @apps-services', () => {
   })
 
   it('Should fail to register an app with no scopes', async () => {
-    await createApp({ name: 'test application2', redirectUrl: 'http://localhost:1335' })
+    await createApp({ name: 'test application2', redirectUrl: 'http://127.0.0.1:1335' })
       .then(() => {
         throw new Error('this should have been rejected')
       })

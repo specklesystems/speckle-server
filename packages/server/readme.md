@@ -32,7 +32,7 @@ After you have PostgreSQL and Redis running, in the `packages/server` folder:
 - If you have a custom setup, open and edit the `.env` & `.env.test` files, filling in the required variables,
 - run `yarn install`,
 - finally `yarn dev`,
-- check `localhost:3000/graphql` out!
+- check `127.0.0.1:3000/graphql` out!
 
 ## Developing
 
@@ -72,18 +72,18 @@ Use `yarn cli bull monitor` to serve a Web UI for our Bull queues (e.g. Notifica
 
 ### Frontend
 
-- In **development** mode, the Speckle Server will proxy the frontend from `localhost:3000` to `localhost:8080`.
+- In **development** mode, the Speckle Server will proxy the frontend from `127.0.0.1:3000` to `127.0.0.1:8080`.
   If you don't see anything, ensure you've run `yarn dev` in the frontend package.
 
 - In **production** mode, the frontend is served by an `nginx` container that proxy server requests to the server (depending on the requested path). For more information about making a production deployment, check out [our detailed guide](https://speckle.guide/dev/server-setup.html)
 
 ### GraphIQL
 
-A GraphIQL app is available for authenticated api exploration at `localhost:3000/explorer`. Note that for the authentication flow to work, you need to have the frontend running first.
+A GraphIQL app is available for authenticated api exploration at `127.0.0.1:3000/explorer`. Note that for the authentication flow to work, you need to have the frontend running first.
 
 ### GraphQL Playground
 
-For non-authenticated api exploration, you can use the Graphql Playground which is available by default at `localhost:3000/graphql`.
+For non-authenticated api exploration, you can use the Graphql Playground which is available by default at `127.0.0.1:3000/graphql`.
 
 ## Testing
 

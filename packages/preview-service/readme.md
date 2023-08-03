@@ -24,7 +24,7 @@ After the viewer web page is up to date, run the preview service with:
 yarn dev
 ```
 
-This will use the default dev DB connection of `postgres://speckle:speckle@localhost/speckle`. You can pass the environment variable `PG_CONNECTION_STRING` to change this to a different DB.
+This will use the default dev DB connection of `postgres://speckle:speckle@127.0.0.1/speckle`. You can pass the environment variable `PG_CONNECTION_STRING` to change this to a different DB.
 
 ## Deployment notes
 
