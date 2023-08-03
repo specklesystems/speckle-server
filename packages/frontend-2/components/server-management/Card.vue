@@ -1,0 +1,37 @@
+<template>
+  <div>
+    <div class="bg-foundation p-4 flex flex-col gap-4 rounded-md shadow-md">
+      <CardRow
+        v-for="(info, index) in serverInfo"
+        :key="index"
+        :title="info.title"
+        :value="info.value"
+        :cta="info.cta"
+      />
+    </div>
+  </div>
+</template>
+
+<script lang="ts" setup>
+import CardRow from './CardRow.vue'
+
+interface CTA {
+  type: string
+  label: string
+  action: () => void
+}
+
+interface ServerInfo {
+  title: string
+  value: string
+  cta?: CTA
+}
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
+const props = defineProps({
+  serverInfo: {
+    type: Array as () => ServerInfo[],
+    required: true
+  }
+})
+</script>
