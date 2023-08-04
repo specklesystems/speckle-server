@@ -22,6 +22,7 @@ export interface Batch {
 
   getCount(): number
   setBatchMaterial(material: Material): void
+  setBatchBuffers(...range: BatchUpdateRange[]): void
   setVisibleRange(...range: BatchUpdateRange[])
   getVisibleRange(): BatchUpdateRange
   setDrawRanges(...ranges: BatchUpdateRange[])

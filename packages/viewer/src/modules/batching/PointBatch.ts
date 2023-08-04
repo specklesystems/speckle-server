@@ -90,41 +90,47 @@ export default class PointBatch implements Batch {
     return AllBatchUpdateRange
   }
 
+  public setBatchBuffers(...range: BatchUpdateRange[]): void {
+    range
+    // throw new Error('Method not implemented.')
+  }
+
   /**
    * This is the first version for multi draw ranges with automatic fill support
    * In the near future, we'll re-sort the index buffer so we minimize draw calls to
    * a minimmum. For now it's ok
    */
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
-    const materials = ranges.map((val) => val.material)
-    const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
-    if (Array.isArray(this.mesh.material))
-      this.mesh.material = this.mesh.material.concat(uniqueMaterials)
-    else {
-      this.mesh.material = [this.mesh.material, ...uniqueMaterials]
-    }
-    const sortedRanges = ranges.sort((a, b) => {
-      return a.offset - b.offset
-    })
-    const newGroups = []
-    for (let k = 0; k < sortedRanges.length; k++) {
-      const collidingGroup = this.getDrawRangeCollision(sortedRanges[k])
-      if (collidingGroup) {
-        // Logger.warn(`Draw range collision @ ${this.id} overwritting...`)
-        collidingGroup.materialIndex = this.mesh.material.indexOf(
-          sortedRanges[k].material
-        )
-        continue
-      }
-      newGroups.push(sortedRanges[k])
-    }
-    for (let i = 0; i < newGroups.length; i++) {
-      this.geometry.addGroup(
-        newGroups[i].offset,
-        newGroups[i].count,
-        this.mesh.material.indexOf(newGroups[i].material)
-      )
-    }
+    ranges
+    // const materials = ranges.map((val) => val.material)
+    // const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
+    // if (Array.isArray(this.mesh.material))
+    //   this.mesh.material = this.mesh.material.concat(uniqueMaterials)
+    // else {
+    //   this.mesh.material = [this.mesh.material, ...uniqueMaterials]
+    // }
+    // const sortedRanges = ranges.sort((a, b) => {
+    //   return a.offset - b.offset
+    // })
+    // const newGroups = []
+    // for (let k = 0; k < sortedRanges.length; k++) {
+    //   const collidingGroup = this.getDrawRangeCollision(sortedRanges[k])
+    //   if (collidingGroup) {
+    //     // Logger.warn(`Draw range collision @ ${this.id} overwritting...`)
+    //     collidingGroup.materialIndex = this.mesh.material.indexOf(
+    //       sortedRanges[k].material
+    //     )
+    //     continue
+    //   }
+    //   newGroups.push(sortedRanges[k])
+    // }
+    // for (let i = 0; i < newGroups.length; i++) {
+    //   this.geometry.addGroup(
+    //     newGroups[i].offset,
+    //     newGroups[i].count,
+    //     this.mesh.material.indexOf(newGroups[i].material)
+    //   )
+    // }
   }
 
   insertDrawRanges(...ranges: BatchUpdateRange[]) {

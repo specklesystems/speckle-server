@@ -9,6 +9,7 @@ import { SpeckleText } from '../objects/SpeckleText'
 import { GlyphGeometry } from 'troika-three-text'
 import { ObjectLayers } from '../SpeckleRenderer'
 import SpeckleTextMaterial from '../materials/SpeckleTextMaterial'
+import { FilterMaterial } from '../filtering/FilteringManager'
 
 export default class TextBatch implements Batch {
   public id: string
@@ -57,6 +58,10 @@ export default class TextBatch implements Batch {
 
   public getVisibleRange(): BatchUpdateRange {
     return AllBatchUpdateRange
+  }
+
+  public setBatchBuffers(...range: BatchUpdateRange[]): void {
+    throw new Error('Method not implemented.')
   }
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {

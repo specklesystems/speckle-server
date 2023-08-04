@@ -486,10 +486,7 @@ export default class Batcher {
         return {
           offset: rv.batchStart,
           count: rv.batchCount,
-          material: this.materials.getFilterMaterial(
-            rv,
-            filterMaterial.filterType
-          ) as Material,
+          material: this.materials.getFilterMaterial(rv, filterMaterial) as Material,
           materialOptions: this.materials.getFilterMaterialOptions(filterMaterial)
         } as BatchUpdateRange
       },
@@ -539,11 +536,11 @@ export default class Batcher {
       let opaqueMaterial, transparentMaterial
       if (opaqueRvs.length)
         opaqueMaterial = this.materials
-          .getFilterMaterial(opaqueRvs[0], filterMaterial.filterType)
+          .getFilterMaterial(opaqueRvs[0], filterMaterial)
           .clone() as Material
       if (transparentRvs.length)
         transparentMaterial = this.materials
-          .getFilterMaterial(transparentRvs[0], filterMaterial.filterType)
+          .getFilterMaterial(transparentRvs[0], filterMaterial)
           .clone() as Material
       const views = batchRenderViews.map((rv: NodeRenderView) => {
         return {
@@ -586,10 +583,9 @@ export default class Batcher {
         this.batches[k].setDrawRanges({
           offset: 0,
           count: this.batches[k].getCount(),
-          material: this.materials.getFilterMaterial(
-            this.batches[k].renderViews[0],
-            FilterMaterialType.GHOST
-          )
+          material: this.materials.getFilterMaterial(this.batches[k].renderViews[0], {
+            filterType: FilterMaterialType.GHOST
+          })
         })
       }
     }
@@ -601,10 +597,9 @@ export default class Batcher {
         this.batches[k].setDrawRanges({
           offset: 0,
           count: this.batches[k].getCount(),
-          material: this.materials.getFilterMaterial(
-            this.batches[k].renderViews[0],
-            FilterMaterialType.GHOST
-          )
+          material: this.materials.getFilterMaterial(this.batches[k].renderViews[0], {
+            filterType: FilterMaterialType.GHOST
+          })
         })
       }
     }

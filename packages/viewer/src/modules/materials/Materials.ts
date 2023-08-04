@@ -1024,10 +1024,10 @@ export default class Materials {
 
   public getFilterMaterial(
     renderView: NodeRenderView,
-    filterMaterial: FilterMaterialType
+    filterMaterial: FilterMaterial
   ): Material {
     let retMaterial: Material
-    switch (filterMaterial) {
+    switch (filterMaterial.filterType) {
       case FilterMaterialType.SELECT:
         retMaterial = this.getHighlightMaterial(renderView)
         break
@@ -1036,6 +1036,11 @@ export default class Materials {
         break
       case FilterMaterialType.GRADIENT:
         retMaterial = this.getGradientMaterial(renderView)
+        if (filterMaterial.rampTexture) {
+          ;(retMaterial as SpeckleStandardColoredMaterial).setGradientTexture(
+            filterMaterial.rampTexture
+          )
+        }
         break
       case FilterMaterialType.COLORED:
         retMaterial = this.getColoredMaterial(renderView)

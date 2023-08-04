@@ -8,6 +8,7 @@ import {
   DirectionalLightHelper,
   Group,
   Intersection,
+  Material,
   Matrix4,
   Mesh,
   Object3D,
@@ -631,6 +632,42 @@ export default class SpeckleRenderer {
         }
       })
     )
+  }
+
+  public setMaterial(rvs: NodeRenderView[], material: Material) {
+    const rvMap = {}
+    for (let k = 0; k < rvs.length; k++) {
+      if (!rvMap[rvs[k].batchId]) rvMap[rvs[k].batchId] = []
+      rvMap[rvs[k].batchId].push(rvs[k])
+    }
+    for (const k in rvMap) {
+      this.batcher.batches[k].setDrawRanges(
+        ...rvMap[k].map((value: NodeRenderView) => {
+          return { offset: value.batchStart, count: value.batchCount, material }
+        })
+      )
+    }
+  }
+
+  public setFilterMaterial(rvs: NodeRenderView[], filterMaterial: FilterMaterial) {
+    const rvMap = {}
+    for (let k = 0; k < rvs.length; k++) {
+      if (!rvMap[rvs[k].batchId]) rvMap[rvs[k].batchId] = []
+      rvMap[rvs[k].batchId].push(rvs[k])
+    }
+    for (const k in rvMap) {
+      const drawRanges = rvMap[k].map((value: NodeRenderView) => {
+        return {
+          offset: value.batchStart,
+          count: value.batchCount,
+          material: this.batcher.materials.getFilterMaterial(value, filterMaterial),
+          materialOptions:
+            this.batcher.materials.getFilterMaterialOptions(filterMaterial)
+        }
+      })
+      this.batcher.batches[k].setDrawRanges(...drawRanges)
+      this.batcher.batches[k].setBatchBuffers(...drawRanges)
+    }
   }
 
   public beginFilter() {

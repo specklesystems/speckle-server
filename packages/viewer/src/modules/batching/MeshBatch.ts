@@ -11,7 +11,6 @@ import {
   WebGLRenderer
 } from 'three'
 import { Geometry } from '../converter/Geometry'
-import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
 import SpeckleMesh from '../objects/SpeckleMesh'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import {
@@ -119,7 +118,40 @@ export default class MeshBatch implements Batch {
     }
   }
 
+  public setBatchBuffers(...range: BatchUpdateRange[]): void {
+    let minGradientIndex = Infinity
+    let maxGradientIndex = 0
+    for (let k = 0; k < range.length; k++) {
+      if (range[k].materialOptions) {
+        if (range[k].materialOptions.rampIndex !== undefined) {
+          const start = range[k].offset
+          const len = range[k].offset + range[k].count
+          /** The ramp indices specify the *begining* of each ramp color. When sampling with Nearest filter (since we don't want filtering)
+           *  we'll always be sampling right at the edge between texels. Most GPUs will sample consistently, but some won't and we end up with
+           *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
+           *  sampling can occur.
+           */
+          const shiftedIndex =
+            range[k].materialOptions.rampIndex +
+            0.5 / range[k].materialOptions.rampWidth
+          const minMaxIndices = this.updateGradientIndexBufferData(
+            start,
+            range[k].count === Infinity
+              ? this.geometry.attributes['gradientIndex'].array.length
+              : len,
+            shiftedIndex
+          )
+          minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
+          maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
+        }
+      }
+    }
+    this.updateGradientIndexBuffer()
+  }
+
+  public static split = 0
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
+    const start = performance.now()
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
         value.material = this.mesh.getCachedMaterial(
@@ -128,73 +160,218 @@ export default class MeshBatch implements Batch {
         )
       }
     })
-    const materials = ranges.map((val) => val.material)
+    const materials = ranges.map((val) => {
+      return val.material
+    })
     const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
-    if (!Array.isArray(this.mesh.material)) {
-      this.mesh.material = [this.mesh.material]
-    }
+
     for (let k = 0; k < uniqueMaterials.length; k++) {
-      if (!this.mesh.material.includes(uniqueMaterials[k]))
-        this.mesh.material.push(uniqueMaterials[k])
+      if (!this.mesh.materials.includes(uniqueMaterials[k]))
+        this.mesh.materials.push(uniqueMaterials[k])
     }
 
     const sortedRanges = ranges.sort((a, b) => {
       return a.offset - b.offset
     })
 
-    const newGroups = []
-    let minGradientIndex = Infinity
-    let maxGradientIndex = 0
-    for (let k = 0; k < sortedRanges.length; k++) {
-      if (sortedRanges[k].materialOptions) {
-        if (sortedRanges[k].materialOptions.rampIndex !== undefined) {
-          const start = sortedRanges[k].offset
-          const len = sortedRanges[k].offset + sortedRanges[k].count
-          /** The ramp indices specify the *begining* of each ramp color. When sampling with Nearest filter (since we don't want filtering)
-           *  we'll always be sampling right at the edge between texels. Most GPUs will sample consistently, but some won't and we end up with
-           *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
-           *  sampling can occur.
-           */
-          const shiftedIndex =
-            sortedRanges[k].materialOptions.rampIndex +
-            0.5 / sortedRanges[k].materialOptions.rampWidth
-          const minMaxIndices = this.updateGradientIndexBufferData(
-            start,
-            sortedRanges[k].count === Infinity
-              ? this.geometry.attributes['gradientIndex'].array.length
-              : len,
-            shiftedIndex
-          )
-          minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
-          maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
-        }
-        if (sortedRanges[k].materialOptions.rampTexture) {
-          ;(
-            sortedRanges[k].material as SpeckleStandardColoredMaterial
-          ).setGradientTexture(sortedRanges[k].materialOptions.rampTexture)
-        }
-      }
-      const collidingGroup = this.getDrawRangeCollision(sortedRanges[k])
+    MeshBatch.split += performance.now() - start
+    for (let i = 0; i < sortedRanges.length; i++) {
+      const materialIndex = this.mesh.materials.indexOf(sortedRanges[i].material)
+      const collidingGroup = this.getDrawRangeCollision(sortedRanges[i])
       if (collidingGroup) {
-        // console.warn(`Draw range collision @ ${this.id} overwritting...`)
-        collidingGroup.materialIndex = this.mesh.material.indexOf(
-          sortedRanges[k].material
+        collidingGroup.materialIndex = this.mesh.materials.indexOf(
+          sortedRanges[i].material
         )
-        continue
+      } else {
+        // console.log('Start ->', this.geometry.groups.slice())
+        const includingGroup = this.geDrawRangeInclusion(sortedRanges[i])
+        if (includingGroup && includingGroup.materialIndex !== materialIndex) {
+          this.geometry.groups.splice(this.geometry.groups.indexOf(includingGroup), 1)
+          if (includingGroup.start === sortedRanges[i].offset) {
+            this.geometry.addGroup(
+              sortedRanges[i].offset,
+              sortedRanges[i].count,
+              materialIndex
+            )
+            this.geometry.addGroup(
+              sortedRanges[i].offset + sortedRanges[i].count,
+              includingGroup.count - sortedRanges[i].count,
+              includingGroup.materialIndex
+            )
+          } else if (
+            sortedRanges[i].offset + sortedRanges[i].count ===
+            includingGroup.count
+          ) {
+            this.geometry.addGroup(
+              includingGroup.start,
+              includingGroup.count - sortedRanges[i].count,
+              includingGroup.materialIndex
+            )
+            this.geometry.addGroup(
+              sortedRanges[i].offset,
+              sortedRanges[i].count,
+              materialIndex
+            )
+          } else {
+            this.geometry.addGroup(
+              includingGroup.start,
+              sortedRanges[i].offset - includingGroup.start,
+              includingGroup.materialIndex
+            )
+            this.geometry.addGroup(
+              sortedRanges[i].offset,
+              sortedRanges[i].count,
+              materialIndex
+            )
+            this.geometry.addGroup(
+              sortedRanges[i].offset + sortedRanges[i].count,
+              includingGroup.count -
+                (sortedRanges[i].count + sortedRanges[i].offset - includingGroup.start),
+              includingGroup.materialIndex
+            )
+          }
+        }
       }
-      newGroups.push(sortedRanges[k])
     }
-    /** Should properly compute min, max buffer range. Current minGradientIndex and maxGradientIndex are incorrect */
-    this.updateGradientIndexBuffer()
+    // const mata = this.getCount()
+    // console.log(mata, this.geometry.groups)
+    let count = 0
+    this.geometry.groups.forEach((value) => (count += value.count))
+    if (count !== this.getCount()) {
+      // console.log(ranges)
+      throw new Error('mata')
+    }
 
-    for (let i = 0; i < newGroups.length; i++) {
-      this.geometry.addGroup(
-        newGroups[i].offset,
-        newGroups[i].count,
-        this.mesh.material.indexOf(newGroups[i].material)
+    const materialOrder = []
+    this.geometry.groups.reduce((previousValue, currentValue) => {
+      if (previousValue.indexOf(currentValue.materialIndex) === -1) {
+        previousValue.push(currentValue.materialIndex)
+      }
+      return previousValue
+    }, materialOrder)
+    const grouped = []
+    for (let k = 0; k < materialOrder.length; k++) {
+      grouped.push(
+        this.geometry.groups.filter((val) => {
+          return val.materialIndex === materialOrder[k]
+        })
       )
     }
+    this.geometry.groups = []
+    for (let matIndex = 0; matIndex < grouped.length; matIndex++) {
+      const matGroup = grouped[matIndex]
+      for (let k = 0; k < matGroup.length; ) {
+        let offset = matGroup[k].start
+        let count = matGroup[k].count
+        let runningCount = matGroup[k].count
+        let n = k + 1
+        for (; n < matGroup.length; n++) {
+          if (offset + count === matGroup[n].start) {
+            offset = matGroup[n].start
+            count = matGroup[n].count
+            runningCount += matGroup[n].count
+          } else {
+            const group = {
+              start: matGroup[k].start,
+              count: runningCount,
+              materialIndex: matGroup[k].materialIndex,
+              id: matGroup[k].id
+            }
+            this.geometry.groups.push(group)
+            break
+          }
+        }
+        if (n === matGroup.length) {
+          const group = {
+            start: matGroup[k].start,
+            count: runningCount,
+            materialIndex: matGroup[k].materialIndex,
+            id: matGroup[k].id
+          }
+          this.geometry.groups.push(group)
+        }
+        k = n
+      }
+    }
+    // console.log(this.geometry.groups)
   }
+
+  // public setDrawRanges(...ranges: BatchUpdateRange[]) {
+  //   ranges.forEach((value: BatchUpdateRange) => {
+  //     if (value.material) {
+  //       value.material = this.mesh.getCachedMaterial(
+  //         value.material,
+  //         value.materialOptions?.needsCopy
+  //       )
+  //     }
+  //   })
+  //   const materials = ranges.map((val) => val.material)
+  //   const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
+  //   if (!Array.isArray(this.mesh.material)) {
+  //     this.mesh.material = [this.mesh.material]
+  //   }
+  //   for (let k = 0; k < uniqueMaterials.length; k++) {
+  //     if (!this.mesh.material.includes(uniqueMaterials[k]))
+  //       this.mesh.material.push(uniqueMaterials[k])
+  //   }
+
+  //   const sortedRanges = ranges.sort((a, b) => {
+  //     return a.offset - b.offset
+  //   })
+
+  //   const newGroups = []
+  //   let minGradientIndex = Infinity
+  //   let maxGradientIndex = 0
+  //   for (let k = 0; k < sortedRanges.length; k++) {
+  //     if (sortedRanges[k].materialOptions) {
+  //       if (sortedRanges[k].materialOptions.rampIndex !== undefined) {
+  //         const start = sortedRanges[k].offset
+  //         const len = sortedRanges[k].offset + sortedRanges[k].count
+  //         /** The ramp indices specify the *begining* of each ramp color. When sampling with Nearest filter (since we don't want filtering)
+  //          *  we'll always be sampling right at the edge between texels. Most GPUs will sample consistently, but some won't and we end up with
+  //          *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
+  //          *  sampling can occur.
+  //          */
+  //         const shiftedIndex =
+  //           sortedRanges[k].materialOptions.rampIndex +
+  //           0.5 / sortedRanges[k].materialOptions.rampWidth
+  //         const minMaxIndices = this.updateGradientIndexBufferData(
+  //           start,
+  //           sortedRanges[k].count === Infinity
+  //             ? this.geometry.attributes['gradientIndex'].array.length
+  //             : len,
+  //           shiftedIndex
+  //         )
+  //         minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
+  //         maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
+  //       }
+  //       if (sortedRanges[k].materialOptions.rampTexture) {
+  //         ;(
+  //           sortedRanges[k].material as SpeckleStandardColoredMaterial
+  //         ).setGradientTexture(sortedRanges[k].materialOptions.rampTexture)
+  //       }
+  //     }
+  //     const collidingGroup = this.getDrawRangeCollision(sortedRanges[k])
+  //     if (collidingGroup) {
+  //       // console.warn(`Draw range collision @ ${this.id} overwritting...`)
+  //       collidingGroup.materialIndex = this.mesh.material.indexOf(
+  //         sortedRanges[k].material
+  //       )
+  //       continue
+  //     }
+  //     newGroups.push(sortedRanges[k])
+  //   }
+  //   /** Should properly compute min, max buffer range. Current minGradientIndex and maxGradientIndex are incorrect */
+  //   this.updateGradientIndexBuffer()
+
+  //   for (let i = 0; i < newGroups.length; i++) {
+  //     this.geometry.addGroup(
+  //       newGroups[i].offset,
+  //       newGroups[i].count,
+  //       this.mesh.material.indexOf(newGroups[i].material)
+  //     )
+  //   }
+  // }
 
   public insertDrawRanges(...ranges: BatchUpdateRange[]) {
     const materials = ranges.map((val) => val.material)
@@ -317,6 +494,26 @@ export default class MeshBatch implements Batch {
     return null
   }
 
+  private geDrawRangeInclusion(range: BatchUpdateRange): {
+    start: number
+    count: number
+    materialIndex?: number
+  } {
+    if (this.geometry.groups.length > 0) {
+      for (let i = 0; i < this.geometry.groups.length; i++) {
+        if (
+          range.offset >= this.geometry.groups[i].start &&
+          range.offset + range.count <=
+            this.geometry.groups[i].start + this.geometry.groups[i].count
+        ) {
+          return this.geometry.groups[i]
+        }
+      }
+      return null
+    }
+    return null
+  }
+
   private getCurrentIndexBuffer(): BufferAttribute {
     return this.indexBufferIndex % 2 === 0 ? this.indexBuffer0 : this.indexBuffer1
   }
@@ -326,8 +523,8 @@ export default class MeshBatch implements Batch {
   }
 
   public autoFillDrawRanges() {
-    this.autoFillDrawRangesShuffleIBO()
-    // this.autoFillDrawRangesBasic()
+    // this.autoFillDrawRangesShuffleIBO()
+    this.autoFillDrawRangesBasic()
   }
 
   private autoFillDrawRangesShuffleIBO() {
@@ -444,7 +641,7 @@ export default class MeshBatch implements Batch {
    *  It's simpler, but it cand add a lot of redundant draw calls. I'm keeping it
    *  for now
    */
-  /*
+
   private autoFillDrawRangesBasic() {
     const sortedRanges = this.geometry.groups
       .sort((a, b) => {
@@ -514,7 +711,6 @@ export default class MeshBatch implements Batch {
       console.error(`DrawRange MESH autocomplete failed! ${count}vs${this.getCount()}`)
     }
   }
-  */
 
   private createRenderViewMapping(): { [index: number]: NodeRenderView } {
     const mapping: { [index: number]: NodeRenderView } = {}

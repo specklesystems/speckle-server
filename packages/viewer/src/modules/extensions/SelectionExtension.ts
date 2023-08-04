@@ -8,6 +8,8 @@ import { Extension } from './core-extensions/Extension'
 import { ICameraProvider } from './core-extensions/Providers'
 import { ObjectLayers } from '../SpeckleRenderer'
 import { NodeRenderView } from '../tree/NodeRenderView'
+import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
+import { DoubleSide } from 'three'
 export interface SelectionExtensionOptions {
   selectionColor: number
   showHover: boolean
@@ -27,6 +29,7 @@ export class SelectionExtension extends Extension {
   protected selectionId: string
   protected hoverId: string
   protected options: SelectionExtensionOptions = DefaultSelectionExtensionOptions
+  protected selectionMaterial: SpeckleStandardMaterial
 
   public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
     super(viewer)
@@ -35,6 +38,17 @@ export class SelectionExtension extends Extension {
     this.viewer
       .getRenderer()
       .input.on(InputEvent.PointerMove, this.onPointerMove.bind(this))
+
+    this.selectionMaterial = new SpeckleStandardMaterial(
+      {
+        color: 0x047efb,
+        emissive: 0x0,
+        roughness: 1,
+        metalness: 0,
+        side: DoubleSide
+      },
+      ['USE_RTE']
+    )
   }
 
   public onUpdate() {
@@ -120,7 +134,8 @@ export class SelectionExtension extends Extension {
   }
 
   protected applySelection(clearCurrent = true) {
-    if (clearCurrent) this.viewer.getRenderer().removeDirectFilter(this.selectionId)
+    clearCurrent
+    // if (clearCurrent) this.viewer.getRenderer().removeDirectFilter(this.selectionId)
     const rvs = []
     for (let k = 0; k < this.selectionList.length; k++) {
       rvs.push(
@@ -131,10 +146,7 @@ export class SelectionExtension extends Extension {
       )
     }
 
-    if (rvs.length)
-      this.selectionId = this.viewer.getRenderer().applyDirectFilter(rvs, {
-        filterType: FilterMaterialType.SELECT
-      })
+    if (rvs.length) this.viewer.getRenderer().setMaterial(rvs, this.selectionMaterial)
   }
 
   protected applyHover(renderView: NodeRenderView) {

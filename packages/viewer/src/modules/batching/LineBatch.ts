@@ -118,7 +118,13 @@ export default class LineBatch implements Batch {
     // TO DO if required
   }
 
+  public setBatchBuffers(...range: BatchUpdateRange[]): void {
+    range
+    // console.warn('Method not implemented.')
+  }
+
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
+    return
     const data = this.colorBuffer.array as number[]
 
     for (let i = 0; i < ranges.length; i++) {
