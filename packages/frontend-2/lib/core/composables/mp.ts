@@ -40,6 +40,7 @@ export function useMixpanelUserIdentification() {
   const mp = useMixpanel()
   const { distinctId } = useActiveUser()
   const { isDarkTheme } = useTheme()
+  const serverId = getMixpanelServerId()
 
   return {
     reidentify: () => {
@@ -49,7 +50,7 @@ export function useMixpanelUserIdentification() {
       // Register session
       mp.register({
         // eslint-disable-next-line camelcase
-        server_id: getMixpanelServerId(),
+        server_id: serverId,
         hostApp: HOST_APP
       })
 
@@ -58,6 +59,7 @@ export function useMixpanelUserIdentification() {
         mp.identify(distinctId.value)
         mp.people.set('Identified', true)
         mp.people.set('Theme Web', isDarkTheme.value ? 'dark' : 'light')
+        mp.add_group('server_id', serverId)
       }
     }
   }
