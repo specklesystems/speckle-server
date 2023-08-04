@@ -27,12 +27,7 @@
             leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             @after-leave="$emit('fully-closed')"
           >
-            <DialogPanel
-              :class="[
-                'transform rounded-lg overflow-hidden bg-foundation text-left shadow-xl transition-all relative',
-                widthClasses
-              ]"
-            >
+            <DialogPanel :class="dialogPanelClasses">
               <div
                 v-if="title"
                 class="flex items-center justify-center shadow p-4 relative z-10 bg-foundation"
@@ -49,7 +44,10 @@
               <div class="p-4 sm:p-6">
                 <slot>Put your content here!</slot>
               </div>
-              <div v-if="buttons" class="flex gap-4 p-4 border-t border-outline-3">
+              <div
+                v-if="buttons"
+                class="flex p-4 sm:px-6 sm:py-5 border-t border-outline-3"
+              >
                 <FormButton
                   v-for="(button, index) in buttons"
                   :key="index"
@@ -94,6 +92,14 @@ const props = defineProps<{
 const open = computed({
   get: () => props.open,
   set: (newVal) => emit('update:open', newVal)
+})
+
+const dialogPanelClasses = computed(() => {
+  return [
+    'transform rounded-lg overflow-hidden text-left shadow-xl transition-all relative',
+    widthClasses.value,
+    props.title || props.buttons ? 'bg-white' : 'bg-foundation'
+  ]
 })
 
 const maxWidthWeight = computed(() => {

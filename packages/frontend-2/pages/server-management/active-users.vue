@@ -85,6 +85,24 @@
       </template>
     </Table>
   </div>
+
+  <UserDeleteDialog
+    v-model:open="showUserDeleteDialog"
+    :user="userToDelete"
+    title="Delete User"
+    :buttons="[
+      {
+        text: 'Delete',
+        props: { color: 'danger', fullWidth: true },
+        onClick: deleteConfirmed
+      },
+      {
+        text: 'Cancel',
+        props: { color: 'secondary', fullWidth: true, outline: true },
+        onClick: closeDialog
+      }
+    ]"
+  />
 </template>
 
 <script setup lang="ts">
@@ -98,10 +116,31 @@ import {
 
 import Table from '../../components/server-management/Table.vue'
 import UserRoleSelect from '../../components/server-management/UserRoleSelect.vue'
+import UserDeleteDialog from '../../components/server-management/DeleteUserDialog.vue'
 
 import { TrashIcon } from '@heroicons/vue/24/outline'
 
-interface User {
+const userToDelete = ref<User | null>(null)
+
+const closeDialog = () => {
+  showUserDeleteDialog.value = false
+}
+
+const deleteUser = (user: User) => {
+  userToDelete.value = user
+  showUserDeleteDialog.value = true
+}
+
+const deleteConfirmed = () => {
+  // Implement actual delete logic here
+  console.log('Deleting user:', userToDelete.value)
+  showUserDeleteDialog.value = false
+  userToDelete.value = null
+}
+
+const showUserDeleteDialog = ref(false)
+
+export interface User {
   id: string
   name: string
   profilePicture: string
