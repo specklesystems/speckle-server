@@ -15,7 +15,7 @@
       class="flex flex-col md:flex-row space-y-2 space-x-2 justify-between mb-4 md:items-center h-8"
     >
       <div>
-        <h5 class="h4 font-bold">Pending</h5>
+        <h5 class="h4 font-bold">Pending Invitations</h5>
       </div>
     </div>
 
