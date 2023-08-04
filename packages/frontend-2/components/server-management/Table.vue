@@ -8,9 +8,10 @@
         <div
           v-for="(header, index) in headers"
           :key="index"
-          :class="columnClasses[header]"
+          :class="columnClasses[header.id]"
+          class="capitalize"
         >
-          {{ header }}
+          {{ header.title }}
         </div>
       </div>
       <div class="divide-y divide-outline-3 h-full">
@@ -21,19 +22,15 @@
           :style="{ paddingRight: paddingRightStyle }"
         >
           <template v-for="(column, colIndex) in headers" :key="colIndex">
-            <div :class="getClasses(column, colIndex, rowIndex)" tabindex="0">
-              <slot :name="column" :item="item">
-                <div class="text-gray-900 font-medium order-1">{{ item[column] }}</div>
+            <div :class="getClasses(column.id, colIndex)" tabindex="0">
+              <slot :name="column.id" :item="item">
+                <div class="text-gray-900 font-medium order-1">
+                  {{ item[column.id] }}
+                </div>
               </slot>
             </div>
           </template>
-          <div
-            :class="{
-              'h-0 h-full': openRow !== rowIndex,
-              'p-3 h-full': openRow === rowIndex
-            }"
-            class="absolute right-0 flex items-center p-0 pr-0.5 overflow-auto"
-          >
+          <div class="absolute right-0 flex items-center p-0 pr-0.5 overflow-auto">
             <div v-for="(button, btnIndex) in buttons" :key="btnIndex" class="p-1">
               <FormButton
                 :icon-left="button.icon"
@@ -60,10 +57,15 @@ interface Button {
   action: (item: any) => void
 }
 
+interface Header {
+  id: string
+  title: string
+}
+
 export default defineComponent({
   props: {
     headers: {
-      type: Array as PropType<string[]>,
+      type: Array as PropType<Header[]>,
       required: true
     },
     items: {
@@ -79,11 +81,6 @@ export default defineComponent({
       required: true
     }
   },
-  data() {
-    return {
-      openRow: -1
-    }
-  },
   computed: {
     paddingRightStyle() {
       const padding = 52 + ((this.buttons as Button[]).length - 1) * 25
@@ -91,7 +88,7 @@ export default defineComponent({
     }
   },
   methods: {
-    getClasses(column: string, colIndex: number, rowIndex: number): string {
+    getClasses(column: string, colIndex: number): string {
       const columnClass = this.columnClasses[column]
 
       // For the first column
@@ -99,10 +96,7 @@ export default defineComponent({
         return `bg-transparent py-3 px-5 ${columnClass}`
       }
 
-      // For other columns
-      const hideClass =
-        this.openRow !== rowIndex ? 'overflow-visible' : 'overflow-visible'
-      return `lg:p-0 ${hideClass} ${columnClass}`
+      return `lg:p-0 ${columnClass}`
     }
   }
 })

@@ -5,6 +5,10 @@
         :to="'/server-management'"
         name="Server Management"
       ></HeaderNavLink>
+      <HeaderNavLink
+        :to="'/server-management/active-users/'"
+        name="Active Users"
+      ></HeaderNavLink>
     </Portal>
 
     <div
@@ -38,9 +42,15 @@
     </div>
 
     <Table
-      :headers="['name', 'email', 'emailState', 'company', 'role']"
+      :headers="[
+        { id: 'name', title: 'Name' },
+        { id: 'email', title: 'Email' },
+        { id: 'emailState', title: 'Email State' },
+        { id: 'company', title: 'Company' },
+        { id: 'role', title: 'Role' }
+      ]"
       :items="users"
-      :buttons="[{ icon: TrashIcon, label: 'Delete', action: deleteUser }]"
+      :buttons="[{ icon: TrashIcon, label: 'Delete', action: openUserDeleteDialog }]"
       :column-classes="{
         name: 'col-span-3',
         email: 'col-span-3',
@@ -81,28 +91,48 @@
       </template>
 
       <template #role="{ item }">
-        <UserRoleSelect :user="item" />
+        <UserRoleSelect v-model="item.role" />
       </template>
     </Table>
-  </div>
 
-  <UserDeleteDialog
-    v-model:open="showUserDeleteDialog"
-    :user="userToDelete"
-    title="Delete User"
-    :buttons="[
-      {
-        text: 'Delete',
-        props: { color: 'danger', fullWidth: true },
-        onClick: deleteConfirmed
-      },
-      {
-        text: 'Cancel',
-        props: { color: 'secondary', fullWidth: true, outline: true },
-        onClick: closeDialog
-      }
-    ]"
-  />
+    <UserDeleteDialog
+      v-model:open="showUserDeleteDialog"
+      :user="userToModify"
+      title="Delete User"
+      :buttons="[
+        {
+          text: 'Delete',
+          props: { color: 'danger', fullWidth: true },
+          onClick: deleteConfirmed
+        },
+        {
+          text: 'Cancel',
+          props: { color: 'secondary', fullWidth: true, outline: true },
+          onClick: closeUserDeleteDialog
+        }
+      ]"
+    />
+
+    <ChangeUserRoleDialog
+      v-model:open="showChangeUserRoleDialog"
+      :user="userToModify"
+      title="Change Role"
+      :old-role="userToModify?.role ?? 'defaultRole'"
+      :new-role="newRole"
+      :buttons="[
+        {
+          text: 'Change Role',
+          props: { color: 'danger', fullWidth: true },
+          onClick: changeUserRoleConfirmed
+        },
+        {
+          text: 'Cancel',
+          props: { color: 'secondary', fullWidth: true, outline: true },
+          onClick: closeChangeUserRoleDialog
+        }
+      ]"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -117,28 +147,47 @@ import {
 import Table from '../../components/server-management/Table.vue'
 import UserRoleSelect from '../../components/server-management/UserRoleSelect.vue'
 import UserDeleteDialog from '../../components/server-management/DeleteUserDialog.vue'
+import ChangeUserRoleDialog from '../../components/server-management/ChangeUserRoleDialog.vue'
 
 import { TrashIcon } from '@heroicons/vue/24/outline'
 
-const userToDelete = ref<User | null>(null)
+const userToModify = ref<User | null>(null)
 
-const closeDialog = () => {
+const openUserDeleteDialog = (user: User) => {
+  userToModify.value = user
+
+  showUserDeleteDialog.value = true
+}
+
+const closeUserDeleteDialog = () => {
   showUserDeleteDialog.value = false
 }
 
-const deleteUser = (user: User) => {
-  userToDelete.value = user
-  showUserDeleteDialog.value = true
+const openChangeUserRoleDialog = (user: User) => {
+  userToModify.value = user
+  showChangeUserRoleDialog.value = true
+}
+
+const closeChangeUserRoleDialog = () => {
+  showChangeUserRoleDialog.value = false
 }
 
 const deleteConfirmed = () => {
   // Implement actual delete logic here
-  console.log('Deleting user:', userToDelete.value)
+  console.log('Deleting user:', userToModify.value)
   showUserDeleteDialog.value = false
-  userToDelete.value = null
+  userToModify.value = null
+}
+
+const changeUserRoleConfirmed = () => {
+  // Implement actual change role logic here
+  console.log('Chaning Role:', userToModify.value)
+  showChangeUserRoleDialog.value = false
+  userToModify.value = null
 }
 
 const showUserDeleteDialog = ref(false)
+const showChangeUserRoleDialog = ref(false)
 
 export interface User {
   id: string
@@ -147,7 +196,8 @@ export interface User {
   email: string
   emailState: 'verified' | 'not verified'
   company: string
-  role: 'user' | 'admin'
+  role: 'user' | 'admin' | 'archive'
+  invitedBy?: User
 }
 
 const users: User[] = [
@@ -332,4 +382,17 @@ const users: User[] = [
     role: 'user'
   }
 ]
+
+// Watch for changes in the 'role' of each user
+users.forEach((user) => {
+  watch(
+    () => user.role,
+    (newRole, oldRole) => {
+      if (newRole !== oldRole) {
+        userToModify.value = user // Set the current user to modify
+        openChangeUserRoleDialog(user) // Open the dialog
+      }
+    }
+  )
+})
 </script>

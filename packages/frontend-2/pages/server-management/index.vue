@@ -46,24 +46,37 @@
   </div>
 </template>
 <script setup lang="ts">
+import { useQuery } from '@vue/apollo-composable'
 import Card from '../../components/server-management/Card.vue'
 import SettingsDialog from '../../components/server-management/SettingsDialog.vue'
+import gql from 'graphql-tag'
 
 const router = useRouter()
 
 const showDialog = ref(false)
 
-// Function to close the dialog
 const closeDialog = () => {
   showDialog.value = false
 }
 
-// Function to save the settings
 const saveSettings = () => {
-  // Your code here for saving the settings
+  // Code here for saving the settings
 }
 
-// Example server information data
+const GET_SERVER_STATS = gql`
+  query ServerStats {
+    admin {
+      serverStatistics {
+        totalPendingInvites
+        totalProjectCount
+        totalUserCount
+      }
+    }
+  }
+`
+
+const { result, loading, error } = useQuery(GET_SERVER_STATS)
+
 const serverData = ref([
   {
     title: 'Server Name',
@@ -87,12 +100,10 @@ const serverData = ref([
   }
 ])
 
-// Example user information data
 const userData = ref([
   {
     title: 'Active users',
-
-    value: '321',
+    value: result.value?.admin.serverStatistics.totalUserCount || 'N/A',
     cta: {
       type: 'button',
       label: 'Manage',
@@ -101,25 +112,23 @@ const userData = ref([
   },
   {
     title: 'Pending invitations',
-
-    value: '18',
+    value: result.value?.admin.serverStatistics.totalPendingInvites || '0',
     cta: {
       type: 'button',
       label: 'Manage',
-      action: '#0'
+      action: async () => await router.push('/server-management/pending-invitations/')
     }
   }
 ])
 
-// Example project data
 const projectData = ref([
   {
     title: 'Projects',
-    value: '1342',
+    value: result.value?.admin.serverStatistics.totalProjectCount || 'N/A',
     cta: {
       type: 'button',
       label: 'Manage',
-      action: '#0'
+      action: async () => await router.push('/projects/')
     }
   }
 ])
