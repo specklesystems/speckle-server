@@ -96,7 +96,7 @@ const userData = ref([
     cta: {
       type: 'button',
       label: 'Manage',
-      action: async () => await router.push('/')
+      action: async () => await router.push('/server-management/active-users/')
     }
   },
   {
