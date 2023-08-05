@@ -28,8 +28,6 @@ export interface Batch {
   setVisibleRange(...range: BatchUpdateRange[])
   getVisibleRange(): BatchUpdateRange
   setDrawRanges(...ranges: BatchUpdateRange[])
-  insertDrawRanges(...ranges: BatchUpdateRange[])
-  removeDrawRanges(id: string)
   autoFillDrawRanges()
   resetDrawRanges()
   buildBatch()

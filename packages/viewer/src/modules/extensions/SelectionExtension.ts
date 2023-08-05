@@ -1,5 +1,4 @@
 import { IViewer, SelectionEvent, TreeNode, ViewerEvent } from '../..'
-import { FilterMaterialType } from '../filtering/FilteringManager'
 import { InputEvent } from '../input/Input'
 import SpeckleGhostMaterial from '../materials/SpeckleGhostMaterial'
 import SpeckleMesh from '../objects/SpeckleMesh'
@@ -150,12 +149,10 @@ export class SelectionExtension extends Extension {
   }
 
   protected applyHover(renderView: NodeRenderView) {
-    this.viewer.getRenderer().removeDirectFilter(this.hoverId)
+    // this.viewer.getRenderer().removeDirectFilter(this.hoverId)
 
     if (renderView)
-      this.hoverId = this.viewer.getRenderer().applyDirectFilter([renderView], {
-        filterType: FilterMaterialType.HOVER
-      })
+      this.viewer.getRenderer().setMaterial([renderView], this.selectionMaterial)
     this.viewer.requestRender()
   }
 }

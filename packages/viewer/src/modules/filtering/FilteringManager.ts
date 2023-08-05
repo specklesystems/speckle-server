@@ -364,19 +364,20 @@ export class FilteringManager extends EventEmitter {
   }
 
   public highlightObjects(objectIds: string[], ghost = false) {
-    this.resetHighlight()
-    this.HighlightState.ghost = ghost
-    this.populateGenericState(objectIds, this.HighlightState)
-    if (this.HighlightState.rvs.length !== 0) {
-      this.HighlightState.id = this.Renderer.applyDirectFilter(
-        this.HighlightState.rvs,
-        {
-          filterType: FilterMaterialType.OVERLAY
-        }
-      )
-    }
-    this.Renderer.viewer.requestRender()
-    this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
+    ghost
+    // this.resetHighlight()
+    // this.HighlightState.ghost = ghost
+    // this.populateGenericState(objectIds, this.HighlightState)
+    // if (this.HighlightState.rvs.length !== 0) {
+    //   this.HighlightState.id = this.Renderer.applyDirectFilter(
+    //     this.HighlightState.rvs,
+    //     {
+    //       filterType: FilterMaterialType.OVERLAY
+    //     }
+    //   )
+    // }
+    // this.Renderer.viewer.requestRender()
+    // this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
     return this.CurrentFilteringState
   }
 
@@ -498,12 +499,12 @@ export class FilteringManager extends EventEmitter {
   }
 
   public resetHighlight() {
-    if (this.HighlightState.rvs.length > 0) {
-      this.Renderer.removeDirectFilter(this.HighlightState.id)
-    }
-    this.HighlightState = new GenericRvState()
-    this.Renderer.viewer.requestRender()
-    this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
+    // if (this.HighlightState.rvs.length > 0) {
+    //   this.Renderer.removeDirectFilter(this.HighlightState.id)
+    // }
+    // this.HighlightState = new GenericRvState()
+    // this.Renderer.viewer.requestRender()
+    // this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
     return this.CurrentFilteringState
   }
 

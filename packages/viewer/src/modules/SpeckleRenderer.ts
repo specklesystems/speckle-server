@@ -250,6 +250,11 @@ export default class SpeckleRenderer {
         }
       })
     }
+    // stats.batchDetails.forEach((element, index) => {
+    //   if (element.drawCalls > element.minDrawCalls + 2) {
+    //     console.log(batches[index])
+    //   }
+    // })
     return stats
   }
 
@@ -643,14 +648,6 @@ export default class SpeckleRenderer {
     )
   }
 
-  public applyDirectFilter(ids: NodeRenderView[], filterMaterial: FilterMaterial) {
-    return this.batcher.insertObjectsFilterMaterial(ids, filterMaterial)
-  }
-
-  public removeDirectFilter(id: string) {
-    if (id) this.batcher.removeObjectsMaterial(id)
-  }
-
   public applyMaterial(
     ids: NodeRenderView[],
     material: SpeckleStandardMaterial | SpecklePointMaterial
@@ -680,6 +677,20 @@ export default class SpeckleRenderer {
           return { offset: value.batchStart, count: value.batchCount, material }
         })
       )
+    }
+  }
+
+  public getMaterial(rv: NodeRenderView): Material {
+    const batch = this.batcher.getBatch(rv)
+    const materials = (batch.renderObject as SpeckleMesh).materials
+    const groups = (batch.renderObject as SpeckleMesh).geometry.groups
+    for (let k = 0; k < groups.length; k++) {
+      if (
+        rv.batchStart >= groups[k].start &&
+        rv.batchEnd <= groups[k].start + groups[k].count
+      ) {
+        return materials[groups[k].materialIndex]
+      }
     }
   }
 
