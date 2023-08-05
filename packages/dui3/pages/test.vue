@@ -218,25 +218,21 @@ const runTests = async () => {
 
 $testBindings.on('emptyTestEvent', () => {
   setTimeout(() => {
-    console.log('host app sent event back', 'emptyTestEvent')
-
     const myTest = tests.value.find((t) => t.name === 'Simple event capture')
-    console.log(myTest, 'myTest')
 
     if (!myTest) return
     myTest.status = 1
     myTest.result = 'got an event back, we are okay'
-  }, 300)
+  }, 1000)
 })
 
 $testBindings.on('testEvent', (args: TestEventArgs) => {
   setTimeout(() => {
-    console.log(args, 'testEvent')
     const myTest = tests.value.find((t) => t.name === 'Event capture with args')
-    console.log(myTest, 'myTest')
+
     if (!myTest) return
     myTest.status = 1
     myTest.result = args
-  }, 300)
+  }, 1000)
 })
 </script>

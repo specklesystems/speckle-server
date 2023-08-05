@@ -7,7 +7,7 @@
         selectionStore.selectionInfo.selectedObjectIds?.length === 0
       "
     >
-      Currently sending {{ filter.selectedObjectIds.length }} objects. Select some
+      Currently sending {{ filter.selectedObjectIds?.length }} objects. Select some
       objects to change what you send to this model.
     </div>
     <div v-else class="space-y-2">
@@ -16,20 +16,8 @@
         {{ selectionStore.selectionInfo.summary }}
       </div>
       <div class="flex w-full justify-end">
-        <FormButton text>
-          Save
-          <!-- ({{
-          selectionStore.selectionInfo.selectedObjectIds.length
-        }}
-        objects). -->
-        </FormButton>
-        <FormButton>
-          Save & Send
-          <!-- current selection ({{
-          selectionStore.selectionInfo.selectedObjectIds.length
-        }}
-        objects). -->
-        </FormButton>
+        <FormButton text @click="save()">Save</FormButton>
+        <FormButton @click="save(true)">Save & Send</FormButton>
       </div>
     </div>
   </div>
@@ -39,12 +27,26 @@ import { IDirectSelectionSendFilter } from '~~/lib/bindings/definitions/IBasicCo
 import { useSendFilterStore } from '~~/store/sendFilter'
 import { useSelectionStore } from '~~/store/selection'
 
+const emit = defineEmits<{
+  (e: 'save', filter: IDirectSelectionSendFilter): void
+  (e: 'save-and-send', filter: IDirectSelectionSendFilter): void
+}>()
+
 const sendFilterStore = useSendFilterStore()
-const { sendFilters } = storeToRefs(sendFilterStore)
+const { selectionFilter } = storeToRefs(sendFilterStore)
 
 const selectionStore = useSelectionStore()
 
-const props = defineProps<{
+defineProps<{
   filter: IDirectSelectionSendFilter
 }>()
+
+const save = (andSend = false) => {
+  const filter = { ...selectionFilter.value } as IDirectSelectionSendFilter
+  filter.selectedObjectIds = selectionStore.selectionInfo.selectedObjectIds
+  filter.summary = selectionStore.selectionInfo.summary as string
+
+  if (andSend) return emit('save-and-send', filter)
+  emit('save', filter)
+}
 </script>

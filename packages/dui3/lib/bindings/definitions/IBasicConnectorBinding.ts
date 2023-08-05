@@ -8,26 +8,23 @@ export const IBasicConnectorBindingKey = 'baseBinding'
 // Needs to be agreed between Frontend and Core
 export interface IBasicConnectorBinding
   extends IBinding<IBasicConnectorBindingHostEvents> {
-  // ACCOUNTS
-  getAccounts: () => Promise<Account[]>
-
-  // VARIOUS
+  // Various
   getSourceApplicationName: () => Promise<string>
   getSourceApplicationVersion: () => Promise<string>
   getDocumentInfo: () => Promise<DocumentInfo>
 
-  // DOC STATE
-  getDocumentState: () => Promise<DocumentState>
-  saveDocumentState: (state: DocumentState) => Promise<void>
-  addModelToDocumentState: (model: IModelCard) => Promise<void>
-  removeModelFromDocumentState: (model: IModelCard) => Promise<void>
+  // Document state calls
+  getDocumentState: () => Promise<DocumentModelStore>
+  saveDocumentModelStore: (state: DocumentModelStore) => Promise<void>
+  addModel: (model: IModelCard) => Promise<void>
+  updateModel: (model: IModelCard) => Promise<void>
+  removeModel: (model: IModelCard) => Promise<void>
 
   // FILTERS AND TYPES
   getSendFilters: () => Promise<ISendFilter[]>
 }
 
 export interface IBasicConnectorBindingHostEvents {
-  displayToastNotification: (args: ToastInfo) => void
   documentChanged: () => void
   filtersNeedRefresh: () => void
 }
@@ -36,7 +33,7 @@ interface IDiscriminatedObject {
   typeDiscriminator: string
 }
 
-export type DocumentState = {
+export type DocumentModelStore = {
   models: IModelCard[]
 }
 
@@ -81,25 +78,6 @@ export interface IListSendFilter extends ISendFilter {
   singleSelection: boolean
 }
 
-// An almost 1-1 mapping of what we need from the Core accounts class.
-export type Account = {
-  id: string
-  isDefault: boolean
-  token: string
-  serverInfo: {
-    name: string
-    url: string
-  }
-  userInfo: {
-    id: string
-    avatar: string
-    email: string
-    name: string
-    commits: { totalCount: number }
-    streams: { totalCount: number }
-  }
-}
-
 export type DocumentInfo = {
   location: string
   name: string
@@ -116,10 +94,6 @@ export type ToastInfo = {
 export class MockedBaseBinding extends BaseBridge {
   constructor() {
     super()
-  }
-
-  public async getAccounts() {
-    return []
   }
 
   public async getSourceApplicationName() {

@@ -22,8 +22,7 @@
         >
           <MenuItem>
             <div class="border border-t-1 border-primary-muted">
-              <div v-if="loading" class="p-2">Loading accounts...</div>
-              <div v-else class="p-2 flex items-center justify-between">
+              <div class="p-2 flex items-center justify-between">
                 <div class="text-xs text-foreground-2">Your accounts</div>
                 <div>
                   <FormButton
@@ -34,6 +33,9 @@
                     Refresh
                   </FormButton>
                 </div>
+              </div>
+              <div v-if="isLoading" class="">
+                <CommonLoadingBar :loading="isLoading" />
               </div>
               <div class="space-y-0">
                 <HeaderUserAccount
@@ -81,12 +83,11 @@
 <script setup lang="ts">
 import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { useAccountStore } from '~/store/accounts'
-import { DUIAccount } from '~/lib/accounts/composables/setup'
+import { useAccountStore, DUIAccount } from '~/store/accounts'
 import { useUiConfigStore } from '~/store/uiConfig'
 
 const accountStore = useAccountStore()
-const { accounts, defaultAccount, loading } = storeToRefs(accountStore)
+const { accounts, defaultAccount, isLoading } = storeToRefs(accountStore)
 
 const uiConfigStore = useUiConfigStore()
 const { isDarkTheme, hasConfigBindings } = storeToRefs(uiConfigStore)

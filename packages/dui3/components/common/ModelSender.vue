@@ -1,6 +1,6 @@
 <template>
   <div
-    class="bg-foundation p-4 rounded-md hover:shadow-md flex flex-col items-center shadow transition h-16 transition-[height]"
+    class="bg-foundation p-4 rounded-md hover:shadow-md flex items-center shadow transition h-20"
   >
     <div class="flex items-center justify-between w-full">
       <div class="flex items-center space-x-2">
@@ -22,7 +22,7 @@
       </div>
     </div>
     <LayoutDialog v-model:open="openFilterDialog">
-      <FilterEditDialog :model="model" />
+      <FilterEditDialog :model="model" @close="openFilterDialog = false" />
     </LayoutDialog>
   </div>
 </template>

@@ -26,7 +26,7 @@
   </button>
 </template>
 <script setup lang="ts">
-import { DUIAccount } from 'lib/accounts/composables/setup'
+import { DUIAccount } from '~~/store/accounts'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
 
 const props = defineProps<{

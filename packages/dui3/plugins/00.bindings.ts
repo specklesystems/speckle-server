@@ -10,6 +10,11 @@ import {
 } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 
 import {
+  IAccountBinding,
+  IAccountBindingKey
+} from '~/lib/bindings/definitions/IAccountBinding'
+
+import {
   ITestBinding,
   ITestBindingKey,
   MockedTestBinding
@@ -39,20 +44,25 @@ declare let globalThis: Record<string, unknown> & {
  * strip or customize functionality from the ui itself.
  */
 export default defineNuxtPlugin(async () => {
+  // Tries to register some non-existant bindings as a test.
+  const nonExistantBindings = await tryHoistBinding('nonExistantBindings')
+
   // Registers some default test bindings.
   const testBindings =
     (await tryHoistBinding<ITestBinding>(ITestBindingKey)) || new MockedTestBinding()
 
-  // Tries to register some non-existant bindings.
-  const nonExistantBindings = await tryHoistBinding('nonExistantBindings')
+  // UI configuration bindings.
+  const configBinding =
+    (await tryHoistBinding<IConfigBinding>(IConfigBindingKey)) ||
+    new MockedConfigBinding()
+
+  // Account bindings
+  const accountBinding = await tryHoistBinding<IAccountBinding>(IAccountBindingKey)
 
   // Registers a set of default bindings.
   const baseBinding =
     (await tryHoistBinding<IBasicConnectorBinding>(IBasicConnectorBindingKey)) ||
     new MockedBaseBinding()
-
-  // UI configuration bindings.
-  const configBinding = await tryHoistBinding<IConfigBinding>(IConfigBindingKey)
 
   // Selection binding
   const selectionBinding = await tryHoistBinding<ISelectionBinding>(
@@ -60,19 +70,20 @@ export default defineNuxtPlugin(async () => {
   )
 
   const showDevTools = () => {
-    baseBinding.showDevTools()
+    configBinding.showDevTools()
   }
 
   const openUrl = (url: string) => {
-    baseBinding.openUrl(url)
+    configBinding.openUrl(url)
   }
 
   return {
     provide: {
-      testBindings,
       nonExistantBindings,
-      baseBinding,
+      testBindings,
       configBinding,
+      accountBinding,
+      baseBinding,
       selectionBinding,
       showDevTools,
       openUrl

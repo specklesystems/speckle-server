@@ -7,18 +7,17 @@ export const useSendFilterStore = defineStore('sendFilterStore', () => {
   const selectionFilter = computed(() =>
     sendFilters.value?.find((f) => f.name === 'Selection')
   )
+
   const everythingFilter = computed(() =>
     sendFilters.value?.find((f) => f.name === 'Everything')
   )
 
   const updateSendFilters = async () => {
     const res = await app.$baseBinding.getSendFilters()
-    console.log(res)
     sendFilters.value = res
   }
 
   app.$baseBinding.on('documentChanged', () => {
-    console.log('doc changed in filter store')
     setTimeout(() => {
       void updateSendFilters()
     }, 500)

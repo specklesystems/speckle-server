@@ -6,13 +6,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useAccountsSetup } from '~/lib/accounts/composables/setup'
 import { useUiConfigStore } from '~/store/uiConfig'
 
 const uiConfigStore = useUiConfigStore()
 const { isDarkTheme } = storeToRefs(uiConfigStore)
-
-useAccountsSetup()
 
 useHead({
   // Title suffix

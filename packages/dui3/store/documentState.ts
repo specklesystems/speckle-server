@@ -1,6 +1,7 @@
 import {
   DocumentState,
   IModelCard,
+  ISenderModelCard,
   ISendFilter
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
 
@@ -31,17 +32,25 @@ export const useDocumentStateStore = defineStore('documentStateStore', () => {
     return projectModelGroups
   })
 
+  $baseBinding.on('documentChanged', () => {
+    setTimeout(async () => {
+      await init()
+    }, 500) // Rhino needs some time.
+  })
+
   const addModel = async (model: IModelCard) => {
     await $baseBinding.addModelToDocumentState(model)
     documentState.value.models.push(model)
   }
 
-  const updateModel = async () => {
-    // TODO
-  }
-
   const updateModelFilter = async (modelId: string, filter: ISendFilter) => {
-    const model = documentState.value.models.find((m) => m.id === modelId)
+    const modelIndex = documentState.value.models.findIndex((m) => m.id === modelId)
+    // TODO: check index, correct type, etc
+    ;(documentState.value.models[modelIndex] as ISenderModelCard).sendFilter = filter
+
+    await $baseBinding.updateModelInDocumentState(
+      documentState.value.models[modelIndex]
+    )
   }
 
   const removeModel = async (model: IModelCard) => {
@@ -57,5 +66,12 @@ export const useDocumentStateStore = defineStore('documentStateStore', () => {
 
   void init()
 
-  return { addModel, removeModel, documentState, models, projectModelGroups }
+  return {
+    addModel,
+    updateModelFilter,
+    removeModel,
+    documentState,
+    models,
+    projectModelGroups
+  }
 })

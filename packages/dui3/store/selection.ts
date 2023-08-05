@@ -6,7 +6,7 @@ export const useSelectionStore = defineStore('selectionStore', () => {
 
   const selectionInfo = ref<SelectionInfo>({
     summary: 'Nothing selected',
-    objectIds: [] as string[]
+    selectedObjectIds: [] as string[]
   })
 
   $selectionBinding?.on('setSelection', (selInfo) => {

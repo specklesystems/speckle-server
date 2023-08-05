@@ -42,17 +42,25 @@
             :project="project"
           />
         </template>
+        <template v-for="model in project.models">
+          <CommonModelSender
+            v-if="model.typeDiscriminator === 'SenderModelCard'"
+            :key="model.modelId"
+            :model="model"
+            :project="project"
+          />
+        </template>
         <div>
           <button
-            class="flex w-full text-xs text-center justify-center bg-primary-muted hover:bg-primary transition rounded-md"
+            class="flex w-full text-xs text-center justify-center bg-primary-muted hover:bg-primary hover:text-foreground-on-primary transition rounded-md py-2"
           >
-            +
+            Add
           </button>
         </div>
       </div>
     </div>
     <template #fallback>
-      <div>Loading...</div>
+      <div>Loading/Error...</div>
     </template>
   </Suspense>
 </template>
