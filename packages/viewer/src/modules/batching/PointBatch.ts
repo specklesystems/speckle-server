@@ -32,6 +32,14 @@ export default class PointBatch implements Batch {
     return this.geometry.boundingBox
   }
 
+  public get drawCalls(): number {
+    return this.geometry.groups.length
+  }
+
+  public get minDrawCalls(): number {
+    return (this.mesh.material as Material[]).length
+  }
+
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
     this.id = id
     this.subtreeId = subtreeId

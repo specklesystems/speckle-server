@@ -40,6 +40,14 @@ export default class LineBatch implements Batch {
     return this.geometry.boundingBox
   }
 
+  public get drawCalls(): number {
+    return 1
+  }
+
+  public get minDrawCalls(): number {
+    return 1
+  }
+
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
     this.id = id
     this.subtreeId = subtreeId

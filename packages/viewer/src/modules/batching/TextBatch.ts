@@ -24,6 +24,14 @@ export default class TextBatch implements Batch {
     return new Box3() //this.mesh.BVH.getBoundingBox(new Box3())
   }
 
+  public get drawCalls(): number {
+    return 1
+  }
+
+  public get minDrawCalls(): number {
+    return 1
+  }
+
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
     this.id = id
     this.subtreeId = subtreeId

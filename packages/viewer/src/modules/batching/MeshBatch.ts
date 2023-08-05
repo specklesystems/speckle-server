@@ -44,6 +44,16 @@ export default class MeshBatch implements Batch {
     return this.mesh.BVH.getBoundingBox(new Box3())
   }
 
+  public get drawCalls(): number {
+    return this.geometry.groups.length
+  }
+
+  public get minDrawCalls(): number {
+    return [
+      ...Array.from(new Set(this.geometry.groups.map((value) => value.materialIndex)))
+    ].length
+  }
+
   public constructor(
     id: string,
     subtreeId: string,
@@ -119,6 +129,7 @@ export default class MeshBatch implements Batch {
   }
 
   public setBatchBuffers(...range: BatchUpdateRange[]): void {
+    const start = performance.now()
     let minGradientIndex = Infinity
     let maxGradientIndex = 0
     for (let k = 0; k < range.length; k++) {
@@ -147,11 +158,14 @@ export default class MeshBatch implements Batch {
       }
     }
     this.updateGradientIndexBuffer()
+    MeshBatch.split3 += performance.now() - start
   }
 
   public static split = 0
+  public static split2 = 0
+  public static split3 = 0
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
-    const start = performance.now()
+    let start = performance.now()
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
         value.material = this.mesh.getCachedMaterial(
@@ -174,7 +188,6 @@ export default class MeshBatch implements Batch {
       return a.offset - b.offset
     })
 
-    MeshBatch.split += performance.now() - start
     for (let i = 0; i < sortedRanges.length; i++) {
       const materialIndex = this.mesh.materials.indexOf(sortedRanges[i].material)
       const collidingGroup = this.getDrawRangeCollision(sortedRanges[i])
@@ -233,6 +246,7 @@ export default class MeshBatch implements Batch {
         }
       }
     }
+    MeshBatch.split += performance.now() - start
     // const mata = this.getCount()
     // console.log(mata, this.geometry.groups)
     let count = 0
@@ -241,7 +255,7 @@ export default class MeshBatch implements Batch {
       // console.log(ranges)
       throw new Error('mata')
     }
-
+    start = performance.now()
     const materialOrder = []
     this.geometry.groups.reduce((previousValue, currentValue) => {
       if (previousValue.indexOf(currentValue.materialIndex) === -1) {
@@ -293,6 +307,7 @@ export default class MeshBatch implements Batch {
         k = n
       }
     }
+    MeshBatch.split2 += performance.now() - start
     // console.log(this.geometry.groups)
   }
 

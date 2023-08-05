@@ -568,10 +568,21 @@ export class FilteringManager extends EventEmitter {
           rampIndex: group.value
         })
       }
-      const split = MeshBatch.split
+
+      const ghostNonMatching = this.ColorNumericFilterState.nonMatchingRvs
+
+      if (ghostNonMatching.length) {
+        this.Renderer.applyFilter(ghostNonMatching, {
+          filterType: FilterMaterialType.GHOST
+        })
+      }
       const time = performance.now() - start
-      console.warn('Split -> ', split)
+      console.warn('Split -> ', MeshBatch.split)
+      console.warn('Split2 -> ', MeshBatch.split2)
+      console.warn('Split3 -> ', MeshBatch.split3)
       console.warn('Time -> ', time)
+      console.warn(this.Renderer.renderingStats)
+
       this.CurrentFilteringState.activePropFilterKey =
         this.ColorNumericFilterState.currentProp.key
       this.CurrentFilteringState.passMin =

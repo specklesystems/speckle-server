@@ -19,6 +19,8 @@ export interface Batch {
   geometryType: GeometryType
 
   get bounds(): Box3
+  get drawCalls(): number
+  get minDrawCalls(): number
 
   getCount(): number
   setBatchMaterial(material: Material): void

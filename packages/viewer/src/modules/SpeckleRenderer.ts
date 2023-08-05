@@ -69,6 +69,20 @@ export enum ObjectLayers {
   MEASUREMENTS = 4
 }
 
+export interface RenderingStats {
+  objects?: number
+  batchCount?: number
+  drawCalls?: number
+  trisCount?: number
+  vertCount?: number
+  batchDetails?: Array<{
+    drawCalls: number
+    minDrawCalls: number
+    tris: number
+    verts: number
+  }>
+}
+
 export default class SpeckleRenderer {
   private readonly SHOW_HELPERS = false
   private readonly IGNORE_ZERO_OPACITY_OBJECTS = true
@@ -217,6 +231,26 @@ export default class SpeckleRenderer {
   public set clippingPlanes(value: Plane[]) {
     this._clippingPlanes = value.map((value: Plane) => new Plane().copy(value))
     this.updateClippingPlanes()
+  }
+
+  public get renderingStats(): RenderingStats {
+    const batches = Object.values(this.batcher.batches)
+    const stats: RenderingStats = {
+      objects: batches.reduce((a: number, c: Batch) => a + c.renderViews.length, 0),
+      batchCount: batches.length,
+      drawCalls: batches.reduce((a: number, c: Batch) => a + c.drawCalls, 0),
+      trisCount: batches.reduce((a: number, c: Batch) => a + c.getCount(), 0),
+      vertCount: 0,
+      batchDetails: batches.map((batch: Batch) => {
+        return {
+          drawCalls: batch.drawCalls,
+          minDrawCalls: batch.minDrawCalls,
+          tris: batch.getCount(),
+          verts: 0
+        }
+      })
+    }
+    return stats
   }
 
   public constructor(viewer: Viewer /** TEMPORARY */) {
