@@ -2,41 +2,35 @@
 
 import { BaseBridge } from '~~/lib/bridge/base'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
+import { IDiscriminatedObject } from '~~/lib/bindings/definitions/common'
+import { ISendFilter } from '~~/lib/bindings/definitions/ISendBinding'
 
 export const IBasicConnectorBindingKey = 'baseBinding'
 
 // Needs to be agreed between Frontend and Core
 export interface IBasicConnectorBinding
   extends IBinding<IBasicConnectorBindingHostEvents> {
-  // ACCOUNTS
-  getAccounts: () => Promise<Account[]>
-
-  // VARIOUS
+  // Various
   getSourceApplicationName: () => Promise<string>
   getSourceApplicationVersion: () => Promise<string>
   getDocumentInfo: () => Promise<DocumentInfo>
 
-  // DOC STATE
-  getDocumentState: () => Promise<DocumentState>
-  saveDocumentState: (state: DocumentState) => Promise<void>
-  addModelToDocumentState: (model: IModelCard) => Promise<void>
-  removeModelFromDocumentState: (model: IModelCard) => Promise<void>
+  // Document state calls
+  getDocumentState: () => Promise<DocumentModelStore>
+  saveDocumentModelStore: (state: DocumentModelStore) => Promise<void>
+  addModel: (model: IModelCard) => Promise<void>
+  updateModel: (model: IModelCard) => Promise<void>
+  removeModel: (model: IModelCard) => Promise<void>
 
   // FILTERS AND TYPES
   getSendFilters: () => Promise<ISendFilter[]>
 }
 
 export interface IBasicConnectorBindingHostEvents {
-  displayToastNotification: (args: ToastInfo) => void
   documentChanged: () => void
-  filtersNeedRefresh: () => void
 }
 
-interface IDiscriminatedObject {
-  typeDiscriminator: string
-}
-
-export type DocumentState = {
+export type DocumentModelStore = {
   models: IModelCard[]
 }
 
@@ -56,48 +50,12 @@ export type ModelCardTypeDiscriminators = 'SenderModelCard' | 'ReceiverModelCard
 export interface ISenderModelCard extends IModelCard {
   typeDiscriminator: 'SenderModelCard'
   sendFilter: ISendFilter
+  expired?: boolean
 }
 
 export interface IReceiverModelCard extends IModelCard {
   typeDiscriminator: 'ReceiverModelCard'
   todo: string
-}
-
-//
-// Filters
-//
-export interface ISendFilter extends IDiscriminatedObject {
-  name: string
-  summary: string
-}
-
-export interface IDirectSelectionSendFilter extends ISendFilter {
-  selectedObjectIds: string[]
-}
-
-export interface IListSendFilter extends ISendFilter {
-  options: string[]
-  selectedOptions: string[]
-  singleSelection: boolean
-}
-
-// An almost 1-1 mapping of what we need from the Core accounts class.
-export type Account = {
-  id: string
-  isDefault: boolean
-  token: string
-  serverInfo: {
-    name: string
-    url: string
-  }
-  userInfo: {
-    id: string
-    avatar: string
-    email: string
-    name: string
-    commits: { totalCount: number }
-    streams: { totalCount: number }
-  }
 }
 
 export type DocumentInfo = {
@@ -116,10 +74,6 @@ export type ToastInfo = {
 export class MockedBaseBinding extends BaseBridge {
   constructor() {
     super()
-  }
-
-  public async getAccounts() {
-    return []
   }
 
   public async getSourceApplicationName() {

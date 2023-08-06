@@ -113,14 +113,12 @@ import { SelectionInfo } from '~~/lib/bindings/definitions/ISelectionBinding'
 import { useSelectionStore } from '~~/store/selection'
 import { useCreateNewProject, useCreateNewModel } from '~~/lib/graphql/composables'
 import { useAccountStore } from '~~/store/accounts'
-import { useDocumentStateStore } from '~~/store/documentState'
-import {
-  ISenderModelCard,
-  ISendFilter
-} from 'lib/bindings/definitions/IBasicConnectorBinding'
+import { useHostAppStore } from '~~/store/hostApp'
+import { ISenderModelCard } from 'lib/bindings/definitions/IBasicConnectorBinding'
+import { ISendFilter } from '~~/lib/bindings/definitions/ISendBinding'
 import { nanoid } from 'nanoid'
 
-const { addModel } = useDocumentStateStore()
+const { addModel } = useHostAppStore()
 const router = useRouter()
 const { defaultAccount } = storeToRefs(useAccountStore())
 

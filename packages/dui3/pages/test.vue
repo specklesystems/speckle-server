@@ -29,7 +29,7 @@
             <span class="text-xs text-foreground-2">{{ filter.summary }}</span>
           </div>
           <div v-if="filter.name === 'Layers'" class="text-xs">
-            {{ (filter as IListSendFilter).options }}
+            {{ (filter as unknown as Record<string,{name:string}[]>).options.map(o =>o.name) }}
           </div>
         </div>
       </div>
@@ -63,9 +63,9 @@
         class="text-xs mx-3 p-4 rounded shadow-inner overflow-auto simple-scrollbar max-h-40"
       >
         <div class="text-info mb-2">
-          There are currently {{ documentStateStore.models.length }} model card(s).
+          There are currently {{totalModelCount }} model card(s).
         </div>
-        <pre>{{ documentStateStore.projectModelGroups }}</pre>
+        <pre>{{ projectModelGroups }}</pre>
       </div>
     </div>
     <div class="px-2">
@@ -108,25 +108,29 @@
 import { ArrowLeftIcon } from '@heroicons/vue/20/solid'
 import { TestEventArgs } from '~/lib/bindings/definitions/ITestBinding'
 import { CheckIcon, MinusIcon, XMarkIcon } from '@heroicons/vue/20/solid'
-import { useDocumentInfoStore } from '~/store/documentInfo'
-import { useDocumentStateStore } from '~/store/documentState'
+import { useHostAppStore } from '~/store/hostApp'
 import { useSelectionStore } from '~/store/selection'
-import { useSendFilterStore } from '~/store/sendFilter'
-import { IListSendFilter } from 'lib/bindings/definitions/IBasicConnectorBinding'
+
 
 const { $testBindings } = useNuxtApp()
 
-const docInfoStore = useDocumentInfoStore()
-const { documentInfo } = storeToRefs(docInfoStore)
+const store = useHostAppStore()
+
+const { documentInfo, sendFilters, projectModelGroups } = storeToRefs(store)
+
+const totalModelCount = computed(() => {
+  let count = 0
+  for(const pmg of projectModelGroups.value) {
+    count += pmg.senders.length
+    count += pmg.receivers.length
+  }
+  return count
+})
 
 const selectionStore = useSelectionStore()
 const { selectionInfo, hasBinding: hasSelectionBinding } = storeToRefs(selectionStore)
 
-const sendFilterStore = useSendFilterStore()
-const { sendFilters } = storeToRefs(sendFilterStore)
-await sendFilterStore.updateSendFilters()
-
-const documentStateStore = useDocumentStateStore()
+await store.refreshSendFilters()
 
 const tests = ref([
   {
@@ -218,25 +222,21 @@ const runTests = async () => {
 
 $testBindings.on('emptyTestEvent', () => {
   setTimeout(() => {
-    console.log('host app sent event back', 'emptyTestEvent')
-
     const myTest = tests.value.find((t) => t.name === 'Simple event capture')
-    console.log(myTest, 'myTest')
 
     if (!myTest) return
     myTest.status = 1
     myTest.result = 'got an event back, we are okay'
-  }, 300)
+  }, 1000)
 })
 
 $testBindings.on('testEvent', (args: TestEventArgs) => {
   setTimeout(() => {
-    console.log(args, 'testEvent')
     const myTest = tests.value.find((t) => t.name === 'Event capture with args')
-    console.log(myTest, 'myTest')
+
     if (!myTest) return
     myTest.status = 1
     myTest.result = args
-  }, 300)
+  }, 1000)
 })
 </script>

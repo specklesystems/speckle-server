@@ -29,7 +29,7 @@
 import { UserCircleIcon } from '@heroicons/vue/20/solid'
 type UserAvatar = {
   name: string
-  avatar?: string
+  avatar?: string | null | undefined
 }
 
 export type UserAvatarSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | 'editable'

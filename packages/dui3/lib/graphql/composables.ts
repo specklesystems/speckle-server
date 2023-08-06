@@ -11,9 +11,9 @@ import { useAccountStore } from '~~/store/accounts'
 function getValidOrDefaultAccount(
   clientId: string | undefined = undefined
 ): ApolloClient<unknown> {
-  const { defaultAccount, validAccounts } = storeToRefs(useAccountStore())
+  const { defaultAccount, accounts } = storeToRefs(useAccountStore())
   if (!clientId) return defaultAccount.value.client
-  const account = validAccounts.value.find((acc) => acc.accountInfo.id === clientId)
+  const account = accounts.value.find((acc) => acc.accountInfo.id === clientId)
   if (account) return account.client
 
   throw new Error(`Failed to find a valid account for id ${clientId}`)
