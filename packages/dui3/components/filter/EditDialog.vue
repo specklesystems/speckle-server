@@ -7,6 +7,7 @@
         name="sendFilter"
         label="Avaialble send filters"
         class="w-full"
+        fixed-height
         :items="sendFilterNames"
         :allow-unset="false"
       >
@@ -32,15 +33,7 @@
       <div class="p-4 text-center text-primary">
         All supported objects will be sent.
       </div>
-      <div>
-        <FormTextInput
-          placeholder="yolo tesxt"
-          show-label
-          label="test"
-          hint="test"
-          name="test"
-        ></FormTextInput>
-      </div>
+
       <div class="flex justify-end">
         <FormButton text @click="save(activeFilter)">Save</FormButton>
         <FormButton @click="save(activeFilter)">Save & Send</FormButton>
@@ -53,22 +46,20 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { ISenderModelCard } from '~~/lib/bindings/definitions/IBasicConnectorBinding'
 import {
-  ISenderModelCard,
   ISendFilter,
   IDirectSelectionSendFilter
-} from '~~/lib/bindings/definitions/IBasicConnectorBinding'
-import { useSendFilterStore } from '~~/store/sendFilter'
-import { useDocumentStateStore } from '~~/store/documentState'
+} from '~~/lib/bindings/definitions/ISendBinding'
+import { useHostAppStore } from '~~/store/hostApp'
 
-const sendFilterStore = useSendFilterStore()
-const { sendFilters } = storeToRefs(sendFilterStore)
 const props = defineProps<{
   model: ISenderModelCard
 }>()
-
 const emit = defineEmits(['close'])
+
+const store = useHostAppStore()
+const { sendFilters } = storeToRefs(store)
 
 const sendFilterNames = computed(() => sendFilters.value?.map((f) => f.name))
 
@@ -89,9 +80,8 @@ watch(selectedSendFilterName, (newVal, oldVal) => {
   newFilter.value = filter
 })
 
-const documentStateStore = useDocumentStateStore()
 const save = async (newFilter: ISendFilter) => {
-  await documentStateStore.updateModelFilter(props.model.id, newFilter)
+  await store.updateModelFilter(props.model.id, newFilter)
   emit('close')
 }
 

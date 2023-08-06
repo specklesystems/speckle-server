@@ -33,22 +33,12 @@
         </div>
       </div>
 
-      <div v-show="showModels" class="ml-2 pl-2 space-y-2 border-l-2">
-        <template v-for="model in project.models">
-          <CommonModelSender
-            v-if="model.typeDiscriminator === 'SenderModelCard'"
-            :key="model.modelId"
-            :model="model"
-            :project="project"
-          />
+      <div v-show="showModels" class="ml-2 pl-2 space-y-2">
+        <template v-for="model in project.senders" :key="model.modelId">
+          <CommonModelSender :model="model" :project="project" />
         </template>
-        <template v-for="model in project.models">
-          <CommonModelSender
-            v-if="model.typeDiscriminator === 'SenderModelCard'"
-            :key="model.modelId"
-            :model="model"
-            :project="project"
-          />
+        <template v-for="model in project.senders" :key="model.modelId + 'ddd'">
+          <CommonModelSender :model="model" :project="project" />
         </template>
         <div>
           <button
@@ -66,9 +56,9 @@
 </template>
 <script setup lang="ts">
 import { ChevronDownIcon, ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
-import { ProjectModelGroup } from '~~/store/documentState'
-import { useGetProjectDetails } from '~~/lib/graphql/composables'
+import { ProjectModelGroup } from '~~/store/hostApp'
 import { useAccountStore } from '~~/store/accounts'
+import { useGetProjectDetails } from '~~/lib/graphql/composables'
 const accountStore = useAccountStore()
 const { $openUrl } = useNuxtApp()
 

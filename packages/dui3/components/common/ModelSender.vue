@@ -7,7 +7,6 @@
         <UserAvatar :user="modelDetails.author" />
         <span>{{ modelDetails.displayName }}</span>
       </div>
-      <!-- {{ modelDetails.versions.totalCount }} -->
       <div class="flex items-center space-x-2">
         <FormButton
           v-tippy="'Change or edit filter'"
@@ -30,7 +29,8 @@
 import { CloudArrowUpIcon, FunnelIcon } from '@heroicons/vue/24/outline'
 import { useGetModelDetails } from '~~/lib/graphql/composables'
 import { ISenderModelCard } from '~~/lib/bindings/definitions/IBasicConnectorBinding'
-import { ProjectModelGroup } from '~~/store/documentState'
+import { ProjectModelGroup } from '~~/store/hostApp'
+
 const props = defineProps<{
   model: ISenderModelCard
   project: ProjectModelGroup

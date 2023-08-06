@@ -2,6 +2,8 @@
 
 import { BaseBridge } from '~~/lib/bridge/base'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
+import { IDiscriminatedObject } from '~~/lib/bindings/definitions/common'
+import { ISendFilter } from '~~/lib/bindings/definitions/ISendBinding'
 
 export const IBasicConnectorBindingKey = 'baseBinding'
 
@@ -29,10 +31,6 @@ export interface IBasicConnectorBindingHostEvents {
   filtersNeedRefresh: () => void
 }
 
-interface IDiscriminatedObject {
-  typeDiscriminator: string
-}
-
 export type DocumentModelStore = {
   models: IModelCard[]
 }
@@ -58,24 +56,6 @@ export interface ISenderModelCard extends IModelCard {
 export interface IReceiverModelCard extends IModelCard {
   typeDiscriminator: 'ReceiverModelCard'
   todo: string
-}
-
-//
-// Filters
-//
-export interface ISendFilter extends IDiscriminatedObject {
-  name: string
-  summary: string
-}
-
-export interface IDirectSelectionSendFilter extends ISendFilter {
-  selectedObjectIds: string[]
-}
-
-export interface IListSendFilter extends ISendFilter {
-  options: string[]
-  selectedOptions: string[]
-  singleSelection: boolean
 }
 
 export type DocumentInfo = {

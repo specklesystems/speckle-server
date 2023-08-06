@@ -4,12 +4,6 @@ import { GenericBridge } from '~/lib/bridge/generic'
 import { SketchupBridge } from '~/lib/bridge/sketchup'
 
 import {
-  IBasicConnectorBinding,
-  IBasicConnectorBindingKey,
-  MockedBaseBinding
-} from '~/lib/bindings/definitions/IBasicConnectorBinding'
-
-import {
   IAccountBinding,
   IAccountBindingKey
 } from '~/lib/bindings/definitions/IAccountBinding'
@@ -25,6 +19,14 @@ import {
   IConfigBindingKey,
   MockedConfigBinding
 } from '~/lib/bindings/definitions/IConfigBinding'
+
+import {
+  IBasicConnectorBinding,
+  IBasicConnectorBindingKey,
+  MockedBaseBinding
+} from '~/lib/bindings/definitions/IBasicConnectorBinding'
+
+import { ISendBindingKey, ISendBinding } from '~/lib/bindings/definitions/ISendBinding'
 
 import {
   ISelectionBindingKey,
@@ -44,31 +46,33 @@ declare let globalThis: Record<string, unknown> & {
  * strip or customize functionality from the ui itself.
  */
 export default defineNuxtPlugin(async () => {
-  // Tries to register some non-existant bindings as a test.
+  // Registers a set of non existent bindings as a test.
   const nonExistantBindings = await tryHoistBinding('nonExistantBindings')
 
   // Registers some default test bindings.
   const testBindings =
     (await tryHoistBinding<ITestBinding>(ITestBindingKey)) || new MockedTestBinding()
 
-  // UI configuration bindings.
+  // Actual bindings follow below.
+
   const configBinding =
     (await tryHoistBinding<IConfigBinding>(IConfigBindingKey)) ||
     new MockedConfigBinding()
 
-  // Account bindings
   const accountBinding = await tryHoistBinding<IAccountBinding>(IAccountBindingKey)
 
-  // Registers a set of default bindings.
   const baseBinding =
     (await tryHoistBinding<IBasicConnectorBinding>(IBasicConnectorBindingKey)) ||
     new MockedBaseBinding()
 
-  // Selection binding
+  const sendBinding = await tryHoistBinding<ISendBinding>(ISendBindingKey)
+
   const selectionBinding = await tryHoistBinding<ISelectionBinding>(
     ISelectionBindingKey
   )
 
+  // Any binding implments these two methods below, we just choose one to
+  // expose globally to the app.
   const showDevTools = () => {
     configBinding.showDevTools()
   }
@@ -84,6 +88,7 @@ export default defineNuxtPlugin(async () => {
       configBinding,
       accountBinding,
       baseBinding,
+      sendBinding,
       selectionBinding,
       showDevTools,
       openUrl

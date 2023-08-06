@@ -1,8 +1,7 @@
 import {
-  DocumentState,
+  DocumentModelStore,
   IModelCard,
-  ISenderModelCard,
-  ISendFilter
+  ISenderModelCard
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
 
 export type ProjectModelGroup = {

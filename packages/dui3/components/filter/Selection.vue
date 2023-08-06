@@ -23,8 +23,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { IDirectSelectionSendFilter } from '~~/lib/bindings/definitions/IBasicConnectorBinding'
-import { useSendFilterStore } from '~~/store/sendFilter'
+import { IDirectSelectionSendFilter } from '~~/lib/bindings/definitions/ISendBinding'
+import { useHostAppStore } from '~~/store/hostApp'
 import { useSelectionStore } from '~~/store/selection'
 
 const emit = defineEmits<{
@@ -32,8 +32,8 @@ const emit = defineEmits<{
   (e: 'save-and-send', filter: IDirectSelectionSendFilter): void
 }>()
 
-const sendFilterStore = useSendFilterStore()
-const { selectionFilter } = storeToRefs(sendFilterStore)
+const store = useHostAppStore()
+const { selectionFilter } = storeToRefs(store)
 
 const selectionStore = useSelectionStore()
 
