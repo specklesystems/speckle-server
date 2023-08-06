@@ -33,7 +33,7 @@
         </div>
       </div>
 
-      <div v-show="showModels" class="ml-2 pl-2 space-y-2">
+      <div v-show="showModels" class="space-y-2">
         <template v-for="model in project.senders" :key="model.modelId">
           <CommonModelSender :model="model" :project="project" />
         </template>

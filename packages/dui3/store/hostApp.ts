@@ -20,7 +20,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
   const projectModelGroups = computed(() => {
-    const projectModelGroups = [] as ProjectModelGroup[]
+    const projectModelGroups: ProjectModelGroup[] = []
 
     for (const model of documentModelStore.value.models) {
       let project = projectModelGroups.find((p) => p.projectId === model.projectId)
@@ -86,6 +86,12 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   )
 
   app.$sendBinding.on('filtersNeedRefresh', () => void refreshSendFilters())
+
+  app.$sendBinding.on('sendersExpired', (senderIds) => {
+    documentModelStore.value.models
+      .filter((m) => senderIds.includes(m.id))
+      .forEach((model) => ((model as ISenderModelCard).expired = true))
+  })
 
   // First initialization calls
   void refreshDocumentInfo()

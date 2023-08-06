@@ -9,13 +9,8 @@ export interface ISendBinding extends IBinding<ISendBindingEvents> {
 
 export interface ISendBindingEvents {
   filtersNeedRefresh: () => void
-  sendersExpired: (args: SenderExpiredArgs[]) => void
+  sendersExpired: (args: string[]) => void
   senderProgress: (args: SenderProgressArgs) => void
-}
-
-export type SenderExpiredArgs = {
-  id: string
-  reason?: string
 }
 
 export type SenderProgressArgs = {

@@ -28,7 +28,6 @@ export interface IBasicConnectorBinding
 
 export interface IBasicConnectorBindingHostEvents {
   documentChanged: () => void
-  filtersNeedRefresh: () => void
 }
 
 export type DocumentModelStore = {
@@ -51,6 +50,7 @@ export type ModelCardTypeDiscriminators = 'SenderModelCard' | 'ReceiverModelCard
 export interface ISenderModelCard extends IModelCard {
   typeDiscriminator: 'SenderModelCard'
   sendFilter: ISendFilter
+  expired?: boolean
 }
 
 export interface IReceiverModelCard extends IModelCard {
