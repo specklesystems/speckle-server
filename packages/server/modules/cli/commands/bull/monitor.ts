@@ -47,7 +47,7 @@ const command: CommandModule<unknown, { testQueueId: string }> = {
     app.listen(PORT, () => {
       cliLogger.info(`Running on ${PORT}...`)
       cliLogger.info(
-        `For the UI, open http://localhost:${PORT}/, and make sure Redis is running`
+        `For the UI, open http://127.0.0.1:${PORT}/, and make sure Redis is running`
       )
     })
 

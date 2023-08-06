@@ -29,7 +29,7 @@ services:
       start_period: 90s
     environment:
       # TODO: Change this to the URL of the speckle server, as accessed from the network
-      CANONICAL_URL: 'http://localhost'
+      CANONICAL_URL: 'http://127.0.0.1'
 
       # TODO: Change this to a unique secret for this server
       SESSION_SECRET: 'TODO:Replace'
