@@ -8,7 +8,9 @@ extend type User {
     before: DateTime
     cursor: DateTime
     limit: Int! = 25
-  ): ActivityCollection @hasRole(role: "server:user") @hasScope(scope: "users:read")
+  ): ActivityCollection
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "users:read")
 
   """
   The user's timeline in chronological order
@@ -19,7 +21,7 @@ extend type User {
     cursor: DateTime
     limit: Int! = 25
   ): ActivityCollection
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScopes(scopes: ["users:read", "streams:read"])
 }
 
@@ -33,7 +35,9 @@ extend type LimitedUser {
     before: DateTime
     cursor: DateTime
     limit: Int! = 25
-  ): ActivityCollection @hasRole(role: "server:user") @hasScope(scope: "users:read")
+  ): ActivityCollection
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "users:read")
 
   """
   The user's timeline in chronological order
@@ -44,7 +48,7 @@ extend type LimitedUser {
     cursor: DateTime
     limit: Int! = 25
   ): ActivityCollection
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScopes(scopes: ["users:read", "streams:read"])
 }
 
@@ -58,7 +62,9 @@ extend type Stream {
     before: DateTime
     cursor: DateTime
     limit: Int! = 25
-  ): ActivityCollection @hasRole(role: "server:user") @hasScope(scope: "streams:read")
+  ): ActivityCollection
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
 }
 
 extend type Branch {
@@ -71,7 +77,9 @@ extend type Branch {
     before: DateTime
     cursor: DateTime
     limit: Int! = 25
-  ): ActivityCollection @hasRole(role: "server:user") @hasScope(scope: "streams:read")
+  ): ActivityCollection
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
 }
 
 extend type Commit {
@@ -84,7 +92,9 @@ extend type Commit {
     before: DateTime
     cursor: DateTime
     limit: Int! = 25
-  ): ActivityCollection @hasRole(role: "server:user") @hasScope(scope: "streams:read")
+  ): ActivityCollection
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:read")
 }
 
 type ActivityCollection {

@@ -30,7 +30,7 @@
     "dist"
   ],
   "engines": {
-    "node": "^18.16.1"
+    "node": "^18.17.0"
   },
   "scripts": {
     "build": "NODE_ENV=production rollup --config",
@@ -61,7 +61,8 @@
     "three": "^0.140.0",
     "three-mesh-bvh": "0.5.17",
     "tree-model": "1.0.7",
-    "troika-three-text": "0.47.2"
+    "troika-three-text": "0.47.2",
+    "underscore": "1.13.6"
   },
   "devDependencies": {
     "@babel/core": "^7.18.2",

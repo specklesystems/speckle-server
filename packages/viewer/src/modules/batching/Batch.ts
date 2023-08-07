@@ -31,6 +31,7 @@ export interface Batch {
   resetDrawRanges()
   buildBatch()
   getRenderView(index: number): NodeRenderView
+  getMaterialAtIndex(index: number): Material
   onUpdate(deltaTime: number)
   onRender(renderer: WebGLRenderer)
   purge()

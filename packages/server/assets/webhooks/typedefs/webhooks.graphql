@@ -1,6 +1,6 @@
 extend type Stream {
   webhooks(id: String): WebhookCollection
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
 }
 
@@ -9,21 +9,21 @@ extend type Mutation {
   Creates a new webhook on a stream
   """
   webhookCreate(webhook: WebhookCreateInput!): String!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
 
   """
   Updates an existing webhook
   """
   webhookUpdate(webhook: WebhookUpdateInput!): String!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
 
   """
   Deletes an existing webhook
   """
   webhookDelete(webhook: WebhookDeleteInput!): String!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
 }
 

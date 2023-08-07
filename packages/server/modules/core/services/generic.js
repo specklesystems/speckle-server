@@ -12,7 +12,7 @@ module.exports = {
   async getServerInfo() {
     const serverInfo = await Info().select('*').first()
     serverInfo.version = process.env.SPECKLE_SERVER_VERSION || 'dev'
-    serverInfo.canonicalUrl = process.env.CANONICAL_URL || 'localhost'
+    serverInfo.canonicalUrl = process.env.CANONICAL_URL || '127.0.0.1'
     return serverInfo
   },
 
@@ -38,7 +38,8 @@ module.exports = {
     description,
     adminContact,
     termsOfService,
-    inviteOnly
+    inviteOnly,
+    guestModeEnabled
   }) {
     const serverInfo = await Info().select('*').first()
     if (!serverInfo)
@@ -49,6 +50,7 @@ module.exports = {
         adminContact,
         termsOfService,
         inviteOnly,
+        guestModeEnabled,
         completed: true
       })
     else
@@ -59,6 +61,7 @@ module.exports = {
         adminContact,
         termsOfService,
         inviteOnly,
+        guestModeEnabled,
         completed: true
       })
   }

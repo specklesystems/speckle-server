@@ -3,7 +3,7 @@ extend type Query {
   Get authed user's stream access request
   """
   streamAccessRequest(streamId: String!): StreamAccessRequest
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
 }
 
 extend type Stream {
@@ -21,13 +21,13 @@ extend type Mutation {
     requestId: String!
     accept: Boolean!
     role: StreamRole! = STREAM_CONTRIBUTOR
-  ): Boolean! @hasRole(role: "server:user") @hasScope(scope: "users:invite")
+  ): Boolean! @hasServerRole(role: SERVER_GUEST) @hasScope(scope: "users:invite")
 
   """
   Request access to a specific stream
   """
   streamAccessRequestCreate(streamId: String!): StreamAccessRequest!
-    @hasRole(role: "server:user")
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "users:invite")
 }
 
