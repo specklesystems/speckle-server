@@ -84,6 +84,7 @@ export default class SpeckleMesh extends Mesh {
   constructor(geometry: BufferGeometry, material: Material) {
     super(geometry, material)
     this.batchMaterial = material
+    this.materialCache[this.batchMaterial.id] = this.batchMaterial
   }
 
   public setBatchObjects(

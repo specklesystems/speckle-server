@@ -674,6 +674,7 @@ export default class SpeckleRenderer {
     for (const k in rvMap) {
       this.batcher.batches[k].setDrawRanges(
         ...rvMap[k].map((value: NodeRenderView) => {
+          console.warn('Set material -> ', value.renderData.id)
           return { offset: value.batchStart, count: value.batchCount, material }
         })
       )
@@ -681,6 +682,9 @@ export default class SpeckleRenderer {
   }
 
   public getMaterial(rv: NodeRenderView): Material {
+    if (!rv || !rv.batchId) {
+      return null
+    }
     const batch = this.batcher.getBatch(rv)
     const materials = (batch.renderObject as SpeckleMesh).materials
     const groups = (batch.renderObject as SpeckleMesh).geometry.groups

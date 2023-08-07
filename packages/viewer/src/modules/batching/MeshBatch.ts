@@ -218,7 +218,7 @@ export default class MeshBatch implements Batch {
             )
           } else if (
             sortedRanges[i].offset + sortedRanges[i].count ===
-            includingGroup.count
+            includingGroup.start + includingGroup.count
           ) {
             this.geometry.addGroup(
               includingGroup.start,
@@ -278,7 +278,9 @@ export default class MeshBatch implements Batch {
     }
     this.geometry.groups = []
     for (let matIndex = 0; matIndex < grouped.length; matIndex++) {
-      const matGroup = grouped[matIndex]
+      const matGroup = grouped[matIndex].sort((a, b) => {
+        return a.start - b.start
+      })
       for (let k = 0; k < matGroup.length; ) {
         let offset = matGroup[k].start
         let count = matGroup[k].count
@@ -313,7 +315,7 @@ export default class MeshBatch implements Batch {
       }
     }
     MeshBatch.split2 += performance.now() - start
-    if (this.drawCalls > this.minDrawCalls + 2) {
+    if (this.drawCalls > this.minDrawCalls) {
       this.shuffleIndex = true
     }
     // console.log(this.geometry.groups)
@@ -372,6 +374,13 @@ export default class MeshBatch implements Batch {
   }
 
   private autoFillDrawRangesShuffleIBO() {
+    console.warn('Shuffling -> ', this.id)
+    // console.log(
+    //   (this.geometry.index.array as Uint16Array).subarray(
+    //     this.renderViews[2].batchStart,
+    //     this.renderViews[2].batchEnd
+    //   )
+    // )
     const groups = this.geometry.groups
       .sort((a, b) => {
         return a.start - b.start
@@ -410,10 +419,10 @@ export default class MeshBatch implements Batch {
     const sourceIBO: BufferAttribute = this.getCurrentIndexBuffer()
     const targetIBO: BufferAttribute = this.getNextIndexBuffer()
     const newGroups = []
-    const newMapping: { [index: number]: number } = {}
-    for (let k = 0; k < this.renderViews.length; k++) {
-      newMapping[this.renderViews[k].batchStart] = this.renderViews[k].batchStart
-    }
+    const scratchRvs = this.renderViews.slice()
+    scratchRvs.sort((a, b) => {
+      return a.batchStart - b.batchStart
+    })
     let targetIBOOffset = 0
     for (let k = 0; k < grouped.length; k++) {
       const materialGroup = grouped[k]
@@ -425,13 +434,19 @@ export default class MeshBatch implements Batch {
         const subArray = (sourceIBO.array as Uint16Array).subarray(start, start + count)
         ;(targetIBO.array as Uint16Array).set(subArray, targetIBOOffset)
         let rvTrisCount = 0
-        for (let m = 0; m < this.renderViews.length; m++) {
+        for (let m = 0; m < scratchRvs.length; m++) {
           if (
-            this.renderViews[m].batchStart >= start &&
-            this.renderViews[m].batchEnd <= start + count
+            scratchRvs[m].batchStart >= start &&
+            scratchRvs[m].batchEnd <= start + count
           ) {
-            newMapping[start] = targetIBOOffset + rvTrisCount
-            rvTrisCount += this.renderViews[m].batchCount
+            scratchRvs[m].setBatchData(
+              this.id,
+              targetIBOOffset + rvTrisCount,
+              scratchRvs[m].batchCount
+            )
+            rvTrisCount += scratchRvs[m].batchCount
+            scratchRvs.splice(m, 1)
+            m--
           }
         }
         targetIBOOffset += count
@@ -451,14 +466,15 @@ export default class MeshBatch implements Batch {
         newGroups[i].materialIndex
       )
     }
-    const oldMapping = this.createRenderViewMapping()
-    for (const index in oldMapping) {
-      const rv = oldMapping[index]
-      rv.setBatchData(rv.batchId, newMapping[index], rv.batchCount)
-    }
+
     this.geometry.setIndex(targetIBO)
     this.geometry.index.needsUpdate = true
-
+    // console.log(
+    //   (this.geometry.index.array as Uint16Array).subarray(
+    //     this.renderViews[2].batchStart,
+    //     this.renderViews[2].batchEnd
+    //   )
+    // )
     const hiddenGroup = this.geometry.groups.find((value) => {
       return this.mesh.material[value.materialIndex].visible === false
     })
