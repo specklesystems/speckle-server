@@ -509,7 +509,7 @@ export class FilteringManager extends EventEmitter {
   }
 
   public reset(): FilteringState {
-    this.Renderer.clearFilter()
+    // this.Renderer.clearFilter()
     this.VisibilityState = new VisibilityState()
     this.ColorStringFilterState = null
     this.ColorNumericFilterState = null
@@ -573,7 +573,7 @@ export class FilteringManager extends EventEmitter {
       const ghostNonMatching = this.ColorNumericFilterState.nonMatchingRvs
 
       if (ghostNonMatching.length) {
-        this.Renderer.applyFilter(ghostNonMatching, {
+        this.Renderer.setFilterMaterial(ghostNonMatching, {
           filterType: FilterMaterialType.GHOST
         })
       }

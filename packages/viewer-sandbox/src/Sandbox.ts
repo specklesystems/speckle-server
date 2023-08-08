@@ -17,6 +17,7 @@ import UrlHelper from './UrlHelper'
 import { DiffResult } from '@speckle/viewer'
 import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
 import { Units } from '@speckle/viewer'
+import { SelectionExtension } from '@speckle/viewer'
 
 export default class Sandbox {
   private viewer: DebugViewer
@@ -395,7 +396,10 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      console.warn(await this.viewer.screenshot())
+      // console.warn(await this.viewer.screenshot())
+      this.viewer
+        .getExtension(SelectionExtension)
+        .selectObjects(['1154ca1d997ac631571db55f84cb703d'])
     })
 
     const rotate = this.tabs.pages[0].addButton({

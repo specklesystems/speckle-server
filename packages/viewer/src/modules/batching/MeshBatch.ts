@@ -24,6 +24,7 @@ import { ObjectLayers } from '../SpeckleRenderer'
 import { TransformStorage } from './Batcher'
 import { BatchObject } from './BatchObject'
 import { GeometryConverter } from '../converter/GeometryConverter'
+import Logger from 'js-logger'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -39,7 +40,8 @@ export default class MeshBatch implements Batch {
   private indexBuffer0: BufferAttribute
   private indexBuffer1: BufferAttribute
   private indexBufferIndex = 0
-  private shuffleIndex = false
+  private needsShuffle = false
+  private needsFlatten = false
 
   public get bounds(): Box3 {
     return this.mesh.BVH.getBoundingBox(new Box3())
@@ -85,9 +87,13 @@ export default class MeshBatch implements Batch {
 
   public onUpdate(deltaTime: number) {
     deltaTime
-    if (this.shuffleIndex) {
+    if (this.needsFlatten) {
+      this.flattenDrawGroups()
+      this.needsFlatten = false
+    }
+    if (this.needsShuffle) {
       this.autoFillDrawRangesShuffleIBO()
-      this.shuffleIndex = false
+      this.needsShuffle = false
     }
   }
 
@@ -170,7 +176,7 @@ export default class MeshBatch implements Batch {
   public static split2 = 0
   public static split3 = 0
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
-    let start = performance.now()
+    const start = performance.now()
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
         value.material = this.mesh.getCachedMaterial(
@@ -201,7 +207,6 @@ export default class MeshBatch implements Batch {
           sortedRanges[i].material
         )
       } else {
-        // console.log('Start ->', this.geometry.groups.slice())
         const includingGroup = this.geDrawRangeInclusion(sortedRanges[i])
         if (includingGroup && includingGroup.materialIndex !== materialIndex) {
           this.geometry.groups.splice(this.geometry.groups.indexOf(includingGroup), 1)
@@ -252,15 +257,35 @@ export default class MeshBatch implements Batch {
       }
     }
     MeshBatch.split += performance.now() - start
-    // const mata = this.getCount()
-    // console.log(mata, this.geometry.groups)
     let count = 0
     this.geometry.groups.forEach((value) => (count += value.count))
     if (count !== this.getCount()) {
-      // console.log(ranges)
-      throw new Error('mata')
+      Logger.error(`Draw groups invalid on ${this.id}`)
     }
-    start = performance.now()
+    this.needsFlatten = true
+  }
+
+  private getDrawRangeCollision(range: BatchUpdateRange): {
+    start: number
+    count: number
+    materialIndex?: number
+  } {
+    if (this.geometry.groups.length > 0) {
+      for (let i = 0; i < this.geometry.groups.length; i++) {
+        if (
+          range.offset === this.geometry.groups[i].start &&
+          range.count === this.geometry.groups[i].count
+        ) {
+          return this.geometry.groups[i]
+        }
+      }
+      return null
+    }
+    return null
+  }
+
+  private flattenDrawGroups() {
+    const start = performance.now()
     const materialOrder = []
     this.geometry.groups.reduce((previousValue, currentValue) => {
       if (previousValue.indexOf(currentValue.materialIndex) === -1) {
@@ -315,29 +340,9 @@ export default class MeshBatch implements Batch {
       }
     }
     MeshBatch.split2 += performance.now() - start
-    if (this.drawCalls > this.minDrawCalls) {
-      this.shuffleIndex = true
+    if (this.drawCalls > this.minDrawCalls + 2) {
+      this.needsShuffle = true
     }
-    // console.log(this.geometry.groups)
-  }
-
-  private getDrawRangeCollision(range: BatchUpdateRange): {
-    start: number
-    count: number
-    materialIndex?: number
-  } {
-    if (this.geometry.groups.length > 0) {
-      for (let i = 0; i < this.geometry.groups.length; i++) {
-        if (
-          range.offset === this.geometry.groups[i].start &&
-          range.count === this.geometry.groups[i].count
-        ) {
-          return this.geometry.groups[i]
-        }
-      }
-      return null
-    }
-    return null
   }
 
   private geDrawRangeInclusion(range: BatchUpdateRange): {
@@ -368,19 +373,7 @@ export default class MeshBatch implements Batch {
     return ++this.indexBufferIndex % 2 === 0 ? this.indexBuffer0 : this.indexBuffer1
   }
 
-  public autoFillDrawRanges() {
-    // this.autoFillDrawRangesShuffleIBO()
-    this.autoFillDrawRangesBasic()
-  }
-
   private autoFillDrawRangesShuffleIBO() {
-    console.warn('Shuffling -> ', this.id)
-    // console.log(
-    //   (this.geometry.index.array as Uint16Array).subarray(
-    //     this.renderViews[2].batchStart,
-    //     this.renderViews[2].batchEnd
-    //   )
-    // )
     const groups = this.geometry.groups
       .sort((a, b) => {
         return a.start - b.start
@@ -469,12 +462,7 @@ export default class MeshBatch implements Batch {
 
     this.geometry.setIndex(targetIBO)
     this.geometry.index.needsUpdate = true
-    // console.log(
-    //   (this.geometry.index.array as Uint16Array).subarray(
-    //     this.renderViews[2].batchStart,
-    //     this.renderViews[2].batchEnd
-    //   )
-    // )
+
     const hiddenGroup = this.geometry.groups.find((value) => {
       return this.mesh.material[value.materialIndex].visible === false
     })
@@ -484,89 +472,6 @@ export default class MeshBatch implements Batch {
         count: hiddenGroup.start
       })
     }
-  }
-
-  /** This is the initial basic way of dealing with auto-completing draw groups
-   *  It's simpler, but it cand add a lot of redundant draw calls. I'm keeping it
-   *  for now
-   */
-
-  private autoFillDrawRangesBasic() {
-    const sortedRanges = this.geometry.groups
-      .sort((a, b) => {
-        return a.start - b.start
-      })
-      .slice()
-    // console.warn(`Batch ID ${this.id} Group count ${sortedRanges.length}`)
-    for (let k = 0; k < sortedRanges.length; k++) {
-      if (k === 0) {
-        if (sortedRanges[k].start > 0) {
-          this.geometry.addGroup(0, sortedRanges[k].start, 0)
-        }
-        if (
-          sortedRanges.length === 1 &&
-          sortedRanges[k].start + sortedRanges[k].count < this.getCount()
-        ) {
-          this.geometry.addGroup(
-            sortedRanges[k].start + sortedRanges[k].count,
-            this.getCount() - sortedRanges[k].start + sortedRanges[k].count,
-            0
-          )
-        }
-      } else if (k === sortedRanges.length - 1) {
-        if (sortedRanges[k].start + sortedRanges[k].count < this.getCount()) {
-          this.geometry.addGroup(
-            sortedRanges[k].start + sortedRanges[k].count,
-            this.getCount() - sortedRanges[k].start + sortedRanges[k].count,
-            0
-          )
-        }
-        if (
-          sortedRanges[k - 1].start + sortedRanges[k - 1].count <
-          sortedRanges[k].start
-        ) {
-          this.geometry.addGroup(
-            sortedRanges[k - 1].start + sortedRanges[k - 1].count,
-            sortedRanges[k].start -
-              (sortedRanges[k - 1].start + sortedRanges[k - 1].count),
-            0
-          )
-        }
-        continue
-      } else {
-        if (
-          sortedRanges[k - 1].start + sortedRanges[k - 1].count <
-          sortedRanges[k].start
-        ) {
-          this.geometry.addGroup(
-            sortedRanges[k - 1].start + sortedRanges[k - 1].count,
-            sortedRanges[k].start -
-              (sortedRanges[k - 1].start + sortedRanges[k - 1].count),
-            0
-          )
-        }
-      }
-    }
-    this.geometry.groups.sort((a, b) => {
-      return a.start - b.start
-    })
-
-    let count = 0
-    this.geometry.groups.forEach((val) => {
-      count += val.count
-    })
-    if (count < this.getCount()) {
-      // Shouldn't happen
-      console.error(`DrawRange MESH autocomplete failed! ${count}vs${this.getCount()}`)
-    }
-  }
-
-  private createRenderViewMapping(): { [index: number]: NodeRenderView } {
-    const mapping: { [index: number]: NodeRenderView } = {}
-    for (let k = 0; k < this.renderViews.length; k++) {
-      mapping[this.renderViews[k].batchStart] = this.renderViews[k]
-    }
-    return mapping
   }
 
   public resetDrawRanges() {

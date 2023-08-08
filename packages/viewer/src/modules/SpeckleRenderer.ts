@@ -51,11 +51,11 @@ import { BatchObject } from './batching/BatchObject'
 import SpecklePointMaterial from './materials/SpecklePointMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import { Measurements } from './measurements/Measurements'
-import { MaterialOptions } from './materials/Materials'
 import {
   ICameraProvider,
   CameraControllerEvent
 } from './extensions/core-extensions/Providers'
+import Logger from 'js-logger'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -99,7 +99,6 @@ export default class SpeckleRenderer {
   private sunTarget: Object3D
   private sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
   public viewer: Viewer // TEMPORARY
-  private filterBatchRecording: string[] = []
   private pipeline: Pipeline
 
   private _shadowcatcher: Shadowcatcher = null
@@ -637,34 +636,6 @@ export default class SpeckleRenderer {
     }
   }
 
-  public clearFilter() {
-    this.batcher.resetBatchesDrawRanges()
-    this.filterBatchRecording = []
-  }
-
-  public applyFilter(ids: NodeRenderView[], filterMaterial: FilterMaterial) {
-    this.filterBatchRecording.push(
-      ...this.batcher.setObjectsFilterMaterial(ids, filterMaterial)
-    )
-  }
-
-  public applyMaterial(
-    ids: NodeRenderView[],
-    material: SpeckleStandardMaterial | SpecklePointMaterial
-  ) {
-    const materialOptions = { needsCopy: true } as MaterialOptions
-    this.filterBatchRecording.push(
-      ...this.batcher.setObjectsMaterial(ids, (rv: NodeRenderView) => {
-        return {
-          offset: rv.batchStart,
-          count: rv.batchCount,
-          material,
-          materialOptions
-        }
-      })
-    )
-  }
-
   public setMaterial(rvs: NodeRenderView[], material: Material) {
     const rvMap = {}
     for (let k = 0; k < rvs.length; k++) {
@@ -674,7 +645,6 @@ export default class SpeckleRenderer {
     for (const k in rvMap) {
       this.batcher.batches[k].setDrawRanges(
         ...rvMap[k].map((value: NodeRenderView) => {
-          console.warn('Set material -> ', value.renderData.id)
           return { offset: value.batchStart, count: value.batchCount, material }
         })
       )
@@ -685,15 +655,21 @@ export default class SpeckleRenderer {
     if (!rv || !rv.batchId) {
       return null
     }
+
     const batch = this.batcher.getBatch(rv)
+    if (!(batch instanceof MeshBatch)) return null
     const materials = (batch.renderObject as SpeckleMesh).materials
     const groups = (batch.renderObject as SpeckleMesh).geometry.groups
     for (let k = 0; k < groups.length; k++) {
-      if (
-        rv.batchStart >= groups[k].start &&
-        rv.batchEnd <= groups[k].start + groups[k].count
-      ) {
-        return materials[groups[k].materialIndex]
+      try {
+        if (
+          rv.batchStart >= groups[k].start &&
+          rv.batchEnd <= groups[k].start + groups[k].count
+        ) {
+          return materials[groups[k].materialIndex]
+        }
+      } catch (e) {
+        Logger.error('Failed to get material')
       }
     }
   }
@@ -717,21 +693,6 @@ export default class SpeckleRenderer {
       this.batcher.batches[k].setDrawRanges(...drawRanges)
       this.batcher.batches[k].setBatchBuffers(...drawRanges)
     }
-  }
-
-  public beginFilter() {
-    this.filterBatchRecording = []
-  }
-
-  public endFilter() {
-    this.batcher.autoFillDrawRanges(this.filterBatchRecording)
-    // REVISIT
-    // this.updateClippingPlanes(this.viewer.sectionBox.planes)
-    // if (this.viewer.sectionBox.display.visible) {
-    //   this.updateSectionBoxCapper()
-    // }
-    this.renderer.shadowMap.needsUpdate = true
-    this.updateShadowCatcher()
   }
 
   public getBatchMaterials(): {

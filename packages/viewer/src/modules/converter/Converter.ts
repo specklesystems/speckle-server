@@ -15,7 +15,7 @@ export default class Coverter {
   private lastAsyncPause: number
   private activePromises: number
   private maxChildrenPromises: number
-  private spoofIDs = false
+  private spoofIDs = true
   private tree: WorldTree
 
   private readonly NodeConverterMapping: {

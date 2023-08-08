@@ -14,12 +14,12 @@ import {
 import PointBatch from './PointBatch'
 // import { FilterMaterialType } from '../FilteringManager'
 import { Material, Mesh, WebGLRenderer } from 'three'
-import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
+import { FilterMaterialType } from '../filtering/FilteringManager'
 import Logger from 'js-logger'
 import { World } from '../World'
 import { RenderTree } from '../tree/RenderTree'
-import SpeckleMesh from '../objects/SpeckleMesh'
 import TextBatch from './TextBatch'
+import SpeckleMesh from '../objects/SpeckleMesh'
 
 export enum TransformStorage {
   VERTEX_TEXTURE = 0,
@@ -405,28 +405,6 @@ export default class Batcher {
     }
   }
 
-  public getByMaterialUUID(materialUUID: string) {
-    const visibilityRanges = {}
-    for (const k in this.batches) {
-      const batch: Batch = this.batches[k]
-      const batchMesh: Mesh = batch.renderObject as Mesh
-      if (batchMesh.geometry.groups.length === 0) {
-        if ((batchMesh.material as Material).uuid === materialUUID)
-          visibilityRanges[k] = AllBatchUpdateRange
-      } else {
-        const materialUUIDGroup = batchMesh.geometry.groups.find((value) => {
-          return batchMesh.material[value.materialIndex].uuid === materialUUID
-        })
-        visibilityRanges[k] = {
-          offset: 0,
-          count:
-            materialUUIDGroup !== undefined ? materialUUIDGroup.start : batch.getCount()
-        }
-      }
-    }
-    return visibilityRanges
-  }
-
   public purgeBatches(subtreeId: string) {
     for (const k in this.batches) {
       if (this.batches[k].subtreeId === subtreeId) {
@@ -473,54 +451,6 @@ export default class Batcher {
     for (const k in this.batches) {
       this.batches[k].resetDrawRanges()
     }
-  }
-
-  public setObjectsFilterMaterial(
-    rvs: NodeRenderView[],
-    filterMaterial: FilterMaterial,
-    uniqueRvsOnly = true
-  ): string[] {
-    return this.setObjectsMaterial(
-      rvs,
-      (rv: NodeRenderView) => {
-        return {
-          offset: rv.batchStart,
-          count: rv.batchCount,
-          material: this.materials.getFilterMaterial(rv, filterMaterial) as Material,
-          materialOptions: this.materials.getFilterMaterialOptions(filterMaterial)
-        } as BatchUpdateRange
-      },
-      uniqueRvsOnly
-    )
-  }
-
-  public setObjectsMaterial(
-    rvs: NodeRenderView[],
-    batchRangeDelegate: (rv: NodeRenderView) => BatchUpdateRange,
-    uniqueRvsOnly = true
-  ): string[] {
-    let renderViews = rvs
-    if (uniqueRvsOnly) renderViews = [...Array.from(new Set(rvs.map((value) => value)))]
-    const batchIds = [...Array.from(new Set(renderViews.map((value) => value.batchId)))]
-    for (let i = 0; i < batchIds.length; i++) {
-      if (!batchIds[i]) {
-        continue
-      }
-      const batch = this.batches[batchIds[i]]
-      const views = renderViews
-        .filter((value) => value.batchId === batchIds[i])
-        .map(batchRangeDelegate)
-      batch.setDrawRanges(...views)
-    }
-    return batchIds
-  }
-
-  public autoFillDrawRanges(batchIds: string[]) {
-    const uniqueBatches = [...Array.from(new Set(batchIds.map((value) => value)))]
-    uniqueBatches.forEach((value) => {
-      if (!value) return
-      this.batches[value].autoFillDrawRanges()
-    })
   }
 
   /**
