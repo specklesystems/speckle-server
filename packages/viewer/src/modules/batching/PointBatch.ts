@@ -26,6 +26,7 @@ export default class PointBatch implements Batch {
   private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: Points
+  private needsFlatten = false
 
   public get bounds() {
     if (!this.geometry.boundingBox) this.geometry.computeBoundingBox()
@@ -46,10 +47,6 @@ export default class PointBatch implements Batch {
     this.renderViews = renderViews
   }
 
-  updateBatchObjects() {
-    // TO DO
-  }
-
   public get renderObject(): Object3D {
     return this.mesh
   }
@@ -58,12 +55,12 @@ export default class PointBatch implements Batch {
     return this.renderViews[0].geometryType
   }
 
-  public getCount() {
-    return this.geometry.attributes.position.array.length / 3
-  }
-
   public get materials(): Material[] {
     return this.mesh.material as Material[]
+  }
+
+  public getCount() {
+    return this.geometry.attributes.position.array.length / 3
   }
 
   public setBatchMaterial(material: Material) {
@@ -72,6 +69,10 @@ export default class PointBatch implements Batch {
 
   public onUpdate(deltaTime: number) {
     deltaTime
+    if (this.needsFlatten) {
+      this.flattenDrawGroups()
+      this.needsFlatten = false
+    }
   }
 
   public onRender(renderer: WebGLRenderer) {
@@ -104,56 +105,18 @@ export default class PointBatch implements Batch {
 
   public setBatchBuffers(...range: BatchUpdateRange[]): void {
     range
-    // throw new Error('Method not implemented.')
+    // NOT IMPLEMENTED
   }
 
-  /**
-   * This is the first version for multi draw ranges with automatic fill support
-   * In the near future, we'll re-sort the index buffer so we minimize draw calls to
-   * a minimmum. For now it's ok
-   */
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
-    ranges
-    // const materials = ranges.map((val) => val.material)
-    // const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
-    // if (Array.isArray(this.mesh.material))
-    //   this.mesh.material = this.mesh.material.concat(uniqueMaterials)
-    // else {
-    //   this.mesh.material = [this.mesh.material, ...uniqueMaterials]
-    // }
-    // const sortedRanges = ranges.sort((a, b) => {
-    //   return a.offset - b.offset
-    // })
-    // const newGroups = []
-    // for (let k = 0; k < sortedRanges.length; k++) {
-    //   const collidingGroup = this.getDrawRangeCollision(sortedRanges[k])
-    //   if (collidingGroup) {
-    //     // Logger.warn(`Draw range collision @ ${this.id} overwritting...`)
-    //     collidingGroup.materialIndex = this.mesh.material.indexOf(
-    //       sortedRanges[k].material
-    //     )
-    //     continue
-    //   }
-    //   newGroups.push(sortedRanges[k])
-    // }
-    // for (let i = 0; i < newGroups.length; i++) {
-    //   this.geometry.addGroup(
-    //     newGroups[i].offset,
-    //     newGroups[i].count,
-    //     this.mesh.material.indexOf(newGroups[i].material)
-    //   )
-    // }
-  }
-
-  insertDrawRanges(...ranges: BatchUpdateRange[]) {
-    const materials = ranges.map((val) => val.material)
+    const materials = ranges.map((val) => {
+      return val.material
+    })
     const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
-    if (!Array.isArray(this.mesh.material)) {
-      this.mesh.material = [this.mesh.material]
-    }
+
     for (let k = 0; k < uniqueMaterials.length; k++) {
-      if (!this.mesh.material.includes(uniqueMaterials[k]))
-        this.mesh.material.push(uniqueMaterials[k])
+      if (!this.materials.includes(uniqueMaterials[k]))
+        this.materials.push(uniqueMaterials[k])
     }
 
     const sortedRanges = ranges.sort((a, b) => {
@@ -161,22 +124,67 @@ export default class PointBatch implements Batch {
     })
 
     for (let i = 0; i < sortedRanges.length; i++) {
-      const group = {
-        start: sortedRanges[i].offset,
-        count: sortedRanges[i].count,
-        materialIndex: this.mesh.material.indexOf(sortedRanges[i].material),
-        id: sortedRanges[i].id
+      const materialIndex = this.materials.indexOf(sortedRanges[i].material)
+      const collidingGroup = this.getDrawRangeCollision(sortedRanges[i])
+      if (collidingGroup) {
+        collidingGroup.materialIndex = this.materials.indexOf(sortedRanges[i].material)
+      } else {
+        const includingGroup = this.geDrawRangeInclusion(sortedRanges[i])
+        if (includingGroup && includingGroup.materialIndex !== materialIndex) {
+          this.geometry.groups.splice(this.geometry.groups.indexOf(includingGroup), 1)
+          if (includingGroup.start === sortedRanges[i].offset) {
+            this.geometry.addGroup(
+              sortedRanges[i].offset,
+              sortedRanges[i].count,
+              materialIndex
+            )
+            this.geometry.addGroup(
+              sortedRanges[i].offset + sortedRanges[i].count,
+              includingGroup.count - sortedRanges[i].count,
+              includingGroup.materialIndex
+            )
+          } else if (
+            sortedRanges[i].offset + sortedRanges[i].count ===
+            includingGroup.start + includingGroup.count
+          ) {
+            this.geometry.addGroup(
+              includingGroup.start,
+              includingGroup.count - sortedRanges[i].count,
+              includingGroup.materialIndex
+            )
+            this.geometry.addGroup(
+              sortedRanges[i].offset,
+              sortedRanges[i].count,
+              materialIndex
+            )
+          } else {
+            this.geometry.addGroup(
+              includingGroup.start,
+              sortedRanges[i].offset - includingGroup.start,
+              includingGroup.materialIndex
+            )
+            this.geometry.addGroup(
+              sortedRanges[i].offset,
+              sortedRanges[i].count,
+              materialIndex
+            )
+            this.geometry.addGroup(
+              sortedRanges[i].offset + sortedRanges[i].count,
+              includingGroup.count -
+                (sortedRanges[i].count + sortedRanges[i].offset - includingGroup.start),
+              includingGroup.materialIndex
+            )
+          }
+        }
       }
-      this.geometry.groups.push(group)
     }
-
-    this.flattenGroups()
-  }
-
-  removeDrawRanges(id: string) {
-    this.geometry.groups = this.geometry.groups.filter((value) => {
-      return !(value['id'] && value['id'] === id)
-    })
+    let count = 0
+    this.geometry.groups.forEach((value) => (count += value.count))
+    if (count !== this.getCount()) {
+      Logger.error(`Draw groups invalid on ${this.id}`)
+    }
+    this.setBatchBuffers(...ranges)
+    this.needsFlatten = true
   }
 
   private getDrawRangeCollision(range: BatchUpdateRange): {
@@ -186,7 +194,10 @@ export default class PointBatch implements Batch {
   } {
     if (this.geometry.groups.length > 0) {
       for (let i = 0; i < this.geometry.groups.length; i++) {
-        if (range.offset === this.geometry.groups[i].start) {
+        if (
+          range.offset === this.geometry.groups[i].start &&
+          range.count === this.geometry.groups[i].count
+        ) {
           return this.geometry.groups[i]
         }
       }
@@ -195,81 +206,27 @@ export default class PointBatch implements Batch {
     return null
   }
 
-  public autoFillDrawRanges() {
-    const sortedRanges = this.geometry.groups
-      .sort((a, b) => {
-        return a.start - b.start
-      })
-      .slice()
-    // console.warn(`Batch ID ${this.id} Group count ${sortedRanges.length}`)
-    for (let k = 0; k < sortedRanges.length; k++) {
-      if (k === 0) {
-        if (sortedRanges[k].start > 0) {
-          this.geometry.addGroup(0, sortedRanges[k].start, 0)
-        }
+  private geDrawRangeInclusion(range: BatchUpdateRange): {
+    start: number
+    count: number
+    materialIndex?: number
+  } {
+    if (this.geometry.groups.length > 0) {
+      for (let i = 0; i < this.geometry.groups.length; i++) {
         if (
-          sortedRanges.length === 1 &&
-          sortedRanges[k].start + sortedRanges[k].count < this.getCount()
+          range.offset >= this.geometry.groups[i].start &&
+          range.offset + range.count <=
+            this.geometry.groups[i].start + this.geometry.groups[i].count
         ) {
-          this.geometry.addGroup(
-            sortedRanges[k].start + sortedRanges[k].count,
-            this.getCount() - sortedRanges[k].start + sortedRanges[k].count,
-            0
-          )
-        }
-      } else if (k === sortedRanges.length - 1) {
-        if (sortedRanges[k].start + sortedRanges[k].count < this.getCount()) {
-          this.geometry.addGroup(
-            sortedRanges[k].start + sortedRanges[k].count,
-            this.getCount() - sortedRanges[k].start + sortedRanges[k].count,
-            0
-          )
-        }
-        if (
-          sortedRanges[k - 1].start + sortedRanges[k - 1].count <
-          sortedRanges[k].start
-        ) {
-          this.geometry.addGroup(
-            sortedRanges[k - 1].start + sortedRanges[k - 1].count,
-            sortedRanges[k].start -
-              (sortedRanges[k - 1].start + sortedRanges[k - 1].count),
-            0
-          )
-        }
-        continue
-      } else {
-        if (
-          sortedRanges[k - 1].start + sortedRanges[k - 1].count <
-          sortedRanges[k].start
-        ) {
-          this.geometry.addGroup(
-            sortedRanges[k - 1].start + sortedRanges[k - 1].count,
-            sortedRanges[k].start -
-              (sortedRanges[k - 1].start + sortedRanges[k - 1].count),
-            0
-          )
+          return this.geometry.groups[i]
         }
       }
+      return null
     }
-    this.geometry.groups.sort((a, b) => {
-      return a.start - b.start
-    })
-
-    let count = 0
-    this.geometry.groups.forEach((val) => {
-      count += val.count
-    })
-    if (count < this.getCount()) {
-      console.error(`DrawRange autocomplete failed! ${count}vs${this.getCount()}`)
-    }
-
-    this.flattenGroups()
+    return null
   }
 
-  private flattenGroups() {
-    /** We're flattening sequential groups to avoid redundant draw calls.
-     *  ! Not thoroughly tested !
-     */
+  private flattenDrawGroups() {
     const materialOrder = []
     this.geometry.groups.reduce((previousValue, currentValue) => {
       if (previousValue.indexOf(currentValue.materialIndex) === -1) {
@@ -287,7 +244,9 @@ export default class PointBatch implements Batch {
     }
     this.geometry.groups = []
     for (let matIndex = 0; matIndex < grouped.length; matIndex++) {
-      const matGroup = grouped[matIndex]
+      const matGroup = grouped[matIndex].sort((a, b) => {
+        return a.start - b.start
+      })
       for (let k = 0; k < matGroup.length; ) {
         let offset = matGroup[k].start
         let count = matGroup[k].count
@@ -299,27 +258,28 @@ export default class PointBatch implements Batch {
             count = matGroup[n].count
             runningCount += matGroup[n].count
           } else {
-            this.geometry.addGroup(
-              matGroup[k].start,
-              runningCount,
-              matGroup[k].materialIndex
-            )
+            const group = {
+              start: matGroup[k].start,
+              count: runningCount,
+              materialIndex: matGroup[k].materialIndex,
+              id: matGroup[k].id
+            }
+            this.geometry.groups.push(group)
             break
           }
         }
         if (n === matGroup.length) {
-          this.geometry.addGroup(
-            matGroup[k].start,
-            runningCount,
-            matGroup[k].materialIndex
-          )
+          const group = {
+            start: matGroup[k].start,
+            count: runningCount,
+            materialIndex: matGroup[k].materialIndex,
+            id: matGroup[k].id
+          }
+          this.geometry.groups.push(group)
         }
         k = n
       }
     }
-    // console.warn(
-    //   `Batch ID ${this.id} Group count ${this.geometry.groups.length} AUTOCOMPLETE`
-    // )
   }
 
   public resetDrawRanges() {

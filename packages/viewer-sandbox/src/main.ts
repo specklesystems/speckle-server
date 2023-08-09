@@ -142,7 +142,7 @@ const getStream = () => {
     // AutoCAD OLD
     // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
     // AutoCAD NEW
-    // 'https://latest.speckle.dev/streams/3ed8357f29/commits/46905429f6'
+    'https://latest.speckle.dev/streams/3ed8357f29/commits/46905429f6'
     //Blizzard world
     // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
     //Car
@@ -266,7 +266,7 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/7ce9010d71/commits/b8bbfd0c05?c=%5B-4.50925,11.1348,5.38124,-0.23829,0.68512,-0.09006,0,1%5D'
 
     // Lines with numeric filter
-    'https://speckle.xyz/streams/16a7ca997a/commits/91d82f4ea1'
+    // 'https://speckle.xyz/streams/16a7ca997a/commits/91d82f4ea1'
 
     // Type inheritence
     // 'https://speckle.xyz/streams/4063469c0b/objects/ce831723f2a3a56a30dfbca54a53c90f'
@@ -276,6 +276,7 @@ const getStream = () => {
 
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/4da17d07da'
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/e2db7d277b'
+    // Bunch a points
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/0dee6dbd98'
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/f9063fe647'
     // 'https://speckle.xyz/streams/be0f962efb/objects/37639741c363a123100eda8044f2fe3f'

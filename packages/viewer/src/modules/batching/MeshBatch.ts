@@ -180,6 +180,7 @@ export default class MeshBatch implements Batch {
   public static split = 0
   public static split2 = 0
   public static split3 = 0
+
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
     const start = performance.now()
     ranges.forEach((value: BatchUpdateRange) => {
@@ -288,6 +289,26 @@ export default class MeshBatch implements Batch {
     return null
   }
 
+  private geDrawRangeInclusion(range: BatchUpdateRange): {
+    start: number
+    count: number
+    materialIndex?: number
+  } {
+    if (this.geometry.groups.length > 0) {
+      for (let i = 0; i < this.geometry.groups.length; i++) {
+        if (
+          range.offset >= this.geometry.groups[i].start &&
+          range.offset + range.count <=
+            this.geometry.groups[i].start + this.geometry.groups[i].count
+        ) {
+          return this.geometry.groups[i]
+        }
+      }
+      return null
+    }
+    return null
+  }
+
   private flattenDrawGroups() {
     const start = performance.now()
     const materialOrder = []
@@ -347,26 +368,6 @@ export default class MeshBatch implements Batch {
     if (this.drawCalls > this.minDrawCalls + 2) {
       this.needsShuffle = true
     }
-  }
-
-  private geDrawRangeInclusion(range: BatchUpdateRange): {
-    start: number
-    count: number
-    materialIndex?: number
-  } {
-    if (this.geometry.groups.length > 0) {
-      for (let i = 0; i < this.geometry.groups.length; i++) {
-        if (
-          range.offset >= this.geometry.groups[i].start &&
-          range.offset + range.count <=
-            this.geometry.groups[i].start + this.geometry.groups[i].count
-        ) {
-          return this.geometry.groups[i]
-        }
-      }
-      return null
-    }
-    return null
   }
 
   private getCurrentIndexBuffer(): BufferAttribute {

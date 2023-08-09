@@ -55,7 +55,6 @@ import {
   ICameraProvider,
   CameraControllerEvent
 } from './extensions/core-extensions/Providers'
-import PointBatch from './batching/PointBatch'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -147,7 +146,8 @@ export default class SpeckleRenderer {
   }
 
   public get sceneBox() {
-    return new Box3().setFromObject(this.allObjects)
+    /** Cache this, don't compute it every frame */
+    return new Box3().setFromObject(this.allObjects).expandByScalar(1.1)
   }
 
   public get sceneSphere() {
@@ -657,7 +657,6 @@ export default class SpeckleRenderer {
     }
 
     const batch = this.batcher.getBatch(rv)
-    if (batch instanceof PointBatch) return null
     return batch.getMaterial(rv)
   }
 
@@ -682,6 +681,10 @@ export default class SpeckleRenderer {
       })
       this.batcher.batches[k].setDrawRanges(...drawRanges)
     }
+  }
+
+  public getBatch(id: string): Batch {
+    return this.batcher.batches[id]
   }
 
   public getBatchMaterials(): {
@@ -848,27 +851,7 @@ export default class SpeckleRenderer {
     const rvs = []
     const points = []
     for (let k = 0; k < results.length; k++) {
-      const batchObject = results[k].batchObject
-      let rv = null
-      if (batchObject) {
-        rv = batchObject.renderView
-        const material = (results[k].object as SpeckleMesh).getBatchObjectMaterial(
-          results[k].batchObject
-        )
-        if (material.opacity === 0 && this.IGNORE_ZERO_OPACITY_OBJECTS) continue
-      } else {
-        rv = this.batcher.getRenderView(
-          results[k].object.uuid,
-          results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
-        )
-        if (rv) {
-          const material = this.batcher.getRenderViewMaterial(
-            results[k].object.uuid,
-            results[k].faceIndex !== undefined ? results[k].faceIndex : results[k].index
-          )
-          if (material.opacity === 0 && this.IGNORE_ZERO_OPACITY_OBJECTS) continue
-        }
-      }
+      const rv = this.renderViewFromIntersection(results[k])
 
       if (rv) {
         rvs.push(rv)
@@ -918,6 +901,36 @@ export default class SpeckleRenderer {
     }
 
     return queryResult
+  }
+
+  public renderViewFromIntersection(
+    intersection: ExtendedIntersection
+  ): NodeRenderView {
+    let rv = null
+    if (intersection.batchObject) {
+      rv = intersection.batchObject.renderView
+      const material = (intersection.object as SpeckleMesh).getBatchObjectMaterial(
+        intersection.batchObject
+      )
+      if (material.opacity === 0 && this.IGNORE_ZERO_OPACITY_OBJECTS) return null
+    } else {
+      rv = this.batcher.getRenderView(
+        intersection.object.uuid,
+        intersection.faceIndex !== undefined
+          ? intersection.faceIndex
+          : intersection.index
+      )
+      if (rv) {
+        const material = this.batcher.getRenderViewMaterial(
+          intersection.object.uuid,
+          intersection.faceIndex !== undefined
+            ? intersection.faceIndex
+            : intersection.index
+        )
+        if (material.opacity === 0 && this.IGNORE_ZERO_OPACITY_OBJECTS) return null
+      }
+    }
+    return rv
   }
 
   private onObjectClick(e) {

@@ -1,15 +1,15 @@
 import { IViewer, SelectionEvent, TreeNode, ViewerEvent } from '../..'
-import SpeckleGhostMaterial from '../materials/SpeckleGhostMaterial'
-import SpeckleMesh from '../objects/SpeckleMesh'
 import { ExtendedIntersection } from '../objects/SpeckleRaycaster'
 import { Extension } from './core-extensions/Extension'
 import { ICameraProvider } from './core-extensions/Providers'
 import { ObjectLayers } from '../SpeckleRenderer'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
-import { Color, DoubleSide, Material } from 'three'
+import { DoubleSide, Material } from 'three'
 import { InputEvent } from '../input/Input'
 import MeshBatch from '../batching/MeshBatch'
+import SpecklePointMaterial from '../materials/SpecklePointMaterial'
+import { GeometryType } from '../batching/Batch'
 export interface SelectionExtensionOptions {
   selectionColor: number
   highlightOnHover: boolean
@@ -17,7 +17,7 @@ export interface SelectionExtensionOptions {
 
 const DefaultSelectionExtensionOptions = {
   selectionColor: 0x047efb,
-  highlightOnHover: false
+  highlightOnHover: true
 }
 
 export class SelectionExtension extends Extension {
@@ -31,9 +31,13 @@ export class SelectionExtension extends Extension {
   protected options: SelectionExtensionOptions = DefaultSelectionExtensionOptions
   protected hoverRv: NodeRenderView
   protected hoverMaterial: Material
-  protected selectionMaterial: SpeckleStandardMaterial
-  protected transparentSelectionMaterial: SpeckleStandardMaterial
-  protected highlightMaterial: SpeckleStandardMaterial
+  protected meshSelectionMaterial: SpeckleStandardMaterial
+  protected meshTransparentMaterial: SpeckleStandardMaterial
+  protected pointSelectionMaterial: SpecklePointMaterial
+  protected pointCloudSelectionMaterial: SpecklePointMaterial
+  protected meshHighlightMaterial: SpeckleStandardMaterial
+  protected pointHighlightMaterial: SpecklePointMaterial
+  protected pointCloudHighlightMaterial: SpecklePointMaterial
 
   public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
     super(viewer)
@@ -43,7 +47,7 @@ export class SelectionExtension extends Extension {
       .getRenderer()
       .input.on(InputEvent.PointerMove, this.onPointerMove.bind(this))
 
-    this.selectionMaterial = new SpeckleStandardMaterial(
+    this.meshSelectionMaterial = new SpeckleStandardMaterial(
       {
         color: 0x047efb,
         emissive: 0x0,
@@ -53,20 +57,59 @@ export class SelectionExtension extends Extension {
       },
       ['USE_RTE']
     )
-    this.selectionMaterial.color.convertSRGBToLinear()
+    this.meshSelectionMaterial.color.convertSRGBToLinear()
 
-    this.transparentSelectionMaterial = this.selectionMaterial.clone()
-    this.transparentSelectionMaterial.transparent = true
-    this.transparentSelectionMaterial.opacity = 0.5
+    this.meshTransparentMaterial = this.meshSelectionMaterial.clone()
+    this.meshTransparentMaterial.transparent = true
+    this.meshTransparentMaterial.opacity = 0.5
 
-    this.highlightMaterial = new SpeckleStandardMaterial(
+    this.pointSelectionMaterial = new SpecklePointMaterial(
       {
-        color: 0xffffff,
+        color: 0x047efb,
+        vertexColors: false,
+        size: 4,
+        sizeAttenuation: false
+      },
+      ['USE_RTE']
+    )
+    this.pointSelectionMaterial.color.convertSRGBToLinear()
+
+    this.pointCloudSelectionMaterial = new SpecklePointMaterial(
+      {
+        color: 0x047efb,
+        vertexColors: true,
+        size: 2,
+        sizeAttenuation: false
+      },
+      ['USE_RTE']
+    )
+    this.pointCloudSelectionMaterial.color.convertSRGBToLinear()
+
+    this.meshHighlightMaterial = new SpeckleStandardMaterial(
+      {
+        color: 0xff7377,
         emissive: 0x0,
         roughness: 1,
         metalness: 0,
-        side: DoubleSide,
-        envMapIntensity: 2
+        side: DoubleSide
+      },
+      ['USE_RTE']
+    )
+    this.pointHighlightMaterial = new SpecklePointMaterial(
+      {
+        color: 0xff7377,
+        vertexColors: false,
+        size: 4,
+        sizeAttenuation: false
+      },
+      ['USE_RTE']
+    )
+    this.pointCloudHighlightMaterial = new SpecklePointMaterial(
+      {
+        color: 0xff7377,
+        vertexColors: true,
+        size: 2,
+        sizeAttenuation: false
       },
       ['USE_RTE']
     )
@@ -136,7 +179,7 @@ export class SelectionExtension extends Extension {
 
   protected onPointerMove(e) {
     if (!this.options.highlightOnHover) return
-    let result =
+    const result =
       (this.viewer
         .getRenderer()
         .intersections.intersect(
@@ -145,16 +188,20 @@ export class SelectionExtension extends Extension {
           e,
           true,
           this.viewer.getRenderer().clippingVolume,
-          [ObjectLayers.STREAM_CONTENT_MESH]
+          [
+            ObjectLayers.STREAM_CONTENT_MESH,
+            ObjectLayers.STREAM_CONTENT_POINT,
+            ObjectLayers.STREAM_CONTENT_LINE
+          ]
         ) as ExtendedIntersection[]) || []
 
-    result = result.filter((value: ExtendedIntersection) => {
-      const material = (value.object as unknown as SpeckleMesh).getBatchObjectMaterial(
-        value.batchObject
-      )
-      return !(material instanceof SpeckleGhostMaterial) && material.visible
-    })
-    const rv = result.length ? result[0].batchObject.renderView : null
+    /* TEMPORARY */
+    let rv = null
+    for (let k = 0; k < result.length; k++) {
+      rv = this.viewer.getRenderer().renderViewFromIntersection(result[k])
+      if (rv) break
+    }
+
     this.applyHover(rv)
   }
 
@@ -187,15 +234,54 @@ export class SelectionExtension extends Extension {
         this.selectionMaterials[value.renderData.id] &&
         this.selectionMaterials[value.renderData.id].transparent
     )
+
+    const opaqueMeshes = []
+    const transparentMeshes = []
+    const points = []
+    const pointClouds = []
+    for (let k = 0; k < opaqueRvs.length; k++) {
+      switch (opaqueRvs[k].geometryType) {
+        case GeometryType.MESH:
+          opaqueMeshes.push(opaqueRvs[k])
+          break
+        case GeometryType.LINE:
+          opaqueMeshes.push(opaqueRvs[k])
+          break
+        case GeometryType.POINT:
+          points.push(opaqueRvs[k])
+          break
+        case GeometryType.POINT_CLOUD:
+          pointClouds.push(opaqueRvs[k])
+          break
+      }
+    }
+    for (let k = 0; k < transparentRvs.length; k++) {
+      switch (transparentRvs[k].geometryType) {
+        case GeometryType.MESH:
+          transparentMeshes.push(transparentRvs[k])
+          break
+        case GeometryType.LINE:
+          transparentMeshes.push(transparentRvs[k])
+          break
+        case GeometryType.POINT:
+          points.push(transparentRvs[k])
+          break
+        case GeometryType.POINT_CLOUD:
+          pointClouds.push(transparentRvs[k])
+          break
+      }
+    }
+
+    this.viewer.getRenderer().setMaterial(opaqueMeshes, this.meshSelectionMaterial)
+    this.viewer.getRenderer().setMaterial(points, this.pointSelectionMaterial)
+    this.viewer.getRenderer().setMaterial(pointClouds, this.pointCloudSelectionMaterial)
     this.viewer
       .getRenderer()
-      .setMaterial(Object.values(opaqueRvs), this.selectionMaterial)
-    this.viewer
-      .getRenderer()
-      .setMaterial(Object.values(transparentRvs), this.transparentSelectionMaterial)
+      .setMaterial(transparentMeshes, this.meshTransparentMaterial)
   }
 
   protected removeSelection() {
+    this.removeHover()
     for (const k in this.selectionRvs) {
       this.viewer
         .getRenderer()
@@ -206,14 +292,32 @@ export class SelectionExtension extends Extension {
   }
 
   protected applyHover(renderView: NodeRenderView) {
+    if (!renderView) return
+    if (this.selectionRvs[renderView.renderData.id]) {
+      return
+    }
     this.removeHover()
 
-    if (renderView) {
-      this.hoverRv = renderView
-      this.hoverMaterial = this.viewer.getRenderer().getMaterial(this.hoverRv)
-      this.copyHoverMaterial(this.hoverMaterial)
-      this.viewer.getRenderer().setMaterial([renderView], this.highlightMaterial)
+    this.hoverRv = renderView
+    this.hoverMaterial = this.viewer.getRenderer().getMaterial(this.hoverRv)
+    this.copyHoverMaterial(this.hoverMaterial)
+    switch (renderView.geometryType) {
+      case GeometryType.MESH:
+        this.viewer.getRenderer().setMaterial([renderView], this.meshHighlightMaterial)
+        break
+      case GeometryType.LINE:
+        this.viewer.getRenderer().setMaterial([renderView], this.meshHighlightMaterial)
+        break
+      case GeometryType.POINT:
+        this.viewer.getRenderer().setMaterial([renderView], this.pointHighlightMaterial)
+        break
+      case GeometryType.POINT_CLOUD:
+        this.viewer
+          .getRenderer()
+          .setMaterial([renderView], this.pointCloudHighlightMaterial)
+        break
     }
+
     this.viewer.requestRender()
   }
 
@@ -225,10 +329,7 @@ export class SelectionExtension extends Extension {
   }
 
   protected copyHoverMaterial(source: Material) {
-    this.highlightMaterial.color.copy(
-      source['color'] ? source['color'] : new Color(0xffffff)
-    )
-    this.highlightMaterial.opacity = source.opacity
-    this.highlightMaterial.transparent = source.transparent
+    this.meshHighlightMaterial.opacity = source.opacity
+    this.meshHighlightMaterial.transparent = source.transparent
   }
 }
