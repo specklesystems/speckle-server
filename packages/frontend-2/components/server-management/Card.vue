@@ -14,18 +14,7 @@
 
 <script lang="ts" setup>
 import CardRow from './CardRow.vue'
-
-interface CTA {
-  type: string
-  label: string
-  action: () => void
-}
-
-interface ServerInfo {
-  title: string
-  value: string
-  cta?: CTA
-}
+import { ServerInfo } from '~~/lib/server-management/helpers/types'
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 const props = defineProps({

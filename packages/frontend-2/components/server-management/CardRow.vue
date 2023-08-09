@@ -6,7 +6,7 @@
     <div class="flex justify-between items-center gap-8">
       <span class="text-2xl font-bold">{{ value }}</span>
       <template v-if="cta && cta.type === 'button'">
-        <FormButton @click="handleClick">
+        <FormButton @click="cta.action">
           {{ cta.label }}
         </FormButton>
       </template>
@@ -15,7 +15,7 @@
           color="invert"
           class="shrink-0"
           :icon-right="ArrowTopRightOnSquareIcon"
-          @click="showDialog = true"
+          @click="cta.action"
         >
           {{ cta.label }}
         </FormButton>
@@ -25,23 +25,19 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 
-const emit = defineEmits(['cta-clicked'])
+defineEmits<{
+  (e: 'cta-clicked', v: MouseEvent): void
+}>()
 
-const showDialog = ref(false)
-const props = defineProps({
-  title: String,
-  value: String,
-  cta: Object
-})
-
-function handleClick() {
-  if (props.cta && typeof props.cta.action === 'function') {
-    ;(props.cta.action as () => void | Promise<void>)()
-  } else {
-    emit('cta-clicked')
-  }
-}
+defineProps<{
+  title: string
+  value: string
+  cta: {
+    type: 'button' | 'link'
+    label: string
+    action: () => void | Promise<void>
+  } | null
+}>()
 </script>

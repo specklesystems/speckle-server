@@ -23,7 +23,9 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
       <Card :server-info="serverData" @cta-clicked="showDialog = true" />
+
       <SettingsDialog
+        ref="settingsDialog"
         v-model:open="showDialog"
         title="Edit Settings"
         :buttons="[
@@ -34,7 +36,7 @@
           },
           {
             text: 'Save',
-            props: { color: 'primary', fullWidth: true },
+            props: { color: 'primary', fullWidth: true, outline: false },
             onClick: saveSettings
           }
         ]"
@@ -45,26 +47,31 @@
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
+import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import Card from '../../components/server-management/Card.vue'
 import SettingsDialog from '../../components/server-management/SettingsDialog.vue'
-import gql from 'graphql-tag'
+import { SettingsDialogRef } from '~~/lib/server-management/helpers/types'
 
 const router = useRouter()
 
 const showDialog = ref(false)
+const settingsDialog = ref<SettingsDialogRef | null>(null)
 
 const closeDialog = () => {
   showDialog.value = false
 }
 
 const saveSettings = () => {
-  // Code here for saving the settings
+  if (settingsDialog.value) {
+    settingsDialog.value.onSave()
+  }
 }
 
-const GET_SERVER_STATS = gql`
-  query ServerStats {
+const dataQuery = graphql(`
+  query ServerStatistics {
     admin {
       serverStatistics {
         totalPendingInvites
@@ -72,38 +79,37 @@ const GET_SERVER_STATS = gql`
         totalUserCount
       }
     }
+    serverInfo {
+      name
+      version
+    }
   }
-`
+`)
 
-const { result, loading, error } = useQuery(GET_SERVER_STATS)
+const { result } = useQuery(dataQuery)
 
-const serverData = ref([
+const serverData = computed(() => [
   {
     title: 'Server Name',
-    value: 'Wonderland',
-    cta: {
-      type: 'button',
-      label: 'Edit Settings',
-      action: () => {
-        showDialog.value = true
-      }
-    }
+    value: result.value?.serverInfo.name || 'N/A'
   },
   {
     title: 'Speckle Version',
-    value: '2.14.8-alpha.44172',
+    value: result.value?.serverInfo.version || 'N/A',
     cta: {
       type: 'link',
       label: 'Update is available',
-      action: '#0'
+      action: () => {
+        router.push('/update-link')
+      }
     }
   }
 ])
 
-const userData = ref([
+const userData = computed(() => [
   {
     title: 'Active users',
-    value: result.value?.admin.serverStatistics.totalUserCount || 'N/A',
+    value: result.value?.admin.serverStatistics.totalUserCount?.toString() || 'N/A',
     cta: {
       type: 'button',
       label: 'Manage',
@@ -112,7 +118,7 @@ const userData = ref([
   },
   {
     title: 'Pending invitations',
-    value: result.value?.admin.serverStatistics.totalPendingInvites || '0',
+    value: result.value?.admin.serverStatistics.totalPendingInvites?.toString() || '0',
     cta: {
       type: 'button',
       label: 'Manage',
@@ -121,10 +127,10 @@ const userData = ref([
   }
 ])
 
-const projectData = ref([
+const projectData = computed(() => [
   {
     title: 'Projects',
-    value: result.value?.admin.serverStatistics.totalProjectCount || 'N/A',
+    value: result.value?.admin.serverStatistics.totalProjectCount?.toString() || 'N/A',
     cta: {
       type: 'button',
       label: 'Manage',

@@ -137,7 +137,7 @@ const documents = {
     "\n  query GetActiveUser {\n    activeUser {\n      id\n      name\n      role\n    }\n  }\n": types.GetActiveUserDocument,
     "\n  fragment ProjectPageProject on Project {\n    id\n    createdAt\n    ...ProjectPageProjectHeader\n    ...ProjectPageStatsBlockTeam\n    ...ProjectPageTeamDialog\n    ...ProjectPageStatsBlockVersions\n    ...ProjectPageStatsBlockModels\n    ...ProjectPageStatsBlockComments\n    ...ProjectPageLatestItemsModels\n    ...ProjectPageLatestItemsComments\n  }\n": types.ProjectPageProjectFragmentDoc,
     "\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n  }\n": types.ModelPageProjectFragmentDoc,
-    "\n  query ServerStats {\n    admin {\n      serverStatistics {\n        totalPendingInvites\n        totalProjectCount\n        totalUserCount\n      }\n    }\n  }\n": types.ServerStatsDocument,
+    "\n  query ServerStatistics {\n    admin {\n      serverStatistics {\n        totalPendingInvites\n        totalProjectCount\n        totalUserCount\n      }\n    }\n    serverInfo {\n      name\n      version\n    }\n  }\n": types.ServerStatisticsDocument,
 };
 
 /**
@@ -653,7 +653,7 @@ export function graphql(source: "\n  fragment ModelPageProject on Project {\n   
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ServerStats {\n    admin {\n      serverStatistics {\n        totalPendingInvites\n        totalProjectCount\n        totalUserCount\n      }\n    }\n  }\n"): (typeof documents)["\n  query ServerStats {\n    admin {\n      serverStatistics {\n        totalPendingInvites\n        totalProjectCount\n        totalUserCount\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query ServerStatistics {\n    admin {\n      serverStatistics {\n        totalPendingInvites\n        totalProjectCount\n        totalUserCount\n      }\n    }\n    serverInfo {\n      name\n      version\n    }\n  }\n"): (typeof documents)["\n  query ServerStatistics {\n    admin {\n      serverStatistics {\n        totalPendingInvites\n        totalProjectCount\n        totalUserCount\n      }\n    }\n    serverInfo {\n      name\n      version\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};
