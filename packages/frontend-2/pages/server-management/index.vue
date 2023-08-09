@@ -91,7 +91,14 @@ const { result } = useQuery(dataQuery)
 const serverData = computed(() => [
   {
     title: 'Server Name',
-    value: result.value?.serverInfo.name || 'N/A'
+    value: result.value?.serverInfo.name || 'N/A',
+    cta: {
+      type: 'button',
+      label: 'Edit Settings',
+      action: () => {
+        showDialog.value = true
+      }
+    }
   },
   {
     title: 'Speckle Version',

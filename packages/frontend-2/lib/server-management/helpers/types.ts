@@ -5,9 +5,13 @@ export interface CTA {
 }
 
 export interface ServerInfo {
-  title: string
-  value: string
-  cta?: CTA | null
+  name: string
+  description: string
+  adminContact: string
+  company: string
+  guestModeEnabled: boolean
+  inviteOnly: boolean
+  termsOfService: string
 }
 
 export interface SettingsDialogRef {
@@ -39,6 +43,9 @@ export interface ServerInfoResponse {
     name: string
     description: string
     adminContact: string
+    company: string
+    termsOfService: string
+    inviteOnly: boolean
   }
 }
 
@@ -46,4 +53,7 @@ export interface FormErrors {
   name?: string
   description?: string
   adminContact?: string
+  company?: string
+  termsOfService?: string
+  inviteOnly: boolean
 }

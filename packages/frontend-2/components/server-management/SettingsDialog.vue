@@ -9,7 +9,7 @@
         show-label
         :show-required="true"
         :type="'text'"
-        :error-message="(form.errors.value as FormErrors).name"
+        :error-message="((form.errors.value as any) as FormErrors).name"
       />
       <FormTextArea
         v-model="form.values.description"
@@ -17,7 +17,15 @@
         name="description"
         placeholder="Description"
         show-label
-        :error-message="(form.errors.value as FormErrors).description"
+        :error-message="((form.errors.value as any) as FormErrors).description"
+      />
+      <FormTextInput
+        v-model="form.values.company"
+        label="Owner"
+        name="owner"
+        placeholder="Owner"
+        show-label
+        :error-message="((form.errors.value as any) as FormErrors).company"
       />
       <FormTextInput
         v-model="form.values.adminContact"
@@ -26,7 +34,21 @@
         placeholder="Admin Email"
         show-label
         :type="'email'"
-        :error-message="(form.errors.value as FormErrors).adminContact"
+        :error-message="((form.errors.value as any) as FormErrors).adminContact"
+      />
+      <FormTextInput
+        v-model="form.values.termsOfService"
+        label="Url pointing to the terms of service page"
+        name="terms"
+        show-label
+        :error-message="((form.errors.value as any) as FormErrors).termsOfService"
+      />
+      <FormCheckbox
+        v-model="form.values.inviteOnly"
+        label="Invite only mode - Only users with an invitation will be able to join"
+        name="inviteOnly"
+        show-label
+        :error-message="((form.errors.value as any) as FormErrors).inviteOnly"
       />
     </div>
   </LayoutDialog>
@@ -43,10 +65,11 @@ import {
   ServerInfoResponse,
   FormErrors
 } from '../../lib/server-management/helpers/types'
-
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { LayoutDialog, FormTextInput, FormTextArea } from '@speckle/ui-components'
 
 const logger = useLogger() as { error: (...args: unknown[]) => void }
+const { triggerNotification } = useGlobalToast()
 
 // Define the rules
 defineRule('required', (value: string) => !!value || 'This field is required.')
@@ -66,12 +89,17 @@ const form = useForm({
   validationSchema: {
     name: { required: true, min: 3, max: 50 },
     description: { min: 3, max: 300 },
-    adminContact: { required: true, min: 3, max: 50 }
+    adminContact: { required: true, min: 3, max: 50 },
+    company: { required: true, min: 3, max: 50 },
+    termsOfService: { required: true, min: 3, max: 50 }
   },
   initialValues: {
     name: '',
     description: '',
-    adminContact: ''
+    adminContact: '',
+    company: '',
+    termsOfService: '',
+    inviteOnly: false
   }
 })
 
@@ -82,25 +110,22 @@ const serverInfoQuery = gql`
       name
       description
       adminContact
+      company
+      termsOfService
+      inviteOnly
     }
   }
 `
 
-const updateServerInfoMutation = gql`
-  mutation UpdateServerInfo($input: UpdateServerInfoInput!) {
-    updateServerInfo(input: $input) {
-      serverInfo {
-        name
-        description
-        adminContact
-      }
-    }
+const serverInfoUpdateMutation = gql`
+  mutation ServerInfoUpdate($info: ServerInfoUpdateInput!) {
+    serverInfoUpdate(info: $info)
   }
 `
 
 // Use the useQuery and useMutation hooks
 const { onResult } = useQuery<ServerInfoResponse>(serverInfoQuery)
-const { mutate } = useMutation(updateServerInfoMutation)
+const { mutate } = useMutation(serverInfoUpdateMutation)
 
 // Use the onResult function to update the form values when the query is successful
 onResult((response) => {
@@ -109,26 +134,53 @@ onResult((response) => {
     form.setValues({
       name: serverInfo.name,
       description: serverInfo.description,
-      adminContact: serverInfo.adminContact
+      adminContact: serverInfo.adminContact,
+      company: serverInfo.company || '',
+      termsOfService: serverInfo.termsOfService || '',
+      inviteOnly: serverInfo.inviteOnly
     })
   }
 })
 
 // Update the onSave function to validate the form before submitting
 const onSave = async () => {
-  try {
-    // Validate the form
-    const { errors } = await form.validate()
+  // Validate the form
+  const { errors } = await form.validate()
 
-    // If there are no errors, submit the form
-    if (!Object.keys(errors).length) {
-      await mutate({ variables: { input: form.values } })
+  // If there are no errors, try to submit the form
+  if (!Object.keys(errors).length) {
+    try {
+      const plainObject = {
+        name: form.values.name,
+        description: form.values.description,
+        adminContact: form.values.adminContact,
+        company: form.values.company,
+        termsOfService: form.values.termsOfService,
+        inviteOnly: form.values.inviteOnly,
+        guestModeEnabled: false // You might want to add this as a field in your form
+      }
+
+      await mutate({ variables: { info: plainObject } })
+
+      // Trigger a success toast when the mutation is successful
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Success',
+        description: 'Server settings have been successfully updated.'
+      })
+    } catch (error) {
+      // Trigger a danger toast when there is an error
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Error',
+        description: 'There was an error updating the server settings.'
+      })
+      logger.error('Error updating server info:', error)
     }
-  } catch (error) {
-    logger.error('Error updating server info:', error)
   }
 }
 
+// Expose onSave
 defineExpose({ onSave })
 
 // Define the props and emits for the component
@@ -148,7 +200,7 @@ const isOpen = computed({
 })
 
 // Define the title
-const title = 'Edit Server Information'
+const title = 'Edit Server Settings'
 </script>
 
 <style scoped>
