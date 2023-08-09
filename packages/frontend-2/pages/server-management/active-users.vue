@@ -61,11 +61,7 @@
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <img
-            :src="item.profilePicture"
-            :alt="'Profile picture of ' + item.name"
-            class="w-6 h-6 rounded-full"
-          />
+          <Avatar :user="item" />
           {{ item.name }}
         </div>
       </template>
@@ -76,13 +72,14 @@
 
       <template #emailState="{ item }">
         <div class="flex items-center gap-2">
-          <template v-if="item.emailState === 'verified'">
-            <ShieldExclamationIcon class="h-4 w-4 text-danger" />
+          <template v-if="item.verified">
+            <ShieldCheckIcon class="h-4 w-4 text-primary" />
+            <span>Verified</span>
           </template>
           <template v-else>
-            <ShieldCheckIcon class="h-4 w-4 text-primary" />
+            <ShieldExclamationIcon class="h-4 w-4 text-danger" />
+            <span>Not Verified</span>
           </template>
-          {{ item.emailState }}
         </div>
       </template>
 
@@ -148,6 +145,10 @@ import Table from '../../components/server-management/Table.vue'
 import UserRoleSelect from '../../components/server-management/UserRoleSelect.vue'
 import UserDeleteDialog from '../../components/server-management/DeleteUserDialog.vue'
 import ChangeUserRoleDialog from '../../components/server-management/ChangeUserRoleDialog.vue'
+import { ref } from 'vue'
+import { useQuery } from '@vue/apollo-composable'
+import gql from 'graphql-tag'
+import Avatar from '~~/components/user/Avatar.vue'
 
 import { TrashIcon } from '@heroicons/vue/24/outline'
 
@@ -192,199 +193,54 @@ const showChangeUserRoleDialog = ref(false)
 export interface User {
   id: string
   name: string
-  profilePicture: string
+  avatar: string
   email: string
-  emailState: 'verified' | 'not verified'
+  emailState: boolean
+  verified: boolean
   company: string
   role: 'user' | 'admin' | 'archive'
   invitedBy?: User
 }
 
-const users: User[] = [
-  {
-    id: '1',
-    name: 'John Doe',
-    profilePicture: 'https://randomuser.me/api/portraits/men/75.jpg',
-    email: 'johndoe@example.com',
-    emailState: 'verified',
-    company: 'Acme',
-    role: 'admin'
-  },
-  {
-    id: '2',
-    name: 'Jane Doe',
-    profilePicture: 'https://randomuser.me/api/portraits/women/75.jpg',
-    email: 'janedoe@example.com',
-    emailState: 'not verified',
-    company: 'Acme',
-    role: 'user'
-  },
-  {
-    id: '3',
-    name: 'Bob Smith',
-    profilePicture: 'https://randomuser.me/api/portraits/men/76.jpg',
-    email: 'bobsmith@example.com',
-    emailState: 'verified',
-    company: 'ABC Inc.',
-    role: 'admin'
-  },
-  {
-    id: '4',
-    name: 'Alice Johnson',
-    profilePicture: 'https://randomuser.me/api/portraits/women/76.jpg',
-    email: 'alicejohnson@example.com',
-    emailState: 'not verified',
-    company: 'ABC Inc.',
-    role: 'user'
-  },
-  {
-    id: '5',
-    name: 'David Lee',
-    profilePicture: 'https://randomuser.me/api/portraits/men/77.jpg',
-    email: 'davidlee@example.com',
-    emailState: 'verified',
-    company: 'XYZ Corp.',
-    role: 'admin'
-  },
-  {
-    id: '6',
-    name: 'Samantha Brown',
-    profilePicture: 'https://randomuser.me/api/portraits/women/77.jpg',
-    email: 'samanthabrown@example.com',
-    emailState: 'not verified',
-    company: 'XYZ Corp.',
-    role: 'user'
-  },
-  {
-    id: '7',
-    name: 'Mike Johnson',
-    profilePicture: 'https://randomuser.me/api/portraits/men/78.jpg',
-    email: 'mikejohnson@example.com',
-    emailState: 'verified',
-    company: 'Acme',
-    role: 'admin'
-  },
-  {
-    id: '8',
-    name: 'Emily Davis',
-    profilePicture: 'https://randomuser.me/api/portraits/women/78.jpg',
-    email: 'emilydavis@example.com',
-    emailState: 'not verified',
-    company: 'Acme',
-    role: 'user'
-  },
-  {
-    id: '9',
-    name: 'Steven Chen',
-    profilePicture: 'https://randomuser.me/api/portraits/men/79.jpg',
-    email: 'stevenchen@example.com',
-    emailState: 'verified',
-    company: 'ABC Inc.',
-    role: 'admin'
-  },
-  {
-    id: '10',
-    name: 'Grace Kim',
-    profilePicture: 'https://randomuser.me/api/portraits/women/79.jpg',
-    email: 'gracekim@example.com',
-    emailState: 'not verified',
-    company: 'ABC Inc.',
-    role: 'user'
-  },
-  {
-    id: '11',
-    name: 'Andrew Nguyen',
-    profilePicture: 'https://randomuser.me/api/portraits/men/80.jpg',
-    email: 'andrenguyen@example.com',
-    emailState: 'verified',
-    company: 'XYZ Corp.',
-    role: 'admin'
-  },
-  {
-    id: '12',
-    name: 'Jessica Lee',
-    profilePicture: 'https://randomuser.me/api/portraits/women/80.jpg',
-    email: 'jessicalee@example.com',
-    emailState: 'not verified',
-    company: 'XYZ Corp.',
-    role: 'user'
-  },
-  {
-    id: '13',
-    name: 'Tom Wilson',
-    profilePicture: 'https://randomuser.me/api/portraits/men/81.jpg',
-    email: 'tomwilson@example.com',
-    emailState: 'verified',
-    company: 'Acme',
-    role: 'admin'
-  },
-  {
-    id: '14',
-    name: 'Olivia Clark',
-    profilePicture: 'https://randomuser.me/api/portraits/women/81.jpg',
-    email: 'oliviaclark@example.com',
-    emailState: 'not verified',
-    company: 'Acme',
-    role: 'user'
-  },
-  {
-    id: '15',
-    name: 'William Davis',
-    profilePicture: 'https://randomuser.me/api/portraits/men/82.jpg',
-    email: 'williamdavis@example.com',
-    emailState: 'verified',
-    company: 'ABC Inc.',
-    role: 'admin'
-  },
-  {
-    id: '16',
-    name: 'Sophia Rodriguez',
-    profilePicture: 'https://randomuser.me/api/portraits/women/82.jpg',
-    email: 'sophiarodriguez@example.com',
-    emailState: 'not verified',
-    company: 'ABC Inc.',
-    role: 'user'
-  },
-  {
-    id: '17',
-    name: 'Daniel Kim',
-    profilePicture: 'https://randomuser.me/api/portraits/men/83.jpg',
-    email: 'danielkim@example.com',
-    emailState: 'verified',
-    company: 'XYZ Corp.',
-    role: 'admin'
-  },
-  {
-    id: '18',
-    name: 'Ava Wilson',
-    profilePicture: 'https://randomuser.me/api/portraits/women/83.jpg',
-    email: 'avawilson@example.com',
-    emailState: 'not verified',
-    company: 'XYZ Corp.',
-    role: 'user'
-  },
-  {
-    id: '19',
-    name: 'Kevin Lee',
-    profilePicture: 'https://randomuser.me/api/portraits/men/84.jpg',
-    email: 'kevinlee@example.com',
-    emailState: 'verified',
-    company: 'Acme',
-    role: 'admin'
-  },
-  {
-    id: '20',
-    name: 'Isabella Martinez',
-    profilePicture: 'https://randomuser.me/api/portraits/women/84.jpg',
-    email: 'isabellamartinez@example.com',
-    emailState: 'not verified',
-    company: 'Acme',
-    role: 'user'
+const GET_USERS = gql`
+  query ServerStatistics(
+    $role: ServerRole
+    $query: String
+    $cursor: String
+    $limit: Int!
+  ) {
+    admin {
+      userList(role: $role, query: $query, cursor: $cursor, limit: $limit) {
+        totalCount
+        items {
+          id
+          name
+          avatar
+          verified
+          company
+          role
+        }
+        cursor
+      }
+    }
   }
-]
+`
+
+const { result } = useQuery(GET_USERS, {
+  limit: 50
+})
+
+const users = ref<User[]>([])
+
+watchEffect(() => {
+  if (result.value) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    users.value = result.value.admin.userList.items
+  }
+})
 
 // Watch for changes in the 'role' of each user
-users.forEach((user) => {
+users.value.forEach((user) => {
   watch(
     () => user.role,
     (newRole, oldRole) => {

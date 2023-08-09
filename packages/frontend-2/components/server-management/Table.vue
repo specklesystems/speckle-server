@@ -1,6 +1,6 @@
 <template>
   <div class="mt-8 text-foreground">
-    <div class="w-full text-sm overflow-x-auto">
+    <div class="w-full text-sm overflow-x-auto overflow-y-visible">
       <div
         class="grid z-10 grid-cols-12 items-center gap-2 font-semibold bg-foundation rounded-t-lg w-full border-b border-outline-3 h-10 px-4 min-w-[900px]"
         :style="{ paddingRight: paddingRightStyle }"
@@ -14,7 +14,7 @@
           {{ header.title }}
         </div>
       </div>
-      <div class="divide-y divide-outline-3 h-full">
+      <div class="divide-y divide-outline-3 h-full overflow-visible min-h-[500px]">
         <div
           v-for="(item, rowIndex) in items"
           :key="rowIndex"
@@ -30,7 +30,7 @@
               </slot>
             </div>
           </template>
-          <div class="absolute right-0 flex items-center p-0 pr-0.5 overflow-auto">
+          <div class="absolute right-0 flex items-center p-0 pr-0.5">
             <div v-for="(button, btnIndex) in buttons" :key="btnIndex" class="p-1">
               <FormButton
                 :icon-left="button.icon"
@@ -51,10 +51,10 @@
 <script lang="ts">
 import { PropType, defineComponent } from 'vue'
 
-interface Button {
-  icon: any
+interface RowButton {
+  icon: unknown
   label: string
-  action: (item: any) => void
+  action: (item: unknown) => void
 }
 
 interface Header {
@@ -69,11 +69,11 @@ export default defineComponent({
       required: true
     },
     items: {
-      type: Array as PropType<Record<string, any>[]>,
+      type: Array as PropType<Record<string, unknown>[]>,
       required: true
     },
     buttons: {
-      type: Array as PropType<Button[]>,
+      type: Array as PropType<RowButton[]>,
       default: () => []
     },
     columnClasses: {
@@ -83,7 +83,7 @@ export default defineComponent({
   },
   computed: {
     paddingRightStyle() {
-      const padding = 52 + ((this.buttons as Button[]).length - 1) * 25
+      const padding = 52 + ((this.buttons as RowButton[]).length - 1) * 25
       return `${padding}px`
     }
   },
@@ -93,7 +93,7 @@ export default defineComponent({
 
       // For the first column
       if (colIndex === 0) {
-        return `bg-transparent py-3 px-5 ${columnClass}`
+        return `bg-transparent py-3 pr-5 ${columnClass}`
       }
 
       return `lg:p-0 ${columnClass}`
