@@ -62,6 +62,10 @@ export default class PointBatch implements Batch {
     return this.geometry.attributes.position.array.length / 3
   }
 
+  public get materials(): Material[] {
+    return this.mesh.material as Material[]
+  }
+
   public setBatchMaterial(material: Material) {
     this.batchMaterial = material
   }
@@ -390,6 +394,21 @@ export default class PointBatch implements Batch {
           }
           return this.mesh.material[group.materialIndex]
         }
+      }
+    }
+  }
+
+  public getMaterial(rv: NodeRenderView): Material {
+    for (let k = 0; k < this.geometry.groups.length; k++) {
+      try {
+        if (
+          rv.batchStart >= this.geometry.groups[k].start &&
+          rv.batchEnd <= this.geometry.groups[k].start + this.geometry.groups[k].count
+        ) {
+          return this.materials[this.geometry.groups[k].materialIndex]
+        }
+      } catch (e) {
+        Logger.error('Failed to get material')
       }
     }
   }

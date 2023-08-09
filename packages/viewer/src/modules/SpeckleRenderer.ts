@@ -55,7 +55,7 @@ import {
   ICameraProvider,
   CameraControllerEvent
 } from './extensions/core-extensions/Providers'
-import Logger from 'js-logger'
+import PointBatch from './batching/PointBatch'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -657,26 +657,16 @@ export default class SpeckleRenderer {
     }
 
     const batch = this.batcher.getBatch(rv)
-    if (!(batch instanceof MeshBatch)) return null
-    const materials = (batch.renderObject as SpeckleMesh).materials
-    const groups = (batch.renderObject as SpeckleMesh).geometry.groups
-    for (let k = 0; k < groups.length; k++) {
-      try {
-        if (
-          rv.batchStart >= groups[k].start &&
-          rv.batchEnd <= groups[k].start + groups[k].count
-        ) {
-          return materials[groups[k].materialIndex]
-        }
-      } catch (e) {
-        Logger.error('Failed to get material')
-      }
-    }
+    if (batch instanceof PointBatch) return null
+    return batch.getMaterial(rv)
   }
 
   public setFilterMaterial(rvs: NodeRenderView[], filterMaterial: FilterMaterial) {
     const rvMap = {}
     for (let k = 0; k < rvs.length; k++) {
+      if (!rvs[k].batchId) {
+        continue
+      }
       if (!rvMap[rvs[k].batchId]) rvMap[rvs[k].batchId] = []
       rvMap[rvs[k].batchId].push(rvs[k])
     }
@@ -691,7 +681,6 @@ export default class SpeckleRenderer {
         }
       })
       this.batcher.batches[k].setDrawRanges(...drawRanges)
-      this.batcher.batches[k].setBatchBuffers(...drawRanges)
     }
   }
 

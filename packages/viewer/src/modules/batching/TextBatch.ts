@@ -50,6 +50,10 @@ export default class TextBatch implements Batch {
     return this.geometry.index.count
   }
 
+  public get materials(): Material[] {
+    return this.mesh.material as Material[]
+  }
+
   public setBatchMaterial(material: Material) {
     this.batchMaterial = material
   }
@@ -144,6 +148,10 @@ export default class TextBatch implements Batch {
   }
 
   public getMaterialAtIndex(index: number): Material {
+    return this.batchMaterial
+  }
+
+  public getMaterial(rv: NodeRenderView): Material {
     return this.batchMaterial
   }
 

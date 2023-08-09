@@ -266,7 +266,7 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/7ce9010d71/commits/b8bbfd0c05?c=%5B-4.50925,11.1348,5.38124,-0.23829,0.68512,-0.09006,0,1%5D'
 
     // Lines with numeric filter
-    // 'https://speckle.xyz/streams/16a7ca997a/commits/91d82f4ea1'
+    'https://speckle.xyz/streams/16a7ca997a/commits/91d82f4ea1'
 
     // Type inheritence
     // 'https://speckle.xyz/streams/4063469c0b/objects/ce831723f2a3a56a30dfbca54a53c90f'
@@ -296,7 +296,7 @@ const getStream = () => {
     // Big ass mafa'
     // 'https://speckle.xyz/streams/88307505eb/objects/a232d760059046b81ff97e6c4530c985'
     // Airport
-    'https://latest.speckle.dev/streams/92b620fb17/commits/dfb9ca025d'
+    // 'https://latest.speckle.dev/streams/92b620fb17/commits/dfb9ca025d'
     // 'Blocks with elements
     // 'https://latest.speckle.dev/streams/e258b0e8db/commits/00e165cc1c'
     // 'https://latest.speckle.dev/streams/e258b0e8db/commits/e48cf53add'

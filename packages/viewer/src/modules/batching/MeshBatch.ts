@@ -81,6 +81,10 @@ export default class MeshBatch implements Batch {
     return this.geometry.index.count
   }
 
+  public get materials(): Material[] {
+    return this.mesh.material as Material[]
+  }
+
   public setBatchMaterial(material: Material) {
     this.batchMaterial = material
   }
@@ -168,7 +172,8 @@ export default class MeshBatch implements Batch {
         }
       }
     }
-    this.updateGradientIndexBuffer()
+    if (minGradientIndex < Infinity && maxGradientIndex > 0)
+      this.updateGradientIndexBuffer()
     MeshBatch.split3 += performance.now() - start
   }
 
@@ -191,8 +196,8 @@ export default class MeshBatch implements Batch {
     const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
 
     for (let k = 0; k < uniqueMaterials.length; k++) {
-      if (!this.mesh.materials.includes(uniqueMaterials[k]))
-        this.mesh.materials.push(uniqueMaterials[k])
+      if (!this.materials.includes(uniqueMaterials[k]))
+        this.materials.push(uniqueMaterials[k])
     }
 
     const sortedRanges = ranges.sort((a, b) => {
@@ -200,12 +205,10 @@ export default class MeshBatch implements Batch {
     })
 
     for (let i = 0; i < sortedRanges.length; i++) {
-      const materialIndex = this.mesh.materials.indexOf(sortedRanges[i].material)
+      const materialIndex = this.materials.indexOf(sortedRanges[i].material)
       const collidingGroup = this.getDrawRangeCollision(sortedRanges[i])
       if (collidingGroup) {
-        collidingGroup.materialIndex = this.mesh.materials.indexOf(
-          sortedRanges[i].material
-        )
+        collidingGroup.materialIndex = this.materials.indexOf(sortedRanges[i].material)
       } else {
         const includingGroup = this.geDrawRangeInclusion(sortedRanges[i])
         if (includingGroup && includingGroup.materialIndex !== materialIndex) {
@@ -262,6 +265,7 @@ export default class MeshBatch implements Batch {
     if (count !== this.getCount()) {
       Logger.error(`Draw groups invalid on ${this.id}`)
     }
+    this.setBatchBuffers(...ranges)
     this.needsFlatten = true
   }
 
@@ -562,6 +566,21 @@ export default class MeshBatch implements Batch {
     index
     console.warn('Deprecated! Do not call this anymore')
     return null
+  }
+
+  public getMaterial(rv: NodeRenderView): Material {
+    for (let k = 0; k < this.geometry.groups.length; k++) {
+      try {
+        if (
+          rv.batchStart >= this.geometry.groups[k].start &&
+          rv.batchEnd <= this.geometry.groups[k].start + this.geometry.groups[k].count
+        ) {
+          return this.materials[this.geometry.groups[k].materialIndex]
+        }
+      } catch (e) {
+        Logger.error('Failed to get material')
+      }
+    }
   }
 
   private makeMeshGeometry(

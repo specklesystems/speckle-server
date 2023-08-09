@@ -21,6 +21,7 @@ export interface Batch {
   get bounds(): Box3
   get drawCalls(): number
   get minDrawCalls(): number
+  get materials(): Material[]
 
   getCount(): number
   setBatchMaterial(material: Material): void
@@ -32,6 +33,7 @@ export interface Batch {
   buildBatch()
   getRenderView(index: number): NodeRenderView
   getMaterialAtIndex(index: number): Material
+  getMaterial(rv: NodeRenderView): Material
   onUpdate(deltaTime: number)
   onRender(renderer: WebGLRenderer)
   purge()
