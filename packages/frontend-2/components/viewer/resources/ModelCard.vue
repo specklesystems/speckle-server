@@ -45,7 +45,7 @@
           v-else
           :class="`${
             showVersions ? 'text-white' : ''
-          } flex flex-none items-center space-x-2 text-xs font-bold opacity-0 transition-opacity group-hover:opacity-100`"
+          } flex flex-none items-center space-x-2 text-xs font-bold opacity-80 transition-opacity group-hover:opacity-100`"
         >
           <ChevronUpIcon class="h-4 w-4" />
         </div>
