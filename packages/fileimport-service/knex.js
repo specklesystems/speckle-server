@@ -6,7 +6,7 @@ module.exports = require('knex')({
   connection: {
     application_name: 'speckle_fileimport_service',
     connectionString:
-      process.env.PG_CONNECTION_STRING || 'postgres://speckle:speckle@localhost/speckle'
+      process.env.PG_CONNECTION_STRING || 'postgres://speckle:speckle@127.0.0.1/speckle'
   },
   pool: { min: 0, max: 1 }
   // migrations are in managed in the server package

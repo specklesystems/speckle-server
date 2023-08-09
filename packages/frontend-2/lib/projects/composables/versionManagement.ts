@@ -47,6 +47,13 @@ import { isUndefined, uniqBy } from 'lodash-es'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 
 /**
+ * TODO: These aren't idempotent which makes them hard to use in multiple places. The moment you do so
+ * bugs can arise like total count counters updating incorrectly etc.
+ *
+ * Even if it causes some over-fetching, we should convert these to be idempotent for easier maintenance and less bugs
+ */
+
+/**
  * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
  * that we don't want to duplicate (or extract that part out into a separate composable)
  */
@@ -176,7 +183,8 @@ export function useProjectVersionUpdateTracking(
             return {
               ...(value || {}),
               items: newItems,
-              totalCount: (value.totalCount || 0) + 1
+              totalCount:
+                version.model.versionCount.totalCount || (value.totalCount || 0) + 1
             }
           }
         )
