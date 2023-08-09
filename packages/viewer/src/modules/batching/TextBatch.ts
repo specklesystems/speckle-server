@@ -83,40 +83,6 @@ export default class TextBatch implements Batch {
     }
   }
 
-  public insertDrawRanges(...ranges: BatchUpdateRange[]) {
-    /** There is a bug in troika library where cloning their derived materials doubles up
-     *  their custom shader code which in turns won't compile anymore. The material we
-     *  recieve in the range argument here is such a clone which won't compile. That's why
-     *  we're 'cloning' it oursleves
-     */
-    const material = new SpeckleTextMaterial({})
-    material.copy(ranges[0].material)
-    ranges[0].material = material.getDerivedMaterial()
-
-    const materialOptions = {
-      rampIndexColor: new Color().copy(this.mesh.textMesh.material.color)
-    }
-    this.insertedRanges.push({
-      offset: ranges[0].offset,
-      count: ranges[0].count,
-      material: this.mesh.textMesh.material,
-      materialOptions,
-      id: ranges[0].id
-    })
-    this.setDrawRanges(...ranges)
-  }
-
-  public removeDrawRanges(id: string) {
-    const ranges = this.insertedRanges.filter((value) => value.id === id)
-    if (!ranges.length) {
-      return
-    }
-    this.setDrawRanges(...ranges)
-    this.insertedRanges = this.insertedRanges.filter((value) => !ranges.includes(value))
-  }
-
-  public autoFillDrawRanges() {}
-
   public resetDrawRanges() {
     this.mesh.textMesh.material = this.batchMaterial
     this.mesh.textMesh.visible = true

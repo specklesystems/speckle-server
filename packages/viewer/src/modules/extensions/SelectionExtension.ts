@@ -10,6 +10,7 @@ import { InputEvent } from '../input/Input'
 import MeshBatch from '../batching/MeshBatch'
 import SpecklePointMaterial from '../materials/SpecklePointMaterial'
 import { GeometryType } from '../batching/Batch'
+import SpeckleTextMaterial from '../materials/SpeckleTextMaterial'
 export interface SelectionExtensionOptions {
   selectionColor: number
   highlightOnHover: boolean
@@ -35,9 +36,11 @@ export class SelectionExtension extends Extension {
   protected meshTransparentMaterial: SpeckleStandardMaterial
   protected pointSelectionMaterial: SpecklePointMaterial
   protected pointCloudSelectionMaterial: SpecklePointMaterial
+  protected textSelectionMaterial: SpeckleTextMaterial
   protected meshHighlightMaterial: SpeckleStandardMaterial
   protected pointHighlightMaterial: SpecklePointMaterial
   protected pointCloudHighlightMaterial: SpecklePointMaterial
+  protected textHighlightMaterial: SpeckleTextMaterial
 
   public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
     super(viewer)
@@ -85,6 +88,21 @@ export class SelectionExtension extends Extension {
     )
     this.pointCloudSelectionMaterial.color.convertSRGBToLinear()
 
+    this.textSelectionMaterial = new SpeckleTextMaterial(
+      {
+        color: 0x047efb,
+        opacity: 1,
+        side: DoubleSide
+      },
+      ['USE_RTE']
+    )
+    this.textSelectionMaterial.toneMapped = false
+    ;(this.textSelectionMaterial as SpeckleTextMaterial).color.convertSRGBToLinear()
+
+    this.textSelectionMaterial = (
+      this.textSelectionMaterial as SpeckleTextMaterial
+    ).getDerivedMaterial()
+
     this.meshHighlightMaterial = new SpeckleStandardMaterial(
       {
         color: 0xff7377,
@@ -113,6 +131,20 @@ export class SelectionExtension extends Extension {
       },
       ['USE_RTE']
     )
+    this.textHighlightMaterial = new SpeckleTextMaterial(
+      {
+        color: 0xff7377,
+        opacity: 1,
+        side: DoubleSide
+      },
+      ['USE_RTE']
+    )
+    this.textHighlightMaterial.toneMapped = false
+    ;(this.textHighlightMaterial as SpeckleTextMaterial).color.convertSRGBToLinear()
+
+    this.textHighlightMaterial = (
+      this.textHighlightMaterial as SpeckleTextMaterial
+    ).getDerivedMaterial()
   }
 
   public onUpdate() {
@@ -191,7 +223,8 @@ export class SelectionExtension extends Extension {
           [
             ObjectLayers.STREAM_CONTENT_MESH,
             ObjectLayers.STREAM_CONTENT_POINT,
-            ObjectLayers.STREAM_CONTENT_LINE
+            ObjectLayers.STREAM_CONTENT_LINE,
+            ObjectLayers.STREAM_CONTENT_TEXT
           ]
         ) as ExtendedIntersection[]) || []
 
@@ -227,18 +260,23 @@ export class SelectionExtension extends Extension {
     const opaqueRvs = rvs.filter(
       (value) =>
         this.selectionMaterials[value.renderData.id] &&
-        !this.selectionMaterials[value.renderData.id].transparent
+        !(
+          this.selectionMaterials[value.renderData.id].transparent &&
+          this.selectionMaterials[value.renderData.id].opacity < 1
+        )
     )
     const transparentRvs = rvs.filter(
       (value) =>
         this.selectionMaterials[value.renderData.id] &&
-        this.selectionMaterials[value.renderData.id].transparent
+        this.selectionMaterials[value.renderData.id].transparent &&
+        this.selectionMaterials[value.renderData.id].opacity < 1
     )
 
     const opaqueMeshes = []
     const transparentMeshes = []
     const points = []
     const pointClouds = []
+    const text = []
     for (let k = 0; k < opaqueRvs.length; k++) {
       switch (opaqueRvs[k].geometryType) {
         case GeometryType.MESH:
@@ -253,6 +291,8 @@ export class SelectionExtension extends Extension {
         case GeometryType.POINT_CLOUD:
           pointClouds.push(opaqueRvs[k])
           break
+        case GeometryType.TEXT:
+          text.push(opaqueRvs[k])
       }
     }
     for (let k = 0; k < transparentRvs.length; k++) {
@@ -269,12 +309,15 @@ export class SelectionExtension extends Extension {
         case GeometryType.POINT_CLOUD:
           pointClouds.push(transparentRvs[k])
           break
+        case GeometryType.TEXT:
+          text.push(transparentRvs[k])
       }
     }
 
     this.viewer.getRenderer().setMaterial(opaqueMeshes, this.meshSelectionMaterial)
     this.viewer.getRenderer().setMaterial(points, this.pointSelectionMaterial)
     this.viewer.getRenderer().setMaterial(pointClouds, this.pointCloudSelectionMaterial)
+    this.viewer.getRenderer().setMaterial(text, this.textSelectionMaterial)
     this.viewer
       .getRenderer()
       .setMaterial(transparentMeshes, this.meshTransparentMaterial)
@@ -292,6 +335,8 @@ export class SelectionExtension extends Extension {
   }
 
   protected applyHover(renderView: NodeRenderView) {
+    this.removeHover()
+
     if (!renderView) return
     if (this.selectionRvs[renderView.renderData.id]) {
       return
@@ -315,6 +360,9 @@ export class SelectionExtension extends Extension {
         this.viewer
           .getRenderer()
           .setMaterial([renderView], this.pointCloudHighlightMaterial)
+        break
+      case GeometryType.TEXT:
+        this.viewer.getRenderer().setMaterial([renderView], this.textHighlightMaterial)
         break
     }
 
