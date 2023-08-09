@@ -73,7 +73,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     (documentModelStore.value = await app.$baseBinding.getDocumentState())
 
   const refreshSendFilters = async () =>
-    (sendFilters.value = await app.$sendBinding.getSendFilters())
+    (sendFilters.value = await app.$sendBinding?.getSendFilters())
 
   app.$baseBinding.on(
     'documentChanged',
@@ -85,9 +85,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       }, 500) // timeout exists because of rhino
   )
 
-  app.$sendBinding.on('filtersNeedRefresh', () => void refreshSendFilters())
+  app.$sendBinding?.on('filtersNeedRefresh', () => void refreshSendFilters())
 
-  app.$sendBinding.on('sendersExpired', (senderIds) => {
+  app.$sendBinding?.on('sendersExpired', (senderIds) => {
     documentModelStore.value.models
       .filter((m) => senderIds.includes(m.id))
       .forEach((model) => ((model as ISenderModelCard).expired = true))

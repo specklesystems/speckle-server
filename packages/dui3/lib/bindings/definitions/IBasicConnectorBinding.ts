@@ -17,7 +17,6 @@ export interface IBasicConnectorBinding
 
   // Document state calls
   getDocumentState: () => Promise<DocumentModelStore>
-  saveDocumentModelStore: (state: DocumentModelStore) => Promise<void>
   addModel: (model: IModelCard) => Promise<void>
   updateModel: (model: IModelCard) => Promise<void>
   removeModel: (model: IModelCard) => Promise<void>

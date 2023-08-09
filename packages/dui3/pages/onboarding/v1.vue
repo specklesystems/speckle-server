@@ -118,7 +118,7 @@ import { ISenderModelCard } from 'lib/bindings/definitions/IBasicConnectorBindin
 import { ISendFilter } from '~~/lib/bindings/definitions/ISendBinding'
 import { nanoid } from 'nanoid'
 
-const { addModel } = useHostAppStore()
+const store = useHostAppStore()
 const router = useRouter()
 const { defaultAccount } = storeToRefs(useAccountStore())
 
@@ -151,9 +151,10 @@ const publish = async () => {
     projectId: projectRes.data?.projectMutations.create.id as string
   })
 
+  console.log(store.sendFilters)
+
   const sendFilter = {
-    name: 'Selection',
-    typeDiscriminator: 'RhinoSelectionFilter',
+    ...store.selectionFilter,
     ...selectionFilterCopy.value
   }
 
@@ -166,7 +167,7 @@ const publish = async () => {
     sendFilter: sendFilter as ISendFilter
   }
 
-  await addModel(modelCard)
+  await store.addModel(modelCard)
   router.push('/')
   // TODO:
   // 0. create project & create model x
