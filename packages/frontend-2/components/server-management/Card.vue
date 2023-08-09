@@ -14,12 +14,12 @@
 
 <script lang="ts" setup>
 import CardRow from './CardRow.vue'
-import { ServerInfo } from '~~/lib/server-management/helpers/types'
+import { CardInfo } from '~~/lib/server-management/helpers/types'
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 const props = defineProps({
   serverInfo: {
-    type: Array as () => ServerInfo[],
+    type: Array as () => CardInfo[],
     required: true
   }
 })

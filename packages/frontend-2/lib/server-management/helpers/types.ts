@@ -18,6 +18,12 @@ export interface SettingsDialogRef {
   onSave: () => Promise<void>
 }
 
+export interface CardInfo {
+  title: string
+  value: string
+  cta: CTA
+}
+
 export interface ServerStatistics {
   admin: {
     serverStatistics: {
