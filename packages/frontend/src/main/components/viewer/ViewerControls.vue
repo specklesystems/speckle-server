@@ -30,28 +30,41 @@
       <v-dialog v-model="helpDialog" max-width="600">
         <viewer-help @close="helpDialog = false" />
       </v-dialog>
+      <div :class="`${measurements ? 'grey darken-3 rounded' : ''}`">
       <v-btn
-        v-tooltip="`Linear measurement`"
+        v-tooltip="`Measurements`"
         :small="small"
         rounded
         icon
         class="mr-2"
-        :class="`mr-2 ${measurements ? 'primary elevation-2' : ''}`"
+        :class="`mr-1 ${measurements ? 'primary elevation-2' : ''}`"
         @click="toggleMeasurements()"
       >
         <v-icon small>mdi-ruler</v-icon>
       </v-btn>
       <v-btn
         v-show="measurements"
-        v-tooltip="`Perpendicular measurement`"
+        v-tooltip="`Toggle Perpendicular Mode`"
         x-small
         rounded
         icon
-        :class="`mr-2 ${perpendicularMode ? 'primary--text' : ''}`"
+        :class="`mr-1 ${perpendicularMode ? 'primary--text' : ''}`"
         @click="togglePerpendicularMeasurements()"
       >
         <v-icon x-small>mdi-ruler-square</v-icon>
       </v-btn>
+      <v-btn
+        v-show="measurements"
+        v-tooltip="`Clear`"
+        x-small
+        rounded
+        icon
+        :class="`mr-1`"
+        @click="viewer.removeAllMeasurements()"
+      >
+        <v-icon x-small>mdi-close-circle-outline</v-icon>
+      </v-btn>
+      </div>
       <v-btn
         v-tooltip="`Switch between perspective or ortho camera.`"
         :small="small"
@@ -189,6 +202,7 @@ export default {
   mounted() {
     this.$eventHub.$on('show-visreset', (state) => (this.showVisReset = state))
     this.sectionBoxIsOn = this.viewer.getCurrentSectionBox() !== null
+    this.viewer.removeAllMeasurements()
   },
   methods: {
     toggleMeasurements() {
