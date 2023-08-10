@@ -37,7 +37,7 @@ defineProps<{
   title: string
   value: string
   icon: ConcreteComponent
-  cta: {
+  cta?: {
     type: 'button' | 'link'
     label: string
     action: () => void | Promise<void>

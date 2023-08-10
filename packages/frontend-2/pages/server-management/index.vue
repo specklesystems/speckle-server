@@ -14,13 +14,6 @@
       </div>
     </div>
 
-    <!-- Not sure if needed? -->
-    <!-- <OnboardingDialogManager
-      v-model:open="showManagerDownloadDialog"
-      @done="showManagerDownloadDialog = false"
-      @cancel="showManagerDownloadDialog = false"
-    ></OnboardingDialogManager> -->
-
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
       <Card :server-info="serverData" @cta-clicked="showDialog = true" />
 
@@ -51,6 +44,7 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
+import { ref, computed, onMounted } from 'vue'
 import Card from '../../components/server-management/Card.vue'
 import SettingsDialog from '../../components/server-management/SettingsDialog.vue'
 import { CardInfo, SettingsDialogRef } from '~~/lib/server-management/helpers/types'
@@ -62,10 +56,22 @@ import {
   HomeIcon
 } from '@heroicons/vue/24/solid'
 
+interface GithubRelease {
+  url: string
+  assets_url: string
+  upload_url: string
+  html_url: string
+  id: number
+  node_id: string
+  tag_name: string
+}
+
 const router = useRouter()
 
 const showDialog = ref(false)
 const settingsDialog = ref<SettingsDialogRef | null>(null)
+const latestVersion = ref<string | null>(null)
+const isLatestVersion = ref<boolean>(false)
 
 const closeDialog = () => {
   showDialog.value = false
@@ -76,6 +82,29 @@ const saveSettings = () => {
     settingsDialog.value.onSave()
   }
 }
+
+async function getLatestVersion(): Promise<string | null> {
+  try {
+    const response: Response = await fetch(
+      'https://api.github.com/repos/specklesystems/speckle-server/releases/latest'
+    )
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    } else {
+      const data = (await response.json()) as GithubRelease
+      console.log(data)
+      return data.tag_name
+    }
+  } catch (err) {
+    console.error('Error fetching latest version:', err)
+    return null
+  }
+}
+
+onMounted(async () => {
+  latestVersion.value = await getLatestVersion()
+  isLatestVersion.value = versionInfo.current === latestVersion.value
+})
 
 const dataQuery = graphql(`
   query AdminPageData {
@@ -94,6 +123,10 @@ const dataQuery = graphql(`
 `)
 
 const { result } = useQuery(dataQuery)
+const versionInfo = reactive({
+  current: result.value?.serverInfo.version || 'N/A',
+  latest: latestVersion.value || 'N/A'
+})
 
 const serverData = computed((): CardInfo[] => [
   {
@@ -110,15 +143,25 @@ const serverData = computed((): CardInfo[] => [
   },
   {
     title: 'Speckle Version',
-    value: result.value?.serverInfo.version || 'N/A',
+    value: versionInfo.current,
     icon: ChartBarIcon,
-    cta: {
-      type: 'link',
-      label: 'Update is available',
-      action: () => {
-        router.push('/update-link')
-      }
-    }
+    cta:
+      latestVersion.value &&
+      !isLatestVersion.value &&
+      versionInfo.current.localeCompare(latestVersion.value, undefined, {
+        numeric: true
+      }) < 0
+        ? {
+            type: 'link',
+            label: 'Update is available',
+            action: () => {
+              window.open(
+                'https://github.com/specklesystems/speckle-server/releases',
+                '_blank'
+              )
+            }
+          }
+        : undefined
   }
 ])
 
@@ -144,7 +187,6 @@ const userData = computed(() => [
     }
   }
 ])
-
 const projectData = computed(() => [
   {
     title: 'Projects',

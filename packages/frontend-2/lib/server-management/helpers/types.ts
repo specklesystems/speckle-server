@@ -23,7 +23,7 @@ export interface SettingsDialogRef {
 export interface CardInfo {
   title: string
   value: string
-  cta: CTA
+  cta?: CTA
   icon: ConcreteComponent
 }
 
