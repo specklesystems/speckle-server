@@ -99,7 +99,7 @@ const form = useForm({
     adminContact: '',
     company: '',
     termsOfService: '',
-    inviteOnly: ''
+    inviteOnly: true
   }
 })
 

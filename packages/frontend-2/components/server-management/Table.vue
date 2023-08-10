@@ -38,7 +38,7 @@
                 color="secondary"
                 hide-text="true"
                 class="text-red-500"
-                @click="button.action(item)"
+                @click="button.action(item as User)"
               />
             </div>
           </div>
@@ -49,11 +49,11 @@
 </template>
 
 <script lang="ts">
-import { PropType, defineComponent } from 'vue'
+import { PropType, defineComponent, ConcreteComponent } from 'vue'
 import { User } from '~~/lib/common/generated/gql/graphql'
 
 interface RowButton {
-  icon: unknown
+  icon: ConcreteComponent
   label: string
   action: (item: User) => void
 }
