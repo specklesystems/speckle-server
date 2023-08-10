@@ -139,6 +139,7 @@ const documents = {
     "\n  query GetActiveUser {\n    activeUser {\n      id\n      name\n      role\n    }\n  }\n": types.GetActiveUserDocument,
     "\n  fragment ProjectPageProject on Project {\n    id\n    createdAt\n    ...ProjectPageProjectHeader\n    ...ProjectPageStatsBlockTeam\n    ...ProjectPageTeamDialog\n    ...ProjectPageStatsBlockVersions\n    ...ProjectPageStatsBlockModels\n    ...ProjectPageStatsBlockComments\n    ...ProjectPageLatestItemsModels\n    ...ProjectPageLatestItemsComments\n  }\n": types.ProjectPageProjectFragmentDoc,
     "\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n  }\n": types.ModelPageProjectFragmentDoc,
+    "\n  mutation Mutation($userConfirmation: UserDeleteInput!) {\n    adminDeleteUser(userConfirmation: $userConfirmation)\n  }\n": types.MutationDocument,
     "\n  query UserList($limit: Int!, $cursor: String, $query: String) {\n    admin {\n      userList(limit: $limit, cursor: $cursor, query: $query) {\n        totalCount\n        cursor\n        items {\n          id\n          bio\n          avatar\n          name\n          role\n          verified\n          company\n        }\n      }\n    }\n  }\n": types.UserListDocument,
     "\n  query AdminPageData {\n    admin {\n      serverStatistics {\n        totalPendingInvites\n        totalProjectCount\n        totalUserCount\n      }\n    }\n    serverInfo {\n      name\n      version\n    }\n  }\n": types.AdminPageDataDocument,
 };
@@ -661,6 +662,10 @@ export function graphql(source: "\n  fragment ProjectPageProject on Project {\n 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n  }\n"): (typeof documents)["\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation Mutation($userConfirmation: UserDeleteInput!) {\n    adminDeleteUser(userConfirmation: $userConfirmation)\n  }\n"): (typeof documents)["\n  mutation Mutation($userConfirmation: UserDeleteInput!) {\n    adminDeleteUser(userConfirmation: $userConfirmation)\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

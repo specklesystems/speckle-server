@@ -7,11 +7,7 @@
         the selected user?
       </p>
       <div v-if="user" class="flex items-center gap-2">
-        <img
-          :src="user.profilePicture"
-          :alt="'Profile picture of ' + user.name"
-          class="w-6 h-6 rounded-full"
-        />
+        <Avatar :user="user" />
         {{ user.name }}
       </div>
       <p>
@@ -26,7 +22,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
-import { User } from '../../pages/server-management/active-users.vue'
+import { User } from '~~/lib/common/generated/gql/graphql'
+import Avatar from '~~/components/user/Avatar.vue'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void

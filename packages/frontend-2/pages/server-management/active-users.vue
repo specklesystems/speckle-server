@@ -125,7 +125,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useQuery } from '@vue/apollo-composable'
+import { useQuery, useMutation } from '@vue/apollo-composable'
 import { debounce } from 'lodash-es'
 
 import Table from '~~/components/server-management/Table.vue'
@@ -168,10 +168,29 @@ const closeChangeUserRoleDialog = () => {
   showChangeUserRoleDialog.value = false
 }
 
-const deleteConfirmed = () => {
-  // Implement actual delete logic here
-  showUserDeleteDialog.value = false
-  userToModify.value = null
+const adminDeleteUser = graphql(`
+  mutation Mutation($userConfirmation: UserDeleteInput!) {
+    adminDeleteUser(userConfirmation: $userConfirmation)
+  }
+`)
+
+const { mutate: adminDeleteUserMutation } = useMutation(adminDeleteUser)
+
+const deleteConfirmed = async () => {
+  try {
+    if (userToModify.value && userToModify.value.email) {
+      await adminDeleteUserMutation({
+        userConfirmation: { email: userToModify.value.email }
+      })
+      // Rest of your code
+    } else {
+      console.error('userToModify.value or userToModify.value.email is not defined')
+      // Handle error e.g., show an error message
+    }
+  } catch (error) {
+    console.error('Failed to delete user', error)
+    // Handle error e.g., show an error message
+  }
 }
 
 const changeUserRoleConfirmed = () => {

@@ -164,7 +164,6 @@ const serverData = computed((): CardInfo[] => [
         : undefined
   }
 ])
-
 const userData = computed(() => [
   {
     title: 'Active users',
