@@ -3,13 +3,14 @@ import { ExtendedIntersection } from '../objects/SpeckleRaycaster'
 import { Extension } from './core-extensions/Extension'
 import { ICameraProvider } from './core-extensions/Providers'
 import { ObjectLayers } from '../SpeckleRenderer'
-import { NodeRenderView } from '../tree/NodeRenderView'
+import { DisplayStyle, NodeRenderView, RenderMaterial } from '../tree/NodeRenderView'
 import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
 import { DoubleSide, Material } from 'three'
 import { InputEvent } from '../input/Input'
 import SpecklePointMaterial from '../materials/SpecklePointMaterial'
 import { GeometryType } from '../batching/Batch'
 import SpeckleTextMaterial from '../materials/SpeckleTextMaterial'
+import { generateUUID } from 'three/src/math/MathUtils'
 export interface SelectionExtensionOptions {
   selectionColor: number
   highlightOnHover: boolean
@@ -40,6 +41,7 @@ export class SelectionExtension extends Extension {
   protected pointHighlightMaterial: SpecklePointMaterial
   protected pointCloudHighlightMaterial: SpecklePointMaterial
   protected textHighlightMaterial: SpeckleTextMaterial
+  protected selectionMaterialData: RenderMaterial & DisplayStyle
 
   public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
     super(viewer)
@@ -48,6 +50,16 @@ export class SelectionExtension extends Extension {
     this.viewer
       .getRenderer()
       .input.on(InputEvent.PointerMove, this.onPointerMove.bind(this))
+
+    this.selectionMaterialData = {
+      id: generateUUID(),
+      color: 0x047efb,
+      opacity: 1,
+      roughness: 1,
+      metalness: 0,
+      vertexColors: false,
+      lineWeight: 1
+    }
 
     this.meshSelectionMaterial = new SpeckleStandardMaterial(
       {
@@ -267,55 +279,57 @@ export class SelectionExtension extends Extension {
         this.selectionMaterials[value.renderData.id].opacity < 1
     )
 
-    const opaqueMeshes = []
-    const transparentMeshes = []
-    const points = []
-    const pointClouds = []
-    const text = []
-    for (let k = 0; k < opaqueRvs.length; k++) {
-      switch (opaqueRvs[k].geometryType) {
-        case GeometryType.MESH:
-          opaqueMeshes.push(opaqueRvs[k])
-          break
-        case GeometryType.LINE:
-          opaqueMeshes.push(opaqueRvs[k])
-          break
-        case GeometryType.POINT:
-          points.push(opaqueRvs[k])
-          break
-        case GeometryType.POINT_CLOUD:
-          pointClouds.push(opaqueRvs[k])
-          break
-        case GeometryType.TEXT:
-          text.push(opaqueRvs[k])
-      }
-    }
-    for (let k = 0; k < transparentRvs.length; k++) {
-      switch (transparentRvs[k].geometryType) {
-        case GeometryType.MESH:
-          transparentMeshes.push(transparentRvs[k])
-          break
-        case GeometryType.LINE:
-          transparentMeshes.push(transparentRvs[k])
-          break
-        case GeometryType.POINT:
-          points.push(transparentRvs[k])
-          break
-        case GeometryType.POINT_CLOUD:
-          pointClouds.push(transparentRvs[k])
-          break
-        case GeometryType.TEXT:
-          text.push(transparentRvs[k])
-      }
-    }
+    this.viewer.getRenderer().setMaterial(opaqueRvs, this.selectionMaterialData)
+    this.viewer.getRenderer().setMaterial(transparentRvs, this.selectionMaterialData)
+    // const opaqueMeshes = []
+    // const transparentMeshes = []
+    // const points = []
+    // const pointClouds = []
+    // const text = []
+    // for (let k = 0; k < opaqueRvs.length; k++) {
+    //   switch (opaqueRvs[k].geometryType) {
+    //     case GeometryType.MESH:
+    //       opaqueMeshes.push(opaqueRvs[k])
+    //       break
+    //     case GeometryType.LINE:
+    //       opaqueMeshes.push(opaqueRvs[k])
+    //       break
+    //     case GeometryType.POINT:
+    //       points.push(opaqueRvs[k])
+    //       break
+    //     case GeometryType.POINT_CLOUD:
+    //       pointClouds.push(opaqueRvs[k])
+    //       break
+    //     case GeometryType.TEXT:
+    //       text.push(opaqueRvs[k])
+    //   }
+    // }
+    // for (let k = 0; k < transparentRvs.length; k++) {
+    //   switch (transparentRvs[k].geometryType) {
+    //     case GeometryType.MESH:
+    //       transparentMeshes.push(transparentRvs[k])
+    //       break
+    //     case GeometryType.LINE:
+    //       transparentMeshes.push(transparentRvs[k])
+    //       break
+    //     case GeometryType.POINT:
+    //       points.push(transparentRvs[k])
+    //       break
+    //     case GeometryType.POINT_CLOUD:
+    //       pointClouds.push(transparentRvs[k])
+    //       break
+    //     case GeometryType.TEXT:
+    //       text.push(transparentRvs[k])
+    //   }
+    // }
 
-    this.viewer.getRenderer().setMaterial(opaqueMeshes, this.meshSelectionMaterial)
-    this.viewer.getRenderer().setMaterial(points, this.pointSelectionMaterial)
-    this.viewer.getRenderer().setMaterial(pointClouds, this.pointCloudSelectionMaterial)
-    this.viewer.getRenderer().setMaterial(text, this.textSelectionMaterial)
-    this.viewer
-      .getRenderer()
-      .setMaterial(transparentMeshes, this.meshTransparentMaterial)
+    // this.viewer.getRenderer().setMaterial(opaqueMeshes, this.meshSelectionMaterial)
+    // this.viewer.getRenderer().setMaterial(points, this.pointSelectionMaterial)
+    // this.viewer.getRenderer().setMaterial(pointClouds, this.pointCloudSelectionMaterial)
+    // this.viewer.getRenderer().setMaterial(text, this.textSelectionMaterial)
+    // this.viewer
+    //   .getRenderer()
+    //   .setMaterial(transparentMeshes, this.meshTransparentMaterial)
   }
 
   protected removeSelection() {

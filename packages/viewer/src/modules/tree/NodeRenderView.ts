@@ -2,6 +2,7 @@ import { Box3 } from 'three'
 import { GeometryType } from '../batching/Batch'
 import { GeometryData } from '../converter/Geometry'
 import { SpeckleType } from '../converter/GeometryConverter'
+import Materials from '../materials/Materials'
 
 export interface RenderMaterial {
   id: string
@@ -38,31 +39,6 @@ export class NodeRenderView {
   private _geometryType: GeometryType
 
   private _aabb: Box3 = null
-
-  public static readonly NullRenderMaterialHash = this.hashCode(
-    GeometryType.MESH.toString()
-  )
-  public static readonly NullRenderMaterialVertexColorsHash = this.hashCode(
-    GeometryType.MESH.toString() + 'vertexColors'
-  )
-  public static readonly NullDisplayStyleHash = this.hashCode(
-    GeometryType.LINE.toString()
-  )
-  public static readonly NullPointMaterialHash = this.hashCode(
-    GeometryType.POINT.toString()
-  )
-  public static readonly NullPointCloudMaterialHash = this.hashCode(
-    GeometryType.POINT_CLOUD.toString()
-  )
-  public static readonly NullPointCloudVertexColorsMaterialHash = this.hashCode(
-    GeometryType.POINT_CLOUD.toString() + 'vertexColors'
-  )
-
-  private static hashCode(s: string) {
-    let h
-    for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0
-    return h
-  }
 
   public get renderData() {
     return this._renderData
@@ -148,7 +124,7 @@ export class NodeRenderView {
   public constructor(data: NodeRenderData) {
     this._renderData = data
     this._geometryType = this.getGeometryType()
-    this._materialHash = this.getMaterialHash()
+    this._materialHash = Materials.getMaterialHash(this)
 
     this._batchId
     this._batchIndexCount
@@ -197,53 +173,5 @@ export class NodeRenderView {
     for (const attr in this._renderData.geometry.attributes) {
       this._renderData.geometry.attributes[attr] = []
     }
-  }
-
-  private renderMaterialToString() {
-    return (
-      this.renderData.renderMaterial.color.toString() +
-      '/' +
-      this.renderData.renderMaterial.opacity.toString() +
-      '/' +
-      this.renderData.renderMaterial.roughness.toString() +
-      '/' +
-      this.renderData.renderMaterial.metalness.toString()
-    )
-  }
-
-  private displayStyleToString() {
-    return (
-      this.renderData.displayStyle.color?.toString() +
-      '/' +
-      this.renderData.displayStyle.lineWeight.toString()
-    )
-  }
-
-  /** Yeah, this needs a better approach after standardizing renderMaterial vs displayStyle
-   *  at the concept level. Currently it's more or less unclear who/when/how should a line/non-line
-   *  use either renderMaterial either displayStyle since all speckle types can use both
-   */
-  private getMaterialHash() {
-    const mat =
-      this.renderData.renderMaterial &&
-      (this.geometryType === GeometryType.MESH ||
-        this.geometryType === GeometryType.POINT ||
-        this.geometryType === GeometryType.TEXT)
-        ? this.renderMaterialToString()
-        : this.renderData.displayStyle &&
-          this.geometryType !== GeometryType.MESH &&
-          this.geometryType !== GeometryType.POINT
-        ? this.displayStyleToString()
-        : ''
-    let geometry = ''
-    if (this.renderData.geometry.attributes)
-      geometry = this.renderData.geometry.attributes.COLOR ? 'vertexColors' : ''
-
-    const s =
-      this.geometryType.toString() +
-      geometry +
-      mat +
-      (this.geometryType === GeometryType.TEXT ? this._renderData.id : '')
-    return NodeRenderView.hashCode(s)
   }
 }

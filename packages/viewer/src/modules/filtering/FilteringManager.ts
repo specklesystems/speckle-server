@@ -562,7 +562,7 @@ export class FilteringManager extends EventEmitter {
         // if (plm.length) {
         //   console.log('mata')
         // }
-        this.Renderer.setFilterMaterial(group.rvs, {
+        this.Renderer.setMaterial(group.rvs, {
           filterType: FilterMaterialType.GRADIENT,
           rampIndex: group.value
         })
@@ -571,7 +571,7 @@ export class FilteringManager extends EventEmitter {
       const ghostNonMatching = this.ColorNumericFilterState.nonMatchingRvs
 
       if (ghostNonMatching.length) {
-        this.Renderer.setFilterMaterial(ghostNonMatching, {
+        this.Renderer.setMaterial(ghostNonMatching, {
           filterType: FilterMaterialType.GHOST
         })
       }

@@ -32,7 +32,7 @@ import Input, { InputOptionsDefault } from './input/Input'
 import { Intersections } from './Intersections'
 import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
-import { NodeRenderView } from './tree/NodeRenderView'
+import { DisplayStyle, NodeRenderView, RenderMaterial } from './tree/NodeRenderView'
 import { Viewer } from './Viewer'
 import { TreeNode } from './tree/WorldTree'
 import {
@@ -636,29 +636,10 @@ export default class SpeckleRenderer {
     }
   }
 
-  public setMaterial(rvs: NodeRenderView[], material: Material, autoTranslate = true) {
-    autoTranslate
-    const rvMap = {}
-    for (let k = 0; k < rvs.length; k++) {
-      if (!rvMap[rvs[k].batchId]) rvMap[rvs[k].batchId] = []
-      rvMap[rvs[k].batchId].push(rvs[k])
-    }
-    for (const k in rvMap) {
-      const rvs = rvMap[k].map((value: NodeRenderView) => {
-        return { offset: value.batchStart, count: value.batchCount, material }
-      })
-      this.batcher.batches[k].setDrawRanges(...rvs)
-    }
-  }
-
-  public getMaterial(rv: NodeRenderView): Material {
-    if (!rv || !rv.batchId) {
-      return null
-    }
-    return this.batcher.getBatch(rv).getMaterial(rv)
-  }
-
-  public setFilterMaterial(rvs: NodeRenderView[], filterMaterial: FilterMaterial) {
+  public setMaterial(rvs: NodeRenderView[], material: Material)
+  public setMaterial(rvs: NodeRenderView[], material: RenderMaterial & DisplayStyle)
+  public setMaterial(rvs: NodeRenderView[], material: FilterMaterial)
+  public setMaterial(rvs: NodeRenderView[], material: unknown) {
     const rvMap = {}
     for (let k = 0; k < rvs.length; k++) {
       if (!rvs[k].batchId) {
@@ -667,18 +648,66 @@ export default class SpeckleRenderer {
       if (!rvMap[rvs[k].batchId]) rvMap[rvs[k].batchId] = []
       rvMap[rvs[k].batchId].push(rvs[k])
     }
-    for (const k in rvMap) {
-      const drawRanges = rvMap[k].map((value: NodeRenderView) => {
+
+    if (material instanceof Material) {
+      this.setMaterialInstance(rvMap, material)
+    } else if (material['filterType'] !== undefined) {
+      this.setFilterMaterial(rvMap, material as FilterMaterial)
+    } else {
+      this.setRenderMaterial(rvMap, material as RenderMaterial & DisplayStyle)
+    }
+  }
+
+  private setMaterialInstance(
+    rvs: Record<string, NodeRenderView[]>,
+    material: Material
+  ) {
+    for (const k in rvs) {
+      const ranges = rvs[k].map((value: NodeRenderView) => {
+        return { offset: value.batchStart, count: value.batchCount, material }
+      })
+      this.batcher.batches[k].setDrawRanges(...ranges)
+    }
+  }
+
+  private setFilterMaterial(
+    rvs: Record<string, NodeRenderView[]>,
+    material: FilterMaterial
+  ) {
+    for (const k in rvs) {
+      const drawRanges = rvs[k].map((value: NodeRenderView) => {
         return {
           offset: value.batchStart,
           count: value.batchCount,
-          material: this.batcher.materials.getFilterMaterial(value, filterMaterial),
-          materialOptions:
-            this.batcher.materials.getFilterMaterialOptions(filterMaterial)
+          material: this.batcher.materials.getFilterMaterial(value, material),
+          materialOptions: this.batcher.materials.getFilterMaterialOptions(material)
         }
       })
       this.batcher.batches[k].setDrawRanges(...drawRanges)
     }
+  }
+
+  private setRenderMaterial(
+    rvs: Record<string, NodeRenderView[]>,
+    material: RenderMaterial & DisplayStyle
+  ) {
+    for (const k in rvs) {
+      const drawRanges = rvs[k].map((value: NodeRenderView) => {
+        return {
+          offset: value.batchStart,
+          count: value.batchCount,
+          material: this.batcher.materials.getRendeMaterial(value, material)
+        }
+      })
+      this.batcher.batches[k].setDrawRanges(...drawRanges)
+    }
+  }
+
+  public getMaterial(rv: NodeRenderView): Material {
+    if (!rv || !rv.batchId) {
+      return null
+    }
+    return this.batcher.getBatch(rv).getMaterial(rv)
   }
 
   public getBatch(id: string): Batch {
