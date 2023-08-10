@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable camelcase */
 import { speckleGhostVert } from './shaders/speckle-ghost-vert'
 import { speckleGhostFrag } from './shaders/speckle-ghost-frag'
 import SpeckleBasicMaterial from './SpeckleBasicMaterial'

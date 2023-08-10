@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
 import { speckleNormalVert } from './shaders/speckle-normal-vert'
 import { speckleNormalFrag } from './shaders/speckle-normal-frag'
-import { UniformsUtils, ShaderLib, Vector3, MeshNormalMaterial, IUniform } from 'three'
+import { ShaderLib, Vector3, IUniform } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import SpeckleMesh from '../objects/SpeckleMesh'

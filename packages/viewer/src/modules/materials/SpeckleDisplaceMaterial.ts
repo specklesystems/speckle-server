@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable camelcase */
 import { speckleDisplaceVert } from './shaders/speckle-displace.vert'
 import { speckleDisplaceFrag } from './shaders/speckle-displace-frag'
 import { Vector2 } from 'three'

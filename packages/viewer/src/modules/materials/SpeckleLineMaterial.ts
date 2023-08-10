@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
 import { speckleLineVert } from './shaders/speckle-line-vert'
 import { speckleLineFrag } from './shaders/speckle-line-frag'
-import { UniformsUtils, ShaderLib, Vector3, Vector2, IUniform, Material } from 'three'
+import { ShaderLib, Vector3, IUniform, Material } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import { ExtendedLineMaterial, Uniforms } from './SpeckleMaterial'

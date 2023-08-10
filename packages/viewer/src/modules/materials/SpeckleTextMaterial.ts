@@ -1,17 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
 import { speckleTextVert } from './shaders/speckle-text-vert'
 import { speckleTextFrag } from './shaders/speckle-text-frag'
-import {
-  UniformsUtils,
-  ShaderLib,
-  Vector3,
-  MeshBasicMaterial,
-  Material,
-  IUniform,
-  Vector2
-} from 'three'
+import { ShaderLib, Vector3, IUniform, Vector2 } from 'three'
 import { Matrix4 } from 'three'
 
 import { ExtendedMeshBasicMaterial, Uniforms } from './SpeckleMaterial'
