@@ -11,29 +11,21 @@
       ></HeaderNavLink>
     </Portal>
 
-    <div
-      class="flex flex-col md:flex-row space-y-2 space-x-2 justify-between mb-4 md:items-center h-8"
-    >
-      <div>
-        <h5 class="h4 font-bold">Active Users</h5>
-      </div>
-    </div>
+    <h1 class="h4 font-bold mb-4">Active Users</h1>
 
-    <div class="flex items-center gap-8 h-10">
-      <FormTextInput
-        size="lg"
-        name="search"
-        :custom-icon="MagnifyingGlassIcon"
-        color="foundation"
-        full-width
-        search
-        :show-clear="!!searchString"
-        placeholder="Search Users"
-        class="rounded-md border border-outline-3"
-        @update:model-value="debounceSearchUpdate"
-        @change="($event) => searchUpdateHandler($event.value)"
-      />
-    </div>
+    <FormTextInput
+      size="lg"
+      name="search"
+      :custom-icon="MagnifyingGlassIcon"
+      color="foundation"
+      full-width
+      search
+      :show-clear="!!searchString"
+      placeholder="Search Users"
+      class="rounded-md border border-outline-3"
+      @update:model-value="debounceSearchUpdate"
+      @change="handleSearchChange"
+    />
 
     <Table
       :headers="[
@@ -132,28 +124,31 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useQuery } from '@vue/apollo-composable'
+import { debounce } from 'lodash-es'
+
+import Table from '~~/components/server-management/Table.vue'
+import UserRoleSelect from '~~/components/server-management/UserRoleSelect.vue'
+import UserDeleteDialog from '~~/components/server-management/DeleteUserDialog.vue'
+import ChangeUserRoleDialog from '~~/components/server-management/ChangeUserRoleDialog.vue'
+import Avatar from '~~/components/user/Avatar.vue'
+import { User } from '~~/lib/common/generated/gql/graphql'
+
+import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import { graphql } from '~~/lib/common/generated/gql'
+
 import {
   MagnifyingGlassIcon,
   ShieldExclamationIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  TrashIcon
 } from '@heroicons/vue/20/solid'
-
-import Table from '../../components/server-management/Table.vue'
-import UserRoleSelect from '../../components/server-management/UserRoleSelect.vue'
-import UserDeleteDialog from '../../components/server-management/DeleteUserDialog.vue'
-import ChangeUserRoleDialog from '../../components/server-management/ChangeUserRoleDialog.vue'
-import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
-import { ref } from 'vue'
-import { useQuery } from '@vue/apollo-composable'
-import { graphql } from '~~/lib/common/generated/gql'
-import { debounce } from 'lodash-es'
-
-import Avatar from '~~/components/user/Avatar.vue'
-
-import { TrashIcon } from '@heroicons/vue/24/outline'
 
 const userToModify = ref<User | null>(null)
 const searchString = ref('')
+const showUserDeleteDialog = ref(false)
+const showChangeUserRoleDialog = ref(false)
 
 const openUserDeleteDialog = (user: User) => {
   userToModify.value = user
@@ -175,31 +170,18 @@ const closeChangeUserRoleDialog = () => {
 
 const deleteConfirmed = () => {
   // Implement actual delete logic here
-  console.log('Deleting user:', userToModify.value)
   showUserDeleteDialog.value = false
   userToModify.value = null
 }
 
 const changeUserRoleConfirmed = () => {
   // Implement actual change role logic here
-  console.log('Chaning Role:', userToModify.value)
   showChangeUserRoleDialog.value = false
   userToModify.value = null
 }
 
-const showUserDeleteDialog = ref(false)
-const showChangeUserRoleDialog = ref(false)
-
-export interface User {
-  id: string
-  name: string
-  avatar: string
-  email: string
-  emailState: boolean
-  verified: boolean
-  company: string
-  role: 'user' | 'admin' | 'archive'
-  invitedBy?: User
+const handleSearchChange = (newSearchString: string) => {
+  searchUpdateHandler(newSearchString)
 }
 
 const getUsers = graphql(`
@@ -234,10 +216,6 @@ const {
   limit: 50,
   query: searchString.value
 }))
-
-// const hasItems = computed(
-//   () => !!(extraPagesResult.value?.admin?.userList?.items || []).length
-// )
 
 const moreToLoad = computed(
   () =>
@@ -281,17 +259,4 @@ const calculateLoaderId = () => {
 }
 
 onResult(calculateLoaderId)
-
-// Watch for changes in the 'role' of each user
-// users.value.forEach((user) => {
-//   watch(
-//     () => user.role,
-//     (newRole, oldRole) => {
-//       if (newRole !== oldRole) {
-//         userToModify.value = user // Set the current user to modify
-//         openChangeUserRoleDialog(user) // Open the dialog
-//       }
-//     }
-//   )
-// })
 </script>

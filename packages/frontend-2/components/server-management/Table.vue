@@ -50,11 +50,12 @@
 
 <script lang="ts">
 import { PropType, defineComponent } from 'vue'
+import { User } from '~~/lib/common/generated/gql/graphql'
 
 interface RowButton {
   icon: unknown
   label: string
-  action: (item: unknown) => void
+  action: (item: User) => void
 }
 
 interface Header {
