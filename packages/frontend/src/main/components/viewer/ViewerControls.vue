@@ -16,6 +16,7 @@
         <v-icon small class="mr-2">mdi-eye-off</v-icon>
         Reset Filters
       </v-btn>
+
       <v-btn
         v-tooltip="'Viewer Help'"
         :small="small"
@@ -29,9 +30,30 @@
       <v-dialog v-model="helpDialog" max-width="600">
         <viewer-help @close="helpDialog = false" />
       </v-dialog>
-      <!-- disabling ortho mode because comment intersection are f*ed. -->
       <v-btn
-        v-tooltip="`between perspective or ortho camera.`"
+        v-tooltip="`Linear measurement`"
+        :small="small"
+        rounded
+        icon
+        class="mr-2"
+        :class="`mr-2 ${measurements ? 'primary elevation-2' : ''}`"
+        @click="toggleMeasurements()"
+      >
+        <v-icon small>mdi-ruler</v-icon>
+      </v-btn>
+      <v-btn
+        v-show="measurements"
+        v-tooltip="`Perpendicular measurement`"
+        x-small
+        rounded
+        icon
+        :class="`mr-2 ${perpendicularMode ? 'primary--text' : ''}`"
+        @click="togglePerpendicularMeasurements()"
+      >
+        <v-icon x-small>mdi-ruler-square</v-icon>
+      </v-btn>
+      <v-btn
+        v-tooltip="`Switch between perspective or ortho camera.`"
         :small="small"
         rounded
         icon
@@ -40,6 +62,7 @@
       >
         <v-icon small>mdi-perspective-less</v-icon>
       </v-btn>
+      
       <v-menu
         :close-on-content-click="false"
         origin="center"
@@ -103,6 +126,8 @@
 import { useInjectedViewer } from '@/main/lib/viewer/core/composables/viewer'
 import { useQuery } from '@vue/apollo-composable'
 import { computed, ref } from 'vue'
+import { onKeyStroke } from '@vueuse/core'
+
 import gql from 'graphql-tag'
 import {
   resetFilter,
@@ -137,11 +162,23 @@ export default {
 
     const helpDialog = ref(false)
     const lightsDialog = ref(false)
-    return { viewer, viewerState, helpDialog, lightsDialog }
+    const measurements = ref(false)
+    const perpendicularMode = ref(false)
+
+    onKeyStroke('Delete', () => {
+      viewer.removeMeasurement()
+    })
+
+    onKeyStroke('Escape', () => {
+      measurements.value = false
+      viewer.enableMeasurements(false)
+    })
+
+    return { viewer, viewerState, helpDialog, lightsDialog, measurements, perpendicularMode }
   },
   data() {
     return {
-      fullScreen: false
+      fullScreen: false,
     }
   },
   computed: {
@@ -154,6 +191,16 @@ export default {
     this.sectionBoxIsOn = this.viewer.getCurrentSectionBox() !== null
   },
   methods: {
+    toggleMeasurements() {
+      this.measurements = !this.measurements
+      this.viewer.enableMeasurements(this.measurements)
+    },
+    togglePerpendicularMeasurements() {
+      this.perpendicularMode = !this.perpendicularMode
+      this.viewer.setMeasurementOptions({
+        type: this.perpendicularMode ? 0 : 1
+      })
+    },
     toggleCamera() {
       this.viewer.toggleCameraProjection()
     },

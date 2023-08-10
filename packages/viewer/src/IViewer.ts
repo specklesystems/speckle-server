@@ -244,6 +244,7 @@ export interface IViewer {
   enableMeasurements(value: boolean)
   setMeasurementOptions(options: MeasurementOptions)
   removeMeasurement()
+  removeAllMeasurements()
 
   dispose(): void
 }

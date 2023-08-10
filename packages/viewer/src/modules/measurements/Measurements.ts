@@ -366,6 +366,15 @@ export class Measurements {
     }
   }
 
+  public removeAllMeasurements() {
+    for(const measurement of this.measurements) {
+      this.renderer.scene.remove(measurement)
+    }
+    this.measurements = []
+    this.renderer.needsRender = true
+    this.renderer.resetPipeline()
+  }
+
   private applyOptions() {
     const all = [this.measurement, ...this.measurements]
     all.forEach((value) => {
