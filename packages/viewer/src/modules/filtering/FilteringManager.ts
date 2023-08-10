@@ -13,7 +13,6 @@ import EventEmitter from '../EventEmitter'
 import { ViewerEvent } from '../../IViewer'
 import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
 import SpecklePointMaterial from '../materials/SpecklePointMaterial'
-import MeshBatch from '../batching/MeshBatch'
 
 export type FilteringState = {
   selectedObjects?: string[]
@@ -556,7 +555,6 @@ export class FilteringManager extends EventEmitter {
     // }
     // Number based colors
     if (this.ColorNumericFilterState) {
-      const start = performance.now()
       for (const group of this.ColorNumericFilterState.colorGroups) {
         // const plm = group.rvs.filter((value) => {
         //   return value.renderData.id === '4e1bb0b5992da0adb11efda9b32dcad9'
@@ -577,11 +575,7 @@ export class FilteringManager extends EventEmitter {
           filterType: FilterMaterialType.GHOST
         })
       }
-      const time = performance.now() - start
-      console.warn('Split -> ', MeshBatch.split)
-      console.warn('Split2 -> ', MeshBatch.split2)
-      console.warn('Split3 -> ', MeshBatch.split3)
-      console.warn('Time -> ', time)
+
       console.warn(this.Renderer.renderingStats)
 
       this.CurrentFilteringState.activePropFilterKey =

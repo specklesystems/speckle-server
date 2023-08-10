@@ -7,7 +7,6 @@ import { NodeRenderView } from '../tree/NodeRenderView'
 import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
 import { DoubleSide, Material } from 'three'
 import { InputEvent } from '../input/Input'
-import MeshBatch from '../batching/MeshBatch'
 import SpecklePointMaterial from '../materials/SpecklePointMaterial'
 import { GeometryType } from '../batching/Batch'
 import SpeckleTextMaterial from '../materials/SpeckleTextMaterial'
@@ -18,7 +17,7 @@ export interface SelectionExtensionOptions {
 
 const DefaultSelectionExtensionOptions = {
   selectionColor: 0x047efb,
-  highlightOnHover: true
+  highlightOnHover: false
 }
 
 export class SelectionExtension extends Extension {
@@ -164,7 +163,6 @@ export class SelectionExtension extends Extension {
   }
 
   public selectObjects(ids: Array<string>, multiSelect = false) {
-    const start = performance.now()
     const idMap = {}
     for (let k = 0; k < ids.length; k++) {
       idMap[ids[k]] = 1
@@ -177,11 +175,6 @@ export class SelectionExtension extends Extension {
       return true
     })
     this.applySelection()
-    const time = performance.now() - start
-    console.warn('Split -> ', MeshBatch.split)
-    console.warn('Split2 -> ', MeshBatch.split2)
-    console.warn('Split3 -> ', MeshBatch.split3)
-    console.warn('Time -> ', time)
     this.viewer.requestRender()
   }
 

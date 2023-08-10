@@ -15,11 +15,11 @@ class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
   protected static readonly vecBuff1: Vector3 = new Vector3()
   protected static readonly vecBuff2: Vector3 = new Vector3()
 
-  protected get vertexShader(): string {
+  protected get vertexProgram(): string {
     return speckleNormalVert
   }
 
-  protected get fragmentShader(): string {
+  protected get fragmentProgram(): string {
     return speckleNormalFrag
   }
 

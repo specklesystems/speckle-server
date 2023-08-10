@@ -8,11 +8,11 @@ import SpeckleBasicMaterial from './SpeckleBasicMaterial'
 import { Uniforms } from './SpeckleMaterial'
 
 class SpeckleDisplaceMaterial extends SpeckleBasicMaterial {
-  protected get vertexShader(): string {
+  protected get vertexProgram(): string {
     return speckleDisplaceVert
   }
 
-  protected get fragmentShader(): string {
+  protected get fragmentProgram(): string {
     return speckleDisplaceFrag
   }
 

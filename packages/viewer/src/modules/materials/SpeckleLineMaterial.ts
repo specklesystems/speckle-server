@@ -3,16 +3,37 @@
 /* eslint-disable camelcase */
 import { speckleLineVert } from './shaders/speckle-line-vert'
 import { speckleLineFrag } from './shaders/speckle-line-frag'
-import { UniformsUtils, ShaderLib, Vector3, Vector2 } from 'three'
+import { UniformsUtils, ShaderLib, Vector3, Vector2, IUniform, Material } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
-import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
+import { ExtendedLineMaterial, Uniforms } from './SpeckleMaterial'
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 
-class SpeckleLineMaterial extends LineMaterial {
+class SpeckleLineMaterial extends ExtendedLineMaterial {
   private static readonly matBuff: Matrix4 = new Matrix4()
   private static readonly vecBuff0: Vector3 = new Vector3()
   private static readonly vecBuff1: Vector3 = new Vector3()
   private static readonly vecBuff2: Vector3 = new Vector3()
+
+  protected get vertexProgram(): string {
+    return speckleLineVert
+  }
+
+  protected get fragmentProgram(): string {
+    return speckleLineFrag
+  }
+
+  protected get baseUniforms(): { [uniform: string]: IUniform } {
+    return ShaderLib['line'].uniforms
+  }
+
+  protected get uniformsDef(): Uniforms {
+    return {
+      uViewer_high: new Vector3(),
+      uViewer_low: new Vector3(),
+      pixelThreshold: 0
+    }
+  }
 
   public set pixelThreshold(value: number) {
     this.userData.pixelThreshold.value = value
@@ -21,62 +42,25 @@ class SpeckleLineMaterial extends LineMaterial {
 
   constructor(parameters, defines = []) {
     super(parameters)
-
-    this.userData.uViewer_high = {
-      value: new Vector3()
-    }
-    this.userData.uViewer_low = {
-      value: new Vector3()
-    }
-    this.userData.pixelThreshold = {
-      value: 0
-    }
-    ;(this as any).vertProgram = speckleLineVert
-    ;(this as any).fragProgram = speckleLineFrag
-    ;(this as any).uniforms = UniformsUtils.merge([
-      ShaderLib.line.uniforms,
-      {
-        uViewer_high: {
-          value: this.userData.uViewer_high.value
-        },
-        uViewer_low: {
-          value: this.userData.uViewer_low.value
-        },
-        pixelThreshold: {
-          value: this.userData.pixelThreshold
-        }
-      }
-    ])
-
-    this.onBeforeCompile = function (shader) {
-      shader.uniforms.uViewer_high = this.userData.uViewer_high
-      shader.uniforms.uViewer_low = this.userData.uViewer_low
-      shader.uniforms.pixelThreshold = this.userData.pixelThreshold
-      shader.vertexShader = this.vertProgram
-      shader.fragmentShader = this.fragProgram
-    }
-
-    for (let k = 0; k < defines.length; k++) {
-      this.defines[defines[k]] = ' '
-    }
-
-    // this.defines['USE_RTE'] = ' '
+    this.init(defines)
   }
 
-  copy(source) {
-    super.copy(source)
-    this.userData = {}
-    this.userData.uViewer_high = {
-      value: new Vector3()
-    }
-    this.userData.uViewer_low = {
-      value: new Vector3()
-    }
-    this.userData.pixelThreshold = {
-      value: source.userData.pixelThreshold.value
-    }
+  /** We need a unique key per program */
+  public customProgramCacheKey() {
+    return this.constructor.name
+  }
 
+  public copy(source) {
+    super.copy(source)
+    this.copyFrom(source)
     return this
+  }
+
+  public fastCopy(from: Material, to: Material) {
+    super.fastCopy(from, to)
+    const toStandard = to as LineMaterial
+    const fromStandard = from as LineMaterial
+    toStandard.color.copy(fromStandard.color)
   }
 
   onBeforeRender(_this, scene, camera, geometry, object, group) {

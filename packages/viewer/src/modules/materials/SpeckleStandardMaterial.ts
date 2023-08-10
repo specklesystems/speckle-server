@@ -1,22 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
 import { speckleStandardVert } from './shaders/speckle-standard-vert'
 import { speckleStandardFrag } from './shaders/speckle-standard-frag'
-import {
-  UniformsUtils,
-  ShaderLib,
-  Vector3,
-  MeshStandardMaterial,
-  Material,
-  IUniform,
-  Euler
-} from 'three'
+import { ShaderLib, Vector3, Material, IUniform } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import SpeckleMesh from '../objects/SpeckleMesh'
 import { ExtendedMeshStandardMaterial, Uniforms } from './SpeckleMaterial'
-import Materials from './Materials'
 
 class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()
@@ -24,11 +14,11 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
   protected static readonly vecBuff1: Vector3 = new Vector3()
   protected static readonly vecBuff2: Vector3 = new Vector3()
 
-  protected get vertexShader(): string {
+  protected get vertexProgram(): string {
     return speckleStandardVert
   }
 
-  protected get fragmentShader(): string {
+  protected get fragmentProgram(): string {
     return speckleStandardFrag
   }
 

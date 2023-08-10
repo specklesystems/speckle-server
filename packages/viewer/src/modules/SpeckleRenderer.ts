@@ -636,18 +636,18 @@ export default class SpeckleRenderer {
     }
   }
 
-  public setMaterial(rvs: NodeRenderView[], material: Material) {
+  public setMaterial(rvs: NodeRenderView[], material: Material, autoTranslate = true) {
+    autoTranslate
     const rvMap = {}
     for (let k = 0; k < rvs.length; k++) {
       if (!rvMap[rvs[k].batchId]) rvMap[rvs[k].batchId] = []
       rvMap[rvs[k].batchId].push(rvs[k])
     }
     for (const k in rvMap) {
-      this.batcher.batches[k].setDrawRanges(
-        ...rvMap[k].map((value: NodeRenderView) => {
-          return { offset: value.batchStart, count: value.batchCount, material }
-        })
-      )
+      const rvs = rvMap[k].map((value: NodeRenderView) => {
+        return { offset: value.batchStart, count: value.batchCount, material }
+      })
+      this.batcher.batches[k].setDrawRanges(...rvs)
     }
   }
 
@@ -655,9 +655,7 @@ export default class SpeckleRenderer {
     if (!rv || !rv.batchId) {
       return null
     }
-
-    const batch = this.batcher.getBatch(rv)
-    return batch.getMaterial(rv)
+    return this.batcher.getBatch(rv).getMaterial(rv)
   }
 
   public setFilterMaterial(rvs: NodeRenderView[], filterMaterial: FilterMaterial) {

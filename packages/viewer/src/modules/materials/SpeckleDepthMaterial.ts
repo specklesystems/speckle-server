@@ -22,11 +22,11 @@ class SpeckleDepthMaterial extends ExtendedMeshDepthMaterial {
   private static readonly vecBuff1: Vector3 = new Vector3()
   private static readonly vecBuff2: Vector3 = new Vector3()
 
-  protected get vertexShader(): string {
+  protected get vertexProgram(): string {
     return speckleDepthVert
   }
 
-  protected get fragmentShader(): string {
+  protected get fragmentProgram(): string {
     return speckleDepthFrag
   }
 

@@ -10,11 +10,11 @@ import SpeckleMesh from '../objects/SpeckleMesh'
 import { Uniforms } from './SpeckleMaterial'
 
 class SpeckleStandardColoredMaterial extends SpeckleStandardMaterial {
-  protected get vertexShader(): string {
+  protected get vertexProgram(): string {
     return speckleStandardColoredVert
   }
 
-  protected get fragmentShader(): string {
+  protected get fragmentProgram(): string {
     return speckleStandardColoredFrag
   }
 

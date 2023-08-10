@@ -8,11 +8,11 @@ import { Vector4 } from 'three'
 import { Uniforms } from './SpeckleMaterial'
 
 class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
-  protected get vertexShader(): string {
+  protected get vertexProgram(): string {
     return speckleShadowcatcherVert
   }
 
-  protected get fragmentShader(): string {
+  protected get fragmentProgram(): string {
     return speckleShadowcatcherFrag
   }
 

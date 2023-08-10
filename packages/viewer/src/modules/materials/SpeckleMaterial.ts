@@ -6,8 +6,10 @@ import {
   MeshDepthMaterial,
   MeshNormalMaterial,
   MeshStandardMaterial,
+  PointsMaterial,
   UniformsUtils
 } from 'three'
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 
 class SpeckleUserData {
   toJSON() {
@@ -21,11 +23,11 @@ export type Uniforms = Record<string, any>
 export class SpeckleMaterial {
   protected _internalUniforms
 
-  protected get vertexShader(): string {
+  protected get vertexProgram(): string {
     return ''
   }
 
-  protected get fragmentShader(): string {
+  protected get fragmentProgram(): string {
     return ''
   }
 
@@ -93,8 +95,8 @@ export class SpeckleMaterial {
   protected onCompile(shader, renderer) {
     this._internalUniforms = shader
     this.bindUniforms()
-    shader.vertexShader = this.vertexShader
-    shader.fragmentShader = this.fragmentShader
+    shader.vertexShader = this.vertexProgram
+    shader.fragmentShader = this.fragmentProgram
   }
 
   public fastCopy(from: Material, to: Material) {
@@ -144,6 +146,9 @@ export class ExtendedMeshStandardMaterial extends MeshStandardMaterial {}
 export class ExtendedMeshBasicMaterial extends MeshBasicMaterial {}
 export class ExtendedMeshDepthMaterial extends MeshDepthMaterial {}
 export class ExtendedMeshNormalMaterial extends MeshNormalMaterial {}
+export class ExtendedLineMaterial extends LineMaterial {}
+export class ExtendedPointsMaterial extends PointsMaterial {}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ExtendedMeshStandardMaterial extends SpeckleMaterial {}
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -152,11 +157,17 @@ export interface ExtendedMeshBasicMaterial extends SpeckleMaterial {}
 export interface ExtendedMeshDepthMaterial extends SpeckleMaterial {}
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ExtendedMeshNormalMaterial extends SpeckleMaterial {}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface ExtendedLineMaterial extends SpeckleMaterial {}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface ExtendedPointsMaterial extends SpeckleMaterial {}
 
 applyMixins(ExtendedMeshStandardMaterial, [SpeckleMaterial])
 applyMixins(ExtendedMeshBasicMaterial, [SpeckleMaterial])
 applyMixins(ExtendedMeshDepthMaterial, [SpeckleMaterial])
 applyMixins(ExtendedMeshNormalMaterial, [SpeckleMaterial])
+applyMixins(ExtendedLineMaterial, [SpeckleMaterial])
+applyMixins(ExtendedPointsMaterial, [SpeckleMaterial])
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function applyMixins(derivedCtor: any, constructors: any[]) {

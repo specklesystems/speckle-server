@@ -27,11 +27,11 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
 
   private _billboardPixelHeight: number
 
-  protected get vertexShader(): string {
+  protected get vertexProgram(): string {
     return speckleBasicVert
   }
 
-  protected get fragmentShader(): string {
+  protected get fragmentProgram(): string {
     return speckleBasicFrag
   }
 

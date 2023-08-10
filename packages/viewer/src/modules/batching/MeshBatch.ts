@@ -144,7 +144,6 @@ export default class MeshBatch implements Batch {
   }
 
   public setBatchBuffers(...range: BatchUpdateRange[]): void {
-    const start = performance.now()
     let minGradientIndex = Infinity
     let maxGradientIndex = 0
     for (let k = 0; k < range.length; k++) {
@@ -174,15 +173,9 @@ export default class MeshBatch implements Batch {
     }
     if (minGradientIndex < Infinity && maxGradientIndex > 0)
       this.updateGradientIndexBuffer()
-    MeshBatch.split3 += performance.now() - start
   }
 
-  public static split = 0
-  public static split2 = 0
-  public static split3 = 0
-
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
-    const start = performance.now()
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
         value.material = this.mesh.getCachedMaterial(
@@ -260,7 +253,6 @@ export default class MeshBatch implements Batch {
         }
       }
     }
-    MeshBatch.split += performance.now() - start
     let count = 0
     this.geometry.groups.forEach((value) => (count += value.count))
     if (count !== this.getCount()) {
@@ -310,7 +302,6 @@ export default class MeshBatch implements Batch {
   }
 
   private flattenDrawGroups() {
-    const start = performance.now()
     const materialOrder = []
     this.geometry.groups.reduce((previousValue, currentValue) => {
       if (previousValue.indexOf(currentValue.materialIndex) === -1) {
@@ -364,7 +355,6 @@ export default class MeshBatch implements Batch {
         k = n
       }
     }
-    MeshBatch.split2 += performance.now() - start
     if (this.drawCalls > this.minDrawCalls + 2) {
       this.needsShuffle = true
     }

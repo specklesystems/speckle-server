@@ -6,11 +6,11 @@ import { speckleGhostFrag } from './shaders/speckle-ghost-frag'
 import SpeckleBasicMaterial from './SpeckleBasicMaterial'
 
 class SpeckleGhostMaterial extends SpeckleBasicMaterial {
-  protected get vertexShader(): string {
+  protected get vertexProgram(): string {
     return speckleGhostVert
   }
 
-  protected get fragmentShader(): string {
+  protected get fragmentProgram(): string {
     return speckleGhostFrag
   }
 
