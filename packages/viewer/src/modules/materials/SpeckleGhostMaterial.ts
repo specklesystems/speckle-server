@@ -11,7 +11,7 @@ class SpeckleGhostMaterial extends SpeckleBasicMaterial {
     return speckleGhostFrag
   }
 
-  constructor(parameters, defines = []) {
+  constructor(parameters, defines = ['USE_RTE']) {
     super(parameters, defines)
   }
 }

@@ -31,7 +31,7 @@ class SpecklePointMaterial extends ExtendedPointsMaterial {
     }
   }
 
-  constructor(parameters, defines = []) {
+  constructor(parameters, defines = ['USE_RTE']) {
     super(parameters)
     this.init(defines)
   }

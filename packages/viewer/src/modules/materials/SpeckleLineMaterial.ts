@@ -39,7 +39,7 @@ class SpeckleLineMaterial extends ExtendedLineMaterial {
     this.needsUpdate = true
   }
 
-  constructor(parameters, defines = []) {
+  constructor(parameters, defines = ['USE_RTE']) {
     super(parameters)
     this.init(defines)
   }
