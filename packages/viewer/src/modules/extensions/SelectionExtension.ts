@@ -59,6 +59,7 @@ export class SelectionExtension extends Extension {
       },
       ['USE_RTE']
     )
+    this.meshSelectionMaterial.stencilOutline = true
     this.meshSelectionMaterial.color.convertSRGBToLinear()
 
     this.meshTransparentMaterial = this.meshSelectionMaterial.clone()
@@ -112,6 +113,7 @@ export class SelectionExtension extends Extension {
       },
       ['USE_RTE']
     )
+
     this.pointHighlightMaterial = new SpecklePointMaterial(
       {
         color: 0xff7377,

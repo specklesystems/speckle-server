@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 import {
+  AlwaysStencilFunc,
   IUniform,
   Material,
   MeshBasicMaterial,
@@ -7,6 +8,7 @@ import {
   MeshNormalMaterial,
   MeshStandardMaterial,
   PointsMaterial,
+  ReplaceStencilOp,
   UniformsUtils
 } from 'three'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
@@ -22,6 +24,7 @@ export type Uniforms = Record<string, any>
 
 export class SpeckleMaterial {
   protected _internalUniforms
+  protected _stencilOutline
 
   protected get vertexProgram(): string {
     return ''
@@ -40,6 +43,18 @@ export class SpeckleMaterial {
   protected get baseUniforms(): { [uniform: string]: IUniform } {
     return {
       emptyBase: { value: 'emptyBase' }
+    }
+  }
+
+  public set stencilOutline(value: boolean) {
+    this['stencilWrite'] = value
+    if (value) {
+      this['stencilWriteMask'] = 0xff
+      this['stencilRef'] = 0x00
+      this['stencilFunc'] = AlwaysStencilFunc
+      this['stencilZFail'] = ReplaceStencilOp
+      this['stencilZPass'] = ReplaceStencilOp
+      this['stencilFail'] = ReplaceStencilOp
     }
   }
 
