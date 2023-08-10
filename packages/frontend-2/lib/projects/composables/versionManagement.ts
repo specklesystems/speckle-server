@@ -45,18 +45,8 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
 import { isUndefined, uniqBy } from 'lodash-es'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
+import { useLock } from '~~/lib/common/composables/singleton'
 
-/**
- * TODO: These aren't idempotent which makes them hard to use in multiple places. The moment you do so
- * bugs can arise like total count counters updating incorrectly etc.
- *
- * Even if it causes some over-fetching, we should convert these to be idempotent for easier maintenance and less bugs
- */
-
-/**
- * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
- * that we don't want to duplicate (or extract that part out into a separate composable)
- */
 export function useProjectVersionUpdateTracking(
   projectId: MaybeRef<string>,
   handler?: (
@@ -78,9 +68,13 @@ export function useProjectVersionUpdateTracking(
       id: unref(projectId)
     })
   )
+  const { hasLock } = useLock(
+    computed(() => `useProjectVersionUpdateTracking-${unref(projectId)}`)
+  )
 
+  // Cache updates that should only be invoked once
   onProjectVersionsUpdate((res) => {
-    if (!res.data?.projectVersionsUpdated) return
+    if (!res.data?.projectVersionsUpdated || !hasLock.value) return
 
     const event = res.data.projectVersionsUpdated
     const version = event.version
@@ -183,8 +177,7 @@ export function useProjectVersionUpdateTracking(
             return {
               ...(value || {}),
               items: newItems,
-              totalCount:
-                version.model.versionCount.totalCount || (value.totalCount || 0) + 1
+              totalCount: (value.totalCount || 0) + 1
             }
           }
         )
@@ -249,7 +242,12 @@ export function useProjectVersionUpdateTracking(
         })
       }
     }
+  })
 
+  onProjectVersionsUpdate((res) => {
+    if (!res.data?.projectVersionsUpdated) return
+
+    const event = res.data.projectVersionsUpdated
     handler?.(event, apollo.cache)
   })
 }
@@ -551,10 +549,6 @@ export function useUpdateVersion() {
   }
 }
 
-/**
- * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
- * that we don't want to duplicate (or extract that part out into a separate composable)
- */
 export function useProjectPendingVersionUpdateTracking(
   projectId: MaybeRef<string>,
   handler?: (
@@ -564,6 +558,9 @@ export function useProjectPendingVersionUpdateTracking(
     cache: ApolloCache<unknown>
   ) => void
 ) {
+  const { hasLock } = useLock(
+    computed(() => `useProjectPendingVersionUpdateTracking-${unref(projectId)}`)
+  )
   const { onResult: onProjectPendingVersionsUpdate } = useSubscription(
     onProjectPendingVersionsUpdatedSubscription,
     () => ({
@@ -574,7 +571,8 @@ export function useProjectPendingVersionUpdateTracking(
   const { triggerNotification } = useGlobalToast()
 
   onProjectPendingVersionsUpdate((res) => {
-    if (!res.data?.projectPendingVersionsUpdated.id) return
+    if (!res.data?.projectPendingVersionsUpdated.id || !hasLock.value) return
+
     const event = res.data.projectPendingVersionsUpdated
     const modelId = event.version.model?.id
     if (!modelId) return
@@ -626,7 +624,12 @@ export function useProjectPendingVersionUpdateTracking(
         })
       }
     }
+  })
 
+  onProjectPendingVersionsUpdate((res) => {
+    if (!res.data?.projectPendingVersionsUpdated.id) return
+
+    const event = res.data.projectPendingVersionsUpdated
     handler?.(event, apollo.cache)
   })
 }

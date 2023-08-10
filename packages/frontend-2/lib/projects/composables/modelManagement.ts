@@ -36,6 +36,7 @@ import {
 } from '~~/lib/projects/graphql/subscriptions'
 import { modelRoute, useNavigateToProject } from '~~/lib/common/helpers/route'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
+import { useLock } from '~~/lib/common/composables/singleton'
 
 const isValidModelName: GenericValidateFunction<string> = (name) => {
   name = name.trim()
@@ -200,9 +201,6 @@ export function useDeleteModel() {
 /**
  * Track project model updates/deletes and make cache updates accordingly. Optionally
  * provide an extra handler that you can use to react to all model update events (create/update/delete)
- *
- * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
- * that we don't want to duplicate (or extract that part out into a separate composable)
  */
 export function useProjectModelUpdateTracking(
   projectId: MaybeRef<string>,
@@ -218,13 +216,16 @@ export function useProjectModelUpdateTracking(
       id: unref(projectId)
     })
   )
+  const { hasLock } = useLock(
+    computed(() => `useProjectModelUpdateTracking-${unref(projectId)}`)
+  )
   const apollo = useApolloClient().client
   const evictProjectModels = useEvictProjectModelFields()
   const goToProject = useNavigateToProject()
   const { triggerNotification } = useGlobalToast()
 
   onProjectModelUpdate((res) => {
-    if (!res.data?.projectModelsUpdated) return
+    if (!res.data?.projectModelsUpdated || !hasLock.value) return
 
     // If model was updated, apollo already updated it
     const event = res.data.projectModelsUpdated
@@ -304,15 +305,15 @@ export function useProjectModelUpdateTracking(
         }
       )
     }
+  })
 
+  onProjectModelUpdate((res) => {
+    if (!res.data?.projectModelsUpdated) return
+    const event = res.data.projectModelsUpdated
     handler?.(event, apollo.cache)
   })
 }
 
-/**
- * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
- * that we don't want to duplicate (or extract that part out into a separate composable)
- */
 export function useProjectPendingModelUpdateTracking(
   projectId: MaybeRef<string>,
   handler?: (
@@ -330,9 +331,12 @@ export function useProjectPendingModelUpdateTracking(
   )
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
+  const { hasLock } = useLock(
+    computed(() => `useProjectPendingModelUpdateTracking-${unref(projectId)}`)
+  )
 
   onProjectPendingModelUpdate((res) => {
-    if (!res.data?.projectPendingModelsUpdated.id) return
+    if (!res.data?.projectPendingModelsUpdated.id || !hasLock.value) return
     const event = res.data.projectPendingModelsUpdated
 
     if (event.type === ProjectPendingModelsUpdatedMessageType.Created) {
@@ -385,7 +389,11 @@ export function useProjectPendingModelUpdateTracking(
         })
       }
     }
+  })
 
+  onProjectPendingModelUpdate((res) => {
+    if (!res.data?.projectPendingModelsUpdated.id) return
+    const event = res.data.projectPendingModelsUpdated
     handler?.(event, apollo.cache)
   })
 }
