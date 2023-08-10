@@ -43,7 +43,7 @@ import {
 } from '~~/lib/projects/graphql/mutations'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
-import { isUndefined, uniqBy } from 'lodash-es'
+import { intersection, isUndefined, uniqBy } from 'lodash-es'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 import { useLock } from '~~/lib/common/composables/singleton'
 
@@ -94,19 +94,21 @@ export function useProjectVersionUpdateTracking(
           if (fieldName !== 'models') return
           if (variables.filter?.search) return
 
+          const limit = variables.limit
           const newModelRef = ref('Model', version.model.id)
           const newItems = (value?.items || []).slice()
 
-          let isAdded = false
-          if (!newItems.find((i) => i.__ref === newModelRef.__ref)) {
+          if (
+            !newItems.find((i) => i.__ref === newModelRef.__ref) &&
+            (isUndefined(limit) || newItems.length < limit)
+          ) {
             newItems.unshift(newModelRef)
-            isAdded = true
           }
 
           return {
             ...(value || {}),
             items: newItems,
-            totalCount: (value.totalCount || 0) + (isAdded ? 1 : 0)
+            totalCount: (value.totalCount || 0) + 1
           }
         }
       )
@@ -169,10 +171,22 @@ export function useProjectVersionUpdateTracking(
         modifyObjectFields<ModelVersionsArgs, Model['versions']>(
           apollo.cache,
           getCacheId('Model', version.model.id),
-          (fieldName, _vars, value, { ref }) => {
+          (fieldName, variables, value, { ref }) => {
             if (fieldName !== 'versions') return
+            if (
+              variables.filter?.priorityIdsOnly &&
+              variables.filter?.priorityIds &&
+              !variables.filter.priorityIds.includes(version.id)
+            ) {
+              return
+            }
+
+            const limit = variables.limit
             const newItems = (value?.items || []).slice()
-            newItems.unshift(ref('Version', version.id))
+
+            if (isUndefined(limit) || newItems.length < limit) {
+              newItems.unshift(ref('Version', version.id))
+            }
 
             return {
               ...(value || {}),
@@ -347,16 +361,27 @@ export function useDeleteVersions() {
             modifyObjectFields<ModelVersionsArgs, Model['versions']>(
               cache,
               getCacheId('Model', options.modelId),
-              (fieldName, _variables, data) => {
+              (fieldName, variables, data) => {
                 if (fieldName !== 'versions') return
+
+                let removedCount = input.versionIds.length
+                if (
+                  variables.filter?.priorityIdsOnly &&
+                  variables.filter?.priorityIds
+                ) {
+                  const idIntersection = intersection(
+                    variables.filter.priorityIds,
+                    input.versionIds
+                  )
+                  if (idIntersection.length < 1) return
+                  removedCount = idIntersection.length
+                }
+
                 return {
                   ...data,
                   ...(!isUndefined(data.totalCount)
                     ? {
-                        totalCount: Math.max(
-                          data.totalCount - input.versionIds.length,
-                          0
-                        )
+                        totalCount: Math.max(data.totalCount - removedCount, 0)
                       }
                     : {})
                 }
@@ -441,13 +466,14 @@ export function useMoveVersions() {
                     .map((id) => getCacheId('Version', id))
                     .includes(i.__ref)
               )
+              const removedItemsCount = Math.max(0, oldItems.length - newItems.length)
 
               return {
                 ...data,
                 ...(data.items ? { items: newItems } : {}),
                 ...(!isUndefined(data.totalCount)
                   ? {
-                      totalCount: data.totalCount - input.versionIds.length
+                      totalCount: data.totalCount - removedItemsCount
                     }
                   : {})
               }
@@ -472,17 +498,19 @@ export function useMoveVersions() {
             (fieldName, _variables, data) => {
               if (fieldName !== 'versions') return
 
+              const oldItems = data.items || []
               const newItems = [
                 ...input.versionIds.map((i) => getObjectReference('Version', i)),
-                ...(data.items || [])
+                ...oldItems
               ]
+              const addedItemAmount = newItems.length - oldItems.length
 
               return {
                 ...data,
                 ...(data.items ? { items: newItems } : {}),
                 ...(!isUndefined(data.totalCount)
                   ? {
-                      totalCount: data.totalCount + input.versionIds.length
+                      totalCount: data.totalCount + addedItemAmount
                     }
                   : {})
               }

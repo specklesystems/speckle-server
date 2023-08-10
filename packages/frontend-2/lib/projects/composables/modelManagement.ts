@@ -37,6 +37,7 @@ import {
 import { modelRoute, useNavigateToProject } from '~~/lib/common/helpers/route'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 import { useLock } from '~~/lib/common/composables/singleton'
+import { isUndefined } from 'lodash-es'
 
 const isValidModelName: GenericValidateFunction<string> = (name) => {
   name = name.trim()
@@ -268,19 +269,21 @@ export function useProjectModelUpdateTracking(
           if (variables.filter?.contributors?.length) return
           if (!variables.filter?.onlyWithVersions) return
 
+          const limit = variables.limit
           const newModelRef = ref('Model', model.id)
           const newItems = (value?.items || []).slice()
 
-          let isAdded = false
-          if (!newItems.find((i) => i.__ref === newModelRef.__ref)) {
+          if (
+            !newItems.find((i) => i.__ref === newModelRef.__ref) &&
+            (isUndefined(limit) || newItems.length < limit)
+          ) {
             newItems.unshift(newModelRef)
-            isAdded = true
           }
 
           return {
             ...(value || {}),
             items: newItems,
-            totalCount: (value.totalCount || 0) + (isAdded ? 1 : 0)
+            totalCount: (value.totalCount || 0) + 1
           }
         }
       )
