@@ -156,7 +156,6 @@ const userToModify = ref<User | null>(null)
 
 const openUserDeleteDialog = (user: User) => {
   userToModify.value = user
-
   showUserDeleteDialog.value = true
 }
 

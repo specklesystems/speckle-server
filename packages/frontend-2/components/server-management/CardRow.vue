@@ -1,6 +1,7 @@
 <template>
   <div class="flex flex-col gap-2">
     <div class="flex items-center gap-1 text-foreground-2 text-sm">
+      <Component :is="icon" class="h-4 w-4" />
       <span>{{ title }}</span>
     </div>
     <div class="flex justify-between items-center gap-8">
@@ -26,6 +27,7 @@
 
 <script lang="ts" setup>
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
+import { ConcreteComponent } from 'vue'
 
 defineEmits<{
   (e: 'cta-clicked', v: MouseEvent): void
@@ -34,6 +36,7 @@ defineEmits<{
 defineProps<{
   title: string
   value: string
+  icon: ConcreteComponent
   cta: {
     type: 'button' | 'link'
     label: string

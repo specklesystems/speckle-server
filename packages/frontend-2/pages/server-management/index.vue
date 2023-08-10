@@ -53,7 +53,14 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import Card from '../../components/server-management/Card.vue'
 import SettingsDialog from '../../components/server-management/SettingsDialog.vue'
-import { SettingsDialogRef } from '~~/lib/server-management/helpers/types'
+import { CardInfo, SettingsDialogRef } from '~~/lib/server-management/helpers/types'
+import {
+  ServerIcon,
+  UsersIcon,
+  EnvelopeIcon,
+  ChartBarIcon,
+  HomeIcon
+} from '@heroicons/vue/24/solid'
 
 const router = useRouter()
 
@@ -88,10 +95,11 @@ const dataQuery = graphql(`
 
 const { result } = useQuery(dataQuery)
 
-const serverData = computed(() => [
+const serverData = computed((): CardInfo[] => [
   {
     title: 'Server Name',
     value: result.value?.serverInfo.name || 'N/A',
+    icon: ServerIcon,
     cta: {
       type: 'button',
       label: 'Edit Settings',
@@ -103,6 +111,7 @@ const serverData = computed(() => [
   {
     title: 'Speckle Version',
     value: result.value?.serverInfo.version || 'N/A',
+    icon: ChartBarIcon,
     cta: {
       type: 'link',
       label: 'Update is available',
@@ -117,6 +126,7 @@ const userData = computed(() => [
   {
     title: 'Active users',
     value: result.value?.admin.serverStatistics.totalUserCount?.toString() || 'N/A',
+    icon: UsersIcon,
     cta: {
       type: 'button',
       label: 'Manage',
@@ -126,6 +136,7 @@ const userData = computed(() => [
   {
     title: 'Pending invitations',
     value: result.value?.admin.serverStatistics.totalPendingInvites?.toString() || '0',
+    icon: EnvelopeIcon,
     cta: {
       type: 'button',
       label: 'Manage',
@@ -138,6 +149,7 @@ const projectData = computed(() => [
   {
     title: 'Projects',
     value: result.value?.admin.serverStatistics.totalProjectCount?.toString() || 'N/A',
+    icon: HomeIcon,
     cta: {
       type: 'button',
       label: 'Manage',

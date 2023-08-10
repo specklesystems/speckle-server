@@ -7,6 +7,7 @@
         :title="info.title"
         :value="info.value"
         :cta="info.cta"
+        :icon="info.icon"
       />
     </div>
   </div>

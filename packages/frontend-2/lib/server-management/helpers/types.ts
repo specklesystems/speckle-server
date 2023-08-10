@@ -1,3 +1,5 @@
+import { ConcreteComponent } from 'vue'
+
 export interface CTA {
   type: 'button' | 'link'
   label: string
@@ -22,6 +24,7 @@ export interface CardInfo {
   title: string
   value: string
   cta: CTA
+  icon: ConcreteComponent
 }
 
 export interface ServerStatistics {

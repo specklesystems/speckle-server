@@ -99,7 +99,7 @@ const form = useForm({
     adminContact: '',
     company: '',
     termsOfService: '',
-    inviteOnly: false
+    inviteOnly: ''
   }
 })
 
@@ -123,7 +123,6 @@ const serverInfoUpdateMutation = gql`
   }
 `
 
-// Use the useQuery and useMutation hooks
 const { onResult } = useQuery<ServerInfoResponse>(serverInfoQuery)
 const { mutate } = useMutation(serverInfoUpdateMutation)
 
