@@ -118,6 +118,8 @@ import { ISenderModelCard } from 'lib/bindings/definitions/IBasicConnectorBindin
 import { ISendFilter } from '~~/lib/bindings/definitions/ISendBinding'
 import { nanoid } from 'nanoid'
 
+const app = useNuxtApp()
+
 const store = useHostAppStore()
 const router = useRouter()
 const { defaultAccount } = storeToRefs(useAccountStore())
@@ -151,8 +153,6 @@ const publish = async () => {
     projectId: projectRes.data?.projectMutations.create.id as string
   })
 
-  console.log(store.sendFilters)
-
   const sendFilter = {
     ...store.selectionFilter,
     ...selectionFilterCopy.value
@@ -174,5 +174,6 @@ const publish = async () => {
   // 1. create model sender card with selection info above x
   // 2. go to home page where this is displayed x
   // 3. send, and show progress
+  await app.$sendBinding.send(modelCard)
 }
 </script>

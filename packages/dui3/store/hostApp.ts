@@ -6,6 +6,9 @@ import {
   IReceiverModelCard
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
 import { ISendFilter } from 'lib/bindings/definitions/ISendBinding'
+import { CommitCreateInput } from '~/lib/common/generated/gql/graphql'
+import { useCreateCommit } from '~/lib/graphql/composables'
+import { useAccountStore } from '~/store/accounts'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -16,6 +19,7 @@ export type ProjectModelGroup = {
 
 export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
+  const accountStore = useAccountStore()
 
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
@@ -91,6 +95,49 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     documentModelStore.value.models
       .filter((m) => senderIds.includes(m.id))
       .forEach((model) => ((model as ISenderModelCard).expired = true))
+  })
+
+  app.$sendBinding?.on('sendViaBrowser', async (sendViaBrowserArgs) => {
+    console.log(sendViaBrowserArgs)
+
+    const formData = new FormData()
+    const sendObject = sendViaBrowserArgs.sendObject
+    const batches = sendObject.batches
+    const defaultAccount = accountStore.defaultAccount
+    const modelCard = sendViaBrowserArgs.modelCard
+    console.log(sendObject)
+    console.log(batches)
+    console.log(sendObject.batches)
+
+    batches.forEach(async (batch) => {
+      formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
+
+      if (defaultAccount) {
+        await fetch(
+          `${defaultAccount.accountInfo.serverInfo.url}/objects/${modelCard.projectId}`,
+          {
+            method: 'POST',
+            headers: { Authorization: 'Bearer ' + defaultAccount.accountInfo.token },
+            body: formData
+          }
+        )
+      }
+    })
+
+    const commit: CommitCreateInput = {
+      streamId: modelCard.projectId,
+      branchName: 'test',
+      objectId: sendObject.id,
+      message: 'sent from sketchup DUI3',
+      sourceApplication: 'sketchup',
+      totalChildrenCount: sendObject.totalChildrenCount
+    }
+
+    const createCommit = useCreateCommit()
+
+    const res = await createCommit(commit)
+
+    console.log(res)
   })
 
   // First initialization calls
