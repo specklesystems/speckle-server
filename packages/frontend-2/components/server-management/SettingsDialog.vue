@@ -105,7 +105,7 @@ const form = useForm({
 
 // Define the GraphQL queries and mutations
 const serverInfoQuery = gql`
-  query ServerStatistics {
+  query ServerSettingsDialogData {
     serverInfo {
       name
       description

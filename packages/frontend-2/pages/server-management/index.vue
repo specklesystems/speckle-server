@@ -78,7 +78,7 @@ const saveSettings = () => {
 }
 
 const dataQuery = graphql(`
-  query ServerStatistics {
+  query AdminPageData {
     admin {
       serverStatistics {
         totalPendingInvites

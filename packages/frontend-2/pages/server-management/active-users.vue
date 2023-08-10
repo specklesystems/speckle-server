@@ -21,7 +21,6 @@
 
     <div class="flex items-center gap-8 h-10">
       <FormTextInput
-        v-model="searchString"
         size="lg"
         name="search"
         :custom-icon="MagnifyingGlassIcon"
@@ -31,14 +30,9 @@
         :show-clear="!!searchString"
         placeholder="Search Users"
         class="rounded-md border border-outline-3"
+        @update:model-value="debounceSearchUpdate"
+        @change="($event) => searchUpdateHandler($event.value)"
       />
-      <div class="flex items-center gap-2 text-foreground text-sm shrink-0">
-        <span class="shrink-0">1-50 of 350</span>
-        <div class="flex gap-1">
-          <ChevronLeftIcon class="h-8 w-8" />
-          <ChevronRightIcon class="h-8 w-8" />
-        </div>
-      </div>
     </div>
 
     <Table
@@ -92,6 +86,11 @@
       </template>
     </Table>
 
+    <InfiniteLoading
+      :settings="{ identifier: infiniteLoaderId }"
+      @infinite="infiniteLoad"
+    />
+
     <UserDeleteDialog
       v-model:open="showUserDeleteDialog"
       :user="userToModify"
@@ -135,8 +134,6 @@
 <script setup lang="ts">
 import {
   MagnifyingGlassIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   ShieldExclamationIcon,
   ShieldCheckIcon
 } from '@heroicons/vue/20/solid'
@@ -145,14 +142,18 @@ import Table from '../../components/server-management/Table.vue'
 import UserRoleSelect from '../../components/server-management/UserRoleSelect.vue'
 import UserDeleteDialog from '../../components/server-management/DeleteUserDialog.vue'
 import ChangeUserRoleDialog from '../../components/server-management/ChangeUserRoleDialog.vue'
+import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { ref } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
-import gql from 'graphql-tag'
+import { graphql } from '~~/lib/common/generated/gql'
+import { debounce } from 'lodash-es'
+
 import Avatar from '~~/components/user/Avatar.vue'
 
 import { TrashIcon } from '@heroicons/vue/24/outline'
 
 const userToModify = ref<User | null>(null)
+const searchString = ref('')
 
 const openUserDeleteDialog = (user: User) => {
   userToModify.value = user
@@ -163,10 +164,10 @@ const closeUserDeleteDialog = () => {
   showUserDeleteDialog.value = false
 }
 
-const openChangeUserRoleDialog = (user: User) => {
-  userToModify.value = user
-  showChangeUserRoleDialog.value = true
-}
+// const openChangeUserRoleDialog = (user: User) => {
+//   userToModify.value = user
+//   showChangeUserRoleDialog.value = true
+// }
 
 const closeChangeUserRoleDialog = () => {
   showChangeUserRoleDialog.value = false
@@ -201,53 +202,96 @@ export interface User {
   invitedBy?: User
 }
 
-const GET_USERS = gql`
-  query ServerStatistics(
-    $role: ServerRole
-    $query: String
-    $cursor: String
-    $limit: Int!
-  ) {
+const getUsers = graphql(`
+  query UserList($limit: Int!, $cursor: String, $query: String) {
     admin {
-      userList(role: $role, query: $query, cursor: $cursor, limit: $limit) {
+      userList(limit: $limit, cursor: $cursor, query: $query) {
         totalCount
+        cursor
         items {
           id
-          name
+          bio
           avatar
+          name
+          role
           verified
           company
-          role
         }
+      }
+    }
+  }
+`)
+
+const logger = useLogger()
+
+const infiniteLoaderId = ref('')
+const {
+  result: extraPagesResult,
+  fetchMore: fetchMorePages,
+  variables: resultVariables,
+  onResult
+} = useQuery(getUsers, () => ({
+  limit: 50,
+  query: searchString.value
+}))
+
+// const hasItems = computed(
+//   () => !!(extraPagesResult.value?.admin?.userList?.items || []).length
+// )
+
+const moreToLoad = computed(
+  () =>
+    !extraPagesResult.value?.admin?.userList ||
+    extraPagesResult.value.admin.userList.items.length <
+      extraPagesResult.value.admin.userList.totalCount
+)
+
+const infiniteLoad = async (state: InfiniteLoaderState) => {
+  const cursor = extraPagesResult.value?.admin?.userList.cursor || null
+  if (!moreToLoad.value || !cursor) return state.complete()
+
+  try {
+    await fetchMorePages({
+      variables: {
         cursor
       }
-    }
+    })
+  } catch (e) {
+    logger.error(e)
+    state.error()
+    return
   }
-`
 
-const { result } = useQuery(GET_USERS, {
-  limit: 50
-})
-
-const users = ref<User[]>([])
-
-watchEffect(() => {
-  if (result.value) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    users.value = result.value.admin.userList.items
+  state.loaded()
+  if (!moreToLoad.value) {
+    state.complete()
   }
-})
+}
+
+const users = computed(() => extraPagesResult.value?.admin.userList.items || [])
+
+const searchUpdateHandler = (value: string) => {
+  searchString.value = value
+}
+
+const debounceSearchUpdate = debounce(searchUpdateHandler, 500)
+
+const calculateLoaderId = () => {
+  infiniteLoaderId.value = resultVariables.value?.query || ''
+}
+
+onResult(calculateLoaderId)
 
 // Watch for changes in the 'role' of each user
-users.value.forEach((user) => {
-  watch(
-    () => user.role,
-    (newRole, oldRole) => {
-      if (newRole !== oldRole) {
-        userToModify.value = user // Set the current user to modify
-        openChangeUserRoleDialog(user) // Open the dialog
-      }
-    }
-  )
-})
+// users.value.forEach((user) => {
+//   watch(
+//     () => user.role,
+//     (newRole, oldRole) => {
+//       if (newRole !== oldRole) {
+//         userToModify.value = user // Set the current user to modify
+//         openChangeUserRoleDialog(user) // Open the dialog
+//       }
+//     }
+//   )
+// })
 </script>
