@@ -7,7 +7,7 @@ import {
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
 import { ISendFilter } from 'lib/bindings/definitions/ISendBinding'
 import { CommitCreateInput } from '~/lib/common/generated/gql/graphql'
-import { useCreateCommit } from '~/lib/graphql/composables'
+import { useCreateCommit, useGetModelDetails } from '~/lib/graphql/composables'
 import { useAccountStore } from '~/store/accounts'
 
 export type ProjectModelGroup = {
@@ -98,18 +98,12 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   })
 
   app.$sendBinding?.on('sendViaBrowser', async (sendViaBrowserArgs) => {
-    console.log(sendViaBrowserArgs)
-
     const formData = new FormData()
     const sendObject = sendViaBrowserArgs.sendObject
-    const batches = sendObject.batches
     const defaultAccount = accountStore.defaultAccount
     const modelCard = sendViaBrowserArgs.modelCard
-    console.log(sendObject)
-    console.log(batches)
-    console.log(sendObject.batches)
 
-    batches.forEach(async (batch) => {
+    sendObject.batches.forEach(async (batch) => {
       formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
 
       if (defaultAccount) {
@@ -124,9 +118,15 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       }
     })
 
+    const getModelDetails = useGetModelDetails()
+    const modelDetails = getModelDetails({
+      projectId: modelCard.projectId,
+      modelId: modelCard.modelId
+    })
+
     const commit: CommitCreateInput = {
       streamId: modelCard.projectId,
-      branchName: 'test',
+      branchName: (await modelDetails).displayName,
       objectId: sendObject.id,
       message: 'sent from sketchup DUI3',
       sourceApplication: 'sketchup',
@@ -134,10 +134,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     }
 
     const createCommit = useCreateCommit()
-
-    const res = await createCommit(commit)
-
-    console.log(res)
+    await createCommit(commit)
   })
 
   // First initialization calls
