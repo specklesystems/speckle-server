@@ -2,7 +2,7 @@
   <div class="mt-8 text-foreground">
     <div class="w-full text-sm overflow-x-auto overflow-y-visible">
       <div
-        class="grid z-10 grid-cols-12 items-center gap-2 font-semibold bg-foundation rounded-t-lg w-full border-b border-outline-3 h-10 px-4 min-w-[900px]"
+        class="grid z-10 grid-cols-12 items-center gap-6 font-semibold bg-foundation rounded-t-lg w-full border-b border-outline-3 h-10 px-4 min-w-[900px]"
         :style="{ paddingRight: paddingRightStyle }"
       >
         <div
@@ -18,7 +18,7 @@
         <div
           v-for="(item, rowIndex) in items"
           :key="rowIndex"
-          class="relative grid grid-cols-12 items-center gap-2 px-4 py-1 min-w-[900px] bg-white"
+          class="relative grid grid-cols-12 items-center gap-6 px-4 py-1 min-w-[900px] bg-white"
           :style="{ paddingRight: paddingRightStyle }"
         >
           <template v-for="(column, colIndex) in headers" :key="colIndex">
@@ -38,7 +38,7 @@
                 color="secondary"
                 hide-text="true"
                 class="text-red-500"
-                @click="button.action(item as User)"
+                @click="button.action(item as User | Project)"
               />
             </div>
           </div>
@@ -50,12 +50,12 @@
 
 <script lang="ts">
 import { PropType, defineComponent, ConcreteComponent } from 'vue'
-import { User } from '~~/lib/common/generated/gql/graphql'
+import { User, Project } from '~~/lib/common/generated/gql/graphql'
 
 interface RowButton {
   icon: ConcreteComponent
   label: string
-  action: (item: User) => void
+  action: (item: User | Project) => void
 }
 
 interface Header {

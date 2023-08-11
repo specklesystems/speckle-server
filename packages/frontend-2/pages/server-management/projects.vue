@@ -11,36 +11,21 @@
       ></HeaderNavLink>
     </Portal>
 
-    <div
-      class="flex flex-col md:flex-row space-y-2 space-x-2 justify-between mb-4 md:items-center h-8"
-    >
-      <div>
-        <h5 class="h4 font-bold">Projects</h5>
-      </div>
-    </div>
+    <h1 class="h4 font-bold mb-4">Projects</h1>
 
-    <div class="flex items-center gap-8 h-10">
-      <FormTextInput
-        v-model="searchString"
-        size="lg"
-        name="search"
-        :custom-icon="MagnifyingGlassIcon"
-        color="foundation"
-        full-width
-        search
-        :show-clear="!!searchString"
-        placeholder="Search Users"
-        class="rounded-md border border-outline-3"
-      />
-      <div>FILTER</div>
-      <div class="flex items-center gap-2 text-foreground text-sm shrink-0">
-        <span class="shrink-0">1-50 of 350</span>
-        <div class="flex gap-1">
-          <ChevronLeftIcon class="h-8 w-8" />
-          <ChevronRightIcon class="h-8 w-8" />
-        </div>
-      </div>
-    </div>
+    <FormTextInput
+      size="lg"
+      name="search"
+      :custom-icon="MagnifyingGlassIcon"
+      color="foundation"
+      full-width
+      search
+      :show-clear="!!searchString"
+      placeholder="Search Projects"
+      class="rounded-md border border-outline-3"
+      @update:model-value="debounceSearchUpdate"
+      @change="handleSearchChange"
+    />
 
     <Table
       :headers="[
@@ -52,46 +37,72 @@
         { id: 'versions', title: 'Versions' },
         { id: 'contributors', title: 'Contributors' }
       ]"
-      :items="users"
-      :buttons="[
-        { icon: TrashIcon, label: 'Delete', action: openDeleteInvitationDialog }
-      ]"
+      :items="projects"
+      :buttons="[{ icon: TrashIcon, label: 'Delete', action: openProjectDeleteDialog }]"
       :column-classes="{
         name: 'col-span-3',
         type: 'col-span-1',
         created: 'col-span-2',
         modified: 'col-span-2',
-        models: 'col-span-1',
-        versions: 'col-span-1',
-        contributors: 'col-span-1'
+        models: 'col-span-1 text-right',
+        versions: 'col-span-1 text-right',
+        contributors: 'col-span-2'
       }"
     >
-      <template #email="{ item }">
-        {{ item.email }}
+      <template #name="{ item }">
+        {{ item.name }}
       </template>
 
-      <template #invitedBy="{ item }">
-        <div class="flex items-center gap-2">
-          <img
-            :src="item.profilePicture"
-            :alt="'Profile picture of ' + item.invitedBy"
-            class="w-6 h-6 rounded-full"
-          />
-          {{ item.invitedBy }}
+      <template #type="{ item }">
+        <div class="lowercase">
+          {{ item.visibility }}
         </div>
       </template>
 
-      <template #resend="{ item }">
-        <button class="font-semibold text-primary" @click="resendInvitation(item)">
-          Resend Invitation
-        </button>
+      <template #created="{ item }">
+        <div class="font-mono text-xs">
+          {{ new Date(item.createdAt).toLocaleString('en-GB') }}
+        </div>
+      </template>
+
+      <template #modified="{ item }">
+        <div class="font-mono text-xs">
+          {{ new Date(item.updatedAt).toLocaleString('en-GB') }}
+        </div>
+      </template>
+
+      <template #models="{ item }">
+        <div class="font-mono text-xs">
+          {{ item.models.totalCount }}
+        </div>
+      </template>
+
+      <template #versions="{ item }">
+        <div class="font-mono text-xs">
+          {{ item.versions.totalCount }}
+        </div>
+      </template>
+
+      <template #contributors="{ item }">
+        <Avatar
+          v-for="(teamMember, index) in item.team"
+          :key="index"
+          :size="small"
+          :user="teamMember.user"
+          class="-mr-2"
+        />
       </template>
     </Table>
 
-    <DeleteInvitationDialog
-      v-model:open="showDeleteInvitationDialog"
-      :user="user ?? userToModify"
-      title="Delete Invitation"
+    <InfiniteLoading
+      :settings="{ identifier: infiniteLoaderId }"
+      @infinite="infiniteLoad"
+    />
+
+    <ProjectDeleteDialog
+      v-model:open="showProjectDeleteDialog"
+      :project="projectToModify"
+      title="Delete Project"
       :buttons="[
         {
           text: 'Delete',
@@ -101,7 +112,7 @@
         {
           text: 'Cancel',
           props: { color: 'secondary', fullWidth: true, outline: true },
-          onClick: closeDeleteInvitationDialog
+          onClick: closeProjectDeleteDialog
         }
       ]"
     />
@@ -109,26 +120,124 @@
 </template>
 
 <script setup lang="ts">
-import {
-  MagnifyingGlassIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
-} from '@heroicons/vue/20/solid'
+import { ref } from 'vue'
+import { useQuery } from '@vue/apollo-composable'
+import { debounce } from 'lodash-es'
 
-import Table from '../../components/server-management/Table.vue'
-import DeleteInvitationDialog from '../../components/server-management/DeleteInvitationDialog.vue'
-import { User } from './active-users.vue'
+import Table from '~~/components/server-management/Table.vue'
+import ProjectDeleteDialog from '~~/components/server-management/DeleteProjectDialog.vue'
+import Avatar from '~~/components/user/Avatar.vue'
+import { Project } from '~~/lib/common/generated/gql/graphql'
 
-import { TrashIcon } from '@heroicons/vue/24/outline'
+import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import { graphql } from '~~/lib/common/generated/gql'
 
-export interface Project {
-  id: string
-  name: string
-  type: 'private' | 'public'
-  created: Date
-  modified: Date
-  models: number
-  versions: number
-  contributors: User[]
+import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
+
+const projectToModify = ref<Project | null>(null)
+const searchString = ref('')
+const showProjectDeleteDialog = ref(false)
+
+const openProjectDeleteDialog = (project: Project) => {
+  projectToModify.value = project
+  showProjectDeleteDialog.value = true
 }
+
+const closeProjectDeleteDialog = () => {
+  showProjectDeleteDialog.value = false
+}
+
+const handleSearchChange = (newSearchString: string) => {
+  searchUpdateHandler(newSearchString)
+}
+
+const getProjects = graphql(`
+  query Query($query: String, $orderBy: String, $limit: Int!, $visibility: String) {
+    admin {
+      projectList(
+        query: $query
+        orderBy: $orderBy
+        limit: $limit
+        visibility: $visibility
+      ) {
+        cursor
+        items {
+          name
+          visibility
+          createdAt
+          updatedAt
+          models {
+            totalCount
+          }
+          versions {
+            totalCount
+          }
+          team {
+            user {
+              avatar
+              id
+            }
+          }
+        }
+        totalCount
+      }
+    }
+  }
+`)
+
+const logger = useLogger()
+
+const infiniteLoaderId = ref('')
+const {
+  result: extraPagesResult,
+  fetchMore: fetchMorePages,
+  variables: resultVariables,
+  onResult
+} = useQuery(getProjects, () => ({
+  limit: 50,
+  query: searchString.value
+}))
+
+const moreToLoad = computed(
+  () =>
+    !extraPagesResult.value?.admin?.projectList ||
+    extraPagesResult.value.admin.projectList.items.length <
+      extraPagesResult.value.admin.projectList.totalCount
+)
+
+const infiniteLoad = async (state: InfiniteLoaderState) => {
+  const cursor = extraPagesResult.value?.admin?.projectList.cursor || null
+  if (!moreToLoad.value || !cursor) return state.complete()
+
+  try {
+    await fetchMorePages({
+      variables: {
+        cursor
+      }
+    })
+  } catch (e) {
+    logger.error(e)
+    state.error()
+    return
+  }
+
+  state.loaded()
+  if (!moreToLoad.value) {
+    state.complete()
+  }
+}
+
+const projects = computed(() => extraPagesResult.value?.admin.projectList.items || [])
+
+const searchUpdateHandler = (value: string) => {
+  searchString.value = value
+}
+
+const debounceSearchUpdate = debounce(searchUpdateHandler, 500)
+
+const calculateLoaderId = () => {
+  infiniteLoaderId.value = resultVariables.value?.query || ''
+}
+
+onResult(calculateLoaderId)
 </script>

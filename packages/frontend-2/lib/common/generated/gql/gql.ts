@@ -142,6 +142,7 @@ const documents = {
     "\n  mutation Mutation($userConfirmation: UserDeleteInput!) {\n    adminDeleteUser(userConfirmation: $userConfirmation)\n  }\n": types.MutationDocument,
     "\n  query UserList($limit: Int!, $cursor: String, $query: String) {\n    admin {\n      userList(limit: $limit, cursor: $cursor, query: $query) {\n        totalCount\n        cursor\n        items {\n          id\n          bio\n          avatar\n          name\n          role\n          verified\n          company\n        }\n      }\n    }\n  }\n": types.UserListDocument,
     "\n  query AdminPageData {\n    admin {\n      serverStatistics {\n        totalPendingInvites\n        totalProjectCount\n        totalUserCount\n      }\n    }\n    serverInfo {\n      name\n      version\n    }\n  }\n": types.AdminPageDataDocument,
+    "\n  query Query($query: String, $orderBy: String, $limit: Int!, $visibility: String) {\n    admin {\n      projectList(\n        query: $query\n        orderBy: $orderBy\n        limit: $limit\n        visibility: $visibility\n      ) {\n        cursor\n        items {\n          name\n          visibility\n          createdAt\n          updatedAt\n          models {\n            totalCount\n          }\n          versions {\n            totalCount\n          }\n          team {\n            user {\n              avatar\n              id\n            }\n          }\n        }\n        totalCount\n      }\n    }\n  }\n": types.QueryDocument,
 };
 
 /**
@@ -674,6 +675,10 @@ export function graphql(source: "\n  query UserList($limit: Int!, $cursor: Strin
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query AdminPageData {\n    admin {\n      serverStatistics {\n        totalPendingInvites\n        totalProjectCount\n        totalUserCount\n      }\n    }\n    serverInfo {\n      name\n      version\n    }\n  }\n"): (typeof documents)["\n  query AdminPageData {\n    admin {\n      serverStatistics {\n        totalPendingInvites\n        totalProjectCount\n        totalUserCount\n      }\n    }\n    serverInfo {\n      name\n      version\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query Query($query: String, $orderBy: String, $limit: Int!, $visibility: String) {\n    admin {\n      projectList(\n        query: $query\n        orderBy: $orderBy\n        limit: $limit\n        visibility: $visibility\n      ) {\n        cursor\n        items {\n          name\n          visibility\n          createdAt\n          updatedAt\n          models {\n            totalCount\n          }\n          versions {\n            totalCount\n          }\n          team {\n            user {\n              avatar\n              id\n            }\n          }\n        }\n        totalCount\n      }\n    }\n  }\n"): (typeof documents)["\n  query Query($query: String, $orderBy: String, $limit: Int!, $visibility: String) {\n    admin {\n      projectList(\n        query: $query\n        orderBy: $orderBy\n        limit: $limit\n        visibility: $visibility\n      ) {\n        cursor\n        items {\n          name\n          visibility\n          createdAt\n          updatedAt\n          models {\n            totalCount\n          }\n          versions {\n            totalCount\n          }\n          team {\n            user {\n              avatar\n              id\n            }\n          }\n        }\n        totalCount\n      }\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};
