@@ -1,6 +1,13 @@
 import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
 import { listUsers, countUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
+import { ServerInviteGraphqlReturnType } from '@/modules/core/services/users/adminUsersListService'
+import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
+import {
+  countServerInvites,
+  findServerInvites,
+  queryServerInvites
+} from '@/modules/serverinvites/repositories'
 import { BaseError } from '@/modules/shared/errors/base'
 import { ServerRoles } from '@speckle/shared'
 
@@ -8,14 +15,22 @@ type HasCursor = {
   cursor: string | null
 }
 
+type HasQuery = {
+  query: string | null
+}
+
 type Collection<T> = HasCursor & {
   items: T[]
   totalCount: number
 }
 
-type AdminUserListArgs = HasCursor & {
+type HasLimit = {
   limit: number
-  query: string | null
+}
+
+type CollectionQueryArgs = HasCursor & HasQuery & HasLimit
+
+type AdminUserListArgs = CollectionQueryArgs & {
   role: ServerRoles | null
 }
 
@@ -55,6 +70,37 @@ type AdminProjectListArgs = HasCursor & {
   orderBy: string | null
   visibility: string | null
   limit: number
+}
+
+// type ServerInviteGraphQLReturnType = {
+//   id: string
+//   email: string
+//   invitedById: string
+// }
+
+export const adminInviteList = async (
+  args: CollectionQueryArgs
+): Promise<Collection<ServerInviteGraphqlReturnType>> => {
+  const parsedCursor = args.cursor ? parseCursorToDate(args.cursor) : null
+  const [totalCount, inviteItems] = await Promise.all([
+    countServerInvites(args.query),
+    queryServerInvites(args.query, args.limit, parsedCursor)
+  ])
+  const items = inviteItems.map((invite: ServerInviteRecord) => {
+    return {
+      id: invite.id,
+      invitedById: invite.inviterId,
+      email: invite.target
+    }
+  })
+  const cursor = inviteItems.length
+    ? convertDateToCursor(inviteItems.slice(-1)[0].createdAt)
+    : null
+  return {
+    totalCount,
+    items,
+    cursor
+  }
 }
 
 export const adminProjectList = async (

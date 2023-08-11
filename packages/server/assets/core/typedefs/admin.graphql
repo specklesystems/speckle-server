@@ -21,6 +21,12 @@ type AdminUserList {
   totalCount: Int!
 }
 
+type AdminInviteList {
+  items: [ServerInvite]!
+  cursor: String
+  totalCount: Int!
+}
+
 type ServerStatistics {
   totalProjectCount: Int!
   totalUserCount: Int!
@@ -34,6 +40,12 @@ type AdminQueries {
     query: String = null
     role: ServerRole = null
   ): AdminUserList! @hasScope(scope: "users:read")
+
+  inviteList(
+    limit: Int! = 25
+    cursor: String = null
+    query: String = null
+  ): AdminInviteList! @hasScope(scope: "users:invite")
 
   projectList(
     query: String

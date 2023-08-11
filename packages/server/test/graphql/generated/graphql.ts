@@ -52,11 +52,26 @@ export type ActivityCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type AdminInviteList = {
+  __typename?: 'AdminInviteList';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Maybe<ServerInvite>>;
+  totalCount: Scalars['Int'];
+};
+
 export type AdminQueries = {
   __typename?: 'AdminQueries';
+  inviteList: AdminInviteList;
   projectList: ProjectCollection;
   serverStatistics: ServerStatistics;
   userList: AdminUserList;
+};
+
+
+export type AdminQueriesInviteListArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+  query?: InputMaybe<Scalars['String']>;
 };
 
 
