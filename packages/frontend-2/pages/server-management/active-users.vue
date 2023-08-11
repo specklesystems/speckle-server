@@ -127,13 +127,13 @@
 import { ref } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { debounce } from 'lodash-es'
-
 import Table from '~~/components/server-management/Table.vue'
 import UserRoleSelect from '~~/components/server-management/UserRoleSelect.vue'
 import UserDeleteDialog from '~~/components/server-management/DeleteUserDialog.vue'
 import ChangeUserRoleDialog from '~~/components/server-management/ChangeUserRoleDialog.vue'
 import Avatar from '~~/components/user/Avatar.vue'
 import { User } from '~~/lib/common/generated/gql/graphql'
+import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -149,6 +149,8 @@ const userToModify = ref<User | null>(null)
 const searchString = ref('')
 const showUserDeleteDialog = ref(false)
 const showChangeUserRoleDialog = ref(false)
+
+const { triggerNotification } = useGlobalToast()
 
 const openUserDeleteDialog = (user: User) => {
   userToModify.value = user
@@ -182,14 +184,28 @@ const deleteConfirmed = async () => {
       await adminDeleteUserMutation({
         userConfirmation: { email: userToModify.value.email }
       })
-      // Rest of your code
+      closeUserDeleteDialog()
+      refetchUsers()
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'User deleted',
+        description: 'The user has been succesfully deleted'
+      })
     } else {
       console.error('userToModify.value or userToModify.value.email is not defined')
-      // Handle error e.g., show an error message
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Error',
+        description: 'Failed to delete user'
+      })
     }
   } catch (error) {
     console.error('Failed to delete user', error)
-    // Handle error e.g., show an error message
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Error',
+      description: 'Failed to delete user'
+    })
   }
 }
 
@@ -230,7 +246,8 @@ const {
   result: extraPagesResult,
   fetchMore: fetchMorePages,
   variables: resultVariables,
-  onResult
+  onResult,
+  refetch: refetchUsers
 } = useQuery(getUsers, () => ({
   limit: 50,
   query: searchString.value
