@@ -262,8 +262,7 @@ export function useProjectModelUpdateTracking(
       modifyObjectFields<ProjectModelsArgs, Project['models']>(
         apollo.cache,
         getCacheId('Project', unref(projectId)),
-        (fieldName, variables, value, { ref }) => {
-          if (fieldName !== 'models') return
+        (_fieldName, variables, value, { ref }) => {
           if (variables.filter?.search) return
           if (variables.filter?.sourceApps?.length) return
           if (variables.filter?.contributors?.length) return
@@ -285,7 +284,8 @@ export function useProjectModelUpdateTracking(
             items: newItems,
             totalCount: (value.totalCount || 0) + 1
           }
-        }
+        },
+        { fieldNameWhitelist: ['models'] }
       )
 
       // + Evict modelsTree, if it doesnt have this model
@@ -350,12 +350,12 @@ export function useProjectPendingModelUpdateTracking(
       >(
         apollo.cache,
         getCacheId('Project', unref(projectId)),
-        (fieldName, _variables, value, { ref }) => {
-          if (fieldName !== 'pendingImportedModels') return
+        (_fieldName, _variables, value, { ref }) => {
           const currentModels = (value || []).slice()
           currentModels.push(ref('FileUpload', event.id))
           return currentModels
-        }
+        },
+        { fieldNameWhitelist: ['pendingImportedModels'] }
       )
     } else if (event.type === ProjectPendingModelsUpdatedMessageType.Updated) {
       // If converted emit toast notification & remove from pending models
@@ -372,15 +372,15 @@ export function useProjectPendingModelUpdateTracking(
         >(
           apollo.cache,
           getCacheId('Project', unref(projectId)),
-          (fieldName, _variables, value, { ref }) => {
-            if (fieldName !== 'pendingImportedModels') return
+          (_fieldName, _variables, value, { ref }) => {
             if (!value?.length) return
 
             const currentModels = (value || []).filter(
               (i) => i.__ref !== ref('FileUpload', event.id).__ref
             )
             return currentModels
-          }
+          },
+          { fieldNameWhitelist: ['pendingImportedModels'] }
         )
       } else if (failure) {
         triggerNotification({

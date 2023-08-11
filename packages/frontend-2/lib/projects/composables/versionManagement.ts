@@ -47,6 +47,10 @@ import { intersection, isUndefined, uniqBy } from 'lodash-es'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 import { useLock } from '~~/lib/common/composables/singleton'
 
+/**
+ * TODO: Just look at the specific failing subs: versions count on model, versions count on project (?), models count on project
+ */
+
 export function useProjectVersionUpdateTracking(
   projectId: MaybeRef<string>,
   handler?: (
@@ -90,8 +94,7 @@ export function useProjectVersionUpdateTracking(
       modifyObjectFields<ProjectModelsArgs, Project['models']>(
         apollo.cache,
         getCacheId('Project', unref(projectId)),
-        (fieldName, variables, value, { ref }) => {
-          if (fieldName !== 'models') return
+        (_fieldName, variables, value, { ref }) => {
           if (variables.filter?.search) return
 
           const limit = variables.limit
@@ -110,7 +113,8 @@ export function useProjectVersionUpdateTracking(
             items: newItems,
             totalCount: (value.totalCount || 0) + 1
           }
-        }
+        },
+        { fieldNameWhitelist: ['models'] }
       )
 
       // + Evict modelsTree, if it doesnt have this model
@@ -148,8 +152,7 @@ export function useProjectVersionUpdateTracking(
         >(
           apollo.cache,
           getCacheId('Model', version.model.id),
-          (fieldName, _variables, value, { readField }) => {
-            if (fieldName !== 'pendingImportedVersions') return
+          (_fieldName, _variables, value, { readField }) => {
             if (!value?.length) return
 
             // Unfortunately message matching is the best we can do
@@ -164,15 +167,15 @@ export function useProjectVersionUpdateTracking(
               newVersions.splice(pendingWithFittingMessageIdx, 1)
             }
             return newVersions
-          }
+          },
+          { fieldNameWhitelist: ['pendingImportedVersions'] }
         )
 
         // Add to model.versions
         modifyObjectFields<ModelVersionsArgs, Model['versions']>(
           apollo.cache,
           getCacheId('Model', version.model.id),
-          (fieldName, variables, value, { ref }) => {
-            if (fieldName !== 'versions') return
+          (_fieldName, variables, value, { ref }) => {
             if (
               variables.filter?.priorityIdsOnly &&
               variables.filter?.priorityIds &&
@@ -193,7 +196,8 @@ export function useProjectVersionUpdateTracking(
               items: newItems,
               totalCount: (value.totalCount || 0) + 1
             }
-          }
+          },
+          { fieldNameWhitelist: ['versions'] }
         )
 
         // Potentially remove item from Project.pendingImportedModels?
@@ -204,8 +208,7 @@ export function useProjectVersionUpdateTracking(
         >(
           apollo.cache,
           getCacheId('Project', unref(projectId)),
-          (fieldName, _variables, value, { readField }) => {
-            if (fieldName !== 'pendingImportedModels') return
+          (_fieldName, _variables, value, { readField }) => {
             if (!value?.length) return
 
             const versionModelName = version.model.name
@@ -214,7 +217,8 @@ export function useProjectVersionUpdateTracking(
               return itemModelName !== versionModelName
             })
             return currentModels
-          }
+          },
+          { fieldNameWhitelist: ['pendingImportedModels'] }
         )
 
         // Emit toast
@@ -339,8 +343,7 @@ export function useDeleteVersions() {
             modifyObjectFields<ProjectVersionsArgs, Project['versions']>(
               cache,
               getCacheId('Project', options.projectId),
-              (fieldName, _variables, data) => {
-                if (fieldName !== 'versions') return
+              (_fieldName, _variables, data) => {
                 return {
                   ...data,
                   ...(!isUndefined(data.totalCount)
@@ -352,7 +355,8 @@ export function useDeleteVersions() {
                       }
                     : {})
                 }
-              }
+              },
+              { fieldNameWhitelist: ['versions'] }
             )
           }
 
@@ -361,9 +365,7 @@ export function useDeleteVersions() {
             modifyObjectFields<ModelVersionsArgs, Model['versions']>(
               cache,
               getCacheId('Model', options.modelId),
-              (fieldName, variables, data) => {
-                if (fieldName !== 'versions') return
-
+              (_fieldName, variables, data) => {
                 let removedCount = input.versionIds.length
                 if (
                   variables.filter?.priorityIdsOnly &&
@@ -385,7 +387,8 @@ export function useDeleteVersions() {
                       }
                     : {})
                 }
-              }
+              },
+              { fieldNameWhitelist: ['versions'] }
             )
           }
         }
@@ -443,22 +446,20 @@ export function useMoveVersions() {
           modifyObjectFields<ModelVersionArgs>(
             cache,
             getCacheId('Model', previousModelId),
-            (fieldName, variables) => {
-              if (fieldName !== 'version') return
+            (_fieldName, variables) => {
               if (!input.versionIds.includes(variables.id)) return
 
               // Set to null
               return null
-            }
+            },
+            { fieldNameWhitelist: ['version'] }
           )
 
           // Remove from Model.versions
           modifyObjectFields<ModelVersionsArgs, Model['versions']>(
             cache,
             getCacheId('Model', previousModelId),
-            (fieldName, _variables, data) => {
-              if (fieldName !== 'versions') return
-
+            (_fieldName, _variables, data) => {
               const oldItems = data.items || []
               const newItems = oldItems.filter(
                 (i) =>
@@ -477,27 +478,26 @@ export function useMoveVersions() {
                     }
                   : {})
               }
-            }
+            },
+            { fieldNameWhitelist: ['versions'] }
           )
 
           // Add to new model's Model.version
           modifyObjectFields<ModelVersionArgs>(
             cache,
             getCacheId('Model', newModelId),
-            (fieldName, variables) => {
-              if (fieldName !== 'version') return
+            (_fieldName, variables) => {
               if (!input.versionIds.includes(variables.id)) return
               return getObjectReference('Version', variables.id)
-            }
+            },
+            { fieldNameWhitelist: ['version'] }
           )
 
           // Add to new model's Model.versions
           modifyObjectFields<ModelVersionsArgs, Model['versions']>(
             cache,
             getCacheId('Model', newModelId),
-            (fieldName, _variables, data) => {
-              if (fieldName !== 'versions') return
-
+            (_fieldName, _variables, data) => {
               const oldItems = data.items || []
               const newItems = [
                 ...input.versionIds.map((i) => getObjectReference('Version', i)),
@@ -514,7 +514,8 @@ export function useMoveVersions() {
                     }
                   : {})
               }
-            }
+            },
+            { fieldNameWhitelist: ['versions'] }
           )
 
           if (options?.newModelCreated && options?.projectId) {
@@ -613,12 +614,12 @@ export function useProjectPendingVersionUpdateTracking(
       >(
         apollo.cache,
         getCacheId('Model', modelId),
-        (fieldName, _variables, value, { ref }) => {
-          if (fieldName !== 'pendingImportedVersions') return
+        (_fieldName, _variables, value, { ref }) => {
           const currentVersions = (value || []).slice()
           currentVersions.push(ref('FileUpload', event.id))
           return uniqBy(currentVersions, (v) => v.__ref)
-        }
+        },
+        { fieldNameWhitelist: ['pendingImportedVersions'] }
       )
     } else if (event.type === ProjectPendingVersionsUpdatedMessageType.Updated) {
       const success =
@@ -633,14 +634,14 @@ export function useProjectPendingVersionUpdateTracking(
         >(
           apollo.cache,
           getCacheId('Model', modelId),
-          (fieldName, _variables, value, { ref }) => {
-            if (fieldName !== 'pendingImportedVersions') return
+          (_fieldName, _variables, value, { ref }) => {
             if (!value?.length) return
             const currentVersions = (value || []).filter(
               (i) => i.__ref !== ref('FileUpload', event.id).__ref
             )
             return currentVersions
-          }
+          },
+          { fieldNameWhitelist: ['pendingImportedVersions'] }
         )
       } else if (failure) {
         triggerNotification({
