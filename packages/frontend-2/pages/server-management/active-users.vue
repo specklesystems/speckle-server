@@ -74,7 +74,10 @@
       </template>
 
       <template #role="{ item }">
-        <UserRoleSelect v-model="item.role" />
+        <UserRoleSelect
+          v-model="item.role"
+          @update:model-value="openChangeUserRoleDialog(item)"
+        />
       </template>
     </Table>
 
@@ -105,7 +108,7 @@
       v-model:open="showChangeUserRoleDialog"
       :user="userToModify"
       title="Change Role"
-      :old-role="userToModify?.role ?? 'defaultRole'"
+      :old-role="newRole"
       :new-role="newRole"
       :buttons="[
         {
@@ -161,10 +164,10 @@ const closeUserDeleteDialog = () => {
   showUserDeleteDialog.value = false
 }
 
-// const openChangeUserRoleDialog = (user: User) => {
-//   userToModify.value = user
-//   showChangeUserRoleDialog.value = true
-// }
+const openChangeUserRoleDialog = (user: User) => {
+  userToModify.value = user
+  showChangeUserRoleDialog.value = true
+}
 
 const closeChangeUserRoleDialog = () => {
   showChangeUserRoleDialog.value = false

@@ -23,7 +23,7 @@
       </div>
 
       <div
-        v-if="newRole === 'admin'"
+        v-if="newRole === 'server:admin'"
         class="flex gap-2 items-center bg-danger-lighter border-danger-darker border rounded-lg p-2"
       >
         <ExclamationTriangleIcon class="h-8 w-8 mt-0.5 text-danger-darker" />

@@ -12,19 +12,18 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { Roles } from '@speckle/shared/src/core/constants'
 
 const emitUpdate = defineEmits<{
-  (e: 'update:modelValue', v: string): void
+  (e: 'update:modelValue', newV: string, oldV: string): void
 }>()
 
 const selectedValue = ref('')
-const roles = ['User', 'Admin', 'Archived']
+
+const roles = Object.values(Roles.Server).concat(Object.values(Roles.Stream))
 
 watch(selectedValue, (newVal, oldVal) => {
-  // Trigger warnings or other side effects here
-  console.warn(`Role changed from ${oldVal} to ${newVal}`)
-
   // Emit update event to parent component
-  emitUpdate('update:modelValue', newVal)
+  emitUpdate('update:modelValue', newVal, oldVal)
 })
 </script>
