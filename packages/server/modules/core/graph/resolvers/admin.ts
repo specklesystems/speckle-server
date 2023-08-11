@@ -1,6 +1,10 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapServerRoleToValue } from '@/modules/core/helpers/graphTypes'
-import { adminProjectList, adminUserList } from '@/modules/core/services/admin'
+import {
+  adminInviteList,
+  adminProjectList,
+  adminUserList
+} from '@/modules/core/services/admin'
 import { getTotalStreamCount, getTotalUserCount } from '@/modules/stats/services'
 
 export = {
@@ -25,7 +29,10 @@ export = {
         cursor: args.cursor
       })
     },
-    serverStatistics: () => ({})
+    serverStatistics: () => ({}),
+    async inviteList(_parent, args) {
+      return await adminInviteList(args)
+    }
   },
   ServerStatistics: {
     async totalProjectCount() {

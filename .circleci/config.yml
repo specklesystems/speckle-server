@@ -27,8 +27,9 @@ workflows:
       - test-frontend-2:
           filters: *filters-allow-all
 
-      - test-dui-3:
-          filters: *filters-allow-all
+      ## TODO: Re-enable when dui3 gets further into development
+      # - test-dui-3:
+      #     filters: *filters-allow-all
 
       - test-ui-components:
           filters: *filters-allow-all
