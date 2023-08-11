@@ -101,15 +101,10 @@ export type AdminUserList = {
 export type AdminUserListItem = {
   __typename?: 'AdminUserListItem';
   avatar?: Maybe<Scalars['String']>;
-  bio?: Maybe<Scalars['String']>;
   company?: Maybe<Scalars['String']>;
-  createdAt?: Maybe<Scalars['DateTime']>;
   email?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
-  /** Whether post-sign up onboarding has been finished or skipped entirely */
-  isOnboardingFinished?: Maybe<Scalars['Boolean']>;
   name: Scalars['String'];
-  profiles?: Maybe<Scalars['JSONObject']>;
   role?: Maybe<Scalars['String']>;
   verified?: Maybe<Scalars['Boolean']>;
 };

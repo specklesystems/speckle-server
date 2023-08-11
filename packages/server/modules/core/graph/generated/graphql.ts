@@ -110,15 +110,10 @@ export type AdminUserList = {
 export type AdminUserListItem = {
   __typename?: 'AdminUserListItem';
   avatar?: Maybe<Scalars['String']>;
-  bio?: Maybe<Scalars['String']>;
   company?: Maybe<Scalars['String']>;
-  createdAt?: Maybe<Scalars['DateTime']>;
   email?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
-  /** Whether post-sign up onboarding has been finished or skipped entirely */
-  isOnboardingFinished?: Maybe<Scalars['Boolean']>;
   name: Scalars['String'];
-  profiles?: Maybe<Scalars['JSONObject']>;
   role?: Maybe<Scalars['String']>;
   verified?: Maybe<Scalars['Boolean']>;
 };
@@ -3171,14 +3166,10 @@ export type AdminUserListResolvers<ContextType = GraphQLContext, ParentType exte
 
 export type AdminUserListItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AdminUserListItem'] = ResolversParentTypes['AdminUserListItem']> = {
   avatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  bio?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  isOnboardingFinished?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   verified?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
