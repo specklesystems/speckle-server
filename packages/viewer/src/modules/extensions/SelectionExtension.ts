@@ -50,7 +50,7 @@ export class SelectionExtension extends Extension {
   protected selectedNodes: Array<TreeNode> = []
   protected selectionRvs: { [id: string]: NodeRenderView } = {}
   protected selectionMaterials: { [id: string]: Material } = {}
-  protected options: SelectionExtensionOptions = DefaultSelectionExtensionOptions
+  protected options: SelectionExtensionOptions
   protected hoverRv: NodeRenderView
   protected hoverMaterial: Material
   protected selectionMaterialData: RenderMaterial & DisplayStyle & MaterialOptions
@@ -69,7 +69,11 @@ export class SelectionExtension extends Extension {
     this.viewer
       .getRenderer()
       .input.on(InputEvent.PointerMove, this.onPointerMove.bind(this))
+    this.setOptions(DefaultSelectionExtensionOptions)
+  }
 
+  public setOptions(options: SelectionExtensionOptions) {
+    this.options = options
     this.selectionMaterialData = Object.assign({}, this.options.selectionMaterialData)
     this.hoverMaterialData = Object.assign({}, this.options.hoverMaterialData)
     this.transparentSelectionMaterialData = Object.assign(
