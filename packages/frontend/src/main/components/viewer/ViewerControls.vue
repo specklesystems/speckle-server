@@ -184,6 +184,7 @@ export default {
 
     onKeyStroke('Escape', () => {
       measurements.value = false
+      viewer.removeMeasurement()
       viewer.enableMeasurements(false)
     })
 
@@ -203,6 +204,9 @@ export default {
     this.$eventHub.$on('show-visreset', (state) => (this.showVisReset = state))
     this.sectionBoxIsOn = this.viewer.getCurrentSectionBox() !== null
     this.viewer.removeAllMeasurements()
+    this.measurements = false
+    this.perpendicularMode = false
+    this.viewer.enableMeasurements(false)
   },
   methods: {
     toggleMeasurements() {
