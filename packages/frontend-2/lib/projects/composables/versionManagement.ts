@@ -47,10 +47,6 @@ import { intersection, isUndefined, uniqBy } from 'lodash-es'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 import { useLock } from '~~/lib/common/composables/singleton'
 
-/**
- * TODO: Just look at the specific failing subs: versions count on model, versions count on project (?), models count on project
- */
-
 export function useProjectVersionUpdateTracking(
   projectId: MaybeRef<string>,
   handler?: (
@@ -101,17 +97,19 @@ export function useProjectVersionUpdateTracking(
           const newModelRef = ref('Model', version.model.id)
           const newItems = (value?.items || []).slice()
 
+          let itemAdded = false
           if (
             !newItems.find((i) => i.__ref === newModelRef.__ref) &&
             (isUndefined(limit) || newItems.length < limit)
           ) {
             newItems.unshift(newModelRef)
+            itemAdded = true
           }
 
           return {
             ...(value || {}),
             items: newItems,
-            totalCount: (value.totalCount || 0) + 1
+            totalCount: (value.totalCount || 0) + (itemAdded ? 1 : 0)
           }
         },
         { fieldNameWhitelist: ['models'] }
@@ -185,10 +183,39 @@ export function useProjectVersionUpdateTracking(
             }
 
             const limit = variables.limit
+            if (!limit) {
+              return // already updated through ProjectPageLatestItemsModelItem fragment in response
+            }
+
             const newItems = (value?.items || []).slice()
 
             if (isUndefined(limit) || newItems.length < limit) {
               newItems.unshift(ref('Version', version.id))
+            }
+
+            return {
+              ...(value || {}),
+              items: newItems,
+              totalCount: (value.totalCount || 0) + 1
+            }
+          },
+          { fieldNameWhitelist: ['versions'] }
+        )
+
+        // Add to project.versions
+        modifyObjectFields<ProjectVersionsArgs, Project['versions']>(
+          apollo.cache,
+          getCacheId('Project', unref(projectId)),
+          (_fieldName, variables, value, { ref }) => {
+            const newVersionRef = ref('Version', version.id)
+            const limit = variables.limit
+
+            const newItems = (value?.items || []).slice()
+            if (
+              !newItems.find((i) => i.__ref === newVersionRef.__ref) &&
+              (isUndefined(limit) || newItems.length < limit)
+            ) {
+              newItems.unshift(newVersionRef)
             }
 
             return {
