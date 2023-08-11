@@ -36,6 +36,8 @@ import {
 } from '~~/lib/projects/graphql/subscriptions'
 import { modelRoute, useNavigateToProject } from '~~/lib/common/helpers/route'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
+import { useLock } from '~~/lib/common/composables/singleton'
+import { isUndefined } from 'lodash-es'
 
 const isValidModelName: GenericValidateFunction<string> = (name) => {
   name = name.trim()
@@ -200,9 +202,6 @@ export function useDeleteModel() {
 /**
  * Track project model updates/deletes and make cache updates accordingly. Optionally
  * provide an extra handler that you can use to react to all model update events (create/update/delete)
- *
- * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
- * that we don't want to duplicate (or extract that part out into a separate composable)
  */
 export function useProjectModelUpdateTracking(
   projectId: MaybeRef<string>,
@@ -218,13 +217,16 @@ export function useProjectModelUpdateTracking(
       id: unref(projectId)
     })
   )
+  const { hasLock } = useLock(
+    computed(() => `useProjectModelUpdateTracking-${unref(projectId)}`)
+  )
   const apollo = useApolloClient().client
   const evictProjectModels = useEvictProjectModelFields()
   const goToProject = useNavigateToProject()
   const { triggerNotification } = useGlobalToast()
 
   onProjectModelUpdate((res) => {
-    if (!res.data?.projectModelsUpdated) return
+    if (!res.data?.projectModelsUpdated || !hasLock.value) return
 
     // If model was updated, apollo already updated it
     const event = res.data.projectModelsUpdated
@@ -260,28 +262,30 @@ export function useProjectModelUpdateTracking(
       modifyObjectFields<ProjectModelsArgs, Project['models']>(
         apollo.cache,
         getCacheId('Project', unref(projectId)),
-        (fieldName, variables, value, { ref }) => {
-          if (fieldName !== 'models') return
+        (_fieldName, variables, value, { ref }) => {
           if (variables.filter?.search) return
           if (variables.filter?.sourceApps?.length) return
           if (variables.filter?.contributors?.length) return
           if (!variables.filter?.onlyWithVersions) return
 
+          const limit = variables.limit
           const newModelRef = ref('Model', model.id)
           const newItems = (value?.items || []).slice()
 
-          let isAdded = false
-          if (!newItems.find((i) => i.__ref === newModelRef.__ref)) {
+          if (
+            !newItems.find((i) => i.__ref === newModelRef.__ref) &&
+            (isUndefined(limit) || newItems.length < limit)
+          ) {
             newItems.unshift(newModelRef)
-            isAdded = true
           }
 
           return {
             ...(value || {}),
             items: newItems,
-            totalCount: (value.totalCount || 0) + (isAdded ? 1 : 0)
+            totalCount: (value.totalCount || 0) + 1
           }
-        }
+        },
+        { fieldNameWhitelist: ['models'] }
       )
 
       // + Evict modelsTree, if it doesnt have this model
@@ -304,15 +308,15 @@ export function useProjectModelUpdateTracking(
         }
       )
     }
+  })
 
+  onProjectModelUpdate((res) => {
+    if (!res.data?.projectModelsUpdated) return
+    const event = res.data.projectModelsUpdated
     handler?.(event, apollo.cache)
   })
 }
 
-/**
- * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
- * that we don't want to duplicate (or extract that part out into a separate composable)
- */
 export function useProjectPendingModelUpdateTracking(
   projectId: MaybeRef<string>,
   handler?: (
@@ -330,9 +334,12 @@ export function useProjectPendingModelUpdateTracking(
   )
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
+  const { hasLock } = useLock(
+    computed(() => `useProjectPendingModelUpdateTracking-${unref(projectId)}`)
+  )
 
   onProjectPendingModelUpdate((res) => {
-    if (!res.data?.projectPendingModelsUpdated.id) return
+    if (!res.data?.projectPendingModelsUpdated.id || !hasLock.value) return
     const event = res.data.projectPendingModelsUpdated
 
     if (event.type === ProjectPendingModelsUpdatedMessageType.Created) {
@@ -343,12 +350,12 @@ export function useProjectPendingModelUpdateTracking(
       >(
         apollo.cache,
         getCacheId('Project', unref(projectId)),
-        (fieldName, _variables, value, { ref }) => {
-          if (fieldName !== 'pendingImportedModels') return
+        (_fieldName, _variables, value, { ref }) => {
           const currentModels = (value || []).slice()
           currentModels.push(ref('FileUpload', event.id))
           return currentModels
-        }
+        },
+        { fieldNameWhitelist: ['pendingImportedModels'] }
       )
     } else if (event.type === ProjectPendingModelsUpdatedMessageType.Updated) {
       // If converted emit toast notification & remove from pending models
@@ -365,15 +372,15 @@ export function useProjectPendingModelUpdateTracking(
         >(
           apollo.cache,
           getCacheId('Project', unref(projectId)),
-          (fieldName, _variables, value, { ref }) => {
-            if (fieldName !== 'pendingImportedModels') return
+          (_fieldName, _variables, value, { ref }) => {
             if (!value?.length) return
 
             const currentModels = (value || []).filter(
               (i) => i.__ref !== ref('FileUpload', event.id).__ref
             )
             return currentModels
-          }
+          },
+          { fieldNameWhitelist: ['pendingImportedModels'] }
         )
       } else if (failure) {
         triggerNotification({
@@ -385,7 +392,11 @@ export function useProjectPendingModelUpdateTracking(
         })
       }
     }
+  })
 
+  onProjectPendingModelUpdate((res) => {
+    if (!res.data?.projectPendingModelsUpdated.id) return
+    const event = res.data.projectPendingModelsUpdated
     handler?.(event, apollo.cache)
   })
 }

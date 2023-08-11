@@ -84,14 +84,14 @@ const config = {
   test: {
     ...commonConfig,
     connection: {
-      connectionString: connectionUri || 'postgres://localhost/speckle2_test',
+      connectionString: connectionUri || 'postgres://127.0.0.1/speckle2_test',
       application_name: 'speckle_server'
     }
   },
   development: {
     ...commonConfig,
     connection: {
-      connectionString: connectionUri || 'postgres://localhost/speckle2_dev',
+      connectionString: connectionUri || 'postgres://127.0.0.1/speckle2_dev',
       application_name: 'speckle_server'
     }
   },
