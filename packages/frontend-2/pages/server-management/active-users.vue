@@ -211,7 +211,7 @@ const getUsers = graphql(`
         cursor
         items {
           id
-          bio
+          email
           avatar
           name
           role

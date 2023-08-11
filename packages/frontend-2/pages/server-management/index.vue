@@ -196,7 +196,7 @@ const projectData = computed(() => [
     cta: {
       type: 'button',
       label: 'Manage',
-      action: async () => await router.push('/projects/')
+      action: async () => await router.push('/server-management/projects/')
     }
   }
 ])
