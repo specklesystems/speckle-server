@@ -1,110 +1,106 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="sm" :title="title" :buttons="buttons">
-    <div class="flex flex-col gap-6">
-      <FormTextInput
-        v-model="form.values.name"
-        label="This server’s public name"
-        name="serverName"
-        placeholder="Server name"
-        show-label
-        :show-required="true"
-        :type="'text'"
-        :error-message="((form.errors.value as any) as FormErrors).name"
-      />
-      <FormTextArea
-        v-model="form.values.description"
-        label="Description"
-        name="description"
-        placeholder="Description"
-        show-label
-        :error-message="((form.errors.value as any) as FormErrors).description"
-      />
-      <FormTextInput
-        v-model="form.values.company"
-        label="Owner"
-        name="owner"
-        placeholder="Owner"
-        show-label
-        :error-message="((form.errors.value as any) as FormErrors).company"
-      />
-      <FormTextInput
-        v-model="form.values.adminContact"
-        label="Admin Email"
-        name="adminEmail"
-        placeholder="Admin Email"
-        show-label
-        :type="'email'"
-        :error-message="((form.errors.value as any) as FormErrors).adminContact"
-      />
-      <FormTextInput
-        v-model="form.values.termsOfService"
-        label="Url pointing to the terms of service page"
-        name="terms"
-        show-label
-        :error-message="((form.errors.value as any) as FormErrors).termsOfService"
-      />
-      <FormCheckbox
-        v-model="form.values.inviteOnly"
-        label="Invite only mode - Only users with an invitation will be able to join"
-        name="inviteOnly"
-        show-label
-        :error-message="((form.errors.value as any) as FormErrors).inviteOnly"
-      />
-    </div>
+    <form @submit="onSubmit">
+      <div class="flex flex-col gap-6">
+        <FormTextInput
+          v-model="name"
+          label="This server’s public name"
+          name="serverName"
+          placeholder="Server name"
+          show-label
+          :show-required="true"
+          :rules="requiredRule"
+          :type="'text'"
+        />
+        <FormTextArea
+          v-model="description"
+          label="Description"
+          name="description"
+          placeholder="Description"
+          show-label
+        />
+        <FormTextInput
+          v-model="company"
+          label="Owner"
+          name="owner"
+          placeholder="Owner"
+          show-label
+        />
+        <FormTextInput
+          v-model="adminContact"
+          label="Admin Email"
+          name="adminEmail"
+          placeholder="Admin Email"
+          show-label
+          :rules="emailRules"
+          :type="'email'"
+        />
+        <FormTextInput
+          v-model="termsOfService"
+          label="Url pointing to the terms of service page"
+          name="terms"
+          show-label
+        />
+        <FormCheckbox
+          v-model="inviteOnly"
+          label="Invite only mode - Only users with an invitation will be able to join"
+          name="inviteOnly"
+          show-label
+        />
+      </div>
+    </form>
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
-import { computed, defineEmits, defineProps } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { gql } from '@apollo/client/core'
-import { useForm, defineRule } from 'vee-validate'
-import { useLogger } from '~~/composables/logging'
-import {
-  Button,
-  ServerInfoResponse,
-  FormErrors
-} from '../../lib/server-management/helpers/types'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { useForm } from 'vee-validate'
+import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
+import { graphql } from '~~/lib/common/generated/gql'
+import { Button } from '../../lib/server-management/helpers/types'
 import { LayoutDialog, FormTextInput, FormTextArea } from '@speckle/ui-components'
+import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 
-const logger = useLogger() as { error: (...args: unknown[]) => void }
+type FormValues = {
+  name: string
+  description: string
+  company: string
+  adminContact: string
+  termsOfService: string
+  inviteOnly: boolean
+}
+
+const name = ref('')
+const description = ref('')
+const company = ref('')
+const adminContact = ref('')
+const termsOfService = ref('')
+const inviteOnly = ref(false)
+
 const { triggerNotification } = useGlobalToast()
 
-// Define the rules
-defineRule('required', (value: string) => !!value || 'This field is required.')
-defineRule(
-  'min',
-  (value: string, [length]: [number]) =>
-    value.length >= length || `This field should have at least ${length} characters.`
-)
-defineRule(
-  'max',
-  (value: string, [length]: [number]) =>
-    value.length <= length || `This field should not exceed ${length} characters.`
-)
+// Compute the isOpen state
+const isOpen = computed({
+  get: () => props.open,
+  set: (newVal) => emit('update:open', newVal)
+})
 
-// Create the form
-const form = useForm({
-  validationSchema: {
-    name: { required: true, min: 3, max: 50 },
-    description: { min: 3, max: 300 },
-    adminContact: { required: true, min: 3, max: 50 },
-    company: { required: true, min: 3, max: 50 },
-    termsOfService: { required: true, min: 3, max: 50 }
-  },
+const { handleSubmit } = useForm<FormValues>({
   initialValues: {
     name: '',
     description: '',
-    adminContact: '',
     company: '',
+    adminContact: '',
     termsOfService: '',
-    inviteOnly: true
+    inviteOnly: false
   }
 })
 
+const emailRules = [isEmail]
+const requiredRule = [isRequired]
+
 // Define the GraphQL queries and mutations
-const serverInfoQuery = gql`
+const serverInfoQuery = graphql(`
   query ServerSettingsDialogData {
     serverInfo {
       name
@@ -115,72 +111,58 @@ const serverInfoQuery = gql`
       inviteOnly
     }
   }
-`
+`)
 
-const serverInfoUpdateMutation = gql`
+const serverInfoUpdateMutation = graphql(`
   mutation ServerInfoUpdate($info: ServerInfoUpdateInput!) {
     serverInfoUpdate(info: $info)
   }
-`
+`)
 
-const { onResult } = useQuery<ServerInfoResponse>(serverInfoQuery)
-const { mutate } = useMutation(serverInfoUpdateMutation)
+const { result } = useQuery(serverInfoQuery)
+const { mutate: updateServerInfo } = useMutation(serverInfoUpdateMutation)
 
-// Use the onResult function to update the form values when the query is successful
-onResult((response) => {
-  const serverInfo = response.data?.serverInfo
-  if (serverInfo) {
-    form.setValues({
-      name: serverInfo.name,
-      description: serverInfo.description,
-      adminContact: serverInfo.adminContact,
-      company: serverInfo.company || '',
-      termsOfService: serverInfo.termsOfService || '',
-      inviteOnly: serverInfo.inviteOnly
+const onSubmit = handleSubmit(async () => {
+  try {
+    await updateServerInfo({
+      info: {
+        name: name.value,
+        description: description.value,
+        company: company.value,
+        adminContact: adminContact.value,
+        termsOfService: termsOfService.value,
+        inviteOnly: inviteOnly.value
+      }
+    })
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Successfully saved',
+      description: 'Your server settings have been saved.'
+    })
+    emit('update:open', false)
+    emit('server-info-updated')
+  } catch (error) {
+    console.error('Failed to update server info', error)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Saving failed',
+      description: `Failed to update server info`
     })
   }
 })
 
-// Update the onSave function to validate the form before submitting
-const onSave = async () => {
-  // Validate the form
-  const { errors } = await form.validate()
-
-  // If there are no errors, try to submit the form
-  if (!Object.keys(errors).length) {
-    try {
-      const plainObject = {
-        name: form.values.name,
-        description: form.values.description,
-        adminContact: form.values.adminContact,
-        company: form.values.company,
-        termsOfService: form.values.termsOfService,
-        inviteOnly: form.values.inviteOnly,
-        guestModeEnabled: false // You might want to add this as a field in your form
-      }
-
-      await mutate({ variables: { info: plainObject } })
-
-      // Trigger a success toast when the mutation is successful
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Success',
-        description: 'Server settings have been successfully updated.'
-      })
-    } catch (error) {
-      // Trigger a danger toast when there is an error
-      triggerNotification({
-        type: ToastNotificationType.Danger,
-        title: 'Error',
-        description: 'There was an error updating the server settings.'
-      })
-      logger.error('Error updating server info:', error)
+watch(isOpen, (newVal, oldVal) => {
+  if (newVal && !oldVal) {
+    if (result.value && result.value.serverInfo) {
+      name.value = result.value.serverInfo.name
+      description.value = result.value.serverInfo.description || ''
+      company.value = result.value.serverInfo.company || ''
+      adminContact.value = result.value.serverInfo.adminContact || ''
+      termsOfService.value = result.value.serverInfo.termsOfService || ''
+      inviteOnly.value = result.value.serverInfo.inviteOnly || false
     }
   }
-}
-
-// Expose onSave
-defineExpose({ onSave })
+})
 
 // Define the props and emits for the component
 const props = defineProps<{
@@ -190,18 +172,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
+  (e: 'server-info-updated'): void
 }>()
 
-// Compute the isOpen state
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
+defineExpose({
+  onSubmit
 })
-
-// Define the title
-const title = 'Edit Server Settings'
 </script>
-
-<style scoped>
-/* Add any scoped styles here */
-</style>

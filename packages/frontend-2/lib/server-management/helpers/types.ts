@@ -17,7 +17,7 @@ export interface ServerInfo {
 }
 
 export interface SettingsDialogRef {
-  onSave: () => Promise<void>
+  onSubmit: () => void
 }
 
 export interface CardInfo {

@@ -33,6 +33,7 @@
             onClick: saveSettings
           }
         ]"
+        @server-info-updated="fetchData"
       />
 
       <Card :server-info="userData" />
@@ -79,7 +80,7 @@ const closeDialog = () => {
 
 const saveSettings = () => {
   if (settingsDialog.value) {
-    settingsDialog.value.onSave()
+    settingsDialog.value.onSubmit()
   }
 }
 
@@ -92,7 +93,6 @@ async function getLatestVersion(): Promise<string | null> {
       throw new Error(`HTTP error! status: ${response.status}`)
     } else {
       const data = (await response.json()) as GithubRelease
-      console.log(data)
       return data.tag_name
     }
   } catch (err) {
@@ -103,7 +103,8 @@ async function getLatestVersion(): Promise<string | null> {
 
 onMounted(async () => {
   latestVersion.value = await getLatestVersion()
-  isLatestVersion.value = versionInfo.current === latestVersion.value
+  isLatestVersion.value =
+    versionInfo.current === latestVersion.value || versionInfo.current === 'dev'
 })
 
 const dataQuery = graphql(`
@@ -122,11 +123,17 @@ const dataQuery = graphql(`
   }
 `)
 
-const { result } = useQuery(dataQuery)
+const { result, refetch } = useQuery(dataQuery)
 const versionInfo = reactive({
   current: result.value?.serverInfo.version || 'N/A',
   latest: latestVersion.value || 'N/A'
 })
+
+const fetchData = () => {
+  refetch()
+}
+
+onMounted(fetchData)
 
 const serverData = computed((): CardInfo[] => [
   {
@@ -145,23 +152,18 @@ const serverData = computed((): CardInfo[] => [
     title: 'Speckle Version',
     value: versionInfo.current,
     icon: ChartBarIcon,
-    cta:
-      latestVersion.value &&
-      !isLatestVersion.value &&
-      versionInfo.current.localeCompare(latestVersion.value, undefined, {
-        numeric: true
-      }) < 0
-        ? {
-            type: 'link',
-            label: 'Update is available',
-            action: () => {
-              window.open(
-                'https://github.com/specklesystems/speckle-server/releases',
-                '_blank'
-              )
-            }
+    cta: !isLatestVersion.value
+      ? {
+          type: 'link',
+          label: 'Update is available',
+          action: () => {
+            window.open(
+              'https://github.com/specklesystems/speckle-server/releases',
+              '_blank'
+            )
           }
-        : undefined
+        }
+      : undefined
   }
 ])
 const userData = computed(() => [
@@ -194,7 +196,7 @@ const projectData = computed(() => [
     cta: {
       type: 'button',
       label: 'Manage',
-      action: async () => await router.push('/server-management/projects/')
+      action: async () => await router.push('/projects/')
     }
   }
 ])
