@@ -54,7 +54,7 @@ async function parseAndCreateCommit({
 
   const userToken = process.env.USER_TOKEN
 
-  const serverBaseUrl = process.env.SPECKLE_SERVER_URL || 'http://localhost:3000'
+  const serverBaseUrl = process.env.SPECKLE_SERVER_URL || 'http://127.0.0.1:3000'
   logger.info(`Creating commit for object (${id}), with message "${message}"`)
   const response = await fetch(serverBaseUrl + '/graphql', {
     method: 'POST',

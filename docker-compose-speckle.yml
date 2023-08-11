@@ -26,10 +26,10 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
-      start_period: 5s
+      start_period: 90s
     environment:
       # TODO: Change this to the URL of the speckle server, as accessed from the network
-      CANONICAL_URL: 'http://localhost'
+      CANONICAL_URL: 'http://127.0.0.1'
 
       # TODO: Change this to a unique secret for this server
       SESSION_SECRET: 'TODO:Replace'
@@ -51,6 +51,7 @@ services:
       S3_CREATE_BUCKET: 'true'
       S3_REGION: '' # optional, defaults to 'us-east-1'
       FILE_SIZE_LIMIT_MB: 100
+      EMAIL_FROM: 'no-reply@example.org'
 
   preview-service:
     build:

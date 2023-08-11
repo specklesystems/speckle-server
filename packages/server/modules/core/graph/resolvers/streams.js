@@ -14,12 +14,11 @@ const {
 } = require('@/modules/core/services/streams')
 
 const {
-  authorizeResolver,
   pubsub,
-  StreamPubsubEvents,
-  validateScopes,
-  validateServerRole
-} = require(`@/modules/shared`)
+  StreamSubscriptions: StreamPubsubEvents
+} = require(`@/modules/shared/utils/subscriptions`)
+
+const { authorizeResolver, validateScopes } = require(`@/modules/shared`)
 const {
   RateLimitError,
   RateLimitAction,
@@ -48,8 +47,9 @@ const {
   updateStreamRoleAndNotify
 } = require('@/modules/core/services/streams/management')
 const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
-const { Roles } = require('@speckle/shared')
+const { Roles, Scopes } = require('@speckle/shared')
 const { StreamNotFoundError } = require('@/modules/core/errors/stream')
+const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -85,11 +85,11 @@ module.exports = {
         throw new StreamNotFoundError('Stream not found')
       }
 
-      await authorizeResolver(context.userId, args.id, 'stream:reviewer')
+      await authorizeResolver(context.userId, args.id, Roles.Stream.Reviewer)
 
       if (!stream.isPublic) {
-        await validateServerRole(context, 'server:user')
-        await validateScopes(context.scopes, 'streams:read')
+        await throwForNotHavingServerRole(context, Roles.Server.Guest)
+        await validateScopes(context.scopes, Scopes.Streams.Read)
       }
 
       return stream
@@ -221,13 +221,13 @@ module.exports = {
     },
 
     async streamUpdate(parent, args, context) {
-      await authorizeResolver(context.userId, args.stream.id, 'stream:owner')
+      await authorizeResolver(context.userId, args.stream.id, Roles.Stream.Owner)
       await updateStreamAndNotify(args.stream, context.userId)
       return true
     },
 
     async streamDelete(parent, args, context, info) {
-      await authorizeResolver(context.userId, args.id, 'stream:owner')
+      await authorizeResolver(context.userId, args.id, Roles.Stream.Owner)
       return await _deleteStream(parent, args, context, info)
     },
 
@@ -246,7 +246,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.permissionParams.streamId,
-        'stream:owner'
+        Roles.Stream.Owner
       )
 
       const result = await updateStreamRoleAndNotify(
@@ -260,7 +260,7 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.permissionParams.streamId,
-        'stream:owner'
+        Roles.Stream.Owner
       )
 
       const result = await updateStreamRoleAndNotify(
@@ -310,7 +310,7 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([STREAM_UPDATED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.id, 'stream:reviewer')
+          await authorizeResolver(context.userId, payload.id, Roles.Stream.Reviewer)
           return payload.id === variables.streamId
         }
       )
@@ -320,7 +320,11 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([STREAM_DELETED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.streamId, 'stream:reviewer')
+          await authorizeResolver(
+            context.userId,
+            payload.streamId,
+            Roles.Stream.Reviewer
+          )
           return payload.streamId === variables.streamId
         }
       )

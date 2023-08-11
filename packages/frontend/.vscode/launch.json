@@ -9,7 +9,7 @@
       "request": "launch",
       "reAttach": true,
       "name": "Launch localhost",
-      "url": "http://localhost:3000",
+      "url": "http://127.0.0.1:3000",
       "webRoot": "${workspaceFolder}",
       "sourceMaps": true,
       "trace": true,
@@ -21,10 +21,10 @@
       ]
     },
     {
-      "type": "pwa-chrome",
+      "type": "chrome",
       "request": "launch",
       "name": "Launch Chrome against localhost",
-      "url": "http://localhost:3000",
+      "url": "http://127.0.0.1:3000",
       "webRoot": "${workspaceFolder}",
       "sourceMaps": true,
       "trace": true,

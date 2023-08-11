@@ -14,6 +14,7 @@ const { revokeRefreshToken } = require(`@/modules/auth/services/apps`)
 const { validateScopes } = require(`@/modules/shared`)
 const { InvalidAccessCodeRequestError } = require('@/modules/auth/errors')
 const { ForbiddenError } = require('apollo-server-errors')
+const { Scopes } = require('@speckle/shared')
 
 // TODO: Secure these endpoints!
 module.exports = (app) => {
@@ -38,7 +39,7 @@ module.exports = (app) => {
       if (!valid) throw new InvalidAccessCodeRequestError('Invalid token')
 
       // 2. Validate token scopes
-      await validateScopes(scopes, 'tokens:write')
+      await validateScopes(scopes, Scopes.Tokens.Write)
 
       const ac = await createAuthorizationCode({ appId, userId, challenge })
       return res.redirect(`${app.redirectUrl}?access_code=${ac}`)

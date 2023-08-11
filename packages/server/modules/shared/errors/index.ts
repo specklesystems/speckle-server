@@ -1,7 +1,7 @@
 import { BaseError } from '@/modules/shared/errors/base'
 
 export class ForbiddenError extends BaseError {
-  static code = 'FORBIDDEN_ERROR'
+  static code = 'FORBIDDEN'
   static defaultMessage = 'Access to the resource is forbidden'
 }
 

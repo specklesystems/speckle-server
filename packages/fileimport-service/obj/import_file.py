@@ -125,7 +125,7 @@ def import_obj():
     # Commit
 
     client = SpeckleClient(
-        host=os.getenv("SPECKLE_SERVER_URL", "localhost:3000"), use_ssl=False
+        host=os.getenv("SPECKLE_SERVER_URL", "127.0.0.1:3000"), use_ssl=False
     )
     client.authenticate_with_token(os.environ["USER_TOKEN"])
 

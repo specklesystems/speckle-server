@@ -35,6 +35,7 @@ export class MockedConfigBinding extends BaseBridge {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   updateConfig(config: Config) {
     // do nothing
   }

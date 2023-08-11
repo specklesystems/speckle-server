@@ -1,0 +1,34 @@
+type AdminUserList {
+  items: [LimitedUser!]!
+  cursor: String
+  totalCount: Int!
+}
+
+type ServerStatistics {
+  totalProjectCount: Int!
+  totalUserCount: Int!
+  totalPendingInvites: Int!
+}
+
+type AdminQueries {
+  userList(
+    limit: Int! = 25
+    cursor: String = null
+    query: String = null
+    role: ServerRole = null
+  ): AdminUserList! @hasScope(scope: "users:read")
+
+  projectList(
+    query: String
+    orderBy: String
+    visibility: String
+    limit: Int! = 25
+    cursor: String = null
+  ): ProjectCollection!
+
+  serverStatistics: ServerStatistics! @hasScope(scope: "server:stats")
+}
+
+extend type Query {
+  admin: AdminQueries! @hasServerRole(role: SERVER_ADMIN)
+}

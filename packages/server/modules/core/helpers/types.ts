@@ -73,6 +73,7 @@ export type ServerConfigRecord = {
   canonicalUrl: string
   completed: boolean
   inviteOnly: boolean
+  guestModeEnabled: boolean
 }
 
 export type ServerInfo = ServerConfigRecord & {

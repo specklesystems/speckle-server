@@ -1,9 +1,5 @@
 'use strict'
-const {
-  validateServerRole,
-  validateScopes,
-  authorizeResolver
-} = require('@/modules/shared')
+const { validateScopes, authorizeResolver } = require('@/modules/shared')
 
 const {
   createObjects,
@@ -11,6 +7,8 @@ const {
   getObjectChildren,
   getObjectChildrenQuery
 } = require('../../services/objects')
+const { Roles, Scopes } = require('@speckle/shared')
+const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 
 module.exports = {
   Stream: {
@@ -59,12 +57,12 @@ module.exports = {
   },
   Mutation: {
     async objectCreate(parent, args, context) {
-      await validateServerRole(context, 'server:user')
-      await validateScopes(context.scopes, 'streams:write')
+      await throwForNotHavingServerRole(context, Roles.Server.Guest)
+      await validateScopes(context.scopes, Scopes.Streams.Write)
       await authorizeResolver(
         context.userId,
         args.objectInput.streamId,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
 
       const ids = await createObjects(

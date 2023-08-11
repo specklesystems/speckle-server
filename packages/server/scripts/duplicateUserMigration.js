@@ -1,6 +1,7 @@
 const knex = require('@/db/knex')
 const { logger } = require('@/logging/logging')
 const roles = require('@/modules/core/roles.js')
+const { Roles } = require('@speckle/shared')
 
 const Users = () => knex('users')
 
@@ -35,10 +36,10 @@ const migrateColumnValue = async (tableName, columnName, oldUser, newUser) => {
 const serverAclMigration = async ({ lowerUser, upperUser }) => {
   const oldAcl = await knex('server_acl').where({ userId: upperUser.id }).first()
   // if the old user was admin, make the target admin too
-  if (oldAcl.role === 'server:admin')
+  if (oldAcl.role === Roles.Server.Admin)
     await knex('server_acl')
       .where({ userId: lowerUser.id })
-      .update({ role: 'server:admin' })
+      .update({ role: Roles.Server.Admin })
 }
 
 const _migrateSingleStreamAccess = async ({ lowerUser, upperStreamAcl }) => {

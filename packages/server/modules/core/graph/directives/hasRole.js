@@ -1,11 +1,12 @@
 const { defaultFieldResolver } = require('graphql')
-const { validateServerRole, authorizeResolver } = require('@/modules/shared')
+const { authorizeResolver } = require('@/modules/shared')
 const { ForbiddenError } = require('@/modules/shared/errors')
 const { mapSchema, getDirective, MapperKind } = require('@graphql-tools/utils')
 const {
   mapStreamRoleToValue,
   mapServerRoleToValue
 } = require('@/modules/core/helpers/graphTypes')
+const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 
 module.exports = {
   /**
@@ -19,6 +20,7 @@ module.exports = {
         enum ServerRole {
           SERVER_USER
           SERVER_ADMIN
+          SERVER_GUEST
           SERVER_ARCHIVED_USER
         }
 
@@ -37,42 +39,10 @@ module.exports = {
             const { resolve = defaultFieldResolver } = fieldConfig
             fieldConfig.resolve = async function (...args) {
               const context = args[2]
-              await validateServerRole(context, mapServerRoleToValue(requiredRole))
-
-              return await resolve.apply(this, args)
-            }
-
-            return fieldConfig
-          }
-        })
-    }
-  },
-
-  /**
-   * Ensure that the user has the specified SERVER role (e.g. server user, admin etc.)
-   * @deprecated Use `hasServerRole` instead, as it relies on proper GQL enums
-   * @type {import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder}
-   */
-  hasRole: () => {
-    const directiveName = 'hasRole'
-    return {
-      typeDefs: `
-        """
-        Ensure that the user has the specified SERVER role (e.g. server user, admin etc.)
-        """
-        directive @${directiveName}(role: String!) on FIELD_DEFINITION
-      `,
-      schemaTransformer: (schema) =>
-        mapSchema(schema, {
-          [MapperKind.OBJECT_FIELD]: (fieldConfig) => {
-            const directive = getDirective(schema, fieldConfig, directiveName)?.[0]
-            if (!directive) return undefined
-
-            const { role: requiredRole } = directive
-            const { resolve = defaultFieldResolver } = fieldConfig
-            fieldConfig.resolve = async function (...args) {
-              const context = args[2]
-              await validateServerRole(context, requiredRole)
+              await throwForNotHavingServerRole(
+                context,
+                mapServerRoleToValue(requiredRole)
+              )
 
               return await resolve.apply(this, args)
             }

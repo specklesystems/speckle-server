@@ -4,6 +4,7 @@ import { MaybeRef } from '@vueuse/core'
 import { isArray } from 'lodash-es'
 import { Get } from 'type-fest'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { useLock } from '~~/lib/common/composables/singleton'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import {
   OnProjectUpdatedSubscription,
@@ -33,10 +34,6 @@ import {
 } from '~~/lib/projects/graphql/mutations'
 import { onProjectUpdatedSubscription } from '~~/lib/projects/graphql/subscriptions'
 
-/**
- * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
- * that we don't want to duplicate (or extract that part out into a separate composable)
- */
 export function useProjectUpdateTracking(
   projectId: MaybeRef<string>,
   handler?: (
@@ -53,6 +50,9 @@ export function useProjectUpdateTracking(
   const goHome = useNavigateToHome()
   const { triggerNotification } = useGlobalToast()
   const apollo = useApolloClient().client
+  const { hasLock } = useLock(
+    computed(() => `useProjectUpdateTracking-${unref(projectId)}`)
+  )
   const { onResult: onProjectUpdated } = useSubscription(
     onProjectUpdatedSubscription,
     () => ({
@@ -61,7 +61,7 @@ export function useProjectUpdateTracking(
   )
 
   onProjectUpdated((res) => {
-    if (!res.data?.projectUpdated) return
+    if (!res.data?.projectUpdated || !hasLock.value) return
 
     const event = res.data.projectUpdated
     const cache = apollo.cache
@@ -84,8 +84,12 @@ export function useProjectUpdateTracking(
         })
       }
     }
+  })
 
-    handler?.(event, cache)
+  onProjectUpdated((res) => {
+    if (!res.data?.projectUpdated) return
+    const event = res.data.projectUpdated
+    handler?.(event, apollo.cache)
   })
 }
 
