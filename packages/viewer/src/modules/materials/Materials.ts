@@ -21,7 +21,6 @@ import defaultGradient from '../../assets/gradient.png'
 import { Assets } from '../Assets'
 import { getConversionFactor } from '../converter/Units'
 import SpeckleGhostMaterial from './SpeckleGhostMaterial'
-import Logger from 'js-logger'
 import SpeckleTextMaterial from './SpeckleTextMaterial'
 import { SpeckleMaterial } from './SpeckleMaterial'
 
@@ -911,37 +910,38 @@ export default class Materials {
   }
 
   private getMeshMaterial(hash: number, material: RenderMaterial) {
-    if (material) {
-      return this.makeMeshMaterial(material)
-    } else {
-      if (this.materialMap[hash]) {
-        return this.materialMap[hash].clone()
-      } else {
-        Logger.warn(`Could not create mesh material hash ${hash} for `, material)
-      }
+    if (!this.materialMap[hash]) {
+      this.materialMap[hash] = this.makeMeshMaterial(material)
     }
+    return this.materialMap[hash]
   }
 
   private getLineMaterial(hash: number, material: RenderMaterial | DisplayStyle) {
-    if (this.materialMap[hash]) {
-      return this.materialMap[hash]
+    if (!this.materialMap[hash]) {
+      this.materialMap[hash] = this.makeLineMaterial(material as DisplayStyle)
     }
-    return this.makeLineMaterial(material as DisplayStyle)
+    return this.materialMap[hash]
   }
 
   private getPointMaterial(hash: number, material: RenderMaterial) {
-    if (this.materialMap[hash]) {
-      return this.materialMap[hash]
+    if (!this.materialMap[hash]) {
+      this.materialMap[hash] = this.makePointMaterial(material as RenderMaterial)
     }
-    return this.makePointMaterial(material as RenderMaterial)
+    return this.materialMap[hash]
   }
 
   private getPointCloudMaterial(hash: number, material: RenderMaterial) {
-    return this.getPointMaterial(hash, material)
+    if (!this.materialMap[hash]) {
+      this.materialMap[hash] = this.getPointMaterial(hash, material)
+    }
+    return this.materialMap[hash]
   }
 
   private getTextMaterial(hash: number, material: RenderMaterial | DisplayStyle) {
-    return this.makeTextMaterial(material as DisplayStyle)
+    if (!this.materialMap[hash]) {
+      this.materialMap[hash] = this.makeTextMaterial(material as DisplayStyle)
+    }
+    return this.materialMap[hash]
   }
 
   public getHighlightMaterial(renderView: NodeRenderView): Material {

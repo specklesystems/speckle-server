@@ -26,7 +26,7 @@ const DefaultSelectionExtensionOptions = {
     metalness: 0,
     vertexColors: false,
     lineWeight: 1,
-    stencilOutlines: true,
+    stencilOutlines: false,
     pointSize: 4
   }
   // hoverMaterialData: {
@@ -211,6 +211,7 @@ export class SelectionExtension extends Extension {
     this.viewer
       .getRenderer()
       .setMaterial(transparentRvs, this.transparentSelectionMaterialData)
+    setTimeout(() => console.warn(this.viewer.getRenderer().renderingStats), 100)
   }
 
   protected removeSelection() {
