@@ -31,6 +31,7 @@ export default defineConfig({
     gql()
   ],
   server: {
+    host: '127.0.0.1',
     port,
     hmr: {
       port

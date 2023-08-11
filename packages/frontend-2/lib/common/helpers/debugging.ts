@@ -31,3 +31,17 @@ export function wrapRefWithTracking<R extends Ref<unknown>>(
     // hiding the real type so that you don't have to re-type everything that relies on the ref being a ref
   }) as unknown as R
 }
+
+/**
+ * Use this to render a stack trace with clickable links to the source code in the browser console
+ */
+export class StackTrace extends Error {
+  constructor() {
+    super('')
+    this.name = 'Stack trace:'
+  }
+}
+
+export function getCurrentTrace() {
+  return (new Error('Trace:').stack || '').substring(7)
+}

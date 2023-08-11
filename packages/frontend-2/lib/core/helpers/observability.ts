@@ -20,7 +20,7 @@ export function buildFakePinoLogger(
     warn: console.warn,
     error: errLogger,
     fatal: errLogger,
-    trace: console.debug,
+    trace: console.trace,
     silent: noop
   } as unknown as ReturnType<typeof Observability.getLogger>
 
