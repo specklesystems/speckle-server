@@ -88,12 +88,13 @@ We're using yarn and its workspaces functionalities to manage the monorepo.
 Make sure you are using nodejs 16+.
 To get started, run:
 
-`$ corepack enable`
-`$ yarn`
-`$ yarn build`
+1. `corepack enable`
+1. `yarn`
+1. `yarn build`
 
 After this, you can use the scripts in the individual packages or run all in dev mode:
-`$ yarn dev`
+
+- `yarn dev`
 
 For development you'll also want to run `yarn dev:docker:up` which will start up the docker containers you will need
 to be able to run the apps on your machine.
