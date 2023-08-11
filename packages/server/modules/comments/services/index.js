@@ -13,6 +13,7 @@ const {
   markCommentViewed
 } = require('@/modules/comments/repositories/comments')
 const { clamp } = require('lodash')
+const { Roles } = require('@speckle/shared')
 
 const Comments = () => knex('comments')
 const CommentLinks = () => knex('comment_links')
@@ -221,7 +222,7 @@ module.exports = {
       .first()
 
     if (comment.authorId !== userId) {
-      if (!aclEntry || aclEntry.role !== 'stream:owner')
+      if (!aclEntry || aclEntry.role !== Roles.Stream.Owner)
         throw new ForbiddenError("You don't have permission to archive the comment")
     }
 

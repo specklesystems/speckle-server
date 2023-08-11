@@ -13,13 +13,11 @@ const { beforeEachContext } = require('@/test/hooks')
 const { createStream } = require('@/modules/core/services/streams')
 const { createUser } = require('@/modules/core/services/users')
 
-const {
-  validateServerRole,
-  validateScopes,
-  authorizeResolver
-} = require('@/modules/shared')
+const { validateScopes, authorizeResolver } = require('@/modules/shared')
 const { buildContext } = require('@/modules/shared/middleware')
 const { ForbiddenError } = require('apollo-server-express')
+const { Roles, Scopes } = require('@speckle/shared')
+const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 
 describe('Generic AuthN & AuthZ controller tests', () => {
   before(async () => {
@@ -60,7 +58,10 @@ describe('Generic AuthN & AuthZ controller tests', () => {
   )
 
   it('Should validate server role', async () => {
-    await validateServerRole({ auth: true, role: 'server:user' }, 'server:admin')
+    await throwForNotHavingServerRole(
+      { auth: true, role: Roles.Server.User },
+      Roles.Server.Admin
+    )
       .then(() => {
         throw new Error('This should have been rejected')
       })
@@ -68,21 +69,28 @@ describe('Generic AuthN & AuthZ controller tests', () => {
         expect('You do not have the required server role').to.equal(err.message)
       )
 
-    await validateServerRole({ auth: true, role: 'HACZOR' }, '133TCR3w')
+    await throwForNotHavingServerRole({ auth: true, role: 'HACZOR' }, '133TCR3w')
       .then(() => {
         throw new Error('This should have been rejected')
       })
-      .catch((err) => expect('Invalid server role specified').to.equal(err.message))
+      .catch((err) =>
+        expect('Invalid role requirement specified').to.equal(err.message)
+      )
 
-    await validateServerRole({ auth: true, role: 'server:admin' }, '133TCR3w')
+    await throwForNotHavingServerRole(
+      { auth: true, role: Roles.Server.Admin },
+      '133TCR3w'
+    )
       .then(() => {
         throw new Error('This should have been rejected')
       })
-      .catch((err) => expect('Invalid server role specified').to.equal(err.message))
+      .catch((err) =>
+        expect('Invalid role requirement specified').to.equal(err.message)
+      )
 
-    const test = await validateServerRole(
-      { auth: true, role: 'server:admin' },
-      'server:user'
+    const test = await throwForNotHavingServerRole(
+      { auth: true, role: Roles.Server.Admin },
+      Roles.Server.User
     )
     expect(test).to.equal(true)
   })
@@ -95,7 +103,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       .catch((err) => expect('Unknown role: bar').to.equal(err.message))
 
     // this caught me out, but streams:read is not a valid role for now
-    await authorizeResolver('foo', 'bar', 'streams:read')
+    await authorizeResolver('foo', 'bar', Scopes.Streams.Read)
       .then(() => {
         throw new Error('This should have been rejected')
       })
@@ -148,9 +156,9 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       const role = await authorizeResolver(
         serverOwner.id,
         myStream.id,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
-      expect(role).to.equal('stream:owner')
+      expect(role).to.equal(Roles.Stream.Owner)
     })
 
     it('should get the passed in role for server:admins if override enabled', async () => {
@@ -159,13 +167,17 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       const role = await authorizeResolver(
         serverOwner.id,
         myStream.id,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
-      expect(role).to.equal('stream:contributor')
+      expect(role).to.equal(Roles.Stream.Contributor)
     })
     it('should not allow server:admins to be anything if adminOverride is disabled', async () => {
       try {
-        await authorizeResolver(serverOwner.id, notMyStream.id, 'stream:contributor')
+        await authorizeResolver(
+          serverOwner.id,
+          notMyStream.id,
+          Roles.Stream.Contributor
+        )
         throw 'This should have thrown'
       } catch (e) {
         expect(e instanceof ForbiddenError)
@@ -179,14 +191,14 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       const role = await authorizeResolver(
         serverOwner.id,
         notMyStream.id,
-        'stream:contributor'
+        Roles.Stream.Contributor
       )
-      expect(role).to.equal('stream:contributor')
+      expect(role).to.equal(Roles.Stream.Contributor)
     })
 
     it('should not allow server:users to be anything if adminOverride is disabled', async () => {
       try {
-        await authorizeResolver(otherGuy.id, myStream.id, 'stream:contributor')
+        await authorizeResolver(otherGuy.id, myStream.id, Roles.Stream.Contributor)
         throw 'This should have thrown'
       } catch (e) {
         expect(e instanceof ForbiddenError)
@@ -197,7 +209,7 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       envHelperMock.enable()
       envHelperMock.mockFunction('adminOverrideEnabled', () => true)
       try {
-        await authorizeResolver(otherGuy.id, myStream.id, 'stream:contributor')
+        await authorizeResolver(otherGuy.id, myStream.id, Roles.Stream.Contributor)
         throw 'This should have thrown'
       } catch (e) {
         expect(e instanceof ForbiddenError)

@@ -24,7 +24,7 @@ export type SpeckleModule<T extends Record<string, unknown> = Record<string, unk
      * @param isInitial Whether this initialization method is being invoked for the first time in this
      * process. In tests modules can be initialized multiple times.
      */
-    init: (app: Express, isInitial: boolean) => MaybeAsync<void>
+    init?: (app: Express, isInitial: boolean) => MaybeAsync<void>
     /**
      * Finalize initialization. This is only invoked once all of the other modules' `init()`
      * hooks are run.

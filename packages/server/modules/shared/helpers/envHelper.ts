@@ -1,4 +1,3 @@
-import { Nullable } from '@speckle/shared'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
 
@@ -145,7 +144,7 @@ export function getFrontendOrigin(forceFe2?: boolean) {
 export function getServerOrigin() {
   if (!process.env.CANONICAL_URL) {
     throw new MisconfiguredEnvironmentError(
-      'Server origin env var (CANONICAL_URL) not configured'
+      'Server origin environment variable (CANONICAL_URL) not configured'
     )
   }
 
@@ -157,13 +156,6 @@ export function getServerOrigin() {
  */
 export function isSSLServer() {
   return /^https:\/\//.test(getBaseUrl())
-}
-
-/**
- * Source stream for cloning tutorial/guide streams for users
- */
-export function getOnboardingStreamId(): Nullable<string> {
-  return process.env.ONBOARDING_STREAM_ID || null
 }
 
 export function adminOverrideEnabled() {
@@ -186,4 +178,38 @@ export function speckleAutomateUrl() {
  */
 export function ignoreMissingMigrations() {
   return ['1', 'true'].includes(process.env.IGNORE_MISSING_MIRATIONS || 'false')
+}
+
+/**
+ * URL of a project on any FE2 speckle server that will be pulled in and used as the onboarding stream
+ */
+export function getOnboardingStreamUrl() {
+  const val = process.env.ONBOARDING_STREAM_URL
+  if (!val?.length) return null
+
+  try {
+    // validating that the URL is valid
+    return new URL(val).toString()
+  } catch (e) {
+    // suppress
+  }
+
+  return null
+}
+
+/**
+ * Increase this value to re-sync the onboarding stream
+ */
+export function getOnboardingStreamCacheBustNumber() {
+  const val = process.env.ONBOARDING_STREAM_CACHE_BUST_NUMBER || '1'
+  return parseInt(val) || 1
+}
+
+export function getEmailFromAddress() {
+  if (!process.env.EMAIL_FROM) {
+    throw new MisconfiguredEnvironmentError(
+      'Email From environment variable (EMAIL_FROM) is not configured'
+    )
+  }
+  return process.env.EMAIL_FROM
 }

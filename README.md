@@ -24,7 +24,7 @@
 
 What is Speckle? Check our [![YouTube Video Views](https://img.shields.io/youtube/views/B9humiSpHzM?label=Speckle%20in%201%20minute%20video&style=social)](https://www.youtube.com/watch?v=B9humiSpHzM)
 
-### Features
+## Features
 
 - **Object-based:** say goodbye to files! Speckle is the first object based platform for the AEC industry
 - **Version control:** Speckle is the Git & Hub for geometry and BIM data
@@ -37,14 +37,14 @@ What is Speckle? Check our [![YouTube Video Views](https://img.shields.io/youtub
 - **Built for developers:** we are building Speckle with developers in mind and got tools for every stack
 - **Built for the AEC industry:** Speckle connectors are plugins for the most common software used in the industry such as Revit, Rhino, Grasshopper, AutoCAD, Civil 3D, Excel, Unreal Engine, Unity, QGIS, Blender, ArchiCAD and more!
 
-### Try Speckle now!
+## Try Speckle now!
 
 Give Speckle a try in no time by:
 
 - [![speckle XYZ](https://img.shields.io/badge/https://-speckle.xyz-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](https://speckle.xyz) ⇒ creating an account at
 - [![create a droplet](https://img.shields.io/badge/Create%20a%20Droplet-0069ff?style=flat-square&logo=digitalocean&logoColor=white)](https://marketplace.digitalocean.com/apps/speckle-server?refcode=947a2b5d7dc1) ⇒ deploying an instance in 1 click
 
-### Resources
+## Resources
 
 - [![Community forum users](https://img.shields.io/badge/community-forum-green?style=for-the-badge&logo=discourse&logoColor=white)](https://speckle.community) for help, feature requests or just to hang with other speckle enthusiasts, check out our community forum!
 - [![website](https://img.shields.io/badge/tutorials-speckle.systems-royalblue?style=for-the-badge&logo=youtube)](https://speckle.systems) our tutorials portal is full of resources to get you started using Speckle
@@ -62,7 +62,7 @@ This monorepo is the home of the Speckle v2 web packages:
 - [`packages/webhook-service`](https://github.com/specklesystems/speckle-server/tree/main/packages/webhook-service): making external webhook calls
 - [`packages/fileimport-service`](https://github.com/specklesystems/speckle-server/tree/main/packages/fileimport-service): parsing and importing files
 
-### Other repos
+## Other repos
 
 Make sure to also check and ⭐️ these other Speckle repositories:
 
@@ -76,57 +76,58 @@ Make sure to also check and ⭐️ these other Speckle repositories:
 - [`speckle-powerbi`](https://github.com/specklesystems/speckle-powerbi): PowerBi connector
 - and more [connectors & tooling](https://github.com/specklesystems/)!
 
-## Developing and Debugging
+# Developing and Debugging
 
 Have you checked our [dev docs](https://speckle.guide/dev/)?
 
 We have a detailed section on [deploying a Speckle server](https://speckle.guide/dev/server-setup.html). To get started developing locally, you can see the [Local development environment](https://speckle.guide/dev/server-local-dev.html) page.
 
-### TL;DR;
+## TL;DR
 
 We're using yarn and its workspaces functionalities to manage the monorepo.
-Make sure you are using nodejs 16+.
+Make sure you are using [Node](https://nodejs.org/en) version 18.
 To get started, run:
 
-`$ corepack enable`
-`$ yarn`
-`$ yarn build`
+1. `corepack enable`
+1. `yarn`
+1. `yarn build`
 
 After this, you can use the scripts in the individual packages or run all in dev mode:
-`$ yarn dev`
+
+- `yarn dev`
 
 For development you'll also want to run `yarn dev:docker:up` which will start up the docker containers you will need
 to be able to run the apps on your machine.
 
-### IDE
+## IDE
 
 The suggested IDE for working in this repo is VSCode, because the repo has special configs to improve the DX there (auto-format & auto-lint, recommended extensions etc.).
 
 This repository relies on [VSCode multi-root workspaces](https://code.visualstudio.com/docs/editor/multi-root-workspaces), so for the best DX and proper formatting/linting make sure you open the project using the `workspace.code-workspace` file instead of just opening the folder in VSCode.
 
-#### Proper TypeScript support
+### Proper TypeScript support
 
 To get proper TS support in standard TS files as well as Vue files, we rely on the **Volar** VSCode extension - not **Vetur**! When you open the workspace for the very first time, VSCode should already prompt you to install this extension.
 The default Volar setup can be quite resource intensive, however, because there end up being standard TS Language Server instances running as well as Vue TS Language server instances. To resolve this issue we rely on Volar's [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471).
 
 Essentially, ensure you have **Volar** enabled, and the built in **TypeScript and JavaScript Language Features** extension disabled (for this workspace)!
 
-### Useful containers
+## Useful containers
 
-#### Maildev
+### Maildev
 
 We have a [Maildev](https://github.com/maildev/maildev) container available that you can use to see all e-mails sent out from the app. Make sure your `server` .env file is configured properly to use it:
 
-```
+```bash
 EMAIL=true
-EMAIL_FROM="speckle@speckle.local"
+EMAIL_FROM="no-reply@example.org"
 EMAIL_HOST="localhost"
 EMAIL_PORT="1025"
 ```
 
 The web portal is available at `localhost:1080` and it's listening for mail on port `1025`.
 
-### Contributing
+# Contributing
 
 Please make sure you read the [contribution guidelines](https://github.com/specklesystems/speckle-server/blob/main/CONTRIBUTING.md) for an overview of the best practices we try to follow.
 
@@ -147,10 +148,10 @@ When committing to git, an automated script will run. This will check that your 
 - Please use the name of the package as the scope of your commit.
 - Note that `ggshield` requires you to [register an account](https://dashboard.gitguardian.com/auth/signup) and then [authorise with GitGuardian](https://github.com/GitGuardian/ggshield#initial-setup) before it can be used: `ggshield auth login`
 
-### Security
+# Security
 
 For any security vulnerabilities or concerns, please contact us directly at security[at]speckle.systems.
 
-### License
+# License
 
 Unless otherwise described, the code in this repository is licensed under the Apache-2.0 License. Please note that some modules, extensions or code herein might be otherwise licensed. This is indicated either in the root of the containing folder under a different license file, or in the respective file's header. If you have any questions, don't hesitate to get in touch with us via [email](mailto:hello@speckle.systems).

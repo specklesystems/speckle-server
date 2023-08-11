@@ -43,13 +43,10 @@ import {
 } from '~~/lib/projects/graphql/mutations'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
-import { isUndefined, uniqBy } from 'lodash-es'
+import { intersection, isUndefined, uniqBy } from 'lodash-es'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
+import { useLock } from '~~/lib/common/composables/singleton'
 
-/**
- * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
- * that we don't want to duplicate (or extract that part out into a separate composable)
- */
 export function useProjectVersionUpdateTracking(
   projectId: MaybeRef<string>,
   handler?: (
@@ -71,9 +68,13 @@ export function useProjectVersionUpdateTracking(
       id: unref(projectId)
     })
   )
+  const { hasLock } = useLock(
+    computed(() => `useProjectVersionUpdateTracking-${unref(projectId)}`)
+  )
 
+  // Cache updates that should only be invoked once
   onProjectVersionsUpdate((res) => {
-    if (!res.data?.projectVersionsUpdated) return
+    if (!res.data?.projectVersionsUpdated || !hasLock.value) return
 
     const event = res.data.projectVersionsUpdated
     const version = event.version
@@ -89,25 +90,29 @@ export function useProjectVersionUpdateTracking(
       modifyObjectFields<ProjectModelsArgs, Project['models']>(
         apollo.cache,
         getCacheId('Project', unref(projectId)),
-        (fieldName, variables, value, { ref }) => {
-          if (fieldName !== 'models') return
+        (_fieldName, variables, value, { ref }) => {
           if (variables.filter?.search) return
 
+          const limit = variables.limit
           const newModelRef = ref('Model', version.model.id)
           const newItems = (value?.items || []).slice()
 
-          let isAdded = false
-          if (!newItems.find((i) => i.__ref === newModelRef.__ref)) {
+          let itemAdded = false
+          if (
+            !newItems.find((i) => i.__ref === newModelRef.__ref) &&
+            (isUndefined(limit) || newItems.length < limit)
+          ) {
             newItems.unshift(newModelRef)
-            isAdded = true
+            itemAdded = true
           }
 
           return {
             ...(value || {}),
             items: newItems,
-            totalCount: (value.totalCount || 0) + (isAdded ? 1 : 0)
+            totalCount: (value.totalCount || 0) + (itemAdded ? 1 : 0)
           }
-        }
+        },
+        { fieldNameWhitelist: ['models'] }
       )
 
       // + Evict modelsTree, if it doesnt have this model
@@ -145,8 +150,7 @@ export function useProjectVersionUpdateTracking(
         >(
           apollo.cache,
           getCacheId('Model', version.model.id),
-          (fieldName, _variables, value, { readField }) => {
-            if (fieldName !== 'pendingImportedVersions') return
+          (_fieldName, _variables, value, { readField }) => {
             if (!value?.length) return
 
             // Unfortunately message matching is the best we can do
@@ -161,24 +165,66 @@ export function useProjectVersionUpdateTracking(
               newVersions.splice(pendingWithFittingMessageIdx, 1)
             }
             return newVersions
-          }
+          },
+          { fieldNameWhitelist: ['pendingImportedVersions'] }
         )
 
         // Add to model.versions
         modifyObjectFields<ModelVersionsArgs, Model['versions']>(
           apollo.cache,
           getCacheId('Model', version.model.id),
-          (fieldName, _vars, value, { ref }) => {
-            if (fieldName !== 'versions') return
+          (_fieldName, variables, value, { ref }) => {
+            if (
+              variables.filter?.priorityIdsOnly &&
+              variables.filter?.priorityIds &&
+              !variables.filter.priorityIds.includes(version.id)
+            ) {
+              return
+            }
+
+            const limit = variables.limit
+            if (!limit) {
+              return // already updated through ProjectPageLatestItemsModelItem fragment in response
+            }
+
             const newItems = (value?.items || []).slice()
-            newItems.unshift(ref('Version', version.id))
+
+            if (isUndefined(limit) || newItems.length < limit) {
+              newItems.unshift(ref('Version', version.id))
+            }
 
             return {
               ...(value || {}),
               items: newItems,
               totalCount: (value.totalCount || 0) + 1
             }
-          }
+          },
+          { fieldNameWhitelist: ['versions'] }
+        )
+
+        // Add to project.versions
+        modifyObjectFields<ProjectVersionsArgs, Project['versions']>(
+          apollo.cache,
+          getCacheId('Project', unref(projectId)),
+          (_fieldName, variables, value, { ref }) => {
+            const newVersionRef = ref('Version', version.id)
+            const limit = variables.limit
+
+            const newItems = (value?.items || []).slice()
+            if (
+              !newItems.find((i) => i.__ref === newVersionRef.__ref) &&
+              (isUndefined(limit) || newItems.length < limit)
+            ) {
+              newItems.unshift(newVersionRef)
+            }
+
+            return {
+              ...(value || {}),
+              items: newItems,
+              totalCount: (value.totalCount || 0) + 1
+            }
+          },
+          { fieldNameWhitelist: ['versions'] }
         )
 
         // Potentially remove item from Project.pendingImportedModels?
@@ -189,8 +235,7 @@ export function useProjectVersionUpdateTracking(
         >(
           apollo.cache,
           getCacheId('Project', unref(projectId)),
-          (fieldName, _variables, value, { readField }) => {
-            if (fieldName !== 'pendingImportedModels') return
+          (_fieldName, _variables, value, { readField }) => {
             if (!value?.length) return
 
             const versionModelName = version.model.name
@@ -199,7 +244,8 @@ export function useProjectVersionUpdateTracking(
               return itemModelName !== versionModelName
             })
             return currentModels
-          }
+          },
+          { fieldNameWhitelist: ['pendingImportedModels'] }
         )
 
         // Emit toast
@@ -241,7 +287,12 @@ export function useProjectVersionUpdateTracking(
         })
       }
     }
+  })
 
+  onProjectVersionsUpdate((res) => {
+    if (!res.data?.projectVersionsUpdated) return
+
+    const event = res.data.projectVersionsUpdated
     handler?.(event, apollo.cache)
   })
 }
@@ -319,8 +370,7 @@ export function useDeleteVersions() {
             modifyObjectFields<ProjectVersionsArgs, Project['versions']>(
               cache,
               getCacheId('Project', options.projectId),
-              (fieldName, _variables, data) => {
-                if (fieldName !== 'versions') return
+              (_fieldName, _variables, data) => {
                 return {
                   ...data,
                   ...(!isUndefined(data.totalCount)
@@ -332,7 +382,8 @@ export function useDeleteVersions() {
                       }
                     : {})
                 }
-              }
+              },
+              { fieldNameWhitelist: ['versions'] }
             )
           }
 
@@ -341,20 +392,30 @@ export function useDeleteVersions() {
             modifyObjectFields<ModelVersionsArgs, Model['versions']>(
               cache,
               getCacheId('Model', options.modelId),
-              (fieldName, _variables, data) => {
-                if (fieldName !== 'versions') return
+              (_fieldName, variables, data) => {
+                let removedCount = input.versionIds.length
+                if (
+                  variables.filter?.priorityIdsOnly &&
+                  variables.filter?.priorityIds
+                ) {
+                  const idIntersection = intersection(
+                    variables.filter.priorityIds,
+                    input.versionIds
+                  )
+                  if (idIntersection.length < 1) return
+                  removedCount = idIntersection.length
+                }
+
                 return {
                   ...data,
                   ...(!isUndefined(data.totalCount)
                     ? {
-                        totalCount: Math.max(
-                          data.totalCount - input.versionIds.length,
-                          0
-                        )
+                        totalCount: Math.max(data.totalCount - removedCount, 0)
                       }
                     : {})
                 }
-              }
+              },
+              { fieldNameWhitelist: ['versions'] }
             )
           }
         }
@@ -412,22 +473,20 @@ export function useMoveVersions() {
           modifyObjectFields<ModelVersionArgs>(
             cache,
             getCacheId('Model', previousModelId),
-            (fieldName, variables) => {
-              if (fieldName !== 'version') return
+            (_fieldName, variables) => {
               if (!input.versionIds.includes(variables.id)) return
 
               // Set to null
               return null
-            }
+            },
+            { fieldNameWhitelist: ['version'] }
           )
 
           // Remove from Model.versions
           modifyObjectFields<ModelVersionsArgs, Model['versions']>(
             cache,
             getCacheId('Model', previousModelId),
-            (fieldName, _variables, data) => {
-              if (fieldName !== 'versions') return
-
+            (_fieldName, _variables, data) => {
               const oldItems = data.items || []
               const newItems = oldItems.filter(
                 (i) =>
@@ -435,52 +494,55 @@ export function useMoveVersions() {
                     .map((id) => getCacheId('Version', id))
                     .includes(i.__ref)
               )
+              const removedItemsCount = Math.max(0, oldItems.length - newItems.length)
 
               return {
                 ...data,
                 ...(data.items ? { items: newItems } : {}),
                 ...(!isUndefined(data.totalCount)
                   ? {
-                      totalCount: data.totalCount - input.versionIds.length
+                      totalCount: data.totalCount - removedItemsCount
                     }
                   : {})
               }
-            }
+            },
+            { fieldNameWhitelist: ['versions'] }
           )
 
           // Add to new model's Model.version
           modifyObjectFields<ModelVersionArgs>(
             cache,
             getCacheId('Model', newModelId),
-            (fieldName, variables) => {
-              if (fieldName !== 'version') return
+            (_fieldName, variables) => {
               if (!input.versionIds.includes(variables.id)) return
               return getObjectReference('Version', variables.id)
-            }
+            },
+            { fieldNameWhitelist: ['version'] }
           )
 
           // Add to new model's Model.versions
           modifyObjectFields<ModelVersionsArgs, Model['versions']>(
             cache,
             getCacheId('Model', newModelId),
-            (fieldName, _variables, data) => {
-              if (fieldName !== 'versions') return
-
+            (_fieldName, _variables, data) => {
+              const oldItems = data.items || []
               const newItems = [
                 ...input.versionIds.map((i) => getObjectReference('Version', i)),
-                ...(data.items || [])
+                ...oldItems
               ]
+              const addedItemAmount = newItems.length - oldItems.length
 
               return {
                 ...data,
                 ...(data.items ? { items: newItems } : {}),
                 ...(!isUndefined(data.totalCount)
                   ? {
-                      totalCount: data.totalCount + input.versionIds.length
+                      totalCount: data.totalCount + addedItemAmount
                     }
                   : {})
               }
-            }
+            },
+            { fieldNameWhitelist: ['versions'] }
           )
 
           if (options?.newModelCreated && options?.projectId) {
@@ -543,10 +605,6 @@ export function useUpdateVersion() {
   }
 }
 
-/**
- * Note: Only invoke this once per project per page, because it handles all kinds of cache updates
- * that we don't want to duplicate (or extract that part out into a separate composable)
- */
 export function useProjectPendingVersionUpdateTracking(
   projectId: MaybeRef<string>,
   handler?: (
@@ -556,6 +614,9 @@ export function useProjectPendingVersionUpdateTracking(
     cache: ApolloCache<unknown>
   ) => void
 ) {
+  const { hasLock } = useLock(
+    computed(() => `useProjectPendingVersionUpdateTracking-${unref(projectId)}`)
+  )
   const { onResult: onProjectPendingVersionsUpdate } = useSubscription(
     onProjectPendingVersionsUpdatedSubscription,
     () => ({
@@ -566,7 +627,8 @@ export function useProjectPendingVersionUpdateTracking(
   const { triggerNotification } = useGlobalToast()
 
   onProjectPendingVersionsUpdate((res) => {
-    if (!res.data?.projectPendingVersionsUpdated.id) return
+    if (!res.data?.projectPendingVersionsUpdated.id || !hasLock.value) return
+
     const event = res.data.projectPendingVersionsUpdated
     const modelId = event.version.model?.id
     if (!modelId) return
@@ -579,12 +641,12 @@ export function useProjectPendingVersionUpdateTracking(
       >(
         apollo.cache,
         getCacheId('Model', modelId),
-        (fieldName, _variables, value, { ref }) => {
-          if (fieldName !== 'pendingImportedVersions') return
+        (_fieldName, _variables, value, { ref }) => {
           const currentVersions = (value || []).slice()
           currentVersions.push(ref('FileUpload', event.id))
           return uniqBy(currentVersions, (v) => v.__ref)
-        }
+        },
+        { fieldNameWhitelist: ['pendingImportedVersions'] }
       )
     } else if (event.type === ProjectPendingVersionsUpdatedMessageType.Updated) {
       const success =
@@ -599,14 +661,14 @@ export function useProjectPendingVersionUpdateTracking(
         >(
           apollo.cache,
           getCacheId('Model', modelId),
-          (fieldName, _variables, value, { ref }) => {
-            if (fieldName !== 'pendingImportedVersions') return
+          (_fieldName, _variables, value, { ref }) => {
             if (!value?.length) return
             const currentVersions = (value || []).filter(
               (i) => i.__ref !== ref('FileUpload', event.id).__ref
             )
             return currentVersions
-          }
+          },
+          { fieldNameWhitelist: ['pendingImportedVersions'] }
         )
       } else if (failure) {
         triggerNotification({
@@ -618,7 +680,12 @@ export function useProjectPendingVersionUpdateTracking(
         })
       }
     }
+  })
 
+  onProjectPendingVersionsUpdate((res) => {
+    if (!res.data?.projectPendingVersionsUpdated.id) return
+
+    const event = res.data.projectPendingVersionsUpdated
     handler?.(event, apollo.cache)
   })
 }

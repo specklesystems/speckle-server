@@ -133,6 +133,7 @@ export class SketchupBridge extends BaseBridge {
       )
     const request = this.requests[requestId]
     try {
+      // eslint-disable-next-line no-prototype-builtins
       if (data && data.hasOwnProperty('error')) {
         console.error(data)
         throw new Error(

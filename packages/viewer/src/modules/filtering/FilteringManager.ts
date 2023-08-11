@@ -12,7 +12,6 @@ import SpeckleRenderer from '../SpeckleRenderer'
 import EventEmitter from '../EventEmitter'
 import { ViewerEvent } from '../../IViewer'
 import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
-import { RenderTree } from '../tree/RenderTree'
 import SpecklePointMaterial from '../materials/SpecklePointMaterial'
 
 export type FilteringState = {
@@ -46,7 +45,6 @@ export interface FilterMaterial {
 
 export class FilteringManager extends EventEmitter {
   public WTI: WorldTree
-  public RTI: RenderTree
   private Renderer: SpeckleRenderer
   private StateKey: string = null
 
@@ -63,7 +61,6 @@ export class FilteringManager extends EventEmitter {
   public constructor(renderer: SpeckleRenderer, tree: WorldTree) {
     super()
     this.WTI = tree
-    this.RTI = tree.getRenderTree()
     this.Renderer = renderer
   }
 
@@ -195,14 +192,16 @@ export class FilteringManager extends EventEmitter {
   private visibilityWalk(node: TreeNode): boolean {
     if (!node.model.atomic) return true
     if (this.VisibilityState.ids[node.model.raw.id]) {
-      this.VisibilityState.rvs.push(...this.RTI.getRenderViewsForNode(node, node))
+      this.VisibilityState.rvs.push(
+        ...this.WTI.getRenderTree().getRenderViewsForNode(node, node)
+      )
     }
     return true
   }
 
   private isolationWalk(node: TreeNode): boolean {
     if (!node.model.atomic || this.WTI.isRoot(node)) return true
-    const rvs = this.RTI.getRenderViewsForNode(node, node)
+    const rvs = this.WTI.getRenderTree().getRenderViewsForNode(node, node)
     if (!this.VisibilityState.ids[node.model.raw.id]) {
       this.VisibilityState.rvs.push(...rvs)
     } else {
@@ -265,7 +264,11 @@ export class FilteringManager extends EventEmitter {
       if (matchingIds[numProp.valueGroups[k].id]) {
         continue
       }
-      matchingIds[numProp.valueGroups[k].id] = numProp.valueGroups[k].value
+      if (
+        numProp.valueGroups[k].value >= passMin &&
+        numProp.valueGroups[k].value <= passMax
+      )
+        matchingIds[numProp.valueGroups[k].id] = numProp.valueGroups[k].value
     }
 
     const nonMatchingRvs: NodeRenderView[] = []
@@ -274,7 +277,7 @@ export class FilteringManager extends EventEmitter {
     this.WTI.walk((node: TreeNode) => {
       if (!node.model.atomic || this.WTI.isRoot(node)) return true
 
-      const rvs = this.RTI.getRenderViewsForNode(node, node)
+      const rvs = this.WTI.getRenderTree().getRenderViewsForNode(node, node)
       const idx = matchingIds[node.model.raw.id]
       if (!idx) {
         nonMatchingRvs.push(...rvs)
@@ -327,15 +330,18 @@ export class FilteringManager extends EventEmitter {
       const vg = valueGroupColors.find((v) => {
         return v['idMap'][node.model.raw.id]
       })
-      const rvNodes = this.RTI.getRenderViewNodesForNode(node, node)
+      const rvNodes = this.WTI.getRenderTree().getRenderViewNodesForNode(node, node)
       if (!vg) {
         nonMatchingRvs.push(...rvNodes.map((rvNode) => rvNode.model.renderView))
         return true
       }
       const rvs = []
+
       rvNodes.forEach((value: TreeNode) => {
-        if (this.RTI.getAtomicParent(value) === node) rvs.push(value.model.renderView)
+        if (this.WTI.getRenderTree().getAtomicParent(value) === node)
+          rvs.push(value.model.renderView)
       })
+
       vg.rvs.push(...rvs)
       return true
     })
@@ -410,9 +416,9 @@ export class FilteringManager extends EventEmitter {
       for (const group of localGroups) {
         if (group.objectIds.includes(node.model.raw.id)) {
           group.nodes.push(node)
-          const rvsNodes = this.RTI.getRenderViewNodesForNode(node, node).map(
-            (rvNode) => rvNode.model.renderView
-          )
+          const rvsNodes = this.WTI.getRenderTree()
+            .getRenderViewNodesForNode(node, node)
+            .map((rvNode) => rvNode.model.renderView)
           if (rvsNodes) group.rvs.push(...rvsNodes)
         }
       }
@@ -456,9 +462,9 @@ export class FilteringManager extends EventEmitter {
 
         if (group.objectIds.includes(node.model.raw.id)) {
           group.nodes.push(node)
-          const rvsNodes = this.RTI.getRenderViewNodesForNode(node, node).map(
-            (rvNode) => rvNode.model.renderView
-          )
+          const rvsNodes = this.WTI.getRenderTree()
+            .getRenderViewNodesForNode(node, node)
+            .map((rvNode) => rvNode.model.renderView)
           if (rvsNodes) group.rvs.push(...rvsNodes)
         }
       }
@@ -495,7 +501,10 @@ export class FilteringManager extends EventEmitter {
         /** There's also quite a lot of redundancy here as well. The nodes coming are
          * hierarchical and we end up getting the same render views more than once.
          */
-        const rvs = this.RTI.getRenderViewNodesForNode(nodes[k], nodes[k])
+        const rvs = this.WTI.getRenderTree().getRenderViewNodesForNode(
+          nodes[k],
+          nodes[k]
+        )
         if (rvs) {
           state.rvs.push(...rvs.map((e) => e.model.renderView))
           state.ids.push(...rvs.map((e) => e.model.raw.id))
@@ -687,12 +696,25 @@ export class FilteringManager extends EventEmitter {
     const key = objectIds.join(',')
 
     if (this.idCache[key] && this.idCache[key].length) return this.idCache[key]
-
+    /** This doesn't return descendants correctly for some streams like:
+     * https://speckle.xyz/streams/2f9f2f3021/commits/75bd13f513
+     */
+    // this.WTI.walk((node: TreeNode) => {
+    //   if (objectIds.includes(node.model.raw.id) && node.model.raw.__closure) {
+    //     const ids = Object.keys(node.model.raw.__closure)
+    //     allIds.push(...ids)
+    //     this.idCache[node.model.raw.id] = ids
+    //   }
+    //   return true
+    // })
     this.WTI.walk((node: TreeNode) => {
-      if (objectIds.includes(node.model.raw.id) && node.model.raw.__closure) {
-        const ids = Object.keys(node.model.raw.__closure)
-        allIds.push(...ids)
-        this.idCache[node.model.raw.id] = ids
+      if (objectIds.includes(node.model.raw.id)) {
+        const subtree = node.all((node) => {
+          return node.model.raw !== undefined
+        })
+        const idList = subtree.map((node) => node.model.raw.id)
+        allIds.push(...idList)
+        this.idCache[node.model.raw.id] = idList
       }
       return true
     })

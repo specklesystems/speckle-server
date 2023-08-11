@@ -49,7 +49,8 @@ describe('Activity digest notifications @notifications', () => {
     canonicalUrl: 'this would be localhost:// or whatever',
     completed: false,
     inviteOnly: true,
-    version: 'testing 1 2 3'
+    version: 'testing 1 2 3',
+    guestModeEnabled: false
   }
 
   const topic: DigestTopic = {

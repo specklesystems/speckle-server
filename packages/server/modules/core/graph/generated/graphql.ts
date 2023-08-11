@@ -1,5 +1,5 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, VersionGraphQLReturn, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, VersionGraphQLReturn, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn, GraphQLEmptyReturn } from '@/modules/core/helpers/graphTypes';
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
@@ -58,6 +58,37 @@ export type ActivityCollection = {
   __typename?: 'ActivityCollection';
   cursor?: Maybe<Scalars['String']>;
   items?: Maybe<Array<Maybe<Activity>>>;
+  totalCount: Scalars['Int'];
+};
+
+export type AdminQueries = {
+  __typename?: 'AdminQueries';
+  projectList: ProjectCollection;
+  serverStatistics: ServerStatistics;
+  userList: AdminUserList;
+};
+
+
+export type AdminQueriesProjectListArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+  orderBy?: InputMaybe<Scalars['String']>;
+  query?: InputMaybe<Scalars['String']>;
+  visibility?: InputMaybe<Scalars['String']>;
+};
+
+
+export type AdminQueriesUserListArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+  query?: InputMaybe<Scalars['String']>;
+  role?: InputMaybe<ServerRole>;
+};
+
+export type AdminUserList = {
+  __typename?: 'AdminUserList';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<LimitedUser>;
   totalCount: Scalars['Int'];
 };
 
@@ -1593,11 +1624,16 @@ export type Query = {
   _?: Maybe<Scalars['String']>;
   /** Gets the profile of the authenticated user or null if not authenticated */
   activeUser?: Maybe<User>;
-  /** All the streams of the server. Available to admins only. */
+  admin: AdminQueries;
+  /**
+   * All the streams of the server. Available to admins only.
+   * @deprecated use admin.projectList instead
+   */
   adminStreams?: Maybe<StreamCollection>;
   /**
    * Get all (or search for specific) users, registered or invited, from the server in a paginated view.
    * The query looks for matches in name, company and email.
+   * @deprecated use admin.UserList instead
    */
   adminUsers?: Maybe<AdminUsersListCollection>;
   /** Gets a specific app from the server. */
@@ -1627,6 +1663,7 @@ export type Query = {
    */
   projectInvite?: Maybe<PendingStreamCollaborator>;
   serverInfo: ServerInfo;
+  /** @deprecated use admin.serverStatistics instead */
   serverStats: ServerStats;
   /**
    * Returns a specific stream. Will throw an authorization error if active user isn't authorized
@@ -1846,6 +1883,7 @@ export type ServerInfo = {
   canonicalUrl?: Maybe<Scalars['String']>;
   company?: Maybe<Scalars['String']>;
   description?: Maybe<Scalars['String']>;
+  guestModeEnabled: Scalars['Boolean'];
   inviteOnly?: Maybe<Scalars['Boolean']>;
   name: Scalars['String'];
   roles: Array<Maybe<Role>>;
@@ -1858,6 +1896,7 @@ export type ServerInfoUpdateInput = {
   adminContact?: InputMaybe<Scalars['String']>;
   company?: InputMaybe<Scalars['String']>;
   description?: InputMaybe<Scalars['String']>;
+  guestModeEnabled?: InputMaybe<Scalars['Boolean']>;
   inviteOnly?: InputMaybe<Scalars['Boolean']>;
   name: Scalars['String'];
   termsOfService?: InputMaybe<Scalars['String']>;
@@ -1878,8 +1917,16 @@ export type ServerInviteCreateInput = {
 export enum ServerRole {
   ServerAdmin = 'SERVER_ADMIN',
   ServerArchivedUser = 'SERVER_ARCHIVED_USER',
+  ServerGuest = 'SERVER_GUEST',
   ServerUser = 'SERVER_USER'
 }
+
+export type ServerStatistics = {
+  __typename?: 'ServerStatistics';
+  totalPendingInvites: Scalars['Int'];
+  totalProjectCount: Scalars['Int'];
+  totalUserCount: Scalars['Int'];
+};
 
 export type ServerStats = {
   __typename?: 'ServerStats';
@@ -2712,6 +2759,8 @@ export type ResolversTypes = {
   ActiveUserMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   Activity: ResolverTypeWrapper<Activity>;
   ActivityCollection: ResolverTypeWrapper<ActivityCollection>;
+  AdminQueries: ResolverTypeWrapper<GraphQLEmptyReturn>;
+  AdminUserList: ResolverTypeWrapper<Omit<AdminUserList, 'items'> & { items: Array<ResolversTypes['LimitedUser']> }>;
   AdminUsersListCollection: ResolverTypeWrapper<Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversTypes['AdminUsersListItem']> }>;
   AdminUsersListItem: ResolverTypeWrapper<Omit<AdminUsersListItem, 'invitedUser' | 'registeredUser'> & { invitedUser?: Maybe<ResolversTypes['ServerInvite']>, registeredUser?: Maybe<ResolversTypes['User']> }>;
   ApiToken: ResolverTypeWrapper<ApiToken>;
@@ -2821,6 +2870,7 @@ export type ResolversTypes = {
   ServerInvite: ResolverTypeWrapper<Omit<ServerInvite, 'invitedBy'> & { invitedBy: ResolversTypes['LimitedUser'] }>;
   ServerInviteCreateInput: ServerInviteCreateInput;
   ServerRole: ServerRole;
+  ServerStatistics: ResolverTypeWrapper<GraphQLEmptyReturn>;
   ServerStats: ResolverTypeWrapper<ServerStats>;
   SmartTextEditorValue: ResolverTypeWrapper<SmartTextEditorValue>;
   SortDirection: SortDirection;
@@ -2870,6 +2920,8 @@ export type ResolversParentTypes = {
   ActiveUserMutations: MutationsObjectGraphQLReturn;
   Activity: Activity;
   ActivityCollection: ActivityCollection;
+  AdminQueries: GraphQLEmptyReturn;
+  AdminUserList: Omit<AdminUserList, 'items'> & { items: Array<ResolversParentTypes['LimitedUser']> };
   AdminUsersListCollection: Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversParentTypes['AdminUsersListItem']> };
   AdminUsersListItem: Omit<AdminUsersListItem, 'invitedUser' | 'registeredUser'> & { invitedUser?: Maybe<ResolversParentTypes['ServerInvite']>, registeredUser?: Maybe<ResolversParentTypes['User']> };
   ApiToken: ApiToken;
@@ -2969,6 +3021,7 @@ export type ResolversParentTypes = {
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: Omit<ServerInvite, 'invitedBy'> & { invitedBy: ResolversParentTypes['LimitedUser'] };
   ServerInviteCreateInput: ServerInviteCreateInput;
+  ServerStatistics: GraphQLEmptyReturn;
   ServerStats: ServerStats;
   SmartTextEditorValue: SmartTextEditorValue;
   Stream: StreamGraphQLReturn;
@@ -3008,12 +3061,6 @@ export type ResolversParentTypes = {
   WebhookEventCollection: WebhookEventCollection;
   WebhookUpdateInput: WebhookUpdateInput;
 };
-
-export type HasRoleDirectiveArgs = {
-  role: Scalars['String'];
-};
-
-export type HasRoleDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = HasRoleDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
 export type HasScopeDirectiveArgs = {
   scope: Scalars['String'];
@@ -3065,6 +3112,20 @@ export type ActivityResolvers<ContextType = GraphQLContext, ParentType extends R
 export type ActivityCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ActivityCollection'] = ResolversParentTypes['ActivityCollection']> = {
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   items?: Resolver<Maybe<Array<Maybe<ResolversTypes['Activity']>>>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AdminQueriesResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AdminQueries'] = ResolversParentTypes['AdminQueries']> = {
+  projectList?: Resolver<ResolversTypes['ProjectCollection'], ParentType, ContextType, RequireFields<AdminQueriesProjectListArgs, 'cursor' | 'limit'>>;
+  serverStatistics?: Resolver<ResolversTypes['ServerStatistics'], ParentType, ContextType>;
+  userList?: Resolver<ResolversTypes['AdminUserList'], ParentType, ContextType, RequireFields<AdminQueriesUserListArgs, 'cursor' | 'limit' | 'query' | 'role'>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AdminUserListResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AdminUserList'] = ResolversParentTypes['AdminUserList']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -3579,6 +3640,7 @@ export type ProjectVersionsUpdatedMessageResolvers<ContextType = GraphQLContext,
 export type QueryResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = {
   _?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   activeUser?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType>;
+  admin?: Resolver<ResolversTypes['AdminQueries'], ParentType, ContextType>;
   adminStreams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryAdminStreamsArgs, 'limit' | 'offset'>>;
   adminUsers?: Resolver<Maybe<ResolversTypes['AdminUsersListCollection']>, ParentType, ContextType, RequireFields<QueryAdminUsersArgs, 'limit' | 'offset' | 'query'>>;
   app?: Resolver<Maybe<ResolversTypes['ServerApp']>, ParentType, ContextType, RequireFields<QueryAppArgs, 'id'>>;
@@ -3657,6 +3719,7 @@ export type ServerInfoResolvers<ContextType = GraphQLContext, ParentType extends
   canonicalUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  guestModeEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   inviteOnly?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   roles?: Resolver<Array<Maybe<ResolversTypes['Role']>>, ParentType, ContextType>;
@@ -3670,6 +3733,13 @@ export type ServerInviteResolvers<ContextType = GraphQLContext, ParentType exten
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   invitedBy?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ServerStatisticsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerStatistics'] = ResolversParentTypes['ServerStatistics']> = {
+  totalPendingInvites?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalProjectCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  totalUserCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3911,6 +3981,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ActiveUserMutations?: ActiveUserMutationsResolvers<ContextType>;
   Activity?: ActivityResolvers<ContextType>;
   ActivityCollection?: ActivityCollectionResolvers<ContextType>;
+  AdminQueries?: AdminQueriesResolvers<ContextType>;
+  AdminUserList?: AdminUserListResolvers<ContextType>;
   AdminUsersListCollection?: AdminUsersListCollectionResolvers<ContextType>;
   AdminUsersListItem?: AdminUsersListItemResolvers<ContextType>;
   ApiToken?: ApiTokenResolvers<ContextType>;
@@ -3968,6 +4040,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ServerAppListItem?: ServerAppListItemResolvers<ContextType>;
   ServerInfo?: ServerInfoResolvers<ContextType>;
   ServerInvite?: ServerInviteResolvers<ContextType>;
+  ServerStatistics?: ServerStatisticsResolvers<ContextType>;
   ServerStats?: ServerStatsResolvers<ContextType>;
   SmartTextEditorValue?: SmartTextEditorValueResolvers<ContextType>;
   Stream?: StreamResolvers<ContextType>;
@@ -3992,7 +4065,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
 };
 
 export type DirectiveResolvers<ContextType = GraphQLContext> = {
-  hasRole?: HasRoleDirectiveResolver<any, any, ContextType>;
   hasScope?: HasScopeDirectiveResolver<any, any, ContextType>;
   hasScopes?: HasScopesDirectiveResolver<any, any, ContextType>;
   hasServerRole?: HasServerRoleDirectiveResolver<any, any, ContextType>;

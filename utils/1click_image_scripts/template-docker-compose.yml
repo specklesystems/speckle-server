@@ -56,7 +56,7 @@ services:
       interval: 10s
       timeout: 10s
       retries: 3
-      start_period: 5s
+      start_period: 90s
     ports:
       - '127.0.0.1:3000:3000'
     environment:

@@ -8,7 +8,7 @@ const createJsonEchoTransporter = () => createTransport({ jsonTransport: true })
 const initSmtpTransporter = async () => {
   try {
     const smtpTransporter = createTransport({
-      host: process.env.EMAIL_HOST || 'localhost',
+      host: process.env.EMAIL_HOST || '127.0.0.1',
       port: parseInt(process.env.EMAIL_PORT || '587'),
       secure: process.env.EMAIL_SECURE === 'true',
       auth: {
