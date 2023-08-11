@@ -1,5 +1,22 @@
+type AdminUserListItem {
+  id: ID!
+  email: String
+  name: String!
+  bio: String
+  company: String
+  avatar: String
+  verified: Boolean
+  profiles: JSONObject
+  role: String
+  """
+  Whether post-sign up onboarding has been finished or skipped entirely
+  """
+  isOnboardingFinished: Boolean @isOwner
+  createdAt: DateTime @isOwner
+}
+
 type AdminUserList {
-  items: [LimitedUser!]!
+  items: [AdminUserListItem!]!
   cursor: String
   totalCount: Int!
 }
