@@ -22,7 +22,7 @@ type AdminUserList {
 }
 
 type AdminInviteList {
-  items: [ServerInvite]!
+  items: [ServerInvite!]!
   cursor: String
   totalCount: Int!
 }

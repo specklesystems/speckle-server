@@ -55,7 +55,7 @@ export type ActivityCollection = {
 export type AdminInviteList = {
   __typename?: 'AdminInviteList';
   cursor?: Maybe<Scalars['String']>;
-  items: Array<Maybe<ServerInvite>>;
+  items: Array<ServerInvite>;
   totalCount: Scalars['Int'];
 };
 

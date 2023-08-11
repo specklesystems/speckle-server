@@ -1,11 +1,10 @@
+import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
 import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
 import { listUsers, countUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
-import { ServerInviteGraphqlReturnType } from '@/modules/core/services/users/adminUsersListService'
 import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
 import {
   countServerInvites,
-  findServerInvites,
   queryServerInvites
 } from '@/modules/serverinvites/repositories'
 import { BaseError } from '@/modules/shared/errors/base'
@@ -72,15 +71,9 @@ type AdminProjectListArgs = HasCursor & {
   limit: number
 }
 
-// type ServerInviteGraphQLReturnType = {
-//   id: string
-//   email: string
-//   invitedById: string
-// }
-
 export const adminInviteList = async (
   args: CollectionQueryArgs
-): Promise<Collection<ServerInviteGraphqlReturnType>> => {
+): Promise<Collection<ServerInviteGraphQLReturnType>> => {
   const parsedCursor = args.cursor ? parseCursorToDate(args.cursor) : null
   const [totalCount, inviteItems] = await Promise.all([
     countServerInvites(args.query),

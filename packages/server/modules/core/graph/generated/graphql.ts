@@ -1,5 +1,5 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, VersionGraphQLReturn, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn, GraphQLEmptyReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, VersionGraphQLReturn, ServerInviteGraphQLReturnType, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn, GraphQLEmptyReturn } from '@/modules/core/helpers/graphTypes';
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
@@ -64,7 +64,7 @@ export type ActivityCollection = {
 export type AdminInviteList = {
   __typename?: 'AdminInviteList';
   cursor?: Maybe<Scalars['String']>;
-  items: Array<Maybe<ServerInvite>>;
+  items: Array<ServerInvite>;
   totalCount: Scalars['Int'];
 };
 
@@ -2786,7 +2786,7 @@ export type ResolversTypes = {
   ActiveUserMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   Activity: ResolverTypeWrapper<Activity>;
   ActivityCollection: ResolverTypeWrapper<ActivityCollection>;
-  AdminInviteList: ResolverTypeWrapper<Omit<AdminInviteList, 'items'> & { items: Array<Maybe<ResolversTypes['ServerInvite']>> }>;
+  AdminInviteList: ResolverTypeWrapper<Omit<AdminInviteList, 'items'> & { items: Array<ResolversTypes['ServerInvite']> }>;
   AdminQueries: ResolverTypeWrapper<GraphQLEmptyReturn>;
   AdminUserList: ResolverTypeWrapper<AdminUserList>;
   AdminUserListItem: ResolverTypeWrapper<AdminUserListItem>;
@@ -2896,7 +2896,7 @@ export type ResolversTypes = {
   ServerAppListItem: ResolverTypeWrapper<ServerAppListItem>;
   ServerInfo: ResolverTypeWrapper<ServerInfo>;
   ServerInfoUpdateInput: ServerInfoUpdateInput;
-  ServerInvite: ResolverTypeWrapper<Omit<ServerInvite, 'invitedBy'> & { invitedBy: ResolversTypes['LimitedUser'] }>;
+  ServerInvite: ResolverTypeWrapper<ServerInviteGraphQLReturnType>;
   ServerInviteCreateInput: ServerInviteCreateInput;
   ServerRole: ServerRole;
   ServerStatistics: ResolverTypeWrapper<GraphQLEmptyReturn>;
@@ -2949,7 +2949,7 @@ export type ResolversParentTypes = {
   ActiveUserMutations: MutationsObjectGraphQLReturn;
   Activity: Activity;
   ActivityCollection: ActivityCollection;
-  AdminInviteList: Omit<AdminInviteList, 'items'> & { items: Array<Maybe<ResolversParentTypes['ServerInvite']>> };
+  AdminInviteList: Omit<AdminInviteList, 'items'> & { items: Array<ResolversParentTypes['ServerInvite']> };
   AdminQueries: GraphQLEmptyReturn;
   AdminUserList: AdminUserList;
   AdminUserListItem: AdminUserListItem;
@@ -3050,7 +3050,7 @@ export type ResolversParentTypes = {
   ServerAppListItem: ServerAppListItem;
   ServerInfo: ServerInfo;
   ServerInfoUpdateInput: ServerInfoUpdateInput;
-  ServerInvite: Omit<ServerInvite, 'invitedBy'> & { invitedBy: ResolversParentTypes['LimitedUser'] };
+  ServerInvite: ServerInviteGraphQLReturnType;
   ServerInviteCreateInput: ServerInviteCreateInput;
   ServerStatistics: GraphQLEmptyReturn;
   ServerStats: ServerStats;
@@ -3149,7 +3149,7 @@ export type ActivityCollectionResolvers<ContextType = GraphQLContext, ParentType
 
 export type AdminInviteListResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AdminInviteList'] = ResolversParentTypes['AdminInviteList']> = {
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  items?: Resolver<Array<Maybe<ResolversTypes['ServerInvite']>>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['ServerInvite']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

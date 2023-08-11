@@ -14,6 +14,7 @@ generates:
         Commit: '@/modules/core/helpers/graphTypes#CommitGraphQLReturn'
         Project: '@/modules/core/helpers/graphTypes#ProjectGraphQLReturn'
         Version: '@/modules/core/helpers/graphTypes#VersionGraphQLReturn'
+        ServerInvite: '@/modules/core/helpers/graphTypes#ServerInviteGraphQLReturnType'
         Model: '@/modules/core/helpers/graphTypes#ModelGraphQLReturn'
         ModelsTreeItem: '@/modules/core/helpers/graphTypes#ModelsTreeItemGraphQLReturn'
         StreamAccessRequest: '@/modules/accessrequests/helpers/graphTypes#StreamAccessRequestGraphQLReturn'
