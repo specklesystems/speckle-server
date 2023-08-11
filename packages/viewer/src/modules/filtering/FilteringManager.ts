@@ -35,7 +35,6 @@ export enum FilterMaterialType {
   HOVER
 }
 
-/** This needs to be rethunked */
 export interface FilterMaterial {
   filterType: FilterMaterialType
   rampIndex?: number

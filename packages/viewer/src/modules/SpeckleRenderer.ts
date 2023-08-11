@@ -32,7 +32,7 @@ import Input, { InputOptionsDefault } from './input/Input'
 import { Intersections } from './Intersections'
 import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
-import { DisplayStyle, NodeRenderView, RenderMaterial } from './tree/NodeRenderView'
+import { NodeRenderView } from './tree/NodeRenderView'
 import { Viewer } from './Viewer'
 import { TreeNode } from './tree/WorldTree'
 import {
@@ -55,6 +55,12 @@ import {
   ICameraProvider,
   CameraControllerEvent
 } from './extensions/core-extensions/Providers'
+import Materials, {
+  RenderMaterial,
+  DisplayStyle,
+  MaterialOptions
+} from './materials/Materials'
+import { SpeckleMaterial } from './materials/SpeckleMaterial'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -637,9 +643,12 @@ export default class SpeckleRenderer {
   }
 
   public setMaterial(rvs: NodeRenderView[], material: Material)
-  public setMaterial(rvs: NodeRenderView[], material: RenderMaterial & DisplayStyle)
+  public setMaterial(
+    rvs: NodeRenderView[],
+    material: RenderMaterial & DisplayStyle & MaterialOptions
+  )
   public setMaterial(rvs: NodeRenderView[], material: FilterMaterial)
-  public setMaterial(rvs: NodeRenderView[], material: unknown) {
+  public setMaterial(rvs: NodeRenderView[], material) {
     const rvMap = {}
     for (let k = 0; k < rvs.length; k++) {
       if (!rvs[k].batchId) {
@@ -649,12 +658,18 @@ export default class SpeckleRenderer {
       rvMap[rvs[k].batchId].push(rvs[k])
     }
 
-    if (material instanceof Material) {
+    if (Materials.isMaterialInstance(material)) {
       this.setMaterialInstance(rvMap, material)
-    } else if (material['filterType'] !== undefined) {
+    } else if (Materials.isFilterMaterial(material)) {
       this.setFilterMaterial(rvMap, material as FilterMaterial)
-    } else {
-      this.setRenderMaterial(rvMap, material as RenderMaterial & DisplayStyle)
+    } else if (
+      Materials.isRendeMaterial(material) ||
+      Materials.isDisplayStyle(material)
+    ) {
+      this.setDataMaterial(
+        rvMap,
+        material as RenderMaterial & DisplayStyle & MaterialOptions
+      )
     }
   }
 
@@ -687,16 +702,18 @@ export default class SpeckleRenderer {
     }
   }
 
-  private setRenderMaterial(
+  private setDataMaterial(
     rvs: Record<string, NodeRenderView[]>,
-    material: RenderMaterial & DisplayStyle
+    materialData: RenderMaterial & DisplayStyle & MaterialOptions
   ) {
     for (const k in rvs) {
       const drawRanges = rvs[k].map((value: NodeRenderView) => {
+        const material = this.batcher.materials.getDataMaterial(value, materialData)
+        ;(material as unknown as SpeckleMaterial).setMaterialOptions(materialData)
         return {
           offset: value.batchStart,
           count: value.batchCount,
-          material: this.batcher.materials.getRendeMaterial(value, material)
+          material
         }
       })
       this.batcher.batches[k].setDrawRanges(...drawRanges)

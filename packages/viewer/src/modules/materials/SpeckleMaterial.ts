@@ -12,6 +12,7 @@ import {
   UniformsUtils
 } from 'three'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
+import { MaterialOptions } from './Materials'
 
 class SpeckleUserData {
   toJSON() {
@@ -46,7 +47,7 @@ export class SpeckleMaterial {
     }
   }
 
-  public set stencilOutline(value: boolean) {
+  protected set stencilOutline(value: boolean) {
     this['stencilWrite'] = value
     if (value) {
       this['stencilWriteMask'] = 0xff
@@ -56,6 +57,10 @@ export class SpeckleMaterial {
       this['stencilZPass'] = ReplaceStencilOp
       this['stencilFail'] = ReplaceStencilOp
     }
+  }
+
+  protected set pointSize(value: number) {
+    this['size'] = value
   }
 
   protected init(defines = []) {
@@ -154,6 +159,11 @@ export class SpeckleMaterial {
     to.transparent = from.transparent
     to.vertexColors = from.vertexColors
     to.visible = from.visible
+  }
+
+  public setMaterialOptions(options: MaterialOptions) {
+    this.stencilOutline = options.stencilOutlines || false
+    this.pointSize = options.pointSize || 1
   }
 }
 

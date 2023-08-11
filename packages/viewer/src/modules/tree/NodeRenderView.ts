@@ -2,22 +2,7 @@ import { Box3 } from 'three'
 import { GeometryType } from '../batching/Batch'
 import { GeometryData } from '../converter/Geometry'
 import { SpeckleType } from '../converter/GeometryConverter'
-import Materials from '../materials/Materials'
-
-export interface RenderMaterial {
-  id: string
-  color: number
-  opacity: number
-  roughness: number
-  metalness: number
-  vertexColors: boolean
-}
-
-export interface DisplayStyle {
-  id: string
-  color: number
-  lineWeight: number
-}
+import Materials, { DisplayStyle, RenderMaterial } from '../materials/Materials'
 
 export interface NodeRenderData {
   id: string

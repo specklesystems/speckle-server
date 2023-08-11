@@ -11,7 +11,7 @@ import {
 } from 'three'
 import { GeometryType } from '../batching/Batch'
 import { TreeNode } from '../tree/WorldTree'
-import { DisplayStyle, NodeRenderView, RenderMaterial } from '../tree/NodeRenderView'
+import { NodeRenderView } from '../tree/NodeRenderView'
 import SpeckleLineMaterial from './SpeckleLineMaterial'
 import SpeckleStandardMaterial from './SpeckleStandardMaterial'
 import SpecklePointMaterial from './SpecklePointMaterial'
@@ -25,7 +25,27 @@ import Logger from 'js-logger'
 import SpeckleTextMaterial from './SpeckleTextMaterial'
 import { SpeckleMaterial } from './SpeckleMaterial'
 
+export interface RenderMaterial {
+  id: string
+  color: number
+  opacity: number
+  roughness: number
+  metalness: number
+  vertexColors: boolean
+}
+
+export interface DisplayStyle {
+  id: string
+  color: number
+  lineWeight: number
+}
+
 export interface MaterialOptions {
+  stencilOutlines?: boolean
+  pointSize?: number
+}
+
+export interface FilterMaterialOptions {
   rampIndex?: number
   rampIndexColor?: Color
   rampTexture?: Texture
@@ -163,12 +183,26 @@ export default class Materials {
     return h
   }
 
+  public static isMaterialInstance(material): material is Material {
+    return material instanceof Material
+  }
+
+  public static isFilterMaterial(material): material is FilterMaterial {
+    return 'filterType' in material
+  }
+
   public static isRendeMaterial(materialData): materialData is RenderMaterial {
-    return 'roughness' in materialData
+    return (
+      'color' in materialData &&
+      'opacity' in materialData &&
+      'roughness' in materialData &&
+      'metalness' in materialData &&
+      'vertexColors' in materialData
+    )
   }
 
   public static isDisplayStyle(materialData): materialData is DisplayStyle {
-    return 'lineWeight' in materialData
+    return 'color' in materialData && 'lineWeight' in materialData
   }
 
   public static getMaterialHash(
@@ -179,17 +213,20 @@ export default class Materials {
       materialData =
         renderView.renderData.renderMaterial || renderView.renderData.displayStyle
     }
-    const mat =
-      Materials.isRendeMaterial(materialData) &&
-      (renderView.geometryType === GeometryType.MESH ||
-        renderView.geometryType === GeometryType.POINT ||
-        renderView.geometryType === GeometryType.TEXT)
-        ? Materials.renderMaterialToString(materialData as RenderMaterial)
-        : Materials.isDisplayStyle(materialData) &&
-          renderView.geometryType !== GeometryType.MESH &&
-          renderView.geometryType !== GeometryType.POINT
-        ? Materials.displayStyleToString(materialData as DisplayStyle)
-        : ''
+    let mat = ''
+    if (materialData) {
+      mat =
+        Materials.isRendeMaterial(materialData) &&
+        (renderView.geometryType === GeometryType.MESH ||
+          renderView.geometryType === GeometryType.POINT ||
+          renderView.geometryType === GeometryType.TEXT)
+          ? Materials.renderMaterialToString(materialData as RenderMaterial)
+          : Materials.isDisplayStyle(materialData) &&
+            renderView.geometryType !== GeometryType.MESH &&
+            renderView.geometryType !== GeometryType.POINT
+          ? Materials.displayStyleToString(materialData as DisplayStyle)
+          : ''
+    }
     let geometry = ''
     if (renderView.renderData.geometry.attributes)
       geometry = renderView.renderData.geometry.attributes.COLOR ? 'vertexColors' : ''
@@ -1139,15 +1176,17 @@ export default class Materials {
     return retMaterial
   }
 
-  public getRendeMaterial(
+  public getDataMaterial(
     renderView: NodeRenderView,
     materialData: RenderMaterial & DisplayStyle
-  ) {
+  ): Material {
     const materialHash = Materials.getMaterialHash(renderView, materialData)
     return this.getMaterial(materialHash, materialData, renderView.geometryType)
   }
 
-  public getFilterMaterialOptions(filterMaterial: FilterMaterial): MaterialOptions {
+  public getFilterMaterialOptions(
+    filterMaterial: FilterMaterial
+  ): FilterMaterialOptions {
     switch (filterMaterial.filterType) {
       case FilterMaterialType.COLORED:
         return {

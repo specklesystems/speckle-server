@@ -1,5 +1,5 @@
 import { Box3, Material, Object3D, WebGLRenderer } from 'three'
-import { MaterialOptions } from '../materials/Materials'
+import { FilterMaterialOptions } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
 
 export enum GeometryType {
@@ -43,7 +43,7 @@ export interface BatchUpdateRange {
   offset: number
   count: number
   material?: Material
-  materialOptions?: MaterialOptions
+  materialOptions?: FilterMaterialOptions
   id?: string
 }
 
