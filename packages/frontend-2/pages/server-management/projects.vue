@@ -48,6 +48,7 @@
         versions: 'col-span-1 text-right',
         contributors: 'col-span-2'
       }"
+      :on-row-click="handleProjectClick"
     >
       <template #name="{ item }">
         {{ item.name }}
@@ -152,6 +153,12 @@ const handleSearchChange = (newSearchString: string) => {
   searchUpdateHandler(newSearchString)
 }
 
+const router = useRouter()
+
+const handleProjectClick = (project: Project) => {
+  router.push(`/projects/${project.id}`)
+}
+
 const getProjects = graphql(`
   query Query($query: String, $orderBy: String, $limit: Int!, $visibility: String) {
     admin {
@@ -163,6 +170,7 @@ const getProjects = graphql(`
       ) {
         cursor
         items {
+          id
           name
           visibility
           createdAt

@@ -23,6 +23,10 @@
           :key="rowIndex"
           class="relative grid grid-cols-12 items-center gap-6 px-4 py-1 min-w-[900px] bg-white"
           :style="{ paddingRight: paddingRightStyle }"
+          :class="{ 'cursor-pointer hover:bg-primary-muted': !!props.onRowClick }"
+          tabindex="0"
+          @click="handleRowClick(item)"
+          @keydown.enter.space="handleRowClick(item)"
         >
           <template v-for="(column, colIndex) in headers" :key="colIndex">
             <div :class="getClasses(column.id, colIndex)" tabindex="0">
@@ -55,6 +59,8 @@
 import { PropType, ConcreteComponent, computed } from 'vue'
 import { User, Project } from '~~/lib/common/generated/gql/graphql'
 
+type OnRowClickType = (item: Record<string, unknown>) => void
+
 interface RowButton {
   icon: ConcreteComponent
   label: string
@@ -85,6 +91,10 @@ const props = defineProps({
   },
   overflowCells: {
     type: Boolean as PropType<boolean>
+  },
+  onRowClick: {
+    type: Function as PropType<OnRowClickType>,
+    default: null
   }
 })
 
@@ -102,5 +112,11 @@ const getClasses = (column: string, colIndex: number): string => {
   }
 
   return `lg:p-0 ${columnClass}`
+}
+
+const handleRowClick = (item: Record<string, unknown>) => {
+  if (props.onRowClick) {
+    props.onRowClick(item)
+  }
 }
 </script>

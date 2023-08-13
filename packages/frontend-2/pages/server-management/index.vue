@@ -110,12 +110,15 @@ onMounted(async () => {
 })
 
 const dataQuery = graphql(`
-  query AdminPageData {
+  query Admin {
     admin {
       serverStatistics {
         totalPendingInvites
         totalProjectCount
         totalUserCount
+      }
+      inviteList {
+        totalCount
       }
     }
     serverInfo {
@@ -181,8 +184,7 @@ const userData = computed(() => [
   },
   {
     title: 'Pending invitations',
-    value:
-      result.value?.admin.serverStatistics.totalPendingInvites?.toString() || 'n/a',
+    value: result.value?.admin.inviteList.totalCount?.toString() || 'n/a',
     icon: EnvelopeIcon,
     cta: {
       type: 'button',
