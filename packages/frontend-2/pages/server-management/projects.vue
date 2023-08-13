@@ -88,7 +88,7 @@
           v-for="(teamMember, index) in item.team"
           :key="index"
           :size="small"
-          :user="teamMember.user"
+          :user="item.user"
           class="-mr-2"
         />
       </template>
@@ -96,6 +96,7 @@
 
     <InfiniteLoading
       :settings="{ identifier: infiniteLoaderId }"
+      class="py-4"
       @infinite="infiniteLoad"
     />
 

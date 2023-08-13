@@ -44,6 +44,7 @@
         company: 'col-span-2',
         role: 'col-span-2'
       }"
+      :overflow-cells="true"
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">

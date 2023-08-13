@@ -104,7 +104,9 @@ async function getLatestVersion(): Promise<string | null> {
 onMounted(async () => {
   latestVersion.value = await getLatestVersion()
   isLatestVersion.value =
-    versionInfo.current === latestVersion.value || versionInfo.current === 'dev'
+    versionInfo.current === latestVersion.value ||
+    versionInfo.current === 'dev' ||
+    versionInfo.current === 'N/A'
 })
 
 const dataQuery = graphql(`

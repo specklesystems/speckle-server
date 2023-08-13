@@ -14,7 +14,10 @@
           {{ header.title }}
         </div>
       </div>
-      <div class="divide-y divide-outline-3 h-full overflow-visible pb-32">
+      <div
+        class="divide-y divide-outline-3 h-full overflow-visible"
+        :class="{ 'pb-32': overflowCells }"
+      >
         <div
           v-for="(item, rowIndex) in items"
           :key="rowIndex"
@@ -48,8 +51,8 @@
   </div>
 </template>
 
-<script lang="ts">
-import { PropType, defineComponent, ConcreteComponent } from 'vue'
+<script setup lang="ts">
+import { PropType, ConcreteComponent, computed } from 'vue'
 import { User, Project } from '~~/lib/common/generated/gql/graphql'
 
 interface RowButton {
@@ -63,42 +66,41 @@ interface Header {
   title: string
 }
 
-export default defineComponent({
-  props: {
-    headers: {
-      type: Array as PropType<Header[]>,
-      required: true
-    },
-    items: {
-      type: Array as PropType<Record<string, unknown>[]>,
-      required: true
-    },
-    buttons: {
-      type: Array as PropType<RowButton[]>,
-      default: () => []
-    },
-    columnClasses: {
-      type: Object as PropType<Record<string, string>>,
-      required: true
-    }
+const props = defineProps({
+  headers: {
+    type: Array as PropType<Header[]>,
+    required: true
   },
-  computed: {
-    paddingRightStyle() {
-      const padding = 52 + ((this.buttons as RowButton[]).length - 1) * 25
-      return `${padding}px`
-    }
+  items: {
+    type: Array as PropType<Record<string, unknown>[]>,
+    required: true
   },
-  methods: {
-    getClasses(column: string, colIndex: number): string {
-      const columnClass = this.columnClasses[column]
-
-      // For the first column
-      if (colIndex === 0) {
-        return `bg-transparent py-3 pr-5 ${columnClass}`
-      }
-
-      return `lg:p-0 ${columnClass}`
-    }
+  buttons: {
+    type: Array as PropType<RowButton[]>,
+    default: () => []
+  },
+  columnClasses: {
+    type: Object as PropType<Record<string, string>>,
+    required: true
+  },
+  overflowCells: {
+    type: Boolean as PropType<boolean>
   }
 })
+
+const paddingRightStyle = computed(() => {
+  const padding = 52 + ((props.buttons as RowButton[]).length - 1) * 25
+  return `${padding}px`
+})
+
+const getClasses = (column: string, colIndex: number): string => {
+  const columnClass = props.columnClasses[column]
+
+  // For the first column
+  if (colIndex === 0) {
+    return `bg-transparent py-3 pr-5 ${columnClass}`
+  }
+
+  return `lg:p-0 ${columnClass}`
+}
 </script>
