@@ -179,7 +179,8 @@ const userData = computed(() => [
   },
   {
     title: 'Pending invitations',
-    value: result.value?.admin.serverStatistics.totalPendingInvites?.toString() || '0',
+    value:
+      result.value?.admin.serverStatistics.totalPendingInvites?.toString() || 'n/a',
     icon: EnvelopeIcon,
     cta: {
       type: 'button',

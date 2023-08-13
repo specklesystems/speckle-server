@@ -83,6 +83,7 @@
 
     <InfiniteLoading
       :settings="{ identifier: infiniteLoaderId }"
+      class="-mt-24 -mb-24"
       @infinite="infiniteLoad"
     />
 

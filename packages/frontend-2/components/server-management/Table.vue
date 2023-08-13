@@ -1,6 +1,6 @@
 <template>
   <div class="mt-8 text-foreground">
-    <div class="w-full text-sm overflow-x-auto overflow-y-visible">
+    <div class="w-full text-sm overflow-x-auto overflow-y-visibl simple-scrollbar">
       <div
         class="grid z-10 grid-cols-12 items-center gap-6 font-semibold bg-foundation rounded-t-lg w-full border-b border-outline-3 h-10 px-4 min-w-[900px]"
         :style="{ paddingRight: paddingRightStyle }"
@@ -14,7 +14,7 @@
           {{ header.title }}
         </div>
       </div>
-      <div class="divide-y divide-outline-3 h-full overflow-visible min-h-[500px]">
+      <div class="divide-y divide-outline-3 h-full overflow-visible pb-32">
         <div
           v-for="(item, rowIndex) in items"
           :key="rowIndex"
