@@ -149,7 +149,11 @@ const token = computed(() => route.query.token as Optional<string>)
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
 const version = computed(() => result.value?.serverInfo.version)
 
-const isAdmin = computed(() => activeUser.value?.role === 'admin')
+const isAdmin = computed(
+  () =>
+    activeUser.value?.role === 'server:admin' ||
+    activeUser.value?.role === 'client:admin'
+)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
