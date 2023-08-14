@@ -94,7 +94,6 @@ export class SketchupBridge extends BaseBridge {
         })
       )
     })
-    console.log(promises)
     await Promise.all(promises)
 
     const args: CreateVersionArgs = {
@@ -103,7 +102,8 @@ export class SketchupBridge extends BaseBridge {
       accountId,
       objectId: sendObject.id
     }
-    this.emit('createVersion', JSON.stringify(args))
+    // TODO: if we stringfy here args, then need to reparse it on createVersion handler, which is not valid for each host
+    this.emit('createVersion', args)
   }
 
   public async create(): Promise<boolean> {

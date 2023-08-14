@@ -93,6 +93,7 @@ export function useGetProjectDetails(clientId: string | undefined = undefined) {
 export function useGetModelDetails(clientId: string | undefined = undefined) {
   return async (input: { projectId: string; modelId: string }) => {
     const client = getValidOrDefaultAccount(clientId)
+
     const res = await client.query({
       query: modelDetailsQuery,
       variables: { ...input }

@@ -5,7 +5,7 @@ import {
   ISenderModelCard,
   IReceiverModelCard
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
-import { ISendFilter } from 'lib/bindings/definitions/ISendBinding'
+import { CreateVersionArgs, ISendFilter } from 'lib/bindings/definitions/ISendBinding'
 import { CommitCreateInput } from '~/lib/common/generated/gql/graphql'
 import { useCreateCommit, useGetModelDetails } from '~/lib/graphql/composables'
 import { useAccountStore } from '~/store/accounts'
@@ -98,53 +98,77 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       .forEach((model) => ((model as ISenderModelCard).expired = true))
   })
 
-  // app.$sendBinding?.on('senderProgress', (args) )
+  app.$sendBinding?.on('senderProgress', (args) => {
+    console.log(args)
+  })
 
-  app.$sendBinding.on('createVersion', (args) => {
+  app.$sendBinding.on('createVersion', async (args) => {
+    const { accountId, modelId, projectId, objectId } = args
+
+    const getModelDetails = useGetModelDetails(accountId)
+    const modelDetails = getModelDetails({
+      projectId,
+      modelId
+    })
+
+    const branchName = (await modelDetails).displayName
+
+    const commit: CommitCreateInput = {
+      streamId: projectId,
+      branchName,
+      objectId,
+      message: 'sent from sketchup DUI3',
+      sourceApplication: 'sketchup'
+    }
+
+    console.log(commit)
+
+    const createCommit = useCreateCommit()
+    await createCommit(commit)
     // TODO: Dim
     // - implement  serever bound create model version api
     // - use that
   })
 
-  app.$sendBinding?.on('sendViaBrowser', async (sendViaBrowserArgs) => {
-    const formData = new FormData()
-    const sendObject = sendViaBrowserArgs.sendObject
-    const defaultAccount = accountStore.defaultAccount
-    const modelCard = sendViaBrowserArgs.modelCard
+  // app.$sendBinding?.on('sendViaBrowser', async (sendViaBrowserArgs) => {
+  //   const formData = new FormData()
+  //   const sendObject = sendViaBrowserArgs.sendObject
+  //   const defaultAccount = accountStore.defaultAccount
+  //   const modelCard = sendViaBrowserArgs.modelCard
 
-    // sendObject.batches.forEach(async (batch) => {
-    //   formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
+  //   sendObject.batches.forEach(async (batch) => {
+  //     formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
 
-    //   if (defaultAccount) {
-    //     await fetch(
-    //       `${defaultAccount.accountInfo.serverInfo.url}/objects/${modelCard.projectId}`,
-    //       {
-    //         method: 'POST',
-    //         headers: { Authorization: 'Bearer ' + defaultAccount.accountInfo.token },
-    //         body: formData
-    //       }
-    //     )
-    //   }
-    // })
+  //     if (defaultAccount) {
+  //       await fetch(
+  //         `${defaultAccount.accountInfo.serverInfo.url}/objects/${modelCard.projectId}`,
+  //         {
+  //           method: 'POST',
+  //           headers: { Authorization: 'Bearer ' + defaultAccount.accountInfo.token },
+  //           body: formData
+  //         }
+  //       )
+  //     }
+  //   })
 
-    const getModelDetails = useGetModelDetails()
-    const modelDetails = getModelDetails({
-      projectId: modelCard.projectId,
-      modelId: modelCard.modelId
-    })
+  //   const getModelDetails = useGetModelDetails()
+  //   const modelDetails = getModelDetails({
+  //     projectId: modelCard.projectId,
+  //     modelId: modelCard.modelId
+  //   })
 
-    const commit: CommitCreateInput = {
-      streamId: modelCard.projectId,
-      branchName: (await modelDetails).displayName,
-      objectId: sendObject.id,
-      message: 'sent from sketchup DUI3',
-      sourceApplication: 'sketchup',
-      totalChildrenCount: sendObject.totalChildrenCount
-    }
+  //   const commit: CommitCreateInput = {
+  //     streamId: modelCard.projectId,
+  //     branchName: (await modelDetails).displayName,
+  //     objectId: sendObject.id,
+  //     message: 'sent from sketchup DUI3',
+  //     sourceApplication: 'sketchup',
+  //     totalChildrenCount: sendObject.totalChildrenCount
+  //   }
 
-    const createCommit = useCreateCommit()
-    await createCommit(commit)
-  })
+  //   const createCommit = useCreateCommit()
+  //   await createCommit(commit)
+  // })
 
   // First initialization calls
   void refreshDocumentInfo()

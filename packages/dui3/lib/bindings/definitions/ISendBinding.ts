@@ -6,7 +6,7 @@ export const ISendBindingKey = 'sendBinding'
 
 export interface ISendBinding extends IBinding<ISendBindingEvents> {
   getSendFilters: () => Promise<ISendFilter[]>
-  send: (modelId: string, accountId: string) => Promise<void>
+  send: (modelCardId: string, accountId: string) => Promise<void>
 }
 
 export interface ISendBindingEvents {
