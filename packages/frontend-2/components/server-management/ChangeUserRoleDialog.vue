@@ -8,17 +8,13 @@
       </p>
       <div v-if="user" class="flex flex-col gap-3">
         <div class="flex items-center gap-2">
-          <img
-            :src="user.profilePicture"
-            :alt="'Profile picture of ' + user.name"
-            class="w-6 h-6 rounded-full"
-          />
+          <Avatar :user="user" />
           {{ user.name }}
         </div>
         <div class="flex gap-2 items-center">
-          <span>{{ oldRole }}</span>
+          <span class="capitalize">{{ parsedRole(oldRole) }}</span>
           <ArrowLongRightIcon class="h-6 w-6" />
-          <strong>{{ newRole }}</strong>
+          <strong class="capitalize">{{ parsedRole(newRole) }}</strong>
         </div>
       </div>
 
@@ -41,6 +37,7 @@ import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
 import { User } from '~~/lib/common/generated/gql/graphql'
 import { ArrowLongRightIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
+import Avatar from '~~/components/user/Avatar.vue'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -54,6 +51,11 @@ const props = defineProps<{
   newRole: string
   buttons?: Array<{ text: string; props: Record<string, unknown>; onClick: () => void }>
 }>()
+
+const parsedRole = (role: string) => {
+  const parts = role.split(':')
+  return parts.length > 1 ? parts[1] : role
+}
 
 const isOpen = computed({
   get: () => props.open,

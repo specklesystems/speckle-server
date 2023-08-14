@@ -33,6 +33,7 @@ const props = defineProps<{
   title: string
   open: boolean
   user: User | null
+  buttons?: Array<{ text: string; props: Record<string, unknown>; onClick: () => void }>
 }>()
 
 const isOpen = computed({

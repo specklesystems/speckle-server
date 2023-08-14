@@ -77,7 +77,9 @@
       <template #role="{ item }">
         <UserRoleSelect
           v-model="item.role"
-          @update:model-value="openChangeUserRoleDialog(item)"
+          @update:model-value="
+            (newRoleValue) => openChangeUserRoleDialog(item, newRoleValue)
+          "
         />
       </template>
     </Table>
@@ -110,7 +112,7 @@
       v-model:open="showChangeUserRoleDialog"
       :user="userToModify"
       title="Change Role"
-      :old-role="newRole"
+      :old-role="oldRole"
       :new-role="newRole"
       :buttons="[
         {
@@ -166,8 +168,20 @@ const closeUserDeleteDialog = () => {
   showUserDeleteDialog.value = false
 }
 
-const openChangeUserRoleDialog = (user: User) => {
+const newRole = ref('')
+
+const oldRole = computed(() => userToModify.value?.role ?? '')
+
+const openChangeUserRoleDialog = (user: User, newRoleValue: string) => {
+  // Debug: Log the old and new roles to see their values
+  console.log('Old Role:', oldRole.value)
+  console.log('New Role:', newRoleValue)
+
+  // Do nothing if the selected role is the same as the current role
+  if (oldRole.value === newRoleValue) return
+
   userToModify.value = user
+  newRole.value = newRoleValue
   showChangeUserRoleDialog.value = true
 }
 
