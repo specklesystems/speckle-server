@@ -111,6 +111,10 @@ import DeleteInvitationDialog from '../../components/server-management/DeleteInv
 
 import { TrashIcon } from '@heroicons/vue/24/outline'
 
+definePageMeta({
+  middleware: ['admin']
+})
+
 const userToModify = ref<User | null>(null)
 
 const openDeleteInvitationDialog = (user: User) => {

@@ -49,7 +49,7 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex items-center  justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
-              @click="goToServerManagement"
+              :to="'/server-management/'"
             >
               Server Management
               <Cog6ToothIcon class="w-5 h-5 mr-2" />
@@ -169,10 +169,6 @@ const onThemeClick = () => {
 
 const goToConnectors = () => {
   router.push('/downloads')
-}
-
-const goToServerManagement = () => {
-  router.push('/server-management')
 }
 
 const loginUrl = computed(() =>

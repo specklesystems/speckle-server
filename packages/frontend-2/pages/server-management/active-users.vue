@@ -76,9 +76,9 @@
 
       <template #role="{ item }">
         <UserRoleSelect
-          v-model="item.role"
+          :model-value="item.role"
           @update:model-value="
-            (newRoleValue) => openChangeUserRoleDialog(item, newRoleValue)
+            (newRoleValue) => openChangeUserRoleDialog(item as UserItem, newRoleValue)
           "
         />
       </template>
@@ -114,6 +114,7 @@
       title="Change Role"
       :old-role="oldRole"
       :new-role="newRole"
+      :hide-closer="true"
       :buttons="[
         {
           text: 'Change Role',
@@ -139,7 +140,6 @@ import UserRoleSelect from '~~/components/server-management/UserRoleSelect.vue'
 import UserDeleteDialog from '~~/components/server-management/DeleteUserDialog.vue'
 import ChangeUserRoleDialog from '~~/components/server-management/ChangeUserRoleDialog.vue'
 import Avatar from '~~/components/user/Avatar.vue'
-import { User } from '~~/lib/common/generated/gql/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
@@ -151,16 +151,25 @@ import {
   ShieldCheckIcon,
   TrashIcon
 } from '@heroicons/vue/20/solid'
+import { UserItem } from '~~/lib/server-management/helpers/types'
+import {
+  convertThrowIntoFetchResult,
+  getFirstErrorMessage
+} from '~~/lib/common/helpers/graphql'
 
-const userToModify = ref<User | null>(null)
+definePageMeta({
+  middleware: ['admin']
+})
+
+const userToModify = ref<UserItem | null>(null)
 const searchString = ref('')
 const showUserDeleteDialog = ref(false)
 const showChangeUserRoleDialog = ref(false)
 
 const { triggerNotification } = useGlobalToast()
 
-const openUserDeleteDialog = (user: User) => {
-  userToModify.value = user as User
+const openUserDeleteDialog = (user: UserItem) => {
+  userToModify.value = user
   showUserDeleteDialog.value = true
 }
 
@@ -172,14 +181,8 @@ const newRole = ref('')
 
 const oldRole = computed(() => userToModify.value?.role ?? '')
 
-const openChangeUserRoleDialog = (
-  user: User | Record<string, unknown>,
-  newRoleValue: string
-) => {
-  // Do nothing if the selected role is the same as the current role
-  if (oldRole.value === newRoleValue) return
-
-  userToModify.value = user as User
+const openChangeUserRoleDialog = (user: UserItem, newRoleValue: string) => {
+  userToModify.value = user
   newRole.value = newRoleValue
   showChangeUserRoleDialog.value = true
 }
@@ -197,38 +200,61 @@ const adminDeleteUser = graphql(`
 const { mutate: adminDeleteUserMutation } = useMutation(adminDeleteUser)
 
 const deleteConfirmed = async () => {
-  try {
-    if (userToModify.value && userToModify.value.email) {
-      await adminDeleteUserMutation({
-        userConfirmation: { email: userToModify.value.email }
-      })
-      closeUserDeleteDialog()
-      refetchUsers()
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'User deleted',
-        description: 'The user has been succesfully deleted'
-      })
-    } else {
-      console.error('userToModify.value or userToModify.value.email is not defined')
-      triggerNotification({
-        type: ToastNotificationType.Danger,
-        title: 'Error',
-        description: 'Failed to delete user'
-      })
-    }
-  } catch (error) {
-    console.error('Failed to delete user', error)
+  if (!userToModify?.value?.email) {
+    return
+  }
+  const result = await adminDeleteUserMutation({
+    userConfirmation: { email: userToModify.value.email }
+  }).catch(convertThrowIntoFetchResult)
+  if (result?.data?.adminDeleteUser) {
+    closeUserDeleteDialog()
+    refetchUsers()
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'User role updated',
+      description: 'The user has been succesfully deleted'
+    })
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
       type: ToastNotificationType.Danger,
-      title: 'Error',
-      description: 'Failed to delete user'
+      title: 'Failed to delete user',
+      description: errorMessage
     })
   }
 }
 
-const changeUserRoleConfirmed = () => {
-  // Implement actual change role logic here
+const changeRoleMutation = graphql(`
+  mutation AdminChangeUseRole($userRoleInput: UserRoleInput!) {
+    userRoleChange(userRoleInput: $userRoleInput)
+  }
+`)
+
+const { mutate: mutateChangeRole } = useMutation(changeRoleMutation)
+
+const changeUserRoleConfirmed = async () => {
+  if (!userToModify.value) {
+    return
+  }
+  const result = await mutateChangeRole({
+    userRoleInput: { id: userToModify.value.id, role: newRole.value }
+  }).catch(convertThrowIntoFetchResult)
+  if (result?.data?.userRoleChange) {
+    closeChangeUserRoleDialog()
+    refetchUsers()
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'User role updated',
+      description: 'The user role has been updated'
+    })
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Failed to update role',
+      description: errorMessage
+    })
+  }
   showChangeUserRoleDialog.value = false
   userToModify.value = null
 }

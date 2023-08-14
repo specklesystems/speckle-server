@@ -1,6 +1,7 @@
-import { ConcreteComponent } from 'vue'
+import { Get } from 'type-fest'
+import { UserListQuery } from '~~/lib/common/generated/gql/graphql'
 
-export type Action<T> = (item: T) => void
+export type UserItem = NonNullable<Get<UserListQuery, 'admin.userList.items[0]'>>
 
 export interface CTA {
   type: 'button' | 'link'
@@ -8,63 +9,8 @@ export interface CTA {
   action: () => void | Promise<void>
 }
 
-export interface ServerInfo {
-  name: string
-  description: string
-  adminContact: string
-  company: string
-  guestModeEnabled: boolean
-  inviteOnly: boolean
-  termsOfService: string
-}
-
-export interface SettingsDialogRef {
-  onSubmit: () => void
-}
-
-export interface CardInfo {
-  title: string
-  value: string
-  cta?: CTA
-  icon: ConcreteComponent
-}
-
-export interface ServerStatistics {
-  admin: {
-    serverStatistics: {
-      totalPendingInvites: number
-      totalProjectCount: number
-      totalUserCount: number
-    }
-  }
-  serverInfo: {
-    name: string
-    version: string
-  }
-}
-
 export interface Button {
   text: string
   props: { color: string; fullWidth: boolean; outline: boolean }
   onClick: () => void
-}
-
-export interface ServerInfoResponse {
-  serverInfo: {
-    name: string
-    description: string
-    adminContact: string
-    company: string
-    termsOfService: string
-    inviteOnly: boolean
-  }
-}
-
-export interface FormErrors {
-  name?: string
-  description?: string
-  adminContact?: string
-  company?: string
-  termsOfService?: string
-  inviteOnly: boolean
 }

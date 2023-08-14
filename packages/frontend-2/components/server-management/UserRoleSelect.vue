@@ -3,7 +3,7 @@
     v-model="selectedValue"
     :items="roles"
     :label="'Role'"
-    :name="'role'"
+    :name="'userRole'"
     :allow-unset="false"
   >
     <template #something-selected="{ value }">
@@ -17,14 +17,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 import { Roles, ServerRoles } from '@speckle/shared/src/core/constants'
+import { useFormSelectChildInternals } from '~~/lib/form/composables/select'
+
+type ValueType = ServerRoles | ServerRoles[] | undefined
 
 type Role = ServerRoles
 
-const emitUpdate = defineEmits<{
-  (e: 'update:modelValue', newV: string, oldV: string): void
+const props = defineProps<{
+  modelValue?: ValueType
+  multiple?: boolean
 }>()
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', v: ValueType): void
+}>()
+
+const { selectedValue } = useFormSelectChildInternals<ServerRoles>({
+  props: toRefs(props),
+  emit
+})
 
 const roleLookupTable = {
   [Roles.Server.User]: 'User',
@@ -37,11 +49,5 @@ const getRoleLabel = (role: Role) => {
   return roleLookupTable[role] || role.split(':')[1]
 }
 
-const selectedValue = ref<Role>('server:user')
-
 const roles = Object.values(Roles.Server).filter((role) => role in roleLookupTable)
-
-watch(selectedValue, (newVal, oldVal) => {
-  emitUpdate('update:modelValue', newVal, oldVal)
-})
 </script>

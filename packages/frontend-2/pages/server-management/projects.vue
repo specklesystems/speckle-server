@@ -136,6 +136,10 @@ import { graphql } from '~~/lib/common/generated/gql'
 
 import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
 
+definePageMeta({
+  middleware: ['admin']
+})
+
 const projectToModify = ref<Project | null>(null)
 const searchString = ref('')
 const showProjectDeleteDialog = ref(false)
