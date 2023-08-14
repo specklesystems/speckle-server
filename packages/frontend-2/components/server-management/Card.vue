@@ -15,10 +15,17 @@
 
 <script lang="ts" setup>
 import CardRow from './CardRow.vue'
-import { CardInfo } from '~~/lib/server-management/helpers/types'
+import { ConcreteComponent } from 'vue'
+import { CTA } from '~~/lib/server-management/helpers/types'
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-const props = defineProps({
+export interface CardInfo {
+  title: string
+  value: string
+  cta?: CTA
+  icon: ConcreteComponent
+}
+
+defineProps({
   serverInfo: {
     type: Array as () => CardInfo[],
     required: true

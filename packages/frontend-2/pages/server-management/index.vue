@@ -46,10 +46,8 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { ref, computed, onMounted, reactive } from 'vue'
-import Card from '../../components/server-management/Card.vue'
-import { ConcreteComponent } from 'vue'
+import Card, { CardInfo } from '../../components/server-management/Card.vue'
 import SettingsDialog from '../../components/server-management/SettingsDialog.vue'
-import { CTA } from '~~/lib/server-management/helpers/types'
 import {
   ServerIcon,
   UsersIcon,
@@ -58,13 +56,6 @@ import {
   HomeIcon
 } from '@heroicons/vue/24/solid'
 import { useRouter } from 'vue-router'
-
-interface CardInfo {
-  title: string
-  value: string
-  cta?: CTA
-  icon: ConcreteComponent
-}
 
 interface GithubRelease {
   url: string
