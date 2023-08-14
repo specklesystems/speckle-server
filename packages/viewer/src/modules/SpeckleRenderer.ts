@@ -61,6 +61,7 @@ import Materials, {
   MaterialOptions
 } from './materials/Materials'
 import { SpeckleMaterial } from './materials/SpeckleMaterial'
+import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -93,7 +94,7 @@ export default class SpeckleRenderer {
   private readonly IGNORE_ZERO_OPACITY_OBJECTS = true
   public SHOW_BVH = false
   private container: HTMLElement
-  private _renderer: WebGLRenderer
+  private _renderer: SpeckleWebGLRenderer
   public _scene: Scene
   private _needsRender: boolean
   private rootGroup: Group
@@ -116,6 +117,11 @@ export default class SpeckleRenderer {
   private _cameraProvider: ICameraProvider = null
   private _clippingPlanes: Plane[] = []
   private _clippingVolume: Box3
+
+  private _rteShadowViewModelMatrix: Matrix4 = new Matrix4()
+  private _rteShadowMatrix: Matrix4 = new Matrix4()
+  private _rteShadowViewerLow: Vector3 = new Vector3()
+  private _rteShadowViewerHigh: Vector3 = new Vector3()
 
   public get renderer(): WebGLRenderer {
     return this._renderer
@@ -275,7 +281,7 @@ export default class SpeckleRenderer {
   }
 
   public create(container: HTMLElement) {
-    this._renderer = new WebGLRenderer({
+    this._renderer = new SpeckleWebGLRenderer({
       antialias: true,
       alpha: true,
       preserveDrawingBuffer: true,
@@ -286,12 +292,12 @@ export default class SpeckleRenderer {
     this._renderer.outputEncoding = sRGBEncoding
     this._renderer.toneMapping = ACESFilmicToneMapping
     this._renderer.toneMappingExposure = 0.5
-    this.renderer.shadowMap.enabled = true
-    this.renderer.shadowMap.type = VSMShadowMap
-    this.renderer.shadowMap.autoUpdate = false
-    this.renderer.shadowMap.needsUpdate = true
-    this.renderer.physicallyCorrectLights = true
-    this.renderer.autoClearStencil = false
+    this._renderer.shadowMap.enabled = true
+    this._renderer.shadowMap.type = VSMShadowMap
+    this._renderer.shadowMap.autoUpdate = false
+    this._renderer.shadowMap.needsUpdate = true
+    this._renderer.physicallyCorrectLights = true
+    this._renderer.autoClearStencil = false
 
     this.container = container
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
@@ -354,10 +360,11 @@ export default class SpeckleRenderer {
 
   public update(deltaTime: number) {
     if (!this._cameraProvider) return
-
     this.batcher.update(deltaTime)
 
+    this.updateRTEBuffers()
     this.updateRTEShadows()
+
     this.updateTransforms()
     this.updateFrustum()
     this._measurements.update()
@@ -374,29 +381,51 @@ export default class SpeckleRenderer {
     }
   }
 
-  private updateRTEShadows() {
-    if (!this._renderer.shadowMap.needsUpdate) return
+  private updateRTEBuffers(): boolean {
+    this._renderer.RTEBuffers.rteViewModelMatrix.copy(
+      this.renderingCamera.matrixWorldInverse
+    )
+    this._renderer.RTEBuffers.rteViewModelMatrix.elements[12] = 0
+    this._renderer.RTEBuffers.rteViewModelMatrix.elements[13] = 0
+    this._renderer.RTEBuffers.rteViewModelMatrix.elements[14] = 0
 
-    const viewer = new Vector3()
-    const viewerLow = new Vector3()
-    const viewerHigh = new Vector3()
+    this._renderer.RTEBuffers.viewer.set(
+      this.renderingCamera.matrixWorld.elements[12],
+      this.renderingCamera.matrixWorld.elements[13],
+      this.renderingCamera.matrixWorld.elements[14]
+    )
 
-    viewer.set(
+    Geometry.DoubleToHighLowVector(
+      this._renderer.RTEBuffers.viewer,
+      this._renderer.RTEBuffers.viewerLow,
+      this._renderer.RTEBuffers.viewerHigh
+    )
+    return true
+  }
+
+  private updateRTEShadowBuffers(): boolean {
+    if (!this._renderer.shadowMap.needsUpdate) return false
+
+    this._renderer.RTEBuffers.shadowViewer.set(
       this.sun.shadow.camera.matrixWorld.elements[12],
       this.sun.shadow.camera.matrixWorld.elements[13],
       this.sun.shadow.camera.matrixWorld.elements[14]
     )
-    Geometry.DoubleToHighLowVector(viewer, viewerLow, viewerHigh)
+    Geometry.DoubleToHighLowVector(
+      this._renderer.RTEBuffers.shadowViewer,
+      this._renderer.RTEBuffers.shadowViewerLow,
+      this._renderer.RTEBuffers.shadowViewerHigh
+    )
 
-    const rteView = new Matrix4()
-    rteView.copy(this.sun.shadow.camera.matrixWorldInverse)
-    rteView.elements[12] = 0
-    rteView.elements[13] = 0
-    rteView.elements[14] = 0
+    this._renderer.RTEBuffers.rteShadowViewModelMatrix.copy(
+      this.sun.shadow.camera.matrixWorldInverse
+    )
+    this._renderer.RTEBuffers.rteShadowViewModelMatrix.elements[12] = 0
+    this._renderer.RTEBuffers.rteShadowViewModelMatrix.elements[13] = 0
+    this._renderer.RTEBuffers.rteShadowViewModelMatrix.elements[14] = 0
 
-    const shadowMatrix = new Matrix4()
     // Lovely
-    shadowMatrix.set(
+    this._renderer.RTEBuffers.rteShadowMatrix.set(
       0.5,
       0.0,
       0.0,
@@ -415,38 +444,42 @@ export default class SpeckleRenderer {
       1.0
     )
 
-    shadowMatrix.multiply(this.sun.shadow.camera.projectionMatrix)
-    shadowMatrix.multiply(rteView)
+    this._renderer.RTEBuffers.rteShadowMatrix.multiply(
+      this.sun.shadow.camera.projectionMatrix
+    )
+    this._renderer.RTEBuffers.rteShadowMatrix.multiply(
+      this._renderer.RTEBuffers.rteShadowViewModelMatrix
+    )
+    return true
+  }
 
-    const rteModelView = new Matrix4()
-    const meshBatches = this.batcher.getBatches(undefined, GeometryType.MESH)
+  private updateRTEShadows() {
+    if (!this.updateRTEShadowBuffers()) return
+
+    const meshBatches = this.batcher.getBatches(
+      undefined,
+      GeometryType.MESH
+    ) as MeshBatch[]
     for (let k = 0; k < meshBatches.length; k++) {
-      const meshBatch: SpeckleMesh = meshBatches[k].renderObject as SpeckleMesh
+      const speckleMesh: SpeckleMesh = meshBatches[k].renderObject as SpeckleMesh
 
-      rteModelView.copy(rteView)
-      rteModelView.multiply(meshBatch.matrixWorld)
-      /** Shadowmap depth material does not go thorugh the normal flow. It's onBeforeRender is not getting called
-       *  That's why we're updating the RTE related uniforms manually here
+      /** Shadowmap depth material does not go thorugh the normal flow.
+       * It's onBeforeRender is not getting called That's why we're updating
+       * the RTE related uniforms manually here
        */
       const depthMaterial: SpeckleDepthMaterial =
-        meshBatch.customDepthMaterial as SpeckleDepthMaterial
+        speckleMesh.customDepthMaterial as SpeckleDepthMaterial
       if (depthMaterial) {
-        depthMaterial.userData.uViewer_low.value.copy(viewerLow)
-        depthMaterial.userData.uViewer_high.value.copy(viewerHigh)
-        depthMaterial.userData.rteModelViewMatrix.value.copy(rteModelView)
+        depthMaterial.userData.uViewer_low.value.copy(
+          this._renderer.RTEBuffers.shadowViewerLow
+        )
+        depthMaterial.userData.uViewer_high.value.copy(
+          this._renderer.RTEBuffers.shadowViewerHigh
+        )
+        depthMaterial.userData.rteModelViewMatrix.value.copy(
+          this._renderer.RTEBuffers.rteShadowViewModelMatrix
+        )
         depthMaterial.needsUpdate = true
-      }
-
-      let material: SpeckleStandardMaterial | SpeckleStandardMaterial[] =
-        meshBatch.material as SpeckleStandardMaterial | SpeckleStandardMaterial[]
-      material = Array.isArray(material) ? material : [material]
-      for (let k = 0; k < material.length; k++) {
-        if (material[k].userData.rteShadowMatrix) {
-          material[k].userData.rteShadowMatrix.value.copy(shadowMatrix)
-          material[k].userData.uShadowViewer_low.value.copy(viewerLow)
-          material[k].userData.uShadowViewer_high.value.copy(viewerHigh)
-          material[k].needsUpdate = true
-        }
       }
     }
   }

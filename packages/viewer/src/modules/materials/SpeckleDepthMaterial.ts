@@ -59,26 +59,9 @@ class SpeckleDepthMaterial extends ExtendedMeshDepthMaterial {
    * inside SpeckleRenderer for shadowmaps
    */
   onBeforeRender(_this, scene, camera, geometry, object, group) {
-    SpeckleDepthMaterial.matBuff.copy(camera.matrixWorldInverse)
-    SpeckleDepthMaterial.matBuff.elements[12] = 0
-    SpeckleDepthMaterial.matBuff.elements[13] = 0
-    SpeckleDepthMaterial.matBuff.elements[14] = 0
-    object.modelViewMatrix.copy(SpeckleDepthMaterial.matBuff)
-
-    SpeckleDepthMaterial.vecBuff0.set(
-      camera.matrixWorld.elements[12],
-      camera.matrixWorld.elements[13],
-      camera.matrixWorld.elements[14]
-    )
-
-    Geometry.DoubleToHighLowVector(
-      SpeckleDepthMaterial.vecBuff0,
-      SpeckleDepthMaterial.vecBuff1,
-      SpeckleDepthMaterial.vecBuff2
-    )
-
-    this.userData.uViewer_low.value.copy(SpeckleDepthMaterial.vecBuff1)
-    this.userData.uViewer_high.value.copy(SpeckleDepthMaterial.vecBuff2)
+    object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
+    this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
+    this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
     this.userData.rteModelViewMatrix.value.copy(object.modelViewMatrix)
 
     if (object instanceof SpeckleMesh) {

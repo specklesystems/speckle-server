@@ -19,7 +19,6 @@ class SpeckleUserData {
     return {}
   }
 }
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Uniforms = Record<string, any>
 
