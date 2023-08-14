@@ -78,37 +78,6 @@ const createViewer = async (containerName: string, stream: string) => {
     sandbox.refresh()
   })
 
-  // viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
-  //   if (!selectionInfo) {
-  //     multiSelectList.length = 0
-  //     await viewer.resetSelection()
-  //     viewer.setSectionBox()
-  //     return
-  //   }
-  //   if (!selectionInfo.multiple) multiSelectList.length = 0
-
-  //   const guids = multiSelectList.map((val) => val.hits[0].guid)
-  //   if (
-  //     (selectionInfo.multiple && !guids.includes(selectionInfo.hits[0].guid)) ||
-  //     multiSelectList.length === 0
-  //   ) {
-  //     multiSelectList.push(selectionInfo)
-  //   }
-
-  //   const ids = multiSelectList.map((val) => val.hits[0].object.id)
-  //   console.log(selectionInfo)
-  //   await viewer.selectObjects(ids as string[])
-  // })
-
-  // viewer.on(ViewerEvent.ObjectDoubleClicked, async (selectionInfo: SelectionEvent) => {
-  //   if (!selectionInfo) {
-  //     viewer.zoom()
-  //     return
-  //   }
-
-  //   viewer.zoom([selectionInfo.hits[0].object.id as string])
-  // })
-
   sandbox.makeGenericUI()
   sandbox.makeSceneUI()
   sandbox.makeFilteringUI()

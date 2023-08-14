@@ -124,6 +124,7 @@ export class CameraController extends Extension implements ICameraProvider {
     } else {
       this.setView(arg0, arg1)
     }
+    this.emit(CameraControllerEvent.Dynamic)
   }
 
   public onUpdate(deltaTime: number) {
@@ -340,15 +341,15 @@ export class CameraController extends Extension implements ICameraProvider {
     )
   }
 
-  public zoom(objectIds?: string[], fit?: number, transition?: boolean) {
+  protected zoom(objectIds?: string[], fit?: number, transition?: boolean) {
     if (!objectIds) {
       this.zoomExtents(fit, transition)
-      this.emit(CameraControllerEvent.Dynamic)
+      // this.emit(CameraControllerEvent.Dynamic)
       //   this.pipeline.onStationaryEnd()
       return
     }
     this.zoomToBox(this.viewer.getRenderer().boxFromObjects(objectIds), fit, transition)
-    this.emit(CameraControllerEvent.Dynamic)
+    // this.emit(CameraControllerEvent.Dynamic)
     // this.pipeline.onStationaryEnd()
   }
 
@@ -450,7 +451,7 @@ export class CameraController extends Extension implements ICameraProvider {
     )
   }
 
-  public setView(
+  protected setView(
     view: CanonicalView | SpeckleView | InlineView | PolarView,
     transition = true
   ): void {
@@ -467,7 +468,7 @@ export class CameraController extends Extension implements ICameraProvider {
       this.setViewPolar(view, transition)
     }
     // this.pipeline.onStationaryEnd()
-    this.emit(CameraControllerEvent.Dynamic)
+    // this.emit(CameraControllerEvent.Dynamic)
   }
 
   private setViewSpeckle(view: SpeckleView, transition = true) {

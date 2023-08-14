@@ -32,6 +32,7 @@ import { BatchObject } from './batching/BatchObject'
 import { MeasurementOptions } from './measurements/Measurements'
 import { Extension } from './extensions/core-extensions/Extension'
 import { ICameraProvider, IProvider } from './extensions/core-extensions/Providers'
+import { CameraController } from '..'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -453,7 +454,16 @@ export class Viewer extends EventEmitter implements IViewer {
 
     if (treeBuilt) {
       t0 = performance.now()
-      await this.speckleRenderer.addRenderTreeAsync(url, priority, zoomToObject)
+      for await (const step of this.speckleRenderer.addRenderTreeAsync(url, priority)) {
+        step
+        if (zoomToObject) {
+          const extension = this.getExtension(CameraController)
+          if (extension) {
+            extension.setCameraView([], false)
+          }
+        }
+      }
+      Logger.log(this.getRenderer().renderingStats)
       Logger.log('ASYNC batch build time -> ', performance.now() - t0)
       this.speckleRenderer.resetPipeline(true)
       this.emit(ViewerEvent.LoadComplete, url)

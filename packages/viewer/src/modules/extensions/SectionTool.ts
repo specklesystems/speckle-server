@@ -169,6 +169,7 @@ export class SectionTool extends Extension implements ISectionProvider {
       this.allowSelection = !data
     })
     this.viewer.getRenderer().input.on(InputEvent.Click, this._clickHandler.bind(this))
+    this.enabled = false
   }
 
   public onUpdate(deltaTime: number) {
