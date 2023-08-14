@@ -141,10 +141,8 @@ import UserDeleteDialog from '~~/components/server-management/DeleteUserDialog.v
 import ChangeUserRoleDialog from '~~/components/server-management/ChangeUserRoleDialog.vue'
 import Avatar from '~~/components/user/Avatar.vue'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { graphql } from '~~/lib/common/generated/gql'
-
 import {
   MagnifyingGlassIcon,
   ShieldExclamationIcon,
@@ -161,12 +159,67 @@ definePageMeta({
   middleware: ['admin']
 })
 
+const getUsers = graphql(`
+  query UserList($limit: Int!, $cursor: String, $query: String) {
+    admin {
+      userList(limit: $limit, cursor: $cursor, query: $query) {
+        totalCount
+        cursor
+        items {
+          id
+          email
+          avatar
+          name
+          role
+          verified
+          company
+        }
+      }
+    }
+  }
+`)
+
+const adminDeleteUser = graphql(`
+  mutation Mutation($userConfirmation: UserDeleteInput!) {
+    adminDeleteUser(userConfirmation: $userConfirmation)
+  }
+`)
+
+const changeRoleMutation = graphql(`
+  mutation AdminChangeUseRole($userRoleInput: UserRoleInput!) {
+    userRoleChange(userRoleInput: $userRoleInput)
+  }
+`)
+
 const userToModify = ref<UserItem | null>(null)
 const searchString = ref('')
 const showUserDeleteDialog = ref(false)
 const showChangeUserRoleDialog = ref(false)
+const newRole = ref('')
+const oldRole = computed(() => userToModify.value?.role ?? '')
+const logger = useLogger()
+const infiniteLoaderId = ref('')
+const {
+  result: extraPagesResult,
+  fetchMore: fetchMorePages,
+  variables: resultVariables,
+  onResult,
+  refetch: refetchUsers
+} = useQuery(getUsers, () => ({
+  limit: 50,
+  query: searchString.value
+}))
+const moreToLoad = computed(
+  () =>
+    !extraPagesResult.value?.admin?.userList ||
+    extraPagesResult.value.admin.userList.items.length <
+      extraPagesResult.value.admin.userList.totalCount
+)
+const users = computed(() => extraPagesResult.value?.admin.userList.items || [])
 
 const { triggerNotification } = useGlobalToast()
+const { mutate: adminDeleteUserMutation } = useMutation(adminDeleteUser)
+const { mutate: mutateChangeRole } = useMutation(changeRoleMutation)
 
 const openUserDeleteDialog = (user: UserItem) => {
   userToModify.value = user
@@ -177,10 +230,6 @@ const closeUserDeleteDialog = () => {
   showUserDeleteDialog.value = false
 }
 
-const newRole = ref('')
-
-const oldRole = computed(() => userToModify.value?.role ?? '')
-
 const openChangeUserRoleDialog = (user: UserItem, newRoleValue: string) => {
   userToModify.value = user
   newRole.value = newRoleValue
@@ -190,14 +239,6 @@ const openChangeUserRoleDialog = (user: UserItem, newRoleValue: string) => {
 const closeChangeUserRoleDialog = () => {
   showChangeUserRoleDialog.value = false
 }
-
-const adminDeleteUser = graphql(`
-  mutation Mutation($userConfirmation: UserDeleteInput!) {
-    adminDeleteUser(userConfirmation: $userConfirmation)
-  }
-`)
-
-const { mutate: adminDeleteUserMutation } = useMutation(adminDeleteUser)
 
 const deleteConfirmed = async () => {
   if (!userToModify?.value?.email) {
@@ -223,14 +264,6 @@ const deleteConfirmed = async () => {
     })
   }
 }
-
-const changeRoleMutation = graphql(`
-  mutation AdminChangeUseRole($userRoleInput: UserRoleInput!) {
-    userRoleChange(userRoleInput: $userRoleInput)
-  }
-`)
-
-const { mutate: mutateChangeRole } = useMutation(changeRoleMutation)
 
 const changeUserRoleConfirmed = async () => {
   if (!userToModify.value) {
@@ -263,47 +296,6 @@ const handleSearchChange = (newSearchString: string) => {
   searchUpdateHandler(newSearchString)
 }
 
-const getUsers = graphql(`
-  query UserList($limit: Int!, $cursor: String, $query: String) {
-    admin {
-      userList(limit: $limit, cursor: $cursor, query: $query) {
-        totalCount
-        cursor
-        items {
-          id
-          email
-          avatar
-          name
-          role
-          verified
-          company
-        }
-      }
-    }
-  }
-`)
-
-const logger = useLogger()
-
-const infiniteLoaderId = ref('')
-const {
-  result: extraPagesResult,
-  fetchMore: fetchMorePages,
-  variables: resultVariables,
-  onResult,
-  refetch: refetchUsers
-} = useQuery(getUsers, () => ({
-  limit: 50,
-  query: searchString.value
-}))
-
-const moreToLoad = computed(
-  () =>
-    !extraPagesResult.value?.admin?.userList ||
-    extraPagesResult.value.admin.userList.items.length <
-      extraPagesResult.value.admin.userList.totalCount
-)
-
 const infiniteLoad = async (state: InfiniteLoaderState) => {
   const cursor = extraPagesResult.value?.admin?.userList.cursor || null
   if (!moreToLoad.value || !cursor) return state.complete()
@@ -325,8 +317,6 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
     state.complete()
   }
 }
-
-const users = computed(() => extraPagesResult.value?.admin.userList.items || [])
 
 const searchUpdateHandler = (value: string) => {
   searchString.value = value
