@@ -534,12 +534,7 @@ export default class SpeckleRenderer {
     this._needsRender = true
   }
 
-  public async addRenderTreeAsync(
-    subtreeId: string,
-    priority = 1,
-    zoomToObject = true
-  ) {
-    zoomToObject
+  public async *addRenderTreeAsync(subtreeId: string, priority = 1) {
     this.cancel[subtreeId] = false
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
@@ -556,7 +551,6 @@ export default class SpeckleRenderer {
       if (!batch) continue
 
       this.addBatch(batch, subtreeGroup)
-      // if (zoomToObject) this.zoom()
       if (batch.geometryType === GeometryType.MESH) {
         this.updateDirectLights()
       }
@@ -567,6 +561,7 @@ export default class SpeckleRenderer {
         delete this.cancel[subtreeId]
         break
       }
+      yield
     }
     this.updateHelpers()
 
