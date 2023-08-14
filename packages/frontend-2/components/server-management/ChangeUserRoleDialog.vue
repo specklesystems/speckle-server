@@ -19,7 +19,7 @@
       </div>
 
       <div
-        v-if="user && newRole === 'server:admin'"
+        v-if="user && newRole === Roles.Server.Admin"
         class="flex gap-2 items-center bg-danger-lighter border-danger-darker border rounded-lg p-2"
       >
         <ExclamationTriangleIcon class="h-8 w-8 mt-0.5 text-danger-darker" />
@@ -35,7 +35,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
-import { User } from '~~/lib/common/generated/gql/graphql'
+import { UserItem } from '~~/lib/server-management/helpers/types'
+import { Roles } from '@speckle/shared'
 import { ArrowLongRightIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 import Avatar from '~~/components/user/Avatar.vue'
 
@@ -46,7 +47,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   title: string
   open: boolean
-  user: User | null
+  user: UserItem | null
   oldRole: string
   newRole: string
   buttons?: Array<{ text: string; props: Record<string, unknown>; onClick: () => void }>
