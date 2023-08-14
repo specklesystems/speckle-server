@@ -61,10 +61,10 @@ import { User, Project } from '~~/lib/common/generated/gql/graphql'
 
 type OnRowClickType = (item: Record<string, unknown>) => void
 
-interface RowButton {
+interface RowButton<T> {
   icon: ConcreteComponent
   label: string
-  action: (item: User | Project) => void
+  action: (item: T) => void
 }
 
 interface Header {
@@ -82,7 +82,7 @@ const props = defineProps({
     required: true
   },
   buttons: {
-    type: Array as PropType<RowButton[]>,
+    type: Array as PropType<RowButton<User | Project>[]>,
     default: () => []
   },
   columnClasses: {
@@ -99,7 +99,7 @@ const props = defineProps({
 })
 
 const paddingRightStyle = computed(() => {
-  const padding = 52 + ((props.buttons as RowButton[]).length - 1) * 25
+  const padding = 52 + ((props.buttons as RowButton<User | Project>[]).length - 1) * 25
   return `${padding}px`
 })
 

@@ -160,7 +160,7 @@ const showChangeUserRoleDialog = ref(false)
 const { triggerNotification } = useGlobalToast()
 
 const openUserDeleteDialog = (user: User) => {
-  userToModify.value = user
+  userToModify.value = user as User
   showUserDeleteDialog.value = true
 }
 
@@ -172,15 +172,14 @@ const newRole = ref('')
 
 const oldRole = computed(() => userToModify.value?.role ?? '')
 
-const openChangeUserRoleDialog = (user: User, newRoleValue: string) => {
-  // Debug: Log the old and new roles to see their values
-  console.log('Old Role:', oldRole.value)
-  console.log('New Role:', newRoleValue)
-
+const openChangeUserRoleDialog = (
+  user: User | Record<string, unknown>,
+  newRoleValue: string
+) => {
   // Do nothing if the selected role is the same as the current role
   if (oldRole.value === newRoleValue) return
 
-  userToModify.value = user
+  userToModify.value = user as User
   newRole.value = newRoleValue
   showChangeUserRoleDialog.value = true
 }

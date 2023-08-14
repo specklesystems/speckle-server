@@ -1,5 +1,11 @@
 <template>
-  <FormSelectBase v-model="selectedValue" :items="roles" :label="'Role'" :name="'role'">
+  <FormSelectBase
+    v-model="selectedValue"
+    :items="roles"
+    :label="'Role'"
+    :name="'role'"
+    :allow-unset="false"
+  >
     <template #something-selected="{ value }">
       <span class="truncate">{{ getRoleLabel(value) }}</span>
     </template>

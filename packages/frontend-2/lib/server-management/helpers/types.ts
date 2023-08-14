@@ -1,5 +1,7 @@
 import { ConcreteComponent } from 'vue'
 
+export type Action<T> = (item: T) => void
+
 export interface CTA {
   type: 'button' | 'link'
   label: string
