@@ -17,6 +17,7 @@ export type ProjectModelGroup = {
   receivers: IReceiverModelCard[]
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
   const accountStore = useAccountStore()
@@ -97,26 +98,34 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       .forEach((model) => ((model as ISenderModelCard).expired = true))
   })
 
+  // app.$sendBinding?.on('senderProgress', (args) )
+
+  app.$sendBinding.on('createVersion', (args) => {
+    // TODO: Dim
+    // - implement  serever bound create model version api
+    // - use that
+  })
+
   app.$sendBinding?.on('sendViaBrowser', async (sendViaBrowserArgs) => {
     const formData = new FormData()
     const sendObject = sendViaBrowserArgs.sendObject
     const defaultAccount = accountStore.defaultAccount
     const modelCard = sendViaBrowserArgs.modelCard
 
-    sendObject.batches.forEach(async (batch) => {
-      formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
+    // sendObject.batches.forEach(async (batch) => {
+    //   formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
 
-      if (defaultAccount) {
-        await fetch(
-          `${defaultAccount.accountInfo.serverInfo.url}/objects/${modelCard.projectId}`,
-          {
-            method: 'POST',
-            headers: { Authorization: 'Bearer ' + defaultAccount.accountInfo.token },
-            body: formData
-          }
-        )
-      }
-    })
+    //   if (defaultAccount) {
+    //     await fetch(
+    //       `${defaultAccount.accountInfo.serverInfo.url}/objects/${modelCard.projectId}`,
+    //       {
+    //         method: 'POST',
+    //         headers: { Authorization: 'Bearer ' + defaultAccount.accountInfo.token },
+    //         body: formData
+    //       }
+    //     )
+    //   }
+    // })
 
     const getModelDetails = useGetModelDetails()
     const modelDetails = getModelDetails({

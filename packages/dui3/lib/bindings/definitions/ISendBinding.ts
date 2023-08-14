@@ -6,31 +6,27 @@ export const ISendBindingKey = 'sendBinding'
 
 export interface ISendBinding extends IBinding<ISendBindingEvents> {
   getSendFilters: () => Promise<ISendFilter[]>
-  send: (args: IModelCard) => Promise<void>
+  send: (modelId: string, accountId: string) => Promise<void>
 }
 
 export interface ISendBindingEvents {
   filtersNeedRefresh: () => void
   sendersExpired: (args: string[]) => void
   senderProgress: (args: SenderProgressArgs) => void
-  sendViaBrowser: (args: SendViaBrowserArgs) => void
-}
-
-export type SendViaBrowserArgs = {
-  modelCard: IModelCard
-  sendObject: SendObject
-}
-
-export type SendObject = {
-  id: string
-  totalChildrenCount: number
-  batches: string[]
+  createVersion: (args: CreateVersionArgs) => void
 }
 
 export type SenderProgressArgs = {
   id: string
   status?: string
   progress?: number
+}
+
+export type CreateVersionArgs = {
+  projectId: string
+  modelId: string
+  accountId: string
+  objectId: string
 }
 
 export interface ISendFilter extends IDiscriminatedObject {
