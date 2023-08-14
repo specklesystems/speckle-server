@@ -46,7 +46,7 @@
               </div>
               <div
                 v-if="buttons"
-                class="flex p-4 sm:px-6 sm:py-5 border-t border-outline-3"
+                class="flex p-4 sm:px-6 sm:py-5 border-t gap-2 border-outline-3"
               >
                 <FormButton
                   v-for="(button, index) in buttons"

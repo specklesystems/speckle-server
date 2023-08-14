@@ -168,6 +168,7 @@ watch(isOpen, (newVal, oldVal) => {
 const props = defineProps<{
   open: boolean
   buttons: Array<Button>
+  title: string
 }>()
 
 const emit = defineEmits<{

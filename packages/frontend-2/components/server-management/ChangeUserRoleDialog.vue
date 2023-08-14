@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
-import { User } from '../../pages/server-management/active-users.vue'
+import { User } from '~~/lib/common/generated/gql/graphql'
 import { ArrowLongRightIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 
 const emit = defineEmits<{
@@ -52,6 +52,7 @@ const props = defineProps<{
   user: User | null
   oldRole: string
   newRole: string
+  buttons?: Array<{ text: string; props: Record<string, unknown>; onClick: () => void }>
 }>()
 
 const isOpen = computed({
