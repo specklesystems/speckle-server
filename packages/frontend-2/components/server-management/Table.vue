@@ -43,7 +43,7 @@
                 :icon-left="button.icon"
                 :size="'sm'"
                 color="secondary"
-                hide-text="true"
+                :hide-text="true"
                 class="text-red-500"
                 @click="button.action(item as User | Project)"
               />
