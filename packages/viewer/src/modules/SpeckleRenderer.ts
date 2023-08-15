@@ -1214,15 +1214,17 @@ export default class SpeckleRenderer {
   // }
 
   public debugShowBatches() {
-    this.batcher.resetBatchesDrawRanges()
     for (const k in this.batcher.batches) {
-      this.batcher.batches[k].setDrawRanges({
-        offset: 0,
-        count: Infinity,
-        material: this.batcher.materials.getDebugBatchMaterial(
-          this.batcher.batches[k].renderViews[0]
-        )
-      })
+      const renderMat = {
+        id: 'string',
+        color: Math.floor(Math.random() * 16777215),
+        opacity: 1,
+        roughness: 1,
+        metalness: 0,
+        vertexColors: false,
+        lineWeight: 1
+      } as RenderMaterial & DisplayStyle & MaterialOptions
+      this.setMaterial(this.batcher.batches[k].renderViews, renderMat)
     }
   }
 
