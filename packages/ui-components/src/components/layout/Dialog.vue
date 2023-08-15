@@ -27,7 +27,12 @@
             leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             @after-leave="$emit('fully-closed')"
           >
-            <DialogPanel :class="dialogPanelClasses">
+            <DialogPanel
+              :class="[
+                'transform rounded-lg bg-foundation text-left shadow-xl transition-all',
+                widthClasses
+              ]"
+            >
               <div
                 v-if="title"
                 class="flex items-center justify-center shadow p-4 relative z-10 bg-foundation"
@@ -92,14 +97,6 @@ const props = defineProps<{
 const open = computed({
   get: () => props.open,
   set: (newVal) => emit('update:open', newVal)
-})
-
-const dialogPanelClasses = computed(() => {
-  return [
-    'transform rounded-lg overflow-hidden text-left shadow-xl transition-all relative',
-    widthClasses.value,
-    props.title || props.buttons ? 'bg-white' : 'bg-foundation'
-  ]
 })
 
 const maxWidthWeight = computed(() => {
