@@ -20,11 +20,20 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { EyeIcon } from '@heroicons/vue/24/solid'
 
-dayjs.extend(relativeTime)
+interface Version {
+  sourceApplication: string
+  message?: string
+  createdAt: string
+}
 
 defineProps({
-  version: Object
+  version: {
+    type: Object as () => Version,
+    required: true
+  }
 })
+
+dayjs.extend(relativeTime)
 
 const timeAgo = (date: string) => {
   if (!date) return 'no message'
