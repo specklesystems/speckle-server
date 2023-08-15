@@ -209,7 +209,7 @@ export type Comment = {
    * Legacy comment viewer data field
    * @deprecated Use the new viewerState field instead
    */
-  data?: Maybe<LegacyCommentViewerData>;
+  data?: Maybe<Scalars['JSONObject']>;
   /** Whether or not comment is a reply to another comment */
   hasParent: Scalars['Boolean'];
   id: Scalars['String'];
@@ -369,6 +369,7 @@ export type Commit = {
   authorAvatar?: Maybe<Scalars['String']>;
   authorId?: Maybe<Scalars['String']>;
   authorName?: Maybe<Scalars['String']>;
+  branch?: Maybe<Branch>;
   branchName?: Maybe<Scalars['String']>;
   /**
    * The total number of comments for this commit. To actually get the comments, use the comments query and pass in a resource array consisting of of this commit's id.
@@ -635,7 +636,7 @@ export type Model = {
   pendingImportedVersions: Array<FileUpload>;
   previewUrl?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
-  version?: Maybe<Version>;
+  version: Version;
   versions: VersionCollection;
 };
 
@@ -694,6 +695,8 @@ export type ModelMutationsUpdateArgs = {
 export type ModelVersionsFilter = {
   /** Make sure these specified versions are always loaded first */
   priorityIds?: InputMaybe<Array<Scalars['String']>>;
+  /** Only return versions specified in `priorityIds` */
+  priorityIdsOnly?: InputMaybe<Scalars['Boolean']>;
 };
 
 export type ModelsTreeItem = {
@@ -1221,7 +1224,7 @@ export type Project = {
   /** Collaborators who have been invited, but not yet accepted. */
   invitedTeam?: Maybe<Array<PendingStreamCollaborator>>;
   /** Returns a specific model by its ID */
-  model?: Maybe<Model>;
+  model: Model;
   /** Return a model tree of children for the specified model name */
   modelChildrenTree: Array<ModelsTreeItem>;
   /** Returns a flat list of all models */
@@ -1605,7 +1608,7 @@ export type Query = {
    * Find a specific project. Will throw an authorization error if active user isn't authorized
    * to see it, for example, if a project isn't public and the user doesn't have the appropriate rights.
    */
-  project?: Maybe<Project>;
+  project: Project;
   /**
    * Look for an invitation to a project, for the current user (authed or not). If token
    * isn't specified, the server will look for any valid invite.
@@ -2266,6 +2269,7 @@ export type SubscriptionUserViewerActivityArgs = {
 
 
 export type SubscriptionViewerUserActivityBroadcastedArgs = {
+  sessionId?: InputMaybe<Scalars['String']>;
   target: ViewerUpdateTrackingTarget;
 };
 
@@ -2624,10 +2628,16 @@ export type WebhookUpdateInput = {
   url?: InputMaybe<Scalars['String']>;
 };
 
+export type AcccountTestQueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AcccountTestQueryQuery = { __typename?: 'Query', serverInfo: { __typename?: 'ServerInfo', version?: string | null, name: string, company?: string | null } };
+
 export type ServerInfoTestQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type ServerInfoTestQuery = { __typename?: 'Query', serverInfo: { __typename?: 'ServerInfo', version?: string | null } };
 
 
+export const AcccountTestQueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AcccountTestQuery"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"version"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"company"}}]}}]}}]} as unknown as DocumentNode<AcccountTestQueryQuery, AcccountTestQueryQueryVariables>;
 export const ServerInfoTestDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ServerInfoTest"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"version"}}]}}]}}]} as unknown as DocumentNode<ServerInfoTestQuery, ServerInfoTestQueryVariables>;

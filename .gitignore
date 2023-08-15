@@ -10,6 +10,7 @@ packages/*/dist-esm
 packages/*/dist-cjs
 *.env
 *.env.test
+*.envrc
 *.crt
 .nyc_output
 coverage/

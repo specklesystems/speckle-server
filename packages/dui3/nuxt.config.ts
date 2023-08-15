@@ -6,7 +6,7 @@ export default defineNuxtConfig({
     shim: false,
     strict: true
   },
-  modules: ['@nuxtjs/tailwindcss'],
+  modules: ['@nuxtjs/tailwindcss', '@speckle/ui-components-nuxt', '@pinia/nuxt'],
   alias: {
     // Rewriting all lodash calls to lodash-es for proper tree-shaking & chunk splitting
     lodash: 'lodash-es'
