@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed } from 'vue'
 import Card, { CardInfo } from '../../components/server-management/Card.vue'
 import SettingsDialog from '../../components/server-management/SettingsDialog.vue'
 import {
@@ -75,7 +75,6 @@ const router = useRouter()
 const showDialog = ref(false)
 const settingsDialog = ref<SettingsDialogRef | null>(null)
 const latestVersion = ref<string | null>(null)
-const isLatestVersion = ref<boolean>(false)
 
 const dataQuery = graphql(`
   query Admin {
@@ -97,11 +96,15 @@ const dataQuery = graphql(`
 `)
 
 const { result, refetch } = useQuery(dataQuery)
-const versionInfo = reactive({
-  current: result.value?.serverInfo.version || 'N/A',
-  latest: latestVersion.value || 'N/A'
+const currentVersion = computed(() => result.value?.serverInfo.version)
+const isLatestVersion = computed(() => {
+  return (
+    !latestVersion.value ||
+    currentVersion.value === latestVersion.value ||
+    currentVersion.value === 'dev' ||
+    currentVersion.value === 'N/A'
+  )
 })
-
 const serverData = computed((): CardInfo[] => [
   {
     title: 'Server Name',
@@ -117,7 +120,7 @@ const serverData = computed((): CardInfo[] => [
   },
   {
     title: 'Speckle Version',
-    value: versionInfo.current,
+    value: currentVersion.value || 'N/A',
     icon: ChartBarIcon,
     cta: !isLatestVersion.value
       ? {
@@ -168,15 +171,6 @@ const projectData = computed(() => [
   }
 ])
 
-onMounted(async () => {
-  fetchData()
-  latestVersion.value = await getLatestVersion()
-  isLatestVersion.value =
-    versionInfo.current === latestVersion.value ||
-    versionInfo.current === 'dev' ||
-    versionInfo.current === 'N/A'
-})
-
 const closeDialog = () => {
   showDialog.value = false
 }
@@ -207,4 +201,7 @@ async function getLatestVersion(): Promise<string | null> {
 const fetchData = () => {
   refetch()
 }
+
+// Load latest value from GH
+latestVersion.value = await getLatestVersion()
 </script>
