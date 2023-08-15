@@ -531,13 +531,13 @@ export default class MeshBatch implements Batch {
       hasVertexColors ? color : null
     )
 
-    this.mesh = new SpeckleMesh(this.geometry, this.batchMaterial)
+    this.mesh = new SpeckleMesh(this.geometry)
+    this.mesh.setBatchMaterial(this.batchMaterial)
     this.mesh.setBatchObjects(batchObjects, this.transformStorage)
     this.mesh.buildBVH()
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
     this.mesh.frustumCulled = false
-    this.mesh.material = [this.batchMaterial]
     this.mesh.geometry.addGroup(0, this.getCount(), 0)
 
     if (!GeometryConverter.keepGeometryData) {
