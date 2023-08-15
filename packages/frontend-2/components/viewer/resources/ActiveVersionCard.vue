@@ -22,6 +22,10 @@ import { EyeIcon } from '@heroicons/vue/24/solid'
 
 dayjs.extend(relativeTime)
 
+defineProps({
+  version: Object
+})
+
 const timeAgo = (date: string) => {
   if (!date) return 'no message'
   return dayjs(date).from(dayjs())
