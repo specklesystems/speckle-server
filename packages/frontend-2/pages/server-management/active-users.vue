@@ -58,14 +58,14 @@
       </template>
 
       <template #emailState="{ item }">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 select-none">
           <template v-if="item.verified">
             <ShieldCheckIcon class="h-4 w-4 text-primary" />
-            <span>Verified</span>
+            <span>verified</span>
           </template>
           <template v-else>
             <ShieldExclamationIcon class="h-4 w-4 text-danger" />
-            <span>Not Verified</span>
+            <span>not verified</span>
           </template>
         </div>
       </template>
