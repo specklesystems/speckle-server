@@ -45,7 +45,7 @@
                 color="secondary"
                 :hide-text="true"
                 class="text-red-500"
-                @click="button.action(item as User | Project)"
+                @click.stop="button.action(item as User | Project)"
               />
             </div>
           </div>
