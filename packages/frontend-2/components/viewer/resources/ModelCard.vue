@@ -52,7 +52,11 @@
       </div>
       <ActiveVersionCard
         v-if="loadedVersion && showVersions"
-        :version="loadedVersion"
+        :version="{
+          sourceApplication: loadedVersion.sourceApplication,
+          message: loadedVersion.message,
+          createdAt: loadedVersion.createdAt
+        }"
       />
     </div>
     <Transition>

@@ -21,8 +21,8 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import { EyeIcon } from '@heroicons/vue/24/solid'
 
 interface Version {
-  sourceApplication: string
-  message?: string
+  sourceApplication?: string | null
+  message?: string | null
   createdAt: string
 }
 
