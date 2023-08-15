@@ -6,9 +6,9 @@ import {
   IReceiverModelCard
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
 import { ISendFilter } from 'lib/bindings/definitions/ISendBinding'
-import { CommitCreateInput } from '~/lib/common/generated/gql/graphql'
-import { useCreateCommit, useGetModelDetails } from '~/lib/graphql/composables'
-import { useAccountStore } from '~/store/accounts'
+// import { CommitCreateInput } from '~/lib/common/generated/gql/graphql'
+// import { useCreateCommit, useGetModelDetails } from '~/lib/graphql/composables'
+// import { useAccountStore } from '~/store/accounts'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -20,7 +20,7 @@ export type ProjectModelGroup = {
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
-  const accountStore = useAccountStore()
+  // const accountStore = useAccountStore()
 
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
@@ -100,50 +100,11 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
   // app.$sendBinding?.on('senderProgress', (args) )
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.$sendBinding.on('createVersion', (args) => {
     // TODO: Dim
     // - implement  serever bound create model version api
     // - use that
-  })
-
-  app.$sendBinding?.on('sendViaBrowser', async (sendViaBrowserArgs) => {
-    const formData = new FormData()
-    const sendObject = sendViaBrowserArgs.sendObject
-    const defaultAccount = accountStore.defaultAccount
-    const modelCard = sendViaBrowserArgs.modelCard
-
-    // sendObject.batches.forEach(async (batch) => {
-    //   formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
-
-    //   if (defaultAccount) {
-    //     await fetch(
-    //       `${defaultAccount.accountInfo.serverInfo.url}/objects/${modelCard.projectId}`,
-    //       {
-    //         method: 'POST',
-    //         headers: { Authorization: 'Bearer ' + defaultAccount.accountInfo.token },
-    //         body: formData
-    //       }
-    //     )
-    //   }
-    // })
-
-    const getModelDetails = useGetModelDetails()
-    const modelDetails = getModelDetails({
-      projectId: modelCard.projectId,
-      modelId: modelCard.modelId
-    })
-
-    const commit: CommitCreateInput = {
-      streamId: modelCard.projectId,
-      branchName: (await modelDetails).displayName,
-      objectId: sendObject.id,
-      message: 'sent from sketchup DUI3',
-      sourceApplication: 'sketchup',
-      totalChildrenCount: sendObject.totalChildrenCount
-    }
-
-    const createCommit = useCreateCommit()
-    await createCommit(commit)
   })
 
   // First initialization calls

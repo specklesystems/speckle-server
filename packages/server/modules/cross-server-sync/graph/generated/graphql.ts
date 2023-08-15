@@ -512,6 +512,15 @@ export type CreateModelInput = {
   projectId: Scalars['ID'];
 };
 
+export type CreateVersionInput = {
+  message?: InputMaybe<Scalars['String']>;
+  modelId: Scalars['String'];
+  objectId: Scalars['String'];
+  projectId: Scalars['String'];
+  sourceApplication?: InputMaybe<Scalars['String']>;
+  totalChildrenCount?: InputMaybe<Scalars['Int']>;
+};
+
 export type DeleteModelInput = {
   id: Scalars['ID'];
   projectId: Scalars['ID'];
@@ -2538,9 +2547,15 @@ export type VersionCollection = {
 
 export type VersionMutations = {
   __typename?: 'VersionMutations';
+  create: Version;
   delete: Scalars['Boolean'];
   moveToModel: Model;
   update: Version;
+};
+
+
+export type VersionMutationsCreateArgs = {
+  input: CreateVersionInput;
 };
 
 
