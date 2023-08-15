@@ -108,6 +108,7 @@ import {
 
 import Table from '../../components/server-management/Table.vue'
 import DeleteInvitationDialog from '../../components/server-management/DeleteInvitationDialog.vue'
+import { User } from '~~/lib/common/generated/gql/graphql'
 
 import { TrashIcon } from '@heroicons/vue/24/outline'
 
@@ -139,13 +140,6 @@ const resendInvitation = (item) => {
 }
 
 const showDeleteInvitationDialog = ref(false)
-
-export interface User {
-  id: string
-  invitedBy: string
-  profilePicture: string
-  email: string
-}
 
 const users: User[] = [
   {

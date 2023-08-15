@@ -164,7 +164,12 @@ const handleProjectClick = (project: Project) => {
 }
 
 const getProjects = graphql(`
-  query Query($query: String, $orderBy: String, $limit: Int!, $visibility: String) {
+  query getAdminProjectsQuery(
+    $query: String
+    $orderBy: String
+    $limit: Int!
+    $visibility: String
+  ) {
     admin {
       projectList(
         query: $query
