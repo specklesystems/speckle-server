@@ -174,6 +174,6 @@ const publish = async () => {
   // 1. create model sender card with selection info above x
   // 2. go to home page where this is displayed x
   // 3. send, and show progress
-  await app.$sendBinding.send(modelCard.id, modelCard.accountId)
+  await app.$sendBinding.send(modelCard.id)
 }
 </script>

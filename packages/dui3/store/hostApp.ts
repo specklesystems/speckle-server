@@ -102,8 +102,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     console.log(args)
   })
 
-  app.$sendBinding.on('createVersion', async (args) => {
-    const { accountId, modelId, projectId, objectId } = args
+  app.$sendBinding.on('createVersion', async (args: CreateVersionArgs) => {
+    const { accountId, modelId, projectId, objectId, message } = args
 
     const getModelDetails = useGetModelDetails(accountId)
     const modelDetails = getModelDetails({
@@ -117,11 +117,11 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       streamId: projectId,
       branchName,
       objectId,
-      message: 'sent from sketchup DUI3',
-      sourceApplication: 'sketchup'
+      message,
+      sourceApplication: (
+        await app.$baseBinding.getSourceApplicationName()
+      ).toLowerCase()
     }
-
-    console.log(commit)
 
     const createCommit = useCreateCommit()
     await createCommit(commit)
