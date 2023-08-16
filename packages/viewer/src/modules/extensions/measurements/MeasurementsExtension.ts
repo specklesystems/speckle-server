@@ -1,6 +1,6 @@
 import SpeckleRenderer, { ObjectLayers } from '../../SpeckleRenderer'
 
-import { IViewer, ViewerEvent } from '../../../IViewer'
+import { IViewer } from '../../../IViewer'
 import { PerpendicularMeasurement } from './PerpendicularMeasurement'
 import { Plane, Ray, Raycaster, Vector2, Vector3 } from 'three'
 import { PointToPointMeasurement } from './PointToPointMeasurement'
@@ -93,11 +93,8 @@ export class MeasurementsExtension extends Extension {
     this.raycaster.layers.set(ObjectLayers.OVERLAY)
 
     this.renderer.input.on(InputEvent.PointerMove, this.onPointerMove.bind(this))
-    this.renderer.input.on(ViewerEvent.ObjectClicked, this.onPointerClick.bind(this))
-    this.renderer.input.on(
-      ViewerEvent.ObjectDoubleClicked,
-      this.onPointerDoubleClick.bind(this)
-    )
+    this.renderer.input.on(InputEvent.Click, this.onPointerClick.bind(this))
+    this.renderer.input.on(InputEvent.DoubleClick, this.onPointerDoubleClick.bind(this))
   }
 
   public onUpdate(deltaTime: number) {

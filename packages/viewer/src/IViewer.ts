@@ -11,6 +11,7 @@ import { Utils } from './modules/Utils'
 import { World } from './modules/World'
 import SpeckleRenderer from './modules/SpeckleRenderer'
 import { Extension } from './modules/extensions/core-extensions/Extension'
+import Input from './modules/input/Input'
 
 export interface ViewerParams {
   showStats: boolean
@@ -108,6 +109,7 @@ export const DefaultLightConfiguration: SunLightConfiguration = {
 }
 
 export interface IViewer {
+  get input(): Input
   init(): Promise<void>
   resize(): void
   on(eventType: ViewerEvent, handler: (arg) => void)
@@ -192,8 +194,6 @@ export interface IViewer {
     includeDescendants?
   ): Promise<FilteringState>
 
-  // selectObjects(objectIds: string[]): Promise<FilteringState>
-  // resetSelection(): Promise<FilteringState>
   highlightObjects(objectIds: string[], ghost?: boolean): Promise<FilteringState>
   resetHighlight(): Promise<FilteringState>
 
@@ -215,16 +215,11 @@ export interface IViewer {
   getObjects(id: string): BatchObject[]
   explode(time: number)
 
-  // enableMeasurements(value: boolean)
-  // setMeasurementOptions(options: MeasurementOptions)
-  // removeMeasurement()
-
   dispose(): void
 
   getRenderer(): SpeckleRenderer
   getContainer(): HTMLElement
 
-  // addExtension(extension: Extension)
   createExtension<T extends Extension>(type: new () => T): T
   getExtension<T extends Extension>(type: new () => T): T
 }

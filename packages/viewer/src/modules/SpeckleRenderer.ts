@@ -28,7 +28,7 @@ import Batcher from './batching/Batcher'
 import { Geometry } from './converter/Geometry'
 import { SpeckleTypeAllRenderables } from './converter/GeometryConverter'
 import { FilterMaterial } from './filtering/FilteringManager'
-import Input, { InputOptionsDefault } from './input/Input'
+import Input, { InputEvent, InputOptionsDefault } from './input/Input'
 import { Intersections } from './Intersections'
 import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
@@ -307,9 +307,8 @@ export default class SpeckleRenderer {
     this.pipeline.pipelineOptions = DefaultPipelineOptions
 
     this.input = new Input(this._renderer.domElement, InputOptionsDefault)
-    this.input.on(ViewerEvent.ObjectClicked, this.onObjectClick.bind(this))
-    // this.input.on('object-clicked-debug', this.onObjectClickDebug.bind(this))
-    this.input.on(ViewerEvent.ObjectDoubleClicked, this.onObjectDoubleClick.bind(this))
+    this.input.on(InputEvent.Click, this.onClick.bind(this))
+    this.input.on(InputEvent.DoubleClick, this.onDoubleClick.bind(this))
 
     this.addDirectLights()
     if (this.SHOW_HELPERS) {
@@ -995,7 +994,7 @@ export default class SpeckleRenderer {
     return rv
   }
 
-  private onObjectClick(e) {
+  private onClick(e) {
     const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.renderingCamera,
@@ -1042,7 +1041,7 @@ export default class SpeckleRenderer {
     this.viewer.emit(ViewerEvent.ObjectClicked, selectionInfo)
   }
 
-  private onObjectDoubleClick(e) {
+  private onDoubleClick(e) {
     const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.renderingCamera,
@@ -1061,7 +1060,7 @@ export default class SpeckleRenderer {
 
     const queryResults = this.queryHits(results)
     if (!queryResults) {
-      this.viewer.emit(ViewerEvent.ObjectClicked, null)
+      this.viewer.emit(ViewerEvent.ObjectDoubleClicked, null)
       return
     }
 

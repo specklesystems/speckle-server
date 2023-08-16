@@ -1,5 +1,4 @@
 import { Vector2 } from 'three'
-import { ViewerEvent } from '../../IViewer'
 import EventEmitter from '../EventEmitter'
 
 export interface InputOptions {
@@ -52,7 +51,6 @@ export default class Input extends EventEmitter {
       const loc = this._getNormalisedClickPosition(e)
       ;(loc as unknown as Record<string, unknown>).event = e
       if (e.shiftKey) (loc as unknown as Record<string, unknown>).multiSelect = true
-      this.emit(ViewerEvent.ObjectClicked, loc)
       this.emit(InputEvent.Click, loc)
       this.lastClick = new Date().getTime()
     })
@@ -72,7 +70,6 @@ export default class Input extends EventEmitter {
       clearTimeout(this.tapTimeout)
       if (tapLength < 500 && tapLength > 0) {
         const loc = this._getNormalisedClickPosition(this.touchLocation)
-        this.emit(ViewerEvent.ObjectDoubleClicked, loc)
         this.emit(InputEvent.DoubleClick, loc)
       } else {
         this.tapTimeout = setTimeout(function () {
@@ -85,7 +82,6 @@ export default class Input extends EventEmitter {
     this.container.addEventListener('dblclick', (e) => {
       const data = this._getNormalisedClickPosition(e)
       ;(data as unknown as Record<string, unknown>).event = e
-      this.emit(ViewerEvent.ObjectDoubleClicked, data)
       this.emit(InputEvent.DoubleClick, data)
     })
 

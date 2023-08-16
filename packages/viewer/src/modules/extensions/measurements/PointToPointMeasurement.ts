@@ -1,4 +1,3 @@
-/* eslint-disable no-empty */
 import { Box3, Camera, Plane, Vector2 } from 'three'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo'
 import { ObjectLayers } from '../../SpeckleRenderer'

@@ -32,6 +32,7 @@ import { BatchObject } from './batching/BatchObject'
 import { Extension } from './extensions/core-extensions/Extension'
 import { ICameraProvider, IProvider } from './extensions/core-extensions/Providers'
 import { CameraController } from '..'
+import Input from './input/Input'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -74,6 +75,10 @@ export class Viewer extends EventEmitter implements IViewer {
       }
     }
     return this.utils
+  }
+
+  public get input(): Input {
+    return this.speckleRenderer.input
   }
 
   public createExtension<T extends Extension>(
