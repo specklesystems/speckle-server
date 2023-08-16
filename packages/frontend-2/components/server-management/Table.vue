@@ -1,13 +1,13 @@
 <template>
-  <div class="mt-8 text-foreground">
-    <div class="w-full text-sm overflow-x-auto overflow-y-visibl simple-scrollbar">
+  <div class="text-foreground">
+    <div class="w-full text-sm overflow-x-auto overflow-y-visible simple-scrollbar">
       <div
         class="grid z-10 grid-cols-12 items-center gap-6 font-semibold bg-foundation rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[900px]"
         :style="{ paddingRight: paddingRightStyle }"
       >
         <div
-          v-for="(header, index) in headers"
-          :key="index"
+          v-for="header in headers"
+          :key="header.id"
           :class="columnClasses[header.id]"
           class="capitalize"
         >
@@ -19,8 +19,8 @@
         :class="{ 'pb-32': overflowCells }"
       >
         <div
-          v-for="(item, rowIndex) in items"
-          :key="rowIndex"
+          v-for="item in items"
+          :key="item.id"
           class="relative grid grid-cols-12 items-center gap-6 px-4 py-1 min-w-[900px] bg-white"
           :style="{ paddingRight: paddingRightStyle }"
           :class="{ 'cursor-pointer hover:bg-primary-muted': !!props.onRowClick }"
@@ -28,11 +28,11 @@
           @click="handleRowClick(item)"
           @keydown.enter.space="handleRowClick(item)"
         >
-          <template v-for="(column, colIndex) in headers" :key="colIndex">
+          <template v-for="column in headers" :key="column.id">
             <div :class="getClasses(column.id, colIndex)" tabindex="0">
               <slot :name="column.id" :item="item">
                 <div class="text-gray-900 font-medium order-1">
-                  {{ item[column.id] }}
+                  {{ (item as any)[column.id] }}
                 </div>
               </slot>
             </div>
@@ -41,11 +41,11 @@
             <div v-for="(button, btnIndex) in buttons" :key="btnIndex" class="p-1">
               <FormButton
                 :icon-left="button.icon"
-                :size="'sm'"
+                size="sm"
                 color="secondary"
-                :hide-text="true"
+                hide-text
                 class="text-red-500"
-                @click.stop="button.action(item as User | Project)"
+                @click.stop="button.action(item)"
               />
             </div>
           </div>
@@ -56,15 +56,17 @@
 </template>
 
 <script setup lang="ts">
-import { PropType, ConcreteComponent, computed } from 'vue'
-import { User, Project } from '~~/lib/common/generated/gql/graphql'
+import { ConcreteComponent, computed } from 'vue'
+import { UserItem, ProjectItem } from '~~/lib/server-management/helpers/types'
 
-type OnRowClickType = (item: Record<string, unknown>) => void
+type ItemType = UserItem | ProjectItem
 
-interface RowButton<T> {
+type OnRowClickType = (item: ItemType) => void
+
+interface RowButton {
   icon: ConcreteComponent
   label: string
-  action: (item: T) => void
+  action: (item: ItemType) => void
 }
 
 interface Header {
@@ -72,34 +74,17 @@ interface Header {
   title: string
 }
 
-const props = defineProps({
-  headers: {
-    type: Array as PropType<Header[]>,
-    required: true
-  },
-  items: {
-    type: Array as PropType<Record<string, unknown>[]>,
-    required: true
-  },
-  buttons: {
-    type: Array as PropType<RowButton<User | Project>[]>,
-    default: () => []
-  },
-  columnClasses: {
-    type: Object as PropType<Record<string, string>>,
-    required: true
-  },
-  overflowCells: {
-    type: Boolean as PropType<boolean>
-  },
-  onRowClick: {
-    type: Function as PropType<OnRowClickType>,
-    default: null
-  }
-})
+const props = defineProps<{
+  headers: Header[]
+  items: ItemType[]
+  buttons?: RowButton[]
+  columnClasses: Record<string, string>
+  overflowCells?: boolean
+  onRowClick?: OnRowClickType
+}>()
 
 const paddingRightStyle = computed(() => {
-  const padding = 52 + ((props.buttons as RowButton<User | Project>[]).length - 1) * 25
+  const padding = 52 + ((props.buttons as RowButton[]).length - 1) * 25
   return `${padding}px`
 })
 
@@ -115,8 +100,6 @@ const getClasses = (column: string, colIndex: number): string => {
 }
 
 const handleRowClick = (item: Record<string, unknown>) => {
-  if (props.onRowClick) {
-    props.onRowClick(item)
-  }
+  props.onRowClick?.(item as ItemType)
 }
 </script>

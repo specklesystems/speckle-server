@@ -1,14 +1,8 @@
 <template>
   <div>
     <Portal to="navigation">
-      <HeaderNavLink
-        :to="'/server-management'"
-        name="Server Management"
-      ></HeaderNavLink>
-      <HeaderNavLink
-        :to="'/server-management/projects/'"
-        name="Projects"
-      ></HeaderNavLink>
+      <HeaderNavLink to="/server-management" name="Server Management"></HeaderNavLink>
+      <HeaderNavLink to="/server-management/projects" name="Projects"></HeaderNavLink>
     </Portal>
 
     <h1 class="h4 font-bold mb-4">Projects</h1>
@@ -28,6 +22,7 @@
     />
 
     <Table
+      class="mt-8"
       :headers="[
         { id: 'name', title: 'Name' },
         { id: 'type', title: 'Type' },
@@ -125,46 +120,16 @@
 import { ref } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { debounce } from 'lodash-es'
-
 import Table from '~~/components/server-management/Table.vue'
 import ProjectDeleteDialog from '~~/components/server-management/DeleteProjectDialog.vue'
 import Avatar from '~~/components/user/Avatar.vue'
 import { Project } from '~~/lib/common/generated/gql/graphql'
-
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { graphql } from '~~/lib/common/generated/gql'
-
 import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
 
-definePageMeta({
-  middleware: ['admin']
-})
-
-const projectToModify = ref<Project | null>(null)
-const searchString = ref('')
-const showProjectDeleteDialog = ref(false)
-
-const openProjectDeleteDialog = (project: Project) => {
-  projectToModify.value = project
-  showProjectDeleteDialog.value = true
-}
-
-const closeProjectDeleteDialog = () => {
-  showProjectDeleteDialog.value = false
-}
-
-const handleSearchChange = (newSearchString: string) => {
-  searchUpdateHandler(newSearchString)
-}
-
-const router = useRouter()
-
-const handleProjectClick = (project: Project) => {
-  router.push(`/projects/${project.id}`)
-}
-
 const getProjects = graphql(`
-  query getAdminProjectsQuery(
+  query AdminPanelProjectsList(
     $query: String
     $orderBy: String
     $limit: Int!
@@ -204,8 +169,43 @@ const getProjects = graphql(`
 `)
 
 const logger = useLogger()
+const router = useRouter()
 
+definePageMeta({
+  middleware: ['admin']
+})
+
+const projectToModify = ref<Project | null>(null)
+const searchString = ref('')
+const showProjectDeleteDialog = ref(false)
 const infiniteLoaderId = ref('')
+
+const moreToLoad = computed(
+  () =>
+    !extraPagesResult.value?.admin?.projectList ||
+    extraPagesResult.value.admin.projectList.items.length <
+      extraPagesResult.value.admin.projectList.totalCount
+)
+
+const projects = computed(() => extraPagesResult.value?.admin.projectList.items || [])
+
+const openProjectDeleteDialog = (project: Project) => {
+  projectToModify.value = project
+  showProjectDeleteDialog.value = true
+}
+
+const closeProjectDeleteDialog = () => {
+  showProjectDeleteDialog.value = false
+}
+
+const handleSearchChange = (newSearchString: string) => {
+  searchUpdateHandler(newSearchString)
+}
+
+const handleProjectClick = (project: Project) => {
+  router.push(`/projects/${project.id}`)
+}
+
 const {
   result: extraPagesResult,
   fetchMore: fetchMorePages,
@@ -215,13 +215,6 @@ const {
   limit: 50,
   query: searchString.value
 }))
-
-const moreToLoad = computed(
-  () =>
-    !extraPagesResult.value?.admin?.projectList ||
-    extraPagesResult.value.admin.projectList.items.length <
-      extraPagesResult.value.admin.projectList.totalCount
-)
 
 const infiniteLoad = async (state: InfiniteLoaderState) => {
   const cursor = extraPagesResult.value?.admin?.projectList.cursor || null
@@ -244,8 +237,6 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
     state.complete()
   }
 }
-
-const projects = computed(() => extraPagesResult.value?.admin.projectList.items || [])
 
 const searchUpdateHandler = (value: string) => {
   searchString.value = value

@@ -1,12 +1,9 @@
 <template>
   <div>
     <Portal to="navigation">
+      <HeaderNavLink to="/server-management" name="Server Management"></HeaderNavLink>
       <HeaderNavLink
-        :to="'/server-management'"
-        name="Server Management"
-      ></HeaderNavLink>
-      <HeaderNavLink
-        :to="'/server-management/active-users/'"
+        to="/server-management/active-users"
         name="Active Users"
       ></HeaderNavLink>
     </Portal>
@@ -24,10 +21,11 @@
       placeholder="Search Users"
       class="rounded-md border border-outline-3"
       @update:model-value="debounceSearchUpdate"
-      @change="handleSearchChange"
+      @change="searchUpdateHandler(newSearchString)"
     />
 
     <Table
+      class="mt-8"
       :headers="[
         { id: 'name', title: 'Name' },
         { id: 'email', title: 'Email' },
@@ -54,12 +52,12 @@
       </template>
 
       <template #email="{ item }">
-        {{ item.email }}
+        {{ isUser(item) ? item.email : '' }}
       </template>
 
       <template #emailState="{ item }">
         <div class="flex items-center gap-2 select-none">
-          <template v-if="item.verified">
+          <template v-if="isUser(item) && item.verified">
             <ShieldCheckIcon class="h-4 w-4 text-primary" />
             <span>verified</span>
           </template>
@@ -71,14 +69,14 @@
       </template>
 
       <template #company="{ item }">
-        {{ item.company }}
+        {{ isUser(item) ? item.company : '' }}
       </template>
 
       <template #role="{ item }">
         <UserRoleSelect
-          :model-value="item.role"
+          :model-value="isUser(item) && item.role"
           @update:model-value="
-            (newRoleValue) => openChangeUserRoleDialog(item as UserItem, newRoleValue)
+            (newRoleValue) => openChangeUserRoleDialog(asUser(item), newRoleValue)
           "
         />
       </template>
@@ -142,25 +140,29 @@ import ChangeUserRoleDialog from '~~/components/server-management/ChangeUserRole
 import Avatar from '~~/components/user/Avatar.vue'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import { Nullable } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
+import { UserItem } from '~~/lib/server-management/helpers/types'
+
 import {
   MagnifyingGlassIcon,
   ShieldExclamationIcon,
   ShieldCheckIcon,
   TrashIcon
 } from '@heroicons/vue/20/solid'
-import { UserItem } from '~~/lib/server-management/helpers/types'
 import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
+import { useLogger } from '~~/composables/logging'
+import { isUser } from '~~/lib/server-management/helpers/roleUtils'
 
 definePageMeta({
   middleware: ['admin']
 })
 
 const getUsers = graphql(`
-  query UserList($limit: Int!, $cursor: String, $query: String) {
+  query AdminPanelUsersList($limit: Int!, $cursor: String, $query: String) {
     admin {
       userList(limit: $limit, cursor: $cursor, query: $query) {
         totalCount
@@ -180,7 +182,7 @@ const getUsers = graphql(`
 `)
 
 const adminDeleteUser = graphql(`
-  mutation Mutation($userConfirmation: UserDeleteInput!) {
+  mutation AdminPanelDeleteUser($userConfirmation: UserDeleteInput!) {
     adminDeleteUser(userConfirmation: $userConfirmation)
   }
 `)
@@ -191,7 +193,7 @@ const changeRoleMutation = graphql(`
   }
 `)
 
-const userToModify = ref<UserItem | null>(null)
+const userToModify: Ref<Nullable<UserItem>> = ref(null)
 const searchString = ref('')
 const showUserDeleteDialog = ref(false)
 const showChangeUserRoleDialog = ref(false)
@@ -231,6 +233,7 @@ const closeUserDeleteDialog = () => {
 }
 
 const openChangeUserRoleDialog = (user: UserItem, newRoleValue: string) => {
+  console.log(userToModify)
   userToModify.value = user
   newRole.value = newRoleValue
   showChangeUserRoleDialog.value = true
@@ -290,10 +293,6 @@ const changeUserRoleConfirmed = async () => {
   }
   showChangeUserRoleDialog.value = false
   userToModify.value = null
-}
-
-const handleSearchChange = (newSearchString: string) => {
-  searchUpdateHandler(newSearchString)
 }
 
 const infiniteLoad = async (state: InfiniteLoaderState) => {

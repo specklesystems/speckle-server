@@ -22,7 +22,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
-import { User } from '~~/lib/common/generated/gql/graphql'
+import { UserItem } from '~~/lib/server-management/helpers/types'
 import Avatar from '~~/components/user/Avatar.vue'
 
 const emit = defineEmits<{
@@ -32,7 +32,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   title: string
   open: boolean
-  user: User | null
+  user: UserItem | null
   buttons?: Array<{ text: string; props: Record<string, unknown>; onClick: () => void }>
 }>()
 

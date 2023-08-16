@@ -12,9 +12,9 @@
           {{ user.name }}
         </div>
         <div class="flex gap-2 items-center">
-          <span class="capitalize">{{ parsedRole(oldRole) }}</span>
+          <span class="capitalize">{{ getRoleLabel(oldRole) }}</span>
           <ArrowLongRightIcon class="h-6 w-6" />
-          <strong class="capitalize">{{ parsedRole(newRole) }}</strong>
+          <strong class="capitalize">{{ getRoleLabel(newRole) }}</strong>
         </div>
       </div>
 
@@ -36,9 +36,10 @@
 import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
 import { UserItem } from '~~/lib/server-management/helpers/types'
-import { Roles } from '@speckle/shared'
+import { Roles, ServerRoles } from '@speckle/shared'
 import { ArrowLongRightIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 import Avatar from '~~/components/user/Avatar.vue'
+import { getRoleLabel } from '~~/lib/server-management/helpers/roleUtils'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -48,15 +49,10 @@ const props = defineProps<{
   title: string
   open: boolean
   user: UserItem | null
-  oldRole: string
-  newRole: string
+  oldRole: ServerRoles
+  newRole: ServerRoles
   buttons?: Array<{ text: string; props: Record<string, unknown>; onClick: () => void }>
 }>()
-
-const parsedRole = (role: string) => {
-  const parts = role.split(':')
-  return parts.length > 1 ? parts[1] : role
-}
 
 const isOpen = computed({
   get: () => props.open,

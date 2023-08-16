@@ -1,16 +1,39 @@
 import { Get } from 'type-fest'
-import { UserListQuery } from '~~/lib/common/generated/gql/graphql'
+import {
+  AdminPanelUsersListQuery,
+  AdminPanelProjectsListQuery
+} from '~~/lib/common/generated/gql/graphql'
+import { ConcreteComponent } from 'vue'
+import { MaybeAsync } from '@speckle/shared'
 
-export type UserItem = NonNullable<Get<UserListQuery, 'admin.userList.items[0]'>>
+export type UserItem = NonNullable<
+  Get<AdminPanelUsersListQuery, 'admin.userList.items[0]'>
+>
+export type ProjectItem = NonNullable<
+  Get<AdminPanelProjectsListQuery, 'admin.projectList.items[0]'>
+>
 
 export interface CTA {
   type: 'button' | 'link'
   label: string
-  action: () => void | Promise<void>
+  action: MaybeAsync<void>
 }
 
 export interface Button {
   text: string
   props: { color: string; fullWidth: boolean; outline: boolean }
   onClick: () => void
+}
+
+export interface CardInfo {
+  title: string
+  value: string
+  icon: ConcreteComponent
+  cta?:
+    | {
+        type: 'button' | 'link'
+        label: string
+        action: MaybeAsync<void>
+      }
+    | undefined
 }

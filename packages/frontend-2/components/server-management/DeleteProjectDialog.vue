@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
-import { Project } from '~~/lib/common/generated/gql/graphql'
+import { ProjectItem } from '~~/lib/server-management/helpers/types'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -34,7 +34,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   title: string
   open: boolean
-  project: Project | null
+  project: ProjectItem | null
 }>()
 
 const isOpen = computed({

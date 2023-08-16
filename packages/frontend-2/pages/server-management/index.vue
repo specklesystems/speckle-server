@@ -1,10 +1,7 @@
 <template>
   <div>
     <Portal to="navigation">
-      <HeaderNavLink
-        :to="'/server-management'"
-        name="Server Management"
-      ></HeaderNavLink>
+      <HeaderNavLink to="/server-management" name="Server Management"></HeaderNavLink>
     </Portal>
     <div
       class="flex flex-col md:flex-row space-y-2 space-x-2 justify-between mb-4 md:items-center"
@@ -15,9 +12,12 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
-      <Card :server-info="serverData" @cta-clicked="showDialog = true" />
+      <ServerManagementCard
+        :server-info="serverData"
+        @cta-clicked="showDialog = true"
+      />
 
-      <SettingsDialog
+      <ServerManagementSettingsDialog
         ref="settingsDialog"
         v-model:open="showDialog"
         title="Edit Settings"
@@ -33,11 +33,11 @@
             onClick: saveSettings
           }
         ]"
-        @server-info-updated="fetchData"
+        @server-info-updated="refetch"
       />
 
-      <Card :server-info="userData" />
-      <Card :server-info="projectData" />
+      <ServerManagementCard :server-info="userData" />
+      <ServerManagementCard :server-info="projectData" />
     </div>
   </div>
 </template>
@@ -46,8 +46,9 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { ref, computed } from 'vue'
-import Card, { CardInfo } from '../../components/server-management/Card.vue'
-import SettingsDialog from '../../components/server-management/SettingsDialog.vue'
+import { Nullable } from '@speckle/shared'
+import { CardInfo } from '~~/lib/server-management/helpers/types'
+
 import {
   ServerIcon,
   UsersIcon,
@@ -71,16 +72,16 @@ interface SettingsDialogRef {
   onSubmit: () => void
 }
 
+const logger = useLogger()
 const router = useRouter()
 const showDialog = ref(false)
-const settingsDialog = ref<SettingsDialogRef | null>(null)
+const settingsDialog = ref<Nullable<SettingsDialogRef>>(null)
 const latestVersion = ref<string | null>(null)
 
 const dataQuery = graphql(`
   query Admin {
     admin {
       serverStatistics {
-        totalPendingInvites
         totalProjectCount
         totalUserCount
       }
@@ -113,9 +114,7 @@ const serverData = computed((): CardInfo[] => [
     cta: {
       type: 'button',
       label: 'Edit Settings',
-      action: () => {
-        showDialog.value = true
-      }
+      action: () => Promise.resolve((showDialog.value = true))
     }
   },
   {
@@ -131,6 +130,7 @@ const serverData = computed((): CardInfo[] => [
               'https://github.com/specklesystems/speckle-server/releases',
               '_blank'
             )
+            return Promise.resolve()
           }
         }
       : undefined
@@ -193,13 +193,9 @@ async function getLatestVersion(): Promise<string | null> {
       return data.tag_name
     }
   } catch (err) {
-    console.error('Error fetching latest version:', err)
+    logger.error(err)
     return null
   }
-}
-
-const fetchData = () => {
-  refetch()
 }
 
 // Load latest value from GH

@@ -57,9 +57,10 @@ import { useQuery, useMutation } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
 import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
-import { Button } from '../../lib/server-management/helpers/types'
-import { LayoutDialog, FormTextInput, FormTextArea } from '@speckle/ui-components'
+import { Button } from '~~/lib/server-management/helpers/types'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
+import { LayoutDialog, FormTextInput, FormTextArea } from '@speckle/ui-components'
+import { useLogger } from '~~/composables/logging'
 
 type FormValues = {
   name: string
@@ -70,36 +71,6 @@ type FormValues = {
   inviteOnly: boolean
 }
 
-const name = ref('')
-const description = ref('')
-const company = ref('')
-const adminContact = ref('')
-const termsOfService = ref('')
-const inviteOnly = ref(false)
-
-const { triggerNotification } = useGlobalToast()
-
-// Compute the isOpen state
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
-
-const { handleSubmit } = useForm<FormValues>({
-  initialValues: {
-    name: '',
-    description: '',
-    company: '',
-    adminContact: '',
-    termsOfService: '',
-    inviteOnly: false
-  }
-})
-
-const emailRules = [isEmail]
-const requiredRule = [isRequired]
-
-// Define the GraphQL queries and mutations
 const serverInfoQuery = graphql(`
   query ServerSettingsDialogData {
     serverInfo {
@@ -119,8 +90,40 @@ const serverInfoUpdateMutation = graphql(`
   }
 `)
 
+const props = defineProps<{
+  open: boolean
+  buttons: Array<Button>
+  title: string
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:open', val: boolean): void
+  (e: 'server-info-updated'): void
+}>()
+
+const logger = useLogger()
+
+const { triggerNotification } = useGlobalToast()
+
+const { handleSubmit } = useForm<FormValues>()
+
 const { result } = useQuery(serverInfoQuery)
 const { mutate: updateServerInfo } = useMutation(serverInfoUpdateMutation)
+
+const name = ref('')
+const description = ref('')
+const company = ref('')
+const adminContact = ref('')
+const termsOfService = ref('')
+const inviteOnly = ref(false)
+
+const isOpen = computed({
+  get: () => props.open,
+  set: (newVal) => emit('update:open', newVal)
+})
+
+const emailRules = [isEmail]
+const requiredRule = [isRequired]
 
 const onSubmit = handleSubmit(async () => {
   try {
@@ -139,10 +142,10 @@ const onSubmit = handleSubmit(async () => {
       title: 'Successfully saved',
       description: 'Your server settings have been saved.'
     })
-    emit('update:open', false)
+    isOpen.value = false
     emit('server-info-updated')
   } catch (error) {
-    console.error('Failed to update server info', error)
+    logger.error(error)
     triggerNotification({
       type: ToastNotificationType.Danger,
       title: 'Saving failed',
@@ -163,18 +166,6 @@ watch(isOpen, (newVal, oldVal) => {
     }
   }
 })
-
-// Define the props and emits for the component
-const props = defineProps<{
-  open: boolean
-  buttons: Array<Button>
-  title: string
-}>()
-
-const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
-  (e: 'server-info-updated'): void
-}>()
 
 defineExpose({
   onSubmit

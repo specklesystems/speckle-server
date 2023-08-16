@@ -10,12 +10,7 @@
         <div class="flex flex-col gap-2">
           <strong>{{ user?.email }}</strong>
           <div class="flex items-center gap-2">
-            <img
-              :src="user.profilePicture"
-              :alt="'Profile picture of ' + user.invitedBy"
-              class="w-6 h-6 rounded-full"
-            />
-            {{ user.invitedBy }}
+            {{ user.invitedBy.name }}
           </div>
         </div>
       </div>
@@ -32,7 +27,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
-import { User } from '../../pages/server-management/active-users.vue'
+import { UserItem } from '~~/lib/server-management/helpers/types'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -41,7 +36,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   title: string
   open: boolean
-  user: User | null
+  user: UserItem | null
   buttons?: Array<{ text: string; props: Record<string, unknown>; onClick: () => void }>
 }>()
 

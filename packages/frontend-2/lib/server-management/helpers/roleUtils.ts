@@ -1,0 +1,21 @@
+import { Roles } from '@speckle/shared/src/core/constants'
+import { UserItem, ProjectItem } from '~~/lib/server-management/helpers/types'
+import { has } from 'lodash-es'
+
+export const roleLookupTable = {
+  [Roles.Server.User]: 'User',
+  [Roles.Server.Admin]: 'Admin',
+  [Roles.Server.ArchivedUser]: 'Archived',
+  [Roles.Server.Guest]: 'Guest'
+}
+
+export const getRoleLabel = (role: keyof typeof roleLookupTable) => {
+  return roleLookupTable[role] || role.split(':')[1]
+}
+
+export const isUser = (val: UserItem | ProjectItem): val is UserItem => {
+  if (has(val, 'id')) return true
+  throw new Error(
+    'Unexpectedly item is not a user item! Wtf, we are in active-users.vue how did this happen?'
+  )
+}

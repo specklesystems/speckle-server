@@ -15,12 +15,12 @@ export default defineNuxtRouteMiddleware(async () => {
     })
     .catch(convertThrowIntoFetchResult)
 
-  // If not logged in, redirect to login. If logged in but not an admin, redirect home.
+  // If user is not an Admin, show 403 message.
   if (data?.activeUser?.role !== Roles.Server.Admin) {
     return abortNavigation(
       createError({
         statusCode: 403,
-        message: 'You do not have access to this project'
+        message: 'You do not have access to this page'
       })
     )
   }

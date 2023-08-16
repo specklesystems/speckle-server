@@ -1,12 +1,9 @@
 <template>
   <div>
     <Portal to="navigation">
+      <HeaderNavLink to="/server-management" name="Server Management"></HeaderNavLink>
       <HeaderNavLink
-        :to="'/server-management'"
-        name="Server Management"
-      ></HeaderNavLink>
-      <HeaderNavLink
-        :to="'/server-management/pending-invitations/'"
+        to="/server-management/pending-invitations"
         name="Pending Invitations"
       ></HeaderNavLink>
     </Portal>
@@ -42,6 +39,7 @@
     </div>
 
     <Table
+      class="mt-8"
       :headers="[
         { id: 'email', title: 'Email' },
         { id: 'invitedBy', title: 'Invited By' },
@@ -65,17 +63,21 @@
         <div class="flex items-center gap-2">
           <img
             :src="item.profilePicture"
-            :alt="'Profile picture of ' + item.invitedBy"
+            :alt="'Profile picture of ' + item.invitedBy.name"
             class="w-6 h-6 rounded-full"
           />
-          {{ item.invitedBy }}
+          {{ item.invitedBy.name }}
         </div>
       </template>
 
       <template #resend="{ item }">
-        <button class="font-semibold text-primary" @click="resendInvitation(item)">
+        <FormButton
+          :link="true"
+          class="font-semibold text-primary"
+          @click="resendInvitation(item)"
+        >
           Resend Invitation
-        </button>
+        </FormButton>
       </template>
     </Table>
 
@@ -105,18 +107,19 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon
 } from '@heroicons/vue/20/solid'
-
-import Table from '../../components/server-management/Table.vue'
-import DeleteInvitationDialog from '../../components/server-management/DeleteInvitationDialog.vue'
+import Table from '~~/components/server-management/Table.vue'
+import DeleteInvitationDialog from '~~/components/server-management/DeleteInvitationDialog.vue'
 import { User } from '~~/lib/common/generated/gql/graphql'
-
+import { FormButton } from '@speckle/ui-components'
 import { TrashIcon } from '@heroicons/vue/24/outline'
+import { Nullable } from '@speckle/shared'
+import { UserItem } from '~~/lib/server-management/helpers/types'
 
 definePageMeta({
   middleware: ['admin']
 })
 
-const userToModify = ref<User | null>(null)
+const userToModify: Ref<Nullable<UserItem>> = ref(null)
 
 const openDeleteInvitationDialog = (user: User) => {
   userToModify.value = user
