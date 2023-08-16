@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Optional } from '@speckle/shared'
 import { FieldMergeFunction } from '@apollo/client/core'
 
@@ -108,3 +109,8 @@ export const incomingOverwritesExistingMergeFunction: FieldMergeFunction = (
   _existing: unknown,
   incoming: unknown
 ) => incoming
+
+export const mergeAsObjectsFunction: FieldMergeFunction = (existing, incoming) => ({
+  ...existing,
+  ...incoming
+})
