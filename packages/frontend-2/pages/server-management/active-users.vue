@@ -27,6 +27,8 @@
       @change="handleSearchChange"
     />
 
+    TOtals: {{ extraPagesResult?.admin.userList.totalCount }}
+
     <Table
       :headers="[
         { id: 'name', title: 'Name' },
@@ -152,7 +154,9 @@ import {
 import { UserItem } from '~~/lib/server-management/helpers/types'
 import {
   convertThrowIntoFetchResult,
-  getFirstErrorMessage
+  getCacheId,
+  getFirstErrorMessage,
+  updateCacheByFilter
 } from '~~/lib/common/helpers/graphql'
 
 definePageMeta({
@@ -199,16 +203,17 @@ const newRole = ref('')
 const oldRole = computed(() => userToModify.value?.role ?? '')
 const logger = useLogger()
 const infiniteLoaderId = ref('')
+
+const queryVariables = computed(() => ({
+  limit: 50,
+  query: searchString.value
+}))
 const {
   result: extraPagesResult,
   fetchMore: fetchMorePages,
   variables: resultVariables,
-  onResult,
-  refetch: refetchUsers
-} = useQuery(getUsers, () => ({
-  limit: 50,
-  query: searchString.value
-}))
+  onResult
+} = useQuery(getUsers, queryVariables)
 const moreToLoad = computed(
   () =>
     !extraPagesResult.value?.admin?.userList ||
@@ -241,18 +246,55 @@ const closeChangeUserRoleDialog = () => {
 }
 
 const deleteConfirmed = async () => {
-  if (!userToModify?.value?.email) {
+  const userEmail = userToModify.value?.email
+  const userId = userToModify.value?.id
+  if (!userEmail || !userId) {
     return
   }
-  const result = await adminDeleteUserMutation({
-    userConfirmation: { email: userToModify.value.email }
-  }).catch(convertThrowIntoFetchResult)
+
+  const result = await adminDeleteUserMutation(
+    {
+      userConfirmation: { email: userEmail }
+    },
+    {
+      update: (cache, { data }) => {
+        if (data?.adminDeleteUser) {
+          // Remove item from cache
+          cache.evict({
+            id: getCacheId('AdminUserListItem', userId)
+          })
+
+          // Update list
+          updateCacheByFilter(
+            cache,
+            { query: { query: getUsers, variables: queryVariables.value } },
+            (data) => {
+              const newItems = data.admin.userList.items.filter(
+                (item) => item.id !== userId
+              )
+              return {
+                ...data,
+                admin: {
+                  ...data.admin,
+                  userList: {
+                    ...data.admin.userList,
+                    items: newItems,
+                    totalCount: Math.max(0, data.admin.userList.totalCount - 1)
+                  }
+                }
+              }
+            }
+          )
+        }
+      }
+    }
+  ).catch(convertThrowIntoFetchResult)
+
   if (result?.data?.adminDeleteUser) {
     closeUserDeleteDialog()
-    refetchUsers()
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'User role updated',
+      title: 'User deleted',
       description: 'The user has been succesfully deleted'
     })
   } else {
@@ -269,12 +311,30 @@ const changeUserRoleConfirmed = async () => {
   if (!userToModify.value) {
     return
   }
-  const result = await mutateChangeRole({
-    userRoleInput: { id: userToModify.value.id, role: newRole.value }
-  }).catch(convertThrowIntoFetchResult)
+
+  const userId = userToModify.value.id
+  const newRoleVal = newRole.value
+
+  const result = await mutateChangeRole(
+    {
+      userRoleInput: { id: userId, role: newRoleVal }
+    },
+    {
+      update: (cache, { data }) => {
+        if (data?.userRoleChange) {
+          cache.modify({
+            id: getCacheId('AdminUserListItem', userId),
+            fields: {
+              role: () => newRoleVal
+            }
+          })
+        }
+      }
+    }
+  ).catch(convertThrowIntoFetchResult)
+
   if (result?.data?.userRoleChange) {
     closeChangeUserRoleDialog()
-    refetchUsers()
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'User role updated',
