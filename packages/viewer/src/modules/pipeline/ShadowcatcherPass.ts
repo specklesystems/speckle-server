@@ -66,6 +66,10 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
     this._needsUpdate = value
   }
 
+  get drawDepthMaterial() {
+    return this.depthMaterial
+  }
+
   constructor() {
     super()
     for (let k = 0; k < this.levels; k++) {
@@ -180,6 +184,9 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
     writeBuffer
     readBuffer
     if (this._needsUpdate) {
+      renderer.RTEBuffers.push()
+      renderer.updateRTEViewModel(this.camera)
+
       const colorBuffer = new Color()
       renderer.getClearColor(colorBuffer)
       const originalClearAlpha = renderer.getClearAlpha()
@@ -199,8 +206,8 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
         }
 
         this.camera.updateProjectionMatrix()
+
         renderer.setRenderTarget(this.renderTargets[k])
-        this.scene.overrideMaterial = this.depthMaterial
         renderer.setClearColor(0x000000)
         renderer.setClearAlpha(1)
         renderer.render(this.scene, this.camera)
@@ -244,6 +251,8 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
       renderer.autoClear = originalAutoClear
       renderer.setClearColor(colorBuffer)
       renderer.setClearAlpha(originalClearAlpha)
+
+      renderer.RTEBuffers.pop()
 
       if (this.onAfterRender) this.onAfterRender()
       this._needsUpdate = false
@@ -297,6 +306,7 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
     this.camera.near = near
     this.camera.far = far
     this.camera.updateProjectionMatrix()
+    this.camera.updateMatrixWorld(true)
   }
 
   public updateConfig(config: ShadowcatcherConfig) {

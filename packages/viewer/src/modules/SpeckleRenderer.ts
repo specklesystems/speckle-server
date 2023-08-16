@@ -20,8 +20,7 @@ import {
   sRGBEncoding,
   Texture,
   Vector3,
-  VSMShadowMap,
-  WebGLRenderer
+  VSMShadowMap
 } from 'three'
 import { Batch, GeometryType } from './batching/Batch'
 import Batcher from './batching/Batcher'
@@ -121,7 +120,7 @@ export default class SpeckleRenderer {
   private _rteShadowViewerLow: Vector3 = new Vector3()
   private _rteShadowViewerHigh: Vector3 = new Vector3()
 
-  public get renderer(): WebGLRenderer {
+  public get renderer(): SpeckleWebGLRenderer {
     return this._renderer
   }
 
@@ -336,14 +335,19 @@ export default class SpeckleRenderer {
       ObjectLayers.STREAM_CONTENT_MESH
       // ObjectLayers.STREAM_CONTENT_LINE
     ])
-    let restoreVisibility
+    let restoreVisibility, opaque
     this._shadowcatcher.shadowcatcherPass.onBeforeRender = () => {
       restoreVisibility = this.batcher.saveVisiblity()
-      const opaque = this.batcher.getOpaque()
+      opaque = this.batcher.getOpaque()
       this.batcher.applyVisibility(opaque)
+      this.batcher.overrideMaterial(
+        opaque,
+        this._shadowcatcher.shadowcatcherPass.drawDepthMaterial
+      )
     }
     this._shadowcatcher.shadowcatcherPass.onAfterRender = () => {
       this.batcher.applyVisibility(restoreVisibility)
+      this.batcher.restoreMaterial(opaque)
     }
 
     this._scene.add(this._shadowcatcher.shadowcatcherMesh)
@@ -353,7 +357,7 @@ export default class SpeckleRenderer {
     if (!this._cameraProvider) return
     this.batcher.update(deltaTime)
 
-    this.updateRTEBuffers()
+    this._renderer.updateRTEViewModel(this.renderingCamera)
     this.updateRTEShadows()
 
     this.updateTransforms()
@@ -369,28 +373,6 @@ export default class SpeckleRenderer {
       this.explode(this.explodeTime, this.explodeRange)
       this.explodeTime = -1
     }
-  }
-
-  private updateRTEBuffers(): boolean {
-    this._renderer.RTEBuffers.rteViewModelMatrix.copy(
-      this.renderingCamera.matrixWorldInverse
-    )
-    this._renderer.RTEBuffers.rteViewModelMatrix.elements[12] = 0
-    this._renderer.RTEBuffers.rteViewModelMatrix.elements[13] = 0
-    this._renderer.RTEBuffers.rteViewModelMatrix.elements[14] = 0
-
-    this._renderer.RTEBuffers.viewer.set(
-      this.renderingCamera.matrixWorld.elements[12],
-      this.renderingCamera.matrixWorld.elements[13],
-      this.renderingCamera.matrixWorld.elements[14]
-    )
-
-    Geometry.DoubleToHighLowVector(
-      this._renderer.RTEBuffers.viewer,
-      this._renderer.RTEBuffers.viewerLow,
-      this._renderer.RTEBuffers.viewerHigh
-    )
-    return true
   }
 
   private updateRTEShadowBuffers(): boolean {
