@@ -102,8 +102,7 @@ export class SketchupBridge extends BaseBridge {
       accountId,
       objectId: sendObject.id
     }
-    // TODO: if we stringfy here args, then need to reparse it on createVersion handler, which is not valid for each host
-    this.emit('createVersion', args)
+    this.emit('createVersion', args as unknown as string)
   }
 
   public async create(): Promise<boolean> {
