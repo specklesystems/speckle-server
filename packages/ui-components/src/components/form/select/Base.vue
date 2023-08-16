@@ -1,6 +1,7 @@
 <template>
   <div>
     <Listbox
+      :key="forceUpdateKey"
       v-model="wrappedValue"
       :name="name"
       :multiple="multiple"
@@ -63,6 +64,7 @@
           leave-to-class="opacity-0"
         >
           <ListboxOptions
+            :unmount="true"
             class="absolute top-[100%] z-10 mt-1 w-full rounded-md bg-foundation-2 py-1 label label--light outline outline-2 outline-primary-muted focus:outline-none shadow"
             @focus="searchInput?.focus()"
           >
@@ -179,7 +181,7 @@ type ButtonStyle = 'base' | 'simple' | 'tinted'
 type SingleItem = any
 type ValueType = SingleItem | SingleItem[] | undefined
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'update:modelValue', v: ValueType): void
 }>()
 
@@ -326,6 +328,7 @@ const searchInput = ref(null as Nullable<HTMLInputElement>)
 const searchValue = ref('')
 const currentItems = ref([] as SingleItem[])
 const isAsyncLoading = ref(false)
+const forceUpdateKey = ref(1)
 
 const internalHelpTipId = ref(nanoid())
 
@@ -455,8 +458,9 @@ const wrappedValue = computed({
       return
     }
 
+    let finalValue: typeof value.value
     if (props.multiple) {
-      value.value = newVal || []
+      finalValue = newVal || []
     } else {
       const currentVal = value.value
       const isUnset =
@@ -464,8 +468,17 @@ const wrappedValue = computed({
         currentVal &&
         newVal &&
         itemKey(currentVal as SingleItem) === itemKey(newVal as SingleItem)
-      value.value = isUnset ? undefined : newVal
+      finalValue = isUnset ? undefined : newVal
     }
+
+    // Not setting value.value, cause then we don't give a chance for the parent
+    // component to reject the update
+    emit('update:modelValue', finalValue)
+
+    // hacky, but there's no other way to force ListBox to re-read the modelValue prop which
+    // we need in case the update was rejected and ListBox still thinks the value is the one
+    // that was clicked on
+    forceUpdateKey.value += 1
   }
 })
 
