@@ -1,4 +1,4 @@
-import { PerspectiveCamera, OrthographicCamera, Vector3, Plane } from 'three'
+import { PerspectiveCamera, OrthographicCamera, Vector3, Plane, Box3 } from 'three'
 import { SpeckleView } from '../../..'
 import { SectionToolEvent } from '../SectionTool'
 
@@ -51,6 +51,7 @@ export interface ICameraProvider extends IProvider {
     view: CanonicalView | SpeckleView | InlineView | PolarView,
     transition: boolean
   )
+  setCameraView(box: Box3, transition: boolean, fit?: number)
   on(e: CameraControllerEvent, handler: (data: boolean) => void)
   removeListener(e: SectionToolEvent, handler: (data: Plane[]) => void)
 }

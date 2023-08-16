@@ -9,7 +9,6 @@ import { DataTree } from './modules/tree/DataTree'
 import { TreeNode, WorldTree } from './modules/tree/WorldTree'
 import { Utils } from './modules/Utils'
 import { World } from './modules/World'
-import { MeasurementOptions } from './modules/measurements/Measurements'
 import SpeckleRenderer from './modules/SpeckleRenderer'
 import { Extension } from './modules/extensions/core-extensions/Extension'
 
@@ -216,9 +215,9 @@ export interface IViewer {
   getObjects(id: string): BatchObject[]
   explode(time: number)
 
-  enableMeasurements(value: boolean)
-  setMeasurementOptions(options: MeasurementOptions)
-  removeMeasurement()
+  // enableMeasurements(value: boolean)
+  // setMeasurementOptions(options: MeasurementOptions)
+  // removeMeasurement()
 
   dispose(): void
 

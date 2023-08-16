@@ -18,12 +18,12 @@ import {
 } from 'three'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
-import { ObjectLayers } from '../SpeckleRenderer'
-import { Geometry } from '../converter/Geometry'
-import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
-import { SpeckleText } from '../objects/SpeckleText'
-import SpeckleTextMaterial from '../materials/SpeckleTextMaterial'
-import SpeckleBasicMaterial from '../materials/SpeckleBasicMaterial'
+import { ObjectLayers } from '../../SpeckleRenderer'
+import { Geometry } from '../../converter/Geometry'
+import SpeckleLineMaterial from '../../materials/SpeckleLineMaterial'
+import { SpeckleText } from '../../objects/SpeckleText'
+import SpeckleTextMaterial from '../../materials/SpeckleTextMaterial'
+import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial'
 
 export interface MeasurementPointGizmoStyle {
   fixedSize?: number | boolean
@@ -162,14 +162,14 @@ export class MeasurementPointGizmo extends Group {
 
   public constructor(style?: MeasurementPointGizmoStyle) {
     super()
-    this.layers.set(ObjectLayers.MEASUREMENTS)
+    this.layers.set(ObjectLayers.OVERLAY)
 
     const geometry = new CircleGeometry(1, 16)
     const doublePositions = new Float64Array(geometry.attributes.position.array)
     Geometry.updateRTEGeometry(geometry, doublePositions)
 
     this.disc = new Mesh(geometry, null)
-    this.disc.layers.set(ObjectLayers.MEASUREMENTS)
+    this.disc.layers.set(ObjectLayers.OVERLAY)
 
     const buffer = new Float64Array(18)
     const lineGeometry = new LineSegmentsGeometry()
@@ -185,12 +185,12 @@ export class MeasurementPointGizmo extends Group {
     this.line.name = `test-mesurements-line`
     this.line.frustumCulled = false
     this.line.renderOrder = 0
-    this.line.layers.set(ObjectLayers.MEASUREMENTS)
+    this.line.layers.set(ObjectLayers.OVERLAY)
 
     const sphereGeometry = new CircleGeometry(1, 16)
 
     this.point = new Mesh(sphereGeometry, null)
-    this.point.layers.set(ObjectLayers.MEASUREMENTS)
+    this.point.layers.set(ObjectLayers.OVERLAY)
     this.point.visible = false
     this.point.renderOrder = 1
 
@@ -199,13 +199,13 @@ export class MeasurementPointGizmo extends Group {
     point2.material.billboardPixelHeight =
       this._style.pointPixelHeight * window.devicePixelRatio -
       2 * window.devicePixelRatio
-    point2.layers.set(ObjectLayers.MEASUREMENTS)
+    point2.layers.set(ObjectLayers.OVERLAY)
     this.point.add(point2)
 
     this.text = new SpeckleText('test-text')
     this.text.textMesh.material = null
-    this.text.layers.set(ObjectLayers.MEASUREMENTS)
-    this.text.textMesh.layers.set(ObjectLayers.MEASUREMENTS)
+    this.text.layers.set(ObjectLayers.OVERLAY)
+    this.text.textMesh.layers.set(ObjectLayers.OVERLAY)
     this.text.backgroundMesh
 
     this.add(this.point)

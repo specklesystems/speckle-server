@@ -32,8 +32,9 @@ import { BatchObject } from './modules/batching/BatchObject'
 import { Box3, Vector3 } from 'three'
 import {
   MeasurementOptions,
-  MeasurementType
-} from './modules/measurements/Measurements'
+  MeasurementType,
+  MeasurementsExtension
+} from './modules/extensions/measurements/MeasurementsExtension'
 import { Units } from './modules/converter/Units'
 import { SelectionExtension } from './modules/extensions/SelectionExtension'
 import { CameraController } from './modules/extensions/core-extensions/CameraController'
@@ -62,7 +63,8 @@ export {
   SelectionExtension,
   CameraController,
   SectionTool,
-  SectionOutlines
+  SectionOutlines,
+  MeasurementsExtension
 }
 
 export type {

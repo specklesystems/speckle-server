@@ -61,6 +61,15 @@ export class SelectionExtension extends Extension {
   protected transparentHoverMaterialData: RenderMaterial &
     DisplayStyle &
     MaterialOptions
+  protected _enabled = true
+
+  public get enabled() {
+    return this._enabled
+  }
+
+  public set enabled(value: boolean) {
+    this._enabled = value
+  }
 
   public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
     super(viewer)
@@ -121,6 +130,8 @@ export class SelectionExtension extends Extension {
   }
 
   protected onObjectClicked(selection: SelectionEvent) {
+    if (!this._enabled) return
+
     if (!selection) {
       this.removeSelection()
       return
@@ -134,6 +145,8 @@ export class SelectionExtension extends Extension {
   }
 
   protected onObjectDoubleClick(selectionInfo: SelectionEvent) {
+    if (!this._enabled) return
+
     if (!selectionInfo) {
       this.cameraProvider.setCameraView([], true)
       return
@@ -145,6 +158,8 @@ export class SelectionExtension extends Extension {
   }
 
   protected onPointerMove(e) {
+    if (!this._enabled) return
+
     if (!this.options.hoverMaterialData) return
     const result =
       (this.viewer

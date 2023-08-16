@@ -237,7 +237,7 @@ export class SpeckleText extends Mesh {
       material.depthTest = false
 
       this._background = new Mesh(geometry, material)
-      this._background.layers.set(ObjectLayers.MEASUREMENTS)
+      this._background.layers.set(ObjectLayers.OVERLAY)
       this._background.frustumCulled = false
       this._background.renderOrder = 1
       this.add(this._background)

@@ -1,8 +1,8 @@
 /* eslint-disable no-empty */
 import { Box3, Camera, Plane, Vector2 } from 'three'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo'
-import { ObjectLayers } from '../SpeckleRenderer'
-import { getConversionFactor } from '../converter/Units'
+import { ObjectLayers } from '../../SpeckleRenderer'
+import { getConversionFactor } from '../../converter/Units'
 import { Measurement, MeasurementState } from './Measurement'
 
 export class PointToPointMeasurement extends Measurement {
@@ -22,7 +22,7 @@ export class PointToPointMeasurement extends Measurement {
     this.startLineLength = 0
     this.add(this.startGizmo)
     this.add(this.endGizmo)
-    this.layers.set(ObjectLayers.MEASUREMENTS)
+    this.layers.set(ObjectLayers.OVERLAY)
   }
 
   public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {

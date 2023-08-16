@@ -274,7 +274,7 @@ export class Pipeline {
       ObjectLayers.SHADOWCATCHER
     ])
     this.stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    this.overlayPass.setLayers([ObjectLayers.MEASUREMENTS])
+    this.overlayPass.setLayers([ObjectLayers.OVERLAY])
     let restoreVisibility, opaque, stencil
 
     this.onBeforePipelineRender = () => {
@@ -466,7 +466,6 @@ export class Pipeline {
     this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
     this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
-    // console.warn('Starting stationary')
   }
 
   public onStationaryEnd() {
@@ -481,6 +480,5 @@ export class Pipeline {
     this.dynamicAoPass.enabled = true
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
-    // console.warn('Ending stationary')
   }
 }

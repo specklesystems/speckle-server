@@ -18,6 +18,7 @@ import { DiffResult } from '@speckle/viewer'
 import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
 import { Units } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
+import { MeasurementsExtension } from '@speckle/viewer'
 
 export default class Sandbox {
   private viewer: DebugViewer
@@ -1078,7 +1079,10 @@ export default class Sandbox {
         label: 'Enabled'
       })
       .on('change', () => {
-        this.viewer.enableMeasurements(this.measurementsParams.enabled)
+        this.viewer.getExtension(SelectionExtension).enabled =
+          !this.measurementsParams.enabled
+        this.viewer.getExtension(MeasurementsExtension).enabled =
+          this.measurementsParams.enabled
       })
 
     container
@@ -1090,14 +1094,16 @@ export default class Sandbox {
         }
       })
       .on('change', () => {
-        this.viewer.setMeasurementOptions(this.measurementsParams)
+        this.viewer.getExtension(MeasurementsExtension).options =
+          this.measurementsParams
       })
     container
       .addInput(this.measurementsParams, 'vertexSnap', {
         label: 'Snap'
       })
       .on('change', () => {
-        this.viewer.setMeasurementOptions(this.measurementsParams)
+        this.viewer.getExtension(MeasurementsExtension).options =
+          this.measurementsParams
       })
 
     container
@@ -1106,7 +1112,8 @@ export default class Sandbox {
         options: Units
       })
       .on('change', () => {
-        this.viewer.setMeasurementOptions(this.measurementsParams)
+        this.viewer.getExtension(MeasurementsExtension).options =
+          this.measurementsParams
       })
     container
       .addInput(this.measurementsParams, 'precision', {
@@ -1116,14 +1123,15 @@ export default class Sandbox {
         max: 5
       })
       .on('change', () => {
-        this.viewer.setMeasurementOptions(this.measurementsParams)
+        this.viewer.getExtension(MeasurementsExtension).options =
+          this.measurementsParams
       })
     container
       .addButton({
         title: 'Delete'
       })
       .on('click', () => {
-        this.viewer.removeMeasurement()
+        this.viewer.getExtension(MeasurementsExtension).removeMeasurement()
       })
   }
 

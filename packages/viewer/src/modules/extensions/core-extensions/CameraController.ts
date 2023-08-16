@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import CameraControls from 'camera-controls'
 import { Extension } from './Extension'
 import { SpeckleCameraControls } from '../../objects/SpeckleCameraControls'
-import { OrthographicCamera, PerspectiveCamera, Vector3 } from 'three'
+import { Box3, OrthographicCamera, PerspectiveCamera, Vector3 } from 'three'
 import { KeyboardKeyHold, HOLD_EVENT_TYPE } from 'hold-event'
 import { CanonicalView, SpeckleView, InlineView, IViewer } from '../../..'
 import {
@@ -114,13 +114,16 @@ export class CameraController extends Extension implements ICameraProvider {
     view: CanonicalView | SpeckleView | InlineView | PolarView,
     transition: boolean
   ): void
+  setCameraView(bounds: Box3, transition: boolean): void
   setCameraView(
-    arg0: string[] | CanonicalView | SpeckleView | InlineView | PolarView,
+    arg0: string[] | CanonicalView | SpeckleView | InlineView | PolarView | Box3,
     arg1 = true,
     arg2 = 1.2
   ): void {
     if (Array.isArray(arg0)) {
       this.zoom(arg0, arg2, arg1)
+    } else if (this.isBox3(arg0)) {
+      this.zoomToBox(arg0, arg2, arg1)
     } else {
       this.setView(arg0, arg1)
     }
@@ -449,6 +452,10 @@ export class CameraController extends Extension implements ICameraProvider {
       (view as PolarView).azimuth !== undefined &&
       (view as PolarView).polar !== undefined
     )
+  }
+
+  private isBox3(view: unknown): view is Box3 {
+    return view['isBox3']
   }
 
   protected setView(

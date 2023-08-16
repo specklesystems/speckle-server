@@ -50,7 +50,6 @@ import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 import { BatchObject } from './batching/BatchObject'
 import SpecklePointMaterial from './materials/SpecklePointMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
-import { Measurements } from './measurements/Measurements'
 import {
   ICameraProvider,
   CameraControllerEvent
@@ -72,7 +71,7 @@ export enum ObjectLayers {
   STREAM_CONTENT = 1,
   PROPS = 2,
   SHADOWCATCHER = 3,
-  MEASUREMENTS = 4
+  OVERLAY = 4
 }
 
 export interface RenderingStats {
@@ -108,7 +107,6 @@ export default class SpeckleRenderer {
   private pipeline: Pipeline
 
   private _shadowcatcher: Shadowcatcher = null
-  private _measurements: Measurements = null
   private cancel: { [subtreeId: string]: boolean } = {}
 
   private explodeTime = -1
@@ -224,10 +222,6 @@ export default class SpeckleRenderer {
 
   public get intersections() {
     return this._intersections
-  }
-
-  public get measurements() {
-    return this._measurements
   }
 
   public get clippingVolume(): Box3 {
@@ -354,8 +348,6 @@ export default class SpeckleRenderer {
     }
 
     this._scene.add(this._shadowcatcher.shadowcatcherMesh)
-
-    this._measurements = new Measurements(this)
   }
 
   public update(deltaTime: number) {
@@ -367,7 +359,6 @@ export default class SpeckleRenderer {
 
     this.updateTransforms()
     this.updateFrustum()
-    this._measurements.update()
 
     this.pipeline.update(this)
 
@@ -785,7 +776,6 @@ export default class SpeckleRenderer {
     this.pipeline.updateClippingPlanes(planes)
     // this.sectionBoxOutlines.updateClippingPlanes(planes)
     this._shadowcatcher.updateClippingPlanes(planes)
-    this._measurements.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
     this.resetPipeline()
   }
@@ -1006,14 +996,6 @@ export default class SpeckleRenderer {
   }
 
   private onObjectClick(e) {
-    const measurement = this._measurements.pickMeasurement(e)
-    if (measurement) {
-      this._measurements.selectMeasurement(measurement, true)
-      return
-    }
-
-    if (this._measurements.enabled) return
-
     const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.renderingCamera,
@@ -1061,15 +1043,6 @@ export default class SpeckleRenderer {
   }
 
   private onObjectDoubleClick(e) {
-    // REVISIT
-    // const measurement = this._measurements.pickMeasurement(e)
-    // if (measurement) {
-    //   this.zoomToBox(measurement.bounds)
-    //   return
-    // }
-
-    if (this._measurements.enabled) return
-
     const results: Array<Intersection> = this._intersections.intersect(
       this._scene,
       this.renderingCamera,

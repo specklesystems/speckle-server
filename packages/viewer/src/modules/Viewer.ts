@@ -29,7 +29,6 @@ import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
 import { DiffResult, Differ, VisualDiffMode } from './Differ'
 import { BatchObject } from './batching/BatchObject'
-import { MeasurementOptions } from './measurements/Measurements'
 import { Extension } from './extensions/core-extensions/Extension'
 import { ICameraProvider, IProvider } from './extensions/core-extensions/Providers'
 import { CameraController } from '..'
@@ -598,17 +597,17 @@ export class Viewer extends EventEmitter implements IViewer {
     this.filteringManager.setUserMaterials(this.differ.materialGroups)
   }
 
-  public enableMeasurements(value: boolean) {
-    this.speckleRenderer.measurements.enabled = value
-  }
+  // public enableMeasurements(value: boolean) {
+  //   this.speckleRenderer.measurements.enabled = value
+  // }
 
-  public setMeasurementOptions(options: MeasurementOptions) {
-    this.speckleRenderer.measurements.options = options
-  }
+  // public setMeasurementOptions(options: MeasurementOptions) {
+  //   this.speckleRenderer.measurements.options = options
+  // }
 
-  public removeMeasurement() {
-    this.speckleRenderer.measurements.removeMeasurement()
-  }
+  // public removeMeasurement() {
+  //   this.speckleRenderer.measurements.removeMeasurement()
+  // }
 
   public dispose() {
     // TODO: currently it's easier to simply refresh the page :)

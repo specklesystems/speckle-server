@@ -1,7 +1,7 @@
 import { Box3, Camera, PerspectiveCamera, Plane, Vector2, Vector3 } from 'three'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo'
-import { ObjectLayers } from '../SpeckleRenderer'
-import { getConversionFactor } from '../converter/Units'
+import { ObjectLayers } from '../../SpeckleRenderer'
+import { getConversionFactor } from '../../converter/Units'
 import { Measurement, MeasurementState } from './Measurement'
 
 export class PerpendicularMeasurement extends Measurement {
@@ -30,7 +30,7 @@ export class PerpendicularMeasurement extends Measurement {
     this.startLineLength = 0.25
     this.add(this.startGizmo)
     this.add(this.endGizmo)
-    this.layers.set(ObjectLayers.MEASUREMENTS)
+    this.layers.set(ObjectLayers.OVERLAY)
   }
 
   public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {
