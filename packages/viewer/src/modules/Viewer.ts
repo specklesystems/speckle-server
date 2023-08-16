@@ -19,7 +19,6 @@ import {
 import { World } from './World'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
-import { FilteringManager, FilteringState } from './filtering/FilteringManager'
 import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
 import { GeometryConverter, SpeckleType } from './converter/GeometryConverter'
 import { DataTree } from './tree/DataTree'
@@ -47,7 +46,6 @@ export class Viewer extends EventEmitter implements IViewer {
   private world: World = new World()
   public static Assets: Assets
   public speckleRenderer: SpeckleRenderer
-  private filteringManager: FilteringManager
   private propertyManager: PropertyManager
   public differ: Differ
 
@@ -132,13 +130,6 @@ export class Viewer extends EventEmitter implements IViewer {
     window.addEventListener('resize', this.resize.bind(this), false)
 
     new Assets()
-    this.filteringManager = new FilteringManager(this.speckleRenderer, this.tree)
-    this.filteringManager.on(
-      ViewerEvent.FilteringStateSet,
-      (newState: FilteringState) => {
-        this.emit(ViewerEvent.FilteringStateSet, newState)
-      }
-    )
     this.propertyManager = new PropertyManager()
     this.differ = new Differ(this.tree)
 
@@ -228,103 +219,103 @@ export class Viewer extends EventEmitter implements IViewer {
     return this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
   }
 
-  public hideObjects(
-    objectIds: string[],
-    stateKey: string = null,
-    includeDescendants = false,
-    ghost = false
-  ): Promise<FilteringState> {
-    return new Promise<FilteringState>((resolve) => {
-      resolve(
-        this.filteringManager.hideObjects(
-          objectIds,
-          stateKey,
-          includeDescendants,
-          ghost
-        )
-      )
-    })
-  }
+  // public hideObjects(
+  //   objectIds: string[],
+  //   stateKey: string = null,
+  //   includeDescendants = false,
+  //   ghost = false
+  // ): Promise<FilteringState> {
+  //   return new Promise<FilteringState>((resolve) => {
+  //     resolve(
+  //       this.filteringManager.hideObjects(
+  //         objectIds,
+  //         stateKey,
+  //         includeDescendants,
+  //         ghost
+  //       )
+  //     )
+  //   })
+  // }
 
-  public showObjects(
-    objectIds: string[],
-    stateKey: string = null,
-    includeDescendants = false
-  ): Promise<FilteringState> {
-    return new Promise<FilteringState>((resolve) => {
-      resolve(
-        this.filteringManager.showObjects(objectIds, stateKey, includeDescendants)
-      )
-    })
-  }
+  // public showObjects(
+  //   objectIds: string[],
+  //   stateKey: string = null,
+  //   includeDescendants = false
+  // ): Promise<FilteringState> {
+  //   return new Promise<FilteringState>((resolve) => {
+  //     resolve(
+  //       this.filteringManager.showObjects(objectIds, stateKey, includeDescendants)
+  //     )
+  //   })
+  // }
 
-  public isolateObjects(
-    objectIds: string[],
-    stateKey: string = null,
-    includeDescendants = false,
-    ghost = true
-  ): Promise<FilteringState> {
-    return new Promise<FilteringState>((resolve) => {
-      resolve(
-        this.filteringManager.isolateObjects(
-          objectIds,
-          stateKey,
-          includeDescendants,
-          ghost
-        )
-      )
-    })
-  }
+  // public isolateObjects(
+  //   objectIds: string[],
+  //   stateKey: string = null,
+  //   includeDescendants = false,
+  //   ghost = true
+  // ): Promise<FilteringState> {
+  //   return new Promise<FilteringState>((resolve) => {
+  //     resolve(
+  //       this.filteringManager.isolateObjects(
+  //         objectIds,
+  //         stateKey,
+  //         includeDescendants,
+  //         ghost
+  //       )
+  //     )
+  //   })
+  // }
 
-  public unIsolateObjects(
-    objectIds: string[],
-    stateKey: string = null,
-    includeDescendants = false
-  ): Promise<FilteringState> {
-    return new Promise<FilteringState>((resolve) => {
-      resolve(
-        this.filteringManager.unIsolateObjects(objectIds, stateKey, includeDescendants)
-      )
-    })
-  }
+  // public unIsolateObjects(
+  //   objectIds: string[],
+  //   stateKey: string = null,
+  //   includeDescendants = false
+  // ): Promise<FilteringState> {
+  //   return new Promise<FilteringState>((resolve) => {
+  //     resolve(
+  //       this.filteringManager.unIsolateObjects(objectIds, stateKey, includeDescendants)
+  //     )
+  //   })
+  // }
 
-  public highlightObjects(objectIds: string[], ghost = false): Promise<FilteringState> {
-    return new Promise<FilteringState>((resolve) => {
-      resolve(this.filteringManager.highlightObjects(objectIds, ghost))
-    })
-  }
+  // public highlightObjects(objectIds: string[], ghost = false): Promise<FilteringState> {
+  //   return new Promise<FilteringState>((resolve) => {
+  //     resolve(this.filteringManager.highlightObjects(objectIds, ghost))
+  //   })
+  // }
 
-  public resetHighlight(): Promise<FilteringState> {
-    return new Promise<FilteringState>((resolve) => {
-      resolve(this.filteringManager.resetHighlight())
-    })
-  }
+  // public resetHighlight(): Promise<FilteringState> {
+  //   return new Promise<FilteringState>((resolve) => {
+  //     resolve(this.filteringManager.resetHighlight())
+  //   })
+  // }
 
-  public setColorFilter(property: PropertyInfo, ghost = true): Promise<FilteringState> {
-    return new Promise<FilteringState>((resolve) => {
-      resolve(this.filteringManager.setColorFilter(property, ghost))
-    })
-  }
+  // public setColorFilter(property: PropertyInfo, ghost = true): Promise<FilteringState> {
+  //   return new Promise<FilteringState>((resolve) => {
+  //     resolve(this.filteringManager.setColorFilter(property, ghost))
+  //   })
+  // }
 
-  public removeColorFilter(): Promise<FilteringState> {
-    return new Promise<FilteringState>((resolve) => {
-      resolve(this.filteringManager.removeColorFilter())
-    })
-  }
+  // public removeColorFilter(): Promise<FilteringState> {
+  //   return new Promise<FilteringState>((resolve) => {
+  //     resolve(this.filteringManager.removeColorFilter())
+  //   })
+  // }
 
-  public setUserObjectColors(
-    groups: { objectIds: string[]; color: string }[]
-  ): Promise<FilteringState> {
-    return new Promise<FilteringState>((resolve) => {
-      resolve(this.filteringManager.setUserObjectColors(groups))
-    })
-  }
+  // public setUserObjectColors(
+  //   groups: { objectIds: string[]; color: string }[]
+  // ): Promise<FilteringState> {
+  //   return new Promise<FilteringState>((resolve) => {
+  //     resolve(this.filteringManager.setUserObjectColors(groups))
+  //   })
+  // }
 
-  public resetFilters(): Promise<FilteringState> {
-    return new Promise<FilteringState>((resolve) => {
-      resolve(this.filteringManager.reset())
-    })
-  }
+  // public resetFilters(): Promise<FilteringState> {
+  //   return new Promise<FilteringState>((resolve) => {
+  //     resolve(this.filteringManager.reset())
+  //   })
+  // }
 
   /**
    * LEGACY: Handles (or tries to handle) old viewer filtering.
@@ -514,7 +505,6 @@ export class Viewer extends EventEmitter implements IViewer {
       for (const key of Object.keys(this.loaders)) {
         delete this.loaders[key]
       }
-      this.filteringManager.reset()
       this.tree.root.children.forEach((node) => {
         this.speckleRenderer.removeRenderTree(node.model.id)
         this.tree.getRenderTree().purge()
@@ -566,7 +556,8 @@ export class Viewer extends EventEmitter implements IViewer {
       this.speckleRenderer.getBatchMaterials()
     )
     this.differ.setDiffTime(0)
-    this.filteringManager.setUserMaterials(this.differ.materialGroups)
+    // REVISIT
+    // this.filteringManager.setUserMaterials(this.differ.materialGroups)
 
     return Promise.resolve(diffResult)
   }
@@ -576,7 +567,8 @@ export class Viewer extends EventEmitter implements IViewer {
     pipelineOptions.depthSide = DoubleSide
     this.speckleRenderer.pipelineOptions = pipelineOptions
     this.differ.resetMaterialGroups()
-    this.filteringManager.removeUserMaterials()
+    // REVISIT
+    // this.filteringManager.removeUserMaterials()
 
     const unloadPromises = []
     if (this.dynamicallyLoadedDiffResources.length !== 0) {
@@ -589,7 +581,8 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public setDiffTime(diffResult: DiffResult, time: number) {
     this.differ.setDiffTime(time)
-    this.filteringManager.setUserMaterials(this.differ.materialGroups)
+    // REVISIT
+    // this.filteringManager.setUserMaterials(this.differ.materialGroups)
   }
 
   public setVisualDiffMode(diffResult: DiffResult, mode: VisualDiffMode) {
@@ -599,7 +592,8 @@ export class Viewer extends EventEmitter implements IViewer {
       diffResult,
       this.speckleRenderer.getBatchMaterials()
     )
-    this.filteringManager.setUserMaterials(this.differ.materialGroups)
+    // REVISIT
+    // this.filteringManager.setUserMaterials(this.differ.materialGroups)
   }
 
   // public enableMeasurements(value: boolean) {

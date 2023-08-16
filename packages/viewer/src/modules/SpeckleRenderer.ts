@@ -26,7 +26,6 @@ import { Batch, GeometryType } from './batching/Batch'
 import Batcher from './batching/Batcher'
 import { Geometry } from './converter/Geometry'
 import { SpeckleTypeAllRenderables } from './converter/GeometryConverter'
-import { FilterMaterial } from './filtering/FilteringManager'
 import Input, { InputEvent, InputOptionsDefault } from './input/Input'
 import { Intersections } from './Intersections'
 import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial'
@@ -56,7 +55,8 @@ import {
 import Materials, {
   RenderMaterial,
   DisplayStyle,
-  MaterialOptions
+  MaterialOptions,
+  FilterMaterial
 } from './materials/Materials'
 import { SpeckleMaterial } from './materials/SpeckleMaterial'
 import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'

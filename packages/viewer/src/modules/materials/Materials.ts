@@ -5,7 +5,6 @@ import { NodeRenderView } from '../tree/NodeRenderView'
 import SpeckleLineMaterial from './SpeckleLineMaterial'
 import SpeckleStandardMaterial from './SpeckleStandardMaterial'
 import SpecklePointMaterial from './SpecklePointMaterial'
-import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
 import SpeckleStandardColoredMaterial from './SpeckleStandardColoredMaterial'
 import defaultGradient from '../../assets/gradient.png'
 import { Assets } from '../Assets'
@@ -32,6 +31,20 @@ export interface DisplayStyle {
 export interface MaterialOptions {
   stencilOutlines?: boolean
   pointSize?: number
+}
+
+export enum FilterMaterialType {
+  GHOST,
+  GRADIENT,
+  COLORED,
+  HIDDEN
+}
+
+export interface FilterMaterial {
+  filterType: FilterMaterialType
+  rampIndex?: number
+  rampIndexColor?: Color
+  rampTexture?: Texture
 }
 
 export interface FilterMaterialOptions {

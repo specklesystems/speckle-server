@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-empty-function */
 import { Box3, Color, Material, Object3D, WebGLRenderer } from 'three'
 
 import { NodeRenderView } from '../tree/NodeRenderView'
@@ -8,8 +7,6 @@ import { AllBatchUpdateRange, Batch, BatchUpdateRange, GeometryType } from './Ba
 import { SpeckleText } from '../objects/SpeckleText'
 import { GlyphGeometry } from 'troika-three-text'
 import { ObjectLayers } from '../SpeckleRenderer'
-import SpeckleTextMaterial from '../materials/SpeckleTextMaterial'
-import { FilterMaterial } from '../filtering/FilteringManager'
 
 export default class TextBatch implements Batch {
   public id: string
@@ -66,7 +63,9 @@ export default class TextBatch implements Batch {
     renderer
   }
 
-  public setVisibleRange(...ranges: BatchUpdateRange[]) {}
+  public setVisibleRange(...ranges: BatchUpdateRange[]) {
+    // TO DO
+  }
 
   public getVisibleRange(): BatchUpdateRange {
     return AllBatchUpdateRange

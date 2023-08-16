@@ -2,7 +2,6 @@ import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
 import { DiffResult, VisualDiffMode } from './modules/Differ'
 import { BatchObject } from './modules/batching/BatchObject'
-import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
@@ -171,38 +170,38 @@ export interface IViewer {
 
   /** New Filtering members */
   getObjectProperties(resourceURL?: string, bypassCache?: boolean): PropertyInfo[]
-  showObjects(
-    objectIds: string[],
-    stateKey?: string,
-    includeDescendants?
-  ): Promise<FilteringState>
-  hideObjects(
-    objectIds: string[],
-    stateKey?: string,
-    includeDescendants?,
-    ghost?: boolean
-  ): Promise<FilteringState>
-  isolateObjects(
-    objectIds: string[],
-    stateKey?: string,
-    includeDescendants?,
-    ghost?: boolean
-  ): Promise<FilteringState>
-  unIsolateObjects(
-    objectIds: string[],
-    stateKey?: string,
-    includeDescendants?
-  ): Promise<FilteringState>
+  // showObjects(
+  //   objectIds: string[],
+  //   stateKey?: string,
+  //   includeDescendants?
+  // ): Promise<FilteringState>
+  // hideObjects(
+  //   objectIds: string[],
+  //   stateKey?: string,
+  //   includeDescendants?,
+  //   ghost?: boolean
+  // ): Promise<FilteringState>
+  // isolateObjects(
+  //   objectIds: string[],
+  //   stateKey?: string,
+  //   includeDescendants?,
+  //   ghost?: boolean
+  // ): Promise<FilteringState>
+  // unIsolateObjects(
+  //   objectIds: string[],
+  //   stateKey?: string,
+  //   includeDescendants?
+  // ): Promise<FilteringState>
 
-  highlightObjects(objectIds: string[], ghost?: boolean): Promise<FilteringState>
-  resetHighlight(): Promise<FilteringState>
+  // highlightObjects(objectIds: string[], ghost?: boolean): Promise<FilteringState>
+  // resetHighlight(): Promise<FilteringState>
 
-  setColorFilter(prop: PropertyInfo, ghost?: boolean): Promise<FilteringState>
-  setUserObjectColors(
-    groups: [{ objectIds: string[]; color: string }]
-  ): Promise<FilteringState>
-  removeColorFilter(): Promise<FilteringState>
-  resetFilters(): Promise<FilteringState>
+  // setColorFilter(prop: PropertyInfo, ghost?: boolean): Promise<FilteringState>
+  // setUserObjectColors(
+  //   groups: [{ objectIds: string[]; color: string }]
+  // ): Promise<FilteringState>
+  // removeColorFilter(): Promise<FilteringState>
+  // resetFilters(): Promise<FilteringState>
 
   /** Data ops */
   getDataTree(): DataTree

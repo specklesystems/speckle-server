@@ -26,7 +26,7 @@ const DefaultSelectionExtensionOptions = {
     metalness: 0,
     vertexColors: false,
     lineWeight: 1,
-    stencilOutlines: false,
+    stencilOutlines: true,
     pointSize: 4
   }
   // hoverMaterialData: {

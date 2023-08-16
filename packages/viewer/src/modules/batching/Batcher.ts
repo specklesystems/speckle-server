@@ -2,7 +2,7 @@ import { generateUUID } from 'three/src/math/MathUtils'
 import MeshBatch from './MeshBatch'
 import { SpeckleType } from '../converter/GeometryConverter'
 import LineBatch from './LineBatch'
-import Materials from '../materials/Materials'
+import Materials, { FilterMaterialType } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import {
   AllBatchUpdateRange,
@@ -14,7 +14,6 @@ import {
 import PointBatch from './PointBatch'
 // import { FilterMaterialType } from '../FilteringManager'
 import { Material, Mesh, WebGLRenderer } from 'three'
-import { FilterMaterialType } from '../filtering/FilteringManager'
 import Logger from 'js-logger'
 import { World } from '../World'
 import { RenderTree } from '../tree/RenderTree'

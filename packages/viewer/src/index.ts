@@ -7,7 +7,6 @@ import {
   SpeckleView,
   ViewerEvent
 } from './IViewer'
-import { FilteringState } from './modules/filtering/FilteringManager'
 import {
   PropertyInfo,
   StringPropertyInfo,
@@ -73,7 +72,6 @@ export type {
   PropertyInfo,
   StringPropertyInfo,
   NumericPropertyInfo,
-  FilteringState,
   SunLightConfiguration,
   DataTree,
   ObjectPredicate,
