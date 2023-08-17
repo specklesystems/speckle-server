@@ -337,24 +337,6 @@ export class FilteringExtension extends Extension {
     return this.setFilters()
   }
 
-  public highlightObjects(objectIds: string[], ghost = false) {
-    ghost
-    // this.resetHighlight()
-    // this.HighlightState.ghost = ghost
-    // this.populateGenericState(objectIds, this.HighlightState)
-    // if (this.HighlightState.rvs.length !== 0) {
-    //   this.HighlightState.id = this.Renderer.applyDirectFilter(
-    //     this.HighlightState.rvs,
-    //     {
-    //       filterType: FilterMaterialType.OVERLAY
-    //     }
-    //   )
-    // }
-    // this.Renderer.viewer.requestRender()
-    // this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
-    return this.CurrentFilteringState
-  }
-
   public setUserObjectColors(groups: { objectIds: string[]; color: string }[]) {
     this.UserspaceColorState = new UserspaceColorState()
     // Resetting any other filtering color ops as they're not compatible
@@ -430,16 +412,6 @@ export class FilteringExtension extends Extension {
     }
   }
 
-  public resetHighlight() {
-    // if (this.HighlightState.rvs.length > 0) {
-    //   this.Renderer.removeDirectFilter(this.HighlightState.id)
-    // }
-    // this.HighlightState = new GenericRvState()
-    // this.Renderer.viewer.requestRender()
-    // this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
-    return this.CurrentFilteringState
-  }
-
   public reset(): FilteringState {
     this.VisibilityState = new VisibilityState()
     this.ColorStringFilterState = null
@@ -452,39 +424,30 @@ export class FilteringExtension extends Extension {
   private setFilters(): FilteringState {
     this.CurrentFilteringState = {}
 
-    // this.Renderer.clearFilter()
-    // this.Renderer.beginFilter()
-
     // String based colors
-    // if (this.ColorStringFilterState) {
-    //   this.CurrentFilteringState.colorGroups = []
-    //   let k = -1
-    //   for (const group of this.ColorStringFilterState.colorGroups) {
-    //     k++
-    //     this.Renderer.applyFilter(group.rvs, {
-    //       filterType: FilterMaterialType.COLORED,
-    //       rampIndex: k / this.ColorStringFilterState.colorGroups.length,
-    //       rampIndexColor: group.color,
-    //       rampTexture: this.ColorStringFilterState.rampTexture
-    //     })
-    //     this.CurrentFilteringState.colorGroups.push({
-    //       value: group.value,
-    //       color: group.color.getHexString(),
-    //       ids: group.ids
-    //     })
-    //     this.CurrentFilteringState.activePropFilterKey =
-    //       this.ColorStringFilterState.currentProp.key
-    //   }
-    // }
+    if (this.ColorStringFilterState) {
+      this.CurrentFilteringState.colorGroups = []
+      let k = -1
+      for (const group of this.ColorStringFilterState.colorGroups) {
+        k++
+        this.Renderer.setMaterial(group.rvs, {
+          filterType: FilterMaterialType.COLORED,
+          rampIndex: k / this.ColorStringFilterState.colorGroups.length,
+          rampIndexColor: group.color,
+          rampTexture: this.ColorStringFilterState.rampTexture
+        })
+        this.CurrentFilteringState.colorGroups.push({
+          value: group.value,
+          color: group.color.getHexString(),
+          ids: group.ids
+        })
+        this.CurrentFilteringState.activePropFilterKey =
+          this.ColorStringFilterState.currentProp.key
+      }
+    }
     // Number based colors
     if (this.ColorNumericFilterState) {
       for (const group of this.ColorNumericFilterState.colorGroups) {
-        // const plm = group.rvs.filter((value) => {
-        //   return value.renderData.id === '4e1bb0b5992da0adb11efda9b32dcad9'
-        // })
-        // if (plm.length) {
-        //   console.log('mata')
-        // }
         this.Renderer.setMaterial(group.rvs, {
           filterType: FilterMaterialType.GRADIENT,
           rampIndex: group.value
@@ -498,8 +461,6 @@ export class FilteringExtension extends Extension {
           filterType: FilterMaterialType.GHOST
         })
       }
-
-      console.warn(this.Renderer.renderingStats)
 
       this.CurrentFilteringState.activePropFilterKey =
         this.ColorNumericFilterState.currentProp.key
@@ -515,78 +476,64 @@ export class FilteringExtension extends Extension {
       )
     }
 
-    // const isShowHide =
-    //   this.VisibilityState.command === Command.HIDE ||
-    //   this.VisibilityState.command === Command.SHOW
-    // const isIsolate =
-    //   this.VisibilityState.command === Command.ISOLATE ||
-    //   this.VisibilityState.command === Command.UNISOLATE
+    const isShowHide =
+      this.VisibilityState.command === Command.HIDE ||
+      this.VisibilityState.command === Command.SHOW
+    const isIsolate =
+      this.VisibilityState.command === Command.ISOLATE ||
+      this.VisibilityState.command === Command.UNISOLATE
 
-    // if (isShowHide || isIsolate) {
-    //   this.Renderer.applyFilter(this.VisibilityState.rvs, {
-    //     filterType: this.VisibilityState.ghost
-    //       ? FilterMaterialType.GHOST
-    //       : FilterMaterialType.HIDDEN
-    //   })
+    if (isShowHide || isIsolate) {
+      this.Renderer.setMaterial(this.VisibilityState.rvs, {
+        filterType: this.VisibilityState.ghost
+          ? FilterMaterialType.GHOST
+          : FilterMaterialType.HIDDEN
+      })
 
-    //   if (isShowHide)
-    //     this.CurrentFilteringState.hiddenObjects = Object.keys(this.VisibilityState.ids)
-    //   if (isIsolate)
-    //     this.CurrentFilteringState.isolatedObjects = Object.keys(
-    //       this.VisibilityState.ids
-    //     )
-    // }
+      if (isShowHide)
+        this.CurrentFilteringState.hiddenObjects = Object.keys(this.VisibilityState.ids)
+      if (isIsolate)
+        this.CurrentFilteringState.isolatedObjects = Object.keys(
+          this.VisibilityState.ids
+        )
+    }
 
-    // const nonMatchingRvs =
-    //   this.ColorStringFilterState?.nonMatchingRvs ||
-    //   this.ColorNumericFilterState?.nonMatchingRvs
+    const nonMatchingRvs =
+      this.ColorStringFilterState?.nonMatchingRvs ||
+      this.ColorNumericFilterState?.nonMatchingRvs
 
-    // let ghostNonMatching = false
-    // if (this.ColorStringFilterState)
-    //   ghostNonMatching = this.ColorStringFilterState.ghost
-    // if (this.ColorNumericFilterState)
-    //   ghostNonMatching = this.ColorNumericFilterState.ghost
+    let ghostNonMatching = false
+    if (this.ColorStringFilterState)
+      ghostNonMatching = this.ColorStringFilterState.ghost
+    if (this.ColorNumericFilterState)
+      ghostNonMatching = this.ColorNumericFilterState.ghost
 
-    // if (nonMatchingRvs) {
-    //   this.Renderer.applyFilter(nonMatchingRvs, {
-    //     filterType: ghostNonMatching
-    //       ? FilterMaterialType.GHOST
-    //       : FilterMaterialType.HIDDEN // TODO: ghost
-    //   })
-    // }
+    if (nonMatchingRvs) {
+      this.Renderer.setMaterial(nonMatchingRvs, {
+        filterType: ghostNonMatching
+          ? FilterMaterialType.GHOST
+          : FilterMaterialType.HIDDEN // TODO: ghost
+      })
+    }
 
-    // if (this.UserspaceColorState) {
-    //   this.CurrentFilteringState.userColorGroups = []
-    //   let m = -1
-    //   for (const group of this.UserspaceColorState.groups) {
-    //     m++
-    //     this.Renderer.applyFilter(group.rvs, {
-    //       filterType: FilterMaterialType.COLORED,
-    //       rampIndex: m / this.UserspaceColorState.groups.length,
-    //       rampIndexColor: new Color(group.color),
-    //       rampTexture: this.UserspaceColorState.rampTexture
-    //     })
+    if (this.UserspaceColorState) {
+      this.CurrentFilteringState.userColorGroups = []
+      let m = -1
+      for (const group of this.UserspaceColorState.groups) {
+        m++
+        this.Renderer.setMaterial(group.rvs, {
+          filterType: FilterMaterialType.COLORED,
+          rampIndex: m / this.UserspaceColorState.groups.length,
+          rampIndexColor: new Color(group.color),
+          rampTexture: this.UserspaceColorState.rampTexture
+        })
 
-    //     this.CurrentFilteringState.userColorGroups.push({
-    //       ids: group.objectIds,
-    //       color: group.color //.getHexString()
-    //     })
-    //   }
-    // }
-
-    // // this.Renderer.endFilter()
-
-    // /** We apply any preexisting highlights after finishing the filter batch */
-    // if (this.HighlightState.rvs.length !== 0) {
-    //   this.HighlightState.id = this.Renderer.applyDirectFilter(
-    //     this.HighlightState.rvs,
-    //     {
-    //       filterType: this.HighlightState.ghost
-    //         ? FilterMaterialType.GHOST
-    //         : FilterMaterialType.OVERLAY
-    //     }
-    //   )
-    // }
+        this.CurrentFilteringState.userColorGroups.push({
+          ids: group.objectIds,
+          color: group.color //.getHexString()
+        })
+      }
+    }
 
     this.Renderer.viewer.requestRender()
     this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)

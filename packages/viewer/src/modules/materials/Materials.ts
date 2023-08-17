@@ -690,7 +690,11 @@ export default class Materials {
     return this.materialMap[hash]
   }
 
-  public getGhostMaterial(renderView: NodeRenderView): Material {
+  public getGhostMaterial(
+    renderView: NodeRenderView,
+    filterMaterial?: FilterMaterial
+  ): Material {
+    filterMaterial
     switch (renderView.geometryType) {
       case GeometryType.MESH:
         return this.meshGhostMaterial
@@ -705,12 +709,21 @@ export default class Materials {
     }
   }
 
-  public getGradientMaterial(renderView: NodeRenderView): Material {
+  public getGradientMaterial(
+    renderView: NodeRenderView,
+    filterMaterial?: FilterMaterial
+  ): Material {
     switch (renderView.geometryType) {
-      case GeometryType.MESH:
-        return renderView.transparent
+      case GeometryType.MESH: {
+        const material = renderView.transparent
           ? this.meshTransparentGradientMaterial
           : this.meshGradientMaterial
+        if (filterMaterial?.rampTexture)
+          (material as SpeckleStandardColoredMaterial).setGradientTexture(
+            filterMaterial.rampTexture
+          )
+        return material
+      }
       case GeometryType.LINE:
         return this.lineColoredMaterial
       case GeometryType.POINT:
@@ -722,12 +735,21 @@ export default class Materials {
     }
   }
 
-  public getColoredMaterial(renderView: NodeRenderView): Material {
+  public getColoredMaterial(
+    renderView: NodeRenderView,
+    filterMaterial?: FilterMaterial
+  ): Material {
     switch (renderView.geometryType) {
-      case GeometryType.MESH:
-        return renderView.transparent
-          ? this.meshTransparentColoredMaterial
-          : this.meshColoredMaterial
+      case GeometryType.MESH: {
+        const material = renderView.transparent
+          ? this.meshTransparentGradientMaterial
+          : this.meshGradientMaterial
+        if (filterMaterial?.rampTexture)
+          (material as SpeckleStandardColoredMaterial).setGradientTexture(
+            filterMaterial.rampTexture
+          )
+        return material
+      }
       case GeometryType.LINE:
         return this.lineColoredMaterial
       case GeometryType.POINT:
@@ -739,7 +761,11 @@ export default class Materials {
     }
   }
 
-  public getHiddenMaterial(renderView: NodeRenderView): Material {
+  public getHiddenMaterial(
+    renderView: NodeRenderView,
+    filterMaterial?: FilterMaterial
+  ): Material {
+    filterMaterial
     switch (renderView.geometryType) {
       case GeometryType.MESH:
         return this.meshHiddenMaterial
@@ -761,22 +787,16 @@ export default class Materials {
     let retMaterial: Material
     switch (filterMaterial.filterType) {
       case FilterMaterialType.GHOST:
-        retMaterial = this.getGhostMaterial(renderView)
+        retMaterial = this.getGhostMaterial(renderView, filterMaterial)
         break
       case FilterMaterialType.GRADIENT:
-        retMaterial = this.getGradientMaterial(renderView)
-        if (filterMaterial.rampTexture) {
-          ;(retMaterial as SpeckleStandardColoredMaterial).setGradientTexture(
-            filterMaterial.rampTexture
-          )
-        }
+        retMaterial = this.getGradientMaterial(renderView, filterMaterial)
         break
       case FilterMaterialType.COLORED:
-        retMaterial = this.getColoredMaterial(renderView)
+        retMaterial = this.getColoredMaterial(renderView, filterMaterial)
         break
-
       case FilterMaterialType.HIDDEN:
-        retMaterial = this.getHiddenMaterial(renderView)
+        retMaterial = this.getHiddenMaterial(renderView, filterMaterial)
         break
     }
     /** There's a bug in three.js where it checks for the length of the planes without checking if they exist first

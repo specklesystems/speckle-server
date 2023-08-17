@@ -19,6 +19,7 @@ import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipe
 import { Units } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
 import { MeasurementsExtension } from '@speckle/viewer'
+import { FilteringExtension } from '@speckle/viewer'
 
 export default class Sandbox {
   private viewer: DebugViewer
@@ -922,7 +923,7 @@ export default class Sandbox {
         const data = this.properties.find((value) => {
           return value.key === this.filterParams.filterBy
         }) as PropertyInfo
-        this.viewer.setColorFilter(data)
+        this.viewer.getExtension(FilteringExtension).setColorFilter(data)
         this.pane.refresh()
       })
 

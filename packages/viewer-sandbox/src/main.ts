@@ -15,6 +15,7 @@ import {
   SectionOutlines,
   MeasurementsExtension
 } from '@speckle/viewer'
+import { FilteringExtension } from '@speckle/viewer'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -43,11 +44,13 @@ const createViewer = async (containerName: string, stream: string) => {
   const sections = viewer.createExtension(SectionTool)
   const sectionOutlines = viewer.createExtension(SectionOutlines)
   const measurements = viewer.createExtension(MeasurementsExtension)
+  const filtering = viewer.createExtension(FilteringExtension)
   cameraController // use it
   selection // use it
   sections // use it
   sectionOutlines // use it
   measurements // use it
+  filtering
 
   const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
 

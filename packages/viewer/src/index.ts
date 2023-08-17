@@ -44,6 +44,7 @@ import {
 } from './modules/extensions/core-extensions/Providers'
 import { SectionTool } from './modules/extensions/SectionTool'
 import { SectionOutlines } from './modules/extensions/SectionOutlines'
+import { FilteringExtension } from './modules/extensions/FilteringExtension'
 
 export {
   Viewer,
@@ -63,7 +64,8 @@ export {
   CameraController,
   SectionTool,
   SectionOutlines,
-  MeasurementsExtension
+  MeasurementsExtension,
+  FilteringExtension
 }
 
 export type {
