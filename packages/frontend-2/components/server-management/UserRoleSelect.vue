@@ -6,6 +6,7 @@
     :name="'userRole'"
     :allow-unset="false"
     class="py-1"
+    :disabled="disabled"
   >
     <template #something-selected="{ value }">
       <span class="truncate">{{ getRoleLabel(value) }}</span>
@@ -30,6 +31,10 @@ const props = defineProps({
     default: () => null
   },
   multiple: {
+    type: Boolean,
+    default: false
+  },
+  disabled: {
     type: Boolean,
     default: false
   }

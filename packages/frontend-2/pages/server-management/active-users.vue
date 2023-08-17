@@ -75,6 +75,7 @@
       <template #role="{ item }">
         <ServerManagementUserRoleSelect
           :model-value="isUser(item) ? item.role : undefined"
+          :disabled="isCurrentUser(item)"
           @update:model-value="
             (newRoleValue: ServerRoles) =>
               isUser(item) &&
@@ -142,6 +143,7 @@ import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { Nullable, ServerRoles, Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ItemType, UserItem } from '~~/lib/server-management/helpers/types'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 import {
   MagnifyingGlassIcon,
@@ -202,6 +204,12 @@ const newRole = ref<ServerRoles>()
 const oldRole = computed(() => userToModify.value?.role as Optional<ServerRoles>)
 const logger = useLogger()
 const infiniteLoaderId = ref('')
+
+const { activeUser } = useActiveUser()
+
+const isCurrentUser = (userItem: UserItem) => {
+  return userItem.id === activeUser.value?.id
+}
 
 const queryVariables = computed(() => ({
   limit: 50,
