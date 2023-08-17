@@ -924,6 +924,14 @@ export default class Sandbox {
           return value.key === this.filterParams.filterBy
         }) as PropertyInfo
         this.viewer.getExtension(FilteringExtension).setColorFilter(data)
+        // this.viewer
+        //   .getExtension(FilteringExtension)
+        //   .isolateObjects(['2f2ab0d53fc998bd34581e6ac8593eaa'], 'isolate', true, true)
+        // this.viewer
+        //   .getExtension(FilteringExtension)
+        //   .setUserObjectColors([
+        //     { objectIds: ['2f2ab0d53fc998bd34581e6ac8593eaa'], color: '#ff0000' }
+        //   ])
         this.pane.refresh()
       })
 
@@ -932,7 +940,7 @@ export default class Sandbox {
         title: 'Clear Filters'
       })
       .on('click', () => {
-        this.viewer.resetFilters()
+        this.viewer.getExtension(FilteringExtension).resetFilters()
       })
   }
 

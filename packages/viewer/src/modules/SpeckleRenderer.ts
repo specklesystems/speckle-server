@@ -9,7 +9,6 @@ import {
   Group,
   Intersection,
   Material,
-  Matrix4,
   Mesh,
   Object3D,
   Plane,
@@ -114,11 +113,6 @@ export default class SpeckleRenderer {
   private _cameraProvider: ICameraProvider = null
   private _clippingPlanes: Plane[] = []
   private _clippingVolume: Box3
-
-  private _rteShadowViewModelMatrix: Matrix4 = new Matrix4()
-  private _rteShadowMatrix: Matrix4 = new Matrix4()
-  private _rteShadowViewerLow: Vector3 = new Vector3()
-  private _rteShadowViewerHigh: Vector3 = new Vector3()
 
   public get renderer(): SpeckleWebGLRenderer {
     return this._renderer
@@ -725,6 +719,10 @@ export default class SpeckleRenderer {
       return null
     }
     return this.batcher.getBatch(rv).getMaterial(rv)
+  }
+
+  public resetMaterials() {
+    this.batcher.resetBatchesDrawRanges()
   }
 
   public getBatch(id: string): Batch {

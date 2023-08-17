@@ -379,45 +379,14 @@ export class FilteringExtension extends Extension {
     return this.setFilters()
   }
 
-  private populateGenericState(objectIds, state) {
-    let ids = [...objectIds] //, ...this.getDescendantIds(objectIds)]
-    /** There's a lot of duplicate ids coming in from 'getDescendantIds'. We remove them
-     *  to avoid the large redundancy they incurr otherwise.
-     */
-    ids = [...Array.from(new Set(ids.map((value) => value)))]
-    state.rvs = []
-    state.ids = []
-    const nodes = []
-    if (ids.length !== 0) {
-      /** This walk still takes longer than we'd like */
-      this.WTI.walk((node: TreeNode) => {
-        if (ids.indexOf(node.model.raw.id) !== -1) {
-          nodes.push(node)
-        }
-        return true
-      })
-      for (let k = 0; k < nodes.length; k++) {
-        /** There's also quite a lot of redundancy here as well. The nodes coming are
-         * hierarchical and we end up getting the same render views more than once.
-         */
-        const rvs = this.WTI.getRenderTree().getRenderViewNodesForNode(
-          nodes[k],
-          nodes[k]
-        )
-        if (rvs) {
-          state.rvs.push(...rvs.map((e) => e.model.renderView))
-          state.ids.push(...rvs.map((e) => e.model.raw.id))
-        }
-      }
-    }
-  }
-
-  public reset(): FilteringState {
+  public resetFilters(): FilteringState {
     this.VisibilityState = new VisibilityState()
     this.ColorStringFilterState = null
     this.ColorNumericFilterState = null
     this.UserspaceColorState = null
     this.StateKey = null
+    this.Renderer.resetMaterials()
+    this.viewer.requestRender()
     return null
   }
 
