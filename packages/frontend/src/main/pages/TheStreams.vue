@@ -20,12 +20,13 @@
       <no-data-placeholder v-if="user">
         <h2>Welcome {{ user.name.split(' ')[0] }}!</h2>
         <p class="caption">
-          Once you create a stream and start sending some data, your activity will show
-          up here.
+          Once you {{ isGuestUser ? 'join' : 'create' }} a stream and start sending some
+          data, your activity will show up here.
         </p>
         <template #actions>
           <v-list rounded class="transparent">
             <v-list-item
+              v-if="!isGuestUser"
               link
               class="primary mb-4"
               dark
@@ -95,6 +96,7 @@ import NoDataPlaceholder from '@/main/components/common/NoDataPlaceholder.vue'
 import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import { Roles } from '@speckle/shared'
+import { isGuest } from '@/main/lib/core/helpers/users'
 
 export default {
   name: 'TheStreams',
@@ -135,6 +137,9 @@ export default {
     }
   },
   computed: {
+    isGuestUser() {
+      return isGuest(this.user)
+    },
     filteredStreams() {
       if (!this.streams) return []
       if (this.streamFilter === 1) return this.streams.items
