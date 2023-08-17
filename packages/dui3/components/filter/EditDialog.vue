@@ -46,7 +46,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ISenderModelCard } from '~~/lib/bindings/definitions/IBasicConnectorBinding'
+import { ISenderModelCard } from '~~/lib/bindings/definitions/ISendBinding'
 import {
   ISendFilter,
   IDirectSelectionSendFilter

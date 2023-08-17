@@ -521,15 +521,6 @@ export type CreateModelInput = {
   projectId: Scalars['ID'];
 };
 
-export type CreateVersionInput = {
-  message?: InputMaybe<Scalars['String']>;
-  modelId: Scalars['String'];
-  objectId: Scalars['String'];
-  projectId: Scalars['String'];
-  sourceApplication?: InputMaybe<Scalars['String']>;
-  totalChildrenCount?: InputMaybe<Scalars['Int']>;
-};
-
 export type DeleteModelInput = {
   id: Scalars['ID'];
   projectId: Scalars['ID'];
@@ -2554,6 +2545,15 @@ export type VersionCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type VersionCreateInput = {
+  message?: InputMaybe<Scalars['String']>;
+  modelId: Scalars['String'];
+  objectId: Scalars['String'];
+  projectId: Scalars['String'];
+  sourceApplication?: InputMaybe<Scalars['String']>;
+  totalChildrenCount?: InputMaybe<Scalars['Int']>;
+};
+
 export type VersionMutations = {
   __typename?: 'VersionMutations';
   create: Version;
@@ -2564,7 +2564,7 @@ export type VersionMutations = {
 
 
 export type VersionMutationsCreateArgs = {
-  input: CreateVersionInput;
+  input: VersionCreateInput;
 };
 
 
@@ -2815,7 +2815,6 @@ export type ResolversTypes = {
   CreateCommentInput: CreateCommentInput;
   CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
-  CreateVersionInput: CreateVersionInput;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']>;
   DeleteModelInput: DeleteModelInput;
   DeleteVersionsInput: DeleteVersionsInput;
@@ -2915,6 +2914,7 @@ export type ResolversTypes = {
   UserUpdateInput: UserUpdateInput;
   Version: ResolverTypeWrapper<VersionGraphQLReturn>;
   VersionCollection: ResolverTypeWrapper<Omit<VersionCollection, 'items'> & { items: Array<ResolversTypes['Version']> }>;
+  VersionCreateInput: VersionCreateInput;
   VersionMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ViewerResourceGroup: ResolverTypeWrapper<ViewerResourceGroup>;
   ViewerResourceItem: ResolverTypeWrapper<ViewerResourceItem>;
@@ -2977,7 +2977,6 @@ export type ResolversParentTypes = {
   CreateCommentInput: CreateCommentInput;
   CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
-  CreateVersionInput: CreateVersionInput;
   DateTime: Scalars['DateTime'];
   DeleteModelInput: DeleteModelInput;
   DeleteVersionsInput: DeleteVersionsInput;
@@ -3064,6 +3063,7 @@ export type ResolversParentTypes = {
   UserUpdateInput: UserUpdateInput;
   Version: VersionGraphQLReturn;
   VersionCollection: Omit<VersionCollection, 'items'> & { items: Array<ResolversParentTypes['Version']> };
+  VersionCreateInput: VersionCreateInput;
   VersionMutations: MutationsObjectGraphQLReturn;
   ViewerResourceGroup: ViewerResourceGroup;
   ViewerResourceItem: ViewerResourceItem;

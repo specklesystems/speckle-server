@@ -54,6 +54,37 @@ export type ActivityCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type AdminQueries = {
+  __typename?: 'AdminQueries';
+  projectList: ProjectCollection;
+  serverStatistics: ServerStatistics;
+  userList: AdminUserList;
+};
+
+
+export type AdminQueriesProjectListArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+  orderBy?: InputMaybe<Scalars['String']>;
+  query?: InputMaybe<Scalars['String']>;
+  visibility?: InputMaybe<Scalars['String']>;
+};
+
+
+export type AdminQueriesUserListArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+  query?: InputMaybe<Scalars['String']>;
+  role?: InputMaybe<ServerRole>;
+};
+
+export type AdminUserList = {
+  __typename?: 'AdminUserList';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<LimitedUser>;
+  totalCount: Scalars['Int'];
+};
+
 export type AdminUsersListCollection = {
   __typename?: 'AdminUsersListCollection';
   items: Array<AdminUsersListItem>;
@@ -1581,11 +1612,16 @@ export type Query = {
   _?: Maybe<Scalars['String']>;
   /** Gets the profile of the authenticated user or null if not authenticated */
   activeUser?: Maybe<User>;
-  /** All the streams of the server. Available to admins only. */
+  admin: AdminQueries;
+  /**
+   * All the streams of the server. Available to admins only.
+   * @deprecated use admin.projectList instead
+   */
   adminStreams?: Maybe<StreamCollection>;
   /**
    * Get all (or search for specific) users, registered or invited, from the server in a paginated view.
    * The query looks for matches in name, company and email.
+   * @deprecated use admin.UserList instead
    */
   adminUsers?: Maybe<AdminUsersListCollection>;
   /** Gets a specific app from the server. */
@@ -1615,6 +1651,7 @@ export type Query = {
    */
   projectInvite?: Maybe<PendingStreamCollaborator>;
   serverInfo: ServerInfo;
+  /** @deprecated use admin.serverStatistics instead */
   serverStats: ServerStats;
   /**
    * Returns a specific stream. Will throw an authorization error if active user isn't authorized
@@ -1834,6 +1871,7 @@ export type ServerInfo = {
   canonicalUrl?: Maybe<Scalars['String']>;
   company?: Maybe<Scalars['String']>;
   description?: Maybe<Scalars['String']>;
+  guestModeEnabled: Scalars['Boolean'];
   inviteOnly?: Maybe<Scalars['Boolean']>;
   name: Scalars['String'];
   roles: Array<Maybe<Role>>;
@@ -1846,6 +1884,7 @@ export type ServerInfoUpdateInput = {
   adminContact?: InputMaybe<Scalars['String']>;
   company?: InputMaybe<Scalars['String']>;
   description?: InputMaybe<Scalars['String']>;
+  guestModeEnabled?: InputMaybe<Scalars['Boolean']>;
   inviteOnly?: InputMaybe<Scalars['Boolean']>;
   name: Scalars['String'];
   termsOfService?: InputMaybe<Scalars['String']>;
@@ -1866,8 +1905,16 @@ export type ServerInviteCreateInput = {
 export enum ServerRole {
   ServerAdmin = 'SERVER_ADMIN',
   ServerArchivedUser = 'SERVER_ARCHIVED_USER',
+  ServerGuest = 'SERVER_GUEST',
   ServerUser = 'SERVER_USER'
 }
+
+export type ServerStatistics = {
+  __typename?: 'ServerStatistics';
+  totalPendingInvites: Scalars['Int'];
+  totalProjectCount: Scalars['Int'];
+  totalUserCount: Scalars['Int'];
+};
 
 export type ServerStats = {
   __typename?: 'ServerStats';
@@ -2486,11 +2533,26 @@ export type VersionCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type VersionCreateInput = {
+  message?: InputMaybe<Scalars['String']>;
+  modelId: Scalars['String'];
+  objectId: Scalars['String'];
+  projectId: Scalars['String'];
+  sourceApplication?: InputMaybe<Scalars['String']>;
+  totalChildrenCount?: InputMaybe<Scalars['Int']>;
+};
+
 export type VersionMutations = {
   __typename?: 'VersionMutations';
+  create: Version;
   delete: Scalars['Boolean'];
   moveToModel: Model;
   update: Version;
+};
+
+
+export type VersionMutationsCreateArgs = {
+  input: VersionCreateInput;
 };
 
 
@@ -2628,12 +2690,12 @@ export type WebhookUpdateInput = {
   url?: InputMaybe<Scalars['String']>;
 };
 
-export type CommitCreateMutationVariables = Exact<{
-  commit: CommitCreateInput;
+export type CreateVersionMutationVariables = Exact<{
+  input: VersionCreateInput;
 }>;
 
 
-export type CommitCreateMutation = { __typename?: 'Mutation', commitCreate: string };
+export type CreateVersionMutation = { __typename?: 'Mutation', versionMutations: { __typename?: 'VersionMutations', create: { __typename?: 'Version', id: string, message?: string | null, referencedObject: string } } };
 
 export type CreateModelMutationVariables = Exact<{
   input: CreateModelInput;
@@ -2665,7 +2727,7 @@ export type ModelDetailsQueryVariables = Exact<{
 export type ModelDetailsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, model: { __typename?: 'Model', id: string, displayName: string, versions: { __typename?: 'VersionCollection', totalCount: number }, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } } } };
 
 
-export const CommitCreateDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CommitCreate"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"commit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CommitCreateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commitCreate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"commit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"commit"}}}]}]}}]} as unknown as DocumentNode<CommitCreateMutation, CommitCreateMutationVariables>;
+export const CreateVersionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateVersion"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"VersionCreateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"versionMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"create"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}}]}}]}}]}}]} as unknown as DocumentNode<CreateVersionMutation, CreateVersionMutationVariables>;
 export const CreateModelDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateModel"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateModelInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"modelMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"create"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<CreateModelMutation, CreateModelMutationVariables>;
 export const CreateProjectDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateProject"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectCreateInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"create"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]} as unknown as DocumentNode<CreateProjectMutation, CreateProjectMutationVariables>;
 export const ProjectDetailsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectDetails"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"avatar"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}}]}}]}}]} as unknown as DocumentNode<ProjectDetailsQuery, ProjectDetailsQueryVariables>;

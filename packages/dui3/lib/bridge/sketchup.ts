@@ -103,7 +103,7 @@ export class SketchupBridge extends BaseBridge {
       accountId,
       objectId: sendObject.id
     }
-    this.emit('createVersion', JSON.stringify(args))
+    this.emit('createVersion', args as unknown as string)
   }
 
   public async create(): Promise<boolean> {
