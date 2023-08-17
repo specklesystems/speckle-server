@@ -21,7 +21,7 @@
       @change="handleSearchChange"
     />
 
-    <Table
+    <ServerManagementTable
       class="mt-8"
       :headers="[
         { id: 'name', title: 'Name' },
@@ -84,7 +84,7 @@
           <UserAvatarGroup :users="item.team.map((t) => t.user)" :max-count="3" />
         </div>
       </template>
-    </Table>
+    </ServerManagementTable>
 
     <InfiniteLoading
       :settings="{ identifier: infiniteLoaderId }"
@@ -92,7 +92,7 @@
       @infinite="infiniteLoad"
     />
 
-    <ProjectDeleteDialog
+    <ServerManagementDeleteProjectDialog
       v-model:open="showProjectDeleteDialog"
       :project="projectToModify"
       title="Delete Project"
@@ -114,10 +114,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useQuery, useMutation } from '@vue/apollo-composable'
 import { debounce } from 'lodash-es'
-import Table from '~~/components/server-management/Table.vue'
-import ProjectDeleteDialog from '~~/components/server-management/DeleteProjectDialog.vue'
+import { useQuery, useMutation } from '@vue/apollo-composable'
+import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
 import { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
@@ -128,7 +127,6 @@ import {
   updateCacheByFilter
 } from '~~/lib/common/helpers/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
-import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
 import { isProject } from '~~/lib/server-management/helpers/utils'
 
 const getProjects = graphql(`

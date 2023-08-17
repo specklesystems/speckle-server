@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
-import { UserItem } from '~~/lib/server-management/helpers/types'
+import { InviteItem } from '~~/lib/server-management/helpers/types'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -36,7 +36,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   title: string
   open: boolean
-  user: UserItem | null
+  invite: InviteItem | null
   buttons?: Array<{ text: string; props: Record<string, unknown>; onClick: () => void }>
 }>()
 

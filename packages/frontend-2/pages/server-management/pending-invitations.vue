@@ -24,7 +24,7 @@
       @change="handleSearchChange"
     />
 
-    <Table
+    <ServerManagementTable
       class="mt-8"
       :headers="[
         { id: 'email', title: 'Email' },
@@ -47,7 +47,7 @@
 
       <template #invitedBy="{ item }">
         <div class="flex items-center gap-2 py-1">
-          <Avatar v-if="isInvite(item)" :user="item.invitedBy" />
+          <UserAvatar v-if="isInvite(item)" :user="item.invitedBy" />
           {{ isInvite(item) ? item.invitedBy.name : '' }}
         </div>
       </template>
@@ -56,16 +56,21 @@
         <FormButton
           :link="true"
           class="font-semibold text-primary"
+          :disabled="successfullyResentInvites.includes(item.id)"
           @click="resendInvitation(item)"
         >
-          Resend Invitation
+          {{
+            successfullyResentInvites.includes(item.id)
+              ? 'Invitation Resent'
+              : 'Resend Invitation'
+          }}
         </FormButton>
       </template>
-    </Table>
+    </ServerManagementTable>
 
-    <DeleteInvitationDialog
+    <ServerManagementDeleteInvitationDialog
       v-model:open="showDeleteInvitationDialog"
-      :user="user ?? userToModify"
+      :invite="inviteToModify"
       title="Delete Invitation"
       :buttons="[
         {
@@ -76,7 +81,7 @@
         {
           text: 'Cancel',
           props: { color: 'secondary', fullWidth: true, outline: true },
-          onClick: closeDeleteInvitationDialog
+          onClick: closeInvitationDeleteDialog
         }
       ]"
     />
@@ -91,15 +96,20 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useQuery } from '@vue/apollo-composable'
 import { debounce } from 'lodash-es'
-import Table from '~~/components/server-management/Table.vue'
-import Avatar from '~~/components/user/Avatar.vue'
+import { useQuery, useMutation } from '@vue/apollo-composable'
+import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
 import { ItemType, InviteItem } from '~~/lib/server-management/helpers/types'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { graphql } from '~~/lib/common/generated/gql'
-import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
 import { isInvite } from '~~/lib/server-management/helpers/utils'
+import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
+import {
+  convertThrowIntoFetchResult,
+  getCacheId,
+  getFirstErrorMessage,
+  updateCacheByFilter
+} from '~~/lib/common/helpers/graphql'
 
 const getInvites = graphql(`
   query AdminPanelInvitesList($limit: Int!, $cursor: String, $query: String) {
@@ -120,6 +130,18 @@ const getInvites = graphql(`
   }
 `)
 
+const adminDeleteInvite = graphql(`
+  mutation AdminPanelDeleteInvite($inviteId: String!) {
+    inviteDelete(inviteId: $inviteId)
+  }
+`)
+
+const adminResendInvite = graphql(`
+  mutation AdminPanelResendInvite($inviteId: String!) {
+    inviteResend(inviteId: $inviteId)
+  }
+`)
+
 const logger = useLogger()
 
 definePageMeta({
@@ -130,6 +152,7 @@ const inviteToModify = ref<InviteItem | null>(null)
 const searchString = ref('')
 const showDeleteInvitationDialog = ref(false)
 const infiniteLoaderId = ref('')
+const successfullyResentInvites = ref<string[]>([])
 
 const moreToLoad = computed(
   () =>
@@ -139,18 +162,109 @@ const moreToLoad = computed(
 )
 
 const invites = computed(() => extraPagesResult.value?.admin.inviteList.items || [])
+const { triggerNotification } = useGlobalToast()
+
+const { mutate: adminDeleteMutation } = useMutation(adminDeleteInvite)
+const { mutate: resendInvitationMutation } = useMutation(adminResendInvite)
 
 const openDeleteInvitationDialog = (item: ItemType) => {
-  console.log('Trying to open the modal')
   if (isInvite(item)) {
     inviteToModify.value = item
     showDeleteInvitationDialog.value = true
-    console.log('Modal should now be open')
   }
+}
+
+const closeInvitationDeleteDialog = () => {
+  showDeleteInvitationDialog.value = false
 }
 
 const handleSearchChange = (newSearchString: string) => {
   searchUpdateHandler(newSearchString)
+}
+
+const deleteConfirmed = async () => {
+  const inviteId = inviteToModify.value?.id
+  if (!inviteId) {
+    return
+  }
+
+  const result = await adminDeleteMutation(
+    {
+      inviteId
+    },
+    {
+      update: (cache, { data }) => {
+        if (data?.inviteDelete) {
+          // Remove invite from cache
+          cache.evict({
+            id: getCacheId('AdminUserListItem', inviteId)
+          })
+          // Update list in cache
+          updateCacheByFilter(
+            cache,
+            { query: { query: getInvites, variables: resultVariables.value } },
+            (data) => {
+              const newItems = data.admin.inviteList.items.filter(
+                (item) => item.id !== inviteId
+              )
+              return {
+                ...data,
+                admin: {
+                  ...data.admin,
+                  inviteList: {
+                    ...data.admin.inviteList,
+                    items: newItems,
+                    totalCount: Math.max(0, data.admin.inviteList.totalCount - 1)
+                  }
+                }
+              }
+            }
+          )
+        }
+      }
+    }
+  ).catch(convertThrowIntoFetchResult)
+
+  if (result?.data?.inviteDelete) {
+    closeInvitationDeleteDialog()
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Invitation deleted',
+      description: 'The invitation has been successfully deleted'
+    })
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Failed to delete invitation',
+      description: errorMessage
+    })
+  }
+}
+
+const resendInvitation = async (item: InviteItem) => {
+  const inviteId = item.id
+  if (!inviteId) return
+
+  const result = await resendInvitationMutation({ inviteId }).catch(
+    convertThrowIntoFetchResult
+  )
+
+  if (result?.data?.inviteResend) {
+    successfullyResentInvites.value.push(inviteId)
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Invitation Resent',
+      description: 'The invitation has been successfully resent'
+    })
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Failed to resend invitation',
+      description: errorMessage
+    })
+  }
 }
 
 const {

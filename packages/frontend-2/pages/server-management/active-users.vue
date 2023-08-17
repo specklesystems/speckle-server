@@ -24,7 +24,7 @@
       @change="searchUpdateHandler(newSearchString)"
     />
 
-    <Table
+    <ServerManagementTable
       class="mt-8"
       :headers="[
         { id: 'name', title: 'Name' },
@@ -46,7 +46,7 @@
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <Avatar v-if="isUser(item)" :user="item" />
+          <UserAvatar v-if="isUser(item)" :user="item" />
           {{ isUser(item) ? item.name : '' }}
         </div>
       </template>
@@ -73,10 +73,10 @@
       </template>
 
       <template #role="{ item }">
-        <UserRoleSelect
+        <ServerManagementUserRoleSelect
           :model-value="isUser(item) ? item.role : undefined"
           @update:model-value="
-            (newRoleValue) =>
+            (newRoleValue: ServerRoles) =>
               isUser(item) &&
               !isArray(newRoleValue) &&
               newRoleValue &&
@@ -84,7 +84,7 @@
           "
         />
       </template>
-    </Table>
+    </ServerManagementTable>
 
     <InfiniteLoading
       :settings="{ identifier: infiniteLoaderId }"
@@ -92,7 +92,7 @@
       @infinite="infiniteLoad"
     />
 
-    <UserDeleteDialog
+    <ServerManagementDeleteUserDialog
       v-model:open="showUserDeleteDialog"
       :user="userToModify"
       title="Delete User"
@@ -110,7 +110,7 @@
       ]"
     />
 
-    <ChangeUserRoleDialog
+    <ServerManagementChangeUserRoleDialog
       v-model:open="showChangeUserRoleDialog"
       :user="userToModify"
       title="Change Role"
@@ -137,11 +137,6 @@
 import { ref } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { debounce, isArray } from 'lodash-es'
-import Table from '~~/components/server-management/Table.vue'
-import UserRoleSelect from '~~/components/server-management/UserRoleSelect.vue'
-import UserDeleteDialog from '~~/components/server-management/DeleteUserDialog.vue'
-import ChangeUserRoleDialog from '~~/components/server-management/ChangeUserRoleDialog.vue'
-import Avatar from '~~/components/user/Avatar.vue'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { Nullable, ServerRoles, Optional } from '@speckle/shared'
@@ -242,7 +237,9 @@ const closeUserDeleteDialog = () => {
 }
 
 const openChangeUserRoleDialog = (user: UserItem, newRoleValue: ServerRoles) => {
-  console.log(userToModify)
+  if (user.role === newRoleValue) {
+    return
+  }
   userToModify.value = user
   newRole.value = newRoleValue
   showChangeUserRoleDialog.value = true
