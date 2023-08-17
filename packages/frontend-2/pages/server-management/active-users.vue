@@ -24,8 +24,6 @@
       @change="searchUpdateHandler(newSearchString)"
     />
 
-    TOtals: {{ extraPagesResult?.admin.userList.totalCount }}
-
     <Table
       class="mt-8"
       :headers="[
@@ -76,9 +74,13 @@
 
       <template #role="{ item }">
         <UserRoleSelect
-          :model-value="isUser(item) && item.role"
+          :model-value="isUser(item) ? item.role : undefined"
           @update:model-value="
-            (newRoleValue) => openChangeUserRoleDialog(isUser(item), newRoleValue)
+            (newRoleValue) =>
+              isUser(item) &&
+              !isArray(newRoleValue) &&
+              newRoleValue &&
+              openChangeUserRoleDialog(item, newRoleValue)
           "
         />
       </template>
@@ -134,7 +136,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { debounce } from 'lodash-es'
+import { debounce, isArray } from 'lodash-es'
 import Table from '~~/components/server-management/Table.vue'
 import UserRoleSelect from '~~/components/server-management/UserRoleSelect.vue'
 import UserDeleteDialog from '~~/components/server-management/DeleteUserDialog.vue'
@@ -142,9 +144,9 @@ import ChangeUserRoleDialog from '~~/components/server-management/ChangeUserRole
 import Avatar from '~~/components/user/Avatar.vue'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
-import { Nullable } from '@speckle/shared'
+import { Nullable, ServerRoles, Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
-import { UserItem } from '~~/lib/server-management/helpers/types'
+import { ItemType, UserItem } from '~~/lib/server-management/helpers/types'
 
 import {
   MagnifyingGlassIcon,
@@ -201,8 +203,8 @@ const userToModify: Ref<Nullable<UserItem>> = ref(null)
 const searchString = ref('')
 const showUserDeleteDialog = ref(false)
 const showChangeUserRoleDialog = ref(false)
-const newRole = ref('')
-const oldRole = computed(() => userToModify.value?.role ?? '')
+const newRole = ref<ServerRoles>()
+const oldRole = computed(() => userToModify.value?.role as Optional<ServerRoles>)
 const logger = useLogger()
 const infiniteLoaderId = ref('')
 
@@ -228,16 +230,18 @@ const { triggerNotification } = useGlobalToast()
 const { mutate: adminDeleteUserMutation } = useMutation(adminDeleteUser)
 const { mutate: mutateChangeRole } = useMutation(changeRoleMutation)
 
-const openUserDeleteDialog = (user: UserItem) => {
-  userToModify.value = user
-  showUserDeleteDialog.value = true
+const openUserDeleteDialog = (item: ItemType) => {
+  if (isUser(item)) {
+    userToModify.value = item
+    showUserDeleteDialog.value = true
+  }
 }
 
 const closeUserDeleteDialog = () => {
   showUserDeleteDialog.value = false
 }
 
-const openChangeUserRoleDialog = (user: UserItem, newRoleValue: string) => {
+const openChangeUserRoleDialog = (user: UserItem, newRoleValue: ServerRoles) => {
   console.log(userToModify)
   userToModify.value = user
   newRole.value = newRoleValue
@@ -311,7 +315,7 @@ const deleteConfirmed = async () => {
 }
 
 const changeUserRoleConfirmed = async () => {
-  if (!userToModify.value) {
+  if (!userToModify.value || !newRole.value) {
     return
   }
 

@@ -6,7 +6,7 @@
         <strong>change the role of</strong>
         the selected user?
       </p>
-      <div v-if="user" class="flex flex-col gap-3">
+      <div v-if="user && newRole && oldRole" class="flex flex-col gap-3">
         <div class="flex items-center gap-2">
           <Avatar :user="user" />
           {{ user.name }}
@@ -49,8 +49,8 @@ const props = defineProps<{
   title: string
   open: boolean
   user: UserItem | null
-  oldRole: ServerRoles
-  newRole: ServerRoles
+  oldRole: ServerRoles | undefined
+  newRole: ServerRoles | undefined
   buttons?: Array<{ text: string; props: Record<string, unknown>; onClick: () => void }>
 }>()
 

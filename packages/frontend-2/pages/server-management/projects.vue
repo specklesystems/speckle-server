@@ -50,8 +50,8 @@
       </template>
 
       <template #type="{ item }">
-        <div class="lowercase">
-          {{ isProject(item) ? item.visibility : '' }}
+        <div class="capitalize">
+          {{ isProject(item) ? item.visibility.toLowerCase() : '' }}
         </div>
       </template>
 

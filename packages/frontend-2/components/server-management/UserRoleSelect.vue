@@ -38,5 +38,7 @@ const { selectedValue } = useFormSelectChildInternals<ServerRoles>({
   emit
 })
 
-const roles = Object.values(Roles.Server).filter((role) => role in roleLookupTable)
+const roles = Object.values(Roles.Server).filter(
+  (role) => role in roleLookupTable && role !== Roles.Server.Guest
+)
 </script>
