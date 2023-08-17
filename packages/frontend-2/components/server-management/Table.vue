@@ -28,7 +28,7 @@
           @click="handleRowClick(item)"
           @keydown.enter.space="handleRowClick(item)"
         >
-          <template v-for="column in headers" :key="column.id">
+          <template v-for="(column, colIndex) in headers" :key="column.id">
             <div :class="getClasses(column.id, colIndex)" tabindex="0">
               <slot :name="column.id" :item="item">
                 <div class="text-gray-900 font-medium order-1">

@@ -46,8 +46,8 @@
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
-          <Avatar :user="item" />
-          {{ item.name }}
+          <Avatar v-if="isUser(item)" :user="item" />
+          {{ isUser(item) ? item.name : '' }}
         </div>
       </template>
 

@@ -35,7 +35,7 @@
             >
               <div
                 v-if="title"
-                class="flex items-center justify-center shadow p-4 relative z-10 bg-foundation"
+                class="flex items-center justify-center shadow p-4 relative z-10 bg-foundation rounded-t-lg"
               >
                 <h4 class="text-2xl font-bold">{{ title }}</h4>
               </div>

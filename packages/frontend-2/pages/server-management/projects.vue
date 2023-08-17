@@ -46,7 +46,7 @@
       :on-row-click="handleProjectClick"
     >
       <template #name="{ item }">
-        {{ item.name }}
+        {{ isProject(item) ? item.name : '' }}
       </template>
 
       <template #type="{ item }">
@@ -81,13 +81,7 @@
 
       <template #contributors="{ item }">
         <div v-if="isProject(item)" class="py-1">
-          <Avatar
-            v-for="(teamMember, index) in item.team"
-            :key="index"
-            :size="small"
-            :user="teamMember.user"
-            class="-mr-2"
-          />
+          <UserAvatarGroup :users="item.team.map((t) => t.user)" :max-count="3" />
         </div>
       </template>
     </Table>
@@ -120,13 +114,19 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useQuery } from '@vue/apollo-composable'
+import { useQuery, useMutation } from '@vue/apollo-composable'
 import { debounce } from 'lodash-es'
 import Table from '~~/components/server-management/Table.vue'
 import ProjectDeleteDialog from '~~/components/server-management/DeleteProjectDialog.vue'
-import Avatar from '~~/components/user/Avatar.vue'
 import { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
+import {
+  convertThrowIntoFetchResult,
+  getCacheId,
+  getFirstErrorMessage,
+  updateCacheByFilter
+} from '~~/lib/common/helpers/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
 import { isProject } from '~~/lib/server-management/helpers/utils'
@@ -162,15 +162,23 @@ const getProjects = graphql(`
           }
           team {
             user {
-              avatar
               name
               id
+              avatar
             }
           }
         }
         totalCount
         cursor
       }
+    }
+  }
+`)
+
+const adminDeleteProject = graphql(`
+  mutation AdminPanelDeleteProject($deleteId: String!) {
+    projectMutations {
+      delete(id: $deleteId)
     }
   }
 `)
@@ -195,6 +203,9 @@ const moreToLoad = computed(
 )
 
 const projects = computed(() => extraPagesResult.value?.admin.projectList.items || [])
+const { triggerNotification } = useGlobalToast()
+
+const { mutate: adminDeleteMutation } = useMutation(adminDeleteProject)
 
 const openProjectDeleteDialog = (item: ItemType) => {
   if (isProject(item)) {
@@ -213,6 +224,67 @@ const handleSearchChange = (newSearchString: string) => {
 
 const handleProjectClick = (item: ItemType) => {
   router.push(`/projects/${item.id}`)
+}
+
+const deleteConfirmed = async () => {
+  const projectId = projectToModify.value?.id
+  if (!projectId) {
+    return
+  }
+
+  const result = await adminDeleteMutation(
+    {
+      deleteId: projectId
+    },
+    {
+      update: (cache, { data }) => {
+        if (data?.projectMutations.delete) {
+          // Remove item from cache
+          cache.evict({
+            id: getCacheId('AdminUserListItem', projectId)
+          })
+
+          // Update list
+          updateCacheByFilter(
+            cache,
+            { query: { query: getProjects, variables: resultVariables.value } },
+            (data) => {
+              const newItems = data.admin.projectList.items.filter(
+                (item) => item.id !== projectId
+              )
+              return {
+                ...data,
+                admin: {
+                  ...data.admin,
+                  projectList: {
+                    ...data.admin.projectList,
+                    items: newItems,
+                    totalCount: Math.max(0, data.admin.projectList.totalCount - 1)
+                  }
+                }
+              }
+            }
+          )
+        }
+      }
+    }
+  ).catch(convertThrowIntoFetchResult)
+
+  if (result?.data?.projectMutations.delete) {
+    closeProjectDeleteDialog()
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Project deleted',
+      description: 'The project has been successfully deleted'
+    })
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Failed to delete project',
+      description: errorMessage
+    })
+  }
 }
 
 const {

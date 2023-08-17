@@ -8,35 +8,21 @@
       ></HeaderNavLink>
     </Portal>
 
-    <div
-      class="flex flex-col md:flex-row space-y-2 space-x-2 justify-between mb-4 md:items-center h-8"
-    >
-      <div>
-        <h5 class="h4 font-bold">Pending Invitations</h5>
-      </div>
-    </div>
+    <h1 class="h4 font-bold mb-4">Pending Invitations</h1>
 
-    <div class="flex items-center gap-8 h-10">
-      <FormTextInput
-        v-model="searchString"
-        size="lg"
-        name="search"
-        :custom-icon="MagnifyingGlassIcon"
-        color="foundation"
-        full-width
-        search
-        :show-clear="!!searchString"
-        placeholder="Search Users"
-        class="rounded-md border border-outline-3"
-      />
-      <div class="flex items-center gap-2 text-foreground text-sm shrink-0">
-        <span class="shrink-0">1-50 of 350</span>
-        <div class="flex gap-1">
-          <ChevronLeftIcon class="h-8 w-8" />
-          <ChevronRightIcon class="h-8 w-8" />
-        </div>
-      </div>
-    </div>
+    <FormTextInput
+      size="lg"
+      name="search"
+      :custom-icon="MagnifyingGlassIcon"
+      color="foundation"
+      full-width
+      search
+      :show-clear="!!searchString"
+      placeholder="Search Invitations"
+      class="rounded-md border border-outline-3"
+      @update:model-value="debounceSearchUpdate"
+      @change="handleSearchChange"
+    />
 
     <Table
       class="mt-8"
@@ -45,7 +31,7 @@
         { id: 'invitedBy', title: 'Invited By' },
         { id: 'resend', title: '' }
       ]"
-      :items="users"
+      :items="invites"
       :buttons="[
         { icon: TrashIcon, label: 'Delete', action: openDeleteInvitationDialog }
       ]"
@@ -56,17 +42,13 @@
       }"
     >
       <template #email="{ item }">
-        {{ item.email }}
+        {{ isInvite(item) ? item.email : '' }}
       </template>
 
       <template #invitedBy="{ item }">
-        <div class="flex items-center gap-2">
-          <img
-            :src="item.profilePicture"
-            :alt="'Profile picture of ' + item.invitedBy.name"
-            class="w-6 h-6 rounded-full"
-          />
-          {{ item.invitedBy.name }}
+        <div class="flex items-center gap-2 py-1">
+          <Avatar v-if="isInvite(item)" :user="item.invitedBy" />
+          {{ isInvite(item) ? item.invitedBy.name : '' }}
         </div>
       </template>
 
@@ -98,172 +80,120 @@
         }
       ]"
     />
+
+    <InfiniteLoading
+      :settings="{ identifier: infiniteLoaderId }"
+      class="py-4"
+      @infinite="infiniteLoad"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import {
-  MagnifyingGlassIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon
-} from '@heroicons/vue/20/solid'
+import { ref } from 'vue'
+import { useQuery } from '@vue/apollo-composable'
+import { debounce } from 'lodash-es'
 import Table from '~~/components/server-management/Table.vue'
-import DeleteInvitationDialog from '~~/components/server-management/DeleteInvitationDialog.vue'
-import { User } from '~~/lib/common/generated/gql/graphql'
-import { FormButton } from '@speckle/ui-components'
-import { TrashIcon } from '@heroicons/vue/24/outline'
-import { Nullable } from '@speckle/shared'
-import { UserItem } from '~~/lib/server-management/helpers/types'
+import Avatar from '~~/components/user/Avatar.vue'
+import { ItemType, InviteItem } from '~~/lib/server-management/helpers/types'
+import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import { graphql } from '~~/lib/common/generated/gql'
+import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
+import { isInvite } from '~~/lib/server-management/helpers/utils'
+
+const getInvites = graphql(`
+  query AdminPanelInvitesList($limit: Int!, $cursor: String, $query: String) {
+    admin {
+      inviteList(limit: $limit, cursor: $cursor, query: $query) {
+        cursor
+        items {
+          email
+          id
+          invitedBy {
+            id
+            name
+          }
+        }
+        totalCount
+      }
+    }
+  }
+`)
+
+const logger = useLogger()
 
 definePageMeta({
   middleware: ['admin']
 })
 
-const userToModify: Ref<Nullable<UserItem>> = ref(null)
-
-const openDeleteInvitationDialog = (user: User) => {
-  userToModify.value = user
-  showDeleteInvitationDialog.value = true
-}
-
-const closeDeleteInvitationDialog = () => {
-  userToModify.value = null
-  showDeleteInvitationDialog.value = false
-}
-
-const deleteConfirmed = () => {
-  // Implement actual delete logic here
-  console.log('Deleting user:', userToModify.value)
-  showDeleteInvitationDialog.value = false
-  userToModify.value = null
-}
-
-const resendInvitation = (item) => {
-  console.log(item)
-}
-
+const inviteToModify = ref<InviteItem | null>(null)
+const searchString = ref('')
 const showDeleteInvitationDialog = ref(false)
+const infiniteLoaderId = ref('')
 
-const users: User[] = [
-  {
-    id: '1',
-    invitedBy: 'John Doe',
-    profilePicture: 'https://randomuser.me/api/portraits/men/75.jpg',
-    email: 'johndoe@example.com'
-  },
-  {
-    id: '2',
-    invitedBy: 'Jane Doe',
-    profilePicture: 'https://randomuser.me/api/portraits/women/75.jpg',
-    email: 'janedoe@example.com'
-  },
-  {
-    id: '3',
-    invitedBy: 'Bob Smith',
-    profilePicture: 'https://randomuser.me/api/portraits/men/76.jpg',
-    email: 'bobsmith@example.com'
-  },
-  {
-    id: '4',
-    invitedBy: 'Alice Johnson',
-    profilePicture: 'https://randomuser.me/api/portraits/women/76.jpg',
-    email: 'alicejohnson@example.com'
-  },
-  {
-    id: '5',
-    invitedBy: 'David Lee',
-    profilePicture: 'https://randomuser.me/api/portraits/men/77.jpg',
-    email: 'davidlee@example.com'
-  },
-  {
-    id: '6',
-    invitedBy: 'Samantha Brown',
-    profilePicture: 'https://randomuser.me/api/portraits/women/77.jpg',
-    email: 'samanthabrown@example.com'
-  },
-  {
-    id: '7',
-    invitedBy: 'Mike Johnson',
-    profilePicture: 'https://randomuser.me/api/portraits/men/78.jpg',
-    email: 'mikejohnson@example.com'
-  },
-  {
-    id: '8',
-    invitedBy: 'Emily Davis',
-    profilePicture: 'https://randomuser.me/api/portraits/women/78.jpg',
-    email: 'emilydavis@example.com'
-  },
-  {
-    id: '9',
-    invitedBy: 'Steven Chen',
-    profilePicture: 'https://randomuser.me/api/portraits/men/79.jpg',
-    email: 'stevenchen@example.com'
-  },
-  {
-    id: '10',
-    invitedBy: 'Grace Kim',
-    profilePicture: 'https://randomuser.me/api/portraits/women/79.jpg',
-    email: 'gracekim@example.com'
-  },
-  {
-    id: '11',
-    invitedBy: 'Andrew Nguyen',
-    profilePicture: 'https://randomuser.me/api/portraits/men/80.jpg',
-    email: 'andrenguyen@example.com'
-  },
-  {
-    id: '12',
-    invitedBy: 'Jessica Lee',
-    profilePicture: 'https://randomuser.me/api/portraits/women/80.jpg',
-    email: 'jessicalee@example.com'
-  },
-  {
-    id: '13',
-    invitedBy: 'Tom Wilson',
-    profilePicture: 'https://randomuser.me/api/portraits/men/81.jpg',
-    email: 'tomwilson@example.com'
-  },
-  {
-    id: '14',
-    invitedBy: 'Olivia Clark',
-    profilePicture: 'https://randomuser.me/api/portraits/women/81.jpg',
-    email: 'oliviaclark@example.com'
-  },
-  {
-    id: '15',
-    invitedBy: 'William Davis',
-    profilePicture: 'https://randomuser.me/api/portraits/men/82.jpg',
-    email: 'williamdavis@example.com'
-  },
-  {
-    id: '16',
-    invitedBy: 'Sophia Rodriguez',
-    profilePicture: 'https://randomuser.me/api/portraits/women/82.jpg',
-    email: 'sophiarodriguez@example.com'
-  },
-  {
-    id: '17',
-    invitedBy: 'Daniel Kim',
-    profilePicture: 'https://randomuser.me/api/portraits/men/83.jpg',
-    email: 'danielkim@example.com'
-  },
-  {
-    id: '18',
-    invitedBy: 'Ava Wilson',
-    profilePicture: 'https://randomuser.me/api/portraits/women/83.jpg',
-    email: 'avawilson@example.com'
-  },
-  {
-    id: '19',
-    invitedBy: 'Kevin Lee',
-    profilePicture: 'https://randomuser.me/api/portraits/men/84.jpg',
-    email: 'kevinlee@example.com'
-  },
-  {
-    id: '20',
-    invitedBy: 'Isabella Martinez',
-    profilePicture: 'https://randomuser.me/api/portraits/women/84.jpg',
-    email: 'isabellamartinez@example.com'
+const moreToLoad = computed(
+  () =>
+    !extraPagesResult.value?.admin?.inviteList ||
+    extraPagesResult.value.admin.inviteList.items.length <
+      extraPagesResult.value.admin.inviteList.totalCount
+)
+
+const invites = computed(() => extraPagesResult.value?.admin.inviteList.items || [])
+
+const openDeleteInvitationDialog = (item: ItemType) => {
+  console.log('Trying to open the modal')
+  if (isInvite(item)) {
+    inviteToModify.value = item
+    showDeleteInvitationDialog.value = true
+    console.log('Modal should now be open')
   }
-]
+}
+
+const handleSearchChange = (newSearchString: string) => {
+  searchUpdateHandler(newSearchString)
+}
+
+const {
+  result: extraPagesResult,
+  fetchMore: fetchMorePages,
+  variables: resultVariables,
+  onResult
+} = useQuery(getInvites, () => ({
+  limit: 50,
+  query: searchString.value
+}))
+
+const infiniteLoad = async (state: InfiniteLoaderState) => {
+  const cursor = extraPagesResult.value?.admin?.inviteList.cursor || null
+  if (!moreToLoad.value || !cursor) return state.complete()
+
+  try {
+    await fetchMorePages({
+      variables: {
+        cursor
+      }
+    })
+  } catch (e) {
+    logger.error(e)
+    state.error()
+    return
+  }
+
+  state.loaded()
+  if (!moreToLoad.value) {
+    state.complete()
+  }
+}
+
+const searchUpdateHandler = (value: string) => {
+  searchString.value = value
+}
+
+const debounceSearchUpdate = debounce(searchUpdateHandler, 500)
+
+const calculateLoaderId = () => {
+  infiniteLoaderId.value = resultVariables.value?.query || ''
+}
+
+onResult(calculateLoaderId)
 </script>
