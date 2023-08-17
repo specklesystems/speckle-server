@@ -57,9 +57,7 @@
 
 <script setup lang="ts">
 import { ConcreteComponent, computed } from 'vue'
-import { UserItem, ProjectItem } from '~~/lib/server-management/helpers/types'
-
-type ItemType = UserItem | ProjectItem
+import { ItemType } from '~~/lib/server-management/helpers/types'
 
 type OnRowClickType = (item: ItemType) => void
 

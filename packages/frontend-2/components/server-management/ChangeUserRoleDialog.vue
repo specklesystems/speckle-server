@@ -39,7 +39,7 @@ import { UserItem } from '~~/lib/server-management/helpers/types'
 import { Roles, ServerRoles } from '@speckle/shared'
 import { ArrowLongRightIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 import Avatar from '~~/components/user/Avatar.vue'
-import { getRoleLabel } from '~~/lib/server-management/helpers/roleUtils'
+import { getRoleLabel } from '~~/lib/server-management/helpers/utils'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void

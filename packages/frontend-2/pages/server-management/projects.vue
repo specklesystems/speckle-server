@@ -51,42 +51,44 @@
 
       <template #type="{ item }">
         <div class="lowercase">
-          {{ item.visibility }}
+          {{ isProject(item) ? item.visibility : '' }}
         </div>
       </template>
 
       <template #created="{ item }">
         <div class="font-mono text-xs">
-          {{ new Date(item.createdAt).toLocaleString('en-GB') }}
+          {{ isProject(item) ? new Date(item.createdAt).toLocaleString('en-GB') : '' }}
         </div>
       </template>
 
       <template #modified="{ item }">
         <div class="font-mono text-xs">
-          {{ new Date(item.updatedAt).toLocaleString('en-GB') }}
+          {{ isProject(item) ? new Date(item.updatedAt).toLocaleString('en-GB') : '' }}
         </div>
       </template>
 
       <template #models="{ item }">
         <div class="font-mono text-xs">
-          {{ item.models.totalCount }}
+          {{ isProject(item) ? item.models.totalCount : '' }}
         </div>
       </template>
 
       <template #versions="{ item }">
         <div class="font-mono text-xs">
-          {{ item.versions.totalCount }}
+          {{ isProject(item) ? item.versions.totalCount : '' }}
         </div>
       </template>
 
       <template #contributors="{ item }">
-        <Avatar
-          v-for="(teamMember, index) in item.team"
-          :key="index"
-          :size="small"
-          :user="item.user"
-          class="-mr-2"
-        />
+        <div v-if="isProject(item)" class="py-1">
+          <Avatar
+            v-for="(teamMember, index) in item.team"
+            :key="index"
+            :size="small"
+            :user="teamMember.user"
+            class="-mr-2"
+          />
+        </div>
       </template>
     </Table>
 
@@ -123,10 +125,11 @@ import { debounce } from 'lodash-es'
 import Table from '~~/components/server-management/Table.vue'
 import ProjectDeleteDialog from '~~/components/server-management/DeleteProjectDialog.vue'
 import Avatar from '~~/components/user/Avatar.vue'
-import { Project } from '~~/lib/common/generated/gql/graphql'
+import { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { graphql } from '~~/lib/common/generated/gql'
 import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
+import { isProject } from '~~/lib/server-management/helpers/utils'
 
 const getProjects = graphql(`
   query AdminPanelProjectsList(
@@ -134,6 +137,7 @@ const getProjects = graphql(`
     $orderBy: String
     $limit: Int!
     $visibility: String
+    $cursor: String
   ) {
     admin {
       projectList(
@@ -141,6 +145,7 @@ const getProjects = graphql(`
         orderBy: $orderBy
         limit: $limit
         visibility: $visibility
+        cursor: $cursor
       ) {
         cursor
         items {
@@ -158,11 +163,13 @@ const getProjects = graphql(`
           team {
             user {
               avatar
+              name
               id
             }
           }
         }
         totalCount
+        cursor
       }
     }
   }
@@ -175,7 +182,7 @@ definePageMeta({
   middleware: ['admin']
 })
 
-const projectToModify = ref<Project | null>(null)
+const projectToModify = ref<ProjectItem | null>(null)
 const searchString = ref('')
 const showProjectDeleteDialog = ref(false)
 const infiniteLoaderId = ref('')
@@ -189,9 +196,11 @@ const moreToLoad = computed(
 
 const projects = computed(() => extraPagesResult.value?.admin.projectList.items || [])
 
-const openProjectDeleteDialog = (project: Project) => {
-  projectToModify.value = project
-  showProjectDeleteDialog.value = true
+const openProjectDeleteDialog = (item: ItemType) => {
+  if (isProject(item)) {
+    projectToModify.value = item
+    showProjectDeleteDialog.value = true
+  }
 }
 
 const closeProjectDeleteDialog = () => {
@@ -202,8 +211,8 @@ const handleSearchChange = (newSearchString: string) => {
   searchUpdateHandler(newSearchString)
 }
 
-const handleProjectClick = (project: Project) => {
-  router.push(`/projects/${project.id}`)
+const handleProjectClick = (item: ItemType) => {
+  router.push(`/projects/${item.id}`)
 }
 
 const {

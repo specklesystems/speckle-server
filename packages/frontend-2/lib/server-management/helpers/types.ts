@@ -6,6 +6,8 @@ import {
 import { ConcreteComponent } from 'vue'
 import { MaybeAsync } from '@speckle/shared'
 
+export type ItemType = UserItem | ProjectItem
+
 export type UserItem = NonNullable<
   Get<AdminPanelUsersListQuery, 'admin.userList.items[0]'>
 >

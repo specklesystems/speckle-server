@@ -20,10 +20,7 @@
 <script setup lang="ts">
 import { Roles, ServerRoles } from '@speckle/shared/src/core/constants'
 import { useFormSelectChildInternals } from '~~/lib/form/composables/select'
-import {
-  roleLookupTable,
-  getRoleLabel
-} from '~~/lib/server-management/helpers/roleUtils'
+import { roleLookupTable, getRoleLabel } from '~~/lib/server-management/helpers/utils'
 
 type ValueType = ServerRoles | ServerRoles[] | undefined
 

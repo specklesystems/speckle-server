@@ -78,7 +78,7 @@
         <UserRoleSelect
           :model-value="isUser(item) && item.role"
           @update:model-value="
-            (newRoleValue) => openChangeUserRoleDialog(asUser(item), newRoleValue)
+            (newRoleValue) => openChangeUserRoleDialog(isUser(item), newRoleValue)
           "
         />
       </template>
@@ -159,7 +159,7 @@ import {
   updateCacheByFilter
 } from '~~/lib/common/helpers/graphql'
 import { useLogger } from '~~/composables/logging'
-import { isUser } from '~~/lib/server-management/helpers/roleUtils'
+import { isUser } from '~~/lib/server-management/helpers/utils'
 
 definePageMeta({
   middleware: ['admin']

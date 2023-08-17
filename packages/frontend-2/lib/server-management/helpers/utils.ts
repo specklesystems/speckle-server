@@ -15,7 +15,10 @@ export const getRoleLabel = (role: keyof typeof roleLookupTable) => {
 
 export const isUser = (val: UserItem | ProjectItem): val is UserItem => {
   if (has(val, 'id')) return true
-  throw new Error(
-    'Unexpectedly item is not a user item! Wtf, we are in active-users.vue how did this happen?'
-  )
+  throw new Error('Unexpectedly item is not a user!')
+}
+
+export const isProject = (val: UserItem | ProjectItem): val is ProjectItem => {
+  if (has(val, 'id')) return true
+  throw new Error('Unexpectedly item is not a project!')
 }
