@@ -532,8 +532,8 @@ export default class MeshBatch implements Batch {
     )
 
     this.mesh = new SpeckleMesh(this.geometry)
-    this.mesh.setBatchMaterial(this.batchMaterial)
     this.mesh.setBatchObjects(batchObjects, this.transformStorage)
+    this.mesh.setBatchMaterial(this.batchMaterial)
     this.mesh.buildBVH()
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)

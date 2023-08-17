@@ -5,7 +5,6 @@ import { speckleBasicFrag } from './shaders/speckle-basic-frag'
 import { ShaderLib, Vector3, Material, IUniform, Vector2 } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
-import SpeckleMesh from '../objects/SpeckleMesh'
 
 import { ExtendedMeshBasicMaterial, Uniforms } from './SpeckleMaterial'
 
@@ -106,9 +105,6 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
 
     this.userData.uViewer_low.value.copy(SpeckleBasicMaterial.vecBuff1)
     this.userData.uViewer_high.value.copy(SpeckleBasicMaterial.vecBuff2)
-
-    if (object instanceof SpeckleMesh)
-      (object as SpeckleMesh).updateMaterialTransformsUniform(this)
 
     this.needsUpdate = true
   }

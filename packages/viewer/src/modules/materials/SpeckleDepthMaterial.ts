@@ -3,9 +3,7 @@
 import { speckleDepthVert } from './shaders/speckle-depth-vert'
 import { speckleDepthFrag } from './shaders/speckle-depth-frag'
 import { ShaderLib, Vector3, IUniform } from 'three'
-import { Matrix4 } from 'three'
-import { Geometry } from '../converter/Geometry'
-import SpeckleMesh from '../objects/SpeckleMesh'
+import { Matrix4, Material } from 'three'
 import { ExtendedMeshDepthMaterial, Uniforms } from './SpeckleMaterial'
 
 class SpeckleDepthMaterial extends ExtendedMeshDepthMaterial {
@@ -55,6 +53,12 @@ class SpeckleDepthMaterial extends ExtendedMeshDepthMaterial {
     return this
   }
 
+  public fastCopy(from: Material, to: Material) {
+    super.fastCopy(from, to)
+    to.userData.near.value = from.userData.near.value
+    to.userData.far.value = from.userData.far.value
+  }
+
   /** Another note here, this will NOT get called by three when rendering shadowmaps. We update the uniforms manually
    * inside SpeckleRenderer for shadowmaps
    */
@@ -63,10 +67,6 @@ class SpeckleDepthMaterial extends ExtendedMeshDepthMaterial {
     this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
     this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
     this.userData.rteModelViewMatrix.value.copy(_this.RTEBuffers.rteViewModelMatrix)
-
-    if (object instanceof SpeckleMesh) {
-      ;(object as SpeckleMesh).updateMaterialTransformsUniform(this)
-    }
 
     this.needsUpdate = true
   }

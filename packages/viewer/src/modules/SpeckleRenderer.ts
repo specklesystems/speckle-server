@@ -59,6 +59,7 @@ import Materials, {
 } from './materials/Materials'
 import { SpeckleMaterial } from './materials/SpeckleMaterial'
 import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
+import Logger from 'js-logger'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -495,12 +496,22 @@ export default class SpeckleRenderer {
     if (/*this.viewer.cameraHandler.controls.hasRested ||*/ force) this.pipeline.reset()
   }
 
+  private renderTimeAcc = 0
+  private renderTimeSamples = 0
   public render(): void {
     if (!this._cameraProvider) return
     if (this._needsRender || this.pipeline.needsAccumulation) {
+      const start = performance.now()
       this.batcher.render(this.renderer)
       this._needsRender = this.pipeline.render()
       // this._needsRender = true
+      this.renderTimeAcc += performance.now() - start
+      this.renderTimeSamples++
+      if (this.renderTimeSamples % 500 === 0) {
+        Logger.log('Avrg Render Time -> ', this.renderTimeAcc / this.renderTimeSamples)
+        this.renderTimeSamples = 0
+        this.renderTimeAcc = 0
+      }
       if (this.sunConfiguration.shadowcatcher) {
         this._shadowcatcher.render(this._renderer)
       }

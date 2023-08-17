@@ -4,8 +4,6 @@ import { speckleStandardVert } from './shaders/speckle-standard-vert'
 import { speckleStandardFrag } from './shaders/speckle-standard-frag'
 import { ShaderLib, Vector3, Material, IUniform } from 'three'
 import { Matrix4 } from 'three'
-import { Geometry } from '../converter/Geometry'
-import SpeckleMesh from '../objects/SpeckleMesh'
 import { ExtendedMeshStandardMaterial, Uniforms } from './SpeckleMaterial'
 import { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
 
@@ -95,8 +93,6 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
       this.userData.uShadowViewer_low.value.copy(_this.RTEBuffers.shadowViewerLow)
       this.userData.uShadowViewer_high.value.copy(_this.RTEBuffers.shadowViewerHigh)
     }
-    if (object instanceof SpeckleMesh)
-      (object as SpeckleMesh).updateMaterialTransformsUniform(this)
 
     this.needsUpdate = true
   }

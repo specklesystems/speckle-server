@@ -13,9 +13,11 @@ import {
   CameraController,
   SectionTool,
   SectionOutlines,
-  MeasurementsExtension
+  MeasurementsExtension,
+  CameraControllerEvent
 } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
+import { Vector3 } from '@speckle/viewer'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -70,6 +72,16 @@ const createViewer = async (containerName: string, stream: string) => {
   viewer.on(ViewerEvent.LoadComplete, () => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
+    const polar = {
+      azimuth: 0.001,
+      polar: 0,
+      radius: 100,
+      origin: new Vector3()
+    }
+    cameraController.on(CameraControllerEvent.FrameUpdate, () => {
+      // polar.azimuth += 0.001
+      cameraController.setCameraView(polar, false)
+    })
     sandbox.refresh()
   })
 

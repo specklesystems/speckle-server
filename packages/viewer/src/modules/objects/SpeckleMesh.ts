@@ -110,17 +110,15 @@ export default class SpeckleMesh extends Mesh {
 
   public setOverrideMaterial(material: Material) {
     this.materialStack.push(this.material)
-    if (!this.materialCache[material.id]) {
-      this.materialCache[material.id] = material.clone()
-    }
-    this.materialCache[material.id].copy(material)
-    this.material = this.materialCache[material.id]
+
+    this.material = this.getCachedMaterial(material, true)
     this.material.needsUpdate = true
   }
 
   public getCachedMaterial(material: Material, copy = false) {
     if (!this.materialCache[material.id]) {
       this.materialCache[material.id] = material.clone()
+      this.updateMaterialTransformsUniform(this.materialCache[material.id])
     } else if (copy) {
       Materials.fastCopy(material, this.materialCache[material.id])
     }

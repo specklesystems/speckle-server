@@ -38,6 +38,7 @@ import { Units } from './modules/converter/Units'
 import { SelectionExtension } from './modules/extensions/SelectionExtension'
 import { CameraController } from './modules/extensions/core-extensions/CameraController'
 import {
+  CameraControllerEvent,
   CanonicalView,
   ICameraProvider,
   InlineView
@@ -65,7 +66,8 @@ export {
   SectionTool,
   SectionOutlines,
   MeasurementsExtension,
-  FilteringExtension
+  FilteringExtension,
+  CameraControllerEvent
 }
 
 export type {
