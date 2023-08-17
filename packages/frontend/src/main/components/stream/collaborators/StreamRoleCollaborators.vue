@@ -49,7 +49,6 @@
 </template>
 <script lang="ts">
 import {
-  Role,
   StreamWithCollaboratorsQuery,
   StreamCollaborator
 } from '@/graphql/generated/graphql'
@@ -57,8 +56,13 @@ import Vue, { PropType } from 'vue'
 import type { Get } from 'type-fest'
 import StreamCollaboratorRow from '@/main/components/stream/collaborators/StreamCollaboratorRow.vue'
 import SectionCard from '@/main/components/common/SectionCard.vue'
-import { Roles } from '@/helpers/mainConstants'
 import StreamPendingCollaboratorRow from '@/main/components/stream/collaborators/StreamPendingCollaboratorRow.vue'
+import { Roles } from '@speckle/shared'
+
+type RoleItem = {
+  name: string
+  description: string
+}
 
 export default Vue.extend({
   name: 'StreamRoleCollaborators',
@@ -73,7 +77,7 @@ export default Vue.extend({
       required: true
     },
     roles: {
-      type: Array as PropType<Role[]>,
+      type: Array as PropType<RoleItem[]>,
       required: true
     },
     stream: {
@@ -84,7 +88,7 @@ export default Vue.extend({
     }
   },
   computed: {
-    role(): Role {
+    role(): RoleItem {
       const role = this.roles.find((r) => r.name === this.roleName)
       if (!role) {
         throw new Error('Invalid role name provided')

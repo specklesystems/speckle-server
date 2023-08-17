@@ -111,11 +111,12 @@ import {
 import {
   DeleteInviteDocument,
   ResendInviteDocument,
-  AdminUsersListDocument
+  AdminUsersListDocument,
+  AvailableServerRolesDocument
 } from '@/graphql/generated/graphql'
 import SectionCard from '@/main/components/common/SectionCard.vue'
 import UsersListItem from '@/main/components/admin/UsersListItem.vue'
-import { Roles } from '@/helpers/mainConstants'
+import { RoleInfo, Roles } from '@speckle/shared'
 import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 
 // TODO: This needs a redesign, it's pretty unusable on small screens
@@ -140,12 +141,7 @@ export default {
   },
   data() {
     return {
-      roleLookupTable: {
-        [Roles.Server.User]: 'User',
-        [Roles.Server.Admin]: 'Admin',
-        [Roles.Server.ArchivedUser]: 'Archived',
-        [Roles.Server.Guest]: 'Guest'
-      },
+      roleLookupTable: RoleInfo.Server,
       adminUsers: {
         items: [],
         totalCount: 0
@@ -183,11 +179,14 @@ export default {
       return Math.ceil(this.adminUsers.totalCount / this.limit)
     },
     availableRoles() {
-      const roleItems = []
-      for (const role in this.roleLookupTable) {
-        roleItems.push({ text: this.roleLookupTable[role], value: role })
-      }
-      return roleItems
+      const isGuestEnabled = this.serverInfo?.guestModeEnabled
+      const allRoles = Object.values(Roles.Server).map((r) => ({
+        text: RoleInfo.Server[r],
+        value: r,
+        disabled: !isGuestEnabled && r === Roles.Server.Guest
+      }))
+
+      return allRoles
     }
   },
   methods: {
@@ -328,6 +327,9 @@ export default {
           query: this.q
         }
       }
+    },
+    serverInfo: {
+      query: AvailableServerRolesDocument
     }
   }
 }

@@ -88,6 +88,11 @@ export default {
           label: 'Invite-Only mode',
           hint: 'Only users with an invitation will be able to join',
           type: 'boolean'
+        },
+        guestModeEnabled: {
+          label: 'Guest mode',
+          hint: "Enable the 'Guest' role, which allows users to only contribute to streams that they're invited to",
+          type: 'boolean'
         }
       }
     }
@@ -106,6 +111,7 @@ export default {
   methods: {
     async saveEdit() {
       this.loading = true
+      const changes = pick(this.serverModifications, Object.keys(this.serverDetails))
       await this.$apollo.mutate({
         mutation: gql`
           mutation ($info: ServerInfoUpdateInput!) {
@@ -113,10 +119,21 @@ export default {
           }
         `,
         variables: {
-          info: pick(this.serverModifications, Object.keys(this.serverDetails))
+          info: changes
+        },
+        update: (cache) => {
+          cache.writeQuery({
+            query: mainServerInfoQuery,
+            data: {
+              serverInfo: {
+                ...this.serverInfo,
+                ...changes
+              }
+            }
+          })
         }
       })
-      await this.$apollo.queries['serverInfo'].refetch()
+      // await this.$apollo.queries['serverInfo'].refetch()
       this.loading = false
     }
   }

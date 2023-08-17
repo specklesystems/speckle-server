@@ -66,17 +66,18 @@
                   </template>
 
                   <!-- Users found -->
-                  <basic-user-info-row
-                    v-for="user in filteredSearchResults"
-                    v-else
-                    :key="user.id"
-                    :user="user"
-                    @click="showUserInviteDialog(user)"
-                  >
-                    <template #actions>
-                      <v-btn color="primary">Invite</v-btn>
-                    </template>
-                  </basic-user-info-row>
+                  <template v-else>
+                    <basic-user-info-row
+                      v-for="user in filteredSearchResults"
+                      :key="user.id"
+                      :user="user"
+                      @click="showUserInviteDialog(user)"
+                    >
+                      <template #actions>
+                        <v-btn color="primary">Invite</v-btn>
+                      </template>
+                    </basic-user-info-row>
+                  </template>
                 </v-list>
               </v-card-text>
               <invite-dialog
@@ -154,7 +155,7 @@ import {
   UpdateStreamPermissionDocument
 } from '@/graphql/generated/graphql'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
-import { Roles } from '@/helpers/mainConstants'
+import { Roles, RoleInfo } from '@speckle/shared'
 import LeaveStreamPanel from '@/main/components/stream/collaborators/LeaveStreamPanel.vue'
 import { IsLoggedInMixin } from '@/main/lib/core/mixins/isLoggedInMixin'
 import { vueWithMixins } from '@/helpers/typeHelpers'
@@ -238,22 +239,10 @@ export default vueWithMixins(IsLoggedInMixin).extend({
       return this.$route.params.streamId
     },
     roles() {
-      if (this.serverInfo.roles.length === 0) return []
-      const temp = this.serverInfo.roles.filter((x) => x.resourceTarget === 'streams')
-      const ret = [null, null, null]
-      // World's most idiotic way of enforcing order
-      for (const role of temp) {
-        if (role.name === 'stream:owner') {
-          ret[0] = role
-        } else if (role.name === 'stream:contributor') {
-          ret[1] = role
-        } else if (role.name === 'stream:reviewer') {
-          ret[2] = role
-        } else {
-          ret.push(role)
-        }
-      }
-      return ret
+      return Object.values(Roles.Stream).map((r) => ({
+        name: r,
+        description: RoleInfo.Stream[r].description
+      }))
     },
     collaborators() {
       if (!this.stream) return []
@@ -261,15 +250,17 @@ export default vueWithMixins(IsLoggedInMixin).extend({
     },
     reviewers() {
       if (!this.stream) return []
-      return this.stream.collaborators.filter((u) => u.role === 'stream:reviewer')
+      return this.stream.collaborators.filter((u) => u.role === Roles.Stream.Reviewer)
     },
     contributors() {
       if (!this.stream) return []
-      return this.stream.collaborators.filter((u) => u.role === 'stream:contributor')
+      return this.stream.collaborators.filter(
+        (u) => u.role === Roles.Stream.Contributor
+      )
     },
     owners() {
       if (!this.stream) return []
-      return this.stream.collaborators.filter((u) => u.role === 'stream:owner')
+      return this.stream.collaborators.filter((u) => u.role === Roles.Stream.Owner)
     },
     pendingAccessRequests() {
       return this.stream?.pendingAccessRequests

@@ -28,7 +28,7 @@
           <span v-else class="font-italic">No description provided</span>
         </div>
         <router-link
-          v-if="stream.role === 'stream:owner'"
+          v-if="stream.role === streamRoles.Owner"
           :to="`/streams/${$route.params.streamId}/settings`"
           class="text-decoration-none"
         >
@@ -55,7 +55,7 @@
         </template>
         <!-- <v-divider class="mb-1"></v-divider> -->
         <v-list-item
-          v-if="stream.role !== 'stream:reviewer'"
+          v-if="stream.role !== streamRoles.Reviewer"
           v-tooltip.bottom="'Create a new branch to help categorise your commits.'"
           link
           @click="newBranchDialog = true"
@@ -226,6 +226,7 @@ import {
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import { useRoute } from '@/main/lib/core/composables/router'
 import { useAllStreamBranches } from '@/main/lib/stream/composables/branches'
+import { Roles } from '@speckle/shared'
 
 export default {
   components: {
@@ -247,7 +248,8 @@ export default {
       localBranches,
       refetchBranches,
       totalBranchCount,
-      loading: branchesLoading
+      loading: branchesLoading,
+      streamRoles: Roles.Stream
     }
   },
   data() {

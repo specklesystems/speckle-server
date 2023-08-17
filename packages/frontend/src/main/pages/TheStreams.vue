@@ -94,6 +94,7 @@ import StreamPreviewCard from '@/main/components/common/StreamPreviewCard.vue'
 import NoDataPlaceholder from '@/main/components/common/NoDataPlaceholder.vue'
 import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
+import { Roles } from '@speckle/shared'
 
 export default {
   name: 'TheStreams',
@@ -129,7 +130,8 @@ export default {
   data() {
     return {
       streamFilter: 1,
-      infiniteId: 0
+      infiniteId: 0,
+      streamRoles: Roles.Stream
     }
   },
   computed: {
@@ -137,11 +139,11 @@ export default {
       if (!this.streams) return []
       if (this.streamFilter === 1) return this.streams.items
       if (this.streamFilter === 2)
-        return this.streams.items.filter((s) => s.role === 'stream:owner')
+        return this.streams.items.filter((s) => s.role === this.streamRoles.Owner)
       if (this.streamFilter === 3)
-        return this.streams.items.filter((s) => s.role === 'stream:contributor')
+        return this.streams.items.filter((s) => s.role === this.streamRoles.Contributor)
       if (this.streamFilter === 4)
-        return this.streams.items.filter((s) => s.role === 'stream:reviewer')
+        return this.streams.items.filter((s) => s.role === this.streamRoles.Reviewer)
       return this.streams.items
     },
     /**
@@ -169,9 +171,9 @@ export default {
     },
     checkFilter(role) {
       if (this.streamFilter === 1) return true
-      if (this.streamFilter === 2 && role === 'stream:owner') return true
-      if (this.streamFilter === 3 && role === 'stream:contributor') return true
-      if (this.streamFilter === 4 && role === 'stream:reviewer') return true
+      if (this.streamFilter === 2 && role === this.streamRoles.Owner) return true
+      if (this.streamFilter === 3 && role === this.streamRoles.Contributor) return true
+      if (this.streamFilter === 4 && role === this.streamRoles.Reviewer) return true
       return false
     },
     async infiniteHandler($state) {
