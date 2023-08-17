@@ -106,7 +106,6 @@ export class SketchupBridge extends BaseBridge {
       hostApp: 'sketchup',
       message: message || 'send from sketchup'
     }
-
     this.emit('createVersion', args as unknown as string)
   }
 

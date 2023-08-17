@@ -2536,11 +2536,26 @@ export type VersionCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type VersionCreateInput = {
+  message?: InputMaybe<Scalars['String']>;
+  modelId: Scalars['String'];
+  objectId: Scalars['String'];
+  projectId: Scalars['String'];
+  sourceApplication?: InputMaybe<Scalars['String']>;
+  totalChildrenCount?: InputMaybe<Scalars['Int']>;
+};
+
 export type VersionMutations = {
   __typename?: 'VersionMutations';
+  create: Version;
   delete: Scalars['Boolean'];
   moveToModel: Model;
   update: Version;
+};
+
+
+export type VersionMutationsCreateArgs = {
+  input: VersionCreateInput;
 };
 
 

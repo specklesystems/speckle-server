@@ -37,9 +37,9 @@
         <template v-for="model in project.senders" :key="model.modelId">
           <CommonModelSender :model="model" :project="project" />
         </template>
-        <template v-for="model in project.senders" :key="model.modelId + 'ddd'">
+        <!-- <template v-for="model in project.senders" :key="model.modelId + 'ddd'">
           <CommonModelSender :model="model" :project="project" />
-        </template>
+        </template> -->
         <div>
           <button
             class="flex w-full text-xs text-center justify-center bg-primary-muted hover:bg-primary hover:text-foreground-on-primary transition rounded-md py-2"

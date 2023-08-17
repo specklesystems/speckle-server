@@ -1,10 +1,10 @@
 import { ApolloClient } from '@apollo/client/core'
 import {
-  CommitCreateInput,
+  VersionCreateInput,
   ProjectCreateInput
 } from '~~/lib/common/generated/gql/graphql'
 import {
-  createCommitMutation,
+  createVersionMutation,
   createProjectMutation,
   createModelMutation,
   projectDetailsQuery,
@@ -23,12 +23,12 @@ function getValidOrDefaultAccount(
   throw new Error(`Failed to find a valid account for id ${clientId}`)
 }
 
-export function useCreateCommit(clientId: string | undefined = undefined) {
-  return async (commit: CommitCreateInput) => {
+export function useCreateVersion(clientId: string | undefined = undefined) {
+  return async (version: VersionCreateInput) => {
     const client = getValidOrDefaultAccount(clientId)
     const res = await client.mutate({
-      mutation: createCommitMutation,
-      variables: { commit }
+      mutation: createVersionMutation,
+      variables: { version }
     })
     return res
   }

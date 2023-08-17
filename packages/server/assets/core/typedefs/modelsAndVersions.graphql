@@ -156,10 +156,20 @@ input UpdateVersionInput {
   message: String
 }
 
+input VersionCreateInput {
+  projectId: String!
+  modelId: String!
+  objectId: String!
+  message: String
+  sourceApplication: String
+  totalChildrenCount: Int
+}
+
 type VersionMutations {
   moveToModel(input: MoveVersionsInput!): Model!
   delete(input: DeleteVersionsInput!): Boolean!
   update(input: UpdateVersionInput!): Version!
+  create(input: VersionCreateInput!): Version!
 }
 
 extend type Mutation {

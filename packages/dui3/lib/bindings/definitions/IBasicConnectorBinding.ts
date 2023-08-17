@@ -46,12 +46,6 @@ export interface IModelCard extends IDiscriminatedObject {
 
 export type ModelCardTypeDiscriminators = 'SenderModelCard' | 'ReceiverModelCard'
 
-export interface ISenderModelCard extends IModelCard {
-  typeDiscriminator: 'SenderModelCard'
-  sendFilter: ISendFilter
-  expired?: boolean
-}
-
 export interface IReceiverModelCard extends IModelCard {
   typeDiscriminator: 'ReceiverModelCard'
   todo: string
