@@ -8,7 +8,7 @@
       </p>
       <div v-if="user && newRole && oldRole" class="flex flex-col gap-3">
         <div class="flex items-center gap-2">
-          <Avatar :user="user" />
+          <UserAvatar :user="user" />
           {{ user.name }}
         </div>
         <div class="flex gap-2 items-center">
@@ -38,7 +38,6 @@ import { LayoutDialog } from '@speckle/ui-components'
 import { UserItem } from '~~/lib/server-management/helpers/types'
 import { Roles, ServerRoles } from '@speckle/shared'
 import { ArrowLongRightIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
-import Avatar from '~~/components/user/Avatar.vue'
 import { getRoleLabel } from '~~/lib/server-management/helpers/utils'
 
 const emit = defineEmits<{

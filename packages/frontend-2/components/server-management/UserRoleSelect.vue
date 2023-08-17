@@ -24,10 +24,16 @@ import { roleLookupTable, getRoleLabel } from '~~/lib/server-management/helpers/
 
 type ValueType = ServerRoles | ServerRoles[] | undefined
 
-const props = defineProps<{
-  modelValue?: ValueType
-  multiple?: boolean
-}>()
+const props = defineProps({
+  modelValue: {
+    type: [String, Array, null],
+    default: () => null
+  },
+  multiple: {
+    type: Boolean,
+    default: false
+  }
+})
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ValueType): void

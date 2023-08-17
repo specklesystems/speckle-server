@@ -7,7 +7,7 @@
         the selected user?
       </p>
       <div v-if="user" class="flex items-center gap-2">
-        <Avatar :user="user" />
+        <UserAvatar :user="user" />
         {{ user.name }}
       </div>
       <p>
@@ -23,7 +23,6 @@
 import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
 import { UserItem } from '~~/lib/server-management/helpers/types'
-import Avatar from '~~/components/user/Avatar.vue'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void

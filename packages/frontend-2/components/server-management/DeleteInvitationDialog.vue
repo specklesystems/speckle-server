@@ -2,16 +2,15 @@
   <LayoutDialog v-model:open="isOpen" max-width="sm" :title="title" :buttons="buttons">
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <p>Are you sure you want to delete the selected invitation?</p>
-      <div v-if="user" class="flex">
-        <div class="flex flex-col pr-2 gap-2">
-          <span>Email:</span>
-          <span>Invited by:</span>
+      <div v-if="invite" class="flex flex-col gap-2">
+        <div class="flex gap-1">
+          <div class="w-20">Email:</div>
+          <strong>{{ invite?.email }}</strong>
         </div>
-        <div class="flex flex-col gap-2">
-          <strong>{{ user?.email }}</strong>
-          <div class="flex items-center gap-2">
-            {{ user.invitedBy.name }}
-          </div>
+        <div class="flex items-center gap-1">
+          <div class="w-20">Invited by:</div>
+          <UserAvatar :user="invite.invitedBy" />
+          {{ invite.invitedBy.name }}
         </div>
       </div>
 
