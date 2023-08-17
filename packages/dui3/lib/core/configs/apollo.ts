@@ -250,6 +250,7 @@ function createWsClient(params: {
 
   return new SubscriptionClient(wsEndpoint, {
     reconnect: true,
+    reconnectionAttempts: 3,
     connectionParams: () => {
       const token = authToken()
       const Authorization = token?.length ? `Bearer ${token}` : null

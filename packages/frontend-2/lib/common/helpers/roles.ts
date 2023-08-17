@@ -26,5 +26,7 @@ export function mapServerRoleToValue(graphqlServerRole: ServerRole): ServerRoles
       return Roles.Server.Admin
     case ServerRole.ServerArchivedUser:
       return Roles.Server.ArchivedUser
+    case ServerRole.ServerGuest:
+      return Roles.Server.Guest
   }
 }

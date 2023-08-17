@@ -3,6 +3,7 @@ import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { onProjectVersionsPreviewGeneratedSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { useSubscription } from '@vue/apollo-composable'
+import { useLock } from '~~/lib/common/composables/singleton'
 
 const previewUrlProjectIdRegexp = /\/preview\/([\w\d]+)\//i
 const previewUrlCommitIdRegexp = /\/commits\/([\w\d]+)/i
@@ -62,12 +63,15 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
     return val
   })
 
+  const { hasLock } = useLock(
+    computed(() => `useProjectModelUpdateTracking-${unref(previewUrl) || ''}`)
+  )
   const { onResult: onProjectPreviewGenerated } = useSubscription(
     onProjectVersionsPreviewGeneratedSubscription,
     () => ({
       id: projectId.value || ''
     }),
-    () => ({ enabled: !!projectId.value })
+    () => ({ enabled: !!projectId.value && hasLock.value })
   )
 
   onProjectPreviewGenerated((res) => {

@@ -131,3 +131,9 @@ export function mapServerRoleToValue(graphqlServerRole: ServerRole): ServerRoles
       return Roles.Server.Guest
   }
 }
+
+export type ServerInviteGraphQLReturnType = {
+  id: string
+  email: string
+  invitedById: string
+}

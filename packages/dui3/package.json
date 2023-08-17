@@ -25,6 +25,7 @@
     "@apollo/client": "^3.7.14",
     "@headlessui/vue": "^1.7.13",
     "@heroicons/vue": "^2.0.12",
+    "@pinia/nuxt": "^0.4.11",
     "@speckle/shared": "workspace:^",
     "@speckle/ui-components": "workspace:^",
     "@speckle/ui-components-nuxt": "workspace:^",
@@ -34,8 +35,11 @@
     "graphql": "^16.6.0",
     "graphql-tag": "^2.12.6",
     "lodash-es": "^4.17.21",
+    "nanoevents": "^8.0.0",
+    "pinia": "^2.1.4",
     "portal-vue": "^3.0.0",
-    "subscriptions-transport-ws": "^0.11.0"
+    "subscriptions-transport-ws": "^0.11.0",
+    "vue-tippy": "^6.2.0"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^2.13.6",
@@ -52,7 +56,7 @@
     "eslint-plugin-nuxt": "^4.0.0",
     "eslint-plugin-vue": "^9.5.1",
     "eslint-plugin-vuejs-accessibility": "^1.2.0",
-    "nuxt": "^3.5.0",
+    "nuxt": "^3.6.3",
     "postcss": "^8.4.18",
     "postcss-custom-properties": "^12.1.9",
     "postcss-html": "^1.5.0",

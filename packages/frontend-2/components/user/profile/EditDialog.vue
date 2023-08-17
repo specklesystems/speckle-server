@@ -5,6 +5,7 @@
       <UserProfileEditDialogNotificationPreferences :user="user" />
       <UserProfileEditDialogChangePassword :user="user" />
       <UserProfileEditDialogDeleteAccount :user="user" @deleted="isOpen = false" />
+      <div class="text-tiny text-foreground-2">User #{{ user.id }}</div>
     </div>
   </LayoutDialog>
 </template>

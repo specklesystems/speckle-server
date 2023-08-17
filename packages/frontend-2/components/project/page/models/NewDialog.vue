@@ -63,11 +63,8 @@ const openState = computed({
 
 const onSubmit = handleSubmit(async ({ name }) => {
   await createModel({ name, projectId: props.projectId })
-
   mp.track('Branch Action', { type: 'action', name: 'create', mode: 'dialog' })
-
   openState.value = false
-  newModelName.value = ''
 })
 
 watch(

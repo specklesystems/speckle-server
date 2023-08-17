@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { isUndefinedOrVoid, Optional } from '@speckle/shared'
 import {
@@ -11,10 +12,12 @@ import {
   ServerParseError
 } from '@apollo/client/core'
 import { DocumentNode, GraphQLError } from 'graphql'
-import { flatten, isUndefined, has } from 'lodash-es'
+import { flatten, isUndefined, has, isFunction } from 'lodash-es'
 import { Modifier } from '@apollo/client/cache'
 import { PartialDeep } from 'type-fest'
 import { NetworkError } from '@apollo/client/errors'
+import { nanoid } from 'nanoid'
+import { StackTrace } from '~~/lib/common/helpers/debugging'
 
 export const isServerError = (err: Error): err is ServerError =>
   has(err, 'response') && has(err, 'result') && has(err, 'statusCode')
@@ -272,12 +275,41 @@ export function modifyObjectFields<
     details: Parameters<Modifier<ModifyFnCacheData<D>>>[1] & {
       ref: typeof getObjectReference
     }
-  ) => Optional<ModifyFnCacheData<D>> | void
+  ) => Optional<ModifyFnCacheData<D>> | void,
+  options?: Partial<{
+    fieldNameWhitelist: string[]
+    debug: boolean
+  }>
 ) {
+  const { fieldNameWhitelist, debug = !!(process.dev && process.client) } =
+    options || {}
+
+  const logger = useLogger()
+  const invocationId = nanoid()
+  const log = (...args: Parameters<typeof logger.debug>) => {
+    if (!debug) return
+    const [message, ...rest] = args
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    logger.debug(`[${invocationId}] ${message}`, ...rest)
+  }
+
+  log(
+    'modifyObjectFields invoked',
+    {
+      id,
+      fieldNameWhitelist
+    },
+    new StackTrace()
+  )
   cache.modify({
     id,
     fields(fieldValue, details) {
       const { storeFieldName, fieldName } = details
+
+      if (fieldNameWhitelist?.length && !fieldNameWhitelist.includes(fieldName)) {
+        return fieldValue as unknown
+      }
 
       let variables: Optional<V> = undefined
       if (storeFieldName !== fieldName) {
@@ -291,6 +323,7 @@ export function modifyObjectFields<
         }
       }
 
+      log('invoking updater', { fieldName, variables, fieldValue })
       const res = updater(
         fieldName,
         variables as V,
@@ -300,9 +333,11 @@ export function modifyObjectFields<
           ref: getObjectReference
         }
       )
+
       if (isUndefined(res)) {
         return fieldValue as unknown
       } else {
+        log('updater returned', { res })
         return res
       }
     }
@@ -320,15 +355,27 @@ export function evictObjectFields<
 >(
   cache: ApolloCache<unknown>,
   id: string,
-  predicate: (
-    fieldName: string,
-    variables: V,
-    value: ModifyFnCacheData<D>,
-    details: Parameters<Modifier<ModifyFnCacheData<D>>>[1]
-  ) => boolean
+  predicate:
+    | ((
+        fieldName: string,
+        variables: V,
+        value: ModifyFnCacheData<D>,
+        details: Parameters<Modifier<ModifyFnCacheData<D>>>[1]
+      ) => boolean)
+    | string[]
 ) {
-  modifyObjectFields<V, D>(cache, id, (fieldName, variables, value, details) => {
-    if (!predicate(fieldName, variables, value, details)) return undefined
-    return details.DELETE as ModifyFnCacheData<D>
-  })
+  modifyObjectFields<V, D>(
+    cache,
+    id,
+    (fieldName, variables, value, details) => {
+      if (isFunction(predicate)) {
+        if (!predicate(fieldName, variables, value, details)) return undefined
+      } else {
+        const predicateFields = predicate
+        if (!predicateFields.includes(fieldName)) return undefined
+      }
+      return details.DELETE as ModifyFnCacheData<D>
+    },
+    { debug: false }
+  )
 }
