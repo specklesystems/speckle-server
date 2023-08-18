@@ -41,9 +41,6 @@ export = {
 
     async totalUserCount() {
       return await getTotalUserCount()
-    },
-    async totalPendingInvites() {
-      return 0
     }
   }
 } as Resolvers
