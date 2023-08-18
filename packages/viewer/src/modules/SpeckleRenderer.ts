@@ -1198,8 +1198,4 @@ export default class SpeckleRenderer {
     )
     return selectedObjects
   }
-
-  public markTransformsDirty(batchId: string) {
-    ;(this.batcher.batches[batchId] as MeshBatch).mesh.transformsDirty = true
-  }
 }

@@ -114,7 +114,6 @@ export class SelectionExtension extends Extension {
       return true
     })
     this.applySelection()
-    this.viewer.requestRender()
   }
 
   protected onObjectClicked(selection: SelectionEvent) {
@@ -215,6 +214,7 @@ export class SelectionExtension extends Extension {
       .getRenderer()
       .setMaterial(transparentRvs, this.transparentSelectionMaterialData)
     // setTimeout(() => console.warn(this.viewer.getRenderer().renderingStats), 100)
+    this.viewer.requestRender()
   }
 
   protected removeSelection() {

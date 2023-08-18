@@ -31,6 +31,8 @@ export class BatchObject {
   private static scaleBuff: Vector3 = new Vector3()
   private static pivotBuff: Vector3 = new Vector3()
 
+  public transformDirty = true
+
   public get renderView(): NodeRenderView {
     return this._renderView
   }
@@ -144,5 +146,6 @@ export class BatchObject {
       this.pivot_Low,
       this.pivot_High
     )
+    this.transformDirty = true
   }
 }

@@ -32,7 +32,6 @@ export class ExplodeExtension extends Extension {
 
         objects[i].transformTRS(dir, undefined, undefined, undefined)
       }
-      batches[k].mesh.transformsDirty = true
     }
 
     // this.renderer.shadowMap.needsUpdate = true

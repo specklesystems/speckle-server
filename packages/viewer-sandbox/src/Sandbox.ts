@@ -264,7 +264,6 @@ export default class Sandbox {
         const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
           obj.transformTRS(position.value, rotation.value, scale.value, origin)
-          this.viewer.getRenderer().markTransformsDirty(obj.renderView.batchId)
         })
         this.viewer.requestRender()
       })
@@ -284,7 +283,6 @@ export default class Sandbox {
         const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
           obj.transformTRS(position.value, rotation.value, scale.value, origin)
-          this.viewer.getRenderer().markTransformsDirty(obj.renderView.batchId)
         })
         this.viewer.requestRender()
       })
@@ -304,7 +302,6 @@ export default class Sandbox {
         const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
           obj.transformTRS(position.value, rotation.value, scale.value, origin)
-          this.viewer.getRenderer().markTransformsDirty(obj.renderView.batchId)
         })
         this.viewer.requestRender()
       })
