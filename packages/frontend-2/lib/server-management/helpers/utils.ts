@@ -21,7 +21,7 @@ export const getRoleLabel = (role: keyof typeof roleLookupTable) => {
 export const isUser = (
   val: UserItem | ProjectItem | InviteItem
 ): val is UserItem & { role: ServerRoles } => {
-  if (has(val, 'email')) return true
+  if (has(val, 'company')) return true
   throw new Error('Unexpectedly item is not a user!')
 }
 

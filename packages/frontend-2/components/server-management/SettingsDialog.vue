@@ -1,5 +1,10 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="sm" :title="title" :buttons="buttons">
+  <LayoutDialog
+    v-model:open="isOpen"
+    max-width="sm"
+    :title="title"
+    :buttons="dialogButtons"
+  >
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">
         <FormTextInput
@@ -57,7 +62,6 @@ import { useQuery, useMutation } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
 import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
-import { Button } from '~~/lib/server-management/helpers/types'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { LayoutDialog, FormTextInput, FormTextArea } from '@speckle/ui-components'
 import { useLogger } from '~~/composables/logging'
@@ -92,7 +96,6 @@ const serverInfoUpdateMutation = graphql(`
 
 const props = defineProps<{
   open: boolean
-  buttons: Array<Button>
   title: string
 }>()
 
@@ -100,6 +103,19 @@ const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
   (e: 'server-info-updated'): void
 }>()
+
+const dialogButtons = computed(() => [
+  {
+    text: 'Cancel',
+    props: { color: 'secondary', fullWidth: true, outline: true },
+    onClick: () => (isOpen.value = false)
+  },
+  {
+    text: 'Save',
+    props: { color: 'primary', fullWidth: true, outline: false },
+    onClick: onSubmit
+  }
+])
 
 const logger = useLogger()
 
@@ -165,9 +181,5 @@ watch(isOpen, (newVal, oldVal) => {
       inviteOnly.value = result.value.serverInfo.inviteOnly || false
     }
   }
-})
-
-defineExpose({
-  onSubmit
 })
 </script>

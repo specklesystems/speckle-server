@@ -57,7 +57,12 @@
 
 <script setup lang="ts">
 import { ConcreteComponent, computed } from 'vue'
-import { ItemType } from '~~/lib/server-management/helpers/types'
+import {
+  ItemType,
+  UserItem,
+  ProjectItem,
+  InviteItem
+} from '~~/lib/server-management/helpers/types'
 
 type OnRowClickType = (item: ItemType) => void
 
@@ -74,7 +79,7 @@ interface Header {
 
 const props = defineProps<{
   headers: Header[]
-  items: ItemType[]
+  items: Array<UserItem | ProjectItem | InviteItem>
   buttons?: RowButton[]
   columnClasses: Record<string, string>
   overflowCells?: boolean
@@ -89,15 +94,13 @@ const paddingRightStyle = computed(() => {
 const getClasses = (column: string, colIndex: number): string => {
   const columnClass = props.columnClasses[column]
 
-  // For the first column
   if (colIndex === 0) {
     return `bg-transparent py-3 pr-5 ${columnClass}`
   }
-
   return `lg:p-0 ${columnClass}`
 }
 
-const handleRowClick = (item: Record<string, unknown>) => {
+const handleRowClick = (item: UserItem | ProjectItem | InviteItem) => {
   props.onRowClick?.(item as ItemType)
 }
 </script>

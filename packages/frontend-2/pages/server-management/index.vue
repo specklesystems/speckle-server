@@ -18,21 +18,8 @@
       />
 
       <ServerManagementSettingsDialog
-        ref="settingsDialog"
         v-model:open="showDialog"
         title="Edit Settings"
-        :buttons="[
-          {
-            text: 'Cancel',
-            props: { color: 'secondary', fullWidth: true, outline: true },
-            onClick: closeDialog
-          },
-          {
-            text: 'Save',
-            props: { color: 'primary', fullWidth: true, outline: false },
-            onClick: saveSettings
-          }
-        ]"
         @server-info-updated="refetch"
       />
 
@@ -46,7 +33,6 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { ref, computed } from 'vue'
-import { Nullable } from '@speckle/shared'
 import { CardInfo } from '~~/lib/server-management/helpers/types'
 
 import {
@@ -68,10 +54,6 @@ interface GithubRelease {
   tag_name: string
 }
 
-interface SettingsDialogRef {
-  onSubmit: () => void
-}
-
 definePageMeta({
   middleware: ['admin']
 })
@@ -79,7 +61,6 @@ definePageMeta({
 const logger = useLogger()
 const router = useRouter()
 const showDialog = ref(false)
-const settingsDialog = ref<Nullable<SettingsDialogRef>>(null)
 const latestVersion = ref<string | null>(null)
 
 const dataQuery = graphql(`
@@ -171,18 +152,8 @@ const projectData = computed((): CardInfo[] => [
   }
 ])
 
-const closeDialog = () => {
-  showDialog.value = false
-}
-
 const openGithubReleasePage = () => {
   window.open('https://github.com/specklesystems/speckle-server/releases', '_blank')
-}
-
-const saveSettings = () => {
-  if (settingsDialog.value) {
-    settingsDialog.value.onSubmit()
-  }
 }
 
 const navigate = async (path: string) => {
