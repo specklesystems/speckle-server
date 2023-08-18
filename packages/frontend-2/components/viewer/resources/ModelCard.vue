@@ -25,10 +25,12 @@
           >
             {{ modelName.header }}
           </div>
-          <div class="text-foreground-2 truncate text-xs">
+          <div class="text-foreground-1 truncate text-xs">
             <span
               v-tippy="createdAt"
-              :class="`${showVersions ? 'text-white/70' : ''} text-xs font-semibold`"
+              :class="`${
+                showVersions ? 'text-foundation-5' : ''
+              } text-xs font-semibold`"
             >
               {{ isLatest ? 'latest version' : timeAgoCreatedAt }}
             </span>
@@ -50,13 +52,9 @@
           <ChevronUpIcon class="h-4 w-4" />
         </div>
       </div>
-      <ActiveVersionCard
+      <ViewerResourcesActiveVersionCard
         v-if="loadedVersion && showVersions"
-        :version="{
-          sourceApplication: loadedVersion.sourceApplication,
-          message: loadedVersion.message,
-          createdAt: loadedVersion.createdAt
-        }"
+        :version="loadedVersion"
       />
     </div>
     <Transition>
@@ -123,7 +121,6 @@ import {
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
 import { useDiffUtilities } from '~~/lib/viewer/composables/ui'
-import ActiveVersionCard from './ActiveVersionCard.vue'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
