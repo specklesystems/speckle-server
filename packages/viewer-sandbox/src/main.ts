@@ -13,11 +13,10 @@ import {
   CameraController,
   SectionTool,
   SectionOutlines,
-  MeasurementsExtension,
-  CameraControllerEvent
+  MeasurementsExtension
 } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
-import { Vector3 } from '@speckle/viewer'
+import { RotateCamera } from './RotateCamera'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -47,12 +46,14 @@ const createViewer = async (containerName: string, stream: string) => {
   const sectionOutlines = viewer.createExtension(SectionOutlines)
   const measurements = viewer.createExtension(MeasurementsExtension)
   const filtering = viewer.createExtension(FilteringExtension)
+  const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
   selection // use it
   sections // use it
   sectionOutlines // use it
   measurements // use it
-  filtering
+  filtering // use it
+  rotateCamera // use it
 
   const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
 
@@ -72,16 +73,6 @@ const createViewer = async (containerName: string, stream: string) => {
   viewer.on(ViewerEvent.LoadComplete, () => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
-    const polar = {
-      azimuth: 0.001,
-      polar: 0,
-      radius: 100,
-      origin: new Vector3()
-    }
-    cameraController.on(CameraControllerEvent.FrameUpdate, () => {
-      // polar.azimuth += 0.001
-      cameraController.setCameraView(polar, false)
-    })
     sandbox.refresh()
   })
 

@@ -46,6 +46,7 @@ import {
 import { SectionTool } from './modules/extensions/SectionTool'
 import { SectionOutlines } from './modules/extensions/SectionOutlines'
 import { FilteringExtension } from './modules/extensions/FilteringExtension'
+import { Extension } from './modules/extensions/core-extensions/Extension'
 
 export {
   Viewer,
@@ -61,6 +62,8 @@ export {
   VisualDiffMode,
   MeasurementType,
   Units,
+  Extension,
+  ICameraProvider,
   SelectionExtension,
   CameraController,
   SectionTool,
@@ -93,6 +96,5 @@ export type {
   IntersectionQueryResult,
   Utils,
   DiffResult,
-  MeasurementOptions,
-  ICameraProvider
+  MeasurementOptions
 }

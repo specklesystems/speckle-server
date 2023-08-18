@@ -59,7 +59,6 @@ import Materials, {
 } from './materials/Materials'
 import { SpeckleMaterial } from './materials/SpeckleMaterial'
 import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
-import Logger from 'js-logger'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -73,18 +72,39 @@ export enum ObjectLayers {
   OVERLAY = 4
 }
 
-export interface RenderingStats {
-  objects?: number
-  batchCount?: number
-  drawCalls?: number
-  trisCount?: number
-  vertCount?: number
-  batchDetails?: Array<{
+export class RenderingStats {
+  private renderTimeAcc = 0
+  private renderTimeSamples = 0
+  private readonly renderTimeMaxSamples = 500
+  private renderTimeStart = 0
+  public renderTime = 0
+
+  public objects: number
+  public batchCount: number
+  public drawCalls: number
+  public trisCount: number
+  public vertCount: number
+
+  public batchDetails: Array<{
     drawCalls: number
     minDrawCalls: number
     tris: number
     verts: number
   }>
+
+  public frameStart() {
+    this.renderTimeStart = performance.now()
+  }
+  public frameEnd() {
+    this.renderTimeAcc += performance.now() - this.renderTimeStart
+    this.renderTimeSamples++
+    if (this.renderTimeSamples % this.renderTimeMaxSamples === 0) {
+      this.renderTime = this.renderTimeAcc / this.renderTimeSamples
+      this.renderTimeSamples = 0
+      this.renderTimeAcc = 0
+      // Logger.log(this.renderTime)
+    }
+  }
 }
 
 export default class SpeckleRenderer {
@@ -93,6 +113,7 @@ export default class SpeckleRenderer {
   public SHOW_BVH = false
   private container: HTMLElement
   private _renderer: SpeckleWebGLRenderer
+  private _renderinStats: RenderingStats
   public _scene: Scene
   private _needsRender: boolean
   private rootGroup: Group
@@ -234,30 +255,34 @@ export default class SpeckleRenderer {
 
   public get renderingStats(): RenderingStats {
     const batches = Object.values(this.batcher.batches)
-    const stats: RenderingStats = {
-      objects: batches.reduce((a: number, c: Batch) => a + c.renderViews.length, 0),
-      batchCount: batches.length,
-      drawCalls: batches.reduce((a: number, c: Batch) => a + c.drawCalls, 0),
-      trisCount: batches.reduce((a: number, c: Batch) => a + c.getCount(), 0),
-      vertCount: 0,
-      batchDetails: batches.map((batch: Batch) => {
+
+    this._renderinStats.objects = batches.reduce(
+      (a: number, c: Batch) => a + c.renderViews.length,
+      0
+    )
+    this._renderinStats.batchCount = batches.length
+    ;(this._renderinStats.drawCalls = batches.reduce(
+      (a: number, c: Batch) => a + c.drawCalls,
+      0
+    )),
+      (this._renderinStats.trisCount = batches.reduce(
+        (a: number, c: Batch) => a + c.getCount(),
+        0
+      )),
+      (this._renderinStats.vertCount = 0),
+      (this._renderinStats.batchDetails = batches.map((batch: Batch) => {
         return {
           drawCalls: batch.drawCalls,
           minDrawCalls: batch.minDrawCalls,
           tris: batch.getCount(),
           verts: 0
         }
-      })
-    }
-    // stats.batchDetails.forEach((element, index) => {
-    //   if (element.drawCalls > element.minDrawCalls + 2) {
-    //     console.log(batches[index])
-    //   }
-    // })
-    return stats
+      }))
+    return this._renderinStats
   }
 
   public constructor(viewer: Viewer /** TEMPORARY */) {
+    this._renderinStats = new RenderingStats()
     this._scene = new Scene()
     this.rootGroup = new Group()
     this.rootGroup.name = 'ContentGroup'
@@ -496,22 +521,15 @@ export default class SpeckleRenderer {
     if (/*this.viewer.cameraHandler.controls.hasRested ||*/ force) this.pipeline.reset()
   }
 
-  private renderTimeAcc = 0
-  private renderTimeSamples = 0
   public render(): void {
     if (!this._cameraProvider) return
     if (this._needsRender || this.pipeline.needsAccumulation) {
-      const start = performance.now()
+      this._renderinStats.frameStart()
       this.batcher.render(this.renderer)
       this._needsRender = this.pipeline.render()
       // this._needsRender = true
-      this.renderTimeAcc += performance.now() - start
-      this.renderTimeSamples++
-      if (this.renderTimeSamples % 500 === 0) {
-        Logger.log('Avrg Render Time -> ', this.renderTimeAcc / this.renderTimeSamples)
-        this.renderTimeSamples = 0
-        this.renderTimeAcc = 0
-      }
+      this._renderinStats.frameEnd()
+
       if (this.sunConfiguration.shadowcatcher) {
         this._shadowcatcher.render(this._renderer)
       }
