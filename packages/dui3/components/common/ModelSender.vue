@@ -59,7 +59,11 @@
       } transition-[height,scale,opacity] overflow-hidden`"
     >
       <CommonLoadingBar :loading="true" class="h-1" />
-      <div class="text-xs px-2 pt-1">Progress...</div>
+      <div v-if="model.sending" class="text-xs px-2 pt-1">
+        {{ model.progress?.status }} (%
+        {{ ((model.progress?.progress as number) * 100).toFixed(2) }})
+      </div>
+      <div v-else class="text-xs px-2 pt-1">Completed!</div>
     </div>
     <!-- TODO: Post send state -->
     <!-- 

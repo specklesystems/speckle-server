@@ -37,6 +37,7 @@ export type CreateVersionArgs = {
   accountId: string
   objectId: string
   message?: string
+  sourceApplication?: string
 }
 
 export interface ISendFilter extends IDiscriminatedObject {

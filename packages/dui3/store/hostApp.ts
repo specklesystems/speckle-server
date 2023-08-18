@@ -5,7 +5,12 @@ import {
   IReceiverModelCard
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
 import { ISendFilter, ISenderModelCard } from 'lib/bindings/definitions/ISendBinding'
-import { useCreateVersion } from '~/lib/graphql/composables'
+import { CommitCreateInput } from 'lib/common/generated/gql/graphql'
+import {
+  useCreateCommit,
+  useCreateVersion,
+  useGetModelDetails
+} from '~/lib/graphql/composables'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -116,15 +121,44 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   })
 
   app.$sendBinding.on('senderProgress', (args) => {
+    console.log(args)
+
     const model = documentModelStore.value.models.find(
       (m) => m.id === args.id
     ) as ISenderModelCard
     model.progress = args
+    if (args.status === 'Completed') {
+      model.sending = false
+    }
+    console.log(model)
   })
 
   app.$sendBinding.on('createVersion', async (args) => {
-    const createVersion = useCreateVersion(args.accountId)
-    await createVersion(args)
+    // const createVersion = useCreateVersion(args.accountId)
+    // await createVersion(args)
+
+    const { accountId, modelId, projectId, objectId, message } = args
+
+    const getModelDetails = useGetModelDetails(accountId)
+    const modelDetails = getModelDetails({
+      projectId,
+      modelId
+    })
+
+    const branchName = (await modelDetails).displayName
+
+    const commit: CommitCreateInput = {
+      streamId: projectId,
+      branchName,
+      objectId,
+      message,
+      sourceApplication: (
+        await app.$baseBinding.getSourceApplicationName()
+      ).toLowerCase()
+    }
+
+    const createCommit = useCreateCommit(args.accountId)
+    await createCommit(commit)
   })
 
   // app.$sendBinding?.on('sendViaBrowser', async (sendViaBrowserArgs) => {
