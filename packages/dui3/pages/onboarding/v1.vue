@@ -169,7 +169,7 @@ const publish = async () => {
   }
 
   await store.addModel(modelCard)
-  await store.sendModel(modelCard.id)
   router.push('/')
+  await store.sendModel(modelCard.id)
 }
 </script>
