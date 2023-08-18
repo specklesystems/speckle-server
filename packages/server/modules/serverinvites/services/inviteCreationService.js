@@ -36,6 +36,7 @@ const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
  *  resourceTarget?: string;
  *  resourceId?: string;
  *  role?: string;
+ *  serverRole?: string
  * }} CreateInviteParams
  */
 
@@ -327,10 +328,10 @@ async function buildEmailContents(invite, inviter, targetUser, resource) {
  * @returns {Promise<string>} The ID of the created invite
  */
 async function createAndSendInvite(params) {
-  const { inviterId, resourceTarget, resourceId, role } = params
+  const { inviterId, resourceTarget, resourceId, role, serverRole } = params
   let { message, target } = params
 
-  const inviter = await getUser(inviterId)
+  const inviter = await getUser(inviterId, { withRole: true })
   const targetUser = await getUserFromTarget(target)
   const resource = await getResource(params)
 
@@ -347,6 +348,14 @@ async function createAndSendInvite(params) {
     message = sanitizeMessage(message)
   }
 
+  // validate server role
+  if (serverRole && !Object.values(Roles.Server).includes(serverRole)) {
+    throw new InviteCreateValidationError('Invalid server role')
+  }
+  if (inviter.role !== Roles.Server.Admin && serverRole) {
+    throw new InviteCreateValidationError('Only server admins can assign server roles')
+  }
+
   // write to DB
   const invite = {
     id: crs({ length: 20 }),
@@ -356,7 +365,8 @@ async function createAndSendInvite(params) {
     resourceTarget,
     resourceId,
     role,
-    token: crs({ length: 50 })
+    token: crs({ length: 50 }),
+    serverRole
   }
   await insertInviteAndDeleteOld(
     invite,

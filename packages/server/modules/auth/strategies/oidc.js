@@ -97,7 +97,13 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           )
 
           // create the user
-          const myUser = await findOrCreateUser({ user, rawProfile: userinfo })
+          const myUser = await findOrCreateUser({
+            user: {
+              ...user,
+              role: validInvite?.serverRole
+            },
+            rawProfile: userinfo
+          })
 
           await finalizeInvitedServerRegistration(user.email, myUser.id)
 

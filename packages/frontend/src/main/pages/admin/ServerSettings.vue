@@ -91,7 +91,7 @@ export default {
         },
         guestModeEnabled: {
           label: 'Guest mode',
-          hint: "Enable the 'Guest' role, which allows users to only contribute to streams that they're invited to",
+          hint: "Enable the 'Guest' server role, which allows users to only contribute to streams that they're invited to",
           type: 'boolean'
         }
       }

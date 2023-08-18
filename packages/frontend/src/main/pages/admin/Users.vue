@@ -33,7 +33,7 @@
         <div v-for="item in adminUsers.items" :key="item.id">
           <users-list-item
             :item="item"
-            :roles="availableRoles"
+            :allow-guest="serverInfo?.guestModeEnabled"
             @user-change-role="changeUserRole"
             @user-delete="initiateDeleteUser"
             @invite-delete="deleteInvite"
@@ -116,7 +116,7 @@ import {
 } from '@/graphql/generated/graphql'
 import SectionCard from '@/main/components/common/SectionCard.vue'
 import UsersListItem from '@/main/components/admin/UsersListItem.vue'
-import { RoleInfo, Roles } from '@speckle/shared'
+import { RoleInfo } from '@speckle/shared'
 import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 
 // TODO: This needs a redesign, it's pretty unusable on small screens
@@ -177,16 +177,6 @@ export default {
     },
     numberOfPages() {
       return Math.ceil(this.adminUsers.totalCount / this.limit)
-    },
-    availableRoles() {
-      const isGuestEnabled = this.serverInfo?.guestModeEnabled
-      const allRoles = Object.values(Roles.Server).map((r) => ({
-        text: RoleInfo.Server[r],
-        value: r,
-        disabled: !isGuestEnabled && r === Roles.Server.Guest
-      }))
-
-      return allRoles
     }
   },
   methods: {

@@ -73,6 +73,11 @@ module.exports = {
     // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
     const { skipPropertyValidation = false } = options || {}
 
+    const expectedRole = Object.values(Roles.Server).includes(user.role)
+      ? user.role
+      : null
+    delete user.role
+
     user = skipPropertyValidation
       ? user
       : pick(user, ['id', 'bio', 'email', 'password', 'name', 'company'])
@@ -95,7 +100,9 @@ module.exports = {
     if (!newUser) throw new Error("Couldn't create user")
 
     const userRole =
-      (await countAdminUsers()) === 0 ? Roles.Server.Admin : Roles.Server.User
+      (await countAdminUsers()) === 0
+        ? Roles.Server.Admin
+        : expectedRole || Roles.Server.User
 
     await Acl().insert({ userId: newId, role: userRole })
 

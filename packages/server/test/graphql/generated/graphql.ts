@@ -1930,6 +1930,8 @@ export type ServerInvite = {
 export type ServerInviteCreateInput = {
   email: Scalars['String'];
   message?: InputMaybe<Scalars['String']>;
+  /** Can only be specified by server admins */
+  serverRole?: InputMaybe<Scalars['String']>;
 };
 
 export enum ServerRole {
@@ -2148,6 +2150,8 @@ export type StreamInviteCreateInput = {
   message?: InputMaybe<Scalars['String']>;
   /** Defaults to the contributor role, if not specified */
   role?: InputMaybe<Scalars['String']>;
+  /** Can only be specified by server admins */
+  serverRole?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
   userId?: InputMaybe<Scalars['String']>;
 };

@@ -314,7 +314,8 @@ export const ServerInvites = buildTableHelper('server_invites', [
   'resourceTarget',
   'resourceId',
   'role',
-  'token'
+  'token',
+  'serverRole'
 ])
 
 export const PasswordResetTokens = buildTableHelper('pwdreset_tokens', [
