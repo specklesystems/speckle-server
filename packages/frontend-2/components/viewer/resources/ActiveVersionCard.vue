@@ -8,10 +8,10 @@
       <div class="inline-block rounded-full font-bold truncate">
         {{ version.sourceApplication }}
       </div>
-      <div class="truncate text-foreground-2">
+      <div class="truncate text-foreground opacity-80">
         {{ version.message || 'no message' }}
       </div>
-      <div class="italic text-foreground-2">
+      <div class="italic text-foreground opacity-60">
         {{ timeAgo }}
       </div>
     </div>

@@ -21,16 +21,18 @@
         <div class="flex min-w-0 flex-grow flex-col space-y-0">
           <div
             v-tippy="modelName.subheader ? model.name : null"
-            :class="`${showVersions ? 'text-white' : ''} font-bold truncate min-w-0`"
+            :class="`${
+              showVersions ? 'text-foundation' : ''
+            } font-bold truncate min-w-0`"
           >
             {{ modelName.header }}
           </div>
-          <div class="text-foreground-1 truncate text-xs">
+          <div class="truncate text-xs">
             <span
               v-tippy="createdAt"
               :class="`${
-                showVersions ? 'text-foundation-5' : ''
-              } text-xs font-semibold`"
+                showVersions ? 'text-foundation font-semibold' : ''
+              } text-xs opacity-70`"
             >
               {{ isLatest ? 'latest version' : timeAgoCreatedAt }}
             </span>
