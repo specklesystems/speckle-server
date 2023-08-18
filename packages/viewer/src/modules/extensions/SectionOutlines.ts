@@ -96,17 +96,6 @@ export class SectionOutlines extends Extension {
     this.sectionProvider.on(SectionToolEvent.Updated, this.sectionUpdated.bind(this))
   }
 
-  public onUpdate(deltaTime: number) {
-    deltaTime
-    // UNIMPLEMENTED
-  }
-  public onRender() {
-    // UNIMPLEMENTED
-  }
-  public onResize() {
-    // UNIMPLEMENTED
-  }
-
   public getPlaneOutline(planeId: PlaneId) {
     return this.planeOutlines[planeId]
   }

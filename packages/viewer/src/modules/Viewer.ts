@@ -177,9 +177,13 @@ export class Viewer extends EventEmitter implements IViewer {
 
   private update() {
     const delta = this.clock.getDelta()
+    const extensions = Object.values(this.extensions)
+    extensions.forEach((ext: Extension) => {
+      ext.onEarlyUpdate(delta)
+    })
     this.speckleRenderer.update(delta)
-    Object.values(this.extensions).forEach((ext: Extension) => {
-      ext.onUpdate(delta)
+    extensions.forEach((ext: Extension) => {
+      ext.onLateUpdate(delta)
     })
     this.stats?.update()
     requestAnimationFrame(this.frame.bind(this))

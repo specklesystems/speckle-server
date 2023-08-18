@@ -97,7 +97,7 @@ export class MeasurementsExtension extends Extension {
     this.renderer.input.on(InputEvent.DoubleClick, this.onPointerDoubleClick.bind(this))
   }
 
-  public onUpdate(deltaTime: number) {
+  public onLateUpdate(deltaTime: number) {
     deltaTime
     if (!this._enabled) return
 
@@ -118,9 +118,6 @@ export class MeasurementsExtension extends Extension {
     })
   }
 
-  public onRender() {
-    // NOT IMPLEMENTED
-  }
   public onResize() {
     this.renderer.renderer.getDrawingBufferSize(this.screenBuff0)
   }

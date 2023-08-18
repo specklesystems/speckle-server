@@ -97,18 +97,6 @@ export class SelectionExtension extends Extension {
     this.transparentHoverMaterialData.opacity = 0.5
   }
 
-  public onUpdate() {
-    // UNIMPLEMENTED
-  }
-
-  public onRender() {
-    // UNIMPLEMENTED
-  }
-
-  public onResize() {
-    //UNIMPLEMENTED
-  }
-
   public getSelectedObjects() {
     return this.selectedNodes.map((v) => v.model.raw)
   }

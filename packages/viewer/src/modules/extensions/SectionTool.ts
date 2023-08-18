@@ -172,17 +172,6 @@ export class SectionTool extends Extension implements ISectionProvider {
     this.enabled = false
   }
 
-  public onUpdate(deltaTime: number) {
-    deltaTime
-    // UNIMPLEMENTED
-  }
-  public onRender() {
-    // UNIMPLEMENTED
-  }
-  public onResize() {
-    // UNIMPLEMENTED
-  }
-
   private _setupControls() {
     this.controls?.dispose()
     this.controls?.detach()

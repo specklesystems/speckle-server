@@ -377,6 +377,7 @@ export default class SpeckleRenderer {
     if (!this._cameraProvider) return
     this.batcher.update(deltaTime)
 
+    this.renderingCamera.updateMatrixWorld(true)
     this._renderer.updateRTEViewModel(this.renderingCamera)
     this.updateRTEShadows()
 

@@ -13,7 +13,18 @@ export abstract class Extension extends EventEmitter {
   }
 
   public async init?()
-  public abstract onUpdate(deltaTime: number)
-  public abstract onRender()
-  public abstract onResize()
+  public onEarlyUpdate(deltaTime?: number) {
+    deltaTime
+    /* EMPTY*/
+  }
+  public onLateUpdate(deltaTime?: number) {
+    deltaTime
+    /* EMPTY*/
+  }
+  public onRender() {
+    /* EMPTY*/
+  }
+  public onResize() {
+    /* EMPTY*/
+  }
 }

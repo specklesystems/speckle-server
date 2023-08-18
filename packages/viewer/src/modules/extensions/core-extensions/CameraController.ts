@@ -130,13 +130,9 @@ export class CameraController extends Extension implements ICameraProvider {
     this.emit(CameraControllerEvent.Dynamic)
   }
 
-  public onUpdate(deltaTime: number) {
+  public onEarlyUpdate(deltaTime: number) {
     const changed = this.controls.update(deltaTime)
     this.emit(CameraControllerEvent.FrameUpdate, changed)
-  }
-
-  public onRender() {
-    // NOT IMPLEMENTED
   }
 
   public onResize() {

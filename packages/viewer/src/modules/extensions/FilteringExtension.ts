@@ -43,18 +43,6 @@ export class FilteringExtension extends Extension {
     this.Renderer = this.viewer.getRenderer()
   }
 
-  public onResize() {
-    // NOT IMPLEMENTED
-  }
-
-  public onUpdate() {
-    // NOT IMPLEMENTED
-  }
-
-  public onRender() {
-    // NOT IMPLEMENTED
-  }
-
   public hideObjects(
     objectIds: string[],
     stateKey: string = null,

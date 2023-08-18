@@ -16,7 +16,6 @@ import {
   MeasurementsExtension
 } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
-import { RotateCamera } from './RotateCamera'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -46,14 +45,14 @@ const createViewer = async (containerName: string, stream: string) => {
   const sectionOutlines = viewer.createExtension(SectionOutlines)
   const measurements = viewer.createExtension(MeasurementsExtension)
   const filtering = viewer.createExtension(FilteringExtension)
-  const rotateCamera = viewer.createExtension(RotateCamera)
+  // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
   selection // use it
   sections // use it
   sectionOutlines // use it
   measurements // use it
   filtering // use it
-  rotateCamera // use it
+  // rotateCamera // use it
 
   const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
 
@@ -120,7 +119,7 @@ const getStream = () => {
     // AutoCAD OLD
     // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
     // AutoCAD NEW
-    // 'https://latest.speckle.dev/streams/3ed8357f29/commits/46905429f6'
+    'https://latest.speckle.dev/streams/3ed8357f29/commits/46905429f6'
     //Blizzard world
     // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
     //Car
@@ -275,7 +274,7 @@ const getStream = () => {
     // Big ass mafa'
     // 'https://speckle.xyz/streams/88307505eb/objects/a232d760059046b81ff97e6c4530c985'
     // Airport
-    'https://latest.speckle.dev/streams/92b620fb17/commits/dfb9ca025d'
+    // 'https://latest.speckle.dev/streams/92b620fb17/commits/dfb9ca025d'
     // 'Blocks with elements
     // 'https://latest.speckle.dev/streams/e258b0e8db/commits/00e165cc1c'
     // 'https://latest.speckle.dev/streams/e258b0e8db/commits/e48cf53add'
