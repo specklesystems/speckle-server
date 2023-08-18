@@ -10,7 +10,8 @@ import {
   ViewerEvent,
   BatchObject,
   VisualDiffMode,
-  MeasurementType
+  MeasurementType,
+  ExplodeExtension
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
@@ -975,7 +976,9 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         value
-        this.viewer.explode(this.batchesParams.explode)
+        this.viewer
+          .getExtension(ExplodeExtension)
+          .setExplode(this.batchesParams.explode)
       })
     // container
     //   .addInput(Sandbox.batchesParams, 'culling', {

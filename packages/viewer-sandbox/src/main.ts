@@ -14,7 +14,8 @@ import {
   CameraController,
   SectionTool,
   SectionOutlines,
-  MeasurementsExtension
+  MeasurementsExtension,
+  ExplodeExtension
 } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
 
@@ -46,6 +47,7 @@ const createViewer = async (containerName: string, stream: string) => {
   const sectionOutlines = viewer.createExtension(SectionOutlines)
   const measurements = viewer.createExtension(MeasurementsExtension)
   const filtering = viewer.createExtension(FilteringExtension)
+  const explode = viewer.createExtension(ExplodeExtension)
   // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
   selection // use it
@@ -104,7 +106,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+    'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6c6e43e5f3'
     // 'https://latest.speckle.dev/streams/58b5648c4d/commits/60371ecb2d'
     // 'Super' heavy revit shit
@@ -121,7 +123,7 @@ const getStream = () => {
     // AutoCAD OLD
     // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
     // AutoCAD NEW
-    'https://latest.speckle.dev/streams/3ed8357f29/commits/46905429f6'
+    // 'https://latest.speckle.dev/streams/3ed8357f29/commits/46905429f6'
     //Blizzard world
     // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
     //Car

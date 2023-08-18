@@ -387,12 +387,6 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
-  public explode(time: number) {
-    const size = this.world.worldSize
-    const worldSize = Math.sqrt(size.x * size.x + size.y * size.y + size.z * size.z)
-    this.speckleRenderer.setExplode(time, worldSize)
-  }
-
   /**
    * OBJECT LOADING/UNLOADING
    */
@@ -462,6 +456,7 @@ export class Viewer extends EventEmitter implements IViewer {
           }
         }
       }
+      Logger.log(this.getRenderer().renderingStats)
       Logger.log('ASYNC batch build time -> ', performance.now() - t0)
       this.speckleRenderer.resetPipeline(true)
       this.emit(ViewerEvent.LoadComplete, url)
@@ -598,18 +593,6 @@ export class Viewer extends EventEmitter implements IViewer {
     // REVISIT
     // this.filteringManager.setUserMaterials(this.differ.materialGroups)
   }
-
-  // public enableMeasurements(value: boolean) {
-  //   this.speckleRenderer.measurements.enabled = value
-  // }
-
-  // public setMeasurementOptions(options: MeasurementOptions) {
-  //   this.speckleRenderer.measurements.options = options
-  // }
-
-  // public removeMeasurement() {
-  //   this.speckleRenderer.measurements.removeMeasurement()
-  // }
 
   public dispose() {
     // TODO: currently it's easier to simply refresh the page :)

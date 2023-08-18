@@ -129,9 +129,6 @@ export default class SpeckleRenderer {
   private _shadowcatcher: Shadowcatcher = null
   private cancel: { [subtreeId: string]: boolean } = {}
 
-  private explodeTime = -1
-  private explodeRange = 0
-
   private _cameraProvider: ICameraProvider = null
   private _clippingPlanes: Plane[] = []
   private _clippingVolume: Box3
@@ -388,11 +385,6 @@ export default class SpeckleRenderer {
 
     if (this.sunConfiguration.shadowcatcher) {
       this._shadowcatcher.update(this._scene)
-    }
-
-    if (this.explodeTime > -1) {
-      this.explode(this.explodeTime, this.explodeRange)
-      this.explodeTime = -1
     }
   }
 
@@ -1158,43 +1150,6 @@ export default class SpeckleRenderer {
     }
   }
 
-  /** DEBUG */
-  // public onObjectClickDebug(e) {
-  //   const results: Array<Intersection> = this._intersections.intersect(
-  //     this._scene,
-  //     this.viewer.cameraHandler.activeCam.camera,
-  //     e,
-  //     true,
-  //     this.viewer.sectionBox.getCurrentBox()
-  //   )
-  //   if (!results) {
-  //     this.batcher.resetBatchesDrawRanges()
-  //     return
-  //   }
-  //   const result = results[0]
-  //   // console.warn(result)
-  //   const rv = this.batcher.getRenderView(
-  //     result.object.uuid,
-  //     result.faceIndex !== undefined ? result.faceIndex : result.index
-  //   )
-  //   const hitId = rv.renderData.id
-
-  //   // const hitNode = WorldTree.getInstance(this.viewer.viewerGuid).findId(hitId)
-  //   // console.log(hitNode)
-
-  //   this.batcher.resetBatchesDrawRanges()
-
-  //   this.batcher.isolateRenderViewBatch(hitId)
-  //   if (this.SHOW_BVH) {
-  //     this.allObjects.traverse((obj) => {
-  //       if (obj.name.includes('_bvh')) {
-  //         obj.visible = false
-  //       }
-  //     })
-  //     this.scene.getObjectByName(result.object.id + '_bvh').visible = true
-  //   }
-  // }
-
   public debugShowBatches() {
     for (const k in this.batcher.batches) {
       const renderMat = {
@@ -1227,32 +1182,6 @@ export default class SpeckleRenderer {
   public isolateBatch(batchId: string) {
     this.batcher.resetBatchesDrawRanges()
     this.batcher.isolateBatch(batchId)
-  }
-
-  public setExplode(time: number, range: number) {
-    this.explodeTime = time
-    this.explodeRange = range
-  }
-
-  private explode(time: number, range: number) {
-    const batches: MeshBatch[] = this.batcher.getBatches(
-      undefined,
-      GeometryType.MESH
-    ) as MeshBatch[]
-    const vecBuff: Vector3 = new Vector3()
-    for (let k = 0; k < batches.length; k++) {
-      const objects = batches[k].mesh.batchObjects
-      for (let i = 0; i < objects.length; i++) {
-        const center = objects[i].renderView.aabb.getCenter(vecBuff)
-        const dir = center.sub(this.viewer.World.worldOrigin)
-        dir.normalize().multiplyScalar(time * range)
-        objects[i].transformTRS(dir, undefined, undefined, undefined)
-      }
-      batches[k].mesh.transformsDirty = true
-    }
-    this.renderer.shadowMap.needsUpdate = true
-    this.needsRender = true
-    this.resetPipeline()
   }
 
   public getObjects(id: string): BatchObject[] {

@@ -109,36 +109,17 @@ export const DefaultLightConfiguration: SunLightConfiguration = {
 
 export interface IViewer {
   get input(): Input
+  get Utils(): Utils
+  get World(): World
+
   init(): Promise<void>
   resize(): void
   on(eventType: ViewerEvent, handler: (arg) => void)
   requestRender(): void
-  // setSectionBox(
-  //   box?: {
-  //     min: { x: number; y: number; z: number }
-  //     max: { x: number; y: number; z: number }
-  //   },
-  //   offset?: number
-  // )
-  // setSectionBoxFromObjects(objectIds: string[], offset?: number)
-  // getCurrentSectionBox(): {
-  //   min: { x: number; y: number; z: number }
-  //   max: { x: number; y: number; z: number }
-  // } | null
-  // toggleSectionBox(): void
-  // sectionBoxOff(): void
-  // sectionBoxOn(): void
 
-  // zoom(objectIds?: string[], fit?: number, transition?: boolean): void
-
-  // toggleCameraProjection(): void
   setLightConfiguration(config: LightConfiguration): void
 
   getViews(): SpeckleView[]
-  // setView(
-  //   view: CanonicalView | SpeckleView | InlineView | PolarView,
-  //   transition?: boolean
-  // )
 
   loadObject(
     url: string,
@@ -165,60 +146,21 @@ export interface IViewer {
 
   screenshot(): Promise<string>
 
-  /** Old Filtering members. Deprecated */
-  applyFilter(filter: unknown): Promise<void>
-
-  /** New Filtering members */
   getObjectProperties(resourceURL?: string, bypassCache?: boolean): PropertyInfo[]
-  // showObjects(
-  //   objectIds: string[],
-  //   stateKey?: string,
-  //   includeDescendants?
-  // ): Promise<FilteringState>
-  // hideObjects(
-  //   objectIds: string[],
-  //   stateKey?: string,
-  //   includeDescendants?,
-  //   ghost?: boolean
-  // ): Promise<FilteringState>
-  // isolateObjects(
-  //   objectIds: string[],
-  //   stateKey?: string,
-  //   includeDescendants?,
-  //   ghost?: boolean
-  // ): Promise<FilteringState>
-  // unIsolateObjects(
-  //   objectIds: string[],
-  //   stateKey?: string,
-  //   includeDescendants?
-  // ): Promise<FilteringState>
-
-  // highlightObjects(objectIds: string[], ghost?: boolean): Promise<FilteringState>
-  // resetHighlight(): Promise<FilteringState>
-
-  // setColorFilter(prop: PropertyInfo, ghost?: boolean): Promise<FilteringState>
-  // setUserObjectColors(
-  //   groups: [{ objectIds: string[]; color: string }]
-  // ): Promise<FilteringState>
-  // removeColorFilter(): Promise<FilteringState>
-  // resetFilters(): Promise<FilteringState>
 
   /** Data ops */
   getDataTree(): DataTree
   getWorldTree(): WorldTree
   query<T extends Query>(query: T): QueryArgsResultMap[T['operation']]
   queryAsync(query: Query): Promise<QueryResult>
-  get Utils(): Utils
-  get World(): World
 
   getObjects(id: string): BatchObject[]
-  explode(time: number)
-
-  dispose(): void
 
   getRenderer(): SpeckleRenderer
   getContainer(): HTMLElement
 
   createExtension<T extends Extension>(type: new () => T): T
   getExtension<T extends Extension>(type: new () => T): T
+
+  dispose(): void
 }
