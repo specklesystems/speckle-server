@@ -139,12 +139,13 @@ import { ref } from 'vue'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { debounce, isArray } from 'lodash-es'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
+import { useLogger } from '~~/composables/logging'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { Nullable, ServerRoles, Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ItemType, UserItem } from '~~/lib/server-management/helpers/types'
+import { isUser } from '~~/lib/server-management/helpers/utils'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-
 import {
   MagnifyingGlassIcon,
   ShieldExclamationIcon,
@@ -157,8 +158,6 @@ import {
   getFirstErrorMessage,
   updateCacheByFilter
 } from '~~/lib/common/helpers/graphql'
-import { useLogger } from '~~/composables/logging'
-import { isUser } from '~~/lib/server-management/helpers/utils'
 
 definePageMeta({
   middleware: ['admin']
@@ -196,40 +195,43 @@ const changeRoleMutation = graphql(`
   }
 `)
 
+const { triggerNotification } = useGlobalToast()
+const logger = useLogger()
+const { activeUser } = useActiveUser()
+
 const userToModify: Ref<Nullable<UserItem>> = ref(null)
 const searchString = ref('')
 const showUserDeleteDialog = ref(false)
 const showChangeUserRoleDialog = ref(false)
 const newRole = ref<ServerRoles>()
 const oldRole = computed(() => userToModify.value?.role as Optional<ServerRoles>)
-const logger = useLogger()
 const infiniteLoaderId = ref('')
-
-const { activeUser } = useActiveUser()
-
-const isCurrentUser = (userItem: UserItem) => {
-  return userItem.id === activeUser.value?.id
-}
 
 const queryVariables = computed(() => ({
   limit: 50,
   query: searchString.value
 }))
-const {
-  result: extraPagesResult,
-  fetchMore: fetchMorePages,
-  variables: resultVariables,
-  onResult
-} = useQuery(getUsers, queryVariables)
+
 const moreToLoad = computed(
   () =>
     !extraPagesResult.value?.admin?.userList ||
     extraPagesResult.value.admin.userList.items.length <
       extraPagesResult.value.admin.userList.totalCount
 )
+
 const users = computed(() => extraPagesResult.value?.admin.userList.items || [])
 
-const { triggerNotification } = useGlobalToast()
+const isCurrentUser = (userItem: UserItem) => {
+  return userItem.id === activeUser.value?.id
+}
+
+const {
+  result: extraPagesResult,
+  fetchMore: fetchMorePages,
+  variables: resultVariables,
+  onResult
+} = useQuery(getUsers, queryVariables)
+
 const { mutate: adminDeleteUserMutation } = useMutation(adminDeleteUser)
 const { mutate: mutateChangeRole } = useMutation(changeRoleMutation)
 
