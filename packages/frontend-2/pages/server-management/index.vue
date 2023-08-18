@@ -72,6 +72,10 @@ interface SettingsDialogRef {
   onSubmit: () => void
 }
 
+definePageMeta({
+  middleware: ['admin']
+})
+
 const logger = useLogger()
 const router = useRouter()
 const showDialog = ref(false)
@@ -125,13 +129,7 @@ const serverData = computed((): CardInfo[] => [
       ? {
           type: 'link',
           label: 'Update is available',
-          action: () => {
-            window.open(
-              'https://github.com/specklesystems/speckle-server/releases',
-              '_blank'
-            )
-            return Promise.resolve()
-          }
+          action: openGithubReleasePage
         }
       : undefined
   }
@@ -173,6 +171,10 @@ const projectData = computed(() => [
 
 const closeDialog = () => {
   showDialog.value = false
+}
+
+const openGithubReleasePage = () => {
+  window.open('https://github.com/specklesystems/speckle-server/releases', '_blank')
 }
 
 const saveSettings = () => {

@@ -75,7 +75,7 @@
       <template #role="{ item }">
         <ServerManagementUserRoleSelect
           :model-value="isUser(item) ? item.role : undefined"
-          :disabled="isCurrentUser(item)"
+          :disabled="isUser(item) && isCurrentUser(item)"
           @update:model-value="
             (newRoleValue: ServerRoles) =>
               isUser(item) &&

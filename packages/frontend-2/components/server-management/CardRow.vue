@@ -7,7 +7,7 @@
     <div class="flex justify-between items-center gap-8">
       <span class="text-2xl font-bold">{{ value }}</span>
       <template v-if="cta?.type === 'button'">
-        <FormButton @click="cta.action">
+        <FormButton @click="cta?.action">
           {{ cta.label }}
         </FormButton>
       </template>
@@ -16,7 +16,7 @@
           color="invert"
           class="shrink-0"
           :icon-right="ArrowTopRightOnSquareIcon"
-          @click="cta.action"
+          @click="cta?.action"
         >
           {{ cta.label }}
         </FormButton>
@@ -28,7 +28,7 @@
 <script lang="ts" setup>
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 import { ConcreteComponent } from 'vue'
-import { MaybeAsync } from '@speckle/shared'
+import { CTA } from '~~/lib/server-management/helpers/types'
 
 defineEmits<{
   (e: 'cta-clicked', v: MouseEvent): void
@@ -38,10 +38,6 @@ defineProps<{
   title: string
   value: string
   icon: ConcreteComponent
-  cta?: {
-    type: 'button' | 'link'
-    label: string
-    action: () => MaybeAsync<void>
-  } | null
+  cta?: CTA
 }>()
 </script>

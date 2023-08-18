@@ -57,7 +57,7 @@
           :link="true"
           class="font-semibold text-primary"
           :disabled="successfullyResentInvites.includes(item.id)"
-          @click="resendInvitation(item)"
+          @click="resendInvitation(item as InviteItem)"
         >
           {{
             successfullyResentInvites.includes(item.id)

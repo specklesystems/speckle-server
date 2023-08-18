@@ -7,7 +7,9 @@
         the selected project?
       </p>
       <div v-if="project">
-        <strong>{{ project.name }}</strong>
+        <strong>
+          {{ isProject(project) ? project.name : '' }}
+        </strong>
         <p>
           {{ isProject(project) ? project.models.totalCount : '' }} models,
           {{ isProject(project) ? project.versions.totalCount : '' }} versions,
