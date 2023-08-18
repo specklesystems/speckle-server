@@ -9,11 +9,6 @@ import { ExtendedLineMaterial, Uniforms } from './SpeckleMaterial'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 
 class SpeckleLineMaterial extends ExtendedLineMaterial {
-  private static readonly matBuff: Matrix4 = new Matrix4()
-  private static readonly vecBuff0: Vector3 = new Vector3()
-  private static readonly vecBuff1: Vector3 = new Vector3()
-  private static readonly vecBuff2: Vector3 = new Vector3()
-
   protected get vertexProgram(): string {
     return speckleLineVert
   }
@@ -60,29 +55,13 @@ class SpeckleLineMaterial extends ExtendedLineMaterial {
     const toStandard = to as LineMaterial
     const fromStandard = from as LineMaterial
     toStandard.color.copy(fromStandard.color)
+    to.userData.pixelThreshold.value = from.userData.pixelThreshold.value
   }
 
   onBeforeRender(_this, scene, camera, geometry, object, group) {
-    SpeckleLineMaterial.matBuff.copy(camera.matrixWorldInverse)
-    SpeckleLineMaterial.matBuff.elements[12] = 0
-    SpeckleLineMaterial.matBuff.elements[13] = 0
-    SpeckleLineMaterial.matBuff.elements[14] = 0
-    // SpeckleLineMaterial.matBuff.multiply(object.matrixWorld)
-    object.modelViewMatrix.copy(SpeckleLineMaterial.matBuff)
-
-    SpeckleLineMaterial.vecBuff0.set(
-      camera.matrixWorld.elements[12],
-      camera.matrixWorld.elements[13],
-      camera.matrixWorld.elements[14]
-    )
-
-    Geometry.DoubleToHighLowVector(
-      SpeckleLineMaterial.vecBuff0,
-      SpeckleLineMaterial.vecBuff1,
-      SpeckleLineMaterial.vecBuff2
-    )
-    this.userData.uViewer_low.value.copy(SpeckleLineMaterial.vecBuff1)
-    this.userData.uViewer_high.value.copy(SpeckleLineMaterial.vecBuff2)
+    object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
+    this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
+    this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
     _this.getDrawingBufferSize(this.resolution)
     this.needsUpdate = true
   }

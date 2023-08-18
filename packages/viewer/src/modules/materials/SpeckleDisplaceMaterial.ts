@@ -1,6 +1,6 @@
 import { speckleDisplaceVert } from './shaders/speckle-displace.vert'
 import { speckleDisplaceFrag } from './shaders/speckle-displace-frag'
-import { Vector2 } from 'three'
+import { Material, Vector2 } from 'three'
 import SpeckleBasicMaterial from './SpeckleBasicMaterial'
 import { Uniforms } from './SpeckleMaterial'
 
@@ -19,6 +19,11 @@ class SpeckleDisplaceMaterial extends SpeckleBasicMaterial {
 
   constructor(parameters, defines = ['USE_RTE']) {
     super(parameters, defines)
+  }
+
+  public fastCopy(from: Material, to: Material) {
+    super.fastCopy(from, to)
+    to.userData.displacement.value = from.userData.displacement.value
   }
 }
 

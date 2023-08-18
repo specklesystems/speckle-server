@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   DefaultViewerParams,
   SelectionEvent,
@@ -70,6 +71,7 @@ const createViewer = async (containerName: string, stream: string) => {
   )
 
   viewer.on(ViewerEvent.LoadComplete, () => {
+    console.warn(viewer.getRenderer().renderingStats)
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()

@@ -44,7 +44,10 @@ export default class TextBatch implements Batch {
   }
 
   public getCount(): number {
-    return this.geometry.index.count
+    return (
+      this.mesh.textMesh.geometry.index.count +
+      this.mesh.backgroundMesh?.geometry.index.count
+    )
   }
 
   public get materials(): Material[] {
@@ -122,7 +125,7 @@ export default class TextBatch implements Batch {
 
   public purge() {
     this.renderViews.length = 0
-    this.geometry.dispose()
+    this.mesh.geometry.dispose()
     this.batchMaterial.dispose()
     this.mesh = null
   }

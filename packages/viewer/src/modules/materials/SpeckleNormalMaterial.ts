@@ -8,11 +8,6 @@ import { Geometry } from '../converter/Geometry'
 import { ExtendedMeshNormalMaterial, Uniforms } from './SpeckleMaterial'
 
 class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
-  protected static readonly matBuff: Matrix4 = new Matrix4()
-  protected static readonly vecBuff0: Vector3 = new Vector3()
-  protected static readonly vecBuff1: Vector3 = new Vector3()
-  protected static readonly vecBuff2: Vector3 = new Vector3()
-
   protected get vertexProgram(): string {
     return speckleNormalVert
   }
@@ -52,26 +47,9 @@ class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
 
   /** Called by three.js render loop */
   public onBeforeRender(_this, scene, camera, geometry, object, group) {
-    SpeckleNormalMaterial.matBuff.copy(camera.matrixWorldInverse)
-    SpeckleNormalMaterial.matBuff.elements[12] = 0
-    SpeckleNormalMaterial.matBuff.elements[13] = 0
-    SpeckleNormalMaterial.matBuff.elements[14] = 0
-    object.modelViewMatrix.copy(SpeckleNormalMaterial.matBuff)
-
-    SpeckleNormalMaterial.vecBuff0.set(
-      camera.matrixWorld.elements[12],
-      camera.matrixWorld.elements[13],
-      camera.matrixWorld.elements[14]
-    )
-
-    Geometry.DoubleToHighLowVector(
-      SpeckleNormalMaterial.vecBuff0,
-      SpeckleNormalMaterial.vecBuff1,
-      SpeckleNormalMaterial.vecBuff2
-    )
-
-    this.userData.uViewer_low.value.copy(SpeckleNormalMaterial.vecBuff1)
-    this.userData.uViewer_high.value.copy(SpeckleNormalMaterial.vecBuff2)
+    object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
+    this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
+    this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
 
     this.needsUpdate = true
   }
