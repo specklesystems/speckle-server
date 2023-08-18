@@ -22,7 +22,7 @@ export type InviteItem = NonNullable<
 export interface CTA {
   type: 'button' | 'link'
   label: string
-  action: MaybeAsync<void>
+  action: () => MaybeAsync<void>
 }
 
 export interface Button {
@@ -39,7 +39,7 @@ export interface CardInfo {
     | {
         type: 'button' | 'link'
         label: string
-        action: MaybeAsync<void>
+        action: () => MaybeAsync<void>
       }
     | undefined
 }

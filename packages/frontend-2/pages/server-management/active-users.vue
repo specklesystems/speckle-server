@@ -21,7 +21,7 @@
       placeholder="Search Users"
       class="rounded-md border border-outline-3"
       @update:model-value="debounceSearchUpdate"
-      @change="searchUpdateHandler(newSearchString)"
+      @change="(newSearchString) => searchUpdateHandler(newSearchString)"
     />
 
     <ServerManagementTable
@@ -76,13 +76,7 @@
         <ServerManagementUserRoleSelect
           :model-value="isUser(item) ? item.role : undefined"
           :disabled="isUser(item) && isCurrentUser(item)"
-          @update:model-value="
-            (newRoleValue: ServerRoles) =>
-              isUser(item) &&
-              !isArray(newRoleValue) &&
-              newRoleValue &&
-              openChangeUserRoleDialog(item, newRoleValue)
-          "
+          @update:model-value="(newRoleValue) => isUser(item) && !isArray(newRoleValue) && newRoleValue && openChangeUserRoleDialog(item, newRoleValue as ServerRoles)"
         />
       </template>
     </ServerManagementTable>

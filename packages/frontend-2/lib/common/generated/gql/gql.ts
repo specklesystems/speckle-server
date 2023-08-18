@@ -147,7 +147,7 @@ const documents = {
     "\n  mutation AdminPanelDeleteInvite($inviteId: String!) {\n    inviteDelete(inviteId: $inviteId)\n  }\n": types.AdminPanelDeleteInviteDocument,
     "\n  mutation AdminPanelResendInvite($inviteId: String!) {\n    inviteResend(inviteId: $inviteId)\n  }\n": types.AdminPanelResendInviteDocument,
     "\n  query AdminPanelProjectsList(\n    $query: String\n    $orderBy: String\n    $limit: Int!\n    $visibility: String\n    $cursor: String\n  ) {\n    admin {\n      projectList(\n        query: $query\n        orderBy: $orderBy\n        limit: $limit\n        visibility: $visibility\n        cursor: $cursor\n      ) {\n        cursor\n        items {\n          id\n          name\n          visibility\n          createdAt\n          updatedAt\n          models {\n            totalCount\n          }\n          versions {\n            totalCount\n          }\n          team {\n            user {\n              name\n              id\n              avatar\n            }\n          }\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n": types.AdminPanelProjectsListDocument,
-    "\n  mutation AdminPanelDeleteProject($deleteId: String!) {\n    projectMutations {\n      delete(id: $deleteId)\n    }\n  }\n": types.AdminPanelDeleteProjectDocument,
+    "\n  mutation AdminPanelDeleteProject($ids: [String!]) {\n    streamsDelete(ids: $ids)\n  }\n": types.AdminPanelDeleteProjectDocument,
 };
 
 /**
@@ -703,7 +703,7 @@ export function graphql(source: "\n  query AdminPanelProjectsList(\n    $query: 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation AdminPanelDeleteProject($deleteId: String!) {\n    projectMutations {\n      delete(id: $deleteId)\n    }\n  }\n"): (typeof documents)["\n  mutation AdminPanelDeleteProject($deleteId: String!) {\n    projectMutations {\n      delete(id: $deleteId)\n    }\n  }\n"];
+export function graphql(source: "\n  mutation AdminPanelDeleteProject($ids: [String!]) {\n    streamsDelete(ids: $ids)\n  }\n"): (typeof documents)["\n  mutation AdminPanelDeleteProject($ids: [String!]) {\n    streamsDelete(ids: $ids)\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

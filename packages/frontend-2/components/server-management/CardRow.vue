@@ -38,6 +38,6 @@ defineProps<{
   title: string
   value: string
   icon: ConcreteComponent
-  cta?: CTA
+  cta?: CTA | undefined
 }>()
 </script>

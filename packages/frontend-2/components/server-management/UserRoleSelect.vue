@@ -27,7 +27,7 @@ type ValueType = ServerRoles | ServerRoles[] | undefined
 
 const props = defineProps({
   modelValue: {
-    type: [String, Array, null],
+    type: [String, Array] as PropType<ValueType>,
     default: () => null
   },
   multiple: {

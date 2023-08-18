@@ -118,7 +118,9 @@ const serverData = computed((): CardInfo[] => [
     cta: {
       type: 'button',
       label: 'Edit Settings',
-      action: () => Promise.resolve((showDialog.value = true))
+      action: () => {
+        showDialog.value = true
+      }
     }
   },
   {
@@ -134,7 +136,7 @@ const serverData = computed((): CardInfo[] => [
       : undefined
   }
 ])
-const userData = computed(() => [
+const userData = computed((): CardInfo[] => [
   {
     title: 'Active users',
     value: result.value?.admin.serverStatistics.totalUserCount?.toString() || 'N/A',
@@ -142,7 +144,7 @@ const userData = computed(() => [
     cta: {
       type: 'button',
       label: 'Manage',
-      action: async () => await router.push('/server-management/active-users/')
+      action: () => navigate('/server-management/active-users/')
     }
   },
   {
@@ -152,11 +154,11 @@ const userData = computed(() => [
     cta: {
       type: 'button',
       label: 'Manage',
-      action: async () => await router.push('/server-management/pending-invitations/')
+      action: () => navigate('/server-management/pending-invitations/')
     }
   }
 ])
-const projectData = computed(() => [
+const projectData = computed((): CardInfo[] => [
   {
     title: 'Projects',
     value: result.value?.admin.serverStatistics.totalProjectCount?.toString() || 'N/A',
@@ -164,7 +166,7 @@ const projectData = computed(() => [
     cta: {
       type: 'button',
       label: 'Manage',
-      action: async () => await router.push('/server-management/projects/')
+      action: () => navigate('/server-management/projects/')
     }
   }
 ])
@@ -180,6 +182,14 @@ const openGithubReleasePage = () => {
 const saveSettings = () => {
   if (settingsDialog.value) {
     settingsDialog.value.onSubmit()
+  }
+}
+
+const navigate = async (path: string) => {
+  try {
+    await router.push(path)
+  } catch (error) {
+    logger.error('Failed to navigate:', error)
   }
 }
 

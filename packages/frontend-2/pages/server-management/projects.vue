@@ -174,10 +174,8 @@ const getProjects = graphql(`
 `)
 
 const adminDeleteProject = graphql(`
-  mutation AdminPanelDeleteProject($deleteId: String!) {
-    projectMutations {
-      delete(id: $deleteId)
-    }
+  mutation AdminPanelDeleteProject($ids: [String!]) {
+    streamsDelete(ids: $ids)
   }
 `)
 
@@ -232,11 +230,11 @@ const deleteConfirmed = async () => {
 
   const result = await adminDeleteMutation(
     {
-      deleteId: projectId
+      ids: [projectId]
     },
     {
       update: (cache, { data }) => {
-        if (data?.projectMutations.delete) {
+        if (data?.streamsDelete) {
           // Remove item from cache
           cache.evict({
             id: getCacheId('AdminUserListItem', projectId)
@@ -268,7 +266,7 @@ const deleteConfirmed = async () => {
     }
   ).catch(convertThrowIntoFetchResult)
 
-  if (result?.data?.projectMutations.delete) {
+  if (result?.data?.streamsDelete) {
     closeProjectDeleteDialog()
     triggerNotification({
       type: ToastNotificationType.Success,
