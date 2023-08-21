@@ -34,7 +34,6 @@ const props = defineProps<{
 }>()
 
 const timeAgo = computed(() => {
-  if (!props.version.createdAt) return 'no message'
   return dayjs(props.version.createdAt).from(dayjs())
 })
 </script>
