@@ -162,6 +162,7 @@ import { vueWithMixins } from '@/helpers/typeHelpers'
 import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 import { AppLocalStorage } from '@/utils/localStorage'
 import StreamAccessRequestBanner from '@/main/components/stream/StreamAccessRequestBanner.vue'
+import { MainUserDataDocument } from '@/graphql/generated/graphql'
 
 export default vueWithMixins(IsLoggedInMixin).extend({
   // @vue/component
@@ -222,18 +223,25 @@ export default vueWithMixins(IsLoggedInMixin).extend({
     serverInfo: {
       prefetch: true,
       query: fullServerInfoQuery
+    },
+    activeUser: {
+      query: MainUserDataDocument
     }
   },
   computed: {
     showLeaveStreamPanel() {
       if (!this.isLoggedIn) return false
       if (!this.stream?.role) return false
+      if (this.isServerGuest) return false
       if (this.isStreamOwner && this.owners.length <= 1) return false
 
       return true
     },
     isStreamOwner() {
       return this.stream?.role === Roles.Stream.Owner
+    },
+    isServerGuest() {
+      return this.activeUser?.role === Roles.Server.Guest
     },
     streamId() {
       return this.$route.params.streamId

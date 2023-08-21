@@ -189,7 +189,7 @@ extend type Mutation {
   """
   Remove yourself from stream collaborators (not possible for the owner)
   """
-  streamLeave(streamId: String!): Boolean! @hasServerRole(role: SERVER_GUEST)
+  streamLeave(streamId: String!): Boolean! @hasServerRole(role: SERVER_USER)
 }
 
 extend type Subscription {

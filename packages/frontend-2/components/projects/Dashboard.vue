@@ -41,7 +41,11 @@
             class="w-56 grow md:grow-0"
             fixed-height
           />
-          <FormButton :icon-left="PlusIcon" @click="openNewProject = true">
+          <FormButton
+            v-if="!isGuest"
+            :icon-left="PlusIcon"
+            @click="openNewProject = true"
+          >
             New
           </FormButton>
         </div>
@@ -113,7 +117,7 @@ const debouncedSearch = ref('')
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
 
-const { activeUser } = useActiveUser()
+const { activeUser, isGuest } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
 const areQueriesLoading = useQueryLoading()
 const apollo = useApolloClient().client

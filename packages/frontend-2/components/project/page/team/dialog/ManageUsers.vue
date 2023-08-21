@@ -20,6 +20,7 @@
             class="shrink-0"
             :model-value="collaborator.role"
             :disabled="loading"
+            :hide-owner="collaborator.serverRole === Roles.Server.Guest"
             @update:model-value="onCollaboratorRoleChange(collaborator, $event)"
             @delete="onCollaboratorRoleChange(collaborator, null)"
           />
@@ -51,7 +52,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Nullable, StreamRoles } from '@speckle/shared'
+import { Nullable, StreamRoles, Roles } from '@speckle/shared'
 import { useApolloClient } from '@vue/apollo-composable'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import {

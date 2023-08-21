@@ -34,7 +34,7 @@
 </template>
 <script setup lang="ts">
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
-import { StreamRoles } from '@speckle/shared'
+import { Roles, StreamRoles } from '@speckle/shared'
 import { reduce } from 'lodash-es'
 
 const emit = defineEmits<{
@@ -48,15 +48,25 @@ const props = defineProps<{
   name?: string
   disabled?: boolean
   hideRemove?: boolean
+  hideOwner?: boolean
 }>()
 
 const items = ref(
   reduce(
     roleSelectItems,
     (results, item) => {
-      if (!props.hideRemove || item.id !== 'delete') {
+      if (item.id === 'delete') {
+        if (!props.hideRemove) {
+          results[item.id] = item
+        }
+      } else if (item.id === Roles.Stream.Owner) {
+        if (!props.hideOwner) {
+          results[item.id] = item
+        }
+      } else {
         results[item.id] = item
       }
+
       return results
     },
     {} as typeof roleSelectItems

@@ -23,6 +23,7 @@ graphql(`
       role
       user {
         ...LimitedUserAvatar
+        role
       }
     }
     invitedTeam {
@@ -32,6 +33,7 @@ graphql(`
       role
       user {
         ...LimitedUserAvatar
+        role
       }
     }
   }

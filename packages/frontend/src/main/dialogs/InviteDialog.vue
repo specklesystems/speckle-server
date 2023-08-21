@@ -86,6 +86,12 @@ import UserRoleSelect from '@/main/components/common/UserRoleSelect.vue'
 import { useServerInfo } from '@/main/lib/core/composables/server'
 import { Roles } from '@speckle/shared'
 
+/**
+ * TODO: Role select only if guest mode on and filter out admin options if user is non-admin
+ * - Check BE as well
+ * - What about FE2 team management dialog? What kind of design?
+ */
+
 type UserType = Get<UserSearchQuery, 'userSearch.items.0'>
 
 export default defineComponent({

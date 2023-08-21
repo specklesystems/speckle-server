@@ -11,7 +11,7 @@
 </template>
 <script setup lang="ts">
 import { ServerRoles, RoleInfo, Roles } from '@speckle/shared'
-import { defineProps, defineEmits, computed } from 'vue'
+import { computed } from 'vue'
 
 const emit = defineEmits<{
   (e: 'update:role', val: ServerRoles): void

@@ -241,7 +241,7 @@ extend type User {
   Get all invitations to projects that the active user has
   """
   projectInvites: [PendingStreamCollaborator!]!
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
     @isOwner
 }
