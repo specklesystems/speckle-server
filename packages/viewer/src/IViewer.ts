@@ -1,7 +1,6 @@
 import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
 import { DiffResult, VisualDiffMode } from './modules/Differ'
-import { BatchObject } from './modules/batching/BatchObject'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
@@ -153,8 +152,6 @@ export interface IViewer {
   getWorldTree(): WorldTree
   query<T extends Query>(query: T): QueryArgsResultMap[T['operation']]
   queryAsync(query: Query): Promise<QueryResult>
-
-  getObjects(id: string): BatchObject[]
 
   getRenderer(): SpeckleRenderer
   getContainer(): HTMLElement

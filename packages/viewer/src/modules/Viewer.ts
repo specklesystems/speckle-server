@@ -27,7 +27,6 @@ import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
 import { DiffResult, Differ, VisualDiffMode } from './Differ'
-import { BatchObject } from './batching/BatchObject'
 import { Extension } from './extensions/core-extensions/Extension'
 import { ICameraProvider, IProvider } from './extensions/core-extensions/Providers'
 import { CameraController } from '..'
@@ -150,10 +149,6 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public getRenderer() {
     return this.speckleRenderer
-  }
-
-  public getObjects(id: string): BatchObject[] {
-    return this.speckleRenderer.getObjects(id)
   }
 
   public resize() {

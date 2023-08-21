@@ -59,6 +59,7 @@ import Materials, {
 } from './materials/Materials'
 import { SpeckleMaterial } from './materials/SpeckleMaterial'
 import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
+import Logger from 'js-logger'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -1184,18 +1185,21 @@ export default class SpeckleRenderer {
     this.batcher.isolateBatch(batchId)
   }
 
-  public getObjects(id: string): BatchObject[] {
-    const node = this.viewer.getWorldTree().findId(id)
-    const rvs = this.viewer
-      .getWorldTree()
-      .getRenderTree()
-      .getRenderViewsForNode(node, node)
+  public getObjects(): BatchObject[] {
     const batches = this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
     const meshes = batches.map((batch: MeshBatch) => batch.mesh)
     const objects = meshes.flatMap((mesh) => mesh.batchObjects)
-    const selectedObjects = objects.filter((obj: BatchObject) =>
-      rvs.includes(obj.renderView)
+    return objects
+  }
+
+  public getObject(rv: NodeRenderView): BatchObject {
+    const batch = this.batcher.getBatch(rv) as MeshBatch
+    if (batch.geometryType !== GeometryType.MESH) {
+      Logger.error('Render view is not of mesh type. No batch object found')
+      return null
+    }
+    return batch.mesh.batchObjects.find(
+      (value) => value.renderView.renderData.id === rv.renderData.id
     )
-    return selectedObjects
   }
 }

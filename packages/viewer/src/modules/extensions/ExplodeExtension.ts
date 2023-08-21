@@ -1,6 +1,4 @@
 import { Extension, Vector3 } from '../..'
-import { GeometryType } from '../batching/Batch'
-import MeshBatch from '../batching/MeshBatch'
 
 export class ExplodeExtension extends Extension {
   private explodeTime = -1
@@ -19,19 +17,14 @@ export class ExplodeExtension extends Extension {
   }
 
   private explode(time: number, range: number) {
-    const batches: MeshBatch[] = this.viewer
-      .getRenderer()
-      .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
-    const vecBuff: Vector3 = new Vector3()
-    for (let k = 0; k < batches.length; k++) {
-      const objects = batches[k].mesh.batchObjects
-      for (let i = 0; i < objects.length; i++) {
-        const center = objects[i].renderView.aabb.getCenter(vecBuff)
-        const dir = center.sub(this.viewer.World.worldOrigin)
-        dir.normalize().multiplyScalar(time * range)
+    const objects = this.viewer.getRenderer().getObjects()
+    const vecBuff = new Vector3()
+    for (let i = 0; i < objects.length; i++) {
+      const center = objects[i].renderView.aabb.getCenter(vecBuff)
+      const dir = center.sub(this.viewer.World.worldOrigin)
+      dir.normalize().multiplyScalar(time * range)
 
-        objects[i].transformTRS(dir, undefined, undefined, undefined)
-      }
+      objects[i].transformTRS(dir, undefined, undefined, undefined)
     }
 
     // this.renderer.shadowMap.needsUpdate = true
