@@ -15,9 +15,10 @@ import {
   SectionTool,
   SectionOutlines,
   MeasurementsExtension,
-  ExplodeExtension
+  ExplodeExtension,
+  DiffExtension,
+  FilteringExtension
 } from '@speckle/viewer'
-import { FilteringExtension } from '@speckle/viewer'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -48,6 +49,7 @@ const createViewer = async (containerName: string, stream: string) => {
   const measurements = viewer.createExtension(MeasurementsExtension)
   const filtering = viewer.createExtension(FilteringExtension)
   const explode = viewer.createExtension(ExplodeExtension)
+  const diff = viewer.createExtension(DiffExtension)
   // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
   selection // use it

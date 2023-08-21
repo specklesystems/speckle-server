@@ -213,7 +213,6 @@ export class SelectionExtension extends Extension {
     this.viewer
       .getRenderer()
       .setMaterial(transparentRvs, this.transparentSelectionMaterialData)
-    // setTimeout(() => console.warn(this.viewer.getRenderer().renderingStats), 100)
     this.viewer.requestRender()
   }
 
@@ -256,5 +255,6 @@ export class SelectionExtension extends Extension {
       this.viewer.getRenderer().setMaterial([this.hoverRv], this.hoverMaterial)
     this.hoverRv = null
     this.hoverMaterial = null
+    this.viewer.requestRender()
   }
 }

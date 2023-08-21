@@ -11,7 +11,8 @@ import {
   BatchObject,
   VisualDiffMode,
   MeasurementType,
-  ExplodeExtension
+  ExplodeExtension,
+  DiffExtension
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
@@ -1011,7 +1012,7 @@ export default class Sandbox {
     }
     let diffResult: DiffResult | null = null
     diffButton.on('click', async () => {
-      diffResult = await this.viewer.diff(
+      diffResult = await this.viewer.getExtension(DiffExtension).diff(
         //building
         // 'https://latest.speckle.dev/streams/aea12cab71/objects/bcf37136dea9fe9397cdfd84012f616a',
         // 'https://latest.speckle.dev/streams/aea12cab71/objects/94af0a6b4eaa318647180f8c230cb867',
@@ -1075,7 +1076,7 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         if (!diffResult) return
-        this.viewer.setDiffTime(diffResult, value.value)
+        this.viewer.getExtension(DiffExtension).updateVisualDiff(value.value)
         this.viewer.requestRender()
       })
     container
@@ -1087,8 +1088,9 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         if (!diffResult) return
-        this.viewer.setVisualDiffMode(diffResult, value.value)
-        this.viewer.setDiffTime(diffResult, diffParams.time)
+        this.viewer
+          .getExtension(DiffExtension)
+          .updateVisualDiff(diffParams.time, value.value)
         this.viewer.requestRender()
       })
   }

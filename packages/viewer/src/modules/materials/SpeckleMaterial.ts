@@ -25,6 +25,7 @@ export type Uniforms = Record<string, any>
 export class SpeckleMaterial {
   protected _internalUniforms
   protected _stencilOutline
+  public needsCopy: boolean
 
   protected get vertexProgram(): string {
     return ''
@@ -163,6 +164,7 @@ export class SpeckleMaterial {
   public setMaterialOptions(options: MaterialOptions) {
     this.stencilOutline = options.stencilOutlines || false
     this.pointSize = options.pointSize || 1
+    this['depthWrite'] = options.depthWrite
   }
 }
 

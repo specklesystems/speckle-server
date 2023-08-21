@@ -178,10 +178,7 @@ export default class MeshBatch implements Batch {
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
-        value.material = this.mesh.getCachedMaterial(
-          value.material,
-          value.materialOptions?.needsCopy
-        )
+        value.material = this.mesh.getCachedMaterial(value.material)
       }
     })
     const materials = ranges.map((val) => {
@@ -301,6 +298,21 @@ export default class MeshBatch implements Batch {
     return null
   }
 
+  private sortGroups() {
+    this.geometry.groups.sort((a, b) => {
+      const materialA: Material = (this.mesh.material as Array<Material>)[
+        a.materialIndex
+      ]
+      const materialB: Material = (this.mesh.material as Array<Material>)[
+        b.materialIndex
+      ]
+      const visibleOrder = +materialB.visible - +materialA.visible
+      const transparentOrder = +materialA.transparent - +materialB.transparent
+      if (visibleOrder !== 0) return visibleOrder
+      return transparentOrder
+    })
+  }
+
   private flattenDrawGroups() {
     const materialOrder = []
     this.geometry.groups.reduce((previousValue, currentValue) => {
@@ -357,6 +369,28 @@ export default class MeshBatch implements Batch {
     }
     if (this.drawCalls > this.minDrawCalls + 2) {
       this.needsShuffle = true
+    } else {
+      this.geometry.groups.sort((a, b) => {
+        return a.start - b.start
+      })
+      const transparentOrHiddenGroup = this.geometry.groups.find(
+        (value) =>
+          this.materials[value.materialIndex].transparent === true ||
+          this.materials[value.materialIndex].visible === false
+      )
+      if (transparentOrHiddenGroup) {
+        for (
+          let k = this.geometry.groups.indexOf(transparentOrHiddenGroup);
+          k < this.geometry.groups.length;
+          k++
+        ) {
+          const material = this.materials[this.geometry.groups[k].materialIndex]
+          if (material.transparent !== true && material.visible !== false) {
+            this.needsShuffle = true
+            break
+          }
+        }
+      }
     }
   }
 
@@ -375,7 +409,7 @@ export default class MeshBatch implements Batch {
       })
       .slice()
 
-    groups.sort((a, b) => {
+    this.geometry.groups.sort((a, b) => {
       const materialA: Material = (this.mesh.material as Array<Material>)[
         a.materialIndex
       ]
@@ -387,6 +421,7 @@ export default class MeshBatch implements Batch {
       if (visibleOrder !== 0) return visibleOrder
       return transparentOrder
     })
+
     const materialOrder = []
     groups.reduce((previousValue, currentValue) => {
       if (previousValue.indexOf(currentValue.materialIndex) === -1) {

@@ -26,11 +26,13 @@ export interface DisplayStyle {
   id: string
   color: number
   lineWeight: number
+  opacity?: number
 }
 
 export interface MaterialOptions {
   stencilOutlines?: boolean
   pointSize?: number
+  depthWrite?: number
 }
 
 export enum FilterMaterialType {
@@ -52,7 +54,6 @@ export interface FilterMaterialOptions {
   rampIndexColor?: Color
   rampTexture?: Texture
   rampWidth?: number
-  needsCopy?: boolean
 }
 
 export default class Materials {
@@ -162,7 +163,13 @@ export default class Materials {
   }
 
   private static displayStyleToString(displayStyle: DisplayStyle) {
-    return displayStyle.color?.toString() + '/' + displayStyle.lineWeight.toString()
+    return displayStyle.color?.toString() +
+      '/' +
+      displayStyle.lineWeight.toString() +
+      displayStyle.opacity !==
+      undefined
+      ? displayStyle.opacity.toString()
+      : ''
   }
 
   private static hashCode(s: string) {
@@ -567,6 +574,7 @@ export default class Materials {
     )
     mat.color = new Color(materialData.color)
     mat.color.convertSRGBToLinear()
+    mat.opacity = materialData.opacity !== undefined ? materialData.opacity : 1
     mat.linewidth = materialData.lineWeight > 0 ? materialData.lineWeight : 1
     mat.worldUnits = materialData.lineWeight > 0 ? true : false
     mat.vertexColors = true

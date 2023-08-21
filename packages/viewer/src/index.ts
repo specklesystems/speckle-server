@@ -48,6 +48,7 @@ import { SectionOutlines } from './modules/extensions/SectionOutlines'
 import { FilteringExtension } from './modules/extensions/FilteringExtension'
 import { Extension } from './modules/extensions/core-extensions/Extension'
 import { ExplodeExtension } from './modules/extensions/ExplodeExtension'
+import { DiffExtension } from './modules/extensions/DiffExtension'
 
 export {
   Viewer,
@@ -72,7 +73,8 @@ export {
   MeasurementsExtension,
   FilteringExtension,
   CameraControllerEvent,
-  ExplodeExtension
+  ExplodeExtension,
+  DiffExtension
 }
 
 export type {
