@@ -4,7 +4,7 @@ import Stats from 'three/examples/jsm/libs/stats.module.js'
 import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
 
-import { Clock, DoubleSide, FrontSide, Texture } from 'three'
+import { Clock, Texture } from 'three'
 import { Assets } from './Assets'
 import { Optional } from '../helpers/typeHelper'
 import {
@@ -25,7 +25,6 @@ import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
-import { DiffResult, Differ, VisualDiffMode } from './Differ'
 import { Extension } from './extensions/core-extensions/Extension'
 import { ICameraProvider, IProvider } from './extensions/core-extensions/Providers'
 import { CameraController } from '..'
@@ -45,7 +44,6 @@ export class Viewer extends EventEmitter implements IViewer {
   public static Assets: Assets
   public speckleRenderer: SpeckleRenderer
   private propertyManager: PropertyManager
-  public differ: Differ
 
   /** Misc members */
   private inProgressOperations: number
@@ -129,7 +127,6 @@ export class Viewer extends EventEmitter implements IViewer {
 
     new Assets()
     this.propertyManager = new PropertyManager()
-    this.differ = new Differ(this.tree)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(window as any)._V = this // For debugging! ಠ_ಠ
@@ -403,82 +400,6 @@ export class Viewer extends EventEmitter implements IViewer {
         ;(this as EventEmitter).emit(ViewerEvent.UnloadAllComplete)
       }
     }
-  }
-
-  // Note: Alex, don't kill me over this one - it's making things in the FE much easier...
-  // I know this probably screws up showing multiple diffs at the same time, but for the
-  // time being it's probs a good compromise
-  private dynamicallyLoadedDiffResources = [] as string[]
-  public async diff(
-    urlA: string,
-    urlB: string,
-    mode: VisualDiffMode,
-    authToken?: string
-  ): Promise<DiffResult> {
-    const loadPromises = []
-    this.dynamicallyLoadedDiffResources = []
-
-    if (!this.tree.findId(urlA)) {
-      loadPromises.push(this.loadObjectAsync(urlA, authToken, undefined, 1))
-      this.dynamicallyLoadedDiffResources.push(urlA)
-    }
-    if (!this.tree.findId(urlB)) {
-      loadPromises.push(this.loadObjectAsync(urlB, authToken, undefined, 1))
-      this.dynamicallyLoadedDiffResources.push(urlB)
-    }
-    await Promise.all(loadPromises)
-
-    const diffResult = await this.differ.diff(urlA, urlB)
-
-    const pipelineOptions = this.speckleRenderer.pipelineOptions
-    pipelineOptions.depthSide = FrontSide
-    this.speckleRenderer.pipelineOptions = pipelineOptions
-
-    this.differ.resetMaterialGroups()
-    this.differ.buildMaterialGroups(
-      mode,
-      diffResult,
-      this.speckleRenderer.getBatchMaterials()
-    )
-    this.differ.setDiffTime(0)
-    // REVISIT
-    // this.filteringManager.setUserMaterials(this.differ.materialGroups)
-
-    return Promise.resolve(diffResult)
-  }
-
-  public async undiff() {
-    const pipelineOptions = this.speckleRenderer.pipelineOptions
-    pipelineOptions.depthSide = DoubleSide
-    this.speckleRenderer.pipelineOptions = pipelineOptions
-    this.differ.resetMaterialGroups()
-    // REVISIT
-    // this.filteringManager.removeUserMaterials()
-
-    const unloadPromises = []
-    if (this.dynamicallyLoadedDiffResources.length !== 0) {
-      for (const id of this.dynamicallyLoadedDiffResources)
-        unloadPromises.push(this.unloadObject(id))
-    }
-    this.dynamicallyLoadedDiffResources = []
-    await Promise.all(unloadPromises)
-  }
-
-  public setDiffTime(diffResult: DiffResult, time: number) {
-    this.differ.setDiffTime(time)
-    // REVISIT
-    // this.filteringManager.setUserMaterials(this.differ.materialGroups)
-  }
-
-  public setVisualDiffMode(diffResult: DiffResult, mode: VisualDiffMode) {
-    this.differ.resetMaterialGroups()
-    this.differ.buildMaterialGroups(
-      mode,
-      diffResult,
-      this.speckleRenderer.getBatchMaterials()
-    )
-    // REVISIT
-    // this.filteringManager.setUserMaterials(this.differ.materialGroups)
   }
 
   public dispose() {

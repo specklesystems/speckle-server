@@ -45,8 +45,6 @@ import { Shadowcatcher } from './Shadowcatcher'
 import SpeckleMesh from './objects/SpeckleMesh'
 import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 import { BatchObject } from './batching/BatchObject'
-import SpecklePointMaterial from './materials/SpecklePointMaterial'
-import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import {
   ICameraProvider,
   CameraControllerEvent
@@ -744,20 +742,19 @@ export default class SpeckleRenderer {
     return this.batcher.getBatch(rv).getMaterial(rv)
   }
 
+  public getBatchMaterial(rv: NodeRenderView): Material {
+    if (!rv || !rv.batchId) {
+      return null
+    }
+    return this.batcher.getBatch(rv).batchMaterial
+  }
+
   public resetMaterials() {
     this.batcher.resetBatchesDrawRanges()
   }
 
   public getBatch(id: string): Batch {
     return this.batcher.batches[id]
-  }
-
-  public getBatchMaterials(): {
-    [id: string]: SpeckleStandardMaterial | SpecklePointMaterial | SpeckleLineMaterial
-  } {
-    return Object.keys(this.batcher.batches).reduce((accumulator, value) => {
-      return { ...accumulator, [value]: this.batcher.batches[value].batchMaterial }
-    }, {})
   }
 
   protected updateClippingPlanes(planes?: Plane[]) {

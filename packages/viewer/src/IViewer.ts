@@ -1,6 +1,5 @@
 import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
-import { DiffResult, VisualDiffMode } from './modules/Differ'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
@@ -138,10 +137,10 @@ export interface IViewer {
   unloadAll(): Promise<void>
 
   /** Diffing */
-  diff(urlA: string, urlB: string, mode: VisualDiffMode): Promise<DiffResult>
-  undiff(): void
-  setDiffTime(diffResult: DiffResult, time: number): void
-  setVisualDiffMode(diffResult: DiffResult, mode: VisualDiffMode)
+  // diff(urlA: string, urlB: string, mode: VisualDiffMode): Promise<DiffResult>
+  // undiff(): void
+  // setDiffTime(diffResult: DiffResult, time: number): void
+  // setVisualDiffMode(diffResult: DiffResult, mode: VisualDiffMode)
 
   screenshot(): Promise<string>
 

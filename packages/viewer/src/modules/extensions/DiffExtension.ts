@@ -10,7 +10,6 @@ import SpecklePointMaterial from '../materials/SpecklePointMaterial'
 import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Extension, IViewer } from '../..'
-import { generateUUID } from 'three/src/math/MathUtils'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeckleObject = Record<string, any>
@@ -58,7 +57,7 @@ export class DiffExtension extends Extension {
 
   private _materialGroups = null
   private _visualDiff: VisualDiffResult = null
-  private _diffTime = 0
+  private _diffTime = -1
   private _diffMode: VisualDiffMode = VisualDiffMode.COLORED
 
   public constructor(viewer: IViewer) {
@@ -215,6 +214,23 @@ export class DiffExtension extends Extension {
     this.updateVisualDiff(0, mode)
 
     return Promise.resolve(diffResult)
+  }
+
+  /** Currently, the diff does not store the existing materials. We can do that if we need to */
+  public async undiff() {
+    const pipelineOptions = this.viewer.getRenderer().pipelineOptions
+    pipelineOptions.depthSide = DoubleSide
+    this.viewer.getRenderer().pipelineOptions = pipelineOptions
+    this.resetMaterialGroups()
+    this.viewer.getRenderer().resetMaterials()
+
+    const unloadPromises = []
+    if (this.dynamicallyLoadedDiffResources.length !== 0) {
+      for (const id of this.dynamicallyLoadedDiffResources)
+        unloadPromises.push(this.viewer.unloadObject(id))
+    }
+    this.dynamicallyLoadedDiffResources = []
+    await Promise.all(unloadPromises)
   }
 
   private intersection(o1, o2) {
@@ -428,9 +444,13 @@ export class DiffExtension extends Extension {
       this._materialGroups === null
     ) {
       this.resetMaterialGroups()
-      this.buildMaterialGroups(mode, this.viewer.getRenderer().getBatchMaterials())
+      this.buildMaterialGroups(mode)
+      this._diffMode = mode
     }
-    if (time !== undefined) this.setDiffTime(time)
+    if (time !== undefined && time !== this._diffTime) {
+      this.setDiffTime(time)
+      this._diffTime = time
+    }
 
     this._materialGroups.forEach((value) => {
       this.viewer.getRenderer().setMaterial(value.rvs, value.material)
@@ -474,21 +494,13 @@ export class DiffExtension extends Extension {
     })
   }
 
-  private buildMaterialGroups(
-    mode: VisualDiffMode,
-    batchMaterials?: {
-      [id: string]: SpeckleStandardMaterial | SpecklePointMaterial | SpeckleLineMaterial
-    }
-  ) {
+  private buildMaterialGroups(mode: VisualDiffMode) {
     switch (mode) {
       case VisualDiffMode.COLORED:
         this._materialGroups = this.getColoredMaterialGroups(this._visualDiff)
         break
       case VisualDiffMode.PLAIN:
-        this._materialGroups = this.getPlainMaterialGroups(
-          this._visualDiff,
-          batchMaterials
-        )
+        this._materialGroups = this.getPlainMaterialGroups(this._visualDiff)
         break
       default:
         Logger.error(`Unsupported visual diff mode ${mode}`)
@@ -553,7 +565,6 @@ export class DiffExtension extends Extension {
       // We could use specific line materials, but it won't make a difference until we elevate the
       // LineBatch a bit
       {
-        objectIds: [],
         rvs: visualDiffResult.added.filter(
           (value) =>
             value.geometryType === GeometryType.MESH ||
@@ -562,7 +573,6 @@ export class DiffExtension extends Extension {
         material: this.addedMaterialMesh
       },
       {
-        objectIds: [],
         rvs: visualDiffResult.modifiedNew.filter(
           (value) =>
             value.geometryType === GeometryType.MESH ||
@@ -571,7 +581,6 @@ export class DiffExtension extends Extension {
         material: this.changedNewMaterialMesh
       },
       {
-        objectIds: [],
         rvs: visualDiffResult.modifiedOld.filter(
           (value) =>
             value.geometryType === GeometryType.MESH ||
@@ -580,7 +589,6 @@ export class DiffExtension extends Extension {
         material: this.changedOldMaterialMesh
       },
       {
-        objectIds: [],
         rvs: visualDiffResult.removed.filter(
           (value) =>
             value.geometryType === GeometryType.MESH ||
@@ -590,7 +598,6 @@ export class DiffExtension extends Extension {
       },
       //POINTS
       {
-        objectIds: [],
         rvs: visualDiffResult.added.filter(
           (value) =>
             value.geometryType === GeometryType.POINT ||
@@ -599,7 +606,6 @@ export class DiffExtension extends Extension {
         material: this.addedMaterialPoint
       },
       {
-        objectIds: [],
         rvs: visualDiffResult.modifiedNew.filter(
           (value) =>
             value.geometryType === GeometryType.POINT ||
@@ -608,7 +614,6 @@ export class DiffExtension extends Extension {
         material: this.changedNewMaterialPoint
       },
       {
-        objectIds: [],
         rvs: visualDiffResult.modifiedOld.filter(
           (value) =>
             value.geometryType === GeometryType.POINT ||
@@ -617,7 +622,6 @@ export class DiffExtension extends Extension {
         material: this.changedOldMaterialPoint
       },
       {
-        objectIds: [],
         rvs: visualDiffResult.removed.filter(
           (value) =>
             value.geometryType === GeometryType.POINT ||
@@ -640,22 +644,11 @@ export class DiffExtension extends Extension {
     return groups.filter((value) => value.rvs.length > 0)
   }
 
-  private getPlainMaterialGroups(
-    visualDiffResult: VisualDiffResult,
-    batchMaterials: {
-      [id: string]: SpeckleStandardMaterial | SpecklePointMaterial | SpeckleLineMaterial
-    }
-  ) {
-    const added = this.getBatchesSubgroups(visualDiffResult.added, batchMaterials)
-    const changedOld = this.getBatchesSubgroups(
-      visualDiffResult.modifiedOld,
-      batchMaterials
-    )
-    const changedNew = this.getBatchesSubgroups(
-      visualDiffResult.modifiedNew,
-      batchMaterials
-    )
-    const removed = this.getBatchesSubgroups(visualDiffResult.removed, batchMaterials)
+  private getPlainMaterialGroups(visualDiffResult: VisualDiffResult) {
+    const added = this.getBatchesSubgroups(visualDiffResult.added)
+    const changedOld = this.getBatchesSubgroups(visualDiffResult.modifiedOld)
+    const changedNew = this.getBatchesSubgroups(visualDiffResult.modifiedNew)
+    const removed = this.getBatchesSubgroups(visualDiffResult.removed)
     this.addedMaterials = added.map((value) => value.material)
     this.changedOldMaterials = changedOld.map((value) => value.material)
     this.changedNewMaterials = changedNew.map((value) => value.material)
@@ -663,25 +656,20 @@ export class DiffExtension extends Extension {
     return [...added, ...changedOld, ...changedNew, ...removed]
   }
 
-  private getBatchesSubgroups(
-    subgroup: Array<NodeRenderView>,
-    batchMaterials: {
-      [id: string]: SpeckleStandardMaterial | SpecklePointMaterial | SpeckleLineMaterial
-    }
-  ) {
-    const groupBatches: Array<string> = [
-      ...Array.from(new Set(subgroup.map((value) => value.batchId)))
-    ] as Array<string>
+  private getBatchesSubgroups(subgroup: Array<NodeRenderView>) {
+    const groupBatches = _.groupBy(subgroup, 'batchId')
 
     const materialGroup = []
-    for (let k = 0; k < groupBatches.length; k++) {
-      const matClone = batchMaterials[groupBatches[k]].clone()
+    for (const k in groupBatches) {
+      const matClone = this.viewer
+        .getRenderer()
+        .getBatchMaterial(groupBatches[k][0])
+        .clone()
       matClone['clampOpacity'] = matClone.opacity
       matClone.opacity = 0.5
       matClone.transparent = true
       materialGroup.push({
-        objectIds: [],
-        rvs: subgroup.filter((value) => value.batchId === groupBatches[k]),
+        rvs: groupBatches[k],
         material: matClone
       })
     }
