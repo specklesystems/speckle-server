@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Box3, SectionTool } from '@speckle/viewer'
+import { Box3, SectionTool, TreeNode } from '@speckle/viewer'
 import { Vector3 } from '@speckle/viewer'
 import {
   CanonicalView,
@@ -158,10 +158,9 @@ export default class Sandbox {
     })
     viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent) => {
       if (selectionEvent && selectionEvent.hits) {
-        const firstHitGuid = selectionEvent.hits[0].guid
-        if (firstHitGuid) {
-          const objects = this.viewer.getObjects(firstHitGuid)
-          this.addObjectControls(firstHitGuid, objects)
+        const firstHitNode = selectionEvent.hits[0].node
+        if (firstHitNode) {
+          this.addObjectControls(firstHitNode)
         }
       }
     })
@@ -243,27 +242,39 @@ export default class Sandbox {
     this.viewsFolder.dispose()
   }
 
-  public addObjectControls(id: string, objects: BatchObject[]) {
+  public addObjectControls(node: TreeNode) {
     if (this.objectControls) {
       this.objectControls.dispose()
     }
     this.objectControls = this.tabs.pages[0].addFolder({
-      title: `Object: ${id}`
+      title: `Object: ${node.model.id}`
     })
 
+    const rvs = this.viewer
+      .getWorldTree()
+      .getRenderTree()
+      .getRenderViewsForNode(node, node)
+    const objects: BatchObject[] = []
+    for (let k = 0; k < rvs.length; k++) {
+      const batchObject = this.viewer.getRenderer().getObject(rvs[k])
+      if (batchObject) {
+        objects.push(batchObject)
+      }
+    }
     const position = { value: { x: 0, y: 0, z: 0 } }
     const rotation = { value: { x: 0, y: 0, z: 0 } }
     const scale = { value: { x: 1, y: 1, z: 1 } }
     this.objectControls
       .addInput(position, 'value', { label: 'Position' })
       .on('change', () => {
-        const unionBox: Box3 = new Box3()
+        // const unionBox: Box3 = new Box3()
+        // objects.forEach((obj: BatchObject) => {
+        //   unionBox.union(obj.renderView.aabb)
+        // })
+        // const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
-          unionBox.union(obj.renderView.aabb)
-        })
-        const origin = unionBox.getCenter(new Vector3())
-        objects.forEach((obj: BatchObject) => {
-          obj.transformTRS(position.value, rotation.value, scale.value, origin)
+          // obj.transformTRS(position.value, rotation.value, scale.value, origin)
+          obj.position = position.value
         })
         this.viewer.requestRender()
       })
@@ -276,13 +287,14 @@ export default class Sandbox {
         z: { step: 0.1 }
       })
       .on('change', () => {
-        const unionBox: Box3 = new Box3()
+        // const unionBox: Box3 = new Box3()
+        // objects.forEach((obj: BatchObject) => {
+        //   unionBox.union(obj.renderView.aabb)
+        // })
+        // const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
-          unionBox.union(obj.renderView.aabb)
-        })
-        const origin = unionBox.getCenter(new Vector3())
-        objects.forEach((obj: BatchObject) => {
-          obj.transformTRS(position.value, rotation.value, scale.value, origin)
+          // obj.transformTRS(position.value, rotation.value, scale.value, origin)
+          obj.euler = rotation.value
         })
         this.viewer.requestRender()
       })

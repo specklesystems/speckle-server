@@ -3,7 +3,6 @@ import Stats from 'three/examples/jsm/libs/stats.module.js'
 
 import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
-// import CameraHandler from './context/CameraHanlder'
 
 import { Clock, DoubleSide, FrontSide, Texture } from 'three'
 import { Assets } from './Assets'
@@ -216,113 +215,6 @@ export class Viewer extends EventEmitter implements IViewer {
     bypassCache = true
   ): PropertyInfo[] {
     return this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
-  }
-
-  // public hideObjects(
-  //   objectIds: string[],
-  //   stateKey: string = null,
-  //   includeDescendants = false,
-  //   ghost = false
-  // ): Promise<FilteringState> {
-  //   return new Promise<FilteringState>((resolve) => {
-  //     resolve(
-  //       this.filteringManager.hideObjects(
-  //         objectIds,
-  //         stateKey,
-  //         includeDescendants,
-  //         ghost
-  //       )
-  //     )
-  //   })
-  // }
-
-  // public showObjects(
-  //   objectIds: string[],
-  //   stateKey: string = null,
-  //   includeDescendants = false
-  // ): Promise<FilteringState> {
-  //   return new Promise<FilteringState>((resolve) => {
-  //     resolve(
-  //       this.filteringManager.showObjects(objectIds, stateKey, includeDescendants)
-  //     )
-  //   })
-  // }
-
-  // public isolateObjects(
-  //   objectIds: string[],
-  //   stateKey: string = null,
-  //   includeDescendants = false,
-  //   ghost = true
-  // ): Promise<FilteringState> {
-  //   return new Promise<FilteringState>((resolve) => {
-  //     resolve(
-  //       this.filteringManager.isolateObjects(
-  //         objectIds,
-  //         stateKey,
-  //         includeDescendants,
-  //         ghost
-  //       )
-  //     )
-  //   })
-  // }
-
-  // public unIsolateObjects(
-  //   objectIds: string[],
-  //   stateKey: string = null,
-  //   includeDescendants = false
-  // ): Promise<FilteringState> {
-  //   return new Promise<FilteringState>((resolve) => {
-  //     resolve(
-  //       this.filteringManager.unIsolateObjects(objectIds, stateKey, includeDescendants)
-  //     )
-  //   })
-  // }
-
-  // public highlightObjects(objectIds: string[], ghost = false): Promise<FilteringState> {
-  //   return new Promise<FilteringState>((resolve) => {
-  //     resolve(this.filteringManager.highlightObjects(objectIds, ghost))
-  //   })
-  // }
-
-  // public resetHighlight(): Promise<FilteringState> {
-  //   return new Promise<FilteringState>((resolve) => {
-  //     resolve(this.filteringManager.resetHighlight())
-  //   })
-  // }
-
-  // public setColorFilter(property: PropertyInfo, ghost = true): Promise<FilteringState> {
-  //   return new Promise<FilteringState>((resolve) => {
-  //     resolve(this.filteringManager.setColorFilter(property, ghost))
-  //   })
-  // }
-
-  // public removeColorFilter(): Promise<FilteringState> {
-  //   return new Promise<FilteringState>((resolve) => {
-  //     resolve(this.filteringManager.removeColorFilter())
-  //   })
-  // }
-
-  // public setUserObjectColors(
-  //   groups: { objectIds: string[]; color: string }[]
-  // ): Promise<FilteringState> {
-  //   return new Promise<FilteringState>((resolve) => {
-  //     resolve(this.filteringManager.setUserObjectColors(groups))
-  //   })
-  // }
-
-  // public resetFilters(): Promise<FilteringState> {
-  //   return new Promise<FilteringState>((resolve) => {
-  //     resolve(this.filteringManager.reset())
-  //   })
-  // }
-
-  /**
-   * LEGACY: Handles (or tries to handle) old viewer filtering.
-   * @param args legacy filter object
-   */
-  public async applyFilter(filter: unknown) {
-    filter
-    // return this.FilteringManager.handleLegacyFilter(filter)
   }
 
   public getDataTree(): DataTree {

@@ -164,17 +164,17 @@ export default class SpeckleMesh extends Mesh {
         this.transformsBuffer[index + 4] = batchObject.pivot_Low.x
         this.transformsBuffer[index + 5] = batchObject.pivot_Low.y
         this.transformsBuffer[index + 6] = batchObject.pivot_Low.z
-        this.transformsBuffer[index + 7] = batchObject.scale.x
+        this.transformsBuffer[index + 7] = batchObject.scaleValue.x
 
         this.transformsBuffer[index + 8] = batchObject.pivot_High.x
         this.transformsBuffer[index + 9] = batchObject.pivot_High.y
         this.transformsBuffer[index + 10] = batchObject.pivot_High.z
-        this.transformsBuffer[index + 11] = batchObject.scale.y
+        this.transformsBuffer[index + 11] = batchObject.scaleValue.y
 
         this.transformsBuffer[index + 12] = batchObject.translation.x
         this.transformsBuffer[index + 13] = batchObject.translation.y
         this.transformsBuffer[index + 14] = batchObject.translation.z
-        this.transformsBuffer[index + 15] = batchObject.scale.z
+        this.transformsBuffer[index + 15] = batchObject.scaleValue.z
 
         batchObject.transformDirty = false
       }
@@ -198,9 +198,9 @@ export default class SpeckleMesh extends Mesh {
           batchObject.pivot_High.z,
           batchObject.translation.z,
           batchObject.quaternion.w,
-          batchObject.scale.x,
-          batchObject.scale.y,
-          batchObject.scale.z
+          batchObject.scaleValue.x,
+          batchObject.scaleValue.y,
+          batchObject.scaleValue.z
         )
       }
     }

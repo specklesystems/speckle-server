@@ -18,10 +18,11 @@ export class BatchObject {
   public tasVertIndexEnd: number
 
   public quaternion: Quaternion = new Quaternion()
+  public eulerValue: Euler = new Euler()
   public pivot_High: Vector3 = new Vector3()
   public pivot_Low: Vector3 = new Vector3()
   public translation: Vector3 = new Vector3()
-  public scale: Vector3 = new Vector3(1, 1, 1)
+  public scaleValue: Vector3 = new Vector3(1, 1, 1)
 
   private static matBuff0: Matrix4 = new Matrix4()
   private static matBuff1: Matrix4 = new Matrix4()
@@ -47,6 +48,33 @@ export class BatchObject {
 
   public get speckleId(): string {
     return this._renderView.renderData.id
+  }
+
+  public set position(value: Vector3) {
+    this.transformTRS(
+      new Vector3().subVectors(value, this._localOrigin),
+      this.eulerValue,
+      this.scaleValue,
+      new Vector3().addVectors(this.pivot_Low, this.pivot_High)
+    )
+  }
+
+  public set euler(euler: Euler) {
+    this.transformTRS(
+      this.translation,
+      euler,
+      this.scaleValue,
+      new Vector3().addVectors(this.pivot_Low, this.pivot_High)
+    )
+  }
+
+  public set scale(scale: Vector3) {
+    this.transformTRS(
+      this.translation,
+      this.eulerValue,
+      scale,
+      new Vector3().addVectors(this.pivot_Low, this.pivot_High)
+    )
   }
 
   public constructor(renderView: NodeRenderView, batchIndex: number) {
@@ -118,6 +146,7 @@ export class BatchObject {
       BatchObject.eulerBuff.set(euler.x, euler.y, euler.z, 'XYZ')
       R = BatchObject.matBuff1.makeRotationFromEuler(BatchObject.eulerBuff)
       this.quaternion.setFromEuler(BatchObject.eulerBuff)
+      this.eulerValue.copy(BatchObject.eulerBuff)
     }
 
     if (scale) {
@@ -139,7 +168,7 @@ export class BatchObject {
 
     this.translation.copy(BatchObject.translationBuff)
     this.quaternion.setFromEuler(BatchObject.eulerBuff)
-    this.scale.copy(BatchObject.scaleBuff)
+    this.scaleValue.copy(BatchObject.scaleBuff)
 
     Geometry.DoubleToHighLowVector(
       BatchObject.pivotBuff,
