@@ -136,12 +136,6 @@ export interface IViewer {
   unloadObject(url: string): Promise<void>
   unloadAll(): Promise<void>
 
-  /** Diffing */
-  // diff(urlA: string, urlB: string, mode: VisualDiffMode): Promise<DiffResult>
-  // undiff(): void
-  // setDiffTime(diffResult: DiffResult, time: number): void
-  // setVisualDiffMode(diffResult: DiffResult, mode: VisualDiffMode)
-
   screenshot(): Promise<string>
 
   getObjectProperties(resourceURL?: string, bypassCache?: boolean): PropertyInfo[]

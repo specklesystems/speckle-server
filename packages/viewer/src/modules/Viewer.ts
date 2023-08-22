@@ -119,17 +119,12 @@ export class Viewer extends EventEmitter implements IViewer {
     this.clock = new THREE.Clock()
     this.inProgressOperations = 0
 
-    // this.cameraHandler = new CameraHandler(this)
-
     this.speckleRenderer = new SpeckleRenderer(this)
     this.speckleRenderer.create(this.container)
     window.addEventListener('resize', this.resize.bind(this), false)
 
     new Assets()
     this.propertyManager = new PropertyManager()
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(window as any)._V = this // For debugging! ಠ_ಠ
 
     this.frame()
     this.resize()
@@ -304,7 +299,12 @@ export class Viewer extends EventEmitter implements IViewer {
     await this.speckleRenderer.addRenderTree(url)
     Logger.log('SYNC batch build time -> ', performance.now() - t0)
 
-    // if (zoomToObject) this.zoom()
+    if (zoomToObject) {
+      const extension = this.getExtension(CameraController)
+      if (extension) {
+        extension.setCameraView([], false)
+      }
+    }
 
     this.speckleRenderer.resetPipeline(true)
     this.emit(ViewerEvent.LoadComplete, url)
