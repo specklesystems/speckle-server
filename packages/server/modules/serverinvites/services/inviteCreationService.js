@@ -331,9 +331,12 @@ async function createAndSendInvite(params) {
   const { inviterId, resourceTarget, resourceId, role, serverRole } = params
   let { message, target } = params
 
-  const inviter = await getUser(inviterId, { withRole: true })
-  const targetUser = await getUserFromTarget(target)
-  const resource = await getResource(params)
+  const [inviter, targetUser, resource, serverInfo] = await Promise.all([
+    getUser(inviterId, { withRole: true }),
+    getUserFromTarget(target),
+    getResource(params),
+    getServerInfo()
+  ])
 
   // if target user found, always use the user ID
   if (targetUser) target = buildUserTarget(targetUser.id)
@@ -352,8 +355,13 @@ async function createAndSendInvite(params) {
   if (serverRole && !Object.values(Roles.Server).includes(serverRole)) {
     throw new InviteCreateValidationError('Invalid server role')
   }
-  if (inviter.role !== Roles.Server.Admin && serverRole) {
-    throw new InviteCreateValidationError('Only server admins can assign server roles')
+  if (inviter.role !== Roles.Server.Admin && serverRole === Roles.Server.Admin) {
+    throw new InviteCreateValidationError(
+      'Only server admins can assign the admin server role'
+    )
+  }
+  if (serverRole === Roles.Server.Guest && !serverInfo.guestModeEnabled) {
+    throw new InviteCreateValidationError('Guest mode is not enabled on this server')
   }
 
   // write to DB

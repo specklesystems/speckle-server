@@ -52,10 +52,11 @@
               label="message"
             />
             <user-role-select
-              v-if="isAdmin && !user"
+              v-if="allowServerRoleSelect && !user"
               class="mb-4"
               label="Select server role"
               for-invite
+              :allow-admin="isAdmin"
               :allow-guest="isGuestMode"
               :role.sync="role"
             />
@@ -85,12 +86,6 @@ import { useActiveUser } from '@/main/lib/core/composables/activeUser'
 import UserRoleSelect from '@/main/components/common/UserRoleSelect.vue'
 import { useServerInfo } from '@/main/lib/core/composables/server'
 import { Roles } from '@speckle/shared'
-
-/**
- * TODO: Role select only if guest mode on and filter out admin options if user is non-admin
- * - Check BE as well
- * - What about FE2 team management dialog? What kind of design?
- */
 
 type UserType = Get<UserSearchQuery, 'userSearch.items.0'>
 
@@ -142,6 +137,9 @@ export default defineComponent({
     }
   },
   computed: {
+    allowServerRoleSelect() {
+      return this.isAdmin || this.isGuestMode
+    },
     isServerInvite(): boolean {
       return !this.streamId
     },
@@ -191,7 +189,7 @@ export default defineComponent({
             message: this.message,
             streamId: this.streamId,
             userId: this.user ? this.user.id : null,
-            serverRole: this.isAdmin ? this.role : null
+            serverRole: this.allowServerRoleSelect && this.role ? this.role : null
           }
         }
       })

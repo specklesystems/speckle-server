@@ -17,16 +17,26 @@ const emit = defineEmits<{
   (e: 'update:role', val: ServerRoles): void
 }>()
 
-const props = defineProps<{
-  role: ServerRoles
-  allowGuest?: boolean
-  label?: string
-  forInvite?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    role: ServerRoles
+    allowGuest?: boolean
+    allowAdmin?: boolean
+    label?: string
+    forInvite?: boolean
+  }>(),
+  {
+    allowAdmin: true
+  }
+)
 
 const roles = computed(() =>
   Object.values(Roles.Server)
-    .filter((r) => !props.forInvite || r !== Roles.Server.ArchivedUser)
+    .filter((r) => {
+      if (r === Roles.Server.Admin) return props.allowAdmin
+      if (r === Roles.Server.ArchivedUser) return !props.forInvite
+      return true
+    })
     .map((r) => ({
       text: RoleInfo.Server[r],
       value: r,
