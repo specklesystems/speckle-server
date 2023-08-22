@@ -20,9 +20,11 @@
 
       <div
         v-if="user && newRole === Roles.Server.Admin"
-        class="flex gap-2 items-center bg-danger-lighter border-danger-darker border rounded-lg p-2"
+        class="flex gap-2 items-center bg-danger-lighter dark:bg-danger border-danger-darker dark:border-danger-lighter border rounded-lg p-2"
       >
-        <ExclamationTriangleIcon class="h-8 w-8 mt-0.5 text-danger-darker" />
+        <ExclamationTriangleIcon
+          class="h-8 w-8 mt-0.5 text-danger-darker dark:text-danger-lighter"
+        />
         <div>
           <p>Make sure you trust {{ user.name }}!</p>
           <p>An admin on the server has access to every resource.</p>

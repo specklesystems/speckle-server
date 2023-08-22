@@ -21,7 +21,7 @@
         <div
           v-for="item in items"
           :key="item.id"
-          class="relative grid grid-cols-12 items-center gap-6 px-4 py-1 min-w-[900px] bg-white"
+          class="relative grid grid-cols-12 items-center gap-6 px-4 py-1 min-w-[900px] bg-foundation"
           :style="{ paddingRight: paddingRightStyle }"
           :class="{ 'cursor-pointer hover:bg-primary-muted': !!props.onRowClick }"
           tabindex="0"
