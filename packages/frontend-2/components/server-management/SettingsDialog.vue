@@ -9,7 +9,7 @@
       <div class="flex flex-col gap-6">
         <FormTextInput
           v-model="name"
-          label="This server’s public name"
+          label="This server's public name"
           name="serverName"
           placeholder="Server name"
           show-label
@@ -57,13 +57,14 @@
 </template>
 
 <script setup lang="ts">
-import { useQuery, useMutation } from '@vue/apollo-composable'
+import { useQuery, useMutation, useApolloClient } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
 import { isRequired } from '~~/lib/common/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { LayoutDialog, FormTextInput, FormTextArea } from '@speckle/ui-components'
 import { useLogger } from '~~/composables/logging'
+import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 
 type FormValues = {
   name: string
@@ -72,6 +73,10 @@ type FormValues = {
   adminContact: string
   termsOfService: string
   inviteOnly: boolean
+}
+
+type ServerInfoUpdateVariables = {
+  info: FormValues
 }
 
 const serverInfoQuery = graphql(`
@@ -124,6 +129,29 @@ const { handleSubmit } = useForm<FormValues>()
 
 const { result } = useQuery(serverInfoQuery)
 const { mutate: updateServerInfo } = useMutation(serverInfoUpdateMutation)
+const apolloClient = useApolloClient().client
+
+const updateServerInfoAndCache = async (variables: ServerInfoUpdateVariables) => {
+  const result = await updateServerInfo(variables).catch(convertThrowIntoFetchResult)
+
+  if (result?.data?.serverInfoUpdate) {
+    apolloClient.cache.modify({
+      fields: {
+        serverInfo(existingServerInfo: FormValues): FormValues {
+          return {
+            ...existingServerInfo,
+            name: name.value,
+            description: description.value,
+            company: company.value,
+            adminContact: adminContact.value,
+            termsOfService: termsOfService.value,
+            inviteOnly: inviteOnly.value
+          }
+        }
+      }
+    })
+  }
+}
 
 const name = ref('')
 const description = ref('')
@@ -141,7 +169,7 @@ const requiredRule = [isRequired]
 
 const onSubmit = handleSubmit(async () => {
   try {
-    await updateServerInfo({
+    await updateServerInfoAndCache({
       info: {
         name: name.value,
         description: description.value,
