@@ -363,6 +363,11 @@ async function createAndSendInvite(params) {
   if (serverRole === Roles.Server.Guest && !serverInfo.guestModeEnabled) {
     throw new InviteCreateValidationError('Guest mode is not enabled on this server')
   }
+  if (targetUser && targetUser.role === Roles.Server.Guest) {
+    if (role === Roles.Stream.Owner) {
+      throw new InviteCreateValidationError('Guest users cannot be owners of streams')
+    }
+  }
 
   // write to DB
   const invite = {

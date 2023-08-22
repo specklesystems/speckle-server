@@ -50,11 +50,13 @@ async function getResource(invite) {
 /**
  * Try to find a user using the target value
  * @param {string} target
- * @returns {Promise<import('@/modules/core/helpers/userHelper').UserRecord>}
+ * @returns {Promise<import('@/modules/core/repositories/users').UserWithOptionalRole | undefined>}
  */
 async function getUserFromTarget(target) {
   const { userEmail, userId } = resolveTarget(target)
-  return userEmail ? await getUserByEmail(userEmail) : await getUser(userId)
+  return userEmail
+    ? await getUserByEmail(userEmail, { withRole: true })
+    : await getUser(userId, { withRole: true })
 }
 
 /**

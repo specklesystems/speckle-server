@@ -131,9 +131,21 @@ export async function getUser(userId: string, params?: GetUserParams) {
  */
 export async function getUserByEmail(
   email: string,
-  options?: Partial<{ skipClean: boolean }>
+  options?: Partial<{ skipClean: boolean; withRole: boolean }>
 ) {
-  const q = Users.knex<UserRecord[]>().whereRaw('lower(email) = lower(?)', [email])
+  const q = Users.knex<UserWithOptionalRole[]>().whereRaw('lower(email) = lower(?)', [
+    email
+  ])
+  if (options?.withRole) {
+    q.columns([
+      ...Object.values(Users.col),
+      // Getting first role from grouped results
+      knex.raw(`(array_agg("server_acl"."role"))[1] as role`)
+    ])
+    q.leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+    q.groupBy(Users.col.id)
+  }
+
   const user = await q.first()
   return user ? (!options?.skipClean ? sanitizeUserRecord(user) : user) : null
 }
