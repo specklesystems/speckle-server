@@ -60,8 +60,7 @@
     >
       <CommonLoadingBar :loading="true" class="h-1" />
       <div v-if="model.sending" class="text-xs px-2 pt-1">
-        {{ model.progress?.status }} (%
-        {{ ((model.progress?.progress as number) * 100).toFixed(2) }})
+        {{ progressBarText }}
       </div>
       <div v-else class="text-xs px-2 pt-1">Completed!</div>
     </div>
@@ -102,6 +101,24 @@ const props = defineProps<{
 }>()
 
 const getModelDetails = useGetModelDetails(props.project.accountId)
+
+const progressBarValue = () => {
+  if (props.model.progress === undefined) {
+    return 0
+  } else {
+    return ((props.model.progress.progress as number) * 100).toFixed(2)
+  }
+}
+
+const progressBarText = computed(() => {
+  if (props.model.progress?.status === undefined) {
+    return 'Progressing'
+  } else if (props.model.progress?.status === 'Converting') {
+    return `${props.model.progress?.status} (% ${progressBarValue()})`
+  } else {
+    return props.model.progress.status
+  }
+})
 
 const modelDetails = await getModelDetails({
   projectId: props.model.projectId,

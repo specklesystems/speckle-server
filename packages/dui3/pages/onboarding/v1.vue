@@ -170,6 +170,9 @@ const publish = async () => {
 
   await store.addModel(modelCard)
   router.push('/')
-  await store.sendModel(modelCard.id)
+  // Sketchup freezes immediately after routing, by setting timeout we can get correct states
+  setTimeout(async () => {
+    await store.sendModel(modelCard.id)
+  }, 500)
 }
 </script>

@@ -8,6 +8,7 @@ declare let sketchup: {
 }
 
 type SendViaBrowserArgs = {
+  modelCardId: string
   projectId: string
   modelId: string
   token: string
@@ -79,8 +80,21 @@ export class SketchupBridge extends BaseBridge {
    * @param eventPayload
    */
   private async sendViaBrowser(eventPayload: SendViaBrowserArgs) {
-    const { serverUrl, token, projectId, accountId, modelId, sendObject, message } =
-      eventPayload
+    const {
+      serverUrl,
+      token,
+      projectId,
+      accountId,
+      modelId,
+      modelCardId,
+      sendObject,
+      message
+    } = eventPayload
+    this.emit('senderProgress', {
+      id: modelCardId,
+      status: 'Uploading',
+      progress: 0
+    } as unknown as string)
     // TODO: More of a question: why are we not sending multiple batches at once?
     // What's in a batch? etc. To look at optmizing this and not blocking the
     // main thread.
@@ -107,6 +121,12 @@ export class SketchupBridge extends BaseBridge {
       message: message || 'send from sketchup'
     }
     this.emit('createVersion', args as unknown as string)
+
+    this.emit('senderProgress', {
+      id: modelCardId,
+      status: 'Completed',
+      progress: 1
+    } as unknown as string)
   }
 
   public async create(): Promise<boolean> {

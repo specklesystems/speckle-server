@@ -121,8 +121,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   })
 
   app.$sendBinding.on('senderProgress', (args) => {
-    console.log(args)
-
     const model = documentModelStore.value.models.find(
       (m) => m.id === args.id
     ) as ISenderModelCard
@@ -130,10 +128,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     if (args.status === 'Completed') {
       model.sending = false
     }
-    console.log(model)
   })
 
   app.$sendBinding.on('createVersion', async (args) => {
+    // TODO: Use below once it's ready
     // const createVersion = useCreateVersion(args.accountId)
     // await createVersion(args)
 
@@ -160,46 +158,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const createCommit = useCreateCommit(args.accountId)
     await createCommit(commit)
   })
-
-  // app.$sendBinding?.on('sendViaBrowser', async (sendViaBrowserArgs) => {
-  //   const formData = new FormData()
-  //   const sendObject = sendViaBrowserArgs.sendObject
-  //   const defaultAccount = accountStore.defaultAccount
-  //   const modelCard = sendViaBrowserArgs.modelCard
-
-  //   sendObject.batches.forEach(async (batch) => {
-  //     formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
-
-  //     if (defaultAccount) {
-  //       await fetch(
-  //         `${defaultAccount.accountInfo.serverInfo.url}/objects/${modelCard.projectId}`,
-  //         {
-  //           method: 'POST',
-  //           headers: { Authorization: 'Bearer ' + defaultAccount.accountInfo.token },
-  //           body: formData
-  //         }
-  //       )
-  //     }
-  //   })
-
-  //   const getModelDetails = useGetModelDetails()
-  //   const modelDetails = getModelDetails({
-  //     projectId: modelCard.projectId,
-  //     modelId: modelCard.modelId
-  //   })
-
-  //   const commit: CommitCreateInput = {
-  //     streamId: modelCard.projectId,
-  //     branchName: (await modelDetails).displayName,
-  //     objectId: sendObject.id,
-  //     message: 'sent from sketchup DUI3',
-  //     sourceApplication: 'sketchup',
-  //     totalChildrenCount: sendObject.totalChildrenCount
-  //   }
-
-  //   const createCommit = useCreateCommit()
-  //   await createCommit(commit)
-  // })
 
   // First initialization calls
   void refreshDocumentInfo()
