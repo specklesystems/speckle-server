@@ -20,40 +20,22 @@
       </FormTextInput>
       <div v-if="searchUsers.length || selectedEmails" class="flex flex-col space-y-4">
         <template v-if="searchUsers.length">
-          <template v-for="user in searchUsers" :key="user.id">
-            <div class="flex items-center space-x-2">
-              <UserAvatar :user="user" />
-              <span class="grow truncate">{{ user.name }}</span>
-              <span
-                v-tippy="
-                  isOwnerSelected && user.role === Roles.Server.Guest
-                    ? `Server guests can't be project owners`
-                    : undefined
-                "
-              >
-                <FormButton
-                  :disabled="
-                    loading || (isOwnerSelected && user.role === Roles.Server.Guest)
-                  "
-                  @click="onInviteUser(user)"
-                >
-                  Invite
-                </FormButton>
-              </span>
-            </div>
-          </template>
+          <ProjectPageTeamDialogInviteUserServerUserRow
+            v-for="user in searchUsers"
+            :key="user.id"
+            :user="user"
+            :stream-role="role"
+            :disabled="loading"
+            @invite-user="($event) => onInviteUser($event.user)"
+          />
         </template>
         <template v-else-if="selectedEmails?.length">
-          <div class="flex items-center space-x-2">
-            <UserAvatar />
-            <span class="grow truncate">{{ selectedEmails.join(', ') }}</span>
-            <FormButton
-              :disabled="loading"
-              @click="() => onInviteUser(selectedEmails || [])"
-            >
-              Invite
-            </FormButton>
-          </div>
+          <ProjectPageTeamDialogInviteUserEmailsRow
+            :selected-emails="selectedEmails"
+            :stream-role="role"
+            :disabled="loading"
+            @invite-emails="($event) => onInviteUser($event.emails)"
+          />
         </template>
       </div>
     </div>
@@ -61,8 +43,7 @@
 </template>
 <script setup lang="ts">
 import { Roles, StreamRoles } from '@speckle/shared'
-import { Get } from 'type-fest'
-import { useUserSearch } from '~~/lib/common/composables/users'
+import { UserSearchItem, useUserSearch } from '~~/lib/common/composables/users'
 import {
   ProjectInviteCreateInput,
   ProjectPageTeamDialogFragment
@@ -75,7 +56,7 @@ import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
 import { UserPlusIcon } from '@heroicons/vue/24/solid'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
-type InvitableUser = NonNullable<Get<typeof searchUsers.value, '[0]'>> | string
+type InvitableUser = UserSearchItem | string
 
 const props = defineProps<{
   project: ProjectPageTeamDialogFragment
@@ -95,6 +76,17 @@ const { userSearch, searchVariables } = useUserSearch({
 const { collaboratorListItems } = useTeamDialogInternals({
   props: toRefs(props)
 })
+
+const selectedEmails = computed(() => {
+  const query = searchVariables.value?.query || ''
+  if (isValidEmail(query)) return [query]
+
+  const multipleEmails = query.split(',').map((i) => i.trim())
+  const validEmails = multipleEmails.filter((e) => isValidEmail(e))
+  return validEmails.length ? validEmails : null
+})
+
+const isOwnerSelected = computed(() => role.value === Roles.Stream.Owner)
 
 const searchUsers = computed(() => {
   const searchResults = userSearch.value?.userSearch.items || []
@@ -152,15 +144,4 @@ const onInviteUser = async (user: InvitableUser | InvitableUser[]) => {
 
   loading.value = false
 }
-
-const selectedEmails = computed(() => {
-  const query = searchVariables.value?.query || ''
-  if (isValidEmail(query)) return [query]
-
-  const multipleEmails = query.split(',').map((i) => i.trim())
-  const validEmails = multipleEmails.filter((e) => isValidEmail(e))
-  return validEmails.length ? validEmails : null
-})
-
-const isOwnerSelected = computed(() => role.value === Roles.Stream.Owner)
 </script>
