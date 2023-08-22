@@ -1,6 +1,6 @@
 overwrite: true
 schema:
-  - 'http://localhost:3000/graphql'
+  - 'http://127.0.0.1:3000/graphql'
   - 'src/graphql/local-only/schema.gql'
 documents:
   - 'src/graphql/**/*.gql'
