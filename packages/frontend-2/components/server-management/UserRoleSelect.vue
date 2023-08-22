@@ -5,7 +5,7 @@
     label="Role"
     name="userRole"
     :allow-unset="false"
-    class="py-1"
+    class="p-1"
     :disabled="disabled"
   >
     <template #something-selected="{ value }">

@@ -36,10 +36,10 @@
       :items="users"
       :buttons="[{ icon: TrashIcon, label: 'Delete', action: openUserDeleteDialog }]"
       :column-classes="{
-        name: 'col-span-3',
-        email: 'col-span-3',
+        name: 'col-span-3 truncate',
+        email: 'col-span-3 truncate',
         emailState: 'col-span-2',
-        company: 'col-span-2',
+        company: 'col-span-2 truncate',
         role: 'col-span-2'
       }"
       :overflow-cells="true"

@@ -96,9 +96,9 @@ const getClasses = (column: string, colIndex: number): string => {
   const columnClass = props.columnClasses[column]
 
   if (colIndex === 0) {
-    return `bg-transparent py-3 pr-5 truncate ${columnClass}`
+    return `bg-transparent py-3 pr-5 px-1 ${columnClass}`
   }
-  return `lg:p-0 truncate ${columnClass}`
+  return `lg:p-0 px-1 ${columnClass}`
 }
 
 const handleRowClick = (item: ItemType) => {
