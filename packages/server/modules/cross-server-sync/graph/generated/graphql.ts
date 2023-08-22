@@ -1509,7 +1509,10 @@ export type ProjectMutations = {
   __typename?: 'ProjectMutations';
   /** Create new project */
   create: Project;
-  /** Create onboarding/tutorial project */
+  /**
+   * Create onboarding/tutorial project. If one is already created for the active user, that
+   * one will be returned instead.
+   */
   createForOnboarding: Project;
   /** Delete an existing project */
   delete: Scalars['Boolean'];

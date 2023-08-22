@@ -232,7 +232,6 @@ export default vueWithMixins(IsLoggedInMixin).extend({
     showLeaveStreamPanel() {
       if (!this.isLoggedIn) return false
       if (!this.stream?.role) return false
-      if (this.isServerGuest) return false
       if (this.isStreamOwner && this.owners.length <= 1) return false
 
       return true
