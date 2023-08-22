@@ -105,6 +105,18 @@ export const DefaultLightConfiguration: SunLightConfiguration = {
   shadowcatcher: true
 }
 
+export enum ObjectLayers {
+  STREAM_CONTENT_MESH = 10,
+  STREAM_CONTENT_LINE = 11,
+  STREAM_CONTENT_POINT = 12,
+  STREAM_CONTENT_TEXT = 13,
+
+  STREAM_CONTENT = 1,
+  PROPS = 2,
+  SHADOWCATCHER = 3,
+  OVERLAY = 4
+}
+
 export interface IViewer {
   get input(): Input
   get Utils(): Utils

@@ -12,18 +12,12 @@ import {
   HideAllBatchUpdateRange
 } from './Batch'
 import PointBatch from './PointBatch'
-// import { FilterMaterialType } from '../FilteringManager'
 import { Material, Mesh, WebGLRenderer } from 'three'
 import Logger from 'js-logger'
 import { World } from '../World'
 import { RenderTree } from '../tree/RenderTree'
 import TextBatch from './TextBatch'
-import SpeckleMesh from '../objects/SpeckleMesh'
-
-export enum TransformStorage {
-  VERTEX_TEXTURE = 0,
-  UNIFORM_ARRAY = 1
-}
+import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
 
 export default class Batcher {
   private maxHardwareUniformCount = 0

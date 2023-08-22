@@ -1,7 +1,8 @@
 import Logger from 'js-logger'
 import { Intersection, Ray, Vector2, Vector3 } from 'three'
-import SpeckleRenderer, { ObjectLayers } from '../SpeckleRenderer'
+import SpeckleRenderer from '../SpeckleRenderer'
 import { IntersectionQuery, IntersectionQueryResult } from './Query'
+import { ObjectLayers } from '../../IViewer'
 
 export class IntersectionQuerySolver {
   private vecBuff0: Vector3 = new Vector3()

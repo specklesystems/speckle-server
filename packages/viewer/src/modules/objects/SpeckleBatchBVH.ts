@@ -14,7 +14,7 @@ import { ExtendedTriangle } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
 import { ExtendedIntersection, ExtendedShapeCastCallbacks } from './SpeckleRaycaster'
 import { SpeckleMeshBVH } from './SpeckleMeshBVH'
-import { ObjectLayers } from '../SpeckleRenderer'
+import { ObjectLayers } from '../../IViewer'
 
 /** 
  * 

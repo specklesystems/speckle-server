@@ -3,6 +3,7 @@ import {
   DefaultLightConfiguration,
   DefaultViewerParams,
   IViewer,
+  ObjectLayers,
   SelectionEvent,
   SpeckleView,
   ViewerEvent
@@ -25,7 +26,6 @@ import {
   IntersectionQueryResult
 } from './modules/queries/Query'
 import { Utils } from './modules/Utils'
-import { ObjectLayers } from './modules/SpeckleRenderer'
 import { DiffResult, VisualDiffMode } from './modules/Differ'
 import { BatchObject } from './modules/batching/BatchObject'
 import { Box3, Vector3 } from 'three'

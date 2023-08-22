@@ -13,7 +13,6 @@ import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
 import { Geometry } from '../converter/Geometry'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
-import { ObjectLayers } from '../SpeckleRenderer'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import {
   AllBatchUpdateRange,
@@ -22,6 +21,7 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
+import { ObjectLayers } from '../../IViewer'
 
 export default class LineBatch implements Batch {
   public id: string

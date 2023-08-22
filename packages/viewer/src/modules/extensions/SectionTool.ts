@@ -16,8 +16,7 @@ import {
   SphereGeometry
 } from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
-import { IViewer } from '../../IViewer'
-import { ObjectLayers } from '../SpeckleRenderer'
+import { IViewer, ObjectLayers } from '../../IViewer'
 import { Extension } from './core-extensions/Extension'
 import { CameraControllerEvent, ICameraProvider } from './core-extensions/Providers'
 import { InputEvent } from '../input/Input'

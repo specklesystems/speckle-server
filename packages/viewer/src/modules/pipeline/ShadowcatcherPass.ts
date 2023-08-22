@@ -26,9 +26,9 @@ import {
 } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
 import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
 import SpeckleShadowcatcherMaterial from '../materials/SpeckleShadowcatcherMaterial'
-import { DefaultShadowcatcherConfig, ShadowcatcherConfig } from '../Shadowcatcher'
-import { ObjectLayers } from '../SpeckleRenderer'
 import { BaseSpecklePass, SpecklePass } from './SpecklePass'
+import { ObjectLayers } from '../../IViewer'
+import { DefaultShadowcatcherConfig, ShadowcatcherConfig } from '../ShadowcatcherConfig'
 
 export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
   private readonly levels: number = 4

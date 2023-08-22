@@ -1,17 +1,17 @@
-import { IViewer, SelectionEvent, TreeNode, ViewerEvent } from '../..'
 import { ExtendedIntersection } from '../objects/SpeckleRaycaster'
 import { Extension } from './core-extensions/Extension'
 import { ICameraProvider } from './core-extensions/Providers'
-import { ObjectLayers } from '../SpeckleRenderer'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Material } from 'three'
 import { InputEvent } from '../input/Input'
 import { generateUUID } from 'three/src/math/MathUtils'
+import { IViewer, ObjectLayers, SelectionEvent, ViewerEvent } from '../../IViewer'
 import Materials, {
   DisplayStyle,
   MaterialOptions,
   RenderMaterial
 } from '../materials/Materials'
+import { TreeNode } from '../tree/WorldTree'
 export interface SelectionExtensionOptions {
   selectionMaterialData: RenderMaterial & DisplayStyle & MaterialOptions
   hoverMaterialData?: RenderMaterial & DisplayStyle & MaterialOptions

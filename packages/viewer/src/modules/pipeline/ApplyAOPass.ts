@@ -13,17 +13,18 @@ import {
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 import { speckleApplyAoFrag } from '../materials/shaders/speckle-apply-ao-frag'
 import { speckleApplyAoVert } from '../materials/shaders/speckle-apply-ao-vert'
-import { Pipeline, RenderType } from './Pipeline'
 import {
   InputColorTextureUniform,
   InputColorInterpolateTextureUniform,
-  SpeckleProgressivePass
+  SpeckleProgressivePass,
+  RenderType
 } from './SpecklePass'
 
 export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
   private fsQuad: FullScreenQuad
   public materialCopy: ShaderMaterial
   private frameIndex = 0
+  private accumulatioFrames = 0
 
   constructor() {
     super()
@@ -79,6 +80,10 @@ export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
     this.frameIndex = index
   }
 
+  setAccumulationFrames(frames: number) {
+    this.accumulatioFrames = frames
+  }
+
   setRenderType(type: RenderType) {
     if (type === RenderType.NORMAL) {
       this.materialCopy.defines['ACCUMULATE'] = 0
@@ -92,7 +97,7 @@ export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
   public update(scene: Scene, camera: Camera) {
     scene
     camera
-    this.materialCopy.defines['NUM_FRAMES'] = Pipeline.ACCUMULATE_FRAMES
+    this.materialCopy.defines['NUM_FRAMES'] = this.accumulatioFrames
     this.materialCopy.uniforms['frameIndex'].value = this.frameIndex
     this.materialCopy.needsUpdate = true
   }

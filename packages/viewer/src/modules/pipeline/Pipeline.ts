@@ -4,7 +4,7 @@ import {
   Pass
 } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import Batcher from '../batching/Batcher'
-import SpeckleRenderer, { ObjectLayers } from '../SpeckleRenderer'
+import SpeckleRenderer from '../SpeckleRenderer'
 import { ApplySAOPass } from './ApplyAOPass'
 import { CopyOutputPass } from './CopyOutputPass'
 import { DepthPass, DepthSize, DepthType } from './DepthPass'
@@ -21,16 +21,12 @@ import {
   StaticAOPass,
   StaticAoPassParams
 } from './StaticAOPass'
-import { SpecklePass } from './SpecklePass'
+import { RenderType, SpecklePass } from './SpecklePass'
 import { ColorPass } from './ColorPass'
 import { StencilPass } from './StencilPass'
 import { StencilMaskPass } from './StencilMaskPass'
 import { OverlayPass } from './OverlayPass'
-
-export enum RenderType {
-  NORMAL,
-  ACCUMULATION
-}
+import { ObjectLayers } from '../../IViewer'
 
 export enum PipelineOutputType {
   DEPTH_RGBA = 0,
@@ -65,8 +61,6 @@ export const DefaultPipelineOptions: PipelineOptions = {
 }
 
 export class Pipeline {
-  public static ACCUMULATE_FRAMES = 16
-
   private _renderer: WebGLRenderer = null
   private _batcher: Batcher = null
   private _pipelineOptions: PipelineOptions = Object.assign({}, DefaultPipelineOptions)
@@ -97,9 +91,9 @@ export class Pipeline {
     this.dynamicAoPass.setParams(options.dynamicAoParams)
     this.staticAoPass.setParams(options.staticAoParams)
     this.accumulationFrame = 0
-    Pipeline.ACCUMULATE_FRAMES = options.accumulationFrames
     this.depthPass.depthSide = options.depthSide
-
+    this.applySaoPass.setAccumulationFrames(options.accumulationFrames)
+    this.staticAoPass.setAccumulationFrames(options.accumulationFrames)
     this.pipelineOutput = options.pipelineOutput
   }
 
@@ -227,7 +221,7 @@ export class Pipeline {
   public get needsAccumulation() {
     return (
       this._renderType === RenderType.ACCUMULATION &&
-      this.accumulationFrame < Pipeline.ACCUMULATE_FRAMES
+      this.accumulationFrame < this._pipelineOptions.accumulationFrames
     )
   }
 

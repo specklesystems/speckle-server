@@ -1,4 +1,3 @@
-import * as THREE from 'three'
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 
 import ViewerObjectLoader from './ViewerObjectLoader'
@@ -27,8 +26,8 @@ import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
 import { Extension } from './extensions/core-extensions/Extension'
 import { ICameraProvider, IProvider } from './extensions/core-extensions/Providers'
-import { CameraController } from '..'
 import Input from './input/Input'
+import { CameraController } from './extensions/core-extensions/CameraController'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -116,7 +115,7 @@ export class Viewer extends EventEmitter implements IViewer {
     }
     this.loaders = {}
     this.startupParams = params
-    this.clock = new THREE.Clock()
+    this.clock = new Clock()
     this.inProgressOperations = 0
 
     this.speckleRenderer = new SpeckleRenderer(this)

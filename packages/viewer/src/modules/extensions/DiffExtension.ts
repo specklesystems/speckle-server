@@ -9,7 +9,8 @@ import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import SpecklePointMaterial from '../materials/SpecklePointMaterial'
 import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { Extension, IViewer } from '../..'
+import { IViewer } from '../../IViewer'
+import { Extension } from './core-extensions/Extension'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeckleObject = Record<string, any>

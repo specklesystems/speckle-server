@@ -15,12 +15,12 @@ import MeshBatch from '../batching/MeshBatch'
 import { Geometry } from '../converter/Geometry'
 import SpeckleGhostMaterial from '../materials/SpeckleGhostMaterial'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
-import { ObjectLayers } from '../SpeckleRenderer'
 import { Extension } from './core-extensions/Extension'
 import { IViewer } from '../..'
 import { ISectionProvider } from './core-extensions/Providers'
 import { SectionToolEvent } from './SectionTool'
 import { GeometryType } from '../batching/Batch'
+import { ObjectLayers } from '../../IViewer'
 import Logger from 'js-logger'
 
 export enum PlaneId {

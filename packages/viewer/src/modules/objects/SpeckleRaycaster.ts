@@ -1,7 +1,7 @@
 import { Box3, Intersection, Material, Object3D, Raycaster } from 'three'
 import { ExtendedTriangle, ShapecastIntersection } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
-import { ObjectLayers } from '../SpeckleRenderer'
+import { ObjectLayers } from '../../IViewer'
 
 export type ExtendedShapeCastCallbacks = {
   intersectsTAS?: (

@@ -16,8 +16,8 @@ import {
   HideAllBatchUpdateRange
 } from './Batch'
 import { GeometryConverter } from '../converter/GeometryConverter'
-import { ObjectLayers } from '../SpeckleRenderer'
 import Logger from 'js-logger'
+import { ObjectLayers } from '../../IViewer'
 
 export default class PointBatch implements Batch {
   public id: string

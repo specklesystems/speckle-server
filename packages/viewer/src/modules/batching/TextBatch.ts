@@ -6,7 +6,7 @@ import { AllBatchUpdateRange, Batch, BatchUpdateRange, GeometryType } from './Ba
 
 import { SpeckleText } from '../objects/SpeckleText'
 import { GlyphGeometry } from 'troika-three-text'
-import { ObjectLayers } from '../SpeckleRenderer'
+import { ObjectLayers } from '../../IViewer'
 
 export default class TextBatch implements Batch {
   public id: string

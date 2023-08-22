@@ -1,7 +1,11 @@
 import { Camera, Plane, Scene, Texture } from 'three'
 import { Pass } from 'three/examples/jsm/postprocessing/Pass.js'
-import { ObjectLayers } from '../SpeckleRenderer'
-import { RenderType } from './Pipeline'
+import { ObjectLayers } from '../../IViewer'
+
+export enum RenderType {
+  NORMAL,
+  ACCUMULATION
+}
 
 export type InputColorTextureUniform = 'tDiffuse'
 export type InputDepthTextureUniform = 'tDepth'
@@ -24,6 +28,7 @@ export interface SpecklePass {
 
 export interface SpeckleProgressivePass extends SpecklePass {
   setFrameIndex(index: number)
+  setAccumulationFrames(frames: number)
   setRenderType?(type: RenderType)
 }
 

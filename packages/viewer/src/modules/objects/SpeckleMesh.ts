@@ -18,11 +18,10 @@ import {
   Vector2,
   Vector3
 } from 'three'
-import { TransformStorage } from '../batching/Batcher'
 import { BatchObject } from '../batching/BatchObject'
 import { SpeckleBatchBVH } from './SpeckleBatchBVH'
-import { ObjectLayers } from '../SpeckleRenderer'
 import Materials from '../materials/Materials'
+import { ObjectLayers } from '../../IViewer'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -49,6 +48,11 @@ const _intersectionPointWorld = new Vector3()
 
 const ray = /* @__PURE__ */ new Ray()
 const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
+
+export enum TransformStorage {
+  VERTEX_TEXTURE = 0,
+  UNIFORM_ARRAY = 1
+}
 
 export default class SpeckleMesh extends Mesh {
   public static MeshBatchNumber = 0

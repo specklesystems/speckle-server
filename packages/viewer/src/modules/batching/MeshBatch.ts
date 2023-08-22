@@ -11,7 +11,7 @@ import {
   WebGLRenderer
 } from 'three'
 import { Geometry } from '../converter/Geometry'
-import SpeckleMesh from '../objects/SpeckleMesh'
+import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import {
   AllBatchUpdateRange,
@@ -20,11 +20,10 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
-import { ObjectLayers } from '../SpeckleRenderer'
-import { TransformStorage } from './Batcher'
 import { BatchObject } from './BatchObject'
 import { GeometryConverter } from '../converter/GeometryConverter'
 import Logger from 'js-logger'
+import { ObjectLayers } from '../../IViewer'
 
 export default class MeshBatch implements Batch {
   public id: string

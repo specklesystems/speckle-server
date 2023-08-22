@@ -34,6 +34,7 @@ import { Viewer } from './Viewer'
 import { TreeNode } from './tree/WorldTree'
 import {
   DefaultLightConfiguration,
+  ObjectLayers,
   SelectionEvent,
   SunLightConfiguration,
   ViewerEvent
@@ -58,18 +59,6 @@ import Materials, {
 import { SpeckleMaterial } from './materials/SpeckleMaterial'
 import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
 import Logger from 'js-logger'
-
-export enum ObjectLayers {
-  STREAM_CONTENT_MESH = 10,
-  STREAM_CONTENT_LINE = 11,
-  STREAM_CONTENT_POINT = 12,
-  STREAM_CONTENT_TEXT = 13,
-
-  STREAM_CONTENT = 1,
-  PROPS = 2,
-  SHADOWCATCHER = 3,
-  OVERLAY = 4
-}
 
 export class RenderingStats {
   private renderTimeAcc = 0

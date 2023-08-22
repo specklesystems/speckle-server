@@ -1,6 +1,6 @@
-import SpeckleRenderer, { ObjectLayers } from '../../SpeckleRenderer'
+import SpeckleRenderer from '../../SpeckleRenderer'
 
-import { IViewer } from '../../../IViewer'
+import { IViewer, ObjectLayers } from '../../../IViewer'
 import { PerpendicularMeasurement } from './PerpendicularMeasurement'
 import { Plane, Ray, Raycaster, Vector2, Vector3 } from 'three'
 import { PointToPointMeasurement } from './PointToPointMeasurement'

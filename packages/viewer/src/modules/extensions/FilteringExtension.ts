@@ -1,19 +1,18 @@
 import stc from 'string-to-color'
 import { Color, Texture } from 'three'
-import {
-  IViewer,
-  NumericPropertyInfo,
-  PropertyInfo,
-  StringPropertyInfo,
-  TreeNode,
-  ViewerEvent,
-  WorldTree
-} from '../..'
+
 import { Assets } from '../Assets'
 import SpeckleRenderer from '../SpeckleRenderer'
 import { FilterMaterialType } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Extension } from './core-extensions/Extension'
+import { TreeNode, WorldTree } from '../tree/WorldTree'
+import { IViewer, ViewerEvent } from '../../IViewer'
+import {
+  NumericPropertyInfo,
+  PropertyInfo,
+  StringPropertyInfo
+} from '../filtering/PropertyManager'
 
 export type FilteringState = {
   selectedObjects?: string[]

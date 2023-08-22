@@ -1,4 +1,5 @@
-import { Extension, Vector3 } from '../..'
+import { Vector3 } from 'three'
+import { Extension } from './core-extensions/Extension'
 
 export class ExplodeExtension extends Extension {
   private explodeTime = -1
