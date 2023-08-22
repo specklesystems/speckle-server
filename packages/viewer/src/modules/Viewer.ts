@@ -19,7 +19,7 @@ import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
 import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
 import { GeometryConverter, SpeckleType } from './converter/GeometryConverter'
-import { DataTree } from './tree/DataTree'
+import { DataTree, DataTreeBuilder } from './tree/DataTree'
 import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
@@ -209,7 +209,7 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public getDataTree(): DataTree {
-    return this.tree.getDataTree()
+    return DataTreeBuilder.build(this.tree)
   }
 
   public getWorldTree(): WorldTree {
