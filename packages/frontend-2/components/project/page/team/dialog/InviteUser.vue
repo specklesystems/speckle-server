@@ -24,9 +24,22 @@
             <div class="flex items-center space-x-2">
               <UserAvatar :user="user" />
               <span class="grow truncate">{{ user.name }}</span>
-              <FormButton :disabled="loading" @click="onInviteUser(user)">
-                Invite
-              </FormButton>
+              <span
+                v-tippy="
+                  isOwnerSelected && user.role === Roles.Server.Guest
+                    ? `Server guests can't be project owners`
+                    : undefined
+                "
+              >
+                <FormButton
+                  :disabled="
+                    loading || (isOwnerSelected && user.role === Roles.Server.Guest)
+                  "
+                  @click="onInviteUser(user)"
+                >
+                  Invite
+                </FormButton>
+              </span>
             </div>
           </template>
         </template>
@@ -47,7 +60,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Roles } from '@speckle/shared'
+import { Roles, StreamRoles } from '@speckle/shared'
 import { Get } from 'type-fest'
 import { useUserSearch } from '~~/lib/common/composables/users'
 import {
@@ -70,7 +83,7 @@ const props = defineProps<{
 
 const loading = ref(false)
 const search = ref('')
-const role = ref(Roles.Stream.Contributor)
+const role = ref<StreamRoles>(Roles.Stream.Contributor)
 
 const createInvite = useInviteUserToProject()
 const { userSearch, searchVariables } = useUserSearch({
@@ -104,7 +117,10 @@ const isValidEmail = (val: string) =>
 
 const mp = useMixpanel()
 const onInviteUser = async (user: InvitableUser | InvitableUser[]) => {
-  const users = isArray(user) ? user : [user]
+  const users = (isArray(user) ? user : [user]).filter(
+    (u) => !isOwnerSelected.value || isString(u) || u.role !== Roles.Server.Guest
+  )
+
   const inputs: ProjectInviteCreateInput[] = users
     .filter((u) => (isString(u) ? isValidEmail(u) : u))
     .map((u) => ({
@@ -145,4 +161,6 @@ const selectedEmails = computed(() => {
   const validEmails = multipleEmails.filter((e) => isValidEmail(e))
   return validEmails.length ? validEmails : null
 })
+
+const isOwnerSelected = computed(() => role.value === Roles.Stream.Owner)
 </script>
