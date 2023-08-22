@@ -7,7 +7,7 @@
     <div class="flex justify-between items-center gap-8">
       <span class="text-2xl font-bold">{{ value }}</span>
       <template v-if="cta?.type === 'button'">
-        <FormButton @click="cta?.action">
+        <FormButton @click="cta.action">
           {{ cta.label }}
         </FormButton>
       </template>
@@ -16,7 +16,7 @@
           color="invert"
           class="shrink-0"
           :icon-right="ArrowTopRightOnSquareIcon"
-          @click="cta?.action"
+          @click="cta.action"
         >
           {{ cta.label }}
         </FormButton>

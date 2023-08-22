@@ -7,12 +7,10 @@
         the selected project?
       </p>
       <div v-if="project">
-        <strong>
-          {{ isProject(project) ? project.name : '' }}
-        </strong>
+        <strong>{{ project.name }}</strong>
         <p>
-          {{ isProject(project) ? project.models.totalCount : '' }} models,
-          {{ isProject(project) ? project.versions.totalCount : '' }} versions,
+          {{ project.models.totalCount }} models,
+          {{ project.versions.totalCount }} versions,
         </p>
       </div>
       <p>
@@ -27,8 +25,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
-import { ItemType } from '~~/lib/server-management/helpers/types'
-import { isProject } from '~~/lib/server-management/helpers/utils'
+import { ProjectItem } from '~~/lib/server-management/helpers/types'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -37,7 +34,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   title: string
   open: boolean
-  project: ItemType | null
+  project: ProjectItem | null
   buttons?: Array<{ text: string; props: Record<string, unknown>; onClick: () => void }>
 }>()
 

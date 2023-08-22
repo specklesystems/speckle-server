@@ -37,7 +37,6 @@
           name="adminEmail"
           placeholder="Admin Email"
           show-label
-          :rules="emailRules"
           :type="'email'"
         />
         <FormTextInput
@@ -60,7 +59,7 @@
 <script setup lang="ts">
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
-import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
+import { isRequired } from '~~/lib/common/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { LayoutDialog, FormTextInput, FormTextArea } from '@speckle/ui-components'
@@ -138,7 +137,6 @@ const isOpen = computed({
   set: (newVal) => emit('update:open', newVal)
 })
 
-const emailRules = [isEmail]
 const requiredRule = [isRequired]
 
 const onSubmit = handleSubmit(async () => {
@@ -171,15 +169,14 @@ const onSubmit = handleSubmit(async () => {
 })
 
 watch(isOpen, (newVal, oldVal) => {
-  if (newVal && !oldVal) {
-    if (result.value && result.value.serverInfo) {
-      name.value = result.value.serverInfo.name
-      description.value = result.value.serverInfo.description || ''
-      company.value = result.value.serverInfo.company || ''
-      adminContact.value = result.value.serverInfo.adminContact || ''
-      termsOfService.value = result.value.serverInfo.termsOfService || ''
-      inviteOnly.value = result.value.serverInfo.inviteOnly || false
-    }
-  }
+  if (!newVal || oldVal) return
+  if (!result.value?.serverInfo) return
+
+  name.value = result.value.serverInfo.name
+  description.value = result.value.serverInfo.description || ''
+  company.value = result.value.serverInfo.company || ''
+  adminContact.value = result.value.serverInfo.adminContact || ''
+  termsOfService.value = result.value.serverInfo.termsOfService || ''
+  inviteOnly.value = result.value.serverInfo.inviteOnly || false
 })
 </script>

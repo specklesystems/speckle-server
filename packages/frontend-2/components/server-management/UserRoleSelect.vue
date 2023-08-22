@@ -2,8 +2,8 @@
   <FormSelectBase
     v-model="selectedValue"
     :items="roles"
-    :label="'Role'"
-    :name="'userRole'"
+    label="Role"
+    name="userRole"
     :allow-unset="false"
     class="py-1"
     :disabled="disabled"

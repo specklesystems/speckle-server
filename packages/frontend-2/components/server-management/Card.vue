@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="bg-foundation p-4 flex flex-col gap-4 rounded-md shadow-md">
-      <CardRow
+      <ServerManagementCardRow
         v-for="info in serverInfo"
         :key="info.title"
         :title="info.title"
@@ -14,7 +14,6 @@
 </template>
 
 <script lang="ts" setup>
-import CardRow from './CardRow.vue'
 import { CardInfo } from '~~/lib/server-management/helpers/types'
 
 defineProps<{

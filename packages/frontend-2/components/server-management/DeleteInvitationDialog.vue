@@ -5,7 +5,7 @@
       <div v-if="invite" class="flex flex-col gap-2">
         <div class="flex gap-1">
           <div class="w-20">Email:</div>
-          <strong>{{ invite?.email }}</strong>
+          <strong>{{ invite.email }}</strong>
         </div>
         <div class="flex items-center gap-1">
           <div class="w-20">Invited by:</div>

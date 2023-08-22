@@ -26,7 +26,7 @@
           :class="{ 'cursor-pointer hover:bg-primary-muted': !!props.onRowClick }"
           tabindex="0"
           @click="handleRowClick(item)"
-          @keydown.enter.space="handleRowClick(item)"
+          @keypress="keyboardClick(() => handleRowClick(item))"
         >
           <template v-for="(column, colIndex) in headers" :key="column.id">
             <div :class="getClasses(column.id, colIndex)" tabindex="0">
@@ -38,7 +38,7 @@
             </div>
           </template>
           <div class="absolute right-0 flex items-center p-0 pr-0.5">
-            <div v-for="(button, btnIndex) in buttons" :key="btnIndex" class="p-1">
+            <div v-for="button in buttons" :key="button.label" class="p-1">
               <FormButton
                 :icon-left="button.icon"
                 size="sm"
@@ -63,6 +63,7 @@ import {
   ProjectItem,
   InviteItem
 } from '~~/lib/server-management/helpers/types'
+import { keyboardClick } from '~~/lib/common/helpers/accessibility'
 
 type OnRowClickType = (item: ItemType) => void
 
@@ -95,12 +96,12 @@ const getClasses = (column: string, colIndex: number): string => {
   const columnClass = props.columnClasses[column]
 
   if (colIndex === 0) {
-    return `bg-transparent py-3 pr-5 ${columnClass}`
+    return `bg-transparent py-3 pr-5 truncate ${columnClass}`
   }
-  return `lg:p-0 ${columnClass}`
+  return `lg:p-0 truncate ${columnClass}`
 }
 
-const handleRowClick = (item: UserItem | ProjectItem | InviteItem) => {
-  props.onRowClick?.(item as ItemType)
+const handleRowClick = (item: ItemType) => {
+  props.onRowClick?.(item)
 }
 </script>
