@@ -72,18 +72,7 @@
       v-model:open="showDeleteInvitationDialog"
       :invite="inviteToModify"
       title="Delete Invitation"
-      :buttons="[
-        {
-          text: 'Delete',
-          props: { color: 'danger', fullWidth: true },
-          onClick: deleteConfirmed
-        },
-        {
-          text: 'Cancel',
-          props: { color: 'secondary', fullWidth: true, outline: true },
-          onClick: closeInvitationDeleteDialog
-        }
-      ]"
+      @invitation-deleted="handleInvitationDeleted"
     />
 
     <InfiniteLoading
@@ -110,6 +99,7 @@ import {
   getFirstErrorMessage,
   updateCacheByFilter
 } from '~~/lib/common/helpers/graphql'
+import { useApolloClient } from '@speckle/vue-apollo-composable'
 
 const getInvites = graphql(`
   query AdminPanelInvitesList($limit: Int!, $cursor: String, $query: String) {
@@ -127,12 +117,6 @@ const getInvites = graphql(`
         totalCount
       }
     }
-  }
-`)
-
-const adminDeleteInvite = graphql(`
-  mutation AdminPanelDeleteInvite($inviteId: String!) {
-    inviteDelete(inviteId: $inviteId)
   }
 `)
 
@@ -164,7 +148,6 @@ const moreToLoad = computed(
 const invites = computed(() => extraPagesResult.value?.admin.inviteList.items || [])
 const { triggerNotification } = useGlobalToast()
 
-const { mutate: adminDeleteMutation } = useMutation(adminDeleteInvite)
 const { mutate: resendInvitationMutation } = useMutation(adminResendInvite)
 
 const openDeleteInvitationDialog = (item: ItemType) => {
@@ -174,72 +157,37 @@ const openDeleteInvitationDialog = (item: ItemType) => {
   }
 }
 
-const closeInvitationDeleteDialog = () => {
-  showDeleteInvitationDialog.value = false
-}
-
 const handleSearchChange = (newSearchString: string) => {
   searchUpdateHandler(newSearchString)
 }
 
-const deleteConfirmed = async () => {
-  const inviteId = inviteToModify.value?.id
-  if (!inviteId) {
-    return
-  }
+const { client } = useApolloClient()
 
-  const result = await adminDeleteMutation(
-    {
-      inviteId
-    },
-    {
-      update: (cache, { data }) => {
-        if (data?.inviteDelete) {
-          // Remove invite from cache
-          cache.evict({
-            id: getCacheId('AdminUserListItem', inviteId)
-          })
-          // Update list in cache
-          updateCacheByFilter(
-            cache,
-            { query: { query: getInvites, variables: resultVariables.value } },
-            (data) => {
-              const newItems = data.admin.inviteList.items.filter(
-                (item) => item.id !== inviteId
-              )
-              return {
-                ...data,
-                admin: {
-                  ...data.admin,
-                  inviteList: {
-                    ...data.admin.inviteList,
-                    items: newItems,
-                    totalCount: Math.max(0, data.admin.inviteList.totalCount - 1)
-                  }
-                }
-              }
-            }
-          )
+const handleInvitationDeleted = (inviteId: string) => {
+  client.cache.evict({
+    id: getCacheId('AdminUserListItem', inviteId)
+  })
+  // Update list in cache
+  updateCacheByFilter(
+    client.cache,
+    { query: { query: getInvites, variables: resultVariables.value } },
+    (data) => {
+      const newItems = data.admin.inviteList.items.filter(
+        (item) => item.id !== inviteId
+      )
+      return {
+        ...data,
+        admin: {
+          ...data.admin,
+          inviteList: {
+            ...data.admin.inviteList,
+            items: newItems,
+            totalCount: Math.max(0, data.admin.inviteList.totalCount - 1)
+          }
         }
       }
     }
-  ).catch(convertThrowIntoFetchResult)
-
-  if (result?.data?.inviteDelete) {
-    closeInvitationDeleteDialog()
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Invitation deleted',
-      description: 'The invitation has been successfully deleted'
-    })
-  } else {
-    const errorMessage = getFirstErrorMessage(result?.errors)
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Failed to delete invitation',
-      description: errorMessage
-    })
-  }
+  )
 }
 
 const resendInvitation = async (item: InviteItem) => {
