@@ -51,6 +51,7 @@ const documents = {
     "\n  fragment ProjectsDashboardFilled on ProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledFragmentDoc,
     "\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n  }\n": types.ProjectsInviteBannerFragmentDoc,
     "\n  fragment ProjectsInviteBanners on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectsInviteBannersFragmentDoc,
+    "\n  mutation AdminChangeUseRole($userRoleInput: UserRoleInput!) {\n    userRoleChange(userRoleInput: $userRoleInput)\n  }\n": types.AdminChangeUseRoleDocument,
     "\n  mutation AdminPanelDeleteInvite($inviteId: String!) {\n    inviteDelete(inviteId: $inviteId)\n  }\n": types.AdminPanelDeleteInviteDocument,
     "\n  mutation AdminPanelDeleteProject($ids: [String!]) {\n    streamsDelete(ids: $ids)\n  }\n": types.AdminPanelDeleteProjectDocument,
     "\n  mutation AdminPanelDeleteUser($userConfirmation: UserDeleteInput!) {\n    adminDeleteUser(userConfirmation: $userConfirmation)\n  }\n": types.AdminPanelDeleteUserDocument,
@@ -143,7 +144,6 @@ const documents = {
     "\n  fragment ProjectPageProject on Project {\n    id\n    createdAt\n    ...ProjectPageProjectHeader\n    ...ProjectPageStatsBlockTeam\n    ...ProjectPageTeamDialog\n    ...ProjectPageStatsBlockVersions\n    ...ProjectPageStatsBlockModels\n    ...ProjectPageStatsBlockComments\n    ...ProjectPageLatestItemsModels\n    ...ProjectPageLatestItemsComments\n  }\n": types.ProjectPageProjectFragmentDoc,
     "\n  fragment ModelPageProject on Project {\n    id\n    createdAt\n    name\n  }\n": types.ModelPageProjectFragmentDoc,
     "\n  query AdminPanelUsersList($limit: Int!, $cursor: String, $query: String) {\n    admin {\n      userList(limit: $limit, cursor: $cursor, query: $query) {\n        totalCount\n        cursor\n        items {\n          id\n          email\n          avatar\n          name\n          role\n          verified\n          company\n        }\n      }\n    }\n  }\n": types.AdminPanelUsersListDocument,
-    "\n  mutation AdminChangeUseRole($userRoleInput: UserRoleInput!) {\n    userRoleChange(userRoleInput: $userRoleInput)\n  }\n": types.AdminChangeUseRoleDocument,
     "\n  query Admin {\n    admin {\n      serverStatistics {\n        totalProjectCount\n        totalUserCount\n      }\n      inviteList {\n        totalCount\n      }\n    }\n    serverInfo {\n      name\n      version\n    }\n  }\n": types.AdminDocument,
     "\n  query AdminPanelInvitesList($limit: Int!, $cursor: String, $query: String) {\n    admin {\n      inviteList(limit: $limit, cursor: $cursor, query: $query) {\n        cursor\n        items {\n          email\n          id\n          invitedBy {\n            id\n            name\n          }\n        }\n        totalCount\n      }\n    }\n  }\n": types.AdminPanelInvitesListDocument,
     "\n  mutation AdminPanelResendInvite($inviteId: String!) {\n    inviteResend(inviteId: $inviteId)\n  }\n": types.AdminPanelResendInviteDocument,
@@ -316,6 +316,10 @@ export function graphql(source: "\n  fragment ProjectsInviteBanner on PendingStr
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ProjectsInviteBanners on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectsInviteBanners on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation AdminChangeUseRole($userRoleInput: UserRoleInput!) {\n    userRoleChange(userRoleInput: $userRoleInput)\n  }\n"): (typeof documents)["\n  mutation AdminChangeUseRole($userRoleInput: UserRoleInput!) {\n    userRoleChange(userRoleInput: $userRoleInput)\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -684,10 +688,6 @@ export function graphql(source: "\n  fragment ModelPageProject on Project {\n   
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query AdminPanelUsersList($limit: Int!, $cursor: String, $query: String) {\n    admin {\n      userList(limit: $limit, cursor: $cursor, query: $query) {\n        totalCount\n        cursor\n        items {\n          id\n          email\n          avatar\n          name\n          role\n          verified\n          company\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query AdminPanelUsersList($limit: Int!, $cursor: String, $query: String) {\n    admin {\n      userList(limit: $limit, cursor: $cursor, query: $query) {\n        totalCount\n        cursor\n        items {\n          id\n          email\n          avatar\n          name\n          role\n          verified\n          company\n        }\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  mutation AdminChangeUseRole($userRoleInput: UserRoleInput!) {\n    userRoleChange(userRoleInput: $userRoleInput)\n  }\n"): (typeof documents)["\n  mutation AdminChangeUseRole($userRoleInput: UserRoleInput!) {\n    userRoleChange(userRoleInput: $userRoleInput)\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

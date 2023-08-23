@@ -1,5 +1,10 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="sm" :title="title" :buttons="buttons">
+  <LayoutDialog
+    v-model:open="isOpen"
+    max-width="sm"
+    :title="title"
+    :buttons="dialogButtons"
+  >
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <p>
         Are you sure you want to
@@ -41,9 +46,23 @@ import { UserItem } from '~~/lib/server-management/helpers/types'
 import { Roles, ServerRoles } from '@speckle/shared'
 import { ArrowLongRightIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 import { getRoleLabel } from '~~/lib/server-management/helpers/utils'
+import { graphql } from '~~/lib/common/generated/gql'
+import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
+import { useMutation } from '@vue/apollo-composable'
+import {
+  convertThrowIntoFetchResult,
+  getFirstErrorMessage
+} from '~~/lib/common/helpers/graphql'
+
+const changeRoleMutation = graphql(`
+  mutation AdminChangeUseRole($userRoleInput: UserRoleInput!) {
+    userRoleChange(userRoleInput: $userRoleInput)
+  }
+`)
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
+  (e: 'role-changed', val: string): void
 }>()
 
 const props = defineProps<{
@@ -52,11 +71,58 @@ const props = defineProps<{
   user: UserItem | null
   oldRole: ServerRoles | undefined
   newRole: ServerRoles | undefined
-  buttons?: Array<{ text: string; props: Record<string, unknown>; onClick: () => void }>
 }>()
+
+const { triggerNotification } = useGlobalToast()
+const { mutate: mutateChangeRole } = useMutation(changeRoleMutation)
 
 const isOpen = computed({
   get: () => props.open,
   set: (newVal) => emit('update:open', newVal)
 })
+
+const changeUserRoleConfirmed = async () => {
+  if (!props.user || !props.newRole) {
+    return
+  }
+
+  const userId = props.user?.id
+  const newRoleVal = props.newRole
+
+  const result = await mutateChangeRole({
+    userRoleInput: { id: userId, role: newRoleVal }
+  }).catch(convertThrowIntoFetchResult)
+
+  if (result?.data?.userRoleChange) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'User role updated',
+      description: 'The user role has been updated'
+    })
+    emit('role-changed', userId)
+    emit('update:open', false)
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Failed to update role',
+      description: errorMessage
+    })
+  }
+  emit('update:open', false)
+  // userToModify.value = null
+}
+
+const dialogButtons = [
+  {
+    text: 'Delete',
+    props: { color: 'danger', fullWidth: true },
+    onClick: changeUserRoleConfirmed
+  },
+  {
+    text: 'Cancel',
+    props: { color: 'secondary', fullWidth: true, outline: true },
+    onClick: () => emit('update:open', false)
+  }
+]
 </script>

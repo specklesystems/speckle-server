@@ -101,27 +101,15 @@
       :old-role="oldRole"
       :new-role="newRole"
       :hide-closer="true"
-      :buttons="[
-        {
-          text: 'Change Role',
-          props: { color: 'danger', fullWidth: true },
-          onClick: changeUserRoleConfirmed
-        },
-        {
-          text: 'Cancel',
-          props: { color: 'secondary', fullWidth: true, outline: true },
-          onClick: closeChangeUserRoleDialog
-        }
-      ]"
+      @role-changed="handleRoleChanged"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useQuery, useMutation, useApolloClient } from '@vue/apollo-composable'
+import { useQuery, useApolloClient } from '@vue/apollo-composable'
 import { debounce, isArray } from 'lodash-es'
-import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { useLogger } from '~~/composables/logging'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { Nullable, ServerRoles, Optional } from '@speckle/shared'
@@ -135,12 +123,7 @@ import {
   ShieldCheckIcon,
   TrashIcon
 } from '@heroicons/vue/20/solid'
-import {
-  convertThrowIntoFetchResult,
-  getCacheId,
-  getFirstErrorMessage,
-  updateCacheByFilter
-} from '~~/lib/common/helpers/graphql'
+import { getCacheId, updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 
 definePageMeta({
   middleware: ['admin']
@@ -166,13 +149,6 @@ const getUsers = graphql(`
   }
 `)
 
-const changeRoleMutation = graphql(`
-  mutation AdminChangeUseRole($userRoleInput: UserRoleInput!) {
-    userRoleChange(userRoleInput: $userRoleInput)
-  }
-`)
-
-const { triggerNotification } = useGlobalToast()
 const logger = useLogger()
 const { activeUser } = useActiveUser()
 
@@ -198,6 +174,8 @@ const moreToLoad = computed(
 
 const users = computed(() => extraPagesResult.value?.admin.userList.items || [])
 
+const { client } = useApolloClient()
+
 const isCurrentUser = (userItem: UserItem) => {
   return userItem.id === activeUser.value?.id
 }
@@ -208,8 +186,6 @@ const {
   variables: resultVariables,
   onResult
 } = useQuery(getUsers, queryVariables)
-
-const { mutate: mutateChangeRole } = useMutation(changeRoleMutation)
 
 const openUserDeleteDialog = (item: ItemType) => {
   if (isUser(item)) {
@@ -227,55 +203,15 @@ const openChangeUserRoleDialog = (user: UserItem, newRoleValue: ServerRoles) => 
   showChangeUserRoleDialog.value = true
 }
 
-const closeChangeUserRoleDialog = () => {
-  showChangeUserRoleDialog.value = false
-}
-
-const changeUserRoleConfirmed = async () => {
-  if (!userToModify.value || !newRole.value) {
-    return
-  }
-
-  const userId = userToModify.value.id
+const handleRoleChanged = (userId: string) => {
   const newRoleVal = newRole.value
-
-  const result = await mutateChangeRole(
-    {
-      userRoleInput: { id: userId, role: newRoleVal }
-    },
-    {
-      update: (cache, { data }) => {
-        if (data?.userRoleChange) {
-          cache.modify({
-            id: getCacheId('AdminUserListItem', userId),
-            fields: {
-              role: () => newRoleVal
-            }
-          })
-        }
-      }
+  client.cache.modify({
+    id: getCacheId('AdminUserListItem', userId),
+    fields: {
+      role: () => newRoleVal
     }
-  ).catch(convertThrowIntoFetchResult)
-
-  if (result?.data?.userRoleChange) {
-    closeChangeUserRoleDialog()
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'User role updated',
-      description: 'The user role has been updated'
-    })
-  } else {
-    const errorMessage = getFirstErrorMessage(result?.errors)
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Failed to update role',
-      description: errorMessage
-    })
-  }
-  showChangeUserRoleDialog.value = false
-  userToModify.value = null
+  })
 }
-const { client } = useApolloClient()
 
 const handleUserDeleted = (userId: string) => {
   client.cache.evict({
