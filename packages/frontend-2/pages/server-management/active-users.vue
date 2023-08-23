@@ -91,18 +91,7 @@
       v-model:open="showUserDeleteDialog"
       :user="userToModify"
       title="Delete User"
-      :buttons="[
-        {
-          text: 'Delete',
-          props: { color: 'danger', fullWidth: true },
-          onClick: deleteConfirmed
-        },
-        {
-          text: 'Cancel',
-          props: { color: 'secondary', fullWidth: true, outline: true },
-          onClick: closeUserDeleteDialog
-        }
-      ]"
+      @user-deleted="handleUserDeleted"
     />
 
     <ServerManagementChangeUserRoleDialog
@@ -130,7 +119,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useQuery, useMutation } from '@vue/apollo-composable'
+import { useQuery, useMutation, useApolloClient } from '@vue/apollo-composable'
 import { debounce, isArray } from 'lodash-es'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { useLogger } from '~~/composables/logging'
@@ -177,12 +166,6 @@ const getUsers = graphql(`
   }
 `)
 
-const adminDeleteUser = graphql(`
-  mutation AdminPanelDeleteUser($userConfirmation: UserDeleteInput!) {
-    adminDeleteUser(userConfirmation: $userConfirmation)
-  }
-`)
-
 const changeRoleMutation = graphql(`
   mutation AdminChangeUseRole($userRoleInput: UserRoleInput!) {
     userRoleChange(userRoleInput: $userRoleInput)
@@ -226,7 +209,6 @@ const {
   onResult
 } = useQuery(getUsers, queryVariables)
 
-const { mutate: adminDeleteUserMutation } = useMutation(adminDeleteUser)
 const { mutate: mutateChangeRole } = useMutation(changeRoleMutation)
 
 const openUserDeleteDialog = (item: ItemType) => {
@@ -234,10 +216,6 @@ const openUserDeleteDialog = (item: ItemType) => {
     userToModify.value = item
     showUserDeleteDialog.value = true
   }
-}
-
-const closeUserDeleteDialog = () => {
-  showUserDeleteDialog.value = false
 }
 
 const openChangeUserRoleDialog = (user: UserItem, newRoleValue: ServerRoles) => {
@@ -251,68 +229,6 @@ const openChangeUserRoleDialog = (user: UserItem, newRoleValue: ServerRoles) => 
 
 const closeChangeUserRoleDialog = () => {
   showChangeUserRoleDialog.value = false
-}
-
-const deleteConfirmed = async () => {
-  const userEmail = userToModify.value?.email
-  const userId = userToModify.value?.id
-  if (!userEmail || !userId) {
-    return
-  }
-
-  const result = await adminDeleteUserMutation(
-    {
-      userConfirmation: { email: userEmail }
-    },
-    {
-      update: (cache, { data }) => {
-        if (data?.adminDeleteUser) {
-          // Remove item from cache
-          cache.evict({
-            id: getCacheId('AdminUserListItem', userId)
-          })
-
-          // Update list
-          updateCacheByFilter(
-            cache,
-            { query: { query: getUsers, variables: queryVariables.value } },
-            (data) => {
-              const newItems = data.admin.userList.items.filter(
-                (item) => item.id !== userId
-              )
-              return {
-                ...data,
-                admin: {
-                  ...data.admin,
-                  userList: {
-                    ...data.admin.userList,
-                    items: newItems,
-                    totalCount: Math.max(0, data.admin.userList.totalCount - 1)
-                  }
-                }
-              }
-            }
-          )
-        }
-      }
-    }
-  ).catch(convertThrowIntoFetchResult)
-
-  if (result?.data?.adminDeleteUser) {
-    closeUserDeleteDialog()
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'User deleted',
-      description: 'The user has been succesfully deleted'
-    })
-  } else {
-    const errorMessage = getFirstErrorMessage(result?.errors)
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Failed to delete user',
-      description: errorMessage
-    })
-  }
 }
 
 const changeUserRoleConfirmed = async () => {
@@ -358,6 +274,32 @@ const changeUserRoleConfirmed = async () => {
   }
   showChangeUserRoleDialog.value = false
   userToModify.value = null
+}
+const { client } = useApolloClient()
+
+const handleUserDeleted = (userId: string) => {
+  client.cache.evict({
+    id: getCacheId('AdminUserListItem', userId)
+  })
+  // Update list in cache
+  updateCacheByFilter(
+    client.cache,
+    { query: { query: getUsers, variables: resultVariables.value } },
+    (data) => {
+      const newItems = data.admin.userList.items.filter((item) => item.id !== userId)
+      return {
+        ...data,
+        admin: {
+          ...data.admin,
+          userList: {
+            ...data.admin.userList,
+            items: newItems,
+            totalCount: Math.max(0, data.admin.userList.totalCount - 1)
+          }
+        }
+      }
+    }
+  )
 }
 
 const infiniteLoad = async (state: InfiniteLoaderState) => {
