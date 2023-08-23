@@ -39,8 +39,9 @@ export function useActiveUser() {
   })
 
   const isGuest = computed(() => activeUser.value?.role === Roles.Server.Guest)
+  const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
 
-  return { activeUser, isLoggedIn, distinctId, refetch, onResult, isGuest }
+  return { activeUser, isLoggedIn, distinctId, refetch, onResult, isGuest, isAdmin }
 }
 
 /**

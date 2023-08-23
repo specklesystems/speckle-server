@@ -85,7 +85,8 @@ export default Vue.extend({
         NonNullable<Get<StreamWithCollaboratorsQuery, 'stream'>>
       >,
       required: true
-    }
+    },
+    disabledUpdates: Boolean
   },
   computed: {
     role(): RoleItem {
@@ -97,7 +98,7 @@ export default Vue.extend({
       return role
     },
     disabled(): boolean {
-      return this.stream.role !== Roles.Stream.Owner
+      return this.stream.role !== Roles.Stream.Owner || this.disabledUpdates
     },
     collaborators(): StreamCollaborator[] {
       return this.stream.collaborators.filter((c) => c.role === this.roleName)

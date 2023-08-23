@@ -54,6 +54,10 @@ input ProjectInviteCreateInput {
   Defaults to the contributor role, if not specified
   """
   role: String
+  """
+  Can only be specified if guest mode is on or if the user is an admin
+  """
+  serverRole: String
 }
 
 input ProjectInviteUseInput {

@@ -12,7 +12,7 @@ export function useTeamDialogInternals(params: {
     props: { project }
   } = params
 
-  const { activeUser } = useActiveUser()
+  const { activeUser, isGuest: isServerGuest } = useActiveUser()
 
   const collaboratorListItems = computed((): ProjectCollaboratorListItem[] => {
     const results: ProjectCollaboratorListItem[] = []
@@ -56,6 +56,7 @@ export function useTeamDialogInternals(params: {
   return {
     collaboratorListItems,
     isOwner,
-    canLeaveProject
+    canLeaveProject,
+    isServerGuest
   }
 }

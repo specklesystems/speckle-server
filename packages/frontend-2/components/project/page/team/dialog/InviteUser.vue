@@ -18,7 +18,10 @@
           </div>
         </template>
       </FormTextInput>
-      <div v-if="searchUsers.length || selectedEmails" class="flex flex-col space-y-4">
+      <div
+        v-if="searchUsers.length || selectedEmails?.length"
+        class="flex flex-col space-y-4"
+      >
         <template v-if="searchUsers.length">
           <ProjectPageTeamDialogInviteUserServerUserRow
             v-for="user in searchUsers"
@@ -29,20 +32,20 @@
             @invite-user="($event) => onInviteUser($event.user)"
           />
         </template>
-        <template v-else-if="selectedEmails?.length">
-          <ProjectPageTeamDialogInviteUserEmailsRow
-            :selected-emails="selectedEmails"
-            :stream-role="role"
-            :disabled="loading"
-            @invite-emails="($event) => onInviteUser($event.emails)"
-          />
-        </template>
+        <ProjectPageTeamDialogInviteUserEmailsRow
+          v-else-if="selectedEmails?.length"
+          :selected-emails="selectedEmails"
+          :stream-role="role"
+          :disabled="loading"
+          :is-guest-mode="isGuestMode"
+          @invite-emails="($event) => onInviteUser($event.emails, $event.serverRole)"
+        />
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { Roles, StreamRoles } from '@speckle/shared'
+import { Roles, ServerRoles, StreamRoles } from '@speckle/shared'
 import { UserSearchItem, useUserSearch } from '~~/lib/common/composables/users'
 import {
   ProjectInviteCreateInput,
@@ -55,6 +58,7 @@ import { useInviteUserToProject } from '~~/lib/projects/composables/projectManag
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
 import { UserPlusIcon } from '@heroicons/vue/24/solid'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useServerInfo } from '~~/lib/core/composables/server'
 
 type InvitableUser = UserSearchItem | string
 
@@ -66,6 +70,7 @@ const loading = ref(false)
 const search = ref('')
 const role = ref<StreamRoles>(Roles.Stream.Contributor)
 
+const { isGuestMode } = useServerInfo()
 const createInvite = useInviteUserToProject()
 const { userSearch, searchVariables } = useUserSearch({
   variables: computed(() => ({
@@ -108,7 +113,10 @@ const isValidEmail = (val: string) =>
     : false
 
 const mp = useMixpanel()
-const onInviteUser = async (user: InvitableUser | InvitableUser[]) => {
+const onInviteUser = async (
+  user: InvitableUser | InvitableUser[],
+  serverRole?: ServerRoles
+) => {
   const users = (isArray(user) ? user : [user]).filter(
     (u) => !isOwnerSelected.value || isString(u) || u.role !== Roles.Server.Guest
   )
@@ -119,7 +127,8 @@ const onInviteUser = async (user: InvitableUser | InvitableUser[]) => {
       role: role.value,
       ...(isString(u)
         ? {
-            email: u
+            email: u,
+            serverRole
           }
         : {
             userId: u.id

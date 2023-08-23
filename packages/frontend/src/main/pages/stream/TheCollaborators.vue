@@ -23,7 +23,7 @@
       <v-col v-if="serverInfo && stream" cols="12">
         <v-row>
           <!-- Add contributors panel -->
-          <v-col v-if="isStreamOwner" cols="12">
+          <v-col v-if="canEditCollaborators" cols="12">
             <section-card :elevation="4">
               <v-progress-linear v-show="loading" indeterminate></v-progress-linear>
               <template slot="header">
@@ -91,7 +91,7 @@
           </v-col>
 
           <!-- No permissions warning -->
-          <v-col v-if="stream.role !== 'stream:owner'" cols="12">
+          <v-col v-if="!isStreamOwner" cols="12">
             <v-alert type="warning" class="mb-0">
               Your permission level ({{ stream.role ? stream.role : 'none' }}) is not
               high enough to edit this stream's collaborators.
@@ -101,7 +101,9 @@
           <!-- Stream access requests -->
           <v-col
             v-if="
-              isStreamOwner && pendingAccessRequests && pendingAccessRequests.length
+              canEditCollaborators &&
+              pendingAccessRequests &&
+              pendingAccessRequests.length
             "
             cols="12"
           >
@@ -118,6 +120,7 @@
               :role-name="role.name"
               :roles="roles"
               :stream="stream"
+              :disabled-updates="!canEditCollaborators"
               @update-user-role="setUserPermissions"
               @remove-user="removeUser"
               @cancel-invite="cancelInvite"
@@ -235,6 +238,9 @@ export default vueWithMixins(IsLoggedInMixin).extend({
       if (this.isStreamOwner && this.owners.length <= 1) return false
 
       return true
+    },
+    canEditCollaborators() {
+      return this.isStreamOwner && !this.isServerGuest
     },
     isStreamOwner() {
       return this.stream?.role === Roles.Stream.Owner

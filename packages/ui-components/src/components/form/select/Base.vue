@@ -102,13 +102,15 @@
                   :key="itemKey(item)"
                   v-slot="{ active, selected }: { active: boolean, selected: boolean }"
                   :value="item"
+                  :disabled="disabledItemPredicate?.(item) || false"
                 >
                   <li
-                    :class="[
-                      active ? 'text-primary' : 'text-foreground',
-                      'relative transition cursor-pointer select-none py-1.5 pl-3',
-                      !hideCheckmarks ? 'pr-9' : ''
-                    ]"
+                    :class="
+                      listboxOptionClasses({
+                        active,
+                        disabled: disabledItemPredicate?.(item) || false
+                      })
+                    "
                   >
                     <span :class="['block truncate']">
                       <slot
@@ -116,6 +118,7 @@
                         :item="item"
                         :active="active"
                         :selected="selected"
+                        :disabled="disabledItemPredicate?.(item) || false"
                       >
                         {{ simpleDisplayText(item) }}
                       </slot>
@@ -214,6 +217,13 @@ const props = defineProps({
     type: Function as PropType<
       Optional<(item: SingleItem, searchString: string) => boolean>
     >,
+    default: undefined
+  },
+  /**
+   * Set this to disable certain items in the list
+   */
+  disabledItemPredicate: {
+    type: Function as PropType<Optional<(item: SingleItem) => boolean>>,
     default: undefined
   },
   /**
@@ -507,6 +517,24 @@ const triggerSearch = async () => {
   }
 }
 const debouncedSearch = debounce(triggerSearch, 1000)
+
+const listboxOptionClasses = (params: { active: boolean; disabled: boolean }) => {
+  const { active, disabled } = params || {}
+  const { hideCheckmarks } = props
+
+  const classParts = [
+    'relative transition cursor-pointer select-none py-1.5 pl-3',
+    !hideCheckmarks ? 'pr-9' : ''
+  ]
+
+  if (disabled) {
+    classParts.push('opacity-50 cursor-not-allowed')
+  } else {
+    classParts.push(active ? 'text-primary' : 'text-foreground')
+  }
+
+  return classParts.join(' ')
+}
 
 watch(
   () => props.items,
