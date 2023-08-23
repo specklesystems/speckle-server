@@ -96,18 +96,7 @@
       v-model:open="showProjectDeleteDialog"
       :project="projectToModify"
       title="Delete Project"
-      :buttons="[
-        {
-          text: 'Delete',
-          props: { color: 'danger', fullWidth: true },
-          onClick: deleteConfirmed
-        },
-        {
-          text: 'Cancel',
-          props: { color: 'secondary', fullWidth: true, outline: true },
-          onClick: closeProjectDeleteDialog
-        }
-      ]"
+      @project-deleted="handleProjectDeleted"
     />
   </div>
 </template>
@@ -115,19 +104,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { debounce } from 'lodash-es'
-import { useQuery, useMutation } from '@vue/apollo-composable'
+import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
 import { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
-import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import {
-  convertThrowIntoFetchResult,
-  getCacheId,
-  getFirstErrorMessage,
-  updateCacheByFilter
-} from '~~/lib/common/helpers/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { isProject } from '~~/lib/server-management/helpers/utils'
+import { getCacheId, updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 
 const getProjects = graphql(`
   query AdminPanelProjectsList(
@@ -173,12 +156,6 @@ const getProjects = graphql(`
   }
 `)
 
-const adminDeleteProject = graphql(`
-  mutation AdminPanelDeleteProject($ids: [String!]) {
-    streamsDelete(ids: $ids)
-  }
-`)
-
 const logger = useLogger()
 const router = useRouter()
 
@@ -199,9 +176,6 @@ const moreToLoad = computed(
 )
 
 const projects = computed(() => extraPagesResult.value?.admin.projectList.items || [])
-const { triggerNotification } = useGlobalToast()
-
-const { mutate: adminDeleteMutation } = useMutation(adminDeleteProject)
 
 const openProjectDeleteDialog = (item: ItemType) => {
   if (isProject(item)) {
@@ -210,77 +184,12 @@ const openProjectDeleteDialog = (item: ItemType) => {
   }
 }
 
-const closeProjectDeleteDialog = () => {
-  showProjectDeleteDialog.value = false
-}
-
 const handleSearchChange = (newSearchString: string) => {
   searchUpdateHandler(newSearchString)
 }
 
 const handleProjectClick = (item: ItemType) => {
   router.push(`/projects/${item.id}`)
-}
-
-const deleteConfirmed = async () => {
-  const projectId = projectToModify.value?.id
-  if (!projectId) {
-    return
-  }
-
-  const result = await adminDeleteMutation(
-    {
-      ids: [projectId]
-    },
-    {
-      update: (cache, { data }) => {
-        if (data?.streamsDelete) {
-          // Remove item from cache
-          cache.evict({
-            id: getCacheId('AdminUserListItem', projectId)
-          })
-
-          // Update list
-          updateCacheByFilter(
-            cache,
-            { query: { query: getProjects, variables: resultVariables.value } },
-            (data) => {
-              const newItems = data.admin.projectList.items.filter(
-                (item) => item.id !== projectId
-              )
-              return {
-                ...data,
-                admin: {
-                  ...data.admin,
-                  projectList: {
-                    ...data.admin.projectList,
-                    items: newItems,
-                    totalCount: Math.max(0, data.admin.projectList.totalCount - 1)
-                  }
-                }
-              }
-            }
-          )
-        }
-      }
-    }
-  ).catch(convertThrowIntoFetchResult)
-
-  if (result?.data?.streamsDelete) {
-    closeProjectDeleteDialog()
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Project deleted',
-      description: 'The project has been successfully deleted'
-    })
-  } else {
-    const errorMessage = getFirstErrorMessage(result?.errors)
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Failed to delete project',
-      description: errorMessage
-    })
-  }
 }
 
 const {
@@ -313,6 +222,35 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
   if (!moreToLoad.value) {
     state.complete()
   }
+}
+
+const { client } = useApolloClient()
+
+const handleProjectDeleted = (projectID: string) => {
+  client.cache.evict({
+    id: getCacheId('AdminUserListItem', projectID)
+  })
+  // Update list in cache
+  updateCacheByFilter(
+    client.cache,
+    { query: { query: getProjects, variables: resultVariables.value } },
+    (data) => {
+      const newItems = data.admin.projectList.items.filter(
+        (item) => item.id !== projectID
+      )
+      return {
+        ...data,
+        admin: {
+          ...data.admin,
+          projectList: {
+            ...data.admin.projectList,
+            items: newItems,
+            totalCount: Math.max(0, data.admin.projectList.totalCount - 1)
+          }
+        }
+      }
+    }
+  )
 }
 
 const searchUpdateHandler = (value: string) => {
