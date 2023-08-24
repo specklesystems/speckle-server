@@ -23,6 +23,7 @@ export type ProjectModelGroup = {
 export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
 
+  const hostAppName = ref<string>()
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
   const projectModelGroups = computed(() => {
@@ -93,6 +94,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await app.$sendBinding.cancelSend(modelId)
   }
 
+  const getHostAppName = async () =>
+    (hostAppName.value = await app.$baseBinding.getSourceApplicationName())
+
   const refreshDocumentInfo = async () =>
     (documentInfo.value = await app.$baseBinding.getDocumentInfo())
 
@@ -146,8 +150,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   void refreshDocumentInfo()
   void refreshDocumentModelStore()
   void refreshSendFilters()
+  void getHostAppName()
 
   return {
+    hostAppName,
     documentInfo,
     projectModelGroups,
     sendFilters,
