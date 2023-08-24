@@ -78,7 +78,7 @@ module.exports = {
     if (user.role) {
       const isValidRole = Object.values(Roles.Server).includes(user.role)
       const isValidIfGuestModeEnabled =
-        user.role === Roles.Server.Guest && (await getServerInfo()).guestModeEnabled
+        user.role !== Roles.Server.Guest || (await getServerInfo()).guestModeEnabled
       expectedRole = isValidRole && isValidIfGuestModeEnabled ? user.role : null
     }
     delete user.role
