@@ -87,6 +87,7 @@
 import { ref } from 'vue'
 import { debounce } from 'lodash-es'
 import { useQuery, useMutation } from '@vue/apollo-composable'
+import { useApolloClient } from '@speckle/vue-apollo-composable'
 import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
 import { ItemType, InviteItem } from '~~/lib/server-management/helpers/types'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
@@ -99,7 +100,6 @@ import {
   getFirstErrorMessage,
   updateCacheByFilter
 } from '~~/lib/common/helpers/graphql'
-import { useApolloClient } from '@speckle/vue-apollo-composable'
 
 const getInvites = graphql(`
   query AdminPanelInvitesList($limit: Int!, $cursor: String, $query: String) {
@@ -126,11 +126,23 @@ const adminResendInvite = graphql(`
   }
 `)
 
-const logger = useLogger()
-
 definePageMeta({
   middleware: ['admin']
 })
+
+const logger = useLogger()
+const { triggerNotification } = useGlobalToast()
+const { mutate: resendInvitationMutation } = useMutation(adminResendInvite)
+const { client } = useApolloClient()
+const {
+  result: extraPagesResult,
+  fetchMore: fetchMorePages,
+  variables: resultVariables,
+  onResult
+} = useQuery(getInvites, () => ({
+  limit: 50,
+  query: searchString.value
+}))
 
 const inviteToModify = ref<InviteItem | null>(null)
 const searchString = ref('')
@@ -146,9 +158,6 @@ const moreToLoad = computed(
 )
 
 const invites = computed(() => extraPagesResult.value?.admin.inviteList.items || [])
-const { triggerNotification } = useGlobalToast()
-
-const { mutate: resendInvitationMutation } = useMutation(adminResendInvite)
 
 const openDeleteInvitationDialog = (item: ItemType) => {
   if (isInvite(item)) {
@@ -160,8 +169,6 @@ const openDeleteInvitationDialog = (item: ItemType) => {
 const handleSearchChange = (newSearchString: string) => {
   searchUpdateHandler(newSearchString)
 }
-
-const { client } = useApolloClient()
 
 const handleInvitationDeleted = (inviteId: string) => {
   client.cache.evict({
@@ -214,16 +221,6 @@ const resendInvitation = async (item: InviteItem) => {
     })
   }
 }
-
-const {
-  result: extraPagesResult,
-  fetchMore: fetchMorePages,
-  variables: resultVariables,
-  onResult
-} = useQuery(getInvites, () => ({
-  limit: 50,
-  query: searchString.value
-}))
 
 const infiniteLoad = async (state: InfiniteLoaderState) => {
   const cursor = extraPagesResult.value?.admin?.inviteList.cursor || null

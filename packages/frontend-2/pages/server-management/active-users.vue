@@ -125,10 +125,6 @@ import {
 } from '@heroicons/vue/20/solid'
 import { getCacheId, updateCacheByFilter } from '~~/lib/common/helpers/graphql'
 
-definePageMeta({
-  middleware: ['admin']
-})
-
 const getUsers = graphql(`
   query AdminPanelUsersList($limit: Int!, $cursor: String, $query: String) {
     admin {
@@ -149,21 +145,34 @@ const getUsers = graphql(`
   }
 `)
 
+definePageMeta({
+  middleware: ['admin']
+})
+
 const logger = useLogger()
 const { activeUser } = useActiveUser()
+const { client } = useApolloClient()
 
 const userToModify: Ref<Nullable<UserItem>> = ref(null)
 const searchString = ref('')
 const showUserDeleteDialog = ref(false)
 const showChangeUserRoleDialog = ref(false)
 const newRole = ref<ServerRoles>()
-const oldRole = computed(() => userToModify.value?.role as Optional<ServerRoles>)
 const infiniteLoaderId = ref('')
 
 const queryVariables = computed(() => ({
   limit: 50,
   query: searchString.value
 }))
+
+const {
+  result: extraPagesResult,
+  fetchMore: fetchMorePages,
+  variables: resultVariables,
+  onResult
+} = useQuery(getUsers, queryVariables)
+
+const oldRole = computed(() => userToModify.value?.role as Optional<ServerRoles>)
 
 const moreToLoad = computed(
   () =>
@@ -174,18 +183,9 @@ const moreToLoad = computed(
 
 const users = computed(() => extraPagesResult.value?.admin.userList.items || [])
 
-const { client } = useApolloClient()
-
 const isCurrentUser = (userItem: UserItem) => {
   return userItem.id === activeUser.value?.id
 }
-
-const {
-  result: extraPagesResult,
-  fetchMore: fetchMorePages,
-  variables: resultVariables,
-  onResult
-} = useQuery(getUsers, queryVariables)
 
 const openUserDeleteDialog = (item: ItemType) => {
   if (isUser(item)) {

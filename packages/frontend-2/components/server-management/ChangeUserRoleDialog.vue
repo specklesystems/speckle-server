@@ -115,7 +115,7 @@ const changeUserRoleConfirmed = async () => {
 
 const dialogButtons = [
   {
-    text: 'Delete',
+    text: 'Change Role',
     props: { color: 'danger', fullWidth: true },
     onClick: changeUserRoleConfirmed
   },

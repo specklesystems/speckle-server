@@ -45,9 +45,6 @@ const adminDeleteProject = graphql(`
   }
 `)
 
-const { triggerNotification } = useGlobalToast()
-const { mutate: adminDeleteMutation } = useMutation(adminDeleteProject)
-
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
   (e: 'project-deleted', val: string): void
@@ -58,6 +55,9 @@ const props = defineProps<{
   open: boolean
   project: ProjectItem | null
 }>()
+
+const { triggerNotification } = useGlobalToast()
+const { mutate: adminDeleteMutation } = useMutation(adminDeleteProject)
 
 const isOpen = computed({
   get: () => props.open,

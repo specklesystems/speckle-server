@@ -108,6 +108,25 @@ const emit = defineEmits<{
   (e: 'server-info-updated'): void
 }>()
 
+const logger = useLogger()
+const { triggerNotification } = useGlobalToast()
+const { handleSubmit } = useForm<FormValues>()
+const { result } = useQuery(serverInfoQuery)
+const { mutate: updateServerInfo } = useMutation(serverInfoUpdateMutation)
+const apolloClient = useApolloClient().client
+
+const name = ref('')
+const description = ref('')
+const company = ref('')
+const adminContact = ref('')
+const termsOfService = ref('')
+const inviteOnly = ref(false)
+
+const isOpen = computed({
+  get: () => props.open,
+  set: (newVal) => emit('update:open', newVal)
+})
+
 const dialogButtons = computed(() => [
   {
     text: 'Cancel',
@@ -121,15 +140,7 @@ const dialogButtons = computed(() => [
   }
 ])
 
-const logger = useLogger()
-
-const { triggerNotification } = useGlobalToast()
-
-const { handleSubmit } = useForm<FormValues>()
-
-const { result } = useQuery(serverInfoQuery)
-const { mutate: updateServerInfo } = useMutation(serverInfoUpdateMutation)
-const apolloClient = useApolloClient().client
+const requiredRule = [isRequired]
 
 const updateServerInfoAndCache = async (variables: ServerInfoUpdateVariables) => {
   const result = await updateServerInfo(variables).catch(convertThrowIntoFetchResult)
@@ -152,20 +163,6 @@ const updateServerInfoAndCache = async (variables: ServerInfoUpdateVariables) =>
     })
   }
 }
-
-const name = ref('')
-const description = ref('')
-const company = ref('')
-const adminContact = ref('')
-const termsOfService = ref('')
-const inviteOnly = ref(false)
-
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
-
-const requiredRule = [isRequired]
 
 const onSubmit = handleSubmit(async () => {
   try {

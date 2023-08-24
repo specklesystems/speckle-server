@@ -46,9 +46,6 @@ const adminDeleteInvite = graphql(`
   }
 `)
 
-const { triggerNotification } = useGlobalToast()
-const { mutate: adminDeleteMutation } = useMutation(adminDeleteInvite)
-
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
   (e: 'invitation-deleted', val: string): void
@@ -59,6 +56,9 @@ const props = defineProps<{
   open: boolean
   invite: InviteItem | null
 }>()
+
+const { triggerNotification } = useGlobalToast()
+const { mutate: adminDeleteMutation } = useMutation(adminDeleteInvite)
 
 const isOpen = computed({
   get: () => props.open,

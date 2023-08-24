@@ -34,7 +34,6 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { ref, computed } from 'vue'
 import { CardInfo } from '~~/lib/server-management/helpers/types'
-
 import {
   ServerIcon,
   UsersIcon,
@@ -43,25 +42,6 @@ import {
   HomeIcon
 } from '@heroicons/vue/24/solid'
 import { useRouter } from 'vue-router'
-
-interface GithubRelease {
-  url: string
-  assets_url: string
-  upload_url: string
-  html_url: string
-  id: number
-  node_id: string
-  tag_name: string
-}
-
-definePageMeta({
-  middleware: ['admin']
-})
-
-const logger = useLogger()
-const router = useRouter()
-const showDialog = ref(false)
-const latestVersion = ref<string | null>(null)
 
 const dataQuery = graphql(`
   query Admin {
@@ -81,7 +61,27 @@ const dataQuery = graphql(`
   }
 `)
 
+interface GithubRelease {
+  url: string
+  assets_url: string
+  upload_url: string
+  html_url: string
+  id: number
+  node_id: string
+  tag_name: string
+}
+
+definePageMeta({
+  middleware: ['admin']
+})
+
+const logger = useLogger()
+const router = useRouter()
 const { result, refetch } = useQuery(dataQuery)
+
+const showDialog = ref(false)
+const latestVersion = ref<string | null>(null)
+
 const currentVersion = computed(() => result.value?.serverInfo.version)
 const isLatestVersion = computed(() => {
   return (

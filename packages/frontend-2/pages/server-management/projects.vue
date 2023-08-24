@@ -158,6 +158,16 @@ const getProjects = graphql(`
 
 const logger = useLogger()
 const router = useRouter()
+const { client } = useApolloClient()
+const {
+  result: extraPagesResult,
+  fetchMore: fetchMorePages,
+  variables: resultVariables,
+  onResult
+} = useQuery(getProjects, () => ({
+  limit: 50,
+  query: searchString.value
+}))
 
 definePageMeta({
   middleware: ['admin']
@@ -192,16 +202,6 @@ const handleProjectClick = (item: ItemType) => {
   router.push(`/projects/${item.id}`)
 }
 
-const {
-  result: extraPagesResult,
-  fetchMore: fetchMorePages,
-  variables: resultVariables,
-  onResult
-} = useQuery(getProjects, () => ({
-  limit: 50,
-  query: searchString.value
-}))
-
 const infiniteLoad = async (state: InfiniteLoaderState) => {
   const cursor = extraPagesResult.value?.admin?.projectList.cursor || null
   if (!moreToLoad.value || !cursor) return state.complete()
@@ -223,8 +223,6 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
     state.complete()
   }
 }
-
-const { client } = useApolloClient()
 
 const handleProjectDeleted = (projectID: string) => {
   client.cache.evict({
