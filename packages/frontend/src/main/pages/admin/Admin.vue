@@ -18,13 +18,13 @@
     </error-placeholder>
   </v-container>
 </template>
-
 <script>
 import { gql } from '@apollo/client/core'
 import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import { Roles } from '@speckle/shared'
 
 export default {
   name: 'AdminPanel',
@@ -54,7 +54,7 @@ export default {
   },
   computed: {
     isAdmin() {
-      return this.user?.role === 'server:admin'
+      return this.user?.role === Roles.Server.Admin
     }
   }
 }

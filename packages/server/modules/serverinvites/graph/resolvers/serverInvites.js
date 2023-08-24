@@ -26,13 +26,15 @@ const {
 const { authorizeResolver } = require('@/modules/shared')
 const { chunk } = require('lodash')
 
+/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
   Mutation: {
     async serverInviteCreate(_parent, args, context) {
       await createAndSendInvite({
         target: args.input.email,
         inviterId: context.userId,
-        message: args.input.message
+        message: args.input.message,
+        serverRole: args.input.serverRole
       })
 
       return true
@@ -56,7 +58,8 @@ module.exports = {
             createAndSendInvite({
               target: params.email,
               inviterId: context.userId,
-              message: params.message
+              message: params.message,
+              serverRole: params.serverRole
             })
           )
         )
@@ -83,7 +86,7 @@ module.exports = {
       for (const paramsBatchArray of batches) {
         await Promise.all(
           paramsBatchArray.map((params) => {
-            const { email, userId, message, streamId, role } = params
+            const { email, userId, message, streamId, role, serverRole } = params
             const target = userId ? buildUserTarget(userId) : email
             return createAndSendInvite({
               target,
@@ -91,7 +94,8 @@ module.exports = {
               message,
               resourceTarget: ResourceTargets.Streams,
               resourceId: streamId,
-              role: role || Roles.Stream.Contributor
+              role: role || Roles.Stream.Contributor,
+              serverRole
             })
           })
         )

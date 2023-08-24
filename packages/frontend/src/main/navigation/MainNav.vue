@@ -9,7 +9,12 @@
     <portal-target name="nav">
       <!-- Main Actions -->
       <v-list v-if="true" dense nav class="mb-0 pb-0">
-        <v-list-item class="primary elevation-5" dark @click="newStreamDialog = true">
+        <v-list-item
+          v-if="!isUserGuest"
+          class="primary elevation-5"
+          dark
+          @click="showNewStreamDialog = true"
+        >
           <v-list-item-icon>
             <v-icon class="">mdi-folder-plus</v-icon>
           </v-list-item-icon>
@@ -17,7 +22,7 @@
             <v-list-item-title>New Stream</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
-        <v-list-item @click="inviteUsersDialog = true">
+        <v-list-item v-if="!isUserGuest" @click="showInviteUsersDialog = true">
           <v-list-item-icon>
             <v-icon class="">mdi-email</v-icon>
           </v-list-item-icon>
@@ -83,7 +88,12 @@
         </v-list-item>
         <portal-target name="subnav-commits" />
 
-        <v-list-item v-if="user && user.role === 'server:admin'" exact link to="/admin">
+        <v-list-item
+          v-if="user && user.role === serverRoles.Admin"
+          exact
+          link
+          to="/admin"
+        >
           <v-list-item-icon>
             <v-icon class="mt-2">mdi-cog-outline</v-icon>
           </v-list-item-icon>
@@ -119,20 +129,25 @@
 
     <!-- Dialogs  -->
     <v-dialog
-      v-model="newStreamDialog"
+      v-model="showNewStreamDialog"
       max-width="500"
       :fullscreen="$vuetify.breakpoint.xsOnly"
     >
-      <new-stream @created="newStreamDialog = false" @close="newStreamDialog = false" />
+      <new-stream
+        @created="showNewStreamDialog = false"
+        @close="showNewStreamDialog = false"
+      />
     </v-dialog>
 
-    <invite-dialog :visible.sync="inviteUsersDialog" />
+    <invite-dialog :visible.sync="showInviteUsersDialog" />
   </div>
 </template>
 <script>
 import { mainUserDataQuery } from '@/graphql/user'
 import InviteDialog from '@/main/dialogs/InviteDialog.vue'
 import { setDarkTheme } from '@/main/utils/themeStateManager'
+import { Roles } from '@speckle/shared'
+import { isGuest } from '@/main/lib/core/helpers/users'
 
 export default {
   components: {
@@ -158,7 +173,31 @@ export default {
     return {
       newStreamDialog: false,
       inviteUsersDialog: false,
-      shadowSpeckle: false
+      shadowSpeckle: false,
+      serverRoles: Roles.Server
+    }
+  },
+  computed: {
+    isUserGuest() {
+      return isGuest(this.user)
+    },
+    showNewStreamDialog: {
+      get() {
+        return this.newStreamDialog
+      },
+      set(val) {
+        if (this.isUserGuest) return
+        this.newStreamDialog = val
+      }
+    },
+    showInviteUsersDialog: {
+      get() {
+        return this.inviteUsersDialog
+      },
+      set(val) {
+        if (this.isUserGuest) return
+        this.inviteUsersDialog = val
+      }
     }
   },
   mounted() {
@@ -169,7 +208,10 @@ export default {
       if (navContent.scrollTop > 50) this.shadowSpeckle = true
       else this.shadowSpeckle = false
     })
-    this.$eventHub.$on('show-new-stream-dialog', () => (this.newStreamDialog = true))
+    this.$eventHub.$on(
+      'show-new-stream-dialog',
+      () => (this.showNewStreamDialog = true)
+    )
   },
   methods: {
     switchTheme() {

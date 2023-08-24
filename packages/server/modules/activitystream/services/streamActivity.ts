@@ -126,26 +126,45 @@ export async function addStreamDeletedActivity(params: {
 export async function addStreamClonedActivity(
   params: {
     sourceStreamId: string
-    newStreamId: string
+    newStream: StreamRecord
     clonerId: string
   },
   options?: Partial<{ trx: Knex.Transaction }>
 ) {
   const { trx } = options || {}
-  const { sourceStreamId, newStreamId, clonerId } = params
+  const { sourceStreamId, newStream, clonerId } = params
+  const newStreamId = newStream.id
 
-  await saveActivity(
-    {
-      streamId: newStreamId,
-      resourceType: ResourceTypes.Stream,
-      resourceId: newStreamId,
-      actionType: ActionTypes.Stream.Clone,
-      userId: clonerId,
-      info: { sourceStreamId, newStreamId, clonerId },
-      message: `User ${clonerId} cloned stream ${sourceStreamId} as ${newStreamId}`
-    },
-    { trx }
-  )
+  const publishSubscriptions = async () =>
+    publish(UserSubscriptions.UserProjectsUpdated, {
+      userProjectsUpdated: {
+        id: newStreamId,
+        type: UserProjectsUpdatedMessageType.Added,
+        project: newStream
+      },
+      ownerId: clonerId
+    })
+
+  await Promise.all([
+    saveActivity(
+      {
+        streamId: newStreamId,
+        resourceType: ResourceTypes.Stream,
+        resourceId: newStreamId,
+        actionType: ActionTypes.Stream.Clone,
+        userId: clonerId,
+        info: { sourceStreamId, newStreamId, clonerId },
+        message: `User ${clonerId} cloned stream ${sourceStreamId} as ${newStreamId}`
+      },
+      { trx }
+    ),
+    !trx ? publishSubscriptions() : null
+  ])
+
+  if (trx) {
+    // can't await this, cause it'll block everything
+    void trx.executionPromise.then(publishSubscriptions)
+  }
 }
 
 /**

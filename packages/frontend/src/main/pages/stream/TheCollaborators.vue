@@ -23,7 +23,7 @@
       <v-col v-if="serverInfo && stream" cols="12">
         <v-row>
           <!-- Add contributors panel -->
-          <v-col v-if="isStreamOwner" cols="12">
+          <v-col v-if="canEditCollaborators" cols="12">
             <section-card :elevation="4">
               <v-progress-linear v-show="loading" indeterminate></v-progress-linear>
               <template slot="header">
@@ -66,17 +66,18 @@
                   </template>
 
                   <!-- Users found -->
-                  <basic-user-info-row
-                    v-for="user in filteredSearchResults"
-                    v-else
-                    :key="user.id"
-                    :user="user"
-                    @click="showUserInviteDialog(user)"
-                  >
-                    <template #actions>
-                      <v-btn color="primary">Invite</v-btn>
-                    </template>
-                  </basic-user-info-row>
+                  <template v-else>
+                    <basic-user-info-row
+                      v-for="user in filteredSearchResults"
+                      :key="user.id"
+                      :user="user"
+                      @click="showUserInviteDialog(user)"
+                    >
+                      <template #actions>
+                        <v-btn color="primary">Invite</v-btn>
+                      </template>
+                    </basic-user-info-row>
+                  </template>
                 </v-list>
               </v-card-text>
               <invite-dialog
@@ -90,7 +91,7 @@
           </v-col>
 
           <!-- No permissions warning -->
-          <v-col v-if="stream.role !== 'stream:owner'" cols="12">
+          <v-col v-if="!isStreamOwner" cols="12">
             <v-alert type="warning" class="mb-0">
               Your permission level ({{ stream.role ? stream.role : 'none' }}) is not
               high enough to edit this stream's collaborators.
@@ -100,7 +101,9 @@
           <!-- Stream access requests -->
           <v-col
             v-if="
-              isStreamOwner && pendingAccessRequests && pendingAccessRequests.length
+              canEditCollaborators &&
+              pendingAccessRequests &&
+              pendingAccessRequests.length
             "
             cols="12"
           >
@@ -117,6 +120,7 @@
               :role-name="role.name"
               :roles="roles"
               :stream="stream"
+              :disabled-updates="!canEditCollaborators"
               @update-user-role="setUserPermissions"
               @remove-user="removeUser"
               @cancel-invite="cancelInvite"
@@ -154,13 +158,14 @@ import {
   UpdateStreamPermissionDocument
 } from '@/graphql/generated/graphql'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
-import { Roles } from '@/helpers/mainConstants'
+import { Roles, RoleInfo } from '@speckle/shared'
 import LeaveStreamPanel from '@/main/components/stream/collaborators/LeaveStreamPanel.vue'
 import { IsLoggedInMixin } from '@/main/lib/core/mixins/isLoggedInMixin'
 import { vueWithMixins } from '@/helpers/typeHelpers'
 import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 import { AppLocalStorage } from '@/utils/localStorage'
 import StreamAccessRequestBanner from '@/main/components/stream/StreamAccessRequestBanner.vue'
+import { MainUserDataDocument } from '@/graphql/generated/graphql'
 
 export default vueWithMixins(IsLoggedInMixin).extend({
   // @vue/component
@@ -221,6 +226,9 @@ export default vueWithMixins(IsLoggedInMixin).extend({
     serverInfo: {
       prefetch: true,
       query: fullServerInfoQuery
+    },
+    activeUser: {
+      query: MainUserDataDocument
     }
   },
   computed: {
@@ -231,29 +239,23 @@ export default vueWithMixins(IsLoggedInMixin).extend({
 
       return true
     },
+    canEditCollaborators() {
+      return this.isStreamOwner && !this.isServerGuest
+    },
     isStreamOwner() {
       return this.stream?.role === Roles.Stream.Owner
+    },
+    isServerGuest() {
+      return this.activeUser?.role === Roles.Server.Guest
     },
     streamId() {
       return this.$route.params.streamId
     },
     roles() {
-      if (this.serverInfo.roles.length === 0) return []
-      const temp = this.serverInfo.roles.filter((x) => x.resourceTarget === 'streams')
-      const ret = [null, null, null]
-      // World's most idiotic way of enforcing order
-      for (const role of temp) {
-        if (role.name === 'stream:owner') {
-          ret[0] = role
-        } else if (role.name === 'stream:contributor') {
-          ret[1] = role
-        } else if (role.name === 'stream:reviewer') {
-          ret[2] = role
-        } else {
-          ret.push(role)
-        }
-      }
-      return ret
+      return Object.values(Roles.Stream).map((r) => ({
+        name: r,
+        description: RoleInfo.Stream[r].description
+      }))
     },
     collaborators() {
       if (!this.stream) return []
@@ -261,15 +263,17 @@ export default vueWithMixins(IsLoggedInMixin).extend({
     },
     reviewers() {
       if (!this.stream) return []
-      return this.stream.collaborators.filter((u) => u.role === 'stream:reviewer')
+      return this.stream.collaborators.filter((u) => u.role === Roles.Stream.Reviewer)
     },
     contributors() {
       if (!this.stream) return []
-      return this.stream.collaborators.filter((u) => u.role === 'stream:contributor')
+      return this.stream.collaborators.filter(
+        (u) => u.role === Roles.Stream.Contributor
+      )
     },
     owners() {
       if (!this.stream) return []
-      return this.stream.collaborators.filter((u) => u.role === 'stream:owner')
+      return this.stream.collaborators.filter((u) => u.role === Roles.Stream.Owner)
     },
     pendingAccessRequests() {
       return this.stream?.pendingAccessRequests

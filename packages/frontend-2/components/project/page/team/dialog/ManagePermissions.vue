@@ -21,7 +21,7 @@
       <!-- <div class="text-foreground-2 text-sm">Project Access</div> -->
       <ProjectVisibilitySelect
         :model-value="project.visibility"
-        :disabled="!isOwner || loading"
+        :disabled="isDisabled"
         @update:model-value="onChangeVisibility"
       />
       <!-- <div class="text-foreground-2 text-sm">Comments</div> -->
@@ -31,7 +31,7 @@
             ? CommentPermissions.Anyone
             : CommentPermissions.TeamMembersOnly
         "
-        :disabled="!isOwner || loading"
+        :disabled="isDisabled"
         @update:model-value="onChangeCommentPermissions"
       />
       <!-- <hr class="border border-outline-3" /> -->
@@ -57,11 +57,17 @@ const props = defineProps<{
   project: ProjectPageTeamDialogFragment
 }>()
 
-const { isOwner, canLeaveProject } = useTeamDialogInternals({ props: toRefs(props) })
+const { isOwner, canLeaveProject, isServerGuest } = useTeamDialogInternals({
+  props: toRefs(props)
+})
 const updateProject = useUpdateProject()
 
 const loading = ref(false)
 const mp = useMixpanel()
+
+const isDisabled = computed(
+  () => !isOwner.value || loading.value || isServerGuest.value
+)
 
 const onChangeVisibility = async (visibility: ProjectVisibility) => {
   loading.value = true

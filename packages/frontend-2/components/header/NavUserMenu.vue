@@ -67,7 +67,7 @@
               <Icon class="w-5 h-5 mr-2" />
             </NuxtLink>
           </MenuItem>
-          <MenuItem v-if="activeUser" v-slot="{ active }">
+          <MenuItem v-if="activeUser && !isGuest" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
@@ -136,7 +136,7 @@ import { useTheme, AppTheme } from '~~/lib/core/composables/theme'
 import { serverVersionInfoQuery } from '~~/lib/core/graphql/queries'
 
 const { logout } = useAuthManager()
-const { activeUser } = useActiveUser()
+const { activeUser, isGuest } = useActiveUser()
 const { isDarkTheme, setTheme } = useTheme()
 const { result } = useQuery(serverVersionInfoQuery)
 const route = useRoute()

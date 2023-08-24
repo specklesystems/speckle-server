@@ -310,3 +310,11 @@ export const RejectingUpdates: StoryType = {
     }
   })
 }
+
+export const WithDisabledItems: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    disabledItemPredicate: (item: FakeItemType) => item.id === '3'
+  }
+}
