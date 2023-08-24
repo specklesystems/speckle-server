@@ -30,7 +30,7 @@
       </Disclosure>
     </div>
     <div
-      v-if="isOwner"
+      v-if="isOwner && !isServerGuest"
       class="border-l-2 border-danger px-2 rounded transition hover:bg-red-500/10"
     >
       <Disclosure>
@@ -100,7 +100,9 @@ const { handleSubmit: handleDeleteSubmit, errors: deleteErrors } = useForm<{
   projectName: string
 }>()
 
-const { isOwner, canLeaveProject } = useTeamDialogInternals({ props: toRefs(props) })
+const { isOwner, canLeaveProject, isServerGuest } = useTeamDialogInternals({
+  props: toRefs(props)
+})
 const deleteProject = useDeleteProject()
 const leaveProject = useLeaveProject()
 const mp = useMixpanel()

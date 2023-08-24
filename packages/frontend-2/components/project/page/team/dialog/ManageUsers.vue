@@ -1,6 +1,5 @@
 <template>
   <div class="flex flex-col space-y-4">
-    <!-- <div class="h4 font-bold">{{ isOwner ? 'Manage Your Team' : 'Team' }}</div> -->
     <div class="h4 font-bold flex items-center space-x-2">
       <UsersIcon class="w-6 h-6" />
       <span>Team</span>
@@ -16,7 +15,7 @@
 
         <template v-if="!collaborator.inviteId">
           <ProjectPageTeamPermissionSelect
-            v-if="isOwner && activeUser && collaborator.id !== activeUser.id"
+            v-if="canEdit && activeUser && collaborator.id !== activeUser.id"
             class="shrink-0"
             :model-value="collaborator.role"
             :disabled="loading"
@@ -28,7 +27,7 @@
             {{ roleSelectItems[collaborator.role].title }}
           </span>
         </template>
-        <template v-else-if="isOwner">
+        <template v-else-if="canEdit">
           <span class="shrink-0 text-foreground-2">
             {{ roleSelectItems[collaborator.role].title }}
           </span>
@@ -84,12 +83,14 @@ const apollo = useApolloClient().client
 const updateRole = useUpdateUserRole()
 const cancelInvite = useCancelProjectInvite()
 const { activeUser } = useActiveUser()
-const { collaboratorListItems, isOwner } = useTeamDialogInternals({
+const { collaboratorListItems, isOwner, isServerGuest } = useTeamDialogInternals({
   props: toRefs(props)
 })
 const mp = useMixpanel()
 
 const loading = ref(false)
+
+const canEdit = computed(() => isOwner.value && !isServerGuest.value)
 
 const onCollaboratorRoleChange = async (
   collaborator: ProjectCollaboratorListItem,

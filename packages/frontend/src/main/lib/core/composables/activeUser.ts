@@ -2,7 +2,7 @@ import { MainUserDataDocument } from '@/graphql/generated/graphql'
 import { md5 } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
-import { isAdmin } from '@/main/lib/core/helpers/users'
+import { isAdmin, isGuest } from '@/main/lib/core/helpers/users'
 
 /**
  * Get active user.
@@ -25,6 +25,15 @@ export function useActiveUser() {
   })
 
   const isAdminUser = computed(() => isAdmin(activeUser.value))
+  const isServerGuest = computed(() => isGuest(activeUser.value))
 
-  return { activeUser, isLoggedIn, distinctId, refetch, onResult, isAdmin: isAdminUser }
+  return {
+    activeUser,
+    isLoggedIn,
+    distinctId,
+    refetch,
+    onResult,
+    isAdmin: isAdminUser,
+    isServerGuest
+  }
 }
