@@ -1,10 +1,16 @@
 import { ApolloClient } from '@apollo/client/core'
-import { ProjectCreateInput } from '~~/lib/common/generated/gql/graphql'
 import {
+  VersionCreateInput,
+  ProjectCreateInput,
+  CommitCreateInput
+} from '~~/lib/common/generated/gql/graphql'
+import {
+  createVersionMutation,
   createProjectMutation,
   createModelMutation,
   projectDetailsQuery,
-  modelDetailsQuery
+  modelDetailsQuery,
+  createCommitMutation
 } from '~~/lib/graphql/mutationsAndQueries'
 import { useAccountStore } from '~~/store/accounts'
 
@@ -17,6 +23,34 @@ function getValidOrDefaultAccount(
   if (account) return account.client
 
   throw new Error(`Failed to find a valid account for id ${clientId}`)
+}
+
+/**
+ * Use `useCreateVersion` when it is ready to use.
+ * @param clientId
+ * @returns
+ * @deprecated
+ */
+export function useCreateCommit(clientId: string | undefined = undefined) {
+  return async (commit: CommitCreateInput) => {
+    const client = getValidOrDefaultAccount(clientId)
+    const res = await client.mutate({
+      mutation: createCommitMutation,
+      variables: { commit }
+    })
+    return res
+  }
+}
+
+export function useCreateVersion(clientId: string | undefined = undefined) {
+  return async (version: VersionCreateInput) => {
+    const client = getValidOrDefaultAccount(clientId)
+    const res = await client.mutate({
+      mutation: createVersionMutation,
+      variables: { input: version }
+    })
+    return res
+  }
 }
 
 export function useCreateNewProject(clientId: string | undefined = undefined) {
@@ -78,6 +112,7 @@ export function useGetProjectDetails(clientId: string | undefined = undefined) {
 export function useGetModelDetails(clientId: string | undefined = undefined) {
   return async (input: { projectId: string; modelId: string }) => {
     const client = getValidOrDefaultAccount(clientId)
+
     const res = await client.query({
       query: modelDetailsQuery,
       variables: { ...input }

@@ -10,8 +10,12 @@ import {
   batchDeleteCommits,
   batchMoveCommits
 } from '@/modules/core/services/commit/batchCommitActions'
-import { CommitUpdateError } from '@/modules/core/errors/commit'
-import { updateCommitAndNotify } from '@/modules/core/services/commit/management'
+import { CommitUpdateError, CommitCreateError } from '@/modules/core/errors/commit'
+import {
+  updateCommitAndNotify,
+  createCommitByBranchName
+} from '@/modules/core/services/commit/management'
+import { getBranchById } from '@/modules/core/repositories/branches'
 
 export = {
   Version: {
@@ -47,9 +51,35 @@ export = {
       if (!stream) {
         throw new CommitUpdateError('Commit stream not found')
       }
-
       await authorizeResolver(ctx.userId!, stream.id, Roles.Stream.Contributor)
       return await updateCommitAndNotify(args.input, ctx.userId!)
+    },
+    async create(_parent, args, ctx) {
+      await authorizeResolver(
+        ctx.userId,
+        args.input.projectId,
+        Roles.Stream.Contributor
+      )
+      const branch = await getBranchById(args.input.modelId)
+      if (!branch) {
+        throw new CommitCreateError('Model with specified id was not found.')
+      }
+      const userId = ctx.userId as string
+
+      const commit = await createCommitByBranchName(
+        {
+          streamId: args.input.projectId,
+          branchName: branch?.name,
+          objectId: args.input.objectId,
+          authorId: userId,
+          message: args.input.message || 'no description',
+          sourceApplication: args.input.sourceApplication || 'unknown',
+          parents: null
+        },
+        { notify: true }
+      )
+
+      return commit
     }
   },
   Subscription: {

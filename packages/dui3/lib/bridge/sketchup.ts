@@ -1,9 +1,25 @@
 import { uniqueId } from 'lodash-es'
 import { BaseBridge } from './base'
+import { CreateVersionArgs } from 'lib/bindings/definitions/ISendBinding'
 
 declare let sketchup: {
   exec: (data: Record<string, unknown>) => void
   getCommands: (viewId: string) => void
+}
+
+type SendViaBrowserArgs = {
+  modelCardId: string
+  projectId: string
+  modelId: string
+  token: string
+  serverUrl: string
+  accountId: string
+  message: string
+  sendObject: {
+    id: string // the root object id which should be used for creating the version
+    totalChildrenCount: number
+    batches: string[]
+  }
 }
 
 /**
@@ -51,7 +67,66 @@ export class SketchupBridge extends BaseBridge {
 
   // NOTE: Overriden emit as we do not need to parse the data back - the Sketchup bridge already parses it for us.
   emit(eventName: string, payload: string): void {
-    this.emitter.emit(eventName, payload as unknown as Record<string, unknown>)
+    const eventPayload = payload as unknown as Record<string, unknown>
+
+    if (eventName !== 'sendViaBrowser')
+      return this.emitter.emit(eventName, eventPayload)
+
+    this.sendViaBrowser(eventPayload as SendViaBrowserArgs)
+  }
+
+  /**
+   * Internal sketchup method for sending data via the browser.
+   * @param eventPayload
+   */
+  private async sendViaBrowser(eventPayload: SendViaBrowserArgs) {
+    const {
+      serverUrl,
+      token,
+      projectId,
+      accountId,
+      modelId,
+      modelCardId,
+      sendObject,
+      message
+    } = eventPayload
+    this.emit('senderProgress', {
+      id: modelCardId,
+      status: 'Uploading',
+      progress: 0
+    } as unknown as string)
+    // TODO: More of a question: why are we not sending multiple batches at once?
+    // What's in a batch? etc. To look at optmizing this and not blocking the
+    // main thread.
+    const promises = [] as Promise<Response>[]
+    sendObject.batches.forEach((batch) => {
+      const formData = new FormData()
+      formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
+      promises.push(
+        fetch(`${serverUrl}/objects/${projectId}`, {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token },
+          body: formData
+        })
+      )
+    })
+    await Promise.all(promises)
+
+    const args: CreateVersionArgs = {
+      projectId,
+      modelId,
+      accountId,
+      objectId: sendObject.id,
+      sourceApplication: 'sketchup',
+      message: message || 'send from sketchup'
+    }
+    this.emit('createVersion', args as unknown as string)
+
+    this.emit('senderProgress', {
+      id: modelCardId,
+      status: 'Completed',
+      progress: 1
+    } as unknown as string)
   }
 
   public async create(): Promise<boolean> {

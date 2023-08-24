@@ -114,9 +114,10 @@ import { useSelectionStore } from '~~/store/selection'
 import { useCreateNewProject, useCreateNewModel } from '~~/lib/graphql/composables'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'
-import { ISenderModelCard } from 'lib/bindings/definitions/IBasicConnectorBinding'
-import { ISendFilter } from '~~/lib/bindings/definitions/ISendBinding'
+import { ISendFilter, ISenderModelCard } from '~~/lib/bindings/definitions/ISendBinding'
 import { nanoid } from 'nanoid'
+
+const app = useNuxtApp()
 
 const store = useHostAppStore()
 const router = useRouter()
@@ -151,12 +152,12 @@ const publish = async () => {
     projectId: projectRes.data?.projectMutations.create.id as string
   })
 
-  console.log(store.sendFilters)
-
   const sendFilter = {
     ...store.selectionFilter,
     ...selectionFilterCopy.value
   }
+
+  if (!defaultAccount.value) return // to make ts happy, a bit of hack - should throw if this is the case, but this will be handled at a higher level (ie, whole page!)
 
   const modelCard: ISenderModelCard = {
     typeDiscriminator: 'SenderModelCard',
@@ -169,10 +170,9 @@ const publish = async () => {
 
   await store.addModel(modelCard)
   router.push('/')
-  // TODO:
-  // 0. create project & create model x
-  // 1. create model sender card with selection info above x
-  // 2. go to home page where this is displayed x
-  // 3. send, and show progress
+  // Sketchup freezes immediately after routing, by setting timeout we can get correct states
+  setTimeout(async () => {
+    await store.sendModel(modelCard.id)
+  }, 500)
 }
 </script>

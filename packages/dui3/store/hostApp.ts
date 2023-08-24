@@ -2,10 +2,15 @@ import {
   DocumentInfo,
   DocumentModelStore,
   IModelCard,
-  ISenderModelCard,
   IReceiverModelCard
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
-import { ISendFilter } from 'lib/bindings/definitions/ISendBinding'
+import { ISendFilter, ISenderModelCard } from 'lib/bindings/definitions/ISendBinding'
+import { CommitCreateInput, VersionCreateInput } from 'lib/common/generated/gql/graphql'
+import {
+  useCreateCommit,
+  useCreateVersion,
+  useGetModelDetails
+} from '~/lib/graphql/composables'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -14,6 +19,7 @@ export type ProjectModelGroup = {
   receivers: IReceiverModelCard[]
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
 
@@ -21,7 +27,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
   const projectModelGroups = computed(() => {
     const projectModelGroups: ProjectModelGroup[] = []
-
     for (const model of documentModelStore.value.models) {
       let project = projectModelGroups.find((p) => p.projectId === model.projectId)
       if (!project) {
@@ -38,7 +43,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       if (model.typeDiscriminator.toLowerCase().includes('receiver'))
         project.receivers.push(model as IReceiverModelCard)
     }
-
     return projectModelGroups
   })
 
@@ -64,6 +68,29 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.sendFilter = filter
 
     await app.$baseBinding.updateModel(documentModelStore.value.models[modelIndex])
+  }
+
+  const removeModel = (modelId: string) => {
+    //TODO
+    console.log(`Should remove ${modelId}`)
+  }
+
+  const sendModel = async (modelId: string) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === modelId
+    ) as ISenderModelCard
+    model.expired = false
+    model.sending = true
+    await app.$sendBinding.send(modelId)
+  }
+
+  const sendModelCancel = async (modelId: string) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === modelId
+    ) as ISenderModelCard
+    model.sending = false
+    model.progress = undefined
+    await app.$sendBinding.cancelSend(modelId)
   }
 
   const refreshDocumentInfo = async () =>
@@ -93,6 +120,28 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       .forEach((model) => ((model as ISenderModelCard).expired = true))
   })
 
+  app.$sendBinding.on('senderProgress', (args) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === args.id
+    ) as ISenderModelCard
+    model.progress = args
+    if (args.status === 'Completed') {
+      model.sending = false
+    }
+  })
+
+  app.$sendBinding.on('createVersion', async (args) => {
+    const createVersion = useCreateVersion(args.accountId)
+    const version: VersionCreateInput = {
+      projectId: args.projectId,
+      modelId: args.modelId,
+      objectId: args.objectId,
+      sourceApplication: args.sourceApplication,
+      message: args.message
+    }
+    await createVersion(version)
+  })
+
   // First initialization calls
   void refreshDocumentInfo()
   void refreshDocumentModelStore()
@@ -106,6 +155,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     everythingFilter,
     addModel,
     updateModelFilter,
+    removeModel,
+    sendModel,
+    sendModelCancel,
     refreshSendFilters
   }
 })

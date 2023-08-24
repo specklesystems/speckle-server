@@ -2545,11 +2545,26 @@ export type VersionCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type VersionCreateInput = {
+  message?: InputMaybe<Scalars['String']>;
+  modelId: Scalars['String'];
+  objectId: Scalars['String'];
+  projectId: Scalars['String'];
+  sourceApplication?: InputMaybe<Scalars['String']>;
+  totalChildrenCount?: InputMaybe<Scalars['Int']>;
+};
+
 export type VersionMutations = {
   __typename?: 'VersionMutations';
+  create: Version;
   delete: Scalars['Boolean'];
   moveToModel: Model;
   update: Version;
+};
+
+
+export type VersionMutationsCreateArgs = {
+  input: VersionCreateInput;
 };
 
 
@@ -2899,6 +2914,7 @@ export type ResolversTypes = {
   UserUpdateInput: UserUpdateInput;
   Version: ResolverTypeWrapper<VersionGraphQLReturn>;
   VersionCollection: ResolverTypeWrapper<Omit<VersionCollection, 'items'> & { items: Array<ResolversTypes['Version']> }>;
+  VersionCreateInput: VersionCreateInput;
   VersionMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ViewerResourceGroup: ResolverTypeWrapper<ViewerResourceGroup>;
   ViewerResourceItem: ResolverTypeWrapper<ViewerResourceItem>;
@@ -3047,6 +3063,7 @@ export type ResolversParentTypes = {
   UserUpdateInput: UserUpdateInput;
   Version: VersionGraphQLReturn;
   VersionCollection: Omit<VersionCollection, 'items'> & { items: Array<ResolversParentTypes['Version']> };
+  VersionCreateInput: VersionCreateInput;
   VersionMutations: MutationsObjectGraphQLReturn;
   ViewerResourceGroup: ViewerResourceGroup;
   ViewerResourceItem: ViewerResourceItem;
@@ -3914,6 +3931,7 @@ export type VersionCollectionResolvers<ContextType = GraphQLContext, ParentType 
 };
 
 export type VersionMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VersionMutations'] = ResolversParentTypes['VersionMutations']> = {
+  create?: Resolver<ResolversTypes['Version'], ParentType, ContextType, RequireFields<VersionMutationsCreateArgs, 'input'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<VersionMutationsDeleteArgs, 'input'>>;
   moveToModel?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<VersionMutationsMoveToModelArgs, 'input'>>;
   update?: Resolver<ResolversTypes['Version'], ParentType, ContextType, RequireFields<VersionMutationsUpdateArgs, 'input'>>;
