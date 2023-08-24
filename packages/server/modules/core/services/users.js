@@ -27,6 +27,7 @@ const {
   PasswordTooShortError
 } = require('@/modules/core/errors/userinput')
 const { Roles } = require('@speckle/shared')
+const { getServerInfo } = require('@/modules/core/services/generic')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -73,6 +74,15 @@ module.exports = {
     // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
     const { skipPropertyValidation = false } = options || {}
 
+    let expectedRole = null
+    if (user.role) {
+      const isValidRole = Object.values(Roles.Server).includes(user.role)
+      const isValidIfGuestModeEnabled =
+        user.role === Roles.Server.Guest && (await getServerInfo()).guestModeEnabled
+      expectedRole = isValidRole && isValidIfGuestModeEnabled ? user.role : null
+    }
+    delete user.role
+
     user = skipPropertyValidation
       ? user
       : pick(user, ['id', 'bio', 'email', 'password', 'name', 'company'])
@@ -95,7 +105,9 @@ module.exports = {
     if (!newUser) throw new Error("Couldn't create user")
 
     const userRole =
-      (await countAdminUsers()) === 0 ? Roles.Server.Admin : Roles.Server.User
+      (await countAdminUsers()) === 0
+        ? Roles.Server.Admin
+        : expectedRole || Roles.Server.User
 
     await Acl().insert({ userId: newId, role: userRole })
 

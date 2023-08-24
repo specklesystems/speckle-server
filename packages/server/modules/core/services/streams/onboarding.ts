@@ -5,12 +5,17 @@ import { StreamRecord } from '@/modules/core/helpers/types'
 import { logger } from '@/logging/logging'
 import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
 import { getOnboardingBaseProject } from '@/modules/cross-server-sync/services/onboardingProject'
+import {
+  getUserOnboardingStream,
+  markUserOnboardingStream
+} from '@/modules/core/repositories/streams'
 
 export async function createOnboardingStream(targetUserId: string) {
   const sourceStream = await getOnboardingBaseProject()
 
+  // clone from base
+  let newStream: Optional<StreamRecord> = undefined
   if (sourceStream) {
-    let newStream: Optional<StreamRecord> = undefined
     try {
       newStream = await cloneStream(targetUserId, sourceStream.id)
     } catch (e) {
@@ -20,10 +25,22 @@ export async function createOnboardingStream(targetUserId: string) {
         logger.warn(e, 'Stream clone failed')
       }
     }
-
-    if (newStream) return newStream
   }
 
   // clone failed, just create empty stream
-  return await createStreamReturnRecord({ ownerId: targetUserId })
+  if (!newStream) {
+    newStream = await createStreamReturnRecord({ ownerId: targetUserId })
+  }
+
+  // mark as onboarding stream
+  await markUserOnboardingStream(targetUserId, newStream.id)
+
+  return newStream
+}
+
+export async function ensureOnboardingStream(targetUserId: string) {
+  return (
+    (await getUserOnboardingStream(targetUserId)) ||
+    (await createOnboardingStream(targetUserId))
+  )
 }

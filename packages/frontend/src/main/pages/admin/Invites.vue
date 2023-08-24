@@ -62,6 +62,13 @@
               </v-chip>
             </template>
           </v-combobox>
+          <user-role-select
+            class="mb-4"
+            label="Select server role"
+            for-invite
+            :allow-guest="isGuestMode"
+            :role.sync="role"
+          />
           <p v-if="!selectedStream">Optionally invite users to stream.</p>
           <stream-search-bar
             v-if="!selectedStream"
@@ -87,7 +94,6 @@
     </section-card>
   </div>
 </template>
-
 <script>
 import { gql } from '@apollo/client/core'
 import { isEmailValid } from '@/plugins/authHelpers'
@@ -102,12 +108,15 @@ import {
   BatchInviteToServerDocument
 } from '@/graphql/generated/graphql'
 import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
+import { Roles } from '@speckle/shared'
+import UserRoleSelect from '@/main/components/common/UserRoleSelect.vue'
 
 export default {
   name: 'AdminInvites',
   components: {
     SectionCard: () => import('@/main/components/common/SectionCard'),
-    StreamSearchBar: () => import('@/main/components/common/SearchBar')
+    StreamSearchBar: () => import('@/main/components/common/SearchBar'),
+    UserRoleSelect
   },
   mixins: [buildPortalStateMixin([STANDARD_PORTAL_KEYS.Toolbar], 'admin-invites', 1)],
   data() {
@@ -123,6 +132,7 @@ export default {
       chips: [],
       inputErrors: [],
       selectedStream: null,
+      role: Roles.Server.User,
       validation: {
         messageRules: [
           maxLength(1024, "Message can't be longer than 1024 characters"),
@@ -134,6 +144,9 @@ export default {
   computed: {
     submitable() {
       return this.chips && this.chips.length !== 0
+    },
+    isGuestMode() {
+      return !!this.serverInfo?.guestModeEnabled
     }
   },
   apollo: {
@@ -199,11 +212,13 @@ export default {
         ? targetEmails.map((e) => ({
             email: e,
             streamId,
-            message
+            message,
+            serverRole: this.role
           }))
         : targetEmails.map((e) => ({
             email: e,
-            message
+            message,
+            serverRole: this.role
           }))
 
       try {

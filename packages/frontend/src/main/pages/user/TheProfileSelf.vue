@@ -14,7 +14,7 @@
           <template #header><b>Authorized Apps</b></template>
           <user-authorised-apps />
         </section-card>
-        <section-card expandable class="mt-6 mb-10">
+        <section-card v-if="!isGuestUser" expandable class="mt-6 mb-10">
           <template #header><b>Developer Settings</b></template>
           <v-alert type="info" color="primary" dense class="my-2 mx-4">
             Heads up! The sections below are intended for developers.
@@ -50,6 +50,7 @@ import {
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
 import UserNotificationPreferences from '@/main/components/user/UserNotificationPreferences'
+import { isGuest } from '@/main/lib/core/helpers/users'
 
 export default {
   name: 'TheProfileSelf',
@@ -69,6 +70,11 @@ export default {
     user: {
       query: profileSelfQuery,
       update: (data) => data.activeUser
+    }
+  },
+  computed: {
+    isGuestUser() {
+      return isGuest(this.user)
     }
   },
   methods: {

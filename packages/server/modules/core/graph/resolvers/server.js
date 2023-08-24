@@ -6,7 +6,7 @@ const {
   getPublicScopes,
   getPublicRoles
 } = require('../../services/generic')
-const { Roles, Scopes } = require('@speckle/shared')
+const { Roles, Scopes, RoleInfo } = require('@speckle/shared')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 
 module.exports = {
@@ -23,6 +23,16 @@ module.exports = {
 
     async scopes() {
       return await getPublicScopes()
+    },
+
+    async serverRoles(parent) {
+      const { guestModeEnabled } = parent
+      return Object.values(Roles.Server)
+        .filter((role) => guestModeEnabled || role !== Roles.Server.Guest)
+        .map((r) => ({
+          id: r,
+          title: RoleInfo.Server[r]
+        }))
     }
   },
 

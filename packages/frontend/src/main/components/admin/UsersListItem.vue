@@ -2,7 +2,7 @@
   <users-list-user-item
     v-if="registeredUser"
     :user="registeredUser"
-    :roles="roles"
+    :allow-guest="allowGuest"
     @change-role="$emit('user-change-role', $event)"
     @delete="$emit('user-delete', $event)"
   />
@@ -34,10 +34,7 @@ export default Vue.extend({
         return !!(val.invitedUser || val.registeredUser)
       }
     },
-    roles: {
-      type: Array as PropType<{ text: string; value: string }[]>,
-      required: true
-    }
+    allowGuest: { type: Boolean }
   },
   computed: {
     registeredUser(): MaybeFalsy<User> {
