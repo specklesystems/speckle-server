@@ -48,12 +48,13 @@
     <no-data-placeholder v-if="user && user.commits.totalCount === 0">
       <h2>Welcome {{ user.name.split(' ')[0] }}!</h2>
       <p class="caption">
-        Once you create a stream and start sending some data, your activity will show up
-        here.
+        Once you {{ isGuestUser ? 'join' : 'create' }} a stream and start sending some
+        data, your activity will show up here.
       </p>
       <template #actions>
         <v-list rounded class="transparent">
           <v-list-item
+            v-if="!isGuestUser"
             link
             class="primary mb-4"
             dark
@@ -96,6 +97,7 @@ import {
   deleteCommitsFromCachedCommitsQuery,
   disabledCheckboxMessage
 } from '@/main/lib/stream/services/commitMultiActions'
+import { isGuest } from '@/main/lib/core/helpers/users'
 
 export default defineComponent({
   name: 'TheCommits',
@@ -113,6 +115,7 @@ export default defineComponent({
         activeUser {
           id
           name
+          role
           commits(limit: 10, cursor: $cursor) {
             totalCount
             cursor
@@ -186,8 +189,10 @@ export default defineComponent({
     })
     const shareDialogCommitId = computed(() => shareDialogCommit.value?.id)
     const shareDialogStreamId = computed(() => shareDialogCommit.value?.stream.id)
+    const isGuestUser = computed(() => isGuest(user.value))
 
     return {
+      isGuestUser,
       user,
       commitItems,
       totalCommitCount,

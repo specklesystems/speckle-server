@@ -16,15 +16,15 @@ export const mainServerInfoFieldsFragment = gql`
     termsOfService
     inviteOnly
     version
+    guestModeEnabled
   }
 `
 
 export const serverInfoRolesFieldsFragment = gql`
   fragment ServerInfoRolesFields on ServerInfo {
-    roles {
-      name
-      description
-      resourceTarget
+    serverRoles {
+      id
+      title
     }
   }
 `
@@ -74,4 +74,16 @@ export const serverInfoBlobSizeLimitQuery = gql`
     }
   }
   ${serverInfoBlobSizeFragment}
+`
+
+export const availableServerRolesQuery = gql`
+  query AvailableServerRoles {
+    serverInfo {
+      serverRoles {
+        id
+        title
+      }
+      guestModeEnabled
+    }
+  }
 `

@@ -330,6 +330,13 @@ module.exports = {
       )
     }
   },
+  StreamCollaborator: {
+    async serverRole(parent, _args, ctx) {
+      const { id } = parent
+      const user = await ctx.loaders.users.getUser.load(id)
+      return user?.role
+    }
+  },
   PendingStreamCollaborator: {
     /**
      * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent

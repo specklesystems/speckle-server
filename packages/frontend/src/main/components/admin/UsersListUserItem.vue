@@ -35,25 +35,18 @@
     <v-col cols="3" class="d-flex align-center text-right">
       <v-icon small class="mr-2">
         {{
-          selfUser.role === 'server:admin'
+          selfUser.role === serverRoles.Admin
             ? 'mdi-key'
-            : selfUser.role === 'server:user'
-            ? 'mdi-account'
-            : 'mdi-account-off'
+            : selfUser.role === serverRoles.ArchivedUser
+            ? 'mdi-account-off'
+            : 'mdi-account'
         }}
       </v-icon>
-      <v-select
-        v-tooltip="'Change role'"
-        :value="selfUser.role"
-        :items="roles"
-        dense
-        filled
-        rounded
-        hide-details
-        @change="(e) => $emit('change-role', { user, role: e })"
-      ></v-select>
-      <!-- </v-col>
-    <v-col cols="1" class="text-right"> -->
+      <user-role-select
+        :allow-guest="allowGuest"
+        :role="selfUser.role"
+        @update:role="(e) => $emit('change-role', { user, role: e })"
+      />
       <v-btn
         v-tooltip="'Delete user'"
         small
@@ -67,18 +60,23 @@
   </v-row>
 </template>
 <script>
+import UserRoleSelect from '@/main/components/common/UserRoleSelect.vue'
+import { Roles } from '@speckle/shared'
+
 export default {
   name: 'UsersListUserItem',
   components: {
-    UserAvatar: () => import('@/main/components/common/UserAvatar')
+    UserAvatar: () => import('@/main/components/common/UserAvatar'),
+    UserRoleSelect
   },
   props: {
     user: { type: Object, default: () => null },
-    roles: { type: Array, default: () => [] }
+    allowGuest: { type: Boolean }
   },
   data() {
     return {
-      selfUser: this.user
+      selfUser: this.user,
+      serverRoles: Roles.Server
     }
   }
 }

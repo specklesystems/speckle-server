@@ -116,6 +116,7 @@ type StreamCollaborator {
   role: String!
   company: String
   avatar: String
+  serverRole: String!
 }
 
 type PendingStreamCollaborator {

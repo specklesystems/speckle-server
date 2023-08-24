@@ -1,4 +1,4 @@
-import { Roles } from '@speckle/shared'
+import { Nullable, Roles, ServerRoles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
@@ -12,7 +12,7 @@ export function useTeamDialogInternals(params: {
     props: { project }
   } = params
 
-  const { activeUser } = useActiveUser()
+  const { activeUser, isGuest: isServerGuest } = useActiveUser()
 
   const collaboratorListItems = computed((): ProjectCollaboratorListItem[] => {
     const results: ProjectCollaboratorListItem[] = []
@@ -23,7 +23,8 @@ export function useTeamDialogInternals(params: {
         title: invitedUser.title,
         user: invitedUser.user || null,
         role: invitedUser.role,
-        inviteId: invitedUser.inviteId
+        inviteId: invitedUser.inviteId,
+        serverRole: (invitedUser.user?.role || null) as Nullable<ServerRoles>
       })
     }
 
@@ -33,7 +34,8 @@ export function useTeamDialogInternals(params: {
         title: collaborator.user.name,
         user: collaborator.user,
         role: collaborator.role,
-        inviteId: null
+        inviteId: null,
+        serverRole: collaborator.user.role as ServerRoles
       })
     }
 
@@ -54,6 +56,7 @@ export function useTeamDialogInternals(params: {
   return {
     collaboratorListItems,
     isOwner,
-    canLeaveProject
+    canLeaveProject,
+    isServerGuest
   }
 }

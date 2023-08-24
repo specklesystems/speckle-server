@@ -51,6 +51,15 @@
               :disabled="loading"
               label="message"
             />
+            <user-role-select
+              v-if="allowServerRoleSelect && !user"
+              class="mb-4"
+              label="Select server role"
+              for-invite
+              :allow-admin="isAdmin"
+              :allow-guest="isGuestMode"
+              :role.sync="role"
+            />
             <v-card-actions>
               <v-btn block color="primary" type="submit" :disabled="loading">
                 Send invite
@@ -64,7 +73,7 @@
 </template>
 <script lang="ts">
 import { gql } from '@apollo/client/core'
-import Vue, { PropType } from 'vue'
+import { PropType, defineComponent } from 'vue'
 import { email, maxLength, noXss, required } from '@/main/lib/common/vuetify/validators'
 import { Nullable, Optional } from '@/helpers/typeHelpers'
 import { VFormInstance } from '@/helpers/vuetifyHelpers'
@@ -73,13 +82,18 @@ import type { FetchResult } from '@apollo/client/core'
 import { UserSearchQuery } from '@/graphql/generated/graphql'
 import BasicUserInfoRow from '@/main/components/user/BasicUserInfoRow.vue'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
+import { useActiveUser } from '@/main/lib/core/composables/activeUser'
+import UserRoleSelect from '@/main/components/common/UserRoleSelect.vue'
+import { useServerInfo } from '@/main/lib/core/composables/server'
+import { Roles } from '@speckle/shared'
 
 type UserType = Get<UserSearchQuery, 'userSearch.items.0'>
 
-export default Vue.extend({
+export default defineComponent({
   name: 'InviteDialog',
   components: {
-    BasicUserInfoRow
+    BasicUserInfoRow,
+    UserRoleSelect
   },
   props: {
     streamId: {
@@ -99,6 +113,11 @@ export default Vue.extend({
       default: false
     }
   },
+  setup() {
+    const { isAdmin } = useActiveUser()
+    const { isGuestMode } = useServerInfo()
+    return { isAdmin, isGuestMode }
+  },
   data() {
     return {
       localEmail: null as Nullable<string>,
@@ -107,6 +126,7 @@ export default Vue.extend({
       error: null as Nullable<string>,
       showError: false,
       loading: false,
+      role: Roles.Server.User,
       validation: {
         emailRules: [required(), email()],
         messageRules: [
@@ -117,6 +137,9 @@ export default Vue.extend({
     }
   },
   computed: {
+    allowServerRoleSelect() {
+      return this.isAdmin || this.isGuestMode
+    },
     isServerInvite(): boolean {
       return !this.streamId
     },
@@ -165,7 +188,8 @@ export default Vue.extend({
             email: this.user ? null : this.localEmail,
             message: this.message,
             streamId: this.streamId,
-            userId: this.user ? this.user.id : null
+            userId: this.user ? this.user.id : null,
+            serverRole: this.allowServerRoleSelect && this.role ? this.role : null
           }
         }
       })
@@ -180,7 +204,8 @@ export default Vue.extend({
         variables: {
           input: {
             email: this.localEmail,
-            message: this.message
+            message: this.message,
+            serverRole: this.isAdmin ? this.role : null
           }
         }
       })

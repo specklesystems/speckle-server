@@ -37,7 +37,8 @@ export async function createStreamInviteAndNotify(
     resourceTarget: ResourceTargets.Streams,
     resourceId: isStreamInviteCreateInput(input) ? input.streamId : input.projectId,
     role: role || Roles.Stream.Contributor,
-    message: isStreamInviteCreateInput(input) ? input.message || undefined : undefined
+    message: isStreamInviteCreateInput(input) ? input.message || undefined : undefined,
+    serverRole: input.serverRole || undefined
   })
 }
 

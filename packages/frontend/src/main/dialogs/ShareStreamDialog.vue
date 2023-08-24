@@ -142,7 +142,7 @@
         :class="`${!$vuetify.theme.dark ? 'grey lighten-4' : 'grey darken-4'}`"
       >
         <v-toolbar
-          v-if="stream.role === 'stream:owner'"
+          v-if="stream.role === streamRoles.Owner"
           class="transparent"
           rounded
           flat
@@ -176,7 +176,7 @@
         <v-toolbar
           v-tooltip="
             `${
-              stream.role !== 'stream:owner'
+              stream.role !== streamRoles.Owner
                 ? 'You do not have the right access level (' +
                   stream.role +
                   ') to add collaborators.'
@@ -207,7 +207,7 @@
             color="primary"
             text
             rounded
-            :disabled="stream.role !== 'stream:owner'"
+            :disabled="stream.role !== streamRoles.Owner"
             @click="goToStreamCollabs()"
           >
             Manage
@@ -222,7 +222,7 @@
           v-if="!stream.isPublic"
           v-tooltip="
             `${
-              stream.role !== 'stream:owner'
+              stream.role !== streamRoles.Owner
                 ? 'You do not have the right access level (' +
                   stream.role +
                   ') to invite people to this stream.'
@@ -241,7 +241,7 @@
             color="primary"
             text
             rounded
-            :disabled="stream.role !== 'stream:owner'"
+            :disabled="stream.role !== streamRoles.Owner"
             @click="showStreamInviteDialog()"
           >
             Send Invite
@@ -266,7 +266,7 @@ import {
   UpdateStreamSettingsDocument
 } from '@/graphql/generated/graphql'
 import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
-import { Optional } from '@speckle/shared'
+import { Optional, Roles } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 
 /**
@@ -355,7 +355,8 @@ export default {
       ...options,
       url,
       iFrameUrl,
-      resetUrlOptions
+      resetUrlOptions,
+      streamRoles: Roles.Stream
     }
   },
   data() {
