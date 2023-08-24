@@ -260,13 +260,13 @@ export const authPipelineCreator = (
 }
 
 export const streamWritePermissions = [
-  validateServerRole({ requiredRole: Roles.Server.User }),
+  validateServerRole({ requiredRole: Roles.Server.Guest }),
   validateScope({ requiredScope: Scopes.Streams.Write }),
   contextRequiresStream(getStream as StreamGetter),
   validateStreamRole({ requiredRole: Roles.Stream.Contributor })
 ]
 export const streamReadPermissions = [
-  validateServerRole({ requiredRole: Roles.Server.User }),
+  validateServerRole({ requiredRole: Roles.Server.Guest }),
   validateScope({ requiredScope: Scopes.Streams.Read }),
   contextRequiresStream(getStream as StreamGetter),
   validateStreamRole({ requiredRole: Roles.Stream.Contributor })
