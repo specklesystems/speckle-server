@@ -30,31 +30,35 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
 import { InviteItem } from '~~/lib/server-management/helpers/types'
-import { graphql } from '~~/lib/common/generated/gql'
-import { useMutation } from '@vue/apollo-composable'
+import { getInvites } from '~~/lib/server-management/graphql/queries'
+import { adminDeleteInvite } from '~~/lib/server-management/graphql/mutations'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
   convertThrowIntoFetchResult,
-  getFirstErrorMessage
+  getCacheId,
+  getFirstErrorMessage,
+  updateCacheByFilter
 } from '~~/lib/common/helpers/graphql'
-
-const adminDeleteInvite = graphql(`
-  mutation AdminPanelDeleteInvite($inviteId: String!) {
-    inviteDelete(inviteId: $inviteId)
-  }
-`)
+import { Exact, InputMaybe } from '~~/lib/common/generated/gql/graphql'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
-  (e: 'invitation-deleted', val: string): void
 }>()
 
 const props = defineProps<{
   title: string
   open: boolean
   invite: InviteItem | null
+  resultVariables:
+    | Exact<{
+        limit: number
+        cursor?: InputMaybe<string> | undefined
+        query?: InputMaybe<string> | undefined
+      }>
+    | undefined
 }>()
 
 const { triggerNotification } = useGlobalToast()
@@ -71,18 +75,50 @@ const deleteConfirmed = async () => {
     return
   }
 
-  const result = await adminDeleteMutation({
-    inviteId
-  }).catch(convertThrowIntoFetchResult)
+  const result = await adminDeleteMutation(
+    {
+      inviteId
+    },
+    {
+      update: (cache, { data }) => {
+        if (data?.inviteDelete) {
+          // Remove invite from cache
+          cache.evict({
+            id: getCacheId('AdminUserListItem', inviteId)
+          })
+          // Update list in cache
+          updateCacheByFilter(
+            cache,
+            { query: { query: getInvites, variables: props.resultVariables } },
+            (data) => {
+              const newItems = data.admin.inviteList.items.filter(
+                (item) => item.id !== inviteId
+              )
+              return {
+                ...data,
+                admin: {
+                  ...data.admin,
+                  inviteList: {
+                    ...data.admin.inviteList,
+                    items: newItems,
+                    totalCount: Math.max(0, data.admin.inviteList.totalCount - 1)
+                  }
+                }
+              }
+            }
+          )
+        }
+      }
+    }
+  ).catch(convertThrowIntoFetchResult)
 
   if (result?.data?.inviteDelete) {
+    emit('update:open', false)
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Invitation deleted',
       description: 'The invitation has been successfully deleted'
     })
-    emit('invitation-deleted', inviteId)
-    emit('update:open', false)
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({

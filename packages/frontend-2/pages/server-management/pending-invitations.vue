@@ -72,7 +72,7 @@
       v-model:open="showDeleteInvitationDialog"
       :invite="inviteToModify"
       title="Delete Invitation"
-      @invitation-deleted="handleInvitationDeleted"
+      :result-variables="resultVariables"
     />
 
     <InfiniteLoading
@@ -86,44 +86,18 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { debounce } from 'lodash-es'
-import { useQuery, useMutation, useApolloClient } from '@vue/apollo-composable'
+import { useQuery, useMutation } from '@vue/apollo-composable'
 import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
 import { ItemType, InviteItem } from '~~/lib/server-management/helpers/types'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
-import { graphql } from '~~/lib/common/generated/gql'
+import { getInvites } from '~~/lib/server-management/graphql/queries'
+import { adminResendInvite } from '~~/lib/server-management/graphql/mutations'
 import { isInvite } from '~~/lib/server-management/helpers/utils'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
   convertThrowIntoFetchResult,
-  getCacheId,
-  getFirstErrorMessage,
-  updateCacheByFilter
+  getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-
-const getInvites = graphql(`
-  query AdminPanelInvitesList($limit: Int!, $cursor: String, $query: String) {
-    admin {
-      inviteList(limit: $limit, cursor: $cursor, query: $query) {
-        cursor
-        items {
-          email
-          id
-          invitedBy {
-            id
-            name
-          }
-        }
-        totalCount
-      }
-    }
-  }
-`)
-
-const adminResendInvite = graphql(`
-  mutation AdminPanelResendInvite($inviteId: String!) {
-    inviteResend(inviteId: $inviteId)
-  }
-`)
 
 definePageMeta({
   middleware: ['admin']
@@ -132,7 +106,6 @@ definePageMeta({
 const logger = useLogger()
 const { triggerNotification } = useGlobalToast()
 const { mutate: resendInvitationMutation } = useMutation(adminResendInvite)
-const { client } = useApolloClient()
 
 const inviteToModify = ref<InviteItem | null>(null)
 const searchString = ref('')
@@ -164,33 +137,6 @@ const openDeleteInvitationDialog = (item: ItemType) => {
     inviteToModify.value = item
     showDeleteInvitationDialog.value = true
   }
-}
-
-const handleInvitationDeleted = (inviteId: string) => {
-  client.cache.evict({
-    id: getCacheId('AdminUserListItem', inviteId)
-  })
-  // Update list in cache
-  updateCacheByFilter(
-    client.cache,
-    { query: { query: getInvites, variables: resultVariables.value } },
-    (data) => {
-      const newItems = data.admin.inviteList.items.filter(
-        (item) => item.id !== inviteId
-      )
-      return {
-        ...data,
-        admin: {
-          ...data.admin,
-          inviteList: {
-            ...data.admin.inviteList,
-            items: newItems,
-            totalCount: Math.max(0, data.admin.inviteList.totalCount - 1)
-          }
-        }
-      }
-    }
-  )
 }
 
 const resendInvitation = async (item: InviteItem) => {

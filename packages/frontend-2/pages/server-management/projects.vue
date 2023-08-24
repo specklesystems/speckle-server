@@ -96,7 +96,7 @@
       v-model:open="showProjectDeleteDialog"
       :project="projectToModify"
       title="Delete Project"
-      @project-deleted="handleProjectDeleted"
+      :result-variables="resultVariables"
     />
   </div>
 </template>
@@ -104,61 +104,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { debounce } from 'lodash-es'
-import { useApolloClient, useQuery } from '@vue/apollo-composable'
+import { useQuery } from '@vue/apollo-composable'
 import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
+import { getProjects } from '~~/lib/server-management/graphql/queries'
 import { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
-import { graphql } from '~~/lib/common/generated/gql'
 import { isProject } from '~~/lib/server-management/helpers/utils'
-import { getCacheId, updateCacheByFilter } from '~~/lib/common/helpers/graphql'
-
-const getProjects = graphql(`
-  query AdminPanelProjectsList(
-    $query: String
-    $orderBy: String
-    $limit: Int!
-    $visibility: String
-    $cursor: String
-  ) {
-    admin {
-      projectList(
-        query: $query
-        orderBy: $orderBy
-        limit: $limit
-        visibility: $visibility
-        cursor: $cursor
-      ) {
-        cursor
-        items {
-          id
-          name
-          visibility
-          createdAt
-          updatedAt
-          models {
-            totalCount
-          }
-          versions {
-            totalCount
-          }
-          team {
-            user {
-              name
-              id
-              avatar
-            }
-          }
-        }
-        totalCount
-        cursor
-      }
-    }
-  }
-`)
 
 const logger = useLogger()
 const router = useRouter()
-const { client } = useApolloClient()
 
 definePageMeta({
   middleware: ['admin']
@@ -219,33 +173,6 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
   if (!moreToLoad.value) {
     state.complete()
   }
-}
-
-const handleProjectDeleted = (projectID: string) => {
-  client.cache.evict({
-    id: getCacheId('AdminUserListItem', projectID)
-  })
-  // Update list in cache
-  updateCacheByFilter(
-    client.cache,
-    { query: { query: getProjects, variables: resultVariables.value } },
-    (data) => {
-      const newItems = data.admin.projectList.items.filter(
-        (item) => item.id !== projectID
-      )
-      return {
-        ...data,
-        admin: {
-          ...data.admin,
-          projectList: {
-            ...data.admin.projectList,
-            items: newItems,
-            totalCount: Math.max(0, data.admin.projectList.totalCount - 1)
-          }
-        }
-      }
-    }
-  )
 }
 
 const searchUpdateHandler = (value: string) => {

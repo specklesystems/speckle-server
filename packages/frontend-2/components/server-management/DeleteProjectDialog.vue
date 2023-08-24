@@ -34,26 +34,30 @@ import { ProjectItem } from '~~/lib/server-management/helpers/types'
 import { useMutation } from '@vue/apollo-composable'
 import {
   convertThrowIntoFetchResult,
-  getFirstErrorMessage
+  getCacheId,
+  getFirstErrorMessage,
+  updateCacheByFilter
 } from '~~/lib/common/helpers/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import { graphql } from '~~/lib/common/generated/gql'
-
-const adminDeleteProject = graphql(`
-  mutation AdminPanelDeleteProject($ids: [String!]) {
-    streamsDelete(ids: $ids)
-  }
-`)
+import { adminDeleteProject } from '~~/lib/server-management/graphql/mutations'
+import { getProjects } from '~~/lib/server-management/graphql/queries'
+import { Exact, InputMaybe } from '~~/lib/common/generated/gql/graphql'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
-  (e: 'project-deleted', val: string): void
 }>()
 
 const props = defineProps<{
   title: string
   open: boolean
   project: ProjectItem | null
+  resultVariables:
+    | Exact<{
+        limit: number
+        cursor?: InputMaybe<string> | undefined
+        query?: InputMaybe<string> | undefined
+      }>
+    | undefined
 }>()
 
 const { triggerNotification } = useGlobalToast()
@@ -70,9 +74,42 @@ const deleteConfirmed = async () => {
     return
   }
 
-  const result = await adminDeleteMutation({
-    ids: [projectId]
-  }).catch(convertThrowIntoFetchResult)
+  const result = await adminDeleteMutation(
+    {
+      ids: [projectId]
+    },
+    {
+      update: (cache, { data }) => {
+        if (data?.streamsDelete) {
+          // Remove invite from cache
+          cache.evict({
+            id: getCacheId('AdminUserListItem', projectId)
+          })
+          // Update list in cache
+          updateCacheByFilter(
+            cache,
+            { query: { query: getProjects, variables: props.resultVariables } },
+            (data) => {
+              const newItems = data.admin.projectList.items.filter(
+                (item) => item.id !== projectId
+              )
+              return {
+                ...data,
+                admin: {
+                  ...data.admin,
+                  projectList: {
+                    ...data.admin.projectList,
+                    items: newItems,
+                    totalCount: Math.max(0, data.admin.projectList.totalCount - 1)
+                  }
+                }
+              }
+            }
+          )
+        }
+      }
+    }
+  ).catch(convertThrowIntoFetchResult)
 
   if (result?.data?.streamsDelete) {
     triggerNotification({
@@ -80,7 +117,6 @@ const deleteConfirmed = async () => {
       title: 'Project deleted',
       description: 'The project has been successfully deleted'
     })
-    emit('project-deleted', projectId)
     emit('update:open', false)
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)

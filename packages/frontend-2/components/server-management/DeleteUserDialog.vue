@@ -29,12 +29,16 @@ import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
 import { UserItem } from '~~/lib/server-management/helpers/types'
 import { graphql } from '~~/lib/common/generated/gql'
+import { getUsers } from '~~/lib/server-management/graphql/queries'
 import { useMutation } from '@vue/apollo-composable'
 import {
   convertThrowIntoFetchResult,
-  getFirstErrorMessage
+  getCacheId,
+  getFirstErrorMessage,
+  updateCacheByFilter
 } from '~~/lib/common/helpers/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
+import { Exact, InputMaybe } from '~~/lib/common/generated/gql/graphql'
 
 const adminDeleteUser = graphql(`
   mutation AdminPanelDeleteUser($userConfirmation: UserDeleteInput!) {
@@ -44,13 +48,19 @@ const adminDeleteUser = graphql(`
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
-  (e: 'user-deleted', val: string): void
 }>()
 
 const props = defineProps<{
   title: string
   open: boolean
   user: UserItem | null
+  resultVariables:
+    | Exact<{
+        limit: number
+        cursor?: InputMaybe<string> | undefined
+        query?: InputMaybe<string> | undefined
+      }>
+    | undefined
 }>()
 
 const { triggerNotification } = useGlobalToast()
@@ -68,9 +78,43 @@ const deleteConfirmed = async () => {
     return
   }
 
-  const result = await adminDeleteUserMutation({
-    userConfirmation: { email: userEmail }
-  }).catch(convertThrowIntoFetchResult)
+  const result = await adminDeleteUserMutation(
+    {
+      userConfirmation: { email: userEmail }
+    },
+    {
+      update: (cache, { data }) => {
+        if (data?.adminDeleteUser) {
+          // Remove item from cache
+          cache.evict({
+            id: getCacheId('AdminUserListItem', userId)
+          })
+
+          // Update list
+          updateCacheByFilter(
+            cache,
+            { query: { query: getUsers, variables: props.resultVariables } },
+            (data) => {
+              const newItems = data.admin.userList.items.filter(
+                (item) => item.id !== userId
+              )
+              return {
+                ...data,
+                admin: {
+                  ...data.admin,
+                  userList: {
+                    ...data.admin.userList,
+                    items: newItems,
+                    totalCount: Math.max(0, data.admin.userList.totalCount - 1)
+                  }
+                }
+              }
+            }
+          )
+        }
+      }
+    }
+  ).catch(convertThrowIntoFetchResult)
 
   if (result?.data?.adminDeleteUser) {
     triggerNotification({
@@ -78,7 +122,6 @@ const deleteConfirmed = async () => {
       title: 'User deleted',
       description: 'The user has been succesfully deleted'
     })
-    emit('user-deleted', userId)
     emit('update:open', false)
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)

@@ -91,7 +91,7 @@
       v-model:open="showUserDeleteDialog"
       :user="userToModify"
       title="Delete User"
-      @user-deleted="handleUserDeleted"
+      :result-variables="resultVariables"
     />
 
     <ServerManagementChangeUserRoleDialog
@@ -100,20 +100,19 @@
       title="Change Role"
       :old-role="oldRole"
       :new-role="newRole"
-      :hide-closer="true"
-      @role-changed="handleRoleChanged"
+      hide-closer
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useQuery, useApolloClient } from '@vue/apollo-composable'
+import { useQuery } from '@vue/apollo-composable'
 import { debounce, isArray } from 'lodash-es'
 import { useLogger } from '~~/composables/logging'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { Nullable, ServerRoles, Optional } from '@speckle/shared'
-import { graphql } from '~~/lib/common/generated/gql'
+import { getUsers } from '~~/lib/server-management/graphql/queries'
 import { ItemType, UserItem } from '~~/lib/server-management/helpers/types'
 import { isUser } from '~~/lib/server-management/helpers/utils'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -123,27 +122,6 @@ import {
   ShieldCheckIcon,
   TrashIcon
 } from '@heroicons/vue/20/solid'
-import { getCacheId, updateCacheByFilter } from '~~/lib/common/helpers/graphql'
-
-const getUsers = graphql(`
-  query AdminPanelUsersList($limit: Int!, $cursor: String, $query: String) {
-    admin {
-      userList(limit: $limit, cursor: $cursor, query: $query) {
-        totalCount
-        cursor
-        items {
-          id
-          email
-          avatar
-          name
-          role
-          verified
-          company
-        }
-      }
-    }
-  }
-`)
 
 definePageMeta({
   middleware: ['admin']
@@ -151,7 +129,6 @@ definePageMeta({
 
 const logger = useLogger()
 const { activeUser } = useActiveUser()
-const { client } = useApolloClient()
 
 const userToModify: Ref<Nullable<UserItem>> = ref(null)
 const searchString = ref('')
@@ -201,41 +178,6 @@ const openChangeUserRoleDialog = (user: UserItem, newRoleValue: ServerRoles) => 
   userToModify.value = user
   newRole.value = newRoleValue
   showChangeUserRoleDialog.value = true
-}
-
-const handleRoleChanged = (userId: string) => {
-  const newRoleVal = newRole.value
-  client.cache.modify({
-    id: getCacheId('AdminUserListItem', userId),
-    fields: {
-      role: () => newRoleVal
-    }
-  })
-}
-
-const handleUserDeleted = (userId: string) => {
-  client.cache.evict({
-    id: getCacheId('AdminUserListItem', userId)
-  })
-  // Update list in cache
-  updateCacheByFilter(
-    client.cache,
-    { query: { query: getUsers, variables: resultVariables.value } },
-    (data) => {
-      const newItems = data.admin.userList.items.filter((item) => item.id !== userId)
-      return {
-        ...data,
-        admin: {
-          ...data.admin,
-          userList: {
-            ...data.admin.userList,
-            items: newItems,
-            totalCount: Math.max(0, data.admin.userList.totalCount - 1)
-          }
-        }
-      }
-    }
-  )
 }
 
 const infiniteLoad = async (state: InfiniteLoaderState) => {

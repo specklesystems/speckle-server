@@ -46,23 +46,17 @@ import { UserItem } from '~~/lib/server-management/helpers/types'
 import { Roles, ServerRoles } from '@speckle/shared'
 import { ArrowLongRightIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 import { getRoleLabel } from '~~/lib/server-management/helpers/utils'
-import { graphql } from '~~/lib/common/generated/gql'
+import { changeRoleMutation } from '~~/lib/server-management/graphql/mutations'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { useMutation } from '@vue/apollo-composable'
 import {
   convertThrowIntoFetchResult,
+  getCacheId,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 
-const changeRoleMutation = graphql(`
-  mutation AdminChangeUseRole($userRoleInput: UserRoleInput!) {
-    userRoleChange(userRoleInput: $userRoleInput)
-  }
-`)
-
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
-  (e: 'role-changed', val: string): void
 }>()
 
 const props = defineProps<{
@@ -89,9 +83,23 @@ const changeUserRoleConfirmed = async () => {
   const userId = props.user?.id
   const newRoleVal = props.newRole
 
-  const result = await mutateChangeRole({
-    userRoleInput: { id: userId, role: newRoleVal }
-  }).catch(convertThrowIntoFetchResult)
+  const result = await mutateChangeRole(
+    {
+      userRoleInput: { id: userId, role: newRoleVal }
+    },
+    {
+      update: (cache, { data }) => {
+        if (data?.userRoleChange) {
+          cache.modify({
+            id: getCacheId('AdminUserListItem', userId),
+            fields: {
+              role: () => newRoleVal
+            }
+          })
+        }
+      }
+    }
+  ).catch(convertThrowIntoFetchResult)
 
   if (result?.data?.userRoleChange) {
     triggerNotification({
@@ -99,7 +107,6 @@ const changeUserRoleConfirmed = async () => {
       title: 'User role updated',
       description: 'The user role has been updated'
     })
-    emit('role-changed', userId)
     emit('update:open', false)
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
@@ -110,7 +117,6 @@ const changeUserRoleConfirmed = async () => {
     })
   }
   emit('update:open', false)
-  // userToModify.value = null
 }
 
 const dialogButtons = [
