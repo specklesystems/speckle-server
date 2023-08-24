@@ -12,4 +12,5 @@ export type LayoutMenuItem<I extends string = string> = {
   title: string
   id: I
   disabled?: boolean
+  disabledTooltip?: string
 }
