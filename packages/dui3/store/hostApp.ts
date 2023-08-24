@@ -5,7 +5,7 @@ import {
   IReceiverModelCard
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
 import { ISendFilter, ISenderModelCard } from 'lib/bindings/definitions/ISendBinding'
-import { CommitCreateInput } from 'lib/common/generated/gql/graphql'
+import { CommitCreateInput, VersionCreateInput } from 'lib/common/generated/gql/graphql'
 import {
   useCreateCommit,
   useCreateVersion,
@@ -131,32 +131,15 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   })
 
   app.$sendBinding.on('createVersion', async (args) => {
-    // TODO: Use below once it's ready
-    // const createVersion = useCreateVersion(args.accountId)
-    // await createVersion(args)
-
-    const { accountId, modelId, projectId, objectId, message } = args
-
-    const getModelDetails = useGetModelDetails(accountId)
-    const modelDetails = getModelDetails({
-      projectId,
-      modelId
-    })
-
-    const branchName = (await modelDetails).displayName
-
-    const commit: CommitCreateInput = {
-      streamId: projectId,
-      branchName,
-      objectId,
-      message,
-      sourceApplication: (
-        await app.$baseBinding.getSourceApplicationName()
-      ).toLowerCase()
+    const createVersion = useCreateVersion(args.accountId)
+    const version: VersionCreateInput = {
+      projectId: args.projectId,
+      modelId: args.modelId,
+      objectId: args.objectId,
+      sourceApplication: args.sourceApplication,
+      message: args.message
     }
-
-    const createCommit = useCreateCommit(args.accountId)
-    await createCommit(commit)
+    await createVersion(version)
   })
 
   // First initialization calls

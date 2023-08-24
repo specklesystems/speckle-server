@@ -47,7 +47,7 @@ export function useCreateVersion(clientId: string | undefined = undefined) {
     const client = getValidOrDefaultAccount(clientId)
     const res = await client.mutate({
       mutation: createVersionMutation,
-      variables: { version }
+      variables: { input: version }
     })
     return res
   }
