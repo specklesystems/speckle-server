@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { useQuery, useMutation, useApolloClient } from '@vue/apollo-composable'
+import { useQuery, useMutation } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
 import { isRequired } from '~~/lib/common/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -113,14 +113,13 @@ const { triggerNotification } = useGlobalToast()
 const { handleSubmit } = useForm<FormValues>()
 const { result } = useQuery(serverInfoQuery)
 const { mutate: updateServerInfo } = useMutation(serverInfoUpdateMutation)
-const apolloClient = useApolloClient().client
 
 const name = ref('')
 const description = ref('')
 const company = ref('')
 const adminContact = ref('')
 const termsOfService = ref('')
-const inviteOnly = ref(false)
+const inviteOnly = ref<true | undefined>(undefined)
 
 const isOpen = computed({
   get: () => props.open,
@@ -143,25 +142,22 @@ const dialogButtons = computed(() => [
 const requiredRule = [isRequired]
 
 const updateServerInfoAndCache = async (variables: ServerInfoUpdateVariables) => {
-  const result = await updateServerInfo(variables).catch(convertThrowIntoFetchResult)
-
-  if (result?.data?.serverInfoUpdate) {
-    apolloClient.cache.modify({
-      fields: {
-        serverInfo(existingServerInfo: FormValues): FormValues {
-          return {
-            ...existingServerInfo,
-            name: name.value,
-            description: description.value,
-            company: company.value,
-            adminContact: adminContact.value,
-            termsOfService: termsOfService.value,
-            inviteOnly: inviteOnly.value
+  await updateServerInfo(variables, {
+    update: (cache, result) => {
+      if (result?.data?.serverInfoUpdate) {
+        cache.modify({
+          fields: {
+            serverInfo(existingServerInfo: FormValues): FormValues {
+              return {
+                ...existingServerInfo,
+                ...variables.info
+              }
+            }
           }
-        }
+        })
       }
-    })
-  }
+    }
+  }).catch(convertThrowIntoFetchResult)
 }
 
 const onSubmit = handleSubmit(async () => {
@@ -173,7 +169,7 @@ const onSubmit = handleSubmit(async () => {
         company: company.value,
         adminContact: adminContact.value,
         termsOfService: termsOfService.value,
-        inviteOnly: inviteOnly.value
+        inviteOnly: inviteOnly.value || false
       }
     })
     triggerNotification({
@@ -202,6 +198,6 @@ watch(isOpen, (newVal, oldVal) => {
   company.value = result.value.serverInfo.company || ''
   adminContact.value = result.value.serverInfo.adminContact || ''
   termsOfService.value = result.value.serverInfo.termsOfService || ''
-  inviteOnly.value = result.value.serverInfo.inviteOnly || false
+  inviteOnly.value = result.value.serverInfo.inviteOnly || undefined
 })
 </script>

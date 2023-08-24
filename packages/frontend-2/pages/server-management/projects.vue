@@ -18,7 +18,7 @@
       placeholder="Search Projects"
       class="rounded-md border border-outline-3"
       @update:model-value="debounceSearchUpdate"
-      @change="handleSearchChange"
+      @change="($event) => searchUpdateHandler($event.value)"
     />
 
     <ServerManagementTable
@@ -159,15 +159,6 @@ const getProjects = graphql(`
 const logger = useLogger()
 const router = useRouter()
 const { client } = useApolloClient()
-const {
-  result: extraPagesResult,
-  fetchMore: fetchMorePages,
-  variables: resultVariables,
-  onResult
-} = useQuery(getProjects, () => ({
-  limit: 50,
-  query: searchString.value
-}))
 
 definePageMeta({
   middleware: ['admin']
@@ -177,6 +168,16 @@ const projectToModify = ref<ProjectItem | null>(null)
 const searchString = ref('')
 const showProjectDeleteDialog = ref(false)
 const infiniteLoaderId = ref('')
+
+const {
+  result: extraPagesResult,
+  fetchMore: fetchMorePages,
+  variables: resultVariables,
+  onResult
+} = useQuery(getProjects, () => ({
+  limit: 50,
+  query: searchString.value
+}))
 
 const moreToLoad = computed(
   () =>
@@ -192,10 +193,6 @@ const openProjectDeleteDialog = (item: ItemType) => {
     projectToModify.value = item
     showProjectDeleteDialog.value = true
   }
-}
-
-const handleSearchChange = (newSearchString: string) => {
-  searchUpdateHandler(newSearchString)
 }
 
 const handleProjectClick = (item: ItemType) => {

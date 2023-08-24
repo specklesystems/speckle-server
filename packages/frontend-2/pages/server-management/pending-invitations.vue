@@ -21,7 +21,7 @@
       placeholder="Search Invitations"
       class="rounded-md border border-outline-3"
       @update:model-value="debounceSearchUpdate"
-      @change="handleSearchChange"
+      @change="($event) => searchUpdateHandler($event.value)"
     />
 
     <ServerManagementTable
@@ -86,8 +86,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { debounce } from 'lodash-es'
-import { useQuery, useMutation } from '@vue/apollo-composable'
-import { useApolloClient } from '@speckle/vue-apollo-composable'
+import { useQuery, useMutation, useApolloClient } from '@vue/apollo-composable'
 import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
 import { ItemType, InviteItem } from '~~/lib/server-management/helpers/types'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
@@ -134,6 +133,13 @@ const logger = useLogger()
 const { triggerNotification } = useGlobalToast()
 const { mutate: resendInvitationMutation } = useMutation(adminResendInvite)
 const { client } = useApolloClient()
+
+const inviteToModify = ref<InviteItem | null>(null)
+const searchString = ref('')
+const showDeleteInvitationDialog = ref(false)
+const infiniteLoaderId = ref('')
+const successfullyResentInvites = ref<string[]>([])
+
 const {
   result: extraPagesResult,
   fetchMore: fetchMorePages,
@@ -143,12 +149,6 @@ const {
   limit: 50,
   query: searchString.value
 }))
-
-const inviteToModify = ref<InviteItem | null>(null)
-const searchString = ref('')
-const showDeleteInvitationDialog = ref(false)
-const infiniteLoaderId = ref('')
-const successfullyResentInvites = ref<string[]>([])
 
 const moreToLoad = computed(
   () =>
@@ -164,10 +164,6 @@ const openDeleteInvitationDialog = (item: ItemType) => {
     inviteToModify.value = item
     showDeleteInvitationDialog.value = true
   }
-}
-
-const handleSearchChange = (newSearchString: string) => {
-  searchUpdateHandler(newSearchString)
 }
 
 const handleInvitationDeleted = (inviteId: string) => {

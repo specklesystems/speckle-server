@@ -49,7 +49,7 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex items-center  justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
-              to="/server-management/"
+              to="/server-management"
             >
               Server Management
               <Cog6ToothIcon class="w-5 h-5 mr-2" />
