@@ -45,8 +45,6 @@
   </Menu>
 </template>
 <script setup lang="ts">
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import { directive as vTippy } from 'vue-tippy'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { Nullable } from '@speckle/shared'
