@@ -11,7 +11,9 @@ const require = createRequire(import.meta.url)
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    dts(),
+    dts({
+      exclude: ['**/*.stories.ts', '**/*.test.ts', '**/*.spec.ts', '.storybook/**/*']
+    }),
     vueMacros({
       plugins: {
         vue: vue()
@@ -30,7 +32,10 @@ export default defineConfig({
         ...Object.keys(pkg.dependencies || {}).map((d) => new RegExp(`^${d}(\\/.*)?$`)),
         ...Object.keys(pkg.peerDependencies || {}).map(
           (d) => new RegExp(`^${d}(\\/.*)?$`)
-        )
+        ),
+        // Don't build stories
+        /\.stories\.ts$/i,
+        /\.storybook/i
       ]
     }
   },
