@@ -1,6 +1,6 @@
 import { useEventHub } from '@/main/lib/core/composables/core'
 import { useRoute } from '@/main/lib/core/composables/router'
-import { onBeforeUnmount, onMounted, Ref, ref, unref, watch } from 'vue'
+import Vue, { onBeforeUnmount, onMounted, Ref, ref, unref, watch } from 'vue'
 
 /**
  * Sets up v-navigation-drawer autoresize (ask @dim how this works)

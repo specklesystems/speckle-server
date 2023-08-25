@@ -34,9 +34,9 @@ export function useUpdateUserProfile() {
               id: getCacheId('LimitedUser', update.id),
               fields: {
                 name: () => update.name,
-                bio: () => update.bio,
-                company: () => update.company,
-                avatar: () => update.avatar
+                bio: () => update.bio || null,
+                company: () => update.company || null,
+                avatar: () => update.avatar || null
               }
             })
           }

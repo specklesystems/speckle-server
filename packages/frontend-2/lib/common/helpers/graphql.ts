@@ -12,8 +12,8 @@ import {
   ServerParseError
 } from '@apollo/client/core'
 import { DocumentNode, GraphQLError } from 'graphql'
-import { flatten, isUndefined, has, isFunction } from 'lodash-es'
-import { Modifier } from '@apollo/client/cache'
+import { flatten, isUndefined, has, isFunction, isString } from 'lodash-es'
+import { Modifier, Reference } from '@apollo/client/cache'
 import { PartialDeep } from 'type-fest'
 import { NetworkError } from '@apollo/client/errors'
 import { nanoid } from 'nanoid'
@@ -68,7 +68,9 @@ export function isInvalidAuth(error: ApolloError | NetworkError) {
   if (!hasCorrectCode) return false
 
   const message: string | undefined = isServerError(networkError)
-    ? networkError.result?.error
+    ? isString(networkError.result)
+      ? networkError.result
+      : networkError.result?.error
     : networkError.bodyText
 
   return (message || '').toLowerCase().includes('token')
@@ -244,7 +246,7 @@ export function getStoreFieldName(
  * Inside cache.modify calls you'll get these instead of full objects when reading fields that hold
  * identifiable objects or object arrays
  */
-export type CacheObjectReference = { __ref: string }
+export type CacheObjectReference = Reference
 
 /**
  * Objects & object arrays in `cache.modify` calls are represented through reference objects, so
@@ -254,6 +256,10 @@ export function getObjectReference(typeName: string, id: string): CacheObjectRef
   return {
     __ref: getCacheId(typeName, id)
   }
+}
+
+export function isReference(obj: unknown): obj is CacheObjectReference {
+  return has(obj, '__ref')
 }
 
 /**
