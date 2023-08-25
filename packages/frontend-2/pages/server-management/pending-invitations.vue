@@ -55,7 +55,11 @@
       <template #resend="{ item }">
         <FormButton
           :link="true"
-          class="font-semibold text-primary"
+          :class="{
+            'font-semibold': true,
+            'text-primary': !successfullyResentInvites.includes(item.id),
+            'text-foreground': successfullyResentInvites.includes(item.id)
+          }"
           :disabled="successfullyResentInvites.includes(item.id)"
           @click="resendInvitation(item as InviteItem)"
         >
