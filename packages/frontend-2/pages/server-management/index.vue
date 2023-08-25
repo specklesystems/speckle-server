@@ -93,7 +93,7 @@ const isLatestVersion = computed(() => {
 })
 const serverData = computed((): CardInfo[] => [
   {
-    title: 'Server Name',
+    title: 'Server',
     value: result.value?.serverInfo.name || 'N/A',
     icon: ServerIcon,
     cta: {

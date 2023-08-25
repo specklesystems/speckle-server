@@ -8,7 +8,12 @@
       ></HeaderNavLink>
     </Portal>
 
-    <h1 class="h4 font-bold mb-4">Pending Invitations</h1>
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="h4 font-bold">Pending Invitations</h1>
+      <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
+        Invite
+      </FormButton>
+    </div>
 
     <FormTextInput
       size="lg"
@@ -84,6 +89,7 @@
       class="py-4"
       @infinite="infiniteLoad"
     />
+    <ServerInviteDialog v-model:open="showInviteDialog" />
   </div>
 </template>
 
@@ -91,7 +97,7 @@
 import { ref } from 'vue'
 import { debounce } from 'lodash-es'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
+import { MagnifyingGlassIcon, TrashIcon, UserPlusIcon } from '@heroicons/vue/20/solid'
 import { ItemType, InviteItem } from '~~/lib/server-management/helpers/types'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { getInvites } from '~~/lib/server-management/graphql/queries'
@@ -116,6 +122,7 @@ const searchString = ref('')
 const showDeleteInvitationDialog = ref(false)
 const infiniteLoaderId = ref('')
 const successfullyResentInvites = ref<string[]>([])
+const showInviteDialog = ref(false)
 
 const {
   result: extraPagesResult,
@@ -198,6 +205,10 @@ const debounceSearchUpdate = debounce(searchUpdateHandler, 500)
 
 const calculateLoaderId = () => {
   infiniteLoaderId.value = resultVariables.value?.query || ''
+}
+
+const toggleInviteDialog = () => {
+  showInviteDialog.value = true
 }
 
 onResult(calculateLoaderId)

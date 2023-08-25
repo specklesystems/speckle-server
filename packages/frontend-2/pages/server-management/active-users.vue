@@ -8,7 +8,12 @@
       ></HeaderNavLink>
     </Portal>
 
-    <h1 class="h4 font-bold mb-4">Active Users</h1>
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="h4 font-bold">Active Users</h1>
+      <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
+        Invite
+      </FormButton>
+    </div>
 
     <FormTextInput
       size="lg"
@@ -102,6 +107,7 @@
       :new-role="newRole"
       hide-closer
     />
+    <ServerInviteDialog v-model:open="showInviteDialog" />
   </div>
 </template>
 
@@ -120,7 +126,8 @@ import {
   MagnifyingGlassIcon,
   ShieldExclamationIcon,
   ShieldCheckIcon,
-  TrashIcon
+  TrashIcon,
+  UserPlusIcon
 } from '@heroicons/vue/20/solid'
 
 definePageMeta({
@@ -136,6 +143,7 @@ const showUserDeleteDialog = ref(false)
 const showChangeUserRoleDialog = ref(false)
 const newRole = ref<ServerRoles>()
 const infiniteLoaderId = ref('')
+const showInviteDialog = ref(false)
 
 const queryVariables = computed(() => ({
   limit: 50,
@@ -210,6 +218,10 @@ const debounceSearchUpdate = debounce(searchUpdateHandler, 500)
 
 const calculateLoaderId = () => {
   infiniteLoaderId.value = resultVariables.value?.query || ''
+}
+
+const toggleInviteDialog = () => {
+  showInviteDialog.value = true
 }
 
 onResult(calculateLoaderId)

@@ -5,7 +5,10 @@
       <HeaderNavLink to="/server-management/projects" name="Projects"></HeaderNavLink>
     </Portal>
 
-    <h1 class="h4 font-bold mb-4">Projects</h1>
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="h4 font-bold">Projects</h1>
+      <FormButton :icon-left="PlusIcon" @click="openNewProject = true">New</FormButton>
+    </div>
 
     <FormTextInput
       size="lg"
@@ -98,6 +101,8 @@
       title="Delete Project"
       :result-variables="resultVariables"
     />
+
+    <ProjectsAddDialog v-model:open="openNewProject" />
   </div>
 </template>
 
@@ -105,7 +110,7 @@
 import { ref } from 'vue'
 import { debounce } from 'lodash-es'
 import { useQuery } from '@vue/apollo-composable'
-import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
+import { MagnifyingGlassIcon, TrashIcon, PlusIcon } from '@heroicons/vue/20/solid'
 import { getProjects } from '~~/lib/server-management/graphql/queries'
 import { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
@@ -122,6 +127,7 @@ const projectToModify = ref<ProjectItem | null>(null)
 const searchString = ref('')
 const showProjectDeleteDialog = ref(false)
 const infiniteLoaderId = ref('')
+const openNewProject = ref(false)
 
 const {
   result: extraPagesResult,
