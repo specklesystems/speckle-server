@@ -53,6 +53,12 @@ export default defineNuxtConfig({
   },
 
   vite: {
+    vue: {
+      script: {
+        defineModel: true
+      }
+    },
+
     resolve: {
       alias: [{ find: /^lodash$/, replacement: 'lodash-es' }],
       // i've no idea why, but the same version of various deps gets bundled twice

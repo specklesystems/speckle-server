@@ -30,24 +30,18 @@ graphql(`
 `)
 
 const emit = defineEmits<{
-  (e: 'update:open', v: boolean): void
   (e: 'deleted'): void
 }>()
 
 const props = defineProps<{
-  open: boolean
   projectId: string
   model: ProjectPageModelsCardDeleteDialogFragment
 }>()
 
+const isOpen = defineModel<boolean>('open', { required: true })
 const deleteModel = useDeleteModel()
 
 const loading = ref(false)
-
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
 
 const mp = useMixpanel()
 
