@@ -48,8 +48,8 @@ export default defineNuxtConfig({
 
   alias: {
     // Rewriting all lodash calls to lodash-es for proper tree-shaking & chunk splitting
-    lodash: 'lodash-es',
-    '@vue/apollo-composable': '@speckle/vue-apollo-composable'
+    lodash: 'lodash-es'
+    // '@vue/apollo-composable': '@speckle/vue-apollo-composable'
   },
 
   vite: {
