@@ -33,7 +33,9 @@ export default {
   }
 } as Meta
 
-const defaultItems: LayoutMenuItem<'a' | 'b' | 'c'>[][] = [
+const defaultItems = (
+  params?: Partial<{ withTooltip: boolean }>
+): LayoutMenuItem<'a' | 'b' | 'c'>[][] => [
   [
     {
       title: 'First Group Item - #1',
@@ -43,7 +45,8 @@ const defaultItems: LayoutMenuItem<'a' | 'b' | 'c'>[][] = [
     {
       title: 'First Group Item - #2 (Disabled)',
       id: 'b',
-      disabled: true
+      disabled: true,
+      disabledTooltip: params?.withTooltip ? "Here's why it is disabled..." : undefined
     }
   ],
   [
@@ -86,6 +89,14 @@ export const Default: StoryType = {
   }),
   args: {
     open: false,
-    items: defaultItems
+    items: defaultItems()
+  }
+}
+
+export const WithDisabledTooltip: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    items: defaultItems({ withTooltip: true })
   }
 }
