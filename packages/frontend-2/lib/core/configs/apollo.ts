@@ -329,19 +329,18 @@ function createLink(params: {
     uri: httpEndpoint
   })
 
-  const authLink = setContext(
-    (_, { headers }: { headers: Record<string, unknown> }) => {
-      const authHeader = authToken.value
-        ? { Authorization: `Bearer ${authToken.value}` }
-        : {}
-      return {
-        headers: {
-          ...headers,
-          ...authHeader
-        }
+  const authLink = setContext((_, ctx) => {
+    const { headers } = ctx
+    const authHeader = authToken.value
+      ? { Authorization: `Bearer ${authToken.value}` }
+      : {}
+    return {
+      headers: {
+        ...headers,
+        ...authHeader
       }
     }
-  )
+  })
 
   let link = authLink.concat(httpLink)
 
