@@ -29,12 +29,15 @@
             :key="item.id"
             :disabled="item.disabled"
           >
-            <button
-              :class="buildButtonClassses({ active, disabled })"
-              @click="chooseItem(item, $event)"
-            >
-              <slot name="item" :item="item">{{ item.title }}</slot>
-            </button>
+            <span v-tippy="item.disabled && item.disabledTooltip">
+              <button
+                :class="buildButtonClassses({ active, disabled })"
+                :disabled="disabled"
+                @click="chooseItem(item, $event)"
+              >
+                <slot name="item" :item="item">{{ item.title }}</slot>
+              </button>
+            </span>
           </MenuItem>
         </div>
       </MenuItems>
@@ -42,6 +45,7 @@
   </Menu>
 </template>
 <script setup lang="ts">
+import { directive as vTippy } from 'vue-tippy'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import { Nullable } from '@speckle/shared'
 import { computed, ref, watch } from 'vue'

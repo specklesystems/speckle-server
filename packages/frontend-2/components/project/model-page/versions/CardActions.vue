@@ -35,6 +35,10 @@ const props = defineProps<{
 
 const copyModelLink = useCopyModelLink()
 
+const disabledMessage = ref(
+  'Version editing is only allowed to project or version owners'
+)
+
 const showActionsMenu = computed({
   get: () => props.open,
   set: (newVal) => emit('update:open', newVal)
@@ -45,24 +49,28 @@ const actionsItems = computed<LayoutMenuItem<VersionActionTypes>[][]>(() => [
     {
       title: 'Delete',
       id: VersionActionTypes.Delete,
-      disabled: !!props.selectionDisabled
+      disabled: !!props.selectionDisabled,
+      disabledTooltip: disabledMessage.value
     },
     {
       title: 'Move to',
       id: VersionActionTypes.MoveTo,
-      disabled: !!props.selectionDisabled
+      disabled: !!props.selectionDisabled,
+      disabledTooltip: disabledMessage.value
     },
     {
       title: 'Edit message',
       id: VersionActionTypes.EditMessage,
-      disabled: !!props.selectionDisabled
+      disabled: !!props.selectionDisabled,
+      disabledTooltip: disabledMessage.value
     }
   ],
   [
     {
       title: 'Select',
       id: VersionActionTypes.Select,
-      disabled: !!props.selectionDisabled
+      disabled: !!props.selectionDisabled,
+      disabledTooltip: disabledMessage.value
     }
   ],
   [{ title: 'Share', id: VersionActionTypes.Share }]
