@@ -2,7 +2,7 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    :title="title"
+    title="Edit Settings"
     :buttons="dialogButtons"
   >
     <form @submit="onSubmit">
@@ -60,11 +60,12 @@
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
 import { isRequired } from '~~/lib/common/helpers/validation'
-import { graphql } from '~~/lib/common/generated/gql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { LayoutDialog, FormTextInput, FormTextArea } from '@speckle/ui-components'
 import { useLogger } from '~~/composables/logging'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
+import { serverInfoQuery } from '~~/lib/server-management/graphql/queries'
+import { serverInfoUpdateMutation } from '~~/lib/server-management/graphql/mutations'
 
 type FormValues = {
   name: string
@@ -79,32 +80,7 @@ type ServerInfoUpdateVariables = {
   info: FormValues
 }
 
-const serverInfoQuery = graphql(`
-  query ServerSettingsDialogData {
-    serverInfo {
-      name
-      description
-      adminContact
-      company
-      termsOfService
-      inviteOnly
-    }
-  }
-`)
-
-const serverInfoUpdateMutation = graphql(`
-  mutation ServerInfoUpdate($info: ServerInfoUpdateInput!) {
-    serverInfoUpdate(info: $info)
-  }
-`)
-
-const props = defineProps<{
-  open: boolean
-  title: string
-}>()
-
 const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
   (e: 'server-info-updated'): void
 }>()
 
@@ -121,10 +97,7 @@ const adminContact = ref('')
 const termsOfService = ref('')
 const inviteOnly = ref<true | undefined>(undefined)
 
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
+const isOpen = defineModel<boolean>('open', { required: true })
 
 const dialogButtons = computed(() => [
   {

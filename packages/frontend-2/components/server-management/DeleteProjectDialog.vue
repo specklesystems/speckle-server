@@ -28,7 +28,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
 import { ProjectItem } from '~~/lib/server-management/helpers/types'
 import { useMutation } from '@vue/apollo-composable'
@@ -42,10 +41,6 @@ import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables
 import { adminDeleteProject } from '~~/lib/server-management/graphql/mutations'
 import { getProjects } from '~~/lib/server-management/graphql/queries'
 import { Exact, InputMaybe } from '~~/lib/common/generated/gql/graphql'
-
-const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
-}>()
 
 const props = defineProps<{
   title: string
@@ -63,10 +58,7 @@ const props = defineProps<{
 const { triggerNotification } = useGlobalToast()
 const { mutate: adminDeleteMutation } = useMutation(adminDeleteProject)
 
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
+const isOpen = defineModel<boolean>('open', { required: true })
 
 const deleteConfirmed = async () => {
   const projectId = props.project?.id
@@ -117,7 +109,7 @@ const deleteConfirmed = async () => {
       title: 'Project deleted',
       description: 'The project has been successfully deleted'
     })
-    emit('update:open', false)
+    isOpen.value = false
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
@@ -137,7 +129,7 @@ const dialogButtons = [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
-    onClick: () => emit('update:open', false)
+    onClick: () => (isOpen.value = false)
   }
 ]
 </script>

@@ -1,5 +1,36 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
+export const serverManagementDataQuery = graphql(`
+  query Admin {
+    admin {
+      serverStatistics {
+        totalProjectCount
+        totalUserCount
+      }
+      inviteList {
+        totalCount
+      }
+    }
+    serverInfo {
+      name
+      version
+    }
+  }
+`)
+
+export const serverInfoQuery = graphql(`
+  query ServerSettingsDialogData {
+    serverInfo {
+      name
+      description
+      adminContact
+      company
+      termsOfService
+      inviteOnly
+    }
+  }
+`)
+
 export const getUsers = graphql(`
   query AdminPanelUsersList($limit: Int!, $cursor: String, $query: String) {
     admin {

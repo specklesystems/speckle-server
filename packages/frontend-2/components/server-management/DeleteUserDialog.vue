@@ -25,7 +25,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
 import { UserItem } from '~~/lib/server-management/helpers/types'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -46,10 +45,6 @@ const adminDeleteUser = graphql(`
   }
 `)
 
-const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
-}>()
-
 const props = defineProps<{
   title: string
   open: boolean
@@ -66,10 +61,7 @@ const props = defineProps<{
 const { triggerNotification } = useGlobalToast()
 const { mutate: adminDeleteUserMutation } = useMutation(adminDeleteUser)
 
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
+const isOpen = defineModel<boolean>('open', { required: true })
 
 const deleteConfirmed = async () => {
   const userEmail = props.user?.email
@@ -122,7 +114,7 @@ const deleteConfirmed = async () => {
       title: 'User deleted',
       description: 'The user has been succesfully deleted'
     })
-    emit('update:open', false)
+    isOpen.value = false
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
@@ -142,7 +134,7 @@ const dialogButtons = [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
-    onClick: () => emit('update:open', false)
+    onClick: () => (isOpen.value = false)
   }
 ]
 </script>

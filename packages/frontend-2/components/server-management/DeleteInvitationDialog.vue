@@ -29,7 +29,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
 import { InviteItem } from '~~/lib/server-management/helpers/types'
@@ -44,13 +43,8 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { Exact, InputMaybe } from '~~/lib/common/generated/gql/graphql'
 
-const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
-}>()
-
 const props = defineProps<{
   title: string
-  open: boolean
   invite: InviteItem | null
   resultVariables:
     | Exact<{
@@ -64,10 +58,7 @@ const props = defineProps<{
 const { triggerNotification } = useGlobalToast()
 const { mutate: adminDeleteMutation } = useMutation(adminDeleteInvite)
 
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
+const isOpen = defineModel<boolean>('open', { required: true })
 
 const deleteConfirmed = async () => {
   const inviteId = props.invite?.id
@@ -113,7 +104,7 @@ const deleteConfirmed = async () => {
   ).catch(convertThrowIntoFetchResult)
 
   if (result?.data?.inviteDelete) {
-    emit('update:open', false)
+    isOpen.value = false
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Invitation deleted',
@@ -138,7 +129,7 @@ const dialogButtons = [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
-    onClick: () => emit('update:open', false)
+    onClick: () => (isOpen.value = false)
   }
 ]
 </script>

@@ -19,7 +19,6 @@
 
       <ServerManagementSettingsDialog
         v-model:open="showDialog"
-        title="Edit Settings"
         @server-info-updated="refetch"
       />
 
@@ -30,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { graphql } from '~~/lib/common/generated/gql'
+import { serverManagementDataQuery } from '~~/lib/server-management/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { ref, computed } from 'vue'
 import { CardInfo } from '~~/lib/server-management/helpers/types'
@@ -42,24 +41,6 @@ import {
   HomeIcon
 } from '@heroicons/vue/24/solid'
 import { useRouter } from 'vue-router'
-
-const dataQuery = graphql(`
-  query Admin {
-    admin {
-      serverStatistics {
-        totalProjectCount
-        totalUserCount
-      }
-      inviteList {
-        totalCount
-      }
-    }
-    serverInfo {
-      name
-      version
-    }
-  }
-`)
 
 interface GithubRelease {
   url: string
@@ -77,7 +58,7 @@ definePageMeta({
 
 const logger = useLogger()
 const router = useRouter()
-const { result, refetch } = useQuery(dataQuery)
+const { result, refetch } = useQuery(serverManagementDataQuery)
 
 const showDialog = ref(false)
 const latestVersion = ref<string | null>(null)
@@ -181,6 +162,5 @@ async function getLatestVersion(): Promise<string | null> {
   }
 }
 
-// Load latest value from GH
 latestVersion.value = await getLatestVersion()
 </script>

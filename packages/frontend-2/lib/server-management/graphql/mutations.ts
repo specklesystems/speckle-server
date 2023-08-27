@@ -1,5 +1,11 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
+export const serverInfoUpdateMutation = graphql(`
+  mutation ServerInfoUpdate($info: ServerInfoUpdateInput!) {
+    serverInfoUpdate(info: $info)
+  }
+`)
+
 export const adminDeleteProject = graphql(`
   mutation AdminPanelDeleteProject($ids: [String!]) {
     streamsDelete(ids: $ids)
