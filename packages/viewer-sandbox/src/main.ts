@@ -287,6 +287,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/e258b0e8db/commits/c19577c7d6?c=%5B15.88776,-8.2182,12.17095,18.64059,1.48552,0.6025,0,1%5D'
     // 'https://speckle.xyz/streams/46caea9b53/commits/71938adcd1'
     // 'https://speckle.xyz/streams/2f9f2f3021/commits/75bd13f513'
+    // 'https://speckle.xyz/streams/0a2f096caf/commits/eee0e4436f?overlay=72828bce0d&c=%5B14.04465,-332.88372,258.40392,53.09575,31.13694,126.39999,0,1%5D&filter=%7B%22propertyInfoKey%22%3A%22level.name%22%7D'
   )
 }
 

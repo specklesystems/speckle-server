@@ -252,6 +252,7 @@ export class SectionTool extends Extension implements ISectionProvider {
       this.prevPosition = this.sphere.position.clone()
     }
     this.viewer.getRenderer().clippingPlanes = this.planes
+    this.viewer.getRenderer().clippingVolume = this.getCurrentBox()
     this.emit(SectionToolEvent.Updated, this.planes)
     this.viewer.requestRender()
   }
@@ -417,6 +418,11 @@ export class SectionTool extends Extension implements ISectionProvider {
     this.controls.showZ = true
   }
 
+  public getCurrentBox() {
+    if (!this.display.visible) return new Box3()
+    return this.boxGeometry.boundingBox
+  }
+
   public setBox(targetBox, offset = 0.05) {
     let box
 
@@ -477,6 +483,7 @@ export class SectionTool extends Extension implements ISectionProvider {
     this.boxMeshHelper.box.copy(this.boxGeometry.boundingBox)
     this.emit(SectionToolEvent.Updated, this.planes)
     this.viewer.getRenderer().clippingPlanes = this.planes
+    this.viewer.getRenderer().clippingVolume = this.getCurrentBox()
     this.viewer.requestRender()
   }
 

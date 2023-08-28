@@ -119,7 +119,7 @@ export default class SpeckleRenderer {
 
   private _cameraProvider: ICameraProvider = null
   private _clippingPlanes: Plane[] = []
-  private _clippingVolume: Box3
+  private _clippingVolume: Box3 = new Box3()
 
   public get renderer(): SpeckleWebGLRenderer {
     return this._renderer
@@ -157,7 +157,7 @@ export default class SpeckleRenderer {
 
   public get sceneBox() {
     /** Cache this, don't compute it every frame */
-    return new Box3().setFromObject(this.allObjects).expandByScalar(1.1)
+    return new Box3().setFromObject(this.allObjects)
   }
 
   public get sceneSphere() {
@@ -224,11 +224,6 @@ export default class SpeckleRenderer {
     return this._intersections
   }
 
-  public get clippingVolume(): Box3 {
-    // This needs to be computed from the clipping plane's intersection with the scene box
-    return this.sceneBox
-  }
-
   public get clippingPlanes(): Plane[] {
     return this._clippingPlanes
   }
@@ -236,6 +231,14 @@ export default class SpeckleRenderer {
   public set clippingPlanes(value: Plane[]) {
     this._clippingPlanes = value.map((value: Plane) => new Plane().copy(value))
     this.updateClippingPlanes()
+  }
+
+  public get clippingVolume(): Box3 {
+    return this._clippingVolume
+  }
+
+  public set clippingVolume(box: Box3) {
+    this._clippingVolume = this.sceneBox.intersect(box)
   }
 
   public get renderingStats(): RenderingStats {
@@ -320,7 +323,7 @@ export default class SpeckleRenderer {
       helpers.name = 'Helpers'
       this._scene.add(helpers)
 
-      const sceneBoxHelper = new Box3Helper(this.sceneBox, new Color(0x0000ff))
+      const sceneBoxHelper = new Box3Helper(this._clippingVolume, new Color(0xff00ff))
       sceneBoxHelper.name = 'SceneBoxHelper'
       sceneBoxHelper.layers.set(ObjectLayers.PROPS)
       helpers.add(sceneBoxHelper)
@@ -492,7 +495,6 @@ export default class SpeckleRenderer {
     v.set(box.max.x, box.max.y, box.max.z) // 111
     d = Math.max(camPos.distanceTo(v), d)
     this.renderingCamera.far = d * 2
-    this.renderingCamera.updateProjectionMatrix()
     this.renderingCamera.updateProjectionMatrix()
   }
 
@@ -749,7 +751,7 @@ export default class SpeckleRenderer {
   protected updateClippingPlanes(planes?: Plane[]) {
     if (!this.allObjects) return
     if (!planes) planes = this._clippingPlanes
-    /** This will be done via the batches in the near future */
+
     this.allObjects.traverse((object) => {
       const material = (object as unknown as { material }).material
       if (!material) return
@@ -762,7 +764,6 @@ export default class SpeckleRenderer {
       }
     })
     this.pipeline.updateClippingPlanes(planes)
-    // this.sectionBoxOutlines.updateClippingPlanes(planes)
     this._shadowcatcher.updateClippingPlanes(planes)
     this.renderer.shadowMap.needsUpdate = true
     this.resetPipeline()
@@ -887,7 +888,7 @@ export default class SpeckleRenderer {
       ;(this._scene.getObjectByName('CamHelper') as CameraHelper).update()
       // Thank you prettier, this looks so much better
       ;(this._scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
-        this.sceneBox
+        this._clippingVolume
       )
       ;(
         this._scene.getObjectByName('DirLightHelper') as DirectionalLightHelper
@@ -989,8 +990,7 @@ export default class SpeckleRenderer {
       this.renderingCamera,
       e,
       true,
-      // REVISIT
-      this.sceneBox // this.viewer.sectionBox.getCurrentBox()
+      this._clippingVolume
     )
 
     if (!results) {
@@ -1036,8 +1036,7 @@ export default class SpeckleRenderer {
       this.renderingCamera,
       e,
       true,
-      // REVISIT
-      this.sceneBox // this.viewer.sectionBox.getCurrentBox()
+      this._clippingVolume
     )
     if (!results) {
       this.viewer.emit(ViewerEvent.ObjectDoubleClicked, null)

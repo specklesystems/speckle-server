@@ -3,9 +3,11 @@ import {
   Camera,
   Intersection,
   Object3D,
+  Plane,
   Ray,
   Scene,
   Vector2,
+  Vector3,
   Vector4
 } from 'three'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
@@ -139,5 +141,97 @@ export class Intersections {
     }
 
     return results
+  }
+
+  public static aabbPlanePoints = (plane: Plane, aabb: Box3) => {
+    const ray = new Ray()
+    const outPoints = new Array<Vector3>()
+    // Test edges along X axis, pointing right.
+    const dir: Vector3 = new Vector3(aabb.max.x - aabb.min.x, 0, 0)
+    const orig: Vector3 = new Vector3().copy(aabb.min)
+    ray.set(orig, dir)
+    let t = ray.distanceToPlane(plane)
+    if (t) {
+      outPoints.push(new Vector3().copy(orig).addScaledVector(dir, t))
+    }
+
+    orig.set(aabb.min.x, aabb.max.y, aabb.min.z)
+    ray.set(orig, dir)
+    t = ray.distanceToPlane(plane)
+    if (t) {
+      outPoints.push(new Vector3().copy(orig).addScaledVector(dir, t))
+    }
+
+    orig.set(aabb.min.x, aabb.min.y, aabb.max.z)
+    ray.set(orig, dir)
+    t = ray.distanceToPlane(plane)
+    if (t) {
+      outPoints.push(new Vector3().copy(orig).addScaledVector(dir, t))
+    }
+
+    orig.set(aabb.min.x, aabb.max.y, aabb.max.z)
+    ray.set(orig, dir)
+    t = ray.distanceToPlane(plane)
+    if (t) {
+      outPoints.push(new Vector3().copy(orig).addScaledVector(dir, t))
+    }
+
+    // Test edges along Y axis, pointing up.
+    dir.set(0, aabb.max.y - aabb.min.y, 0)
+    orig.set(aabb.min.x, aabb.min.y, aabb.min.z)
+    ray.set(orig, dir)
+    t = ray.distanceToPlane(plane)
+    if (t) {
+      outPoints.push(new Vector3().copy(orig).addScaledVector(dir, t))
+    }
+
+    orig.set(aabb.max.x, aabb.min.y, aabb.min.z)
+    ray.set(orig, dir)
+    t = ray.distanceToPlane(plane)
+    if (t) {
+      outPoints.push(new Vector3().copy(orig).addScaledVector(dir, t))
+    }
+    orig.set(aabb.min.x, aabb.min.y, aabb.max.z)
+    ray.set(orig, dir)
+    t = ray.distanceToPlane(plane)
+    if (t) {
+      outPoints.push(new Vector3().copy(orig).addScaledVector(dir, t))
+    }
+
+    orig.set(aabb.max.x, aabb.min.y, aabb.max.z)
+    ray.set(orig, dir)
+    t = ray.distanceToPlane(plane)
+    if (t) {
+      outPoints.push(new Vector3().copy(orig).addScaledVector(dir, t))
+    }
+
+    // Test edges along Z axis, pointing forward.
+    dir.set(0, 0, aabb.max.z - aabb.min.z)
+    orig.set(aabb.min.x, aabb.min.y, aabb.min.z)
+    ray.set(orig, dir)
+    t = ray.distanceToPlane(plane)
+    if (t) {
+      outPoints.push(new Vector3().copy(orig).addScaledVector(dir, t))
+    }
+    orig.set(aabb.max.x, aabb.min.y, aabb.min.z)
+    ray.set(orig, dir)
+    t = ray.distanceToPlane(plane)
+    if (t) {
+      outPoints.push(new Vector3().copy(orig).addScaledVector(dir, t))
+    }
+    orig.set(aabb.min.x, aabb.max.y, aabb.min.z)
+    ray.set(orig, dir)
+    t = ray.distanceToPlane(plane)
+    if (t) {
+      outPoints.push(new Vector3().copy(orig).addScaledVector(dir, t))
+    }
+    orig.set(aabb.max.x, aabb.max.y, aabb.min.z)
+    ray.set(orig, dir)
+    t = ray.distanceToPlane(plane)
+    if (t) {
+      outPoints.push(new Vector3().copy(orig).addScaledVector(dir, t))
+    }
+
+    return outPoints
   }
 }

@@ -165,7 +165,6 @@ export class SpeckleMaterial {
   public setMaterialOptions(options: MaterialOptions) {
     this.stencilOutline = options.stencilOutlines || false
     this.pointSize = options.pointSize || 1
-    this['depthWrite'] = options.depthWrite
   }
 }
 
