@@ -6,7 +6,7 @@
       <ProjectPageHeader :project="project" class="mb-8" />
       <!-- Stats blocks -->
       <div class="flex flex-col md:flex-row space-y-2 md:space-x-4 mb-14">
-        <ProjectPageStatsBlockTeam
+        <ProjectPageStatsBlockSettings
           :project="project"
           class="shadow hover:shadow-xl w-full md:w-72 transition"
         />

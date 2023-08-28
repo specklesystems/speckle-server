@@ -7,6 +7,7 @@
       />
       <ProjectPageTeamDialogManageUsers :project="project" />
       <ProjectPageTeamDialogManagePermissions :project="project" />
+      <ProjectPageTeamDialogWebhooks :project="project" />
     </div>
   </LayoutDialog>
 </template>
