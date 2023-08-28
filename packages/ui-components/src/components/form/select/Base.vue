@@ -176,7 +176,7 @@ import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import { directive as vTippy } from 'vue-tippy'
 
 type ButtonStyle = 'base' | 'simple' | 'tinted'
-type SingleItem = any
+export type SingleItem = any
 type ValueType = SingleItem | SingleItem[] | undefined
 
 defineEmits<{
