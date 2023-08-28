@@ -35,7 +35,7 @@ export class RenderTree {
   }
 
   public buildRenderTreeAsync(priority: number): Promise<boolean> {
-    const p = this.root.walkAsync(
+    const p = this.tree.walkAsync(
       (node: TreeNode): boolean => {
         const rendeNode = this.buildRenderNode(node)
         node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
