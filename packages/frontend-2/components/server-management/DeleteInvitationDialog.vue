@@ -44,6 +44,7 @@ import {
 import { Exact, InputMaybe } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
+  open: boolean
   title: string
   invite: InviteItem | null
   resultVariables:
@@ -55,10 +56,17 @@ const props = defineProps<{
     | undefined
 }>()
 
+const emit = defineEmits<{
+  (e: 'update:open', val: boolean): void
+}>()
+
 const { triggerNotification } = useGlobalToast()
 const { mutate: adminDeleteMutation } = useMutation(adminDeleteInvite)
 
-const isOpen = defineModel<boolean>('open', { required: true })
+const isOpen = computed({
+  get: () => props.open,
+  set: (newVal) => emit('update:open', newVal)
+})
 
 const deleteConfirmed = async () => {
   const inviteId = props.invite?.id
@@ -104,7 +112,7 @@ const deleteConfirmed = async () => {
   ).catch(convertThrowIntoFetchResult)
 
   if (result?.data?.inviteDelete) {
-    isOpen.value = false
+    emit('update:open', false)
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Invitation deleted',
@@ -129,7 +137,7 @@ const dialogButtons = [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
-    onClick: () => (isOpen.value = false)
+    onClick: () => emit('update:open', false)
   }
 ]
 </script>

@@ -80,7 +80,12 @@ type ServerInfoUpdateVariables = {
   info: FormValues
 }
 
+const props = defineProps<{
+  open: boolean
+}>()
+
 const emit = defineEmits<{
+  (e: 'update:open', val: boolean): void
   (e: 'server-info-updated'): void
 }>()
 
@@ -97,7 +102,10 @@ const adminContact = ref('')
 const termsOfService = ref('')
 const inviteOnly = ref<true | undefined>(undefined)
 
-const isOpen = defineModel<boolean>('open', { required: true })
+const isOpen = computed({
+  get: () => props.open,
+  set: (newVal) => emit('update:open', newVal)
+})
 
 const dialogButtons = computed(() => [
   {
