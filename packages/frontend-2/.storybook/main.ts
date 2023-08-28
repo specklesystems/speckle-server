@@ -1,9 +1,10 @@
 import dotenv from 'dotenv'
 import Unimport from 'unimport/unplugin'
-import { flatten } from 'lodash-es'
+import { flatten, get } from 'lodash-es'
 import type { StorybookConfig } from '@storybook/vue3-vite'
 import { mergeConfig, InlineConfig } from 'vite'
 import jiti from 'jiti'
+import vuePlugin, { Options as VuePluginOptions } from '@vitejs/plugin-vue'
 
 // used in nuxt.config.ts
 process.env.IS_STORYBOOK_BUILD = 'true'
@@ -63,6 +64,8 @@ const config: StorybookConfig = {
       },
       build: {
         sourcemap: false
+        // sourcemap: true,
+        // minify: false
       },
       resolve: {
         alias: {
@@ -71,8 +74,22 @@ const config: StorybookConfig = {
         }
       }
     }
-    let final = mergeConfig(config, resolvedViteConfig)
+
+    let final: InlineConfig = mergeConfig(config, resolvedViteConfig)
     final = mergeConfig(final, customConfig)
+
+    const vuePluginSettings = get(resolvedViteConfig, 'vue') as VuePluginOptions
+    const vuePluginInstance = vuePlugin(vuePluginSettings)
+
+    // Replace '@vitejs/plugin-vue' w/ our own instance with relevant settings
+    final.plugins = (final.plugins || []).map((p) => {
+      if (get(p || {}, 'name') === 'vite:vue') {
+        return vuePluginInstance
+      }
+
+      return p
+    })
+
     return final
   },
   docs: {
