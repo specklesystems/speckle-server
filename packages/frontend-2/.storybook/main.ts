@@ -1,3 +1,4 @@
+import { dirname, join } from 'path'
 import dotenv from 'dotenv'
 import Unimport from 'unimport/unplugin'
 import { flatten, get } from 'lodash-es'
@@ -27,19 +28,23 @@ const storiesPairs = storyPaths.map((p) => [
 ])
 const stories = flatten(storiesPairs)
 
+function getAbsolutePath<V extends string = string>(value: V): V {
+  return dirname(require.resolve(join(value, 'package.json'))) as V
+}
+
 /**
  * STORYBOOK CONFIG STARTS HERE
  */
 const config: StorybookConfig = {
   stories,
   addons: [
-    '@storybook/addon-links',
-    '@storybook/addon-essentials',
-    '@storybook/addon-interactions',
-    '@storybook/addon-a11y'
+    getAbsolutePath('@storybook/addon-links'),
+    getAbsolutePath('@storybook/addon-essentials'),
+    getAbsolutePath('@storybook/addon-interactions'),
+    getAbsolutePath('@storybook/addon-a11y')
   ],
   framework: {
-    name: '@storybook/vue3-vite',
+    name: getAbsolutePath('@storybook/vue3-vite'),
     options: {}
   },
   features: {
