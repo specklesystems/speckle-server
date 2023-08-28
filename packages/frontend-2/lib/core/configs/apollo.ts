@@ -22,6 +22,7 @@ import { useNavigateToLogin, loginRoute } from '~~/lib/common/helpers/route'
 import { useAppErrorState } from '~~/lib/core/composables/appErrorState'
 import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
 import { omit } from 'lodash-es'
+import type pino from 'pino'
 
 const appName = 'frontend-2'
 
@@ -291,7 +292,7 @@ function createLink(params: {
   const { registerError, isErrorState } = useAppErrorState()
 
   const errorLink = onError((res) => {
-    const logger = nuxtApp.$logger
+    const logger = nuxtApp.$logger as pino.Logger
     const isSubTokenMissingError = (res.networkError?.message || '').includes(
       'need a token to subscribe'
     )
@@ -389,10 +390,14 @@ const defaultConfigResolver: ApolloConfigResolver = async () => {
     : undefined
   const link = createLink({ httpEndpoint, wsClient, authToken, nuxtApp })
 
+  // If we don't markRaw the cache, sometimes we get cryptic internal Apollo Client errors that essentially
+  // result from parts of its internals being made reactive, even tho they shouldn't be
+  const cache = markRaw(createCache())
+  // markRaw(cache.data)
+  // markRaw(cache.data.data)
+
   return {
-    // If we don't markRaw the cache, sometimes we get cryptic internal Apollo Client errors that essentially
-    // result from parts of its internals being made reactive, even tho they shouldn't be
-    cache: markRaw(createCache()),
+    cache,
     link,
     name: appName,
     version: speckleServerVersion
