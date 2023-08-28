@@ -102,7 +102,7 @@
             :manual-expand-level="manualExpandLevel"
             :debug="debug"
             :parent="treeItem"
-            @expanded="(e: number) => $emit('expanded', e)"
+            @expanded="(e) => $emit('expanded', e)"
           />
         </div>
       </div>
@@ -118,7 +118,7 @@
             :manual-expand-level="manualExpandLevel"
             :debug="debug"
             :parent="treeItem"
-            @expanded="(e: number) => $emit('expanded', e)"
+            @expanded="(e) => $emit('expanded', e)"
           />
         </div>
         <div v-if="itemCount <= singleCollectionItems.length" class="mb-2">
