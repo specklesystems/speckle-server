@@ -31,6 +31,7 @@ import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commen
 import {
   getCacheId,
   getObjectReference,
+  isReference,
   ModifyFnCacheData,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
@@ -47,6 +48,8 @@ import { Nullable } from '@speckle/shared'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 import { watchTriggerable } from '@vueuse/core'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
+import { Reference } from '@apollo/client'
+import { Modifier } from '@apollo/client/cache'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -210,7 +213,11 @@ function useViewerSubscriptionEventTracker() {
           cache.modify({
             id: getCacheId('Comment', parentId),
             fields: {
-              replies: (oldValue: ModifyFnCacheData<Comment['replies']>) => {
+              replies: ((
+                oldValue: ModifyFnCacheData<Comment['replies']> | Reference
+              ) => {
+                if (isReference(oldValue)) return oldValue
+
                 const newValue: typeof oldValue = {
                   totalCount: (oldValue?.totalCount || 0) + 1,
                   items: [
@@ -219,7 +226,7 @@ function useViewerSubscriptionEventTracker() {
                   ]
                 }
                 return newValue
-              }
+              }) as Modifier<ModifyFnCacheData<Comment['replies']> | Reference>
             }
           })
         } else {

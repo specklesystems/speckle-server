@@ -97,7 +97,10 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         //    * the server public and the user has a valid invite
         //    * the server public and the user doesn't have an invite
         // so we go ahead and register the user
-        const userId = await createUser(user)
+        const userId = await createUser({
+          ...user,
+          role: invite?.serverRole
+        })
         req.user = {
           id: userId,
           email: user.email,

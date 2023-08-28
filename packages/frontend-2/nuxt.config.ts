@@ -48,11 +48,17 @@ export default defineNuxtConfig({
 
   alias: {
     // Rewriting all lodash calls to lodash-es for proper tree-shaking & chunk splitting
-    lodash: 'lodash-es',
-    '@vue/apollo-composable': '@speckle/vue-apollo-composable'
+    lodash: 'lodash-es'
+    // '@vue/apollo-composable': '@speckle/vue-apollo-composable'
   },
 
   vite: {
+    vue: {
+      script: {
+        // defineModel: true
+      }
+    },
+
     resolve: {
       alias: [{ find: /^lodash$/, replacement: 'lodash-es' }],
       // i've no idea why, but the same version of various deps gets bundled twice

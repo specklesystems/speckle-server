@@ -3,6 +3,7 @@ import { Meta, StoryObj } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
 import CommonTextLink from '~~/src/components/common/text/Link.vue'
 import { VuePlayFunction, mergeStories } from '~~/src/stories/helpers/storybook'
+import { rightClick } from '~~/src/helpers/testing'
 
 export default {
   component: CommonTextLink,
@@ -39,12 +40,16 @@ export default {
 } as Meta
 
 const clickPlayBuilder: (rightClick: boolean) => VuePlayFunction =
-  (rightClick) =>
+  (useRightClick) =>
   async ({ canvasElement }) => {
     const canvas = within(canvasElement)
     const button = canvas.getByRole('link')
 
-    userEvent.click(button, rightClick ? { button: 2 } : undefined)
+    if (useRightClick) {
+      rightClick(button)
+    } else {
+      userEvent.click(button)
+    }
 
     await wait(1000)
 

@@ -30,16 +30,17 @@ graphql(`
 `)
 
 const emit = defineEmits<{
-  (e: 'update:open', v: boolean): void
   (e: 'deleted'): void
+  (e: 'update:open', v: boolean): void
 }>()
 
 const props = defineProps<{
-  open: boolean
   projectId: string
   model: ProjectPageModelsCardDeleteDialogFragment
+  open: boolean
 }>()
 
+// const isOpen = defineModel<boolean>('open', { required: true })
 const deleteModel = useDeleteModel()
 
 const loading = ref(false)

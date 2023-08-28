@@ -1,7 +1,10 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md">
     <div class="flex flex-col text-foreground space-y-4">
-      <ProjectPageTeamDialogInviteUser v-if="isOwner" :project="project" />
+      <ProjectPageTeamDialogInviteUser
+        v-if="isOwner && !isServerGuest"
+        :project="project"
+      />
       <ProjectPageTeamDialogManageUsers :project="project" />
       <ProjectPageTeamDialogManagePermissions :project="project" />
     </div>
@@ -23,6 +26,7 @@ graphql(`
       role
       user {
         ...LimitedUserAvatar
+        role
       }
     }
     invitedTeam {
@@ -32,6 +36,7 @@ graphql(`
       role
       user {
         ...LimitedUserAvatar
+        role
       }
     }
   }
@@ -46,7 +51,7 @@ const props = defineProps<{
   project: ProjectPageTeamDialogFragment
 }>()
 
-const { isOwner } = useTeamDialogInternals({ props: toRefs(props) })
+const { isOwner, isServerGuest } = useTeamDialogInternals({ props: toRefs(props) })
 
 const isOpen = computed({
   get: () => props.open,
