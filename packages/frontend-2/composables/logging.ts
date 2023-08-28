@@ -1,9 +1,11 @@
 import { NuxtApp } from '#app'
 import { Optional } from '@speckle/shared'
 import { buildFakePinoLogger } from '~~/lib/core/helpers/observability'
+import type pino from 'pino'
 
 export const useLogger = () => {
-  return useNuxtApp().$logger
+  // TODO: We shouldn't need to force cast here, but somethings broken currently
+  return useNuxtApp().$logger as pino.Logger
 }
 
 /**
