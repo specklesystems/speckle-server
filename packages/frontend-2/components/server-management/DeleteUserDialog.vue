@@ -27,8 +27,8 @@
 <script setup lang="ts">
 import { LayoutDialog } from '@speckle/ui-components'
 import { UserItem } from '~~/lib/server-management/helpers/types'
-import { graphql } from '~~/lib/common/generated/gql'
 import { getUsers } from '~~/lib/server-management/graphql/queries'
+import { adminDeleteUser } from '~~/lib/server-management/graphql/mutations'
 import { useMutation } from '@vue/apollo-composable'
 import {
   convertThrowIntoFetchResult,
@@ -38,12 +38,6 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { Exact, InputMaybe } from '~~/lib/common/generated/gql/graphql'
-
-const adminDeleteUser = graphql(`
-  mutation AdminPanelDeleteUser($userConfirmation: UserDeleteInput!) {
-    adminDeleteUser(userConfirmation: $userConfirmation)
-  }
-`)
 
 const props = defineProps<{
   title: string

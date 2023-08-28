@@ -6,6 +6,12 @@ export const serverInfoUpdateMutation = graphql(`
   }
 `)
 
+export const adminDeleteUser = graphql(`
+  mutation AdminPanelDeleteUser($userConfirmation: UserDeleteInput!) {
+    adminDeleteUser(userConfirmation: $userConfirmation)
+  }
+`)
+
 export const adminDeleteProject = graphql(`
   mutation AdminPanelDeleteProject($ids: [String!]) {
     streamsDelete(ids: $ids)
