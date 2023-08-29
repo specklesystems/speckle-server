@@ -10,7 +10,8 @@ import {
   createModelMutation,
   projectDetailsQuery,
   modelDetailsQuery,
-  createCommitMutation
+  createCommitMutation,
+  projectsListQuery
 } from '~~/lib/graphql/mutationsAndQueries'
 import { useAccountStore } from '~~/store/accounts'
 
@@ -88,6 +89,24 @@ export function useCreateNewModel(clientId: string | undefined = undefined) {
     }
 
     return res
+  }
+}
+
+export function useGetProjects(clientId: string | undefined = undefined) {
+  return async (query: string) => {
+    const client = getValidOrDefaultAccount(clientId)
+    const res = await client.query({
+      query: projectsListQuery,
+      variables: { query }
+    })
+
+    if (!res.data) {
+      console.error(res.errors)
+    } else {
+      // success!
+    }
+
+    return res.data?.streams?.items
   }
 }
 

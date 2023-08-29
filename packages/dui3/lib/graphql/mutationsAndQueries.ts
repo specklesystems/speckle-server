@@ -40,6 +40,19 @@ export const createProjectMutation = graphql(`
   }
 `)
 
+export const projectsListQuery = graphql(`
+  query ProjectsList($query: String, $limit: Int, $cursor: String) {
+    streams(query: $query, limit: $limit, cursor: $cursor) {
+      totalCount
+      cursor
+      items {
+        id
+        name
+      }
+    }
+  }
+`)
+
 export const projectDetailsQuery = graphql(`
   query ProjectDetails($projectId: String!) {
     project(id: $projectId) {

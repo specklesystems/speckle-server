@@ -17,6 +17,7 @@ const documents = {
     "\n  mutation CreateVersion($input: VersionCreateInput!) {\n    versionMutations {\n      create(input: $input) {\n        id\n        message\n        referencedObject\n      }\n    }\n  }\n": types.CreateVersionDocument,
     "\n  mutation CreateModel($input: CreateModelInput!) {\n    modelMutations {\n      create(input: $input) {\n        id\n        name\n      }\n    }\n  }\n": types.CreateModelDocument,
     "\n  mutation CreateProject($input: ProjectCreateInput) {\n    projectMutations {\n      create(input: $input) {\n        id\n        name\n      }\n    }\n  }\n": types.CreateProjectDocument,
+    "\n  query ProjectsList($query: String, $limit: Int, $cursor: String) {\n    streams(query: $query, limit: $limit, cursor: $cursor) {\n      totalCount\n      cursor\n      items {\n        id\n        name\n      }\n    }\n  }\n": types.ProjectsListDocument,
     "\n  query ProjectDetails($projectId: String!) {\n    project(id: $projectId) {\n      id\n      role\n      name\n      team {\n        user {\n          avatar\n          id\n          name\n        }\n      }\n      visibility\n    }\n  }\n": types.ProjectDetailsDocument,
     "\n  query ModelDetails($modelId: String!, $projectId: String!) {\n    project(id: $projectId) {\n      id\n      model(id: $modelId) {\n        id\n        displayName\n        versions {\n          totalCount\n        }\n        author {\n          id\n          name\n          avatar\n        }\n      }\n    }\n  }\n": types.ModelDetailsDocument,
 };
@@ -51,6 +52,10 @@ export function graphql(source: "\n  mutation CreateModel($input: CreateModelInp
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation CreateProject($input: ProjectCreateInput) {\n    projectMutations {\n      create(input: $input) {\n        id\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateProject($input: ProjectCreateInput) {\n    projectMutations {\n      create(input: $input) {\n        id\n        name\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ProjectsList($query: String, $limit: Int, $cursor: String) {\n    streams(query: $query, limit: $limit, cursor: $cursor) {\n      totalCount\n      cursor\n      items {\n        id\n        name\n      }\n    }\n  }\n"): (typeof documents)["\n  query ProjectsList($query: String, $limit: Int, $cursor: String) {\n    streams(query: $query, limit: $limit, cursor: $cursor) {\n      totalCount\n      cursor\n      items {\n        id\n        name\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
