@@ -32,9 +32,9 @@ export type SenderProgressArgs = {
 }
 
 export type CreateVersionArgs = {
-  projectId: string
-  modelId: string
   accountId: string
+  projectId: string
+  modelCardId: string
   objectId: string
 }
 

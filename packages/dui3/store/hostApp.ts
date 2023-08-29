@@ -5,6 +5,7 @@ import {
   IReceiverModelCard
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
 import { ISendFilter, ISenderModelCard } from 'lib/bindings/definitions/ISendBinding'
+import { VersionCreateInput } from 'lib/common/generated/gql/graphql'
 import { useCreateVersion } from '~/lib/graphql/composables'
 
 export type ProjectModelGroup = {
@@ -120,11 +121,24 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       (m) => m.id === args.id
     ) as ISenderModelCard
     model.progress = args
+    console.log(args)
   })
 
   app.$sendBinding.on('createVersion', async (args) => {
+    console.log(args)
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === args.modelCardId
+    ) as ISenderModelCard
+
     const createVersion = useCreateVersion(args.accountId)
-    await createVersion(args)
+    const input = {
+      projectId: model.projectId,
+      modelId: model.modelId,
+      objectId: args.objectId,
+      sourceApplication: 'TODO'
+    }
+    const res = await createVersion(input)
+    console.log(res)
   })
 
   // First initialization calls

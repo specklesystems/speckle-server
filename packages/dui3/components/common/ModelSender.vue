@@ -58,9 +58,11 @@
         model.sending ? 'h-8 opacity-100' : 'h-0 opacity-0 py-0'
       } transition-[height,scale,opacity] overflow-hidden`"
     >
-      <CommonLoadingBar :loading="true" class="h-1" />
-      <div class="text-xs px-2 pt-1">Progress...</div>
+      <!-- <CommonLoadingBar :loading="true" class="h-1" /> -->
+      <CommonLoadingProgressBar :loading="true" :progress="model.progress?.progress" />
+      <div class="text-xs px-2 pt-1">{{ model.progress?.status }}</div>
     </div>
+
     <!-- TODO: Post send state -->
     <!-- 
       Think about:
