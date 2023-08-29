@@ -1,6 +1,13 @@
 import { Meta, StoryObj } from '@storybook/vue3'
 import MultiBadge from './MultiBadge.vue'
-import { SingleItem } from './Base.vue'
+
+// Vue components don't support generic props, so having to rely on any
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+type SingleItem = any
 
 type StoryType = StoryObj<
   Record<string, unknown> & {
@@ -37,6 +44,7 @@ export const Default: StoryType = {
   }),
   args: {
     multiple: true,
+    name: 'MultiBadge',
     label: 'Choose an item',
     items: Array.from({ length: 10 }, (_, i) => ({
       id: `value${i + 1}`,

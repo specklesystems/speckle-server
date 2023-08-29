@@ -21,6 +21,7 @@ import { useWrappingContainerHiddenCount } from '~~/src/composables/layout/resiz
 import { useFormSelectChildInternals } from '~~/src/composables/form/select'
 import FormSelectSourceApps from '~~/src/components/form/select/SourceApps.vue'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
+import FormSelectMultiBadge from '~~/src/components/form/select/MultiBadge.vue'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import SourceAppBadge from '~~/src/components/SourceAppBadge.vue'
 import { onKeyboardShortcut } from '~~/src/composables/form/input'
@@ -65,6 +66,7 @@ export {
   useWrappingContainerHiddenCount,
   useFormSelectChildInternals,
   FormSelectBase,
+  FormSelectMultiBadge,
   FormSelectSourceApps,
   CommonLoadingBar,
   SourceAppBadge,

@@ -13,9 +13,9 @@
           help="A POST request will be sent to this URL when this webhook is triggered"
           name="hookUrl"
           show-label
-          :show-required="true"
+          show-required
           :rules="requiredRule"
-          :type="'text'"
+          type="text"
         />
         <FormTextInput
           v-model="name"
@@ -23,7 +23,7 @@
           help="An optional name to help you identify this webhook"
           name="hookName"
           show-label
-          :type="'text'"
+          type="text"
         />
         <FormTextInput
           v-model="secret"
@@ -31,7 +31,15 @@
           help="An optional secret. You'll be able to change this in the future, but you won't be able to retrieve it."
           name="hookSecret"
           show-label
-          :type="'text'"
+          type="text"
+        />
+        <FormSelectMultiBadge
+          name="Name"
+          label="Choose Events"
+          show-required
+          :rules="requiredRule"
+          show-label
+          :items="webhookTriggerItems"
         />
       </div>
     </form>
@@ -40,10 +48,18 @@
 
 <script setup lang="ts">
 import { isRequired } from '~~/lib/common/helpers/validation'
-import { LayoutDialog, FormTextInput } from '@speckle/ui-components'
+import { WebhookTriggers } from '@speckle/shared/'
+import {
+  LayoutDialog,
+  FormTextInput,
+  FormSelectMultiBadge
+} from '@speckle/ui-components'
 
 const props = defineProps<{
   open: boolean
+  name: string
+  url: string
+  secret: string
 }>()
 
 const emit = defineEmits<{
@@ -51,9 +67,23 @@ const emit = defineEmits<{
   (e: 'server-info-updated'): void
 }>()
 
+const name = toRef(props, 'name')
+const url = toRef(props, 'url')
+const secret = toRef(props, 'secret')
+
 const isOpen = computed({
   get: () => props.open,
   set: (newVal) => emit('update:open', newVal)
+})
+
+const webhookTriggerItems = computed(() => {
+  return Object.entries(WebhookTriggers as Record<string, unknown>).map(
+    ([value, key]) => ({
+      id: value,
+      value,
+      text: key
+    })
+  )
 })
 
 const dialogButtons = computed(() => [

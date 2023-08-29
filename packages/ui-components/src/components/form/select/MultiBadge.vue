@@ -5,6 +5,7 @@
     :items="props.items"
     :label="props.label"
     :name="props.name"
+    :help="props.help"
   >
     <template #something-selected="{ value }">
       <ul class="flex flex-wrap gap-1.5 text-xs">
@@ -19,6 +20,9 @@
           </CommonBadge>
         </li>
       </ul>
+    </template>
+    <template #option="{ item }">
+      {{ item.text }}
     </template>
   </FormSelectBase>
 </template>
@@ -35,12 +39,14 @@ import { ref, defineProps, defineEmits } from 'vue'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import { CommonBadge } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/solid'
-import { SingleItem } from '~~/src/components/form/select/Base.vue'
+
+type SingleItem = any
 
 const props = defineProps<{
   items: Array<SingleItem>
   label: string
   name: string
+  help?: string
 }>()
 
 const selectedItems = ref<Array<SingleItem>>([])
@@ -51,6 +57,6 @@ const deselectItem = (item: SingleItem) => {
 }
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', val: string[]): void
+  (e: 'update:modelValue', val: Array<SingleItem>): void
 }>()
 </script>

@@ -23,13 +23,19 @@
         more.
       </div>
     </div>
+    <ProjectWebhooksPageDialogCreateWebhook
+      v-model:open="showDialog"
+      :url="urlValue"
+      :name="nameValue"
+      :secret="secretValue"
+    />
   </div>
-  <ProjectWebhooksPageDialogCreateWebhook v-model:open="showDialog" />
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import { Optional } from '@speckle/shared'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
+import { projectRoute } from '~~/lib/common/helpers/route'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { BookOpenIcon, PlusIcon } from '@heroicons/vue/24/outline'
 
@@ -43,6 +49,10 @@ const projectId = computed(() => route.params.id as string)
 useGeneralProjectPageUpdateTracking({ projectId }, { notifyOnProjectUpdate: true })
 
 const showDialog = ref(false)
+
+const urlValue = ref('')
+const nameValue = ref('')
+const secretValue = ref('')
 
 const { result: projectPageResult } = useQuery(
   projectPageQuery,
