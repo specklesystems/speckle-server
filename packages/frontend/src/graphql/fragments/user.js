@@ -18,6 +18,7 @@ export const streamCollaboratorFieldsFragment = gql`
     role
     company
     avatar
+    serverRole
   }
 `
 

@@ -1,3 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { ConcreteComponent } from 'vue'
+
+export type PropComponentType = ConcreteComponent<any, any, any, any, any>
+
 export type HorizontalOrVertical = 'horizontal' | 'vertical'
 
 export interface StepCoreType {

@@ -1,4 +1,4 @@
-import { Nullable, Roles, StreamRoles } from '@speckle/shared'
+import { Nullable, Roles, ServerRoles, StreamRoles } from '@speckle/shared'
 import { LimitedUserAvatarFragment } from '~~/lib/common/generated/gql/graphql'
 
 export type ProjectCollaboratorListItem = {
@@ -7,6 +7,7 @@ export type ProjectCollaboratorListItem = {
   user: Nullable<LimitedUserAvatarFragment>
   role: string
   inviteId: Nullable<string>
+  serverRole: Nullable<ServerRoles>
 }
 
 export type SelectableStreamRole = StreamRoles | 'delete'

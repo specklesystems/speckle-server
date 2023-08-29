@@ -36,6 +36,7 @@ const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
  *  resourceTarget?: string;
  *  resourceId?: string;
  *  role?: string;
+ *  serverRole?: string
  * }} CreateInviteParams
  */
 
@@ -327,12 +328,15 @@ async function buildEmailContents(invite, inviter, targetUser, resource) {
  * @returns {Promise<string>} The ID of the created invite
  */
 async function createAndSendInvite(params) {
-  const { inviterId, resourceTarget, resourceId, role } = params
+  const { inviterId, resourceTarget, resourceId, role, serverRole } = params
   let { message, target } = params
 
-  const inviter = await getUser(inviterId)
-  const targetUser = await getUserFromTarget(target)
-  const resource = await getResource(params)
+  const [inviter, targetUser, resource, serverInfo] = await Promise.all([
+    getUser(inviterId, { withRole: true }),
+    getUserFromTarget(target),
+    getResource(params),
+    getServerInfo()
+  ])
 
   // if target user found, always use the user ID
   if (targetUser) target = buildUserTarget(targetUser.id)
@@ -347,6 +351,24 @@ async function createAndSendInvite(params) {
     message = sanitizeMessage(message)
   }
 
+  // validate server role
+  if (serverRole && !Object.values(Roles.Server).includes(serverRole)) {
+    throw new InviteCreateValidationError('Invalid server role')
+  }
+  if (inviter.role !== Roles.Server.Admin && serverRole === Roles.Server.Admin) {
+    throw new InviteCreateValidationError(
+      'Only server admins can assign the admin server role'
+    )
+  }
+  if (serverRole === Roles.Server.Guest && !serverInfo.guestModeEnabled) {
+    throw new InviteCreateValidationError('Guest mode is not enabled on this server')
+  }
+  if (targetUser && targetUser.role === Roles.Server.Guest) {
+    if (role === Roles.Stream.Owner) {
+      throw new InviteCreateValidationError('Guest users cannot be owners of streams')
+    }
+  }
+
   // write to DB
   const invite = {
     id: crs({ length: 20 }),
@@ -356,7 +378,8 @@ async function createAndSendInvite(params) {
     resourceTarget,
     resourceId,
     role,
-    token: crs({ length: 50 })
+    token: crs({ length: 50 }),
+    serverRole
   }
   await insertInviteAndDeleteOld(
     invite,

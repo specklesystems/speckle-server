@@ -1,3 +1,4 @@
+import { Roles } from '@speckle/shared'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
 import md5 from '~~/lib/common/helpers/md5'
@@ -37,7 +38,10 @@ export function useActiveUser() {
     return '@' + md5(user.email.toLowerCase()).toUpperCase()
   })
 
-  return { activeUser, isLoggedIn, distinctId, refetch, onResult }
+  const isGuest = computed(() => activeUser.value?.role === Roles.Server.Guest)
+  const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
+
+  return { activeUser, isLoggedIn, distinctId, refetch, onResult, isGuest, isAdmin }
 }
 
 /**

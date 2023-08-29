@@ -33,7 +33,7 @@
         <div v-for="item in adminUsers.items" :key="item.id">
           <users-list-item
             :item="item"
-            :roles="availableRoles"
+            :allow-guest="serverInfo?.guestModeEnabled"
             @user-change-role="changeUserRole"
             @user-delete="initiateDeleteUser"
             @invite-delete="deleteInvite"
@@ -111,11 +111,12 @@ import {
 import {
   DeleteInviteDocument,
   ResendInviteDocument,
-  AdminUsersListDocument
+  AdminUsersListDocument,
+  AvailableServerRolesDocument
 } from '@/graphql/generated/graphql'
 import SectionCard from '@/main/components/common/SectionCard.vue'
 import UsersListItem from '@/main/components/admin/UsersListItem.vue'
-import { Roles } from '@/helpers/mainConstants'
+import { RoleInfo } from '@speckle/shared'
 import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 
 // TODO: This needs a redesign, it's pretty unusable on small screens
@@ -140,12 +141,7 @@ export default {
   },
   data() {
     return {
-      roleLookupTable: {
-        [Roles.Server.User]: 'User',
-        [Roles.Server.Admin]: 'Admin',
-        [Roles.Server.ArchivedUser]: 'Archived',
-        [Roles.Server.Guest]: 'Guest'
-      },
+      roleLookupTable: RoleInfo.Server,
       adminUsers: {
         items: [],
         totalCount: 0
@@ -181,13 +177,6 @@ export default {
     },
     numberOfPages() {
       return Math.ceil(this.adminUsers.totalCount / this.limit)
-    },
-    availableRoles() {
-      const roleItems = []
-      for (const role in this.roleLookupTable) {
-        roleItems.push({ text: this.roleLookupTable[role], value: role })
-      }
-      return roleItems
     }
   },
   methods: {
@@ -328,6 +317,9 @@ export default {
           query: this.q
         }
       }
+    },
+    serverInfo: {
+      query: AvailableServerRolesDocument
     }
   }
 }

@@ -12,20 +12,26 @@ type ServerInfo {
   adminContact: String
   canonicalUrl: String
   termsOfService: String
-  roles: [Role]!
-  scopes: [Scope]!
+  roles: [Role!]!
+    @deprecated(
+      reason: "Use role constants from the @speckle/shared npm package instead"
+    )
+  scopes: [Scope!]!
   inviteOnly: Boolean
   guestModeEnabled: Boolean!
   version: String
+  serverRoles: [ServerRoleItem!]!
 }
 
-"""
-Available roles.
-"""
 type Role {
   name: String!
   description: String!
   resourceTarget: String!
+}
+
+type ServerRoleItem {
+  id: String!
+  title: String!
 }
 
 """

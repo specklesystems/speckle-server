@@ -3,6 +3,7 @@ import { Meta, StoryObj } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
 import FormCardButton from '~~/src/components/form/CardButton.vue'
 import { VuePlayFunction } from '~~/src/stories/helpers/storybook'
+import { rightClick } from '~~/src/helpers/testing'
 
 type StoryType = StoryObj<
   Record<string, unknown> & {
@@ -36,15 +37,23 @@ export default {
 } as Meta
 
 const clickPlayBuilder: (rightClick?: boolean) => VuePlayFunction =
-  (rightClick) =>
+  (useRightClick) =>
   async ({ canvasElement }) => {
     const canvas = within(canvasElement)
 
-    userEvent.click(canvas.getByRole('button'), rightClick ? { button: 2 } : undefined)
+    if (useRightClick) {
+      rightClick(canvas.getByRole('button'))
+    } else {
+      userEvent.click(canvas.getByRole('button'))
+    }
 
     await wait(500)
 
-    userEvent.click(canvas.getByRole('button'), rightClick ? { button: 2 } : undefined)
+    if (useRightClick) {
+      rightClick(canvas.getByRole('button'))
+    } else {
+      userEvent.click(canvas.getByRole('button'))
+    }
 
     userEvent.tab()
   }

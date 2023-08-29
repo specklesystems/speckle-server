@@ -254,7 +254,7 @@ export const StreamFavorites = buildTableHelper('stream_favorites', [
 export const UsersMeta = buildMetaTableHelper(
   'users_meta',
   ['userId', 'key', 'value', 'createdAt', 'updatedAt'],
-  ['isOnboardingFinished', 'foo', 'bar'],
+  ['isOnboardingFinished', 'foo', 'bar', 'onboardingStreamId'],
   'userId'
 )
 
@@ -314,7 +314,8 @@ export const ServerInvites = buildTableHelper('server_invites', [
   'resourceTarget',
   'resourceId',
   'role',
-  'token'
+  'token',
+  'serverRole'
 ])
 
 export const PasswordResetTokens = buildTableHelper('pwdreset_tokens', [

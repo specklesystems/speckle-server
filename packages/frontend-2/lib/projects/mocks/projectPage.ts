@@ -58,7 +58,10 @@ export const mockProjectPageQuery = apolloMockRequestWithDefaults<
           team: fakeUsers.map((u) => ({
             __typename: 'ProjectCollaborator',
             role: Roles.Stream.Contributor,
-            user: u
+            user: {
+              ...u,
+              role: Roles.Server.User
+            }
           })),
           invitedTeam: null
         },

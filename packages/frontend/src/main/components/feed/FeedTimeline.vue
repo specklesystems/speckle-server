@@ -42,13 +42,14 @@
         <no-data-placeholder v-if="quickUser">
           <h2>Welcome {{ quickUser.name.split(' ')[0] }}!</h2>
           <p class="caption">
-            Once you create a stream and start sending some data, your activity will
-            show up here.
+            Once you {{ isGuestUser ? 'join' : 'create' }} a stream and start sending
+            some data, your activity will show up here.
           </p>
 
           <template #actions>
             <v-list rounded class="transparent">
               <v-list-item
+                v-if="!isGuestUser"
                 link
                 class="primary mb-4"
                 dark
@@ -83,6 +84,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import { AppLocalStorage } from '@/utils/localStorage'
 import { SKIPPABLE_ACTION_TYPES } from '@/main/lib/feed/helpers/activityStream'
+import { isGuest } from '@/main/lib/core/helpers/users'
 
 export default {
   name: 'FeedTimeline',
@@ -174,12 +176,15 @@ export default {
         quickUser: activeUser {
           id
           name
+          role
         }
       }
     `)
     const quickUser = computed(() => quickUserResult.value?.quickUser || null)
+    const isGuestUser = computed(() => isGuest(quickUser.value))
 
     return {
+      isGuestUser,
       quickUser,
       groupedTimeline,
       timeline,
