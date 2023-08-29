@@ -40,27 +40,32 @@
         </div>
       </div>
       <div class="h-40 simple-scrollbar overflow-y-scroll space-y-2">
-        <div
-          v-for="version in searchedVersions"
-          :key="version.Number"
-          class="flex justify-between text-sm"
-        >
-          <div class="space-x-2">
-            <span>{{ version.Number }}</span>
-            <span class="text-foreground-2">
-              {{ dayjs(version.Date).from(dayjs()) }}
-            </span>
-          </div>
-          <div class="px-4">
-            <FormButton size="sm" text @click="downloadVersion(version)">
-              <span class="text-xs font-bold">
-                {{ version.Os === 0 ? 'Windows' : 'MacOS' }}
+        <template v-if="searchedVersions.length">
+          <div
+            v-for="version in searchedVersions"
+            :key="version.Number"
+            class="flex justify-between text-sm"
+          >
+            <div class="space-x-2">
+              <span>{{ version.Number }}</span>
+              <span class="text-foreground-2">
+                {{ dayjs(version.Date).from(dayjs()) }}
               </span>
-              <CloudArrowDownIcon class="w-4 h-4" />
-            </FormButton>
+            </div>
+            <div class="px-4">
+              <FormButton size="sm" text @click="downloadVersion(version)">
+                <span class="text-xs font-bold">
+                  {{ version.Os === 0 ? 'Windows' : 'MacOS' }}
+                </span>
+                <CloudArrowDownIcon class="w-4 h-4" />
+              </FormButton>
+            </div>
           </div>
+        </template>
+
+        <div v-if="searchedVersions.length === 0" class="text-foreground-2">
+          No versions found.
         </div>
-        <div v-if="searchedVersions.length === 0">No versions found.</div>
       </div>
     </div>
   </LayoutDialog>

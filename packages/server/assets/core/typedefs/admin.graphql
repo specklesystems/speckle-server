@@ -1,5 +1,21 @@
+type AdminUserListItem {
+  id: ID!
+  email: String
+  name: String!
+  company: String
+  avatar: String
+  verified: Boolean
+  role: String
+}
+
 type AdminUserList {
-  items: [LimitedUser!]!
+  items: [AdminUserListItem!]!
+  cursor: String
+  totalCount: Int!
+}
+
+type AdminInviteList {
+  items: [ServerInvite!]!
   cursor: String
   totalCount: Int!
 }
@@ -17,6 +33,12 @@ type AdminQueries {
     query: String = null
     role: ServerRole = null
   ): AdminUserList! @hasScope(scope: "users:read")
+
+  inviteList(
+    limit: Int! = 25
+    cursor: String = null
+    query: String = null
+  ): AdminInviteList! @hasScope(scope: "users:invite")
 
   projectList(
     query: String

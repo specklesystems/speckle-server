@@ -381,7 +381,7 @@ export async function cloneStream(userId: string, sourceStreamId: string) {
   try {
     // Clone stream/commits/branches/objects
     const coreCloneResult = await cloneStreamCore(state)
-    const newStreamId = coreCloneResult.newStreamId
+    const { newStream } = coreCloneResult
 
     // Clone comments
     await cloneStreamComments(state, coreCloneResult)
@@ -390,7 +390,7 @@ export async function cloneStream(userId: string, sourceStreamId: string) {
     await addStreamClonedActivity(
       {
         sourceStreamId,
-        newStreamId,
+        newStream,
         clonerId: userId
       },
       { trx: state.trx }

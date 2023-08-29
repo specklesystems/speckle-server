@@ -1,6 +1,6 @@
 import { ApolloError, ServerError, ServerParseError } from '@apollo/client/core'
 import { NetworkError } from '@apollo/client/errors'
-import { has } from 'lodash'
+import { has, isString } from 'lodash'
 
 /**
  * Base application error
@@ -35,7 +35,9 @@ export function isInvalidAuth(error: ApolloError | NetworkError) {
   if (!hasCorrectCode) return false
 
   const message: string | undefined = isServerError(networkError)
-    ? networkError.result?.error
+    ? isString(networkError.result)
+      ? networkError.result
+      : networkError.result?.error
     : networkError.bodyText
 
   return (message || '').toLowerCase().includes('token')

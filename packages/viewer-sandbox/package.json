@@ -15,8 +15,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint": "eslint . --ext .js,.ts",
-    "lint:tsc": "tsc --noEmit"
+    "lint:eslint": "eslint . --ext .js,.ts",
+    "lint:tsc": "tsc --noEmit",
+    "lint": "yarn lint:eslint && yarn lint:tsc"
   },
   "dependencies": {
     "@speckle/viewer": "workspace:^",

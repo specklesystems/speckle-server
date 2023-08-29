@@ -1,5 +1,5 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, VersionGraphQLReturn, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn, GraphQLEmptyReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, VersionGraphQLReturn, ServerInviteGraphQLReturnType, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn, GraphQLEmptyReturn } from '@/modules/core/helpers/graphTypes';
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
@@ -61,11 +61,26 @@ export type ActivityCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type AdminInviteList = {
+  __typename?: 'AdminInviteList';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<ServerInvite>;
+  totalCount: Scalars['Int'];
+};
+
 export type AdminQueries = {
   __typename?: 'AdminQueries';
+  inviteList: AdminInviteList;
   projectList: ProjectCollection;
   serverStatistics: ServerStatistics;
   userList: AdminUserList;
+};
+
+
+export type AdminQueriesInviteListArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+  query?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -88,8 +103,19 @@ export type AdminQueriesUserListArgs = {
 export type AdminUserList = {
   __typename?: 'AdminUserList';
   cursor?: Maybe<Scalars['String']>;
-  items: Array<LimitedUser>;
+  items: Array<AdminUserListItem>;
   totalCount: Scalars['Int'];
+};
+
+export type AdminUserListItem = {
+  __typename?: 'AdminUserListItem';
+  avatar?: Maybe<Scalars['String']>;
+  company?: Maybe<Scalars['String']>;
+  email?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  role?: Maybe<Scalars['String']>;
+  verified?: Maybe<Scalars['Boolean']>;
 };
 
 export type AdminUsersListCollection = {
@@ -1404,6 +1430,8 @@ export type ProjectInviteCreateInput = {
   email?: InputMaybe<Scalars['String']>;
   /** Defaults to the contributor role, if not specified */
   role?: InputMaybe<Scalars['String']>;
+  /** Can only be specified if guest mode is on or if the user is an admin */
+  serverRole?: InputMaybe<Scalars['String']>;
   /** Either this or email must be filled */
   userId?: InputMaybe<Scalars['String']>;
 };
@@ -1492,7 +1520,10 @@ export type ProjectMutations = {
   __typename?: 'ProjectMutations';
   /** Create new project */
   create: Project;
-  /** Create onboarding/tutorial project */
+  /**
+   * Create onboarding/tutorial project. If one is already created for the active user, that
+   * one will be returned instead.
+   */
   createForOnboarding: Project;
   /** Delete an existing project */
   delete: Scalars['Boolean'];
@@ -1830,7 +1861,6 @@ export enum ResourceType {
   Stream = 'stream'
 }
 
-/** Available roles. */
 export type Role = {
   __typename?: 'Role';
   description: Scalars['String'];
@@ -1886,8 +1916,10 @@ export type ServerInfo = {
   guestModeEnabled: Scalars['Boolean'];
   inviteOnly?: Maybe<Scalars['Boolean']>;
   name: Scalars['String'];
-  roles: Array<Maybe<Role>>;
-  scopes: Array<Maybe<Scope>>;
+  /** @deprecated Use role constants from the @speckle/shared npm package instead */
+  roles: Array<Role>;
+  scopes: Array<Scope>;
+  serverRoles: Array<ServerRoleItem>;
   termsOfService?: Maybe<Scalars['String']>;
   version?: Maybe<Scalars['String']>;
 };
@@ -1912,6 +1944,8 @@ export type ServerInvite = {
 export type ServerInviteCreateInput = {
   email: Scalars['String'];
   message?: InputMaybe<Scalars['String']>;
+  /** Can only be specified if guest mode is on or if the user is an admin */
+  serverRole?: InputMaybe<Scalars['String']>;
 };
 
 export enum ServerRole {
@@ -1920,6 +1954,12 @@ export enum ServerRole {
   ServerGuest = 'SERVER_GUEST',
   ServerUser = 'SERVER_USER'
 }
+
+export type ServerRoleItem = {
+  __typename?: 'ServerRoleItem';
+  id: Scalars['String'];
+  title: Scalars['String'];
+};
 
 export type ServerStatistics = {
   __typename?: 'ServerStatistics';
@@ -2095,6 +2135,7 @@ export type StreamCollaborator = {
   id: Scalars['String'];
   name: Scalars['String'];
   role: Scalars['String'];
+  serverRole: Scalars['String'];
 };
 
 export type StreamCollection = {
@@ -2123,6 +2164,8 @@ export type StreamInviteCreateInput = {
   message?: InputMaybe<Scalars['String']>;
   /** Defaults to the contributor role, if not specified */
   role?: InputMaybe<Scalars['String']>;
+  /** Can only be specified if guest mode is on or if the user is an admin */
+  serverRole?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
   userId?: InputMaybe<Scalars['String']>;
 };
@@ -2373,10 +2416,6 @@ export type User = {
   /** Returns the apps you have created. */
   createdApps?: Maybe<Array<ServerApp>>;
   createdAt?: Maybe<Scalars['DateTime']>;
-  /**
-   * E-mail can be null, if it's requested for a user other than the authenticated one
-   * and the user isn't an admin
-   */
   email?: Maybe<Scalars['String']>;
   /**
    * All the streams that a active user has favorited.
@@ -2774,8 +2813,10 @@ export type ResolversTypes = {
   ActiveUserMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   Activity: ResolverTypeWrapper<Activity>;
   ActivityCollection: ResolverTypeWrapper<ActivityCollection>;
+  AdminInviteList: ResolverTypeWrapper<Omit<AdminInviteList, 'items'> & { items: Array<ResolversTypes['ServerInvite']> }>;
   AdminQueries: ResolverTypeWrapper<GraphQLEmptyReturn>;
-  AdminUserList: ResolverTypeWrapper<Omit<AdminUserList, 'items'> & { items: Array<ResolversTypes['LimitedUser']> }>;
+  AdminUserList: ResolverTypeWrapper<AdminUserList>;
+  AdminUserListItem: ResolverTypeWrapper<AdminUserListItem>;
   AdminUsersListCollection: ResolverTypeWrapper<Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversTypes['AdminUsersListItem']> }>;
   AdminUsersListItem: ResolverTypeWrapper<Omit<AdminUsersListItem, 'invitedUser' | 'registeredUser'> & { invitedUser?: Maybe<ResolversTypes['ServerInvite']>, registeredUser?: Maybe<ResolversTypes['User']> }>;
   ApiToken: ResolverTypeWrapper<ApiToken>;
@@ -2882,9 +2923,10 @@ export type ResolversTypes = {
   ServerAppListItem: ResolverTypeWrapper<ServerAppListItem>;
   ServerInfo: ResolverTypeWrapper<ServerInfo>;
   ServerInfoUpdateInput: ServerInfoUpdateInput;
-  ServerInvite: ResolverTypeWrapper<Omit<ServerInvite, 'invitedBy'> & { invitedBy: ResolversTypes['LimitedUser'] }>;
+  ServerInvite: ResolverTypeWrapper<ServerInviteGraphQLReturnType>;
   ServerInviteCreateInput: ServerInviteCreateInput;
   ServerRole: ServerRole;
+  ServerRoleItem: ResolverTypeWrapper<ServerRoleItem>;
   ServerStatistics: ResolverTypeWrapper<GraphQLEmptyReturn>;
   ServerStats: ResolverTypeWrapper<ServerStats>;
   SmartTextEditorValue: ResolverTypeWrapper<SmartTextEditorValue>;
@@ -2936,8 +2978,10 @@ export type ResolversParentTypes = {
   ActiveUserMutations: MutationsObjectGraphQLReturn;
   Activity: Activity;
   ActivityCollection: ActivityCollection;
+  AdminInviteList: Omit<AdminInviteList, 'items'> & { items: Array<ResolversParentTypes['ServerInvite']> };
   AdminQueries: GraphQLEmptyReturn;
-  AdminUserList: Omit<AdminUserList, 'items'> & { items: Array<ResolversParentTypes['LimitedUser']> };
+  AdminUserList: AdminUserList;
+  AdminUserListItem: AdminUserListItem;
   AdminUsersListCollection: Omit<AdminUsersListCollection, 'items'> & { items: Array<ResolversParentTypes['AdminUsersListItem']> };
   AdminUsersListItem: Omit<AdminUsersListItem, 'invitedUser' | 'registeredUser'> & { invitedUser?: Maybe<ResolversParentTypes['ServerInvite']>, registeredUser?: Maybe<ResolversParentTypes['User']> };
   ApiToken: ApiToken;
@@ -3035,8 +3079,9 @@ export type ResolversParentTypes = {
   ServerAppListItem: ServerAppListItem;
   ServerInfo: ServerInfo;
   ServerInfoUpdateInput: ServerInfoUpdateInput;
-  ServerInvite: Omit<ServerInvite, 'invitedBy'> & { invitedBy: ResolversParentTypes['LimitedUser'] };
+  ServerInvite: ServerInviteGraphQLReturnType;
   ServerInviteCreateInput: ServerInviteCreateInput;
+  ServerRoleItem: ServerRoleItem;
   ServerStatistics: GraphQLEmptyReturn;
   ServerStats: ServerStats;
   SmartTextEditorValue: SmartTextEditorValue;
@@ -3133,7 +3178,15 @@ export type ActivityCollectionResolvers<ContextType = GraphQLContext, ParentType
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type AdminInviteListResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AdminInviteList'] = ResolversParentTypes['AdminInviteList']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['ServerInvite']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type AdminQueriesResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AdminQueries'] = ResolversParentTypes['AdminQueries']> = {
+  inviteList?: Resolver<ResolversTypes['AdminInviteList'], ParentType, ContextType, RequireFields<AdminQueriesInviteListArgs, 'cursor' | 'limit' | 'query'>>;
   projectList?: Resolver<ResolversTypes['ProjectCollection'], ParentType, ContextType, RequireFields<AdminQueriesProjectListArgs, 'cursor' | 'limit'>>;
   serverStatistics?: Resolver<ResolversTypes['ServerStatistics'], ParentType, ContextType>;
   userList?: Resolver<ResolversTypes['AdminUserList'], ParentType, ContextType, RequireFields<AdminQueriesUserListArgs, 'cursor' | 'limit' | 'query' | 'role'>>;
@@ -3142,8 +3195,19 @@ export type AdminQueriesResolvers<ContextType = GraphQLContext, ParentType exten
 
 export type AdminUserListResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AdminUserList'] = ResolversParentTypes['AdminUserList']> = {
   cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  items?: Resolver<Array<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['AdminUserListItem']>, ParentType, ContextType>;
   totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AdminUserListItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AdminUserListItem'] = ResolversParentTypes['AdminUserListItem']> = {
+  avatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  verified?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3739,8 +3803,9 @@ export type ServerInfoResolvers<ContextType = GraphQLContext, ParentType extends
   guestModeEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   inviteOnly?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  roles?: Resolver<Array<Maybe<ResolversTypes['Role']>>, ParentType, ContextType>;
-  scopes?: Resolver<Array<Maybe<ResolversTypes['Scope']>>, ParentType, ContextType>;
+  roles?: Resolver<Array<ResolversTypes['Role']>, ParentType, ContextType>;
+  scopes?: Resolver<Array<ResolversTypes['Scope']>, ParentType, ContextType>;
+  serverRoles?: Resolver<Array<ResolversTypes['ServerRoleItem']>, ParentType, ContextType>;
   termsOfService?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   version?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -3750,6 +3815,12 @@ export type ServerInviteResolvers<ContextType = GraphQLContext, ParentType exten
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   invitedBy?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ServerRoleItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerRoleItem'] = ResolversParentTypes['ServerRoleItem']> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3827,6 +3898,7 @@ export type StreamCollaboratorResolvers<ContextType = GraphQLContext, ParentType
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  serverRole?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3999,8 +4071,10 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ActiveUserMutations?: ActiveUserMutationsResolvers<ContextType>;
   Activity?: ActivityResolvers<ContextType>;
   ActivityCollection?: ActivityCollectionResolvers<ContextType>;
+  AdminInviteList?: AdminInviteListResolvers<ContextType>;
   AdminQueries?: AdminQueriesResolvers<ContextType>;
   AdminUserList?: AdminUserListResolvers<ContextType>;
+  AdminUserListItem?: AdminUserListItemResolvers<ContextType>;
   AdminUsersListCollection?: AdminUsersListCollectionResolvers<ContextType>;
   AdminUsersListItem?: AdminUsersListItemResolvers<ContextType>;
   ApiToken?: ApiTokenResolvers<ContextType>;
@@ -4058,6 +4132,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ServerAppListItem?: ServerAppListItemResolvers<ContextType>;
   ServerInfo?: ServerInfoResolvers<ContextType>;
   ServerInvite?: ServerInviteResolvers<ContextType>;
+  ServerRoleItem?: ServerRoleItemResolvers<ContextType>;
   ServerStatistics?: ServerStatisticsResolvers<ContextType>;
   ServerStats?: ServerStatsResolvers<ContextType>;
   SmartTextEditorValue?: SmartTextEditorValueResolvers<ContextType>;

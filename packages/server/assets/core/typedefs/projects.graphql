@@ -54,6 +54,10 @@ input ProjectInviteCreateInput {
   Defaults to the contributor role, if not specified
   """
   role: String
+  """
+  Can only be specified if guest mode is on or if the user is an admin
+  """
+  serverRole: String
 }
 
 input ProjectInviteUseInput {
@@ -68,11 +72,13 @@ type ProjectInviteMutations {
   """
   create(projectId: ID!, input: ProjectInviteCreateInput!): Project!
     @hasScope(scope: "users:invite")
+    @hasServerRole(role: SERVER_USER)
   """
   Batch invite to project
   """
   batchCreate(projectId: ID!, input: [ProjectInviteCreateInput!]!): Project!
     @hasScope(scope: "users:invite")
+    @hasServerRole(role: SERVER_USER)
 
   """
   Accept or decline a project invite
@@ -82,29 +88,32 @@ type ProjectInviteMutations {
   """
   Cancel a pending stream invite. Can only be invoked by a project owner.
   """
-  cancel(projectId: ID!, inviteId: String!): Project! @hasScope(scope: "users:invite")
+  cancel(projectId: ID!, inviteId: String!): Project!
+    @hasScope(scope: "users:invite")
+    @hasServerRole(role: SERVER_USER)
 }
 
 type ProjectMutations {
   """
   Delete an existing project
   """
-  delete(id: String!): Boolean!
+  delete(id: String!): Boolean! @hasServerRole(role: SERVER_USER)
 
   """
   Updates an existing project
   """
-  update(update: ProjectUpdateInput!): Project!
+  update(update: ProjectUpdateInput!): Project! @hasServerRole(role: SERVER_USER)
 
   """
-  Create onboarding/tutorial project
+  Create onboarding/tutorial project. If one is already created for the active user, that
+  one will be returned instead.
   """
   createForOnboarding: Project!
 
   """
   Create new project
   """
-  create(input: ProjectCreateInput): Project!
+  create(input: ProjectCreateInput): Project! @hasServerRole(role: SERVER_USER)
 
   """
   Invite related mutations
@@ -114,7 +123,7 @@ type ProjectMutations {
   """
   Update role for a collaborator
   """
-  updateRole(input: ProjectUpdateRoleInput!): Project!
+  updateRole(input: ProjectUpdateRoleInput!): Project! @hasServerRole(role: SERVER_USER)
 
   """
   Leave a project. Only possible if you're not the last remaining owner.
@@ -124,7 +133,7 @@ type ProjectMutations {
 
 extend type Mutation {
   projectMutations: ProjectMutations!
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:write")
 }
 
@@ -241,7 +250,7 @@ extend type User {
   Get all invitations to projects that the active user has
   """
   projectInvites: [PendingStreamCollaborator!]!
-    @hasServerRole(role: SERVER_USER)
+    @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
     @isOwner
 }

@@ -20,8 +20,8 @@
         </template>
         <v-list dense>
           <v-list-item
-            v-for="(item, index) in roles.filter((r) => r.name !== user.role)"
-            :key="index"
+            v-for="item in availableRoles"
+            :key="item.name"
             @click="$emit('update-user-role', { user, role: item })"
           >
             <v-list-item-action>
@@ -41,8 +41,14 @@
   </div>
 </template>
 <script lang="ts">
-import { StreamCollaboratorFieldsFragment, Role } from '@/graphql/generated/graphql'
+import { StreamCollaboratorFieldsFragment } from '@/graphql/generated/graphql'
+import { Roles } from '@speckle/shared'
 import Vue, { PropType } from 'vue'
+
+type RoleItem = {
+  name: string
+  description: string
+}
 
 export default Vue.extend({
   name: 'StreamCollaboratorRow',
@@ -54,8 +60,16 @@ export default Vue.extend({
       type: Object as PropType<StreamCollaboratorFieldsFragment>,
       required: true
     },
-    roles: { type: Array as PropType<Role[]>, required: true },
+    roles: { type: Array as PropType<RoleItem[]>, required: true },
     disabled: { type: Boolean, default: false }
+  },
+  computed: {
+    availableRoles(): RoleItem[] {
+      const baseRoles = this.roles.filter((r) => r.name !== this.user.role)
+      if (this.user.serverRole !== Roles.Server.Guest) return baseRoles
+
+      return baseRoles.filter((r) => r.name !== Roles.Stream.Owner)
+    }
   }
 })
 </script>

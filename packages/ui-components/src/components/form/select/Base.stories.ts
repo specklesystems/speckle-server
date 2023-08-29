@@ -290,3 +290,11 @@ export const Simple: StoryType = {
     buttonStyle: 'simple'
   }
 }
+
+export const WithDisabledItems: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    disabledItemPredicate: (item: FakeItemType) => item.id === '3'
+  }
+}

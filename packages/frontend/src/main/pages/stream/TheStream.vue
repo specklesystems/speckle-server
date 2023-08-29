@@ -227,16 +227,18 @@ export default defineComponent({
           { data }: { data: { branchCreated: Record<string, unknown> } }
         ): void {
           if (!data.branchCreated) return
+          const branchName = data.branchCreated.name
+          const streamId = data.branchCreated.streamId
           this.$eventHub.$emit('notification', {
             text: `A new branch was created!`,
             action: {
               name: 'View Branch',
-              to: `/streams/${this.streamId}/branches/${data.branchCreated.name}`
+              to: `/streams/${streamId}/branches/${branchName}`
             }
           })
         },
         skip(this: VueThis): boolean {
-          return !this.isLoggedIn
+          return !this.isLoggedIn || !this.streamId
         }
       },
       commitCreated: {
@@ -255,16 +257,19 @@ export default defineComponent({
           { data }: { data: { commitCreated: Record<string, unknown> } }
         ): void {
           if (!data.commitCreated) return
+          const commitId = data.commitCreated.id
+          const streamId = data.commitCreated.streamId
+
           this.$eventHub.$emit('notification', {
             text: `A new commit was created!`,
             action: {
               name: 'View Commit',
-              to: `/streams/${this.streamId}/commits/${data.commitCreated.id}`
+              to: `/streams/${streamId}/commits/${commitId}`
             }
           })
         },
         skip(this: VueThis): boolean {
-          return !this.isLoggedIn
+          return !this.isLoggedIn || !this.streamId
         }
       }
     } as never // for some reason Vue Apollo Options API being used for subscriptions breaks all types in this SFC

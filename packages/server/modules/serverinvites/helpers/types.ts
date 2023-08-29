@@ -11,4 +11,5 @@ export type ServerInviteRecord = {
   resourceId: Nullable<string>
   role: Nullable<string>
   token: string
+  serverRole: Nullable<string>
 }

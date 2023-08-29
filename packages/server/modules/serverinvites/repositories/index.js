@@ -50,11 +50,13 @@ async function getResource(invite) {
 /**
  * Try to find a user using the target value
  * @param {string} target
- * @returns {Promise<import('@/modules/core/helpers/userHelper').UserRecord>}
+ * @returns {Promise<import('@/modules/core/repositories/users').UserWithOptionalRole | undefined>}
  */
 async function getUserFromTarget(target) {
   const { userEmail, userId } = resolveTarget(target)
-  return userEmail ? await getUserByEmail(userEmail) : await getUser(userId)
+  return userEmail
+    ? await getUserByEmail(userEmail, { withRole: true })
+    : await getUser(userId, { withRole: true })
 }
 
 /**
@@ -263,6 +265,21 @@ async function findServerInvites(searchQuery, limit, offset) {
 }
 
 /**
+ *
+ * @param {string|null} searchQuery
+ * @param {number} limit
+ * @param {Date|null} cursor
+ * @returns {Promise<ServerInviteRecord[]>}
+ */
+async function queryServerInvites(searchQuery, limit, cursor) {
+  const q = findServerInvitesBaseQuery(searchQuery)
+    .limit(limit)
+    .orderBy(ServerInvites.col.createdAt, 'desc')
+  if (cursor) q.where(ServerInvites.col.createdAt, '<', cursor)
+  return await q
+}
+
+/**
  * Retrieve a specific invite (irregardless of the type)
  * @param {string} inviteId
  * @returns {Promise<ServerInviteRecord | null>}
@@ -375,5 +392,6 @@ module.exports = {
   getAllUserStreamInvites,
   getInvites,
   getInviteByToken,
-  deleteAllStreamInvites
+  deleteAllStreamInvites,
+  queryServerInvites
 }
