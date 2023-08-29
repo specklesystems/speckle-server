@@ -1,11 +1,8 @@
 <template>
-  <div
-    class="flex flex-col items-center justify-center h-[calc(100vh-16rem)] px-4 space-y-2"
-  >
+  <div>
     <div class="flex flex-col max-w-sm w-full mx-auto space-y-4">
       <FormSelectBase
         v-model="selectedValue"
-        :items="projects"
         :multiple="false"
         :search="true"
         search-placeholder="Project"
@@ -31,10 +28,10 @@
 </template>
 
 <script setup lang="ts">
-import { RuleExpression } from 'vee-validate'
 import { ValidationHelpers, useFormSelectChildInternals } from '@speckle/ui-components'
 import { useGetProjects } from '~/lib/graphql/composables'
 import { PropType } from 'vue'
+import { RuleExpression } from 'vee-validate'
 import { Nullable, Optional } from '@speckle/shared'
 import { ProjectsSelectItemType } from 'lib/form/select/types'
 

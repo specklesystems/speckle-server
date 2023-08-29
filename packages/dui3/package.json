@@ -39,6 +39,7 @@
     "pinia": "^2.1.4",
     "portal-vue": "^3.0.0",
     "subscriptions-transport-ws": "^0.11.0",
+    "vee-validate": "^4.9.6",
     "vue-tippy": "^6.2.0"
   },
   "devDependencies": {

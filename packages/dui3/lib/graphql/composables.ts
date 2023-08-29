@@ -11,7 +11,8 @@ import {
   projectDetailsQuery,
   modelDetailsQuery,
   createCommitMutation,
-  projectsListQuery
+  projectsListQuery,
+  projectModelsQuery
 } from '~~/lib/graphql/mutationsAndQueries'
 import { useAccountStore } from '~~/store/accounts'
 
@@ -107,6 +108,24 @@ export function useGetProjects(clientId: string | undefined = undefined) {
     }
 
     return res.data?.streams?.items
+  }
+}
+
+export function useGetProjectModels(clientId: string | undefined = undefined) {
+  return async (projectId: string, query: string) => {
+    const client = getValidOrDefaultAccount(clientId)
+    const res = await client.query({
+      query: projectModelsQuery,
+      variables: { query, projectId }
+    })
+
+    if (!res.data) {
+      console.error(res.errors)
+    } else {
+      // success!
+    }
+
+    return res.data?.models?.items
   }
 }
 

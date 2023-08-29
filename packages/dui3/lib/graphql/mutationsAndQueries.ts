@@ -53,6 +53,21 @@ export const projectsListQuery = graphql(`
   }
 `)
 
+export const projectModelsQuery = graphql(`
+  query ProjectModels($projectId: String!, $filter: String, $cursor: String) {
+    project(id: $projectId) {
+      id
+      name
+      models(cursor: $cursor, filter: $filter) {
+        items {
+          id
+          name
+        }
+      }
+    }
+  }
+`)
+
 export const projectDetailsQuery = graphql(`
   query ProjectDetails($projectId: String!) {
     project(id: $projectId) {
