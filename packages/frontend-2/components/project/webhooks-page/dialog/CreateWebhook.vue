@@ -4,6 +4,7 @@
     max-width="sm"
     title="Create Webhook"
     :buttons="dialogButtons"
+    prevent-close-on-click-outside
   >
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">
