@@ -2,7 +2,7 @@
   <div>
     <div class="flex flex-col max-w-sm w-full mx-auto space-y-4">
       <FormSelectBase
-        v-model="selectedValue"
+        v-model="selectedValueWrapper"
         :multiple="false"
         :search="true"
         search-placeholder="Project"
@@ -99,6 +99,16 @@ const { selectedValue } = useFormSelectChildInternals<ItemType>({
   emit,
   dynamicVisibility: { elementToWatchForChanges, itemContainer }
 })
+
+/*const selectedValueWrapper = computed({
+  get: () => selectedValue.value,
+  set: (newVal) => {
+    debugger
+    selectedValue.value = newVal
+  }
+})*/
+
+const selectedValueWrapper = ref<ItemType>()
 
 const getProjects = useGetProjects()
 

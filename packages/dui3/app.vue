@@ -21,6 +21,7 @@ useHead({
   },
   bodyAttrs: {
     class: 'simple-scrollbar bg-foundation-page text-foreground'
-  }
+  },
+  script: process.dev ? ['http://localhost:8098'] : []
 })
 </script>

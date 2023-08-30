@@ -54,6 +54,7 @@ export function useFormSelectChildInternals<T>(params: {
       }
     },
     set: (newVal: GenericSelectValueType<T>) => {
+      debugger
       if (props.multiple?.value && !isArray(newVal)) {
         console.warn('Attempting to set non-array value in selector w/ multiple=true')
         return
