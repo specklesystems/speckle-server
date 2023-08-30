@@ -5,12 +5,8 @@ import {
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
 import { IReceiverModelCard } from 'lib/bindings/definitions/IReceiveBinding'
 import { ISendFilter, ISenderModelCard } from 'lib/bindings/definitions/ISendBinding'
-import { CommitCreateInput, VersionCreateInput } from 'lib/common/generated/gql/graphql'
-import {
-  useCreateCommit,
-  useCreateVersion,
-  useGetModelDetails
-} from '~/lib/graphql/composables'
+import { VersionCreateInput } from 'lib/common/generated/gql/graphql'
+import { useCreateVersion } from '~/lib/graphql/composables'
 
 export type ProjectModelGroup = {
   projectId: string
