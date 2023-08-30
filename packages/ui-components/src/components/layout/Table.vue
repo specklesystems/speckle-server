@@ -59,7 +59,7 @@
 import { ConcreteComponent, computed } from 'vue'
 import { FormButton } from '~~/src/lib'
 
-interface ItemType {
+export interface ItemType {
   id: string
   [key: string]: unknown
 }

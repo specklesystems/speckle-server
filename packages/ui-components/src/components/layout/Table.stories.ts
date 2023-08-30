@@ -1,5 +1,6 @@
 import { Meta, StoryObj } from '@storybook/vue3'
 import Table from '~~/src/components/layout/Table.vue'
+import { ItemType } from '~~/src/components/layout/Table.vue'
 import {
   ShieldCheckIcon,
   ShieldExclamationIcon,
@@ -102,7 +103,7 @@ export const Default: StoryObj = {
       {
         icon: TrashIcon,
         label: 'Delete',
-        action: (item) => console.log('Delete', item)
+        action: (item: ItemType) => console.log('Delete', item)
       }
     ],
     columnClasses: {
