@@ -2,7 +2,7 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    :title="title"
+    title="Delete Invitation"
     :buttons="dialogButtons"
   >
     <div class="flex flex-col gap-6 text-sm text-foreground">
@@ -45,7 +45,6 @@ import { AdminInviteList } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   open: boolean
-  title: string
   invite: InviteItem | null
 }>()
 

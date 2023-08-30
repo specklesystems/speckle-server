@@ -80,7 +80,6 @@
     <ServerManagementDeleteInvitationDialog
       v-model:open="showDeleteInvitationDialog"
       :invite="inviteToModify"
-      title="Delete Invitation"
       :result-variables="resultVariables"
     />
 

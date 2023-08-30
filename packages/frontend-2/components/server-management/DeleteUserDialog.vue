@@ -2,7 +2,7 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    :title="title"
+    title="Delete User"
     :buttons="dialogButtons"
   >
     <div class="flex flex-col gap-6">
@@ -40,7 +40,6 @@ import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables
 import { Exact, InputMaybe } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
-  title: string
   open: boolean
   user: UserItem | null
   resultVariables:

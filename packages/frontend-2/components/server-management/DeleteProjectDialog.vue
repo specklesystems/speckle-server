@@ -2,7 +2,7 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    :title="title"
+    title="Delete Project"
     :buttons="dialogButtons"
   >
     <div class="flex flex-col gap-6">

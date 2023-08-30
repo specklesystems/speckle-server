@@ -2,7 +2,7 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    :title="title"
+    title="Change Role"
     :buttons="dialogButtons"
   >
     <div class="flex flex-col gap-6 text-sm text-foreground">
@@ -60,7 +60,6 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  title: string
   open: boolean
   user: UserItem | null
   oldRole: ServerRoles | undefined
