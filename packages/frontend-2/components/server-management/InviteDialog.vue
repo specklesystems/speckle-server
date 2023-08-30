@@ -1,8 +1,12 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="md">
+  <LayoutDialog
+    v-model:open="isOpen"
+    max-width="md"
+    title="Get your colleagues in!"
+    :buttons="dialogButtons"
+  >
     <form @submit="onSubmit">
       <div class="flex flex-col space-y-4 text-foreground">
-        <h1 class="h4 font-bold">Get your colleagues in!</h1>
         <p>
           Speckle will send a server invite link to the email(-s) below. You can also
           add a personal message if you want to. To add multiple e-mails, seperate them
@@ -44,10 +48,6 @@
               :allow-guest="isGuestMode"
               :allow-admin="isAdmin"
             />
-          </div>
-          <div class="flex justify-end self-end">
-            <FormButton text @click="isOpen = false">Cancel</FormButton>
-            <FormButton submit :disabled="anyMutationsLoading">Send</FormButton>
           </div>
         </div>
       </div>
@@ -129,4 +129,25 @@ const onSubmit = handleSubmit(async (values) => {
     })
   }
 })
+
+const dialogButtons = computed(() => [
+  {
+    text: 'Cancel',
+    props: { color: 'secondary', fullWidth: true },
+    onClick: () => {
+      isOpen.value = false
+    }
+  },
+  {
+    text: 'Send',
+    props: {
+      color: 'primary',
+      fullWidth: true,
+      outline: true,
+      submit: true,
+      disabled: anyMutationsLoading.value
+    },
+    onClick: onSubmit
+  }
+])
 </script>

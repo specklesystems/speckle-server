@@ -111,7 +111,7 @@
         </MenuItems>
       </Transition>
     </Menu>
-    <ServerInviteDialog v-model:open="showInviteDialog" />
+    <ServerManagementInviteDialog v-model:open="showInviteDialog" />
     <UserProfileEditDialog v-model:open="showProfileEditDialog" />
   </div>
 </template>

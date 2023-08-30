@@ -88,7 +88,7 @@
       class="py-4"
       @infinite="infiniteLoad"
     />
-    <ServerInviteDialog v-model:open="showInviteDialog" />
+    <ServerManagementInviteDialog v-model:open="showInviteDialog" />
   </div>
 </template>
 
