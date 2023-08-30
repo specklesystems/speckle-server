@@ -66,6 +66,7 @@ import { useLogger } from '~~/composables/logging'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
 import { serverInfoQuery } from '~~/lib/server-management/graphql/queries'
 import { serverInfoUpdateMutation } from '~~/lib/server-management/graphql/mutations'
+import type { Modifier, Reference } from '@apollo/client/cache'
 
 type FormValues = {
   name: string
@@ -128,12 +129,12 @@ const updateServerInfoAndCache = async (variables: ServerInfoUpdateVariables) =>
       if (result?.data?.serverInfoUpdate) {
         cache.modify({
           fields: {
-            serverInfo(existingServerInfo: FormValues): FormValues {
+            serverInfo: ((existingServerInfo: FormValues): FormValues => {
               return {
                 ...existingServerInfo,
                 ...variables.info
               }
-            }
+            }) as Modifier<FormValues | Reference>
           }
         })
       }
