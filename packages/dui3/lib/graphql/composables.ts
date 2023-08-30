@@ -125,7 +125,7 @@ export function useGetProjectModels(clientId: string | undefined = undefined) {
       // success!
     }
 
-    return res.data.project.models
+    return res.data.project.models.items
   }
 }
 

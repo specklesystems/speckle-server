@@ -12,7 +12,8 @@
         <FormSelectProjects
           v-model="selectedProject"
           name="project"
-          label="Speckle project"
+          label="Projects"
+          show-label
           :rules="[ValidationHelpers.isRequired]"
           validate-on-value-update
         />
@@ -21,7 +22,8 @@
           v-model="selectedModel"
           :project-id="selectedProject.id"
           name="model"
-          label="Speckle model"
+          label="Models"
+          show-label
           :rules="[ValidationHelpers.isRequired]"
           validate-on-value-update
         />
