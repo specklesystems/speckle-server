@@ -102,6 +102,15 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await app.$receiveBinding.receive(modelId, versionId)
   }
 
+  const receiveModelCancel = async (modelId: string) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === modelId
+    ) as IReceiverModelCard
+    model.receiving = false
+    model.progress = undefined
+    await app.$receiveBinding.cancelReceive(modelId)
+  }
+
   const getHostAppName = async () =>
     (hostAppName.value = await app.$baseBinding.getSourceApplicationName())
 
@@ -142,6 +151,16 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     }
   })
 
+  app.$receiveBinding.on('receiverProgress', (args) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === args.id
+    ) as IReceiverModelCard
+    model.progress = args
+    if (args.status === 'Completed') {
+      model.receiving = false
+    }
+  })
+
   app.$sendBinding.on('createVersion', async (args) => {
     const createVersion = useCreateVersion(args.accountId)
     const version: VersionCreateInput = {
@@ -173,6 +192,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     sendModel,
     receiveModel,
     sendModelCancel,
+    receiveModelCancel,
     refreshSendFilters
   }
 })

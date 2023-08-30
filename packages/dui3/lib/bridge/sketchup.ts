@@ -51,7 +51,8 @@ export class SketchupBridge extends BaseBridge {
     }
   >
   private bindingName: string
-  private TIMEOUT_MS = 200000 // 2s
+  private TIMEOUT_MS = 2000 // 2s
+  private NON_TIMEOUT_METHODS = ['send', 'afterGetObjects']
   public isInitalized: Promise<boolean>
   private resolveIsInitializedPromise!: (v: boolean) => unknown
   private rejectIsInitializedPromise!: (message: string) => unknown
@@ -98,9 +99,13 @@ export class SketchupBridge extends BaseBridge {
 
     const rootObj = await loader.getAndConstructObject(() => {})
     const args = [eventPayload.modelCardId, eventPayload.sourceApplication, rootObj]
-    console.log(args)
 
-    this.runMethod('afterGetObjects', args as unknown as unknown[])
+    await this.runMethod('afterGetObjects', args as unknown as unknown[])
+    this.emit('receiverProgress', {
+      id: eventPayload.modelCardId,
+      status: 'Completed',
+      progress: 1
+    } as unknown as string)
   }
 
   /**
@@ -204,7 +209,8 @@ export class SketchupBridge extends BaseBridge {
   private async runMethod(methodName: string, args: unknown[]): Promise<unknown> {
     const requestId = uniqueId(this.bindingName)
 
-    console.log(args)
+    console.log(methodName)
+    console.log(this.NON_TIMEOUT_METHODS.includes(methodName))
 
     // TODO: more on the ruby end, but for now Oguzhan seems happy with this.
     // Changes might be needed in the future.
@@ -221,12 +227,15 @@ export class SketchupBridge extends BaseBridge {
       this.requests[requestId] = {
         resolve,
         reject,
-        rejectTimerId: window.setTimeout(() => {
-          reject(
-            `Sketchup response timed out - did not receive anything back in good time (${this.TIMEOUT_MS}ms).`
-          )
-          delete this.requests[requestId]
-        }, this.TIMEOUT_MS)
+        rejectTimerId: window.setTimeout(
+          () => {
+            reject(
+              `Sketchup response timed out for ${methodName} - did not receive anything back in good time (${this.TIMEOUT_MS}ms).`
+            )
+            delete this.requests[requestId]
+          },
+          this.NON_TIMEOUT_METHODS.includes(methodName) ? 3600000 : this.TIMEOUT_MS
+        )
       }
     })
   }

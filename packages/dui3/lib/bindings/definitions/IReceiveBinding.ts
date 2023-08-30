@@ -5,9 +5,12 @@ export const IReceiveBindingKey = 'receiveBinding'
 
 export interface IReceiveBinding extends IBinding<IReceiveBindingEvents> {
   receive: (modelId: string, versionId: string) => Promise<void>
+  cancelReceive: (modelId: string) => Promise<void>
 }
 
-export interface IReceiveBindingEvents {}
+export interface IReceiveBindingEvents {
+  receiverProgress: (args: ReceiverProgressArgs) => void
+}
 
 export interface IReceiverModelCard extends IModelCard {
   typeDiscriminator: 'ReceiverModelCard'
@@ -16,4 +19,12 @@ export interface IReceiverModelCard extends IModelCard {
   projectName: string
   sourceApp: string
   receiving?: boolean
+  expired?: boolean
+  progress?: ReceiverProgressArgs
+}
+
+export type ReceiverProgressArgs = {
+  id: string
+  status?: string
+  progress?: number
 }
