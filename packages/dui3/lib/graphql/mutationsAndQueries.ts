@@ -54,11 +54,11 @@ export const projectsListQuery = graphql(`
 `)
 
 export const projectModelsQuery = graphql(`
-  query ProjectModels($projectId: String!, $filter: String, $cursor: String) {
+  query ProjectModels($projectId: String!, $filter: ProjectModelsFilter) {
     project(id: $projectId) {
       id
       name
-      models(cursor: $cursor, filter: $filter) {
+      models(filter: $filter) {
         items {
           id
           name

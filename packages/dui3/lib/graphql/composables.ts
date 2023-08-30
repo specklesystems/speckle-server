@@ -116,7 +116,7 @@ export function useGetProjectModels(clientId: string | undefined = undefined) {
     const client = getValidOrDefaultAccount(clientId)
     const res = await client.query({
       query: projectModelsQuery,
-      variables: { query, projectId }
+      variables: { projectId, filter: { search: query } }
     })
 
     if (!res.data) {
@@ -125,7 +125,7 @@ export function useGetProjectModels(clientId: string | undefined = undefined) {
       // success!
     }
 
-    return res.data?.models?.items
+    return res.data.project.models
   }
 }
 

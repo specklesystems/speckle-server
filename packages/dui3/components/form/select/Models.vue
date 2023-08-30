@@ -111,6 +111,8 @@ const getModels = useGetProjectModels()
 const models = ref<ModelsSelectItemType[]>()
 
 const invokeSearch = async (search: string) => {
+  console.log(props.projectId)
+
   if (!props.projectId) return []
 
   const res = (await getModels(props.projectId, search)) as ModelsSelectItemType[]
