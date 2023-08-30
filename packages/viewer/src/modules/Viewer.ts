@@ -27,8 +27,9 @@ import { ICameraProvider, IProvider } from './extensions/core-extensions/Provide
 import Input from './input/Input'
 import { CameraController } from './extensions/core-extensions/CameraController'
 import { SpeckleType } from './loaders/GeometryConverter'
-import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader'
 import { Loader } from './loaders/Loader'
+import { ObjLoader } from './loaders/OBJ/ObjLoader'
+import sampleObj from '../assets/BrandenburgGate.png'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -276,12 +277,15 @@ export class Viewer extends EventEmitter implements IViewer {
     priority = 1,
     zoomToObject = true
   ) {
+    token
+    enableCaching
     if (++this.inProgressOperations === 1)
       (this as EventEmitter).emit(ViewerEvent.Busy, true)
-    this.loaders[url] = new SpeckleLoader(this, url, token, enableCaching)
+    // this.loaders[url] = new SpeckleLoader(this, url, token, enableCaching)
+    // const treeBuilt = await this.loaders[url].load()
+    url = sampleObj
+    this.loaders[url] = new ObjLoader(this, url)
     const treeBuilt = await this.loaders[url].load()
-    // const treeBuilt = await this.tree.getRenderTree(url).buildRenderTreeAsync(priority)
-    // Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
 
     if (treeBuilt) {
       const t0 = performance.now()

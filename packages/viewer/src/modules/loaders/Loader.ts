@@ -8,7 +8,8 @@ export enum LoaderEvent {
 }
 
 export abstract class Loader extends EventEmitter {
-  public abstract get resource()
+  protected _resource: string
+  public abstract get resource(): string
 
   public abstract load(): Promise<boolean>
   public abstract cancel()

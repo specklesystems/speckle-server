@@ -6,7 +6,6 @@ import ObjectLoader from '@speckle/objectloader'
 import { SpeckleGeometryConverter } from './SpeckleGeometryConverter'
 
 export class SpeckleLoader extends Loader {
-  private _resource: string
   private loader: ObjectLoader
   private converter: Converter
   private viewer: Viewer
