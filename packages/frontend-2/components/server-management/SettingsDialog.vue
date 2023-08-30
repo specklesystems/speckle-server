@@ -124,22 +124,27 @@ const dialogButtons = computed(() => [
 const requiredRule = [isRequired]
 
 const updateServerInfoAndCache = async (variables: ServerInfoUpdateVariables) => {
-  await updateServerInfo(variables, {
-    update: (cache, result) => {
-      if (result?.data?.serverInfoUpdate) {
-        cache.modify({
-          fields: {
-            serverInfo: ((existingServerInfo: FormValues): FormValues => {
-              return {
-                ...existingServerInfo,
-                ...variables.info
-              }
-            }) as Modifier<FormValues | Reference>
-          }
-        })
+  try {
+    const result = await updateServerInfo(variables, {
+      update: (cache, result) => {
+        if (result?.data?.serverInfoUpdate) {
+          cache.modify({
+            fields: {
+              serverInfo: ((existingServerInfo: FormValues): FormValues => {
+                return {
+                  ...existingServerInfo,
+                  ...variables.info
+                }
+              }) as Modifier<FormValues | Reference>
+            }
+          })
+        }
       }
-    }
-  }).catch(convertThrowIntoFetchResult)
+    })
+    return result
+  } catch (error) {
+    return convertThrowIntoFetchResult(error)
+  }
 }
 
 const onSubmit = handleSubmit(async () => {
