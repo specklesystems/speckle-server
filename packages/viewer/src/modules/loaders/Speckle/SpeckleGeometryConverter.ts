@@ -1,50 +1,13 @@
 import { BoxBufferGeometry, EllipseCurve, Matrix4, Vector2, Vector3 } from 'three'
-import { Geometry, GeometryData } from './Geometry'
-import MeshTriangulationHelper from './MeshTriangulationHelper'
-import { getConversionFactor } from './Units'
-import { NodeData } from '../tree/WorldTree'
+import { Geometry, GeometryData } from '../../converter/Geometry'
+import MeshTriangulationHelper from '../../converter/MeshTriangulationHelper'
+import { getConversionFactor } from '../../converter/Units'
+import { NodeData } from '../../tree/WorldTree'
 import Logger from 'js-logger'
+import { GeometryConverter, SpeckleType } from '../GeometryConverter'
 
-export enum SpeckleType {
-  View3D = 'View3D',
-  BlockInstance = 'BlockInstance',
-  Pointcloud = 'Pointcloud',
-  Brep = 'Brep',
-  Mesh = 'Mesh',
-  Point = 'Point',
-  Line = 'Line',
-  Polyline = 'Polyline',
-  Box = 'Box',
-  Polycurve = 'Polycurve',
-  Curve = 'Curve',
-  Circle = 'Circle',
-  Arc = 'Arc',
-  Ellipse = 'Ellipse',
-  RevitInstance = 'RevitInstance',
-  Text = 'Text',
-  Unknown = 'Unknown'
-}
-
-export const SpeckleTypeAllRenderables: SpeckleType[] = [
-  SpeckleType.Pointcloud,
-  SpeckleType.Brep,
-  SpeckleType.Mesh,
-  SpeckleType.Point,
-  SpeckleType.Line,
-  SpeckleType.Polyline,
-  SpeckleType.Box,
-  SpeckleType.Polycurve,
-  SpeckleType.Curve,
-  SpeckleType.Circle,
-  SpeckleType.Arc,
-  SpeckleType.Ellipse,
-  SpeckleType.Text
-]
-
-export class GeometryConverter {
-  public static keepGeometryData = false
-
-  public static getSpeckleType(node: NodeData): SpeckleType {
+export class SpeckleGeometryConverter extends GeometryConverter {
+  public getSpeckleType(node: NodeData): SpeckleType {
     let typeChain = ['Base']
     if (node.raw.data)
       typeChain = node.raw.data.speckle_type
@@ -63,49 +26,49 @@ export class GeometryConverter {
     return SpeckleType.Unknown
   }
 
-  public static convertNodeToGeometryData(node: NodeData): GeometryData {
-    const type = GeometryConverter.getSpeckleType(node)
+  public convertNodeToGeometryData(node: NodeData): GeometryData {
+    const type = this.getSpeckleType(node)
     switch (type) {
       case SpeckleType.BlockInstance:
-        return GeometryConverter.BlockInstanceToGeometryData(node)
+        return this.BlockInstanceToGeometryData(node)
       case SpeckleType.Pointcloud:
-        return GeometryConverter.PointcloudToGeometryData(node)
+        return this.PointcloudToGeometryData(node)
       case SpeckleType.Brep:
-        return GeometryConverter.BrepToGeometryData(node)
+        return this.BrepToGeometryData(node)
       case SpeckleType.Mesh:
-        return GeometryConverter.MeshToGeometryData(node)
+        return this.MeshToGeometryData(node)
       case SpeckleType.Point:
-        return GeometryConverter.PointToGeometryData(node)
+        return this.PointToGeometryData(node)
       case SpeckleType.Line:
-        return GeometryConverter.LineToGeometryData(node)
+        return this.LineToGeometryData(node)
       case SpeckleType.Polyline:
-        return GeometryConverter.PolylineToGeometryData(node)
+        return this.PolylineToGeometryData(node)
       case SpeckleType.Box:
-        return GeometryConverter.BoxToGeometryData(node)
+        return this.BoxToGeometryData(node)
       case SpeckleType.Polycurve:
-        return GeometryConverter.PolycurveToGeometryData(node)
+        return this.PolycurveToGeometryData(node)
       case SpeckleType.Curve:
-        return GeometryConverter.CurveToGeometryData(node)
+        return this.CurveToGeometryData(node)
       case SpeckleType.Circle:
-        return GeometryConverter.CircleToGeometryData(node)
+        return this.CircleToGeometryData(node)
       case SpeckleType.Arc:
-        return GeometryConverter.ArcToGeometryData(node)
+        return this.ArcToGeometryData(node)
       case SpeckleType.Ellipse:
-        return GeometryConverter.EllipseToGeometryData(node)
+        return this.EllipseToGeometryData(node)
       case SpeckleType.View3D:
-        return GeometryConverter.View3DToGeometryData(node)
+        return this.View3DToGeometryData(node)
       case SpeckleType.RevitInstance:
-        return GeometryConverter.RevitInstanceToGeometryData(node)
+        return this.RevitInstanceToGeometryData(node)
       case SpeckleType.Text:
-        return GeometryConverter.TextToGeometryData(node)
+        return this.TextToGeometryData(node)
       case SpeckleType.Unknown:
         // console.warn(`Skipping geometry conversion for ${type}`)
         return null
     }
   }
 
-  public static disposeNodeGeometryData(node: NodeData): void {
-    const type = GeometryConverter.getSpeckleType(node)
+  public disposeNodeGeometryData(node: NodeData): void {
+    const type = this.getSpeckleType(node)
     switch (type) {
       case SpeckleType.Pointcloud:
         node.raw.vertices = []
@@ -147,9 +110,9 @@ export class GeometryConverter {
     }
   }
 
-  static View3DToGeometryData(node: NodeData): GeometryData {
-    const vOrigin = GeometryConverter.PointToVector3(node.raw.origin)
-    const vTarget = GeometryConverter.PointToVector3(node.raw.target)
+  private View3DToGeometryData(node: NodeData): GeometryData {
+    const vOrigin = this.PointToVector3(node.raw.origin)
+    const vTarget = this.PointToVector3(node.raw.target)
     node.raw.origin = vOrigin
     node.raw.target = vTarget
 
@@ -161,7 +124,7 @@ export class GeometryConverter {
   }
 
   /** BLOCK INSTANCE */
-  private static BlockInstanceToGeometryData(node: NodeData): GeometryData {
+  private BlockInstanceToGeometryData(node: NodeData): GeometryData {
     const conversionFactor = getConversionFactor(node.raw.units)
     /**
      * Speckle matrices are row major. Three's 'fromArray' function assumes
@@ -195,7 +158,7 @@ export class GeometryConverter {
     } as GeometryData
   }
 
-  private static RevitInstanceToGeometryData(node: NodeData): GeometryData {
+  private RevitInstanceToGeometryData(node: NodeData): GeometryData {
     const conversionFactor = getConversionFactor(node.raw.units)
     /**
      * Speckle matrices are row major. Three's 'fromArray' function assumes
@@ -232,7 +195,7 @@ export class GeometryConverter {
   /**
    * POINT CLOUD
    */
-  private static PointcloudToGeometryData(node: NodeData) {
+  private PointcloudToGeometryData(node: NodeData) {
     const conversionFactor = getConversionFactor(node.raw.units)
 
     const vertices = node.raw.points
@@ -246,7 +209,7 @@ export class GeometryConverter {
         )
       }
       /** We want the colors in linear space */
-      colors = GeometryConverter.unpackColors(colorsRaw, true)
+      colors = this.unpackColors(colorsRaw, true)
     }
 
     return {
@@ -266,7 +229,7 @@ export class GeometryConverter {
   /**
    * BREP
    */
-  private static BrepToGeometryData(node) {
+  private BrepToGeometryData(node) {
     /** Breps don't (currently) have inherent geometryic description in the viewer. They are replaced
      * by their mesh display values
      */
@@ -277,7 +240,7 @@ export class GeometryConverter {
   /**
    * MESH
    */
-  private static MeshToGeometryData(node: NodeData): GeometryData {
+  private MeshToGeometryData(node: NodeData): GeometryData {
     if (!node.raw) return
 
     const conversionFactor = getConversionFactor(node.raw.units)
@@ -323,7 +286,7 @@ export class GeometryConverter {
           `Mesh (id ${node.raw.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
         )
       }
-      colors = GeometryConverter.unpackColors(colorsRaw)
+      colors = this.unpackColors(colorsRaw)
     }
 
     return {
@@ -344,7 +307,7 @@ export class GeometryConverter {
   /**
    * TEXT
    */
-  private static TextToGeometryData(node: NodeData): GeometryData {
+  private TextToGeometryData(node: NodeData): GeometryData {
     const conversionFactor = getConversionFactor(node.raw.units)
     const plane = node.raw.plane
     const position = new Vector3(plane.origin.x, plane.origin.y, plane.origin.z)
@@ -367,7 +330,7 @@ export class GeometryConverter {
   /**
    * POINT
    */
-  private static PointToGeometryData(node: NodeData): GeometryData {
+  private PointToGeometryData(node: NodeData): GeometryData {
     const conversionFactor = getConversionFactor(node.raw.units)
     return {
       attributes: {
@@ -385,7 +348,7 @@ export class GeometryConverter {
   /**
    * LINE
    */
-  private static LineToGeometryData(node: NodeData): GeometryData {
+  private LineToGeometryData(node: NodeData): GeometryData {
     const conversionFactor = getConversionFactor(node.raw.units)
     return {
       attributes: {
@@ -405,7 +368,7 @@ export class GeometryConverter {
   /**
    * POLYLINE
    */
-  private static PolylineToGeometryData(node: NodeData): GeometryData {
+  private PolylineToGeometryData(node: NodeData): GeometryData {
     const conversionFactor = getConversionFactor(node.raw.units)
 
     if (node.raw.closed)
@@ -426,7 +389,7 @@ export class GeometryConverter {
   /**
    * BOX
    */
-  private static BoxToGeometryData(node: NodeData) {
+  private BoxToGeometryData(node: NodeData) {
     /**
      * Right, so we're cheating here a bit. We're using three's box geometry
      * to get the vertices and indices. Normally we could(should) do that by hand
@@ -453,11 +416,11 @@ export class GeometryConverter {
   /**
    * POLYCURVE
    */
-  private static PolycurveToGeometryData(node: NodeData): GeometryData {
+  private PolycurveToGeometryData(node: NodeData): GeometryData {
     const buffers = []
     for (let i = 0; i < node.nestedNodes.length; i++) {
       const element = node.nestedNodes[i].model
-      const conv = GeometryConverter.convertNodeToGeometryData(element)
+      const conv = this.convertNodeToGeometryData(element)
       buffers.push(conv)
     }
     return Geometry.mergeGeometryData(buffers)
@@ -466,7 +429,7 @@ export class GeometryConverter {
   /**
    * CURVE
    */
-  private static CurveToGeometryData(node) {
+  private CurveToGeometryData(node) {
     if (node.nestedNodes.length === 0) {
       return null
     }
@@ -484,7 +447,7 @@ export class GeometryConverter {
   /**
    * CIRCLE
    */
-  private static CircleToGeometryData(node: NodeData) {
+  private CircleToGeometryData(node: NodeData) {
     const conversionFactor = getConversionFactor(node.raw.units)
     const curveSegmentLength = 0.1 * conversionFactor
     const points = this.getCircularCurvePoints(
@@ -506,7 +469,7 @@ export class GeometryConverter {
   /**
    * ARC
    */
-  private static ArcToGeometryData(node: NodeData) {
+  private ArcToGeometryData(node: NodeData) {
     const origin = new Vector3(
       node.raw.plane.origin.x,
       node.raw.plane.origin.y,
@@ -608,7 +571,7 @@ export class GeometryConverter {
   /**
    * ELLIPSE
    */
-  private static EllipseToGeometryData(node: NodeData) {
+  private EllipseToGeometryData(node: NodeData) {
     const conversionFactor = getConversionFactor(node.raw.units)
 
     const center = new Vector3(
@@ -655,7 +618,7 @@ export class GeometryConverter {
    * UTILS
    */
 
-  private static getCircularCurvePoints(
+  private getCircularCurvePoints(
     plane,
     radius,
     startAngle = 0,
@@ -690,7 +653,7 @@ export class GeometryConverter {
     return points
   }
 
-  private static PointToVector3(obj, scale = true) {
+  private PointToVector3(obj, scale = true) {
     const conversionFactor = scale ? getConversionFactor(obj.units) : 1
     let v = null
     if (obj.value) {
@@ -711,7 +674,7 @@ export class GeometryConverter {
     return v
   }
 
-  private static PointToFloatArray(obj) {
+  private PointToFloatArray(obj) {
     if (obj.value) {
       return [obj.value[0], obj.value[1], obj.value[2]]
     } else {
@@ -719,7 +682,7 @@ export class GeometryConverter {
     }
   }
 
-  private static FlattenVector3Array(input: Vector3[] | Vector2[]): number[] {
+  private FlattenVector3Array(input: Vector3[] | Vector2[]): number[] {
     const output = new Array(input.length * 3)
     const vBuff = []
     for (let k = 0, l = 0; k < input.length; k++, l += 3) {
@@ -731,7 +694,7 @@ export class GeometryConverter {
     return output
   }
 
-  private static unpackColors(int32Colors: number[], tolinear = false): number[] {
+  private unpackColors(int32Colors: number[], tolinear = false): number[] {
     const colors = new Array<number>(int32Colors.length * 3)
     for (let i = 0; i < int32Colors.length; i++) {
       const color = int32Colors[i]
@@ -742,15 +705,15 @@ export class GeometryConverter {
       colors[i * 3 + 1] = g / 255
       colors[i * 3 + 2] = b / 255
       if (tolinear) {
-        colors[i * 3] = GeometryConverter.srgbToLinear(colors[i * 3])
-        colors[i * 3 + 1] = GeometryConverter.srgbToLinear(colors[i * 3 + 1])
-        colors[i * 3 + 2] = GeometryConverter.srgbToLinear(colors[i * 3 + 2])
+        colors[i * 3] = this.srgbToLinear(colors[i * 3])
+        colors[i * 3 + 1] = this.srgbToLinear(colors[i * 3 + 1])
+        colors[i * 3 + 2] = this.srgbToLinear(colors[i * 3 + 2])
       }
     }
     return colors
   }
 
-  private static srgbToLinear(x) {
+  private srgbToLinear(x) {
     if (x <= 0) return 0
     else if (x >= 1) return 1
     else if (x < 0.04045) return x / 12.92

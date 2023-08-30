@@ -4,13 +4,13 @@ import { TreeNode, WorldTree } from '../tree/WorldTree'
 import Logger from 'js-logger'
 import _, { omit } from 'underscore'
 import { GeometryType } from '../batching/Batch'
-import { SpeckleTypeAllRenderables } from '../converter/GeometryConverter'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import SpecklePointMaterial from '../materials/SpecklePointMaterial'
 import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { IViewer } from '../../IViewer'
 import { Extension } from './core-extensions/Extension'
+import { SpeckleTypeAllRenderables } from '../loaders/GeometryConverter'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeckleObject = Record<string, any>

@@ -24,7 +24,6 @@ import {
 import { Batch, GeometryType } from './batching/Batch'
 import Batcher from './batching/Batcher'
 import { Geometry } from './converter/Geometry'
-import { SpeckleTypeAllRenderables } from './converter/GeometryConverter'
 import Input, { InputEvent, InputOptionsDefault } from './input/Input'
 import { Intersections } from './Intersections'
 import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial'
@@ -59,6 +58,7 @@ import Materials, {
 import { SpeckleMaterial } from './materials/SpeckleMaterial'
 import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
 import Logger from 'js-logger'
+import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter'
 
 export class RenderingStats {
   private renderTimeAcc = 0

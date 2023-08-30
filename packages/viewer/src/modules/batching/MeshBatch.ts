@@ -21,7 +21,6 @@ import {
   HideAllBatchUpdateRange
 } from './Batch'
 import { BatchObject } from './BatchObject'
-import { GeometryConverter } from '../converter/GeometryConverter'
 import Logger from 'js-logger'
 import { ObjectLayers } from '../../IViewer'
 
@@ -574,11 +573,9 @@ export default class MeshBatch implements Batch {
     this.mesh.frustumCulled = false
     this.mesh.geometry.addGroup(0, this.getCount(), 0)
 
-    if (!GeometryConverter.keepGeometryData) {
-      batchObjects.forEach((element: BatchObject) => {
-        element.renderView.disposeGeometry()
-      })
-    }
+    batchObjects.forEach((element: BatchObject) => {
+      element.renderView.disposeGeometry()
+    })
   }
 
   public getRenderView(index: number): NodeRenderView {

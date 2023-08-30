@@ -1,6 +1,5 @@
 import { generateUUID } from 'three/src/math/MathUtils'
 import MeshBatch from './MeshBatch'
-import { SpeckleType } from '../converter/GeometryConverter'
 import LineBatch from './LineBatch'
 import Materials, { FilterMaterialType } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
@@ -18,6 +17,7 @@ import { World } from '../World'
 import { RenderTree } from '../tree/RenderTree'
 import TextBatch from './TextBatch'
 import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
+import { SpeckleType } from '../loaders/GeometryConverter'
 
 export default class Batcher {
   private maxHardwareUniformCount = 0

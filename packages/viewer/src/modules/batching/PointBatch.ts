@@ -15,7 +15,6 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
-import { GeometryConverter } from '../converter/GeometryConverter'
 import Logger from 'js-logger'
 import { ObjectLayers } from '../../IViewer'
 
@@ -309,9 +308,7 @@ export default class PointBatch implements Batch {
 
       offset += geometry.attributes.POSITION.length
 
-      if (!GeometryConverter.keepGeometryData) {
-        this.renderViews[k].disposeGeometry()
-      }
+      this.renderViews[k].disposeGeometry()
     }
     this.makePointGeometry(position, color)
     this.mesh = new Points(this.geometry, this.batchMaterial)

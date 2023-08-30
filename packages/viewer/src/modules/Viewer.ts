@@ -1,6 +1,5 @@
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 
-import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
 
 import { Clock, Texture } from 'three'
@@ -18,7 +17,6 @@ import { World } from './World'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
 import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
-import { GeometryConverter, SpeckleType } from './converter/GeometryConverter'
 import { DataTree, DataTreeBuilder } from './tree/DataTree'
 import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
@@ -28,6 +26,9 @@ import { Extension } from './extensions/core-extensions/Extension'
 import { ICameraProvider, IProvider } from './extensions/core-extensions/Providers'
 import Input from './input/Input'
 import { CameraController } from './extensions/core-extensions/CameraController'
+import { SpeckleType } from './loaders/GeometryConverter'
+import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader'
+import { Loader } from './loaders/Loader'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -47,7 +48,7 @@ export class Viewer extends EventEmitter implements IViewer {
   /** Misc members */
   private inProgressOperations: number
   private clock: Clock
-  private loaders: { [id: string]: ViewerObjectLoader } = {}
+  private loaders: { [id: string]: Loader } = {}
 
   private extensions: {
     [id: string]: Extension | IProvider
@@ -105,7 +106,6 @@ export class Viewer extends EventEmitter implements IViewer {
     super()
     Logger.useDefaults()
     Logger.setLevel(params.verbose ? Logger.TRACE : Logger.ERROR)
-    GeometryConverter.keepGeometryData = params.keepGeometryData
 
     this.container = container || document.getElementById('renderer')
     if (params.showStats) {
@@ -269,50 +269,6 @@ export class Viewer extends EventEmitter implements IViewer {
    * OBJECT LOADING/UNLOADING
    */
 
-  private async downloadObject(
-    url: string,
-    token: string = null,
-    enableCaching = true
-  ) {
-    const loader = new ViewerObjectLoader(this, url, token, enableCaching)
-    this.loaders[url] = loader
-    await loader.load()
-  }
-
-  public async loadObject(
-    url: string,
-    token: string = null,
-    enableCaching = true,
-    zoomToObject = true
-  ) {
-    zoomToObject
-    if (++this.inProgressOperations === 1)
-      (this as EventEmitter).emit(ViewerEvent.Busy, true)
-    await this.downloadObject(url, token, enableCaching)
-
-    let t0 = performance.now()
-    this.tree.getRenderTree(url).buildRenderTree()
-    Logger.log('SYNC Tree build time -> ', performance.now() - t0)
-
-    t0 = performance.now()
-    await this.speckleRenderer.addRenderTree(url)
-    Logger.log('SYNC batch build time -> ', performance.now() - t0)
-
-    if (zoomToObject) {
-      const extension = this.getExtension(CameraController)
-      if (extension) {
-        extension.setCameraView([], false)
-      }
-    }
-
-    this.speckleRenderer.resetPipeline(true)
-    this.emit(ViewerEvent.LoadComplete, url)
-    this.loaders[url].dispose()
-    delete this.loaders[url]
-    if (--this.inProgressOperations === 0)
-      (this as EventEmitter).emit(ViewerEvent.Busy, false)
-  }
-
   public async loadObjectAsync(
     url: string,
     token: string = null,
@@ -322,14 +278,13 @@ export class Viewer extends EventEmitter implements IViewer {
   ) {
     if (++this.inProgressOperations === 1)
       (this as EventEmitter).emit(ViewerEvent.Busy, true)
-    await this.downloadObject(url, token, enableCaching)
-
-    let t0 = performance.now()
-    const treeBuilt = await this.tree.getRenderTree(url).buildRenderTreeAsync(priority)
-    Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
+    this.loaders[url] = new SpeckleLoader(this, url, token, enableCaching)
+    const treeBuilt = await this.loaders[url].load()
+    // const treeBuilt = await this.tree.getRenderTree(url).buildRenderTreeAsync(priority)
+    // Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
 
     if (treeBuilt) {
-      t0 = performance.now()
+      const t0 = performance.now()
       for await (const step of this.speckleRenderer.addRenderTreeAsync(url, priority)) {
         step
         if (zoomToObject) {
@@ -351,7 +306,7 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public async cancelLoad(url: string, unload = false) {
-    this.loaders[url].cancelLoad()
+    this.loaders[url].cancel()
     this.tree.getRenderTree(url).cancelBuild(url)
     this.speckleRenderer.cancelRenderTree(url)
     if (unload) {

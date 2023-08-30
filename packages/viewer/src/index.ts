@@ -26,7 +26,6 @@ import {
   IntersectionQueryResult
 } from './modules/queries/Query'
 import { Utils } from './modules/Utils'
-import { DiffResult, VisualDiffMode } from './modules/Differ'
 import { BatchObject } from './modules/batching/BatchObject'
 import { Box3, Vector3 } from 'three'
 import {
@@ -48,7 +47,11 @@ import { SectionOutlines } from './modules/extensions/SectionOutlines'
 import { FilteringExtension } from './modules/extensions/FilteringExtension'
 import { Extension } from './modules/extensions/core-extensions/Extension'
 import { ExplodeExtension } from './modules/extensions/ExplodeExtension'
-import { DiffExtension } from './modules/extensions/DiffExtension'
+import {
+  DiffExtension,
+  DiffResult,
+  VisualDiffMode
+} from './modules/extensions/DiffExtension'
 
 export {
   Viewer,

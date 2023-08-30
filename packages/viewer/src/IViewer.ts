@@ -14,7 +14,6 @@ export interface ViewerParams {
   showStats: boolean
   environmentSrc: Asset | string
   verbose: boolean
-  keepGeometryData: boolean
 }
 export enum AssetType {
   TEXTURE_8BPP = 'png', // For now
@@ -42,7 +41,6 @@ export interface Asset {
 export const DefaultViewerParams: ViewerParams = {
   showStats: false,
   verbose: false,
-  keepGeometryData: false,
   environmentSrc: {
     src: sampleHdri,
     type: AssetType.TEXTURE_EXR
@@ -131,12 +129,6 @@ export interface IViewer {
 
   getViews(): SpeckleView[]
 
-  loadObject(
-    url: string,
-    token?: string,
-    enableCaching?: boolean,
-    zoomToObject?: boolean
-  ): Promise<void>
   loadObjectAsync(
     url: string,
     token?: string,

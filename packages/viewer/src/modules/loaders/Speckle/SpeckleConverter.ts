@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { generateUUID } from 'three/src/math/MathUtils'
-import { TreeNode, WorldTree } from '../tree/WorldTree'
+import { TreeNode, WorldTree } from '../../tree/WorldTree'
 import Logger from 'js-logger'
 
 export type ConverterResultDelegate = (object) => Promise<void>
-
 export type ConverterNodeDelegate = (object, node) => Promise<void>
+
 /**
  * Utility class providing some top level conversion methods.
  * Warning: HIC SVNT DRACONES.
  */
-export default class Coverter {
+export default class SpeckleConverter {
   private objectLoader
   private lastAsyncPause: number
   private activePromises: number
@@ -109,10 +109,8 @@ export default class Coverter {
 
     if (node === null) {
       this.tree.addSubtree(childNode)
-      // console.warn(`Added root node with id ${obj.id}`)
     } else {
       this.tree.addNode(childNode, node)
-      // console.warn(`Added child node with id ${obj.id} to parent node ${node.model.id}`)
     }
 
     // If we can convert it, we should invoke the respective conversion routine.
@@ -131,7 +129,7 @@ export default class Coverter {
       }
     }
 
-    const target = obj //obj.data || obj
+    const target = obj
 
     // Check if the object has a display value of sorts
     let displayValue = this.getDisplayValue(target)
@@ -334,32 +332,6 @@ export default class Coverter {
     obj.origin.units = obj.units
     obj.target.units = obj.units
   }
-
-  // private hashCode = (input: string) => {
-  //   let hash = 0,
-  //     i,
-  //     chr
-  //   if (input.length === 0) return hash
-  //   for (i = 0; i < input.length; i++) {
-  //     chr = input.charCodeAt(i)
-  //     hash = (hash << 5) - hash + chr
-  //     hash |= 0 // Convert to 32bit integer
-  //   }
-  //   return hash
-  // }
-
-  // private hashCode = (input: string) => {
-  //   let hash = 0,
-  //     i,
-  //     chr
-  //   if (input.length === 0) return hash
-  //   for (i = 0; i < input.length; i++) {
-  //     chr = input.charCodeAt(i)
-  //     hash = (hash << 5) - hash + chr
-  //     hash |= 0 // Convert to 32bit integer
-  //   }
-  //   return hash
-  // }
 
   /** This is only used for Blocks to search for convertible objects, without using the main 'traverse' function
    *  It's only looking for 'elements' and 'displayValues'
@@ -587,7 +559,6 @@ export default class Coverter {
       await this.convertToNode(element, nestedNode)
       /** We're not adding the segments as children since they shouldn't exist as individual line elements */
       node.model.nestedNodes.push(nestedNode)
-      // WorldTree.getInstance(this.treeInstaceId).addNode(nestedNode, node)
     }
   }
 
@@ -610,7 +581,6 @@ export default class Coverter {
     await this.convertToNode(displayValue, nestedNode)
     /** We're not adding the segments as children since they shouldn't exist as individual line elements */
     node.model.nestedNodes.push(nestedNode)
-    // this.tree.addNode(nestedNode, node)
   }
 
   private async CircleToNode(obj, node) {
