@@ -117,8 +117,6 @@ import { useHostAppStore } from '~~/store/hostApp'
 import { ISendFilter, ISenderModelCard } from '~~/lib/bindings/definitions/ISendBinding'
 import { nanoid } from 'nanoid'
 
-const app = useNuxtApp()
-
 const store = useHostAppStore()
 const router = useRouter()
 const { defaultAccount } = storeToRefs(useAccountStore())
@@ -173,6 +171,6 @@ const publish = async () => {
   // Sketchup freezes immediately after routing, by setting timeout we can get correct states
   setTimeout(async () => {
     await store.sendModel(modelCard.id)
-  }, 500)
+  }, 200)
 }
 </script>

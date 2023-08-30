@@ -46,11 +46,6 @@ export interface IModelCard extends IDiscriminatedObject {
 
 export type ModelCardTypeDiscriminators = 'SenderModelCard' | 'ReceiverModelCard'
 
-export interface IReceiverModelCard extends IModelCard {
-  typeDiscriminator: 'ReceiverModelCard'
-  todo: string
-}
-
 export type DocumentInfo = {
   location: string
   name: string

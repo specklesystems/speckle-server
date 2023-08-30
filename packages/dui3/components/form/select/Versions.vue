@@ -8,37 +8,41 @@
     :get-search-results="invokeSearch"
     :label="label"
     :show-label="showLabel"
-    :name="name || 'models'"
+    :name="name || 'versions'"
     :validate-on-value-update="validateOnValueUpdate"
     by="id"
   >
     <template #something-selected="{ value }">
       <div class="text-normal">
-        {{ value.name }}
+        {{ value.message }}
       </div>
     </template>
     <template #option="{ item }">
       <div class="flex items-center">
-        <span class="truncate">{{ item.name }}</span>
+        <span class="truncate">{{ `${item.message} - (${item.id})` }}</span>
       </div>
     </template>
   </FormSelectBase>
 </template>
 <script setup lang="ts">
 import { Nullable, Optional } from '@speckle/shared'
-import { useGetProjectModels } from '~/lib/graphql/composables'
+import { useGetModelVersions } from '~/lib/graphql/composables'
 import { FormSelectBase, useFormSelectChildInternals } from '@speckle/ui-components'
 import { RuleExpression } from 'vee-validate'
 import { PropType } from 'vue'
-import { ModelsSelectItemType } from '~/lib/form/select/types'
+import { VersionsSelectItemType } from '~/lib/form/select/types'
 
-type ItemType = ModelsSelectItemType
+type ItemType = VersionsSelectItemType
 type ValueType = ItemType | ItemType[] | undefined
 
 const emit = defineEmits<(e: 'update:modelValue', v: ValueType) => void>()
 
 const props = defineProps({
   projectId: {
+    type: String,
+    required: true
+  },
+  modelId: {
     type: String,
     required: true
   },
@@ -106,17 +110,20 @@ const { selectedValue } = useFormSelectChildInternals<ItemType>({
 })
 
 const modelsParams = computed(() => ({ projectId: props.projectId }))
-const getModels = useGetProjectModels()
+const getVersions = useGetModelVersions()
 
-const models = ref<ModelsSelectItemType[]>()
+const versions = ref<VersionsSelectItemType[]>()
 
-const invokeSearch = async (search: string) => {
+const invokeSearch = async () => {
   if (!props.projectId) return []
 
-  const res = (await getModels(props.projectId, search)) as ModelsSelectItemType[]
+  const res = (await getVersions(
+    props.projectId,
+    props.modelId
+  )) as VersionsSelectItemType[]
   console.log(res)
-  models.value = res
-  return models.value || []
+  versions.value = res
+  return versions.value || []
 }
 
 watch(modelsParams, () => {

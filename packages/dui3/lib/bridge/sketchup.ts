@@ -1,6 +1,7 @@
 import { uniqueId } from 'lodash-es'
 import { BaseBridge } from './base'
 import { CreateVersionArgs } from 'lib/bindings/definitions/ISendBinding'
+import ObjectLoader from '@speckle/objectloader'
 
 declare let sketchup: {
   exec: (data: Record<string, unknown>) => void
@@ -22,6 +23,16 @@ type SendViaBrowserArgs = {
   }
 }
 
+type ReceiveViaBrowserArgs = {
+  modelCardId: string
+  projectId: string
+  modelId: string
+  token: string
+  serverUrl: string
+  objectId: string
+  sourceApplication: string
+}
+
 /**
  * This class operates in different way than the others, because calls into Sketchup are one way only.
  * E.g., we cannot return values from internal calls to it (e.g., const test = sketchup.rubyCall() does not work ).
@@ -40,7 +51,7 @@ export class SketchupBridge extends BaseBridge {
     }
   >
   private bindingName: string
-  private TIMEOUT_MS = 2000 // 2s
+  private TIMEOUT_MS = 200000 // 2s
   public isInitalized: Promise<boolean>
   private resolveIsInitializedPromise!: (v: boolean) => unknown
   private rejectIsInitializedPromise!: (message: string) => unknown
@@ -69,10 +80,27 @@ export class SketchupBridge extends BaseBridge {
   emit(eventName: string, payload: string): void {
     const eventPayload = payload as unknown as Record<string, unknown>
 
-    if (eventName !== 'sendViaBrowser')
-      return this.emitter.emit(eventName, eventPayload)
+    if (eventName === 'sendViaBrowser')
+      this.sendViaBrowser(eventPayload as SendViaBrowserArgs)
+    else if (eventName === 'receiveViaBrowser')
+      this.receiveViaBrowser(eventPayload as ReceiveViaBrowserArgs)
 
-    this.sendViaBrowser(eventPayload as SendViaBrowserArgs)
+    return this.emitter.emit(eventName, eventPayload)
+  }
+
+  private async receiveViaBrowser(eventPayload: ReceiveViaBrowserArgs) {
+    const loader = new ObjectLoader({
+      serverUrl: eventPayload.serverUrl as string,
+      token: eventPayload.token as string,
+      streamId: eventPayload.projectId,
+      objectId: eventPayload.objectId
+    })
+
+    const rootObj = await loader.getAndConstructObject(() => {})
+    const args = [eventPayload.modelCardId, eventPayload.sourceApplication, rootObj]
+    console.log(args)
+
+    this.runMethod('afterGetObjects', args as unknown as unknown[])
   }
 
   /**
@@ -175,6 +203,8 @@ export class SketchupBridge extends BaseBridge {
    */
   private async runMethod(methodName: string, args: unknown[]): Promise<unknown> {
     const requestId = uniqueId(this.bindingName)
+
+    console.log(args)
 
     // TODO: more on the ruby end, but for now Oguzhan seems happy with this.
     // Changes might be needed in the future.

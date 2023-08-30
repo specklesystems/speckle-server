@@ -22,7 +22,18 @@
           v-model="selectedModel"
           :project-id="selectedProject.id"
           name="model"
-          label="Models"
+          label="Model"
+          show-label
+          :rules="[ValidationHelpers.isRequired]"
+          validate-on-value-update
+        />
+        <FormSelectVersions
+          v-if="selectedProject && selectedModel"
+          v-model="selectedVersion"
+          :project-id="selectedProject.id"
+          :model-id="selectedModel.id"
+          name="version"
+          label="Version"
           show-label
           :rules="[ValidationHelpers.isRequired]"
           validate-on-value-update
@@ -30,7 +41,7 @@
       </div>
       <div class="flex justify-end">
         <FormButton
-          v-if="selectedModel"
+          v-if="selectedVersion"
           submit
           :disabled="hasProjectFormErrors"
           size="lg"
@@ -43,12 +54,21 @@
 </template>
 
 <script setup lang="ts">
+import { nanoid } from 'nanoid'
 import { useForm } from 'vee-validate'
 import { useHostAppStore } from '~~/store/hostApp'
+import { useAccountStore } from '~~/store/accounts'
 import { ValidationHelpers } from '@speckle/ui-components'
-import { ProjectsSelectItemType, ModelsSelectItemType } from 'lib/form/select/types'
+import {
+  ProjectsSelectItemType,
+  ModelsSelectItemType,
+  VersionsSelectItemType
+} from 'lib/form/select/types'
+import { IReceiverModelCard } from 'lib/bindings/definitions/IReceiveBinding'
 
+const { defaultAccount } = storeToRefs(useAccountStore())
 const hostAppStore = useHostAppStore()
+const router = useRouter()
 const hostAppName = computed(() => hostAppStore.hostAppName)
 
 const emit = defineEmits<{
@@ -64,16 +84,41 @@ const emit = defineEmits<{
 const { handleSubmit, errors } = useForm<{
   model: ProjectsSelectItemType
   project: ModelsSelectItemType
+  version: VersionsSelectItemType
 }>()
 
 const selectedProject = ref<ProjectsSelectItemType>()
 const selectedModel = ref<ModelsSelectItemType>()
+const selectedVersion = ref<VersionsSelectItemType>()
 
 const hasProjectFormErrors = computed(() => {
   return Object.keys(errors.value).length > 0
 })
 
-const onProjectModelSelected = handleSubmit((values) => {
+const receive = async () => {
+  if (!defaultAccount.value) return
+
+  const modelCard: IReceiverModelCard = {
+    typeDiscriminator: 'ReceiverModelCard',
+    id: nanoid(),
+    modelId: selectedModel.value?.id as string,
+    projectId: selectedProject.value?.id as string,
+    accountId: defaultAccount.value.accountInfo.id,
+    referencedObject: selectedVersion.value?.referencedObject as string,
+    modelName: selectedModel.value?.name as string,
+    projectName: selectedProject.value?.name as string,
+    sourceApp: selectedVersion.value?.sourceApplication as string
+  }
+
+  await hostAppStore.addModel(modelCard)
+  router.push('/')
+  setTimeout(async () => {
+    await hostAppStore.receiveModel(modelCard.id, selectedVersion.value?.id as string)
+  }, 200)
+}
+
+const onProjectModelSelected = handleSubmit(async (values) => {
+  await receive()
   emit('next', values)
 })
 </script>

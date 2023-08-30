@@ -56,12 +56,29 @@ export const projectsListQuery = graphql(`
 export const projectModelsQuery = graphql(`
   query ProjectModels($projectId: String!, $filter: ProjectModelsFilter) {
     project(id: $projectId) {
-      id
-      name
       models(filter: $filter) {
         items {
           id
           name
+        }
+      }
+    }
+  }
+`)
+
+export const modelVersionsQuery = graphql(`
+  query ModelVersions($projectId: String!, $modelId: String!) {
+    project(id: $projectId) {
+      model(id: $modelId) {
+        versions {
+          items {
+            id
+            message
+            referencedObject
+            createdAt
+            previewUrl
+            sourceApplication
+          }
         }
       }
     }

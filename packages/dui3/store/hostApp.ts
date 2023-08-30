@@ -1,9 +1,9 @@
 import {
   DocumentInfo,
   DocumentModelStore,
-  IModelCard,
-  IReceiverModelCard
+  IModelCard
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
+import { IReceiverModelCard } from 'lib/bindings/definitions/IReceiveBinding'
 import { ISendFilter, ISenderModelCard } from 'lib/bindings/definitions/ISendBinding'
 import { CommitCreateInput, VersionCreateInput } from 'lib/common/generated/gql/graphql'
 import {
@@ -94,6 +94,14 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await app.$sendBinding.cancelSend(modelId)
   }
 
+  const receiveModel = async (modelId: string, versionId: string) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === modelId
+    ) as IReceiverModelCard
+    model.receiving = true
+    await app.$receiveBinding.receive(modelId, versionId)
+  }
+
   const getHostAppName = async () =>
     (hostAppName.value = await app.$baseBinding.getSourceApplicationName())
 
@@ -163,6 +171,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     updateModelFilter,
     removeModel,
     sendModel,
+    receiveModel,
     sendModelCancel,
     refreshSendFilters
   }
