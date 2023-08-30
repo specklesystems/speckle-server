@@ -1,18 +1,12 @@
-import { Roles } from '@speckle/shared/src/core/constants'
 import {
   UserItem,
   ProjectItem,
   InviteItem
 } from '~~/lib/server-management/helpers/types'
 import { has } from 'lodash-es'
-import { ServerRoles } from '@speckle/shared'
+import { ServerRoles, RoleInfo } from '@speckle/shared'
 
-export const roleLookupTable = {
-  [Roles.Server.User]: 'User',
-  [Roles.Server.Admin]: 'Admin',
-  [Roles.Server.ArchivedUser]: 'Archived',
-  [Roles.Server.Guest]: 'Guest'
-}
+export const roleLookupTable = RoleInfo.Server
 
 export const getRoleLabel = (role: keyof typeof roleLookupTable) => {
   return roleLookupTable[role] || role.split(':')[1]

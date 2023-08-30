@@ -32,28 +32,21 @@
 import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
 import { InviteItem } from '~~/lib/server-management/helpers/types'
-import { getInvites } from '~~/lib/server-management/graphql/queries'
 import { adminDeleteInvite } from '~~/lib/server-management/graphql/mutations'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
+  ROOT_QUERY,
   convertThrowIntoFetchResult,
   getCacheId,
   getFirstErrorMessage,
-  updateCacheByFilter
+  modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { Exact, InputMaybe } from '~~/lib/common/generated/gql/graphql'
+import { AdminInviteList } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   open: boolean
   title: string
   invite: InviteItem | null
-  resultVariables:
-    | Exact<{
-        limit: number
-        cursor?: InputMaybe<string> | undefined
-        query?: InputMaybe<string> | undefined
-      }>
-    | undefined
 }>()
 
 const emit = defineEmits<{
@@ -82,29 +75,44 @@ const deleteConfirmed = async () => {
       update: (cache, { data }) => {
         if (data?.inviteDelete) {
           // Remove invite from cache
+          const cacheId = getCacheId('ServerInvite', inviteId)
           cache.evict({
-            id: getCacheId('AdminUserListItem', inviteId)
+            id: cacheId
           })
-          // Update list in cache
-          updateCacheByFilter(
+
+          // Modify 'admin' field of ROOT_QUERY so that we can modify all `inviteList` instances
+          modifyObjectFields<undefined, { [key: string]: AdminInviteList }>(
             cache,
-            { query: { query: getInvites, variables: props.resultVariables } },
-            (data) => {
-              const newItems = data.admin.inviteList.items.filter(
-                (item) => item.id !== inviteId
+            ROOT_QUERY,
+            (_fieldName, _variables, value, details) => {
+              // Find all `inviteList` fields (there can be multiple due to differing variables)
+              const inviteListFields = Object.keys(value).filter(
+                (k) =>
+                  details.revolveFieldNameAndVariables(k).fieldName === 'inviteList'
               )
-              return {
-                ...data,
-                admin: {
-                  ...data.admin,
-                  inviteList: {
-                    ...data.admin.inviteList,
-                    items: newItems,
-                    totalCount: Math.max(0, data.admin.inviteList.totalCount - 1)
-                  }
+
+              // Being careful not to mutate original `value`
+              const newVal: typeof value = { ...value }
+
+              // Iterate over each and adjust `items` and `totalCount`
+              for (const field of inviteListFields) {
+                const oldItems = value[field]?.items || []
+                const newItems = oldItems.filter((i) => i.__ref !== cacheId)
+                const removedCount = oldItems.length - newItems.length
+
+                newVal[field] = {
+                  ...value[field],
+                  items: newItems,
+                  totalCount: Math.max(
+                    0,
+                    (value[field]?.totalCount || 0) - removedCount
+                  )
                 }
               }
-            }
+
+              return newVal
+            },
+            { fieldNameWhitelist: ['admin'] }
           )
         }
       }
