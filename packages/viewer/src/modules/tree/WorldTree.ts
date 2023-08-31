@@ -21,6 +21,7 @@ export class WorldTree {
   private renderTreeInstances: { [id: string]: RenderTree } = {}
   private readonly supressWarnings = true
   public static readonly ROOT_ID = 'ROOT'
+  public nodeCount: number = 0
 
   public constructor() {
     this.tree = new TreeModel()
@@ -74,10 +75,12 @@ export class WorldTree {
       return
     }
     parent.addChild(node)
+    this.nodeCount++
   }
 
   public removeNode(node: TreeNode) {
     node.drop()
+    this.nodeCount--
   }
 
   public findAll(predicate: SearchPredicate, node?: TreeNode): Array<TreeNode> {

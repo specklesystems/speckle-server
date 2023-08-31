@@ -98,9 +98,9 @@ export class SpeckleLoader extends Loader {
     }
 
     Logger.warn(
-      `Finished downloading object ${this._resource} in ${
+      `Finished converting object ${this._resource} in ${
         (performance.now() - start) / 1000
-      } seconds`
+      } seconds. Node count: ${this.viewer.getWorldTree().nodeCount}`
     )
 
     if (viewerLoads === 0) {
@@ -114,8 +114,10 @@ export class SpeckleLoader extends Loader {
       .getWorldTree()
       .getRenderTree(this._resource)
       .buildRenderTree(new SpeckleGeometryConverter())
-    Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
 
+    p.then(() => {
+      Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
+    })
     return p
   }
 
