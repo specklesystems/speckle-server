@@ -95,19 +95,17 @@
     <ServerManagementDeleteUserDialog
       v-model:open="showUserDeleteDialog"
       :user="userToModify"
-      title="Delete User"
       :result-variables="resultVariables"
     />
 
     <ServerManagementChangeUserRoleDialog
       v-model:open="showChangeUserRoleDialog"
       :user="userToModify"
-      title="Change Role"
       :old-role="oldRole"
       :new-role="newRole"
       hide-closer
     />
-    <ServerInviteDialog v-model:open="showInviteDialog" />
+    <ServerManagementInviteDialog v-model:open="showInviteDialog" />
   </div>
 </template>
 

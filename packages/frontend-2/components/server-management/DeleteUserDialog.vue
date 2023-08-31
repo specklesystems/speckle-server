@@ -2,7 +2,7 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    :title="title"
+    title="Delete User"
     :buttons="dialogButtons"
   >
     <div class="flex flex-col gap-6">
@@ -25,49 +25,33 @@
 </template>
 
 <script setup lang="ts">
+import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
 import { UserItem } from '~~/lib/server-management/helpers/types'
-import { getUsers } from '~~/lib/server-management/graphql/queries'
 import { adminDeleteUser } from '~~/lib/server-management/graphql/mutations'
-import { useMutation } from '@vue/apollo-composable'
+import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
+  ROOT_QUERY,
   convertThrowIntoFetchResult,
   getCacheId,
   getFirstErrorMessage,
-  updateCacheByFilter
+  modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import { Exact, InputMaybe } from '~~/lib/common/generated/gql/graphql'
+import { AdminUserList } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
-  title: string
   open: boolean
   user: UserItem | null
-  resultVariables:
-    | Exact<{
-        limit: number
-        cursor?: InputMaybe<string> | undefined
-        query?: InputMaybe<string> | undefined
-      }>
-    | undefined
-}>()
-
-const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
 }>()
 
 const { triggerNotification } = useGlobalToast()
 const { mutate: adminDeleteUserMutation } = useMutation(adminDeleteUser)
 
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
+const isOpen = defineModel<boolean>('open', { required: true })
 
 const deleteConfirmed = async () => {
   const userEmail = props.user?.email
-  const userId = props.user?.id
-  if (!userEmail || !userId) {
+  if (!userEmail) {
     return
   }
 
@@ -78,31 +62,44 @@ const deleteConfirmed = async () => {
     {
       update: (cache, { data }) => {
         if (data?.adminDeleteUser) {
-          // Remove item from cache
+          // Remove user from cache
+          const cacheId = getCacheId('AdminUserListItem', props.user?.id as string)
           cache.evict({
-            id: getCacheId('AdminUserListItem', userId)
+            id: cacheId
           })
 
-          // Update list
-          updateCacheByFilter(
+          // Modify 'admin' field of ROOT_QUERY so that we can modify all `userList` instances
+          modifyObjectFields<undefined, { [key: string]: AdminUserList }>(
             cache,
-            { query: { query: getUsers, variables: props.resultVariables } },
-            (data) => {
-              const newItems = data.admin.userList.items.filter(
-                (item) => item.id !== userId
+            ROOT_QUERY,
+            (_fieldName, _variables, value, details) => {
+              // Find all `userList` fields (there can be multiple due to differing variables)
+              const userListFields = Object.keys(value).filter(
+                (k) => details.revolveFieldNameAndVariables(k).fieldName === 'userList'
               )
-              return {
-                ...data,
-                admin: {
-                  ...data.admin,
-                  userList: {
-                    ...data.admin.userList,
-                    items: newItems,
-                    totalCount: Math.max(0, data.admin.userList.totalCount - 1)
-                  }
+
+              // Being careful not to mutate original `value`
+              const newVal: typeof value = { ...value }
+
+              // Iterate over each and adjust `items` and `totalCount`
+              for (const field of userListFields) {
+                const oldItems = value[field]?.items || []
+                const newItems = oldItems.filter((i) => i.__ref !== cacheId)
+                const removedCount = oldItems.length - newItems.length
+
+                newVal[field] = {
+                  ...value[field],
+                  items: newItems,
+                  totalCount: Math.max(
+                    0,
+                    (value[field]?.totalCount || 0) - removedCount
+                  )
                 }
               }
-            }
+
+              return newVal
+            },
+            { fieldNameWhitelist: ['admin'] }
           )
         }
       }
@@ -113,9 +110,9 @@ const deleteConfirmed = async () => {
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'User deleted',
-      description: 'The user has been succesfully deleted'
+      description: 'The user has been successfully deleted'
     })
-    emit('update:open', false)
+    isOpen.value = false
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
@@ -135,7 +132,7 @@ const dialogButtons = [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
-    onClick: () => emit('update:open', false)
+    onClick: () => (isOpen.value = false)
   }
 ]
 </script>

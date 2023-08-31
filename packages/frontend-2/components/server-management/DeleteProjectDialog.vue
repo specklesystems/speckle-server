@@ -2,7 +2,7 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    :title="title"
+    title="Delete Project"
     :buttons="dialogButtons"
   >
     <div class="flex flex-col gap-6">
@@ -28,44 +28,30 @@
 </template>
 
 <script setup lang="ts">
+import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
 import { ProjectItem } from '~~/lib/server-management/helpers/types'
-import { useMutation } from '@vue/apollo-composable'
+import { adminDeleteProject } from '~~/lib/server-management/graphql/mutations'
+import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
+  ROOT_QUERY,
   convertThrowIntoFetchResult,
   getCacheId,
   getFirstErrorMessage,
-  updateCacheByFilter
+  modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import { adminDeleteProject } from '~~/lib/server-management/graphql/mutations'
-import { getProjects } from '~~/lib/server-management/graphql/queries'
-import { Exact, InputMaybe } from '~~/lib/common/generated/gql/graphql'
+import { ProjectCollection } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
-  title: string
   open: boolean
+  title: string
   project: ProjectItem | null
-  resultVariables:
-    | Exact<{
-        limit: number
-        cursor?: InputMaybe<string> | undefined
-        query?: InputMaybe<string> | undefined
-      }>
-    | undefined
-}>()
-
-const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
 }>()
 
 const { triggerNotification } = useGlobalToast()
 const { mutate: adminDeleteMutation } = useMutation(adminDeleteProject)
 
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
+const isOpen = defineModel<boolean>('open', { required: true })
 
 const deleteConfirmed = async () => {
   const projectId = props.project?.id
@@ -80,30 +66,45 @@ const deleteConfirmed = async () => {
     {
       update: (cache, { data }) => {
         if (data?.streamsDelete) {
-          // Remove invite from cache
+          // Remove project from cache
+          const cacheId = getCacheId('Project', projectId)
           cache.evict({
-            id: getCacheId('AdminUserListItem', projectId)
+            id: cacheId
           })
-          // Update list in cache
-          updateCacheByFilter(
+
+          // Modify 'admin' field of ROOT_QUERY so that we can modify all `projectList` instances
+          modifyObjectFields<undefined, { [key: string]: ProjectCollection }>(
             cache,
-            { query: { query: getProjects, variables: props.resultVariables } },
-            (data) => {
-              const newItems = data.admin.projectList.items.filter(
-                (item) => item.id !== projectId
+            ROOT_QUERY,
+            (_fieldName, _variables, value, details) => {
+              // Find all `projectList` fields (there can be multiple due to differing variables)
+              const projectListFields = Object.keys(value).filter(
+                (k) =>
+                  details.revolveFieldNameAndVariables(k).fieldName === 'projectList'
               )
-              return {
-                ...data,
-                admin: {
-                  ...data.admin,
-                  projectList: {
-                    ...data.admin.projectList,
-                    items: newItems,
-                    totalCount: Math.max(0, data.admin.projectList.totalCount - 1)
-                  }
+
+              // Being careful not to mutate original `value`
+              const newVal: typeof value = { ...value }
+
+              // Iterate over each and adjust `items` and `totalCount`
+              for (const field of projectListFields) {
+                const oldItems = value[field]?.items || []
+                const newItems = oldItems.filter((i) => i.__ref !== cacheId)
+                const removedCount = oldItems.length - newItems.length
+
+                newVal[field] = {
+                  ...value[field],
+                  items: newItems,
+                  totalCount: Math.max(
+                    0,
+                    (value[field]?.totalCount || 0) - removedCount
+                  )
                 }
               }
-            }
+
+              return newVal
+            },
+            { fieldNameWhitelist: ['admin'] }
           )
         }
       }
@@ -116,7 +117,7 @@ const deleteConfirmed = async () => {
       title: 'Project deleted',
       description: 'The project has been successfully deleted'
     })
-    emit('update:open', false)
+    isOpen.value = false
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
@@ -136,7 +137,7 @@ const dialogButtons = [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
-    onClick: () => emit('update:open', false)
+    onClick: () => (isOpen.value = false)
   }
 ]
 </script>

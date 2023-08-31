@@ -81,12 +81,7 @@ type ServerInfoUpdateVariables = {
   info: FormValues
 }
 
-const props = defineProps<{
-  open: boolean
-}>()
-
 const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
   (e: 'server-info-updated'): void
 }>()
 
@@ -103,10 +98,7 @@ const adminContact = ref('')
 const termsOfService = ref('')
 const inviteOnly = ref<true | undefined>(undefined)
 
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
+const isOpen = defineModel<boolean>('open', { required: true })
 
 const dialogButtons = computed(() => [
   {
@@ -124,22 +116,27 @@ const dialogButtons = computed(() => [
 const requiredRule = [isRequired]
 
 const updateServerInfoAndCache = async (variables: ServerInfoUpdateVariables) => {
-  await updateServerInfo(variables, {
-    update: (cache, result) => {
-      if (result?.data?.serverInfoUpdate) {
-        cache.modify({
-          fields: {
-            serverInfo: ((existingServerInfo: FormValues): FormValues => {
-              return {
-                ...existingServerInfo,
-                ...variables.info
-              }
-            }) as Modifier<FormValues | Reference>
-          }
-        })
+  try {
+    const result = await updateServerInfo(variables, {
+      update: (cache, result) => {
+        if (result?.data?.serverInfoUpdate) {
+          cache.modify({
+            fields: {
+              serverInfo: ((existingServerInfo: FormValues): FormValues => {
+                return {
+                  ...existingServerInfo,
+                  ...variables.info
+                }
+              }) as Modifier<FormValues | Reference>
+            }
+          })
+        }
       }
-    }
-  }).catch(convertThrowIntoFetchResult)
+    })
+    return result
+  } catch (error) {
+    return convertThrowIntoFetchResult(error)
+  }
 }
 
 const onSubmit = handleSubmit(async () => {

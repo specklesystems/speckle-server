@@ -80,7 +80,6 @@
     <ServerManagementDeleteInvitationDialog
       v-model:open="showDeleteInvitationDialog"
       :invite="inviteToModify"
-      title="Delete Invitation"
       :result-variables="resultVariables"
     />
 
@@ -89,7 +88,7 @@
       class="py-4"
       @infinite="infiniteLoad"
     />
-    <ServerInviteDialog v-model:open="showInviteDialog" />
+    <ServerManagementInviteDialog v-model:open="showInviteDialog" />
   </div>
 </template>
 
