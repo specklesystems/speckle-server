@@ -1,7 +1,7 @@
 import { uniqueId } from 'lodash-es'
 import { BaseBridge } from './base'
 import { CreateVersionArgs } from 'lib/bindings/definitions/ISendBinding'
-import ObjectLoader from '@speckle/objectloader'
+import ObjectLoader, { ProgressStage } from '@speckle/objectloader'
 
 declare let sketchup: {
   exec: (data: Record<string, unknown>) => void
@@ -97,7 +97,20 @@ export class SketchupBridge extends BaseBridge {
       objectId: eventPayload.objectId
     })
 
-    const rootObj = await loader.getAndConstructObject(() => {})
+    const updateProgress = (e: {
+      stage: ProgressStage
+      current: number
+      total: number
+    }) => {
+      const progress = e.current / e.total
+      this.emit('receiverProgress', {
+        id: eventPayload.modelCardId,
+        status: progress === 1 ? 'Constructing' : 'Downloading',
+        progress
+      } as unknown as string)
+    }
+
+    const rootObj = await loader.getAndConstructObject(updateProgress)
     const args = [eventPayload.modelCardId, eventPayload.sourceApplication, rootObj]
 
     await this.runMethod('afterGetObjects', args as unknown as unknown[])

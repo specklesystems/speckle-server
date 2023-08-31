@@ -85,7 +85,10 @@ const progressBarValue = () => {
 const progressBarText = computed(() => {
   if (props.model.progress?.status === undefined) {
     return 'Progressing'
-  } else if (props.model.progress?.status === 'Receiving') {
+  } else if (
+    (props.model.progress?.status === 'Receiving',
+    props.model.progress?.status === 'Downloading')
+  ) {
     return `${props.model.progress?.status} (% ${progressBarValue()})`
   } else {
     return props.model.progress.status
