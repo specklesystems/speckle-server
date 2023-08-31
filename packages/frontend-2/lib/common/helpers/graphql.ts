@@ -396,7 +396,9 @@ export function evictObjectFields<
         fieldName: string,
         variables: V,
         value: ModifyFnCacheData<D>,
-        details: Parameters<Modifier<ModifyFnCacheData<D>>>[1]
+        details: Parameters<Modifier<ModifyFnCacheData<D>>>[1] & {
+          revolveFieldNameAndVariables: typeof revolveFieldNameAndVariables
+        }
       ) => boolean)
     | string[]
 ) {
@@ -405,7 +407,13 @@ export function evictObjectFields<
     id,
     (fieldName, variables, value, details) => {
       if (isFunction(predicate)) {
-        if (!predicate(fieldName, variables, value, details)) return undefined
+        if (
+          !predicate(fieldName, variables, value, {
+            ...details,
+            revolveFieldNameAndVariables
+          })
+        )
+          return undefined
       } else {
         const predicateFields = predicate
         if (!predicateFields.includes(fieldName)) return undefined
