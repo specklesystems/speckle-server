@@ -48,17 +48,10 @@ const props = defineProps<{
   project: ProjectItem | null
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
-}>()
-
 const { triggerNotification } = useGlobalToast()
 const { mutate: adminDeleteMutation } = useMutation(adminDeleteProject)
 
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
+const isOpen = defineModel<boolean>('open', { required: true })
 
 const deleteConfirmed = async () => {
   const projectId = props.project?.id
@@ -124,7 +117,7 @@ const deleteConfirmed = async () => {
       title: 'Project deleted',
       description: 'The project has been successfully deleted'
     })
-    emit('update:open', false)
+    isOpen.value = false
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
@@ -144,7 +137,7 @@ const dialogButtons = [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
-    onClick: () => emit('update:open', false)
+    onClick: () => (isOpen.value = false)
   }
 ]
 </script>

@@ -44,17 +44,10 @@ const props = defineProps<{
   user: UserItem | null
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
-}>()
-
 const { triggerNotification } = useGlobalToast()
 const { mutate: adminDeleteUserMutation } = useMutation(adminDeleteUser)
 
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
+const isOpen = defineModel<boolean>('open', { required: true })
 
 const deleteConfirmed = async () => {
   const userEmail = props.user?.email
@@ -119,7 +112,7 @@ const deleteConfirmed = async () => {
       title: 'User deleted',
       description: 'The user has been successfully deleted'
     })
-    emit('update:open', false)
+    isOpen.value = false
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
@@ -139,7 +132,7 @@ const dialogButtons = [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
-    onClick: () => emit('update:open', false)
+    onClick: () => (isOpen.value = false)
   }
 ]
 </script>

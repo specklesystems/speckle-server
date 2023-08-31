@@ -48,17 +48,10 @@ const props = defineProps<{
   invite: InviteItem | null
 }>()
 
-const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
-}>()
-
 const { triggerNotification } = useGlobalToast()
 const { mutate: adminDeleteMutation } = useMutation(adminDeleteInvite)
 
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
+const isOpen = defineModel<boolean>('open', { required: true })
 
 const deleteConfirmed = async () => {
   const inviteId = props.invite?.id
@@ -119,7 +112,7 @@ const deleteConfirmed = async () => {
   ).catch(convertThrowIntoFetchResult)
 
   if (result?.data?.inviteDelete) {
-    emit('update:open', false)
+    isOpen.value = false
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Invitation deleted',
@@ -144,7 +137,7 @@ const dialogButtons = [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
-    onClick: () => emit('update:open', false)
+    onClick: () => (isOpen.value = false)
   }
 ]
 </script>
