@@ -1,7 +1,11 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="lg">
+  <LayoutDialog
+    v-model:open="open"
+    max-width="sm"
+    title="Create new project"
+    :buttons="dialogButtons"
+  >
     <form class="flex flex-col text-foreground" @submit="onSubmit">
-      <div class="h4 font-bold mb-4">Create new project</div>
       <div class="flex flex-col space-y-3 mb-6">
         <FormTextInput
           name="name"
@@ -27,10 +31,6 @@
           v-model="visibility"
           class="sm:max-w-none w-full sm:w-80"
         />
-        <div class="space-x-2">
-          <FormButton text color="secondary" @click="open = false">Cancel</FormButton>
-          <FormButton submit>Create project</FormButton>
-        </div>
       </div>
     </form>
   </LayoutDialog>
@@ -77,4 +77,24 @@ const onSubmit = handleSubmit(async (values) => {
   mp.track('Stream Action', { type: 'action', name: 'create' })
   open.value = false
 })
+
+const dialogButtons = computed(() => [
+  {
+    text: 'Cancel',
+    props: { color: 'secondary', fullWidth: true },
+    onClick: () => {
+      open.value = false
+    }
+  },
+  {
+    text: 'Create',
+    props: {
+      color: 'primary',
+      fullWidth: true,
+      outline: true,
+      submit: true
+    },
+    onClick: onSubmit
+  }
+])
 </script>
