@@ -48,12 +48,7 @@ type FormValues = {
 }
 
 const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
   (e: 'created'): void
-}>()
-
-const props = defineProps<{
-  open: boolean
 }>()
 
 const createProject = useCreateProject()
@@ -61,10 +56,7 @@ const { handleSubmit } = useForm<FormValues>()
 
 const visibility = ref(ProjectVisibility.Unlisted)
 
-const open = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
+const open = defineModel<boolean>('open', { required: true })
 
 const mp = useMixpanel()
 

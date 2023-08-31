@@ -71,14 +71,6 @@ import { useServerInfo } from '~~/lib/core/composables/server'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useInviteUserToServer } from '~~/lib/server/composables/invites'
 
-const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
-}>()
-
-const props = defineProps<{
-  open: boolean
-}>()
-
 const selectedProject = ref(undefined as Optional<FormSelectProjects_ProjectFragment>)
 const serverRole = ref<ServerRoles>(Roles.Server.User)
 
@@ -89,10 +81,7 @@ const anyMutationsLoading = useMutationLoading()
 const { isAdmin } = useActiveUser()
 const { isGuestMode } = useServerInfo()
 
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
+const isOpen = defineModel<boolean>('open', { required: true })
 
 const allowServerRoleSelect = computed(() => isAdmin.value || isGuestMode.value)
 
