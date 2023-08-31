@@ -43,7 +43,7 @@
         <div class="text-xs">Received model is out of sync with file.</div>
       </div>
     </div>
-    <!-- Sending state -->
+    <!-- Receiving state -->
     <div
       :class="`bg-blue-500/10 text-primary ${
         model.receiving ? 'h-8 opacity-100' : 'h-0 opacity-0 py-0'
@@ -62,7 +62,7 @@
 import { CloudArrowDownIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { IReceiverModelCard } from '~/lib/bindings/definitions/IReceiveBinding'
 import { VersionsSelectItemType } from '~/lib/form/select/types'
-import { useGetModelDetails } from '~/lib/graphql/composables'
+import { useGetModelDetails, useProjectVersionUpdated } from '~/lib/graphql/composables'
 import { ProjectModelGroup, useHostAppStore } from '~/store/hostApp'
 
 const store = useHostAppStore()
@@ -97,5 +97,13 @@ const getModelDetails = useGetModelDetails(props.project.accountId)
 const modelDetails = await getModelDetails({
   projectId: props.model.projectId,
   modelId: props.model.modelId
+})
+
+const onProjectVersionsUpdate = useProjectVersionUpdated()
+const projectVersionsUpdated = onProjectVersionsUpdate(props.project.projectId)
+
+watch(projectVersionsUpdated, (newVal) => {
+  store.invalidateReceiver(props.model.modelId)
+  console.log(newVal)
 })
 </script>

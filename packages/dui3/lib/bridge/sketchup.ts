@@ -209,9 +209,6 @@ export class SketchupBridge extends BaseBridge {
   private async runMethod(methodName: string, args: unknown[]): Promise<unknown> {
     const requestId = uniqueId(this.bindingName)
 
-    console.log(methodName)
-    console.log(this.NON_TIMEOUT_METHODS.includes(methodName))
-
     // TODO: more on the ruby end, but for now Oguzhan seems happy with this.
     // Changes might be needed in the future.
     sketchup.exec({

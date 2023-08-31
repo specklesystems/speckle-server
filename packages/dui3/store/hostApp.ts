@@ -72,6 +72,14 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     console.log(`Should remove ${modelId}`)
   }
 
+  const invalidateReceiver = async (modelId: string) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === modelId
+    ) as IReceiverModelCard
+    model.expired = true
+    await app.$receiveBinding.invalidate(modelId)
+  }
+
   const sendModel = async (modelId: string) => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === modelId
@@ -189,6 +197,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     receiveModel,
     sendModelCancel,
     receiveModelCancel,
+    invalidateReceiver,
     refreshSendFilters
   }
 })
