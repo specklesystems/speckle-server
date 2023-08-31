@@ -105,7 +105,7 @@
       :new-role="newRole"
       hide-closer
     />
-    <ServerInviteDialog v-model:open="showInviteDialog" />
+    <ServerManagementInviteDialog v-model:open="showInviteDialog" />
   </div>
 </template>
 
