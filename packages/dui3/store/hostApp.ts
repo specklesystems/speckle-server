@@ -102,6 +102,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === modelId
     ) as IReceiverModelCard
+    model.expired = false
     model.receiving = true
     await app.$receiveBinding.receive(modelId, versionId)
   }

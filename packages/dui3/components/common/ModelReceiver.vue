@@ -102,6 +102,8 @@ const modelDetails = await getModelDetails({
 const onProjectVersionsUpdate = useProjectVersionUpdated()
 const projectVersionsUpdated = onProjectVersionsUpdate(props.project.projectId)
 
+projectVersionsUpdated.onResult(() => store.invalidateReceiver(props.model.id))
+
 watch(projectVersionsUpdated, (newVal) => {
   store.invalidateReceiver(props.model.modelId)
   console.log(newVal)
