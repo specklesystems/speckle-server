@@ -131,6 +131,10 @@ export default defineNuxtConfig({
     }
   },
 
+  nitro: {
+    compressPublicAssets: true
+  },
+
   build: {
     transpile: [
       /^@apollo\/client/,
