@@ -90,15 +90,11 @@ const deleteConfirmed = async () => {
               for (const field of inviteListFields) {
                 const oldItems = value[field]?.items || []
                 const newItems = oldItems.filter((i) => i.__ref !== cacheId)
-                const removedCount = oldItems.length - newItems.length
 
                 newVal[field] = {
                   ...value[field],
-                  items: newItems,
-                  totalCount: Math.max(
-                    0,
-                    (value[field]?.totalCount || 0) - removedCount
-                  )
+                  ...(value[field]?.items ? { items: newItems } : {}),
+                  totalCount: Math.max(0, (value[field]?.totalCount || 0) - 1)
                 }
               }
 

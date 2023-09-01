@@ -5,21 +5,12 @@ export const serverManagementDataQuery = graphql(`
     admin {
       userList {
         totalCount
-        items {
-          id
-        }
       }
       projectList {
         totalCount
-        items {
-          id
-        }
       }
       inviteList {
         totalCount
-        items {
-          id
-        }
       }
     }
     serverInfo {
