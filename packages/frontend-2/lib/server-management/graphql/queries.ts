@@ -31,7 +31,7 @@ export const serverInfoQuery = graphql(`
   }
 `)
 
-export const getUsers = graphql(`
+export const getUsersQuery = graphql(`
   query AdminPanelUsersList($limit: Int!, $cursor: String, $query: String) {
     admin {
       userList(limit: $limit, cursor: $cursor, query: $query) {
@@ -51,7 +51,7 @@ export const getUsers = graphql(`
   }
 `)
 
-export const getProjects = graphql(`
+export const getProjectsQuery = graphql(`
   query AdminPanelProjectsList(
     $query: String
     $orderBy: String
@@ -95,7 +95,7 @@ export const getProjects = graphql(`
   }
 `)
 
-export const getInvites = graphql(`
+export const getInvitesQuery = graphql(`
   query AdminPanelInvitesList($limit: Int!, $cursor: String, $query: String) {
     admin {
       inviteList(limit: $limit, cursor: $cursor, query: $query) {

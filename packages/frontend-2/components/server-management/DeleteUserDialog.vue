@@ -28,7 +28,7 @@
 import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
 import { UserItem } from '~~/lib/server-management/helpers/types'
-import { adminDeleteUser } from '~~/lib/server-management/graphql/mutations'
+import { adminDeleteUserMutation } from '~~/lib/server-management/graphql/mutations'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
   ROOT_QUERY,
@@ -45,7 +45,7 @@ const props = defineProps<{
 }>()
 
 const { triggerNotification } = useGlobalToast()
-const { mutate: adminDeleteUserMutation } = useMutation(adminDeleteUser)
+const { mutate: adminDeleteUser } = useMutation(adminDeleteUserMutation)
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
@@ -55,7 +55,7 @@ const deleteConfirmed = async () => {
     return
   }
 
-  const result = await adminDeleteUserMutation(
+  const result = await adminDeleteUser(
     {
       userConfirmation: { email: userEmail }
     },

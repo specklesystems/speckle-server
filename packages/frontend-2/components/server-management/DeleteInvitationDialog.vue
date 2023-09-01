@@ -32,7 +32,7 @@
 import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
 import { InviteItem } from '~~/lib/server-management/helpers/types'
-import { adminDeleteInvite } from '~~/lib/server-management/graphql/mutations'
+import { adminDeleteInviteMutation } from '~~/lib/server-management/graphql/mutations'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
   ROOT_QUERY,
@@ -49,7 +49,7 @@ const props = defineProps<{
 }>()
 
 const { triggerNotification } = useGlobalToast()
-const { mutate: adminDeleteMutation } = useMutation(adminDeleteInvite)
+const { mutate: adminDeleteMutation } = useMutation(adminDeleteInviteMutation)
 
 const isOpen = defineModel<boolean>('open', { required: true })
 

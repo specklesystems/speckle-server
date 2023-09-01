@@ -17,10 +17,7 @@
         @cta-clicked="showDialog = true"
       />
 
-      <ServerManagementSettingsDialog
-        v-model:open="showDialog"
-        @server-info-updated="refetch"
-      />
+      <ServerManagementSettingsDialog v-model:open="showDialog" />
 
       <ServerManagementCard :server-info="userData" />
       <ServerManagementCard :server-info="projectData" />
@@ -58,7 +55,7 @@ definePageMeta({
 
 const logger = useLogger()
 const router = useRouter()
-const { result, refetch } = useQuery(serverManagementDataQuery)
+const { result } = useQuery(serverManagementDataQuery)
 
 const showDialog = ref(false)
 const latestVersion = ref<string | null>(null)
@@ -79,7 +76,7 @@ const serverData = computed((): CardInfo[] => [
     icon: ServerIcon,
     cta: {
       type: 'button',
-      label: 'Edit Settings',
+      label: 'Edit',
       action: () => {
         showDialog.value = true
       }

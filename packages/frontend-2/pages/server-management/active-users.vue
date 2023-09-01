@@ -52,7 +52,9 @@
       <template #name="{ item }">
         <div class="flex items-center gap-2">
           <UserAvatar v-if="isUser(item)" :user="item" />
-          {{ isUser(item) ? item.name : '' }}
+          <span class="truncate">
+            {{ isUser(item) ? item.name : '' }}
+          </span>
         </div>
       </template>
 
@@ -79,6 +81,7 @@
 
       <template #role="{ item }">
         <FormSelectServerRoles
+          allow-admin
           :model-value="isUser(item) ? item.role : undefined"
           :disabled="isUser(item) && isCurrentUser(item)"
           @update:model-value="(newRoleValue) => isUser(item) && !isArray(newRoleValue) && newRoleValue && openChangeUserRoleDialog(item, newRoleValue as ServerRoles)"
@@ -116,7 +119,7 @@ import { debounce, isArray } from 'lodash-es'
 import { useLogger } from '~~/composables/logging'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { Nullable, ServerRoles, Optional } from '@speckle/shared'
-import { getUsers } from '~~/lib/server-management/graphql/queries'
+import { getUsersQuery } from '~~/lib/server-management/graphql/queries'
 import { ItemType, UserItem } from '~~/lib/server-management/helpers/types'
 import { isUser } from '~~/lib/server-management/helpers/utils'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -153,7 +156,7 @@ const {
   fetchMore: fetchMorePages,
   variables: resultVariables,
   onResult
-} = useQuery(getUsers, queryVariables)
+} = useQuery(getUsersQuery, queryVariables)
 
 const oldRole = computed(() => userToModify.value?.role as Optional<ServerRoles>)
 
