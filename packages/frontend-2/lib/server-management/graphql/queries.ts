@@ -3,12 +3,23 @@ import { graphql } from '~~/lib/common/generated/gql'
 export const serverManagementDataQuery = graphql(`
   query Admin {
     admin {
-      serverStatistics {
-        totalProjectCount
-        totalUserCount
+      userList {
+        totalCount
+        items {
+          id
+        }
+      }
+      projectList {
+        totalCount
+        items {
+          id
+        }
       }
       inviteList {
         totalCount
+        items {
+          id
+        }
       }
     }
     serverInfo {

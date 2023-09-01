@@ -98,7 +98,7 @@ const serverData = computed((): CardInfo[] => [
 const userData = computed((): CardInfo[] => [
   {
     title: 'Active users',
-    value: result.value?.admin.serverStatistics.totalUserCount?.toString() || 'N/A',
+    value: result.value?.admin.userList.totalCount?.toString() || 'N/A',
     icon: UsersIcon,
     cta: {
       type: 'button',
@@ -120,7 +120,7 @@ const userData = computed((): CardInfo[] => [
 const projectData = computed((): CardInfo[] => [
   {
     title: 'Projects',
-    value: result.value?.admin.serverStatistics.totalProjectCount?.toString() || 'N/A',
+    value: result.value?.admin.projectList.totalCount?.toString() || 'N/A',
     icon: HomeIcon,
     cta: {
       type: 'button',
