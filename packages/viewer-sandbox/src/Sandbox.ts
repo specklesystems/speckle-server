@@ -336,6 +336,29 @@ export default class Sandbox {
       this.loadUrl(this.urlParams.url)
     })
 
+    const loadObjButton = this.tabs.pages[0].addButton({
+      title: 'Load OBJ'
+    })
+    loadObjButton.on('click', () => {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.onchange = (e) => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const file = e.target?.files[0]
+
+        const reader = new FileReader()
+        reader.readAsText(file, 'UTF-8')
+
+        reader.onload = async (readerEvent) => {
+          const content = readerEvent?.target?.result
+          const loader = new ObjLoader(this.viewer.getWorldTree(), file.name, content)
+          await this.viewer.loadObject(loader, 1, true)
+        }
+      }
+      input.click()
+    })
+
     const clearButton = this.tabs.pages[0].addButton({
       title: 'Clear All'
     })
@@ -412,10 +435,7 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
-      this.viewer
-        .getExtension(SelectionExtension)
-        .selectObjects(['1154ca1d997ac631571db55f84cb703d'])
+      console.warn(await this.viewer.screenshot())
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -1190,7 +1210,6 @@ export default class Sandbox {
         undefined,
         1
       )
-      // const loader = new ObjLoader(this.viewer.getWorldTree(), sampleObj)
       await this.viewer.loadObject(loader, 1, true)
     }
     localStorage.setItem('last-load-url', url)

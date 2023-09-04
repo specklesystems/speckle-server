@@ -18,14 +18,14 @@ export class SpeckleLoader extends Loader {
 
   constructor(
     targetTree: WorldTree,
-    objectUrl: string,
+    resource: string,
     authToken: string,
-    enableCaching: boolean,
+    enableCaching?: boolean,
+    resourceData?: string | ArrayBuffer,
     priority: number = 1
   ) {
-    super()
+    super(resource, resourceData)
     this.tree = targetTree
-    this._resource = objectUrl
     this.priority = priority
     let token = null
     try {
@@ -40,7 +40,7 @@ export class SpeckleLoader extends Loader {
       )
     }
 
-    const url = new URL(objectUrl)
+    const url = new URL(resource)
 
     const segments = url.pathname.split('/')
     if (

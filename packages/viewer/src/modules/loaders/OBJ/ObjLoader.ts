@@ -1,5 +1,5 @@
 import { Group } from 'three'
-import { Loader } from '../Loader'
+import { Loader, LoaderEvent } from '../Loader'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { ObjConverter } from './ObjConverter'
 import { ObjGeometryConverter } from './ObjGeometryConverter'
@@ -15,27 +15,66 @@ export class ObjLoader extends Loader {
     return this._resource
   }
 
-  public constructor(targetTree: WorldTree, resource: string) {
-    super()
-    this._resource = resource
+  public constructor(targetTree: WorldTree, resource: string, resourceData?: string) {
+    super(resource, resourceData)
     this.tree = targetTree
     this.baseLoader = new OBJLoader()
     this.converter = new ObjConverter(this.tree)
   }
 
   public load(): Promise<boolean> {
-    return new Promise<boolean>((resolve) => {
-      this.baseLoader.load(this._resource, async (group: Group) => {
-        await this.converter.traverse(this._resource, group, async (obj) => {
-          obj
-        })
+    return new Promise<boolean>((resolve, reject) => {
+      const pload = new Promise<void>((loadResolve, loadReject) => {
+        if (!this._resourceData) {
+          this.baseLoader.load(
+            this._resource,
+            async (group: Group) => {
+              await this.converter.traverse(this._resource, group, async (obj) => {
+                obj
+              })
+
+              loadResolve()
+            },
+            (event: ProgressEvent) => {
+              this.emit(LoaderEvent.LoadProgress, {
+                progress: event.loaded / (event.total + 1),
+                id: this._resource
+              })
+            },
+            (event: ErrorEvent) => {
+              Logger.error(`Loading obj ${this._resource} failed with ${event.error}`)
+              loadReject()
+            }
+          )
+        } else {
+          this.converter
+            .traverse(
+              this._resource,
+              this.baseLoader.parse(this._resourceData as string),
+              async (obj) => {
+                obj
+              }
+            )
+            .then(() => loadResolve())
+            .catch((err) => {
+              Logger.error(`Loading obj ${this._resource} failed with ${err}`)
+              loadReject()
+            })
+        }
+      })
+
+      pload.then(async () => {
         const t0 = performance.now()
         const res = await this.tree
           .getRenderTree(this._resource)
           .buildRenderTree(new ObjGeometryConverter())
-        Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
+        Logger.log('Tree build time -> ', performance.now() - t0)
 
         resolve(res)
+      })
+      pload.catch(() => {
+        Logger.error(`Could not load ${this._resource}`)
+        reject()
       })
     })
   }
