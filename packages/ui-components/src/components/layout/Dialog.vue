@@ -33,15 +33,34 @@
                 widthClasses
               ]"
             >
-              <div class="relative">
+              <div
+                v-if="title"
+                class="flex items-center justify-center shadow p-4 relative z-10 bg-foundation rounded-t-lg"
+              >
+                <h4 class="text-2xl font-bold">{{ title }}</h4>
+              </div>
+              <button
+                v-if="!hideCloser"
+                class="absolute z-20 top-5 right-4 text-foreground"
+                @click="open = false"
+              >
+                <XMarkIcon class="h-6 w-6" />
+              </button>
+              <div class="p-4 sm:p-6">
                 <slot>Put your content here!</slot>
-                <button
-                  v-if="!hideCloser"
-                  class="absolute top-0 right-0 text-foreground"
-                  @click="open = false"
+              </div>
+              <div
+                v-if="buttons"
+                class="flex p-4 sm:px-6 sm:py-5 border-t gap-2 border-outline-3"
+              >
+                <FormButton
+                  v-for="(button, index) in buttons"
+                  :key="index"
+                  v-bind="button.props"
+                  @click="button.onClick"
                 >
-                  <XMarkIcon class="h-6 w-6" />
-                </button>
+                  {{ button.text }}
+                </FormButton>
               </div>
             </DialogPanel>
           </TransitionChild>
@@ -52,6 +71,7 @@
 </template>
 <script setup lang="ts">
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
+import { FormButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { computed } from 'vue'
 
@@ -70,6 +90,8 @@ const props = defineProps<{
    * Prevent modal from closing when the user clicks outside of the modal or presses Esc
    */
   preventCloseOnClickOutside?: boolean
+  title?: string
+  buttons?: Array<{ text: string; props: Record<string, unknown>; onClick: () => void }>
 }>()
 
 const open = computed({
@@ -93,10 +115,11 @@ const maxWidthWeight = computed(() => {
 })
 
 const widthClasses = computed(() => {
-  const classParts: string[] = [
-    'px-4 pt-4 pb-4 w-full',
-    'sm:my-8 sm:w-full sm:max-w-xl sm:p-6'
-  ]
+  const classParts: string[] = ['w-full', 'sm:my-8 sm:w-full sm:max-w-xl']
+
+  if (!props.title) {
+    classParts.push('px-4 pt-4 pb-4', 'sm:p-6')
+  }
 
   if (maxWidthWeight.value >= 1) {
     classParts.push('md:max-w-2xl')

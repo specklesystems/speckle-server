@@ -149,6 +149,8 @@ module.exports = {
     async adminDeleteUser(_parent, args, context) {
       await throwForNotHavingServerRole(context, Roles.Server.Admin)
       const user = await getUserByEmail({ email: args.userConfirmation.email })
+      if (!user) return false
+
       await deleteUser(user.id)
       return true
     },

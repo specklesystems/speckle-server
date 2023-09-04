@@ -14,7 +14,8 @@ import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import {
   buildAbstractCollectionMergeFunction,
   buildArrayMergeFunction,
-  incomingOverwritesExistingMergeFunction
+  incomingOverwritesExistingMergeFunction,
+  mergeAsObjectsFunction
 } from '~~/lib/core/helpers/apolloSetup'
 import { onError } from '@apollo/client/link/error'
 import { useNavigateToLogin, loginRoute } from '~~/lib/common/helpers/route'
@@ -94,6 +95,25 @@ function createCache(): InMemoryCache {
           },
           projects: {
             merge: buildArrayMergeFunction()
+          },
+          admin: {
+            merge: mergeAsObjectsFunction
+          }
+        }
+      },
+      AdminQueries: {
+        fields: {
+          inviteList: {
+            keyArgs: ['query'],
+            merge: buildAbstractCollectionMergeFunction('AdminInviteList')
+          },
+          projectList: {
+            keyArgs: ['query', 'visibility'],
+            merge: buildAbstractCollectionMergeFunction('ProjectCollection')
+          },
+          userList: {
+            keyArgs: ['query', 'role'],
+            merge: buildAbstractCollectionMergeFunction('AdminUserList')
           }
         }
       },

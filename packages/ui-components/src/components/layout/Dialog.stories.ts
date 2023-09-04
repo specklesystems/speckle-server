@@ -47,6 +47,33 @@ export const Default: StoryObj = {
   }
 }
 
+export const HeaderAndFooter = {
+  ...Default,
+  args: {
+    ...Default.args,
+    title: 'Dialog Title',
+    buttons: [
+      {
+        text: 'Close',
+        props: {
+          color: 'secondary',
+          link: false,
+          fullWidth: true,
+          outline: true
+        }
+      },
+      {
+        text: 'Save',
+        props: {
+          color: 'default',
+          link: false,
+          fullWidth: true
+        }
+      }
+    ]
+  }
+}
+
 export const ManualCloseOnly = {
   ...Default,
   args: {
