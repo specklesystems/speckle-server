@@ -28,7 +28,7 @@
 import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
 import { UserItem } from '~~/lib/server-management/helpers/types'
-import { adminDeleteUser } from '~~/lib/server-management/graphql/mutations'
+import { adminDeleteUserMutation } from '~~/lib/server-management/graphql/mutations'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
   ROOT_QUERY,
@@ -37,7 +37,7 @@ import {
   getFirstErrorMessage,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { AdminUserList } from '~~/lib/common/generated/gql/graphql'
+import { AdminUserList, ProjectCollection } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   open: boolean
@@ -45,7 +45,7 @@ const props = defineProps<{
 }>()
 
 const { triggerNotification } = useGlobalToast()
-const { mutate: adminDeleteUserMutation } = useMutation(adminDeleteUser)
+const { mutate: adminDeleteUser } = useMutation(adminDeleteUserMutation)
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
@@ -55,7 +55,7 @@ const deleteConfirmed = async () => {
     return
   }
 
-  const result = await adminDeleteUserMutation(
+  const result = await adminDeleteUser(
     {
       userConfirmation: { email: userEmail }
     },
@@ -85,16 +85,35 @@ const deleteConfirmed = async () => {
               for (const field of userListFields) {
                 const oldItems = value[field]?.items || []
                 const newItems = oldItems.filter((i) => i.__ref !== cacheId)
-                const removedCount = oldItems.length - newItems.length
 
                 newVal[field] = {
                   ...value[field],
-                  items: newItems,
-                  totalCount: Math.max(
-                    0,
-                    (value[field]?.totalCount || 0) - removedCount
-                  )
+                  ...(value[field]?.items ? { items: newItems } : {}),
+                  totalCount: Math.max(0, (value[field]?.totalCount || 0) - 1)
                 }
+              }
+
+              return newVal
+            },
+            { fieldNameWhitelist: ['admin'] }
+          )
+
+          // Modify 'admin' field of ROOT_QUERY so that we can delete all `projectList` instances, cause projects may have changed (deleted)
+          modifyObjectFields<undefined, { [key: string]: ProjectCollection }>(
+            cache,
+            ROOT_QUERY,
+            (_fieldName, _variables, value, details) => {
+              // Find all `projectList` fields (there can be multiple due to differing variables)
+              const projectListFields = Object.keys(value).filter(
+                (k) =>
+                  details.revolveFieldNameAndVariables(k).fieldName === 'projectList'
+              )
+
+              // Being careful not to mutate original `value`
+              const newVal: typeof value = { ...value }
+
+              for (const field of projectListFields) {
+                delete newVal[field]
               }
 
               return newVal

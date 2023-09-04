@@ -41,7 +41,7 @@
         { icon: TrashIcon, label: 'Delete', action: openDeleteInvitationDialog }
       ]"
       :column-classes="{
-        email: 'col-span-5',
+        email: 'col-span-5 truncate',
         invitedBy: 'col-span-4',
         resend: 'col-span-3'
       }"
@@ -53,7 +53,9 @@
       <template #invitedBy="{ item }">
         <div class="flex items-center gap-2 py-1">
           <UserAvatar v-if="isInvite(item)" :user="item.invitedBy" />
-          {{ isInvite(item) ? item.invitedBy.name : '' }}
+          <span class="truncate">
+            {{ isInvite(item) ? item.invitedBy.name : '' }}
+          </span>
         </div>
       </template>
 
@@ -99,8 +101,8 @@ import { useQuery, useMutation } from '@vue/apollo-composable'
 import { MagnifyingGlassIcon, TrashIcon, UserPlusIcon } from '@heroicons/vue/20/solid'
 import { ItemType, InviteItem } from '~~/lib/server-management/helpers/types'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
-import { getInvites } from '~~/lib/server-management/graphql/queries'
-import { adminResendInvite } from '~~/lib/server-management/graphql/mutations'
+import { getInvitesQuery } from '~~/lib/server-management/graphql/queries'
+import { adminResendInviteMutation } from '~~/lib/server-management/graphql/mutations'
 import { isInvite } from '~~/lib/server-management/helpers/utils'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
@@ -114,7 +116,7 @@ definePageMeta({
 
 const logger = useLogger()
 const { triggerNotification } = useGlobalToast()
-const { mutate: resendInvitationMutation } = useMutation(adminResendInvite)
+const { mutate: resendInvitationMutation } = useMutation(adminResendInviteMutation)
 
 const inviteToModify = ref<InviteItem | null>(null)
 const searchString = ref('')
@@ -128,7 +130,7 @@ const {
   fetchMore: fetchMorePages,
   variables: resultVariables,
   onResult
-} = useQuery(getInvites, () => ({
+} = useQuery(getInvitesQuery, () => ({
   limit: 50,
   query: searchString.value
 }))

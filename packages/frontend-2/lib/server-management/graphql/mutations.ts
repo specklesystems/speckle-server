@@ -6,25 +6,25 @@ export const serverInfoUpdateMutation = graphql(`
   }
 `)
 
-export const adminDeleteUser = graphql(`
+export const adminDeleteUserMutation = graphql(`
   mutation AdminPanelDeleteUser($userConfirmation: UserDeleteInput!) {
     adminDeleteUser(userConfirmation: $userConfirmation)
   }
 `)
 
-export const adminDeleteProject = graphql(`
+export const adminDeleteProjectMutation = graphql(`
   mutation AdminPanelDeleteProject($ids: [String!]) {
     streamsDelete(ids: $ids)
   }
 `)
 
-export const adminResendInvite = graphql(`
+export const adminResendInviteMutation = graphql(`
   mutation AdminPanelResendInvite($inviteId: String!) {
     inviteResend(inviteId: $inviteId)
   }
 `)
 
-export const adminDeleteInvite = graphql(`
+export const adminDeleteInviteMutation = graphql(`
   mutation AdminPanelDeleteInvite($inviteId: String!) {
     inviteDelete(inviteId: $inviteId)
   }

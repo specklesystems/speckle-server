@@ -38,7 +38,7 @@
       :items="projects"
       :buttons="[{ icon: TrashIcon, label: 'Delete', action: openProjectDeleteDialog }]"
       :column-classes="{
-        name: 'col-span-3',
+        name: 'col-span-3 truncate',
         type: 'col-span-1',
         created: 'col-span-2',
         modified: 'col-span-2',
@@ -111,7 +111,7 @@ import { ref } from 'vue'
 import { debounce } from 'lodash-es'
 import { useQuery } from '@vue/apollo-composable'
 import { MagnifyingGlassIcon, TrashIcon, PlusIcon } from '@heroicons/vue/20/solid'
-import { getProjects } from '~~/lib/server-management/graphql/queries'
+import { getProjectsQuery } from '~~/lib/server-management/graphql/queries'
 import { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { isProject } from '~~/lib/server-management/helpers/utils'
@@ -134,7 +134,7 @@ const {
   fetchMore: fetchMorePages,
   variables: resultVariables,
   onResult
-} = useQuery(getProjects, () => ({
+} = useQuery(getProjectsQuery, () => ({
   limit: 50,
   query: searchString.value
 }))

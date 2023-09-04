@@ -17,10 +17,7 @@
         @cta-clicked="showDialog = true"
       />
 
-      <ServerManagementSettingsDialog
-        v-model:open="showDialog"
-        @server-info-updated="refetch"
-      />
+      <ServerManagementSettingsDialog v-model:open="showDialog" />
 
       <ServerManagementCard :server-info="userData" />
       <ServerManagementCard :server-info="projectData" />
@@ -58,7 +55,7 @@ definePageMeta({
 
 const logger = useLogger()
 const router = useRouter()
-const { result, refetch } = useQuery(serverManagementDataQuery)
+const { result } = useQuery(serverManagementDataQuery)
 
 const showDialog = ref(false)
 const latestVersion = ref<string | null>(null)
@@ -79,7 +76,7 @@ const serverData = computed((): CardInfo[] => [
     icon: ServerIcon,
     cta: {
       type: 'button',
-      label: 'Edit Settings',
+      label: 'Edit',
       action: () => {
         showDialog.value = true
       }
@@ -101,7 +98,7 @@ const serverData = computed((): CardInfo[] => [
 const userData = computed((): CardInfo[] => [
   {
     title: 'Active users',
-    value: result.value?.admin.serverStatistics.totalUserCount?.toString() || 'N/A',
+    value: result.value?.admin.userList.totalCount?.toString() || 'N/A',
     icon: UsersIcon,
     cta: {
       type: 'button',
@@ -123,7 +120,7 @@ const userData = computed((): CardInfo[] => [
 const projectData = computed((): CardInfo[] => [
   {
     title: 'Projects',
-    value: result.value?.admin.serverStatistics.totalProjectCount?.toString() || 'N/A',
+    value: result.value?.admin.projectList.totalCount?.toString() || 'N/A',
     icon: HomeIcon,
     cta: {
       type: 'button',

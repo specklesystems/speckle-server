@@ -63,10 +63,13 @@ import { isRequired } from '~~/lib/common/helpers/validation'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { LayoutDialog, FormTextInput, FormTextArea } from '@speckle/ui-components'
 import { useLogger } from '~~/composables/logging'
-import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
+import {
+  ROOT_QUERY,
+  convertThrowIntoFetchResult,
+  modifyObjectFields
+} from '~~/lib/common/helpers/graphql'
 import { serverInfoQuery } from '~~/lib/server-management/graphql/queries'
 import { serverInfoUpdateMutation } from '~~/lib/server-management/graphql/mutations'
-import type { Modifier, Reference } from '@apollo/client/cache'
 
 type FormValues = {
   name: string
@@ -80,10 +83,6 @@ type FormValues = {
 type ServerInfoUpdateVariables = {
   info: FormValues
 }
-
-const emit = defineEmits<{
-  (e: 'server-info-updated'): void
-}>()
 
 const logger = useLogger()
 const { triggerNotification } = useGlobalToast()
@@ -120,16 +119,25 @@ const updateServerInfoAndCache = async (variables: ServerInfoUpdateVariables) =>
     const result = await updateServerInfo(variables, {
       update: (cache, result) => {
         if (result?.data?.serverInfoUpdate) {
-          cache.modify({
-            fields: {
-              serverInfo: ((existingServerInfo: FormValues): FormValues => {
+          // Modify 'serverInfo' field of ROOT_QUERY
+          modifyObjectFields<FormValues, FormValues>(
+            cache,
+            ROOT_QUERY,
+            (_fieldName, _variables, value, details) => {
+              // Find the `serverInfo` field and modify it
+              if (
+                details.revolveFieldNameAndVariables(_fieldName).fieldName ===
+                'serverInfo'
+              ) {
                 return {
-                  ...existingServerInfo,
+                  ...value,
                   ...variables.info
                 }
-              }) as Modifier<FormValues | Reference>
-            }
-          })
+              }
+              return value
+            },
+            { fieldNameWhitelist: ['serverInfo'] }
+          )
         }
       }
     })
@@ -140,26 +148,26 @@ const updateServerInfoAndCache = async (variables: ServerInfoUpdateVariables) =>
 }
 
 const onSubmit = handleSubmit(async () => {
-  try {
-    await updateServerInfoAndCache({
-      info: {
-        name: name.value,
-        description: description.value,
-        company: company.value,
-        adminContact: adminContact.value,
-        termsOfService: termsOfService.value,
-        inviteOnly: inviteOnly.value || false
-      }
-    })
+  const result = await updateServerInfoAndCache({
+    info: {
+      name: name.value,
+      description: description.value,
+      company: company.value,
+      adminContact: adminContact.value,
+      termsOfService: termsOfService.value,
+      inviteOnly: inviteOnly.value || false
+    }
+  })
+
+  if (result && result.data) {
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Successfully saved',
       description: 'Your server settings have been saved.'
     })
     isOpen.value = false
-    emit('server-info-updated')
-  } catch (error) {
-    logger.error(error)
+  } else {
+    logger.error(result && result.errors)
     triggerNotification({
       type: ToastNotificationType.Danger,
       title: 'Saving failed',

@@ -88,7 +88,7 @@ const props = defineProps<{
 }>()
 
 const paddingRightStyle = computed(() => {
-  const padding = 52 + ((props.buttons as RowButton[]).length - 1) * 25
+  const padding = 52 + ((props.buttons?.length || 0) - 1) * 25
   return `${padding}px`
 })
 

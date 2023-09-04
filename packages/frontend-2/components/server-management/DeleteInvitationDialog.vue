@@ -32,7 +32,7 @@
 import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
 import { InviteItem } from '~~/lib/server-management/helpers/types'
-import { adminDeleteInvite } from '~~/lib/server-management/graphql/mutations'
+import { adminDeleteInviteMutation } from '~~/lib/server-management/graphql/mutations'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
   ROOT_QUERY,
@@ -49,7 +49,7 @@ const props = defineProps<{
 }>()
 
 const { triggerNotification } = useGlobalToast()
-const { mutate: adminDeleteMutation } = useMutation(adminDeleteInvite)
+const { mutate: adminDeleteMutation } = useMutation(adminDeleteInviteMutation)
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
@@ -90,15 +90,11 @@ const deleteConfirmed = async () => {
               for (const field of inviteListFields) {
                 const oldItems = value[field]?.items || []
                 const newItems = oldItems.filter((i) => i.__ref !== cacheId)
-                const removedCount = oldItems.length - newItems.length
 
                 newVal[field] = {
                   ...value[field],
-                  items: newItems,
-                  totalCount: Math.max(
-                    0,
-                    (value[field]?.totalCount || 0) - removedCount
-                  )
+                  ...(value[field]?.items ? { items: newItems } : {}),
+                  totalCount: Math.max(0, (value[field]?.totalCount || 0) - 1)
                 }
               }
 
