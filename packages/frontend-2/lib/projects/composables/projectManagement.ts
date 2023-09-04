@@ -14,12 +14,15 @@ import {
   ProjectUpdatedMessageType,
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
-  UpdateProjectMetadataMutation
+  UpdateProjectMetadataMutation,
+  AdminPanelProjectsListQuery
 } from '~~/lib/common/generated/gql/graphql'
 import {
+  ROOT_QUERY,
   convertThrowIntoFetchResult,
   getCacheId,
-  getFirstErrorMessage
+  getFirstErrorMessage,
+  modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
 import { useNavigateToHome } from '~~/lib/common/helpers/route'
 import {
@@ -105,7 +108,30 @@ export function useCreateProject() {
     const res = await apollo
       .mutate({
         mutation: createProjectMutation,
-        variables: { input }
+        variables: { input },
+        update: (cache, { data }) => {
+          if (data?.projectMutations.create.id) {
+            modifyObjectFields<
+              undefined,
+              { [key: string]: AdminPanelProjectsListQuery }
+            >(
+              cache,
+              ROOT_QUERY,
+              (fieldName, _variables, value, details) => {
+                const projectListFields = Object.keys(value).filter(
+                  (k) =>
+                    details.revolveFieldNameAndVariables(k).fieldName === 'projectList'
+                )
+                const newVal: typeof value = { ...value }
+                for (const field of projectListFields) {
+                  delete newVal[field]
+                }
+                return newVal
+              },
+              { fieldNameWhitelist: ['admin'] }
+            )
+          }
+        }
       })
       .catch(convertThrowIntoFetchResult)
 
