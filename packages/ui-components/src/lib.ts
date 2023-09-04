@@ -44,6 +44,7 @@ import {
 import LayoutMenu from '~~/src/components/layout/Menu.vue'
 import { LayoutMenuItem, LayoutTabItem } from '~~/src/helpers/layout/components'
 import LayoutTabs from '~~/src/components/layout/Tabs.vue'
+import LayoutTable from '~~/src/components/layout/Table.vue'
 import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
 import { InfiniteLoaderState } from '~~/src/helpers/global/components'
 import LayoutPanel from '~~/src/components/layout/Panel.vue'
@@ -90,6 +91,7 @@ export {
   useResponsiveHorizontalDirectionCalculation,
   LayoutMenu,
   LayoutTabs,
+  LayoutTable,
   InfiniteLoading,
   LayoutPanel,
   CommonAlert,

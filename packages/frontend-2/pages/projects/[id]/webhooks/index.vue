@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="project">
+    <div v-if="project" class="mb-8">
       <!-- Not working yet -->
       <Portal to="navigation">
         <HeaderNavLink
@@ -23,6 +23,7 @@
         more.
       </div>
     </div>
+    <ProjectWebhooksPageTable />
     <ProjectWebhooksPageDialogCreateWebhook
       v-model:open="showDialog"
       :url="urlValue"
