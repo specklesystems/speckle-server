@@ -11,6 +11,7 @@ import { NodeRenderView } from '../tree/NodeRenderView'
 import { IViewer } from '../../IViewer'
 import { Extension } from './core-extensions/Extension'
 import { SpeckleTypeAllRenderables } from '../loaders/GeometryConverter'
+import { SpeckleLoader } from '../loaders/Speckle/SpeckleLoader'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeckleObject = Record<string, any>
@@ -197,11 +198,19 @@ export class DiffExtension extends Extension {
     this.dynamicallyLoadedDiffResources = []
 
     if (!this.tree.findId(urlA)) {
-      loadPromises.push(this.viewer.loadObjectAsync(urlA, authToken, undefined, 1))
+      loadPromises.push(
+        this.viewer.loadObject(
+          new SpeckleLoader(this.viewer.getWorldTree(), urlA, authToken, undefined, 1)
+        )
+      )
       this.dynamicallyLoadedDiffResources.push(urlA)
     }
     if (!this.tree.findId(urlB)) {
-      loadPromises.push(this.viewer.loadObjectAsync(urlB, authToken, undefined, 1))
+      loadPromises.push(
+        this.viewer.loadObject(
+          new SpeckleLoader(this.viewer.getWorldTree(), urlB, authToken, undefined, 1)
+        )
+      )
       this.dynamicallyLoadedDiffResources.push(urlB)
     }
     await Promise.all(loadPromises)

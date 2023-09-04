@@ -12,7 +12,9 @@ import {
   VisualDiffMode,
   MeasurementType,
   ExplodeExtension,
-  DiffExtension
+  DiffExtension,
+  SpeckleLoader,
+  ObjLoader
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
@@ -22,6 +24,7 @@ import { Units } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
 import { MeasurementsExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
+import sampleObj from '../assets/BrandenburgGate.png'
 
 export default class Sandbox {
   private viewer: DebugViewer
@@ -1180,7 +1183,15 @@ export default class Sandbox {
       const authToken = localStorage.getItem(
         url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
       ) as string
-      await this.viewer.loadObjectAsync(url, authToken, undefined, 1)
+      const loader = new SpeckleLoader(
+        this.viewer.getWorldTree(),
+        url,
+        authToken,
+        undefined,
+        1
+      )
+      // const loader = new ObjLoader(this.viewer.getWorldTree(), sampleObj)
+      await this.viewer.loadObject(loader, 1, true)
     }
     localStorage.setItem('last-load-url', url)
   }

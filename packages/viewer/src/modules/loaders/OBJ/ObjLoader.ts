@@ -2,25 +2,25 @@ import { Group } from 'three'
 import { Loader } from '../Loader'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { ObjConverter } from './ObjConverter'
-import { Viewer } from '../../Viewer'
 import { ObjGeometryConverter } from './ObjGeometryConverter'
 import Logger from 'js-logger'
+import { WorldTree } from '../../..'
 
 export class ObjLoader extends Loader {
   private baseLoader: OBJLoader
   private converter: ObjConverter
-  private viewer: Viewer
+  private tree: WorldTree
 
   public get resource(): string {
     return this._resource
   }
 
-  public constructor(viewer: Viewer, resource: string) {
+  public constructor(targetTree: WorldTree, resource: string) {
     super()
     this._resource = resource
-    this.viewer = viewer
+    this.tree = targetTree
     this.baseLoader = new OBJLoader()
-    this.converter = new ObjConverter(viewer.getWorldTree())
+    this.converter = new ObjConverter(this.tree)
   }
 
   public load(): Promise<boolean> {
@@ -30,8 +30,7 @@ export class ObjLoader extends Loader {
           obj
         })
         const t0 = performance.now()
-        const res = await this.viewer
-          .getWorldTree()
+        const res = await this.tree
           .getRenderTree(this._resource)
           .buildRenderTree(new ObjGeometryConverter())
         Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
@@ -45,6 +44,6 @@ export class ObjLoader extends Loader {
     throw new Error('Method not implemented.')
   }
   public dispose() {
-    // TO DO
+    this.baseLoader = null
   }
 }

@@ -52,6 +52,9 @@ import {
   DiffResult,
   VisualDiffMode
 } from './modules/extensions/DiffExtension'
+import { Loader } from './modules/loaders/Loader'
+import { SpeckleLoader } from './modules/loaders/Speckle/SpeckleLoader'
+import { ObjLoader } from './modules/loaders/OBJ/ObjLoader'
 
 export {
   Viewer,
@@ -77,7 +80,10 @@ export {
   FilteringExtension,
   CameraControllerEvent,
   ExplodeExtension,
-  DiffExtension
+  DiffExtension,
+  Loader,
+  SpeckleLoader,
+  ObjLoader
 }
 
 export type {

@@ -9,6 +9,7 @@ import { World } from './modules/World'
 import SpeckleRenderer from './modules/SpeckleRenderer'
 import { Extension } from './modules/extensions/core-extensions/Extension'
 import Input from './modules/input/Input'
+import { Loader } from './modules/loaders/Loader'
 
 export interface ViewerParams {
   showStats: boolean
@@ -129,13 +130,7 @@ export interface IViewer {
 
   getViews(): SpeckleView[]
 
-  loadObjectAsync(
-    url: string,
-    token?: string,
-    enableCaching?: boolean,
-    priority?: number,
-    zoomToObject?: boolean
-  ): Promise<void>
+  loadObject(loader: Loader, priority?: number, zoomToObject?: boolean): Promise<void>
   cancelLoad(url: string, unload?: boolean): Promise<void>
   unloadObject(url: string): Promise<void>
   unloadAll(): Promise<void>

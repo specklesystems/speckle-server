@@ -2,6 +2,7 @@ import { Matrix4 } from 'three'
 import { NodeData } from '../../..'
 import { GeometryData } from '../../converter/Geometry'
 import { GeometryConverter, SpeckleType } from '../GeometryConverter'
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils'
 
 export class ObjGeometryConverter extends GeometryConverter {
   public getSpeckleType(node: NodeData): SpeckleType {
@@ -56,6 +57,9 @@ export class ObjGeometryConverter extends GeometryConverter {
     if (!node.raw) return
 
     const conversionFactor = 1
+    if (!node.raw.geometry.index || node.raw.geometry.index.array.length === 0) {
+      node.raw.geometry = mergeVertices(node.raw.geometry)
+    }
 
     return {
       attributes: {

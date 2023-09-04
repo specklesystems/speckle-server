@@ -1,14 +1,15 @@
 import Logger from 'js-logger'
 import Converter from './SpeckleConverter'
-import { Viewer } from '../../Viewer'
 import { Loader, LoaderEvent } from '../Loader'
 import ObjectLoader from '@speckle/objectloader'
 import { SpeckleGeometryConverter } from './SpeckleGeometryConverter'
+import { WorldTree } from '../../..'
 
 export class SpeckleLoader extends Loader {
   private loader: ObjectLoader
   private converter: Converter
-  private viewer: Viewer
+  private tree: WorldTree
+  private priority: number = 1
   private isCancelled = false
 
   public get resource(): string {
@@ -16,14 +17,16 @@ export class SpeckleLoader extends Loader {
   }
 
   constructor(
-    viewer: Viewer,
+    targetTree: WorldTree,
     objectUrl: string,
     authToken: string,
-    enableCaching: boolean
+    enableCaching: boolean,
+    priority: number = 1
   ) {
     super()
-    this.viewer = viewer
+    this.tree = targetTree
     this._resource = objectUrl
+    this.priority = priority
     let token = null
     try {
       token = authToken || localStorage.getItem('AuthToken')
@@ -61,7 +64,7 @@ export class SpeckleLoader extends Loader {
       options: { enableCaching, customLogger: (Logger as any).log }
     })
 
-    this.converter = new Converter(this.loader, viewer.getWorldTree())
+    this.converter = new Converter(this.loader, this.tree)
   }
 
   public async load(): Promise<boolean> {
@@ -100,7 +103,7 @@ export class SpeckleLoader extends Loader {
     Logger.warn(
       `Finished converting object ${this._resource} in ${
         (performance.now() - start) / 1000
-      } seconds. Node count: ${this.viewer.getWorldTree().nodeCount}`
+      } seconds. Node count: ${this.tree.nodeCount}`
     )
 
     if (viewerLoads === 0) {
@@ -110,10 +113,9 @@ export class SpeckleLoader extends Loader {
       })
     }
     const t0 = performance.now()
-    const p = this.viewer
-      .getWorldTree()
+    const p = this.tree
       .getRenderTree(this._resource)
-      .buildRenderTree(new SpeckleGeometryConverter())
+      .buildRenderTree(new SpeckleGeometryConverter(), this.priority)
 
     p.then(() => {
       Logger.log('ASYNC Tree build time -> ', performance.now() - t0)

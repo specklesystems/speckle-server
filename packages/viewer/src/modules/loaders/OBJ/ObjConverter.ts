@@ -5,7 +5,6 @@ import {
   ConverterResultDelegate
 } from '../Speckle/SpeckleConverter'
 import Logger from 'js-logger'
-import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils'
 
 export class ObjConverter {
   private lastAsyncPause: number
@@ -96,13 +95,9 @@ export class ObjConverter {
       )
       return
     }
-    if (!obj.geometry.index || obj.geometry.index.array.length === 0) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      obj.geometry = mergeVertices(obj.geometry)
-    }
 
     node.model.raw.vertices = obj.geometry.attributes.position.array
-    node.model.raw.faces = obj.geometry.index.array
+    node.model.raw.faces = obj.geometry.index?.array
     node.model.raw.colors = obj.geometry.attributes.color?.array
   }
 
