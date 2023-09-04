@@ -47,6 +47,11 @@ import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
 import { InfiniteLoaderState } from '~~/src/helpers/global/components'
 import LayoutPanel from '~~/src/components/layout/Panel.vue'
 import CommonAlert from '~~/src/components/common/Alert.vue'
+import {
+  writableAsyncComputed,
+  AsyncWritableComputedOptions,
+  AsyncWritableComputedRef
+} from '~~/src/composables/common/async'
 
 export {
   GlobalToastRenderer,
@@ -85,7 +90,8 @@ export {
   LayoutTabs,
   InfiniteLoading,
   LayoutPanel,
-  CommonAlert
+  CommonAlert,
+  writableAsyncComputed
 }
 export type {
   ToastNotification,
@@ -94,5 +100,7 @@ export type {
   HorizontalOrVertical,
   LayoutMenuItem,
   LayoutTabItem,
-  InfiniteLoaderState
+  InfiniteLoaderState,
+  AsyncWritableComputedOptions,
+  AsyncWritableComputedRef
 }
