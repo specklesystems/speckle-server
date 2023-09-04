@@ -1,7 +1,7 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
 export const serverManagementDataQuery = graphql(`
-  query Admin {
+  query ServerManagementDataPage {
     admin {
       userList {
         totalCount
@@ -29,6 +29,7 @@ export const serverInfoQuery = graphql(`
       company
       termsOfService
       inviteOnly
+      guestModeEnabled
     }
   }
 `)

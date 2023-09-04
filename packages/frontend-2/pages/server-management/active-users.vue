@@ -81,7 +81,9 @@
 
       <template #role="{ item }">
         <FormSelectServerRoles
+          :allow-guest="isGuestMode"
           allow-admin
+          allow-archived
           :model-value="isUser(item) ? item.role : undefined"
           :disabled="isUser(item) && isCurrentUser(item)"
           @update:model-value="(newRoleValue) => isUser(item) && !isArray(newRoleValue) && newRoleValue && openChangeUserRoleDialog(item, newRoleValue as ServerRoles)"
@@ -130,6 +132,7 @@ import {
   TrashIcon,
   UserPlusIcon
 } from '@heroicons/vue/20/solid'
+import { useServerInfo } from '~~/lib/core/composables/server'
 
 definePageMeta({
   middleware: ['admin']
@@ -137,6 +140,7 @@ definePageMeta({
 
 const logger = useLogger()
 const { activeUser } = useActiveUser()
+const { isGuestMode } = useServerInfo()
 
 const userToModify: Ref<Nullable<UserItem>> = ref(null)
 const searchString = ref('')
