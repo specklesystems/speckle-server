@@ -44,7 +44,7 @@
                 size="sm"
                 color="secondary"
                 hide-text
-                class="text-red-500"
+                :class="button.class"
                 @click.stop="button.action(item)"
               />
             </div>
@@ -57,6 +57,7 @@
 
 <script setup lang="ts">
 import { ConcreteComponent, computed } from 'vue'
+import { FormButton } from '~~/src/lib'
 
 export interface ItemType {
   id: string
@@ -67,6 +68,7 @@ interface RowButton {
   icon: ConcreteComponent
   label: string
   action: (item: ItemType) => void
+  class: string
 }
 
 interface Header {

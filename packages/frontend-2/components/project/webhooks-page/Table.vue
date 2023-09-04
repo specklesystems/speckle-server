@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { LayoutTable } from '@speckle/ui-components'
-import { TrashIcon } from '@heroicons/vue/24/solid'
+import { TrashIcon, PencilIcon } from '@heroicons/vue/24/outline'
 
 const headers = [
   { id: 'state', title: 'State' },
@@ -35,15 +35,22 @@ const webhooks = ref([
 
 const buttons = [
   {
+    icon: PencilIcon,
+    label: 'Edit',
+    action: (item) => console.log('Delete', item),
+    class: 'text-primary'
+  },
+  {
     icon: TrashIcon,
     label: 'Delete',
-    action: (item) => console.log('Delete', item)
+    action: (item) => console.log('Delete', item),
+    class: 'text-red-500'
   }
 ]
 
 const columnClasses = {
-  state: 'col-span-2',
+  state: 'col-span-1',
   data: 'col-span-5 truncate',
-  triggerEvents: 'col-span-5 truncate'
+  triggerEvents: 'col-span-6 truncate'
 }
 </script>
