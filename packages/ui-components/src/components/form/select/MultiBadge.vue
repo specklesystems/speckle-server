@@ -35,7 +35,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { ref, defineProps, defineEmits } from 'vue'
+import { ref } from 'vue'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import { CommonBadge } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/solid'
