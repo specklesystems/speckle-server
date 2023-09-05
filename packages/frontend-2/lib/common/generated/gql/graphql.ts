@@ -1305,6 +1305,7 @@ export type Project = {
   /** Return metadata about resources being requested in the viewer */
   viewerResources: Array<ViewerResourceGroup>;
   visibility: ProjectVisibility;
+  webhooks?: Maybe<WebhookCollection>;
 };
 
 
@@ -1353,6 +1354,11 @@ export type ProjectVersionsArgs = {
 export type ProjectViewerResourcesArgs = {
   loadedVersionsOnly?: InputMaybe<Scalars['Boolean']>;
   resourceIdString: Scalars['String'];
+};
+
+
+export type ProjectWebhooksArgs = {
+  id?: InputMaybe<Scalars['String']>;
 };
 
 export type ProjectCollaborator = {
