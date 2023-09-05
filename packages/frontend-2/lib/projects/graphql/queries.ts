@@ -202,3 +202,27 @@ export const projectDiscussionsPageQuery = graphql(`
     }
   }
 `)
+
+export const projectWebhooksQuery = graphql(`
+  query projectWebhooks($projectId: String!, $webhooksId: String) {
+    project(id: $projectId) {
+      webhooks(id: $webhooksId) {
+        items {
+          streamId
+          triggers
+          enabled
+          url
+          id
+          description
+          history(limit: 5) {
+            items {
+              status
+              statusInfo
+            }
+          }
+        }
+        totalCount
+      }
+    }
+  }
+`)

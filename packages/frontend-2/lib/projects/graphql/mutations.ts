@@ -144,3 +144,9 @@ export const updateVersionMutation = graphql(`
     }
   }
 `)
+
+export const deleteWebhookMutation = graphql(`
+  mutation deleteWebhook($webhook: WebhookDeleteInput!) {
+    webhookDelete(webhook: $webhook)
+  }
+`)
