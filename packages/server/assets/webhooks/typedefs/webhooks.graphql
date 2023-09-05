@@ -4,6 +4,12 @@ extend type Stream {
     @hasScope(scope: "streams:write")
 }
 
+extend type Project {
+  webhooks(id: String): WebhookCollection
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "streams:write")
+}
+
 extend type Mutation {
   """
   Creates a new webhook on a stream
@@ -42,6 +48,21 @@ type Webhook {
   history(limit: Int! = 25): WebhookEventCollection
 }
 
+type WebhookEventCollection {
+  totalCount: Int
+  items: [WebhookEvent]
+}
+
+type WebhookEvent {
+  id: String!
+  webhookId: String!
+  status: Int!
+  statusInfo: String!
+  retryCount: Int!
+  lastUpdate: DateTime!
+  payload: String!
+}
+
 input WebhookCreateInput {
   streamId: String!
   url: String!
@@ -64,19 +85,4 @@ input WebhookUpdateInput {
 input WebhookDeleteInput {
   id: String!
   streamId: String!
-}
-
-type WebhookEventCollection {
-  totalCount: Int
-  items: [WebhookEvent]
-}
-
-type WebhookEvent {
-  id: String!
-  webhookId: String!
-  status: Int!
-  statusInfo: String!
-  retryCount: Int!
-  lastUpdate: DateTime!
-  payload: String!
 }
