@@ -23,7 +23,7 @@ import FormSelectSourceApps from '~~/src/components/form/select/SourceApps.vue'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import SourceAppBadge from '~~/src/components/SourceAppBadge.vue'
-import { onKeyboardShortcut } from '~~/src/composables/form/input'
+import { onKeyboardShortcut, useFormCheckboxModel } from '~~/src/composables/form/input'
 import {
   ModifierKeys,
   getKeyboardShortcutTitle,
@@ -91,7 +91,8 @@ export {
   InfiniteLoading,
   LayoutPanel,
   CommonAlert,
-  writableAsyncComputed
+  writableAsyncComputed,
+  useFormCheckboxModel
 }
 export type {
   ToastNotification,

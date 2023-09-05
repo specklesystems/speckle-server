@@ -51,6 +51,12 @@
           name="inviteOnly"
           show-label
         />
+        <FormCheckbox
+          v-model="guestModeEnabled"
+          label="Guest mode - Enables the 'Guest' server role, which allows users to only contribute to projects that they're invited to"
+          name="guestModeEnabled"
+          show-label
+        />
       </div>
     </form>
   </LayoutDialog>
@@ -61,7 +67,12 @@ import { useQuery, useMutation } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
 import { isRequired } from '~~/lib/common/helpers/validation'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import { LayoutDialog, FormTextInput, FormTextArea } from '@speckle/ui-components'
+import {
+  LayoutDialog,
+  FormTextInput,
+  FormTextArea,
+  useFormCheckboxModel
+} from '@speckle/ui-components'
 import { useLogger } from '~~/composables/logging'
 import {
   ROOT_QUERY,
@@ -70,6 +81,10 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { serverInfoQuery } from '~~/lib/server-management/graphql/queries'
 import { serverInfoUpdateMutation } from '~~/lib/server-management/graphql/mutations'
+import type {
+  ServerInfoUpdateMutationVariables,
+  Query
+} from '~~/lib/common/generated/gql/graphql'
 
 type FormValues = {
   name: string
@@ -78,10 +93,7 @@ type FormValues = {
   adminContact: string
   termsOfService: string
   inviteOnly: boolean
-}
-
-type ServerInfoUpdateVariables = {
-  info: FormValues
+  guestModeEnabled: boolean
 }
 
 const logger = useLogger()
@@ -95,7 +107,9 @@ const description = ref('')
 const company = ref('')
 const adminContact = ref('')
 const termsOfService = ref('')
-const inviteOnly = ref<true | undefined>(undefined)
+const { model: inviteOnly, isChecked: isInviteOnlyChecked } = useFormCheckboxModel()
+const { model: guestModeEnabled, isChecked: isGuestModeChecked } =
+  useFormCheckboxModel()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
@@ -114,27 +128,24 @@ const dialogButtons = computed(() => [
 
 const requiredRule = [isRequired]
 
-const updateServerInfoAndCache = async (variables: ServerInfoUpdateVariables) => {
+const updateServerInfoAndCache = async (
+  variables: ServerInfoUpdateMutationVariables
+) => {
   try {
     const result = await updateServerInfo(variables, {
       update: (cache, result) => {
         if (result?.data?.serverInfoUpdate) {
           // Modify 'serverInfo' field of ROOT_QUERY
-          modifyObjectFields<FormValues, FormValues>(
+          modifyObjectFields<undefined, Query['serverInfo']>(
             cache,
             ROOT_QUERY,
-            (_fieldName, _variables, value, details) => {
-              // Find the `serverInfo` field and modify it
-              if (
-                details.revolveFieldNameAndVariables(_fieldName).fieldName ===
-                'serverInfo'
-              ) {
-                return {
-                  ...value,
-                  ...variables.info
-                }
+            (_fieldName, _variables, value) => {
+              const newData = variables.info
+              return {
+                ...value,
+                ...newData,
+                guestModeEnabled: newData.guestModeEnabled ?? value.guestModeEnabled
               }
-              return value
             },
             { fieldNameWhitelist: ['serverInfo'] }
           )
@@ -155,7 +166,8 @@ const onSubmit = handleSubmit(async () => {
       company: company.value,
       adminContact: adminContact.value,
       termsOfService: termsOfService.value,
-      inviteOnly: inviteOnly.value || false
+      inviteOnly: isInviteOnlyChecked.value,
+      guestModeEnabled: isGuestModeChecked.value
     }
   })
 
@@ -185,6 +197,7 @@ watch(isOpen, (newVal, oldVal) => {
   company.value = result.value.serverInfo.company || ''
   adminContact.value = result.value.serverInfo.adminContact || ''
   termsOfService.value = result.value.serverInfo.termsOfService || ''
-  inviteOnly.value = result.value.serverInfo.inviteOnly || undefined
+  isInviteOnlyChecked.value = !!result.value.serverInfo.inviteOnly
+  isGuestModeChecked.value = !!result.value.serverInfo.guestModeEnabled
 })
 </script>
