@@ -37,52 +37,7 @@ export default class Batcher {
     this.materials.createDefaultMaterials()
   }
 
-  public async makeBatches(
-    renderTree: RenderTree,
-    speckleType: SpeckleType[],
-    batchType?: GeometryType
-  ) {
-    const renderViews = renderTree
-      .getRenderableRenderViews(...speckleType)
-      .sort((a, b) => {
-        if (a.renderMaterialHash === 0) return -1
-        if (b.renderMaterialHash === 0) return 1
-        return a.renderMaterialHash - b.renderMaterialHash
-      })
-    const materialHashes = [
-      ...Array.from(new Set(renderViews.map((value) => value.renderMaterialHash)))
-    ]
-
-    Logger.warn(`Batch count: ${materialHashes}`)
-
-    for (let i = 0; i < materialHashes.length; i++) {
-      let renderViewsBatch = renderViews.filter(
-        (value) => value.renderMaterialHash === materialHashes[i]
-      )
-      /** Prune any meshes with no geometry data */
-      let vertCount
-      renderViewsBatch = renderViewsBatch.filter((value) => {
-        const valid = value.validGeometry
-        if (valid) {
-          vertCount += value.renderData.geometry.attributes.POSITION.length / 3
-        }
-        return valid || value.hasMetadata
-      })
-      const batches = this.splitBatch(renderViewsBatch, vertCount)
-      for (let k = 0; k < batches.length; k++) {
-        const restrictedRvs = batches[k]
-        const batch = await this.buildBatch(
-          renderTree,
-          restrictedRvs,
-          materialHashes[i],
-          batchType
-        )
-        this.batches[batch.id] = batch
-      }
-    }
-  }
-
-  public async *makeBatchesAsync(
+  public async *makeBatches(
     renderTree: RenderTree,
     speckleType: SpeckleType[],
     batchType?: GeometryType,

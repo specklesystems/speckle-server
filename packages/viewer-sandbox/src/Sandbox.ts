@@ -988,14 +988,6 @@ export default class Sandbox {
       this.viewer.requestRender()
     })
 
-    container
-      .addInput(this.batchesParams, 'showBvh', {
-        label: 'Show BVH'
-      })
-      .on('change', (ev) => {
-        this.viewer.getRenderer().showBVH = ev.value
-        this.viewer.requestRender()
-      })
     container.addInput(this.batchesParams, 'totalBvhSize', {
       label: 'BVH Size(MB)',
       disabled: true

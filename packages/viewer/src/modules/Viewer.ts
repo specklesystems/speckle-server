@@ -277,7 +277,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     if (treeBuilt) {
       const t0 = performance.now()
-      for await (const step of this.speckleRenderer.addRenderTreeAsync(
+      for await (const step of this.speckleRenderer.addRenderTree(
         loader.resource,
         priority
       )) {

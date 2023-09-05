@@ -343,28 +343,19 @@ export class CameraController extends Extension implements ICameraProvider {
   protected zoom(objectIds?: string[], fit?: number, transition?: boolean) {
     if (!objectIds) {
       this.zoomExtents(fit, transition)
-      // this.emit(CameraControllerEvent.Dynamic)
-      //   this.pipeline.onStationaryEnd()
       return
     }
     this.zoomToBox(this.viewer.getRenderer().boxFromObjects(objectIds), fit, transition)
-    // this.emit(CameraControllerEvent.Dynamic)
-    // this.pipeline.onStationaryEnd()
   }
 
   private zoomExtents(fit = 1.2, transition = true) {
-    // REVISIT
-    // if (this.viewer.sectionBox.display.visible) {
-    //   this.zoomToBox(this.viewer.clippingVolume, 1.2, true)
-    //   return
-    // }
-    if (this.viewer.getRenderer().allObjects.children.length === 0) {
+    if (this.viewer.getRenderer().clippingVolume.isEmpty()) {
       const box = new THREE.Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
       this.zoomToBox(box, fit, transition)
       return
     }
 
-    const box = new THREE.Box3().setFromObject(this.viewer.getRenderer().allObjects)
+    const box = this.viewer.getRenderer().clippingVolume
     /** This is for special cases like when the stream will only have one point
      *  which three will not consider it's size when computing the bounding box
      *  resulting in a zero size bounding box. That's why we make sure the bounding
@@ -470,8 +461,6 @@ export class CameraController extends Extension implements ICameraProvider {
     if (this.isPolarView(view)) {
       this.setViewPolar(view, transition)
     }
-    // this.pipeline.onStationaryEnd()
-    // this.emit(CameraControllerEvent.Dynamic)
   }
 
   private setViewSpeckle(view: SpeckleView, transition = true) {

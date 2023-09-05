@@ -39,7 +39,6 @@ import {
   ViewerEvent
 } from '../IViewer'
 import { DefaultPipelineOptions, Pipeline, PipelineOptions } from './pipeline/Pipeline'
-import { MeshBVHVisualizer } from 'three-mesh-bvh'
 import MeshBatch from './batching/MeshBatch'
 import { Shadowcatcher } from './Shadowcatcher'
 import SpeckleMesh from './objects/SpeckleMesh'
@@ -119,14 +118,70 @@ export default class SpeckleRenderer {
 
   private _cameraProvider: ICameraProvider = null
   private _clippingPlanes: Plane[] = []
-  private _clippingVolume: Box3 = new Box3()
+  private _clippingVolume: Box3 = null
 
+  /********************************
+   * Renderer and rendering flags */
   public get renderer(): SpeckleWebGLRenderer {
     return this._renderer
   }
 
   public set needsRender(value: boolean) {
     this._needsRender ||= value
+  }
+
+  /**********************
+   * Bounds and volumes */
+  public get sceneBox() {
+    return new Box3().setFromObject(this.allObjects)
+  }
+
+  public get sceneSphere() {
+    return this.sceneBox.getBoundingSphere(new Sphere())
+  }
+
+  public get sceneCenter() {
+    return this.sceneBox.getCenter(new Vector3())
+  }
+
+  public get clippingVolume(): Box3 {
+    return this._clippingVolume ? new Box3().copy(this._clippingVolume) : this.sceneBox
+  }
+
+  public set clippingVolume(box: Box3) {
+    this._clippingVolume = this.sceneBox.intersect(box)
+  }
+
+  /*****************
+   * Clipping planes */
+  public get clippingPlanes(): Plane[] {
+    return this._clippingPlanes
+  }
+
+  public set clippingPlanes(value: Plane[]) {
+    this._clippingPlanes = value.map((value: Plane) => new Plane().copy(value))
+    this.updateClippingPlanes()
+  }
+
+  /****************
+   * Common Objects */
+  public get allObjects() {
+    return this._scene.getObjectByName('ContentGroup')
+  }
+
+  public subtree(subtreeId: string) {
+    return this._scene.getObjectByName(subtreeId)
+  }
+
+  public get scene() {
+    return this._scene
+  }
+
+  /********
+   * Lights */
+
+  public get sunLight() {
+    return this.sun
   }
 
   public set indirectIBL(texture: Texture) {
@@ -146,32 +201,8 @@ export default class SpeckleRenderer {
     }
   }
 
-  /** TEMPORARY for backwards compatibility */
-  public get allObjects() {
-    return this._scene.getObjectByName('ContentGroup')
-  }
-
-  public subtree(subtreeId: string) {
-    return this._scene.getObjectByName(subtreeId)
-  }
-
-  public get sceneBox() {
-    /** Cache this, don't compute it every frame */
-    return new Box3().setFromObject(this.allObjects)
-  }
-
-  public get sceneSphere() {
-    return this.sceneBox.getBoundingSphere(new Sphere())
-  }
-
-  public get sceneCenter() {
-    return this.sceneBox.getCenter(new Vector3())
-  }
-
-  public get sunLight() {
-    return this.sun
-  }
-
+  /********
+   * Camera */
   public get cameraProvider() {
     return this._cameraProvider
   }
@@ -195,10 +226,8 @@ export default class SpeckleRenderer {
     return this._cameraProvider.renderingCamera
   }
 
-  public get scene() {
-    return this._scene
-  }
-
+  /**********
+   * Pipeline */
   public set pipelineOptions(value: PipelineOptions) {
     this.pipeline.pipelineOptions = value
   }
@@ -207,40 +236,18 @@ export default class SpeckleRenderer {
     return this.pipeline.pipelineOptions
   }
 
-  public set showBVH(value: boolean) {
-    this.SHOW_BVH = value
-    this.allObjects.traverse((obj) => {
-      if (obj.name.includes('_bvh')) {
-        obj.visible = this.SHOW_BVH
-      }
-    })
-  }
-
   public get shadowcatcher() {
     return this._shadowcatcher
   }
 
+  /**************
+   * Intersections */
   public get intersections() {
     return this._intersections
   }
 
-  public get clippingPlanes(): Plane[] {
-    return this._clippingPlanes
-  }
-
-  public set clippingPlanes(value: Plane[]) {
-    this._clippingPlanes = value.map((value: Plane) => new Plane().copy(value))
-    this.updateClippingPlanes()
-  }
-
-  public get clippingVolume(): Box3 {
-    return this._clippingVolume
-  }
-
-  public set clippingVolume(box: Box3) {
-    this._clippingVolume = this.sceneBox.intersect(box)
-  }
-
+  /*****************
+   * Rendering Stats */
   public get renderingStats(): RenderingStats {
     const batches = Object.values(this.batcher.batches)
 
@@ -525,39 +532,14 @@ export default class SpeckleRenderer {
     this._needsRender = true
   }
 
-  public async addRenderTree(subtreeId: string) {
-    await this.batcher.makeBatches(
-      this.viewer.getWorldTree().getRenderTree(subtreeId),
-      SpeckleTypeAllRenderables
-    )
-    const subtreeGroup = new Group()
-    subtreeGroup.name = subtreeId
-    subtreeGroup.layers.set(ObjectLayers.STREAM_CONTENT)
-    this.rootGroup.add(subtreeGroup)
-
-    const batches = this.batcher.getBatches(subtreeId)
-    batches.forEach((batch: Batch) => {
-      this.addBatch(batch, subtreeGroup)
-    })
-
-    this.updateDirectLights()
-    this.updateHelpers()
-    // REVISIT
-    // if (this.viewer.sectionBox.display.visible) {
-    //   this.viewer.setSectionBox()
-    // }
-    this.updateShadowCatcher()
-    this._needsRender = true
-  }
-
-  public async *addRenderTreeAsync(subtreeId: string, priority = 1) {
+  public async *addRenderTree(subtreeId: string, priority = 1) {
     this.cancel[subtreeId] = false
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
     subtreeGroup.layers.set(ObjectLayers.STREAM_CONTENT)
     this.rootGroup.add(subtreeGroup)
 
-    const generator = this.batcher.makeBatchesAsync(
+    const generator = this.batcher.makeBatches(
       this.viewer.getWorldTree().getRenderTree(subtreeId),
       SpeckleTypeAllRenderables,
       undefined,
@@ -583,10 +565,6 @@ export default class SpeckleRenderer {
 
     /** We'll just update the shadowcatcher after all batches are loaded */
     this.updateShadowCatcher()
-    // REVISIT
-    // if (this.viewer.sectionBox.display.visible) {
-    //   this.viewer.setSectionBox()
-    // }
     delete this.cancel[subtreeId]
   }
 
@@ -606,20 +584,6 @@ export default class SpeckleRenderer {
         ['USE_RTE', 'ALPHATEST_REJECTION']
       )
 
-      if (this.SHOW_BVH) {
-        const bvhHelper: MeshBVHVisualizer = new MeshBVHVisualizer(
-          batchRenderable as Mesh,
-          10
-        )
-        bvhHelper.name = batch.renderObject.id + '_bvh'
-        bvhHelper.traverse((obj) => {
-          obj.layers.set(ObjectLayers.PROPS)
-        })
-        bvhHelper.displayParents = true
-        bvhHelper.visible = false
-        bvhHelper.update()
-        parent.add(bvhHelper)
-      }
       const speckleMesh = batchRenderable as SpeckleMesh
       speckleMesh.BVH.boxHelpers.forEach((helper: Box3Helper) => {
         this.scene.add(helper)
@@ -773,7 +737,7 @@ export default class SpeckleRenderer {
     this._shadowcatcher.shadowcatcherMesh.visible = this.sunConfiguration.shadowcatcher
     if (this.sunConfiguration.shadowcatcher) {
       this._shadowcatcher.bake(
-        this.sceneBox,
+        this.clippingVolume,
         this._renderer.capabilities.maxTextureSize
       )
       this.resetPipeline()
@@ -995,13 +959,6 @@ export default class SpeckleRenderer {
 
     if (!results) {
       this.viewer.emit(ViewerEvent.ObjectClicked, null)
-      if (this.SHOW_BVH) {
-        this.allObjects.traverse((obj) => {
-          if (obj.name.includes('_bvh')) {
-            obj.visible = true
-          }
-        })
-      }
       return
     }
 
