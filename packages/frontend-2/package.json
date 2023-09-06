@@ -66,7 +66,6 @@
     "portal-vue": "^3.0.0",
     "seq-logging": "^2.1.1",
     "subscriptions-transport-ws": "^0.11.0",
-    "tslib": "^2.6.2",
     "vee-validate": "^4.7.0",
     "vue-advanced-cropper": "^2.8.8",
     "vue-tippy": "^6.0.0",
