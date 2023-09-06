@@ -180,6 +180,47 @@ export type AuthStrategy = {
   url: Scalars['String'];
 };
 
+export type AutomationFunctionRunResult = {
+  __typename?: 'AutomationFunctionRunResult';
+  blobs?: Maybe<Array<Scalars['String']>>;
+  contextView?: Maybe<Scalars['String']>;
+  elapsed: Scalars['Float'];
+  functionId: Scalars['String'];
+  objectResults: Scalars['JSONObject'];
+  runStatus: AutomationRunStatus;
+  statusMessage?: Maybe<Scalars['String']>;
+};
+
+export type AutomationMutations = {
+  __typename?: 'AutomationMutations';
+  create: Scalars['Boolean'];
+  functionRunStatusReport: Scalars['String'];
+};
+
+
+export type AutomationMutationsCreateArgs = {
+  input: ModelAutomationCreateInput;
+};
+
+
+export type AutomationMutationsFunctionRunStatusReportArgs = {
+  input: ModelAutomationRunResultCreateInput;
+};
+
+export enum AutomationRunStatus {
+  Failed = 'FAILED',
+  Initializing = 'INITIALIZING',
+  Running = 'RUNNING',
+  Succeeded = 'SUCCEEDED'
+}
+
+export type AutomationsStatus = {
+  __typename?: 'AutomationsStatus';
+  automationRuns: Array<ModelAutomationRun>;
+  status: AutomationRunStatus;
+  statusMessage?: Maybe<Scalars['String']>;
+};
+
 export type BlobMetadata = {
   __typename?: 'BlobMetadata';
   createdAt: Scalars['DateTime'];
@@ -591,6 +632,17 @@ export type FileUpload = {
   userId: Scalars['String'];
 };
 
+export type FunctionRunStatusInput = {
+  blobs?: InputMaybe<Array<Scalars['String']>>;
+  elapsed: Scalars['Float'];
+  functionId: Scalars['String'];
+  objectResults: Scalars['JSONObject'];
+  resultVersions?: InputMaybe<Array<Scalars['String']>>;
+  resultView?: InputMaybe<Scalars['String']>;
+  runStatus: AutomationRunStatus;
+  statusMessage?: InputMaybe<Scalars['String']>;
+};
+
 export type LegacyCommentViewerData = {
   __typename?: 'LegacyCommentViewerData';
   /**
@@ -681,6 +733,7 @@ export type LimitedUserTimelineArgs = {
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
+  automationStatus?: Maybe<AutomationsStatus>;
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
   /** All comment threads in this model */
@@ -721,6 +774,54 @@ export type ModelVersionsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<ModelVersionsFilter>;
   limit?: Scalars['Int'];
+};
+
+export type ModelAutomation = {
+  __typename?: 'ModelAutomation';
+  automationId: Scalars['String'];
+  runs: ModelAutomationRunsCollection;
+  versionId?: Maybe<Scalars['String']>;
+};
+
+
+export type ModelAutomationRunsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: Scalars['Int'];
+};
+
+export type ModelAutomationCreateInput = {
+  automationId: Scalars['String'];
+  automationRevisionId: Scalars['String'];
+  modelId: Scalars['String'];
+  projectId: Scalars['String'];
+};
+
+export type ModelAutomationRun = {
+  __typename?: 'ModelAutomationRun';
+  automation: ModelAutomation;
+  automationRevisionId: Scalars['String'];
+  automationRunId: Scalars['String'];
+  createdAt: Scalars['DateTime'];
+  functionRunResults: Array<AutomationFunctionRunResult>;
+  runStatus: AutomationRunStatus;
+  updatedAt: Scalars['DateTime'];
+};
+
+export type ModelAutomationRunResultCreateInput = {
+  automationId: Scalars['String'];
+  automationRevisionId: Scalars['String'];
+  automationRunId: Scalars['String'];
+  functionRunStatus: FunctionRunStatusInput;
+  modelId: Scalars['String'];
+  projectId: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
+export type ModelAutomationRunsCollection = {
+  __typename?: 'ModelAutomationRunsCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<ModelAutomationRun>;
+  totalCount: Scalars['Int'];
 };
 
 export type ModelCollection = {
@@ -808,6 +909,7 @@ export type Mutation = {
   appRevokeAccess?: Maybe<Scalars['Boolean']>;
   /** Update an existing third party application. **Note: This will invalidate all existing tokens, refresh tokens and access codes and will require existing users to re-authorize it.** */
   appUpdate: Scalars['Boolean'];
+  automationMutations: AutomationMutations;
   branchCreate: Scalars['String'];
   branchDelete: Scalars['Boolean'];
   branchUpdate: Scalars['Boolean'];
@@ -2551,6 +2653,7 @@ export type UserUpdateInput = {
 export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
+  automationStatus?: Maybe<AutomationsStatus>;
   /** All comment threads in this version */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
