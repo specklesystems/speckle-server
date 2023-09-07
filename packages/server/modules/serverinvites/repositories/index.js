@@ -275,7 +275,7 @@ async function queryServerInvites(searchQuery, limit, cursor) {
   const q = findServerInvitesBaseQuery(searchQuery)
     .limit(limit)
     .orderBy(ServerInvites.col.createdAt, 'desc')
-  if (cursor) q.where(ServerInvites.col.createdAt, '<', cursor)
+  if (cursor) q.where(ServerInvites.col.createdAt, '>', cursor)
   return await q
 }
 
