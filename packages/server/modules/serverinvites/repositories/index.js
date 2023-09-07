@@ -13,7 +13,7 @@ const { getStream } = require('@/modules/core/repositories/streams')
 /**
  * Use this wherever you're retrieving invites, not necessarily where you're writing to them
  */
-const getInvitesBaseQuery = () => {
+const getInvitesBaseQuery = (sort = 'asc') => {
   const q = ServerInvites.knex().select(ServerInvites.cols)
 
   // join just to ensure we don't retrieve invalid invites
@@ -25,7 +25,7 @@ const getInvitesBaseQuery = () => {
     w1.whereNull(ServerInvites.col.resourceId).orWhereNotNull(Streams.col.id)
   })
 
-  q.orderBy(ServerInvites.col.createdAt)
+  q.orderBy(ServerInvites.col.createdAt, sort)
 
   return q
 }
@@ -225,8 +225,8 @@ async function deleteStreamInvite(inviteId) {
     .delete()
 }
 
-function findServerInvitesBaseQuery(searchQuery) {
-  const q = getInvitesBaseQuery()
+function findServerInvitesBaseQuery(searchQuery, sort) {
+  const q = getInvitesBaseQuery(sort)
 
   if (searchQuery) {
     // TODO: Is this safe from SQL injection?
@@ -272,10 +272,9 @@ async function findServerInvites(searchQuery, limit, offset) {
  * @returns {Promise<ServerInviteRecord[]>}
  */
 async function queryServerInvites(searchQuery, limit, cursor) {
-  const q = findServerInvitesBaseQuery(searchQuery)
-    .limit(limit)
-    .orderBy(ServerInvites.col.createdAt, 'desc')
-  if (cursor) q.where(ServerInvites.col.createdAt, '>', cursor)
+  const q = findServerInvitesBaseQuery(searchQuery, 'desc').limit(limit)
+
+  if (cursor) q.where(ServerInvites.col.createdAt, '<', cursor.toISOString())
   return await q
 }
 
