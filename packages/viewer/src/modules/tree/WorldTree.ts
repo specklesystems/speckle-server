@@ -2,7 +2,7 @@ import TreeModel from 'tree-model'
 import { NodeRenderView } from './NodeRenderView'
 import { RenderTree } from './RenderTree'
 import Logger from 'js-logger'
-import { World } from '../World'
+import { AsyncPause } from '../World'
 
 export type TreeNode = TreeModel.Node<NodeData>
 export type SearchPredicate = (node: TreeNode) => boolean
@@ -112,19 +112,23 @@ export class WorldTree {
 
   public async walkAsync(
     predicate: SearchPredicate,
-    node?: TreeNode,
-    priority?: number
+    node?: TreeNode
   ): Promise<boolean> {
     if (!node && !this.supressWarnings) {
       Logger.warn(`Root will be used for searching. You might not want that`)
     }
-    const pause = World.getPause(priority)
+    const pause = new AsyncPause()
 
     let success = true
     async function depthFirstPreOrderAsync(callback, context) {
       let i, childCount
-      await pause()
+      pause.tick(100)
+      if (pause.needsWait) {
+        await pause.wait(16)
+      }
+
       success &&= callback(context)
+
       for (i = 0, childCount = context.children.length; i < childCount; i++) {
         if (!(await depthFirstPreOrderAsync(callback, context.children[i]))) break
       }

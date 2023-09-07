@@ -534,7 +534,7 @@ export default class SpeckleRenderer {
     this._needsRender = true
   }
 
-  public async *addRenderTree(subtreeId: string, priority = 1) {
+  public async *addRenderTree(subtreeId: string) {
     this.cancel[subtreeId] = false
     const subtreeGroup = new Group()
     subtreeGroup.name = subtreeId
@@ -543,9 +543,7 @@ export default class SpeckleRenderer {
 
     const generator = this.batcher.makeBatches(
       this.viewer.getWorldTree().getRenderTree(subtreeId),
-      SpeckleTypeAllRenderables,
-      undefined,
-      priority
+      SpeckleTypeAllRenderables
     )
     for await (const batch of generator) {
       if (!batch) continue

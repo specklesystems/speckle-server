@@ -2,6 +2,7 @@
 import { generateUUID } from 'three/src/math/MathUtils'
 import { TreeNode, WorldTree } from '../../tree/WorldTree'
 import Logger from 'js-logger'
+import { AsyncPause } from '../../World'
 
 export type ConverterResultDelegate = (object) => Promise<void>
 export type ConverterNodeDelegate = (object, node) => Promise<void>
@@ -17,6 +18,7 @@ export default class SpeckleConverter {
   private maxChildrenPromises: number
   private spoofIDs = true
   private tree: WorldTree
+  private pause: AsyncPause
 
   private readonly NodeConverterMapping: {
     [name: string]: ConverterNodeDelegate
@@ -52,15 +54,16 @@ export default class SpeckleConverter {
     this.activePromises = 0
     this.maxChildrenPromises = 200
     this.tree = tree
+    this.pause = new AsyncPause()
   }
 
-  public async asyncPause() {
-    // Don't freeze the UI when doing all those traversals
-    if (Date.now() - this.lastAsyncPause >= 100) {
-      this.lastAsyncPause = Date.now()
-      await new Promise((resolve) => setTimeout(resolve, 0))
-    }
-  }
+  // public async asyncPause() {
+  //   // Don't freeze the UI when doing all those traversals
+  //   if (Date.now() - this.lastAsyncPause >= 100) {
+  //     this.lastAsyncPause = Date.now()
+  //     await new Promise((resolve) => setTimeout(resolve, 0))
+  //   }
+  // }
 
   /**
    * If the object is convertible (there is a direct conversion routine), it will invoke the callback with the conversion result.
@@ -75,7 +78,10 @@ export default class SpeckleConverter {
     callback: ConverterResultDelegate,
     node: TreeNode = null
   ) {
-    await this.asyncPause()
+    // this.pause.tick(100)
+    // if (this.pause.needsWait) {
+    //   await this.pause.wait(16)
+    // }
 
     // Exit on primitives (string, ints, bools, bigints, etc.)
     if (obj === null || typeof obj !== 'object') return

@@ -81,10 +81,10 @@ export class SpeckleLoader extends Loader {
         this.emit(LoaderEvent.LoadCancelled, this._resource)
         return
       }
-      await this.converter.asyncPause()
+      // await this.converter.asyncPause()
       if (first) {
         firstObjectPromise = this.converter.traverse(this._resource, obj, async () => {
-          await this.converter.asyncPause()
+          // await this.converter.asyncPause()
           viewerLoads++
         })
         first = false
@@ -116,7 +116,7 @@ export class SpeckleLoader extends Loader {
     const t0 = performance.now()
     const p = this.tree
       .getRenderTree(this._resource)
-      .buildRenderTree(new SpeckleGeometryConverter(), this.priority)
+      .buildRenderTree(new SpeckleGeometryConverter())
 
     p.then(() => {
       Logger.log('ASYNC Tree build time -> ', performance.now() - t0)

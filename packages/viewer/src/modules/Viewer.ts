@@ -269,6 +269,7 @@ export class Viewer extends EventEmitter implements IViewer {
    */
 
   public async loadObject(loader: Loader, priority: number = 1, zoomToObject = true) {
+    priority
     if (++this.inProgressOperations === 1)
       (this as EventEmitter).emit(ViewerEvent.Busy, true)
 
@@ -277,10 +278,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     if (treeBuilt) {
       const t0 = performance.now()
-      for await (const step of this.speckleRenderer.addRenderTree(
-        loader.resource,
-        priority
-      )) {
+      for await (const step of this.speckleRenderer.addRenderTree(loader.resource)) {
         step
         if (zoomToObject) {
           const extension = this.getExtension(CameraController)

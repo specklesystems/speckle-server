@@ -436,14 +436,14 @@ export default class Sandbox {
     screenshot.on('click', async () => {
       // console.warn(await this.viewer.screenshot())
       // const start = performance.now()
-      // const node = this.viewer.getWorldTree().root.first(
-      //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      //   (node: any) => node.model.raw.id === '68372cb435912782949e6acef8d241c5'
-      // )
-      // console.log('Tree -> ', performance.now() - start)
-      this.viewer.cancelLoad(
-        'https://latest.speckle.dev/streams/97750296c2/objects/c3138e24a866d447eb86b2a8107b2c09'
+      const nodes = this.viewer.getWorldTree().root.all(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (node: any) => node.model.raw.id === 'c35234a1e8584b159f7e8be59323cd64'
       )
+      console.log(nodes)
+      // this.viewer.cancelLoad(
+      //   'https://latest.speckle.dev/streams/97750296c2/objects/c3138e24a866d447eb86b2a8107b2c09'
+      // )
     })
 
     const rotate = this.tabs.pages[0].addButton({

@@ -13,7 +13,7 @@ import {
 import PointBatch from './PointBatch'
 import { Material, Mesh, WebGLRenderer } from 'three'
 import Logger from 'js-logger'
-import { World } from '../World'
+import { AsyncPause } from '../World'
 import { RenderTree } from '../tree/RenderTree'
 import TextBatch from './TextBatch'
 import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
@@ -40,11 +40,8 @@ export default class Batcher {
   public async *makeBatches(
     renderTree: RenderTree,
     speckleType: SpeckleType[],
-    batchType?: GeometryType,
-    priority?: number
+    batchType?: GeometryType
   ) {
-    const pause = World.getPause(priority)
-
     const renderViews = renderTree
       .getRenderableRenderViews(...speckleType)
       .sort((a, b) => {
@@ -61,6 +58,7 @@ export default class Batcher {
       average = 0,
       batchCount = 0
 
+    const pause = new AsyncPause()
     for (let i = 0; i < materialHashes.length; i++) {
       let renderViewsBatch = renderViews.filter(
         (value) => value.renderMaterialHash === materialHashes[i]
@@ -76,6 +74,11 @@ export default class Batcher {
       })
       const batches = this.splitBatch(renderViewsBatch, vertCount)
       for (let k = 0; k < batches.length; k++) {
+        pause.tick(100)
+        if (pause.needsWait) {
+          await pause.wait(50)
+        }
+
         const restrictedRvs = batches[k]
         const batch = await this.buildBatch(
           renderTree,
@@ -90,7 +93,6 @@ export default class Batcher {
         average += batch.renderViews.length
         batchCount++
         yield this.batches[batch.id]
-        await pause()
       }
     }
     console.warn(
