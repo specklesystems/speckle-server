@@ -66,6 +66,7 @@ const isLatestVersion = computed(() => {
     !latestVersion.value ||
     currentVersion.value === latestVersion.value ||
     currentVersion.value === 'dev' ||
+    currentVersion.value?.includes('alpha') ||
     currentVersion.value === 'N/A'
   )
 })

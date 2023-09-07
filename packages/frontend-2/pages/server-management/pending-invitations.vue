@@ -85,7 +85,10 @@
       :result-variables="resultVariables"
     />
 
+    <CommonLoadingBar v-if="loading && !invites?.length" loading />
+
     <InfiniteLoading
+      v-if="invites?.length"
       :settings="{ identifier: infiniteLoaderId }"
       class="py-4"
       @infinite="infiniteLoad"
@@ -129,7 +132,8 @@ const {
   result: extraPagesResult,
   fetchMore: fetchMorePages,
   variables: resultVariables,
-  onResult
+  onResult,
+  loading
 } = useQuery(getInvitesQuery, () => ({
   limit: 5,
   query: searchString.value
