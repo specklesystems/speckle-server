@@ -135,7 +135,7 @@ const {
   onResult,
   loading
 } = useQuery(getInvitesQuery, () => ({
-  limit: 5,
+  limit: 50,
   query: searchString.value
 }))
 
