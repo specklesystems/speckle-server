@@ -120,25 +120,18 @@ export class WorldTree {
     }
     const pause = World.getPause(priority)
 
-    async function* depthFirstPreOrderAsync(callback, context) {
+    let success = true
+    async function depthFirstPreOrderAsync(callback, context) {
       let i, childCount
-      yield callback(context)
-      for (i = 0, childCount = context.children.length; i < childCount; i++) {
-        yield* depthFirstPreOrderAsync(callback, context.children[i])
-      }
-    }
-
-    const generator = depthFirstPreOrderAsync(predicate, node ? node : this._root)
-    let ret = true
-    for await (const step of generator) {
-      ret = step
-      if (step === false) {
-        generator.return()
-      }
       await pause()
+      success &&= callback(context)
+      for (i = 0, childCount = context.children.length; i < childCount; i++) {
+        if (!(await depthFirstPreOrderAsync(callback, context.children[i]))) break
+      }
+      return success
     }
 
-    return Promise.resolve(ret)
+    return depthFirstPreOrderAsync(predicate, node ? node : this._root)
   }
 
   public purge(subtreeId?: string) {

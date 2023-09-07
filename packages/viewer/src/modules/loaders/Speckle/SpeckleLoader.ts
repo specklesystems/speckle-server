@@ -4,6 +4,7 @@ import { Loader, LoaderEvent } from '../Loader'
 import ObjectLoader from '@speckle/objectloader'
 import { SpeckleGeometryConverter } from './SpeckleGeometryConverter'
 import { WorldTree } from '../../..'
+import { RenderTree } from '../../tree/RenderTree'
 
 export class SpeckleLoader extends Loader {
   private loader: ObjectLoader
@@ -119,6 +120,7 @@ export class SpeckleLoader extends Loader {
 
     p.then(() => {
       Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
+      Logger.log('Actual tree build time -> ', RenderTree.buildTime)
     })
     return p
   }

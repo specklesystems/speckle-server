@@ -118,7 +118,7 @@ export default class SpeckleRenderer {
 
   private _cameraProvider: ICameraProvider = null
   private _clippingPlanes: Plane[] = []
-  private _clippingVolume: Box3 = null
+  private _clippingVolume: Box3 = new Box3()
 
   /********************************
    * Renderer and rendering flags */
@@ -145,7 +145,9 @@ export default class SpeckleRenderer {
   }
 
   public get clippingVolume(): Box3 {
-    return this._clippingVolume ? new Box3().copy(this._clippingVolume) : this.sceneBox
+    return !this._clippingVolume.isEmpty()
+      ? new Box3().copy(this._clippingVolume)
+      : this.sceneBox
   }
 
   public set clippingVolume(box: Box3) {
@@ -330,7 +332,7 @@ export default class SpeckleRenderer {
       helpers.name = 'Helpers'
       this._scene.add(helpers)
 
-      const sceneBoxHelper = new Box3Helper(this._clippingVolume, new Color(0xff00ff))
+      const sceneBoxHelper = new Box3Helper(this.clippingVolume, new Color(0xff00ff))
       sceneBoxHelper.name = 'SceneBoxHelper'
       sceneBoxHelper.layers.set(ObjectLayers.PROPS)
       helpers.add(sceneBoxHelper)
@@ -852,7 +854,7 @@ export default class SpeckleRenderer {
       ;(this._scene.getObjectByName('CamHelper') as CameraHelper).update()
       // Thank you prettier, this looks so much better
       ;(this._scene.getObjectByName('SceneBoxHelper') as Box3Helper).box.copy(
-        this._clippingVolume
+        this.clippingVolume
       )
       ;(
         this._scene.getObjectByName('DirLightHelper') as DirectionalLightHelper
@@ -954,7 +956,7 @@ export default class SpeckleRenderer {
       this.renderingCamera,
       e,
       true,
-      this._clippingVolume
+      this.clippingVolume
     )
 
     if (!results) {
@@ -964,7 +966,6 @@ export default class SpeckleRenderer {
 
     let multiSelect = false
     if (e.multiSelect) multiSelect = true
-
     const queryResults = this.queryHits(results)
     if (!queryResults) {
       this.viewer.emit(
@@ -993,7 +994,7 @@ export default class SpeckleRenderer {
       this.renderingCamera,
       e,
       true,
-      this._clippingVolume
+      this.clippingVolume
     )
     if (!results) {
       this.viewer.emit(ViewerEvent.ObjectDoubleClicked, null)

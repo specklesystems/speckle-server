@@ -24,7 +24,6 @@ import { Units } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
 import { MeasurementsExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
-import sampleObj from '../assets/BrandenburgGate.png'
 
 export default class Sandbox {
   private viewer: DebugViewer
@@ -435,7 +434,16 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      console.warn(await this.viewer.screenshot())
+      // console.warn(await this.viewer.screenshot())
+      // const start = performance.now()
+      // const node = this.viewer.getWorldTree().root.first(
+      //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      //   (node: any) => node.model.raw.id === '68372cb435912782949e6acef8d241c5'
+      // )
+      // console.log('Tree -> ', performance.now() - start)
+      this.viewer.cancelLoad(
+        'https://latest.speckle.dev/streams/97750296c2/objects/c3138e24a866d447eb86b2a8107b2c09'
+      )
     })
 
     const rotate = this.tabs.pages[0].addButton({
