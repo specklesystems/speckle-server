@@ -1,16 +1,24 @@
-import { ModelAutomation } from '@/modules/automations/helpers/types'
-import { getStreamBranchesByName } from '@/modules/core/repositories/branches'
+import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { getStream } from '@/modules/core/repositories/streams'
-import { publish } from '@/modules/shared/utils/subscriptions'
-import {
-  AutomationsStatus,
-  ModelAutomationRunResultCreateInput
-} from '@/test/graphql/generated/graphql'
 import { Roles } from '@speckle/shared'
+import {
+  getAutomationRun,
+  getLatestAutomationRunsFor,
+  getModelAutomation,
+  storeModelAutomation
+} from '@/modules/automations/repositories/automations'
+import _ from 'lodash'
+import {
+  ModelAutomationCreateInput,
+  ModelAutomationRunStatusUpdateInput,
+  AutomationRunStatus,
+  AutomationsStatus
+} from '@/modules/core/graph/generated/graphql'
+import { upsertAutomationRunData } from '@/modules/automations/repositories/automations'
 
 export const createModelAutomation = async (
-  userId: string,
-  automation: ModelAutomation
+  automation: ModelAutomationCreateInput,
+  userId?: string | undefined
 ) => {
   // stream acl for user
   const stream = await getStream({ userId, streamId: automation.projectId })
@@ -18,20 +26,49 @@ export const createModelAutomation = async (
   if (stream.role !== Roles.Stream.Owner) throw new Error('401, not an owner')
   // TODO: once webhooks are migrated to FE2 terms, we need to get the branch model by id
   // const branch = await getBranchById()
-  const branch = await getStreamBranchesByName(automation.projectId, automation.modelId)
+  const branch = await getStreamBranchByName(automation.projectId, automation.modelId)
+  if (!branch) throw new Error('400 invalid modelId')
+  const insertModel = { ...automation, createdAt: new Date() }
+  await storeModelAutomation(insertModel)
 }
 
-export async function storeModelAutomationRunResult({
+export async function upsertModelAutomationRunResult({
   userId,
   input
 }: {
   userId: string | null | undefined
-  input: ModelAutomationRunResultCreateInput
-}): Promise<boolean> {
-  return false
+  input: ModelAutomationRunStatusUpdateInput
+}) {
   // 1. get the automation from the DB
+  const automation = await getModelAutomation(input.automationId)
   // 2. authz the current user on the automation
+  const stream = await getStream({
+    userId: userId || undefined,
+    streamId: automation.projectId
+  })
+  if (!stream) throw new Error('400 invalid projectId')
+  if (stream.role !== Roles.Stream.Owner) throw new Error('401, not an owner')
   // 3. store the result of the run, if it already exists, patch it
+  const maybeAutomationRun = await getAutomationRun(input.automationRunId)
+  const insertModel = {
+    ..._.cloneDeep(input),
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+  if (maybeAutomationRun) {
+    insertModel.createdAt = maybeAutomationRun.createdAt
+
+    // if the function run status is not in the update, add it from the DB to not loose its data
+    maybeAutomationRun.functionRunStatuses.map((functionRunStatus) => {
+      if (
+        !insertModel.functionRunStatuses.some(
+          (frs) => frs.functionId === functionRunStatus.functionId
+        )
+      )
+        insertModel.functionRunStatuses.push(functionRunStatus)
+    })
+  }
+  await upsertAutomationRunData(insertModel)
   // 4. publish an event for new automation run creation
   // 5. publish an event for new run result update
   // the last two events should be separated.
@@ -41,12 +78,10 @@ export async function storeModelAutomationRunResult({
   // when a new run is triggered, the frontend should react to that
   // also for the result of independent function run results.
   // we're now shortcutting this until the one automation one function barrier is there.
-  publish(automationRunStatusUpdate, { foo: 'bar' })
+  // publish(automationRunStatusUpdate, { foo: 'bar' })
 }
 
-type AutomationStatus = 'INITIALIZING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED'
-
-export const getAutomationStatusFor = ({
+export const getAutomationStatusFor = async ({
   modelId,
   versionId
 }: {
@@ -60,7 +95,18 @@ export const getAutomationStatusFor = ({
   }
 }
 
-const getLatestAutomationRunsFor = ({ modelId }: { modelId: string }) => { }
+export const getAutomationsStatus = async ({
+  modelId
+}: {
+  modelId: string
+}): Promise<AutomationsStatus> => {
+  const runs = await getLatestAutomationRunsFor({ modelId })
+  return {
+    status: 'FAILED' as AutomationRunStatus,
+    automationRuns: [],
+    statusMessage: 'o-oh'
+  }
+}
 
 export const getModelAutomations = async ({
   projectId,

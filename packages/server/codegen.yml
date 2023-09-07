@@ -33,7 +33,7 @@ generates:
         FileUpload: '@/modules/fileuploads/helpers/types#FileUploadGraphQLReturn'
         ModelAutomation: '@/modules/automation/helpers/graphTypes#ModelAutomationGraphQLReturn'
         AutomationMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
-        ModelAutomationRun: '@/modules/automations/helpers/graphTypes#ModelAutomationRunGraphQLReturn'
+        # ModelAutomationRun: '@/modules/automations/helpers/graphTypes#ModelAutomationRunGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'

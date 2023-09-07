@@ -11,17 +11,18 @@ export type AutomationRun = {
   automationId: string
   automationRevisionId: string
   automationRunId: string
+  versionId: string
   createdAt: Date
   updatedAt: Date
-  functionRunResults: FunctionRunResult[]
+  functionRunStatuses: FunctionRunStatus[]
 }
 
 export type RunStatus = 'INITIALIZING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED'
 
-export type FunctionRunResult = {
+export type FunctionRunStatus = {
   functionId: string
   elapsed: number
-  runStatus: RunStatus
+  runStatus: string
   contextView: string | null
   blobs: string[]
   statusMessage: string | null

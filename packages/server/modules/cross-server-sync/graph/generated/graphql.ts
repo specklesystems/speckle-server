@@ -194,7 +194,7 @@ export type AutomationFunctionRunResult = {
 export type AutomationMutations = {
   __typename?: 'AutomationMutations';
   create: Scalars['Boolean'];
-  functionRunStatusReport: Scalars['String'];
+  functionRunStatusReport: Scalars['Boolean'];
 };
 
 
@@ -204,7 +204,7 @@ export type AutomationMutationsCreateArgs = {
 
 
 export type AutomationMutationsFunctionRunStatusReportArgs = {
-  input: ModelAutomationRunResultCreateInput;
+  input: ModelAutomationRunStatusUpdateInput;
 };
 
 export enum AutomationRunStatus {
@@ -634,11 +634,11 @@ export type FileUpload = {
 
 export type FunctionRunStatusInput = {
   blobs?: InputMaybe<Array<Scalars['String']>>;
+  contextView?: InputMaybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   functionId: Scalars['String'];
   objectResults: Scalars['JSONObject'];
   resultVersions?: InputMaybe<Array<Scalars['String']>>;
-  resultView?: InputMaybe<Scalars['String']>;
   runStatus: AutomationRunStatus;
   statusMessage?: InputMaybe<Scalars['String']>;
 };
@@ -779,8 +779,10 @@ export type ModelVersionsArgs = {
 export type ModelAutomation = {
   __typename?: 'ModelAutomation';
   automationId: Scalars['String'];
+  automationName: Scalars['String'];
+  automationRevisionId: Scalars['String'];
+  createdAt: Scalars['DateTime'];
   runs: ModelAutomationRunsCollection;
-  versionId?: Maybe<Scalars['String']>;
 };
 
 
@@ -791,6 +793,7 @@ export type ModelAutomationRunsArgs = {
 
 export type ModelAutomationCreateInput = {
   automationId: Scalars['String'];
+  automationName: Scalars['String'];
   automationRevisionId: Scalars['String'];
   modelId: Scalars['String'];
   projectId: Scalars['String'];
@@ -798,8 +801,6 @@ export type ModelAutomationCreateInput = {
 
 export type ModelAutomationRun = {
   __typename?: 'ModelAutomationRun';
-  automation: ModelAutomation;
-  automationRevisionId: Scalars['String'];
   automationRunId: Scalars['String'];
   createdAt: Scalars['DateTime'];
   functionRunResults: Array<AutomationFunctionRunResult>;
@@ -807,13 +808,11 @@ export type ModelAutomationRun = {
   updatedAt: Scalars['DateTime'];
 };
 
-export type ModelAutomationRunResultCreateInput = {
+export type ModelAutomationRunStatusUpdateInput = {
   automationId: Scalars['String'];
   automationRevisionId: Scalars['String'];
   automationRunId: Scalars['String'];
-  functionRunStatus: FunctionRunStatusInput;
-  modelId: Scalars['String'];
-  projectId: Scalars['String'];
+  functionRunStatuses: Array<FunctionRunStatusInput>;
   versionId: Scalars['String'];
 };
 

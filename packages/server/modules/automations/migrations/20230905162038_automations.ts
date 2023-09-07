@@ -11,7 +11,7 @@ export async function up(knex: Knex): Promise<void> {
     table.string(AUTOMATION_ID).notNullable
     table.string(AUTOMATION_REVISION_ID).notNullable()
     table.string('automationName').notNullable()
-    table.string('projectId').notNullable()
+    table.string('projectId').notNullable().references('id').inTable('streams')
     table.string('modelId').notNullable()
     table
       .timestamp('createdAt', { precision: 3, useTz: true })
@@ -20,17 +20,14 @@ export async function up(knex: Knex): Promise<void> {
     table.primary([AUTOMATION_ID, AUTOMATION_REVISION_ID])
   })
   await knex.schema.createTable(AUTOMATION_RUNS_TABLE_NAME, (table) => {
+    table.string(AUTOMATION_ID).notNullable()
+    table.string(AUTOMATION_REVISION_ID).notNullable()
     table
-      .string(AUTOMATION_ID)
-      .references(AUTOMATION_ID)
-      .inTable(AUTOMATIONS_TABLE_NAME)
+      .string('versionId')
+      .references('id')
+      .inTable('commits')
       .notNullable()
-    table
-      .string(AUTOMATION_REVISION_ID)
-      .references(AUTOMATION_REVISION_ID)
-      .inTable(AUTOMATIONS_TABLE_NAME)
-      .notNullable()
-
+      .onDelete('cascade')
     table.string('automationRunId').primary()
     table
       .timestamp('createdAt', { precision: 3, useTz: true })
@@ -41,6 +38,10 @@ export async function up(knex: Knex): Promise<void> {
       .defaultTo(knex.fn.now())
       .notNullable()
     table.jsonb('data')
+    table
+      .foreign([AUTOMATION_ID, AUTOMATION_REVISION_ID])
+      .references([AUTOMATION_ID, AUTOMATION_REVISION_ID])
+      .inTable(AUTOMATIONS_TABLE_NAME)
   })
 }
 

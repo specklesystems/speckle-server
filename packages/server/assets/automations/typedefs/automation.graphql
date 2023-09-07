@@ -36,7 +36,7 @@ type ModelAutomationRunsCollection {
 
 type ModelAutomationRun {
   # versionId: String!
-  automation: ModelAutomation!
+  # automation: ModelAutomation!
   createdAt: DateTime!
   updatedAt: DateTime!
   automationRunId: String!
@@ -68,7 +68,7 @@ extend type Mutation {
 }
 
 type AutomationMutations {
-  functionRunStatusReport(input: ModelAutomationRunResultCreateInput!): String!
+  functionRunStatusReport(input: ModelAutomationRunStatusUpdateInput!): Boolean!
     @hasServerRole(role: SERVER_USER)
   # @hasStreamRole(role: STREAM_OWNER) # who can do this?
   # @hasScope(scope: "automation:result") # TODO: add the scope constant
@@ -80,18 +80,18 @@ type AutomationMutations {
 input ModelAutomationCreateInput {
   projectId: String!
   modelId: String!
+  automationName: String!
   automationId: String!
   automationRevisionId: String!
-  
 }
 
-input ModelAutomationRunResultCreateInput {
+input ModelAutomationRunStatusUpdateInput {
   versionId: String!
   automationId: String!
   automationRevisionId: String!
   automationRunId: String!
   # functionReleaseId: String!
-  functionRunStatus: FunctionRunStatusInput!
+  functionRunStatuses: [FunctionRunStatusInput!]!
 }
 
 enum AutomationRunStatus {
@@ -108,7 +108,7 @@ input FunctionRunStatusInput {
   functionId: String!
   elapsed: Float!
   runStatus: AutomationRunStatus!
-  resultView: String
+  contextView: String
   resultVersions: [String!]
   blobs: [String!]
   statusMessage: String
