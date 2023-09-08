@@ -21,12 +21,18 @@
           {{ cta.label }}
         </FormButton>
       </template>
+      <template v-else-if="cta?.type === 'text'">
+        <div class="flex items-center gap-1 text-sm opacity-50">
+          <CheckCircleIcon class="h-4 w-4" />
+          {{ cta.label }}
+        </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
+import { ArrowTopRightOnSquareIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
 import { ConcreteComponent } from 'vue'
 import { CTA } from '~~/lib/server-management/helpers/types'
 
@@ -38,6 +44,6 @@ defineProps<{
   title: string
   value: string
   icon: ConcreteComponent
-  cta?: CTA | undefined
+  cta?: CTA
 }>()
 </script>

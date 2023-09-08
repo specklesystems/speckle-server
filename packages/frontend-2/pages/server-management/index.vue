@@ -93,7 +93,10 @@ const serverData = computed((): CardInfo[] => [
           label: 'Update is available',
           action: openGithubReleasePage
         }
-      : undefined
+      : {
+          type: 'text',
+          label: 'Up-to-date'
+        }
   }
 ])
 const userData = computed((): CardInfo[] => [
