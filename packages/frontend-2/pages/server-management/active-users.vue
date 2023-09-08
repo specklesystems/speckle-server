@@ -91,7 +91,10 @@
       </template>
     </ServerManagementTable>
 
+    <CommonLoadingBar v-if="loading && !users?.length" loading />
+
     <InfiniteLoading
+      v-if="users?.length"
       :settings="{ identifier: infiniteLoaderId }"
       class="-mt-24 -mb-24"
       @infinite="infiniteLoad"
@@ -159,7 +162,8 @@ const {
   result: extraPagesResult,
   fetchMore: fetchMorePages,
   variables: resultVariables,
-  onResult
+  onResult,
+  loading
 } = useQuery(getUsersQuery, queryVariables)
 
 const oldRole = computed(() => userToModify.value?.role as Optional<ServerRoles>)
