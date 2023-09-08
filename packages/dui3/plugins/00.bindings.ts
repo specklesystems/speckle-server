@@ -28,6 +28,10 @@ import {
 } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 
 import { ISendBindingKey, ISendBinding } from '~/lib/bindings/definitions/ISendBinding'
+import {
+  IReceiveBindingKey,
+  IReceiveBinding
+} from '~/lib/bindings/definitions/IReceiveBinding'
 
 import {
   ISelectionBindingKey,
@@ -68,6 +72,8 @@ export default defineNuxtPlugin(async () => {
 
   const sendBinding = await tryHoistBinding<ISendBinding>(ISendBindingKey)
 
+  const receiveBinding = await tryHoistBinding<IReceiveBinding>(IReceiveBindingKey)
+
   const selectionBinding = await tryHoistBinding<ISelectionBinding>(
     ISelectionBindingKey
   )
@@ -90,6 +96,7 @@ export default defineNuxtPlugin(async () => {
       accountBinding,
       baseBinding,
       sendBinding,
+      receiveBinding,
       selectionBinding,
       showDevTools,
       openUrl

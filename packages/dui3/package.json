@@ -39,6 +39,7 @@
     "pinia": "^2.1.4",
     "portal-vue": "^3.0.0",
     "subscriptions-transport-ws": "^0.11.0",
+    "vee-validate": "4.7.0",
     "vue-tippy": "^6.2.0"
   },
   "devDependencies": {
@@ -49,6 +50,7 @@
     "@types/lodash-es": "^4.17.6",
     "@types/node": "^18",
     "@vitejs/plugin-legacy": "^4.0.3",
+    "@vue/devtools": "^6.5.0",
     "autoprefixer": "^10.4.14",
     "concurrently": "^7.5.0",
     "eslint": "^8.24.0",

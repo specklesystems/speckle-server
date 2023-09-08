@@ -40,6 +40,51 @@ export const createProjectMutation = graphql(`
   }
 `)
 
+export const projectsListQuery = graphql(`
+  query ProjectsList($query: String, $limit: Int, $cursor: String) {
+    streams(query: $query, limit: $limit, cursor: $cursor) {
+      totalCount
+      cursor
+      items {
+        id
+        name
+      }
+    }
+  }
+`)
+
+export const projectModelsQuery = graphql(`
+  query ProjectModels($projectId: String!, $filter: ProjectModelsFilter) {
+    project(id: $projectId) {
+      models(filter: $filter) {
+        items {
+          id
+          name
+        }
+      }
+    }
+  }
+`)
+
+export const modelVersionsQuery = graphql(`
+  query ModelVersions($projectId: String!, $modelId: String!) {
+    project(id: $projectId) {
+      model(id: $modelId) {
+        versions {
+          items {
+            id
+            message
+            referencedObject
+            createdAt
+            previewUrl
+            sourceApplication
+          }
+        }
+      }
+    }
+  }
+`)
+
 export const projectDetailsQuery = graphql(`
   query ProjectDetails($projectId: String!) {
     project(id: $projectId) {

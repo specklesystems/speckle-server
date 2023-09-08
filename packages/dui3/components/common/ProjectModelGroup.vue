@@ -37,6 +37,9 @@
         <template v-for="model in project.senders" :key="model.modelId">
           <CommonModelSender :model="model" :project="project" />
         </template>
+        <template v-for="model in project.receivers" :key="model.modelId">
+          <CommonModelReceiver :model="model" :project="project" />
+        </template>
         <!-- <template v-for="model in project.senders" :key="model.modelId + 'ddd'">
           <CommonModelSender :model="model" :project="project" />
         </template> -->

@@ -1,16 +1,12 @@
 import {
   DocumentInfo,
   DocumentModelStore,
-  IModelCard,
-  IReceiverModelCard
+  IModelCard
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
+import { IReceiverModelCard } from 'lib/bindings/definitions/IReceiveBinding'
 import { ISendFilter, ISenderModelCard } from 'lib/bindings/definitions/ISendBinding'
-import { CommitCreateInput, VersionCreateInput } from 'lib/common/generated/gql/graphql'
-import {
-  useCreateCommit,
-  useCreateVersion,
-  useGetModelDetails
-} from '~/lib/graphql/composables'
+import { VersionCreateInput } from 'lib/common/generated/gql/graphql'
+import { useCreateVersion } from '~/lib/graphql/composables'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -23,6 +19,7 @@ export type ProjectModelGroup = {
 export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
 
+  const hostAppName = ref<string>()
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
   const projectModelGroups = computed(() => {
@@ -75,6 +72,14 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     console.log(`Should remove ${modelId}`)
   }
 
+  const invalidateReceiver = async (modelId: string) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === modelId
+    ) as IReceiverModelCard
+    model.expired = true
+    await app.$receiveBinding.invalidate(modelId)
+  }
+
   const sendModel = async (modelId: string) => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === modelId
@@ -92,6 +97,27 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.progress = undefined
     await app.$sendBinding.cancelSend(modelId)
   }
+
+  const receiveModel = async (modelId: string, versionId: string) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === modelId
+    ) as IReceiverModelCard
+    model.expired = false
+    model.receiving = true
+    await app.$receiveBinding.receive(modelId, versionId)
+  }
+
+  const receiveModelCancel = async (modelId: string) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === modelId
+    ) as IReceiverModelCard
+    model.receiving = false
+    model.progress = undefined
+    await app.$receiveBinding.cancelReceive(modelId)
+  }
+
+  const getHostAppName = async () =>
+    (hostAppName.value = await app.$baseBinding.getSourceApplicationName())
 
   const refreshDocumentInfo = async () =>
     (documentInfo.value = await app.$baseBinding.getDocumentInfo())
@@ -130,6 +156,16 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     }
   })
 
+  app.$receiveBinding.on('receiverProgress', (args) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === args.id
+    ) as IReceiverModelCard
+    model.progress = args
+    if (args.status === 'Completed') {
+      model.receiving = false
+    }
+  })
+
   app.$sendBinding.on('createVersion', async (args) => {
     const createVersion = useCreateVersion(args.accountId)
     const version: VersionCreateInput = {
@@ -146,8 +182,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   void refreshDocumentInfo()
   void refreshDocumentModelStore()
   void refreshSendFilters()
+  void getHostAppName()
 
   return {
+    hostAppName,
     documentInfo,
     projectModelGroups,
     sendFilters,
@@ -157,7 +195,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     updateModelFilter,
     removeModel,
     sendModel,
+    receiveModel,
     sendModelCancel,
+    receiveModelCancel,
+    invalidateReceiver,
     refreshSendFilters
   }
 })

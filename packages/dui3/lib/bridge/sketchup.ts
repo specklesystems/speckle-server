@@ -1,6 +1,7 @@
 import { uniqueId } from 'lodash-es'
 import { BaseBridge } from './base'
 import { CreateVersionArgs } from 'lib/bindings/definitions/ISendBinding'
+import ObjectLoader, { ProgressStage } from '@speckle/objectloader'
 
 declare let sketchup: {
   exec: (data: Record<string, unknown>) => void
@@ -22,6 +23,16 @@ type SendViaBrowserArgs = {
   }
 }
 
+type ReceiveViaBrowserArgs = {
+  modelCardId: string
+  projectId: string
+  modelId: string
+  token: string
+  serverUrl: string
+  objectId: string
+  sourceApplication: string
+}
+
 /**
  * This class operates in different way than the others, because calls into Sketchup are one way only.
  * E.g., we cannot return values from internal calls to it (e.g., const test = sketchup.rubyCall() does not work ).
@@ -41,6 +52,7 @@ export class SketchupBridge extends BaseBridge {
   >
   private bindingName: string
   private TIMEOUT_MS = 2000 // 2s
+  private NON_TIMEOUT_METHODS = ['send', 'afterGetObjects']
   public isInitalized: Promise<boolean>
   private resolveIsInitializedPromise!: (v: boolean) => unknown
   private rejectIsInitializedPromise!: (message: string) => unknown
@@ -69,10 +81,44 @@ export class SketchupBridge extends BaseBridge {
   emit(eventName: string, payload: string): void {
     const eventPayload = payload as unknown as Record<string, unknown>
 
-    if (eventName !== 'sendViaBrowser')
-      return this.emitter.emit(eventName, eventPayload)
+    if (eventName === 'sendViaBrowser')
+      this.sendViaBrowser(eventPayload as SendViaBrowserArgs)
+    else if (eventName === 'receiveViaBrowser')
+      this.receiveViaBrowser(eventPayload as ReceiveViaBrowserArgs)
 
-    this.sendViaBrowser(eventPayload as SendViaBrowserArgs)
+    return this.emitter.emit(eventName, eventPayload)
+  }
+
+  private async receiveViaBrowser(eventPayload: ReceiveViaBrowserArgs) {
+    const loader = new ObjectLoader({
+      serverUrl: eventPayload.serverUrl as string,
+      token: eventPayload.token as string,
+      streamId: eventPayload.projectId,
+      objectId: eventPayload.objectId
+    })
+
+    const updateProgress = (e: {
+      stage: ProgressStage
+      current: number
+      total: number
+    }) => {
+      const progress = e.current / e.total
+      this.emit('receiverProgress', {
+        id: eventPayload.modelCardId,
+        status: progress === 1 ? 'Constructing' : 'Downloading',
+        progress
+      } as unknown as string)
+    }
+
+    const rootObj = await loader.getAndConstructObject(updateProgress)
+    const args = [eventPayload.modelCardId, eventPayload.sourceApplication, rootObj]
+
+    await this.runMethod('afterGetObjects', args as unknown as unknown[])
+    this.emit('receiverProgress', {
+      id: eventPayload.modelCardId,
+      status: 'Completed',
+      progress: 1
+    } as unknown as string)
   }
 
   /**
@@ -191,12 +237,15 @@ export class SketchupBridge extends BaseBridge {
       this.requests[requestId] = {
         resolve,
         reject,
-        rejectTimerId: window.setTimeout(() => {
-          reject(
-            `Sketchup response timed out - did not receive anything back in good time (${this.TIMEOUT_MS}ms).`
-          )
-          delete this.requests[requestId]
-        }, this.TIMEOUT_MS)
+        rejectTimerId: window.setTimeout(
+          () => {
+            reject(
+              `Sketchup response timed out for ${methodName} - did not receive anything back in good time (${this.TIMEOUT_MS}ms).`
+            )
+            delete this.requests[requestId]
+          },
+          this.NON_TIMEOUT_METHODS.includes(methodName) ? 3600000 : this.TIMEOUT_MS
+        )
       }
     })
   }
