@@ -2,6 +2,7 @@ import { Meta, StoryObj } from '@storybook/vue3'
 import LayoutDialog from '~~/src/components/layout/Dialog.vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import { ref } from 'vue'
+import { action } from '@storybook/addon-actions'
 
 export default {
   component: LayoutDialog,
@@ -79,5 +80,23 @@ export const ManualCloseOnly = {
   args: {
     ...Default.args,
     preventCloseOnClickOutside: true
+  }
+}
+
+export const WithSubmit = {
+  ...HeaderAndFooter,
+  args: {
+    ...HeaderAndFooter.args,
+    onSubmit: action('submit'),
+    buttons: [
+      {
+        text: 'Submit',
+        props: {
+          color: 'default',
+          submit: true,
+          fullWidth: true
+        }
+      }
+    ]
   }
 }

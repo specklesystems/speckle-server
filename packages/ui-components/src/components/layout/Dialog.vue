@@ -32,6 +32,8 @@
                 'transform rounded-lg bg-foundation text-left shadow-xl transition-all',
                 widthClasses
               ]"
+              :as="isForm ? 'form' : 'div'"
+              @submit.prevent="onSubmit"
             >
               <div
                 v-if="title"
@@ -92,7 +94,13 @@ const props = defineProps<{
   preventCloseOnClickOutside?: boolean
   title?: string
   buttons?: Array<{ text: string; props: Record<string, unknown>; onClick: () => void }>
+  /**
+   * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
+   */
+  onSubmit?: (e: SubmitEvent) => void
 }>()
+
+const isForm = computed(() => !!props.onSubmit)
 
 const open = computed({
   get: () => props.open,
