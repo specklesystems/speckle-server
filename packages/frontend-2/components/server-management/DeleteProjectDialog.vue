@@ -79,8 +79,7 @@ const deleteConfirmed = async () => {
             (_fieldName, _variables, value, details) => {
               // Find all `projectList` fields (there can be multiple due to differing variables)
               const projectListFields = Object.keys(value).filter(
-                (k) =>
-                  details.revolveFieldNameAndVariables(k).fieldName === 'projectList'
+                (k) => details.revolveFieldNameAndVariables(k).fieldName === 'items'
               )
 
               // Being careful not to mutate original `value`

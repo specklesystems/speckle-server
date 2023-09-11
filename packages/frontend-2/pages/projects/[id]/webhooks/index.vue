@@ -102,6 +102,7 @@
       :url="urlValue"
       :name="nameValue"
       :secret="secretValue"
+      :stream-id="projectId"
     />
   </div>
 </template>
@@ -122,6 +123,7 @@ import { projectWebhooksQuery } from '~~/lib/projects/graphql/queries'
 import { FormSwitch } from '@speckle/ui-components'
 import { isWebhook } from '~~/lib/projects/helpers/utils'
 import { WebhookItem } from '~~/lib/projects/helpers/types'
+import { ItemType } from '@speckle/ui-components/dist/components/layout/Table.vue'
 
 const route = useRoute()
 
@@ -134,7 +136,7 @@ const urlValue = ref('')
 const nameValue = ref('')
 const secretValue = ref('')
 
-const { result: extraPagesResult, variables: resultVariables } = useQuery(
+const { result: pageResult, variables: resultVariables } = useQuery(
   projectWebhooksQuery,
   () => ({
     projectId: projectId.value
@@ -143,7 +145,7 @@ const { result: extraPagesResult, variables: resultVariables } = useQuery(
 
 const webhooks = computed<ItemType<WebhookItem>[]>(() => {
   return (
-    extraPagesResult.value?.project?.webhooks?.items?.map((webhook) => {
+    pageResult.value?.project?.webhooks?.items?.map((webhook) => {
       const recentHistory = webhook?.history?.items?.[0]
       let historyStatus, historyStatusInfo
 

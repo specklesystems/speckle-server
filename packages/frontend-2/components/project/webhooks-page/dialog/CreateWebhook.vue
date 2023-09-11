@@ -41,6 +41,7 @@
           :rules="requiredRule"
           show-label
           :items="webhookTriggerItems"
+          @update:model-value="updateTriggers"
         />
       </div>
     </form>
@@ -53,35 +54,70 @@ import { WebhookTriggers } from '@speckle/shared/src/core/constants'
 import {
   LayoutDialog,
   FormTextInput,
-  FormSelectMultiBadge
+  FormSelectMultiBadge,
+  ToastNotificationType
 } from '@speckle/ui-components'
+import { WebhookCreateInput } from '~~/lib/common/generated/gql/graphql'
+import { createWebhookMutation } from '~~/lib/projects/graphql/mutations'
+import { useMutation } from '@vue/apollo-composable'
+import { useGlobalToast } from '~~/lib/common/composables/toast'
+
+const { triggerNotification } = useGlobalToast()
+const { mutate: createWebhook } = useMutation(createWebhookMutation)
 
 const props = defineProps<{
   open: boolean
-  name: string
-  url: string
-  secret: string
+  streamId: string
 }>()
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
-  (e: 'server-info-updated'): void
+  (e: 'webhook-created'): void
 }>()
 
-const name = toRef(props, 'name')
-const url = toRef(props, 'url')
-const secret = toRef(props, 'secret')
+const name = ref('')
+const url = ref('')
+const secret = ref('')
+const triggers = ref<string[]>([])
 
 const isOpen = computed({
   get: () => props.open,
   set: (newVal) => emit('update:open', newVal)
 })
 
+const onSubmit = async () => {
+  try {
+    const webhookInput: WebhookCreateInput = {
+      description: name.value,
+      secret: secret.value,
+      url: url.value,
+      streamId: props.streamId,
+      triggers: triggers.value,
+      enabled: true
+    }
+    console.log('Triggers value before mutation:', triggers.value)
+
+    await createWebhook({ webhook: webhookInput })
+    emit('webhook-created')
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Webhook succesfully created'
+    })
+    isOpen.value = false
+  } catch (error) {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Problem creating webhook'
+    })
+    console.error('Error creating webhook:', error)
+    // Handle error
+  }
+}
+
 const webhookTriggerItems = computed(() => {
   return Object.entries(WebhookTriggers as Record<string, unknown>).map(
     ([value, key]) => ({
       id: value,
-      value,
       text: key
     })
   )
@@ -96,9 +132,13 @@ const dialogButtons = computed(() => [
   {
     text: 'Create',
     props: { color: 'primary', fullWidth: true, outline: false },
-    onClick: () => (isOpen.value = false)
+    onClick: onSubmit
   }
 ])
+
+const updateTriggers = (newValue: { text: string }[]) => {
+  triggers.value = newValue.map((item) => item.text)
+}
 
 const requiredRule = [isRequired]
 </script>

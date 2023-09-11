@@ -35,7 +35,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import { CommonBadge } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/solid'
@@ -51,9 +51,12 @@ const props = defineProps<{
 
 const selectedItems = ref<Array<SingleItem>>([])
 
+watch(selectedItems, (newVal) => {
+  emit('update:modelValue', newVal)
+})
+
 const deselectItem = (item: SingleItem) => {
   selectedItems.value = selectedItems.value.filter((i) => i.id !== item.id)
-  emit('update:modelValue', selectedItems.value)
 }
 
 const emit = defineEmits<{

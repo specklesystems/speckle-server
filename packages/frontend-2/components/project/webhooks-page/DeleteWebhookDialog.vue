@@ -69,32 +69,27 @@ const deleteConfirmed = async () => {
           cache.evict({
             id: cacheId
           })
+
           modifyObjectFields<undefined, { [key: string]: WebhookCollection }>(
             cache,
             ROOT_QUERY,
             (_fieldName, _variables, value, details) => {
               const webhookCollectionFields = Object.keys(value).filter(
-                (k) =>
-                  details.revolveFieldNameAndVariables(k).fieldName ===
-                  'Project.webhooks'
+                (k) => details.revolveFieldNameAndVariables(k).fieldName === 'webhooks'
               )
-
               const newVal: typeof value = { ...value }
 
               for (const field of webhookCollectionFields) {
                 const oldItems = value[field]?.items || []
                 const newItems = oldItems.filter((i) => i?.id !== webhookId)
-
                 newVal[field] = {
                   ...value[field],
                   ...(value[field]?.items ? { items: newItems } : {}),
                   totalCount: Math.max(0, (value[field]?.totalCount || 0) - 1)
                 }
               }
-
               return newVal
-            },
-            { fieldNameWhitelist: ['admin'] }
+            }
           )
         }
       }
