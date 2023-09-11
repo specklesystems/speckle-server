@@ -1,12 +1,14 @@
 import {
   DocumentInfo,
   DocumentModelStore,
-  IModelCard
+  IModelCard,
+  ToastInfo
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
 import { IReceiverModelCard } from 'lib/bindings/definitions/IReceiveBinding'
 import { ISendFilter, ISenderModelCard } from 'lib/bindings/definitions/ISendBinding'
 import { VersionCreateInput } from 'lib/common/generated/gql/graphql'
 import { useCreateVersion } from '~/lib/graphql/composables'
+import { useAccountStore } from '~~/store/accounts'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -18,6 +20,8 @@ export type ProjectModelGroup = {
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
+
+  const { defaultAccount } = storeToRefs(useAccountStore())
 
   const hostAppName = ref<string>()
   const documentInfo = ref<DocumentInfo>()
@@ -146,6 +150,16 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       .forEach((model) => ((model as ISenderModelCard).expired = true))
   })
 
+  app.$sendBinding.on('notify', (args) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === args.id
+    ) as ISenderModelCard
+    model.notification = args
+    setTimeout(() => {
+      model.notification = undefined
+    }, args.timeout)
+  })
+
   app.$sendBinding.on('senderProgress', (args) => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === args.id
@@ -175,7 +189,27 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       sourceApplication: args.sourceApplication,
       message: args.message
     }
-    await createVersion(version)
+    const res = await createVersion(version)
+
+    const notification: ToastInfo = {
+      id: args.modelCardId,
+      text: 'Version Created',
+      type: 'success',
+      action: {
+        name: 'View',
+        url: `${defaultAccount.value?.accountInfo.serverInfo.url}/streams/${args.projectId}/commits/${res?.data?.versionMutations.create.id}`
+      }
+    }
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === args.modelCardId
+    ) as ISenderModelCard
+
+    model.notification = notification
+
+    setTimeout(() => {
+      model.notification = undefined
+      console.log(model.notification, 'after timeout')
+    }, 5000)
   })
 
   // First initialization calls

@@ -1,4 +1,4 @@
-import { IModelCard } from 'lib/bindings/definitions/IBasicConnectorBinding'
+import { IModelCard, ToastInfo } from 'lib/bindings/definitions/IBasicConnectorBinding'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 
 export const IReceiveBindingKey = 'receiveBinding'
@@ -20,8 +20,8 @@ export interface IReceiverModelCard extends IModelCard {
   projectName: string
   sourceApp: string
   receiving?: boolean
-  expired?: boolean
   progress?: ReceiverProgressArgs
+  notification?: ToastInfo
 }
 
 export type ReceiverProgressArgs = {

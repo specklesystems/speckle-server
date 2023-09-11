@@ -41,6 +41,7 @@ export interface IModelCard extends IDiscriminatedObject {
   modelId: string
   projectId: string
   accountId: string
+  expired?: boolean
   lastLocalUpdate?: string
 }
 
@@ -52,11 +53,17 @@ export type DocumentInfo = {
   id: string
 }
 
-// NOTE: just a reminder for now
 export type ToastInfo = {
+  id: string
   text: string
-  details?: string
-  type: 'info' | 'error' | 'warning'
+  type: 'info' | 'error' | 'warning' | 'success'
+  action?: ToastAction
+  timeout?: number
+}
+
+export type ToastAction = {
+  url: string
+  name: string
 }
 
 export class MockedBaseBinding extends BaseBridge {

@@ -1,4 +1,4 @@
-import { IModelCard } from 'lib/bindings/definitions/IBasicConnectorBinding'
+import { IModelCard, ToastInfo } from 'lib/bindings/definitions/IBasicConnectorBinding'
 import { IDiscriminatedObject } from '~~/lib/bindings/definitions/common'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 
@@ -14,15 +14,16 @@ export interface ISendBindingEvents {
   filtersNeedRefresh: () => void
   sendersExpired: (args: string[]) => void
   senderProgress: (args: SenderProgressArgs) => void
+  notify: (args: ToastInfo) => void
   createVersion: (args: CreateVersionArgs) => void
 }
 
 export interface ISenderModelCard extends IModelCard {
   typeDiscriminator: 'SenderModelCard'
   sendFilter: ISendFilter
-  expired?: boolean
   sending?: boolean
   progress?: SenderProgressArgs
+  notification?: ToastInfo
 }
 
 export type SenderProgressArgs = {
@@ -32,6 +33,7 @@ export type SenderProgressArgs = {
 }
 
 export type CreateVersionArgs = {
+  modelCardId: string
   projectId: string
   modelId: string
   accountId: string

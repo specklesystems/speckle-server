@@ -56,6 +56,13 @@
       <div v-else class="text-xs px-2 pt-1">Completed!</div>
     </div>
   </div>
+  <!-- Card Notification -->
+  <div
+    v-if="!model.receiving && props.model.notification"
+    :class="`bg-blue-500/10 text-primary`"
+  >
+    <div class="text-xs px-2 pt-1">{{ props.model.notification.text }}</div>
+  </div>
 </template>
 
 <script setup lang="ts">
