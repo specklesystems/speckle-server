@@ -18,7 +18,7 @@
     <LayoutTable
       class="mt-8"
       :headers="[
-        { id: 'state', title: 'State' },
+        { id: 'enabled', title: 'State' },
         { id: 'data', title: 'Data' },
         { id: 'triggerEvents', title: 'Trigger Events' }
       ]"
@@ -38,13 +38,13 @@
         }
       ]"
       :column-classes="{
-        state: 'col-span-1',
+        enabled: 'col-span-1',
         data: 'col-span-5',
         triggerEvents: 'col-span-6 whitespace-break-spaces text-xs'
       }"
     >
-      <template #state="{ item }">
-        <FormSwitch v-model="item.state" />
+      <template #enabled="{ item }">
+        <FormSwitch v-model="item.enabled" />
       </template>
       <template #data="{ item }">
         <div class="flex flex-col">
@@ -78,7 +78,7 @@
         </div>
       </template>
       <template #triggerEvents="{ item }">
-        <div :class="{ 'opacity-60': !item.state }">
+        <div :class="{ 'opacity-60': !item.enabled }">
           {{
             (item.triggerEvents as string[])
               .map(
@@ -97,11 +97,6 @@
       :result-variables="resultVariables"
     />
 
-    <InfiniteLoading
-      :settings="{ identifier: infiniteLoaderId }"
-      class="py-4"
-      @infinite="infiniteLoad"
-    />
     <ProjectWebhooksPageDialogCreateWebhook
       v-model:open="showNewWebhookDialog"
       :url="urlValue"
@@ -123,43 +118,30 @@ import {
   QuestionMarkCircleIcon
 } from '@heroicons/vue/20/solid'
 import { TrashIcon, PencilIcon } from '@heroicons/vue/24/outline'
-import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { projectWebhooksQuery } from '~~/lib/projects/graphql/queries'
 import { FormSwitch } from '@speckle/ui-components'
 import { isWebhook } from '~~/lib/projects/helpers/utils'
 import { WebhookItem } from '~~/lib/projects/helpers/types'
-import { ItemType } from '@speckle/ui-components/dist/components/layout/Table.vue'
 
-const logger = useLogger()
 const route = useRoute()
 
 const projectId = computed(() => route.params.id as string)
 
 const inviteToModify = ref<WebhookItem | null>(null)
 const showDeleteWebhookDialog = ref(false)
-const infiniteLoaderId = ref('')
 const showNewWebhookDialog = ref(false)
 const urlValue = ref('')
 const nameValue = ref('')
 const secretValue = ref('')
 
-const {
-  result: extraPagesResult,
-  fetchMore: fetchMorePages,
-  variables: resultVariables,
-  onResult
-} = useQuery(projectWebhooksQuery, () => ({
-  projectId: projectId.value
-}))
-
-const moreToLoad = computed(
-  () =>
-    !extraPagesResult.value?.project?.webhooks ||
-    (extraPagesResult.value?.project?.webhooks?.items?.length ?? 0) <
-      (extraPagesResult.value?.project?.webhooks?.totalCount ?? 0)
+const { result: extraPagesResult, variables: resultVariables } = useQuery(
+  projectWebhooksQuery,
+  () => ({
+    projectId: projectId.value
+  })
 )
 
-const webhooks = computed(() => {
+const webhooks = computed<ItemType<WebhookItem>[]>(() => {
   return (
     extraPagesResult.value?.project?.webhooks?.items?.map((webhook) => {
       const recentHistory = webhook?.history?.items?.[0]
@@ -190,51 +172,23 @@ const webhooks = computed(() => {
       }
 
       return {
-        id: webhook.id,
-        state: !!webhook?.enabled,
+        id: webhook?.id || '',
+        enabled: webhook?.enabled === true,
         url: webhook?.url,
         description: webhook?.description,
         streamId: webhook?.streamId,
-        historyStatus,
-        historyStatusInfo,
+        historyStatus: historyStatus || '',
+        historyStatusInfo: historyStatusInfo || '',
         triggerEvents: webhook?.triggers
       }
     }) || []
   )
 })
 
-const openDeleteWebhookDialog = (item: ItemType) => {
-  if (isWebhook(item as WebhookItem)) {
-    inviteToModify.value = item as WebhookItem
+const openDeleteWebhookDialog = (item: ItemType<WebhookItem>) => {
+  if (isWebhook(item)) {
+    inviteToModify.value = item
     showDeleteWebhookDialog.value = true
   }
 }
-
-const infiniteLoad = async (state: InfiniteLoaderState) => {
-  const cursor = extraPagesResult.value?.project?.webhooks.cursor || null
-  if (!moreToLoad.value || !cursor) return state.complete()
-
-  try {
-    await fetchMorePages({
-      variables: {
-        cursor
-      }
-    })
-  } catch (e) {
-    logger.error(e)
-    state.error()
-    return
-  }
-
-  state.loaded()
-  if (!moreToLoad.value) {
-    state.complete()
-  }
-}
-
-const calculateLoaderId = () => {
-  infiniteLoaderId.value = resultVariables.value?.query || ''
-}
-
-onResult(calculateLoaderId)
 </script>

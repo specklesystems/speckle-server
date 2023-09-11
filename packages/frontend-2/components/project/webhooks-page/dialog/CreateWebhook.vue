@@ -49,7 +49,7 @@
 
 <script setup lang="ts">
 import { isRequired } from '~~/lib/common/helpers/validation'
-import { WebhookTriggers } from '@speckle/shared/'
+import { WebhookTriggers } from '@speckle/shared/src/core/constants'
 import {
   LayoutDialog,
   FormTextInput,

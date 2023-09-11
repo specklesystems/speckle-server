@@ -36,10 +36,10 @@
       />
       <!-- <hr class="border border-outline-3" /> -->
     </div>
-    <ProjectPageTeamDialogDangerZones
+    <!-- <ProjectPageTeamDialogDangerZones
       v-if="isOwner || canLeaveProject"
       :project="project"
-    />
+    /> -->
   </div>
 </template>
 <script setup lang="ts">
@@ -57,7 +57,7 @@ const props = defineProps<{
   project: ProjectPageTeamDialogFragment
 }>()
 
-const { isOwner, canLeaveProject, isServerGuest } = useTeamDialogInternals({
+const { isOwner, isServerGuest } = useTeamDialogInternals({
   props: toRefs(props)
 })
 const updateProject = useUpdateProject()

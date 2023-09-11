@@ -59,15 +59,15 @@
 import { ConcreteComponent, computed } from 'vue'
 import { FormButton } from '~~/src/lib'
 
-export interface ItemType {
+export interface ItemType<T = unknown> {
   id: string
-  [key: string]: unknown
+  [key: string]: T | string
 }
 
-interface RowButton {
+interface RowButton<T = unknown> {
   icon: ConcreteComponent
   label: string
-  action: (item: ItemType) => void
+  action: (item: ItemType<T>) => void
   class: string
 }
 
@@ -78,15 +78,15 @@ interface Header {
 
 const props = defineProps<{
   headers: Header[]
-  items: ItemType[]
-  buttons?: RowButton[]
+  items: ItemType<unknown>[]
+  buttons?: RowButton<unknown>[]
   columnClasses: Record<string, string>
   overflowCells?: boolean
-  onRowClick?: (item: ItemType) => void
+  onRowClick?: (item: ItemType<unknown>) => void
 }>()
 
 const paddingRightStyle = computed(() => {
-  const padding = 52 + ((props.buttons as RowButton[]).length - 1) * 25
+  const padding = 52 + ((props.buttons as RowButton<unknown>[]).length - 1) * 25
   return `${padding}px`
 })
 
@@ -99,9 +99,9 @@ const getClasses = (column: string, colIndex: number): string => {
   return `lg:p-0 px-1 ${columnClass}`
 }
 
-const handleRowClick = (item: { [key: string]: unknown }) => {
+const handleRowClick = (item: ItemType<unknown>) => {
   if ('id' in item) {
-    props.onRowClick?.(item as ItemType)
+    props.onRowClick?.(item)
   }
 }
 </script>
