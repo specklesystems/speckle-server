@@ -36,13 +36,6 @@ export = {
       })
     }
   },
-  // ModelAutomationRun: {
-  //   async automation() {
-  //     return {
-  //       foo: 'bar'
-  //     }
-  //   }
-  // },
   Mutation: {
     automationMutations: () => ({})
   },

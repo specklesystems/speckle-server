@@ -4,7 +4,6 @@ import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpe
 import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
-import { ModelAutomationGraphQLReturn } from '@/modules/automation/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -2966,7 +2965,7 @@ export type ResolversTypes = {
   LegacyCommentViewerData: ResolverTypeWrapper<LegacyCommentViewerData>;
   LimitedUser: ResolverTypeWrapper<LimitedUserGraphQLReturn>;
   Model: ResolverTypeWrapper<ModelGraphQLReturn>;
-  ModelAutomation: ResolverTypeWrapper<ModelAutomationGraphQLReturn>;
+  ModelAutomation: ResolverTypeWrapper<ModelAutomation>;
   ModelAutomationCreateInput: ModelAutomationCreateInput;
   ModelAutomationRun: ResolverTypeWrapper<ModelAutomationRun>;
   ModelAutomationRunStatusUpdateInput: ModelAutomationRunStatusUpdateInput;
@@ -3138,7 +3137,7 @@ export type ResolversParentTypes = {
   LegacyCommentViewerData: LegacyCommentViewerData;
   LimitedUser: LimitedUserGraphQLReturn;
   Model: ModelGraphQLReturn;
-  ModelAutomation: ModelAutomationGraphQLReturn;
+  ModelAutomation: ModelAutomation;
   ModelAutomationCreateInput: ModelAutomationCreateInput;
   ModelAutomationRun: ModelAutomationRun;
   ModelAutomationRunStatusUpdateInput: ModelAutomationRunStatusUpdateInput;
