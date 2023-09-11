@@ -1,3 +1,6 @@
+import { AutomationRunStatus } from '@/modules/core/graph/generated/graphql'
+import { z } from 'zod'
+
 export type ModelAutomation = {
   projectId: string
   modelId: string
@@ -7,32 +10,45 @@ export type ModelAutomation = {
   automationName: string
 }
 
-export type AutomationRun = {
-  automationId: string
-  automationRevisionId: string
-  automationRunId: string
-  versionId: string
-  createdAt: Date
-  updatedAt: Date
-  functionRunStatuses: FunctionRunStatus[]
-}
+export const SupportedObjectResultsVersions = ['23.09'] as const
 
-export type RunStatus = 'INITIALIZING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED'
+export const ObjectResultLevel = ['INFO', 'WARNING', 'ERROR'] as const
 
-export type FunctionRunStatus = {
-  functionId: string
-  elapsed: number
-  runStatus: string
-  contextView: string | null
-  blobs: string[]
-  statusMessage: string | null
-  objectResults: ObjectResults
-}
+export const ObjectResultLevelEnum = z.enum(ObjectResultLevel)
 
-export type SupportedObjectResultsVersions = '23.09'
+export const ObjectResultValuesSchema = z.object({
+  level: z.enum(['INFO', 'WARNING', 'ERROR']),
+  statusMessage: z.string()
+})
 
-export type ObjectResultLevel = 'INFO' | 'WARNING' | 'ERROR'
-export type ObjectResults = {
-  version: SupportedObjectResultsVersions
-  objectResults: Record<string, { level: ObjectResultLevel; statusMessage: string }[]>
-}
+export const ObjectResultsSchema = z.object({
+  version: z.enum(SupportedObjectResultsVersions),
+  values: z.record(z.string(), ObjectResultValuesSchema.array())
+})
+
+export type ObjectResults = z.infer<typeof ObjectResultsSchema>
+
+export const FunctionRunStatusSchema = z.object({
+  functionId: z.string().nonempty(),
+  elapsed: z.number(),
+  runStatus: z.nativeEnum(AutomationRunStatus),
+  contextView: z.string().nullable().default(null),
+  resultVersionIds: z.string().array(),
+  blobs: z.string().array(),
+  statusMessage: z.string().nullable().default(null),
+  objectResults: ObjectResultsSchema
+})
+
+export type FunctionRunStatus = z.infer<typeof FunctionRunStatusSchema>
+
+export const AutomationRunSchema = z.object({
+  automationId: z.string().nonempty(),
+  automationRevisionId: z.string().nonempty(),
+  automationRunId: z.string().nonempty(),
+  versionId: z.string().nonempty(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+  functionRunStatuses: z.array(FunctionRunStatusSchema)
+})
+
+export type AutomationRun = z.infer<typeof AutomationRunSchema>

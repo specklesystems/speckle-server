@@ -24,7 +24,7 @@ export const upsertAutomationRunData = async (automationRun: AutomationRun) => {
     updatedAt: automationRun.updatedAt,
     data: automationRun
   }
-  await AutomationRuns().insert(insertModel)
+  await AutomationRuns().insert(insertModel).onConflict('automationRunId').merge()
 }
 
 export const getAutomationRun = async (
@@ -35,14 +35,29 @@ export const getAutomationRun = async (
   return item.data
 }
 
-export const getLatestAutomationRunsFor = async ({ modelId }: { modelId: string }) => {
-  const runs = AutomationRuns()
+export const getLatestAutomationRunsFor = async ({
+  projectId,
+  modelId,
+  versionId
+}: {
+  projectId: string
+  modelId: string
+  versionId: string
+}): Promise<AutomationRun[]> => {
+  const runs = await AutomationRuns()
     .innerJoin(
       'automations',
       'automation_runs.automationId',
       'automations.automationId'
     )
-    .where({ modelId })
+    .where({ projectId })
+    .andWhere({ modelId })
+    .andWhere({ versionId })
     .distinctOn('automation_runs.automationId')
-    .orderBy('automation_runs.createdAt')
+    .orderBy([
+      { column: 'automation_runs.automationId' },
+      { column: 'automation_runs.createdAt', order: 'desc' }
+    ])
+
+  return runs.map((r) => r.data)
 }

@@ -190,13 +190,14 @@ export type AuthStrategy = {
   url: Scalars['String'];
 };
 
-export type AutomationFunctionRunResult = {
-  __typename?: 'AutomationFunctionRunResult';
-  blobs?: Maybe<Array<Scalars['String']>>;
+export type AutomationFunctionRunStatus = {
+  __typename?: 'AutomationFunctionRunStatus';
+  blobs: Array<Scalars['String']>;
   contextView?: Maybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   functionId: Scalars['String'];
   objectResults: Scalars['JSONObject'];
+  resultVersionIds: Array<Scalars['String']>;
   runStatus: AutomationRunStatus;
   statusMessage?: Maybe<Scalars['String']>;
 };
@@ -643,12 +644,12 @@ export type FileUpload = {
 };
 
 export type FunctionRunStatusInput = {
-  blobs?: InputMaybe<Array<Scalars['String']>>;
+  blobs: Array<Scalars['String']>;
   contextView?: InputMaybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   functionId: Scalars['String'];
   objectResults: Scalars['JSONObject'];
-  resultVersions?: InputMaybe<Array<Scalars['String']>>;
+  resultVersionIds: Array<Scalars['String']>;
   runStatus: AutomationRunStatus;
   statusMessage?: InputMaybe<Scalars['String']>;
 };
@@ -813,9 +814,10 @@ export type ModelAutomationRun = {
   __typename?: 'ModelAutomationRun';
   automationRunId: Scalars['String'];
   createdAt: Scalars['DateTime'];
-  functionRunResults: Array<AutomationFunctionRunResult>;
+  functionRunStatuses: Array<AutomationFunctionRunStatus>;
   runStatus: AutomationRunStatus;
   updatedAt: Scalars['DateTime'];
+  versionId: Scalars['String'];
 };
 
 export type ModelAutomationRunStatusUpdateInput = {
@@ -2913,7 +2915,7 @@ export type ResolversTypes = {
   AppCreateInput: AppCreateInput;
   AppUpdateInput: AppUpdateInput;
   AuthStrategy: ResolverTypeWrapper<AuthStrategy>;
-  AutomationFunctionRunResult: ResolverTypeWrapper<AutomationFunctionRunResult>;
+  AutomationFunctionRunStatus: ResolverTypeWrapper<AutomationFunctionRunStatus>;
   AutomationMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   AutomationRunStatus: AutomationRunStatus;
   AutomationsStatus: ResolverTypeWrapper<AutomationsStatus>;
@@ -3087,7 +3089,7 @@ export type ResolversParentTypes = {
   AppCreateInput: AppCreateInput;
   AppUpdateInput: AppUpdateInput;
   AuthStrategy: AuthStrategy;
-  AutomationFunctionRunResult: AutomationFunctionRunResult;
+  AutomationFunctionRunStatus: AutomationFunctionRunStatus;
   AutomationMutations: MutationsObjectGraphQLReturn;
   AutomationsStatus: AutomationsStatus;
   BigInt: Scalars['BigInt'];
@@ -3356,12 +3358,13 @@ export type AuthStrategyResolvers<ContextType = GraphQLContext, ParentType exten
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type AutomationFunctionRunResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomationFunctionRunResult'] = ResolversParentTypes['AutomationFunctionRunResult']> = {
-  blobs?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+export type AutomationFunctionRunStatusResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomationFunctionRunStatus'] = ResolversParentTypes['AutomationFunctionRunStatus']> = {
+  blobs?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   contextView?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   elapsed?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   functionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   objectResults?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
+  resultVersionIds?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   runStatus?: Resolver<ResolversTypes['AutomationRunStatus'], ParentType, ContextType>;
   statusMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -3608,9 +3611,10 @@ export type ModelAutomationResolvers<ContextType = GraphQLContext, ParentType ex
 export type ModelAutomationRunResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ModelAutomationRun'] = ResolversParentTypes['ModelAutomationRun']> = {
   automationRunId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  functionRunResults?: Resolver<Array<ResolversTypes['AutomationFunctionRunResult']>, ParentType, ContextType>;
+  functionRunStatuses?: Resolver<Array<ResolversTypes['AutomationFunctionRunStatus']>, ParentType, ContextType>;
   runStatus?: Resolver<ResolversTypes['AutomationRunStatus'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  versionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -4236,7 +4240,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ApiToken?: ApiTokenResolvers<ContextType>;
   AppAuthor?: AppAuthorResolvers<ContextType>;
   AuthStrategy?: AuthStrategyResolvers<ContextType>;
-  AutomationFunctionRunResult?: AutomationFunctionRunResultResolvers<ContextType>;
+  AutomationFunctionRunStatus?: AutomationFunctionRunStatusResolvers<ContextType>;
   AutomationMutations?: AutomationMutationsResolvers<ContextType>;
   AutomationsStatus?: AutomationsStatusResolvers<ContextType>;
   BigInt?: GraphQLScalarType;

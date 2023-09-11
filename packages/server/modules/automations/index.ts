@@ -3,7 +3,7 @@ import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 const automationModule: SpeckleModule = {
   init() {
-    moduleLogger.info('🤖 Init automation module')
+    moduleLogger.info('🤖 Init automations module')
   }
 }
 

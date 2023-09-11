@@ -180,13 +180,14 @@ export type AuthStrategy = {
   url: Scalars['String'];
 };
 
-export type AutomationFunctionRunResult = {
-  __typename?: 'AutomationFunctionRunResult';
-  blobs?: Maybe<Array<Scalars['String']>>;
+export type AutomationFunctionRunStatus = {
+  __typename?: 'AutomationFunctionRunStatus';
+  blobs: Array<Scalars['String']>;
   contextView?: Maybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   functionId: Scalars['String'];
   objectResults: Scalars['JSONObject'];
+  resultVersionIds: Array<Scalars['String']>;
   runStatus: AutomationRunStatus;
   statusMessage?: Maybe<Scalars['String']>;
 };
@@ -633,12 +634,12 @@ export type FileUpload = {
 };
 
 export type FunctionRunStatusInput = {
-  blobs?: InputMaybe<Array<Scalars['String']>>;
+  blobs: Array<Scalars['String']>;
   contextView?: InputMaybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   functionId: Scalars['String'];
   objectResults: Scalars['JSONObject'];
-  resultVersions?: InputMaybe<Array<Scalars['String']>>;
+  resultVersionIds: Array<Scalars['String']>;
   runStatus: AutomationRunStatus;
   statusMessage?: InputMaybe<Scalars['String']>;
 };
@@ -803,9 +804,10 @@ export type ModelAutomationRun = {
   __typename?: 'ModelAutomationRun';
   automationRunId: Scalars['String'];
   createdAt: Scalars['DateTime'];
-  functionRunResults: Array<AutomationFunctionRunResult>;
+  functionRunStatuses: Array<AutomationFunctionRunStatus>;
   runStatus: AutomationRunStatus;
   updatedAt: Scalars['DateTime'];
+  versionId: Scalars['String'];
 };
 
 export type ModelAutomationRunStatusUpdateInput = {

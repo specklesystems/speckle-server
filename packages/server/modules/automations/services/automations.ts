@@ -15,6 +15,8 @@ import {
   AutomationsStatus
 } from '@/modules/core/graph/generated/graphql'
 import { upsertAutomationRunData } from '@/modules/automations/repositories/automations'
+import { AutomationRun, AutomationRunSchema } from '../helpers/types'
+import { ForbiddenError, BadRequestError } from '@/modules/shared/errors'
 
 export const createModelAutomation = async (
   automation: ModelAutomationCreateInput,
@@ -22,12 +24,13 @@ export const createModelAutomation = async (
 ) => {
   // stream acl for user
   const stream = await getStream({ userId, streamId: automation.projectId })
-  if (!stream) throw new Error('400 invalid projectId')
-  if (stream.role !== Roles.Stream.Owner) throw new Error('401, not an owner')
+  if (!stream) throw new BadRequestError('400 invalid projectId')
+  if (stream.role !== Roles.Stream.Owner)
+    throw new ForbiddenError('Only project owners are allowed.')
   // TODO: once webhooks are migrated to FE2 terms, we need to get the branch model by id
   // const branch = await getBranchById()
   const branch = await getStreamBranchByName(automation.projectId, automation.modelId)
-  if (!branch) throw new Error('400 invalid modelId')
+  if (!branch) throw new BadRequestError('400 invalid modelId')
   const insertModel = { ...automation, createdAt: new Date() }
   await storeModelAutomation(insertModel)
 }
@@ -46,17 +49,23 @@ export async function upsertModelAutomationRunResult({
     userId: userId || undefined,
     streamId: automation.projectId
   })
-  if (!stream) throw new Error('400 invalid projectId')
-  if (stream.role !== Roles.Stream.Owner) throw new Error('401, not an owner')
+  if (!stream) throw new BadRequestError('400 invalid projectId')
+  if (stream.role !== Roles.Stream.Owner)
+    throw new ForbiddenError('Only project owners are allowed')
   // 3. store the result of the run, if it already exists, patch it
   const maybeAutomationRun = await getAutomationRun(input.automationRunId)
-  const insertModel = {
-    ..._.cloneDeep(input),
+  const insertModel = AutomationRunSchema.parse({
+    ...input,
     createdAt: new Date(),
     updatedAt: new Date()
-  }
+  })
+
   if (maybeAutomationRun) {
+    // some bits we do not allow overriding
     insertModel.createdAt = maybeAutomationRun.createdAt
+    insertModel.versionId = maybeAutomationRun.versionId
+    insertModel.automationId = maybeAutomationRun.automationId
+    insertModel.automationRevisionId = maybeAutomationRun.automationRevisionId
 
     // if the function run status is not in the update, add it from the DB to not loose its data
     maybeAutomationRun.functionRunStatuses.map((functionRunStatus) => {
@@ -81,92 +90,78 @@ export async function upsertModelAutomationRunResult({
   // publish(automationRunStatusUpdate, { foo: 'bar' })
 }
 
-export const getAutomationStatusFor = async ({
+const anyFunctionRunsHaveStatus = (ar: AutomationRun, status: AutomationRunStatus) =>
+  ar.functionRunStatuses.some((st) => st.runStatus === status)
+
+const anyFunctionRunsHaveFailed = (ar: AutomationRun): boolean =>
+  anyFunctionRunsHaveStatus(ar, AutomationRunStatus.Failed)
+
+const anyFunctionRunsRunning = (ar: AutomationRun): boolean =>
+  anyFunctionRunsHaveStatus(ar, AutomationRunStatus.Running)
+
+const anyFunctionRunsInitializing = (ar: AutomationRun): boolean =>
+  anyFunctionRunsHaveStatus(ar, AutomationRunStatus.Initializing)
+
+export const getAutomationsStatus = async ({
+  projectId,
   modelId,
   versionId
 }: {
-  modelId: string
-  versionId?: string | undefined
-}) => {
-  return {
-    status: 'FAILED',
-    statusMessage: 'cause its fake',
-    automationRuns: [run]
-  }
-}
-
-export const getAutomationsStatus = async ({
-  modelId
-}: {
-  modelId: string
-}): Promise<AutomationsStatus> => {
-  const runs = await getLatestAutomationRunsFor({ modelId })
-  return {
-    status: 'FAILED' as AutomationRunStatus,
-    automationRuns: [],
-    statusMessage: 'o-oh'
-  }
-}
-
-export const getModelAutomations = async ({
-  projectId,
-  modelId,
-  cursor,
-  limit
-}: {
   projectId: string
   modelId: string
-  cursor: string | null
-  limit: number
-}) => {
-  return {
-    totalCount: 1,
-    cursor: null,
-    items: [
-      {
-        automationId: 'asdf',
-        // automationRevisionId: "asdf",
-        createdAt: new Date()
-      }
-    ]
-  }
-}
+  versionId: string
+}): Promise<AutomationsStatus | null> => {
+  const automationRuns = await getLatestAutomationRunsFor({
+    projectId,
+    modelId,
+    versionId
+  })
+  // automation is registered, but no run status have been reported
+  if (!automationRuns.length) return null
 
-const run = {
-  versionId: 'baz',
-  automationId: 'asdf',
-  automationRevisionId: 'asdf',
-  automationRunId: 'fake',
-  runStatus: 'FAILED',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  functionRunResults: [
-    // modeling a single run ATM
-    {
-      functionId: 'automate all the way',
-      elapsed: 20.5,
-      runStatus: 'failed',
-      resultsView:
-        'https://latest.speckle.systems/projects/03434ee1f1/models/168bf25649',
-      resultVersions: [
-        'https://latest.speckle.systems/projects/03434ee1f1/models/168bf25649@0f638a4a79'
-      ],
-      blobs: [
-        'blob:https://latest.speckle.systems/2a5fb815-6434-4577-9937-5c88420eca35'
-      ],
-      statusMessage: 'I want a black T-shirt.',
-      objectResults: {
-        afe5e2601d2072103c3eac0260a0e730: [
-          {
-            level: 'error',
-            statusMessage: "I don't want this bump here!"
-          },
-          {
-            level: 'warning',
-            statusMessage: 'This should not be so blue.'
-          }
-        ]
+  const modelAutomationRuns = automationRuns.map((ar) => {
+    let status: AutomationRunStatus = AutomationRunStatus.Succeeded
+    if (anyFunctionRunsHaveFailed(ar)) {
+      status = AutomationRunStatus.Failed
+    } else if (anyFunctionRunsRunning(ar)) {
+      status = AutomationRunStatus.Running
+    } else if (anyFunctionRunsInitializing(ar)) {
+      status = AutomationRunStatus.Initializing
+    }
+    return { ..._.cloneDeep(ar), runStatus: status }
+  })
+
+  const failedAutomations = modelAutomationRuns.filter(
+    (a) => a.runStatus === AutomationRunStatus.Failed
+  )
+
+  const runningAutomations = modelAutomationRuns.filter(
+    (a) => a.runStatus === AutomationRunStatus.Running
+  )
+  const initializingAutomations = modelAutomationRuns.filter(
+    (a) => a.runStatus === AutomationRunStatus.Initializing
+  )
+
+  let status = AutomationRunStatus.Succeeded
+  let statusMessage = 'All automations have succeeded'
+
+  if (failedAutomations.length) {
+    status = AutomationRunStatus.Failed
+    statusMessage = 'Some automations have failed:'
+    for (const fa of failedAutomations) {
+      for (const functionRunStatus of fa.functionRunStatuses) {
+        if (functionRunStatus.runStatus === AutomationRunStatus.Failed)
+          statusMessage += `\n${functionRunStatus.statusMessage}`
       }
     }
-  ]
+  } else if (runningAutomations.length) {
+    status = AutomationRunStatus.Running
+  } else if (initializingAutomations.length) {
+    status = AutomationRunStatus.Initializing
+  }
+  return {
+    status: status as AutomationRunStatus,
+    automationRuns: modelAutomationRuns,
+    statusMessage
+  }
 }
