@@ -43,7 +43,7 @@
 <script setup lang="ts">
 import { Nullable, Roles, ServerRoles, RoleInfo } from '@speckle/shared'
 import { useFormSelectChildInternals } from '@speckle/ui-components'
-import { PropType } from 'nuxt/dist/app/compat/capi'
+import { PropType } from 'vue'
 
 type ValueType = ServerRoles | ServerRoles[] | undefined
 

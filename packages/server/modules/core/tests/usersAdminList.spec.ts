@@ -12,6 +12,10 @@ import { expect } from 'chai'
 import { ApolloServer } from 'apollo-server-express'
 import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
+import { wait } from '@speckle/shared'
+
+// To ensure that the invites are created in the correct order, we need to wait a bit between each creation
+const WAIT_TIMEOUT = 5
 
 function randomEl<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)]
@@ -90,18 +94,18 @@ describe('[Admin users list]', () => {
     let remainingSearchQueryInviteCount = SEARCH_QUERY_RESULT_COUNT
 
     // Create Users
-    await Promise.all(
-      // count - 1, cause `me` also exists
-      times(USER_COUNT - 1, (i) =>
-        createUser({
-          name: `User #${i} - ${
-            remainingSearchQueryUserCount-- >= 1 ? SEARCH_QUERY : ''
-          }`,
-          email: `speckleuser${i}@gmail.com`,
-          password: 'sn3aky-1337-b1m'
-        }).then((id) => userIds.push(id))
-      )
-    )
+    // count - 1, cause `me` also exists
+    for (let i = 0; i < USER_COUNT - 1; i++) {
+      const id = await createUser({
+        name: `User #${i} - ${
+          remainingSearchQueryUserCount-- >= 1 ? SEARCH_QUERY : ''
+        }`,
+        email: `speckleuser${i}@gmail.com`,
+        password: 'sn3aky-1337-b1m'
+      })
+      userIds.push(id)
+      await wait(WAIT_TIMEOUT)
+    }
 
     // Create streams
     const streamData: { id: string; ownerId: string }[] = []
@@ -117,34 +121,35 @@ describe('[Admin users list]', () => {
     )
 
     // Create invites
-    await Promise.all([
-      // Server invites
-      ...times(SERVER_INVITE_COUNT, (i) =>
-        createInviteDirectly(
-          {
-            email: `randominvitee${i}.${
-              remainingSearchQueryInviteCount-- >= 1 ? SEARCH_QUERY : ''
-            }@gmail.com`
-          },
-          randomEl(userIds)
-        )
-      ),
-      // Stream invites
-      ...times(STREAM_INVITE_COUNT, (i) => {
-        const { id: streamId, ownerId } = randomEl(streamData)
-        const email = `streamrandominvitee${i}.${
-          remainingSearchQueryInviteCount-- >= 1 ? SEARCH_QUERY : ''
-        }@gmail.com`
+    // Server invites
+    for (let i = 0; i < SERVER_INVITE_COUNT; i++) {
+      await createInviteDirectly(
+        {
+          email: `randominvitee${i}.${
+            remainingSearchQueryInviteCount-- >= 1 ? SEARCH_QUERY : ''
+          }@gmail.com`
+        },
+        randomEl(userIds)
+      )
+      await wait(WAIT_TIMEOUT)
+    }
 
-        return createInviteDirectly(
-          {
-            streamId,
-            email
-          },
-          ownerId
-        )
-      })
-    ])
+    // Stream invites
+    for (let i = 0; i < STREAM_INVITE_COUNT; i++) {
+      const { id: streamId, ownerId } = randomEl(streamData)
+      const email = `streamrandominvitee${i}.${
+        remainingSearchQueryInviteCount-- >= 1 ? SEARCH_QUERY : ''
+      }@gmail.com`
+
+      await createInviteDirectly(
+        {
+          streamId,
+          email
+        },
+        ownerId
+      )
+      await wait(WAIT_TIMEOUT)
+    }
 
     // Create a few more stream invites to registered users, which should not appear in
     // the users list

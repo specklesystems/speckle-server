@@ -23,7 +23,7 @@ import FormSelectSourceApps from '~~/src/components/form/select/SourceApps.vue'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import SourceAppBadge from '~~/src/components/SourceAppBadge.vue'
-import { onKeyboardShortcut } from '~~/src/composables/form/input'
+import { onKeyboardShortcut, useFormCheckboxModel } from '~~/src/composables/form/input'
 import {
   ModifierKeys,
   getKeyboardShortcutTitle,
@@ -47,6 +47,11 @@ import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
 import { InfiniteLoaderState } from '~~/src/helpers/global/components'
 import LayoutPanel from '~~/src/components/layout/Panel.vue'
 import CommonAlert from '~~/src/components/common/Alert.vue'
+import {
+  writableAsyncComputed,
+  AsyncWritableComputedOptions,
+  AsyncWritableComputedRef
+} from '~~/src/composables/common/async'
 
 export {
   GlobalToastRenderer,
@@ -85,7 +90,9 @@ export {
   LayoutTabs,
   InfiniteLoading,
   LayoutPanel,
-  CommonAlert
+  CommonAlert,
+  writableAsyncComputed,
+  useFormCheckboxModel
 }
 export type {
   ToastNotification,
@@ -94,5 +101,7 @@ export type {
   HorizontalOrVertical,
   LayoutMenuItem,
   LayoutTabItem,
-  InfiniteLoaderState
+  InfiniteLoaderState,
+  AsyncWritableComputedOptions,
+  AsyncWritableComputedRef
 }

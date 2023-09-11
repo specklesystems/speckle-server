@@ -24,6 +24,10 @@ export const isServerError = (err: Error): err is ServerError =>
 export const isServerParseError = (err: Error): err is ServerParseError =>
   has(err, 'response') && has(err, 'bodyText') && has(err, 'statusCode')
 
+export const ROOT_QUERY = 'ROOT_QUERY'
+export const ROOT_MUTATION = 'ROOT_MUTATION'
+export const ROOT_SUBSCRIPTION = 'ROOT_SUBSCRIPTION'
+
 /**
  * Utility type for typing cached data in Apollo modify functions.
  * Essentially inside a modify function all references to cached objects that can be uniquely identified (have an ID field) are converted
@@ -263,6 +267,40 @@ export function isReference(obj: unknown): obj is CacheObjectReference {
 }
 
 /**
+ * Resolve the field name and variables from an Apollo store field name which
+ * is usually a string like "fieldName:{"var1":"val1","var2":"val2"}"
+ * @param storeFieldName
+ * @param fieldName
+ */
+const revolveFieldNameAndVariables = <
+  V extends Optional<Record<string, unknown>> = undefined
+>(
+  storeFieldName: string,
+  fieldName?: string
+) => {
+  let variables: Optional<V> = undefined
+
+  if (!fieldName) {
+    fieldName = /^[a-zA-Z0-9_-]+(?=[:(])/.exec(storeFieldName)?.[0]
+  }
+  if (!fieldName?.length) return { fieldName: storeFieldName, variables }
+
+  const variablesStringbase = storeFieldName.substring(fieldName.length)
+  if (variablesStringbase.startsWith(':')) {
+    variables = JSON.parse(variablesStringbase.substring(1)) as V
+  } else if (variablesStringbase.startsWith('(')) {
+    variables = JSON.parse(
+      variablesStringbase.substring(1, variablesStringbase.length - 1)
+    ) as V
+  }
+
+  return {
+    fieldName,
+    variables
+  }
+}
+
+/**
  * Iterate over a cached object's fields and optionally update them. Similar to cache.modify, except allows
  * better filtering capabilities to filter filters to update (e.g. you can actually get each field's variables)
  * Note: This uses cache.modify underneath which means that `data` will only hold object references (CacheObjectReference) not
@@ -280,6 +318,7 @@ export function modifyObjectFields<
     value: ModifyFnCacheData<D>,
     details: Parameters<Modifier<ModifyFnCacheData<D>>>[1] & {
       ref: typeof getObjectReference
+      revolveFieldNameAndVariables: typeof revolveFieldNameAndVariables
     }
   ) => Optional<ModifyFnCacheData<D>> | void,
   options?: Partial<{
@@ -317,17 +356,7 @@ export function modifyObjectFields<
         return fieldValue as unknown
       }
 
-      let variables: Optional<V> = undefined
-      if (storeFieldName !== fieldName) {
-        const variablesStringbase = storeFieldName.substring(fieldName.length)
-        if (variablesStringbase.startsWith(':')) {
-          variables = JSON.parse(variablesStringbase.substring(1)) as V
-        } else if (variablesStringbase.startsWith('(')) {
-          variables = JSON.parse(
-            variablesStringbase.substring(1, variablesStringbase.length - 1)
-          ) as V
-        }
-      }
+      const { variables } = revolveFieldNameAndVariables<V>(storeFieldName, fieldName)
 
       log('invoking updater', { fieldName, variables, fieldValue })
       const res = updater(
@@ -336,7 +365,8 @@ export function modifyObjectFields<
         fieldValue as ModifyFnCacheData<D>,
         {
           ...details,
-          ref: getObjectReference
+          ref: getObjectReference,
+          revolveFieldNameAndVariables
         }
       )
 
@@ -366,7 +396,9 @@ export function evictObjectFields<
         fieldName: string,
         variables: V,
         value: ModifyFnCacheData<D>,
-        details: Parameters<Modifier<ModifyFnCacheData<D>>>[1]
+        details: Parameters<Modifier<ModifyFnCacheData<D>>>[1] & {
+          revolveFieldNameAndVariables: typeof revolveFieldNameAndVariables
+        }
       ) => boolean)
     | string[]
 ) {
@@ -375,7 +407,13 @@ export function evictObjectFields<
     id,
     (fieldName, variables, value, details) => {
       if (isFunction(predicate)) {
-        if (!predicate(fieldName, variables, value, details)) return undefined
+        if (
+          !predicate(fieldName, variables, value, {
+            ...details,
+            revolveFieldNameAndVariables
+          })
+        )
+          return undefined
       } else {
         const predicateFields = predicate
         if (!predicateFields.includes(fieldName)) return undefined
