@@ -12791,6 +12791,7 @@ __metadata:
     ws: ^7.5.7
     xml-escape: ^1.1.0
     yargs: ^17.3.1
+    zod: ^3.22.2
     zxcvbn: ^4.4.2
   languageName: unknown
   linkType: soft
@@ -44170,6 +44171,13 @@ __metadata:
   version: 1.0.5
   resolution: "zlib@npm:1.0.5"
   checksum: 5ef5693a1deb70f65845424f5ecce1ee956e50320aa438126759fd28ec8a25ae876acb3b179b4f5050427e7e0dfcd9e45bdae23f055b2d732bc2fe1dbe4da169
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.22.2":
+  version: 3.22.2
+  resolution: "zod@npm:3.22.2"
+  checksum: 231e2180c8eabb56e88680d80baff5cf6cbe6d64df3c44c50ebe52f73081ecd0229b1c7215b9552537f537a36d9e36afac2737ddd86dc14e3519bdbc777e82b9
   languageName: node
   linkType: hard
 
