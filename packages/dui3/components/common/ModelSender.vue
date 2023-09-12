@@ -65,21 +65,15 @@
       <div v-else class="text-xs px-2 pt-1">Completed!</div>
     </div>
     <!-- Card Notification -->
-    <div
+    <CommonModelNotification
       v-if="props.model.notification"
-      :class="`bg-green-500/10 text-success h-6 opacity-100 justify-center inline`"
-    >
-      <div class="text-xs px-2 pt-1 inline">{{ props.model.notification.text }}</div>
-      <div v-if="props.model.notification.action">
-        <FormButton size="sm" @click="openWindow(props.model.notification.action.url)">
-          {{ props.model.notification.action.name }}
-        </FormButton>
-      </div>
-    </div>
+      :notification="props.model.notification"
+    />
+
     <!-- TODO: Post send state -->
     <!-- 
       Think about:
-        - view version
+        - view version is DONE with CommonModelNotification!
         - view report 
     -->
     <!-- <div
@@ -113,11 +107,6 @@ const props = defineProps<{
 }>()
 
 const getModelDetails = useGetModelDetails(props.project.accountId)
-
-const openWindow = (url: string) => {
-  const app = useNuxtApp()
-  app.$openUrl(url)
-}
 
 const progressBarValue = () => {
   if (props.model.progress === undefined) {

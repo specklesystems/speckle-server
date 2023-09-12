@@ -56,7 +56,7 @@ export type DocumentInfo = {
 export type ToastInfo = {
   id: string
   text: string
-  type: 'info' | 'error' | 'warning' | 'success'
+  type: 'info' | 'danger' | 'warning' | 'success'
   action?: ToastAction
   timeout?: number
 }
