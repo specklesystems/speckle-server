@@ -1,6 +1,8 @@
 <template>
-  <div :class="`flex justify-between bg-green-500/10 text-success h-8 opacity-100`">
-    <div class="text-xs px-2 pt-2 font-medium">{{ props.notification.text }}</div>
+  <div :class="`flex justify-between bg-${background}-500/10 h-8 opacity-100`">
+    <div :class="`text-xs text-${textColor}-500 px-2 pt-2 font-medium`">
+      {{ props.notification.text }}
+    </div>
     <div v-if="props.notification.action" class="p-1">
       <FormButton
         size="sm"
@@ -19,6 +21,24 @@ import { ToastInfo } from 'lib/bindings/definitions/IBasicConnectorBinding'
 const props = defineProps<{
   notification: ToastInfo
 }>()
+
+const typeColors2 = {
+  info: 'blue',
+  success: 'success',
+  warning: 'orange',
+  danger: 'red'
+}
+
+const background = computed(() => {
+  const typeColors = {
+    info: 'blue',
+    success: 'success',
+    warning: 'orange',
+    danger: 'red'
+  }
+  return typeColors[props.notification.type]
+})
+const textColor = computed(() => typeColors2[props.notification.type])
 
 const openWindow = (url: string) => {
   const app = useNuxtApp()
