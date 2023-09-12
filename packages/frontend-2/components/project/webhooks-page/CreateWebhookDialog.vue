@@ -68,6 +68,7 @@ const { mutate: createWebhook } = useMutation(createWebhookMutation)
 const props = defineProps<{
   open: boolean
   streamId: string
+  webhookId?: string
 }>()
 
 const emit = defineEmits<{
@@ -84,35 +85,6 @@ const isOpen = computed({
   get: () => props.open,
   set: (newVal) => emit('update:open', newVal)
 })
-
-const onSubmit = async () => {
-  try {
-    const webhookInput: WebhookCreateInput = {
-      description: name.value,
-      secret: secret.value,
-      url: url.value,
-      streamId: props.streamId,
-      triggers: triggers.value,
-      enabled: true
-    }
-    console.log('Triggers value before mutation:', triggers.value)
-
-    await createWebhook({ webhook: webhookInput })
-    emit('webhook-created')
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Webhook succesfully created'
-    })
-    isOpen.value = false
-  } catch (error) {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Problem creating webhook'
-    })
-    console.error('Error creating webhook:', error)
-    // Handle error
-  }
-}
 
 const webhookTriggerItems = computed(() => {
   return Object.entries(WebhookTriggers as Record<string, unknown>).map(
@@ -135,6 +107,34 @@ const dialogButtons = computed(() => [
     onClick: onSubmit
   }
 ])
+
+const onSubmit = async () => {
+  try {
+    const webhookInput: WebhookCreateInput = {
+      description: name.value,
+      secret: secret.value,
+      url: url.value,
+      streamId: props.streamId,
+      triggers: triggers.value,
+      enabled: true
+    }
+
+    await createWebhook({ webhook: webhookInput })
+    emit('webhook-created')
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Webhook succesfully created'
+    })
+    isOpen.value = false
+  } catch (error) {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Problem creating webhook'
+    })
+    console.error('Error creating webhook:', error)
+    // Handle error
+  }
+}
 
 const updateTriggers = (newValue: { text: string }[]) => {
   triggers.value = newValue.map((item) => item.text)

@@ -156,3 +156,9 @@ export const createWebhookMutation = graphql(`
     webhookCreate(webhook: $webhook)
   }
 `)
+
+export const updateWebhookMutation = graphql(`
+  mutation updateWebhook($webhook: WebhookUpdateInput!) {
+    webhookUpdate(webhook: $webhook)
+  }
+`)

@@ -97,7 +97,7 @@
       :result-variables="resultVariables"
     />
 
-    <ProjectWebhooksPageDialogCreateWebhook
+    <ProjectWebhooksPageCreateWebhookDialog
       v-model:open="showNewWebhookDialog"
       :url="urlValue"
       :name="nameValue"

@@ -78,8 +78,8 @@ interface Header {
 
 const props = defineProps<{
   headers: Header[]
-  items: ItemType<unknown>[]
-  buttons?: RowButton<unknown>[]
+  items: ItemType[]
+  buttons?: RowButton[]
   columnClasses: Record<string, string>
   overflowCells?: boolean
   onRowClick?: (item: ItemType<unknown>) => void
