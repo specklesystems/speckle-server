@@ -8,7 +8,7 @@ exports.up = async (knex) => {
   // Base table holding up some configuration variables for the server. Not really used much.
   await knex.schema.createTable('server_config', (table) => {
     table.integer('id').notNullable().defaultTo(0).index()
-    table.string('name').defaultTo('Community Server')
+    table.string('name').defaultTo('My new Speckle Server')
     table.string('company').defaultTo('Unknown Company')
     table
       .string('description')
