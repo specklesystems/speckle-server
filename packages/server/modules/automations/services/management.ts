@@ -1,4 +1,4 @@
-import { getStreamBranchByNameOrId } from '@/modules/core/repositories/branches'
+import { getBranchById } from '@/modules/core/repositories/branches'
 import { getStream } from '@/modules/core/repositories/streams'
 import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import {
@@ -42,10 +42,9 @@ export const createModelAutomation = async (
   if (stream.role !== Roles.Stream.Owner)
     throw new ForbiddenError('Only project owners are allowed.')
 
-  const branch = await getStreamBranchByNameOrId(
-    automation.projectId,
-    automation.modelId
-  )
+  const branch = await getBranchById(automation.modelId, {
+    streamId: automation.projectId
+  })
   if (!branch) throw new BadRequestError('400 invalid modelId')
 
   const insertModel = { ...automation, modelId: branch.id, createdAt: new Date() }
