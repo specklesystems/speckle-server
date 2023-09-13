@@ -1,95 +1,77 @@
-extend type Model {
-  automationStatus: AutomationsStatus
+enum AutomationRunStatus {
+  INITIALIZING
+  RUNNING
+  SUCCEEDED
+  FAILED
 }
 
-type AutomationsStatus {
-  status: AutomationRunStatus!
-  statusMessage: String
-  automationRuns: [ModelAutomationRun!]!
+extend type Model {
+  automationStatus: AutomationsStatus
 }
 
 extend type Version {
   automationStatus: AutomationsStatus
 }
 
-type ModelAutomation {
-  automationName: String!
-  automationId: String!
-  automationRevisionId: String!
-  createdAt: DateTime!
-  runs(cursor: String, limit: Int! = 25): ModelAutomationRunsCollection!
+type AutomationsStatus {
+  status: AutomationRunStatus!
+  statusMessage: String
+  automationRuns: [AutomationRun!]!
 }
 
-type ModelAutomationRunsCollection {
-  totalCount: Int!
-  cursor: String
-  items: [ModelAutomationRun!]!
-}
+# TODO: Currently not needed
+# type Automation {
+#   automationName: String!
+#   automationId: String!
+#   automationRevisionId: String!
+#   createdAt: DateTime!
+#   runs(cursor: String, limit: Int! = 25): AutomationRunsCollection!
+# }
 
-type ModelAutomationRun {
+# type AutomationRunsCollection {
+#   totalCount: Int!
+#   cursor: String
+#   items: [AutomationRun!]!
+# }
+
+type AutomationRun {
+  automationRunId: String!
   versionId: String!
-  # automation: ModelAutomation!
   createdAt: DateTime!
   updatedAt: DateTime!
-  automationRunId: String!
-  functionRunStatuses: [AutomationFunctionRunStatus!]!
-  runStatus: AutomationRunStatus!
+  functionRuns: [AutomationFunctionRun!]!
+  """
+  Resolved from all function run statuses
+  """
+  status: AutomationRunStatus!
 }
 
-type AutomationFunctionRunStatus {
+type AutomationFunctionRun {
   functionId: String!
   elapsed: Float!
-  runStatus: AutomationRunStatus!
-  # this is a link to a viewer page with potentially composite
+  status: AutomationRunStatus!
   contextView: String
-  # TODO: remove this from the schema and add it as a type override
-  resultVersionIds: [String!]!
-  # resultVersions: [Version!]!
-
-  blobs: [String!]!
+  resultVersions: [Version!]!
   statusMessage: String
-  # its a {version: string; objectResults: Record<string, Array<{level: string; statusMessage: string}>>}
-  # where the record key is the object id
-  objectResults: JSONObject!
+  """
+  Current schema: {
+    version: "23.09.2023",
+    values: {
+      speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
+      blobIds?: string[]
+    }
+  }
+  """
+  results: JSONObject!
 }
 
-extend type Mutation {
-  automationMutations: AutomationMutations!
-}
-
-type AutomationMutations {
-  functionRunStatusReport(input: ModelAutomationRunStatusUpdateInput!): Boolean!
-    @hasServerRole(role: SERVER_USER)
-  # @hasStreamRole(role: STREAM_OWNER) # who can do this?
-  # @hasScope(scope: "automation:result") # TODO: add the scope constant
-  create(input: ModelAutomationCreateInput!): Boolean! @hasServerRole(role: SERVER_USER)
-  # @hasStreamRole(role: STREAM_OWNER) # TODO: check for stream ownership in the service
-  # @hasScope(scope: "automation:create") # TODO: add the scope constant
-}
-
-input ModelAutomationCreateInput {
+input AutomationCreateInput {
   projectId: String!
   modelId: String!
   automationName: String!
   automationId: String!
   automationRevisionId: String!
-}
-
-input ModelAutomationRunStatusUpdateInput {
-  versionId: String!
-  automationId: String!
-  automationRevisionId: String!
-  automationRunId: String!
-  # functionReleaseId: String!
-  functionRunStatuses: [FunctionRunStatusInput!]!
-}
-
-enum AutomationRunStatus {
-  INITIALIZING
-  RUNNING
-  SUCCEEDED
-  FAILED
-  # TIMEOUT needs to be handled as an error
+  webhookId: String
 }
 
 input FunctionRunStatusInput {
@@ -97,16 +79,40 @@ input FunctionRunStatusInput {
   # Or should we?
   functionId: String!
   elapsed: Float!
-  runStatus: AutomationRunStatus!
+  status: AutomationRunStatus!
   contextView: String
   resultVersionIds: [String!]!
-  blobs: [String!]!
   statusMessage: String
-  # its a Record<string, {level: string; statusMessage: string}[]>
-  # where the record key is the object id
-  objectResults: JSONObject!
+  """
+  Current schema: {
+    version: "23.09.2023",
+    values: {
+      speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
+      blobIds?: string[]
+    }
+  }
+  """
+  results: JSONObject!
 }
 
-# extend type Subscription {
-#   automationRunStatusUpdated()
-# }
+input AutomationRunStatusUpdateInput {
+  versionId: String!
+  automationId: String!
+  automationRevisionId: String!
+  automationRunId: String!
+  functionRuns: [FunctionRunStatusInput!]!
+}
+
+type AutomationMutations {
+  functionRunStatusReport(input: AutomationRunStatusUpdateInput!): Boolean!
+    @hasServerRole(role: SERVER_USER)
+  # @hasStreamRole(role: STREAM_OWNER) # who can do this?
+  # @hasScope(scope: "automation:result") # TODO: add the scope constant
+  create(input: AutomationCreateInput!): Boolean! @hasServerRole(role: SERVER_USER)
+  # @hasStreamRole(role: STREAM_OWNER) # TODO: check for stream ownership in the service
+  # @hasScope(scope: "automation:create") # TODO: add the scope constant
+}
+
+extend type Mutation {
+  automationMutations: AutomationMutations!
+}

@@ -65,6 +65,16 @@ export async function getStreamBranchesByName(
   return await q
 }
 
+export async function getStreamBranchByNameOrId(streamId: string, nameOrId: string) {
+  if (!streamId || !nameOrId) return null
+
+  const [first] = await getStreamBranchesByName(streamId, [nameOrId])
+  if (first) return first
+
+  const [second] = await getBranchesByIds([nameOrId], { streamId })
+  return second || null
+}
+
 export async function getStreamBranchByName(streamId: string, name: string) {
   if (!streamId || !name) return null
 
