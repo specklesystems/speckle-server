@@ -3,44 +3,61 @@
     :class="`bg-foundation rounded-md hover:shadow-md shadow transition overflow-hidden ${
       model.expired ? 'outline outline-blue-500/10' : ''
     }`"
+    @onmouseenter="onHover = true"
+    @onmouseleave="onHover = false"
   >
-    <div class="flex items-center h-20 justify-between w-full p-2">
-      <div class="flex items-center space-x-2">
-        <UserAvatar :user="modelDetails.author" size="sm" />
-        <span>{{ modelDetails.displayName }}</span>
-      </div>
-      <div class="flex items-center space-x-2">
+    <div class="space-y-2">
+      <div class="flex items-center">
         <FormButton
-          v-tippy="'Change or edit filter'"
+          v-if="onHover"
+          key="removeCard"
+          v-tippy="'Remove Card'"
           size="sm"
           text
-          :icon-left="FunnelIcon"
-          @click="openFilterDialog = true"
-        >
-          {{ model.sendFilter.name }}
-        </FormButton>
-        <FormButton
-          v-if="!model.sending"
-          v-tippy="'Publish'"
-          size="sm"
-          :icon-left="CloudArrowUpIcon"
-          :text="!model.expired"
-          class="flex items-center justify-center"
-          @click="store.sendModel(model.id)"
-        >
-          Publish
-        </FormButton>
-        <FormButton
-          v-else
-          v-tippy="'Cancel'"
-          size="sm"
-          class="flex items-center justify-center"
-          @click="store.sendModelCancel(model.id)"
-        >
-          Cancel
-        </FormButton>
+          hide-text
+          :icon-left="TrashIcon"
+          @click="openRemoveCardDialog = true"
+        />
+      </div>
+      <div class="flex items-center h-20 justify-between w-full p-2">
+        <div class="flex items-center space-x-2">
+          <UserAvatar :user="modelDetails.author" size="sm" />
+          <span>{{ modelDetails.displayName }}</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <FormButton
+            v-tippy="'Change or edit filter'"
+            size="sm"
+            text
+            :icon-left="FunnelIcon"
+            @click="openFilterDialog = true"
+          >
+            {{ model.sendFilter.name }}
+          </FormButton>
+          <FormButton
+            v-if="!model.sending"
+            v-tippy="'Publish'"
+            size="sm"
+            :icon-left="CloudArrowUpIcon"
+            :text="!model.expired"
+            class="flex items-center justify-center"
+            @click="store.sendModel(model.id)"
+          >
+            Publish
+          </FormButton>
+          <FormButton
+            v-else
+            v-tippy="'Cancel'"
+            size="sm"
+            class="flex items-center justify-center"
+            @click="store.sendModelCancel(model.id)"
+          >
+            Cancel
+          </FormButton>
+        </div>
       </div>
     </div>
+
     <!-- Expired State -->
     <div
       :class="`bg-blue-500/10 text-primary flex items-center space-x-2 px-2  ${
@@ -87,11 +104,15 @@
     <LayoutDialog v-model:open="openFilterDialog">
       <FilterEditDialog :model="model" @close="openFilterDialog = false" />
     </LayoutDialog>
+    <LayoutDialog v-model:open="openRemoveCardDialog">
+      <FilterEditDialog :model="model" @close="openRemoveCardDialog = false" />
+    </LayoutDialog>
   </div>
 </template>
 <script setup lang="ts">
 import {
   CloudArrowUpIcon,
+  TrashIcon,
   FunnelIcon,
   ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
@@ -132,4 +153,6 @@ const modelDetails = await getModelDetails({
 })
 
 const openFilterDialog = ref(false)
+const openRemoveCardDialog = ref(false)
+const onHover = ref(false)
 </script>
