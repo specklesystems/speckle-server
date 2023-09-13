@@ -1,10 +1,5 @@
 import { Knex } from 'knex'
 
-/**
- * TODO:
- * - Validate FKs to everything
- */
-
 const AUTOMATIONS_TABLE_NAME = 'automations'
 const AUTOMATION_RUNS_TABLE_NAME = 'automation_runs'
 const AUTOMATION_FUNCTION_RUNS_TABLE_NAME = 'automation_function_runs'
@@ -12,6 +7,11 @@ const AUTOMATION_FUNCTION_RUNS_RESULT_VERSIONS_TABLE_NAME =
   'automation_function_runs_result_versions'
 
 export async function up(knex: Knex): Promise<void> {
+  // Deleting existing data in case someone's already used the (hidden) API somehow
+  // If we don't do this, FKs may cause problems
+  await knex(AUTOMATION_RUNS_TABLE_NAME).delete()
+  await knex(AUTOMATIONS_TABLE_NAME).delete()
+
   // Add updatedAt to automations + add modelId FK + webhookId
   await knex.schema.alterTable(AUTOMATIONS_TABLE_NAME, (table) => {
     table
