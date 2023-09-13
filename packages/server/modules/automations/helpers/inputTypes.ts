@@ -1,7 +1,7 @@
 import { AutomationRunStatus } from '@/modules/core/graph/generated/graphql'
 import { z } from 'zod'
 
-const CurrentObjectResultsVersion = '23.09.2023' as const
+const CurrentObjectResultsVersion = '1.0.0' as const
 
 const SupportedObjectResultsVersions = [CurrentObjectResultsVersion] as const
 

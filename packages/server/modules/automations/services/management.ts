@@ -23,10 +23,12 @@ import {
   AutomationFunctionRunsResultVersionRecord,
   AutomationRunRecord
 } from '@/modules/automations/helpers/types'
-import { ForbiddenError, BadRequestError } from '@/modules/shared/errors'
+import { ForbiddenError } from '@/modules/shared/errors'
 import { Merge } from 'type-fest'
 import { AutomationFunctionRunGraphQLReturn } from '@/modules/automations/helpers/graphTypes'
 import { AutomationRunSchema } from '@/modules/automations/helpers/inputTypes'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
 
 type AutomationRunWithFunctionRunsRecord = AutomationRunRecord & {
   functionRuns: AutomationFunctionRunRecord[]
@@ -38,14 +40,14 @@ export const createModelAutomation = async (
 ) => {
   // stream acl for user
   const stream = await getStream({ userId, streamId: automation.projectId })
-  if (!stream) throw new BadRequestError('400 invalid projectId')
+  if (!stream) throw new StreamNotFoundError('Project not found')
   if (stream.role !== Roles.Stream.Owner)
     throw new ForbiddenError('Only project owners are allowed.')
 
   const branch = await getBranchById(automation.modelId, {
     streamId: automation.projectId
   })
-  if (!branch) throw new BadRequestError('400 invalid modelId')
+  if (!branch) throw new BranchNotFoundError('Model not found')
 
   const insertModel = { ...automation, modelId: branch.id, createdAt: new Date() }
   await upsertAutomation(insertModel)
@@ -73,7 +75,7 @@ export async function upsertModelAutomationRunResult({
     userId: userId || undefined,
     streamId: automation.projectId
   })
-  if (!stream) throw new BadRequestError('400 invalid projectId')
+  if (!stream) throw new StreamNotFoundError('Project not found')
   if (stream.role !== Roles.Stream.Owner)
     throw new ForbiddenError('Only project owners are allowed')
 

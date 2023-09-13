@@ -188,6 +188,7 @@ export type AutomationCreateInput = {
   automationRevisionId: Scalars['String'];
   modelId: Scalars['String'];
   projectId: Scalars['String'];
+  webhookId?: InputMaybe<Scalars['String']>;
 };
 
 export type AutomationFunctionRun = {
@@ -198,7 +199,7 @@ export type AutomationFunctionRun = {
   resultVersions: Array<Version>;
   /**
    * Current schema: {
-   *   version: "23.09.2023",
+   *   version: "1.0.0",
    *   values: {
    *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
    *     blobIds?: string[]
@@ -248,15 +249,8 @@ export type AutomationRunStatusUpdateInput = {
   automationId: Scalars['String'];
   automationRevisionId: Scalars['String'];
   automationRunId: Scalars['String'];
-  functionRunStatuses: Array<FunctionRunStatusInput>;
+  functionRuns: Array<FunctionRunStatusInput>;
   versionId: Scalars['String'];
-};
-
-export type AutomationRunsCollection = {
-  __typename?: 'AutomationRunsCollection';
-  cursor?: Maybe<Scalars['String']>;
-  items: Array<AutomationRun>;
-  totalCount: Scalars['Int'];
 };
 
 export type AutomationsStatus = {
@@ -679,7 +673,7 @@ export type FunctionRunStatusInput = {
   resultVersionIds: Array<Scalars['String']>;
   /**
    * Current schema: {
-   *   version: "23.09.2023",
+   *   version: "1.0.0",
    *   values: {
    *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
    *     blobIds?: string[]
@@ -687,7 +681,7 @@ export type FunctionRunStatusInput = {
    * }
    */
   results: Scalars['JSONObject'];
-  runStatus: AutomationRunStatus;
+  status: AutomationRunStatus;
   statusMessage?: InputMaybe<Scalars['String']>;
 };
 

@@ -55,7 +55,7 @@ type AutomationFunctionRun {
   statusMessage: String
   """
   Current schema: {
-    version: "23.09.2023",
+    version: "1.0.0",
     values: {
       speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
       blobIds?: string[]
@@ -85,7 +85,7 @@ input FunctionRunStatusInput {
   statusMessage: String
   """
   Current schema: {
-    version: "23.09.2023",
+    version: "1.0.0",
     values: {
       speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
       blobIds?: string[]
@@ -106,11 +106,9 @@ input AutomationRunStatusUpdateInput {
 type AutomationMutations {
   functionRunStatusReport(input: AutomationRunStatusUpdateInput!): Boolean!
     @hasServerRole(role: SERVER_USER)
-  # @hasStreamRole(role: STREAM_OWNER) # who can do this?
-  # @hasScope(scope: "automation:result") # TODO: add the scope constant
+  # @hasScope(scope: "automation:result") # TODO: Consult about this w/ Dim
   create(input: AutomationCreateInput!): Boolean! @hasServerRole(role: SERVER_USER)
-  # @hasStreamRole(role: STREAM_OWNER) # TODO: check for stream ownership in the service
-  # @hasScope(scope: "automation:create") # TODO: add the scope constant
+  # @hasScope(scope: "automation:create") # TODO: Consult about this w/ Dim
 }
 
 extend type Mutation {

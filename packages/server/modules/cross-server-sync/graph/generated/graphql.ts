@@ -197,7 +197,7 @@ export type AutomationFunctionRun = {
   resultVersions: Array<Version>;
   /**
    * Current schema: {
-   *   version: "23.09.2023",
+   *   version: "1.0.0",
    *   values: {
    *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
    *     blobIds?: string[]
@@ -676,7 +676,7 @@ export type FunctionRunStatusInput = {
   resultVersionIds: Array<Scalars['String']>;
   /**
    * Current schema: {
-   *   version: "23.09.2023",
+   *   version: "1.0.0",
    *   values: {
    *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
    *     blobIds?: string[]

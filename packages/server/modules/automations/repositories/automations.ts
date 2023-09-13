@@ -90,7 +90,10 @@ export const insertAutomationFunctionRunResultVersion = async (
     ) as AutomationFunctionRunsResultVersionRecord
   })
 
-  return await AutomationFunctionRunsResultVersions.knex().insert(normalizedModels)
+  return await AutomationFunctionRunsResultVersions.knex()
+    .insert(normalizedModels)
+    .onConflict()
+    .ignore()
 }
 
 export const getAutomationRun = async (
