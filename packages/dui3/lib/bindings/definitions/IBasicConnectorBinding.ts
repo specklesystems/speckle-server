@@ -3,7 +3,10 @@
 import { BaseBridge } from '~~/lib/bridge/base'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 import { IDiscriminatedObject } from '~~/lib/bindings/definitions/common'
-import { ISendFilter } from '~~/lib/bindings/definitions/ISendBinding'
+import {
+  ISendFilter,
+  ModelProgressArgs
+} from '~~/lib/bindings/definitions/ISendBinding'
 
 export const IBasicConnectorBindingKey = 'baseBinding'
 
@@ -43,6 +46,8 @@ export interface IModelCard extends IDiscriminatedObject {
   accountId: string
   expired?: boolean
   lastLocalUpdate?: string
+  notification?: ToastInfo
+  progress?: ModelProgressArgs
 }
 
 export type ModelCardTypeDiscriminators = 'SenderModelCard' | 'ReceiverModelCard'

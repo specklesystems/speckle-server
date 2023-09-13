@@ -1,15 +1,56 @@
 <template>
+  <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
   <div
     :class="`bg-foundation rounded-md hover:shadow-md shadow transition overflow-hidden ${
       model.expired ? 'outline outline-blue-500/10' : ''
     }`"
-    @onmouseenter="onHover = true"
-    @onmouseleave="onHover = false"
+    @mouseenter="hovered = true"
+    @mouseleave="hovered = false"
   >
-    <div class="space-y-2">
-      <div class="flex items-center">
+    <div class="flex items-center h-20 justify-between w-full p-2">
+      <div class="flex items-center space-x-2">
+        <UserAvatar :user="modelDetails.author" size="sm" />
+        <span>{{ modelDetails.displayName }}</span>
+      </div>
+      <div class="flex items-center space-x-2">
         <FormButton
-          v-if="onHover"
+          v-tippy="'Change or edit filter'"
+          size="sm"
+          text
+          :icon-left="FunnelIcon"
+          @click="openFilterDialog = true"
+        >
+          {{ model.sendFilter.name }}
+        </FormButton>
+        <FormButton
+          v-if="!model.sending"
+          v-tippy="'Publish'"
+          size="sm"
+          :icon-left="CloudArrowUpIcon"
+          :text="!model.expired"
+          class="flex items-center justify-center"
+          @click="store.sendModel(model.id)"
+        >
+          Publish
+        </FormButton>
+        <FormButton
+          v-else
+          v-tippy="'Cancel'"
+          size="sm"
+          class="flex items-center justify-center"
+          @click="store.sendModelCancel(model.id)"
+        >
+          Cancel
+        </FormButton>
+      </div>
+      <!-- <Transition
+        enter-from-class="opacity-0"
+        enter-active-class="transition duration-300"
+        leave-to-class="opacity-0"
+        leave-active-class="transition duration-300"
+      >
+        <FormButton
+          v-if="hovered"
           key="removeCard"
           v-tippy="'Remove Card'"
           size="sm"
@@ -18,44 +59,7 @@
           :icon-left="TrashIcon"
           @click="openRemoveCardDialog = true"
         />
-      </div>
-      <div class="flex items-center h-20 justify-between w-full p-2">
-        <div class="flex items-center space-x-2">
-          <UserAvatar :user="modelDetails.author" size="sm" />
-          <span>{{ modelDetails.displayName }}</span>
-        </div>
-        <div class="flex items-center space-x-2">
-          <FormButton
-            v-tippy="'Change or edit filter'"
-            size="sm"
-            text
-            :icon-left="FunnelIcon"
-            @click="openFilterDialog = true"
-          >
-            {{ model.sendFilter.name }}
-          </FormButton>
-          <FormButton
-            v-if="!model.sending"
-            v-tippy="'Publish'"
-            size="sm"
-            :icon-left="CloudArrowUpIcon"
-            :text="!model.expired"
-            class="flex items-center justify-center"
-            @click="store.sendModel(model.id)"
-          >
-            Publish
-          </FormButton>
-          <FormButton
-            v-else
-            v-tippy="'Cancel'"
-            size="sm"
-            class="flex items-center justify-center"
-            @click="store.sendModelCancel(model.id)"
-          >
-            Cancel
-          </FormButton>
-        </div>
-      </div>
+      </Transition> -->
     </div>
 
     <!-- Expired State -->
@@ -154,5 +158,5 @@ const modelDetails = await getModelDetails({
 
 const openFilterDialog = ref(false)
 const openRemoveCardDialog = ref(false)
-const onHover = ref(false)
+const hovered = ref(false)
 </script>
