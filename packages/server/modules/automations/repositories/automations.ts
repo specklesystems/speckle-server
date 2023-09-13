@@ -82,6 +82,7 @@ export const insertAutomationFunctionRunResultVersion = async (
   const versions = isArray(functionRunVersions)
     ? functionRunVersions
     : [functionRunVersions]
+  if (!versions.length) return
 
   const normalizedModels = versions.map((run) => {
     return pick(

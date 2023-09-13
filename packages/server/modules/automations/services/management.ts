@@ -29,6 +29,7 @@ import { AutomationFunctionRunGraphQLReturn } from '@/modules/automations/helper
 import { AutomationRunSchema } from '@/modules/automations/helpers/inputTypes'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
+import { getCommits } from '@/modules/core/repositories/commits'
 
 type AutomationRunWithFunctionRunsRecord = AutomationRunRecord & {
   functionRuns: AutomationFunctionRunRecord[]
@@ -99,7 +100,7 @@ export async function upsertModelAutomationRunResult({
   )
   await upsertAutomationFunctionRunData(runs)
 
-  // upsert result versions
+  // validate & upsert result versions
   const versionsRecords: AutomationFunctionRunsResultVersionRecord[] = flatMap(
     validatedInput.functionRuns
       .filter((s) => s.resultVersionIds?.length)
@@ -116,7 +117,16 @@ export async function upsertModelAutomationRunResult({
       }))
     }
   )
-  await insertAutomationFunctionRunResultVersion(versionsRecords)
+  const validatedVersions = await getCommits(
+    versionsRecords.map((r) => r.resultVersionId)
+  )
+  const validVersionsRecords = versionsRecords.filter((r) =>
+    validatedVersions.find(
+      (vv) => vv.id === r.resultVersionId && vv.streamId === stream.id
+    )
+  )
+
+  await insertAutomationFunctionRunResultVersion(validVersionsRecords)
 
   // 4. publish an event for new automation run creation
   // 5. publish an event for new run result update
