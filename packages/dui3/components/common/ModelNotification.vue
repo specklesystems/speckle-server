@@ -1,6 +1,6 @@
 <template>
-  <div :class="`flex justify-between bg-${background}-500/10 h-8 opacity-100`">
-    <div :class="`text-xs text-${textColor}-500 px-2 pt-2 font-medium`">
+  <div :class="container">
+    <div :class="textColor">
       {{ props.notification.text }}
     </div>
     <div v-if="props.notification.action" class="p-1">
@@ -22,23 +22,28 @@ const props = defineProps<{
   notification: ToastInfo
 }>()
 
-const typeColors2 = {
-  info: 'blue',
-  success: 'success',
-  warning: 'orange',
-  danger: 'red'
-}
-
-const background = computed(() => {
-  const typeColors = {
+const notification = reactive({
+  type: props.notification.type,
+  typeColors: {
     info: 'blue',
-    success: 'success',
+    success: 'green',
     warning: 'orange',
     danger: 'red'
   }
-  return typeColors[props.notification.type]
 })
-const textColor = computed(() => typeColors2[props.notification.type])
+
+const computedNotificationType = computed(() => {
+  return notification.typeColors[notification.type]
+})
+
+// FIXME: there is a weird styling state issue, that need to be fixed when the time arrives!
+// For now not bothering, because it's MVP...
+const container = computed(() => {
+  return `flex justify-between bg-${computedNotificationType.value}-500/10 h-8 opacity-100`
+})
+const textColor = computed(() => {
+  return `text-xs text-${computedNotificationType.value}-500 px-2 pt-2 font-medium`
+})
 
 const openWindow = (url: string) => {
   const app = useNuxtApp()

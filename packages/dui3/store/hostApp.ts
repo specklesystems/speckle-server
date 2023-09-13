@@ -190,7 +190,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       message: args.message
     }
     const res = await createVersion(version)
-
     const notification: ToastInfo = {
       id: args.modelCardId,
       text: 'Version Created',
@@ -211,7 +210,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       console.log(model.notification, 'after timeout')
     }, 5000)
   })
-
   // First initialization calls
   void refreshDocumentInfo()
   void refreshDocumentModelStore()
