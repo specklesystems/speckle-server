@@ -1,4 +1,11 @@
 <template>
+  <Portal to="navigation">
+    <HeaderNavLink :to="projectRoute(projectId)" :name="projectId"></HeaderNavLink>
+    <HeaderNavLink
+      :to="`${projectRoute(projectId)}/webhooks`"
+      name="Webhooks"
+    ></HeaderNavLink>
+  </Portal>
   <div>
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold">Webhooks</h1>
@@ -126,6 +133,7 @@ import {
 import { TrashIcon, PencilIcon } from '@heroicons/vue/24/outline'
 import { projectWebhooksQuery } from '~~/lib/projects/graphql/queries'
 import { FormSwitch } from '@speckle/ui-components'
+import { projectRoute } from '~~/lib/common/helpers/route'
 import { isWebhook } from '~~/lib/projects/helpers/utils'
 import { WebhookItem } from '~~/lib/projects/helpers/types'
 import { ItemType } from '@speckle/ui-components/dist/components/layout/Table.vue'
