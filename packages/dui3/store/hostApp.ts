@@ -193,7 +193,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const notification: ToastInfo = {
       id: args.modelCardId,
       text: 'Version Created',
-      type: 'success',
+      level: 'warning',
       action: {
         name: 'View',
         url: `${defaultAccount.value?.accountInfo.serverInfo.url}/streams/${args.projectId}/commits/${res?.data?.versionMutations.create.id}`
@@ -205,10 +205,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
     model.notification = notification
 
-    setTimeout(() => {
-      model.notification = undefined
-      console.log(model.notification, 'after timeout')
-    }, 5000)
+    // setTimeout(() => {
+    //   model.notification = undefined
+    //   console.log(model.notification, 'after timeout')
+    // }, 5000)
   })
   // First initialization calls
   void refreshDocumentInfo()

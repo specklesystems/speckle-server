@@ -1,12 +1,12 @@
 <template>
-  <div :class="container">
-    <div :class="textColor">
+  <div :class="containerClass">
+    <div :class="textClass">
       {{ props.notification.text }}
     </div>
     <div v-if="props.notification.action" class="p-1">
       <FormButton
         size="sm"
-        :color="props.notification.type"
+        :color="props.notification.level"
         @click="openWindow(props.notification.action.url)"
       >
         {{ props.notification.action.name }}
@@ -22,28 +22,51 @@ const props = defineProps<{
   notification: ToastInfo
 }>()
 
-const notification = reactive({
-  type: props.notification.type,
-  typeColors: {
-    info: 'blue',
-    success: 'green',
-    warning: 'orange',
-    danger: 'red'
+const containerClass = computed(() => {
+  switch (props.notification.level) {
+    case 'danger':
+      return 'flex justify-between bg-red-500/10 h-8 opacity-100'
+    case 'info':
+      return 'flex justify-between bg-blue-500/10 h-8 opacity-100'
+    case 'success':
+      return 'flex justify-between bg-green-500/10 h-8 opacity-100'
+    case 'warning':
+      return 'flex justify-between bg-orange-500/10 h-8 opacity-100'
   }
 })
 
-const computedNotificationType = computed(() => {
-  return notification.typeColors[notification.type]
+const textClass = computed(() => {
+  switch (props.notification.level) {
+    case 'danger':
+      return 'text-xs text-red-500 px-2 pt-2 font-medium'
+    case 'info':
+      return 'text-xs text-blue-500 px-2 pt-2 font-medium'
+    case 'success':
+      return 'text-xs text-green-500 px-2 pt-2 font-medium'
+    case 'warning':
+      return 'text-xs text-orange-500 px-2 pt-2 font-medium'
+  }
 })
 
-// FIXME: there is a weird styling state issue, that need to be fixed when the time arrives!
-// For now not bothering, because it's MVP...
-const container = computed(() => {
-  return `flex justify-between bg-${computedNotificationType.value}-500/10 h-8 opacity-100`
-})
-const textColor = computed(() => {
-  return `text-xs text-${computedNotificationType.value}-500 px-2 pt-2 font-medium`
-})
+// FIXME: there is a weird styling state issue if I use dynamic styling as before..
+// It somehow doesn't work! That's why I used it as above with switch cases...
+
+// const typeColors = {
+//   info: 'blue',
+//   success: 'green',
+//   warning: 'orange',
+//   danger: 'red'
+// }
+// const container = computed(() => {
+//   return `flex justify-between bg-${
+//     typeColors[props.notification.level]
+//   }-500/10 h-8 opacity-100`
+// })
+// const textColor = computed(() => {
+//   return `text-xs text-${
+//     typeColors[props.notification.level]
+//   }-500 px-2 pt-2 font-medium`
+// })
 
 const openWindow = (url: string) => {
   const app = useNuxtApp()
