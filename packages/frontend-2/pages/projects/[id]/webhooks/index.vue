@@ -27,7 +27,7 @@
         {
           icon: PencilIcon,
           label: 'Edit',
-          action: (item) => console.log('Edit', item),
+          action: openEditWebhookDialog,
           class: 'text-primary'
         },
         {
@@ -44,7 +44,7 @@
       }"
     >
       <template #enabled="{ item }">
-        <FormSwitch v-model="item.enabled" />
+        <FormSwitch :model-value="(item.enabled as boolean)" />
       </template>
       <template #data="{ item }">
         <div class="flex flex-col">
@@ -93,8 +93,13 @@
 
     <ProjectWebhooksPageDeleteWebhookDialog
       v-model:open="showDeleteWebhookDialog"
-      :webhook="inviteToModify"
+      :webhook="webhookToModify"
       :result-variables="resultVariables"
+    />
+
+    <ProjectWebhooksPageEditWebhookDialog
+      v-model:open="showEditWebhookDialog"
+      :webhook="webhookToModify"
     />
 
     <ProjectWebhooksPageCreateWebhookDialog
@@ -129,8 +134,9 @@ const route = useRoute()
 
 const projectId = computed(() => route.params.id as string)
 
-const inviteToModify = ref<WebhookItem | null>(null)
+const webhookToModify = ref<WebhookItem | null>(null)
 const showDeleteWebhookDialog = ref(false)
+const showEditWebhookDialog = ref(false)
 const showNewWebhookDialog = ref(false)
 const urlValue = ref('')
 const nameValue = ref('')
@@ -189,8 +195,15 @@ const webhooks = computed<ItemType<WebhookItem>[]>(() => {
 
 const openDeleteWebhookDialog = (item: ItemType<WebhookItem>) => {
   if (isWebhook(item)) {
-    inviteToModify.value = item
+    webhookToModify.value = item
     showDeleteWebhookDialog.value = true
+  }
+}
+
+const openEditWebhookDialog = (item: ItemType<WebhookItem>) => {
+  if (isWebhook(item)) {
+    webhookToModify.value = item
+    showEditWebhookDialog.value = true
   }
 }
 </script>
