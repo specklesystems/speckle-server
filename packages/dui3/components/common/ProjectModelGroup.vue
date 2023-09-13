@@ -35,12 +35,7 @@
 
       <div v-show="showModels" class="space-y-2">
         <template v-for="model in project.senders" :key="model.modelId">
-          <CommonModelCard
-            :model-card="model"
-            :on-progress="model.progress !== undefined"
-            :progress="model.progress"
-            :project="project"
-          >
+          <CommonModelCard :model-card="model" :project="project">
             <CommonModelSenderV2 :model="model" :project="project" />
           </CommonModelCard>
         </template>
