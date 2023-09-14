@@ -1,8 +1,10 @@
 import { Meta, StoryObj } from '@storybook/vue3'
 import {
+  PencilIcon,
   ShieldCheckIcon,
   ShieldExclamationIcon,
-  TrashIcon
+  TrashIcon,
+  DocumentDuplicateIcon
 } from '@heroicons/vue/24/outline'
 import Table from '~~/src/components/layout/Table.vue'
 import { TableItemType } from '~~/src/helpers/layout/components'
@@ -61,7 +63,7 @@ export const Default: StoryObj = {
         </template>
 
         <template #role="{ item }">
-          <select>
+          <select class="w-full">
             <option v-for="role in args.roles" :key="role" :value="role">{{ role }}</option>
           </select>
         </template>
@@ -188,10 +190,22 @@ export const Default: StoryObj = {
     ],
     buttons: [
       {
-        icon: TrashIcon,
+        icon: DocumentDuplicateIcon,
+        label: 'Duplicate',
+        action: (item: TableItemType) => console.log('Duplicate', item),
+        class: 'text-gray-500'
+      },
+      {
+        icon: PencilIcon,
         label: 'Delete',
+        action: (item: TableItemType) => console.log('Edit', item),
+        class: 'text-primary'
+      },
+      {
+        icon: TrashIcon,
+        label: 'Edit',
         action: (item: TableItemType) => console.log('Delete', item),
-        class: 'some-button-class-here'
+        class: 'text-red-700'
       }
     ],
     overflowCells: false,

@@ -35,8 +35,8 @@
               </slot>
             </div>
           </template>
-          <div class="absolute right-0 flex items-center p-0 pr-0.5">
-            <div v-for="button in buttons" :key="button.label" class="p-1">
+          <div class="absolute right-1.5 gap-1 flex items-center p-0">
+            <div v-for="button in buttons" :key="button.label">
               <FormButton
                 :icon-left="button.icon"
                 size="sm"
@@ -79,7 +79,11 @@ const props = defineProps<{
 }>()
 
 const paddingRightStyle = computed(() => {
-  const padding = 52 + (props.buttons || []).length * 30
+  const buttonCount = (props.buttons || []).length
+  let padding = 0
+  if (buttonCount > 0) {
+    padding = 48 + (buttonCount - 1) * 42
+  }
   return `${padding}px`
 })
 
