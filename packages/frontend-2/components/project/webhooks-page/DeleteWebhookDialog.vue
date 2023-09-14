@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
-import { LayoutDialog } from '@speckle/ui-components'
+import { LayoutDialog, TableItemType } from '@speckle/ui-components'
 import { WebhookItem } from '~~/lib/projects/helpers/types'
 import { deleteWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
@@ -41,7 +41,7 @@ import { WebhookCollection } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   open: boolean
-  webhook: WebhookItem | null
+  webhook: TableItemType<WebhookItem> | null
 }>()
 
 const { triggerNotification } = useGlobalToast()

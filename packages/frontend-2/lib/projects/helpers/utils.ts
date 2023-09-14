@@ -1,9 +1,10 @@
 import { WebhookItem } from '~~/lib/projects/helpers/types'
 import { has } from 'lodash-es'
-import { ItemType } from '@speckle/ui-components/dist/components/layout/Table.vue'
+import { TableItemType } from '@speckle/ui-components'
 
-export const isWebhook = (val: ItemType<WebhookItem>): val is WebhookItem => {
-  if (has(val, 'triggerEvents')) return true
-  console.log(val)
+export const isWebhook = (
+  val: TableItemType<WebhookItem>
+): val is TableItemType<WebhookItem> => {
+  if (has(val, 'triggers')) return true
   throw new Error('Unexpectedly item is not a webhook!')
 }

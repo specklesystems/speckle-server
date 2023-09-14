@@ -9,7 +9,7 @@
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">
         <FormTextInput
-          :model-value="webhook.url"
+          :model-value="webhookModel.url"
           label="URL"
           help="A POST request will be sent to this URL when this webhook is triggered"
           name="hookUrl"
@@ -20,7 +20,7 @@
           @update:model-value="updateUrl"
         />
         <FormTextInput
-          :model-value="webhook.description || ''"
+          :model-value="(webhookModel.description as string)"
           label="Webhook name"
           help="An optional name to help you identify this webhook"
           name="hookName"
@@ -28,7 +28,10 @@
           type="text"
           @update:model-value="updateDescription"
         />
+
         <FormSelectMultiBadge
+          v-model="triggers"
+          multiple
           name="triggers"
           label="Choose Events"
           show-required
@@ -54,16 +57,17 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { WebhookTriggers } from '@speckle/shared'
+import { TableItemType } from '@speckle/ui-components'
 
 const props = defineProps<{
   open: boolean
-  webhook: WebhookItem | null
+  webhook: TableItemType<WebhookItem> | null
 }>()
 
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(updateWebhookMutation)
 
-const triggers = ref<string[]>([])
+const triggers = ref<typeof webhookTriggerItems.value>([])
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
@@ -87,9 +91,9 @@ const onSubmit = async () => {
       webhook: {
         id: webhookId,
         streamId: props.webhook.streamId,
-        url: webhook.value.url,
-        description: webhook.value.description,
-        triggers: triggers.value
+        url: webhookModel.value.url,
+        description: webhookModel.value.description,
+        triggers: triggers.value.map((i) => i.id)
       }
     },
     {
@@ -98,9 +102,9 @@ const onSubmit = async () => {
           cache.modify({
             id: getCacheId('Webhook', webhookId),
             fields: {
-              url: () => webhook.value.url,
-              description: () => webhook.value.description || '',
-              triggers: () => triggers.value
+              url: () => webhookModel.value.url,
+              description: () => webhookModel.value.description || '',
+              triggers: () => triggers.value.map((i) => i.id)
             }
           })
         }
@@ -125,22 +129,29 @@ const onSubmit = async () => {
   }
 }
 
-const webhook = ref(props.webhook || { url: '', description: '', triggers: [] })
+const webhookModel = ref(props.webhook || { url: '', description: '', triggers: [] })
 
 watch(
   () => props.webhook,
   (newVal) => {
-    webhook.value = newVal || { url: '', description: '', triggers: [] }
+    webhookModel.value = newVal
+      ? { ...newVal }
+      : { url: '', description: '', triggers: [] }
+    triggers.value = (
+      (newVal?.triggers || []).filter(
+        (t): t is NonNullable<typeof t> => !!t
+      ) as string[]
+    ).map((i) => ({ id: i, text: i }))
   },
   { immediate: true }
 )
 
 const updateUrl = (newValue: string) => {
-  webhook.value.url = newValue
+  webhookModel.value.url = newValue
 }
 
 const updateDescription = (newValue: string) => {
-  webhook.value.description = newValue
+  webhookModel.value.description = newValue
 }
 
 const dialogButtons = [

@@ -1,15 +1,15 @@
 <template>
   <FormSelectBase
-    v-model="selectedItems"
-    :multiple="true"
-    :items="props.items"
-    :label="props.label"
-    :name="props.name"
-    :help="props.help"
+    v-model="selectedValue"
+    :multiple="multiple"
+    :items="items"
+    :label="label"
+    :name="name"
+    :help="help"
   >
     <template #something-selected="{ value }">
       <ul class="flex flex-wrap gap-1.5 text-xs">
-        <li v-for="item in value" :key="item">
+        <li v-for="item in isArrayValue(value) ? value : [value]" :key="item">
           <CommonBadge
             size="lg"
             :clickable-icon="true"
@@ -35,31 +35,37 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { ref, watch } from 'vue'
+import { toRefs } from 'vue'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
-import { CommonBadge } from '~~/src/lib'
+import CommonBadge from '~~/src/components/common/Badge.vue'
+import { useFormSelectChildInternals } from '~~/src/composables/form/select'
 import { XMarkIcon } from '@heroicons/vue/24/solid'
 
 type SingleItem = any
+
+const emit = defineEmits<{
+  (e: 'update:modelValue', val: Array<SingleItem>): void
+}>()
 
 const props = defineProps<{
   items: Array<SingleItem>
   label: string
   name: string
   help?: string
+  modelValue?: SingleItem | SingleItem[] | undefined
+  multiple?: boolean
 }>()
 
-const selectedItems = ref<Array<SingleItem>>([])
-
-watch(selectedItems, (newVal) => {
-  emit('update:modelValue', newVal)
+const { selectedValue, isArrayValue } = useFormSelectChildInternals<SingleItem>({
+  props: toRefs(props),
+  emit
 })
 
 const deselectItem = (item: SingleItem) => {
-  selectedItems.value = selectedItems.value.filter((i) => i.id !== item.id)
+  if (isArrayValue(selectedValue.value)) {
+    selectedValue.value = selectedValue.value.filter((i) => i.id !== item.id)
+  } else {
+    selectedValue.value = undefined
+  }
 }
-
-const emit = defineEmits<{
-  (e: 'update:modelValue', val: Array<SingleItem>): void
-}>()
 </script>

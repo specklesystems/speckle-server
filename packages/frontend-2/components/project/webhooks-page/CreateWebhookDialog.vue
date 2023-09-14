@@ -132,7 +132,6 @@ const onSubmit = async () => {
       title: 'Problem creating webhook'
     })
     console.error('Error creating webhook:', error)
-    // Handle error
   }
 }
 

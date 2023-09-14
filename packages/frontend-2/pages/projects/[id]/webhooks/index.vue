@@ -1,12 +1,12 @@
 <template>
-  <Portal to="navigation">
-    <HeaderNavLink :to="projectRoute(projectId)" :name="projectId"></HeaderNavLink>
-    <HeaderNavLink
-      :to="`${projectRoute(projectId)}/webhooks`"
-      name="Webhooks"
-    ></HeaderNavLink>
-  </Portal>
   <div>
+    <Portal to="navigation">
+      <HeaderNavLink :to="projectRoute(projectId)" name="Name"></HeaderNavLink>
+      <HeaderNavLink
+        :to="`${projectRoute(projectId)}/webhooks`"
+        name="Webhooks"
+      ></HeaderNavLink>
+    </Portal>
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold">Webhooks</h1>
       <div class="flex gap-2">
@@ -23,11 +23,14 @@
     </div>
 
     <LayoutTable
-      class="mt-8"
-      :headers="[
-        { id: 'enabled', title: 'State' },
-        { id: 'data', title: 'Data' },
-        { id: 'triggerEvents', title: 'Trigger Events' }
+      :columns="[
+        { id: 'enabled', header: 'State', classes: 'col-span-1' },
+        { id: 'data', header: 'Data', classes: 'col-span-5' },
+        {
+          id: 'triggers',
+          header: 'Trigger Events',
+          classes: 'col-span-6 whitespace-break-spaces text-xs'
+        }
       ]"
       :items="webhooks"
       :buttons="[
@@ -44,14 +47,12 @@
           class: 'text-red-500'
         }
       ]"
-      :column-classes="{
-        enabled: 'col-span-1',
-        data: 'col-span-5',
-        triggerEvents: 'col-span-6 whitespace-break-spaces text-xs'
-      }"
     >
       <template #enabled="{ item }">
-        <FormSwitch :model-value="(item.enabled as boolean)" />
+        <FormSwitch
+          :model-value="(item.enabled as boolean)"
+          @update:model-value="(newValue) => onChange(item, newValue)"
+        />
       </template>
       <template #data="{ item }">
         <div class="flex flex-col">
@@ -59,24 +60,23 @@
           <div class="flex gap-1.5 items-center">
             <div class="h-4 w-4">
               <InformationCircleIcon
-                v-if="item.historyStatus === 'noEvents'"
+                v-if="getHistoryStatus(item) === 'noEvents'"
                 class="opacity-40"
               />
               <CheckCircleIcon
-                v-if="item.historyStatus === 'called'"
+                v-if="getHistoryStatus(item) === 'called'"
                 class="text-success"
               />
               <XCircleIcon
-                v-if="item.historyStatus === 'error' || item.historyStatus === 'alert'"
+                v-if="
+                  getHistoryStatus(item) === 'error' ||
+                  getHistoryStatus(item) === 'alert'
+                "
                 class="text-danger"
-              />
-              <QuestionMarkCircleIcon
-                v-if="item.historyStatus === 'unknown'"
-                class="opacity-40"
               />
             </div>
             <span class="text-foreground opacity-50 text-sm truncate">
-              {{ item.historyStatusInfo }}
+              {{ getHistoryStatusInfo(item) }}
             </span>
           </div>
           <span class="text-foreground opacity-50 text-sm truncate">
@@ -84,10 +84,11 @@
           </span>
         </div>
       </template>
-      <template #triggerEvents="{ item }">
+
+      <template #triggers="{ item }">
         <div :class="{ 'opacity-60': !item.enabled }">
           {{
-            (item.triggerEvents as string[])
+            (item.triggers as string[])
               .map(
                 (event, index, array) =>
                   `"${event}"${index < array.length - 1 ? ',' : ''}`
@@ -121,28 +122,37 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useQuery } from '@vue/apollo-composable'
+import { useMutation, useQuery } from '@vue/apollo-composable'
 import {
   PlusIcon,
   BookOpenIcon,
   InformationCircleIcon,
   CheckCircleIcon,
-  XCircleIcon,
-  QuestionMarkCircleIcon
+  XCircleIcon
 } from '@heroicons/vue/20/solid'
 import { TrashIcon, PencilIcon } from '@heroicons/vue/24/outline'
 import { projectWebhooksQuery } from '~~/lib/projects/graphql/queries'
-import { FormSwitch } from '@speckle/ui-components'
+import { FormSwitch, ToastNotificationType } from '@speckle/ui-components'
 import { projectRoute } from '~~/lib/common/helpers/route'
 import { isWebhook } from '~~/lib/projects/helpers/utils'
 import { WebhookItem } from '~~/lib/projects/helpers/types'
-import { ItemType } from '@speckle/ui-components/dist/components/layout/Table.vue'
+import { TableItemType } from '@speckle/ui-components'
+import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
+import { useGlobalToast } from '~~/lib/common/composables/toast'
+import {
+  convertThrowIntoFetchResult,
+  getCacheId,
+  getFirstErrorMessage
+} from '~~/lib/common/helpers/graphql'
+
+const { triggerNotification } = useGlobalToast()
+const { mutate: updateMutation } = useMutation(updateWebhookMutation)
 
 const route = useRoute()
 
 const projectId = computed(() => route.params.id as string)
 
-const webhookToModify = ref<WebhookItem | null>(null)
+const webhookToModify = ref<TableItemType<WebhookItem> | null>(null)
 const showDeleteWebhookDialog = ref(false)
 const showEditWebhookDialog = ref(false)
 const showNewWebhookDialog = ref(false)
@@ -157,61 +167,94 @@ const { result: pageResult, variables: resultVariables } = useQuery(
   })
 )
 
-const webhooks = computed<ItemType<WebhookItem>[]>(() => {
+const getHistoryStatus = (item: TableItemType<WebhookItem>) => {
+  const recentHistory = item.history?.items?.[0]
+  if (recentHistory) {
+    switch (recentHistory.status) {
+      case 0:
+      case 1:
+        return 'alert'
+      case 2:
+        return 'called'
+      case 3:
+        return 'error'
+      default:
+        return 'noEvents'
+    }
+  }
+}
+
+const getHistoryStatusInfo = (item: TableItemType<WebhookItem>) => {
+  if (isWebhook(item)) {
+    const recentHistory = item.history?.items?.[0]
+    if (recentHistory) {
+      return recentHistory.statusInfo
+    } else {
+      return 'No events yet'
+    }
+  }
+}
+
+const webhooks = computed<WebhookItem[]>(() => {
   return (
-    pageResult.value?.project?.webhooks?.items?.map((webhook) => {
-      const recentHistory = webhook?.history?.items?.[0]
-      let historyStatus, historyStatusInfo
-
-      if (recentHistory) {
-        switch (recentHistory.status) {
-          case 0:
-          case 1:
-            historyStatus = 'alert'
-            historyStatusInfo = recentHistory.statusInfo
-            break
-          case 2:
-            historyStatus = 'called'
-            historyStatusInfo = 'Webhook Called'
-            break
-          case 3:
-            historyStatus = 'error'
-            historyStatusInfo = recentHistory.statusInfo
-            break
-          default:
-            historyStatus = 'unknown'
-            historyStatusInfo = recentHistory.statusInfo
-        }
-      } else {
-        historyStatus = 'noEvents'
-        historyStatusInfo = 'No events yet'
-      }
-
-      return {
-        id: webhook?.id || '',
-        enabled: webhook?.enabled === true,
-        url: webhook?.url,
-        description: webhook?.description,
-        streamId: webhook?.streamId,
-        historyStatus: historyStatus || '',
-        historyStatusInfo: historyStatusInfo || '',
-        triggerEvents: webhook?.triggers
-      }
-    }) || []
+    pageResult.value?.project?.webhooks?.items?.map(
+      (webhook) => webhook as WebhookItem
+    ) || []
   )
 })
 
-const openDeleteWebhookDialog = (item: ItemType<WebhookItem>) => {
+const openDeleteWebhookDialog = (item: TableItemType<WebhookItem>) => {
   if (isWebhook(item)) {
     webhookToModify.value = item
     showDeleteWebhookDialog.value = true
   }
 }
 
-const openEditWebhookDialog = (item: ItemType<WebhookItem>) => {
+const openEditWebhookDialog = (item: TableItemType<WebhookItem>) => {
   if (isWebhook(item)) {
     webhookToModify.value = item
     showEditWebhookDialog.value = true
+  }
+}
+
+const onChange = async (item: TableItemType<WebhookItem>, newValue: boolean) => {
+  if (!isWebhook(item)) {
+    return
+  }
+
+  const result = await updateMutation(
+    {
+      webhook: {
+        streamId: projectId.value,
+        id: item.id,
+        enabled: newValue
+      }
+    },
+    {
+      update: (cache, { data }) => {
+        if (data?.webhookUpdate) {
+          cache.modify({
+            id: getCacheId('Webhook', item.id),
+            fields: {
+              enabled: () => newValue
+            }
+          })
+        }
+      }
+    }
+  ).catch(convertThrowIntoFetchResult)
+
+  if (result?.data?.webhookUpdate) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Webhook updated'
+    })
+  } else {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Failed to update webhook',
+      description: getFirstErrorMessage(result?.errors)
+    })
   }
 }
 </script>

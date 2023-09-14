@@ -14,3 +14,7 @@ export type LayoutMenuItem<I extends string = string> = {
   disabled?: boolean
   disabledTooltip?: string
 }
+
+export type TableItemType<T = unknown> = {
+  id: string
+} & T

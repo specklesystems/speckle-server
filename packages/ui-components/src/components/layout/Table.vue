@@ -6,12 +6,12 @@
         :style="{ paddingRight: paddingRightStyle }"
       >
         <div
-          v-for="header in headers"
-          :key="header.id"
-          :class="columnClasses[header.id]"
+          v-for="column in columns"
+          :key="column.id"
+          :class="getHeaderClasses(column.id)"
           class="capitalize"
         >
-          {{ header.title }}
+          {{ column.header }}
         </div>
       </div>
       <div
@@ -20,20 +20,18 @@
       >
         <div
           v-for="item in items"
-          :key="(item.id as string)"
+          :key="item.id"
           class="relative grid grid-cols-12 items-center gap-6 px-4 py-1 min-w-[900px] bg-foundation"
           :style="{ paddingRight: paddingRightStyle }"
-          :class="{ 'cursor-pointer hover:bg-primary-muted': !!props.onRowClick }"
+          :class="{ 'cursor-pointer hover:bg-primary-muted': !!onRowClick }"
           tabindex="0"
           @click="handleRowClick(item)"
           @keypress="handleRowClick(item)"
         >
-          <template v-for="(column, colIndex) in headers" :key="column.id">
+          <template v-for="(column, colIndex) in columns" :key="column.id">
             <div :class="getClasses(column.id, colIndex)" tabindex="0">
               <slot :name="column.id" :item="item">
-                <div class="text-gray-900 font-medium order-1">
-                  {{ item[column.id] as string }}
-                </div>
+                <div class="text-gray-900 font-medium order-1">Placeholder</div>
               </slot>
             </div>
           </template>
@@ -55,43 +53,49 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends {id: string}, C extends string">
 import { ConcreteComponent, computed } from 'vue'
 import { FormButton } from '~~/src/lib'
 
-export interface ItemType<T = unknown> {
-  id: string
-  [key: string]: T | string
+export type TableColumn<I> = {
+  id: I
+  header: string
+  classes: string
 }
 
-interface RowButton<T = unknown> {
+export interface RowButton<T = unknown> {
   icon: ConcreteComponent
   label: string
-  action: (item: ItemType<T>) => void
+  action: (item: T) => void
   class: string
 }
 
-interface Header {
-  id: string
-  title: string
-}
+//export interface Header<R> {
+///  id: keyof R
+//  title: string
+//}
 
 const props = defineProps<{
-  headers: Header[]
-  items: ItemType[]
-  buttons?: RowButton[]
-  columnClasses: Record<string, string>
+  //headers: Header<T>[]
+  items: T[]
+  buttons?: RowButton<T>[]
+  //columnClasses: Record<keyof T, string>
+  columns: TableColumn<C>[]
   overflowCells?: boolean
-  onRowClick?: (item: ItemType<unknown>) => void
+  onRowClick?: (item: T) => void
 }>()
 
 const paddingRightStyle = computed(() => {
-  const padding = 52 + (props.buttons as RowButton<unknown>[]).length * 30
+  const padding = 52 + (props.buttons || []).length * 30
   return `${padding}px`
 })
 
-const getClasses = (column: string, colIndex: number): string => {
-  const columnClass = props.columnClasses[column]
+const getHeaderClasses = (column: C): string => {
+  return props.columns.find((c) => c.id === column)?.classes || ''
+}
+
+const getClasses = (column: C, colIndex: number): string => {
+  const columnClass = getHeaderClasses(column)
 
   if (colIndex === 0) {
     return `bg-transparent py-3 pr-5 px-1 ${columnClass}`
@@ -99,7 +103,7 @@ const getClasses = (column: string, colIndex: number): string => {
   return `lg:p-0 px-1 ${columnClass}`
 }
 
-const handleRowClick = (item: ItemType<unknown>) => {
+const handleRowClick = (item: T) => {
   if ('id' in item) {
     props.onRowClick?.(item)
   }

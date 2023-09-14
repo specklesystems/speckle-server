@@ -1,19 +1,16 @@
 import { Meta, StoryObj } from '@storybook/vue3'
 import MultiBadge from './MultiBadge.vue'
 
-// Vue components don't support generic props, so having to rely on any
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-type SingleItem = any
-
 type StoryType = StoryObj<
   Record<string, unknown> & {
     'update:modelValue': (val: unknown) => void
   }
 >
+
+type SingleItem = {
+  id: string
+  text: string
+}
 
 export default {
   component: MultiBadge,
@@ -26,7 +23,7 @@ export default {
 } as Meta
 
 export const Default: StoryType = {
-  render: (args) => ({
+  render: (args, ctx) => ({
     components: { MultiBadge },
     setup: () => {
       return { args }
@@ -39,6 +36,7 @@ export const Default: StoryType = {
     methods: {
       onModelUpdate(val: Array<SingleItem>) {
         args['update:modelValue'](val)
+        ctx.updateArgs({ ...args, modelValue: val })
       }
     }
   }),
@@ -49,6 +47,16 @@ export const Default: StoryType = {
     items: Array.from({ length: 10 }, (_, i) => ({
       id: `value${i + 1}`,
       text: `Example ${i + 1}`
-    }))
+    })),
+    modelValue: []
+  }
+}
+
+export const Single: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    multiple: false,
+    modelValue: undefined
   }
 }
