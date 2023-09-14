@@ -31,6 +31,9 @@ import { AutomationRunSchema } from '@/modules/automations/helpers/inputTypes'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { getCommits } from '@/modules/core/repositories/commits'
+import { AutomationNotFoundError } from '@/modules/automations/errors/automations'
+import { getCommitById } from '@/modules/core/services/commits'
+import { CommitNotFoundError } from '@/modules/core/errors/commit'
 
 type AutomationRunWithFunctionRunsRecord = AutomationRunRecord & {
   functionRuns: AutomationFunctionRunRecord[]
@@ -71,15 +74,23 @@ export async function upsertModelAutomationRunResult({
 
   // get the automation from the DB
   const automation = await getAutomation(input.automationId)
+  if (!automation) throw new AutomationNotFoundError()
 
   // authz the current user on the automation
   const stream = await getStream({
     userId: userId || undefined,
     streamId: automation.projectId
   })
+  // this is never going to happen, cause the automation has an FK to the streamId
   if (!stream) throw new StreamNotFoundError('Project not found')
   if (stream.role !== Roles.Stream.Owner)
     throw new ForbiddenError('Only project owners are allowed')
+
+  const version = await getCommitById({
+    streamId: automation.projectId,
+    id: validatedInput.versionId
+  })
+  if (!version) throw new CommitNotFoundError()
 
   // store the result of the run, if it already exists, patch it
   const maybeAutomationRun = await getAutomationRun(input.automationRunId)

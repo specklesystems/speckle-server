@@ -24,7 +24,8 @@ function buildErrorFormatter(debug) {
     if (realError instanceof ZodError) {
       return {
         ...error,
-        message: fromZodError(realError).message
+        message: fromZodError(realError).message,
+        extensions: { ...error.extensions, code: 'BAD_REQUEST' }
       }
     }
 

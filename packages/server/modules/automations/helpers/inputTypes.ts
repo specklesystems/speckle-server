@@ -67,7 +67,7 @@ export const AutomationRunSchema = z.object({
   versionId: z.string().nonempty(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  functionRuns: z.array(FunctionRunStatusSchema)
+  functionRuns: z.array(FunctionRunStatusSchema).min(1)
 })
 
 export type AutomationRun = z.infer<typeof AutomationRunSchema>
