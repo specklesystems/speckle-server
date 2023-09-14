@@ -106,7 +106,11 @@ const onSubmit = async () => {
         streamId: props.webhook.streamId,
         url: webhookModel.value.url,
         description: webhookModel.value.description,
-        triggers: triggers.value.map((i) => i.id)
+        triggers: triggers.value.map((i) => {
+          return (
+            Object.entries(WebhookTriggers).find(([key]) => key === i.id)?.[1] || i.id
+          )
+        })
       }
     },
     {
@@ -117,7 +121,7 @@ const onSubmit = async () => {
             fields: {
               url: () => webhookModel.value.url,
               description: () => webhookModel.value.description || '',
-              triggers: () => triggers.value.map((i) => i.id)
+              triggers: () => triggers.value.map((i) => i.text)
             }
           })
         }
@@ -152,7 +156,12 @@ watch(
       (newVal?.triggers || []).filter(
         (t): t is NonNullable<typeof t> => !!t
       ) as string[]
-    ).map((i) => ({ id: i, text: i }))
+    ).map((i) => {
+      const mappedKey = Object.entries(WebhookTriggers).find(
+        ([value]) => value === i
+      )?.[0]
+      return { id: mappedKey || i, text: mappedKey || i }
+    })
   },
   { immediate: true }
 )
