@@ -32,6 +32,8 @@
                 'transform rounded-lg bg-foundation text-left shadow-xl transition-all',
                 widthClasses
               ]"
+              :as="isForm ? 'form' : 'div'"
+              @submit.prevent="onSubmit"
             >
               <div
                 v-if="title"
@@ -50,17 +52,22 @@
                 <slot>Put your content here!</slot>
               </div>
               <div
-                v-if="buttons"
+                v-if="hasButtons"
                 class="flex p-4 sm:px-6 sm:py-5 border-t gap-2 border-outline-3"
               >
-                <FormButton
-                  v-for="(button, index) in buttons"
-                  :key="index"
-                  v-bind="button.props"
-                  @click="button.onClick"
-                >
-                  {{ button.text }}
-                </FormButton>
+                <template v-if="buttons">
+                  <FormButton
+                    v-for="(button, index) in buttons"
+                    :key="index"
+                    v-bind="button.props"
+                    @click="button.onClick"
+                  >
+                    {{ button.text }}
+                  </FormButton>
+                </template>
+                <template v-else>
+                  <slot name="buttons" />
+                </template>
               </div>
             </DialogPanel>
           </TransitionChild>
@@ -73,7 +80,7 @@
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { FormButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
-import { computed } from 'vue'
+import { computed, useSlots } from 'vue'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -91,8 +98,21 @@ const props = defineProps<{
    */
   preventCloseOnClickOutside?: boolean
   title?: string
-  buttons?: Array<{ text: string; props: Record<string, unknown>; onClick: () => void }>
+  buttons?: Array<{
+    text: string
+    props: Record<string, unknown>
+    onClick?: () => void
+  }>
+  /**
+   * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
+   */
+  onSubmit?: (e: SubmitEvent) => void
 }>()
+
+const slots = useSlots()
+
+const isForm = computed(() => !!props.onSubmit)
+const hasButtons = computed(() => props.buttons || slots.buttons)
 
 const open = computed({
   get: () => props.open,
@@ -117,7 +137,7 @@ const maxWidthWeight = computed(() => {
 const widthClasses = computed(() => {
   const classParts: string[] = ['w-full', 'sm:my-8 sm:w-full sm:max-w-xl']
 
-  if (!props.title) {
+  if (!props.title && !hasButtons.value) {
     classParts.push('px-4 pt-4 pb-4', 'sm:p-6')
   }
 

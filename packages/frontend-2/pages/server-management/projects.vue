@@ -89,7 +89,10 @@
       </template>
     </ServerManagementTable>
 
+    <CommonLoadingBar v-if="loading && !projects?.length" loading />
+
     <InfiniteLoading
+      v-if="projects?.length"
       :settings="{ identifier: infiniteLoaderId }"
       class="py-4"
       @infinite="infiniteLoad"
@@ -133,7 +136,8 @@ const {
   result: extraPagesResult,
   fetchMore: fetchMorePages,
   variables: resultVariables,
-  onResult
+  onResult,
+  loading
 } = useQuery(getProjectsQuery, () => ({
   limit: 50,
   query: searchString.value

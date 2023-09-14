@@ -1,0 +1,112 @@
+extend type Model {
+  automationStatus: AutomationsStatus
+}
+
+type AutomationsStatus {
+  status: AutomationRunStatus!
+  statusMessage: String
+  automationRuns: [ModelAutomationRun!]!
+}
+
+extend type Version {
+  automationStatus: AutomationsStatus
+}
+
+type ModelAutomation {
+  automationName: String!
+  automationId: String!
+  automationRevisionId: String!
+  createdAt: DateTime!
+  runs(cursor: String, limit: Int! = 25): ModelAutomationRunsCollection!
+}
+
+type ModelAutomationRunsCollection {
+  totalCount: Int!
+  cursor: String
+  items: [ModelAutomationRun!]!
+}
+
+type ModelAutomationRun {
+  versionId: String!
+  # automation: ModelAutomation!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  automationRunId: String!
+  functionRunStatuses: [AutomationFunctionRunStatus!]!
+  runStatus: AutomationRunStatus!
+}
+
+type AutomationFunctionRunStatus {
+  functionId: String!
+  elapsed: Float!
+  runStatus: AutomationRunStatus!
+  # this is a link to a viewer page with potentially composite
+  contextView: String
+  # TODO: remove this from the schema and add it as a type override
+  resultVersionIds: [String!]!
+  # resultVersions: [Version!]!
+
+  blobs: [String!]!
+  statusMessage: String
+  # its a {version: string; objectResults: Record<string, Array<{level: string; statusMessage: string}>>}
+  # where the record key is the object id
+  objectResults: JSONObject!
+}
+
+extend type Mutation {
+  automationMutations: AutomationMutations!
+}
+
+type AutomationMutations {
+  functionRunStatusReport(input: ModelAutomationRunStatusUpdateInput!): Boolean!
+    @hasServerRole(role: SERVER_USER)
+  # @hasStreamRole(role: STREAM_OWNER) # who can do this?
+  # @hasScope(scope: "automation:result") # TODO: add the scope constant
+  create(input: ModelAutomationCreateInput!): Boolean! @hasServerRole(role: SERVER_USER)
+  # @hasStreamRole(role: STREAM_OWNER) # TODO: check for stream ownership in the service
+  # @hasScope(scope: "automation:create") # TODO: add the scope constant
+}
+
+input ModelAutomationCreateInput {
+  projectId: String!
+  modelId: String!
+  automationName: String!
+  automationId: String!
+  automationRevisionId: String!
+}
+
+input ModelAutomationRunStatusUpdateInput {
+  versionId: String!
+  automationId: String!
+  automationRevisionId: String!
+  automationRunId: String!
+  # functionReleaseId: String!
+  functionRunStatuses: [FunctionRunStatusInput!]!
+}
+
+enum AutomationRunStatus {
+  INITIALIZING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  # TIMEOUT needs to be handled as an error
+}
+
+input FunctionRunStatusInput {
+  # we cannot strictly require these values, cause local testers of function, wont have it...
+  # Or should we?
+  functionId: String!
+  elapsed: Float!
+  runStatus: AutomationRunStatus!
+  contextView: String
+  resultVersionIds: [String!]!
+  blobs: [String!]!
+  statusMessage: String
+  # its a Record<string, {level: string; statusMessage: string}[]>
+  # where the record key is the object id
+  objectResults: JSONObject!
+}
+
+# extend type Subscription {
+#   automationRunStatusUpdated()
+# }

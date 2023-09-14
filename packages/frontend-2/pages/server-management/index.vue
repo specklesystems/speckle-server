@@ -66,6 +66,7 @@ const isLatestVersion = computed(() => {
     !latestVersion.value ||
     currentVersion.value === latestVersion.value ||
     currentVersion.value === 'dev' ||
+    currentVersion.value?.includes('alpha') ||
     currentVersion.value === 'N/A'
   )
 })
@@ -92,7 +93,10 @@ const serverData = computed((): CardInfo[] => [
           label: 'Update is available',
           action: openGithubReleasePage
         }
-      : undefined
+      : {
+          type: 'text',
+          label: 'Up-to-date'
+        }
   }
 ])
 const userData = computed((): CardInfo[] => [
