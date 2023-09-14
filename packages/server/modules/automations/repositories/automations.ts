@@ -91,10 +91,21 @@ export const insertAutomationFunctionRunResultVersion = async (
     ) as AutomationFunctionRunsResultVersionRecord
   })
 
+  return await AutomationFunctionRunsResultVersions.knex().insert(normalizedModels)
+}
+
+export const deleteResultVersionsForRuns = async (
+  keyPairs: [functionId: string, automationRunId: string][]
+) => {
   return await AutomationFunctionRunsResultVersions.knex()
-    .insert(normalizedModels)
-    .onConflict()
-    .ignore()
+    .whereIn(
+      [
+        AutomationFunctionRunsResultVersions.col.functionId,
+        AutomationFunctionRunsResultVersions.col.automationRunId
+      ],
+      keyPairs
+    )
+    .del()
 }
 
 export const getAutomationRun = async (

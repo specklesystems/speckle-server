@@ -28,7 +28,7 @@ export type AutomationFunctionRunRecord = {
   status: AutomationRunStatus
   contextView: Nullable<string>
   statusMessage: Nullable<string>
-  results: Results
+  results: Nullable<Results>
 }
 
 export type AutomationFunctionRunsResultVersionRecord = {

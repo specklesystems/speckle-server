@@ -44,3 +44,27 @@ export const Default: StoryObj = {
     icon: FaceSmileIcon
   }
 }
+
+export const Danger: StoryObj = {
+  ...Default,
+  args: {
+    ...Default.args,
+    color: 'danger'
+  }
+}
+
+export const Success: StoryObj = {
+  ...Default,
+  args: {
+    ...Default.args,
+    color: 'success'
+  }
+}
+
+export const Warning: StoryObj = {
+  ...Default,
+  args: {
+    ...Default.args,
+    color: 'warning'
+  }
+}

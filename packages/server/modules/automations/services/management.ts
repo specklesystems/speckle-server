@@ -8,9 +8,10 @@ import {
   upsertAutomationFunctionRunData,
   insertAutomationFunctionRunResultVersion,
   getLatestAutomationRunsFor,
-  getFunctionRunsForAutomationRuns
+  getFunctionRunsForAutomationRuns,
+  deleteResultVersionsForRuns
 } from '@/modules/automations/repositories/automations'
-import _, { flatMap } from 'lodash'
+import _, { flatMap, uniqBy } from 'lodash'
 import {
   AutomationCreateInput,
   AutomationRunStatusUpdateInput,
@@ -92,15 +93,18 @@ export async function upsertModelAutomationRunResult({
   await upsertAutomationRunData(validatedInput)
 
   // upsert run function runs
-  const runs = validatedInput.functionRuns.map(
-    (s): AutomationFunctionRunRecord => ({
-      ...s,
-      automationRunId: validatedInput.automationRunId
-    })
+  const runs = uniqBy(
+    validatedInput.functionRuns.map(
+      (s): AutomationFunctionRunRecord => ({
+        ...s,
+        automationRunId: validatedInput.automationRunId
+      })
+    ),
+    (v) => `${v.automationRunId}-${v.functionId}`
   )
   await upsertAutomationFunctionRunData(runs)
 
-  // validate & upsert result versions
+  // create new result version records
   const versionsRecords: AutomationFunctionRunsResultVersionRecord[] = flatMap(
     validatedInput.functionRuns
       .filter((s) => s.resultVersionIds?.length)
@@ -120,12 +124,22 @@ export async function upsertModelAutomationRunResult({
   const validatedVersions = await getCommits(
     versionsRecords.map((r) => r.resultVersionId)
   )
-  const validVersionsRecords = versionsRecords.filter((r) =>
-    validatedVersions.find(
-      (vv) => vv.id === r.resultVersionId && vv.streamId === stream.id
-    )
+  const validVersionsRecords = uniqBy(
+    versionsRecords.filter((r) =>
+      validatedVersions.find(
+        (vv) => vv.id === r.resultVersionId && vv.streamId === stream.id
+      )
+    ),
+    (v) => `${v.automationRunId}-${v.functionId}-${v.resultVersionId}`
   )
 
+  // delete old/stale versions and re-insert new valid ones (in case this is an update to an existing run)
+  await deleteResultVersionsForRuns(
+    validatedInput.functionRuns.map((s) => [
+      s.functionId,
+      validatedInput.automationRunId
+    ])
+  )
   await insertAutomationFunctionRunResultVersion(validVersionsRecords)
 
   // 4. publish an event for new automation run creation
@@ -193,7 +207,7 @@ export const getAutomationsStatus = async ({
     } else if (anyFunctionRunsInitializing(ar)) {
       status = AutomationRunStatus.Initializing
     }
-    return { ..._.cloneDeep(ar), status }
+    return { ..._.cloneDeep(ar), status, id: ar.automationRunId }
   })
 
   const failedAutomations = automationRuns.filter(
@@ -224,11 +238,12 @@ export const getAutomationsStatus = async ({
     statusMessage = 'Some automations are running'
   } else if (initializingAutomations.length) {
     status = AutomationRunStatus.Initializing
-    statusMessage = 'All automations are initializing'
+    statusMessage = 'Some automations are initializing'
   }
   return {
     status: status as AutomationRunStatus,
     automationRuns,
-    statusMessage
+    statusMessage,
+    id: versionId
   }
 }

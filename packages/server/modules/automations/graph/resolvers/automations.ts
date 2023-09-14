@@ -47,7 +47,11 @@ export = {
     },
     async results(parent) {
       const originalResults = parent.results
+      if (!originalResults) return null
       return formatResults(originalResults)
+    },
+    id(parent) {
+      return `${parent.automationRunId}-${parent.functionId}`
     }
   },
   Mutation: {
