@@ -35,13 +35,14 @@
           type="text"
         />
         <FormSelectMultiBadge
+          v-model="triggers"
+          multiple
           name="Name"
           label="Choose Events"
           show-required
           :rules="requiredRule"
           show-label
           :items="webhookTriggerItems"
-          @update:model-value="updateTriggers"
         />
       </div>
     </form>
@@ -81,7 +82,7 @@ const { mutate: createWebhook } = useMutation(createWebhookMutation)
 const name = ref('')
 const url = ref('')
 const secret = ref('')
-const triggers = ref<string[]>([])
+const triggers = ref<Array<{ id: string; text: string }>>([])
 
 const isOpen = computed({
   get: () => props.open,
@@ -104,7 +105,7 @@ const onSubmit = async () => {
       secret: secret.value,
       url: url.value,
       streamId: props.streamId,
-      triggers: triggers.value,
+      triggers: triggers.value.map((i) => i.text),
       enabled: true
     }
 
@@ -122,10 +123,6 @@ const onSubmit = async () => {
     })
     console.error('Error creating webhook:', error)
   }
-}
-
-const updateTriggers = (newValue: { text: string }[]) => {
-  triggers.value = newValue.map((item) => item.text)
 }
 
 const dialogButtons = [
