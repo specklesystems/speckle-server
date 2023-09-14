@@ -1,7 +1,7 @@
 <template>
   <div>
     <Portal to="navigation">
-      <HeaderNavLink :to="projectRoute(projectId)" name="Name"></HeaderNavLink>
+      <HeaderNavLink :to="projectRoute(projectId)" :name="projectName"></HeaderNavLink>
       <HeaderNavLink
         :to="`${projectRoute(projectId)}/webhooks`"
         name="Webhooks"
@@ -145,6 +145,10 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 
+definePageMeta({
+  middleware: ['require-valid-project']
+})
+
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(updateWebhookMutation)
 
@@ -167,20 +171,21 @@ const { result: pageResult, variables: resultVariables } = useQuery(
   })
 )
 
+const projectName = computed(() => pageResult.value?.project?.name || 'Unknown Project')
+
 const getHistoryStatus = (item: TableItemType<WebhookItem>) => {
   const recentHistory = item.history?.items?.[0]
   if (recentHistory) {
     switch (recentHistory.status) {
-      case 0:
       case 1:
         return 'alert'
       case 2:
         return 'called'
       case 3:
         return 'error'
-      default:
-        return 'noEvents'
     }
+  } else {
+    return 'noEvents'
   }
 }
 
