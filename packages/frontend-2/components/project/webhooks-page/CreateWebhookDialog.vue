@@ -34,7 +34,7 @@
           show-label
           type="text"
         />
-        <FormSelectMultiBadge
+        <FormSelectBadgeSelected
           v-model="triggers"
           multiple
           name="Name"
@@ -55,7 +55,7 @@ import { WebhookTriggers } from '@speckle/shared/src/core/constants'
 import {
   LayoutDialog,
   FormTextInput,
-  FormSelectMultiBadge,
+  FormSelectBadgeSelected,
   ToastNotificationType
 } from '@speckle/ui-components'
 import { isRequired } from '~~/lib/common/helpers/validation'

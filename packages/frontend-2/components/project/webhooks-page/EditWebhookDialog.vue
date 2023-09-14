@@ -29,7 +29,7 @@
           @update:model-value="updateDescription"
         />
 
-        <FormSelectMultiBadge
+        <FormSelectBadgeSelected
           v-model="triggers"
           multiple
           name="triggers"
@@ -47,7 +47,11 @@
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
 import { WebhookTriggers } from '@speckle/shared'
-import { LayoutDialog, TableItemType } from '@speckle/ui-components'
+import {
+  LayoutDialog,
+  TableItemType,
+  FormSelectBadgeSelected
+} from '@speckle/ui-components'
 import { WebhookItem } from '~~/lib/projects/helpers/types'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { isRequired } from '~~/lib/common/helpers/validation'
