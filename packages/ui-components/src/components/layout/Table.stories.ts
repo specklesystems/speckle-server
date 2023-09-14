@@ -188,6 +188,16 @@ export const Default: StoryObj = {
         role: 'User'
       }
     ],
+    overflowCells: false,
+    onRowClick: (item: TableItemType) => console.log('Row clicked', item),
+    roles: ['Admin', 'User', 'Guest']
+  }
+}
+
+export const WithButtons: StoryObj = {
+  ...Default,
+  args: {
+    ...Default.args,
     buttons: [
       {
         icon: DocumentDuplicateIcon,
@@ -207,9 +217,6 @@ export const Default: StoryObj = {
         action: (item: TableItemType) => console.log('Delete', item),
         class: 'text-red-700'
       }
-    ],
-    overflowCells: false,
-    onRowClick: (item: TableItemType) => console.log('Row clicked', item),
-    roles: ['Admin', 'User', 'Guest']
+    ]
   }
 }

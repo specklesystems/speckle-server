@@ -80,7 +80,7 @@ const props = defineProps<{
 
 const paddingRightStyle = computed(() => {
   const buttonCount = (props.buttons || []).length
-  let padding = 0
+  let padding = 16
   if (buttonCount > 0) {
     padding = 48 + (buttonCount - 1) * 42
   }
