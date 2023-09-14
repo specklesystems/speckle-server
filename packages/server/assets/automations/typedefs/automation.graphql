@@ -14,6 +14,7 @@ extend type Version {
 }
 
 type AutomationsStatus {
+  id: ID!
   status: AutomationRunStatus!
   statusMessage: String
   automationRuns: [AutomationRun!]!
@@ -35,7 +36,8 @@ type AutomationsStatus {
 # }
 
 type AutomationRun {
-  automationRunId: String!
+  id: ID!
+  automationId: String!
   versionId: String!
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -47,6 +49,7 @@ type AutomationRun {
 }
 
 type AutomationFunctionRun {
+  id: ID!
   functionId: String!
   elapsed: Float!
   status: AutomationRunStatus!
@@ -62,7 +65,7 @@ type AutomationFunctionRun {
     }
   }
   """
-  results: JSONObject!
+  results: JSONObject
 }
 
 input AutomationCreateInput {
@@ -92,7 +95,7 @@ input FunctionRunStatusInput {
     }
   }
   """
-  results: JSONObject!
+  results: JSONObject
 }
 
 input AutomationRunStatusUpdateInput {

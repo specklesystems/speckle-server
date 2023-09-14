@@ -194,6 +194,7 @@ export type AutomationFunctionRun = {
   contextView?: Maybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   functionId: Scalars['String'];
+  id: Scalars['ID'];
   resultVersions: Array<Version>;
   /**
    * Current schema: {
@@ -204,7 +205,7 @@ export type AutomationFunctionRun = {
    *   }
    * }
    */
-  results: Scalars['JSONObject'];
+  results?: Maybe<Scalars['JSONObject']>;
   status: AutomationRunStatus;
   statusMessage?: Maybe<Scalars['String']>;
 };
@@ -227,9 +228,10 @@ export type AutomationMutationsFunctionRunStatusReportArgs = {
 
 export type AutomationRun = {
   __typename?: 'AutomationRun';
-  automationRunId: Scalars['String'];
+  automationId: Scalars['String'];
   createdAt: Scalars['DateTime'];
   functionRuns: Array<AutomationFunctionRun>;
+  id: Scalars['ID'];
   /** Resolved from all function run statuses */
   status: AutomationRunStatus;
   updatedAt: Scalars['DateTime'];
@@ -254,6 +256,7 @@ export type AutomationRunStatusUpdateInput = {
 export type AutomationsStatus = {
   __typename?: 'AutomationsStatus';
   automationRuns: Array<AutomationRun>;
+  id: Scalars['ID'];
   status: AutomationRunStatus;
   statusMessage?: Maybe<Scalars['String']>;
 };
@@ -683,7 +686,7 @@ export type FunctionRunStatusInput = {
    *   }
    * }
    */
-  results: Scalars['JSONObject'];
+  results?: InputMaybe<Scalars['JSONObject']>;
   status: AutomationRunStatus;
   statusMessage?: InputMaybe<Scalars['String']>;
 };
