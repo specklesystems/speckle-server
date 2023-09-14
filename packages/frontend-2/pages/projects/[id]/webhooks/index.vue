@@ -10,7 +10,9 @@
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold">Webhooks</h1>
       <div class="flex gap-2">
-        <FormButton color="secondary" :icon-left="BookOpenIcon">Open Docs</FormButton>
+        <FormButton color="secondary" :icon-left="BookOpenIcon" @click="openDocs">
+          Open Docs
+        </FormButton>
         <FormButton :icon-left="PlusIcon" @click="showNewWebhookDialog = true">
           Create Webhook
         </FormButton>
@@ -131,14 +133,17 @@ import {
   XCircleIcon
 } from '@heroicons/vue/20/solid'
 import { TrashIcon, PencilIcon } from '@heroicons/vue/24/outline'
+import {
+  FormSwitch,
+  ToastNotificationType,
+  TableItemType
+} from '@speckle/ui-components'
 import { projectWebhooksQuery } from '~~/lib/projects/graphql/queries'
-import { FormSwitch, ToastNotificationType } from '@speckle/ui-components'
+import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
+import { useGlobalToast } from '~~/lib/common/composables/toast'
 import { projectRoute } from '~~/lib/common/helpers/route'
 import { isWebhook } from '~~/lib/projects/helpers/utils'
 import { WebhookItem } from '~~/lib/projects/helpers/types'
-import { TableItemType } from '@speckle/ui-components'
-import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
-import { useGlobalToast } from '~~/lib/common/composables/toast'
 import {
   convertThrowIntoFetchResult,
   getCacheId,
@@ -151,10 +156,7 @@ definePageMeta({
 
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(updateWebhookMutation)
-
 const route = useRoute()
-
-const projectId = computed(() => route.params.id as string)
 
 const webhookToModify = ref<TableItemType<WebhookItem> | null>(null)
 const showDeleteWebhookDialog = ref(false)
@@ -164,14 +166,15 @@ const urlValue = ref('')
 const nameValue = ref('')
 const secretValue = ref('')
 
-const { result: pageResult, variables: resultVariables } = useQuery(
-  projectWebhooksQuery,
-  () => ({
-    projectId: projectId.value
-  })
-)
-
+const projectId = computed(() => route.params.id as string)
 const projectName = computed(() => pageResult.value?.project?.name || 'Unknown Project')
+const webhooks = computed<WebhookItem[]>(() => {
+  return (
+    pageResult.value?.project?.webhooks?.items?.map(
+      (webhook) => webhook as WebhookItem
+    ) || []
+  )
+})
 
 const getHistoryStatus = (item: TableItemType<WebhookItem>) => {
   const recentHistory = item.history?.items?.[0]
@@ -200,14 +203,6 @@ const getHistoryStatusInfo = (item: TableItemType<WebhookItem>) => {
   }
 }
 
-const webhooks = computed<WebhookItem[]>(() => {
-  return (
-    pageResult.value?.project?.webhooks?.items?.map(
-      (webhook) => webhook as WebhookItem
-    ) || []
-  )
-})
-
 const openDeleteWebhookDialog = (item: TableItemType<WebhookItem>) => {
   if (isWebhook(item)) {
     webhookToModify.value = item
@@ -220,6 +215,10 @@ const openEditWebhookDialog = (item: TableItemType<WebhookItem>) => {
     webhookToModify.value = item
     showEditWebhookDialog.value = true
   }
+}
+
+const openDocs = () => {
+  window.open('https://speckle.guide/dev/server-webhooks.html', '_blank')
 }
 
 const onChange = async (item: TableItemType<WebhookItem>, newValue: boolean) => {
@@ -262,4 +261,11 @@ const onChange = async (item: TableItemType<WebhookItem>, newValue: boolean) => 
     })
   }
 }
+
+const { result: pageResult, variables: resultVariables } = useQuery(
+  projectWebhooksQuery,
+  () => ({
+    projectId: projectId.value
+  })
+)
 </script>

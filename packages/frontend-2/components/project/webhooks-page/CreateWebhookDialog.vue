@@ -49,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { isRequired } from '~~/lib/common/helpers/validation'
+import { useMutation } from '@vue/apollo-composable'
 import { WebhookTriggers } from '@speckle/shared/src/core/constants'
 import {
   LayoutDialog,
@@ -57,13 +57,12 @@ import {
   FormSelectMultiBadge,
   ToastNotificationType
 } from '@speckle/ui-components'
-import { WebhookCreateInput } from '~~/lib/common/generated/gql/graphql'
+import { isRequired } from '~~/lib/common/helpers/validation'
 import { createWebhookMutation } from '~~/lib/projects/graphql/mutations'
-import { useMutation } from '@vue/apollo-composable'
+import { WebhookCreateInput } from '~~/lib/common/generated/gql/graphql'
 import { useGlobalToast } from '~~/lib/common/composables/toast'
 
-const { triggerNotification } = useGlobalToast()
-const { mutate: createWebhook } = useMutation(createWebhookMutation)
+const requiredRule = [isRequired]
 
 const props = defineProps<{
   open: boolean
@@ -75,6 +74,9 @@ const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
   (e: 'webhook-created'): void
 }>()
+
+const { triggerNotification } = useGlobalToast()
+const { mutate: createWebhook } = useMutation(createWebhookMutation)
 
 const name = ref('')
 const url = ref('')
@@ -94,19 +96,6 @@ const webhookTriggerItems = computed(() => {
     })
   )
 })
-
-const dialogButtons = computed(() => [
-  {
-    text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true, outline: true },
-    onClick: () => (isOpen.value = false)
-  },
-  {
-    text: 'Create',
-    props: { color: 'primary', fullWidth: true, outline: false },
-    onClick: onSubmit
-  }
-])
 
 const onSubmit = async () => {
   try {
@@ -139,5 +128,16 @@ const updateTriggers = (newValue: { text: string }[]) => {
   triggers.value = newValue.map((item) => item.text)
 }
 
-const requiredRule = [isRequired]
+const dialogButtons = [
+  {
+    text: 'Cancel',
+    props: { color: 'secondary', fullWidth: true, outline: true },
+    onClick: () => (isOpen.value = false)
+  },
+  {
+    text: 'Create',
+    props: { color: 'primary', fullWidth: true, outline: false },
+    onClick: onSubmit
+  }
+]
 </script>

@@ -46,18 +46,19 @@
 
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
-import { LayoutDialog } from '@speckle/ui-components'
-import { isRequired } from '~~/lib/common/helpers/validation'
+import { WebhookTriggers } from '@speckle/shared'
+import { LayoutDialog, TableItemType } from '@speckle/ui-components'
 import { WebhookItem } from '~~/lib/projects/helpers/types'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
-import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
+import { isRequired } from '~~/lib/common/helpers/validation'
 import {
   convertThrowIntoFetchResult,
   getCacheId,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-import { WebhookTriggers } from '@speckle/shared'
-import { TableItemType } from '@speckle/ui-components'
+import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
+
+const requiredRule = [isRequired]
 
 const props = defineProps<{
   open: boolean
@@ -68,8 +69,8 @@ const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(updateWebhookMutation)
 
 const triggers = ref<typeof webhookTriggerItems.value>([])
-
 const isOpen = defineModel<boolean>('open', { required: true })
+const webhookModel = ref(props.webhook || { url: '', description: '', triggers: [] })
 
 const webhookTriggerItems = computed(() => {
   return Object.entries(WebhookTriggers as Record<string, unknown>).map(
@@ -79,6 +80,14 @@ const webhookTriggerItems = computed(() => {
     })
   )
 })
+
+const updateUrl = (newValue: string) => {
+  webhookModel.value.url = newValue
+}
+
+const updateDescription = (newValue: string) => {
+  webhookModel.value.description = newValue
+}
 
 const onSubmit = async () => {
   const webhookId = props.webhook?.id
@@ -129,8 +138,6 @@ const onSubmit = async () => {
   }
 }
 
-const webhookModel = ref(props.webhook || { url: '', description: '', triggers: [] })
-
 watch(
   () => props.webhook,
   (newVal) => {
@@ -146,14 +153,6 @@ watch(
   { immediate: true }
 )
 
-const updateUrl = (newValue: string) => {
-  webhookModel.value.url = newValue
-}
-
-const updateDescription = (newValue: string) => {
-  webhookModel.value.description = newValue
-}
-
 const dialogButtons = [
   {
     text: 'Cancel',
@@ -166,6 +165,4 @@ const dialogButtons = [
     onClick: onSubmit
   }
 ]
-
-const requiredRule = [isRequired]
 </script>

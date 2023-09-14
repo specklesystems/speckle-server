@@ -70,16 +70,9 @@ export interface RowButton<T = unknown> {
   class: string
 }
 
-//export interface Header<R> {
-///  id: keyof R
-//  title: string
-//}
-
 const props = defineProps<{
-  //headers: Header<T>[]
   items: T[]
   buttons?: RowButton<T>[]
-  //columnClasses: Record<keyof T, string>
   columns: TableColumn<C>[]
   overflowCells?: boolean
   onRowClick?: (item: T) => void

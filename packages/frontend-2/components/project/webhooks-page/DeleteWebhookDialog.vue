@@ -29,7 +29,6 @@ import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog, TableItemType } from '@speckle/ui-components'
 import { WebhookItem } from '~~/lib/projects/helpers/types'
 import { deleteWebhookMutation } from '~~/lib/projects/graphql/mutations'
-import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
   ROOT_QUERY,
   convertThrowIntoFetchResult,
@@ -37,6 +36,7 @@ import {
   getFirstErrorMessage,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
+import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { WebhookCollection } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
