@@ -59,7 +59,14 @@
                 </div>
               </div>
               <div>
-                <!-- <FormButton>View automation</FormButton> -->
+                <FormButton
+                  v-if="automateBaseUrl"
+                  :to="automationDataPageRoute(automateBaseUrl, run.automationId)"
+                  external
+                  target="_blank"
+                >
+                  View automation
+                </FormButton>
               </div>
             </div>
             <div class="grid gap-4 grid-cols-1 sm:grid-cols-2">
@@ -139,8 +146,9 @@ import {
   ModelCardAutomationStatus_ModelFragment
 } from '~~/lib/common/generated/gql/graphql'
 import dayjs from 'dayjs'
-import { modelRoute } from '~~/lib/common/helpers/route'
+import { automationDataPageRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { SpeckleViewer } from '@speckle/shared'
+import { useServerInfo } from '~~/lib/core/composables/server'
 
 // TODO: Clean up unnecessary fields
 // Remember about stories
@@ -191,7 +199,17 @@ const props = defineProps<{
   projectId: string
 }>()
 
+const { serverInfo } = useServerInfo()
+
 const showDialog = ref(false)
+
+const automationStatus = computed(() => props.model.automationStatus)
+const statusIconAndColor = computed(() =>
+  resolveStatusMetadata(automationStatus.value.status)
+)
+
+const automationRuns = computed(() => automationStatus.value.automationRuns)
+const automateBaseUrl = computed(() => serverInfo.value?.automateUrl)
 
 const resolveStatusMetadata = (
   status: AutomationRunStatus
@@ -246,11 +264,4 @@ const viewResultVersionsRoute = (versions: Array<{ id: string }>) => {
   const resourceIdString = resourceIdStringBuilder.toString()
   return modelRoute(props.projectId, resourceIdString)
 }
-
-const automationStatus = computed(() => props.model.automationStatus)
-const statusIconAndColor = computed(() =>
-  resolveStatusMetadata(automationStatus.value.status)
-)
-
-const automationRuns = computed(() => automationStatus.value.automationRuns)
 </script>

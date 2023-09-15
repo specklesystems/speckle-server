@@ -2018,6 +2018,8 @@ export type ServerInfo = {
   adminContact?: Maybe<Scalars['String']>;
   /** The authentication strategies available on this server. */
   authStrategies: Array<AuthStrategy>;
+  /** Base URL of Speckle Automate, if set */
+  automateUrl?: Maybe<Scalars['String']>;
   blobSizeLimitBytes: Scalars['Int'];
   canonicalUrl?: Maybe<Scalars['String']>;
   company?: Maybe<Scalars['String']>;
@@ -3944,6 +3946,7 @@ export type ServerAppListItemResolvers<ContextType = GraphQLContext, ParentType 
 export type ServerInfoResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerInfo'] = ResolversParentTypes['ServerInfo']> = {
   adminContact?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   authStrategies?: Resolver<Array<ResolversTypes['AuthStrategy']>, ParentType, ContextType>;
+  automateUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   blobSizeLimitBytes?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   canonicalUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

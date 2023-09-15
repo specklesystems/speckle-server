@@ -2008,6 +2008,8 @@ export type ServerInfo = {
   adminContact?: Maybe<Scalars['String']>;
   /** The authentication strategies available on this server. */
   authStrategies: Array<AuthStrategy>;
+  /** Base URL of Speckle Automate, if set */
+  automateUrl?: Maybe<Scalars['String']>;
   blobSizeLimitBytes: Scalars['Int'];
   canonicalUrl?: Maybe<Scalars['String']>;
   company?: Maybe<Scalars['String']>;
