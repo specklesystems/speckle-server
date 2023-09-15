@@ -159,6 +159,7 @@ export class SketchupBridge extends BaseBridge {
     await Promise.all(promises)
 
     const args: CreateVersionArgs = {
+      modelCardId,
       projectId,
       modelId,
       accountId,
