@@ -36,12 +36,13 @@
       <div v-show="showModels" class="space-y-2">
         <template v-for="model in project.senders" :key="model.modelId">
           <CommonModelCard :model-card="model" :project="project">
-            <CommonModelSenderV2 :model="model" :project="project" />
+            <CommonModelSender :model="model" :project="project" />
           </CommonModelCard>
         </template>
         <template v-for="model in project.receivers" :key="model.modelId">
-          <!-- TODO: Wrap it with CommonModelCard-->
-          <CommonModelReceiver :model="model" :project="project" />
+          <CommonModelCard :model-card="model" :project="project">
+            <CommonModelReceiver :model="model" :project="project" />
+          </CommonModelCard>
         </template>
         <div>
           <button

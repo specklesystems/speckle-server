@@ -59,7 +59,7 @@ export type DocumentInfo = {
 }
 
 export type ToastInfo = {
-  id: string
+  modelCardId: string
   text: string
   level: 'info' | 'danger' | 'warning' | 'success'
   action?: ToastAction

@@ -63,7 +63,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { TrashIcon } from '@heroicons/vue/24/outline'
+import { TrashIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { IModelCard } from '~~/lib/bindings/definitions/IBasicConnectorBinding'
 import { ProjectModelGroup, useHostAppStore } from '~~/store/hostApp'
 
@@ -95,7 +95,7 @@ const progressBarText = computed(() => {
 })
 
 const removeCard = () => {
-  store.removeModel(props.modelCard.id)
+  store.removeModel(props.modelCard)
 }
 
 const openRemoveCardDialog = ref(false)

@@ -1,4 +1,4 @@
-import { IModelCard } from 'lib/bindings/definitions/IBasicConnectorBinding'
+import { IModelCard, ToastInfo } from 'lib/bindings/definitions/IBasicConnectorBinding'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 
 export const IReceiveBindingKey = 'receiveBinding'
@@ -11,6 +11,7 @@ export interface IReceiveBinding extends IBinding<IReceiveBindingEvents> {
 
 export interface IReceiveBindingEvents {
   receiverProgress: (args: ReceiverProgressArgs) => void
+  notify: (args: ToastInfo) => void
 }
 
 export interface IReceiverModelCard extends IModelCard {
