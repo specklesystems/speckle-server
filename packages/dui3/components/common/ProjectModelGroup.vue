@@ -35,14 +35,15 @@
 
       <div v-show="showModels" class="space-y-2">
         <template v-for="model in project.senders" :key="model.modelId">
-          <CommonModelSender :model="model" :project="project" />
+          <CommonModelCard :model-card="model" :project="project">
+            <CommonModelSender :model="model" :project="project" />
+          </CommonModelCard>
         </template>
         <template v-for="model in project.receivers" :key="model.modelId">
-          <CommonModelReceiver :model="model" :project="project" />
+          <CommonModelCard :model-card="model" :project="project">
+            <CommonModelReceiver :model="model" :project="project" />
+          </CommonModelCard>
         </template>
-        <!-- <template v-for="model in project.senders" :key="model.modelId + 'ddd'">
-          <CommonModelSender :model="model" :project="project" />
-        </template> -->
         <div>
           <button
             class="flex w-full text-xs text-center justify-center bg-primary-muted hover:bg-primary hover:text-foreground-on-primary transition rounded-md py-2"

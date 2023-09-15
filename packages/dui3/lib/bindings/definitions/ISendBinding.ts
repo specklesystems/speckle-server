@@ -22,8 +22,12 @@ export interface ISenderModelCard extends IModelCard {
   typeDiscriminator: 'SenderModelCard'
   sendFilter: ISendFilter
   sending?: boolean
-  progress?: SenderProgressArgs
-  notification?: ToastInfo
+}
+
+export type ModelProgressArgs = {
+  id: string
+  status?: string
+  progress?: number
 }
 
 export type SenderProgressArgs = {

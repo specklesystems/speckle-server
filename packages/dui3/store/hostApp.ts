@@ -71,9 +71,11 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await app.$baseBinding.updateModel(documentModelStore.value.models[modelIndex])
   }
 
-  const removeModel = (modelId: string) => {
-    //TODO
-    console.log(`Should remove ${modelId}`)
+  const removeModel = async (model: IModelCard) => {
+    await app.$baseBinding.removeModel(model)
+    documentModelStore.value.models = documentModelStore.value.models.filter(
+      (item) => item.id !== model.id
+    )
   }
 
   const invalidateReceiver = async (modelId: string) => {
@@ -152,8 +154,18 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
   app.$sendBinding.on('notify', (args) => {
     const model = documentModelStore.value.models.find(
-      (m) => m.id === args.id
+      (m) => m.id === args.modelCardId
     ) as ISenderModelCard
+    model.notification = args
+    setTimeout(() => {
+      model.notification = undefined
+    }, args.timeout)
+  })
+
+  app.$receiveBinding.on('notify', (args) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === args.modelCardId
+    ) as IReceiverModelCard
     model.notification = args
     setTimeout(() => {
       model.notification = undefined
@@ -191,9 +203,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     }
     const res = await createVersion(version)
     const notification: ToastInfo = {
-      id: args.modelCardId,
+      modelCardId: args.modelCardId,
       text: 'Version Created',
-      level: 'warning',
+      level: 'success',
       action: {
         name: 'View',
         url: `${defaultAccount.value?.accountInfo.serverInfo.url}/streams/${args.projectId}/commits/${res?.data?.versionMutations.create.id}`
@@ -205,10 +217,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
     model.notification = notification
 
-    // setTimeout(() => {
-    //   model.notification = undefined
-    //   console.log(model.notification, 'after timeout')
-    // }, 5000)
+    setTimeout(() => {
+      model.notification = undefined
+    }, 5000)
   })
   // First initialization calls
   void refreshDocumentInfo()

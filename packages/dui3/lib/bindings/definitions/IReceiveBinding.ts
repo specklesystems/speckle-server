@@ -11,6 +11,7 @@ export interface IReceiveBinding extends IBinding<IReceiveBindingEvents> {
 
 export interface IReceiveBindingEvents {
   receiverProgress: (args: ReceiverProgressArgs) => void
+  notify: (args: ToastInfo) => void
 }
 
 export interface IReceiverModelCard extends IModelCard {
@@ -20,8 +21,6 @@ export interface IReceiverModelCard extends IModelCard {
   projectName: string
   sourceApp: string
   receiving?: boolean
-  progress?: ReceiverProgressArgs
-  notification?: ToastInfo
 }
 
 export type ReceiverProgressArgs = {
