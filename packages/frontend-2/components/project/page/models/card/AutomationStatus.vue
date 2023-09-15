@@ -21,19 +21,99 @@
             {{ automationStatus.status }}
           </CommonBadge>
         </div>
-        <div class="inline-flex space-x-2 items-start">
+        <div
+          v-if="automationStatus.statusMessage"
+          class="inline-flex space-x-2 items-start"
+        >
           <strong class="shrink-0">Status message:</strong>
           <span class="text-foreground">
-            {{ automationStatus.statusMessage || '' }}
+            {{ automationStatus.statusMessage }}
           </span>
         </div>
+
         <LayoutDisclosure
           v-for="run in automationRuns"
           :key="run.id"
           :title="`Automation Run #${run.id}`"
           :color="resolveStatusMetadata(run.status).disclosureColor"
         >
-          Ayo
+          <div class="flex flex-col space-y-2">
+            <div class="flex justify-between items-start">
+              <div class="flex flex-col space-y-2">
+                <div class="inline-flex space-x-2 items-center">
+                  <strong>Status:</strong>
+                  <CommonBadge
+                    rounded
+                    :color-classes="`text-white ${
+                      resolveStatusMetadata(run.status).badgeColor
+                    }`"
+                  >
+                    {{ run.status }}
+                  </CommonBadge>
+                </div>
+                <div class="inline-flex space-x-2 items-start">
+                  <strong class="shrink-0">Started:</strong>
+                  <span v-tippy="absoluteDate(run.createdAt)" class="text-foreground">
+                    {{ fromNowDate(run.createdAt) }}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <!-- <FormButton>View automation</FormButton> -->
+              </div>
+            </div>
+            <div class="grid gap-4 grid-cols-1 sm:grid-cols-2">
+              <LayoutPanel
+                v-for="fnRun in run.functionRuns"
+                :key="fnRun.id"
+                ring
+                panel-classes="bg-foundation-2 py-2 px-4"
+                custom-padding
+              >
+                <div class="flex flex-col space-y-4">
+                  <div class="flex justify-between items-center">
+                    <span class="italic">Function #{{ fnRun.functionId }}</span>
+                    <CommonBadge
+                      rounded
+                      :color-classes="`text-white ${
+                        resolveStatusMetadata(fnRun.status).badgeColor
+                      }`"
+                    >
+                      {{ fnRun.status }}
+                    </CommonBadge>
+                  </div>
+                  <div v-if="fnRun.statusMessage">
+                    <strong class="shrink-0">Status message:</strong>
+                    <p class="text-foreground">
+                      {{ fnRun.statusMessage }}
+                    </p>
+                  </div>
+                  <div
+                    v-if="fnRun.contextView || fnRun.resultVersions.length"
+                    class="flex space-x-2"
+                  >
+                    <FormButton
+                      v-if="fnRun.contextView"
+                      size="sm"
+                      :to="fnRun.contextView"
+                      target="_blank"
+                    >
+                      View results
+                    </FormButton>
+                    <!-- TODO: How do we want to render result versions? -->
+                    <FormButton
+                      v-if="fnRun.resultVersions.length && false"
+                      size="sm"
+                      :to="viewResultVersionsRoute(fnRun.resultVersions)"
+                      target="_blank"
+                    >
+                      View new versions
+                    </FormButton>
+                  </div>
+                </div>
+              </LayoutPanel>
+            </div>
+          </div>
         </LayoutDisclosure>
       </div>
 
@@ -58,6 +138,9 @@ import {
   AutomationRunStatus,
   ModelCardAutomationStatus_ModelFragment
 } from '~~/lib/common/generated/gql/graphql'
+import dayjs from 'dayjs'
+import { modelRoute } from '~~/lib/common/helpers/route'
+import { SpeckleViewer } from '@speckle/shared'
 
 // TODO: Clean up unnecessary fields
 // Remember about stories
@@ -89,10 +172,14 @@ graphql(`
         status
         functionRuns {
           id
+          functionId
           elapsed
           status
           statusMessage
           contextView
+          resultVersions {
+            id
+          }
         }
       }
     }
@@ -101,6 +188,7 @@ graphql(`
 
 const props = defineProps<{
   model: SetFullyRequired<ModelCardAutomationStatus_ModelFragment, 'automationStatus'>
+  projectId: string
 }>()
 
 const showDialog = ref(false)
@@ -143,6 +231,20 @@ const resolveStatusMetadata = (
         disclosureColor: 'warning'
       }
   }
+}
+
+const fromNowDate = (date: Date | string) => dayjs(date).fromNow()
+const absoluteDate = (date: Date | string) =>
+  dayjs(date).format('MMMM D, YYYY - hh:mm:ss Z')
+
+const viewResultVersionsRoute = (versions: Array<{ id: string }>) => {
+  const modelId = props.model.id
+  const versionIds = versions.map((v) => v.id)
+
+  const resourceIdStringBuilder = SpeckleViewer.ViewerRoute.resourceBuilder()
+  versionIds.forEach((vId) => resourceIdStringBuilder.addModel(modelId, vId))
+  const resourceIdString = resourceIdStringBuilder.toString()
+  return modelRoute(props.projectId, resourceIdString)
 }
 
 const automationStatus = computed(() => props.model.automationStatus)

@@ -103,6 +103,7 @@
         class="absolute top-0 left-0 p-2"
       >
         <ProjectPageModelsCardAutomationStatus
+          :project-id="project.id"
           :model="{
             ...model,
             automationStatus: model.automationStatus
