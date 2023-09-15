@@ -22,6 +22,7 @@ import { useFormSelectChildInternals } from '~~/src/composables/form/select'
 import FormSelectSourceApps from '~~/src/components/form/select/SourceApps.vue'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
+import CommonLoadingProgressBar from '~~/src/components/common/loading/ProgressBar.vue'
 import SourceAppBadge from '~~/src/components/SourceAppBadge.vue'
 import { onKeyboardShortcut, useFormCheckboxModel } from '~~/src/composables/form/input'
 import {
@@ -72,6 +73,7 @@ export {
   FormSelectBase,
   FormSelectSourceApps,
   CommonLoadingBar,
+  CommonLoadingProgressBar,
   SourceAppBadge,
   onKeyboardShortcut,
   ModifierKeys,

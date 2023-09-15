@@ -179,6 +179,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.progress = args
     if (args.status === 'Completed') {
       model.sending = false
+      model.progress = undefined
     }
   })
 
@@ -189,6 +190,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.progress = args
     if (args.status === 'Completed') {
       model.receiving = false
+      model.progress = undefined
     }
   })
 

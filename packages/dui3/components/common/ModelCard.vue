@@ -45,7 +45,12 @@
         onProgress ? 'h-8 opacity-100' : 'h-0 opacity-0 py-0'
       } transition-[height,scale,opacity] overflow-hidden`"
     >
-      <CommonLoadingBar :loading="true" class="h-1" />
+      <CommonLoadingProgressBar
+        :loading="true"
+        :progress="
+          props.modelCard.progress ? props.modelCard.progress.progress : undefined
+        "
+      />
       <div v-if="onProgress" class="text-xs px-2 pt-1">
         {{ progressBarText }}
       </div>
@@ -74,7 +79,7 @@ const props = defineProps<{
   project: ProjectModelGroup
 }>()
 
-const onProgress = computed(() => props.modelCard.progress?.status !== 'Completed')
+const onProgress = computed(() => props.modelCard.progress !== undefined)
 
 const progressBarValue = () => {
   if (props.modelCard.progress === undefined) {
