@@ -23,7 +23,8 @@
         <template v-else>
           <PreviewImage :preview-url="version.previewUrl" />
           <div
-            class="absolute top-0 left-0 p-2 flex space-x-1 items-center transition opacity-0 group-hover:opacity-100"
+            class="absolute top-0 p-2 flex space-x-1 items-center transition opacity-0 group-hover:opacity-100"
+            :class="[hasAutomationStatus ? 'left-6' : 'left-0']"
           >
             <UserAvatar :user="version.authorUser" />
             <SourceAppBadge v-if="sourceApp" :source-app="sourceApp" />
@@ -73,6 +74,19 @@
           />
         </div>
       </div>
+      <div
+        v-if="!isPendingVersionFragment(version) && version.automationStatus"
+        class="absolute top-1 left-0 p-2"
+      >
+        <ProjectPageModelsCardAutomationStatus
+          :project-id="projectId"
+          :model-or-version="{
+            ...version,
+            automationStatus: version.automationStatus
+          }"
+          :model-id="modelId"
+        />
+      </div>
     </NuxtLink>
   </div>
 </template>
@@ -104,6 +118,7 @@ graphql(`
     }
     ...ProjectModelPageDialogDeleteVersion
     ...ProjectModelPageDialogMoveToVersion
+    ...ModelCardAutomationStatus_Version
   }
 `)
 
@@ -125,6 +140,9 @@ const props = defineProps<{
 
 const showActionsMenu = ref(false)
 
+const hasAutomationStatus = computed(
+  () => !isPendingVersionFragment(props.version) && props.version.automationStatus
+)
 const createdAt = computed(() => {
   const date = isPendingVersionFragment(props.version)
     ? props.version.convertedLastUpdate || props.version.uploadDate

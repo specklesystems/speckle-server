@@ -104,10 +104,11 @@
       >
         <ProjectPageModelsCardAutomationStatus
           :project-id="project.id"
-          :model="{
+          :model-or-version="{
             ...model,
             automationStatus: model.automationStatus
           }"
+          :model-id="model.id"
         />
       </div>
     </NuxtLink>

@@ -8,7 +8,7 @@
     />
     <LayoutDialog
       v-model:open="showDialog"
-      :title="`Automation Status for ${props.model.displayName}`"
+      :title="`Automation Status for ${displayName}`"
       max-width="lg"
     >
       <div class="flex flex-col space-y-2">
@@ -143,7 +143,8 @@ import { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
   AutomationRunStatus,
-  ModelCardAutomationStatus_ModelFragment
+  ModelCardAutomationStatus_ModelFragment,
+  ModelCardAutomationStatus_VersionFragment
 } from '~~/lib/common/generated/gql/graphql'
 import dayjs from 'dayjs'
 import { automationDataPageRoute, modelRoute } from '~~/lib/common/helpers/route'
@@ -165,51 +166,83 @@ import { useServerInfo } from '~~/lib/core/composables/server'
  * - Where to show per-object info? In object explorer cards?
  */
 
+type Model = SetFullyRequired<
+  ModelCardAutomationStatus_ModelFragment,
+  'automationStatus'
+>
+type Version = SetFullyRequired<
+  ModelCardAutomationStatus_VersionFragment,
+  'automationStatus'
+>
+
+const isModel = (val: Model | Version): val is Model => 'displayName' in val
+
 graphql(`
-  fragment ModelCardAutomationStatus_Model on Model {
+  fragment ModelCardAutomationStatus_AutomationsStatus on AutomationsStatus {
     id
-    displayName
-    automationStatus {
+    status
+    statusMessage
+    automationRuns {
       id
+      automationId
+      createdAt
       status
-      statusMessage
-      automationRuns {
+      functionRuns {
         id
-        automationId
-        createdAt
+        functionId
+        elapsed
         status
-        functionRuns {
+        statusMessage
+        contextView
+        resultVersions {
           id
-          functionId
-          elapsed
-          status
-          statusMessage
-          contextView
-          resultVersions {
-            id
-          }
         }
       }
     }
   }
 `)
 
+graphql(`
+  fragment ModelCardAutomationStatus_Model on Model {
+    id
+    displayName
+    automationStatus {
+      ...ModelCardAutomationStatus_AutomationsStatus
+    }
+  }
+`)
+
+graphql(`
+  fragment ModelCardAutomationStatus_Version on Version {
+    id
+    automationStatus {
+      ...ModelCardAutomationStatus_AutomationsStatus
+    }
+  }
+`)
+
 const props = defineProps<{
-  model: SetFullyRequired<ModelCardAutomationStatus_ModelFragment, 'automationStatus'>
+  modelOrVersion: Model | Version
   projectId: string
+  modelId: string
 }>()
 
 const { serverInfo } = useServerInfo()
 
 const showDialog = ref(false)
 
-const automationStatus = computed(() => props.model.automationStatus)
+const automationStatus = computed(() => props.modelOrVersion.automationStatus)
 const statusIconAndColor = computed(() =>
   resolveStatusMetadata(automationStatus.value.status)
 )
 
 const automationRuns = computed(() => automationStatus.value.automationRuns)
 const automateBaseUrl = computed(() => serverInfo.value?.automateUrl)
+const displayName = computed(() =>
+  isModel(props.modelOrVersion)
+    ? props.modelOrVersion.displayName
+    : `version #${props.modelOrVersion.id}`
+)
 
 const resolveStatusMetadata = (
   status: AutomationRunStatus
@@ -256,7 +289,7 @@ const absoluteDate = (date: Date | string) =>
   dayjs(date).format('MMMM D, YYYY - hh:mm:ss Z')
 
 const viewResultVersionsRoute = (versions: Array<{ id: string }>) => {
-  const modelId = props.model.id
+  const modelId = props.modelId
   const versionIds = versions.map((v) => v.id)
 
   const resourceIdStringBuilder = SpeckleViewer.ViewerRoute.resourceBuilder()
