@@ -6,6 +6,12 @@ export const onModelVersionCardAutomationsStatusUpdated = graphql(`
       status {
         ...ModelCardAutomationStatus_AutomationsStatus
       }
+      version {
+        id
+      }
+      model {
+        id
+      }
     }
   }
 `)

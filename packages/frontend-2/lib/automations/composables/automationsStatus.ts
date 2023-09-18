@@ -4,6 +4,7 @@ import { Get } from 'type-fest'
 import { onModelVersionCardAutomationsStatusUpdated } from '~~/lib/automations/graphql/subscriptions'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import { useLock } from '~~/lib/common/composables/singleton'
+import { getCacheId, getObjectReference } from '~~/lib/common/helpers/graphql'
 
 /**
  * Track project model/version automations status updates and makes cache updates accordingly.
@@ -39,8 +40,26 @@ export const useModelVersionCardAutomationsStatusUpdateTracking = (
   onResult((result) => {
     if (!result.data?.projectAutomationsStatusUpdated || !hasLock.value) return
 
-    // Just by virtue of receiving this event the cache should be updated
-    // In case we need to do any global stuff, feel free to do it below:
+    // Add to model/version automationsStatus field, in case it was null before
+    const {
+      model: { id: modelId },
+      version: { id: versionId },
+      status: { id: statusId }
+    } = result.data.projectAutomationsStatusUpdated
+
+    apollo.cache.modify({
+      id: getCacheId('Version', versionId),
+      fields: {
+        automationStatus: () => getObjectReference('AutomationsStatus', statusId)
+      }
+    })
+
+    apollo.cache.modify({
+      id: getCacheId('Model', modelId),
+      fields: {
+        automationStatus: () => getObjectReference('AutomationsStatus', statusId)
+      }
+    })
   })
 
   onResult((result) => {
