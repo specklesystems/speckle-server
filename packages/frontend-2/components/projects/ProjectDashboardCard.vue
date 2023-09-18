@@ -1,5 +1,5 @@
 <template>
-  <NuxtLink :to="projectRoute(project.id)">
+  <div>
     <div
       class="relative group flex flex-col md:flex-row md:space-x-2 border-2 border-primary-muted hover:bg-primary-muted rounded-md p-3 transition overflow-hidden"
     >
@@ -62,7 +62,7 @@
         }}
       </div>
     </div>
-  </NuxtLink>
+  </div>
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
