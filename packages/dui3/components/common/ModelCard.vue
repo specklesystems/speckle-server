@@ -46,7 +46,7 @@
       } transition-[height,scale,opacity] overflow-hidden`"
     >
       <CommonLoadingProgressBar
-        :loading="true"
+        :loading="loading"
         :progress="
           props.modelCard.progress ? props.modelCard.progress.progress : undefined
         "
@@ -89,15 +89,22 @@ const progressBarValue = () => {
   }
 }
 
+// TODO: This is fragile, need to figure it out with better explicit parameters, or progress bar types etc..
 const progressBarText = computed(() => {
   if (props.modelCard.progress?.status === undefined) {
     return 'Progressing'
-  } else if (props.modelCard.progress?.status === 'Converting') {
+  } else if (
+    props.modelCard.progress?.status === 'Converting' ||
+    props.modelCard.progress?.status === 'Constructing'
+  ) {
     return `${props.modelCard.progress?.status} (% ${progressBarValue()})`
   } else {
     return props.modelCard.progress.status
   }
 })
+
+// TODO: This is fragile, need to figure it out with better explicit parameters, or progress bar types etc..
+const loading = computed(() => progressBarText.value !== 'Progressing')
 
 const removeCard = () => {
   store.removeModel(props.modelCard)
