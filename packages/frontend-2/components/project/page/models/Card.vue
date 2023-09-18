@@ -11,7 +11,7 @@
     -->
     <NuxtLink
       :href="defaultLinkDisabled ? undefined : modelRoute(project.id, model.id)"
-      class="cursor-pointer"
+      class="cursor-pointer relative"
       @click="$emit('click', $event)"
     >
       <div :class="`${height} flex items-center justify-center`">
@@ -97,6 +97,19 @@
       >
         <ChatBubbleLeftRightIcon class="w-4 h-4" />
         <span>{{ model.commentThreadCount.totalCount }}</span>
+      </div>
+      <div
+        v-if="!isPendingModelFragment(model) && model.automationStatus"
+        class="absolute top-0 left-0 p-2"
+      >
+        <ProjectPageModelsCardAutomationStatus
+          :project-id="project.id"
+          :model-or-version="{
+            ...model,
+            automationStatus: model.automationStatus
+          }"
+          :model-id="model.id"
+        />
       </div>
     </NuxtLink>
   </div>

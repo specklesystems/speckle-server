@@ -180,15 +180,33 @@ export type AuthStrategy = {
   url: Scalars['String'];
 };
 
-export type AutomationFunctionRunStatus = {
-  __typename?: 'AutomationFunctionRunStatus';
-  blobs: Array<Scalars['String']>;
+export type AutomationCreateInput = {
+  automationId: Scalars['String'];
+  automationName: Scalars['String'];
+  automationRevisionId: Scalars['String'];
+  modelId: Scalars['String'];
+  projectId: Scalars['String'];
+  webhookId?: InputMaybe<Scalars['String']>;
+};
+
+export type AutomationFunctionRun = {
+  __typename?: 'AutomationFunctionRun';
   contextView?: Maybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   functionId: Scalars['String'];
-  objectResults: Scalars['JSONObject'];
-  resultVersionIds: Array<Scalars['String']>;
-  runStatus: AutomationRunStatus;
+  id: Scalars['ID'];
+  resultVersions: Array<Version>;
+  /**
+   * Current schema: {
+   *   version: "1.0.0",
+   *   values: {
+   *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
+   *     blobIds?: string[]
+   *   }
+   * }
+   */
+  results?: Maybe<Scalars['JSONObject']>;
+  status: AutomationRunStatus;
   statusMessage?: Maybe<Scalars['String']>;
 };
 
@@ -200,12 +218,24 @@ export type AutomationMutations = {
 
 
 export type AutomationMutationsCreateArgs = {
-  input: ModelAutomationCreateInput;
+  input: AutomationCreateInput;
 };
 
 
 export type AutomationMutationsFunctionRunStatusReportArgs = {
-  input: ModelAutomationRunStatusUpdateInput;
+  input: AutomationRunStatusUpdateInput;
+};
+
+export type AutomationRun = {
+  __typename?: 'AutomationRun';
+  automationId: Scalars['String'];
+  createdAt: Scalars['DateTime'];
+  functionRuns: Array<AutomationFunctionRun>;
+  id: Scalars['ID'];
+  /** Resolved from all function run statuses */
+  status: AutomationRunStatus;
+  updatedAt: Scalars['DateTime'];
+  versionId: Scalars['String'];
 };
 
 export enum AutomationRunStatus {
@@ -215,9 +245,18 @@ export enum AutomationRunStatus {
   Succeeded = 'SUCCEEDED'
 }
 
+export type AutomationRunStatusUpdateInput = {
+  automationId: Scalars['String'];
+  automationRevisionId: Scalars['String'];
+  automationRunId: Scalars['String'];
+  functionRuns: Array<FunctionRunStatusInput>;
+  versionId: Scalars['String'];
+};
+
 export type AutomationsStatus = {
   __typename?: 'AutomationsStatus';
-  automationRuns: Array<ModelAutomationRun>;
+  automationRuns: Array<AutomationRun>;
+  id: Scalars['ID'];
   status: AutomationRunStatus;
   statusMessage?: Maybe<Scalars['String']>;
 };
@@ -634,13 +673,21 @@ export type FileUpload = {
 };
 
 export type FunctionRunStatusInput = {
-  blobs: Array<Scalars['String']>;
   contextView?: InputMaybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   functionId: Scalars['String'];
-  objectResults: Scalars['JSONObject'];
   resultVersionIds: Array<Scalars['String']>;
-  runStatus: AutomationRunStatus;
+  /**
+   * Current schema: {
+   *   version: "1.0.0",
+   *   values: {
+   *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
+   *     blobIds?: string[]
+   *   }
+   * }
+   */
+  results?: InputMaybe<Scalars['JSONObject']>;
+  status: AutomationRunStatus;
   statusMessage?: InputMaybe<Scalars['String']>;
 };
 
@@ -775,54 +822,6 @@ export type ModelVersionsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<ModelVersionsFilter>;
   limit?: Scalars['Int'];
-};
-
-export type ModelAutomation = {
-  __typename?: 'ModelAutomation';
-  automationId: Scalars['String'];
-  automationName: Scalars['String'];
-  automationRevisionId: Scalars['String'];
-  createdAt: Scalars['DateTime'];
-  runs: ModelAutomationRunsCollection;
-};
-
-
-export type ModelAutomationRunsArgs = {
-  cursor?: InputMaybe<Scalars['String']>;
-  limit?: Scalars['Int'];
-};
-
-export type ModelAutomationCreateInput = {
-  automationId: Scalars['String'];
-  automationName: Scalars['String'];
-  automationRevisionId: Scalars['String'];
-  modelId: Scalars['String'];
-  projectId: Scalars['String'];
-};
-
-export type ModelAutomationRun = {
-  __typename?: 'ModelAutomationRun';
-  automationRunId: Scalars['String'];
-  createdAt: Scalars['DateTime'];
-  functionRunStatuses: Array<AutomationFunctionRunStatus>;
-  runStatus: AutomationRunStatus;
-  updatedAt: Scalars['DateTime'];
-  versionId: Scalars['String'];
-};
-
-export type ModelAutomationRunStatusUpdateInput = {
-  automationId: Scalars['String'];
-  automationRevisionId: Scalars['String'];
-  automationRunId: Scalars['String'];
-  functionRunStatuses: Array<FunctionRunStatusInput>;
-  versionId: Scalars['String'];
-};
-
-export type ModelAutomationRunsCollection = {
-  __typename?: 'ModelAutomationRunsCollection';
-  cursor?: Maybe<Scalars['String']>;
-  items: Array<ModelAutomationRun>;
-  totalCount: Scalars['Int'];
 };
 
 export type ModelCollection = {
@@ -2009,6 +2008,8 @@ export type ServerInfo = {
   adminContact?: Maybe<Scalars['String']>;
   /** The authentication strategies available on this server. */
   authStrategies: Array<AuthStrategy>;
+  /** Base URL of Speckle Automate, if set */
+  automateUrl?: Maybe<Scalars['String']>;
   blobSizeLimitBytes: Scalars['Int'];
   canonicalUrl?: Maybe<Scalars['String']>;
   company?: Maybe<Scalars['String']>;

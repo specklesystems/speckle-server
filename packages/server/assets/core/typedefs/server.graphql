@@ -21,6 +21,10 @@ type ServerInfo {
   guestModeEnabled: Boolean!
   version: String
   serverRoles: [ServerRoleItem!]!
+  """
+  Base URL of Speckle Automate, if set
+  """
+  automateUrl: String
 }
 
 type Role {
