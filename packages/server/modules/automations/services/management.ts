@@ -30,10 +30,14 @@ import { AutomationFunctionRunGraphQLReturn } from '@/modules/automations/helper
 import { AutomationRunSchema } from '@/modules/automations/helpers/inputTypes'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
-import { getCommits } from '@/modules/core/repositories/commits'
+import {
+  getCommits,
+  getCommit,
+  getCommitBranch
+} from '@/modules/core/repositories/commits'
 import { AutomationNotFoundError } from '@/modules/automations/errors/automations'
-import { getCommitById } from '@/modules/core/services/commits'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
+import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 
 type AutomationRunWithFunctionRunsRecord = AutomationRunRecord & {
   functionRuns: AutomationFunctionRunRecord[]
@@ -76,21 +80,23 @@ export async function upsertModelAutomationRunResult({
   const automation = await getAutomation(input.automationId)
   if (!automation) throw new AutomationNotFoundError()
 
-  // authz the current user on the automation
-  const stream = await getStream({
-    userId: userId || undefined,
-    streamId: automation.projectId
-  })
+  const [stream, version, model] = await Promise.all([
+    getStream({
+      userId: userId || undefined,
+      streamId: automation.projectId
+    }),
+    getCommit(validatedInput.versionId, {
+      streamId: automation.projectId
+    }),
+    getCommitBranch(validatedInput.versionId)
+  ])
+
   // this is never going to happen, cause the automation has an FK to the streamId
   if (!stream) throw new StreamNotFoundError('Project not found')
   if (stream.role !== Roles.Stream.Owner)
     throw new ForbiddenError('Only project owners are allowed')
-
-  const version = await getCommitById({
-    streamId: automation.projectId,
-    id: validatedInput.versionId
-  })
   if (!version) throw new CommitNotFoundError()
+  if (!model) throw new BranchNotFoundError()
 
   // store the result of the run, if it already exists, patch it
   const maybeAutomationRun = await getAutomationRun(input.automationRunId)
@@ -153,16 +159,23 @@ export async function upsertModelAutomationRunResult({
   )
   await insertAutomationFunctionRunResultVersion(validVersionsRecords)
 
-  // 4. publish an event for new automation run creation
-  // 5. publish an event for new run result update
-  // the last two events should be separated.
-  // automate should publish the new run linked to the model / version, with function run results as pending
-  // the running function should only update the function run result
-  // this is, so that FE subscriptions can be added properly.
-  // when a new run is triggered, the frontend should react to that
-  // also for the result of independent function run results.
-  // we're now shortcutting this until the one automation one function barrier is there.
-  // publish(automationRunStatusUpdate, { foo: 'bar' })
+  // Emit subscription
+  const newStatus = await getAutomationsStatus({
+    modelId: version.branchId,
+    projectId: stream.id,
+    versionId: version.id
+  })
+  if (newStatus) {
+    await publish(ProjectSubscriptions.ProjectAutomationStatusUpdated, {
+      projectId: stream.id,
+      projectAutomationsStatusUpdated: {
+        status: newStatus,
+        version,
+        project: stream,
+        model
+      }
+    })
+  }
 }
 
 const anyFunctionRunsHaveStatus = (

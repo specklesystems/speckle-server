@@ -5,6 +5,12 @@ import {
 } from '@/modules/automations/services/management'
 import { formatResults } from '@/modules/automations/services/results'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { getStream } from '@/modules/core/repositories/streams'
+import {
+  ProjectSubscriptions,
+  filteredSubscribe
+} from '@/modules/shared/utils/subscriptions'
+import { ForbiddenError } from 'apollo-server-express'
 
 export = {
   Model: {
@@ -66,6 +72,29 @@ export = {
       const { userId } = context
       await upsertModelAutomationRunResult({ userId, input: args.input })
       return true
+    }
+  },
+  Subscription: {
+    projectAutomationsStatusUpdated: {
+      subscribe: filteredSubscribe(
+        ProjectSubscriptions.ProjectAutomationStatusUpdated,
+        async (payload, variables, context) => {
+          if (payload.projectId !== variables.projectId) return false
+
+          const stream = await getStream({
+            streamId: variables.projectId,
+            userId: context.userId
+          })
+          if (
+            !stream ||
+            (!(stream.isDiscoverable || stream.isPublic) && !stream.role)
+          ) {
+            throw new ForbiddenError('You are not authorized.')
+          }
+
+          return true
+        }
+      )
     }
   }
 } as Resolvers
