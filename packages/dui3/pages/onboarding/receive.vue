@@ -20,7 +20,7 @@
         <FormSelectModels
           v-if="selectedProject"
           v-model="selectedModel"
-          :project-id="selectedProject.id"
+          :project-id="(selectedProject.id as string)"
           name="model"
           label="Model"
           show-label
@@ -30,8 +30,8 @@
         <FormSelectVersions
           v-if="selectedProject && selectedModel"
           v-model="selectedVersion"
-          :project-id="selectedProject.id"
-          :model-id="selectedModel.id"
+          :project-id="(selectedProject.id as string)"
+          :model-id="(selectedModel.id as string)"
           name="version"
           label="Version"
           show-label

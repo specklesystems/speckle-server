@@ -120,7 +120,7 @@ const invokeSearch = async () => {
   const res = (await getVersions(
     props.projectId,
     props.modelId
-  )) as VersionsSelectItemType[]
+  )) as unknown as VersionsSelectItemType[]
   console.log(res)
   versions.value = res
   return versions.value || []

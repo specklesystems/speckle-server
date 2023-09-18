@@ -18,8 +18,22 @@
           </div>
         </template>
         <template #option="{ item }">
-          <div class="flex items-center">
-            <span class="truncate">{{ item.name }}</span>
+          <div class="flex items-center justify-between">
+            <div class="w-[85%]">
+              <span class="truncate" :class="item.id ? '' : 'text-green-500'">
+                {{ item.name }}
+              </span>
+            </div>
+            <div v-if="create && !item.id" class="w-[15%]">
+              <FormButton
+                v-tippy="'Create Project'"
+                color="success"
+                text
+                hide-text
+                :icon-left="FolderPlusIcon"
+                @click="createProject(item.name)"
+              ></FormButton>
+            </div>
           </div>
         </template>
       </FormSelectBase>
@@ -28,8 +42,9 @@
 </template>
 
 <script setup lang="ts">
+import { FolderPlusIcon } from '@heroicons/vue/24/outline'
 import { ValidationHelpers, useFormSelectChildInternals } from '@speckle/ui-components'
-import { useGetProjects } from '~/lib/graphql/composables'
+import { useGetProjects, useCreateNewProject } from '~/lib/graphql/composables'
 import { PropType } from 'vue'
 import { RuleExpression } from 'vee-validate'
 import { Nullable, Optional } from '@speckle/shared'
@@ -41,6 +56,10 @@ type ValueType = ItemType | ItemType[] | undefined
 const emit = defineEmits<(e: 'update:modelValue', v: ValueType) => void>()
 
 const props = defineProps({
+  create: {
+    type: Boolean,
+    default: false
+  },
   /**
    * Whether to allow selecting multiple items
    */
@@ -100,14 +119,27 @@ const { selectedValue } = useFormSelectChildInternals<ItemType>({
   dynamicVisibility: { elementToWatchForChanges, itemContainer }
 })
 
+const createNewProject = useCreateNewProject()
 const getProjects = useGetProjects()
 
 const projects = ref<ProjectsSelectItemType[]>()
 
+const createProject = async (name: string) => {
+  const res = await createNewProject({ name })
+  emit('update:modelValue', {
+    id: res.data?.projectMutations.create.id,
+    name
+  } as ValueType)
+}
+
 const invokeSearch = async (search: string) => {
+  const addProject = ref<ProjectsSelectItemType>({ name: search })
+  projects.value = []
+  if (search !== '') {
+    projects.value = [addProject.value]
+  }
   const res = (await getProjects(search)) as ProjectsSelectItemType[]
-  console.log(res)
-  projects.value = res
+  projects.value = projects.value.concat(res)
   return projects.value || []
 }
 </script>

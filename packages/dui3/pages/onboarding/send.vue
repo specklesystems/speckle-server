@@ -3,7 +3,7 @@
     class="flex flex-col items-center justify-center h-[calc(100vh-16rem)] px-4 space-y-2"
   >
     <!-- STEP 0 -->
-    <div v-if="step === 0" class="space-y-4 w-full">
+    <div class="space-y-4 w-full">
       <div class="h3">Let's publish our first model to Speckle.</div>
       <div
         v-if="!hasSelectedSomethingNow && selectionInfo.selectedObjectIds?.length === 0"
@@ -19,103 +19,63 @@
       </div>
       <div v-if="!hasSelectedSomethingNow" class="text-foreground-2 text-xs">
         Or continue with publishing
-        <FormButton text size="xs" @click="saveSelectionAndNext">
-          the whole model.
-        </FormButton>
+        <FormButton text size="xs" @click="saveSelection">the whole model.</FormButton>
         This might take a bit longer.
       </div>
-      <div class="flex items-center justify-between">
-        <FormButton text size="sm" @click="step--">Back</FormButton>
-        <FormButton
-          :disabled="!hasSelectedSomethingNow"
-          :icon-right="ChevronRightIcon"
-          @click="saveSelectionAndNext"
-        >
-          Let's publish!
-        </FormButton>
-      </div>
-    </div>
-    <!-- STEP 1 -->
-    <div v-if="step === 1" class="space-y-4 w-full">
-      <div class="h4">
-        What shall we call this
-        <b class="text-primary">model</b>
-        ?
-      </div>
-      <div class="text-sm text-foreground-2">
-        Models in speckle are bla bla, bla bla. Lorem ipsum, painful amet
-      </div>
-      <div>
-        <FormTextInput
-          v-model="modelName"
-          size="xl"
-          color="foundation"
-          name="modelName"
-          placeholder="My First Model"
+      <form
+        class="flex flex-col justify-center space-y-4"
+        @submit="onProjectModelSelected"
+      >
+        <FormSelectProjects
+          v-if="hasSelectedSomethingNow"
+          v-model="selectedProject"
+          create
+          name="project"
+          label="Projects"
+          show-label
+          :rules="[ValidationHelpers.isRequired]"
+          validate-on-value-update
         />
-      </div>
-      <div class="flex items-center justify-between">
-        <FormButton text size="sm" @click="step--">Back</FormButton>
-        <FormButton
-          :disabled="modelName.length < 1"
-          :icon-right="ChevronRightIcon"
-          @click="step++"
-        >
-          Next
-        </FormButton>
-      </div>
-    </div>
-    <!-- STEP 2 -->
-    <div v-if="step === 2" class="space-y-4 w-full">
-      <div class="h4">
-        What
-        <b class="text-primary">project</b>
-        is this model part of?
-      </div>
-      <div class="text-sm text-foreground-2">
-        Projects in speckle are bla bla, bla bla. Lorem ipsum, painful amet
-      </div>
-
-      <div class="h4">
-        <FormTextInput
-          v-model="projectName"
-          size="xl"
-          color="foundation"
-          name="projectName"
-          placeholder="My First Project"
+        <FormSelectModels
+          v-if="selectedProject"
+          v-model="selectedModel"
+          create
+          :project-id="(selectedProject.id as string)"
+          name="model"
+          label="Model"
+          show-label
+          :rules="[ValidationHelpers.isRequired]"
+          validate-on-value-update
         />
-      </div>
-      <div class="flex items-center justify-between">
-        <FormButton text size="sm" @click="step--">Back</FormButton>
-        <FormButton
-          :disabled="projectName.length < 1"
-          :icon-right="CloudArrowUpIcon"
-          @click="publish()"
-        >
-          Publish
-        </FormButton>
-      </div>
+        <div class="flex justify-end">
+          <FormButton
+            v-if="selectedModel"
+            submit
+            :disabled="hasProjectFormErrors"
+            size="lg"
+          >
+            Let's publish!
+          </FormButton>
+        </div>
+      </form>
     </div>
     <div class="text-xs text-foreground-2 w-full">
       Debug Current state:
       <br />
       - selection info: {{ selectionFilterCopy?.summary }}
-      <br />
-      - model name: {{ modelName }}
-      <br />
-      - project name: {{ projectName }}
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { CloudArrowUpIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { useForm } from 'vee-validate'
 import { SelectionInfo } from '~~/lib/bindings/definitions/ISelectionBinding'
 import { useSelectionStore } from '~~/store/selection'
-import { useCreateNewProject, useCreateNewModel } from '~~/lib/graphql/composables'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'
 import { ISendFilter, ISenderModelCard } from '~~/lib/bindings/definitions/ISendBinding'
 import { nanoid } from 'nanoid'
+import { ValidationHelpers } from '@speckle/ui-components'
+import { ModelsSelectItemType, ProjectsSelectItemType } from 'lib/form/select/types'
 
 const store = useHostAppStore()
 const router = useRouter()
@@ -124,32 +84,51 @@ const { defaultAccount } = storeToRefs(useAccountStore())
 const selectionStore = useSelectionStore()
 const { selectionInfo } = storeToRefs(selectionStore)
 
-const step = ref(0)
 const hasSelectedSomethingNow = ref(false)
 
 const selectionFilterCopy = ref<SelectionInfo>()
-const modelName = ref('')
-const projectName = ref('')
+
+// NEW
+
+const emit = defineEmits<{
+  (
+    e: 'next',
+    payload: {
+      model: ProjectsSelectItemType
+      project: ModelsSelectItemType
+    }
+  ): void
+}>()
+
+const { handleSubmit, errors } = useForm<{
+  model: ProjectsSelectItemType
+  project: ModelsSelectItemType
+}>()
+
+const selectedProject = ref<ProjectsSelectItemType>()
+const selectedModel = ref<ModelsSelectItemType>()
+
+const hasProjectFormErrors = computed(() => {
+  return Object.keys(errors.value).length > 0
+})
+
+const onProjectModelSelected = handleSubmit(async (values) => {
+  await publish()
+  emit('next', values)
+})
+
+// NEW END
 
 watch(selectionInfo, (newVal) => {
   hasSelectedSomethingNow.value = newVal?.selectedObjectIds?.length !== 0
+  saveSelection()
 })
 
-const saveSelectionAndNext = () => {
+const saveSelection = () => {
   selectionFilterCopy.value = { ...selectionInfo.value }
-  step.value++
 }
 
-const createProject = useCreateNewProject() // defaults to using default account is none is provided
-const createModel = useCreateNewModel() // defaults to using default account is none is provided
-
 const publish = async () => {
-  const projectRes = await createProject({ name: projectName.value })
-  const modelRes = await createModel({
-    name: modelName.value,
-    projectId: projectRes.data?.projectMutations.create.id as string
-  })
-
   const sendFilter = {
     ...store.selectionFilter,
     ...selectionFilterCopy.value
@@ -160,8 +139,8 @@ const publish = async () => {
   const modelCard: ISenderModelCard = {
     typeDiscriminator: 'SenderModelCard',
     id: nanoid(),
-    modelId: modelRes.data?.modelMutations.create.id as string,
-    projectId: projectRes.data?.projectMutations.create.id as string,
+    modelId: selectedModel.value?.id as string,
+    projectId: selectedProject.value?.id as string,
     accountId: defaultAccount.value.accountInfo.id,
     sendFilter: sendFilter as ISendFilter
   }
