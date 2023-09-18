@@ -5,6 +5,9 @@ import Redis from 'ioredis'
 import { withFilter } from 'graphql-subscriptions'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import {
+  AutomationRun,
+  AutomationsStatus,
+  ProjectAutomationsStatusUpdatedMessage,
   ProjectCommentsUpdatedMessage,
   ProjectModelsUpdatedMessage,
   ProjectPendingModelsUpdatedMessage,
@@ -12,6 +15,7 @@ import {
   ProjectUpdatedMessage,
   ProjectVersionsPreviewGeneratedMessage,
   ProjectVersionsUpdatedMessage,
+  SubscriptionProjectAutomationsStatusUpdatedArgs,
   SubscriptionProjectCommentsUpdatedArgs,
   SubscriptionProjectModelsUpdatedArgs,
   SubscriptionProjectPendingModelsUpdatedArgs,
@@ -33,6 +37,7 @@ import {
 } from '@/modules/core/helpers/graphTypes'
 import { CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes'
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types'
+import { AutomationFunctionRunGraphQLReturn } from '@/modules/automations/helpers/graphTypes'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -82,7 +87,8 @@ export enum ProjectSubscriptions {
   ProjectModelsUpdated = 'PROJECT_MODELS_UPDATED',
   ProjectVersionsUpdated = 'PROJECT_VERSIONS_UPDATED',
   ProjectVersionsPreviewGenerated = 'PROJECT_VERSIONS_PREVIEW_GENERATED',
-  ProjectCommentsUpdated = 'PROJECT_COMMENTS_UPDATED'
+  ProjectCommentsUpdated = 'PROJECT_COMMENTS_UPDATED',
+  ProjectAutomationStatusUpdated = 'PROJECT_AUTOMATION_STATUS_UPDATED'
 }
 
 export enum ViewerSubscriptions {
@@ -183,6 +189,31 @@ type SubscriptionTypeMap = {
       branchName: string
     }
     variables: SubscriptionProjectPendingVersionsUpdatedArgs
+  }
+  [ProjectSubscriptions.ProjectAutomationStatusUpdated]: {
+    payload: {
+      projectAutomationsStatusUpdated: Merge<
+        ProjectAutomationsStatusUpdatedMessage,
+        {
+          version: VersionGraphQLReturn
+          model: ModelGraphQLReturn
+          project: ProjectGraphQLReturn
+          status: Merge<
+            AutomationsStatus,
+            {
+              automationRuns: Array<
+                Merge<
+                  AutomationRun,
+                  { functionRuns: AutomationFunctionRunGraphQLReturn[] }
+                >
+              >
+            }
+          >
+        }
+      >
+      projectId: string
+    }
+    variables: SubscriptionProjectAutomationsStatusUpdatedArgs
   }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 

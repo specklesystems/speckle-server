@@ -117,3 +117,16 @@ type AutomationMutations {
 extend type Mutation {
   automationMutations: AutomationMutations!
 }
+
+type ProjectAutomationsStatusUpdatedMessage {
+  status: AutomationsStatus!
+  version: Version!
+  model: Model!
+  project: Project!
+}
+
+extend type Subscription {
+  projectAutomationsStatusUpdated(
+    projectId: String!
+  ): ProjectAutomationsStatusUpdatedMessage!
+}
