@@ -7,7 +7,6 @@ import {
   DocumentDuplicateIcon
 } from '@heroicons/vue/24/outline'
 import Table from '~~/src/components/layout/Table.vue'
-import { TableItemType } from '~~/src/helpers/layout/components'
 
 export default {
   component: Table,
@@ -189,7 +188,7 @@ export const Default: StoryObj = {
       }
     ],
     overflowCells: false,
-    onRowClick: (item: TableItemType) => console.log('Row clicked', item),
+    onRowClick: (item: unknown) => console.log('Row clicked', item),
     roles: ['Admin', 'User', 'Guest']
   }
 }
@@ -202,19 +201,19 @@ export const WithButtons: StoryObj = {
       {
         icon: DocumentDuplicateIcon,
         label: 'Duplicate',
-        action: (item: TableItemType) => console.log('Duplicate', item),
+        action: (item: unknown) => console.log('Duplicate', item),
         class: 'text-gray-500'
       },
       {
         icon: PencilIcon,
         label: 'Delete',
-        action: (item: TableItemType) => console.log('Edit', item),
+        action: (item: unknown) => console.log('Edit', item),
         class: 'text-primary'
       },
       {
         icon: TrashIcon,
         label: 'Edit',
-        action: (item: TableItemType) => console.log('Delete', item),
+        action: (item: unknown) => console.log('Delete', item),
         class: 'text-red-700'
       }
     ]

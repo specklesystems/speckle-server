@@ -130,16 +130,11 @@ import {
   XCircleIcon
 } from '@heroicons/vue/20/solid'
 import { TrashIcon, PencilIcon } from '@heroicons/vue/24/outline'
-import {
-  FormSwitch,
-  ToastNotificationType,
-  TableItemType
-} from '@speckle/ui-components'
+import { FormSwitch, ToastNotificationType } from '@speckle/ui-components'
 import { projectWebhooksQuery } from '~~/lib/projects/graphql/queries'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { useGlobalToast } from '~~/lib/common/composables/toast'
 import { projectRoute } from '~~/lib/common/helpers/route'
-import { isWebhook } from '~~/lib/projects/helpers/utils'
 import { WebhookItem } from '~~/lib/projects/helpers/types'
 import {
   convertThrowIntoFetchResult,
@@ -155,7 +150,7 @@ const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(updateWebhookMutation)
 const route = useRoute()
 
-const webhookToModify = ref<TableItemType<WebhookItem> | null>(null)
+const webhookToModify = ref<WebhookItem | null>(null)
 const showDeleteWebhookDialog = ref(false)
 const showEditWebhookDialog = ref(false)
 const showNewWebhookDialog = ref(false)
@@ -170,7 +165,7 @@ const webhooks = computed<WebhookItem[]>(() => {
   )
 })
 
-const getHistoryStatus = (item: TableItemType<WebhookItem>) => {
+const getHistoryStatus = (item: WebhookItem) => {
   const recentHistory = item.history?.items?.[0]
   if (recentHistory) {
     switch (recentHistory.status) {
@@ -186,29 +181,23 @@ const getHistoryStatus = (item: TableItemType<WebhookItem>) => {
   }
 }
 
-const getHistoryStatusInfo = (item: TableItemType<WebhookItem>) => {
-  if (isWebhook(item)) {
-    const recentHistory = item.history?.items?.[0]
-    if (recentHistory) {
-      return recentHistory.statusInfo
-    } else {
-      return 'No events yet'
-    }
+const getHistoryStatusInfo = (item: WebhookItem) => {
+  const recentHistory = item.history?.items?.[0]
+  if (recentHistory) {
+    return recentHistory.statusInfo
+  } else {
+    return 'No events yet'
   }
 }
 
-const openDeleteWebhookDialog = (item: TableItemType<WebhookItem>) => {
-  if (isWebhook(item)) {
-    webhookToModify.value = item
-    showDeleteWebhookDialog.value = true
-  }
+const openDeleteWebhookDialog = (item: WebhookItem) => {
+  webhookToModify.value = item
+  showDeleteWebhookDialog.value = true
 }
 
-const openEditWebhookDialog = (item: TableItemType<WebhookItem>) => {
-  if (isWebhook(item)) {
-    webhookToModify.value = item
-    showEditWebhookDialog.value = true
-  }
+const openEditWebhookDialog = (item: WebhookItem) => {
+  webhookToModify.value = item
+  showEditWebhookDialog.value = true
 }
 
 const openDocs = () => {
@@ -219,11 +208,7 @@ const handleWebhookCreated = () => {
   refetchWebhooks()
 }
 
-const onChange = async (item: TableItemType<WebhookItem>, newValue: boolean) => {
-  if (!isWebhook(item)) {
-    return
-  }
-
+const onChange = async (item: WebhookItem, newValue: boolean) => {
   const result = await updateMutation(
     {
       webhook: {

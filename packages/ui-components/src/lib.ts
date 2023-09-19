@@ -34,7 +34,7 @@ import {
 import LayoutDialog from '~~/src/components/layout/Dialog.vue'
 import LayoutDisclosure from '~~/src/components/layout/Disclosure.vue'
 import LayoutGridListToggle from '~~/src/components/layout/GridListToggle.vue'
-import { GridListToggleValue, TableItemType } from '~~/src/helpers/layout/components'
+import { GridListToggleValue } from '~~/src/helpers/layout/components'
 import {
   ThrottleOrDebounce,
   HorizontalDirection,
@@ -109,6 +109,5 @@ export type {
   LayoutTabItem,
   InfiniteLoaderState,
   AsyncWritableComputedOptions,
-  AsyncWritableComputedRef,
-  TableItemType
+  AsyncWritableComputedRef
 }

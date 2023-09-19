@@ -47,11 +47,7 @@
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
 import { WebhookTriggers } from '@speckle/shared'
-import {
-  LayoutDialog,
-  TableItemType,
-  FormSelectBadgeSelected
-} from '@speckle/ui-components'
+import { LayoutDialog, FormSelectBadgeSelected } from '@speckle/ui-components'
 import { WebhookItem, FormValues } from '~~/lib/projects/helpers/types'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { isRequired, isUrl, isItemSelected } from '~~/lib/common/helpers/validation'
@@ -65,7 +61,7 @@ import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables
 
 const props = defineProps<{
   open: boolean
-  webhook: TableItemType<WebhookItem> | null
+  webhook: WebhookItem | null
 }>()
 
 const { triggerNotification } = useGlobalToast()
