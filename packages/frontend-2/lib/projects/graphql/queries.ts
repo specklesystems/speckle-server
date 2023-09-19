@@ -204,7 +204,7 @@ export const projectDiscussionsPageQuery = graphql(`
 `)
 
 export const projectWebhooksQuery = graphql(`
-  query projectWebhooks($projectId: String!, $webhooksId: String) {
+  query ProjectWebhooks($projectId: String!) {
     project(id: $projectId) {
       id
       name
