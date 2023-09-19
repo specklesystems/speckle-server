@@ -2793,8 +2793,10 @@ export type Webhook = {
   __typename?: 'Webhook';
   description?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
+  hasSecret: Scalars['Boolean'];
   history?: Maybe<WebhookEventCollection>;
   id: Scalars['String'];
+  projectId: Scalars['String'];
   streamId: Scalars['String'];
   triggers: Array<Maybe<Scalars['String']>>;
   url: Scalars['String'];
@@ -4212,8 +4214,10 @@ export type ViewerUserActivityMessageResolvers<ContextType = GraphQLContext, Par
 export type WebhookResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Webhook'] = ResolversParentTypes['Webhook']> = {
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   enabled?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  hasSecret?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   history?: Resolver<Maybe<ResolversTypes['WebhookEventCollection']>, ParentType, ContextType, RequireFields<WebhookHistoryArgs, 'limit'>>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   streamId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   triggers?: Resolver<Array<Maybe<ResolversTypes['String']>>, ParentType, ContextType>;
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

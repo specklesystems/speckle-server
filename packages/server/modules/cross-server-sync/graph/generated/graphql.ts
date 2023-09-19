@@ -2783,8 +2783,10 @@ export type Webhook = {
   __typename?: 'Webhook';
   description?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
+  hasSecret: Scalars['Boolean'];
   history?: Maybe<WebhookEventCollection>;
   id: Scalars['String'];
+  projectId: Scalars['String'];
   streamId: Scalars['String'];
   triggers: Array<Maybe<Scalars['String']>>;
   url: Scalars['String'];

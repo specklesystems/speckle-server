@@ -41,6 +41,8 @@ type WebhookCollection {
 type Webhook {
   id: String!
   streamId: String!
+  projectId: String!
+  hasSecret: Boolean!
   url: String!
   description: String
   triggers: [String]!
