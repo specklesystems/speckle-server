@@ -43,6 +43,7 @@
           :rules="[isItemSelected]"
           show-label
           :items="webhookTriggerItems"
+          help="Choose what events will trigger this webhook."
         />
       </div>
     </form>
@@ -88,7 +89,12 @@ const formData = ref<FormValues>({
 
 const isOpen = computed({
   get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
+  set: (newVal) => {
+    emit('update:open', newVal)
+    if (!newVal) {
+      resetFormData()
+    }
+  }
 })
 
 const webhookTriggerItems = computed(() => {
@@ -127,11 +133,23 @@ const onSubmit = handleSubmit(async () => {
   }
 })
 
+const resetFormData = () => {
+  formData.value = {
+    url: '',
+    description: '',
+    secret: '',
+    triggers: []
+  }
+}
+
 const dialogButtons = [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
-    onClick: () => (isOpen.value = false)
+    onClick: () => {
+      isOpen.value = false
+      resetFormData()
+    }
   },
   {
     text: 'Create',

@@ -166,11 +166,30 @@ watch(
   { immediate: true }
 )
 
+const resetWebhookModel = () => {
+  webhookModel.value = props.webhook
+    ? { ...props.webhook }
+    : { url: '', description: '', triggers: [] }
+
+  triggers.value = (props.webhook?.triggers || []).map((i) => {
+    const mappedKey = Object.entries(WebhookTriggers).find(
+      ([value]) => value === i
+    )?.[0]
+    return {
+      id: mappedKey || i || 'unknown_id',
+      text: mappedKey || i || 'unknown_text'
+    }
+  })
+}
+
 const dialogButtons = [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
-    onClick: () => (isOpen.value = false)
+    onClick: () => {
+      isOpen.value = false
+      resetWebhookModel()
+    }
   },
   {
     text: 'Save',
