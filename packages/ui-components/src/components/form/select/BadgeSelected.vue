@@ -6,6 +6,7 @@
     :label="label"
     :name="name"
     :help="help"
+    :rules="rules"
   >
     <template #something-selected="{ value }">
       <ul class="flex flex-wrap gap-1.5 text-xs">
@@ -54,6 +55,7 @@ const props = defineProps<{
   help?: string
   modelValue?: SingleItem | SingleItem[] | undefined
   multiple?: boolean
+  rules?: Array<any>
 }>()
 
 const { selectedValue, isArrayValue } = useFormSelectChildInternals<SingleItem>({

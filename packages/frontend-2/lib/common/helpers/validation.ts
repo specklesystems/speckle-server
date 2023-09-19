@@ -25,3 +25,5 @@ export const isStringOfLength = ValidationHelpers.isStringOfLength
 export const stringContains = ValidationHelpers.stringContains
 
 export const isUrl = ValidationHelpers.isUrl
+
+export const isItemSelected = ValidationHelpers.isItemSelected

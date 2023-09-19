@@ -15,7 +15,7 @@
           name="hookUrl"
           show-label
           show-required
-          :rules="isRequired"
+          :rules="(isRequired, isUrl)"
           type="text"
           @update:model-value="updateUrl"
         />
@@ -35,7 +35,7 @@
           name="triggers"
           label="Choose Events"
           show-required
-          :rules="isRequired"
+          :rules="[isItemSelected]"
           show-label
           :items="webhookTriggerItems"
         />
@@ -54,7 +54,7 @@ import {
 } from '@speckle/ui-components'
 import { WebhookItem, FormValues } from '~~/lib/projects/helpers/types'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
-import { isRequired } from '~~/lib/common/helpers/validation'
+import { isRequired, isUrl, isItemSelected } from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
 import {
   convertThrowIntoFetchResult,

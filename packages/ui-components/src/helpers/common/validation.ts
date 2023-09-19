@@ -84,3 +84,10 @@ export const isUrl: GenericValidateFunction<string> = (value) => {
   }
   return 'Invalid URL'
 }
+
+export const isItemSelected: GenericValidateFunction<[]> = (val) => {
+  if (Array.isArray(val) && val.length > 0) {
+    return true
+  }
+  return 'At least one item must be selected'
+}

@@ -40,7 +40,7 @@
           name="Name"
           label="Choose Events"
           show-required
-          :rules="isRequired"
+          :rules="[isItemSelected]"
           show-label
           :items="webhookTriggerItems"
         />
@@ -59,7 +59,7 @@ import {
   ToastNotificationType
 } from '@speckle/ui-components'
 import { useForm } from 'vee-validate'
-import { isRequired, isUrl } from '~~/lib/common/helpers/validation'
+import { isRequired, isUrl, isItemSelected } from '~~/lib/common/helpers/validation'
 import { createWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { WebhookCreateInput } from '~~/lib/common/generated/gql/graphql'
 import { useGlobalToast } from '~~/lib/common/composables/toast'
