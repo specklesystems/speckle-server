@@ -58,7 +58,7 @@
       <template #enabled="{ item }">
         <FormSwitch
           :model-value="!!item.enabled"
-          @update:model-value="(newValue) => onChange(item, newValue)"
+          @update:model-value="(newValue) => onEnabledChange(item, newValue)"
         />
       </template>
       <template #data="{ item }">
@@ -199,7 +199,7 @@ const handleWebhookCreated = () => {
   refetchWebhooks()
 }
 
-const onChange = async (item: WebhookItem, newValue: boolean) => {
+const onEnabledChange = async (item: WebhookItem, newValue: boolean) => {
   const result = await updateMutation(
     {
       webhook: {
