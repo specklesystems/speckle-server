@@ -1407,7 +1407,7 @@ export type Project = {
   /** Return metadata about resources being requested in the viewer */
   viewerResources: Array<ViewerResourceGroup>;
   visibility: ProjectVisibility;
-  webhooks?: Maybe<WebhookCollection>;
+  webhooks: WebhookCollection;
 };
 
 
@@ -2161,7 +2161,7 @@ export type Stream = {
   role?: Maybe<Scalars['String']>;
   size?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
-  webhooks?: Maybe<WebhookCollection>;
+  webhooks: WebhookCollection;
 };
 
 
@@ -2785,7 +2785,7 @@ export type Webhook = {
   id: Scalars['String'];
   projectId: Scalars['String'];
   streamId: Scalars['String'];
-  triggers: Array<Maybe<Scalars['String']>>;
+  triggers: Array<Scalars['String']>;
   url: Scalars['String'];
 };
 
@@ -2796,8 +2796,8 @@ export type WebhookHistoryArgs = {
 
 export type WebhookCollection = {
   __typename?: 'WebhookCollection';
-  items?: Maybe<Array<Maybe<Webhook>>>;
-  totalCount?: Maybe<Scalars['Int']>;
+  items: Array<Webhook>;
+  totalCount: Scalars['Int'];
 };
 
 export type WebhookCreateInput = {
@@ -3296,7 +3296,7 @@ export type ProjectWebhooksQueryVariables = Exact<{
 }>;
 
 
-export type ProjectWebhooksQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, webhooks?: { __typename?: 'WebhookCollection', totalCount?: number | null, items?: Array<{ __typename?: 'Webhook', streamId: string, triggers: Array<string | null>, enabled?: boolean | null, url: string, id: string, description?: string | null, history?: { __typename?: 'WebhookEventCollection', items?: Array<{ __typename?: 'WebhookEvent', status: number, statusInfo: string } | null> | null } | null } | null> | null } | null } };
+export type ProjectWebhooksQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, webhooks: { __typename?: 'WebhookCollection', totalCount: number, items: Array<{ __typename?: 'Webhook', streamId: string, triggers: Array<string>, enabled?: boolean | null, url: string, id: string, description?: string | null, history?: { __typename?: 'WebhookEventCollection', items?: Array<{ __typename?: 'WebhookEvent', status: number, statusInfo: string } | null> | null } | null }> } } };
 
 export type OnProjectUpdatedSubscriptionVariables = Exact<{
   id: Scalars['String'];

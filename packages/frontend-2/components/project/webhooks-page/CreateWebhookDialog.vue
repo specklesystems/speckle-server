@@ -15,7 +15,7 @@
           name="hookUrl"
           show-label
           show-required
-          :rules="(isRequired, isUrl)"
+          :rules="[isRequired, isUrl]"
           type="text"
         />
         <FormTextInput
@@ -98,12 +98,10 @@ const isOpen = computed({
 })
 
 const webhookTriggerItems = computed(() => {
-  return Object.entries(WebhookTriggers as Record<string, unknown>).map(
-    ([value, key]) => ({
-      id: value,
-      text: key
-    })
-  )
+  return Object.entries(WebhookTriggers).map(([value, key]) => ({
+    id: value,
+    text: key
+  }))
 })
 
 const onSubmit = handleSubmit(async () => {

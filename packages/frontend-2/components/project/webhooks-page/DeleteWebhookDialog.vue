@@ -76,7 +76,7 @@ const deleteConfirmed = async () => {
             (fieldName, _variables, value) => {
               if (fieldName === 'webhooks') {
                 const oldItems = value?.items || []
-                const newItems = oldItems.filter((i) => i?.id !== webhookId)
+                const newItems = oldItems.filter((i) => i?.__ref !== cacheId)
                 return {
                   ...value,
                   items: newItems,
