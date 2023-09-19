@@ -32,7 +32,7 @@ generates:
         PendingStreamCollaborator: '@/modules/serverinvites/helpers/graphTypes#PendingStreamCollaboratorGraphQLReturn'
         FileUpload: '@/modules/fileuploads/helpers/types#FileUploadGraphQLReturn'
         AutomationMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
-        # ModelAutomationRun: '@/modules/automations/helpers/graphTypes#ModelAutomationRunGraphQLReturn'
+        AutomationFunctionRun: '@/modules/automations/helpers/graphTypes#AutomationFunctionRunGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'

@@ -24,6 +24,9 @@ export const allProjectModelsRoute = (projectId: string) =>
 export const projectDiscussionsRoute = (projectId: string) =>
   `/projects/${projectId}/discussions`
 
+export const automationDataPageRoute = (baseUrl: string, automationId: string) =>
+  new URL(`/automations/${automationId}`, baseUrl).toString()
+
 /**
  * TODO: Page doesn't exist
  */
