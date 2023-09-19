@@ -10,7 +10,12 @@
     <div class="flex items-center justify-between">
       <h1 class="text-2xl font-bold">Webhooks</h1>
       <div class="flex gap-2">
-        <FormButton color="secondary" :icon-left="BookOpenIcon" @click="openDocs">
+        <FormButton
+          color="secondary"
+          :icon-left="BookOpenIcon"
+          to="https://speckle.guide/dev/server-webhooks.html"
+          external
+        >
           Open Docs
         </FormButton>
         <FormButton :icon-left="PlusIcon" @click="showNewWebhookDialog = true">
@@ -139,20 +144,28 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 
+const projectId = computed(() => route.params.id as string)
+const route = useRoute()
+
+const { result: pageResult, refetch: refetchWebhooks } = useQuery(
+  projectWebhooksQuery,
+  () => ({
+    projectId: projectId.value
+  })
+)
+
 definePageMeta({
   middleware: ['require-valid-project']
 })
 
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(updateWebhookMutation)
-const route = useRoute()
 
 const webhookToModify = ref<WebhookItem | null>(null)
 const showDeleteWebhookDialog = ref(false)
 const showEditWebhookDialog = ref(false)
 const showNewWebhookDialog = ref(false)
 
-const projectId = computed(() => route.params.id as string)
 const projectName = computed(() => pageResult.value?.project?.name || 'Unknown Project')
 const webhooks = computed<WebhookItem[]>(() => {
   return pageResult.value?.project?.webhooks?.items || []
@@ -160,18 +173,7 @@ const webhooks = computed<WebhookItem[]>(() => {
 
 const getHistoryStatus = (item: WebhookItem) => {
   const recentHistory = item.history?.items?.[0]
-  if (recentHistory) {
-    switch (recentHistory.status) {
-      case 1:
-        return 'alert'
-      case 2:
-        return 'called'
-      case 3:
-        return 'error'
-    }
-  } else {
-    return 'noEvents'
-  }
+  return recentHistory ? recentHistory.statusInfo : 'No events yet'
 }
 
 const getHistoryStatusInfo = (item: WebhookItem) => {
@@ -191,10 +193,6 @@ const openDeleteWebhookDialog = (item: WebhookItem) => {
 const openEditWebhookDialog = (item: WebhookItem) => {
   webhookToModify.value = item
   showEditWebhookDialog.value = true
-}
-
-const openDocs = () => {
-  window.open('https://speckle.guide/dev/server-webhooks.html', '_blank')
 }
 
 const handleWebhookCreated = () => {
@@ -237,11 +235,4 @@ const onChange = async (item: WebhookItem, newValue: boolean) => {
     })
   }
 }
-
-const { result: pageResult, refetch: refetchWebhooks } = useQuery(
-  projectWebhooksQuery,
-  () => ({
-    projectId: projectId.value
-  })
-)
 </script>
