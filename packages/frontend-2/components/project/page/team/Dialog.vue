@@ -8,6 +8,10 @@
       <ProjectPageTeamDialogManageUsers :project="project" />
       <ProjectPageTeamDialogManagePermissions :project="project" />
       <ProjectPageTeamDialogWebhooks :project="project" />
+      <ProjectPageTeamDialogDangerZones
+        v-if="isOwner || canLeaveProject"
+        :project="project"
+      />
     </div>
   </LayoutDialog>
 </template>
@@ -52,7 +56,9 @@ const props = defineProps<{
   project: ProjectPageTeamDialogFragment
 }>()
 
-const { isOwner, isServerGuest } = useTeamDialogInternals({ props: toRefs(props) })
+const { isOwner, isServerGuest, canLeaveProject } = useTeamDialogInternals({
+  props: toRefs(props)
+})
 
 const isOpen = computed({
   get: () => props.open,

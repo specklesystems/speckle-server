@@ -34,12 +34,7 @@
         :disabled="isDisabled"
         @update:model-value="onChangeCommentPermissions"
       />
-      <!-- <hr class="border border-outline-3" /> -->
     </div>
-    <!-- <ProjectPageTeamDialogDangerZones
-      v-if="isOwner || canLeaveProject"
-      :project="project"
-    /> -->
   </div>
 </template>
 <script setup lang="ts">
