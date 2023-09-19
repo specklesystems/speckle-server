@@ -87,7 +87,7 @@
       <template #triggers="{ item }">
         <div :class="{ 'opacity-60': !item.enabled }">
           {{
-            (item.triggers as string[])
+            item.triggers
               .map(
                 (event, index, array) =>
                   `"${event}"${index < array.length - 1 ? ',' : ''}`
