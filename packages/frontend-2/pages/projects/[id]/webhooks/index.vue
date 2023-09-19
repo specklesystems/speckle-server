@@ -52,7 +52,7 @@
     >
       <template #enabled="{ item }">
         <FormSwitch
-          :model-value="(item.enabled as boolean)"
+          :model-value="!!item.enabled"
           @update:model-value="(newValue) => onChange(item, newValue)"
         />
       </template>
@@ -70,10 +70,7 @@
                 class="text-success"
               />
               <XCircleIcon
-                v-if="
-                  getHistoryStatus(item) === 'error' ||
-                  getHistoryStatus(item) === 'alert'
-                "
+                v-if="['error', 'alert'].includes(getHistoryStatus(item) || '')"
                 class="text-danger"
               />
             </div>
