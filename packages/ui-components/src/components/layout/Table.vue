@@ -2,6 +2,7 @@
   <div class="text-foreground">
     <div class="w-full text-sm overflow-x-auto overflow-y-visible simple-scrollbar">
       <div
+        v-if="items.length > 0"
         class="grid z-10 grid-cols-12 items-center gap-6 font-semibold bg-foundation rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[900px]"
         :style="{ paddingRight: paddingRightStyle }"
       >
