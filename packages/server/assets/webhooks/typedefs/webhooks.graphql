@@ -1,11 +1,11 @@
 extend type Stream {
-  webhooks(id: String): WebhookCollection
+  webhooks(id: String): WebhookCollection!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
 }
 
 extend type Project {
-  webhooks(id: String): WebhookCollection
+  webhooks(id: String): WebhookCollection!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
 }
@@ -34,8 +34,8 @@ extend type Mutation {
 }
 
 type WebhookCollection {
-  totalCount: Int
-  items: [Webhook]
+  totalCount: Int!
+  items: [Webhook!]!
 }
 
 type Webhook {
@@ -45,7 +45,7 @@ type Webhook {
   hasSecret: Boolean!
   url: String!
   description: String
-  triggers: [String]!
+  triggers: [String!]!
   enabled: Boolean
   history(limit: Int! = 25): WebhookEventCollection
 }
