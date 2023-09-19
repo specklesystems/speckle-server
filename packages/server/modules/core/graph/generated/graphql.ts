@@ -2798,7 +2798,7 @@ export type Webhook = {
   id: Scalars['String'];
   projectId: Scalars['String'];
   streamId: Scalars['String'];
-  triggers: Array<Maybe<Scalars['String']>>;
+  triggers: Array<Scalars['String']>;
   url: Scalars['String'];
 };
 
@@ -4219,7 +4219,7 @@ export type WebhookResolvers<ContextType = GraphQLContext, ParentType extends Re
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   streamId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  triggers?: Resolver<Array<Maybe<ResolversTypes['String']>>, ParentType, ContextType>;
+  triggers?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   url?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

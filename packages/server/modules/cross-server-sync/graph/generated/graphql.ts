@@ -2788,7 +2788,7 @@ export type Webhook = {
   id: Scalars['String'];
   projectId: Scalars['String'];
   streamId: Scalars['String'];
-  triggers: Array<Maybe<Scalars['String']>>;
+  triggers: Array<Scalars['String']>;
   url: Scalars['String'];
 };
 
