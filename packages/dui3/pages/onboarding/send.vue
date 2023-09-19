@@ -88,8 +88,6 @@ const hasSelectedSomethingNow = ref(false)
 
 const selectionFilterCopy = ref<SelectionInfo>()
 
-// NEW
-
 const emit = defineEmits<{
   (
     e: 'next',
@@ -117,8 +115,6 @@ const onProjectModelSelected = handleSubmit(async (values) => {
   emit('next', values)
 })
 
-// NEW END
-
 watch(selectionInfo, (newVal) => {
   hasSelectedSomethingNow.value = newVal?.selectedObjectIds?.length !== 0
   saveSelection()
@@ -128,24 +124,34 @@ const saveSelection = () => {
   selectionFilterCopy.value = { ...selectionInfo.value }
 }
 
+const getOrCreateModelCard = async () => {
+  const modelCard = store.tryGetModel(selectedModel.value?.id)
+  if (modelCard) {
+    return modelCard
+  } else {
+    const sendFilter = {
+      ...store.selectionFilter,
+      ...selectionFilterCopy.value
+    }
+    if (!defaultAccount.value) return // to make ts happy, a bit of hack - should throw if this is the case, but this will be handled at a higher level (ie, whole page!)
+
+    const modelCard: ISenderModelCard = {
+      typeDiscriminator: 'SenderModelCard',
+      id: nanoid(),
+      modelId: selectedModel.value?.id as string,
+      projectId: selectedProject.value?.id as string,
+      accountId: defaultAccount.value.accountInfo.id,
+      sendFilter: sendFilter as ISendFilter
+    }
+
+    await store.addModel(modelCard)
+    return modelCard
+  }
+}
+
 const publish = async () => {
-  const sendFilter = {
-    ...store.selectionFilter,
-    ...selectionFilterCopy.value
-  }
-
-  if (!defaultAccount.value) return // to make ts happy, a bit of hack - should throw if this is the case, but this will be handled at a higher level (ie, whole page!)
-
-  const modelCard: ISenderModelCard = {
-    typeDiscriminator: 'SenderModelCard',
-    id: nanoid(),
-    modelId: selectedModel.value?.id as string,
-    projectId: selectedProject.value?.id as string,
-    accountId: defaultAccount.value.accountInfo.id,
-    sendFilter: sendFilter as ISendFilter
-  }
-
-  await store.addModel(modelCard)
+  const modelCard = await getOrCreateModelCard()
+  if (!modelCard) return // throw here error
   router.push('/')
   // Sketchup freezes immediately after routing, by setting timeout we can get correct states
   setTimeout(async () => {
