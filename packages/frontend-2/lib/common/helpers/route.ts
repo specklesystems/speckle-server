@@ -23,6 +23,8 @@ export const allProjectModelsRoute = (projectId: string) =>
   `/projects/${projectId}/models`
 export const projectDiscussionsRoute = (projectId: string) =>
   `/projects/${projectId}/discussions`
+export const projectWebhooksRoute = (projectId: string) =>
+  `/projects/${projectId}/webhooks`
 
 export const automationDataPageRoute = (baseUrl: string, automationId: string) =>
   new URL(`/automations/${automationId}`, baseUrl).toString()
