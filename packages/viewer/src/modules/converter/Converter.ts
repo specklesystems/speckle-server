@@ -134,7 +134,8 @@ export default class Coverter {
     const target = obj //obj.data || obj
 
     // Check if the object has a display value of sorts
-    let displayValue = this.getDisplayValue(target)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let displayValue = this.getDisplayValue(target) as any
 
     if (displayValue) {
       childNode.model.atomic = true
@@ -301,12 +302,23 @@ export default class Coverter {
   }
 
   private getDisplayValue(obj) {
-    return (
+    const displayValue =
       obj['displayValue'] ||
       obj['@displayValue'] ||
       obj['displayMesh'] ||
       obj['@displayMesh']
-    )
+
+    if (displayValue) {
+      if (Array.isArray(displayValue)) {
+        const filteredDisplayValue = displayValue.filter((v) => v)
+        if (displayValue.length !== filteredDisplayValue.length) {
+          Logger.warn(`Object ${obj.id} has null display values which will be ignored`)
+        }
+        return filteredDisplayValue
+      }
+      return displayValue
+    }
+    return null
   }
 
   private getElementsValue(obj) {
@@ -457,8 +469,11 @@ export default class Coverter {
     try {
       if (!obj) return
 
-      let displayValue = obj.displayValue || obj.displayMesh
+      let displayValue = this.getDisplayValue(obj)
+
       if (Array.isArray(displayValue)) displayValue = displayValue[0] //Just take the first display value for now (not ideal)
+      if (!displayValue) return
+
       const ref = await this.resolveReference(displayValue)
       const nestedNode: TreeNode = this.tree.parse({
         id: this.getNodeId(ref),
@@ -592,14 +607,15 @@ export default class Coverter {
   }
 
   private async CurveToNode(obj, node) {
-    if (!obj.displayValue) {
+    let displayValue = this.getDisplayValue(obj)
+    if (!displayValue) {
       Logger.warn(
         `Object ${obj.id} of type ${obj.speckle_type} has no display value and will be ignored`
       )
       return
     }
     node.model.nestedNodes = []
-    const displayValue = await this.resolveReference(obj.displayValue)
+    displayValue = await this.resolveReference(obj.displayValue)
     displayValue.units = displayValue.units || obj.units
     const nestedNode: TreeNode = this.tree.parse({
       id: this.getNodeId(displayValue),
