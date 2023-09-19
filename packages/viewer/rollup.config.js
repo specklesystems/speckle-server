@@ -2,10 +2,9 @@ import { terser } from 'rollup-plugin-terser'
 import clean from 'rollup-plugin-delete'
 import pkg from './package.json'
 import typescript2 from 'rollup-plugin-typescript2'
-import rebasePlugin from 'rollup-plugin-rebase'
-import copyPlugin from 'rollup-plugin-copy'
 import { babel } from '@rollup/plugin-babel'
 import { DEFAULT_EXTENSIONS } from '@babel/core'
+import image from '@rollup/plugin-image'
 
 const isProd = process.env.NODE_ENV === 'production'
 const sourcemap = isProd ? false : 'inline'
@@ -27,10 +26,7 @@ const config = {
   ],
   plugins: [
     clean({ targets: 'dist/*' }),
-    rebasePlugin({ keepName: true }),
-    copyPlugin({
-      targets: [{ src: './always-bundled-assets/**/*', dest: 'dist/assets' }]
-    }),
+    image(),
     typescript2({
       tsconfigOverride: {
         sourceMap: sourcemap
