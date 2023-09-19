@@ -155,11 +155,7 @@ const showNewWebhookDialog = ref(false)
 const projectId = computed(() => route.params.id as string)
 const projectName = computed(() => pageResult.value?.project?.name || 'Unknown Project')
 const webhooks = computed<WebhookItem[]>(() => {
-  return (
-    pageResult.value?.project?.webhooks?.items?.map(
-      (webhook) => webhook as WebhookItem
-    ) || []
-  )
+  return pageResult.value?.project?.webhooks?.items || []
 })
 
 const getHistoryStatus = (item: WebhookItem) => {
