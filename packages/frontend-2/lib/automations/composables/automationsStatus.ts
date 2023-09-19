@@ -42,7 +42,7 @@ export const useModelVersionCardAutomationsStatusUpdateTracking = (
 
     // Add to model/version automationsStatus field, in case it was null before
     const {
-      model: { id: modelId },
+      model: { id: modelId, versions: { items: [latestVersion] = [] } = {} },
       version: { id: versionId },
       status: { id: statusId }
     } = result.data.projectAutomationsStatusUpdated
@@ -54,12 +54,15 @@ export const useModelVersionCardAutomationsStatusUpdateTracking = (
       }
     })
 
-    apollo.cache.modify({
-      id: getCacheId('Model', modelId),
-      fields: {
-        automationStatus: () => getObjectReference('AutomationsStatus', statusId)
-      }
-    })
+    // Set as model's automationStatus only if version is latest version
+    if (latestVersion?.id === versionId) {
+      apollo.cache.modify({
+        id: getCacheId('Model', modelId),
+        fields: {
+          automationStatus: () => getObjectReference('AutomationsStatus', statusId)
+        }
+      })
+    }
   })
 
   onResult((result) => {

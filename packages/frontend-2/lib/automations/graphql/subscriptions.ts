@@ -11,6 +11,11 @@ export const onModelVersionCardAutomationsStatusUpdated = graphql(`
       }
       model {
         id
+        versions(limit: 1) {
+          items {
+            id
+          }
+        }
       }
     }
   }
