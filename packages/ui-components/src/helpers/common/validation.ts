@@ -77,3 +77,10 @@ export const stringContains =
       return match.test(val) ? true : message
     }
   }
+
+export const isUrl: GenericValidateFunction<string> = (value) => {
+  if (VALID_HTTP_URL.test(value)) {
+    return true
+  }
+  return 'Invalid URL'
+}

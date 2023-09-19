@@ -30,7 +30,6 @@ import { LayoutDialog, TableItemType } from '@speckle/ui-components'
 import { WebhookItem } from '~~/lib/projects/helpers/types'
 import { deleteWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import {
-  ROOT_QUERY,
   convertThrowIntoFetchResult,
   getCacheId,
   getFirstErrorMessage,
@@ -51,44 +50,40 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const deleteConfirmed = async () => {
   const webhookId = props.webhook?.id
-  if (!webhookId) {
+  const projectId = props.webhook?.streamId
+
+  if (!webhookId || !projectId) {
     return
   }
 
   const result = await deleteMutation(
     {
       webhook: {
-        id: props.webhook.id,
-        streamId: props.webhook.streamId
+        id: webhookId,
+        streamId: projectId
       }
     },
     {
       update: (cache, { data }) => {
         if (data?.webhookDelete) {
           const cacheId = getCacheId('Webhook', webhookId)
-          cache.evict({
-            id: cacheId
-          })
+          cache.evict({ id: cacheId })
 
-          modifyObjectFields<undefined, { [key: string]: WebhookCollection }>(
+          const projectCacheId = getCacheId('Project', projectId)
+          modifyObjectFields<{ webhooks: WebhookCollection }, WebhookCollection>(
             cache,
-            ROOT_QUERY,
-            (_fieldName, _variables, value, details) => {
-              const webhookCollectionFields = Object.keys(value).filter(
-                (k) => details.revolveFieldNameAndVariables(k).fieldName === 'webhooks'
-              )
-              const newVal: typeof value = { ...value }
-
-              for (const field of webhookCollectionFields) {
-                const oldItems = value[field]?.items || []
+            projectCacheId,
+            (fieldName, _variables, value) => {
+              if (fieldName === 'webhooks') {
+                const oldItems = value?.items || []
                 const newItems = oldItems.filter((i) => i?.id !== webhookId)
-                newVal[field] = {
-                  ...value[field],
-                  ...(value[field]?.items ? { items: newItems } : {}),
-                  totalCount: Math.max(0, (value[field]?.totalCount || 0) - 1)
+                return {
+                  ...value,
+                  items: newItems,
+                  totalCount: Math.max(0, (value?.totalCount || 0) - 1)
                 }
               }
-              return newVal
+              return value
             }
           )
         }

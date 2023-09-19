@@ -104,7 +104,6 @@
     <ProjectWebhooksPageDeleteWebhookDialog
       v-model:open="showDeleteWebhookDialog"
       :webhook="webhookToModify"
-      :result-variables="resultVariables"
     />
 
     <ProjectWebhooksPageEditWebhookDialog
@@ -114,10 +113,8 @@
 
     <ProjectWebhooksPageCreateWebhookDialog
       v-model:open="showNewWebhookDialog"
-      :url="urlValue"
-      :name="nameValue"
-      :secret="secretValue"
       :stream-id="projectId"
+      @webhook-created="handleWebhookCreated"
     />
   </div>
 </template>
@@ -162,9 +159,6 @@ const webhookToModify = ref<TableItemType<WebhookItem> | null>(null)
 const showDeleteWebhookDialog = ref(false)
 const showEditWebhookDialog = ref(false)
 const showNewWebhookDialog = ref(false)
-const urlValue = ref('')
-const nameValue = ref('')
-const secretValue = ref('')
 
 const projectId = computed(() => route.params.id as string)
 const projectName = computed(() => pageResult.value?.project?.name || 'Unknown Project')
@@ -221,6 +215,10 @@ const openDocs = () => {
   window.open('https://speckle.guide/dev/server-webhooks.html', '_blank')
 }
 
+const handleWebhookCreated = () => {
+  refetchWebhooks()
+}
+
 const onChange = async (item: TableItemType<WebhookItem>, newValue: boolean) => {
   if (!isWebhook(item)) {
     return
@@ -251,7 +249,7 @@ const onChange = async (item: TableItemType<WebhookItem>, newValue: boolean) => 
   if (result?.data?.webhookUpdate) {
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'Webhook updated'
+      title: newValue ? 'Webhook Enabled' : 'Webhook Disabled'
     })
   } else {
     triggerNotification({
@@ -262,7 +260,7 @@ const onChange = async (item: TableItemType<WebhookItem>, newValue: boolean) => 
   }
 }
 
-const { result: pageResult, variables: resultVariables } = useQuery(
+const { result: pageResult, refetch: refetchWebhooks } = useQuery(
   projectWebhooksQuery,
   () => ({
     projectId: projectId.value

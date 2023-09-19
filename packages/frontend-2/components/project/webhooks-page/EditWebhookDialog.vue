@@ -15,7 +15,7 @@
           name="hookUrl"
           show-label
           show-required
-          :rules="requiredRule"
+          :rules="isRequired"
           type="text"
           @update:model-value="updateUrl"
         />
@@ -35,7 +35,7 @@
           name="triggers"
           label="Choose Events"
           show-required
-          :rules="requiredRule"
+          :rules="isRequired"
           show-label
           :items="webhookTriggerItems"
         />
@@ -52,17 +52,16 @@ import {
   TableItemType,
   FormSelectBadgeSelected
 } from '@speckle/ui-components'
-import { WebhookItem } from '~~/lib/projects/helpers/types'
+import { WebhookItem, FormValues } from '~~/lib/projects/helpers/types'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { isRequired } from '~~/lib/common/helpers/validation'
+import { useForm } from 'vee-validate'
 import {
   convertThrowIntoFetchResult,
   getCacheId,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-
-const requiredRule = [isRequired]
 
 const props = defineProps<{
   open: boolean
@@ -71,6 +70,7 @@ const props = defineProps<{
 
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(updateWebhookMutation)
+const { handleSubmit } = useForm<FormValues>()
 
 const triggers = ref<typeof webhookTriggerItems.value>([])
 const isOpen = defineModel<boolean>('open', { required: true })
@@ -93,7 +93,7 @@ const updateDescription = (newValue: string) => {
   webhookModel.value.description = newValue
 }
 
-const onSubmit = async () => {
+const onSubmit = handleSubmit(async (FormValues) => {
   const webhookId = props.webhook?.id
   if (!webhookId) {
     return
@@ -104,9 +104,9 @@ const onSubmit = async () => {
       webhook: {
         id: webhookId,
         streamId: props.webhook.streamId,
-        url: webhookModel.value.url,
-        description: webhookModel.value.description,
-        triggers: triggers.value.map((i) => {
+        url: FormValues.url,
+        description: FormValues.description,
+        triggers: FormValues.triggers.map((i) => {
           return (
             Object.entries(WebhookTriggers).find(([key]) => key === i.id)?.[1] || i.id
           )
@@ -144,7 +144,7 @@ const onSubmit = async () => {
       description: errorMessage
     })
   }
-}
+})
 
 watch(
   () => props.webhook,

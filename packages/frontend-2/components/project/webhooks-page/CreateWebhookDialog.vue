@@ -9,17 +9,17 @@
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">
         <FormTextInput
-          v-model="url"
+          v-model="formData.url"
           label="URL"
           help="A POST request will be sent to this URL when this webhook is triggered"
           name="hookUrl"
           show-label
           show-required
-          :rules="requiredRule"
+          :rules="(isRequired, isUrl)"
           type="text"
         />
         <FormTextInput
-          v-model="name"
+          v-model="formData.description"
           label="Webhook name"
           help="An optional name to help you identify this webhook"
           name="hookName"
@@ -27,7 +27,7 @@
           type="text"
         />
         <FormTextInput
-          v-model="secret"
+          v-model="formData.secret"
           label="Secret"
           help="An optional secret. You'll be able to change this in the future, but you won't be able to retrieve it."
           name="hookSecret"
@@ -35,12 +35,12 @@
           type="text"
         />
         <FormSelectBadgeSelected
-          v-model="triggers"
+          v-model="formData.triggers"
           multiple
           name="Name"
           label="Choose Events"
           show-required
-          :rules="requiredRule"
+          :rules="isRequired"
           show-label
           :items="webhookTriggerItems"
         />
@@ -58,17 +58,16 @@ import {
   FormSelectBadgeSelected,
   ToastNotificationType
 } from '@speckle/ui-components'
-import { isRequired } from '~~/lib/common/helpers/validation'
+import { useForm } from 'vee-validate'
+import { isRequired, isUrl } from '~~/lib/common/helpers/validation'
 import { createWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { WebhookCreateInput } from '~~/lib/common/generated/gql/graphql'
 import { useGlobalToast } from '~~/lib/common/composables/toast'
-
-const requiredRule = [isRequired]
+import { FormValues } from 'lib/projects/helpers/types'
 
 const props = defineProps<{
   open: boolean
   streamId: string
-  webhookId?: string
 }>()
 
 const emit = defineEmits<{
@@ -76,13 +75,16 @@ const emit = defineEmits<{
   (e: 'webhook-created'): void
 }>()
 
+const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: createWebhook } = useMutation(createWebhookMutation)
 
-const name = ref('')
-const url = ref('')
-const secret = ref('')
-const triggers = ref<Array<{ id: string; text: string }>>([])
+const formData = ref<FormValues>({
+  url: '',
+  description: '',
+  secret: '',
+  triggers: []
+})
 
 const isOpen = computed({
   get: () => props.open,
@@ -98,14 +100,14 @@ const webhookTriggerItems = computed(() => {
   )
 })
 
-const onSubmit = async () => {
+const onSubmit = handleSubmit(async () => {
   try {
     const webhookInput: WebhookCreateInput = {
-      description: name.value,
-      secret: secret.value,
-      url: url.value,
+      description: formData.value.description,
+      secret: formData.value.secret,
+      url: formData.value.url,
       streamId: props.streamId,
-      triggers: triggers.value.map((i) => i.text),
+      triggers: formData.value.triggers.map((i) => i.text),
       enabled: true
     }
 
@@ -113,7 +115,7 @@ const onSubmit = async () => {
     emit('webhook-created')
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'Webhook succesfully created'
+      title: 'Webhook successfully created'
     })
     isOpen.value = false
   } catch (error) {
@@ -123,7 +125,7 @@ const onSubmit = async () => {
     })
     console.error('Error creating webhook:', error)
   }
-}
+})
 
 const dialogButtons = [
   {

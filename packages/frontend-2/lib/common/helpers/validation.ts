@@ -23,3 +23,5 @@ export const isSameAs = ValidationHelpers.isSameAs
 export const isStringOfLength = ValidationHelpers.isStringOfLength
 
 export const stringContains = ValidationHelpers.stringContains
+
+export const isUrl = ValidationHelpers.isUrl
