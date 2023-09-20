@@ -13,12 +13,12 @@ export type ConverterNodeDelegate = (object, node) => Promise<void>
  */
 export default class SpeckleConverter {
   private objectLoader
-  private lastAsyncPause: number
   private activePromises: number
   private maxChildrenPromises: number
   private spoofIDs = true
   private tree: WorldTree
   private pause: AsyncPause
+  private typeLookupTable: { [type: string]: string } = {}
 
   private readonly NodeConverterMapping: {
     [name: string]: ConverterNodeDelegate
@@ -50,20 +50,11 @@ export default class SpeckleConverter {
     }
 
     this.objectLoader = objectLoader
-    this.lastAsyncPause = Date.now()
     this.activePromises = 0
     this.maxChildrenPromises = 200
     this.tree = tree
     this.pause = new AsyncPause()
   }
-
-  // public async asyncPause() {
-  //   // Don't freeze the UI when doing all those traversals
-  //   if (Date.now() - this.lastAsyncPause >= 100) {
-  //     this.lastAsyncPause = Date.now()
-  //     await new Promise((resolve) => setTimeout(resolve, 0))
-  //   }
-  // }
 
   /**
    * If the object is convertible (there is a direct conversion routine), it will invoke the callback with the conversion result.
@@ -120,8 +111,6 @@ export default class SpeckleConverter {
     }
 
     // If we can convert it, we should invoke the respective conversion routine.
-    const type = this.getSpeckleType(obj)
-
     if (this.directNodeConverterExists(obj)) {
       try {
         await this.convertToNode(obj.data || obj, childNode)
@@ -129,7 +118,9 @@ export default class SpeckleConverter {
         return
       } catch (e) {
         Logger.warn(
-          `(Traversing - direct) Failed to convert ${type} with id: ${obj.id}`,
+          `(Traversing - direct) Failed to convert ${this.getSpeckleType(
+            obj
+          )} with id: ${obj.id}`,
           e
         )
       }
@@ -264,12 +255,24 @@ export default class SpeckleConverter {
    * @return {[type]}     [description]
    */
   private getSpeckleType(obj): string {
+    let rawType = 'Base'
+    if (obj.data) rawType = obj.data.speckle_type ? obj.data.speckle_type : 'Base'
+    else rawType = obj.speckle_type ? obj.speckle_type : 'Base'
+
+    const lookup = this.typeLookupTable[rawType]
+    if (lookup) return lookup
+
+    let typeRet = 'Base'
     const typeChain = this.getSpeckleTypeChain(obj)
     for (const type of typeChain) {
       const nodeConverter = type in this.NodeConverterMapping
-      if (nodeConverter) return type
+      if (nodeConverter) {
+        typeRet = type
+        break
+      }
     }
-    return 'Base'
+    this.typeLookupTable[rawType] = typeRet
+    return typeRet
   }
 
   private getSpeckleTypeChain(obj): string[] {
@@ -277,18 +280,15 @@ export default class SpeckleConverter {
     if (obj.data)
       type = obj.data.speckle_type ? obj.data.speckle_type.split(':').reverse() : type
     else type = obj.speckle_type ? obj.speckle_type.split(':').reverse() : type
-    return type.map<string>((value: string) => {
+    type = type.map<string>((value: string) => {
       return value.split('.').reverse()[0]
     })
+
+    return type
   }
 
   private directNodeConverterExists(obj) {
-    const typeChain = this.getSpeckleTypeChain(obj)
-    for (const type of typeChain) {
-      const nodeConverter = type in this.NodeConverterMapping
-      if (nodeConverter) return nodeConverter
-    }
-    return false
+    return this.getSpeckleType(obj) in this.NodeConverterMapping
   }
 
   private async convertToNode(obj, node) {

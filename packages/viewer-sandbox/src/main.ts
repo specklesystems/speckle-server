@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   DefaultViewerParams,
@@ -80,6 +81,19 @@ const createViewer = async (containerName: string, stream: string) => {
     console.warn(viewer.getRenderer().renderingStats)
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
+    const categories = {}
+    //@ts-ignore
+    viewer.getWorldTree().walkAsync((node) => {
+      //@ts-ignore
+      if (!categories[node.model.raw.speckle_type]) {
+        //@ts-ignore
+        categories[node.model.raw.speckle_type] = 0
+      }
+      //@ts-ignore
+      categories[node.model.raw.speckle_type]++
+      return true
+    })
+    console.log(categories)
     sandbox.refresh()
   })
 
@@ -291,8 +305,8 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/2f9f2f3021/commits/75bd13f513'
     // 'https://speckle.xyz/streams/0a2f096caf/commits/eee0e4436f?overlay=72828bce0d&c=%5B14.04465,-332.88372,258.40392,53.09575,31.13694,126.39999,0,1%5D&filter=%7B%22propertyInfoKey%22%3A%22level.name%22%7D'
     // 'Bilal's tests
-    'https://latest.speckle.dev/streams/97750296c2/commits/5386a0af02' // 700k+ objects 30kk tris
-    // 'https://latest.speckle.dev/streams/97750296c2/commits/48f0567a88' // 1015849 objects
+    // 'https://latest.speckle.dev/streams/97750296c2/commits/5386a0af02' // 700k+ objects 30kk tris
+    'https://latest.speckle.dev/streams/97750296c2/commits/48f0567a88' // 1015849 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/aec0841f7e' // 11k objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/96ffc3c786' // 92209 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/92115d3789' // 390974 objects 19kk tris

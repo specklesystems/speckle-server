@@ -7,23 +7,33 @@ import Logger from 'js-logger'
 import { GeometryConverter, SpeckleType } from '../GeometryConverter'
 
 export class SpeckleGeometryConverter extends GeometryConverter {
+  public typeLookupTable: { [type: string]: SpeckleType } = {}
+
   public getSpeckleType(node: NodeData): SpeckleType {
-    let typeChain = ['Base']
+    let rawType = 'Base'
     if (node.raw.data)
-      typeChain = node.raw.data.speckle_type
-        ? node.raw.data.speckle_type.split(':').reverse()
-        : typeChain
-    else
-      typeChain = node.raw.speckle_type
-        ? node.raw.speckle_type.split(':').reverse()
-        : typeChain
+      rawType = node.raw.data.speckle_type ? node.raw.data.speckle_type : 'Base'
+    else rawType = node.raw.speckle_type ? node.raw.speckle_type : 'Base'
+
+    const lookup = this.typeLookupTable[rawType]
+    if (lookup) {
+      return lookup
+    }
+
+    let typeRet = SpeckleType.Unknown
+    let typeChain = []
+    typeChain = rawType.split(':').reverse()
     typeChain = typeChain.map<string>((value: string) => {
       return value.split('.').reverse()[0]
     })
     for (const type of typeChain) {
-      if (type in SpeckleType) return type as SpeckleType
+      if (type in SpeckleType) {
+        typeRet = type
+        break
+      }
     }
-    return SpeckleType.Unknown
+    this.typeLookupTable[rawType] = typeRet
+    return typeRet
   }
 
   public convertNodeToGeometryData(node: NodeData): GeometryData {
@@ -254,7 +264,6 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     const faces = node.raw.faces
     const colorsRaw = node.raw.colors
     let colors = undefined
-
     let k = 0
     while (k < faces.length) {
       let n = faces[k]

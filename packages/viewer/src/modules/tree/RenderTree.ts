@@ -11,7 +11,6 @@ export class RenderTree {
   private root: TreeNode
   private _treeBounds: Box3 = new Box3()
   private cancel = false
-
   public get treeBounds(): Box3 {
     return this._treeBounds
   }
@@ -25,16 +24,12 @@ export class RenderTree {
     this.root = subtreeRoot
   }
 
-  public static buildTime = 0
-
   public buildRenderTree(geometryConverter: GeometryConverter): Promise<boolean> {
     const p = this.tree.walkAsync((node: TreeNode): boolean => {
-      const start = performance.now()
       const rendeNode = this.buildRenderNode(node, geometryConverter)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
       this.applyTransforms(node)
       geometryConverter.disposeNodeGeometryData(node.model)
-      RenderTree.buildTime += performance.now() - start
       return !this.cancel
     }, this.root)
     return p

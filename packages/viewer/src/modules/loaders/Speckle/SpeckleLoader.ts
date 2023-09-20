@@ -4,7 +4,6 @@ import { Loader, LoaderEvent } from '../Loader'
 import ObjectLoader from '@speckle/objectloader'
 import { SpeckleGeometryConverter } from './SpeckleGeometryConverter'
 import { WorldTree } from '../../..'
-import { RenderTree } from '../../tree/RenderTree'
 
 export class SpeckleLoader extends Loader {
   private loader: ObjectLoader
@@ -75,7 +74,9 @@ export class SpeckleLoader extends Loader {
     let total = 0
     let viewerLoads = 0
     let firstObjectPromise = null
+
     Logger.warn('Downloading object ', this._resource)
+
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.isCancelled) {
         this.emit(LoaderEvent.LoadCancelled, this._resource)
@@ -114,13 +115,11 @@ export class SpeckleLoader extends Loader {
       })
     }
     const t0 = performance.now()
-    const p = this.tree
-      .getRenderTree(this._resource)
-      .buildRenderTree(new SpeckleGeometryConverter())
+    const geometryConverter = new SpeckleGeometryConverter()
+    const p = this.tree.getRenderTree(this._resource).buildRenderTree(geometryConverter)
 
     p.then(() => {
       Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
-      Logger.log('Actual tree build time -> ', RenderTree.buildTime)
     })
     return p
   }
