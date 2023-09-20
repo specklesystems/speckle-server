@@ -61,7 +61,6 @@ import {
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 
 const props = defineProps<{
-  open: boolean
   webhook: WebhookItem | null
 }>()
 

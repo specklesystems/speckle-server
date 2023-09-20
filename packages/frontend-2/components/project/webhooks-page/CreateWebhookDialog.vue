@@ -72,12 +72,10 @@ import {
 } from '~~/lib/common/helpers/graphql'
 
 const props = defineProps<{
-  open: boolean
   streamId: string
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
   (e: 'webhook-created'): void
 }>()
 
@@ -92,13 +90,11 @@ const formData = ref<WebhookFormValues>({
   triggers: []
 })
 
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => {
-    emit('update:open', newVal)
-    if (!newVal) {
-      resetFormData()
-    }
+const isOpen = defineModel<boolean>('open', { required: true })
+
+watch(isOpen, (newVal) => {
+  if (!newVal) {
+    resetFormData()
   }
 })
 

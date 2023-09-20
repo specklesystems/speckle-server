@@ -39,7 +39,6 @@ import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables
 import { WebhookCollection } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
-  open: boolean
   webhook: WebhookItem | null
 }>()
 
