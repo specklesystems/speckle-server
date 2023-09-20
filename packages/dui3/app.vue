@@ -21,6 +21,8 @@ useHead({
   },
   bodyAttrs: {
     class: 'simple-scrollbar bg-foundation-page text-foreground'
-  }
+  },
+  // For standalone vue devtools see: https://devtools.vuejs.org/guide/installation.html#standalone
+  script: process.dev ? ['http://localhost:8098'] : []
 })
 </script>

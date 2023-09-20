@@ -421,8 +421,12 @@ module.exports = class IFCParser {
   }
 
   colorToMaterial(color) {
-    const intColor =
-      (color.w << 24) + ((color.x * 255) << 16) + ((color.y * 255) << 8) + color.z * 255
+    const intColor = Math.floor(
+      ((color.w * 255) << 24) +
+        ((color.x * 255) << 16) +
+        ((color.y * 255) << 8) +
+        color.z * 255
+    )
 
     return {
       diffuse: intColor,

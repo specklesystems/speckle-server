@@ -10,6 +10,7 @@ export type AvatarUserType =
   | LimitedUserAvatarFragment
   | ActiveUserAvatarFragment
   | AppAuthorAvatarFragment
+  | { id: string; name: string; avatar?: string | null }
 
 export function useAvatarSizeClasses(params: {
   props: ToRefs<{

@@ -565,7 +565,7 @@ export default class Materials {
     this.materialMap[NodeRenderView.NullRenderMaterialVertexColorsHash] =
       new SpeckleStandardMaterial(
         {
-          color: 0x7f7f7f,
+          color: 0xffffff,
           emissive: 0x0,
           roughness: 1,
           metalness: 0,

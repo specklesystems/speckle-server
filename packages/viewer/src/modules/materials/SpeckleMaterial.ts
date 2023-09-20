@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
 /* eslint-disable camelcase */
 import {
   IUniform,

@@ -32,16 +32,42 @@
                 'transform rounded-lg bg-foundation text-left shadow-xl transition-all',
                 widthClasses
               ]"
+              :as="isForm ? 'form' : 'div'"
+              @submit.prevent="onSubmit"
             >
-              <div class="relative">
+              <div
+                v-if="title"
+                class="flex items-center justify-center shadow p-4 relative z-10 bg-foundation rounded-t-lg"
+              >
+                <h4 class="text-2xl font-bold">{{ title }}</h4>
+              </div>
+              <button
+                v-if="!hideCloser"
+                class="absolute z-20 top-5 right-4 text-foreground"
+                @click="open = false"
+              >
+                <XMarkIcon class="h-6 w-6" />
+              </button>
+              <div class="p-4 sm:p-6">
                 <slot>Put your content here!</slot>
-                <button
-                  v-if="!hideCloser"
-                  class="absolute top-0 right-0 text-foreground"
-                  @click="open = false"
-                >
-                  <XMarkIcon class="h-6 w-6" />
-                </button>
+              </div>
+              <div
+                v-if="hasButtons"
+                class="flex p-4 sm:px-6 sm:py-5 border-t gap-2 border-outline-3"
+              >
+                <template v-if="buttons">
+                  <FormButton
+                    v-for="(button, index) in buttons"
+                    :key="index"
+                    v-bind="button.props"
+                    @click="button.onClick"
+                  >
+                    {{ button.text }}
+                  </FormButton>
+                </template>
+                <template v-else>
+                  <slot name="buttons" />
+                </template>
               </div>
             </DialogPanel>
           </TransitionChild>
@@ -52,8 +78,9 @@
 </template>
 <script setup lang="ts">
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
+import { FormButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
-import { computed } from 'vue'
+import { computed, useSlots } from 'vue'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -70,7 +97,22 @@ const props = defineProps<{
    * Prevent modal from closing when the user clicks outside of the modal or presses Esc
    */
   preventCloseOnClickOutside?: boolean
+  title?: string
+  buttons?: Array<{
+    text: string
+    props: Record<string, unknown>
+    onClick?: () => void
+  }>
+  /**
+   * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
+   */
+  onSubmit?: (e: SubmitEvent) => void
 }>()
+
+const slots = useSlots()
+
+const isForm = computed(() => !!props.onSubmit)
+const hasButtons = computed(() => props.buttons || slots.buttons)
 
 const open = computed({
   get: () => props.open,
@@ -93,10 +135,11 @@ const maxWidthWeight = computed(() => {
 })
 
 const widthClasses = computed(() => {
-  const classParts: string[] = [
-    'px-4 pt-4 pb-4 w-full',
-    'sm:my-8 sm:w-full sm:max-w-xl sm:p-6'
-  ]
+  const classParts: string[] = ['w-full', 'sm:my-8 sm:w-full sm:max-w-xl']
+
+  if (!props.title && !hasButtons.value) {
+    classParts.push('px-4 pt-4 pb-4', 'sm:p-6')
+  }
 
   if (maxWidthWeight.value >= 1) {
     classParts.push('md:max-w-2xl')

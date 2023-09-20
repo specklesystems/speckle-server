@@ -12,20 +12,26 @@ const {
 } = require('../../services/webhooks')
 const { Roles } = require('@speckle/shared')
 
+const streamWebhooksResolver = async (parent, args, context) => {
+  await authorizeResolver(context.userId, parent.id, Roles.Stream.Owner)
+
+  if (args.id) {
+    const wh = await getWebhook({ id: args.id })
+    const items = wh ? [wh] : []
+    return { items, totalCount: items.length }
+  }
+
+  const items = await getStreamWebhooks({ streamId: parent.id })
+  return { items, totalCount: items.length }
+}
+
 module.exports = {
   Stream: {
-    async webhooks(parent, args, context) {
-      await authorizeResolver(context.userId, parent.id, Roles.Stream.Owner)
+    webhooks: streamWebhooksResolver
+  },
 
-      if (args.id) {
-        const wh = await getWebhook({ id: args.id })
-        const items = wh ? [wh] : []
-        return { items, totalCount: items.length }
-      }
-
-      const items = await getStreamWebhooks({ streamId: parent.id })
-      return { items, totalCount: items.length }
-    }
+  Project: {
+    webhooks: streamWebhooksResolver
   },
 
   Webhook: {

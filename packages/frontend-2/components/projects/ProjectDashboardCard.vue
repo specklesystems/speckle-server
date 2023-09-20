@@ -67,8 +67,7 @@
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 import { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { UserCircleIcon, ClockIcon, CubeIcon } from '@heroicons/vue/24/outline'
+import { UserCircleIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import { projectRoute } from '~~/lib/common/helpers/route'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 

@@ -26,7 +26,7 @@ export class RenderTree {
   }
 
   public buildRenderTree() {
-    this.tree.walk((node: TreeNode): boolean => {
+    this.root.walk((node: TreeNode): boolean => {
       const rendeNode = this.buildRenderNode(node)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
       this.applyTransforms(node)

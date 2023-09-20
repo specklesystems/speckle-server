@@ -12,8 +12,8 @@ import {
   ServerParseError
 } from '@apollo/client/core'
 import { DocumentNode, GraphQLError } from 'graphql'
-import { flatten, isUndefined, has, isFunction } from 'lodash-es'
-import { Modifier } from '@apollo/client/cache'
+import { flatten, isUndefined, has, isFunction, isString } from 'lodash-es'
+import { Modifier, Reference } from '@apollo/client/cache'
 import { PartialDeep } from 'type-fest'
 import { NetworkError } from '@apollo/client/errors'
 import { nanoid } from 'nanoid'
@@ -23,6 +23,10 @@ export const isServerError = (err: Error): err is ServerError =>
   has(err, 'response') && has(err, 'result') && has(err, 'statusCode')
 export const isServerParseError = (err: Error): err is ServerParseError =>
   has(err, 'response') && has(err, 'bodyText') && has(err, 'statusCode')
+
+export const ROOT_QUERY = 'ROOT_QUERY'
+export const ROOT_MUTATION = 'ROOT_MUTATION'
+export const ROOT_SUBSCRIPTION = 'ROOT_SUBSCRIPTION'
 
 /**
  * Utility type for typing cached data in Apollo modify functions.
@@ -68,7 +72,9 @@ export function isInvalidAuth(error: ApolloError | NetworkError) {
   if (!hasCorrectCode) return false
 
   const message: string | undefined = isServerError(networkError)
-    ? networkError.result?.error
+    ? isString(networkError.result)
+      ? networkError.result
+      : networkError.result?.error
     : networkError.bodyText
 
   return (message || '').toLowerCase().includes('token')
@@ -244,7 +250,7 @@ export function getStoreFieldName(
  * Inside cache.modify calls you'll get these instead of full objects when reading fields that hold
  * identifiable objects or object arrays
  */
-export type CacheObjectReference = { __ref: string }
+export type CacheObjectReference = Reference
 
 /**
  * Objects & object arrays in `cache.modify` calls are represented through reference objects, so
@@ -253,6 +259,44 @@ export type CacheObjectReference = { __ref: string }
 export function getObjectReference(typeName: string, id: string): CacheObjectReference {
   return {
     __ref: getCacheId(typeName, id)
+  }
+}
+
+export function isReference(obj: unknown): obj is CacheObjectReference {
+  return has(obj, '__ref')
+}
+
+/**
+ * Resolve the field name and variables from an Apollo store field name which
+ * is usually a string like "fieldName:{"var1":"val1","var2":"val2"}"
+ * @param storeFieldName
+ * @param fieldName
+ */
+const revolveFieldNameAndVariables = <
+  V extends Optional<Record<string, unknown>> = undefined
+>(
+  storeFieldName: string,
+  fieldName?: string
+) => {
+  let variables: Optional<V> = undefined
+
+  if (!fieldName) {
+    fieldName = /^[a-zA-Z0-9_-]+(?=[:(])/.exec(storeFieldName)?.[0]
+  }
+  if (!fieldName?.length) return { fieldName: storeFieldName, variables }
+
+  const variablesStringbase = storeFieldName.substring(fieldName.length)
+  if (variablesStringbase.startsWith(':')) {
+    variables = JSON.parse(variablesStringbase.substring(1)) as V
+  } else if (variablesStringbase.startsWith('(')) {
+    variables = JSON.parse(
+      variablesStringbase.substring(1, variablesStringbase.length - 1)
+    ) as V
+  }
+
+  return {
+    fieldName,
+    variables
   }
 }
 
@@ -274,6 +318,7 @@ export function modifyObjectFields<
     value: ModifyFnCacheData<D>,
     details: Parameters<Modifier<ModifyFnCacheData<D>>>[1] & {
       ref: typeof getObjectReference
+      revolveFieldNameAndVariables: typeof revolveFieldNameAndVariables
     }
   ) => Optional<ModifyFnCacheData<D>> | void,
   options?: Partial<{
@@ -311,17 +356,7 @@ export function modifyObjectFields<
         return fieldValue as unknown
       }
 
-      let variables: Optional<V> = undefined
-      if (storeFieldName !== fieldName) {
-        const variablesStringbase = storeFieldName.substring(fieldName.length)
-        if (variablesStringbase.startsWith(':')) {
-          variables = JSON.parse(variablesStringbase.substring(1)) as V
-        } else if (variablesStringbase.startsWith('(')) {
-          variables = JSON.parse(
-            variablesStringbase.substring(1, variablesStringbase.length - 1)
-          ) as V
-        }
-      }
+      const { variables } = revolveFieldNameAndVariables<V>(storeFieldName, fieldName)
 
       log('invoking updater', { fieldName, variables, fieldValue })
       const res = updater(
@@ -330,7 +365,8 @@ export function modifyObjectFields<
         fieldValue as ModifyFnCacheData<D>,
         {
           ...details,
-          ref: getObjectReference
+          ref: getObjectReference,
+          revolveFieldNameAndVariables
         }
       )
 
@@ -360,7 +396,9 @@ export function evictObjectFields<
         fieldName: string,
         variables: V,
         value: ModifyFnCacheData<D>,
-        details: Parameters<Modifier<ModifyFnCacheData<D>>>[1]
+        details: Parameters<Modifier<ModifyFnCacheData<D>>>[1] & {
+          revolveFieldNameAndVariables: typeof revolveFieldNameAndVariables
+        }
       ) => boolean)
     | string[]
 ) {
@@ -369,7 +407,13 @@ export function evictObjectFields<
     id,
     (fieldName, variables, value, details) => {
       if (isFunction(predicate)) {
-        if (!predicate(fieldName, variables, value, details)) return undefined
+        if (
+          !predicate(fieldName, variables, value, {
+            ...details,
+            revolveFieldNameAndVariables
+          })
+        )
+          return undefined
       } else {
         const predicateFields = predicate
         if (!predicateFields.includes(fieldName)) return undefined

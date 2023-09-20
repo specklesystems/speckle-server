@@ -6,6 +6,7 @@ import SingletonManagers from '~~/components/singleton/Managers.vue'
 import { useArgs, useGlobals } from '@storybook/client-api'
 import { provide, watch } from 'vue'
 import { AppTheme, useTheme } from '~~/lib/core/composables/theme'
+import { PageRouteSymbol } from '#app/components/injections'
 
 setup((app) => {
   setupVueApp(app)
@@ -183,7 +184,7 @@ export const decorators = [
       components: { Story: story() },
       setup: () => {
         if (route) {
-          provide('_route', route)
+          provide(PageRouteSymbol, route)
         }
       },
       template: `<Story/>`

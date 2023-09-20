@@ -290,3 +290,31 @@ export const Simple: StoryType = {
     buttonStyle: 'simple'
   }
 }
+
+export const RejectingUpdates: StoryType = {
+  ...Default,
+  render: (args) => ({
+    components: { FormSelectBase },
+    setup: () => {
+      return { args }
+    },
+    template: `
+      <div class="flex justify-center h-72">
+        <FormSelectBase v-bind="args" class="max-w-xs w-full" @update:modelValue="onModelUpdate"/>
+      </div>
+    `,
+    methods: {
+      onModelUpdate() {
+        console.log('rejecting update')
+      }
+    }
+  })
+}
+
+export const WithDisabledItems: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    disabledItemPredicate: (item: FakeItemType) => item.id === '3'
+  }
+}

@@ -19,6 +19,31 @@ export const Roles = Object.freeze(<const>{
   }
 })
 
+export const RoleInfo = Object.freeze(<const>{
+  Stream: {
+    [Roles.Stream.Owner]: {
+      title: 'Owner',
+      description:
+        'Owners have full access, including deletion rights & access control.'
+    },
+    [Roles.Stream.Contributor]: {
+      title: 'Contributor',
+      description:
+        'Contributors can create new branches and commits, but they cannot edit stream details or manage collaborators.'
+    },
+    [Roles.Stream.Reviewer]: {
+      title: 'Reviewer',
+      description: 'Reviewers can only view (read) the data from this stream.'
+    }
+  },
+  Server: {
+    [Roles.Server.Admin]: 'Admin',
+    [Roles.Server.User]: 'User',
+    [Roles.Server.Guest]: 'Guest',
+    [Roles.Server.ArchivedUser]: 'Archived'
+  }
+})
+
 export type ServerRoles = (typeof Roles)['Server'][keyof (typeof Roles)['Server']]
 export type StreamRoles = (typeof Roles)['Stream'][keyof (typeof Roles)['Stream']]
 

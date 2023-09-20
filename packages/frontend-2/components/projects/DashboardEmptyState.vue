@@ -8,22 +8,34 @@
       />
     </div>
     <h2 class="block font-bold leading-8 text-center p-2 h3">
-      Create your first project!
+      {{ isGuest ? 'No projects found!' : 'Create your first project!' }}
     </h2>
     <h4 class="block font-normal leading-8 text-center p-2">
       Projects are the place where your models and their versions live.
     </h4>
-    <div class="text-center space-y-4">
-      <FormButton size="xl" class="shadow-lg" @click="$emit('create-project')">
+    <div class="flex flex-col items-center space-y-4">
+      <FormButton
+        v-if="!isGuest"
+        size="xl"
+        class="shadow-lg"
+        @click="$emit('create-project')"
+      >
         Create a project
       </FormButton>
-      <br />
       <FormButton text size="xs" to="/onboarding?force=true">
-        Or go through the onboarding again
+        {{
+          isGuest
+            ? 'Go through the onboarding again?'
+            : 'Or go through the onboarding again'
+        }}
       </FormButton>
     </div>
   </div>
 </template>
 <script setup lang="ts">
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+
 defineEmits(['create-project'])
+
+const { isGuest } = useActiveUser()
 </script>

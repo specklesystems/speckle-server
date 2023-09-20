@@ -193,7 +193,7 @@
     >
       <template #header>Your First Upload</template>
     </OnboardingDialogFirstSend>
-    <ServerInviteDialog
+    <ServerManagementInviteDialog
       v-model:open="showServerInviteDialog"
       @update:open="(v) => (!v ? markComplete(3) : '')"
     />
@@ -212,7 +212,11 @@ import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 withDefaults(
-  defineProps<{ showIntro: boolean; showBottomEscape: boolean; background: boolean }>(),
+  defineProps<{
+    showIntro?: boolean
+    showBottomEscape?: boolean
+    background?: boolean
+  }>(),
   {
     showIntro: false,
     showBottomEscape: false,

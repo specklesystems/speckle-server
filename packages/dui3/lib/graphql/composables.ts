@@ -1,8 +1,13 @@
 import { ApolloClient } from '@apollo/client/core'
 import {
+  provideApolloClient,
+  useMutation,
+  useSubscription
+} from '@vue/apollo-composable'
+import { onProjectVersionsUpdateSubscription } from '~/lib/graphql/subscriptions'
+import {
   VersionCreateInput,
-  ProjectCreateInput,
-  CommitCreateInput
+  ProjectCreateInput
 } from '~~/lib/common/generated/gql/graphql'
 import {
   createVersionMutation,
@@ -10,7 +15,9 @@ import {
   createModelMutation,
   projectDetailsQuery,
   modelDetailsQuery,
-  createCommitMutation
+  projectsListQuery,
+  projectModelsQuery,
+  modelVersionsQuery
 } from '~~/lib/graphql/mutationsAndQueries'
 import { useAccountStore } from '~~/store/accounts'
 
@@ -18,37 +25,31 @@ function getValidOrDefaultAccount(
   clientId: string | undefined = undefined
 ): ApolloClient<unknown> {
   const { defaultAccount, accounts } = storeToRefs(useAccountStore())
-  if (!clientId) return defaultAccount.value.client
+  if (!clientId) return defaultAccount.value?.client as ApolloClient<unknown>
   const account = accounts.value.find((acc) => acc.accountInfo.id === clientId)
-  if (account) return account.client
+  if (account) return account.client as ApolloClient<unknown>
 
   throw new Error(`Failed to find a valid account for id ${clientId}`)
 }
 
-/**
- * Use `useCreateVersion` when it is ready to use.
- * @param clientId
- * @returns
- * @deprecated
- */
-export function useCreateCommit(clientId: string | undefined = undefined) {
-  return async (commit: CommitCreateInput) => {
+export function useProjectVersionUpdated(clientId: string | undefined = undefined) {
+  return (projectId: string) => {
     const client = getValidOrDefaultAccount(clientId)
-    const res = await client.mutate({
-      mutation: createCommitMutation,
-      variables: { commit }
-    })
-    return res
+    const onProjectVersionUpdate = provideApolloClient(client)(() =>
+      useSubscription(onProjectVersionsUpdateSubscription, { id: projectId })
+    )
+    return onProjectVersionUpdate
   }
 }
 
 export function useCreateVersion(clientId: string | undefined = undefined) {
   return async (version: VersionCreateInput) => {
     const client = getValidOrDefaultAccount(clientId)
-    const res = await client.mutate({
-      mutation: createVersionMutation,
-      variables: { input: version }
-    })
+    const createVersion = provideApolloClient(client)(() =>
+      useMutation(createVersionMutation)
+    )
+    // we can return here directly createVersion to reach some other props like `loading`, `error`.
+    const res = await createVersion.mutate({ input: version })
     return res
   }
 }
@@ -88,6 +89,61 @@ export function useCreateNewModel(clientId: string | undefined = undefined) {
     }
 
     return res
+  }
+}
+
+export function useGetProjects(clientId: string | undefined = undefined) {
+  return async (query: string) => {
+    const client = getValidOrDefaultAccount(clientId)
+
+    const res = await client.query({
+      query: projectsListQuery,
+      variables: { query }
+    })
+
+    if (!res.data) {
+      console.error(res.errors)
+    } else {
+      // success!
+    }
+
+    return res.data?.streams?.items
+  }
+}
+
+export function useGetProjectModels(clientId: string | undefined = undefined) {
+  return async (projectId: string, query: string) => {
+    const client = getValidOrDefaultAccount(clientId)
+    const res = await client.query({
+      query: projectModelsQuery,
+      variables: { projectId, filter: { search: query } }
+    })
+
+    if (!res.data) {
+      console.error(res.errors)
+    } else {
+      // success!
+    }
+
+    return res.data.project.models.items
+  }
+}
+
+export function useGetModelVersions(clientId: string | undefined = undefined) {
+  return async (projectId: string, modelId: string) => {
+    const client = getValidOrDefaultAccount(clientId)
+    const res = await client.query({
+      query: modelVersionsQuery,
+      variables: { projectId, modelId }
+    })
+
+    if (!res.data) {
+      console.error(res.errors)
+    } else {
+      // success!
+    }
+
+    return res.data.project.model.versions.items
   }
 }
 

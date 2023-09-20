@@ -3,7 +3,10 @@
 import { BaseBridge } from '~~/lib/bridge/base'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 import { IDiscriminatedObject } from '~~/lib/bindings/definitions/common'
-import { ISendFilter } from '~~/lib/bindings/definitions/ISendBinding'
+import {
+  ISendFilter,
+  ModelProgressArgs
+} from '~~/lib/bindings/definitions/ISendBinding'
 
 export const IBasicConnectorBindingKey = 'baseBinding'
 
@@ -41,15 +44,13 @@ export interface IModelCard extends IDiscriminatedObject {
   modelId: string
   projectId: string
   accountId: string
+  expired?: boolean
   lastLocalUpdate?: string
+  notification?: ToastInfo
+  progress?: ModelProgressArgs
 }
 
 export type ModelCardTypeDiscriminators = 'SenderModelCard' | 'ReceiverModelCard'
-
-export interface IReceiverModelCard extends IModelCard {
-  typeDiscriminator: 'ReceiverModelCard'
-  todo: string
-}
 
 export type DocumentInfo = {
   location: string
@@ -57,11 +58,17 @@ export type DocumentInfo = {
   id: string
 }
 
-// NOTE: just a reminder for now
 export type ToastInfo = {
+  modelCardId: string
   text: string
-  details?: string
-  type: 'info' | 'error' | 'warning'
+  level: 'info' | 'danger' | 'warning' | 'success'
+  action?: ToastAction
+  timeout?: number
+}
+
+export type ToastAction = {
+  url: string
+  name: string
 }
 
 export class MockedBaseBinding extends BaseBridge {

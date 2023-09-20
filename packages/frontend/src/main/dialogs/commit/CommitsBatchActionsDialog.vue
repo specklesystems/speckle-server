@@ -62,6 +62,7 @@ import {
 } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 import { useGlobalToast } from '@/main/lib/core/composables/notifications'
 import { DocumentNode } from 'graphql'
+import type { OperationVariables } from '@apollo/client/core'
 
 export default defineComponent({
   name: 'CommitsBatchActionsDialog',
@@ -124,7 +125,7 @@ export default defineComponent({
 
     const invokeAction = async <
       D = Record<string, unknown>,
-      V = Record<string, unknown>
+      V extends OperationVariables = Record<string, unknown>
     >(params: {
       shouldQuit: () => boolean
       getResult: (data: D | undefined) => boolean | null | undefined

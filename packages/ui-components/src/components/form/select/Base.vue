@@ -1,6 +1,7 @@
 <template>
   <div>
     <Listbox
+      :key="forceUpdateKey"
       v-model="wrappedValue"
       :name="name"
       :multiple="multiple"
@@ -63,6 +64,7 @@
           leave-to-class="opacity-0"
         >
           <ListboxOptions
+            :unmount="true"
             class="absolute top-[100%] z-10 mt-1 w-full rounded-md bg-foundation-2 py-1 label label--light outline outline-2 outline-primary-muted focus:outline-none shadow"
             @focus="searchInput?.focus()"
           >
@@ -102,13 +104,15 @@
                   :key="itemKey(item)"
                   v-slot="{ active, selected }: { active: boolean, selected: boolean }"
                   :value="item"
+                  :disabled="disabledItemPredicate?.(item) || false"
                 >
                   <li
-                    :class="[
-                      active ? 'text-primary' : 'text-foreground',
-                      'relative transition cursor-pointer select-none py-1.5 pl-3',
-                      !hideCheckmarks ? 'pr-9' : ''
-                    ]"
+                    :class="
+                      listboxOptionClasses({
+                        active,
+                        disabled: disabledItemPredicate?.(item) || false
+                      })
+                    "
                   >
                     <span :class="['block truncate']">
                       <slot
@@ -116,6 +120,7 @@
                         :item="item"
                         :active="active"
                         :selected="selected"
+                        :disabled="disabledItemPredicate?.(item) || false"
                       >
                         {{ simpleDisplayText(item) }}
                       </slot>
@@ -170,16 +175,13 @@ import { MaybeAsync, Nullable, Optional } from '@speckle/shared'
 import { RuleExpression, useField } from 'vee-validate'
 import { nanoid } from 'nanoid'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
-
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import { directive as vTippy } from 'vue-tippy'
 
 type ButtonStyle = 'base' | 'simple' | 'tinted'
 type SingleItem = any
 type ValueType = SingleItem | SingleItem[] | undefined
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'update:modelValue', v: ValueType): void
 }>()
 
@@ -214,6 +216,13 @@ const props = defineProps({
     type: Function as PropType<
       Optional<(item: SingleItem, searchString: string) => boolean>
     >,
+    default: undefined
+  },
+  /**
+   * Set this to disable certain items in the list
+   */
+  disabledItemPredicate: {
+    type: Function as PropType<Optional<(item: SingleItem) => boolean>>,
     default: undefined
   },
   /**
@@ -326,6 +335,7 @@ const searchInput = ref(null as Nullable<HTMLInputElement>)
 const searchValue = ref('')
 const currentItems = ref([] as SingleItem[])
 const isAsyncLoading = ref(false)
+const forceUpdateKey = ref(1)
 
 const internalHelpTipId = ref(nanoid())
 
@@ -455,8 +465,9 @@ const wrappedValue = computed({
       return
     }
 
+    let finalValue: typeof value.value
     if (props.multiple) {
-      value.value = newVal || []
+      finalValue = newVal || []
     } else {
       const currentVal = value.value
       const isUnset =
@@ -464,8 +475,17 @@ const wrappedValue = computed({
         currentVal &&
         newVal &&
         itemKey(currentVal as SingleItem) === itemKey(newVal as SingleItem)
-      value.value = isUnset ? undefined : newVal
+      finalValue = isUnset ? undefined : newVal
     }
+
+    // Not setting value.value, cause then we don't give a chance for the parent
+    // component to reject the update
+    emit('update:modelValue', finalValue)
+
+    // hacky, but there's no other way to force ListBox to re-read the modelValue prop which
+    // we need in case the update was rejected and ListBox still thinks the value is the one
+    // that was clicked on
+    forceUpdateKey.value += 1
   }
 })
 
@@ -507,6 +527,24 @@ const triggerSearch = async () => {
   }
 }
 const debouncedSearch = debounce(triggerSearch, 1000)
+
+const listboxOptionClasses = (params: { active: boolean; disabled: boolean }) => {
+  const { active, disabled } = params || {}
+  const { hideCheckmarks } = props
+
+  const classParts = [
+    'relative transition cursor-pointer select-none py-1.5 pl-3',
+    !hideCheckmarks ? 'pr-9' : ''
+  ]
+
+  if (disabled) {
+    classParts.push('opacity-50 cursor-not-allowed')
+  } else {
+    classParts.push(active ? 'text-primary' : 'text-foreground')
+  }
+
+  return classParts.join(' ')
+}
 
 watch(
   () => props.items,
