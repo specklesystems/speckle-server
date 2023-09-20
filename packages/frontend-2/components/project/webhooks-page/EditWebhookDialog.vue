@@ -20,7 +20,7 @@
           @update:model-value="updateUrl"
         />
         <FormTextInput
-          :model-value="(webhookModel.description as string)"
+          :model-value="webhookModel.description"
           label="Webhook name"
           help="An optional name to help you identify this webhook"
           name="hookName"
