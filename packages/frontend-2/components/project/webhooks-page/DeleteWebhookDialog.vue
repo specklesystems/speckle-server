@@ -74,17 +74,15 @@ const deleteConfirmed = async () => {
             cache,
             projectCacheId,
             (fieldName, _variables, value) => {
-              if (fieldName === 'webhooks') {
-                const oldItems = value?.items || []
-                const newItems = oldItems.filter((i) => i?.__ref !== cacheId)
-                return {
-                  ...value,
-                  items: newItems,
-                  totalCount: Math.max(0, (value?.totalCount || 0) - 1)
-                }
+              const oldItems = value?.items || []
+              const newItems = oldItems.filter((i) => i?.__ref !== cacheId)
+              return {
+                ...value,
+                items: newItems,
+                totalCount: Math.max(0, (value?.totalCount || 0) - 1)
               }
-              return value
-            }
+            },
+            { fieldNameWhitelist: ['webhooks'] }
           )
         }
       }
