@@ -65,7 +65,11 @@ import { isRequired, isUrl, isItemSelected } from '~~/lib/common/helpers/validat
 import { createWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { WebhookCreateInput } from '~~/lib/common/generated/gql/graphql'
 import { useGlobalToast } from '~~/lib/common/composables/toast'
-import { WebhookFormValues } from 'lib/projects/helpers/types'
+import { WebhookFormValues } from '~~/lib/projects/helpers/types'
+import {
+  convertThrowIntoFetchResult,
+  getFirstErrorMessage
+} from '~~/lib/common/helpers/graphql'
 
 const props = defineProps<{
   open: boolean
@@ -105,31 +109,37 @@ const webhookTriggerItems = computed(() => {
   }))
 })
 
-const onSubmit = handleSubmit(async () => {
-  try {
-    const webhookInput: WebhookCreateInput = {
-      description: formData.value.description,
-      secret: formData.value.secret,
-      url: formData.value.url,
-      streamId: props.streamId,
-      triggers: formData.value.triggers.map((i) => i.text),
-      enabled: true
-    }
-
-    await createWebhook({ webhook: webhookInput })
-    emit('webhook-created')
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: 'Webhook successfully created'
-    })
-    isOpen.value = false
-  } catch (error) {
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Problem creating webhook'
-    })
-    console.error('Error creating webhook:', error)
+const onSubmit = handleSubmit(() => {
+  const webhookInput: WebhookCreateInput = {
+    description: formData.value.description,
+    secret: formData.value.secret,
+    url: formData.value.url,
+    streamId: props.streamId,
+    triggers: formData.value.triggers.map((i) => i.text),
+    enabled: true
   }
+
+  createWebhook({ webhook: webhookInput })
+    .then(() => {
+      emit('webhook-created')
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Webhook successfully created'
+      })
+      isOpen.value = false
+    })
+    .catch(convertThrowIntoFetchResult)
+    .then((result) => {
+      if (result?.errors) {
+        const errorMessage = getFirstErrorMessage(result.errors)
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: 'Problem creating webhook',
+          description: errorMessage
+        })
+        console.error('Error creating webhook:', errorMessage)
+      }
+    })
 })
 
 const resetFormData = () => {
