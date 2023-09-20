@@ -18,28 +18,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { defineModel } from 'vue'
 import { Switch as HeadlessSwitch } from '@headlessui/vue'
 import { CheckIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 
-const props = defineProps<{
-  modelValue: boolean
-}>()
-
-const emit = defineEmits<{
-  (event: 'update:modelValue', value: boolean): void
-}>()
-
-const enabled = ref(props.modelValue)
-
-watch(
-  () => props.modelValue,
-  (newValue) => {
-    enabled.value = newValue
-  }
-)
-
-watch(enabled, (newValue) => {
-  emit('update:modelValue', newValue)
-})
+const enabled = defineModel<boolean>()
 </script>
