@@ -15,6 +15,7 @@
           :icon-left="BookOpenIcon"
           to="https://speckle.guide/dev/server-webhooks.html"
           external
+          target="_blank"
         >
           Open Docs
         </FormButton>

@@ -103,11 +103,7 @@ const onSubmit = handleSubmit(async (WebhookFormValues) => {
         streamId: props.webhook.streamId,
         url: WebhookFormValues.url,
         description: WebhookFormValues.description,
-        triggers: WebhookFormValues.triggers.map((i) => {
-          return (
-            Object.entries(WebhookTriggers).find(([key]) => key === i.id)?.[1] || i.id
-          )
-        })
+        triggers: WebhookFormValues.triggers.map((t) => t.id)
       }
     },
     {
