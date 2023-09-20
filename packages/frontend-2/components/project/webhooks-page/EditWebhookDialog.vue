@@ -49,7 +49,7 @@
 import { useMutation } from '@vue/apollo-composable'
 import { WebhookTriggers } from '@speckle/shared'
 import { LayoutDialog, FormSelectBadges } from '@speckle/ui-components'
-import { WebhookItem, FormValues } from '~~/lib/projects/helpers/types'
+import { WebhookItem, WebhookFormValues } from '~~/lib/projects/helpers/types'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { isRequired, isUrl, isItemSelected } from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
@@ -67,7 +67,7 @@ const props = defineProps<{
 
 const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(updateWebhookMutation)
-const { handleSubmit } = useForm<FormValues>()
+const { handleSubmit } = useForm<WebhookFormValues>()
 
 const triggers = ref<typeof webhookTriggerItems.value>([])
 const isOpen = defineModel<boolean>('open', { required: true })
@@ -90,7 +90,7 @@ const updateDescription = (newValue: string) => {
   webhookModel.value.description = newValue
 }
 
-const onSubmit = handleSubmit(async (FormValues) => {
+const onSubmit = handleSubmit(async (WebhookFormValues) => {
   const webhookId = props.webhook?.id
   if (!webhookId) {
     return
@@ -101,9 +101,9 @@ const onSubmit = handleSubmit(async (FormValues) => {
       webhook: {
         id: webhookId,
         streamId: props.webhook.streamId,
-        url: FormValues.url,
-        description: FormValues.description,
-        triggers: FormValues.triggers.map((i) => {
+        url: WebhookFormValues.url,
+        description: WebhookFormValues.description,
+        triggers: WebhookFormValues.triggers.map((i) => {
           return (
             Object.entries(WebhookTriggers).find(([key]) => key === i.id)?.[1] || i.id
           )

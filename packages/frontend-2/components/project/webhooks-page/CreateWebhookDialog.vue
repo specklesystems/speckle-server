@@ -65,7 +65,7 @@ import { isRequired, isUrl, isItemSelected } from '~~/lib/common/helpers/validat
 import { createWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { WebhookCreateInput } from '~~/lib/common/generated/gql/graphql'
 import { useGlobalToast } from '~~/lib/common/composables/toast'
-import { FormValues } from 'lib/projects/helpers/types'
+import { WebhookFormValues } from 'lib/projects/helpers/types'
 
 const props = defineProps<{
   open: boolean
@@ -77,11 +77,11 @@ const emit = defineEmits<{
   (e: 'webhook-created'): void
 }>()
 
-const { handleSubmit } = useForm<FormValues>()
+const { handleSubmit } = useForm<WebhookFormValues>()
 const { triggerNotification } = useGlobalToast()
 const { mutate: createWebhook } = useMutation(createWebhookMutation)
 
-const formData = ref<FormValues>({
+const formData = ref<WebhookFormValues>({
   url: '',
   description: '',
   secret: '',

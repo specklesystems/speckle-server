@@ -5,7 +5,7 @@ export type WebhookItem = NonNullable<
   Get<ProjectWebhooksQuery, 'project.webhooks.items[0]'>
 >
 
-export type FormValues = {
+export type WebhookFormValues = {
   url: string
   description?: string
   secret?: string
