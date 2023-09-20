@@ -46,7 +46,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@apollo/client@npm:^3.6.6, @apollo/client@npm:^3.7.0, @apollo/client@npm:^3.7.14, @apollo/client@npm:^3.8.1":
+"@apollo/client@npm:^3.6.6, @apollo/client@npm:^3.7.0, @apollo/client@npm:^3.7.14":
   version: 3.8.1
   resolution: "@apollo/client@npm:3.8.1"
   dependencies:
@@ -79,6 +79,42 @@ __metadata:
     subscriptions-transport-ws:
       optional: true
   checksum: 3a1748359a7c0f339764e7764dc6c7426be1d522eda963416d3a693733edbce8408cb8f78f9c98b036d34621af663e3dd3446703dfd29037c78a77eacd3c70bb
+  languageName: node
+  linkType: hard
+
+"@apollo/client@npm:^3.8.4":
+  version: 3.8.4
+  resolution: "@apollo/client@npm:3.8.4"
+  dependencies:
+    "@graphql-typed-document-node/core": ^3.1.1
+    "@wry/context": ^0.7.3
+    "@wry/equality": ^0.5.6
+    "@wry/trie": ^0.4.3
+    graphql-tag: ^2.12.6
+    hoist-non-react-statics: ^3.3.2
+    optimism: ^0.17.5
+    prop-types: ^15.7.2
+    response-iterator: ^0.2.6
+    symbol-observable: ^4.0.0
+    ts-invariant: ^0.10.3
+    tslib: ^2.3.0
+    zen-observable-ts: ^1.2.5
+  peerDependencies:
+    graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
+    graphql-ws: ^5.5.5
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+    subscriptions-transport-ws: ^0.9.0 || ^0.11.0
+  peerDependenciesMeta:
+    graphql-ws:
+      optional: true
+    react:
+      optional: true
+    react-dom:
+      optional: true
+    subscriptions-transport-ws:
+      optional: true
+  checksum: 509e37cdce7462cacda0a86c413ce471cd8f618625fb8ac3a60d6347d12f37a4fc60e12fc3fc1a375799caa21e56ff58d709e13ef5e13ab15e4dfc828a527848
   languageName: node
   linkType: hard
 
@@ -12422,7 +12458,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/frontend-2@workspace:packages/frontend-2"
   dependencies:
-    "@apollo/client": ^3.8.1
+    "@apollo/client": ^3.8.4
     "@babel/core": ^7.19.6
     "@babel/preset-env": ^7.19.4
     "@babel/preset-react": ^7.18.6
@@ -12476,8 +12512,8 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.38.1
     "@typescript-eslint/parser": ^5.38.1
     "@vitejs/plugin-legacy": ^4.0.3
-    "@vue/apollo-composable": 4.0.0-beta.8
-    "@vue/apollo-ssr": 4.0.0-beta.5
+    "@vue/apollo-composable": 4.0.0-beta.11
+    "@vue/apollo-ssr": 4.0.0-beta.9
     "@vueuse/core": ^9.13.0
     apollo-upload-client: ^17.0.0
     autoprefixer: ^10.4.14
@@ -16959,13 +16995,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/apollo-composable@npm:4.0.0-beta.8":
-  version: 4.0.0-beta.8
-  resolution: "@vue/apollo-composable@npm:4.0.0-beta.8"
+"@vue/apollo-composable@npm:4.0.0-beta.11":
+  version: 4.0.0-beta.11
+  resolution: "@vue/apollo-composable@npm:4.0.0-beta.11"
   dependencies:
-    throttle-debounce: ^3.0.1
-    ts-essentials: ^9.1.2
-    vue-demi: ^0.13.1
+    throttle-debounce: ^5.0.0
+    ts-essentials: ^9.4.0
+    vue-demi: ^0.14.6
   peerDependencies:
     "@apollo/client": ^3.4.13
     "@vue/composition-api": ^1.0.0
@@ -16974,7 +17010,7 @@ __metadata:
   peerDependenciesMeta:
     "@vue/composition-api":
       optional: true
-  checksum: da25c39bba90d6f7ad4e433c37a1688f2d6640282fe2fcc8763ed27b1f06a1fb106d13ffc6e1245c3596e0ed57751efb2ce17ba3b97da46c447449ef1f6560dc
+  checksum: c68771158d1362804c14ad872943b4f549b3f3842de7b9ba2ef21a11e012c7dd71ce7bbc8bed5fbd79ee26a402efee2263e9985b1cac9da0a0a1a8ec3ef66a6c
   languageName: node
   linkType: hard
 
@@ -17028,12 +17064,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vue/apollo-ssr@npm:4.0.0-beta.5":
-  version: 4.0.0-beta.5
-  resolution: "@vue/apollo-ssr@npm:4.0.0-beta.5"
+"@vue/apollo-ssr@npm:4.0.0-beta.9":
+  version: 4.0.0-beta.9
+  resolution: "@vue/apollo-ssr@npm:4.0.0-beta.9"
   dependencies:
-    serialize-javascript: ^6.0.0
-  checksum: 95094d0dc9f0bb34090b29c452db8c89915bed173763c17a0d2c5f634d622e9f2797ec0b6321bb2221da7d2855453a7d516ba81ec4a4e1715d88863d898abf66
+    serialize-javascript: ^6.0.1
+  checksum: 493a1cae1e900754d3f3117f7a82d17ea0a8c2708923f9264f78f5821ce4380f8893f19a00a257de3f2e50f02ac25a425d57ba8a902767c59c81d975559c4303
   languageName: node
   linkType: hard
 
@@ -40366,6 +40402,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"throttle-debounce@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "throttle-debounce@npm:5.0.0"
+  checksum: aa8bf25828b4f8645ce863589de05d6807ea3debc147ce7d89624638ff8a16792d6d0baa0f8a32a260f0b163444d74020c6087b713ae561fde594b97b6e51f28
+  languageName: node
+  linkType: hard
+
 "through2@npm:^2.0.3":
   version: 2.0.5
   resolution: "through2@npm:2.0.5"
@@ -40616,6 +40659,18 @@ __metadata:
   peerDependencies:
     typescript: ">=4.1.0"
   checksum: e9aa2563d9226f650d00423d62d71192db1fa4a9c30e815fab94204f6034bc069fd956494278c6aa66faeb8ed4bf7792c6a9fb4218f0dd25161d08f2e0577f95
+  languageName: node
+  linkType: hard
+
+"ts-essentials@npm:^9.4.0":
+  version: 9.4.0
+  resolution: "ts-essentials@npm:9.4.0"
+  peerDependencies:
+    typescript: ">=4.1.0"
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 50719782f9bfa31678fd1607de783a92b322ed8c26e6229bd0d1786c0649b9f1a7b9a6ac5bc60435053c4952bd3ef2356b5c930cb3a8d3519dc8f41c5576328f
   languageName: node
   linkType: hard
 
@@ -42450,6 +42505,22 @@ __metadata:
     vue-demi-fix: bin/vue-demi-fix.js
     vue-demi-switch: bin/vue-demi-switch.js
   checksum: f4d0af46972698664af35fb2697311e83a388f768d7ebfc945540be5ffa808cb6d1be6f8d17fd2def0f13df40f151baf4edaec2c6e9e520b26cbd62a849a63e6
+  languageName: node
+  linkType: hard
+
+"vue-demi@npm:^0.14.6":
+  version: 0.14.6
+  resolution: "vue-demi@npm:0.14.6"
+  peerDependencies:
+    "@vue/composition-api": ^1.0.0-rc.1
+    vue: ^3.0.0-0 || ^2.6.0
+  peerDependenciesMeta:
+    "@vue/composition-api":
+      optional: true
+  bin:
+    vue-demi-fix: bin/vue-demi-fix.js
+    vue-demi-switch: bin/vue-demi-switch.js
+  checksum: 424b1f340d5111fc4d4a0f8042c14ae836ba983bc968773a6d955d6846202d7e6f951993ac1525be8732b0cfe0c81d94ab88f427c97bfa86ead08db06491279b
   languageName: node
   linkType: hard
 

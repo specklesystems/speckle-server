@@ -27,7 +27,7 @@
     "chromatic": "chromatic --exit-zero-on-changes --exit-once-uploaded"
   },
   "dependencies": {
-    "@apollo/client": "^3.8.1",
+    "@apollo/client": "^3.8.4",
     "@headlessui/vue": "^1.7.13",
     "@heroicons/vue": "^2.0.12",
     "@speckle/shared": "workspace:^",
@@ -50,8 +50,8 @@
     "@tiptap/pm": "2.0.0-beta.220",
     "@tiptap/suggestion": "2.0.0-beta.220",
     "@tiptap/vue-3": "2.0.0-beta.220",
-    "@vue/apollo-composable": "4.0.0-beta.8",
-    "@vue/apollo-ssr": "4.0.0-beta.5",
+    "@vue/apollo-composable": "4.0.0-beta.11",
+    "@vue/apollo-ssr": "4.0.0-beta.9",
     "@vueuse/core": "^9.13.0",
     "apollo-upload-client": "^17.0.0",
     "dayjs": "^1.11.7",
