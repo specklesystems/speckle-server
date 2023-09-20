@@ -102,8 +102,6 @@ const getClasses = (column: C, colIndex: number): string => {
 }
 
 const handleRowClick = (item: T) => {
-  if ('id' in item) {
-    props.onRowClick?.(item)
-  }
+  props.onRowClick?.(item)
 }
 </script>

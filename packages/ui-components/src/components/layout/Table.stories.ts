@@ -1,4 +1,5 @@
 import { Meta, StoryObj } from '@storybook/vue3'
+import { action } from '@storybook/addon-actions'
 import {
   PencilIcon,
   ShieldCheckIcon,
@@ -201,19 +202,19 @@ export const WithButtons: StoryObj = {
       {
         icon: DocumentDuplicateIcon,
         label: 'Duplicate',
-        action: (item: unknown) => console.log('Duplicate', item),
+        action: (item: unknown) => action('Duplicate')(item),
         class: 'text-gray-500'
       },
       {
         icon: PencilIcon,
         label: 'Delete',
-        action: (item: unknown) => console.log('Edit', item),
+        action: (item: unknown) => action('Edit')(item),
         class: 'text-primary'
       },
       {
         icon: TrashIcon,
         label: 'Edit',
-        action: (item: unknown) => console.log('Delete', item),
+        action: (item: unknown) => action('Delete')(item),
         class: 'text-red-700'
       }
     ]
