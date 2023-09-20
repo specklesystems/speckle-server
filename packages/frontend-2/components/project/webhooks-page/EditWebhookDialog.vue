@@ -71,7 +71,11 @@ const { handleSubmit } = useForm<WebhookFormValues>()
 
 const triggers = ref<typeof webhookTriggerItems.value>([])
 const isOpen = defineModel<boolean>('open', { required: true })
-const webhookModel = ref(props.webhook || { url: '', description: '', triggers: [] })
+const webhookModel = ref<{ url: string; description: string; triggers: string[] }>({
+  url: '',
+  description: '',
+  triggers: []
+})
 
 const webhookTriggerItems = computed(() => {
   return Object.entries(WebhookTriggers as Record<string, unknown>).map(
@@ -143,7 +147,11 @@ watch(
   () => props.webhook,
   (newVal) => {
     webhookModel.value = newVal
-      ? { ...newVal }
+      ? {
+          url: newVal.url,
+          description: newVal.description || '',
+          triggers: newVal.triggers || []
+        }
       : { url: '', description: '', triggers: [] }
     triggers.value = (
       (newVal?.triggers || []).filter(
@@ -160,9 +168,15 @@ watch(
 )
 
 const resetWebhookModel = () => {
-  webhookModel.value = props.webhook
-    ? { ...props.webhook }
-    : { url: '', description: '', triggers: [] }
+  if (props.webhook) {
+    webhookModel.value = {
+      url: props.webhook.url,
+      description: props.webhook.description || '',
+      triggers: props.webhook.triggers || []
+    }
+  } else {
+    webhookModel.value = { url: '', description: '', triggers: [] }
+  }
 
   triggers.value = (props.webhook?.triggers || []).map((i) => {
     const mappedKey = Object.entries(WebhookTriggers).find(
