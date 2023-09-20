@@ -16,7 +16,11 @@ export default defineConfig({
     }),
     vueMacros({
       plugins: {
-        vue: vue()
+        vue: vue({
+          script: {
+            defineModel: true
+          }
+        })
       }
     })
   ],

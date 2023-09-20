@@ -22,7 +22,7 @@ export const Default: StoryObj = {
       <div>
         <Switch 
           v-bind="args" 
-          :model-value="args.modelValue"
+          @update:modelValue="args.modelValue = $event"
         />
       </div>
     `
