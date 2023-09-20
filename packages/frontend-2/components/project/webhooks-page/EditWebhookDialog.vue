@@ -90,7 +90,7 @@ const updateDescription = (newValue: string) => {
   webhookModel.value.description = newValue
 }
 
-const onSubmit = handleSubmit(async (WebhookFormValues) => {
+const onSubmit = handleSubmit(async (webhookFormValues) => {
   const webhookId = props.webhook?.id
   if (!webhookId) {
     return
@@ -101,9 +101,9 @@ const onSubmit = handleSubmit(async (WebhookFormValues) => {
       webhook: {
         id: webhookId,
         streamId: props.webhook.streamId,
-        url: WebhookFormValues.url,
-        description: WebhookFormValues.description,
-        triggers: WebhookFormValues.triggers.map((t) => t.id)
+        url: webhookFormValues.url,
+        description: webhookFormValues.description,
+        triggers: webhookFormValues.triggers.map((t) => t.id)
       }
     },
     {
