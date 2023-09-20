@@ -3,7 +3,7 @@
     <Portal to="navigation">
       <HeaderNavLink :to="projectRoute(projectId)" :name="projectName"></HeaderNavLink>
       <HeaderNavLink
-        :to="`${projectRoute(projectId)}/webhooks`"
+        :to="`${projectWebhooksRoute(projectId)}`"
         name="Webhooks"
       ></HeaderNavLink>
     </Portal>
@@ -136,7 +136,7 @@ import { FormSwitch, ToastNotificationType } from '@speckle/ui-components'
 import { projectWebhooksQuery } from '~~/lib/projects/graphql/queries'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { useGlobalToast } from '~~/lib/common/composables/toast'
-import { projectRoute } from '~~/lib/common/helpers/route'
+import { projectRoute, projectWebhooksRoute } from '~~/lib/common/helpers/route'
 import { WebhookItem } from '~~/lib/projects/helpers/types'
 import {
   convertThrowIntoFetchResult,
