@@ -21,7 +21,7 @@ import { useWrappingContainerHiddenCount } from '~~/src/composables/layout/resiz
 import { useFormSelectChildInternals } from '~~/src/composables/form/select'
 import FormSelectSourceApps from '~~/src/components/form/select/SourceApps.vue'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
-import FormSelectBadgeSelected from '~~/src/components/form/select/BadgeSelected.vue'
+import FormSelectBadges from '~~/src/components/form/select/Badges.vue'
 import FormSwitch from '~~/src/components/form/Switch.vue'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import SourceAppBadge from '~~/src/components/SourceAppBadge.vue'
@@ -74,7 +74,7 @@ export {
   useWrappingContainerHiddenCount,
   useFormSelectChildInternals,
   FormSelectBase,
-  FormSelectBadgeSelected,
+  FormSelectBadges,
   FormSelectSourceApps,
   CommonLoadingBar,
   SourceAppBadge,

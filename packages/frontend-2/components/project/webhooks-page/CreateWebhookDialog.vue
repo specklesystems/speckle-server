@@ -34,7 +34,7 @@
           show-label
           type="text"
         />
-        <FormSelectBadgeSelected
+        <FormSelectBadges
           v-model="formData.triggers"
           multiple
           name="Name"
@@ -44,6 +44,7 @@
           show-label
           :items="webhookTriggerItems"
           help="Choose what events will trigger this webhook."
+          by="id"
         />
       </div>
     </form>
@@ -56,7 +57,7 @@ import { WebhookTriggers } from '@speckle/shared/src/core/constants'
 import {
   LayoutDialog,
   FormTextInput,
-  FormSelectBadgeSelected,
+  FormSelectBadges,
   ToastNotificationType
 } from '@speckle/ui-components'
 import { useForm } from 'vee-validate'

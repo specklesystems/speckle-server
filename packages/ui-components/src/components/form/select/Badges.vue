@@ -7,10 +7,11 @@
     :name="name"
     :help="help"
     :rules="rules"
+    :by="by"
   >
     <template #something-selected="{ value }">
       <ul class="flex flex-wrap gap-1.5 text-xs">
-        <li v-for="item in isArrayValue(value) ? value : [value]" :key="item">
+        <li v-for="item in isArrayValue(value) ? value : [value]" :key="item[by]">
           <CommonBadge
             size="lg"
             :clickable-icon="true"
@@ -56,6 +57,7 @@ const props = defineProps<{
   modelValue?: SingleItem | SingleItem[] | undefined
   multiple?: boolean
   rules?: Array<any>
+  by: string
 }>()
 
 const { selectedValue, isArrayValue } = useFormSelectChildInternals<SingleItem>({

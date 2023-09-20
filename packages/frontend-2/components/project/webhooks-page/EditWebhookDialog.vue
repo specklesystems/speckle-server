@@ -29,7 +29,7 @@
           @update:model-value="updateDescription"
         />
 
-        <FormSelectBadgeSelected
+        <FormSelectBadges
           v-model="triggers"
           multiple
           name="triggers"
@@ -38,6 +38,7 @@
           :rules="[isItemSelected]"
           show-label
           :items="webhookTriggerItems"
+          by="id"
         />
       </div>
     </form>
@@ -47,7 +48,7 @@
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
 import { WebhookTriggers } from '@speckle/shared'
-import { LayoutDialog, FormSelectBadgeSelected } from '@speckle/ui-components'
+import { LayoutDialog, FormSelectBadges } from '@speckle/ui-components'
 import { WebhookItem, FormValues } from '~~/lib/projects/helpers/types'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { isRequired, isUrl, isItemSelected } from '~~/lib/common/helpers/validation'

@@ -1,5 +1,5 @@
 import { Meta, StoryObj } from '@storybook/vue3'
-import BadgeSelected from './BadgeSelected.vue'
+import Badges from './Badges.vue'
 
 type StoryType = StoryObj<
   Record<string, unknown> & {
@@ -13,7 +13,7 @@ type SingleItem = {
 }
 
 export default {
-  component: BadgeSelected,
+  component: Badges,
   argTypes: {
     'update:modelValue': {
       action: 'update:modelValue',
@@ -24,13 +24,13 @@ export default {
 
 export const Default: StoryType = {
   render: (args, ctx) => ({
-    components: { BadgeSelected },
+    components: { Badges },
     setup: () => {
       return { args }
     },
     template: `
     <div class="flex justify-center h-72 w-full">
-      <BadgeSelected v-bind="args" @update:modelValue="onModelUpdate" class="w-full"/>
+      <Badges v-bind="args" @update:modelValue="onModelUpdate" class="w-full"/>
     </div>
     `,
     methods: {
@@ -42,7 +42,7 @@ export const Default: StoryType = {
   }),
   args: {
     multiple: true,
-    name: 'BadgeSelected',
+    name: 'Badges',
     label: 'Choose an item',
     items: Array.from({ length: 10 }, (_, i) => ({
       id: `value${i + 1}`,
