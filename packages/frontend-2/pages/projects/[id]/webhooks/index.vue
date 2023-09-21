@@ -19,7 +19,7 @@
         >
           Open Docs
         </FormButton>
-        <FormButton :icon-left="PlusIcon" @click="showNewWebhookDialog = true">
+        <FormButton :icon-left="PlusIcon" @click="openCreateWebhookDialog">
           Create Webhook
         </FormButton>
       </div>
@@ -112,10 +112,6 @@
     <ProjectWebhooksPageEditWebhookDialog
       v-model:open="showEditWebhookDialog"
       :webhook="webhookToModify"
-    />
-
-    <ProjectWebhooksPageCreateWebhookDialog
-      v-model:open="showNewWebhookDialog"
       :stream-id="projectId"
       @webhook-created="handleWebhookCreated"
     />
@@ -165,7 +161,6 @@ const { mutate: updateMutation } = useMutation(updateWebhookMutation)
 const webhookToModify = ref<WebhookItem | null>(null)
 const showDeleteWebhookDialog = ref(false)
 const showEditWebhookDialog = ref(false)
-const showNewWebhookDialog = ref(false)
 
 const projectName = computed(() => pageResult.value?.project?.name || 'Unknown Project')
 const webhooks = computed<WebhookItem[]>(() => {
@@ -193,6 +188,11 @@ const openDeleteWebhookDialog = (item: WebhookItem) => {
 
 const openEditWebhookDialog = (item: WebhookItem) => {
   webhookToModify.value = item
+  showEditWebhookDialog.value = true
+}
+
+const openCreateWebhookDialog = () => {
+  webhookToModify.value = null
   showEditWebhookDialog.value = true
 }
 
