@@ -1,6 +1,6 @@
-import { uniqueId } from 'lodash-es'
 import { BaseBridge } from '~/lib/bridge/base'
 import { IRawBridge } from '~/lib/bridge/definitions'
+
 /**
  * A generic bridge class for Webivew2 or CefSharp.
  */
@@ -64,38 +64,16 @@ export class GenericBridge extends BaseBridge {
         }, this.TIMEOUT_MS)
       }
     })
-
-    // NOTE: RunMethod is a call to the .NET side.
-    // const result = await this.bridge.RunMethod(
-    //   methodName,
-    //   requestId,
-    //   JSON.stringify(preserializedArgs)
-    // )
-
-    // const parsed = result ? (JSON.parse(result) as Record<string, unknown>) : null
-
-    // if (parsed && parsed['error']) {
-    //   console.error(parsed)
-    //   throw new Error(
-    //     `Failed to run ${methodName} with args ${JSON.stringify(
-    //       args
-    //     )}. The host app error is logged above.`
-    //   )
-    // }
-
-    // return parsed
   }
 
-  private receiveResponse(requestId: string, data: string) {
+  private async responseReady(requestId: string) {
     if (!this.requests[requestId])
       throw new Error(
         `.NET Bridge found no request to resolve with the id of ${requestId}. Something is weird!`
       )
 
     const request = this.requests[requestId]
-    console.log(request.methodName)
-    console.log(data)
-
+    const data = await this.bridge.GetCallResult(requestId)
     try {
       const parsedData = data ? (JSON.parse(data) as Record<string, unknown>) : null // TODO: check if data is undefined
 
