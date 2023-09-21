@@ -1,5 +1,6 @@
 import { wait } from '@speckle/shared'
 import { Meta, StoryObj } from '@storybook/vue3'
+import { omit } from 'lodash'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import { isRequired } from '~~/src/helpers/common/validation'
 
@@ -291,8 +292,28 @@ export const Simple: StoryType = {
   }
 }
 
+export const NoVModel: StoryType = {
+  ...Default,
+  render: (args) => ({
+    components: { FormSelectBase },
+    setup: () => {
+      return { args }
+    },
+    template: `
+      <div class="flex justify-center h-72">
+        <FormSelectBase v-bind="args" class="max-w-xs w-full"/>
+      </div>
+    `
+  }),
+  args: omit(Default.args, 'modelValue')
+}
+
 export const RejectingUpdates: StoryType = {
   ...Default,
+  args: {
+    ...Default.args,
+    fullyControlValue: true
+  },
   render: (args) => ({
     components: { FormSelectBase },
     setup: () => {

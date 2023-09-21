@@ -64,7 +64,6 @@
           leave-to-class="opacity-0"
         >
           <ListboxOptions
-            :unmount="true"
             class="absolute top-[100%] z-10 mt-1 w-full rounded-md bg-foundation-2 py-1 label label--light outline outline-2 outline-primary-muted focus:outline-none shadow"
             @focus="searchInput?.focus()"
           >
@@ -322,6 +321,16 @@ const props = defineProps({
   fixedHeight: {
     type: Boolean,
     default: false
+  },
+  /**
+   * By default component holds its own internal value state so that even if you don't have it tied up to a real `modelValue` ref somewhere
+   * it knows its internal state and can report it on form submits.
+   *
+   * If you set this to true, its only going to rely on `modelValue` as its primary source of truth so that you can reject updates etc.
+   */
+  fullyControlValue: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -478,9 +487,13 @@ const wrappedValue = computed({
       finalValue = isUnset ? undefined : newVal
     }
 
-    // Not setting value.value, cause then we don't give a chance for the parent
-    // component to reject the update
-    emit('update:modelValue', finalValue)
+    if (props.fullyControlValue) {
+      // Not setting value.value, cause then we don't give a chance for the parent
+      // component to reject the update
+      emit('update:modelValue', finalValue)
+    } else {
+      value.value = finalValue
+    }
 
     // hacky, but there's no other way to force ListBox to re-read the modelValue prop which
     // we need in case the update was rejected and ListBox still thinks the value is the one
