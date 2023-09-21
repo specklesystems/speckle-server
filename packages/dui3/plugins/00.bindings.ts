@@ -1,6 +1,6 @@
 import { IRawBridge } from '~/lib/bridge/definitions'
 
-import { GenericBridge } from '~/lib/bridge/generic'
+import { GenericBridge } from '~/lib/bridge/generic-v2'
 import { SketchupBridge } from '~/lib/bridge/sketchup'
 
 import {
@@ -64,7 +64,8 @@ export default defineNuxtPlugin(async () => {
     (await tryHoistBinding<IConfigBinding>(IConfigBindingKey)) ||
     new MockedConfigBinding()
 
-  const accountBinding = await tryHoistBinding<IAccountBinding>(IAccountBindingKey)
+  const accountBinding =
+    (await tryHoistBinding<IAccountBinding>(IAccountBindingKey)) || null
 
   const baseBinding =
     (await tryHoistBinding<IBasicConnectorBinding>(IBasicConnectorBindingKey)) ||
