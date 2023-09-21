@@ -1,3 +1,4 @@
+import { FaceSmileIcon } from '@heroicons/vue/24/solid'
 import { Meta, StoryObj } from '@storybook/vue3'
 import CommonAlert from '~~/src/components/common/Alert.vue'
 
@@ -110,5 +111,45 @@ export const Warning = {
   args: {
     ...Default.args,
     color: 'warning'
+  }
+}
+
+export const CustomIcon = {
+  ...WithoutDescriptionAndActions,
+  args: {
+    ...WithoutDescriptionAndActions.args,
+    customIcon: FaceSmileIcon
+  }
+}
+
+export const XtraSmall = {
+  ...WithoutDescriptionAndActions,
+  args: {
+    ...WithoutDescriptionAndActions.args,
+    size: 'xs'
+  }
+}
+
+export const XtraSmallDescription = {
+  ...WithoutActions,
+  args: {
+    ...WithoutActions.args,
+    size: 'xs'
+  }
+}
+
+export const XtraSmallActions = {
+  ...WithoutDescription,
+  args: {
+    ...WithoutDescription.args,
+    size: 'xs'
+  }
+}
+
+export const XtraSmallFull = {
+  ...WithDismisser,
+  args: {
+    ...WithDismisser.args,
+    size: 'xs'
   }
 }
