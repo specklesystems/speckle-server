@@ -58,5 +58,6 @@ export enum VersionActionTypes {
   MoveTo = 'move-to',
   EditMessage = 'edit-message',
   Select = 'select',
-  Share = 'share'
+  Share = 'share',
+  CopyId = 'copy-id'
 }
