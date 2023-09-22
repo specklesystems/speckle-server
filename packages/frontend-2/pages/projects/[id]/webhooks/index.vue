@@ -184,7 +184,6 @@ const getHistoryStatus = (item: WebhookItem) => {
 }
 
 const getHistoryStatusInfo = (item: WebhookItem) => {
-  console.log(item.history)
   const recentHistory = item.history?.items?.[0]
   return recentHistory ? recentHistory.statusInfo : 'No events yet'
 }
