@@ -28,12 +28,23 @@
           type="text"
           @update:model-value="updateDescription"
         />
+        <FormTextInput
+          v-if="!props.webhook"
+          :model-value="webhookModel.secret"
+          label="Secret"
+          help="An optional secret. You'll be able to change this in the future, but you won't be able to retrieve it."
+          name="hookSecret"
+          show-label
+          type="text"
+          @update:model-value="updateSecret"
+        />
         <FormSelectBadges
           v-model="triggers"
           multiple
           name="triggers"
           label="Events"
           placeholder="Choose Events"
+          help="Choose what events will trigger this webhook."
           show-required
           :rules="[isItemSelected]"
           show-label
@@ -84,6 +95,7 @@ const triggers = ref<typeof webhookTriggerItems.value>([])
 const webhookModel = ref<{
   url: string
   description: string
+  secret?: string
   triggers: {
     id: string
     text: string
@@ -91,6 +103,7 @@ const webhookModel = ref<{
 }>({
   url: '',
   description: '',
+  secret: '',
   triggers: []
 })
 
@@ -111,6 +124,10 @@ const updateDescription = (newValue: string) => {
   webhookModel.value.description = newValue
 }
 
+const updateSecret = (newValue: string) => {
+  webhookModel.value.secret = newValue
+}
+
 const onSubmit = handleSubmit(async (webhookFormValues) => {
   if (props.webhook) {
     const webhookId = props.webhook.id
@@ -122,6 +139,7 @@ const onSubmit = handleSubmit(async (webhookFormValues) => {
           streamId: props.webhook.streamId,
           url: webhookModel.value.url,
           description: webhookModel.value.description,
+          secret: webhookModel.value.secret,
           triggers: webhookFormValues.triggers.map((t) => t.text)
         }
       },
@@ -221,7 +239,7 @@ watch(
 )
 
 const resetWebhookModel = () => {
-  webhookModel.value = { url: '', description: '', triggers: [] }
+  webhookModel.value = { url: '', description: '', secret: '', triggers: [] }
 
   triggers.value = (props.webhook?.triggers || []).map((i) => {
     const mappedKey = Object.entries(WebhookTriggers).find(
