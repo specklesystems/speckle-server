@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import { Euler, Matrix4, Quaternion, Vector3 } from 'three'
+import { Box3, Euler, Matrix4, Quaternion, Vector3 } from 'three'
 import { SpeckleMeshBVH } from '../objects/SpeckleMeshBVH'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Geometry } from '../converter/Geometry'
@@ -48,6 +48,12 @@ export class BatchObject {
 
   public get speckleId(): string {
     return this._renderView.renderData.id
+  }
+
+  public get aabb(): Box3 {
+    const box = new Box3().copy(this.renderView.aabb)
+    box.applyMatrix4(this.transform)
+    return box
   }
 
   public set position(value: Vector3) {
