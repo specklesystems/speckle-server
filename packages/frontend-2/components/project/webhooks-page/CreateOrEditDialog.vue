@@ -177,6 +177,7 @@ const onSubmit = handleSubmit(async (webhookFormValues) => {
       description: webhookModel.value.description,
       url: webhookModel.value.url,
       streamId: props.streamId || '',
+      secret: webhookModel.value.secret,
       triggers: webhookFormValues.triggers.map((t) => t.text),
       enabled: true
     }
@@ -223,15 +224,10 @@ watch(
                 )?.[1] || trigger
             })) || []
         }
-        triggers.value = (props.webhook.triggers || []).map((trigger) => {
-          const mappedKey = Object.entries(WebhookTriggers).find(
-            ([value]) => value === trigger
-          )?.[0]
-          return {
-            id: mappedKey || trigger,
-            text: mappedKey || trigger
-          }
-        })
+        triggers.value = (props.webhook.triggers || []).map((trigger) => ({
+          id: trigger,
+          text: trigger
+        }))
       } else {
         resetWebhookModel()
       }
@@ -246,15 +242,14 @@ watch(
 const resetWebhookModel = () => {
   webhookModel.value = { url: '', description: '', secret: '', triggers: [] }
 
-  triggers.value = (props.webhook?.triggers || []).map((i) => {
-    const mappedKey = Object.entries(WebhookTriggers).find(
-      ([value]) => value === i
-    )?.[0]
-    return {
-      id: mappedKey || i || 'unknown_id',
-      text: mappedKey || i || 'unknown_text'
-    }
-  })
+  if (props.webhook) {
+    triggers.value = (props.webhook.triggers || []).map((trigger) => ({
+      id: trigger,
+      text: trigger
+    }))
+  } else {
+    triggers.value = []
+  }
 }
 
 const dialogButtons = computed(() => [
