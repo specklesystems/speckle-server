@@ -32,7 +32,8 @@
           v-model="triggers"
           multiple
           name="triggers"
-          label="Choose Events"
+          label="Events"
+          placeholder="Choose Events"
           show-required
           :rules="[isItemSelected]"
           show-label

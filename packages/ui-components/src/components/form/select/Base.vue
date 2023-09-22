@@ -24,7 +24,7 @@
                 v-if="!wrappedValue || (isArray(wrappedValue) && !wrappedValue.length)"
               >
                 <slot name="nothing-selected">
-                  {{ label }}
+                  {{ placeholder ? placeholder : label }}
                 </slot>
               </template>
               <template v-else>
@@ -244,6 +244,12 @@ const props = defineProps({
   label: {
     type: String,
     required: true
+  },
+  /**
+   * Optional text that replaces the label as the placeholder when set.
+   */
+  placeholder: {
+    type: String
   },
   /**
    * Whether to show the label visually
