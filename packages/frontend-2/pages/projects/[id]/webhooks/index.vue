@@ -169,16 +169,24 @@ const webhooks = computed<WebhookItem[]>(() => {
 
 const getHistoryStatus = (item: WebhookItem) => {
   const recentHistory = item.history?.items?.[0]
-  return recentHistory ? recentHistory.statusInfo : 'No events yet'
+  if (recentHistory) {
+    switch (recentHistory.status) {
+      case 1:
+        return 'alert'
+      case 2:
+        return 'called'
+      case 3:
+        return 'error'
+    }
+  } else {
+    return 'noEvents'
+  }
 }
 
 const getHistoryStatusInfo = (item: WebhookItem) => {
+  console.log(item.history)
   const recentHistory = item.history?.items?.[0]
-  if (recentHistory) {
-    return recentHistory.statusInfo
-  } else {
-    return 'No events yet'
-  }
+  return recentHistory ? recentHistory.statusInfo : 'No events yet'
 }
 
 const openDeleteWebhookDialog = (item: WebhookItem) => {
