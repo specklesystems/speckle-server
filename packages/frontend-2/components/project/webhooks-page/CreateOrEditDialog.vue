@@ -108,12 +108,10 @@ const webhookModel = ref<{
 })
 
 const webhookTriggerItems = computed(() => {
-  return Object.entries(WebhookTriggers as Record<string, unknown>).map(
-    ([value, key]) => ({
-      id: value,
-      text: key
-    })
-  )
+  return Object.values(WebhookTriggers).map((value) => ({
+    id: value,
+    text: value
+  }))
 })
 
 const updateUrl = (newValue: string) => {
