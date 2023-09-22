@@ -72,14 +72,14 @@ const emit = defineEmits<{
   (e: 'webhook-created'): void
 }>()
 
-const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(updateWebhookMutation)
 const { mutate: createWebhook } = useMutation(createWebhookMutation)
-
+const { triggerNotification } = useGlobalToast()
 const { handleSubmit } = useForm<WebhookFormValues>()
 
-const triggers = ref<typeof webhookTriggerItems.value>([])
 const isOpen = defineModel<boolean>('open', { required: true })
+
+const triggers = ref<typeof webhookTriggerItems.value>([])
 const webhookModel = ref<{
   url: string
   description: string
@@ -119,8 +119,8 @@ const onSubmit = handleSubmit(async (webhookFormValues) => {
         webhook: {
           id: webhookId,
           streamId: props.webhook.streamId,
-          url: webhookFormValues.url,
-          description: webhookFormValues.description,
+          url: webhookModel.value.url,
+          description: webhookModel.value.description,
           triggers: webhookFormValues.triggers.map((t) => t.text)
         }
       },
@@ -186,7 +186,6 @@ const onSubmit = handleSubmit(async (webhookFormValues) => {
         }
       })
   }
-  resetWebhookModel()
 })
 
 watch(
