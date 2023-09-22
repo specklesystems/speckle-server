@@ -243,12 +243,15 @@ export const WithValidation: StoryType = {
     filterPredicate: (val: FakeItemType, search: string) =>
       val.name.toLowerCase().includes(search.toLowerCase()),
     searchPlaceholder: 'Search',
-    label: 'Item',
+    label: 'Required Item',
     showLabel: true,
     by: 'name',
     rules: [isRequired],
     help: 'This is a random help message',
-    name: 'example-2'
+    name: 'example-2',
+    showRequired: true,
+    validateOnValueUpdate: true,
+    clearable: true
   }
 }
 
@@ -337,5 +340,13 @@ export const WithDisabledItems: StoryType = {
   args: {
     ...Default.args,
     disabledItemPredicate: (item: FakeItemType) => item.id === '3'
+  }
+}
+
+export const WithRequired: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    showRequired: true
   }
 }
