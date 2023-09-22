@@ -64,9 +64,15 @@
       </template>
       <template #data="{ item }">
         <div class="flex flex-col">
-          <h3 class="font-bold text-base truncate">{{ item.description }}</h3>
+          <h3
+            class="font-bold text-base truncate"
+            :class="{ 'opacity-60': !item.enabled }"
+          >
+            {{ item.description }}
+          </h3>
+
           <div class="flex gap-1.5 items-center">
-            <div class="h-4 w-4">
+            <div class="h-4 w-4" :class="{ grayscale: !item.enabled }">
               <InformationCircleIcon
                 v-if="getHistoryStatus(item) === 'noEvents'"
                 class="opacity-40"

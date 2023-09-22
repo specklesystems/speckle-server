@@ -208,14 +208,16 @@ const onSubmit = handleSubmit(async (webhookFormValues) => {
 })
 
 watch(
-  () => props.webhook,
-  (newVal) => {
-    webhookModel.value = newVal
-      ? {
-          url: newVal.url,
-          description: newVal.description || '',
+  () => isOpen.value,
+  (newVal, oldVal) => {
+    //Opening Dialog
+    if (newVal && !oldVal) {
+      if (props.webhook) {
+        webhookModel.value = {
+          url: props.webhook.url,
+          description: props.webhook.description || '',
           triggers:
-            newVal.triggers?.map((trigger) => ({
+            props.webhook.triggers?.map((trigger) => ({
               id: trigger,
               text:
                 Object.entries(WebhookTriggers).find(
@@ -223,19 +225,24 @@ watch(
                 )?.[1] || trigger
             })) || []
         }
-      : { url: '', description: '', triggers: [] }
-
-    triggers.value = (newVal?.triggers || []).map((trigger) => {
-      const mappedKey = Object.entries(WebhookTriggers).find(
-        ([value]) => value === trigger
-      )?.[0]
-      return {
-        id: mappedKey || trigger,
-        text: mappedKey || trigger
+        triggers.value = (props.webhook.triggers || []).map((trigger) => {
+          const mappedKey = Object.entries(WebhookTriggers).find(
+            ([value]) => value === trigger
+          )?.[0]
+          return {
+            id: mappedKey || trigger,
+            text: mappedKey || trigger
+          }
+        })
+      } else {
+        resetWebhookModel()
       }
-    })
-  },
-  { immediate: true }
+    }
+    //Closing Dialog
+    else {
+      resetWebhookModel()
+    }
+  }
 )
 
 const resetWebhookModel = () => {
