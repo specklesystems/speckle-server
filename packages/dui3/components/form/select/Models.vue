@@ -142,9 +142,9 @@ const models = ref<ModelsSelectItemType[]>()
 const invokeSearch = async (search: string) => {
   if (!props.projectId) return []
 
-  const addModel = ref<ModelsSelectItemType>({ name: search })
   models.value = []
-  if (search !== '') {
+  if (!props.create && search !== '') {
+    const addModel = ref<ModelsSelectItemType>({ name: search })
     models.value = [addModel.value]
   }
 

@@ -133,9 +133,9 @@ const createProject = async (name: string) => {
 }
 
 const invokeSearch = async (search: string) => {
-  const addProject = ref<ProjectsSelectItemType>({ name: search })
   projects.value = []
-  if (search !== '') {
+  if (!props.create && search !== '') {
+    const addProject = ref<ProjectsSelectItemType>({ name: search })
     projects.value = [addProject.value]
   }
   const res = (await getProjects(search)) as ProjectsSelectItemType[]
