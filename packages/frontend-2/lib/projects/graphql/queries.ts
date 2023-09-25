@@ -204,11 +204,11 @@ export const projectDiscussionsPageQuery = graphql(`
 `)
 
 export const projectWebhooksQuery = graphql(`
-  query ProjectWebhooks($projectId: String!, $webhooksId: String) {
+  query ProjectWebhooks($projectId: String!) {
     project(id: $projectId) {
       id
       name
-      webhooks(id: $webhooksId) {
+      webhooks {
         items {
           streamId
           triggers
