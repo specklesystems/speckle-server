@@ -68,6 +68,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { CommonLoadingProgressBar } from '@speckle/ui-components'
 import { TrashIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { IModelCard } from '~~/lib/bindings/definitions/IBasicConnectorBinding'
 import { ProjectModelGroup, useHostAppStore } from '~~/store/hostApp'

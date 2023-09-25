@@ -56,6 +56,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     sendFilters.value?.find((f) => f.name === 'Everything')
   )
 
+  const tryGetModel = (modelId: string | undefined) => {
+    return documentModelStore.value.models.find((model) => model.modelId === modelId)
+  }
+
   const addModel = async (model: IModelCard) => {
     await app.$baseBinding.addModel(model)
     documentModelStore.value.models.push(model)
@@ -239,6 +243,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     addModel,
     updateModelFilter,
     removeModel,
+    tryGetModel,
     sendModel,
     receiveModel,
     sendModelCancel,

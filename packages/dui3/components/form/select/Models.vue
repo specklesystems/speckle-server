@@ -18,15 +18,30 @@
       </div>
     </template>
     <template #option="{ item }">
-      <div class="flex items-center">
-        <span class="truncate">{{ item.name }}</span>
+      <div class="flex items-center justify-between">
+        <div class="w-[85%]">
+          <span class="truncate" :class="item.id ? '' : 'text-green-500'">
+            {{ item.name }}
+          </span>
+        </div>
+        <div v-if="create && !item.id" class="w-[15%]">
+          <FormButton
+            v-tippy="'Create Model'"
+            color="success"
+            text
+            hide-text
+            :icon-left="DocumentPlusIcon"
+            @click="createModel(item.name)"
+          ></FormButton>
+        </div>
       </div>
     </template>
   </FormSelectBase>
 </template>
 <script setup lang="ts">
+import { DocumentPlusIcon } from '@heroicons/vue/24/outline'
 import { Nullable, Optional } from '@speckle/shared'
-import { useGetProjectModels } from '~/lib/graphql/composables'
+import { useGetProjectModels, useCreateNewModel } from '~/lib/graphql/composables'
 import { FormSelectBase, useFormSelectChildInternals } from '@speckle/ui-components'
 import { RuleExpression } from 'vee-validate'
 import { PropType } from 'vue'
@@ -38,6 +53,10 @@ type ValueType = ItemType | ItemType[] | undefined
 const emit = defineEmits<(e: 'update:modelValue', v: ValueType) => void>()
 
 const props = defineProps({
+  create: {
+    type: Boolean,
+    default: false
+  },
   projectId: {
     type: String,
     required: true
@@ -105,6 +124,16 @@ const { selectedValue } = useFormSelectChildInternals<ItemType>({
   dynamicVisibility: { elementToWatchForChanges, itemContainer }
 })
 
+const createNewModel = useCreateNewModel()
+
+const createModel = async (name: string) => {
+  const res = await createNewModel({ name, projectId: props.projectId })
+  emit('update:modelValue', {
+    id: res.data?.modelMutations.create.id,
+    name
+  } as ValueType)
+}
+
 const modelsParams = computed(() => ({ projectId: props.projectId }))
 const getModels = useGetProjectModels()
 
@@ -113,9 +142,14 @@ const models = ref<ModelsSelectItemType[]>()
 const invokeSearch = async (search: string) => {
   if (!props.projectId) return []
 
+  models.value = []
+  if (!props.create && search !== '') {
+    const addModel = ref<ModelsSelectItemType>({ name: search })
+    models.value = [addModel.value]
+  }
+
   const res = (await getModels(props.projectId, search)) as ModelsSelectItemType[]
-  console.log(res)
-  models.value = res
+  models.value = models.value.concat(res)
   return models.value || []
 }
 

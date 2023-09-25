@@ -115,13 +115,12 @@ const getVersions = useGetModelVersions()
 const versions = ref<VersionsSelectItemType[]>()
 
 const invokeSearch = async () => {
-  if (!props.projectId) return []
+  if (!props.projectId || !props.modelId) return []
 
   const res = (await getVersions(
     props.projectId,
     props.modelId
-  )) as VersionsSelectItemType[]
-  console.log(res)
+  )) as unknown as VersionsSelectItemType[]
   versions.value = res
   return versions.value || []
 }
