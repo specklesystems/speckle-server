@@ -31,6 +31,7 @@ export default defineConfig({
       fileName: 'lib',
       formats: ['es', 'cjs']
     },
+    sourcemap: true,
     rollupOptions: {
       external: [
         ...Object.keys(pkg.dependencies || {}).map((d) => new RegExp(`^${d}(\\/.*)?$`)),

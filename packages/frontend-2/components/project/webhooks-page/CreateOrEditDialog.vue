@@ -9,7 +9,7 @@
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">
         <FormTextInput
-          :model-value="webhookModel.url"
+          v-model="url"
           label="URL"
           help="A POST request will be sent to this URL when this webhook is triggered"
           name="hookUrl"
@@ -17,26 +17,23 @@
           show-required
           :rules="(isRequired, isUrl)"
           type="text"
-          @update:model-value="updateUrl"
         />
         <FormTextInput
-          :model-value="webhookModel.description"
+          v-model="description"
           label="Webhook name"
           help="An optional name to help you identify this webhook"
           name="hookName"
           show-label
           type="text"
-          @update:model-value="updateDescription"
         />
         <FormTextInput
           v-if="!props.webhook"
-          :model-value="webhookModel.secret"
+          v-model="secret"
           label="Secret"
           help="An optional secret. You'll be able to change this in the future, but you won't be able to retrieve it."
           name="hookSecret"
           show-label
           type="text"
-          @update:model-value="updateSecret"
         />
         <FormSelectBadges
           v-model="triggers"
@@ -65,7 +62,12 @@ import {
   createWebhookMutation,
   updateWebhookMutation
 } from '~~/lib/projects/graphql/mutations'
-import { isRequired, isUrl, isItemSelected } from '~~/lib/common/helpers/validation'
+import {
+  isRequired,
+  isUrl,
+  isItemSelected,
+  fullyResetForm
+} from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
 import {
   convertThrowIntoFetchResult,
@@ -74,6 +76,7 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { WebhookCreateInput } from '~~/lib/common/generated/gql/graphql'
+import { ValueOf } from 'type-fest'
 
 const props = defineProps<{
   webhook?: WebhookItem | null
@@ -87,44 +90,21 @@ const emit = defineEmits<{
 const { mutate: updateMutation } = useMutation(updateWebhookMutation)
 const { mutate: createWebhook } = useMutation(createWebhookMutation)
 const { triggerNotification } = useGlobalToast()
-const { handleSubmit } = useForm<WebhookFormValues>()
+const { handleSubmit, resetForm } = useForm<WebhookFormValues>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const triggers = ref<typeof webhookTriggerItems.value>([])
-const webhookModel = ref<{
-  url: string
-  description: string
-  secret?: string
-  triggers: {
-    id: string
-    text: string
-  }[]
-}>({
-  url: '',
-  description: '',
-  secret: '',
-  triggers: []
-})
+const url = ref('')
+const description = ref('')
+const secret = ref('')
 
 const webhookTriggerItems = computed(() => {
-  return Object.values(WebhookTriggers as Record<string, string>).map((value) => ({
+  return Object.values(WebhookTriggers).map((value) => ({
     id: value,
     text: value
   }))
 })
-
-const updateUrl = (newValue: string) => {
-  webhookModel.value.url = newValue
-}
-
-const updateDescription = (newValue: string) => {
-  webhookModel.value.description = newValue
-}
-
-const updateSecret = (newValue: string) => {
-  webhookModel.value.secret = newValue
-}
 
 const onSubmit = handleSubmit(async (webhookFormValues) => {
   if (props.webhook) {
@@ -135,9 +115,9 @@ const onSubmit = handleSubmit(async (webhookFormValues) => {
         webhook: {
           id: webhookId,
           streamId: props.webhook.streamId,
-          url: webhookModel.value.url,
-          description: webhookModel.value.description,
-          secret: webhookModel.value.secret,
+          url: url.value,
+          description: description.value,
+          secret: secret.value?.length ? secret.value : null,
           triggers: webhookFormValues.triggers.map((t) => t.text)
         }
       },
@@ -174,8 +154,9 @@ const onSubmit = handleSubmit(async (webhookFormValues) => {
     }
   } else {
     const webhookInput: WebhookCreateInput = {
-      description: webhookModel.value.description,
-      url: webhookModel.value.url,
+      description: description.value,
+      url: url.value,
+      secret: secret.value?.length ? secret.value : null,
       streamId: props.streamId || '',
       triggers: webhookFormValues.triggers.map((t) => t.text),
       enabled: true
@@ -208,53 +189,28 @@ const onSubmit = handleSubmit(async (webhookFormValues) => {
 watch(
   () => isOpen.value,
   (newVal, oldVal) => {
-    //Opening Dialog
-    if (newVal && !oldVal) {
-      if (props.webhook) {
-        webhookModel.value = {
-          url: props.webhook.url,
-          description: props.webhook.description || '',
-          triggers:
-            props.webhook.triggers?.map((trigger) => ({
-              id: trigger,
-              text:
-                Object.entries(WebhookTriggers).find(
-                  ([value]) => value === trigger
-                )?.[1] || trigger
-            })) || []
-        }
-        triggers.value = (props.webhook.triggers || []).map((trigger) => {
-          const mappedKey = Object.entries(WebhookTriggers).find(
-            ([value]) => value === trigger
-          )?.[0]
-          return {
-            id: mappedKey || trigger,
-            text: mappedKey || trigger
-          }
-        })
-      } else {
-        resetWebhookModel()
-      }
-    }
-    //Closing Dialog
-    else {
-      resetWebhookModel()
-    }
+    if (!(newVal && !oldVal)) return
+
+    // Only run on open
+    // Reset vee-validate form initialValues to prevent inheriting previous dialog values
+    fullyResetForm(resetForm)
+
+    // Explicitly reset values
+    resetWebhookModel()
   }
 )
 
 const resetWebhookModel = () => {
-  webhookModel.value = { url: '', description: '', secret: '', triggers: [] }
+  url.value = props.webhook?.url || ''
+  description.value = props.webhook?.description || ''
+  secret.value = ''
 
-  triggers.value = (props.webhook?.triggers || []).map((i) => {
-    const mappedKey = Object.entries(WebhookTriggers).find(
-      ([value]) => value === i
-    )?.[0]
-    return {
-      id: mappedKey || i || 'unknown_id',
-      text: mappedKey || i || 'unknown_text'
-    }
-  })
+  triggers.value = (
+    (props.webhook?.triggers || []) as Array<ValueOf<typeof WebhookTriggers>>
+  ).map((i) => ({
+    id: i,
+    text: i
+  }))
 }
 
 const dialogButtons = computed(() => [
@@ -263,7 +219,6 @@ const dialogButtons = computed(() => [
     props: { color: 'secondary', fullWidth: true, outline: true },
     onClick: () => {
       isOpen.value = false
-      resetWebhookModel()
     }
   },
   {
