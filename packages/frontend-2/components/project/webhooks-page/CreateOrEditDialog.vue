@@ -15,7 +15,7 @@
           name="hookUrl"
           show-label
           show-required
-          :rules="(isRequired, isUrl)"
+          :rules="[isRequired, isUrl]"
           type="text"
         />
         <FormTextInput
