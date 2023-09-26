@@ -21,6 +21,8 @@ import { useWrappingContainerHiddenCount } from '~~/src/composables/layout/resiz
 import { useFormSelectChildInternals } from '~~/src/composables/form/select'
 import FormSelectSourceApps from '~~/src/components/form/select/SourceApps.vue'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
+import FormSelectBadges from '~~/src/components/form/select/Badges.vue'
+import FormSwitch from '~~/src/components/form/Switch.vue'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import SourceAppBadge from '~~/src/components/SourceAppBadge.vue'
 import { onKeyboardShortcut, useFormCheckboxModel } from '~~/src/composables/form/input'
@@ -43,6 +45,7 @@ import {
 import LayoutMenu from '~~/src/components/layout/Menu.vue'
 import { LayoutMenuItem, LayoutTabItem } from '~~/src/helpers/layout/components'
 import LayoutTabs from '~~/src/components/layout/Tabs.vue'
+import LayoutTable from '~~/src/components/layout/Table.vue'
 import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
 import { InfiniteLoaderState } from '~~/src/helpers/global/components'
 import LayoutPanel from '~~/src/components/layout/Panel.vue'
@@ -66,10 +69,12 @@ export {
   FormCheckbox,
   FormTextArea,
   FormTextInput,
+  FormSwitch,
   ValidationHelpers,
   useWrappingContainerHiddenCount,
   useFormSelectChildInternals,
   FormSelectBase,
+  FormSelectBadges,
   FormSelectSourceApps,
   CommonLoadingBar,
   SourceAppBadge,
@@ -88,6 +93,7 @@ export {
   useResponsiveHorizontalDirectionCalculation,
   LayoutMenu,
   LayoutTabs,
+  LayoutTable,
   InfiniteLoading,
   LayoutPanel,
   CommonAlert,

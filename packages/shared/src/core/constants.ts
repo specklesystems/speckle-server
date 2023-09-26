@@ -152,3 +152,20 @@ export const SourceApps: SourceAppDefinition[] = [
   },
   { searchKey: 'navisworks', name: 'Navisworks', bgColor: '#3e8742', short: 'NAVIS' }
 ]
+
+export const WebhookTriggers = Object.freeze(<const>{
+  StreamUpdate: 'stream_update',
+  StreamDelete: 'stream_delete',
+  BranchCreate: 'branch_create',
+  BranchUpdate: 'branch_update',
+  BranchDelete: 'branch_delete',
+  CommitCreate: 'commit_create',
+  CommitUpdate: 'commit_update',
+  CommitReceive: 'commit_receive',
+  CommitDelete: 'commit_delete',
+  CommentCreated: 'comment_created',
+  CommentArchived: 'comment_archived',
+  CommentReplied: 'comment_replied',
+  StreamPermissionsAdd: 'stream_permissions_add',
+  StreamPermissionsRemove: 'stream_permissions_remove'
+})

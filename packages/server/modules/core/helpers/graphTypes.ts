@@ -67,6 +67,7 @@ export type ProjectGraphQLReturn = StreamRecord &
     | 'visibility'
     | 'allowPublicComments'
     | 'pendingImportedModels'
+    | 'webhooks'
   > & {
     /**
      * Some queries resolve the role, some don't. If role isn't returned, no worries, it'll
