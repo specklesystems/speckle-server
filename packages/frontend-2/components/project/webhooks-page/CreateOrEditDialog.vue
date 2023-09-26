@@ -75,7 +75,6 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import { WebhookCreateInput } from '~~/lib/common/generated/gql/graphql'
 import { ValueOf } from 'type-fest'
 
 const props = defineProps<{
@@ -109,7 +108,6 @@ const webhookTriggerItems = computed(() => {
 const onSubmit = handleSubmit(async (webhookFormValues) => {
   if (props.webhook) {
     const webhookId = props.webhook.id
-
     const result = await updateMutation(
       {
         webhook: {
@@ -153,36 +151,33 @@ const onSubmit = handleSubmit(async (webhookFormValues) => {
       })
     }
   } else {
-    const webhookInput: WebhookCreateInput = {
-      description: description.value,
-      url: url.value,
-      secret: secret.value?.length ? secret.value : null,
-      streamId: props.streamId || '',
-      triggers: webhookFormValues.triggers.map((t) => t.id),
-      enabled: true
-    }
+    const result = await createWebhook({
+      webhook: {
+        description: description.value,
+        url: url.value,
+        secret: secret.value?.length ? secret.value : null,
+        streamId: props.streamId || '',
+        triggers: webhookFormValues.triggers.map((t) => t.id),
+        enabled: true
+      }
+    }).catch(convertThrowIntoFetchResult)
 
-    createWebhook({ webhook: webhookInput })
-      .then(() => {
-        emit('webhook-created')
-        triggerNotification({
-          type: ToastNotificationType.Success,
-          title: 'Webhook successfully created'
-        })
-        isOpen.value = false
+    if (result?.data?.webhookCreate) {
+      isOpen.value = false
+      emit('webhook-created')
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Webhook created',
+        description: 'The webhook has been successfully created'
       })
-      .catch(convertThrowIntoFetchResult)
-      .then((result) => {
-        if (result?.errors) {
-          const errorMessage = getFirstErrorMessage(result.errors)
-          triggerNotification({
-            type: ToastNotificationType.Danger,
-            title: 'Problem creating webhook',
-            description: errorMessage
-          })
-          console.error('Error creating webhook:', errorMessage)
-        }
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to create webhook',
+        description: errorMessage
       })
+    }
   }
 })
 
