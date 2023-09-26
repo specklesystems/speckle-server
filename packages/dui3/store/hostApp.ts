@@ -184,6 +184,11 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     if (args.status === 'Completed') {
       model.sending = false
       model.progress = undefined
+    } else if (args.status === 'Cancelled') {
+      model.sending = false
+      setTimeout(() => {
+        model.progress = undefined
+      }, 3000)
     }
   })
 
