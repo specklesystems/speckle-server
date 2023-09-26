@@ -33,7 +33,18 @@
                 </slot>
               </template>
             </div>
-            <div class="pointer-events-none shrink-0 ml-1 flex items-center">
+            <div class="pointer-events-none shrink-0 ml-1 flex items-center space-x-2">
+              <ExclamationCircleIcon
+                v-if="errorMessage"
+                class="h-4 w-4 text-danger"
+                aria-hidden="true"
+              />
+              <div
+                v-else-if="showRequired"
+                class="text-4xl text-danger opacity-50 h-4 w-4 leading-6"
+              >
+                *
+              </div>
               <ChevronUpIcon
                 v-if="open"
                 class="h-4 w-4 text-foreground"
@@ -166,7 +177,8 @@ import {
   CheckIcon,
   ChevronUpIcon,
   MagnifyingGlassIcon,
-  XMarkIcon
+  XMarkIcon,
+  ExclamationCircleIcon
 } from '@heroicons/vue/24/solid'
 import { debounce, isArray } from 'lodash'
 import { PropType, computed, onMounted, ref, unref, watch } from 'vue'
@@ -337,6 +349,13 @@ const props = defineProps({
   fullyControlValue: {
     type: Boolean,
     default: false
+  },
+  /**
+   * Whether to show the red "required" asterisk
+   */
+  showRequired: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -376,7 +395,14 @@ const renderClearButton = computed(
 const buttonsWrapperClasses = computed(() => {
   const classParts: string[] = ['relative flex group']
 
-  if (props.buttonStyle !== 'simple') {
+  if (error.value) {
+    classParts.push('hover:shadow rounded-md')
+    classParts.push('text-danger-darker focus:border-danger focus:ring-danger')
+
+    if (props.buttonStyle !== 'simple') {
+      classParts.push('outline outline-2 outline-danger')
+    }
+  } else if (props.buttonStyle !== 'simple') {
     classParts.push('hover:shadow rounded-md')
     classParts.push('outline outline-2 outline-primary-muted')
   }

@@ -33,6 +33,7 @@ const props = defineProps<{
   selectionDisabled?: boolean
 }>()
 
+const { copy } = useClipboard()
 const copyModelLink = useCopyModelLink()
 
 const disabledMessage = ref(
@@ -73,7 +74,10 @@ const actionsItems = computed<LayoutMenuItem<VersionActionTypes>[][]>(() => [
       disabledTooltip: disabledMessage.value
     }
   ],
-  [{ title: 'Share', id: VersionActionTypes.Share }]
+  [
+    { title: 'Share', id: VersionActionTypes.Share },
+    { title: 'Copy ID', id: VersionActionTypes.CopyId }
+  ]
 ])
 
 const onActionChosen = (params: { item: LayoutMenuItem<VersionActionTypes> }) => {
@@ -85,6 +89,9 @@ const onActionChosen = (params: { item: LayoutMenuItem<VersionActionTypes> }) =>
       break
     case VersionActionTypes.Share:
       copyModelLink(props.projectId, props.modelId, props.versionId)
+      break
+    case VersionActionTypes.CopyId:
+      copy(props.versionId, { successMessage: 'Version ID copied to clipboard' })
       break
   }
 
