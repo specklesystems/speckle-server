@@ -1,6 +1,7 @@
 <template>
   <div>
     <Listbox
+      :key="forceUpdateKey"
       v-model="wrappedValue"
       :name="name"
       :multiple="multiple"
@@ -32,7 +33,18 @@
                 </slot>
               </template>
             </div>
-            <div class="pointer-events-none shrink-0 ml-1 flex items-center">
+            <div class="pointer-events-none shrink-0 ml-1 flex items-center space-x-2">
+              <ExclamationCircleIcon
+                v-if="errorMessage"
+                class="h-4 w-4 text-danger"
+                aria-hidden="true"
+              />
+              <div
+                v-else-if="showRequired"
+                class="text-4xl text-danger opacity-50 h-4 w-4 leading-6"
+              >
+                *
+              </div>
               <ChevronUpIcon
                 v-if="open"
                 class="h-4 w-4 text-foreground"
@@ -165,7 +177,8 @@ import {
   CheckIcon,
   ChevronUpIcon,
   MagnifyingGlassIcon,
-  XMarkIcon
+  XMarkIcon,
+  ExclamationCircleIcon
 } from '@heroicons/vue/24/solid'
 import { debounce, isArray } from 'lodash'
 import { PropType, computed, onMounted, ref, unref, watch } from 'vue'
@@ -179,7 +192,7 @@ type ButtonStyle = 'base' | 'simple' | 'tinted'
 type SingleItem = any
 type ValueType = SingleItem | SingleItem[] | undefined
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'update:modelValue', v: ValueType): void
 }>()
 
@@ -320,6 +333,23 @@ const props = defineProps({
   fixedHeight: {
     type: Boolean,
     default: false
+  },
+  /**
+   * By default component holds its own internal value state so that even if you don't have it tied up to a real `modelValue` ref somewhere
+   * it knows its internal state and can report it on form submits.
+   *
+   * If you set this to true, its only going to rely on `modelValue` as its primary source of truth so that you can reject updates etc.
+   */
+  fullyControlValue: {
+    type: Boolean,
+    default: false
+  },
+  /**
+   * Whether to show the red "required" asterisk
+   */
+  showRequired: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -333,6 +363,7 @@ const searchInput = ref(null as Nullable<HTMLInputElement>)
 const searchValue = ref('')
 const currentItems = ref([] as SingleItem[])
 const isAsyncLoading = ref(false)
+const forceUpdateKey = ref(1)
 
 const internalHelpTipId = ref(nanoid())
 
@@ -358,7 +389,14 @@ const renderClearButton = computed(
 const buttonsWrapperClasses = computed(() => {
   const classParts: string[] = ['relative flex group']
 
-  if (props.buttonStyle !== 'simple') {
+  if (error.value) {
+    classParts.push('hover:shadow rounded-md')
+    classParts.push('text-danger-darker focus:border-danger focus:ring-danger')
+
+    if (props.buttonStyle !== 'simple') {
+      classParts.push('outline outline-2 outline-danger')
+    }
+  } else if (props.buttonStyle !== 'simple') {
     classParts.push('hover:shadow rounded-md')
     classParts.push('outline outline-2 outline-primary-muted')
   }
@@ -462,8 +500,9 @@ const wrappedValue = computed({
       return
     }
 
+    let finalValue: typeof value.value
     if (props.multiple) {
-      value.value = newVal || []
+      finalValue = newVal || []
     } else {
       const currentVal = value.value
       const isUnset =
@@ -471,8 +510,21 @@ const wrappedValue = computed({
         currentVal &&
         newVal &&
         itemKey(currentVal as SingleItem) === itemKey(newVal as SingleItem)
-      value.value = isUnset ? undefined : newVal
+      finalValue = isUnset ? undefined : newVal
     }
+
+    if (props.fullyControlValue) {
+      // Not setting value.value, cause then we don't give a chance for the parent
+      // component to reject the update
+      emit('update:modelValue', finalValue)
+    } else {
+      value.value = finalValue
+    }
+
+    // hacky, but there's no other way to force ListBox to re-read the modelValue prop which
+    // we need in case the update was rejected and ListBox still thinks the value is the one
+    // that was clicked on
+    forceUpdateKey.value += 1
   }
 })
 

@@ -30,7 +30,7 @@
     "dist"
   ],
   "engines": {
-    "node": "^18.17.1"
+    "node": ">=18.0.0"
   },
   "scripts": {
     "build": "NODE_ENV=production rollup --config",
@@ -69,6 +69,7 @@
     "@babel/eslint-parser": "^7.18.2",
     "@babel/preset-env": "^7.20.2",
     "@rollup/plugin-babel": "^5.3.1",
+    "@rollup/plugin-image": "^3.0.2",
     "@types/babel__core": "^7.20.1",
     "@types/three": "^0.136.0",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
@@ -79,9 +80,7 @@
     "prettier": "^2.5.1",
     "regenerator-runtime": "^0.13.7",
     "rollup": "^2.70.1",
-    "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-delete": "^2.0.0",
-    "rollup-plugin-rebase": "^4.1.1",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.31.2",
     "typescript": "^4.5.4"

@@ -4,11 +4,11 @@
       <!-- eslint-disable-next-line vuejs-accessibility/form-control-has-label -->
       <input
         :id="finalId"
-        :checked="finalChecked"
+        :checked="coreChecked"
         :aria-describedby="descriptionId"
         :name="name"
-        :value="checkboxValue"
         :disabled="disabled"
+        :value="checkboxValue"
         type="checkbox"
         class="h-4 w-4 rounded text-primary focus:ring-primary bg-foundation disabled:cursor-not-allowed disabled:bg-disabled disabled:text-disabled-2"
         :class="computedClasses"
@@ -32,8 +32,10 @@
   </div>
 </template>
 <script setup lang="ts">
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { RuleExpression, useField } from 'vee-validate'
-import { PropType, computed, ref } from 'vue'
+import { PropType, computed, onMounted, ref } from 'vue'
 import { Optional } from '@speckle/shared'
 import { nanoid } from 'nanoid'
 
@@ -146,20 +148,16 @@ defineEmits<{
 const checkboxValue = computed(() => props.value || props.name)
 
 const {
-  checked: finalChecked,
+  checked: coreChecked,
   errorMessage,
-  handleChange
+  handleChange,
+  value: coreValue
 } = useField<ValueType>(props.name, props.rules, {
   validateOnMount: props.validateOnMount,
   type: 'checkbox',
   checkedValue: checkboxValue,
   initialValue: props.modelValue || undefined
 })
-
-const onChange = (e: unknown) => {
-  if (props.disabled) return
-  handleChange(e)
-}
 
 const title = computed(() => props.label || props.name)
 
@@ -189,4 +187,31 @@ const descriptionClasses = computed((): string => {
 
 const implicitId = ref<Optional<string>>(generateRandomId('checkbox'))
 const finalId = computed(() => props.id || implicitId.value)
+
+const onChange = (e: unknown) => {
+  if (props.disabled) return
+  handleChange(e)
+}
+
+/**
+ * Bugfix for strange issue where checkbox appears checked even tho it shouldnt be.
+ * It's not clear why this happens, but for some reason coreValue.value shows that the checkbox
+ * is checked, even tho props.modelValue is undefined.
+ */
+onMounted(() => {
+  const newModelValue = props.modelValue
+  const newCoreValue = coreValue.value
+
+  const shouldBeChecked = Array.isArray(newModelValue)
+    ? newModelValue.includes(props.value as any)
+    : newModelValue === props.value
+
+  const isCoreChecked = Array.isArray(newCoreValue)
+    ? newCoreValue.includes(props.value as any)
+    : newCoreValue === props.value
+
+  if (shouldBeChecked !== isCoreChecked) {
+    handleChange(newModelValue)
+  }
+})
 </script>

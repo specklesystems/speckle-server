@@ -7,6 +7,7 @@
     name="serverRoles"
     label="Server roles"
     class="min-w-[110px]"
+    :fully-control-value="fullyControlValue"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -43,7 +44,7 @@
 <script setup lang="ts">
 import { Nullable, Roles, ServerRoles, RoleInfo } from '@speckle/shared'
 import { useFormSelectChildInternals } from '@speckle/ui-components'
-import { PropType } from 'nuxt/dist/app/compat/capi'
+import { PropType } from 'vue'
 
 type ValueType = ServerRoles | ServerRoles[] | undefined
 
@@ -59,7 +60,8 @@ const props = defineProps({
   },
   allowGuest: Boolean,
   allowAdmin: Boolean,
-  allowArchived: Boolean
+  allowArchived: Boolean,
+  fullyControlValue: Boolean
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)

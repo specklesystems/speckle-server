@@ -489,10 +489,14 @@ function setupResponseResourceItems(
     result: resolvedResourcesResult,
     variables: resourceItemsQueryVariables,
     onError
-  } = useQuery(projectViewerResourcesQuery, () => ({
-    projectId: projectId.value,
-    resourceUrlString: resourceIdString.value
-  }))
+  } = useQuery(
+    projectViewerResourcesQuery,
+    () => ({
+      projectId: projectId.value,
+      resourceUrlString: resourceIdString.value
+    }),
+    { keepPreviousResult: true }
+  )
 
   onError((err) => {
     globalError.value = createError({
@@ -635,7 +639,9 @@ function setupResponseResourceData(
     variables: viewerLoadedResourcesVariables,
     onError: onViewerLoadedResourcesError,
     onResult: onViewerLoadedResourcesResult
-  } = useQuery(viewerLoadedResourcesQuery, viewerLoadedResourcesVariablesFunc)
+  } = useQuery(viewerLoadedResourcesQuery, viewerLoadedResourcesVariablesFunc, {
+    keepPreviousResult: true
+  })
 
   const project = computed(() => viewerLoadedResourcesResult.value?.project)
   const models = computed(() => project.value?.models?.items || [])
@@ -723,13 +729,17 @@ function setupResponseResourceData(
     result: viewerLoadedThreadsResult,
     onError: onViewerLoadedThreadsError,
     variables: threadsQueryVariables
-  } = useQuery(viewerLoadedThreadsQuery, () => ({
-    projectId: projectId.value,
-    filter: {
-      ...threadFilters.value,
-      resourceIdString: resourceIdString.value
-    }
-  }))
+  } = useQuery(
+    viewerLoadedThreadsQuery,
+    () => ({
+      projectId: projectId.value,
+      filter: {
+        ...threadFilters.value,
+        resourceIdString: resourceIdString.value
+      }
+    }),
+    { keepPreviousResult: true }
+  )
 
   const commentThreadsMetadata = computed(
     () => viewerLoadedThreadsResult.value?.project?.commentThreads

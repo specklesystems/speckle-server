@@ -55,7 +55,7 @@ export default defineNuxtConfig({
   vite: {
     vue: {
       script: {
-        // defineModel: true
+        defineModel: true
       }
     },
 
@@ -129,6 +129,10 @@ export default defineNuxtConfig({
       cors: true,
       headers: { 'access-control-allow-methods': 'GET' }
     }
+  },
+
+  nitro: {
+    compressPublicAssets: true
   },
 
   build: {

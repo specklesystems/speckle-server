@@ -5,6 +5,7 @@
 import { ApolloClient } from '@apollo/client/core'
 import { defineNuxtPlugin } from '#app'
 import { ApolloClients, provideApolloClient } from '@vue/apollo-composable'
+import {markRaw, toRaw} from 'vue'
 
 export default defineNuxtPlugin(async (nuxt) => {
   // Load all configs
@@ -22,8 +23,13 @@ export default defineNuxtPlugin(async (nuxt) => {
     for (const [key, config] of Object.entries(keyedConfigs)) {
       /** @type {import('@apollo/client').InMemoryCache} */
       const cache = config.cache;
-      cache.restore(window.__NUXT__?.apollo?.[key] || null);
-      config.cache = cache;
+      const restorable = window.__NUXT__?.apollo?.[key] || null
+
+      if (restorable) {
+      // Cache is proxified by Vue, gotta undo all that or all hell breaks loose
+        cache.restore(markRaw(toRaw(restorable)));
+        config.cache = cache;
+      }
     }
   }
 
@@ -34,6 +40,7 @@ export default defineNuxtPlugin(async (nuxt) => {
     const client = new ApolloClient({
       ...config,
       ...(process.server ? {ssrMode: true} : {ssrForceFetchDelay: 100}),
+      connectToDevTools: !!process.dev
     });
     if (key === 'default') {
       defaultClient = client;

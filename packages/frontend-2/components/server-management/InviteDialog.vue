@@ -1,8 +1,12 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="md">
+  <LayoutDialog
+    v-model:open="isOpen"
+    max-width="md"
+    title="Get your colleagues in!"
+    :buttons="dialogButtons"
+  >
     <form @submit="onSubmit">
       <div class="flex flex-col space-y-4 text-foreground">
-        <h1 class="h4 font-bold">Get your colleagues in!</h1>
         <p>
           Speckle will send a server invite link to the email(-s) below. You can also
           add a personal message if you want to. To add multiple e-mails, seperate them
@@ -45,10 +49,6 @@
               :allow-admin="isAdmin"
             />
           </div>
-          <div class="flex justify-end self-end">
-            <FormButton text @click="isOpen = false">Cancel</FormButton>
-            <FormButton submit :disabled="anyMutationsLoading">Send</FormButton>
-          </div>
         </div>
       </div>
     </form>
@@ -71,14 +71,6 @@ import { useServerInfo } from '~~/lib/core/composables/server'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useInviteUserToServer } from '~~/lib/server/composables/invites'
 
-const emit = defineEmits<{
-  (e: 'update:open', val: boolean): void
-}>()
-
-const props = defineProps<{
-  open: boolean
-}>()
-
 const selectedProject = ref(undefined as Optional<FormSelectProjects_ProjectFragment>)
 const serverRole = ref<ServerRoles>(Roles.Server.User)
 
@@ -89,10 +81,7 @@ const anyMutationsLoading = useMutationLoading()
 const { isAdmin } = useActiveUser()
 const { isGuestMode } = useServerInfo()
 
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
-})
+const isOpen = defineModel<boolean>('open', { required: true })
 
 const allowServerRoleSelect = computed(() => isAdmin.value || isGuestMode.value)
 
@@ -129,4 +118,25 @@ const onSubmit = handleSubmit(async (values) => {
     })
   }
 })
+
+const dialogButtons = computed(() => [
+  {
+    text: 'Cancel',
+    props: { color: 'secondary', fullWidth: true },
+    onClick: () => {
+      isOpen.value = false
+    }
+  },
+  {
+    text: 'Send',
+    props: {
+      color: 'primary',
+      fullWidth: true,
+      outline: true,
+      submit: true,
+      disabled: anyMutationsLoading.value
+    },
+    onClick: onSubmit
+  }
+])
 </script>

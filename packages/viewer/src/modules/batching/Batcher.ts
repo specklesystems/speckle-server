@@ -72,6 +72,8 @@ export default class Batcher {
         }
         return valid || value.hasMetadata
       })
+      if (renderViewsBatch.length === 0) continue
+
       const batches = this.splitBatch(renderViewsBatch, vertCount)
       for (let k = 0; k < batches.length; k++) {
         pause.tick(100)

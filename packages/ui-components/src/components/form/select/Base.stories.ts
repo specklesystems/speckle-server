@@ -1,5 +1,6 @@
 import { wait } from '@speckle/shared'
 import { Meta, StoryObj } from '@storybook/vue3'
+import { omit } from 'lodash'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import { isRequired } from '~~/src/helpers/common/validation'
 
@@ -242,12 +243,15 @@ export const WithValidation: StoryType = {
     filterPredicate: (val: FakeItemType, search: string) =>
       val.name.toLowerCase().includes(search.toLowerCase()),
     searchPlaceholder: 'Search',
-    label: 'Item',
+    label: 'Required Item',
     showLabel: true,
     by: 'name',
     rules: [isRequired],
     help: 'This is a random help message',
-    name: 'example-2'
+    name: 'example-2',
+    showRequired: true,
+    validateOnValueUpdate: true,
+    clearable: true
   }
 }
 
@@ -291,10 +295,58 @@ export const Simple: StoryType = {
   }
 }
 
+export const NoVModel: StoryType = {
+  ...Default,
+  render: (args) => ({
+    components: { FormSelectBase },
+    setup: () => {
+      return { args }
+    },
+    template: `
+      <div class="flex justify-center h-72">
+        <FormSelectBase v-bind="args" class="max-w-xs w-full"/>
+      </div>
+    `
+  }),
+  args: omit(Default.args, 'modelValue')
+}
+
+export const RejectingUpdates: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    fullyControlValue: true
+  },
+  render: (args) => ({
+    components: { FormSelectBase },
+    setup: () => {
+      return { args }
+    },
+    template: `
+      <div class="flex justify-center h-72">
+        <FormSelectBase v-bind="args" class="max-w-xs w-full" @update:modelValue="onModelUpdate"/>
+      </div>
+    `,
+    methods: {
+      onModelUpdate() {
+        console.log('rejecting update')
+      }
+    }
+  })
+}
+
 export const WithDisabledItems: StoryType = {
   ...Default,
   args: {
     ...Default.args,
     disabledItemPredicate: (item: FakeItemType) => item.id === '3'
+  }
+}
+
+export const WithRequired: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    showRequired: true
   }
 }

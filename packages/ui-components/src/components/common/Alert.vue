@@ -1,39 +1,31 @@
 <template>
   <div class="rounded-md" :class="[containerClasses, textClasses]">
-    <div class="flex" :class="[hasDescription ? '' : 'items-center space-x-2']">
+    <div class="flex" :class="subcontainerClasses">
       <div class="flex-shrink-0">
-        <CheckCircleIcon class="h-5 w-5" :class="iconClasses" aria-hidden="true" />
+        <Component :is="icon" :class="iconClasses" aria-hidden="true" />
       </div>
-      <div
-        class="ml-3 grow"
-        :class="[hasDescription ? '' : 'flex items-center space-x-2']"
-      >
+      <div :class="mainContentContainerClasses">
         <h3 class="text-sm" :class="[hasDescription ? 'font-medium' : '']">
           <slot name="title">Title</slot>
         </h3>
-        <div v-if="hasDescription" class="mt-2 text-sm">
+        <div v-if="hasDescription" :class="descriptionWrapperClasses">
           <slot name="description">
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Aliquid pariatur,
             ipsum similique veniam.
           </slot>
         </div>
-        <div :class="[hasDescription ? (actions?.length ? 'mt-4' : '') : 'grow flex']">
-          <div
-            class="flex"
-            :class="['space-x-2', hasDescription ? '' : 'grow justify-end']"
+        <div :class="actionsContainerClasses">
+          <FormButton
+            v-for="(action, i) in actions || []"
+            :key="i"
+            :color="color"
+            :size="actionSize"
+            :to="action.url"
+            :external="action.externalUrl || false"
+            @click="action.onClick || noop"
           >
-            <FormButton
-              v-for="(action, i) in actions || []"
-              :key="i"
-              :color="color"
-              size="sm"
-              :to="action.url"
-              :external="action.externalUrl || false"
-              @click="action.onClick || noop"
-            >
-              {{ action.title }}
-            </FormButton>
-          </div>
+            {{ action.title }}
+          </FormButton>
         </div>
       </div>
       <div
@@ -55,12 +47,19 @@
   </div>
 </template>
 <script setup lang="ts">
-import { CheckCircleIcon, XMarkIcon } from '@heroicons/vue/20/solid'
+import {
+  CheckCircleIcon,
+  XMarkIcon,
+  XCircleIcon,
+  InformationCircleIcon,
+  ExclamationCircleIcon
+} from '@heroicons/vue/20/solid'
 import { noop } from 'lodash'
-import { computed, useSlots } from 'vue'
+import { ConcreteComponent, computed, useSlots } from 'vue'
 import FormButton from '~~/src/components/form/Button.vue'
 
 type AlertColor = 'success' | 'danger' | 'warning' | 'info'
+type Size = 'default' | 'xs'
 
 defineEmits<{ (e: 'dismiss'): void }>()
 
@@ -74,19 +73,46 @@ const props = withDefaults(
       onClick?: () => void
       externalUrl?: boolean
     }>
+    customIcon?: ConcreteComponent
+    size?: Size
   }>(),
   {
-    color: 'success'
+    color: 'success',
+    size: 'default'
   }
 )
 
 const slots = useSlots()
 const hasDescription = computed(() => !!slots['description'])
 
+const icon = computed(() => {
+  if (props.customIcon) return props.customIcon
+
+  switch (props.color) {
+    case 'info':
+      return InformationCircleIcon
+    case 'warning':
+      return ExclamationCircleIcon
+    case 'danger':
+      return XCircleIcon
+    case 'success':
+    default:
+      return CheckCircleIcon
+  }
+})
+
 const containerClasses = computed(() => {
   const classParts: string[] = []
 
-  classParts.push(hasDescription.value ? 'p-4' : 'p-2')
+  switch (props.size) {
+    case 'xs':
+      classParts.push('p-1')
+      break
+    case 'default':
+    default:
+      classParts.push(hasDescription.value ? 'p-4' : 'p-2')
+      break
+  }
 
   switch (props.color) {
     case 'success':
@@ -100,6 +126,93 @@ const containerClasses = computed(() => {
       break
     case 'warning':
       classParts.push('bg-warning-lighter border-l-4 border-warning')
+      break
+  }
+
+  return classParts.join(' ')
+})
+
+const subcontainerClasses = computed(() => {
+  const classParts: string[] = []
+
+  if (hasDescription.value) {
+    classParts.push('')
+  } else {
+    classParts.push('items-center')
+
+    switch (props.size) {
+      case 'xs':
+        classParts.push('space-x-1')
+        break
+      case 'default':
+      default:
+        classParts.push('space-x-2')
+        break
+    }
+  }
+
+  return classParts.join(' ')
+})
+
+const mainContentContainerClasses = computed(() => {
+  const classParts: string[] = ['grow']
+
+  if (!hasDescription.value) {
+    classParts.push('flex items-center space-x-2')
+  }
+
+  switch (props.size) {
+    case 'xs':
+      classParts.push('ml-1')
+      break
+    case 'default':
+    default:
+      classParts.push('ml-3')
+
+      break
+  }
+
+  return classParts.join(' ')
+})
+
+const descriptionWrapperClasses = computed(() => {
+  const classParts: string[] = []
+
+  switch (props.size) {
+    case 'xs':
+      classParts.push('text-xs')
+      break
+    case 'default':
+    default:
+      classParts.push('mt-2 text-sm')
+      break
+  }
+
+  return classParts.join(' ')
+})
+
+const actionsContainerClasses = computed(() => {
+  const classParts: string[] = ['flex']
+
+  if (!hasDescription.value) {
+    classParts.push('grow justify-end')
+  }
+
+  const hasDescriptionAndActions = hasDescription.value && props.actions?.length
+
+  switch (props.size) {
+    case 'xs':
+      classParts.push('space-x-1')
+      if (hasDescriptionAndActions) {
+        classParts.push('mt-1')
+      }
+      break
+    case 'default':
+    default:
+      classParts.push('space-x-2')
+      if (hasDescriptionAndActions) {
+        classParts.push('mt-4')
+      }
       break
   }
 
@@ -129,6 +242,17 @@ const textClasses = computed(() => {
 
 const iconClasses = computed(() => {
   const classParts: string[] = []
+
+  switch (props.size) {
+    case 'xs':
+      classParts.push('h-4 w-4')
+      classParts.push(hasDescription.value ? 'mt-0.5' : '')
+      break
+    case 'default':
+    default:
+      classParts.push('h-5 w-5')
+      break
+  }
 
   switch (props.color) {
     case 'success':
@@ -167,5 +291,15 @@ const buttonClasses = computed(() => {
   }
 
   return classParts.join(' ')
+})
+
+const actionSize = computed(() => {
+  switch (props.size) {
+    case 'xs':
+      return 'xs'
+    case 'default':
+    default:
+      return 'sm'
+  }
 })
 </script>

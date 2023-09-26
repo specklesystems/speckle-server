@@ -193,7 +193,7 @@
     >
       <template #header>Your First Upload</template>
     </OnboardingDialogFirstSend>
-    <ServerInviteDialog
+    <ServerManagementInviteDialog
       v-model:open="showServerInviteDialog"
       @update:open="(v) => (!v ? markComplete(3) : '')"
     />
@@ -380,13 +380,16 @@ const markComplete = (idx: number) => {
 
 const goToFirstUncompletedStep = () => {
   const firstNonCompleteStepIndex = steps.value.findIndex((s) => s.completed === false)
-  mp.track('Onboarding Action', {
-    type: 'action',
-    name: 'checklist',
-    action: 'goto-uncompleted-step',
-    status: getStatus()
-  })
   activateStep(firstNonCompleteStepIndex)
+
+  if (process.client) {
+    mp.track('Onboarding Action', {
+      type: 'action',
+      name: 'checklist',
+      action: 'goto-uncompleted-step',
+      status: getStatus()
+    })
+  }
 }
 
 const allCompleted = computed(() => steps.value.every((step) => step.completed))
