@@ -74,15 +74,19 @@
           <div class="flex gap-1.5 items-center">
             <div class="h-4 w-4" :class="{ grayscale: !item.enabled }">
               <InformationCircleIcon
-                v-if="getHistoryStatus(item) === 'noEvents'"
+                v-if="getHistoryStatus(item) === HistoryStatus.NoEvents"
                 class="opacity-40"
               />
               <CheckCircleIcon
-                v-if="getHistoryStatus(item) === 'called'"
+                v-if="getHistoryStatus(item) === HistoryStatus.Called"
                 class="text-success"
               />
               <XCircleIcon
-                v-if="['error', 'alert'].includes(getHistoryStatus(item) || '')"
+                v-if="
+                  [HistoryStatus.Alert, HistoryStatus.Error].includes(
+                    getHistoryStatus(item)
+                  )
+                "
                 class="text-danger"
               />
             </div>
@@ -146,6 +150,7 @@ import {
   getCacheId,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
+import { Optional } from '@speckle/shared'
 
 const projectId = computed(() => route.params.id as string)
 const route = useRoute()
@@ -173,20 +178,17 @@ const webhooks = computed<WebhookItem[]>(() => {
   return pageResult.value?.project?.webhooks?.items || []
 })
 
+enum HistoryStatus {
+  NoEvents = 0,
+  Alert = 1,
+  Called = 2,
+  Error = 3
+}
+
 const getHistoryStatus = (item: WebhookItem) => {
   const recentHistory = item.history?.items?.[0]
-  if (recentHistory) {
-    switch (recentHistory.status) {
-      case 1:
-        return 'alert'
-      case 2:
-        return 'called'
-      case 3:
-        return 'error'
-    }
-  } else {
-    return 'noEvents'
-  }
+  const status = recentHistory?.status as Optional<HistoryStatus>
+  return status || HistoryStatus.NoEvents
 }
 
 const getHistoryStatusInfo = (item: WebhookItem) => {
