@@ -118,7 +118,7 @@ const onSubmit = handleSubmit(async (webhookFormValues) => {
           url: url.value,
           description: description.value,
           secret: secret.value?.length ? secret.value : null,
-          triggers: webhookFormValues.triggers.map((t) => t.text)
+          triggers: webhookFormValues.triggers.map((t) => t.id)
         }
       },
       {
@@ -129,7 +129,7 @@ const onSubmit = handleSubmit(async (webhookFormValues) => {
               fields: {
                 url: () => webhookFormValues.url,
                 description: () => webhookFormValues.description || '',
-                triggers: () => webhookFormValues.triggers.map((t) => t.text)
+                triggers: () => webhookFormValues.triggers.map((t) => t.id)
               }
             })
           }
@@ -158,7 +158,7 @@ const onSubmit = handleSubmit(async (webhookFormValues) => {
       url: url.value,
       secret: secret.value?.length ? secret.value : null,
       streamId: props.streamId || '',
-      triggers: webhookFormValues.triggers.map((t) => t.text),
+      triggers: webhookFormValues.triggers.map((t) => t.id),
       enabled: true
     }
 
