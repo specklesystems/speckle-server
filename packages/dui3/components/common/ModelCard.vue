@@ -41,12 +41,17 @@
 
     <!-- Progress state -->
     <div
-      :class="`bg-blue-500/10 text-primary ${
-        onProgress ? 'h-8 opacity-100' : 'h-0 opacity-0 py-0'
-      } transition-[height,scale,opacity] overflow-hidden`"
+      :class="[
+        props.modelCard.progress?.status === 'Cancelled'
+          ? 'bg-red-500/10 text-danger'
+          : 'bg-blue-500/10 text-primary',
+        onProgress ? 'h-8 opacity-100' : 'h-0 opacity-0 py-0',
+        'transition-[height,scale,opacity] overflow-hidden'
+      ]"
     >
       <CommonLoadingProgressBar
         :loading="loading"
+        :cancelled="props.modelCard.progress?.status === 'Cancelled'"
         :progress="
           props.modelCard.progress ? props.modelCard.progress.progress : undefined
         "
@@ -54,7 +59,6 @@
       <div v-if="onProgress" class="text-xs px-2 pt-1">
         {{ progressBarText }}
       </div>
-      <div v-else class="text-xs px-2 pt-1">Completed!</div>
     </div>
     <!-- Card Notification -->
     <CommonModelNotification
