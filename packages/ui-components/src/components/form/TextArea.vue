@@ -9,7 +9,12 @@
         ref="inputElement"
         v-model="value"
         :name="name"
-        :class="[coreClasses, iconClasses, 'min-h-[4rem]']"
+        :class="[
+          coreClasses,
+          iconClasses,
+          textareaClasses || '',
+          'min-h-[4rem] simple-scrollbar'
+        ]"
         :placeholder="placeholder"
         :disabled="disabled"
         :aria-invalid="errorMessage ? 'true' : 'false'"
@@ -31,7 +36,7 @@
       <div
         v-if="errorMessage"
         :class="[
-          'pointer-events-none absolute inset-y-0 right-0 flex items-center',
+          'pointer-events-none absolute inset-y-0 right-0 flex items-start mt-2',
           showClear ? 'pr-8' : 'pr-2'
         ]"
       >
@@ -39,7 +44,7 @@
       </div>
       <div
         v-if="showRequired && !errorMessage"
-        class="pointer-events-none absolute inset-y-0 mt-3 text-4xl right-0 flex items-center pr-2 text-danger opacity-50"
+        class="pointer-events-none absolute inset-y-0 mt-0.5 text-4xl right-0 flex items-start pr-2 text-danger opacity-50"
       >
         *
       </div>
@@ -84,6 +89,7 @@ const props = withDefaults(
     fullWidth?: boolean
     showRequired?: boolean
     color?: InputColor
+    textareaClasses?: string
   }>(),
   {
     useLabelInErrors: true,
