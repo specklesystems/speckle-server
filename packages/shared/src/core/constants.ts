@@ -94,7 +94,7 @@ export type SourceAppDefinition = {
   /**
    * Full name
    */
-  name: string
+  name: SourceAppName
 
   /**
    * Shortened name
@@ -107,7 +107,7 @@ export type SourceAppDefinition = {
   bgColor: string
 }
 
-export const SourceApps: SourceAppDefinition[] = [
+const SourceAppsBase = <const>[
   { searchKey: 'dynamo', name: 'Dynamo', short: 'DYN', bgColor: '#a438b6' },
   { searchKey: 'revit', name: 'Revit', short: 'RVT', bgColor: '#3091e7' },
   { searchKey: 'autocad', name: 'AutoCAD', short: 'ACAD', bgColor: '#f0605e' },
@@ -152,6 +152,10 @@ export const SourceApps: SourceAppDefinition[] = [
   },
   { searchKey: 'navisworks', name: 'Navisworks', bgColor: '#3e8742', short: 'NAVIS' }
 ]
+
+export type SourceAppName = (typeof SourceAppsBase)[number]['name']
+
+export const SourceApps = SourceAppsBase.slice() as SourceAppDefinition[]
 
 export const WebhookTriggers = Object.freeze(<const>{
   StreamUpdate: 'stream_update',
