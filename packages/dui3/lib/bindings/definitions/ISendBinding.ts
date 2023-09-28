@@ -1,5 +1,6 @@
-import { IModelCard, ToastInfo } from 'lib/bindings/definitions/IBasicConnectorBinding'
-import { IDiscriminatedObject } from '~~/lib/bindings/definitions/common'
+import { ModelCardNotification } from '~~/lib/models/card/notification'
+import { ModelCardProgress } from '~~/lib/models/card/progress'
+import { ISendFilter } from '~~/lib/models/card/send'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 
 export const ISendBindingKey = 'sendBinding'
@@ -13,27 +14,9 @@ export interface ISendBinding extends IBinding<ISendBindingEvents> {
 export interface ISendBindingEvents {
   filtersNeedRefresh: () => void
   sendersExpired: (args: string[]) => void
-  senderProgress: (args: SenderProgressArgs) => void
-  notify: (args: ToastInfo) => void
+  senderProgress: (args: ModelCardProgress) => void
+  notify: (args: ModelCardNotification) => void
   createVersion: (args: CreateVersionArgs) => void
-}
-
-export interface ISenderModelCard extends IModelCard {
-  typeDiscriminator: 'SenderModelCard'
-  sendFilter: ISendFilter
-  sending?: boolean
-}
-
-export type ModelProgressArgs = {
-  id: string
-  status?: string
-  progress?: number
-}
-
-export type SenderProgressArgs = {
-  id: string
-  status?: string
-  progress?: number
 }
 
 export type CreateVersionArgs = {
@@ -44,13 +27,4 @@ export type CreateVersionArgs = {
   objectId: string
   message?: string
   sourceApplication?: string
-}
-
-export interface ISendFilter extends IDiscriminatedObject {
-  name: string
-  summary: string
-}
-
-export interface IDirectSelectionSendFilter extends ISendFilter {
-  selectedObjectIds: string[]
 }

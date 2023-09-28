@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import { CloudArrowDownIcon } from '@heroicons/vue/24/outline'
-import { IReceiverModelCard } from '~/lib/bindings/definitions/IReceiveBinding'
+import { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { VersionsSelectItemType } from '~/lib/form/select/types'
 import { useGetModelDetails, useProjectVersionUpdated } from '~/lib/graphql/composables'
 import { ProjectModelGroup, useHostAppStore } from '~/store/hostApp'

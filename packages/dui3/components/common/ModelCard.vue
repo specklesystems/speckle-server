@@ -61,10 +61,13 @@
       </div>
     </div>
     <!-- Card Notification -->
-    <CommonModelNotification
-      v-if="props.modelCard.notification"
-      :notification="props.modelCard.notification"
-    />
+    <div v-for="notification in props.modelCard.notifications" :key="notification.id">
+      <CommonModelNotification
+        v-if="notification.visible"
+        :key="notification.id"
+        :notification="notification"
+      />
+    </div>
     <LayoutDialog v-model:open="openRemoveCardDialog">
       <FormButton @click="removeCard">Remove</FormButton>
       <!-- <RemoveCardDialog :model="modelCard" @close="openRemoveCardDialog = false" /> -->
@@ -74,8 +77,8 @@
 <script setup lang="ts">
 import { CommonLoadingProgressBar } from '@speckle/ui-components'
 import { TrashIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
-import { IModelCard } from '~~/lib/bindings/definitions/IBasicConnectorBinding'
 import { ProjectModelGroup, useHostAppStore } from '~~/store/hostApp'
+import { IModelCard } from '~~/lib/models/card'
 
 const store = useHostAppStore()
 

@@ -283,4 +283,8 @@ export class SketchupBridge extends BaseBridge {
       'Sketchup cannot do this. The dev tools menu is accessible via a right click.'
     )
   }
+
+  public openUrl(url: string) {
+    window.open(url)
+  }
 }
