@@ -65,6 +65,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     documentModelStore.value.models.push(model)
   }
 
+  const highlightModel = async (modelId: string) => {
+    await app.$baseBinding.highlightModel(modelId)
+  }
+
   const updateModelFilter = async (modelId: string, filter: ISendFilter) => {
     const modelIndex = documentModelStore.value.models.findIndex(
       (m) => m.id === modelId
@@ -263,6 +267,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     selectionFilter,
     everythingFilter,
     addModel,
+    highlightModel,
     updateModelFilter,
     removeModel,
     tryGetModel,
