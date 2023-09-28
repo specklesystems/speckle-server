@@ -47,7 +47,7 @@
               loadedVersionsOnly = loadedVersionsOnly ? undefined : 'loadedVersionsOnly'
             "
           >
-            Exclude Other Versions
+            Exclude threads from other versions
           </FormButton>
         </div>
       </div>

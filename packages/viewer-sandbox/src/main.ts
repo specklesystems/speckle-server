@@ -321,6 +321,8 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/25d8a162af/commits/6c842a713c'
     // 'https://speckle.xyz/streams/25d8a162af/commits/6c842a713c'
     // 'https://speckle.xyz/streams/76e3acde68/commits/0ea3d47e6c'
+    // Point cloud
+    // 'https://speckle.xyz/streams/b920636274/commits/8df6496749'
   )
 }
 

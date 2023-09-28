@@ -77,3 +77,17 @@ export const stringContains =
       return match.test(val) ? true : message
     }
   }
+
+export const isUrl: GenericValidateFunction<string> = (value) => {
+  if (VALID_HTTP_URL.test(value)) {
+    return true
+  }
+  return 'Value is not a valid URL'
+}
+
+export const isItemSelected: GenericValidateFunction<unknown[]> = (val) => {
+  if (Array.isArray(val) && val.length > 0) {
+    return true
+  }
+  return 'Value should have at least a single item selected'
+}

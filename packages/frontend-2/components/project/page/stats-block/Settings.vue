@@ -3,16 +3,16 @@
     <template #top>
       <div class="flex items-center">
         <div class="flex items-center justify-between w-full">
-          <div class="flex items-center flex-grow">
+          <div class="flex items-center gap-0.5 flex-grow">
             <UsersIcon class="h-5 w-5" />
-            <span class="text-xs">Team</span>
+            <span class="text-xs">Settings</span>
           </div>
           <div class="text-xs">{{ project.role?.split(':').reverse()[0] }}</div>
         </div>
       </div>
     </template>
     <template #bottom>
-      <div class="flex items-center justify-between mt-2">
+      <div class="flex items-center justify-between mt-3">
         <UserAvatarGroup :users="teamUsers" class="max-w-[104px]" />
         <div>
           <FormButton class="ml-2" @click="dialogOpen = true">

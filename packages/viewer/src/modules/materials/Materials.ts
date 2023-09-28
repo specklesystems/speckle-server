@@ -97,20 +97,24 @@ export default class Materials {
     GeometryType.POINT_CLOUD.toString() + 'vertexColors'
   )
 
-  public static renderMaterialFromNode(node: TreeNode): RenderMaterial {
-    if (!node) return null
+  public static renderMaterialFromNode(
+    materialNode: TreeNode,
+    geometryNode: TreeNode
+  ): RenderMaterial {
+    if (!materialNode) return null
     let renderMaterial: RenderMaterial = null
-    if (node.model.raw.renderMaterial) {
+    if (materialNode.model.raw.renderMaterial) {
       renderMaterial = {
-        id: node.model.raw.renderMaterial.id,
-        color: node.model.raw.renderMaterial.diffuse,
+        id: materialNode.model.raw.renderMaterial.id,
+        color: materialNode.model.raw.renderMaterial.diffuse,
         opacity:
-          node.model.raw.renderMaterial.opacity !== undefined
-            ? node.model.raw.renderMaterial.opacity
+          materialNode.model.raw.renderMaterial.opacity !== undefined
+            ? materialNode.model.raw.renderMaterial.opacity
             : 1,
-        roughness: node.model.raw.renderMaterial.roughness,
-        metalness: node.model.raw.renderMaterial.metalness,
-        vertexColors: node.model.raw.colors && node.model.raw.colors.length > 0
+        roughness: materialNode.model.raw.renderMaterial.roughness,
+        metalness: materialNode.model.raw.renderMaterial.metalness,
+        vertexColors:
+          geometryNode.model.raw.colors && geometryNode.model.raw.colors.length > 0
       }
     }
     return renderMaterial
