@@ -72,10 +72,10 @@ import { SelectionInfo } from '~~/lib/bindings/definitions/ISelectionBinding'
 import { useSelectionStore } from '~~/store/selection'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'
-import { ISendFilter, ISenderModelCard } from '~~/lib/bindings/definitions/ISendBinding'
 import { nanoid } from 'nanoid'
 import { ValidationHelpers } from '@speckle/ui-components'
 import { ModelsSelectItemType, ProjectsSelectItemType } from 'lib/form/select/types'
+import { ISendFilter, ISenderModelCard } from '~~/lib/models/card/send'
 
 const store = useHostAppStore()
 const router = useRouter()
@@ -141,7 +141,8 @@ const getOrCreateModelCard = async () => {
       modelId: selectedModel.value?.id as string,
       projectId: selectedProject.value?.id as string,
       accountId: defaultAccount.value.accountInfo.id,
-      sendFilter: sendFilter as ISendFilter
+      sendFilter: sendFilter as ISendFilter,
+      notifications: []
     }
 
     await store.addModel(modelCard)

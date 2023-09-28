@@ -2,11 +2,8 @@
 
 import { BaseBridge } from '~~/lib/bridge/base'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
-import { IDiscriminatedObject } from '~~/lib/bindings/definitions/common'
-import {
-  ISendFilter,
-  ModelProgressArgs
-} from '~~/lib/bindings/definitions/ISendBinding'
+import { IModelCard } from '~~/lib/models/card'
+import { ISendFilter } from '~~/lib/models/card/send'
 
 export const IBasicConnectorBindingKey = 'baseBinding'
 
@@ -35,22 +32,6 @@ export interface IBasicConnectorBindingHostEvents {
 export type DocumentModelStore = {
   models: IModelCard[]
 }
-
-//
-// Model cards
-//
-export interface IModelCard extends IDiscriminatedObject {
-  id: string
-  modelId: string
-  projectId: string
-  accountId: string
-  expired?: boolean
-  lastLocalUpdate?: string
-  notification?: ToastInfo
-  progress?: ModelProgressArgs
-}
-
-export type ModelCardTypeDiscriminators = 'SenderModelCard' | 'ReceiverModelCard'
 
 export type DocumentInfo = {
   location: string

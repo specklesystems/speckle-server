@@ -40,8 +40,8 @@
 </template>
 <script setup lang="ts">
 import { CloudArrowUpIcon, FunnelIcon } from '@heroicons/vue/24/outline'
+import { ISenderModelCard } from '~~/lib/models/card/send'
 import { useGetModelDetails } from '~~/lib/graphql/composables'
-import { ISenderModelCard } from '~~/lib/bindings/definitions/ISendBinding'
 import { ProjectModelGroup, useHostAppStore } from '~~/store/hostApp'
 
 const store = useHostAppStore()

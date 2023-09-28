@@ -1,12 +1,12 @@
 import {
   DocumentInfo,
-  DocumentModelStore,
-  IModelCard,
-  ToastInfo
+  DocumentModelStore
 } from 'lib/bindings/definitions/IBasicConnectorBinding'
-import { IReceiverModelCard } from 'lib/bindings/definitions/IReceiveBinding'
-import { ISendFilter, ISenderModelCard } from 'lib/bindings/definitions/ISendBinding'
 import { VersionCreateInput } from 'lib/common/generated/gql/graphql'
+import { IModelCard } from 'lib/models/card'
+import { ModelCardNotification } from 'lib/models/card/notification'
+import { IReceiverModelCard } from 'lib/models/card/receiver'
+import { ISenderModelCard, ISendFilter } from 'lib/models/card/send'
 import { useCreateVersion } from '~/lib/graphql/composables'
 import { useAccountStore } from '~~/store/accounts'
 
@@ -160,9 +160,12 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === args.modelCardId
     ) as ISenderModelCard
-    model.notification = args
+    model.notifications?.push(args)
     setTimeout(() => {
-      model.notification = undefined
+      const notification = model.notifications?.find((n) => n.id === args.id)
+      const notifications = model.notifications?.filter((n) => n.id !== args.id)
+      notifications?.push({ ...notification, visible: false } as ModelCardNotification)
+      model.notifications = notifications
     }, args.timeout)
   })
 
@@ -170,9 +173,15 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === args.modelCardId
     ) as IReceiverModelCard
-    model.notification = args
+    model.notifications?.push(args)
+    console.log(model.notifications, 'when added')
+
     setTimeout(() => {
-      model.notification = undefined
+      const notification = model.notifications?.find((n) => n.id === args.id)
+      const notifications = model.notifications?.filter((n) => n.id !== args.id)
+      notifications?.push({ ...notification, visible: false } as ModelCardNotification)
+      model.notifications = notifications
+      console.log(model.notifications, 'after timeout')
     }, args.timeout)
   })
 
@@ -218,7 +227,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       message: args.message
     }
     const res = await createVersion(version)
-    const notification: ToastInfo = {
+    const notification: ModelCardNotification = {
+      id: `createCommit ${res?.data?.versionMutations.create.id}`,
       modelCardId: args.modelCardId,
       text: 'Version Created',
       level: 'success',
@@ -231,10 +241,13 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       (m) => m.id === args.modelCardId
     ) as ISenderModelCard
 
-    model.notification = notification
+    model.notifications?.push(notification)
 
     setTimeout(() => {
-      model.notification = undefined
+      const not = model.notifications?.find((n) => n.id === notification.id)
+      const notifications = model.notifications?.filter((n) => n.id !== notification.id)
+      notifications?.push({ ...not, visible: false } as ModelCardNotification)
+      model.notifications = notifications
     }, 5000)
   })
   // First initialization calls

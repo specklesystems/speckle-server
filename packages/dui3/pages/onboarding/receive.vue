@@ -64,7 +64,7 @@ import {
   ModelsSelectItemType,
   VersionsSelectItemType
 } from 'lib/form/select/types'
-import { IReceiverModelCard } from 'lib/bindings/definitions/IReceiveBinding'
+import { IReceiverModelCard } from '~~/lib/models/card/receiver'
 
 const { defaultAccount } = storeToRefs(useAccountStore())
 const hostAppStore = useHostAppStore()
@@ -107,7 +107,8 @@ const receive = async () => {
     referencedObject: selectedVersion.value?.referencedObject as string,
     modelName: selectedModel.value?.name as string,
     projectName: selectedProject.value?.name as string,
-    sourceApp: selectedVersion.value?.sourceApplication as string
+    sourceApp: selectedVersion.value?.sourceApplication as string,
+    notifications: []
   }
 
   await hostAppStore.addModel(modelCard)
