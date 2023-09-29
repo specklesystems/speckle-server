@@ -85,12 +85,7 @@ export const Scopes = Object.freeze(<const>{
  */
 export const AllScopes = _.flatMap(Scopes, (v) => Object.values(v))
 
-// export type SourceAppShort = 'foo' |
-//
-//
-//
-
-export const SourceAppName = [
+export const SourceAppNames = [
   'Dynamo',
   'Revit',
   'AutoCAD',
@@ -121,7 +116,7 @@ export const SourceAppName = [
   'Navisworks'
 ] as const
 
-export type SourceAppNameType = (typeof SourceAppName)[number]
+export type SourceAppName = (typeof SourceAppNames)[number]
 
 export type SourceAppDefinition = {
   /**
@@ -132,7 +127,7 @@ export type SourceAppDefinition = {
   /**
    * Full name
    */
-  name: SourceAppNameType
+  name: SourceAppName
 
   /**
    * Shortened name
