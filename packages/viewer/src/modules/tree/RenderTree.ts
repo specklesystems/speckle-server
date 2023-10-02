@@ -82,7 +82,8 @@ export class RenderTree {
         speckleType: GeometryConverter.getSpeckleType(node.model),
         geometry: geometryData,
         renderMaterial: Materials.renderMaterialFromNode(
-          renderMaterialNode || displayStyleNode
+          renderMaterialNode || displayStyleNode,
+          node
         ),
         /** Line-type geometry can also use a renderMaterial*/
         displayStyle: Materials.displayStyleFromNode(
