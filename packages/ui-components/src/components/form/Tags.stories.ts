@@ -1,3 +1,4 @@
+import { wait } from '@speckle/shared'
 import { Meta, StoryObj } from '@storybook/vue3'
 import FormSelectTags from '~~/src/components/form/Tags.vue'
 
@@ -21,6 +22,9 @@ export default {
     'update:modelValue': {
       type: 'function',
       action: 'v-model'
+    },
+    getAutocompleteItems: {
+      type: 'function'
     }
   }
 } as Meta
@@ -60,7 +64,39 @@ export const Default: StoryType = {
     wrapperClasses: undefined,
     size: 'base',
     placeholder: 'Choose some tags',
-    disabled: false
+    disabled: false,
+    getAutocompleteItems: undefined
+  }
+}
+
+export const WithAutocomplete = {
+  ...Default,
+  args: {
+    ...Default.args,
+    name: 'with-autocomplete',
+    getAutocompleteItems: (query: string) => [
+      `autocomplete-${query}-1`,
+      `autocomplete-${query}-2`,
+      `autocomplete-${query}-3`
+    ]
+  }
+}
+
+export const WithAsyncAutocomplete = {
+  ...Default,
+  args: {
+    ...Default.args,
+    name: 'with-async-autocomplete',
+    getAutocompleteItems: async (query: string) => {
+      if (!query.length) return []
+
+      await wait(1000)
+      return [
+        `autocomplete-${query}-1`,
+        `autocomplete-${query}-2`,
+        `autocomplete-${query}-3`
+      ]
+    }
   }
 }
 

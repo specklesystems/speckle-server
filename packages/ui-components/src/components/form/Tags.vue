@@ -72,47 +72,52 @@
         leave="transition ease-in duration-100"
         leave-from="opacity-100"
         leave-to="opacity-0"
-        class="relative"
+        class="relative px-0.5"
       >
         <ComboboxOptions
-          class="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
+          class="absolute top-1 max-h-60 w-full overflow-auto simple-scrollbar rounded-md bg-foundation-2 py-1 shadow label label--light outline outline-2 outline-primary-muted focus:outline-none"
         >
-          <div
-            v-if="filteredItems.length === 0 && query !== ''"
-            class="relative cursor-default select-none py-2 px-4 text-gray-700"
-          >
-            Create new tag!
+          <div v-if="isAutocompleteLoading" class="px-1">
+            <CommonLoadingBar :loading="true" />
           </div>
-
-          <ComboboxOption
-            v-for="tag in filteredItems"
-            :key="tag"
-            v-slot="{ selected, active }"
-            as="template"
-            :value="tag"
-          >
-            <li
-              class="relative cursor-default select-none py-2 pl-10 pr-4"
-              :class="{
-                'bg-teal-600 text-white': active,
-                'text-gray-900': !active
-              }"
+          <div v-else-if="!autocompleteItems.length">
+            <div class="text-foreground-2 text-center">
+              Press
+              <strong>Enter</strong>
+              to create tag ⚡
+            </div>
+          </div>
+          <template v-else>
+            <ComboboxOption
+              v-for="tag in autocompleteItems"
+              :key="tag"
+              v-slot="{ selected, active }"
+              as="template"
+              :value="tag"
             >
-              <span
-                class="block truncate"
-                :class="{ 'font-medium': selected, 'font-normal': !selected }"
+              <li
+                class="relative cursor-default select-none py-2 pl-10 pr-4"
+                :class="{
+                  'bg-teal-600 text-white': active,
+                  'text-gray-900': !active
+                }"
               >
-                {{ tag }}
-              </span>
-              <span
-                v-if="selected"
-                class="absolute inset-y-0 left-0 flex items-center pl-3"
-                :class="{ 'text-white': active, 'text-teal-600': !active }"
-              >
-                <CheckIcon class="h-5 w-5" aria-hidden="true" />
-              </span>
-            </li>
-          </ComboboxOption>
+                <span
+                  class="block truncate"
+                  :class="{ 'font-medium': selected, 'font-normal': !selected }"
+                >
+                  {{ tag }}
+                </span>
+                <span
+                  v-if="selected"
+                  class="absolute inset-y-0 left-0 flex items-center pl-3"
+                  :class="{ 'text-white': active, 'text-teal-600': !active }"
+                >
+                  <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                </span>
+              </li>
+            </ComboboxOption>
+          </template>
         </ComboboxOptions>
       </TransitionRoot>
       <p v-if="helpTipId && !hideHelpTip" :id="helpTipId" :class="helpTipClasses">
@@ -123,7 +128,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, toRefs, watch } from 'vue'
+import { ref, computed, toRefs, watch, onMounted } from 'vue'
 import {
   Combobox,
   ComboboxOptions,
@@ -131,13 +136,14 @@ import {
   TransitionRoot
 } from '@headlessui/vue'
 import { CheckIcon, XMarkIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { uniq } from 'lodash'
+import { debounce, uniq } from 'lodash'
 import { InputColor, useTextInputCore } from '~~/src/composables/form/textInput'
 import { RuleExpression } from 'vee-validate'
-import { Nullable } from '@speckle/shared'
+import { MaybeAsync, Nullable } from '@speckle/shared'
 import CommonBadge from '~~/src/components/common/Badge.vue'
 import FormTagsContextManager from '~~/src/components/form/tags/ContextManager.vue'
 import { useFocus } from '@vueuse/core'
+import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
 type Tag = string
@@ -166,6 +172,7 @@ const props = withDefaults(
     placeholder?: string
     disabled?: boolean
     useLabelInErrors?: boolean
+    getAutocompleteItems?: (query: string) => MaybeAsync<Tag[]>
   }>(),
   {
     size: 'base',
@@ -207,7 +214,9 @@ const {
   inputEl
 })
 
-const serverTags = ref(['test1', 'test2', 'test3'])
+const autocompleteItems = ref([] as string[])
+const isAutocompleteLoading = ref(false)
+
 const isAutocompleteOpen = ref(false)
 const query = ref('')
 
@@ -218,16 +227,16 @@ const selectedItems = computed({
   }
 })
 
-const filteredItems = computed(() =>
-  query.value === ''
-    ? serverTags.value
-    : serverTags.value.filter((tag) =>
-        tag
-          .toLowerCase()
-          .replace(/\s+/g, '')
-          .includes(query.value.toLowerCase().replace(/\s+/g, ''))
-      )
-)
+// const filteredItems = computed(() =>
+//   query.value === ''
+//     ? serverTags.value
+//     : serverTags.value.filter((tag) =>
+//         tag
+//           .toLowerCase()
+//           .replace(/\s+/g, '')
+//           .includes(query.value.toLowerCase().replace(/\s+/g, ''))
+//       )
+// )
 
 const sizeClasses = computed((): string => {
   switch (props.size) {
@@ -284,16 +293,6 @@ const removeTag = (tag: Tag) => {
   }
 }
 
-// // unknown cuz headlessui components aren't generic
-// const displayValue = (item: unknown) => {
-//   // return ''
-
-//   const typedItem = item as Tag
-//   if (!typedItem?.length) return ''
-
-//   return `${typedItem}`
-// }
-
 const onQueryEscape = () => {
   inputEl.value?.blur()
   isAutocompleteOpen.value = false
@@ -326,6 +325,17 @@ const onQueryArrowDown = () => {
   }
 }
 
+const resolveAutocompleteItems = async () => {
+  if (!props.getAutocompleteItems) return
+
+  isAutocompleteLoading.value = true
+  autocompleteItems.value = await Promise.resolve(
+    props.getAutocompleteItems(query.value)
+  )
+  isAutocompleteLoading.value = false
+}
+const debouncedResolve = debounce(resolveAutocompleteItems, 1000)
+
 const onQueryInput = (e: Event, forceCreateFromInput?: boolean) => {
   const isAddingTag = isInputEvent(e)
     ? e.data === ' ' || e.data === ',' || e.data === ';'
@@ -335,7 +345,7 @@ const onQueryInput = (e: Event, forceCreateFromInput?: boolean) => {
     let selected = false
     if (
       ctxManager.value?.isOpen() &&
-      filteredItems.value.length &&
+      autocompleteItems.value.length &&
       !forceCreateFromInput
     ) {
       // Add from opened autocomplete panel
@@ -365,9 +375,19 @@ const onQueryInput = (e: Event, forceCreateFromInput?: boolean) => {
 
 watch(isAutocompleteOpen, (newIsOpen, oldIsOpen) => {
   if (newIsOpen && !oldIsOpen) {
-    ctxManager.value?.open()
+    if (props.getAutocompleteItems) ctxManager.value?.open()
   } else if (!newIsOpen && oldIsOpen) {
     ctxManager.value?.close()
   }
 })
+
+watch(query, () => {
+  debouncedResolve()
+})
+
+onMounted(() => {
+  resolveAutocompleteItems()
+})
+
+defineExpose({ resolveAutocompleteItems })
 </script>
