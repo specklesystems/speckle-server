@@ -37,7 +37,7 @@
             >
               <div
                 v-if="title"
-                class="flex items-center justify-start rounded-t-lg shrink-0 h-16 px-8"
+                class="relative z-10 flex items-center justify-start rounded-t-lg shrink-0 h-16 px-8"
                 :class="scrolledFromTop && 'shadow'"
               >
                 <h4 class="text-2xl font-bold">{{ title }}</h4>
@@ -51,7 +51,7 @@
                 <XMarkIcon class="h-6 w-6" />
               </button>
               <div
-                class="flex-1 simple-scrollbar overflow-y-auto"
+                class="flex-1 simple-scrollbar overflow-y-auto bg-white"
                 :class="title ? 'py-6 px-8' : 'p-10'"
                 @scroll="onScroll"
               >
