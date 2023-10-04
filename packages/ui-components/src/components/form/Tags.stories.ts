@@ -35,6 +35,7 @@ export const Default: StoryType = {
     help: 'Some help text',
     label: 'Tags',
     showRequired: true,
-    color: 'page'
+    color: 'page',
+    placeholder: 'Choose some tags'
   }
 }

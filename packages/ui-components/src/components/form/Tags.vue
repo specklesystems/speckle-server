@@ -10,7 +10,10 @@
       <label :for="name" :class="labelClasses">
         <span>{{ title }}</span>
       </label>
-      <div class="relative flex items-center space-x-1" :class="[coreClasses, 'px-2']">
+      <div
+        class="relative flex flex-wrap items-center space-x-1"
+        :class="[coreClasses, 'px-2 py-1']"
+      >
         <CommonBadge
           v-for="tag in selectedItems"
           :key="tag"
@@ -24,7 +27,9 @@
         <input
           ref="inputEl"
           v-model="query"
-          class="bg-transparent grow border-0 focus:ring-0 p-0"
+          class="bg-transparent grow shrink border-0 focus:ring-0 p-0"
+          style="flex-basis: 70px; min-width: 70px"
+          :placeholder="!selectedItems.length ? placeholder : undefined"
           :class="[coreInputClasses, sizeClasses]"
           @input="onQueryInput"
           @keydown.escape="onQueryEscape"
@@ -46,14 +51,14 @@
           class="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
         >
           <div
-            v-if="filteredTags.length === 0 && query !== ''"
+            v-if="filteredItems.length === 0 && query !== ''"
             class="relative cursor-default select-none py-2 px-4 text-gray-700"
           >
             Create new tag!
           </div>
 
           <ComboboxOption
-            v-for="tag in filteredTags"
+            v-for="tag in filteredItems"
             :key="tag"
             v-slot="{ selected, active }"
             as="template"
@@ -134,6 +139,7 @@ const props = withDefaults(
     fullWidth?: boolean
     wrapperClasses?: string
     size?: InputSize
+    placeholder?: string
   }>(),
   {
     size: 'base'
@@ -179,15 +185,15 @@ const selectedItems = computed({
   }
 })
 
-const finalTagOptions = computed(() => {
-  const tags = [...selectedItems.value, ...serverTags.value]
-  return uniq(tags)
-})
+// const finalTagOptions = computed(() => {
+//   const tags = [...selectedItems.value, ...serverTags.value]
+//   return uniq(tags)
+// })
 
-const filteredTags = computed(() =>
+const filteredItems = computed(() =>
   query.value === ''
-    ? finalTagOptions.value
-    : finalTagOptions.value.filter((tag) =>
+    ? serverTags.value
+    : serverTags.value.filter((tag) =>
         tag
           .toLowerCase()
           .replace(/\s+/g, '')
@@ -267,10 +273,9 @@ const onQueryInput = (e: Event) => {
     : true
 
   if (isAddingTag) {
-    // Add from opened autocomplete panel
-
     let selected = false
-    if (ctxManager.value?.isOpen()) {
+    if (ctxManager.value?.isOpen() && filteredItems.value.length) {
+      // Add from opened autocomplete panel
       ctxManager.value?.selectActive()
       selected = true
     } else {

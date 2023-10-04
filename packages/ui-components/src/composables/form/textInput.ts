@@ -137,31 +137,3 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     labelClasses
   }
 }
-
-// /**
-//  * Used by TextInput & other single line text input components like the tags
-//  * combobox
-//  */
-// export const useSingleLineTextInput = <V extends string | string[] = string>(
-//   params: Parameters<typeof useTextInputCore<V>>[0]
-// ) => {
-//   const core = useTextInputCore(params)
-
-// const sizeClasses = computed((): string => {
-//   switch (props.size) {
-//     case 'sm':
-//       return 'h-6'
-//     case 'lg':
-//       return 'h-10'
-//     case 'xl':
-//       return 'h-14'
-//     case 'base':
-//     default:
-//       return 'h-8'
-//   }
-// })
-
-//   return {
-//     ...core
-//   }
-// }
