@@ -1,5 +1,5 @@
 import { Meta, StoryObj } from '@storybook/vue3'
-import FormSelectTags from '~~/src/components/form/select/Tags.vue'
+import FormSelectTags from '~~/src/components/form/Tags.vue'
 
 type StoryType = StoryObj<
   Record<string, unknown> & {
@@ -18,8 +18,8 @@ export const Default: StoryType = {
       return { args }
     },
     template: `
-    <div class="flex justify-center h-72">
-      <FormSelectTags v-bind="args" @update:modelValue="onModelUpdate" class="max-w-[217px] w-full"/>
+    <div class="bg-foundation p-5">
+      <FormSelectTags v-bind="args" @update:modelValue="onModelUpdate" class="max-w-[400px] w-full"/>
     </div>
     `,
     methods: {
@@ -29,5 +29,12 @@ export const Default: StoryType = {
       }
     }
   }),
-  args: {}
+  args: {
+    showLabel: true,
+    name: 'default',
+    help: 'Some help text',
+    label: 'Tags',
+    showRequired: true,
+    color: 'page'
+  }
 }
