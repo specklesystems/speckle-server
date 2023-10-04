@@ -4,20 +4,20 @@
     as="div"
     multiple
     clearable
-    :class="[fullWidth ? 'w-full relative' : '', wrapperClasses]"
+    :class="[wrapperClasses]"
   >
     <FormTagsContextManager ref="ctxManager">
       <label :for="name" :class="labelClasses">
         <span>{{ title }}</span>
       </label>
       <div
-        class="relative flex flex-wrap items-center space-x-1"
-        :class="[coreClasses, 'px-2 py-1']"
+        class="relative flex flex-wrap items-center space-x-1 px-2 py-1"
+        :class="inputWrapperClasses"
       >
         <CommonBadge
           v-for="tag in selectedItems"
           :key="tag"
-          :icon-left="XMarkIcon"
+          :icon-left="!disabled ? XMarkIcon : undefined"
           clickable-icon
           size="lg"
           @click-icon="() => removeTag(tag)"
@@ -27,19 +27,46 @@
         <input
           ref="inputEl"
           v-model="query"
+          :disabled="disabled"
           class="bg-transparent grow shrink border-0 focus:ring-0 p-0"
+          :class="[coreInputClasses, sizeClasses]"
           style="flex-basis: 70px; min-width: 70px"
           :placeholder="!selectedItems.length ? placeholder : undefined"
-          :class="[coreInputClasses, sizeClasses]"
           @input="onQueryInput"
           @keydown.escape="onQueryEscape"
-          @keydown.enter="onQueryInput"
+          @keydown.enter="onQueryInput($event, true)"
           @keydown.tab="onQueryInput"
           @keydown.backspace="onQueryBackspace"
           @keydown.arrow-up="onQueryArrowUp"
           @keydown.arrow-down="onQueryArrowDown"
           @blur="isAutocompleteOpen = false"
         />
+        <a
+          v-if="showClear"
+          title="Clear input"
+          class="absolute top-2 right-0 flex items-center pr-2 cursor-pointer"
+          @click="clear"
+          @keydown="clear"
+        >
+          <span class="text-xs sr-only">Clear input</span>
+          <XMarkIcon class="h-5 w-5 text-foreground" aria-hidden="true" />
+        </a>
+        <div
+          v-if="errorMessage"
+          :class="[
+            'pointer-events-none absolute top-[10px] right-0 flex items-center',
+            showClear ? 'pr-8' : 'pr-2'
+          ]"
+        >
+          <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
+        </div>
+        <div
+          v-if="showRequired && !errorMessage"
+          class="pointer-events-none absolute top-[2px] text-4xl right-0 flex items-center pr-2 text-danger opacity-50"
+          :class="showClear ? 'pr-8' : 'pr-2'"
+        >
+          *
+        </div>
       </div>
       <TransitionRoot
         leave="transition ease-in duration-100"
@@ -103,20 +130,20 @@ import {
   ComboboxOption,
   TransitionRoot
 } from '@headlessui/vue'
-import { CheckIcon, XMarkIcon } from '@heroicons/vue/20/solid'
+import { CheckIcon, XMarkIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { uniq } from 'lodash'
 import { InputColor, useTextInputCore } from '~~/src/composables/form/textInput'
 import { RuleExpression } from 'vee-validate'
 import { Nullable } from '@speckle/shared'
 import CommonBadge from '~~/src/components/common/Badge.vue'
 import FormTagsContextManager from '~~/src/components/form/tags/ContextManager.vue'
+import { useFocus } from '@vueuse/core'
 
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
 type Tag = string
 const isInputEvent = (e: Event): e is InputEvent => e.type === 'input'
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', v: Tag[]): void
   (e: 'change', val: { event?: Event; value: Tag[] }): void
   (e: 'clear'): void
 }>()
@@ -130,23 +157,28 @@ const props = withDefaults(
     rules?: RuleExpression<Tag[]>
     validateOnMount?: boolean
     validateOnValueUpdate?: boolean
-    modelValue?: Tag[]
     autoFocus?: boolean
     showClear?: boolean
-    useLabelInErrors?: boolean
-    hideErrorMessage?: boolean
+    showRequired?: boolean
     color?: InputColor
-    fullWidth?: boolean
     wrapperClasses?: string
     size?: InputSize
     placeholder?: string
+    disabled?: boolean
+    useLabelInErrors?: boolean
   }>(),
   {
-    size: 'base'
+    size: 'base',
+    color: 'page',
+    useLabelInErrors: true
   }
 )
 
+const model = defineModel<Tag[]>({ local: true })
+
 const inputEl = ref(null as Nullable<HTMLInputElement>)
+const { focused: isInputFocused } = useFocus(inputEl)
+
 const ctxManager = ref(
   null as Nullable<{
     goUp: () => void
@@ -166,7 +198,9 @@ const {
   helpTip,
   helpTipId,
   hideHelpTip,
-  helpTipClasses
+  helpTipClasses,
+  errorMessage,
+  clear
 } = useTextInputCore({
   props: toRefs(props),
   emit,
@@ -174,21 +208,15 @@ const {
 })
 
 const serverTags = ref(['test1', 'test2', 'test3'])
-const selectedInternal = ref([] as Tag[])
 const isAutocompleteOpen = ref(false)
 const query = ref('')
 
 const selectedItems = computed({
-  get: () => selectedInternal.value,
+  get: () => model.value || [],
   set: (newVal) => {
-    selectedInternal.value = uniq(newVal).filter((t) => !!t.length)
+    model.value = uniq(newVal).filter((t) => !!t.length)
   }
 })
-
-// const finalTagOptions = computed(() => {
-//   const tags = [...selectedItems.value, ...serverTags.value]
-//   return uniq(tags)
-// })
 
 const filteredItems = computed(() =>
   query.value === ''
@@ -215,7 +243,38 @@ const sizeClasses = computed((): string => {
   }
 })
 
+const inputWrapperClasses = computed(() => {
+  const classParts: string[] = [
+    coreClasses.value,
+    props.disabled
+      ? 'cursor-not-allowed !bg-foundation-disabled !text-disabled-muted'
+      : ''
+  ]
+
+  if (props.showClear && (errorMessage.value || props.showRequired)) {
+    classParts.push('pr-14')
+  } else if (props.showClear || errorMessage.value || props.showRequired) {
+    classParts.push('pr-8')
+  }
+
+  if (errorMessage.value) {
+    classParts.push('border-2 border-danger text-danger-darker')
+    if (isInputFocused.value) {
+      classParts.push('ring-1 ring-danger')
+    }
+  } else {
+    classParts.push('border-2 border-transparent')
+    if (isInputFocused.value) {
+      classParts.push('ring-2 ring-outline-2')
+    }
+  }
+
+  return classParts.join(' ')
+})
+
 const removeTag = (tag: Tag) => {
+  if (props.disabled) return
+
   const idx = selectedItems.value.indexOf(tag)
   if (idx !== -1) {
     const newSelected = selectedItems.value.slice()
@@ -267,14 +326,18 @@ const onQueryArrowDown = () => {
   }
 }
 
-const onQueryInput = (e: Event) => {
+const onQueryInput = (e: Event, forceCreateFromInput?: boolean) => {
   const isAddingTag = isInputEvent(e)
     ? e.data === ' ' || e.data === ',' || e.data === ';'
     : true
 
   if (isAddingTag) {
     let selected = false
-    if (ctxManager.value?.isOpen() && filteredItems.value.length) {
+    if (
+      ctxManager.value?.isOpen() &&
+      filteredItems.value.length &&
+      !forceCreateFromInput
+    ) {
       // Add from opened autocomplete panel
       ctxManager.value?.selectActive()
       selected = true
