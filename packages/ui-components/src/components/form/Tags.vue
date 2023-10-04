@@ -62,7 +62,7 @@
         </div>
         <div
           v-if="showRequired && !errorMessage"
-          class="pointer-events-none absolute top-[2px] text-4xl right-0 flex items-center pr-2 text-danger opacity-50"
+          class="pointer-events-none absolute top-[2px] text-4xl right-0 flex items-center text-danger opacity-50"
           :class="showClear ? 'pr-8' : 'pr-2'"
         >
           *
