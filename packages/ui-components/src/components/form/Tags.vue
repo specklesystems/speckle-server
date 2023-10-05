@@ -77,17 +77,21 @@
         <ComboboxOptions
           class="absolute top-1 max-h-60 w-full overflow-auto simple-scrollbar rounded-md bg-foundation-2 py-1 shadow label label--light outline outline-2 outline-primary-muted focus:outline-none"
         >
-          <div v-if="isAutocompleteLoading" class="px-1">
+          <div
+            v-if="isAutocompleteLoading"
+            class="px-1"
+            :class="autocompleteItems.length ? 'mb-1' : ''"
+          >
             <CommonLoadingBar :loading="true" />
           </div>
-          <div v-else-if="!autocompleteItems.length">
+          <div v-if="!autocompleteItems.length && !isAutocompleteLoading">
             <div class="text-foreground-2 text-center">
               Press
               <strong>Enter</strong>
               to create tag ⚡
             </div>
           </div>
-          <template v-else>
+          <template v-if="autocompleteItems.length">
             <ComboboxOption
               v-for="tag in autocompleteItems"
               :key="tag"
@@ -96,10 +100,10 @@
               :value="tag"
             >
               <li
-                class="relative cursor-default select-none py-2 pl-10 pr-4"
+                class="relative cursor-pointer select-none py-1.5 pl-3"
                 :class="{
-                  'bg-teal-600 text-white': active,
-                  'text-gray-900': !active
+                  'text-primary': active,
+                  'text-foreground': !active
                 }"
               >
                 <span
@@ -110,8 +114,8 @@
                 </span>
                 <span
                   v-if="selected"
-                  class="absolute inset-y-0 left-0 flex items-center pl-3"
-                  :class="{ 'text-white': active, 'text-teal-600': !active }"
+                  class="absolute inset-y-0 right-0 flex items-center pr-4"
+                  :class="{ 'text-primary': active, 'text-foreground': !active }"
                 >
                   <CheckIcon class="h-5 w-5" aria-hidden="true" />
                 </span>
@@ -216,7 +220,6 @@ const {
 
 const autocompleteItems = ref([] as string[])
 const isAutocompleteLoading = ref(false)
-
 const isAutocompleteOpen = ref(false)
 const query = ref('')
 
@@ -226,17 +229,6 @@ const selectedItems = computed({
     model.value = uniq(newVal).filter((t) => !!t.length)
   }
 })
-
-// const filteredItems = computed(() =>
-//   query.value === ''
-//     ? serverTags.value
-//     : serverTags.value.filter((tag) =>
-//         tag
-//           .toLowerCase()
-//           .replace(/\s+/g, '')
-//           .includes(query.value.toLowerCase().replace(/\s+/g, ''))
-//       )
-// )
 
 const sizeClasses = computed((): string => {
   switch (props.size) {
@@ -335,6 +327,10 @@ const resolveAutocompleteItems = async () => {
   isAutocompleteLoading.value = false
 }
 const debouncedResolve = debounce(resolveAutocompleteItems, 1000)
+const debouncedResolveAndMarkLoading = () => {
+  isAutocompleteLoading.value = true
+  debouncedResolve()
+}
 
 const onQueryInput = (e: Event, forceCreateFromInput?: boolean) => {
   const isAddingTag = isInputEvent(e)
@@ -382,7 +378,7 @@ watch(isAutocompleteOpen, (newIsOpen, oldIsOpen) => {
 })
 
 watch(query, () => {
-  debouncedResolve()
+  debouncedResolveAndMarkLoading()
 })
 
 onMounted(() => {

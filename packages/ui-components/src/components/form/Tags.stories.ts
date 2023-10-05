@@ -1,5 +1,6 @@
 import { wait } from '@speckle/shared'
 import { Meta, StoryObj } from '@storybook/vue3'
+import { times } from 'lodash'
 import FormSelectTags from '~~/src/components/form/Tags.vue'
 
 type StoryType = StoryObj<
@@ -74,11 +75,8 @@ export const WithAutocomplete = {
   args: {
     ...Default.args,
     name: 'with-autocomplete',
-    getAutocompleteItems: (query: string) => [
-      `autocomplete-${query}-1`,
-      `autocomplete-${query}-2`,
-      `autocomplete-${query}-3`
-    ]
+    getAutocompleteItems: (query: string) =>
+      times(20, (i) => `autocomplete-${query}-${i}`)
   }
 }
 
