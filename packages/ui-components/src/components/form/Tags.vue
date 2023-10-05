@@ -34,7 +34,7 @@
           :placeholder="!selectedItems.length ? placeholder : undefined"
           @input="onQueryInput"
           @keydown.escape="onQueryEscape"
-          @keydown.enter="onQueryInput($event, true)"
+          @keydown.enter.stop.prevent="onQueryInput($event, true)"
           @keydown.tab="onQueryInput"
           @keydown.backspace="onQueryBackspace"
           @keydown.arrow-up="onQueryArrowUp"
@@ -42,7 +42,7 @@
           @blur="isAutocompleteOpen = false"
         />
         <a
-          v-if="showClear"
+          v-if="shouldShowClear"
           title="Clear input"
           class="absolute top-2 right-0 flex items-center pr-2 cursor-pointer"
           @click="clear"
@@ -55,7 +55,7 @@
           v-if="errorMessage"
           :class="[
             'pointer-events-none absolute top-[10px] right-0 flex items-center',
-            showClear ? 'pr-8' : 'pr-2'
+            shouldShowClear ? 'pr-8' : 'pr-2'
           ]"
         >
           <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
@@ -63,7 +63,7 @@
         <div
           v-if="showRequired && !errorMessage"
           class="pointer-events-none absolute top-[2px] text-4xl right-0 flex items-center text-danger opacity-50"
-          :class="showClear ? 'pr-8' : 'pr-2'"
+          :class="shouldShowClear ? 'pr-8' : 'pr-2'"
         >
           *
         </div>
@@ -154,6 +154,7 @@ type Tag = string
 const isInputEvent = (e: Event): e is InputEvent => e.type === 'input'
 
 const emit = defineEmits<{
+  (e: 'update:modelValue', val: Tag[]): void
   (e: 'change', val: { event?: Event; value: Tag[] }): void
   (e: 'clear'): void
 }>()
@@ -177,6 +178,7 @@ const props = withDefaults(
     disabled?: boolean
     useLabelInErrors?: boolean
     getAutocompleteItems?: (query: string) => MaybeAsync<Tag[]>
+    modelValue?: Tag[]
   }>(),
   {
     size: 'base',
@@ -185,8 +187,7 @@ const props = withDefaults(
   }
 )
 
-const model = defineModel<Tag[]>({ local: true })
-
+// const localValue = defineModel<Tag[]>({ local: true })
 const inputEl = ref(null as Nullable<HTMLInputElement>)
 const { focused: isInputFocused } = useFocus(inputEl)
 
@@ -211,11 +212,15 @@ const {
   hideHelpTip,
   helpTipClasses,
   errorMessage,
-  clear
+  clear,
+  value
 } = useTextInputCore({
   props: toRefs(props),
   emit,
   inputEl
+  // options: {
+  //   customClear: () => (selectedItems.value = [])
+  // }
 })
 
 const autocompleteItems = ref([] as string[])
@@ -224,9 +229,9 @@ const isAutocompleteOpen = ref(false)
 const query = ref('')
 
 const selectedItems = computed({
-  get: () => model.value || [],
+  get: () => value.value || [],
   set: (newVal) => {
-    model.value = uniq(newVal).filter((t) => !!t.length)
+    value.value = uniq(newVal).filter((t) => !!t.length)
   }
 })
 
@@ -244,6 +249,8 @@ const sizeClasses = computed((): string => {
   }
 })
 
+const shouldShowClear = computed(() => props.showClear && !!selectedItems.value.length)
+
 const inputWrapperClasses = computed(() => {
   const classParts: string[] = [
     coreClasses.value,
@@ -252,9 +259,9 @@ const inputWrapperClasses = computed(() => {
       : ''
   ]
 
-  if (props.showClear && (errorMessage.value || props.showRequired)) {
+  if (shouldShowClear.value && (errorMessage.value || props.showRequired)) {
     classParts.push('pr-14')
-  } else if (props.showClear || errorMessage.value || props.showRequired) {
+  } else if (shouldShowClear.value || errorMessage.value || props.showRequired) {
     classParts.push('pr-8')
   }
 
@@ -380,6 +387,15 @@ watch(isAutocompleteOpen, (newIsOpen, oldIsOpen) => {
 watch(query, () => {
   debouncedResolveAndMarkLoading()
 })
+
+// // syncing value w/ vee-validate internal state
+// watch(
+//   selectedItems,
+//   (newVal) => {
+//     value.value = newVal.slice()
+//   },
+//   { deep: true, immediate: true }
+// )
 
 onMounted(() => {
   resolveAutocompleteItems()

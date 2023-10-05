@@ -55,6 +55,7 @@ import {
   AsyncWritableComputedOptions,
   AsyncWritableComputedRef
 } from '~~/src/composables/common/async'
+import FormTags from '~~/src/components/form/Tags.vue'
 
 export {
   GlobalToastRenderer,
@@ -98,7 +99,8 @@ export {
   LayoutPanel,
   CommonAlert,
   writableAsyncComputed,
-  useFormCheckboxModel
+  useFormCheckboxModel,
+  FormTags
 }
 export type {
   ToastNotification,

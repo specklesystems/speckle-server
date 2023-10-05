@@ -1,7 +1,10 @@
 import { wait } from '@speckle/shared'
 import { Meta, StoryObj } from '@storybook/vue3'
 import { times } from 'lodash'
+import { useForm } from 'vee-validate'
+import FormButton from '~~/src/components/form/Button.vue'
 import FormSelectTags from '~~/src/components/form/Tags.vue'
+import { action } from '@storybook/addon-actions'
 
 type StoryType = StoryObj<
   Record<string, unknown> & {
@@ -165,4 +168,25 @@ export const WithFoundationColor: StoryType = {
     name: 'with-foundation-color',
     color: 'foundation'
   }
+}
+
+export const UncontrolledInForm: StoryType = {
+  ...Default,
+  render: (args) => ({
+    components: { FormSelectTags, FormButton },
+    setup: () => {
+      const { handleSubmit } = useForm()
+      const onSubmit = handleSubmit((vals) => {
+        action('submit')(vals)
+      })
+      return { args, onSubmit }
+    },
+    template: `
+    <form class="bg-foundation p-5 w-full flex flex-col space-y-4" @submit="onSubmit">
+      <FormSelectTags name="with-form" label="Tags" show-label show-clear/>
+      <FormButton submit>Submit</FormButton>
+    </form>
+    `
+  }),
+  args: {}
 }

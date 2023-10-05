@@ -31,8 +31,11 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     (e: 'clear'): void
   }
   inputEl: Ref<Nullable<HTMLInputElement | HTMLTextAreaElement>>
+  options?: Partial<{
+    customClear: () => void
+  }>
 }) {
-  const { props, inputEl, emit } = params
+  const { props, inputEl, emit, options } = params
 
   const { value, errorMessage: error } = useField<V>(props.name, props.rules, {
     validateOnMount: unref(props.validateOnMount),
@@ -112,6 +115,8 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 
   const clear = () => {
     value.value = (isArray(value.value) ? [] : '') as V
+    options?.customClear?.()
+
     emit('change', { value: value.value })
     emit('clear')
   }
