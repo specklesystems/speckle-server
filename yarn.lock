@@ -12573,7 +12573,7 @@ __metadata:
     "@vue/apollo-option": ^4.0.0-alpha.20
     "@vue/eslint-config-typescript": ^11.0.1
     "@vuejs-community/vue-filter-date-format": ^1.6.3
-    "@vuejs-community/vue-filter-date-parse": ^1.1.6
+    "@vuejs-community/vue-filter-date-parse": ^1.2.0
     "@vueuse/core": ^9.13.0
     apexcharts: ^3.33.1
     apollo-upload-client: ^17.0.0
@@ -17588,12 +17588,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vuejs-community/vue-filter-date-parse@npm:^1.1.6":
-  version: 1.1.6
-  resolution: "@vuejs-community/vue-filter-date-parse@npm:1.1.6"
-  peerDependencies:
-    vue: ^2.0.0
-  checksum: c0c03afeeb85981a1b92baf1e9309a71bb410af0d974b725da2eb177200fcc2de4403ec13665b8e0a05106e2de970259a0d428849a8fee6f900cc52fb315934f
+"@vuejs-community/vue-filter-date-parse@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "@vuejs-community/vue-filter-date-parse@npm:1.2.0"
+  checksum: 92ad64996aef07ebba75ecb5839e6c5ddd3b8708dfd4c5eaf509c2936c368b1270714b4d98b750651cf6b19102c4878cf67dab9ddeba5e714a8a126ed88c9dcb
   languageName: node
   linkType: hard
 
