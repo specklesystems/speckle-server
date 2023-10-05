@@ -88,6 +88,7 @@ import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessu
 import { FormButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { computed, ref, useSlots } from 'vue'
+import { throttle } from 'lodash'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -171,10 +172,10 @@ const onClose = () => {
   open.value = false
 }
 
-const onScroll = (e: Event) => {
+const onScroll = throttle((e: Event) => {
   const target = e.target as HTMLElement
   const { scrollTop, offsetHeight, scrollHeight } = target
   scrolledFromTop.value = scrollTop > 0
   scrolledToBottom.value = scrollTop + offsetHeight >= scrollHeight
-}
+}, 60)
 </script>
