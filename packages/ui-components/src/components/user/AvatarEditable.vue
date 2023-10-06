@@ -22,10 +22,13 @@ import { defineAsyncComponent, ref, watch } from 'vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import UserAvatar from '~~/src/components/user/Avatar.vue'
 import { AvatarUser } from '~~/src/composables/user/avatar'
+import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
 
-const LazyUserAvatarEditor = defineAsyncComponent(
-  () => import('~~/src/components/user/AvatarEditor.vue')
-)
+const LazyUserAvatarEditor = defineAsyncComponent({
+  loader: () => import('~~/src/components/user/AvatarEditor.vue'),
+  loadingComponent: CommonLoadingIcon,
+  delay: 100
+})
 
 const emit = defineEmits<{
   (e: 'save', newUrl: Nullable<string>): void

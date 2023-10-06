@@ -72,8 +72,10 @@ import {
   prettyFileSize
 } from '~~/src/helpers/form/file'
 export * from '~~/src/helpers/common/error'
+import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
 
 export {
+  CommonLoadingIcon,
   UniqueFileTypeSpecifier,
   prettyFileSize,
   BlobUploadStatus,
