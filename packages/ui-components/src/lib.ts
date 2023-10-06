@@ -56,8 +56,15 @@ import {
   AsyncWritableComputedRef
 } from '~~/src/composables/common/async'
 import FormTags from '~~/src/components/form/Tags.vue'
+import UserAvatar from '~~/src/components/user/Avatar.vue'
+import UserAvatarGroup from '~~/src/components/user/AvatarGroup.vue'
+import UserAvatarEditable from '~~/src/components/user/AvatarEditable.vue'
+export * from '~~/src/helpers/common/error'
 
 export {
+  UserAvatar,
+  UserAvatarGroup,
+  UserAvatarEditable,
   GlobalToastRenderer,
   ToastNotificationType,
   FormButton,

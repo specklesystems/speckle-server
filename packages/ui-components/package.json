@@ -47,6 +47,7 @@
     "nanoid": "^3.0.0",
     "v3-infinite-loading": "^1.2.2",
     "vee-validate": "^4.7.0",
+    "vue-advanced-cropper": "^2.8.8",
     "vue-tippy": "^6.0.0"
   },
   "devDependencies": {
