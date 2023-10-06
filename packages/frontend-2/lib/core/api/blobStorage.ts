@@ -3,20 +3,7 @@ import { BaseError } from '~~/lib/core/errors/base'
 import { UploadableFileItem, UploadFileItem } from '~~/lib/form/composables/fileUpload'
 import { Optional } from '@speckle/shared'
 import { Merge, SetRequired } from 'type-fest'
-
-export enum BlobUploadStatus {
-  Success = 1,
-  Failure = 2
-}
-
-export type BlobPostResultItem = {
-  blobId?: string
-  fileName?: string
-  fileSize?: number
-  formKey: string
-  uploadStatus: number
-  uploadError: string
-}
+import { BlobUploadStatus, BlobPostResultItem } from '@speckle/ui-components'
 
 export type BlobUploadPrincipal = {
   streamId: string
@@ -268,3 +255,6 @@ export async function deleteBlob(params: {
     throw new BlobDeleteFailedError()
   }
 }
+
+export { BlobUploadStatus }
+export type { BlobPostResultItem }
