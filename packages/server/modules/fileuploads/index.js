@@ -38,7 +38,7 @@ exports.init = async (app) => {
     '/api/file/:fileType/:streamId/:branchName?',
     authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
-      const branchName = (req.params.branchName || 'main').toLowerCase()
+      const branchName = req.params.branchName || 'main'
       req.log = req.log.child({
         streamId: req.params.streamId,
         userId: req.context.userId,
