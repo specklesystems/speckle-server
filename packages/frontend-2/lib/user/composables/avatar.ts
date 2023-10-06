@@ -5,7 +5,7 @@ import {
   AppAuthorAvatarFragment
 } from '~~/lib/common/generated/gql/graphql'
 
-export type UserAvatarSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | 'editable'
+export type UserAvatarSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | 'xxl' | 'editable'
 export type AvatarUserType =
   | LimitedUserAvatarFragment
   | ActiveUserAvatarFragment
@@ -30,6 +30,8 @@ export function useAvatarSizeClasses(params: {
         return 'h-10'
       case 'xl':
         return 'h-14'
+      case 'xxl':
+        return 'h-32'
       case 'editable':
         return 'h-60'
       case 'base':
@@ -49,6 +51,8 @@ export function useAvatarSizeClasses(params: {
         return 'w-10'
       case 'xl':
         return 'w-14'
+      case 'xxl':
+        return 'w-32'
       case 'editable':
         return 'w-60'
       case 'base':
@@ -68,6 +72,8 @@ export function useAvatarSizeClasses(params: {
         return 'text-md'
       case 'xl':
         return 'text-2xl'
+      case 'xxl':
+        return 'text-3xl'
       case 'editable':
         return 'h1'
       case 'base':
@@ -87,6 +93,8 @@ export function useAvatarSizeClasses(params: {
         return 'w-5 h-5'
       case 'xl':
         return 'w-8 h-8'
+      case 'xxl':
+        return 'w-16 h-16'
       case 'editable':
         return 'w-20 h-20'
       case 'base':

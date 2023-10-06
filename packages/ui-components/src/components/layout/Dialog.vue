@@ -29,7 +29,7 @@
           >
             <DialogPanel
               :class="[
-                'transform rounded-lg bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90vh]',
+                'transform rounded-lg overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90vh]',
                 widthClasses
               ]"
               :as="isForm ? 'form' : 'div'"
@@ -40,7 +40,7 @@
                 class="relative z-10 flex items-center justify-start rounded-t-lg shrink-0 h-16 px-8"
                 :class="scrolledFromTop && 'shadow'"
               >
-                <h4 class="text-2xl font-bold">{{ title }}</h4>
+                <h4 class="text-2xl font-bold dark:text-white">{{ title }}</h4>
               </div>
               <button
                 v-if="!hideCloser"
@@ -51,7 +51,7 @@
                 <XMarkIcon class="h-6 w-6" />
               </button>
               <div
-                class="flex-1 simple-scrollbar overflow-y-auto bg-white"
+                class="flex-1 simple-scrollbar overflow-y-auto bg-white dark:bg-foundation"
                 :class="title ? 'py-6 px-8' : 'p-10'"
                 @scroll="onScroll"
               >

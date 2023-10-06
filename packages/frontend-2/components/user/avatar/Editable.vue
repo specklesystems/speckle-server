@@ -7,7 +7,7 @@
       @save="editMode = false"
     />
     <div v-else class="relative group">
-      <UserAvatar :user="user" size="editable" />
+      <UserAvatar :user="user" :size="size ? size : 'editable'" />
       <div
         class="opacity-0 transition-all absolute group-hover:opacity-100 inset-0 flex items-end justify-center bottom-4"
       >
@@ -17,6 +17,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { UserAvatarSize } from '~~/lib/user/composables/avatar'
 import { graphql } from '~~/lib/common/generated/gql'
 import { UserAvatarEditable_UserFragment } from '~~/lib/common/generated/gql/graphql'
 
@@ -30,6 +31,7 @@ graphql(`
 
 defineProps<{
   user: UserAvatarEditable_UserFragment
+  size?: UserAvatarSize
 }>()
 
 const editMode = ref(false)
