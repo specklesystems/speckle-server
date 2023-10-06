@@ -111,7 +111,7 @@ export function validateFileType(
   if (!fileExt) return new MissingFileExtensionError()
 
   for (const allowedExtension of allowedExtensions) {
-    if (allowedExtension === fileExt) return true
+    if (allowedExtension === fileExt.toLowerCase()) return true
   }
 
   return new ForbiddenFileTypeError()
