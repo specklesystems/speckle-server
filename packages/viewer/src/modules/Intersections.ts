@@ -24,7 +24,7 @@ export class Intersections {
   public constructor() {
     this.raycaster = new SpeckleRaycaster()
     this.raycaster.params.Line = { threshold: 0.01 }
-    this.raycaster.params.Points.threshold = 0.1
+    this.raycaster.params.Points = { threshold: 0.01 }
     ;(this.raycaster.params as { Line2? }).Line2 = {}
     ;(this.raycaster.params as { Line2? }).Line2.threshold = 1
     this.raycaster.onObjectIntersectionTest = this.onObjectIntersection.bind(this)

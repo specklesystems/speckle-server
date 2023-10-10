@@ -12,6 +12,7 @@ import { getConversionFactor } from '../converter/Units'
 import SpeckleGhostMaterial from './SpeckleGhostMaterial'
 import SpeckleTextMaterial from './SpeckleTextMaterial'
 import { SpeckleMaterial } from './SpeckleMaterial'
+import SpecklePointColouredMaterial from './SpecklePointColouredMaterial'
 
 export interface RenderMaterial {
   id: string
@@ -71,6 +72,7 @@ export default class Materials {
   private lineHiddenMaterial: Material = null
 
   private pointGhostMaterial: Material = null
+  private pointCloudColouredMaterial: Material = null
 
   private textGhostMaterial: Material = null
   private textColoredMaterial: Material = null
@@ -387,6 +389,17 @@ export default class Materials {
       },
       ['USE_RTE']
     )
+
+    this.pointCloudColouredMaterial = new SpecklePointColouredMaterial(
+      {
+        color: 0xffffff,
+        vertexColors: false,
+        size: 2,
+        sizeAttenuation: false
+      },
+      ['USE_RTE']
+    )
+    ;(this.pointCloudColouredMaterial as SpecklePointMaterial).toneMapped = false
     ;(this.pointGhostMaterial as SpecklePointMaterial).toneMapped = false
   }
 
@@ -754,8 +767,8 @@ export default class Materials {
     switch (renderView.geometryType) {
       case GeometryType.MESH: {
         const material = renderView.transparent
-          ? this.meshTransparentGradientMaterial
-          : this.meshGradientMaterial
+          ? this.meshTransparentColoredMaterial
+          : this.meshColoredMaterial
         if (filterMaterial?.rampTexture)
           (material as SpeckleStandardColoredMaterial).setGradientTexture(
             filterMaterial.rampTexture
@@ -766,8 +779,14 @@ export default class Materials {
         return this.lineColoredMaterial
       case GeometryType.POINT:
         return this.pointGhostMaterial
-      case GeometryType.POINT_CLOUD:
-        return this.pointGhostMaterial
+      case GeometryType.POINT_CLOUD: {
+        const material = this.pointCloudColouredMaterial
+        if (filterMaterial?.rampTexture)
+          (material as SpeckleStandardColoredMaterial).setGradientTexture(
+            filterMaterial.rampTexture
+          )
+        return material
+      }
       case GeometryType.TEXT:
         return this.textColoredMaterial
     }

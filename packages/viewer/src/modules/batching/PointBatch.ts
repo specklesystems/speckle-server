@@ -1,5 +1,7 @@
 import {
+  BufferAttribute,
   BufferGeometry,
+  DynamicDrawUsage,
   Float32BufferAttribute,
   Material,
   Object3D,
@@ -26,6 +28,8 @@ export default class PointBatch implements Batch {
   public batchMaterial: Material
   public mesh: Points
   private needsFlatten = false
+
+  private gradientIndexBuffer: BufferAttribute
 
   public get bounds() {
     if (!this.geometry.boundingBox) this.geometry.computeBoundingBox()
@@ -103,8 +107,35 @@ export default class PointBatch implements Batch {
   }
 
   public setBatchBuffers(...range: BatchUpdateRange[]): void {
-    range
-    // NOT IMPLEMENTED
+    let minGradientIndex = Infinity
+    let maxGradientIndex = 0
+    for (let k = 0; k < range.length; k++) {
+      if (range[k].materialOptions) {
+        if (range[k].materialOptions.rampIndex !== undefined) {
+          const start = range[k].offset
+          const len = range[k].offset + range[k].count
+          /** The ramp indices specify the *begining* of each ramp color. When sampling with Nearest filter (since we don't want filtering)
+           *  we'll always be sampling right at the edge between texels. Most GPUs will sample consistently, but some won't and we end up with
+           *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
+           *  sampling can occur.
+           */
+          const shiftedIndex =
+            range[k].materialOptions.rampIndex +
+            0.5 / range[k].materialOptions.rampWidth
+          const minMaxIndices = this.updateGradientIndexBufferData(
+            start,
+            range[k].count === Infinity
+              ? this.geometry.attributes['gradientIndex'].array.length
+              : len,
+            shiftedIndex
+          )
+          minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
+          maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
+        }
+      }
+    }
+    if (minGradientIndex < Infinity && maxGradientIndex > 0)
+      this.updateGradientIndexBuffer()
   }
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
@@ -315,7 +346,11 @@ export default class PointBatch implements Batch {
     this.mesh.material = [this.batchMaterial]
     this.mesh.geometry.addGroup(0, this.getCount(), 0)
     this.mesh.uuid = this.id
-    this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_POINT)
+    this.mesh.layers.set(
+      this.renderViews[0].geometryType === GeometryType.POINT
+        ? ObjectLayers.STREAM_CONTENT_POINT
+        : ObjectLayers.STREAM_CONTENT_POINT_CLOUD
+    )
   }
 
   public getRenderView(index: number): NodeRenderView {
@@ -379,6 +414,13 @@ export default class PointBatch implements Batch {
     this.geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
     this.geometry.setAttribute('color', new Float32BufferAttribute(color, 3))
 
+    const buffer = new Float32Array(position.length / 3)
+    this.gradientIndexBuffer = new Float32BufferAttribute(buffer, 1)
+    this.gradientIndexBuffer.setUsage(DynamicDrawUsage)
+    this.geometry.setAttribute('gradientIndex', this.gradientIndexBuffer)
+    this.updateGradientIndexBufferData(0, buffer.length, 0)
+    this.updateGradientIndexBuffer()
+
     this.geometry.computeVertexNormals()
     this.geometry.computeBoundingSphere()
     this.geometry.computeBoundingBox()
@@ -386,6 +428,35 @@ export default class PointBatch implements Batch {
     Geometry.updateRTEGeometry(this.geometry, position)
 
     return this.geometry
+  }
+
+  private updateGradientIndexBufferData(
+    start: number,
+    end: number,
+    value: number
+  ): { minIndex: number; maxIndex: number } {
+    const data = this.gradientIndexBuffer
+    ;(data.array as Float32Array).fill(value, start, end)
+    this.gradientIndexBuffer.updateRange = {
+      offset: start,
+      count: end - start
+    }
+    this.gradientIndexBuffer.needsUpdate = true
+    this.geometry.attributes['gradientIndex'].needsUpdate = true
+    return {
+      minIndex: start,
+      maxIndex: end
+    }
+  }
+
+  private updateGradientIndexBuffer(rangeMin?: number, rangeMax?: number) {
+    this.gradientIndexBuffer.updateRange = {
+      offset: rangeMin !== undefined ? rangeMin : 0,
+      count:
+        rangeMin !== undefined && rangeMax !== undefined ? rangeMax - rangeMin + 1 : -1
+    }
+    this.gradientIndexBuffer.needsUpdate = true
+    this.geometry.attributes['gradientIndex'].needsUpdate = true
   }
 
   public purge() {

@@ -953,7 +953,8 @@ export default class Sandbox {
         SpeckleType: 'speckle_type',
         DisplayName: 'DisplayName',
         EmbodiedCarbon: 'EmbodiedCarbon',
-        Floor: 'Floor'
+        Floor: 'Floor',
+        Name: 'name'
       }
     })
 
