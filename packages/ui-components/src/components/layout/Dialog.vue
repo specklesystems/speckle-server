@@ -11,12 +11,12 @@
         leave-to="opacity-0"
       >
         <div
-          class="fixed inset-0 bg-neutral-100/70 dark:bg-neutral-900/70 transition-opacity"
+          class="fixed inset-0 bg-neutral-100/70 dark:bg-neutral-900/70 transition-opacity backdrop-blur-xs"
         />
       </TransitionChild>
 
-      <div class="fixed inset-0 z-10 overflow-y-auto">
-        <div class="flex min-h-full justify-center p-4 text-center items-center sm:p-0">
+      <div class="fixed inset-0 z-10 h-screen w-screen">
+        <div class="flex justify-center items-center h-full w-full p-4 sm:p-0">
           <TransitionChild
             as="template"
             enter="ease-out duration-300"
@@ -29,31 +29,40 @@
           >
             <DialogPanel
               :class="[
-                'transform rounded-lg bg-foundation text-left shadow-xl transition-all',
+                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90vh]',
                 widthClasses
               ]"
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onSubmit"
             >
-              <div
-                v-if="title"
-                class="flex items-center justify-center shadow p-4 relative z-10 bg-foundation rounded-t-lg"
-              >
-                <h4 class="text-2xl font-bold">{{ title }}</h4>
+              <div :class="scrolledFromTop && 'relative z-10 shadow-lg'">
+                <div
+                  v-if="title"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 h-16 px-8"
+                >
+                  <h4 class="text-2xl font-bold">{{ title }}</h4>
+                </div>
               </div>
+
               <button
                 v-if="!hideCloser"
-                class="absolute z-20 top-5 right-4 text-foreground"
+                class="absolute z-20 right-4 bg-foundation rounded-full p-1"
+                :class="title ? 'top-4' : 'top-3'"
                 @click="open = false"
               >
                 <XMarkIcon class="h-6 w-6" />
               </button>
-              <div class="p-4 sm:p-6">
+              <div
+                class="flex-1 simple-scrollbar overflow-y-auto bg-white dark:bg-foundation"
+                :class="title ? 'py-6 px-8' : 'p-10'"
+                @scroll="onScroll"
+              >
                 <slot>Put your content here!</slot>
               </div>
               <div
                 v-if="hasButtons"
-                class="flex p-4 sm:px-6 sm:py-5 border-t gap-2 border-outline-3"
+                class="flex p-4 sm:px-6 gap-2 shrink-0"
+                :class="!scrolledToBottom && 'shadow-t'"
               >
                 <template v-if="buttons">
                   <FormButton
@@ -80,7 +89,8 @@
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { FormButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
-import { computed, useSlots } from 'vue'
+import { computed, ref, useSlots } from 'vue'
+import { throttle } from 'lodash'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -111,6 +121,9 @@ const props = defineProps<{
 
 const slots = useSlots()
 
+const scrolledFromTop = ref(false)
+const scrolledToBottom = ref(false)
+
 const isForm = computed(() => !!props.onSubmit)
 const hasButtons = computed(() => props.buttons || slots.buttons)
 
@@ -137,24 +150,20 @@ const maxWidthWeight = computed(() => {
 const widthClasses = computed(() => {
   const classParts: string[] = ['w-full', 'sm:my-8 sm:w-full sm:max-w-xl']
 
-  if (!props.title && !hasButtons.value) {
-    classParts.push('px-4 pt-4 pb-4', 'sm:p-6')
-  }
-
   if (maxWidthWeight.value >= 1) {
-    classParts.push('md:max-w-2xl')
+    classParts.push('max-w-2xl')
   }
 
   if (maxWidthWeight.value >= 2) {
-    classParts.push('lg:max-w-4xl')
+    classParts.push('max-w-4xl')
   }
 
   if (maxWidthWeight.value >= 3) {
-    classParts.push('xl:max-w-6xl')
+    classParts.push('max-w-6xl')
   }
 
   if (maxWidthWeight.value >= 4) {
-    classParts.push('2xl:max-w-7xl')
+    classParts.push('max-w-7xl')
   }
 
   return classParts.join(' ')
@@ -164,4 +173,11 @@ const onClose = () => {
   if (props.preventCloseOnClickOutside) return
   open.value = false
 }
+
+const onScroll = throttle((e: Event) => {
+  const target = e.target as HTMLElement
+  const { scrollTop, offsetHeight, scrollHeight } = target
+  scrolledFromTop.value = scrollTop > 0
+  scrolledToBottom.value = scrollTop + offsetHeight >= scrollHeight
+}, 60)
 </script>
