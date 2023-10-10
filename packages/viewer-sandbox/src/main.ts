@@ -20,6 +20,7 @@ import {
   DiffExtension,
   FilteringExtension
 } from '@speckle/viewer'
+import { Edges } from './extensions/Edges'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -51,7 +52,6 @@ const createViewer = async (containerName: string, stream: string) => {
   const filtering = viewer.createExtension(FilteringExtension)
   const explode = viewer.createExtension(ExplodeExtension)
   const diff = viewer.createExtension(DiffExtension)
-  // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
   selection // use it
   sections // use it
@@ -60,7 +60,8 @@ const createViewer = async (containerName: string, stream: string) => {
   filtering // use it
   explode // use it
   diff // use it
-  // rotateCamera // use it
+
+  const edges = viewer.createExtension(Edges)
 
   const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
 
@@ -95,6 +96,8 @@ const createViewer = async (containerName: string, stream: string) => {
     })
     console.log(categories)
     sandbox.refresh()
+
+    edges.generate()
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
@@ -124,7 +127,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+    // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6c6e43e5f3'
     // 'https://latest.speckle.dev/streams/58b5648c4d/commits/60371ecb2d'
     // 'Super' heavy revit shit
@@ -310,7 +313,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/97750296c2/commits/aec0841f7e' // 11k objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/96ffc3c786' // 92209 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/92115d3789' // 390974 objects 19kk tris
-    // 'https://latest.speckle.dev/streams/97750296c2/commits/a3c8388d89' // 145593 objects 100kk tris o_0
+    'https://latest.speckle.dev/streams/97750296c2/commits/a3c8388d89' // 145593 objects 100kk tris o_0
     // 'https://latest.speckle.dev/streams/97750296c2/commits/2584ad524d' // 22888 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/2bb21d31d6' // 619129 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/7cfb96a6b0' // 84452 objects

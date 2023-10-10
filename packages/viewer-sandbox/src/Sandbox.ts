@@ -24,6 +24,7 @@ import { Units } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
 import { MeasurementsExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
+import { Edges } from './extensions/Edges'
 
 export default class Sandbox {
   private viewer: DebugViewer
@@ -510,6 +511,17 @@ export default class Sandbox {
       disabled: true,
       label: 'Origin-z'
     })
+
+    const threshold = { value: 1 }
+    worldFolder
+      .addInput(threshold, 'value', {
+        min: 1,
+        max: 100,
+        step: 1
+      })
+      .on('change', () => {
+        this.viewer.getExtension(Edges).threshold = threshold.value
+      })
 
     this.tabs.pages[1].addSeparator()
     const postFolder = this.tabs.pages[1].addFolder({

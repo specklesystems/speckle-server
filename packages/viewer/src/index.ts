@@ -55,6 +55,8 @@ import {
 import { Loader } from './modules/loaders/Loader'
 import { SpeckleLoader } from './modules/loaders/Speckle/SpeckleLoader'
 import { ObjLoader } from './modules/loaders/OBJ/ObjLoader'
+import { GeometryType } from './modules/batching/Batch'
+import MeshBatch from './modules/batching/MeshBatch'
 
 export {
   Viewer,
@@ -83,7 +85,10 @@ export {
   DiffExtension,
   Loader,
   SpeckleLoader,
-  ObjLoader
+  ObjLoader,
+  MeshBatch,
+  GeometryType,
+  ObjectLayers
 }
 
 export type {
@@ -101,7 +106,6 @@ export type {
   InlineView,
   TreeNode,
   NodeData,
-  ObjectLayers,
   PointQuery,
   IntersectionQuery,
   QueryResult,
