@@ -87,7 +87,7 @@
     <div class="flex mx-14 space-x-2">
       <div class="grow" />
       <FormButton color="secondary" size="sm" @click="$emit('cancel')">
-        Cancel
+        Close
       </FormButton>
       <FormButton size="sm" :disabled="disabled" @click="onSave">Save</FormButton>
     </div>

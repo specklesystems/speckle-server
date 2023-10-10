@@ -23,6 +23,7 @@
       </div>
       <div v-else><UserCircleIcon :class="iconClasses" /></div>
     </slot>
+    <slot name="absolute-anchor" />
   </div>
 </template>
 <script setup lang="ts">
