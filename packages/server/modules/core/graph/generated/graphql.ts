@@ -210,7 +210,14 @@ export type AutomationFunctionRun = {
    * Current schema: {
    *   version: "1.0.0",
    *   values: {
-   *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
+   *     objectResults: Record<str, {
+   *       category: string
+   *       level: ObjectResultLevel
+   *       objectIds: string[]
+   *       message: str | null
+   *       metadata: Records<str, unknown> | null
+   *       visualoverrides: Records<str, unknown> | null
+   *     }[]>
    *     blobIds?: string[]
    *   }
    * }
