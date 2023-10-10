@@ -20,7 +20,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Nullable } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { computed, defineAsyncComponent } from 'vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import UserAvatar from '~~/src/components/user/Avatar.vue'
@@ -28,7 +28,7 @@ import { AvatarUser } from '~~/src/composables/user/avatar'
 import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
 import { RuleExpression, useField } from 'vee-validate'
 
-type ModelType = Nullable<string>
+type ModelType = MaybeNullOrUndefined<string>
 
 const LazyUserAvatarEditor = defineAsyncComponent({
   loader: () => import('~~/src/components/user/AvatarEditor.vue'),
