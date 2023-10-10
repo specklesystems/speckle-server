@@ -427,8 +427,7 @@ module.exports = class IFCParser {
         ((color.y * 255) << 8) +
         color.z * 255
     )
-
-    return {
+    const material = {
       diffuse: intColor,
       opacity: color.w,
       metalness: 0,
@@ -436,5 +435,7 @@ module.exports = class IFCParser {
       // eslint-disable-next-line camelcase
       speckle_type: 'Objects.Other.RenderMaterial'
     }
+    material.id = getHash(material)
+    return material
   }
 }

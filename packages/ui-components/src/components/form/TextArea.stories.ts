@@ -65,7 +65,8 @@ export const Default: StoryObj = {
     showLabel: true,
     disabled: false,
     validateOnMount: false,
-    color: 'page'
+    color: 'page',
+    textareaClasses: ''
   },
   parameters: {
     docs: {
@@ -132,5 +133,12 @@ export const WithFoundationColor = mergeStories(Default, {
   }),
   args: {
     color: 'foundation'
+  }
+})
+
+export const WithCustomTextareaClasses = mergeStories(Default, {
+  args: {
+    textareaClasses: 'font-mono',
+    label: 'Monospaced font textarea'
   }
 })

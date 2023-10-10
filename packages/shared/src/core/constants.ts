@@ -85,6 +85,39 @@ export const Scopes = Object.freeze(<const>{
  */
 export const AllScopes = _.flatMap(Scopes, (v) => Object.values(v))
 
+export const SourceAppNames = [
+  'Dynamo',
+  'Revit',
+  'AutoCAD',
+  'Civil3D',
+  'Blender',
+  'Rhino',
+  'Grasshopper',
+  'Excel',
+  'Unity',
+  'Unreal',
+  'Python',
+  '.NET',
+  'IFC',
+  'QGIS',
+  'ArcGIS',
+  'ETABS',
+  'PowerBI',
+  'SketchUp',
+  'SAP2000',
+  'CSiBridge',
+  'SAFE',
+  'Archicad',
+  'Tekla Structures',
+  'OpenRoads',
+  'OpenRail',
+  'OpenBuildings',
+  'MicroStation',
+  'Navisworks'
+] as const
+
+export type SourceAppName = (typeof SourceAppNames)[number]
+
 export type SourceAppDefinition = {
   /**
    * String to look for in input app names to match them to a specific source app
@@ -94,7 +127,7 @@ export type SourceAppDefinition = {
   /**
    * Full name
    */
-  name: string
+  name: SourceAppName
 
   /**
    * Shortened name
