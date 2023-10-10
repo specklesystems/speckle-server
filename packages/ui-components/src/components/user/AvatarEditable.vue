@@ -45,7 +45,7 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  modelValue: ModelType
+  modelValue?: ModelType
   /**
    * Placeholder name that will be used to generate and show initials if no avatar is present
    */
