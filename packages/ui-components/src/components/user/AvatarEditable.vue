@@ -3,6 +3,7 @@
     <LazyUserAvatarEditor
       v-if="editMode"
       :user="modelAsUser"
+      :disabled="disabled"
       @cancel="editMode = false"
       @save="onSave"
     />
@@ -11,7 +12,9 @@
       <div
         class="opacity-0 transition-all absolute group-hover:opacity-100 inset-0 flex items-end justify-center bottom-4"
       >
-        <FormButton color="secondary" @click="editMode = true">Change</FormButton>
+        <FormButton :disabled="disabled" color="secondary" @click="editMode = true">
+          Change
+        </FormButton>
       </div>
     </div>
     <div v-if="errorMessage" class="w-full text-center text-danger text-sm">
@@ -54,6 +57,7 @@ const props = defineProps<{
   rules?: RuleExpression<ModelType>
   validateOnMount?: boolean
   validateOnValueUpdate?: boolean
+  disabled?: boolean
 }>()
 
 const { value, errorMessage } = useField<ModelType>(props.name, props.rules, {

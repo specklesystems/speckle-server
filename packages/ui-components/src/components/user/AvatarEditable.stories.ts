@@ -50,7 +50,8 @@ export const Default: StoryType = {
     modelValue: null,
     placeholder: 'John Doe',
     name: 'default',
-    editMode: false
+    editMode: false,
+    disabled: false
   }
 }
 
@@ -83,5 +84,14 @@ export const WithValidation: StoryType = {
       (val || '').length > 0 || 'Please choose a picture',
     validateOnMount: true,
     validateOnValueUpdate: true
+  }
+}
+
+export const Disabled: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    name: 'disabled',
+    disabled: true
   }
 }
