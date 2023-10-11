@@ -488,4 +488,6 @@ export const ServerAppsScopes = buildTableHelper('server_apps_scopes', [
   'scopeName'
 ])
 
+export const Scopes = buildTableHelper('scopes', ['name', 'description', 'public'])
+
 export { knex }

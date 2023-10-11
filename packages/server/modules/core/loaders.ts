@@ -29,7 +29,7 @@ import {
   getSpecificBranchCommits,
   getStreamCommitCounts
 } from '@/modules/core/repositories/commits'
-import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
+import { ResourceIdentifier, Scope } from '@/modules/core/graph/generated/graphql'
 import {
   getBranchCommentCounts,
   getCommentParents,
@@ -396,7 +396,7 @@ export function buildRequestLoaders(
       )
     },
     apps: {
-      getAppScopes: createLoader<string, string[]>(async (appIds) => {
+      getAppScopes: createLoader<string, Array<Scope>>(async (appIds) => {
         const results = await getAppScopes(appIds.slice())
         return appIds.map((i) => results[i] || [])
       })
