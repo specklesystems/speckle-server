@@ -53,6 +53,7 @@ import { Users } from '@/modules/core/dbSchema'
 import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import { getAutomationFunctionRunResultVersions } from '@/modules/automations/repositories/automations'
+import { getAppScopes } from '@/modules/auth/repositories'
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -393,6 +394,12 @@ export function buildRequestLoaders(
           return inviteIds.map((i) => results[i] || null)
         }
       )
+    },
+    apps: {
+      getAppScopes: createLoader<string, string[]>(async (appIds) => {
+        const results = await getAppScopes(appIds.slice())
+        return appIds.map((i) => results[i] || [])
+      })
     },
     automationFunctionRuns: {
       /**

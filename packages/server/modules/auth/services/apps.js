@@ -108,11 +108,11 @@ module.exports = {
     app.id = crs({ length: 10 })
     app.secret = crs({ length: 10 })
 
-    if (!app.scopes) {
+    const scopes = (app.scopes || []).filter((s) => !!s?.length)
+
+    if (scopes) {
       throw new Error('Cannot create an app with no scopes.')
     }
-
-    const scopes = [...app.scopes]
 
     delete app.scopes
     delete app.firstparty
