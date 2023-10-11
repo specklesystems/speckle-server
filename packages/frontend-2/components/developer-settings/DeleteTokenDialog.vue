@@ -4,15 +4,16 @@
     max-width="sm"
     title="Delete Access Token"
     :buttons="dialogButtons"
+    max-height
   >
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <p>
         Are you sure you want to
         <strong>permanently delete</strong>
-        the selected webhook?
+        the selected access token?
       </p>
-      <div v-if="webhook" class="flex flex-col gap-2">
-        <strong>{{ webhook.description }}</strong>
+      <div v-if="token" class="flex flex-col gap-2">
+        <strong>{{ token.name }}</strong>
       </div>
 
       <p>
@@ -27,79 +28,57 @@
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
-import { WebhookItem } from '~~/lib/projects/helpers/types'
-import { deleteWebhookMutation } from '~~/lib/projects/graphql/mutations'
+import { TokenItem } from '~~/lib/developer-settings/helpers/types'
+import { deleteAccessTokenMutation } from '~~/lib/developer-settings/graphql/mutations'
 import {
   convertThrowIntoFetchResult,
   getCacheId,
-  getFirstErrorMessage,
-  modifyObjectFields
+  getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import { WebhookCollection } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
-  webhook: WebhookItem | null
+  token: TokenItem | null
 }>()
 
 const { triggerNotification } = useGlobalToast()
-const { mutate: deleteMutation } = useMutation(deleteWebhookMutation)
+const { mutate: deleteMutation } = useMutation(deleteAccessTokenMutation)
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const deleteConfirmed = async () => {
-  const webhookId = props.webhook?.id
-  const projectId = props.webhook?.streamId
+  const tokenId = props.token?.id
 
-  if (!webhookId || !projectId) {
+  if (!tokenId) {
     return
   }
 
   const result = await deleteMutation(
     {
-      webhook: {
-        id: webhookId,
-        streamId: projectId
-      }
+      token: tokenId
     },
     {
       update: (cache, { data }) => {
-        if (data?.webhookDelete) {
-          const cacheId = getCacheId('Webhook', webhookId)
+        if (data?.apiTokenRevoke) {
+          const cacheId = getCacheId('ApiToken', tokenId)
           cache.evict({ id: cacheId })
-
-          const projectCacheId = getCacheId('Project', projectId)
-          modifyObjectFields<{ webhooks: WebhookCollection }, WebhookCollection>(
-            cache,
-            projectCacheId,
-            (fieldName, _variables, value) => {
-              const oldItems = value?.items || []
-              const newItems = oldItems.filter((i) => i?.__ref !== cacheId)
-              return {
-                ...value,
-                items: newItems,
-                totalCount: Math.max(0, (value?.totalCount || 0) - 1)
-              }
-            },
-            { fieldNameWhitelist: ['webhooks'] }
-          )
         }
       }
     }
   ).catch(convertThrowIntoFetchResult)
 
-  if (result?.data?.webhookDelete) {
+  if (result?.data?.apiTokenRevoke) {
     isOpen.value = false
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'Webhook deleted',
-      description: 'The webhook has been successfully deleted'
+      title: 'Access Token deleted',
+      description: 'The access token has been successfully deleted'
     })
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
       type: ToastNotificationType.Danger,
-      title: 'Failed to delete webhook',
+      title: 'Failed to delete access token',
       description: errorMessage
     })
   }

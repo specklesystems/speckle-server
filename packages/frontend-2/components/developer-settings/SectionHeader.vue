@@ -14,7 +14,9 @@
         </FormButton>
       </div>
     </div>
-    <p class="text-sm max-w-5xl">{{ text }}</p>
+    <p class="text-sm max-w-5xl">
+      <slot></slot>
+    </p>
   </div>
 </template>
 

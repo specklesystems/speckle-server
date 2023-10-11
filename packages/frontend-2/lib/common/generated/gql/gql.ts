@@ -77,7 +77,6 @@ const documents = {
     "\n  query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {\n    project(id: $projectId) {\n      id\n      models(limit: 100, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...CommonModelSelectorModel\n        }\n      }\n    }\n  }\n": types.ProjectModelsSelectorValuesDocument,
     "\n  query MainServerInfoData {\n    serverInfo {\n      adminContact\n      blobSizeLimitBytes\n      canonicalUrl\n      company\n      description\n      guestModeEnabled\n      inviteOnly\n      name\n      termsOfService\n      version\n      automateUrl\n    }\n  }\n": types.MainServerInfoDataDocument,
     "\n  query ServerVersionInfo {\n    serverInfo {\n      version\n    }\n  }\n": types.ServerVersionInfoDocument,
-    "\n  mutation UpdateAccessTokens($user: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $user) {\n        id\n        apiTokens {\n          name\n          id\n          scopes\n        }\n      }\n    }\n  }\n": types.UpdateAccessTokensDocument,
     "\n  mutation deleteAccessToken($token: String!) {\n    apiTokenRevoke(token: $token)\n  }\n": types.DeleteAccessTokenDocument,
     "\n  mutation createAccessToken($token: ApiTokenCreateInput!) {\n    apiTokenCreate(token: $token)\n  }\n": types.CreateAccessTokenDocument,
     "\n  query DeveloperSettingsAccessTokens {\n    activeUser {\n      id\n      apiTokens {\n        id\n        name\n        lastUsed\n        lastChars\n        createdAt\n        scopes\n      }\n    }\n  }\n": types.DeveloperSettingsAccessTokensDocument,
@@ -433,10 +432,6 @@ export function graphql(source: "\n  query MainServerInfoData {\n    serverInfo 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query ServerVersionInfo {\n    serverInfo {\n      version\n    }\n  }\n"): (typeof documents)["\n  query ServerVersionInfo {\n    serverInfo {\n      version\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  mutation UpdateAccessTokens($user: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $user) {\n        id\n        apiTokens {\n          name\n          id\n          scopes\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateAccessTokens($user: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $user) {\n        id\n        apiTokens {\n          name\n          id\n          scopes\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

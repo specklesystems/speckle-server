@@ -30,7 +30,8 @@
             <DialogPanel
               :class="[
                 'transform rounded-lg overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90vh]',
-                widthClasses
+                widthClasses,
+                !maxHeight && 'h-full'
               ]"
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onSubmit"
@@ -106,6 +107,7 @@ const props = defineProps<{
    */
   preventCloseOnClickOutside?: boolean
   title?: string
+  maxHeight?: boolean
   buttons?: Array<{
     text: string
     props: Record<string, unknown>
