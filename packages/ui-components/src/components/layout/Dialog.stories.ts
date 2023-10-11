@@ -3,6 +3,7 @@ import LayoutDialog from '~~/src/components/layout/Dialog.vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import { ref } from 'vue'
 import { action } from '@storybook/addon-actions'
+import { directive as vTippy } from 'vue-tippy'
 
 export default {
   component: LayoutDialog,
@@ -122,6 +123,29 @@ export const WithSlotButtons: StoryObj = {
         <template #buttons>
             <FormButton @click="() => open = false">Close</FormButton>
         </template>
+      </LayoutDialog>
+    </div>`
+  })
+}
+
+export const WithOverflowingTooltip: StoryObj = {
+  ...Default,
+  args: {
+    ...Default.args
+  },
+  render: (args) => ({
+    components: { LayoutDialog, FormButton },
+    directives: { tippy: vTippy },
+    setup() {
+      const open = ref(false)
+      return { args, open }
+    },
+    template: `<div>
+      <FormButton @click="() => open = true">Trigger dialog</FormButton>
+      <LayoutDialog v-model:open="open" v-bind="args">
+        <div class="flex flex-col text-foreground space-y-4">
+          <p v-tippy="\`Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris vehicula mauris sed tortor tempor, eget viverra arcu dapibus. Vivamus ac erat sit amet justo pulvinar condimentum. Vivamus volutpat eget justo in elementum. Quisque ut metus sed elit eleifend faucibus eget vel diam. Sed eget accumsan felis. Nullam sollicitudin a felis eget aliquet. Fusce vitae erat rutrum, convallis ipsum in, efficitur lectus. Mauris sed augue at lacus malesuada mattis. Mauris tincidunt augue nec magna mollis efficitur. Etiam suscipit pellentesque lorem, quis placerat mi tristique et. Donec at scelerisque dolor. Proin nec libero vitae ligula tincidunt interdum eget et odio.\`">Hover on me!</p>
+        </div>
       </LayoutDialog>
     </div>`
   })
