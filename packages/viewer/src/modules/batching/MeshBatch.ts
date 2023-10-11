@@ -6,6 +6,7 @@ import {
   Float32BufferAttribute,
   Material,
   Object3D,
+  Sphere,
   Uint16BufferAttribute,
   Uint32BufferAttribute,
   WebGLRenderer
@@ -510,13 +511,24 @@ export default class MeshBatch implements Batch {
     this.geometry.setDrawRange(0, Infinity)
   }
 
+  public static bufferSetup = 0
+  public static arrayWork = 0
+  public static objectBvh = 0
+  public static computeNormals = 0
+  public static computeBoxAndSphere = 0
+  public static computeRTE = 0
+  public static batchBVH = 0
+
   public buildBatch() {
-    const indicesCount = this.renderViews.flatMap(
-      (val: NodeRenderView) => val.renderData.geometry.attributes.INDEX
-    ).length
-    const attributeCount = this.renderViews.flatMap(
-      (val: NodeRenderView) => val.renderData.geometry.attributes.POSITION
-    ).length
+    const start = performance.now()
+    let indicesCount = 0
+    let attributeCount = 0
+    for (let k = 0; k < this.renderViews.length; k++) {
+      indicesCount += this.renderViews[k].renderData.geometry.attributes.INDEX.length
+      attributeCount +=
+        this.renderViews[k].renderData.geometry.attributes.POSITION.length
+    }
+
     const hasVertexColors =
       this.renderViews[0].renderData.geometry.attributes.COLOR !== undefined
     const indices = new Uint32Array(indicesCount)
@@ -525,10 +537,13 @@ export default class MeshBatch implements Batch {
     color.fill(1)
     const batchIndices = new Float32Array(attributeCount / 3)
 
+    MeshBatch.bufferSetup += performance.now() - start
     let offset = 0
     let arrayOffset = 0
     const batchObjects = []
+
     for (let k = 0; k < this.renderViews.length; k++) {
+      const start2 = performance.now()
       const geometry = this.renderViews[k].renderData.geometry
       indices.set(
         geometry.attributes.INDEX.map((val) => val + offset / 3),
@@ -541,6 +556,7 @@ export default class MeshBatch implements Batch {
         offset / 3,
         offset / 3 + geometry.attributes.POSITION.length / 3
       )
+      MeshBatch.arrayWork += performance.now() - start2
       this.renderViews[k].setBatchData(
         this.id,
         arrayOffset,
@@ -550,7 +566,9 @@ export default class MeshBatch implements Batch {
       )
 
       const batchObject = new BatchObject(this.renderViews[k], k)
+      const start3 = performance.now()
       batchObject.buildBVH()
+      MeshBatch.objectBvh += performance.now() - start3
       batchObjects.push(batchObject)
 
       offset += geometry.attributes.POSITION.length
@@ -567,7 +585,14 @@ export default class MeshBatch implements Batch {
     this.mesh = new SpeckleMesh(this.geometry)
     this.mesh.setBatchObjects(batchObjects, this.transformStorage)
     this.mesh.setBatchMaterial(this.batchMaterial)
+    const start6 = performance.now()
     this.mesh.buildBVH()
+    MeshBatch.batchBVH += performance.now() - start6
+    this.geometry.boundingBox = this.mesh.BVH.getBoundingBox(new Box3())
+    this.geometry.boundingSphere = this.geometry.boundingBox.getBoundingSphere(
+      new Sphere()
+    )
+
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
     this.mesh.frustumCulled = false
@@ -611,6 +636,7 @@ export default class MeshBatch implements Batch {
     batchIndices: Float32Array,
     color?: Float32Array
   ): BufferGeometry {
+    // const start5 = performance.now()
     this.geometry = new BufferGeometry()
     if (position.length >= 65535 || indices.length >= 65535) {
       this.indexBuffer0 = new Uint32BufferAttribute(indices, 1)
@@ -644,14 +670,23 @@ export default class MeshBatch implements Batch {
     this.gradientIndexBuffer = new Float32BufferAttribute(buffer, 1)
     this.gradientIndexBuffer.setUsage(DynamicDrawUsage)
     this.geometry.setAttribute('gradientIndex', this.gradientIndexBuffer)
+    // console.log(' -- Rest -> ', performance.now() - start5)
+    // const start = performance.now()
     this.updateGradientIndexBufferData(0, buffer.length, 0)
+    // console.log(' -- Gradient index update -> ', performance.now() - start)
     this.updateGradientIndexBuffer()
 
+    const start2 = performance.now()
     Geometry.computeVertexNormals(this.geometry, position)
-    this.geometry.computeBoundingSphere()
-    this.geometry.computeBoundingBox()
+    MeshBatch.computeNormals += performance.now() - start2
+    // const start3 = performance.now()
+    // this.geometry.computeBoundingSphere()
+    // this.geometry.computeBoundingBox()
+    // MeshBatch.computeBoxAndSphere += performance.now() - start3
 
+    const start4 = performance.now()
     Geometry.updateRTEGeometry(this.geometry, position)
+    MeshBatch.computeRTE += performance.now() - start4
 
     return this.geometry
   }

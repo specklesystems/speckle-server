@@ -49,6 +49,7 @@ export default class Batcher {
         if (b.renderMaterialHash === 0) return 1
         return a.renderMaterialHash - b.renderMaterialHash
       })
+
     const materialHashes = [
       ...Array.from(new Set(renderViews.map((value) => value.renderMaterialHash)))
     ]
@@ -72,15 +73,14 @@ export default class Batcher {
         }
         return valid || value.hasMetadata
       })
-      if (renderViewsBatch.length === 0) continue
 
+      if (renderViewsBatch.length === 0) continue
       const batches = this.splitBatch(renderViewsBatch, vertCount)
       for (let k = 0; k < batches.length; k++) {
         pause.tick(100)
         if (pause.needsWait) {
           await pause.wait(50)
         }
-
         const restrictedRvs = batches[k]
         const batch = await this.buildBatch(
           renderTree,
@@ -102,6 +102,13 @@ export default class Batcher {
         average / materialHashes.length
       }`
     )
+    console.warn('Buffer setup -> ', MeshBatch.bufferSetup)
+    console.warn('Array work -> ', MeshBatch.arrayWork)
+    console.warn('Object BVH -> ', MeshBatch.objectBvh)
+    console.warn('Compute normals -> ', MeshBatch.computeNormals)
+    console.warn('Compute box and sphere -> ', MeshBatch.computeBoxAndSphere)
+    console.warn('Compute RTE -> ', MeshBatch.computeRTE)
+    console.warn('Batch BVH -> ', MeshBatch.batchBVH)
   }
 
   private splitBatch(
@@ -161,11 +168,11 @@ export default class Batcher {
     materialHash: number,
     batchType?: GeometryType
   ): Promise<Batch> {
-    const batch = renderViews.filter(
-      (value) => value.renderMaterialHash === materialHash
-    )
+    // const batch = renderViews.filter(
+    //   (value) => value.renderMaterialHash === materialHash
+    // )
 
-    if (!batch.length) {
+    if (!renderViews.length) {
       /** This is for the case when all renderviews have invalid geometries, and it generally
        * means there is something wrong with the stream
        */
@@ -176,7 +183,8 @@ export default class Batcher {
       return null
     }
 
-    const geometryType = batchType !== undefined ? batchType : batch[0].geometryType
+    const geometryType =
+      batchType !== undefined ? batchType : renderViews[0].geometryType
     let matRef = null
 
     if (geometryType === GeometryType.MESH) {
@@ -200,23 +208,23 @@ export default class Batcher {
         geometryBatch = new MeshBatch(
           batchID,
           renderTree.id,
-          batch,
+          renderViews,
           this.floatTextures
             ? TransformStorage.VERTEX_TEXTURE
             : TransformStorage.UNIFORM_ARRAY
         )
         break
       case GeometryType.LINE:
-        geometryBatch = new LineBatch(batchID, renderTree.id, batch)
+        geometryBatch = new LineBatch(batchID, renderTree.id, renderViews)
         break
       case GeometryType.POINT:
-        geometryBatch = new PointBatch(batchID, renderTree.id, batch)
+        geometryBatch = new PointBatch(batchID, renderTree.id, renderViews)
         break
       case GeometryType.POINT_CLOUD:
-        geometryBatch = new PointBatch(batchID, renderTree.id, batch)
+        geometryBatch = new PointBatch(batchID, renderTree.id, renderViews)
         break
       case GeometryType.TEXT:
-        geometryBatch = new TextBatch(batchID, renderTree.id, batch)
+        geometryBatch = new TextBatch(batchID, renderTree.id, renderViews)
         break
     }
 

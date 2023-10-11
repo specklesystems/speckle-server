@@ -321,9 +321,11 @@ export default class PointBatch implements Batch {
   }
 
   public buildBatch() {
-    const attributeCount = this.renderViews.flatMap(
-      (val: NodeRenderView) => val.renderData.geometry.attributes.POSITION
-    ).length
+    let attributeCount = 0
+    for (let k = 0; k < this.renderViews.length; k++) {
+      attributeCount +=
+        this.renderViews[k].renderData.geometry.attributes.POSITION.length
+    }
     const position = new Float64Array(attributeCount)
     const color = new Float32Array(attributeCount).fill(1)
     let offset = 0
@@ -421,7 +423,6 @@ export default class PointBatch implements Batch {
     this.updateGradientIndexBufferData(0, buffer.length, 0)
     this.updateGradientIndexBuffer()
 
-    this.geometry.computeVertexNormals()
     this.geometry.computeBoundingSphere()
     this.geometry.computeBoundingBox()
 

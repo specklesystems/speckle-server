@@ -108,8 +108,8 @@ export default class SpeckleRenderer {
   private _intersections: Intersections
   public input: Input
   private sun: DirectionalLight
-  private sunTarget: Object3D
   private sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
+  private sunTarget: Object3D
   public viewer: Viewer // TEMPORARY
   private pipeline: Pipeline
 
@@ -119,6 +119,8 @@ export default class SpeckleRenderer {
   private _cameraProvider: ICameraProvider = null
   private _clippingPlanes: Plane[] = []
   private _clippingVolume: Box3 = new Box3()
+
+  private _renderOverride: () => void = null
 
   /********************************
    * Renderer and rendering flags */
@@ -510,10 +512,15 @@ export default class SpeckleRenderer {
   public resetPipeline(force = false) {
     this._needsRender = true
     this.pipeline.reset()
-    if (/*this.viewer.cameraHandler.controls.hasRested ||*/ force) this.pipeline.reset()
+    if (force) this.pipeline.reset()
   }
 
   public render(): void {
+    if (this._renderOverride) {
+      this._renderOverride()
+      return
+    }
+
     if (!this._cameraProvider) return
     if (this._needsRender || this.pipeline.needsAccumulation) {
       this._renderinStats.frameStart()
@@ -545,6 +552,15 @@ export default class SpeckleRenderer {
       this.viewer.getWorldTree().getRenderTree(subtreeId),
       SpeckleTypeAllRenderables
     )
+    let currentBatchCount = 0
+    let lastBatchCount = -1
+    this._renderOverride = () => {
+      if (currentBatchCount > lastBatchCount) {
+        this.pipeline.render()
+        lastBatchCount = currentBatchCount
+      }
+    }
+
     for await (const batch of generator) {
       if (!batch) continue
 
@@ -552,15 +568,17 @@ export default class SpeckleRenderer {
       if (batch.geometryType === GeometryType.MESH) {
         this.updateDirectLights()
       }
-      this._needsRender = true
+
       if (this.cancel[subtreeId]) {
         generator.return()
         this.removeRenderTree(subtreeId)
         delete this.cancel[subtreeId]
         break
       }
+      currentBatchCount++
       yield
     }
+    this._renderOverride = null
     this.updateHelpers()
 
     /** We'll just update the shadowcatcher after all batches are loaded */
@@ -832,9 +850,7 @@ export default class SpeckleRenderer {
     this.sun.shadow.camera.far = Math.abs(lightSpaceBox.min.z)
     this.sun.shadow.camera.updateProjectionMatrix()
     this.renderer.shadowMap.needsUpdate = true
-    this.needsRender = true
     this.updateHelpers()
-    this.resetPipeline()
   }
 
   public setSunLightConfiguration(config: SunLightConfiguration) {
