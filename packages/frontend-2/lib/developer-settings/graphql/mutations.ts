@@ -11,3 +11,15 @@ export const createAccessTokenMutation = graphql(`
     apiTokenCreate(token: $token)
   }
 `)
+
+export const deleteApplicationMutation = graphql(`
+  mutation deleteApplication($appId: String!) {
+    appDelete(appId: $appId)
+  }
+`)
+
+export const createApplicationMutation = graphql(`
+  mutation createApplication($app: AppCreateInput!) {
+    appCreate(app: $app)
+  }
+`)

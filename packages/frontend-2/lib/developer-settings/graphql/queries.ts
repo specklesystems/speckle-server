@@ -15,3 +15,21 @@ export const developerSettingsAccessTokensQuery = graphql(`
     }
   }
 `)
+
+export const developerSettingsApplicationsQuery = graphql(`
+  query DeveloperSettingsApplications {
+    activeUser {
+      createdApps {
+        id
+        secret
+        name
+        description
+        redirectUrl
+        scopes {
+          name
+        }
+      }
+      id
+    }
+  }
+`)

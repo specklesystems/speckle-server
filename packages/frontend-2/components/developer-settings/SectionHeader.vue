@@ -8,7 +8,6 @@
           :key="index"
           v-bind="button.props"
           class="shrink-0"
-          v-on="button.events"
         >
           {{ button.label }}
         </FormButton>
@@ -21,13 +20,16 @@
 </template>
 
 <script lang="ts" setup>
-import { ConcreteComponent } from 'vue'
+interface Button {
+  label: string
+  props: Record<string, unknown>
+}
 
 defineProps({
   title: String,
   text: String,
   buttons: {
-    type: Array as () => ConcreteComponent[],
+    type: Array as () => Button[],
     default: () => []
   }
 })
