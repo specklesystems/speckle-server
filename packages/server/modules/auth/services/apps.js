@@ -110,7 +110,7 @@ module.exports = {
 
     const scopes = (app.scopes || []).filter((s) => !!s?.length)
 
-    if (scopes) {
+    if (!scopes.length) {
       throw new Error('Cannot create an app with no scopes.')
     }
 
