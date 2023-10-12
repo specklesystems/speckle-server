@@ -59,7 +59,7 @@ RUN apt-get update && \
   libnspr4=2:4.29-1 \
   libnss3=2:3.61-1+deb11u3 \
   libpango-1.0-0=1.46.2-3 \
-  libx11-6=2:1.7.2-1 \
+  libx11-6=2:1.7.2-1+deb11u2 \
   libxcb1=1.14-3 \
   libxcomposite1=1:0.4.5-1 \
   libxdamage1=1:1.1.5-2 \
