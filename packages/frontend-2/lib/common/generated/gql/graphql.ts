@@ -148,8 +148,8 @@ export type ApiTokenCreateInput = {
 export type AppAuthor = {
   __typename?: 'AppAuthor';
   avatar?: Maybe<Scalars['String']>;
-  id?: Maybe<Scalars['String']>;
-  name?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  name: Scalars['String'];
 };
 
 export type AppCreateInput = {
@@ -202,7 +202,14 @@ export type AutomationFunctionRun = {
    * Current schema: {
    *   version: "1.0.0",
    *   values: {
-   *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
+   *     objectResults: Record<str, {
+   *       category: string
+   *       level: ObjectResultLevel
+   *       objectIds: string[]
+   *       message: str | null
+   *       metadata: Records<str, unknown> | null
+   *       visualoverrides: Records<str, unknown> | null
+   *     }[]>
    *     blobIds?: string[]
    *   }
    * }
@@ -2971,7 +2978,7 @@ export type AuthorizableAppMetadataQueryVariables = Exact<{
 }>;
 
 
-export type AuthorizableAppMetadataQuery = { __typename?: 'Query', app?: { __typename?: 'ServerApp', id: string, name: string, description?: string | null, trustByDefault?: boolean | null, redirectUrl: string, scopes: Array<{ __typename?: 'Scope', name: string, description: string }>, author?: { __typename?: 'AppAuthor', name?: string | null, id?: string | null, avatar?: string | null } | null } | null };
+export type AuthorizableAppMetadataQuery = { __typename?: 'Query', app?: { __typename?: 'ServerApp', id: string, name: string, description?: string | null, trustByDefault?: boolean | null, redirectUrl: string, scopes: Array<{ __typename?: 'Scope', name: string, description: string }>, author?: { __typename?: 'AppAuthor', name: string, id: string, avatar?: string | null } | null } | null };
 
 export type OnModelVersionCardAutomationsStatusUpdatedSubscriptionVariables = Exact<{
   projectId: Scalars['String'];
@@ -3419,7 +3426,7 @@ export type InviteServerUserMutationVariables = Exact<{
 
 export type InviteServerUserMutation = { __typename?: 'Mutation', serverInviteBatchCreate: boolean };
 
-export type AppAuthorAvatarFragment = { __typename?: 'AppAuthor', id?: string | null, name?: string | null, avatar?: string | null };
+export type AppAuthorAvatarFragment = { __typename?: 'AppAuthor', id: string, name: string, avatar?: string | null };
 
 export type LimitedUserAvatarFragment = { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null };
 

@@ -73,6 +73,7 @@ import {
 } from '~~/src/helpers/form/file'
 export * from '~~/src/helpers/common/error'
 import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
+import { AvatarUser, AvatarUserWithId } from '~~/src/composables/user/avatar'
 
 export {
   CommonLoadingIcon,
@@ -140,5 +141,7 @@ export type {
   UploadFileItem,
   UploadableFileItem,
   BlobPostResultItem,
-  FileTypeSpecifier
+  FileTypeSpecifier,
+  AvatarUser,
+  AvatarUserWithId
 }

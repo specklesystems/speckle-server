@@ -7,6 +7,7 @@ type StoryType = StoryObj<
   Record<string, unknown> & {
     modelValue: Nullable<string>
     editMode?: boolean
+    'update:modelValue': (val: Nullable<string>) => void
   }
 >
 
@@ -33,6 +34,7 @@ export const Default: StoryType = {
     setup: () => ({
       args,
       onUpdateModelValue: (newUrl: Nullable<string>) => {
+        args['update:modelValue'](newUrl)
         ctx.updateArgs({
           ...args,
           modelValue: newUrl
@@ -43,7 +45,7 @@ export const Default: StoryType = {
       }
     }),
     template: `
-      <UserAvatarEditable v-bind="args" @update:modelValue="onUpdateModelValue" @update:editMode="onUpdateEditMode" @update:modelValue="args['update:modelValue']" @save="args['save']"/>
+      <UserAvatarEditable v-bind="args" @update:modelValue="onUpdateModelValue" @update:editMode="onUpdateEditMode" @save="args['save']"/>
     `
   }),
   args: {
@@ -62,6 +64,7 @@ export const WithValidation: StoryType = {
     setup: () => ({
       args,
       onUpdateModelValue: (newUrl: Nullable<string>) => {
+        args['update:modelValue'](newUrl)
         ctx.updateArgs({
           ...args,
           modelValue: newUrl
@@ -73,7 +76,7 @@ export const WithValidation: StoryType = {
     }),
     template: `
       <form class="flex flex-col space-y-4">
-        <UserAvatarEditable v-bind="args" @update:modelValue="onUpdateModelValue" @update:editMode="onUpdateEditMode" @update:modelValue="args['update:modelValue']" @save="args['save']"/>
+        <UserAvatarEditable v-bind="args" @update:modelValue="onUpdateModelValue" @update:editMode="onUpdateEditMode" @save="args['save']"/>
       </form>
     `
   }),
