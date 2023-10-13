@@ -113,7 +113,8 @@ export const SourceAppNames = [
   'OpenRail',
   'OpenBuildings',
   'MicroStation',
-  'Navisworks'
+  'Navisworks',
+  'Speckle Automate'
 ] as const
 
 export type SourceAppName = (typeof SourceAppNames)[number]
@@ -183,7 +184,13 @@ export const SourceApps: SourceAppDefinition[] = [
     short: 'MICRO',
     bgColor: '#846256'
   },
-  { searchKey: 'navisworks', name: 'Navisworks', bgColor: '#3e8742', short: 'NAVIS' }
+  { searchKey: 'navisworks', name: 'Navisworks', bgColor: '#3e8742', short: 'NAVIS' },
+  {
+    searchKey: 'automate',
+    name: 'Speckle Automate',
+    bgColor: '#f85c56',
+    short: 'ATMAT'
+  }
 ]
 
 export const WebhookTriggers = Object.freeze(<const>{
