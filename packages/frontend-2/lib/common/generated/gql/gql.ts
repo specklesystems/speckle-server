@@ -81,6 +81,7 @@ const documents = {
     "\n  mutation createAccessToken($token: ApiTokenCreateInput!) {\n    apiTokenCreate(token: $token)\n  }\n": types.CreateAccessTokenDocument,
     "\n  mutation deleteApplication($appId: String!) {\n    appDelete(appId: $appId)\n  }\n": types.DeleteApplicationDocument,
     "\n  mutation createApplication($app: AppCreateInput!) {\n    appCreate(app: $app)\n  }\n": types.CreateApplicationDocument,
+    "\n  mutation editApplication($app: AppUpdateInput!) {\n    appUpdate(app: $app)\n  }\n": types.EditApplicationDocument,
     "\n  query DeveloperSettingsAccessTokens {\n    activeUser {\n      id\n      apiTokens {\n        id\n        name\n        lastUsed\n        lastChars\n        createdAt\n        scopes\n      }\n    }\n  }\n": types.DeveloperSettingsAccessTokensDocument,
     "\n  query DeveloperSettingsApplications {\n    activeUser {\n      createdApps {\n        id\n        secret\n        name\n        description\n        redirectUrl\n        scopes {\n          name\n        }\n      }\n      id\n    }\n  }\n": types.DeveloperSettingsApplicationsDocument,
     "\n  query SearchProjects($search: String, $onlyWithRoles: [String!] = null) {\n    activeUser {\n      projects(limit: 10, filter: { search: $search, onlyWithRoles: $onlyWithRoles }) {\n        totalCount\n        items {\n          ...FormSelectProjects_Project\n        }\n      }\n    }\n  }\n": types.SearchProjectsDocument,
@@ -451,6 +452,10 @@ export function graphql(source: "\n  mutation deleteApplication($appId: String!)
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation createApplication($app: AppCreateInput!) {\n    appCreate(app: $app)\n  }\n"): (typeof documents)["\n  mutation createApplication($app: AppCreateInput!) {\n    appCreate(app: $app)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation editApplication($app: AppUpdateInput!) {\n    appUpdate(app: $app)\n  }\n"): (typeof documents)["\n  mutation editApplication($app: AppUpdateInput!) {\n    appUpdate(app: $app)\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

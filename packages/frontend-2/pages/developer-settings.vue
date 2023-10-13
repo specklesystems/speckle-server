@@ -71,7 +71,7 @@
             {
               icon: TrashIcon,
               label: 'Delete',
-              action: openDeleteTokenDialog,
+              action: openDeleteDialog,
               class: 'text-red-500'
             }
           ]"
@@ -142,9 +142,21 @@
           :items="applications"
           :buttons="[
             {
+              icon: LockOpenIcon,
+              label: 'Reveal Secret',
+              action: openRevealSecretDialog,
+              class: 'text-primary'
+            },
+            {
+              icon: PencilIcon,
+              label: 'Edit',
+              action: openEditApplicationDialog,
+              class: 'text-primary'
+            },
+            {
               icon: TrashIcon,
               label: 'Delete',
-              action: openCreateApplicationDialog,
+              action: openDeleteDialog,
               class: 'text-red-500'
             }
           ]"
@@ -173,24 +185,35 @@
         </LayoutTable>
       </div>
     </div>
-  </div>
 
-  <DeveloperSettingsCreateTokenDialog
-    v-model:open="showCreateTokenDialog"
-    @token-created="handleTokenCreated"
-  />
-  <DeveloperSettingsDeleteTokenDialog
-    v-model:open="showDeleteTokenDialog"
-    :token="tokenToModify"
-  />
-  <DeveloperSettingsCreateApplicationDialog
-    v-model:open="showCreateApplicationDialog"
-    @token-created="handleApplicationCreated"
-  />
+    <DeveloperSettingsCreateTokenDialog
+      v-model:open="showCreateTokenDialog"
+      @token-created="handleTokenCreated"
+    />
+    <DeveloperSettingsDeleteDialog
+      v-model:open="showDeleteDialog"
+      :item="itemToModify"
+    />
+    <DeveloperSettingsCreateEditApplicationDialog
+      v-model:open="showCreateEditApplicationDialog"
+      :application="(itemToModify as ApplicationItem)"
+      @application-created="handleApplicationCreated"
+    />
+    <DeveloperSettingsRevealSecretDialog
+      v-model:open="showRevealSecretDialog"
+      :application="itemToModify && 'secret' in itemToModify ? itemToModify : null"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { PlusIcon, BookOpenIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import {
+  PlusIcon,
+  BookOpenIcon,
+  TrashIcon,
+  PencilIcon,
+  LockOpenIcon
+} from '@heroicons/vue/24/outline'
 import { TokenItem, ApplicationItem } from '~~/lib/developer-settings/helpers/types'
 import {
   developerSettingsAccessTokensQuery,
@@ -210,10 +233,11 @@ const { result: applicationsResult, refetch: refetchApplications } = useQuery(
   developerSettingsApplicationsQuery
 )
 
-const tokenToModify = ref<TokenItem | null>(null)
+const itemToModify = ref<TokenItem | ApplicationItem | null>(null)
 const showCreateTokenDialog = ref(false)
-const showDeleteTokenDialog = ref(false)
-const showCreateApplicationDialog = ref(false)
+const showDeleteDialog = ref(false)
+const showCreateEditApplicationDialog = ref(false)
+const showRevealSecretDialog = ref(false)
 
 const tokens = computed<TokenItem[]>(() => {
   return tokensResult.value?.activeUser?.apiTokens || []
@@ -223,13 +247,24 @@ const applications = computed<ApplicationItem[]>(() => {
   return applicationsResult.value?.activeUser?.createdApps || []
 })
 
-const openDeleteTokenDialog = (item: TokenItem) => {
-  tokenToModify.value = item
-  showDeleteTokenDialog.value = true
+const openDeleteDialog = (item: TokenItem | ApplicationItem) => {
+  itemToModify.value = item
+  showDeleteDialog.value = true
 }
 
 const openCreateApplicationDialog = () => {
-  showCreateApplicationDialog.value = true
+  itemToModify.value = null
+  showCreateEditApplicationDialog.value = true
+}
+
+const openEditApplicationDialog = (item: ApplicationItem) => {
+  itemToModify.value = item
+  showCreateEditApplicationDialog.value = true
+}
+
+const openRevealSecretDialog = (item: ApplicationItem) => {
+  itemToModify.value = item
+  showRevealSecretDialog.value = true
 }
 
 const handleTokenCreated = () => {

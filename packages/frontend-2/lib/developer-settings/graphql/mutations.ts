@@ -23,3 +23,9 @@ export const createApplicationMutation = graphql(`
     appCreate(app: $app)
   }
 `)
+
+export const editApplicationMutation = graphql(`
+  mutation editApplication($app: AppUpdateInput!) {
+    appUpdate(app: $app)
+  }
+`)
