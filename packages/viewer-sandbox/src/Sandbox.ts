@@ -49,7 +49,8 @@ export default class Sandbox {
   }
 
   public pipelineParams = {
-    pipelineOutput: 8,
+    pipelineOutput: 2,
+    depthPrepass: true,
     accumulationFrames: 16,
     dynamicAoEnabled: true,
     dynamicAoParams: {
@@ -142,7 +143,7 @@ export default class Sandbox {
       this.addStreamControls(url)
       this.addViewControls()
       this.addBatches()
-      this.properties = this.viewer.getObjectProperties()
+      // this.properties = this.viewer.getObjectProperties()
       this.batchesParams.totalBvhSize = this.getBVHSize()
       this.refresh()
     })
@@ -582,6 +583,13 @@ export default class Sandbox {
           FINAL: 8
         }
       })
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
+        this.viewer.requestRender()
+      })
+
+    pipelineFolder
+      .addInput(this.pipelineParams, 'depthPrepass', {})
       .on('change', () => {
         this.viewer.getRenderer().pipelineOptions = this.pipelineParams
         this.viewer.requestRender()

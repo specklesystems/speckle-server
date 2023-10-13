@@ -8,7 +8,7 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
   private _oldClearColor: Color = new Color()
   private clearColor: Color = null
   private clearAlpha = 0
-  private clearDepth = true
+  private clearDepth = false
 
   public onBeforeRenderOpauqe: () => void = null
   public onAfterRenderOpaque: () => void = null

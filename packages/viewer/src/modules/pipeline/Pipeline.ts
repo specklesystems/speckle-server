@@ -27,6 +27,7 @@ import { StencilPass } from './StencilPass'
 import { StencilMaskPass } from './StencilMaskPass'
 import { OverlayPass } from './OverlayPass'
 import { ObjectLayers } from '../../IViewer'
+import { DepthPrepass } from './DepthPrepass'
 
 export enum PipelineOutputType {
   DEPTH_RGBA = 0,
@@ -42,6 +43,7 @@ export enum PipelineOutputType {
 
 export interface PipelineOptions {
   pipelineOutput: PipelineOutputType
+  depthPrepass: boolean
   accumulationFrames: number
   dynamicAoEnabled: boolean
   dynamicAoParams: DynamicAOPassParams
@@ -51,7 +53,8 @@ export interface PipelineOptions {
 }
 
 export const DefaultPipelineOptions: PipelineOptions = {
-  pipelineOutput: PipelineOutputType.FINAL,
+  pipelineOutput: PipelineOutputType.COLOR,
+  depthPrepass: true,
   accumulationFrames: 16,
   dynamicAoEnabled: true,
   dynamicAoParams: DefaultDynamicAOPassParams,
@@ -78,6 +81,7 @@ export class Pipeline {
   private copyOutputPass: CopyOutputPass = null
   private staticAoPass: StaticAOPass = null
   private overlayPass: OverlayPass = null
+  private depthPrepass: DepthPrepass = null
 
   private drawingSize: Vector2 = new Vector2()
   private _renderType: RenderType = RenderType.NORMAL
@@ -104,6 +108,10 @@ export class Pipeline {
   public set pipelineOutput(outputType: PipelineOutputType) {
     let pipeline = []
     this.clearPipeline()
+    if (this._pipelineOptions.depthPrepass) {
+      pipeline.push(this.depthPrepass)
+    }
+
     switch (outputType) {
       case PipelineOutputType.FINAL:
         pipeline = this.getDefaultPipeline()
@@ -251,6 +259,7 @@ export class Pipeline {
     this.applySaoPass = new ApplySAOPass()
     this.staticAoPass = new StaticAOPass()
     this.overlayPass = new OverlayPass()
+    this.depthPrepass = new DepthPrepass()
 
     this.copyOutputPass = new CopyOutputPass()
     this.copyOutputPass.renderToScreen = true
@@ -262,14 +271,16 @@ export class Pipeline {
       ObjectLayers.PROPS,
       ObjectLayers.STREAM_CONTENT,
       ObjectLayers.STREAM_CONTENT_MESH,
-      ObjectLayers.STREAM_CONTENT_LINE,
-      ObjectLayers.STREAM_CONTENT_POINT,
-      ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
-      ObjectLayers.STREAM_CONTENT_TEXT,
+      // ObjectLayers.STREAM_CONTENT_LINE,
+      // ObjectLayers.STREAM_CONTENT_POINT,
+      // ObjectLayers.STREAM_CONTENT_POINT_CLOUD,
+      // ObjectLayers.STREAM_CONTENT_TEXT,
       ObjectLayers.SHADOWCATCHER
     ])
     this.stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     this.overlayPass.setLayers([ObjectLayers.OVERLAY])
+    this.depthPrepass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
+
     let restoreVisibility, opaque, stencil
 
     this.onBeforePipelineRender = () => {
@@ -280,6 +291,15 @@ export class Pipeline {
 
     this.onAfterPipelineRender = () => {
       this._batcher.applyVisibility(restoreVisibility)
+    }
+
+    this.depthPrepass.onBeforeRender = () => {
+      this._batcher.applyVisibility(opaque)
+      this._batcher.overrideMaterial(opaque, this.depthPrepass.material)
+    }
+    this.depthPrepass.onAfterRender = () => {
+      this._batcher.applyVisibility(restoreVisibility)
+      this._batcher.restoreMaterial(opaque)
     }
 
     this.depthPass.onBeforeRender = () => {
@@ -396,6 +416,7 @@ export class Pipeline {
   }
 
   public update(renderer: SpeckleRenderer) {
+    this.depthPrepass.update(renderer.scene, renderer.renderingCamera)
     this.stencilPass.update(renderer.scene, renderer.renderingCamera)
     this.renderPass.update(renderer.scene, renderer.renderingCamera)
     this.stencilMaskPass.update(renderer.scene, renderer.renderingCamera)

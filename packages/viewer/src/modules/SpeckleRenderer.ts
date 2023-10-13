@@ -189,7 +189,7 @@ export default class SpeckleRenderer {
   }
 
   public set indirectIBL(texture: Texture) {
-    this._scene.environment = texture
+    // this._scene.environment = texture
   }
 
   public set indirectIBLIntensity(value: number) {
@@ -294,9 +294,9 @@ export default class SpeckleRenderer {
 
   public create(container: HTMLElement) {
     this._renderer = new SpeckleWebGLRenderer({
-      antialias: true,
+      antialias: false,
       alpha: true,
-      preserveDrawingBuffer: true,
+      preserveDrawingBuffer: false,
       stencil: true
     })
     this._renderer.setClearColor(0xffffff, 0)
@@ -526,7 +526,7 @@ export default class SpeckleRenderer {
       this._renderinStats.frameStart()
       this.batcher.render(this.renderer)
       this._needsRender = this.pipeline.render()
-      // this._needsRender = true
+      this._needsRender = true
       this._renderinStats.frameEnd()
 
       if (this.sunConfiguration.shadowcatcher) {

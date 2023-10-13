@@ -571,7 +571,7 @@ export default class Materials {
     )
     mat.vertexColors = materialData.vertexColors
     mat.transparent = mat.opacity < 1 ? true : false
-    mat.depthWrite = mat.transparent ? false : true
+    mat.depthWrite = false //mat.transparent ? false : true
     mat.clipShadows = true
     mat.color.convertSRGBToLinear()
     return mat
