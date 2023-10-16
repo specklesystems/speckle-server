@@ -3,6 +3,7 @@ import { generateUUID } from 'three/src/math/MathUtils'
 import { TreeNode, WorldTree } from '../../tree/WorldTree'
 import Logger from 'js-logger'
 import { AsyncPause } from '../../World'
+import { NodeMap } from '../../tree/NodeMap'
 
 export type ConverterResultDelegate = (object) => Promise<void>
 export type ConverterNodeDelegate = (object, node) => Promise<void>
@@ -15,10 +16,12 @@ export default class SpeckleConverter {
   private objectLoader
   private activePromises: number
   private maxChildrenPromises: number
-  private spoofIDs = true
+  private spoofIDs = false
+  public idMap = {}
   private tree: WorldTree
   private pause: AsyncPause
   private typeLookupTable: { [type: string]: string } = {}
+  private instanceCounter = 0
 
   private readonly NodeConverterMapping: {
     [name: string]: ConverterNodeDelegate
@@ -213,7 +216,14 @@ export default class SpeckleConverter {
 
   private getNodeId(obj) {
     if (this.spoofIDs) return generateUUID()
-    return obj.id
+    let retId = obj.id
+    // const type = ''
+    if (this.idMap[obj.id]) {
+      // && (type = this.getSpeckleType(obj)) !== 'Base') {
+      retId = this.getCompoundId(obj.id, this.instanceCounter++)
+    }
+    this.idMap[retId] = 1
+    return retId
   }
   /**
    * Takes an array composed of chunked references and dechunks it.
@@ -342,6 +352,10 @@ export default class SpeckleConverter {
     return obj['@geometry'] || obj['geometry']
   }
 
+  private getCompoundId(baseId, parentId) {
+    return baseId + NodeMap.COMPOUND_ID_CHAR + parentId
+  }
+
   /**
    * 
     NODES
@@ -384,7 +398,8 @@ export default class SpeckleConverter {
     node.model.raw.definition = definition
     for (const def of this.getBlockDefinitionGeometry(definition)) {
       const ref = await this.resolveReference(def)
-      ref.id = ref.id + node.model.raw.transform.id
+      /** We concatenate the ids to get unique ones */
+      ref.id = this.getCompoundId(ref.id, node.model.raw.transform.id)
       const childNode: TreeNode = this.tree.parse({
         id: this.getNodeId(ref),
         raw: Object.assign({}, ref),
@@ -417,6 +432,8 @@ export default class SpeckleConverter {
       if (!list) return
       for (const def of list) {
         const ref = await this.resolveReference(def)
+        /** We concatenate the ids to get unique ones */
+        ref.id = this.getCompoundId(ref.id, this.instanceCounter++)
         const childNode: TreeNode = this.tree.parse({
           id: this.getNodeId(ref),
           raw: Object.assign({}, ref),

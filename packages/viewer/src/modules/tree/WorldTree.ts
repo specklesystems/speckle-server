@@ -3,6 +3,7 @@ import { NodeRenderView } from './NodeRenderView'
 import { RenderTree } from './RenderTree'
 import Logger from 'js-logger'
 import { AsyncPause } from '../World'
+import { NodeMap } from './NodeMap'
 
 export type TreeNode = TreeModel.Node<NodeData>
 export type SearchPredicate = (node: TreeNode) => boolean
@@ -21,10 +22,11 @@ export class WorldTree {
   private renderTreeInstances: { [id: string]: RenderTree } = {}
   private readonly supressWarnings = true
   public static readonly ROOT_ID = 'ROOT'
-  public nodeCount: number = 0
+  public nodeMap: NodeMap
 
   public constructor() {
     this.tree = new TreeModel()
+    this.nodeMap = new NodeMap()
     this._root = this.parse({
       id: WorldTree.ROOT_ID,
       raw: {},
@@ -56,6 +58,10 @@ export class WorldTree {
     return this._root
   }
 
+  public get nodeCount() {
+    return this.nodeMap.nodeCount
+  }
+
   public isRoot(node: TreeNode) {
     return node === this._root
   }
@@ -65,8 +71,8 @@ export class WorldTree {
   }
 
   public addSubtree(node: TreeNode) {
-    // Logger.warn(`Adding subtree with id: ${node.model.id}`)
     this._root.addChild(node)
+    this.nodeMap.addSubtree(node)
   }
 
   public addNode(node: TreeNode, parent: TreeNode) {
@@ -75,12 +81,12 @@ export class WorldTree {
       return
     }
     parent.addChild(node)
-    this.nodeCount++
+    this.nodeMap.addNode(node)
   }
 
   public removeNode(node: TreeNode) {
     node.drop()
-    this.nodeCount--
+    this.nodeMap.removeNode(node)
   }
 
   public findAll(predicate: SearchPredicate, node?: TreeNode): Array<TreeNode> {
@@ -97,6 +103,17 @@ export class WorldTree {
     return (node ? node : this.root).first((_node: TreeNode) => {
       return _node.model.id === id
     })
+  }
+
+  public findIdNew(id: string, node?: TreeNode) {
+    if (!node && !this.supressWarnings) {
+      Logger.warn(`Root will be used for searching. You might not want that`)
+    }
+    return this.nodeMap.getNodeById(id)
+  }
+
+  public hasId(id: string) {
+    return this.nodeMap.hasId(id)
   }
 
   public getAncestors(node: TreeNode): Array<TreeNode> {

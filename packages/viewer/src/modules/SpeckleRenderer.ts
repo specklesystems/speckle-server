@@ -56,7 +56,6 @@ import Materials, {
 } from './materials/Materials'
 import { SpeckleMaterial } from './materials/SpeckleMaterial'
 import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
-import Logger from 'js-logger'
 import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter'
 
 export class RenderingStats {
@@ -896,16 +895,19 @@ export default class SpeckleRenderer {
     }
 
     const queryResult = []
+    let searchTime = 0
     for (let k = 0; k < rvs.length; k++) {
       const hitId = rvs[k].renderData.id
-      const hitNode = this.viewer.getWorldTree().findId(hitId)
+      const start = performance.now()
+      const hitNode = this.viewer.getWorldTree().findIdNew(hitId) as TreeNode
+      searchTime += performance.now() - start
       let parentNode = hitNode
       while (!parentNode.model.atomic && parentNode.parent) {
         parentNode = parentNode.parent
       }
       queryResult.push({ node: parentNode, point: points[k] })
     }
-
+    console.warn('Search time -> ', searchTime)
     return queryResult
   }
 
@@ -1153,7 +1155,7 @@ export default class SpeckleRenderer {
   public getObject(rv: NodeRenderView): BatchObject {
     const batch = this.batcher.getBatch(rv) as MeshBatch
     if (batch.geometryType !== GeometryType.MESH) {
-      Logger.error('Render view is not of mesh type. No batch object found')
+      // Logger.error('Render view is not of mesh type. No batch object found')
       return null
     }
     return batch.mesh.batchObjects.find(

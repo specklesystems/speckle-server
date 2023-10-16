@@ -20,6 +20,7 @@ import {
   DiffExtension,
   FilteringExtension
 } from '@speckle/viewer'
+import { bindFoldable } from '@tweakpane/core'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -169,7 +170,7 @@ const getStream = () => {
     //Gergo's house
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/78bdd8eb76'
     // Point cloud
-    'https://latest.speckle.dev/streams/2d19273d31/commits/9ceb423feb'
+    // 'https://latest.speckle.dev/streams/2d19273d31/commits/9ceb423feb'
     // 'https://latest.speckle.dev/streams/7707df6cae/commits/02bdf09092'
     // 'https://latest.speckle.dev/streams/ca0378725b/commits/fbae00db5a'
     // Luis sphere
@@ -251,6 +252,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/f92e060177/commits/46fd255010'
     // 'https://latest.speckle.dev/streams/f92e060177/commits/038a587267'
     // 'https://latest.speckle.dev/streams/3f895e614f/commits/8a3e424997'
+    // 'https://latest.speckle.dev/streams/f92e060177/commits/f51ee777d5'
     // Big curves
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
     // 'https://speckle.xyz/streams/7ce9010d71/commits/afda4ffdf8'
@@ -305,7 +307,7 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/2f9f2f3021/commits/75bd13f513'
     // 'https://speckle.xyz/streams/0a2f096caf/commits/eee0e4436f?overlay=72828bce0d&c=%5B14.04465,-332.88372,258.40392,53.09575,31.13694,126.39999,0,1%5D&filter=%7B%22propertyInfoKey%22%3A%22level.name%22%7D'
     // 'Bilal's tests
-    // 'https://latest.speckle.dev/streams/97750296c2/commits/5386a0af02' // 700k+ objects 30kk tris
+    'https://latest.speckle.dev/streams/97750296c2/commits/5386a0af02' // 700k+ objects 30kk tris
     // 'https://latest.speckle.dev/streams/97750296c2/commits/48f0567a88' // 1015849 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/aec0841f7e' // 11k objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/96ffc3c786' // 92209 objects
@@ -316,6 +318,11 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/97750296c2/commits/7cfb96a6b0' // 84452 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/92a7c35b8b' // 121395 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/2f5803a19e' // 47696 objects
+
+    // Alex facade
+    // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/f4e11a8b01'
+    // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/3c5cb3f539'
+    // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/13729601f3'
 
     // Weird IFC
     // 'https://speckle.xyz/streams/25d8a162af/commits/6c842a713c'
