@@ -47,6 +47,7 @@
           width: 250,
           height: 250
         }"
+        style="width: 250px; height: 250px"
       />
       <FormFileUploadZone
         ref="uploadZone"
@@ -86,9 +87,9 @@
     <div class="flex mx-14 space-x-2">
       <div class="grow" />
       <FormButton color="secondary" size="sm" @click="$emit('cancel')">
-        Cancel
+        Close
       </FormButton>
-      <FormButton size="sm" :disabled="loading" @click="onSave">Save</FormButton>
+      <FormButton size="sm" :disabled="disabled" @click="onSave">Save</FormButton>
     </div>
   </div>
 </template>
@@ -102,23 +103,18 @@ import {
   PhotoIcon
 } from '@heroicons/vue/24/outline'
 import { Nullable } from '@speckle/shared'
+import { onUnmounted, ref, watch } from 'vue'
 import { Cropper } from 'vue-advanced-cropper'
 import 'vue-advanced-cropper/dist/style.css'
-import { graphql } from '~~/lib/common/generated/gql'
-import { UserAvatarEditor_UserFragment } from '~~/lib/common/generated/gql/graphql'
-import { UploadableFileItem } from '~~/lib/form/composables/fileUpload'
-import { useUpdateUserProfile } from '~~/lib/user/composables/management'
+import FormButton from '~~/src/components/form/Button.vue'
+import FormFileUploadZone from '~~/src/components/form/file-upload/Zone.vue'
+import { UploadableFileItem } from '~~/src/composables/form/fileUpload'
+import { AvatarUser } from '~~/src/composables/user/avatar'
+import { directive as vTippy } from 'vue-tippy'
 
 /**
  * Always try to lazy load this, as it's quite heavy
  */
-
-graphql(`
-  fragment UserAvatarEditor_User on User {
-    id
-    avatar
-  }
-`)
 
 const emit = defineEmits<{
   (e: 'cancel'): void
@@ -126,10 +122,9 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  user: UserAvatarEditor_UserFragment
+  user: AvatarUser
+  disabled?: boolean
 }>()
-
-const { mutate, loading } = useUpdateUserProfile()
 
 const cropper = ref(
   null as Nullable<{
@@ -163,16 +158,6 @@ const getDashedBorderClasses = (isDraggingFiles: boolean) => {
   return 'border-outline-2'
 }
 
-const saveChanges = async (newUrl: Nullable<string>) => {
-  if (props.user.avatar === newUrl) return
-  if (loading.value) return
-
-  const result = await mutate({
-    avatar: newUrl || ''
-  })
-  return !!result?.data?.activeUserMutations.update
-}
-
 const rotateLeft = () => cropper.value?.rotate(-90)
 const rotateRight = () => cropper.value?.rotate(90)
 const flipHorizontal = () => cropper.value?.flip(1, 0)
@@ -183,10 +168,9 @@ const onRemove = () => {
   selectedUpload.value = null
   activeImageUrl.value = null
 }
-const onSave = async () => {
+const onSave = () => {
   const newUrl = cropper.value?.getResult().canvas.toDataURL('image/jpeg', 0.85) || null
-  const success = await saveChanges(newUrl)
-  if (success) emit('save', newUrl)
+  emit('save', newUrl)
 }
 
 onUnmounted(() => {
@@ -210,9 +194,3 @@ watch(
   { deep: true }
 )
 </script>
-<style lang="postcss">
-.cropper {
-  width: 250px;
-  height: 250px;
-}
-</style>

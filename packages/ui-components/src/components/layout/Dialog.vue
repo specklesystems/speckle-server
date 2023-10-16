@@ -153,15 +153,12 @@ const widthClasses = computed(() => {
   if (maxWidthWeight.value >= 1) {
     classParts.push('md:max-w-2xl')
   }
-
   if (maxWidthWeight.value >= 2) {
     classParts.push('lg:max-w-4xl')
   }
-
   if (maxWidthWeight.value >= 3) {
     classParts.push('xl:max-w-6xl')
   }
-
   if (maxWidthWeight.value >= 4) {
     classParts.push('2xl:max-w-7xl')
   }

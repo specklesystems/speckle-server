@@ -83,7 +83,7 @@ export default {
       type: 'boolean'
     },
     buttonStyle: {
-      options: ['base', 'simple'],
+      options: ['base', 'simple', 'tinted'],
       control: { type: 'select' }
     }
   }
