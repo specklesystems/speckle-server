@@ -251,7 +251,11 @@ const showCreateEditApplicationDialog = ref(false)
 const showRevealSecretDialog = ref(false)
 
 const tokens = computed<TokenItem[]>(() => {
-  return tokensResult.value?.activeUser?.apiTokens || []
+  return (
+    tokensResult.value?.activeUser?.apiTokens?.filter(
+      (token): token is TokenItem => token !== null
+    ) || []
+  )
 })
 
 const applications = computed<ApplicationItem[]>(() => {
