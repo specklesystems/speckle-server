@@ -20,10 +20,10 @@
         />
       </div>
       <div
-        class="flex gap-4 items-center bg-warning-lighter dark:bg-warning border-warning-darker dark:border-warning-lighter border rounded-lg py-2 pl-4 pr-8"
+        class="flex gap-4 items-center bg-warning dark:bg-warning-lighter border-warning-darker dark:border-warning-lighter border rounded-lg py-2 pl-4 pr-8"
       >
         <ExclamationTriangleIcon
-          class="h-8 w-8 mt-0.5 text-warning-darker dark:text-warning-lighter"
+          class="h-8 w-8 mt-0.5 text-warning-darker dark:text-warning-darker"
         />
         <div class="text-warning-darker max-w-md">
           <p>
