@@ -146,8 +146,8 @@ export type ApiTokenCreateInput = {
 export type AppAuthor = {
   __typename?: 'AppAuthor';
   avatar?: Maybe<Scalars['String']>;
-  id?: Maybe<Scalars['String']>;
-  name?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  name: Scalars['String'];
 };
 
 export type AppCreateInput = {
@@ -200,7 +200,14 @@ export type AutomationFunctionRun = {
    * Current schema: {
    *   version: "1.0.0",
    *   values: {
-   *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
+   *     objectResults: Record<str, {
+   *       category: string
+   *       level: ObjectResultLevel
+   *       objectIds: string[]
+   *       message: str | null
+   *       metadata: Records<str, unknown> | null
+   *       visualoverrides: Records<str, unknown> | null
+   *     }[]>
    *     blobIds?: string[]
    *   }
    * }

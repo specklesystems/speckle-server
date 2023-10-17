@@ -253,54 +253,50 @@
             </div>
             <div class="flex items-center space-x-2">
               <UserAvatar
-                :user="{ name: 'Dimitrie Stefanescu', id: 'ds' }"
+                :user="{ name: 'Dimitrie Stefanescu' }"
                 hover-effect
                 size="xl"
               />
               <UserAvatar
-                :user="{ name: 'Andrei Stefanescu', id: 'ds' }"
+                :user="{ name: 'Andrei Stefanescu' }"
                 hover-effect
                 size="lg"
               />
+              <UserAvatar :user="{ name: 'Dimitrie Berbinski' }" hover-effect />
               <UserAvatar
-                :user="{ name: 'Dimitrie Berbinski', id: 'ds' }"
-                hover-effect
-              />
-              <UserAvatar
-                :user="{ name: 'Zorkan Stefanescu', id: 'ds' }"
+                :user="{ name: 'Zorkan Stefanescu' }"
                 hover-effect
                 size="sm"
               />
               <UserAvatar
-                :user="{ name: 'Gergo Cant Type Your Last Name', id: 'ds' }"
+                :user="{ name: 'Gergo Cant Type Your Last Name' }"
                 hover-effect
                 size="xs"
               />
             </div>
             <div class="flex items-center space-x-2">
               <UserAvatar
-                :user="{ name: 'Dimitrie Stefanescu', id: 'ds', avatar: img }"
+                :user="{ name: 'Dimitrie Stefanescu', avatar: img }"
                 hover-effect
                 size="xl"
               />
               <UserAvatar
-                :user="{ name: 'Andrei Stefanescu', id: 'ds', avatar: img }"
+                :user="{ name: 'Andrei Stefanescu', avatar: img }"
                 hover-effect
                 size="lg"
               />
               <UserAvatar
-                :user="{ name: 'Dimitrie Berbinski', id: 'ds', avatar: img }"
+                :user="{ name: 'Dimitrie Berbinski', avatar: img }"
                 hover-effect
               />
               <UserAvatar
-                :user="{ name: 'Zorkan Stefanescu', id: 'ds', avatar: img }"
+                :user="{ name: 'Zorkan Stefanescu', avatar: img }"
                 hover-effect
                 size="sm"
               />
               <UserAvatar
                 :user="{
                   name: 'Gergo Cant Type Your Last Name',
-                  id: 'ds',
                   avatar: img
                 }"
                 hover-effect

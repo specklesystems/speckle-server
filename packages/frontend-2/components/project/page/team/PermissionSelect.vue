@@ -14,7 +14,7 @@
   >
     <template #something-selected="{ value }">
       <div class="text-normal">
-        {{ value.title }}
+        {{ isArray(value) ? value[0].title : value.title }}
       </div>
     </template>
     <template #option="{ item, selected }">
@@ -36,6 +36,7 @@
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
 import { Roles, StreamRoles } from '@speckle/shared'
 import { reduce } from 'lodash-es'
+import { isArray } from 'lodash-es'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: StreamRoles): void

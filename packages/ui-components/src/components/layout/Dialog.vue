@@ -29,23 +29,25 @@
           >
             <DialogPanel
               :class="[
-                'transform rounded-lg overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90vh]',
+                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90vh]',
                 widthClasses,
                 !maxHeight && 'h-full'
               ]"
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onSubmit"
             >
-              <div
-                v-if="title"
-                class="relative z-10 flex items-center justify-start rounded-t-lg shrink-0 h-16 px-8"
-                :class="scrolledFromTop && 'shadow'"
-              >
-                <h4 class="text-2xl font-bold dark:text-white">{{ title }}</h4>
+              <div :class="scrolledFromTop && 'relative z-10 shadow-lg'">
+                <div
+                  v-if="title"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 h-16 px-8"
+                >
+                  <h4 class="text-2xl font-bold">{{ title }}</h4>
+                </div>
               </div>
+
               <button
                 v-if="!hideCloser"
-                class="absolute z-20 right-4 text-foreground bg-foundation rounded-full p-1"
+                class="absolute z-20 right-4 bg-foundation rounded-full p-1"
                 :class="title ? 'top-4' : 'top-3'"
                 @click="open = false"
               >
@@ -151,19 +153,16 @@ const widthClasses = computed(() => {
   const classParts: string[] = ['w-full', 'sm:my-8 sm:w-full sm:max-w-xl']
 
   if (maxWidthWeight.value >= 1) {
-    classParts.push('max-w-2xl')
+    classParts.push('md:max-w-2xl')
   }
-
   if (maxWidthWeight.value >= 2) {
-    classParts.push('max-w-4xl')
+    classParts.push('lg:max-w-4xl')
   }
-
   if (maxWidthWeight.value >= 3) {
-    classParts.push('max-w-6xl')
+    classParts.push('xl:max-w-6xl')
   }
-
   if (maxWidthWeight.value >= 4) {
-    classParts.push('max-w-7xl')
+    classParts.push('2xl:max-w-7xl')
   }
 
   return classParts.join(' ')

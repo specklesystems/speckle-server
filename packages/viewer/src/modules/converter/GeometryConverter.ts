@@ -1,4 +1,4 @@
-import { BoxBufferGeometry, EllipseCurve, Matrix4, Vector2, Vector3 } from 'three'
+import { Box3, EllipseCurve, Matrix4, Vector2, Vector3 } from 'three'
 import { Geometry, GeometryData } from './Geometry'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
 import { getConversionFactor } from './Units'
@@ -439,11 +439,45 @@ export class GeometryConverter {
     const depth = (node.raw.ySize.end - node.raw.ySize.start) * conversionFactor
     const height = (node.raw.zSize.end - node.raw.zSize.start) * conversionFactor
 
-    const box = new BoxBufferGeometry(width, depth, height, 1, 1, 1)
+    // const box = new BoxBufferGeometry(width, depth, height, 1, 1, 1)
+    const box3 = new Box3(
+      new Vector3(-width * 0.5, -depth * 0.5, -height * 0.5),
+      new Vector3(width * 0.5, depth * 0.5, height * 0.5)
+    )
+    // prettier-ignore
+    const edges = [
+      box3.min.x, box3.min.y, box3.min.z, 
+      box3.min.x, box3.max.y, box3.min.z,
+      box3.min.x, box3.min.y, box3.max.z,
+      box3.min.x, box3.max.y, box3.max.z,
+      box3.min.x, box3.min.y, box3.min.z,
+      box3.min.x, box3.min.y, box3.max.z,
+      box3.min.x, box3.max.y, box3.min.z,
+      box3.min.x, box3.max.y, box3.max.z,
+
+      box3.max.x, box3.min.y, box3.min.z, 
+      box3.max.x, box3.max.y, box3.min.z,
+      box3.max.x, box3.min.y, box3.max.z,
+      box3.max.x, box3.max.y, box3.max.z,
+      box3.max.x, box3.min.y, box3.min.z,
+      box3.max.x, box3.min.y, box3.max.z,
+      box3.max.x, box3.max.y, box3.min.z,
+      box3.max.x, box3.max.y, box3.max.z,
+
+      box3.max.x, box3.min.y, box3.max.z, 
+      box3.min.x, box3.min.y, box3.max.z,
+      box3.max.x, box3.min.y, box3.min.z, 
+      box3.min.x, box3.min.y, box3.min.z,
+      box3.max.x, box3.max.y, box3.max.z, 
+      box3.min.x, box3.max.y, box3.max.z,
+      box3.max.x, box3.max.y, box3.min.z, 
+      box3.min.x, box3.max.y, box3.min.z,
+      
+    ]
+
     return {
       attributes: {
-        POSITION: box.attributes.position.array,
-        INDEX: box.index.array
+        POSITION: edges
       },
       bakeTransform: new Matrix4().setPosition(move),
       transform: null

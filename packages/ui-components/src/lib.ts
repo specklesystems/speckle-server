@@ -56,8 +56,35 @@ import {
   AsyncWritableComputedOptions,
   AsyncWritableComputedRef
 } from '~~/src/composables/common/async'
+import FormTags from '~~/src/components/form/Tags.vue'
+import UserAvatar from '~~/src/components/user/Avatar.vue'
+import UserAvatarGroup from '~~/src/components/user/AvatarGroup.vue'
+import UserAvatarEditable from '~~/src/components/user/AvatarEditable.vue'
+import FormFileUploadZone from '~~/src/components/form/file-upload/Zone.vue'
+import {
+  UploadableFileItem,
+  UploadFileItem,
+  BlobUploadStatus,
+  BlobPostResultItem
+} from '~~/src/composables/form/fileUpload'
+import {
+  FileTypeSpecifier,
+  UniqueFileTypeSpecifier,
+  prettyFileSize
+} from '~~/src/helpers/form/file'
+export * from '~~/src/helpers/common/error'
+import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
+import { AvatarUser, AvatarUserWithId } from '~~/src/composables/user/avatar'
 
 export {
+  CommonLoadingIcon,
+  UniqueFileTypeSpecifier,
+  prettyFileSize,
+  BlobUploadStatus,
+  FormFileUploadZone,
+  UserAvatar,
+  UserAvatarGroup,
+  UserAvatarEditable,
   GlobalToastRenderer,
   ToastNotificationType,
   FormButton,
@@ -100,7 +127,8 @@ export {
   LayoutPanel,
   CommonAlert,
   writableAsyncComputed,
-  useFormCheckboxModel
+  useFormCheckboxModel,
+  FormTags
 }
 export type {
   ToastNotification,
@@ -111,5 +139,11 @@ export type {
   LayoutTabItem,
   InfiniteLoaderState,
   AsyncWritableComputedOptions,
-  AsyncWritableComputedRef
+  AsyncWritableComputedRef,
+  UploadFileItem,
+  UploadableFileItem,
+  BlobPostResultItem,
+  FileTypeSpecifier,
+  AvatarUser,
+  AvatarUserWithId
 }

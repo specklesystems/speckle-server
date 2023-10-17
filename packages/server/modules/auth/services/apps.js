@@ -51,7 +51,7 @@ module.exports = {
       .orderBy('server_apps.trustByDefault', 'DESC')
 
     apps.forEach((app) => {
-      if (app.authorName) {
+      if (app.authorName && app.authorId) {
         app.author = { name: app.authorName, id: app.authorId }
       }
       delete app.authorName
@@ -101,7 +101,10 @@ module.exports = {
     )
 
     const { rows } = await query
-    return rows
+    return rows.map((r) => ({
+      ...r,
+      author: r.author?.id ? r.author : null
+    }))
   },
 
   async createApp(app) {

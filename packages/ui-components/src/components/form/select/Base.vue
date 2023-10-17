@@ -158,8 +158,11 @@
     </p>
   </div>
 </template>
-<script setup lang="ts">
-// Vue components don't support generic props, so having to rely on any
+<script
+  setup
+  lang="ts"
+  generic="SingleItem extends Record<string, unknown> | string | number"
+>
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -180,8 +183,8 @@ import {
   XMarkIcon,
   ExclamationCircleIcon
 } from '@heroicons/vue/24/solid'
-import { debounce, isArray } from 'lodash'
-import { PropType, computed, onMounted, ref, unref, watch } from 'vue'
+import { debounce, isArray, isObjectLike } from 'lodash'
+import { PropType, Ref, computed, onMounted, ref, unref, watch } from 'vue'
 import { MaybeAsync, Nullable, Optional } from '@speckle/shared'
 import { RuleExpression, useField } from 'vee-validate'
 import { nanoid } from 'nanoid'
@@ -189,8 +192,9 @@ import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import { directive as vTippy } from 'vue-tippy'
 
 type ButtonStyle = 'base' | 'simple' | 'tinted'
-type SingleItem = any
 type ValueType = SingleItem | SingleItem[] | undefined
+
+const isObjectLikeType = (v: unknown): v is Record<string, unknown> => isObjectLike(v)
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ValueType): void
@@ -362,12 +366,12 @@ const props = defineProps({
 const { value, errorMessage: error } = useField<ValueType>(props.name, props.rules, {
   validateOnMount: props.validateOnMount,
   validateOnValueUpdate: props.validateOnValueUpdate,
-  initialValue: props.modelValue
+  initialValue: props.modelValue as ValueType
 })
 
 const searchInput = ref(null as Nullable<HTMLInputElement>)
 const searchValue = ref('')
-const currentItems = ref([] as SingleItem[])
+const currentItems = ref([]) as Ref<SingleItem[]>
 const isAsyncLoading = ref(false)
 const forceUpdateKey = ref(1)
 
@@ -535,7 +539,8 @@ const wrappedValue = computed({
 })
 
 const hasValueSelected = computed(() => {
-  if (props.multiple) return wrappedValue.value.length !== 0
+  if (props.multiple && isArray(wrappedValue.value))
+    return wrappedValue.value.length !== 0
   else return !!wrappedValue.value
 })
 
@@ -558,8 +563,13 @@ const finalItems = computed(() => {
 })
 
 const simpleDisplayText = (v: ValueType) => JSON.stringify(v)
-const itemKey = (v: SingleItem): string | number =>
-  props.by ? (v[props.by] as string) : v
+const itemKey = (v: SingleItem): string | number => {
+  if (isObjectLikeType(v)) {
+    return v[props.by || 'id'] as string
+  } else {
+    return v
+  }
+}
 
 const triggerSearch = async () => {
   if (!isAsyncSearchMode.value || !props.getSearchResults) return

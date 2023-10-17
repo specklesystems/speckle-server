@@ -11,13 +11,17 @@ const ObjectResultLevelEnum = z.enum(ObjectResultLevel)
 
 const ObjectResultValuesSchema = z.object({
   level: ObjectResultLevelEnum,
-  statusMessage: z.string()
+  message: z.string(),
+  category: z.string(),
+  objectIds: z.string().array().nonempty(),
+  metadata: z.record(z.string(), z.unknown()).nullable(),
+  visualOverrides: z.record(z.string(), z.unknown()).nullable()
 })
 
 const FirstVersionResultsSchema = z.object({
   version: z.enum(SupportedObjectResultsVersions),
   values: z.object({
-    speckleObjects: z.record(z.string(), ObjectResultValuesSchema.array()),
+    objectResults: ObjectResultValuesSchema.array(),
     blobIds: z.string().array().optional()
   })
 })

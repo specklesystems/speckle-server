@@ -1,23 +1,25 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { RuleExpression, useField } from 'vee-validate'
 import { Ref, ToRefs, computed, onMounted, ref, unref } from 'vue'
 import { Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
+import { isArray } from 'lodash'
 
 export type InputColor = 'page' | 'foundation' | 'transparent'
 
 /**
  * Common setup for text input & textarea fields
  */
-export function useTextInputCore(params: {
+export function useTextInputCore<V extends string | string[] = string>(params: {
   props: ToRefs<{
     name: string
     help?: string
     label?: string
     showLabel?: boolean
-    rules?: RuleExpression<string>
+    rules?: RuleExpression<V>
     validateOnMount?: boolean
     validateOnValueUpdate?: boolean
-    modelValue?: string
+    modelValue?: V
     autoFocus?: boolean
     showClear?: boolean
     useLabelInErrors?: boolean
@@ -25,14 +27,17 @@ export function useTextInputCore(params: {
     color?: InputColor
   }>
   emit: {
-    (e: 'change', val: { event?: Event; value: string }): void
+    (e: 'change', val: { event?: Event; value: V }): void
     (e: 'clear'): void
   }
   inputEl: Ref<Nullable<HTMLInputElement | HTMLTextAreaElement>>
+  options?: Partial<{
+    customClear: () => void
+  }>
 }) {
-  const { props, inputEl, emit } = params
+  const { props, inputEl, emit, options } = params
 
-  const { value, errorMessage: error } = useField(props.name, props.rules, {
+  const { value, errorMessage: error } = useField<V>(props.name, props.rules, {
     validateOnMount: unref(props.validateOnMount),
     validateOnValueUpdate: unref(props.validateOnValueUpdate),
     initialValue: unref(props.modelValue) || undefined
@@ -47,16 +52,25 @@ export function useTextInputCore(params: {
     return classParts.join(' ')
   })
 
+  const coreInputClasses = computed(() => {
+    const classParts: string[] = [
+      'focus:outline-none disabled:cursor-not-allowed disabled:bg-foundation-disabled',
+      'disabled:text-disabled-muted placeholder:text-foreground-2',
+      'rounded'
+    ]
+
+    return classParts.join(' ')
+  })
+
   const coreClasses = computed(() => {
     const classParts = [
-      'block w-full rounded focus:outline-none text-foreground transition-all',
-      'disabled:cursor-not-allowed disabled:bg-foundation-disabled disabled:text-disabled-muted',
-      'placeholder:text-foreground-2'
+      'block w-full text-foreground transition-all',
+      coreInputClasses.value
     ]
 
     if (error.value) {
       classParts.push(
-        'border-2 border-danger text-danger-darker focus:border-danger focus:ring-danger'
+        'focus:border-danger focus:ring-danger border-2 border-danger text-danger-darker'
       )
     } else {
       classParts.push('border-0 focus:ring-2 focus:ring-outline-2')
@@ -102,8 +116,10 @@ export function useTextInputCore(params: {
   }
 
   const clear = () => {
-    value.value = ''
-    emit('change', { value: '' })
+    value.value = (isArray(value.value) ? [] : '') as V
+    options?.customClear?.()
+
+    emit('change', { value: value.value })
     emit('clear')
   }
 
@@ -114,6 +130,7 @@ export function useTextInputCore(params: {
   })
 
   return {
+    coreInputClasses,
     coreClasses,
     title,
     value,

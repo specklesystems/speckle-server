@@ -3,7 +3,7 @@
     <div class="flex flex-col space-y-4">
       <div class="flex flex-col md:flex-row gap-8 items-center">
         <div class="w-full md:w-3/12">
-          <UserAvatarEditable class="self-center" :user="user" size="xxl" />
+          <UserProfileEditDialogAvatar :user="user" />
         </div>
         <div class="flex flex-col space-y-4 w-full md:w-9/12">
           <FormTextInput
@@ -49,7 +49,7 @@ graphql(`
     name
     company
     bio
-    ...UserAvatarEditable_User
+    ...UserProfileEditDialogAvatar_User
   }
 `)
 

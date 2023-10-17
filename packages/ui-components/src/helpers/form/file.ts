@@ -1,45 +1,6 @@
-import { BaseError } from '@/helpers/errorHelper'
-import md5 from '@/helpers/md5'
-import { Nullable, Optional } from '@/helpers/typeHelpers'
-import { BlobPostResultItem } from '@/main/lib/common/file-upload/blobStorageApi'
-import { difference, has, intersection } from 'lodash'
-
-/**
- * A file, as emitted out from FileUploadZone
- */
-export interface UploadableFileItem {
-  file: File
-  error: Nullable<Error>
-  /**
-   * You can use this ID to check for File equality
-   */
-  id: string
-}
-
-/**
- * A file once it's upload has started
- */
-export interface UploadFileItem extends UploadableFileItem {
-  /**
-   * Progress between 0 and 100
-   */
-  progress: number
-
-  /**
-   * When upload has finished this contains a BlobPostResultItem
-   */
-  result: Optional<BlobPostResultItem>
-
-  /**
-   * When a blob gets assigned to a resource, it should count as in use, and this will
-   * prevent it from being deleted as junk
-   */
-  inUse?: boolean
-}
-
-export type FilesSelectedEvent = { files: UploadableFileItem[] }
-
-export type FileUploadDeleteEvent = { id: string }
+import { difference, intersection } from 'lodash'
+import { Nullable, md5 } from '@speckle/shared'
+import { BaseError } from '~~/src/helpers/common/error'
 
 export type FileTypeSpecifier = UniqueFileTypeSpecifier | `.${string}`
 
@@ -47,30 +8,6 @@ export enum UniqueFileTypeSpecifier {
   AnyAudio = 'audio/*',
   AnyVideo = 'video/*',
   AnyImage = 'image/*'
-}
-
-function isUploadFileItem(
-  uploadable: UploadableFileItem
-): uploadable is UploadFileItem {
-  return has(uploadable, 'progress') || has(uploadable, 'result')
-}
-
-export function isSuccessfullyUploaded(upload: UploadFileItem): boolean {
-  return !!upload.result?.blobId
-}
-
-/**
- * Validate if the upload is fully processed (successfully or not)
- */
-export function isUploadProcessed(
-  upload: UploadableFileItem | UploadFileItem
-): boolean {
-  if (upload.error) return true
-  if (isUploadFileItem(upload)) {
-    return upload.progress >= 100
-  }
-
-  return false
 }
 
 /**
@@ -111,7 +48,7 @@ export function validateFileType(
   if (!fileExt) return new MissingFileExtensionError()
 
   for (const allowedExtension of allowedExtensions) {
-    if (allowedExtension === fileExt.toLowerCase()) return true
+    if (allowedExtension.toLowerCase() === fileExt.toLowerCase()) return true
   }
 
   return new ForbiddenFileTypeError()
@@ -175,14 +112,10 @@ export function generateFileId(file: File): string {
   return md5(JSON.stringify(importantData))
 }
 
-export class ForbiddenFileTypeError extends BaseError {
-  static defaultMessage = 'The selected file type is forbidden'
-}
-
 export class MissingFileExtensionError extends BaseError {
   static defaultMessage = 'The selected file has a missing extension'
 }
 
-export class FileTooLargeError extends BaseError {
-  static defaultMessage = "The selected file's size is too large"
+export class ForbiddenFileTypeError extends BaseError {
+  static defaultMessage = 'The selected file type is forbidden'
 }

@@ -46,6 +46,6 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.schema.dropTableIfExists(AUTOMATIONS_TABLE_NAME)
   await knex.schema.dropTableIfExists(AUTOMATION_RUNS_TABLE_NAME)
+  await knex.schema.dropTableIfExists(AUTOMATIONS_TABLE_NAME)
 }

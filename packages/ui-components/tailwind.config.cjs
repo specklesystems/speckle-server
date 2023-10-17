@@ -14,7 +14,7 @@ module.exports = {
     extend: {
       // Standard Tailwind Shadows add shadows below the element, 'shadow-t" variant adds shadow to the top of the element.
       boxShadow: {
-        t: '0 -1px 3px 0 rgb(0 0 0 / 10%), 0 -1px 2px -1px rgb(0 0 0 / 6%)'
+        t: '0 -10px 8px 0 rgb(0 0 0 / 8%), 0 -4px 3px -6px rgb(0 0 0 / 10%)'
       },
       backdropBlur: {
         xs: '1px'

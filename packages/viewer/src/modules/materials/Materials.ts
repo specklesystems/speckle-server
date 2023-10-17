@@ -24,6 +24,7 @@ import SpeckleGhostMaterial from './SpeckleGhostMaterial'
 import Logger from 'js-logger'
 import SpeckleTextMaterial from './SpeckleTextMaterial'
 import { SpeckleMaterial } from './SpeckleMaterial'
+import SpecklePointColouredMaterial from './SpecklePointColouredMaterial'
 
 export interface MaterialOptions {
   rampIndex?: number
@@ -58,6 +59,7 @@ export default class Materials {
   private pointGhostMaterial: Material = null
   private pointOverlayMaterial: Material = null
   private pointCloudOverlayMaterial: Material = null
+  private pointCloudColouredMaterial: Material = null
 
   private textHighlightMaterial: Material = null
   private textGhostMaterial: Material = null
@@ -435,7 +437,17 @@ export default class Materials {
       ['USE_RTE']
     )
 
-    // Jesus prettier... o_0
+    this.pointCloudColouredMaterial = new SpecklePointColouredMaterial(
+      {
+        color: 0xffffff,
+        vertexColors: false,
+        size: 2,
+        sizeAttenuation: false
+      },
+      ['USE_RTE']
+    )
+
+    // Jesus prettier... o_0(
     ;(
       this.pointCloudHighlightMaterial as SpecklePointMaterial
     ).color.convertSRGBToLinear()
@@ -864,7 +876,7 @@ export default class Materials {
       case GeometryType.POINT:
         return this.pointGhostMaterial
       case GeometryType.POINT_CLOUD:
-        return this.pointGhostMaterial
+        return this.pointCloudColouredMaterial
       case GeometryType.TEXT:
         return this.textColoredMaterial
     }
