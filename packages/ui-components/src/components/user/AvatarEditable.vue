@@ -8,7 +8,7 @@
       @save="onSave"
     />
     <div v-else class="relative group">
-      <UserAvatar :user="modelAsUser" size="editable" />
+      <UserAvatar :user="modelAsUser" :size="size" />
       <div
         class="opacity-0 transition-all absolute group-hover:opacity-100 inset-0 flex items-end justify-center bottom-4"
       >
@@ -27,7 +27,7 @@ import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { computed, defineAsyncComponent } from 'vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import UserAvatar from '~~/src/components/user/Avatar.vue'
-import { AvatarUser } from '~~/src/composables/user/avatar'
+import { AvatarUser, UserAvatarSize } from '~~/src/composables/user/avatar'
 import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
 import { RuleExpression, useField } from 'vee-validate'
 
@@ -58,6 +58,7 @@ const props = defineProps<{
   validateOnMount?: boolean
   validateOnValueUpdate?: boolean
   disabled?: boolean
+  size: UserAvatarSize
 }>()
 
 const { value, errorMessage } = useField<ModelType>(props.name, props.rules, {

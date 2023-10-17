@@ -236,7 +236,6 @@ const {
 const { result: tokensResult, refetch: refetchTokens } = useQuery(
   developerSettingsAccessTokensQuery
 )
-
 const { result: applicationsResult, refetch: refetchApplications } = useQuery(
   developerSettingsApplicationsQuery
 )
