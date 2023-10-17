@@ -19,6 +19,7 @@ export interface IBasicConnectorBinding
   getDocumentState: () => Promise<DocumentModelStore>
   addModel: (model: IModelCard) => Promise<void>
   updateModel: (model: IModelCard) => Promise<void>
+  highlightModel: (modelCardId: string) => Promise<void>
   removeModel: (model: IModelCard) => Promise<void>
 
   // FILTERS AND TYPES

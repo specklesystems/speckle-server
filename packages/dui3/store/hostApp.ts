@@ -65,6 +65,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     documentModelStore.value.models.push(model)
   }
 
+  const highlightModel = async (modelId: string) => {
+    await app.$baseBinding.highlightModel(modelId)
+  }
+
   const updateModelFilter = async (modelId: string, filter: ISendFilter) => {
     const modelIndex = documentModelStore.value.models.findIndex(
       (m) => m.id === modelId
@@ -174,14 +178,12 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       (m) => m.id === args.modelCardId
     ) as IReceiverModelCard
     model.notifications?.push(args)
-    console.log(model.notifications, 'when added')
 
     setTimeout(() => {
       const notification = model.notifications?.find((n) => n.id === args.id)
       const notifications = model.notifications?.filter((n) => n.id !== args.id)
       notifications?.push({ ...notification, visible: false } as ModelCardNotification)
       model.notifications = notifications
-      console.log(model.notifications, 'after timeout')
     }, args.timeout)
   })
 
@@ -235,7 +237,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       action: {
         name: 'View',
         url: `${defaultAccount.value?.accountInfo.serverInfo.url}/streams/${args.projectId}/commits/${res?.data?.versionMutations.create.id}`
-      }
+      },
+      visible: true
     }
     const model = documentModelStore.value.models.find(
       (m) => m.id === args.modelCardId
@@ -264,6 +267,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     selectionFilter,
     everythingFilter,
     addModel,
+    highlightModel,
     updateModelFilter,
     removeModel,
     tryGetModel,

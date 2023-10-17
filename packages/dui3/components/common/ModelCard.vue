@@ -7,25 +7,63 @@
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"
   >
-    <div class="flex items-center h-20 justify-between w-full p-2">
-      <slot></slot>
-      <Transition
-        enter-from-class="opacity-0"
-        enter-active-class="transition duration-300"
-        leave-to-class="opacity-0"
-        leave-active-class="transition duration-300"
-      >
-        <FormButton
-          v-if="hovered"
-          key="removeCard"
-          v-tippy="'Remove Card'"
-          size="sm"
-          text
-          hide-text
-          :icon-left="TrashIcon"
-          @click="openRemoveCardDialog = true"
-        />
-      </Transition>
+    <div class="flex items-center h-20">
+      <div class="flex items-center h-20 justify-between w-[90%] p-2">
+        <slot></slot>
+      </div>
+      <div class="w-[10%]">
+        <Transition
+          enter-from-class="opacity-0"
+          enter-active-class="transition duration-300"
+          leave-to-class="opacity-0"
+          leave-active-class="transition duration-300"
+        >
+          <FormButton
+            v-if="hovered"
+            key="highlight"
+            v-tippy="'Highlight Objects'"
+            size="sm"
+            text
+            hide-text
+            :icon-left="EyeIcon"
+            @click="showHighlight"
+          />
+        </Transition>
+        <Transition
+          enter-from-class="opacity-0"
+          enter-active-class="transition duration-300"
+          leave-to-class="opacity-0"
+          leave-active-class="transition duration-300"
+        >
+          <FormButton
+            v-if="hovered"
+            key="removeModel"
+            v-tippy="'Remove Model'"
+            size="sm"
+            text
+            hide-text
+            :icon-left="TrashIcon"
+            @click="openRemoveCardDialog = true"
+          />
+        </Transition>
+        <Transition
+          enter-from-class="opacity-0"
+          enter-active-class="transition duration-300"
+          leave-to-class="opacity-0"
+          leave-active-class="transition duration-300"
+        >
+          <FormButton
+            v-if="hovered"
+            key="showNotifications"
+            v-tippy="'Show Notifications'"
+            size="sm"
+            text
+            hide-text
+            :icon-left="notificationsEnabled ? SolidBellAlertIcon : BellAlertIcon"
+            @click="showNotifications"
+          />
+        </Transition>
+      </div>
     </div>
 
     <div
@@ -76,7 +114,13 @@
 </template>
 <script setup lang="ts">
 import { CommonLoadingProgressBar } from '@speckle/ui-components'
-import { TrashIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import {
+  TrashIcon,
+  ExclamationTriangleIcon,
+  BellAlertIcon,
+  EyeIcon
+} from '@heroicons/vue/24/outline'
+import { BellAlertIcon as SolidBellAlertIcon } from '@heroicons/vue/24/solid'
 import { ProjectModelGroup, useHostAppStore } from '~~/store/hostApp'
 import { IModelCard } from '~~/lib/models/card'
 
@@ -118,6 +162,21 @@ const removeCard = () => {
   store.removeModel(props.modelCard)
 }
 
+const showNotifications = () => {
+  notificationsEnabled.value = !notificationsEnabled.value
+
+  if (notificationsEnabled.value) {
+    props.modelCard.notifications?.forEach((n) => (n.visible = true))
+  } else {
+    props.modelCard.notifications?.forEach((n) => (n.visible = false))
+  }
+}
+
+const showHighlight = () => {
+  store.highlightModel(props.modelCard.id)
+}
+
 const openRemoveCardDialog = ref(false)
 const hovered = ref(false)
+const notificationsEnabled = ref(false)
 </script>
