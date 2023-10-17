@@ -5,7 +5,7 @@ import Logger from 'js-logger'
 import { AsyncPause } from '../../World'
 import { NodeMap } from '../../tree/NodeMap'
 
-export type ConverterResultDelegate = (object) => Promise<void>
+export type ConverterResultDelegate = () => Promise<void>
 export type ConverterNodeDelegate = (object, node) => Promise<void>
 
 /**
@@ -17,7 +17,7 @@ export default class SpeckleConverter {
   private activePromises: number
   private maxChildrenPromises: number
   private spoofIDs = false
-  public idMap = {}
+  private idCache = {}
   private tree: WorldTree
   private pause: AsyncPause
   private typeLookupTable: { [type: string]: string } = {}
@@ -42,8 +42,11 @@ export default class SpeckleConverter {
     Ellipse: this.EllipseToNode.bind(this),
     RevitInstance: this.RevitInstanceToNode.bind(this),
     Text: this.TextToNode.bind(this),
-    Dimension: this.DimensionToNode.bind(this)
+    Dimension: this.DimensionToNode.bind(this),
+    Parameter: null
   }
+
+  private readonly IgnoreNodes = ['Parameter']
 
   constructor(objectLoader: unknown, tree: WorldTree) {
     if (!objectLoader) {
@@ -100,6 +103,11 @@ export default class SpeckleConverter {
       return
     }
 
+    /** These are not needed as nodes */
+    if (this.IgnoreNodes.includes(this.getSpeckleType(obj))) {
+      return
+    }
+
     const childNode: TreeNode = this.tree.parse({
       id: !node ? objectURL : this.getNodeId(obj),
       raw: Object.assign({}, obj),
@@ -117,7 +125,7 @@ export default class SpeckleConverter {
     if (this.directNodeConverterExists(obj)) {
       try {
         await this.convertToNode(obj.data || obj, childNode)
-        await callback(null /*await this.directConvert(obj.data || obj, scale)*/)
+        await callback()
         return
       } catch (e) {
         Logger.warn(
@@ -154,7 +162,7 @@ export default class SpeckleConverter {
           })
           await this.convertToNode(displayValue, nestedNode)
           this.tree.addNode(nestedNode, childNode)
-          await callback({}) // use the parent's metadata!
+          await callback()
         } catch (e) {
           Logger.warn(
             `(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}`
@@ -172,7 +180,7 @@ export default class SpeckleConverter {
           })
           await this.convertToNode(val, nestedNode)
           this.tree.addNode(nestedNode, childNode)
-          await callback({})
+          await callback()
         }
       }
 
@@ -218,11 +226,11 @@ export default class SpeckleConverter {
     if (this.spoofIDs) return generateUUID()
     let retId = obj.id
     // const type = ''
-    if (this.idMap[obj.id]) {
+    if (this.idCache[obj.id]) {
       // && (type = this.getSpeckleType(obj)) !== 'Base') {
       retId = this.getCompoundId(obj.id, this.instanceCounter++)
     }
-    this.idMap[retId] = 1
+    this.idCache[retId] = 1
     return retId
   }
   /**

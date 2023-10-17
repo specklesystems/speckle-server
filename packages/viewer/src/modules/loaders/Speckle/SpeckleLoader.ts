@@ -4,6 +4,7 @@ import { Loader, LoaderEvent } from '../Loader'
 import ObjectLoader from '@speckle/objectloader'
 import { SpeckleGeometryConverter } from './SpeckleGeometryConverter'
 import { WorldTree } from '../../..'
+import { AsyncPause } from '../../World'
 
 export class SpeckleLoader extends Loader {
   private loader: ObjectLoader
@@ -77,16 +78,19 @@ export class SpeckleLoader extends Loader {
 
     Logger.warn('Downloading object ', this._resource)
 
+    const pause = new AsyncPause()
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.isCancelled) {
         this.emit(LoaderEvent.LoadCancelled, this._resource)
         return
       }
-      // await this.converter.asyncPause()
       if (first) {
         firstObjectPromise = this.converter.traverse(this._resource, obj, async () => {
-          // await this.converter.asyncPause()
           viewerLoads++
+          pause.tick(100)
+          if (pause.needsWait) {
+            await pause.wait(16)
+          }
         })
         first = false
         total = obj.totalChildrenCount

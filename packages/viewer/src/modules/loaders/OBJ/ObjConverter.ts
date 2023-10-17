@@ -55,7 +55,7 @@ export class ObjConverter {
     if (this.directNodeConverterExists(object)) {
       try {
         await this.convertToNode(object, childNode)
-        await callback(null)
+        await callback()
       } catch (e) {
         Logger.warn(
           `(Traversing - direct) Failed to convert ${type} with id: ${object.uuid}`,

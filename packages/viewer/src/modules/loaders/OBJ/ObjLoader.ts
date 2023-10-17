@@ -29,9 +29,7 @@ export class ObjLoader extends Loader {
           this.baseLoader.load(
             this._resource,
             async (group: Group) => {
-              await this.converter.traverse(this._resource, group, async (obj) => {
-                obj
-              })
+              await this.converter.traverse(this._resource, group, async () => {})
 
               loadResolve()
             },
@@ -51,9 +49,7 @@ export class ObjLoader extends Loader {
             .traverse(
               this._resource,
               this.baseLoader.parse(this._resourceData as string),
-              async (obj) => {
-                obj
-              }
+              async () => {}
             )
             .then(() => loadResolve())
             .catch((err) => {
