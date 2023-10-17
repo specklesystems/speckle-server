@@ -15,7 +15,12 @@
         <FormClipboardInput
           v-if="props.application?.secret"
           :value="props.application?.secret"
-          @copy="showCopyToast"
+          @copy="
+            triggerNotification({
+              type: ToastNotificationType.Info,
+              title: 'App Secret copied to clipboard'
+            })
+          "
         />
       </div>
     </div>
@@ -44,11 +49,4 @@ const dialogButtons = computed(() => [
 ])
 
 const { triggerNotification } = useGlobalToast()
-
-const showCopyToast = () => {
-  triggerNotification({
-    type: ToastNotificationType.Info,
-    title: 'App Secret copied to clipboard'
-  })
-}
 </script>

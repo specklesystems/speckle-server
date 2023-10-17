@@ -49,7 +49,7 @@ import {
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 
 const emit = defineEmits<{
-  (e: 'token-created', token: string): void
+  (e: 'token-created', tokenId: string): void
 }>()
 
 const { mutate: createToken } = useMutation(createAccessTokenMutation)

@@ -207,6 +207,10 @@
       v-model:open="showCreateTokenSuccessDialog"
       :token="tokenSuccess"
     />
+    <DeveloperSettingsCreateApplicationSuccessDialog
+      v-model:open="showCreateApplicationSuccessDialog"
+      :application="(itemToModify as ApplicationItem)"
+    />
   </div>
 </template>
 
@@ -241,6 +245,7 @@ const itemToModify = ref<TokenItem | ApplicationItem | null>(null)
 const tokenSuccess = ref('')
 const showCreateTokenDialog = ref(false)
 const showCreateTokenSuccessDialog = ref(false)
+const showCreateApplicationSuccessDialog = ref(false)
 const showDeleteDialog = ref(false)
 const showCreateEditApplicationDialog = ref(false)
 const showRevealSecretDialog = ref(false)
@@ -283,7 +288,14 @@ const handleTokenCreated = (token: string) => {
   showCreateTokenSuccessDialog.value = true
 }
 
-const handleApplicationCreated = () => {
-  refetchApplications()
+const handleApplicationCreated = (applicationId: string) => {
+  refetchApplications()?.then(() => {
+    const newApplication = applications.value.find((app) => app.id === applicationId)
+
+    if (newApplication) {
+      itemToModify.value = newApplication
+      showCreateApplicationSuccessDialog.value = true
+    }
+  })
 }
 </script>

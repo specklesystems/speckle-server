@@ -82,7 +82,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'application-created'): void
+  (e: 'application-created', applicationId: string): void
 }>()
 
 const { mutate: createApplication } = useMutation(createApplicationMutation)
@@ -164,7 +164,7 @@ const onSubmit = handleSubmit(async (applicationFormValues) => {
     if (result?.data?.appCreate) {
       isOpen.value = false
       resetFormFields()
-      emit('application-created')
+      emit('application-created', result.data.appCreate)
       triggerNotification({
         type: ToastNotificationType.Success,
         title: 'Application created',

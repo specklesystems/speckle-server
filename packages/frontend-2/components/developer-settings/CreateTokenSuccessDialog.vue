@@ -9,7 +9,15 @@
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <div class="flex flex-col gap-3">
         <h6 class="h6 font-bold text-center">Your new token:</h6>
-        <FormClipboardInput :value="props.token" />
+        <FormClipboardInput
+          :value="props.token"
+          @copy="
+            triggerNotification({
+              type: ToastNotificationType.Info,
+              title: 'App Id copied to clipboard'
+            })
+          "
+        />
       </div>
       <div
         class="flex gap-4 items-center bg-warning-lighter dark:bg-warning border-warning-darker dark:border-warning-lighter border rounded-lg py-2 pl-4 pr-8"
@@ -32,12 +40,15 @@
 <script setup lang="ts">
 import { LayoutDialog, FormClipboardInput } from '@speckle/ui-components'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 
 const props = defineProps<{
   token: string
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
+
+const { triggerNotification } = useGlobalToast()
 
 const dialogButtons = [
   {
