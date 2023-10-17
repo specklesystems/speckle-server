@@ -37,8 +37,8 @@ type ServerAppListItem {
 }
 
 type AppAuthor {
-  name: String
-  id: String
+  name: String!
+  id: String!
   avatar: String
 }
 

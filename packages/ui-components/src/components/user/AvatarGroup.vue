@@ -20,16 +20,18 @@
 </template>
 <script setup lang="ts">
 import { Nullable } from '@speckle/shared'
-import { useWrappingContainerHiddenCount } from '~~/lib/layout/composables/resize'
+import { computed, ref, toRefs } from 'vue'
+import UserAvatar from '~~/src/components/user/Avatar.vue'
+import { useWrappingContainerHiddenCount } from '~~/src/composables/layout/resize'
 import {
-  AvatarUserType,
   UserAvatarSize,
+  AvatarUserWithId,
   useAvatarSizeClasses
-} from '~~/lib/user/composables/avatar'
+} from '~~/src/composables/user/avatar'
 
 const props = withDefaults(
   defineProps<{
-    users: AvatarUserType[]
+    users: AvatarUserWithId[]
     overlap?: boolean
     size?: UserAvatarSize
     maxCount?: number

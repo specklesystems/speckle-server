@@ -146,8 +146,8 @@ export type ApiTokenCreateInput = {
 export type AppAuthor = {
   __typename?: 'AppAuthor';
   avatar?: Maybe<Scalars['String']>;
-  id?: Maybe<Scalars['String']>;
-  name?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  name: Scalars['String'];
 };
 
 export type AppCreateInput = {

@@ -44,7 +44,8 @@
       </div>
       <div
         v-if="showRequired && !errorMessage"
-        class="pointer-events-none absolute inset-y-0 mt-0.5 text-4xl right-0 flex items-start pr-2 text-danger opacity-50"
+        class="pointer-events-none absolute inset-y-0 mt-0.5 text-4xl right-0 flex items-start text-danger opacity-50"
+        :class="[showClear ? 'pr-8' : 'pr-2']"
       >
         *
       </div>

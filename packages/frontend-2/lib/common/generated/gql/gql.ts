@@ -54,12 +54,8 @@ const documents = {
     "\n  fragment ProjectsDashboardFilled on ProjectCollection {\n    items {\n      ...ProjectDashboardItem\n    }\n  }\n": types.ProjectsDashboardFilledFragmentDoc,
     "\n  fragment ProjectsInviteBanner on PendingStreamCollaborator {\n    id\n    invitedBy {\n      ...LimitedUserAvatar\n    }\n    projectId\n    projectName\n    token\n  }\n": types.ProjectsInviteBannerFragmentDoc,
     "\n  fragment ProjectsInviteBanners on User {\n    projectInvites {\n      ...ProjectsInviteBanner\n    }\n  }\n": types.ProjectsInviteBannersFragmentDoc,
-    "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": types.AppAuthorAvatarFragmentDoc,
-    "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
-    "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
-    "\n  fragment UserAvatarEditable_User on User {\n    id\n    avatar\n    ...ActiveUserAvatar\n  }\n": types.UserAvatarEditable_UserFragmentDoc,
-    "\n  fragment UserAvatarEditor_User on User {\n    id\n    avatar\n  }\n": types.UserAvatarEditor_UserFragmentDoc,
-    "\n  fragment UserProfileEditDialogBio_User on User {\n    id\n    name\n    company\n    bio\n    ...UserAvatarEditable_User\n  }\n": types.UserProfileEditDialogBio_UserFragmentDoc,
+    "\n  fragment UserProfileEditDialogAvatar_User on User {\n    id\n    avatar\n    ...ActiveUserAvatar\n  }\n": types.UserProfileEditDialogAvatar_UserFragmentDoc,
+    "\n  fragment UserProfileEditDialogBio_User on User {\n    id\n    name\n    company\n    bio\n    ...UserProfileEditDialogAvatar_User\n  }\n": types.UserProfileEditDialogBio_UserFragmentDoc,
     "\n  fragment UserProfileEditDialogDeleteAccount_User on User {\n    id\n    email\n  }\n": types.UserProfileEditDialogDeleteAccount_UserFragmentDoc,
     "\n  fragment UserProfileEditDialogNotificationPreferences_User on User {\n    id\n    notificationPreferences\n  }\n": types.UserProfileEditDialogNotificationPreferences_UserFragmentDoc,
     "\n  fragment ThreadCommentAttachment on Comment {\n    text {\n      attachments {\n        id\n        fileName\n        fileType\n        fileSize\n      }\n    }\n  }\n": types.ThreadCommentAttachmentFragmentDoc,
@@ -134,6 +130,9 @@ const documents = {
     "\n  query AdminPanelProjectsList(\n    $query: String\n    $orderBy: String\n    $limit: Int!\n    $visibility: String\n    $cursor: String\n  ) {\n    admin {\n      projectList(\n        query: $query\n        orderBy: $orderBy\n        limit: $limit\n        visibility: $visibility\n        cursor: $cursor\n      ) {\n        cursor\n        items {\n          id\n          name\n          visibility\n          createdAt\n          updatedAt\n          models {\n            totalCount\n          }\n          versions {\n            totalCount\n          }\n          team {\n            user {\n              name\n              id\n              avatar\n            }\n          }\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n": types.AdminPanelProjectsListDocument,
     "\n  query AdminPanelInvitesList($limit: Int!, $cursor: String, $query: String) {\n    admin {\n      inviteList(limit: $limit, cursor: $cursor, query: $query) {\n        cursor\n        items {\n          email\n          id\n          invitedBy {\n            id\n            name\n          }\n        }\n        totalCount\n      }\n    }\n  }\n": types.AdminPanelInvitesListDocument,
     "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n": types.InviteServerUserDocument,
+    "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": types.AppAuthorAvatarFragmentDoc,
+    "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
+    "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
     "\n  mutation UpdateUser($input: UserUpdateInput!) {\n    activeUserMutations {\n      update(user: $input) {\n        id\n        name\n        bio\n        company\n        avatar\n      }\n    }\n  }\n": types.UpdateUserDocument,
     "\n  mutation UpdateNotificationPreferences($input: JSONObject!) {\n    userNotificationPreferencesUpdate(preferences: $input)\n  }\n": types.UpdateNotificationPreferencesDocument,
     "\n  mutation DeleteAccount($input: UserDeleteInput!) {\n    userDelete(userConfirmation: $input)\n  }\n": types.DeleteAccountDocument,
@@ -340,27 +339,11 @@ export function graphql(source: "\n  fragment ProjectsInviteBanners on User {\n 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n"): (typeof documents)["\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n"];
+export function graphql(source: "\n  fragment UserProfileEditDialogAvatar_User on User {\n    id\n    avatar\n    ...ActiveUserAvatar\n  }\n"): (typeof documents)["\n  fragment UserProfileEditDialogAvatar_User on User {\n    id\n    avatar\n    ...ActiveUserAvatar\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n"): (typeof documents)["\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n"): (typeof documents)["\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment UserAvatarEditable_User on User {\n    id\n    avatar\n    ...ActiveUserAvatar\n  }\n"): (typeof documents)["\n  fragment UserAvatarEditable_User on User {\n    id\n    avatar\n    ...ActiveUserAvatar\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment UserAvatarEditor_User on User {\n    id\n    avatar\n  }\n"): (typeof documents)["\n  fragment UserAvatarEditor_User on User {\n    id\n    avatar\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment UserProfileEditDialogBio_User on User {\n    id\n    name\n    company\n    bio\n    ...UserAvatarEditable_User\n  }\n"): (typeof documents)["\n  fragment UserProfileEditDialogBio_User on User {\n    id\n    name\n    company\n    bio\n    ...UserAvatarEditable_User\n  }\n"];
+export function graphql(source: "\n  fragment UserProfileEditDialogBio_User on User {\n    id\n    name\n    company\n    bio\n    ...UserProfileEditDialogAvatar_User\n  }\n"): (typeof documents)["\n  fragment UserProfileEditDialogBio_User on User {\n    id\n    name\n    company\n    bio\n    ...UserProfileEditDialogAvatar_User\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -657,6 +640,18 @@ export function graphql(source: "\n  query AdminPanelInvitesList($limit: Int!, $
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n"): (typeof documents)["\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n"): (typeof documents)["\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n"): (typeof documents)["\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n"): (typeof documents)["\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
