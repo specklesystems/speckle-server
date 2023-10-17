@@ -85,12 +85,12 @@ const emit = defineEmits<{
   (e: 'application-created', applicationId: string): void
 }>()
 
+const isOpen = defineModel<boolean>('open', { required: true })
+
 const { mutate: createApplication } = useMutation(createApplicationMutation)
 const { mutate: editApplication } = useMutation(editApplicationMutation)
 const { triggerNotification } = useGlobalToast()
 const { handleSubmit, resetForm } = useForm<ApplicationFormValues>()
-
-const isOpen = defineModel<boolean>('open', { required: true })
 
 const name = ref('')
 const scopes = ref<typeof applicationScopes.value>([])
@@ -198,7 +198,6 @@ const dialogButtons = computed(() => [
 
 const resetApplicationModel = () => {
   if (props.application) {
-    console.log('prop')
     name.value = props.application.name
     scopes.value = props.application.scopes
       ? props.application.scopes.map((scope) => ({
@@ -206,7 +205,6 @@ const resetApplicationModel = () => {
           text: scope.name as (typeof AllScopes)[number]
         }))
       : []
-
     redirectUrl.value = props.application.redirectUrl
     description.value = props.application.description || ''
   } else {

@@ -78,6 +78,8 @@ const props = defineProps<{
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
+const { triggerNotification } = useGlobalToast()
+
 const dialogButtons = [
   {
     text: 'Close',
@@ -85,6 +87,4 @@ const dialogButtons = [
     onClick: () => (isOpen.value = false)
   }
 ]
-
-const { triggerNotification } = useGlobalToast()
 </script>
