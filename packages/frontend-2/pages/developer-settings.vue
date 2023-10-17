@@ -41,7 +41,7 @@
               props: {
                 color: 'primary',
                 iconLeft: PlusIcon,
-                onclick: openCreateTokenDialog
+                onClick: openCreateTokenDialog
               },
               label: 'New Token'
             }
@@ -188,7 +188,7 @@
 
     <DeveloperSettingsCreateTokenDialog
       v-model:open="showCreateTokenDialog"
-      @token-created="handleTokenCreated"
+      @token-created="(token) => handleTokenCreated(token)"
     />
     <DeveloperSettingsDeleteDialog
       v-model:open="showDeleteDialog"
@@ -202,6 +202,10 @@
     <DeveloperSettingsRevealSecretDialog
       v-model:open="showRevealSecretDialog"
       :application="itemToModify && 'secret' in itemToModify ? itemToModify : null"
+    />
+    <DeveloperSettingsCreateTokenSuccessDialog
+      v-model:open="showCreateTokenSuccessDialog"
+      :token="tokenSuccess"
     />
   </div>
 </template>
@@ -234,7 +238,9 @@ const { result: applicationsResult, refetch: refetchApplications } = useQuery(
 )
 
 const itemToModify = ref<TokenItem | ApplicationItem | null>(null)
+const tokenSuccess = ref('')
 const showCreateTokenDialog = ref(false)
+const showCreateTokenSuccessDialog = ref(false)
 const showDeleteDialog = ref(false)
 const showCreateEditApplicationDialog = ref(false)
 const showRevealSecretDialog = ref(false)
@@ -257,6 +263,10 @@ const openCreateApplicationDialog = () => {
   showCreateEditApplicationDialog.value = true
 }
 
+const openCreateTokenDialog = () => {
+  showCreateTokenDialog.value = true
+}
+
 const openEditApplicationDialog = (item: ApplicationItem) => {
   itemToModify.value = item
   showCreateEditApplicationDialog.value = true
@@ -267,15 +277,13 @@ const openRevealSecretDialog = (item: ApplicationItem) => {
   showRevealSecretDialog.value = true
 }
 
-const handleTokenCreated = () => {
+const handleTokenCreated = (token: string) => {
   refetchTokens()
+  tokenSuccess.value = token
+  showCreateTokenSuccessDialog.value = true
 }
 
 const handleApplicationCreated = () => {
   refetchApplications()
-}
-
-const openCreateTokenDialog = () => {
-  showCreateTokenDialog.value = true
 }
 </script>

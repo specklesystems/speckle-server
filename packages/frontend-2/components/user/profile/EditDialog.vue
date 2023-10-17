@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" title="Edit Profile" max-width="md">
+  <LayoutDialog v-model:open="isOpen" max-height title="Edit Profile" max-width="md">
     <div v-if="user" class="flex flex-col text-foreground">
       <UserProfileEditDialogBio :user="user" />
       <UserProfileEditDialogNotificationPreferences :user="user" />
@@ -8,7 +8,7 @@
           <CodeBracketIcon class="w-5 h-5" />
           <span class="font-bold">Developer Settings</span>
         </div>
-        <FormButton size="sm" to="/developer-settings/">
+        <FormButton size="sm" to="/developer-settings/" @click="isOpen = false">
           Open Developer Settings
         </FormButton>
       </div>

@@ -49,7 +49,7 @@ import {
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 
 const emit = defineEmits<{
-  (e: 'token-created'): void
+  (e: 'token-created', token: string): void
 }>()
 
 const { mutate: createToken } = useMutation(createAccessTokenMutation)
@@ -79,7 +79,7 @@ const onSubmit = handleSubmit(async (tokenFormValues) => {
   if (result?.data?.apiTokenCreate) {
     isOpen.value = false
     resetFormFields()
-    emit('token-created')
+    emit('token-created', result.data.apiTokenCreate)
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Webhook created',

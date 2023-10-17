@@ -23,6 +23,7 @@ import FormSelectSourceApps from '~~/src/components/form/select/SourceApps.vue'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import FormSelectBadges from '~~/src/components/form/select/Badges.vue'
 import FormSwitch from '~~/src/components/form/Switch.vue'
+import FormClipboardInput from '~~/src/components/form/ClipboardInput.vue'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import SourceAppBadge from '~~/src/components/SourceAppBadge.vue'
 import { onKeyboardShortcut, useFormCheckboxModel } from '~~/src/composables/form/input'
@@ -70,6 +71,7 @@ export {
   FormTextArea,
   FormTextInput,
   FormSwitch,
+  FormClipboardInput,
   ValidationHelpers,
   useWrappingContainerHiddenCount,
   useFormSelectChildInternals,

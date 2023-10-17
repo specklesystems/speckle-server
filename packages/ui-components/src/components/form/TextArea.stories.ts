@@ -19,7 +19,7 @@ export default {
       type: 'function'
     },
     color: {
-      options: ['page', 'foundation'],
+      options: ['page', 'foundation', 'transparent'],
       control: { type: 'select' }
     },
     'update:modelValue': {

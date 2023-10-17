@@ -88,7 +88,7 @@ import { useTextInputCore } from '~~/src/composables/form/textInput'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | string
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
-type InputColor = 'page' | 'foundation'
+type InputColor = 'page' | 'foundation' | 'transparent'
 
 defineOptions({
   inheritAttrs: false

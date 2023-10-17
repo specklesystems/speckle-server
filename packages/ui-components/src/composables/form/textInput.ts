@@ -3,7 +3,7 @@ import { Ref, ToRefs, computed, onMounted, ref, unref } from 'vue'
 import { Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
 
-export type InputColor = 'page' | 'foundation'
+export type InputColor = 'page' | 'foundation' | 'transparent'
 
 /**
  * Common setup for text input & textarea fields
@@ -65,6 +65,8 @@ export function useTextInputCore(params: {
     const color = unref(props.color)
     if (color === 'foundation') {
       classParts.push('bg-foundation shadow-sm hover:shadow')
+    } else if (color === 'transparent') {
+      classParts.push('bg-transparent')
     } else {
       classParts.push('bg-foundation-page')
     }
