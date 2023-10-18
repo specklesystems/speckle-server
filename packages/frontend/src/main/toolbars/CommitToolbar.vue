@@ -163,6 +163,7 @@ import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
+import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
 
 export default {
   components: {
@@ -178,6 +179,7 @@ export default {
       default: () => null
     }
   },
+  setup: () => ({ formatBranchNameForURL }),
   data() {
     return { showCommitInfo: false }
   }

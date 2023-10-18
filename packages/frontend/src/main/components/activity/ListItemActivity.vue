@@ -213,7 +213,9 @@
                     </span>
                     <span v-if="lastActivity.actionType !== 'commit_delete' && commit">
                       <v-chip
-                        :to="`/streams/${lastActivity.streamId}/branches/${commit.branchName}`"
+                        :to="`/streams/${
+                          lastActivity.streamId
+                        }/branches/${formatBranchNameForURL(commit.branchName)}`"
                         small
                         color="primary"
                       >
@@ -249,7 +251,9 @@
                   can't easily group them by branch as that info is not in the activity stream -->
                   <router-link
                     v-if="activityGroup.length > 1"
-                    :to="`/streams/${lastActivity.streamId}/branches/${commit.branchName}`"
+                    :to="`/streams/${
+                      lastActivity.streamId
+                    }/branches/${formatBranchNameForURL(commit.branchName)}`"
                     class="mt-5 caption"
                   >
                     SEE ALL {{ activityGroup.length }} COMMITS
@@ -287,6 +291,7 @@ import PreviewImage from '@/main/components/common/PreviewImage'
 import { gql } from '@apollo/client/core'
 import ListItemActivityDescription from '@/main/components/activity/ListItemActivityDescription.vue'
 import { STREAM_CREATED_TYPES } from '@/main/lib/feed/helpers/activityStream'
+import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
 
 export default {
   components: {
@@ -302,7 +307,7 @@ export default {
       default: () => []
     }
   },
-  setup: () => ({ STREAM_CREATED_TYPES }),
+  setup: () => ({ STREAM_CREATED_TYPES, formatBranchNameForURL }),
   apollo: {
     you: {
       query: gql`
@@ -440,7 +445,9 @@ export default {
           return this.stream ? `/streams/${this.lastActivity.streamId}` : null
         case 'branch':
           return this.branch
-            ? `/streams/${this.lastActivity.streamId}/branches/${this.branchName}`
+            ? `/streams/${this.lastActivity.streamId}/branches/${formatBranchNameForURL(
+                this.branchName
+              )}`
             : null
         case 'commit':
           return this.commit

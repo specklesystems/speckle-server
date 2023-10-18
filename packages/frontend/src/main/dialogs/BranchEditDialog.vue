@@ -86,6 +86,7 @@ import isNull from 'lodash/isNull'
 import isUndefined from 'lodash/isUndefined'
 import clone from 'lodash/clone'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
+import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
 
 export default {
   props: {
@@ -93,6 +94,9 @@ export default {
       type: Object,
       default: () => null
     }
+  },
+  setup() {
+    return { formatBranchNameForURL }
   },
   data() {
     return {
@@ -237,14 +241,14 @@ export default {
             `/streams/` +
             this.$route.params.streamId +
             `/branches/` +
-            this.editableBranch.name
+            this.formatBranchNameForURL(this.editableBranch.name)
         }
       })
       this.$router.push(
         `/streams/` +
           this.$route.params.streamId +
           `/branches/` +
-          this.editableBranch.name
+          this.formatBranchNameForURL(this.editableBranch.name)
       )
       this.$emit('close')
     }

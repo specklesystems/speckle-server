@@ -35,7 +35,9 @@
               <v-list-item
                 v-if="!isMultiple && isCommitResource(firstResource)"
                 link
-                :to="`/streams/${streamId}/branches/${firstResource.data.commit?.branchName}`"
+                :to="`/streams/${streamId}/branches/${formatBranchNameForURL(
+                  firstResource.data.commit?.branchName || ''
+                )}`"
                 class=""
               >
                 <v-list-item-icon>
@@ -278,6 +280,7 @@ import { getCamArray } from '@/main/lib/viewer/core/helpers/cameraHelper'
 import CommitObjectViewerScope from '@/main/components/viewer/CommitObjectViewerScope.vue'
 import PrioritizedPortal from '@/main/components/common/utility/PrioritizedPortal.vue'
 import { ViewerEvent } from '@speckle/viewer'
+import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
 
 type ErroredResourceData = {
   error: boolean
@@ -396,7 +399,8 @@ export default defineComponent({
       isCommitResource,
       isObjectResource,
       isErrorResource,
-      isNotErrorResource
+      isNotErrorResource,
+      formatBranchNameForURL
     }
   },
   data: () => ({
