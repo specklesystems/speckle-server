@@ -524,10 +524,11 @@ export const validateBranchName = (name: string) => {
     name.startsWith('#') ||
     name.startsWith('$') ||
     name.indexOf('//') !== -1 ||
-    name.indexOf(',') !== -1
+    name.indexOf(',') !== -1 ||
+    name.indexOf('\\') !== -1
   )
     throw new BranchNameError(
-      'Branch names cannot start with "#", "$", start or end with "/", have multiple slashes next to each other (e.g., "//") or contain commas.',
+      'Branch names cannot start with "#", "$", start or end with "/", have multiple slashes next to each other (e.g., "//") or contain commas or backwards slashes.',
       {
         info: {
           name
