@@ -52,6 +52,7 @@
     "tsconfig-paths": "^4.0.0"
   },
   "resolutions": {
+    "@babel/traverse": ">=7.23.2",
     "@microsoft/api-extractor/semver": "^7.5.4",
     "@rushstack/node-core-library/semver": "^7.5.4",
     "@typescript-eslint/eslint-plugin": "^6.4.1",
