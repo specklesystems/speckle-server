@@ -8,7 +8,7 @@
       <div class="flex flex-col md:flex-row space-y-2 md:space-x-4 mb-14">
         <ProjectPageStatsBlockSettings
           :project="project"
-          class="shadow hover:shadow-xl w-full md:w-72 transition"
+          class="shadow w-full md:w-72 transition"
         />
         <div class="grow hidden md:flex"></div>
         <div class="grid grid-cols-3 gap-2">

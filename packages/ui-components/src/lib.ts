@@ -32,6 +32,7 @@ import {
   clientOs
 } from '~~/src/helpers/form/input'
 import LayoutDialog from '~~/src/components/layout/Dialog.vue'
+import LayoutDialogSection from '~~/src/components/layout/DialogSection.vue'
 import LayoutDisclosure from '~~/src/components/layout/Disclosure.vue'
 import LayoutGridListToggle from '~~/src/components/layout/GridListToggle.vue'
 import { GridListToggleValue } from '~~/src/helpers/layout/components'
@@ -110,6 +111,7 @@ export {
   getKeyboardShortcutTitle,
   clientOs,
   LayoutDialog,
+  LayoutDialogSection,
   LayoutDisclosure,
   LayoutGridListToggle,
   GridListToggleValue,

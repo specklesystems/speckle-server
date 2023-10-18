@@ -1,11 +1,11 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="md">
-    <div class="flex flex-col text-foreground space-y-4">
+  <LayoutDialog v-model:open="isOpen" title="Manage Project" max-width="sm">
+    <div class="flex flex-col text-foreground">
+      <ProjectPageTeamDialogManageUsers always-open :project="project" />
       <ProjectPageTeamDialogInviteUser
         v-if="isOwner && !isServerGuest"
         :project="project"
       />
-      <ProjectPageTeamDialogManageUsers :project="project" />
       <ProjectPageTeamDialogManagePermissions :project="project" />
       <ProjectPageTeamDialogWebhooks :project="project" />
       <ProjectPageTeamDialogDangerZones

@@ -1,22 +1,5 @@
 <template>
-  <div class="flex flex-col space-y-4">
-    <!-- <hr class="border border-outline-3" /> -->
-    <!-- <div class="h4 font-bold">Project Permissions</div> -->
-    <div class="h5 font-bold flex items-center space-x-2 mt-5">
-      <LockOpenIcon
-        v-if="project.visibility === ProjectVisibility.Public"
-        class="w-6 h-6"
-      />
-      <LinkIcon
-        v-if="project.visibility === ProjectVisibility.Unlisted"
-        class="w-6 h-6"
-      />
-      <LockClosedIcon
-        v-if="project.visibility === ProjectVisibility.Private"
-        class="w-6 h-6"
-      />
-      <span>Access</span>
-    </div>
+  <LayoutDialogSection allow-overflow border-b title="Access" :icon="selectedIcon">
     <div class="flex flex-col space-y-2">
       <!-- <div class="text-foreground-2 text-sm">Project Access</div> -->
       <ProjectVisibilitySelect
@@ -35,13 +18,14 @@
         @update:model-value="onChangeCommentPermissions"
       />
     </div>
-  </div>
+  </LayoutDialogSection>
 </template>
 <script setup lang="ts">
 import {
   ProjectPageTeamDialogFragment,
   ProjectVisibility
 } from '~~/lib/common/generated/gql/graphql'
+import { LayoutDialogSection } from '@speckle/ui-components'
 import { CommentPermissions } from '~~/lib/projects/helpers/components'
 import { useUpdateProject } from '~~/lib/projects/composables/projectManagement'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
@@ -63,6 +47,19 @@ const mp = useMixpanel()
 const isDisabled = computed(
   () => !isOwner.value || loading.value || isServerGuest.value
 )
+
+const selectedIcon = computed(() => {
+  switch (props.project.visibility) {
+    case ProjectVisibility.Public:
+      return LockOpenIcon
+    case ProjectVisibility.Unlisted:
+      return LinkIcon
+    case ProjectVisibility.Private:
+      return LockClosedIcon
+    default:
+      return LockOpenIcon
+  }
+})
 
 const onChangeVisibility = async (visibility: ProjectVisibility) => {
   loading.value = true

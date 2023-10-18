@@ -69,6 +69,8 @@
                     v-for="(button, index) in buttons"
                     :key="index"
                     v-bind="button.props"
+                    :disabled="button.disabled"
+                    :type="button.submit && 'submit'"
                     @click="button.onClick"
                   >
                     {{ button.text }}
@@ -112,6 +114,8 @@ const props = defineProps<{
     text: string
     props: Record<string, unknown>
     onClick?: () => void
+    disabled?: boolean
+    submit?: boolean
   }>
   /**
    * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form

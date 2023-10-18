@@ -1,16 +1,18 @@
 <template>
-  <div class="flex flex-col space-y-4">
-    <div class="h4 font-bold flex items-center space-x-2">
-      <UserPlusIcon class="w-6 h-6" />
-      <span>Invite</span>
-    </div>
-    <div class="flex flex-col space-y-4">
+  <LayoutDialogSection
+    allow-overflow
+    border-b
+    border-t
+    title="Invite"
+    :icon="UserPlusIcon"
+  >
+    <div class="flex flex-col gap-4 mt-2">
       <FormTextInput
         v-model="search"
         name="search"
-        size="xl"
+        size="lg"
         placeholder="search by username or email"
-        input-classes="pr-[100px]"
+        input-classes="pr-[100px] text-sm"
       >
         <template #input-right>
           <div class="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -42,10 +44,11 @@
         />
       </div>
     </div>
-  </div>
+  </LayoutDialogSection>
 </template>
 <script setup lang="ts">
 import { Roles, ServerRoles, StreamRoles } from '@speckle/shared'
+import { LayoutDialogSection } from '@speckle/ui-components'
 import { UserSearchItem, useUserSearch } from '~~/lib/common/composables/users'
 import {
   ProjectInviteCreateInput,

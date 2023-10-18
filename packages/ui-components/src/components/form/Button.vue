@@ -34,7 +34,7 @@ import { Nullable, Optional } from '@speckle/shared'
 import { ArrowPathIcon } from '@heroicons/vue/24/solid'
 
 type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
-type FormButtonColor =
+export type FormButtonColor =
   | 'default'
   | 'invert'
   | 'danger'
