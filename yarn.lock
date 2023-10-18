@@ -7726,6 +7726,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fastify/busboy@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "@fastify/busboy@npm:2.0.0"
+  checksum: 41879937ce1dee6421ef9cd4da53239830617e1f0bb7a0e843940772cd72827205d05e518af6adabe6e1ea19301285fff432b9d11bad01a531e698bea95c781b
+  languageName: node
+  linkType: hard
+
 "@floating-ui/core@npm:^1.4.1":
   version: 1.4.1
   resolution: "@floating-ui/core@npm:1.4.1"
@@ -12291,7 +12298,7 @@ __metadata:
     pino-pretty: ^9.1.1
     prettier: ^2.5.1
     prom-client: ^14.0.1
-    undici: ^5.19.1
+    undici: ^5.26.2
     valid-filename: ^3.1.0
     web-ifc: ^0.0.36
   languageName: unknown
@@ -12680,7 +12687,7 @@ __metadata:
     tsconfig-paths: ^4.0.0
     type-fest: ^2.19.0
     typescript: ^4.6.4
-    undici: ^5.19.1
+    undici: ^5.26.2
     verror: ^1.10.1
     ws: ^7.5.7
     xml-escape: ^1.1.0
@@ -41142,12 +41149,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:^5.1.0, undici@npm:^5.12.0, undici@npm:^5.19.1, undici@npm:^5.22.1, undici@npm:^5.8.0":
+"undici@npm:^5.1.0, undici@npm:^5.12.0, undici@npm:^5.22.1, undici@npm:^5.8.0":
   version: 5.22.1
   resolution: "undici@npm:5.22.1"
   dependencies:
     busboy: ^1.6.0
   checksum: 048a3365f622be44fb319316cedfaa241c59cf7f3368ae7667a12323447e1822e8cc3d00f6956c852d1478a6fde1cbbe753f49e05f2fdaed229693e716ebaf35
+  languageName: node
+  linkType: hard
+
+"undici@npm:^5.26.2":
+  version: 5.26.3
+  resolution: "undici@npm:5.26.3"
+  dependencies:
+    "@fastify/busboy": ^2.0.0
+  checksum: aaa9aadb712cf80e1a9cea2377e4842670105e00abbc184a21770ea5a8b77e4e2eadc200eac62442e74a1cd3b16a840c6f73b112b9e886bd3c1a125eb22e4f21
   languageName: node
   linkType: hard
 
