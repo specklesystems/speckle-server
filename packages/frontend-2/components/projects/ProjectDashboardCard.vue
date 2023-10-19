@@ -55,11 +55,13 @@
       </div>
       <div
         v-if="modelItemTotalCount > 4"
-        class="absolute -right-11 hover:right-0 top-1/2 translate -translate-y-1/2 bg-foundation text-primary text-xs font-bold transition-all opacity-0 group-hover:opacity-100 rounded-l-md shadow-md px-1 py-4"
+        class="absolute -right-11 hover:right-0 top-1/2 translate -translate-y-1/2 bg-foundation text-primary text-xs font-bold transition-all opacity-0 group-hover:opacity-100 rounded-l-md shadow-md px-1 py-12"
       >
-        +{{ modelItemTotalCount - 4 }} model{{
-          modelItemTotalCount - 4 !== 1 ? 's' : ''
-        }}
+        <NuxtLink :to="allProjectModelsRoute(project.id) + '/'">
+          +{{ modelItemTotalCount - 4 }} more model{{
+            modelItemTotalCount - 4 !== 1 ? 's' : ''
+          }}
+        </NuxtLink>
       </div>
     </div>
   </div>
@@ -68,7 +70,7 @@
 import dayjs from 'dayjs'
 import { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { UserCircleIcon, ClockIcon } from '@heroicons/vue/24/outline'
-import { projectRoute } from '~~/lib/common/helpers/route'
+import { projectRoute, allProjectModelsRoute } from '~~/lib/common/helpers/route'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 
 const props = defineProps<{
