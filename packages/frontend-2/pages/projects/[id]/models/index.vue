@@ -59,7 +59,9 @@ const clearSearch = () => {
   selectedApps.value = []
 }
 
-const title = computed(() => 'Models - ' + (project.value?.name || 'Project'))
+const title = computed(() =>
+  project.value?.name.length ? `Models - ${project.value.name}` : ''
+)
 
 useHead({
   title

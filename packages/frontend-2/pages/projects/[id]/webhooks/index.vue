@@ -162,8 +162,8 @@ const { result: pageResult, refetch: refetchWebhooks } = useQuery(
   })
 )
 
-const title = computed(
-  () => 'Webhooks - ' + (pageResult.value?.project.name || 'Project')
+const title = computed(() =>
+  pageResult.value?.project.name ? `Webhooks - ${pageResult.value.project.name}` : ''
 )
 
 useHead({

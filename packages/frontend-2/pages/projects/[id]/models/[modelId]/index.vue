@@ -96,6 +96,8 @@ graphql(`
   }
 `)
 
-const title = computed(() => `Viewer - ${project.value?.name || 'Project'}`)
+const title = computed(() =>
+  project.value?.name.length ? `Viewer - ${project.value.name}` : ''
+)
 useHead({ title })
 </script>
