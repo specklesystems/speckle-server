@@ -72,4 +72,9 @@ const { result: projectPageResult } = useQuery(
 
 const project = computed(() => projectPageResult.value?.project)
 const invite = computed(() => projectPageResult.value?.projectInvite)
+const projectName = computed(() => project.value?.name || 'Project')
+
+useHead({
+  title: projectName
+})
 </script>

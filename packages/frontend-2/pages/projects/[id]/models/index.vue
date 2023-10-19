@@ -58,4 +58,10 @@ const clearSearch = () => {
   selectedMembers.value = []
   selectedApps.value = []
 }
+
+const title = computed(() => 'Models - ' + (project.value?.name || 'Project'))
+
+useHead({
+  title
+})
 </script>

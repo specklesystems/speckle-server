@@ -162,6 +162,14 @@ const { result: pageResult, refetch: refetchWebhooks } = useQuery(
   })
 )
 
+const title = computed(
+  () => 'Webhooks - ' + (pageResult.value?.project.name || 'Project')
+)
+
+useHead({
+  title
+})
+
 definePageMeta({
   middleware: ['require-valid-project']
 })

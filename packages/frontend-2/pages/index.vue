@@ -7,8 +7,11 @@
 <script setup lang="ts">
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
+useHead({
+  title: 'Dashboard'
+})
+
 definePageMeta({
-  title: 'Dashboard',
   middleware: ['dashboard-redirect']
 })
 

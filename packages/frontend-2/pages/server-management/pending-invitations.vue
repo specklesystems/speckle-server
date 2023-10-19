@@ -113,6 +113,10 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 
+useHead({
+  title: 'Pending Invitations'
+})
+
 definePageMeta({
   middleware: ['admin']
 })

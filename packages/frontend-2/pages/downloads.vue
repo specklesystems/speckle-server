@@ -1,7 +1,7 @@
 <template>
   <div>
     <Portal to="navigation">
-      <HeaderNavLink :to="'/connectors'" name="Connector Downloads"></HeaderNavLink>
+      <HeaderNavLink :to="'/downloads'" name="Speckle Connectors"></HeaderNavLink>
     </Portal>
     <div
       class="flex flex-col md:flex-row space-y-2 space-x-2 justify-between mb-4 md:items-center"
@@ -57,11 +57,10 @@
 // import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ConnectorTag, ConnectorVersion, Tag } from '~~/lib/connectors'
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
-definePageMeta({
+
+useHead({
   title: 'Speckle Connectors'
 })
-
-// const { isLoggedIn } = useActiveUser()
 
 const response = await useFetch(
   'https://speckle.systems/ghost/api/v3/content/tags?key=c895981da23dbb5c87ee7192e2&limit=all'
