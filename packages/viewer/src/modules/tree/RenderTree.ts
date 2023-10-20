@@ -198,21 +198,28 @@ export class RenderTree {
   }
 
   public getRenderViewsForNodeId(id: string): NodeRenderView[] {
-    const node = this.tree.findId(id)
-    if (!node) {
+    const nodes = this.tree.findId(id)
+    if (!nodes) {
       Logger.warn(`Id ${id} does not exist`)
       return null
     }
-    return this.getRenderViewsForNode(node, node)
+    const ret = []
+    nodes.forEach((node: TreeNode) => {
+      ret.push(...this.getRenderViewsForNode(node, node))
+    })
+    return ret
   }
 
   public getRenderViewForNodeId(id: string): NodeRenderView {
-    const node = this.tree.findId(id)
-    if (!node) {
+    const nodes = this.tree.findId(id)
+    if (!nodes) {
       Logger.warn(`Id ${id} does not exist`)
       return null
     }
-    return node.model.renderView
+    if (nodes.length > 1) {
+      Logger.warn(`Multiple nodes with ${id} found. Returning first only`)
+    }
+    return nodes[0].model.renderView
   }
 
   public purge() {

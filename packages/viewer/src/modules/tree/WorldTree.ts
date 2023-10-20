@@ -45,7 +45,7 @@ export class WorldTree {
     const id = subtreeId ? subtreeId : this.root.model.id
 
     if (!this.renderTreeInstances[id]) {
-      this.renderTreeInstances[id] = new RenderTree(this, this.findId(id))
+      this.renderTreeInstances[id] = new RenderTree(this, this.findSubtree(id))
     }
 
     return this.renderTreeInstances[id]
@@ -96,20 +96,24 @@ export class WorldTree {
     return (node ? node : this.root).all(predicate)
   }
 
+  // public findId(id: string, node?: TreeNode) {
+  //   if (!node && !this.supressWarnings) {
+  //     Logger.warn(`Root will be used for searching. You might not want that`)
+  //   }
+  //   return (node ? node : this.root).first((_node: TreeNode) => {
+  //     return _node.model.id === id
+  //   })
+  // }
+
   public findId(id: string, node?: TreeNode) {
     if (!node && !this.supressWarnings) {
       Logger.warn(`Root will be used for searching. You might not want that`)
     }
-    return (node ? node : this.root).first((_node: TreeNode) => {
-      return _node.model.id === id
-    })
+    return this.nodeMap.getNodeById(id)
   }
 
-  public findIdNew(id: string, node?: TreeNode) {
-    if (!node && !this.supressWarnings) {
-      Logger.warn(`Root will be used for searching. You might not want that`)
-    }
-    return this.nodeMap.getNodeById(id)
+  public findSubtree(id: string) {
+    return this.nodeMap.getSubtreeById(id)
   }
 
   public hasId(id: string) {
@@ -158,7 +162,7 @@ export class WorldTree {
   public purge(subtreeId?: string) {
     if (subtreeId) {
       delete this.renderTreeInstances[subtreeId]
-      this.removeNode(this.findId(subtreeId))
+      this.removeNode(this.findId(subtreeId)[0])
       return
     }
 

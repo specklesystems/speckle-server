@@ -339,19 +339,20 @@ export class FilteringExtension extends Extension {
       return { ...g, nodes: [], rvs: [] }
     })
 
-    this.WTI.walk((node: TreeNode) => {
-      if (!node.model?.raw?.id) return true
-      for (const group of localGroups) {
-        if (group.objectIds.includes(node.model.raw.id)) {
-          group.nodes.push(node)
-          const rvsNodes = this.WTI.getRenderTree()
-            .getRenderViewNodesForNode(node, node)
-            .map((rvNode) => rvNode.model.renderView)
-          if (rvsNodes) group.rvs.push(...rvsNodes)
+    for (const group of localGroups) {
+      for (let k = 0; k < group.objectIds.length; k++) {
+        const nodes = this.WTI.findId(group.objectIds[k])
+        if (nodes) {
+          group.nodes.push(...nodes)
+          nodes.forEach((node: TreeNode) => {
+            const rvsNodes = this.WTI.getRenderTree()
+              .getRenderViewNodesForNode(node, node)
+              .map((rvNode) => rvNode.model.renderView)
+            if (rvsNodes) group.rvs.push(...rvsNodes)
+          })
         }
       }
-      return true
-    })
+    }
 
     this.UserspaceColorState.groups = localGroups
     const rampTexture = Assets.generateDiscreetRampTexture(
@@ -502,17 +503,7 @@ export class FilteringExtension extends Extension {
     const key = objectIds.join(',')
 
     if (this.idCache[key] && this.idCache[key].length) return this.idCache[key]
-    /** This doesn't return descendants correctly for some streams like:
-     * https://speckle.xyz/streams/2f9f2f3021/commits/75bd13f513
-     */
-    // this.WTI.walk((node: TreeNode) => {
-    //   if (objectIds.includes(node.model.raw.id) && node.model.raw.__closure) {
-    //     const ids = Object.keys(node.model.raw.__closure)
-    //     allIds.push(...ids)
-    //     this.idCache[node.model.raw.id] = ids
-    //   }
-    //   return true
-    // })
+
     this.WTI.walk((node: TreeNode) => {
       if (objectIds.includes(node.model.raw.id)) {
         const subtree = node.all((node) => {

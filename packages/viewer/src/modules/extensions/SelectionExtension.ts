@@ -102,17 +102,14 @@ export class SelectionExtension extends Extension {
   }
 
   public selectObjects(ids: Array<string>, multiSelect = false) {
-    const idMap = {}
-    for (let k = 0; k < ids.length; k++) {
-      idMap[ids[k]] = 1
-    }
     if (!multiSelect) {
       this.selectedNodes = []
     }
-    this.viewer.getWorldTree().walk((node) => {
-      if (idMap[node.model.raw.id]) this.selectedNodes.push(node)
-      return true
-    })
+
+    for (let k = 0; k < ids.length; k++) {
+      this.selectedNodes.push(...this.viewer.getWorldTree().findId(ids[k]))
+    }
+
     this.applySelection()
   }
 

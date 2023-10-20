@@ -27,22 +27,27 @@ export class NodeMap {
     } else this.registerNode(node)
   }
 
-  public getNodeById(id: string): TreeNode | TreeNode[] {
+  public getNodeById(id: string): TreeNode[] {
     if (id.includes(NodeMap.COMPOUND_ID_CHAR)) {
       const baseId = id.substring(0, id.indexOf(NodeMap.COMPOUND_ID_CHAR))
       if (this.instances[baseId]) {
-        return this.instances[baseId][id]
+        return [this.instances[baseId][id]]
       } else {
         Logger.error('Whoa, could not find instance with baseID: ', baseId)
         return null
       }
     }
     if (this.all[id]) {
-      return this.all[id]
+      return [this.all[id]]
     }
     if (this.instances[id]) {
       return Object.values(this.instances[id])
     }
+    return null
+  }
+
+  public getSubtreeById(id: string): TreeNode {
+    return this.all[id]
   }
 
   public hasId(id: string) {

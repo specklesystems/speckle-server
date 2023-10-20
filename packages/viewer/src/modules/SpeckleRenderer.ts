@@ -899,7 +899,7 @@ export default class SpeckleRenderer {
     for (let k = 0; k < rvs.length; k++) {
       const hitId = rvs[k].renderData.id
       const start = performance.now()
-      const hitNode = this.viewer.getWorldTree().findIdNew(hitId) as TreeNode
+      const hitNode = this.viewer.getWorldTree().findId(hitId)[0]
       searchTime += performance.now() - start
       let parentNode = hitNode
       while (!parentNode.model.atomic && parentNode.parent) {
@@ -1043,19 +1043,17 @@ export default class SpeckleRenderer {
     let box = new Box3()
     const rvs: NodeRenderView[] = []
     if (objectIds.length > 0) {
-      this.viewer.getWorldTree().walk((node: TreeNode) => {
-        if (!node.model.atomic) return true
-        if (!node.model.raw) return true
-        if (objectIds.indexOf(node.model.raw.id) !== -1) {
+      for (let k = 0; k < objectIds.length; k++) {
+        const nodes = this.viewer.getWorldTree().findId(objectIds[k])
+        nodes.forEach((node: TreeNode) => {
           rvs.push(
             ...this.viewer
               .getWorldTree()
               .getRenderTree()
               .getRenderViewsForNode(node, node)
           )
-        }
-        return true
-      })
+        })
+      }
     } else box = this.sceneBox
     for (let k = 0; k < rvs.length; k++) {
       const object = this.getObject(rvs[k])
