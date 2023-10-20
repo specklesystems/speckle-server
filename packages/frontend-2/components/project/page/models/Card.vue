@@ -103,7 +103,7 @@
         v-if="!isPendingModelFragment(model) && model.automationStatus"
         class="absolute top-0 left-0 p-2"
       >
-        <ProjectPageModelsCardAutomationStatus
+        <ProjectPageModelsCardAutomationStatusRefactor
           :project-id="project.id"
           :model-or-version="{
             ...model,
@@ -159,6 +159,9 @@ const props = withDefaults(
     height: 'h-64'
   }
 )
+
+provide('projectId', props.project.id)
+provide('modelId', props.model.id)
 
 const importArea = ref(
   null as Nullable<{

@@ -14,17 +14,22 @@
     >
       <template #header>
         <div class="flex items-center space-x-2">
-          <Component
+          <!-- <Component
             :is="statusIconAndColor.icon"
             v-tippy="automationStatus.statusMessage"
             :class="['h-6 w-6 outline-none', statusIconAndColor.iconColor]"
-          />
+          /> -->
           <h4 class="text-2xl font-bold">{{ displayName }}</h4>
         </div>
       </template>
-      <div class="flex flex-col space-y-2">
+      <div class="flex flex-col space-y-5">
+        <div v-for="run in automationRuns" :key="run.id">
+          <ProjectPageModelsCardAutomationRun :run="(run as AutomationRun)" />
+        </div>
+
         <LayoutDisclosure
           v-for="run in automationRuns"
+          v-if="false"
           :key="run.id"
           :title="`${run.automationName}`"
           :color="resolveStatusMetadata(run.status).disclosureColor"
@@ -115,16 +120,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  CheckCircleIcon,
-  XCircleIcon,
-  EllipsisHorizontalCircleIcon,
-  ArrowRightCircleIcon
-} from '@heroicons/vue/24/solid'
 import { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
-  AutomationRunStatus,
+  AutomationFunctionRun,
+  AutomationRun,
   ModelCardAutomationStatus_ModelFragment,
   ModelCardAutomationStatus_VersionFragment
 } from '~~/lib/common/generated/gql/graphql'
@@ -132,6 +132,7 @@ import dayjs from 'dayjs'
 import { automationDataPageRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { SpeckleViewer } from '@speckle/shared'
 import { useServerInfo } from '~~/lib/core/composables/server'
+import { resolveStatusMetadata } from '~~/lib/automations/helpers/resolveStatusMetadata'
 
 // TODO: Clean up unnecessary fields
 // Remember about stories
@@ -228,46 +229,6 @@ const displayName = computed(() =>
     : `version #${props.modelOrVersion.id}`
 )
 
-const resolveStatusMetadata = (
-  status: AutomationRunStatus
-): {
-  icon: typeof CheckCircleIcon
-  iconColor: string
-  badgeColor: string
-  disclosureColor: 'success' | 'warning' | 'danger' | 'default'
-} => {
-  switch (status) {
-    case AutomationRunStatus.Succeeded:
-      return {
-        icon: CheckCircleIcon,
-        iconColor: 'text-success',
-        badgeColor: 'bg-success',
-        disclosureColor: 'success'
-      }
-    case AutomationRunStatus.Failed:
-      return {
-        icon: XCircleIcon,
-        iconColor: 'text-danger',
-        badgeColor: 'bg-danger',
-        disclosureColor: 'danger'
-      }
-    case AutomationRunStatus.Running:
-      return {
-        icon: ArrowRightCircleIcon,
-        iconColor: 'text-info',
-        badgeColor: 'bg-info',
-        disclosureColor: 'default'
-      }
-    case AutomationRunStatus.Initializing:
-      return {
-        icon: EllipsisHorizontalCircleIcon,
-        iconColor: 'text-warning',
-        badgeColor: 'bg-warning',
-        disclosureColor: 'warning'
-      }
-  }
-}
-
 const fromNowDate = (date: Date | string) => dayjs(date).fromNow()
 const absoluteDate = (date: Date | string) =>
   dayjs(date).format('MMMM D, YYYY - hh:mm:ss Z')
@@ -281,4 +242,11 @@ const viewResultVersionsRoute = (versions: Array<{ id: string }>) => {
   const resourceIdString = resourceIdStringBuilder.toString()
   return modelRoute(props.projectId, resourceIdString)
 }
+
+const summary = computed(() => {
+  let allRuns = [] as AutomationFunctionRun[]
+  for (const aRun of props.modelOrVersion.automationStatus.automationRuns) {
+    allRuns = [...allRuns, ...aRun.functionRuns]
+  }
+})
 </script>

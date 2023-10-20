@@ -38,6 +38,7 @@ type AutomationsStatus {
 type AutomationRun {
   id: ID!
   automationId: String!
+  automationName: String!
   versionId: String!
   createdAt: DateTime!
   updatedAt: DateTime!
