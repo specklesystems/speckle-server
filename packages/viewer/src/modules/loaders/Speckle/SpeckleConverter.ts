@@ -19,7 +19,6 @@ export default class SpeckleConverter {
   private spoofIDs = false
   private idCache = {}
   private tree: WorldTree
-  private pause: AsyncPause
   private typeLookupTable: { [type: string]: string } = {}
   private instanceCounter = 0
 
@@ -59,7 +58,6 @@ export default class SpeckleConverter {
     this.activePromises = 0
     this.maxChildrenPromises = 200
     this.tree = tree
-    this.pause = new AsyncPause()
   }
 
   /**
@@ -75,11 +73,6 @@ export default class SpeckleConverter {
     callback: ConverterResultDelegate,
     node: TreeNode = null
   ) {
-    // this.pause.tick(100)
-    // if (this.pause.needsWait) {
-    //   await this.pause.wait(16)
-    // }
-
     // Exit on primitives (string, ints, bools, bigints, etc.)
     if (obj === null || typeof obj !== 'object') return
     if (obj.referencedId) obj = await this.resolveReference(obj)
@@ -110,7 +103,7 @@ export default class SpeckleConverter {
 
     const childNode: TreeNode = this.tree.parse({
       id: !node ? objectURL : this.getNodeId(obj),
-      raw: Object.assign({}, obj),
+      raw: obj,
       atomic: true,
       children: []
     })
@@ -156,7 +149,7 @@ export default class SpeckleConverter {
         try {
           const nestedNode: TreeNode = this.tree.parse({
             id: this.getNodeId(displayValue),
-            raw: Object.assign({}, displayValue),
+            raw: displayValue,
             atomic: false,
             children: []
           })
@@ -174,7 +167,7 @@ export default class SpeckleConverter {
           if (!val.units) val.units = obj.units
           const nestedNode: TreeNode = this.tree.parse({
             id: this.getNodeId(val),
-            raw: Object.assign({}, val),
+            raw: val,
             atomic: false,
             children: []
           })
@@ -391,7 +384,7 @@ export default class SpeckleConverter {
         const value = await this.resolveReference(entry)
         const valueNode: TreeNode = this.tree.parse({
           id: this.getNodeId(value),
-          raw: Object.assign({}, value),
+          raw: value,
           atomic: false,
           children: []
         })
@@ -410,7 +403,7 @@ export default class SpeckleConverter {
       ref.id = this.getCompoundId(ref.id, node.model.raw.transform.id)
       const childNode: TreeNode = this.tree.parse({
         id: this.getNodeId(ref),
-        raw: Object.assign({}, ref),
+        raw: ref,
         atomic: false,
         children: []
       })
@@ -423,7 +416,7 @@ export default class SpeckleConverter {
           const ref = await this.resolveReference(element)
           const childNode: TreeNode = this.tree.parse({
             id: this.getNodeId(ref),
-            raw: Object.assign({}, ref),
+            raw: ref,
             atomic: false,
             children: []
           })
@@ -444,7 +437,7 @@ export default class SpeckleConverter {
         ref.id = this.getCompoundId(ref.id, this.instanceCounter++)
         const childNode: TreeNode = this.tree.parse({
           id: this.getNodeId(ref),
-          raw: Object.assign({}, ref),
+          raw: ref,
           atomic: false,
           children: []
         })
@@ -480,7 +473,7 @@ export default class SpeckleConverter {
       const ref = await this.resolveReference(displayValue)
       const nestedNode: TreeNode = this.tree.parse({
         id: this.getNodeId(ref),
-        raw: Object.assign({}, ref),
+        raw: ref,
         atomic: false,
         children: []
       })
@@ -531,7 +524,7 @@ export default class SpeckleConverter {
     for (const displayValue of displayValues) {
       const childNode: TreeNode = this.tree.parse({
         id: this.getNodeId(displayValue),
-        raw: Object.assign({}, displayValue),
+        raw: displayValue,
         atomic: false,
         children: []
       })
@@ -573,8 +566,7 @@ export default class SpeckleConverter {
     return
   }
   private async LineToNode(obj, node) {
-    node.model.raw.start = Object.assign({}, obj.start)
-    node.model.raw.end = Object.assign({}, obj.end)
+    return
   }
 
   private async PolylineToNode(obj, node) {
@@ -598,7 +590,7 @@ export default class SpeckleConverter {
       }
       const nestedNode: TreeNode = this.tree.parse({
         id: this.getNodeId(element),
-        raw: Object.assign({}, element),
+        raw: element,
         atomic: false,
         children: []
       })
@@ -621,7 +613,7 @@ export default class SpeckleConverter {
     displayValue.units = displayValue.units || obj.units
     const nestedNode: TreeNode = this.tree.parse({
       id: this.getNodeId(displayValue),
-      raw: Object.assign({}, displayValue),
+      raw: displayValue,
       atomic: false,
       children: []
     })
