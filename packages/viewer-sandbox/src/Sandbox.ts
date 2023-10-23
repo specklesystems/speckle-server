@@ -138,11 +138,11 @@ export default class Sandbox {
     })
     this.properties = []
 
-    viewer.on(ViewerEvent.LoadComplete, (url: string) => {
+    viewer.on(ViewerEvent.LoadComplete, async (url: string) => {
       this.addStreamControls(url)
       this.addViewControls()
       this.addBatches()
-      this.properties = this.viewer.getObjectProperties()
+      this.properties = await this.viewer.getObjectProperties()
       this.batchesParams.totalBvhSize = this.getBVHSize()
       this.refresh()
     })

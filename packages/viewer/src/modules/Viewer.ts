@@ -203,7 +203,7 @@ export class Viewer extends EventEmitter implements IViewer {
   public getObjectProperties(
     resourceURL: string = null,
     bypassCache = true
-  ): PropertyInfo[] {
+  ): Promise<PropertyInfo[]> {
     return this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
   }
 

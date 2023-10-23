@@ -138,7 +138,10 @@ export interface IViewer {
 
   screenshot(): Promise<string>
 
-  getObjectProperties(resourceURL?: string, bypassCache?: boolean): PropertyInfo[]
+  getObjectProperties(
+    resourceURL?: string,
+    bypassCache?: boolean
+  ): Promise<PropertyInfo[]>
 
   /** Data ops */
   getDataTree(): DataTree
