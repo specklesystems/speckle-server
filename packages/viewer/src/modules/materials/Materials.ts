@@ -169,13 +169,12 @@ export default class Materials {
   }
 
   private static displayStyleToString(displayStyle: DisplayStyle) {
-    return displayStyle.color?.toString() +
+    const plm =
+      displayStyle.color?.toString() +
       '/' +
-      displayStyle.lineWeight.toString() +
-      displayStyle.opacity !==
-      undefined
-      ? displayStyle.opacity.toString()
-      : ''
+      displayStyle.lineWeight?.toString() +
+      displayStyle.opacity?.toString()
+    return plm
   }
 
   private static hashCode(s: string) {
