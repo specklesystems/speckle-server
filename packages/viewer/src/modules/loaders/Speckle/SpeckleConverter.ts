@@ -386,7 +386,8 @@ export default class SpeckleConverter {
           id: this.getNodeId(value),
           raw: value,
           atomic: false,
-          children: []
+          children: [],
+          instanced: true
         })
         this.tree.addNode(valueNode, node)
         await this.displayableLookup(value, valueNode)
@@ -405,7 +406,8 @@ export default class SpeckleConverter {
         id: this.getNodeId(ref),
         raw: ref,
         atomic: false,
-        children: []
+        children: [],
+        instanced: true
       })
       this.tree.addNode(childNode, node)
 
@@ -439,7 +441,8 @@ export default class SpeckleConverter {
           id: this.getNodeId(ref),
           raw: ref,
           atomic: false,
-          children: []
+          children: [],
+          instanced: true
         })
         if (hostId) {
           childNode.model.raw.host = hostId
@@ -475,7 +478,8 @@ export default class SpeckleConverter {
         id: this.getNodeId(ref),
         raw: ref,
         atomic: false,
-        children: []
+        children: [],
+        ...(node.model.instanced && { instanced: node.model.instanced })
       })
       await this.convertToNode(ref, nestedNode)
       this.tree.addNode(nestedNode, node)

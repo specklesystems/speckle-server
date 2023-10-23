@@ -29,7 +29,7 @@ export class RenderTree {
       const rendeNode = this.buildRenderNode(node, geometryConverter)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
       this.applyTransforms(node)
-      geometryConverter.disposeNodeGeometryData(node.model)
+      if (!node.model.instanced) geometryConverter.disposeNodeGeometryData(node.model)
       return !this.cancel
     }, this.root)
     return p

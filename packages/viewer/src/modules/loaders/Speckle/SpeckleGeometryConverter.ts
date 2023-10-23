@@ -208,7 +208,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
   private PointcloudToGeometryData(node: NodeData) {
     const conversionFactor = getConversionFactor(node.raw.units)
 
-    const vertices = node.raw.points
+    const vertices = node.instanced ? node.raw.points.slice() : node.raw.points
     const colorsRaw = node.raw.colors
     let colors = null
 
@@ -254,13 +254,12 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     if (!node.raw) return
 
     const conversionFactor = getConversionFactor(node.raw.units)
-    // const buffer = new BufferGeometry()
     const indices = []
 
     if (!node.raw.vertices) return
     if (!node.raw.faces) return
 
-    const vertices = node.raw.vertices
+    const vertices = node.instanced ? node.raw.vertices.slice() : node.raw.vertices
     const faces = node.raw.faces
     const colorsRaw = node.raw.colors
     let colors = undefined

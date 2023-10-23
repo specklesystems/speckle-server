@@ -16,6 +16,7 @@ export interface NodeData {
   nestedNodes: TreeNode[]
   atomic: boolean
   renderView?: NodeRenderView
+  instanced?: boolean
 }
 
 export class WorldTree {
