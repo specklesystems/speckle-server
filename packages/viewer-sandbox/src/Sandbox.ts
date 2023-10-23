@@ -1208,7 +1208,7 @@ export default class Sandbox {
         this.viewer.getWorldTree(),
         url,
         authToken,
-        undefined,
+        true,
         1
       )
       await this.viewer.loadObject(loader, 1, true)
