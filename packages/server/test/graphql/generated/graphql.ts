@@ -197,6 +197,7 @@ export type AutomationFunctionRun = {
   id: Scalars['ID'];
   resultVersions: Array<Version>;
   /**
+   * NOTE: this is the schema for the results field below!
    * Current schema: {
    *   version: "1.0.0",
    *   values: {
@@ -236,6 +237,7 @@ export type AutomationMutationsFunctionRunStatusReportArgs = {
 export type AutomationRun = {
   __typename?: 'AutomationRun';
   automationId: Scalars['String'];
+  automationName: Scalars['String'];
   createdAt: Scalars['DateTime'];
   functionRuns: Array<AutomationFunctionRun>;
   id: Scalars['ID'];

@@ -228,3 +228,18 @@ export const projectWebhooksQuery = graphql(`
     }
   }
 `)
+
+// // TODO: uses deprecated endpoint, needs migration BE & here
+export const blobInfoQuery = graphql(`
+  query Blob($blobId: String!, $streamId: String!) {
+    stream(id: $streamId) {
+      blob(id: $blobId) {
+        id
+        fileName
+        fileType
+        fileSize
+        createdAt
+      }
+    }
+  }
+`)

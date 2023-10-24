@@ -40,7 +40,9 @@
                   v-if="title"
                   class="flex items-center justify-start rounded-t-lg shrink-0 h-16 px-8"
                 >
-                  <h4 class="text-2xl font-bold">{{ title }}</h4>
+                  <slot name="header">
+                    <h4 class="text-2xl font-bold">{{ title }}</h4>
+                  </slot>
                 </div>
               </div>
 

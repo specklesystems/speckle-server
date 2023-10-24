@@ -78,13 +78,23 @@
           />
         </div>
         <div v-else-if="hasVersions" class="flex items-center space-x-10">
-          <div class="text-xs text-foreground-2">
+          <div class="text-xs text-foreground-2 hidden sm:block">
             updated
             <b>{{ updatedAt }}</b>
           </div>
           <div class="text-xs text-foreground-2 flex items-center space-x-1">
             <span>{{ model?.commentThreadCount.totalCount }}</span>
             <ChatBubbleLeftRightIcon class="w-4 h-4" />
+          </div>
+          <div v-if="model && model.automationStatus" class="text-xs text-foreground-2">
+            <ProjectPageModelsCardAutomationStatusRefactor
+              :project-id="props.projectId"
+              :model-or-version="{
+                ...model,
+                automationStatus: model.automationStatus
+              }"
+              :model-id="model.id"
+            />
           </div>
           <div class="text-xs text-foreground-2">
             <FormButton
@@ -272,6 +282,8 @@ const props = defineProps<{
   canContribute?: boolean
   isSearchResult?: boolean
 }>()
+
+provide('projectId', props.projectId)
 
 const importArea = ref(
   null as Nullable<{

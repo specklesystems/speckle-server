@@ -19,6 +19,7 @@ export type AutomationRunRecord = {
   versionId: string
   createdAt: Date
   updatedAt: Date
+  automationName: string
 }
 
 export type AutomationFunctionRunRecord = {
