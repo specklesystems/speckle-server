@@ -38,6 +38,7 @@ type AutomationsStatus {
 type AutomationRun {
   id: ID!
   automationId: String!
+  automationName: String!
   versionId: String!
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -53,10 +54,12 @@ type AutomationFunctionRun {
   functionId: String!
   elapsed: Float!
   status: AutomationRunStatus!
+  # Context view is just a url (most likely overlaid models)
   contextView: String
   resultVersions: [Version!]!
   statusMessage: String
   """
+  NOTE: this is the schema for the results field below!
   Current schema: {
     version: "1.0.0",
     values: {
@@ -72,7 +75,7 @@ type AutomationFunctionRun {
     }
   }
   """
-  results: JSONObject
+  results: JSONObject # blobIds are in here
 }
 
 input AutomationCreateInput {
