@@ -19,7 +19,9 @@
       </div>
       <div class="text-truncate flex-shrink-0">
         <router-link
-          :to="`/streams/${stream.id}/branches/${stream.branch.name}`"
+          :to="`/streams/${stream.id}/branches/${formatBranchNameForURL(
+            stream.branch.name
+          )}`"
           class="text-decoration-none space-grotesk mx-2 font-weight-bold"
         >
           <v-icon small class="mr-1" style="font-size: 13px">mdi-source-branch</v-icon>
@@ -103,12 +105,15 @@
   </portal>
 </template>
 <script>
+import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
+
 export default {
   props: {
     stream: {
       type: Object,
       default: () => null
     }
-  }
+  },
+  setup: () => ({ formatBranchNameForURL })
 }
 </script>

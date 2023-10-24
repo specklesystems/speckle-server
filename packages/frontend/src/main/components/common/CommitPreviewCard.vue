@@ -63,7 +63,9 @@
         <div class="text-right flex-grow-1 text-truncate">
           <router-link
             class="text-decoration-none d-inline-flex align-center"
-            :to="`/streams/${streamId}/branches/${commit.branchName}`"
+            :to="`/streams/${streamId}/branches/${formatBranchNameForURL(
+              commit.branchName
+            )}`"
           >
             <v-icon x-small class="primary--text mr-2">mdi-source-branch</v-icon>
             {{ commit.branchName }}
@@ -106,6 +108,7 @@
 <script>
 import CommitShareBtn from '@/main/components/stream/commit/CommitShareBtn.vue'
 import { useSelectableCommit } from '@/main/lib/stream/composables/commitMultiActions'
+import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
 
 export default {
   components: {
@@ -159,7 +162,13 @@ export default {
     const { highlighted, selectedState, onSelect } = useSelectableCommit(props, ctx)
     const onShareClicked = () => ctx.emit('share', props.commit)
 
-    return { highlighted, selectedState, onSelect, onShareClicked }
+    return {
+      highlighted,
+      selectedState,
+      onSelect,
+      onShareClicked,
+      formatBranchNameForURL
+    }
   },
   computed: {
     streamId() {

@@ -6,6 +6,8 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const mixpanel = useMixpanel()
 
+useHead({ title: 'Register' })
+
 onMounted(() => {
   mixpanel.track('Visit Sign Up')
 })
