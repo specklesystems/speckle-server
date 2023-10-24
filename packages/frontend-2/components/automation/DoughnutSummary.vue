@@ -2,7 +2,7 @@
   <svg width="120" height="120" viewBox="0 0 120 120" style="height: 95%; width: 95%">
     <circle cx="60" cy="60" r="40" fill="none" stroke="#e6e6e6" stroke-width="12" />
     <circle
-      class="base xxxpercent xxxfailed stroke-red-400 origin-center"
+      class="base stroke-red-400 origin-center"
       :style="`${styles.failed}`"
       cx="60"
       cy="60"
@@ -12,7 +12,7 @@
       pathLength="100"
     />
     <circle
-      class="base xxxpercent xxxsuccess stroke-green-400 origin-center"
+      class="base stroke-green-400 origin-center"
       :style="`${styles.passed}`"
       cx="60"
       cy="60"
@@ -22,7 +22,7 @@
       pathLength="100"
     />
     <circle
-      class="base xxxpercent xxxinprogress stroke-amber-400 origin-center"
+      class="base stroke-amber-400 origin-center"
       :style="`${styles.inProgress}`"
       cx="60"
       cy="60"
@@ -67,25 +67,5 @@ const styles = computed(() => {
 .base {
   stroke-dasharray: 100;
   transform-origin: center;
-}
-
-.percent {
-  stroke-dasharray: 100;
-  stroke-dashoffset: calc(100 - var(--val));
-}
-
-.failed {
-  --val: 25;
-  transform: rotate(0deg);
-}
-
-.success {
-  --val: 50;
-  transform: rotate(90deg);
-}
-
-.inprogress {
-  --val: 25;
-  transform: rotate(270deg);
 }
 </style>
