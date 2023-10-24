@@ -16,6 +16,7 @@ import {
   commitObjectViewerState,
   StateType
 } from '@/main/lib/viewer/commit-object-viewer/stateManagerCore'
+import { LegacyViewer } from '@speckle/viewer'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
   'COMMIT_OBJECT_VIEWER_STREAMID'
@@ -61,7 +62,7 @@ function getOrInitViewerData(): GlobalViewerData {
   container.className = 'viewer-container'
   container.style.display = 'inline-block'
 
-  const viewer = new Viewer(container, DefaultViewerParams)
+  const viewer = new LegacyViewer(container, DefaultViewerParams)
   const initPromise = viewer.init()
 
   globalViewerData = {
@@ -236,9 +237,9 @@ export function sectionBoxOn() {
   updateState({ sectionBox: true })
 }
 
-export function loadObjectProperties() {
+export async function loadObjectProperties() {
   setIsViewerBusy(true)
-  const props = getInitializedViewer().getObjectProperties(undefined, true)
+  const props = await getInitializedViewer().getObjectProperties(undefined, true)
   setIsViewerBusy(false)
   updateState({ objectProperties: props })
 }

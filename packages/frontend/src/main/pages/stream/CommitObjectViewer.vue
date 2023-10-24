@@ -281,6 +281,7 @@ import CommitObjectViewerScope from '@/main/components/viewer/CommitObjectViewer
 import PrioritizedPortal from '@/main/components/common/utility/PrioritizedPortal.vue'
 import { ViewerEvent } from '@speckle/viewer'
 import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
+import { CameraController } from '@speckle/viewer'
 
 type ErroredResourceData = {
   error: boolean
@@ -567,8 +568,7 @@ export default defineComponent({
           }, 200)
         }
       })
-
-      this.viewer.cameraHandler.controls.addEventListener(
+      this.viewer.getExtension(CameraController).controls.addEventListener(
         'rest',
         debounce(() => {
           if (this.isEmbed) return
@@ -670,7 +670,7 @@ export default defineComponent({
       }
     },
     async loadModel(objectId: string) {
-      await this.viewer.loadObject(
+      await this.viewer.loadObjectAsync(
         `${window.location.origin}/streams/${this.streamId}/objects/${objectId}`
       )
       this.viewer.zoom(undefined, undefined, true)

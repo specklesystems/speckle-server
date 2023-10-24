@@ -23,7 +23,7 @@ import {
   resetSelection,
   handleViewerDoubleClick
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
-import { ViewerEvent } from '@speckle/viewer'
+import { ViewerEvent, CameraController } from '@speckle/viewer'
 
 export default {
   name: 'SpeckleViewer',
@@ -67,18 +67,19 @@ export default {
     await this.viewer.unloadAll()
 
     if (this.noScroll && this.isEmbed) {
-      this.viewer.cameraHandler.controls.mouseButtons.wheel = 0
+      this.viewer.getExtension(CameraController).controls.mouseButtons.wheel = 0
     } else {
       // this.viewer.cameraHandler.controls.mouseButtons.wheel = 8
     }
 
     this.viewer.resize()
-    this.viewer.cameraHandler.onWindowResize()
+    // this.viewer.cameraHandler.onWindowResize()
     this.setupEvents()
     this.$emit('viewer-init')
     this.$eventHub.$on('resize-viewer', () => {
       this.viewer.resize()
-      this.viewer.cameraHandler.onWindowResize()
+      // This isn't needed
+      // this.viewer.cameraHandler.onWindowResize()
     })
   },
   beforeDestroy() {

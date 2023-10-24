@@ -20,7 +20,7 @@ export class CameraController extends Extension implements ICameraProvider {
   protected _renderingCamera: PerspectiveCamera | OrthographicCamera = null
   protected perspectiveCamera: PerspectiveCamera = null
   protected orthographicCamera: OrthographicCamera = null
-  protected controls: SpeckleCameraControls = null
+  protected _controls: SpeckleCameraControls = null
 
   get renderingCamera(): PerspectiveCamera | OrthographicCamera {
     return this._renderingCamera
@@ -31,11 +31,11 @@ export class CameraController extends Extension implements ICameraProvider {
   }
 
   public get enabled() {
-    return this.controls.enabled
+    return this._controls.enabled
   }
 
   public set enabled(val) {
-    this.controls.enabled = val
+    this._controls.enabled = val
   }
 
   public get fieldOfView() {
@@ -49,6 +49,10 @@ export class CameraController extends Extension implements ICameraProvider {
 
   public get aspect() {
     return this.perspectiveCamera.aspect
+  }
+
+  public get controls() {
+    return this._controls
   }
 
   public constructor(viewer: IViewer) {
@@ -85,26 +89,26 @@ export class CameraController extends Extension implements ICameraProvider {
     /** Setup the controls library (urgh...) */
     CameraControls.install({ THREE })
     SpeckleCameraControls.install()
-    this.controls = new SpeckleCameraControls(
+    this._controls = new SpeckleCameraControls(
       this.perspectiveCamera,
       this.viewer.getContainer()
     )
-    this.controls.maxPolarAngle = Math.PI / 2
-    this.controls.restThreshold = 0.001
+    this._controls.maxPolarAngle = Math.PI / 2
+    this._controls.restThreshold = 0.001
     this.setupWASDControls()
 
-    this.controls.addEventListener('rest', () => {
+    this._controls.addEventListener('rest', () => {
       this.emit(CameraControllerEvent.Stationary)
     })
-    this.controls.addEventListener('controlstart', () => {
+    this._controls.addEventListener('controlstart', () => {
       this.emit(CameraControllerEvent.Dynamic)
     })
 
-    this.controls.addEventListener('controlend', () => {
-      if (this.controls.hasRested) this.emit(CameraControllerEvent.Stationary)
+    this._controls.addEventListener('controlend', () => {
+      if (this._controls.hasRested) this.emit(CameraControllerEvent.Stationary)
     })
 
-    this.controls.addEventListener('control', () => {
+    this._controls.addEventListener('control', () => {
       this.emit(CameraControllerEvent.Dynamic)
     })
   }
@@ -120,7 +124,9 @@ export class CameraController extends Extension implements ICameraProvider {
     arg1 = true,
     arg2 = 1.2
   ): void {
-    if (Array.isArray(arg0)) {
+    if (!arg0) {
+      this.zoomExtents(arg2, arg1)
+    } else if (Array.isArray(arg0)) {
       this.zoom(arg0, arg2, arg1)
     } else if (this.isBox3(arg0)) {
       this.zoomToBox(arg0, arg2, arg1)
@@ -131,7 +137,7 @@ export class CameraController extends Extension implements ICameraProvider {
   }
 
   public onEarlyUpdate(deltaTime: number) {
-    const changed = this.controls.update(deltaTime)
+    const changed = this._controls.update(deltaTime)
     this.emit(CameraControllerEvent.FrameUpdate, changed)
   }
 
@@ -143,7 +149,7 @@ export class CameraController extends Extension implements ICameraProvider {
     const lineOfSight = new THREE.Vector3()
     this.perspectiveCamera.getWorldDirection(lineOfSight)
     const target = new THREE.Vector3()
-    this.controls.getTarget(target)
+    this._controls.getTarget(target)
     const distance = target.clone().sub(this.perspectiveCamera.position)
     const depth = distance.dot(lineOfSight)
     const dims = {
@@ -183,7 +189,7 @@ export class CameraController extends Extension implements ICameraProvider {
   }
 
   protected setupOrthoCamera() {
-    this.controls.mouseButtons.wheel = CameraControls.ACTION.ZOOM
+    this._controls.mouseButtons.wheel = CameraControls.ACTION.ZOOM
 
     const lineOfSight = new THREE.Vector3()
     this.perspectiveCamera.getWorldDirection(lineOfSight)
@@ -211,27 +217,27 @@ export class CameraController extends Extension implements ICameraProvider {
     this.orthographicCamera.quaternion.copy(this.perspectiveCamera.quaternion)
     this.orthographicCamera.updateProjectionMatrix()
 
-    this.controls.camera = this.orthographicCamera
+    this._controls.camera = this.orthographicCamera
     this.emit(CameraControllerEvent.ProjectionChanged, CameraProjection.ORTHOGRAPHIC)
   }
 
   protected setupPerspectiveCamera() {
-    this.controls.mouseButtons.wheel = CameraControls.ACTION.DOLLY
+    this._controls.mouseButtons.wheel = CameraControls.ACTION.DOLLY
     this.perspectiveCamera.position.copy(this.perspectiveCamera.position)
     this.perspectiveCamera.quaternion.copy(this.perspectiveCamera.quaternion)
     this.perspectiveCamera.updateProjectionMatrix()
-    this.controls.camera = this.perspectiveCamera
-    this.controls.zoomTo(1)
+    this._controls.camera = this.perspectiveCamera
+    this._controls.zoomTo(1)
     this.enableRotations()
     this.emit(CameraControllerEvent.ProjectionChanged, CameraProjection.PERSPECTIVE)
   }
 
   public disableRotations() {
-    this.controls.mouseButtons.left = CameraControls.ACTION.TRUCK
+    this._controls.mouseButtons.left = CameraControls.ACTION.TRUCK
   }
 
   public enableRotations() {
-    this.controls.mouseButtons.left = CameraControls.ACTION.ROTATE
+    this._controls.mouseButtons.left = CameraControls.ACTION.ROTATE
   }
 
   protected setupWASDControls() {
@@ -246,9 +252,9 @@ export class CameraController extends Extension implements ICameraProvider {
     const setTrucking = (index, value) => {
       isTruckingGroup[index] = value
       if (isTruckingGroup.every((element) => element === false)) {
-        this.controls.isTrucking = false
-        this.controls['dispatchEvent']({ type: 'rest' })
-      } else this.controls.isTrucking = true
+        this._controls.isTrucking = false
+        this._controls['dispatchEvent']({ type: 'rest' })
+      } else this._controls.isTrucking = true
     }
 
     aKey.addEventListener(
@@ -388,10 +394,10 @@ export class CameraController extends Extension implements ICameraProvider {
     const fitWidthDistance = fitHeightDistance / camAspect
     const distance = fitOffset * Math.max(fitHeightDistance, fitWidthDistance)
 
-    this.controls.fitToSphere(target, transition)
+    this._controls.fitToSphere(target, transition)
 
-    this.controls.minDistance = distance / 100
-    this.controls.maxDistance = distance * 100
+    this._controls.minDistance = distance / 100
+    this._controls.maxDistance = distance * 100
     this._renderingCamera.near = Math.max(distance / 100, 0.1)
     this._renderingCamera.far = distance * 100
     this._renderingCamera.updateProjectionMatrix()
@@ -406,7 +412,7 @@ export class CameraController extends Extension implements ICameraProvider {
       let dist = target.distanceToPoint(camPos)
       if (dist < 0) {
         dist *= -1
-        this.controls.setPosition(camPos.x + dist, camPos.y + dist, camPos.z + dist)
+        this._controls.setPosition(camPos.x + dist, camPos.y + dist, camPos.z + dist)
       }
     }
   }
@@ -464,7 +470,7 @@ export class CameraController extends Extension implements ICameraProvider {
   }
 
   private setViewSpeckle(view: SpeckleView, transition = true) {
-    this.controls.setLookAt(
+    this._controls.setLookAt(
       view.view.origin['x'],
       view.view.origin['y'],
       view.view.origin['z'],
@@ -490,39 +496,39 @@ export class CameraController extends Extension implements ICameraProvider {
     switch (side) {
       case 'front':
         this.zoomExtents()
-        this.controls.rotateTo(0, DEG90, transition)
+        this._controls.rotateTo(0, DEG90, transition)
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'back':
         this.zoomExtents()
-        this.controls.rotateTo(DEG180, DEG90, transition)
+        this._controls.rotateTo(DEG180, DEG90, transition)
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'up':
       case 'top':
         this.zoomExtents()
-        this.controls.rotateTo(0, 0, transition)
+        this._controls.rotateTo(0, 0, transition)
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'down':
       case 'bottom':
         this.zoomExtents()
-        this.controls.rotateTo(0, DEG180, transition)
+        this._controls.rotateTo(0, DEG180, transition)
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'right':
         this.zoomExtents()
-        this.controls.rotateTo(DEG90, DEG90, transition)
+        this._controls.rotateTo(DEG90, DEG90, transition)
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'left':
         this.zoomExtents()
-        this.controls.rotateTo(-DEG90, DEG90, transition)
+        this._controls.rotateTo(-DEG90, DEG90, transition)
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
@@ -536,7 +542,7 @@ export class CameraController extends Extension implements ICameraProvider {
         if (box.max.x === Infinity || box.max.x === -Infinity) {
           box = new THREE.Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
         }
-        this.controls.setPosition(box.max.x, box.max.y, box.max.z, transition)
+        this._controls.setPosition(box.max.x, box.max.y, box.max.z, transition)
         this.zoomExtents()
         this.enableRotations()
         break
@@ -545,7 +551,7 @@ export class CameraController extends Extension implements ICameraProvider {
   }
 
   private setViewInline(view: InlineView, transition = true) {
-    this.controls.setLookAt(
+    this._controls.setLookAt(
       view.position.x,
       view.position.y,
       view.position.z,
@@ -558,7 +564,7 @@ export class CameraController extends Extension implements ICameraProvider {
   }
 
   private setViewPolar(view: PolarView, transition = true) {
-    this.controls.rotate(view.azimuth, view.polar, transition)
+    this._controls.rotate(view.azimuth, view.polar, transition)
     this.enableRotations()
   }
 }

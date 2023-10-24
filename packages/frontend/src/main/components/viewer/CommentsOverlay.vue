@@ -198,6 +198,7 @@ import {
   setSectionBox
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 import { useEmbedViewerQuery } from '@/main/lib/viewer/commit-object-viewer/composables/embed'
+import { CameraController } from '@speckle/viewer'
 export default {
   components: {
     CommentThreadViewer: () => import('@/main/components/comments/CommentThreadViewer'),
@@ -416,7 +417,7 @@ export default {
       // console.log('cameraHandler.controls update')
       this.updateCommentBubbles()
     }, VIEWER_UPDATE_THROTTLE_TIME)
-    this.viewer.cameraHandler.controls.addEventListener(
+    this.viewer.getExtension(CameraController).controls.addEventListener(
       'update',
       this.viewerControlsUpdateHandler
     )
@@ -427,7 +428,7 @@ export default {
   },
   beforeDestroy() {
     this.viewer.removeListener('select', this.viewerSelectHandler)
-    this.viewer.cameraHandler.controls.removeEventListener(
+    this.viewer.getExtension(CameraController).controls.removeEventListener(
       'update',
       this.viewerControlsUpdateHandler
     )

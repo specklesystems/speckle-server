@@ -1,6 +1,7 @@
 import { PerspectiveCamera, OrthographicCamera, Vector3, Plane, Box3 } from 'three'
 import { SpeckleView } from '../../..'
 import { SectionToolEvent } from '../SectionTool'
+import { SpeckleCameraControls } from '../../objects/SpeckleCameraControls'
 
 export type CanonicalView =
   | 'front'
@@ -46,6 +47,7 @@ export interface ICameraProvider extends IProvider {
   get enabled(): boolean
   set enabled(val: boolean)
   get renderingCamera(): PerspectiveCamera | OrthographicCamera
+  get controls(): SpeckleCameraControls
   setCameraView(objectIds: string[], transition: boolean, fit?: number)
   setCameraView(
     view: CanonicalView | SpeckleView | InlineView | PolarView,

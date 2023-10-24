@@ -55,10 +55,12 @@ import {
 import { Loader } from './modules/loaders/Loader'
 import { SpeckleLoader } from './modules/loaders/Speckle/SpeckleLoader'
 import { ObjLoader } from './modules/loaders/OBJ/ObjLoader'
+import { LegacyViewer } from './modules/LegacyViewer'
 
 export {
   Viewer,
   DebugViewer,
+  LegacyViewer,
   DefaultViewerParams,
   ViewerEvent,
   DefaultLightConfiguration,

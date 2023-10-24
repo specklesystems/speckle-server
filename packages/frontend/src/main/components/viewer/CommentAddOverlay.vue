@@ -253,7 +253,7 @@ import {
   useCommitObjectViewerParams,
   getLocalFilterState
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
-import { ViewerEvent } from '@speckle/viewer'
+import { ViewerEvent, CameraController } from '@speckle/viewer'
 /**
  * TODO: Would be nice to get rid of duplicate templates for mobile & large screens
  */
@@ -346,7 +346,7 @@ export default {
     this.viewerControlsUpdateHandler = throttle(() => {
       this.updateCommentBubble()
     }, VIEWER_UPDATE_THROTTLE_TIME)
-    this.viewer.cameraHandler.controls.addEventListener(
+    this.viewer.getExtension(CameraController).controls.addEventListener(
       'update',
       this.viewerControlsUpdateHandler
     )
@@ -358,7 +358,7 @@ export default {
   },
   beforeDestroy() {
     this.viewer.removeListener(ViewerEvent.ObjectClicked, this.viewerSelectHandler)
-    this.viewer.cameraHandler.controls.removeEventListener(
+    this.viewer.getExtension(CameraController).controls.removeEventListener(
       'update',
       this.viewerControlsUpdateHandler
     )
@@ -387,7 +387,7 @@ export default {
 
       this.$mixpanel.track('Comment Action', { type: 'action', name: 'create' })
 
-      const camTarget = this.viewer.cameraHandler.activeCam.controls.getTarget()
+      const camTarget = this.viewer.getExtension(CameraController).controls.getTarget()
 
       const blobIds = this.commentValue.attachments
         .filter(isSuccessfullyUploaded)

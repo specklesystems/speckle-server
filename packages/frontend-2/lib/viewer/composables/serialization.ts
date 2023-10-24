@@ -50,7 +50,7 @@ export function useStateSerialization() {
   ): SerializedViewerState => {
     const { concreteResourceIdString } = options || {}
 
-    const camControls = state.viewer.instance.cameraHandler.activeCam.controls
+    const camControls = state.viewer.instance.getExtension(CameraController).controls
     const box = state.viewer.instance.getCurrentSectionBox()
 
     const ret: SerializedViewerState = {
