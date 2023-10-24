@@ -59,7 +59,9 @@ import {
   ModelCardAutomationStatus_ModelFragment,
   ModelCardAutomationStatus_VersionFragment
 } from '~~/lib/common/generated/gql/graphql'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import dayjs from 'dayjs'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { automationDataPageRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { SpeckleViewer } from '@speckle/shared'
 import { useServerInfo } from '~~/lib/core/composables/server'

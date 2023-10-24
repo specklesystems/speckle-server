@@ -73,7 +73,7 @@
         v-if="!isPendingVersionFragment(version) && version.automationStatus"
         class="absolute top-1 left-0 p-2"
       >
-        <ProjectPageModelsCardAutomationStatus
+        <ProjectPageModelsCardAutomationStatusRefactor
           :project-id="projectId"
           :model-or-version="{
             ...version,
