@@ -49,6 +49,16 @@
           <ArrowsPointingOutIcon class="h-5 w-5" />
         </ViewerControlsButtonToggle>
 
+        <!-- Sun and lights -->
+        <ViewerSunMenu v-tippy="'Light Controls'" />
+
+        <!-- Views -->
+        <ViewerViewsMenu v-tippy="'Views'" />
+
+        <!-- Settings -->
+        <ViewerSettingsMenu />
+      </ViewerControlsButtonGroup>
+      <ViewerControlsButtonGroup>
         <!-- Projection type -->
         <!-- TODO (Question for fabs): How to persist state between page navigation? e.g., swap to iso mode, move out, move back, iso mode is still on in viewer but not in ui -->
         <ViewerControlsButtonToggle
@@ -73,17 +83,8 @@
           <ScissorsIcon class="h-5 w-5" />
         </ViewerControlsButtonToggle>
 
-        <!-- Sun and lights -->
-        <ViewerSunMenu v-tippy="'Light Controls'" />
-
         <!-- Explosion -->
         <ViewerExplodeMenu v-tippy="'Explode'" />
-
-        <!-- Views -->
-        <ViewerViewsMenu v-tippy="'Views'" />
-
-        <!-- Settings -->
-        <ViewerSettingsMenu />
       </ViewerControlsButtonGroup>
     </div>
     <div
