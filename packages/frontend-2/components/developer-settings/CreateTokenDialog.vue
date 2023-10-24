@@ -13,6 +13,8 @@
           label="Name"
           help="A name to remember this token by. For example, the name of the script or application you're planning to use it in!"
           name="hookName"
+          :rules="[isRequired]"
+          show-required
           show-label
           type="text"
         />
@@ -39,8 +41,8 @@ import { useMutation } from '@vue/apollo-composable'
 import { AllScopes } from '@speckle/shared'
 import { LayoutDialog, FormSelectBadges } from '@speckle/ui-components'
 import { TokenFormValues } from '~~/lib/developer-settings/helpers/types'
-import { createAccessTokenMutation } from '~~/lib/developer-settings/graphql/mutations'
-import { isItemSelected } from '~~/lib/common/helpers/validation'
+import { CreateAccessTokenMutation } from '~~/lib/developer-settings/graphql/mutations'
+import { isItemSelected, isRequired } from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
 import {
   convertThrowIntoFetchResult,
@@ -52,7 +54,7 @@ const emit = defineEmits<{
   (e: 'token-created', tokenId: string): void
 }>()
 
-const { mutate: createToken } = useMutation(createAccessTokenMutation)
+const { mutate: createToken } = useMutation(CreateAccessTokenMutation)
 const { triggerNotification } = useGlobalToast()
 const { handleSubmit } = useForm<TokenFormValues>()
 

@@ -34,21 +34,24 @@ import { useClipboard } from '@vueuse/core'
 import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
 import { FormTextArea, FormTextInput, FormButton } from '~~/src/lib'
 
-const props = defineProps({
-  value: String,
-  isMultiline: Boolean,
-  showNotificationOnCopy: Boolean,
-  rows: Number
+type Props = {
+  value: string
+  isMultiline?: boolean
+  rows?: number
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  isMultiline: false
 })
 
-const emits = defineEmits(['copy'])
+const emit = defineEmits<{ (e: 'copy', val: string): void }>()
 
-const { copy } = useClipboard()
+const { copy } = useClipboard({ legacy: true })
 
 const handleCopy = async () => {
   if (props.value) {
     await copy(props.value)
-    emits('copy', props.value)
+    emit('copy', props.value)
   }
 }
 </script>

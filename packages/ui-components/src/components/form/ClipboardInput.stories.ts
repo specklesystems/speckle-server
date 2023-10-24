@@ -1,15 +1,14 @@
-import { Meta, StoryObj } from '@storybook/vue3'
+import { Meta } from '@storybook/vue3'
 import ClipboardInput from './ClipboardInput.vue'
 
-type ClipboardInputStoryType = StoryObj<
-  Record<string, unknown> & {
-    value?: string
-    isMultiline?: boolean
-    copiedItemName: string
-    showNotificationOnCopy?: boolean
-    rows?: number
-  }
->
+type ClipboardInputArgs = {
+  value?: string
+  showCopyButton?: boolean
+  copiedItemName?: string
+  isMultiline?: boolean
+  showNotificationOnCopy?: boolean
+  rows?: number
+}
 
 export default {
   component: ClipboardInput,
@@ -23,8 +22,8 @@ export default {
   }
 } as Meta
 
-export const Default: ClipboardInputStoryType = {
-  render: (args) => ({
+export const Default = {
+  render: (args: ClipboardInputArgs) => ({
     components: { ClipboardInput },
     setup() {
       return { args }

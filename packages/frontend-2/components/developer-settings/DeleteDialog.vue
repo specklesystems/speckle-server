@@ -30,8 +30,8 @@ import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
 import { ApplicationItem, TokenItem } from '~~/lib/developer-settings/helpers/types'
 import {
-  deleteAccessTokenMutation,
-  deleteApplicationMutation
+  DeleteAccessTokenMutation,
+  DeleteApplicationMutation
 } from '~~/lib/developer-settings/graphql/mutations'
 import {
   convertThrowIntoFetchResult,
@@ -45,8 +45,8 @@ const props = defineProps<{
 }>()
 
 const { triggerNotification } = useGlobalToast()
-const { mutate: deleteTokenMutation } = useMutation(deleteAccessTokenMutation)
-const { mutate: deleteAppMutation } = useMutation(deleteApplicationMutation)
+const { mutate: deleteTokenMutation } = useMutation(DeleteAccessTokenMutation)
+const { mutate: deleteAppMutation } = useMutation(DeleteApplicationMutation)
 
 const isOpen = defineModel<boolean>('open', { required: true })
 

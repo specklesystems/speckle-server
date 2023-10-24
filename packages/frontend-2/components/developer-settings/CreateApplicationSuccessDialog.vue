@@ -12,28 +12,16 @@
         <div class="grid grid-cols-2 gap-x-6 gap-y-3 py-2 text-sm max-w-xs mx-auto">
           <div class="flex items-center">App Id:</div>
           <div class="w-40">
-            <FormClipboardInput
+            <CommonClipboardInputWithToast
               v-if="props.application?.id"
               :value="props.application?.id"
-              @copy="
-                triggerNotification({
-                  type: ToastNotificationType.Info,
-                  title: 'App Id copied to clipboard'
-                })
-              "
             />
           </div>
           <div class="flex items-center">App Secret:</div>
           <div class="w-40">
-            <FormClipboardInput
+            <CommonClipboardInputWithToast
               v-if="props.application?.secret"
               :value="props.application?.secret"
-              @copy="
-                triggerNotification({
-                  type: ToastNotificationType.Info,
-                  title: 'App Secret copied to clipboard'
-                })
-              "
             />
           </div>
         </div>
@@ -45,16 +33,10 @@
             <strong>Note:</strong>
             To authenticate users inside your app, direct them to
           </p>
-          <FormClipboardInput
+          <CommonClipboardInputWithToast
             v-if="props.application?.secret"
-            is-multiline
             :value="`https://latest.speckle.dev/authn/verify/${props.application?.id}/{code_challenge}`"
-            @copy="
-              triggerNotification({
-                type: ToastNotificationType.Info,
-                title: 'URL copied to clipboard'
-              })
-            "
+            is-multiline
           />
           <p>
             `{code_challenge}` is an OAuth2 plain code challenge that your app needs to
@@ -67,18 +49,15 @@
 </template>
 
 <script setup lang="ts">
-import { LayoutDialog, FormClipboardInput } from '@speckle/ui-components'
+import { LayoutDialog } from '@speckle/ui-components'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { ApplicationItem } from 'lib/developer-settings/helpers/types'
-import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 
 const props = defineProps<{
   application: ApplicationItem | null
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
-
-const { triggerNotification } = useGlobalToast()
 
 const dialogButtons = [
   {

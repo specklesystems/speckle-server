@@ -15,16 +15,6 @@ const req = createRequire(import.meta.url)
 
 const config = {
   darkMode: 'class',
-  theme: {
-    extend: {
-      boxShadow: {
-        t: '0 -1px 3px 0 rgb(0 0 0 / 10%), 0 -1px 2px -1px rgb(0 0 0 / 6%)'
-      },
-      backdropBlur: {
-        xs: '1px'
-      }
-    }
-  },
   content: [
     `./components/**/*.{vue,js,ts}`,
     `./layouts/**/*.vue`,

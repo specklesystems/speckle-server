@@ -12,15 +12,9 @@
       <p class="truncate">{{ props.application?.name }}</p>
       <div class="text-right flex items-center justify-end">App Secret:</div>
       <div class="w-40">
-        <FormClipboardInput
+        <CommonClipboardInputWithToast
           v-if="props.application?.secret"
           :value="props.application?.secret"
-          @copy="
-            triggerNotification({
-              type: ToastNotificationType.Info,
-              title: 'App Secret copied to clipboard'
-            })
-          "
         />
       </div>
     </div>
@@ -28,9 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import { LayoutDialog, FormClipboardInput } from '@speckle/ui-components'
+import { LayoutDialog } from '@speckle/ui-components'
 import { ApplicationItem } from '~~/lib/developer-settings/helpers/types'
-import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 
 const props = defineProps<{
   application: ApplicationItem | null
@@ -47,6 +40,4 @@ const dialogButtons = computed(() => [
     }
   }
 ])
-
-const { triggerNotification } = useGlobalToast()
 </script>

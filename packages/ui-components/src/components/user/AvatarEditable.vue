@@ -4,6 +4,7 @@
       v-if="editMode"
       :user="modelAsUser"
       :disabled="disabled"
+      :size="size"
       @cancel="editMode = false"
       @save="onSave"
     />
@@ -58,7 +59,7 @@ const props = defineProps<{
   validateOnMount?: boolean
   validateOnValueUpdate?: boolean
   disabled?: boolean
-  size: UserAvatarSize
+  size?: UserAvatarSize
 }>()
 
 const { value, errorMessage } = useField<ModelType>(props.name, props.rules, {

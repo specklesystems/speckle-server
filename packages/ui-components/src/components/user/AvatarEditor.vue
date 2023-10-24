@@ -43,11 +43,8 @@
         :stencil-props="{
           aspectRatio: 1 / 1
         }"
-        :canvas="{
-          width: 250,
-          height: 250
-        }"
-        style="width: 250px; height: 250px"
+        :canvas="canvasSize"
+        :style="`width: ${canvasSize.width}px; height: ${canvasSize.height}px`"
       />
       <FormFileUploadZone
         ref="uploadZone"
@@ -103,13 +100,13 @@ import {
   PhotoIcon
 } from '@heroicons/vue/24/outline'
 import { Nullable } from '@speckle/shared'
-import { onUnmounted, ref, watch } from 'vue'
+import { onUnmounted, ref, watch, computed } from 'vue'
 import { Cropper } from 'vue-advanced-cropper'
 import 'vue-advanced-cropper/dist/style.css'
 import FormButton from '~~/src/components/form/Button.vue'
 import FormFileUploadZone from '~~/src/components/form/file-upload/Zone.vue'
 import { UploadableFileItem } from '~~/src/composables/form/fileUpload'
-import { AvatarUser } from '~~/src/composables/user/avatar'
+import { AvatarUser, UserAvatarSize } from '~~/src/composables/user/avatar'
 import { directive as vTippy } from 'vue-tippy'
 
 /**
@@ -124,6 +121,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   user: AvatarUser
   disabled?: boolean
+  size?: UserAvatarSize
 }>()
 
 const cropper = ref(
@@ -136,6 +134,20 @@ const cropper = ref(
 const uploadZone = ref(null as Nullable<{ triggerPicker: () => void }>)
 const selectedUpload = ref(null as Nullable<UploadableFileItem>)
 const activeImageUrl = ref(null as Nullable<string>)
+
+const canvasSize = computed(() => {
+  switch (props.size) {
+    case 'xs' || 'sm' || 'lg' || 'xl':
+      return { width: 64, height: 64 }
+    case 'xxl':
+      return { width: 140, height: 140 }
+    case 'editable':
+      return { width: 240, height: 240 }
+    case 'base':
+    default:
+      return { width: 32, height: 32 }
+  }
+})
 
 const setNewActiveUrl = (url: Nullable<string>) => {
   if (activeImageUrl.value) {

@@ -13,7 +13,7 @@
           {
             props: {
               color: 'primary',
-              to: apiOrigin + '/graphql',
+              to: apiOrigin + '/explorer',
               target: '_blank',
               external: true
             },

@@ -2,7 +2,7 @@
   <div class="flex flex-col space-y-4 mb-8">
     <div class="flex flex-col space-y-4">
       <div class="flex flex-col md:flex-row gap-8 items-center">
-        <div class="w-full md:w-3/12">
+        <div class="w-full md:w-4/12">
           <UserProfileEditDialogAvatar :user="user" size="xxl" />
         </div>
         <div class="flex flex-col space-y-4 w-full md:w-9/12">

@@ -25,7 +25,7 @@
           name="scopes"
           label="Scopes"
           placeholder="Choose Scopes"
-          help="xyz"
+          help="It's good practice to limit the scopes of your token to the absolute minimum."
           show-required
           :rules="[isItemSelected]"
           show-label
@@ -64,8 +64,8 @@ import {
   ApplicationItem
 } from '~~/lib/developer-settings/helpers/types'
 import {
-  createApplicationMutation,
-  editApplicationMutation
+  CreateApplicationMutation,
+  EditApplicationMutation
 } from '~~/lib/developer-settings/graphql/mutations'
 import { isItemSelected } from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
@@ -87,8 +87,8 @@ const emit = defineEmits<{
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const { mutate: createApplication } = useMutation(createApplicationMutation)
-const { mutate: editApplication } = useMutation(editApplicationMutation)
+const { mutate: createApplication } = useMutation(CreateApplicationMutation)
+const { mutate: editApplication } = useMutation(EditApplicationMutation)
 const { triggerNotification } = useGlobalToast()
 const { handleSubmit, resetForm } = useForm<ApplicationFormValues>()
 
@@ -199,12 +199,10 @@ const dialogButtons = computed(() => [
 const resetApplicationModel = () => {
   if (props.application) {
     name.value = props.application.name
-    scopes.value = props.application.scopes
-      ? props.application.scopes.map((scope) => ({
-          id: scope.name as (typeof AllScopes)[number],
-          text: scope.name as (typeof AllScopes)[number]
-        }))
-      : []
+    scopes.value = (props.application.scopes || []).map((scope) => ({
+      id: scope.name as (typeof AllScopes)[number],
+      text: scope.name as (typeof AllScopes)[number]
+    }))
     redirectUrl.value = props.application.redirectUrl
     description.value = props.application.description || ''
   } else {

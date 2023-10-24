@@ -110,10 +110,6 @@ const notificationChannels = computed(() => {
 
 const toggleExpansion = () => {
   isExpanded.value = !isExpanded.value
-  if (isExpanded.value) {
-    //Extra 64px needed to add vertical padding to expanded content
-    contentHeight.value = (unref(content)?.scrollHeight || 0) + 64
-  }
 }
 
 const onUpdate = async (params: { value: boolean; channel: string; type: string }) => {
