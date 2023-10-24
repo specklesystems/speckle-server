@@ -370,32 +370,32 @@ const ringClasses = computed(() => {
 const sizeClasses = computed(() => {
   switch (props.size) {
     case 'xs':
-      return 'h-5 text-xs font-medium xxx-tracking-wide'
+      return 'text-xs font-medium xxx-tracking-wide'
     case 'sm':
-      return 'h-6 text-sm font-medium xxx-tracking-wide'
+      return 'text-sm font-medium xxx-tracking-wide'
     case 'lg':
-      return 'h-10 text-lg font-semibold xxx-tracking-wide'
+      return 'text-lg font-semibold xxx-tracking-wide'
     case 'xl':
-      return 'h-14 text-xl font-bold xxx-tracking-wide'
+      return 'text-xl font-bold xxx-tracking-wide'
     default:
     case 'base':
-      return 'h-8 text-base font-medium xxx-tracking-wide'
+      return 'text-base font-medium xxx-tracking-wide'
   }
 })
 
 const paddingClasses = computed(() => {
   switch (props.size) {
     case 'xs':
-      return 'px-1'
+      return 'px-1 sm:px-2 py-0.5'
     case 'sm':
-      return 'px-2'
+      return 'px-2 sm:px-4 py-0.5 sm:py-1'
     case 'lg':
-      return 'px-4'
+      return 'px-3 sm:px-4 py-1'
     case 'xl':
-      return 'px-5'
+      return 'px-6 py-1.5'
     default:
     case 'base':
-      return 'px-3'
+      return 'px-4 py-1'
   }
 })
 
@@ -431,7 +431,7 @@ const decoratorClasses = computed(() => {
 const buttonClasses = computed(() => {
   const isLinkOrText = props.link || props.text
   return [
-    'transition inline-flex justify-center items-center space-x-2 outline-none select-none',
+    'transition inline-flex justify-center text-center items-center space-x-2 outline-none select-none',
     generalClasses.value,
     sizeClasses.value,
     foregroundClasses.value,

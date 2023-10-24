@@ -7,7 +7,7 @@
     }"
   >
     <div
-      class="flex justify-between items-center gap-8 py-4 px-2"
+      class="flex justify-between items-center gap-4 sm:gap-8 py-4 px-2"
       :class="backgroundClass"
       tabindex="0"
       v-on="
@@ -19,7 +19,7 @@
           : {}
       "
     >
-      <div class="font-bold flex items-center space-x-2 select-none">
+      <div class="font-bold flex items-center gap-2 select-none">
         <Component :is="icon" v-if="icon" class="h-5 w-5" />
         <span>{{ title }}</span>
       </div>
@@ -34,7 +34,6 @@
           size="sm"
           :to="button.expandContent ? undefined : button.to"
           :color="button.expandContent && isExpanded ? 'invert' : button.color"
-          class="text-xs"
           :icon-right="
             button.expandContent && isExpanded ? undefined : button.iconRight
           "

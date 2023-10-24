@@ -61,7 +61,7 @@
               </button>
               <div
                 class="flex-1 simple-scrollbar overflow-y-auto bg-white dark:bg-foundation"
-                :class="title ? 'py-6 px-8' : 'p-10'"
+                :class="title ? 'py-6 px-4 sm:px-8' : 'p-10'"
                 @scroll="onScroll"
               >
                 <slot>Put your content here!</slot>
