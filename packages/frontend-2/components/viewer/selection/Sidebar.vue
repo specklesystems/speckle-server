@@ -30,7 +30,7 @@
             v-for="object in objectsLimited"
             :key="(object.id as string)"
             :object="object"
-            :unfold="false"
+            :unfold="true"
             :root="true"
           />
         </div>
