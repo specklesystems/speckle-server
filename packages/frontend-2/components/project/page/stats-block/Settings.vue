@@ -7,9 +7,7 @@
             <UsersIcon class="h-5 w-5" />
             <span class="text-sm">Settings</span>
           </div>
-          <div
-            class="flex items-center text-xs p-1 bg-primary-muted rounded leading-none select-none"
-          >
+          <div class="flex items-center text-xs">
             {{ project.role?.split(':').reverse()[0] }}
           </div>
         </div>

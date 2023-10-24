@@ -16,7 +16,13 @@
       </TransitionChild>
 
       <div class="fixed inset-0 z-10 h-screen w-screen">
-        <div class="flex justify-center items-center h-full w-full p-4 sm:p-0">
+        <div
+          :class="
+            sidePanel
+              ? 'absolute top-0 right-0 h-screen w-96'
+              : 'flex justify-center items-center h-full w-full p-4 sm:p-0'
+          "
+        >
           <TransitionChild
             as="template"
             enter="ease-out duration-300"
@@ -29,8 +35,9 @@
           >
             <DialogPanel
               :class="[
-                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90vh]',
-                widthClasses
+                'transform text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col',
+                widthClasses,
+                sidePanel ? 'h-full' : 'max-h-[90vh] rounded-lg'
               ]"
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onSubmit"
@@ -110,6 +117,7 @@ const props = defineProps<{
    */
   preventCloseOnClickOutside?: boolean
   title?: string
+  sidePanel?: boolean
   buttons?: Array<{
     text: string
     props: Record<string, unknown>
@@ -152,7 +160,7 @@ const maxWidthWeight = computed(() => {
 })
 
 const widthClasses = computed(() => {
-  const classParts: string[] = ['w-full', 'sm:my-8 sm:w-full sm:max-w-xl']
+  const classParts: string[] = ['w-full', 'sm:w-full sm:max-w-xl']
 
   if (maxWidthWeight.value >= 1) {
     classParts.push('md:max-w-2xl')

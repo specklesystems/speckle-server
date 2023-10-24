@@ -1,18 +1,35 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="md">
+  <LayoutDialog
+    v-model:open="isOpen"
+    title="Delete Model"
+    :buttons="[
+      {
+        text: 'Delete',
+        props: { color: 'danger', fullWidth: true, disabled: loading },
+        onClick: () => {
+          onDelete()
+        }
+      },
+      {
+        text: 'Cancel',
+        props: { color: 'secondary', fullWidth: true },
+        onClick: () => {
+          isOpen = false
+        }
+      }
+    ]"
+    max-width="sm"
+  >
     <div class="flex flex-col text-foreground">
-      <div class="h4 font-bold mb-4">Delete model</div>
-      <p class="mb-6">
+      <p class="mb-2">
         Are you sure you want to delete the model
         <span class="inline font-bold">{{ model.name }}</span>
-        ? This action is irreversible and all of the versions inside of this model will
-        be deleted also!
+        ?
       </p>
-      <div class="flex justify-end">
-        <FormButton submit :disabled="loading" color="danger" @click="onDelete">
-          Delete
-        </FormButton>
-      </div>
+      <p>
+        This action is irreversible and all of the versions inside of this model will be
+        deleted also!
+      </p>
     </div>
   </LayoutDialog>
 </template>

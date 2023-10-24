@@ -1,13 +1,11 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-width="md"
+    max-width="sm"
+    :title="'Move ' + versions.length + ' version' + (versions.length > 1 ? 's' : '')"
     @fully-closed="$emit('fully-closed')"
   >
     <div class="flex flex-col space-y-4">
-      <div class="h4 font-bold text-foreground">
-        Move {{ `${versions.length} version${versions.length > 1 ? 's' : ''}` }}
-      </div>
       <LayoutTabs v-slot="{ activeItem }" :items="tabItems">
         <ProjectModelPageDialogMoveToExistingTab
           v-if="activeItem.id === 'existing-model'"
