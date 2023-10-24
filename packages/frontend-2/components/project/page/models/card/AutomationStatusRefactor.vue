@@ -32,7 +32,7 @@
           </div>
         </div>
       </template>
-      <div class="flex flex-col space-y-5">
+      <div class="">
         <div v-for="run in automationRuns" :key="run.id">
           <ProjectPageModelsCardAutomationRun :run="(run as AutomationRun)" />
         </div>
