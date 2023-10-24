@@ -31,30 +31,30 @@ import { Loader } from './loaders/Loader'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
-  private container: HTMLElement
-  private stats: Optional<Stats>
+  protected container: HTMLElement
+  protected stats: Optional<Stats>
 
   /** Viewer params used at init time */
-  private startupParams: ViewerParams
+  protected startupParams: ViewerParams
 
   /** Viewer components */
-  private tree: WorldTree = new WorldTree()
-  private world: World = new World()
+  protected tree: WorldTree = new WorldTree()
+  protected world: World = new World()
   public static Assets: Assets
   public speckleRenderer: SpeckleRenderer
-  private propertyManager: PropertyManager
+  protected propertyManager: PropertyManager
 
   /** Misc members */
-  private inProgressOperations: number
-  private clock: Clock
-  private loaders: { [id: string]: Loader } = {}
+  protected inProgressOperations: number
+  protected clock: Clock
+  protected loaders: { [id: string]: Loader } = {}
 
-  private extensions: {
+  protected extensions: {
     [id: string]: Extension | IProvider
   } = {}
 
   /** various utils/helpers */
-  private utils: Utils
+  protected utils: Utils
   /** Gets the World object. Currently it's used for info mostly */
   public get World(): World {
     return this.world

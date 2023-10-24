@@ -113,6 +113,10 @@ export class SelectionExtension extends Extension {
     this.applySelection()
   }
 
+  public clearSelection() {
+    this.removeSelection()
+  }
+
   protected onObjectClicked(selection: SelectionEvent) {
     if (!this._enabled) return
 

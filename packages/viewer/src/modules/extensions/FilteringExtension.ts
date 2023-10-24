@@ -36,6 +36,10 @@ export class FilteringExtension extends Extension {
   private UserspaceColorState = new UserspaceColorState()
   private CurrentFilteringState: FilteringState = {} as FilteringState
 
+  public get filteringState(): FilteringState {
+    return this.CurrentFilteringState
+  }
+
   public constructor(viewer: IViewer) {
     super(viewer)
     this.WTI = this.viewer.getWorldTree()
