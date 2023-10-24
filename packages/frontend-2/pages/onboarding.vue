@@ -23,6 +23,10 @@ import {
 } from '~~/lib/auth/composables/onboarding'
 import { homeRoute, modelRoute, projectRoute } from '~~/lib/common/helpers/route'
 
+useHead({
+  title: 'Setting up'
+})
+
 definePageMeta({
   middleware: ['auth'],
   layout: 'onboarding'

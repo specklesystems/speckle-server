@@ -12,9 +12,11 @@
     <template #something-selected="{ value }">
       <div class="text-sm">
         <div class="font-bold">
-          {{ value.title }}
+          {{ isArray(value) ? value[0].title : value.title }}
         </div>
-        <span class="text-foreground-2">{{ value.description }}</span>
+        <span class="text-foreground-2">
+          {{ isArray(value) ? value[0].description : value.description }}
+        </span>
       </div>
     </template>
     <template #option="{ item }">
@@ -27,6 +29,7 @@
 </template>
 <script setup lang="ts">
 import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
+import { isArray } from 'lodash-es'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ProjectVisibility): void

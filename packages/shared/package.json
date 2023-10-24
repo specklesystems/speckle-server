@@ -1,6 +1,6 @@
 {
   "name": "@speckle/shared",
-  "version": "0.1.0",
+  "version": "2.16.1-alpha.1",
   "description": "Shared code between various Speckle JS packages",
   "homepage": "https://speckle.systems",
   "repository": {
@@ -54,5 +54,6 @@
     "rollup-plugin-delete": "^2.0.0",
     "rollup-plugin-typescript2": "^0.34.1",
     "typescript": "^4.5.4"
-  }
+  },
+  "stableVersion": "0.1.0"
 }

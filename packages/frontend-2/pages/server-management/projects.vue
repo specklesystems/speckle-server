@@ -122,6 +122,10 @@ import { isProject } from '~~/lib/server-management/helpers/utils'
 const logger = useLogger()
 const router = useRouter()
 
+useHead({
+  title: 'Projects'
+})
+
 definePageMeta({
   middleware: ['admin']
 })

@@ -21,10 +21,11 @@
 /* eslint-disable vue/require-default-prop */
 import { Nullable } from '@speckle/shared'
 import { useDropZone } from '@vueuse/core'
+import { computed, ref } from 'vue'
 import {
   UploadableFileItem,
   usePrepareUploadableFiles
-} from '~~/lib/form/composables/fileUpload'
+} from '~~/src/composables/form/fileUpload'
 
 const emit = defineEmits<{
   (e: 'files-selected', v: { files: UploadableFileItem[] }): void

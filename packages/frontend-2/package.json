@@ -116,7 +116,7 @@
     "jest": "27",
     "nuxt": "^3.6.5",
     "pino-pretty": "^10.0.1",
-    "postcss": "^8.4.18",
+    "postcss": "^8.4.31",
     "postcss-custom-properties": "^12.1.9",
     "postcss-html": "^1.5.0",
     "postcss-nesting": "^10.2.0",

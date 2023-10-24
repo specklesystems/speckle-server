@@ -5,6 +5,10 @@
 const route = useRoute()
 const token = ref('')
 
+useHead({
+  title: 'Reset password'
+})
+
 definePageMeta({
   name: 'reset-password'
 })

@@ -30,7 +30,7 @@
             hint="Branch url copied to clipboard. Most connectors can receive the latest commit from a branch by using this url."
             style="color: blue"
             prepend-inner-icon="mdi-source-branch"
-            :value="streamUrl + '/branches/' + branchName"
+            :value="streamUrl + '/branches/' + formatBranchNameForURL(branchName)"
             @focus="copyToClipboard"
           ></v-text-field>
           <v-text-field
@@ -268,6 +268,7 @@ import {
 import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 import { Optional, Roles } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
+import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
 
 /**
  * what about embedType? can that be cleaned up? and all other url params?
@@ -356,7 +357,8 @@ export default {
       url,
       iFrameUrl,
       resetUrlOptions,
-      streamRoles: Roles.Stream
+      streamRoles: Roles.Stream,
+      formatBranchNameForURL
     }
   },
   data() {

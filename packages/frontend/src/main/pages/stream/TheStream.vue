@@ -94,6 +94,7 @@ import {
 import { useIsLoggedIn } from '@/main/lib/core/composables/core'
 import { useQuery } from '@vue/apollo-composable'
 import { useRoute } from '@/main/lib/core/composables/router'
+import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
 
 // Cause of a limitation of Vue Apollo Options API TS types, this needs to be duplicated
 // (the better option is to just use the Composition API)
@@ -227,13 +228,13 @@ export default defineComponent({
           { data }: { data: { branchCreated: Record<string, unknown> } }
         ): void {
           if (!data.branchCreated) return
-          const branchName = data.branchCreated.name
+          const branchName = data.branchCreated.name as string
           const streamId = data.branchCreated.streamId
           this.$eventHub.$emit('notification', {
             text: `A new branch was created!`,
             action: {
               name: 'View Branch',
-              to: `/streams/${streamId}/branches/${branchName}`
+              to: `/streams/${streamId}/branches/${formatBranchNameForURL(branchName)}`
             }
           })
         },

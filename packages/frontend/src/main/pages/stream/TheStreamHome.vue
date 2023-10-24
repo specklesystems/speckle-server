@@ -38,7 +38,9 @@
             >
               <v-card
                 class="rounded-lg"
-                :to="`/streams/${$route.params.streamId}/branches/${branch.name}`"
+                :to="`/streams/${
+                  $route.params.streamId
+                }/branches/${formatBranchNameForURL(branch.name)}`"
               >
                 <preview-image
                   :height="120"
@@ -133,6 +135,7 @@
 import { gql } from '@apollo/client/core'
 import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
 import { AppLocalStorage } from '@/utils/localStorage'
+import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
 
 export default {
   name: 'TheStreamHome',
@@ -143,6 +146,7 @@ export default {
     CommitPreviewCard: () => import('@/main/components/common/CommitPreviewCard'),
     CommentListItem: () => import('@/main/components/comments/CommentListItem.vue')
   },
+  setup: () => ({ formatBranchNameForURL }),
   data() {
     return {
       clearRendererTrigger: 0,

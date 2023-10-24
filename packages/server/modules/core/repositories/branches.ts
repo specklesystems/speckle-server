@@ -55,12 +55,20 @@ export async function getStreamBranchesByName(
 
   const q = Branches.knex<BranchRecord[]>()
     .where(Branches.col.streamId, streamId)
-    .andWhere(
-      knex.raw('LOWER(??) ilike ANY(?)', [
-        Branches.col.name,
-        names.map((n) => n.toLowerCase() + (startsWithName ? '%' : ''))
-      ])
-    )
+    .andWhere((w1) => {
+      w1.where(
+        knex.raw('LOWER(??) ilike ANY(?)', [
+          Branches.col.name,
+          names.map((n) => n.toLowerCase() + (startsWithName ? '%' : ''))
+        ])
+      )
+
+      if (!options?.startsWithName) {
+        // There are some edge cases with branches that have backwards slashes in their name that break the query,
+        // hence the extra condition
+        w1.orWhereIn(Branches.col.name, names)
+      }
+    })
 
   return await q
 }
@@ -516,10 +524,11 @@ export const validateBranchName = (name: string) => {
     name.startsWith('#') ||
     name.startsWith('$') ||
     name.indexOf('//') !== -1 ||
-    name.indexOf(',') !== -1
+    name.indexOf(',') !== -1 ||
+    name.indexOf('\\') !== -1
   )
     throw new BranchNameError(
-      'Branch names cannot start with "#", "$", start or end with "/", have multiple slashes next to each other (e.g., "//") or contain commas.',
+      'Branch names cannot start with "#", "$", start or end with "/", have multiple slashes next to each other (e.g., "//") or contain commas or backwards slashes.',
       {
         info: {
           name
