@@ -161,7 +161,6 @@ const props = withDefaults(
 )
 
 provide('projectId', props.project.id)
-provide('modelId', props.model.id)
 
 const importArea = ref(
   null as Nullable<{

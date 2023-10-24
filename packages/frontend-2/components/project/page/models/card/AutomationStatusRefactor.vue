@@ -1,5 +1,5 @@
 <template>
-  <div @click.stop.prevent>
+  <div v-if="allFunctionRuns.length > 0" @click.stop.prevent>
     <button
       v-tippy="summary.longSummary"
       class="h-6 w-6 bg-foundation rounded-full flex items-center justify-center"
@@ -175,6 +175,7 @@ const viewResultVersionsRoute = (versions: Array<{ id: string }>) => {
 
 const allFunctionRuns = computed(() => {
   const allRuns: AutomationFunctionRun[] = [] // as AutomationFunctionRun[]
+  if (!props.modelOrVersion.automationStatus) return allRuns
   for (const myRun of props.modelOrVersion.automationStatus.automationRuns) {
     allRuns.push(...(myRun.functionRuns as AutomationFunctionRun[]))
   }
