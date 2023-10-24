@@ -129,6 +129,7 @@ import {
   ModelCardAutomationStatus_VersionFragment
 } from '~~/lib/common/generated/gql/graphql'
 import dayjs from 'dayjs'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { automationDataPageRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { SpeckleViewer } from '@speckle/shared'
 import { useServerInfo } from '~~/lib/core/composables/server'
@@ -221,6 +222,7 @@ const statusIconAndColor = computed(() =>
 )
 
 const automationRuns = computed(() => automationStatus.value.automationRuns)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const automateBaseUrl = computed(() => serverInfo.value?.automateUrl)
 const displayName = computed(() =>
   isModel(props.modelOrVersion)

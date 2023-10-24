@@ -19,7 +19,7 @@
 
       <div class="font-bold text-sm truncate">
         {{ automationName ? automationName + ' / ' : ''
-        }}{{ functionRun.functionName || 'Majestic Function' }}
+        }}{{ functionRun.functionName || 'Majestic ' + functionRun.functionId }}
       </div>
       <div
         v-if="
