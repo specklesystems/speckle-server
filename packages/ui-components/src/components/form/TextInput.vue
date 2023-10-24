@@ -40,6 +40,8 @@
         v-bind="$attrs"
         @change="$emit('change', { event: $event, value })"
         @input="$emit('input', { event: $event, value })"
+        @focus="$emit('focusin')"
+        @blur="$emit('focusout')"
       />
       <slot name="input-right">
         <a

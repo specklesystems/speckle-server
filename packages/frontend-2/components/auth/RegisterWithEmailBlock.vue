@@ -6,7 +6,7 @@
         type="text"
         name="name"
         label="Full Name"
-        placeholder="John Doe"
+        placeholder="My Name"
         size="xl"
         :rules="nameRules"
         :custom-icon="UserIcon"
@@ -42,7 +42,6 @@
       :password="password"
       :class="`mt-2 overflow-hidden ${pwdFocused ? 'h-8' : 'h-0'} transition-[height]`"
     />
-    <FormButton submit full-width class="mt-4" :disabled="loading">Sign up</FormButton>
     <div
       class="mt-3 text-xs flex items-center justify-center text-foreground-2 space-x-2"
     >
@@ -56,6 +55,7 @@
         label="I want to receive tips and tricks on how to use Speckle"
       />
     </div>
+    <FormButton submit full-width class="mt-4" :disabled="loading">Sign up</FormButton>
     <div
       v-if="serverInfo.termsOfService"
       class="mt-2 text-xs text-foreground-2 text-center linkify-tos"
