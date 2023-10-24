@@ -1,21 +1,53 @@
 <template>
   <div class="">
-    <FormButton text size="xs">
-      <!-- TODO: Get blob details and display file name -->
-      <span class="max-w-[5rem] truncate">{{ blobId }}, {{ projectId }}</span>
+    <FormButton v-tippy="fileInfo.name" text size="xs" @click="onDownloadClick">
+      <span class="max-w-[5rem] truncate">{{ fileInfo.name }}</span>
       <PaperClipIcon class="w-3 h-3 text-primary" />
     </FormButton>
   </div>
 </template>
 <script setup lang="ts">
 import { PaperClipIcon } from '@heroicons/vue/20/solid'
+import { useQuery } from '@vue/apollo-composable'
+import { blobInfoQuery } from '~~/lib/projects/graphql/queries'
+import { useFileDownload } from '~~/lib/core/composables/fileUpload'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { ensureError } from '@speckle/shared'
 
-const projectId = inject<string>('projectId')
-const modelId = inject<string>('modelId')
+const projectId = inject<string>('projectId') as string
+const { download } = useFileDownload()
+const { triggerNotification } = useGlobalToast()
 
 const props = defineProps<{
   blobId: string
 }>()
 
-// TODO: get blob, display file name, etc.
+const { result } = useQuery(blobInfoQuery, () => ({
+  streamId: projectId,
+  blobId: props.blobId
+}))
+
+const fileInfo = computed(() => {
+  return {
+    name: result.value?.stream?.blob?.fileName,
+    type: result.value?.stream?.blob?.fileType,
+    size: result.value?.stream?.blob?.fileSize
+  }
+})
+
+const onDownloadClick = async () => {
+  try {
+    await download({
+      blobId: props.blobId,
+      fileName: fileInfo.value.name as string,
+      projectId
+    })
+  } catch (e) {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Download failed',
+      description: ensureError(e).message
+    })
+  }
+}
 </script>

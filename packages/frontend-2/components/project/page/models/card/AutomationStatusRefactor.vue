@@ -1,11 +1,16 @@
 <template>
   <div @click.stop.prevent>
-    <button @click="showDialog = true">
-      <Component
+    <button
+      v-tippy="summary.longSummary"
+      class="h-6 w-6 bg-foundation rounded-full flex items-center justify-center"
+      @click="showDialog = true"
+    >
+      <!-- <Component
         :is="statusIconAndColor.icon"
         v-tippy="automationStatus.statusMessage"
         :class="['h-6 w-6 outline-none', statusIconAndColor.iconColor]"
-      />
+      /> -->
+      <AutomationDoughnutSummary :summary="summary" />
     </button>
     <LayoutDialog
       v-model:open="showDialog"
@@ -13,107 +18,32 @@
       max-width="lg"
     >
       <template #header>
-        <div class="flex items-center space-x-2">
-          <!-- <Component
-            :is="statusIconAndColor.icon"
-            v-tippy="automationStatus.statusMessage"
-            :class="['h-6 w-6 outline-none', statusIconAndColor.iconColor]"
-          /> -->
-          <h4 class="text-2xl font-bold">{{ displayName }}</h4>
+        <div class="flex items-center space-x-2 pt-3 max-w-full w-full">
+          <div class="h-10 w-10 mt-[6px]">
+            <AutomationDoughnutSummary :summary="summary" />
+          </div>
+          <div class="min-w-0">
+            <h4 :class="`text-xl font-bold ${summary.titleColor}`">
+              {{ summary.title }}
+            </h4>
+            <div class="text-xs text-foreground-2 truncate">
+              {{ summary.longSummary }}
+            </div>
+          </div>
         </div>
       </template>
       <div class="flex flex-col space-y-5">
         <div v-for="run in automationRuns" :key="run.id">
           <ProjectPageModelsCardAutomationRun :run="(run as AutomationRun)" />
         </div>
-
-        <LayoutDisclosure
-          v-for="run in automationRuns"
-          v-if="false"
-          :key="run.id"
-          :title="`${run.automationName}`"
-          :color="resolveStatusMetadata(run.status).disclosureColor"
-          :default-open="true"
-        >
-          <template #header>
-            <div class="flex space-x-2">
-              <div>{{ run.automationName }}</div>
-              <CommonBadge
-                rounded
-                :color-classes="`text-white ${
-                  resolveStatusMetadata(run.status).badgeColor
-                }`"
-              >
-                {{ run.status }}
-              </CommonBadge>
-              <div class="inline-flex space-x-2 items-start text-sm text-foreground-2">
-                <strong class="shrink-0"></strong>
-                <span v-tippy="absoluteDate(run.createdAt)">
-                  {{ fromNowDate(run.createdAt) }}
-                </span>
-              </div>
-            </div>
-          </template>
-          <div class="flex flex-col space-y-2">
-            <div class="space-y-4">
-              <LayoutPanel
-                v-for="fnRun in run.functionRuns"
-                :key="fnRun.id"
-                ring
-                panel-classes="bg-foundation-2 py-2 px-4"
-                custom-padding
-              >
-                <div class="flex flex-col space-y-4">
-                  <div class="flex justify-between items-center">
-                    <span class="italic">
-                      TODO: Function Name #{{ fnRun.functionId }}
-                    </span>
-                    <CommonBadge
-                      rounded
-                      :color-classes="`text-white ${
-                        resolveStatusMetadata(fnRun.status).badgeColor
-                      }`"
-                    >
-                      {{ fnRun.status }}
-                    </CommonBadge>
-                  </div>
-                  <div v-if="fnRun.statusMessage" class="flex space-x-2">
-                    <p class="text-foreground">
-                      {{ fnRun.statusMessage }}
-                    </p>
-                  </div>
-                  <div
-                    v-if="fnRun.contextView || fnRun.resultVersions.length"
-                    class="flex space-x-2"
-                  >
-                    <FormButton
-                      v-if="fnRun.contextView"
-                      size="sm"
-                      :to="fnRun.contextView"
-                      target="_blank"
-                    >
-                      View results
-                    </FormButton>
-                    <!-- TODO: How do we want to render result versions? -->
-                    <FormButton
-                      v-if="fnRun.resultVersions.length && false"
-                      size="sm"
-                      :to="viewResultVersionsRoute(fnRun.resultVersions)"
-                      target="_blank"
-                    >
-                      View new versions
-                    </FormButton>
-                  </div>
-                </div>
-              </LayoutPanel>
-            </div>
-          </div>
-        </LayoutDisclosure>
       </div>
 
       <template #buttons>
-        <div class="flex w-full justify-end">
-          <FormButton outlined @click="showDialog = false">Close</FormButton>
+        <div class="flex w-full justify-between items-center pl-2">
+          <FormButton text size="xs" to="https://automate.speckle.dev" target="_blank">
+            Learn more about Automate here!
+          </FormButton>
+          <FormButton @click="showDialog = false">Close</FormButton>
         </div>
       </template>
     </LayoutDialog>
@@ -125,6 +55,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import {
   AutomationFunctionRun,
   AutomationRun,
+  AutomationRunStatus,
   ModelCardAutomationStatus_ModelFragment,
   ModelCardAutomationStatus_VersionFragment
 } from '~~/lib/common/generated/gql/graphql'
@@ -217,11 +148,13 @@ const { serverInfo } = useServerInfo()
 const showDialog = ref(false)
 
 const automationStatus = computed(() => props.modelOrVersion.automationStatus)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const statusIconAndColor = computed(() =>
   resolveStatusMetadata(automationStatus.value.status)
 )
 
 const automationRuns = computed(() => automationStatus.value.automationRuns)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const automateBaseUrl = computed(() => serverInfo.value?.automateUrl)
 const displayName = computed(() =>
   isModel(props.modelOrVersion)
@@ -229,10 +162,7 @@ const displayName = computed(() =>
     : `version #${props.modelOrVersion.id}`
 )
 
-const fromNowDate = (date: Date | string) => dayjs(date).fromNow()
-const absoluteDate = (date: Date | string) =>
-  dayjs(date).format('MMMM D, YYYY - hh:mm:ss Z')
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const viewResultVersionsRoute = (versions: Array<{ id: string }>) => {
   const modelId = props.modelId
   const versionIds = versions.map((v) => v.id)
@@ -243,10 +173,59 @@ const viewResultVersionsRoute = (versions: Array<{ id: string }>) => {
   return modelRoute(props.projectId, resourceIdString)
 }
 
-const summary = computed(() => {
-  let allRuns = [] as AutomationFunctionRun[]
-  for (const aRun of props.modelOrVersion.automationStatus.automationRuns) {
-    allRuns = [...allRuns, ...aRun.functionRuns]
+const allFunctionRuns = computed(() => {
+  const allRuns: AutomationFunctionRun[] = [] // as AutomationFunctionRun[]
+  for (const myRun of props.modelOrVersion.automationStatus.automationRuns) {
+    allRuns.push(...(myRun.functionRuns as AutomationFunctionRun[]))
   }
+  return allRuns
+})
+
+const summary = computed(() => {
+  const result = {
+    failed: 0,
+    passed: 0,
+    inProgress: 0,
+    total: allFunctionRuns.value.length,
+    title: 'All runs passed.',
+    titleColor: 'text-success',
+    longSummary: ''
+  }
+
+  for (const run of allFunctionRuns.value) {
+    switch (run.status) {
+      case AutomationRunStatus.Succeeded:
+        result.passed++
+        break
+      case AutomationRunStatus.Failed:
+        result.title = 'Some runs failed.'
+        result.titleColor = 'text-danger'
+        result.failed++
+        break
+      default:
+        if (result.failed === 0) {
+          result.title = 'Some runs are still in progress.'
+          result.titleColor = 'text-warning'
+        }
+        result.inProgress++
+        break
+    }
+  }
+
+  // format:
+  // 2 failed, 1 passed runs
+  // 1 passed, 2 in progress, 1 failed runs
+  // 1 passed run
+  const longSummarySegments = []
+  if (result.passed > 0) longSummarySegments.push(`${result.passed} passed`)
+  if (result.inProgress > 0)
+    longSummarySegments.push(`${result.inProgress} in progress`)
+  if (result.failed > 0) longSummarySegments.push(`${result.failed} failed`)
+
+  result.longSummary = (
+    longSummarySegments.join(', ') + ` run${result.total > 1 ? 's' : ''}.`
+  ).replace(/,(?=[^,]+$)/, ', and')
+
+  return result
 })
 </script>

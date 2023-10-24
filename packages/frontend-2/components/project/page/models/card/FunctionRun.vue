@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      class="flex space-x-2 items-center my-2 py-1 px-2 border border-primary-muted rounded-sm"
+      class="flex space-x-2 items-center my-2 py-1 px-2 border border-blue-500/10 rounded-md h-12"
     >
       <div>
         <Component
@@ -17,12 +17,20 @@
         <span v-else class="text-xs">λ</span>
       </div>
 
-      <div class="font-bold text-xs truncate">
-        <!-- NOTE: TODO -->
+      <div class="font-bold text-sm truncate">
         {{ automationName ? automationName + ' / ' : ''
         }}{{ functionRun.functionName || 'Majestic Function' }}
       </div>
-      <div class="text-xs text-foreground-2 italic truncate">
+      <div
+        v-if="
+          functionRun.status === AutomationRunStatus.Initializing ||
+          functionRun.status === AutomationRunStatus.Running
+        "
+        class="text-sm text-foreground-2 italic truncate"
+      >
+        Function is {{ functionRun.status.toLowerCase() }}.
+      </div>
+      <div v-else class="text-sm text-foreground-2 italic truncate">
         {{ functionRun.statusMessage }}
       </div>
       <div
@@ -48,15 +56,22 @@
   </div>
 </template>
 <script setup lang="ts">
-import { AutomationFunctionRun } from '~~/lib/common/generated/gql/graphql'
+import {
+  AutomationFunctionRun,
+  AutomationRunStatus
+} from '~~/lib/common/generated/gql/graphql'
 import { resolveStatusMetadata } from '~~/lib/automations/helpers/resolveStatusMetadata'
 
 const props = defineProps<{
   automationName?: string
-  functionRun: AutomationFunctionRun & { logo?: string; functionName?: string } // NOTE: these are backend TODOs
+  functionRun: AutomationFunctionRun & {
+    logo?: string // NOTE: this is a backend TODO
+    functionName?: string // NOTE: this is a backend TODO
+    results: { values: { blobIds: string[] } }
+  }
 }>()
 
-const attachments = computed(() => props.functionRun.results.values.blobIds)
+const attachments = computed(() => props.functionRun.results?.values?.blobIds || [])
 
 const statusMetaData = resolveStatusMetadata(props.functionRun.status)
 </script>

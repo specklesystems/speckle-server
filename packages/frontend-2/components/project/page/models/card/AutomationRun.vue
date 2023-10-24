@@ -1,19 +1,31 @@
 <template>
   <div class="space-y-2">
+    <!-- Note: keeping for the sake of potential future layout expansions. For now it looks cleaner
+    without the automation name here, and having that in combined with the functino name in the components below. -->
     <!-- <div class="text-sm text-foreground-2">{{ run.automationName }} {{ run.id }}</div> -->
     <ProjectPageModelsCardFunctionRun
       v-for="fRun in run.functionRuns"
       :key="fRun.id"
       :automation-name="run.automationName"
-      :function-run="fRun"
+      :function-run="(fRun as RemoveOnceBEIsHappy)"
     />
   </div>
 </template>
 <script setup lang="ts">
-import dayjs from 'dayjs'
-import { AutomationRun } from '~~/lib/common/generated/gql/graphql'
+// import dayjs from 'dayjs'
+import {
+  AutomationFunctionRun,
+  AutomationRun
+} from '~~/lib/common/generated/gql/graphql'
 
-const props = defineProps<{
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type RemoveOnceBEIsHappy = AutomationFunctionRun & {
+  logo?: string // NOTE: this is a backend TODO
+  functionName?: string // NOTE: this is a backend TODO
+  results: { values: { blobIds: string[] } }
+}
+
+/* const props =  */ defineProps<{
   run: AutomationRun
 }>()
 </script>
