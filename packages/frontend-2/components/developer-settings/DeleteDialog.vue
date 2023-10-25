@@ -54,6 +54,9 @@ const itemType = computed(() => {
   return props.item && 'secret' in props.item ? 'Application' : 'Access Token'
 })
 
+const isApplication = (i: TokenItem | ApplicationItem | null): i is ApplicationItem =>
+  i && 'secret' in i
+
 const deleteConfirmed = async () => {
   const itemId = props.item?.id
 
@@ -61,7 +64,7 @@ const deleteConfirmed = async () => {
     return
   }
 
-  if (itemType.value.toLowerCase() === 'access token') {
+  if (!isApplication(props.item)) {
     const result = await deleteTokenMutation(
       {
         token: itemId
@@ -91,7 +94,7 @@ const deleteConfirmed = async () => {
         description: errorMessage
       })
     }
-  } else if (itemType.value.toLowerCase() === 'application') {
+  } else {
     const result = await deleteAppMutation(
       {
         appId: itemId
