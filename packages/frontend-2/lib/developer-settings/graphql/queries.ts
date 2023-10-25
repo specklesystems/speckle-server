@@ -27,6 +27,7 @@ export const developerSettingsApplicationsQuery = graphql(`
         redirectUrl
         scopes {
           name
+          description
         }
       }
       id
