@@ -25,12 +25,14 @@ interface Button {
   props: Record<string, unknown>
 }
 
-defineProps({
-  title: String,
-  text: String,
-  buttons: {
-    type: Array as () => Button[],
-    default: () => []
+withDefaults(
+  defineProps<{
+    title: string
+    text?: string
+    buttons?: Button[]
+  }>(),
+  {
+    buttons: () => []
   }
-})
+)
 </script>
