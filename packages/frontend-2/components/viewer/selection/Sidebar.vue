@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="`bg-foundation simple-scrollbar fixed top-[4rem] right-4 mb-4 max-h-[calc(100vh-5.5rem)] w-64 overflow-y-auto rounded-md shadow transition ${
+    :class="`hidden sm:block bg-foundation simple-scrollbar fixed top-16 right-4 sm:top-[4rem] sm:right-4 mb-4 max-w-64 max-h-[calc(100vh-5.5rem)] w-64 overflow-y-auto rounded-md shadow transition ${
       objects.length !== 0
         ? 'translate-x-0 opacity-100'
         : 'translate-x-[120%] opacity-0'
@@ -39,7 +39,10 @@
             View More ({{ objects.length - itemCount }})
           </FormButton>
         </div>
-        <div v-if="objects.length === 1" class="text-foreground-2 mt-2 px-2 text-xs">
+        <div
+          v-if="objects.length === 1"
+          class="hidden sm:block text-foreground-2 mt-2 px-2 text-xs"
+        >
           Hold down "shift" to select multiple objects.
         </div>
       </div>

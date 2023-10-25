@@ -32,21 +32,21 @@
     <div
       v-if="isExpanded"
       ref="threadContainer"
-      class="fixed z-50 pointer-events-auto"
+      class="thread-container fixed bottom-0 right-4 sm:bottom-auto sm:right-auto h-[50vh] sm:h-auto w-72 sm:w-auto z-50 pointer-events-auto"
       :style="threadStyle"
     >
       <div
         ref="handle"
-        class="p-1.5 cursor-move rounded-lg group hover:bg-blue-500/50 transition"
+        class="sm:p-1.5 cursor-move sm:rounded-lg group hover:bg-blue-500/50 transition h-full"
         :class="{ 'is-dragging bg-blue-500/50': isDragging }"
       >
         <div
           :class="[
-            'bg-white dark:bg-neutral-800 backdrop-blur-sm shadow-md cursor-auto rounded-lg',
+            'bg-white flex flex-col dark:bg-neutral-800 shadow-md cursor-auto sm:rounded-lg h-full',
             'group-hover:bg-foundation dark:group-hover:bg-neutral-800 group-[.is-dragging]:bg-foundation dark:group-[.is-dragging]:bg-neutral-800'
           ]"
         >
-          <div class="relative w-80 flex pt-3">
+          <div class="relative w-full sm:w-80 flex pt-3">
             <div class="flex-grow flex items-center">
               <FormButton
                 v-tippy="'Previous'"
@@ -106,10 +106,10 @@
               ></FormButton>
             </div>
           </div>
-          <div class="relative w-80 flex flex-col">
+          <div class="relative w-full sm:w-80 flex flex-col flex-1 justify-between">
             <div
               ref="commentsContainer"
-              class="max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
+              class="sm:max-h-[400px] h-[calc(50vh-90px)] sm:h-auto overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
             >
               <div
                 v-if="!isThreadResourceLoaded"
@@ -139,13 +139,13 @@
             >
               {{ isTypingMessage }}
             </div>
-            <ViewerAnchoredPointThreadNewReply
-              v-if="!modelValue.archived && canReply"
-              :model-value="modelValue"
-              class="mt-2"
-              @submit="onNewReply"
-            />
           </div>
+          <ViewerAnchoredPointThreadNewReply
+            v-if="!modelValue.archived && canReply"
+            :model-value="modelValue"
+            class="absolute bottom-0 left-0 my-2 px-4 sm:px-0"
+            @submit="onNewReply"
+          />
         </div>
       </div>
     </div>
@@ -474,3 +474,10 @@ onMounted(() => {
   }
 })
 </script>
+<style scoped>
+@media (max-width: 640px) {
+  .thread-container {
+    transform: none !important;
+  }
+}
+</style>

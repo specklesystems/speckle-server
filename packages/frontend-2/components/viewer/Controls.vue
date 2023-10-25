@@ -1,5 +1,10 @@
 <template>
-  <div>
+  <div
+    :class="{
+      'fixed sm:relative w-screen h-screen sm:w-auto sm:h-auto inset-0 bg-white/40 backdrop-blur sm:backdrop-blur-none sm:bg-transparent':
+        activeControl !== 'none'
+    }"
+  >
     <div
       class="absolute z-20 flex h-screen flex-col space-y-2 bg-green-300/0 px-2 pt-[4.2rem]"
     >

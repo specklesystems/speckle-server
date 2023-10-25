@@ -7,7 +7,9 @@
       size="sm"
       @click="() => onAttachmentClick(attachment)"
     >
-      <span class="truncate relative bottom-0.5">{{ attachment.fileName }}</span>
+      <span class="truncate relative bottom-0.5 text-xs sm:text-sm">
+        {{ attachment.fileName }}
+      </span>
     </CommonTextLink>
     <LayoutDialog v-model:open="dialogOpen" max-width="lg">
       <template v-if="dialogAttachment">

@@ -1,13 +1,13 @@
 <template>
-  <div class="flex flex-col items-center space-y-1">
+  <div class="flex flex-col items-center">
     <!-- <div class="xxx-bg-foundation rounded-full caption space-x-2 p-1">
       <span>{{ absoluteDate }}</span>
       <span>{{ timeFromNow }}</span>
     </div> -->
-    <div class="xxx-bg-foundation rounded-xl p-4 w-full relative">
+    <div class="xxx-bg-foundation sm:rounded-xl py-2 px-3 sm:p-4 w-full relative">
       <div class="flex items-center space-x-1">
         <UserAvatar :user="comment.author" class="mr-1" />
-        <span class="grow truncate text-sm font-medium">
+        <span class="grow truncate text-xs sm:text-sm font-medium">
           {{ comment.author.name }}
         </span>
         <span class="text-xs truncate text-foreground-2">{{ timeFromNow }}</span>
@@ -22,7 +22,7 @@
           </CommonTextLink>
         </div> -->
       </div>
-      <div class="truncate text-sm text-foreground flex flex-col mt-2">
+      <div class="truncate text-xs sm:text-sm text-foreground flex flex-col mt-2">
         <CommonTiptapTextEditor
           v-if="comment.text.doc"
           :model-value="comment.text.doc"
