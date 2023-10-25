@@ -20,8 +20,6 @@ import {
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 type RemoveOnceBEIsHappy = AutomationFunctionRun & {
-  logo?: string // NOTE: this is a backend TODO
-  functionName?: string // NOTE: this is a backend TODO
   results: { values: { blobIds: string[] } }
 }
 

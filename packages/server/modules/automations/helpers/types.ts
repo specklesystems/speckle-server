@@ -25,6 +25,8 @@ export type AutomationRunRecord = {
 export type AutomationFunctionRunRecord = {
   automationRunId: string
   functionId: string
+  functionName: string
+  functionLogo: string | null
   elapsed: number
   status: AutomationRunStatus
   contextView: Nullable<string>

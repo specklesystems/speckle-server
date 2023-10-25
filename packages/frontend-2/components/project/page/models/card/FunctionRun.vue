@@ -13,13 +13,16 @@
       <div
         class="bg-blue-500/10 text-primary font-bold h-4 w-4 rounded-md shrink-0 flex justify-center text-center items-center overflow-hidden"
       >
-        <img v-if="functionRun.logo" :src="functionRun.logo" alt="function logo" />
+        <img
+          v-if="functionRun.functionLogo"
+          :src="functionRun.functionLogo"
+          alt="function logo"
+        />
         <span v-else class="text-xs">λ</span>
       </div>
 
       <div class="font-bold text-sm truncate">
-        {{ automationName ? automationName + ' / ' : ''
-        }}{{ functionRun.functionName || 'Majestic ' + functionRun.functionId }}
+        {{ automationName ? automationName + ' / ' : '' }}{{ functionRun.functionName }}
       </div>
       <div
         v-if="
@@ -65,8 +68,6 @@ import { resolveStatusMetadata } from '~~/lib/automations/helpers/resolveStatusM
 const props = defineProps<{
   automationName?: string
   functionRun: AutomationFunctionRun & {
-    logo?: string // NOTE: this is a backend TODO
-    functionName?: string // NOTE: this is a backend TODO
     results: { values: { blobIds: string[] } }
   }
 }>()
