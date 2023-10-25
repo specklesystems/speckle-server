@@ -73,6 +73,7 @@ export default class Materials {
 
   private pointGhostMaterial: Material = null
   private pointCloudColouredMaterial: Material = null
+  private pointCloudGradientMaterial: Material = null
 
   private textGhostMaterial: Material = null
   private textColoredMaterial: Material = null
@@ -399,6 +400,18 @@ export default class Materials {
       ['USE_RTE']
     )
     ;(this.pointCloudColouredMaterial as SpecklePointMaterial).toneMapped = false
+    this.pointCloudGradientMaterial = new SpecklePointColouredMaterial(
+      {
+        color: 0xffffff,
+        vertexColors: false,
+        size: 2,
+        sizeAttenuation: false
+      },
+      ['USE_RTE']
+    )
+    ;(
+      this.pointCloudGradientMaterial as SpecklePointColouredMaterial
+    ).setGradientTexture(await Assets.getTexture(defaultGradient))
     ;(this.pointGhostMaterial as SpecklePointMaterial).toneMapped = false
   }
 
@@ -750,10 +763,22 @@ export default class Materials {
       }
       case GeometryType.LINE:
         return this.lineColoredMaterial
-      case GeometryType.POINT:
-        return this.pointGhostMaterial
-      case GeometryType.POINT_CLOUD:
-        return this.pointGhostMaterial
+      case GeometryType.POINT: {
+        const material = this.pointCloudGradientMaterial
+        if (filterMaterial?.rampTexture)
+          (material as SpeckleStandardColoredMaterial).setGradientTexture(
+            filterMaterial.rampTexture
+          )
+        return material
+      }
+      case GeometryType.POINT_CLOUD: {
+        const material = this.pointCloudGradientMaterial
+        if (filterMaterial?.rampTexture)
+          (material as SpeckleStandardColoredMaterial).setGradientTexture(
+            filterMaterial.rampTexture
+          )
+        return material
+      }
       case GeometryType.TEXT:
         return this.textColoredMaterial
     }
@@ -776,8 +801,14 @@ export default class Materials {
       }
       case GeometryType.LINE:
         return this.lineColoredMaterial
-      case GeometryType.POINT:
-        return this.pointGhostMaterial
+      case GeometryType.POINT: {
+        const material = this.pointCloudColouredMaterial
+        if (filterMaterial?.rampTexture)
+          (material as SpeckleStandardColoredMaterial).setGradientTexture(
+            filterMaterial.rampTexture
+          )
+        return material
+      }
       case GeometryType.POINT_CLOUD: {
         const material = this.pointCloudColouredMaterial
         if (filterMaterial?.rampTexture)

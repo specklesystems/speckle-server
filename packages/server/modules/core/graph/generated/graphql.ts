@@ -207,6 +207,7 @@ export type AutomationFunctionRun = {
   id: Scalars['ID'];
   resultVersions: Array<Version>;
   /**
+   * NOTE: this is the schema for the results field below!
    * Current schema: {
    *   version: "1.0.0",
    *   values: {
@@ -246,6 +247,7 @@ export type AutomationMutationsFunctionRunStatusReportArgs = {
 export type AutomationRun = {
   __typename?: 'AutomationRun';
   automationId: Scalars['String'];
+  automationName: Scalars['String'];
   createdAt: Scalars['DateTime'];
   functionRuns: Array<AutomationFunctionRun>;
   id: Scalars['ID'];
@@ -3406,6 +3408,7 @@ export type AutomationMutationsResolvers<ContextType = GraphQLContext, ParentTyp
 
 export type AutomationRunResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomationRun'] = ResolversParentTypes['AutomationRun']> = {
   automationId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  automationName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   functionRuns?: Resolver<Array<ResolversTypes['AutomationFunctionRun']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;

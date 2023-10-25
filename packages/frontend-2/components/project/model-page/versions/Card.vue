@@ -17,6 +17,19 @@
             <PreviewImage :preview-url="version.previewUrl" />
           </NuxtLink>
           <div
+            v-if="!isPendingVersionFragment(version) && version.automationStatus"
+            class="absolute top-1 left-0 p-2"
+          >
+            <ProjectPageModelsCardAutomationStatusRefactor
+              :project-id="projectId"
+              :model-or-version="{
+                ...version,
+                automationStatus: version.automationStatus
+              }"
+              :model-id="modelId"
+            />
+          </div>
+          <div
             class="absolute top-0 p-2 flex space-x-1 items-center transition opacity-0 group-hover:opacity-100"
             :class="[hasAutomationStatus ? 'left-6' : 'left-0']"
           >
@@ -69,19 +82,6 @@
           />
         </div>
       </div>
-      <div
-        v-if="!isPendingVersionFragment(version) && version.automationStatus"
-        class="absolute top-1 left-0 p-2"
-      >
-        <ProjectPageModelsCardAutomationStatus
-          :project-id="projectId"
-          :model-or-version="{
-            ...version,
-            automationStatus: version.automationStatus
-          }"
-          :model-id="modelId"
-        />
-      </div>
     </div>
   </div>
 </template>
@@ -132,6 +132,7 @@ const props = defineProps<{
   selected?: boolean
   selectionDisabled?: boolean
 }>()
+provide('projectId', props.projectId)
 
 const showActionsMenu = ref(false)
 
