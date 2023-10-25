@@ -13,11 +13,11 @@ export class NodeMap {
 
   public addSubtree(node: TreeNode): boolean {
     if (this.all[node.model.id]) {
-      console.error(`Duplicate id ${node.model.id}, skipping!`)
+      console.warn(`Duplicate id ${node.model.id}, skipping!`)
       return false
     }
     this.registerNode(node)
-    return false
+    return true
   }
 
   public addNode(node: TreeNode): boolean {
@@ -25,7 +25,7 @@ export class NodeMap {
       this.registerInstance(node)
     } else {
       if (this.all[node.model.id]) {
-        console.error(`Duplicate id ${node.model.id}, skipping!`)
+        console.warn(`Duplicate id ${node.model.id}, skipping!`)
         return false
       }
       this.registerNode(node)
@@ -39,7 +39,7 @@ export class NodeMap {
       if (this.instances[baseId]) {
         return [this.instances[baseId][id]]
       } else {
-        Logger.error('Could not find instance with baseID: ', baseId)
+        Logger.warn('Could not find instance with baseID: ', baseId)
         return null
       }
     }

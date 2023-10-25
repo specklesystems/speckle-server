@@ -115,6 +115,7 @@ export class SelectionExtension extends Extension {
 
   public clearSelection() {
     this.removeSelection()
+    this.selectedNodes = []
   }
 
   protected onObjectClicked(selection: SelectionEvent) {

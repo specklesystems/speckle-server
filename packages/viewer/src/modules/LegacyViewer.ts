@@ -107,7 +107,8 @@ export class LegacyViewer extends Viewer {
 
   public resetSelection(): Promise<FilteringState> {
     this.selection.clearSelection()
-    this.filtering.filteringState.selectedObjects = []
+    if (this.filtering.filteringState.selectedObjects)
+      this.filtering.filteringState.selectedObjects.length = 0
     return Promise.resolve(this.filtering.filteringState)
   }
 
@@ -344,7 +345,7 @@ export class LegacyViewer extends Viewer {
     zoomToObject = true
   ) {
     const loader = new SpeckleLoader(this.tree, url, token, enableCaching)
-    return super.loadObject(loader, 1, zoomToObject)
+    return this.loadObject(loader, 1, zoomToObject)
   }
 
   public async diff(

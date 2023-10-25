@@ -263,22 +263,25 @@ export async function handleViewerSelection(selectionInfo: SelectionEvent) {
     state.selectedObjects = [firstVisibleHit.node.model.raw]
   }
 
-  getInitializedViewer().selectObjects(
-    state.selectedObjects.map((o) => o.id) as string[]
-  )
+  // No need to explicitly select on clicking while SelectionExtension exists
+  // getInitializedViewer().selectObjects(
+  //   state.selectedObjects.map((o) => o.id) as string[]
+  // )
   updateState(state)
 }
 
 export async function handleViewerDoubleClick(selectionInfo: SelectionEvent) {
-  if (!selectionInfo) {
-    await getInitializedViewer().zoom()
-    return
-  }
+  selectionInfo
+  // No need for this anymore
+  // if (!selectionInfo) {
+  //   await getInitializedViewer().zoom()
+  //   return
+  // }
 
-  const firstVisibleHit = getFirstVisibleSelectionHit(selectionInfo)
-  if (!firstVisibleHit) return
+  // const firstVisibleHit = getFirstVisibleSelectionHit(selectionInfo)
+  // if (!firstVisibleHit) return
 
-  await getInitializedViewer().zoom([firstVisibleHit.object.id as string])
+  // await getInitializedViewer().zoom([firstVisibleHit.object.id as string])
 }
 
 function getFirstVisibleSelectionHit({ hits }: SelectionEvent) {

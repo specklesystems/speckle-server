@@ -673,10 +673,11 @@ export default defineComponent({
       await this.viewer.loadObjectAsync(
         `${window.location.origin}/streams/${this.streamId}/objects/${objectId}`
       )
-      this.viewer.zoom(undefined, undefined, true)
+      /** Not needed anymore */
+      // this.viewer.zoom(undefined, undefined, true)
 
       this.loadedModel = true
-      this.setFilters()
+      await this.setFilters()
       this.setViews()
     },
     async addResources(ids: string[]) {
@@ -731,7 +732,7 @@ export default defineComponent({
         })
       }
 
-      this.loadModel(
+      await this.loadModel(
         resource.type === 'commit'
           ? resource.data.commit.referencedObject
           : resource.data.object.id
@@ -761,7 +762,7 @@ export default defineComponent({
         this.viewer.zoom(undefined, undefined, true)
       }
       this.resources.splice(index, 1)
-      this.setFilters()
+      await this.setFilters()
       this.setViews()
       if (this.overlay) {
         const arr = this.overlay
@@ -790,7 +791,7 @@ export default defineComponent({
     async setFilters() {
       try {
         // repopulate object props
-        loadObjectProperties()
+        await loadObjectProperties()
       } catch (e) {
         this.$eventHub.$emit('notification', {
           text: 'Failed to get object properties from viewer.'
