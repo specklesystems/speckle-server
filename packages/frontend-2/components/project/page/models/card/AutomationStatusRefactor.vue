@@ -18,7 +18,7 @@
       max-width="lg"
     >
       <template #header>
-        <div class="flex items-center space-x-2 pt-3 max-w-full w-full">
+        <div class="flex items-center space-x-2 -mt-1 max-w-full w-full">
           <div class="h-10 w-10 mt-[6px]">
             <AutomationDoughnutSummary :summary="summary" />
           </div>
@@ -66,6 +66,7 @@ import { automationDataPageRoute, modelRoute } from '~~/lib/common/helpers/route
 import { SpeckleViewer } from '@speckle/shared'
 import { useServerInfo } from '~~/lib/core/composables/server'
 import { resolveStatusMetadata } from '~~/lib/automations/helpers/resolveStatusMetadata'
+import { useModelVersionCardAutomationsStatusUpdateTracking } from '~~/lib/automations/composables/automationsStatus'
 
 // TODO: Clean up unnecessary fields
 // Remember about stories
@@ -144,6 +145,8 @@ const props = defineProps<{
   projectId: string
   modelId: string
 }>()
+
+useModelVersionCardAutomationsStatusUpdateTracking(props.projectId)
 
 const { serverInfo } = useServerInfo()
 
