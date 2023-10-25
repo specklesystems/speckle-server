@@ -515,5 +515,4 @@ export async function resetFilter() {
   })
 
   await viewer.resetFilters()
-  viewer.applyFilter(null)
 }

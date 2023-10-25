@@ -97,6 +97,8 @@ export class LegacyViewer extends Viewer {
   /** FILTERING */
   public selectObjects(objectIds: string[]): Promise<FilteringState> {
     this.selection.selectObjects(objectIds)
+    if (!this.filtering.filteringState.selectedObjects)
+      this.filtering.filteringState.selectedObjects = []
     this.filtering.filteringState.selectedObjects.push(
       ...this.selection.getSelectedObjects().map((obj) => obj.id)
     )
@@ -116,9 +118,17 @@ export class LegacyViewer extends Viewer {
     ghost = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      resolve(
-        this.filtering.hideObjects(objectIds, stateKey, includeDescendants, ghost)
+      const filteringState = this.filtering.hideObjects(
+        objectIds,
+        stateKey,
+        includeDescendants,
+        ghost
       )
+      if (!filteringState.selectedObjects) filteringState.selectedObjects = []
+      filteringState.selectedObjects.push(
+        ...this.selection.getSelectedObjects().map((obj) => obj.id)
+      )
+      resolve(filteringState)
     })
   }
 
@@ -128,7 +138,16 @@ export class LegacyViewer extends Viewer {
     includeDescendants = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      resolve(this.filtering.showObjects(objectIds, stateKey, includeDescendants))
+      const filteringState = this.filtering.showObjects(
+        objectIds,
+        stateKey,
+        includeDescendants
+      )
+      if (!filteringState.selectedObjects) filteringState.selectedObjects = []
+      filteringState.selectedObjects.push(
+        ...this.selection.getSelectedObjects().map((obj) => obj.id)
+      )
+      resolve(filteringState)
     })
   }
 
@@ -139,9 +158,17 @@ export class LegacyViewer extends Viewer {
     ghost = true
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      resolve(
-        this.filtering.isolateObjects(objectIds, stateKey, includeDescendants, ghost)
+      const filteringState = this.filtering.isolateObjects(
+        objectIds,
+        stateKey,
+        includeDescendants,
+        ghost
       )
+      if (!filteringState.selectedObjects) filteringState.selectedObjects = []
+      filteringState.selectedObjects.push(
+        ...this.selection.getSelectedObjects().map((obj) => obj.id)
+      )
+      resolve(filteringState)
     })
   }
 
@@ -151,7 +178,16 @@ export class LegacyViewer extends Viewer {
     includeDescendants = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      resolve(this.filtering.unIsolateObjects(objectIds, stateKey, includeDescendants))
+      const filteringState = this.filtering.unIsolateObjects(
+        objectIds,
+        stateKey,
+        includeDescendants
+      )
+      if (!filteringState.selectedObjects) filteringState.selectedObjects = []
+      filteringState.selectedObjects.push(
+        ...this.selection.getSelectedObjects().map((obj) => obj.id)
+      )
+      resolve(filteringState)
     })
   }
 
