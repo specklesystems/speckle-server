@@ -72,8 +72,7 @@ export class WorldTree {
   }
 
   public addSubtree(node: TreeNode) {
-    this._root.addChild(node)
-    this.nodeMap.addSubtree(node)
+    if (this.nodeMap.addSubtree(node)) this._root.addChild(node)
   }
 
   public addNode(node: TreeNode, parent: TreeNode) {
@@ -81,8 +80,7 @@ export class WorldTree {
       Logger.error(`Invalid parent node!`)
       return
     }
-    parent.addChild(node)
-    this.nodeMap.addNode(node)
+    if (this.nodeMap.addNode(node)) parent.addChild(node)
   }
 
   public removeNode(node: TreeNode) {

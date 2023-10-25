@@ -11,20 +11,26 @@ export class NodeMap {
     return Object.keys(this.all).length
   }
 
-  public addSubtree(node: TreeNode) {
+  public addSubtree(node: TreeNode): boolean {
     if (this.all[node.model.id]) {
-      console.error('Whoa, duplicate id! ', node)
+      console.error(`Duplicate id ${node.model.id}, skipping!`)
+      return false
     }
     this.registerNode(node)
+    return false
   }
 
-  public addNode(node: TreeNode) {
-    if (this.all[node.model.id]) {
-      console.error('Whoa, duplicate id! ', node)
-    }
+  public addNode(node: TreeNode): boolean {
     if (node.model.id.includes(NodeMap.COMPOUND_ID_CHAR)) {
       this.registerInstance(node)
-    } else this.registerNode(node)
+    } else {
+      if (this.all[node.model.id]) {
+        console.error(`Duplicate id ${node.model.id}, skipping!`)
+        return false
+      }
+      this.registerNode(node)
+    }
+    return true
   }
 
   public getNodeById(id: string): TreeNode[] {
@@ -33,7 +39,7 @@ export class NodeMap {
       if (this.instances[baseId]) {
         return [this.instances[baseId][id]]
       } else {
-        Logger.error('Whoa, could not find instance with baseID: ', baseId)
+        Logger.error('Could not find instance with baseID: ', baseId)
         return null
       }
     }
