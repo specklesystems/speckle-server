@@ -52,6 +52,8 @@ type AutomationRun {
 type AutomationFunctionRun {
   id: ID!
   functionId: String!
+  functionName: String!
+  functionLogo: String
   elapsed: Float!
   status: AutomationRunStatus!
   # Context view is just a url (most likely overlaid models)
@@ -91,6 +93,8 @@ input FunctionRunStatusInput {
   # we cannot strictly require these values, cause local testers of function, wont have it...
   # Or should we?
   functionId: String!
+  functionName: String!
+  functionLogo: String
   elapsed: Float!
   status: AutomationRunStatus!
   contextView: String
