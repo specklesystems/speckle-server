@@ -17,7 +17,6 @@ export default class SpeckleConverter {
   private activePromises: number
   private maxChildrenPromises: number
   private spoofIDs = false
-  private idCache = {}
   private tree: WorldTree
   private typeLookupTable: { [type: string]: string } = {}
   private instanceCounter = 0
@@ -178,6 +177,7 @@ export default class SpeckleConverter {
       }
 
       // If this is a built element and has a display value, only iterate through the "elements" prop if it exists.
+      /** 10.25.2023 This might be serious legacy stuff that we might not need anymore */
       if (obj.speckle_type.toLowerCase().includes('builtelements')) {
         const elements = this.getElementsValue(obj)
         if (elements) {
@@ -217,14 +217,7 @@ export default class SpeckleConverter {
 
   private getNodeId(obj) {
     if (this.spoofIDs) return generateUUID()
-    let retId = obj.id
-    // const type = ''
-    if (this.idCache[obj.id]) {
-      // && (type = this.getSpeckleType(obj)) !== 'Base') {
-      retId = this.getCompoundId(obj.id, this.instanceCounter++)
-    }
-    this.idCache[retId] = 1
-    return retId
+    return obj.id
   }
   /**
    * Takes an array composed of chunked references and dechunks it.
