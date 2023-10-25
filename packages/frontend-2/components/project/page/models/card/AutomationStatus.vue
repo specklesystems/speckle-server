@@ -174,6 +174,8 @@ graphql(`
       functionRuns {
         id
         functionId
+        functionName
+        functionLogo
         elapsed
         status
         statusMessage
