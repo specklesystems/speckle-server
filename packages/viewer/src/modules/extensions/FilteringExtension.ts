@@ -34,7 +34,9 @@ export class FilteringExtension extends Extension {
   private ColorStringFilterState = null
   private ColorNumericFilterState = null
   private UserspaceColorState = new UserspaceColorState()
-  private CurrentFilteringState: FilteringState = {} as FilteringState
+  private CurrentFilteringState: FilteringState = {
+    selectedObjects: []
+  } as FilteringState
 
   public get filteringState(): FilteringState {
     return this.CurrentFilteringState

@@ -97,7 +97,9 @@ export class LegacyViewer extends Viewer {
   /** FILTERING */
   public selectObjects(objectIds: string[]): Promise<FilteringState> {
     this.selection.selectObjects(objectIds)
-    this.filtering.filteringState.selectedObjects.push(...objectIds)
+    this.filtering.filteringState.selectedObjects.push(
+      ...this.selection.getSelectedObjects().map((obj) => obj.id)
+    )
     return Promise.resolve(this.filtering.filteringState)
   }
 

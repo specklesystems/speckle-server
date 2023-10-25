@@ -257,10 +257,10 @@ export async function handleViewerSelection(selectionInfo: SelectionEvent) {
   }
 
   if (selectionInfo.multiple) {
-    if (!state.selectedObjects.includes(firstVisibleHit.object))
-      state.selectedObjects = [...state.selectedObjects, firstVisibleHit.object]
+    if (!state.selectedObjects.includes(firstVisibleHit.node.model.raw))
+      state.selectedObjects = [...state.selectedObjects, firstVisibleHit.node.model.raw]
   } else {
-    state.selectedObjects = [firstVisibleHit.object]
+    state.selectedObjects = [firstVisibleHit.node.model.raw]
   }
 
   getInitializedViewer().selectObjects(

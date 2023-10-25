@@ -346,10 +346,9 @@ export default {
     this.viewerControlsUpdateHandler = throttle(() => {
       this.updateCommentBubble()
     }, VIEWER_UPDATE_THROTTLE_TIME)
-    this.viewer.getExtension(CameraController).controls.addEventListener(
-      'update',
-      this.viewerControlsUpdateHandler
-    )
+    this.viewer
+      .getExtension(CameraController)
+      .controls.addEventListener('update', this.viewerControlsUpdateHandler)
 
     this.docKeyUpHandler = (e) => {
       if (e.shiftKey && e.ctrlKey && e.keyCode === 67) this.toggleExpand()
@@ -358,10 +357,9 @@ export default {
   },
   beforeDestroy() {
     this.viewer.removeListener(ViewerEvent.ObjectClicked, this.viewerSelectHandler)
-    this.viewer.getExtension(CameraController).controls.removeEventListener(
-      'update',
-      this.viewerControlsUpdateHandler
-    )
+    this.viewer
+      .getExtension(CameraController)
+      .controls.removeEventListener('update', this.viewerControlsUpdateHandler)
     document.removeEventListener('keyup', this.docKeyUpHandler)
   },
   methods: {

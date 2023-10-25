@@ -417,10 +417,9 @@ export default {
       // console.log('cameraHandler.controls update')
       this.updateCommentBubbles()
     }, VIEWER_UPDATE_THROTTLE_TIME)
-    this.viewer.getExtension(CameraController).controls.addEventListener(
-      'update',
-      this.viewerControlsUpdateHandler
-    )
+    this.viewer
+      .getExtension(CameraController)
+      .controls.addEventListener('update', this.viewerControlsUpdateHandler)
     setTimeout(() => {
       // console.log('mounted timeout')
       this.updateCommentBubbles()
@@ -428,10 +427,9 @@ export default {
   },
   beforeDestroy() {
     this.viewer.removeListener('select', this.viewerSelectHandler)
-    this.viewer.getExtension(CameraController).controls.removeEventListener(
-      'update',
-      this.viewerControlsUpdateHandler
-    )
+    this.viewer
+      .getExtension(CameraController)
+      .controls.removeEventListener('update', this.viewerControlsUpdateHandler)
     window.clearInterval(this.commentIntervalChecker)
   },
   methods: {

@@ -107,7 +107,7 @@ import {
   sectionBoxOff,
   highlightObjects
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
-import { ViewerEvent, CameraController, CameraControllerEvent } from '@speckle/viewer'
+import { ViewerEvent, CameraController } from '@speckle/viewer'
 
 export default {
   name: 'ViewerBubbles',
@@ -252,9 +252,9 @@ export default {
 
     this.raycaster = new THREE.Raycaster()
 
-    this.viewer.getExtension(CameraController).controls.addEventListener('update', () =>
-      this.updateBubbles(false)
-    )
+    this.viewer
+      .getExtension(CameraController)
+      .controls.addEventListener('update', () => this.updateBubbles(false))
 
     this.updateInterval = window.setInterval(
       this.sendUpdateAndPrune,
@@ -301,7 +301,7 @@ export default {
       }
 
       const firstHit = selectionInfo?.hits[0]
-      this.selectedIds = firstHit.object.id
+      this.selectedIds = firstHit.node.model.raw.id
       this.selectionLocation = firstHit.point
       this.selectionCenter = firstHit.point
       this.sendUpdateAndPrune()
@@ -374,7 +374,9 @@ export default {
         parseFloat(target.x.toFixed(5)),
         parseFloat(target.y.toFixed(5)),
         parseFloat(target.z.toFixed(5)),
-        this.viewer.getExtension(CameraController).renderingCamera.name === 'ortho' ? 1 : 0,
+        this.viewer.getExtension(CameraController).renderingCamera.name === 'ortho'
+          ? 1
+          : 0,
         controls._zoom
       ]
 
