@@ -5,7 +5,6 @@
 <script setup lang="ts">
 import { FormClipboardInput } from '@speckle/ui-components'
 import { useClipboard } from '~~/composables/browser'
-import { defineProps } from 'vue'
 
 const { copy } = useClipboard()
 
