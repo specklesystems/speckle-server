@@ -76,6 +76,7 @@ import {
 } from '~~/lib/common/helpers/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import { isRequired, isUrl, fullyResetForm } from '~~/lib/common/helpers/validation'
+import { useServerInfoScopes } from '~~/lib/common/composables/serverInfo'
 
 const props = defineProps<{
   application?: ApplicationItem
@@ -87,6 +88,7 @@ const emit = defineEmits<{
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
+const { scopes: allScopes } = useServerInfoScopes()
 const { mutate: createApplication } = useMutation(CreateApplicationMutation)
 const { mutate: editApplication } = useMutation(EditApplicationMutation)
 const { triggerNotification } = useGlobalToast()
@@ -108,6 +110,7 @@ const onSubmit = handleSubmit(async (applicationFormValues) => {
   const applicationId = props.application?.id
 
   if (props.application) {
+    const usedScopeIds = applicationFormValues.scopes.map((t) => t.id)
     const result = await editApplication(
       {
         app: {
@@ -125,9 +128,10 @@ const onSubmit = handleSubmit(async (applicationFormValues) => {
               id: getCacheId('ServerApp', applicationId),
               fields: {
                 redirectUrl: () => applicationFormValues.redirectUrl,
-                description: () => applicationFormValues.description || '',
-                scopes: () => applicationFormValues.scopes.map((t) => t.id),
-                name: () => applicationFormValues.name
+                description: () => description.value || '',
+                scopes: () =>
+                  allScopes.value.filter((t) => usedScopeIds.includes(t.name)),
+                name: () => name.value
               }
             })
           }
