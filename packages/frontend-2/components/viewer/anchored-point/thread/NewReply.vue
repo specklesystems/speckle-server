@@ -1,6 +1,6 @@
 <!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
-  <div class="relative flex items-center ml-1 gap-1">
+  <div class="py-2 sm:py-0 flex items-center ml-1 sm:ml-4 gap-1 w-full sm:w-11/12">
     <ViewerCommentsEditor
       ref="editor"
       v-model="commentValue"

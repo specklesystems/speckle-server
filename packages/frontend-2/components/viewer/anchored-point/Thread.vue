@@ -32,10 +32,10 @@
     <div
       v-if="isExpanded"
       ref="threadContainer"
-      class="thread-container fixed bottom-0 right-0 sm:bottom-auto sm:right-auto w-screen sm:w-[20.75rem] z-50 pointer-events-auto"
+      class="thread-container fixed mb-16 bottom-0 right-0 sm:bottom-auto sm:right-auto w-screen sm:w-[20.75rem] z-50 pointer-events-auto"
       :style="threadStyle"
     >
-      <ViewerCommentsPortalOrDiv to="bottomPanel">
+      <ViewerCommentsPortalOrDiv to="mobileComments">
         <div
           ref="handle"
           class="sm:p-1.5 cursor-move sm:rounded-lg group hover:bg-blue-500/50 transition h-full"
@@ -49,6 +49,9 @@
           >
             <div class="relative w-full sm:w-80 flex py-2 bg-foundation">
               <div class="flex-grow flex items-center">
+                <span class="sm:hidden mx-2 text-primary text-sm font-medium">
+                  Discussions
+                </span>
                 <FormButton
                   v-tippy="'Previous'"
                   size="sm"
@@ -110,7 +113,7 @@
             <div class="relative w-full sm:w-80 flex flex-col flex-1 justify-between">
               <div
                 ref="commentsContainer"
-                class="max-h-[calc(50vh-100px)] sm:max-h-[300px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
+                class="max-h-[calc(50vh-100px)] sm:max-h-[300px] pb-20 overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
               >
                 <div
                   v-if="!isThreadResourceLoaded"
@@ -144,7 +147,7 @@
             <ViewerAnchoredPointThreadNewReply
               v-if="!modelValue.archived && canReply"
               :model-value="modelValue"
-              class="absolute bottom-0 left-0 mb-3 sm:my-2 px-4 sm:px-0"
+              class="absolute bottom-1 left-0 mb-3 sm:my-2 px-4 sm:px-0"
               @submit="onNewReply"
             />
           </div>

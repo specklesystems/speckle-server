@@ -21,6 +21,13 @@ const config: Config = {
       mono: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace"
     },
     extend: {
+      // Standard Tailwind Shadows add shadows below the element, 'shadow-t" variant adds shadow to the top of the element.
+      boxShadow: {
+        t: '0 -10px 8px 0 rgb(0 0 0 / 8%), 0 -4px 3px -6px rgb(0 0 0 / 10%)'
+      },
+      backdropBlur: {
+        xs: '1px'
+      },
       colors: {
         foundation: {
           page: 'var(--foundation-page)',

@@ -53,7 +53,9 @@
           enter-from-class="opacity-0"
           enter-active-class="transition duration-1000"
         >
-          <ViewerSelectionSidebar v-show="tourState.showViewerControls" class="z-20" />
+          <div v-show="tourState.showViewerControls">
+            <ViewerSelectionSidebar class="z-20 hidden sm:block" />
+          </div>
         </Transition>
         <!-- Shows up when filters are applied for an easy return to normality -->
         <ViewerGlobalFilterReset class="z-20" />
@@ -61,9 +63,10 @@
     </div>
   </ViewerPostSetupWrapper>
   <div
-    class="sm:hidden fixed bottom-0 left-0 h-[50vh] w-screen bg-white z-50 1transition-all duration-300 empty:-bottom-[50vh]"
+    class="sm:hidden shadow-t fixed bottom-0 left-0 max-h-[50vh] w-screen bg-white z-50 transition-all duration-300 empty:-bottom-[50vh]"
   >
     <PortalTarget name="bottomPanel"></PortalTarget>
+    <PortalTarget name="mobileComments"></PortalTarget>
   </div>
 </template>
 <script setup lang="ts">

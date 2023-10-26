@@ -1,53 +1,55 @@
 <template>
-  <div
-    :class="`hidden sm:block bg-foundation simple-scrollbar fixed top-16 right-4 sm:top-[4rem] sm:right-4 mb-4 max-w-64 max-h-[calc(100vh-5.5rem)] w-64 overflow-y-auto rounded-md shadow transition ${
-      objects.length !== 0
-        ? 'translate-x-0 opacity-100'
-        : 'translate-x-[120%] opacity-0'
-    }`"
-  >
-    <ViewerLayoutPanel @close="trackAndClearSelection()">
-      <template #actions>
-        <button
-          class="hover:text-primary px-1 py-2 transition"
-          @click.stop="hideOrShowSelection"
-        >
-          <EyeIcon v-if="!isHidden" class="h-3 w-3" />
-          <EyeSlashIcon v-else class="h-3 w-3" />
-        </button>
+  <ViewerCommentsPortalOrDiv v-if="objects.length !== 0" to="bottomPanel">
+    <div
+      :class="`bg-foundation simple-scrollbar z-10 relative sm:fixed sm:top-16 sm:right-4 sm:top-[4rem] sm:right-4 sm:mb-4 sm:max-w-64 min-h-[4.75rem] max-h-[50vh] sm:max-h-[calc(100vh-5.5rem)] w-full sm:w-64 overflow-y-auto rounded-md sm:shadow transition ${
+        objects.length !== 0
+          ? 'translate-x-0 opacity-100'
+          : 'translate-x-[120%] opacity-0'
+      }`"
+    >
+      <ViewerLayoutPanel @close="trackAndClearSelection()">
+        <template #actions>
+          <button
+            class="hover:text-primary px-2 sm:px-1 py-2 transition"
+            @click.stop="hideOrShowSelection"
+          >
+            <EyeIcon v-if="!isHidden" class="h-4 w-4 sm:h-3 sm:w-3" />
+            <EyeSlashIcon v-else class="h-4 w-4 sm:h-3 sm:w-3" />
+          </button>
 
-        <button
-          class="hover:text-primary px-1 py-2 transition"
-          @click.stop="isolateOrUnisolateSelection"
-        >
-          <FunnelIconOutline v-if="!isIsolated" class="h-3 w-3" />
-          <FunnelIcon v-else class="h-3 w-3" />
-        </button>
-      </template>
-      <div class="px-1 py-2">
-        <div class="space-y-2">
-          <ViewerSelectionObject
-            v-for="object in objectsLimited"
-            :key="(object.id as string)"
-            :object="object"
-            :unfold="false"
-            :root="true"
-          />
+          <button
+            class="hover:text-primary px-2 sm:px-1 py-2 transition"
+            @click.stop="isolateOrUnisolateSelection"
+          >
+            <FunnelIconOutline v-if="!isIsolated" class="h-4 w-4 sm:h-3 sm:w-3" />
+            <FunnelIcon v-else class="h-4 w-4 sm:h-3 sm:w-3" />
+          </button>
+        </template>
+        <div class="px-1 py-2 bg-white">
+          <div class="space-y-2">
+            <ViewerSelectionObject
+              v-for="object in objectsLimited"
+              :key="(object.id as string)"
+              :object="object"
+              :unfold="false"
+              :root="true"
+            />
+          </div>
+          <div v-if="itemCount <= objects.length" class="mb-2">
+            <FormButton size="xs" text full-width @click="itemCount += 10">
+              View More ({{ objects.length - itemCount }})
+            </FormButton>
+          </div>
+          <div
+            v-if="objects.length === 1"
+            class="hidden sm:block text-foreground-2 mt-2 px-2 text-xs"
+          >
+            Hold down "shift" to select multiple objects.
+          </div>
         </div>
-        <div v-if="itemCount <= objects.length" class="mb-2">
-          <FormButton size="xs" text full-width @click="itemCount += 10">
-            View More ({{ objects.length - itemCount }})
-          </FormButton>
-        </div>
-        <div
-          v-if="objects.length === 1"
-          class="hidden sm:block text-foreground-2 mt-2 px-2 text-xs"
-        >
-          Hold down "shift" to select multiple objects.
-        </div>
-      </div>
-    </ViewerLayoutPanel>
-  </div>
+      </ViewerLayoutPanel>
+    </div>
+  </ViewerCommentsPortalOrDiv>
 </template>
 <script setup lang="ts">
 import { EyeIcon, EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
