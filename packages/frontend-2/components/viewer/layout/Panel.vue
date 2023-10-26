@@ -1,7 +1,7 @@
 <template>
   <div class="bg-foundation rounded-lg shadow">
     <div
-      class="bg-foundation-2 sticky top-0 z-50 flex h-10 items-center justify-between rounded-t-lg px-2 sm:shadow-md"
+      class="bg-foundation-2 sticky top-0 z-50 flex h-10 items-center justify-between rounded-t-lg sm:px-2 sm:shadow-md"
     >
       <div class="flex items-center w-full"><slot name="actions"></slot></div>
       <div v-if="!hideClose">
