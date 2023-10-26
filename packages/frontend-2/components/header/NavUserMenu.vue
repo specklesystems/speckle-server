@@ -43,14 +43,13 @@
               <UserAvatar :user="activeUser" size="sm" class="mr-1" />
             </NuxtLink>
           </MenuItem>
-          <MenuItem v-if="isAdmin" v-slot="{ active, close }">
+          <MenuItem v-if="isAdmin" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
                 'flex items-center  justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
-              to="/server-management"
-              @click="close"
+              @click="goToServerManagement()"
             >
               Server Management
               <Cog6ToothIcon class="w-5 h-5 mr-2" />
@@ -166,6 +165,10 @@ const onThemeClick = () => {
 
 const goToConnectors = () => {
   router.push('/downloads')
+}
+
+const goToServerManagement = () => {
+  router.push('/server-management')
 }
 
 const loginUrl = computed(() =>
