@@ -22,7 +22,7 @@
             @click.stop="isolateOrUnisolateSelection"
           >
             <FunnelIconOutline v-if="!isIsolated" class="h-4 w-4 sm:h-3 sm:w-3" />
-            <FunnelIcon v-else class="h-4 w-4 sm:h-3 sm:w-3" />
+            <FunnelIcon v-else class="h-4 w-4 sm:h-3 sm:w-3 text-primary" />
           </button>
         </template>
         <div class="px-1 py-2 sm:bg-white/90 dark:sm:bg-neutral-700/90">
@@ -44,7 +44,7 @@
             v-if="objects.length === 1"
             class="hidden sm:block text-foreground-2 mt-2 px-2 text-xs"
           >
-            Hold down "shift" to select multiple objects.
+            Hold "shift" to select multiple objects
           </div>
         </div>
       </ViewerLayoutPanel>

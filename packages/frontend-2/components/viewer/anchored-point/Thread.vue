@@ -38,12 +38,12 @@
       <ViewerCommentsPortalOrDiv to="mobileComments">
         <div
           ref="handle"
-          class="sm:p-1.5 cursor-move sm:rounded-lg group hover:sm:bg-blue-500/50 transition h-full"
+          class="sm:p-1.5 cursor-move sm:rounded-lg group hover:sm:bg-blue-500/50 transition h-full transition-all duration-200"
           :class="{ 'is-dragging bg-blue-500/50': isDragging }"
         >
           <div
             :class="[
-              'sm:bg-white/70 dark:sm:bg-neutral-700/70 sm:backdrop-blur flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all',
+              'sm:bg-white/70 dark:sm:bg-neutral-800/70 sm:backdrop-blur flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
               'group-hover:bg-foundation dark:group-hover:bg-neutral-800 group-[.is-dragging]:bg-foundation dark:group-[.is-dragging]:bg-neutral-800'
             ]"
           >
