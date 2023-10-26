@@ -41,7 +41,7 @@ import { useMutation } from '@vue/apollo-composable'
 import { AllScopes } from '@speckle/shared'
 import { LayoutDialog, FormSelectBadges } from '@speckle/ui-components'
 import { TokenFormValues } from '~~/lib/developer-settings/helpers/types'
-import { CreateAccessTokenMutation } from '~~/lib/developer-settings/graphql/mutations'
+import { createAccessTokenMutation } from '~~/lib/developer-settings/graphql/mutations'
 import { isItemSelected, isRequired } from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
 import {
@@ -54,7 +54,7 @@ const emit = defineEmits<{
   (e: 'token-created', tokenId: string): void
 }>()
 
-const { mutate: createToken } = useMutation(CreateAccessTokenMutation)
+const { mutate: createToken } = useMutation(createAccessTokenMutation)
 const { triggerNotification } = useGlobalToast()
 const { handleSubmit } = useForm<TokenFormValues>()
 

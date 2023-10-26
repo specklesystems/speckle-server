@@ -1,31 +1,31 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
-export const DeleteAccessTokenMutation = graphql(`
-  mutation deleteAccessToken($token: String!) {
+export const deleteAccessTokenMutation = graphql(`
+  mutation DeleteAccessToken($token: String!) {
     apiTokenRevoke(token: $token)
   }
 `)
 
-export const CreateAccessTokenMutation = graphql(`
-  mutation createAccessToken($token: ApiTokenCreateInput!) {
+export const createAccessTokenMutation = graphql(`
+  mutation CreateAccessToken($token: ApiTokenCreateInput!) {
     apiTokenCreate(token: $token)
   }
 `)
 
-export const DeleteApplicationMutation = graphql(`
-  mutation deleteApplication($appId: String!) {
+export const deleteApplicationMutation = graphql(`
+  mutation DeleteApplication($appId: String!) {
     appDelete(appId: $appId)
   }
 `)
 
-export const CreateApplicationMutation = graphql(`
-  mutation createApplication($app: AppCreateInput!) {
+export const createApplicationMutation = graphql(`
+  mutation CreateApplication($app: AppCreateInput!) {
     appCreate(app: $app)
   }
 `)
 
-export const EditApplicationMutation = graphql(`
-  mutation editApplication($app: AppUpdateInput!) {
+export const editApplicationMutation = graphql(`
+  mutation EditApplication($app: AppUpdateInput!) {
     appUpdate(app: $app)
   }
 `)

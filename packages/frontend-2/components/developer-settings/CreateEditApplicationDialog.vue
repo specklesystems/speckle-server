@@ -64,8 +64,8 @@ import {
   ApplicationItem
 } from '~~/lib/developer-settings/helpers/types'
 import {
-  CreateApplicationMutation,
-  EditApplicationMutation
+  createApplicationMutation,
+  editApplicationMutation
 } from '~~/lib/developer-settings/graphql/mutations'
 import { isItemSelected } from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
@@ -89,8 +89,8 @@ const emit = defineEmits<{
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const { scopes: allScopes } = useServerInfoScopes()
-const { mutate: createApplication } = useMutation(CreateApplicationMutation)
-const { mutate: editApplication } = useMutation(EditApplicationMutation)
+const { mutate: createApplication } = useMutation(createApplicationMutation)
+const { mutate: editApplication } = useMutation(editApplicationMutation)
 const { triggerNotification } = useGlobalToast()
 const { handleSubmit, resetForm } = useForm<ApplicationFormValues>()
 
