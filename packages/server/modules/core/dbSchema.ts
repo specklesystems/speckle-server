@@ -471,6 +471,8 @@ export const AutomationRuns = buildTableHelper('automation_runs', [
 export const AutomationFunctionRuns = buildTableHelper('automation_function_runs', [
   'automationRunId',
   'functionId',
+  'functionName',
+  'functionLogo',
   'elapsed',
   'status',
   'contextView',

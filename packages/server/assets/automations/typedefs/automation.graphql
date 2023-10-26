@@ -38,6 +38,7 @@ type AutomationsStatus {
 type AutomationRun {
   id: ID!
   automationId: String!
+  automationName: String!
   versionId: String!
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -51,12 +52,16 @@ type AutomationRun {
 type AutomationFunctionRun {
   id: ID!
   functionId: String!
+  functionName: String!
+  functionLogo: String
   elapsed: Float!
   status: AutomationRunStatus!
+  # Context view is just a url (most likely overlaid models)
   contextView: String
   resultVersions: [Version!]!
   statusMessage: String
   """
+  NOTE: this is the schema for the results field below!
   Current schema: {
     version: "1.0.0",
     values: {
@@ -72,7 +77,7 @@ type AutomationFunctionRun {
     }
   }
   """
-  results: JSONObject
+  results: JSONObject # blobIds are in here
 }
 
 input AutomationCreateInput {
@@ -88,6 +93,8 @@ input FunctionRunStatusInput {
   # we cannot strictly require these values, cause local testers of function, wont have it...
   # Or should we?
   functionId: String!
+  functionName: String!
+  functionLogo: String
   elapsed: Float!
   status: AutomationRunStatus!
   contextView: String

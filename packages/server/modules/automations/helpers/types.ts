@@ -19,11 +19,14 @@ export type AutomationRunRecord = {
   versionId: string
   createdAt: Date
   updatedAt: Date
+  automationName: string
 }
 
 export type AutomationFunctionRunRecord = {
   automationRunId: string
   functionId: string
+  functionName: string
+  functionLogo: string | null
   elapsed: number
   status: AutomationRunStatus
   contextView: Nullable<string>

@@ -107,7 +107,7 @@ export async function upsertModelAutomationRunResult({
     validatedInput.automationId = maybeAutomationRun.automationId
     validatedInput.automationRevisionId = maybeAutomationRun.automationRevisionId
   }
-  await upsertAutomationRunData(validatedInput)
+  await upsertAutomationRunData({ ...validatedInput, automationName: 'pasta' })
 
   // upsert run function runs
   const runs = uniqBy(
