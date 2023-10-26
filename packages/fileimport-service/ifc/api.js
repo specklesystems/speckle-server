@@ -4,6 +4,7 @@ const crs = require('crypto-random-string')
 const bcrypt = require('bcrypt')
 const { chunk } = require('lodash')
 const { logger: parentLogger } = require('../observability/logging')
+const { getMaximumObjectSizeMB } = require('@/modules/shared/helpers/envHelper')
 
 const knex = require('../knex')
 const { Observability } = require('@speckle/shared')
@@ -150,7 +151,7 @@ module.exports = class ServerAPI {
   }
 
   prepInsertionObject(streamId, obj) {
-    const MAX_OBJECT_SIZE = 10 * 1024 * 1024
+    const MAX_OBJECT_SIZE = getMaximumObjectSizeMB() * 1024 * 1024
 
     if (obj.hash) obj.id = obj.hash
     else
