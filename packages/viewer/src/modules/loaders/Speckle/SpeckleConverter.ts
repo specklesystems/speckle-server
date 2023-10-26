@@ -99,6 +99,8 @@ export default class SpeckleConverter {
     if (this.IgnoreNodes.includes(this.getSpeckleType(obj))) {
       return
     }
+    /** Ignore objects with no id */
+    if (!obj.id) return
 
     const childNode: TreeNode = this.tree.parse({
       id: !node ? objectURL : this.getNodeId(obj),
