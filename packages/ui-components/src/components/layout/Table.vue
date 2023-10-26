@@ -98,7 +98,7 @@ const getClasses = (column: C, colIndex: number): string => {
   if (colIndex === 0) {
     return `bg-transparent py-3 pr-5 px-1 ${columnClass}`
   }
-  return `lg:p-0 px-1 ${columnClass}`
+  return `lg:p-0 px-1 my-2 ${columnClass}`
 }
 
 const handleRowClick = (item: T) => {

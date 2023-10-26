@@ -98,7 +98,7 @@
             </label>
             <div
               class="overflow-auto simple-scrollbar"
-              :class="[hasSearch ? 'max-h-52' : 'max-h-60']"
+              :class="[hasSearch ? 'max-h-52' : 'max-h-40']"
             >
               <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
                 <CommonLoadingBar :loading="true" />
