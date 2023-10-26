@@ -97,6 +97,11 @@
       "description": "This maximum size of any single file (unit is Megabytes) that can be uploaded to Speckle",
       "default": 100
     },
+    "max_object_size_mb": {
+      "type": "number",
+      "description": "The maximum size of an individual object which can be uploaded to the server via the API or fileimport service.",
+      "default": 10
+    },
     "enable_prometheus_monitoring": {
       "type": "boolean",
       "description": "If enabled, Speckle deploys a Prometheus ServiceMonitor resource",
@@ -508,7 +513,7 @@
         },
         "max_object_size_mb": {
           "type": "number",
-          "description": "The maximum size of an individual object which can be uploaded to the server",
+          "description": "**DEPRECATED** Use max_object_size_mb at the root instead. The maximum size of an individual object which can be uploaded to the server.",
           "default": 10
         },
         "speckleAutomateUrl": {

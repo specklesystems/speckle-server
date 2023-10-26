@@ -123,8 +123,12 @@ spec:
             value: {{ .Values.file_size_limit_mb | quote }}
 
           - name: MAX_OBJECT_SIZE_MB
+            {{- if .Values.max_object_size_mb }}
+            value: {{ .Values.max_object_size_mb | quote }}
+            {{- else }}
+            {{- /* provided for backwards-compatibility */ -}}
             value: {{ .Values.server.max_object_size_mb | quote }}
-
+            {{- end }}
           - name: SPECKLE_AUTOMATE_URL
             value: {{ .Values.server.speckleAutomateUrl }}
 
