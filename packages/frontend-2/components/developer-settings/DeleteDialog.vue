@@ -55,7 +55,7 @@ const itemType = computed(() => {
 })
 
 const isApplication = (i: TokenItem | ApplicationItem | null): i is ApplicationItem =>
-  i && 'secret' in i
+  !!(i && 'secret' in i)
 
 const deleteConfirmed = async () => {
   const itemId = props.item?.id
