@@ -2,53 +2,60 @@
 
 ## Introduction
 
-Thank you for reading this! Speckle's a rather wide network of parts that depend on each other, either directly, indirectly or even just cosmetically.
+Thank you for reading this! At Speckle, we're part of a vast interconnected network of components, each relying on the others, whether directly, indirectly, or even aesthetically.
 
-> **Speckle** is a quite large ecosystem of moving parts. Any changes may have unintended effects, that can cause problems quickly for many people (and processes) that rely on Speckle.
+> **Speckle**'s ecosystem is expansive, consisting of many moving parts. Changes made within it can have unforeseen consequences, potentially causing disruptions for many users and processes. It's essential to understand that what seems like a simple alteration in one part of our project can have significant implications throughout the system.
 
-This means that what might look like a simple quick change in one repo may have a big hidden cost that propagates around other parts of the project. We're all here to help each other, and this guide is meant to help you get started and promote a framework that can untangle all these dependencies through discussion!
+We're all here to support one another, and these guidelines are designed to assist you in getting started and promoting discussions to unravel complexities within our dependencies. Your contributions are highly valued, and following these guidelines ensures a smooth and collaborative experience for everyone.
 
 ## Bugs & Issues 🐞
 
-### Found a new bug?
+### Found a New Bug?
 
-- First step is to check whether this is a new bug! We encourage you to search through the issues of the project in question **and** associated repos!
+- Before reporting a new bug, search existing issues to avoid duplicates.
+- If it's a **new issue, create one with a clear title and description** as relevant information as possible:
+  - System configuration
+  - Code samples
+  - Steps to reproduce the problem
+- Reproduction steps are essential; issues without them may be ignored.
 
-- If you come up with nothing, **open a new issue with a clear title and description**, as much relevant information as possible: system configuration, code samples & steps to reproduce the problem.
+### Security Vulnerabilities
 
-- Can't mention this often enough: tells us how to reproduce the problem! We will ignore or flag as such issues without reproduction steps.
-
-- Try to reference & note all potentially affected projects.
-
-### Security vulnerabilities
-
-For any security vulnerabilities or concerns, please contact us directly at security[at]speckle.systems.
+For security vulnerabilities or concerns, contact us directly at security[at]speckle.systems.
 
 ### Sending a PR for Bug Fixes
 
-You fixed something! Great! We hope you logged it first :) Make sure though that you've covered the lateral thinking needed for a bug report, as described above, also in your implementation! If there any tests, make sure they all pass. If there are none, it means they're missing - so add them!
+- If you fixed a bug, ensure you've followed the bug report process.
+- Verify that all existing tests pass.
+- If there are no tests, please add them.
 
 ## New Features 🎉
 
-The golden rule is to Discuss First!
+### The Golden Rule: Discuss First!
 
-- Before embarking on adding a new feature, suggest it first as an issue with the `enhancement` label and/or title - this will allow relevant people to pitch in
-- We'll now discuss your requirements and see how and if they fit within the Speckle ecosystem.
-- The last step is to actually start writing code & submit a PR so we can follow along!
-- All new features should, if and where possible, come with tests. We won't merge without!
+- Before developing a new feature, start a discussion by creating an issue with the `enhancement` label.
+- This allows others to provide feedback and determine if the feature aligns with Speckle's goals.
 
-> Many clients may potentially have overlapping scopes, some features might already be in dev somewhere else, or might have been postponed to the next major release due to api instability in that area. For example, adding a delete stream button in the accounts panel in rhino: this feature was planned for speckle admin, and the whole functionality of the accounts panel in rhino is to be greatly reduced!
+### Development Steps
+
+1. Discuss your requirements and get feedback.
+2. Start writing code and submit a PR.
+3. Include tests with your new feature.
 
 ## Cosmetic Patches ✨
 
-Changes that are cosmetic in nature and do not add anything substantial to the stability or functionality of Speckle **will generally not be accepted**.
+Cosmetic changes that do not enhance stability or functionality are generally not accepted.
 
-Why? However trivial the changes might seem, there might be subtle reasons for the original code to be as it is. Furthermore, there are a lot of potential hidden costs (that even maintainers themselves are not aware of fully!) and they eat up review time unncessarily.
+- Even seemingly minor changes may have unforeseen consequences.
+- Hidden costs can consume review time unnecessarily.
 
-> **Examples**: modifying the colour of an UI element in one client may have a big hidden cost and need propagation in several other clients that implement a similar ui element. Changing the default port or specifying `localhost` instead of `0.0.0.0` breaks cross-vm debugging and developing.
+> **Examples**:
+>
+> - Changing UI element colors in one client may affect others.
+> - Changing the default port or specifying `localhost` instead of `0.0.0.0` breaks cross-vm debugging and developing.
 
-## Wrap up
+## Wrap Up
 
-Don't worry if you get things wrong. We all do, including project owners: this document should've been here a long time ago. There's plenty of room for discussion on our community [forum](https://speckle.community).
+Don't worry if you make mistakes; we all do. There's room for discussion on our community [forum](https://speckle.community/).
 
-🙌❤️💙💚💜🙌
+🙌 Thank you for your contributions! 🙌
