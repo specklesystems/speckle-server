@@ -1,75 +1,56 @@
 <template>
   <div @click.stop.prevent>
-    <Component
-      :is="statusIconAndColor.icon"
-      v-tippy="automationStatus.statusMessage"
-      :class="['h-6 w-6 outline-none', statusIconAndColor.iconColor]"
-      @click="showDialog = true"
-    />
+    <button @click="showDialog = true">
+      <Component
+        :is="statusIconAndColor.icon"
+        v-tippy="automationStatus.statusMessage"
+        :class="['h-6 w-6 outline-none', statusIconAndColor.iconColor]"
+      />
+    </button>
     <LayoutDialog
       v-model:open="showDialog"
       :title="`Automation Status for ${displayName}`"
       max-width="lg"
     >
+      <template #header>
+        <div class="flex items-center space-x-2">
+          <Component
+            :is="statusIconAndColor.icon"
+            v-tippy="automationStatus.statusMessage"
+            :class="['h-6 w-6 outline-none', statusIconAndColor.iconColor]"
+          />
+          <h4 class="text-2xl font-bold">{{ displayName }}</h4>
+        </div>
+      </template>
       <div class="flex flex-col space-y-2">
-        <div class="inline-flex space-x-2 items-center">
-          <strong>Status:</strong>
-          <CommonBadge
-            rounded
-            :color-classes="`text-white ${statusIconAndColor.badgeColor}`"
-          >
-            {{ automationStatus.status }}
-          </CommonBadge>
-        </div>
-        <div
-          v-if="automationStatus.statusMessage"
-          class="inline-flex space-x-2 items-start"
-        >
-          <strong class="shrink-0">Status message:</strong>
-          <span class="text-foreground">
-            {{ automationStatus.statusMessage }}
-          </span>
-        </div>
-
         <LayoutDisclosure
           v-for="run in automationRuns"
           :key="run.id"
-          :title="`Automation Run #${run.id}`"
+          :title="`${run.automationName}`"
           :color="resolveStatusMetadata(run.status).disclosureColor"
+          :default-open="true"
         >
-          <div class="flex flex-col space-y-2">
-            <div class="flex justify-between items-start">
-              <div class="flex flex-col space-y-2">
-                <div class="inline-flex space-x-2 items-center">
-                  <strong>Status:</strong>
-                  <CommonBadge
-                    rounded
-                    :color-classes="`text-white ${
-                      resolveStatusMetadata(run.status).badgeColor
-                    }`"
-                  >
-                    {{ run.status }}
-                  </CommonBadge>
-                </div>
-                <div class="inline-flex space-x-2 items-start">
-                  <strong class="shrink-0">Started:</strong>
-                  <span v-tippy="absoluteDate(run.createdAt)" class="text-foreground">
-                    {{ fromNowDate(run.createdAt) }}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <FormButton
-                  v-if="automateBaseUrl"
-                  :to="automationDataPageRoute(automateBaseUrl, run.automationId)"
-                  external
-                  target="_blank"
-                >
-                  View automation
-                </FormButton>
+          <template #header>
+            <div class="flex space-x-2">
+              <div>{{ run.automationName }}</div>
+              <CommonBadge
+                rounded
+                :color-classes="`text-white ${
+                  resolveStatusMetadata(run.status).badgeColor
+                }`"
+              >
+                {{ run.status }}
+              </CommonBadge>
+              <div class="inline-flex space-x-2 items-start text-sm text-foreground-2">
+                <strong class="shrink-0"></strong>
+                <span v-tippy="absoluteDate(run.createdAt)">
+                  {{ fromNowDate(run.createdAt) }}
+                </span>
               </div>
             </div>
-            <div class="grid gap-4 grid-cols-1 sm:grid-cols-2">
+          </template>
+          <div class="flex flex-col space-y-2">
+            <div class="space-y-4">
               <LayoutPanel
                 v-for="fnRun in run.functionRuns"
                 :key="fnRun.id"
@@ -79,7 +60,9 @@
               >
                 <div class="flex flex-col space-y-4">
                   <div class="flex justify-between items-center">
-                    <span class="italic">Function #{{ fnRun.functionId }}</span>
+                    <span class="italic">
+                      TODO: Function Name #{{ fnRun.functionId }}
+                    </span>
                     <CommonBadge
                       rounded
                       :color-classes="`text-white ${
@@ -89,8 +72,7 @@
                       {{ fnRun.status }}
                     </CommonBadge>
                   </div>
-                  <div v-if="fnRun.statusMessage">
-                    <strong class="shrink-0">Status message:</strong>
+                  <div v-if="fnRun.statusMessage" class="flex space-x-2">
                     <p class="text-foreground">
                       {{ fnRun.statusMessage }}
                     </p>
@@ -147,6 +129,7 @@ import {
   ModelCardAutomationStatus_VersionFragment
 } from '~~/lib/common/generated/gql/graphql'
 import dayjs from 'dayjs'
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { automationDataPageRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { SpeckleViewer } from '@speckle/shared'
 import { useServerInfo } from '~~/lib/core/composables/server'
@@ -185,15 +168,19 @@ graphql(`
     automationRuns {
       id
       automationId
+      automationName
       createdAt
       status
       functionRuns {
         id
         functionId
+        functionName
+        functionLogo
         elapsed
         status
         statusMessage
         contextView
+        results
         resultVersions {
           id
         }
@@ -237,6 +224,7 @@ const statusIconAndColor = computed(() =>
 )
 
 const automationRuns = computed(() => automationStatus.value.automationRuns)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const automateBaseUrl = computed(() => serverInfo.value?.automateUrl)
 const displayName = computed(() =>
   isModel(props.modelOrVersion)

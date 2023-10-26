@@ -130,8 +130,8 @@ export const getLatestAutomationRunsFor = async (
   const { limit = 20 } = options || {}
 
   const runs = await AutomationRuns.knex()
-    .select(AutomationRuns.cols)
-    .innerJoin(
+    .select([...AutomationRuns.cols, 'automations.automationName'])
+    .join(
       Automations.name,
       AutomationRuns.col.automationId,
       Automations.col.automationId

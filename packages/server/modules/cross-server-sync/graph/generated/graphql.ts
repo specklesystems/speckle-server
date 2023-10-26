@@ -194,9 +194,12 @@ export type AutomationFunctionRun = {
   contextView?: Maybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   functionId: Scalars['String'];
+  functionLogo?: Maybe<Scalars['String']>;
+  functionName: Scalars['String'];
   id: Scalars['ID'];
   resultVersions: Array<Version>;
   /**
+   * NOTE: this is the schema for the results field below!
    * Current schema: {
    *   version: "1.0.0",
    *   values: {
@@ -236,6 +239,7 @@ export type AutomationMutationsFunctionRunStatusReportArgs = {
 export type AutomationRun = {
   __typename?: 'AutomationRun';
   automationId: Scalars['String'];
+  automationName: Scalars['String'];
   createdAt: Scalars['DateTime'];
   functionRuns: Array<AutomationFunctionRun>;
   id: Scalars['ID'];
@@ -683,6 +687,8 @@ export type FunctionRunStatusInput = {
   contextView?: InputMaybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   functionId: Scalars['String'];
+  functionLogo?: InputMaybe<Scalars['String']>;
+  functionName: Scalars['String'];
   resultVersionIds: Array<Scalars['String']>;
   /**
    * Current schema: {

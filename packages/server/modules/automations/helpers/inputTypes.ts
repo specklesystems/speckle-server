@@ -35,7 +35,9 @@ export type Results = FirstVersionResults // | SecondVersionResults | ThirdVersi
 
 const FunctionRunStatusSchema = z
   .object({
-    functionId: z.string().nonempty(),
+    functionId: z.string().min(1),
+    functionName: z.string().min(1),
+    functionLogo: z.string().nullable(),
     elapsed: z.number(),
     status: z.nativeEnum(AutomationRunStatus),
     contextView: z
@@ -65,10 +67,10 @@ const FunctionRunStatusSchema = z
   )
 
 export const AutomationRunSchema = z.object({
-  automationId: z.string().nonempty(),
-  automationRevisionId: z.string().nonempty(),
-  automationRunId: z.string().nonempty(),
-  versionId: z.string().nonempty(),
+  automationId: z.string().min(1),
+  automationRevisionId: z.string().min(1),
+  automationRunId: z.string().min(1),
+  versionId: z.string().min(1),
   createdAt: z.date(),
   updatedAt: z.date(),
   functionRuns: z.array(FunctionRunStatusSchema).min(1)
