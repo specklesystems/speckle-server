@@ -1,4 +1,6 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
+import { TreeNode } from '@speckle/viewer'
+import { CameraController } from '@speckle/viewer'
 import { PropertyInfo } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
@@ -60,8 +62,9 @@ export function useCameraUtilities() {
     instance.setView(...args)
   }
 
-  const truck = (...args: Parameters<typeof instance.cameraHandler.controls.truck>) =>
-    instance.cameraHandler.controls.truck(...args)
+  const truck = (...args: Parameters<typeof CameraController.controls.truck>) =>
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    instance.getExtension(CameraController).controls.truck(...args)
 
   const zoomExtentsOrSelection = () => {
     const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
@@ -227,7 +230,7 @@ export function useSelectionUtilities() {
 
   const setSelectionFromObjectIds = (objectIds: string[]) => {
     const res = worldTree.value
-      ? worldTree.value.findAll((node) => {
+      ? worldTree.value.findAll((node: TreeNode) => {
           const t = node.model as Record<string, unknown>
           const raw = t.raw as Record<string, unknown>
           const id = raw.id as string
@@ -238,7 +241,7 @@ export function useSelectionUtilities() {
       : []
 
     const objs = res.map(
-      (node) => (node.model as Record<string, unknown>).raw as SpeckleObject
+      (node: TreeNode) => (node.model as Record<string, unknown>).raw as SpeckleObject
     )
     selectedObjects.value = objs
   }

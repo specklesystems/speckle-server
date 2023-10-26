@@ -10,7 +10,8 @@ import {
   DefaultLightConfiguration,
   SpeckleView,
   DiffResult,
-  VisualDiffMode
+  VisualDiffMode,
+  LegacyViewer
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -96,7 +97,7 @@ export type InjectableViewerState = Readonly<{
     /**
      * The actual viewer instance
      */
-    instance: Viewer
+    instance: LegacyViewer
     /**
      * Container onto which the Viewer instance is attached
      */
@@ -312,7 +313,7 @@ function createViewerData(): CachedViewerState {
   container.style.width = '100%'
   container.style.height = '100%'
 
-  const viewer = new Viewer(container, DefaultViewerParams)
+  const viewer = new LegacyViewer(container, DefaultViewerParams)
   const initPromise = viewer.init()
 
   return {
@@ -332,10 +333,10 @@ function setupViewerMetadata(params: {
   const filteringState = shallowRef(undefined as Optional<FilteringState>)
   const views = ref([] as SpeckleView[])
 
-  const refreshWorldTreeAndFilters = (busy: boolean) => {
+  const refreshWorldTreeAndFilters = async (busy: boolean) => {
     if (busy) return
     worldTree.value = viewer.getWorldTree()
-    availableFilters.value = viewer.getObjectProperties()
+    availableFilters.value = await viewer.getObjectProperties()
     views.value = viewer.getViews()
   }
   const updateFilteringState = (newState: FilteringState) => {

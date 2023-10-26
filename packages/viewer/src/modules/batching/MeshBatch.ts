@@ -504,7 +504,7 @@ export default class MeshBatch implements Batch {
   }
 
   public resetDrawRanges() {
-    this.mesh.material = [this.batchMaterial]
+    this.mesh.setBatchMaterial(this.batchMaterial)
     this.mesh.visible = true
     this.geometry.clearGroups()
     this.geometry.addGroup(0, this.getCount(), 0)

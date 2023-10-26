@@ -7,7 +7,8 @@ import {
   SelectionEvent,
   SpeckleView,
   UpdateFlags,
-  ViewerEvent
+  ViewerEvent,
+  ViewerParams
 } from './IViewer'
 import {
   PropertyInfo,
@@ -45,7 +46,10 @@ import {
 } from './modules/extensions/core-extensions/Providers'
 import { SectionTool } from './modules/extensions/SectionTool'
 import { SectionOutlines } from './modules/extensions/SectionOutlines'
-import { FilteringExtension } from './modules/extensions/FilteringExtension'
+import {
+  FilteringExtension,
+  FilteringState
+} from './modules/extensions/FilteringExtension'
 import { Extension } from './modules/extensions/core-extensions/Extension'
 import { ExplodeExtension } from './modules/extensions/ExplodeExtension'
 import {
@@ -92,6 +96,7 @@ export {
 
 export type {
   IViewer,
+  ViewerParams,
   SelectionEvent,
   PropertyInfo,
   StringPropertyInfo,
@@ -113,5 +118,6 @@ export type {
   IntersectionQueryResult,
   Utils,
   DiffResult,
-  MeasurementOptions
+  MeasurementOptions,
+  FilteringState
 }
