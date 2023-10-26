@@ -60,6 +60,11 @@
       </ClientOnly>
     </div>
   </ViewerPostSetupWrapper>
+  <div
+    class="sm:hidden fixed bottom-0 left-0 h-[50vh] w-screen bg-white z-50 1transition-all duration-300 empty:-bottom-[50vh]"
+  >
+    <PortalTarget name="bottomPanel"></PortalTarget>
+  </div>
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'

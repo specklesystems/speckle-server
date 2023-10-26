@@ -1,6 +1,6 @@
 <!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
-  <div class="relative flex sm:flex-col">
+  <div class="relative flex items-center ml-1 gap-1">
     <ViewerCommentsEditor
       ref="editor"
       v-model="commentValue"
@@ -10,24 +10,22 @@
       @keydown="onKeyDownHandler"
       @submit="onSubmit"
     />
-    <div class="sm:w-full flex justify-end pt-2 gap-2 p-2">
-      <div class="flex gap-2">
-        <FormButton
-          :icon-left="PaperClipIcon"
-          hide-text
-          text
-          :disabled="loading"
-          size="sm"
-          @click="trackAttachAndOpenFilePicker()"
-        />
-        <FormButton
-          :icon-left="PaperAirplaneIcon"
-          hide-text
-          size="sm"
-          :disabled="loading"
-          @click="onSubmit"
-        />
-      </div>
+    <div class="max-w-max flex justify-end gap-1 p-1">
+      <FormButton
+        :icon-left="PaperClipIcon"
+        hide-text
+        text
+        :disabled="loading"
+        size="sm"
+        @click="trackAttachAndOpenFilePicker()"
+      />
+      <FormButton
+        :icon-left="PaperAirplaneIcon"
+        hide-text
+        size="sm"
+        :disabled="loading"
+        @click="onSubmit"
+      />
     </div>
   </div>
 </template>

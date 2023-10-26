@@ -7,7 +7,7 @@
       size="sm"
       @click="() => onAttachmentClick(attachment)"
     >
-      <span class="truncate relative bottom-0.5 text-xs sm:text-sm">
+      <span class="truncate relative bottom-0.5 text-xs">
         {{ attachment.fileName }}
       </span>
     </CommonTextLink>

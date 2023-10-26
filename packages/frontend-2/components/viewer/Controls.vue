@@ -1,10 +1,5 @@
 <template>
-  <div
-    :class="{
-      'fixed sm:relative w-screen h-screen sm:w-auto sm:h-auto inset-0 bg-white/40 backdrop-blur sm:backdrop-blur-none sm:bg-transparent':
-        activeControl !== 'none'
-    }"
-  >
+  <div>
     <div
       class="absolute z-20 flex h-screen flex-col space-y-2 bg-green-300/0 px-2 pt-[4.2rem]"
     >
@@ -161,6 +156,7 @@ import {
   useCameraUtilities,
   useSectionBoxUtilities
 } from '~~/lib/viewer/composables/ui'
+import { useBreakpoints } from '~~/composables/browser'
 import {
   onKeyboardShortcut,
   ModifierKeys,
@@ -182,10 +178,12 @@ const { resourceItems } = useInjectedViewerLoadedResources()
 
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 
+const { isMediaQueryMax } = useBreakpoints()
+
 type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'discussions'
 const openAddModel = ref(false)
 
-const activeControl = ref<ActiveControl>('models')
+const activeControl = ref<ActiveControl>(isMediaQueryMax('sm') ? 'none' : 'models')
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
 const {
   diff: { enabled }
