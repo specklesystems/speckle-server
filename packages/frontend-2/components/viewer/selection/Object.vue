@@ -8,7 +8,7 @@
   >
     <div class="mb-1 flex items-center">
       <button
-        class="flex h-full w-full p-2 items-center justify-between gap-4 rounded hover:bg-primary-muted hover-text-primary"
+        class="flex h-full w-full p-2 items-center justify-between gap-4 rounded hover:bg-primary-muted hover:text-primary"
         :class="unfold && 'bg-primary-muted text-primary'"
         @click="unfold = !unfold"
       >
