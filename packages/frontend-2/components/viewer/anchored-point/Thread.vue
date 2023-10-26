@@ -38,16 +38,16 @@
       <ViewerCommentsPortalOrDiv to="mobileComments">
         <div
           ref="handle"
-          class="sm:p-1.5 cursor-move sm:rounded-lg group hover:bg-blue-500/50 transition h-full"
+          class="sm:p-1.5 cursor-move sm:rounded-lg group hover:sm:bg-blue-500/50 transition h-full"
           :class="{ 'is-dragging bg-blue-500/50': isDragging }"
         >
           <div
             :class="[
-              'bg-white flex flex-col dark:bg-neutral-800 overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full',
+              'sm:bg-white/70 dark:sm:bg-neutral-700/70 sm:backdrop-blur flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all',
               'group-hover:bg-foundation dark:group-hover:bg-neutral-800 group-[.is-dragging]:bg-foundation dark:group-[.is-dragging]:bg-neutral-800'
             ]"
           >
-            <div class="relative w-full sm:w-80 flex py-2 bg-foundation">
+            <div class="relative w-full sm:w-80 flex py-2 sm:bg-foundation">
               <div class="flex-grow flex items-center">
                 <span class="sm:hidden mx-2 text-primary text-sm font-medium">
                   Discussions
@@ -147,7 +147,6 @@
             <ViewerAnchoredPointThreadNewReply
               v-if="!modelValue.archived && canReply"
               :model-value="modelValue"
-              class="absolute bottom-1 left-0 mb-3 sm:my-2 px-4 sm:px-0"
               @submit="onNewReply"
             />
           </div>

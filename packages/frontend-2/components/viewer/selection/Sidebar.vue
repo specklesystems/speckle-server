@@ -1,7 +1,7 @@
 <template>
   <ViewerCommentsPortalOrDiv v-if="objects.length !== 0" to="bottomPanel">
     <div
-      :class="`bg-foundation simple-scrollbar z-10 relative sm:fixed sm:top-16 sm:right-4 sm:top-[4rem] sm:right-4 sm:mb-4 sm:max-w-64 min-h-[4.75rem] max-h-[50vh] sm:max-h-[calc(100vh-5.5rem)] w-full sm:w-64 overflow-y-auto rounded-md sm:shadow transition ${
+      :class="`sm:bg-foundation simple-scrollbar z-10 relative sm:fixed sm:top-16 sm:right-4 sm:top-[4rem] sm:right-4 sm:mb-4 sm:max-w-64 min-h-[4.75rem] max-h-[50vh] sm:max-h-[calc(100vh-5.5rem)] w-full sm:w-64 overflow-y-auto rounded-md sm:shadow transition ${
         objects.length !== 0
           ? 'translate-x-0 opacity-100'
           : 'translate-x-[120%] opacity-0'
@@ -25,7 +25,7 @@
             <FunnelIcon v-else class="h-4 w-4 sm:h-3 sm:w-3" />
           </button>
         </template>
-        <div class="px-1 py-2 bg-white">
+        <div class="px-1 py-2 sm:bg-white/90 dark:sm:bg-neutral-700/90">
           <div class="space-y-2">
             <ViewerSelectionObject
               v-for="object in objectsLimited"

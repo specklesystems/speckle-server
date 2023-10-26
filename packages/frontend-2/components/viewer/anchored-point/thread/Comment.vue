@@ -7,10 +7,12 @@
     <div class="xxx-bg-foundation sm:rounded-xl py-2 px-3 sm:p-4 w-full relative">
       <div class="flex items-center space-x-1">
         <UserAvatar :user="comment.author" class="mr-1" />
-        <span class="grow truncate text-xs sm:text-sm font-medium">
+        <span class="grow truncate text-xs sm:text-sm font-bold">
           {{ comment.author.name }}
         </span>
-        <span class="text-xs truncate text-foreground-2">{{ timeFromNow }}</span>
+        <span class="text-xs truncate text-foreground-2 font-medium sm:font-bold">
+          {{ timeFromNow }}
+        </span>
         <!-- Note: disabled as archiving comments is now equivalent to "resolving" them. -->
         <!-- <div class="pl-2">
           <CommonTextLink

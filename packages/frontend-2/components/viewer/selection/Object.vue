@@ -26,7 +26,10 @@
         </div>
       </button>
     </div>
-    <div v-if="unfold" class="ml-1 space-y-1">
+    <div
+      v-if="unfold"
+      class="ml-1 space-y-1 p-1 sm:p-0 backdrop-blur sm:backdrop-blur-none"
+    >
       <div
         v-for="(kvp, index) in [
           ...categorisedValuePairs.primitives,
