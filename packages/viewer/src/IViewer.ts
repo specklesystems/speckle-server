@@ -117,6 +117,11 @@ export enum ObjectLayers {
   OVERLAY = 4
 }
 
+export enum UpdateFlags {
+  RENDER = 1,
+  SHADOWS = 2
+}
+
 export interface IViewer {
   get input(): Input
   get Utils(): Utils
@@ -125,7 +130,7 @@ export interface IViewer {
   init(): Promise<void>
   resize(): void
   on(eventType: ViewerEvent, handler: (arg) => void)
-  requestRender(): void
+  requestRender(flags?: number): void
 
   setLightConfiguration(config: LightConfiguration): void
 

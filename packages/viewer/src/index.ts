@@ -6,6 +6,7 @@ import {
   ObjectLayers,
   SelectionEvent,
   SpeckleView,
+  UpdateFlags,
   ViewerEvent
 } from './IViewer'
 import {
@@ -85,7 +86,8 @@ export {
   DiffExtension,
   Loader,
   SpeckleLoader,
-  ObjLoader
+  ObjLoader,
+  UpdateFlags
 }
 
 export type {

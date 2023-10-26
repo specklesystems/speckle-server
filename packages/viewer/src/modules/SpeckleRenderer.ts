@@ -131,6 +131,10 @@ export default class SpeckleRenderer {
     this._needsRender ||= value
   }
 
+  public set shadowMapNeedsUpdate(value: boolean) {
+    this._renderer.shadowMap.needsUpdate = value
+  }
+
   /**********************
    * Bounds and volumes */
   public get sceneBox() {

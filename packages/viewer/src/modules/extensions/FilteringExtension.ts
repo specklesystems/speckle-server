@@ -7,7 +7,7 @@ import { FilterMaterialType } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Extension } from './core-extensions/Extension'
 import { TreeNode, WorldTree } from '../tree/WorldTree'
-import { IViewer, ViewerEvent } from '../../IViewer'
+import { IViewer, UpdateFlags, ViewerEvent } from '../../IViewer'
 import {
   NumericPropertyInfo,
   PropertyInfo,
@@ -136,10 +136,8 @@ export class FilteringExtension extends Extension {
     }
 
     if (command === Command.HIDE || command === Command.ISOLATE) {
-      Object.assign(
-        this.VisibilityState.ids,
-        objectIds.reduce((acc, curr) => ((acc[curr] = 1), acc), {})
-      )
+      const res = objectIds.reduce((acc, curr) => ((acc[curr] = 1), acc), {})
+      Object.assign(this.VisibilityState.ids, res)
     }
 
     const enabled = Object.keys(this.VisibilityState.ids).length !== 0
@@ -378,11 +376,12 @@ export class FilteringExtension extends Extension {
     this.UserspaceColorState = null
     this.StateKey = null
     this.Renderer.resetMaterials()
-    this.viewer.requestRender()
+    this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
     return null
   }
 
   private setFilters(): FilteringState {
+    this.viewer.getRenderer().resetMaterials()
     this.CurrentFilteringState = {}
 
     // String based colors
@@ -496,7 +495,7 @@ export class FilteringExtension extends Extension {
       }
     }
 
-    this.Renderer.viewer.requestRender()
+    this.Renderer.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
     this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
     return this.CurrentFilteringState
   }

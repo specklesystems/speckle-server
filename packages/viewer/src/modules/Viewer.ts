@@ -10,6 +10,7 @@ import {
   IViewer,
   SpeckleView,
   SunLightConfiguration,
+  UpdateFlags,
   ViewerEvent,
   ViewerParams
 } from '../IViewer'
@@ -149,9 +150,14 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
-  public requestRender() {
-    this.speckleRenderer.needsRender = true
-    this.speckleRenderer.resetPipeline()
+  public requestRender(flags: number = UpdateFlags.RENDER) {
+    if (flags & UpdateFlags.RENDER) {
+      this.speckleRenderer.needsRender = true
+      this.speckleRenderer.resetPipeline()
+    }
+    if (flags & UpdateFlags.SHADOWS) {
+      this.speckleRenderer.shadowMapNeedsUpdate = true
+    }
   }
 
   private frame() {
