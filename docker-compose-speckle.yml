@@ -51,7 +51,6 @@ services:
       S3_CREATE_BUCKET: 'true'
       S3_REGION: '' # optional, defaults to 'us-east-1'
       FILE_SIZE_LIMIT_MB: 100
-      MAX_OBJECT_SIZE_MB: 10
       EMAIL_FROM: 'no-reply@example.org'
 
   preview-service:
@@ -87,4 +86,3 @@ services:
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
       SPECKLE_SERVER_URL: 'http://speckle-server:3000'
       FILE_IMPORT_TIME_LIMIT_MIN: 10
-      MAX_OBJECT_SIZE_MB: 10
