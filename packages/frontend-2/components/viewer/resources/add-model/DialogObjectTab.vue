@@ -14,7 +14,7 @@
         size="lg"
         :custom-icon="CubeIcon"
         :rules="[isRequired, isValidValue]"
-        placeholder="Comma-delimited object IDs or an URL to an object(-s)"
+        placeholder="Add objects from the current project by their IDs or an Object URL."
         auto-focus
       />
       <FormButton :icon-left="PlusIcon" size="lg" submit>Add</FormButton>

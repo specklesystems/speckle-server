@@ -8,24 +8,35 @@
       }`"
     >
       <ViewerLayoutPanel @close="trackAndClearSelection()">
+        <template #title>Selection Info</template>
         <template #actions>
-          <button
-            class="hover:text-primary px-2 sm:px-1 py-2 transition"
+          <FormButton
+            size="xs"
+            color="secondary"
+            class="opacity-80 hover:opacity-100"
             @click.stop="hideOrShowSelection"
           >
-            <EyeIcon v-if="!isHidden" class="h-4 w-4 sm:h-3 sm:w-3" />
-            <EyeSlashIcon v-else class="h-4 w-4 sm:h-3 sm:w-3" />
-          </button>
-
-          <button
-            class="hover:text-primary px-2 sm:px-1 py-2 transition"
+            <div class="flex items-center gap-1">
+              <EyeIcon v-if="!isHidden" class="h-4 w-4" />
+              <EyeSlashIcon v-else class="h-4 w-4" />
+              Hide
+            </div>
+          </FormButton>
+          <FormButton
+            size="xs"
+            color="secondary"
+            class="hover:opacity-100"
+            :class="isIsolated ? 'text-primary opacity-100' : 'opacity-80'"
             @click.stop="isolateOrUnisolateSelection"
           >
-            <FunnelIconOutline v-if="!isIsolated" class="h-4 w-4 sm:h-3 sm:w-3" />
-            <FunnelIcon v-else class="h-4 w-4 sm:h-3 sm:w-3 text-primary" />
-          </button>
+            <div class="flex items-center gap-1">
+              <FunnelIconOutline v-if="!isIsolated" class="h-4 w-4" />
+              <FunnelIcon v-else class="h-4 w-4" />
+              Isolate
+            </div>
+          </FormButton>
         </template>
-        <div class="px-1 py-2 sm:bg-white/90 dark:sm:bg-neutral-700/90">
+        <div class="p-1 sm:py-2 sm:bg-white/90 dark:sm:bg-neutral-700/90">
           <div class="space-y-2">
             <ViewerSelectionObject
               v-for="object in objectsLimited"

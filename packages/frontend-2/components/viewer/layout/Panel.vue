@@ -1,13 +1,27 @@
 <template>
-  <div class="sm:bg-foundation rounded-lg shadow">
+  <div class="sm:bg-foundation sm:rounded-lg shadow">
     <div
-      class="sm:bg-foundation-2 sticky top-0 z-50 flex h-10 items-center justify-between rounded-t-lg sm:px-2 sm:shadow-md"
+      class="sticky top-0 z-50 flex flex-col sm:bg-foundation-2 rounded-t-lg sm:shadow-md"
     >
-      <div class="flex items-center w-full"><slot name="actions"></slot></div>
-      <div v-if="!hideClose">
-        <FormButton size="sm" text @click="$emit('close')">
-          <XMarkIcon class="h-4 w-4 sm:h-3 sm:w-3" />
+      <div v-if="!hideClose" class="absolute top-2 right-0 z-10">
+        <FormButton size="sm" color="secondary" text @click="$emit('close')">
+          <XMarkIcon class="h-4 w-4 sm:h-3 sm:w-3 text-primary sm:text-foreground" />
         </FormButton>
+      </div>
+      <div
+        v-if="$slots.title"
+        class="flex items-center h-10 px-2 sm:px-3 sm:border-b backdrop-blur sm:backdrop-blur-none"
+      >
+        <div
+          class="flex items-center h-full w-full pr-8 font-semibold sm:font-bold text-sm text-primary"
+        >
+          <span class="truncate">
+            <slot name="title"></slot>
+          </span>
+        </div>
+      </div>
+      <div class="flex items-center h-8 sm:h-10 gap-2 sm:px-2">
+        <slot name="actions"></slot>
       </div>
     </div>
     <div>

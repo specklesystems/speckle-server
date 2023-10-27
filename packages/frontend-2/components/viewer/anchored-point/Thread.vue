@@ -47,7 +47,9 @@
               'group-hover:bg-foundation dark:group-hover:bg-neutral-800 group-[.is-dragging]:bg-foundation dark:group-[.is-dragging]:bg-neutral-800'
             ]"
           >
-            <div class="relative w-full sm:w-80 flex py-2 sm:bg-foundation">
+            <div
+              class="relative w-full sm:w-80 flex py-2 sm:bg-foundation backdrop-blur sm:backdrop-blur-none"
+            >
               <div class="flex-grow flex items-center">
                 <span class="sm:hidden mx-2 text-primary text-sm font-medium">
                   Discussions
@@ -113,7 +115,7 @@
             <div class="relative w-full sm:w-80 flex flex-col flex-1 justify-between">
               <div
                 ref="commentsContainer"
-                class="max-h-[calc(50vh-100px)] sm:max-h-[300px] pb-20 sm:pb-16 overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
+                class="max-h-[calc(40vh)] sm:max-h-[300px] pb-20 sm:pb-16 overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
               >
                 <div
                   v-if="!isThreadResourceLoaded"

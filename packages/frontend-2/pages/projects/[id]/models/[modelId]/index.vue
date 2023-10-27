@@ -63,7 +63,7 @@
     </div>
   </ViewerPostSetupWrapper>
   <div
-    class="backdrop-blur bg-white/70 px-1 dark:bg-neutral-700/70 sm:hidden shadow-t fixed bottom-0 left-0 max-h-[50vh] w-screen z-50 transition-all duration-300 empty:-bottom-[50vh]"
+    class="backdrop-blur bg-white/70 px-1 dark:bg-neutral-700/70 sm:hidden shadow-t fixed bottom-0 left-0 max-h-[65vh] w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
   >
     <PortalTarget name="bottomPanel"></PortalTarget>
     <PortalTarget name="mobileComments"></PortalTarget>

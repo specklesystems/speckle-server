@@ -1,5 +1,6 @@
 <template>
   <ViewerLayoutPanel @close="$emit('close')">
+    <template #title>Discussions</template>
     <template #actions>
       <FormButton
         text
