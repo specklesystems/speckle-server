@@ -221,6 +221,7 @@ export default class SpeckleConverter {
     if (this.spoofIDs) return generateUUID()
     return obj.id
   }
+
   /**
    * Takes an array composed of chunked references and dechunks it.
    * @param  {[type]} arr [description]
