@@ -465,6 +465,7 @@ export class DiffExtension extends Extension {
     this._materialGroups.forEach((value) => {
       this.viewer.getRenderer().setMaterial(value.rvs, value.material)
     })
+    this.viewer.requestRender()
   }
 
   private setDiffTime(time: number) {
