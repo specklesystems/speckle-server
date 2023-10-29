@@ -40,6 +40,8 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
     new Strategy(
       { client, passReqToCallback: true },
       async (req, tokenSet, userinfo, done) => {
+        if (!req.session)
+          throw new Error('OIDC cannot authenticate without a valid session')
         req.session.tokenSet = tokenSet
         req.session.userinfo = userinfo
 

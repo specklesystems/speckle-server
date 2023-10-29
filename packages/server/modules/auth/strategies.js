@@ -4,7 +4,6 @@ const ExpressSession = require('express-session')
 const RedisStore = require('connect-redis')(ExpressSession)
 const passport = require('passport')
 
-const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
 const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
 const { isSSLServer, getRedisUrl } = require('@/modules/shared/helpers/envHelper')
@@ -40,6 +39,8 @@ module.exports = async (app) => {
    * Move incoming auth query params to session, for easier access (?)
    */
   const sessionStorage = (req, res, next) => {
+    if (!req.session)
+      throw new Error("The request doesn't have a valid session attached")
     if (!req.query.challenge)
       return res.status(400).send('Invalid request: no challenge detected.')
 
@@ -63,6 +64,10 @@ module.exports = async (app) => {
   @param {import('express').Request} req
    */
   const finalizeAuth = async (req, res) => {
+    if (!req.session)
+      throw new Error(
+        "Cannot finalize auth, the request doesn't have a valid session attached"
+      )
     try {
       const ac = await createAuthorizationCode({
         appId: 'spklwebapp',
@@ -100,7 +105,6 @@ module.exports = async (app) => {
 
       return res.redirect(redirectUrl)
     } catch (err) {
-      sentry({ err })
       authLogger.error(err, 'Could not finalize auth')
       if (req.session) req.session.destroy()
       return res.status(401).send({ err: err.message })

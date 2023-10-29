@@ -6,8 +6,14 @@ import {
   MisconfiguredEnvironmentError
 } from '@/modules/shared/errors'
 
+const onRedisError = (err: NodeJS.ErrnoException): boolean | 2 | 1 => {
+  if (err.code === 'ETIMEDOUT') return true
+  return false
+}
+
 export function createRedisClient(redisUrl: string, redisOptions: RedisOptions): Redis {
   let redisClient: Redis
+  redisOptions.reconnectOnError ?? onRedisError
   try {
     redisClient = new Redis(redisUrl, redisOptions)
     redisClient.on('error', (err) => {
