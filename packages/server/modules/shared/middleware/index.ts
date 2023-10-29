@@ -74,7 +74,7 @@ export async function createAuthContextFromToken(
     const tokenValidationResult = await tokenValidator(token)
     // invalid tokens however will be rejected.
     if (!tokenValidationResult.valid)
-      return { auth: false, err: new ForbiddenError('Your token is not valid.') }
+      return { auth: false, err: new UnauthorizedError('Your token is not valid.') }
 
     const { scopes, userId, role } = tokenValidationResult
 
