@@ -1,6 +1,14 @@
-import { AuthorizationCodes, RefreshTokens, knex } from '@/modules/core/dbSchema'
+import {
+  AuthorizationCodes,
+  RefreshTokens,
+  Scopes,
+  ServerAppsScopes,
+  knex
+} from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { ScopeRecord, ServerAppsScopesRecord } from '@/modules/auth/helpers/types'
+import { groupBy, mapValues } from 'lodash'
 
 export type RefreshTokenRecord = {
   id: string
@@ -46,5 +54,19 @@ export async function deleteExistingAuthTokens(userId: string) {
         )
         `,
     [userId, userId]
+  )
+}
+
+export async function getAppScopes(appIds: string[]) {
+  const items = await ServerAppsScopes.knex<
+    Array<ServerAppsScopesRecord & ScopeRecord>
+  >()
+    .whereIn(ServerAppsScopes.col.appId, appIds)
+    .innerJoin(Scopes.name, Scopes.col.name, ServerAppsScopes.col.scopeName)
+
+  // Return record where each key is an app id and the value is an array of scopes
+  return mapValues(
+    groupBy(items, (i) => i.appId),
+    (v) => v.map((vi) => ({ name: vi.scopeName, description: vi.description }))
   )
 }

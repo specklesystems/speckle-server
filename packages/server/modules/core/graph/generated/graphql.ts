@@ -204,6 +204,8 @@ export type AutomationFunctionRun = {
   contextView?: Maybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   functionId: Scalars['String'];
+  functionLogo?: Maybe<Scalars['String']>;
+  functionName: Scalars['String'];
   id: Scalars['ID'];
   resultVersions: Array<Version>;
   /**
@@ -695,6 +697,8 @@ export type FunctionRunStatusInput = {
   contextView?: InputMaybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   functionId: Scalars['String'];
+  functionLogo?: InputMaybe<Scalars['String']>;
+  functionName: Scalars['String'];
   resultVersionIds: Array<Scalars['String']>;
   /**
    * Current schema: {
@@ -3392,6 +3396,8 @@ export type AutomationFunctionRunResolvers<ContextType = GraphQLContext, ParentT
   contextView?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   elapsed?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   functionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  functionLogo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  functionName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   resultVersions?: Resolver<Array<ResolversTypes['Version']>, ParentType, ContextType>;
   results?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;

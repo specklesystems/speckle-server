@@ -471,6 +471,8 @@ export const AutomationRuns = buildTableHelper('automation_runs', [
 export const AutomationFunctionRuns = buildTableHelper('automation_function_runs', [
   'automationRunId',
   'functionId',
+  'functionName',
+  'functionLogo',
   'elapsed',
   'status',
   'contextView',
@@ -482,5 +484,12 @@ export const AutomationFunctionRunsResultVersions = buildTableHelper(
   'automation_function_runs_result_versions',
   ['automationRunId', 'functionId', 'resultVersionId']
 )
+
+export const ServerAppsScopes = buildTableHelper('server_apps_scopes', [
+  'appId',
+  'scopeName'
+])
+
+export const Scopes = buildTableHelper('scopes', ['name', 'description', 'public'])
 
 export { knex }

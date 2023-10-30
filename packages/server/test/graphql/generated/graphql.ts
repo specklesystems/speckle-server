@@ -194,6 +194,8 @@ export type AutomationFunctionRun = {
   contextView?: Maybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   functionId: Scalars['String'];
+  functionLogo?: Maybe<Scalars['String']>;
+  functionName: Scalars['String'];
   id: Scalars['ID'];
   resultVersions: Array<Version>;
   /**
@@ -685,6 +687,8 @@ export type FunctionRunStatusInput = {
   contextView?: InputMaybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   functionId: Scalars['String'];
+  functionLogo?: InputMaybe<Scalars['String']>;
+  functionName: Scalars['String'];
   resultVersionIds: Array<Scalars['String']>;
   /**
    * Current schema: {
