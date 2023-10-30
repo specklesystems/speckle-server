@@ -25,7 +25,7 @@
         />
       </div>
       <div
-        class="flex flex-col space-y-4 items-end md:flex-row md:justify-between md:items-center md:space-y-0 mb-40"
+        class="flex flex-col space-y-4 items-end md:flex-row md:justify-between md:items-center md:space-y-0"
       >
         <ProjectVisibilitySelect
           v-model="visibility"
