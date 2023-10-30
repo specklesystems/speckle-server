@@ -4,7 +4,7 @@
     title="Webhooks"
     :icon="LockClosedIcon"
     :button="{
-      text: 'Manage Webhooks',
+      text: 'Manage',
       to: projectWebhooksRoute(project.id),
       iconRight: ChevronRightIcon,
       color: 'default'

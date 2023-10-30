@@ -3,7 +3,8 @@
     class="flex flex-col border-primary-muted"
     :class="{
       'border-t': borderT,
-      'border-b': borderB
+      'border-b': borderB,
+      'relative z-10': isExpanded
     }"
   >
     <div
@@ -56,7 +57,7 @@
           : `max-height: ${isExpanded ? contentHeight + 'px' : '0px'}`
       "
     >
-      <div ref="content" class="rounded-md text-sm pb-3 px-2 mt-1">
+      <div ref="content" class="rounded-md text-sm pb-3 px-2 mt-1 bg-white">
         <slot>Panel contents</slot>
       </div>
     </div>
