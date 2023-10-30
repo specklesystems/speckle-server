@@ -485,4 +485,11 @@ export const AutomationFunctionRunsResultVersions = buildTableHelper(
   ['automationRunId', 'functionId', 'resultVersionId']
 )
 
+export const ServerAppsScopes = buildTableHelper('server_apps_scopes', [
+  'appId',
+  'scopeName'
+])
+
+export const Scopes = buildTableHelper('scopes', ['name', 'description', 'public'])
+
 export { knex }

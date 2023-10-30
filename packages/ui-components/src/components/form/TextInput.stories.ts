@@ -21,7 +21,7 @@ export default {
       control: { type: 'select' }
     },
     color: {
-      options: ['page', 'foundation'],
+      options: ['page', 'foundation', 'transparent'],
       control: { type: 'select' }
     },
     rules: {
