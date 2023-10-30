@@ -35,6 +35,15 @@
         <ChatBubbleLeftRightIcon class="h-5 w-5" />
       </ViewerControlsButtonToggle>
 
+      <!-- Automateeeeeeee FTW -->
+      <ViewerControlsButtonToggle
+        v-tippy="`Automate Run Results`"
+        :active="activeControl === 'automate'"
+        @click="toggleActiveControl('automate')"
+      >
+        <PlayCircleIcon class="h-5 w-5" />
+      </ViewerControlsButtonToggle>
+
       <!-- TODO: direct add comment -->
       <!-- <ViewerCommentsDirectAddComment v-show="activeControl === 'comments'" /> -->
 
@@ -121,6 +130,9 @@
         v-if="resourceItems.length !== 0 && activeControl === 'filters'"
         class="pointer-events-auto"
       />
+      <div v-show="resourceItems.length !== 0 && activeControl === 'automate'">
+        <ViewerAutomatePanel />
+      </div>
 
       <!-- Empty state -->
       <div v-if="resourceItems.length === 0">
@@ -148,7 +160,8 @@ import {
   ChatBubbleLeftRightIcon,
   ArrowsPointingOutIcon,
   ScissorsIcon,
-  PlusIcon
+  PlusIcon,
+  PlayCircleIcon
 } from '@heroicons/vue/24/outline'
 import { Nullable } from '@speckle/shared'
 import {
@@ -176,7 +189,14 @@ const { resourceItems } = useInjectedViewerLoadedResources()
 
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 
-type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'discussions'
+type ActiveControl =
+  | 'none'
+  | 'models'
+  | 'explorer'
+  | 'filters'
+  | 'discussions'
+  | 'automate'
+
 const openAddModel = ref(false)
 
 const activeControl = ref<ActiveControl>('models')
