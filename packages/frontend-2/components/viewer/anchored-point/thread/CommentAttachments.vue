@@ -9,25 +9,32 @@
     >
       <span class="truncate relative bottom-0.5">{{ attachment.fileName }}</span>
     </CommonTextLink>
-    <LayoutDialog v-model:open="dialogOpen" max-width="lg">
+    <LayoutDialog
+      v-model:open="dialogOpen"
+      max-width="lg"
+      :title="dialogAttachment ? dialogAttachment.fileName : 'Attachment'"
+      :buttons="
+        dialogAttachment
+          ? [
+              {
+                text: dialogAttachment.fileSize
+                  ? prettyFileSize(dialogAttachment.fileSize)
+                  : 'Download',
+                props: {
+                  color: 'primary',
+                  fullWidth: true,
+                  iconLeft: ArrowDownTrayIcon
+                },
+                onClick: () => {
+                  onDownloadClick()
+                }
+              }
+            ]
+          : undefined
+      "
+    >
       <template v-if="dialogAttachment">
         <div class="flex flex-col space-y-2">
-          <div class="flex justify-between">
-            <h1 class="h4 font-bold text-foreground truncate">
-              {{ dialogAttachment.fileName }}
-            </h1>
-            <FormButton
-              :icon-left="ArrowDownTrayIcon"
-              class="mr-8 ml-2"
-              @click="onDownloadClick"
-            >
-              {{
-                dialogAttachment.fileSize
-                  ? prettyFileSize(dialogAttachment.fileSize)
-                  : 'Download'
-              }}
-            </FormButton>
-          </div>
           <div class="flex justify-center text-foreground">
             <template v-if="dialogAttachmentError">
               <span class="inline-flex space-x-2 items-center">

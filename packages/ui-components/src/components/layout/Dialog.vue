@@ -91,10 +91,13 @@
 </template>
 <script setup lang="ts">
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
+import { ExtractPropTypes } from 'vue'
 import { FormButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { computed, ref, useSlots } from 'vue'
 import { throttle } from 'lodash'
+
+type FormButtonType = ExtractPropTypes<typeof FormButton>
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -112,13 +115,7 @@ const props = defineProps<{
    */
   preventCloseOnClickOutside?: boolean
   title?: string
-  buttons?: Array<{
-    text: string
-    props: Record<string, unknown>
-    onClick?: () => void
-    disabled?: boolean
-    submit?: boolean
-  }>
+  buttons?: FormButtonType[]
   /**
    * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
    */
