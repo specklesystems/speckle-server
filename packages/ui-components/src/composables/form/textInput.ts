@@ -5,7 +5,7 @@ import { Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
 import { isArray } from 'lodash'
 
-export type InputColor = 'page' | 'foundation'
+export type InputColor = 'page' | 'foundation' | 'transparent'
 
 /**
  * Common setup for text input & textarea fields
@@ -79,6 +79,8 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     const color = unref(props.color)
     if (color === 'foundation') {
       classParts.push('bg-foundation shadow-sm hover:shadow')
+    } else if (color === 'transparent') {
+      classParts.push('bg-transparent')
     } else {
       classParts.push('bg-foundation-page')
     }

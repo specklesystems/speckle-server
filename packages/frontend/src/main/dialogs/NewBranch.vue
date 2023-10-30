@@ -36,6 +36,7 @@
 </template>
 <script>
 import { gql } from '@apollo/client/core'
+import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
 
 export default {
   data() {
@@ -96,9 +97,9 @@ export default {
 
         try {
           await this.$router.push(
-            `/streams/${
-              this.$route.params.streamId
-            }/branches/${this.name.toLowerCase()}`
+            `/streams/${this.$route.params.streamId}/branches/${formatBranchNameForURL(
+              this.name.toLowerCase()
+            )}`
           )
         } catch (routerErr) {
           if (routerErr?.name === 'NavigationDuplicated') {

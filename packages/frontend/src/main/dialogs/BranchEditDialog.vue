@@ -86,13 +86,20 @@ import isNull from 'lodash/isNull'
 import isUndefined from 'lodash/isUndefined'
 import clone from 'lodash/clone'
 import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
-
+import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
+import {
+  convertThrowIntoFetchResult,
+  getFirstErrorMessage
+} from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
 export default {
   props: {
     stream: {
       type: Object,
       default: () => null
     }
+  },
+  setup() {
+    return { formatBranchNameForURL }
   },
   data() {
     return {
@@ -195,18 +202,23 @@ export default {
     },
     async updateBranch() {
       if (!this.$refs.form.validate()) return
-      try {
-        if (this.allBranchNames.indexOf(this.editableBranch.name) !== -1)
-          throw new Error('Branch already exists. Please choose a different name.')
 
-        this.loading = true
-        this.$mixpanel.track('Branch Action', { type: 'action', name: 'update' })
+      if (this.allBranchNames.indexOf(this.editableBranch.name) !== -1) {
+        this.$eventHub.$emit('notification', {
+          text: 'Branch already exists. Please choose a different name.'
+        })
+        return
+      }
 
-        const branchId = this.editableBranch.id
-        const newName = this.editableBranch.name
-        const newDescription = this.editableBranch.description
+      this.loading = true
+      this.$mixpanel.track('Branch Action', { type: 'action', name: 'update' })
 
-        const res = await this.$apollo.mutate({
+      const branchId = this.editableBranch.id
+      const newName = this.editableBranch.name
+      const newDescription = this.editableBranch.description
+
+      const res = await this.$apollo
+        .mutate({
           mutation: gql`
             mutation branchUpdate($params: BranchUpdateInput!) {
               branchUpdate(branch: $params)
@@ -221,32 +233,36 @@ export default {
             }
           }
         })
+        .catch(convertThrowIntoFetchResult)
 
-        if (!res.data.branchUpdate) throw new Error('Something went wrong!')
-      } catch (err) {
-        this.$eventHub.$emit('notification', { text: err.message })
-      }
+      const success = !!res.data?.branchUpdate
+      const error = getFirstErrorMessage(res.errors)
 
       this.loading = false
-      this.$eventHub.$emit(StreamEvents.RefetchBranches)
-      this.$eventHub.$emit('notification', {
-        text: 'Branch updated',
-        action: {
-          name: 'View',
-          to:
-            `/streams/` +
+
+      if (success) {
+        this.$eventHub.$emit(StreamEvents.RefetchBranches)
+        this.$eventHub.$emit('notification', {
+          text: 'Branch updated',
+          action: {
+            name: 'View',
+            to:
+              `/streams/` +
+              this.$route.params.streamId +
+              `/branches/` +
+              this.formatBranchNameForURL(this.editableBranch.name)
+          }
+        })
+        this.$router.push(
+          `/streams/` +
             this.$route.params.streamId +
             `/branches/` +
-            this.editableBranch.name
-        }
-      })
-      this.$router.push(
-        `/streams/` +
-          this.$route.params.streamId +
-          `/branches/` +
-          this.editableBranch.name
-      )
-      this.$emit('close')
+            this.formatBranchNameForURL(this.editableBranch.name)
+        )
+        this.$emit('close')
+      } else {
+        this.$eventHub.$emit('notification', { text: error })
+      }
     }
   }
 }

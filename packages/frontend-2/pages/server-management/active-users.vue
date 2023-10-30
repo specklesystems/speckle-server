@@ -138,6 +138,10 @@ import {
 } from '@heroicons/vue/20/solid'
 import { useServerInfo } from '~~/lib/core/composables/server'
 
+useHead({
+  title: 'Active Users'
+})
+
 definePageMeta({
   middleware: ['admin']
 })

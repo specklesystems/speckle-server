@@ -5,6 +5,7 @@
     :placeholder="user.name"
     name="edit-avatar"
     :disabled="loading"
+    :size="size"
     @save="onSave"
   />
 </template>
@@ -13,6 +14,7 @@ import { UserProfileEditDialogAvatar_UserFragment } from '~~/lib/common/generate
 import { graphql } from '~~/lib/common/generated/gql'
 import { useUpdateUserProfile } from '~~/lib/user/composables/management'
 import { MaybeNullOrUndefined } from '@speckle/shared'
+import { UserAvatarSize } from '@speckle/ui-components/dist/composables/user/avatar'
 
 graphql(`
   fragment UserProfileEditDialogAvatar_User on User {
@@ -24,6 +26,7 @@ graphql(`
 
 const props = defineProps<{
   user: UserProfileEditDialogAvatar_UserFragment
+  size: UserAvatarSize
 }>()
 
 const editMode = ref(false)

@@ -66,6 +66,8 @@ spec:
             value: {{ .Values.frontend_2.logClientApiToken }}
           - name: NUXT_PUBLIC_LOG_CLIENT_API_ENDPOINT
             value: {{ .Values.frontend_2.logClientApiEndpoint }}
+          - name: NODE_TLS_REJECT_UNAUTHORIZED
+            value: {{ .Values.tlsRejectUnauthorized | quote }}
 
       priorityClassName: high-priority
       {{- if .Values.frontend_2.affinity }}

@@ -95,6 +95,7 @@ import { gql } from '@apollo/client/core'
 import { useRoute } from '@/main/lib/core/composables/router'
 import { useAllStreamBranches } from '@/main/lib/stream/composables/branches'
 import { computed } from 'vue'
+import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
 
 export default {
   props: {
@@ -109,7 +110,8 @@ export default {
     const { localBranches, branchesLoading } = useAllStreamBranches(streamId)
     return {
       localBranches,
-      branchesLoading
+      branchesLoading,
+      formatBranchNameForURL
     }
   },
   data() {
@@ -181,7 +183,9 @@ export default {
           text: `Commit moved to branch ${this.newBranch}.`,
           action: {
             name: 'View Branch',
-            to: `/streams/${this.$route.params.streamId}/branches/${this.newBranch}`
+            to: `/streams/${
+              this.$route.params.streamId
+            }/branches/${formatBranchNameForURL(this.newBranch)}`
           }
         })
       }
@@ -210,7 +214,10 @@ export default {
         })
       }
       this.$router.push(
-        `/streams/` + this.$route.params.streamId + `/branches/` + commitBranch
+        `/streams/` +
+          this.$route.params.streamId +
+          `/branches/` +
+          formatBranchNameForURL(commitBranch)
       )
       this.loading = false
       this.showDeleteDialog = false

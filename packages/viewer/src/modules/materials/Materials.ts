@@ -60,6 +60,7 @@ export default class Materials {
   private pointOverlayMaterial: Material = null
   private pointCloudOverlayMaterial: Material = null
   private pointCloudColouredMaterial: Material = null
+  private pointCloudGradientMaterial: Material = null
 
   private textHighlightMaterial: Material = null
   private textGhostMaterial: Material = null
@@ -446,6 +447,18 @@ export default class Materials {
       },
       ['USE_RTE']
     )
+    this.pointCloudGradientMaterial = new SpecklePointColouredMaterial(
+      {
+        color: 0xffffff,
+        vertexColors: false,
+        size: 2,
+        sizeAttenuation: false
+      },
+      ['USE_RTE']
+    )
+    ;(
+      this.pointCloudGradientMaterial as SpecklePointColouredMaterial
+    ).setGradientTexture(await Assets.getTexture(defaultGradient))
 
     // Jesus prettier... o_0(
     ;(
@@ -857,9 +870,9 @@ export default class Materials {
       case GeometryType.LINE:
         return this.lineColoredMaterial
       case GeometryType.POINT:
-        return this.pointGhostMaterial
+        return this.pointCloudGradientMaterial
       case GeometryType.POINT_CLOUD:
-        return this.pointGhostMaterial
+        return this.pointCloudGradientMaterial
       case GeometryType.TEXT:
         return this.textColoredMaterial
     }
@@ -874,7 +887,7 @@ export default class Materials {
       case GeometryType.LINE:
         return this.lineColoredMaterial
       case GeometryType.POINT:
-        return this.pointGhostMaterial
+        return this.pointCloudColouredMaterial
       case GeometryType.POINT_CLOUD:
         return this.pointCloudColouredMaterial
       case GeometryType.TEXT:

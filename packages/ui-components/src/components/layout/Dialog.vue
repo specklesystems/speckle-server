@@ -16,13 +16,7 @@
       </TransitionChild>
 
       <div class="fixed inset-0 z-10 h-screen w-screen">
-        <div
-          :class="
-            sidePanel
-              ? 'absolute top-0 right-0 h-screen w-96'
-              : 'flex justify-center items-center h-full w-full p-4 sm:p-0'
-          "
-        >
+        <div class="flex justify-center items-center h-full w-full p-4 sm:p-0">
           <TransitionChild
             as="template"
             enter="ease-out duration-300"
@@ -35,9 +29,9 @@
           >
             <DialogPanel
               :class="[
-                'transform text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col',
+                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90vh]',
                 widthClasses,
-                sidePanel ? 'h-full' : 'max-h-[90vh] rounded-lg'
+                !maxHeight && 'h-full'
               ]"
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onSubmit"
@@ -47,7 +41,9 @@
                   v-if="title"
                   class="flex items-center justify-start rounded-t-lg shrink-0 h-16 px-8"
                 >
-                  <h4 class="text-2xl font-bold">{{ title }}</h4>
+                  <slot name="header">
+                    <h4 class="text-2xl font-bold">{{ title }}</h4>
+                  </slot>
                 </div>
               </div>
 
@@ -117,7 +113,7 @@ const props = defineProps<{
    */
   preventCloseOnClickOutside?: boolean
   title?: string
-  sidePanel?: boolean
+  maxHeight?: boolean
   buttons?: Array<{
     text: string
     props: Record<string, unknown>

@@ -57,7 +57,7 @@
     "eslint-plugin-vue": "^9.5.1",
     "eslint-plugin-vuejs-accessibility": "^1.2.0",
     "nuxt": "^3.6.3",
-    "postcss": "^8.4.18",
+    "postcss": "^8.4.31",
     "postcss-custom-properties": "^12.1.9",
     "postcss-html": "^1.5.0",
     "postcss-nesting": "^10.2.0",
