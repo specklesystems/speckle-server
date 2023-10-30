@@ -275,17 +275,17 @@ export class LegacyViewer extends Viewer {
 
   public setOrthoCameraOn() {
     this.cameraController.setOrthoCameraOn()
-    this.speckleRenderer.resetPipeline(true)
+    this.speckleRenderer.resetPipeline()
   }
 
   public setPerspectiveCameraOn() {
     this.cameraController.setPerspectiveCameraOn()
-    this.speckleRenderer.resetPipeline(true)
+    this.speckleRenderer.resetPipeline()
   }
 
   public toggleCameraProjection() {
     this.cameraController.toggleCameras()
-    this.speckleRenderer.resetPipeline(true)
+    this.speckleRenderer.resetPipeline()
   }
 
   public setLightConfiguration(config: SunLightConfiguration): void {

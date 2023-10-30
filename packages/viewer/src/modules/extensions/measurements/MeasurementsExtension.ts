@@ -171,10 +171,7 @@ export class MeasurementsExtension extends Extension {
     this.measurement.update()
 
     this.renderer.needsRender = true
-    this.renderer.resetPipeline(
-      /* Because of the camera controller library*/
-      this.renderer.renderingCamera.type === 'OrthographicCamera'
-    )
+    this.renderer.resetPipeline()
     this._frameLock = true
     this._sceneHit = true
   }

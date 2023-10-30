@@ -423,7 +423,8 @@ export class Pipeline {
       const ret = false || this._resetFrame
       if (this._resetFrame) {
         this._resetFrame = false
-        this.onStationaryBegin()
+        /** This might not be needed */
+        // this.onStationaryBegin()
       }
       retVal = ret
     } else {

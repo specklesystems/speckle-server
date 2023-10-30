@@ -296,7 +296,7 @@ export class Viewer extends EventEmitter implements IViewer {
       Logger.log(this.getRenderer().renderingStats)
       Logger.log('ASYNC batch build time -> ', performance.now() - t0)
       this.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
-      this.speckleRenderer.resetPipeline(true)
+      this.speckleRenderer.resetPipeline()
       this.emit(ViewerEvent.LoadComplete, loader.resource)
     }
 
