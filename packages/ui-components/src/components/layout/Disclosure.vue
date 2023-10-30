@@ -69,7 +69,7 @@ const buttonClasses = computed(() => {
 })
 
 const panelClasses = computed(() => {
-  const classParts = ['mt-4 px-3 py-1 border-x ']
+  const classParts = ['p-3 border-x border-b rounded-b-md']
 
   switch (props.color) {
     case 'warning':
