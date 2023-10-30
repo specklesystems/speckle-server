@@ -5,7 +5,7 @@ metadata:
   name: speckle-frontend-2
   namespace: {{ .Values.namespace }}
   labels:
-{{ include "frontend-2.labels" . | indent 4 }}
+{{ include "frontend_2.labels" . | indent 4 }}
 spec:
   selector:
     app: speckle-frontend-2
