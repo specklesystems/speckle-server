@@ -281,7 +281,6 @@ import CommitObjectViewerScope from '@/main/components/viewer/CommitObjectViewer
 import PrioritizedPortal from '@/main/components/common/utility/PrioritizedPortal.vue'
 import { ViewerEvent } from '@speckle/viewer'
 import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
-import { CameraController } from '@speckle/viewer'
 
 type ErroredResourceData = {
   error: boolean
@@ -568,7 +567,8 @@ export default defineComponent({
           }, 200)
         }
       })
-      this.viewer.getExtension(CameraController).controls.addEventListener(
+
+      this.viewer.cameraHandler.controls.addEventListener(
         'rest',
         debounce(() => {
           if (this.isEmbed) return
@@ -670,14 +670,13 @@ export default defineComponent({
       }
     },
     async loadModel(objectId: string) {
-      await this.viewer.loadObjectAsync(
+      await this.viewer.loadObject(
         `${window.location.origin}/streams/${this.streamId}/objects/${objectId}`
       )
-      /** Not needed anymore */
-      // this.viewer.zoom(undefined, undefined, true)
+      this.viewer.zoom(undefined, undefined, true)
 
       this.loadedModel = true
-      await this.setFilters()
+      this.setFilters()
       this.setViews()
     },
     async addResources(ids: string[]) {
@@ -732,7 +731,7 @@ export default defineComponent({
         })
       }
 
-      await this.loadModel(
+      this.loadModel(
         resource.type === 'commit'
           ? resource.data.commit.referencedObject
           : resource.data.object.id
@@ -762,7 +761,7 @@ export default defineComponent({
         this.viewer.zoom(undefined, undefined, true)
       }
       this.resources.splice(index, 1)
-      await this.setFilters()
+      this.setFilters()
       this.setViews()
       if (this.overlay) {
         const arr = this.overlay
@@ -791,7 +790,7 @@ export default defineComponent({
     async setFilters() {
       try {
         // repopulate object props
-        await loadObjectProperties()
+        loadObjectProperties()
       } catch (e) {
         this.$eventHub.$emit('notification', {
           text: 'Failed to get object properties from viewer.'
