@@ -113,7 +113,8 @@ export default class SpeckleConverter {
       /** We're adding a parent for the entire model (subtree) */
       const subtreeNode: TreeNode = this.tree.parse({
         id: objectURL,
-        raw: obj,
+        /* Hack required by frontend*/
+        raw: { id: objectURL, children: [obj] },
         atomic: true,
         children: []
       })

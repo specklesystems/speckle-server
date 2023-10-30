@@ -226,6 +226,9 @@ export default class SpeckleRenderer {
     })
     this._cameraProvider.on(CameraControllerEvent.FrameUpdate, (data: boolean) => {
       this.needsRender = data
+      if (this.pipeline.needsAccumulation && data) {
+        this.pipeline.reset()
+      }
     })
   }
 
@@ -640,6 +643,8 @@ export default class SpeckleRenderer {
   )
   public setMaterial(rvs: NodeRenderView[], material: FilterMaterial)
   public setMaterial(rvs: NodeRenderView[], material) {
+    if (!material) return
+
     const rvMap = {}
     for (let k = 0; k < rvs.length; k++) {
       if (!rvs[k].batchId) {

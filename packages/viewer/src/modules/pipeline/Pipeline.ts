@@ -424,7 +424,7 @@ export class Pipeline {
       if (this._resetFrame) {
         this._resetFrame = false
         /** This might not be needed */
-        // this.onStationaryBegin()
+        this.onStationaryBegin()
       }
       retVal = ret
     } else {
