@@ -103,14 +103,22 @@ export default class SpeckleConverter {
     if (!obj.id) return
 
     const childNode: TreeNode = this.tree.parse({
-      id: !node ? objectURL : this.getNodeId(obj),
+      id: this.getNodeId(obj),
       raw: obj,
       atomic: true,
       children: []
     })
 
     if (node === null) {
-      this.tree.addSubtree(childNode)
+      /** We're adding a parent for the entire model (subtree) */
+      const subtreeNode: TreeNode = this.tree.parse({
+        id: objectURL,
+        raw: obj,
+        atomic: true,
+        children: []
+      })
+      this.tree.addSubtree(subtreeNode)
+      this.tree.addNode(childNode, subtreeNode)
     } else {
       this.tree.addNode(childNode, node)
     }
