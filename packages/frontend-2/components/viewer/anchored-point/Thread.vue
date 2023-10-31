@@ -43,15 +43,15 @@
         >
           <div
             :class="[
-              'sm:bg-white/70 dark:sm:bg-neutral-800/70 sm:backdrop-blur flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
+              'bg-foundation sm:bg-white/70 dark:sm:bg-neutral-800/70 sm:backdrop-blur flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
               'group-hover:bg-foundation dark:group-hover:bg-neutral-800 group-[.is-dragging]:bg-foundation dark:group-[.is-dragging]:bg-neutral-800'
             ]"
           >
             <div
-              class="relative w-full sm:w-80 flex py-2 sm:bg-foundation backdrop-blur sm:backdrop-blur-none"
+              class="relative w-full sm:w-80 flex py-2 pl-3 pr-2 sm:px-2 bg-foundation-2"
             >
               <div class="flex-grow flex items-center">
-                <span class="sm:hidden mx-2 text-primary text-sm font-medium">
+                <span class="sm:hidden text-primary text-sm font-medium">
                   Discussions
                 </span>
                 <FormButton
@@ -115,7 +115,7 @@
             <div class="relative w-full sm:w-80 flex flex-col flex-1 justify-between">
               <div
                 ref="commentsContainer"
-                class="max-h-[calc(40vh)] sm:max-h-[300px] pb-20 sm:pb-16 overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
+                class="max-h-[calc(40vh)] sm:max-h-[300px] pb-16 overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
               >
                 <div
                   v-if="!isThreadResourceLoaded"
