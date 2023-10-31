@@ -37,7 +37,7 @@
 
       <!-- Automateeeeeeee FTW -->
       <ViewerControlsButtonToggle
-        v-if='allAutomationRuns.length!==0'
+        v-if="allAutomationRuns.length !== 0"
         v-tippy="summary.longSummary"
         :active="activeControl === 'automate'"
         @click="toggleActiveControl('automate')"
@@ -135,7 +135,11 @@
         class="pointer-events-auto"
       />
       <div v-show="resourceItems.length !== 0 && activeControl === 'automate'">
-        <ViewerAutomatePanel />
+        <ViewerAutomatePanel
+          :automation-runs="allAutomationRuns"
+          :summary="summary"
+          @close="activeControl = 'none'"
+        />
       </div>
 
       <!-- Empty state -->
@@ -197,12 +201,15 @@ const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources(
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 
 const allAutomationRuns = computed(() => {
-  const allAutomationStatuses = modelsAndVersionIds.value.map(model => model.model.loadedVersion.items[0].automationStatus ).flat().filter(run => !!run)
-  return allAutomationStatuses.map(status => status?.automationRuns).flat()
+  const allAutomationStatuses = modelsAndVersionIds.value
+    .map((model) => model.model.loadedVersion.items[0].automationStatus)
+    .flat()
+    .filter((run) => !!run)
+  return allAutomationStatuses.map((status) => status?.automationRuns).flat()
 })
 
 const allFunctionRuns = computed(() => {
-  return allAutomationRuns.value.map(run => run?.functionRuns).flat()
+  return allAutomationRuns.value.map((run) => run?.functionRuns).flat()
 })
 
 const summary = computed(() => {
