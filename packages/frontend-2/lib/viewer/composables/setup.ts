@@ -68,6 +68,7 @@ import {
 import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { flatten, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
+import { FilteringExtension } from '@speckle/viewer'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -345,12 +346,16 @@ function setupViewerMetadata(params: {
 
   onMounted(() => {
     viewer.on(ViewerEvent.Busy, refreshWorldTreeAndFilters)
-    viewer.on(ViewerEvent.FilteringStateSet, updateFilteringState)
+    viewer
+      .getExtension(FilteringExtension)
+      .on(ViewerEvent.FilteringStateSet, updateFilteringState)
   })
 
   onBeforeUnmount(() => {
     viewer.removeListener(ViewerEvent.Busy, refreshWorldTreeAndFilters)
-    viewer.removeListener(ViewerEvent.FilteringStateSet, updateFilteringState)
+    viewer
+      .getExtension(FilteringExtension)
+      .removeListener(ViewerEvent.FilteringStateSet, updateFilteringState)
   })
 
   return {
