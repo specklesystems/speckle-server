@@ -26,7 +26,7 @@ const config: Config = {
         t: '0 -10px 8px 0 rgb(0 0 0 / 8%), 0 -4px 3px -6px rgb(0 0 0 / 10%)'
       },
       backdropBlur: {
-        xs: '1px'
+        xs: '2px'
       },
       colors: {
         foundation: {
