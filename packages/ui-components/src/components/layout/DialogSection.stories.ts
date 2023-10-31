@@ -7,17 +7,8 @@ export default {
   parameters: {
     docs: {
       description: {
-        component: 'Standard disclosure panel'
+        component: 'Section to use in Dialogs'
       }
-    }
-  },
-  argTypes: {
-    color: {
-      options: ['default', 'danger'],
-      control: { type: 'select' }
-    },
-    icon: {
-      type: 'function'
     }
   }
 } as Meta
