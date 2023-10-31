@@ -30,6 +30,7 @@
         <ProjectVisibilitySelect
           v-model="visibility"
           class="sm:max-w-none w-full sm:w-80"
+          mount-menu-on-body
         />
       </div>
     </form>
