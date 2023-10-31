@@ -19,6 +19,10 @@
         </div>
       </div>
       <div class="relative flex flex-col space-y-2 p-2">
+        <div class="text-xs my-4 px-1">
+          TODO: Display a message informing whether we've hidden any run results (e.g.,
+          from function runs that are inprogress? )
+        </div>
         <template v-for="automationRun in automationRuns">
           <template v-for="run in automationRun.functionRuns" :key="run.id">
             <AutomationViewerFunctionRunItem
