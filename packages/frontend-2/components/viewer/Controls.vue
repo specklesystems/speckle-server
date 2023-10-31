@@ -40,6 +40,8 @@
 
       <!-- Standard viewer controls -->
       <ViewerControlsButtonGroup>
+        <!-- Views -->
+        <ViewerViewsMenu v-tippy="'Views'" />
         <!-- Zoom extents -->
         <ViewerControlsButtonToggle
           v-tippy="zoomExtentsShortcut"
@@ -51,12 +53,6 @@
 
         <!-- Sun and lights -->
         <ViewerSunMenu v-tippy="'Light Controls'" />
-
-        <!-- Views -->
-        <ViewerViewsMenu v-tippy="'Views'" />
-
-        <!-- Settings -->
-        <ViewerSettingsMenu />
       </ViewerControlsButtonGroup>
       <ViewerControlsButtonGroup>
         <!-- Projection type -->
@@ -85,6 +81,9 @@
 
         <!-- Explosion -->
         <ViewerExplodeMenu v-tippy="'Explode'" />
+
+        <!-- Settings -->
+        <ViewerSettingsMenu />
       </ViewerControlsButtonGroup>
     </div>
     <div
@@ -199,7 +198,7 @@ const discussionsShortcut = ref(
   `Discussions (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 't'])})`
 )
 const zoomExtentsShortcut = ref(
-  `Zoom Extents (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'Space'])})`
+  `Fit to screen (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'Space'])})`
 )
 const projectionShortcut = ref(
   `Projection (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'p'])})`
