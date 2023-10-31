@@ -155,7 +155,8 @@ import {
   useCameraUtilities,
   useSectionBoxUtilities
 } from '~~/lib/viewer/composables/ui'
-import { useBreakpoints } from '~~/composables/browser'
+import { useBreakpoints, Breakpoint } from '~~/lib/common/composables/window'
+
 import {
   onKeyboardShortcut,
   ModifierKeys,
@@ -182,7 +183,11 @@ const { isMediaQueryMax } = useBreakpoints()
 type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'discussions'
 const openAddModel = ref(false)
 
-const activeControl = ref<ActiveControl>(isMediaQueryMax('sm') ? 'none' : 'models')
+const activeControl = ref<ActiveControl>(
+  isMediaQueryMax(Breakpoint.sm).value ? 'none' : 'models'
+)
+console.log(isMediaQueryMax(Breakpoint.sm))
+
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
 const {
   diff: { enabled }
