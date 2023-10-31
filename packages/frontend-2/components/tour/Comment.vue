@@ -22,7 +22,7 @@
       >
         <div
           v-show="item.expanded"
-          class="transition hover:bg-foundation bg-white dark:bg-neutral-800/90 dark:hover:bg-neutral-800 rounded-lg shadow-md ml-10 px-4 py-4 max-w-xs min-w-fit space-y-4 w-96 pointer-events-auto"
+          class="transition hover:bg-foundation bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm rounded-lg shadow-md ml-10 px-4 py-4 max-w-xs min-w-fit space-y-4 w-96 pointer-events-auto"
         >
           <slot></slot>
 
