@@ -175,7 +175,7 @@
               :icon-right="ArrowTopRightOnSquareIcon"
               :to="viewAllUrl"
               :disabled="!viewAllUrl"
-              @click="trackFederateModels"
+              @click.stop="trackFederateModels"
             >
               View All
             </FormButton>
@@ -241,6 +241,7 @@ import { projectModelChildrenTreeQuery } from '~~/lib/projects/graphql/queries'
 import { has } from 'lodash-es'
 import { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useIsModelExpanded } from '~~/lib/projects/composables/models'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -300,7 +301,6 @@ const trackFederateModels = () =>
     source: 'model grid item'
   })
 
-const expanded = ref(false)
 const showActionsMenu = ref(false)
 
 const itemType = computed<StructureItemType>(() => {
@@ -338,6 +338,13 @@ const hasSubmodels = computed(() =>
 const name = computed(() => {
   if (isPendingFileUpload(props.item)) return props.item.modelName
   return props.isSearchResult ? props.item.fullName : props.item.name
+})
+const fullName = computed(() =>
+  isPendingFileUpload(props.item) ? props.item.modelName : props.item.fullName
+)
+const expanded = useIsModelExpanded({
+  fullName,
+  projectId: computed(() => props.projectId)
 })
 
 const model = computed(() =>
