@@ -24,16 +24,33 @@
             </div>
             <!-- Notifications dropdown -->
             <HeaderNavNotifications />
-            <!-- Profile dropdown -->
-            <HeaderNavUserMenu />
+            <!-- Profile -->
+            <button
+              class="relative group cursor-pointer"
+              @click="showProfileEditDialog = true"
+            >
+              <UserAvatar size="lg" :user="activeUser" />
+              <div
+                class="opacity-0 group-hover:opacity-90 transition-all duration-200 absolute inset-0 bg-primary text-white rounded-full flex items-center justify-center"
+              >
+                <PencilIcon class="h-4 w-4" />
+              </div>
+            </button>
+            <!-- Menu dropdown -->
+            <HeaderNavUserMenu hover-effect />
           </div>
         </div>
       </div>
     </div>
     <PopupsSignIn v-if="!activeUser" />
+    <UserProfileEditDialog v-model:open="showProfileEditDialog" />
   </nav>
 </template>
 <script setup lang="ts">
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 const { activeUser } = useActiveUser()
+
+import { PencilIcon } from '@heroicons/vue/24/solid'
+
+const showProfileEditDialog = ref(false)
 </script>

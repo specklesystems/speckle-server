@@ -3,10 +3,8 @@
     <Menu as="div" class="ml-2 flex items-center">
       <MenuButton v-slot="{ open: userOpen }">
         <span class="sr-only">Open user menu</span>
-        <UserAvatar v-if="!userOpen" size="lg" :user="activeUser" hover-effect />
-        <UserAvatar v-else size="lg" hover-effect>
-          <XMarkIcon class="w-5 h-5" />
-        </UserAvatar>
+        <Bars3Icon v-if="!userOpen" class="w-6 h-6" hover-effect no-bg />
+        <XMarkIcon v-else class="w-6 h-6" />
       </MenuButton>
       <Transition
         enter-active-class="transition ease-out duration-200"
@@ -23,7 +21,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center justify-between px-2 py-3 text-sm text-primary cursor-pointer transition border-b border-primary'
+                'flex items-center justify-between pl-3 pr-2 py-3 text-sm text-primary cursor-pointer transition border-b border-primary'
               ]"
               @click="goToConnectors()"
             >
@@ -31,23 +29,11 @@
               <CloudArrowDownIcon class="w-5 h-5 mr-2 text-primary" />
             </NuxtLink>
           </MenuItem>
-          <MenuItem v-if="activeUser" v-slot="{ active }">
-            <NuxtLink
-              :class="[
-                active ? 'bg-foundation-focus' : '',
-                'flex items-center justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
-              ]"
-              @click="() => (showProfileEditDialog = true)"
-            >
-              Edit Profile
-              <UserAvatar :user="activeUser" size="sm" class="mr-1" />
-            </NuxtLink>
-          </MenuItem>
           <MenuItem v-if="isAdmin" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
+                'flex items-center  justify-between pl-3 pr-2 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
               to="/server-management"
             >
@@ -59,7 +45,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
+                'flex items-center  justify-between pl-3 pr-2 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
               @click="onThemeClick"
             >
@@ -71,7 +57,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
+                'flex items-center justify-between pl-3 pr-2 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
               @click="toggleInviteDialog"
             >
@@ -83,7 +69,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-2 py-3 text-sm text-danger cursor-pointer transition'
+                'flex items-center  justify-between pl-3 pr-2 py-3 text-sm text-danger cursor-pointer transition'
               ]"
               @click="logout"
             >
@@ -95,7 +81,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-2 py-3 text-sm text-primary cursor-pointer transition'
+                'flex items-center  justify-between pl-3 pr-2 py-3 text-sm text-primary cursor-pointer transition'
               ]"
               :to="loginUrl"
             >
@@ -112,7 +98,6 @@
       </Transition>
     </Menu>
     <ServerManagementInviteDialog v-model:open="showInviteDialog" />
-    <UserProfileEditDialog v-model:open="showProfileEditDialog" />
   </div>
 </template>
 <script setup lang="ts">
@@ -125,7 +110,8 @@ import {
   MoonIcon,
   EnvelopeIcon,
   CloudArrowDownIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  Bars3Icon
 } from '@heroicons/vue/24/solid'
 import { useQuery } from '@vue/apollo-composable'
 import { Optional, Roles } from '@speckle/shared'
@@ -143,7 +129,6 @@ const route = useRoute()
 const router = useRouter()
 
 const showInviteDialog = ref(false)
-const showProfileEditDialog = ref(false)
 const token = computed(() => route.query.token as Optional<string>)
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
