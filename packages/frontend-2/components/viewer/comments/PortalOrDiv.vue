@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { useBreakpoints } from '~~/composables/browser'
+import { useBreakpoints, Breakpoint } from '~~/lib/common/composables/window'
 
 const props = defineProps({
   to: String
@@ -18,6 +18,5 @@ const props = defineProps({
 
 const { isMediaQueryMax } = useBreakpoints()
 
-const isMobile = computed(() => isMediaQueryMax('sm'))
-console.log(isMobile.value)
+const isMobile = computed(() => isMediaQueryMax(Breakpoint.sm).value)
 </script>

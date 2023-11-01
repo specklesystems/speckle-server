@@ -32,7 +32,7 @@
     <div
       v-if="isExpanded"
       ref="threadContainer"
-      class="thread-container fixed mb-16 bottom-0 right-0 sm:bottom-auto sm:right-auto w-screen sm:w-[20.75rem] z-50 pointer-events-auto"
+      class="thread-container fixed mb-16 bottom-0 right-0 sm:bottom-auto sm:right-auto w-screen sm:w-80 z-50 pointer-events-auto"
       :style="threadStyle"
     >
       <ViewerCommentsPortalOrDiv to="mobileComments">
@@ -115,7 +115,7 @@
             <div class="relative w-full sm:w-80 flex flex-col flex-1 justify-between">
               <div
                 ref="commentsContainer"
-                class="max-h-[calc(40vh)] sm:max-h-[300px] pb-16 overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
+                class="max-h-[calc(50vh)] sm:max-h-[300px] 2xl:max-h-[500px] pb-16 overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
               >
                 <div
                   v-if="!isThreadResourceLoaded"

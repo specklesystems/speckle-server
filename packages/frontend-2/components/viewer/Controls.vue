@@ -88,7 +88,7 @@
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar bg-foundation sm:bg-transparent rounded-lg absolute z-10 mx-14 mt-[4rem] mb-4 max-h-[calc(100vh-5.5rem)] w-64 sm:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
+      :class="`simple-scrollbar absolute z-10 mx-14 mt-[4rem] mb-4 max-h-[calc(100vh-5.5rem)] w-64 sm:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
@@ -186,7 +186,6 @@ const openAddModel = ref(false)
 const activeControl = ref<ActiveControl>(
   isMediaQueryMax(Breakpoint.sm).value ? 'none' : 'models'
 )
-console.log(isMediaQueryMax(Breakpoint.sm))
 
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
 const {
