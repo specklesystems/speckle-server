@@ -70,6 +70,7 @@
           <XMarkIcon class="w-3 h-3" />
         </button>
         <Transition
+          v-if="isMounted"
           leave-active-class="transition ease-in duration-100"
           leave-from-class="opacity-100"
           leave-to-class="opacity-0"
@@ -213,7 +214,7 @@ import { RuleExpression, useField } from 'vee-validate'
 import { nanoid } from 'nanoid'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import { directive as vTippy } from 'vue-tippy'
-import { useElementBounding } from '@vueuse/core'
+import { useElementBounding, useMounted } from '@vueuse/core'
 
 type ButtonStyle = 'base' | 'simple' | 'tinted'
 type ValueType = SingleItem | SingleItem[] | undefined
@@ -400,6 +401,8 @@ const { value, errorMessage: error } = useField<ValueType>(props.name, props.rul
   validateOnValueUpdate: props.validateOnValueUpdate,
   initialValue: props.modelValue as ValueType
 })
+
+const isMounted = useMounted()
 
 const searchInput = ref(null as Nullable<HTMLInputElement>)
 const listboxButton = ref(null as Nullable<{ el: Nullable<HTMLButtonElement> }>)
