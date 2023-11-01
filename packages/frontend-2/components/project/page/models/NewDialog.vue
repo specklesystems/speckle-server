@@ -7,7 +7,7 @@
     :buttons="dialogButtons"
   >
     <template #header>
-      <div class="w-full truncate">Create new model</div>
+      <div class="w-full truncate">Create New Model</div>
     </template>
     <form @submit="onSubmit">
       <div class="flex flex-col space-y-4">

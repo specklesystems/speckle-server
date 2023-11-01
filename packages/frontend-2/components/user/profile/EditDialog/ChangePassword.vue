@@ -1,18 +1,28 @@
 <template>
-  <LayoutDisclosure title="Change password" :icon="LockClosedIcon">
+  <LayoutDialogSection
+    border-b
+    title="Change Password"
+    :icon="LockClosedIcon"
+    :button="{
+      text: 'Change Password',
+      color: 'info',
+      expandContent: true,
+      iconRight: ChevronDownIcon
+    }"
+  >
     <div class="flex flex-col space-y-4">
       <div>
         Press the button below to start the password reset process. Once pressed, you
         will receive an e-mail with further instructions.
       </div>
       <div class="flex justify-end">
-        <FormButton size="sm" @click="onClick">Reset password</FormButton>
+        <FormButton color="info" @click="onClick">Reset password</FormButton>
       </div>
     </div>
-  </LayoutDisclosure>
+  </LayoutDialogSection>
 </template>
 <script setup lang="ts">
-import { LockClosedIcon } from '@heroicons/vue/24/outline'
+import { LockClosedIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { usePasswordReset } from '~~/lib/auth/composables/passwordReset'
 

@@ -1,5 +1,15 @@
 <template>
-  <LayoutDisclosure title="Delete account" :icon="TrashIcon" color="danger">
+  <LayoutDialogSection
+    border-b
+    title="Delete Account"
+    :icon="TrashIcon"
+    :button="{
+      text: 'Change Password',
+      color: 'danger',
+      expandContent: true,
+      iconRight: ChevronDownIcon
+    }"
+  >
     <form class="flex flex-col space-y-4" @submit="onDelete">
       <div>
         This action cannot be undone. We will delete all projects where you are the sole
@@ -31,10 +41,10 @@
         </FormButton>
       </div>
     </form>
-  </LayoutDisclosure>
+  </LayoutDialogSection>
 </template>
 <script setup lang="ts">
-import { TrashIcon } from '@heroicons/vue/24/outline'
+import { TrashIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { GenericValidateFunction, useForm } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'
 import { UserProfileEditDialogDeleteAccount_UserFragment } from '~~/lib/common/generated/gql/graphql'
