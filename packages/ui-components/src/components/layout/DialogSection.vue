@@ -72,23 +72,23 @@ import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { FormButton } from '~~/src/lib'
 import { FormButtonColor } from '../form/Button.vue'
 
-const props = defineProps({
-  title: String,
-  icon: Object as () => ConcreteComponent | undefined,
-  borderT: Boolean,
-  borderB: Boolean,
-  allowOverflow: Boolean,
-  button: Object as () =>
-    | {
-        expandContent?: boolean
-        text: string
-        to?: string
-        color: FormButtonColor
-        iconRight?: ConcreteComponent
-      }
-    | undefined,
-  alwaysOpen: Boolean
-})
+interface DialogSectionProps {
+  title?: string
+  icon?: ConcreteComponent
+  borderT?: boolean
+  borderB?: boolean
+  allowOverflow?: boolean
+  button?: {
+    expandContent?: boolean
+    text: string
+    to?: string
+    color: FormButtonColor
+    iconRight?: ConcreteComponent
+  }
+  alwaysOpen?: boolean
+}
+
+const props = defineProps<DialogSectionProps>()
 
 const content: Ref<HTMLElement | null> = ref(null)
 const contentHeight = ref(0)
