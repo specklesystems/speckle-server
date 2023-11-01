@@ -20,7 +20,7 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import { CodeBracketIcon } from '@heroicons/vue/24/outline'
+import { CodeBracketIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 import { profileEditDialogQuery } from '~~/lib/user/graphql/queries'
 
 const emit = defineEmits<{
@@ -41,9 +41,10 @@ const isOpen = computed({
 })
 
 const developerSettingsButton = {
-  text: 'Open',
+  text: 'Manage',
   color: 'default',
   to: '/developer-settings/',
+  iconRight: ChevronRightIcon,
   onClick: () => {
     isOpen.value = false
   }

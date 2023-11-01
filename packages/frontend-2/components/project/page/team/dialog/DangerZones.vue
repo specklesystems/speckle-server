@@ -51,13 +51,13 @@
       }"
     >
       <div
-        class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 bg-danger-lighter rounded-md select-none mb-4"
+        class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 bg-danger-lighter dark:bg-danger-darker rounded-md select-none mb-4"
       >
         <div>
           <ExclamationTriangleIcon class="mt-0.5 h-12 w-12 text-danger" />
         </div>
         <div>
-          <p class="font-semibold text-danger-darker">
+          <p class="font-semibold text-danger-darker dark:text-danger-lighter">
             Deleting a project is an irreversible action!
           </p>
           <p class="text-sm">
