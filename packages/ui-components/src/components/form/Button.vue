@@ -390,12 +390,12 @@ const paddingClasses = computed(() => {
     case 'sm':
       return 'px-2'
     case 'lg':
-      return 'px-3'
+      return 'px-4'
     case 'xl':
-      return 'px-6'
+      return 'px-5'
     default:
     case 'base':
-      return 'px-4'
+      return 'px-3'
   }
 })
 

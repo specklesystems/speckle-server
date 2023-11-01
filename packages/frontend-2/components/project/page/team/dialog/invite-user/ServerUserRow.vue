@@ -1,5 +1,7 @@
 <template>
-  <div class="flex even:bg-primary-muted py-1 px-2 items-center space-x-2">
+  <div
+    class="flex even:bg-primary-muted odd:bg-foundation-2 py-1 px-2 items-center space-x-2"
+  >
     <UserAvatar :user="user" size="sm" />
     <span class="grow truncate text-xs">{{ user.name }}</span>
     <span

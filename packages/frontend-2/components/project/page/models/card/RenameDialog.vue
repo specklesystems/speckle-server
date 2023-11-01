@@ -1,7 +1,6 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-height
     max-width="sm"
     :buttons="[
       {

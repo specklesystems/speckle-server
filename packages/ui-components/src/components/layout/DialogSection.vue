@@ -59,7 +59,7 @@
           : `max-height: ${isExpanded ? contentHeight + 'px' : '0px'}`
       "
     >
-      <div ref="content" class="rounded-md text-sm pb-3 px-2 mt-1 bg-white">
+      <div ref="content" class="rounded-md text-sm pb-3 px-2 mt-1">
         <slot>Panel contents</slot>
       </div>
     </div>

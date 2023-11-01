@@ -2,7 +2,7 @@
   <div>
     <Disclosure v-slot="{ open }">
       <DisclosureButton :class="buttonClasses">
-        <div class="font-bold flex items-center space-x-2">
+        <div class="inline-flex items-center space-x-2">
           <Component :is="icon" v-if="icon" class="h-5 w-5" />
           <span>{{ title }}</span>
         </div>

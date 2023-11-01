@@ -1,7 +1,6 @@
 <template>
   <LayoutDialog
     v-model:open="openState"
-    max-height
     max-width="sm"
     hide-closer
     :buttons="dialogButtons"

@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-height max-width="md">
+  <LayoutDialog v-model:open="isOpen" max-width="md">
     <template #header>
       <div class="w-full truncate">Edit Profile</div>
     </template>

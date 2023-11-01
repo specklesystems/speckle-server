@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="fixed top-0 h-14 bg-foundation max-w-screen w-full shadow hover:shadow-md transition z-20"
+    class="fixed top-0 h-14 bg-foundation max-w-full w-full shadow hover:shadow-md transition z-20"
   >
     <div class="px-4">
       <div class="flex items-center h-14 transition-all justify-between">

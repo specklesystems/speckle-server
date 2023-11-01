@@ -1,10 +1,5 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="sm"
-    :buttons="dialogButtons"
-    max-height
-  >
+  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
     <template #header>
       <div class="w-full truncate">Delete {{ itemType }}</div>
     </template>

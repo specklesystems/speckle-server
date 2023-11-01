@@ -4,7 +4,6 @@
     max-width="sm"
     :buttons="dialogButtons"
     prevent-close-on-click-outside
-    max-height
   >
     <template #header>
       <div class="w-full truncate">
