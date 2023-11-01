@@ -5,6 +5,7 @@
       <ProjectVisibilitySelect
         :model-value="project.visibility"
         :disabled="isDisabled"
+        mount-menu-on-body
         @update:model-value="onChangeVisibility"
       />
       <!-- <div class="text-foreground-2 text-sm">Comments</div> -->
@@ -15,6 +16,7 @@
             : CommentPermissions.TeamMembersOnly
         "
         :disabled="isDisabled"
+        mount-menu-on-body
         @update:model-value="onChangeCommentPermissions"
       />
     </div>
