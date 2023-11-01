@@ -1,10 +1,8 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="sm"
-    title="Change Role"
-    :buttons="dialogButtons"
-  >
+  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
+    <template #header>
+      <div class="w-full truncate">Change Role</div>
+    </template>
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <p>
         Are you sure you want to

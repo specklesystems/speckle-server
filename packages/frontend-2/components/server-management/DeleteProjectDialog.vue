@@ -1,10 +1,8 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="sm"
-    title="Delete Project"
-    :buttons="dialogButtons"
-  >
+  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
+    <template #header>
+      <div class="w-full truncate">Delete Project</div>
+    </template>
     <div class="flex flex-col gap-6">
       <p>
         Are you sure you want to

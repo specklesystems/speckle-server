@@ -1,12 +1,14 @@
 <template>
   <LayoutDialog
     v-model:open="openState"
-    title="Create new model"
     max-height
     max-width="sm"
     hide-closer
     :buttons="dialogButtons"
   >
+    <template #header>
+      <div class="w-full truncate">Create new model</div>
+    </template>
     <form @submit="onSubmit">
       <div class="flex flex-col space-y-4">
         <FormTextInput

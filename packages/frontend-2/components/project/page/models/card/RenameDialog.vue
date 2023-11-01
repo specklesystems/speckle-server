@@ -2,7 +2,6 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-height
-    title="Rename Model"
     max-width="sm"
     :buttons="[
       {
@@ -21,6 +20,9 @@
       }
     ]"
   >
+    <template #header>
+      <div class="w-full truncate">Rename Model</div>
+    </template>
     <form class="flex flex-col text-foreground" @submit="onSubmit">
       <div class="flex flex-col space-y-3 mb-6">
         <FormTextInput

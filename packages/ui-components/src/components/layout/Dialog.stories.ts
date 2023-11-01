@@ -49,11 +49,10 @@ export const Default: StoryObj = {
   }
 }
 
-export const HeaderAndFooter = {
+export const HeaderAndFooter: StoryObj = {
   ...Default,
   args: {
     ...Default.args,
-    title: 'Dialog Title',
     buttons: [
       {
         text: 'Close',
@@ -73,7 +72,26 @@ export const HeaderAndFooter = {
         }
       }
     ]
-  }
+  },
+  render: (args) => ({
+    components: { LayoutDialog, FormButton },
+    setup() {
+      const open = ref(false)
+      return { args, open }
+    },
+    template: `<div>
+      <FormButton @click="() => open = true">Trigger dialog</FormButton>
+      <LayoutDialog v-model:open="open" v-bind="args">
+        <div class="flex flex-col text-foreground space-y-4">
+          <div class="h4 font-bold">Hello world!</div>
+          <div>Lorem ipsum blah blah blah</div>
+        </div>
+        <template #header>
+            Example Header
+        </template>
+      </LayoutDialog>
+    </div>`
+  })
 }
 
 export const ManualCloseOnly = {

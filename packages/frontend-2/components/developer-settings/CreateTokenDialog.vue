@@ -2,10 +2,12 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    title="Create Token"
     :buttons="dialogButtons"
     prevent-close-on-click-outside
   >
+    <template #header>
+      <div class="w-full truncate">Create Token</div>
+    </template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">
         <FormTextInput

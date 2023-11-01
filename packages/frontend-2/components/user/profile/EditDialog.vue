@@ -1,5 +1,8 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-height title="Edit Profile" max-width="md">
+  <LayoutDialog v-model:open="isOpen" max-height max-width="md">
+    <template #header>
+      <div class="w-full truncate">Edit Profile</div>
+    </template>
     <div v-if="user" class="flex flex-col text-foreground">
       <UserProfileEditDialogBio :user="user" />
       <UserProfileEditDialogNotificationPreferences :user="user" />

@@ -1,10 +1,8 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="md"
-    title="Get your colleagues in!"
-    :buttons="dialogButtons"
-  >
+  <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
+    <template #header>
+      <div class="w-full truncate">Get your colleagues in!</div>
+    </template>
     <form @submit="onSubmit">
       <div class="flex flex-col space-y-4 text-foreground">
         <p class="text-sm sm:text-base mb-3">

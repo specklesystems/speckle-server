@@ -1,7 +1,6 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    title="Delete Model"
     :buttons="[
       {
         text: 'Delete',
@@ -20,6 +19,9 @@
     ]"
     max-width="sm"
   >
+    <template #header>
+      <div class="w-full truncate">Delete Model</div>
+    </template>
     <div class="flex flex-col text-foreground">
       <p class="mb-2">
         Are you sure you want to delete the model

@@ -2,7 +2,6 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    title="Edit Version Message"
     :buttons="[
       {
         text: 'Cancel',
@@ -21,6 +20,9 @@
     ]"
     @fully-closed="$emit('fully-closed')"
   >
+    <template #header>
+      <div class="w-full truncate">Edit Version Message</div>
+    </template>
     <form class="flex flex-col text-foreground space-y-4" @submit="onSubmit">
       <FormTextInput
         v-model="message"

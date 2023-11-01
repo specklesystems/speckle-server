@@ -2,10 +2,14 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    :title="props.webhook ? 'Edit Webhook' : 'Create Webhook'"
     :buttons="dialogButtons"
     prevent-close-on-click-outside
   >
+    <template #header>
+      <div class="w-full truncate">
+        {{ props.webhook ? 'Edit Webhook' : 'Create Webhook' }}
+      </div>
+    </template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">
         <FormTextInput

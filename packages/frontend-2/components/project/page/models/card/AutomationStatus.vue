@@ -7,11 +7,7 @@
         :class="['h-6 w-6 outline-none', statusIconAndColor.iconColor]"
       />
     </button>
-    <LayoutDialog
-      v-model:open="showDialog"
-      :title="`Automation Status for ${displayName}`"
-      max-width="lg"
-    >
+    <LayoutDialog v-model:open="showDialog" max-width="lg">
       <template #header>
         <div class="flex items-center space-x-2">
           <Component

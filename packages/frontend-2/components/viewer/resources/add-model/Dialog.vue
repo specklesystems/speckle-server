@@ -1,5 +1,8 @@
 <template>
-  <LayoutDialog v-model:open="open" title="Add model" max-width="lg">
+  <LayoutDialog v-model:open="open" max-width="lg">
+    <template #header>
+      <div class="w-full truncate">Add Model</div>
+    </template>
     <div class="flex flex-col space-y-4">
       <LayoutTabs v-slot="{ activeItem }" :items="tabItems">
         <ViewerResourcesAddModelDialogModelTab

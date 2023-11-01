@@ -2,11 +2,15 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    :title="props.application ? 'Edit Application' : 'Create Application'"
     :buttons="dialogButtons"
     prevent-close-on-click-outside
     max-height
   >
+    <template #header>
+      <div class="w-full truncate">
+        {{ props.application ? 'Edit Application' : 'Create Application' }}
+      </div>
+    </template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">
         <FormTextInput

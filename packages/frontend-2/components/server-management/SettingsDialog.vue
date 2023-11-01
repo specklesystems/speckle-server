@@ -1,10 +1,8 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="sm"
-    title="Edit Settings"
-    :buttons="dialogButtons"
-  >
+  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
+    <template #header>
+      <div class="w-full truncate">Edit Settings</div>
+    </template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">
         <FormTextInput

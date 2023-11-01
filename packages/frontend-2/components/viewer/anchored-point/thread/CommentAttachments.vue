@@ -12,7 +12,6 @@
     <LayoutDialog
       v-model:open="dialogOpen"
       max-width="lg"
-      :title="dialogAttachment ? dialogAttachment.fileName : 'Attachment'"
       :buttons="
         dialogAttachment
           ? [
@@ -33,6 +32,11 @@
           : undefined
       "
     >
+      <template #header>
+        <div class="w-full truncate">
+          {{ dialogAttachment ? dialogAttachment.fileName : 'Attachment' }}
+        </div>
+      </template>
       <template v-if="dialogAttachment">
         <div class="flex flex-col space-y-2">
           <div class="flex justify-center text-foreground">

@@ -1,10 +1,8 @@
 <template>
-  <LayoutDialog
-    v-model:open="open"
-    max-width="sm"
-    title="Create new project"
-    :buttons="dialogButtons"
-  >
+  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
+    <template #header>
+      <div class="w-full truncate">Create new project</div>
+    </template>
     <form class="flex flex-col text-foreground" @submit="onSubmit">
       <div class="flex flex-col space-y-3 mb-6">
         <FormTextInput

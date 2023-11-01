@@ -2,10 +2,12 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    title="Create Token"
     :buttons="dialogButtons"
     max-height
   >
+    <template #header>
+      <div class="w-full truncate">Create Token</div>
+    </template>
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <div class="flex flex-col gap-3">
         <h6 class="h6 font-bold text-center">Your new token:</h6>

@@ -35,28 +35,24 @@
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onSubmit"
             >
-              <div :class="scrolledFromTop && 'relative z-10 shadow-lg'">
-                <div
-                  v-if="title"
-                  class="flex items-center justify-start rounded-t-lg shrink-0 h-16 px-4 sm:px-8"
-                >
-                  <slot name="header">
-                    <h4 class="text-xl sm:text-2xl font-bold">{{ title }}</h4>
-                  </slot>
-                </div>
+              <div
+                v-if="hasHeaderSlot"
+                class="flex items-center justify-start rounded-t-lg shrink-0 p-4 sm:px-8 text-xl sm:text-2xl font-bold"
+                :class="scrolledFromTop && 'relative z-10 shadow-lg'"
+              >
+                <slot name="header"></slot>
               </div>
 
               <button
                 v-if="!hideCloser"
-                class="absolute z-20 right-4 bg-foundation rounded-full p-1"
-                :class="title ? 'top-4' : 'top-3'"
+                class="absolute z-20 right-4 bg-foundation rounded-full p-1 top-3"
                 @click="open = false"
               >
                 <XMarkIcon class="h-6 w-6" />
               </button>
               <div
                 class="flex-1 simple-scrollbar overflow-y-auto bg-white dark:bg-foundation"
-                :class="title ? 'p-4 sm:py-6 sm:px-8' : 'p-10'"
+                :class="hasHeaderSlot ? 'p-4 sm:py-6 sm:px-8' : 'p-10'"
                 @scroll="onScroll"
               >
                 <slot>Put your content here!</slot>
@@ -114,7 +110,6 @@ const props = defineProps<{
    * Prevent modal from closing when the user clicks outside of the modal or presses Esc
    */
   preventCloseOnClickOutside?: boolean
-  title?: string
   buttons?: FormButtonType[]
   /**
    * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
@@ -129,6 +124,7 @@ const scrolledToBottom = ref(false)
 
 const isForm = computed(() => !!props.onSubmit)
 const hasButtons = computed(() => props.buttons || slots.buttons)
+const hasHeaderSlot = computed(() => !!slots.header)
 
 const open = computed({
   get: () => props.open,
