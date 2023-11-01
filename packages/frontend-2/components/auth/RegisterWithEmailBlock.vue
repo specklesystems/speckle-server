@@ -51,8 +51,8 @@
        -->
       <FormCheckbox
         v-model="newsletterConsent"
-        name="test"
-        label="I want to receive tips and tricks on how to use Speckle"
+        name="newsletter"
+        label="Opt in for exclusive Speckle news and tips"
       />
     </div>
     <FormButton submit full-width class="mt-4" :disabled="loading">Sign up</FormButton>
