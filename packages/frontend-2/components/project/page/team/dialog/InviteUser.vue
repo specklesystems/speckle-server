@@ -12,7 +12,7 @@
         name="search"
         size="lg"
         placeholder="search by username or email"
-        input-classes="pr-[100px] text-sm"
+        input-classes="pr-[85px] text-sm"
       >
         <template #input-right>
           <div class="absolute inset-y-0 right-0 flex items-center pr-2">

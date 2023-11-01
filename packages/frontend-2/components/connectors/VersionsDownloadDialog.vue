@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md">
     <div class="flex flex-col space-y-2">
-      <div class="h4 font-bold flex items-center space-x-2">
+      <div class="h4 font-bold flex items-center space-x-2 leading-tight">
         <img :src="tag.feature_image" alt="featured image" class="w-12" />
         <span>{{ tag.name }}</span>
       </div>

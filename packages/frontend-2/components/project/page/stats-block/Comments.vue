@@ -1,9 +1,9 @@
 <template>
   <ProjectPageStatsBlock>
     <template #top>
-      <div class="flex space-x-1.5 items-center">
+      <div class="flex flex-col sm:flex-row gap-x-1.5 sm:items-center">
         <ChatBubbleOvalLeftIcon class="h-5 w-5" />
-        <span class="text-sm">Threads</span>
+        <span class="text-xs sm:text-sm">Threads</span>
       </div>
     </template>
     <template #bottom>

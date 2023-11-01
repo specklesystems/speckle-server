@@ -38,10 +38,10 @@
               <div :class="scrolledFromTop && 'relative z-10 shadow-lg'">
                 <div
                   v-if="title"
-                  class="flex items-center justify-start rounded-t-lg shrink-0 h-16 px-8"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 h-16 px-4 sm:px-8"
                 >
                   <slot name="header">
-                    <h4 class="text-2xl font-bold">{{ title }}</h4>
+                    <h4 class="text-xl sm:text-2xl font-bold">{{ title }}</h4>
                   </slot>
                 </div>
               </div>
@@ -56,14 +56,14 @@
               </button>
               <div
                 class="flex-1 simple-scrollbar overflow-y-auto bg-white dark:bg-foundation"
-                :class="title ? 'py-6 px-4 sm:px-8' : 'p-10'"
+                :class="title ? 'p-4 sm:py-6 sm:px-8' : 'p-10'"
                 @scroll="onScroll"
               >
                 <slot>Put your content here!</slot>
               </div>
               <div
                 v-if="hasButtons"
-                class="flex p-4 sm:px-6 gap-2 shrink-0"
+                class="flex px-4 py-2 sm:py-4 sm:px-6 gap-2 shrink-0"
                 :class="!scrolledToBottom && 'shadow-t'"
               >
                 <template v-if="buttons">

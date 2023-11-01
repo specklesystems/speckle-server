@@ -29,6 +29,7 @@
           :rules="[isItemSelected]"
           show-label
           :items="apiTokenScopes"
+          mount-menu-on-body
           by="id"
         />
       </div>

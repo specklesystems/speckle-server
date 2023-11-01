@@ -6,7 +6,7 @@
       <div class="flex justify-between items-center py-4 px-3 border-t border-b mb-5">
         <div class="flex items-center gap-2">
           <CodeBracketIcon class="w-5 h-5" />
-          <span class="font-bold">Developer Settings</span>
+          <span class="font-bold leading-tight">Developer Settings</span>
         </div>
         <FormButton size="sm" to="/developer-settings/" @click="isOpen = false">
           Open Developer Settings

@@ -7,7 +7,7 @@
   >
     <form @submit="onSubmit">
       <div class="flex flex-col space-y-4 text-foreground">
-        <p>
+        <p class="text-sm sm:text-base mb-3">
           Speckle will send a server invite link to the email(-s) below. You can also
           add a personal message if you want to. To add multiple e-mails, seperate them
           with commas.
@@ -38,6 +38,7 @@
               label="(Optional) Select project to invite to"
               class="w-full sm:w-60"
               owned-only
+              mount-menu-on-body
               show-label
             />
             <FormSelectServerRoles
@@ -47,6 +48,7 @@
               show-label
               :allow-guest="isGuestMode"
               :allow-admin="isAdmin"
+              mount-menu-on-body
             />
           </div>
         </div>

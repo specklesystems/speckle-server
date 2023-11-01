@@ -6,7 +6,7 @@
       <div
         class="w-full md:w-48 flex flex-col col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1"
       >
-        <div class="text-2xl font-bold hover:text-primary transition">
+        <div class="text-xl text-2xl font-bold hover:text-primary transition">
           <NuxtLink :to="projectRoute(project.id)" class="break-words">
             {{ project.name }}
           </NuxtLink>

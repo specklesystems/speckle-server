@@ -45,9 +45,9 @@
         </div>
       </Portal> -->
     </div>
-    <div class="mt-3 flex space-x-2 group">
-      <div class="shrink-0 text-foreground-2">
-        <InformationCircleIcon class="hidden md:inline-block w-5 h-5" />
+    <div class="mt-3 flex gap-x-2 group">
+      <div class="hidden md:inline-block shrink-0 text-foreground-2 mt-0.5">
+        <InformationCircleIcon class="w-5 h-5" />
       </div>
       <label>
         <div class="sr-only">Edit description</div>
@@ -61,7 +61,7 @@
             v-model="descriptionState"
             :class="[
               ...descriptionInputClasses,
-              descriptionState ? 'focus:min-w-0' : 'min-w-[280px]'
+              descriptionState ? 'focus:min-w-0' : 'min-w-[260px]'
             ]"
             :placeholder="
               descriptionState ? undefined : 'Click here to add a description.'

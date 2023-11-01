@@ -1,11 +1,11 @@
 <template>
   <div class="flex flex-col border-t">
     <div
-      class="flex justify-between items-center gap-8 cursor-pointer py-4 px-2 hover:bg-foundation"
+      class="flex justify-between items-center gap-8 cursor-pointer py-3 sm:py-4 px-2 hover:bg-foundation"
       @click="toggleExpansion"
       @keypress="toggleExpansion"
     >
-      <div class="font-bold flex items-center space-x-2">
+      <div class="font-bold flex items-center space-x-2 leading-tight">
         <BellIcon class="w-5 h-5" />
         <span>Notification preferences</span>
       </div>

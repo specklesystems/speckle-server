@@ -370,32 +370,32 @@ const ringClasses = computed(() => {
 const sizeClasses = computed(() => {
   switch (props.size) {
     case 'xs':
-      return 'text-xs font-medium xxx-tracking-wide'
+      return 'h-5 text-xs font-medium xxx-tracking-wide'
     case 'sm':
-      return 'text-sm font-medium xxx-tracking-wide'
+      return 'h-6 text-sm font-medium xxx-tracking-wide'
     case 'lg':
-      return 'text-lg font-semibold xxx-tracking-wide'
+      return 'h-10 text-lg font-semibold xxx-tracking-wide'
     case 'xl':
-      return 'text-xl font-bold xxx-tracking-wide'
+      return 'h-14 text-xl font-bold xxx-tracking-wide'
     default:
     case 'base':
-      return 'text-base font-medium xxx-tracking-wide'
+      return 'h-8 text-sm sm:text-base font-medium xxx-tracking-wide'
   }
 })
 
 const paddingClasses = computed(() => {
   switch (props.size) {
     case 'xs':
-      return 'px-1 sm:px-2 py-0.5'
+      return 'px-1'
     case 'sm':
-      return 'px-2 sm:px-4 py-0.5 sm:py-1'
+      return 'px-2'
     case 'lg':
-      return 'px-3 sm:px-4 py-1'
+      return 'px-3'
     case 'xl':
-      return 'px-6 py-1.5'
+      return 'px-6'
     default:
     case 'base':
-      return 'px-4 py-1'
+      return 'px-4'
   }
 })
 
