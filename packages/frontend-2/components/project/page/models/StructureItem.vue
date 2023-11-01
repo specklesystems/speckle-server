@@ -175,7 +175,7 @@
               :icon-right="ArrowTopRightOnSquareIcon"
               :to="viewAllUrl"
               :disabled="!viewAllUrl"
-              @click="trackFederateModels"
+              @click.stop="trackFederateModels"
             >
               View All
             </FormButton>
