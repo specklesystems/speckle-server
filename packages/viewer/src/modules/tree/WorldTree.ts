@@ -44,13 +44,13 @@ export class WorldTree {
       return null
     }
 
-    const id = subtreeId ? subtreeId : this.root.model.id
-
-    if (!this.renderTreeInstances[id]) {
-      this.renderTreeInstances[id] = new RenderTree(this, this.findSubtree(id))
+    const renderTreeRoot = subtreeId ? this.findSubtree(subtreeId) : this.root
+    const subtreeRootId = renderTreeRoot.model.id
+    if (!this.renderTreeInstances[subtreeRootId]) {
+      this.renderTreeInstances[subtreeRootId] = new RenderTree(this, renderTreeRoot)
     }
 
-    return this.renderTreeInstances[id]
+    return this.renderTreeInstances[subtreeRootId]
   }
 
   private tree: TreeModel
