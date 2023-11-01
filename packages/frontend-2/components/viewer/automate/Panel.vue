@@ -19,19 +19,14 @@
         </div>
       </div>
       <div class="relative flex flex-col space-y-2 p-2">
-        <div class="text-xs my-4 px-1">
+        <!-- NOTE: N/a as i'm now displaying all runs -->
+        <!-- <div class="text-xs my-4 px-1">
           TODO: Display a message informing whether we've hidden any run results (e.g.,
           from function runs that are inprogress? )
-        </div>
+        </div> -->
         <template v-for="automationRun in automationRuns">
           <template v-for="run in automationRun.functionRuns" :key="run.id">
             <AutomationViewerFunctionRunItem
-              v-if="
-                run.results &&
-                run.results.values &&
-                run.results.values.objectResults &&
-                run.results.values.objectResults.length !== 0
-              "
               :function-run="run"
               :automation-name="automationRun.automationName"
             />
@@ -46,6 +41,11 @@ import {
   AutomationFunctionRun,
   AutomationRun
 } from '~~/lib/common/generated/gql/graphql'
+import { useModelVersionCardAutomationsStatusUpdateTracking } from '~~/lib/automations/composables/automationsStatus'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+
+const { projectId } = useInjectedViewerState()
+useModelVersionCardAutomationsStatusUpdateTracking(projectId)
 
 defineEmits(['close'])
 
@@ -62,9 +62,4 @@ defineProps<{
   functionRuns: AutomationFunctionRun[]
   automationRuns: AutomationRun[]
 }>()
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-type RemoveOnceBEIsHappy = AutomationFunctionRun & {
-  results: { values: { blobIds: string[] } }
-}
 </script>

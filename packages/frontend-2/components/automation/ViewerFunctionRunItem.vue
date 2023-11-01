@@ -36,7 +36,9 @@
 				</button>
 			</div>
 		</button>
-		<div v-if="expanded" class="px-2 pb-2">
+		<div v-if="expanded" class="px-2 pb-2 space-y-2">
+			<!-- Status message -->
+			<div class="text-xs font-bold text-foreground-2">Status message:</div>
 			<div
 				v-if="
 					functionRun.status === AutomationRunStatus.Initializing ||
@@ -49,26 +51,37 @@
 			<div v-else class="text-xs text-foreground-2 italic">
 				{{ functionRun.statusMessage || 'No status message' }}
 			</div>
-			<div
-				v-for="(result, index) in functionRun.results.values.objectResults"
-				:key="index"
-			>
-				{{ result.category }} | {{ result.level }}
-			</div>
-			<div class="max-h-96 simple-scrollbar">
-				<!-- {{ functionRun.results.values.objectResults }} -->
-			</div>
-		</div>
-		<!-- 		<div>
-			<div v-if="attachments.length !== 0" class="flex space-x-1">
-				<ProjectPageModelsCardAutomationRunAttachmentButton
+
+			<!-- Attachments -->
+			<div v-if="attachments.length !== 0">
+				<div class="text-xs font-bold text-foreground-2">Run attachments:</div>
+				<AutomationAttachmentButton
 					v-for="id in attachments"
 					:key="id"
 					:blob-id="id"
+					:project-id="projectId"
 				/>
-				
 			</div>
-		</div> -->
+
+			<!-- Results -->
+			<div
+				v-if="
+					typedFunctionRun.results &&
+					typedFunctionRun.results.values &&
+					typedFunctionRun.results.values.objectResults &&
+					typedFunctionRun.results.values.objectResults.length !== 0
+				"
+			>
+				<div class="text-xs font-bold text-foreground-2 mb-2">Run results:</div>
+				<div class="space-y-1">
+					<AutomationViewerResultRowItem
+						v-for="(result, index) in typedFunctionRun.results.values.objectResults"
+						:key="index"
+						:result="result"
+					/>
+				</div>
+			</div>
+		</div>
 	</div>
 </template>
 <script setup lang="ts">
@@ -78,30 +91,38 @@ import {
 	AutomationRunStatus
 } from '~~/lib/common/generated/gql/graphql'
 import { resolveStatusMetadata } from '~~/lib/automations/helpers/resolveStatusMetadata'
-const route = useRoute()
-
-const projectId = computed(() => route.params.id as string)
-provide('projectId', projectId)
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+const { projectId } = useInjectedViewerState()
 
 type ObjectResult = {
 	category: string
 	objectIds: string[]
 	message: string
-	level: 'ERROR' | 'WARNING'
+	level: 'ERROR' | 'WARNING' | 'INFO'
 }
 
 const props = defineProps<{
-	functionRun: AutomationFunctionRun & {
-		results: { values: { blobIds: string[]; objectResults: ObjectResult[] } }
-	}
+	functionRun: AutomationFunctionRun
 	automationName: string
 }>()
 
+const typedFunctionRun = computed(() => {
+	return props.functionRun as AutomationFunctionRun & {
+		results: { values: { blobIds: string[]; objectResults: ObjectResult[] } }
+	}
+})
+
 const expanded = ref(false)
 
-const attachments = computed(() =>
-	props.functionRun.results?.values?.blobIds.filter((b) => !!b)
-)
+const attachments = computed(() => {
+	if (
+		!typedFunctionRun.value.results ||
+		!typedFunctionRun.value.results.values ||
+		!typedFunctionRun.value.results.values.blobIds
+	)
+		return []
+	return typedFunctionRun.value.results?.values?.blobIds.filter((b) => !!b)
+})
 
 const statusMetaData = resolveStatusMetadata(props.functionRun.status)
 </script>
