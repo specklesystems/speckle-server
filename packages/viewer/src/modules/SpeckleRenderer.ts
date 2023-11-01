@@ -907,8 +907,9 @@ export default class SpeckleRenderer {
     let searchTime = 0
     for (let k = 0; k < rvs.length; k++) {
       const hitId = rvs[k].renderData.id
+      const subtreeId = rvs[k].renderData.subtreeId
       const start = performance.now()
-      const hitNode = this.viewer.getWorldTree().findId(hitId)[0]
+      const hitNode = this.viewer.getWorldTree().findId(hitId, subtreeId)[0]
       searchTime += performance.now() - start
       let parentNode = hitNode
       while (!parentNode.model.atomic && parentNode.parent) {

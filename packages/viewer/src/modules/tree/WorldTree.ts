@@ -109,13 +109,15 @@ export class WorldTree {
     return (node ? node : this.root).all(predicate)
   }
 
-  public findId(id: string, node?: TreeNode) {
-    if (!node && !this.supressWarnings) {
-      Logger.warn(`Root will be used for searching. You might not want that`)
-    }
+  public findId(id: string, subtreeId?: number) {
     let idNode = null
-    for (const k in this.nodeMaps) {
-      if ((idNode = this.nodeMaps[k].getNodeById(id)) !== null) break
+    if (subtreeId) {
+      idNode = this.nodeMaps[subtreeId].getNodeById(id)
+    } else {
+      for (const k in this.nodeMaps) {
+        const nodes = this.nodeMaps[k].getNodeById(id)
+        if (nodes) idNode = [...nodes]
+      }
     }
     return idNode
   }

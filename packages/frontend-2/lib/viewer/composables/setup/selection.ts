@@ -58,11 +58,14 @@ function useSelectOrZoomOnSelection() {
         ) {
           const modifiedObjectPairs = state.ui.diff.result.value.modified
           const obj = firstVisibleSelectionHit.node.model.raw as SpeckleObject
-          const pairedItems = modifiedObjectPairs.find(
-            (item) =>
+          const pairedItems = modifiedObjectPairs.find((item) => {
+            if (
               (item[0].model.raw as SpeckleObject).id === obj.id ||
               (item[1].model.raw as SpeckleObject).id === obj.id
-          )
+            ) {
+              return true
+            }
+          })
           if (!pairedItems) return
 
           const pair =
