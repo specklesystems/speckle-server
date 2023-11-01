@@ -23,7 +23,10 @@
           <NuxtLink :to="modelLink || ''" class="text-lg font-bold text-foreground">
             {{ name }}
           </NuxtLink>
-          <span v-if="model" class="opacity-0 group-hover:opacity-100 transition">
+          <span
+            v-if="model"
+            class="opacity-100 sm:opacity-0 group-hover:opacity-100 transition"
+          >
             <ProjectPageModelsActions
               v-model:open="showActionsMenu"
               :model="model"

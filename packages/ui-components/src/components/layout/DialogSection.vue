@@ -8,7 +8,7 @@
     }"
   >
     <div
-      class="flex justify-between items-center gap-4 sm:gap-8 py-4 px-2"
+      class="flex justify-between items-center gap-4 sm:gap-8 py-3 sm:py-4 px-2"
       :class="backgroundClass"
       tabindex="0"
       v-on="
@@ -40,6 +40,7 @@
           :icon-right="
             button.expandContent && isExpanded ? undefined : button.iconRight
           "
+          @click="button.onClick"
           v-on="button?.expandContent ? { click: toggleExpansion } : {}"
         >
           {{ button.expandContent && isExpanded ? 'Cancel' : button.text }}
@@ -70,7 +71,11 @@
 import { ConcreteComponent, ref, unref, Ref, computed } from 'vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { FormButton } from '~~/src/lib'
-import { FormButtonColor } from '../form/Button.vue'
+import { FormButtonType } from './Dialog.vue'
+
+interface DialogSectionButtonType extends FormButtonType {
+  expandContent?: boolean
+}
 
 interface DialogSectionProps {
   title?: string
@@ -78,13 +83,7 @@ interface DialogSectionProps {
   borderT?: boolean
   borderB?: boolean
   allowOverflow?: boolean
-  button?: {
-    expandContent?: boolean
-    text: string
-    to?: string
-    color: FormButtonColor
-    iconRight?: ConcreteComponent
-  }
+  button?: DialogSectionButtonType
   alwaysOpen?: boolean
 }
 

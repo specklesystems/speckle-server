@@ -93,7 +93,7 @@ import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { computed, ref, useSlots } from 'vue'
 import { throttle } from 'lodash'
 
-type FormButtonType = ExtractPropTypes<typeof FormButton>
+export type FormButtonType = ExtractPropTypes<typeof FormButton>
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 

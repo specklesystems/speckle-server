@@ -4,7 +4,7 @@
     title="Change Password"
     :icon="LockClosedIcon"
     :button="{
-      text: 'Change Password',
+      text: 'Change',
       color: 'info',
       expandContent: true,
       iconRight: ChevronDownIcon

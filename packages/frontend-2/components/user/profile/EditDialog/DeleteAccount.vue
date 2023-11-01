@@ -4,7 +4,7 @@
     title="Delete Account"
     :icon="TrashIcon"
     :button="{
-      text: 'Change Password',
+      text: 'Delete',
       color: 'danger',
       expandContent: true,
       iconRight: ChevronDownIcon

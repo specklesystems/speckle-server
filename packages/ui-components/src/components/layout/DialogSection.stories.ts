@@ -30,7 +30,7 @@ export const Default: StoryObj = {
     </div>`
   }),
   args: {
-    title: 'Disclosure title',
+    title: 'Dialog Section Title',
     color: 'primary',
     icon: FaceSmileIcon,
     borderT: true,
