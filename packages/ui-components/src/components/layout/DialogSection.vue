@@ -29,7 +29,7 @@
       <div>
         <ChevronDownIcon
           v-if="!button && !alwaysOpen"
-          class="w-5 h-5 transition-all duration-400"
+          class="w-4 h-4 sm:w-5 sm:h-5 transition-all duration-400"
           :class="isExpanded && 'rotate-180'"
         />
         <FormButton

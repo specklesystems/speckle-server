@@ -11,7 +11,8 @@
         v-model="search"
         name="search"
         size="lg"
-        placeholder="search by username or email"
+        placeholder="Search"
+        help="Search by username or email"
         input-classes="pr-[85px] text-sm"
       >
         <template #input-right>

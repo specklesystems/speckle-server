@@ -44,14 +44,14 @@
       title="Delete Project"
       :icon="TrashIcon"
       :button="{
-        text: 'Delete Project',
+        text: 'Delete',
         color: 'danger',
         expandContent: true,
         iconRight: ChevronDownIcon
       }"
     >
       <div
-        class="flex items-center gap-4 py-3 px-4 bg-danger-lighter rounded-md select-none mb-4"
+        class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 bg-danger-lighter rounded-md select-none mb-4"
       >
         <div>
           <ExclamationTriangleIcon class="mt-0.5 h-12 w-12 text-danger" />

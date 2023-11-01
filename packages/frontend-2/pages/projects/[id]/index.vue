@@ -17,7 +17,7 @@
           <ProjectPageStatsBlockComments :project="project" />
         </div>
       </div>
-      <div class="flex flex-col space-y-14">
+      <div class="flex flex-col space-y-8 sm:space-y-14">
         <!-- Latest models -->
         <ProjectPageLatestItemsModels :project="project" />
         <!-- Latest comments -->
