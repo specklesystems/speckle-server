@@ -54,7 +54,7 @@ function useSelectOrZoomOnSelection() {
         if (
           state.ui.diff.enabled.value &&
           state.ui.diff.result.value &&
-          firstVisibleSelectionHit.object.applicationId
+          firstVisibleSelectionHit.node.model.raw.applicationId
         ) {
           const modifiedObjectPairs = state.ui.diff.result.value.modified
           const obj = firstVisibleSelectionHit.node.model.raw as SpeckleObject
