@@ -10,9 +10,9 @@
         @create-submodel="onCreateSubmodel"
       />
     </div>
-    <ProjectPageModelsNewModelStructureItem
-      v-if="canContribute && !isUsingSearch"
-      :project-id="projectId"
+    <FormButtonSecondaryViewAll
+      v-if="showViewAll"
+      :to="allProjectModelsRoute(project.id)"
     />
   </div>
   <CommonEmptySearchState
@@ -50,6 +50,7 @@ import { Nullable, SourceAppDefinition } from '@speckle/shared'
 import { projectModelsTreeTopLevelPaginationQuery } from '~~/lib/projects/graphql/queries'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
+import { allProjectModelsRoute } from '~~/lib/common/helpers/route'
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
@@ -151,6 +152,7 @@ const moreToLoad = computed(
     extraPagesResult.value.project.modelsTree.items.length <
       extraPagesResult.value.project.modelsTree.totalCount
 )
+const showViewAll = computed(() => moreToLoad.value && props.disablePagination)
 
 const onModelUpdated = () => {
   // Evict model data
