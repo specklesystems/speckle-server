@@ -74,6 +74,10 @@ export class WorldTree {
     return node === this._root
   }
 
+  public isSubtreeRoot(node: TreeNode) {
+    return node.parent === this._root
+  }
+
   public parse(model) {
     return this.tree.parse(model)
   }
