@@ -84,8 +84,24 @@
 				<div class="text-xs font-bold text-foreground-2 mb-2">Resulting Models</div>
 				<!-- <div class="text-xs">{{ typedFunctionRun.resultVersions }}</div> -->
 				<div v-for="version in typedFunctionRun.resultVersions" :key="version.id">
-					<FormButton size="xs" link class="truncate max-w-full">
-						Overlay "{{ version.model.name }}" @ {{ version.id }}
+					<FormButton
+						v-if="!hasResource(version)"
+						size="xs"
+						link
+						class="truncate max-w-full"
+						@click="loadResultVersion(version)"
+					>
+						Overlay "{{ version.model.name }}"
+					</FormButton>
+					<FormButton
+						v-else
+						size="xs"
+						link
+						class="truncate max-w-full"
+						@click="loadResultVersion(version)"
+						disabled
+					>
+						"{{ version.model.name }}" is already overlaid
 					</FormButton>
 				</div>
 			</div>
@@ -115,11 +131,18 @@
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import {
 	AutomationFunctionRun,
-	AutomationRunStatus
+	AutomationRunStatus,
+	Version
 } from '~~/lib/common/generated/gql/graphql'
+import { SpeckleViewer } from '@speckle/shared'
 import { resolveStatusMetadata } from '~~/lib/automations/helpers/resolveStatusMetadata'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import {
+	useInjectedViewerState,
+	useInjectedViewerRequestedResources
+} from '~~/lib/viewer/composables/setup'
+
 const { projectId } = useInjectedViewerState()
+const { items } = useInjectedViewerRequestedResources()
 
 type ObjectResult = {
 	category: string
@@ -152,4 +175,25 @@ const attachments = computed(() => {
 })
 
 const statusMetaData = resolveStatusMetadata(props.functionRun.status)
+
+const hasResource = (version: Version) => {
+	for (let res of items.value) {
+		const typedRes = res as unknown as { modelId: string; versionId: string }
+		if (typedRes.modelId === version.model.id && typedRes.versionId === version.id)
+			return true
+	}
+	return false
+}
+
+const loadResultVersion = async (version: Version) => {
+	const modelId = version.model.id
+	const versionId = version.id
+
+	await items.update([
+		...items.value,
+		...SpeckleViewer.ViewerRoute.resourceBuilder()
+			.addModel(modelId, versionId)
+			.toResources()
+	])
+}
 </script>
