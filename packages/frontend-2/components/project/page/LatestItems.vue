@@ -7,7 +7,6 @@
         class="flex flex-col items-start space-y-1 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between sm:space-x-2"
       >
         <NuxtLink
-          v-tippy="'View All'"
           class="flex items-center space-x-2 group hover:cursor-pointer"
           :to="seeAllUrl"
         >

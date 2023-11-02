@@ -39,13 +39,13 @@
         class="flex flex-col space-y-2 md:space-y-0 md:flex-row md:items-center md:space-x-2"
       >
         <FormTextInput
-          v-model="search"
+          v-model="localSearch"
           name="modelsearch"
           :show-label="false"
           placeholder="Search"
           color="foundation"
           wrapper-classes="grow lg:grow-0 lg:ml-2 lg:w-40 xl:w-60"
-          :show-clear="search !== ''"
+          :show-clear="localSearch !== ''"
           @change="($event) => updateSearchImmediately($event.value)"
           @update:model-value="updateDebouncedSearch"
         ></FormTextInput>
@@ -151,7 +151,7 @@ const props = defineProps<{
   disabled?: boolean
 }>()
 
-const search = ref('')
+const localSearch = ref('')
 
 const mp = useMixpanel()
 const trackFederateAll = () =>
@@ -198,17 +198,17 @@ const allModelsRoute = computed(() => {
 const team = computed(() => props.project.team.map((t) => t.user))
 
 const updateDebouncedSearch = debounce(() => {
-  debouncedSearch.value = search.value.trim()
+  debouncedSearch.value = localSearch.value.trim()
 }, 500)
 
 const updateSearchImmediately = (val?: string) => {
   updateDebouncedSearch.cancel()
-  debouncedSearch.value = (val ?? search.value).trim()
+  debouncedSearch.value = (val ?? localSearch.value).trim()
 }
 
 watch(debouncedSearch, (newVal) => {
-  if (newVal !== search.value) {
-    search.value = newVal
+  if (newVal !== localSearch.value) {
+    localSearch.value = newVal
   }
 })
 </script>
