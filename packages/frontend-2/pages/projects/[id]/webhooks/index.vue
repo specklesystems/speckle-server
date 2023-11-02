@@ -7,7 +7,7 @@
         name="Webhooks"
       ></HeaderNavLink>
     </Portal>
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <h1 class="text-2xl font-bold">Webhooks</h1>
       <div class="flex gap-2">
         <FormButton
@@ -17,10 +17,10 @@
           external
           target="_blank"
         >
-          Open Docs
+          Docs
         </FormButton>
         <FormButton :icon-left="PlusIcon" @click="openCreateWebhookDialog">
-          Create Webhook
+          Create
         </FormButton>
       </div>
     </div>
