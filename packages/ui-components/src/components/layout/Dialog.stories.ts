@@ -2,7 +2,6 @@ import { Meta, StoryObj } from '@storybook/vue3'
 import LayoutDialog from '~~/src/components/layout/Dialog.vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import { ref } from 'vue'
-import { action } from '@storybook/addon-actions'
 import { directive as vTippy } from 'vue-tippy'
 
 export default {
@@ -49,29 +48,10 @@ export const Default: StoryObj = {
   }
 }
 
-export const HeaderAndFooter: StoryObj = {
+export const WithHeader: StoryObj = {
   ...Default,
   args: {
-    ...Default.args,
-    buttons: [
-      {
-        text: 'Close',
-        props: {
-          color: 'secondary',
-          link: false,
-          fullWidth: true,
-          outline: true
-        }
-      },
-      {
-        text: 'Save',
-        props: {
-          color: 'default',
-          link: false,
-          fullWidth: true
-        }
-      }
-    ]
+    ...Default.args
   },
   render: (args) => ({
     components: { LayoutDialog, FormButton },
@@ -101,25 +81,6 @@ export const ManualCloseOnly = {
     preventCloseOnClickOutside: true
   }
 }
-
-export const WithSubmit = {
-  ...HeaderAndFooter,
-  args: {
-    ...HeaderAndFooter.args,
-    onSubmit: action('submit'),
-    buttons: [
-      {
-        text: 'Submit',
-        props: {
-          color: 'default',
-          submit: true,
-          fullWidth: true
-        }
-      }
-    ]
-  }
-}
-
 export const WithSlotButtons: StoryObj = {
   ...Default,
   args: {

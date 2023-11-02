@@ -62,21 +62,7 @@
                 class="flex px-4 py-2 sm:py-4 sm:px-6 gap-2 shrink-0"
                 :class="!scrolledToBottom && 'shadow-t'"
               >
-                <template v-if="buttons">
-                  <FormButton
-                    v-for="(button, index) in buttons"
-                    :key="index"
-                    v-bind="button.props"
-                    :disabled="button.disabled"
-                    :type="button.submit && 'submit'"
-                    @click="button.onClick"
-                  >
-                    {{ button.text }}
-                  </FormButton>
-                </template>
-                <template v-else>
-                  <slot name="buttons" />
-                </template>
+                <slot name="buttons" />
               </div>
             </DialogPanel>
           </TransitionChild>
@@ -87,13 +73,9 @@
 </template>
 <script setup lang="ts">
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import { ExtractPropTypes } from 'vue'
-import { FormButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { computed, ref, useSlots } from 'vue'
 import { throttle } from 'lodash'
-
-export type FormButtonType = ExtractPropTypes<typeof FormButton>
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -110,7 +92,6 @@ const props = defineProps<{
    * Prevent modal from closing when the user clicks outside of the modal or presses Esc
    */
   preventCloseOnClickOutside?: boolean
-  buttons?: FormButtonType[]
   /**
    * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
    */
@@ -123,7 +104,7 @@ const scrolledFromTop = ref(false)
 const scrolledToBottom = ref(false)
 
 const isForm = computed(() => !!props.onSubmit)
-const hasButtons = computed(() => props.buttons || slots.buttons)
+const hasButtons = computed(() => slots.buttons)
 const hasHeaderSlot = computed(() => !!slots.header)
 
 const open = computed({
