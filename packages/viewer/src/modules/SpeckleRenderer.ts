@@ -1166,8 +1166,6 @@ export default class SpeckleRenderer {
       // Logger.error('Render view is not of mesh type. No batch object found')
       return null
     }
-    return batch.mesh.batchObjects.find(
-      (value) => value.renderView.renderData.id === rv.renderData.id
-    )
+    return batch.mesh.batchObjects.find((value) => value.renderView.guid === rv.guid)
   }
 }
