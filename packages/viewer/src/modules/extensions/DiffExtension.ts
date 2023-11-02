@@ -252,7 +252,7 @@ export class DiffExtension extends Extension {
   private buildIdMaps(
     rvs: Array<TreeNode>,
     idMap: { [id: string]: { node: TreeNode; applicationId: string } },
-    appIdMap: { [id: string]: number }
+    appIdMap: { [id: string]: TreeNode }
   ) {
     for (let k = 0; k < rvs.length; k++) {
       const atomicRv = rvs[k]
@@ -267,7 +267,7 @@ export class DiffExtension extends Extension {
         applicationId
       }
       if (applicationId) {
-        appIdMap[applicationId] = 1
+        appIdMap[applicationId] = atomicRv
       }
     }
   }
@@ -412,7 +412,7 @@ export class DiffExtension extends Extension {
         }
         const res2 = appIdMapA[applicationId]
         if (res2) {
-          modifiedNew.push(rvsB[k])
+          diffResult.modified.push([res2, rvsB[k]])
         } else {
           diffResult.added.push(rvsB[k])
         }
@@ -432,17 +432,12 @@ export class DiffExtension extends Extension {
         const res2 = appIdMapB[applicationId]
         if (!res2) {
           diffResult.removed.push(rvsA[k])
-        } else {
-          modifiedOld.push(rvsA[k])
         }
       } else {
         diffResult.unchanged.push(res)
       }
     }
-    modifiedOld.forEach((value, index) => {
-      value
-      diffResult.modified.push([modifiedOld[index], modifiedNew[index]])
-    })
+
     console.warn('Interative Time -> ', performance.now() - start)
 
     return Promise.resolve(diffResult)

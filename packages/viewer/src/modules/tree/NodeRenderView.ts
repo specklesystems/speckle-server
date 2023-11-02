@@ -26,6 +26,10 @@ export class NodeRenderView {
 
   private _aabb: Box3 = null
 
+  public get guid() {
+    return this._renderData.subtreeId + this._renderData.id
+  }
+
   public get renderData() {
     return this._renderData
   }
