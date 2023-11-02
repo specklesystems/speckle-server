@@ -10,7 +10,7 @@
       </div>
       <div
         v-if="$slots.title"
-        class="flex items-center h-10 px-3 sm:border-b bg-foundation-2"
+        class="flex items-center h-10 px-3 sm:border-b border-foundation-2 bg-foundation rounded-t"
       >
         <div
           class="flex items-center h-full w-full pr-8 font-semibold sm:font-bold text-sm text-primary"

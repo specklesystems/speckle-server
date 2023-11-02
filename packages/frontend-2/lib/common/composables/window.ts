@@ -1,4 +1,3 @@
-import { useWindowResizeHandler } from '@speckle/ui-components'
 export {
   ThrottleOrDebounce,
   HorizontalDirection,
@@ -25,38 +24,6 @@ export function useDisableGlobalTextSelection() {
   }
 
   return { disableTextSelection }
-}
-
-export enum Breakpoint {
-  xs = 425,
-  sm = 640,
-  md = 768,
-  lg = 1024,
-  xl = 1280
-}
-
-export function useBreakpoints() {
-  const width = ref(window.innerWidth)
-
-  const updateDimensions = () => {
-    width.value = window.innerWidth
-  }
-
-  useWindowResizeHandler(updateDimensions)
-
-  const isMediaQueryMax = (breakpoint: Breakpoint) => {
-    return computed(() => width.value <= breakpoint)
-  }
-
-  const isMediaQueryMin = (breakpoint: Breakpoint) => {
-    return computed(() => width.value >= breakpoint)
-  }
-
-  return {
-    width: computed(() => width.value),
-    isMediaQueryMax,
-    isMediaQueryMin
-  }
 }
 
 export function useItemsExpandedState(params: { stateName: string }) {

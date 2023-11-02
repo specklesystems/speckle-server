@@ -155,7 +155,8 @@ import {
   useCameraUtilities,
   useSectionBoxUtilities
 } from '~~/lib/viewer/composables/ui'
-import { useBreakpoints, Breakpoint } from '~~/lib/common/composables/window'
+import { useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 import {
   onKeyboardShortcut,
@@ -178,14 +179,12 @@ const { resourceItems } = useInjectedViewerLoadedResources()
 
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 
-const { isMediaQueryMax } = useBreakpoints()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
 
 type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'discussions'
 const openAddModel = ref(false)
 
-const activeControl = ref<ActiveControl>(
-  isMediaQueryMax(Breakpoint.sm).value ? 'none' : 'models'
-)
+const activeControl = ref<ActiveControl>('models')
 
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
 const {
@@ -210,6 +209,8 @@ const projectionShortcut = ref(
 const sectionBoxShortcut = ref(
   `Section Box (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'b'])})`
 )
+
+const isSmallerOrEqualSM = computed(() => breakpoints.smallerOrEqual('sm').value)
 
 const toggleActiveControl = (control: ActiveControl) =>
   activeControl.value === control
@@ -272,4 +273,8 @@ const scrollControlsToBottom = () => {
   // if (scrollableControlsContainer.value)
   //   scrollToBottom(scrollableControlsContainer.value)
 }
+
+watch(isSmallerOrEqualSM, (newVal) => {
+  activeControl.value = newVal ? 'none' : 'models'
+})
 </script>

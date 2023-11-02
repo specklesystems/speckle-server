@@ -34,8 +34,8 @@
         :rules="passwordRules"
         show-label
         :disabled="loading"
-        @focusin="pwdFocused = true"
-        @focusout="pwdFocused = false"
+        @focus="pwdFocused = true"
+        @blur="pwdFocused = false"
       />
     </div>
     <AuthPasswordChecks

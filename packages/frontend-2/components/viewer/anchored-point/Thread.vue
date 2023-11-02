@@ -60,7 +60,7 @@
                   :icon-left="ChevronLeftIcon"
                   text
                   hide-text
-                  @click="emit('prev', props.modelValue)"
+                  @click="emit('prev', modelValue)"
                 ></FormButton>
                 <FormButton
                   v-tippy="'Next'"
@@ -68,7 +68,7 @@
                   :icon-left="ChevronRightIcon"
                   text
                   hide-text
-                  @click="emit('next', props.modelValue)"
+                  @click="emit('next', modelValue)"
                 ></FormButton>
                 <div class="flex-grow"></div>
                 <FormButton

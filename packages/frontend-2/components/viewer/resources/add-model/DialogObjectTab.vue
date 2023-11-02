@@ -14,7 +14,7 @@
         size="lg"
         :custom-icon="LinkIcon"
         :rules="[isRequired, isValidValue]"
-        placeholder="Comma-delimited object ID/URL"
+        placeholder="Comma-delimited object IDs/URLs"
         auto-focus
       />
       <FormButton :icon-left="PlusIcon" size="lg" submit>Add</FormButton>

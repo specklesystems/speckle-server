@@ -40,8 +40,8 @@
         v-bind="$attrs"
         @change="$emit('change', { event: $event, value })"
         @input="$emit('input', { event: $event, value })"
-        @focus="$emit('focusin')"
-        @blur="$emit('focusout')"
+        @focus="$emit('focus')"
+        @blur="$emit('blur')"
       />
       <slot name="input-right">
         <a
@@ -235,8 +235,8 @@ const emit = defineEmits<{
   (e: 'change', val: { event?: Event; value: string }): void
   (e: 'input', val: { event?: Event; value: string }): void
   (e: 'clear'): void
-  (e: 'focusin'): void
-  (e: 'focusout'): void
+  (e: 'focus'): void
+  (e: 'blur'): void
 }>()
 
 const slots = useSlots()

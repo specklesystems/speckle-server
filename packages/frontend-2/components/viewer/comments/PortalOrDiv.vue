@@ -10,13 +10,14 @@
 </template>
 
 <script setup lang="ts">
-import { useBreakpoints, Breakpoint } from '~~/lib/common/composables/window'
+import { useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 const props = defineProps({
   to: String
 })
 
-const { isMediaQueryMax } = useBreakpoints()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
 
-const isMobile = computed(() => isMediaQueryMax(Breakpoint.sm).value)
+const isMobile = computed(() => breakpoints.smallerOrEqual('sm').value)
 </script>
