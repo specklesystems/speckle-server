@@ -45,6 +45,7 @@ import { useModelVersionCardAutomationsStatusUpdateTracking } from '~~/lib/autom
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
 const { projectId } = useInjectedViewerState()
+// NOTE: test if this actually works
 useModelVersionCardAutomationsStatusUpdateTracking(projectId)
 
 defineEmits(['close'])

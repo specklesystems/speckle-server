@@ -1,5 +1,9 @@
 <template>
-	<div class="border border-blue-500/10 rounded-md space-y-2">
+	<div
+		:class="`border border-blue-500/10 rounded-md space-y-2 overflow-hidden ${
+			expanded ? 'shadow' : ''
+		}`"
+	>
 		<button
 			class="flex space-x-1 items-center max-w-full w-full px-1 py-1 h-8 transition hover:bg-primary-muted"
 			@click="expanded = !expanded"
@@ -26,9 +30,9 @@
 				{{ automationName ? automationName + ' / ' : '' }}{{ functionRun.functionName }}
 			</div>
 
-			<div class="h-full">
+			<div class="h-full grow flex justify-end">
 				<button
-					class="hover:bg-primary-muted hover:text-primary flex h-full w-full items-center justify-center rounded"
+					class="hover:bg-primary-muted hover:text-primary flex h-full items-center justify-center rounded"
 				>
 					<ChevronDownIcon
 						:class="`h-3 w-3 transition ${!expanded ? '-rotate-90' : 'rotate-0'}`"
@@ -36,33 +40,55 @@
 				</button>
 			</div>
 		</button>
-		<div v-if="expanded" class="px-2 pb-2 space-y-2">
+		<div v-if="expanded" class="px-2 pb-2 space-y-4">
 			<!-- Status message -->
-			<div class="text-xs font-bold text-foreground-2">Status message:</div>
-			<div
-				v-if="
-					functionRun.status === AutomationRunStatus.Initializing ||
-					functionRun.status === AutomationRunStatus.Running
-				"
-				class="text-xs text-foreground-2 italic"
-			>
-				Function is {{ functionRun.status.toLowerCase() }}.
-			</div>
-			<div v-else class="text-xs text-foreground-2 italic">
-				{{ functionRun.statusMessage || 'No status message' }}
+			<div class="space-y-1">
+				<div class="text-xs font-bold text-foreground-2">Status</div>
+				<div
+					v-if="
+						functionRun.status === AutomationRunStatus.Initializing ||
+						functionRun.status === AutomationRunStatus.Running
+					"
+					class="text-xs text-foreground-2 italic"
+				>
+					Function is {{ functionRun.status.toLowerCase() }}.
+				</div>
+				<div v-else class="text-xs text-foreground-2 italic">
+					{{ functionRun.statusMessage || 'No status message' }}
+				</div>
 			</div>
 
 			<!-- Attachments -->
-			<div v-if="attachments.length !== 0">
-				<div class="text-xs font-bold text-foreground-2">Run attachments:</div>
-				<AutomationAttachmentButton
-					v-for="id in attachments"
-					:key="id"
-					:blob-id="id"
-					:project-id="projectId"
-				/>
+			<div
+				v-if="attachments.length !== 0"
+				class="border-t pt-2 border-foreground-2 space-y-1"
+			>
+				<div class="text-xs font-bold text-foreground-2">Attachments</div>
+				<div class="ml-[2px] justify-start">
+					<AutomationAttachmentButton
+						v-for="id in attachments"
+						:key="id"
+						:blob-id="id"
+						:project-id="projectId"
+						size="xs"
+						link
+						class="mr-2"
+					/>
+				</div>
 			</div>
-
+			<!-- TODO: Overlay result versions -->
+			<div
+				v-if="typedFunctionRun.resultVersions.length !== 0"
+				class="border-t pt-2 border-foreground-2"
+			>
+				<div class="text-xs font-bold text-foreground-2 mb-2">Resulting Models</div>
+				<!-- <div class="text-xs">{{ typedFunctionRun.resultVersions }}</div> -->
+				<div v-for="version in typedFunctionRun.resultVersions" :key="version.id">
+					<FormButton size="xs" link class="truncate max-w-full">
+						Overlay "{{ version.model.name }}" @ {{ version.id }}
+					</FormButton>
+				</div>
+			</div>
 			<!-- Results -->
 			<div
 				v-if="
@@ -71,8 +97,9 @@
 					typedFunctionRun.results.values.objectResults &&
 					typedFunctionRun.results.values.objectResults.length !== 0
 				"
+				class="border-t pt-2 border-foreground-2"
 			>
-				<div class="text-xs font-bold text-foreground-2 mb-2">Run results:</div>
+				<div class="text-xs font-bold text-foreground-2 mb-2">Results</div>
 				<div class="space-y-1">
 					<AutomationViewerResultRowItem
 						v-for="(result, index) in typedFunctionRun.results.values.objectResults"

@@ -57,6 +57,14 @@ export const viewerLoadedResourcesQuery = graphql(`
                     functionId
                     functionName
                     functionLogo
+                    resultVersions {
+                      id
+                      referencedObject
+                      model {
+                        id
+                        name
+                      }
+                    }
                     elapsed
                     status
                     contextView

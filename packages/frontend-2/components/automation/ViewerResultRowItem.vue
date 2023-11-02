@@ -1,7 +1,7 @@
 <template>
 	<button
 		:class="`block transition text-left hover:bg-primary-muted hover:shadow-md rounded-md p-1 cursor-pointer border-l-2  ${
-			isIsolated ? 'border-primary' : 'border-transparent'
+			isIsolated ? 'border-primary bg-primary-muted shadow-md' : 'border-transparent'
 		}`"
 		@click="isolateOrUnisolateObjects()"
 	>

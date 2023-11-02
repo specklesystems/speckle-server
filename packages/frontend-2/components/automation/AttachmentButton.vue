@@ -1,10 +1,8 @@
 <template>
-	<div class="">
-		<FormButton v-tippy="fileInfo.name" text size="xs" @click="onDownloadClick">
-			<span class="max-w-[5rem] truncate">{{ fileInfo.name }}</span>
-			<PaperClipIcon class="w-3 h-3 text-primary" />
-		</FormButton>
-	</div>
+	<FormButton v-tippy="fileInfo.name" text @click="onDownloadClick">
+		<span class="max-w-[5rem] truncate">{{ fileInfo.name }}</span>
+		<PaperClipIcon class="w-3 h-3 text-primary" />
+	</FormButton>
 </template>
 <script setup lang="ts">
 import { PaperClipIcon } from '@heroicons/vue/20/solid'
