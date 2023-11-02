@@ -71,23 +71,35 @@
 import { ConcreteComponent, ref, unref, Ref, computed } from 'vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { FormButton } from '~~/src/lib'
-import { FormButtonType } from './Dialog.vue'
 
-interface DialogSectionButtonType extends FormButtonType {
-  expandContent?: boolean
-}
+type FormButtonColor =
+  | 'default'
+  | 'invert'
+  | 'danger'
+  | 'warning'
+  | 'success'
+  | 'card'
+  | 'secondary'
+  | 'info'
 
-interface DialogSectionProps {
-  title?: string
-  icon?: ConcreteComponent
-  borderT?: boolean
-  borderB?: boolean
-  allowOverflow?: boolean
-  button?: DialogSectionButtonType
-  alwaysOpen?: boolean
-}
-
-const props = defineProps<DialogSectionProps>()
+const props = defineProps({
+  title: String,
+  icon: Object as () => ConcreteComponent | undefined,
+  borderT: Boolean,
+  borderB: Boolean,
+  allowOverflow: Boolean,
+  button: Object as () =>
+    | {
+        expandContent?: boolean
+        text: string
+        to?: string
+        color: FormButtonColor
+        iconRight?: ConcreteComponent
+        onClick?: (event?: MouseEvent) => void
+      }
+    | undefined,
+  alwaysOpen: Boolean
+})
 
 const content: Ref<HTMLElement | null> = ref(null)
 const contentHeight = ref(0)
