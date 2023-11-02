@@ -15,15 +15,19 @@
       :to="allProjectModelsRoute(project.id)"
     />
   </div>
-  <CommonEmptySearchState
-    v-else-if="
-      isFiltering && (baseResult?.project?.modelsTree.items || []).length === 0
-    "
-    @clear-search="$emit('clear-search')"
-  />
-  <div v-else>
-    <ProjectCardImportFileArea :project-id="project.id" class="h-36 col-span-4" />
-  </div>
+  <template v-else-if="!areQueriesLoading">
+    <CommonEmptySearchState
+      v-if="
+        !topLevelItems.length &&
+        isFiltering &&
+        (baseResult?.project?.modelsTree.items || []).length === 0
+      "
+      @clear-search="$emit('clear-search')"
+    />
+    <div v-else>
+      <ProjectCardImportFileArea :project-id="project.id" class="h-36 col-span-4" />
+    </div>
+  </template>
   <InfiniteLoading
     v-if="topLevelItems?.length && !disablePagination"
     :settings="{ identifier: infiniteLoaderId }"
