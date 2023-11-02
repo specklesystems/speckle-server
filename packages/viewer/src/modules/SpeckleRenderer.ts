@@ -677,7 +677,7 @@ export default class SpeckleRenderer {
       const ranges = rvs[k].map((value: NodeRenderView) => {
         return { offset: value.batchStart, count: value.batchCount, material }
       })
-      this.batcher.batches[k].setDrawRanges(...ranges)
+      if (this.batcher.batches[k]) this.batcher.batches[k].setDrawRanges(...ranges)
     }
   }
 
@@ -694,7 +694,7 @@ export default class SpeckleRenderer {
           materialOptions: this.batcher.materials.getFilterMaterialOptions(material)
         }
       })
-      this.batcher.batches[k].setDrawRanges(...drawRanges)
+      if (this.batcher.batches[k]) this.batcher.batches[k].setDrawRanges(...drawRanges)
     }
   }
 
@@ -712,7 +712,7 @@ export default class SpeckleRenderer {
           material
         }
       })
-      this.batcher.batches[k].setDrawRanges(...drawRanges)
+      if (this.batcher.batches[k]) this.batcher.batches[k].setDrawRanges(...drawRanges)
     }
   }
 
