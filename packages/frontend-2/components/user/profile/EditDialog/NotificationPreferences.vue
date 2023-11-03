@@ -44,6 +44,7 @@
   </LayoutDialogSection>
 </template>
 <script setup lang="ts">
+import { LayoutDialogSection } from '@speckle/ui-components'
 import { BellIcon } from '@heroicons/vue/24/outline'
 import { capitalize, cloneDeep } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'

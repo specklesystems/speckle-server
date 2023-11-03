@@ -15,7 +15,7 @@
         !button && !alwaysOpen
           ? {
               click: toggleExpansion,
-              keypress: toggleExpansion
+              keypress: keyboardClick(toggleExpansion)
             }
           : {}
       "
@@ -40,7 +40,7 @@
           :icon-right="
             button.expandContent && isExpanded ? undefined : button.iconRight
           "
-          @click="button.onClick"
+          @click="button?.onClick"
           v-on="button?.expandContent ? { click: toggleExpansion } : {}"
         >
           {{ button.expandContent && isExpanded ? 'Cancel' : button.text }}
@@ -70,7 +70,7 @@
 <script setup lang="ts">
 import { ConcreteComponent, ref, unref, Ref, computed } from 'vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
-import { FormButton } from '~~/src/lib'
+import { FormButton, keyboardClick } from '~~/src/lib'
 
 type FormButtonColor =
   | 'default'
@@ -95,7 +95,7 @@ const props = defineProps({
         to?: string
         color: FormButtonColor
         iconRight?: ConcreteComponent
-        onClick?: (event?: MouseEvent) => void
+        onClick?: () => void
       }
     | undefined,
   alwaysOpen: Boolean

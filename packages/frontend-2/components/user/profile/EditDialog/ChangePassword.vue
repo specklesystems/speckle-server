@@ -22,6 +22,7 @@
   </LayoutDialogSection>
 </template>
 <script setup lang="ts">
+import { LayoutDialogSection } from '@speckle/ui-components'
 import { LockClosedIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { usePasswordReset } from '~~/lib/auth/composables/passwordReset'

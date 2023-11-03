@@ -8,7 +8,7 @@
     <div
       :class="['relative', defaultLinkDisabled ? 'cursor-pointer' : '']"
       @click="$emit('click', $event)"
-      @keypress="keyboardClick(() => $emit('click', $event))"
+      @keypress="keyboardClick((e) => emit('click', e))"
     >
       <div :class="`${height} flex items-center justify-center`">
         <ProjectPendingFileImportStatus
@@ -131,7 +131,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
 import { Nullable } from '@speckle/shared'
-import { keyboardClick } from '~~/lib/common/helpers/accessibility'
+import { keyboardClick } from '@speckle/ui-components'
 
 graphql(`
   fragment ProjectPageModelsCardProject on Project {
@@ -140,8 +140,8 @@ graphql(`
   }
 `)
 
-defineEmits<{
-  (e: 'click', val: MouseEvent): void
+const emit = defineEmits<{
+  (e: 'click', event: MouseEvent | KeyboardEvent): void
 }>()
 
 const props = withDefaults(

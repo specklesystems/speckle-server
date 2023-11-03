@@ -44,6 +44,7 @@
   </LayoutDialogSection>
 </template>
 <script setup lang="ts">
+import { LayoutDialogSection } from '@speckle/ui-components'
 import { TrashIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { GenericValidateFunction, useForm } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'

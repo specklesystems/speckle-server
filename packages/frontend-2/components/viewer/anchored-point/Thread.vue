@@ -113,7 +113,7 @@
             >
               <div
                 v-if="!isThreadResourceLoaded"
-                class="pl-3 pr-1 py-1 mt-2 flex items-center justify-between text-xs text-primary bg-primary-muted"
+                class="pl-3 pr-1 py-1 flex items-center justify-between text-xs text-primary bg-primary-muted"
               >
                 <span>Conversation started in a different version.</span>
                 <FormButton
