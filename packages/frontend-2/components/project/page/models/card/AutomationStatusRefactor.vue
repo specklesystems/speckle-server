@@ -43,7 +43,10 @@
           <FormButton text size="xs" to="https://automate.speckle.dev" target="_blank">
             Learn more about Automate here!
           </FormButton>
-          <FormButton @click="showDialog = false">Close</FormButton>
+          <div class="space-x-1">
+            <FormButton color="secondary" @click="showDialog = false">Close</FormButton>
+            <FormButton @click="showDialog = false">View</FormButton>
+          </div>
         </div>
       </template>
     </LayoutDialog>
@@ -198,6 +201,7 @@ const allFunctionRuns = computed(() => {
   return allRuns
 })
 
+// TODO: move to somewhere central, it's copy pasted around currently
 const summary = computed(() => {
   const result = {
     failed: 0,
