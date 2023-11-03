@@ -93,14 +93,7 @@
 					>
 						Overlay "{{ version.model.name }}"
 					</FormButton>
-					<FormButton
-						v-else
-						size="xs"
-						link
-						class="truncate max-w-full"
-						@click="loadResultVersion(version)"
-						disabled
-					>
+					<FormButton v-else size="xs" link class="truncate max-w-full" disabled>
 						"{{ version.model.name }}" is already overlaid
 					</FormButton>
 				</div>
@@ -177,7 +170,7 @@ const attachments = computed(() => {
 const statusMetaData = resolveStatusMetadata(props.functionRun.status)
 
 const hasResource = (version: Version) => {
-	for (let res of items.value) {
+	for (const res of items.value) {
 		const typedRes = res as unknown as { modelId: string; versionId: string }
 		if (typedRes.modelId === version.model.id && typedRes.versionId === version.id)
 			return true

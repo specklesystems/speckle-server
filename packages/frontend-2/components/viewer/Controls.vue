@@ -168,8 +168,7 @@ import {
   ChatBubbleLeftRightIcon,
   ArrowsPointingOutIcon,
   ScissorsIcon,
-  PlusIcon,
-  PlayCircleIcon
+  PlusIcon
 } from '@heroicons/vue/24/outline'
 import { Nullable } from '@speckle/shared'
 import {

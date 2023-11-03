@@ -122,6 +122,14 @@ const statusMetaData = resolveStatusMetadata(props.functionRun.status)
 const showAttachmentDialog = ref(false)
 
 const coalescedRunResult = computed(() => {
-  return `/projects/${props.projectId}/models/${props.modelId}`
+  const isVersion = !!props.versionId
+  let url = `/projects/${props.projectId}/models/${props.modelId}`
+  if (isVersion) url += `@${props.versionId}`
+  for (const res of props.functionRun.resultVersions) {
+    const modelId = res.model.id
+    const versionId = res.id
+    url += `,${modelId}@${versionId}`
+  }
+  return url
 })
 </script>

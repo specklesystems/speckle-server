@@ -161,7 +161,7 @@ const showDialog = ref(false)
 const automationStatus = computed(() => props.modelOrVersion.automationStatus)
 
 const versionId = computed(() => {
-  return isModel(props.modelOrVersion) ? props.modelOrVersion.id : undefined
+  return !isModel(props.modelOrVersion) ? props.modelOrVersion.id : undefined
 })
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
