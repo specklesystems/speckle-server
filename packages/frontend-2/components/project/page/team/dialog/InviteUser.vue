@@ -6,7 +6,7 @@
     title="Invite"
     :icon="UserPlusIcon"
   >
-    <div class="flex flex-col gap-4 mt-2">
+    <div class="flex flex-col mt-2">
       <FormTextInput
         v-model="search"
         name="search"
@@ -23,7 +23,7 @@
       </FormTextInput>
       <div
         v-if="searchUsers.length || selectedEmails?.length"
-        class="flex flex-col border border-primary-muted"
+        class="flex flex-col border border-primary-muted -mt-6"
       >
         <template v-if="searchUsers.length">
           <ProjectPageTeamDialogInviteUserServerUserRow
