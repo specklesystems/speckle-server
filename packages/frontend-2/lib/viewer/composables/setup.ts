@@ -67,6 +67,10 @@ import {
 import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { flatten, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
+import {
+  ModelSelectionTree,
+  setupSelectedModelsAndScene
+} from '~~/lib/viewer/composables/setup/selection'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -168,7 +172,13 @@ export type InjectableViewerState = Readonly<{
       /**
        * Model GQL objects paired with their loaded version IDs
        */
-      modelsAndVersionIds: ComputedRef<Array<{ model: LoadedModel; versionId: string }>>
+      modelsAndVersionIds: ComputedRef<
+        Array<{
+          model: LoadedModel
+          versionId: string
+          version: LoadedModel['loadedVersion']['items'][number]
+        }>
+      >
       /**
        * All available (retrieved from GQL) models and their versions
        */
@@ -234,6 +244,10 @@ export type InjectableViewerState = Readonly<{
         isApplied: Ref<boolean>
       }
       hasAnyFiltersApplied: ComputedRef<boolean>
+      /**
+       * Info about which models are selected and what the selection paths are
+       */
+      modelSelectionTree: ComputedRef<ModelSelectionTree>
     }
     camera: {
       position: Ref<Vector3>
@@ -648,11 +662,20 @@ function setupResponseResourceData(
 
   const modelsAndVersionIds = computed(() =>
     nonObjectResourceItems.value
-      .map((r) => ({
-        versionId: r.versionId,
-        model: models.value.find((m) => m.id === r.modelId)
-      }))
-      .filter((o): o is SetNonNullable<typeof o, 'model'> => !!(o.versionId && o.model))
+      .map((r) => {
+        const model = models.value.find((m) => m.id === r.modelId)
+        const version = model?.loadedVersion.items.find((v) => v.id === r.versionId)
+
+        return {
+          versionId: r.versionId,
+          model,
+          version
+        }
+      })
+      .filter(
+        (o): o is SetNonNullable<typeof o, 'model' | 'version'> =>
+          !!(o.versionId && o.model && o.version)
+      )
   )
 
   const availableModelsAndVersions = computed(() => {
@@ -839,6 +862,9 @@ function setupInterfaceState(
   const target = ref(new Vector3())
   const isOrthoProjection = ref(false as boolean)
 
+  // Model selection tree
+  const { modelSelectionTree } = setupSelectedModelsAndScene({ state, selectedObjects })
+
   return {
     ...state,
     ui: {
@@ -875,7 +901,8 @@ function setupInterfaceState(
           filter: propertyFilter,
           isApplied: isPropertyFilterApplied
         },
-        hasAnyFiltersApplied
+        hasAnyFiltersApplied,
+        modelSelectionTree
       },
       highlightedObjectIds
     }
