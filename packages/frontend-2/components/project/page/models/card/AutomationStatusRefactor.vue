@@ -45,7 +45,7 @@
           </FormButton>
           <div class="space-x-1">
             <FormButton color="secondary" @click="showDialog = false">Close</FormButton>
-            <FormButton @click="showDialog = false">View</FormButton>
+            <FormButton :to="viewModelLink">View</FormButton>
           </div>
         </div>
       </template>
@@ -65,7 +65,7 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import dayjs from 'dayjs'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { automationDataPageRoute, modelRoute } from '~~/lib/common/helpers/route'
+import { modelRoute } from '~~/lib/common/helpers/route'
 import { SpeckleViewer } from '@speckle/shared'
 import { useServerInfo } from '~~/lib/core/composables/server'
 import { resolveStatusMetadata } from '~~/lib/automations/helpers/resolveStatusMetadata'
@@ -165,6 +165,12 @@ const automationStatus = computed(() => props.modelOrVersion.automationStatus)
 
 const versionId = computed(() => {
   return !isModel(props.modelOrVersion) ? props.modelOrVersion.id : undefined
+})
+
+const viewModelLink = computed(() => {
+  return !versionId.value
+    ? modelRoute(props.projectId, props.modelId)
+    : modelRoute(props.projectId, `${props.modelId}@${versionId.value}`)
 })
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
