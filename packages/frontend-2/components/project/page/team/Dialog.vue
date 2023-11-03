@@ -1,8 +1,6 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="sm">
-    <template #header>
-      <div class="w-full truncate">Manage Project</div>
-    </template>
+    <template #header>Manage Project</template>
     <div class="flex flex-col text-foreground">
       <ProjectPageTeamDialogManageUsers always-open :project="project" />
       <ProjectPageTeamDialogInviteUser

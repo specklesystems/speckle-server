@@ -20,9 +20,7 @@
     ]"
     @fully-closed="$emit('fully-closed')"
   >
-    <template #header>
-      <div class="w-full truncate">Edit Version Message</div>
-    </template>
+    <template #header>Edit Version Message</template>
     <form class="flex flex-col text-foreground space-y-4" @submit="onSubmit">
       <FormTextInput
         v-model="message"

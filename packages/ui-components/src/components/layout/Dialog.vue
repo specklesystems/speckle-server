@@ -37,26 +37,27 @@
             >
               <div :class="scrolledFromTop && 'relative z-10 shadow-lg'">
                 <div
-                  v-if="title"
-                  class="flex items-center justify-start rounded-t-lg shrink-0 h-16 px-4 sm:px-8"
+                  v-if="hasTitle"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 h-16 px-4 sm:px-8 truncate text-xl sm:text-2xl font-bold"
                 >
-                  <slot name="header">
-                    <h4 class="text-xl sm:text-2xl font-bold">{{ title }}</h4>
-                  </slot>
+                  <div class="w-full truncate pr-12">
+                    {{ title }}
+                    <slot name="header"></slot>
+                  </div>
                 </div>
               </div>
 
               <button
                 v-if="!hideCloser"
                 class="absolute z-20 right-4 bg-foundation rounded-full p-1"
-                :class="title ? 'top-4' : 'top-3'"
+                :class="hasTitle ? 'top-4' : 'top-3'"
                 @click="open = false"
               >
                 <XMarkIcon class="h-6 w-6" />
               </button>
               <div
                 class="flex-1 simple-scrollbar overflow-y-auto bg-white dark:bg-foundation"
-                :class="title ? 'p-4 sm:py-6 sm:px-8' : 'p-10'"
+                :class="hasTitle ? 'p-4 sm:py-6 sm:px-8' : 'p-10'"
                 @scroll="onScroll"
               >
                 <slot>Put your content here!</slot>
@@ -91,13 +92,10 @@
 </template>
 <script setup lang="ts">
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import { ExtractPropTypes } from 'vue'
 import { FormButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { computed, ref, useSlots } from 'vue'
 import { throttle } from 'lodash'
-
-type FormButtonType = ExtractPropTypes<typeof FormButton>
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -115,7 +113,13 @@ const props = defineProps<{
    */
   preventCloseOnClickOutside?: boolean
   title?: string
-  buttons?: FormButtonType[]
+  buttons?: Array<{
+    text: string
+    props: Record<string, unknown>
+    onClick?: () => void
+    disabled?: boolean
+    submit?: boolean
+  }>
   /**
    * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
    */
@@ -129,6 +133,7 @@ const scrolledToBottom = ref(false)
 
 const isForm = computed(() => !!props.onSubmit)
 const hasButtons = computed(() => props.buttons || slots.buttons)
+const hasTitle = computed(() => props.title || slots.header)
 
 const open = computed({
   get: () => props.open,

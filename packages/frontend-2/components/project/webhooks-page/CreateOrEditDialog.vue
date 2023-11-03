@@ -6,9 +6,7 @@
     prevent-close-on-click-outside
   >
     <template #header>
-      <div class="w-full truncate">
-        {{ props.webhook ? 'Edit Webhook' : 'Create Webhook' }}
-      </div>
+      {{ props.webhook ? 'Edit Webhook' : 'Create Webhook' }}
     </template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">

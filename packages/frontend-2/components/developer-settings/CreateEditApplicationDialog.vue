@@ -6,9 +6,7 @@
     prevent-close-on-click-outside
   >
     <template #header>
-      <div class="w-full truncate">
-        {{ props.application ? 'Edit Application' : 'Create Application' }}
-      </div>
+      {{ props.application ? 'Edit Application' : 'Create Application' }}
     </template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">

@@ -19,9 +19,7 @@
     ]"
     max-width="sm"
   >
-    <template #header>
-      <div class="w-full truncate">Delete Model</div>
-    </template>
+    <template #header>Delete Model</template>
     <div class="flex flex-col text-foreground">
       <p class="mb-2">
         Are you sure you want to delete the model

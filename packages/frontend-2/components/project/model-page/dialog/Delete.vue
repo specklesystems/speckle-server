@@ -14,9 +14,7 @@
     @fully-closed="$emit('fully-closed')"
   >
     <template #header>
-      <div class="w-full truncate">
-        Delete {{ `${versions.length} version${versions.length > 1 ? 's' : ''}` }}
-      </div>
+      Delete {{ `${versions.length} version${versions.length > 1 ? 's' : ''}` }}
     </template>
     <div class="flex flex-col text-foreground">
       <p class="mb-6">

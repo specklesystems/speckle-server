@@ -5,9 +5,7 @@
     hide-closer
     :buttons="dialogButtons"
   >
-    <template #header>
-      <div class="w-full truncate">Create New Model</div>
-    </template>
+    <template #header>Create New Model</template>
     <form @submit="onSubmit">
       <div class="flex flex-col space-y-4">
         <FormTextInput

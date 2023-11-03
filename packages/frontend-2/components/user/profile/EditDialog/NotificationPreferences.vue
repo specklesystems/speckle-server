@@ -5,10 +5,10 @@
     border-t
     border-b
   >
-    <table class="table-auto w-full">
+    <table class="table-auto w-full rounded-t overflow-hidden">
       <thead class="text-foreground-1">
         <tr>
-          <th class="bg-primary-muted py-2 px-4 rounded-t">Notification type</th>
+          <th class="bg-primary-muted py-2 px-4">Notification type</th>
           <th
             v-for="channel in notificationChannels"
             :key="channel"

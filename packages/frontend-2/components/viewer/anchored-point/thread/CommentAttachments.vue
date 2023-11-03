@@ -7,37 +7,13 @@
       size="sm"
       @click="() => onAttachmentClick(attachment)"
     >
-      <span class="truncate relative bottom-0.5 text-xs">
+      <span class="truncate relative text-xs">
         {{ attachment.fileName }}
       </span>
     </CommonTextLink>
-    <LayoutDialog
-      v-model:open="dialogOpen"
-      max-width="lg"
-      :buttons="
-        dialogAttachment
-          ? [
-              {
-                text: dialogAttachment.fileSize
-                  ? prettyFileSize(dialogAttachment.fileSize)
-                  : 'Download',
-                props: {
-                  color: 'primary',
-                  fullWidth: true,
-                  iconLeft: ArrowDownTrayIcon
-                },
-                onClick: () => {
-                  onDownloadClick()
-                }
-              }
-            ]
-          : undefined
-      "
-    >
+    <LayoutDialog v-model:open="dialogOpen" max-width="lg" :buttons="dialogButtons">
       <template #header>
-        <div class="w-full truncate">
-          {{ dialogAttachment ? dialogAttachment.fileName : 'Attachment' }}
-        </div>
+        {{ dialogAttachment ? dialogAttachment.fileName : 'Attachment' }}
       </template>
       <template v-if="dialogAttachment">
         <div class="flex flex-col space-y-2">
@@ -164,6 +140,26 @@ const onDownloadClick = async () => {
     })
   }
 }
+
+const dialogButtons = computed(() => {
+  if (!dialogAttachment.value) return undefined
+
+  const button = {
+    text: dialogAttachment.value.fileSize
+      ? prettyFileSize(dialogAttachment.value.fileSize)
+      : 'Download',
+    props: {
+      color: 'primary',
+      fullWidth: true,
+      iconLeft: ArrowDownTrayIcon
+    },
+    onClick: () => {
+      onDownloadClick()
+    }
+  }
+
+  return [button]
+})
 
 watch(dialogOpen, (newIsOpen) => {
   if (!newIsOpen) {
