@@ -45,7 +45,9 @@
           </FormButton>
           <div class="space-x-1">
             <FormButton color="secondary" @click="showDialog = false">Close</FormButton>
-            <FormButton :to="viewModelLink">View</FormButton>
+            <FormButton :to="viewModelLink">
+              Open {{ versionId ? 'Version' : 'Model' }}
+            </FormButton>
           </div>
         </div>
       </template>
