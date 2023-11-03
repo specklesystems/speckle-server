@@ -13,6 +13,7 @@ export interface IBasicConnectorBinding
   // Various
   getSourceApplicationName: () => Promise<string>
   getSourceApplicationVersion: () => Promise<string>
+  getConnectorVersion: () => Promise<string>
   getDocumentInfo: () => Promise<DocumentInfo>
 
   // Document state calls
@@ -56,6 +57,10 @@ export type ToastAction = {
 export class MockedBaseBinding extends BaseBridge {
   constructor() {
     super()
+  }
+
+  public async getConnectorVersion() {
+    return '0.0.0'
   }
 
   public async getSourceApplicationName() {

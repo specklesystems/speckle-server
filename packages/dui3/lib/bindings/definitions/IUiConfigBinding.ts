@@ -6,22 +6,23 @@ import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 /**
  * The name under which this binding will be registered.
  */
-export const IConfigBindingKey = 'configBinding'
+export const IUiConfigBindingKey = 'uiConfigBinding'
 
 /**
  * A test binding interface to ensure compatbility. Ideally all host environments would implement and register it.
  */
-export interface IConfigBinding extends IBinding<IConfigBindingEvents> {
-  getConfig: () => Promise<Config>
-  updateConfig: (config: Config) => Promise<void>
+export interface IUiConfigBinding extends IBinding<IUiConfigBindingEvents> {
+  getConfig: (hostAppName: string) => Promise<UiConfig>
+  updateConfig: (config: UiConfig, hostAppName: string) => Promise<void>
 }
 
-export interface IConfigBindingEvents {
+export interface IUiConfigBindingEvents {
   void: () => void
 }
 
-export type Config = {
+export type UiConfig = {
   darkTheme: boolean
+  onboardingCompleted: boolean
 }
 
 export class MockedConfigBinding extends BaseBridge {
@@ -36,7 +37,7 @@ export class MockedConfigBinding extends BaseBridge {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  updateConfig(config: Config) {
+  updateConfig(config: UiConfig) {
     // do nothing
   }
 }

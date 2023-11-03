@@ -15,11 +15,11 @@ import {
 } from '~/lib/bindings/definitions/ITestBinding'
 
 import {
-  IConfigBinding,
-  IConfigBindingKey,
+  IUiConfigBinding,
+  IUiConfigBindingKey,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   MockedConfigBinding
-} from '~/lib/bindings/definitions/IConfigBinding'
+} from '~/lib/bindings/definitions/IUiConfigBinding'
 
 import {
   IBasicConnectorBinding,
@@ -60,8 +60,8 @@ export default defineNuxtPlugin(async () => {
 
   // Actual bindings follow below.
 
-  const configBinding =
-    (await tryHoistBinding<IConfigBinding>(IConfigBindingKey)) ||
+  const uiConfigBinding =
+    (await tryHoistBinding<IUiConfigBinding>(IUiConfigBindingKey)) ||
     new MockedConfigBinding()
 
   const accountBinding =
@@ -82,18 +82,18 @@ export default defineNuxtPlugin(async () => {
   // Any binding implments these two methods below, we just choose one to
   // expose globally to the app.
   const showDevTools = () => {
-    configBinding.showDevTools()
+    uiConfigBinding.showDevTools()
   }
 
   const openUrl = (url: string) => {
-    configBinding.openUrl(url)
+    uiConfigBinding.openUrl(url)
   }
 
   return {
     provide: {
       nonExistantBindings,
       testBindings,
-      configBinding,
+      uiConfigBinding,
       accountBinding,
       baseBinding,
       sendBinding,

@@ -1,16 +1,19 @@
-import { Config } from 'lib/bindings/definitions/IConfigBinding'
+import { UiConfig } from 'lib/bindings/definitions/IUiConfigBinding'
 
 export const useUiConfigStore = defineStore('uiConfigStore', () => {
-  const { $configBinding } = useNuxtApp()
+  const { $uiConfigBinding, $baseBinding } = useNuxtApp()
 
-  const hasConfigBindings = ref(!!$configBinding)
-  const uiConfig = ref<Config>({ darkTheme: false })
-
+  const hasConfigBindings = ref(!!$uiConfigBinding)
+  const uiConfig = ref<UiConfig>({ darkTheme: false, onboardingCompleted: false })
+  // const uiConnectorConfig = ref<UiConfig>({ darkTheme: false })
+  const hostAppName = computed(
+    async () => await $baseBinding.getSourceApplicationName()
+  )
   watch(
     uiConfig,
     async (newValue) => {
-      if (!newValue || !$configBinding) return
-      await $configBinding.updateConfig(newValue)
+      if (!newValue || !$uiConfigBinding) return
+      await $uiConfigBinding.updateConfig(newValue, await hostAppName.value)
     },
     { deep: true }
   )
@@ -24,8 +27,10 @@ export const useUiConfigStore = defineStore('uiConfigStore', () => {
   }
 
   const init = async () => {
-    if (!$configBinding) return
-    uiConfig.value = await $configBinding.getConfig()
+    if (!$uiConfigBinding) return
+    console.log(hostAppName.value)
+
+    uiConfig.value = await $uiConfigBinding.getConfig(await hostAppName.value)
   }
   void init()
 

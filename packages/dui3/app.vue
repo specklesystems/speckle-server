@@ -1,5 +1,5 @@
 <template>
-  <div id="speckle" class="bg-foundation-page text-foreground">
+  <div id="speckle" class="bg-foundation-page text-foreground overflow-auto">
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>

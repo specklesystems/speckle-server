@@ -2,6 +2,11 @@
   <div
     class="flex flex-col items-center justify-center h-[calc(100vh-16rem)] px-4 space-y-2"
   >
+    <Portal to="navigation">
+      <FormButton to="/" size="sm" :icon-left="ArrowLeftIcon" class="ml-2">
+        Back home
+      </FormButton>
+    </Portal>
     <div class="h3">{{ `Let's receive our first model to ${hostAppName}.` }}</div>
     <form
       class="flex flex-col justify-center space-y-4"
@@ -65,6 +70,7 @@ import {
   VersionsSelectItemType
 } from 'lib/form/select/types'
 import { IReceiverModelCard } from '~~/lib/models/card/receiver'
+import { ArrowLeftIcon } from '@heroicons/vue/20/solid'
 
 const { defaultAccount } = storeToRefs(useAccountStore())
 const hostAppStore = useHostAppStore()
