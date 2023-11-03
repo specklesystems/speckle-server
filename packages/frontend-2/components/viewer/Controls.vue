@@ -40,8 +40,8 @@
         v-if="allAutomationRuns.length !== 0"
         v-tippy="summary.longSummary"
         :active="activeControl === 'automate'"
-        @click="toggleActiveControl('automate')"
         class="p-2"
+        @click="toggleActiveControl('automate')"
       >
         <!-- <PlayCircleIcon class="h-5 w-5" /> -->
         <!-- {{allAutomationRuns.length}} -->
@@ -196,7 +196,7 @@ const {
   camera: { isOrthoProjection }
 } = useCameraUtilities()
 
-import { AutomationRunStatus } from '~~/lib/common/generated/gql/graphql'
+import { AutomationRunStatus, AutomationRun } from '~~/lib/common/generated/gql/graphql'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
@@ -209,11 +209,13 @@ const allAutomationRuns = computed(() => {
     .map((model) => model.model.loadedVersion.items[0].automationStatus)
     .flat()
     .filter((run) => !!run)
-  return allAutomationStatuses.map((status) => status?.automationRuns).flat()
+  return allAutomationStatuses
+    .map((status) => status?.automationRuns)
+    .flat() as AutomationRun[]
 })
 
 const allFunctionRuns = computed(() => {
-  return allAutomationRuns.value.map((run) => run?.functionRuns).flat()
+  return allAutomationRuns.value.map((run) => run.functionRuns).flat()
 })
 
 const summary = computed(() => {

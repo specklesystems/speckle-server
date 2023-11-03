@@ -35,10 +35,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  AutomationFunctionRun,
-  AutomationRun
-} from '~~/lib/common/generated/gql/graphql'
+import { AutomationRun } from '~~/lib/common/generated/gql/graphql'
 import { useModelVersionCardAutomationsStatusUpdateTracking } from '~~/lib/automations/composables/automationsStatus'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
@@ -58,7 +55,6 @@ defineProps<{
     titleColor: string
     longSummary: string
   }
-  functionRuns: AutomationFunctionRun[]
   automationRuns: AutomationRun[]
 }>()
 </script>
