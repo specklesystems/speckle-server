@@ -113,6 +113,7 @@
           <AutomationViewerResultRowItem
             v-for="(result, index) in typedFunctionRun.results.values.objectResults"
             :key="index"
+            :function-id="typedFunctionRun.functionId"
             :result="result"
           />
         </div>
