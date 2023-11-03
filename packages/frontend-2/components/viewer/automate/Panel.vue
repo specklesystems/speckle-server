@@ -1,10 +1,8 @@
 <template>
   <div>
     <ViewerLayoutPanel @close="$emit('close')">
-      <template #actions>
-        <!-- TODO: Use new title slot once Andrew's PR is in -->
-        <FormButton size="xs" text>Automate</FormButton>
-      </template>
+      <template #title>Automate</template>
+
       <div class="flex items-center space-x-2 w-full pl-3 mt-2">
         <div class="h-6 w-6 mt-[6px]">
           <AutomationDoughnutSummary :summary="summary" />
