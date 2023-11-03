@@ -56,8 +56,8 @@
             v-if="attachments.length > 1"
             size="xs"
             color="card"
-            @click="showAttachmentDialog = true"
             class="mt-1"
+            @click="showAttachmentDialog = true"
           >
             {{ attachments.length }} attachments
           </FormButton>
