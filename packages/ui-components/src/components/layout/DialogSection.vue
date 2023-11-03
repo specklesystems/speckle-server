@@ -70,7 +70,8 @@
 <script setup lang="ts">
 import { ConcreteComponent, ref, unref, Ref, computed } from 'vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
-import { FormButton, keyboardClick } from '~~/src/lib'
+import { FormButton } from '~~/src/lib'
+import { keyboardClick } from '~~/src/helpers/global/accessibility'
 
 type FormButtonColor =
   | 'default'

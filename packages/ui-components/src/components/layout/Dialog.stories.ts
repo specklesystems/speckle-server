@@ -28,7 +28,7 @@ export const Default: StoryObj = {
       const open = ref(false)
       return { args, open }
     },
-    template: `<div>
+    template: `<div class="bg-foundation-page">
       <FormButton @click="() => open = true">Trigger dialog</FormButton>
       <LayoutDialog v-model:open="open" v-bind="args">
         <div class="flex flex-col text-foreground space-y-4">

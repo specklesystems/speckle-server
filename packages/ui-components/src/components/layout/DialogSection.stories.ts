@@ -20,7 +20,7 @@ export const Default: StoryObj = {
       return { args }
     },
     template: `
-    <div>
+    <div class="bg-foundation">
       <DialogSection v-bind="args">
         <div class="flex flex-col text-foreground space-y-4">
           <div class="h4 font-bold">Hello world!</div>
