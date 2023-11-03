@@ -45,7 +45,7 @@ type ObjectResultWithOptionalMetadata = {
   level: 'ERROR' | 'WARNING' | 'INFO'
   metadata?: {
     gradient?: boolean
-    gradientValues: Record<string, { gradientValue: number }>
+    gradientValues: Record<string, { gradientValue: number }> // TODO simplify convention, it's unweildly
   }
 }
 
@@ -109,6 +109,7 @@ watch(filteringState, (newVal) => {
     metadataGradientIsSet.value = false
 })
 
+// NOTE: This is currently a hacky convention!!!
 const computedPropInfo = computed(() => {
   if (!hasMetadataGradient.value) return
   if (!props.result.metadata) return
@@ -140,7 +141,6 @@ const computedPropInfo = computed(() => {
   return propInfo
 })
 
-// NOTE: This is currently a hacky convention
 const setOrUnsetGradient = () => {
   if (metadataGradientIsSet.value) {
     resetFilters()
