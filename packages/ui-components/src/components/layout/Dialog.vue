@@ -35,24 +35,28 @@
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onSubmit"
             >
-              <div
-                v-if="hasHeaderSlot"
-                class="flex items-center justify-start rounded-t-lg shrink-0 p-4 sm:px-8 text-xl sm:text-2xl font-bold"
-                :class="scrolledFromTop && 'relative z-10 shadow-lg'"
-              >
-                <slot name="header"></slot>
+              <div :class="scrolledFromTop && 'relative z-10 shadow-lg'">
+                <div
+                  v-if="title"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 h-16 px-4 sm:px-8"
+                >
+                  <slot name="header">
+                    <h4 class="text-xl sm:text-2xl font-bold">{{ title }}</h4>
+                  </slot>
+                </div>
               </div>
 
               <button
                 v-if="!hideCloser"
-                class="absolute z-20 right-4 bg-foundation rounded-full p-1 top-3"
+                class="absolute z-20 right-4 bg-foundation rounded-full p-1"
+                :class="title ? 'top-4' : 'top-3'"
                 @click="open = false"
               >
                 <XMarkIcon class="h-6 w-6" />
               </button>
               <div
                 class="flex-1 simple-scrollbar overflow-y-auto bg-white dark:bg-foundation"
-                :class="hasHeaderSlot ? 'p-4 sm:py-6 sm:px-8' : 'p-10'"
+                :class="title ? 'p-4 sm:py-6 sm:px-8' : 'p-10'"
                 @scroll="onScroll"
               >
                 <slot>Put your content here!</slot>
@@ -62,7 +66,21 @@
                 class="flex px-4 py-2 sm:py-4 sm:px-6 gap-2 shrink-0"
                 :class="!scrolledToBottom && 'shadow-t'"
               >
-                <slot name="buttons" />
+                <template v-if="buttons">
+                  <FormButton
+                    v-for="(button, index) in buttons"
+                    :key="index"
+                    v-bind="button.props"
+                    :disabled="button.disabled"
+                    :type="button.submit && 'submit'"
+                    @click="button.onClick"
+                  >
+                    {{ button.text }}
+                  </FormButton>
+                </template>
+                <template v-else>
+                  <slot name="buttons" />
+                </template>
               </div>
             </DialogPanel>
           </TransitionChild>
@@ -73,9 +91,13 @@
 </template>
 <script setup lang="ts">
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
+import { ExtractPropTypes } from 'vue'
+import { FormButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { computed, ref, useSlots } from 'vue'
 import { throttle } from 'lodash'
+
+type FormButtonType = ExtractPropTypes<typeof FormButton>
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -92,6 +114,8 @@ const props = defineProps<{
    * Prevent modal from closing when the user clicks outside of the modal or presses Esc
    */
   preventCloseOnClickOutside?: boolean
+  title?: string
+  buttons?: FormButtonType[]
   /**
    * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
    */
@@ -104,8 +128,7 @@ const scrolledFromTop = ref(false)
 const scrolledToBottom = ref(false)
 
 const isForm = computed(() => !!props.onSubmit)
-const hasButtons = computed(() => slots.buttons)
-const hasHeaderSlot = computed(() => !!slots.header)
+const hasButtons = computed(() => props.buttons || slots.buttons)
 
 const open = computed({
   get: () => props.open,

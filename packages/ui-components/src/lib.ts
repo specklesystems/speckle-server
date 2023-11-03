@@ -131,10 +131,10 @@ export {
   CommonAlert,
   writableAsyncComputed,
   useFormCheckboxModel,
-  FormTags
+  FormTags,
+  keyboardClick
 }
 export type {
-  keyboardClick,
   ToastNotification,
   BulletStepType,
   NumberStepType,

@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { ConcreteComponent, ref, unref, Ref, computed } from 'vue'
+import { ref, unref, Ref, computed, ConcreteComponent } from 'vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { FormButton } from '~~/src/lib'
 import { keyboardClick } from '~~/src/helpers/global/accessibility'
@@ -85,7 +85,7 @@ type FormButtonColor =
 
 const props = defineProps({
   title: String,
-  icon: Object as () => ConcreteComponent | undefined,
+  icon: Object as () => ConcreteComponent,
   borderT: Boolean,
   borderB: Boolean,
   allowOverflow: Boolean,
@@ -95,7 +95,7 @@ const props = defineProps({
         text: string
         to?: string
         color: FormButtonColor
-        iconRight?: ConcreteComponent
+        iconRight?: ConcreteComponent | undefined
         onClick?: () => void
       }
     | undefined,

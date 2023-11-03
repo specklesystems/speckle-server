@@ -2,6 +2,7 @@ import { Meta, StoryObj } from '@storybook/vue3'
 import LayoutDialog from '~~/src/components/layout/Dialog.vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import { ref } from 'vue'
+import { action } from '@storybook/addon-actions'
 import { directive as vTippy } from 'vue-tippy'
 
 export default {
@@ -28,7 +29,7 @@ export const Default: StoryObj = {
       const open = ref(false)
       return { args, open }
     },
-    template: `<div class="bg-foundation-page">
+    template: `<div>
       <FormButton @click="() => open = true">Trigger dialog</FormButton>
       <LayoutDialog v-model:open="open" v-bind="args">
         <div class="flex flex-col text-foreground space-y-4">
@@ -48,30 +49,31 @@ export const Default: StoryObj = {
   }
 }
 
-export const WithHeader: StoryObj = {
+export const HeaderAndFooter = {
   ...Default,
   args: {
-    ...Default.args
-  },
-  render: (args) => ({
-    components: { LayoutDialog, FormButton },
-    setup() {
-      const open = ref(false)
-      return { args, open }
-    },
-    template: `<div>
-      <FormButton @click="() => open = true">Trigger dialog</FormButton>
-      <LayoutDialog v-model:open="open" v-bind="args">
-        <div class="flex flex-col text-foreground space-y-4">
-          <div class="h4 font-bold">Hello world!</div>
-          <div>Lorem ipsum blah blah blah</div>
-        </div>
-        <template #header>
-            Example Header
-        </template>
-      </LayoutDialog>
-    </div>`
-  })
+    ...Default.args,
+    title: 'Dialog Title',
+    buttons: [
+      {
+        text: 'Close',
+        props: {
+          color: 'secondary',
+          link: false,
+          fullWidth: true,
+          outline: true
+        }
+      },
+      {
+        text: 'Save',
+        props: {
+          color: 'default',
+          link: false,
+          fullWidth: true
+        }
+      }
+    ]
+  }
 }
 
 export const ManualCloseOnly = {
@@ -81,6 +83,25 @@ export const ManualCloseOnly = {
     preventCloseOnClickOutside: true
   }
 }
+
+export const WithSubmit = {
+  ...HeaderAndFooter,
+  args: {
+    ...HeaderAndFooter.args,
+    onSubmit: action('submit'),
+    buttons: [
+      {
+        text: 'Submit',
+        props: {
+          color: 'default',
+          submit: true,
+          fullWidth: true
+        }
+      }
+    ]
+  }
+}
+
 export const WithSlotButtons: StoryObj = {
   ...Default,
   args: {

@@ -63,7 +63,7 @@ import {
   ProjectItem,
   InviteItem
 } from '~~/lib/server-management/helpers/types'
-import { keyboardClick } from '@speckle/ui-components/'
+import { keyboardClick } from '@speckle/ui-components'
 
 type OnRowClickType = (item: ItemType) => void
 

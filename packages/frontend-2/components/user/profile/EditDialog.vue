@@ -23,6 +23,16 @@ import { useQuery } from '@vue/apollo-composable'
 import { CodeBracketIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 import { profileEditDialogQuery } from '~~/lib/user/graphql/queries'
 
+type FormButtonColor =
+  | 'default'
+  | 'invert'
+  | 'danger'
+  | 'warning'
+  | 'success'
+  | 'card'
+  | 'secondary'
+  | 'info'
+
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
 }>()
@@ -42,7 +52,7 @@ const isOpen = computed({
 
 const developerSettingsButton = {
   text: 'Manage',
-  color: 'default',
+  color: 'default' as FormButtonColor,
   to: '/developer-settings/',
   iconRight: ChevronRightIcon,
   onClick: () => {
