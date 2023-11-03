@@ -23,7 +23,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center justify-between px-4 sm:px-2 py-3 text-sm text-primary cursor-pointer transition border-b border-primary'
+                'flex items-center justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-primary cursor-pointer transition border-b border-primary'
               ]"
               @click="goToConnectors()"
             >
@@ -35,19 +35,19 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center justify-between px-4 sm:px-2 py-3 text-sm text-foreground cursor-pointer transition'
+                'flex items-center justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
               @click="() => (showProfileEditDialog = true)"
             >
               Edit Profile
-              <UserAvatar :user="activeUser" size="sm" class="-mr-1 sm:mr-1" />
+              <UserAvatar :user="activeUser" size="sm" class="-mr-1 sm:mr-1.5" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="isAdmin" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-4 sm:px-2 py-3 text-sm text-foreground cursor-pointer transition'
+                'flex items-center  justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
               @click="goToServerManagement()"
             >
@@ -59,7 +59,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-4 sm:px-2 py-3 text-sm text-foreground cursor-pointer transition'
+                'flex items-center  justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
               @click="onThemeClick"
             >
@@ -71,7 +71,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center justify-between px-4 sm:px-2 py-3 text-sm text-foreground cursor-pointer transition'
+                'flex items-center justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
               @click="toggleInviteDialog"
             >
@@ -83,7 +83,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-4 sm:px-2 py-3 text-sm text-danger cursor-pointer transition'
+                'flex items-center  justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-danger cursor-pointer transition'
               ]"
               @click="logout"
             >
@@ -95,7 +95,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-4 sm:px-2 py-3 text-sm text-primary cursor-pointer transition'
+                'flex items-center  justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-primary cursor-pointer transition'
               ]"
               :to="loginUrl"
             >
@@ -104,7 +104,7 @@
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="version">
-            <div class="px-2 pb-1 text-tiny text-foreground-2">
+            <div class="px-2 pl-4 pb-1 text-tiny text-foreground-2">
               Version {{ version }}
             </div>
           </MenuItem>
@@ -126,7 +126,7 @@ import {
   EnvelopeIcon,
   CloudArrowDownIcon,
   Cog6ToothIcon
-} from '@heroicons/vue/24/solid'
+} from '@heroicons/vue/24/outline'
 import { useQuery } from '@vue/apollo-composable'
 import { Optional, Roles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'

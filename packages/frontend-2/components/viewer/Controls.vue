@@ -274,6 +274,10 @@ const scrollControlsToBottom = () => {
   //   scrollToBottom(scrollableControlsContainer.value)
 }
 
+onMounted(() => {
+  activeControl.value = isSmallerOrEqualSM.value ? 'none' : 'models'
+})
+
 watch(isSmallerOrEqualSM, (newVal) => {
   activeControl.value = newVal ? 'none' : 'models'
 })
