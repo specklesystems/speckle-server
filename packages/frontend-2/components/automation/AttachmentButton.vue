@@ -1,6 +1,8 @@
 <template>
 	<FormButton v-tippy="fileInfo.name" text @click="onDownloadClick">
-		<span class="max-w-[5rem] truncate">{{ fileInfo.name }}</span>
+		<span :class="`${restrictWidth ? 'max-w-[5rem]' : ''} truncate`">
+			{{ fileInfo.name }}
+		</span>
 		<PaperClipIcon class="w-3 h-3 text-primary" />
 	</FormButton>
 </template>
@@ -15,10 +17,16 @@ import { ensureError } from '@speckle/shared'
 const { download } = useFileDownload()
 const { triggerNotification } = useGlobalToast()
 
-const props = defineProps<{
-	blobId: string
-	projectId: string
-}>()
+const props = withDefaults(
+	defineProps<{
+		blobId: string
+		projectId: string
+		restrictWidth: boolean
+	}>(),
+	{
+		restrictWidth: true
+	}
+)
 
 const { result } = useQuery(blobInfoQuery, () => ({
 	streamId: props.projectId,

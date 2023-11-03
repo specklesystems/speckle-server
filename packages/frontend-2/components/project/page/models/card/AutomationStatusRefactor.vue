@@ -5,11 +5,6 @@
       class="h-6 w-6 bg-foundation rounded-full flex items-center justify-center"
       @click="showDialog = true"
     >
-      <!-- <Component
-        :is="statusIconAndColor.icon"
-        v-tippy="automationStatus.statusMessage"
-        :class="['h-6 w-6 outline-none', statusIconAndColor.iconColor]"
-      /> -->
       <AutomationDoughnutSummary :summary="summary" />
     </button>
     <LayoutDialog
@@ -34,7 +29,12 @@
       </template>
       <div class="">
         <div v-for="run in automationRuns" :key="run.id">
-          <ProjectPageModelsCardAutomationRun :run="(run as AutomationRun)" />
+          <ProjectPageModelsCardAutomationRun
+            :run="(run as AutomationRun)"
+            :project-id="projectId"
+            :model-id="modelId"
+            :version-id="versionId"
+          />
         </div>
       </div>
 
@@ -117,6 +117,10 @@ graphql(`
         results
         resultVersions {
           id
+          model {
+            id
+            name
+          }
         }
       }
     }
@@ -155,6 +159,11 @@ const { serverInfo } = useServerInfo()
 const showDialog = ref(false)
 
 const automationStatus = computed(() => props.modelOrVersion.automationStatus)
+
+const versionId = computed(() => {
+  return isModel(props.modelOrVersion) ? props.modelOrVersion.id : undefined
+})
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const statusIconAndColor = computed(() =>
   resolveStatusMetadata(automationStatus.value.status)
