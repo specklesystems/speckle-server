@@ -129,7 +129,7 @@ const props = defineProps<{
 const slots = useSlots()
 
 const scrolledFromTop = ref(false)
-const scrolledToBottom = ref(false)
+const scrolledToBottom = ref(true)
 
 const isForm = computed(() => !!props.onSubmit)
 const hasButtons = computed(() => props.buttons || slots.buttons)
