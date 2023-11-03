@@ -53,6 +53,8 @@
 
       <!-- Standard viewer controls -->
       <ViewerControlsButtonGroup>
+        <!-- Views -->
+        <ViewerViewsMenu v-tippy="'Views'" />
         <!-- Zoom extents -->
         <ViewerControlsButtonToggle
           v-tippy="zoomExtentsShortcut"
@@ -62,6 +64,10 @@
           <ArrowsPointingOutIcon class="h-5 w-5" />
         </ViewerControlsButtonToggle>
 
+        <!-- Sun and lights -->
+        <ViewerSunMenu v-tippy="'Light Controls'" />
+      </ViewerControlsButtonGroup>
+      <ViewerControlsButtonGroup>
         <!-- Projection type -->
         <!-- TODO (Question for fabs): How to persist state between page navigation? e.g., swap to iso mode, move out, move back, iso mode is still on in viewer but not in ui -->
         <ViewerControlsButtonToggle
@@ -86,14 +92,8 @@
           <ScissorsIcon class="h-5 w-5" />
         </ViewerControlsButtonToggle>
 
-        <!-- Sun and lights -->
-        <ViewerSunMenu v-tippy="'Light Controls'" />
-
         <!-- Explosion -->
         <ViewerExplodeMenu v-tippy="'Explode'" />
-
-        <!-- Views -->
-        <ViewerViewsMenu v-tippy="'Views'" />
 
         <!-- Settings -->
         <ViewerSettingsMenu />
@@ -101,7 +101,7 @@
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 mx-14 mt-[4rem] mb-4 max-h-[calc(100vh-5.5rem)] w-72 overflow-y-auto px-[2px] py-[2px] transition ${
+      :class="`simple-scrollbar absolute z-10 mx-14 mt-[4rem] mb-4 max-h-[calc(100vh-5.5rem)] w-64 sm:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
@@ -175,6 +175,9 @@ import {
   useCameraUtilities,
   useSectionBoxUtilities
 } from '~~/lib/viewer/composables/ui'
+import { useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+
 import {
   onKeyboardShortcut,
   ModifierKeys,
@@ -198,6 +201,8 @@ import { AutomationRunStatus } from '~~/lib/common/generated/gql/graphql'
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
+
+const breakpoints = useBreakpoints(TailwindBreakpoints)
 
 const allAutomationRuns = computed(() => {
   const allAutomationStatuses = modelsAndVersionIds.value
@@ -270,6 +275,7 @@ type ActiveControl =
 const openAddModel = ref(false)
 
 const activeControl = ref<ActiveControl>('models')
+
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
 const {
   diff: { enabled }
@@ -285,7 +291,7 @@ const discussionsShortcut = ref(
   `Discussions (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 't'])})`
 )
 const zoomExtentsShortcut = ref(
-  `Zoom Extents (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'Space'])})`
+  `Fit to screen (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'Space'])})`
 )
 const projectionShortcut = ref(
   `Projection (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'p'])})`
@@ -293,6 +299,8 @@ const projectionShortcut = ref(
 const sectionBoxShortcut = ref(
   `Section Box (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'b'])})`
 )
+
+const isSmallerOrEqualSM = computed(() => breakpoints.smallerOrEqual('sm').value)
 
 const toggleActiveControl = (control: ActiveControl) =>
   activeControl.value === control
@@ -355,4 +363,8 @@ const scrollControlsToBottom = () => {
   // if (scrollableControlsContainer.value)
   //   scrollToBottom(scrollableControlsContainer.value)
 }
+
+watch(isSmallerOrEqualSM, (newVal) => {
+  activeControl.value = newVal ? 'none' : 'models'
+})
 </script>

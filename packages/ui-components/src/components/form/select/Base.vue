@@ -17,7 +17,7 @@
       </ListboxLabel>
       <div :class="buttonsWrapperClasses">
         <!-- <div class="relative flex"> -->
-        <ListboxButton v-slot="{ open }" :class="buttonClasses">
+        <ListboxButton ref="listboxButton" v-slot="{ open }" :class="buttonClasses">
           <div class="flex items-center justify-between w-full">
             <div class="block truncate grow text-left">
               <template
@@ -70,86 +70,96 @@
           <XMarkIcon class="w-3 h-3" />
         </button>
         <Transition
+          v-if="isMounted"
           leave-active-class="transition ease-in duration-100"
           leave-from-class="opacity-100"
           leave-to-class="opacity-0"
         >
-          <ListboxOptions
-            class="absolute top-[100%] z-10 mt-1 w-full rounded-md bg-foundation-2 py-1 label label--light outline outline-2 outline-primary-muted focus:outline-none shadow"
-            @focus="searchInput?.focus()"
-          >
-            <label v-if="hasSearch" class="flex flex-col mx-1 mb-1">
-              <span class="sr-only label text-foreground">Search</span>
-              <div class="relative">
-                <div
-                  class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2"
-                >
-                  <MagnifyingGlassIcon class="h-5 w-5 text-foreground" />
-                </div>
-                <input
-                  ref="searchInput"
-                  v-model="searchValue"
-                  type="text"
-                  class="pl-9 w-full border-0 bg-foundation-page rounded placeholder:font-normal normal placeholder:text-foreground-2 focus:outline-none focus:ring-1 focus:border-outline-1 focus:ring-outline-1"
-                  :placeholder="searchPlaceholder"
-                  @keydown.stop
-                />
-              </div>
-            </label>
-            <div
-              class="overflow-auto simple-scrollbar"
-              :class="[hasSearch ? 'max-h-52' : 'max-h-40']"
+          <Teleport to="body" :disabled="!mountMenuOnBody">
+            <ListboxOptions
+              :class="listboxOptionsClasses"
+              :style="listboxOptionsStyle"
+              @focus="searchInput?.focus()"
             >
-              <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
-                <CommonLoadingBar :loading="true" />
-              </div>
-              <div v-else-if="isAsyncSearchMode && !currentItems.length">
-                <slot name="nothing-found">
-                  <div class="text-foreground-2 text-center">Nothing found 🤷‍♂️</div>
-                </slot>
-              </div>
-              <template v-if="!isAsyncSearchMode || !isAsyncLoading">
-                <ListboxOption
-                  v-for="item in finalItems"
-                  :key="itemKey(item)"
-                  v-slot="{ active, selected }: { active: boolean, selected: boolean }"
-                  :value="item"
-                  :disabled="disabledItemPredicate?.(item) || false"
-                >
-                  <li
-                    :class="
-                      listboxOptionClasses({
-                        active,
-                        disabled: disabledItemPredicate?.(item) || false
-                      })
-                    "
+              <label v-if="hasSearch" class="flex flex-col mx-1 mb-1">
+                <span class="sr-only label text-foreground">Search</span>
+                <div class="relative">
+                  <div
+                    class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2"
                   >
-                    <span :class="['block truncate']">
-                      <slot
-                        name="option"
-                        :item="item"
-                        :active="active"
-                        :selected="selected"
-                        :disabled="disabledItemPredicate?.(item) || false"
-                      >
-                        {{ simpleDisplayText(item) }}
-                      </slot>
-                    </span>
-
-                    <span
-                      v-if="!hideCheckmarks && selected"
-                      :class="[
-                        active ? 'text-primary' : 'text-foreground',
-                        'absolute inset-y-0 right-0 flex items-center pr-4'
-                      ]"
+                    <MagnifyingGlassIcon class="h-5 w-5 text-foreground" />
+                  </div>
+                  <input
+                    ref="searchInput"
+                    v-model="searchValue"
+                    type="text"
+                    class="pl-9 w-full border-0 bg-foundation-page rounded placeholder:font-normal normal placeholder:text-foreground-2 focus:outline-none focus:ring-1 focus:border-outline-1 focus:ring-outline-1"
+                    :placeholder="searchPlaceholder"
+                    @keydown.stop
+                  />
+                </div>
+              </label>
+              <div
+                class="overflow-auto simple-scrollbar"
+                :class="[hasSearch ? 'max-h-52' : 'max-h-40']"
+              >
+                <div v-if="isAsyncSearchMode && isAsyncLoading" class="px-1">
+                  <CommonLoadingBar :loading="true" />
+                </div>
+                <div v-else-if="isAsyncSearchMode && !currentItems.length">
+                  <slot name="nothing-found">
+                    <div class="text-foreground-2 text-center">Nothing found 🤷‍♂️</div>
+                  </slot>
+                </div>
+                <template v-if="!isAsyncSearchMode || !isAsyncLoading">
+                  <ListboxOption
+                    v-for="item in finalItems"
+                    :key="itemKey(item)"
+                    v-slot="{
+                      active,
+                      selected
+                    }: {
+                      active: boolean,
+                      selected: boolean
+                    }"
+                    :value="item"
+                    :disabled="disabledItemPredicate?.(item) || false"
+                  >
+                    <li
+                      :class="
+                        listboxOptionClasses({
+                          active,
+                          disabled: disabledItemPredicate?.(item) || false
+                        })
+                      "
                     >
-                      <CheckIcon class="h-5 w-5" aria-hidden="true" />
-                    </span>
-                  </li>
-                </ListboxOption>
-              </template>
-            </div>
-          </ListboxOptions>
+                      <span :class="['block truncate']">
+                        <slot
+                          name="option"
+                          :item="item"
+                          :active="active"
+                          :selected="selected"
+                          :disabled="disabledItemPredicate?.(item) || false"
+                        >
+                          {{ simpleDisplayText(item) }}
+                        </slot>
+                      </span>
+
+                      <span
+                        v-if="!hideCheckmarks && selected"
+                        :class="[
+                          active ? 'text-primary' : 'text-foreground',
+                          'absolute inset-y-0 right-0 flex items-center pr-4'
+                        ]"
+                      >
+                        <CheckIcon class="h-5 w-5" aria-hidden="true" />
+                      </span>
+                    </li>
+                  </ListboxOption>
+                </template>
+              </div>
+            </ListboxOptions>
+          </Teleport>
         </Transition>
       </div>
     </Listbox>
@@ -184,12 +194,22 @@ import {
   ExclamationCircleIcon
 } from '@heroicons/vue/24/solid'
 import { debounce, isArray, isObjectLike } from 'lodash'
-import { PropType, Ref, computed, onMounted, ref, unref, watch } from 'vue'
+import {
+  CSSProperties,
+  PropType,
+  Ref,
+  computed,
+  onMounted,
+  ref,
+  unref,
+  watch
+} from 'vue'
 import { MaybeAsync, Nullable, Optional } from '@speckle/shared'
 import { RuleExpression, useField } from 'vee-validate'
 import { nanoid } from 'nanoid'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import { directive as vTippy } from 'vue-tippy'
+import { useElementBounding, useMounted } from '@vueuse/core'
 
 type ButtonStyle = 'base' | 'simple' | 'tinted'
 type ValueType = SingleItem | SingleItem[] | undefined
@@ -360,6 +380,14 @@ const props = defineProps({
   showRequired: {
     type: Boolean,
     default: false
+  },
+  /**
+   * Whether to mount the menu on the body instead of inside the component. Useful when select box is mounted within
+   * dialog windows and the menu causes unnecessary overflow.
+   */
+  mountMenuOnBody: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -369,13 +397,20 @@ const { value, errorMessage: error } = useField<ValueType>(props.name, props.rul
   initialValue: props.modelValue as ValueType
 })
 
+const isMounted = useMounted()
+
 const searchInput = ref(null as Nullable<HTMLInputElement>)
+const listboxButton = ref(null as Nullable<{ el: Nullable<HTMLButtonElement> }>)
 const searchValue = ref('')
 const currentItems = ref([]) as Ref<SingleItem[]>
 const isAsyncLoading = ref(false)
 const forceUpdateKey = ref(1)
-
 const internalHelpTipId = ref(nanoid())
+
+const listboxButtonBounding = useElementBounding(
+  computed(() => listboxButton.value?.el),
+  { windowResize: true, windowScroll: true, immediate: true }
+)
 
 const title = computed(() => unref(props.label) || unref(props.name))
 const errorMessage = computed(() => {
@@ -560,6 +595,37 @@ const finalItems = computed(() => {
   }
 
   return currentItems.value
+})
+
+const listboxOptionsClasses = computed(() => {
+  const classParts = [
+    'rounded-md bg-foundation-2 py-1 label label--light outline outline-2 outline-primary-muted focus:outline-none shadow mt-1 '
+  ]
+
+  if (props.mountMenuOnBody) {
+    classParts.push('fixed z-50')
+  } else {
+    classParts.push('absolute top-[100%] w-full z-10')
+  }
+
+  return classParts.join(' ')
+})
+
+const listboxOptionsStyle = computed(() => {
+  const style: CSSProperties = {}
+
+  if (props.mountMenuOnBody) {
+    const top = listboxButtonBounding.top.value
+    const left = listboxButtonBounding.left.value
+    const width = listboxButtonBounding.width.value
+    const height = listboxButtonBounding.height.value
+
+    style.top = `${top + height}px`
+    style.left = `${left}px`
+    style.width = `${width}px`
+  }
+
+  return style
 })
 
 const simpleDisplayText = (v: ValueType) => JSON.stringify(v)

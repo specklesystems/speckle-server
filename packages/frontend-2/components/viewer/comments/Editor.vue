@@ -1,6 +1,6 @@
 <!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
-  <div class="flex flex-col w-80 max-h-40 overflow-y-auto simple-scrollbar">
+  <div class="flex flex-col w-full max-h-28 overflow-y-auto simple-scrollbar">
     <FormFileUploadZone
       ref="uploadZone"
       v-slot="{ isDraggingFiles }"
@@ -13,7 +13,7 @@
       <CommonTiptapTextEditor
         v-model="doc"
         :class="[
-          'dark:bg-foundation-2 bg-neutral-100 rounded-lg p-4 border',
+          'dark:bg-foundation-2 bg-neutral-100 rounded-lg p-2 pr-12 border text-sm',
           isDraggingFiles ? 'border-success' : 'border-transparent'
         ]"
         :autofocus="autofocus"

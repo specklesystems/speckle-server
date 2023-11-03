@@ -5,18 +5,18 @@ metadata:
   name: speckle-frontend-2
   namespace: {{ .Values.namespace }}
   labels:
-{{ include "frontend-2.labels" . | indent 4 }}
+{{ include "frontend_2.labels" . | indent 4 }}
 spec:
   replicas: {{ .Values.frontend_2.replicas }}
   selector:
     matchLabels:
-{{ include "frontend-2.selectorLabels" . | indent 6 }}
+{{ include "frontend_2.selectorLabels" . | indent 6 }}
   strategy:
     type: RollingUpdate
   template:
     metadata:
       labels:
-{{ include "frontend-2.labels" . | indent 8 }}
+{{ include "frontend_2.labels" . | indent 8 }}
     spec:
       containers:
       - name: main
@@ -83,6 +83,6 @@ spec:
       topologySpreadConstraints: {{- include "speckle.renderTpl" (dict "value" .Values.frontend_2.topologySpreadConstraints "context" $) | nindent 8 }}
       {{- end }}
       {{- if .Values.frontend_2.serviceAccount.create }}
-      serviceAccountName: {{ include "frontend-2.name" $ }}
+      serviceAccountName: {{ include "frontend_2.name" $ }}
       {{- end }}
 {{- end }}

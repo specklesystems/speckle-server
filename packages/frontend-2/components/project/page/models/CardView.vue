@@ -1,25 +1,34 @@
 <template>
-  <div v-if="itemsCount" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-    <!-- Decrementing z-index necessary for the actions menu to render correctly. Each card has its own stacking context because of the scale property -->
-    <ProjectPageModelsCard
-      v-for="(item, i) in items"
-      :key="item.id"
-      :model="item"
-      :project="project"
-      :show-actions="showActions"
-      :show-versions="showVersions"
-      :disable-default-link="disableDefaultLinks"
-      :style="`z-index: ${items.length - i};`"
-      @click="($event) => $emit('model-clicked', { id: item.id, e: $event })"
+  <template v-if="itemsCount">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <!-- Decrementing z-index necessary for the actions menu to render correctly. Each card has its own stacking context because of the scale property -->
+      <ProjectPageModelsCard
+        v-for="(item, i) in items"
+        :key="item.id"
+        :model="item"
+        :project="project"
+        :show-actions="showActions"
+        :show-versions="showVersions"
+        :disable-default-link="disableDefaultLinks"
+        :style="`z-index: ${items.length - i};`"
+        @click="($event) => $emit('model-clicked', { id: item.id, e: $event })"
+      />
+    </div>
+    <FormButtonSecondaryViewAll
+      v-if="showViewAll"
+      class="mt-4"
+      :to="allProjectModelsRoute(project.id)"
     />
-  </div>
-  <CommonEmptySearchState
-    v-else-if="isFiltering && items.length === 0"
-    @clear-search="() => $emit('clear-search')"
-  />
-  <div v-else>
-    <ProjectCardImportFileArea :project-id="project.id" class="h-36 col-span-4" />
-  </div>
+  </template>
+  <template v-else-if="!areQueriesLoading">
+    <CommonEmptySearchState
+      v-if="isFiltering"
+      @clear-search="() => $emit('clear-search')"
+    />
+    <div v-else>
+      <ProjectCardImportFileArea :project-id="project.id" class="h-36 col-span-4" />
+    </div>
+  </template>
   <InfiniteLoading
     v-if="items?.length && !disablePagination"
     :settings="{ identifier: infiniteLoaderId }"
@@ -39,6 +48,7 @@ import {
 } from '~~/lib/projects/graphql/queries'
 import { Nullable, SourceAppDefinition } from '@speckle/shared'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import { allProjectModelsRoute } from '~~/lib/common/helpers/route'
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
@@ -138,6 +148,7 @@ const moreToLoad = computed(
     baseResult.value.project.models.items.length <
       baseResult.value.project.models.totalCount
 )
+const showViewAll = computed(() => moreToLoad.value && props.disablePagination)
 
 const infiniteLoad = async (state: InfiniteLoaderState) => {
   const cursor =
