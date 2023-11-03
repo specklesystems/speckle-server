@@ -2,7 +2,7 @@
   <Menu as="div" class="relative z-30">
     <MenuButton v-slot="{ open }" as="template">
       <ViewerControlsButtonToggle flat secondary :active="open">
-        <VideoCameraIcon class="w-5 h-5" />
+        <IconViews class="w-5 h-5" />
       </ViewerControlsButtonToggle>
     </MenuButton>
     <Transition
@@ -62,7 +62,6 @@
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
-import { VideoCameraIcon } from '@heroicons/vue/24/outline'
 import { CanonicalView, SpeckleView } from '~~/../viewer/dist'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'

@@ -8,14 +8,10 @@
   >
     <div class="mb-1 flex items-center">
       <button
-        class="hover:bg-primary-muted hover:text-primary flex h-full min-w-0 items-center space-x-1 rounded"
+        class="flex h-full w-full p-2 items-center justify-between gap-4 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
+        :class="unfold && 'text-primary'"
         @click="unfold = !unfold"
       >
-        <ChevronDownIcon
-          :class="`h-3 w-3 transition ${headerClasses} ${
-            !unfold ? '-rotate-90' : 'rotate-0'
-          }`"
-        />
         <div :class="`truncate text-xs font-bold ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
           <span
@@ -24,9 +20,14 @@
             {{ isModifiedQuery.isNew ? '(New)' : '(Old)' }}
           </span>
         </div>
+        <ChevronDownIcon
+          :class="`h-3 w-3 transition ${headerClasses} ${
+            !unfold ? '-rotate-90' : 'rotate-0'
+          }`"
+        />
       </button>
     </div>
-    <div v-if="unfold" class="ml-1 space-y-1">
+    <div v-if="unfold" class="ml-1 space-y-1 p-2">
       <div
         v-for="(kvp, index) in [
           ...categorisedValuePairs.primitives,
@@ -45,7 +46,7 @@
           >
             {{ kvp.key }}
           </div>
-          <div class="col-span-2 truncate text-xs" :title="(kvp.value as string)">
+          <div class="col-span-2 pl-1 truncate text-xs" :title="(kvp.value as string)">
             <!-- NOTE: can't do kvp.value || 'null' because 0 || 'null' = 'null' -->
             {{ kvp.value === null ? 'null' : kvp.value }}
           </div>

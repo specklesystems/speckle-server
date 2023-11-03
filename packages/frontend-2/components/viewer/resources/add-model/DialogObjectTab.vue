@@ -12,9 +12,9 @@
         label="Value"
         full-width
         size="lg"
-        :custom-icon="CubeIcon"
+        :custom-icon="LinkIcon"
         :rules="[isRequired, isValidValue]"
-        placeholder="Comma-delimited object IDs or an URL to an object(-s)"
+        placeholder="Comma-delimited object IDs/URLs"
         auto-focus
       />
       <FormButton :icon-left="PlusIcon" size="lg" submit>Add</FormButton>
@@ -23,7 +23,7 @@
 </template>
 <script setup lang="ts">
 import { RuleExpression, useForm } from 'vee-validate'
-import { PlusIcon, CubeIcon } from '@heroicons/vue/24/solid'
+import { PlusIcon, LinkIcon } from '@heroicons/vue/24/solid'
 import { isRequired } from '~~/lib/common/helpers/validation'
 import { isObjectId } from '~~/lib/common/helpers/resources'
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'

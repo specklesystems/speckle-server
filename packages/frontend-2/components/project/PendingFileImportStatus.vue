@@ -8,7 +8,7 @@
         ].includes(upload.convertedStatus)
       "
     >
-      <span>{{ isSelfImport ? 'Importing' : 'Importing new version' }}</span>
+      <span>{{ isSelfImport ? 'Importing' : 'Uploading new version' }}</span>
       <CommonLoadingBar loading class="max-w-[100px]" />
     </template>
     <template
