@@ -63,6 +63,7 @@ const incrementingDateGenerator = () => {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const decrementingDateGenerator = () => {
   let date = dayjs()
   return {
@@ -113,6 +114,7 @@ async function cloneStreamEntity(state: CloneStreamInitialState) {
   return newStream
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function cloneStreamObjects(state: CloneStreamInitialState, newStreamId: string) {
   const { getNewDate } = incrementingDateGenerator()
   for await (const objectsBatch of getBatchedStreamObjects(state.targetStream.id, {
@@ -127,11 +129,37 @@ async function cloneStreamObjects(state: CloneStreamInitialState, newStreamId: s
   }
 }
 
+async function cloneStreamObjectsGrug(
+  state: CloneStreamInitialState,
+  newStreamId: string
+) {
+  const query = knex
+    .raw(
+      `
+        INSERT INTO objects ("id", "speckleType", "totalChildrenCount", "totalChildrenCountByDepth", "createdAt", "data", "streamId")
+        SELECT
+          id,
+          objects."speckleType",
+          objects."totalChildrenCount",
+          objects."totalChildrenCountByDepth",
+          objects."createdAt",
+          objects."data",
+          :newStreamId
+        FROM
+          objects
+        WHERE
+          "streamId" = :targetStreamId
+      `,
+      { newStreamId, targetStreamId: state.targetStream.id }
+    )
+    .transacting(state.trx)
+  await query
+}
+
 async function cloneCommits(state: CloneStreamInitialState) {
   // oldCommitId/newCommitId
   const commitIdMap = new Map<string, string>()
 
-  const { getNewDate } = decrementingDateGenerator()
   for await (const commitsBatch of getBatchedStreamCommits(state.targetStream.id, {
     trx: state.trx
   })) {
@@ -139,7 +167,6 @@ async function cloneCommits(state: CloneStreamInitialState) {
       const oldId = c.id
       c.id = generateCommitId()
       c.author = state.user.id
-      c.createdAt = getNewDate()
 
       commitIdMap.set(oldId, c.id)
     })
@@ -233,21 +260,27 @@ async function cloneStreamCore(state: CloneStreamInitialState) {
   const newStream = await cloneStreamEntity(state)
   const { id: newStreamId } = newStream
 
+  console.time('core clone')
   // Clone objects
-  await cloneStreamObjects(state, newStreamId)
+  await cloneStreamObjectsGrug(state, newStreamId)
+  console.timeLog('core clone', 'objects')
 
   // Clone commits
   const commitIdMap = await cloneCommits(state)
+  console.timeLog('core clone', 'commits')
 
   // Create stream_commits references
   await createStreamCommitReferences(state, commitIdMap, newStreamId)
+  console.timeLog('core clone', 'stream commit refs')
 
   // Clone branches
   const branchIdMap = await cloneBranches(state, newStreamId)
+  console.timeLog('core clone', 'branches')
 
   // Create branch_commits
   await createBranchCommitReferences(state, commitIdMap, branchIdMap)
-
+  console.timeLog('core clone', 'branch commit refs')
+  console.timeEnd('core clone')
   return { newStreamId, commitIdMap, newStream }
 }
 
@@ -376,16 +409,18 @@ async function cloneStreamComments(
  * @returns The ID of the new stream
  */
 export async function cloneStream(userId: string, sourceStreamId: string) {
+  console.time('clone')
   const state = await prepareState(userId, sourceStreamId)
+  console.timeLog('clone', 'state prep end')
 
   try {
     // Clone stream/commits/branches/objects
     const coreCloneResult = await cloneStreamCore(state)
     const { newStream } = coreCloneResult
-
+    console.timeLog('clone', 'end core clone')
     // Clone comments
     await cloneStreamComments(state, coreCloneResult)
-
+    console.timeLog('clone', 'end comments')
     // Create activity item
     await addStreamClonedActivity(
       {
@@ -395,9 +430,12 @@ export async function cloneStream(userId: string, sourceStreamId: string) {
       },
       { trx: state.trx }
     )
+    console.timeLog('clone', 'end activity')
 
     // Commit transaction
     await state.trx.commit()
+
+    console.timeLog('clone', 'trx commit end')
 
     return coreCloneResult.newStream
   } catch (e) {
