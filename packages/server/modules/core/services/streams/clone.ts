@@ -129,6 +129,7 @@ async function cloneStreamObjects(state: CloneStreamInitialState, newStreamId: s
   }
 }
 
+// For sample onboarding stream, goes from 25s to ~250ms vs `cloneStreamObjects`
 async function cloneStreamObjectsGrug(
   state: CloneStreamInitialState,
   newStreamId: string

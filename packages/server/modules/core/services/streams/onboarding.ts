@@ -14,7 +14,9 @@ export async function createOnboardingStream(targetUserId: string) {
   let newStream: Optional<StreamRecord> = undefined
   if (sourceStream) {
     try {
+      logger.info('Cloning onboarding stream')
       newStream = await cloneStream(targetUserId, sourceStream.id)
+      logger.info('Done cloning onboarding stream')
     } catch (e) {
       if (!(e instanceof StreamCloneError)) {
         throw e
@@ -29,8 +31,11 @@ export async function createOnboardingStream(targetUserId: string) {
     logger.warn('Fallback: Creating a blank stream for onboarding')
     newStream = await createStreamReturnRecord({ ownerId: targetUserId })
   }
+
+  logger.info('Updating onboarding stream title')
   const user = await getUser(targetUserId)
   const name = user.name.split(' ')[0]
   await updateStream({ id: newStream.id, name: `${name}'s First Project` })
+  logger.info('Done updating onboarding stream title')
   return newStream
 }
