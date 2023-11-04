@@ -971,7 +971,10 @@ export async function markOnboardingBaseStream(streamId: string, version: string
   if (!stream) {
     throw new Error(`Stream ${streamId} not found`)
   }
-
+  await updateStream({
+    id: streamId,
+    name: 'Onboarding Stream Local Source - Do Not Delete'
+  })
   const meta = metaHelpers(Streams)
   await meta.set(streamId, Streams.meta.metaKey.onboardingBaseStream, version)
 }
@@ -988,33 +991,4 @@ export async function getOnboardingBaseStream(version: string) {
     .first()
 
   return await q
-}
-
-/**
- * Get user's own onboarding stream, if any
- */
-export async function getUserOnboardingStream(userId: string) {
-  const q = Users.meta
-    .knex()
-    .select<StreamRecord[]>(Streams.cols)
-    .innerJoin(
-      Streams.name,
-      Streams.col.id,
-      knex.raw(`?? #>> '{}'`, [Users.meta.col.value])
-    )
-    .where(Users.meta.col.userId, userId)
-    .andWhere(Users.meta.col.key, Users.meta.metaKey.onboardingStreamId)
-    .first()
-
-  return await q
-}
-
-export async function markUserOnboardingStream(userId: string, streamId: string) {
-  const stream = await getStream({ streamId })
-  if (!stream) {
-    throw new Error(`Stream ${streamId} not found`)
-  }
-
-  const meta = metaHelpers(Users)
-  await meta.set(userId, Users.meta.metaKey.onboardingStreamId, streamId)
 }
