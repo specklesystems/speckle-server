@@ -111,11 +111,25 @@
         <div class="text-xs font-bold text-foreground-2 mb-2">Results</div>
         <div class="space-y-1">
           <AutomationViewerResultRowItem
-            v-for="(result, index) in typedFunctionRun.results.values.objectResults"
+            v-for="(
+              result, index
+            ) in typedFunctionRun.results.values.objectResults.slice(0, pageRunLimit)"
             :key="index"
             :function-id="typedFunctionRun.functionId"
             :result="result"
           />
+          <FormButton
+            v-if="pageRunLimit < typedFunctionRun.results.values.objectResults.length"
+            size="xs"
+            color="card"
+            class="w-full"
+            @click="pageRunLimit += 10"
+          >
+            Load more ({{
+              typedFunctionRun.results.values.objectResults.length - pageRunLimit
+            }}
+            hidden results)
+          </FormButton>
         </div>
       </div>
     </div>
@@ -149,6 +163,8 @@ const props = defineProps<{
   functionRun: AutomationFunctionRun
   automationName: string
 }>()
+
+const pageRunLimit = ref(5)
 
 const typedFunctionRun = computed(() => {
   return props.functionRun as AutomationFunctionRun & {

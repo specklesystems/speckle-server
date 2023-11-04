@@ -93,13 +93,12 @@ const handleClick = () => {
 
 const isolateOrUnisolateObjects = () => {
   const ids = props.result.objectIds
-  resetFilters()
   if (!isIsolated.value) {
+    resetFilters()
     isolateObjects(ids)
     return
   }
-
-  unIsolateObjects(ids)
+  resetFilters()
 }
 
 const metadataGradientIsSet = ref(false)
@@ -161,22 +160,22 @@ const iconAndColor = computed(() => {
     case 'ERROR':
       return {
         icon: XMarkIcon,
-        color: 'text-danger'
+        color: 'text-danger font-bold'
       }
     case 'WARNING':
       return {
         icon: ExclamationTriangleIcon,
-        color: 'text-warning'
+        color: 'text-warning font-bold'
       }
     case 'INFO':
       return {
         icon: InformationCircleIcon,
-        color: 'text-foreground'
+        color: 'text-foreground font-bold'
       }
   }
   return {
     icon: XMarkIcon,
-    color: 'text-danger'
+    color: 'text-danger font-bold'
   }
 })
 </script>
