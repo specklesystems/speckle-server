@@ -60,13 +60,8 @@ const {
   }
 } = useInjectedViewerState()
 
-const {
-  isolateObjects,
-  unIsolateObjects,
-  resetFilters,
-  setPropertyFilter,
-  applyPropertyFilter
-} = useFilterUtilities()
+const { isolateObjects, resetFilters, setPropertyFilter, applyPropertyFilter } =
+  useFilterUtilities()
 
 import { containsAll } from '~~/lib/common/helpers/utils'
 
