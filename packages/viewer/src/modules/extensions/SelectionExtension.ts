@@ -186,29 +186,26 @@ export class SelectionExtension extends Extension {
         .getRenderTree()
         .getRenderViewsForNode(this.selectedNodes[k], this.selectedNodes[k])
       rvs.forEach((rv: NodeRenderView) => {
-        if (!this.selectionRvs[rv.renderData.id])
-          this.selectionRvs[rv.renderData.id] = rv
-        if (!this.selectionMaterials[rv.renderData.id])
-          this.selectionMaterials[rv.renderData.id] = this.viewer
-            .getRenderer()
-            .getMaterial(rv)
+        if (!this.selectionRvs[rv.guid]) this.selectionRvs[rv.guid] = rv
+        if (!this.selectionMaterials[rv.guid])
+          this.selectionMaterials[rv.guid] = this.viewer.getRenderer().getMaterial(rv)
       })
     }
 
     const rvs = Object.values(this.selectionRvs)
     const opaqueRvs = rvs.filter(
       (value) =>
-        this.selectionMaterials[value.renderData.id] &&
+        this.selectionMaterials[value.guid] &&
         !(
-          this.selectionMaterials[value.renderData.id].transparent &&
-          this.selectionMaterials[value.renderData.id].opacity < 1
+          this.selectionMaterials[value.guid].transparent &&
+          this.selectionMaterials[value.guid].opacity < 1
         )
     )
     const transparentRvs = rvs.filter(
       (value) =>
-        this.selectionMaterials[value.renderData.id] &&
-        this.selectionMaterials[value.renderData.id].transparent &&
-        this.selectionMaterials[value.renderData.id].opacity < 1
+        this.selectionMaterials[value.guid] &&
+        this.selectionMaterials[value.guid].transparent &&
+        this.selectionMaterials[value.guid].opacity < 1
     )
 
     this.viewer.getRenderer().setMaterial(opaqueRvs, this.selectionMaterialData)
@@ -233,7 +230,7 @@ export class SelectionExtension extends Extension {
     this.removeHover()
 
     if (!renderView) return
-    if (this.selectionRvs[renderView.renderData.id]) {
+    if (this.selectionRvs[renderView.guid]) {
       return
     }
     this.removeHover()

@@ -33,8 +33,8 @@
             text
             @click="toggleColors()"
           >
-            <SparklesIconOutline v-if="!colors" class="w-3 h-3 text-primary" />
-            <SparklesIcon v-else class="w-3 h-3 text-primary" />
+            <IconColouringOutline v-if="!colors" class="w-3 h-3 text-primary" />
+            <IconColouring v-else class="w-3 h-3 text-primary" />
           </FormButton>
         </div>
       </div>
@@ -88,8 +88,7 @@
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
-import { ChevronDownIcon, ChevronUpIcon, SparklesIcon } from '@heroicons/vue/24/solid'
-import { SparklesIcon as SparklesIconOutline } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
 import { PropertyInfo, StringPropertyInfo, NumericPropertyInfo } from '@speckle/viewer'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'

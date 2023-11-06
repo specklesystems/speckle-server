@@ -12,6 +12,7 @@ import {
   useSelectionUtilities
 } from '~~/lib/viewer/composables/ui'
 import { NumericPropertyInfo } from '@speckle/viewer'
+import { CameraController } from '@speckle/viewer'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 

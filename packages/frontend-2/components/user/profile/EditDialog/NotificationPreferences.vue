@@ -91,8 +91,8 @@ const isExpanded = ref(false)
 const notificationTypeMapping = ref({
   activityDigest: 'Weekly activity digest',
   mentionedInComment: 'Mentioned in comment',
-  newStreamAccessRequest: 'Stream access request',
-  streamAccessRequestApproved: 'Stream access request approved'
+  newStreamAccessRequest: 'Project access request',
+  streamAccessRequestApproved: 'Project access request approved'
 } as Record<string, string>)
 
 const localPreferences = ref({} as NotificationPreferences)

@@ -15,19 +15,20 @@ export interface NodeData {
   children: TreeNode[]
   nestedNodes: TreeNode[]
   atomic: boolean
+  subtreeId?: number
   renderView?: NodeRenderView
   instanced?: boolean
 }
 
 export class WorldTree {
   private renderTreeInstances: { [id: string]: RenderTree } = {}
+  private nodeMaps: { [id: string]: NodeMap } = {}
   private readonly supressWarnings = true
   public static readonly ROOT_ID = 'ROOT'
-  public nodeMap: NodeMap
+  private subtreeId: number = 0
 
   public constructor() {
     this.tree = new TreeModel()
-    this.nodeMap = new NodeMap()
     this._root = this.parse({
       id: WorldTree.ROOT_ID,
       raw: {},
@@ -43,13 +44,13 @@ export class WorldTree {
       return null
     }
 
-    const id = subtreeId ? subtreeId : this.root.model.id
-
-    if (!this.renderTreeInstances[id]) {
-      this.renderTreeInstances[id] = new RenderTree(this, this.findSubtree(id))
+    const renderTreeRoot = subtreeId ? this.findSubtree(subtreeId) : this.root
+    const subtreeRootId = renderTreeRoot.model.id
+    if (!this.renderTreeInstances[subtreeRootId]) {
+      this.renderTreeInstances[subtreeRootId] = new RenderTree(this, renderTreeRoot)
     }
 
-    return this.renderTreeInstances[id]
+    return this.renderTreeInstances[subtreeRootId]
   }
 
   private tree: TreeModel
@@ -59,12 +60,22 @@ export class WorldTree {
     return this._root
   }
 
+  public get nextSubtreeId(): number {
+    return ++this.subtreeId
+  }
+
   public get nodeCount() {
-    return this.nodeMap.nodeCount
+    let nodeCount = 0
+    for (const k in this.nodeMaps) nodeCount += this.nodeMaps[k].nodeCount
+    return nodeCount
   }
 
   public isRoot(node: TreeNode) {
     return node === this._root
+  }
+
+  public isSubtreeRoot(node: TreeNode) {
+    return node.parent === this._root
   }
 
   public parse(model) {
@@ -72,20 +83,27 @@ export class WorldTree {
   }
 
   public addSubtree(node: TreeNode) {
-    if (this.nodeMap.addSubtree(node)) this._root.addChild(node)
+    if (this.nodeMaps[node.id]) {
+      Logger.error(`Subtree with id ${node.id} already exists!`)
+      return
+    }
+    const subtreeId = this.nextSubtreeId
+    node.model.subtreeId = subtreeId
+    this.nodeMaps[subtreeId] = new NodeMap(node)
+    this._root.addChild(node)
   }
 
   public addNode(node: TreeNode, parent: TreeNode) {
-    if (parent === null) {
+    if (parent === null || parent.model.subtreeId === undefined) {
       Logger.error(`Invalid parent node!`)
       return
     }
-    if (this.nodeMap.addNode(node)) parent.addChild(node)
+    node.model.subtreeId = parent.model.subtreeId
+    if (this.nodeMaps[parent.model.subtreeId].addNode(node)) parent.addChild(node)
   }
 
   public removeNode(node: TreeNode) {
     node.drop()
-    this.nodeMap.removeNode(node)
   }
 
   public findAll(predicate: SearchPredicate, node?: TreeNode): Array<TreeNode> {
@@ -95,28 +113,25 @@ export class WorldTree {
     return (node ? node : this.root).all(predicate)
   }
 
-  // public findId(id: string, node?: TreeNode) {
-  //   if (!node && !this.supressWarnings) {
-  //     Logger.warn(`Root will be used for searching. You might not want that`)
-  //   }
-  //   return (node ? node : this.root).first((_node: TreeNode) => {
-  //     return _node.model.id === id
-  //   })
-  // }
-
-  public findId(id: string, node?: TreeNode) {
-    if (!node && !this.supressWarnings) {
-      Logger.warn(`Root will be used for searching. You might not want that`)
+  public findId(id: string, subtreeId?: number) {
+    let idNode = null
+    if (subtreeId) {
+      idNode = this.nodeMaps[subtreeId].getNodeById(id)
+    } else {
+      for (const k in this.nodeMaps) {
+        const nodes = this.nodeMaps[k].getNodeById(id)
+        if (nodes) idNode = [...nodes]
+      }
     }
-    return this.nodeMap.getNodeById(id)
+    return idNode
   }
 
   public findSubtree(id: string) {
-    return this.nodeMap.getSubtreeById(id)
-  }
-
-  public hasId(id: string) {
-    return this.nodeMap.hasId(id)
+    let idNode = null
+    for (const k in this.nodeMaps) {
+      if ((idNode = this.nodeMaps[k].getSubtreeById(id))) break
+    }
+    return idNode
   }
 
   public getAncestors(node: TreeNode): Array<TreeNode> {
@@ -161,13 +176,21 @@ export class WorldTree {
   public purge(subtreeId?: string) {
     if (subtreeId) {
       delete this.renderTreeInstances[subtreeId]
-      this.removeNode(this.findId(subtreeId)[0])
+      const subtreeNode = this.findId(subtreeId)[0]
+      this.nodeMaps[subtreeNode.model.subtreeId].purge()
+      delete this.nodeMaps[subtreeNode.model.subtreeId]
+      this.removeNode(subtreeNode)
       return
     }
 
     Object.keys(this.renderTreeInstances).forEach(
       (key) => delete this.renderTreeInstances[key]
     )
+    Object.keys(this.nodeMaps).forEach((key) => {
+      this.nodeMaps[key].purge
+      delete this.nodeMaps[key]
+    })
+
     this._root.drop()
     this._root.children.length = 0
     this.tree = new TreeModel()

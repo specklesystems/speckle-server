@@ -2,8 +2,9 @@ import Logger from 'js-logger'
 import { TreeNode } from './WorldTree'
 
 export class NodeMap {
-  public static readonly COMPOUND_ID_CHAR = '.'
+  public static readonly COMPOUND_ID_CHAR = '~'
 
+  private subtreeRoot: TreeNode
   private all: { [id: string]: TreeNode } = {}
   private instances: { [id: string]: { [id: string]: TreeNode } } = {}
 
@@ -11,13 +12,9 @@ export class NodeMap {
     return Object.keys(this.all).length
   }
 
-  public addSubtree(node: TreeNode): boolean {
-    if (this.all[node.model.id]) {
-      console.warn(`Duplicate id ${node.model.id}, skipping!`)
-      return false
-    }
-    this.registerNode(node)
-    return true
+  public constructor(subtreeRoot: TreeNode) {
+    this.subtreeRoot = subtreeRoot
+    this.registerNode(subtreeRoot)
   }
 
   public addNode(node: TreeNode): boolean {
@@ -25,10 +22,23 @@ export class NodeMap {
       this.registerInstance(node)
     } else {
       if (this.all[node.model.id]) {
-        console.warn(`Duplicate id ${node.model.id}, skipping!`)
+        // console.warn(`Duplicate id ${node.model.id}, skipping!`)
         return false
       }
       this.registerNode(node)
+    }
+    return true
+  }
+
+  public removeNode(node: TreeNode): boolean {
+    if (node.model.id.includes(NodeMap.COMPOUND_ID_CHAR)) {
+      const baseId = node.model.id.substring(
+        0,
+        node.model.id.indexOf(NodeMap.COMPOUND_ID_CHAR)
+      )
+      delete this.instances[baseId][node.model.id]
+    } else {
+      delete this.all[node.model.id]
     }
     return true
   }
@@ -37,7 +47,9 @@ export class NodeMap {
     if (id.includes(NodeMap.COMPOUND_ID_CHAR)) {
       const baseId = id.substring(0, id.indexOf(NodeMap.COMPOUND_ID_CHAR))
       if (this.instances[baseId]) {
-        return [this.instances[baseId][id]]
+        if (this.instances[baseId][id]) {
+          return [this.instances[baseId][id]]
+        }
       } else {
         Logger.warn('Could not find instance with baseID: ', baseId)
         return null
@@ -88,7 +100,8 @@ export class NodeMap {
     this.all[node.model.id] = node
   }
 
-  public removeNode(node: TreeNode) {
-    delete this.all[node.id]
+  public purge() {
+    this.all = null
+    this.instances = null
   }
 }

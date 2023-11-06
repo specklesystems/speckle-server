@@ -107,7 +107,7 @@ import {
   sectionBoxOff,
   highlightObjects
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
-import { ViewerEvent, CameraController } from '@speckle/viewer'
+import { ViewerEvent } from '@speckle/viewer'
 
 export default {
   name: 'ViewerBubbles',
@@ -251,10 +251,9 @@ export default {
     this.uuid = window.__bubblesId
 
     this.raycaster = new THREE.Raycaster()
-
-    this.viewer
-      .getExtension(CameraController)
-      .controls.addEventListener('update', () => this.updateBubbles(false))
+    this.viewer.cameraHandler.controls.addEventListener('update', () =>
+      this.updateBubbles(false)
+    )
 
     this.updateInterval = window.setInterval(
       this.sendUpdateAndPrune,
@@ -301,7 +300,7 @@ export default {
       }
 
       const firstHit = selectionInfo?.hits[0]
-      this.selectedIds = firstHit.node.model.raw.id
+      this.selectedIds = firstHit.object.id
       this.selectionLocation = firstHit.point
       this.selectionCenter = firstHit.point
       this.sendUpdateAndPrune()
@@ -364,7 +363,7 @@ export default {
       this.pruneStaleUsers()
       if (!this.resourceId || !this.isLoggedIn) return
 
-      const controls = this.viewer.getExtension(CameraController).controls
+      const controls = this.viewer.cameraHandler.activeCam.controls
       const pos = controls.getPosition()
       const target = controls.getTarget()
       const c = [
@@ -374,9 +373,7 @@ export default {
         parseFloat(target.x.toFixed(5)),
         parseFloat(target.y.toFixed(5)),
         parseFloat(target.z.toFixed(5)),
-        this.viewer.getExtension(CameraController).renderingCamera.name === 'ortho'
-          ? 1
-          : 0,
+        this.viewer.cameraHandler.activeCam.name === 'ortho' ? 1 : 0,
         controls._zoom
       ]
 
@@ -451,7 +448,7 @@ export default {
     updateBubbles(transition = true) {
       if (!this.$refs.parent) return
       /** This needs to be refactored using queries. TO DO in FE2 */
-      const cam = this.viewer.getExtension(CameraController).renderingCamera
+      const cam = this.viewer.cameraHandler.camera
       cam.updateProjectionMatrix()
       const selectedObjects = []
       for (const user of this.users) {

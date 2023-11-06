@@ -20,7 +20,9 @@ import {
   SectionTool,
   SelectionExtension,
   TreeNode,
-  SpeckleLoader
+  SpeckleLoader,
+  DefaultViewerParams,
+  ViewerParams
 } from '..'
 import { FilteringExtension, FilteringState } from './extensions/FilteringExtension'
 import { PolarView } from './extensions/core-extensions/Providers'
@@ -39,9 +41,11 @@ export class LegacyViewer extends Viewer {
   private explodeExtension: ExplodeExtension = null
   private diffExtension: DiffExtension = null
 
-  public async init(): Promise<void> {
-    await super.init()
-
+  public constructor(
+    container: HTMLElement,
+    params: ViewerParams = DefaultViewerParams
+  ) {
+    super(container, params)
     this.cameraController = this.createExtension(CameraController)
     this.selection = this.createExtension(SelectionExtension)
     this.sections = this.createExtension(SectionTool)
@@ -50,6 +54,10 @@ export class LegacyViewer extends Viewer {
     this.filtering = this.createExtension(FilteringExtension)
     this.explodeExtension = this.createExtension(ExplodeExtension)
     this.diffExtension = this.createExtension(DiffExtension)
+  }
+
+  public async init(): Promise<void> {
+    await super.init()
   }
 
   /** SECTION BOX */
@@ -267,17 +275,17 @@ export class LegacyViewer extends Viewer {
 
   public setOrthoCameraOn() {
     this.cameraController.setOrthoCameraOn()
-    this.speckleRenderer.resetPipeline(true)
+    this.speckleRenderer.resetPipeline()
   }
 
   public setPerspectiveCameraOn() {
     this.cameraController.setPerspectiveCameraOn()
-    this.speckleRenderer.resetPipeline(true)
+    this.speckleRenderer.resetPipeline()
   }
 
   public toggleCameraProjection() {
     this.cameraController.toggleCameras()
-    this.speckleRenderer.resetPipeline(true)
+    this.speckleRenderer.resetPipeline()
   }
 
   public setLightConfiguration(config: SunLightConfiguration): void {

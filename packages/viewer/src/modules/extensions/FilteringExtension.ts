@@ -239,7 +239,8 @@ export class FilteringExtension extends Extension {
     const colorGroups: ValueGroupColorItemNumericProps[] = []
 
     this.WTI.walk((node: TreeNode) => {
-      if (!node.model.atomic || this.WTI.isRoot(node)) return true
+      if (!node.model.atomic || this.WTI.isRoot(node) || this.WTI.isSubtreeRoot(node))
+        return true
 
       const rvs = this.WTI.getRenderTree().getRenderViewsForNode(node, node)
       const idx = matchingIds[node.model.raw.id]
@@ -288,7 +289,7 @@ export class FilteringExtension extends Extension {
     // 07.05.2023: Attempt on fixing the issue described above. This fixes #1525, but it does
     // add a bit of overhead. Not 100% sure if it breaks anything else tho'
     this.WTI.walk((node: TreeNode) => {
-      if (!node.model.atomic || this.WTI.isRoot(node)) {
+      if (!node.model.atomic || this.WTI.isRoot(node) || this.WTI.isSubtreeRoot(node)) {
         return true
       }
       const vg = valueGroupColors.find((v) => {

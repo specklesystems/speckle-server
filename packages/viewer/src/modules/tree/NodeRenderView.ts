@@ -6,6 +6,7 @@ import { SpeckleType } from '../loaders/GeometryConverter'
 
 export interface NodeRenderData {
   id: string
+  subtreeId: number
   speckleType: SpeckleType
   geometry: GeometryData
   renderMaterial: RenderMaterial
@@ -24,6 +25,10 @@ export class NodeRenderView {
   private _geometryType: GeometryType
 
   private _aabb: Box3 = null
+
+  public get guid() {
+    return this._renderData.subtreeId + this._renderData.id
+  }
 
   public get renderData() {
     return this._renderData

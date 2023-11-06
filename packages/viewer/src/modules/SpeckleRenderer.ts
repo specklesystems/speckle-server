@@ -226,6 +226,9 @@ export default class SpeckleRenderer {
     })
     this._cameraProvider.on(CameraControllerEvent.FrameUpdate, (data: boolean) => {
       this.needsRender = data
+      if (this.pipeline.needsAccumulation && data) {
+        this.pipeline.reset()
+      }
     })
   }
 
@@ -512,10 +515,10 @@ export default class SpeckleRenderer {
     this.renderingCamera.updateProjectionMatrix()
   }
 
-  public resetPipeline(force = false) {
+  public resetPipeline() {
     this._needsRender = true
     this.pipeline.reset()
-    if (force) this.pipeline.reset()
+    // if (force) this.pipeline.reset()
   }
 
   public render(): void {
@@ -640,6 +643,8 @@ export default class SpeckleRenderer {
   )
   public setMaterial(rvs: NodeRenderView[], material: FilterMaterial)
   public setMaterial(rvs: NodeRenderView[], material) {
+    if (!material) return
+
     const rvMap = {}
     for (let k = 0; k < rvs.length; k++) {
       if (!rvs[k].batchId) {
@@ -672,7 +677,7 @@ export default class SpeckleRenderer {
       const ranges = rvs[k].map((value: NodeRenderView) => {
         return { offset: value.batchStart, count: value.batchCount, material }
       })
-      this.batcher.batches[k].setDrawRanges(...ranges)
+      if (this.batcher.batches[k]) this.batcher.batches[k].setDrawRanges(...ranges)
     }
   }
 
@@ -689,7 +694,7 @@ export default class SpeckleRenderer {
           materialOptions: this.batcher.materials.getFilterMaterialOptions(material)
         }
       })
-      this.batcher.batches[k].setDrawRanges(...drawRanges)
+      if (this.batcher.batches[k]) this.batcher.batches[k].setDrawRanges(...drawRanges)
     }
   }
 
@@ -707,7 +712,7 @@ export default class SpeckleRenderer {
           material
         }
       })
-      this.batcher.batches[k].setDrawRanges(...drawRanges)
+      if (this.batcher.batches[k]) this.batcher.batches[k].setDrawRanges(...drawRanges)
     }
   }
 
@@ -902,8 +907,9 @@ export default class SpeckleRenderer {
     let searchTime = 0
     for (let k = 0; k < rvs.length; k++) {
       const hitId = rvs[k].renderData.id
+      const subtreeId = rvs[k].renderData.subtreeId
       const start = performance.now()
-      const hitNode = this.viewer.getWorldTree().findId(hitId)[0]
+      const hitNode = this.viewer.getWorldTree().findId(hitId, subtreeId)[0]
       searchTime += performance.now() - start
       let parentNode = hitNode
       while (!parentNode.model.atomic && parentNode.parent) {
@@ -1160,8 +1166,6 @@ export default class SpeckleRenderer {
       // Logger.error('Render view is not of mesh type. No batch object found')
       return null
     }
-    return batch.mesh.batchObjects.find(
-      (value) => value.renderView.renderData.id === rv.renderData.id
-    )
+    return batch.mesh.batchObjects.find((value) => value.renderView.guid === rv.guid)
   }
 }

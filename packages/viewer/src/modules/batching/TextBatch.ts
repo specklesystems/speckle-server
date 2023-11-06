@@ -1,18 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Box3, Color, Material, Object3D, WebGLRenderer } from 'three'
+import { Box3, Material, Object3D, WebGLRenderer } from 'three'
 
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { AllBatchUpdateRange, Batch, BatchUpdateRange, GeometryType } from './Batch'
 
 import { SpeckleText } from '../objects/SpeckleText'
-import { GlyphGeometry } from 'troika-three-text'
 import { ObjectLayers } from '../../IViewer'
 
 export default class TextBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
-  private geometry: GlyphGeometry
   public batchMaterial: Material
   public mesh: SpeckleText
   private insertedRanges: BatchUpdateRange[] = []
@@ -125,8 +123,8 @@ export default class TextBatch implements Batch {
 
   public purge() {
     this.renderViews.length = 0
-    this.mesh.geometry.dispose()
     this.batchMaterial.dispose()
+    this.mesh.geometry.dispose()
     this.mesh = null
   }
 }

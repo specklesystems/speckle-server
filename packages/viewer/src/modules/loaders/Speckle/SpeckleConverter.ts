@@ -103,14 +103,23 @@ export default class SpeckleConverter {
     if (!obj.id) return
 
     const childNode: TreeNode = this.tree.parse({
-      id: !node ? objectURL : this.getNodeId(obj),
+      id: this.getNodeId(obj),
       raw: obj,
       atomic: true,
       children: []
     })
 
     if (node === null) {
-      this.tree.addSubtree(childNode)
+      /** We're adding a parent for the entire model (subtree) */
+      const subtreeNode: TreeNode = this.tree.parse({
+        id: objectURL,
+        /* Hack required by frontend*/
+        raw: { id: objectURL, children: [obj] },
+        atomic: true,
+        children: []
+      })
+      this.tree.addSubtree(subtreeNode)
+      this.tree.addNode(childNode, subtreeNode)
     } else {
       this.tree.addNode(childNode, node)
     }
@@ -221,6 +230,7 @@ export default class SpeckleConverter {
     if (this.spoofIDs) return generateUUID()
     return obj.id
   }
+
   /**
    * Takes an array composed of chunked references and dechunks it.
    * @param  {[type]} arr [description]
@@ -396,7 +406,7 @@ export default class SpeckleConverter {
     for (const def of this.getBlockDefinitionGeometry(definition)) {
       const ref = await this.resolveReference(def)
       /** We concatenate the ids to get unique ones */
-      ref.id = this.getCompoundId(ref.id, node.model.raw.transform.id)
+      ref.id = this.getCompoundId(ref.id, this.instanceCounter++)
       const childNode: TreeNode = this.tree.parse({
         id: this.getNodeId(ref),
         raw: ref,
@@ -470,7 +480,9 @@ export default class SpeckleConverter {
 
       const ref = await this.resolveReference(displayValue)
       const nestedNode: TreeNode = this.tree.parse({
-        id: this.getNodeId(ref),
+        id: node.model.instanced
+          ? this.getCompoundId(ref.id, this.instanceCounter++)
+          : this.getNodeId(ref),
         raw: ref,
         atomic: false,
         children: [],

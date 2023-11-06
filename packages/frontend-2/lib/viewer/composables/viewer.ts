@@ -9,6 +9,9 @@ import { until } from '@vueuse/core'
 import { MaybeAsync, Nullable, TimeoutError, timeoutAt } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
+import { CameraController } from '@speckle/viewer'
+import { TreeNode } from '@speckle/viewer'
+import { SpeckleObject } from 'lib/common/helpers/sceneExplorer'
 
 // NOTE: this is a preformance optimisation - this function is hot, and has to do
 // potentially large searches if many elements are hidden/isolated. We cache the
@@ -17,10 +20,7 @@ import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 // viewer bound modules to help us with selection and visibility state management.
 const cacheTimeoutMs = 250
 let hitCache: Nullable<{
-  guid?: string | undefined
-  object: Record<string, unknown> & {
-    id: string
-  }
+  node: TreeNode
   point: Vector3
 }> = null
 let lastCacheRefresh: number = Date.now()
@@ -48,12 +48,22 @@ function getFirstVisibleSelectionHit(
 
   for (const hit of hits) {
     if (hasHiddenObjects) {
-      if (!filteringState.value?.hiddenObjects?.includes(hit.object.id as string)) {
+      if (
+        !filteringState.value?.hiddenObjects?.includes(
+          ((hit.node.model as Record<string, unknown>).raw as SpeckleObject)
+            .id as string
+        )
+      ) {
         hitCache = hit
         return hitCache
       }
     } else if (hasIsolatedObjects) {
-      if (filteringState.value.isolatedObjects?.includes(hit.object.id as string)) {
+      if (
+        filteringState.value.isolatedObjects?.includes(
+          ((hit.node.model as Record<string, unknown>).raw as SpeckleObject)
+            .id as string
+        )
+      ) {
         hitCache = hit
         return hitCache
       }
@@ -123,8 +133,7 @@ export function useViewerCameraTracker(
     }
 
     // Only invoke callback if position/target changed in a meaningful way
-    const activeCam = instance.cameraHandler.activeCam
-    const controls = activeCam.controls
+    const controls = instance.getExtension(CameraController).controls
     const viewerPos = new Vector3()
     const viewerTarget = new Vector3()
 
@@ -153,11 +162,15 @@ export function useViewerCameraTracker(
     : callbackChangeTrackerWrapper
 
   onMounted(() => {
-    instance.cameraHandler.controls.addEventListener('update', finalCallback)
+    const extension = instance.getExtension(CameraController)
+
+    extension.controls.addEventListener('update', finalCallback)
   })
 
   onBeforeUnmount(() => {
-    instance.cameraHandler.controls.removeEventListener('update', finalCallback)
+    instance
+      .getExtension(CameraController)
+      .controls.removeEventListener('update', finalCallback)
   })
 }
 
@@ -167,10 +180,14 @@ export function useViewerCameraControlStartTracker(callback: () => void) {
   } = useInjectedViewerState()
 
   const removeListener = () =>
-    instance.cameraHandler.controls.removeEventListener('controlstart', callback)
+    instance
+      .getExtension(CameraController)
+      .controls.removeEventListener('controlstart', callback)
 
   onMounted(() => {
-    instance.cameraHandler.controls.addEventListener('controlstart', callback)
+    instance
+      .getExtension(CameraController)
+      .controls.addEventListener('controlstart', callback)
   })
 
   onBeforeUnmount(() => {
@@ -191,11 +208,16 @@ export function useViewerCameraRestTracker(
   const { debounceWait = 200 } = options || {}
 
   const finalCallback = debounceWait ? debounce(callback, debounceWait) : callback
-  const removeListener = () =>
-    instance.cameraHandler.controls.removeEventListener('rest', finalCallback)
+  const removeListener = () => {
+    const extension = instance.getExtension(CameraController)
+
+    extension.controls.removeEventListener('rest', finalCallback)
+  }
 
   onMounted(() => {
-    instance.cameraHandler.controls.addEventListener('rest', finalCallback)
+    instance
+      .getExtension(CameraController)
+      .controls.addEventListener('rest', finalCallback)
   })
 
   onBeforeUnmount(() => {
@@ -211,10 +233,12 @@ export function useViewerCameraControlEndTracker(callback: () => void) {
   } = useInjectedViewerState()
 
   const removeListener = () =>
-    instance.cameraHandler.controls.removeEventListener('rest', callback)
+    instance
+      .getExtension(CameraController)
+      .controls.removeEventListener('rest', callback)
 
   onMounted(() => {
-    instance.cameraHandler.controls.addEventListener('rest', callback)
+    instance.getExtension(CameraController).controls.addEventListener('rest', callback)
   })
 
   onBeforeUnmount(() => {

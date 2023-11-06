@@ -65,6 +65,7 @@ export class RenderTree {
       const displayStyleNode = this.getDisplayStyleNode(node)
       ret = {
         id: node.model.id,
+        subtreeId: node.model.subtreeId,
         speckleType: geometryConverter.getSpeckleType(node.model),
         geometry: geometryData,
         renderMaterial: Materials.renderMaterialFromNode(

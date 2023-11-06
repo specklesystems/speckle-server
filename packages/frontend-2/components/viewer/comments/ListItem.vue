@@ -20,7 +20,7 @@
       ></FormButton>
     </div>
     <div class="flex items-center space-x-1">
-      <span class="grow truncate text-sm font-medium text-foreground-2">
+      <span class="grow truncate text-xs font-medium text-foreground-2">
         {{ thread.author.name }}
         <span v-if="threadAuthors.length !== 1">
           & {{ thread.replyAuthors.totalCount }} others
@@ -31,7 +31,7 @@
       {{ thread.rawText }}
     </div>
     <div
-      :class="`text-xs font-bold flex items-center space-x-2 ${
+      :class="`text-xs font-medium flex items-center space-x-2 ${
         thread.replies.totalCount > 0 ? 'text-primary' : 'text-foreground-2'
       } mb-1`"
     >

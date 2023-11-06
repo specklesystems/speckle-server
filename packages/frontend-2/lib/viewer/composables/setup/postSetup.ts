@@ -50,6 +50,7 @@ import { watchTriggerable } from '@vueuse/core'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { Reference } from '@apollo/client'
 import { Modifier } from '@apollo/client/cache'
+import { CameraController } from '@speckle/viewer'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -302,8 +303,7 @@ function useViewerCameraIntegration() {
   const hasInitialLoadFired = ref(false)
 
   const loadCameraDataFromViewer = () => {
-    const activeCam = instance.cameraHandler.activeCam
-    const controls = activeCam.controls
+    const controls = instance.getExtension(CameraController).controls
     const viewerPos = new Vector3()
     const viewerTarget = new Vector3()
 
@@ -602,6 +602,7 @@ function useExplodeFactorIntegration() {
   watch(
     explodeFactor,
     (newVal) => {
+      /** newVal turns out to be a string. It needs to be a */
       instance.explode(newVal)
     },
     { immediate: true }

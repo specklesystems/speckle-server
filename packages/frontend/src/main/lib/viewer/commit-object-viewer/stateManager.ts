@@ -16,7 +16,6 @@ import {
   commitObjectViewerState,
   StateType
 } from '@/main/lib/viewer/commit-object-viewer/stateManagerCore'
-import { LegacyViewer } from '@speckle/viewer'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
   'COMMIT_OBJECT_VIEWER_STREAMID'
@@ -62,7 +61,7 @@ function getOrInitViewerData(): GlobalViewerData {
   container.className = 'viewer-container'
   container.style.display = 'inline-block'
 
-  const viewer = new LegacyViewer(container, DefaultViewerParams)
+  const viewer = new Viewer(container, DefaultViewerParams)
   const initPromise = viewer.init()
 
   globalViewerData = {
@@ -195,7 +194,7 @@ export function getLocalFilterState(): LocalFilterState {
   fs.passMax = state.currentFilterState?.passMax
   fs.passMin = state.currentFilterState?.passMin
   const box = getInitializedViewer().getCurrentSectionBox()
-  if (box && !box.isEmpty()) {
+  if (box) {
     fs.sectionBox = [
       +box.min.x.toFixed(2),
       +box.min.y.toFixed(2),
@@ -237,9 +236,9 @@ export function sectionBoxOn() {
   updateState({ sectionBox: true })
 }
 
-export async function loadObjectProperties() {
+export function loadObjectProperties() {
   setIsViewerBusy(true)
-  const props = await getInitializedViewer().getObjectProperties(undefined, true)
+  const props = getInitializedViewer().getObjectProperties(undefined, true)
   setIsViewerBusy(false)
   updateState({ objectProperties: props })
 }
@@ -257,31 +256,28 @@ export async function handleViewerSelection(selectionInfo: SelectionEvent) {
   }
 
   if (selectionInfo.multiple) {
-    if (!state.selectedObjects.includes(firstVisibleHit.node.model.raw))
-      state.selectedObjects = [...state.selectedObjects, firstVisibleHit.node.model.raw]
+    if (!state.selectedObjects.includes(firstVisibleHit.object))
+      state.selectedObjects = [...state.selectedObjects, firstVisibleHit.object]
   } else {
-    state.selectedObjects = [firstVisibleHit.node.model.raw]
+    state.selectedObjects = [firstVisibleHit.object]
   }
 
-  // No need to explicitly select on clicking while SelectionExtension exists
-  // getInitializedViewer().selectObjects(
-  //   state.selectedObjects.map((o) => o.id) as string[]
-  // )
+  getInitializedViewer().selectObjects(
+    state.selectedObjects.map((o) => o.id) as string[]
+  )
   updateState(state)
 }
 
 export async function handleViewerDoubleClick(selectionInfo: SelectionEvent) {
-  selectionInfo
-  // No need for this anymore
-  // if (!selectionInfo) {
-  //   await getInitializedViewer().zoom()
-  //   return
-  // }
+  if (!selectionInfo) {
+    await getInitializedViewer().zoom()
+    return
+  }
 
-  // const firstVisibleHit = getFirstVisibleSelectionHit(selectionInfo)
-  // if (!firstVisibleHit) return
+  const firstVisibleHit = getFirstVisibleSelectionHit(selectionInfo)
+  if (!firstVisibleHit) return
 
-  // await getInitializedViewer().zoom([firstVisibleHit.object.id as string])
+  await getInitializedViewer().zoom([firstVisibleHit.object.id as string])
 }
 
 function getFirstVisibleSelectionHit({ hits }: SelectionEvent) {
@@ -518,4 +514,5 @@ export async function resetFilter() {
   })
 
   await viewer.resetFilters()
+  viewer.applyFilter(null)
 }

@@ -1,11 +1,12 @@
 import { Vector3 } from 'three'
 import { Extension } from './core-extensions/Extension'
+import { UpdateFlags } from '../..'
 
 export class ExplodeExtension extends Extension {
   private explodeTime = -1
   private explodeRange = 0
 
-  public onLateUpdate() {
+  public onEarlyUpdate() {
     if (this.explodeTime > -1) {
       this.explode(this.explodeTime, this.explodeRange)
       this.explodeTime = -1
@@ -27,8 +28,6 @@ export class ExplodeExtension extends Extension {
 
       objects[i].transformTRS(dir, undefined, undefined, undefined)
     }
-
-    // this.renderer.shadowMap.needsUpdate = true
-    this.viewer.requestRender()
+    this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
   }
 }

@@ -10,7 +10,8 @@ import {
   DefaultLightConfiguration,
   SpeckleView,
   DiffResult,
-  VisualDiffMode
+  VisualDiffMode,
+  LegacyViewer
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -67,6 +68,7 @@ import {
 import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { flatten, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
+import { FilteringExtension } from '@speckle/viewer'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -96,7 +98,7 @@ export type InjectableViewerState = Readonly<{
     /**
      * The actual viewer instance
      */
-    instance: Viewer
+    instance: LegacyViewer
     /**
      * Container onto which the Viewer instance is attached
      */
@@ -312,7 +314,7 @@ function createViewerData(): CachedViewerState {
   container.style.width = '100%'
   container.style.height = '100%'
 
-  const viewer = new Viewer(container, DefaultViewerParams)
+  const viewer = new LegacyViewer(container, DefaultViewerParams)
   const initPromise = viewer.init()
 
   return {
@@ -332,10 +334,10 @@ function setupViewerMetadata(params: {
   const filteringState = shallowRef(undefined as Optional<FilteringState>)
   const views = ref([] as SpeckleView[])
 
-  const refreshWorldTreeAndFilters = (busy: boolean) => {
+  const refreshWorldTreeAndFilters = async (busy: boolean) => {
     if (busy) return
     worldTree.value = viewer.getWorldTree()
-    availableFilters.value = viewer.getObjectProperties()
+    availableFilters.value = await viewer.getObjectProperties()
     views.value = viewer.getViews()
   }
   const updateFilteringState = (newState: FilteringState) => {
@@ -344,12 +346,16 @@ function setupViewerMetadata(params: {
 
   onMounted(() => {
     viewer.on(ViewerEvent.Busy, refreshWorldTreeAndFilters)
-    viewer.on(ViewerEvent.FilteringStateSet, updateFilteringState)
+    viewer
+      .getExtension(FilteringExtension)
+      .on(ViewerEvent.FilteringStateSet, updateFilteringState)
   })
 
   onBeforeUnmount(() => {
     viewer.removeListener(ViewerEvent.Busy, refreshWorldTreeAndFilters)
-    viewer.removeListener(ViewerEvent.FilteringStateSet, updateFilteringState)
+    viewer
+      .getExtension(FilteringExtension)
+      .removeListener(ViewerEvent.FilteringStateSet, updateFilteringState)
   })
 
   return {

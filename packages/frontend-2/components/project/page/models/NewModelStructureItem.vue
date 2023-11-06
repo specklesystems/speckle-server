@@ -27,7 +27,7 @@
             :disabled="anyMutationsLoading"
           />
         </div>
-        <div class="space-x-2">
+        <div class="flex gap-2">
           <FormButton submit :disabled="anyMutationsLoading">Save</FormButton>
           <FormButton outlined color="danger" @click="showNewModelCard = false">
             Cancel

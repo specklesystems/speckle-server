@@ -1,5 +1,5 @@
 import Logger from 'js-logger'
-import Converter from './SpeckleConverter'
+import SpeckleConverter from './SpeckleConverter'
 import { Loader, LoaderEvent } from '../Loader'
 import ObjectLoader from '@speckle/objectloader'
 import { SpeckleGeometryConverter } from './SpeckleGeometryConverter'
@@ -8,7 +8,7 @@ import { AsyncPause } from '../../World'
 
 export class SpeckleLoader extends Loader {
   private loader: ObjectLoader
-  private converter: Converter
+  private converter: SpeckleConverter
   private tree: WorldTree
   private priority: number = 1
   private isCancelled = false
@@ -65,7 +65,7 @@ export class SpeckleLoader extends Loader {
       options: { enableCaching, customLogger: (Logger as any).log }
     })
 
-    this.converter = new Converter(this.loader, this.tree)
+    this.converter = new SpeckleConverter(this.loader, this.tree)
   }
 
   public async load(): Promise<boolean> {

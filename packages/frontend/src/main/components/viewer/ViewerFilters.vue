@@ -182,8 +182,8 @@ export default {
       const prop = this.viewerState.objectProperties?.find((p) => p.key === e.targetKey)
       setColorFilter(prop)
     },
-    async refresh() {
-      await loadObjectProperties()
+    refresh() {
+      loadObjectProperties()
     },
     removeFilter() {
       this.filterSearch = null
