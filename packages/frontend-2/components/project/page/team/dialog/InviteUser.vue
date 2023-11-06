@@ -1,11 +1,8 @@
 <template>
-  <LayoutDialogSection
-    allow-overflow
-    border-b
-    border-t
-    title="Invite"
-    :icon="UserPlusIcon"
-  >
+  <LayoutDialogSection allow-overflow border-b border-t title="Invite">
+    <template #icon>
+      <UserPlusIcon class="h-full w-full" />
+    </template>
     <div class="flex flex-col mt-2">
       <FormTextInput
         v-model="search"

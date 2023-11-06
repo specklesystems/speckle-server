@@ -6,10 +6,13 @@
       <UserProfileEditDialogNotificationPreferences :user="user" />
       <LayoutDialogSection
         title="Developer Settings"
-        :icon="CodeBracketIcon"
         :button="developerSettingsButton"
         border-b
-      />
+      >
+        <template #icon>
+          <CodeBracketIcon class="h-full w-full" />
+        </template>
+      </LayoutDialogSection>
       <UserProfileEditDialogChangePassword :user="user" />
       <UserProfileEditDialogDeleteAccount :user="user" @deleted="isOpen = false" />
       <div class="text-tiny text-foreground-2 mt-4">User #{{ user.id }}</div>

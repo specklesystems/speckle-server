@@ -1,5 +1,16 @@
 <template>
-  <LayoutDialogSection allow-overflow border-b title="Access" :icon="selectedIcon">
+  <LayoutDialogSection allow-overflow border-b title="Access">
+    <template #icon>
+      <LockOpenIcon
+        v-if="project.visibility === ProjectVisibility.Public"
+        class="h-full w-full"
+      />
+      <LinkIcon
+        v-else-if="project.visibility === ProjectVisibility.Unlisted"
+        class="h-full w-full"
+      />
+      <LockClosedIcon v-else class="h-full w-full" />
+    </template>
     <div class="flex flex-col space-y-2">
       <!-- <div class="text-foreground-2 text-sm">Project Access</div> -->
       <ProjectVisibilitySelect
@@ -49,19 +60,6 @@ const mp = useMixpanel()
 const isDisabled = computed(
   () => !isOwner.value || loading.value || isServerGuest.value
 )
-
-const selectedIcon = computed(() => {
-  switch (props.project.visibility) {
-    case ProjectVisibility.Public:
-      return LockOpenIcon
-    case ProjectVisibility.Unlisted:
-      return LinkIcon
-    case ProjectVisibility.Private:
-      return LockClosedIcon
-    default:
-      return LockOpenIcon
-  }
-})
 
 const onChangeVisibility = async (visibility: ProjectVisibility) => {
   loading.value = true

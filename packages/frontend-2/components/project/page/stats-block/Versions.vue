@@ -15,7 +15,7 @@
   </ProjectPageStatsBlock>
 </template>
 <script setup lang="ts">
-import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/solid'
+import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectPageStatsBlockVersionsFragment } from '~~/lib/common/generated/gql/graphql'
 

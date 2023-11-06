@@ -1,10 +1,8 @@
 <template>
-  <LayoutDialogSection
-    title="Notification preferences"
-    :icon="BellIcon"
-    border-t
-    border-b
-  >
+  <LayoutDialogSection title="Notification preferences" border-t border-b>
+    <template #icon>
+      <BellIcon class="h-full w-full" />
+    </template>
     <table class="table-auto w-full rounded-t overflow-hidden">
       <thead class="text-foreground-1">
         <tr>

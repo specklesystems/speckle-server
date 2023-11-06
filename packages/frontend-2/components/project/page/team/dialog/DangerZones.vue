@@ -4,9 +4,11 @@
       v-if="canLeaveProject"
       border-b
       title="Leave Project"
-      :icon="ArrowRightOnRectangleIcon"
       title-color="info"
     >
+      <template #icon>
+        <ArrowRightOnRectangleIcon class="h-full w-full" />
+      </template>
       <div
         class="flex flex-col sm:flex-row sm:items-center gap-4 py-3 px-4 bg-info-lighter rounded-md select-none mb-4 text-info-darker text-sm"
       >
@@ -37,9 +39,11 @@
     <LayoutDialogSection
       v-if="isOwner && !isServerGuest"
       title="Delete Project"
-      :icon="TrashIcon"
       title-color="danger"
     >
+      <template #icon>
+        <TrashIcon class="h-full w-full" />
+      </template>
       <div
         class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 bg-danger-lighter dark:bg-danger-darker rounded-md select-none mb-4"
       >

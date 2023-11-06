@@ -1,10 +1,8 @@
 <template>
-  <LayoutDialogSection
-    border-b
-    title="Delete Account"
-    :icon="TrashIcon"
-    title-color="danger"
-  >
+  <LayoutDialogSection border-b title="Delete Account" title-color="danger">
+    <template #icon>
+      <TrashIcon class="h-full w-full" />
+    </template>
     <form class="flex flex-col gap-2" @submit="onDelete">
       <div
         class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 bg-danger-lighter dark:bg-danger-darker rounded-md select-none mb-4"

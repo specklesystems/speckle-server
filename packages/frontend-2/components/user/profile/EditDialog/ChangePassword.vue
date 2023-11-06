@@ -1,10 +1,8 @@
 <template>
-  <LayoutDialogSection
-    border-b
-    title="Change Password"
-    :icon="LockClosedIcon"
-    title-color="info"
-  >
+  <LayoutDialogSection border-b title="Change Password" title-color="info">
+    <template #icon>
+      <LockClosedIcon class="h-full w-full" />
+    </template>
     <div class="flex flex-col space-y-4">
       <div>
         Press the button below to start the password reset process. Once pressed, you

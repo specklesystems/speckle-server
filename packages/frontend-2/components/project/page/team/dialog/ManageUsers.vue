@@ -1,5 +1,8 @@
 <template>
-  <LayoutDialogSection class="-mt-4" title="Team" :icon="UsersIcon">
+  <LayoutDialogSection class="-mt-4" title="Team">
+    <template #icon>
+      <UsersIcon class="h-full w-full" />
+    </template>
     <div class="flex flex-col gap-2">
       <div
         class="flex flex-col border border-primary-muted max-h-40 overflow-auto simple-scrollbar"
