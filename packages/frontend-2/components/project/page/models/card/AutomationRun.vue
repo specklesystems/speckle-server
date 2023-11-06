@@ -8,6 +8,9 @@
       :key="fRun.id"
       :automation-name="run.automationName"
       :function-run="(fRun as RemoveOnceBEIsHappy)"
+      :project-id="projectId"
+      :model-id="modelId"
+      :version-id="versionId"
     />
   </div>
 </template>
@@ -23,7 +26,10 @@ type RemoveOnceBEIsHappy = AutomationFunctionRun & {
   results: { values: { blobIds: string[] } }
 }
 
-/* const props =  */ defineProps<{
+defineProps<{
   run: AutomationRun
+  projectId: string
+  modelId: string
+  versionId?: string
 }>()
 </script>

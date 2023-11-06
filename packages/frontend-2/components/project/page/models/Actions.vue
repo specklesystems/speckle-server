@@ -79,7 +79,7 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
     }
   ],
   [
-    { title: 'Share', id: ActionTypes.Share },
+    { title: 'Copy Link', id: ActionTypes.Share },
     { title: 'Copy ID', id: ActionTypes.CopyId }
   ],
   [

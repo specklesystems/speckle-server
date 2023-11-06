@@ -53,13 +53,21 @@
           enter-from-class="opacity-0"
           enter-active-class="transition duration-1000"
         >
-          <ViewerSelectionSidebar v-show="tourState.showViewerControls" class="z-20" />
+          <div v-show="tourState.showViewerControls">
+            <ViewerSelectionSidebar class="z-20 hidden sm:block" />
+          </div>
         </Transition>
         <!-- Shows up when filters are applied for an easy return to normality -->
         <ViewerGlobalFilterReset class="z-20" />
       </ClientOnly>
     </div>
   </ViewerPostSetupWrapper>
+  <div
+    class="sm:hidden shadow-t fixed bottom-0 left-0 max-h-[65vh] w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
+  >
+    <PortalTarget name="bottomPanel"></PortalTarget>
+    <PortalTarget name="mobileComments"></PortalTarget>
+  </div>
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
