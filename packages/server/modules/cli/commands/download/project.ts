@@ -8,9 +8,10 @@ const command: CommandModule<
     projectUrl: string
     authorId: string
     syncComments: boolean
+    token: string
   }
 > = {
-  command: 'project <projectUrl> <authorId> [syncComments]',
+  command: 'project <projectUrl> <authorId> [syncComments] [token]',
   describe: 'Download a project from an external Speckle server instance',
   builder: {
     projectUrl: {
@@ -26,10 +27,17 @@ const command: CommandModule<
       describe: 'Whether or not to sync comments as well',
       type: 'boolean',
       default: true
+    },
+    token: {
+      describe: 'The authorisation token for private streams',
+      type: 'string'
     }
   },
   handler: async (argv) => {
-    await downloadProject(argv, { logger: cliLogger })
+    await downloadProject(argv, {
+      logger: cliLogger,
+      token: argv.token?.length ? argv.token : undefined
+    })
   }
 }
 
