@@ -18,7 +18,7 @@
           </span>
         </div>
       </div>
-      <div class="flex items-center h-8 sm:h-10 gap-2 px-2">
+      <div v-if="$slots.actions" class="flex items-center h-8 sm:h-10 gap-2 px-2">
         <slot name="actions"></slot>
       </div>
     </div>

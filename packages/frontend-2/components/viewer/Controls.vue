@@ -35,6 +35,19 @@
         <ChatBubbleLeftRightIcon class="h-5 w-5" />
       </ViewerControlsButtonToggle>
 
+      <!-- Automateeeeeeee FTW -->
+      <ViewerControlsButtonToggle
+        v-if="allAutomationRuns.length !== 0"
+        v-tippy="summary.longSummary"
+        :active="activeControl === 'automate'"
+        class="p-2"
+        @click="toggleActiveControl('automate')"
+      >
+        <!-- <PlayCircleIcon class="h-5 w-5" /> -->
+        <!-- {{allAutomationRuns.length}} -->
+        <AutomationDoughnutSummary :summary="summary" />
+      </ViewerControlsButtonToggle>
+
       <!-- TODO: direct add comment -->
       <!-- <ViewerCommentsDirectAddComment v-show="activeControl === 'comments'" /> -->
 
@@ -121,6 +134,13 @@
         v-if="resourceItems.length !== 0 && activeControl === 'filters'"
         class="pointer-events-auto"
       />
+      <div v-show="resourceItems.length !== 0 && activeControl === 'automate'">
+        <ViewerAutomatePanel
+          :automation-runs="allAutomationRuns"
+          :summary="summary"
+          @close="activeControl = 'none'"
+        />
+      </div>
 
       <!-- Empty state -->
       <div v-if="resourceItems.length === 0">
@@ -175,13 +195,85 @@ const {
   toggleProjection,
   camera: { isOrthoProjection }
 } = useCameraUtilities()
-const { resourceItems } = useInjectedViewerLoadedResources()
+
+import { AutomationRunStatus, AutomationRun } from '~~/lib/common/generated/gql/graphql'
+
+const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 
-type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'discussions'
+const allAutomationRuns = computed(() => {
+  const allAutomationStatuses = modelsAndVersionIds.value
+    .map((model) => model.model.loadedVersion.items[0].automationStatus)
+    .flat()
+    .filter((run) => !!run)
+  return allAutomationStatuses
+    .map((status) => status?.automationRuns)
+    .flat() as AutomationRun[]
+})
+
+const allFunctionRuns = computed(() => {
+  return allAutomationRuns.value.map((run) => run.functionRuns).flat()
+})
+
+const summary = computed(() => {
+  const result = {
+    failed: 0,
+    passed: 0,
+    inProgress: 0,
+    total: allFunctionRuns.value.length,
+    title: 'All runs passed.',
+    titleColor: 'text-success',
+    longSummary: ''
+  }
+
+  for (const run of allFunctionRuns.value) {
+    switch (run?.status) {
+      case AutomationRunStatus.Succeeded:
+        result.passed++
+        break
+      case AutomationRunStatus.Failed:
+        result.title = 'Some runs failed.'
+        result.titleColor = 'text-danger'
+        result.failed++
+        break
+      default:
+        if (result.failed === 0) {
+          result.title = 'Some runs are still in progress.'
+          result.titleColor = 'text-warning'
+        }
+        result.inProgress++
+        break
+    }
+  }
+
+  // format:
+  // 2 failed, 1 passed runs
+  // 1 passed, 2 in progress, 1 failed runs
+  // 1 passed run
+  const longSummarySegments = []
+  if (result.passed > 0) longSummarySegments.push(`${result.passed} passed`)
+  if (result.inProgress > 0)
+    longSummarySegments.push(`${result.inProgress} in progress`)
+  if (result.failed > 0) longSummarySegments.push(`${result.failed} failed`)
+
+  result.longSummary = (
+    longSummarySegments.join(', ') + ` run${result.total > 1 ? 's' : ''}.`
+  ).replace(/,(?=[^,]+$)/, ', and')
+
+  return result
+})
+
+type ActiveControl =
+  | 'none'
+  | 'models'
+  | 'explorer'
+  | 'filters'
+  | 'discussions'
+  | 'automate'
+
 const openAddModel = ref(false)
 
 const activeControl = ref<ActiveControl>('models')
