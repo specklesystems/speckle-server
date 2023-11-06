@@ -42,7 +42,7 @@ import { LayoutDialogSection } from '@speckle/ui-components'
 import { CommentPermissions } from '~~/lib/projects/helpers/components'
 import { useUpdateProject } from '~~/lib/projects/composables/projectManagement'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
-import { LockClosedIcon, LockOpenIcon, LinkIcon } from '@heroicons/vue/24/solid'
+import { LockClosedIcon, LockOpenIcon, LinkIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{

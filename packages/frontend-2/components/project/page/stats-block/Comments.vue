@@ -15,7 +15,7 @@
   </ProjectPageStatsBlock>
 </template>
 <script setup lang="ts">
-import { ChatBubbleOvalLeftIcon } from '@heroicons/vue/24/solid'
+import { ChatBubbleOvalLeftIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectPageStatsBlockCommentsFragment } from '~~/lib/common/generated/gql/graphql'
 

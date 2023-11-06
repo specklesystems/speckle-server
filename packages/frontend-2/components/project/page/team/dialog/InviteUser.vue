@@ -57,7 +57,7 @@ import { isEmail } from '~~/lib/common/helpers/validation'
 import { isArray, isString } from 'lodash-es'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
-import { UserPlusIcon } from '@heroicons/vue/24/solid'
+import { UserPlusIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useServerInfo } from '~~/lib/core/composables/server'
 

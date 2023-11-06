@@ -124,9 +124,9 @@ import {
   SunIcon,
   MoonIcon,
   EnvelopeIcon,
-  CloudArrowDownIcon,
   Cog6ToothIcon
 } from '@heroicons/vue/24/outline'
+import { CloudArrowDownIcon } from '@heroicons/vue/24/solid'
 import { useQuery } from '@vue/apollo-composable'
 import { Optional, Roles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'

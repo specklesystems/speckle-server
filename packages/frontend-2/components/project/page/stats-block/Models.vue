@@ -15,7 +15,7 @@
   </ProjectPageStatsBlock>
 </template>
 <script setup lang="ts">
-import { CubeIcon } from '@heroicons/vue/24/solid'
+import { CubeIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectPageStatsBlockModelsFragment } from '~~/lib/common/generated/gql/graphql'
 

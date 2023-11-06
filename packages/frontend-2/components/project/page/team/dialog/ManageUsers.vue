@@ -76,7 +76,7 @@ import {
   ProjectCollaboratorListItem,
   roleSelectItems
 } from '~~/lib/projects/helpers/components'
-import { UsersIcon } from '@heroicons/vue/24/solid'
+import { UsersIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
