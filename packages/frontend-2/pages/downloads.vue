@@ -46,7 +46,7 @@
       </div>
     </div>
     <div v-if="searchResults.length === 0" class="w-full">
-      No connector found.d Feel free to ask for it on our
+      No connector found. Feel free to ask for it on our
       <FormButton link to="https://speckle.community/" target="_blank">
         community forum!
       </FormButton>
