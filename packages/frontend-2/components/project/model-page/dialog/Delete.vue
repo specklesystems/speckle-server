@@ -17,7 +17,7 @@
       Delete {{ `${versions.length} version${versions.length > 1 ? 's' : ''}` }}
     </template>
     <div class="flex flex-col text-foreground">
-      <p class="mb-6">
+      <p>
         Deleting versions is an irrevocable action! If you are sure about wanting to
         delete
         <template v-if="versions.length > 1">the selected versions,</template>
