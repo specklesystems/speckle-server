@@ -38,11 +38,11 @@ const props = defineProps<{
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const dialogButtons = [
+const dialogButtons = computed(() => [
   {
     text: 'Close',
     props: { color: 'primary', fullWidth: true },
     onClick: () => (isOpen.value = false)
   }
-]
+])
 </script>

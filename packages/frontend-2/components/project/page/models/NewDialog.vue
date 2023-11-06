@@ -78,7 +78,7 @@ watch(
   }
 )
 
-const dialogButtons = [
+const dialogButtons = computed(() => [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
@@ -94,5 +94,5 @@ const dialogButtons = [
     },
     disabled: anyMutationsLoading.value
   }
-]
+])
 </script>

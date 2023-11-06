@@ -48,7 +48,7 @@ const isOpen = computed({
   set: (newVal) => emit('update:open', newVal)
 })
 
-const developerSettingsButton = {
+const developerSettingsButton = computed(() => ({
   text: 'Manage',
   color: 'default' as FormButtonColor,
   to: '/developer-settings/',
@@ -56,5 +56,5 @@ const developerSettingsButton = {
   onClick: () => {
     isOpen.value = false
   }
-}
+}))
 </script>

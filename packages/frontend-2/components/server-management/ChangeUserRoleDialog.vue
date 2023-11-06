@@ -114,7 +114,7 @@ const changeUserRoleConfirmed = async () => {
   emit('update:open', false)
 }
 
-const dialogButtons = [
+const dialogButtons = computed(() => [
   {
     text: 'Change Role',
     props: { color: 'danger', fullWidth: true },
@@ -125,5 +125,5 @@ const dialogButtons = [
     props: { color: 'secondary', fullWidth: true, outline: true },
     onClick: () => emit('update:open', false)
   }
-]
+])
 </script>

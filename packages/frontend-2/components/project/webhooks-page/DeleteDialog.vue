@@ -1,6 +1,10 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
-    <template #header>Delete Webhook</template>
+  <LayoutDialog
+    v-model:open="isOpen"
+    max-width="sm"
+    title="Delete Webhook"
+    :buttons="dialogButtons"
+  >
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <p>
         Are you sure you want to
