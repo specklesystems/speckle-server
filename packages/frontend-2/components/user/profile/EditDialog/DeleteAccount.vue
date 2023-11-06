@@ -3,27 +3,31 @@
     border-b
     title="Delete Account"
     :icon="TrashIcon"
-    :button="{
-      text: 'Delete',
-      color: 'danger',
-      expandContent: true,
-      iconRight: ChevronDownIcon
-    }"
+    title-color="danger"
   >
-    <form class="flex flex-col space-y-4" @submit="onDelete">
-      <div>
-        This action cannot be undone. We will delete all projects where you are the sole
-        owner, and any associated data.
-        <br />
-        To delete your account, type in your
-        <HelpText :text="emailPlaceholder">e-mail address</HelpText>
-        and press the button.
+    <form class="flex flex-col gap-2" @submit="onDelete">
+      <div
+        class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 bg-danger-lighter dark:bg-danger-darker rounded-md select-none mb-4"
+      >
+        <div>
+          <ExclamationTriangleIcon class="mt-0.5 h-12 w-12 text-danger" />
+        </div>
+        <div>
+          <p class="font-semibold text-danger-darker dark:text-danger-lighter">
+            This action cannot be undone. We will delete all projects where you are the
+            sole owner, and any associated data.
+          </p>
+          <p class="text-sm">
+            To delete your account, type in your
+            <HelpText :text="emailPlaceholder">e-mail address</HelpText>
+            and press the button.
+          </p>
+        </div>
       </div>
-      <div class="flex space-x-2">
+      <div class="flex gap-2">
         <FormTextInput
           name="deleteEmail"
           label="Your e-mail address"
-          size="sm"
           :placeholder="emailPlaceholder"
           full-width
           validate-on-mount
@@ -33,7 +37,6 @@
         />
         <FormButton
           color="danger"
-          size="sm"
           submit
           :disabled="!!Object.values(errors).length || loading"
         >
@@ -45,7 +48,7 @@
 </template>
 <script setup lang="ts">
 import { LayoutDialogSection } from '@speckle/ui-components'
-import { TrashIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
+import { TrashIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { GenericValidateFunction, useForm } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'
 import { UserProfileEditDialogDeleteAccount_UserFragment } from '~~/lib/common/generated/gql/graphql'

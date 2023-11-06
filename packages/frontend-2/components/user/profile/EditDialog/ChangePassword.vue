@@ -3,12 +3,7 @@
     border-b
     title="Change Password"
     :icon="LockClosedIcon"
-    :button="{
-      text: 'Change',
-      color: 'info',
-      expandContent: true,
-      iconRight: ChevronDownIcon
-    }"
+    title-color="info"
   >
     <div class="flex flex-col space-y-4">
       <div>
@@ -23,7 +18,7 @@
 </template>
 <script setup lang="ts">
 import { LayoutDialogSection } from '@speckle/ui-components'
-import { LockClosedIcon, ChevronDownIcon } from '@heroicons/vue/24/outline'
+import { LockClosedIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { usePasswordReset } from '~~/lib/auth/composables/passwordReset'
 

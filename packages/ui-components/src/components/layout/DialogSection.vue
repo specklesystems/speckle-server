@@ -22,6 +22,7 @@
     >
       <div
         class="text-sm sm:text-base font-bold flex items-center gap-1 sm:gap-2 select-none"
+        :class="titleClasses"
       >
         <Component :is="icon" v-if="icon" class="h-4 sm:h-5 h-4 sm:w-5" />
         <span>{{ title }}</span>
@@ -73,6 +74,8 @@ import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { FormButton } from '~~/src/lib'
 import { keyboardClick } from '~~/src/helpers/global/accessibility'
 
+type TitleColor = 'default' | 'danger' | 'warning' | 'success' | 'secondary' | 'info'
+
 type FormButtonColor =
   | 'default'
   | 'invert'
@@ -89,6 +92,10 @@ const props = defineProps({
   borderT: Boolean,
   borderB: Boolean,
   allowOverflow: Boolean,
+  titleColor: {
+    type: String as () => TitleColor,
+    default: 'default'
+  },
   button: Object as () =>
     | {
         expandContent?: boolean
@@ -118,6 +125,23 @@ const backgroundClass = computed(() => {
   }
 
   return classes
+})
+
+const titleClasses = computed(() => {
+  switch (props.titleColor) {
+    case 'danger':
+      return 'text-danger'
+    case 'warning':
+      return 'text-warning'
+    case 'success':
+      return 'text-success'
+    case 'secondary':
+      return 'text-secondary'
+    case 'info':
+      return 'text-info'
+    default:
+      return 'text-foreground'
+  }
 })
 
 const toggleExpansion = () => {

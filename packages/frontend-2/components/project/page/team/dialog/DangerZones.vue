@@ -5,20 +5,15 @@
       border-b
       title="Leave Project"
       :icon="ArrowRightOnRectangleIcon"
-      :button="{
-        text: 'Leave Project',
-        color: 'info',
-        expandContent: true,
-        iconRight: ChevronDownIcon
-      }"
+      title-color="info"
     >
       <div
-        class="flex items-center gap-4 py-3 px-4 bg-info-lighter rounded-md select-none mb-4"
+        class="flex flex-col sm:flex-row sm:items-center gap-4 py-3 px-4 bg-info-lighter rounded-md select-none mb-4 text-info-darker text-sm"
       >
         <div>
           <ExclamationTriangleIcon class="mt-0.5 h-12 w-12 text-info" />
         </div>
-        <div>
+        <div class="">
           <p class="text-sm">
             As long as you're not the only owner you can remove yourself from this
             project's list of collaborators.
@@ -43,12 +38,7 @@
       v-if="isOwner && !isServerGuest"
       title="Delete Project"
       :icon="TrashIcon"
-      :button="{
-        text: 'Delete',
-        color: 'danger',
-        expandContent: true,
-        iconRight: ChevronDownIcon
-      }"
+      title-color="danger"
     >
       <div
         class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 bg-danger-lighter dark:bg-danger-darker rounded-md select-none mb-4"
@@ -67,28 +57,25 @@
           </p>
         </div>
       </div>
-      <form class="flex flex-col space-y-2 pb-2" @submit="onDelete">
+      <form class="flex flex-col sm:flex-row gap-2 pb-2" @submit="onDelete">
         <FormTextInput
           name="projectName"
           label="Project name"
           placeholder="Project name"
           :rules="[stringMatchesProjectName]"
           full-width
-          size="lg"
           validate-on-mount
           validate-on-value-update
           hide-error-message
           class="text-sm"
         />
-        <div class="flex gap-2 mt-4">
-          <FormButton
-            submit
-            :disabled="!!Object.values(deleteErrors).length"
-            color="danger"
-          >
-            Delete
-          </FormButton>
-        </div>
+        <FormButton
+          submit
+          :disabled="!!Object.values(deleteErrors).length"
+          color="danger"
+        >
+          Delete
+        </FormButton>
       </form>
     </LayoutDialogSection>
   </div>
@@ -97,8 +84,7 @@
 import {
   TrashIcon,
   ArrowRightOnRectangleIcon,
-  ExclamationTriangleIcon,
-  ChevronDownIcon
+  ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
 import { LayoutDialogSection } from '@speckle/ui-components'
 import { GenericValidateFunction, useForm } from 'vee-validate'
