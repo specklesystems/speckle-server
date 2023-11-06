@@ -2,7 +2,7 @@
   <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
     <template #header>Edit Settings</template>
     <form @submit="onSubmit">
-      <div class="flex flex-col gap-6">
+      <div class="flex flex-col gap-4">
         <FormTextInput
           v-model="name"
           label="This server's public name"
@@ -41,18 +41,22 @@
           name="terms"
           show-label
         />
-        <FormCheckbox
-          v-model="inviteOnly"
-          label="Invite only mode - Only users with an invitation will be able to join"
-          name="inviteOnly"
-          show-label
-        />
-        <FormCheckbox
-          v-model="guestModeEnabled"
-          label="Guest mode - Enables the 'Guest' server role, which allows users to only contribute to projects that they're invited to"
-          name="guestModeEnabled"
-          show-label
-        />
+        <div
+          class="rounded-lg px-3 py-2 sm:p-4 bg-primary-muted opacity-70 text-sm flex flex-col gap-2 mt-2"
+        >
+          <FormCheckbox
+            v-model="inviteOnly"
+            label="Invite only mode - Only users with an invitation will be able to join"
+            name="inviteOnly"
+            show-label
+          />
+          <FormCheckbox
+            v-model="guestModeEnabled"
+            label="Guest mode - Enables the 'Guest' server role, which allows users to only contribute to projects that they're invited to"
+            name="guestModeEnabled"
+            show-label
+          />
+        </div>
       </div>
     </form>
   </LayoutDialog>

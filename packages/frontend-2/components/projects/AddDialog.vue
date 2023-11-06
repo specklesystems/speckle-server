@@ -7,7 +7,6 @@
           name="name"
           label="Project name"
           placeholder="Project name"
-          size="lg"
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
           show-required
           auto-focus
