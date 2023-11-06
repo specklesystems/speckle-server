@@ -6,9 +6,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useUiConfigStore } from '~/store/uiConfig'
+import { useConfigStore } from '~/store/config'
 
-const uiConfigStore = useUiConfigStore()
+const uiConfigStore = useConfigStore()
 const { isDarkTheme } = storeToRefs(uiConfigStore)
 
 useHead({
@@ -26,3 +26,4 @@ useHead({
   script: process.dev ? ['http://localhost:8098'] : []
 })
 </script>
+store/config

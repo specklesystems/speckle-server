@@ -79,6 +79,33 @@ export class MockedBaseBinding extends BaseBridge {
     }
   }
 
+  public async getDocumentState() {
+    return {
+      models: [
+        // {
+        //   typeDiscriminator: 'sender',
+        //   id: 'sender_test',
+        //   modelId: 'test',
+        //   projectId: 'string',
+        //   accountId: 'string',
+        //   expired: false,
+        //   lastLocalUpdate: '',
+        //   notifications: []
+        // },
+        // {
+        //   typeDiscriminator: 'receiver',
+        //   id: 'receiver_test',
+        //   modelId: 'test',
+        //   projectId: 'string',
+        //   accountId: 'string',
+        //   expired: false,
+        //   lastLocalUpdate: '',
+        //   notifications: []
+        // }
+      ]
+    }
+  }
+
   public async showDevTools() {
     console.log('Mocked bindings cannot do this')
   }

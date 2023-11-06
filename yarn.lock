@@ -12386,6 +12386,7 @@ __metadata:
     apollo-upload-client: ^17.0.0
     autoprefixer: ^10.4.14
     concurrently: ^7.5.0
+    dotenv: ^16.3.1
     eslint: ^8.24.0
     eslint-config-prettier: ^8.5.0
     eslint-plugin-nuxt: ^4.0.0

@@ -2,6 +2,7 @@ import { ModelCardNotification } from '~~/lib/models/card/notification'
 import { ModelCardProgress } from '~~/lib/models/card/progress'
 import { ISendFilter } from '~~/lib/models/card/send'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
+import { BaseBridge } from '~~/lib/bridge/base'
 
 export const ISendBindingKey = 'sendBinding'
 
@@ -27,4 +28,14 @@ export type CreateVersionArgs = {
   objectId: string
   message?: string
   sourceApplication?: string
+}
+
+export class MockedSendBinding extends BaseBridge {
+  constructor() {
+    super()
+  }
+
+  getSendFilters() {
+    return []
+  }
 }

@@ -5,7 +5,8 @@ import { SketchupBridge } from '~/lib/bridge/sketchup'
 
 import {
   IAccountBinding,
-  IAccountBindingKey
+  IAccountBindingKey,
+  MockedAccountBinding
 } from '~/lib/bindings/definitions/IAccountBinding'
 
 import {
@@ -15,11 +16,11 @@ import {
 } from '~/lib/bindings/definitions/ITestBinding'
 
 import {
-  IUiConfigBinding,
-  IUiConfigBindingKey,
+  IConfigBinding,
+  IConfigBindingKey,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   MockedConfigBinding
-} from '~/lib/bindings/definitions/IUiConfigBinding'
+} from '~/lib/bindings/definitions/IConfigBinding'
 
 import {
   IBasicConnectorBinding,
@@ -27,16 +28,22 @@ import {
   MockedBaseBinding
 } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 
-import { ISendBindingKey, ISendBinding } from '~/lib/bindings/definitions/ISendBinding'
+import {
+  ISendBindingKey,
+  ISendBinding,
+  MockedSendBinding
+} from '~/lib/bindings/definitions/ISendBinding'
 import {
   IReceiveBindingKey,
-  IReceiveBinding
+  IReceiveBinding,
+  MockedReceiveBinding
 } from '~/lib/bindings/definitions/IReceiveBinding'
 
 import {
   ISelectionBindingKey,
   ISelectionBinding
 } from '~/lib/bindings/definitions/ISelectionBinding'
+import { BaseBridge } from 'lib/bridge/base'
 
 // Makes TS happy
 declare let globalThis: Record<string, unknown> & {
@@ -60,40 +67,44 @@ export default defineNuxtPlugin(async () => {
 
   // Actual bindings follow below.
 
-  const uiConfigBinding =
-    (await tryHoistBinding<IUiConfigBinding>(IUiConfigBindingKey)) ||
-    new MockedConfigBinding()
+  const configBinding =
+    (await tryHoistBinding<IConfigBinding>(IConfigBindingKey)) ||
+    hoistMockBinding(new MockedConfigBinding(), IConfigBindingKey)
 
   const accountBinding =
-    (await tryHoistBinding<IAccountBinding>(IAccountBindingKey)) || null
+    (await tryHoistBinding<IAccountBinding>(IAccountBindingKey)) ||
+    hoistMockBinding(new MockedAccountBinding(), IAccountBindingKey)
 
   const baseBinding =
     (await tryHoistBinding<IBasicConnectorBinding>(IBasicConnectorBindingKey)) ||
-    new MockedBaseBinding()
+    hoistMockBinding(new MockedBaseBinding(), IBasicConnectorBindingKey)
 
-  const sendBinding = await tryHoistBinding<ISendBinding>(ISendBindingKey)
+  const sendBinding =
+    (await tryHoistBinding<ISendBinding>(ISendBindingKey)) ||
+    hoistMockBinding(new MockedSendBinding(), ISendBindingKey)
 
-  const receiveBinding = await tryHoistBinding<IReceiveBinding>(IReceiveBindingKey)
+  const receiveBinding =
+    (await tryHoistBinding<IReceiveBinding>(IReceiveBindingKey)) ||
+    hoistMockBinding(new MockedReceiveBinding(), IReceiveBindingKey)
 
-  const selectionBinding = await tryHoistBinding<ISelectionBinding>(
-    ISelectionBindingKey
-  )
+  const selectionBinding =
+    (await tryHoistBinding<ISelectionBinding>(ISelectionBindingKey)) || null
 
   // Any binding implments these two methods below, we just choose one to
   // expose globally to the app.
   const showDevTools = () => {
-    uiConfigBinding.showDevTools()
+    configBinding.showDevTools()
   }
 
   const openUrl = (url: string) => {
-    uiConfigBinding.openUrl(url)
+    configBinding.openUrl(url)
   }
 
   return {
     provide: {
       nonExistantBindings,
       testBindings,
-      uiConfigBinding,
+      configBinding,
       accountBinding,
       baseBinding,
       sendBinding,
@@ -135,4 +146,9 @@ const tryHoistBinding = async <T>(name: string) => {
 
   globalThis[name] = bridge
   return bridge as unknown as T
+}
+
+const hoistMockBinding = (mockBinding: BaseBridge, name: string) => {
+  globalThis[name] = mockBinding
+  return mockBinding
 }

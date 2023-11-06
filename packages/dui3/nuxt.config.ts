@@ -14,6 +14,14 @@ export default defineNuxtConfig({
   pinia: {
     autoImports: ['defineStore', 'storeToRefs']
   },
+  runtimeConfig: {
+    public: {
+      speckleAccountId: process.env.SPECKLE_ACCOUNT_ID,
+      speckleToken: process.env.SPECKLE_TOKEN,
+      speckleUserId: process.env.SPECKLE_USER_ID,
+      speckleUrl: process.env.SPECKLE_URL
+    }
+  },
   vite: {
     resolve: {
       alias: [{ find: /^lodash$/, replacement: 'lodash-es' }]
