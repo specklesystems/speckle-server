@@ -391,8 +391,6 @@ server:
 
   ## @param server.adminOverrideEnabled Enables the server side admin authz override
   adminOverrideEnabled: false
-  ## @param server.onboardingStreamId The id of the stream to be used for onboarding new users
-  onboardingStreamId: ''
   ## @param server.max_object_size_mb The maximum size of an individual object which can be uploaded to the server
   max_object_size_mb: 10
   ## @param server.speckleAutomateUrl The url of the Speckle Automate instance
