@@ -7,22 +7,21 @@
     >
       <AutomationDoughnutSummary :summary="summary" />
     </button>
-    <LayoutDialog
-      v-model:open="showDialog"
-      :title="`Automation Status for ${displayName}`"
-      max-width="lg"
-    >
+    <LayoutDialog v-model:open="showDialog" max-width="lg">
       <template #header>
-        <div class="flex items-center space-x-2 -mt-1 max-w-full w-full">
-          <div class="h-10 w-10 mt-[6px]">
-            <AutomationDoughnutSummary :summary="summary" />
-          </div>
-          <div class="min-w-0">
-            <h4 :class="`text-xl font-bold ${summary.titleColor}`">
-              {{ summary.title }}
-            </h4>
-            <div class="text-xs text-foreground-2 truncate">
-              {{ summary.longSummary }}
+        <div class="flex flex-col">
+          <h6 class="text-base font-bold">Automation Status for {{ displayName }}</h6>
+          <div class="flex items-center space-x-2 -mt-1 max-w-full w-full">
+            <div class="h-10 w-10 mt-[6px]">
+              <AutomationDoughnutSummary :summary="summary" />
+            </div>
+            <div class="min-w-0">
+              <h4 :class="`text-xl font-bold ${summary.titleColor}`">
+                {{ summary.title }}
+              </h4>
+              <div class="text-xs text-foreground-2 truncate">
+                {{ summary.longSummary }}
+              </div>
             </div>
           </div>
         </div>
