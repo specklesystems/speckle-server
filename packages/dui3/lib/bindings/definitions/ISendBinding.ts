@@ -44,6 +44,28 @@ export class MockedSendBinding extends BaseBridge {
   }
 
   getSendFilters() {
-    return []
+    return [
+      {
+        name: 'Everything',
+        summary: 'All supported objects in the file.',
+        typeDiscriminator: 'MockEverythingFilter'
+      },
+      {
+        name: 'Selection',
+        summary: 'Placeholder summary',
+        selectedObjectIds: []
+      },
+      {
+        name: 'Layers',
+        summary: 'Placeholder summary',
+        showLabel: false,
+        multiSelect: true,
+        selectedOptions: [],
+        options: [
+          { id: '1', name: 'Layer 1', typeDiscriminator: 'ListValueItem' },
+          { id: '2', name: 'Layer 2', typeDiscriminator: 'ListValueItem' }
+        ]
+      }
+    ]
   }
 }

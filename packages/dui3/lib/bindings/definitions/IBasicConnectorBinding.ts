@@ -3,7 +3,6 @@
 import { BaseBridge } from '~~/lib/bridge/base'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 import { IModelCard } from '~~/lib/models/card'
-import { ISendFilter } from '~~/lib/models/card/send'
 
 export const IBasicConnectorBindingKey = 'baseBinding'
 
@@ -22,9 +21,6 @@ export interface IBasicConnectorBinding
   updateModel: (model: IModelCard) => Promise<void>
   highlightModel: (modelCardId: string) => Promise<void>
   removeModel: (model: IModelCard) => Promise<void>
-
-  // FILTERS AND TYPES
-  getSendFilters: () => Promise<ISendFilter[]>
 }
 
 export interface IBasicConnectorBindingHostEvents {
