@@ -12,7 +12,7 @@
       :item="item"
       :index="index"
       class="absolute"
-      :class="isSmallerOrEqualSM ? 'bottom-0 left-0 w-screen' : 'absolute'"
+      :class="isSmallerOrEqualSM ? 'bottom-0 left-0 w-screen' : ''"
       :style="isSmallerOrEqualSM ? undefined : item.style"
       :show-controls="item.showControls"
       @skip="finishSlideshow()"
