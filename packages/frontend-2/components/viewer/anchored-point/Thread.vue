@@ -115,7 +115,7 @@
             <div class="relative w-full sm:w-80 flex flex-col flex-1 justify-between">
               <div
                 ref="commentsContainer"
-                class="max-h-[calc(50vh)] sm:max-h-[300px] 2xl:max-h-[500px] pb-16 overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
+                class="max-h-[calc(50vh)] sm:max-h-[300px] 2xl:max-h-[500px] pb-20 overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
               >
                 <div
                   v-if="!isThreadResourceLoaded"
