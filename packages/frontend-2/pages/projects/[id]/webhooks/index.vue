@@ -171,7 +171,7 @@ useHead({
 })
 
 definePageMeta({
-  middleware: ['require-valid-project']
+  middleware: ['require-valid-project', 'require-project-webhooks-access']
 })
 
 const { triggerNotification } = useGlobalToast()

@@ -8,6 +8,18 @@ export const projectAccessCheckQuery = graphql(`
   }
 `)
 
+export const projectWebhookAccessCheckQuery = graphql(`
+  query ProjectWebhookAccessCheck($id: String!) {
+    project(id: $id) {
+      webhooks {
+        items {
+          id
+        }
+      }
+    }
+  }
+`)
+
 export const projectsDashboardQuery = graphql(`
   query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {
     activeUser {

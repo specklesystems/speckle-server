@@ -3,10 +3,10 @@ import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-import { projectAccessCheckQuery } from '~~/lib/projects/graphql/queries'
+import { projectWebhookAccessCheckQuery } from '~~/lib/projects/graphql/queries'
 
 /**
- * Used in project page to validate that project ID refers to a valid project and redirects to 404 if not
+ * Used to validate that user has access to Webhooks
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
@@ -15,7 +15,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const { data, errors } = await client
     .query({
-      query: projectAccessCheckQuery,
+      query: projectWebhookAccessCheckQuery,
       variables: { id: projectId },
       context: {
         skipLoggingErrors: true
@@ -24,24 +24,16 @@ export default defineNuxtRouteMiddleware(async (to) => {
     .catch(convertThrowIntoFetchResult)
 
   // If project succesfully resolved, move on
-  if (data?.project?.id) return
+  if (data?.project?.webhooks.items) return
 
   const isForbidden = (errors || []).find((e) => e.extensions['code'] === 'FORBIDDEN')
-  const isNotFound = (errors || []).find(
-    (e) => e.extensions['code'] === 'STREAM_NOT_FOUND'
-  )
+
   if (isForbidden) {
     return abortNavigation(
       createError({
         statusCode: 403,
-        message: 'You do not have access to this project'
+        message: 'You do not have access to webhooks for this project'
       })
-    )
-  }
-
-  if (isNotFound) {
-    return abortNavigation(
-      createError({ statusCode: 404, message: 'Project not found' })
     )
   }
 
