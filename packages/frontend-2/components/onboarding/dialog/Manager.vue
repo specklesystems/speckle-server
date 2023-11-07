@@ -2,7 +2,7 @@
   <OnboardingDialogBase v-model:open="openState">
     <template #header>Install Manager ⚙️</template>
     <div
-      class="w-full h-[351px] bg-primary rounded-xl flex items-center justify-center overflow-hidden"
+      class="w-full aspect-video bg-primary rounded-xl flex items-center justify-center overflow-hidden"
     >
       <iframe
         width="560"
@@ -31,7 +31,7 @@
           Download for {{ os === 'Windows' ? 'Mac OS' : 'Windows' }}
         </FormButton>
       </div>
-      <div v-else class="flex justify-center flex-col space-y-2">
+      <div v-else class="flex justify-center flex-col space-y-2 text-sm sm:text-base">
         <p>
           Speckle Connectors exist only for applications running on Windows or Mac OS.
           If you want, you can still go ahead and download Speckle Manager for

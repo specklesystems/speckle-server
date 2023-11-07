@@ -7,14 +7,14 @@
       <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
       <div
         v-show="step === 0"
-        class="bg-blue-500/50 border-4 border-primary-muted text-foreground-on-primary backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto"
+        class="bg-white/70 border text-foreground backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto mx-2"
         @mouseenter="rotateGently(Math.random() * 2)"
         @mouseleave="rotateGently(Math.random() * 2)"
       >
         <h2 class="text-center text-2xl font-bold">
           Welcome, {{ activeUser?.name?.split(' ')[0] }}!
         </h2>
-        <p class="text-center">
+        <p class="text-center text-sm">
           Let's get to know each other. What industry do you work in?
         </p>
         <div class="grid grid-cols-2 gap-4">
@@ -38,12 +38,12 @@
       <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
       <div
         v-show="step === 1"
-        class="bg-blue-500/40 border-4 border-primary-muted text-foreground-on-primary backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto"
+        class="bg-white/70 border text-foreground backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto mx-2"
         @mouseenter="rotateGently(Math.random() * 2)"
         @mouseleave="rotateGently(Math.random() * 2)"
       >
         <h2 class="text-center text-2xl font-bold">Thanks!</h2>
-        <p class="text-center">
+        <p class="text-center text-sm">
           Last thing! Please select the role that best describes you:
         </p>
         <div class="grid grid-cols-2 gap-4">

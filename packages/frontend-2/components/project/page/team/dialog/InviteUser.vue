@@ -20,7 +20,7 @@
       </FormTextInput>
       <div
         v-if="searchUsers.length || selectedEmails?.length"
-        class="flex flex-col border border-primary-muted -mt-6"
+        class="flex flex-col border bg-foundation border-primary-muted -mt-6"
       >
         <template v-if="searchUsers.length">
           <ProjectPageTeamDialogInviteUserServerUserRow

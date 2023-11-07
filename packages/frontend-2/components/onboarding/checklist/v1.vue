@@ -51,7 +51,7 @@
               "
             >
               <div
-                :class="`text-xl font-bold flex items-center justify-between ${
+                :class="`text-lg sm:text-xl font-bold flex items-center justify-between ${
                   step.active ? 'text-foreground-on-primary' : 'text-foreground-2'
                 }`"
               >
@@ -64,12 +64,19 @@
                 <CheckCircleIcon v-else class="w-4 h-4 mt-1 text-primary" />
               </div>
               <div
-                :class="`${step.active ? 'font-bold text-forergound-on-primary' : ''}`"
+                :class="`${
+                  step.active
+                    ? 'font-bold text-sm sm:text-base text-forergound-on-primary'
+                    : ''
+                }`"
               >
                 {{ step.title }}
               </div>
               <div class="text-xs mt-[2px]">{{ step.blurb }}</div>
-              <div class="h-10 flex items-center justify-between">
+              <div
+                class="flex items-center justify-between"
+                :class="step.active ? 'h-10' : 'h-0'"
+              >
                 <div
                   v-if="idx === 0 || steps[idx - 1].completed"
                   class="flex justify-between items-center py-2 w-full"
