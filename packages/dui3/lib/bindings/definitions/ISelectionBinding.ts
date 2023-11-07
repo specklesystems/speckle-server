@@ -1,4 +1,5 @@
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
+import { BaseBridge } from '~~/lib/bridge/base'
 
 export const ISelectionBindingKey = 'selectionBinding'
 
@@ -13,4 +14,10 @@ export interface ISelectionBindingHostEvents {
 export type SelectionInfo = {
   summary?: string
   selectedObjectIds: string[]
+}
+
+export class MockedSelectionBinding extends BaseBridge {
+  constructor() {
+    super()
+  }
 }

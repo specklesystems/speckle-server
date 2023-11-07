@@ -1,7 +1,7 @@
 import { IRawBridge } from '~/lib/bridge/definitions'
-
 import { GenericBridge } from '~/lib/bridge/generic-v2'
 import { SketchupBridge } from '~/lib/bridge/sketchup'
+import { BaseBridge } from '~~/lib/bridge/base'
 
 import {
   IAccountBinding,
@@ -41,9 +41,9 @@ import {
 
 import {
   ISelectionBindingKey,
-  ISelectionBinding
+  ISelectionBinding,
+  MockedSelectionBinding
 } from '~/lib/bindings/definitions/ISelectionBinding'
-import { BaseBridge } from 'lib/bridge/base'
 
 // Makes TS happy
 declare let globalThis: Record<string, unknown> & {
@@ -88,7 +88,8 @@ export default defineNuxtPlugin(async () => {
     hoistMockBinding(new MockedReceiveBinding(), IReceiveBindingKey)
 
   const selectionBinding =
-    (await tryHoistBinding<ISelectionBinding>(ISelectionBindingKey)) || null
+    (await tryHoistBinding<ISelectionBinding>(ISelectionBindingKey)) ||
+    hoistMockBinding(new MockedSelectionBinding(), ISelectionBindingKey)
 
   // Any binding implments these two methods below, we just choose one to
   // expose globally to the app.
@@ -142,13 +143,24 @@ const tryHoistBinding = async <T>(name: string) => {
   const res = await tempBridge?.create()
   if (res) bridge = tempBridge
 
-  if (!bridge) console.warn(`Failed to bind ${name} binding.`)
+  if (!bridge) {
+    console.warn(`Failed to bind ${name} binding.`)
+    return bridge as unknown as T
+  }
 
   globalThis[name] = bridge
+  console.log(
+    `%c✔ ${name} connector binding added succesfully.`,
+    'color: green; font-weight: bold; font-size: small'
+  )
   return bridge as unknown as T
 }
 
 const hoistMockBinding = (mockBinding: BaseBridge, name: string) => {
   globalThis[name] = mockBinding
+  console.log(
+    `%c✔ Mocked ${name} binding added succesfully.`,
+    'color: green; font-weight: bold; font-size: small'
+  )
   return mockBinding
 }

@@ -66,10 +66,6 @@ export const useAccountStore = defineStore('accountStore', () => {
         newAccs.push(existing as DUIAccount)
         continue
       }
-      console.log(acc.serverInfo.url)
-
-      console.log(new URL('/graphql', acc.serverInfo.url))
-
       const client = new ApolloClient(
         resolveClientConfig({
           httpEndpoint: new URL('/graphql', acc.serverInfo.url).href,

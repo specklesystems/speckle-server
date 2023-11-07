@@ -25,12 +25,11 @@ export class GenericBridge extends BaseBridge {
   public async create(): Promise<boolean> {
     // NOTE: GetMethods is a call to the .NET side.
     let availableMethodNames = [] as string[]
-    console.log(this.bridge)
 
     try {
       availableMethodNames = await this.bridge.GetBindingsMethodNames()
     } catch (e) {
-      console.warn(`Failed to get method names.`)
+      console.warn(`Failed to get method names from binding.`)
       return false
     }
 
