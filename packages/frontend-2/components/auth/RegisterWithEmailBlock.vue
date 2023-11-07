@@ -7,7 +7,7 @@
         name="name"
         label="Full Name"
         placeholder="My Name"
-        size="xl"
+        :size="isSmallerOrEqualSM ? 'lg' : 'xl'"
         :rules="nameRules"
         :custom-icon="UserIcon"
         show-label
@@ -19,7 +19,7 @@
         name="email"
         label="Email"
         placeholder="example@email.com"
-        size="xl"
+        :size="isSmallerOrEqualSM ? 'lg' : 'xl'"
         :rules="emailRules"
         show-label
         :disabled="loading"
@@ -30,7 +30,7 @@
         name="password"
         label="Password"
         placeholder="Type a strong password"
-        size="xl"
+        :size="isSmallerOrEqualSM ? 'lg' : 'xl'"
         :rules="passwordRules"
         show-label
         :disabled="loading"
@@ -82,6 +82,8 @@ import { passwordRules } from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { UserIcon, ArrowRightIcon } from '@heroicons/vue/20/solid'
+import { useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 /**
  * TODO:
@@ -104,6 +106,7 @@ const props = defineProps<{
 
 const { handleSubmit } = useForm<FormValues>()
 const router = useRouter()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
 
 const loading = ref(false)
 const password = ref('')
@@ -117,6 +120,8 @@ const { triggerNotification } = useGlobalToast()
 const newsletterConsent = inject<Ref<boolean>>('newsletterconsent')
 
 const pwdFocused = ref(false)
+
+const isSmallerOrEqualSM = computed(() => breakpoints.smallerOrEqual('sm').value)
 
 const finalLoginRoute = computed(() => {
   const result = router.resolve({
