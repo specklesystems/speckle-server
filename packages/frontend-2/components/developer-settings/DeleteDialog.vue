@@ -1,11 +1,6 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="sm"
-    :title="`Delete ${itemType}`"
-    :buttons="dialogButtons"
-    max-height
-  >
+  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
+    <template #header>Delete {{ itemType }}</template>
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <p>
         Are you sure you want to

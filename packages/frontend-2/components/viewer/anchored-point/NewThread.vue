@@ -22,43 +22,54 @@
           } transition`"
         />
       </button>
-      <div
-        v-if="modelValue.isExpanded"
-        ref="threadContainer"
-        class="absolute hover:bg-foundation transition bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm rounded-lg shadow-md"
-      >
-        <div class="relative">
-          <ViewerCommentsEditor
-            ref="editor"
-            v-model="commentValue"
-            prompt="Press enter to comment"
-            max-height="300px"
-            autofocus
-            :disabled="isPostingNewThread"
-            @submit="() => onSubmit()"
-            @keydown="onKeyDownHandler"
-          />
-          <div class="w-full flex justify-end p-2 space-x-2">
-            <div class="space-x-2">
-              <FormButton
-                v-tippy="'Attach'"
-                :icon-left="PaperClipIcon"
-                hide-text
-                text
-                :disabled="isPostingNewThread"
-                @click="trackAttachAndOpenFilePicker()"
-              />
+      <ViewerCommentsPortalOrDiv to="mobileComments">
+        <div
+          v-if="modelValue.isExpanded"
+          class="bg-foundation px-2 py-2 text-sm text-primary sm:hidden font-medium flex justify-between items-center"
+        >
+          Add Comment
+          <button v-tippy="'Close'" @click="onThreadClick">
+            <PlusIcon class="w-5 h-5 text-primary rotate-45" />
+          </button>
+        </div>
+        <div
+          v-if="modelValue.isExpanded"
+          ref="threadContainer"
+          class="sm:absolute min-w-[200px] hover:bg-foundation transition bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm rounded-lg shadow-md"
+        >
+          <div class="relative">
+            <ViewerCommentsEditor
+              ref="editor"
+              v-model="commentValue"
+              prompt="Press enter to comment"
+              max-height="300px"
+              autofocus
+              :disabled="isPostingNewThread"
+              @submit="() => onSubmit()"
+              @keydown="onKeyDownHandler"
+            />
+            <div class="w-full flex justify-end p-2 space-x-2">
+              <div class="space-x-2">
+                <FormButton
+                  v-tippy="'Attach'"
+                  :icon-left="PaperClipIcon"
+                  hide-text
+                  text
+                  :disabled="isPostingNewThread"
+                  @click="trackAttachAndOpenFilePicker()"
+                />
 
-              <FormButton
-                :icon-left="PaperAirplaneIcon"
-                hide-text
-                :loading="isPostingNewThread"
-                @click="() => onSubmit()"
-              />
+                <FormButton
+                  :icon-left="PaperAirplaneIcon"
+                  hide-text
+                  :loading="isPostingNewThread"
+                  @click="() => onSubmit()"
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </ViewerCommentsPortalOrDiv>
     </div>
   </div>
 </template>

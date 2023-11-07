@@ -3,7 +3,7 @@
     <Disclosure v-slot="{ open }">
       <DisclosureButton :class="buttonClasses">
         <div class="inline-flex items-center space-x-2">
-          <Component :is="icon" v-if="icon" class="h-4 w-4" />
+          <Component :is="icon" v-if="icon" class="h-5 w-5" />
           <span>{{ title }}</span>
         </div>
         <ChevronUpIcon :class="!open ? 'rotate-180 transform' : ''" class="h-5 w-5" />

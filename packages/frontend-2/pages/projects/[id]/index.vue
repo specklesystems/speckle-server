@@ -8,7 +8,7 @@
       <div class="flex flex-col md:flex-row space-y-2 md:space-x-4 mb-14">
         <ProjectPageStatsBlockSettings
           :project="project"
-          class="shadow hover:shadow-xl w-full md:w-72 transition"
+          class="w-full md:w-72 transition"
         />
         <div class="grow hidden md:flex"></div>
         <div class="grid grid-cols-3 gap-2">
@@ -17,7 +17,7 @@
           <ProjectPageStatsBlockComments :project="project" />
         </div>
       </div>
-      <div class="flex flex-col space-y-14">
+      <div class="flex flex-col space-y-8 sm:space-y-14">
         <!-- Latest models -->
         <ProjectPageLatestItemsModels :project="project" />
         <!-- Latest comments -->

@@ -43,7 +43,7 @@
         >
           <div
             :class="[
-              'bg-foundation sm:bg-white/70 dark:sm:bg-neutral-800/70 sm:backdrop-blur flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
+              'bg-foundation sm:bg-white dark:sm:bg-neutral-800 flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
               'group-hover:bg-foundation dark:group-hover:bg-neutral-800 group-[.is-dragging]:bg-foundation dark:group-[.is-dragging]:bg-neutral-800'
             ]"
           >
@@ -119,7 +119,7 @@
               >
                 <div
                   v-if="!isThreadResourceLoaded"
-                  class="pl-3 pr-1 py-1 mt-2 flex items-center justify-between text-xs text-primary bg-primary-muted"
+                  class="pl-3 pr-1 py-1 flex items-center justify-between text-xs text-primary bg-primary-muted"
                 >
                   <span>Conversation started in a different version.</span>
                   <FormButton

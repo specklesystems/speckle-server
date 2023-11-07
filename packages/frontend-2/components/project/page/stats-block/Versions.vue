@@ -1,9 +1,9 @@
 <template>
   <ProjectPageStatsBlock>
     <template #top>
-      <div class="flex space-x-1.5 items-center">
+      <div class="flex flex-col sm:flex-row gap-x-1.5 sm:items-center">
         <ArrowPathRoundedSquareIcon class="h-5 w-5" />
-        <span class="text-xs">Versions</span>
+        <span class="text-xs sm:text-sm">Versions</span>
       </div>
     </template>
     <template #bottom>
@@ -15,7 +15,7 @@
   </ProjectPageStatsBlock>
 </template>
 <script setup lang="ts">
-import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/solid'
+import { ArrowPathRoundedSquareIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectPageStatsBlockVersionsFragment } from '~~/lib/common/generated/gql/graphql'
 

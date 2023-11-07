@@ -2,10 +2,10 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    title="Create Token"
     :buttons="dialogButtons"
     prevent-close-on-click-outside
   >
+    <template #header>Create Token</template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">
         <FormTextInput
@@ -29,6 +29,7 @@
           :rules="[isItemSelected]"
           show-label
           :items="apiTokenScopes"
+          mount-menu-on-body
           by="id"
         />
       </div>

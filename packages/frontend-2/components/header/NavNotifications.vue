@@ -33,7 +33,7 @@
           class="absolute z-50 right-0 md:right-14 top-14 md:top-16 w-full md:w-64 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
           <div class="p-2 text-sm font-bold">Notifications</div>
-          <div class="p-2 text-sm">TODO: project invites</div>
+          <!-- <div class="p-2 text-sm">TODO: project invites</div> -->
           <MenuItem>
             <AuthVerificationReminderMenuNotice />
           </MenuItem>
