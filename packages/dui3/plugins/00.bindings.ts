@@ -63,7 +63,8 @@ export default defineNuxtPlugin(async () => {
 
   // Registers some default test bindings.
   const testBindings =
-    (await tryHoistBinding<ITestBinding>(ITestBindingKey)) || new MockedTestBinding()
+    (await tryHoistBinding<ITestBinding>(ITestBindingKey)) ||
+    hoistMockBinding(new MockedTestBinding(), ITestBindingKey)
 
   // Actual bindings follow below.
 

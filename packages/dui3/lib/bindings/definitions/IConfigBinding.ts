@@ -50,7 +50,9 @@ export type ConnectorSettings = {
   model: ModelSettings
 }
 
-export type UserSettings = {}
+export type UserSettings = {
+  darkTheme: boolean
+}
 
 export type ModelSettings = {}
 
