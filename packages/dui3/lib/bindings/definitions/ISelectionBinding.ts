@@ -17,7 +17,26 @@ export type SelectionInfo = {
 }
 
 export class MockedSelectionBinding extends BaseBridge {
+  private selectionInfo: SelectionInfo = {
+    summary: 'test',
+    selectedObjectIds: ['test_object_1']
+  }
+
   constructor() {
     super()
+  }
+
+  getSelection() {
+    return this.selectionInfo
+  }
+
+  setSelection(selection: string[]) {
+    const selectionInfo = {
+      summary: `${selection.length} object(s) selected.`,
+      selectedObjectIds: selection
+    }
+
+    // trigger fake event
+    this.emit('setSelection', JSON.stringify(selectionInfo))
   }
 }

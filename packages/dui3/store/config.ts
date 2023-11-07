@@ -1,4 +1,4 @@
-import { Config } from 'lib/bindings/definitions/IConfigBinding'
+import { ConnectorConfig, GlobalConfig } from 'lib/bindings/definitions/IConfigBinding'
 import { useHostAppStore } from '~~/store/hostApp'
 
 export const useConfigStore = defineStore('configStore', () => {
@@ -7,32 +7,46 @@ export const useConfigStore = defineStore('configStore', () => {
 
   const hasConfigBindings = ref(!!$configBinding)
 
-  const config = ref<Config>({
-    darkTheme: false,
-    onboardingCompleted: false,
-    hostApp: hostAppStore.hostAppName as string
+  const globalConfig = ref<GlobalConfig>({
+    onboardingCompleted: false
+  })
+
+  const connectorConfig = ref<ConnectorConfig>({
+    hostApp: hostAppStore.hostAppName as string,
+    darkTheme: false
   })
 
   watch(
-    config,
+    connectorConfig,
     async (newValue) => {
       if (!newValue || !$configBinding) return
-      await $configBinding.updateConfig(newValue)
+      await $configBinding.updateConnectorConfig(newValue)
+    },
+    { deep: true }
+  )
+  watch(
+    globalConfig,
+    async (newValue) => {
+      if (!newValue || !$configBinding) return
+      await $configBinding.updateGlobalConfig(newValue)
     },
     { deep: true }
   )
 
   const isDarkTheme = computed(() => {
-    return config.value?.darkTheme
+    return connectorConfig.value?.darkTheme
   })
 
   const toggleTheme = () => {
-    config.value.darkTheme = !config.value.darkTheme
+    connectorConfig.value.darkTheme = !connectorConfig.value.darkTheme
   }
 
   const init = async () => {
     if (!$configBinding) return
-    config.value = await $configBinding.getConfig()
+    const uiConfig = await $configBinding.getConfig()
+    globalConfig.value = uiConfig.global
+    connectorConfig.value =
+      uiConfig.connectors[hostAppStore.hostAppName?.toLowerCase() as string]
   }
   void init()
 

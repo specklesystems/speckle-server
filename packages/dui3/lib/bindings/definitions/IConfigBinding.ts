@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/require-await */
 
-import { IRawBridge } from '~/lib/bridge/definitions'
-import { GenericBridge } from '~/lib/bridge/generic-v2'
+import { BaseBridge } from '~/lib/bridge/base'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 
 /**
@@ -13,21 +12,22 @@ export const IConfigBindingKey = 'configBinding'
  * A test binding interface to ensure compatbility. Ideally all host environments would implement and register it.
  */
 export interface IConfigBinding extends IBinding<IConfigBindingEvents> {
-  getConfig: () => Promise<Config>
-  updateConfig: (config: Config) => Promise<void>
+  getConfig: () => Promise<UiConfig>
+  updateGlobalConfig: (config: GlobalConfig) => Promise<void>
+  updateConnectorConfig: (config: ConnectorConfig) => Promise<void>
 }
 
 export interface IConfigBindingEvents {
   void: () => void
 }
 
-export type Config = {
+export type UiConfigOld = {
   hostApp: string
   darkTheme: boolean
   onboardingCompleted: boolean
 }
 
-export type ConfigV2 = {
+export type UiConfig = {
   global: GlobalConfig
   connectors: ConnectorConfigDictionary
 }
@@ -42,53 +42,42 @@ export type GlobalConfig = {
 
 export type ConnectorConfig = {
   hostApp: string
-  settings: ConnectorSettings
-}
-
-export type ConnectorSettings = {
-  user: UserSettings
-  model: ModelSettings
-}
-
-export type UserSettings = {
   darkTheme: boolean
 }
 
-export type ModelSettings = {}
-
-export class MockedConfigBinding extends GenericBridge {
+export class MockedConfigBinding extends BaseBridge {
   constructor() {
-    super(globalThis as unknown as IRawBridge)
+    super()
   }
 
-  getConfig() {
+  getConfigOld() {
     return {
       darkTheme: false,
       onboardingCompleted: false
     }
   }
 
-  getConfigV2() {
+  getConfig() {
     return {
       global: {
         onboardingCompleted: false
       },
       connectors: {
-        hostAppName: {
-          hostApp: '',
-          settings: {
-            user: {
-              darkTheme: false
-            },
-            model: {}
-          }
+        mock: {
+          hostApp: 'Mock',
+          darkTheme: false
         }
       }
     }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  updateConfig(config: Config) {
+  updateGlobalConfig(config: GlobalConfig) {
+    // do nothing
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  updateConnectorConfig(config: ConnectorConfig) {
     // do nothing
   }
 }

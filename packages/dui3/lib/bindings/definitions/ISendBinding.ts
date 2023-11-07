@@ -35,6 +35,14 @@ export class MockedSendBinding extends BaseBridge {
     super()
   }
 
+  send(modelId: string) {
+    console.log(`Model sent with ${modelId} id.`)
+  }
+
+  cancelSend(modelId: string) {
+    console.log(`Model send cancelled with ${modelId} id.`)
+  }
+
   getSendFilters() {
     return []
   }

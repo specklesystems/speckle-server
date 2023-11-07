@@ -59,12 +59,16 @@ export class MockedBaseBinding extends BaseBridge {
     super()
   }
 
+  public async addModel() {}
+
+  public async removeModel() {}
+
   public async getConnectorVersion() {
     return '0.0.0'
   }
 
   public async getSourceApplicationName() {
-    return 'Mocks'
+    return 'Mock'
   }
 
   public async getSourceApplicationVersion() {
@@ -80,28 +84,35 @@ export class MockedBaseBinding extends BaseBridge {
   }
 
   public async getDocumentState() {
+    const config = useRuntimeConfig()
     return {
       models: [
-        // {
-        //   typeDiscriminator: 'sender',
-        //   id: 'sender_test',
-        //   modelId: 'test',
-        //   projectId: 'string',
-        //   accountId: 'string',
-        //   expired: false,
-        //   lastLocalUpdate: '',
-        //   notifications: []
-        // },
-        // {
-        //   typeDiscriminator: 'receiver',
-        //   id: 'receiver_test',
-        //   modelId: 'test',
-        //   projectId: 'string',
-        //   accountId: 'string',
-        //   expired: false,
-        //   lastLocalUpdate: '',
-        //   notifications: []
-        // }
+        {
+          typeDiscriminator: 'SenderModelCard',
+          id: 'sender_test',
+          projectId: config.public.speckleSampleProjectId,
+          modelId: config.public.speckleSampleModelId,
+          accountId: config.public.speckleAccountId,
+          expired: false,
+          lastLocalUpdate: '',
+          notifications: [],
+          sendFilter: {
+            name: 'Selection',
+            selectedObjectIds: ['test'],
+            summary: 'Test',
+            typeDiscriminator: 'RhinoSelectionFilter'
+          }
+        },
+        {
+          typeDiscriminator: 'ReceiverModelCard',
+          id: 'receiver_test',
+          projectId: config.public.speckleSampleProjectId,
+          modelId: config.public.speckleSampleModelId,
+          accountId: config.public.speckleAccountId,
+          expired: false,
+          lastLocalUpdate: '',
+          notifications: []
+        }
       ]
     }
   }

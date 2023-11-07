@@ -69,14 +69,9 @@
                 regarding switching themes. 
               -->
               <div v-if="hasConfigBindings">
-                <FormButton size="xs" text @click.stop="openFilterDialog = true">
-                  {{ 'Settings' }}
+                <FormButton size="xs" text @click.stop="toggleTheme()">
+                  {{ isDarkTheme ? 'Switch to light theme' : 'Switch to dark theme' }}
                 </FormButton>
-              </div>
-              <div v-if="hasConfigBindings">
-                <LayoutDialog v-model:open="openFilterDialog">
-                  <ConfigDialog @close="openFilterDialog = false" />
-                </LayoutDialog>
               </div>
             </div>
           </MenuItem>
@@ -90,8 +85,6 @@ import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { useAccountStore, DUIAccount } from '~/store/accounts'
 import { useConfigStore } from '~/store/config'
-
-const openFilterDialog = ref(false)
 
 const accountStore = useAccountStore()
 const { accounts, defaultAccount, isLoading } = storeToRefs(accountStore)
