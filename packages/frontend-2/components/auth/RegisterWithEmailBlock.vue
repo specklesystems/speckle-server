@@ -40,7 +40,9 @@
     </div>
     <AuthPasswordChecks
       :password="password"
-      :class="`mt-2 overflow-hidden ${pwdFocused ? 'h-8' : 'h-0'} transition-[height]`"
+      :class="`mt-2 overflow-hidden ${
+        pwdFocused ? 'h-12 sm:h-8' : 'h-0'
+      } transition-[height]`"
     />
     <div
       class="mt-3 text-xs flex items-center justify-center text-foreground-2 space-x-2"
@@ -61,7 +63,7 @@
       class="mt-2 text-xs text-foreground-2 text-center linkify-tos"
       v-html="serverInfo.termsOfService"
     ></div>
-    <div class="mt-8 text-center">
+    <div class="mt-2 sm:mt-8 text-center text-xs sm:text-base">
       <span class="mr-2">Already have an account?</span>
       <CommonTextLink :to="finalLoginRoute" :icon-right="ArrowRightIcon">
         Log in
