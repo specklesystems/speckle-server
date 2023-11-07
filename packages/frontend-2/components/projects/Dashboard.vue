@@ -259,6 +259,9 @@ watch(search, (newVal) => {
 
 watch(areQueriesLoading, (newVal) => (showLoadingBar.value = newVal))
 
+const twoYearsFromNow = new Date()
+twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2)
+
 const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
   `hasCompletedChecklistV1`,
   { default: () => false }
@@ -271,7 +274,10 @@ const hasDismissedChecklistTime = useSynchronizedCookie<string | undefined>(
 
 const hasDismissedChecklistForever = useSynchronizedCookie<boolean | undefined>(
   `hasDismissedChecklistForever`,
-  { default: () => false }
+  {
+    default: () => false,
+    expires: twoYearsFromNow
+  }
 )
 
 const hasDismissedChecklistTimeAgo = computed(() => {
