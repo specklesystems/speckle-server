@@ -16,6 +16,7 @@
         label="Target model"
         :rules="[isRequired]"
         :disabled="disabled"
+        mount-menu-on-body
         :excluded-ids="modelId ? [modelId] : undefined"
       />
       <div class="flex justify-end">

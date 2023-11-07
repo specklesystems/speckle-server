@@ -17,94 +17,94 @@
         leave-to-class="transform opacity-0 scale-95"
       >
         <MenuItems
-          class="absolute right-0 md:right-4 top-14 md:top-16 w-full md:w-64 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
+          class="absolute right-0 md:right-4 top-14 md:top-16 w-screen md:w-64 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
           <MenuItem v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center justify-between px-2 py-3 text-sm text-primary cursor-pointer transition border-b border-primary'
+                'flex items-center justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-primary cursor-pointer transition border-b border-primary'
               ]"
               @click="goToConnectors()"
             >
               Connector Downloads
-              <CloudArrowDownIcon class="w-5 h-5 mr-2 text-primary" />
+              <CloudArrowDownIcon class="w-5 h-5 sm:mr-2 text-primary" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="activeUser" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
+                'flex items-center justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
               @click="() => (showProfileEditDialog = true)"
             >
               Edit Profile
-              <UserAvatar :user="activeUser" size="sm" class="mr-1" />
+              <UserAvatar :user="activeUser" size="sm" class="-mr-1 sm:mr-1.5" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="isAdmin" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
+                'flex items-center  justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
               @click="goToServerManagement()"
             >
               Server Management
-              <Cog6ToothIcon class="w-5 h-5 mr-2" />
+              <Cog6ToothIcon class="w-5 h-5 sm:mr-2" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
+                'flex items-center  justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
               @click="onThemeClick"
             >
               {{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}
-              <Icon class="w-5 h-5 mr-2" />
+              <Icon class="w-5 h-5 sm:mr-2" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="activeUser && !isGuest" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center justify-between px-2 py-3 text-sm text-foreground cursor-pointer transition'
+                'flex items-center justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-foreground cursor-pointer transition'
               ]"
               @click="toggleInviteDialog"
             >
               Invite to Speckle
-              <EnvelopeIcon class="w-5 h-5 mr-2" />
+              <EnvelopeIcon class="w-5 h-5 sm:mr-2" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="activeUser" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-2 py-3 text-sm text-danger cursor-pointer transition'
+                'flex items-center  justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-danger cursor-pointer transition'
               ]"
               @click="logout"
             >
               Sign Out
-              <ArrowLeftOnRectangleIcon class="w-5 h-5 mr-2" />
+              <ArrowLeftOnRectangleIcon class="w-5 h-5 sm:mr-2" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="!activeUser" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-2 py-3 text-sm text-primary cursor-pointer transition'
+                'flex items-center  justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-primary cursor-pointer transition'
               ]"
               :to="loginUrl"
             >
               Sign In
-              <ArrowRightOnRectangleIcon class="w-5 h-5 mr-2" />
+              <ArrowRightOnRectangleIcon class="w-5 h-5 sm:mr-2" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="version">
-            <div class="px-2 pb-1 text-tiny text-foreground-2">
+            <div class="px-2 pl-4 pb-1 text-tiny text-foreground-2">
               Version {{ version }}
             </div>
           </MenuItem>
@@ -124,9 +124,9 @@ import {
   SunIcon,
   MoonIcon,
   EnvelopeIcon,
-  CloudArrowDownIcon,
   Cog6ToothIcon
-} from '@heroicons/vue/24/solid'
+} from '@heroicons/vue/24/outline'
+import { CloudArrowDownIcon } from '@heroicons/vue/24/solid'
 import { useQuery } from '@vue/apollo-composable'
 import { Optional, Roles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'

@@ -10,7 +10,7 @@
     </button>
     <div
       v-if="showNewModelCard"
-      class="w-full py-2 h-14 px-3 flex items-center rounded-md transition bg-foundation-focus dark:bg-primary-muted"
+      class="w-full py-2 px-3 flex items-center rounded-md transition bg-foundation-focus dark:bg-primary-muted"
     >
       <form
         class="flex items-center justify-between w-full space-x-2"
@@ -27,9 +27,14 @@
             :disabled="anyMutationsLoading"
           />
         </div>
-        <div class="flex gap-2">
-          <FormButton submit :disabled="anyMutationsLoading">Save</FormButton>
-          <FormButton outlined color="danger" @click="showNewModelCard = false">
+        <div class="flex flex-wrap gap-1 sm:gap-2">
+          <FormButton submit :disabled="anyMutationsLoading" size="sm">Save</FormButton>
+          <FormButton
+            outlined
+            color="danger"
+            size="sm"
+            @click="showNewModelCard = false"
+          >
             Cancel
           </FormButton>
         </div>

@@ -2,9 +2,8 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    title="Create Token"
     :buttons="dialogButtons"
-    max-height
+    title="Create Token"
   >
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <div class="flex flex-col gap-3">
@@ -39,11 +38,11 @@ const props = defineProps<{
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const dialogButtons = [
+const dialogButtons = computed(() => [
   {
     text: 'Close',
     props: { color: 'primary', fullWidth: true },
     onClick: () => (isOpen.value = false)
   }
-]
+])
 </script>

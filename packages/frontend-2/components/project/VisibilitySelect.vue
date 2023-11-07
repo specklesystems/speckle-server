@@ -14,7 +14,7 @@
         <div class="font-bold">
           {{ isArray(value) ? value[0].title : value.title }}
         </div>
-        <span class="text-foreground-2">
+        <span class="text-foreground-2 text-xs sm:text-sm">
           {{ isArray(value) ? value[0].description : value.description }}
         </span>
       </div>
@@ -22,7 +22,9 @@
     <template #option="{ item }">
       <div class="flex flex-col">
         <div class="label">{{ item.title }}</div>
-        <div class="label label--light text-foreground-2">{{ item.description }}</div>
+        <div class="label label--light text-foreground-2 text-xs sm:text-sm">
+          {{ item.description }}
+        </div>
       </div>
     </template>
   </FormSelectBase>

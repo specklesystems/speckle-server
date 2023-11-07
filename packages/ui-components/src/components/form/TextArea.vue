@@ -13,7 +13,7 @@
           coreClasses,
           iconClasses,
           textareaClasses || '',
-          'min-h-[3rem] simple-scrollbar'
+          'min-h-[3rem] simple-scrollbar text-sm'
         ]"
         :placeholder="placeholder"
         :disabled="disabled"
