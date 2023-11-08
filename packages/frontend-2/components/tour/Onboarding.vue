@@ -2,10 +2,7 @@
   <div
     class="relative max-w-4xl w-screen h-screen flex items-center justify-center z-50"
   >
-    <TourSegmentation
-      v-if="tourState.showSegmentation && step === 0"
-      @next="step++, (tourState.showSegmentation = false)"
-    />
+    <TourSegmentation v-if="tourState.showSegmentation && step === 0" @next="step++" />
     <TourSlideshow v-if="step === 1" @next="step++" />
     <!-- <OnboardingDialogManager v-if="step === 2" allow-escape @cancel="step++" /> -->
     <div
