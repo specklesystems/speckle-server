@@ -1,7 +1,11 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div>
-    <div :class="`${background ? 'px-2 bg-foundation rounded-md shadow-xl' : ''}`">
+    <div
+      :class="`${
+        background ? 'mx-2 sm:mx-auto px-2 bg-foundation rounded-md shadow-xl' : ''
+      } ${allCompleted ? 'max-w-lg' : ''}`"
+    >
       <div
         v-if="!allCompleted"
         :class="`grid gap-2 ${showIntro ? 'px-4 grid-cols-5' : 'grid-cols-4'}`"
@@ -51,7 +55,7 @@
               "
             >
               <div
-                :class="`text-xl font-bold flex items-center justify-between ${
+                :class="`text-lg sm:text-xl font-bold flex items-center justify-between ${
                   step.active ? 'text-foreground-on-primary' : 'text-foreground-2'
                 }`"
               >
@@ -64,12 +68,19 @@
                 <CheckCircleIcon v-else class="w-4 h-4 mt-1 text-primary" />
               </div>
               <div
-                :class="`${step.active ? 'font-bold text-forergound-on-primary' : ''}`"
+                :class="`${
+                  step.active
+                    ? 'font-bold text-sm sm:text-base text-forergound-on-primary'
+                    : ''
+                }`"
               >
                 {{ step.title }}
               </div>
               <div class="text-xs mt-[2px]">{{ step.blurb }}</div>
-              <div class="h-10 flex items-center justify-between">
+              <div
+                class="flex items-center justify-between"
+                :class="step.active ? 'h-10' : 'h-4'"
+              >
                 <div
                   v-if="idx === 0 || steps[idx - 1].completed"
                   class="flex justify-between items-center py-2 w-full"
@@ -143,13 +154,13 @@
       </div>
       <div
         v-else
-        class="flex flex-col sm:flex-row items-center justify-center flex-1 space-x-2 py-4"
+        class="flex flex-col items-center justify-center flex-1 space-x-2 py-4"
       >
         <div class="w-6 h-6">
           <!-- <CheckCircleIcon class="absolute w-6 h-6 text-primary" /> -->
           <CheckCircleIcon class="w-6 h-6 text-primary animate-ping animate-pulse" />
         </div>
-        <div class="text-sm max-w-lg grow">
+        <div class="text-sm max-w-lg grow text-center sm:text-left">
           <b>All done!</b>
           PS: the
           <FormButton to="https://speckle.community" target="_blank" size="sm" link>
@@ -157,7 +168,7 @@
           </FormButton>
           is there to help!
         </div>
-        <div>
+        <div class="mt-2">
           <FormButton text size="sm" @click="closeChecklist()">Close</FormButton>
         </div>
       </div>

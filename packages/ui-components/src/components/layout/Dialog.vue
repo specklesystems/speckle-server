@@ -38,7 +38,7 @@
               <div :class="scrolledFromTop && 'relative z-10 shadow-lg'">
                 <div
                   v-if="hasTitle"
-                  class="flex items-center justify-start rounded-t-lg shrink-0 h-16 px-4 sm:px-8 truncate text-xl sm:text-2xl font-bold"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[4rem] py-2 px-4 sm:px-8 truncate text-xl sm:text-2xl font-bold"
                 >
                   <div class="w-full truncate pr-12">
                     {{ title }}
