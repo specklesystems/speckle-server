@@ -155,6 +155,8 @@ async function cloneStreamObjectsGrug(
     )
     .transacting(state.trx)
   await query
+
+  // TODO: closure
 }
 
 async function cloneCommits(state: CloneStreamInitialState) {
@@ -261,27 +263,20 @@ async function cloneStreamCore(state: CloneStreamInitialState) {
   const newStream = await cloneStreamEntity(state)
   const { id: newStreamId } = newStream
 
-  console.time('core clone')
   // Clone objects
   await cloneStreamObjectsGrug(state, newStreamId)
-  console.timeLog('core clone', 'objects')
 
   // Clone commits
   const commitIdMap = await cloneCommits(state)
-  console.timeLog('core clone', 'commits')
 
   // Create stream_commits references
   await createStreamCommitReferences(state, commitIdMap, newStreamId)
-  console.timeLog('core clone', 'stream commit refs')
 
   // Clone branches
   const branchIdMap = await cloneBranches(state, newStreamId)
-  console.timeLog('core clone', 'branches')
 
   // Create branch_commits
   await createBranchCommitReferences(state, commitIdMap, branchIdMap)
-  console.timeLog('core clone', 'branch commit refs')
-  console.timeEnd('core clone')
   return { newStreamId, commitIdMap, newStream }
 }
 
@@ -418,10 +413,8 @@ export async function cloneStream(userId: string, sourceStreamId: string) {
     // Clone stream/commits/branches/objects
     const coreCloneResult = await cloneStreamCore(state)
     const { newStream } = coreCloneResult
-    console.timeLog('clone', 'end core clone')
     // Clone comments
     await cloneStreamComments(state, coreCloneResult)
-    console.timeLog('clone', 'end comments')
     // Create activity item
     await addStreamClonedActivity(
       {
@@ -431,12 +424,9 @@ export async function cloneStream(userId: string, sourceStreamId: string) {
       },
       { trx: state.trx }
     )
-    console.timeLog('clone', 'end activity')
 
     // Commit transaction
     await state.trx.commit()
-
-    console.timeLog('clone', 'trx commit end')
 
     return coreCloneResult.newStream
   } catch (e) {
