@@ -10,8 +10,7 @@
     <LayoutDialog v-model:open="showDialog" max-width="lg">
       <template #header>
         <div class="flex flex-col">
-          <h6 class="text-base font-bold">Automation Status for {{ displayName }}</h6>
-          <div class="flex items-center space-x-2 -mt-1 max-w-full w-full">
+          <div class="flex items-center space-x-2 max-w-full w-full">
             <div class="h-10 w-10 mt-[6px]">
               <AutomationDoughnutSummary :summary="summary" />
             </div>
