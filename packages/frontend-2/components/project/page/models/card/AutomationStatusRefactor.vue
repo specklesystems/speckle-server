@@ -181,11 +181,6 @@ const statusIconAndColor = computed(() =>
 const automationRuns = computed(() => automationStatus.value.automationRuns)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const automateBaseUrl = computed(() => serverInfo.value?.automateUrl)
-const displayName = computed(() =>
-  isModel(props.modelOrVersion)
-    ? props.modelOrVersion.displayName
-    : `version #${props.modelOrVersion.id}`
-)
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const viewResultVersionsRoute = (versions: Array<{ id: string }>) => {
