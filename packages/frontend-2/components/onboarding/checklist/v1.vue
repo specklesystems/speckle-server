@@ -4,7 +4,7 @@
     <div
       :class="`${
         background ? 'mx-2 sm:mx-auto px-2 bg-foundation rounded-md shadow-xl' : ''
-      } ${allCompleted ? 'max-w-lg' : ''}`"
+      } ${allCompleted ? 'max-w-lg mx-auto' : ''}`"
     >
       <div
         v-if="!allCompleted"
