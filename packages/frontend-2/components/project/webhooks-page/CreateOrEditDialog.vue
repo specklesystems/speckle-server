@@ -43,6 +43,7 @@
           name="triggers"
           label="Events"
           placeholder="Choose Events"
+          mount-menu-on-body
           help="Choose what events will trigger this webhook."
           show-required
           :rules="[isItemSelected]"
