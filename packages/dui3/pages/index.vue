@@ -18,7 +18,7 @@
         Receive
       </FormButton>
     </div>
-    <div class="mt-2 space-y-4">
+    <div v-if="configStore.onboardingCompleted" class="mt-2 space-y-4">
       <div v-for="project in store.projectModelGroups" :key="project.projectId">
         <CommonProjectModelGroup :project="project" />
       </div>
@@ -28,5 +28,7 @@
 <script setup lang="ts">
 import { useHostAppStore } from '~~/store/hostApp'
 import { CloudArrowUpIcon, CloudArrowDownIcon } from '@heroicons/vue/20/solid'
+import { useConfigStore } from '~/store/config'
 const store = useHostAppStore()
+const configStore = useConfigStore()
 </script>

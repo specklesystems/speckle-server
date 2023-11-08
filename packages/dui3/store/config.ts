@@ -33,6 +33,11 @@ export const useConfigStore = defineStore('configStore', () => {
     { deep: true }
   )
 
+  const onboardingCompleted = computed(() => globalConfig.value.onboardingCompleted)
+
+  const completeOnboarding = () => {
+    globalConfig.value = { ...globalConfig.value, onboardingCompleted: true }
+  }
   const isDarkTheme = computed(() => {
     return connectorConfig.value?.darkTheme
   })
@@ -50,5 +55,11 @@ export const useConfigStore = defineStore('configStore', () => {
   }
   void init()
 
-  return { hasConfigBindings, isDarkTheme, toggleTheme }
+  return {
+    hasConfigBindings,
+    isDarkTheme,
+    toggleTheme,
+    onboardingCompleted,
+    completeOnboarding
+  }
 })

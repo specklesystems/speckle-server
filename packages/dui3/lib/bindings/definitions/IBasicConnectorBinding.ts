@@ -55,23 +55,66 @@ export class MockedBaseBinding extends BaseBridge {
     super()
   }
 
-  public async addModel() {}
+  private documentModelStore: IModelCard[] = [
+    {
+      typeDiscriminator: 'SenderModelCard',
+      id: 'sender_test',
+      projectId: useRuntimeConfig().public.speckleSampleProjectId,
+      modelId: useRuntimeConfig().public.speckleSampleModelId,
+      accountId: useRuntimeConfig().public.speckleAccountId,
+      expired: false,
+      lastLocalUpdate: '',
+      notifications: [],
+      sendFilter: {
+        name: 'Selection',
+        selectedObjectIds: ['test'],
+        summary: 'Test',
+        typeDiscriminator: 'RhinoSelectionFilter'
+      }
+    } as IModelCard,
+    {
+      typeDiscriminator: 'ReceiverModelCard',
+      id: 'receiver_test',
+      projectId: useRuntimeConfig().public.speckleSampleProjectId,
+      modelId: useRuntimeConfig().public.speckleSampleModelId,
+      accountId: useRuntimeConfig().public.speckleAccountId,
+      expired: false,
+      lastLocalUpdate: '',
+      notifications: []
+    }
+  ]
 
-  public async removeModel() {}
+  public addModel(model: IModelCard) {
+    this.documentModelStore = this.documentModelStore.concat([model])
+  }
 
-  public async getConnectorVersion() {
+  public removeModel(model: IModelCard) {
+    const modelIndex = this.documentModelStore.findIndex((m) => m.id === model.id)
+    if (modelIndex > -1) {
+      this.documentModelStore = this.documentModelStore.splice(modelIndex, 1)
+    }
+  }
+
+  public updateModel(model: IModelCard) {
+    const modelIndex = this.documentModelStore.findIndex(
+      (m) => m.modelId === model.modelId
+    )
+    this.documentModelStore[modelIndex] = model
+  }
+
+  public getConnectorVersion() {
     return '0.0.0'
   }
 
-  public async getSourceApplicationName() {
+  public getSourceApplicationName() {
     return 'Mock'
   }
 
-  public async getSourceApplicationVersion() {
+  public getSourceApplicationVersion() {
     return Math.random().toString()
   }
 
-  public async getDocumentInfo() {
+  public getDocumentInfo() {
     return {
       name: 'Mocked File',
       location: 'www',
@@ -79,41 +122,13 @@ export class MockedBaseBinding extends BaseBridge {
     }
   }
 
-  public async getDocumentState() {
-    const config = useRuntimeConfig()
+  public getDocumentState() {
     return {
-      models: [
-        {
-          typeDiscriminator: 'SenderModelCard',
-          id: 'sender_test',
-          projectId: config.public.speckleSampleProjectId,
-          modelId: config.public.speckleSampleModelId,
-          accountId: config.public.speckleAccountId,
-          expired: false,
-          lastLocalUpdate: '',
-          notifications: [],
-          sendFilter: {
-            name: 'Selection',
-            selectedObjectIds: ['test'],
-            summary: 'Test',
-            typeDiscriminator: 'RhinoSelectionFilter'
-          }
-        },
-        {
-          typeDiscriminator: 'ReceiverModelCard',
-          id: 'receiver_test',
-          projectId: config.public.speckleSampleProjectId,
-          modelId: config.public.speckleSampleModelId,
-          accountId: config.public.speckleAccountId,
-          expired: false,
-          lastLocalUpdate: '',
-          notifications: []
-        }
-      ]
+      models: this.documentModelStore
     }
   }
 
-  public async showDevTools() {
+  public showDevTools() {
     console.log('Mocked bindings cannot do this')
   }
 }

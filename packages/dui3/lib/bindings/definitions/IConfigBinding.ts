@@ -50,6 +50,18 @@ export class MockedConfigBinding extends BaseBridge {
     super()
   }
 
+  private uiConfig: UiConfig = {
+    global: {
+      onboardingCompleted: false
+    },
+    connectors: {
+      mock: {
+        hostApp: 'Mock',
+        darkTheme: false
+      }
+    }
+  }
+
   getConfigOld() {
     return {
       darkTheme: false,
@@ -58,26 +70,16 @@ export class MockedConfigBinding extends BaseBridge {
   }
 
   getConfig() {
-    return {
-      global: {
-        onboardingCompleted: false
-      },
-      connectors: {
-        mock: {
-          hostApp: 'Mock',
-          darkTheme: false
-        }
-      }
-    }
+    return this.uiConfig
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  updateGlobalConfig(config: GlobalConfig) {
-    // do nothing
+  updateGlobalConfig(globalConfig: GlobalConfig) {
+    this.uiConfig.global = globalConfig
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  updateConnectorConfig(config: ConnectorConfig) {
-    // do nothing
+  updateConnectorConfig(connectorConfig: ConnectorConfig) {
+    this.uiConfig.connectors[connectorConfig.hostApp.toLowerCase()] = connectorConfig
   }
 }
