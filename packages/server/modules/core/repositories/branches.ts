@@ -573,6 +573,12 @@ export async function updateBranch(branchId: string, branch: Partial<BranchRecor
 }
 
 export async function deleteBranchById(branchId: string) {
+  // this needs to happen before deleting the branch, otherwise the
+  // branch_commits table doesn't have the needed rows
+  await Commits.knex()
+    .join('branch_commits', 'commits.id', 'branch_commits.commitId')
+    .where('branch_commits.branchId', branchId)
+    .del()
   return await Branches.knex().where(Branches.col.id, branchId).del()
 }
 
