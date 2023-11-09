@@ -154,7 +154,7 @@
       </div>
       <div
         v-else
-        class="flex flex-col items-center justify-center flex-1 space-x-2 py-4"
+        class="flex flex-col sm:flex-row items-center justify-center flex-1 space-x-2 py-4"
       >
         <div class="w-6 h-6">
           <!-- <CheckCircleIcon class="absolute w-6 h-6 text-primary" /> -->
@@ -168,7 +168,7 @@
           </FormButton>
           is there to help!
         </div>
-        <div class="mt-2">
+        <div class="mt-2 sm:mt-0">
           <FormButton text size="sm" @click="closeChecklist()">Close</FormButton>
         </div>
       </div>
