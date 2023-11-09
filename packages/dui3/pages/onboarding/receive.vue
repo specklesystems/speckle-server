@@ -3,8 +3,13 @@
     class="flex flex-col items-center justify-center h-[calc(100vh-16rem)] px-4 space-y-2"
   >
     <Portal to="navigation">
-      <FormButton to="/" size="sm" :icon-left="ArrowLeftIcon" class="ml-2">
-        Back home
+      <FormButton
+        to="/onboardingIndex"
+        size="sm"
+        :icon-left="ArrowLeftIcon"
+        class="ml-2"
+      >
+        Onboarding
       </FormButton>
     </Portal>
     <div class="h3">{{ `Let's receive our first model to ${hostAppName}.` }}</div>

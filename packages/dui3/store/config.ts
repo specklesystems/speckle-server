@@ -4,6 +4,7 @@ import { useHostAppStore } from '~~/store/hostApp'
 export const useConfigStore = defineStore('configStore', () => {
   const { $configBinding } = useNuxtApp()
   const hostAppStore = useHostAppStore()
+  const router = useRouter()
 
   const hasConfigBindings = ref(!!$configBinding)
 
@@ -27,6 +28,8 @@ export const useConfigStore = defineStore('configStore', () => {
   watch(
     globalConfig,
     async (newValue) => {
+      console.log(newValue, 'globalConfig updated')
+
       if (!newValue || !$configBinding) return
       await $configBinding.updateGlobalConfig(newValue)
     },
@@ -37,6 +40,7 @@ export const useConfigStore = defineStore('configStore', () => {
 
   const completeOnboarding = () => {
     globalConfig.value = { ...globalConfig.value, onboardingCompleted: true }
+    router.push('/')
   }
   const isDarkTheme = computed(() => {
     return connectorConfig.value?.darkTheme
