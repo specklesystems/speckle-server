@@ -7,10 +7,7 @@ export default defineNuxtConfig({
     strict: true
   },
   modules: ['@nuxtjs/tailwindcss', '@speckle/ui-components-nuxt', '@pinia/nuxt'],
-  alias: {
-    // Rewriting all lodash calls to lodash-es for proper tree-shaking & chunk splitting
-    lodash: 'lodash-es'
-  },
+
   pinia: {
     autoImports: ['defineStore', 'storeToRefs']
   },
