@@ -71,6 +71,8 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         return this.RevitInstanceToGeometryData(node)
       case SpeckleType.Text:
         return this.TextToGeometryData(node)
+      case SpeckleType.Transform:
+        return this.TransformToGeometryData(node)
       case SpeckleType.Unknown:
         // console.warn(`Skipping geometry conversion for ${type}`)
         return null
@@ -133,18 +135,14 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     } as GeometryData
   }
 
-  /** BLOCK INSTANCE */
-  private BlockInstanceToGeometryData(node: NodeData): GeometryData {
+  private TransformToGeometryData(node: NodeData): GeometryData {
     const conversionFactor = getConversionFactor(node.raw.units)
     /**
      * Speckle matrices are row major. Three's 'fromArray' function assumes
      * the matrix is in column major. That's why we transpose it here.
      */
-    const matrixData: number[] = Array.isArray(node.raw.transform)
-      ? node.raw.transform
-      : node.raw.transform.value
-      ? node.raw.transform.value
-      : node.raw.transform.matrix
+    const matrixData: number[] = node.raw.matrix
+
     const matrix = new Matrix4().fromArray(matrixData).transpose()
     /** We need to scale the transform, but not propagate the scale towards the block's children
      *  They do the scaling on their own. That's why we multiply with the inverse scale at the end
@@ -168,38 +166,16 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     } as GeometryData
   }
 
-  private RevitInstanceToGeometryData(node: NodeData): GeometryData {
-    const conversionFactor = getConversionFactor(node.raw.units)
-    /**
-     * Speckle matrices are row major. Three's 'fromArray' function assumes
-     * the matrix is in column major. That's why we transpose it here.
-     */
-    const matrixData: number[] = Array.isArray(node.raw.transform)
-      ? node.raw.transform
-      : node.raw.transform.value
-      ? node.raw.transform.value
-      : node.raw.transform.matrix
-    const matrix = new Matrix4().fromArray(matrixData).transpose()
-    /** We need to scale the transform, but not propagate the scale towards the block's children
-     *  They do the scaling on their own. That's why we multiply with the inverse scale at the end
-     *  Not 100% sure on this if the original block matrix containts it's own scale + rotation
-     */
-    const transform: Matrix4 = new Matrix4()
-      .makeScale(conversionFactor, conversionFactor, conversionFactor)
-      .multiply(matrix)
-      .multiply(
-        new Matrix4().makeScale(
-          1 / conversionFactor,
-          1 / conversionFactor,
-          1 / conversionFactor
-        )
-      )
+  /** BLOCK INSTANCE */
+  private BlockInstanceToGeometryData(node: NodeData): GeometryData {
+    node
+    return null
+  }
 
-    return {
-      attributes: null,
-      bakeTransform: null,
-      transform
-    } as GeometryData
+  /** REVIT INSTANCE */
+  private RevitInstanceToGeometryData(node: NodeData): GeometryData {
+    node
+    return null
   }
 
   /**

@@ -106,20 +106,16 @@ export class RenderTree {
   }
 
   public computeTransform(node: TreeNode): Matrix4 {
+    /** We don't stack transforms nodes with each other */
+    if (node.model.renderView.speckleType === SpeckleType.Transform)
+      return node.model.renderView.renderData.transform
+
     const transform = new Matrix4()
     const ancestors = this.tree.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.renderView) {
         const renderNode: NodeRenderData = ancestors[k].model.renderView.renderData
-        if (
-          renderNode.speckleType === SpeckleType.RevitInstance ||
-          renderNode.speckleType === SpeckleType.BlockInstance
-        ) {
-          /** Revit Instances *hosted* on other instances do not stack the host's transform */
-          if (k > 0) {
-            const curentAncestorId = ancestors[k].model.raw.id
-            if (ancestors[k - 1].model.raw.host === curentAncestorId) continue
-          }
+        if (renderNode.speckleType === SpeckleType.Transform) {
           transform.premultiply(renderNode.geometry.transform)
         }
       }

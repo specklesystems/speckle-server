@@ -18,6 +18,7 @@ export enum SpeckleType {
   Ellipse = 'Ellipse',
   RevitInstance = 'RevitInstance',
   Text = 'Text',
+  Transform = 'Transform',
   Unknown = 'Unknown'
 }
 

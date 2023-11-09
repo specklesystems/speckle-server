@@ -4,6 +4,7 @@ import { TreeNode, WorldTree } from '../../tree/WorldTree'
 import Logger from 'js-logger'
 import { AsyncPause } from '../../World'
 import { NodeMap } from '../../tree/NodeMap'
+import { Matrix4 } from 'three'
 
 export type ConverterResultDelegate = () => Promise<void>
 export type ConverterNodeDelegate = (object, node) => Promise<void>
@@ -362,6 +363,11 @@ export default class SpeckleConverter {
     return baseId + NodeMap.COMPOUND_ID_CHAR + parentId
   }
 
+  private getEmptyTransformData(id: string) {
+    // eslint-disable-next-line camelcase
+    return { id, speckle_type: 'Transform', units: 'm', matrix: new Matrix4() }
+  }
+
   /**
    * 
     NODES
@@ -375,7 +381,7 @@ export default class SpeckleConverter {
    *  It's only looking for 'elements' and 'displayValues'
    *  I think it can be used for RevitInstances as well to replace it's current lookup, but I'm afraid to do it
    */
-  private async displayableLookup(obj, node) {
+  private async displayableLookup(obj, node, instanced) {
     if (this.directNodeConverterExists(obj)) {
       await this.convertToNode(obj, node)
     } else {
@@ -387,17 +393,60 @@ export default class SpeckleConverter {
       ]
       for (const entry of entries) {
         const value = await this.resolveReference(entry)
+        if (instanced) value.id = this.getCompoundId(value.id, this.instanceCounter++)
         const valueNode: TreeNode = this.tree.parse({
           id: this.getNodeId(value),
           raw: value,
           atomic: false,
           children: [],
-          instanced: true
+          instanced
         })
         this.tree.addNode(valueNode, node)
-        await this.displayableLookup(value, valueNode)
+        await this.displayableLookup(value, valueNode, instanced)
       }
     }
+  }
+
+  private async parseInstanceDefinitionGeometry(
+    instanceObj,
+    defGeometry,
+    instanceNode
+  ) {
+    const transformNodeId = generateUUID()
+    const transformData = instanceObj.transform
+      ? instanceObj.transform
+      : this.getEmptyTransformData(transformNodeId)
+
+    const transformNode = this.tree.parse({
+      id: transformNodeId,
+      raw: transformData,
+      atomic: false,
+      children: []
+    })
+    this.tree.addNode(transformNode, instanceNode)
+
+    defGeometry.id = this.getCompoundId(defGeometry.id, this.instanceCounter++)
+    const childNode: TreeNode = this.tree.parse({
+      id: this.getNodeId(defGeometry),
+      raw: defGeometry,
+      atomic: false,
+      children: [],
+      instanced: true
+    })
+    this.tree.addNode(childNode, transformNode)
+
+    await this.displayableLookup(defGeometry, childNode, true)
+  }
+
+  private async parseInstanceElement(instanceObj, elementObj, instanceNode) {
+    const childNode: TreeNode = this.tree.parse({
+      id: this.getNodeId(elementObj),
+      raw: elementObj,
+      atomic: false,
+      children: []
+    })
+    this.tree.addNode(childNode, instanceNode)
+    await this.displayableLookup(elementObj, childNode, false)
   }
 
   private async BlockInstanceToNode(obj, node) {
@@ -405,63 +454,84 @@ export default class SpeckleConverter {
     node.model.raw.definition = definition
     for (const def of this.getBlockDefinitionGeometry(definition)) {
       const ref = await this.resolveReference(def)
-      /** We concatenate the ids to get unique ones */
-      ref.id = this.getCompoundId(ref.id, this.instanceCounter++)
-      const childNode: TreeNode = this.tree.parse({
-        id: this.getNodeId(ref),
-        raw: ref,
-        atomic: false,
-        children: [],
-        instanced: true
-      })
-      this.tree.addNode(childNode, node)
+      await this.parseInstanceDefinitionGeometry(obj, ref, node)
+    }
 
-      await this.displayableLookup(ref, childNode)
-      const elements = this.getElementsValue(obj)
-      if (elements) {
-        for (const element of elements) {
-          const ref = await this.resolveReference(element)
-          const childNode: TreeNode = this.tree.parse({
-            id: this.getNodeId(ref),
-            raw: ref,
-            atomic: false,
-            children: []
-          })
-          childNode.model.raw.host = obj.id
-          this.tree.addNode(childNode, node)
-          await this.displayableLookup(ref, childNode)
-        }
+    const elements = this.getElementsValue(obj)
+    if (elements) {
+      for (const element of elements) {
+        const elementObj = await this.resolveReference(element)
+        this.parseInstanceElement(obj, elementObj, node)
       }
     }
+    // const ref = await this.resolveReference(def)
+    // /** We concatenate the ids to get unique ones */
+    // ref.id = this.getCompoundId(ref.id, this.instanceCounter++)
+    // const childNode: TreeNode = this.tree.parse({
+    //   id: this.getNodeId(ref),
+    //   raw: ref,
+    //   atomic: false,
+    //   children: [],
+    //   instanced: true
+    // })
+    // this.tree.addNode(childNode, node)
+
+    // await this.displayableLookup(ref, childNode)
+    // const elements = this.getElementsValue(obj)
+    // if (elements) {
+    //   for (const element of elements) {
+    //     const ref = await this.resolveReference(element)
+    //     const childNode: TreeNode = this.tree.parse({
+    //       id: this.getNodeId(ref),
+    //       raw: ref,
+    //       atomic: false,
+    //       children: []
+    //     })
+    //     childNode.model.raw.host = obj.id
+    //     this.tree.addNode(childNode, node)
+    //     await this.displayableLookup(ref, childNode)
+    //   }
+    // }
   }
 
   private async RevitInstanceToNode(obj, node) {
-    const traverseList = async (list, hostId?: string) => {
-      if (!list) return
-      for (const def of list) {
-        const ref = await this.resolveReference(def)
-        /** We concatenate the ids to get unique ones */
-        ref.id = this.getCompoundId(ref.id, this.instanceCounter++)
-        const childNode: TreeNode = this.tree.parse({
-          id: this.getNodeId(ref),
-          raw: ref,
-          atomic: false,
-          children: [],
-          instanced: true
-        })
-        if (hostId) {
-          childNode.model.raw.host = hostId
-        }
-        this.tree.addNode(childNode, node)
-        await this.convertToNode(ref, childNode)
-      }
-    }
     const definition = await this.resolveReference(obj.definition)
     node.model.raw.definition = definition
+    await this.parseInstanceDefinitionGeometry(obj, definition, node)
 
-    await traverseList(this.getElementsValue(definition))
-    await traverseList(this.getDisplayValue(definition))
-    await traverseList(this.getElementsValue(obj), obj.id)
+    const elements = this.getElementsValue(obj)
+    if (elements) {
+      for (const element of elements) {
+        const elementObj = await this.resolveReference(element)
+        this.parseInstanceElement(obj, elementObj, node)
+      }
+    }
+    // const traverseList = async (list, hostId?: string) => {
+    //   if (!list) return
+    //   for (const def of list) {
+    //     const ref = await this.resolveReference(def)
+    //     /** We concatenate the ids to get unique ones */
+    //     ref.id = this.getCompoundId(ref.id, this.instanceCounter++)
+    //     const childNode: TreeNode = this.tree.parse({
+    //       id: this.getNodeId(ref),
+    //       raw: ref,
+    //       atomic: false,
+    //       children: [],
+    //       instanced: true
+    //     })
+    //     if (hostId) {
+    //       childNode.model.raw.host = hostId
+    //     }
+    //     this.tree.addNode(childNode, node)
+    //     await this.convertToNode(ref, childNode)
+    //   }
+    // }
+    // const definition = await this.resolveReference(obj.definition)
+    // node.model.raw.definition = definition
+    // await this.parseInstanceDefinitionGeometry(obj, ref, node)
+    // await traverseList(this.getElementsValue(definition))
+    // await traverseList(this.getDisplayValue(definition))
+    // await traverseList(this.getElementsValue(obj), obj.id)
   }
 
   private async PointcloudToNode(obj, node) {
