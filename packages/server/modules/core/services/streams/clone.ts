@@ -63,6 +63,7 @@ const incrementingDateGenerator = () => {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const decrementingDateGenerator = () => {
   let date = dayjs()
   return {
@@ -113,6 +114,7 @@ async function cloneStreamEntity(state: CloneStreamInitialState) {
   return newStream
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function cloneStreamObjects(state: CloneStreamInitialState, newStreamId: string) {
   const { getNewDate } = incrementingDateGenerator()
   for await (const objectsBatch of getBatchedStreamObjects(state.targetStream.id, {
@@ -127,11 +129,40 @@ async function cloneStreamObjects(state: CloneStreamInitialState, newStreamId: s
   }
 }
 
+// For sample onboarding stream, goes from 25s to ~250ms vs `cloneStreamObjects`
+async function cloneStreamObjectsGrug(
+  state: CloneStreamInitialState,
+  newStreamId: string
+) {
+  const query = knex
+    .raw(
+      `
+        INSERT INTO objects ("id", "speckleType", "totalChildrenCount", "totalChildrenCountByDepth", "createdAt", "data", "streamId")
+        SELECT
+          id,
+          objects."speckleType",
+          objects."totalChildrenCount",
+          objects."totalChildrenCountByDepth",
+          objects."createdAt",
+          objects."data",
+          :newStreamId
+        FROM
+          objects
+        WHERE
+          "streamId" = :targetStreamId
+      `,
+      { newStreamId, targetStreamId: state.targetStream.id }
+    )
+    .transacting(state.trx)
+  await query
+
+  // TODO: closure
+}
+
 async function cloneCommits(state: CloneStreamInitialState) {
   // oldCommitId/newCommitId
   const commitIdMap = new Map<string, string>()
 
-  const { getNewDate } = decrementingDateGenerator()
   for await (const commitsBatch of getBatchedStreamCommits(state.targetStream.id, {
     trx: state.trx
   })) {
@@ -139,7 +170,6 @@ async function cloneCommits(state: CloneStreamInitialState) {
       const oldId = c.id
       c.id = generateCommitId()
       c.author = state.user.id
-      c.createdAt = getNewDate()
 
       commitIdMap.set(oldId, c.id)
     })
@@ -234,7 +264,7 @@ async function cloneStreamCore(state: CloneStreamInitialState) {
   const { id: newStreamId } = newStream
 
   // Clone objects
-  await cloneStreamObjects(state, newStreamId)
+  await cloneStreamObjectsGrug(state, newStreamId)
 
   // Clone commits
   const commitIdMap = await cloneCommits(state)
@@ -247,7 +277,6 @@ async function cloneStreamCore(state: CloneStreamInitialState) {
 
   // Create branch_commits
   await createBranchCommitReferences(state, commitIdMap, branchIdMap)
-
   return { newStreamId, commitIdMap, newStream }
 }
 
@@ -376,16 +405,16 @@ async function cloneStreamComments(
  * @returns The ID of the new stream
  */
 export async function cloneStream(userId: string, sourceStreamId: string) {
+  console.time('clone')
   const state = await prepareState(userId, sourceStreamId)
+  console.timeLog('clone', 'state prep end')
 
   try {
     // Clone stream/commits/branches/objects
     const coreCloneResult = await cloneStreamCore(state)
     const { newStream } = coreCloneResult
-
     // Clone comments
     await cloneStreamComments(state, coreCloneResult)
-
     // Create activity item
     await addStreamClonedActivity(
       {

@@ -302,14 +302,14 @@ const iconClasses = computed((): string => {
 const sizeClasses = computed((): string => {
   switch (props.size) {
     case 'sm':
-      return 'h-6'
+      return 'h-6 text-sm'
     case 'lg':
       return 'h-10'
     case 'xl':
       return 'h-14'
     case 'base':
     default:
-      return 'h-8'
+      return 'h-8 text-sm'
   }
 })
 

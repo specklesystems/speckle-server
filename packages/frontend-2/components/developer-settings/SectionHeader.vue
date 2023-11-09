@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-4">
     <div class="flex flex-col md:flex-row gap-3 md:gap-0 justify-between">
       <h1 class="text-2xl font-bold">{{ title }}</h1>
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         <FormButton
           v-for="(button, index) in buttons"
           :key="index"

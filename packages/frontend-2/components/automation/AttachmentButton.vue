@@ -1,10 +1,10 @@
 <template>
-  <div class="">
-    <FormButton v-tippy="fileInfo.name" text size="xs" @click="onDownloadClick">
-      <span class="max-w-[5rem] truncate">{{ fileInfo.name }}</span>
-      <PaperClipIcon class="w-3 h-3 text-primary" />
-    </FormButton>
-  </div>
+  <FormButton v-tippy="fileInfo.name" text @click="onDownloadClick">
+    <span :class="`${restrictWidth ? 'max-w-[5rem]' : ''} truncate`">
+      {{ fileInfo.name }}
+    </span>
+    <PaperClipIcon class="w-3 h-3 text-primary" />
+  </FormButton>
 </template>
 <script setup lang="ts">
 import { PaperClipIcon } from '@heroicons/vue/20/solid'
@@ -14,16 +14,22 @@ import { useFileDownload } from '~~/lib/core/composables/fileUpload'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { ensureError } from '@speckle/shared'
 
-const projectId = inject<string>('projectId') as string
 const { download } = useFileDownload()
 const { triggerNotification } = useGlobalToast()
 
-const props = defineProps<{
-  blobId: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    blobId: string
+    projectId: string
+    restrictWidth: boolean
+  }>(),
+  {
+    restrictWidth: true
+  }
+)
 
 const { result } = useQuery(blobInfoQuery, () => ({
-  streamId: projectId,
+  streamId: props.projectId,
   blobId: props.blobId
 }))
 
@@ -40,7 +46,7 @@ const onDownloadClick = async () => {
     await download({
       blobId: props.blobId,
       fileName: fileInfo.value.name as string,
-      projectId
+      projectId: props.projectId
     })
   } catch (e) {
     triggerNotification({

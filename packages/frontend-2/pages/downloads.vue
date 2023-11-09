@@ -40,13 +40,13 @@
         />
       </div>
     </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       <div v-for="(tag, index) in searchResults" :key="index">
         <ConnectorsCard :tag="tag" />
       </div>
     </div>
     <div v-if="searchResults.length === 0" class="w-full">
-      No connector found.d Feel free to ask for it on our
+      No connector found. Feel free to ask for it on our
       <FormButton link to="https://speckle.community/" target="_blank">
         community forum!
       </FormButton>

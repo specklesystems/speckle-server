@@ -1,14 +1,16 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md">
-    <div class="flex flex-col space-y-2">
-      <div class="h4 font-bold flex items-center space-x-2">
+    <template #header>
+      <div class="flex items-center space-x-2 leading-tight">
         <img :src="tag.feature_image" alt="featured image" class="w-12" />
-        <span>{{ tag.name }}</span>
+        <span class="truncate w-full">{{ tag.name }}</span>
       </div>
-      <div class="text-foreground-2">
+    </template>
+    <div class="flex flex-col space-y-2">
+      <div class="text-foreground text-sm mb-4">
         {{ tag.description }}
       </div>
-      <div class="flex flex-col space-y-2">
+      <div class="flex flex-col space-y-2 pb-1">
         <FormButton
           v-if="latestStableVersions.win"
           full-width
@@ -25,9 +27,9 @@
           Download Latest Stable ({{ latestStableVersions.mac.Number }}) Mac OS
         </FormButton>
       </div>
-      <div class="flex items-center py-2 space-x-2">
+      <div class="flex items-center justify-between pt-5 gap-6 border-t">
         <div class="h6 font-bold">All releases</div>
-        <div class="grow">
+        <div class="w-full max-w-[50%]">
           <FormTextInput
             v-model="searchString"
             name="search"
@@ -36,6 +38,7 @@
             search
             :show-clear="!!searchString"
             placeholder="Search for a version"
+            class="text-sm"
           />
         </div>
       </div>

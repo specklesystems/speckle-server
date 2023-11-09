@@ -2,16 +2,19 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    title="Reveal Application Secret"
     :buttons="dialogButtons"
     prevent-close-on-click-outside
-    max-height
   >
-    <div class="grid grid-cols-2 gap-x-6 gap-y-3 py-2 text-sm">
-      <div class="text-right">App Name:</div>
-      <p class="truncate">{{ props.application?.name }}</p>
-      <div class="text-right flex items-center justify-end">App Secret:</div>
-      <div class="w-40">
+    <template #header>Reveal Application Secret</template>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 py-2 text-sm">
+      <div class="text-center sm:text-right font-bold sm:font-normal">App Name:</div>
+      <p class="truncate text-center sm:text-left">{{ props.application?.name }}</p>
+      <div
+        class="text-center sm:text-right flex items-center justify-center sm:justify-end font-bold sm:font-normal"
+      >
+        App Secret:
+      </div>
+      <div class="w-44 mx-auto sm:ml-0">
         <CommonClipboardInputWithToast
           v-if="props.application?.secret"
           :value="props.application?.secret"

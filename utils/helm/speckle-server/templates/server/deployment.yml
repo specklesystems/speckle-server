@@ -285,7 +285,7 @@ spec:
           # *** Newsletter ***
           {{- if (default false (.Values.server.mailchimp).enabled) }}
           - name: MAILCHIMP_ENABLED
-            value: {{ default false (.Values.server.mailchimp).enabled }}
+            value: "true"
           - name: MAILCHIMP_API_KEY
             valueFrom:
               secretKeyRef:

@@ -1,18 +1,30 @@
 <template>
   <div>
     <p class="text-sm">
-      You can easily navigate it by
-      <b>rotating</b>
-      (left mouse button),
-      <b>zooming</b>
-      (scroll) and
-      <b>panning</b>
-      (right mouse button). Give it a try now!
+      <strong>Navigate</strong>
+      easily with hand gestures:
     </p>
-    <p v-if="hasMovedCamera" class="mt-2 text-sm font-bold flex items-center">
-      <CheckIcon class="w-4 h-4 text-success mr-2" />
-      {{ encouragements[controlEndCounts] }}
-    </p>
+    <div class="flex items-center justify-between gap-4 py-3 text-xs">
+      <div class="flex gap-1 items-center">
+        <IconHandRotate class="h-5 w-5" />
+        rotate
+      </div>
+      <div class="flex gap-1 items-center">
+        <IconHandSelect class="h-5 w-5" />
+        select
+      </div>
+      <div class="flex gap-1 items-center">
+        <IconHandZoom class="h-5 w-5" />
+        zoom
+      </div>
+    </div>
+    <div class="text-sm">
+      <div v-if="hasMovedCamera" class="font-bold flex items-center">
+        <CheckIcon class="w-4 h-4 text-success mr-2" />
+        <p>{{ encouragements[controlEndCounts] }}</p>
+      </div>
+      <p v-else>Give it a try now!</p>
+    </div>
   </div>
 </template>
 <script setup lang="ts">

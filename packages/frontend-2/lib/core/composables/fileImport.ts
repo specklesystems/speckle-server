@@ -68,11 +68,13 @@ export function useFileImport(params: {
         }
       )
       upload.value.result = res
-
+      // TODO: add file extension
+      // const extension = res.fileName?.split('.').reverse()[0]
       mp.track('Upload Action', {
         type: 'action',
         name: 'create',
         source: unref(modelName) ? 'model card' : 'empty card'
+        // extension
       })
 
       onFileUploadedCb?.(upload.value)
