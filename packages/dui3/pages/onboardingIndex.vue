@@ -1,6 +1,9 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div class="p-2">
+    <div v-if="!configStore.allOnboardingCompleted" class="z-50">
+      <OnboardingV1></OnboardingV1>
+    </div>
     <div
       class="pb-5 flex flex-col border-dashed border-2 rounded-md border-blue-500/10 items-center justify-center h-[calc(100vh-5.5rem)]"
     >
@@ -38,8 +41,8 @@
 </template>
 <script setup lang="ts">
 import { CloudArrowDownIcon } from '@heroicons/vue/20/solid'
-// import { useConfigStore } from '~/store/config'
-// const configStore = useConfigStore()
+import { useConfigStore } from '~/store/config'
+const configStore = useConfigStore()
 
 const sendHovered = ref(false)
 const receiveHovered = ref(false)

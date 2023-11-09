@@ -43,6 +43,18 @@ export type GlobalConfig = {
 export type ConnectorConfig = {
   hostApp: string
   darkTheme: boolean
+  onboarding: ConnectorOnboardingDictionary
+}
+
+export type ConnectorOnboardingDictionary = {
+  [id: string]: ConnectorOnboarding
+}
+
+export type ConnectorOnboarding = {
+  title: string
+  blurb: string
+  completed: boolean
+  icon: object
 }
 
 export class MockedConfigBinding extends BaseBridge {
@@ -57,7 +69,27 @@ export class MockedConfigBinding extends BaseBridge {
     connectors: {
       mock: {
         hostApp: 'Mock',
-        darkTheme: false
+        darkTheme: false,
+        onboarding: {
+          send: {
+            title: 'Send',
+            blurb: 'Initial Send',
+            completed: false,
+            icon: {}
+          },
+          receive: {
+            title: 'Receive',
+            blurb: 'Initial Receive',
+            completed: false,
+            icon: {}
+          },
+          test: {
+            title: 'Test',
+            blurb: 'Initial Test',
+            completed: false,
+            icon: {}
+          }
+        }
       }
     }
   }
