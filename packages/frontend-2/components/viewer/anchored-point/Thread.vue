@@ -43,7 +43,7 @@
         >
           <div
             :class="[
-              'bg-foundation sm:bg-white dark:sm:bg-neutral-800 flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
+              'relative bg-foundation sm:bg-white dark:sm:bg-neutral-800 flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
               'group-hover:bg-foundation dark:group-hover:bg-neutral-800 group-[.is-dragging]:bg-foundation dark:group-[.is-dragging]:bg-neutral-800'
             ]"
           >
