@@ -73,13 +73,13 @@ export class MockedConfigBinding extends BaseBridge {
         onboarding: {
           send: {
             title: 'Send',
-            blurb: 'Initial Send',
+            blurb: 'Send first model to Speckleverse!',
             completed: false,
             icon: {}
           },
           receive: {
             title: 'Receive',
-            blurb: 'Initial Receive',
+            blurb: 'Receive first model from Speckleverse!',
             completed: false,
             icon: {}
           },

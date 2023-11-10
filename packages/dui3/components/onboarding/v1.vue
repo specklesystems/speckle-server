@@ -146,7 +146,6 @@
 </template>
 <script setup lang="ts">
 import { ConnectorOnboardingDictionary } from 'lib/bindings/definitions/IConfigBinding'
-import { CheckCircleIcon as OutlineCheckCircleIcon } from '@heroicons/vue/24/outline'
 import { CheckCircleIcon } from '@heroicons/vue/24/solid'
 import { useConfigStore } from '~/store/config'
 const configStore = useConfigStore()
@@ -234,4 +233,6 @@ const dismissChecklistForever = () => {
   //   status: getStatus()
   // })
 }
+
+goToFirstUncompletedStep()
 </script>
