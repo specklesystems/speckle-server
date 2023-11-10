@@ -68,6 +68,7 @@ import { nanoid } from 'nanoid'
 import { useForm } from 'vee-validate'
 import { useHostAppStore } from '~~/store/hostApp'
 import { useAccountStore } from '~~/store/accounts'
+import { useConfigStore } from '~/store/config'
 import { ValidationHelpers } from '@speckle/ui-components'
 import {
   ProjectsSelectItemType,
@@ -79,6 +80,7 @@ import { ArrowLeftIcon } from '@heroicons/vue/20/solid'
 
 const { defaultAccount } = storeToRefs(useAccountStore())
 const hostAppStore = useHostAppStore()
+const configStore = useConfigStore()
 const router = useRouter()
 const hostAppName = computed(() => hostAppStore.hostAppName)
 
@@ -123,6 +125,7 @@ const receive = async () => {
   }
 
   await hostAppStore.addModel(modelCard)
+  configStore.completeConnectorOnboarding('receive')
   router.push('/')
   setTimeout(async () => {
     await hostAppStore.receiveModel(modelCard.id, selectedVersion.value?.id as string)

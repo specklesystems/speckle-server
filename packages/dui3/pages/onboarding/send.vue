@@ -167,8 +167,8 @@ const getOrCreateModelCard = async () => {
 const publish = async () => {
   const modelCard = await getOrCreateModelCard()
   if (!modelCard) return // throw here error
-  configStore.completeOnboarding()
-  // router.push('/')
+  configStore.completeConnectorOnboarding('send')
+  router.push('/')
   // Sketchup freezes immediately after routing, by setting timeout we can get correct states
   setTimeout(async () => {
     await store.sendModel(modelCard.id)
