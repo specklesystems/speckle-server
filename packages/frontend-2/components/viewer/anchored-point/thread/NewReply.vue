@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
   <div
-    class="absolute bottom-0 left-0 bg-foundation sm:bg-transparent pl-4 pr-3 py-2 sm:py-1.5 rounded-b flex items-center w-full"
+    class="absolute bottom-0 left-0 bg-foundation pl-4 pr-3 py-2 sm:py-1.5 rounded-b flex items-center w-full"
   >
     <FormButton
       :icon-left="PaperClipIcon"
