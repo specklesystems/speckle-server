@@ -14,6 +14,7 @@ import {
 import crs from 'crypto-random-string'
 import { Knex } from 'knex'
 import { clamp, last, trim } from 'lodash'
+import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 
 export const generateBranchId = () => crs({ length: 10 })
 
@@ -258,8 +259,13 @@ export async function getPaginatedProjectModelsItems(
     return { items: [], cursor: null }
   }
 
+  const maxProjectModelsPerPage = getMaximumProjectModelsPerPage()
+
   const q = getPaginatedProjectModelsBaseQuery<BranchRecord[]>(projectId, params)
-  q.limit(clamp(limit || 25, 1, 100)).orderBy(Branches.col.updatedAt, 'desc')
+  q.limit(clamp(limit || 25, 1, maxProjectModelsPerPage)).orderBy(
+    Branches.col.updatedAt,
+    'desc'
+  )
 
   if (cursor) q.andWhere(Branches.col.updatedAt, '<', cursor)
 

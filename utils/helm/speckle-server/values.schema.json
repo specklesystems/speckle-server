@@ -511,6 +511,11 @@
           "description": "The maximum size of an individual object which can be uploaded to the server",
           "default": 10
         },
+        "max_project_models_per_page": {
+          "type": "number",
+          "description": "The maximum number of models that can be returned in a single page of a query for all models of a project",
+          "default": 100
+        },
         "speckleAutomateUrl": {
           "type": "string",
           "description": "The url of the Speckle Automate instance",
