@@ -2,7 +2,7 @@
   <div
     class="relative max-w-4xl w-screen h-screen flex items-center justify-center z-50"
   >
-    <TourSegmentation v-if="step === 0" @next="step++" />
+    <TourSegmentation v-if="tourState.showSegmentation && step === 0" @next="step++" />
     <TourSlideshow v-if="step === 1" @next="step++" />
     <!-- <OnboardingDialogManager v-if="step === 2" allow-escape @cancel="step++" /> -->
     <div
@@ -27,6 +27,8 @@ const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
   `hasCompletedChecklistV1`,
   { default: () => false }
 )
+
+const tourState = useTourStageState()
 
 const mp = useMixpanel()
 watch(step, (val) => {

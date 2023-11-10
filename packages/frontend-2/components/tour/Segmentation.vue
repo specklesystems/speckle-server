@@ -84,6 +84,7 @@ const {
 const onboardingState = ref<OnboardingState>({ industry: undefined, role: undefined })
 
 const { activeUser } = useActiveUser()
+const tourState = useTourStageState()
 
 const emit = defineEmits(['next'])
 
@@ -101,6 +102,7 @@ function setRole(val: OnboardingRole) {
   nextView()
   // NOTE: workaround for being able to view this in storybook
   if (activeUser.value?.id) setMixpanelSegments(onboardingState.value)
+  tourState.value.showSegmentation = false
   emit('next')
 }
 
