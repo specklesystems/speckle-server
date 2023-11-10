@@ -514,7 +514,7 @@
         "max_project_models_per_page": {
           "type": "number",
           "description": "The maximum number of models that can be returned in a single page of a query for all models of a project",
-          "default": 100
+          "default": 500
         },
         "speckleAutomateUrl": {
           "type": "string",
