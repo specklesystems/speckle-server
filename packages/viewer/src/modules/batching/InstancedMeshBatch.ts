@@ -1,18 +1,20 @@
 import {
   Box3,
-  BufferAttribute,
   BufferGeometry,
   DynamicDrawUsage,
   Float32BufferAttribute,
+  InstancedBufferAttribute,
   Material,
   Object3D,
+  Sphere,
   WebGLRenderer
 } from 'three'
 import { Geometry } from '../converter/Geometry'
-import SpeckleMesh from '../objects/SpeckleMesh'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { AllBatchUpdateRange, Batch, BatchUpdateRange, GeometryType } from './Batch'
-import Logger from 'js-logger'
+import { BatchObject } from './BatchObject'
+import SpeckleInstancedMesh from '../objects/SpeckleInstancedMesh'
+import { ObjectLayers } from '../../IViewer'
 
 export default class InstancedMeshBatch implements Batch {
   public id: string
@@ -20,15 +22,16 @@ export default class InstancedMeshBatch implements Batch {
   public renderViews: NodeRenderView[]
   private geometry: BufferGeometry
   public batchMaterial: Material
-  public mesh: SpeckleMesh
+  public mesh: SpeckleInstancedMesh
 
-  private gradientIndexBuffer: BufferAttribute
+  private gradientIndexBuffer: InstancedBufferAttribute
 
   private needsShuffle = false
   private needsFlatten = false
 
   public get bounds(): Box3 {
-    return this.mesh.BVH.getBoundingBox(new Box3())
+    // return this.mesh.BVH.getBoundingBox(new Box3())
+    return this.geometry.boundingBox
   }
 
   public get drawCalls(): number {
@@ -36,9 +39,10 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public get minDrawCalls(): number {
-    return [
-      ...Array.from(new Set(this.geometry.groups.map((value) => value.materialIndex)))
-    ].length
+    // return [
+    //   ...Array.from(new Set(this.geometry.groups.map((value) => value.materialIndex)))
+    // ].length
+    return 1
   }
 
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
@@ -378,14 +382,51 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public resetDrawRanges() {
-    this.mesh.setBatchMaterial(this.batchMaterial)
-    this.mesh.visible = true
-    this.geometry.clearGroups()
-    this.geometry.addGroup(0, this.getCount(), 0)
-    this.geometry.setDrawRange(0, Infinity)
+    // this.mesh.setBatchMaterial(this.batchMaterial)
+    // this.mesh.visible = true
+    // this.geometry.clearGroups()
+    // this.geometry.addGroup(0, this.getCount(), 0)
+    // this.geometry.setDrawRange(0, Infinity)
   }
 
-  public buildBatch() {}
+  public buildBatch() {
+    const batchObjects = []
+    for (let k = 0; k < this.renderViews.length; k++) {
+      this.renderViews[k].setBatchData(this.id, k, 1)
+      const batchObject = new BatchObject(this.renderViews[k], k)
+      batchObject.buildBVH()
+      batchObjects.push(batchObject)
+    }
+
+    const indices = new Uint32Array(
+      this.renderViews[0].renderData.geometry.attributes.INDEX
+    )
+    const positions = new Float64Array(
+      this.renderViews[0].renderData.geometry.attributes.POSITION
+    )
+    const colors = new Float32Array(
+      this.renderViews[0].renderData.geometry.attributes.COLOR
+    )
+
+    this.makeInstancedMeshGeometry(indices, positions, colors)
+    this.mesh = new SpeckleInstancedMesh(this.geometry, this.renderViews.length)
+    this.mesh.setBatchObjects(batchObjects)
+    this.mesh.setBatchMaterial(this.batchMaterial)
+    this.mesh.buildBVH()
+    this.geometry.boundingBox = this.mesh.BVH.getBoundingBox(new Box3())
+    this.geometry.boundingSphere = this.geometry.boundingBox.getBoundingSphere(
+      new Sphere()
+    )
+
+    this.mesh.uuid = this.id
+    this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
+    this.mesh.frustumCulled = false
+    this.mesh.geometry.addGroup(0, this.getCount(), 0)
+
+    batchObjects.forEach((element: BatchObject) => {
+      element.renderView.disposeGeometry()
+    })
+  }
 
   public getRenderView(index: number): NodeRenderView {
     index
@@ -400,27 +441,27 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public getMaterial(rv: NodeRenderView): Material {
-    for (let k = 0; k < this.geometry.groups.length; k++) {
-      try {
-        if (
-          rv.batchStart >= this.geometry.groups[k].start &&
-          rv.batchEnd <= this.geometry.groups[k].start + this.geometry.groups[k].count
-        ) {
-          return this.materials[this.geometry.groups[k].materialIndex]
-        }
-      } catch (e) {
-        Logger.error('Failed to get material')
-      }
-    }
+    // for (let k = 0; k < this.geometry.groups.length; k++) {
+    //   try {
+    //     if (
+    //       rv.batchStart >= this.geometry.groups[k].start &&
+    //       rv.batchEnd <= this.geometry.groups[k].start + this.geometry.groups[k].count
+    //     ) {
+    //       return this.materials[this.geometry.groups[k].materialIndex]
+    //     }
+    //   } catch (e) {
+    //     Logger.error('Failed to get material')
+    //   }
+    // }
+    rv
+    return null
   }
 
   private makeInstancedMeshGeometry(
     indices: Uint32Array | Uint16Array,
     position: Float64Array,
-    batchIndices: Float32Array,
     color?: Float32Array
   ): BufferGeometry {
-    // const start5 = performance.now()
     this.geometry = new BufferGeometry()
     if (position) {
       /** When RTE enabled, we'll be storing the high component of the encoding here,
@@ -430,25 +471,15 @@ export default class InstancedMeshBatch implements Batch {
       this.geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
     }
 
-    if (batchIndices) {
-      this.geometry.setAttribute(
-        'objIndex',
-        new Float32BufferAttribute(batchIndices, 1)
-      )
-    }
-
     if (color) {
       this.geometry.setAttribute('color', new Float32BufferAttribute(color, 3))
     }
 
     const buffer = new Float32Array(position.length / 3)
-    this.gradientIndexBuffer = new Float32BufferAttribute(buffer, 1)
+    this.gradientIndexBuffer = new InstancedBufferAttribute(buffer, 1)
     this.gradientIndexBuffer.setUsage(DynamicDrawUsage)
     this.geometry.setAttribute('gradientIndex', this.gradientIndexBuffer)
-    // console.log(' -- Rest -> ', performance.now() - start5)
-    // const start = performance.now()
     this.updateGradientIndexBufferData(0, buffer.length, 0)
-    // console.log(' -- Gradient index update -> ', performance.now() - start)
     this.updateGradientIndexBuffer()
 
     Geometry.computeVertexNormals(this.geometry, position)

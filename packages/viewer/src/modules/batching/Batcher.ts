@@ -19,6 +19,7 @@ import TextBatch from './TextBatch'
 import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
 import { SpeckleType } from '../loaders/GeometryConverter'
 import { WorldTree } from '../..'
+import InstancedMeshBatch from './InstancedMeshBatch'
 
 export default class Batcher {
   private maxHardwareUniformCount = 0
@@ -38,7 +39,7 @@ export default class Batcher {
     this.materials.createDefaultMaterials()
   }
 
-  public async *makeInstancedBatches(tree: WorldTree) {
+  public async *makeInstancedBatches(tree: WorldTree, renderTree: RenderTree) {
     // const renderViews = tree
     //   .getRenderTree()
     //   .getInstancedRenderableRenderViews(...[SpeckleType.Mesh])
@@ -48,7 +49,14 @@ export default class Batcher {
     for (const g in instanceGroups) {
       const rvs = tree.getRenderTree().getRenderViewsForNodeId(g)
       if (rvs.length) {
-        console.warn(g)
+        const materialHash = rvs[0].renderMaterialHash
+        const instancedBatch = await this.buildInstancedBatch(
+          renderTree,
+          rvs,
+          materialHash
+        )
+
+        this.batches[instancedBatch.id] = instancedBatch
       }
     }
     yield
@@ -179,16 +187,38 @@ export default class Batcher {
     return vSplit
   }
 
+  private async buildInstancedBatch(
+    renderTree: RenderTree,
+    renderViews: NodeRenderView[],
+    materialHash: number
+  ): Promise<Batch> {
+    if (!renderViews.length) {
+      /** This is for the case when all renderviews have invalid geometries, and it generally
+       * means there is something wrong with the stream
+       */
+      Logger.warn(
+        'All renderviews have invalid geometries. Skipping batch!',
+        renderViews
+      )
+      return null
+    }
+
+    const matRef = renderViews[0].renderData.renderMaterial
+    const material = this.materials.getMaterial(materialHash, matRef, GeometryType.MESH)
+    const batchID = generateUUID()
+    const geometryBatch = new InstancedMeshBatch(batchID, renderTree.id, renderViews)
+    geometryBatch.setBatchMaterial(material)
+    await geometryBatch.buildBatch()
+
+    return geometryBatch
+  }
+
   private async buildBatch(
     renderTree: RenderTree,
     renderViews: NodeRenderView[],
     materialHash: number,
     batchType?: GeometryType
   ): Promise<Batch> {
-    // const batch = renderViews.filter(
-    //   (value) => value.renderMaterialHash === materialHash
-    // )
-
     if (!renderViews.length) {
       /** This is for the case when all renderviews have invalid geometries, and it generally
        * means there is something wrong with the stream
