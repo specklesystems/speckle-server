@@ -141,7 +141,8 @@ export class SpeckleGeometryConverter extends GeometryConverter {
      * Speckle matrices are row major. Three's 'fromArray' function assumes
      * the matrix is in column major. That's why we transpose it here.
      */
-    const matrixData: number[] = node.raw.matrix
+    /** Legacy "value" */
+    const matrixData: number[] = node.raw.value ? node.raw.value : node.raw.matrix
 
     const matrix = new Matrix4().fromArray(matrixData).transpose()
     /** We need to scale the transform, but not propagate the scale towards the block's children

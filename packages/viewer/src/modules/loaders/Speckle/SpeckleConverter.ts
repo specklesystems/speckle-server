@@ -435,7 +435,7 @@ export default class SpeckleConverter {
     })
     this.tree.addNode(childNode, transformNode)
 
-    await this.displayableLookup(defGeometry, childNode, true)
+    await this.displayableLookup(defGeometry, transformNode, true)
   }
 
   private async parseInstanceElement(instanceObj, elementObj, instanceNode) {
@@ -464,34 +464,6 @@ export default class SpeckleConverter {
         this.parseInstanceElement(obj, elementObj, node)
       }
     }
-    // const ref = await this.resolveReference(def)
-    // /** We concatenate the ids to get unique ones */
-    // ref.id = this.getCompoundId(ref.id, this.instanceCounter++)
-    // const childNode: TreeNode = this.tree.parse({
-    //   id: this.getNodeId(ref),
-    //   raw: ref,
-    //   atomic: false,
-    //   children: [],
-    //   instanced: true
-    // })
-    // this.tree.addNode(childNode, node)
-
-    // await this.displayableLookup(ref, childNode)
-    // const elements = this.getElementsValue(obj)
-    // if (elements) {
-    //   for (const element of elements) {
-    //     const ref = await this.resolveReference(element)
-    //     const childNode: TreeNode = this.tree.parse({
-    //       id: this.getNodeId(ref),
-    //       raw: ref,
-    //       atomic: false,
-    //       children: []
-    //     })
-    //     childNode.model.raw.host = obj.id
-    //     this.tree.addNode(childNode, node)
-    //     await this.displayableLookup(ref, childNode)
-    //   }
-    // }
   }
 
   private async RevitInstanceToNode(obj, node) {
@@ -506,32 +478,6 @@ export default class SpeckleConverter {
         this.parseInstanceElement(obj, elementObj, node)
       }
     }
-    // const traverseList = async (list, hostId?: string) => {
-    //   if (!list) return
-    //   for (const def of list) {
-    //     const ref = await this.resolveReference(def)
-    //     /** We concatenate the ids to get unique ones */
-    //     ref.id = this.getCompoundId(ref.id, this.instanceCounter++)
-    //     const childNode: TreeNode = this.tree.parse({
-    //       id: this.getNodeId(ref),
-    //       raw: ref,
-    //       atomic: false,
-    //       children: [],
-    //       instanced: true
-    //     })
-    //     if (hostId) {
-    //       childNode.model.raw.host = hostId
-    //     }
-    //     this.tree.addNode(childNode, node)
-    //     await this.convertToNode(ref, childNode)
-    //   }
-    // }
-    // const definition = await this.resolveReference(obj.definition)
-    // node.model.raw.definition = definition
-    // await this.parseInstanceDefinitionGeometry(obj, ref, node)
-    // await traverseList(this.getElementsValue(definition))
-    // await traverseList(this.getDisplayValue(definition))
-    // await traverseList(this.getElementsValue(obj), obj.id)
   }
 
   private async PointcloudToNode(obj, node) {

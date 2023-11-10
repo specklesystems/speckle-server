@@ -18,6 +18,7 @@ import { RenderTree } from '../tree/RenderTree'
 import TextBatch from './TextBatch'
 import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
 import { SpeckleType } from '../loaders/GeometryConverter'
+import { WorldTree } from '../..'
 
 export default class Batcher {
   private maxHardwareUniformCount = 0
@@ -35,6 +36,22 @@ export default class Batcher {
     this.floatTextures = floatTextures
     this.materials = new Materials()
     this.materials.createDefaultMaterials()
+  }
+
+  public async *makeInstancedBatches(tree: WorldTree) {
+    // const renderViews = tree
+    //   .getRenderTree()
+    //   .getInstancedRenderableRenderViews(...[SpeckleType.Mesh])
+    //   .sort((a, b) => +(a.renderData.id. === b.renderData.id))
+    // console.log(renderViews)
+    const instanceGroups = tree.getInstances('1')
+    for (const g in instanceGroups) {
+      const rvs = tree.getRenderTree().getRenderViewsForNodeId(g)
+      if (rvs.length) {
+        console.warn(g)
+      }
+    }
+    yield
   }
 
   public async *makeBatches(

@@ -584,6 +584,13 @@ export default class SpeckleRenderer {
       currentBatchCount++
       yield
     }
+    const instancedGenerator = this.batcher.makeInstancedBatches(
+      this.viewer.getWorldTree()
+    )
+    for await (const instancedBatch of instancedGenerator) {
+      instancedBatch
+    }
+
     this._renderOverride = null
     this.updateHelpers()
 

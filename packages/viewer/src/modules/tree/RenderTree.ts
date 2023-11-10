@@ -129,7 +129,21 @@ export class RenderTree {
         return (
           node.model.renderView !== null &&
           (node.model.renderView.hasGeometry || node.model.renderView.hasMetadata) &&
-          types.includes(node.model.renderView.renderData.speckleType)
+          types.includes(node.model.renderView.renderData.speckleType) &&
+          !node.model.instanced
+        )
+      })
+      .map((val: TreeNode) => val.model.renderView)
+  }
+
+  public getInstancedRenderableRenderViews(...types: SpeckleType[]): NodeRenderView[] {
+    return this.root
+      .all((node: TreeNode): boolean => {
+        return (
+          node.model.renderView !== null &&
+          (node.model.renderView.hasGeometry || node.model.renderView.hasMetadata) &&
+          types.includes(node.model.renderView.renderData.speckleType) &&
+          node.model.instanced
         )
       })
       .map((val: TreeNode) => val.model.renderView)

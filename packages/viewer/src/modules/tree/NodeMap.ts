@@ -6,7 +6,7 @@ export class NodeMap {
 
   private subtreeRoot: TreeNode
   private all: { [id: string]: TreeNode } = {}
-  private instances: { [id: string]: { [id: string]: TreeNode } } = {}
+  public instances: { [id: string]: { [id: string]: TreeNode } } = {}
 
   public get nodeCount() {
     return Object.keys(this.all).length

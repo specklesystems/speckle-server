@@ -22,7 +22,7 @@ export interface NodeData {
 
 export class WorldTree {
   private renderTreeInstances: { [id: string]: RenderTree } = {}
-  private nodeMaps: { [id: string]: NodeMap } = {}
+  public nodeMaps: { [id: string]: NodeMap } = {}
   private readonly supressWarnings = true
   public static readonly ROOT_ID = 'ROOT'
   private subtreeId: number = 0
@@ -136,6 +136,10 @@ export class WorldTree {
 
   public getAncestors(node: TreeNode): Array<TreeNode> {
     return node.getPath().reverse().slice(1) // We skip the node itself
+  }
+
+  public getInstances(subtree: string): { [id: string]: Record<string, TreeNode> } {
+    return this.nodeMaps[subtree].instances
   }
 
   public walk(predicate: SearchPredicate, node?: TreeNode): void {
