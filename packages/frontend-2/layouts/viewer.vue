@@ -34,7 +34,7 @@
     >
       <HeaderNavBar v-show="tourState.showNavbar" class="relative z-20 mb-6" />
     </Transition>
-    <main class="absolute top-0 left-0 z-10 h-screen w-screen">
+    <main class="absolute top-0 left-0 z-10 h-[100dvh] w-screen">
       <slot />
     </main>
   </div>

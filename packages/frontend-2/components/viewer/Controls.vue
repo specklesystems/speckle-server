@@ -175,15 +175,11 @@ import {
   useCameraUtilities,
   useSectionBoxUtilities
 } from '~~/lib/viewer/composables/ui'
-import { useBreakpoints } from '@vueuse/core'
-import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-
 import {
   onKeyboardShortcut,
   ModifierKeys,
   getKeyboardShortcutTitle
 } from '@speckle/ui-components'
-
 import {
   useInjectedViewerLoadedResources,
   useInjectedViewerInterfaceState
@@ -201,8 +197,6 @@ import { AutomationRunStatus, AutomationRun } from '~~/lib/common/generated/gql/
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
-
-const breakpoints = useBreakpoints(TailwindBreakpoints)
 
 const allAutomationRuns = computed(() => {
   const allAutomationStatuses = modelsAndVersionIds.value
@@ -302,7 +296,7 @@ const sectionBoxShortcut = ref(
   `Section Box (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'b'])})`
 )
 
-const isSmallerOrEqualSM = computed(() => breakpoints.smallerOrEqual('sm').value)
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const toggleActiveControl = (control: ActiveControl) =>
   activeControl.value === control
@@ -367,10 +361,10 @@ const scrollControlsToBottom = () => {
 }
 
 onMounted(() => {
-  activeControl.value = isSmallerOrEqualSM.value ? 'none' : 'models'
+  activeControl.value = isSmallerOrEqualSm.value ? 'none' : 'models'
 })
 
-watch(isSmallerOrEqualSM, (newVal) => {
+watch(isSmallerOrEqualSm, (newVal) => {
   activeControl.value = newVal ? 'none' : 'models'
 })
 </script>

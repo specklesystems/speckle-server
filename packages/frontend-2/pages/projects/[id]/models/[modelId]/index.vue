@@ -1,6 +1,6 @@
 <template>
   <ViewerPostSetupWrapper>
-    <div class="absolute top-0 left-0 w-screen h-screen">
+    <div class="absolute top-0 left-0 w-screen h-[100dvh]">
       <!-- Nav -->
       <Portal to="navigation">
         <ViewerScope :state="state">
@@ -23,12 +23,12 @@
         <!-- Tour host -->
         <div
           v-if="tourState.showTour"
-          class="fixed w-full h-full flex justify-center items-center pointer-events-none z-[100]"
+          class="fixed w-full h-[100dvh] flex justify-center items-center pointer-events-none z-[100]"
         >
           <TourOnboarding />
         </div>
         <!-- Viewer host -->
-        <div class="special-gradient absolute w-screen h-screen z-10 overflow-hidden">
+        <div class="special-gradient absolute w-screen h-[100dvh] z-10 overflow-hidden">
           <ViewerBase />
           <Transition
             enter-from-class="opacity-0"
@@ -63,6 +63,7 @@
     </div>
   </ViewerPostSetupWrapper>
   <div
+    v-if="tourState.showViewerControls"
     class="sm:hidden shadow-t fixed bottom-0 left-0 max-h-[65vh] w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
   >
     <PortalTarget name="bottomPanel"></PortalTarget>
