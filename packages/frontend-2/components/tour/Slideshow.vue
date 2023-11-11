@@ -12,8 +12,8 @@
       :item="item"
       :index="index"
       class="absolute"
-      :class="isSmallerOrEqualSM ? 'bottom-0 left-0 w-screen' : ''"
-      :style="isSmallerOrEqualSM ? undefined : item.style"
+      :class="isSmallerOrEqualSm ? 'bottom-0 left-0 w-screen' : ''"
+      :style="isSmallerOrEqualSm ? undefined : item.style"
       :show-controls="item.showControls"
       @skip="finishSlideshow()"
     >
@@ -60,8 +60,6 @@ import BasicViewerNavigation from '~~/components/tour/content/BasicViewerNavigat
 import OverlayModel from '~~/components/tour/content/OverlayModel.vue'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useBreakpoints } from '@vueuse/core'
-import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 const emit = defineEmits(['next'])
 
@@ -79,9 +77,9 @@ provide('slideshowItems', slideshowItems)
 
 const lastOpenIndex = ref(0)
 const mp = useMixpanel()
-const breakpoints = useBreakpoints(TailwindBreakpoints)
 
-const isSmallerOrEqualSM = computed(() => breakpoints.smallerOrEqual('sm').value)
+// const isSmallerOrEqualSm = computed(() => breakpoints.smallerOrEqual('sm').value)
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const next = (currentIndex: number) => {
   if (currentIndex + 1 >= slideshowItems.value.length) {
