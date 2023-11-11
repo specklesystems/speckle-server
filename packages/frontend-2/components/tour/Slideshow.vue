@@ -1,7 +1,7 @@
 <template>
   <div
     ref="parentEl"
-    class="fixed z-30 left-0 top-0 w-screen h-screen pointer-events-none overflow-hidden"
+    class="fixed z-30 left-0 top-0 w-screen h-[100dvh] pointer-events-none overflow-hidden"
   >
     <!--     
       Tour Slideshow 

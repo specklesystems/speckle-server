@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative max-w-4xl w-screen h-screen flex items-center justify-center z-50"
+    class="relative max-w-4xl w-screen h-[100dvh] flex items-center justify-center z-50"
   >
     <TourSegmentation v-if="tourState.showSegmentation && step === 0" @next="step++" />
     <TourSlideshow v-if="step === 1" @next="step++" />
