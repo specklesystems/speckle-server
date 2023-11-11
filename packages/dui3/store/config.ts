@@ -3,7 +3,6 @@ import {
   GlobalConfig,
   UiConfig
 } from 'lib/bindings/definitions/IConfigBinding'
-import { cloneDeep } from 'lodash-es'
 import { useHostAppStore } from '~~/store/hostApp'
 
 export const useConfigStore = defineStore('configStore', () => {
@@ -22,7 +21,10 @@ export const useConfigStore = defineStore('configStore', () => {
   const connectorConfig = ref<ConnectorConfig>({
     hostApp: hostAppStore.hostAppName as string,
     darkTheme: false,
-    onboarding: {}
+    onboarding: {
+      skipped: false,
+      onboardings: {}
+    }
   })
 
   watch(
@@ -49,10 +51,12 @@ export const useConfigStore = defineStore('configStore', () => {
     router.push('/')
   }
 
+  const skipOnboarding = () => {
+    connectorConfig.value.onboarding.skipped = true
+  }
+
   const completeConnectorOnboarding = (id: string) => {
-    // const copyConnectorConfig = cloneDeep(connectorConfig.value)
-    connectorConfig.value.onboarding[id].completed = true
-    // connectorConfig.value = copyConnectorConfig
+    connectorConfig.value.onboarding.onboardings[id].completed = true
   }
 
   const isDarkTheme = computed(() => {
@@ -64,13 +68,15 @@ export const useConfigStore = defineStore('configStore', () => {
   }
 
   const allOnboardingCompleted = computed(() => {
-    for (const key in connectorConfig.value.onboarding) {
-      if (!connectorConfig.value.onboarding[key].completed) {
+    for (const key in connectorConfig.value.onboarding.onboardings) {
+      if (!connectorConfig.value.onboarding.onboardings[key].completed) {
         return false
       }
     }
     return true
   })
+
+  const onboardingSkipped = computed(() => connectorConfig.value.onboarding.skipped)
 
   const init = async () => {
     if (!$configBinding) return
@@ -87,9 +93,11 @@ export const useConfigStore = defineStore('configStore', () => {
     hasConfigBindings,
     isDarkTheme,
     onboardingCompleted,
+    onboardingSkipped,
     allOnboardingCompleted,
     toggleTheme,
     completeOnboarding,
-    completeConnectorOnboarding
+    completeConnectorOnboarding,
+    skipOnboarding
   }
 })

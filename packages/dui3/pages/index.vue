@@ -15,8 +15,7 @@ const configStore = useConfigStore()
 const router = useRouter()
 
 onMounted(() => {
-  if (!configStore.allOnboardingCompleted) {
-    console.log(configStore.allOnboardingCompleted)
+  if (!configStore.allOnboardingCompleted && !configStore.onboardingSkipped) {
     router.push('/onboardingIndex')
   }
 })

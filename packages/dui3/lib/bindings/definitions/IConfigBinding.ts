@@ -43,14 +43,19 @@ export type GlobalConfig = {
 export type ConnectorConfig = {
   hostApp: string
   darkTheme: boolean
-  onboarding: ConnectorOnboardingDictionary
-}
-
-export type ConnectorOnboardingDictionary = {
-  [id: string]: ConnectorOnboarding
+  onboarding: ConnectorOnboarding
 }
 
 export type ConnectorOnboarding = {
+  skipped: boolean
+  onboardings: ConnectorOnboardingDictionary
+}
+
+export type ConnectorOnboardingDictionary = {
+  [id: string]: ConnectorOnboardingData
+}
+
+export type ConnectorOnboardingData = {
   title: string
   blurb: string
   completed: boolean
@@ -71,23 +76,26 @@ export class MockedConfigBinding extends BaseBridge {
         hostApp: 'Mock',
         darkTheme: false,
         onboarding: {
-          send: {
-            title: 'Send',
-            blurb: 'Send first model to Speckleverse!',
-            completed: false,
-            icon: {}
-          },
-          receive: {
-            title: 'Receive',
-            blurb: 'Receive first model from Speckleverse!',
-            completed: false,
-            icon: {}
-          },
-          test: {
-            title: 'Test',
-            blurb: 'Initial Test',
-            completed: false,
-            icon: {}
+          skipped: false,
+          onboardings: {
+            send: {
+              title: 'Send',
+              blurb: 'Send first model to Speckleverse!',
+              completed: false,
+              icon: {}
+            },
+            receive: {
+              title: 'Receive',
+              blurb: 'Receive first model from Speckleverse!',
+              completed: false,
+              icon: {}
+            },
+            test: {
+              title: 'Test',
+              blurb: 'Initial Test',
+              completed: false,
+              icon: {}
+            }
           }
         }
       }

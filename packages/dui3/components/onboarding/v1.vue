@@ -3,9 +3,16 @@
   <div>
     <div :class="`${background ? 'px-2 bg-foundation rounded-md shadow-xl' : ''}`">
       <div
-        v-if="!allCompleted"
-        :class="`grid gap-2 ${showIntro ? 'px-4 grid-cols-5' : 'grid-cols-4'}`"
+        v-if="!allCompleted && !skipped"
+        :class="`grid gap-2 ${showIntro ? 'px-4 grid-cols-5' : 'grid-cols-5'}`"
       >
+        <div class="flex items-center justify-center col-start-2 col-end-5">
+          <div class="space-x-1">
+            <FormButton v-if="!allCompleted" size="sm" @click="markCompleteAll()">
+              I'll do onboarding later
+            </FormButton>
+          </div>
+        </div>
         <div
           v-if="!showIntro"
           class="flex-col justify-around px-2 h-full py-2 md:col-span-1 hidden lg:flex"
@@ -125,11 +132,7 @@
         v-else
         class="flex flex-col sm:flex-row items-center justify-center flex-1 space-x-2 py-4"
       >
-        <div class="w-6 h-6">
-          <!-- <CheckCircleIcon class="absolute w-6 h-6 text-primary" /> -->
-          <CheckCircleIcon class="w-6 h-6 text-primary animate-ping animate-pulse" />
-        </div>
-        <div class="text-sm max-w-lg grow">
+        <div class="text-sm max-w-lg grow mb-1">
           <b>All done!</b>
           PS: the
           <FormButton to="https://speckle.community" target="_blank" size="sm">
@@ -138,17 +141,21 @@
           is there to help!
         </div>
         <div>
-          <FormButton text size="sm" @click="closeChecklist()">Close</FormButton>
+          <FormButton text size="sm" @click="closeChecklist()">Go Home!</FormButton>
         </div>
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { ConnectorOnboardingDictionary } from 'lib/bindings/definitions/IConfigBinding'
+import {
+  ConnectorOnboarding,
+  ConnectorOnboardingDictionary
+} from 'lib/bindings/definitions/IConfigBinding'
 import { CheckCircleIcon } from '@heroicons/vue/24/solid'
 import { useConfigStore } from '~/store/config'
 const configStore = useConfigStore()
+const router = useRouter()
 
 const emit = defineEmits(['dismiss'])
 
@@ -165,10 +172,14 @@ withDefaults(
   }
 )
 
+const connectorOnboarding = computed(
+  () =>
+    configStore.config?.connectors['mock']?.onboarding as unknown as ConnectorOnboarding
+)
+
 const steps = ref(
   Object.entries(
-    configStore.config?.connectors['mock']
-      ?.onboarding as unknown as ConnectorOnboardingDictionary
+    connectorOnboarding.value.onboardings as unknown as ConnectorOnboardingDictionary
   ).map(([key, value]) => {
     return {
       ...value,
@@ -184,6 +195,10 @@ const steps = ref(
 
 const allCompleted = computed(() => steps.value.every((step) => step.completed))
 
+const skipped = computed(
+  () => configStore.config?.connectors['mock']?.onboarding.skipped
+)
+
 const activateStep = (idx: number) => {
   steps.value.forEach((s, index) => (s.active = idx === index))
 }
@@ -198,8 +213,16 @@ const markComplete = (idx: number) => {
   steps.value[idx].completed = true
   steps.value[idx].active = false
   steps.value[idx].completionAction()
-
+  configStore.completeConnectorOnboarding(steps.value[idx].id)
   activateStep(idx + 1)
+}
+
+const markCompleteAll = () => {
+  steps.value.forEach((step) => {
+    step.completed = true
+    step.completionAction() // TODO: Not sure!
+  })
+  configStore.skipOnboarding()
 }
 
 const getStatus = () => {
@@ -209,12 +232,13 @@ const getStatus = () => {
 }
 
 const closeChecklist = () => {
-  //hasCompletedChecklistV1.value = true
+  router.push('/')
 }
 
 const dismissChecklist = () => {
   // hasDismissedChecklistTime.value = Date.now().toString()
   emit('dismiss')
+  router.push('/')
   // mp.track('Onboarding Action', {
   //   type: 'action',
   //   name: 'checklist',

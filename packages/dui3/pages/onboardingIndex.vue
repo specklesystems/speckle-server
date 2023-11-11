@@ -1,11 +1,11 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div class="p-2">
-    <div v-if="!configStore.allOnboardingCompleted" class="z-50">
+    <div class="z-50">
       <OnboardingV1></OnboardingV1>
     </div>
     <div
-      class="pb-5 flex flex-col border-dashed border-2 rounded-md border-blue-500/10 items-center justify-center h-[calc(100vh-5.5rem)]"
+      class="pb-5 flex flex-col border-dashed border-2 rounded-md border-blue-500/10 items-center justify-center h-[calc(100vh-12rem)]"
     >
       <div class="relative">
         <!-- Add a relative container for covering elements -->
