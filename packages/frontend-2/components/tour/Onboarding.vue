@@ -10,10 +10,18 @@
       class="relative w-full pointer-events-auto space-y-2 z-50"
     >
       <div
+        v-if="!isSmallerOrEqualSM"
         class="pointer-events-none fixed inset-0 bg-neutral-100/70 dark:bg-neutral-900/70 transition-opacity z-50"
       />
-      <div class="relative z-50">
+      <div v-if="!isSmallerOrEqualSM" class="relative z-50">
         <OnboardingChecklistV1 show-bottom-escape background @dismiss="step++" />
+      </div>
+      <div v-else class="fixed bottom-10 left-0 w-screen z-50 p-10">
+        <div class="bg-foundation p-2 rounded-md text-sm">
+          There's more to Speckle - be sure to visit on a computer. Since you're on a
+          mobile device, feel free to keep exploring the web app!
+          <FormButton class="w-full mt-4" @click="step++">Let's go!</FormButton>
+        </div>
       </div>
     </div>
   </div>
@@ -21,6 +29,11 @@
 <script setup lang="ts">
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isSmallerOrEqualSM = computed(() => breakpoints.smallerOrEqual('sm').value)
 
 const step = ref(0)
 const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
