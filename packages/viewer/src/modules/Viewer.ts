@@ -659,6 +659,10 @@ export class Viewer extends EventEmitter implements IViewer {
   public removeMeasurement() {
     this.speckleRenderer.measurements.removeMeasurement()
   }
+  
+  public removeAllMeasurements() {
+    this.speckleRenderer.measurements.removeAllMeasurements()
+  }
 
   public dispose() {
     // TODO: currently it's easier to simply refresh the page :)
