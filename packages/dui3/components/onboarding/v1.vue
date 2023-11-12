@@ -6,36 +6,14 @@
         v-if="!allCompleted && !skipped"
         :class="`grid gap-2 ${showIntro ? 'px-4 grid-cols-5' : 'grid-cols-5'}`"
       >
-        <div class="flex items-center justify-center col-start-2 col-end-5">
-          <div class="space-x-1">
-            <FormButton v-if="!allCompleted" size="sm" @click="markCompleteAll()">
-              I'll do onboarding later
-            </FormButton>
-          </div>
+        <div class="flex items-center justify-center col-start-2 col-end-5 space-x-1">
+          <FormButton v-if="!allCompleted" size="sm" @click="markCompleteAll()">
+            I'll do onboarding later
+          </FormButton>
         </div>
         <div
-          v-if="!showIntro"
-          class="flex-col justify-around px-2 h-full py-2 md:col-span-1 hidden lg:flex"
+          class="grid grid-cols-1 grow col-span-5 lg:col-span-5 bg-foundation rounded-md shadow hover:shadow-md p-2 mb-2"
         >
-          <div>Quickstart Checklist</div>
-          <div class="text-sm text-foreground-2">
-            Become a Speckle pro in four steps!
-          </div>
-          <div class="space-x-1">
-            <FormButton v-if="!allCompleted" size="sm" @click="dismissChecklist()">
-              I'll do it later
-            </FormButton>
-            <FormButton
-              v-if="!allCompleted"
-              text
-              size="xs"
-              @click="dismissChecklistForever()"
-            >
-              Don't show again
-            </FormButton>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 grow col-span-5 lg:col-span-5">
           <!-- Steps -->
           <div
             class="flex justify-between items-center row-start-1 row-end-3 absolute border border-dashed border-blue-500/10 z-[1]"
@@ -111,6 +89,7 @@
             </div>
           </div>
         </div>
+
         <div
           v-if="showIntro"
           class="lg:hidden col-span-5 pb-3 pt-2 text-center space-x-2"
@@ -133,8 +112,8 @@
         class="flex flex-col sm:flex-row items-center justify-center flex-1 space-x-2 py-4"
       >
         <div class="text-sm max-w-lg grow mb-1">
-          <b>All done!</b>
-          PS: the
+          <b>{{ skipped ? 'Skipped!' : 'All done!' }}</b>
+          PS: The
           <FormButton to="https://speckle.community" target="_blank" size="sm">
             Community Forum
           </FormButton>
