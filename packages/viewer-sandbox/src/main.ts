@@ -21,6 +21,7 @@ import {
   FilteringExtension
 } from '@speckle/viewer'
 import { bindFoldable } from '@tweakpane/core'
+import { BoxSelection } from './BoxSelection'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -52,6 +53,7 @@ const createViewer = async (containerName: string, stream: string) => {
   const filtering = viewer.createExtension(FilteringExtension)
   const explode = viewer.createExtension(ExplodeExtension)
   const diff = viewer.createExtension(DiffExtension)
+  const boxSelect = viewer.createExtension(BoxSelection)
   // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
   selection // use it
@@ -62,6 +64,7 @@ const createViewer = async (containerName: string, stream: string) => {
   explode // use it
   diff // use it
   // rotateCamera // use it
+  boxSelect // use it
 
   const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
 

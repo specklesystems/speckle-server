@@ -61,6 +61,7 @@ import { Loader } from './modules/loaders/Loader'
 import { SpeckleLoader } from './modules/loaders/Speckle/SpeckleLoader'
 import { ObjLoader } from './modules/loaders/OBJ/ObjLoader'
 import { LegacyViewer } from './modules/LegacyViewer'
+import Input, { InputEvent } from './modules/input/Input'
 
 export {
   Viewer,
@@ -91,7 +92,10 @@ export {
   Loader,
   SpeckleLoader,
   ObjLoader,
-  UpdateFlags
+  UpdateFlags,
+  Input,
+  InputEvent,
+  ObjectLayers
 }
 
 export type {
@@ -110,7 +114,6 @@ export type {
   InlineView,
   TreeNode,
   NodeData,
-  ObjectLayers,
   PointQuery,
   IntersectionQuery,
   QueryResult,
