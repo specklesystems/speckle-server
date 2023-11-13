@@ -5,7 +5,7 @@
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
       class="group relative bg-foundation w-full py-1 pr-2 sm:pr-4 flex flex-col sm:flex-row rounded-md shadow hover:shadow-xl hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary items-stretch"
     >
-      <div class="flex items-center flex-grow order-2 sm:order-1">
+      <div class="flex flex-col sm:flex-row items-center flex-grow order-2 sm:order-1">
         <!-- Icon -->
         <template v-if="model">
           <CubeIcon
@@ -131,7 +131,7 @@
           />
         </NuxtLink>
       </div>
-      <div v-else class="h-20" />
+      <div v-else class="h-20 empty:h-4 empty:sm:h-20" />
     </div>
     <!-- Doubling up for mixed items -->
     <div
