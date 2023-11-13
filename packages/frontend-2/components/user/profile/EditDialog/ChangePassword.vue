@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialogSection border-b title="Change Password" title-color="info">
+  <LayoutDialogSection border-b title="Change Password" title-color="default">
     <template #icon>
       <LockClosedIcon class="h-full w-full" />
     </template>
@@ -9,7 +9,7 @@
         will receive an e-mail with further instructions.
       </div>
       <div class="flex justify-end">
-        <FormButton color="info" @click="onClick">Reset password</FormButton>
+        <FormButton color="default" @click="onClick">Reset password</FormButton>
       </div>
     </div>
   </LayoutDialogSection>
