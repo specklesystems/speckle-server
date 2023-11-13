@@ -82,6 +82,7 @@ import { passwordRules } from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { UserIcon, ArrowRightIcon } from '@heroicons/vue/20/solid'
+import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 /**
  * TODO:
