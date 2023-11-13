@@ -1,6 +1,6 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
-  <div>
+  <div class="relative">
     <div
       :class="`${
         background ? 'mx-2 sm:mx-auto px-2 bg-foundation rounded-md shadow-xl' : ''
@@ -168,13 +168,13 @@
         </div>
         <div
           v-else
-          class="flex flex-col sm:flex-row items-center justify-center flex-1 space-x-2 py-4"
+          class="flex flex-col sm:flex-row items-center justify-center flex-1 gap-x-2 py-4"
         >
           <div class="w-6 h-6">
             <!-- <CheckCircleIcon class="absolute w-6 h-6 text-primary" /> -->
             <CheckCircleIcon class="w-6 h-6 text-primary animate-ping animate-pulse" />
           </div>
-          <div class="text-sm max-w-lg grow text-center sm:text-left">
+          <div class="text-sm max-w-lg text-center sm:text-left">
             <b>All done!</b>
             PS: the
             <FormButton to="https://speckle.community" target="_blank" size="sm" link>
@@ -182,8 +182,15 @@
             </FormButton>
             is there to help!
           </div>
-          <div class="mt-2 sm:mt-0">
-            <FormButton text size="sm" @click="closeChecklist()">Close</FormButton>
+          <div class="absolute right-2 top-3">
+            <FormButton
+              color="secondary"
+              :icon-left="XMarkIcon"
+              hide-text
+              @click="closeChecklist()"
+            >
+              Close
+            </FormButton>
           </div>
         </div>
       </div>
@@ -231,7 +238,8 @@ import {
   ShareIcon,
   ComputerDesktopIcon,
   UserPlusIcon,
-  CloudArrowUpIcon
+  CloudArrowUpIcon,
+  XMarkIcon
 } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as OutlineCheckCircleIcon } from '@heroicons/vue/24/outline'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
