@@ -36,7 +36,7 @@
             </div>
           </FormButton>
         </template>
-        <div class="p-1 sm:py-2 sm:bg-white/90 dark:sm:bg-neutral-700/90">
+        <div class="p-1 mb-2 sm:mb-0 sm:py-2 sm:bg-white/90 dark:sm:bg-neutral-700/90">
           <div class="space-y-2">
             <ViewerSelectionObject
               v-for="object in objectsLimited"
