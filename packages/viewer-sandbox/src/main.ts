@@ -329,7 +329,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/13729601f3'
 
     // Weird IFC
-    // 'https://speckle.xyz/streams/25d8a162af/commits/6c842a713c'
+    'https://speckle.xyz/streams/25d8a162af/commits/6c842a713c'
     // 'https://speckle.xyz/streams/25d8a162af/commits/6c842a713c'
     // 'https://speckle.xyz/streams/76e3acde68/commits/0ea3d47e6c'
     // Point cloud
@@ -337,7 +337,7 @@ const getStream = () => {
     // 'https://multiconsult.speckle.xyz/streams/9721fe797c/objects/ff5d939a8c26bde092152d5b4a0c945d'
     // 'https://speckle.xyz/streams/87a2be92c7/objects/803c3c413b133ee9a6631160ccb194c9'
     // 'https://latest.speckle.dev/streams/1422d91a81/commits/480d88ba68'
-    'https://latest.speckle.dev/streams/92b620fb17/commits/14085847b0'
+    // 'https://latest.speckle.dev/streams/92b620fb17/commits/14085847b0'
   )
 }
 

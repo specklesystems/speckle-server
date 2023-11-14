@@ -384,9 +384,7 @@ export default class Batcher {
   }
 
   public getBatch(rv: NodeRenderView) {
-    return Object.values(this.batches).find((value: Batch) => {
-      return value.renderViews.includes(rv)
-    })
+    return this.batches[rv.batchId]
   }
 
   public getRenderView(batchId: string, index: number) {

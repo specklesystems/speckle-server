@@ -62,6 +62,8 @@ import { SpeckleLoader } from './modules/loaders/Speckle/SpeckleLoader'
 import { ObjLoader } from './modules/loaders/OBJ/ObjLoader'
 import { LegacyViewer } from './modules/LegacyViewer'
 import Input, { InputEvent } from './modules/input/Input'
+import { GeometryType } from './modules/batching/Batch'
+import MeshBatch from './modules/batching/MeshBatch'
 
 export {
   Viewer,
@@ -95,7 +97,9 @@ export {
   UpdateFlags,
   Input,
   InputEvent,
-  ObjectLayers
+  ObjectLayers,
+  GeometryType,
+  MeshBatch
 }
 
 export type {

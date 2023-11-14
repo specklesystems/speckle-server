@@ -11,7 +11,7 @@ export type ExtendedShapeCastCallbacks = {
     depth: number,
     nodeIndex: number
   ) => ShapecastIntersection | boolean
-
+  intersectTASRange?: (batchObject: BatchObject) => ShapecastIntersection | boolean
   intersectsBounds: (
     box: Box3,
     isLeaf: boolean,

@@ -239,6 +239,10 @@ export class SpeckleBatchBVH {
       intersectsRange: (triangleOffset: number) => {
         const vertIndex = this.tas.geometry.index.array[triangleOffset * 3]
         const batchObjectIndex = Math.trunc(vertIndex / SpeckleBatchBVH.CUBE_VERTS)
+        if (callbacks.intersectTASRange) {
+          const ret = callbacks.intersectTASRange(this.batchObjects[batchObjectIndex])
+          if (!ret) return false
+        }
         ret ||= this.batchObjects[batchObjectIndex].bvh.shapecast(
           wrapCallbacks(this.batchObjects[batchObjectIndex])
         )
