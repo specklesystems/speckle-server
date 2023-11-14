@@ -69,8 +69,8 @@ export = {
       return true
     },
     async functionRunStatusReport(_, args, context) {
-      const { userId } = context
-      await upsertModelAutomationRunResult({ userId, input: args.input })
+      const { userId, log } = context
+      await upsertModelAutomationRunResult({ userId, input: args.input, logger: log })
       return true
     }
   },
