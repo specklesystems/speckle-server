@@ -193,7 +193,7 @@ const {
 } = useCameraUtilities()
 
 import { AutomationRunStatus, AutomationRun } from '~~/lib/common/generated/gql/graphql'
-import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
+import { useIsSmallerOrEqualThanBreakpoint } from 'composables/browser'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
