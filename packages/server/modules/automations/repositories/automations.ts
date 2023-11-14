@@ -60,7 +60,7 @@ export const upsertAutomationFunctionRunData = async (
     ? automationFunctionRuns
     : [automationFunctionRuns]
 
-  logger.info({runs}, "Upserting runs.")
+  logger.info({ runs }, 'Upserting runs.')
   const normalizedModels = runs.map((run) => {
     return pick(
       run,
@@ -68,7 +68,7 @@ export const upsertAutomationFunctionRunData = async (
     ) as AutomationFunctionRunRecord
   })
 
-  logger.info({normalizedModels}, "Normalized runs.")
+  logger.info({ normalizedModels }, 'Normalized runs.')
   return await AutomationFunctionRuns.knex()
     .insert(normalizedModels)
     .onConflict([
