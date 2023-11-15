@@ -96,7 +96,25 @@ export class Viewer extends EventEmitter implements IViewer {
   public getExtension<T extends Extension | IProvider>(
     type: new (viewer: IViewer, ...args) => T
   ): T {
-    return this.extensions[type.name] as T
+    const getConstructorChain = (obj) => {
+      const cs = []
+      let pt = obj
+      do {
+        if ((pt = Object.getPrototypeOf(pt))) cs.push(pt.constructor || null)
+      } while (pt !== null)
+      return cs.map(function (c) {
+        return c ? c.toString().split(/\s|\(/)[1] : null
+      })
+    }
+    if (this.extensions[type.name]) return this.extensions[type.name] as T
+    else {
+      for (const k in this.extensions) {
+        const prototypeChain = getConstructorChain(this.extensions[k])
+        if (prototypeChain.includes(type.name)) {
+          return this.extensions[k] as T
+        }
+      }
+    }
   }
 
   public constructor(
