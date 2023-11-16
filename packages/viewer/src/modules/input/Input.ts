@@ -35,21 +35,24 @@ export default class Input extends EventEmitter {
     let mdTime
     this.container.addEventListener('pointerdown', (e) => {
       e.preventDefault()
+      const loc = this._getNormalisedClickPosition(e)
+      ;(loc as unknown as Record<string, unknown>).event = e
       mdTime = new Date().getTime()
-      this.emit(InputEvent.PointerDown)
+      this.emit(InputEvent.PointerDown, loc)
     })
 
     this.container.addEventListener('pointerup', (e) => {
       e.preventDefault()
-      this.emit(InputEvent.PointerUp)
+      const loc = this._getNormalisedClickPosition(e)
+      ;(loc as unknown as Record<string, unknown>).event = e
+
+      this.emit(InputEvent.PointerUp, loc)
       const now = new Date().getTime()
       const delta = now - mdTime
       const deltaClick = now - this.lastClick
 
       if (delta > 250 || deltaClick < Input.MAX_DOUBLE_CLICK_TIMING) return
 
-      const loc = this._getNormalisedClickPosition(e)
-      ;(loc as unknown as Record<string, unknown>).event = e
       if (e.shiftKey) (loc as unknown as Record<string, unknown>).multiSelect = true
       this.emit(InputEvent.Click, loc)
       this.lastClick = new Date().getTime()

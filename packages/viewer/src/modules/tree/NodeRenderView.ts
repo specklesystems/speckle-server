@@ -23,11 +23,15 @@ export class NodeRenderView {
   private readonly _renderData: NodeRenderData
   private _materialHash: number
   private _geometryType: GeometryType
+  private _guid: string = null
 
   private _aabb: Box3 = null
 
   public get guid() {
-    return this._renderData.subtreeId + this._renderData.id
+    if (!this._guid) {
+      this._guid = this._renderData.subtreeId + this._renderData.id
+    }
+    return this._guid
   }
 
   public get renderData() {

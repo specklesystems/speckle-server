@@ -62,6 +62,9 @@ import { SpeckleLoader } from './modules/loaders/Speckle/SpeckleLoader'
 import { ObjLoader } from './modules/loaders/OBJ/ObjLoader'
 import { LegacyViewer } from './modules/LegacyViewer'
 import { SpeckleType } from './modules/loaders/GeometryConverter'
+import Input, { InputEvent } from './modules/input/Input'
+import { GeometryType } from './modules/batching/Batch'
+import MeshBatch from './modules/batching/MeshBatch'
 
 export {
   Viewer,
@@ -93,7 +96,12 @@ export {
   SpeckleLoader,
   ObjLoader,
   UpdateFlags,
-  SpeckleType
+  SpeckleType,
+  Input,
+  InputEvent,
+  ObjectLayers,
+  GeometryType,
+  MeshBatch
 }
 
 export type {
@@ -112,7 +120,6 @@ export type {
   InlineView,
   TreeNode,
   NodeData,
-  ObjectLayers,
   PointQuery,
   IntersectionQuery,
   QueryResult,
