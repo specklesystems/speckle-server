@@ -37,29 +37,25 @@ export type ConnectorConfigDictionary = {
 }
 
 export type GlobalConfig = {
-  onboardingCompleted: boolean
+  onboardingSkipped: boolean
+  onboardings: OnboardingDictionary
 }
 
 export type ConnectorConfig = {
   hostApp: string
   darkTheme: boolean
-  onboarding: ConnectorOnboarding
+  onboardings: OnboardingDictionary
 }
 
-export type ConnectorOnboarding = {
-  skipped: boolean
-  onboardings: ConnectorOnboardingDictionary
+export type OnboardingDictionary = {
+  [id: string]: OnboardingData
 }
 
-export type ConnectorOnboardingDictionary = {
-  [id: string]: ConnectorOnboardingData
-}
-
-export type ConnectorOnboardingData = {
+export type OnboardingData = {
   title: string
   blurb: string
   completed: boolean
-  icon: object
+  page: string
 }
 
 export class MockedConfigBinding extends BaseBridge {
@@ -69,33 +65,32 @@ export class MockedConfigBinding extends BaseBridge {
 
   private uiConfig: UiConfig = {
     global: {
-      onboardingCompleted: false
+      onboardingSkipped: false,
+      onboardings: {
+        send: {
+          title: 'Send',
+          blurb: 'Send first model to Speckleverse!',
+          completed: false,
+          page: '/onboarding/send'
+        },
+        receive: {
+          title: 'Receive',
+          blurb: 'Receive first model from Speckleverse!',
+          completed: false,
+          page: '/onboarding/receive'
+        }
+      }
     },
     connectors: {
       mock: {
         hostApp: 'Mock',
         darkTheme: false,
-        onboarding: {
-          skipped: false,
-          onboardings: {
-            send: {
-              title: 'Send',
-              blurb: 'Send first model to Speckleverse!',
-              completed: false,
-              icon: {}
-            },
-            receive: {
-              title: 'Receive',
-              blurb: 'Receive first model from Speckleverse!',
-              completed: false,
-              icon: {}
-            },
-            test: {
-              title: 'Test',
-              blurb: 'Initial Test',
-              completed: false,
-              icon: {}
-            }
+        onboardings: {
+          test: {
+            title: 'Test',
+            blurb: 'Initial Test',
+            completed: false,
+            page: '/onboarding/test'
           }
         }
       }

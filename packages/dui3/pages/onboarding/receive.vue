@@ -7,7 +7,7 @@
         to="/onboardingIndex"
         size="sm"
         :icon-left="ArrowLeftIcon"
-        class="ml-2"
+        class="ml-5"
       >
         Onboarding
       </FormButton>
@@ -125,7 +125,7 @@ const receive = async () => {
   }
 
   await hostAppStore.addModel(modelCard)
-  configStore.completeConnectorOnboarding('receive')
+  configStore.completeOnboarding('receive')
   router.push('/')
   setTimeout(async () => {
     await hostAppStore.receiveModel(modelCard.id, selectedVersion.value?.id as string)

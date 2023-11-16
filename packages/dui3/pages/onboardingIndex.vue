@@ -1,14 +1,24 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div class="p-2">
-    <div class="z-50">
+    <div class="z-50 pb-2">
       <OnboardingV1></OnboardingV1>
     </div>
-    <div
-      class="pb-5 flex flex-col border-dashed border-2 rounded-md border-blue-500/10 items-center justify-center h-[calc(100vh-12rem)]"
+    <div class="space-y-3">
+      <div v-for="i in 8" :key="i">
+        <div
+          class="text-foreground-2 border-dashed border rounded-md border-blue-500/10 hover:shadow-md shadow transition overflow-hidden flex h-20 items-center justify-center"
+        >
+          <div class="opacity-20">Model</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Some animative examples -->
+    <!-- <div
+      class="pb-5 flex flex-col border-dashed border-2 rounded-md border-blue-500/10 items-center justify-center h-[calc(100vh-16rem)]"
     >
       <div class="relative">
-        <!-- Add a relative container for covering elements -->
         <div class="dashed-rectangle">
           <div @mouseover="sendHovered = true" @mouseout="sendHovered = false">
             <FormButton class="w-10rem" text to="/onboarding/send">Send</FormButton>
@@ -25,7 +35,6 @@
         alt="Speckle"
       />
       <div class="relative">
-        <!-- Add a relative container for covering elements -->
         <div class="dashed-rectangle">
           <CloudArrowDownIcon
             class="w-8 h-8 text-foreground-2"
@@ -36,16 +45,16 @@
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 <script setup lang="ts">
-import { CloudArrowDownIcon } from '@heroicons/vue/20/solid'
-import { useConfigStore } from '~/store/config'
-const configStore = useConfigStore()
+// import { CloudArrowDownIcon } from '@heroicons/vue/20/solid'
+// import { useConfigStore } from '~/store/config'
+// const configStore = useConfigStore()
 
-const sendHovered = ref(false)
-const receiveHovered = ref(false)
+// const sendHovered = ref(false)
+// const receiveHovered = ref(false)
 </script>
 
 <style>

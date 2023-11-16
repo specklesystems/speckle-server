@@ -8,23 +8,20 @@ import { useHostAppStore } from '~~/store/hostApp'
 export const useConfigStore = defineStore('configStore', () => {
   const { $configBinding } = useNuxtApp()
   const hostAppStore = useHostAppStore()
-  const router = useRouter()
 
   const hasConfigBindings = ref(!!$configBinding)
 
   const config = ref<UiConfig>()
 
   const globalConfig = ref<GlobalConfig>({
-    onboardingCompleted: false
+    onboardingSkipped: false,
+    onboardings: {}
   })
 
   const connectorConfig = ref<ConnectorConfig>({
     hostApp: hostAppStore.hostAppName as string,
     darkTheme: false,
-    onboarding: {
-      skipped: false,
-      onboardings: {}
-    }
+    onboardings: {}
   })
 
   watch(
@@ -44,19 +41,27 @@ export const useConfigStore = defineStore('configStore', () => {
     { deep: true }
   )
 
-  const onboardingCompleted = computed(() => globalConfig.value.onboardingCompleted)
+  const onboardings = computed(() => {
+    return {
+      ...globalConfig.value.onboardings,
+      ...connectorConfig.value.onboardings
+    }
+  })
 
-  const completeOnboarding = () => {
-    globalConfig.value = { ...globalConfig.value, onboardingCompleted: true }
-    router.push('/')
-  }
+  const onboardingSkipped = computed(() => globalConfig.value.onboardingSkipped)
+
+  const onboardingCompleted = computed(() => {
+    console.log(onboardings.value)
+
+    return Object.values(onboardings.value).every((o) => o.completed)
+  })
 
   const skipOnboarding = () => {
-    connectorConfig.value.onboarding.skipped = true
+    globalConfig.value.onboardingSkipped = true
   }
 
-  const completeConnectorOnboarding = (id: string) => {
-    connectorConfig.value.onboarding.onboardings[id].completed = true
+  const completeOnboarding = (id: string) => {
+    onboardings.value[id].completed = true
   }
 
   const isDarkTheme = computed(() => {
@@ -67,16 +72,7 @@ export const useConfigStore = defineStore('configStore', () => {
     connectorConfig.value.darkTheme = !connectorConfig.value.darkTheme
   }
 
-  const allOnboardingCompleted = computed(() => {
-    for (const key in connectorConfig.value.onboarding.onboardings) {
-      if (!connectorConfig.value.onboarding.onboardings[key].completed) {
-        return false
-      }
-    }
-    return true
-  })
-
-  const onboardingSkipped = computed(() => connectorConfig.value.onboarding.skipped)
+  const isInitialized = ref(false)
 
   const init = async () => {
     if (!$configBinding) return
@@ -85,19 +81,20 @@ export const useConfigStore = defineStore('configStore', () => {
     globalConfig.value = uiConfig.global
     connectorConfig.value =
       uiConfig.connectors[hostAppStore.hostAppName?.toLowerCase() as string]
+    isInitialized.value = true
   }
-  void init()
+  init()
 
   return {
+    isInitialized,
     config,
     hasConfigBindings,
     isDarkTheme,
+    onboardings,
     onboardingCompleted,
     onboardingSkipped,
-    allOnboardingCompleted,
     toggleTheme,
     completeOnboarding,
-    completeConnectorOnboarding,
     skipOnboarding
   }
 })

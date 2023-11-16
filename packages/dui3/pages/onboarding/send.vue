@@ -7,7 +7,7 @@
         to="/onboardingIndex"
         size="sm"
         :icon-left="ArrowLeftIcon"
-        class="ml-2"
+        class="ml-5"
       >
         Onboarding
       </FormButton>
@@ -167,7 +167,7 @@ const getOrCreateModelCard = async () => {
 const publish = async () => {
   const modelCard = await getOrCreateModelCard()
   if (!modelCard) return // throw here error
-  configStore.completeConnectorOnboarding('send')
+  configStore.completeOnboarding('send')
   router.push('/')
   // Sketchup freezes immediately after routing, by setting timeout we can get correct states
   setTimeout(async () => {

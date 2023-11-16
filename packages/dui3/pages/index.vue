@@ -14,8 +14,22 @@ const store = useHostAppStore()
 const configStore = useConfigStore()
 const router = useRouter()
 
+// NOTE: Watching configStore initialization is important since sometimes it init after mount
+watch(
+  () => configStore.isInitialized,
+  (newVal) => {
+    if (newVal) {
+      // Now the store is initialized, check for onboarding status
+      if (!configStore.onboardingCompleted && !configStore.onboardingSkipped) {
+        router.push('/onboardingIndex')
+      }
+    }
+  }
+)
+
 onMounted(() => {
-  if (!configStore.allOnboardingCompleted && !configStore.onboardingSkipped) {
+  // We route this page after onboarding steps completed, so it's better to check again all completed or not.
+  if (!configStore.onboardingCompleted && !configStore.onboardingSkipped) {
     router.push('/onboardingIndex')
   }
 })

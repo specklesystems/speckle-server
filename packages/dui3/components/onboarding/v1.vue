@@ -7,7 +7,7 @@
         :class="`grid gap-2 ${showIntro ? 'px-4 grid-cols-5' : 'grid-cols-5'}`"
       >
         <div class="flex items-center justify-center col-start-2 col-end-5 space-x-1">
-          <FormButton v-if="!allCompleted" size="sm" @click="markCompleteAll()">
+          <FormButton v-if="!allCompleted" size="xs" @click="markCompleteAll()">
             I'll do onboarding later
           </FormButton>
         </div>
@@ -53,7 +53,7 @@
                   : goToFirstUncompletedStep()
               "
             >
-              <div class="grid grid-cols-4 grow">
+              <div class="grid grid-cols-4 grow text-xs">
                 <div
                   :class="`pl-2 flex items-center justify-between ${
                     step.active ? 'pl-4 font-bold text-forergound-on-primary' : ''
@@ -61,16 +61,16 @@
                 >
                   {{ step.title }}
                 </div>
-                <div class="flex items-center justify-between text-xs col-span-2">
+                <div class="flex items-center justify-between text-tiny col-span-2">
                   {{ step.blurb }}
                 </div>
                 <div class="flex items-center justify-end pr-0.5">
                   <FormButton
                     v-if="!step.completed && step.active"
-                    size="sm"
+                    size="xs"
                     :disabled="!step.active"
                     color="invert"
-                    @click.stop="step.action"
+                    @click.stop="$router.push(step.page)"
                   >
                     {{ step.cta }}
                   </FormButton>
@@ -127,10 +127,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  ConnectorOnboarding,
-  ConnectorOnboardingDictionary
-} from 'lib/bindings/definitions/IConfigBinding'
+import { OnboardingDictionary } from 'lib/bindings/definitions/IConfigBinding'
 import { CheckCircleIcon } from '@heroicons/vue/24/solid'
 import { useConfigStore } from '~/store/config'
 const configStore = useConfigStore()
@@ -151,32 +148,26 @@ withDefaults(
   }
 )
 
-const connectorOnboarding = computed(
-  () =>
-    configStore.config?.connectors['mock']?.onboarding as unknown as ConnectorOnboarding
-)
-
 const steps = ref(
-  Object.entries(
-    connectorOnboarding.value.onboardings as unknown as ConnectorOnboardingDictionary
-  ).map(([key, value]) => {
-    return {
-      ...value,
-      id: key,
-      active: false,
-      action: () => {},
-      completionAction: () => {},
-      cta: "Let's go!",
-      postCompletionCta: `${value.title} again!`
+  Object.entries(configStore.onboardings as unknown as OnboardingDictionary).map(
+    ([key, value]) => {
+      return {
+        ...value,
+        id: key,
+        active: false,
+        page: value.page,
+        action: () => {},
+        completionAction: () => {},
+        cta: "Let's go!",
+        postCompletionCta: `${value.title} again!`
+      }
     }
-  })
+  )
 )
 
-const allCompleted = computed(() => steps.value.every((step) => step.completed))
+const allCompleted = computed(() => configStore.onboardingCompleted)
 
-const skipped = computed(
-  () => configStore.config?.connectors['mock']?.onboarding.skipped
-)
+const skipped = computed(() => configStore.config?.global.onboardingSkipped)
 
 const activateStep = (idx: number) => {
   steps.value.forEach((s, index) => (s.active = idx === index))
@@ -192,7 +183,7 @@ const markComplete = (idx: number) => {
   steps.value[idx].completed = true
   steps.value[idx].active = false
   steps.value[idx].completionAction()
-  configStore.completeConnectorOnboarding(steps.value[idx].id)
+  configStore.completeOnboarding(steps.value[idx].id)
   activateStep(idx + 1)
 }
 
@@ -204,11 +195,11 @@ const markCompleteAll = () => {
   configStore.skipOnboarding()
 }
 
-const getStatus = () => {
-  return steps.value.map((step) => ({
-    [step.id]: step.completed
-  }))
-}
+// const getStatus = () => {
+//   return steps.value.map((step) => ({
+//     [step.id]: step.completed
+//   }))
+// }
 
 const closeChecklist = () => {
   router.push('/')
