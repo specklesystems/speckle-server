@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-xl w-screen h-screen flex items-center justify-center">
+  <div class="max-w-xl w-screen h-[100dvh] flex items-center justify-center">
     <Transition
       enter-from-class="opacity-0"
       enter-active-class="transition duration-300"

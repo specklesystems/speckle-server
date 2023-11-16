@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-foundation rounded-lg overflow-hidden shadow">
+  <div class="bg-foundation sm:rounded-lg overflow-hidden shadow">
     <div class="sticky top-0 z-50 flex flex-col bg-foundation shadow-md">
       <div v-if="!hideClose" class="absolute top-2 right-2 sm:right-0 z-10">
         <FormButton size="sm" color="secondary" text @click="$emit('close')">

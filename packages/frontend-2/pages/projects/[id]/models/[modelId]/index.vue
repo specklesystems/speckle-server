@@ -64,7 +64,7 @@
   </ViewerPostSetupWrapper>
   <div
     v-if="tourState.showViewerControls"
-    class="sm:hidden shadow-t fixed bottom-0 left-0 max-h-[65vh] w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
+    class="sm:hidden shadow-t fixed bottom-0 left-0 max-h-[65vh] overflow-hidden w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
   >
     <PortalTarget name="bottomPanel"></PortalTarget>
     <PortalTarget name="mobileComments"></PortalTarget>
