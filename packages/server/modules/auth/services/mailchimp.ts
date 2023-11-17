@@ -68,6 +68,7 @@ async function startMailchimpCustomerJourney(userId: string) {
       )
     }
 
+    // @ts-expect-error what is mailchimp doing?
     await mailchimp.customerJourneys.trigger(
       config.onboardingJourneyId,
       config.onboardingStepId,
