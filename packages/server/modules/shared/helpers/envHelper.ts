@@ -217,5 +217,5 @@ export function getEmailFromAddress() {
 }
 
 export function getMaximumProjectModelsPerPage() {
-  return getIntFromEnv('MAX_PROJECT_MODELS_PER_PAGE', '100')
+  return getIntFromEnv('MAX_PROJECT_MODELS_PER_PAGE', '500')
 }
