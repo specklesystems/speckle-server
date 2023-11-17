@@ -2,7 +2,6 @@ import { Box3, Matrix4 } from 'three'
 import { TreeNode, WorldTree } from './WorldTree'
 import Materials from '../materials/Materials'
 import { NodeRenderData, NodeRenderView } from './NodeRenderView'
-import { Geometry } from '../converter/Geometry'
 import Logger from 'js-logger'
 import { GeometryConverter, SpeckleType } from '../loaders/GeometryConverter'
 
@@ -42,10 +41,11 @@ export class RenderTree {
         if (node.model.renderView.renderData.geometry.bakeTransform) {
           transform.multiply(node.model.renderView.renderData.geometry.bakeTransform)
         }
-        Geometry.transformGeometryData(
-          node.model.renderView.renderData.geometry,
-          transform
-        )
+        node.model.renderView.renderData.geometry.transform = transform
+        // Geometry.transformGeometryData(
+        //   node.model.renderView.renderData.geometry,
+        //   transform
+        // )
         node.model.renderView.computeAABB()
         this._treeBounds.union(node.model.renderView.aabb)
       } else if (node.model.renderView.hasMetadata) {

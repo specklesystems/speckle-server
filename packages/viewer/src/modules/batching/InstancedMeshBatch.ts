@@ -1,12 +1,13 @@
 import {
   Box3,
   BufferGeometry,
-  DynamicDrawUsage,
   Float32BufferAttribute,
   InstancedBufferAttribute,
   Material,
   Object3D,
   Sphere,
+  Uint16BufferAttribute,
+  Uint32BufferAttribute,
   WebGLRenderer
 } from 'three'
 import { Geometry } from '../converter/Geometry'
@@ -60,7 +61,7 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public getCount(): number {
-    return this.geometry.index.count
+    return this.geometry.index.count * this.renderViews.length
   }
 
   public get materials(): Material[] {
@@ -421,11 +422,11 @@ export default class InstancedMeshBatch implements Batch {
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
     this.mesh.frustumCulled = false
-    this.mesh.geometry.addGroup(0, this.getCount(), 0)
+    // this.mesh.geometry.addGroup(0, this.getCount(), 0)
 
-    batchObjects.forEach((element: BatchObject) => {
-      element.renderView.disposeGeometry()
-    })
+    // batchObjects.forEach((element: BatchObject) => {
+    //   element.renderView.disposeGeometry()
+    // })
   }
 
   public getRenderView(index: number): NodeRenderView {
@@ -474,13 +475,20 @@ export default class InstancedMeshBatch implements Batch {
     if (color) {
       this.geometry.setAttribute('color', new Float32BufferAttribute(color, 3))
     }
+    let indexBuffer = null
+    if (position.length >= 65535 || indices.length >= 65535) {
+      indexBuffer = new Uint32BufferAttribute(indices, 1)
+    } else {
+      indexBuffer = new Uint16BufferAttribute(indices, 1)
+    }
+    this.geometry.setIndex(indexBuffer)
 
-    const buffer = new Float32Array(position.length / 3)
-    this.gradientIndexBuffer = new InstancedBufferAttribute(buffer, 1)
-    this.gradientIndexBuffer.setUsage(DynamicDrawUsage)
-    this.geometry.setAttribute('gradientIndex', this.gradientIndexBuffer)
-    this.updateGradientIndexBufferData(0, buffer.length, 0)
-    this.updateGradientIndexBuffer()
+    // const buffer = new Float32Array(position.length / 3)
+    // this.gradientIndexBuffer = new InstancedBufferAttribute(buffer, 1)
+    // this.gradientIndexBuffer.setUsage(DynamicDrawUsage)
+    // this.geometry.setAttribute('gradientIndex', this.gradientIndexBuffer)
+    // this.updateGradientIndexBufferData(0, buffer.length, 0)
+    // this.updateGradientIndexBuffer()
 
     Geometry.computeVertexNormals(this.geometry, position)
 

@@ -589,7 +589,22 @@ export default class SpeckleRenderer {
       this.viewer.getWorldTree().getRenderTree(subtreeId)
     )
     for await (const instancedBatch of instancedGenerator) {
-      instancedBatch
+      if (!instancedBatch) {
+        continue
+      }
+      this.addBatch(instancedBatch, subtreeGroup)
+      if (instancedBatch.geometryType === GeometryType.MESH) {
+        this.updateDirectLights()
+      }
+
+      if (this.cancel[subtreeId]) {
+        generator.return()
+        this.removeRenderTree(subtreeId)
+        delete this.cancel[subtreeId]
+        break
+      }
+      currentBatchCount++
+      yield
     }
 
     this._renderOverride = null

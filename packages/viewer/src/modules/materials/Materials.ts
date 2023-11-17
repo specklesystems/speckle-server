@@ -569,7 +569,7 @@ export default class Materials {
     this.defaultGradientTextureData = await Assets.getTextureData(defaultGradient)
   }
 
-  private makeMeshMaterial(materialData: RenderMaterial): Material {
+  private makeMeshMaterial(materialData: RenderMaterial, rte: boolean): Material {
     const mat = new SpeckleStandardMaterial(
       {
         color: materialData.color,
@@ -579,7 +579,7 @@ export default class Materials {
         opacity: materialData.opacity,
         side: DoubleSide
       },
-      ['USE_RTE']
+      rte ? ['USE_RTE'] : []
     )
     mat.vertexColors = materialData.vertexColors
     mat.transparent = mat.opacity < 1 ? true : false
@@ -663,12 +663,13 @@ export default class Materials {
   public getMaterial(
     hash: number,
     material: RenderMaterial | DisplayStyle,
-    type: GeometryType
+    type: GeometryType,
+    rte = true
   ): Material {
     let mat
     switch (type) {
       case GeometryType.MESH:
-        mat = this.getMeshMaterial(hash, material as RenderMaterial)
+        mat = this.getMeshMaterial(hash, material as RenderMaterial, rte)
         break
       case GeometryType.LINE:
         mat = this.getLineMaterial(hash, material)
@@ -692,9 +693,9 @@ export default class Materials {
     return mat
   }
 
-  private getMeshMaterial(hash: number, material: RenderMaterial) {
+  private getMeshMaterial(hash: number, material: RenderMaterial, rte: boolean) {
     if (!this.materialMap[hash]) {
-      this.materialMap[hash] = this.makeMeshMaterial(material)
+      this.materialMap[hash] = this.makeMeshMaterial(material, rte)
     }
     return this.materialMap[hash]
   }

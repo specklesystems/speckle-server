@@ -68,7 +68,7 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
     renderer.render(this.scene, this.camera)
     if (this.onAfterRenderOpaque) this.onAfterRenderOpaque()
     if (this.onBeforeRenderTransparent) this.onBeforeRenderTransparent()
-    renderer.render(this.scene, this.camera)
+    // renderer.render(this.scene, this.camera)
     if (this.onAfterRenderTransparent) this.onAfterRenderTransparent()
 
     if (this.clearColor) {

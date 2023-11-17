@@ -21,6 +21,7 @@ import {
   FilteringExtension
 } from '@speckle/viewer'
 import { BoxSelection } from './BoxSelection'
+import { InstancingTests } from './InstancingTests'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -46,24 +47,26 @@ const createViewer = async (containerName: string, stream: string) => {
 
   const cameraController = viewer.createExtension(CameraController)
   const selection = viewer.createExtension(SelectionExtension)
-  const sections = viewer.createExtension(SectionTool)
-  const sectionOutlines = viewer.createExtension(SectionOutlines)
+  // const sections = viewer.createExtension(SectionTool)
+  // const sectionOutlines = viewer.createExtension(SectionOutlines)
   const measurements = viewer.createExtension(MeasurementsExtension)
   const filtering = viewer.createExtension(FilteringExtension)
   const explode = viewer.createExtension(ExplodeExtension)
   const diff = viewer.createExtension(DiffExtension)
   const boxSelect = viewer.createExtension(BoxSelection)
+  // const test = viewer.createExtension(InstancingTests)
   // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
   selection // use it
-  sections // use it
-  sectionOutlines // use it
+  // sections // use it
+  // sectionOutlines // use it
   measurements // use it
   filtering // use it
   explode // use it
   diff // use it
   // rotateCamera // use it
   boxSelect // use it
+  // test.init() // use it
 
   const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
 
@@ -256,7 +259,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/f92e060177/commits/038a587267'
     // 'https://latest.speckle.dev/streams/3f895e614f/commits/8a3e424997'
     // 'https://latest.speckle.dev/streams/f92e060177/commits/f51ee777d5'
-    'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
+    // 'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
     // Big curves
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
     // 'https://speckle.xyz/streams/7ce9010d71/commits/afda4ffdf8'
@@ -344,7 +347,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/d721ab8df4'
     // Big ass tower
     // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/cef3f40be2'
-    // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/f4e11a8b01'
+    'https://latest.speckle.dev/streams/0cf9e393c4/commits/f4e11a8b01'
   )
 }
 

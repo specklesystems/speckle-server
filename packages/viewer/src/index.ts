@@ -65,6 +65,7 @@ import { SpeckleType } from './modules/loaders/GeometryConverter'
 import Input, { InputEvent } from './modules/input/Input'
 import { GeometryType } from './modules/batching/Batch'
 import MeshBatch from './modules/batching/MeshBatch'
+import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial'
 
 export {
   Viewer,
@@ -101,7 +102,8 @@ export {
   InputEvent,
   ObjectLayers,
   GeometryType,
-  MeshBatch
+  MeshBatch,
+  SpeckleStandardMaterial
 }
 
 export type {

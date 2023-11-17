@@ -136,7 +136,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
   }
 
   private TransformToGeometryData(node: NodeData): GeometryData {
-    const conversionFactor = getConversionFactor(node.raw.units)
+    // const conversionFactor = getConversionFactor(node.raw.units)
     /**
      * Speckle matrices are row major. Three's 'fromArray' function assumes
      * the matrix is in column major. That's why we transpose it here.
@@ -150,15 +150,15 @@ export class SpeckleGeometryConverter extends GeometryConverter {
      *  Not 100% sure on this if the original block matrix containts it's own scale + rotation
      */
     const transform: Matrix4 = new Matrix4()
-      .makeScale(conversionFactor, conversionFactor, conversionFactor)
+      // .makeScale(conversionFactor, conversionFactor, conversionFactor)
       .multiply(matrix)
-      .multiply(
-        new Matrix4().makeScale(
-          1 / conversionFactor,
-          1 / conversionFactor,
-          1 / conversionFactor
-        )
-      )
+    // .multiply(
+    //   new Matrix4().makeScale(
+    //     1 / conversionFactor,
+    //     1 / conversionFactor,
+    //     1 / conversionFactor
+    //   )
+    // )
 
     return {
       attributes: null,
@@ -230,7 +230,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
   private MeshToGeometryData(node: NodeData): GeometryData {
     if (!node.raw) return
 
-    const conversionFactor = getConversionFactor(node.raw.units)
+    // const conversionFactor = getConversionFactor(node.raw.units)
     const indices = []
 
     if (!node.raw.vertices) return
@@ -280,11 +280,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         INDEX: indices,
         ...(colors && { COLOR: colors })
       },
-      bakeTransform: new Matrix4().makeScale(
-        conversionFactor,
-        conversionFactor,
-        conversionFactor
-      ),
+      bakeTransform: new Matrix4().makeScale(1, 1, 1),
       transform: null
     } as GeometryData
   }

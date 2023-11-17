@@ -70,12 +70,16 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
   }
 
   public setBatchMaterial(material: Material) {
-    this.batchMaterial = this.getCachedMaterial(material)
-    this.material = [this.batchMaterial]
+    this.batchMaterial = material //this.getCachedMaterial(material)
+    this.material = this.batchMaterial
   }
 
   public setBatchObjects(batchObjects: BatchObject[]) {
     this._batchObjects = batchObjects
+    for (let k = 0; k < batchObjects.length; k++) {
+      this.setMatrixAt(k, batchObjects[k].renderView.renderData.geometry.transform)
+    }
+    this.instanceMatrix.needsUpdate = true
   }
 
   public setOverrideMaterial(material: Material) {
@@ -104,6 +108,11 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
      *  so we force a refit in order to get the proper bounds value out of it
      */
     this.bvh.tas.refit()
+  }
+
+  public updateTransformsUniform() {}
+  public updateMaterialTransformsUniform(material: Material) {
+    material
   }
 
   public getBatchObjectMaterial(batchObject: BatchObject) {
