@@ -11,7 +11,10 @@ const { isSSLServer, getRedisUrl } = require('@/modules/shared/helpers/envHelper
 const { authLogger } = require('@/logging/logging')
 const { createRedisClient } = require('@/modules/shared/redis/redis')
 const { mixpanel, resolveMixpanelUserId } = require('@/modules/shared/utils/mixpanel')
-const { addToMailchimpAudience } = require('./services/mailchimp')
+const {
+  addToMailchimpAudience,
+  startMailchimpCustomerJourney
+} = require('./services/mailchimp')
 /**
  * TODO: Get rid of session entirely, we don't use it for the app and it's not really necessary for the auth flow, so it only complicates things
  * NOTE: it does seem used!
@@ -95,6 +98,7 @@ module.exports = async (app) => {
       if (newsletterConsent) {
         await addToMailchimpAudience(req.user.id)
       }
+      await startMailchimpCustomerJourney(req.user.id)
 
       const redirectUrl = urlObj.toString()
 

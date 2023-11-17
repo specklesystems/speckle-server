@@ -88,19 +88,33 @@ export function getMailchimpStatus() {
   return [true, 'true'].includes(process.env.MAILCHIMP_ENABLED || false)
 }
 
+export function getMailchimpOnboardingStatus() {
+  return [true, 'true'].includes(process.env.MAILCHIMP_ONBOARDING_ENABLED || false)
+}
+
 export function getMailchimpConfig() {
+  const apiKey = process.env.MAILCHIMP_API_KEY
+  const serverPrefix = process.env.MAILCHIMP_SERVER_PREFIX
+  const listId = process.env.MAILCHIMP_LIST_ID
+  const onboardingJourneyId = process.env.MAILCHIMP_ONBOARDING_JOURNEY_ID
+  const onboardingStepId = process.env.MAILCHIMP_ONBOARDING_STEP_ID
+
   if (
-    !process.env.MAILCHIMP_API_KEY ||
-    !process.env.MAILCHIMP_SERVER_PREFIX ||
-    !process.env.MAILCHIMP_LIST_ID
+    !apiKey ||
+    !serverPrefix ||
+    !listId ||
+    !onboardingJourneyId ||
+    !onboardingStepId
   ) {
     throw new MisconfiguredEnvironmentError('Mailchimp is not configured')
   }
 
   return {
-    apiKey: process.env.MAILCHIMP_API_KEY,
-    serverPrefix: process.env.MAILCHIMP_SERVER_PREFIX,
-    listId: process.env.MAILCHIMP_LIST_ID
+    apiKey,
+    serverPrefix,
+    listId,
+    onboardingJourneyId,
+    onboardingStepId
   }
 }
 

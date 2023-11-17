@@ -4,7 +4,8 @@ import { logger } from '@/logging/logging'
 import { md5 } from '@/modules/shared/helpers/cryptoHelper'
 import {
   getMailchimpConfig,
-  getMailchimpStatus
+  getMailchimpStatus,
+  getMailchimpOnboardingStatus
 } from '@/modules/shared/helpers/envHelper'
 import { getUserById } from '@/modules/core/services/users'
 
@@ -49,4 +50,33 @@ async function addToMailchimpAudience(userId: string) {
   }
 }
 
-export { addToMailchimpAudience }
+async function startMailchimpCustomerJourney(userId: string) {
+  try {
+    if (!getMailchimpStatus() || !getMailchimpOnboardingStatus()) return
+    const config = getMailchimpConfig() // Note: throws an error if not configured
+
+    mailchimp.setConfig({
+      apiKey: config.apiKey,
+      server: config.serverPrefix
+    })
+
+    const user = await getUserById({ userId })
+
+    if (!user) {
+      throw new Error(
+        'Could not register user for newsletter - no db user record found.'
+      )
+    }
+
+    await mailchimp.customerJourneys.trigger(
+      config.onboardingJourneyId,
+      config.onboardingStepId,
+      {
+        email_address: user.email
+      }
+    )
+  } catch (err) {
+    logger.warn(err, 'Failed to start mailchimp customer onboarding journey.')
+  }
+}
+export { addToMailchimpAudience, startMailchimpCustomerJourney }
