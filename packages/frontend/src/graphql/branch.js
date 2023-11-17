@@ -10,7 +10,7 @@ export const streamNavBranchesQuery = gql`
   query StreamAllBranches($streamId: String!, $cursor: String) {
     stream(id: $streamId) {
       id
-      branches(limit: 100, cursor: $cursor) {
+      branches(limit: 200, cursor: $cursor) {
         totalCount
         cursor
         items {
