@@ -259,7 +259,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/f92e060177/commits/038a587267'
     // 'https://latest.speckle.dev/streams/3f895e614f/commits/8a3e424997'
     // 'https://latest.speckle.dev/streams/f92e060177/commits/f51ee777d5'
-    // 'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
+    'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
     // Big curves
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
     // 'https://speckle.xyz/streams/7ce9010d71/commits/afda4ffdf8'
@@ -347,7 +347,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/d721ab8df4'
     // Big ass tower
     // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/cef3f40be2'
-    'https://latest.speckle.dev/streams/0cf9e393c4/commits/f4e11a8b01'
+    // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/f4e11a8b01'
   )
 }
 

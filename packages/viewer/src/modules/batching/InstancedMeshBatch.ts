@@ -32,7 +32,12 @@ export default class InstancedMeshBatch implements Batch {
 
   public get bounds(): Box3 {
     // return this.mesh.BVH.getBoundingBox(new Box3())
-    return this.geometry.boundingBox
+    const bounds = new Box3()
+    for (let k = 0; k < this.renderViews.length; k++) {
+      bounds.union(this.renderViews[k].aabb)
+    }
+
+    return bounds
   }
 
   public get drawCalls(): number {
@@ -414,7 +419,12 @@ export default class InstancedMeshBatch implements Batch {
     this.mesh.setBatchObjects(batchObjects)
     this.mesh.setBatchMaterial(this.batchMaterial)
     this.mesh.buildBVH()
-    this.geometry.boundingBox = this.mesh.BVH.getBoundingBox(new Box3())
+    const bounds = new Box3()
+    for (let k = 0; k < this.renderViews.length; k++) {
+      bounds.union(this.renderViews[k].aabb)
+    }
+
+    this.geometry.boundingBox = bounds //this.mesh.BVH.getBoundingBox(new Box3())
     this.geometry.boundingSphere = this.geometry.boundingBox.getBoundingSphere(
       new Sphere()
     )

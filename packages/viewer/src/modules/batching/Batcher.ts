@@ -45,8 +45,13 @@ export default class Batcher {
     //   .getInstancedRenderableRenderViews(...[SpeckleType.Mesh])
     //   .sort((a, b) => +(a.renderData.id. === b.renderData.id))
     // console.log(renderViews)
+    const pause = new AsyncPause()
     const instanceGroups = tree.getInstances('1')
     for (const g in instanceGroups) {
+      pause.tick(100)
+      if (pause.needsWait) {
+        await pause.wait(50)
+      }
       const rvs = tree.getRenderTree().getRenderViewsForNodeId(g)
       if (rvs.length) {
         const materialHash = rvs[0].renderMaterialHash

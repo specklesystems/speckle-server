@@ -4,6 +4,7 @@ import Materials from '../materials/Materials'
 import { NodeRenderData, NodeRenderView } from './NodeRenderView'
 import Logger from 'js-logger'
 import { GeometryConverter, SpeckleType } from '../loaders/GeometryConverter'
+import { Geometry } from '../converter/Geometry'
 
 export class RenderTree {
   private tree: WorldTree
@@ -41,11 +42,14 @@ export class RenderTree {
         if (node.model.renderView.renderData.geometry.bakeTransform) {
           transform.multiply(node.model.renderView.renderData.geometry.bakeTransform)
         }
-        node.model.renderView.renderData.geometry.transform = transform
-        // Geometry.transformGeometryData(
-        //   node.model.renderView.renderData.geometry,
-        //   transform
-        // )
+        if (node.model.instanced)
+          node.model.renderView.renderData.geometry.transform = transform
+        else {
+          Geometry.transformGeometryData(
+            node.model.renderView.renderData.geometry,
+            transform
+          )
+        }
         node.model.renderView.computeAABB()
         this._treeBounds.union(node.model.renderView.aabb)
       } else if (node.model.renderView.hasMetadata) {

@@ -110,7 +110,7 @@ export default class SpeckleRenderer {
   private sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
   private sunTarget: Object3D
   public viewer: Viewer // TEMPORARY
-  private pipeline: Pipeline
+  public pipeline: Pipeline
 
   private _shadowcatcher: Shadowcatcher = null
   private cancel: { [subtreeId: string]: boolean } = {}

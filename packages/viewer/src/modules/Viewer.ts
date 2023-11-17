@@ -308,6 +308,7 @@ export class Viewer extends EventEmitter implements IViewer {
           const extension = this.getExtension(CameraController)
           if (extension) {
             extension.setCameraView([], false)
+            this.speckleRenderer.pipeline.render()
           }
         }
       }
