@@ -292,18 +292,28 @@ spec:
           - name: MAILCHIMP_API_KEY
             valueFrom:
               secretKeyRef:
-                name: {{ default .Values.secretName ((.Values.server.mailchimp).apikey).secretName }}
-                key: {{ default "mailchimp_apikey" ((.Values.server.mailchimp).apikey).secretKey }}
+                name: {{ default .Values.secretName ((.Values.server.mailchimp).apiKey).secretName }}
+                key: {{ default "mailchimp_apikey" ((.Values.server.mailchimp).apiKey).secretKey }}
           - name: MAILCHIMP_SERVER_PREFIX
             valueFrom:
               secretKeyRef:
-                name: {{ default .Values.secretName ((.Values.server.mailchimp).serverprefix).secretName }}
-                key: {{ default "mailchimp_serverprefix" ((.Values.server.mailchimp).serverprefix).secretKey }}
+                name: {{ default .Values.secretName ((.Values.server.mailchimp).serverPrefix).secretName }}
+                key: {{ default "mailchimp_serverprefix" ((.Values.server.mailchimp).serverPrefix).secretKey }}
           - name: MAILCHIMP_LIST_ID
             valueFrom:
               secretKeyRef:
-                name: {{ default .Values.secretName ((.Values.server.mailchimp).listid).secretName }}
-                key: {{ default "mailchimp_listid" ((.Values.server.mailchimp).listid).secretKey }}
+                name: {{ default .Values.secretName ((.Values.server.mailchimp).listId).secretName }}
+                key: {{ default "mailchimp_listid" ((.Values.server.mailchimp).listId).secretKey }}
+          - name: MAILCHIMP_ONBOARDING_JOURNEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName ((.Values.server.mailchimp).onboardingJourneyId).secretName }}
+                key: {{ default "mailchimp_onboardingjourneyid" ((.Values.server.mailchimp).onboardingJourneyId).secretKey }}
+          - name: MAILCHIMP_ONBOARDING_STEP_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName ((.Values.server.mailchimp).onboardingStepId).secretName }}
+                key: {{ default "mailchimp_onboardingstepid" ((.Values.server.mailchimp).onboardingStepId).secretKey }}
           {{- end }}
 
           # *** Tracking / Tracing ***
