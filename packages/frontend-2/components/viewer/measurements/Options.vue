@@ -69,7 +69,7 @@ const typeOptions = [
     description: 'Lorem ipsum dolor sit amet'
   },
   {
-    title: 'Perpindicular',
+    title: 'Perpendicular',
     description: 'Sed do eiusmod tempor.'
   }
 ]
