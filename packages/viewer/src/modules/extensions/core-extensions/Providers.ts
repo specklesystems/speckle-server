@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
 import { PerspectiveCamera, OrthographicCamera, Vector3, Plane, Box3 } from 'three'
 import { SpeckleView } from '../../..'
 import { SectionToolEvent } from '../SectionTool'
