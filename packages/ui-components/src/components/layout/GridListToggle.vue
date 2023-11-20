@@ -3,11 +3,12 @@
     class="flex items-center justify-center rounded bg-foundation h-8 w-8 shadow cursor-pointer text-foreground"
     @click="onClick"
   >
-    <Component :is="currentIcon" class="h-6 w-6" />
+    <Component :is="currentIcon" class="h-5 w-5" />
   </button>
 </template>
 <script setup lang="ts">
-import { Bars3Icon, Squares2X2Icon } from '@heroicons/vue/24/solid'
+import { Bars3Icon } from '@heroicons/vue/24/solid'
+import { Squares2X2Icon } from '@heroicons/vue/24/outline'
 import { computed } from 'vue'
 import { GridListToggleValue } from '~~/src/helpers/layout/components'
 

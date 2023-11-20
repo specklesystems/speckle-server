@@ -1,6 +1,6 @@
 <template>
   <main
-    class="h-screen w-screen flex items-center justify-center overflow-y-auto overflow-x-hidden"
+    class="h-[100dvh] w-screen flex items-center justify-center overflow-y-auto overflow-x-hidden"
   >
     <div class="absolute inset-0 pointer-events-none p-4 text-right">
       <FormButton size="xs" text class="pointer-events-auto" @click="onThemeClick">

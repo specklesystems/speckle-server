@@ -19,7 +19,7 @@
         <!-- <div class="relative flex"> -->
         <ListboxButton ref="listboxButton" v-slot="{ open }" :class="buttonClasses">
           <div class="flex items-center justify-between w-full">
-            <div class="block truncate grow text-left">
+            <div class="block truncate grow text-left text-xs sm:text-sm">
               <template
                 v-if="!wrappedValue || (isArray(wrappedValue) && !wrappedValue.length)"
               >
@@ -163,7 +163,12 @@
         </Transition>
       </div>
     </Listbox>
-    <p v-if="helpTipId" :id="helpTipId" class="mt-2 text-sm" :class="helpTipClasses">
+    <p
+      v-if="helpTipId"
+      :id="helpTipId"
+      class="mt-2 text-xs sm:text-sm"
+      :class="helpTipClasses"
+    >
       {{ helpTip }}
     </p>
   </div>

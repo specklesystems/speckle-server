@@ -501,15 +501,15 @@
           "description": "Enables the server side admin authz override",
           "default": false
         },
-        "onboardingStreamId": {
-          "type": "string",
-          "description": "The id of the stream to be used for onboarding new users",
-          "default": ""
-        },
         "max_object_size_mb": {
           "type": "number",
           "description": "The maximum size of an individual object which can be uploaded to the server",
           "default": 10
+        },
+        "max_project_models_per_page": {
+          "type": "number",
+          "description": "The maximum number of models that can be returned in a single page of a query for all models of a project",
+          "default": 500
         },
         "speckleAutomateUrl": {
           "type": "string",

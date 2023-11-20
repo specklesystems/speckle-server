@@ -1,55 +1,56 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="md"
-    title="Get your colleagues in!"
-    :buttons="dialogButtons"
-  >
+  <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
+    <template #header>Get your colleagues in!</template>
     <form @submit="onSubmit">
       <div class="flex flex-col space-y-4 text-foreground">
-        <p>
+        <p class="text-sm mb-3">
           Speckle will send a server invite link to the email(-s) below. You can also
           add a personal message if you want to. To add multiple e-mails, seperate them
           with commas.
         </p>
-        <FormTextInput
-          :custom-icon="EnvelopeIcon"
-          name="emailsString"
-          label="E-mail"
-          placeholder="example@example.com, example2@example.com"
-          :rules="[isRequired, isOneOrMultipleEmails]"
-          :disabled="anyMutationsLoading"
-        />
-        <FormTextArea
-          name="message"
-          label="Message"
-          :disabled="anyMutationsLoading"
-          :rules="[isStringOfLength({ maxLength: 1024 })]"
-          placeholder="Write an optional invitation message!"
-        />
-        <div
-          class="grow flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center"
-        >
-          <div
-            class="grow flex flex-col space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0"
-          >
-            <FormSelectProjects
-              v-model="selectedProject"
-              label="(Optional) Select project to invite to"
-              class="w-full sm:w-60"
-              owned-only
+        <div class="flex flex-col sm:flex-row gap-4">
+          <div class="w-full sm:w-8/12">
+            <FormTextInput
+              :custom-icon="EnvelopeIcon"
+              name="emailsString"
+              label="E-mail"
               show-label
+              placeholder="example@example.com, example2@example.com"
+              :rules="[isRequired, isOneOrMultipleEmails]"
+              :disabled="anyMutationsLoading"
             />
+          </div>
+          <div class="w-full sm:w-4/12">
             <FormSelectServerRoles
               v-if="allowServerRoleSelect"
               v-model="serverRole"
               label="Select server role"
               show-label
+              fixed-height
               :allow-guest="isGuestMode"
               :allow-admin="isAdmin"
+              mount-menu-on-body
             />
           </div>
         </div>
+
+        <FormTextArea
+          name="message"
+          show-label
+          label="Message"
+          :disabled="anyMutationsLoading"
+          :rules="[isStringOfLength({ maxLength: 1024 })]"
+          placeholder="Write an optional invitation message!"
+        />
+        <FormSelectProjects
+          v-model="selectedProject"
+          label="(Optional) Select project to invite to"
+          class="w-full sm:w-60"
+          owned-only
+          mount-menu-on-body
+          fixed-height
+          show-label
+        />
       </div>
     </form>
   </LayoutDialog>

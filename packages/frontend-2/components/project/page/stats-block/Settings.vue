@@ -3,11 +3,13 @@
     <template #top>
       <div class="flex items-center">
         <div class="flex items-center justify-between w-full">
-          <div class="flex items-center gap-0.5 flex-grow">
+          <div class="flex items-center gap-0.5 flex-grow select-none">
             <Cog6ToothIcon class="h-5 w-5" />
-            <span class="text-xs">Settings</span>
+            <span class="text-sm">Settings</span>
           </div>
-          <div class="text-xs">{{ project.role?.split(':').reverse()[0] }}</div>
+          <div class="flex items-center text-xs">
+            {{ project.role?.split(':').reverse()[0] }}
+          </div>
         </div>
       </div>
     </template>
@@ -27,7 +29,7 @@
   </ProjectPageStatsBlock>
 </template>
 <script setup lang="ts">
-import { Cog6ToothIcon } from '@heroicons/vue/20/solid'
+import { Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ProjectPageStatsBlockTeamFragment } from '~~/lib/common/generated/gql/graphql'
 

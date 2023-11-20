@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      class="absolute z-20 flex h-screen flex-col space-y-2 bg-green-300/0 px-2 pt-[4.2rem]"
+      class="absolute z-20 flex h-[100dvh] flex-col space-y-2 bg-green-300/0 px-2 pt-[4.2rem]"
     >
       <ViewerControlsButtonToggle
         v-tippy="modelsShortcut"
@@ -101,7 +101,7 @@
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 mx-14 mt-[4rem] mb-4 max-h-[calc(100vh-5.5rem)] w-64 sm:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
+      :class="`simple-scrollbar absolute z-10 mx-14 mt-[4rem] mb-4 max-h-[calc(100dvh-5.5rem)] w-64 sm:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
@@ -175,15 +175,11 @@ import {
   useCameraUtilities,
   useSectionBoxUtilities
 } from '~~/lib/viewer/composables/ui'
-import { useBreakpoints } from '@vueuse/core'
-import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-
 import {
   onKeyboardShortcut,
   ModifierKeys,
   getKeyboardShortcutTitle
 } from '@speckle/ui-components'
-
 import {
   useInjectedViewerLoadedResources,
   useInjectedViewerInterfaceState
@@ -197,12 +193,11 @@ const {
 } = useCameraUtilities()
 
 import { AutomationRunStatus, AutomationRun } from '~~/lib/common/generated/gql/graphql'
+import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
-
-const breakpoints = useBreakpoints(TailwindBreakpoints)
 
 const allAutomationRuns = computed(() => {
   const allAutomationStatuses = modelsAndVersionIds.value
@@ -302,7 +297,7 @@ const sectionBoxShortcut = ref(
   `Section Box (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'b'])})`
 )
 
-const isSmallerOrEqualSM = computed(() => breakpoints.smallerOrEqual('sm').value)
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const toggleActiveControl = (control: ActiveControl) =>
   activeControl.value === control
@@ -366,7 +361,11 @@ const scrollControlsToBottom = () => {
   //   scrollToBottom(scrollableControlsContainer.value)
 }
 
-watch(isSmallerOrEqualSM, (newVal) => {
+onMounted(() => {
+  activeControl.value = isSmallerOrEqualSm.value ? 'none' : 'models'
+})
+
+watch(isSmallerOrEqualSm, (newVal) => {
   activeControl.value = newVal ? 'none' : 'models'
 })
 </script>

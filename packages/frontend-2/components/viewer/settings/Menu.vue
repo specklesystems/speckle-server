@@ -2,7 +2,7 @@
   <ViewerControlsButtonToggle
     v-tippy="'Free Orbit'"
     flat
-    :active="localViewerSettings.turntableMode"
+    :active="!localViewerSettings.turntableMode"
     secondary
     @click="toggleTurntableMode()"
   >

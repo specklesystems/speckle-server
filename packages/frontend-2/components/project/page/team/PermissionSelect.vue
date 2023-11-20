@@ -13,7 +13,7 @@
     class="min-w-[85px]"
   >
     <template #something-selected="{ value }">
-      <div class="text-normal">
+      <div class="text-normal text-right">
         {{ isArray(value) ? value[0].title : value.title }}
       </div>
     </template>

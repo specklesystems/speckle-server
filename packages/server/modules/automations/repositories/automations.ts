@@ -1,3 +1,4 @@
+import { Logger } from '@/logging/logging'
 import {
   AutomationFunctionRunRecord,
   AutomationFunctionRunsResultVersionRecord,
@@ -52,12 +53,14 @@ export const upsertAutomationRunData = async (automationRun: AutomationRunRecord
 }
 
 export const upsertAutomationFunctionRunData = async (
-  automationFunctionRuns: AutomationFunctionRunRecord | AutomationFunctionRunRecord[]
+  automationFunctionRuns: AutomationFunctionRunRecord | AutomationFunctionRunRecord[],
+  logger: Logger
 ) => {
   const runs = isArray(automationFunctionRuns)
     ? automationFunctionRuns
     : [automationFunctionRuns]
 
+  logger.info({ runs }, 'Upserting runs.')
   const normalizedModels = runs.map((run) => {
     return pick(
       run,
@@ -65,6 +68,7 @@ export const upsertAutomationFunctionRunData = async (
     ) as AutomationFunctionRunRecord
   })
 
+  logger.info({ normalizedModels }, 'Normalized runs.')
   return await AutomationFunctionRuns.knex()
     .insert(normalizedModels)
     .onConflict([

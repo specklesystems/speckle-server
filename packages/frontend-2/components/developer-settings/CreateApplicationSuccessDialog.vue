@@ -1,11 +1,6 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="sm"
-    title="Create Application"
-    :buttons="dialogButtons"
-    max-height
-  >
+  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
+    <template #header>Create Application</template>
     <div class="flex flex-col gap-4 text-sm text-foreground">
       <div class="flex flex-col gap-3">
         <h6 class="h6 font-bold text-center">Your new app is ready</h6>
@@ -59,11 +54,11 @@ const props = defineProps<{
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const dialogButtons = [
+const dialogButtons = computed(() => [
   {
     text: 'Close',
     props: { color: 'primary', fullWidth: true },
     onClick: () => (isOpen.value = false)
   }
-]
+])
 </script>
