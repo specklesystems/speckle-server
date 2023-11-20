@@ -66,8 +66,7 @@ export default defineNuxtPlugin(async () => {
     (await tryHoistBinding<ITestBinding>(ITestBindingKey)) ||
     hoistMockBinding(new MockedTestBinding(), ITestBindingKey)
 
-  // Actual bindings follow below.
-
+  // Actual || mock bindings follow below.
   const configBinding =
     (await tryHoistBinding<IConfigBinding>(IConfigBindingKey)) ||
     hoistMockBinding(new MockedConfigBinding(), IConfigBindingKey)

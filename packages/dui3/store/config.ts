@@ -51,8 +51,6 @@ export const useConfigStore = defineStore('configStore', () => {
   const onboardingSkipped = computed(() => globalConfig.value.onboardingSkipped)
 
   const onboardingCompleted = computed(() => {
-    console.log(onboardings.value)
-
     return Object.values(onboardings.value).every((o) => o.completed)
   })
 
