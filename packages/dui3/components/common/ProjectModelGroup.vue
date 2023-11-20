@@ -46,7 +46,7 @@
         </template>
         <div>
           <button
-            class="flex w-full text-xs text-center justify-center bg-primary-muted hover:bg-primary hover:text-foreground-on-primary transition rounded-md py-2"
+            class="flex w-full text-xs text-center justify-center bg-primary-muted hover:bg-primary hover:text-foreground-on-primary transition rounded-md py-1"
           >
             Add
           </button>

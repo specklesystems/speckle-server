@@ -62,7 +62,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
   const addModel = async (model: IModelCard) => {
     await app.$baseBinding.addModel(model)
-    documentModelStore.value.models.push(model)
+    documentModelStore.value.models = documentModelStore.value.models.concat([model])
   }
 
   const highlightModel = async (modelId: string) => {

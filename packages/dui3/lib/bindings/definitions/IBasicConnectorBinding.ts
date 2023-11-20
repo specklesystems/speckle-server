@@ -3,7 +3,6 @@
 import { BaseBridge } from '~~/lib/bridge/base'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 import { IModelCard } from '~~/lib/models/card'
-import { ISendFilter } from '~~/lib/models/card/send'
 
 export const IBasicConnectorBindingKey = 'baseBinding'
 
@@ -13,6 +12,7 @@ export interface IBasicConnectorBinding
   // Various
   getSourceApplicationName: () => Promise<string>
   getSourceApplicationVersion: () => Promise<string>
+  getConnectorVersion: () => Promise<string>
   getDocumentInfo: () => Promise<DocumentInfo>
 
   // Document state calls
@@ -21,9 +21,6 @@ export interface IBasicConnectorBinding
   updateModel: (model: IModelCard) => Promise<void>
   highlightModel: (modelCardId: string) => Promise<void>
   removeModel: (model: IModelCard) => Promise<void>
-
-  // FILTERS AND TYPES
-  getSendFilters: () => Promise<ISendFilter[]>
 }
 
 export interface IBasicConnectorBindingHostEvents {
@@ -58,15 +55,66 @@ export class MockedBaseBinding extends BaseBridge {
     super()
   }
 
-  public async getSourceApplicationName() {
-    return 'Mocks'
+  private documentModelStore: IModelCard[] = [
+    {
+      typeDiscriminator: 'SenderModelCard',
+      id: 'sender_test',
+      projectId: useRuntimeConfig().public.speckleSampleProjectId,
+      modelId: useRuntimeConfig().public.speckleSampleModelId,
+      accountId: useRuntimeConfig().public.speckleAccountId,
+      expired: false,
+      lastLocalUpdate: '',
+      notifications: [],
+      sendFilter: {
+        name: 'Selection',
+        selectedObjectIds: ['test'],
+        summary: 'Test',
+        typeDiscriminator: 'RhinoSelectionFilter'
+      }
+    } as IModelCard,
+    {
+      typeDiscriminator: 'ReceiverModelCard',
+      id: 'receiver_test',
+      projectId: useRuntimeConfig().public.speckleSampleProjectId,
+      modelId: useRuntimeConfig().public.speckleSampleModelId,
+      accountId: useRuntimeConfig().public.speckleAccountId,
+      expired: false,
+      lastLocalUpdate: '',
+      notifications: []
+    }
+  ]
+
+  public addModel(model: IModelCard) {
+    this.documentModelStore = this.documentModelStore.concat([model])
   }
 
-  public async getSourceApplicationVersion() {
+  public removeModel(model: IModelCard) {
+    const modelIndex = this.documentModelStore.findIndex((m) => m.id === model.id)
+    if (modelIndex > -1) {
+      this.documentModelStore = this.documentModelStore.splice(modelIndex, 1)
+    }
+  }
+
+  public updateModel(model: IModelCard) {
+    const modelIndex = this.documentModelStore.findIndex(
+      (m) => m.modelId === model.modelId
+    )
+    this.documentModelStore[modelIndex] = model
+  }
+
+  public getConnectorVersion() {
+    return '0.0.0'
+  }
+
+  public getSourceApplicationName() {
+    return 'Mock'
+  }
+
+  public getSourceApplicationVersion() {
     return Math.random().toString()
   }
 
-  public async getDocumentInfo() {
+  public getDocumentInfo() {
     return {
       name: 'Mocked File',
       location: 'www',
@@ -74,7 +122,13 @@ export class MockedBaseBinding extends BaseBridge {
     }
   }
 
-  public async showDevTools() {
+  public getDocumentState() {
+    return {
+      models: this.documentModelStore
+    }
+  }
+
+  public showDevTools() {
     console.log('Mocked bindings cannot do this')
   }
 }

@@ -1,7 +1,13 @@
 <template>
   <div class="flex items-center space-x-2">
     <UserAvatar :user="modelDetails.author" size="sm" />
-    <span>{{ modelDetails.displayName }}</span>
+    <span v-tippy="modelDetails.displayName" class="truncate">
+      {{
+        modelDetails.displayName.length > 8
+          ? modelDetails.displayName.slice(0, 8) + '...'
+          : modelDetails.displayName
+      }}
+    </span>
   </div>
   <div class="flex items-center space-x-2">
     <FormButton

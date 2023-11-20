@@ -2,6 +2,16 @@
   <div
     class="flex flex-col items-center justify-center h-[calc(100vh-16rem)] px-4 space-y-2"
   >
+    <Portal to="navigation">
+      <FormButton
+        to="/onboardingIndex"
+        size="sm"
+        :icon-left="ArrowLeftIcon"
+        class="ml-5"
+      >
+        Onboarding
+      </FormButton>
+    </Portal>
     <!-- STEP 0 -->
     <div class="space-y-4 w-full">
       <div class="h3">Let's publish our first model to Speckle.</div>
@@ -72,10 +82,14 @@ import { SelectionInfo } from '~~/lib/bindings/definitions/ISelectionBinding'
 import { useSelectionStore } from '~~/store/selection'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'
+import { useConfigStore } from '~/store/config'
 import { nanoid } from 'nanoid'
 import { ValidationHelpers } from '@speckle/ui-components'
 import { ModelsSelectItemType, ProjectsSelectItemType } from 'lib/form/select/types'
 import { ISendFilter, ISenderModelCard } from '~~/lib/models/card/send'
+import { ArrowLeftIcon } from '@heroicons/vue/20/solid'
+
+const configStore = useConfigStore()
 
 const store = useHostAppStore()
 const router = useRouter()
@@ -153,6 +167,7 @@ const getOrCreateModelCard = async () => {
 const publish = async () => {
   const modelCard = await getOrCreateModelCard()
   if (!modelCard) return // throw here error
+  configStore.completeOnboarding('send')
   router.push('/')
   // Sketchup freezes immediately after routing, by setting timeout we can get correct states
   setTimeout(async () => {

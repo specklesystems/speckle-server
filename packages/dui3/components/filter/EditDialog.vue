@@ -46,11 +46,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ISenderModelCard } from '~~/lib/bindings/definitions/ISendBinding'
 import {
+  ISenderModelCard,
   ISendFilter,
   IDirectSelectionSendFilter
-} from '~~/lib/bindings/definitions/ISendBinding'
+} from 'lib/models/card/send'
 import { useHostAppStore } from '~~/store/hostApp'
 
 const props = defineProps<{

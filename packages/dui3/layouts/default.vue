@@ -1,7 +1,7 @@
 <template>
-  <div class="min-h-full">
+  <div class="min-h-screen flex flex-col">
     <HeaderNavBar />
-    <main class="px-1 pb-4 mt-16">
+    <main class="flex-1 px-1 mt-14">
       <slot />
     </main>
   </div>

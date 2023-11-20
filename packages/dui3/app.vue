@@ -1,14 +1,14 @@
 <template>
-  <div id="speckle" class="bg-foundation-page text-foreground">
+  <div id="speckle" class="bg-foundation-page text-foreground overflow-auto">
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
   </div>
 </template>
 <script setup lang="ts">
-import { useUiConfigStore } from '~/store/uiConfig'
+import { useConfigStore } from '~/store/config'
 
-const uiConfigStore = useUiConfigStore()
+const uiConfigStore = useConfigStore()
 const { isDarkTheme } = storeToRefs(uiConfigStore)
 
 useHead({
@@ -20,9 +20,10 @@ useHead({
     class: computed(() => (isDarkTheme.value ? `dark` : ``))
   },
   bodyAttrs: {
-    class: 'simple-scrollbar bg-foundation-page text-foreground'
+    class: 'simple-scrollbar bg-foundation-page text-foreground '
   },
   // For standalone vue devtools see: https://devtools.vuejs.org/guide/installation.html#standalone
   script: process.dev ? ['http://localhost:8098'] : []
 })
 </script>
+store/config
