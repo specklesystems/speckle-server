@@ -47,6 +47,7 @@ export const Default: SwitchStoryType = {
     }
   }),
   args: {
-    modelValue: false
+    modelValue: false,
+    size: 'small'
   }
 }

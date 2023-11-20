@@ -3,6 +3,7 @@
     <div
       class="absolute z-20 flex h-[100dvh] flex-col space-y-2 bg-green-300/0 px-2 pt-[4.2rem]"
     >
+      <!-- Models -->
       <ViewerControlsButtonToggle
         v-tippy="modelsShortcut"
         :active="activeControl === 'models'"
@@ -10,12 +11,23 @@
       >
         <CubeIcon class="h-5 w-5" />
       </ViewerControlsButtonToggle>
+
+      <!-- Explorer -->
       <ViewerControlsButtonToggle
         v-tippy="explorerShortcut"
         :active="activeControl === 'explorer'"
         @click="toggleActiveControl('explorer')"
       >
         <IconFileExplorer class="h-5 w-5" />
+      </ViewerControlsButtonToggle>
+
+      <!-- Measurements -->
+      <ViewerControlsButtonToggle
+        v-tippy="'Measurements'"
+        :active="activeControl === 'measurements'"
+        @click="toggleActiveControl('measurements')"
+      >
+        <IconMeasurements class="h-5 w-5" />
       </ViewerControlsButtonToggle>
 
       <!-- TODO -->
@@ -107,6 +119,11 @@
           : '-translate-x-[100%] opacity-0'
       }`"
     >
+      <div v-show="activeControl === 'measurements'">
+        <KeepAlive>
+          <div><ViewerMeasurementsOptions /></div>
+        </KeepAlive>
+      </div>
       <div v-show="resourceItems.length !== 0 && activeControl === 'models'">
         <KeepAlive>
           <div>
@@ -268,6 +285,7 @@ type ActiveControl =
   | 'filters'
   | 'discussions'
   | 'automate'
+  | 'measurements'
 
 const openAddModel = ref(false)
 
