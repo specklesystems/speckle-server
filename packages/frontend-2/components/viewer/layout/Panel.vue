@@ -1,6 +1,6 @@
 <template>
-  <div class="bg-foundation sm:rounded-lg overflow-hidden shadow">
-    <div class="sticky top-0 z-50 flex flex-col bg-foundation shadow-md">
+  <div class="bg-foundation sm:rounded-lg overflow-hidden shadow flex flex-col">
+    <div class="sticky top-0 z-50 flex flex-col bg-foundation">
       <div v-if="!hideClose" class="absolute top-2 right-2 sm:right-0 z-10">
         <FormButton size="sm" color="secondary" text @click="$emit('close')">
           <XMarkIcon class="h-4 w-4 sm:h-3 sm:w-3 text-primary sm:text-foreground" />
@@ -18,11 +18,19 @@
           </span>
         </div>
       </div>
-      <div v-if="$slots.actions" class="flex items-center h-8 sm:h-10 gap-2 px-2">
-        <slot name="actions"></slot>
-      </div>
     </div>
-    <div>
+    <div
+      v-if="$slots.actions"
+      class="flex items-center h-8 sm:h-10 gap-2 px-2"
+      :class="
+        moveActionsToBottom
+          ? 'order-3 border-t border-outline dark:border-outline-2 mt-2'
+          : 'order-2 shadow-md'
+      "
+    >
+      <slot name="actions"></slot>
+    </div>
+    <div :class="moveActionsToBottom ? 'order-2' : 'order-3'">
       <slot></slot>
     </div>
   </div>
@@ -32,6 +40,10 @@ import { XMarkIcon } from '@heroicons/vue/24/solid'
 defineEmits(['close'])
 defineProps({
   hideClose: {
+    type: Boolean,
+    default: false
+  },
+  moveActionsToBottom: {
     type: Boolean,
     default: false
   }

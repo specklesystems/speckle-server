@@ -1,5 +1,5 @@
 <template>
-  <ViewerLayoutPanel @close="$emit('close')">
+  <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
     <template #title>Measure</template>
     <template #actions>
       <FormButton size="xs" text :icon-left="MinusIcon">Delete</FormButton>
