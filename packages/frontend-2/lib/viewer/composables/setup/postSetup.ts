@@ -100,7 +100,6 @@ function useViewerObjectAutoLoading() {
         objectUrl,
         authToken.value || undefined,
         undefined,
-        undefined,
         options?.zoomToObject
       )
     }

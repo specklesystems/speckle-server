@@ -61,10 +61,9 @@ export function useCameraUtilities() {
   const setView = (...args: Parameters<typeof instance.setView>) => {
     instance.setView(...args)
   }
-
-  const truck = (...args: Parameters<typeof CameraController.controls.truck>) =>
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    instance.getExtension(CameraController).controls.truck(...args)
+  const cameraController = instance.getExtension(CameraController)
+  const truck = (...args: Parameters<typeof cameraController.controls.truck>) =>
+    cameraController.controls.truck(...args)
 
   const zoomExtentsOrSelection = () => {
     const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
