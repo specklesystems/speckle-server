@@ -435,7 +435,7 @@ export default class SpeckleConverter {
     })
     this.tree.addNode(childNode, transformNode)
 
-    await this.displayableLookup(defGeometry, transformNode, true)
+    await this.displayableLookup(defGeometry, childNode, true)
   }
 
   private async parseInstanceElement(instanceObj, elementObj, instanceNode) {

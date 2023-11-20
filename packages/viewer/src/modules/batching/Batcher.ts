@@ -18,7 +18,7 @@ import { RenderTree } from '../tree/RenderTree'
 import TextBatch from './TextBatch'
 import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
 import { SpeckleType } from '../loaders/GeometryConverter'
-import { WorldTree } from '../..'
+import { TreeNode, WorldTree } from '../..'
 import InstancedMeshBatch from './InstancedMeshBatch'
 
 export default class Batcher {
@@ -52,7 +52,15 @@ export default class Batcher {
       if (pause.needsWait) {
         await pause.wait(50)
       }
-      const rvs = tree.getRenderTree().getRenderViewsForNodeId(g)
+      let instancedNodes = tree.findId(g)
+      instancedNodes = instancedNodes.filter((node: TreeNode) => {
+        return (
+          node.model.renderView &&
+          node.model.renderView.speckleType === SpeckleType.Mesh
+        )
+      })
+      const rvs = instancedNodes.map((node: TreeNode) => node.model.renderView)
+
       if (rvs.length) {
         const materialHash = rvs[0].renderMaterialHash
         const instancedBatch = await this.buildInstancedBatch(
@@ -74,7 +82,18 @@ export default class Batcher {
     batchType?: GeometryType
   ) {
     const renderViews = renderTree
-      .getRenderableRenderViews(...speckleType)
+      .getRenderableNodes(...speckleType)
+      .flatMap((node: TreeNode) => {
+        if (node.model.renderView) {
+          if (node.model.instanced) {
+            if (node.model.renderView.speckleType !== SpeckleType.Mesh) {
+              return [node.model.renderView]
+            }
+            return []
+          }
+          return [node.model.renderView]
+        } else return []
+      })
       .sort((a, b) => {
         if (a.renderMaterialHash === 0) return -1
         if (b.renderMaterialHash === 0) return 1

@@ -158,7 +158,7 @@ const getStream = () => {
     // Alex's cube
     // 'https://latest.speckle.dev/streams/46e3e0e1ec/commits/a6392c19d6?c=%5B6.85874,2.9754,0.79022,0,0,0,0,1%5D'
     // Groups of groups
-    // 'https://speckle.xyz/streams/1ce562e99a/commits/6fa28a5a0f'
+    'https://speckle.xyz/streams/1ce562e99a/commits/6fa28a5a0f'
     // Arc flowers
     // 'https://latest.speckle.dev/streams/9e6c4343ba/commits/037e382aa2'
     // Car lines
@@ -259,7 +259,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/f92e060177/commits/038a587267'
     // 'https://latest.speckle.dev/streams/3f895e614f/commits/8a3e424997'
     // 'https://latest.speckle.dev/streams/f92e060177/commits/f51ee777d5'
-    'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
+    // 'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
     // Big curves
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
     // 'https://speckle.xyz/streams/7ce9010d71/commits/afda4ffdf8'

@@ -42,7 +42,10 @@ export class RenderTree {
         if (node.model.renderView.renderData.geometry.bakeTransform) {
           transform.multiply(node.model.renderView.renderData.geometry.bakeTransform)
         }
-        if (node.model.instanced)
+        if (
+          node.model.instanced &&
+          node.model.renderView.speckleType === SpeckleType.Mesh
+        )
           node.model.renderView.renderData.geometry.transform = transform
         else {
           Geometry.transformGeometryData(
@@ -133,21 +136,7 @@ export class RenderTree {
         return (
           node.model.renderView !== null &&
           (node.model.renderView.hasGeometry || node.model.renderView.hasMetadata) &&
-          types.includes(node.model.renderView.renderData.speckleType) &&
-          !node.model.instanced
-        )
-      })
-      .map((val: TreeNode) => val.model.renderView)
-  }
-
-  public getInstancedRenderableRenderViews(...types: SpeckleType[]): NodeRenderView[] {
-    return this.root
-      .all((node: TreeNode): boolean => {
-        return (
-          node.model.renderView !== null &&
-          (node.model.renderView.hasGeometry || node.model.renderView.hasMetadata) &&
-          types.includes(node.model.renderView.renderData.speckleType) &&
-          node.model.instanced
+          types.includes(node.model.renderView.renderData.speckleType)
         )
       })
       .map((val: TreeNode) => val.model.renderView)
