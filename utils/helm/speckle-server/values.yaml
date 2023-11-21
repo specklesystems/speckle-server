@@ -693,7 +693,6 @@ server:
   ##
   topologySpreadConstraints: []
 
-### XXXXXXXXXXXXXXXXXX
 ## @section Server
 ## @descriptionStart
 ## Defines parameters related to the backend server component of Speckle.
