@@ -1,6 +1,6 @@
 <template>
   <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
-    <template #title>Measure</template>
+    <template #title>Measure mode</template>
     <template #actions>
       <FormButton size="xs" text :icon-left="MinusIcon" disabled>Delete</FormButton>
     </template>
@@ -37,15 +37,15 @@
         <div class="flex gap-2 items-center">
           <input
             id="precision"
-            v-model="precision"
+            v-model="measurementPrecision"
             class="h-2 mr-2 flex-1"
             type="range"
-            name="intensity"
             min="1"
             max="5"
             step="1"
+            :onchange="onChangeMeasurementPrecision"
           />
-          <span class="text-xs w-4">{{ precision }}</span>
+          <span class="text-xs w-4">{{ measurementPrecision }}</span>
         </div>
       </div>
     </div>
@@ -65,14 +65,14 @@ interface Option {
 
 defineEmits(['close'])
 
-const precision = ref()
+const measurementPrecision = ref(2)
 const selectedUnit = ref('Meters')
 
 const measurementParams = ref({
   type: MeasurementType.POINTTOPOINT,
   vertexSnap: true,
   units: selectedUnit.value,
-  precision: 2
+  precision: measurementPrecision.value
 })
 
 const { setMeasurementOptions } = useMeasurementUtilities()
@@ -90,6 +90,11 @@ const onChangeMeasurementUnits = (newUnit: string) => {
 
 const toggleMeasurementsSnap = () => {
   measurementParams.value.vertexSnap = !measurementParams.value.vertexSnap
+  setMeasurementOptions(measurementParams.value)
+}
+
+const onChangeMeasurementPrecision = () => {
+  measurementParams.value.precision = measurementPrecision.value
   setMeasurementOptions(measurementParams.value)
 }
 
