@@ -1,5 +1,6 @@
 <template>
   <ViewerLayoutPanel @close="$emit('close')">
+    <template #title>Models</template>
     <template #actions>
       <FormButton
         size="xs"
@@ -13,7 +14,6 @@
       <FormButton
         size="xs"
         text
-        :color="showRemove ? 'default' : 'secondary'"
         :icon-left="showRemove ? CheckIcon : MinusIcon"
         :disabled="modelsAndVersionIds.length <= 1"
         @click="showRemove = !showRemove"

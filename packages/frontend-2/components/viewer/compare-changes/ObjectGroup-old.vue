@@ -18,7 +18,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { keyboardClick } from '~~/lib/common/helpers/accessibility'
+import { keyboardClick } from '@speckle/ui-components'
 import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 
 const {

@@ -40,6 +40,7 @@ export default defineNuxtPlugin(async (nuxt) => {
     const client = new ApolloClient({
       ...config,
       ...(process.server ? {ssrMode: true} : {ssrForceFetchDelay: 100}),
+      connectToDevTools: !!process.dev
     });
     if (key === 'default') {
       defaultClient = client;

@@ -7,6 +7,7 @@
     name="serverRoles"
     label="Server roles"
     class="min-w-[110px]"
+    :fully-control-value="fullyControlValue"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -59,7 +60,8 @@ const props = defineProps({
   },
   allowGuest: Boolean,
   allowAdmin: Boolean,
-  allowArchived: Boolean
+  allowArchived: Boolean,
+  fullyControlValue: Boolean
 })
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)

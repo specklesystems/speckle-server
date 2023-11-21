@@ -4,11 +4,9 @@
     <div
       class="w-[calc(100vw-8px)] ml-[calc(50%-50vw+4px)] mr-[calc(50%-50vw+4px)] -mt-6 mb-10 rounded-b-xl bg-foundation transition shadow-md hover:shadow-xl divide-y divide-outline-3"
     >
-      <ClientOnly>
-        <div v-if="showChecklist">
-          <OnboardingChecklistV1 show-intro />
-        </div>
-      </ClientOnly>
+      <div v-if="showChecklist">
+        <OnboardingChecklistV1 show-intro />
+      </div>
       <ProjectsInviteBanners
         v-if="projectsPanelResult?.activeUser?.projectInvites?.length"
         :invites="projectsPanelResult?.activeUser"
@@ -29,7 +27,7 @@
           :show-label="false"
           placeholder="Search"
           color="foundation"
-          wrapper-classes="grow md:grow-0 md:w-60"
+          wrapper-classes="grow md:grow-0 md:w-60 hover:shadow rounded-md outline outline-2 outline-primary-muted"
           :show-clear="!!search"
           @change="updateSearchImmediately"
           @update:model-value="updateDebouncedSearch"
@@ -261,6 +259,9 @@ watch(search, (newVal) => {
 
 watch(areQueriesLoading, (newVal) => (showLoadingBar.value = newVal))
 
+const twoYearsFromNow = new Date()
+twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2)
+
 const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
   `hasCompletedChecklistV1`,
   { default: () => false }
@@ -273,7 +274,10 @@ const hasDismissedChecklistTime = useSynchronizedCookie<string | undefined>(
 
 const hasDismissedChecklistForever = useSynchronizedCookie<boolean | undefined>(
   `hasDismissedChecklistForever`,
-  { default: () => false }
+  {
+    default: () => false,
+    expires: twoYearsFromNow
+  }
 )
 
 const hasDismissedChecklistTimeAgo = computed(() => {

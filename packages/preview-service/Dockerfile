@@ -1,7 +1,7 @@
 # NOTE: Docker context should be set to git root directory, to include the viewer
 ARG NODE_ENV=production
 
-FROM node:18.17.1-bullseye-slim as build-stage
+FROM node:18.18.2-bullseye-slim as build-stage
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
@@ -36,7 +36,7 @@ COPY packages/preview-service ./packages/preview-service/
 # This way the foreach only builds the frontend and its deps
 RUN yarn workspaces foreach run build
 
-FROM node:18.17.1-bullseye-slim as node
+FROM node:18.18.2-bullseye-slim as node
 
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -59,7 +59,7 @@ RUN apt-get update && \
   libnspr4=2:4.29-1 \
   libnss3=2:3.61-1+deb11u3 \
   libpango-1.0-0=1.46.2-3 \
-  libx11-6=2:1.7.2-1 \
+  libx11-6=2:1.7.2-1+deb11u2 \
   libxcb1=1.14-3 \
   libxcomposite1=1:0.4.5-1 \
   libxdamage1=1:1.1.5-2 \

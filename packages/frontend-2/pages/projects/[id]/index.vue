@@ -6,9 +6,9 @@
       <ProjectPageHeader :project="project" class="mb-8" />
       <!-- Stats blocks -->
       <div class="flex flex-col md:flex-row space-y-2 md:space-x-4 mb-14">
-        <ProjectPageStatsBlockTeam
+        <ProjectPageStatsBlockSettings
           :project="project"
-          class="shadow hover:shadow-xl w-full md:w-72 transition"
+          class="w-full md:w-72 transition"
         />
         <div class="grow hidden md:flex"></div>
         <div class="grid grid-cols-3 gap-2">
@@ -17,7 +17,7 @@
           <ProjectPageStatsBlockComments :project="project" />
         </div>
       </div>
-      <div class="flex flex-col space-y-14">
+      <div class="flex flex-col space-y-8 sm:space-y-14">
         <!-- Latest models -->
         <ProjectPageLatestItemsModels :project="project" />
         <!-- Latest comments -->
@@ -72,4 +72,11 @@ const { result: projectPageResult } = useQuery(
 
 const project = computed(() => projectPageResult.value?.project)
 const invite = computed(() => projectPageResult.value?.projectInvite)
+const projectName = computed(() =>
+  project.value?.name.length ? project.value.name : ''
+)
+
+useHead({
+  title: projectName
+})
 </script>

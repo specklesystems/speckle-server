@@ -1,7 +1,11 @@
 import { wait } from '@speckle/shared'
 import { Meta, StoryObj } from '@storybook/vue3'
+import { omit } from 'lodash'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import { isRequired } from '~~/src/helpers/common/validation'
+import LayoutDialog from '~~/src/components/layout/Dialog.vue'
+import FormButton from '~~/src/components/form/Button.vue'
+import { ref } from 'vue'
 
 type FakeItemType = { id: string; name: string }
 
@@ -82,7 +86,7 @@ export default {
       type: 'boolean'
     },
     buttonStyle: {
-      options: ['base', 'simple'],
+      options: ['base', 'simple', 'tinted'],
       control: { type: 'select' }
     }
   }
@@ -121,7 +125,8 @@ export const Default: StoryType = {
     name: 'example',
     clearable: true,
     buttonStyle: 'base',
-    disabled: false
+    disabled: false,
+    mountMenuOnBody: false
   }
 }
 
@@ -242,12 +247,15 @@ export const WithValidation: StoryType = {
     filterPredicate: (val: FakeItemType, search: string) =>
       val.name.toLowerCase().includes(search.toLowerCase()),
     searchPlaceholder: 'Search',
-    label: 'Item',
+    label: 'Required Item',
     showLabel: true,
     by: 'name',
     rules: [isRequired],
     help: 'This is a random help message',
-    name: 'example-2'
+    name: 'example-2',
+    showRequired: true,
+    validateOnValueUpdate: true,
+    clearable: true
   }
 }
 
@@ -291,8 +299,28 @@ export const Simple: StoryType = {
   }
 }
 
+export const NoVModel: StoryType = {
+  ...Default,
+  render: (args) => ({
+    components: { FormSelectBase },
+    setup: () => {
+      return { args }
+    },
+    template: `
+      <div class="flex justify-center h-72">
+        <FormSelectBase v-bind="args" class="max-w-xs w-full"/>
+      </div>
+    `
+  }),
+  args: omit(Default.args, 'modelValue')
+}
+
 export const RejectingUpdates: StoryType = {
   ...Default,
+  args: {
+    ...Default.args,
+    fullyControlValue: true
+  },
   render: (args) => ({
     components: { FormSelectBase },
     setup: () => {
@@ -316,5 +344,51 @@ export const WithDisabledItems: StoryType = {
   args: {
     ...Default.args,
     disabledItemPredicate: (item: FakeItemType) => item.id === '3'
+  }
+}
+
+export const WithRequired: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    showRequired: true
+  }
+}
+
+export const WithOverflowingMenu: StoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    mountMenuOnBody: true
+  },
+  render: (args, ctx) => ({
+    components: { LayoutDialog, FormButton, FormSelectBase },
+    setup() {
+      const open = ref(false)
+      return { args, open }
+    },
+    template: `<div>
+      <FormButton @click="() => open = true">Trigger dialog</FormButton>
+      <LayoutDialog v-model:open="open" title="Test">
+        <div class="flex justify-center">
+          <FormSelectBase v-bind="args" class="max-w-xs w-full" @update:modelValue="onModelUpdate"/>
+        </div>
+      </LayoutDialog>
+    </div>`,
+
+    methods: {
+      onModelUpdate(val: FakeItemType) {
+        args['update:modelValue'](val)
+        ctx.updateArgs({ ...args, modelValue: val })
+      }
+    }
+  }),
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Use the mountMenuOnBody prop to mount the menu on the body instead of the parent element. Useful inside dialogs.'
+      }
+    }
   }
 }

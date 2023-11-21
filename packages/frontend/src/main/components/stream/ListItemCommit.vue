@@ -49,7 +49,9 @@
             v-tooltip="`On branch '${commit.branchName}'`"
             small
             color="primary"
-            :to="`/streams/${streamId}/branches/${commit.branchName}`"
+            :to="`/streams/${streamId}/branches/${formatBranchNameForURL(
+              commit.branchName
+            )}`"
           >
             <v-icon small class="mr-2">mdi-source-branch</v-icon>
             {{ commit.branchName }}
@@ -73,6 +75,7 @@ import { gql } from '@apollo/client/core'
 import { limitedCommitActivityFieldsFragment } from '@/graphql/fragments/activity'
 import { useSelectableCommit } from '@/main/lib/stream/composables/commitMultiActions'
 import CommitShareBtn from '@/main/components/stream/commit/CommitShareBtn.vue'
+import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
 
 export default {
   components: {
@@ -155,7 +158,13 @@ export default {
     const { highlighted, selectedState, onSelect } = useSelectableCommit(props, ctx)
     const onShareClicked = () => ctx.emit('share', props.commit)
 
-    return { highlighted, selectedState, onSelect, onShareClicked }
+    return {
+      highlighted,
+      selectedState,
+      onSelect,
+      onShareClicked,
+      formatBranchNameForURL
+    }
   },
   apollo: {
     activity: {
@@ -213,7 +222,7 @@ export default {
       if (!this.commit) return null
       return `${window.location.origin}/streams/${
         this.$route.params.streamId
-      }/branches/${encodeURIComponent(this.commit.branchName)}`
+      }/branches/${this.formatBranchNameForURL(this.commit.branchName)}`
     },
     receivedUsersUnique() {
       if (!(this.activity && this.activity.items && this.activity.items.length > 0))

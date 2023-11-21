@@ -12,21 +12,26 @@
     <template #something-selected="{ value }">
       <div class="text-sm">
         <div class="font-bold">
-          {{ value.title }}
+          {{ isArray(value) ? value[0].title : value.title }}
         </div>
-        <span class="text-foreground-2">{{ value.description }}</span>
+        <span class="text-foreground-2 text-xs sm:text-sm">
+          {{ isArray(value) ? value[0].description : value.description }}
+        </span>
       </div>
     </template>
     <template #option="{ item }">
       <div class="flex flex-col">
         <div class="label">{{ item.title }}</div>
-        <div class="label label--light text-foreground-2">{{ item.description }}</div>
+        <div class="label label--light text-foreground-2 text-xs sm:text-sm">
+          {{ item.description }}
+        </div>
       </div>
     </template>
   </FormSelectBase>
 </template>
 <script setup lang="ts">
 import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
+import { isArray } from 'lodash-es'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ProjectVisibility): void

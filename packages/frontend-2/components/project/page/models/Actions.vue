@@ -45,7 +45,8 @@ enum ActionTypes {
   Rename = 'rename',
   Delete = 'delete',
   Share = 'share',
-  UploadVersion = 'upload-version'
+  UploadVersion = 'upload-version',
+  CopyId = 'copy-id'
 }
 
 const emit = defineEmits<{
@@ -62,6 +63,7 @@ const props = defineProps<{
 }>()
 
 const copyModelLink = useCopyModelLink()
+const { copy } = useClipboard()
 
 const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)
@@ -76,7 +78,10 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
       disabled: isMain.value || !props.canEdit
     }
   ],
-  [{ title: 'Share', id: ActionTypes.Share }],
+  [
+    { title: 'Copy Link', id: ActionTypes.Share },
+    { title: 'Copy ID', id: ActionTypes.CopyId }
+  ],
   [
     {
       title: 'Upload new version',
@@ -111,6 +116,9 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       break
     case ActionTypes.UploadVersion:
       emit('upload-version')
+      break
+    case ActionTypes.CopyId:
+      copy(props.model.id, { successMessage: 'Copied model ID to clipboard' })
       break
   }
 }

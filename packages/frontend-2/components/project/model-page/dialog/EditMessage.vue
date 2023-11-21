@@ -1,11 +1,27 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-width="md"
+    max-width="sm"
+    :buttons="[
+      {
+        text: 'Cancel',
+        props: { color: 'secondary', fullWidth: true },
+        onClick: () => {
+          isOpen = false
+        }
+      },
+      {
+        text: 'Save',
+        props: { color: 'primary', fullWidth: true, disabled: loading },
+        onClick: () => {
+          onSubmit()
+        }
+      }
+    ]"
     @fully-closed="$emit('fully-closed')"
   >
+    <template #header>Edit Version Message</template>
     <form class="flex flex-col text-foreground space-y-4" @submit="onSubmit">
-      <div class="h4 font-bold">Edit version message</div>
       <FormTextInput
         v-model="message"
         name="newMessage"
@@ -15,9 +31,6 @@
         :rules="[isRequired]"
         :disabled="loading"
       />
-      <div class="flex justify-end">
-        <FormButton submit :disabled="loading">Save</FormButton>
-      </div>
     </form>
   </LayoutDialog>
 </template>

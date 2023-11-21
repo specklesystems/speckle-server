@@ -11,7 +11,7 @@
   >
     <template #something-selected="{ value }">
       <div class="label label--light">
-        {{ value.title }}
+        {{ isArray(value) ? value[0].title : value.title }}
       </div>
     </template>
     <template #option="{ item, selected }">
@@ -24,6 +24,7 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
+import { isArray } from 'lodash-es'
 import {
   CommentPermissions,
   commentPermissionsSelectItems

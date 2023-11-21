@@ -43,6 +43,17 @@ export const serverInfoBlobSizeLimitQuery = graphql(`
   }
 `)
 
+export const serverInfoAllScopesQuery = graphql(`
+  query ServerInfoAllScopes {
+    serverInfo {
+      scopes {
+        name
+        description
+      }
+    }
+  }
+`)
+
 export const projectModelsSelectorValuesQuery = graphql(`
   query ProjectModelsSelectorValues($projectId: String!, $cursor: String) {
     project(id: $projectId) {

@@ -29,7 +29,7 @@ import {
   getSpecificBranchCommits,
   getStreamCommitCounts
 } from '@/modules/core/repositories/commits'
-import { ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
+import { ResourceIdentifier, Scope } from '@/modules/core/graph/generated/graphql'
 import {
   getBranchCommentCounts,
   getCommentParents,
@@ -52,6 +52,8 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { Users } from '@/modules/core/dbSchema'
 import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
+import { getAutomationFunctionRunResultVersions } from '@/modules/automations/repositories/automations'
+import { getAppScopes } from '@/modules/auth/repositories'
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -391,6 +393,31 @@ export function buildRequestLoaders(
           const results = keyBy(await getInvites(inviteIds), 'id')
           return inviteIds.map((i) => results[i] || null)
         }
+      )
+    },
+    apps: {
+      getAppScopes: createLoader<string, Array<Scope>>(async (appIds) => {
+        const results = await getAppScopes(appIds.slice())
+        return appIds.map((i) => results[i] || [])
+      })
+    },
+    automationFunctionRuns: {
+      /**
+       * Get result versions/commits from function runs
+       */
+      getResultVersions: createLoader<
+        [automationRunId: string, functionId: string],
+        CommitRecord[],
+        string
+      >(
+        async (ids) => {
+          const results = await getAutomationFunctionRunResultVersions(ids.slice())
+          return ids.map((i) => {
+            const [automationRunId, functionId] = i
+            return results[automationRunId]?.[functionId] || []
+          })
+        },
+        { cacheKeyFn: (key) => `${key[0]}:${key[1]}` }
       )
     }
   }

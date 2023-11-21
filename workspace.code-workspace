@@ -86,7 +86,7 @@
     },
     "files.eol": "\n",
     "volar.vueserver.maxOldSpaceSize": 4000,
-    "cSpell.words": ["Bursty", "mjml"],
+    "cSpell.words": ["Automations", "Bursty", "mjml"],
     "tailwindCSS.experimental.configFile": {
       "packages/frontend-2/tailwind.config.mjs": "packages/frontend-2/**"
     },
@@ -104,7 +104,7 @@
     },
     "[vue]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
+    }
   },
   "extensions": {
     // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.

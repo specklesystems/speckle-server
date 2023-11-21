@@ -1,6 +1,8 @@
 <template>
   <div>
     <ViewerLayoutPanel @close="$emit('close')">
+      <template #title>Scene Explorer</template>
+
       <template #actions>
         <FormButton
           size="xs"

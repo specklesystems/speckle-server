@@ -1,7 +1,7 @@
 <template>
   <div
     ref="parentEl"
-    class="fixed z-30 left-0 top-0 w-screen h-screen pointer-events-none overflow-hidden"
+    class="fixed z-30 left-0 top-0 w-screen h-[100dvh] pointer-events-none overflow-hidden"
   >
     <!--     
       Tour Slideshow 
@@ -12,7 +12,8 @@
       :item="item"
       :index="index"
       class="absolute"
-      :style="{ ...item.style }"
+      :class="isSmallerOrEqualSm ? 'bottom-0 left-0 w-screen' : ''"
+      :style="isSmallerOrEqualSm ? undefined : item.style"
       :show-controls="item.showControls"
       @skip="finishSlideshow()"
     >
@@ -76,6 +77,9 @@ provide('slideshowItems', slideshowItems)
 
 const lastOpenIndex = ref(0)
 const mp = useMixpanel()
+
+// const isSmallerOrEqualSm = computed(() => breakpoints.smallerOrEqual('sm').value)
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const next = (currentIndex: number) => {
   if (currentIndex + 1 >= slideshowItems.value.length) {

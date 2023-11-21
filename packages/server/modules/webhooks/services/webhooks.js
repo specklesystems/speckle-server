@@ -46,7 +46,9 @@ module.exports = {
   },
 
   async updateWebhook({ id, url, description, secret, enabled, triggers }) {
-    const fieldsToUpdate = {}
+    const fieldsToUpdate = {
+      updatedAt: new Date()
+    }
     if (url !== undefined) fieldsToUpdate.url = url
     if (description !== undefined) fieldsToUpdate.description = description
     if (secret !== undefined) fieldsToUpdate.secret = secret
@@ -68,7 +70,11 @@ module.exports = {
   },
 
   async getStreamWebhooks({ streamId }) {
-    const webhooks = await WebhooksConfig().select('*').where({ streamId })
+    const webhooks = await WebhooksConfig()
+      .select('*')
+      .where({ streamId })
+      .orderBy('updatedAt', 'desc')
+
     for (const webhook of webhooks) {
       webhook.triggers = Object.keys(webhook.triggers)
     }

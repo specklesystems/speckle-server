@@ -40,6 +40,8 @@
         v-bind="$attrs"
         @change="$emit('change', { event: $event, value })"
         @input="$emit('input', { event: $event, value })"
+        @focus="$emit('focus')"
+        @blur="$emit('blur')"
       />
       <slot name="input-right">
         <a
@@ -63,7 +65,8 @@
         </div>
         <div
           v-if="showRequired && !errorMessage"
-          class="pointer-events-none absolute inset-y-0 mt-3 text-4xl right-0 flex items-center pr-2 text-danger opacity-50"
+          class="pointer-events-none absolute inset-y-0 mt-3 text-4xl right-0 flex items-center text-danger opacity-50"
+          :class="[showClear ? 'pr-8' : 'pr-2']"
         >
           *
         </div>
@@ -88,7 +91,7 @@ import { useTextInputCore } from '~~/src/composables/form/textInput'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | string
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
-type InputColor = 'page' | 'foundation'
+type InputColor = 'page' | 'foundation' | 'transparent'
 
 defineOptions({
   inheritAttrs: false
@@ -232,8 +235,8 @@ const emit = defineEmits<{
   (e: 'change', val: { event?: Event; value: string }): void
   (e: 'input', val: { event?: Event; value: string }): void
   (e: 'clear'): void
-  (e: 'focusin'): void
-  (e: 'focusout'): void
+  (e: 'focus'): void
+  (e: 'blur'): void
 }>()
 
 const slots = useSlots()
@@ -299,14 +302,14 @@ const iconClasses = computed((): string => {
 const sizeClasses = computed((): string => {
   switch (props.size) {
     case 'sm':
-      return 'h-6'
+      return 'h-6 text-sm'
     case 'lg':
       return 'h-10'
     case 'xl':
       return 'h-14'
     case 'base':
     default:
-      return 'h-8'
+      return 'h-8 text-sm'
   }
 })
 

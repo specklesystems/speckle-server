@@ -7,6 +7,7 @@ const { sleep } = require('@/test/helpers')
 
 const expect = chai.expect
 
+const knex = require('@/db/knex')
 const { createUser } = require('../services/users')
 const { createStream } = require('../services/streams')
 const { createObject } = require('../services/objects')
@@ -18,6 +19,11 @@ const {
   getBranchByNameAndStreamId,
   deleteBranchById
 } = require('../services/branches')
+const { createCommitByBranchName } = require('../services/commits')
+
+const { deleteBranchAndNotify } = require('@/modules/core/services/branch/management')
+
+const Commits = () => knex('commits')
 
 describe('Branches @core-branches', () => {
   const user = {
@@ -186,6 +192,29 @@ describe('Branches @core-branches', () => {
     await deleteBranchById({ id: branch.id, streamId: stream.id, userId: user.id })
     const { items } = await getBranchesByStreamId({ streamId: stream.id })
     expect(items).to.have.lengthOf(4)
+  })
+
+  it('Deleting a branch should delete the commit', async () => {
+    const branchName = 'pasta'
+
+    const branchId = await createBranch({
+      name: branchName,
+      streamId: stream.id,
+      authorId: user.id
+    })
+
+    const tempCommit = await createCommitByBranchName({
+      streamId: stream.id,
+      branchName,
+      message: 'temp commit',
+      sourceApplication: 'tests',
+      objectId: testObject.id,
+      authorId: user.id
+    })
+    await deleteBranchAndNotify({ id: branchId, streamId: stream.id }, user.id)
+
+    const commit = await Commits().where({ id: tempCommit }).first()
+    expect(commit).to.be.undefined
   })
 
   it('Should NOT delete the main branch', async () => {

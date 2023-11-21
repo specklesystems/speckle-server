@@ -110,7 +110,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+    'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6c6e43e5f3'
     // 'https://latest.speckle.dev/streams/58b5648c4d/commits/60371ecb2d'
     // 'Super' heavy revit shit
@@ -285,7 +285,13 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/e258b0e8db/commits/c19577c7d6?c=%5B15.88776,-8.2182,12.17095,18.64059,1.48552,0.6025,0,1%5D'
     // 'https://speckle.xyz/streams/46caea9b53/commits/71938adcd1'
     // 'https://speckle.xyz/streams/2f9f2f3021/commits/75bd13f513'
-    'https://speckle.xyz/streams/25d8a162af/commits/6c842a713c'
+    // 'https://speckle.xyz/streams/25d8a162af/commits/6c842a713c'
+    // 'https://speckle.xyz/streams/76e3acde68/commits/0ea3d47e6c'
+    // Point cloud
+    // 'https://speckle.xyz/streams/b920636274/commits/8df6496749'
+    // 'https://multiconsult.speckle.xyz/streams/9721fe797c/objects/ff5d939a8c26bde092152d5b4a0c945d'
+    // 'https://speckle.xyz/streams/87a2be92c7/objects/803c3c413b133ee9a6631160ccb194c9'
+    // 'https://latest.speckle.dev/streams/1422d91a81/commits/480d88ba68'
   )
 }
 

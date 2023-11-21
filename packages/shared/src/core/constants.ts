@@ -85,6 +85,40 @@ export const Scopes = Object.freeze(<const>{
  */
 export const AllScopes = _.flatMap(Scopes, (v) => Object.values(v))
 
+export const SourceAppNames = [
+  'Dynamo',
+  'Revit',
+  'AutoCAD',
+  'Civil3D',
+  'Blender',
+  'Rhino',
+  'Grasshopper',
+  'Excel',
+  'Unity',
+  'Unreal',
+  'Python',
+  '.NET',
+  'IFC',
+  'QGIS',
+  'ArcGIS',
+  'ETABS',
+  'PowerBI',
+  'SketchUp',
+  'SAP2000',
+  'CSiBridge',
+  'SAFE',
+  'Archicad',
+  'Tekla Structures',
+  'OpenRoads',
+  'OpenRail',
+  'OpenBuildings',
+  'MicroStation',
+  'Navisworks',
+  'Speckle Automate'
+] as const
+
+export type SourceAppName = (typeof SourceAppNames)[number]
+
 export type SourceAppDefinition = {
   /**
    * String to look for in input app names to match them to a specific source app
@@ -94,7 +128,7 @@ export type SourceAppDefinition = {
   /**
    * Full name
    */
-  name: string
+  name: SourceAppName
 
   /**
    * Shortened name
@@ -150,5 +184,28 @@ export const SourceApps: SourceAppDefinition[] = [
     short: 'MICRO',
     bgColor: '#846256'
   },
-  { searchKey: 'navisworks', name: 'Navisworks', bgColor: '#3e8742', short: 'NAVIS' }
+  { searchKey: 'navisworks', name: 'Navisworks', bgColor: '#3e8742', short: 'NAVIS' },
+  {
+    searchKey: 'automate',
+    name: 'Speckle Automate',
+    bgColor: '#f85c56',
+    short: 'ATMAT'
+  }
 ]
+
+export const WebhookTriggers = Object.freeze(<const>{
+  StreamUpdate: 'stream_update',
+  StreamDelete: 'stream_delete',
+  BranchCreate: 'branch_create',
+  BranchUpdate: 'branch_update',
+  BranchDelete: 'branch_delete',
+  CommitCreate: 'commit_create',
+  CommitUpdate: 'commit_update',
+  CommitReceive: 'commit_receive',
+  CommitDelete: 'commit_delete',
+  CommentCreated: 'comment_created',
+  CommentArchived: 'comment_archived',
+  CommentReplied: 'comment_replied',
+  StreamPermissionsAdd: 'stream_permissions_add',
+  StreamPermissionsRemove: 'stream_permissions_remove'
+})

@@ -1,9 +1,9 @@
 <template>
   <Popover as="div" class="relative z-30">
     <PopoverButton v-slot="{ open }" as="template">
-      <ViewerControlsButtonToggle flat secondary :active="open">
+      <ViewerControlsButtonToggle flat secondary :active="open || isActive">
         <!-- <ChevronUpDownIcon class="w-5 h-5 rotate-45" /> -->
-        <span :class="`${explodeFactor > 0.01 ? '' : 'grayscale'}`">💥</span>
+        <IconExplode class="h-5 w-5" />
       </ViewerControlsButtonToggle>
     </PopoverButton>
     <Transition
@@ -43,6 +43,10 @@ import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 const {
   ui: { explodeFactor }
 } = useInjectedViewerState()
+
+const isActive = computed(() => {
+  return explodeFactor.value > 0.01
+})
 
 const mp = useMixpanel()
 watch(explodeFactor, (val) => {

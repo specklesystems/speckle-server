@@ -12,7 +12,7 @@
     "url": "https://github.com/specklesystems/Server.git"
   },
   "engines": {
-    "node": "^18.17.1"
+    "node": "^18.18.2"
   },
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json",
@@ -94,12 +94,14 @@
     "request": "^2.88.2",
     "response-time": "^2.3.2",
     "sanitize-html": "^2.7.1",
-    "sharp": "^0.30.5",
+    "sharp": "^0.32.6",
     "string-pixel-width": "^1.10.0",
     "subscriptions-transport-ws": "^0.11.0",
-    "undici": "^5.19.1",
+    "undici": "^5.26.2",
     "verror": "^1.10.1",
     "xml-escape": "^1.1.0",
+    "zod": "^3.22.3",
+    "zod-validation-error": "^1.5.0",
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
@@ -135,7 +137,7 @@
     "@types/zxcvbn": "^4.4.1",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "@typescript-eslint/parser": "^5.39.0",
-    "axios": "^0.25.0",
+    "axios": "^1.6.0",
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
     "concurrently": "^7.0.0",

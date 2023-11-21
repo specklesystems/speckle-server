@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ValidationHelpers } from '@speckle/ui-components'
+import { useForm } from 'vee-validate'
 
 export const VALID_HTTP_URL = ValidationHelpers.VALID_HTTP_URL
 export const VALID_EMAIL = ValidationHelpers.VALID_EMAIL
@@ -23,3 +25,17 @@ export const isSameAs = ValidationHelpers.isSameAs
 export const isStringOfLength = ValidationHelpers.isStringOfLength
 
 export const stringContains = ValidationHelpers.stringContains
+
+export const isUrl = ValidationHelpers.isUrl
+
+export const isItemSelected = ValidationHelpers.isItemSelected
+
+/**
+ * Wrapper over useForm's `resetForm` that fully resets the form and its initial values
+ * @param veeValidateResetForm The `resetForm` function returned by vee-validate's `useForm`
+ */
+export function fullyResetForm(
+  veeValidateResetForm: ReturnType<typeof useForm<any>>['resetForm']
+) {
+  veeValidateResetForm({ values: {} })
+}

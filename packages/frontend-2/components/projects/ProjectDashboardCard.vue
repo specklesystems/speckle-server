@@ -1,13 +1,16 @@
 <template>
-  <NuxtLink :to="projectRoute(project.id)">
+  <div>
     <div
       class="relative group flex flex-col md:flex-row md:space-x-2 border-2 border-primary-muted hover:bg-primary-muted rounded-md p-3 transition overflow-hidden"
     >
       <div
         class="w-full md:w-48 flex flex-col col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1"
       >
-        <div class="text-2xl font-bold group-hover:text-primary transition">
-          <NuxtLink :to="projectRoute(project.id)" class="break-words">
+        <div class="text-xl sm:text-2xl font-bold transition">
+          <NuxtLink
+            :to="projectRoute(project.id)"
+            class="break-words hover:text-primary"
+          >
             {{ project.name }}
           </NuxtLink>
           <UserAvatarGroup :users="teamUsers" :max-count="2" class="mt-2" />
@@ -15,7 +18,9 @@
         <div class="flex-grow"></div>
         <div class="text-xs text-foreground-2 flex items-center">
           <UserCircleIcon class="w-4 h-4 mr-1" />
-          {{ project.role?.split(':').reverse()[0] }}
+          <span class="-mt-px">
+            {{ project.role?.split(':').reverse()[0] }}
+          </span>
         </div>
         <!-- Note: commented out as we have the +x models indicator. Less clutter! -->
         <!-- <div class="text-xs text-foreground-2 flex items-center">
@@ -24,8 +29,10 @@
         </div> -->
         <div class="text-xs text-foreground-2 flex items-center">
           <ClockIcon class="w-4 h-4 mr-1" />
-          updated&nbsp;
-          <b>{{ updatedAt }}</b>
+          <span class="-mt-px">
+            updated
+            <b>{{ updatedAt }}</b>
+          </span>
         </div>
       </div>
       <div
@@ -55,20 +62,22 @@
       </div>
       <div
         v-if="modelItemTotalCount > 4"
-        class="absolute -right-11 hover:right-0 top-1/2 translate -translate-y-1/2 bg-foundation text-primary text-xs font-bold transition-all opacity-0 group-hover:opacity-100 rounded-l-md shadow-md px-1 py-4"
+        class="absolute -right-11 hover:right-0 top-1/2 translate -translate-y-1/2 bg-foundation text-primary text-xs font-bold transition-all opacity-0 group-hover:opacity-100 rounded-l-md shadow-md px-1 py-12"
       >
-        +{{ modelItemTotalCount - 4 }} model{{
-          modelItemTotalCount - 4 !== 1 ? 's' : ''
-        }}
+        <NuxtLink :to="allProjectModelsRoute(project.id) + '/'">
+          +{{ modelItemTotalCount - 4 }} more model{{
+            modelItemTotalCount - 4 !== 1 ? 's' : ''
+          }}
+        </NuxtLink>
       </div>
     </div>
-  </NuxtLink>
+  </div>
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 import { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { UserCircleIcon, ClockIcon } from '@heroicons/vue/24/outline'
-import { projectRoute } from '~~/lib/common/helpers/route'
+import { projectRoute, allProjectModelsRoute } from '~~/lib/common/helpers/route'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 
 const props = defineProps<{

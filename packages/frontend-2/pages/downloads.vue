@@ -1,7 +1,7 @@
 <template>
   <div>
     <Portal to="navigation">
-      <HeaderNavLink :to="'/connectors'" name="Connector Downloads"></HeaderNavLink>
+      <HeaderNavLink :to="'/downloads'" name="Speckle Connectors"></HeaderNavLink>
     </Portal>
     <div
       class="flex flex-col md:flex-row space-y-2 space-x-2 justify-between mb-4 md:items-center"
@@ -40,13 +40,13 @@
         />
       </div>
     </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
       <div v-for="(tag, index) in searchResults" :key="index">
         <ConnectorsCard :tag="tag" />
       </div>
     </div>
     <div v-if="searchResults.length === 0" class="w-full">
-      No connector found.d Feel free to ask for it on our
+      No connector found. Feel free to ask for it on our
       <FormButton link to="https://speckle.community/" target="_blank">
         community forum!
       </FormButton>
@@ -57,11 +57,10 @@
 // import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { ConnectorTag, ConnectorVersion, Tag } from '~~/lib/connectors'
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
-definePageMeta({
+
+useHead({
   title: 'Speckle Connectors'
 })
-
-// const { isLoggedIn } = useActiveUser()
 
 const response = await useFetch(
   'https://speckle.systems/ghost/api/v3/content/tags?key=c895981da23dbb5c87ee7192e2&limit=all'

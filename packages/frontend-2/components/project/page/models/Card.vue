@@ -5,14 +5,10 @@
     @mouseleave=";(showActionsMenu = false), (hovered = false)"
     @mouseenter="hovered = true"
   >
-    <!--
-      Nested anchors are causing a hydration mismatch for some reason (template renders wrong in SSR), could be a Vue bug?
-      TODO: Report it to Vue/Nuxt!
-    -->
-    <NuxtLink
-      :href="defaultLinkDisabled ? undefined : modelRoute(project.id, model.id)"
-      class="cursor-pointer"
+    <div
+      :class="['relative', defaultLinkDisabled ? 'cursor-pointer' : '']"
       @click="$emit('click', $event)"
+      @keypress="keyboardClick((e) => emit('click', e))"
     >
       <div :class="`${height} flex items-center justify-center`">
         <ProjectPendingFileImportStatus
@@ -26,7 +22,11 @@
           type="subversion"
           class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
         />
-        <PreviewImage v-else-if="previewUrl" :preview-url="previewUrl" />
+        <template v-else-if="previewUrl">
+          <NuxtLink :href="finalModelUrl" class="w-full h-full">
+            <PreviewImage :preview-url="previewUrl" />
+          </NuxtLink>
+        </template>
         <div
           v-if="!isPendingModelFragment(model)"
           v-show="!previewUrl && !pendingVersion"
@@ -41,7 +41,7 @@
         </div>
       </div>
       <div class="h-12 flex items-center px-2 py-1 space-x-1">
-        <div class="flex-grow min-w-0">
+        <NuxtLink class="min-w-0 cursor-pointer" :href="finalModelUrl">
           <div
             v-if="nameParts[0]"
             class="text-xs text-foreground-2 relative -mb-1 truncate"
@@ -51,11 +51,12 @@
           <div class="font-bold truncate text-foreground flex-shrink min-w-0">
             {{ nameParts[1] }}
           </div>
-        </div>
+        </NuxtLink>
+        <div class="grow" />
         <div class="flex items-center">
           <div
-            :class="`text-xs text-foreground-2 mr-1 truncate transition ${
-              hovered ? 'w-auto' : 'w-0'
+            :class="`text-xs w-full text-foreground-2 mr-1 truncate transition ${
+              hovered ? 'sm:w-auto' : 'sm:w-0'
             }`"
           >
             updated
@@ -70,7 +71,7 @@
             :icon-left="ArrowPathRoundedSquareIcon"
             :to="modelVersionsRoute(project.id, model.id)"
             :class="`transition ${
-              hovered ? 'inline-block opacity-100' : 'hidden opacity-0'
+              hovered ? 'inline-block opacity-100' : 'sm:hidden sm:opacity-0'
             }`"
             :disabled="versionCount === 0"
           >
@@ -91,14 +92,27 @@
         v-if="
           !isPendingModelFragment(model) && model.commentThreadCount.totalCount !== 0
         "
-        :class="`absolute top-0 right-0 p-2 flex items-center transition border-2 border-primary-muted h-8 bg-foundation shadow-md justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2 ${
-          hovered ? 'opacity-100' : 'opacity-0'
+        :class="`absolute opacity-100 top-0 right-0 p-2 flex items-center transition border-2 border-primary-muted h-8 bg-foundation shadow-md justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2 ${
+          hovered ? 'sm:opacity-100' : 'sm:opacity-0'
         }`"
       >
         <ChatBubbleLeftRightIcon class="w-4 h-4" />
         <span>{{ model.commentThreadCount.totalCount }}</span>
       </div>
-    </NuxtLink>
+      <div
+        v-if="!isPendingModelFragment(model) && model.automationStatus"
+        class="absolute top-0 left-0 p-2"
+      >
+        <ProjectPageModelsCardAutomationStatusRefactor
+          :project-id="project.id"
+          :model-or-version="{
+            ...model,
+            automationStatus: model.automationStatus
+          }"
+          :model-id="model.id"
+        />
+      </div>
+    </div>
   </div>
 </template>
 <script lang="ts" setup>
@@ -117,6 +131,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
 import { Nullable } from '@speckle/shared'
+import { keyboardClick } from '@speckle/ui-components'
 
 graphql(`
   fragment ProjectPageModelsCardProject on Project {
@@ -125,8 +140,8 @@ graphql(`
   }
 `)
 
-defineEmits<{
-  (e: 'click', val: MouseEvent): void
+const emit = defineEmits<{
+  (e: 'click', event: MouseEvent | KeyboardEvent): void
 }>()
 
 const props = withDefaults(
@@ -144,6 +159,8 @@ const props = withDefaults(
     height: 'h-64'
   }
 )
+
+provide('projectId', props.project.id)
 
 const importArea = ref(
   null as Nullable<{
@@ -200,6 +217,10 @@ const pendingVersion = computed(() => {
     ? null
     : props.model.pendingImportedVersions[0]
 })
+
+const finalModelUrl = computed(() =>
+  defaultLinkDisabled.value ? undefined : modelRoute(props.project.id, props.model.id)
+)
 
 const triggerVersionUpload = () => {
   importArea.value?.triggerPicker()

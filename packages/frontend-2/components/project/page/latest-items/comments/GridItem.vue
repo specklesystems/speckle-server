@@ -52,9 +52,9 @@ import dayjs from 'dayjs'
 import { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
 import { times } from 'lodash-es'
-import { AvatarUserType } from '~~/lib/user/composables/avatar'
 import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
 import { CheckCircleIcon } from '@heroicons/vue/24/solid'
+import { AvatarUserWithId } from '@speckle/ui-components'
 
 const props = defineProps<{
   thread: ProjectPageLatestItemsCommentItemFragment
@@ -80,13 +80,13 @@ const threadAuthors = computed(() => {
   return authors
 })
 
-const allAvatars = computed((): AvatarUserType[] => [
+const allAvatars = computed((): AvatarUserWithId[] => [
   ...threadAuthors.value,
   // We're adding fake entries so that the proper "+X" number is rendered, and the actual data is
   // not really important because it's never going to be rendered
   ...times(
     hiddenReplyAuthorCount.value,
-    (): AvatarUserType => ({ id: 'fake', name: 'fake' })
+    (): AvatarUserWithId => ({ id: 'fake', name: 'fake' })
   )
 ])
 

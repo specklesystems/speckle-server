@@ -1,13 +1,13 @@
 <template>
   <LayoutDialog v-model:open="openState" max-width="md">
+    <template #header>
+      <slot name="header" />
+    </template>
     <div>
-      <div class="max-w-2xl w-full flex flex-col justify-center pointer-events-auto">
-        <div class="space-y-4 w-full">
-          <h2 class="text-center text-3xl font-bold">
-            <slot name="header">Dialog Header</slot>
-          </h2>
-          <slot></slot>
-        </div>
+      <div
+        class="max-w-2xl w-full flex flex-col gap-4 justify-center pointer-events-auto"
+      >
+        <slot></slot>
       </div>
     </div>
   </LayoutDialog>

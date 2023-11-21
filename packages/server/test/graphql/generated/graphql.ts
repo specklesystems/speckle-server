@@ -146,8 +146,8 @@ export type ApiTokenCreateInput = {
 export type AppAuthor = {
   __typename?: 'AppAuthor';
   avatar?: Maybe<Scalars['String']>;
-  id?: Maybe<Scalars['String']>;
-  name?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  name: Scalars['String'];
 };
 
 export type AppCreateInput = {
@@ -178,6 +178,98 @@ export type AuthStrategy = {
   id: Scalars['String'];
   name: Scalars['String'];
   url: Scalars['String'];
+};
+
+export type AutomationCreateInput = {
+  automationId: Scalars['String'];
+  automationName: Scalars['String'];
+  automationRevisionId: Scalars['String'];
+  modelId: Scalars['String'];
+  projectId: Scalars['String'];
+  webhookId?: InputMaybe<Scalars['String']>;
+};
+
+export type AutomationFunctionRun = {
+  __typename?: 'AutomationFunctionRun';
+  contextView?: Maybe<Scalars['String']>;
+  elapsed: Scalars['Float'];
+  functionId: Scalars['String'];
+  functionLogo?: Maybe<Scalars['String']>;
+  functionName: Scalars['String'];
+  id: Scalars['ID'];
+  resultVersions: Array<Version>;
+  /**
+   * NOTE: this is the schema for the results field below!
+   * Current schema: {
+   *   version: "1.0.0",
+   *   values: {
+   *     objectResults: Record<str, {
+   *       category: string
+   *       level: ObjectResultLevel
+   *       objectIds: string[]
+   *       message: str | null
+   *       metadata: Records<str, unknown> | null
+   *       visualoverrides: Records<str, unknown> | null
+   *     }[]>
+   *     blobIds?: string[]
+   *   }
+   * }
+   */
+  results?: Maybe<Scalars['JSONObject']>;
+  status: AutomationRunStatus;
+  statusMessage?: Maybe<Scalars['String']>;
+};
+
+export type AutomationMutations = {
+  __typename?: 'AutomationMutations';
+  create: Scalars['Boolean'];
+  functionRunStatusReport: Scalars['Boolean'];
+};
+
+
+export type AutomationMutationsCreateArgs = {
+  input: AutomationCreateInput;
+};
+
+
+export type AutomationMutationsFunctionRunStatusReportArgs = {
+  input: AutomationRunStatusUpdateInput;
+};
+
+export type AutomationRun = {
+  __typename?: 'AutomationRun';
+  automationId: Scalars['String'];
+  automationName: Scalars['String'];
+  createdAt: Scalars['DateTime'];
+  functionRuns: Array<AutomationFunctionRun>;
+  id: Scalars['ID'];
+  /** Resolved from all function run statuses */
+  status: AutomationRunStatus;
+  updatedAt: Scalars['DateTime'];
+  versionId: Scalars['String'];
+};
+
+export enum AutomationRunStatus {
+  Failed = 'FAILED',
+  Initializing = 'INITIALIZING',
+  Running = 'RUNNING',
+  Succeeded = 'SUCCEEDED'
+}
+
+export type AutomationRunStatusUpdateInput = {
+  automationId: Scalars['String'];
+  automationRevisionId: Scalars['String'];
+  automationRunId: Scalars['String'];
+  functionRuns: Array<FunctionRunStatusInput>;
+  versionId: Scalars['String'];
+};
+
+export type AutomationsStatus = {
+  __typename?: 'AutomationsStatus';
+  automationRuns: Array<AutomationRun>;
+  id: Scalars['ID'];
+  status: AutomationRunStatus;
+  statusMessage?: Maybe<Scalars['String']>;
 };
 
 export type BlobMetadata = {
@@ -591,6 +683,27 @@ export type FileUpload = {
   userId: Scalars['String'];
 };
 
+export type FunctionRunStatusInput = {
+  contextView?: InputMaybe<Scalars['String']>;
+  elapsed: Scalars['Float'];
+  functionId: Scalars['String'];
+  functionLogo?: InputMaybe<Scalars['String']>;
+  functionName: Scalars['String'];
+  resultVersionIds: Array<Scalars['String']>;
+  /**
+   * Current schema: {
+   *   version: "1.0.0",
+   *   values: {
+   *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
+   *     blobIds?: string[]
+   *   }
+   * }
+   */
+  results?: InputMaybe<Scalars['JSONObject']>;
+  status: AutomationRunStatus;
+  statusMessage?: InputMaybe<Scalars['String']>;
+};
+
 export type LegacyCommentViewerData = {
   __typename?: 'LegacyCommentViewerData';
   /**
@@ -681,6 +794,7 @@ export type LimitedUserTimelineArgs = {
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
+  automationStatus?: Maybe<AutomationsStatus>;
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
   /** All comment threads in this model */
@@ -808,6 +922,7 @@ export type Mutation = {
   appRevokeAccess?: Maybe<Scalars['Boolean']>;
   /** Update an existing third party application. **Note: This will invalidate all existing tokens, refresh tokens and access codes and will require existing users to re-authorize it.** */
   appUpdate: Scalars['Boolean'];
+  automationMutations: AutomationMutations;
   branchCreate: Scalars['String'];
   branchDelete: Scalars['Boolean'];
   branchUpdate: Scalars['Boolean'];
@@ -1308,7 +1423,7 @@ export type Project = {
   /** Return metadata about resources being requested in the viewer */
   viewerResources: Array<ViewerResourceGroup>;
   visibility: ProjectVisibility;
-  webhooks?: Maybe<WebhookCollection>;
+  webhooks: WebhookCollection;
 };
 
 
@@ -1362,6 +1477,14 @@ export type ProjectViewerResourcesArgs = {
 
 export type ProjectWebhooksArgs = {
   id?: InputMaybe<Scalars['String']>;
+};
+
+export type ProjectAutomationsStatusUpdatedMessage = {
+  __typename?: 'ProjectAutomationsStatusUpdatedMessage';
+  model: Model;
+  project: Project;
+  status: AutomationsStatus;
+  version: Version;
 };
 
 export type ProjectCollaborator = {
@@ -1906,6 +2029,8 @@ export type ServerInfo = {
   adminContact?: Maybe<Scalars['String']>;
   /** The authentication strategies available on this server. */
   authStrategies: Array<AuthStrategy>;
+  /** Base URL of Speckle Automate, if set */
+  automateUrl?: Maybe<Scalars['String']>;
   blobSizeLimitBytes: Scalars['Int'];
   canonicalUrl?: Maybe<Scalars['String']>;
   company?: Maybe<Scalars['String']>;
@@ -2052,7 +2177,7 @@ export type Stream = {
   role?: Maybe<Scalars['String']>;
   size?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
-  webhooks?: Maybe<WebhookCollection>;
+  webhooks: WebhookCollection;
 };
 
 
@@ -2228,6 +2353,7 @@ export type Subscription = {
   commitDeleted?: Maybe<Scalars['JSONObject']>;
   /** Subscribe to commit updated event. */
   commitUpdated?: Maybe<Scalars['JSONObject']>;
+  projectAutomationsStatusUpdated: ProjectAutomationsStatusUpdatedMessage;
   /**
    * Subscribe to updates to resource comments/threads. Optionally specify resource ID string to only receive
    * updates regarding comments for those resources.
@@ -2312,6 +2438,11 @@ export type SubscriptionCommitDeletedArgs = {
 export type SubscriptionCommitUpdatedArgs = {
   commitId?: InputMaybe<Scalars['String']>;
   streamId: Scalars['String'];
+};
+
+
+export type SubscriptionProjectAutomationsStatusUpdatedArgs = {
+  projectId: Scalars['String'];
 };
 
 
@@ -2557,6 +2688,7 @@ export type UserUpdateInput = {
 export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
+  automationStatus?: Maybe<AutomationsStatus>;
   /** All comment threads in this version */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
@@ -2679,10 +2811,12 @@ export type Webhook = {
   __typename?: 'Webhook';
   description?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
+  hasSecret: Scalars['Boolean'];
   history?: Maybe<WebhookEventCollection>;
   id: Scalars['String'];
+  projectId: Scalars['String'];
   streamId: Scalars['String'];
-  triggers: Array<Maybe<Scalars['String']>>;
+  triggers: Array<Scalars['String']>;
   url: Scalars['String'];
 };
 
@@ -2693,8 +2827,8 @@ export type WebhookHistoryArgs = {
 
 export type WebhookCollection = {
   __typename?: 'WebhookCollection';
-  items?: Maybe<Array<Maybe<Webhook>>>;
-  totalCount?: Maybe<Scalars['Int']>;
+  items: Array<Webhook>;
+  totalCount: Scalars['Int'];
 };
 
 export type WebhookCreateInput = {

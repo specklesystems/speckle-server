@@ -14,6 +14,7 @@ const serverInfoQuery = graphql(`
       name
       termsOfService
       version
+      automateUrl
     }
   }
 `)
