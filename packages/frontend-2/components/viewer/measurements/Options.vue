@@ -19,7 +19,7 @@
           <ViewerMeasurementsUnitSelect
             v-model="selectedUnit"
             mount-menu-on-body
-            @update:model-value="onChangeUnits"
+            @update:model-value="onChangeMeasurementUnits"
           />
         </div>
         <div class="w-3/12">
@@ -27,7 +27,7 @@
           <div class="scale-95 -ml-1">
             <FormSwitch
               :model-value="measurementParams.vertexSnap"
-              @update:model-value="(newValue) => toggleMeasurementsSnap()"
+              @update:model-value="() => toggleMeasurementsSnap()"
             />
           </div>
         </div>
@@ -71,7 +71,7 @@ const selectedUnit = ref('Meters')
 const measurementParams = ref({
   type: MeasurementType.POINTTOPOINT,
   vertexSnap: true,
-  units: 'm',
+  units: selectedUnit.value,
   precision: 2
 })
 
@@ -82,8 +82,10 @@ const updateMeasurementsType = (selectedOption: Option) => {
   setMeasurementOptions(measurementParams.value)
 }
 
-const onChangeUnits = (newUnit: string) => {
-  console.log('Selected Unit:', newUnit)
+const onChangeMeasurementUnits = (newUnit: string) => {
+  selectedUnit.value = newUnit
+  measurementParams.value.units = newUnit
+  setMeasurementOptions(measurementParams.value)
 }
 
 const toggleMeasurementsSnap = () => {
