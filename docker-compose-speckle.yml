@@ -1,15 +1,22 @@
 version: '2.3'
 services:
-  speckle-frontend:
+  speckle-ingress:
     build:
       context: .
-      dockerfile: packages/frontend/Dockerfile
-    image: speckle/speckle-frontend:local
+      dockerfile: utils/docker-compose-ingress/Dockerfile
+    image: speckle/speckle-docker-compose-ingress:local
     restart: always
     ports:
       - '0.0.0.0:80:8080'
     environment:
-      FILE_SIZE_LIMIT_MB: 100
+      FILE_SIZE_LIMIT_MB: '100'
+
+  speckle-frontend-2:
+    build:
+      context: .
+      dockerfile: packages/frontend-2/Dockerfile
+    image: speckle/speckle-frontend-2:local
+    restart: always
 
   speckle-server:
     build:

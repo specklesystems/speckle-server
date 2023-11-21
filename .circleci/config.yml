@@ -101,6 +101,12 @@ workflows:
           requires:
             - get-version
 
+      - docker-build-docker-compose-ingress:
+          context: *build-context
+          filters: *filters-build
+          requires:
+            - get-version
+
       - publish-approval:
           type: approval
           filters: &filters-ignore-main-branch-or-all-tags
@@ -203,6 +209,15 @@ workflows:
             - publish-approval
             - test-frontend-2
             - test-server
+
+      - docker-publish-docker-compose-ingress:
+          context: *docker-hub-context
+          filters: *filters-publish
+          requires:
+            - docker-build-docker-compose-ingress
+            - get-version
+            - pre-commit
+            - publish-approval
 
       - publish-helm-chart:
           filters: &filters-publish
@@ -721,6 +736,12 @@ jobs:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: monitor-deployment
 
+  docker-build-docker-compose-ingress:
+    <<: *build-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: docker-compose-ingress
+
   docker-publish: &publish-job
     docker: &base-image
       - image: cimg/python:3.9.15-node
@@ -781,6 +802,12 @@ jobs:
     environment:
       FOLDER: utils
       SPECKLE_SERVER_PACKAGE: monitor-deployment
+
+  docker-publish-docker-compose-ingress:
+    <<: *publish-job
+    environment:
+      FOLDER: utils
+      SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
   publish-npm:
     docker: *docker-image
