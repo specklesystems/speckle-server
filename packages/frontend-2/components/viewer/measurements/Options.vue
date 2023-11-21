@@ -34,16 +34,19 @@
       </div>
       <div class="flex flex-col gap-3">
         <label class="font-semibold text-xs" for="precision">Precision</label>
-        <input
-          id="intensity"
-          v-model="precision"
-          class="h-2 mr-2"
-          type="range"
-          name="intensity"
-          min="0"
-          max="1"
-          step="0.01"
-        />
+        <div class="flex gap-2 items-center">
+          <input
+            id="precision"
+            v-model="precision"
+            class="h-2 mr-2 flex-1"
+            type="range"
+            name="intensity"
+            min="1"
+            max="5"
+            step="1"
+          />
+          <span class="text-xs w-4">{{ precision }}</span>
+        </div>
       </div>
     </div>
   </ViewerLayoutPanel>
@@ -66,11 +69,11 @@ const selectedUnit = ref('Meters')
 const typeOptions = [
   {
     title: 'Point to Point',
-    description: 'Lorem ipsum dolor sit amet'
+    description: 'Select two points to measure the direct distance between them'
   },
   {
     title: 'Perpendicular',
-    description: 'Sed do eiusmod tempor.'
+    description: 'Distance between a point and a surface, perpendicular to the target'
   }
 ]
 
