@@ -669,13 +669,13 @@ jobs:
       - run:
           name: Initialize nix shell
           command: |
-            nix-shell --run "echo Here, a nix shell for you"
+            nix-shell --run "echo Here, a nix shell for you" ./.circleci/shell.nix
       - save_cache:
           key: nix-{{ checksum "./.circleci/shell.nix" }}
           paths:
             - /nix
-      - run: nix-shell --run "docker compose --file docker-compose-deps.yml up --detach"
-      - run: nix-shell --run "docker compose --file docker-compose-speckle.yml up --detach"
+      - run: nix-shell --run "docker compose --file docker-compose-deps.yml up --detach" ./.circleci/shell.nix
+      - run: nix-shell --run "docker compose --file docker-compose-speckle.yml up --detach" ./.circleci/shell.nix
 
   docker-build: &build-job
     docker: &docker-image
