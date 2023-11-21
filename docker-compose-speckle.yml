@@ -21,8 +21,8 @@ services:
     image: speckle/speckle-frontend-2:local
     restart: always
     environment:
-      - NUXT_PUBLIC_SERVER_NAME: 'local'
-      - NUXT_PUBLIC_API_ORIGIN: 'http://127.0.0.1'
+      NUXT_PUBLIC_SERVER_NAME: 'local'
+      NUXT_PUBLIC_API_ORIGIN: 'http://127.0.0.1'
 
   speckle-server:
     build:
