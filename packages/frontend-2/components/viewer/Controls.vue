@@ -25,7 +25,7 @@
       <ViewerControlsButtonToggle
         v-tippy="'Measurements'"
         :active="activeControl === 'measurements'"
-        @click="toggleActiveControl('measurements')"
+        @click="toggleMeasurements"
       >
         <IconMeasurements class="h-5 w-5" />
       </ViewerControlsButtonToggle>
@@ -190,7 +190,8 @@ import {
 import { Nullable } from '@speckle/shared'
 import {
   useCameraUtilities,
-  useSectionBoxUtilities
+  useSectionBoxUtilities,
+  useMeasurementUtilities
 } from '~~/lib/viewer/composables/ui'
 import {
   onKeyboardShortcut,
@@ -215,6 +216,8 @@ import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
+
+const { enableMeasurements } = useMeasurementUtilities()
 
 const allAutomationRuns = computed(() => {
   const allAutomationStatuses = modelsAndVersionIds.value
@@ -377,6 +380,12 @@ const scrollControlsToBottom = () => {
   // TODO: Currently this will scroll to the very bottom, which doesn't make sense when there are multiple models loaded
   // if (scrollableControlsContainer.value)
   //   scrollToBottom(scrollableControlsContainer.value)
+}
+
+const toggleMeasurements = () => {
+  const isMeasurementsActive = activeControl.value === 'measurements'
+  enableMeasurements(!isMeasurementsActive)
+  activeControl.value = isMeasurementsActive ? 'none' : 'measurements'
 }
 
 onMounted(() => {

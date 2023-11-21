@@ -1,5 +1,5 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
-import { PropertyInfo } from '@speckle/viewer'
+import { MeasurementOptions, PropertyInfo } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
 import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
@@ -338,4 +338,24 @@ export function useThreadUtilities() {
   }
 
   return { closeAllThreads, open, isOpenThread }
+}
+
+export function useMeasurementUtilities() {
+  const { instance } = useInjectedViewer()
+
+  const enableMeasurements = (value: boolean) => {
+    if (instance && instance.enableMeasurements) {
+      instance.enableMeasurements(value)
+    }
+  }
+  const setMeasurementOptions = (options: MeasurementOptions) => {
+    if (instance && instance.setMeasurementOptions) {
+      instance.setMeasurementOptions(options)
+    }
+  }
+
+  return {
+    enableMeasurements,
+    setMeasurementOptions
+  }
 }

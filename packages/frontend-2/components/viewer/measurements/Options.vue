@@ -2,15 +2,15 @@
   <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
     <template #title>Measure</template>
     <template #actions>
-      <FormButton size="xs" text :icon-left="MinusIcon">Delete</FormButton>
+      <FormButton size="xs" text :icon-left="MinusIcon" disabled>Delete</FormButton>
     </template>
     <div class="p-4 flex flex-col gap-3">
       <div>
         <h6 class="font-semibold text-xs mb-2">Measurement Type</h6>
         <FormRadioGroup
           label="Select an Option"
-          :options="typeOptions"
-          @update:selected="updateType"
+          :options="measurementTypeOptions"
+          @update:selected="updateMeasurementsType"
         />
       </div>
       <div class="flex gap-4">
@@ -26,8 +26,8 @@
           <h6 class="font-semibold text-xs mb-1.5">Snap</h6>
           <div class="scale-95 -ml-1">
             <FormSwitch
-              :model-value="snapEnabled"
-              @update:model-value="(newValue) => onSnapEnabledChange(newValue)"
+              :model-value="measurementParams.vertexSnap"
+              @update:model-value="(newValue) => toggleMeasurementsSnap()"
             />
           </div>
         </div>
@@ -54,39 +54,53 @@
 <script setup lang="ts">
 import { MinusIcon } from '@heroicons/vue/24/solid'
 import { FormSwitch, FormRadioGroup } from '@speckle/ui-components'
+import { MeasurementType } from '@speckle/viewer'
+import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
 
 interface Option {
   title: string
   description: string
+  value: MeasurementType
 }
 
 defineEmits(['close'])
 
-const snapEnabled = ref(false)
 const precision = ref()
 const selectedUnit = ref('Meters')
 
-const typeOptions = [
-  {
-    title: 'Point to Point',
-    description: 'Select two points to measure the direct distance between them'
-  },
-  {
-    title: 'Perpendicular',
-    description: 'Distance between a point and a surface, perpendicular to the target'
-  }
-]
+const measurementParams = ref({
+  type: MeasurementType.POINTTOPOINT,
+  vertexSnap: true,
+  units: 'm',
+  precision: 2
+})
 
-const updateType = (selectedOption: Option) => {
-  console.log('Selected option:', selectedOption)
+const { setMeasurementOptions } = useMeasurementUtilities()
+
+const updateMeasurementsType = (selectedOption: Option) => {
+  measurementParams.value.type = selectedOption.value
+  setMeasurementOptions(measurementParams.value)
 }
 
 const onChangeUnits = (newUnit: string) => {
   console.log('Selected Unit:', newUnit)
 }
 
-const onSnapEnabledChange = (newValue: boolean) => {
-  snapEnabled.value = newValue
-  console.log(newValue)
+const toggleMeasurementsSnap = () => {
+  measurementParams.value.vertexSnap = !measurementParams.value.vertexSnap
+  setMeasurementOptions(measurementParams.value)
 }
+
+const measurementTypeOptions = [
+  {
+    title: 'Point to Point',
+    description: 'Select two points to measure the direct distance between them',
+    value: MeasurementType.POINTTOPOINT
+  },
+  {
+    title: 'Perpendicular',
+    description: 'Distance between a point and a surface, perpendicular to the target',
+    value: MeasurementType.PERPENDICULAR
+  }
+]
 </script>
