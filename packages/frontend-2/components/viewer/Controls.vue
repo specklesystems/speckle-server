@@ -23,7 +23,7 @@
 
       <!-- Measurements -->
       <ViewerControlsButtonToggle
-        v-tippy="'Measurements'"
+        v-tippy="'Measure mode'"
         :active="activeControl === 'measurements'"
         @click="toggleMeasurements"
       >
