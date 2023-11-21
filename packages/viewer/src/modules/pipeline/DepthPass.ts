@@ -96,7 +96,7 @@ export class DepthPass extends BaseSpecklePass implements SpecklePass {
       {
         depthPacking: RGBADepthPacking
       },
-      ['USE_RTE', 'ALPHATEST_REJECTION']
+      [/*'USE_RTE',*/ 'ALPHATEST_REJECTION']
     )
 
     this.depthMaterial.blending = NoBlending

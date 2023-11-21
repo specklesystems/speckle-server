@@ -173,8 +173,12 @@ void main() {
         mvPosition = instanceMatrix * mvPosition;
     #endif
     
-    mvPosition = rteModelViewMatrix * mvPosition;
-
+    #ifdef USE_RTE
+        mvPosition = rteModelViewMatrix * mvPosition;
+    #else
+        mvPosition = modelViewMatrix * mvPosition;
+    #endif
+    
     #ifdef LINEAR_DEPTH
         vViewPosition = mvPosition;
     #endif 

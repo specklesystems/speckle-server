@@ -12,7 +12,13 @@ import {
 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { AllBatchUpdateRange, Batch, BatchUpdateRange, GeometryType } from './Batch'
+import {
+  AllBatchUpdateRange,
+  Batch,
+  BatchUpdateRange,
+  GeometryType,
+  HideAllBatchUpdateRange
+} from './Batch'
 import { BatchObject } from './BatchObject'
 import SpeckleInstancedMesh from '../objects/SpeckleInstancedMesh'
 import { ObjectLayers } from '../../IViewer'
@@ -94,12 +100,11 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public setVisibleRange(...ranges: BatchUpdateRange[]) {
-    ranges
-    // if (ranges.length === 1 && ranges[0] === HideAllBatchUpdateRange) {
-    //   this.geometry.setDrawRange(0, 0)
-    //   this.mesh.visible = false
-    //   return
-    // }
+    if (ranges.length === 1 && ranges[0] === HideAllBatchUpdateRange) {
+      this.mesh.visible = false
+      return
+    }
+    this.mesh.visible = true
     // if (
     //   ranges.length === 1 &&
     //   ranges[0].offset === AllBatchUpdateRange.offset &&
@@ -125,11 +130,8 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public getVisibleRange(): BatchUpdateRange {
-    if (this.geometry.groups.length === 0) return AllBatchUpdateRange
-    return {
-      offset: this.geometry.drawRange.start,
-      count: this.geometry.drawRange.count
-    }
+    if (this.mesh.visible) return AllBatchUpdateRange
+    return HideAllBatchUpdateRange
   }
 
   public setBatchBuffers(...range: BatchUpdateRange[]): void {

@@ -63,10 +63,12 @@ class SpeckleDepthMaterial extends ExtendedMeshDepthMaterial {
    * inside SpeckleRenderer for shadowmaps
    */
   onBeforeRender(_this, scene, camera, geometry, object, group) {
-    object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
-    this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
-    this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
-    this.userData.rteModelViewMatrix.value.copy(_this.RTEBuffers.rteViewModelMatrix)
+    if (this.defines['USE_RTE']) {
+      object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
+      this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
+      this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
+      this.userData.rteModelViewMatrix.value.copy(_this.RTEBuffers.rteViewModelMatrix)
+    }
 
     this.needsUpdate = true
   }
