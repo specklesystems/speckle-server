@@ -49,7 +49,7 @@ spec:
             port:
               number: 3000
       - pathType: Exact
-        path: "/objects/.*"
+        path: "/((objects/.*)|(api/.*))"
         backend:
           service:
             name: speckle-objects
