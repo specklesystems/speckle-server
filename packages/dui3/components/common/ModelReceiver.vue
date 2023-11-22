@@ -90,9 +90,28 @@ const projectVersionsUpdated = onProjectVersionsUpdate(props.project.projectId)
 
 projectVersionsUpdated.onResult(() => store.invalidateReceiver(props.model.id))
 
+type DataType = Record<string, unknown>
 const paramsFormState = ref<JsonFormsChangeEvent>()
 const onParamsFormChange = (e: JsonFormsChangeEvent) => {
   paramsFormState.value = e
-  console.log(e)
+  console.log(JSON.parse(JSON.stringify(e.data)))
+  // if (props.model.settings) {
+  //   console.log(props.model.settings)
+
+  //   Object.entries(e.data as DataType).forEach((key, value) => {
+  //     console.log(key, 'key')
+  //     console.log(value, 'value')
+
+  //     const setting = props.model.settings?.find(
+  //       (s) => s.id === (key[0] as unknown as string)
+  //     )
+  //     console.log(setting)
+
+  //     if (setting) {
+  //       setting.default = key[1]
+  //     }
+  //   })
+  // }
+  store.updateModelSettings(props.model.id, e.data as DataType)
 }
 </script>
