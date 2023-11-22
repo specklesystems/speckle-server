@@ -6,7 +6,7 @@ if k8s_context() != 'kind-speckle-server':
   fail('Failing early as tilt should only ever connect to kind-speckle-server.')
 
 # Install extensions
-load('ext://helm_remote', 'helm_remote')
+load('ext://helm_resource', 'helm_resource', 'helm_repo')
 load('ext://k8s_yaml_glob', 'k8s_yaml_glob')
 
 # Create namespaces
@@ -26,49 +26,54 @@ k8s_yaml('./manifests/priorityclass.yaml')
 k8s_yaml('./manifests/speckle-server.secret.yaml')
 
 # Install charts
-helm_remote('postgresql',
+helm_resource('postgresql',
+            release_name='postgresql',
             namespace='postgres',
-            repo_name='oci://registry-1.docker.io/bitnamicharts',
-            values=['./values/postgres.values.yaml'],
-            version='^12.0.0')
+            chart='oci://registry-1.docker.io/bitnamicharts/postgresql',
+            flags=['--version=^12.0.0', '--values=./values/postgres.values.yaml'])
 
-helm_remote('minio',
+helm_resource('minio',
+            release_name='minio',
             namespace='minio',
-            repo_name='oci://registry-1.docker.io/bitnamicharts',
-            values=['./values/minio.values.yaml'],
-            version='^12.0.0')
+            chart='oci://registry-1.docker.io/bitnamicharts/minio',
+            flags=['--version=^12.0.0', '--values=./values/minio.values.yaml'])
 
-helm_remote('redis',
+helm_resource('redis',
+            release_name='redis',
             namespace='redis',
-            repo_name='oci://registry-1.docker.io/bitnamicharts',
-            values=['./values/redis.values.yaml'],
-            version='^18.0.0')
+            chart='oci://registry-1.docker.io/bitnamicharts/redis',
+            flags=['--version=^18.0.0', '--values=./values/redis.values.yaml'])
 
 # errors with `no matches for kind "DaemonSet" in version "extensions/v1beta1"`
 # but `kubectl get --raw /apis ` and v1.
 # The Helm Chart should identify and template correctly: https://github.com/search?q=repo%3Aprometheus-community%2Fhelm-charts+rbac.authorization.k8s.io%2Fv1beta1+path%3Acharts%2F&type=code
 # It seems that the chart is not generated correctly.
-# helm_remote('prometheus',
-#             repo_name='prometheus-operator-crds',
+# helm_repo('prometheus-repo',
+#           'https://prometheus-community.github.io/helm-charts')
+# helm_resource('prometheus',
+#             release_name='prometheus-operator-crds',
 #             namespace='prometheus',
-#             repo_url='https://prometheus-community.github.io/helm-charts',
-#             values=['./values/prometheus-operator-crds.values.yaml'],
-#             version='^7.0.0')
+#             chart='prometheus-repo/prometheus-operator-crds',
+#             flags=['--version=^7.0.0', '--values=./values/prometheus-operator-crds.values.yaml'])
+
+helm_repo('ingress-nginx-repo',
+          'https://kubernetes.github.io/ingress-nginx')
 
 #nginx should be deployed as the last dependency as it opens ports to services
 #it expects these services to exist, which are created by the helm charts above
-helm_remote('ingress-nginx',
-            repo_name='ingress-nginx',
+helm_resource('ingress-nginx',
+            release_name='ingress-nginx',
             namespace='ingress-nginx',
-            repo_url='https://kubernetes.github.io/ingress-nginx',
-            values=['./values/nginx.values.yaml'],
-            version='^4.8.0')
+            chart='ingress-nginx-repo/ingress-nginx',
+            flags=['--version=^4.8.0', '--values=./values/nginx.values.yaml'])
 
+# helm_repo('speckle-server-repo',
+#           'https://specklesystems.github.io/helm')
 # helm_remote('speckle-server',
-#             repo_name='speckle-server',
+#             release_name='speckle-server',
 #             namespace='speckle-server',
-#             repo_url='https://specklesystems.github.io/helm',
-#             values=['./values/speckle-server.values.yaml'])
+#             chart='speckle-server-repo/speckle-server',
+#             flags=['--values=./values/speckle-server.values.yaml'])
 
 k8s_yaml(helm('./../../utils/helm/speckle-server',
               values=['./values/speckle-server.values.yaml'],
