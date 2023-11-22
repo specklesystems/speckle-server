@@ -725,21 +725,31 @@ jobs:
       - run:
           name: Initialize nix shell
           command: |
-            nix-shell --run "echo Here, a nix shell for you" ./.circleci/deployment/helm-chart-shell.nix
+            nix-shell \
+            --run "echo Here, a nix shell for you" \
+            ./.circleci/deployment/helm-chart-shell.nix
       - save_cache:
           key: nix-{{ checksum "./.circleci/deployment/helm-chart-shell.nix" }}
           paths:
             - /nix
       - run: echo "export KUBECONFIG=$(pwd)/.kube/config" >> "${BASH_ENV}"
       - run: echo "${KUBECONFIG}"
-      - run: nix-shell --run "yarn"
+      - run:
+          name: Install dependencies via yarn
+          command: |
+            nix-shell \
+            --run "yarn" \
+            ./.circleci/deployment/helm-chart-shell.nix
       - save_cache:
           key: yarn-{{ checksum "yarn.lock" }}
           paths:
             - .yarn/cache
       - run:
           name: Template Helm Chart
-          command: nix-shell --run "helm template speckle-server ./utils/helm/speckle-server" ./.circleci/deployment/helm-chart-shell.nix
+          command: |
+            nix-shell \
+            --run "helm template speckle-server ./utils/helm/speckle-server" \
+            ./.circleci/deployment/helm-chart-shell.nix
       - run:
           name: Add 127.0.0.1 domains to /etc/hosts
           command: |
