@@ -107,6 +107,6 @@ const openFilterDialog = ref(false)
 const paramsFormState = ref<JsonFormsChangeEvent>()
 const onParamsFormChange = (e: JsonFormsChangeEvent) => {
   paramsFormState.value = e
-  console.log(e)
+  console.log(JSON.parse(JSON.stringify(e)))
 }
 </script>
