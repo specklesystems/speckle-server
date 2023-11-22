@@ -54,7 +54,7 @@ workflows:
             tags:
               ignore: /.*/
 
-      - test-docker-compose:
+      - deployment-test-docker-compose:
           filters: &filters-deployment-testing
             tags:
               # run tests for any commit on any branch, including any tags
@@ -238,6 +238,7 @@ workflows:
             - docker-publish-server
             - docker-publish-test-container
             - docker-publish-webhooks
+            - deployment-test-docker-compose
             - get-version
             - publish-approval
 
@@ -659,7 +660,7 @@ jobs:
           additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
           fail-on-issues: false
 
-  test-docker-compose:
+  deployment-test-docker-compose:
     machine:
       image: ubuntu-2204:2023.02.1
       docker_layer_caching: true
