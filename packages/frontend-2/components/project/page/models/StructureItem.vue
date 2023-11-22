@@ -1,23 +1,18 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div class="space-y-4 relative" @mouseleave="showActionsMenu = false">
-    <!--
-      Nested anchors are causing a hydration mismatch for some reason (template renders wrong in SSR), could be a Vue bug?
-      TODO: Report it to Vue/Nuxt!
-    -->
-    <NuxtLink
+    <div
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group bg-foundation w-full py-1 pr-1 flex rounded-md shadow hover:shadow-xl cursor-pointer hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary items-stretch"
-      :to="modelLink || ''"
+      class="group relative bg-foundation w-full py-1 pr-2 sm:pr-4 flex flex-col sm:flex-row rounded-md shadow hover:shadow-xl hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary items-stretch"
     >
-      <div class="flex items-center flex-grow">
+      <div class="flex items-center flex-grow order-2 sm:order-1">
         <!-- Icon -->
         <template v-if="model">
           <CubeIcon
             v-if="model.versionCount.totalCount !== 0"
-            class="w-4 h-4 text-foreground-2 mx-2"
+            class="w-4 h-4 text-foreground-2 mx-2 shrink-0"
           />
-          <CubeTransparentIcon v-else class="w-4 h-4 text-foreground-2 mx-2" />
+          <CubeTransparentIcon v-else class="w-4 h-4 text-foreground-2 mx-2 shrink-0" />
         </template>
         <template v-else-if="pendingModel">
           <ArrowUpOnSquareIcon class="w-4 h-4 text-foreground-2 mx-2" />
@@ -25,10 +20,13 @@
 
         <!-- Name -->
         <div class="flex justify-start space-x-2 items-center">
-          <span class="text-lg font-bold text-foreground">
+          <NuxtLink :to="modelLink || ''" class="text-lg font-bold text-foreground">
             {{ name }}
-          </span>
-          <span v-if="model" class="opacity-0 group-hover:opacity-100 transition">
+          </NuxtLink>
+          <span
+            v-if="model"
+            class="opacity-100 sm:opacity-0 group-hover:opacity-100 transition"
+          >
             <ProjectPageModelsActions
               v-model:open="showActionsMenu"
               :model="model"
@@ -82,14 +80,26 @@
             class="h-full w-full"
           />
         </div>
-        <div v-else-if="hasVersions" class="flex items-center space-x-10">
-          <div class="text-xs text-foreground-2">
+        <div v-else-if="hasVersions" class="flex items-center space-x-6 sm:space-x-10">
+          <div
+            class="text-xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
+          >
             updated
             <b>{{ updatedAt }}</b>
           </div>
           <div class="text-xs text-foreground-2 flex items-center space-x-1">
             <span>{{ model?.commentThreadCount.totalCount }}</span>
             <ChatBubbleLeftRightIcon class="w-4 h-4" />
+          </div>
+          <div v-if="model && model.automationStatus" class="text-xs text-foreground-2">
+            <ProjectPageModelsCardAutomationStatusRefactor
+              :project-id="props.projectId"
+              :model-or-version="{
+                ...model,
+                automationStatus: model.automationStatus
+              }"
+              :model-id="model.id"
+            />
           </div>
           <div class="text-xs text-foreground-2">
             <FormButton
@@ -114,20 +124,22 @@
         v-if="!isPendingFileUpload(item) && item.model?.previewUrl && !pendingVersion"
         class="w-24 h-20 ml-4"
       >
-        <PreviewImage
-          v-if="item.model?.previewUrl"
-          :preview-url="item.model.previewUrl"
-        />
+        <NuxtLink :to="modelLink || ''" class="h-full w-full">
+          <PreviewImage
+            v-if="item.model?.previewUrl"
+            :preview-url="item.model.previewUrl"
+          />
+        </NuxtLink>
       </div>
       <div v-else class="h-20" />
-    </NuxtLink>
+    </div>
     <!-- Doubling up for mixed items -->
     <div
       v-if="hasSubmodels"
       class="border-l-2 border-primary-muted hover:border-primary transition rounded-md"
     >
       <button
-        class="group bg-foundation w-full py-1 pr-1 flex items-center rounded-md shadow hover:shadow-xl cursor-pointer hover:bg-primary-muted transition-all"
+        class="group bg-foundation w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md shadow hover:shadow-xl cursor-pointer hover:bg-primary-muted transition-all"
         href="/test"
         @click.stop="expanded = !expanded"
       >
@@ -168,7 +180,7 @@
               :icon-right="ArrowTopRightOnSquareIcon"
               :to="viewAllUrl"
               :disabled="!viewAllUrl"
-              @click="trackFederateModels"
+              @click.stop="trackFederateModels"
             >
               View All
             </FormButton>
@@ -234,6 +246,7 @@ import { projectModelChildrenTreeQuery } from '~~/lib/projects/graphql/queries'
 import { has } from 'lodash-es'
 import { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useIsModelExpanded } from '~~/lib/projects/composables/models'
 
 /**
  * TODO: The template in this file is a complete mess, needs refactoring
@@ -276,6 +289,8 @@ const props = defineProps<{
   isSearchResult?: boolean
 }>()
 
+provide('projectId', props.projectId)
+
 const importArea = ref(
   null as Nullable<{
     triggerPicker: () => void
@@ -291,7 +306,6 @@ const trackFederateModels = () =>
     source: 'model grid item'
   })
 
-const expanded = ref(false)
 const showActionsMenu = ref(false)
 
 const itemType = computed<StructureItemType>(() => {
@@ -329,6 +343,13 @@ const hasSubmodels = computed(() =>
 const name = computed(() => {
   if (isPendingFileUpload(props.item)) return props.item.modelName
   return props.isSearchResult ? props.item.fullName : props.item.name
+})
+const fullName = computed(() =>
+  isPendingFileUpload(props.item) ? props.item.modelName : props.item.fullName
+)
+const expanded = useIsModelExpanded({
+  fullName,
+  projectId: computed(() => props.projectId)
 })
 
 const model = computed(() =>

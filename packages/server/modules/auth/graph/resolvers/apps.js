@@ -36,6 +36,10 @@ module.exports = {
         return parent.secret
 
       return 'App secrets are only revealed to their author 😉'
+    },
+    async scopes(parent, args, context) {
+      if (parent.scopes?.length) return parent.scopes
+      return await context.loaders.apps.getAppScopes.load(parent.id)
     }
   },
 

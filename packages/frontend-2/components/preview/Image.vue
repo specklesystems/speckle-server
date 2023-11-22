@@ -15,11 +15,11 @@
       >
         <div
           v-show="
-            (!hovered && previewUrl) || isLoadingPanorama || !props.panoramaOnHover
+            (!hovered && finalPreviewUrl) || isLoadingPanorama || !props.panoramaOnHover
           "
           class="w-full h-full bg-contain bg-no-repeat bg-center transition"
           :style="{
-            backgroundImage: `url('${previewUrl}')`
+            backgroundImage: `url('${finalPreviewUrl}')`
           }"
         />
       </Transition>
@@ -81,8 +81,12 @@ const props = withDefaults(
 )
 
 const basePreviewUrl = computed(() => props.previewUrl)
-const { previewUrl, panoramaPreviewUrl, shouldLoadPanorama, isLoadingPanorama } =
-  usePreviewImageBlob(basePreviewUrl)
+const {
+  previewUrl: finalPreviewUrl,
+  panoramaPreviewUrl,
+  shouldLoadPanorama,
+  isLoadingPanorama
+} = usePreviewImageBlob(basePreviewUrl)
 
 const hovered = ref(false)
 

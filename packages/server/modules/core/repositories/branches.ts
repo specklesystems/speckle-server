@@ -14,6 +14,7 @@ import {
 import crs from 'crypto-random-string'
 import { Knex } from 'knex'
 import { clamp, last, trim } from 'lodash'
+import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 
 export const generateBranchId = () => crs({ length: 10 })
 
@@ -55,12 +56,20 @@ export async function getStreamBranchesByName(
 
   const q = Branches.knex<BranchRecord[]>()
     .where(Branches.col.streamId, streamId)
-    .andWhere(
-      knex.raw('LOWER(??) ilike ANY(?)', [
-        Branches.col.name,
-        names.map((n) => n.toLowerCase() + (startsWithName ? '%' : ''))
-      ])
-    )
+    .andWhere((w1) => {
+      w1.where(
+        knex.raw('LOWER(??) ilike ANY(?)', [
+          Branches.col.name,
+          names.map((n) => n.toLowerCase() + (startsWithName ? '%' : ''))
+        ])
+      )
+
+      if (!options?.startsWithName) {
+        // There are some edge cases with branches that have backwards slashes in their name that break the query,
+        // hence the extra condition
+        w1.orWhereIn(Branches.col.name, names)
+      }
+    })
 
   return await q
 }
@@ -250,8 +259,13 @@ export async function getPaginatedProjectModelsItems(
     return { items: [], cursor: null }
   }
 
+  const maxProjectModelsPerPage = getMaximumProjectModelsPerPage()
+
   const q = getPaginatedProjectModelsBaseQuery<BranchRecord[]>(projectId, params)
-  q.limit(clamp(limit || 25, 1, 100)).orderBy(Branches.col.updatedAt, 'desc')
+  q.limit(clamp(limit || 25, 1, maxProjectModelsPerPage)).orderBy(
+    Branches.col.updatedAt,
+    'desc'
+  )
 
   if (cursor) q.andWhere(Branches.col.updatedAt, '<', cursor)
 
@@ -516,10 +530,11 @@ export const validateBranchName = (name: string) => {
     name.startsWith('#') ||
     name.startsWith('$') ||
     name.indexOf('//') !== -1 ||
-    name.indexOf(',') !== -1
+    name.indexOf(',') !== -1 ||
+    name.indexOf('\\') !== -1
   )
     throw new BranchNameError(
-      'Branch names cannot start with "#", "$", start or end with "/", have multiple slashes next to each other (e.g., "//") or contain commas.',
+      'Branch names cannot start with "#", "$", start or end with "/", have multiple slashes next to each other (e.g., "//") or contain commas or backwards slashes.',
       {
         info: {
           name
@@ -564,6 +579,12 @@ export async function updateBranch(branchId: string, branch: Partial<BranchRecor
 }
 
 export async function deleteBranchById(branchId: string) {
+  // this needs to happen before deleting the branch, otherwise the
+  // branch_commits table doesn't have the needed rows
+  await Commits.knex()
+    .join('branch_commits', 'commits.id', 'branch_commits.commitId')
+    .where('branch_commits.branchId', branchId)
+    .del()
   return await Branches.knex().where(Branches.col.id, branchId).del()
 }
 

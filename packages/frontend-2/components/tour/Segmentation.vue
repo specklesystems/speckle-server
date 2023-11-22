@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-xl w-screen h-screen flex items-center justify-center">
+  <div class="max-w-xl w-screen h-[100dvh] flex items-center justify-center">
     <Transition
       enter-from-class="opacity-0"
       enter-active-class="transition duration-300"
@@ -7,14 +7,14 @@
       <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
       <div
         v-show="step === 0"
-        class="bg-blue-500/50 border-4 border-primary-muted text-foreground-on-primary backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto"
+        class="dark:bg-neutral-900/80 border dark:border-neutral-800 text-foreground backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto mx-2"
         @mouseenter="rotateGently(Math.random() * 2)"
         @mouseleave="rotateGently(Math.random() * 2)"
       >
         <h2 class="text-center text-2xl font-bold">
           Welcome, {{ activeUser?.name?.split(' ')[0] }}!
         </h2>
-        <p class="text-center">
+        <p class="text-center text-sm">
           Let's get to know each other. What industry do you work in?
         </p>
         <div class="grid grid-cols-2 gap-4">
@@ -38,12 +38,12 @@
       <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
       <div
         v-show="step === 1"
-        class="bg-blue-500/40 border-4 border-primary-muted text-foreground-on-primary backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto"
+        class="dark:bg-neutral-900/80 border dark:border-neutral-800 text-foreground backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto mx-2"
         @mouseenter="rotateGently(Math.random() * 2)"
         @mouseleave="rotateGently(Math.random() * 2)"
       >
         <h2 class="text-center text-2xl font-bold">Thanks!</h2>
-        <p class="text-center">
+        <p class="text-center text-sm">
           Last thing! Please select the role that best describes you:
         </p>
         <div class="grid grid-cols-2 gap-4">
@@ -84,6 +84,7 @@ const {
 const onboardingState = ref<OnboardingState>({ industry: undefined, role: undefined })
 
 const { activeUser } = useActiveUser()
+const tourState = useTourStageState()
 
 const emit = defineEmits(['next'])
 
@@ -101,6 +102,7 @@ function setRole(val: OnboardingRole) {
   nextView()
   // NOTE: workaround for being able to view this in storybook
   if (activeUser.value?.id) setMixpanelSegments(onboardingState.value)
+  tourState.value.showSegmentation = false
   emit('next')
 }
 

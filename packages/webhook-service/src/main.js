@@ -98,7 +98,7 @@ async function doTask(task) {
   } catch (err) {
     switch (err.constructor) {
       case WebhookError:
-        boundLogger.info({ err }, 'Failed to trigger webhook event.')
+        boundLogger.warn({ err }, 'Failed to trigger webhook event.')
         break
       default:
         boundLogger.error(err, 'Failed to trigger webhook event.')

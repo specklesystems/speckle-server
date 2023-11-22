@@ -24,6 +24,7 @@ import SpeckleGhostMaterial from './SpeckleGhostMaterial'
 import Logger from 'js-logger'
 import SpeckleTextMaterial from './SpeckleTextMaterial'
 import { SpeckleMaterial } from './SpeckleMaterial'
+import SpecklePointColouredMaterial from './SpecklePointColouredMaterial'
 
 export interface MaterialOptions {
   rampIndex?: number
@@ -58,6 +59,8 @@ export default class Materials {
   private pointGhostMaterial: Material = null
   private pointOverlayMaterial: Material = null
   private pointCloudOverlayMaterial: Material = null
+  private pointCloudColouredMaterial: Material = null
+  private pointCloudGradientMaterial: Material = null
 
   private textHighlightMaterial: Material = null
   private textGhostMaterial: Material = null
@@ -67,20 +70,24 @@ export default class Materials {
 
   private defaultGradientTextureData: ImageData = null
 
-  public static renderMaterialFromNode(node: TreeNode): RenderMaterial {
-    if (!node) return null
+  public static renderMaterialFromNode(
+    materialNode: TreeNode,
+    geometryNode: TreeNode
+  ): RenderMaterial {
+    if (!materialNode) return null
     let renderMaterial: RenderMaterial = null
-    if (node.model.raw.renderMaterial) {
+    if (materialNode.model.raw.renderMaterial) {
       renderMaterial = {
-        id: node.model.raw.renderMaterial.id,
-        color: node.model.raw.renderMaterial.diffuse,
+        id: materialNode.model.raw.renderMaterial.id,
+        color: materialNode.model.raw.renderMaterial.diffuse,
         opacity:
-          node.model.raw.renderMaterial.opacity !== undefined
-            ? node.model.raw.renderMaterial.opacity
+          materialNode.model.raw.renderMaterial.opacity !== undefined
+            ? materialNode.model.raw.renderMaterial.opacity
             : 1,
-        roughness: node.model.raw.renderMaterial.roughness,
-        metalness: node.model.raw.renderMaterial.metalness,
-        vertexColors: node.model.raw.colors && node.model.raw.colors.length > 0
+        roughness: materialNode.model.raw.renderMaterial.roughness,
+        metalness: materialNode.model.raw.renderMaterial.metalness,
+        vertexColors:
+          geometryNode.model.raw.colors && geometryNode.model.raw.colors.length > 0
       }
     }
     return renderMaterial
@@ -431,7 +438,29 @@ export default class Materials {
       ['USE_RTE']
     )
 
-    // Jesus prettier... o_0
+    this.pointCloudColouredMaterial = new SpecklePointColouredMaterial(
+      {
+        color: 0xffffff,
+        vertexColors: false,
+        size: 2,
+        sizeAttenuation: false
+      },
+      ['USE_RTE']
+    )
+    this.pointCloudGradientMaterial = new SpecklePointColouredMaterial(
+      {
+        color: 0xffffff,
+        vertexColors: false,
+        size: 2,
+        sizeAttenuation: false
+      },
+      ['USE_RTE']
+    )
+    ;(
+      this.pointCloudGradientMaterial as SpecklePointColouredMaterial
+    ).setGradientTexture(await Assets.getTexture(defaultGradient))
+
+    // Jesus prettier... o_0(
     ;(
       this.pointCloudHighlightMaterial as SpecklePointMaterial
     ).color.convertSRGBToLinear()
@@ -841,9 +870,9 @@ export default class Materials {
       case GeometryType.LINE:
         return this.lineColoredMaterial
       case GeometryType.POINT:
-        return this.pointGhostMaterial
+        return this.pointCloudGradientMaterial
       case GeometryType.POINT_CLOUD:
-        return this.pointGhostMaterial
+        return this.pointCloudGradientMaterial
       case GeometryType.TEXT:
         return this.textColoredMaterial
     }
@@ -858,9 +887,9 @@ export default class Materials {
       case GeometryType.LINE:
         return this.lineColoredMaterial
       case GeometryType.POINT:
-        return this.pointGhostMaterial
+        return this.pointCloudColouredMaterial
       case GeometryType.POINT_CLOUD:
-        return this.pointGhostMaterial
+        return this.pointCloudColouredMaterial
       case GeometryType.TEXT:
         return this.textColoredMaterial
     }

@@ -49,6 +49,10 @@ interface GithubRelease {
   tag_name: string
 }
 
+useHead({
+  title: 'Server Management'
+})
+
 definePageMeta({
   middleware: ['admin']
 })

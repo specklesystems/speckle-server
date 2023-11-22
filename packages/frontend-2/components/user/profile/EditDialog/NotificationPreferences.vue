@@ -1,24 +1,31 @@
 <template>
-  <div class="flex flex-col space-y-4">
-    <div class="h4 font-bold flex items-center space-x-2">
-      <BellIcon class="w-6 h-6" />
-      <span>Notification preferences</span>
-    </div>
-    <table class="table-auto">
-      <thead class="text-foreground-2 border-b">
+  <LayoutDialogSection title="Notification preferences" border-t border-b>
+    <template #icon>
+      <BellIcon class="h-full w-full" />
+    </template>
+    <table class="table-auto w-full rounded-t overflow-hidden">
+      <thead class="text-foreground-1">
         <tr>
-          <th>Notification type</th>
-          <th v-for="channel in notificationChannels" :key="channel">
+          <th class="bg-primary-muted py-2 px-4">Notification type</th>
+          <th
+            v-for="channel in notificationChannels"
+            :key="channel"
+            class="bg-primary-muted text-right py-2 px-4"
+          >
             {{ capitalize(channel) }}
           </th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="[type, settings] in Object.entries(localPreferences)" :key="type">
-          <td>
+          <td class="px-4 pb-1 pt-2 text-xs sm:text-sm">
             {{ notificationTypeMapping[type] || 'Unknown' }}
           </td>
-          <td v-for="channel in notificationChannels" :key="channel">
+          <td
+            v-for="channel in notificationChannels"
+            :key="channel"
+            class="flex justify-end pt-2 pr-4"
+          >
             <FormCheckbox
               :name="`${type} (${channel})`"
               :disabled="loading"
@@ -32,9 +39,10 @@
         </tr>
       </tbody>
     </table>
-  </div>
+  </LayoutDialogSection>
 </template>
 <script setup lang="ts">
+import { LayoutDialogSection } from '@speckle/ui-components'
 import { BellIcon } from '@heroicons/vue/24/outline'
 import { capitalize, cloneDeep } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -58,8 +66,8 @@ const { mutate, loading } = useUpdateNotificationPreferences()
 const notificationTypeMapping = ref({
   activityDigest: 'Weekly activity digest',
   mentionedInComment: 'Mentioned in comment',
-  newStreamAccessRequest: 'Stream access request',
-  streamAccessRequestApproved: 'Stream access request approved'
+  newStreamAccessRequest: 'Project access request',
+  streamAccessRequestApproved: 'Project access request approved'
 } as Record<string, string>)
 
 const localPreferences = ref({} as NotificationPreferences)

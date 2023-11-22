@@ -11,7 +11,7 @@
     "directory": "packages/preview-service"
   },
   "engines": {
-    "node": "^18.17.1"
+    "node": "^18.18.2"
   },
   "scripts": {
     "dev": "LOG_PRETTY=true nodemon --trace-deprecation ./bin/www",
@@ -37,7 +37,7 @@
     "pino-pretty": "^9.1.1",
     "prom-client": "^14.0.1",
     "puppeteer": "^13.3.2",
-    "sharp": "^0.30.7",
+    "sharp": "^0.32.6",
     "yargs": "^17.3.0",
     "zlib": "^1.0.5"
   },

@@ -1,47 +1,38 @@
 <template>
-  <div class="flex flex-col space-y-4">
-    <div class="h4 font-bold flex items-center space-x-2">
-      <InformationCircleIcon class="w-6 h-6" />
-      <span>Bio</span>
-    </div>
+  <div class="flex flex-col space-y-4 mb-8">
     <div class="flex flex-col space-y-4">
-      <!-- <LazyUserAvatarEditor class="w-6/12 self-center" /> -->
-      <UserAvatarEditable class="w-6/12 self-center" :user="user" />
-      <FormTextInput
-        v-model="name"
-        label="Name"
-        name="name"
-        placeholder="John Doe"
-        :custom-icon="UserIcon"
-        show-label
-        show-required
-        :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
-        @change="save"
-      />
-      <FormTextInput
-        v-model="company"
-        label="Company"
-        name="company"
-        placeholder="Example Ltd."
-        :custom-icon="BriefcaseIcon"
-        show-label
-        :rules="[isStringOfLength({ maxLength: 512 })]"
-        @change="save"
-      />
-      <FormTextArea
-        v-model="bio"
-        name="bio"
-        label="Bio"
-        show-label
-        placeholder="Tell everyone a little bit about yourself!"
-        :rules="[isStringOfLength({ maxLength: 2048 })]"
-        @change="save"
-      />
+      <div class="flex flex-col md:flex-row gap-2 sm:gap-8 items-center">
+        <div class="w-full md:w-4/12">
+          <UserProfileEditDialogAvatar :user="user" size="xxl" />
+        </div>
+        <div class="flex flex-col space-y-4 w-full md:w-9/12">
+          <FormTextInput
+            v-model="name"
+            label="Name"
+            name="name"
+            placeholder="John Doe"
+            :custom-icon="UserIcon"
+            show-label
+            show-required
+            :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
+            @change="save"
+          />
+          <FormTextInput
+            v-model="company"
+            label="Company"
+            name="company"
+            placeholder="Example Ltd."
+            :custom-icon="BriefcaseIcon"
+            show-label
+            :rules="[isStringOfLength({ maxLength: 512 })]"
+            @change="save"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { UserIcon, BriefcaseIcon } from '@heroicons/vue/24/solid'
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -58,7 +49,7 @@ graphql(`
     name
     company
     bio
-    ...UserAvatarEditable_User
+    ...UserProfileEditDialogAvatar_User
   }
 `)
 

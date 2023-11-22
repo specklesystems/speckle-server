@@ -6,7 +6,6 @@ import { NodeRenderView } from '../tree/NodeRenderView'
 import { AllBatchUpdateRange, Batch, BatchUpdateRange, GeometryType } from './Batch'
 
 import { SpeckleText } from '../objects/SpeckleText'
-import { GlyphGeometry } from 'troika-three-text'
 import { ObjectLayers } from '../SpeckleRenderer'
 import SpeckleTextMaterial from '../materials/SpeckleTextMaterial'
 
@@ -14,7 +13,6 @@ export default class TextBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
-  private geometry: GlyphGeometry
   public batchMaterial: Material
   public mesh: SpeckleText
   private insertedRanges: BatchUpdateRange[] = []
@@ -38,7 +36,7 @@ export default class TextBatch implements Batch {
   }
 
   public getCount(): number {
-    return this.geometry.index.count
+    return this.mesh.geometry.index.count
   }
 
   public setBatchMaterial(material: Material) {
@@ -136,8 +134,8 @@ export default class TextBatch implements Batch {
 
   public purge() {
     this.renderViews.length = 0
-    this.geometry.dispose()
     this.batchMaterial.dispose()
+    this.mesh.geometry.dispose()
     this.mesh = null
   }
 }

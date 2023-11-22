@@ -64,6 +64,11 @@ vec4 computeRelativePosition(in vec3 position_low, in vec3 position_high, in vec
     return vec4(position, 1.);
 }
 
+#ifdef USE_GRADIENT_RAMP
+    attribute float gradientIndex;
+    varying float vGradientIndex;
+#endif
+
 void main() {
 
 	#include <color_vertex>
@@ -83,6 +88,10 @@ void main() {
 
     #endif
     mvPosition = modelViewMatrix * mvPosition;
+
+    #ifdef USE_GRADIENT_RAMP
+        vGradientIndex = gradientIndex;
+    #endif
 
     gl_Position = projectionMatrix * mvPosition;
 

@@ -1,13 +1,13 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-width="md"
+    max-width="sm"
     @fully-closed="$emit('fully-closed')"
   >
+    <template #header>
+      Move {{ versions.length }} version{{ versions.length > 1 ? 's' : '' }}
+    </template>
     <div class="flex flex-col space-y-4">
-      <div class="h4 font-bold text-foreground">
-        Move {{ `${versions.length} version${versions.length > 1 ? 's' : ''}` }}
-      </div>
       <LayoutTabs v-slot="{ activeItem }" :items="tabItems">
         <ProjectModelPageDialogMoveToExistingTab
           v-if="activeItem.id === 'existing-model'"

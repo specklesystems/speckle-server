@@ -58,6 +58,9 @@ const props = defineProps({
   noShadow: {
     type: Boolean,
     default: false
+  },
+  panelClasses: {
+    type: String
   }
 })
 
@@ -74,6 +77,9 @@ const computedClasses = computed(() => {
   if (!props.noShadow) classParts.push('shadow')
   if (props.ring) {
     classParts.push('ring-outline-2 hover:ring-2')
+  }
+  if (props.panelClasses) {
+    classParts.push(props.panelClasses)
   }
 
   return classParts.join(' ')

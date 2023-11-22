@@ -70,7 +70,7 @@
               -->
               <div v-if="hasConfigBindings">
                 <FormButton size="xs" text @click.stop="toggleTheme()">
-                  {{ isDarkTheme ? 'Switch To Light Theme' : 'Switch To Dark Theme' }}
+                  {{ isDarkTheme ? 'Switch to light theme' : 'Switch to dark theme' }}
                 </FormButton>
               </div>
             </div>
@@ -84,12 +84,12 @@
 import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { useAccountStore, DUIAccount } from '~/store/accounts'
-import { useUiConfigStore } from '~/store/uiConfig'
+import { useConfigStore } from '~/store/config'
 
 const accountStore = useAccountStore()
 const { accounts, defaultAccount, isLoading } = storeToRefs(accountStore)
 
-const uiConfigStore = useUiConfigStore()
+const uiConfigStore = useConfigStore()
 const { isDarkTheme, hasConfigBindings } = storeToRefs(uiConfigStore)
 const { toggleTheme } = uiConfigStore
 

@@ -379,7 +379,7 @@ const sizeClasses = computed(() => {
       return 'h-14 text-xl font-bold xxx-tracking-wide'
     default:
     case 'base':
-      return 'h-8 text-base font-medium xxx-tracking-wide'
+      return 'h-8 text-sm sm:text-base font-medium xxx-tracking-wide'
   }
 })
 
@@ -431,7 +431,7 @@ const decoratorClasses = computed(() => {
 const buttonClasses = computed(() => {
   const isLinkOrText = props.link || props.text
   return [
-    'transition inline-flex justify-center items-center space-x-2 outline-none select-none',
+    'transition inline-flex justify-center text-center items-center space-x-2 outline-none select-none',
     generalClasses.value,
     sizeClasses.value,
     foregroundClasses.value,

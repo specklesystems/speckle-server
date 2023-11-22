@@ -23,7 +23,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { IDirectSelectionSendFilter } from '~~/lib/bindings/definitions/ISendBinding'
+import { IDirectSelectionSendFilter } from 'lib/models/card/send'
 import { useHostAppStore } from '~~/store/hostApp'
 import { useSelectionStore } from '~~/store/selection'
 

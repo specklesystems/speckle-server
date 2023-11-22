@@ -1,16 +1,16 @@
 <template>
-  <div class="flex flex-col space-y-4">
-    <div class="h4 font-bold flex items-center space-x-2">
-      <UserPlusIcon class="w-6 h-6" />
-      <span>Invite</span>
-    </div>
-    <div class="flex flex-col space-y-4">
+  <LayoutDialogSection allow-overflow border-b border-t title="Invite">
+    <template #icon>
+      <UserPlusIcon class="h-full w-full" />
+    </template>
+    <div class="flex flex-col mt-2">
       <FormTextInput
         v-model="search"
         name="search"
-        size="xl"
-        placeholder="search by username or email"
-        input-classes="pr-[100px]"
+        size="lg"
+        placeholder="Search"
+        help="Search by username or email"
+        input-classes="pr-[85px] text-sm"
       >
         <template #input-right>
           <div class="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -20,7 +20,7 @@
       </FormTextInput>
       <div
         v-if="searchUsers.length || selectedEmails?.length"
-        class="flex flex-col space-y-4"
+        class="flex flex-col border bg-foundation border-primary-muted -mt-6"
       >
         <template v-if="searchUsers.length">
           <ProjectPageTeamDialogInviteUserServerUserRow
@@ -42,10 +42,11 @@
         />
       </div>
     </div>
-  </div>
+  </LayoutDialogSection>
 </template>
 <script setup lang="ts">
 import { Roles, ServerRoles, StreamRoles } from '@speckle/shared'
+import { LayoutDialogSection } from '@speckle/ui-components'
 import { UserSearchItem, useUserSearch } from '~~/lib/common/composables/users'
 import {
   ProjectInviteCreateInput,
@@ -56,7 +57,7 @@ import { isEmail } from '~~/lib/common/helpers/validation'
 import { isArray, isString } from 'lodash-es'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
-import { UserPlusIcon } from '@heroicons/vue/24/solid'
+import { UserPlusIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useServerInfo } from '~~/lib/core/composables/server'
 

@@ -78,7 +78,9 @@
             <v-list-item
               v-if="item.type === 'item'"
               :key="i"
-              :to="`/streams/${stream.id}/branches/${item.name}`"
+              :to="`/streams/${stream.id}/branches/${formatBranchNameForURL(
+                item.name
+              )}`"
               exact
             >
               <v-list-item-icon>
@@ -124,7 +126,9 @@
               <v-list-item
                 v-for="(kid, j) in item.children"
                 :key="j"
-                :to="`/streams/${stream.id}/branches/${kid.name}`"
+                :to="`/streams/${stream.id}/branches/${formatBranchNameForURL(
+                  kid.name
+                )}`"
                 exact
               >
                 <v-list-item-icon>
@@ -227,6 +231,7 @@ import { StreamEvents } from '@/main/lib/core/helpers/eventHubHelper'
 import { useRoute } from '@/main/lib/core/composables/router'
 import { useAllStreamBranches } from '@/main/lib/stream/composables/branches'
 import { Roles } from '@speckle/shared'
+import { formatBranchNameForURL } from '@/main/lib/stream/helpers/branches'
 
 export default {
   components: {
@@ -244,12 +249,14 @@ export default {
     const streamId = computed(() => route.params.streamId)
     const { localBranches, refetchBranches, totalBranchCount, branchesLoading } =
       useAllStreamBranches(streamId)
+
     return {
       localBranches,
       refetchBranches,
       totalBranchCount,
       loading: branchesLoading,
-      streamRoles: Roles.Stream
+      streamRoles: Roles.Stream,
+      formatBranchNameForURL
     }
   },
   data() {

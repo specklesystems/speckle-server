@@ -3,7 +3,7 @@
     <Disclosure v-slot="{ open }">
       <DisclosureButton :class="buttonClasses">
         <div class="inline-flex items-center space-x-2">
-          <Component :is="icon" v-if="icon" class="h-4 w-4" />
+          <Component :is="icon" v-if="icon" class="h-5 w-5" />
           <span>{{ title }}</span>
         </div>
         <ChevronUpIcon :class="!open ? 'rotate-180 transform' : ''" class="h-5 w-5" />
@@ -21,7 +21,7 @@ import { DisclosureButton, Disclosure, DisclosurePanel } from '@headlessui/vue'
 import { ChevronUpIcon } from '@heroicons/vue/24/solid'
 import { ConcreteComponent, computed } from 'vue'
 
-type DisclosureColor = 'default' | 'danger'
+type DisclosureColor = 'default' | 'danger' | 'success' | 'warning'
 
 const props = withDefaults(
   defineProps<{
@@ -40,10 +40,20 @@ const props = withDefaults(
 const buttonClasses = computed(() => {
   const classParts = [
     'pr-3 h-10 w-full flex items-center justify-between border-l-2 px-2 rounded transition',
-    'ring-1'
+    'ring-1 font-medium'
   ]
 
   switch (props.color) {
+    case 'warning':
+      classParts.push(
+        'border-warning text-warning ring-warning-lighter hover:ring-warning'
+      )
+      break
+    case 'success':
+      classParts.push(
+        'border-success text-success ring-success-lighter hover:ring-success'
+      )
+      break
     case 'danger':
       classParts.push('border-danger text-danger ring-danger-lighter hover:ring-danger')
       break
@@ -59,9 +69,15 @@ const buttonClasses = computed(() => {
 })
 
 const panelClasses = computed(() => {
-  const classParts = ['mt-4 px-3 py-1 border-x ']
+  const classParts = ['p-3 border-x border-b rounded-b-md']
 
   switch (props.color) {
+    case 'warning':
+      classParts.push('border-warning-lighter')
+      break
+    case 'success':
+      classParts.push('border-success-lighter')
+      break
     case 'danger':
       classParts.push('border-danger-lighter')
       break

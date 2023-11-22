@@ -2,6 +2,16 @@
   <div
     class="flex flex-col items-center justify-center h-[calc(100vh-16rem)] px-4 space-y-2"
   >
+    <Portal to="navigation">
+      <FormButton
+        to="/onboardingIndex"
+        size="sm"
+        :icon-left="ArrowLeftIcon"
+        class="ml-5"
+      >
+        Onboarding
+      </FormButton>
+    </Portal>
     <div class="h3">{{ `Let's receive our first model to ${hostAppName}.` }}</div>
     <form
       class="flex flex-col justify-center space-y-4"
@@ -58,6 +68,7 @@ import { nanoid } from 'nanoid'
 import { useForm } from 'vee-validate'
 import { useHostAppStore } from '~~/store/hostApp'
 import { useAccountStore } from '~~/store/accounts'
+import { useConfigStore } from '~/store/config'
 import { ValidationHelpers } from '@speckle/ui-components'
 import {
   ProjectsSelectItemType,
@@ -65,9 +76,11 @@ import {
   VersionsSelectItemType
 } from 'lib/form/select/types'
 import { IReceiverModelCard } from '~~/lib/models/card/receiver'
+import { ArrowLeftIcon } from '@heroicons/vue/20/solid'
 
 const { defaultAccount } = storeToRefs(useAccountStore())
 const hostAppStore = useHostAppStore()
+const configStore = useConfigStore()
 const router = useRouter()
 const hostAppName = computed(() => hostAppStore.hostAppName)
 
@@ -112,6 +125,7 @@ const receive = async () => {
   }
 
   await hostAppStore.addModel(modelCard)
+  configStore.completeOnboarding('receive')
   router.push('/')
   setTimeout(async () => {
     await hostAppStore.receiveModel(modelCard.id, selectedVersion.value?.id as string)

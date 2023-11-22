@@ -32,122 +32,128 @@
     <div
       v-if="isExpanded"
       ref="threadContainer"
-      class="fixed z-50 pointer-events-auto"
+      class="thread-container fixed mb-16 bottom-0 right-0 sm:bottom-auto sm:right-auto w-screen sm:w-80 z-50 pointer-events-auto"
       :style="threadStyle"
     >
-      <div
-        ref="handle"
-        class="p-1.5 cursor-move rounded-lg group hover:bg-blue-500/50 transition"
-        :class="{ 'is-dragging bg-blue-500/50': isDragging }"
-      >
+      <ViewerCommentsPortalOrDiv to="mobileComments">
         <div
-          :class="[
-            'bg-white dark:bg-neutral-800 backdrop-blur-sm shadow-md cursor-auto rounded-lg',
-            'group-hover:bg-foundation dark:group-hover:bg-neutral-800 group-[.is-dragging]:bg-foundation dark:group-[.is-dragging]:bg-neutral-800'
-          ]"
+          ref="handle"
+          class="sm:p-1.5 cursor-move sm:rounded-lg group hover:sm:bg-blue-500/50 transition h-full transition-all duration-200"
+          :class="{ 'is-dragging bg-blue-500/50': isDragging }"
         >
-          <div class="relative w-80 flex pt-3">
-            <div class="flex-grow flex items-center">
-              <FormButton
-                v-tippy="'Previous'"
-                size="sm"
-                :icon-left="ChevronLeftIcon"
-                text
-                hide-text
-                @click="emit('prev', props.modelValue)"
-              ></FormButton>
-              <FormButton
-                v-tippy="'Next'"
-                size="sm"
-                :icon-left="ChevronRightIcon"
-                text
-                hide-text
-                @click="emit('next', props.modelValue)"
-              ></FormButton>
-              <div class="flex-grow"></div>
-              <FormButton
-                v-show="isDragged"
-                v-tippy="'Pop In'"
-                size="sm"
-                :icon-left="ArrowTopRightOnSquareIcon"
-                text
-                hide-text
-                class="rotate-180"
-                @click="isDragged = false"
-              ></FormButton>
-            </div>
-            <div>
-              <FormButton
-                v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
-                size="sm"
-                :icon-left="
-                  modelValue.archived ? CheckCircleIcon : CheckCircleIconOutlined
-                "
-                text
-                hide-text
-                :color="modelValue.archived ? 'default' : 'default'"
-                :disabled="!canArchiveOrUnarchive"
-                @click="toggleCommentResolvedStatus()"
-              ></FormButton>
-              <FormButton
-                v-tippy="'Copy link'"
-                size="sm"
-                :icon-left="LinkIcon"
-                text
-                hide-text
-                @click="onCopyLink"
-              ></FormButton>
-              <FormButton
-                size="sm"
-                :icon-left="XMarkIcon"
-                text
-                hide-text
-                @click="changeExpanded(false)"
-              ></FormButton>
-            </div>
-          </div>
-          <div class="relative w-80 flex flex-col">
+          <div
+            :class="[
+              'relative bg-foundation sm:bg-white dark:sm:bg-neutral-800 flex flex-col overflow-hidden sm:shadow-md cursor-auto sm:rounded-lg h-full transition-all duration-200',
+              'group-hover:bg-foundation dark:group-hover:bg-neutral-800 group-[.is-dragging]:bg-foundation dark:group-[.is-dragging]:bg-neutral-800'
+            ]"
+          >
             <div
-              ref="commentsContainer"
-              class="max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
+              class="relative w-full sm:w-80 flex py-2 pl-3 pr-2 sm:px-2 bg-foundation-2"
             >
-              <div
-                v-if="!isThreadResourceLoaded"
-                class="pl-3 pr-1 py-1 mt-2 flex items-center justify-between text-xs text-primary bg-primary-muted"
-              >
-                <span>Conversation started in a different version.</span>
+              <div class="flex-grow flex items-center">
+                <span class="sm:hidden text-primary text-sm font-medium">
+                  Discussions
+                </span>
                 <FormButton
-                  v-tippy="'Load thread context'"
-                  size="xs"
+                  v-tippy="'Previous'"
+                  size="sm"
+                  :icon-left="ChevronLeftIcon"
                   text
-                  @click="onLoadThreadContext"
-                >
-                  <ArrowDownCircleIcon class="w-5 h-5" />
-                </FormButton>
+                  hide-text
+                  @click="emit('prev', modelValue)"
+                ></FormButton>
+                <FormButton
+                  v-tippy="'Next'"
+                  size="sm"
+                  :icon-left="ChevronRightIcon"
+                  text
+                  hide-text
+                  @click="emit('next', modelValue)"
+                ></FormButton>
+                <div class="flex-grow"></div>
+                <FormButton
+                  v-show="isDragged"
+                  v-tippy="'Pop In'"
+                  size="sm"
+                  :icon-left="ArrowTopRightOnSquareIcon"
+                  text
+                  hide-text
+                  class="rotate-180"
+                  @click="isDragged = false"
+                ></FormButton>
               </div>
-              <ViewerAnchoredPointThreadComment
-                v-for="comment in comments"
-                :key="comment.id"
-                :comment="comment"
-                :project-id="projectId"
-                @mounted="onCommentMounted"
-              />
+              <div>
+                <FormButton
+                  v-tippy="modelValue.archived ? 'Unresolve' : 'Resolve'"
+                  size="sm"
+                  :icon-left="
+                    modelValue.archived ? CheckCircleIcon : CheckCircleIconOutlined
+                  "
+                  text
+                  hide-text
+                  :color="modelValue.archived ? 'default' : 'default'"
+                  :disabled="!canArchiveOrUnarchive"
+                  @click="toggleCommentResolvedStatus()"
+                ></FormButton>
+                <FormButton
+                  v-tippy="'Copy link'"
+                  size="sm"
+                  :icon-left="LinkIcon"
+                  text
+                  hide-text
+                  @click="onCopyLink"
+                ></FormButton>
+                <FormButton
+                  size="sm"
+                  :icon-left="XMarkIcon"
+                  text
+                  hide-text
+                  @click="changeExpanded(false)"
+                ></FormButton>
+              </div>
             </div>
-            <div
-              v-if="isTypingMessage"
-              class="bg-foundation rounded-full w-full p-2 caption mt-2"
-            >
-              {{ isTypingMessage }}
+            <div class="relative w-full sm:w-80 flex flex-col flex-1 justify-between">
+              <div
+                ref="commentsContainer"
+                class="max-h-[calc(50vh)] sm:max-h-[300px] 2xl:max-h-[500px] pb-20 overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
+              >
+                <div
+                  v-if="!isThreadResourceLoaded"
+                  class="pl-3 pr-1 py-1 flex items-center justify-between text-xs text-primary bg-primary-muted"
+                >
+                  <span>Conversation started in a different version.</span>
+                  <FormButton
+                    v-tippy="'Load thread context'"
+                    size="xs"
+                    text
+                    @click="onLoadThreadContext"
+                  >
+                    <ArrowDownCircleIcon class="w-5 h-5" />
+                  </FormButton>
+                </div>
+                <ViewerAnchoredPointThreadComment
+                  v-for="comment in comments"
+                  :key="comment.id"
+                  :comment="comment"
+                  :project-id="projectId"
+                  @mounted="onCommentMounted"
+                />
+              </div>
+              <div
+                v-if="isTypingMessage"
+                class="bg-foundation rounded-full w-full p-2 caption mt-2"
+              >
+                {{ isTypingMessage }}
+              </div>
             </div>
             <ViewerAnchoredPointThreadNewReply
               v-if="!modelValue.archived && canReply"
               :model-value="modelValue"
-              class="mt-2"
               @submit="onNewReply"
             />
           </div>
         </div>
-      </div>
+      </ViewerCommentsPortalOrDiv>
     </div>
   </div>
 </template>
@@ -205,6 +211,7 @@ const props = defineProps<{
 const threadId = computed(() => props.modelValue.id)
 const { copy } = useClipboard()
 const { activeUser } = useActiveUser()
+
 const archiveComment = useArchiveComment()
 const { triggerNotification } = useGlobalToast()
 const {
@@ -474,3 +481,10 @@ onMounted(() => {
   }
 })
 </script>
+<style scoped>
+@media (max-width: 640px) {
+  .thread-container {
+    transform: none !important;
+  }
+}
+</style>

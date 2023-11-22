@@ -1,12 +1,18 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="md">
-    <div class="flex flex-col text-foreground space-y-4">
+  <LayoutDialog v-model:open="isOpen" max-width="sm">
+    <template #header>Manage Project</template>
+    <div class="flex flex-col text-foreground">
+      <ProjectPageTeamDialogManageUsers always-open :project="project" />
       <ProjectPageTeamDialogInviteUser
         v-if="isOwner && !isServerGuest"
         :project="project"
       />
-      <ProjectPageTeamDialogManageUsers :project="project" />
       <ProjectPageTeamDialogManagePermissions :project="project" />
+      <ProjectPageTeamDialogWebhooks :project="project" />
+      <ProjectPageTeamDialogDangerZones
+        v-if="isOwner || canLeaveProject"
+        :project="project"
+      />
     </div>
   </LayoutDialog>
 </template>
@@ -51,7 +57,9 @@ const props = defineProps<{
   project: ProjectPageTeamDialogFragment
 }>()
 
-const { isOwner, isServerGuest } = useTeamDialogInternals({ props: toRefs(props) })
+const { isOwner, isServerGuest, canLeaveProject } = useTeamDialogInternals({
+  props: toRefs(props)
+})
 
 const isOpen = computed({
   get: () => props.open,

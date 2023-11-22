@@ -1,5 +1,6 @@
 <template>
   <ViewerLayoutPanel @close="$emit('close')">
+    <template #title>Discussions</template>
     <template #actions>
       <FormButton
         text
@@ -10,10 +11,10 @@
         Discussion Visibility Options
       </FormButton>
     </template>
-    <div class="flex flex-col px-1">
+    <div class="flex flex-col">
       <div
         v-show="showVisibilityOptions"
-        class="sticky top-10 px-0 py-2 flex flex-col justify-start text-left border-b-2 border-primary-muted bg-foundation"
+        class="sticky top-10 px-2 py-2 flex flex-col justify-start text-left border-b-2 border-primary-muted bg-foundation"
       >
         <div>
           <FormButton
@@ -47,7 +48,7 @@
               loadedVersionsOnly = loadedVersionsOnly ? undefined : 'loadedVersionsOnly'
             "
           >
-            Exclude Other Versions
+            Exclude threads from other versions
           </FormButton>
         </div>
       </div>

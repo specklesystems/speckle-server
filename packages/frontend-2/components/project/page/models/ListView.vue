@@ -10,20 +10,24 @@
         @create-submodel="onCreateSubmodel"
       />
     </div>
-    <ProjectPageModelsNewModelStructureItem
-      v-if="canContribute && !isUsingSearch"
-      :project-id="projectId"
+    <FormButtonSecondaryViewAll
+      v-if="showViewAll"
+      :to="allProjectModelsRoute(project.id)"
     />
   </div>
-  <CommonEmptySearchState
-    v-else-if="
-      isFiltering && (baseResult?.project?.modelsTree.items || []).length === 0
-    "
-    @clear-search="$emit('clear-search')"
-  />
-  <div v-else>
-    <ProjectCardImportFileArea :project-id="project.id" class="h-36 col-span-4" />
-  </div>
+  <template v-else-if="!areQueriesLoading">
+    <CommonEmptySearchState
+      v-if="
+        !topLevelItems.length &&
+        isFiltering &&
+        (baseResult?.project?.modelsTree.items || []).length === 0
+      "
+      @clear-search="$emit('clear-search')"
+    />
+    <div v-else>
+      <ProjectCardImportFileArea :project-id="project.id" class="h-36 col-span-4" />
+    </div>
+  </template>
   <InfiniteLoading
     v-if="topLevelItems?.length && !disablePagination"
     :settings="{ identifier: infiniteLoaderId }"
@@ -50,6 +54,7 @@ import { Nullable, SourceAppDefinition } from '@speckle/shared'
 import { projectModelsTreeTopLevelPaginationQuery } from '~~/lib/projects/graphql/queries'
 import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
+import { allProjectModelsRoute } from '~~/lib/common/helpers/route'
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
@@ -151,6 +156,7 @@ const moreToLoad = computed(
     extraPagesResult.value.project.modelsTree.items.length <
       extraPagesResult.value.project.modelsTree.totalCount
 )
+const showViewAll = computed(() => moreToLoad.value && props.disablePagination)
 
 const onModelUpdated = () => {
   // Evict model data

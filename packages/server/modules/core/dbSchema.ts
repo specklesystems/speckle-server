@@ -448,4 +448,48 @@ export const FileUploads = buildTableHelper('file_uploads', [
   'convertedCommitId'
 ])
 
+export const Automations = buildTableHelper('automations', [
+  'automationId',
+  'automationRevisionId',
+  'automationName',
+  'projectId',
+  'modelId',
+  'createdAt',
+  'updatedAt',
+  'webhookId'
+])
+
+export const AutomationRuns = buildTableHelper('automation_runs', [
+  'automationId',
+  'automationRevisionId',
+  'automationRunId',
+  'versionId',
+  'createdAt',
+  'updatedAt'
+])
+
+export const AutomationFunctionRuns = buildTableHelper('automation_function_runs', [
+  'automationRunId',
+  'functionId',
+  'functionName',
+  'functionLogo',
+  'elapsed',
+  'status',
+  'contextView',
+  'statusMessage',
+  'results'
+])
+
+export const AutomationFunctionRunsResultVersions = buildTableHelper(
+  'automation_function_runs_result_versions',
+  ['automationRunId', 'functionId', 'resultVersionId']
+)
+
+export const ServerAppsScopes = buildTableHelper('server_apps_scopes', [
+  'appId',
+  'scopeName'
+])
+
+export const Scopes = buildTableHelper('scopes', ['name', 'description', 'public'])
+
 export { knex }

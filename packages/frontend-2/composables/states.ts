@@ -5,5 +5,6 @@ export const useTourStageState = () =>
   useState('global-ui-element-state', () => ({
     showNavbar: true,
     showViewerControls: true,
-    showTour: false
+    showTour: false,
+    showSegmentation: true
   }))

@@ -5,15 +5,7 @@
     class="group rounded-md bg-foundation shadow transition hover:scale-[1.02] border-2 border-transparent hover:border-outline-2 hover:shadow-xl"
     @mouseleave="showActionsMenu = false"
   >
-    <!--
-      Nested anchors are causing a hydration mismatch for some reason (template renders wrong in SSR), could be a Vue bug?
-      TODO: Report it to Vue/Nuxt!
-    -->
-    <NuxtLink
-      :href="viewerRoute"
-      class="cursor-pointer"
-      @click="$emit('click', $event)"
-    >
+    <div @click="$emit('click', $event)">
       <div class="h-64 flex items-center justify-center relative">
         <ProjectPendingFileImportStatus
           v-if="isPendingVersionFragment(version)"
@@ -21,9 +13,25 @@
           class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
         />
         <template v-else>
-          <PreviewImage :preview-url="version.previewUrl" />
+          <NuxtLink :href="viewerRoute" class="h-full w-full">
+            <PreviewImage :preview-url="version.previewUrl" />
+          </NuxtLink>
           <div
-            class="absolute top-0 left-0 p-2 flex space-x-1 items-center transition opacity-0 group-hover:opacity-100"
+            v-if="!isPendingVersionFragment(version) && version.automationStatus"
+            class="absolute top-1 left-0 p-2"
+          >
+            <ProjectPageModelsCardAutomationStatusRefactor
+              :project-id="projectId"
+              :model-or-version="{
+                ...version,
+                automationStatus: version.automationStatus
+              }"
+              :model-id="modelId"
+            />
+          </div>
+          <div
+            class="absolute top-0 p-2 flex space-x-1 items-center transition opacity-0 group-hover:opacity-100"
+            :class="[hasAutomationStatus ? 'left-6' : 'left-0']"
           >
             <UserAvatar :user="version.authorUser" />
             <SourceAppBadge v-if="sourceApp" :source-app="sourceApp" />
@@ -58,9 +66,10 @@
             :value="true"
             :disabled="selectionDisabled"
           />
-          <div class="font-bold truncate grow">
+          <NuxtLink class="font-bold truncate" :href="viewerRoute">
             {{ message }}
-          </div>
+          </NuxtLink>
+          <div class="grow" />
           <ProjectModelPageVersionsCardActions
             v-if="!isPendingVersionFragment(version)"
             v-model:open="showActionsMenu"
@@ -73,7 +82,7 @@
           />
         </div>
       </div>
-    </NuxtLink>
+    </div>
   </div>
 </template>
 <script lang="ts" setup>
@@ -104,6 +113,7 @@ graphql(`
     }
     ...ProjectModelPageDialogDeleteVersion
     ...ProjectModelPageDialogMoveToVersion
+    ...ModelCardAutomationStatus_Version
   }
 `)
 
@@ -122,9 +132,13 @@ const props = defineProps<{
   selected?: boolean
   selectionDisabled?: boolean
 }>()
+provide('projectId', props.projectId)
 
 const showActionsMenu = ref(false)
 
+const hasAutomationStatus = computed(
+  () => !isPendingVersionFragment(props.version) && props.version.automationStatus
+)
 const createdAt = computed(() => {
   const date = isPendingVersionFragment(props.version)
     ? props.version.convertedLastUpdate || props.version.uploadDate

@@ -9,6 +9,8 @@
     :show-label="showLabel"
     :name="name || 'sourceApps'"
     :filter-predicate="searchFilterPredicate"
+    :clearable="clearable"
+    :help="help"
     by="name"
   >
     <template #nothing-selected>
@@ -121,6 +123,12 @@ const props = defineProps({
   items: {
     type: Array as PropType<Optional<SourceAppDefinition[]>>,
     default: undefined
+  },
+  clearable: {
+    type: Boolean
+  },
+  help: {
+    type: String
   }
 })
 

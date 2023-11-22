@@ -31,6 +31,8 @@ generates:
         Comment: '@/modules/comments/helpers/graphTypes#CommentGraphQLReturn'
         PendingStreamCollaborator: '@/modules/serverinvites/helpers/graphTypes#PendingStreamCollaboratorGraphQLReturn'
         FileUpload: '@/modules/fileuploads/helpers/types#FileUploadGraphQLReturn'
+        AutomationMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        AutomationFunctionRun: '@/modules/automations/helpers/graphTypes#AutomationFunctionRunGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'

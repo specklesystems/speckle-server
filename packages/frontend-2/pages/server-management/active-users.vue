@@ -86,6 +86,7 @@
           allow-archived
           :model-value="isUser(item) ? item.role : undefined"
           :disabled="isUser(item) && isCurrentUser(item)"
+          fully-control-value
           @update:model-value="(newRoleValue) => isUser(item) && !isArray(newRoleValue) && newRoleValue && openChangeUserRoleDialog(item, newRoleValue as ServerRoles)"
         />
       </template>
@@ -136,6 +137,10 @@ import {
   UserPlusIcon
 } from '@heroicons/vue/20/solid'
 import { useServerInfo } from '~~/lib/core/composables/server'
+
+useHead({
+  title: 'Active Users'
+})
 
 definePageMeta({
   middleware: ['admin']

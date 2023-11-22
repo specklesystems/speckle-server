@@ -163,6 +163,8 @@ export function adminOverrideEnabled() {
 }
 
 export function enableMixpanel() {
+  if (isDevEnv() || isTestEnv()) return false
+
   // if not explicitly set to '0' or 'false', it is enabled by default
   return !['0', 'false'].includes(process.env.ENABLE_MP || 'true')
 }
@@ -212,4 +214,8 @@ export function getEmailFromAddress() {
     )
   }
   return process.env.EMAIL_FROM
+}
+
+export function getMaximumProjectModelsPerPage() {
+  return getIntFromEnv('MAX_PROJECT_MODELS_PER_PAGE', '500')
 }

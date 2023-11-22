@@ -51,7 +51,7 @@ module.exports = {
       .orderBy('server_apps.trustByDefault', 'DESC')
 
     apps.forEach((app) => {
-      if (app.authorName) {
+      if (app.authorName && app.authorId) {
         app.author = { name: app.authorName, id: app.authorId }
       }
       delete app.authorName
@@ -101,18 +101,21 @@ module.exports = {
     )
 
     const { rows } = await query
-    return rows
+    return rows.map((r) => ({
+      ...r,
+      author: r.author?.id ? r.author : null
+    }))
   },
 
   async createApp(app) {
     app.id = crs({ length: 10 })
     app.secret = crs({ length: 10 })
 
-    if (!app.scopes) {
+    const scopes = (app.scopes || []).filter((s) => !!s?.length)
+
+    if (!scopes.length) {
       throw new Error('Cannot create an app with no scopes.')
     }
-
-    const scopes = [...app.scopes]
 
     delete app.scopes
     delete app.firstparty

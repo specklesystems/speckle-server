@@ -1,5 +1,7 @@
 const _ = require('lodash')
 const VError = require('verror')
+const { ZodError } = require('zod')
+const { fromZodError } = require('zod-validation-error')
 
 /**
  * Some VError implementation details that we want to remove from object representations
@@ -17,6 +19,15 @@ function buildErrorFormatter(debug) {
   return function (error) {
     const debugMode = debug
     const realError = error.originalError ? error.originalError : error
+
+    // If error is a ZodError, convert its message to something more readable
+    if (realError instanceof ZodError) {
+      return {
+        ...error,
+        message: fromZodError(realError).message,
+        extensions: { ...error.extensions, code: 'BAD_REQUEST' }
+      }
+    }
 
     // If error isn't a VError child, don't do anything extra
     if (!(realError instanceof VError)) {

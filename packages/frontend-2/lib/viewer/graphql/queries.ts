@@ -40,6 +40,39 @@ export const viewerLoadedResourcesQuery = graphql(`
           ) {
             items {
               ...ViewerModelVersionCardItem
+              automationStatus {
+                id
+                status
+                statusMessage
+                automationRuns {
+                  id
+                  automationId
+                  automationName
+                  versionId
+                  createdAt
+                  updatedAt
+                  status
+                  functionRuns {
+                    id
+                    functionId
+                    functionName
+                    functionLogo
+                    resultVersions {
+                      id
+                      referencedObject
+                      model {
+                        id
+                        name
+                      }
+                    }
+                    elapsed
+                    status
+                    contextView
+                    statusMessage
+                    results
+                  }
+                }
+              }
             }
           }
           versions(limit: 5) {

@@ -6,8 +6,8 @@
         type="text"
         name="name"
         label="Full Name"
-        placeholder="John Doe"
-        size="xl"
+        placeholder="My Name"
+        :size="isSmallerOrEqualSm ? 'lg' : 'xl'"
         :rules="nameRules"
         :custom-icon="UserIcon"
         show-label
@@ -19,7 +19,7 @@
         name="email"
         label="Email"
         placeholder="example@email.com"
-        size="xl"
+        :size="isSmallerOrEqualSm ? 'lg' : 'xl'"
         :rules="emailRules"
         show-label
         :disabled="loading"
@@ -30,19 +30,20 @@
         name="password"
         label="Password"
         placeholder="Type a strong password"
-        size="xl"
+        :size="isSmallerOrEqualSm ? 'lg' : 'xl'"
         :rules="passwordRules"
         show-label
         :disabled="loading"
-        @focusin="pwdFocused = true"
-        @focusout="pwdFocused = false"
+        @focus="pwdFocused = true"
+        @blur="pwdFocused = false"
       />
     </div>
     <AuthPasswordChecks
       :password="password"
-      :class="`mt-2 overflow-hidden ${pwdFocused ? 'h-8' : 'h-0'} transition-[height]`"
+      :class="`mt-2 overflow-hidden ${
+        pwdFocused ? 'h-12 sm:h-8' : 'h-0'
+      } transition-[height]`"
     />
-    <FormButton submit full-width class="mt-4" :disabled="loading">Sign up</FormButton>
     <div
       class="mt-3 text-xs flex items-center justify-center text-foreground-2 space-x-2"
     >
@@ -52,16 +53,17 @@
        -->
       <FormCheckbox
         v-model="newsletterConsent"
-        name="test"
-        label="I want to receive tips and tricks on how to use Speckle"
+        name="newsletter"
+        label="Opt in for exclusive Speckle news and tips"
       />
     </div>
+    <FormButton submit full-width class="mt-4" :disabled="loading">Sign up</FormButton>
     <div
       v-if="serverInfo.termsOfService"
       class="mt-2 text-xs text-foreground-2 text-center linkify-tos"
       v-html="serverInfo.termsOfService"
     ></div>
-    <div class="mt-8 text-center">
+    <div class="mt-2 sm:mt-8 text-center text-xs sm:text-base">
       <span class="mr-2">Already have an account?</span>
       <CommonTextLink :to="finalLoginRoute" :icon-right="ArrowRightIcon">
         Log in
@@ -80,6 +82,7 @@ import { passwordRules } from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { UserIcon, ArrowRightIcon } from '@heroicons/vue/20/solid'
+import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 /**
  * TODO:
@@ -115,6 +118,8 @@ const { triggerNotification } = useGlobalToast()
 const newsletterConsent = inject<Ref<boolean>>('newsletterconsent')
 
 const pwdFocused = ref(false)
+
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const finalLoginRoute = computed(() => {
   const result = router.resolve({
