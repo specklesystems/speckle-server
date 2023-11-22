@@ -65,3 +65,9 @@ build-storybook.log
 ensure-tailwind-deps.mjs.lock
 vite.config.ts.timestamp-*.mjs
 introspected-schema.graphql
+
+# Deployment
+kubeconfig
+minio-data/
+postgres-data/
+redis-data/
