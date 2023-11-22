@@ -44,8 +44,27 @@ workflows:
             - chromatic-ui-components
           filters: *filters-allow-all
 
+      - deployment-testing-approval:
+          type: approval
+          filters: &filters-ignore-main-branch-or-all-tags
+            branches:
+              ignore:
+                - main
+                - frontend-2
+            tags:
+              ignore: /.*/
+
       - test-docker-compose:
-          filters: *filters-allow-all
+          filters: &filters-deployment-testing
+            tags:
+              # run tests for any commit on any branch, including any tags
+              only: /.*/
+          requires:
+            - get-version
+            - pre-commit
+            - deployment-testing-approval
+            - test-frontend-2
+            - test-server
 
       - get-version:
           filters: *filters-allow-all
@@ -106,13 +125,7 @@ workflows:
 
       - publish-approval:
           type: approval
-          filters: &filters-ignore-main-branch-or-all-tags
-            branches:
-              ignore:
-                - main
-                - frontend-2
-            tags:
-              ignore: /.*/
+          filters: *filters-ignore-main-branch-or-all-tags
 
       - docker-publish-server:
           context: &docker-hub-context
