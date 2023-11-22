@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Menu as="div" class="ml-2 flex items-center">
+    <Menu as="div" class="ml-1 flex items-center">
       <MenuButton v-slot="{ open }">
         <span class="sr-only">Open user menu</span>
 

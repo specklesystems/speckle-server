@@ -6,17 +6,20 @@
       :schema="finalSchema"
       :uischema="finalUiSchema"
       :data="data"
+      :ajv="handleDefaultsAjv"
       @change="onChange"
     />
   </form>
 </template>
 <script setup lang="ts">
-import { JsonSchema, UISchemaElement } from '@jsonforms/core'
+import { JsonSchema, UISchemaElement, createAjv } from '@jsonforms/core'
 import { JsonForms, JsonFormsChangeEvent } from '@jsonforms/vue'
 import { Nullable, Optional } from '@speckle/shared'
 import { omit } from 'lodash-es'
 import { useForm } from 'vee-validate'
 import { renderers } from '~/lib/form/jsonRenderers'
+
+const handleDefaultsAjv = createAjv({ useDefaults: true })
 
 type DataType = Record<string, unknown>
 

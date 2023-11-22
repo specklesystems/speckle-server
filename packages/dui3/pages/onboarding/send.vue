@@ -156,7 +156,8 @@ const getOrCreateModelCard = async () => {
       projectId: selectedProject.value?.id as string,
       accountId: defaultAccount.value.accountInfo.id,
       sendFilter: sendFilter as ISendFilter,
-      notifications: []
+      notifications: [],
+      settings: store.sendSettings
     }
 
     await store.addModel(modelCard)

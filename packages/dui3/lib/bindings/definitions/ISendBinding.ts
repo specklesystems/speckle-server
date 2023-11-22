@@ -3,11 +3,13 @@ import { ModelCardProgress } from '~~/lib/models/card/progress'
 import { ISendFilter } from '~~/lib/models/card/send'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 import { BaseBridge } from '~~/lib/bridge/base'
+import { CardSetting } from 'lib/models/card/setting'
 
 export const ISendBindingKey = 'sendBinding'
 
 export interface ISendBinding extends IBinding<ISendBindingEvents> {
   getSendFilters: () => Promise<ISendFilter[]>
+  getSendSettings: () => Promise<CardSetting[]>
   send: (modelId: string) => Promise<void>
   cancelSend: (modelId: string) => Promise<void>
 }
@@ -41,6 +43,18 @@ export class MockedSendBinding extends BaseBridge {
 
   cancelSend(modelId: string) {
     console.log(`Model send cancelled with ${modelId} id.`)
+  }
+
+  getSendSettings() {
+    return [
+      {
+        id: 'includeAttributes',
+        type: 'boolean',
+        title: 'Include Attributes',
+        value: true,
+        typeDiscriminator: 'CardSetting'
+      }
+    ]
   }
 
   getSendFilters() {

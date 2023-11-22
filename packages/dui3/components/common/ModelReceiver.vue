@@ -6,14 +6,14 @@
   <div class="flex items-center space-x-2">
     <FormButton
       v-if="!model.receiving"
-      v-tippy="'Receive'"
+      v-tippy="'Load'"
       size="sm"
       :icon-left="CloudArrowDownIcon"
       :text="!model.expired"
       class="flex items-center justify-center"
       @click="store.receiveModel(model.id, selectedVersion?.id as string)"
     >
-      Receive
+      Load
     </FormButton>
     <FormButton
       v-else
@@ -24,17 +24,52 @@
     >
       Cancel
     </FormButton>
+    <FormButton
+      v-if="props.model.settings"
+      v-tippy="'Settings'"
+      class="px-0"
+      size="sm"
+      text
+      hide-text
+      :icon-left="Cog6ToothIcon"
+      @click="openSettingDialog = true"
+    ></FormButton>
+    <LayoutDialog v-model:open="openSettingDialog">
+      <div class="h5 font-semibold pb-2">Load Settings</div>
+      <hr class="pb-3" />
+      <FormJsonForm
+        :schema="settingsJsonForms"
+        @change="onParamsFormChange"
+      ></FormJsonForm>
+    </LayoutDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { CloudArrowDownIcon } from '@heroicons/vue/24/outline'
+import { CloudArrowDownIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { VersionsSelectItemType } from '~/lib/form/select/types'
 import { useGetModelDetails, useProjectVersionUpdated } from '~/lib/graphql/composables'
 import { ProjectModelGroup, useHostAppStore } from '~/store/hostApp'
+import { JsonFormsChangeEvent } from '@jsonforms/vue'
+import { omit } from 'lodash-es'
+import { JsonSchema } from '@jsonforms/core'
+import { CardSetting } from '~/lib/models/card/setting'
 
+const openSettingDialog = ref(false)
 const store = useHostAppStore()
+
+const settingsJsonForms = computed(() => {
+  if (props.model.settings === undefined) return {}
+  const obj: JsonSchema = { type: 'object', properties: {} }
+  props.model.settings.forEach((setting: CardSetting) => {
+    const mappedSetting = omit({ ...setting, $id: setting.id }, ['id'])
+    if (obj && obj.properties) {
+      obj.properties[setting.id] = mappedSetting
+    }
+  })
+  return obj
+})
 
 const props = defineProps<{
   model: IReceiverModelCard
@@ -54,4 +89,10 @@ const onProjectVersionsUpdate = useProjectVersionUpdated()
 const projectVersionsUpdated = onProjectVersionsUpdate(props.project.projectId)
 
 projectVersionsUpdated.onResult(() => store.invalidateReceiver(props.model.id))
+
+const paramsFormState = ref<JsonFormsChangeEvent>()
+const onParamsFormChange = (e: JsonFormsChangeEvent) => {
+  paramsFormState.value = e
+  console.log(e)
+}
 </script>
