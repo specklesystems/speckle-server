@@ -87,8 +87,21 @@ export class AccelerationStructure {
   public static buildBVH(
     indices: number[],
     position: Float32Array,
-    options: BVHOptions = DefaultBVHOptions
+    options: BVHOptions = DefaultBVHOptions,
+    transform?: Matrix4
   ): MeshBVH {
+    let bvhPositions = position
+    if (transform) {
+      bvhPositions = new Float32Array(position.length)
+      const vecBuff = new Vector3()
+      for (let k = 0; k < position.length; k += 3) {
+        vecBuff.set(position[k], position[k + 1], position[k + 2])
+        vecBuff.applyMatrix4(transform)
+        bvhPositions[k] = vecBuff.x
+        bvhPositions[k + 1] = vecBuff.y
+        bvhPositions[k + 2] = vecBuff.z
+      }
+    }
     const bvhGeometry = new BufferGeometry()
     let bvhIndices = null
     if (position.length >= 65535 || indices.length >= 65535) {
@@ -101,7 +114,7 @@ export class AccelerationStructure {
       bvhGeometry.setIndex(new Uint16BufferAttribute(bvhIndices, 1))
     }
 
-    bvhGeometry.setAttribute('position', new Float32BufferAttribute(position, 3))
+    bvhGeometry.setAttribute('position', new Float32BufferAttribute(bvhPositions, 3))
     bvhGeometry.computeBoundingBox()
 
     const bvh = new MeshBVH(bvhGeometry, options)

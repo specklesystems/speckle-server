@@ -1,6 +1,7 @@
 import {
   Box3,
   Box3Helper,
+  Color,
   FrontSide,
   Intersection,
   Material,
@@ -33,7 +34,7 @@ import { AccelerationStructure } from './AccelerationStructure'
   fine as it is. If we really really really need that 100% accuracy, we'll just make it relative to the origin
  */
 export class TopLevelAccelerationStructure {
-  private static debugBoxes = false
+  private static debugBoxes = true
   private static cubeIndices = [
     // front
     0, 1, 2, 2, 3, 0,
@@ -84,7 +85,7 @@ export class TopLevelAccelerationStructure {
       vertOffset += TopLevelAccelerationStructure.CUBE_VERTS * 3
 
       if (TopLevelAccelerationStructure.debugBoxes) {
-        const helper = new Box3Helper(boxBounds)
+        const helper = new Box3Helper(boxBounds, new Color(0xff0000))
         helper.layers.set(ObjectLayers.PROPS)
         this.boxHelpers.push(helper)
       }

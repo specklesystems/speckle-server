@@ -43,7 +43,7 @@ export default class MeshBatch implements Batch {
   private needsFlatten = false
 
   public get bounds(): Box3 {
-    return this.mesh.BVH.getBoundingBox(new Box3())
+    return this.mesh.TAS.getBoundingBox(new Box3())
   }
 
   public get drawCalls(): number {
@@ -567,7 +567,7 @@ export default class MeshBatch implements Batch {
 
       const batchObject = new BatchObject(this.renderViews[k], k)
       const start3 = performance.now()
-      batchObject.buildBVH()
+      batchObject.buildAccelerationStructure()
       MeshBatch.objectBvh += performance.now() - start3
       batchObjects.push(batchObject)
 
@@ -586,9 +586,9 @@ export default class MeshBatch implements Batch {
     this.mesh.setBatchObjects(batchObjects, this.transformStorage)
     this.mesh.setBatchMaterial(this.batchMaterial)
     const start6 = performance.now()
-    this.mesh.buildBVH()
+    this.mesh.buildTAS()
     MeshBatch.batchBVH += performance.now() - start6
-    this.geometry.boundingBox = this.mesh.BVH.getBoundingBox(new Box3())
+    this.geometry.boundingBox = this.mesh.TAS.getBoundingBox(new Box3())
     this.geometry.boundingSphere = this.geometry.boundingBox.getBoundingSphere(
       new Sphere()
     )

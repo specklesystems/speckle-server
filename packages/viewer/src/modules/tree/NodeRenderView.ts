@@ -143,8 +143,8 @@ export class NodeRenderView {
 
   public computeAABB() {
     this._aabb = new Box3().setFromArray(this._renderData.geometry.attributes.POSITION)
-    if (this._renderData.geometry.transform)
-      this._aabb.applyMatrix4(this._renderData.geometry.transform)
+    // if (this._renderData.geometry.transform)
+    //   this._aabb.applyMatrix4(this._renderData.geometry.transform)
   }
 
   public getGeometryType(): GeometryType {

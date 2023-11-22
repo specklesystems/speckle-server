@@ -4,6 +4,7 @@ import {
   Float32BufferAttribute,
   InstancedBufferAttribute,
   Material,
+  Matrix4,
   Object3D,
   Sphere,
   Uint16BufferAttribute,
@@ -19,9 +20,13 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
-import { BatchObject } from './BatchObject'
 import SpeckleInstancedMesh from '../objects/SpeckleInstancedMesh'
 import { ObjectLayers } from '../../IViewer'
+import {
+  AccelerationStructure,
+  DefaultBVHOptions
+} from '../objects/AccelerationStructure'
+import { InstancedBatchObject } from './InstancedBatchObject'
 
 export default class InstancedMeshBatch implements Batch {
   public id: string
@@ -399,10 +404,35 @@ export default class InstancedMeshBatch implements Batch {
 
   public buildBatch() {
     const batchObjects = []
+    let instanceBVH = null
     for (let k = 0; k < this.renderViews.length; k++) {
       this.renderViews[k].setBatchData(this.id, k, 1)
-      const batchObject = new BatchObject(this.renderViews[k], k)
-      batchObject.buildBVH()
+      const batchObject = new InstancedBatchObject(this.renderViews[k], k)
+      if (!instanceBVH) {
+        const transform = new Matrix4().makeTranslation(
+          batchObject.localOrigin.x,
+          batchObject.localOrigin.y,
+          batchObject.localOrigin.z
+        )
+        transform.invert()
+        const indices = this.renderViews[k].renderData.geometry.attributes.INDEX
+        const position = this.renderViews[k].renderData.geometry.attributes.POSITION
+        instanceBVH = AccelerationStructure.buildBVH(
+          indices,
+          new Float32Array(position),
+          DefaultBVHOptions,
+          transform
+        )
+        /** There's a bug in the library where it reports incorrect bounds until a refit */
+        instanceBVH.refit()
+      }
+      batchObject.buildAccelerationStructure(instanceBVH)
+
+      console.warn(
+        this.renderViews[k].aabb,
+        'vs',
+        batchObject.accelerationStructure.getBoundingBox(new Box3())
+      )
       batchObjects.push(batchObject)
     }
 
@@ -420,13 +450,13 @@ export default class InstancedMeshBatch implements Batch {
     this.mesh = new SpeckleInstancedMesh(this.geometry, this.renderViews.length)
     this.mesh.setBatchObjects(batchObjects)
     this.mesh.setBatchMaterial(this.batchMaterial)
-    this.mesh.buildBVH()
+    this.mesh.buildTAS()
     const bounds = new Box3()
     for (let k = 0; k < this.renderViews.length; k++) {
       bounds.union(this.renderViews[k].aabb)
     }
 
-    this.geometry.boundingBox = bounds //this.mesh.BVH.getBoundingBox(new Box3())
+    this.geometry.boundingBox = this.mesh.TAS.getBoundingBox(new Box3())
     this.geometry.boundingSphere = this.geometry.boundingBox.getBoundingSphere(
       new Sphere()
     )
@@ -434,11 +464,6 @@ export default class InstancedMeshBatch implements Batch {
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
     this.mesh.frustumCulled = false
-    // this.mesh.geometry.addGroup(0, this.getCount(), 0)
-
-    // batchObjects.forEach((element: BatchObject) => {
-    //   element.renderView.disposeGeometry()
-    // })
   }
 
   public getRenderView(index: number): NodeRenderView {

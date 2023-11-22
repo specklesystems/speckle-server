@@ -2,7 +2,11 @@
 import { Box3, Euler, Matrix4, Quaternion, Vector3 } from 'three'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Geometry } from '../converter/Geometry'
-import { AccelerationStructure } from '../objects/AccelerationStructure'
+import {
+  AccelerationStructure,
+  DefaultBVHOptions
+} from '../objects/AccelerationStructure'
+import { MeshBVH } from 'three-mesh-bvh'
 
 export type VectorLike = { x: number; y: number; z?: number; w?: number }
 
@@ -56,6 +60,10 @@ export class BatchObject {
     return box
   }
 
+  public get localOrigin(): Vector3 {
+    return this._localOrigin
+  }
+
   public set position(value: Vector3) {
     this.transformTRS(
       new Vector3().subVectors(value, this._localOrigin),
@@ -97,7 +105,7 @@ export class BatchObject {
     )
   }
 
-  public buildBVH() {
+  public buildAccelerationStructure(bvh?: MeshBVH) {
     const transform = new Matrix4().makeTranslation(
       this._localOrigin.x,
       this._localOrigin.y,
@@ -105,22 +113,18 @@ export class BatchObject {
     )
     transform.invert()
 
-    const indices = this._renderView.renderData.geometry.attributes.INDEX
-    const position = this._renderView.renderData.geometry.attributes.POSITION
-
-    const localPositions = new Float32Array(position.length)
-    const vecBuff = new Vector3()
-    for (let k = 0; k < position.length; k += 3) {
-      vecBuff.set(position[k], position[k + 1], position[k + 2])
-      vecBuff.applyMatrix4(transform)
-      localPositions[k] = vecBuff.x
-      localPositions[k + 1] = vecBuff.y
-      localPositions[k + 2] = vecBuff.z
+    if (!bvh) {
+      const indices = this._renderView.renderData.geometry.attributes.INDEX
+      const position = this._renderView.renderData.geometry.attributes.POSITION
+      bvh = AccelerationStructure.buildBVH(
+        indices,
+        new Float32Array(position),
+        DefaultBVHOptions,
+        transform
+      )
     }
 
-    this._accelerationStructure = new AccelerationStructure(
-      AccelerationStructure.buildBVH(indices, localPositions)
-    )
+    this._accelerationStructure = new AccelerationStructure(bvh)
     this._accelerationStructure.inputTransform = this.transformInv
     this._accelerationStructure.outputTransform = this.transform
     this._accelerationStructure.inputOriginTransform = new Matrix4().copy(transform)

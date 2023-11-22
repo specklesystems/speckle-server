@@ -632,7 +632,7 @@ export default class SpeckleRenderer {
       )
 
       const speckleMesh = batchRenderable as SpeckleMesh
-      speckleMesh.BVH.boxHelpers.forEach((helper: Box3Helper) => {
+      speckleMesh.TAS.boxHelpers.forEach((helper: Box3Helper) => {
         this.scene.add(helper)
       })
     }

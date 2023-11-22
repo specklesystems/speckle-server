@@ -72,7 +72,7 @@ export default class SpeckleMesh extends Mesh {
   private debugBatchBox = false
   private boxHelper: Box3Helper
 
-  public get BVH() {
+  public get TAS() {
     return this.tas
   }
 
@@ -221,7 +221,7 @@ export default class SpeckleMesh extends Mesh {
     }
   }
 
-  public buildBVH() {
+  public buildTAS() {
     this.tas = new TopLevelAccelerationStructure(this.batchObjects)
     /** We do a refit here, because for some reason the bvh library incorrectly computes the total bvh bounds at creation,
      *  so we force a refit in order to get the proper bounds value out of it

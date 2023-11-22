@@ -132,7 +132,7 @@ export class SectionOutlines extends Extension {
     const scratchBuffer = new Array<number>()
     for (let b = 0; b < batches.length; b++) {
       const plane = new Plane().copy(_plane)
-      batches[b].mesh.BVH.shapecast({
+      batches[b].mesh.TAS.shapecast({
         intersectsTAS: (
           box: Box3
           // isLeaf: boolean,
