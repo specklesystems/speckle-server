@@ -13,8 +13,8 @@ import {
 import { ExtendedTriangle } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
 import { ExtendedIntersection, ExtendedShapeCastCallbacks } from './SpeckleRaycaster'
-import { SpeckleMeshBVH } from './SpeckleMeshBVH'
 import { ObjectLayers } from '../../IViewer'
+import { AccelerationStructure } from './AccelerationStructure'
 
 /** 
  * 
@@ -32,7 +32,7 @@ import { ObjectLayers } from '../../IViewer'
   In theory this might mean the TAS is not 100% accurate for objects far away from origin, but I think it should do
   fine as it is. If we really really really need that 100% accuracy, we'll just make it relative to the origin
  */
-export class SpeckleBatchBVH {
+export class TopLevelAccelerationStructure {
   private static debugBoxes = false
   private static cubeIndices = [
     // front
@@ -54,41 +54,48 @@ export class SpeckleBatchBVH {
   public bounds: Box3 = new Box3(new Vector3(0, 0, 0), new Vector3(0, 0, 0))
 
   public boxHelpers: Box3Helper[] = []
-  public tas: SpeckleMeshBVH = null
+  public accelerationStructure: AccelerationStructure = null
   public lastRefitTime = 0
 
   public constructor(batchObjects: BatchObject[]) {
     this.batchObjects = batchObjects
-    this.buildTAS()
+    this.buildBVH()
     this.getBoundingBox(this.bounds)
   }
 
-  private buildTAS() {
+  private buildBVH() {
     const indices = []
     const vertices = new Float32Array(
-      SpeckleBatchBVH.CUBE_VERTS * 3 * this.batchObjects.length
+      TopLevelAccelerationStructure.CUBE_VERTS * 3 * this.batchObjects.length
     )
     let vertOffset = 0
     for (let k = 0; k < this.batchObjects.length; k++) {
-      const boxBounds: Box3 = this.batchObjects[k].bvh.getBoundingBox(new Box3())
+      const boxBounds: Box3 = this.batchObjects[k].accelerationStructure.getBoundingBox(
+        new Box3()
+      )
       this.updateVertArray(boxBounds, vertOffset, vertices)
-      indices.push(...SpeckleBatchBVH.cubeIndices.map((val) => val + vertOffset / 3))
+      indices.push(
+        ...TopLevelAccelerationStructure.cubeIndices.map((val) => val + vertOffset / 3)
+      )
       this.batchObjects[k].tasVertIndexStart = vertOffset / 3
-      this.batchObjects[k].tasVertIndexEnd = vertOffset / 3 + SpeckleBatchBVH.CUBE_VERTS
+      this.batchObjects[k].tasVertIndexEnd =
+        vertOffset / 3 + TopLevelAccelerationStructure.CUBE_VERTS
 
-      vertOffset += SpeckleBatchBVH.CUBE_VERTS * 3
+      vertOffset += TopLevelAccelerationStructure.CUBE_VERTS * 3
 
-      if (SpeckleBatchBVH.debugBoxes) {
+      if (TopLevelAccelerationStructure.debugBoxes) {
         const helper = new Box3Helper(boxBounds)
         helper.layers.set(ObjectLayers.PROPS)
         this.boxHelpers.push(helper)
       }
     }
-    this.tas = SpeckleMeshBVH.buildBVH(indices, vertices)
-    this.tas.inputTransform = new Matrix4()
-    this.tas.outputTransform = new Matrix4()
-    this.tas.inputOriginTransform = new Matrix4()
-    this.tas.outputOriginTransfom = new Matrix4()
+    this.accelerationStructure = new AccelerationStructure(
+      AccelerationStructure.buildBVH(indices, vertices)
+    )
+    this.accelerationStructure.inputTransform = new Matrix4()
+    this.accelerationStructure.outputTransform = new Matrix4()
+    this.accelerationStructure.inputOriginTransform = new Matrix4()
+    this.accelerationStructure.outputOriginTransfom = new Matrix4()
   }
 
   private updateVertArray(box: Box3, offset: number, outPositions: Float32Array) {
@@ -127,16 +134,17 @@ export class SpeckleBatchBVH {
 
   public refit() {
     const start = performance.now()
-    const positions = this.tas.geometry.attributes.position.array
+    const positions = this.accelerationStructure.geometry.attributes.position.array
     const boxBuffer: Box3 = new Box3()
     for (let k = 0; k < this.batchObjects.length; k++) {
       const start = this.batchObjects[k].tasVertIndexStart
-      const basBox = this.batchObjects[k].bvh.getBoundingBox(boxBuffer)
+      const basBox =
+        this.batchObjects[k].accelerationStructure.getBoundingBox(boxBuffer)
       this.updateVertArray(basBox, start * 3, positions as Float32Array)
 
-      if (SpeckleBatchBVH.debugBoxes) this.boxHelpers[k].box.copy(basBox)
+      if (TopLevelAccelerationStructure.debugBoxes) this.boxHelpers[k].box.copy(basBox)
     }
-    this.tas.refit()
+    this.accelerationStructure.bvh.refit()
     this.lastRefitTime = performance.now() - start
   }
 
@@ -148,14 +156,20 @@ export class SpeckleBatchBVH {
     const res = []
     const rayBuff = new Ray()
     rayBuff.copy(ray)
-    const tasResults: Intersection<Object3D>[] = this.tas.raycast(rayBuff, FrontSide)
+    const tasResults: Intersection<Object3D>[] = this.accelerationStructure.raycast(
+      rayBuff,
+      FrontSide
+    )
     if (!tasResults.length) return res
 
     tasResults.forEach((tasRes: Intersection<Object3D>) => {
-      const vertIndex = this.tas.geometry.index.array[tasRes.faceIndex * 3]
-      const batchObjectIndex = Math.trunc(vertIndex / SpeckleBatchBVH.CUBE_VERTS)
+      const vertIndex =
+        this.accelerationStructure.geometry.index.array[tasRes.faceIndex * 3]
+      const batchObjectIndex = Math.trunc(
+        vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
+      )
       rayBuff.copy(ray)
-      const hits = this.batchObjects[batchObjectIndex].bvh.raycast(
+      const hits = this.batchObjects[batchObjectIndex].accelerationStructure.raycast(
         rayBuff,
         materialOrSide
       )
@@ -175,13 +189,19 @@ export class SpeckleBatchBVH {
     const res = null
     const rayBuff = new Ray()
     rayBuff.copy(ray)
-    const tasRes: Intersection<Object3D> = this.tas.raycastFirst(rayBuff, FrontSide)
+    const tasRes: Intersection<Object3D> = this.accelerationStructure.raycastFirst(
+      rayBuff,
+      FrontSide
+    )
     if (!tasRes) return res
 
-    const vertIndex = this.tas.geometry.index.array[tasRes.faceIndex * 3]
-    const batchObjectIndex = Math.trunc(vertIndex / SpeckleBatchBVH.CUBE_VERTS)
+    const vertIndex =
+      this.accelerationStructure.geometry.index.array[tasRes.faceIndex * 3]
+    const batchObjectIndex = Math.trunc(
+      vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
+    )
     rayBuff.copy(ray)
-    const hits = this.batchObjects[batchObjectIndex].bvh.raycast(
+    const hits = this.batchObjects[batchObjectIndex].accelerationStructure.raycast(
       rayBuff,
       materialOrSide
     )
@@ -231,19 +251,22 @@ export class SpeckleBatchBVH {
     }
 
     let ret = false
-    this.tas.shapecast({
+    this.accelerationStructure.shapecast({
       intersectsBounds: (box, isLeaf, score, depth, nodeIndex) => {
         const res = callbacks.intersectsTAS(box, isLeaf, score, depth, nodeIndex)
         return res
       },
       intersectsRange: (triangleOffset: number) => {
-        const vertIndex = this.tas.geometry.index.array[triangleOffset * 3]
-        const batchObjectIndex = Math.trunc(vertIndex / SpeckleBatchBVH.CUBE_VERTS)
+        const vertIndex =
+          this.accelerationStructure.geometry.index.array[triangleOffset * 3]
+        const batchObjectIndex = Math.trunc(
+          vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
+        )
         if (callbacks.intersectTASRange) {
           const ret = callbacks.intersectTASRange(this.batchObjects[batchObjectIndex])
           if (!ret) return false
         }
-        ret ||= this.batchObjects[batchObjectIndex].bvh.shapecast(
+        ret ||= this.batchObjects[batchObjectIndex].accelerationStructure.shapecast(
           wrapCallbacks(this.batchObjects[batchObjectIndex])
         )
 
@@ -255,7 +278,7 @@ export class SpeckleBatchBVH {
   }
 
   public getBoundingBox(target: Box3): Box3 {
-    this.tas.getBoundingBox(target)
+    this.accelerationStructure.getBoundingBox(target)
     return target
   }
 }

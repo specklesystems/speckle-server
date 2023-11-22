@@ -352,13 +352,13 @@ export class MeasurementsExtension extends Extension {
     outPoint: Vector3,
     outNormal: Vector3
   ) {
-    const v0 = intersection.batchObject.bvh
+    const v0 = intersection.batchObject.accelerationStructure
       .getVertexAtIndex(intersection.face.a)
       .project(this.renderer.renderingCamera)
-    const v1 = intersection.batchObject.bvh
+    const v1 = intersection.batchObject.accelerationStructure
       .getVertexAtIndex(intersection.face.b)
       .project(this.renderer.renderingCamera)
-    const v2 = intersection.batchObject.bvh
+    const v2 = intersection.batchObject.accelerationStructure
       .getVertexAtIndex(intersection.face.c)
       .project(this.renderer.renderingCamera)
 

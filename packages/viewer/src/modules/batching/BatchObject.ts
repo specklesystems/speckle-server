@@ -1,16 +1,16 @@
 /* eslint-disable camelcase */
 import { Box3, Euler, Matrix4, Quaternion, Vector3 } from 'three'
-import { SpeckleMeshBVH } from '../objects/SpeckleMeshBVH'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Geometry } from '../converter/Geometry'
+import { AccelerationStructure } from '../objects/AccelerationStructure'
 
-type VectorLike = { x: number; y: number; z?: number; w?: number }
+export type VectorLike = { x: number; y: number; z?: number; w?: number }
 
 export class BatchObject {
-  private _renderView: NodeRenderView
-  private _bvh: SpeckleMeshBVH
-  private _batchIndex: number
-  private _localOrigin: Vector3
+  protected _renderView: NodeRenderView
+  protected _accelerationStructure: AccelerationStructure
+  protected _batchIndex: number
+  protected _localOrigin: Vector3
   public transform: Matrix4
   public transformInv: Matrix4
 
@@ -24,13 +24,13 @@ export class BatchObject {
   public translation: Vector3 = new Vector3()
   public scaleValue: Vector3 = new Vector3(1, 1, 1)
 
-  private static matBuff0: Matrix4 = new Matrix4()
-  private static matBuff1: Matrix4 = new Matrix4()
-  private static matBuff2: Matrix4 = new Matrix4()
-  private static eulerBuff: Euler = new Euler()
-  private static translationBuff: Vector3 = new Vector3()
-  private static scaleBuff: Vector3 = new Vector3()
-  private static pivotBuff: Vector3 = new Vector3()
+  protected static matBuff0: Matrix4 = new Matrix4()
+  protected static matBuff1: Matrix4 = new Matrix4()
+  protected static matBuff2: Matrix4 = new Matrix4()
+  protected static eulerBuff: Euler = new Euler()
+  protected static translationBuff: Vector3 = new Vector3()
+  protected static scaleBuff: Vector3 = new Vector3()
+  protected static pivotBuff: Vector3 = new Vector3()
 
   public transformDirty = true
 
@@ -38,8 +38,8 @@ export class BatchObject {
     return this._renderView
   }
 
-  public get bvh(): SpeckleMeshBVH {
-    return this._bvh
+  public get accelerationStructure(): AccelerationStructure {
+    return this._accelerationStructure
   }
 
   public get batchIndex(): number {
@@ -118,11 +118,15 @@ export class BatchObject {
       localPositions[k + 2] = vecBuff.z
     }
 
-    this._bvh = SpeckleMeshBVH.buildBVH(indices, localPositions)
-    this._bvh.inputTransform = this.transformInv
-    this._bvh.outputTransform = this.transform
-    this._bvh.inputOriginTransform = new Matrix4().copy(transform)
-    this._bvh.outputOriginTransfom = new Matrix4().copy(transform).invert()
+    this._accelerationStructure = new AccelerationStructure(
+      AccelerationStructure.buildBVH(indices, localPositions)
+    )
+    this._accelerationStructure.inputTransform = this.transformInv
+    this._accelerationStructure.outputTransform = this.transform
+    this._accelerationStructure.inputOriginTransform = new Matrix4().copy(transform)
+    this._accelerationStructure.outputOriginTransfom = new Matrix4()
+      .copy(transform)
+      .invert()
   }
 
   public transformTRS(

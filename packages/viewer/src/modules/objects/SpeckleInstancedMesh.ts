@@ -15,8 +15,8 @@ import {
   Vector3
 } from 'three'
 import { BatchObject } from '../batching/BatchObject'
-import { SpeckleBatchBVH } from './SpeckleBatchBVH'
 import Materials from '../materials/Materials'
+import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -47,7 +47,7 @@ const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
 export default class SpeckleInstancedMesh extends InstancedMesh {
   public static MeshBatchNumber = 0
 
-  private bvh: SpeckleBatchBVH = null
+  private tas: TopLevelAccelerationStructure = null
   private batchMaterial: Material = null
   private materialCache: { [id: string]: Material } = {}
   private materialStack: Array<Material | Material[]> = []
@@ -58,7 +58,7 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
   private boxHelper: Box3Helper
 
   public get BVH() {
-    return this.bvh
+    return this.tas
   }
 
   public get batchObjects(): BatchObject[] {
@@ -103,11 +103,11 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
   }
 
   public buildBVH() {
-    this.bvh = new SpeckleBatchBVH(this.batchObjects)
+    this.tas = new TopLevelAccelerationStructure(this.batchObjects)
     /** We do a refit here, because for some reason the bvh library incorrectly computes the total bvh bounds at creation,
      *  so we force a refit in order to get the proper bounds value out of it
      */
-    this.bvh.tas.refit()
+    this.tas.refit()
   }
 
   public updateTransformsUniform() {}
@@ -155,16 +155,15 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
   }
 
   raycast(raycaster: Raycaster, intersects) {
-    if (this.bvh) {
+    if (this.tas) {
       if (this.batchMaterial === undefined) return
 
       tmpInverseMatrix.copy(this.matrixWorld).invert()
       ray.copy(raycaster.ray).applyMatrix4(tmpInverseMatrix)
 
-      const bvh = this.bvh
       if (raycaster.firstHitOnly === true) {
         const hit = this.convertRaycastIntersect(
-          bvh.raycastFirst(ray, this.batchMaterial),
+          this.tas.raycastFirst(ray, this.batchMaterial),
           this,
           raycaster
         )
@@ -172,7 +171,7 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
           intersects.push(hit)
         }
       } else {
-        const hits = bvh.raycast(ray, this.batchMaterial)
+        const hits = this.tas.raycast(ray, this.batchMaterial)
         for (let i = 0, l = hits.length; i < l; i++) {
           const hit = this.convertRaycastIntersect(hits[i], this, raycaster)
           if (hit) {

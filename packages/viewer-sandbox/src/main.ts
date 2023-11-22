@@ -21,7 +21,6 @@ import {
   FilteringExtension
 } from '@speckle/viewer'
 import { BoxSelection } from './BoxSelection'
-import { InstancingTests } from './InstancingTests'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -54,7 +53,6 @@ const createViewer = async (containerName: string, stream: string) => {
   const explode = viewer.createExtension(ExplodeExtension)
   const diff = viewer.createExtension(DiffExtension)
   const boxSelect = viewer.createExtension(BoxSelection)
-  // const test = viewer.createExtension(InstancingTests)
   // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
   selection // use it
@@ -66,7 +64,6 @@ const createViewer = async (containerName: string, stream: string) => {
   diff // use it
   // rotateCamera // use it
   boxSelect // use it
-  // test.init() // use it
 
   const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
 

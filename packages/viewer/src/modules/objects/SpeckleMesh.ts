@@ -19,9 +19,9 @@ import {
   Vector3
 } from 'three'
 import { BatchObject } from '../batching/BatchObject'
-import { SpeckleBatchBVH } from './SpeckleBatchBVH'
 import Materials from '../materials/Materials'
 import { ObjectLayers } from '../../IViewer'
+import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -57,7 +57,7 @@ export enum TransformStorage {
 export default class SpeckleMesh extends Mesh {
   public static MeshBatchNumber = 0
 
-  private bvh: SpeckleBatchBVH = null
+  private tas: TopLevelAccelerationStructure = null
   private batchMaterial: Material = null
   private materialCache: { [id: string]: Material } = {}
   private materialStack: Array<Material | Material[]> = []
@@ -73,7 +73,7 @@ export default class SpeckleMesh extends Mesh {
   private boxHelper: Box3Helper
 
   public get BVH() {
-    return this.bvh
+    return this.tas
   }
 
   public get batchObjects(): BatchObject[] {
@@ -208,13 +208,13 @@ export default class SpeckleMesh extends Mesh {
         )
       }
     }
-    if (this.bvh && needsUpdate) {
-      this.bvh.refit()
-      this.bvh.getBoundingBox(this.bvh.bounds)
-      this.geometry.boundingBox.copy(this.bvh.bounds)
+    if (this.tas && needsUpdate) {
+      this.tas.refit()
+      this.tas.getBoundingBox(this.tas.bounds)
+      this.geometry.boundingBox.copy(this.tas.bounds)
       this.geometry.boundingBox.getBoundingSphere(this.geometry.boundingSphere)
       if (!this.boxHelper && this.debugBatchBox) {
-        this.boxHelper = new Box3Helper(this.bvh.bounds, new Color(0xff0000))
+        this.boxHelper = new Box3Helper(this.tas.bounds, new Color(0xff0000))
         this.boxHelper.layers.set(ObjectLayers.PROPS)
         this.parent.add(this.boxHelper)
       }
@@ -222,11 +222,11 @@ export default class SpeckleMesh extends Mesh {
   }
 
   public buildBVH() {
-    this.bvh = new SpeckleBatchBVH(this.batchObjects)
+    this.tas = new TopLevelAccelerationStructure(this.batchObjects)
     /** We do a refit here, because for some reason the bvh library incorrectly computes the total bvh bounds at creation,
      *  so we force a refit in order to get the proper bounds value out of it
      */
-    this.bvh.tas.refit()
+    this.tas.refit()
   }
 
   public getBatchObjectMaterial(batchObject: BatchObject) {
@@ -269,16 +269,15 @@ export default class SpeckleMesh extends Mesh {
   }
 
   raycast(raycaster: Raycaster, intersects) {
-    if (this.bvh) {
+    if (this.tas) {
       if (this.batchMaterial === undefined) return
 
       tmpInverseMatrix.copy(this.matrixWorld).invert()
       ray.copy(raycaster.ray).applyMatrix4(tmpInverseMatrix)
 
-      const bvh = this.bvh
       if (raycaster.firstHitOnly === true) {
         const hit = this.convertRaycastIntersect(
-          bvh.raycastFirst(ray, this.batchMaterial),
+          this.tas.raycastFirst(ray, this.batchMaterial),
           this,
           raycaster
         )
@@ -286,7 +285,7 @@ export default class SpeckleMesh extends Mesh {
           intersects.push(hit)
         }
       } else {
-        const hits = bvh.raycast(ray, this.batchMaterial)
+        const hits = this.tas.raycast(ray, this.batchMaterial)
         for (let i = 0, l = hits.length; i < l; i++) {
           const hit = this.convertRaycastIntersect(hits[i], this, raycaster)
           if (hit) {

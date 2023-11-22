@@ -68,18 +68,27 @@ will need to be wrapped around if required.
 Otherwise, keep in mind that if you use this class for any other purposes, you can use transformInput and transformOutput
 to get the correct values for Vectors, Rays, Boxes, etc
  */
-export class SpeckleMeshBVH extends MeshBVH {
+export class AccelerationStructure {
   private static readonly MatBuff: Matrix4 = new Matrix4()
+  private _bvh: MeshBVH
   public inputTransform: Matrix4
   public outputTransform: Matrix4
   public inputOriginTransform: Matrix4
   public outputOriginTransfom: Matrix4
 
+  public get geometry() {
+    return this._bvh.geometry
+  }
+
+  public get bvh() {
+    return this._bvh
+  }
+
   public static buildBVH(
     indices: number[],
     position: Float32Array,
     options: BVHOptions = DefaultBVHOptions
-  ): SpeckleMeshBVH {
+  ): MeshBVH {
     const bvhGeometry = new BufferGeometry()
     let bvhIndices = null
     if (position.length >= 65535 || indices.length >= 65535) {
@@ -95,12 +104,12 @@ export class SpeckleMeshBVH extends MeshBVH {
     bvhGeometry.setAttribute('position', new Float32BufferAttribute(position, 3))
     bvhGeometry.computeBoundingBox()
 
-    const bvh = new SpeckleMeshBVH(bvhGeometry, options)
+    const bvh = new MeshBVH(bvhGeometry, options)
     return bvh
   }
 
-  private constructor(geometry, options = {}) {
-    super(geometry, options)
+  constructor(bvh: MeshBVH) {
+    this._bvh = bvh
   }
 
   /* Core Cast Functions */
@@ -108,7 +117,7 @@ export class SpeckleMeshBVH extends MeshBVH {
     ray: Ray,
     materialOrSide: Side | Material | Material[] = FrontSide
   ): Intersection<Object3D<Event>>[] {
-    const res = super.raycast(this.transformInput<Ray>(ray), materialOrSide)
+    const res = this._bvh.raycast(this.transformInput<Ray>(ray), materialOrSide)
     res.forEach((value) => {
       value.point = this.transformOutput(value.point)
     })
@@ -119,7 +128,7 @@ export class SpeckleMeshBVH extends MeshBVH {
     ray: Ray,
     materialOrSide: Side | Material | Material[] = FrontSide
   ): Intersection<Object3D<Event>> {
-    const res = super.raycastFirst(this.transformInput<Ray>(ray), materialOrSide)
+    const res = this._bvh.raycastFirst(this.transformInput<Ray>(ray), materialOrSide)
     res.point = this.transformOutput(res.point)
     return res
   }
@@ -235,30 +244,30 @@ export class SpeckleMeshBVH extends MeshBVH {
     //@ts-ignore
     newCallbacks.traverseBoundsOrder = callbacks.traverseBoundsOrder
 
-    return super.shapecast(newCallbacks)
+    return this._bvh.shapecast(newCallbacks)
   }
 
   public transformInput<T extends Vector3 | Ray | Box3>(input: T): T {
-    SpeckleMeshBVH.MatBuff.copy(this.inputOriginTransform).premultiply(
+    AccelerationStructure.MatBuff.copy(this.inputOriginTransform).premultiply(
       this.inputTransform
     )
-    return input.applyMatrix4(SpeckleMeshBVH.MatBuff) as T
+    return input.applyMatrix4(AccelerationStructure.MatBuff) as T
   }
 
   public transformOutput<T extends Vector3 | Ray | Box3>(output: T): T {
-    SpeckleMeshBVH.MatBuff.copy(this.outputOriginTransfom).multiply(
+    AccelerationStructure.MatBuff.copy(this.outputOriginTransfom).multiply(
       this.outputTransform
     )
-    return output.applyMatrix4(SpeckleMeshBVH.MatBuff) as T
+    return output.applyMatrix4(AccelerationStructure.MatBuff) as T
   }
 
   public getBoundingBox(target) {
-    super.getBoundingBox(target)
+    this._bvh.getBoundingBox(target)
     return this.transformOutput(target)
   }
 
   public getVertexAtIndex(index: number): Vector3 {
-    const array = this.geometry.attributes.position.array
+    const array = this._bvh.geometry.attributes.position.array
     return this.transformOutput(
       new Vector3(array[index * 3], array[index * 3 + 1], array[index * 3 + 2])
     )
