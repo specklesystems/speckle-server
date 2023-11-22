@@ -111,10 +111,12 @@ export enum ObjectLayers {
   STREAM_CONTENT_TEXT = 13,
   STREAM_CONTENT_POINT_CLOUD = 14,
 
+  NONE = 0,
   STREAM_CONTENT = 1,
   PROPS = 2,
   SHADOWCATCHER = 3,
-  OVERLAY = 4
+  OVERLAY = 4,
+  MEASUREMENTS = 5
 }
 
 export enum UpdateFlags {

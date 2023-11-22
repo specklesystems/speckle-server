@@ -30,7 +30,7 @@ export class PerpendicularMeasurement extends Measurement {
     this.startLineLength = 0.25
     this.add(this.startGizmo)
     this.add(this.endGizmo)
-    this.layers.set(ObjectLayers.OVERLAY)
+    this.layers.set(ObjectLayers.MEASUREMENTS)
   }
 
   public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {

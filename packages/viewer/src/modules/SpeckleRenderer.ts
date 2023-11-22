@@ -57,6 +57,7 @@ import Materials, {
 import { SpeckleMaterial } from './materials/SpeckleMaterial'
 import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
 import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter'
+import { BaseSpecklePass } from './pipeline/SpecklePass'
 
 export class RenderingStats {
   private renderTimeAcc = 0
@@ -1167,5 +1168,14 @@ export default class SpeckleRenderer {
       return null
     }
     return batch.mesh.batchObjects.find((value) => value.renderView.guid === rv.guid)
+  }
+
+  public enableLayers(layers: ObjectLayers[], value: boolean) {
+    this.pipeline.composer.passes.forEach((pass: BaseSpecklePass) => {
+      if (!(pass instanceof BaseSpecklePass)) return
+      layers.forEach((layer: ObjectLayers) => {
+        pass.enableLayer(layer, value)
+      })
+    })
   }
 }

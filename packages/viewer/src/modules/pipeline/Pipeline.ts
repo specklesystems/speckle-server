@@ -269,7 +269,7 @@ export class Pipeline {
       ObjectLayers.SHADOWCATCHER
     ])
     this.stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    this.overlayPass.setLayers([ObjectLayers.OVERLAY])
+    this.overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
     let restoreVisibility, opaque, stencil
 
     this.onBeforePipelineRender = () => {
