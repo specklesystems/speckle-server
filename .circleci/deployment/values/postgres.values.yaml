@@ -23,18 +23,6 @@ primary:
         ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO speckle;
         ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO speckle;
         -- End Speckle
-        -- Automate
-        CREATE USER automate WITH PASSWORD 'automate';
-        ALTER USER automate CREATEDB; -- required for tests
-        CREATE DATABASE automate
-            WITH
-            OWNER = automate;
-        GRANT ALL PRIVILEGES ON DATABASE automate TO automate;
-        GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO automate;
-        GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO automate;
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO automate;
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO automate;
-        -- End Automate
         -- Speckle Server Tests
         CREATE DATABASE speckle2_test
             WITH
@@ -45,12 +33,3 @@ primary:
             TABLESPACE = pg_default
             CONNECTION LIMIT = -1;
         -- End Speckle Server Tests
-        -- Automate Results
-        CREATE USER automateresults WITH PASSWORD 'automateresults';
-        CREATE DATABASE automateresults WITH OWNER automateresults;
-        GRANT ALL PRIVILEGES ON DATABASE automateresults TO automateresults;
-        GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO automateresults;
-        GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO automateresults;
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO automateresults;
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO automateresults;
-        -- End Automate Results
