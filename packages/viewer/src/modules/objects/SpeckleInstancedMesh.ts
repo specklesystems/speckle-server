@@ -17,8 +17,6 @@ import {
 import { BatchObject } from '../batching/BatchObject'
 import Materials from '../materials/Materials'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
-import { AccelerationStructure } from './AccelerationStructure'
-import { InstancedBatchObject } from '../batching/InstancedBatchObject'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -49,7 +47,6 @@ const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
 export default class SpeckleInstancedMesh extends InstancedMesh {
   public static MeshBatchNumber = 0
 
-  private instanceAccelerationStructure: AccelerationStructure = null
   private tas: TopLevelAccelerationStructure = null
   private batchMaterial: Material = null
   private materialCache: { [id: string]: Material } = {}
@@ -77,7 +74,7 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
     this.material = this.batchMaterial
   }
 
-  public setBatchObjects(batchObjects: InstancedBatchObject[]) {
+  public setBatchObjects(batchObjects: BatchObject[]) {
     this._batchObjects = batchObjects
     for (let k = 0; k < batchObjects.length; k++) {
       this.setMatrixAt(k, batchObjects[k].renderView.renderData.geometry.transform)
