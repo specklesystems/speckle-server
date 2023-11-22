@@ -19,9 +19,9 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
-import { BatchObject } from './BatchObject'
 import SpeckleInstancedMesh from '../objects/SpeckleInstancedMesh'
 import { ObjectLayers } from '../../IViewer'
+import { InstancedBatchObject } from './InstancedBatchObject'
 
 export default class InstancedMeshBatch implements Batch {
   public id: string
@@ -399,10 +399,11 @@ export default class InstancedMeshBatch implements Batch {
 
   public buildBatch() {
     const batchObjects = []
+    // let instanceBVH = null
     for (let k = 0; k < this.renderViews.length; k++) {
       this.renderViews[k].setBatchData(this.id, k, 1)
-      const batchObject = new BatchObject(this.renderViews[k], k)
-      batchObject.buildBVH()
+      const batchObject = new InstancedBatchObject(this.renderViews[k], k)
+
       batchObjects.push(batchObject)
     }
 
