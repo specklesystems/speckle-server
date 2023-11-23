@@ -427,12 +427,6 @@ export default class InstancedMeshBatch implements Batch {
         instanceBVH.refit()
       }
       batchObject.buildAccelerationStructure(instanceBVH)
-
-      console.warn(
-        this.renderViews[k].aabb,
-        'vs',
-        batchObject.accelerationStructure.getBoundingBox(new Box3())
-      )
       batchObjects.push(batchObject)
     }
 

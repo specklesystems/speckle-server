@@ -261,14 +261,14 @@ export class AccelerationStructure {
   }
 
   public transformInput<T extends Vector3 | Ray | Box3>(input: T): T {
-    AccelerationStructure.MatBuff.copy(this.inputOriginTransform).premultiply(
+    AccelerationStructure.MatBuff.copy(this.inputOriginTransform).multiply(
       this.inputTransform
     )
     return input.applyMatrix4(AccelerationStructure.MatBuff) as T
   }
 
   public transformOutput<T extends Vector3 | Ray | Box3>(output: T): T {
-    AccelerationStructure.MatBuff.copy(this.outputOriginTransfom).multiply(
+    AccelerationStructure.MatBuff.copy(this.outputOriginTransfom).premultiply(
       this.outputTransform
     )
     return output.applyMatrix4(AccelerationStructure.MatBuff) as T

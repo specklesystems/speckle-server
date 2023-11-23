@@ -71,6 +71,10 @@ const createViewer = async (containerName: string, stream: string) => {
     viewer.resize()
   })
 
+  viewer.on(ViewerEvent.ObjectClicked, (event) => {
+    if (event) console.log(event.hits[0].node.model.id)
+  })
+
   viewer.on(
     ViewerEvent.LoadProgress,
     (a: { progress: number; id: string; url: string }) => {
