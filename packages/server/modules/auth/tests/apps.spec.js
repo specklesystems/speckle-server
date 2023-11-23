@@ -53,8 +53,29 @@ describe('Services @apps-services', () => {
     expect(app.scopes).to.be.a('array')
   })
 
+  it('Should get the Speckle Connector app', async () => {
+    const app = await getApp({ id: 'sca' })
+    expect(app).to.be.an('object')
+    expect(app.redirectUrl).to.be.a('string')
+    expect(app.scopes).to.be.a('array')
+  })
+
   it('Should get the excel app', async () => {
     const app = await getApp({ id: 'spklexcel' })
+    expect(app).to.be.an('object')
+    expect(app.redirectUrl).to.be.a('string')
+    expect(app.scopes).to.be.a('array')
+  })
+
+  it('Should get the PowerBI app', async () => {
+    const app = await getApp({ id: 'spklpwerbi' })
+    expect(app).to.be.an('object')
+    expect(app.redirectUrl).to.be.a('string')
+    expect(app.scopes).to.be.a('array')
+  })
+
+  it('Should get the Automate app', async () => {
+    const app = await getApp({ id: 'spklautoma' })
     expect(app).to.be.an('object')
     expect(app.redirectUrl).to.be.a('string')
     expect(app.scopes).to.be.a('array')
