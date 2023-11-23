@@ -54,6 +54,7 @@
       <hr class="pb-3" />
       <FormJsonForm
         :schema="settingsJsonForms"
+        :data="data"
         @change="onParamsFormChange"
       ></FormJsonForm>
     </LayoutDialog>
@@ -80,6 +81,17 @@ const props = defineProps<{
   project: ProjectModelGroup
 }>()
 
+const data = computed(() => {
+  const settingValues = {} as DataType
+  if (props.model.settings) {
+    props.model.settings.forEach((setting) => {
+      settingValues[setting.id as string] = setting.value
+    })
+  }
+  return settingValues
+})
+
+type DataType = Record<string, unknown>
 const settingsJsonForms = computed(() => {
   if (props.model.settings === undefined) return {}
   const obj: JsonSchema = {
@@ -87,7 +99,7 @@ const settingsJsonForms = computed(() => {
     properties: {}
   }
   props.model.settings.forEach((setting: CardSetting) => {
-    const mappedSetting = omit({ ...setting, $id: setting.id }, ['id'])
+    const mappedSetting = omit({ ...setting, $id: setting.id }, ['id', 'value'])
     if (obj && obj.properties) {
       obj.properties[setting.id] = mappedSetting
     }
@@ -104,9 +116,8 @@ const modelDetails = await getModelDetails({
 
 const openFilterDialog = ref(false)
 
-const paramsFormState = ref<JsonFormsChangeEvent>()
 const onParamsFormChange = (e: JsonFormsChangeEvent) => {
-  paramsFormState.value = e
-  console.log(JSON.parse(JSON.stringify(e.data)))
+  // console.log(JSON.parse(JSON.stringify(e.data)))
+  store.updateModelSettings(props.model.id, e.data as DataType)
 }
 </script>

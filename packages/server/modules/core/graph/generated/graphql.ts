@@ -4,6 +4,7 @@ import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpe
 import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
+import { AutomationFunctionRunGraphQLReturn } from '@/modules/automations/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -2966,8 +2967,8 @@ export type ResolversTypes = {
   AppUpdateInput: AppUpdateInput;
   AuthStrategy: ResolverTypeWrapper<AuthStrategy>;
   AutomationCreateInput: AutomationCreateInput;
-  AutomationFunctionRun: ResolverTypeWrapper<Omit<AutomationFunctionRun, 'resultVersions'> & { resultVersions: Array<ResolversTypes['Version']> }>;
-  AutomationMutations: ResolverTypeWrapper<AutomationMutations>;
+  AutomationFunctionRun: ResolverTypeWrapper<AutomationFunctionRunGraphQLReturn>;
+  AutomationMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   AutomationRun: ResolverTypeWrapper<Omit<AutomationRun, 'functionRuns'> & { functionRuns: Array<ResolversTypes['AutomationFunctionRun']> }>;
   AutomationRunStatus: AutomationRunStatus;
   AutomationRunStatusUpdateInput: AutomationRunStatusUpdateInput;
@@ -3140,8 +3141,8 @@ export type ResolversParentTypes = {
   AppUpdateInput: AppUpdateInput;
   AuthStrategy: AuthStrategy;
   AutomationCreateInput: AutomationCreateInput;
-  AutomationFunctionRun: Omit<AutomationFunctionRun, 'resultVersions'> & { resultVersions: Array<ResolversParentTypes['Version']> };
-  AutomationMutations: AutomationMutations;
+  AutomationFunctionRun: AutomationFunctionRunGraphQLReturn;
+  AutomationMutations: MutationsObjectGraphQLReturn;
   AutomationRun: Omit<AutomationRun, 'functionRuns'> & { functionRuns: Array<ResolversParentTypes['AutomationFunctionRun']> };
   AutomationRunStatusUpdateInput: AutomationRunStatusUpdateInput;
   AutomationsStatus: Omit<AutomationsStatus, 'automationRuns'> & { automationRuns: Array<ResolversParentTypes['AutomationRun']> };

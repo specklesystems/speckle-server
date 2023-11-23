@@ -7,8 +7,7 @@ import { IModelCard } from 'lib/models/card'
 import { ModelCardNotification } from 'lib/models/card/notification'
 import { IReceiverModelCard } from 'lib/models/card/receiver'
 import { ISenderModelCard, ISendFilter } from 'lib/models/card/send'
-import { CardSetting } from 'lib/models/card/setting'
-import { cloneDeep } from 'lodash-es'
+import { CardSetting, CardSettingValue } from 'lib/models/card/setting'
 import { useCreateVersion } from '~/lib/graphql/composables'
 import { useAccountStore } from '~~/store/accounts'
 
@@ -84,34 +83,27 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   }
 
   type DataType = Record<string, unknown>
-  const updateModelSettings = async (modelId: string, settings: DataType) => {
+  const updateModelSettings = async (modelId: string, newSettings: DataType) => {
     const modelIndex = documentModelStore.value.models.findIndex(
       (m) => m.id === modelId
     )
     const model = documentModelStore.value.models[modelIndex] as IModelCard
-    const modelCopy = { ...model }
-    const settingsCopy = modelCopy.settings
 
-    // model.settings = settings
-    if (settingsCopy) {
-      console.log(settingsCopy)
-
-      Object.entries(settings).forEach(([key, value]) => {
-        console.log(key, 'key')
-
-        const setting = settingsCopy.find((s) => s.id === (key as unknown as string))
-        console.log(setting)
-
+    if (model.settings) {
+      model.settings.forEach((setting) => {
         if (setting) {
-          if (setting.default !== value) {
-            console.log(setting.default, 'before')
-            console.log(value, 'value')
-            setting.default = value
+          if (setting.value !== newSettings[setting.id]) {
+            // console.log(
+            //   'attempted to set new setting value',
+            //   setting.id,
+            //   newSettings[setting.id]
+            // )
+
+            setting.value = newSettings[setting.id] as CardSettingValue
           }
         }
       })
     }
-    model.settings = settingsCopy
     await app.$baseBinding.updateModel(documentModelStore.value.models[modelIndex])
   }
 

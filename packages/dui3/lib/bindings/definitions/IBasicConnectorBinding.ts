@@ -76,7 +76,7 @@ export class MockedBaseBinding extends BaseBridge {
           id: 'includeAttributes',
           type: 'boolean',
           title: 'Include Attributes',
-          default: true,
+          value: true,
           typeDiscriminator: 'CardSetting'
         }
       ]
@@ -95,21 +95,21 @@ export class MockedBaseBinding extends BaseBridge {
           id: 'includeAttributes',
           type: 'boolean',
           title: 'Include Attributes',
-          default: true,
+          value: true,
           typeDiscriminator: 'CardSetting'
         },
         {
           id: 'mergeCoplanarFaces',
           type: 'boolean',
           title: 'Merge Coplanar Faces',
-          default: true,
+          value: true,
           typeDiscriminator: 'CardSetting'
         },
         {
           id: 'receiveMode',
           type: 'string',
           title: 'Receive Mode',
-          default: 'Update',
+          value: 'Update',
           enum: ['Update', 'Create', 'Ignore'],
           typeDiscriminator: 'CardSetting'
         }

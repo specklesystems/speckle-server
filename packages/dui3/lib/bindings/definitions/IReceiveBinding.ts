@@ -43,7 +43,7 @@ export class MockedReceiveBinding extends BaseBridge {
         id: 'receiveMode',
         type: 'string',
         title: 'Receive Mode',
-        default: 'Update',
+        value: 'Update',
         enum: ['Update', 'Create', 'Ignore'],
         typeDiscriminator: 'CardSetting'
       }

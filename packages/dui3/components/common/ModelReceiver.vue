@@ -39,6 +39,7 @@
       <hr class="pb-3" />
       <FormJsonForm
         :schema="settingsJsonForms"
+        :data="data"
         @change="onParamsFormChange"
       ></FormJsonForm>
     </LayoutDialog>
@@ -76,6 +77,17 @@ const props = defineProps<{
   project: ProjectModelGroup
 }>()
 
+type DataType = Record<string, unknown>
+const data = computed(() => {
+  const settingValues = {} as DataType
+  if (props.model.settings) {
+    props.model.settings.forEach((setting) => {
+      settingValues[setting.id as string] = setting.value
+    })
+  }
+  return settingValues
+})
+
 const selectedVersion = ref<VersionsSelectItemType>()
 
 const getModelDetails = useGetModelDetails(props.project.accountId)
@@ -90,28 +102,8 @@ const projectVersionsUpdated = onProjectVersionsUpdate(props.project.projectId)
 
 projectVersionsUpdated.onResult(() => store.invalidateReceiver(props.model.id))
 
-type DataType = Record<string, unknown>
-const paramsFormState = ref<JsonFormsChangeEvent>()
 const onParamsFormChange = (e: JsonFormsChangeEvent) => {
-  paramsFormState.value = e
-  console.log(JSON.parse(JSON.stringify(e.data)))
-  // if (props.model.settings) {
-  //   console.log(props.model.settings)
-
-  //   Object.entries(e.data as DataType).forEach((key, value) => {
-  //     console.log(key, 'key')
-  //     console.log(value, 'value')
-
-  //     const setting = props.model.settings?.find(
-  //       (s) => s.id === (key[0] as unknown as string)
-  //     )
-  //     console.log(setting)
-
-  //     if (setting) {
-  //       setting.default = key[1]
-  //     }
-  //   })
-  // }
+  // console.log(JSON.parse(JSON.stringify(e.data)))
   store.updateModelSettings(props.model.id, e.data as DataType)
 }
 </script>
