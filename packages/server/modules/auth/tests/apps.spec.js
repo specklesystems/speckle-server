@@ -33,55 +33,6 @@ describe('Services @apps-services', () => {
     actor.id = await createUser(actor)
   })
 
-  it('Should get the frontend main app', async () => {
-    const app = await getApp({ id: 'spklwebapp' })
-    expect(app).to.be.an('object')
-    expect(app.redirectUrl).to.be.a('string')
-    expect(app.scopes).to.be.a('array')
-  })
-
-  it('Should get the desktop manager app', async () => {
-    const app = await getApp({ id: 'sdm' })
-    expect(app).to.be.an('object')
-    expect(app.redirectUrl).to.be.a('string')
-    expect(app.scopes).to.be.a('array')
-  })
-
-  it('Should get the explorer app', async () => {
-    const app = await getApp({ id: 'explorer' })
-    expect(app).to.be.an('object')
-    expect(app.redirectUrl).to.be.a('string')
-    expect(app.scopes).to.be.a('array')
-  })
-
-  it('Should get the Speckle Connector app', async () => {
-    const app = await getApp({ id: 'sca' })
-    expect(app).to.be.an('object')
-    expect(app.redirectUrl).to.be.a('string')
-    expect(app.scopes).to.be.a('array')
-  })
-
-  it('Should get the Excel app', async () => {
-    const app = await getApp({ id: 'spklexcel' })
-    expect(app).to.be.an('object')
-    expect(app.redirectUrl).to.be.a('string')
-    expect(app.scopes).to.be.a('array')
-  })
-
-  it('Should get the PowerBI app', async () => {
-    const app = await getApp({ id: 'spklpwerbi' })
-    expect(app).to.be.an('object')
-    expect(app.redirectUrl).to.be.a('string')
-    expect(app.scopes).to.be.a('array')
-  })
-
-  it('Should get the Automate app', async () => {
-    const app = await getApp({ id: 'spklautoma' })
-    expect(app).to.be.an('object')
-    expect(app.redirectUrl).to.be.a('string')
-    expect(app.scopes).to.be.a('array')
-  })
-
   it('Should register an app', async () => {
     const testAppName = cryptoRandomString({ length: 10 })
     const res = await createApp({
@@ -297,6 +248,12 @@ describe('Services @apps-services', () => {
     'spklautoma'
   ]
   defaultApps.forEach((speckleAppId) => {
+    it(`Should get the default app: ${speckleAppId}`, async () => {
+      const app = await getApp({ id: speckleAppId })
+      expect(app).to.be.an('object')
+      expect(app.redirectUrl).to.be.a('string')
+      expect(app.scopes).to.be.a('array')
+    })
     it(`Should not invalidate tokens, refresh tokens and access codes for default app: ${speckleAppId}, if updated`, async () => {
       const [unusedAccessCode, usedAccessCode] = await Promise.all([
         createAuthorizationCode({
