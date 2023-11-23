@@ -2,7 +2,9 @@
   <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
     <template #title>Measure mode</template>
     <template #actions>
-      <FormButton size="xs" text :icon-left="MinusIcon" disabled>Delete</FormButton>
+      <FormButton size="xs" text :icon-left="MinusIcon" @click="removeMeasurement">
+        Delete
+      </FormButton>
     </template>
     <div class="p-4 flex flex-col gap-3">
       <div>
@@ -24,7 +26,7 @@
         </div>
         <div class="w-3/12">
           <h6 class="font-semibold text-xs mb-1.5">Snap</h6>
-          <div class="scale-95 -ml-1">
+          <div class="scale-95 -ml-0.5">
             <FormSwitch
               :model-value="measurementParams.vertexSnap"
               @update:model-value="() => toggleMeasurementsSnap()"
@@ -57,7 +59,7 @@ import { FormSwitch, FormRadioGroup } from '@speckle/ui-components'
 import { MeasurementType } from '@speckle/viewer'
 import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
 
-interface Option {
+interface MeasurementTypeOption {
   title: string
   description: string
   value: MeasurementType
@@ -75,9 +77,9 @@ const measurementParams = ref({
   precision: measurementPrecision.value
 })
 
-const { setMeasurementOptions } = useMeasurementUtilities()
+const { setMeasurementOptions, removeMeasurement } = useMeasurementUtilities()
 
-const updateMeasurementsType = (selectedOption: Option) => {
+const updateMeasurementsType = (selectedOption: MeasurementTypeOption) => {
   measurementParams.value.type = selectedOption.value
   setMeasurementOptions(measurementParams.value)
 }

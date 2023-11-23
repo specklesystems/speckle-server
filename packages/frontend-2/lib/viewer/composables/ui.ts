@@ -354,8 +354,15 @@ export function useMeasurementUtilities() {
     }
   }
 
+  const removeMeasurement = () => {
+    if (instance && instance.removeMeasurement) {
+      instance.removeMeasurement()
+    }
+  }
+
   return {
     enableMeasurements,
-    setMeasurementOptions
+    setMeasurementOptions,
+    removeMeasurement
   }
 }

@@ -29,16 +29,7 @@ const props = defineProps<{
   name?: string
 }>()
 
-const units = ref([
-  'Millimeters',
-  'Centimeters',
-  'Meters',
-  'Kilometers',
-  'Inches',
-  'Feet',
-  'Yards',
-  'Miles'
-])
+const units = ref(['mm', 'cm', 'm', 'km', 'in', 'ft', 'yd', 'mi'])
 
 const selectedUnit = computed({
   get: () => props.modelValue,
