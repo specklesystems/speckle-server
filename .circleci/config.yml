@@ -755,6 +755,11 @@ jobs:
           command: |
             sudo tee -a /etc/hosts \<<<'127.0.0.1 speckle.internal'
             cat /etc/hosts
+      - run:
+          name: Change directory ownership to allow kind to create directories
+          command: |
+            chown -R $USER:$USER /bitnami/postgresql/data
+            chown -R $USER:$USER /bitnami/minio/data
 
       - run:
           name: Deploy Kubernetes (kind) cluster
