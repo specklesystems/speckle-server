@@ -2,7 +2,7 @@ const crs = require('crypto-random-string')
 const chai = require('chai')
 const request = require('supertest')
 const { createUser } = require('@/modules/core/services/users')
-const { createStreamReturnRecord } = require('@/modules/core/services/streams')
+const { createStream } = require('@/modules/core/services/streams')
 
 const { updateServerInfo } = require('@/modules/core/services/generic')
 const { getUserByEmail } = require('@/modules/core/services/users')
@@ -49,7 +49,7 @@ describe('Auth @auth', () => {
       await createUser(me).then((id) => (me.id = id))
 
       // Create a test stream for testing stream invites
-      await createStreamReturnRecord({ ...myPrivateStream, ownerId: me.id }).then(
+      await createStream({ ...myPrivateStream, ownerId: me.id }).then(
         (id) => (myPrivateStream.id = id)
       )
     })
