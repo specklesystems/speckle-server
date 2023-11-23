@@ -756,10 +756,18 @@ jobs:
             sudo tee -a /etc/hosts \<<<'127.0.0.1 speckle.internal'
             cat /etc/hosts
       - run:
-          name: Change directory ownership to allow kind to create directories
+          name: Change directory permissions to allow kind to create directories
           command: |
-            chown -R $USER:$USER /bitnami/postgresql/data
-            chown -R $USER:$USER /bitnami/minio/data
+            mkdir -p "./minio-data"
+            if [ "$(stat -f "%A" "./minio-data")" != "775" ]; then
+              echo "🔐 We need 'sudo' to set permissions on minio-data directory to 775"
+              sudo chmod 775 "./minio-data"
+            fi
+            mkdir -p "./postgres-data"
+            if [ "$(stat -f "%A" "./postgres-data")" != "775" ]; then
+              echo "🔐 We need 'sudo' to set permissions on postgres-data directory to 775"
+              sudo chmod 775 "./postgres-data"
+            fi
 
       - run:
           name: Deploy Kubernetes (kind) cluster
