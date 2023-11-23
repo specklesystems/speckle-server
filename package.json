@@ -26,7 +26,7 @@
     "dev:kind:down": "ctlptl delete -f ./.circleci/deployment/cluster-config.yaml",
     "dev:kind:tilt:up": "yarn dev:kind:up && tilt up --file ./.circleci/deployment/Tiltfile --context kind-speckle-server",
     "dev:kind:tilt:down": "tilt down --file ./.circleci/deployment/Tiltfile --context kind-speckle-server",
-    "dev:kind:tilt:ci": "tilt ci --file ./.circleci/deployment/Tiltfile --context kind-speckle-server --timeout 15m",
+    "dev:kind:tilt:ci": "tilt ci --file ./.circleci/deployment/Tiltfile --context kind-speckle-server --timeout 10m",
     "dev": "yarn workspaces foreach -piv -j unlimited run dev",
     "dev:no-server": "yarn workspaces foreach --exclude @speckle/server -piv -j unlimited run dev",
     "dev:minimal": "yarn workspaces foreach -piv -j unlimited --include '{@speckle/server,@speckle/frontend,@speckle/shared}' run dev",
