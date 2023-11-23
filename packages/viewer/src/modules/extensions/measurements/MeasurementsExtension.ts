@@ -61,6 +61,10 @@ export class MeasurementsExtension extends Extension {
     return this._enabled
   }
 
+  public get visible(): boolean {
+    return this._options.visible
+  }
+
   public set enabled(value: boolean) {
     this._enabled = value
     if (this.measurement) {
