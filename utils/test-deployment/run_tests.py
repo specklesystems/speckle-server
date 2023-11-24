@@ -23,6 +23,10 @@ if not SPECKLE_SERVER:
     )
     exit(1)
 
+VERIFY_CERTIFICATE = (
+    True if os.getenv("VERIFY_CERTIFICATE", "1") != "0" else False
+)  # default to True except in very narrow case where value is explicitly "0"
+
 FRONTEND_VERSION = os.getenv("FRONTEND_VERSION", "")
 if not FRONTEND_VERSION:
     print(
@@ -39,7 +43,9 @@ print(f"Using Speckle server '{SPECKLE_SERVER}'")
 
 # Test if frontend is accessible
 if FRONTEND_VERSION == "1":
-    frontend_response = requests.get(urllib.parse.urljoin(SPECKLE_SERVER, "logo.svg"))
+    frontend_response = requests.get(
+        urllib.parse.urljoin(SPECKLE_SERVER, "logo.svg"), verify=VERIFY_CERTIFICATE
+    )
     # don't check for status code, the frontend app will server the 404 page with a status code 200
     # even if the rote doesn't exist
     assert frontend_response.headers.get("Content-Type", "").startswith(
@@ -56,7 +62,11 @@ else:
 print("Frontend accessible")
 
 # Test basic unauthenticated operation using specklepy
-client = SpeckleClient(SPECKLE_SERVER, use_ssl=SPECKLE_SERVER.startswith("https://"))
+client = SpeckleClient(
+    SPECKLE_SERVER,
+    use_ssl=SPECKLE_SERVER.startswith("https://"),
+    certificate_verification=VERIFY_CERTIFICATE,
+)
 server_info = client.server.get()
 assert isinstance(server_info, ServerInfo), "GraphQL ServerInfo query error"
 print(f"GraphQL operation succeeded. Server name: {server_info.name}")
