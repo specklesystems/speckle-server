@@ -27,6 +27,13 @@ import {
   DefaultBVHOptions
 } from '../objects/AccelerationStructure'
 import { InstancedBatchObject } from './InstancedBatchObject'
+import Logger from 'js-logger'
+
+export interface DrawGroup {
+  start: number
+  count: number
+  materialIndex?: number
+}
 
 export default class InstancedMeshBatch implements Batch {
   public id: string
@@ -81,7 +88,11 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public get materials(): Material[] {
-    return this.mesh.material as Material[]
+    return this.mesh.materials
+  }
+
+  public get groups(): Array<DrawGroup> {
+    return this.mesh.groups
   }
 
   public setBatchMaterial(material: Material) {
@@ -90,10 +101,10 @@ export default class InstancedMeshBatch implements Batch {
 
   public onUpdate(deltaTime: number) {
     deltaTime
-    // if (this.needsFlatten) {
-    //   this.flattenDrawGroups()
-    //   this.needsFlatten = false
-    // }
+    if (this.needsFlatten) {
+      this.flattenDrawGroups()
+      this.needsFlatten = false
+    }
     // if (this.needsShuffle) {
     //   this.autoFillDrawRangesShuffleIBO()
     //   this.needsShuffle = false
@@ -173,88 +184,91 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
-    ranges
-    // ranges.forEach((value: BatchUpdateRange) => {
-    //   if (value.material) {
-    //     value.material = this.mesh.getCachedMaterial(value.material)
-    //   }
-    // })
-    // const materials = ranges.map((val) => {
-    //   return val.material
-    // })
-    // const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
+    ranges.forEach((value: BatchUpdateRange) => {
+      if (value.material) {
+        value.material = this.mesh.getCachedMaterial(value.material)
+      }
+    })
 
-    // for (let k = 0; k < uniqueMaterials.length; k++) {
-    //   if (!this.materials.includes(uniqueMaterials[k]))
-    //     this.materials.push(uniqueMaterials[k])
-    // }
+    const materials = ranges.map((val) => {
+      return val.material
+    })
+    const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
 
-    // const sortedRanges = ranges.sort((a, b) => {
-    //   return a.offset - b.offset
-    // })
+    for (let k = 0; k < uniqueMaterials.length; k++) {
+      if (!this.materials.includes(uniqueMaterials[k]))
+        this.materials.push(uniqueMaterials[k])
+    }
 
-    // for (let i = 0; i < sortedRanges.length; i++) {
-    //   const materialIndex = this.materials.indexOf(sortedRanges[i].material)
-    //   const collidingGroup = this.getDrawRangeCollision(sortedRanges[i])
-    //   if (collidingGroup) {
-    //     collidingGroup.materialIndex = this.materials.indexOf(sortedRanges[i].material)
-    //   } else {
-    //     const includingGroup = this.geDrawRangeInclusion(sortedRanges[i])
-    //     if (includingGroup && includingGroup.materialIndex !== materialIndex) {
-    //       this.geometry.groups.splice(this.geometry.groups.indexOf(includingGroup), 1)
-    //       if (includingGroup.start === sortedRanges[i].offset) {
-    //         this.geometry.addGroup(
-    //           sortedRanges[i].offset,
-    //           sortedRanges[i].count,
-    //           materialIndex
-    //         )
-    //         this.geometry.addGroup(
-    //           sortedRanges[i].offset + sortedRanges[i].count,
-    //           includingGroup.count - sortedRanges[i].count,
-    //           includingGroup.materialIndex
-    //         )
-    //       } else if (
-    //         sortedRanges[i].offset + sortedRanges[i].count ===
-    //         includingGroup.start + includingGroup.count
-    //       ) {
-    //         this.geometry.addGroup(
-    //           includingGroup.start,
-    //           includingGroup.count - sortedRanges[i].count,
-    //           includingGroup.materialIndex
-    //         )
-    //         this.geometry.addGroup(
-    //           sortedRanges[i].offset,
-    //           sortedRanges[i].count,
-    //           materialIndex
-    //         )
-    //       } else {
-    //         this.geometry.addGroup(
-    //           includingGroup.start,
-    //           sortedRanges[i].offset - includingGroup.start,
-    //           includingGroup.materialIndex
-    //         )
-    //         this.geometry.addGroup(
-    //           sortedRanges[i].offset,
-    //           sortedRanges[i].count,
-    //           materialIndex
-    //         )
-    //         this.geometry.addGroup(
-    //           sortedRanges[i].offset + sortedRanges[i].count,
-    //           includingGroup.count -
-    //             (sortedRanges[i].count + sortedRanges[i].offset - includingGroup.start),
-    //           includingGroup.materialIndex
-    //         )
-    //       }
-    //     }
-    //   }
-    // }
-    // let count = 0
-    // this.geometry.groups.forEach((value) => (count += value.count))
-    // if (count !== this.getCount()) {
-    //   Logger.error(`Draw groups invalid on ${this.id}`)
-    // }
+    const sortedRanges = ranges.sort((a, b) => {
+      return a.offset - b.offset
+    })
+
+    for (let i = 0; i < sortedRanges.length; i++) {
+      const materialIndex = this.materials.indexOf(sortedRanges[i].material)
+      const collidingGroup = this.getDrawRangeCollision(sortedRanges[i])
+      if (collidingGroup) {
+        collidingGroup.materialIndex = this.materials.indexOf(sortedRanges[i].material)
+      } else {
+        const includingGroup = this.geDrawRangeInclusion(sortedRanges[i])
+        if (includingGroup && includingGroup.materialIndex !== materialIndex) {
+          this.groups.splice(this.groups.indexOf(includingGroup), 1)
+          if (includingGroup.start === sortedRanges[i].offset) {
+            this.groups.push({
+              start: sortedRanges[i].offset,
+              count: sortedRanges[i].count,
+              materialIndex
+            })
+            if (includingGroup.count - sortedRanges[i].count > 0) {
+              this.groups.push({
+                start: sortedRanges[i].offset + sortedRanges[i].count,
+                count: includingGroup.count - sortedRanges[i].count,
+                materialIndex: includingGroup.materialIndex
+              })
+            }
+          } else if (
+            sortedRanges[i].offset + sortedRanges[i].count ===
+            includingGroup.start + includingGroup.count
+          ) {
+            this.groups.push({
+              start: includingGroup.start,
+              count: includingGroup.count - sortedRanges[i].count,
+              materialIndex: includingGroup.materialIndex
+            })
+            this.groups.push({
+              start: sortedRanges[i].offset,
+              count: sortedRanges[i].count,
+              materialIndex
+            })
+          } else {
+            this.groups.push({
+              start: includingGroup.start,
+              count: sortedRanges[i].offset - includingGroup.start,
+              materialIndex: includingGroup.materialIndex
+            })
+            this.groups.push({
+              start: sortedRanges[i].offset,
+              count: sortedRanges[i].count,
+              materialIndex
+            })
+            this.groups.push({
+              start: sortedRanges[i].offset + sortedRanges[i].count,
+              count:
+                includingGroup.count -
+                (sortedRanges[i].count + sortedRanges[i].offset - includingGroup.start),
+              materialIndex: includingGroup.materialIndex
+            })
+          }
+        }
+      }
+    }
+    let count = 0
+    this.groups.forEach((value) => (count += value.count))
+    if (count !== this.renderViews.length) {
+      Logger.error(`Draw groups invalid on ${this.id}`)
+    }
     // this.setBatchBuffers(...ranges)
-    // this.needsFlatten = true
+    this.needsFlatten = true
   }
 
   private getDrawRangeCollision(range: BatchUpdateRange): {
@@ -262,18 +276,17 @@ export default class InstancedMeshBatch implements Batch {
     count: number
     materialIndex?: number
   } {
-    range
-    // if (this.geometry.groups.length > 0) {
-    //   for (let i = 0; i < this.geometry.groups.length; i++) {
-    //     if (
-    //       range.offset === this.geometry.groups[i].start &&
-    //       range.count === this.geometry.groups[i].count
-    //     ) {
-    //       return this.geometry.groups[i]
-    //     }
-    //   }
-    //   return null
-    // }
+    if (this.groups.length > 0) {
+      for (let i = 0; i < this.groups.length; i++) {
+        if (
+          range.offset === this.groups[i].start &&
+          range.count === this.groups[i].count
+        ) {
+          return this.geometry.groups[i]
+        }
+      }
+      return null
+    }
     return null
   }
 
@@ -283,115 +296,98 @@ export default class InstancedMeshBatch implements Batch {
     materialIndex?: number
   } {
     range
-    // if (this.geometry.groups.length > 0) {
-    //   for (let i = 0; i < this.geometry.groups.length; i++) {
-    //     if (
-    //       range.offset >= this.geometry.groups[i].start &&
-    //       range.offset + range.count <=
-    //         this.geometry.groups[i].start + this.geometry.groups[i].count
-    //     ) {
-    //       return this.geometry.groups[i]
-    //     }
-    //   }
-    //   return null
-    // }
+    if (this.groups.length > 0) {
+      for (let i = 0; i < this.groups.length; i++) {
+        if (
+          range.offset >= this.groups[i].start &&
+          range.offset + range.count <= this.groups[i].start + this.groups[i].count
+        ) {
+          return this.groups[i]
+        }
+      }
+      return null
+    }
     return null
   }
 
-  private sortGroups() {
-    // this.geometry.groups.sort((a, b) => {
-    //   const materialA: Material = (this.mesh.material as Array<Material>)[
-    //     a.materialIndex
-    //   ]
-    //   const materialB: Material = (this.mesh.material as Array<Material>)[
-    //     b.materialIndex
-    //   ]
-    //   const visibleOrder = +materialB.visible - +materialA.visible
-    //   const transparentOrder = +materialA.transparent - +materialB.transparent
-    //   if (visibleOrder !== 0) return visibleOrder
-    //   return transparentOrder
-    // })
-  }
-
   private flattenDrawGroups() {
-    // const materialOrder = []
-    // this.geometry.groups.reduce((previousValue, currentValue) => {
-    //   if (previousValue.indexOf(currentValue.materialIndex) === -1) {
-    //     previousValue.push(currentValue.materialIndex)
-    //   }
-    //   return previousValue
-    // }, materialOrder)
-    // const grouped = []
-    // for (let k = 0; k < materialOrder.length; k++) {
-    //   grouped.push(
-    //     this.geometry.groups.filter((val) => {
-    //       return val.materialIndex === materialOrder[k]
-    //     })
-    //   )
-    // }
-    // this.geometry.groups = []
-    // for (let matIndex = 0; matIndex < grouped.length; matIndex++) {
-    //   const matGroup = grouped[matIndex].sort((a, b) => {
-    //     return a.start - b.start
-    //   })
-    //   for (let k = 0; k < matGroup.length; ) {
-    //     let offset = matGroup[k].start
-    //     let count = matGroup[k].count
-    //     let runningCount = matGroup[k].count
-    //     let n = k + 1
-    //     for (; n < matGroup.length; n++) {
-    //       if (offset + count === matGroup[n].start) {
-    //         offset = matGroup[n].start
-    //         count = matGroup[n].count
-    //         runningCount += matGroup[n].count
-    //       } else {
-    //         const group = {
-    //           start: matGroup[k].start,
-    //           count: runningCount,
-    //           materialIndex: matGroup[k].materialIndex,
-    //           id: matGroup[k].id
-    //         }
-    //         this.geometry.groups.push(group)
-    //         break
-    //       }
-    //     }
-    //     if (n === matGroup.length) {
-    //       const group = {
-    //         start: matGroup[k].start,
-    //         count: runningCount,
-    //         materialIndex: matGroup[k].materialIndex,
-    //         id: matGroup[k].id
-    //       }
-    //       this.geometry.groups.push(group)
-    //     }
-    //     k = n
-    //   }
-    // }
-    // if (this.drawCalls > this.minDrawCalls + 2) {
-    //   this.needsShuffle = true
-    // } else {
-    //   this.geometry.groups.sort((a, b) => {
-    //     return a.start - b.start
-    //   })
-    //   const transparentOrHiddenGroup = this.geometry.groups.find(
-    //     (value) =>
-    //       this.materials[value.materialIndex].transparent === true ||
-    //       this.materials[value.materialIndex].visible === false
-    //   )
-    //   if (transparentOrHiddenGroup) {
-    //     for (
-    //       let k = this.geometry.groups.indexOf(transparentOrHiddenGroup);
-    //       k < this.geometry.groups.length;
-    //       k++
-    //     ) {
-    //       const material = this.materials[this.geometry.groups[k].materialIndex]
-    //       if (material.transparent !== true && material.visible !== false) {
-    //         this.needsShuffle = true
-    //         break
-    //       }
-    //     }
-    //   }
-    // }
+    const materialOrder = []
+    this.groups.reduce((previousValue, currentValue) => {
+      if (previousValue.indexOf(currentValue.materialIndex) === -1) {
+        previousValue.push(currentValue.materialIndex)
+      }
+      return previousValue
+    }, materialOrder)
+    const grouped = []
+    for (let k = 0; k < materialOrder.length; k++) {
+      grouped.push(
+        this.groups.filter((val) => {
+          return val.materialIndex === materialOrder[k]
+        })
+      )
+    }
+    this.groups.length = 0
+    for (let matIndex = 0; matIndex < grouped.length; matIndex++) {
+      const matGroup = grouped[matIndex].sort((a, b) => {
+        return a.start - b.start
+      })
+      for (let k = 0; k < matGroup.length; ) {
+        let offset = matGroup[k].start
+        let count = matGroup[k].count
+        let runningCount = matGroup[k].count
+        let n = k + 1
+        for (; n < matGroup.length; n++) {
+          if (offset + count === matGroup[n].start) {
+            offset = matGroup[n].start
+            count = matGroup[n].count
+            runningCount += matGroup[n].count
+          } else {
+            const group = {
+              start: matGroup[k].start,
+              count: runningCount,
+              materialIndex: matGroup[k].materialIndex
+            }
+            this.groups.push(group)
+            break
+          }
+        }
+        if (n === matGroup.length) {
+          const group = {
+            start: matGroup[k].start,
+            count: runningCount,
+            materialIndex: matGroup[k].materialIndex
+          }
+          this.groups.push(group)
+        }
+        k = n
+      }
+    }
+    console.warn(this.groups)
+    if (this.drawCalls > this.minDrawCalls + 2) {
+      this.needsShuffle = true
+    } else {
+      this.groups.sort((a, b) => {
+        return a.start - b.start
+      })
+      const transparentOrHiddenGroup = this.groups.find(
+        (value) =>
+          this.materials[value.materialIndex].transparent === true ||
+          this.materials[value.materialIndex].visible === false
+      )
+      if (transparentOrHiddenGroup) {
+        for (
+          let k = this.groups.indexOf(transparentOrHiddenGroup);
+          k < this.groups.length;
+          k++
+        ) {
+          const material = this.materials[this.groups[k].materialIndex]
+          if (material.transparent !== true && material.visible !== false) {
+            this.needsShuffle = true
+            break
+          }
+        }
+      }
+    }
   }
 
   public resetDrawRanges() {
@@ -458,6 +454,9 @@ export default class InstancedMeshBatch implements Batch {
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
     this.mesh.frustumCulled = false
+
+    this.groups.push({ start: 0, count: this.renderViews.length, materialIndex: 0 })
+    this.materials.push(this.batchMaterial)
   }
 
   public getRenderView(index: number): NodeRenderView {
@@ -473,6 +472,7 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public getMaterial(rv: NodeRenderView): Material {
+    rv
     // for (let k = 0; k < this.geometry.groups.length; k++) {
     //   try {
     //     if (
@@ -485,8 +485,7 @@ export default class InstancedMeshBatch implements Batch {
     //     Logger.error('Failed to get material')
     //   }
     // }
-    rv
-    return null
+    return this.batchMaterial
   }
 
   private makeInstancedMeshGeometry(

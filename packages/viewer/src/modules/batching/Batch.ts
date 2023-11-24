@@ -44,7 +44,6 @@ export interface BatchUpdateRange {
   count: number
   material?: Material
   materialOptions?: FilterMaterialOptions
-  id?: string
 }
 
 export const HideAllBatchUpdateRange = {

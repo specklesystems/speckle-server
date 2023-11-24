@@ -1,7 +1,6 @@
 import Logger from 'js-logger'
 import {
   BackSide,
-  Box3Helper,
   BufferGeometry,
   DoubleSide,
   InstancedMesh,
@@ -17,6 +16,7 @@ import {
 import { BatchObject } from '../batching/BatchObject'
 import Materials from '../materials/Materials'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
+import { DrawGroup } from '../batching/InstancedMeshBatch'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -54,8 +54,8 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
 
   private _batchObjects: BatchObject[]
 
-  private debugBatchBox = false
-  private boxHelper: Box3Helper
+  public groups: Array<DrawGroup> = []
+  public materials: Material[] = []
 
   public get TAS() {
     return this.tas
@@ -70,8 +70,9 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
   }
 
   public setBatchMaterial(material: Material) {
-    this.batchMaterial = material //this.getCachedMaterial(material)
+    this.batchMaterial = this.getCachedMaterial(material)
     this.material = this.batchMaterial
+    this.materials.push(this.batchMaterial)
   }
 
   public setBatchObjects(batchObjects: BatchObject[]) {
