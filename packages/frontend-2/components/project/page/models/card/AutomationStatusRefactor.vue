@@ -5,36 +5,34 @@
       class="h-6 w-6 bg-foundation rounded-full flex items-center justify-center"
       @click="showDialog = true"
     >
-      <!-- <Component
-        :is="statusIconAndColor.icon"
-        v-tippy="automationStatus.statusMessage"
-        :class="['h-6 w-6 outline-none', statusIconAndColor.iconColor]"
-      /> -->
       <AutomationDoughnutSummary :summary="summary" />
     </button>
-    <LayoutDialog
-      v-model:open="showDialog"
-      :title="`Automation Status for ${displayName}`"
-      max-width="lg"
-    >
+    <LayoutDialog v-model:open="showDialog" max-width="lg">
       <template #header>
-        <div class="flex items-center space-x-2 pt-3 max-w-full w-full">
-          <div class="h-10 w-10 mt-[6px]">
-            <AutomationDoughnutSummary :summary="summary" />
-          </div>
-          <div class="min-w-0">
-            <h4 :class="`text-xl font-bold ${summary.titleColor}`">
-              {{ summary.title }}
-            </h4>
-            <div class="text-xs text-foreground-2 truncate">
-              {{ summary.longSummary }}
+        <div class="flex flex-col">
+          <div class="flex items-center space-x-2 max-w-full w-full">
+            <div class="h-10 w-10 mt-[6px]">
+              <AutomationDoughnutSummary :summary="summary" />
+            </div>
+            <div class="min-w-0">
+              <h4 :class="`text-xl font-bold ${summary.titleColor}`">
+                {{ summary.title }}
+              </h4>
+              <div class="text-xs text-foreground-2 truncate">
+                {{ summary.longSummary }}
+              </div>
             </div>
           </div>
         </div>
       </template>
       <div class="">
         <div v-for="run in automationRuns" :key="run.id">
-          <ProjectPageModelsCardAutomationRun :run="(run as AutomationRun)" />
+          <ProjectPageModelsCardAutomationRun
+            :run="(run as AutomationRun)"
+            :project-id="projectId"
+            :model-id="modelId"
+            :version-id="versionId"
+          />
         </div>
       </div>
 
@@ -43,7 +41,12 @@
           <FormButton text size="xs" to="https://automate.speckle.dev" target="_blank">
             Learn more about Automate here!
           </FormButton>
-          <FormButton @click="showDialog = false">Close</FormButton>
+          <div class="space-x-1">
+            <FormButton color="secondary" @click="showDialog = false">Close</FormButton>
+            <FormButton :to="viewModelLink">
+              Open {{ versionId ? 'Version' : 'Model' }}
+            </FormButton>
+          </div>
         </div>
       </template>
     </LayoutDialog>
@@ -62,10 +65,11 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import dayjs from 'dayjs'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { automationDataPageRoute, modelRoute } from '~~/lib/common/helpers/route'
+import { modelRoute } from '~~/lib/common/helpers/route'
 import { SpeckleViewer } from '@speckle/shared'
 import { useServerInfo } from '~~/lib/core/composables/server'
 import { resolveStatusMetadata } from '~~/lib/automations/helpers/resolveStatusMetadata'
+import { useModelVersionCardAutomationsStatusUpdateTracking } from '~~/lib/automations/composables/automationsStatus'
 
 // TODO: Clean up unnecessary fields
 // Remember about stories
@@ -116,6 +120,10 @@ graphql(`
         results
         resultVersions {
           id
+          model {
+            id
+            name
+          }
         }
       }
     }
@@ -147,11 +155,24 @@ const props = defineProps<{
   modelId: string
 }>()
 
+useModelVersionCardAutomationsStatusUpdateTracking(props.projectId)
+
 const { serverInfo } = useServerInfo()
 
 const showDialog = ref(false)
 
 const automationStatus = computed(() => props.modelOrVersion.automationStatus)
+
+const versionId = computed(() => {
+  return !isModel(props.modelOrVersion) ? props.modelOrVersion.id : undefined
+})
+
+const viewModelLink = computed(() => {
+  return !versionId.value
+    ? modelRoute(props.projectId, props.modelId)
+    : modelRoute(props.projectId, `${props.modelId}@${versionId.value}`)
+})
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const statusIconAndColor = computed(() =>
   resolveStatusMetadata(automationStatus.value.status)
@@ -160,11 +181,6 @@ const statusIconAndColor = computed(() =>
 const automationRuns = computed(() => automationStatus.value.automationRuns)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const automateBaseUrl = computed(() => serverInfo.value?.automateUrl)
-const displayName = computed(() =>
-  isModel(props.modelOrVersion)
-    ? props.modelOrVersion.displayName
-    : `version #${props.modelOrVersion.id}`
-)
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const viewResultVersionsRoute = (versions: Array<{ id: string }>) => {
@@ -186,6 +202,7 @@ const allFunctionRuns = computed(() => {
   return allRuns
 })
 
+// TODO: move to somewhere central, it's copy pasted around currently
 const summary = computed(() => {
   const result = {
     failed: 0,

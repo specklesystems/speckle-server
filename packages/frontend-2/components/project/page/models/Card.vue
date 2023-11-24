@@ -8,7 +8,7 @@
     <div
       :class="['relative', defaultLinkDisabled ? 'cursor-pointer' : '']"
       @click="$emit('click', $event)"
-      @keypress="keyboardClick(() => $emit('click', $event))"
+      @keypress="keyboardClick((e) => emit('click', e))"
     >
       <div :class="`${height} flex items-center justify-center`">
         <ProjectPendingFileImportStatus
@@ -55,8 +55,8 @@
         <div class="grow" />
         <div class="flex items-center">
           <div
-            :class="`text-xs text-foreground-2 mr-1 truncate transition ${
-              hovered ? 'w-auto' : 'w-0'
+            :class="`text-xs w-full text-foreground-2 mr-1 truncate transition ${
+              hovered ? 'sm:w-auto' : 'sm:w-0'
             }`"
           >
             updated
@@ -71,7 +71,7 @@
             :icon-left="ArrowPathRoundedSquareIcon"
             :to="modelVersionsRoute(project.id, model.id)"
             :class="`transition ${
-              hovered ? 'inline-block opacity-100' : 'hidden opacity-0'
+              hovered ? 'inline-block opacity-100' : 'sm:hidden sm:opacity-0'
             }`"
             :disabled="versionCount === 0"
           >
@@ -92,8 +92,8 @@
         v-if="
           !isPendingModelFragment(model) && model.commentThreadCount.totalCount !== 0
         "
-        :class="`absolute top-0 right-0 p-2 flex items-center transition border-2 border-primary-muted h-8 bg-foundation shadow-md justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2 ${
-          hovered ? 'opacity-100' : 'opacity-0'
+        :class="`absolute opacity-100 top-0 right-0 p-2 flex items-center transition border-2 border-primary-muted h-8 bg-foundation shadow-md justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2 ${
+          hovered ? 'sm:opacity-100' : 'sm:opacity-0'
         }`"
       >
         <ChatBubbleLeftRightIcon class="w-4 h-4" />
@@ -131,7 +131,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
 import { Nullable } from '@speckle/shared'
-import { keyboardClick } from '~~/lib/common/helpers/accessibility'
+import { keyboardClick } from '@speckle/ui-components'
 
 graphql(`
   fragment ProjectPageModelsCardProject on Project {
@@ -140,8 +140,8 @@ graphql(`
   }
 `)
 
-defineEmits<{
-  (e: 'click', val: MouseEvent): void
+const emit = defineEmits<{
+  (e: 'click', event: MouseEvent | KeyboardEvent): void
 }>()
 
 const props = withDefaults(

@@ -38,6 +38,7 @@ import {
 import { AutomationNotFoundError } from '@/modules/automations/errors/automations'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
+import { Logger } from '@/logging/logging'
 
 type AutomationRunWithFunctionRunsRecord = AutomationRunRecord & {
   functionRuns: AutomationFunctionRunRecord[]
@@ -64,17 +65,22 @@ export const createModelAutomation = async (
 
 export async function upsertModelAutomationRunResult({
   userId,
-  input
+  input,
+  logger
 }: {
   userId: MaybeNullOrUndefined<string>
   input: AutomationRunStatusUpdateInput
+  logger: Logger
 }) {
+  logger.info({ input }, 'Received automation run result data')
   // validate input against schema
   const validatedInput = AutomationRunSchema.parse({
     ...input,
     createdAt: new Date(),
     updatedAt: new Date()
   })
+
+  logger.info({ validatedInput }, 'Validated automation run result data')
 
   // get the automation from the DB
   const automation = await getAutomation(input.automationId)
@@ -107,6 +113,7 @@ export async function upsertModelAutomationRunResult({
     validatedInput.automationId = maybeAutomationRun.automationId
     validatedInput.automationRevisionId = maybeAutomationRun.automationRevisionId
   }
+
   await upsertAutomationRunData({ ...validatedInput, automationName: 'pasta' })
 
   // upsert run function runs
@@ -119,7 +126,8 @@ export async function upsertModelAutomationRunResult({
     ),
     (v) => `${v.automationRunId}-${v.functionId}`
   )
-  await upsertAutomationFunctionRunData(runs)
+  logger.info({ runs }, 'Uniqued automation run result data')
+  await upsertAutomationFunctionRunData(runs, logger)
 
   // create new result version records
   const versionsRecords: AutomationFunctionRunsResultVersionRecord[] = flatMap(
@@ -138,6 +146,7 @@ export async function upsertModelAutomationRunResult({
       }))
     }
   )
+  logger.info({ versionsRecords }, 'Version records flat mapped')
   const validatedVersions = await getCommits(
     versionsRecords.map((r) => r.resultVersionId)
   )
@@ -165,6 +174,7 @@ export async function upsertModelAutomationRunResult({
     projectId: stream.id,
     versionId: version.id
   })
+  logger.info({ newStatus }, 'Emiting new status event')
   if (newStatus) {
     await publish(ProjectSubscriptions.ProjectAutomationStatusUpdated, {
       projectId: stream.id,

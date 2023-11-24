@@ -1,17 +1,12 @@
 <template>
-  <LayoutDialog
-    v-model:open="open"
-    max-width="sm"
-    title="Create new project"
-    :buttons="dialogButtons"
-  >
+  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
+    <template #header>Create new project</template>
     <form class="flex flex-col text-foreground" @submit="onSubmit">
       <div class="flex flex-col space-y-3 mb-6">
         <FormTextInput
           name="name"
           label="Project name"
           placeholder="Project name"
-          size="lg"
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
           show-required
           auto-focus

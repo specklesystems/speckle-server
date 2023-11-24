@@ -3,6 +3,8 @@
     <div v-show="!hasAddedOverlay">
       <p class="text-sm">
         Speckle allows you to load multiple models in the same viewer.
+      </p>
+      <p class="text-sm mt-2">
         <span v-show="!hasAddedOverlay">
           <FormButton
             size="sm"

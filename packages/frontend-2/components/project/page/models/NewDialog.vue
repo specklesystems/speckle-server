@@ -1,12 +1,18 @@
 <template>
-  <LayoutDialog v-model:open="openState" max-width="md" hide-closer>
+  <LayoutDialog
+    v-model:open="openState"
+    max-width="sm"
+    hide-closer
+    :buttons="dialogButtons"
+  >
+    <template #header>Create New Model</template>
     <form @submit="onSubmit">
       <div class="flex flex-col space-y-4">
-        <h1 class="h4 font-bold text-foreground">Create new model</h1>
         <FormTextInput
           v-model="newModelName"
           name="name"
           label="Model Name"
+          show-label
           placeholder="model/name/here"
           :custom-icon="CubeIcon"
           :rules="rules"
@@ -15,10 +21,6 @@
         <p class="text-foreground-2 label label--light">
           Use forward slashes in the model name to nest it below other models.
         </p>
-        <div class="grow flex justify-end">
-          <FormButton text @click="openState = false">Cancel</FormButton>
-          <FormButton submit :disabled="anyMutationsLoading">Create</FormButton>
-        </div>
       </div>
     </form>
   </LayoutDialog>
@@ -75,4 +77,22 @@ watch(
     }
   }
 )
+
+const dialogButtons = computed(() => [
+  {
+    text: 'Cancel',
+    props: { color: 'secondary', fullWidth: true, outline: true },
+    onClick: () => {
+      openState.value = false
+    }
+  },
+  {
+    text: 'Create',
+    props: { color: 'primary', fullWidth: true },
+    onClick: () => {
+      onSubmit()
+    },
+    disabled: anyMutationsLoading.value
+  }
+])
 </script>

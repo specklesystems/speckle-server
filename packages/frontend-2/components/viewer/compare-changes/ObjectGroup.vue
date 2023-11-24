@@ -15,7 +15,7 @@
 </template>
 <script setup lang="ts">
 import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
-import { keyboardClick } from '~~/lib/common/helpers/accessibility'
+import { keyboardClick } from '@speckle/ui-components'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const {

@@ -1,84 +1,96 @@
 <template>
-  <div class="space-y-4">
-    <div
+  <div>
+    <LayoutDialogSection
       v-if="canLeaveProject"
-      class="border-l-2 border-danger pl-2 rounded transition hover:bg-red-500/10"
+      border-b
+      title="Leave Project"
+      title-color="info"
     >
-      <Disclosure>
-        <DisclosureButton class="pr-3 text-danger h-10 w-full flex items-center">
-          <div class="inline-flex items-center space-x-4">
-            <ArrowRightOnRectangleIcon class="h-4 w-4" />
-            <span>Leave Project</span>
-          </div>
-        </DisclosureButton>
-        <DisclosurePanel class="flex flex-col space-y-4 pb-2">
-          <div class="flex flex-col space-y-2">
-            <div class="label label--light">
-              As long as you're not the only owner you can remove yourself from this
-              project's list of collaborators.
-              <b>
-                Removing yourself from the collaborators list is an irreversible action
-              </b>
-              and the only way you can get back on the list is if a project owner
-              invites you back.
-            </div>
-            <FormButton color="danger" size="sm" class="self-start" @click="onLeave">
-              Leave
-            </FormButton>
-          </div>
-        </DisclosurePanel>
-      </Disclosure>
-    </div>
-    <div
+      <template #icon>
+        <ArrowRightOnRectangleIcon class="h-full w-full" />
+      </template>
+      <div
+        class="flex flex-col sm:flex-row sm:items-center gap-4 py-3 px-4 bg-info-lighter rounded-md select-none mb-4 text-info-darker text-sm"
+      >
+        <div>
+          <ExclamationTriangleIcon class="mt-0.5 h-12 w-12 text-info" />
+        </div>
+        <div class="">
+          <p class="text-sm">
+            As long as you're not the only owner you can remove yourself from this
+            project's list of collaborators.
+          </p>
+          <p class="font-semibold text-info-darker py-2">
+            Removing yourself from the collaborators list is an irreversible action.
+          </p>
+          <p class="text-sm">
+            The only way you can get back on the list is if a project owner invites you
+            back.
+          </p>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-4">
+        <FormButton color="info" class="text-sm self-start" @click="onLeave">
+          Leave
+        </FormButton>
+      </div>
+    </LayoutDialogSection>
+
+    <LayoutDialogSection
       v-if="isOwner && !isServerGuest"
-      class="border-l-2 border-danger px-2 rounded transition hover:bg-red-500/10"
+      title="Delete Project"
+      title-color="danger"
     >
-      <Disclosure>
-        <DisclosureButton class="pr-3 text-danger h-10 w-full flex items-center">
-          <div class="inline-flex items-center space-x-4">
-            <TrashIcon class="h-4 w-4" />
-            <span>Delete Project</span>
-          </div>
-        </DisclosureButton>
-        <DisclosurePanel class="flex flex-col space-y-4">
-          <form class="flex flex-col space-y-2 pb-2" @submit="onDelete">
-            <div class="label label--light">
-              Deleting a project is an irreversible action! If you are sure you want to
-              proceed, please type in the project name
-              <span class="font-bold">{{ project.name }}</span>
-              in the input field and press "Delete".
-            </div>
-            <div class="flex space-x-2">
-              <FormTextInput
-                name="projectName"
-                label="Project name"
-                size="sm"
-                placeholder="Project name"
-                :rules="[stringMatchesProjectName]"
-                full-width
-                validate-on-mount
-                validate-on-value-update
-                hide-error-message
-              />
-            </div>
-            <FormButton
-              color="danger"
-              size="sm"
-              :disabled="!!Object.values(deleteErrors).length"
-              class="self-start"
-              submit
-            >
-              Delete
-            </FormButton>
-          </form>
-        </DisclosurePanel>
-      </Disclosure>
-    </div>
+      <template #icon>
+        <TrashIcon class="h-full w-full" />
+      </template>
+      <div
+        class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 bg-danger-lighter dark:bg-danger-darker rounded-md select-none mb-4"
+      >
+        <div>
+          <ExclamationTriangleIcon class="mt-0.5 h-12 w-12 text-danger" />
+        </div>
+        <div>
+          <p class="font-semibold text-danger-darker dark:text-danger-lighter">
+            Deleting a project is an irreversible action!
+          </p>
+          <p class="text-sm">
+            If you are sure you want to proceed, please type in the project name
+            <strong>{{ project.name }}</strong>
+            in the input field and press "Delete".
+          </p>
+        </div>
+      </div>
+      <form class="flex flex-col sm:flex-row gap-2 pb-2" @submit="onDelete">
+        <FormTextInput
+          name="projectName"
+          label="Project name"
+          placeholder="Project name"
+          :rules="[stringMatchesProjectName]"
+          full-width
+          validate-on-mount
+          validate-on-value-update
+          hide-error-message
+          class="text-sm"
+        />
+        <FormButton
+          submit
+          :disabled="!!Object.values(deleteErrors).length"
+          color="danger"
+        >
+          Delete
+        </FormButton>
+      </form>
+    </LayoutDialogSection>
   </div>
 </template>
 <script setup lang="ts">
-import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
-import { TrashIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
+import {
+  TrashIcon,
+  ArrowRightOnRectangleIcon,
+  ExclamationTriangleIcon
+} from '@heroicons/vue/24/outline'
+import { LayoutDialogSection } from '@speckle/ui-components'
 import { GenericValidateFunction, useForm } from 'vee-validate'
 import { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'

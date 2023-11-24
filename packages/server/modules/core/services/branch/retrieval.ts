@@ -18,6 +18,7 @@ import {
 import { last } from 'lodash'
 import { Merge } from 'type-fest'
 import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
+import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 
 export async function getStructuredStreamModels(streamId: string) {
   return getStructuredProjectModels(streamId)
@@ -27,9 +28,10 @@ export async function getPaginatedStreamBranches(
   streamId: string,
   params: StreamBranchesArgs
 ) {
-  if (params.limit && params.limit > 100)
+  const maxProjectModelsPerPage = getMaximumProjectModelsPerPage()
+  if (params.limit && params.limit > maxProjectModelsPerPage)
     throw new UserInputError(
-      'Cannot return more than 100 items, please use pagination.'
+      `Cannot return more than ${maxProjectModelsPerPage} items, please use pagination.`
     )
   const { items, cursor, totalCount } = await getBranchesByStreamId({
     streamId,

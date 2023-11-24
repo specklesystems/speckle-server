@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      class="absolute z-20 flex h-screen flex-col space-y-2 bg-green-300/0 px-2 pt-[4.2rem]"
+      class="absolute z-20 flex h-[100dvh] flex-col space-y-2 bg-green-300/0 px-2 pt-[4.2rem]"
     >
       <ViewerControlsButtonToggle
         v-tippy="modelsShortcut"
@@ -33,6 +33,19 @@
         @click="toggleActiveControl('discussions')"
       >
         <ChatBubbleLeftRightIcon class="h-5 w-5" />
+      </ViewerControlsButtonToggle>
+
+      <!-- Automateeeeeeee FTW -->
+      <ViewerControlsButtonToggle
+        v-if="allAutomationRuns.length !== 0"
+        v-tippy="summary.longSummary"
+        :active="activeControl === 'automate'"
+        class="p-2"
+        @click="toggleActiveControl('automate')"
+      >
+        <!-- <PlayCircleIcon class="h-5 w-5" /> -->
+        <!-- {{allAutomationRuns.length}} -->
+        <AutomationDoughnutSummary :summary="summary" />
       </ViewerControlsButtonToggle>
 
       <!-- TODO: direct add comment -->
@@ -88,7 +101,7 @@
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 mx-14 mt-[4rem] mb-4 max-h-[calc(100vh-5.5rem)] w-64 sm:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
+      :class="`simple-scrollbar absolute z-10 mx-14 mt-[4rem] mb-4 max-h-[calc(100dvh-5.5rem)] w-64 sm:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
@@ -121,6 +134,13 @@
         v-if="resourceItems.length !== 0 && activeControl === 'filters'"
         class="pointer-events-auto"
       />
+      <div v-show="resourceItems.length !== 0 && activeControl === 'automate'">
+        <ViewerAutomatePanel
+          :automation-runs="allAutomationRuns"
+          :summary="summary"
+          @close="activeControl = 'none'"
+        />
+      </div>
 
       <!-- Empty state -->
       <div v-if="resourceItems.length === 0">
@@ -155,15 +175,11 @@ import {
   useCameraUtilities,
   useSectionBoxUtilities
 } from '~~/lib/viewer/composables/ui'
-import { useBreakpoints } from '@vueuse/core'
-import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
-
 import {
   onKeyboardShortcut,
   ModifierKeys,
   getKeyboardShortcutTitle
 } from '@speckle/ui-components'
-
 import {
   useInjectedViewerLoadedResources,
   useInjectedViewerInterfaceState
@@ -175,13 +191,84 @@ const {
   toggleProjection,
   camera: { isOrthoProjection }
 } = useCameraUtilities()
-const { resourceItems } = useInjectedViewerLoadedResources()
+
+import { AutomationRunStatus, AutomationRun } from '~~/lib/common/generated/gql/graphql'
+import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
+
+const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 
-const breakpoints = useBreakpoints(TailwindBreakpoints)
+const allAutomationRuns = computed(() => {
+  const allAutomationStatuses = modelsAndVersionIds.value
+    .map((model) => model.model.loadedVersion.items[0].automationStatus)
+    .flat()
+    .filter((run) => !!run)
+  return allAutomationStatuses
+    .map((status) => status?.automationRuns)
+    .flat() as AutomationRun[]
+})
 
-type ActiveControl = 'none' | 'models' | 'explorer' | 'filters' | 'discussions'
+const allFunctionRuns = computed(() => {
+  return allAutomationRuns.value.map((run) => run.functionRuns).flat()
+})
+
+const summary = computed(() => {
+  const result = {
+    failed: 0,
+    passed: 0,
+    inProgress: 0,
+    total: allFunctionRuns.value.length,
+    title: 'All runs passed.',
+    titleColor: 'text-success',
+    longSummary: ''
+  }
+
+  for (const run of allFunctionRuns.value) {
+    switch (run?.status) {
+      case AutomationRunStatus.Succeeded:
+        result.passed++
+        break
+      case AutomationRunStatus.Failed:
+        result.title = 'Some runs failed.'
+        result.titleColor = 'text-danger'
+        result.failed++
+        break
+      default:
+        if (result.failed === 0) {
+          result.title = 'Some runs are still in progress.'
+          result.titleColor = 'text-warning'
+        }
+        result.inProgress++
+        break
+    }
+  }
+
+  // format:
+  // 2 failed, 1 passed runs
+  // 1 passed, 2 in progress, 1 failed runs
+  // 1 passed run
+  const longSummarySegments = []
+  if (result.passed > 0) longSummarySegments.push(`${result.passed} passed`)
+  if (result.inProgress > 0)
+    longSummarySegments.push(`${result.inProgress} in progress`)
+  if (result.failed > 0) longSummarySegments.push(`${result.failed} failed`)
+
+  result.longSummary = (
+    longSummarySegments.join(', ') + ` run${result.total > 1 ? 's' : ''}.`
+  ).replace(/,(?=[^,]+$)/, ', and')
+
+  return result
+})
+
+type ActiveControl =
+  | 'none'
+  | 'models'
+  | 'explorer'
+  | 'filters'
+  | 'discussions'
+  | 'automate'
+
 const openAddModel = ref(false)
 
 const activeControl = ref<ActiveControl>('models')
@@ -210,7 +297,7 @@ const sectionBoxShortcut = ref(
   `Section Box (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'b'])})`
 )
 
-const isSmallerOrEqualSM = computed(() => breakpoints.smallerOrEqual('sm').value)
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const toggleActiveControl = (control: ActiveControl) =>
   activeControl.value === control
@@ -274,7 +361,11 @@ const scrollControlsToBottom = () => {
   //   scrollToBottom(scrollableControlsContainer.value)
 }
 
-watch(isSmallerOrEqualSM, (newVal) => {
+onMounted(() => {
+  activeControl.value = isSmallerOrEqualSm.value ? 'none' : 'models'
+})
+
+watch(isSmallerOrEqualSm, (newVal) => {
   activeControl.value = newVal ? 'none' : 'models'
 })
 </script>

@@ -4,8 +4,8 @@
       <Component :is="icon" class="h-4 w-4" />
       <span>{{ title }}</span>
     </div>
-    <div class="flex justify-between items-center gap-8">
-      <span class="text-2xl font-bold">{{ value }}</span>
+    <div class="flex justify-between items-center gap-4 sm:gap-8">
+      <span class="text-xl sm:text-2xl font-bold">{{ value }}</span>
       <template v-if="cta?.type === 'button'">
         <FormButton @click="cta?.action">
           {{ cta.label }}
@@ -22,7 +22,9 @@
         </FormButton>
       </template>
       <template v-else-if="cta?.type === 'text'">
-        <div class="flex items-center gap-1 text-sm opacity-50">
+        <div
+          class="flex items-center gap-1 text-xs text-center sm:text-sm opacity-50 shrink-0"
+        >
           <CheckCircleIcon class="h-4 w-4" />
           {{ cta.label }}
         </div>

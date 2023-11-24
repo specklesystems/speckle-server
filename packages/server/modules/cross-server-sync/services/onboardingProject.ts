@@ -43,7 +43,7 @@ export async function ensureOnboardingProject() {
     getFirstAdmin()
   ])
   if (existingStream) {
-    logger.debug('Onboarding stream already exists, skipping...')
+    logger.info('Onboarding stream already exists, skipping...')
     return existingStream
   }
   if (!admin) {
@@ -51,7 +51,7 @@ export async function ensureOnboardingProject() {
     return undefined
   }
 
-  logger.debug('Onboarding stream not found, pulling from target server...')
+  logger.info('Onboarding stream not found, pulling from target server...')
   const res = await downloadProject(
     {
       projectUrl: metadata.url,
@@ -61,7 +61,7 @@ export async function ensureOnboardingProject() {
     { logger }
   )
 
-  logger.debug('Marking stream as onboarding base...')
+  logger.info('Marking stream as onboarding base...')
   await markOnboardingBaseStream(res.projectId, metadata.version)
 
   logger.info('Onboarding base stream created successfully!')

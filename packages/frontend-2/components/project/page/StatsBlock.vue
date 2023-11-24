@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-foundation rounded-lg py-4 px-6">
+  <div class="bg-foundation rounded-lg p-4 sm:px-6">
     <div class="flex flex-col">
       <div class="text-foreground-2 mb-2">
         <slot name="top" />
