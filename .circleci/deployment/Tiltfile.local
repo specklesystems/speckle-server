@@ -2,4 +2,10 @@
 # The referenced resources can then be deployed by the Helm Chart
 
 def speckle_image(package):
-    fail('Not implemented yet')
+    package_dir = 'packages/{}'.format(package)
+    if package == 'test-deployment' or package == 'monitor-deployment':
+        package_dir = 'utils/{}'.format(package)
+    docker_build('speckle/speckle-{}'.format(package),
+                  context='../..',
+                  dockerfile='../../{}/Dockerfile'.format(package_dir),
+                  platform='linux/amd64')
