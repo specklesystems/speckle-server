@@ -65,6 +65,14 @@ workflows:
             - deployment-testing-approval
             - test-frontend-2
             - test-server
+            - docker-build-server
+            - docker-build-frontend
+            - docker-build-frontend-2
+            - docker-build-previews
+            - docker-build-webhooks
+            - docker-build-file-imports
+            - docker-build-test-container
+            - docker-build-monitor-container
 
       - deployment-test-helm-chart:
           filters: *filters-deployment-testing
@@ -74,6 +82,14 @@ workflows:
             - deployment-testing-approval
             - test-frontend-2
             - test-server
+            - docker-build-server
+            - docker-build-frontend
+            - docker-build-frontend-2
+            - docker-build-previews
+            - docker-build-webhooks
+            - docker-build-file-imports
+            - docker-build-test-container
+            - docker-build-monitor-container
 
       - get-version:
           filters: *filters-allow-all
@@ -732,6 +748,7 @@ jobs:
           key: nix-{{ checksum "./.circleci/deployment/helm-chart-shell.nix" }}
           paths:
             - /nix
+      - run: cat workspace/env-vars >> $BASH_ENV
       - run: echo "export KUBECONFIG=$(pwd)/.kube/config" >> "${BASH_ENV}"
       - run: echo "${KUBECONFIG}"
       - run:

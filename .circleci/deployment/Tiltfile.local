@@ -1,0 +1,5 @@
+# Build each Dockerfile and reference resource for use in the primary Tiltfile
+# The referenced resources can then be deployed by the Helm Chart
+
+def speckle_image(package):
+    fail('Not implemented yet')

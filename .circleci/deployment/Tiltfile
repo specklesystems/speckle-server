@@ -5,9 +5,28 @@ allow_k8s_contexts(['kind-speckle-server'])
 if k8s_context() != 'kind-speckle-server':
   fail('Failing early as tilt should only ever connect to kind-speckle-server.')
 
+
 # Install extensions
 load('ext://helm_resource', 'helm_resource', 'helm_repo')
 load('ext://k8s_yaml_glob', 'k8s_yaml_glob')
+symbols = None
+IS_CI = os.getenv('CI', "false") == "true"
+if IS_CI:
+  symbols = load_dynamic('./Tiltfile.ci')
+else:
+  symbols = load_dynamic('./Tiltfile.local')
+
+# Prepare the Speckle images
+# (loads the images from tgz file if CI, otherwise builds them or pulls them from remote as a fallback on non-amd64 machines)
+speckle_image = symbols['speckle_image']
+speckle_image('server')
+speckle_image('frontend')
+speckle_image('frontend-2')
+speckle_image('preview-service')
+speckle_image('webhook-service')
+speckle_image('fileimport-service')
+speckle_image('test-deployment')
+speckle_image('monitor-deployment')
 
 # Create namespaces
 k8s_yaml_glob('./manifests/*.namespace.yaml')
@@ -93,6 +112,22 @@ helm_resource('speckle-server',
               chart='./../../utils/helm/speckle-server',
               flags=['--values=./values/speckle-server.values.yaml',
                       '--kube-context=kind-speckle-server'],
+              image_deps=['speckle/speckle-server',
+                          'speckle/speckle-frontend',
+                          'speckle/speckle-frontend-2',
+                          'speckle/speckle-preview-service',
+                          'speckle/speckle-webhook-service',
+                          'speckle/speckle-fileimport-service',
+                          'speckle/speckle-test-deployment',
+                          'speckle/speckle-monitor-deployment'],
+              image_keys=['server.image',
+                          'frontend.image',
+                          'frontend_2.image',
+                          'preview_service.image',
+                          'webhook_service.image',
+                          'fileimport_service.image',
+                          'test.image',
+                          'monitor.image'],
               resource_deps=['postgresql', 'minio', 'redis', 'ingress-nginx'],
               labels=['speckle-server'])
 
