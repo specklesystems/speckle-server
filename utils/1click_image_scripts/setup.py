@@ -146,6 +146,7 @@ def main():
         yml_doc = yaml.load(f)
     env = yml_doc["services"]["speckle-server"]["environment"]
     env["CANONICAL_URL"] = DoubleQuotedScalarString(canonical_url)
+    env["FRONTEND_ORIGIN"] = DoubleQuotedScalarString(canonical_url)
     env["SESSION_SECRET"] = DoubleQuotedScalarString(secrets.token_hex(32))
     if email:
         env["EMAIL"] = DoubleQuotedScalarString("true")

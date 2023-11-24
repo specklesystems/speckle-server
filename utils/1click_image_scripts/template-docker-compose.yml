@@ -93,6 +93,9 @@ services:
 
       FILE_SIZE_LIMIT_MB: 100
 
+      USE_FRONTEND_2: true
+      FRONTEND_ORIGIN: 'TODO: change'
+
   speckle-preview-service:
     image: speckle/speckle-preview-service:2
     restart: always
