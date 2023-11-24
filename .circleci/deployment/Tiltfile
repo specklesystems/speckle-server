@@ -97,5 +97,5 @@ helm_resource('speckle-server',
               labels=['speckle-server'])
 
 local_resource('speckle-server-helm-chart-test',
-              cmd='helm test speckle-server --namespace=speckle-server --kube-context=kind-speckle-server',
+              cmd='helm test speckle-server --logs --namespace=speckle-server --kube-context=kind-speckle-server',
                 resource_deps=['speckle-server'])
