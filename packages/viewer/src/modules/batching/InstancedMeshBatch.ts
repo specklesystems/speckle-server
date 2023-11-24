@@ -59,14 +59,12 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public get drawCalls(): number {
-    return this.geometry.groups.length
+    return this.groups.length
   }
 
   public get minDrawCalls(): number {
-    // return [
-    //   ...Array.from(new Set(this.geometry.groups.map((value) => value.materialIndex)))
-    // ].length
-    return 1
+    return [...Array.from(new Set(this.groups.map((value) => value.materialIndex)))]
+      .length
   }
 
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
@@ -184,6 +182,7 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
+    console.warn('Ranges -> ', ranges)
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
         value.material = this.mesh.getCachedMaterial(value.material)
@@ -264,7 +263,7 @@ export default class InstancedMeshBatch implements Batch {
     }
     let count = 0
     this.groups.forEach((value) => (count += value.count))
-    if (count !== this.renderViews.length) {
+    if (count !== this.renderViews.length * 16) {
       Logger.error(`Draw groups invalid on ${this.id}`)
     }
     // this.setBatchBuffers(...ranges)
@@ -282,7 +281,7 @@ export default class InstancedMeshBatch implements Batch {
           range.offset === this.groups[i].start &&
           range.count === this.groups[i].count
         ) {
-          return this.geometry.groups[i]
+          return this.groups[i]
         }
       }
       return null
@@ -363,6 +362,7 @@ export default class InstancedMeshBatch implements Batch {
       }
     }
     console.warn(this.groups)
+    /** We shuffle only when above a certain fragmentation threshold. We don't want to be shuffling every single time */
     if (this.drawCalls > this.minDrawCalls + 2) {
       this.needsShuffle = true
     } else {
@@ -374,6 +374,7 @@ export default class InstancedMeshBatch implements Batch {
           this.materials[value.materialIndex].transparent === true ||
           this.materials[value.materialIndex].visible === false
       )
+      /** If we find a transparent or hidden group between opaque groups we do a shuffle. The order opauque -> transparent -> hidden */
       if (transparentOrHiddenGroup) {
         for (
           let k = this.groups.indexOf(transparentOrHiddenGroup);
@@ -399,10 +400,15 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public buildBatch() {
+    const INSTANCE_BUFFER_STRIDE = 16
     const batchObjects = []
     let instanceBVH = null
     for (let k = 0; k < this.renderViews.length; k++) {
-      this.renderViews[k].setBatchData(this.id, k, 1)
+      this.renderViews[k].setBatchData(
+        this.id,
+        k * INSTANCE_BUFFER_STRIDE,
+        INSTANCE_BUFFER_STRIDE
+      )
       const batchObject = new InstancedBatchObject(this.renderViews[k], k)
       if (!instanceBVH) {
         const transform = new Matrix4().makeTranslation(
@@ -455,7 +461,11 @@ export default class InstancedMeshBatch implements Batch {
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
     this.mesh.frustumCulled = false
 
-    this.groups.push({ start: 0, count: this.renderViews.length, materialIndex: 0 })
+    this.groups.push({
+      start: 0,
+      count: this.renderViews.length * INSTANCE_BUFFER_STRIDE,
+      materialIndex: 0
+    })
     this.materials.push(this.batchMaterial)
   }
 
