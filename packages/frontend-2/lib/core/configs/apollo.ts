@@ -7,9 +7,10 @@ import type { ApolloConfigResolver } from '~~/lib/core/nuxt-modules/apollo/modul
 import { createUploadLink } from 'apollo-upload-client'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { getMainDefinition } from '@apollo/client/utilities'
-import { OperationDefinitionNode, Kind } from 'graphql'
-import { CookieRef, NuxtApp } from '#app'
-import { Optional } from '@speckle/shared'
+import { Kind } from 'graphql'
+import type { OperationDefinitionNode } from 'graphql'
+import type { CookieRef, NuxtApp } from '#app'
+import type { Optional } from '@speckle/shared'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import {
   buildAbstractCollectionMergeFunction,

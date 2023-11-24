@@ -34,16 +34,12 @@
 </template>
 <script setup lang="ts">
 import { PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import {
-  CommentBubbleModel,
-  useIsTypingUpdateEmitter
-} from '~~/lib/viewer/composables/commentBubbles'
-import {
-  CommentEditorValue,
-  useSubmitReply
-} from '~~/lib/viewer/composables/commentManagement'
+import { useIsTypingUpdateEmitter } from '~~/lib/viewer/composables/commentBubbles'
+import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
+import { useSubmitReply } from '~~/lib/viewer/composables/commentManagement'
+import type { CommentEditorValue } from '~~/lib/viewer/composables/commentManagement'
 import {
   convertCommentEditorValueToInput,
   isValidCommentContentInput

@@ -36,9 +36,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { JSONContent } from '@tiptap/core'
-import { Nullable, Optional } from '@speckle/shared'
-import { CommentEditorValue } from '~~/lib/viewer/composables/commentManagement'
+import type { JSONContent } from '@tiptap/core'
+import type { Nullable, Optional } from '@speckle/shared'
+import type { CommentEditorValue } from '~~/lib/viewer/composables/commentManagement'
 import { useServerFileUploadLimit } from '~~/lib/common/composables/serverInfo'
 import { UniqueFileTypeSpecifier } from '~~/lib/core/helpers/file'
 import { useAttachments } from '~~/lib/core/composables/fileUpload'

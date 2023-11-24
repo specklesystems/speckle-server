@@ -1,13 +1,11 @@
-import {
-  apolloMockRequestWithDefaults,
-  MockedApolloFetchResult
-} from '~~/lib/fake-nuxt-env/utils/betterMockLink'
-import {
+import { apolloMockRequestWithDefaults } from '~~/lib/fake-nuxt-env/utils/betterMockLink'
+import type { MockedApolloFetchResult } from '~~/lib/fake-nuxt-env/utils/betterMockLink'
+import type {
   ProjectsDashboardQueryQuery,
   ProjectsDashboardQueryQueryVariables
 } from '~~/lib/common/generated/gql/graphql'
 import { isNumber, times } from 'lodash-es'
-import { Get } from 'type-fest'
+import type { Get } from 'type-fest'
 import { Roles } from '@speckle/shared'
 import { fakeUsers } from '~~/components/form/select/Users.stories'
 import { mockProjectLatestModelsQuery } from '~~/lib/projects/mocks/projectPage'

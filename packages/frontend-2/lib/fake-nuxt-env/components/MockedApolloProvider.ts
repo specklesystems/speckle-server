@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, vue/no-setup-props-destructure */
-import { ApolloClient, DefaultOptions } from '@apollo/client/core'
+import { ApolloClient } from '@apollo/client/core'
+import type { DefaultOptions } from '@apollo/client/core'
 import { InMemoryCache } from '@apollo/client/cache'
 import type { Resolvers } from '@apollo/client/core'
 import type { ApolloCache } from '@apollo/client/cache'
 import { DefaultApolloClient } from '@vue/apollo-composable'
-import { defineComponent, h, provide, PropType } from 'vue'
-import { Optional } from '@speckle/shared'
-import {
-  BetterMockLink,
-  MockedApolloRequest
-} from '~~/lib/fake-nuxt-env/utils/betterMockLink'
+import { defineComponent, h, provide } from 'vue'
+import type { PropType } from 'vue'
+import type { Optional } from '@speckle/shared'
+import { BetterMockLink } from '~~/lib/fake-nuxt-env/utils/betterMockLink'
+import type { MockedApolloRequest } from '~~/lib/fake-nuxt-env/utils/betterMockLink'
 
 /**
  * Vue implementation of the Apollo Mocked Provider, allows us to completely mock out

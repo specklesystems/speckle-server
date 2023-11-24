@@ -1,8 +1,6 @@
-import {
-  apolloMockRequestWithDefaults,
-  MockedApolloFetchResult
-} from '~~/lib/fake-nuxt-env/utils/betterMockLink'
-import {
+import { apolloMockRequestWithDefaults } from '~~/lib/fake-nuxt-env/utils/betterMockLink'
+import type { MockedApolloFetchResult } from '~~/lib/fake-nuxt-env/utils/betterMockLink'
+import type {
   AuthServerInfoQuery,
   AuthServerInfoQueryVariables
 } from '~~/lib/common/generated/gql/graphql'

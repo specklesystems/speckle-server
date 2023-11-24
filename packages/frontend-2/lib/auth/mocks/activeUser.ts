@@ -1,13 +1,14 @@
-import { Optional, Roles } from '@speckle/shared'
-import { Get } from 'type-fest'
+import { Roles } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
+import type { Get } from 'type-fest'
 import { fakeUsers } from '~~/components/form/select/Users.stories'
-import {
+import type {
   ActiveUserMainMetadataQuery,
   ActiveUserMainMetadataQueryVariables,
   ProfileEditDialogQuery,
   ProfileEditDialogQueryVariables
 } from '~~/lib/common/generated/gql/graphql'
-import { ApolloMockData } from '~~/lib/common/helpers/storybook'
+import type { ApolloMockData } from '~~/lib/common/helpers/storybook'
 import { apolloMockRequestWithDefaults } from '~~/lib/fake-nuxt-env/utils/betterMockLink'
 
 type CombinedUserType = ApolloMockData<

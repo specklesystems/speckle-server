@@ -20,8 +20,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { SuggestionKeyDownProps } from '@tiptap/suggestion'
-import { MentionData, SuggestionOptionsItem } from '~~/lib/core/tiptap/mentionExtension'
+import type { SuggestionKeyDownProps } from '@tiptap/suggestion'
+import type {
+  MentionData,
+  SuggestionOptionsItem
+} from '~~/lib/core/tiptap/mentionExtension'
 
 const props = defineProps<{
   query?: string

@@ -1,5 +1,5 @@
 import { has } from 'lodash-es'
-import {
+import type {
   ProjectPageLatestItemsModelItemFragment,
   PendingFileUploadFragment,
   ProjectModelPageVersionsCardVersionFragment

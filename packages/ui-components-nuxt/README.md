@@ -18,7 +18,8 @@ export default {
       /^@heroicons\/vue/,
       '@vueuse/core',
       '@vueuse/shared',
-      '@speckle/ui-components'
+      '@speckle/ui-components',
+      'v3-infinite-loading'
     ]
   }
 }

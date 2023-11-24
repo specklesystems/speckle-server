@@ -1,4 +1,4 @@
-import { Nullable } from './utilityTypes'
+import type { Nullable } from './utilityTypes'
 
 export enum OperatingSystem {
   Windows = 'win',

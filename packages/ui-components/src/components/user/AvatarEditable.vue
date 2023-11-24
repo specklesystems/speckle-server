@@ -24,13 +24,14 @@
   </div>
 </template>
 <script setup lang="ts">
-import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { computed, defineAsyncComponent } from 'vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import UserAvatar from '~~/src/components/user/Avatar.vue'
-import { AvatarUser, UserAvatarSize } from '~~/src/composables/user/avatar'
+import type { AvatarUser, UserAvatarSize } from '~~/src/composables/user/avatar'
 import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
-import { RuleExpression, useField } from 'vee-validate'
+import { useField } from 'vee-validate'
+import type { RuleExpression } from 'vee-validate'
 
 type ModelType = MaybeNullOrUndefined<string>
 

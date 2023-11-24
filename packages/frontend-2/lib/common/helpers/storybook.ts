@@ -2,10 +2,10 @@
 import { isArray, merge, mergeWith } from 'lodash-es'
 import type { Parameters, StoryObj } from '@storybook/vue3'
 import type { Get } from 'type-fest'
-import { MockedApolloProviderOptions } from '~~/lib/fake-nuxt-env/components/MockedApolloProvider'
-import { MockedRouteParameters } from '~~/lib/fake-nuxt-env/utils/mockedRouter'
-import { NonUndefined } from '~~/lib/common/helpers/type'
-import { Component } from 'vue'
+import type { MockedApolloProviderOptions } from '~~/lib/fake-nuxt-env/components/MockedApolloProvider'
+import type { MockedRouteParameters } from '~~/lib/fake-nuxt-env/utils/mockedRouter'
+import type { NonUndefined } from '~~/lib/common/helpers/type'
+import type { Component } from 'vue'
 import DefaultLayout from '~~/layouts/default.vue'
 import {
   mockActiveUserQuery,

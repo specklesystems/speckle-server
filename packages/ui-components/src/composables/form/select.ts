@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import { isArray } from 'lodash'
-import { Ref, ToRefs, computed, ref } from 'vue'
-import { Nullable } from '@speckle/shared'
+import { computed, ref } from 'vue'
+import type { Ref, ToRefs } from 'vue'
+import type { Nullable } from '@speckle/shared'
 import { useWrappingContainerHiddenCount } from '~~/src/composables/layout/resize'
 
 type GenericSelectValueType<T> = T | T[] | undefined

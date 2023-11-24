@@ -33,7 +33,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Roles, StreamRoles, ServerRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
+import type { StreamRoles, ServerRoles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 defineEmits<{

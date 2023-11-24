@@ -1,5 +1,5 @@
 import { FaceSmileIcon } from '@heroicons/vue/24/solid'
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import CommonAlert from '~~/src/components/common/Alert.vue'
 
 export default {

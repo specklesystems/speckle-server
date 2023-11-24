@@ -14,7 +14,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { NuxtError } from '#app'
+import type { NuxtError } from '#app'
 import { capitalize } from 'lodash-es'
 import { homeRoute } from './lib/common/helpers/route'
 

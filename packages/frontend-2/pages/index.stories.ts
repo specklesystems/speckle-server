@@ -1,4 +1,4 @@
-import { Meta } from '@storybook/vue3'
+import type { Meta } from '@storybook/vue3'
 import Homepage from '~~/pages/index.vue'
 import { mockProjectsDashboardPageQuery } from '~~/lib/projects/mocks/projectsPage'
 import { buildPageStory } from '~~/lib/common/helpers/storybook'

@@ -1,15 +1,18 @@
-import { MaybeRef } from '@vueuse/core'
-import { Optional } from '@speckle/shared'
+import type { MaybeRef } from '@vueuse/core'
+import type { Optional } from '@speckle/shared'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import {
-  BlobUploadPrincipal,
   deleteBlob,
   downloadBlobWithUrl,
   getBlobUrl,
   isSuccessfullyUploaded,
   uploadFiles
 } from '~~/lib/core/api/blobStorage'
-import { UploadableFileItem, UploadFileItem } from '~~/lib/form/composables/fileUpload'
+import type { BlobUploadPrincipal } from '~~/lib/core/api/blobStorage'
+import type {
+  UploadableFileItem,
+  UploadFileItem
+} from '~~/lib/form/composables/fileUpload'
 import { differenceBy, isUndefined } from 'lodash-es'
 
 export function useFileUpload() {

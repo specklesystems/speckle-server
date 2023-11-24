@@ -3,9 +3,11 @@ import dotenv from 'dotenv'
 import Unimport from 'unimport/unplugin'
 import { flatten, get } from 'lodash-es'
 import type { StorybookConfig } from '@storybook/vue3-vite'
-import { mergeConfig, InlineConfig } from 'vite'
+import { mergeConfig } from 'vite'
+import type { InlineConfig } from 'vite'
 import jiti from 'jiti'
-import vuePlugin, { Options as VuePluginOptions } from '@vitejs/plugin-vue'
+import vuePlugin from '@vitejs/plugin-vue'
+import type { Options as VuePluginOptions } from '@vitejs/plugin-vue'
 
 // used in nuxt.config.ts
 process.env.IS_STORYBOOK_BUILD = 'true'

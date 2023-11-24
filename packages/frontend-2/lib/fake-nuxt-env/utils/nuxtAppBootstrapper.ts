@@ -1,8 +1,10 @@
 /* eslint-disable vue/one-component-per-file */
 import { RouterLinkMock } from '~~/lib/fake-nuxt-env/components/RouterLinkMock'
-import { createNuxtApp, callWithNuxt, useNuxtApp, defineNuxtLink, NuxtApp } from '#app'
-import { App, defineComponent } from 'vue'
-import { Optional } from '@speckle/shared'
+import { createNuxtApp, callWithNuxt, useNuxtApp, defineNuxtLink } from '#app'
+import type { NuxtApp } from '#app'
+import { defineComponent, h } from 'vue'
+import type { App } from 'vue'
+import type { Optional } from '@speckle/shared'
 import { noop } from 'lodash-es'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'

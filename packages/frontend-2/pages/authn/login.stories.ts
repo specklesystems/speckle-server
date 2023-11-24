@@ -1,4 +1,4 @@
-import { Meta } from '@storybook/vue3'
+import type { Meta } from '@storybook/vue3'
 import LoginPage from '~~/pages/authn/login.vue'
 import LoginOrRegisterLayout from '~~/layouts/loginOrRegister.vue'
 import { mockLoginServerInfoQuery } from '~~/lib/auth/mocks/serverInfo'

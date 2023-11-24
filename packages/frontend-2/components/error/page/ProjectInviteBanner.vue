@@ -9,7 +9,7 @@
   </NuxtErrorBoundary>
 </template>
 <script setup lang="ts">
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { useNavigateToProject } from '~~/lib/common/helpers/route'
 import { projectInviteQuery } from '~~/lib/projects/graphql/queries'

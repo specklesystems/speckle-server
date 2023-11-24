@@ -26,9 +26,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Nullable } from '@speckle/shared'
-import { ProjectPageModelsActionsFragment } from '~~/lib/common/generated/gql/graphql'
-import { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import type { Nullable } from '@speckle/shared'
+import type { ProjectPageModelsActionsFragment } from '~~/lib/common/generated/gql/graphql'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
 import { graphql } from '~~/lib/common/generated/gql'

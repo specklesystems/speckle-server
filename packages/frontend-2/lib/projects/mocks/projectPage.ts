@@ -1,6 +1,7 @@
-import { FetchResult } from '@apollo/client/core'
-import { Optional, Roles } from '@speckle/shared'
-import {
+import type { FetchResult } from '@apollo/client/core'
+import { Roles } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
+import type {
   ProjectLatestCommentThreadsQuery,
   ProjectLatestCommentThreadsQueryVariables,
   ProjectLatestModelsQuery,
@@ -10,10 +11,10 @@ import {
   ProjectModelsTreeTopLevelQuery,
   ProjectModelsTreeTopLevelQueryVariables,
   ProjectPageQueryQuery,
-  ProjectPageQueryQueryVariables,
-  ProjectVisibility
+  ProjectPageQueryQueryVariables
 } from '~~/lib/common/generated/gql/graphql'
-import { ApolloMockData } from '~~/lib/common/helpers/storybook'
+import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
+import type { ApolloMockData } from '~~/lib/common/helpers/storybook'
 import { apolloMockRequestWithDefaults } from '~~/lib/fake-nuxt-env/utils/betterMockLink'
 import { fakeUsers } from '~~/components/form/select/Users.stories'
 import { isNumber, times } from 'lodash-es'

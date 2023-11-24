@@ -2,8 +2,9 @@
   <slot />
 </template>
 <script setup lang="ts">
-import { Nullable, Optional } from '@speckle/shared'
-import { getCurrentInstance, inject, ComponentInternalInstance, Ref } from 'vue'
+import type { Nullable, Optional } from '@speckle/shared'
+import { getCurrentInstance, inject } from 'vue'
+import type { ComponentInternalInstance, Ref } from 'vue'
 
 /**
  * Sort of hacky - we need to manipulate the @headlessui combobox state, but it can't be injected

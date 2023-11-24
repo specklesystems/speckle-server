@@ -36,7 +36,7 @@
 import { UserIcon, BriefcaseIcon } from '@heroicons/vue/24/solid'
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
+import type {
   UserProfileEditDialogBio_UserFragment,
   UserUpdateInput
 } from '~~/lib/common/generated/gql/graphql'

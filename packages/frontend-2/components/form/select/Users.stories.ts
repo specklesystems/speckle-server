@@ -1,7 +1,7 @@
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import FormSelectUsers from '~~/components/form/select/Users.vue'
-import { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
-import { ApolloMockData } from '~~/lib/common/helpers/storybook'
+import type { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ApolloMockData } from '~~/lib/common/helpers/storybook'
 
 type StoryType = StoryObj<
   Record<string, unknown> & {

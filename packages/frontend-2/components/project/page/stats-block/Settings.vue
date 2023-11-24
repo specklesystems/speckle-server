@@ -31,7 +31,7 @@
 <script setup lang="ts">
 import { Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectPageStatsBlockTeamFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectPageStatsBlockTeamFragment } from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment ProjectPageStatsBlockTeam on Project {

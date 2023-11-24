@@ -15,7 +15,7 @@
 </template>
 <script setup lang="ts">
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
-import { LayoutMenuItem } from '~~/lib/layout/helpers/components'
+import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 import { VersionActionTypes } from '~~/lib/projects/helpers/components'
 

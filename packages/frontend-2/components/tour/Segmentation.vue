@@ -68,9 +68,9 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import {
   OnboardingIndustry,
   OnboardingRole,
-  RoleTitleMap,
-  OnboardingState
+  RoleTitleMap
 } from '~~/lib/auth/helpers/onboarding'
+import type { OnboardingState } from '~~/lib/auth/helpers/onboarding'
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 

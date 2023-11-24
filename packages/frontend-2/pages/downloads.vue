@@ -55,7 +55,7 @@
 </template>
 <script setup lang="ts">
 // import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { ConnectorTag, ConnectorVersion, Tag } from '~~/lib/connectors'
+import type { ConnectorTag, ConnectorVersion, Tag } from '~~/lib/connectors'
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
 
 useHead({

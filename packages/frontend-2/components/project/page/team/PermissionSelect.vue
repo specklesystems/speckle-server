@@ -34,7 +34,8 @@
 </template>
 <script setup lang="ts">
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
-import { Roles, StreamRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
+import type { StreamRoles } from '@speckle/shared'
 import { reduce } from 'lodash-es'
 import { isArray } from 'lodash-es'
 

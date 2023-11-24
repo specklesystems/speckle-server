@@ -1,10 +1,12 @@
 import { Observability } from '@speckle/shared'
 import { defineEventHandler, fromNodeMiddleware } from 'h3'
 import { IncomingMessage, ServerResponse } from 'http'
-import pino, { SerializedResponse } from 'pino'
-import { GenReqId, pinoHttp } from 'pino-http'
+import pino from 'pino'
+import type { SerializedResponse } from 'pino'
+import { pinoHttp } from 'pino-http'
+import type { GenReqId } from 'pino-http'
 import { randomUUID } from 'crypto'
-import { IncomingHttpHeaders } from 'http'
+import type { IncomingHttpHeaders } from 'http'
 import { REQUEST_ID_HEADER } from '~~/server/lib/core/helpers/constants'
 
 /**

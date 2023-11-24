@@ -23,7 +23,10 @@
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
-import { ApplicationItem, TokenItem } from '~~/lib/developer-settings/helpers/types'
+import type {
+  ApplicationItem,
+  TokenItem
+} from '~~/lib/developer-settings/helpers/types'
 import {
   deleteAccessTokenMutation,
   deleteApplicationMutation

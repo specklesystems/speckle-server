@@ -31,7 +31,7 @@
 import { markClassesUsed } from '~~/lib/common/helpers/tailwind'
 import { useClipboard } from '@vueuse/core'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { Ref } from 'vue'
+import type { Ref } from 'vue'
 
 /** Suffix on top of the color base name (e.g., focus if danger-focus) or null if no suffix (e.g., danger) */
 type ColorVariation = string | null

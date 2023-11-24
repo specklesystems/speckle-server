@@ -38,8 +38,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
-import { UserItem } from '~~/lib/server-management/helpers/types'
-import { Roles, ServerRoles } from '@speckle/shared'
+import type { UserItem } from '~~/lib/server-management/helpers/types'
+import { Roles } from '@speckle/shared'
+import type { ServerRoles } from '@speckle/shared'
 import { ArrowLongRightIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 import { getRoleLabel } from '~~/lib/server-management/helpers/utils'
 import { changeRoleMutation } from '~~/lib/server-management/graphql/mutations'

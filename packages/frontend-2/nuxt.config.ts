@@ -1,5 +1,4 @@
 import { join } from 'path'
-import type { OutputOptions } from 'rollup'
 import { withoutLeadingSlash } from 'ufo'
 import { sanitizeFilePath } from 'mlly'
 import { filename } from 'pathe/utils'
@@ -55,6 +54,8 @@ export default defineNuxtConfig({
   vite: {
     vue: {
       script: {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
         defineModel: true
       }
     },
@@ -80,7 +81,7 @@ export default defineNuxtConfig({
 
     build: {
       rollupOptions: {
-        output: <OutputOptions>{
+        output: {
           /**
            * Overriding some output file names to avoid adblock
            */
@@ -146,6 +147,7 @@ export default defineNuxtConfig({
       '@vueuse/core',
       '@vueuse/shared',
       '@speckle/ui-components',
+      'v3-infinite-loading',
       /prosemirror.*/
     ]
   },

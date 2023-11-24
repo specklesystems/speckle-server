@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import { MaybeRef } from '@vueuse/core'
+import type { MaybeRef } from '@vueuse/core'
 
 const useComponentLockState = () =>
   useScopedState('componentLockState', () =>

@@ -46,7 +46,7 @@
 <script setup lang="ts">
 import { BarsArrowUpIcon, BarsArrowDownIcon } from '@heroicons/vue/24/solid'
 import { ViewerEvent } from '@speckle/viewer'
-import { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
+import type { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
 import {
   useInjectedViewer,
   useInjectedViewerLoadedResources,

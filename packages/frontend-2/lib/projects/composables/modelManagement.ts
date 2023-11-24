@@ -1,21 +1,24 @@
 import { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
-import { MaybeRef, useClipboard } from '@vueuse/core'
-import { Get } from 'type-fest'
-import { GenericValidateFunction } from 'vee-validate'
+import { useClipboard } from '@vueuse/core'
+import type { MaybeRef } from '@vueuse/core'
+import type { Get } from 'type-fest'
+import type { GenericValidateFunction } from 'vee-validate'
 import { SpeckleViewer } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import {
+import type {
   DeleteModelInput,
   OnProjectModelsUpdateSubscription,
   OnProjectPendingModelsUpdatedSubscription,
   Project,
   ProjectModelsArgs,
   ProjectModelsTreeArgs,
-  ProjectModelsUpdatedMessageType,
   ProjectPendingImportedModelsArgs,
-  ProjectPendingModelsUpdatedMessageType,
   UpdateModelInput
+} from '~~/lib/common/generated/gql/graphql'
+import {
+  ProjectModelsUpdatedMessageType,
+  ProjectPendingModelsUpdatedMessageType
 } from '~~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,

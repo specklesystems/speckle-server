@@ -1,16 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  ApolloLink,
-  DocumentNode,
-  FetchResult,
-  Observable,
-  Operation
-} from '@apollo/client/core'
-import { Optional } from '@speckle/shared'
+import { ApolloLink, Observable } from '@apollo/client/core'
+import type { DocumentNode, FetchResult, Operation } from '@apollo/client/core'
+import type { Optional } from '@speckle/shared'
 import { merge } from 'lodash-es'
-import { PartialDeep } from 'type-fest'
-import { ApolloMockData } from '~~/lib/common/helpers/storybook'
-import { AddParameters } from '~~/lib/common/helpers/type'
+import type { PartialDeep } from 'type-fest'
+import type { ApolloMockData } from '~~/lib/common/helpers/storybook'
+import type { AddParameters } from '~~/lib/common/helpers/type'
 
 type MockedApolloRequestInput<TVariables = Record<string, any>> = {
   query: DocumentNode
