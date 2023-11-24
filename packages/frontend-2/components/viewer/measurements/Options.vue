@@ -1,41 +1,55 @@
 <template>
   <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
-    <template #title>Measure mode</template>
+    <template #title>Measure Mode</template>
+    <div
+      class="flex items-center gap-3 text-sm p-3 border-b border-outline-3 text-foreground-2"
+    >
+      <InformationCircleIcon class="h-9 h-9" />
+      Reloading the model will delete all measurements.
+    </div>
     <template #actions>
-      <FormButton size="xs" text :icon-left="MinusIcon" @click="removeMeasurement">
-        Delete
+      <FormButton
+        size="sm"
+        text
+        color="danger"
+        :icon-left="TrashIcon"
+        class="font-normal py-1"
+        @click="removeMeasurement"
+      >
+        Delete Measurement
       </FormButton>
     </template>
-    <div class="p-4 flex flex-col gap-3">
+    <div class="p-3 flex flex-col gap-3 border-b border-outline-3">
       <div>
-        <h6 class="font-semibold text-xs mb-2">Measurement Type</h6>
+        <h6 class="font-semibold text-sm mb-2">Mode</h6>
         <FormRadioGroup
+          class="ml-1"
           label="Select an Option"
           :options="measurementTypeOptions"
           @update:selected="updateMeasurementsType"
         />
       </div>
-      <div class="flex gap-4">
-        <div class="w-9/12">
-          <h6 class="font-semibold text-xs">Units</h6>
-          <ViewerMeasurementsUnitSelect
-            v-model="selectedUnit"
-            mount-menu-on-body
-            @update:model-value="onChangeMeasurementUnits"
-          />
-        </div>
-        <div class="w-3/12">
-          <h6 class="font-semibold text-xs mb-1.5">Snap</h6>
-          <div class="scale-95 -ml-0.5">
-            <FormSwitch
-              :model-value="measurementParams.vertexSnap"
-              @update:model-value="() => toggleMeasurementsSnap()"
-            />
-          </div>
-        </div>
+    </div>
+    <div class="p-3 flex items-center border-b border-outline-3">
+      <FormCheckbox
+        name="Snap to Objects"
+        hide-label
+        :model-value="measurementParams.vertexSnap"
+        @update:model-value="() => toggleMeasurementsSnap()"
+      />
+      <span class="font-normal text-sm">Snap to Objects</span>
+    </div>
+    <div class="p-3 flex flex-col gap-3">
+      <div class="flex flex-col gap-2">
+        <h6 class="font-semibold text-sm">Units</h6>
+        <ViewerMeasurementsUnitSelect
+          v-model="selectedUnit"
+          mount-menu-on-body
+          @update:model-value="onChangeMeasurementUnits"
+        />
       </div>
       <div class="flex flex-col gap-3">
-        <label class="font-semibold text-xs" for="precision">Precision</label>
+        <label class="font-semibold text-sm" for="precision">Precision</label>
         <div class="flex gap-2 items-center">
           <input
             id="precision"
@@ -54,8 +68,8 @@
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
-import { MinusIcon } from '@heroicons/vue/24/solid'
-import { FormSwitch, FormRadioGroup } from '@speckle/ui-components'
+import { InformationCircleIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { FormRadioGroup } from '@speckle/ui-components'
 import { MeasurementType } from '@speckle/viewer'
 import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
 
@@ -68,7 +82,7 @@ interface MeasurementTypeOption {
 defineEmits(['close'])
 
 const measurementPrecision = ref(2)
-const selectedUnit = ref('Meters')
+const selectedUnit = ref('m')
 
 const measurementParams = ref({
   type: MeasurementType.POINTTOPOINT,
@@ -103,12 +117,12 @@ const onChangeMeasurementPrecision = () => {
 const measurementTypeOptions = [
   {
     title: 'Point to Point',
-    description: 'Select two points to measure the direct distance between them',
+    icon: TrashIcon,
     value: MeasurementType.POINTTOPOINT
   },
   {
     title: 'Perpendicular',
-    description: 'Distance between a point and a surface, perpendicular to the target',
+    icon: TrashIcon,
     value: MeasurementType.PERPENDICULAR
   }
 ]

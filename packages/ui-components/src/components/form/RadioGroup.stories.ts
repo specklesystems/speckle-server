@@ -1,6 +1,7 @@
 import { Meta, StoryObj } from '@storybook/vue3'
 import { ref } from 'vue'
 import RadioGroup from '~~/src/components/form/RadioGroup.vue'
+import { MegaphoneIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
 
 export default {
   component: RadioGroup,
@@ -38,6 +39,26 @@ export const Default: StoryObj = {
         title: 'Option 2 Title',
         description:
           'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+      }
+    ]
+  }
+}
+
+export const WithIcons: StoryObj = {
+  ...Default,
+  args: {
+    options: [
+      {
+        title: 'Option 1 Title',
+        description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+        icon: MagnifyingGlassIcon
+      },
+      {
+        title: 'Option 2 Title',
+        description:
+          'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+        icon: MegaphoneIcon
       }
     ]
   }

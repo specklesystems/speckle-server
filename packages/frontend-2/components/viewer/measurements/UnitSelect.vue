@@ -2,14 +2,13 @@
   <FormSelectBase
     v-model="selectedUnit"
     :items="units"
-    label="Units"
+    label="Unit"
     :show-label="false"
     :name="name || 'units'"
     :allow-unset="false"
-    class="scale-75 -ml-7 -mr-6"
   >
     <template #something-selected="{ value }">
-      <div class="font-bold">{{ value }}</div>
+      <div>{{ value }}</div>
     </template>
     <template #option="{ item }">
       <div class="flex flex-col">
