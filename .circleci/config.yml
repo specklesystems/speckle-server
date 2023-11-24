@@ -694,6 +694,8 @@ jobs:
     working_directory: *work-dir
     steps:
       - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
       # create the nix folder with permissive write permissions
       - run: |
           sudo mkdir /nix
@@ -726,6 +728,8 @@ jobs:
     working_directory: *work-dir
     steps:
       - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
       # create the nix folder with permissive write permissions
       - run: |
           sudo mkdir /nix
