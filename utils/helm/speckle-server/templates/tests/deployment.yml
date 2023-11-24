@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: test-deployment
-          image: speckle/speckle-test-deployment:{{ .Values.docker_image_tag }}
+          image: {{ default (printf "speckle/speckle-test-deployment:%s" .Values.docker_image_tag) .Values.test.image }}
           imagePullPolicy: {{ .Values.imagePullPolicy }}
 
           env:

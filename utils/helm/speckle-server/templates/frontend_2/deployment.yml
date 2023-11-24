@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: main
-        image: speckle/speckle-frontend-2:{{ .Values.docker_image_tag }}
+        image: {{ default (printf "speckle/speckle-frontend-2:%s" .Values.docker_image_tag) .Values.frontend_2.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:

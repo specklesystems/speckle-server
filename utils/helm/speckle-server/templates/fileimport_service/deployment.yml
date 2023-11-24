@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: main
-        image: speckle/speckle-fileimport-service:{{ .Values.docker_image_tag }}
+        image: {{ default (printf "speckle/speckle-fileimport-service:%s" .Values.docker_image_tag) .Values.fileimport_service.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:
