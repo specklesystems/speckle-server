@@ -6,14 +6,10 @@ services:
       dockerfile: ./utils/test-deployment/Dockerfile
     image: speckle/speckle-test-deployment:local
     environment:
-      - name: SPECKLE_SERVER
-        value: http://127.0.0.1 # this is the canonical url
-      - name: SERVER_VERSION
-        value: 2
-      - name: FRONTEND_VERSION
-        value: '2'
-      - name: VERIFY_CERTIFICATE
-        value: '0'
+      SPECKLE_SERVER: http://127.0.0.1 # this is the canonical url
+      SERVER_VERSION: 2
+      FRONTEND_VERSION: '1'
+      VERIFY_CERTIFICATE: '0'
     deploy:
       restart_policy:
         condition: none
