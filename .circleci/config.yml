@@ -801,7 +801,7 @@ jobs:
           name: Deploy Kubernetes resources to cluster
           command: |
             nix-shell \
-            --run "yarn dev:kind:tilt:ci" \
+            --run "yarn dev:kind:helm:ci" \
             ./.circleci/deployment/helm-chart-shell.nix
 
   docker-build: &build-job
