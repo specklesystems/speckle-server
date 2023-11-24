@@ -718,6 +718,7 @@ jobs:
             - /nix
       - run: nix-shell --run "docker compose --file docker-compose-deps.yml up --detach" ./.circleci/deployment/docker-compose-shell.nix
       - run: nix-shell --run "docker compose --file docker-compose-speckle.yml up --detach" ./.circleci/deployment/docker-compose-shell.nix
+      - run: nix-shell --run "docker compose --file docker-compose-test.yml up" ./.circleci/deployment/docker-compose-shell.nix
       #TODO deploy a container which runs smoke or e2e tests
 
   deployment-test-helm-chart:

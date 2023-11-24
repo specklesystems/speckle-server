@@ -11,10 +11,13 @@ def docker_load(name, filename=None, existing_ref=None, deps=None):
         fail('filename must be specified')
     if not existing_ref:
         fail('existing_tag must be specified')
-    env = {
-        'DOCKER_FILE_NAME': filename,
-        'EXISTING_REF': existing_ref
-        }
+    # HACK: requires tilt version >=0.33.0 but nix is on 0.32.X
+    # env = {
+    #     'DOCKER_FILE_NAME': filename,
+    #     'EXISTING_REF': existing_ref
+    #     }
+    os.putenv('DOCKER_FILE_NAME', filename)
+    os.putenv('EXISTING_REF', existing_ref)
     return custom_build(name,
                         'echo "Loading ${DOCKER_FILE_NAME} into local docker cache" && \
                         docker load --input "/tmp/ci/workspace/${DOCKER_FILE_NAME}" && \
