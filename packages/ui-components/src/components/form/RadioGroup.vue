@@ -12,7 +12,7 @@
           v-model="selected"
           type="radio"
           :value="option"
-          class="cursor-pointer h-[12px] w-[12px] border-foundation ring-[1.5px] ring-primary checked:ring-primary-focus focus:outline-primary-focus"
+          class="cursor-pointer h-[12px] w-[12px] bg-foundation border-foundation ring-[1.5px] ring-primary checked:ring-primary-focus focus:ring-offset-foundation focus:outline-primary-focus"
         />
         <label
           class="flex items-center gap-1 text-xs text-foreground cursor-pointer"
