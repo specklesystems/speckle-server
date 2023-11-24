@@ -30,21 +30,27 @@ helm_resource('postgresql',
             release_name='postgresql',
             namespace='postgres',
             chart='oci://registry-1.docker.io/bitnamicharts/postgresql',
-            flags=['--version=^12.0.0', '--values=./values/postgres.values.yaml'],
+            flags=['--version=^12.0.0',
+                    '--values=./values/postgres.values.yaml',
+                    '--kube-context=kind-speckle-server'],
             labels=['speckle-dependencies'])
 
 helm_resource('minio',
             release_name='minio',
             namespace='minio',
             chart='oci://registry-1.docker.io/bitnamicharts/minio',
-            flags=['--version=^12.0.0', '--values=./values/minio.values.yaml'],
+            flags=['--version=^12.0.0',
+                    '--values=./values/minio.values.yaml',
+                    '--kube-context=kind-speckle-server'],
             labels=['speckle-dependencies'])
 
 helm_resource('redis',
             release_name='redis',
             namespace='redis',
             chart='oci://registry-1.docker.io/bitnamicharts/redis',
-            flags=['--version=^18.0.0', '--values=./values/redis.values.yaml'],
+            flags=['--version=^18.0.0',
+                    '--values=./values/redis.values.yaml',
+                    '--kube-context=kind-speckle-server'],
             labels=['speckle-dependencies'])
 
 # errors with `no matches for kind "DaemonSet" in version "extensions/v1beta1"`
@@ -68,7 +74,9 @@ helm_resource('ingress-nginx',
             release_name='ingress-nginx',
             namespace='ingress-nginx',
             chart='ingress-nginx-repo/ingress-nginx',
-            flags=['--version=^4.8.0', '--values=./values/nginx.values.yaml'],
+            flags=['--version=^4.8.0',
+                    '--values=./values/nginx.values.yaml',
+                    '--kube-context=kind-speckle-server'],
             labels=['speckle-dependencies'])
 
 # helm_repo('speckle-server-repo',
@@ -83,5 +91,7 @@ helm_resource('speckle-server',
               release_name='speckle-server',
               namespace='speckle-server',
               chart='./../../utils/helm/speckle-server',
-              flags=['--values=./values/speckle-server.values.yaml'],
+              flags=['--values=./values/speckle-server.values.yaml',
+                      '--kube-context=kind-speckle-server'],
+              resource_deps=['postgresql', 'minio', 'redis', 'ingress-nginx'],
               labels=['speckle-server'])
