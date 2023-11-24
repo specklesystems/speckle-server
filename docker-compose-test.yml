@@ -1,4 +1,4 @@
-version: '2.3'
+version: '2.4'
 services:
   test:
     build:
@@ -10,6 +10,4 @@ services:
       SERVER_VERSION: 2
       FRONTEND_VERSION: '1'
       VERIFY_CERTIFICATE: '0'
-    deploy:
-      restart_policy:
-        condition: none
+    restart: 'no'
