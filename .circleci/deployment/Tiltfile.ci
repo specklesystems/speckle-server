@@ -40,7 +40,7 @@ def speckle_image(package):
 
     docker_image_tag = 'speckle/speckle-{}'.format(package)
     expected_ref = '{}:{}'.format(docker_image_tag, image_version_tag)
-    docker_file_name = "".join([ c if c.isalnum() or c=='-' or c=='_' else "_" for c in expected_ref.elems() ])
+    docker_file_name = "".join([ c if c.isalnum() or c=='-' or c=='_' or c=='.' else "_" for c in expected_ref.elems() ])
     return docker_load(docker_image_tag,
                         filename=docker_file_name,
                         existing_ref=expected_ref,
