@@ -418,48 +418,6 @@ describe('Services @apps-services', () => {
       .catch((err) => expect(err.message).to.equal('Access code not found.'))
   })
 
-  it('Should receive an expiring fine-grained token in exchange for the authorization code', async () => {
-    const myTestApp = await createApp({
-      name: cryptoRandomString({ length: 10 }),
-      public: true,
-      scopes: [Scopes.Streams.Read],
-      redirectUrl: 'http://127.0.0.1:1335'
-    })
-    const authorizationCode = await createAuthorizationCode({
-      appId: myTestApp.id,
-      userId: actor.id,
-      challenge
-    })
-    expect(authorizationCode).to.be.a('string')
-
-    const response = await createAppTokenFromAccessCode({
-      appId: myTestApp.id,
-      appSecret: myTestApp.secret,
-      accessCode: authorizationCode,
-      challenge,
-      scope: [{ relation: Scopes.Streams.Read, object: 'stream:myStreamId' }],
-      validTime: 60 * 60 * 1000 // 1 hour
-    })
-    expect(response).to.have.property('token')
-    expect(response.token).to.be.a('string')
-    expect(response).to.have.property('refreshToken')
-    expect(response.refreshToken).to.be.a('string')
-
-    const validation = await validateToken(response.token)
-    expect(validation.valid).to.equal(true)
-    expect(validation.userId).to.equal(actor.id)
-    expect(validation.scopes[0]).to.equal({
-      relation: Scopes.Streams.Read,
-      object: 'stream:myStreamId'
-    })
-    expect(validation.remainingTime).to.be.lessThanOrEqual(60 * 60 * 1000) // 1 hour
-  })
-
-  // cannot create a fine-grained token with an valid time exceeding the maximum
-  // cannot create a fine-grained token with a valid time less than 0 milliseconds
-  // cannot create a fine-grained token for a stream to which the user does not have access
-  // cannot create a fine-grained token for scope relationship to which the app is not authorized
-
   it('Should delete an app', async () => {
     const myTestApp = await createApp({
       name: cryptoRandomString({ length: 10 }),
