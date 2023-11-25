@@ -5,6 +5,7 @@ services:
       context: .
       dockerfile: ./utils/test-deployment/Dockerfile
     image: speckle/speckle-test-deployment:local
+    network_mode: 'host'
     environment:
       SPECKLE_SERVER: http://127.0.0.1 # this is the canonical url
       SERVER_VERSION: 2
