@@ -111,6 +111,10 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
     this.tas.refit()
   }
 
+  public updateDrawGroups(buffer: Float32Array) {
+    buffer
+  }
+
   public updateTransformsUniform() {}
   public updateMaterialTransformsUniform(material: Material) {
     material

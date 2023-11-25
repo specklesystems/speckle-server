@@ -95,7 +95,7 @@ export default class MeshBatch implements Batch {
       this.needsFlatten = false
     }
     if (this.needsShuffle) {
-      this.autoFillDrawRangesShuffleIBO()
+      this.shuffleDrawGroups()
       this.needsShuffle = false
     }
   }
@@ -401,7 +401,7 @@ export default class MeshBatch implements Batch {
     return ++this.indexBufferIndex % 2 === 0 ? this.indexBuffer0 : this.indexBuffer1
   }
 
-  private autoFillDrawRangesShuffleIBO() {
+  private shuffleDrawGroups() {
     const groups = this.geometry.groups
       .sort((a, b) => {
         return a.start - b.start

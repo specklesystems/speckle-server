@@ -43,6 +43,9 @@ export default class InstancedMeshBatch implements Batch {
   public batchMaterial: Material
   public mesh: SpeckleInstancedMesh
 
+  private instanceTransformBuffer0: Float32Array = null
+  private instanceTransformBuffer1: Float32Array = null
+  private transformBufferIndex: number = 0
   private gradientIndexBuffer: InstancedBufferAttribute
 
   private needsShuffle = false
@@ -65,6 +68,10 @@ export default class InstancedMeshBatch implements Batch {
   public get minDrawCalls(): number {
     return [...Array.from(new Set(this.groups.map((value) => value.materialIndex)))]
       .length
+  }
+
+  public get maxDrawCalls(): number {
+    return this.minDrawCalls // + 2
   }
 
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
@@ -103,10 +110,10 @@ export default class InstancedMeshBatch implements Batch {
       this.flattenDrawGroups()
       this.needsFlatten = false
     }
-    // if (this.needsShuffle) {
-    //   this.autoFillDrawRangesShuffleIBO()
-    //   this.needsShuffle = false
-    // }
+    if (this.needsShuffle) {
+      this.shuffleDrawGroups()
+      this.needsShuffle = false
+    }
   }
 
   public onRender(renderer: WebGLRenderer) {
@@ -363,7 +370,7 @@ export default class InstancedMeshBatch implements Batch {
     }
     console.warn(this.groups)
     /** We shuffle only when above a certain fragmentation threshold. We don't want to be shuffling every single time */
-    if (this.drawCalls > this.minDrawCalls + 2) {
+    if (this.drawCalls > this.maxDrawCalls) {
       this.needsShuffle = true
     } else {
       this.groups.sort((a, b) => {
@@ -391,6 +398,104 @@ export default class InstancedMeshBatch implements Batch {
     }
   }
 
+  private shuffleDrawGroups() {
+    const groups = this.groups
+      .sort((a, b) => {
+        return a.start - b.start
+      })
+      .slice()
+
+    this.groups.sort((a, b) => {
+      const materialA: Material = this.materials[a.materialIndex]
+      const materialB: Material = this.materials[b.materialIndex]
+      const visibleOrder = +materialB.visible - +materialA.visible
+      const transparentOrder = +materialA.transparent - +materialB.transparent
+      if (visibleOrder !== 0) return visibleOrder
+      return transparentOrder
+    })
+
+    const materialOrder = []
+    groups.reduce((previousValue, currentValue) => {
+      if (previousValue.indexOf(currentValue.materialIndex) === -1) {
+        previousValue.push(currentValue.materialIndex)
+      }
+      return previousValue
+    }, materialOrder)
+
+    const grouped = []
+    for (let k = 0; k < materialOrder.length; k++) {
+      grouped.push(
+        groups.filter((val) => {
+          return val.materialIndex === materialOrder[k]
+        })
+      )
+    }
+
+    const sourceBuffer: Float32Array = this.getCurrentTransformBuffer()
+    const targetBuffer: Float32Array = this.getNextTransformBuffer()
+    const newGroups = []
+    const scratchRvs = this.renderViews.slice()
+    scratchRvs.sort((a, b) => {
+      return a.batchStart - b.batchStart
+    })
+    let targetBufferOffset = 0
+    for (let k = 0; k < grouped.length; k++) {
+      const materialGroup = grouped[k]
+      const materialGroupStart = targetBufferOffset
+      let materialGroupCount = 0
+      for (let i = 0; i < (materialGroup as []).length; i++) {
+        const start = materialGroup[i].start
+        const count = materialGroup[i].count
+        const subArray = sourceBuffer.subarray(start, start + count)
+        targetBuffer.set(subArray, targetBufferOffset)
+        let rvElemCount = 0
+        for (let m = 0; m < scratchRvs.length; m++) {
+          if (
+            scratchRvs[m].batchStart >= start &&
+            scratchRvs[m].batchEnd <= start + count
+          ) {
+            scratchRvs[m].setBatchData(
+              this.id,
+              targetBufferOffset + rvElemCount,
+              scratchRvs[m].batchCount
+            )
+            rvElemCount += scratchRvs[m].batchCount
+            scratchRvs.splice(m, 1)
+            m--
+          }
+        }
+        targetBufferOffset += count
+        materialGroupCount += count
+      }
+      newGroups.push({
+        offset: materialGroupStart,
+        count: materialGroupCount,
+        materialIndex: materialGroup[0].materialIndex
+      })
+    }
+    console.warn(newGroups)
+    this.groups.length = 0
+    for (let i = 0; i < newGroups.length; i++) {
+      this.groups.push(
+        newGroups[i].offset,
+        newGroups[i].count,
+        newGroups[i].materialIndex
+      )
+    }
+    this.mesh.updateDrawGroups(targetBuffer)
+
+    /** Solve hidden groups */
+    // const hiddenGroup = this.groups.find((value) => {
+    //   return this.materials[value.materialIndex].visible === false
+    // })
+    // if (hiddenGroup) {
+    //   this.setVisibleRange({
+    //     offset: 0,
+    //     count: hiddenGroup.start
+    //   })
+    // }
+  }
+
   public resetDrawRanges() {
     // this.mesh.setBatchMaterial(this.batchMaterial)
     // this.mesh.visible = true
@@ -399,11 +504,35 @@ export default class InstancedMeshBatch implements Batch {
     // this.geometry.setDrawRange(0, Infinity)
   }
 
+  private getCurrentTransformBuffer(): Float32Array {
+    return this.transformBufferIndex % 2 === 0
+      ? this.instanceTransformBuffer0
+      : this.instanceTransformBuffer1
+  }
+
+  private getNextTransformBuffer(): Float32Array {
+    return ++this.transformBufferIndex % 2 === 0
+      ? this.instanceTransformBuffer0
+      : this.instanceTransformBuffer1
+  }
+
   public buildBatch() {
     const INSTANCE_BUFFER_STRIDE = 16
     const batchObjects = []
     let instanceBVH = null
+    this.instanceTransformBuffer0 = new Float32Array(
+      this.renderViews.length * INSTANCE_BUFFER_STRIDE
+    )
+    this.instanceTransformBuffer1 = new Float32Array(
+      this.renderViews.length * INSTANCE_BUFFER_STRIDE
+    )
+    const targetInstanceTransformBuffer = this.getCurrentTransformBuffer()
+
     for (let k = 0; k < this.renderViews.length; k++) {
+      this.renderViews[k].renderData.geometry.transform.toArray(
+        targetInstanceTransformBuffer,
+        k * INSTANCE_BUFFER_STRIDE
+      )
       this.renderViews[k].setBatchData(
         this.id,
         k * INSTANCE_BUFFER_STRIDE,
@@ -466,7 +595,7 @@ export default class InstancedMeshBatch implements Batch {
       count: this.renderViews.length * INSTANCE_BUFFER_STRIDE,
       materialIndex: 0
     })
-    this.materials.push(this.batchMaterial)
+    // this.materials.push(this.batchMaterial)
   }
 
   public getRenderView(index: number): NodeRenderView {
