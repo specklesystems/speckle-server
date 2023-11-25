@@ -19,6 +19,7 @@ const {
 const { Scopes } = require('@/modules/core/helpers/mainConstants')
 const { updateDefaultApp } = require('@/modules/auth/defaultApps')
 const knex = require('@/db/knex')
+const cryptoRandomString = require('crypto-random-string')
 
 describe('Services @apps-services', () => {
   const actor = {
@@ -32,39 +33,10 @@ describe('Services @apps-services', () => {
     actor.id = await createUser(actor)
   })
 
-  it('Should get the frontend main app', async () => {
-    const app = await getApp({ id: 'spklwebapp' })
-    expect(app).to.be.an('object')
-    expect(app.redirectUrl).to.be.a('string')
-    expect(app.scopes).to.be.a('array')
-  })
-
-  it('Should get the desktop manager app', async () => {
-    const app = await getApp({ id: 'sdm' })
-    expect(app).to.be.an('object')
-    expect(app.redirectUrl).to.be.a('string')
-    expect(app.scopes).to.be.a('array')
-  })
-
-  it('Should get the explorer app', async () => {
-    const app = await getApp({ id: 'explorer' })
-    expect(app).to.be.an('object')
-    expect(app.redirectUrl).to.be.a('string')
-    expect(app.scopes).to.be.a('array')
-  })
-
-  it('Should get the excel app', async () => {
-    const app = await getApp({ id: 'spklexcel' })
-    expect(app).to.be.an('object')
-    expect(app.redirectUrl).to.be.a('string')
-    expect(app.scopes).to.be.a('array')
-  })
-
-  let myTestApp = null
-
   it('Should register an app', async () => {
+    const testAppName = cryptoRandomString({ length: 10 })
     const res = await createApp({
-      name: 'test application',
+      name: testAppName,
       public: true,
       scopes: [Scopes.Streams.Read],
       redirectUrl: 'http://127.0.0.1:1335'
@@ -78,7 +50,6 @@ describe('Services @apps-services', () => {
 
     const app = await getApp({ id: res.id })
     expect(app.id).to.equal(res.id)
-    myTestApp = app
   })
 
   it('Should get all the public apps on this server', async () => {
@@ -98,6 +69,12 @@ describe('Services @apps-services', () => {
   })
 
   it('Should update an app', async () => {
+    const myTestApp = await createApp({
+      name: cryptoRandomString({ length: 10 }),
+      public: true,
+      scopes: [Scopes.Streams.Read],
+      redirectUrl: 'http://127.0.0.1:1335'
+    })
     const res = await updateApp({
       app: {
         name: 'updated test application',
@@ -115,10 +92,15 @@ describe('Services @apps-services', () => {
   })
 
   const challenge = 'random'
-  let authorizationCode = null
 
   it('Should get an authorization code for the app', async () => {
-    authorizationCode = await createAuthorizationCode({
+    const myTestApp = await createApp({
+      name: cryptoRandomString({ length: 10 }),
+      public: true,
+      scopes: [Scopes.Streams.Read],
+      redirectUrl: 'http://127.0.0.1:1335'
+    })
+    const authorizationCode = await createAuthorizationCode({
       appId: myTestApp.id,
       userId: actor.id,
       challenge
@@ -126,21 +108,30 @@ describe('Services @apps-services', () => {
     expect(authorizationCode).to.be.a('string')
   })
 
-  let tokenCreateResponse = null
-
   it('Should get an api token in exchange for the authorization code ', async () => {
+    const myTestApp = await createApp({
+      name: cryptoRandomString({ length: 10 }),
+      public: true,
+      scopes: [Scopes.Streams.Read],
+      redirectUrl: 'http://127.0.0.1:1335'
+    })
+    const authorizationCode = await createAuthorizationCode({
+      appId: myTestApp.id,
+      userId: actor.id,
+      challenge
+    })
+    expect(authorizationCode).to.be.a('string')
+
     const response = await createAppTokenFromAccessCode({
       appId: myTestApp.id,
       appSecret: myTestApp.secret,
       accessCode: authorizationCode,
-      challenge: 'random'
+      challenge
     })
     expect(response).to.have.property('token')
     expect(response.token).to.be.a('string')
     expect(response).to.have.property('refreshToken')
     expect(response.refreshToken).to.be.a('string')
-
-    tokenCreateResponse = response
 
     const validation = await validateToken(response.token)
     expect(validation.valid).to.equal(true)
@@ -149,6 +140,30 @@ describe('Services @apps-services', () => {
   })
 
   it('Should refresh the token using the refresh token, and get a fresh refresh token and token', async () => {
+    const myTestApp = await createApp({
+      name: cryptoRandomString({ length: 10 }),
+      public: true,
+      scopes: [Scopes.Streams.Read],
+      redirectUrl: 'http://127.0.0.1:1335'
+    })
+    const authorizationCode = await createAuthorizationCode({
+      appId: myTestApp.id,
+      userId: actor.id,
+      challenge
+    })
+    expect(authorizationCode).to.be.a('string')
+
+    const tokenCreateResponse = await createAppTokenFromAccessCode({
+      appId: myTestApp.id,
+      appSecret: myTestApp.secret,
+      accessCode: authorizationCode,
+      challenge
+    })
+    expect(tokenCreateResponse).to.have.property('token')
+    expect(tokenCreateResponse.token).to.be.a('string')
+    expect(tokenCreateResponse).to.have.property('refreshToken')
+    expect(tokenCreateResponse.refreshToken).to.be.a('string')
+
     const res = await refreshAppToken({
       refreshToken: tokenCreateResponse.refreshToken,
       appId: myTestApp.id,
@@ -165,6 +180,12 @@ describe('Services @apps-services', () => {
   })
 
   it('Should invalidate all tokens, refresh tokens and access codes for an app if it is updated', async () => {
+    const myTestApp = await createApp({
+      name: cryptoRandomString({ length: 10 }),
+      public: true,
+      scopes: [Scopes.Streams.Read],
+      redirectUrl: 'http://127.0.0.1:1335'
+    })
     const unusedAccessCode = await createAuthorizationCode({
       appId: myTestApp.id,
       userId: actor.id,
@@ -227,6 +248,12 @@ describe('Services @apps-services', () => {
     'spklautoma'
   ]
   defaultApps.forEach((speckleAppId) => {
+    it(`Should get the default app: ${speckleAppId}`, async () => {
+      const app = await getApp({ id: speckleAppId })
+      expect(app).to.be.an('object')
+      expect(app.redirectUrl).to.be.a('string')
+      expect(app.scopes).to.be.a('array')
+    })
     it(`Should not invalidate tokens, refresh tokens and access codes for default app: ${speckleAppId}, if updated`, async () => {
       const [unusedAccessCode, usedAccessCode] = await Promise.all([
         createAuthorizationCode({
@@ -326,6 +353,12 @@ describe('Services @apps-services', () => {
   })
 
   it('Should revoke access for a given user', async () => {
+    const myTestApp = await createApp({
+      name: cryptoRandomString({ length: 10 }),
+      public: true,
+      scopes: [Scopes.Streams.Read],
+      redirectUrl: 'http://127.0.0.1:1335'
+    })
     const secondUser = {
       name: 'Dimitrie Stefanescu',
       email: 'didimitrie.wow@gmail.com',
@@ -386,6 +419,12 @@ describe('Services @apps-services', () => {
   })
 
   it('Should delete an app', async () => {
+    const myTestApp = await createApp({
+      name: cryptoRandomString({ length: 10 }),
+      public: true,
+      scopes: [Scopes.Streams.Read],
+      redirectUrl: 'http://127.0.0.1:1335'
+    })
     const res = await deleteApp({ id: myTestApp.id })
     expect(res).to.equal(1)
   })
