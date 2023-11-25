@@ -9,7 +9,7 @@ spec:
   replicas: {{ .Values.objects.replicas }}
   selector:
     matchLabels:
-      app: speckle-server
+      app: speckle-objects
       project: speckle-server
   strategy:
     type: RollingUpdate
