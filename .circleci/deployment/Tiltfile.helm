@@ -96,6 +96,7 @@ helm_resource('ingress-nginx',
             flags=['--version=^4.8.0',
                     '--values=./values/nginx.values.yaml',
                     '--kube-context=kind-speckle-server'],
+            resource_deps=['postgresql', 'minio', 'redis'],
             labels=['speckle-dependencies'])
 
 # helm_repo('speckle-server-repo',

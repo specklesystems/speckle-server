@@ -4,6 +4,6 @@ controller:
   admissionWebhooks:
     enabled: false
 tcp:
-  5433: 'postgres/postgres-postgresql:5432'
+  5433: 'postgres/postgresql:5432'
   6380: 'redis/redis-master:6379'
   9002: 'minio/minio:9000'
