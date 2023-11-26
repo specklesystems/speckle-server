@@ -24,6 +24,7 @@ import {
 import { BatchObject } from './BatchObject'
 import Logger from 'js-logger'
 import { ObjectLayers } from '../../IViewer'
+import { DrawGroup } from './InstancedMeshBatch'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -82,6 +83,10 @@ export default class MeshBatch implements Batch {
 
   public get materials(): Material[] {
     return this.mesh.material as Material[]
+  }
+
+  public get groups(): DrawGroup[] {
+    return this.geometry.groups
   }
 
   public setBatchMaterial(material: Material) {

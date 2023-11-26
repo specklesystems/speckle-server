@@ -22,6 +22,7 @@ import {
   HideAllBatchUpdateRange
 } from './Batch'
 import { ObjectLayers } from '../../IViewer'
+import { DrawGroup } from './InstancedMeshBatch'
 
 export default class LineBatch implements Batch {
   public id: string
@@ -62,6 +63,10 @@ export default class LineBatch implements Batch {
 
   public get materials(): Material[] {
     return this.mesh.material as Material[]
+  }
+
+  public get groups(): DrawGroup[] {
+    return []
   }
 
   public getCount(): number {

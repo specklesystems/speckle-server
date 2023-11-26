@@ -89,7 +89,7 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public getCount(): number {
-    return this.geometry.index.count * this.renderViews.length
+    return this.renderViews.length * 16
   }
 
   public get materials(): Material[] {
@@ -572,7 +572,7 @@ export default class InstancedMeshBatch implements Batch {
     )
 
     this.makeInstancedMeshGeometry(indices, positions, colors)
-    this.mesh = new SpeckleInstancedMesh(this.geometry, this.renderViews.length)
+    this.mesh = new SpeckleInstancedMesh(this.geometry)
     this.mesh.setBatchObjects(batchObjects)
     this.mesh.setBatchMaterial(this.batchMaterial)
     this.mesh.buildTAS()
@@ -595,7 +595,7 @@ export default class InstancedMeshBatch implements Batch {
       count: this.renderViews.length * INSTANCE_BUFFER_STRIDE,
       materialIndex: 0
     })
-    // this.materials.push(this.batchMaterial)
+    this.mesh.updateDrawGroups(this.getCurrentTransformBuffer())
   }
 
   public getRenderView(index: number): NodeRenderView {

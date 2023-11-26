@@ -592,7 +592,7 @@ export default class SpeckleRenderer {
       if (!instancedBatch) {
         continue
       }
-      this.addBatch(instancedBatch, subtreeGroup)
+      this.addInstancedBatch(instancedBatch, subtreeGroup)
       if (instancedBatch.geometryType === GeometryType.MESH) {
         this.updateDirectLights()
       }
@@ -630,6 +630,30 @@ export default class SpeckleRenderer {
         },
         ['USE_RTE', 'ALPHATEST_REJECTION']
       )
+
+      const speckleMesh = batchRenderable as SpeckleMesh
+      speckleMesh.TAS.boxHelpers.forEach((helper: Box3Helper) => {
+        this.scene.add(helper)
+      })
+    }
+    this.viewer.World.expandWorld(batch.bounds)
+  }
+
+  private addInstancedBatch(batch: Batch, parent: Object3D) {
+    const batchRenderable = batch.renderObject
+    parent.add(batch.renderObject)
+
+    if (batch.geometryType === GeometryType.MESH) {
+      // const mesh = batchRenderable as unknown as Mesh
+      // const material = mesh.material as SpeckleStandardMaterial
+      // batchRenderable.castShadow = !material.transparent
+      // batchRenderable.receiveShadow = !material.transparent
+      // batchRenderable.customDepthMaterial = new SpeckleDepthMaterial(
+      //   {
+      //     depthPacking: RGBADepthPacking
+      //   },
+      //   ['USE_RTE', 'ALPHATEST_REJECTION']
+      // )
 
       const speckleMesh = batchRenderable as SpeckleMesh
       speckleMesh.TAS.boxHelpers.forEach((helper: Box3Helper) => {

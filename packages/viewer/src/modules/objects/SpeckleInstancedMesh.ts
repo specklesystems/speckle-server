@@ -1,11 +1,12 @@
-import Logger from 'js-logger'
 import {
   BackSide,
   BufferGeometry,
   DoubleSide,
+  Group,
   InstancedMesh,
   Material,
   Matrix4,
+  RGBADepthPacking,
   Ray,
   Raycaster,
   Sphere,
@@ -17,6 +18,8 @@ import { BatchObject } from '../batching/BatchObject'
 import Materials from '../materials/Materials'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
 import { DrawGroup } from '../batching/InstancedMeshBatch'
+import { ObjectLayers } from '../../IViewer'
+import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -44,7 +47,7 @@ const _intersectionPointWorld = new Vector3()
 const ray = /* @__PURE__ */ new Ray()
 const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
 
-export default class SpeckleInstancedMesh extends InstancedMesh {
+export default class SpeckleInstancedMesh extends Group {
   public static MeshBatchNumber = 0
 
   private tas: TopLevelAccelerationStructure = null
@@ -56,6 +59,8 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
 
   public groups: Array<DrawGroup> = []
   public materials: Material[] = []
+  private instanceGeometry: BufferGeometry = null
+  private instances: InstancedMesh[] = []
 
   public get TAS() {
     return this.tas
@@ -65,29 +70,30 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
     return this._batchObjects
   }
 
-  constructor(geometry: BufferGeometry, count: number) {
-    super(geometry, null, count)
+  constructor(geometry: BufferGeometry) {
+    super()
+    this.instanceGeometry = geometry
   }
 
   public setBatchMaterial(material: Material) {
     this.batchMaterial = this.getCachedMaterial(material)
-    this.material = this.batchMaterial
     this.materials.push(this.batchMaterial)
   }
 
   public setBatchObjects(batchObjects: BatchObject[]) {
     this._batchObjects = batchObjects
-    for (let k = 0; k < batchObjects.length; k++) {
-      this.setMatrixAt(k, batchObjects[k].renderView.renderData.geometry.transform)
-    }
-    this.instanceMatrix.needsUpdate = true
   }
 
   public setOverrideMaterial(material: Material) {
-    this.materialStack.push(this.material)
+    material
+    const saveMaterials = []
+    for (let k = 0; k < this.instances.length; k++) {
+      saveMaterials.push(this.instances[k].material)
+    }
+    this.materialStack.push(saveMaterials)
 
-    this.material = this.getCachedMaterial(material, true)
-    this.material.needsUpdate = true
+    const overrideMaterial = this.getCachedMaterial(material, true)
+    this.instances.forEach((value) => (value.material = overrideMaterial))
   }
 
   public getCachedMaterial(material: Material, copy = false) {
@@ -100,7 +106,12 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
   }
 
   public restoreMaterial() {
-    if (this.materialStack.length > 0) this.material = this.materialStack.pop()
+    if (this.materialStack.length > 0) {
+      const restoreMaterials = this.materialStack.pop() as Material[]
+      for (let k = 0; k < restoreMaterials.length; k++) {
+        this.instances[k].material = restoreMaterials[k]
+      }
+    }
   }
 
   public buildTAS() {
@@ -112,7 +123,34 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
   }
 
   public updateDrawGroups(buffer: Float32Array) {
-    buffer
+    this.instances.forEach((value: InstancedMesh) => {
+      this.remove(value)
+      value.dispose()
+    })
+    for (let k = 0; k < this.groups.length; k++) {
+      const instanceCount = this.groups[k].count / 16
+      const material = this.materials[this.groups[k].materialIndex]
+      const group = new InstancedMesh(this.instanceGeometry, material, instanceCount)
+      ;(group.instanceMatrix.array as Float32Array).set(
+        buffer.subarray(
+          this.groups[k].start,
+          this.groups[k].start + this.groups[k].count
+        )
+      )
+      group.instanceMatrix.needsUpdate = true
+      group.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
+      group.frustumCulled = false
+      group.castShadow = !material.transparent
+      group.receiveShadow = !material.transparent
+      group.customDepthMaterial = new SpeckleDepthMaterial(
+        {
+          depthPacking: RGBADepthPacking
+        },
+        ['USE_RTE', 'ALPHATEST_REJECTION']
+      )
+      this.instances.push(group)
+      this.add(group)
+    }
   }
 
   public updateTransformsUniform() {}
@@ -121,24 +159,26 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
   }
 
   public getBatchObjectMaterial(batchObject: BatchObject) {
-    const rv = batchObject.renderView
-    const group = this.geometry.groups.find((value) => {
-      return (
-        rv.batchStart >= value.start &&
-        rv.batchStart + rv.batchCount <= value.count + value.start
-      )
-    })
-    if (!Array.isArray(this.material)) {
-      return this.material
-    } else {
-      if (!group) {
-        Logger.warn(
-          `Could not get material for ${batchObject.renderView.renderData.id}`
-        )
-        return null
-      }
-      return this.material[group.materialIndex]
-    }
+    batchObject
+    return this.batchMaterial
+    // const rv = batchObject.renderView
+    // const group = this.geometry.groups.find((value) => {
+    //   return (
+    //     rv.batchStart >= value.start &&
+    //     rv.batchStart + rv.batchCount <= value.count + value.start
+    //   )
+    // })
+    // if (!Array.isArray(this.material)) {
+    //   return this.material
+    // } else {
+    //   if (!group) {
+    //     Logger.warn(
+    //       `Could not get material for ${batchObject.renderView.renderData.id}`
+    //     )
+    //     return null
+    //   }
+    //   return this.material[group.materialIndex]
+    // }
   }
 
   // converts the given BVH raycast intersection to align with the three.js raycast
@@ -185,8 +225,8 @@ export default class SpeckleInstancedMesh extends InstancedMesh {
         }
       }
     } else {
-      const geometry = this.geometry
-      const material = this.material
+      const geometry = this.instanceGeometry
+      const material = this.materials[0]
       const matrixWorld = this.matrixWorld
 
       if (material === undefined) return

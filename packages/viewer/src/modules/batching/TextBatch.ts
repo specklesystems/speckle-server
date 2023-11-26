@@ -6,6 +6,7 @@ import { AllBatchUpdateRange, Batch, BatchUpdateRange, GeometryType } from './Ba
 
 import { SpeckleText } from '../objects/SpeckleText'
 import { ObjectLayers } from '../../IViewer'
+import { DrawGroup } from './InstancedMeshBatch'
 
 export default class TextBatch implements Batch {
   public id: string
@@ -50,6 +51,10 @@ export default class TextBatch implements Batch {
 
   public get materials(): Material[] {
     return this.mesh.material as Material[]
+  }
+
+  public get groups(): DrawGroup[] {
+    return []
   }
 
   public setBatchMaterial(material: Material) {

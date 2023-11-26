@@ -11,7 +11,7 @@ import {
   HideAllBatchUpdateRange
 } from './Batch'
 import PointBatch from './PointBatch'
-import { Material, Mesh, WebGLRenderer } from 'three'
+import { Material, WebGLRenderer } from 'three'
 import Logger from 'js-logger'
 import { AsyncPause } from '../World'
 import { RenderTree } from '../tree/RenderTree'
@@ -348,16 +348,15 @@ export default class Batcher {
     const visibilityRanges = {}
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
-      const batchMesh: Mesh = batch.renderObject as Mesh
-      if (batchMesh.geometry.groups.length === 0) {
-        if (Materials.isTransparent(batchMesh.material as Material))
+      if (batch.groups.length === 0) {
+        if (Materials.isTransparent(batch.batchMaterial))
           visibilityRanges[k] = AllBatchUpdateRange
       } else {
-        const transparentGroup = batchMesh.geometry.groups.find((value) => {
-          return Materials.isTransparent(batchMesh.material[value.materialIndex])
+        const transparentGroup = batch.groups.find((value) => {
+          return Materials.isTransparent(batch.materials[value.materialIndex])
         })
-        const hiddenGroup = batchMesh.geometry.groups.find((value) => {
-          return batchMesh.material[value.materialIndex].visible === false
+        const hiddenGroup = batch.groups.find((value) => {
+          return batch.materials[value.materialIndex].visible === false
         })
         if (transparentGroup) {
           visibilityRanges[k] = {
@@ -377,13 +376,12 @@ export default class Batcher {
     const visibilityRanges = {}
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
-      const batchMesh: Mesh = batch.renderObject as Mesh
-      if (batchMesh.geometry.groups.length === 0) {
-        if ((batchMesh.material as Material).stencilWrite === true)
+      if (batch.groups.length === 0) {
+        if (batch.batchMaterial.stencilWrite === true)
           visibilityRanges[k] = AllBatchUpdateRange
       } else {
-        const stencilGroup = batchMesh.geometry.groups.find((value) => {
-          return batchMesh.material[value.materialIndex].stencilWrite === true
+        const stencilGroup = batch.groups.find((value) => {
+          return batch.materials[value.materialIndex].stencilWrite === true
         })
         if (stencilGroup) {
           visibilityRanges[k] = {
@@ -400,15 +398,14 @@ export default class Batcher {
     const visibilityRanges = {}
     for (const k in this.batches) {
       const batch: Batch = this.batches[k]
-      const batchMesh: Mesh = batch.renderObject as Mesh
-      if (batchMesh.geometry.groups.length === 0) {
-        if (Materials.isOpaque(batchMesh.material as Material))
+      if (batch.groups.length === 0) {
+        if (Materials.isOpaque(batch.batchMaterial as Material))
           visibilityRanges[k] = AllBatchUpdateRange
       } else {
-        const transparentOrHiddenGroup = batchMesh.geometry.groups.find((value) => {
+        const transparentOrHiddenGroup = batch.groups.find((value) => {
           return (
-            Materials.isTransparent(batchMesh.material[value.materialIndex]) ||
-            batchMesh.material[value.materialIndex].visible === false
+            Materials.isTransparent(batch.materials[value.materialIndex]) ||
+            batch.materials[value.materialIndex].visible === false
           )
         })
         visibilityRanges[k] = {
