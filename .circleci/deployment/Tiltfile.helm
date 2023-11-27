@@ -138,5 +138,6 @@ helm_resource('speckle-server',
               labels=['speckle-server'])
 
 local_resource('speckle-server-helm-chart-test',
-              cmd='helm test speckle-server --namespace=speckle-server --kube-context=kind-speckle-server',
+                # HACK until https://github.com/helm/helm/issues/11236 is fixed. Then replace with --logs flag.
+                cmd='helm test speckle-server --namespace=speckle-server --kube-context=kind-speckle-server || kubectl logs -n speckle-server -l "job-name=speckle-test" -c test-deployment --context kind-speckle-server',
                 resource_deps=['speckle-server'])
