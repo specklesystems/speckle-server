@@ -72,17 +72,15 @@ helm_resource('redis',
                     '--kube-context=kind-speckle-server'],
             labels=['speckle-dependencies'])
 
-# errors with `no matches for kind "DaemonSet" in version "extensions/v1beta1"`
-# but `kubectl get --raw /apis ` and v1.
-# The Helm Chart should identify and template correctly: https://github.com/search?q=repo%3Aprometheus-community%2Fhelm-charts+rbac.authorization.k8s.io%2Fv1beta1+path%3Acharts%2F&type=code
-# It seems that the chart is not generated correctly.
-# helm_repo('prometheus-repo',
-#           'https://prometheus-community.github.io/helm-charts')
-# helm_resource('prometheus',
-#             release_name='prometheus-operator-crds',
-#             namespace='prometheus',
-#             chart='prometheus-repo/prometheus-operator-crds',
-#             flags=['--version=^7.0.0', '--values=./values/prometheus-operator-crds.values.yaml'])
+helm_repo('prometheus-repo',
+          'https://prometheus-community.github.io/helm-charts')
+helm_resource('prometheus',
+            release_name='prometheus-operator-crds',
+            namespace='prometheus',
+            chart='prometheus-repo/prometheus-operator-crds',
+            flags=['--version=^7.0.0',
+                    '--values=./values/prometheus-operator-crds.values.yaml',
+                    '--kube-context=kind-speckle-server'])
 
 helm_repo('ingress-nginx-repo',
           'https://kubernetes.github.io/ingress-nginx')
