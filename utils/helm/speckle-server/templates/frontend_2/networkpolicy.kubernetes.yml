@@ -24,5 +24,22 @@ spec:
 {{ include  "speckle.ingress.selector.pod" $ | indent 14 }}
       ports:
         - port: www
+  egress:
+    # allow access to DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+    # allow egress to speckle-server
+    - to:
+        - podSelector:
+            matchLabels:
+{{ include "server.selectorLabels" $ | indent 16 }}
+      ports:
+        - port: 3000
 {{- end -}}
 {{- end -}}
