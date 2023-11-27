@@ -85,7 +85,9 @@ function intersectObject(object, raycaster, intersects, recursive) {
     }
     object.raycast(raycaster, intersects)
   }
-
+  recursive &&=
+    // eslint-disable-next-line eqeqeq
+    object.userData.raycastChildren != undefined ? object.raycastChildren : true
   if (recursive === true) {
     const children = object.children
 

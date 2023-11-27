@@ -71,7 +71,7 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public get maxDrawCalls(): number {
-    return this.minDrawCalls // + 2
+    return 1 // + 2
   }
 
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
@@ -395,6 +395,8 @@ export default class InstancedMeshBatch implements Batch {
           }
         }
       }
+      if (!this.needsShuffle)
+        this.mesh.updateDrawGroups(this.getCurrentTransformBuffer())
     }
   }
 
@@ -476,11 +478,11 @@ export default class InstancedMeshBatch implements Batch {
     console.warn(newGroups)
     this.groups.length = 0
     for (let i = 0; i < newGroups.length; i++) {
-      this.groups.push(
-        newGroups[i].offset,
-        newGroups[i].count,
-        newGroups[i].materialIndex
-      )
+      this.groups.push({
+        start: newGroups[i].offset,
+        count: newGroups[i].count,
+        materialIndex: newGroups[i].materialIndex
+      })
     }
     this.mesh.updateDrawGroups(targetBuffer)
 

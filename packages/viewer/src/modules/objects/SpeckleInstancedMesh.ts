@@ -73,6 +73,7 @@ export default class SpeckleInstancedMesh extends Group {
   constructor(geometry: BufferGeometry) {
     super()
     this.instanceGeometry = geometry
+    this.userData.raycastChildren = false
   }
 
   public setBatchMaterial(material: Material) {
