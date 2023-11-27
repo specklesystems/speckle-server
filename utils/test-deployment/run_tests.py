@@ -65,7 +65,7 @@ print("Frontend accessible")
 client = SpeckleClient(
     SPECKLE_SERVER,
     use_ssl=SPECKLE_SERVER.startswith("https://"),
-    certificate_verification=VERIFY_CERTIFICATE,
+    verify_certificate=VERIFY_CERTIFICATE,
 )
 server_info = client.server.get()
 assert isinstance(server_info, ServerInfo), "GraphQL ServerInfo query error"
