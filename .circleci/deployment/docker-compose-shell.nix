@@ -3,5 +3,6 @@
 pkgs.mkShell {
   buildInputs = [
     pkgs.docker
+    pkgs.tilt
   ];
 }
