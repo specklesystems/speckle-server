@@ -77,6 +77,7 @@ helm_repo('prometheus-repo',
 helm_resource('prometheus',
             release_name='prometheus-operator-crds',
             namespace='prometheus',
+            resource_deps=['prometheus-repo'],
             chart='prometheus-repo/prometheus-operator-crds',
             flags=['--version=^7.0.0',
                     '--values=./values/prometheus-operator-crds.values.yaml',
@@ -94,13 +95,14 @@ helm_resource('ingress-nginx',
             flags=['--version=^4.8.0',
                     '--values=./values/nginx.values.yaml',
                     '--kube-context=kind-speckle-server'],
-            resource_deps=['postgresql', 'minio', 'redis'],
+            resource_deps=['postgresql', 'minio', 'redis', 'ingress-nginx-repo'],
             labels=['speckle-dependencies'])
 
 # helm_repo('speckle-server-repo',
 #           'https://specklesystems.github.io/helm')
 # helm_resource('speckle-server',
 #             release_name='speckle-server',
+#             resource_deps=['speckle-server-repo'],
 #             namespace='speckle-server',
 #             chart='speckle-server-repo/speckle-server',
 #             flags=['--values=./values/speckle-server.values.yaml'])
