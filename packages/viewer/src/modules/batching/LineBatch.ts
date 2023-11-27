@@ -19,10 +19,11 @@ import {
   Batch,
   BatchUpdateRange,
   GeometryType,
-  HideAllBatchUpdateRange
+  NoneBatchUpdateRange
 } from './Batch'
 import { ObjectLayers } from '../../IViewer'
 import { DrawGroup } from './InstancedMeshBatch'
+import Materials from '../materials/Materials'
 
 export default class LineBatch implements Batch {
   public id: string
@@ -88,8 +89,8 @@ export default class LineBatch implements Batch {
   public setVisibleRange(...ranges: BatchUpdateRange[]) {
     if (
       ranges.length === 1 &&
-      ranges[0].offset === HideAllBatchUpdateRange.offset &&
-      ranges[0].count === HideAllBatchUpdateRange.count
+      ranges[0].offset === NoneBatchUpdateRange.offset &&
+      ranges[0].count === NoneBatchUpdateRange.count
     ) {
       this.mesh.visible = false
       return
@@ -127,6 +128,19 @@ export default class LineBatch implements Batch {
   public getVisibleRange() {
     return AllBatchUpdateRange
     // TO DO if required
+  }
+
+  public getOpaque(): BatchUpdateRange {
+    if (Materials.isOpaque(this.batchMaterial)) return AllBatchUpdateRange
+    return NoneBatchUpdateRange
+  }
+  public getTransparent(): BatchUpdateRange {
+    if (Materials.isTransparent(this.batchMaterial)) return AllBatchUpdateRange
+    return NoneBatchUpdateRange
+  }
+  public getStencil(): BatchUpdateRange {
+    if (this.batchMaterial.stencilWrite === true) return AllBatchUpdateRange
+    return NoneBatchUpdateRange
   }
 
   public setBatchBuffers(...ranges: BatchUpdateRange[]): void {

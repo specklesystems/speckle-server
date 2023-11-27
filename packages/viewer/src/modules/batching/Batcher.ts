@@ -3,13 +3,7 @@ import MeshBatch from './MeshBatch'
 import LineBatch from './LineBatch'
 import Materials, { FilterMaterialType } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import {
-  AllBatchUpdateRange,
-  Batch,
-  BatchUpdateRange,
-  GeometryType,
-  HideAllBatchUpdateRange
-} from './Batch'
+import { Batch, BatchUpdateRange, GeometryType, NoneBatchUpdateRange } from './Batch'
 import PointBatch from './PointBatch'
 import { Material, WebGLRenderer } from 'three'
 import Logger from 'js-logger'
@@ -337,7 +331,7 @@ export default class Batcher {
       const batch: Batch = this.batches[k]
       const range = ranges[k]
       if (!range) {
-        batch.setVisibleRange(HideAllBatchUpdateRange)
+        batch.setVisibleRange(NoneBatchUpdateRange)
       } else {
         batch.setVisibleRange(range)
       }
@@ -347,27 +341,7 @@ export default class Batcher {
   public getTransparent(): Record<string, BatchUpdateRange> {
     const visibilityRanges = {}
     for (const k in this.batches) {
-      const batch: Batch = this.batches[k]
-      if (batch.groups.length === 0) {
-        if (Materials.isTransparent(batch.batchMaterial))
-          visibilityRanges[k] = AllBatchUpdateRange
-      } else {
-        const transparentGroup = batch.groups.find((value) => {
-          return Materials.isTransparent(batch.materials[value.materialIndex])
-        })
-        const hiddenGroup = batch.groups.find((value) => {
-          return batch.materials[value.materialIndex].visible === false
-        })
-        if (transparentGroup) {
-          visibilityRanges[k] = {
-            offset: transparentGroup.start,
-            count:
-              hiddenGroup !== undefined
-                ? hiddenGroup.start
-                : batch.getCount() - transparentGroup.start
-          }
-        }
-      }
+      visibilityRanges[k] = this.batches[k].getTransparent()
     }
     return visibilityRanges
   }
@@ -375,21 +349,7 @@ export default class Batcher {
   public getStencil(): Record<string, BatchUpdateRange> {
     const visibilityRanges = {}
     for (const k in this.batches) {
-      const batch: Batch = this.batches[k]
-      if (batch.groups.length === 0) {
-        if (batch.batchMaterial.stencilWrite === true)
-          visibilityRanges[k] = AllBatchUpdateRange
-      } else {
-        const stencilGroup = batch.groups.find((value) => {
-          return batch.materials[value.materialIndex].stencilWrite === true
-        })
-        if (stencilGroup) {
-          visibilityRanges[k] = {
-            offset: stencilGroup.start,
-            count: stencilGroup.count
-          }
-        }
-      }
+      visibilityRanges[k] = this.batches[k].getStencil()
     }
     return visibilityRanges
   }
@@ -397,25 +357,7 @@ export default class Batcher {
   public getOpaque(): Record<string, BatchUpdateRange> {
     const visibilityRanges = {}
     for (const k in this.batches) {
-      const batch: Batch = this.batches[k]
-      if (batch.groups.length === 0) {
-        if (Materials.isOpaque(batch.batchMaterial as Material))
-          visibilityRanges[k] = AllBatchUpdateRange
-      } else {
-        const transparentOrHiddenGroup = batch.groups.find((value) => {
-          return (
-            Materials.isTransparent(batch.materials[value.materialIndex]) ||
-            batch.materials[value.materialIndex].visible === false
-          )
-        })
-        visibilityRanges[k] = {
-          offset: 0,
-          count:
-            transparentOrHiddenGroup !== undefined
-              ? transparentOrHiddenGroup.start
-              : batch.getCount()
-        }
-      }
+      visibilityRanges[k] = this.batches[k].getOpaque()
     }
     return visibilityRanges
   }

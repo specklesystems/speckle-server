@@ -18,7 +18,7 @@ import {
   Batch,
   BatchUpdateRange,
   GeometryType,
-  HideAllBatchUpdateRange
+  NoneBatchUpdateRange
 } from './Batch'
 import SpeckleInstancedMesh from '../objects/SpeckleInstancedMesh'
 import { ObjectLayers } from '../../IViewer'
@@ -28,6 +28,7 @@ import {
 } from '../objects/AccelerationStructure'
 import { InstancedBatchObject } from './InstancedBatchObject'
 import Logger from 'js-logger'
+import Materials from '../materials/Materials'
 
 export interface DrawGroup {
   start: number
@@ -121,35 +122,104 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public setVisibleRange(...ranges: BatchUpdateRange[]) {
-    if (ranges.length === 1 && ranges[0].offset === 0 && ranges[0].count === 0) {
+    /** Entire batch needs to NOT be drawn */
+    if (ranges.length === 1 && ranges[0] === NoneBatchUpdateRange) {
       this.mesh.children.forEach((instance) => (instance.visible = false))
       return
     }
-    this.mesh.children.forEach((instance) => (instance.visible = true))
-    // if (
-    //   ranges.length === 1 &&
-    //   ranges[0].offset === AllBatchUpdateRange.offset &&
-    //   ranges[0].count === AllBatchUpdateRange.count
-    // ) {
-    //   this.mesh.children.forEach((instance) => (instance.visible = true))
-    //   return
-    // }
+    /** Entire batch needs to BE drawn */
+    if (ranges.length === 1 && ranges[0] === AllBatchUpdateRange) {
+      this.mesh.children.forEach((instance) => (instance.visible = true))
+      return
+    }
 
-    // ranges.forEach((range) => {
-    //   const instanceIndex = this.groups.indexOf(
-    //     this.groups.find(
-    //       (group: DrawGroup) =>
-    //         range.offset >= group.start &&
-    //         range.offset + range.count <= group.start + group.count
-    //     )
-    //   )
-    //   this.mesh.children[instanceIndex].visible = true
-    // })
+    this.mesh.children.forEach((instance) => (instance.visible = false))
+    ranges.forEach((range) => {
+      const instanceIndex = this.groups.indexOf(
+        this.groups.find(
+          (group: DrawGroup) =>
+            range.offset >= group.start &&
+            range.offset + range.count <= group.start + group.count
+        )
+      )
+      if (instanceIndex !== -1) this.mesh.children[instanceIndex].visible = true
+    })
   }
 
   public getVisibleRange(): BatchUpdateRange {
-    if (this.mesh.visible) return AllBatchUpdateRange
-    return HideAllBatchUpdateRange
+    if (!this.mesh.children[0].visible) return NoneBatchUpdateRange
+    for (let k = 0; k < this.mesh.children.length; k++) {
+      if (!this.mesh.children[k].visible) {
+        return {
+          offset: 0,
+          count: k * 16
+        }
+      }
+    }
+    return AllBatchUpdateRange
+  }
+
+  public getOpaque(): BatchUpdateRange {
+    /** If there is any transparent or hidden group return the update range up to it's offset */
+    const transparentOrHiddenGroup = this.groups.find((value) => {
+      return (
+        Materials.isTransparent(this.materials[value.materialIndex]) ||
+        this.materials[value.materialIndex].visible === false
+      )
+    })
+
+    if (transparentOrHiddenGroup) {
+      return {
+        offset: 0,
+        count: transparentOrHiddenGroup.start
+      }
+    }
+    /** Entire batch is opaque */
+    return AllBatchUpdateRange
+  }
+
+  public getTransparent(): BatchUpdateRange {
+    /** Look for a transparent group */
+    const transparentGroup = this.groups.find((value) => {
+      return Materials.isTransparent(this.materials[value.materialIndex])
+    })
+    /** Look for a hidden group */
+    const hiddenGroup = this.groups.find((value) => {
+      return this.materials[value.materialIndex].visible === false
+    })
+    /** If there is a transparent group return it's range */
+    if (transparentGroup) {
+      const offset = transparentGroup.start
+      const count =
+        hiddenGroup !== undefined
+          ? hiddenGroup.start
+          : this.getCount() - transparentGroup.start
+      if (offset === 0 && count === this.getCount()) return AllBatchUpdateRange
+      return {
+        offset,
+        count
+      }
+    }
+    /** Entire batch is not transparent */
+    return NoneBatchUpdateRange
+  }
+
+  public getStencil(): BatchUpdateRange {
+    /** If there is a single group and it's material writes to stencil, return all */
+    if (this.groups.length === 1) {
+      if (this.materials[0].stencilWrite === true) return AllBatchUpdateRange
+    }
+    const stencilGroup = this.groups.find((value) => {
+      return this.materials[value.materialIndex].stencilWrite === true
+    })
+    if (stencilGroup) {
+      return {
+        offset: stencilGroup.start,
+        count: stencilGroup.count
+      }
+    }
+    /** No stencil group */
+    return NoneBatchUpdateRange
   }
 
   public setBatchBuffers(...range: BatchUpdateRange[]): void {

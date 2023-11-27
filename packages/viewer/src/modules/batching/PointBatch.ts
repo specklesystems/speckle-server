@@ -15,11 +15,12 @@ import {
   Batch,
   BatchUpdateRange,
   GeometryType,
-  HideAllBatchUpdateRange
+  NoneBatchUpdateRange
 } from './Batch'
 import Logger from 'js-logger'
 import { ObjectLayers } from '../../IViewer'
 import { DrawGroup } from './InstancedMeshBatch'
+import Materials from '../materials/Materials'
 
 export default class PointBatch implements Batch {
   public id: string
@@ -88,11 +89,21 @@ export default class PointBatch implements Batch {
   }
 
   public setVisibleRange(...ranges: BatchUpdateRange[]) {
-    if (ranges.length === 1 && ranges[0] === HideAllBatchUpdateRange) {
+    /** Entire batch needs to NOT be drawn */
+    if (ranges.length === 1 && ranges[0] === NoneBatchUpdateRange) {
       this.geometry.setDrawRange(0, 0)
+      /** We unset the 'visible' flag, otherwise three.js will still run pointless buffer binding commands*/
       this.mesh.visible = false
       return
     }
+    /** Entire batch needs to BE drawn */
+    if (ranges.length === 1 && ranges[0] === AllBatchUpdateRange) {
+      this.geometry.setDrawRange(0, this.getCount())
+      this.mesh.visible = true
+      return
+    }
+
+    /** Parts of the batch need to be visible. We get the min/max offset and total count */
     let minOffset = Infinity
     let maxOffset = 0
     ranges.forEach((range) => {
@@ -107,8 +118,77 @@ export default class PointBatch implements Batch {
     this.mesh.visible = true
   }
 
-  public getVisibleRange() {
+  public getVisibleRange(): BatchUpdateRange {
+    /** Entire batch is visible */
+    if (this.geometry.groups.length === 1 && this.mesh.visible)
+      return AllBatchUpdateRange
+    /** Entire batch is hidden */
+    if (!this.mesh.visible) return NoneBatchUpdateRange
+    /** Parts of the batch are visible */
+    return {
+      offset: this.geometry.drawRange.start,
+      count: this.geometry.drawRange.count
+    }
+  }
+
+  public getOpaque(): BatchUpdateRange {
+    /** If there is any transparent or hidden group return the update range up to it's offset */
+    const transparentOrHiddenGroup = this.groups.find((value) => {
+      return (
+        Materials.isTransparent(this.materials[value.materialIndex]) ||
+        this.materials[value.materialIndex].visible === false
+      )
+    })
+
+    if (transparentOrHiddenGroup) {
+      return {
+        offset: 0,
+        count: transparentOrHiddenGroup.start
+      }
+    }
+    /** Entire batch is opaque */
     return AllBatchUpdateRange
+  }
+
+  public getTransparent(): BatchUpdateRange {
+    /** Look for a transparent group */
+    const transparentGroup = this.groups.find((value) => {
+      return Materials.isTransparent(this.materials[value.materialIndex])
+    })
+    /** Look for a hidden group */
+    const hiddenGroup = this.groups.find((value) => {
+      return this.materials[value.materialIndex].visible === false
+    })
+    /** If there is a transparent group return it's range */
+    if (transparentGroup) {
+      return {
+        offset: transparentGroup.start,
+        count:
+          hiddenGroup !== undefined
+            ? hiddenGroup.start
+            : this.getCount() - transparentGroup.start
+      }
+    }
+    /** Entire batch is not transparent */
+    return NoneBatchUpdateRange
+  }
+
+  public getStencil(): BatchUpdateRange {
+    /** If there is a single group and it's material writes to stencil, return all */
+    if (this.groups.length === 1) {
+      if (this.materials[0].stencilWrite === true) return AllBatchUpdateRange
+    }
+    const stencilGroup = this.groups.find((value) => {
+      return this.materials[value.materialIndex].stencilWrite === true
+    })
+    if (stencilGroup) {
+      return {
+        offset: stencilGroup.start,
+        count: stencilGroup.count
+      }
+    }
+    /** No stencil group */
+    return NoneBatchUpdateRange
   }
 
   public setBatchBuffers(...range: BatchUpdateRange[]): void {

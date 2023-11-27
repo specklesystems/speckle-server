@@ -2,11 +2,18 @@
 import { Box3, Material, Object3D, WebGLRenderer } from 'three'
 
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { AllBatchUpdateRange, Batch, BatchUpdateRange, GeometryType } from './Batch'
+import {
+  AllBatchUpdateRange,
+  Batch,
+  BatchUpdateRange,
+  GeometryType,
+  NoneBatchUpdateRange
+} from './Batch'
 
 import { SpeckleText } from '../objects/SpeckleText'
 import { ObjectLayers } from '../../IViewer'
 import { DrawGroup } from './InstancedMeshBatch'
+import Materials from '../materials/Materials'
 
 export default class TextBatch implements Batch {
   public id: string
@@ -77,6 +84,19 @@ export default class TextBatch implements Batch {
     return AllBatchUpdateRange
   }
 
+  public getOpaque(): BatchUpdateRange {
+    if (Materials.isOpaque(this.batchMaterial)) return AllBatchUpdateRange
+    return NoneBatchUpdateRange
+  }
+  public getTransparent(): BatchUpdateRange {
+    if (Materials.isTransparent(this.batchMaterial)) return AllBatchUpdateRange
+    return NoneBatchUpdateRange
+  }
+  public getStencil(): BatchUpdateRange {
+    if (this.batchMaterial.stencilWrite === true) return AllBatchUpdateRange
+    return NoneBatchUpdateRange
+  }
+
   public setBatchBuffers(...range: BatchUpdateRange[]): void {
     throw new Error('Method not implemented.')
   }
@@ -107,7 +127,7 @@ export default class TextBatch implements Batch {
     this.renderViews[0].setBatchData(
       this.id,
       0,
-      this.mesh.textMesh.geometry.index.length / 3
+      this.mesh.textMesh.geometry.index.count / 3
     )
     this.mesh.textMesh.material = this.batchMaterial
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_TEXT)

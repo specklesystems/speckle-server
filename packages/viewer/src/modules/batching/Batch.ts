@@ -36,6 +36,9 @@ export interface Batch {
   getRenderView(index: number): NodeRenderView
   getMaterialAtIndex(index: number): Material
   getMaterial(rv: NodeRenderView): Material
+  getOpaque(): BatchUpdateRange
+  getTransparent(): BatchUpdateRange
+  getStencil(): BatchUpdateRange
   onUpdate(deltaTime: number)
   onRender(renderer: WebGLRenderer)
   purge()
@@ -48,7 +51,7 @@ export interface BatchUpdateRange {
   materialOptions?: FilterMaterialOptions
 }
 
-export const HideAllBatchUpdateRange = {
+export const NoneBatchUpdateRange = {
   offset: 0,
   count: 0
 } as BatchUpdateRange
