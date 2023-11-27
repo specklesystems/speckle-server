@@ -318,7 +318,7 @@ const sectionBoxShortcut = ref(
   `Section Box (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'b'])})`
 )
 const measureShortcut = ref(
-  `Measure Mode (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'n'])})`
+  `Measure Mode (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'd'])})`
 )
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
@@ -340,7 +340,7 @@ onKeyboardShortcut([ModifierKeys.AltOrOpt], 'f', () => {
 onKeyboardShortcut([ModifierKeys.AltOrOpt], ['t'], () => {
   toggleActiveControl('discussions')
 })
-onKeyboardShortcut([ModifierKeys.AltOrOpt], 'n', () => {
+onKeyboardShortcut([ModifierKeys.AltOrOpt], 'd', () => {
   toggleActiveControl('measurements')
 })
 
