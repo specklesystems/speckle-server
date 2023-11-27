@@ -2,7 +2,7 @@
   <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
     <template #title>Measure Mode</template>
     <div
-      class="flex items-center gap-2 text-sm p-3 border-b border-outline-3 text-foreground-2"
+      class="flex items-center gap-2 text-sm px-3 py-2 border-b border-outline-3 text-foreground-2"
     >
       <InformationCircleIcon class="h-8 h-8 shrink-0" />
       <span class="max-w-[210px]">
