@@ -63,6 +63,8 @@ spec:
             value: {{ .Values.file_size_limit_mb | quote }}
           - name: NUXT_PUBLIC_API_ORIGIN
             value: {{ .Values.ssl_canonical_url | ternary (printf "https://%s" .Values.domain) (printf "http://%s" .Values.domain) }}
+          - name: NUXT_PUBLIC_BACKEND_API_ORIGIN
+            value: {{ printf "%s.%s.svc.cluster.local." (include "server.name" $) .Values.namespace }}
           - name: NUXT_PUBLIC_MIXPANEL_TOKEN_ID
             value: {{ .Values.analytics.mixpanel_token_id }}
           - name: NUXT_PUBLIC_MIXPANEL_API_HOST
