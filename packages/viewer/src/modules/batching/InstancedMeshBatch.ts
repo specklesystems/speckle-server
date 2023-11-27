@@ -121,33 +121,30 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public setVisibleRange(...ranges: BatchUpdateRange[]) {
-    if (ranges.length === 1 && ranges[0] === HideAllBatchUpdateRange) {
-      this.mesh.visible = false
+    if (ranges.length === 1 && ranges[0].offset === 0 && ranges[0].count === 0) {
+      this.mesh.children.forEach((instance) => (instance.visible = false))
       return
     }
-    this.mesh.visible = true
+    this.mesh.children.forEach((instance) => (instance.visible = true))
     // if (
     //   ranges.length === 1 &&
     //   ranges[0].offset === AllBatchUpdateRange.offset &&
     //   ranges[0].count === AllBatchUpdateRange.count
     // ) {
-    //   this.geometry.setDrawRange(0, this.getCount())
-    //   this.mesh.visible = true
+    //   this.mesh.children.forEach((instance) => (instance.visible = true))
     //   return
     // }
 
-    // let minOffset = Infinity
-    // let maxOffset = 0
     // ranges.forEach((range) => {
-    //   minOffset = Math.min(minOffset, range.offset)
-    //   maxOffset = Math.max(maxOffset, range.offset)
+    //   const instanceIndex = this.groups.indexOf(
+    //     this.groups.find(
+    //       (group: DrawGroup) =>
+    //         range.offset >= group.start &&
+    //         range.offset + range.count <= group.start + group.count
+    //     )
+    //   )
+    //   this.mesh.children[instanceIndex].visible = true
     // })
-
-    // this.geometry.setDrawRange(
-    //   minOffset,
-    //   maxOffset - minOffset + ranges.find((val) => val.offset === maxOffset).count
-    // )
-    // this.mesh.visible = true
   }
 
   public getVisibleRange(): BatchUpdateRange {

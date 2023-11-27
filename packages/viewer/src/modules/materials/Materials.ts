@@ -873,7 +873,7 @@ export default class Materials {
     materialData: RenderMaterial & DisplayStyle
   ): Material {
     const materialHash = Materials.getMaterialHash(renderView, materialData)
-    return this.getMaterial(materialHash, materialData, renderView.geometryType)
+    return this.getMaterial(materialHash, materialData, renderView.geometryType, false)
   }
 
   public getFilterMaterialOptions(

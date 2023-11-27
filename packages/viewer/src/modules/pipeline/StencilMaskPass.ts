@@ -29,7 +29,7 @@ export class StencilMaskPass extends BaseSpecklePass implements SpecklePass {
   public constructor() {
     super()
     this.overrideMaterial = new SpeckleDisplaceMaterial({ color: 0x04a5fb }, [
-      'USE_RTE'
+      /*'USE_RTE'*/
     ])
     this.overrideMaterial.userData.displacement.value = 2
     this.overrideMaterial.colorWrite = true

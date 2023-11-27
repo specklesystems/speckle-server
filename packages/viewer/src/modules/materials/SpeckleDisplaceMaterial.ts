@@ -17,7 +17,7 @@ class SpeckleDisplaceMaterial extends SpeckleBasicMaterial {
     return { ...super.uniformsDef, size: new Vector2(), displacement: 0 }
   }
 
-  constructor(parameters, defines = ['USE_RTE']) {
+  constructor(parameters, defines) {
     super(parameters, defines)
   }
 
