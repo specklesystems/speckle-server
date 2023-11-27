@@ -1,0 +1,22 @@
+print('🚀 Deploying Speckle Server into Docker via Tilt...')
+
+IS_CI = os.getenv('CI', "false") == "true"
+if IS_CI:
+  symbols = load_dynamic('./Tiltfile.ci')
+else:
+  symbols = load_dynamic('./Tiltfile.local')
+
+docker_compose('../../docker-compose-deps.yml')
+dc_resource('postgres', labels=['dependencies'])
+dc_resource('redis', labels=['dependencies'])
+dc_resource('minio', labels=['dependencies'])
+dc_resource('maildev', labels=['dependencies'])
+dc_resource('postgres', labels=['dependencies'])
+docker_compose('../../docker-compose-speckle.yml')
+dc_resource('speckle-server', resource_deps=['postgres', 'redis', 'minio', 'maildev'], labels=['speckle'])
+dc_resource('speckle-frontend', resource_deps=[], labels=['speckle'])
+dc_resource('preview-service', resource_deps=['postgres'], labels=['speckle'])
+dc_resource('fileimport-service', resource_deps=[], labels=['speckle'])
+dc_resource('webhook-service', resource_deps=['postgres'], labels=['speckle'])
+docker_compose('../../docker-compose-test.yml')
+dc_resource('test', resource_deps=['speckle-server', 'speckle-frontend'], labels=['test']) # --exit-code-from test

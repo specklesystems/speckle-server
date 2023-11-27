@@ -1,4 +1,4 @@
-print('🚀 Deploying Speckle Server via Tilt...')
+print('🚀 Deploying Speckle Server into a Kind Cluster via Tilt...')
 
 # we limit tilt to run only on the kind cluster
 allow_k8s_contexts(['kind-speckle-server'])

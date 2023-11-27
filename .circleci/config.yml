@@ -716,10 +716,7 @@ jobs:
           key: nix-{{ checksum "./.circleci/deployment/docker-compose-shell.nix" }}
           paths:
             - /nix
-      - run: nix-shell --run "docker compose --file docker-compose-deps.yml up --detach" ./.circleci/deployment/docker-compose-shell.nix
-      - run: nix-shell --run "docker compose --file docker-compose-speckle.yml up --detach" ./.circleci/deployment/docker-compose-shell.nix
-      - run: nix-shell --run "docker compose --file docker-compose-test.yml up --exit-code-from test" ./.circleci/deployment/docker-compose-shell.nix
-      #TODO deploy a container which runs smoke or e2e tests
+      - run: nix-shell --run "tilt up --file ./.circleci/deployment/Tiltfile.dockercompose" ./.circleci/deployment/docker-compose-shell.nix
 
   deployment-test-helm-chart:
     machine:
