@@ -716,6 +716,7 @@ jobs:
           key: nix-{{ checksum "./.circleci/deployment/docker-compose-shell.nix" }}
           paths:
             - /nix
+      - run: cat workspace/env-vars >> $BASH_ENV
       - run: nix-shell --run "tilt ci --file ./.circleci/deployment/Tiltfile.dockercompose" ./.circleci/deployment/docker-compose-shell.nix
 
   deployment-test-helm-chart:
