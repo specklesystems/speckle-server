@@ -855,6 +855,9 @@ frontend_2:
   ## @param frontend_2.logClientApiEndpoint SEQ endpoint URL
   ##
   logClientApiEndpoint: ''
+  ## @param frontend_2.backend_api_origin The url of the speckle server component to which the frontend_2 component will connect. Defaults to {server name}.{namespace}.svc.cluster.local.
+  ##
+  backend_api_origin: ''
   ## @param frontend_2.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'

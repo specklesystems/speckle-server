@@ -1304,6 +1304,11 @@
           "description": "SEQ endpoint URL",
           "default": ""
         },
+        "backend_api_origin": {
+          "type": "string",
+          "description": "The url of the speckle server component to which the frontend_2 component will connect. Defaults to {server name}.{namespace}.svc.cluster.local.",
+          "default": ""
+        },
         "logLevel": {
           "type": "string",
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
