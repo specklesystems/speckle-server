@@ -754,16 +754,6 @@ jobs:
       - run: echo "export KUBECONFIG=$(pwd)/.kube/config" >> "${BASH_ENV}"
       - run: echo "${KUBECONFIG}"
       - run:
-          name: Install dependencies via yarn
-          command: |
-            nix-shell \
-            --run "yarn" \
-            ./.circleci/deployment/helm-chart-shell.nix
-      - save_cache:
-          key: yarn-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-      - run:
           name: Template Helm Chart
           command: |
             nix-shell \
@@ -792,14 +782,14 @@ jobs:
           name: Deploy Kubernetes (kind) cluster
           command: |
             nix-shell \
-            --run "yarn dev:kind:up" \
+            --run "ctlptl apply --filename ./.circleci/deployment/cluster-config.yaml" \
             ./.circleci/deployment/helm-chart-shell.nix
 
       - run:
           name: Deploy Kubernetes resources to cluster
           command: |
             nix-shell \
-            --run "yarn dev:kind:helm:ci" \
+            --run "tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
             ./.circleci/deployment/helm-chart-shell.nix
 
   docker-build: &build-job
