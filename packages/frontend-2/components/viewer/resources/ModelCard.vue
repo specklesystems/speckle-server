@@ -9,12 +9,7 @@
       }`"
     >
       <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-      <div
-        :class="`${
-          showVersions ? 'bg-primary' : 'bg-foundation hover:bg-primary-muted'
-        } group sticky cursor-pointer top-0 z-20 flex h-20 min-w-0 max-w-full items-center justify-between space-x-2 p-2 transition select-none`"
-        @click="showVersions = !showVersions"
-      >
+      <div :class="clickElementClasses" @click="showVersions = !showVersions">
         <div>
           <UserAvatar :user="loadedVersion?.authorUser" />
         </div>
@@ -119,6 +114,7 @@ import {
 } from '~~/lib/common/generated/gql/graphql'
 import { Get } from 'type-fest'
 import {
+  useInjectedViewerInterfaceState,
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
@@ -139,6 +135,9 @@ const props = defineProps<{
 const { switchModelToVersion } = useInjectedViewerRequestedResources()
 const { loadMoreVersions } = useInjectedViewerLoadedResources()
 const { diffModelVersions } = useDiffUtilities()
+const {
+  filters: { modelSelectionTree }
+} = useInjectedViewerInterfaceState()
 
 const showVersions = ref(false)
 
@@ -178,6 +177,7 @@ const latestVersion = computed(() => {
 })
 
 const isLatest = computed(() => loadedVersion.value?.id === latestVersion.value.id)
+const isModelSelected = computed(() => !!modelSelectionTree.value[modelId.value])
 
 const timeAgoCreatedAt = computed(() =>
   dayjs(loadedVersion.value?.createdAt).from(dayjs())
@@ -204,6 +204,24 @@ const modelName = computed(() => {
       header: props.model.name
     }
   }
+})
+
+const clickElementClasses = computed(() => {
+  const classParts = [
+    'group sticky cursor-pointer top-0 z-20 flex h-20 min-w-0 max-w-full items-center justify-between space-x-2 p-2 transition select-none'
+  ]
+
+  if (showVersions.value) {
+    classParts.push('bg-primary')
+  } else {
+    classParts.push(
+      isModelSelected.value
+        ? 'bg-primary-muted'
+        : 'bg-foundation hover:bg-primary-muted'
+    )
+  }
+
+  return classParts.join(' ')
 })
 
 async function handleVersionChange(versionId: string) {
