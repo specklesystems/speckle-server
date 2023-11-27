@@ -5,7 +5,7 @@
       <div
         v-for="(option, index) in options"
         :key="index"
-        class="flex items-center gap-2"
+        class="flex items-center gap-3"
       >
         <input
           :id="`option-${index}`"
@@ -15,12 +15,10 @@
           class="cursor-pointer h-[12px] w-[12px] bg-foundation border-foundation ring-[1.5px] ring-primary checked:ring-primary-focus focus:ring-offset-foundation focus:outline-primary-focus"
         />
         <label
-          class="flex items-center gap-1 text-xs text-foreground cursor-pointer"
+          class="flex items-center gap-1.5 text-xs text-foreground cursor-pointer"
           :for="`option-${index}`"
         >
-          <div v-if="option.icon" class="h-9 w-9">
-            <Component :is="option.icon" />
-          </div>
+          <Component :is="option.icon" v-if="option.icon" class="h-9 w-9" />
           {{ option.title }}
         </label>
       </div>

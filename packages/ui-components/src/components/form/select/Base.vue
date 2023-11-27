@@ -77,6 +77,7 @@
         >
           <Teleport to="body" :disabled="!mountMenuOnBody">
             <ListboxOptions
+              ref="menuEl"
               :class="listboxOptionsClasses"
               :style="listboxOptionsStyle"
               @focus="searchInput?.focus()"
@@ -214,7 +215,7 @@ import { RuleExpression, useField } from 'vee-validate'
 import { nanoid } from 'nanoid'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import { directive as vTippy } from 'vue-tippy'
-import { useElementBounding, useMounted } from '@vueuse/core'
+import { useElementBounding, useMounted, useIntersectionObserver } from '@vueuse/core'
 
 type ButtonStyle = 'base' | 'simple' | 'tinted'
 type ValueType = SingleItem | SingleItem[] | undefined
@@ -405,6 +406,7 @@ const { value, errorMessage: error } = useField<ValueType>(props.name, props.rul
 const isMounted = useMounted()
 
 const searchInput = ref(null as Nullable<HTMLInputElement>)
+const menuEl = ref(null as Nullable<{ el: Nullable<HTMLElement> }>)
 const listboxButton = ref(null as Nullable<{ el: Nullable<HTMLButtonElement> }>)
 const searchValue = ref('')
 const currentItems = ref([]) as Ref<SingleItem[]>
@@ -415,6 +417,15 @@ const internalHelpTipId = ref(nanoid())
 const listboxButtonBounding = useElementBounding(
   computed(() => listboxButton.value?.el),
   { windowResize: true, windowScroll: true, immediate: true }
+)
+
+useIntersectionObserver(
+  computed(() => menuEl.value?.el),
+  ([{ isIntersecting }]) => {
+    if (isIntersecting && props.mountMenuOnBody) {
+      listboxButtonBounding.update()
+    }
+  }
 )
 
 const title = computed(() => unref(props.label) || unref(props.name))

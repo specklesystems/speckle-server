@@ -72,6 +72,7 @@ import { InformationCircleIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
 import { MeasurementType } from '@speckle/viewer'
 import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
+import { resolveComponent } from 'vue'
 
 interface MeasurementTypeOption {
   title: string
@@ -117,12 +118,12 @@ const onChangeMeasurementPrecision = () => {
 const measurementTypeOptions = [
   {
     title: 'Point to Point',
-    icon: TrashIcon,
+    icon: resolveComponent('IconMeasurePointToPoint'),
     value: MeasurementType.POINTTOPOINT
   },
   {
     title: 'Perpendicular',
-    icon: TrashIcon,
+    icon: resolveComponent('IconMeasurePerpendicular'),
     value: MeasurementType.PERPENDICULAR
   }
 ]
