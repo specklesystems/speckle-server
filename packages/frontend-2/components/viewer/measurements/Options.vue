@@ -2,10 +2,12 @@
   <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
     <template #title>Measure Mode</template>
     <div
-      class="flex items-center gap-3 text-sm p-3 border-b border-outline-3 text-foreground-2"
+      class="flex items-center gap-2 text-sm p-3 border-b border-outline-3 text-foreground-2"
     >
-      <InformationCircleIcon class="h-9 h-9" />
-      Reloading the model will delete all measurements.
+      <InformationCircleIcon class="h-8 h-8 shrink-0" />
+      <span class="max-w-[210px]">
+        Reloading the model will delete all measurements.
+      </span>
     </div>
     <template #actions>
       <FormButton
@@ -72,7 +74,7 @@ import { InformationCircleIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
 import { MeasurementType } from '@speckle/viewer'
 import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
-import { resolveComponent } from 'vue'
+import { resolveComponent, ConcreteComponent } from 'vue'
 
 interface MeasurementTypeOption {
   title: string
@@ -115,15 +117,22 @@ const onChangeMeasurementPrecision = () => {
   setMeasurementOptions(measurementParams.value)
 }
 
+const IconPointToPoint = resolveComponent(
+  'IconMeasurePointToPoint'
+) as ConcreteComponent
+const IconPerpendicular = resolveComponent(
+  'IconMeasurePerpendicular'
+) as ConcreteComponent
+
 const measurementTypeOptions = [
   {
     title: 'Point to Point',
-    icon: resolveComponent('IconMeasurePointToPoint'),
+    icon: IconPointToPoint,
     value: MeasurementType.POINTTOPOINT
   },
   {
     title: 'Perpendicular',
-    icon: resolveComponent('IconMeasurePerpendicular'),
+    icon: IconPerpendicular,
     value: MeasurementType.PERPENDICULAR
   }
 ]
