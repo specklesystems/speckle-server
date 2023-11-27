@@ -42,9 +42,16 @@ spec:
               number: 8080
       {{- end }}
       - pathType: Exact
-        path: "/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*)|(static/.*))"
+        path: "/(graphql|explorer|(auth/.*)|(preview/.*)|(static/.*))"
         backend:
           service:
             name: speckle-server
+            port:
+              number: 3000
+      - pathType: Exact
+        path: "/((objects/.*)|(api/.*))"
+        backend:
+          service:
+            name: speckle-objects
             port:
               number: 3000

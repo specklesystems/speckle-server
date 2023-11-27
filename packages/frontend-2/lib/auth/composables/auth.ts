@@ -52,10 +52,7 @@ export const useAuthCookie = () =>
   })
 
 export const useAuthManager = () => {
-  const {
-    public: { apiOrigin }
-  } = useRuntimeConfig()
-
+  const apiOrigin = useApiOrigin()
   const resetAuthState = useResetAuthState()
   const route = useRoute()
   const goHome = useNavigateToHome()

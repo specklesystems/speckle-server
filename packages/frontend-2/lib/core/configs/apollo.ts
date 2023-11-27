@@ -376,8 +376,9 @@ function createLink(params: {
 
 const defaultConfigResolver: ApolloConfigResolver = async () => {
   const {
-    public: { apiOrigin, speckleServerVersion = 'unknown' }
+    public: { speckleServerVersion = 'unknown' }
   } = useRuntimeConfig()
+  const apiOrigin = useApiOrigin()
   const nuxtApp = useNuxtApp()
 
   const httpEndpoint = `${apiOrigin}/graphql`

@@ -288,9 +288,9 @@ export function useSelectionEvents(
 }
 
 export function useGetObjectUrl() {
-  const config = useRuntimeConfig()
+  const apiOrigin = useApiOrigin()
   return (projectId: string, objectId: string) =>
-    `${config.public.apiOrigin}/streams/${projectId}/objects/${objectId}`
+    `${apiOrigin}/streams/${projectId}/objects/${objectId}`
 }
 
 export function useOnViewerLoadComplete(
