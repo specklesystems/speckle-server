@@ -4,7 +4,7 @@
     <div
       class="flex items-center gap-2 text-sm px-3 py-2 border-b border-outline-3 text-foreground-2"
     >
-      <InformationCircleIcon class="h-8 h-8 shrink-0" />
+      <InformationCircleIcon class="h-6 h-6 shrink-0" />
       <span class="max-w-[210px]">
         Reloading the model will delete all measurements.
       </span>
@@ -18,7 +18,7 @@
         class="font-normal py-1"
         @click="removeMeasurement"
       >
-        Delete Measurement
+        Delete Selected
       </FormButton>
     </template>
     <div class="p-3 flex flex-col gap-3 border-b border-outline-3">
@@ -39,7 +39,7 @@
         :model-value="measurementParams.vertexSnap"
         @update:model-value="() => toggleMeasurementsSnap()"
       />
-      <span class="font-normal text-sm">Snap to Objects</span>
+      <span class="font-normal text-sm">Snap to Vertices</span>
     </div>
     <div class="p-3 flex flex-col gap-3">
       <div class="flex flex-col gap-2">

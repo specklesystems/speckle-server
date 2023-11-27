@@ -24,7 +24,7 @@
       class="flex items-center h-8 sm:h-10 gap-2 px-2"
       :class="
         moveActionsToBottom
-          ? 'order-3 border-t border-outline dark:border-outline-2 mt-2'
+          ? 'order-3 border-t border-outline-3 mt-2'
           : 'order-2 shadow-md'
       "
     >
