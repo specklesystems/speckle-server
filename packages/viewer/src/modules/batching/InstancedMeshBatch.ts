@@ -121,6 +121,7 @@ export default class InstancedMeshBatch implements Batch {
     renderer
   }
 
+  /** Note: You can only set visibility on ranges that exist as draw groups! */
   public setVisibleRange(...ranges: BatchUpdateRange[]) {
     /** Entire batch needs to NOT be drawn */
     if (ranges.length === 1 && ranges[0] === NoneBatchUpdateRange) {
@@ -138,8 +139,8 @@ export default class InstancedMeshBatch implements Batch {
       const instanceIndex = this.groups.indexOf(
         this.groups.find(
           (group: DrawGroup) =>
-            range.offset >= group.start &&
-            range.offset + range.count <= group.start + group.count
+            range.offset === group.start &&
+            range.offset + range.count === group.start + group.count
         )
       )
       if (instanceIndex !== -1) this.mesh.children[instanceIndex].visible = true
