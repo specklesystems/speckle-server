@@ -1,2 +1,2 @@
-specklepy==2.17.13
+specklepy==2.17.14
 requests==2.31.0
