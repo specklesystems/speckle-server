@@ -7,9 +7,7 @@ import {
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 export function usePasswordReset() {
-  const {
-    public: { apiOrigin }
-  } = useRuntimeConfig()
+  const apiOrigin = useApiOrigin()
   const { triggerNotification } = useGlobalToast()
   const { logout } = useAuthManager()
 

@@ -44,9 +44,7 @@ const props = defineProps<{
   appId: string
 }>()
 
-const {
-  public: { apiOrigin }
-} = useRuntimeConfig()
+const apiOrigin = useApiOrigin()
 const mixpanel = useMixpanel()
 const { inviteToken } = useAuthManager()
 

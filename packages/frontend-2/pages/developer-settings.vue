@@ -229,9 +229,7 @@ import {
 } from '~~/lib/developer-settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 
-const {
-  public: { apiOrigin }
-} = useRuntimeConfig()
+const apiOrigin = useApiOrigin()
 
 const { result: tokensResult, refetch: refetchTokens } = useQuery(
   developerSettingsAccessTokensQuery
