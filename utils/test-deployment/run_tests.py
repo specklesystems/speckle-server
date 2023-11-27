@@ -55,7 +55,7 @@ elif FRONTEND_VERSION == "2":
     frontend_response = requests.get(SPECKLE_SERVER, verify=VERIFY_CERTIFICATE)
     assert (
         frontend_response.status_code == 200
-    ), "❌ Frontend did not return a 200 status code"
+    ), f"❌ Frontend did not return a 200 status code, instead returned status code is {frontend_response.status_code}."
 else:
     print(f"❌ Unknown frontend version '{FRONTEND_VERSION}'")
     exit(1)
