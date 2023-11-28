@@ -3,6 +3,7 @@ import {
   BufferGeometry,
   DoubleSide,
   Group,
+  InstancedBufferAttribute,
   InstancedMesh,
   Material,
   Matrix4,
@@ -129,15 +130,16 @@ export default class SpeckleInstancedMesh extends Group {
       value.dispose()
     })
     for (let k = 0; k < this.groups.length; k++) {
-      const instanceCount = this.groups[k].count / 16
       const material = this.materials[this.groups[k].materialIndex]
-      const group = new InstancedMesh(this.instanceGeometry, material, instanceCount)
-      ;(group.instanceMatrix.array as Float32Array).set(
+      const group = new InstancedMesh(this.instanceGeometry, material, 0)
+      group.instanceMatrix = new InstancedBufferAttribute(
         buffer.subarray(
           this.groups[k].start,
           this.groups[k].start + this.groups[k].count
-        )
+        ),
+        16
       )
+      group.count = this.groups[k].count / 16
       group.instanceMatrix.needsUpdate = true
       group.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
       group.frustumCulled = false
