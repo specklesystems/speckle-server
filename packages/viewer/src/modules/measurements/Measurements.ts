@@ -16,6 +16,7 @@ export enum MeasurementType {
 }
 
 export interface MeasurementOptions {
+  visible: boolean
   type?: MeasurementType
   vertexSnap?: boolean
   units?: string
@@ -23,6 +24,7 @@ export interface MeasurementOptions {
 }
 
 const DefaultMeasurementsOptions = {
+  visible: true,
   type: MeasurementType.POINTTOPOINT,
   vertexSnap: true,
   units: 'm',
@@ -59,6 +61,10 @@ export class Measurements {
 
   public get enabled(): boolean {
     return this._enabled
+  }
+
+  public get visible(): boolean {
+    return this._options.visible
   }
 
   public set enabled(value: boolean) {
@@ -375,6 +381,7 @@ export class Measurements {
         value.update()
       }
     })
+    this.renderer.enableLayers([ObjectLayers.MEASUREMENTS], this._options.visible)
     this.renderer.needsRender = true
     this.renderer.resetPipeline()
   }

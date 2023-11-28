@@ -12,9 +12,7 @@ function getConfigStringForHtml(config: Record<string, unknown>) {
 }
 
 export default defineEventHandler(() => {
-  const {
-    public: { apiOrigin }
-  } = useRuntimeConfig()
+  const apiOrigin = useApiOrigin()
 
   const version = '_latest'
   const embeddedExplorerParams = {

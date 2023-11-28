@@ -15,9 +15,7 @@ export function useFileImport(params: {
 
   const { maxSizeInBytes } = useServerFileUploadLimit()
   const authToken = useAuthCookie()
-  const {
-    public: { apiOrigin }
-  } = useRuntimeConfig()
+  const apiOrigin = useApiOrigin()
 
   const accept = ref('.ifc,.stl,.obj')
   const upload = ref(null as Nullable<UploadFileItem>)

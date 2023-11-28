@@ -62,6 +62,7 @@ import SpecklePointMaterial from './materials/SpecklePointMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import { Measurements } from './measurements/Measurements'
 import { MaterialOptions } from './materials/Materials'
+import { BaseSpecklePass } from './pipeline/SpecklePass'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,
@@ -966,7 +967,7 @@ export default class SpeckleRenderer {
 
   private onObjectClick(e) {
     const measurement = this._measurements.pickMeasurement(e)
-    if (measurement) {
+    if (measurement && this._measurements.visible) {
       this._measurements.selectMeasurement(measurement, true)
       return
     }
@@ -1489,5 +1490,14 @@ export default class SpeckleRenderer {
 
   public markTransformsDirty(batchId: string) {
     ;(this.batcher.batches[batchId] as MeshBatch).mesh.transformsDirty = true
+  }
+
+  public enableLayers(layers: ObjectLayers[], value: boolean) {
+    this.pipeline.composer.passes.forEach((pass: BaseSpecklePass) => {
+      if (!(pass instanceof BaseSpecklePass)) return
+      layers.forEach((layer: ObjectLayers) => {
+        pass.enableLayer(layer, value)
+      })
+    })
   }
 }

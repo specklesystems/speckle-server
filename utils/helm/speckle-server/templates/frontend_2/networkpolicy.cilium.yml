@@ -20,5 +20,27 @@ spec:
         - ports:
             - port: "www"
               protocol: TCP
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+          rules:
+            dns:
+              - matchName: {{ include "server.service.fqdn" $ }}
+    # allow egress to speckle-server
+    - toServices:
+        - k8sServiceSelector:
+            namespace: {{ printf "%s" .Values.namespace }}
+            selector:
+              matchLabels:
+{{ include "server.selectorLabels" $ | indent 16 }}
+      toPorts:
+        - ports:
+          - port: {{ printf "%s" ( include "server.port" $ | quote ) }}
 {{- end -}}
 {{- end -}}

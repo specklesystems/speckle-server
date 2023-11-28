@@ -211,15 +211,18 @@ export function useProjectModelUpdateTracking(
   ) => void,
   options?: Partial<{ redirectToProjectOnModelDeletion: (modelId: string) => boolean }>
 ) {
+  const { hasLock } = useLock(
+    computed(() => `useProjectModelUpdateTracking-${unref(projectId)}`)
+  )
+  const isEnabled = computed(() => !!(hasLock.value || handler))
   const { onResult: onProjectModelUpdate } = useSubscription(
     onProjectModelsUpdateSubscription,
     () => ({
       id: unref(projectId)
-    })
+    }),
+    { enabled: isEnabled }
   )
-  const { hasLock } = useLock(
-    computed(() => `useProjectModelUpdateTracking-${unref(projectId)}`)
-  )
+
   const apollo = useApolloClient().client
   const evictProjectModels = useEvictProjectModelFields()
   const goToProject = useNavigateToProject()
@@ -326,17 +329,20 @@ export function useProjectPendingModelUpdateTracking(
     cache: ApolloCache<unknown>
   ) => void
 ) {
+  const { hasLock } = useLock(
+    computed(() => `useProjectPendingModelUpdateTracking-${unref(projectId)}`)
+  )
+  const isEnabled = computed(() => !!(hasLock.value || handler))
+
   const { onResult: onProjectPendingModelUpdate } = useSubscription(
     onProjectPendingModelsUpdatedSubscription,
     () => ({
       id: unref(projectId)
-    })
+    }),
+    { enabled: isEnabled }
   )
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
-  const { hasLock } = useLock(
-    computed(() => `useProjectPendingModelUpdateTracking-${unref(projectId)}`)
-  )
 
   onProjectPendingModelUpdate((res) => {
     if (!res.data?.projectPendingModelsUpdated.id || !hasLock.value) return

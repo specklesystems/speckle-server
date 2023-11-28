@@ -35,6 +35,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiOrigin: 'UNDEFINED',
+      backendApiOrigin: '',
       mixpanelApiHost: 'UNDEFINED',
       mixpanelTokenId: 'UNDEFINED',
       logLevel: 'info',

@@ -101,6 +101,7 @@ export default class Sandbox {
 
   public measurementsParams = {
     enabled: false,
+    visible: true,
     type: MeasurementType.POINTTOPOINT,
     vertexSnap: true,
     units: 'm',
@@ -1071,7 +1072,13 @@ export default class Sandbox {
       .on('change', () => {
         this.viewer.enableMeasurements(this.measurementsParams.enabled)
       })
-
+    container
+      .addInput(this.measurementsParams, 'visible', {
+        label: 'Visible'
+      })
+      .on('change', () => {
+        this.viewer.setMeasurementOptions(this.measurementsParams)
+      })
     container
       .addInput(this.measurementsParams, 'type', {
         label: 'Type',
