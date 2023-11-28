@@ -7,7 +7,6 @@ import {
   InstancedMesh,
   Material,
   Matrix4,
-  RGBADepthPacking,
   Ray,
   Raycaster,
   Sphere,
@@ -20,7 +19,6 @@ import Materials from '../materials/Materials'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
 import { DrawGroup } from '../batching/InstancedMeshBatch'
 import { ObjectLayers } from '../../IViewer'
-import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -143,14 +141,7 @@ export default class SpeckleInstancedMesh extends Group {
       group.instanceMatrix.needsUpdate = true
       group.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
       group.frustumCulled = false
-      group.castShadow = !material.transparent
-      group.receiveShadow = !material.transparent
-      group.customDepthMaterial = new SpeckleDepthMaterial(
-        {
-          depthPacking: RGBADepthPacking
-        },
-        ['USE_RTE', 'ALPHATEST_REJECTION']
-      )
+
       this.instances.push(group)
       this.add(group)
     }

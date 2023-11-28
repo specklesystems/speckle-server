@@ -57,6 +57,7 @@ import Materials, {
 import { SpeckleMaterial } from './materials/SpeckleMaterial'
 import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
 import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter'
+import SpeckleInstancedMesh from './objects/SpeckleInstancedMesh'
 
 export class RenderingStats {
   private renderTimeAcc = 0
@@ -592,7 +593,7 @@ export default class SpeckleRenderer {
       if (!instancedBatch) {
         continue
       }
-      this.addInstancedBatch(instancedBatch, subtreeGroup)
+      this.addBatch(instancedBatch, subtreeGroup)
       if (instancedBatch.geometryType === GeometryType.MESH) {
         this.updateDirectLights()
       }
@@ -620,43 +621,21 @@ export default class SpeckleRenderer {
     parent.add(batch.renderObject)
 
     if (batch.geometryType === GeometryType.MESH) {
-      const mesh = batchRenderable as unknown as Mesh
-      const material = mesh.material as SpeckleStandardMaterial
-      batchRenderable.castShadow = !material.transparent
-      batchRenderable.receiveShadow = !material.transparent
-      batchRenderable.customDepthMaterial = new SpeckleDepthMaterial(
-        {
-          depthPacking: RGBADepthPacking
-        },
-        ['USE_RTE', 'ALPHATEST_REJECTION']
-      )
-
-      const speckleMesh = batchRenderable as SpeckleMesh
-      speckleMesh.TAS.boxHelpers.forEach((helper: Box3Helper) => {
-        this.scene.add(helper)
+      batchRenderable.traverse((obj: Object3D) => {
+        if (obj instanceof Mesh) {
+          batchRenderable.castShadow = !obj.material.transparent
+          batchRenderable.receiveShadow = !obj.material.transparent
+          batchRenderable.customDepthMaterial = new SpeckleDepthMaterial(
+            {
+              depthPacking: RGBADepthPacking
+            },
+            ['USE_RTE', 'ALPHATEST_REJECTION']
+          )
+        }
       })
-    }
-    this.viewer.World.expandWorld(batch.bounds)
-  }
 
-  private addInstancedBatch(batch: Batch, parent: Object3D) {
-    const batchRenderable = batch.renderObject
-    parent.add(batch.renderObject)
-
-    if (batch.geometryType === GeometryType.MESH) {
-      // const mesh = batchRenderable as unknown as Mesh
-      // const material = mesh.material as SpeckleStandardMaterial
-      // batchRenderable.castShadow = !material.transparent
-      // batchRenderable.receiveShadow = !material.transparent
-      // batchRenderable.customDepthMaterial = new SpeckleDepthMaterial(
-      //   {
-      //     depthPacking: RGBADepthPacking
-      //   },
-      //   ['USE_RTE', 'ALPHATEST_REJECTION']
-      // )
-
-      const speckleMesh = batchRenderable as SpeckleMesh
-      speckleMesh.TAS.boxHelpers.forEach((helper: Box3Helper) => {
+      const meshRenderable = batchRenderable as SpeckleMesh | SpeckleInstancedMesh
+      meshRenderable.TAS.boxHelpers.forEach((helper: Box3Helper) => {
         this.scene.add(helper)
       })
     }
