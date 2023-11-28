@@ -1062,6 +1062,148 @@
         }
       }
     },
+    "objects": {
+      "type": "object",
+      "properties": {
+        "replicas": {
+          "type": "number",
+          "description": "The number of instances of the Server pod to be deployed within the cluster.",
+          "default": 1
+        },
+        "logLevel": {
+          "type": "string",
+          "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
+          "default": "info"
+        },
+        "inspect": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, indicates that the Speckle server should be deployed with the nodejs inspect feature enabled",
+              "default": false
+            },
+            "port": {
+              "type": "string",
+              "description": "The port on which the nodejs inspect feature should be exposed",
+              "default": "7000"
+            }
+          }
+        },
+        "max_object_size_mb": {
+          "type": "number",
+          "description": "The maximum size of an individual object which can be uploaded to the server",
+          "default": 10
+        },
+        "requests": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "description": "The CPU that should be available on a node when scheduling this pod.",
+              "default": "500m"
+            },
+            "memory": {
+              "type": "string",
+              "description": "The Memory that should be available on a node when scheduling this pod.",
+              "default": "1Gi"
+            }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "description": "The maximum CPU that will be made available to the server Pod in a given period.",
+              "default": "1000m"
+            },
+            "memory": {
+              "type": "string",
+              "description": "The maximum Memory that will be made available to the server Pod.",
+              "default": "3Gi"
+            }
+          }
+        },
+        "ratelimiting": {
+          "type": "object",
+          "properties": {
+            "post_objects_streamid": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to post a new object in a moving one second window.",
+              "default": 6
+            },
+            "burst_post_objects_streamid": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to post a new object in a moving one minute window.",
+              "default": 400
+            },
+            "get_objects_streamid_objectid": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to get an object in a moving one second window.",
+              "default": 3
+            },
+            "burst_get_objects_streamid_objectid": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to get an object in a moving one minute window.",
+              "default": 200
+            },
+            "get_objects_streamid_objectid_single": {
+              "type": "number",
+              "description": "The maximum number of requests that can be made to the Speckle server to get a single object in a moving one second window.",
+              "default": 3
+            },
+            "burst_get_objects_streamid_objectid_single": {
+              "type": "number",
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to get a single object in a moving one minute window.",
+              "default": 200
+            }
+          }
+        },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "create": {
+              "type": "boolean",
+              "description": "If enabled, a Kubernetes Service Account will be created for this pod.",
+              "default": true
+            }
+          }
+        },
+        "networkPolicy": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "If enabled, will provide additional security be limiting network traffic into and out of the pod to only the required endpoints and ports.",
+              "default": false
+            }
+          }
+        },
+        "affinity": {
+          "type": "object",
+          "description": "Affinity for Speckle server pods scheduling",
+          "default": {}
+        },
+        "nodeSelector": {
+          "type": "object",
+          "description": "Node labels for Speckle server pods scheduling",
+          "default": {}
+        },
+        "tolerations": {
+          "type": "array",
+          "description": "Tolerations for Speckle server pods scheduling",
+          "default": [],
+          "items": {}
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "description": "Spread Constraints for Speckle server pod scheduling",
+          "default": [],
+          "items": {}
+        }
+      }
+    },
     "frontend": {
       "type": "object",
       "properties": {

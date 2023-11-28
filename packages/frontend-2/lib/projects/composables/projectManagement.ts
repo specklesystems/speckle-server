@@ -56,11 +56,14 @@ export function useProjectUpdateTracking(
   const { hasLock } = useLock(
     computed(() => `useProjectUpdateTracking-${unref(projectId)}`)
   )
+  const isEnabled = computed(() => !!(hasLock.value || handler))
+
   const { onResult: onProjectUpdated } = useSubscription(
     onProjectUpdatedSubscription,
     () => ({
       id: unref(projectId)
-    })
+    }),
+    { enabled: isEnabled }
   )
 
   onProjectUpdated((res) => {

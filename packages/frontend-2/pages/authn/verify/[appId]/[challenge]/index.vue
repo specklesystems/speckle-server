@@ -107,9 +107,7 @@ definePageMeta({
   name: 'authorize-app'
 })
 
-const {
-  public: { apiOrigin }
-} = useRuntimeConfig()
+const apiOrigin = useApiOrigin()
 const route = useRoute()
 const { activeUser } = useActiveUser()
 const authToken = useAuthCookie()

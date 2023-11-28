@@ -14,9 +14,7 @@ import { differenceBy, isUndefined } from 'lodash-es'
 
 export function useFileUpload() {
   const token = useAuthCookie()
-  const {
-    public: { apiOrigin }
-  } = useRuntimeConfig()
+  const apiOrigin = useApiOrigin()
 
   return {
     deleteFile: (blobId: string, principal: BlobUploadPrincipal) =>
@@ -38,9 +36,7 @@ export function useFileUpload() {
 
 export function useFileDownload() {
   const token = useAuthCookie()
-  const {
-    public: { apiOrigin }
-  } = useRuntimeConfig()
+  const apiOrigin = useApiOrigin()
 
   return {
     download: (params: { blobId: string; fileName: string; projectId: string }) =>
