@@ -62,14 +62,17 @@ export function useProjectVersionUpdateTracking(
   const { silenceToast = false } = options || {}
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
+
+  const { hasLock } = useLock(
+    computed(() => `useProjectVersionUpdateTracking-${unref(projectId)}`)
+  )
+  const isEnabled = computed(() => !!(hasLock.value || handler))
   const { onResult: onProjectVersionsUpdate } = useSubscription(
     onProjectVersionsUpdateSubscription,
     () => ({
       id: unref(projectId)
-    })
-  )
-  const { hasLock } = useLock(
-    computed(() => `useProjectVersionUpdateTracking-${unref(projectId)}`)
+    }),
+    { enabled: isEnabled }
   )
 
   // Cache updates that should only be invoked once
@@ -617,12 +620,15 @@ export function useProjectPendingVersionUpdateTracking(
   const { hasLock } = useLock(
     computed(() => `useProjectPendingVersionUpdateTracking-${unref(projectId)}`)
   )
+  const isEnabled = computed(() => !!(hasLock.value || handler))
   const { onResult: onProjectPendingVersionsUpdate } = useSubscription(
     onProjectPendingVersionsUpdatedSubscription,
     () => ({
       id: unref(projectId)
-    })
+    }),
+    { enabled: isEnabled }
   )
+
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
 
