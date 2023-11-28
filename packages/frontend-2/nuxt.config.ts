@@ -55,7 +55,6 @@ export default defineNuxtConfig({
     vue: {
       script: {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error
         defineModel: true
       }
     },
@@ -67,11 +66,6 @@ export default defineNuxtConfig({
       // and also under frontend-2. they're the same version, but apparently that's not enough...
       dedupe: ['prosemirror-state', '@tiptap/pm', 'prosemirror-model', 'vee-validate']
     },
-    ...(process.env.IS_STORYBOOK_BUILD
-      ? {}
-      : {
-          assetsInclude: ['**/*.mdx']
-        }),
     server: {
       fs: {
         // Allowing symlinks

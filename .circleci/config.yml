@@ -34,11 +34,6 @@ workflows:
       - test-ui-components:
           filters: *filters-allow-all
 
-      - frontend-2-chromatic:
-          context:
-            - chromatic
-          filters: *filters-allow-all
-
       - ui-components-chromatic:
           context:
             - chromatic-ui-components
@@ -451,15 +446,6 @@ jobs:
           command: yarn lint
           working_directory: 'packages/frontend-2'
 
-      - run:
-          name: Install Playwright
-          command: cd ~ && npx playwright install --with-deps
-
-      - run:
-          name: Test via Storybook
-          command: yarn storybook:test:ci
-          working_directory: 'packages/frontend-2'
-
   test-dui-3:
     docker:
       - image: cimg/node:18.18.2
@@ -542,40 +528,6 @@ jobs:
           name: Test via Storybook
           command: yarn storybook:test:ci
           working_directory: 'packages/ui-components'
-
-  frontend-2-chromatic:
-    resource_class: medium+
-    docker:
-      - image: cimg/node:18.18.2
-    steps:
-      - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
-
-      - run:
-          name: Build shared packages
-          command: yarn build:public
-
-      - run:
-          name: Run chromatic
-          command: yarn chromatic
-          working_directory: 'packages/frontend-2'
 
   ui-components-chromatic:
     resource_class: medium+
