@@ -22,17 +22,19 @@ export const useModelVersionCardAutomationsStatusUpdateTracking = (
     cache: ApolloCache<unknown>
   ) => void
 ) => {
-  const { onResult } = useSubscription(
-    onModelVersionCardAutomationsStatusUpdated,
-    () => ({
-      projectId: unref(projectId)
-    })
-  )
-
   const { hasLock } = useLock(
     computed(
       () => `useModelVersionCardAutomationsStatusUpdateTracking-${unref(projectId)}`
     )
+  )
+  const isEnabled = computed(() => !!(hasLock.value || handler))
+
+  const { onResult } = useSubscription(
+    onModelVersionCardAutomationsStatusUpdated,
+    () => ({
+      projectId: unref(projectId)
+    }),
+    { enabled: isEnabled }
   )
 
   const apollo = useApolloClient().client
