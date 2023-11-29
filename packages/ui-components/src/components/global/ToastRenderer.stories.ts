@@ -1,9 +1,10 @@
-import { Nullable } from '@speckle/shared'
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Nullable } from '@speckle/shared'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import { ref } from 'vue'
 import ToastRenderer from '~~/src/components/global/ToastRenderer.vue'
 import FormButton from '~~/src/components/form/Button.vue'
-import { ToastNotification, ToastNotificationType } from '~~/src/helpers/global/toast'
+import { ToastNotificationType } from '~~/src/helpers/global/toast'
+import type { ToastNotification } from '~~/src/helpers/global/toast'
 
 export default {
   component: ToastRenderer,

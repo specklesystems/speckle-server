@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import { SpeckleViewer } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { LayoutTabItem } from '~~/lib/layout/helpers/components'
+import type { LayoutTabItem } from '~~/lib/layout/helpers/components'
 import { useInjectedViewerRequestedResources } from '~~/lib/viewer/composables/setup'
 
 const { items } = useInjectedViewerRequestedResources()

@@ -39,10 +39,10 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { Get } from 'type-fest'
+import type { Get } from 'type-fest'
 import { useForm } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
+import type {
   ProjectPageModelsCardRenameDialogFragment,
   UpdateModelMutation
 } from '~~/lib/common/generated/gql/graphql'

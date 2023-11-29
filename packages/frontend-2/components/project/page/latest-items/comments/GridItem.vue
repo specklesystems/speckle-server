@@ -49,12 +49,12 @@
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
 import { times } from 'lodash-es'
 import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
 import { CheckCircleIcon } from '@heroicons/vue/24/solid'
-import { AvatarUserWithId } from '@speckle/ui-components'
+import type { AvatarUserWithId } from '@speckle/ui-components'
 
 const props = defineProps<{
   thread: ProjectPageLatestItemsCommentItemFragment

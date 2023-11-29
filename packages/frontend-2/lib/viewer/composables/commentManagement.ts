@@ -1,11 +1,11 @@
 import { ApolloCache } from '@apollo/client/cache'
-import { JSONContent } from '@tiptap/core'
+import type { JSONContent } from '@tiptap/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
-import { MaybeRef } from '@vueuse/core'
+import type { MaybeRef } from '@vueuse/core'
 import dayjs from 'dayjs'
-import { Get } from 'type-fest'
+import type { Get } from 'type-fest'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import {
+import type {
   CommentContentInput,
   CreateCommentReplyInput,
   OnViewerCommentsUpdatedSubscription
@@ -23,9 +23,9 @@ import {
 } from '~~/lib/viewer/graphql/mutations'
 import { onViewerCommentsUpdatedSubscription } from '~~/lib/viewer/graphql/subscriptions'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { MaybeNullOrUndefined } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { SuccessfullyUploadedFileItem } from '~~/lib/core/api/blobStorage'
+import type { SuccessfullyUploadedFileItem } from '~~/lib/core/api/blobStorage'
 import { isValidCommentContentInput } from '~~/lib/viewer/helpers/comments'
 import { useStateSerialization } from '~~/lib/viewer/composables/serialization'
 

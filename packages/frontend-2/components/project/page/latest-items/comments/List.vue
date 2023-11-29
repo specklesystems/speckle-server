@@ -9,7 +9,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ProjectLatestCommentThreadsQuery } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectLatestCommentThreadsQuery } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   threads?: ProjectLatestCommentThreadsQuery

@@ -1,8 +1,8 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
-import { PropertyInfo } from '@speckle/viewer'
+import type { PropertyInfo } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
-import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
   useInjectedViewer,

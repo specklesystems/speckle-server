@@ -13,7 +13,7 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import { ModelPreviewFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ModelPreviewFragment } from '~~/lib/common/generated/gql/graphql'
 import { usePreviewImageBlob } from '~~/lib/projects/composables/previewImage'
 
 graphql(`

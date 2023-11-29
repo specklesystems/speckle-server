@@ -28,13 +28,10 @@
 </template>
 <script setup lang="ts">
 import { UserCircleIcon } from '@heroicons/vue/24/solid'
-import { MaybeNullOrUndefined } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { computed, toRefs } from 'vue'
-import {
-  AvatarUser,
-  useAvatarSizeClasses,
-  UserAvatarSize
-} from '~~/src/composables/user/avatar'
+import { useAvatarSizeClasses } from '~~/src/composables/user/avatar'
+import type { AvatarUser, UserAvatarSize } from '~~/src/composables/user/avatar'
 
 const props = withDefaults(
   defineProps<{

@@ -1,4 +1,4 @@
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import { reduce } from 'lodash-es'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { CookieKeys } from '~~/lib/common/helpers/constants'

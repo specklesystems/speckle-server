@@ -78,7 +78,7 @@
 </template>
 <script setup lang="ts">
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
-import { ProjectPageLatestItemsModelsFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectPageLatestItemsModelsFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useProjectPageItemViewType } from '~~/lib/projects/composables/projectPages'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'

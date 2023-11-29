@@ -1,6 +1,6 @@
 import { ApolloCache } from '@apollo/client/core'
-import { OnModelVersionCardAutomationsStatusUpdatedSubscription } from '~~/lib/common/generated/gql/graphql'
-import { Get } from 'type-fest'
+import type { OnModelVersionCardAutomationsStatusUpdatedSubscription } from '~~/lib/common/generated/gql/graphql'
+import type { Get } from 'type-fest'
 import { onModelVersionCardAutomationsStatusUpdated } from '~~/lib/automations/graphql/subscriptions'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import { useLock } from '~~/lib/common/composables/singleton'

@@ -168,14 +168,13 @@ import {
 } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
 import { ArrowDownCircleIcon } from '@heroicons/vue/20/solid'
-import { ensureError, Nullable, Roles } from '@speckle/shared'
+import { ensureError, Roles } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { onKeyDown, useClipboard, useDraggable } from '@vueuse/core'
 import { scrollToBottom } from '~~/lib/common/helpers/dom'
 import { useViewerThreadTypingTracking } from '~~/lib/viewer/composables/activity'
-import {
-  CommentBubbleModel,
-  useAnimatingEllipsis
-} from '~~/lib/viewer/composables/commentBubbles'
+import { useAnimatingEllipsis } from '~~/lib/viewer/composables/commentBubbles'
+import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import {
   useArchiveComment,
   useCheckViewerCommentingAccess,

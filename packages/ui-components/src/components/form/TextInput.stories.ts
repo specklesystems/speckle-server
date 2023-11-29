@@ -1,9 +1,10 @@
 import { userEvent, within } from '@storybook/testing-library'
 import FormTextInput from '~~/src/components/form/TextInput.vue'
 import FormButton from '~~/src/components/form/Button.vue'
-import { StoryObj, Meta } from '@storybook/vue3'
+import type { StoryObj, Meta } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
-import { VuePlayFunction, mergeStories } from '~~/src/stories/helpers/storybook'
+import type { VuePlayFunction } from '~~/src/stories/helpers/storybook'
+import { mergeStories } from '~~/src/stories/helpers/storybook'
 
 export default {
   component: FormTextInput,

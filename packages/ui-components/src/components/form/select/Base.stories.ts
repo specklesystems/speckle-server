@@ -1,5 +1,5 @@
 import { wait } from '@speckle/shared'
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import { omit } from 'lodash'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import { isRequired } from '~~/src/helpers/common/validation'

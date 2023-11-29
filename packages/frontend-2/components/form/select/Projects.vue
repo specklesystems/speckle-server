@@ -50,10 +50,11 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { PropType } from 'vue'
-import { Nullable, Optional, Roles } from '@speckle/shared'
+import type { PropType } from 'vue'
+import { Roles } from '@speckle/shared'
+import type { Nullable, Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
-import { FormSelectProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import type { FormSelectProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { useFormSelectChildInternals } from '~~/lib/form/composables/select'
 import { useApolloClient } from '@vue/apollo-composable'
 import { searchProjectsQuery } from '~~/lib/form/graphql/queries'

@@ -49,9 +49,9 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import { Nullable, Optional } from '@speckle/shared'
+import type { Nullable, Optional } from '@speckle/shared'
 import { projectModelsSelectorValuesQuery } from '~~/lib/common/graphql/queries'
-import { CommonModelSelectorModelFragment } from '~~/lib/common/generated/gql/graphql'
+import type { CommonModelSelectorModelFragment } from '~~/lib/common/generated/gql/graphql'
 import { useFormSelectChildInternals } from '~~/lib/form/composables/select'
 import { graphql } from '~~/lib/common/generated/gql'
 

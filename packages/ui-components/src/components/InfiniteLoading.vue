@@ -31,8 +31,8 @@
 <script setup lang="ts">
 import InternalInfiniteLoading from 'v3-infinite-loading'
 import { ExclamationTriangleIcon, CheckIcon } from '@heroicons/vue/24/outline'
-import { InfiniteLoaderState } from '~~/src/helpers/global/components'
-import { Nullable } from '@speckle/shared'
+import type { InfiniteLoaderState } from '~~/src/helpers/global/components'
+import type { Nullable } from '@speckle/shared'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import { onMounted, ref } from 'vue'
 import { isClient } from '@vueuse/core'

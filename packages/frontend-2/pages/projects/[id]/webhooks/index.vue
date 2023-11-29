@@ -144,13 +144,13 @@ import { projectWebhooksQuery } from '~~/lib/projects/graphql/queries'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { useGlobalToast } from '~~/lib/common/composables/toast'
 import { projectRoute, projectWebhooksRoute } from '~~/lib/common/helpers/route'
-import { WebhookItem } from '~~/lib/projects/helpers/types'
+import type { WebhookItem } from '~~/lib/projects/helpers/types'
 import {
   convertThrowIntoFetchResult,
   getCacheId,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 
 const projectId = computed(() => route.params.id as string)
 const route = useRoute()

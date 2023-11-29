@@ -17,7 +17,7 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
 

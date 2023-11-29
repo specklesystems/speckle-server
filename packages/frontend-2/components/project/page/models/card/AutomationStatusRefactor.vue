@@ -53,12 +53,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import { SetFullyRequired } from '~~/lib/common/helpers/type'
+import type { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
+import { AutomationRunStatus } from '~~/lib/common/generated/gql/graphql'
+import type {
   AutomationFunctionRun,
   AutomationRun,
-  AutomationRunStatus,
   ModelCardAutomationStatus_ModelFragment,
   ModelCardAutomationStatus_VersionFragment
 } from '~~/lib/common/generated/gql/graphql'

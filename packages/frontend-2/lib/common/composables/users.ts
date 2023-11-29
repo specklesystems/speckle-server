@@ -1,6 +1,6 @@
 import { useQuery } from '@vue/apollo-composable'
-import { Get } from 'type-fest'
-import {
+import type { Get } from 'type-fest'
+import type {
   UserSearchQuery,
   UserSearchQueryVariables
 } from '~~/lib/common/generated/gql/graphql'

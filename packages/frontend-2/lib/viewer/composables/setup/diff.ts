@@ -1,7 +1,9 @@
-import { Nullable, Optional, SpeckleViewer } from '@speckle/shared'
-import { DiffResult, VisualDiffMode } from '@speckle/viewer'
-import { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
-import {
+import type { Nullable, Optional } from '@speckle/shared'
+import { SpeckleViewer } from '@speckle/shared'
+import { VisualDiffMode } from '@speckle/viewer'
+import type { DiffResult } from '@speckle/viewer'
+import type { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
+import type {
   InitialStateWithUrlHashState,
   InjectableViewerState
 } from '~~/lib/viewer/composables/setup'

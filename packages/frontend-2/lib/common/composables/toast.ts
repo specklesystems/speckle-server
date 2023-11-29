@@ -1,7 +1,7 @@
 import { useTimeoutFn } from '@vueuse/core'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { useScopedState } from '~/lib/common/composables/scopedState'
-import { Ref } from 'vue'
+import type { Ref } from 'vue'
 import type { ToastNotification } from '@speckle/ui-components'
 import { ToastNotificationType } from '@speckle/ui-components'
 
@@ -68,4 +68,5 @@ export function useGlobalToast() {
   return { triggerNotification }
 }
 
-export { ToastNotification, ToastNotificationType }
+export { ToastNotificationType }
+export type { ToastNotification }

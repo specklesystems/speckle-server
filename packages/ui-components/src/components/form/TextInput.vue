@@ -78,16 +78,18 @@
   </div>
 </template>
 <script setup lang="ts">
-import { RuleExpression } from 'vee-validate'
+import type { RuleExpression } from 'vee-validate'
 import {
   ExclamationCircleIcon,
   EnvelopeIcon,
   KeyIcon,
   XMarkIcon
 } from '@heroicons/vue/20/solid'
-import { ConcreteComponent, PropType, computed, ref, toRefs, useSlots } from 'vue'
-import { Nullable, Optional } from '@speckle/shared'
+import { computed, ref, toRefs, useSlots } from 'vue'
+import type { PropType } from 'vue'
+import type { Nullable, Optional } from '@speckle/shared'
 import { useTextInputCore } from '~~/src/composables/form/textInput'
+import type { PropAnyComponent } from '~~/src/helpers/common/components'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | string
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
@@ -186,7 +188,7 @@ const props = defineProps({
    * Set a custom icon to use inside the input
    */
   customIcon: {
-    type: [Object, Function] as PropType<Optional<ConcreteComponent>>,
+    type: [Object, Function] as PropType<Optional<PropAnyComponent>>,
     default: undefined
   },
   /**

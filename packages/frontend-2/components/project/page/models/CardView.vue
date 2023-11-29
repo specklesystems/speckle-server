@@ -36,7 +36,7 @@
   />
 </template>
 <script setup lang="ts">
-import {
+import type {
   FormUsersSelectItemFragment,
   ProjectLatestModelsPaginationQueryVariables,
   ProjectPageLatestItemsModelsFragment
@@ -46,13 +46,13 @@ import {
   latestModelsPaginationQuery,
   latestModelsQuery
 } from '~~/lib/projects/graphql/queries'
-import { Nullable, SourceAppDefinition } from '@speckle/shared'
-import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import type { Nullable, SourceAppDefinition } from '@speckle/shared'
+import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { allProjectModelsRoute } from '~~/lib/common/helpers/route'
 
 const emit = defineEmits<{
   (e: 'update:loading', v: boolean): void
-  (e: 'model-clicked', v: { id: string; e: MouseEvent }): void
+  (e: 'model-clicked', v: { id: string; e: MouseEvent | KeyboardEvent }): void
   (e: 'clear-search'): void
 }>()
 

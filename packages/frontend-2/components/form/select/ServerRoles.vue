@@ -42,9 +42,10 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { Nullable, Roles, ServerRoles, RoleInfo } from '@speckle/shared'
+import { Roles, RoleInfo } from '@speckle/shared'
+import type { Nullable, ServerRoles } from '@speckle/shared'
 import { useFormSelectChildInternals } from '@speckle/ui-components'
-import { PropType } from 'vue'
+import type { PropType } from 'vue'
 
 type ValueType = ServerRoles | ServerRoles[] | undefined
 
