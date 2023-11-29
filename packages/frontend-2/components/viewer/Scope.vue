@@ -2,10 +2,8 @@
   <slot />
 </template>
 <script setup lang="ts">
-import {
-  InjectableViewerState,
-  useSetupViewerScope
-} from '~~/lib/viewer/composables/setup'
+import { useSetupViewerScope } from '~~/lib/viewer/composables/setup'
+import type { InjectableViewerState } from '~~/lib/viewer/composables/setup'
 
 const props = defineProps<{
   state: InjectableViewerState

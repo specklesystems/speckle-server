@@ -1,4 +1,4 @@
-import { CookieOptions } from '#app'
+import type { CookieOptions } from '#app'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 
 /**

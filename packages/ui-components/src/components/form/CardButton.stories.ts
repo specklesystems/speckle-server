@@ -1,8 +1,8 @@
 import { userEvent, within } from '@storybook/testing-library'
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
 import FormCardButton from '~~/src/components/form/CardButton.vue'
-import { VuePlayFunction } from '~~/src/stories/helpers/storybook'
+import type { VuePlayFunction } from '~~/src/stories/helpers/storybook'
 import { rightClick } from '~~/src/helpers/testing'
 
 type StoryType = StoryObj<

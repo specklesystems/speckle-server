@@ -1,7 +1,7 @@
 import { action } from '@storybook/addon-actions'
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import CommonStepsBullet from '~~/src/components/common/steps/Bullet.vue'
-import { BulletStepType } from '~~/src/helpers/common/components'
+import type { BulletStepType } from '~~/src/helpers/common/components'
 import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 import { mergeStories } from '~~/src/stories/helpers/storybook'
 

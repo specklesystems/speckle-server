@@ -67,8 +67,12 @@
 <script setup lang="ts">
 import { CheckCircleIcon } from '@heroicons/vue/20/solid'
 import { computed, toRefs } from 'vue'
-import { StepsPadding, useStepsInternals } from '~~/src/composables/common/steps'
-import { BulletStepType, HorizontalOrVertical } from '~~/src/helpers/common/components'
+import { useStepsInternals } from '~~/src/composables/common/steps'
+import type { StepsPadding } from '~~/src/composables/common/steps'
+import type {
+  BulletStepType,
+  HorizontalOrVertical
+} from '~~/src/helpers/common/components'
 import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 
 const emit = defineEmits<{

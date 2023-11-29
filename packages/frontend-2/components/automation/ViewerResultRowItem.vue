@@ -36,7 +36,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
-import { NumericPropertyInfo } from '@speckle/viewer'
+import type { NumericPropertyInfo } from '@speckle/viewer'
 
 type ObjectResultWithOptionalMetadata = {
   category: string

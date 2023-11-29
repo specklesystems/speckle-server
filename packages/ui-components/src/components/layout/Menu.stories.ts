@@ -1,6 +1,6 @@
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import LayoutMenu from '~~/src/components/layout/Menu.vue'
-import { LayoutMenuItem } from '~~/src/helpers/layout/components'
+import type { LayoutMenuItem } from '~~/src/helpers/layout/components'
 import FormButton from '~~/src/components/form/Button.vue'
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
 import { action } from '@storybook/addon-actions'

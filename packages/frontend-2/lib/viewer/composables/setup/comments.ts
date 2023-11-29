@@ -1,8 +1,6 @@
-import { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
-import {
-  InitialStateWithUrlHashState,
-  useInjectedViewerState
-} from '~~/lib/viewer/composables/setup'
+import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import type { InitialStateWithUrlHashState } from '~~/lib/viewer/composables/setup'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
 import { reduce } from 'lodash-es'
 import { SpeckleViewer } from '@speckle/shared'

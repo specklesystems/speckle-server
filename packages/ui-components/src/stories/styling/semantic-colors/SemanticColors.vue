@@ -34,7 +34,8 @@
 import { markClassesUsed } from '~~/src/helpers/tailwind'
 import { useClipboard } from '@vueuse/core'
 import { useGlobalToast } from '~~/src/stories/composables/toast'
-import { Ref, ref } from 'vue'
+import { ref } from 'vue'
+import type { Ref } from 'vue'
 import { ToastNotificationType } from '~~/src/helpers/global/toast'
 import CommonTextLink from '~~/src/components/common/text/Link.vue'
 

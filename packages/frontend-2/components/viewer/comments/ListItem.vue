@@ -55,8 +55,8 @@
 import { CheckCircleIcon } from '@heroicons/vue/24/solid'
 import { CheckCircleIcon as CheckCircleIconOutlined } from '@heroicons/vue/24/outline'
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
+import type { LoadedCommentThread } from '~~/lib/viewer/composables/setup'
 import {
-  LoadedCommentThread,
   useInjectedViewerInterfaceState,
   useInjectedViewerLoadedResources,
   useInjectedViewerState

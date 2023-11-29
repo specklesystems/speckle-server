@@ -7,7 +7,7 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectsInviteBannersFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectsInviteBannersFragment } from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment ProjectsInviteBanners on User {

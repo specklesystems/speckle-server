@@ -60,7 +60,7 @@
 import { useMutation } from '@vue/apollo-composable'
 import { WebhookTriggers } from '@speckle/shared'
 import { LayoutDialog, FormSelectBadges } from '@speckle/ui-components'
-import { WebhookItem, WebhookFormValues } from '~~/lib/projects/helpers/types'
+import type { WebhookItem, WebhookFormValues } from '~~/lib/projects/helpers/types'
 import {
   createWebhookMutation,
   updateWebhookMutation
@@ -78,7 +78,7 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import { ValueOf } from 'type-fest'
+import type { ValueOf } from 'type-fest'
 
 const props = defineProps<{
   webhook?: WebhookItem | null

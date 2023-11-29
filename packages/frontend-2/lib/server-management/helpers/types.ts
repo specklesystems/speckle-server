@@ -1,11 +1,11 @@
-import { Get } from 'type-fest'
-import {
+import type { Get } from 'type-fest'
+import type {
   AdminPanelUsersListQuery,
   AdminPanelProjectsListQuery,
   AdminPanelInvitesListQuery
 } from '~~/lib/common/generated/gql/graphql'
-import { ConcreteComponent } from 'vue'
-import { MaybeAsync } from '@speckle/shared'
+import type { ConcreteComponent } from 'vue'
+import type { MaybeAsync } from '@speckle/shared'
 
 export type ItemType = UserItem | ProjectItem | InviteItem
 

@@ -138,7 +138,7 @@ import {
   FunnelIcon
 } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
-import {
+import type {
   ExplorerNode,
   SpeckleObject,
   SpeckleReference

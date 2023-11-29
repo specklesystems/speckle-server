@@ -93,7 +93,7 @@ import { useAuthCookie, useAuthManager } from '~~/lib/auth/composables/auth'
 import { authorizableAppMetadataQuery } from '~~/lib/auth/graphql/queries'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
 import { ChevronUpIcon } from '@heroicons/vue/20/solid'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { homeRoute } from '~~/lib/common/helpers/route'
 

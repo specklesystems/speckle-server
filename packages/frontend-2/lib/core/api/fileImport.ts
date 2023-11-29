@@ -1,5 +1,5 @@
-import { Optional } from '@speckle/shared'
-import { BlobPostResultItem, PostBlobResponse } from '~~/lib/core/api/blobStorage'
+import type { Optional } from '@speckle/shared'
+import type { BlobPostResultItem, PostBlobResponse } from '~~/lib/core/api/blobStorage'
 
 export enum FileUploadConvertedStatus {
   Queued = 0,

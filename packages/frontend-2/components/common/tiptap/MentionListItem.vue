@@ -14,7 +14,7 @@
   </a>
 </template>
 <script setup lang="ts">
-import { SuggestionOptionsItem } from '~~/lib/core/tiptap/mentionExtension'
+import type { SuggestionOptionsItem } from '~~/lib/core/tiptap/mentionExtension'
 
 defineEmits<{
   (e: 'click', val: MouseEvent): void

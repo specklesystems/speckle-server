@@ -1,8 +1,8 @@
 import { wait } from '@speckle/shared'
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import { computed, ref } from 'vue'
 import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
-import { InfiniteLoaderState } from '~~/src/helpers/global/components'
+import type { InfiniteLoaderState } from '~~/src/helpers/global/components'
 
 export default {
   component: InfiniteLoading,

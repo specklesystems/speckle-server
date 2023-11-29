@@ -49,7 +49,7 @@
 import { useFileImport } from '~~/lib/core/composables/fileImport'
 import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
   projectId: string

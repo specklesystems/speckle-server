@@ -15,13 +15,14 @@
     }
   },
   "peerDependencies": {
+    "@nuxt/kit": "^3.2.0",
     "@speckle/ui-components": "*"
   },
   "dependencies": {
-    "@nuxt/kit": "^3.2.0",
     "lodash-es": "^4.0.0"
   },
   "devDependencies": {
+    "@nuxt/kit": "^3.8.2",
     "@speckle/ui-components": "workspace:^",
     "eslint": "^8.24.0",
     "eslint-config-prettier": "^8.5.0",

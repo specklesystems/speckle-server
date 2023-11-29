@@ -94,17 +94,17 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { LimitedUser } from '~~/lib/common/generated/gql/graphql'
-import { SetFullyRequired } from '~~/lib/common/helpers/type'
+import type { LimitedUser } from '~~/lib/common/generated/gql/graphql'
+import type { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useViewerUserActivityTracking } from '~~/lib/viewer/composables/activity'
 import {
-  CommentBubbleModel,
   useViewerCommentBubblesProjection,
   useViewerNewThreadBubble
 } from '~~/lib/viewer/composables/commentBubbles'
+import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { useCheckViewerCommentingAccess } from '~~/lib/viewer/composables/commentManagement'
 import {
   useInjectedViewerInterfaceState,

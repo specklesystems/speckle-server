@@ -1,5 +1,5 @@
-import { MaybeRef } from '@vueuse/core'
-import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import type { MaybeRef } from '@vueuse/core'
+import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { onProjectVersionsPreviewGeneratedSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { useSubscription } from '@vue/apollo-composable'

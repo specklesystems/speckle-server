@@ -55,7 +55,8 @@
 </template>
 
 <script setup lang="ts" generic="T extends {id: string}, C extends string">
-import { ConcreteComponent, computed } from 'vue'
+import { computed } from 'vue'
+import type { PropAnyComponent } from '~~/src/helpers/common/components'
 import { FormButton } from '~~/src/lib'
 
 export type TableColumn<I> = {
@@ -65,7 +66,7 @@ export type TableColumn<I> = {
 }
 
 export interface RowButton<T = unknown> {
-  icon: ConcreteComponent
+  icon: PropAnyComponent
   label: string
   action: (item: T) => void
   class: string

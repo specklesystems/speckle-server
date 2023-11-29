@@ -1,10 +1,11 @@
 import { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useQuery, useSubscription } from '@vue/apollo-composable'
-import { MaybeRef } from '@vueuse/core'
-import { Get } from 'type-fest'
-import { Nullable, SpeckleViewer } from '@speckle/shared'
+import type { MaybeRef } from '@vueuse/core'
+import type { Get } from 'type-fest'
+import { SpeckleViewer } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import {
+import type {
   DeleteVersionsInput,
   Model,
   ModelPendingImportedVersionsArgs,
@@ -17,10 +18,12 @@ import {
   ProjectModelsArgs,
   ProjectModelsTreeArgs,
   ProjectPendingImportedModelsArgs,
-  ProjectPendingVersionsUpdatedMessageType,
   ProjectVersionsArgs,
-  ProjectVersionsUpdatedMessageType,
   UpdateVersionInput
+} from '~~/lib/common/generated/gql/graphql'
+import {
+  ProjectPendingVersionsUpdatedMessageType,
+  ProjectVersionsUpdatedMessageType
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
 import {

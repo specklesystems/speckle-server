@@ -1,21 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { isUndefinedOrVoid, Optional } from '@speckle/shared'
-import {
-  ApolloError,
+import { isUndefinedOrVoid } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
+import { ApolloError, ApolloCache, defaultDataIdFromObject } from '@apollo/client/core'
+import type {
   FetchResult,
   DataProxy,
-  ApolloCache,
-  defaultDataIdFromObject,
   TypedDocumentNode,
   ServerError,
   ServerParseError
 } from '@apollo/client/core'
-import { DocumentNode, GraphQLError } from 'graphql'
+import { GraphQLError } from 'graphql'
+import type { DocumentNode } from 'graphql'
 import { flatten, isUndefined, has, isFunction, isString } from 'lodash-es'
-import { Modifier, Reference } from '@apollo/client/cache'
-import { PartialDeep } from 'type-fest'
-import { NetworkError } from '@apollo/client/errors'
+import type { Modifier, Reference } from '@apollo/client/cache'
+import type { PartialDeep } from 'type-fest'
+import type { NetworkError } from '@apollo/client/errors'
 import { nanoid } from 'nanoid'
 import { StackTrace } from '~~/lib/common/helpers/debugging'
 
