@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import { ref } from 'vue'
 import RadioGroup from '~~/src/components/form/RadioGroup.vue'
 import { MegaphoneIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/solid'

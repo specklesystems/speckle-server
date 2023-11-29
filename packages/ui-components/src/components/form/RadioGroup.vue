@@ -27,7 +27,8 @@
 </template>
 
 <script setup lang="ts">
-import { ConcreteComponent, ref, watchEffect } from 'vue'
+import { ref, watchEffect } from 'vue'
+import type { ConcreteComponent } from 'vue'
 
 interface Option {
   title: string

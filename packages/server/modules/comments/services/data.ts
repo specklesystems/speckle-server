@@ -1,3 +1,4 @@
+import { ref } from 'vue'
 import { CommentRecord } from '@/modules/comments/helpers/types'
 import { LegacyCommentViewerData } from '@/modules/core/graph/generated/graphql'
 import {
@@ -5,6 +6,7 @@ import {
   viewerResourcesToString
 } from '@/modules/core/services/commit/viewerResources'
 import { Nullable, SpeckleViewer } from '@speckle/shared'
+import type { MeasurementOptions } from '@speckle/viewer'
 import { has, get, intersection, isObjectLike } from 'lodash'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
@@ -167,7 +169,10 @@ export async function convertLegacyDataToState(
         command: null,
         mode: 1,
         time: 0.5
-      }
+      },
+      measurements: ref<MeasurementOptions>({
+        visible: false
+      })
     }
   }
   return ret
