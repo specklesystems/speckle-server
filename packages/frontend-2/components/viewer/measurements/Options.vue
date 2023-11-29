@@ -16,7 +16,7 @@
         color="danger"
         :icon-left="TrashIcon"
         class="font-normal py-1"
-        @click="removeMeasurement"
+        @click="() => removeMeasurement"
       >
         Delete Selected
       </FormButton>
@@ -74,7 +74,8 @@ import { InformationCircleIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
 import { MeasurementType } from '@speckle/viewer'
 import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
-import { resolveComponent, ConcreteComponent } from 'vue'
+import { resolveComponent } from 'vue'
+import type { ConcreteComponent } from 'vue'
 
 interface MeasurementTypeOption {
   title: string
@@ -88,6 +89,7 @@ const measurementPrecision = ref(2)
 const selectedUnit = ref('m')
 
 const measurementParams = ref({
+  visible: true,
   type: MeasurementType.POINTTOPOINT,
   vertexSnap: true,
   units: selectedUnit.value,

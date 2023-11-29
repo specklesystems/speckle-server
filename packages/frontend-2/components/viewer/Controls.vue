@@ -218,7 +218,7 @@ const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources(
 
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 
-const { toggleMeasureMode } = useMeasurementUtilities()
+const { enableMeasurements } = useMeasurementUtilities()
 
 const allAutomationRuns = computed(() => {
   const allAutomationStatuses = modelsAndVersionIds.value
@@ -391,7 +391,7 @@ const scrollControlsToBottom = () => {
 
 const toggleMeasurements = () => {
   const isMeasurementsActive = activeControl.value === 'measurements'
-  toggleMeasureMode(!isMeasurementsActive)
+  enableMeasurements(!isMeasurementsActive)
   activeControl.value = isMeasurementsActive ? 'none' : 'measurements'
 }
 

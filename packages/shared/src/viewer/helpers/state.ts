@@ -1,6 +1,4 @@
 import { intersection, isObjectLike } from 'lodash'
-import { ref } from 'vue'
-import type { Ref } from 'vue'
 import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes'
 import type { PartialDeep } from 'type-fest'
 import { UnformattableSerializedViewerStateError } from '../errors'
@@ -9,6 +7,7 @@ declare enum MeasurementType {
   PERPENDICULAR = 0,
   POINTTOPOINT = 1
 }
+
 interface MeasurementOptions {
   visible: boolean
   type?: MeasurementType
@@ -87,7 +86,10 @@ export type SerializedViewerState = {
     }
     explodeFactor: number
     selection: Nullable<number[]>
-    measurements: Ref<MeasurementOptions | null>
+    measurements: {
+      enableMeasurements: boolean
+      options: MeasurementOptions
+    }
   }
 }
 
@@ -129,9 +131,10 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
     precision: 2
   }
 
-  const measurementsValue = ref(
-    state.ui?.measurements ?? defaultMeasurementOptions
-  ) as Ref<MeasurementOptions | null>
+  const measurementsValue = {
+    ...defaultMeasurementOptions,
+    ...(state.ui?.measurements ?? {})
+  }
 
   return {
     projectId: state.projectId || throwInvalidError('projectId'),
@@ -211,7 +214,7 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
       },
       explodeFactor: state.ui?.explodeFactor || 0,
       selection: state.ui?.selection || null,
-      measurements: ref(measurementsValue)
+      measurements: { enableMeasurements: false, options: measurementsValue }
     }
   }
 }

@@ -343,21 +343,29 @@ export function useThreadUtilities() {
 export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
 
-  const measurementOptions: Ref<MeasurementOptions | null> = state.ui.measurements
+  const measurementSettings = state.ui.measurements.value
 
-  const toggleMeasureMode = (visible: boolean) => {
-    if (measurementOptions.value) {
-      measurementOptions.value.visible = visible
+  const enableMeasurements = (enabled: boolean) => {
+    if (measurementSettings) {
+      state.ui.measurements.value.enabled = enabled
     }
   }
 
   const setMeasurementOptions = (options: MeasurementOptions) => {
-    measurementOptions.value = options
+    if (measurementSettings) {
+      state.ui.measurements.value.options = options
+    }
+  }
+
+  const removeMeasurement = () => {
+    if (state.viewer.instance && state.viewer.instance.removeMeasurement) {
+      state.viewer.instance.removeMeasurement()
+    }
   }
 
   return {
-    measurementOptions,
-    toggleMeasureMode,
-    setMeasurementOptions
+    enableMeasurements,
+    setMeasurementOptions,
+    removeMeasurement
   }
 }

@@ -725,11 +725,11 @@ function useViewerMeasurementIntegration() {
 
   watch(
     () => measurements.value,
-    (newOptions) => {
-      if (newOptions) {
-        if (newOptions.visible) {
+    (newMeasurementState) => {
+      if (newMeasurementState) {
+        if (newMeasurementState.enabled) {
           instance.enableMeasurements(true)
-          instance.setMeasurementOptions(newOptions)
+          instance.setMeasurementOptions(newMeasurementState.options)
         } else {
           instance.enableMeasurements(false)
         }
