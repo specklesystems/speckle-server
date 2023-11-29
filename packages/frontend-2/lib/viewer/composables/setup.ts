@@ -886,7 +886,7 @@ function setupInterfaceState(
       measurements: ref<MeasurementState>({
         enabled: false,
         options: {
-          visible: false,
+          visible: true,
           type: MeasurementType.POINTTOPOINT,
           units: 'm',
           vertexSnap: false,

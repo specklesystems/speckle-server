@@ -16,7 +16,7 @@
         color="danger"
         :icon-left="TrashIcon"
         class="font-normal py-1"
-        @click="() => removeMeasurement"
+        @click="() => removeMeasurement()"
       >
         Delete Selected
       </FormButton>

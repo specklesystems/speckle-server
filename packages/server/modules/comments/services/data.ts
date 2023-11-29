@@ -169,7 +169,10 @@ export async function convertLegacyDataToState(
         time: 0.5
       },
       measurements: {
-        visible: false
+        enableMeasurements: false,
+        options: {
+          visible: true
+        }
       }
     }
   }
