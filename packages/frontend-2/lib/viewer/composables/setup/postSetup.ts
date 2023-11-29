@@ -718,6 +718,28 @@ function useDiffingIntegration() {
   })
 }
 
+function useViewerMeasurementIntegration() {
+  const {
+    ui: { measurements },
+    viewer: { instance }
+  } = useInjectedViewerState()
+
+  watch(
+    () => measurements.value,
+    (newOptions) => {
+      if (newOptions) {
+        if (newOptions.visible) {
+          instance.enableMeasurements(true)
+          instance.setMeasurementOptions(newOptions)
+        } else {
+          instance.enableMeasurements(false)
+        }
+      }
+    },
+    { immediate: true, deep: true }
+  )
+}
+
 export function useViewerPostSetup() {
   if (process.server) return
   useViewerObjectAutoLoading()
@@ -732,5 +754,6 @@ export function useViewerPostSetup() {
   useLightConfigIntegration()
   useExplodeFactorIntegration()
   useDiffingIntegration()
+  useViewerMeasurementIntegration()
   setupDebugMode()
 }

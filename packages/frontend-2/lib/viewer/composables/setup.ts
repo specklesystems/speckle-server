@@ -10,7 +10,9 @@ import {
   DefaultLightConfiguration,
   SpeckleView,
   DiffResult,
-  VisualDiffMode
+  VisualDiffMode,
+  MeasurementOptions,
+  MeasurementType
 } from '@speckle/viewer'
 import { MaybeRef } from '@vueuse/shared'
 import {
@@ -254,6 +256,7 @@ export type InjectableViewerState = Readonly<{
     explodeFactor: Ref<number>
     viewerBusy: WritableComputedRef<boolean>
     selection: Ref<Nullable<Vector3>>
+    measurements: Ref<MeasurementOptions | null>
   }
   /**
    * State stored in the anchor string of the URL
@@ -877,7 +880,14 @@ function setupInterfaceState(
         },
         hasAnyFiltersApplied
       },
-      highlightedObjectIds
+      highlightedObjectIds,
+      measurements: ref<MeasurementOptions>({
+        visible: false,
+        type: MeasurementType.POINTTOPOINT,
+        units: 'm',
+        vertexSnap: false,
+        precision: 2
+      })
     }
   }
 }

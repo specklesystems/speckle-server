@@ -1,7 +1,9 @@
 import { intersection, isObjectLike } from 'lodash'
+import { ref, Ref } from 'vue'
 import { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes'
 import { PartialDeep } from 'type-fest'
 import { UnformattableSerializedViewerStateError } from '../errors'
+import { MeasurementOptions, MeasurementType } from '@speckle/viewer'
 
 /**
  * v1 -> v1.1
@@ -73,6 +75,7 @@ export type SerializedViewerState = {
     }
     explodeFactor: number
     selection: Nullable<number[]>
+    measurements: Ref<MeasurementOptions | null>
   }
 }
 
@@ -105,6 +108,18 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
       'Required data missing from SerializedViewerState: ' + missingPath
     )
   }
+
+  const defaultMeasurementOptions: MeasurementOptions = {
+    visible: false,
+    type: MeasurementType.POINTTOPOINT,
+    vertexSnap: false,
+    units: 'm',
+    precision: 2
+  }
+
+  const measurementsValue = ref(
+    state.ui?.measurements ?? defaultMeasurementOptions
+  ) as Ref<MeasurementOptions | null>
 
   return {
     projectId: state.projectId || throwInvalidError('projectId'),
@@ -183,7 +198,8 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
         azimuth: state.ui?.lightConfig?.azimuth
       },
       explodeFactor: state.ui?.explodeFactor || 0,
-      selection: state.ui?.selection || null
+      selection: state.ui?.selection || null,
+      measurements: ref(measurementsValue)
     }
   }
 }
