@@ -119,9 +119,9 @@
           : '-translate-x-[100%] opacity-0'
       }`"
     >
-      <div v-show="activeControl === 'measurements'">
+      <div v-show="activeControl.length !== 0 && activeControl === 'measurements'">
         <KeepAlive>
-          <div><ViewerMeasurementsOptions /></div>
+          <div><ViewerMeasurementsOptions @close="toggleMeasurements" /></div>
         </KeepAlive>
       </div>
       <div v-show="resourceItems.length !== 0 && activeControl === 'models'">
