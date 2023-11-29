@@ -1,12 +1,14 @@
-import {
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import type {
   InitialStateWithRequestAndResponse,
-  InjectableViewerState,
-  useInjectedViewerState
+  InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
-import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
+import { ViewerEvent } from '@speckle/viewer'
+import type { SelectionEvent } from '@speckle/viewer'
 import { debounce, isArray, throttle } from 'lodash-es'
 import { until } from '@vueuse/core'
-import { MaybeAsync, Nullable, TimeoutError, timeoutAt } from '@speckle/shared'
+import { TimeoutError, timeoutAt } from '@speckle/shared'
+import type { MaybeAsync, Nullable } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 

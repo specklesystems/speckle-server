@@ -1,8 +1,8 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
-import { MeasurementOptions, PropertyInfo } from '@speckle/viewer'
+import type { MeasurementOptions, PropertyInfo } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
-import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
   useInjectedViewer,
@@ -345,9 +345,9 @@ export function useMeasurementUtilities() {
 
   const measurementOptions: Ref<MeasurementOptions | null> = state.ui.measurements
 
-  const toggleMeasurements = () => {
+  const toggleMeasureMode = (visible: boolean) => {
     if (measurementOptions.value) {
-      measurementOptions.value.visible = !measurementOptions.value.visible
+      measurementOptions.value.visible = visible
     }
   }
 
@@ -357,7 +357,7 @@ export function useMeasurementUtilities() {
 
   return {
     measurementOptions,
-    toggleMeasurements,
+    toggleMeasureMode,
     setMeasurementOptions
   }
 }

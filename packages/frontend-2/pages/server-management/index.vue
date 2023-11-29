@@ -29,7 +29,7 @@
 import { serverManagementDataQuery } from '~~/lib/server-management/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 import { ref, computed } from 'vue'
-import { CardInfo } from '~~/lib/server-management/helpers/types'
+import type { CardInfo } from '~~/lib/server-management/helpers/types'
 import {
   ServerIcon,
   UsersIcon,

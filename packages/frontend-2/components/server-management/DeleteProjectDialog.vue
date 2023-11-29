@@ -26,7 +26,7 @@
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
-import { ProjectItem } from '~~/lib/server-management/helpers/types'
+import type { ProjectItem } from '~~/lib/server-management/helpers/types'
 import { adminDeleteProjectMutation } from '~~/lib/server-management/graphql/mutations'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
@@ -36,7 +36,7 @@ import {
   getFirstErrorMessage,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { ProjectCollection } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectCollection } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   open: boolean

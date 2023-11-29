@@ -35,7 +35,7 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectPageModelsCardDeleteDialogFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectPageModelsCardDeleteDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useDeleteModel } from '~~/lib/projects/composables/modelManagement'
 

@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import FormCheckbox from '~~/src/components/form/Checkbox.vue'
 import FormButton from '~~/src/components/form/Button.vue'
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import { action } from '@storybook/addon-actions'
-import { Form, RuleExpression, SubmissionHandler } from 'vee-validate'
+import type { RuleExpression, SubmissionHandler } from 'vee-validate'
+import { Form } from 'vee-validate'
 import { userEvent, within } from '@storybook/testing-library'
-import { Optional, wait } from '@speckle/shared'
+import { wait } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import { expect } from '@storybook/jest'
-import { VuePlayFunction } from '~~/src/stories/helpers/storybook'
+import type { VuePlayFunction } from '~~/src/stories/helpers/storybook'
 import { computed } from 'vue'
 
 export default {

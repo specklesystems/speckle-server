@@ -46,9 +46,9 @@ import { LayoutDialogSection } from '@speckle/ui-components'
 import { BellIcon } from '@heroicons/vue/24/outline'
 import { capitalize, cloneDeep } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
-import { UserProfileEditDialogNotificationPreferences_UserFragment } from '~~/lib/common/generated/gql/graphql'
+import type { UserProfileEditDialogNotificationPreferences_UserFragment } from '~~/lib/common/generated/gql/graphql'
 import { useUpdateNotificationPreferences } from '~~/lib/user/composables/management'
-import { NotificationPreferences } from '~~/lib/user/helpers/components'
+import type { NotificationPreferences } from '~~/lib/user/helpers/components'
 
 graphql(`
   fragment UserProfileEditDialogNotificationPreferences_User on User {

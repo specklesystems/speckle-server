@@ -3,7 +3,10 @@ import { cloneDeep } from 'lodash-es'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { UserDeleteInput, UserUpdateInput } from '~~/lib/common/generated/gql/graphql'
+import type {
+  UserDeleteInput,
+  UserUpdateInput
+} from '~~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,
   getCacheId,
@@ -14,7 +17,7 @@ import {
   updateNotificationPreferencesMutation,
   updateUserMutation
 } from '~~/lib/user/graphql/mutations'
-import { NotificationPreferences } from '~~/lib/user/helpers/components'
+import type { NotificationPreferences } from '~~/lib/user/helpers/components'
 
 export function useUpdateUserProfile() {
   const { mutate, loading } = useMutation(updateUserMutation)

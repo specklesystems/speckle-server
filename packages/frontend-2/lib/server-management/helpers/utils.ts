@@ -1,10 +1,11 @@
-import {
+import type {
   UserItem,
   ProjectItem,
   InviteItem
 } from '~~/lib/server-management/helpers/types'
 import { has } from 'lodash-es'
-import { ServerRoles, RoleInfo } from '@speckle/shared'
+import { RoleInfo } from '@speckle/shared'
+import type { ServerRoles } from '@speckle/shared'
 
 export const roleLookupTable = RoleInfo.Server
 

@@ -60,7 +60,7 @@
 import { useMutation } from '@vue/apollo-composable'
 import { AllScopes } from '@speckle/shared'
 import { LayoutDialog, FormSelectBadges } from '@speckle/ui-components'
-import {
+import type {
   ApplicationFormValues,
   ApplicationItem
 } from '~~/lib/developer-settings/helpers/types'

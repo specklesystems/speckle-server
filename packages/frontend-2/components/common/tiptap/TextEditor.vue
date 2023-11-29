@@ -17,13 +17,13 @@
 </template>
 <script setup lang="ts">
 import { EditorContent, Editor } from '@tiptap/vue-3'
-import { JSONContent } from '@tiptap/core'
-import {
+import type { JSONContent } from '@tiptap/core'
+import { getEditorExtensions } from '~~/lib/common/helpers/tiptap'
+import type {
   EnterKeypressTrackerExtensionStorage,
-  getEditorExtensions,
   TiptapEditorSchemaOptions
 } from '~~/lib/common/helpers/tiptap'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { userProfileRoute } from '~~/lib/common/helpers/route'
 import { onKeyDown } from '@vueuse/core'
 

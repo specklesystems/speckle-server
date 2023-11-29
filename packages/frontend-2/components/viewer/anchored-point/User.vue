@@ -29,7 +29,7 @@
 </template>
 <script setup lang="ts">
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { UserActivityModel } from '~~/lib/viewer/composables/activity'
+import type { UserActivityModel } from '~~/lib/viewer/composables/activity'
 import { useAnimatingEllipsis } from '~~/lib/viewer/composables/commentBubbles'
 import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
 

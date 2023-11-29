@@ -1,5 +1,5 @@
 import { FaceSmileIcon } from '@heroicons/vue/24/outline'
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import DialogSection from '~~/src/components/layout/DialogSection.vue'
 
 export default {

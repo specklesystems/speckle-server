@@ -1,4 +1,4 @@
-import { LocationQueryRaw } from 'vue-router'
+import type { LocationQueryRaw } from 'vue-router'
 import { serializeHashState } from '~~/lib/common/composables/url'
 import { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHashState'
 

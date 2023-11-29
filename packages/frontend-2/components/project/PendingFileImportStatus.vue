@@ -33,7 +33,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PendingFileUploadFragment } from '~~/lib/common/generated/gql/graphql'
+import type { PendingFileUploadFragment } from '~~/lib/common/generated/gql/graphql'
 import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 import { CheckCircleIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
 

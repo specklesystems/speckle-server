@@ -76,7 +76,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { CloudArrowDownIcon, MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
-import { ConnectorTag, ConnectorVersion } from '~~/lib/connectors'
+import type { ConnectorTag, ConnectorVersion } from '~~/lib/connectors'
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void

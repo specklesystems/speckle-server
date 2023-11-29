@@ -81,16 +81,13 @@ import {
   evictObjectFields,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import {
-  User,
-  UserProjectsArgs,
-  UserProjectsUpdatedMessageType
-} from '~~/lib/common/generated/gql/graphql'
+import type { User, UserProjectsArgs } from '~~/lib/common/generated/gql/graphql'
+import { UserProjectsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { projectRoute } from '~~/lib/common/helpers/route'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
-import { Nullable, Optional, StreamRoles } from '@speckle/shared'
+import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 
 const onUserProjectsUpdateSubscription = graphql(`

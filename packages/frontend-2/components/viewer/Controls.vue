@@ -187,7 +187,7 @@ import {
   ScissorsIcon,
   PlusIcon
 } from '@heroicons/vue/24/outline'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import {
   useCameraUtilities,
   useSectionBoxUtilities,
@@ -210,14 +210,15 @@ const {
   camera: { isOrthoProjection }
 } = useCameraUtilities()
 
-import { AutomationRunStatus, AutomationRun } from '~~/lib/common/generated/gql/graphql'
+import { AutomationRunStatus } from '~~/lib/common/generated/gql/graphql'
+import type { AutomationRun } from '~~/lib/common/generated/gql/graphql'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 
-const { enableMeasurements } = useMeasurementUtilities()
+const { toggleMeasureMode } = useMeasurementUtilities()
 
 const allAutomationRuns = computed(() => {
   const allAutomationStatuses = modelsAndVersionIds.value
@@ -390,7 +391,7 @@ const scrollControlsToBottom = () => {
 
 const toggleMeasurements = () => {
   const isMeasurementsActive = activeControl.value === 'measurements'
-  enableMeasurements(!isMeasurementsActive)
+  toggleMeasureMode(!isMeasurementsActive)
   activeControl.value = isMeasurementsActive ? 'none' : 'measurements'
 }
 

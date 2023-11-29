@@ -1,8 +1,9 @@
 import { userEvent, within } from '@storybook/testing-library'
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
 import CommonTextLink from '~~/src/components/common/text/Link.vue'
-import { VuePlayFunction, mergeStories } from '~~/src/stories/helpers/storybook'
+import { mergeStories } from '~~/src/stories/helpers/storybook'
+import type { VuePlayFunction } from '~~/src/stories/helpers/storybook'
 import { rightClick } from '~~/src/helpers/testing'
 
 export default {

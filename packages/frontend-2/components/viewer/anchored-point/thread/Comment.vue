@@ -46,7 +46,7 @@
 import dayjs from 'dayjs'
 // import { Roles } from '@speckle/shared'
 // import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { ViewerCommentsReplyItemFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ViewerCommentsReplyItemFragment } from '~~/lib/common/generated/gql/graphql'
 // import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 // import { useArchiveComment } from '~~/lib/viewer/composables/commentManagement'
 

@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 
 export default {

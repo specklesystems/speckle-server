@@ -1,4 +1,4 @@
-import { Meta } from '@storybook/vue3'
+import type { Meta } from '@storybook/vue3'
 import ClipboardInput from './ClipboardInput.vue'
 
 type ClipboardInputArgs = {

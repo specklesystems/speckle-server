@@ -26,7 +26,7 @@
   </form>
 </template>
 <script setup lang="ts">
-import { ProjectModelPageDialogMoveToVersionFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectModelPageDialogMoveToVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import { useModelNameValidationRules } from '~~/lib/projects/composables/modelManagement'
 import { CubeIcon } from '@heroicons/vue/24/solid'
 import { useForm } from 'vee-validate'

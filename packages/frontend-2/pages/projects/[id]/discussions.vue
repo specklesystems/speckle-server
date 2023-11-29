@@ -16,7 +16,7 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import { Optional } from '~~/../shared/dist-esm'
+import type { Optional } from '~~/../shared/dist-esm'
 import {
   useGeneralProjectPageUpdateTracking,
   useProjectPageItemViewType

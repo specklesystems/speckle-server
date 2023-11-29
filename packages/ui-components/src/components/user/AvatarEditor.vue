@@ -99,14 +99,14 @@ import {
   XMarkIcon,
   PhotoIcon
 } from '@heroicons/vue/24/outline'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { onUnmounted, ref, watch, computed } from 'vue'
 import { Cropper } from 'vue-advanced-cropper'
 import 'vue-advanced-cropper/dist/style.css'
 import FormButton from '~~/src/components/form/Button.vue'
 import FormFileUploadZone from '~~/src/components/form/file-upload/Zone.vue'
-import { UploadableFileItem } from '~~/src/composables/form/fileUpload'
-import { AvatarUser, UserAvatarSize } from '~~/src/composables/user/avatar'
+import type { UploadableFileItem } from '~~/src/composables/form/fileUpload'
+import type { AvatarUser, UserAvatarSize } from '~~/src/composables/user/avatar'
 import { directive as vTippy } from 'vue-tippy'
 
 /**

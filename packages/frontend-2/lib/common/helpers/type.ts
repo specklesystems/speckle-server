@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { isObjectLike as lodashIsObjectLike } from 'lodash-es'
-import { SetNonNullable, SetRequired } from 'type-fest'
+import type { SetNonNullable, SetRequired } from 'type-fest'
 
 export type NonUndefined<T> = T extends undefined ? never : T
 

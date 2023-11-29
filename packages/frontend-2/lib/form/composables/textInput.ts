@@ -1,6 +1,7 @@
-import { RuleExpression, useField } from 'vee-validate'
-import { Ref, ToRefs } from 'vue'
-import { Nullable } from '@speckle/shared'
+import { useField } from 'vee-validate'
+import type { RuleExpression } from 'vee-validate'
+import type { Ref, ToRefs } from 'vue'
+import type { Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
 
 /**

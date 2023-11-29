@@ -200,18 +200,11 @@ import {
   ExclamationCircleIcon
 } from '@heroicons/vue/24/solid'
 import { debounce, isArray, isObjectLike } from 'lodash'
-import {
-  CSSProperties,
-  PropType,
-  Ref,
-  computed,
-  onMounted,
-  ref,
-  unref,
-  watch
-} from 'vue'
-import { MaybeAsync, Nullable, Optional } from '@speckle/shared'
-import { RuleExpression, useField } from 'vee-validate'
+import type { CSSProperties, PropType, Ref } from 'vue'
+import { computed, onMounted, ref, unref, watch } from 'vue'
+import type { MaybeAsync, Nullable, Optional } from '@speckle/shared'
+import { useField } from 'vee-validate'
+import type { RuleExpression } from 'vee-validate'
 import { nanoid } from 'nanoid'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import { directive as vTippy } from 'vue-tippy'
