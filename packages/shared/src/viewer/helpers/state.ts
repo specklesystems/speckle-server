@@ -4,8 +4,18 @@ import type { Ref } from 'vue'
 import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes'
 import type { PartialDeep } from 'type-fest'
 import { UnformattableSerializedViewerStateError } from '../errors'
-import { MeasurementType } from '@speckle/viewer'
-import type { MeasurementOptions } from '@speckle/viewer'
+
+declare enum MeasurementType {
+  PERPENDICULAR = 0,
+  POINTTOPOINT = 1
+}
+interface MeasurementOptions {
+  visible: boolean
+  type?: MeasurementType
+  vertexSnap?: boolean
+  units?: string
+  precision?: number
+}
 
 /**
  * v1 -> v1.1
