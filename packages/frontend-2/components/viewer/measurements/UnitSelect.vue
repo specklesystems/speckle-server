@@ -12,7 +12,7 @@
     </template>
     <template #option="{ item }">
       <div class="flex flex-col">
-        <div class="label text-xs">{{ UnitDisplayNames[item] || item }}</div>
+        <div class="label text-xs">{{ unitDisplayNames[item] || item }}</div>
       </div>
     </template>
   </FormSelectBase>
@@ -21,6 +21,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
+type UnitDisplayNames = {
+  [unit: string]: string
+}
+
 const emit = defineEmits(['update:modelValue'])
 
 const props = defineProps<{
@@ -28,7 +32,8 @@ const props = defineProps<{
   name?: string
 }>()
 
-const UnitDisplayNames: Record<string, string> = {
+// Use a ref for unitDisplayNames
+const unitDisplayNames = ref<UnitDisplayNames>({
   mm: 'Millimeters',
   cm: 'Centimeters',
   m: 'Meters',
@@ -37,15 +42,15 @@ const UnitDisplayNames: Record<string, string> = {
   ft: 'Feet',
   yd: 'Yards',
   mi: 'Miles'
-}
+})
 
 function getFullUnitName(unit: string): string {
-  return UnitDisplayNames[unit] || unit
+  return unitDisplayNames.value[unit] || unit
 }
 
 const fullUnitName = computed(() => getFullUnitName(props.modelValue))
 
-const units = ref(['mm', 'cm', 'm', 'km', 'in', 'ft', 'yd', 'mi'])
+const units = computed(() => Object.keys(unitDisplayNames.value))
 
 const selectedUnit = computed({
   get: () => props.modelValue,

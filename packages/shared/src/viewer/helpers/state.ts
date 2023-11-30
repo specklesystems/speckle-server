@@ -3,7 +3,7 @@ import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityT
 import type { PartialDeep } from 'type-fest'
 import { UnformattableSerializedViewerStateError } from '../errors'
 
-declare enum MeasurementType {
+enum MeasurementType {
   PERPENDICULAR = 0,
   POINTTOPOINT = 1
 }
