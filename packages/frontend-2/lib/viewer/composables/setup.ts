@@ -77,11 +77,6 @@ export type LoadedThreadsMetadata = NonNullable<
 
 export type LoadedCommentThread = NonNullable<Get<LoadedThreadsMetadata, 'items[0]'>>
 
-interface MeasurementState {
-  enabled: boolean
-  options: MeasurementOptions
-}
-
 export type InjectableViewerState = Readonly<{
   /**
    * The project which we're opening in the viewer (all loaded models should belong to it)
@@ -258,7 +253,8 @@ export type InjectableViewerState = Readonly<{
     explodeFactor: Ref<number>
     viewerBusy: WritableComputedRef<boolean>
     selection: Ref<Nullable<Vector3>>
-    measurements: Ref<MeasurementState>
+    measurementsEnabled: Ref<boolean>
+    measurementOptions: Ref<MeasurementOptions>
   }
   /**
    * State stored in the anchor string of the URL
@@ -883,15 +879,13 @@ function setupInterfaceState(
         hasAnyFiltersApplied
       },
       highlightedObjectIds,
-      measurements: ref<MeasurementState>({
-        enabled: false,
-        options: {
-          visible: true,
-          type: MeasurementType.POINTTOPOINT,
-          units: 'm',
-          vertexSnap: false,
-          precision: 2
-        }
+      measurementsEnabled: ref(false),
+      measurementOptions: ref<MeasurementOptions>({
+        visible: true,
+        type: MeasurementType.POINTTOPOINT,
+        units: 'm',
+        vertexSnap: false,
+        precision: 2
       })
     }
   }

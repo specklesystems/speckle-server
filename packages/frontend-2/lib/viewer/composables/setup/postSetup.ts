@@ -719,20 +719,25 @@ function useDiffingIntegration() {
 
 function useViewerMeasurementIntegration() {
   const {
-    ui: { measurements },
+    ui: { measurementsEnabled, measurementOptions },
     viewer: { instance }
   } = useInjectedViewerState()
 
   watch(
-    () => measurements.value,
+    () => measurementsEnabled.value,
+    (newVal, oldVal) => {
+      if (newVal !== oldVal) {
+        instance.enableMeasurements(newVal)
+      }
+    },
+    { immediate: true }
+  )
+
+  watch(
+    () => measurementOptions.value,
     (newMeasurementState) => {
       if (newMeasurementState) {
-        if (newMeasurementState.enabled) {
-          instance.enableMeasurements(true)
-          instance.setMeasurementOptions(newMeasurementState.options)
-        } else {
-          instance.enableMeasurements(false)
-        }
+        instance.setMeasurementOptions(newMeasurementState)
       }
     },
     { immediate: true, deep: true }
