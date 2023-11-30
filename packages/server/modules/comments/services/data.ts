@@ -168,7 +168,8 @@ export async function convertLegacyDataToState(
         mode: 1,
         time: 0.5
       },
-      measurements: null
+      measurementOptions: null,
+      measurementsEnabled: false
     }
   }
   return ret

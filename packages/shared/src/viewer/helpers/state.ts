@@ -87,7 +87,7 @@ export type SerializedViewerState = {
     explodeFactor: number
     selection: Nullable<number[]>
     measurementsEnabled: boolean
-    measurementOptions: MeasurementOptions
+    measurementOptions: Nullable<MeasurementOptions>
   }
 }
 
