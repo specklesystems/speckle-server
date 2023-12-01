@@ -11,6 +11,10 @@
         v-if="projectsPanelResult?.activeUser?.projectInvites?.length"
         :invites="projectsPanelResult?.activeUser"
       />
+      <ProjectsFeedbackRequestBanner
+        v-if="showFeedbackRequest"
+        @feedback-dismissed-or-opened="hasDismissedOrOpenedFeedback = true"
+      />
     </div>
     <div
       v-if="!showEmptyState"
@@ -277,6 +281,11 @@ const hasDismissedChecklistForever = useSynchronizedCookie<boolean | undefined>(
   }
 )
 
+const hasDismissedOrOpenedFeedback = useSynchronizedCookie<boolean | undefined>(
+  `hasDismissedOrOpenedFeedback`,
+  { default: () => false, expires: twoYearsFromNow }
+)
+
 const hasDismissedChecklistTimeAgo = computed(() => {
   return (
     new Date().getTime() -
@@ -294,6 +303,13 @@ const showChecklist = computed(() => {
   )
     return true
   return false
+})
+
+const showFeedbackRequest = computed(() => {
+  return (
+    (!hasCompletedChecklistV1.value || !hasDismissedChecklistForever.value) &&
+    !hasDismissedOrOpenedFeedback.value
+  )
 })
 
 const clearSearch = () => {
