@@ -1,5 +1,8 @@
 <template>
-  <div class="relative flex items-start">
+  <div
+    class="relative flex gap-2 mb-2 last:mb-0"
+    :class="description ? 'items-start' : 'items-center'"
+  >
     <div class="flex h-6 items-center">
       <!-- eslint-disable-next-line vuejs-accessibility/form-control-has-label -->
       <input
@@ -16,12 +19,11 @@
         @change="onChange"
       />
     </div>
-    <div class="ml-2 text-sm" style="padding-top: 2px">
-      <label
-        :for="finalId"
-        class="font-medium text-foreground"
-        :class="{ 'sr-only': hideLabel }"
-      >
+    <div v-if="icon" class="text-sm">
+      <component :is="icon" class="h-10 w-10"></component>
+    </div>
+    <div class="text-sm">
+      <label :for="finalId" class="text-foreground" :class="{ 'sr-only': hideLabel }">
         <span>{{ title }}</span>
         <span v-if="showRequired" class="text-danger ml-1">*</span>
       </label>
@@ -37,7 +39,7 @@
 import { useField } from 'vee-validate'
 import type { RuleExpression } from 'vee-validate'
 import { computed, onMounted, ref } from 'vue'
-import type { PropType } from 'vue'
+import type { PropType, ConcreteComponent } from 'vue'
 import type { Optional } from '@speckle/shared'
 import { nanoid } from 'nanoid'
 
@@ -91,6 +93,13 @@ const props = defineProps({
   inlineDescription: {
     type: Boolean,
     default: false
+  },
+  /**
+   * Optional Icon
+   */
+  icon: {
+    type: Object as PropType<ConcreteComponent>,
+    default: undefined
   },
   /**
    * vee-validate validation rules

@@ -10,7 +10,8 @@ import { wait } from '@speckle/shared'
 import type { Optional } from '@speckle/shared'
 import { expect } from '@storybook/jest'
 import type { VuePlayFunction } from '~~/src/stories/helpers/storybook'
-import { computed } from 'vue'
+import { computed, type ConcreteComponent } from 'vue'
+import { ArrowRightIcon } from '@heroicons/vue/20/solid'
 
 export default {
   component: Radio,
@@ -60,7 +61,8 @@ const defaultArgs = {
   value: 'test1' as string | true,
   disabled: false,
   modelValue: undefined as Optional<string | true>,
-  rules: undefined as Optional<RuleExpression<any>[]>
+  rules: undefined as Optional<RuleExpression<any>[]>,
+  icon: undefined as Optional<ConcreteComponent>
 }
 
 export const Default: StoryObj<typeof defaultArgs> = {
@@ -165,6 +167,15 @@ export const InlineDescription: StoryObj<typeof defaultArgs> = {
     inlineDescription: true,
     label: 'Example radio',
     description: 'This is an inline description'
+  }
+}
+
+export const WithIcon: StoryObj<typeof defaultArgs> = {
+  ...Default,
+  args: {
+    name: 'withIcon',
+    label: 'Example radio with Icon',
+    icon: ArrowRightIcon
   }
 }
 

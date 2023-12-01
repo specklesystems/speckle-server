@@ -23,12 +23,16 @@
     </template>
     <div class="p-3 flex flex-col gap-3 border-b border-outline-3">
       <div>
-        <h6 class="font-semibold text-sm mb-2">Mode</h6>
-        <FormRadioGroup
-          class="ml-1"
-          label="Select an Option"
-          :options="measurementTypeOptions"
-          @update:selected="updateMeasurementsType"
+        <h6 class="font-semibold text-sm mb-2">Measurement Type</h6>
+        <FormRadio
+          v-for="option in measurementTypeOptions"
+          :key="option.value"
+          :label="option.title"
+          :value="option.value.toString()"
+          name="measurementType"
+          :icon="option.icon"
+          :checked="measurementParams.type === option.value"
+          @change="updateMeasurementsType(option)"
         />
       </div>
     </div>
@@ -71,7 +75,7 @@
 </template>
 <script setup lang="ts">
 import { InformationCircleIcon, TrashIcon } from '@heroicons/vue/24/outline'
-import { FormRadioGroup } from '@speckle/ui-components'
+import { FormRadio } from '@speckle/ui-components'
 import { MeasurementType } from '@speckle/viewer'
 import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
 import { resolveComponent } from 'vue'
@@ -79,7 +83,6 @@ import type { ConcreteComponent } from 'vue'
 
 interface MeasurementTypeOption {
   title: string
-  description: string
   value: MeasurementType
 }
 
