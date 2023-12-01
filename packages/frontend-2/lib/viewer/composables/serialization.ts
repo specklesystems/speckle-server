@@ -116,8 +116,8 @@ export function useStateSerialization() {
         lightConfig: { ...state.ui.lightConfig.value },
         explodeFactor: state.ui.explodeFactor.value,
         selection: state.ui.selection.value?.toArray() || null,
-        measurementOptions: null,
-        measurementsEnabled: false
+        measurementOptions: state.ui.measurementOptions.value,
+        measurementsEnabled: state.ui.measurementsEnabled.value
       }
     }
     return ret
