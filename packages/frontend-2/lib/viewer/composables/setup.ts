@@ -884,7 +884,7 @@ function setupInterfaceState(
         visible: true,
         type: MeasurementType.POINTTOPOINT,
         units: 'm',
-        vertexSnap: false,
+        vertexSnap: true,
         precision: 2
       })
     }
