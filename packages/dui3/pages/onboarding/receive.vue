@@ -121,7 +121,8 @@ const receive = async () => {
     modelName: selectedModel.value?.name as string,
     projectName: selectedProject.value?.name as string,
     sourceApp: selectedVersion.value?.sourceApplication as string,
-    notifications: []
+    notifications: [],
+    settings: hostAppStore.receiveSettings
   }
 
   await hostAppStore.addModel(modelCard)

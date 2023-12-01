@@ -7,6 +7,7 @@ import { IModelCard } from 'lib/models/card'
 import { ModelCardNotification } from 'lib/models/card/notification'
 import { IReceiverModelCard } from 'lib/models/card/receiver'
 import { ISenderModelCard, ISendFilter } from 'lib/models/card/send'
+import { CardSetting, CardSettingValue } from 'lib/models/card/setting'
 import { useCreateVersion } from '~/lib/graphql/composables'
 import { useAccountStore } from '~~/store/accounts'
 
@@ -25,6 +26,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
   const hostAppName = ref<string>()
   const documentInfo = ref<DocumentInfo>()
+  const sendSettings = ref<CardSetting[]>()
+  const receiveSettings = ref<CardSetting[]>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
   const projectModelGroups = computed(() => {
     const projectModelGroups: ProjectModelGroup[] = []
@@ -79,6 +82,31 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await app.$baseBinding.updateModel(documentModelStore.value.models[modelIndex])
   }
 
+  type DataType = Record<string, unknown>
+  const updateModelSettings = async (modelId: string, newSettings: DataType) => {
+    const modelIndex = documentModelStore.value.models.findIndex(
+      (m) => m.id === modelId
+    )
+    const model = documentModelStore.value.models[modelIndex] as IModelCard
+
+    if (model.settings) {
+      model.settings.forEach((setting) => {
+        if (setting) {
+          if (setting.value !== newSettings[setting.id]) {
+            // console.log(
+            //   'attempted to set new setting value',
+            //   setting.id,
+            //   newSettings[setting.id]
+            // )
+
+            setting.value = newSettings[setting.id] as CardSettingValue
+          }
+        }
+      })
+    }
+    await app.$baseBinding.updateModel(documentModelStore.value.models[modelIndex])
+  }
+
   const removeModel = async (model: IModelCard) => {
     await app.$baseBinding.removeModel(model)
     documentModelStore.value.models = documentModelStore.value.models.filter(
@@ -129,6 +157,12 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.progress = undefined
     await app.$receiveBinding.cancelReceive(modelId)
   }
+
+  const getSendSettings = async () =>
+    (sendSettings.value = await app.$sendBinding.getSendSettings())
+
+  const getReceiveSettings = async () =>
+    (receiveSettings.value = await app.$receiveBinding.getReceiveSettings())
 
   const getHostAppName = async () =>
     (hostAppName.value = await app.$baseBinding.getSourceApplicationName())
@@ -258,6 +292,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   void refreshDocumentModelStore()
   void refreshSendFilters()
   void getHostAppName()
+  void getSendSettings()
+  void getReceiveSettings()
 
   return {
     hostAppName,
@@ -266,9 +302,12 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     sendFilters,
     selectionFilter,
     everythingFilter,
+    sendSettings,
+    receiveSettings,
     addModel,
     highlightModel,
     updateModelFilter,
+    updateModelSettings,
     removeModel,
     tryGetModel,
     sendModel,

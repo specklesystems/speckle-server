@@ -39,23 +39,73 @@
     >
       Cancel
     </FormButton>
+    <FormButton
+      v-if="props.model.settings"
+      v-tippy="'Settings'"
+      class="px-0"
+      size="sm"
+      text
+      hide-text
+      :icon-left="Cog6ToothIcon"
+      @click="openSettingDialog = true"
+    ></FormButton>
+    <LayoutDialog v-model:open="openSettingDialog">
+      <div class="h5 font-semibold pb-2">Publish Settings</div>
+      <hr class="pb-3" />
+      <FormJsonForm
+        :schema="settingsJsonForms"
+        :data="data"
+        @change="onParamsFormChange"
+      ></FormJsonForm>
+    </LayoutDialog>
   </div>
   <LayoutDialog v-model:open="openFilterDialog">
     <FilterEditDialog :model="model" @close="openFilterDialog = false" />
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { CloudArrowUpIcon, FunnelIcon } from '@heroicons/vue/24/outline'
+import { CloudArrowUpIcon, FunnelIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import { ISenderModelCard } from '~~/lib/models/card/send'
 import { useGetModelDetails } from '~~/lib/graphql/composables'
 import { ProjectModelGroup, useHostAppStore } from '~~/store/hostApp'
+import { JsonFormsChangeEvent } from '@jsonforms/vue'
+import { JsonSchema } from '@jsonforms/core'
+import { CardSetting } from '~/lib/models/card/setting'
+import { omit } from 'lodash-es'
 
+const openSettingDialog = ref(false)
 const store = useHostAppStore()
 
 const props = defineProps<{
   model: ISenderModelCard
   project: ProjectModelGroup
 }>()
+
+const data = computed(() => {
+  const settingValues = {} as DataType
+  if (props.model.settings) {
+    props.model.settings.forEach((setting) => {
+      settingValues[setting.id as string] = setting.value
+    })
+  }
+  return settingValues
+})
+
+type DataType = Record<string, unknown>
+const settingsJsonForms = computed(() => {
+  if (props.model.settings === undefined) return {}
+  const obj: JsonSchema = {
+    type: 'object',
+    properties: {}
+  }
+  props.model.settings.forEach((setting: CardSetting) => {
+    const mappedSetting = omit({ ...setting, $id: setting.id }, ['id', 'value'])
+    if (obj && obj.properties) {
+      obj.properties[setting.id] = mappedSetting
+    }
+  })
+  return obj
+})
 
 const getModelDetails = useGetModelDetails(props.project.accountId)
 
@@ -65,4 +115,9 @@ const modelDetails = await getModelDetails({
 })
 
 const openFilterDialog = ref(false)
+
+const onParamsFormChange = (e: JsonFormsChangeEvent) => {
+  // console.log(JSON.parse(JSON.stringify(e.data)))
+  store.updateModelSettings(props.model.id, e.data as DataType)
+}
 </script>

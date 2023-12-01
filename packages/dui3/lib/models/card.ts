@@ -1,3 +1,4 @@
+import { CardSetting } from 'lib/models/card/setting'
 import { IDiscriminatedObject } from '~~/lib/bindings/definitions/common'
 import { ModelCardNotification } from '~~/lib/models/card/notification'
 import { ModelCardProgress } from '~~/lib/models/card/progress'
@@ -13,4 +14,5 @@ export interface IModelCard extends IDiscriminatedObject {
   lastLocalUpdate?: string
   notifications?: ModelCardNotification[]
   progress?: ModelCardProgress
+  settings?: CardSetting[]
 }

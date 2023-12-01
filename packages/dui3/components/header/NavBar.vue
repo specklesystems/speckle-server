@@ -10,11 +10,38 @@
             <PortalTarget name="navigation"></PortalTarget>
           </div>
         </div>
-        <div>
-          <HeaderUserMenu />
+        <div class="flex justify-between items-center">
+          <!-- ONLY FOR TESTS FOR NOW-->
+          <div v-if="testSettings && hasConfigBindings" class="flex justify-end">
+            <FormButton
+              v-tippy="'Settings'"
+              class="px-1"
+              text
+              hide-text
+              :icon-left="Cog6ToothIcon"
+              @click="openConfigDialog = true"
+            ></FormButton>
+            <LayoutDialog v-model:open="openConfigDialog">
+              <ConfigDialog @close="openConfigDialog = false" />
+            </LayoutDialog>
+          </div>
+          <div>
+            <HeaderUserMenu />
+          </div>
         </div>
       </div>
     </div>
   </nav>
 </template>
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { useConfigStore } from '~/store/config'
+import { Cog6ToothIcon } from '@heroicons/vue/24/outline'
+
+const openConfigDialog = ref(false)
+
+// NOTE: make it true to test settings, it might be removed later. TBD
+const testSettings = ref(true)
+
+const uiConfigStore = useConfigStore()
+const { hasConfigBindings } = storeToRefs(uiConfigStore)
+</script>

@@ -70,13 +70,13 @@ export class MockedConfigBinding extends BaseBridge {
         send: {
           title: 'Send',
           blurb: 'Send first model to Speckleverse!',
-          completed: false,
+          completed: true,
           page: '/onboarding/send'
         },
         receive: {
           title: 'Receive',
           blurb: 'Receive first model from Speckleverse!',
-          completed: false,
+          completed: true,
           page: '/onboarding/receive'
         }
       }
@@ -89,7 +89,7 @@ export class MockedConfigBinding extends BaseBridge {
           test: {
             title: 'Test',
             blurb: 'Initial Test',
-            completed: false,
+            completed: true,
             page: '/onboarding/test'
           }
         }

@@ -70,7 +70,16 @@ export class MockedBaseBinding extends BaseBridge {
         selectedObjectIds: ['test'],
         summary: 'Test',
         typeDiscriminator: 'RhinoSelectionFilter'
-      }
+      },
+      settings: [
+        {
+          id: 'includeAttributes',
+          type: 'boolean',
+          title: 'Include Attributes',
+          value: true,
+          typeDiscriminator: 'CardSetting'
+        }
+      ]
     } as IModelCard,
     {
       typeDiscriminator: 'ReceiverModelCard',
@@ -80,8 +89,32 @@ export class MockedBaseBinding extends BaseBridge {
       accountId: useRuntimeConfig().public.speckleAccountId,
       expired: false,
       lastLocalUpdate: '',
-      notifications: []
-    }
+      notifications: [],
+      settings: [
+        {
+          id: 'includeAttributes',
+          type: 'boolean',
+          title: 'Include Attributes',
+          value: true,
+          typeDiscriminator: 'CardSetting'
+        },
+        {
+          id: 'mergeCoplanarFaces',
+          type: 'boolean',
+          title: 'Merge Coplanar Faces',
+          value: true,
+          typeDiscriminator: 'CardSetting'
+        },
+        {
+          id: 'receiveMode',
+          type: 'string',
+          title: 'Receive Mode',
+          value: 'Update',
+          enum: ['Update', 'Create', 'Ignore'],
+          typeDiscriminator: 'CardSetting'
+        }
+      ]
+    } as IModelCard
   ]
 
   public addModel(model: IModelCard) {
