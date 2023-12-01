@@ -33,7 +33,7 @@ export default {
 } as Meta
 
 export const Default: StoryObj<RadioGroupArgs> = {
-  render: (args) => ({
+  render: (args, ctx) => ({
     components: { RadioGroup },
     setup() {
       const selectedOption = ref<string>(args.modelValue)
@@ -41,6 +41,7 @@ export const Default: StoryObj<RadioGroupArgs> = {
       watch(selectedOption, (newValue) => {
         args.modelValue = newValue
         action('update:modelValue')(newValue)
+        ctx.updateArgs({ modelValue: newValue })
       })
 
       return { args, selectedOption }
