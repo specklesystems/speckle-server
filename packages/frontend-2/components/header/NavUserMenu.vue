@@ -79,6 +79,20 @@
               <EnvelopeIcon class="w-5 h-5 sm:mr-2" />
             </NuxtLink>
           </MenuItem>
+          <MenuItem v-slot="{ active }">
+            <NuxtLink
+              :class="[
+                active ? 'bg-foundation-focus' : '',
+                'flex items-center justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-foreground cursor-pointer transition'
+              ]"
+              target="_blank"
+              to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
+              external
+            >
+              Feedback
+              <ChatBubbleLeftRightIcon class="w-5 h-5 sm:mr-2" />
+            </NuxtLink>
+          </MenuItem>
           <MenuItem v-if="activeUser" v-slot="{ active }">
             <NuxtLink
               :class="[
@@ -124,9 +138,10 @@ import {
   SunIcon,
   MoonIcon,
   EnvelopeIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  CloudArrowDownIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/vue/24/outline'
-import { CloudArrowDownIcon } from '@heroicons/vue/24/solid'
 import { useQuery } from '@vue/apollo-composable'
 import { Roles } from '@speckle/shared'
 import type { Optional } from '@speckle/shared'
