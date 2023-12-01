@@ -5,7 +5,7 @@
         <div class="cursor-pointer">
           <span class="sr-only">Open notifications menu</span>
           <div class="relative">
-            <div v-if="hasNotifications && !menuOpen" class="scale-90">
+            <div v-if="hasNotifications && !menuOpen" class="scale-75">
               <div
                 class="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary animate-ping"
               ></div>
