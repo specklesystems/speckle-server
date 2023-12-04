@@ -3,12 +3,12 @@
     <NuxtLink
       :to="to"
       class="flex gap-1 items-center text-sm ml-0.5"
-      active-class="text-primary font-bold active-class"
+      active-class="text-primary font-bold group is-active"
     >
       <div v-if="separator">
         <ChevronRightIcon class="flex w-4 h-4" />
       </div>
-      <div class="maybe-truncate">
+      <div class="group-[.is-active]:truncate">
         {{ name || to }}
       </div>
     </NuxtLink>
@@ -31,11 +31,3 @@ defineProps({
   }
 })
 </script>
-
-<style>
-.active-class .maybe-truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-</style>
