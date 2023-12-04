@@ -1,14 +1,14 @@
 <template>
-  <div class="overflow-x-auto text-foreground hover:text-primary-focus transition">
+  <div class="text-foreground hover:text-primary-focus transition last:truncate">
     <NuxtLink
       :to="to"
       class="flex gap-1 items-center text-sm ml-0.5"
-      active-class="text-primary font-bold"
+      active-class="text-primary font-bold active-class"
     >
       <div v-if="separator">
         <ChevronRightIcon class="flex w-4 h-4" />
       </div>
-      <div class="truncate">
+      <div class="maybe-truncate">
         {{ name || to }}
       </div>
     </NuxtLink>
@@ -31,3 +31,11 @@ defineProps({
   }
 })
 </script>
+
+<style>
+.active-class .maybe-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+</style>
