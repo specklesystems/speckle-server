@@ -253,8 +253,10 @@ export type InjectableViewerState = Readonly<{
     explodeFactor: Ref<number>
     viewerBusy: WritableComputedRef<boolean>
     selection: Ref<Nullable<Vector3>>
-    measurementsEnabled: Ref<boolean>
-    measurementOptions: Ref<MeasurementOptions>
+    measurement: {
+      enabled: Ref<boolean>
+      options: Ref<MeasurementOptions>
+    }
   }
   /**
    * State stored in the anchor string of the URL
@@ -879,14 +881,16 @@ function setupInterfaceState(
         hasAnyFiltersApplied
       },
       highlightedObjectIds,
-      measurementsEnabled: ref(false),
-      measurementOptions: ref<MeasurementOptions>({
-        visible: true,
-        type: MeasurementType.POINTTOPOINT,
-        units: 'm',
-        vertexSnap: true,
-        precision: 2
-      })
+      measurement: {
+        enabled: ref(false),
+        options: ref<MeasurementOptions>({
+          visible: true,
+          type: MeasurementType.POINTTOPOINT,
+          units: 'm',
+          vertexSnap: true,
+          precision: 2
+        })
+      }
     }
   }
 }

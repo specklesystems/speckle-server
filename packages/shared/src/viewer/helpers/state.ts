@@ -86,8 +86,10 @@ export type SerializedViewerState = {
     }
     explodeFactor: number
     selection: Nullable<number[]>
-    measurementsEnabled: boolean
-    measurementOptions: Nullable<MeasurementOptions>
+    measurement: {
+      enabled: boolean
+      options: Nullable<MeasurementOptions>
+    }
   }
 }
 
@@ -131,7 +133,7 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
 
   const measurementOptions = {
     ...defaultMeasurementOptions,
-    ...state.ui?.measurementOptions
+    ...state.ui?.measurement?.options
   }
 
   return {
@@ -212,8 +214,10 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
       },
       explodeFactor: state.ui?.explodeFactor || 0,
       selection: state.ui?.selection || null,
-      measurementsEnabled: state.ui?.measurementsEnabled ?? false,
-      measurementOptions
+      measurement: {
+        enabled: state.ui?.measurement?.enabled ?? false,
+        options: measurementOptions
+      }
     }
   }
 }

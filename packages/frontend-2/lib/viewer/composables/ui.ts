@@ -344,12 +344,12 @@ export function useMeasurementUtilities() {
   const state = useInjectedViewerState()
 
   const enableMeasurements = (enabled: boolean) => {
-    state.ui.measurementsEnabled.value = enabled
+    state.ui.measurement.enabled.value = enabled
   }
 
   const setMeasurementOptions = (options: MeasurementOptions) => {
-    if (state.ui.measurementOptions.value) {
-      state.ui.measurementOptions.value = options
+    if (state.ui.measurement.options.value) {
+      state.ui.measurement.options.value = options
     }
   }
 
