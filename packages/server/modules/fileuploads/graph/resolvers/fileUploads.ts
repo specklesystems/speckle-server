@@ -65,6 +65,18 @@ export = {
           return true
         }
       )
+    },
+    projectFileImportUpdated: {
+      subscribe: filteredSubscribe(
+        FileImportSubscriptions.ProjectFileImportUpdated,
+        async (payload, args, ctx) => {
+          const { id: projectId } = args
+          if (payload.projectId !== projectId) return false
+
+          await authorizeResolver(ctx.userId, projectId, Roles.Stream.Reviewer)
+          return true
+        }
+      )
     }
   }
 } as Resolvers

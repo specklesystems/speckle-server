@@ -23,7 +23,10 @@
         :app-id="appId"
       />
       <div>
-        <div class="text-center label text-foreground-2 mb-3 text-xs font-normal">
+        <div
+          v-if="hasLocalStrategy"
+          class="text-center label text-foreground-2 mb-3 text-xs font-normal"
+        >
           {{
             hasThirdPartyStrategies
               ? 'Or login with your email'

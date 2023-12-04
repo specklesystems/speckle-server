@@ -53,6 +53,7 @@ const newsletterConsent = inject<Ref<boolean>>('newsletterconsent')
 const NuxtLink = resolveComponent('NuxtLink')
 const GoogleButton = resolveComponent('AuthThirdPartyLoginButtonGoogle')
 const MicrosoftButton = resolveComponent('AuthThirdPartyLoginButtonMicrosoft')
+const OIDCButton = resolveComponent('AuthThirdPartyLoginButtonOIDC')
 const GithubButton = resolveComponent('AuthThirdPartyLoginButtonGithub')
 
 const thirdPartyStrategies = computed(() =>
@@ -84,6 +85,8 @@ const getButtonComponent = (strat: StrategyType) => {
       return GithubButton
     case AuthStrategy.AzureAD:
       return MicrosoftButton
+    case AuthStrategy.OIDC:
+      return OIDCButton
   }
 
   return NuxtLink

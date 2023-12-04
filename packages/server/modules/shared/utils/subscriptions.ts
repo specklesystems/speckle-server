@@ -9,6 +9,7 @@ import {
   AutomationsStatus,
   ProjectAutomationsStatusUpdatedMessage,
   ProjectCommentsUpdatedMessage,
+  ProjectFileImportUpdatedMessage,
   ProjectModelsUpdatedMessage,
   ProjectPendingModelsUpdatedMessage,
   ProjectPendingVersionsUpdatedMessage,
@@ -17,6 +18,7 @@ import {
   ProjectVersionsUpdatedMessage,
   SubscriptionProjectAutomationsStatusUpdatedArgs,
   SubscriptionProjectCommentsUpdatedArgs,
+  SubscriptionProjectFileImportUpdatedArgs,
   SubscriptionProjectModelsUpdatedArgs,
   SubscriptionProjectPendingModelsUpdatedArgs,
   SubscriptionProjectPendingVersionsUpdatedArgs,
@@ -97,7 +99,8 @@ export enum ViewerSubscriptions {
 
 export enum FileImportSubscriptions {
   ProjectPendingModelsUpdated = 'PROJECT_PENDING_MODELS_UPDATED',
-  ProjectPendingVersionsUpdated = 'PROJECT_PENDING_VERSIONS_UPDATED'
+  ProjectPendingVersionsUpdated = 'PROJECT_PENDING_VERSIONS_UPDATED',
+  ProjectFileImportUpdated = 'PROJECT_FILE_IMPORT_UPDATED'
 }
 
 type NoVariables = Record<string, never>
@@ -189,6 +192,16 @@ type SubscriptionTypeMap = {
       branchName: string
     }
     variables: SubscriptionProjectPendingVersionsUpdatedArgs
+  }
+  [FileImportSubscriptions.ProjectFileImportUpdated]: {
+    payload: {
+      projectFileImportUpdated: Merge<
+        ProjectFileImportUpdatedMessage,
+        { upload: FileUploadGraphQLReturn }
+      >
+      projectId: string
+    }
+    variables: SubscriptionProjectFileImportUpdatedArgs
   }
   [ProjectSubscriptions.ProjectAutomationStatusUpdated]: {
     payload: {

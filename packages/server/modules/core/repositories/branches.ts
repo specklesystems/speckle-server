@@ -570,6 +570,7 @@ export async function createBranch(params: {
 export async function updateBranch(branchId: string, branch: Partial<BranchRecord>) {
   if (branch.name) {
     validateBranchName(branch.name)
+    branch.name = branch.name.toLowerCase()
   }
 
   const [newBranch] = (await Branches.knex()

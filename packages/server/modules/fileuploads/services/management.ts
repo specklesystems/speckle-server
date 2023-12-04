@@ -1,4 +1,5 @@
 import {
+  ProjectFileImportUpdatedMessageType,
   ProjectPendingModelsUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
@@ -33,4 +34,13 @@ export async function insertNewUploadAndNotify(upload: SaveUploadFileInput) {
       branchName: file.branchName
     })
   }
+
+  await publish(FileImportSubscriptions.ProjectFileImportUpdated, {
+    projectFileImportUpdated: {
+      id: file.id,
+      type: ProjectFileImportUpdatedMessageType.Created,
+      upload: file
+    },
+    projectId: file.streamId
+  })
 }
