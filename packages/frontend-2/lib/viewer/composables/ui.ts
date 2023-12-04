@@ -348,9 +348,7 @@ export function useMeasurementUtilities() {
   }
 
   const setMeasurementOptions = (options: MeasurementOptions) => {
-    if (state.ui.measurement.options.value) {
-      state.ui.measurement.options.value = options
-    }
+    state.ui.measurement.options.value = options
   }
 
   const removeMeasurement = () => {
