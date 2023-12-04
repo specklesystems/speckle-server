@@ -36,6 +36,16 @@ services:
   ####
   # Speckle Server
   #######
+  speckle-ingress:
+    platform: linux/amd64
+    image: speckle/speckle-docker-compose-ingress:2
+    restart: always
+    ports:
+      - '0.0.0.0:80:8080'
+    environment:
+      FILE_SIZE_LIMIT_MB: '100'
+      NGINX_ENVSUBST_OUTPUT_DIR: '/etc/nginx'
+
   speckle-frontend-2:
     image: speckle/speckle-frontend-2:2
     restart: always
