@@ -54,7 +54,7 @@
           </v-card-text>
           <div v-if="!$apollo.loading && streamUploads.length !== 0">
             <template v-for="file in streamUploads">
-              <file-processing-item :key="file.id" :file-id="file.id" />
+              <file-processing-item :key="file.id" :file="file" />
             </template>
           </div>
           <div v-else>
@@ -134,11 +134,20 @@ import {
   STANDARD_PORTAL_KEYS,
   buildPortalStateMixin
 } from '@/main/utils/portalStateManager'
-import { ServerInfoBlobSizeLimitDocument } from '@/graphql/generated/graphql'
-import { useQuery } from '@vue/apollo-composable'
+import {
+  ServerInfoBlobSizeLimitDocument,
+  StreamFileUploadsUpdatedDocument,
+  ProjectFileImportUpdatedMessageType
+} from '@/graphql/generated/graphql'
+import { useQuery, useSubscription, useApolloClient } from '@vue/apollo-composable'
 import { computed } from 'vue'
 import { prettyFileSize } from '@/main/lib/common/file-upload/fileUploadHelper'
-
+import { streamFileUploadFragment } from '@/graphql/fragments/streams'
+import {
+  getCacheId,
+  getObjectReference
+} from '@/main/lib/common/apollo/helpers/apolloOperationHelper'
+import { useRoute } from '@/main/lib/core/composables/router'
 export default {
   name: 'TheUploads',
   components: {
@@ -176,10 +185,12 @@ export default {
             id
             role
             fileUploads {
-              id
+              ...StreamFileUpload
             }
           }
         }
+
+        ${streamFileUploadFragment}
       `,
       update: (data) => data.stream.fileUploads,
       variables() {
@@ -190,12 +201,40 @@ export default {
     }
   },
   setup() {
+    const route = useRoute()
+    const apollo = useApolloClient().client
     const { result } = useQuery(ServerInfoBlobSizeLimitDocument)
     const blobSizeLimitBytes = computed(
       () => result.value?.serverInfo.blobSizeLimitBytes || 1
     )
     const fileSizeLimit = computed(() => blobSizeLimitBytes.value / 1024 / 1024)
-    return { blobSizeLimitBytes, fileSizeLimit }
+    const streamId = computed(() => route.params.streamId)
+
+    const { onResult: onFileUploadsUpdated } = useSubscription(
+      StreamFileUploadsUpdatedDocument,
+      () => ({
+        id: streamId.value
+      })
+    )
+
+    onFileUploadsUpdated((res) => {
+      const event = res.data?.projectFileImportUpdated
+      if (!event) return
+
+      // If updated, Apollo should take care of the cache update automatically
+      // We only need to take care of the "CREATED" msg
+      if (event.type !== ProjectFileImportUpdatedMessageType.Created) return
+      apollo.cache.modify({
+        id: getCacheId('Stream', streamId.value),
+        fields: {
+          fileUploads(existingRefs = []) {
+            return [getObjectReference('FileUpload', event.id), ...existingRefs]
+          }
+        }
+      })
+    })
+
+    return { blobSizeLimitBytes, fileSizeLimit, streamId }
   },
   data() {
     return {
@@ -253,7 +292,6 @@ export default {
     uploadCompleted(file) {
       const index = this.files.findIndex((f) => f.name === file)
       this.files.splice(index, 1)
-      this.$apollo.queries.streamUploads.refetch()
       this.$mixpanel.track('File Action', {
         type: 'action',
         name: 'upload',

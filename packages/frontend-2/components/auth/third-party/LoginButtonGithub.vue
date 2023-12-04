@@ -5,7 +5,7 @@
       alt="GitHub Sign In"
       class="w-4 dark:invert"
     />
-    <div>Github</div>
+    <div class="ml-3">Github</div>
   </AuthThirdPartyLoginButtonBase>
 </template>
 <script setup lang="ts">
