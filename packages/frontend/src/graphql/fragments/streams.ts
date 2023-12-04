@@ -10,3 +10,18 @@ export const streamPendingAccessRequestsFragment = gql`
 
   ${fullStreamAccessRequestFieldsFragment}
 `
+
+export const streamFileUploadFragment = gql`
+  fragment StreamFileUpload on FileUpload {
+    id
+    convertedCommitId
+    userId
+    convertedStatus
+    convertedMessage
+    fileName
+    fileType
+    uploadComplete
+    uploadDate
+    convertedLastUpdate
+  }
+`

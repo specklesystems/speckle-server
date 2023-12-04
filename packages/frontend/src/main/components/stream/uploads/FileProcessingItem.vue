@@ -63,60 +63,13 @@
 </template>
 <script>
 import { AppLocalStorage } from '@/utils/localStorage'
-import { gql } from '@apollo/client/core'
 
 export default {
   props: {
-    fileId: {
-      type: String,
+    file: {
+      type: Object,
       default: null
     }
-  },
-  data: () => ({
-    percentCompleted: -1,
-    error: null,
-    file: null
-  }),
-  apollo: {
-    file: {
-      query: gql`
-        query File($id: String!, $streamId: String!) {
-          stream(id: $streamId) {
-            id
-            fileUpload(id: $id) {
-              id
-              convertedCommitId
-              userId
-              convertedStatus
-              convertedMessage
-              fileName
-              fileType
-              uploadComplete
-              uploadDate
-              convertedLastUpdate
-            }
-          }
-        }
-      `,
-      variables() {
-        return {
-          id: this.fileId,
-          streamId: this.$route.params.streamId
-        }
-      },
-      skip() {
-        return !this.fileId
-      },
-      update: (data) => data.stream.fileUpload
-    }
-  },
-  watch: {
-    file(val) {
-      if (val.convertedStatus >= 2) this.$apollo.queries.file.stopPolling()
-    }
-  },
-  mounted() {
-    this.$apollo.queries.file.startPolling(1000)
   },
   methods: {
     async downloadOriginalFile() {

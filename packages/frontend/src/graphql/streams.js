@@ -5,6 +5,7 @@ import {
   streamCollaboratorFieldsFragment
 } from '@/graphql/fragments/user'
 import { gql } from '@apollo/client/core'
+import { streamFileUploadFragment } from '@/graphql/fragments/streams'
 
 /**
  * Common stream fields when querying for streams
@@ -213,4 +214,18 @@ export const shareableStreamQuery = gql`
   }
 
   ${streamCollaboratorFieldsFragment}
+`
+
+export const streamFileUploadsUpdatedSubscription = gql`
+  subscription StreamFileUploadsUpdated($id: String!) {
+    projectFileImportUpdated(id: $id) {
+      type
+      id
+      upload {
+        ...StreamFileUpload
+      }
+    }
+  }
+
+  ${streamFileUploadFragment}
 `
