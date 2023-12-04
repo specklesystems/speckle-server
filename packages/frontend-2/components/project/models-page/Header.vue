@@ -103,10 +103,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { SourceAppDefinition, SourceApps, SpeckleViewer } from '@speckle/shared'
+import { SourceApps, SpeckleViewer } from '@speckle/shared'
+import type { SourceAppDefinition } from '@speckle/shared'
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
+import type {
   FormUsersSelectItemFragment,
   ProjectModelsPageHeader_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'

@@ -58,7 +58,7 @@
 import dayjs from 'dayjs'
 
 import { ShieldCheckIcon, GlobeEuropeAfricaIcon } from '@heroicons/vue/24/solid'
-import { ConnectorTag } from '~~/lib/connectors'
+import type { ConnectorTag } from '~~/lib/connectors'
 
 const props = defineProps<{
   tag: ConnectorTag

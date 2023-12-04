@@ -12,11 +12,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Get } from 'type-fest'
+import type { Get } from 'type-fest'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { graphql } from '~~/lib/common/generated/gql'
-import { AuthStategiesServerInfoFragmentFragment } from '~~/lib/common/generated/gql/graphql'
+import type { AuthStategiesServerInfoFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 /**

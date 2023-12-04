@@ -1,6 +1,6 @@
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import LayoutTabs from '~~/src/components/layout/Tabs.vue'
-import { LayoutTabItem } from '~~/src/helpers/layout/components'
+import type { LayoutTabItem } from '~~/src/helpers/layout/components'
 
 export default {
   component: LayoutTabs,

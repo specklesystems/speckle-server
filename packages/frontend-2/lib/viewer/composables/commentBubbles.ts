@@ -1,11 +1,12 @@
-import { CSSProperties, Ref } from 'vue'
-import { Nullable, SpeckleViewer } from '@speckle/shared'
+import type { CSSProperties, Ref } from 'vue'
+import { SpeckleViewer } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import {
-  LoadedCommentThread,
   useInjectedViewerInterfaceState,
   useInjectedViewerState,
   useResetUiState
 } from '~~/lib/viewer/composables/setup'
+import type { LoadedCommentThread } from '~~/lib/viewer/composables/setup'
 import { graphql } from '~~/lib/common/generated/gql'
 import { debounce } from 'lodash-es'
 import { Vector3 } from 'three'
@@ -30,7 +31,7 @@ import {
   useApplySerializedState,
   useStateSerialization
 } from '~~/lib/viewer/composables/serialization'
-import { Merge } from 'type-fest'
+import type { Merge } from 'type-fest'
 import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 
 graphql(`

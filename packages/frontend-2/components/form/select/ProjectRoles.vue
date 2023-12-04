@@ -41,7 +41,8 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { StreamRoles, Roles, Nullable } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
+import type { StreamRoles, Nullable } from '@speckle/shared'
 import { capitalize } from 'lodash-es'
 import { useFormSelectChildInternals } from '~~/lib/form/composables/select'
 

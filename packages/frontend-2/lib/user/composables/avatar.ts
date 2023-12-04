@@ -1,5 +1,5 @@
 import { graphql } from '~~/lib/common/generated/gql'
-import {
+import type {
   ActiveUserAvatarFragment,
   LimitedUserAvatarFragment,
   AppAuthorAvatarFragment

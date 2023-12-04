@@ -137,9 +137,9 @@
 </template>
 <script setup lang="ts">
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
-import {
+import { AutomationRunStatus } from '~~/lib/common/generated/gql/graphql'
+import type {
   AutomationFunctionRun,
-  AutomationRunStatus,
   Version
 } from '~~/lib/common/generated/gql/graphql'
 import { SpeckleViewer } from '@speckle/shared'

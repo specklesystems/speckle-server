@@ -13,7 +13,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { StringPropertyInfo } from '@speckle/viewer'
+import type { StringPropertyInfo } from '@speckle/viewer'
 const props = defineProps<{
   filter: StringPropertyInfo
 }>()

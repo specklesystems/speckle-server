@@ -57,8 +57,10 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { Nullable, Optional, SourceAppDefinition, SourceApps } from '@speckle/shared'
-import { PropType, ref, toRefs } from 'vue'
+import type { Nullable, Optional, SourceAppDefinition } from '@speckle/shared'
+import { SourceApps } from '@speckle/shared'
+import { ref, toRefs } from 'vue'
+import type { PropType } from 'vue'
 import { useFormSelectChildInternals } from '~~/src/composables/form/select'
 import FormSelectBase from '~~/src/components/form/select/Base.vue'
 import SourceAppBadge from '~~/src/components/SourceAppBadge.vue'

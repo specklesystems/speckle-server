@@ -55,8 +55,9 @@ import {
   ExclamationCircleIcon
 } from '@heroicons/vue/20/solid'
 import { noop } from 'lodash'
-import { ConcreteComponent, computed, useSlots } from 'vue'
+import { computed, useSlots } from 'vue'
 import FormButton from '~~/src/components/form/Button.vue'
+import type { PropAnyComponent } from '~~/src/helpers/common/components'
 
 type AlertColor = 'success' | 'danger' | 'warning' | 'info'
 type Size = 'default' | 'xs'
@@ -73,7 +74,7 @@ const props = withDefaults(
       onClick?: () => void
       externalUrl?: boolean
     }>
-    customIcon?: ConcreteComponent
+    customIcon?: PropAnyComponent
     size?: Size
   }>(),
   {

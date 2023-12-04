@@ -1,17 +1,17 @@
 import { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
-import { MaybeRef } from '@vueuse/core'
+import type { MaybeRef } from '@vueuse/core'
 import { isArray } from 'lodash-es'
-import { Get } from 'type-fest'
+import type { Get } from 'type-fest'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useLock } from '~~/lib/common/composables/singleton'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import {
+import { ProjectUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
+import type {
   OnProjectUpdatedSubscription,
   ProjectCreateInput,
   ProjectInviteCreateInput,
   ProjectInviteUseInput,
-  ProjectUpdatedMessageType,
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
   UpdateProjectMetadataMutation,

@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
-import { InviteItem } from '~~/lib/server-management/helpers/types'
+import type { InviteItem } from '~~/lib/server-management/helpers/types'
 import { adminDeleteInviteMutation } from '~~/lib/server-management/graphql/mutations'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
@@ -37,7 +37,7 @@ import {
   getFirstErrorMessage,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { AdminInviteList } from '~~/lib/common/generated/gql/graphql'
+import type { AdminInviteList } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   open: boolean

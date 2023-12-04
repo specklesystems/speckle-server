@@ -15,7 +15,7 @@
   </LayoutDialogSection>
 </template>
 <script setup lang="ts">
-import { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import { ChevronRightIcon } from '@heroicons/vue/24/outline'
 import { projectWebhooksRoute } from '~~/lib/common/helpers/route'
 import { LayoutDialogSection } from '@speckle/ui-components'

@@ -66,7 +66,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { useResizeObserver } from '@vueuse/core'
 import { usePreviewImageBlob } from '~~/lib/projects/composables/previewImage'
 

@@ -76,8 +76,12 @@
 <script setup lang="ts">
 import { CheckIcon } from '@heroicons/vue/20/solid'
 import { toRefs } from 'vue'
-import { StepsPadding, useStepsInternals } from '~~/src/composables/common/steps'
-import { HorizontalOrVertical, NumberStepType } from '~~/src/helpers/common/components'
+import { useStepsInternals } from '~~/src/composables/common/steps'
+import type { StepsPadding } from '~~/src/composables/common/steps'
+import type {
+  HorizontalOrVertical,
+  NumberStepType
+} from '~~/src/helpers/common/components'
 import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 
 const emit = defineEmits<{

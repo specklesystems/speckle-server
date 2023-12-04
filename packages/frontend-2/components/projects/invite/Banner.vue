@@ -36,11 +36,11 @@
 <script setup lang="ts">
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectsInviteBannerFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectsInviteBannerFragment } from '~~/lib/common/generated/gql/graphql'
 import { useNavigateToLogin } from '~~/lib/common/helpers/route'
 import { useProcessProjectInvite } from '~~/lib/projects/composables/projectManagement'
 import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import { CheckIcon } from '@heroicons/vue/24/solid'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 

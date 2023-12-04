@@ -2,6 +2,7 @@ import { FileImportSubscriptions, publish } from '@/modules/shared/utils/subscri
 import { listenFor, MessageType } from '@/modules/core/utils/dbNotificationListener'
 import { getFileInfo } from '@/modules/fileuploads/repositories/fileUploads'
 import {
+  ProjectFileImportUpdatedMessageType,
   ProjectPendingModelsUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
@@ -45,6 +46,15 @@ async function onFileImportProcessed(msg: MessageType) {
       branchName: upload.branchName
     })
   }
+
+  await publish(FileImportSubscriptions.ProjectFileImportUpdated, {
+    projectFileImportUpdated: {
+      id: upload.id,
+      type: ProjectFileImportUpdatedMessageType.Updated,
+      upload
+    },
+    projectId: upload.streamId
+  })
 }
 
 export function listenForImportUpdates() {

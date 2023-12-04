@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { MaybeAsync } from '@speckle/shared'
-import { AsyncComputedOptions, computedAsync } from '@vueuse/core'
-import { ComputedRef, computed } from 'vue'
+import type { MaybeAsync } from '@speckle/shared'
+import { computedAsync } from '@vueuse/core'
+import type { AsyncComputedOptions } from '@vueuse/core'
+import { computed } from 'vue'
+import type { ComputedRef } from 'vue'
 
 export interface AsyncWritableComputedOptions<T> {
   get: (...args: any[]) => MaybeAsync<T>

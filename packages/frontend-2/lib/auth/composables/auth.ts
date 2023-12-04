@@ -3,7 +3,8 @@ import {
   getTokenFromAccessCode,
   registerAndGetAccessCode
 } from '~~/lib/auth/services/auth'
-import { ensureError, Optional, SafeLocalStorage } from '@speckle/shared'
+import { ensureError, SafeLocalStorage } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import { CookieKeys, LocalStorageKeys } from '~~/lib/common/helpers/constants'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { useNavigateToHome, useNavigateToLogin } from '~~/lib/common/helpers/route'

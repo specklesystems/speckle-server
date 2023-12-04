@@ -115,8 +115,8 @@ import { debounce } from 'lodash-es'
 import { useQuery } from '@vue/apollo-composable'
 import { MagnifyingGlassIcon, TrashIcon, PlusIcon } from '@heroicons/vue/20/solid'
 import { getProjectsQuery } from '~~/lib/server-management/graphql/queries'
-import { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
-import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import type { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
+import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { isProject } from '~~/lib/server-management/helpers/utils'
 
 const logger = useLogger()

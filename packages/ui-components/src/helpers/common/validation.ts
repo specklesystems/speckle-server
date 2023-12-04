@@ -1,5 +1,5 @@
 import { isString, isUndefined } from 'lodash'
-import { GenericValidateFunction } from 'vee-validate'
+import type { GenericValidateFunction } from 'vee-validate'
 import { isNullOrUndefined } from '@speckle/shared'
 
 export const VALID_HTTP_URL = /^https?:\/\//

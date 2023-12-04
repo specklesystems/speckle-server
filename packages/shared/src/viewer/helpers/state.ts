@@ -1,6 +1,6 @@
 import { intersection, isObjectLike } from 'lodash'
-import { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes'
-import { PartialDeep } from 'type-fest'
+import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes'
+import type { PartialDeep } from 'type-fest'
 import { UnformattableSerializedViewerStateError } from '../errors'
 
 /**

@@ -14,6 +14,10 @@ yarn install
 
 And create an `.env` file from `.env.example`.
 
+### WSL2 on Windows
+
+Remove the HOST env var from your `.env` file as its known to cause performance issues with the Nuxt dev server: https://github.com/nuxt/cli/issues/209
+
 ## Development
 
 Start the development server on http://localhost:8081

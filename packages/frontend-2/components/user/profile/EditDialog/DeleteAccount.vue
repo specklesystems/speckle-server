@@ -47,9 +47,10 @@
 <script setup lang="ts">
 import { LayoutDialogSection } from '@speckle/ui-components'
 import { TrashIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
-import { GenericValidateFunction, useForm } from 'vee-validate'
+import { useForm } from 'vee-validate'
+import type { GenericValidateFunction } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'
-import { UserProfileEditDialogDeleteAccount_UserFragment } from '~~/lib/common/generated/gql/graphql'
+import type { UserProfileEditDialogDeleteAccount_UserFragment } from '~~/lib/common/generated/gql/graphql'
 import { useDeleteAccount } from '~~/lib/user/composables/management'
 
 graphql(`

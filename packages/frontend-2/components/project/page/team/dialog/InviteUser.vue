@@ -45,14 +45,16 @@
   </LayoutDialogSection>
 </template>
 <script setup lang="ts">
-import { Roles, ServerRoles, StreamRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
+import type { ServerRoles, StreamRoles } from '@speckle/shared'
 import { LayoutDialogSection } from '@speckle/ui-components'
-import { UserSearchItem, useUserSearch } from '~~/lib/common/composables/users'
-import {
+import { useUserSearch } from '~~/lib/common/composables/users'
+import type { UserSearchItem } from '~~/lib/common/composables/users'
+import type {
   ProjectInviteCreateInput,
   ProjectPageTeamDialogFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { SetFullyRequired } from '~~/lib/common/helpers/type'
+import type { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { isEmail } from '~~/lib/common/helpers/validation'
 import { isArray, isString } from 'lodash-es'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'

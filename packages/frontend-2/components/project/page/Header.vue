@@ -90,13 +90,14 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import { PencilIcon } from '@heroicons/vue/20/solid'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
-import {
+import type {
   ProjectPageProjectHeaderFragment,
   ProjectUpdateInput
 } from '~~/lib/common/generated/gql/graphql'
 import { projectRoute } from '~~/lib/common/helpers/route'
 import { omit, debounce, trim } from 'lodash-es'
-import { isNullOrUndefined, Nullable } from '@speckle/shared'
+import { isNullOrUndefined } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { useUpdateProject } from '~~/lib/projects/composables/projectManagement'

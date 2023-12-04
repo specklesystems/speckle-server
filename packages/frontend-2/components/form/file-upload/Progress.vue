@@ -10,7 +10,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { UploadFileItem } from '~~/lib/form/composables/fileUpload'
+import type { UploadFileItem } from '~~/lib/form/composables/fileUpload'
 
 defineEmits<{
   (e: 'delete', v: { id: string }): void
