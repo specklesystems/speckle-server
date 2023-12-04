@@ -145,6 +145,8 @@ export default class SpeckleInstancedMesh extends Group {
       this.instances.push(group)
       this.add(group)
     }
+    this.tas.refit()
+    this.tas.getBoundingBox(this.tas.bounds)
   }
 
   public updateTransformsUniform() {}

@@ -53,13 +53,7 @@ export default class InstancedMeshBatch implements Batch {
   private needsFlatten = false
 
   public get bounds(): Box3 {
-    // return this.mesh.BVH.getBoundingBox(new Box3())
-    const bounds = new Box3()
-    for (let k = 0; k < this.renderViews.length; k++) {
-      bounds.union(this.renderViews[k].aabb)
-    }
-
-    return bounds
+    return this.mesh.TAS.getBoundingBox(new Box3())
   }
 
   public get drawCalls(): number {

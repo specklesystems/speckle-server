@@ -569,7 +569,7 @@ export default class Materials {
     this.defaultGradientTextureData = await Assets.getTextureData(defaultGradient)
   }
 
-  private makeMeshMaterial(materialData: RenderMaterial, rte: boolean): Material {
+  private makeMeshMaterial(materialData: RenderMaterial): Material {
     const mat = new SpeckleStandardMaterial(
       {
         color: materialData.color,
@@ -579,7 +579,7 @@ export default class Materials {
         opacity: materialData.opacity,
         side: DoubleSide
       },
-      rte ? ['USE_RTE'] : []
+      ['USE_RTE']
     )
     mat.vertexColors = materialData.vertexColors
     mat.transparent = mat.opacity < 1 ? true : false
@@ -663,13 +663,12 @@ export default class Materials {
   public getMaterial(
     hash: number,
     material: RenderMaterial | DisplayStyle,
-    type: GeometryType,
-    rte = true
+    type: GeometryType
   ): Material {
     let mat
     switch (type) {
       case GeometryType.MESH:
-        mat = this.getMeshMaterial(hash, material as RenderMaterial, rte)
+        mat = this.getMeshMaterial(hash, material as RenderMaterial)
         break
       case GeometryType.LINE:
         mat = this.getLineMaterial(hash, material)
@@ -693,9 +692,9 @@ export default class Materials {
     return mat
   }
 
-  private getMeshMaterial(hash: number, material: RenderMaterial, rte: boolean) {
+  private getMeshMaterial(hash: number, material: RenderMaterial) {
     if (!this.materialMap[hash]) {
-      this.materialMap[hash] = this.makeMeshMaterial(material, rte)
+      this.materialMap[hash] = this.makeMeshMaterial(material)
     }
     return this.materialMap[hash]
   }
@@ -873,7 +872,7 @@ export default class Materials {
     materialData: RenderMaterial & DisplayStyle
   ): Material {
     const materialHash = Materials.getMaterialHash(renderView, materialData)
-    return this.getMaterial(materialHash, materialData, renderView.geometryType, false)
+    return this.getMaterial(materialHash, materialData, renderView.geometryType)
   }
 
   public getFilterMaterialOptions(

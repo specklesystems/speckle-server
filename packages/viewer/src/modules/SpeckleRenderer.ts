@@ -455,26 +455,29 @@ export default class SpeckleRenderer {
       GeometryType.MESH
     ) as MeshBatch[]
     for (let k = 0; k < meshBatches.length; k++) {
-      const speckleMesh: SpeckleMesh = meshBatches[k].renderObject as SpeckleMesh
+      const speckleMesh: SpeckleMesh | SpeckleInstancedMesh = meshBatches[k]
+        .renderObject as SpeckleMesh | SpeckleInstancedMesh
 
       /** Shadowmap depth material does not go thorugh the normal flow.
        * It's onBeforeRender is not getting called That's why we're updating
        * the RTE related uniforms manually here
        */
-      const depthMaterial: SpeckleDepthMaterial =
-        speckleMesh.customDepthMaterial as SpeckleDepthMaterial
-      if (depthMaterial) {
-        depthMaterial.userData.uViewer_low.value.copy(
-          this._renderer.RTEBuffers.shadowViewerLow
-        )
-        depthMaterial.userData.uViewer_high.value.copy(
-          this._renderer.RTEBuffers.shadowViewerHigh
-        )
-        depthMaterial.userData.rteModelViewMatrix.value.copy(
-          this._renderer.RTEBuffers.rteShadowViewModelMatrix
-        )
-        depthMaterial.needsUpdate = true
-      }
+      speckleMesh.traverse((obj: Object3D) => {
+        const depthMaterial: SpeckleDepthMaterial =
+          obj.customDepthMaterial as SpeckleDepthMaterial
+        if (depthMaterial) {
+          depthMaterial.userData.uViewer_low.value.copy(
+            this._renderer.RTEBuffers.shadowViewerLow
+          )
+          depthMaterial.userData.uViewer_high.value.copy(
+            this._renderer.RTEBuffers.shadowViewerHigh
+          )
+          depthMaterial.userData.rteModelViewMatrix.value.copy(
+            this._renderer.RTEBuffers.rteShadowViewModelMatrix
+          )
+          depthMaterial.needsUpdate = true
+        }
+      })
     }
   }
 
@@ -540,6 +543,7 @@ export default class SpeckleRenderer {
         this._shadowcatcher.render(this._renderer)
       }
     }
+    this._renderer.shadowMap.needsUpdate = true
   }
 
   public resize(width: number, height: number) {
@@ -623,9 +627,9 @@ export default class SpeckleRenderer {
     if (batch.geometryType === GeometryType.MESH) {
       batchRenderable.traverse((obj: Object3D) => {
         if (obj instanceof Mesh) {
-          batchRenderable.castShadow = !obj.material.transparent
-          batchRenderable.receiveShadow = !obj.material.transparent
-          batchRenderable.customDepthMaterial = new SpeckleDepthMaterial(
+          obj.castShadow = !obj.material.transparent
+          obj.receiveShadow = !obj.material.transparent
+          obj.customDepthMaterial = new SpeckleDepthMaterial(
             {
               depthPacking: RGBADepthPacking
             },

@@ -223,12 +223,7 @@ export default class Batcher {
     }
 
     const matRef = renderViews[0].renderData.renderMaterial
-    const material = this.materials.getMaterial(
-      materialHash,
-      matRef,
-      GeometryType.MESH,
-      false
-    )
+    const material = this.materials.getMaterial(materialHash, matRef, GeometryType.MESH)
     const batchID = generateUUID()
     const geometryBatch = new InstancedMeshBatch(batchID, renderTree.id, renderViews)
     geometryBatch.setBatchMaterial(material)
