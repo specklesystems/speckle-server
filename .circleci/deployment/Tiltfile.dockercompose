@@ -10,7 +10,6 @@ else:
 # (loads the images from tgz file if CI, otherwise builds them or pulls them from remote as a fallback on non-amd64 machines)
 speckle_image = symbols['speckle_image']
 speckle_image('fileimport-service')
-speckle_image('frontend')
 speckle_image('frontend-2')
 speckle_image('monitor-deployment')
 speckle_image('preview-service')
@@ -29,11 +28,11 @@ dc_resource('postgres', labels=['dependencies'])
 # Prepare the Speckle resources
 docker_compose('../../docker-compose-speckle.yml')
 dc_resource('speckle-server', resource_deps=['postgres', 'redis', 'minio', 'maildev'], labels=['speckle'])
-dc_resource('speckle-frontend', resource_deps=[], labels=['speckle'])
+dc_resource('speckle-frontend-2', resource_deps=[], labels=['speckle'])
 dc_resource('preview-service', resource_deps=['postgres'], labels=['speckle'])
 dc_resource('fileimport-service', resource_deps=[], labels=['speckle'])
 dc_resource('webhook-service', resource_deps=['postgres'], labels=['speckle'])
 
 # Test the Speckle resources
 docker_compose('../../docker-compose-test.yml')
-dc_resource('test', resource_deps=['speckle-server', 'speckle-frontend'], labels=['test']) # --exit-code-from test
+dc_resource('test', resource_deps=['speckle-server', 'speckle-frontend-2'], labels=['test']) # --exit-code-from test
