@@ -359,8 +359,13 @@ export default class SpeckleConverter {
     return obj['@geometry'] || obj['geometry']
   }
 
-  private getCompoundId(baseId, parentId) {
-    return baseId + NodeMap.COMPOUND_ID_CHAR + parentId
+  /** We're wasting a few milis here, but it is what it is */
+  private getCompoundId(baseId, counter) {
+    const index = baseId.indexOf(NodeMap.COMPOUND_ID_CHAR)
+    if (index === -1) {
+      return baseId + NodeMap.COMPOUND_ID_CHAR + counter
+    }
+    return baseId.substring(0, index) + NodeMap.COMPOUND_ID_CHAR + counter
   }
 
   private getEmptyTransformData(id: string) {
