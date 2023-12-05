@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="truncate">
     <HeaderNavLink
       v-if="lastBreadcrumbName"
       :to="route.fullPath"
