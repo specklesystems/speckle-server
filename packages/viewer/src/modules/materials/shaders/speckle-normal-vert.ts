@@ -173,12 +173,6 @@ void main() {
         #endif
     #endif
 
-    #ifdef USE_INSTANCING
-        mat4 rteInstanceMatrix = instanceMatrix;
-        rteInstanceMatrix[3] = rteInstanceMatrix[3] - vec4(uViewer_high + uViewer_low, 0.);
-        mvPosition = rteInstanceMatrix * mvPosition;
-    #endif
-
     mvPosition = modelViewMatrix * mvPosition;
 
     gl_Position = projectionMatrix * mvPosition;

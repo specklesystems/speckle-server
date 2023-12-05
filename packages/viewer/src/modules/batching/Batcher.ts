@@ -41,6 +41,7 @@ export default class Batcher {
     // console.log(renderViews)
     const pause = new AsyncPause()
     const instanceGroups = tree.getInstances('1')
+    console.warn(instanceGroups)
     for (const g in instanceGroups) {
       pause.tick(100)
       if (pause.needsWait) {

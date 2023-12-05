@@ -2,7 +2,6 @@ import {
   Box3,
   BufferGeometry,
   Float32BufferAttribute,
-  InstancedBufferAttribute,
   Material,
   Matrix4,
   Object3D,
@@ -47,7 +46,9 @@ export default class InstancedMeshBatch implements Batch {
   private instanceTransformBuffer0: Float32Array = null
   private instanceTransformBuffer1: Float32Array = null
   private transformBufferIndex: number = 0
-  private gradientIndexBuffer: InstancedBufferAttribute
+  private instanceGradientBuffer0: Float32Array = null
+  private instanceGradientBuffer1: Float32Array = null
+  private gradientBufferIndex: number = 0
 
   private needsShuffle = false
   private needsFlatten = false
@@ -218,36 +219,22 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public setBatchBuffers(...range: BatchUpdateRange[]): void {
-    range
-    // let minGradientIndex = Infinity
-    // let maxGradientIndex = 0
-    // for (let k = 0; k < range.length; k++) {
-    //   if (range[k].materialOptions) {
-    //     if (range[k].materialOptions.rampIndex !== undefined) {
-    //       const start = range[k].offset
-    //       const len = range[k].offset + range[k].count
-    //       /** The ramp indices specify the *begining* of each ramp color. When sampling with Nearest filter (since we don't want filtering)
-    //        *  we'll always be sampling right at the edge between texels. Most GPUs will sample consistently, but some won't and we end up with
-    //        *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
-    //        *  sampling can occur.
-    //        */
-    //       const shiftedIndex =
-    //         range[k].materialOptions.rampIndex +
-    //         0.5 / range[k].materialOptions.rampWidth
-    //       const minMaxIndices = this.updateGradientIndexBufferData(
-    //         start,
-    //         range[k].count === Infinity
-    //           ? this.geometry.attributes['gradientIndex'].array.length
-    //           : len,
-    //         shiftedIndex
-    //       )
-    //       minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
-    //       maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
-    //     }
-    //   }
-    // }
-    // if (minGradientIndex < Infinity && maxGradientIndex > 0)
-    //   this.updateGradientIndexBuffer()
+    for (let k = 0; k < range.length; k++) {
+      if (range[k].materialOptions) {
+        if (range[k].materialOptions.rampIndex !== undefined) {
+          const start = range[k].offset
+          /** The ramp indices specify the *begining* of each ramp color. When sampling with Nearest filter (since we don't want filtering)
+           *  we'll always be sampling right at the edge between texels. Most GPUs will sample consistently, but some won't and we end up with
+           *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
+           *  sampling can occur.
+           */
+          const shiftedIndex =
+            range[k].materialOptions.rampIndex +
+            0.5 / range[k].materialOptions.rampWidth
+          this.updateGradientIndexBufferData(start / 16, shiftedIndex)
+        }
+      }
+    }
   }
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
@@ -335,7 +322,7 @@ export default class InstancedMeshBatch implements Batch {
     if (count !== this.renderViews.length * 16) {
       Logger.error(`Draw groups invalid on ${this.id}`)
     }
-    // this.setBatchBuffers(...ranges)
+    this.setBatchBuffers(...ranges)
     this.needsFlatten = true
   }
 
@@ -434,7 +421,11 @@ export default class InstancedMeshBatch implements Batch {
     /** We shuffle only when above a certain fragmentation threshold. We don't want to be shuffling every single time */
     if (this.drawCalls > this.maxDrawCalls) {
       this.needsShuffle = true
-    } else this.mesh.updateDrawGroups(this.getCurrentTransformBuffer())
+    } else
+      this.mesh.updateDrawGroups(
+        this.getCurrentTransformBuffer(),
+        this.getCurrentGradientBuffer()
+      )
   }
 
   private shuffleDrawGroups() {
@@ -470,8 +461,10 @@ export default class InstancedMeshBatch implements Batch {
       )
     }
 
-    const sourceBuffer: Float32Array = this.getCurrentTransformBuffer()
-    const targetBuffer: Float32Array = this.getNextTransformBuffer()
+    const sourceTransformBuffer: Float32Array = this.getCurrentTransformBuffer()
+    const targetTransformBuffer: Float32Array = this.getNextTransformBuffer()
+    const sourceGradientBuffer: Float32Array = this.getCurrentGradientBuffer()
+    const targetGradientBuffer: Float32Array = this.getNextGradientBuffer()
     const newGroups = []
     const scratchRvs = this.renderViews.slice()
     scratchRvs.sort((a, b) => {
@@ -485,8 +478,10 @@ export default class InstancedMeshBatch implements Batch {
       for (let i = 0; i < (materialGroup as []).length; i++) {
         const start = materialGroup[i].start
         const count = materialGroup[i].count
-        const subArray = sourceBuffer.subarray(start, start + count)
-        targetBuffer.set(subArray, targetBufferOffset)
+        let subArray = sourceTransformBuffer.subarray(start, start + count)
+        targetTransformBuffer.set(subArray, targetBufferOffset)
+        subArray = sourceGradientBuffer.subarray(start / 16, (start + count) / 16)
+        targetGradientBuffer.set(subArray, targetBufferOffset / 16)
         let rvElemCount = 0
         for (let m = 0; m < scratchRvs.length; m++) {
           if (
@@ -521,7 +516,7 @@ export default class InstancedMeshBatch implements Batch {
         materialIndex: newGroups[i].materialIndex
       })
     }
-    this.mesh.updateDrawGroups(targetBuffer)
+    this.mesh.updateDrawGroups(targetTransformBuffer, targetGradientBuffer)
 
     /** Solve hidden groups */
     const hiddenGroup = this.groups.find((value) => {
@@ -554,6 +549,18 @@ export default class InstancedMeshBatch implements Batch {
     return ++this.transformBufferIndex % 2 === 0
       ? this.instanceTransformBuffer0
       : this.instanceTransformBuffer1
+  }
+
+  private getCurrentGradientBuffer(): Float32Array {
+    return this.gradientBufferIndex % 2 === 0
+      ? this.instanceGradientBuffer0
+      : this.instanceGradientBuffer1
+  }
+
+  private getNextGradientBuffer(): Float32Array {
+    return ++this.gradientBufferIndex % 2 === 0
+      ? this.instanceGradientBuffer0
+      : this.instanceGradientBuffer1
   }
 
   public buildBatch() {
@@ -635,7 +642,10 @@ export default class InstancedMeshBatch implements Batch {
       count: this.renderViews.length * INSTANCE_BUFFER_STRIDE,
       materialIndex: 0
     })
-    this.mesh.updateDrawGroups(this.getCurrentTransformBuffer())
+    this.mesh.updateDrawGroups(
+      this.getCurrentTransformBuffer(),
+      this.getCurrentGradientBuffer()
+    )
   }
 
   public getRenderView(index: number): NodeRenderView {
@@ -689,12 +699,8 @@ export default class InstancedMeshBatch implements Batch {
     }
     this.geometry.setIndex(indexBuffer)
 
-    // const buffer = new Float32Array(position.length / 3)
-    // this.gradientIndexBuffer = new InstancedBufferAttribute(buffer, 1)
-    // this.gradientIndexBuffer.setUsage(DynamicDrawUsage)
-    // this.geometry.setAttribute('gradientIndex', this.gradientIndexBuffer)
-    // this.updateGradientIndexBufferData(0, buffer.length, 0)
-    // this.updateGradientIndexBuffer()
+    this.instanceGradientBuffer0 = new Float32Array(this.renderViews.length)
+    this.instanceGradientBuffer1 = new Float32Array(this.renderViews.length)
 
     Geometry.computeVertexNormals(this.geometry, position)
 
@@ -703,41 +709,9 @@ export default class InstancedMeshBatch implements Batch {
     return this.geometry
   }
 
-  private updateGradientIndexBufferData(
-    start: number,
-    end: number,
-    value: number
-  ): { minIndex: number; maxIndex: number } {
-    const index = this.geometry.index.array as number[]
-    const data = this.gradientIndexBuffer.array as number[]
-    let minVertexIndex = Infinity
-    let maxVertexIndex = 0
-    for (let k = start; k < end; k++) {
-      const vIndex = index[k]
-      minVertexIndex = Math.min(minVertexIndex, vIndex)
-      maxVertexIndex = Math.max(maxVertexIndex, vIndex)
-      data[vIndex] = value
-    }
-    this.gradientIndexBuffer.updateRange = {
-      offset: minVertexIndex,
-      count: maxVertexIndex - minVertexIndex + 1
-    }
-    this.gradientIndexBuffer.needsUpdate = true
-    this.geometry.attributes['gradientIndex'].needsUpdate = true
-    return {
-      minIndex: minVertexIndex,
-      maxIndex: maxVertexIndex
-    }
-  }
-
-  private updateGradientIndexBuffer(rangeMin?: number, rangeMax?: number) {
-    this.gradientIndexBuffer.updateRange = {
-      offset: rangeMin !== undefined ? rangeMin : 0,
-      count:
-        rangeMin !== undefined && rangeMax !== undefined ? rangeMax - rangeMin + 1 : -1
-    }
-    this.gradientIndexBuffer.needsUpdate = true
-    this.geometry.attributes['gradientIndex'].needsUpdate = true
+  private updateGradientIndexBufferData(index: number, value: number): void {
+    const data = this.getCurrentGradientBuffer()
+    data[index] = value
   }
 
   public purge() {

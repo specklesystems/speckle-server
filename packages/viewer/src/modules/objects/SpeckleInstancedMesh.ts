@@ -124,7 +124,7 @@ export default class SpeckleInstancedMesh extends Group {
     this.tas.refit()
   }
 
-  public updateDrawGroups(buffer: Float32Array) {
+  public updateDrawGroups(transformBuffer: Float32Array, gradientBuffer: Float32Array) {
     this.instances.forEach((value: InstancedMesh) => {
       this.remove(value)
       value.dispose()
@@ -133,11 +133,21 @@ export default class SpeckleInstancedMesh extends Group {
       const material = this.materials[this.groups[k].materialIndex]
       const group = new InstancedMesh(this.instanceGeometry, material, 0)
       group.instanceMatrix = new InstancedBufferAttribute(
-        buffer.subarray(
+        transformBuffer.subarray(
           this.groups[k].start,
           this.groups[k].start + this.groups[k].count
         ),
         16
+      )
+      group.geometry.setAttribute(
+        'gradientIndex',
+        new InstancedBufferAttribute(
+          gradientBuffer.subarray(
+            this.groups[k].start / 16,
+            (this.groups[k].start + this.groups[k].count) / 16
+          ),
+          1
+        )
       )
       group.count = this.groups[k].count / 16
       group.instanceMatrix.needsUpdate = true

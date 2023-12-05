@@ -543,7 +543,6 @@ export default class SpeckleRenderer {
         this._shadowcatcher.render(this._renderer)
       }
     }
-    this._renderer.shadowMap.needsUpdate = true
   }
 
   public resize(width: number, height: number) {
