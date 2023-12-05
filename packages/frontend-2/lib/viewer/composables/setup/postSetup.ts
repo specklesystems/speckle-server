@@ -49,7 +49,6 @@ import { watchTriggerable } from '@vueuse/core'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import type { Reference } from '@apollo/client'
 import type { Modifier } from '@apollo/client/cache'
-import { isEqual } from 'lodash-es'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
