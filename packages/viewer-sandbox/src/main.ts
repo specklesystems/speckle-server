@@ -159,7 +159,7 @@ const getStream = () => {
     // Alex's cube
     // 'https://latest.speckle.dev/streams/46e3e0e1ec/commits/a6392c19d6?c=%5B6.85874,2.9754,0.79022,0,0,0,0,1%5D'
     // Groups of groups
-    // 'https://speckle.xyz/streams/1ce562e99a/commits/6fa28a5a0f'
+    'https://speckle.xyz/streams/1ce562e99a/commits/6fa28a5a0f'
     // Arc flowers
     // 'https://latest.speckle.dev/streams/9e6c4343ba/commits/037e382aa2'
     // Car lines
@@ -351,7 +351,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/f4e11a8b01'
 
     // Far away instances
-    'https://latest.speckle.dev/streams/ee5346d3e1/commits/576310a6d5'
+    // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/576310a6d5'
     // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/489d42ca8c'
   )
 }

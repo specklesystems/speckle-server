@@ -66,7 +66,7 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public get maxDrawCalls(): number {
-    return 1 // + 2
+    return 1
   }
 
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
@@ -434,32 +434,7 @@ export default class InstancedMeshBatch implements Batch {
     /** We shuffle only when above a certain fragmentation threshold. We don't want to be shuffling every single time */
     if (this.drawCalls > this.maxDrawCalls) {
       this.needsShuffle = true
-    } else {
-      this.groups.sort((a, b) => {
-        return a.start - b.start
-      })
-      const transparentOrHiddenGroup = this.groups.find(
-        (value) =>
-          this.materials[value.materialIndex].transparent === true ||
-          this.materials[value.materialIndex].visible === false
-      )
-      /** If we find a transparent or hidden group between opaque groups we do a shuffle. The order opauque -> transparent -> hidden */
-      if (transparentOrHiddenGroup) {
-        for (
-          let k = this.groups.indexOf(transparentOrHiddenGroup);
-          k < this.groups.length;
-          k++
-        ) {
-          const material = this.materials[this.groups[k].materialIndex]
-          if (material.transparent !== true && material.visible !== false) {
-            this.needsShuffle = true
-            break
-          }
-        }
-      }
-      if (!this.needsShuffle)
-        this.mesh.updateDrawGroups(this.getCurrentTransformBuffer())
-    }
+    } else this.mesh.updateDrawGroups(this.getCurrentTransformBuffer())
   }
 
   private shuffleDrawGroups() {
@@ -549,18 +524,19 @@ export default class InstancedMeshBatch implements Batch {
     this.mesh.updateDrawGroups(targetBuffer)
 
     /** Solve hidden groups */
-    // const hiddenGroup = this.groups.find((value) => {
-    //   return this.materials[value.materialIndex].visible === false
-    // })
-    // if (hiddenGroup) {
-    //   this.setVisibleRange({
-    //     offset: 0,
-    //     count: hiddenGroup.start
-    //   })
-    // }
+    const hiddenGroup = this.groups.find((value) => {
+      return this.materials[value.materialIndex].visible === false
+    })
+    if (hiddenGroup) {
+      this.setVisibleRange({
+        offset: 0,
+        count: hiddenGroup.start
+      })
+    }
   }
 
   public resetDrawRanges() {
+    console.error('Not implemented!')
     // this.mesh.setBatchMaterial(this.batchMaterial)
     // this.mesh.visible = true
     // this.geometry.clearGroups()
@@ -675,20 +651,17 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public getMaterial(rv: NodeRenderView): Material {
-    rv
-    // for (let k = 0; k < this.geometry.groups.length; k++) {
-    //   try {
-    //     if (
-    //       rv.batchStart >= this.geometry.groups[k].start &&
-    //       rv.batchEnd <= this.geometry.groups[k].start + this.geometry.groups[k].count
-    //     ) {
-    //       return this.materials[this.geometry.groups[k].materialIndex]
-    //     }
-    //   } catch (e) {
-    //     Logger.error('Failed to get material')
-    //   }
-    // }
-    return this.batchMaterial
+    const group = this.groups.find((value) => {
+      return (
+        rv.batchStart >= value.start &&
+        rv.batchStart + rv.batchCount <= value.count + value.start
+      )
+    })
+    if (!group) {
+      Logger.warn(`Could not get material for ${rv.renderData.id}`)
+      return null
+    }
+    return this.materials[group.materialIndex]
   }
 
   private makeInstancedMeshGeometry(

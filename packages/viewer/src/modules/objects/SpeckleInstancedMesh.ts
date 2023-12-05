@@ -19,6 +19,7 @@ import Materials from '../materials/Materials'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
 import { DrawGroup } from '../batching/InstancedMeshBatch'
 import { ObjectLayers } from '../../IViewer'
+import Logger from 'js-logger'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -76,7 +77,8 @@ export default class SpeckleInstancedMesh extends Group {
   }
 
   public setBatchMaterial(material: Material) {
-    this.batchMaterial = this.getCachedMaterial(material)
+    this.batchMaterial = material
+    this.materialCache[material.id] = material
     this.materials.push(this.batchMaterial)
   }
 
@@ -155,26 +157,18 @@ export default class SpeckleInstancedMesh extends Group {
   }
 
   public getBatchObjectMaterial(batchObject: BatchObject) {
-    batchObject
-    return this.batchMaterial
-    // const rv = batchObject.renderView
-    // const group = this.geometry.groups.find((value) => {
-    //   return (
-    //     rv.batchStart >= value.start &&
-    //     rv.batchStart + rv.batchCount <= value.count + value.start
-    //   )
-    // })
-    // if (!Array.isArray(this.material)) {
-    //   return this.material
-    // } else {
-    //   if (!group) {
-    //     Logger.warn(
-    //       `Could not get material for ${batchObject.renderView.renderData.id}`
-    //     )
-    //     return null
-    //   }
-    //   return this.material[group.materialIndex]
-    // }
+    const rv = batchObject.renderView
+    const group = this.groups.find((value) => {
+      return (
+        rv.batchStart >= value.start &&
+        rv.batchStart + rv.batchCount <= value.count + value.start
+      )
+    })
+    if (!group) {
+      Logger.warn(`Could not get material for ${batchObject.renderView.renderData.id}`)
+      return null
+    }
+    return this.materials[group.materialIndex]
   }
 
   // converts the given BVH raycast intersection to align with the three.js raycast
