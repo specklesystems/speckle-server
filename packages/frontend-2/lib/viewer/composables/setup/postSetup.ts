@@ -735,7 +735,7 @@ function useViewerMeasurementIntegration() {
   )
 
   watch(
-    () => measurement.options.value,
+    () => ({ ...measurement.options.value }),
     (newMeasurementState, oldMeasurementState) => {
       if (!isEqual(newMeasurementState, oldMeasurementState)) {
         instance.setMeasurementOptions(newMeasurementState)
