@@ -236,7 +236,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     if (!node.raw.vertices) return
     if (!node.raw.faces) return
 
-    const vertices = node.instanced ? node.raw.vertices.slice() : node.raw.vertices
+    const vertices = node.raw.vertices
     const faces = node.raw.faces
     const colorsRaw = node.raw.colors
     let colors = undefined
@@ -285,7 +285,8 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         conversionFactor,
         conversionFactor
       ),
-      transform: null
+      transform: null,
+      ...(node.instanced && { instanced: true })
     } as GeometryData
   }
 

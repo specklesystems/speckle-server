@@ -24,6 +24,7 @@ export interface GeometryData {
   bakeTransform: Matrix4
   transform: Matrix4
   metaData?: SpeckleObject
+  instanced?: boolean
 }
 
 export class Geometry {

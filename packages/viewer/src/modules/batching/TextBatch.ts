@@ -21,7 +21,6 @@ export default class TextBatch implements Batch {
   public renderViews: NodeRenderView[]
   public batchMaterial: Material
   public mesh: SpeckleText
-  private insertedRanges: BatchUpdateRange[] = []
 
   public get bounds(): Box3 {
     return new Box3() //this.mesh.BVH.getBoundingBox(new Box3())

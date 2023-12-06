@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import { BatchObject } from './BatchObject'
+import { BatchObject, VectorLike } from './BatchObject'
 
 import { Matrix4 } from 'three'
 import { NodeRenderView } from '../tree/NodeRenderView'
@@ -12,5 +12,17 @@ export class InstancedBatchObject extends BatchObject {
     this.instanceTransform.copy(renderView.renderData.geometry.transform)
     this.transform.copy(this.instanceTransform)
     this.transformInv.copy(new Matrix4().copy(this.instanceTransform).invert())
+  }
+
+  public transformTRS(
+    translation: VectorLike,
+    euler: VectorLike,
+    scale: VectorLike,
+    pivot: VectorLike
+  ) {
+    super.transformTRS(translation, euler, scale, pivot)
+    this.transform.multiply(this.instanceTransform)
+    this.transformInv.copy(this.transform)
+    this.transformInv.invert()
   }
 }

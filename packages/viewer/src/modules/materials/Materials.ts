@@ -236,7 +236,10 @@ export default class Materials {
       renderView.geometryType.toString() +
       geometry +
       mat +
-      (renderView.geometryType === GeometryType.TEXT ? renderView.renderData.id : '')
+      (renderView.geometryType === GeometryType.TEXT ? renderView.renderData.id : '') +
+      (renderView.renderData.geometry.instanced
+        ? renderView.renderData.geometry.instanced
+        : '')
     return Materials.hashCode(s)
   }
 

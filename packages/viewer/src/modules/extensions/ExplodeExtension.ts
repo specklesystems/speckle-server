@@ -22,7 +22,7 @@ export class ExplodeExtension extends Extension {
     const objects = this.viewer.getRenderer().getObjects()
     const vecBuff = new Vector3()
     for (let i = 0; i < objects.length; i++) {
-      const center = objects[i].renderView.aabb.getCenter(vecBuff)
+      const center = objects[i].aabb.getCenter(vecBuff)
       const dir = center.sub(this.viewer.World.worldOrigin)
       dir.normalize().multiplyScalar(time * range)
 

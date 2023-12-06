@@ -485,13 +485,16 @@ export default class SpeckleRenderer {
   private updateTransforms() {
     const meshBatches = this.batcher.getBatches(undefined, GeometryType.MESH)
     for (let k = 0; k < meshBatches.length; k++) {
-      const meshBatch: SpeckleMesh = meshBatches[k].renderObject as SpeckleMesh
+      const meshBatch: SpeckleMesh | SpeckleInstancedMesh = meshBatches[k]
+        .renderObject as SpeckleMesh | SpeckleInstancedMesh
       meshBatch.updateTransformsUniform()
-      const depthMaterial: SpeckleDepthMaterial =
-        meshBatch.customDepthMaterial as SpeckleDepthMaterial
-      if (depthMaterial) {
-        meshBatch.updateMaterialTransformsUniform(depthMaterial)
-      }
+      meshBatch.traverse((obj: Object3D) => {
+        const depthMaterial: SpeckleDepthMaterial =
+          obj.customDepthMaterial as SpeckleDepthMaterial
+        if (depthMaterial) {
+          meshBatch.updateMaterialTransformsUniform(depthMaterial)
+        }
+      })
     }
   }
 
