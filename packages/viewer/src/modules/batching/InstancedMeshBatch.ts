@@ -36,6 +36,8 @@ export interface DrawGroup {
 }
 
 export default class InstancedMeshBatch implements Batch {
+  public static readonly INSTANCE_TRANSFORM_BUFFER_STRIDE = 16
+  public static readonly INSTANCE_GRADIENT_BUFFER_STRIDE = 1
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
@@ -46,9 +48,7 @@ export default class InstancedMeshBatch implements Batch {
   private instanceTransformBuffer0: Float32Array = null
   private instanceTransformBuffer1: Float32Array = null
   private transformBufferIndex: number = 0
-  private instanceGradientBuffer0: Float32Array = null
-  private instanceGradientBuffer1: Float32Array = null
-  private gradientBufferIndex: number = 0
+  private instanceGradientBuffer: Float32Array = null
 
   private needsShuffle = false
   private needsFlatten = false
@@ -464,7 +464,9 @@ export default class InstancedMeshBatch implements Batch {
     const sourceTransformBuffer: Float32Array = this.getCurrentTransformBuffer()
     const targetTransformBuffer: Float32Array = this.getNextTransformBuffer()
     const sourceGradientBuffer: Float32Array = this.getCurrentGradientBuffer()
-    const targetGradientBuffer: Float32Array = this.getNextGradientBuffer()
+    const targetGradientBuffer: Float32Array = new Float32Array(
+      sourceGradientBuffer.length
+    )
     const newGroups = []
     const scratchRvs = this.renderViews.slice()
     scratchRvs.sort((a, b) => {
@@ -480,8 +482,14 @@ export default class InstancedMeshBatch implements Batch {
         const count = materialGroup[i].count
         let subArray = sourceTransformBuffer.subarray(start, start + count)
         targetTransformBuffer.set(subArray, targetBufferOffset)
-        subArray = sourceGradientBuffer.subarray(start / 16, (start + count) / 16)
-        targetGradientBuffer.set(subArray, targetBufferOffset / 16)
+        subArray = sourceGradientBuffer.subarray(
+          start / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
+          (start + count) / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+        )
+        targetGradientBuffer.set(
+          subArray,
+          targetBufferOffset / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+        )
         let rvElemCount = 0
         for (let m = 0; m < scratchRvs.length; m++) {
           if (
@@ -516,7 +524,8 @@ export default class InstancedMeshBatch implements Batch {
         materialIndex: newGroups[i].materialIndex
       })
     }
-    this.mesh.updateDrawGroups(targetTransformBuffer, targetGradientBuffer)
+    sourceGradientBuffer.set(targetGradientBuffer, 0)
+    this.mesh.updateDrawGroups(targetTransformBuffer, sourceGradientBuffer)
 
     /** Solve hidden groups */
     const hiddenGroup = this.groups.find((value) => {
@@ -531,12 +540,20 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public resetDrawRanges() {
-    console.error('Not implemented!')
-    // this.mesh.setBatchMaterial(this.batchMaterial)
-    // this.mesh.visible = true
-    // this.geometry.clearGroups()
-    // this.geometry.addGroup(0, this.getCount(), 0)
-    // this.geometry.setDrawRange(0, Infinity)
+    this.groups.length = 0
+    this.materials.length = 0
+    this.groups.push({
+      start: 0,
+      count:
+        this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
+      materialIndex: 0
+    })
+    this.materials.push(this.batchMaterial)
+    this.setVisibleRange(AllBatchUpdateRange)
+    this.mesh.updateDrawGroups(
+      this.getCurrentTransformBuffer(),
+      this.getCurrentGradientBuffer()
+    )
   }
 
   private getCurrentTransformBuffer(): Float32Array {
@@ -552,38 +569,29 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   private getCurrentGradientBuffer(): Float32Array {
-    return this.gradientBufferIndex % 2 === 0
-      ? this.instanceGradientBuffer0
-      : this.instanceGradientBuffer1
-  }
-
-  private getNextGradientBuffer(): Float32Array {
-    return ++this.gradientBufferIndex % 2 === 0
-      ? this.instanceGradientBuffer0
-      : this.instanceGradientBuffer1
+    return this.instanceGradientBuffer
   }
 
   public buildBatch() {
-    const INSTANCE_BUFFER_STRIDE = 16
     const batchObjects = []
     let instanceBVH = null
     this.instanceTransformBuffer0 = new Float32Array(
-      this.renderViews.length * INSTANCE_BUFFER_STRIDE
+      this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
     )
     this.instanceTransformBuffer1 = new Float32Array(
-      this.renderViews.length * INSTANCE_BUFFER_STRIDE
+      this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
     )
     const targetInstanceTransformBuffer = this.getCurrentTransformBuffer()
 
     for (let k = 0; k < this.renderViews.length; k++) {
       this.renderViews[k].renderData.geometry.transform.toArray(
         targetInstanceTransformBuffer,
-        k * INSTANCE_BUFFER_STRIDE
+        k * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
       )
       this.renderViews[k].setBatchData(
         this.id,
-        k * INSTANCE_BUFFER_STRIDE,
-        INSTANCE_BUFFER_STRIDE
+        k * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
+        InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
       )
       const batchObject = new InstancedBatchObject(this.renderViews[k], k)
       if (!instanceBVH) {
@@ -639,7 +647,8 @@ export default class InstancedMeshBatch implements Batch {
 
     this.groups.push({
       start: 0,
-      count: this.renderViews.length * INSTANCE_BUFFER_STRIDE,
+      count:
+        this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
       materialIndex: 0
     })
     this.mesh.updateDrawGroups(
@@ -699,8 +708,7 @@ export default class InstancedMeshBatch implements Batch {
     }
     this.geometry.setIndex(indexBuffer)
 
-    this.instanceGradientBuffer0 = new Float32Array(this.renderViews.length)
-    this.instanceGradientBuffer1 = new Float32Array(this.renderViews.length)
+    this.instanceGradientBuffer = new Float32Array(this.renderViews.length)
 
     Geometry.computeVertexNormals(this.geometry, position)
 

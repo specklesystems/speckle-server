@@ -17,7 +17,7 @@ import {
 import { BatchObject } from '../batching/BatchObject'
 import Materials from '../materials/Materials'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
-import { DrawGroup } from '../batching/InstancedMeshBatch'
+import InstancedMeshBatch, { DrawGroup } from '../batching/InstancedMeshBatch'
 import { ObjectLayers } from '../../IViewer'
 import Logger from 'js-logger'
 
@@ -137,19 +137,21 @@ export default class SpeckleInstancedMesh extends Group {
           this.groups[k].start,
           this.groups[k].start + this.groups[k].count
         ),
-        16
+        InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
       )
       group.geometry.setAttribute(
         'gradientIndex',
         new InstancedBufferAttribute(
           gradientBuffer.subarray(
-            this.groups[k].start / 16,
-            (this.groups[k].start + this.groups[k].count) / 16
+            this.groups[k].start / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
+            (this.groups[k].start + this.groups[k].count) /
+              InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
           ),
-          1
+          InstancedMeshBatch.INSTANCE_GRADIENT_BUFFER_STRIDE
         )
       )
-      group.count = this.groups[k].count / 16
+      group.count =
+        this.groups[k].count / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
       group.instanceMatrix.needsUpdate = true
       group.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
       group.frustumCulled = false
