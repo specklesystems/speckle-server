@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import FormSelectSourceApps from '~~/src/components/form/select/SourceApps.vue'
 
 type StoryType = StoryObj<

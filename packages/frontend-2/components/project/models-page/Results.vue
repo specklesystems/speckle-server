@@ -23,9 +23,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { SourceAppDefinition } from '@speckle/shared'
+import type { SourceAppDefinition } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
+import type {
   FormUsersSelectItemFragment,
   ProjectModelsPageResults_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'

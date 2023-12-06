@@ -1,7 +1,7 @@
 <template>
-  <LayoutDialog v-model:open="open">
+  <LayoutDialog v-model:open="open" max-width="lg">
+    <template #header>Add Model</template>
     <div class="flex flex-col space-y-4">
-      <div class="h4 text-foreground font-bold">Add model</div>
       <LayoutTabs v-slot="{ activeItem }" :items="tabItems">
         <ViewerResourcesAddModelDialogModelTab
           v-if="activeItem.id === 'model'"
@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import { SpeckleViewer } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { LayoutTabItem } from '~~/lib/layout/helpers/components'
+import type { LayoutTabItem } from '~~/lib/layout/helpers/components'
 import { useInjectedViewerRequestedResources } from '~~/lib/viewer/composables/setup'
 
 const { items } = useInjectedViewerRequestedResources()

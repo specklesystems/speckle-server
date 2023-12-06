@@ -15,7 +15,7 @@
         />
       </TransitionChild>
 
-      <div class="fixed inset-0 z-10 h-screen w-screen">
+      <div class="fixed inset-0 z-10 h-[100dvh] w-screen">
         <div class="flex justify-center items-center h-full w-full p-4 sm:p-0">
           <TransitionChild
             as="template"
@@ -29,7 +29,7 @@
           >
             <DialogPanel
               :class="[
-                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90vh]',
+                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90dvh]',
                 widthClasses
               ]"
               :as="isForm ? 'form' : 'div'"
@@ -37,33 +37,34 @@
             >
               <div :class="scrolledFromTop && 'relative z-10 shadow-lg'">
                 <div
-                  v-if="title"
-                  class="flex items-center justify-start rounded-t-lg shrink-0 h-16 px-8"
+                  v-if="hasTitle"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[4rem] py-2 px-4 sm:px-8 truncate text-xl sm:text-2xl font-bold"
                 >
-                  <slot name="header">
-                    <h4 class="text-2xl font-bold">{{ title }}</h4>
-                  </slot>
+                  <div class="w-full truncate pr-12">
+                    {{ title }}
+                    <slot name="header"></slot>
+                  </div>
                 </div>
               </div>
 
               <button
                 v-if="!hideCloser"
                 class="absolute z-20 right-4 bg-foundation rounded-full p-1"
-                :class="title ? 'top-4' : 'top-3'"
+                :class="hasTitle ? 'top-4' : 'top-3'"
                 @click="open = false"
               >
                 <XMarkIcon class="h-6 w-6" />
               </button>
               <div
                 class="flex-1 simple-scrollbar overflow-y-auto bg-white dark:bg-foundation"
-                :class="title ? 'py-6 px-8' : 'p-10'"
+                :class="hasTitle ? 'p-4 sm:py-6 sm:px-8' : 'p-10'"
                 @scroll="onScroll"
               >
                 <slot>Put your content here!</slot>
               </div>
               <div
                 v-if="hasButtons"
-                class="flex p-4 sm:px-6 gap-2 shrink-0"
+                class="flex px-4 py-2 sm:py-4 sm:px-6 gap-2 shrink-0"
                 :class="!scrolledToBottom && 'shadow-t'"
               >
                 <template v-if="buttons">
@@ -71,6 +72,8 @@
                     v-for="(button, index) in buttons"
                     :key="index"
                     v-bind="button.props"
+                    :disabled="button.disabled"
+                    :type="button.submit && 'submit'"
                     @click="button.onClick"
                   >
                     {{ button.text }}
@@ -114,6 +117,8 @@ const props = defineProps<{
     text: string
     props: Record<string, unknown>
     onClick?: () => void
+    disabled?: boolean
+    submit?: boolean
   }>
   /**
    * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
@@ -124,10 +129,11 @@ const props = defineProps<{
 const slots = useSlots()
 
 const scrolledFromTop = ref(false)
-const scrolledToBottom = ref(false)
+const scrolledToBottom = ref(true)
 
 const isForm = computed(() => !!props.onSubmit)
 const hasButtons = computed(() => props.buttons || slots.buttons)
+const hasTitle = computed(() => props.title || slots.header)
 
 const open = computed({
   get: () => props.open,
@@ -150,7 +156,7 @@ const maxWidthWeight = computed(() => {
 })
 
 const widthClasses = computed(() => {
-  const classParts: string[] = ['w-full', 'sm:my-8 sm:w-full sm:max-w-xl']
+  const classParts: string[] = ['w-full', 'sm:w-full sm:max-w-xl']
 
   if (maxWidthWeight.value >= 1) {
     classParts.push('md:max-w-2xl')

@@ -14,7 +14,7 @@
 </template>
 
 <script lang="ts" setup>
-import { CardInfo } from '~~/lib/server-management/helpers/types'
+import type { CardInfo } from '~~/lib/server-management/helpers/types'
 
 defineProps<{
   serverInfo: CardInfo[]

@@ -137,7 +137,7 @@
     "@types/zxcvbn": "^4.4.1",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "@typescript-eslint/parser": "^5.39.0",
-    "axios": "^0.25.0",
+    "axios": "^1.6.0",
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
     "concurrently": "^7.0.0",

@@ -2,13 +2,22 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="md"
+    :buttons="[
+      {
+        text: 'Delete',
+        props: { color: 'danger', fullWidth: true, disabled: loading },
+        onClick: () => {
+          onDelete()
+        }
+      }
+    ]"
     @fully-closed="$emit('fully-closed')"
   >
+    <template #header>
+      Delete {{ `${versions.length} version${versions.length > 1 ? 's' : ''}` }}
+    </template>
     <div class="flex flex-col text-foreground">
-      <div class="h4 font-bold mb-4">
-        Delete {{ `${versions.length} version${versions.length > 1 ? 's' : ''}` }}
-      </div>
-      <p class="mb-6">
+      <p>
         Deleting versions is an irrevocable action! If you are sure about wanting to
         delete
         <template v-if="versions.length > 1">the selected versions,</template>
@@ -18,17 +27,12 @@
         </template>
         please click on the button below!
       </p>
-      <div class="flex justify-end">
-        <FormButton :disabled="loading" color="danger" @click="onDelete">
-          Delete
-        </FormButton>
-      </div>
     </div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectModelPageDialogDeleteVersionFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectModelPageDialogDeleteVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useDeleteVersions } from '~~/lib/projects/composables/versionManagement'
 

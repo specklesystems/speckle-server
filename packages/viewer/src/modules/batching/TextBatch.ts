@@ -116,7 +116,7 @@ export default class TextBatch implements Batch {
   }
 
   public async buildBatch() {
-    this.mesh = new SpeckleText(this.id)
+    this.mesh = new SpeckleText(this.id, ObjectLayers.STREAM_CONTENT_TEXT)
     this.mesh.matrixAutoUpdate = false
     await this.mesh.update(
       SpeckleText.SpeckleTextParamsFromMetadata(
@@ -130,8 +130,6 @@ export default class TextBatch implements Batch {
       this.mesh.textMesh.geometry.index.count / 3
     )
     this.mesh.textMesh.material = this.batchMaterial
-    this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_TEXT)
-    this.mesh.textMesh.layers.set(ObjectLayers.STREAM_CONTENT_TEXT)
   }
 
   public getRenderView(index: number): NodeRenderView {

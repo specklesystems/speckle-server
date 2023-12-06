@@ -73,7 +73,7 @@
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
-import { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 dayjs.extend(localizedFormat)

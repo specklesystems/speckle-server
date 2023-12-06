@@ -34,6 +34,11 @@ export interface SpeckleProgressivePass extends SpecklePass {
 
 export abstract class BaseSpecklePass extends Pass implements SpecklePass {
   protected layers: ObjectLayers[] = null
+  protected _enabledLayers: ObjectLayers[] = []
+
+  public get enabledLayers(): ObjectLayers[] {
+    return this._enabledLayers
+  }
 
   constructor() {
     super()
@@ -48,6 +53,15 @@ export abstract class BaseSpecklePass extends Pass implements SpecklePass {
 
   public setLayers(layers: ObjectLayers[]) {
     this.layers = layers
+    this._enabledLayers = layers.slice()
+  }
+
+  public enableLayer(layer: ObjectLayers, value: boolean) {
+    if (this._enabledLayers.includes(layer)) {
+      if (!value) this._enabledLayers.splice(this._enabledLayers.indexOf(layer), 1)
+    } else {
+      if (value) this._enabledLayers.push(layer)
+    }
   }
 
   protected applyLayers(camera: Camera) {
@@ -57,7 +71,7 @@ export abstract class BaseSpecklePass extends Pass implements SpecklePass {
     }
     camera.layers.disableAll()
     this.layers.forEach((layer) => {
-      camera.layers.enable(layer)
+      if (this._enabledLayers.includes(layer)) camera.layers.enable(layer)
     })
   }
 }

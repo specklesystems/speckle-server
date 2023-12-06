@@ -17,9 +17,9 @@
 </template>
 <script setup lang="ts">
 import FormButton from '~~/src/components/form/Button.vue'
-import { PropType } from 'vue'
-import { Nullable, Optional } from '@speckle/shared'
-import { PropComponentType } from '~~/src/helpers/common/components'
+import type { PropType } from 'vue'
+import type { Nullable, Optional } from '@speckle/shared'
+import type { PropAnyComponent } from '~~/src/helpers/common/components'
 
 type LinkSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
 const emit = defineEmits<{ (e: 'click', val: MouseEvent): void }>()
@@ -52,14 +52,14 @@ const props = defineProps({
    * Add icon to the left from the text
    */
   iconLeft: {
-    type: [Object, Function] as PropType<Nullable<PropComponentType>>,
+    type: [Object, Function] as PropType<Nullable<PropAnyComponent>>,
     default: null
   },
   /**
    * Add icon to the right from the text
    */
   iconRight: {
-    type: [Object, Function] as PropType<Nullable<PropComponentType>>,
+    type: [Object, Function] as PropType<Nullable<PropAnyComponent>>,
     default: null
   },
   /**

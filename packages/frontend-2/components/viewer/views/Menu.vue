@@ -62,7 +62,7 @@
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
-import { CanonicalView, SpeckleView } from '~~/../viewer/dist'
+import type { CanonicalView, SpeckleView } from '~~/../viewer/dist'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'

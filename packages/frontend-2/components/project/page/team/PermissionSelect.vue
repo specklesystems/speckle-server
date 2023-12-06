@@ -13,7 +13,7 @@
     class="min-w-[85px]"
   >
     <template #something-selected="{ value }">
-      <div class="text-normal">
+      <div class="text-normal text-right">
         {{ isArray(value) ? value[0].title : value.title }}
       </div>
     </template>
@@ -34,7 +34,8 @@
 </template>
 <script setup lang="ts">
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
-import { Roles, StreamRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
+import type { StreamRoles } from '@speckle/shared'
 import { reduce } from 'lodash-es'
 import { isArray } from 'lodash-es'
 

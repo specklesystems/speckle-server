@@ -1,27 +1,22 @@
 <template>
-  <div class="flex flex-col space-y-4">
-    <!-- <hr class="border border-outline-3" /> -->
-    <!-- <div class="h4 font-bold">Project Permissions</div> -->
-    <div class="h5 font-bold flex items-center space-x-2 mt-5">
+  <LayoutDialogSection allow-overflow border-b title="Access">
+    <template #icon>
       <LockOpenIcon
         v-if="project.visibility === ProjectVisibility.Public"
-        class="w-6 h-6"
+        class="h-full w-full"
       />
       <LinkIcon
-        v-if="project.visibility === ProjectVisibility.Unlisted"
-        class="w-6 h-6"
+        v-else-if="project.visibility === ProjectVisibility.Unlisted"
+        class="h-full w-full"
       />
-      <LockClosedIcon
-        v-if="project.visibility === ProjectVisibility.Private"
-        class="w-6 h-6"
-      />
-      <span>Access</span>
-    </div>
+      <LockClosedIcon v-else class="h-full w-full" />
+    </template>
     <div class="flex flex-col space-y-2">
       <!-- <div class="text-foreground-2 text-sm">Project Access</div> -->
       <ProjectVisibilitySelect
         :model-value="project.visibility"
         :disabled="isDisabled"
+        mount-menu-on-body
         @update:model-value="onChangeVisibility"
       />
       <!-- <div class="text-foreground-2 text-sm">Comments</div> -->
@@ -32,20 +27,20 @@
             : CommentPermissions.TeamMembersOnly
         "
         :disabled="isDisabled"
+        mount-menu-on-body
         @update:model-value="onChangeCommentPermissions"
       />
     </div>
-  </div>
+  </LayoutDialogSection>
 </template>
 <script setup lang="ts">
-import {
-  ProjectPageTeamDialogFragment,
-  ProjectVisibility
-} from '~~/lib/common/generated/gql/graphql'
+import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
+import { LayoutDialogSection } from '@speckle/ui-components'
 import { CommentPermissions } from '~~/lib/projects/helpers/components'
 import { useUpdateProject } from '~~/lib/projects/composables/projectManagement'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
-import { LockClosedIcon, LockOpenIcon, LinkIcon } from '@heroicons/vue/24/solid'
+import { LockClosedIcon, LockOpenIcon, LinkIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{

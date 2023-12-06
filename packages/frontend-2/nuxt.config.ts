@@ -1,5 +1,4 @@
 import { join } from 'path'
-import type { OutputOptions } from 'rollup'
 import { withoutLeadingSlash } from 'ufo'
 import { sanitizeFilePath } from 'mlly'
 import { filename } from 'pathe/utils'
@@ -35,6 +34,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiOrigin: 'UNDEFINED',
+      backendApiOrigin: '',
       mixpanelApiHost: 'UNDEFINED',
       mixpanelTokenId: 'UNDEFINED',
       logLevel: 'info',
@@ -55,6 +55,7 @@ export default defineNuxtConfig({
   vite: {
     vue: {
       script: {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         defineModel: true
       }
     },
@@ -66,11 +67,6 @@ export default defineNuxtConfig({
       // and also under frontend-2. they're the same version, but apparently that's not enough...
       dedupe: ['prosemirror-state', '@tiptap/pm', 'prosemirror-model', 'vee-validate']
     },
-    ...(process.env.IS_STORYBOOK_BUILD
-      ? {}
-      : {
-          assetsInclude: ['**/*.mdx']
-        }),
     server: {
       fs: {
         // Allowing symlinks
@@ -80,7 +76,7 @@ export default defineNuxtConfig({
 
     build: {
       rollupOptions: {
-        output: <OutputOptions>{
+        output: {
           /**
            * Overriding some output file names to avoid adblock
            */
@@ -146,6 +142,7 @@ export default defineNuxtConfig({
       '@vueuse/core',
       '@vueuse/shared',
       '@speckle/ui-components',
+      'v3-infinite-loading',
       /prosemirror.*/
     ]
   },

@@ -1,10 +1,6 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="sm"
-    title="Delete Invitation"
-    :buttons="dialogButtons"
-  >
+  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
+    <template #header>Delete Invitation</template>
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <p>Are you sure you want to delete the selected invitation?</p>
       <div v-if="invite" class="flex flex-col gap-2">
@@ -31,7 +27,7 @@
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
-import { InviteItem } from '~~/lib/server-management/helpers/types'
+import type { InviteItem } from '~~/lib/server-management/helpers/types'
 import { adminDeleteInviteMutation } from '~~/lib/server-management/graphql/mutations'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
@@ -41,7 +37,7 @@ import {
   getFirstErrorMessage,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { AdminInviteList } from '~~/lib/common/generated/gql/graphql'
+import type { AdminInviteList } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   open: boolean

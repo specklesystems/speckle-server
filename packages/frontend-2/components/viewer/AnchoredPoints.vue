@@ -63,7 +63,7 @@
     <!-- Active user tracking cancel & Follower count display -->
     <div
       v-if="(spotlightUserSessionId && spotlightUser) || followers.length !== 0"
-      class="absolute w-screen mt-[3.5rem] h-[calc(100vh-3.5rem)] z-10 p-1"
+      class="absolute w-screen mt-[3.5rem] h-[calc(100dvh-3.5rem)] z-10 p-1"
     >
       <div
         class="w-full h-full outline -outline-offset-0 outline-8 rounded-md outline-blue-500/40"
@@ -94,17 +94,17 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { LimitedUser } from '~~/lib/common/generated/gql/graphql'
-import { SetFullyRequired } from '~~/lib/common/helpers/type'
+import type { LimitedUser } from '~~/lib/common/generated/gql/graphql'
+import type { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useViewerUserActivityTracking } from '~~/lib/viewer/composables/activity'
 import {
-  CommentBubbleModel,
   useViewerCommentBubblesProjection,
   useViewerNewThreadBubble
 } from '~~/lib/viewer/composables/commentBubbles'
+import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { useCheckViewerCommentingAccess } from '~~/lib/viewer/composables/commentManagement'
 import {
   useInjectedViewerInterfaceState,

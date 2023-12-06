@@ -1,10 +1,10 @@
 import { nanoid } from 'nanoid'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import { MaybeRef } from '@vueuse/core'
+import type { MaybeRef } from '@vueuse/core'
 
 const useComponentLockState = () =>
   useScopedState('componentLockState', () =>
-    ref(new Array<{ key: string; instanceId: string }>())
+    shallowRef(new Array<{ key: string; instanceId: string }>())
   )
 
 /**
@@ -35,10 +35,10 @@ export const useLock = (key: MaybeRef<string>) => {
     () => {
       // If there is no active instance, mark this as the active one
       if (!lockState.value.find((lock) => lock.key === unref(key))) {
-        lockState.value.push({ key: unref(key), instanceId })
+        lockState.value = [...lockState.value, { key: unref(key), instanceId }]
       }
     },
-    { immediate: true, deep: true, flush: 'sync' }
+    { immediate: true }
   )
 
   watch(

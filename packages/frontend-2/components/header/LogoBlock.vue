@@ -1,5 +1,5 @@
 <template>
-  <NuxtLink class="flex items-center" to="/">
+  <NuxtLink class="flex items-center shrink-0" to="/">
     <img
       class="block h-6 w-6"
       :class="{ 'mr-2': !minimal, grayscale: active }"

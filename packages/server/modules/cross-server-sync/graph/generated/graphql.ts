@@ -1545,6 +1545,19 @@ export type ProjectCreateInput = {
   visibility?: InputMaybe<ProjectVisibility>;
 };
 
+export type ProjectFileImportUpdatedMessage = {
+  __typename?: 'ProjectFileImportUpdatedMessage';
+  /** Upload ID */
+  id: Scalars['String'];
+  type: ProjectFileImportUpdatedMessageType;
+  upload: FileUpload;
+};
+
+export enum ProjectFileImportUpdatedMessageType {
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
+
 export type ProjectInviteCreateInput = {
   /** Either this or userId must be filled */
   email?: InputMaybe<Scalars['String']>;
@@ -2359,6 +2372,8 @@ export type Subscription = {
    * updates regarding comments for those resources.
    */
   projectCommentsUpdated: ProjectCommentsUpdatedMessage;
+  /** Subscribe to changes to any of a project's file imports */
+  projectFileImportUpdated: ProjectFileImportUpdatedMessage;
   /** Subscribe to changes to a project's models. Optionally specify modelIds to track. */
   projectModelsUpdated: ProjectModelsUpdatedMessage;
   /** Subscribe to changes to a project's pending models */
@@ -2448,6 +2463,11 @@ export type SubscriptionProjectAutomationsStatusUpdatedArgs = {
 
 export type SubscriptionProjectCommentsUpdatedArgs = {
   target: ViewerUpdateTrackingTarget;
+};
+
+
+export type SubscriptionProjectFileImportUpdatedArgs = {
+  id: Scalars['String'];
 };
 
 

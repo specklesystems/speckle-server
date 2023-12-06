@@ -87,7 +87,7 @@
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
-import {
+import type {
   PendingFileUploadFragment,
   ProjectModelPageVersionsCardVersionFragment
 } from '~~/lib/common/generated/gql/graphql'

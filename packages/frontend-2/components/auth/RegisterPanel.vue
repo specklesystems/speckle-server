@@ -1,13 +1,13 @@
 <template>
   <LayoutPanel fancy-glow no-shadow class="max-w-lg mx-auto w-full">
     <div class="space-y-4">
-      <div class="flex flex-col items-center space-y-2">
+      <div class="flex flex-col items-center sm:gap-2">
         <h1
-          class="h3 text-center font-bold bg-gradient-to-r py-1 from-blue-500 via-blue-400 to-blue-600 inline-block text-transparent bg-clip-text"
+          class="text-xl sm:text-3xl text-center font-bold bg-gradient-to-r py-1 from-blue-500 via-blue-400 to-blue-600 inline-block text-transparent bg-clip-text"
         >
           Create your Speckle Account
         </h1>
-        <h2 class="text-center text-foreground-2">
+        <h2 class="text-sm sm:text-base text-center text-foreground-2">
           Interoperability, Collaboration and Automation for 3D
         </h2>
       </div>

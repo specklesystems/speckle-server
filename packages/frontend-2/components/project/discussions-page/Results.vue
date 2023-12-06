@@ -19,11 +19,11 @@
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
+import type {
   ProjectCommentsFilter,
   ProjectDiscussionsPageResults_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { latestCommentThreadsQuery } from '~~/lib/projects/graphql/queries'
 

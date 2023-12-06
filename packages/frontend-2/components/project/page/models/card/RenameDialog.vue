@@ -1,11 +1,31 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="lg">
+  <LayoutDialog
+    v-model:open="isOpen"
+    max-width="sm"
+    :buttons="[
+      {
+        text: 'Cancel',
+        props: { color: 'secondary', fullWidth: true },
+        onClick: () => {
+          isOpen = false
+        }
+      },
+      {
+        text: 'Save',
+        props: { color: 'primary', fullWidth: true },
+        onClick: () => {
+          onSubmit()
+        }
+      }
+    ]"
+  >
+    <template #header>Rename Model</template>
     <form class="flex flex-col text-foreground" @submit="onSubmit">
-      <div class="h4 font-bold mb-4">Rename model</div>
       <div class="flex flex-col space-y-3 mb-6">
         <FormTextInput
           v-model="newName"
           name="name"
+          show-label
           label="Model name"
           placeholder="Model name"
           size="lg"
@@ -15,17 +35,14 @@
           :disabled="loading"
         />
       </div>
-      <div class="flex justify-end">
-        <FormButton submit :disabled="loading">Save</FormButton>
-      </div>
     </form>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { Get } from 'type-fest'
+import type { Get } from 'type-fest'
 import { useForm } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
+import type {
   ProjectPageModelsCardRenameDialogFragment,
   UpdateModelMutation
 } from '~~/lib/common/generated/gql/graphql'

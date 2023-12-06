@@ -16,6 +16,7 @@
         label="Target model"
         :rules="[isRequired]"
         :disabled="disabled"
+        mount-menu-on-body
         :excluded-ids="modelId ? [modelId] : undefined"
       />
       <div class="flex justify-end">
@@ -25,7 +26,7 @@
   </form>
 </template>
 <script setup lang="ts">
-import {
+import type {
   CommonModelSelectorModelFragment,
   ProjectModelPageDialogMoveToVersionFragment
 } from '~~/lib/common/generated/gql/graphql'

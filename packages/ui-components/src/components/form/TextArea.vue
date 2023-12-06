@@ -13,7 +13,7 @@
           coreClasses,
           iconClasses,
           textareaClasses || '',
-          'min-h-[3rem] simple-scrollbar'
+          'min-h-[3rem] simple-scrollbar text-sm'
         ]"
         :placeholder="placeholder"
         :disabled="disabled"
@@ -57,10 +57,11 @@
 </template>
 <script setup lang="ts">
 import { ExclamationCircleIcon, XMarkIcon } from '@heroicons/vue/20/solid'
-import { Nullable } from '@speckle/shared'
-import { RuleExpression } from 'vee-validate'
+import type { Nullable } from '@speckle/shared'
+import type { RuleExpression } from 'vee-validate'
 import { computed, ref, toRefs } from 'vue'
-import { InputColor, useTextInputCore } from '~~/src/composables/form/textInput'
+import type { InputColor } from '~~/src/composables/form/textInput'
+import { useTextInputCore } from '~~/src/composables/form/textInput'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: string): void

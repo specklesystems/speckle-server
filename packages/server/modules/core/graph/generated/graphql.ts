@@ -1555,6 +1555,19 @@ export type ProjectCreateInput = {
   visibility?: InputMaybe<ProjectVisibility>;
 };
 
+export type ProjectFileImportUpdatedMessage = {
+  __typename?: 'ProjectFileImportUpdatedMessage';
+  /** Upload ID */
+  id: Scalars['String'];
+  type: ProjectFileImportUpdatedMessageType;
+  upload: FileUpload;
+};
+
+export enum ProjectFileImportUpdatedMessageType {
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
+
 export type ProjectInviteCreateInput = {
   /** Either this or userId must be filled */
   email?: InputMaybe<Scalars['String']>;
@@ -2369,6 +2382,8 @@ export type Subscription = {
    * updates regarding comments for those resources.
    */
   projectCommentsUpdated: ProjectCommentsUpdatedMessage;
+  /** Subscribe to changes to any of a project's file imports */
+  projectFileImportUpdated: ProjectFileImportUpdatedMessage;
   /** Subscribe to changes to a project's models. Optionally specify modelIds to track. */
   projectModelsUpdated: ProjectModelsUpdatedMessage;
   /** Subscribe to changes to a project's pending models */
@@ -2458,6 +2473,11 @@ export type SubscriptionProjectAutomationsStatusUpdatedArgs = {
 
 export type SubscriptionProjectCommentsUpdatedArgs = {
   target: ViewerUpdateTrackingTarget;
+};
+
+
+export type SubscriptionProjectFileImportUpdatedArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -3027,6 +3047,8 @@ export type ResolversTypes = {
   ProjectCommentsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectCommentsUpdatedMessage, 'comment'> & { comment?: Maybe<ResolversTypes['Comment']> }>;
   ProjectCommentsUpdatedMessageType: ProjectCommentsUpdatedMessageType;
   ProjectCreateInput: ProjectCreateInput;
+  ProjectFileImportUpdatedMessage: ResolverTypeWrapper<Omit<ProjectFileImportUpdatedMessage, 'upload'> & { upload: ResolversTypes['FileUpload'] }>;
+  ProjectFileImportUpdatedMessageType: ProjectFileImportUpdatedMessageType;
   ProjectInviteCreateInput: ProjectInviteCreateInput;
   ProjectInviteMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ProjectInviteUseInput: ProjectInviteUseInput;
@@ -3197,6 +3219,7 @@ export type ResolversParentTypes = {
   ProjectCommentsFilter: ProjectCommentsFilter;
   ProjectCommentsUpdatedMessage: Omit<ProjectCommentsUpdatedMessage, 'comment'> & { comment?: Maybe<ResolversParentTypes['Comment']> };
   ProjectCreateInput: ProjectCreateInput;
+  ProjectFileImportUpdatedMessage: Omit<ProjectFileImportUpdatedMessage, 'upload'> & { upload: ResolversParentTypes['FileUpload'] };
   ProjectInviteCreateInput: ProjectInviteCreateInput;
   ProjectInviteMutations: MutationsObjectGraphQLReturn;
   ProjectInviteUseInput: ProjectInviteUseInput;
@@ -3848,6 +3871,13 @@ export type ProjectCommentsUpdatedMessageResolvers<ContextType = GraphQLContext,
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ProjectFileImportUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectFileImportUpdatedMessage'] = ResolversParentTypes['ProjectFileImportUpdatedMessage']> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectFileImportUpdatedMessageType'], ParentType, ContextType>;
+  upload?: Resolver<ResolversTypes['FileUpload'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type ProjectInviteMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectInviteMutations'] = ResolversParentTypes['ProjectInviteMutations']> = {
   batchCreate?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectInviteMutationsBatchCreateArgs, 'input' | 'projectId'>>;
   cancel?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectInviteMutationsCancelArgs, 'inviteId' | 'projectId'>>;
@@ -4114,6 +4144,7 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   commitUpdated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitUpdated", ParentType, ContextType, RequireFields<SubscriptionCommitUpdatedArgs, 'streamId'>>;
   projectAutomationsStatusUpdated?: SubscriptionResolver<ResolversTypes['ProjectAutomationsStatusUpdatedMessage'], "projectAutomationsStatusUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectAutomationsStatusUpdatedArgs, 'projectId'>>;
   projectCommentsUpdated?: SubscriptionResolver<ResolversTypes['ProjectCommentsUpdatedMessage'], "projectCommentsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectCommentsUpdatedArgs, 'target'>>;
+  projectFileImportUpdated?: SubscriptionResolver<ResolversTypes['ProjectFileImportUpdatedMessage'], "projectFileImportUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectFileImportUpdatedArgs, 'id'>>;
   projectModelsUpdated?: SubscriptionResolver<ResolversTypes['ProjectModelsUpdatedMessage'], "projectModelsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectModelsUpdatedArgs, 'id'>>;
   projectPendingModelsUpdated?: SubscriptionResolver<ResolversTypes['ProjectPendingModelsUpdatedMessage'], "projectPendingModelsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectPendingModelsUpdatedArgs, 'id'>>;
   projectPendingVersionsUpdated?: SubscriptionResolver<ResolversTypes['ProjectPendingVersionsUpdatedMessage'], "projectPendingVersionsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectPendingVersionsUpdatedArgs, 'id'>>;
@@ -4317,6 +4348,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ProjectCollection?: ProjectCollectionResolvers<ContextType>;
   ProjectCommentCollection?: ProjectCommentCollectionResolvers<ContextType>;
   ProjectCommentsUpdatedMessage?: ProjectCommentsUpdatedMessageResolvers<ContextType>;
+  ProjectFileImportUpdatedMessage?: ProjectFileImportUpdatedMessageResolvers<ContextType>;
   ProjectInviteMutations?: ProjectInviteMutationsResolvers<ContextType>;
   ProjectModelsUpdatedMessage?: ProjectModelsUpdatedMessageResolvers<ContextType>;
   ProjectMutations?: ProjectMutationsResolvers<ContextType>;

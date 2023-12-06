@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
-import { WebhookItem } from '~~/lib/projects/helpers/types'
+import type { WebhookItem } from '~~/lib/projects/helpers/types'
 import { deleteWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import {
   convertThrowIntoFetchResult,
@@ -36,7 +36,7 @@ import {
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import { WebhookCollection } from '~~/lib/common/generated/gql/graphql'
+import type { WebhookCollection } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   webhook: WebhookItem | null

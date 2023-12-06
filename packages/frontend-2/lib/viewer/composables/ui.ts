@@ -1,10 +1,10 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
-import { TreeNode } from '@speckle/viewer'
+import type { TreeNode } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
-import { PropertyInfo } from '@speckle/viewer'
+import type { PropertyInfo } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
-import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
   useInjectedViewer,
@@ -61,10 +61,9 @@ export function useCameraUtilities() {
   const setView = (...args: Parameters<typeof instance.setView>) => {
     instance.setView(...args)
   }
-
-  const truck = (...args: Parameters<typeof CameraController.controls.truck>) =>
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    instance.getExtension(CameraController).controls.truck(...args)
+  const cameraController = instance.getExtension(CameraController)
+  const truck = (...args: Parameters<typeof cameraController.controls.truck>) =>
+    cameraController.controls.truck(...args)
 
   const zoomExtentsOrSelection = () => {
     const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)

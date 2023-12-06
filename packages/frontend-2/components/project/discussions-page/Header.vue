@@ -29,9 +29,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectDiscussionsPageHeader_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectDiscussionsPageHeader_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { projectRoute, projectDiscussionsRoute } from '~~/lib/common/helpers/route'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 

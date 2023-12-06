@@ -56,14 +56,15 @@
 </template>
 
 <script setup lang="ts">
-import { ConcreteComponent, computed } from 'vue'
-import {
+import { computed } from 'vue'
+import type { ConcreteComponent } from 'vue'
+import type {
   ItemType,
   UserItem,
   ProjectItem,
   InviteItem
 } from '~~/lib/server-management/helpers/types'
-import { keyboardClick } from '~~/lib/common/helpers/accessibility'
+import { keyboardClick } from '@speckle/ui-components'
 
 type OnRowClickType = (item: ItemType) => void
 

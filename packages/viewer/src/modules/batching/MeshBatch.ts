@@ -418,8 +418,7 @@ export default class MeshBatch implements Batch {
             const group = {
               start: matGroup[k].start,
               count: runningCount,
-              materialIndex: matGroup[k].materialIndex,
-              id: matGroup[k].id
+              materialIndex: matGroup[k].materialIndex
             }
             this.geometry.groups.push(group)
             break
@@ -429,8 +428,7 @@ export default class MeshBatch implements Batch {
           const group = {
             start: matGroup[k].start,
             count: runningCount,
-            materialIndex: matGroup[k].materialIndex,
-            id: matGroup[k].id
+            materialIndex: matGroup[k].materialIndex
           }
           this.geometry.groups.push(group)
         }

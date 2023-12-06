@@ -7,22 +7,20 @@
     >
       <AutomationDoughnutSummary :summary="summary" />
     </button>
-    <LayoutDialog
-      v-model:open="showDialog"
-      :title="`Automation Status for ${displayName}`"
-      max-width="lg"
-    >
+    <LayoutDialog v-model:open="showDialog" max-width="lg">
       <template #header>
-        <div class="flex items-center space-x-2 -mt-1 max-w-full w-full">
-          <div class="h-10 w-10 mt-[6px]">
-            <AutomationDoughnutSummary :summary="summary" />
-          </div>
-          <div class="min-w-0">
-            <h4 :class="`text-xl font-bold ${summary.titleColor}`">
-              {{ summary.title }}
-            </h4>
-            <div class="text-xs text-foreground-2 truncate">
-              {{ summary.longSummary }}
+        <div class="flex flex-col">
+          <div class="flex items-center space-x-2 max-w-full w-full">
+            <div class="h-10 w-10 mt-[6px]">
+              <AutomationDoughnutSummary :summary="summary" />
+            </div>
+            <div class="min-w-0">
+              <h4 :class="`text-xl font-bold ${summary.titleColor}`">
+                {{ summary.title }}
+              </h4>
+              <div class="text-xs text-foreground-2 truncate">
+                {{ summary.longSummary }}
+              </div>
             </div>
           </div>
         </div>
@@ -55,12 +53,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import { SetFullyRequired } from '~~/lib/common/helpers/type'
+import type { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
+import { AutomationRunStatus } from '~~/lib/common/generated/gql/graphql'
+import type {
   AutomationFunctionRun,
   AutomationRun,
-  AutomationRunStatus,
   ModelCardAutomationStatus_ModelFragment,
   ModelCardAutomationStatus_VersionFragment
 } from '~~/lib/common/generated/gql/graphql'
@@ -183,11 +181,6 @@ const statusIconAndColor = computed(() =>
 const automationRuns = computed(() => automationStatus.value.automationRuns)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const automateBaseUrl = computed(() => serverInfo.value?.automateUrl)
-const displayName = computed(() =>
-  isModel(props.modelOrVersion)
-    ? props.modelOrVersion.displayName
-    : `version #${props.modelOrVersion.id}`
-)
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const viewResultVersionsRoute = (versions: Array<{ id: string }>) => {

@@ -19,6 +19,7 @@ export enum MeasurementType {
 }
 
 export interface MeasurementOptions {
+  visible: boolean
   type?: MeasurementType
   vertexSnap?: boolean
   units?: string
@@ -26,6 +27,7 @@ export interface MeasurementOptions {
 }
 
 const DefaultMeasurementsOptions = {
+  visible: true,
   type: MeasurementType.POINTTOPOINT,
   vertexSnap: true,
   units: 'm',
@@ -59,11 +61,16 @@ export class MeasurementsExtension extends Extension {
     return this._enabled
   }
 
+  public get visible(): boolean {
+    return this._options.visible
+  }
+
   public set enabled(value: boolean) {
     this._enabled = value
     if (this.measurement) {
       this.measurement.isVisible = value
       this.measurement.update()
+      if (!value) this.cancelMeasurement()
     }
     this.renderer.needsRender = true
     this.renderer.resetPipeline()
@@ -90,7 +97,7 @@ export class MeasurementsExtension extends Extension {
     super(viewer)
     this.renderer = viewer.getRenderer()
     this.raycaster = new Raycaster()
-    this.raycaster.layers.set(ObjectLayers.OVERLAY)
+    this.raycaster.layers.enable(ObjectLayers.MEASUREMENTS)
 
     this.renderer.input.on(InputEvent.PointerMove, this.onPointerMove.bind(this))
     this.renderer.input.on(InputEvent.Click, this.onPointerClick.bind(this))
@@ -398,6 +405,13 @@ export class MeasurementsExtension extends Extension {
         value.update()
       }
     })
+    this.viewer
+      .getRenderer()
+      .enableLayers([ObjectLayers.MEASUREMENTS], this._options.visible)
+
+    if (this._options.visible) this.raycaster.layers.enable(ObjectLayers.MEASUREMENTS)
+    else this.raycaster.layers.disable(ObjectLayers.MEASUREMENTS)
+
     this.renderer.needsRender = true
     this.renderer.resetPipeline()
   }

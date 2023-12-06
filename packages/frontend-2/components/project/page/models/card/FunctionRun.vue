@@ -99,10 +99,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  AutomationFunctionRun,
-  AutomationRunStatus
-} from '~~/lib/common/generated/gql/graphql'
+import type { AutomationFunctionRun } from '~~/lib/common/generated/gql/graphql'
+import { AutomationRunStatus } from '~~/lib/common/generated/gql/graphql'
 import { resolveStatusMetadata } from '~~/lib/automations/helpers/resolveStatusMetadata'
 
 const props = defineProps<{

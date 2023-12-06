@@ -2,23 +2,23 @@
 import {
   Viewer,
   DefaultViewerParams,
-  FilteringState,
-  PropertyInfo,
   WorldTree,
   ViewerEvent,
-  SunLightConfiguration,
   DefaultLightConfiguration,
-  SpeckleView,
-  DiffResult,
-  VisualDiffMode,
-  LegacyViewer
+  LegacyViewer,
+  VisualDiffMode
 } from '@speckle/viewer'
-import { MaybeRef } from '@vueuse/shared'
-import {
-  inject,
+import type {
+  FilteringState,
+  PropertyInfo,
+  SunLightConfiguration,
+  SpeckleView,
+  DiffResult
+} from '@speckle/viewer'
+import type { MaybeRef } from '@vueuse/shared'
+import { inject, ref, provide } from 'vue'
+import type {
   InjectionKey,
-  ref,
-  provide,
   ComputedRef,
   WritableComputedRef,
   Raw,
@@ -26,7 +26,8 @@ import {
   ShallowRef
 } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import { Nullable, Optional, SpeckleViewer } from '@speckle/shared'
+import type { Nullable, Optional } from '@speckle/shared'
+import { SpeckleViewer } from '@speckle/shared'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
@@ -34,7 +35,7 @@ import {
   viewerLoadedThreadsQuery,
   viewerModelVersionsQuery
 } from '~~/lib/viewer/graphql/queries'
-import {
+import type {
   ProjectViewerResourcesQueryVariables,
   ViewerLoadedResourcesQuery,
   ViewerLoadedResourcesQueryVariables,
@@ -44,27 +45,23 @@ import {
   ProjectCommentsFilter,
   ViewerModelVersionCardItemFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { SetNonNullable, Get } from 'type-fest'
+import type { SetNonNullable, Get } from 'type-fest'
 import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { nanoid } from 'nanoid'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
+import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
-import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { Box3, Vector3 } from 'three'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { wrapRefWithTracking } from '~~/lib/common/helpers/debugging'
-import {
-  AsyncWritableComputedRef,
-  writableAsyncComputed
-} from '~~/lib/common/composables/async'
-import {
-  DiffStateCommand,
-  setupUiDiffState
-} from '~~/lib/viewer/composables/setup/diff'
+import { writableAsyncComputed } from '~~/lib/common/composables/async'
+import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
+import { setupUiDiffState } from '~~/lib/viewer/composables/setup/diff'
+import type { DiffStateCommand } from '~~/lib/viewer/composables/setup/diff'
 import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { flatten, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'

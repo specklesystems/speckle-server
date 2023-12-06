@@ -3,16 +3,16 @@
   <div class="space-y-4 relative" @mouseleave="showActionsMenu = false">
     <div
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group bg-foundation w-full py-1 pr-1 flex rounded-md shadow hover:shadow-xl hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary items-stretch"
+      class="group relative bg-foundation w-full py-1 pr-2 sm:pr-4 flex flex-col sm:flex-row rounded-md shadow hover:shadow-xl hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary items-stretch"
     >
-      <div class="flex items-center flex-grow">
+      <div class="flex items-center flex-grow order-2 sm:order-1">
         <!-- Icon -->
         <template v-if="model">
           <CubeIcon
             v-if="model.versionCount.totalCount !== 0"
-            class="w-4 h-4 text-foreground-2 mx-2"
+            class="w-4 h-4 text-foreground-2 mx-2 shrink-0"
           />
-          <CubeTransparentIcon v-else class="w-4 h-4 text-foreground-2 mx-2" />
+          <CubeTransparentIcon v-else class="w-4 h-4 text-foreground-2 mx-2 shrink-0" />
         </template>
         <template v-else-if="pendingModel">
           <ArrowUpOnSquareIcon class="w-4 h-4 text-foreground-2 mx-2" />
@@ -23,7 +23,10 @@
           <NuxtLink :to="modelLink || ''" class="text-lg font-bold text-foreground">
             {{ name }}
           </NuxtLink>
-          <span v-if="model" class="opacity-0 group-hover:opacity-100 transition">
+          <span
+            v-if="model"
+            class="opacity-100 sm:opacity-0 group-hover:opacity-100 transition"
+          >
             <ProjectPageModelsActions
               v-model:open="showActionsMenu"
               :model="model"
@@ -77,8 +80,10 @@
             class="h-full w-full"
           />
         </div>
-        <div v-else-if="hasVersions" class="flex items-center space-x-10">
-          <div class="text-xs text-foreground-2 hidden sm:block">
+        <div v-else-if="hasVersions" class="flex items-center space-x-6 sm:space-x-10">
+          <div
+            class="text-xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
+          >
             updated
             <b>{{ updatedAt }}</b>
           </div>
@@ -134,7 +139,7 @@
       class="border-l-2 border-primary-muted hover:border-primary transition rounded-md"
     >
       <button
-        class="group bg-foundation w-full py-1 pr-1 flex items-center rounded-md shadow hover:shadow-xl cursor-pointer hover:bg-primary-muted transition-all"
+        class="group bg-foundation w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md shadow hover:shadow-xl cursor-pointer hover:bg-primary-muted transition-all"
         href="/test"
         @click.stop="expanded = !expanded"
       >
@@ -231,7 +236,7 @@ import {
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
 import { ArrowUpOnSquareIcon } from '@heroicons/vue/24/outline'
-import {
+import type {
   PendingFileUploadFragment,
   SingleLevelModelTreeItemFragment
 } from '~~/lib/common/generated/gql/graphql'
@@ -239,7 +244,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { projectModelChildrenTreeQuery } from '~~/lib/projects/graphql/queries'
 import { has } from 'lodash-es'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsModelExpanded } from '~~/lib/projects/composables/models'
 

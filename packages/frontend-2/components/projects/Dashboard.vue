@@ -27,7 +27,7 @@
           :show-label="false"
           placeholder="Search"
           color="foundation"
-          wrapper-classes="grow md:grow-0 md:w-60"
+          wrapper-classes="grow md:grow-0 md:w-60 hover:shadow rounded-md outline outline-2 outline-primary-muted"
           :show-clear="!!search"
           @change="updateSearchImmediately"
           @update:model-value="updateDebouncedSearch"
@@ -81,16 +81,13 @@ import {
   evictObjectFields,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import {
-  User,
-  UserProjectsArgs,
-  UserProjectsUpdatedMessageType
-} from '~~/lib/common/generated/gql/graphql'
+import type { User, UserProjectsArgs } from '~~/lib/common/generated/gql/graphql'
+import { UserProjectsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { projectRoute } from '~~/lib/common/helpers/route'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
-import { Nullable, Optional, StreamRoles } from '@speckle/shared'
+import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 
 const onUserProjectsUpdateSubscription = graphql(`
@@ -259,6 +256,9 @@ watch(search, (newVal) => {
 
 watch(areQueriesLoading, (newVal) => (showLoadingBar.value = newVal))
 
+const twoYearsFromNow = new Date()
+twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2)
+
 const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
   `hasCompletedChecklistV1`,
   { default: () => false }
@@ -271,7 +271,10 @@ const hasDismissedChecklistTime = useSynchronizedCookie<string | undefined>(
 
 const hasDismissedChecklistForever = useSynchronizedCookie<boolean | undefined>(
   `hasDismissedChecklistForever`,
-  { default: () => false }
+  {
+    default: () => false,
+    expires: twoYearsFromNow
+  }
 )
 
 const hasDismissedChecklistTimeAgo = computed(() => {

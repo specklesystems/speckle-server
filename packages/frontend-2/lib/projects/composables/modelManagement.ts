@@ -1,21 +1,24 @@
 import { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
-import { MaybeRef, useClipboard } from '@vueuse/core'
-import { Get } from 'type-fest'
-import { GenericValidateFunction } from 'vee-validate'
+import { useClipboard } from '@vueuse/core'
+import type { MaybeRef } from '@vueuse/core'
+import type { Get } from 'type-fest'
+import type { GenericValidateFunction } from 'vee-validate'
 import { SpeckleViewer } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import {
+import type {
   DeleteModelInput,
   OnProjectModelsUpdateSubscription,
   OnProjectPendingModelsUpdatedSubscription,
   Project,
   ProjectModelsArgs,
   ProjectModelsTreeArgs,
-  ProjectModelsUpdatedMessageType,
   ProjectPendingImportedModelsArgs,
-  ProjectPendingModelsUpdatedMessageType,
   UpdateModelInput
+} from '~~/lib/common/generated/gql/graphql'
+import {
+  ProjectModelsUpdatedMessageType,
+  ProjectPendingModelsUpdatedMessageType
 } from '~~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,
@@ -211,15 +214,18 @@ export function useProjectModelUpdateTracking(
   ) => void,
   options?: Partial<{ redirectToProjectOnModelDeletion: (modelId: string) => boolean }>
 ) {
+  const { hasLock } = useLock(
+    computed(() => `useProjectModelUpdateTracking-${unref(projectId)}`)
+  )
+  const isEnabled = computed(() => !!(hasLock.value || handler))
   const { onResult: onProjectModelUpdate } = useSubscription(
     onProjectModelsUpdateSubscription,
     () => ({
       id: unref(projectId)
-    })
+    }),
+    { enabled: isEnabled }
   )
-  const { hasLock } = useLock(
-    computed(() => `useProjectModelUpdateTracking-${unref(projectId)}`)
-  )
+
   const apollo = useApolloClient().client
   const evictProjectModels = useEvictProjectModelFields()
   const goToProject = useNavigateToProject()
@@ -326,17 +332,20 @@ export function useProjectPendingModelUpdateTracking(
     cache: ApolloCache<unknown>
   ) => void
 ) {
+  const { hasLock } = useLock(
+    computed(() => `useProjectPendingModelUpdateTracking-${unref(projectId)}`)
+  )
+  const isEnabled = computed(() => !!(hasLock.value || handler))
+
   const { onResult: onProjectPendingModelUpdate } = useSubscription(
     onProjectPendingModelsUpdatedSubscription,
     () => ({
       id: unref(projectId)
-    })
+    }),
+    { enabled: isEnabled }
   )
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
-  const { hasLock } = useLock(
-    computed(() => `useProjectPendingModelUpdateTracking-${unref(projectId)}`)
-  )
 
   onProjectPendingModelUpdate((res) => {
     if (!res.data?.projectPendingModelsUpdated.id || !hasLock.value) return

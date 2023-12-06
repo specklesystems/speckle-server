@@ -42,6 +42,7 @@ const DefaultSpeckleTextStyle: SpeckleTextStyle = {
 }
 
 export class SpeckleText extends Mesh {
+  private _layer: ObjectLayers = ObjectLayers.NONE
   private _text: Text = null
   private _background: Mesh = null
   private _backgroundSize: Vector3 = new Vector3()
@@ -84,9 +85,10 @@ export class SpeckleText extends Mesh {
     this.updateStyle()
   }
 
-  public constructor(uuid: string) {
+  public constructor(uuid: string, layer: ObjectLayers) {
     super()
     this.uuid = uuid
+    this._layer = layer
     this._text = new Text()
     this._text.depthOffset = -0.1
     this._text.raycast = () => {
@@ -94,7 +96,8 @@ export class SpeckleText extends Mesh {
        * Not the best approach but until we figure out text batching it will have to suffice
        */
     }
-
+    this.layers.set(this._layer)
+    this._text.layers.set(this._layer)
     this.add(this._text)
 
     this.onBeforeRender = (renderer) => {
@@ -237,7 +240,7 @@ export class SpeckleText extends Mesh {
       material.depthTest = false
 
       this._background = new Mesh(geometry, material)
-      this._background.layers.set(ObjectLayers.OVERLAY)
+      this._background.layers.set(this._layer)
       this._background.frustumCulled = false
       this._background.renderOrder = 1
       this.add(this._background)

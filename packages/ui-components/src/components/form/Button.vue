@@ -29,8 +29,10 @@
 </template>
 <script setup lang="ts">
 import { isObjectLike } from 'lodash'
-import { ConcreteComponent, PropType, computed, resolveDynamicComponent } from 'vue'
-import { Nullable, Optional } from '@speckle/shared'
+import type { PropType } from 'vue'
+import type { PropAnyComponent } from '~~/src/helpers/common/components'
+import { computed, resolveDynamicComponent } from 'vue'
+import type { Nullable, Optional } from '@speckle/shared'
 import { ArrowPathIcon } from '@heroicons/vue/24/solid'
 
 type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
@@ -141,14 +143,14 @@ const props = defineProps({
    * Add icon to the left from the text
    */
   iconLeft: {
-    type: [Object, Function] as PropType<Nullable<ConcreteComponent>>,
+    type: [Object, Function] as PropType<Nullable<PropAnyComponent>>,
     default: null
   },
   /**
    * Add icon to the right from the text
    */
   iconRight: {
-    type: [Object, Function] as PropType<Nullable<ConcreteComponent>>,
+    type: [Object, Function] as PropType<Nullable<PropAnyComponent>>,
     default: null
   },
   /**
@@ -164,7 +166,7 @@ const props = defineProps({
    * The component will try to dynamically resolve NuxtLink and RouterLink and use those, if this is set to null.
    */
   linkComponent: {
-    type: [Object, Function] as PropType<Nullable<ConcreteComponent>>,
+    type: [Object, Function] as PropType<Nullable<PropAnyComponent>>,
     default: null
   },
   /**
@@ -379,7 +381,7 @@ const sizeClasses = computed(() => {
       return 'h-14 text-xl font-bold xxx-tracking-wide'
     default:
     case 'base':
-      return 'h-8 text-base font-medium xxx-tracking-wide'
+      return 'h-8 text-sm sm:text-base font-medium xxx-tracking-wide'
   }
 })
 
@@ -431,7 +433,7 @@ const decoratorClasses = computed(() => {
 const buttonClasses = computed(() => {
   const isLinkOrText = props.link || props.text
   return [
-    'transition inline-flex justify-center items-center space-x-2 outline-none select-none',
+    'transition inline-flex justify-center text-center items-center space-x-2 outline-none select-none',
     generalClasses.value,
     sizeClasses.value,
     foregroundClasses.value,

@@ -2,10 +2,10 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    title="Create Token"
     :buttons="dialogButtons"
     prevent-close-on-click-outside
   >
+    <template #header>Create Token</template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">
         <FormTextInput
@@ -29,6 +29,7 @@
           :rules="[isItemSelected]"
           show-label
           :items="apiTokenScopes"
+          mount-menu-on-body
           by="id"
         />
       </div>
@@ -40,7 +41,7 @@
 import { useMutation } from '@vue/apollo-composable'
 import { AllScopes } from '@speckle/shared'
 import { LayoutDialog, FormSelectBadges } from '@speckle/ui-components'
-import { TokenFormValues } from '~~/lib/developer-settings/helpers/types'
+import type { TokenFormValues } from '~~/lib/developer-settings/helpers/types'
 import { createAccessTokenMutation } from '~~/lib/developer-settings/graphql/mutations'
 import { isItemSelected, isRequired } from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'

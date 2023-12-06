@@ -7,5 +7,6 @@ export enum AuthStrategy {
   Local = 'local',
   Google = 'google',
   Github = 'github',
-  AzureAD = 'azuread'
+  AzureAD = 'azuread',
+  OIDC = 'oidc'
 }

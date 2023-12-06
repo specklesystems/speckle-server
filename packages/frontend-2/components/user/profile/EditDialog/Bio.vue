@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col space-y-4 mb-8">
     <div class="flex flex-col space-y-4">
-      <div class="flex flex-col md:flex-row gap-8 items-center">
+      <div class="flex flex-col md:flex-row gap-2 sm:gap-8 items-center">
         <div class="w-full md:w-4/12">
           <UserProfileEditDialogAvatar :user="user" size="xxl" />
         </div>
@@ -36,7 +36,7 @@
 import { UserIcon, BriefcaseIcon } from '@heroicons/vue/24/solid'
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
+import type {
   UserProfileEditDialogBio_UserFragment,
   UserUpdateInput
 } from '~~/lib/common/generated/gql/graphql'

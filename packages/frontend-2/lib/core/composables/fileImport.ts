@@ -1,7 +1,11 @@
-import { MaybeRef } from '@vueuse/core'
-import { ensureError, MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
+import type { MaybeRef } from '@vueuse/core'
+import { ensureError } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import { useServerFileUploadLimit } from '~~/lib/common/composables/serverInfo'
-import { UploadableFileItem, UploadFileItem } from '~~/lib/form/composables/fileUpload'
+import type {
+  UploadableFileItem,
+  UploadFileItem
+} from '~~/lib/form/composables/fileUpload'
 import { importFile } from '~~/lib/core/api/fileImport'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { BlobUploadStatus } from '~~/lib/core/api/blobStorage'
@@ -15,9 +19,7 @@ export function useFileImport(params: {
 
   const { maxSizeInBytes } = useServerFileUploadLimit()
   const authToken = useAuthCookie()
-  const {
-    public: { apiOrigin }
-  } = useRuntimeConfig()
+  const apiOrigin = useApiOrigin()
 
   const accept = ref('.ifc,.stl,.obj')
   const upload = ref(null as Nullable<UploadFileItem>)

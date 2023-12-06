@@ -1,6 +1,6 @@
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import UserAvatarEditable from '~~/src/components/user/AvatarEditable.vue'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import FormButton from '~~/src/components/form/Button.vue'
 
 type StoryType = StoryObj<

@@ -5,7 +5,7 @@
         <div class="cursor-pointer">
           <span class="sr-only">Open notifications menu</span>
           <div class="relative">
-            <div v-if="hasNotifications && !menuOpen">
+            <div v-if="hasNotifications && !menuOpen" class="scale-75">
               <div
                 class="absolute top-1 right-1 w-3 h-3 rounded-full bg-primary animate-ping"
               ></div>
@@ -30,10 +30,12 @@
         leave-to-class="transform opacity-0 scale-95"
       >
         <MenuItems
-          class="absolute z-50 right-0 md:right-14 top-14 md:top-16 w-full md:w-64 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
+          class="absolute z-50 right-0 md:right-16 top-14 sm:top-16 w-full sm:w-64 origin-top-right bg-foundation-2 outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
-          <div class="p-2 text-sm font-bold">Notifications</div>
-          <div class="p-2 text-sm">TODO: project invites</div>
+          <div class="p-2 text-sm font-bold bg-gray-50 dark:bg-foundation mb-2">
+            Notifications
+          </div>
+          <!-- <div class="p-2 text-sm">TODO: project invites</div> -->
           <MenuItem>
             <AuthVerificationReminderMenuNotice />
           </MenuItem>

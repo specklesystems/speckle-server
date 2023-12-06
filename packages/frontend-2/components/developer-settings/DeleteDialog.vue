@@ -1,11 +1,6 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="sm"
-    :title="`Delete ${itemType}`"
-    :buttons="dialogButtons"
-    max-height
-  >
+  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
+    <template #header>Delete {{ itemType }}</template>
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <p>
         Are you sure you want to
@@ -28,7 +23,10 @@
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
-import { ApplicationItem, TokenItem } from '~~/lib/developer-settings/helpers/types'
+import type {
+  ApplicationItem,
+  TokenItem
+} from '~~/lib/developer-settings/helpers/types'
 import {
   deleteAccessTokenMutation,
   deleteApplicationMutation

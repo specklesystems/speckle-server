@@ -1,10 +1,6 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="sm"
-    title="Change Role"
-    :buttons="dialogButtons"
-  >
+  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
+    <template #header>Change Role</template>
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <p>
         Are you sure you want to
@@ -42,8 +38,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { LayoutDialog } from '@speckle/ui-components'
-import { UserItem } from '~~/lib/server-management/helpers/types'
-import { Roles, ServerRoles } from '@speckle/shared'
+import type { UserItem } from '~~/lib/server-management/helpers/types'
+import { Roles } from '@speckle/shared'
+import type { ServerRoles } from '@speckle/shared'
 import { ArrowLongRightIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 import { getRoleLabel } from '~~/lib/server-management/helpers/utils'
 import { changeRoleMutation } from '~~/lib/server-management/graphql/mutations'
@@ -118,7 +115,7 @@ const changeUserRoleConfirmed = async () => {
   emit('update:open', false)
 }
 
-const dialogButtons = [
+const dialogButtons = computed(() => [
   {
     text: 'Change Role',
     props: { color: 'danger', fullWidth: true },
@@ -129,5 +126,5 @@ const dialogButtons = [
     props: { color: 'secondary', fullWidth: true, outline: true },
     onClick: () => emit('update:open', false)
   }
-]
+])
 </script>

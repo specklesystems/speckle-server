@@ -1,11 +1,27 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-width="md"
+    max-width="sm"
+    :buttons="[
+      {
+        text: 'Cancel',
+        props: { color: 'secondary', fullWidth: true },
+        onClick: () => {
+          isOpen = false
+        }
+      },
+      {
+        text: 'Save',
+        props: { color: 'primary', fullWidth: true, disabled: loading },
+        onClick: () => {
+          onSubmit()
+        }
+      }
+    ]"
     @fully-closed="$emit('fully-closed')"
   >
+    <template #header>Edit Version Message</template>
     <form class="flex flex-col text-foreground space-y-4" @submit="onSubmit">
-      <div class="h4 font-bold">Edit version message</div>
       <FormTextInput
         v-model="message"
         name="newMessage"
@@ -15,17 +31,14 @@
         :rules="[isRequired]"
         :disabled="loading"
       />
-      <div class="flex justify-end">
-        <FormButton submit :disabled="loading">Save</FormButton>
-      </div>
     </form>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { useForm } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectModelPageDialogDeleteVersionFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectModelPageDialogDeleteVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import { isRequired } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useUpdateVersion } from '~~/lib/projects/composables/versionManagement'

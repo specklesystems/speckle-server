@@ -1,4 +1,4 @@
-import { Nullable } from '../helpers/utilityTypes'
+import type { Nullable } from '../helpers/utilityTypes'
 
 function checkLocalStorageAvailability(): boolean {
   try {

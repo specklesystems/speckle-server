@@ -7,29 +7,16 @@
       size="sm"
       @click="() => onAttachmentClick(attachment)"
     >
-      <span class="truncate relative bottom-0.5 text-xs">
+      <span class="truncate relative text-xs">
         {{ attachment.fileName }}
       </span>
     </CommonTextLink>
-    <LayoutDialog v-model:open="dialogOpen" max-width="lg">
+    <LayoutDialog v-model:open="dialogOpen" max-width="lg" :buttons="dialogButtons">
+      <template #header>
+        {{ dialogAttachment ? dialogAttachment.fileName : 'Attachment' }}
+      </template>
       <template v-if="dialogAttachment">
         <div class="flex flex-col space-y-2">
-          <div class="flex justify-between">
-            <h1 class="h4 font-bold text-foreground truncate">
-              {{ dialogAttachment.fileName }}
-            </h1>
-            <FormButton
-              :icon-left="ArrowDownTrayIcon"
-              class="mr-8 ml-2"
-              @click="onDownloadClick"
-            >
-              {{
-                dialogAttachment.fileSize
-                  ? prettyFileSize(dialogAttachment.fileSize)
-                  : 'Download'
-              }}
-            </FormButton>
-          </div>
           <div class="flex justify-center text-foreground">
             <template v-if="dialogAttachmentError">
               <span class="inline-flex space-x-2 items-center">
@@ -67,10 +54,11 @@ import {
   ArrowDownTrayIcon,
   ExclamationTriangleIcon
 } from '@heroicons/vue/24/solid'
-import { Get } from 'type-fest'
-import { ensureError, Nullable } from '@speckle/shared'
+import type { Get } from 'type-fest'
+import { ensureError } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
-import { ThreadCommentAttachmentFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ThreadCommentAttachmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { prettyFileSize } from '~~/lib/core/helpers/file'
 import { useFileDownload } from '~~/lib/core/composables/fileUpload'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
@@ -153,6 +141,26 @@ const onDownloadClick = async () => {
     })
   }
 }
+
+const dialogButtons = computed(() => {
+  if (!dialogAttachment.value) return undefined
+
+  const button = {
+    text: dialogAttachment.value.fileSize
+      ? prettyFileSize(dialogAttachment.value.fileSize)
+      : 'Download',
+    props: {
+      color: 'primary',
+      fullWidth: true,
+      iconLeft: ArrowDownTrayIcon
+    },
+    onClick: () => {
+      onDownloadClick()
+    }
+  }
+
+  return [button]
+})
 
 watch(dialogOpen, (newIsOpen) => {
   if (!newIsOpen) {

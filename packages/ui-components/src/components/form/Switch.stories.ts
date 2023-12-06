@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import Switch from './Switch.vue'
 
 type SwitchStoryType = StoryObj<

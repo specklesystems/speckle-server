@@ -1,17 +1,19 @@
-import {
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import type {
   InitialStateWithRequestAndResponse,
-  InjectableViewerState,
-  useInjectedViewerState
+  InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
-import { SelectionEvent, ViewerEvent } from '@speckle/viewer'
+import { ViewerEvent } from '@speckle/viewer'
+import type { SelectionEvent } from '@speckle/viewer'
 import { debounce, isArray, throttle } from 'lodash-es'
 import { until } from '@vueuse/core'
-import { MaybeAsync, Nullable, TimeoutError, timeoutAt } from '@speckle/shared'
+import { TimeoutError, timeoutAt } from '@speckle/shared'
+import type { MaybeAsync, Nullable } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { CameraController } from '@speckle/viewer'
-import { TreeNode } from '@speckle/viewer'
-import { SpeckleObject } from 'lib/common/helpers/sceneExplorer'
+import type { TreeNode } from '@speckle/viewer'
+import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 
 // NOTE: this is a preformance optimisation - this function is hot, and has to do
 // potentially large searches if many elements are hidden/isolated. We cache the
@@ -312,9 +314,9 @@ export function useSelectionEvents(
 }
 
 export function useGetObjectUrl() {
-  const config = useRuntimeConfig()
+  const apiOrigin = useApiOrigin()
   return (projectId: string, objectId: string) =>
-    `${config.public.apiOrigin}/streams/${projectId}/objects/${objectId}`
+    `${apiOrigin}/streams/${projectId}/objects/${objectId}`
 }
 
 export function useOnViewerLoadComplete(

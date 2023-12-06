@@ -1,10 +1,11 @@
 import { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useQuery, useSubscription } from '@vue/apollo-composable'
-import { MaybeRef } from '@vueuse/core'
-import { Get } from 'type-fest'
-import { Nullable, SpeckleViewer } from '@speckle/shared'
+import type { MaybeRef } from '@vueuse/core'
+import type { Get } from 'type-fest'
+import { SpeckleViewer } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import {
+import type {
   DeleteVersionsInput,
   Model,
   ModelPendingImportedVersionsArgs,
@@ -17,10 +18,12 @@ import {
   ProjectModelsArgs,
   ProjectModelsTreeArgs,
   ProjectPendingImportedModelsArgs,
-  ProjectPendingVersionsUpdatedMessageType,
   ProjectVersionsArgs,
-  ProjectVersionsUpdatedMessageType,
   UpdateVersionInput
+} from '~~/lib/common/generated/gql/graphql'
+import {
+  ProjectPendingVersionsUpdatedMessageType,
+  ProjectVersionsUpdatedMessageType
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
 import {
@@ -62,14 +65,17 @@ export function useProjectVersionUpdateTracking(
   const { silenceToast = false } = options || {}
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
+
+  const { hasLock } = useLock(
+    computed(() => `useProjectVersionUpdateTracking-${unref(projectId)}`)
+  )
+  const isEnabled = computed(() => !!(hasLock.value || handler))
   const { onResult: onProjectVersionsUpdate } = useSubscription(
     onProjectVersionsUpdateSubscription,
     () => ({
       id: unref(projectId)
-    })
-  )
-  const { hasLock } = useLock(
-    computed(() => `useProjectVersionUpdateTracking-${unref(projectId)}`)
+    }),
+    { enabled: isEnabled }
   )
 
   // Cache updates that should only be invoked once
@@ -617,12 +623,15 @@ export function useProjectPendingVersionUpdateTracking(
   const { hasLock } = useLock(
     computed(() => `useProjectPendingVersionUpdateTracking-${unref(projectId)}`)
   )
+  const isEnabled = computed(() => !!(hasLock.value || handler))
   const { onResult: onProjectPendingVersionsUpdate } = useSubscription(
     onProjectPendingVersionsUpdatedSubscription,
     () => ({
       id: unref(projectId)
-    })
+    }),
+    { enabled: isEnabled }
   )
+
   const apollo = useApolloClient().client
   const { triggerNotification } = useGlobalToast()
 

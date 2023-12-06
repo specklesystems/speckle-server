@@ -7,7 +7,7 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectsDashboardFilledFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectsDashboardFilledFragment } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   projects: ProjectsDashboardFilledFragment

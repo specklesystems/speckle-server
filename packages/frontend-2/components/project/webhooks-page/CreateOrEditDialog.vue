@@ -2,10 +2,12 @@
   <LayoutDialog
     v-model:open="isOpen"
     max-width="sm"
-    :title="props.webhook ? 'Edit Webhook' : 'Create Webhook'"
     :buttons="dialogButtons"
     prevent-close-on-click-outside
   >
+    <template #header>
+      {{ props.webhook ? 'Edit Webhook' : 'Create Webhook' }}
+    </template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">
         <FormTextInput
@@ -41,6 +43,7 @@
           name="triggers"
           label="Events"
           placeholder="Choose Events"
+          mount-menu-on-body
           help="Choose what events will trigger this webhook."
           show-required
           :rules="[isItemSelected]"
@@ -57,7 +60,7 @@
 import { useMutation } from '@vue/apollo-composable'
 import { WebhookTriggers } from '@speckle/shared'
 import { LayoutDialog, FormSelectBadges } from '@speckle/ui-components'
-import { WebhookItem, WebhookFormValues } from '~~/lib/projects/helpers/types'
+import type { WebhookItem, WebhookFormValues } from '~~/lib/projects/helpers/types'
 import {
   createWebhookMutation,
   updateWebhookMutation
@@ -75,7 +78,7 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import { ValueOf } from 'type-fest'
+import type { ValueOf } from 'type-fest'
 
 const props = defineProps<{
   webhook?: WebhookItem | null

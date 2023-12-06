@@ -14,6 +14,7 @@ import {
 import crs from 'crypto-random-string'
 import { Knex } from 'knex'
 import { clamp, last, trim } from 'lodash'
+import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 
 export const generateBranchId = () => crs({ length: 10 })
 
@@ -258,8 +259,13 @@ export async function getPaginatedProjectModelsItems(
     return { items: [], cursor: null }
   }
 
+  const maxProjectModelsPerPage = getMaximumProjectModelsPerPage()
+
   const q = getPaginatedProjectModelsBaseQuery<BranchRecord[]>(projectId, params)
-  q.limit(clamp(limit || 25, 1, 100)).orderBy(Branches.col.updatedAt, 'desc')
+  q.limit(clamp(limit || 25, 1, maxProjectModelsPerPage)).orderBy(
+    Branches.col.updatedAt,
+    'desc'
+  )
 
   if (cursor) q.andWhere(Branches.col.updatedAt, '<', cursor)
 
@@ -564,6 +570,7 @@ export async function createBranch(params: {
 export async function updateBranch(branchId: string, branch: Partial<BranchRecord>) {
   if (branch.name) {
     validateBranchName(branch.name)
+    branch.name = branch.name.toLowerCase()
   }
 
   const [newBranch] = (await Branches.knex()
@@ -573,6 +580,12 @@ export async function updateBranch(branchId: string, branch: Partial<BranchRecor
 }
 
 export async function deleteBranchById(branchId: string) {
+  // this needs to happen before deleting the branch, otherwise the
+  // branch_commits table doesn't have the needed rows
+  await Commits.knex()
+    .join('branch_commits', 'commits.id', 'branch_commits.commitId')
+    .where('branch_commits.branchId', branchId)
+    .del()
   return await Branches.knex().where(Branches.col.id, branchId).del()
 }
 

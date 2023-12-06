@@ -19,7 +19,7 @@
         <!-- <div class="relative flex"> -->
         <ListboxButton ref="listboxButton" v-slot="{ open }" :class="buttonClasses">
           <div class="flex items-center justify-between w-full">
-            <div class="block truncate grow text-left">
+            <div class="block truncate grow text-left text-xs sm:text-sm">
               <template
                 v-if="!wrappedValue || (isArray(wrappedValue) && !wrappedValue.length)"
               >
@@ -163,7 +163,12 @@
         </Transition>
       </div>
     </Listbox>
-    <p v-if="helpTipId" :id="helpTipId" class="mt-2 text-sm" :class="helpTipClasses">
+    <p
+      v-if="helpTipId"
+      :id="helpTipId"
+      class="mt-2 text-xs sm:text-sm"
+      :class="helpTipClasses"
+    >
       {{ helpTip }}
     </p>
   </div>
@@ -194,18 +199,11 @@ import {
   ExclamationCircleIcon
 } from '@heroicons/vue/24/solid'
 import { debounce, isArray, isObjectLike } from 'lodash'
-import {
-  CSSProperties,
-  PropType,
-  Ref,
-  computed,
-  onMounted,
-  ref,
-  unref,
-  watch
-} from 'vue'
-import { MaybeAsync, Nullable, Optional } from '@speckle/shared'
-import { RuleExpression, useField } from 'vee-validate'
+import type { CSSProperties, PropType, Ref } from 'vue'
+import { computed, onMounted, ref, unref, watch } from 'vue'
+import type { MaybeAsync, Nullable, Optional } from '@speckle/shared'
+import { useField } from 'vee-validate'
+import type { RuleExpression } from 'vee-validate'
 import { nanoid } from 'nanoid'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
 import { directive as vTippy } from 'vue-tippy'

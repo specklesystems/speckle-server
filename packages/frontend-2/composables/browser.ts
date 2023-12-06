@@ -1,7 +1,8 @@
 import { ensureError } from '@speckle/shared'
 import { useClipboard as coreUseClipboard } from '@vueuse/core'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-
+import { useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 /**
  * A wrapper over vueuse's useClipboard that also triggers toast notifications
  */
@@ -36,5 +37,16 @@ export const useClipboard = () => {
         })
       }
     }
+  }
+}
+
+export const useIsSmallerOrEqualThanBreakpoint = () => {
+  const breakpoints = useBreakpoints(TailwindBreakpoints)
+  return {
+    isSmallerOrEqualSm: computed(() => breakpoints.smallerOrEqual('sm').value),
+    isSmallerOrEqualMd: computed(() => breakpoints.smallerOrEqual('md').value),
+    isSmallerOrEqualLg: computed(() => breakpoints.smallerOrEqual('lg').value),
+    isSmallerOrEqualXl: computed(() => breakpoints.smallerOrEqual('xl').value),
+    isSmallerOrEqual2xl: computed(() => breakpoints.smallerOrEqual('2xl').value)
   }
 }

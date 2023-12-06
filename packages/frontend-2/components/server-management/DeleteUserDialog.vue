@@ -1,10 +1,6 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="sm"
-    title="Delete User"
-    :buttons="dialogButtons"
-  >
+  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
+    <template #header>Delete User</template>
     <div class="flex flex-col gap-6">
       <p>
         Are you sure you want to
@@ -27,7 +23,7 @@
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
-import { UserItem } from '~~/lib/server-management/helpers/types'
+import type { UserItem } from '~~/lib/server-management/helpers/types'
 import { adminDeleteUserMutation } from '~~/lib/server-management/graphql/mutations'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 import {
@@ -37,7 +33,10 @@ import {
   getFirstErrorMessage,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { AdminUserList, ProjectCollection } from '~~/lib/common/generated/gql/graphql'
+import type {
+  AdminUserList,
+  ProjectCollection
+} from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   open: boolean

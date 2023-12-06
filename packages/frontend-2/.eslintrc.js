@@ -1,7 +1,7 @@
 const mainExtends = [
   'plugin:nuxt/recommended',
   'plugin:vue/vue3-recommended',
-  'plugin:storybook/recommended',
+  // 'plugin:storybook/recommended',
   'prettier'
 ]
 
@@ -113,16 +113,16 @@ const config = {
         '@typescript-eslint/no-explicit-any': 'off',
         '@typescript-eslint/ban-types': 'off'
       }
-    },
-    {
-      files: '*.stories.{js,ts}',
-      rules: {
-        // this one feels busted, tells me to await synchronous calls
-        'storybook/await-interactions': 'off',
-        // storybook types suck and can't be augmented
-        '@typescript-eslint/no-unsafe-call': 'off'
-      }
     }
+    // {
+    //   files: '*.stories.{js,ts}',
+    //   rules: {
+    //     // this one feels busted, tells me to await synchronous calls
+    //     'storybook/await-interactions': 'off',
+    //     // storybook types suck and can't be augmented
+    //     '@typescript-eslint/no-unsafe-call': 'off'
+    //   }
+    // }
   ]
 }
 

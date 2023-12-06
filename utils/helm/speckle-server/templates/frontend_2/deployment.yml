@@ -42,6 +42,15 @@ spec:
             exec:
               command: ["sleep", "5"]
 
+        livenessProbe:
+          httpGet:
+            path: /
+            port: www
+          failureThreshold: 3
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 10
         readinessProbe:
           httpGet:
             path: /
@@ -54,6 +63,8 @@ spec:
             value: {{ .Values.file_size_limit_mb | quote }}
           - name: NUXT_PUBLIC_API_ORIGIN
             value: {{ .Values.ssl_canonical_url | ternary (printf "https://%s" .Values.domain) (printf "http://%s" .Values.domain) }}
+          - name: NUXT_PUBLIC_BACKEND_API_ORIGIN
+            value: {{ printf "http://%s.%s.svc.cluster.local.:3000" (include "server.name" $) .Values.namespace }}
           - name: NUXT_PUBLIC_MIXPANEL_TOKEN_ID
             value: {{ .Values.analytics.mixpanel_token_id }}
           - name: NUXT_PUBLIC_MIXPANEL_API_HOST
