@@ -140,7 +140,12 @@ export default class SpeckleRenderer {
   /**********************
    * Bounds and volumes */
   public get sceneBox() {
-    return new Box3().setFromObject(this.allObjects)
+    const bounds: Box3 = new Box3()
+    const batches = this.batcher.getBatches()
+    for (let k = 0; k < batches.length; k++) {
+      bounds.union(batches[k].bounds)
+    }
+    return bounds
   }
 
   public get sceneSphere() {

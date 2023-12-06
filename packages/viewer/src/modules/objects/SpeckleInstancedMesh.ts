@@ -20,7 +20,6 @@ import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
 import InstancedMeshBatch, { DrawGroup } from '../batching/InstancedMeshBatch'
 import { ObjectLayers } from '../../IViewer'
 import Logger from 'js-logger'
-import { PatchedInstancedMesh } from './PatchedInstancedMesh'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -61,7 +60,7 @@ export default class SpeckleInstancedMesh extends Group {
   public groups: Array<DrawGroup> = []
   public materials: Material[] = []
   private instanceGeometry: BufferGeometry = null
-  private instances: PatchedInstancedMesh[] = []
+  private instances: InstancedMesh[] = []
 
   public get TAS() {
     return this.tas
@@ -134,7 +133,7 @@ export default class SpeckleInstancedMesh extends Group {
 
     for (let k = 0; k < this.groups.length; k++) {
       const material = this.materials[this.groups[k].materialIndex]
-      const group = new PatchedInstancedMesh(this.instanceGeometry, material, 0)
+      const group = new InstancedMesh(this.instanceGeometry, material, 0)
       group.instanceMatrix = new InstancedBufferAttribute(
         transformBuffer.subarray(
           this.groups[k].start,
@@ -158,10 +157,6 @@ export default class SpeckleInstancedMesh extends Group {
       group.instanceMatrix.needsUpdate = true
       group.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
       group.frustumCulled = false
-      group.computeBoundingBox()
-      group.computeBoundingSphere()
-      group.geometry.boundingBox.copy(group.boundingBox)
-      group.geometry.boundingSphere.copy(group.boundingSphere)
 
       this.instances.push(group)
       this.add(group)
@@ -183,23 +178,17 @@ export default class SpeckleInstancedMesh extends Group {
         )
       })
       if (group) {
-        const instance: PatchedInstancedMesh =
-          this.instances[this.groups.indexOf(group)]
+        const instance: InstancedMesh = this.instances[this.groups.indexOf(group)]
         instance.setMatrixAt(
           (rv.batchStart - group.start) /
             InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
           batchObject.transform
         )
-        instance.computeBoundingBox()
-        instance.computeBoundingSphere()
-        instance.geometry.boundingBox.copy(instance.boundingBox)
-        instance.geometry.boundingSphere.copy(instance.boundingSphere)
+
         instance.instanceMatrix.needsUpdate = true
       }
-
       batchObject.transformDirty = false
     }
-
     if (this.tas && needsUpdate) {
       this.tas.refit()
       this.tas.getBoundingBox(this.tas.bounds)

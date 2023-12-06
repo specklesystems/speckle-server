@@ -348,11 +348,11 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/d721ab8df4'
     // Big ass tower
     // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/cef3f40be2'
-    // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/f4e11a8b01'
+    'https://latest.speckle.dev/streams/0cf9e393c4/commits/f4e11a8b01'
 
     // Far away instances
     // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/576310a6d5'
-    'https://latest.speckle.dev/streams/ee5346d3e1/commits/489d42ca8c'
+    // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/489d42ca8c'
   )
 }
 
