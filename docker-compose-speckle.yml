@@ -1,20 +1,35 @@
-version: '2.3'
+version: '2.4'
 services:
-  speckle-frontend:
+  speckle-ingress:
     build:
       context: .
-      dockerfile: packages/frontend/Dockerfile
-    image: speckle/speckle-frontend:local
+      dockerfile: utils/docker-compose-ingress/Dockerfile
+    platform: linux/amd64
+    image: speckle/speckle-docker-compose-ingress:local
     restart: always
     ports:
       - '0.0.0.0:80:8080'
     environment:
-      FILE_SIZE_LIMIT_MB: 100
+      FILE_SIZE_LIMIT_MB: '100'
+      NGINX_ENVSUBST_OUTPUT_DIR: '/etc/nginx'
+
+  speckle-frontend-2:
+    build:
+      context: .
+      dockerfile: packages/frontend-2/Dockerfile
+    platform: linux/amd64
+    image: speckle/speckle-frontend-2:local
+    restart: always
+    environment:
+      NUXT_PUBLIC_SERVER_NAME: 'local'
+      NUXT_PUBLIC_API_ORIGIN: 'http://127.0.0.1'
+      NUXT_PUBLIC_BACKEND_API_ORIGIN: 'http://speckle-server:3000'
 
   speckle-server:
     build:
       context: .
       dockerfile: packages/server/Dockerfile
+    platform: linux/amd64
     image: speckle/speckle-server:local
     restart: always
     healthcheck:
@@ -53,10 +68,14 @@ services:
       FILE_SIZE_LIMIT_MB: 100
       EMAIL_FROM: 'no-reply@example.org'
 
+      USE_FRONTEND_2: true
+      FRONTEND_ORIGIN: 'http://127.0.0.1'
+
   preview-service:
     build:
       context: .
       dockerfile: packages/preview-service/Dockerfile
+    platform: linux/amd64
     image: speckle/speckle-preview-service:local
     restart: always
     mem_limit: '3000m'
@@ -69,6 +88,7 @@ services:
     build:
       context: .
       dockerfile: packages/webhook-service/Dockerfile
+    platform: linux/amd64
     image: speckle/speckle-webhook-service:local
     restart: always
     environment:
@@ -79,6 +99,7 @@ services:
     build:
       context: .
       dockerfile: packages/fileimport-service/Dockerfile
+    platform: linux/amd64
     image: speckle/speckle-fileimport-service:local
     restart: always
     environment:

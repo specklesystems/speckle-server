@@ -15,7 +15,7 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectModelPageHeaderProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectModelPageHeaderProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { projectRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 
 graphql(`

@@ -24,7 +24,7 @@
   </LayoutPanel>
 </template>
 <script setup lang="ts">
-import { ConcreteComponent } from 'vue'
+import type { ConcreteComponent } from 'vue'
 
 defineEmits<{
   (e: 'click', v: MouseEvent): void

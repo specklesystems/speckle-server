@@ -34,9 +34,11 @@
 <script setup lang="ts">
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-import { RuleExpression, useField } from 'vee-validate'
-import { PropType, computed, onMounted, ref } from 'vue'
-import { Optional } from '@speckle/shared'
+import { useField } from 'vee-validate'
+import type { RuleExpression } from 'vee-validate'
+import { computed, onMounted, ref } from 'vue'
+import type { PropType } from 'vue'
+import type { Optional } from '@speckle/shared'
 import { nanoid } from 'nanoid'
 
 /**

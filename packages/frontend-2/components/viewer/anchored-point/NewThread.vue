@@ -75,16 +75,12 @@
 </template>
 <script setup lang="ts">
 import { PlusIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { onKeyDown } from '@vueuse/core'
-import {
-  useIsTypingUpdateEmitter,
-  ViewerNewThreadBubbleModel
-} from '~~/lib/viewer/composables/commentBubbles'
-import {
-  CommentEditorValue,
-  useSubmitComment
-} from '~~/lib/viewer/composables/commentManagement'
+import { useIsTypingUpdateEmitter } from '~~/lib/viewer/composables/commentBubbles'
+import type { ViewerNewThreadBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
+import { useSubmitComment } from '~~/lib/viewer/composables/commentManagement'
+import type { CommentEditorValue } from '~~/lib/viewer/composables/commentManagement'
 import {
   isValidCommentContentInput,
   convertCommentEditorValueToInput

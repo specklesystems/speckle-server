@@ -26,7 +26,7 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectPageLatestItemsCommentsFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectPageLatestItemsCommentsFragment } from '~~/lib/common/generated/gql/graphql'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { useQuery } from '@vue/apollo-composable'
 import { latestCommentThreadsQuery } from '~~/lib/projects/graphql/queries'

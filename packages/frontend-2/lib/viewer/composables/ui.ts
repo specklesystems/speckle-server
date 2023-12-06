@@ -1,10 +1,10 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
-import { TreeNode } from '@speckle/viewer'
+import type { TreeNode } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
-import { PropertyInfo } from '@speckle/viewer'
+import type { PropertyInfo } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
-import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
   useInjectedViewer,

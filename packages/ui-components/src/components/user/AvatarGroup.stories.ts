@@ -1,6 +1,6 @@
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import UserAvatarGroup from '~~/src/components/user/AvatarGroup.vue'
-import { AvatarUserWithId } from '~~/src/composables/user/avatar'
+import type { AvatarUserWithId } from '~~/src/composables/user/avatar'
 
 const sizes = ['xs', 'sm', 'base', 'lg', 'xl', 'editable']
 

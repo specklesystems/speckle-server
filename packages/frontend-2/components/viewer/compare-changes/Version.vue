@@ -15,7 +15,7 @@
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   version: ViewerModelVersionCardItemFragment

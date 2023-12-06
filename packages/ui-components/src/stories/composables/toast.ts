@@ -1,8 +1,8 @@
 import { useTimeoutFn, createGlobalState } from '@vueuse/core'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { computed, nextTick, watch } from 'vue'
 import { ref } from 'vue'
-import { ToastNotification } from '~~/src/helpers/global/toast'
+import type { ToastNotification } from '~~/src/helpers/global/toast'
 
 /**
  * Development-only version of the toast notification state. Do not export this out from the library as it can't work in SSR!

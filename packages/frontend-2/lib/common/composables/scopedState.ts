@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { NuxtApp } from 'nuxt/dist/app/nuxt'
+import type { NuxtApp } from 'nuxt/dist/app/nuxt'
 
 /**
  * Similar to nuxt's useState() except state is scoped to only the SSR request or only the client-side session.

@@ -1,4 +1,4 @@
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import UserAvatar from '~~/src/components/user/Avatar.vue'
 import { unhappyCatBase64 } from '~~/src/stories/helpers/avatar'
 

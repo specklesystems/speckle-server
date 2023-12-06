@@ -1,5 +1,5 @@
 import { reduce } from 'lodash-es'
-import { Nullable, Optional } from '@speckle/shared'
+import type { Nullable, Optional } from '@speckle/shared'
 import { writableAsyncComputed } from '~~/lib/common/composables/async'
 
 export function serializeHashState(

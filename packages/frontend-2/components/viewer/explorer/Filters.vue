@@ -89,7 +89,11 @@
 </template>
 <script setup lang="ts">
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
-import { PropertyInfo, StringPropertyInfo, NumericPropertyInfo } from '@speckle/viewer'
+import type {
+  PropertyInfo,
+  StringPropertyInfo,
+  NumericPropertyInfo
+} from '@speckle/viewer'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 

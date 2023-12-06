@@ -1,5 +1,6 @@
-import { Nullable } from '@speckle/shared'
-import { MaybeRef, isClient } from '@vueuse/core'
+import type { Nullable } from '@speckle/shared'
+import { isClient } from '@vueuse/core'
+import type { MaybeRef } from '@vueuse/core'
 import { debounce, isUndefined, throttle } from 'lodash'
 import { computed, onBeforeUnmount, onMounted, ref, unref, watch } from 'vue'
 

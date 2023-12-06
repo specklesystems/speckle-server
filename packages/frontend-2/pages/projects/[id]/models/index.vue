@@ -25,8 +25,8 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import { SourceAppDefinition } from '@speckle/shared'
-import { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
+import type { SourceAppDefinition } from '@speckle/shared'
+import type { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { projectModelsPageQuery } from '~~/lib/projects/graphql/queries'
 import {
   useGeneralProjectPageUpdateTracking,

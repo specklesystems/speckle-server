@@ -71,10 +71,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, unref, Ref, computed, ConcreteComponent } from 'vue'
+import { ref, unref, computed } from 'vue'
+import type { Ref } from 'vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { FormButton } from '~~/src/lib'
 import { keyboardClick } from '~~/src/helpers/global/accessibility'
+import type { PropAnyComponent } from '~~/src/helpers/common/components'
 
 type TitleColor = 'default' | 'danger' | 'warning' | 'success' | 'secondary' | 'info'
 
@@ -103,7 +105,7 @@ const props = defineProps({
         text: string
         to?: string
         color: FormButtonColor
-        iconRight?: ConcreteComponent | undefined
+        iconRight?: PropAnyComponent | undefined
         onClick?: () => void
       }
     | undefined,

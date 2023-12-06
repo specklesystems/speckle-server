@@ -10,7 +10,8 @@
   </span>
 </template>
 <script setup lang="ts">
-import { ConcreteComponent, computed } from 'vue'
+import { computed } from 'vue'
+import type { PropAnyComponent } from '~~/src/helpers/common/components'
 
 type BadgeSize = 'base' | 'lg'
 
@@ -38,7 +39,7 @@ const props = defineProps<{
   /**
    * Optionally show icon to the left of the text
    */
-  iconLeft?: ConcreteComponent
+  iconLeft?: PropAnyComponent
 
   /**
    * A more square, but still rounded look

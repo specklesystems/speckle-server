@@ -62,10 +62,10 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { PropType } from 'vue'
-import { Nullable, Optional } from '@speckle/shared'
+import type { PropType } from 'vue'
+import type { Nullable, Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
-import { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
+import type { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useFormSelectChildInternals } from '~~/lib/form/composables/select'
 
 type ValueType = FormUsersSelectItemFragment | FormUsersSelectItemFragment[] | undefined

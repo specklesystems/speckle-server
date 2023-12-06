@@ -30,9 +30,9 @@
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectModelPageDialogMoveToVersionFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectModelPageDialogMoveToVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { LayoutTabItem } from '~~/lib/layout/helpers/components'
+import type { LayoutTabItem } from '~~/lib/layout/helpers/components'
 import { useMoveVersions } from '~~/lib/projects/composables/versionManagement'
 
 graphql(`

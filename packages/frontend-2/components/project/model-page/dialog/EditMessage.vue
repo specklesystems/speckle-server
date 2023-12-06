@@ -35,10 +35,10 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { useForm } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectModelPageDialogDeleteVersionFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectModelPageDialogDeleteVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import { isRequired } from '~~/lib/common/helpers/validation'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useUpdateVersion } from '~~/lib/projects/composables/versionManagement'

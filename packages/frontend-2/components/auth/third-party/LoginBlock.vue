@@ -12,11 +12,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Get } from 'type-fest'
+import type { Get } from 'type-fest'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { graphql } from '~~/lib/common/generated/gql'
-import { AuthStategiesServerInfoFragmentFragment } from '~~/lib/common/generated/gql/graphql'
+import type { AuthStategiesServerInfoFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 /**
@@ -44,9 +44,7 @@ const props = defineProps<{
   appId: string
 }>()
 
-const {
-  public: { apiOrigin }
-} = useRuntimeConfig()
+const apiOrigin = useApiOrigin()
 const mixpanel = useMixpanel()
 const { inviteToken } = useAuthManager()
 
@@ -55,6 +53,7 @@ const newsletterConsent = inject<Ref<boolean>>('newsletterconsent')
 const NuxtLink = resolveComponent('NuxtLink')
 const GoogleButton = resolveComponent('AuthThirdPartyLoginButtonGoogle')
 const MicrosoftButton = resolveComponent('AuthThirdPartyLoginButtonMicrosoft')
+const OIDCButton = resolveComponent('AuthThirdPartyLoginButtonOIDC')
 const GithubButton = resolveComponent('AuthThirdPartyLoginButtonGithub')
 
 const thirdPartyStrategies = computed(() =>
@@ -86,6 +85,8 @@ const getButtonComponent = (strat: StrategyType) => {
       return GithubButton
     case AuthStrategy.AzureAD:
       return MicrosoftButton
+    case AuthStrategy.OIDC:
+      return OIDCButton
   }
 
   return NuxtLink

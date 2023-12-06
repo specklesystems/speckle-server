@@ -16,9 +16,9 @@
 </template>
 <script setup lang="ts">
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { computed, ref } from 'vue'
-import { LayoutTabItem } from '~~/src/helpers/layout/components'
+import type { LayoutTabItem } from '~~/src/helpers/layout/components'
 import FormButton from '~~/src/components/form/Button.vue'
 
 const props = defineProps<{

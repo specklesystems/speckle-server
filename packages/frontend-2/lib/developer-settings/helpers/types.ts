@@ -1,6 +1,6 @@
 import { AllScopes } from '@speckle/shared'
-import { Get } from 'type-fest'
-import {
+import type { Get } from 'type-fest'
+import type {
   DeveloperSettingsAccessTokensQuery,
   DeveloperSettingsApplicationsQuery
 } from '~~/lib/common/generated/gql/graphql'

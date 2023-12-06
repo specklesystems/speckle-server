@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import { ChatBubbleOvalLeftIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectPageStatsBlockCommentsFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectPageStatsBlockCommentsFragment } from '~~/lib/common/generated/gql/graphql'
 
 graphql(`
   fragment ProjectPageStatsBlockComments on Project {
