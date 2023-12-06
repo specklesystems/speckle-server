@@ -99,6 +99,12 @@ export default class Materials {
   private static readonly NullPointCloudVertexColorsMaterialHash = this.hashCode(
     GeometryType.POINT_CLOUD.toString() + 'vertexColors'
   )
+  private static readonly NullRenderMaterialInstancedHash = this.hashCode(
+    GeometryType.MESH.toString() + 'instanced'
+  )
+  private static readonly NullRenderMaterialInstancedVertexColorHash = this.hashCode(
+    GeometryType.MESH.toString() + 'vertexColors' + 'instanced'
+  )
 
   public static renderMaterialFromNode(
     materialNode: TreeNode,
@@ -237,9 +243,7 @@ export default class Materials {
       geometry +
       mat +
       (renderView.geometryType === GeometryType.TEXT ? renderView.renderData.id : '') +
-      (renderView.renderData.geometry.instanced
-        ? renderView.renderData.geometry.instanced
-        : '')
+      (renderView.renderData.geometry.instanced ? 'instanced' : '')
     return Materials.hashCode(s)
   }
 
@@ -561,6 +565,41 @@ export default class Materials {
       },
       ['USE_RTE']
     )
+
+    this.materialMap[Materials.NullRenderMaterialInstancedHash] =
+      new SpeckleStandardMaterial(
+        {
+          color: 0x7f7f7f,
+          emissive: 0x0,
+          roughness: 1,
+          metalness: 0,
+          side: DoubleSide
+        },
+        ['USE_RTE']
+      )
+    ;(
+      this.materialMap[
+        Materials.NullRenderMaterialInstancedHash
+      ] as SpeckleStandardMaterial
+    ).color.convertSRGBToLinear()
+
+    this.materialMap[Materials.NullRenderMaterialInstancedVertexColorHash] =
+      new SpeckleStandardMaterial(
+        {
+          color: 0xffffff,
+          emissive: 0x0,
+          roughness: 1,
+          metalness: 0,
+          side: DoubleSide,
+          vertexColors: true
+        },
+        ['USE_RTE']
+      )
+    ;(
+      this.materialMap[
+        Materials.NullRenderMaterialInstancedVertexColorHash
+      ] as SpeckleStandardMaterial
+    ).color.convertSRGBToLinear()
   }
 
   public async createDefaultMaterials() {
