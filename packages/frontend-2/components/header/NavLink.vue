@@ -1,14 +1,14 @@
 <template>
-  <div class="transition text-foreground hover:text-primary-focus">
+  <div class="text-foreground hover:text-primary-focus transition last:truncate">
     <NuxtLink
       :to="to"
-      class="flex items-center text-sm"
-      active-class="text-primary font-bold"
+      class="flex gap-1 items-center text-sm ml-0.5"
+      active-class="text-primary font-bold group is-active"
     >
       <div v-if="separator">
-        <ChevronRightIcon class="flex w-4 h-4 mt-[3px] mx-0 md:mx-1" />
+        <ChevronRightIcon class="flex w-4 h-4" />
       </div>
-      <div class="max-w-[120px] md:max-w-[200px] lg:max-w-[300px] truncate">
+      <div class="group-[.is-active]:truncate">
         {{ name || to }}
       </div>
     </NuxtLink>

@@ -5,13 +5,15 @@ import {
   WorldTree,
   ViewerEvent,
   DefaultLightConfiguration,
-  VisualDiffMode
+  VisualDiffMode,
+  MeasurementType
 } from '@speckle/viewer'
 import type {
   FilteringState,
   PropertyInfo,
   SunLightConfiguration,
   SpeckleView,
+  MeasurementOptions,
   DiffResult
 } from '@speckle/viewer'
 import type { MaybeRef } from '@vueuse/shared'
@@ -251,6 +253,10 @@ export type InjectableViewerState = Readonly<{
     explodeFactor: Ref<number>
     viewerBusy: WritableComputedRef<boolean>
     selection: Ref<Nullable<Vector3>>
+    measurement: {
+      enabled: Ref<boolean>
+      options: Ref<MeasurementOptions>
+    }
   }
   /**
    * State stored in the anchor string of the URL
@@ -874,7 +880,17 @@ function setupInterfaceState(
         },
         hasAnyFiltersApplied
       },
-      highlightedObjectIds
+      highlightedObjectIds,
+      measurement: {
+        enabled: ref(false),
+        options: ref<MeasurementOptions>({
+          visible: true,
+          type: MeasurementType.POINTTOPOINT,
+          units: 'm',
+          vertexSnap: true,
+          precision: 2
+        })
+      }
     }
   }
 }
