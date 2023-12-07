@@ -2,7 +2,11 @@
 import { ApolloServer } from 'apollo-server-express'
 import { GraphQLResponse } from 'apollo-server-types'
 import { DocumentNode } from 'graphql'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { GraphQLContext, Nullable } from '@/modules/shared/helpers/typeHelper'
+import { TypedDocumentNode } from '@graphql-typed-document-node/core'
+import { buildApolloServer } from '@/app'
+import { addLoadersToCtx } from '@/modules/shared/middleware'
+import { buildUnauthenticatedApolloServer } from '@/test/serverHelper'
 
 type TypedGraphqlResponse<R = Record<string, any>> = GraphQLResponse & {
   data: Nullable<R>
@@ -25,3 +29,67 @@ export async function executeOperation<
     variables
   })) as TypedGraphqlResponse<R>
 }
+
+/**
+ * Create a test context for a GraphQL request. Optionally override any of the default values.
+ * By default the context will be unauthenticated
+ */
+export const createTestContext = (
+  ctx?: Partial<Parameters<typeof addLoadersToCtx>[0]>
+): GraphQLContext =>
+  addLoadersToCtx({
+    auth: false,
+    userId: undefined,
+    role: undefined,
+    token: undefined,
+    scopes: [],
+    stream: undefined,
+    err: undefined,
+    ...(ctx || {})
+  })
+
+/**
+ * Utilities that make it easier to test against an Apollo Server instance
+ */
+export const testApolloServer = async (params?: { context?: GraphQLContext }) => {
+  const instance = params?.context
+    ? await buildApolloServer({
+        context: params.context
+      })
+    : await buildUnauthenticatedApolloServer()
+
+  /**
+   * Execute an operation against Apollo and get a properly typed response
+   */
+  const execute = async <
+    R extends Record<string, any> = Record<string, any>,
+    V extends Record<string, any> = Record<string, any>
+  >(
+    query: TypedDocumentNode<R, V>,
+    variables: V,
+    options?: Partial<{
+      /**
+       * Optionally override the instance's context
+       */
+      context: Parameters<typeof createTestContext>[0]
+    }>
+  ): Promise<TypedGraphqlResponse<R>> => {
+    const realInstance = options?.context
+      ? await buildApolloServer({
+          context: createTestContext({
+            ...(params?.context || {}),
+            ...options.context
+          })
+        })
+      : instance
+
+    return (await realInstance.executeOperation({
+      query,
+      variables
+    })) as TypedGraphqlResponse<R>
+  }
+
+  return { execute, server: instance }
+}
+
+export type TestApolloServer = Awaited<ReturnType<typeof testApolloServer>>
