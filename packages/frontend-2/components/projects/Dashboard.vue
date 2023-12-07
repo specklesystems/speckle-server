@@ -265,7 +265,10 @@ twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2)
 
 const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
   `hasCompletedChecklistV1`,
-  { default: () => false }
+  {
+    default: () => false,
+    expires: twoYearsFromNow
+  }
 )
 
 const hasDismissedChecklistTime = useSynchronizedCookie<string | undefined>(
@@ -306,10 +309,8 @@ const showChecklist = computed(() => {
 })
 
 const showFeedbackRequest = computed(() => {
-  return (
-    (!hasCompletedChecklistV1.value || !hasDismissedChecklistForever.value) &&
-    !hasDismissedOrOpenedFeedback.value
-  )
+  if (hasDismissedOrOpenedFeedback.value) return false
+  return true
 })
 
 const clearSearch = () => {

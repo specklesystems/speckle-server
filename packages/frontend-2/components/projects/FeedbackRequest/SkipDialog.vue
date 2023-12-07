@@ -25,7 +25,6 @@ const dialogButtons = computed(() => [
     props: { color: 'default', fullWidth: true, outline: true },
     onClick: () => {
       emit('skip-dialog-dismissed')
-      isOpen.value = false
     }
   }
 ])

@@ -38,6 +38,7 @@ import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/solid'
 const emit = defineEmits<{ 'feedback-dismissed-or-opened': [] }>()
 
 const emitDismissedOrOpened = () => {
+  showSkipDialog.value = false
   emit('feedback-dismissed-or-opened')
 }
 
