@@ -6,8 +6,10 @@ const {
   revokeToken,
   getUserTokens
 } = require('../../services/tokens')
+const { canCreateToken } = require('@/modules/core/helpers/token')
 
-module.exports = {
+/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
+const resolvers = {
   Query: {},
   User: {
     async apiTokens(parent, args, context) {
@@ -21,6 +23,12 @@ module.exports = {
   },
   Mutation: {
     async apiTokenCreate(parent, args, context) {
+      if (!canCreateToken(context.scopes || [], args.token.scopes)) {
+        throw new ForbiddenError(
+          "You can't create a token with scopes that you don't have"
+        )
+      }
+
       return await createPersonalAccessToken(
         context.userId,
         args.token.name,
@@ -37,3 +45,5 @@ module.exports = {
     }
   }
 }
+
+module.exports = resolvers

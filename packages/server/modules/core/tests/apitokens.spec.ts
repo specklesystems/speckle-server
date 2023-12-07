@@ -60,7 +60,9 @@ describe('API Tokens', () => {
     expect(data?.apiTokenCreate).to.not.be.ok
     expect(errors).to.be.ok
     expect(
-      errors!.find((e) => e.message.includes('do not have the required privileges'))
+      errors!.find((e) =>
+        e.message.includes("You can't create a token with scopes that you don't have")
+      )
     ).to.be.ok
   })
 
