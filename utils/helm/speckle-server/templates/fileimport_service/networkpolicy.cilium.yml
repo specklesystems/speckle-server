@@ -34,7 +34,7 @@ spec:
               protocol: UDP
           rules:
             dns:
-              - matchName: {{ include "server.service.fqdn" $ }}
+              - matchName: {{ include "objects.service.fqdn" $ }}
 {{ include "speckle.networkpolicy.dns.postgres.cilium" $ | indent 14 }}
     # allow egress to speckle-server
     - toServices:
