@@ -551,6 +551,7 @@ export default class SpeckleRenderer {
       if (this.sunConfiguration.shadowcatcher) {
         this._shadowcatcher.render(this._renderer)
       }
+      // console.log('Get transparent time -> ', InstancedMeshBatch.transparentTime)
     }
   }
 
@@ -580,23 +581,23 @@ export default class SpeckleRenderer {
       }
     }
 
-    for await (const batch of generator) {
-      if (!batch) continue
+    // for await (const batch of generator) {
+    //   if (!batch) continue
 
-      this.addBatch(batch, subtreeGroup)
-      if (batch.geometryType === GeometryType.MESH) {
-        this.updateDirectLights()
-      }
+    //   this.addBatch(batch, subtreeGroup)
+    //   if (batch.geometryType === GeometryType.MESH) {
+    //     this.updateDirectLights()
+    //   }
 
-      if (this.cancel[subtreeId]) {
-        generator.return()
-        this.removeRenderTree(subtreeId)
-        delete this.cancel[subtreeId]
-        break
-      }
-      currentBatchCount++
-      yield
-    }
+    //   if (this.cancel[subtreeId]) {
+    //     generator.return()
+    //     this.removeRenderTree(subtreeId)
+    //     delete this.cancel[subtreeId]
+    //     break
+    //   }
+    //   currentBatchCount++
+    //   yield
+    // }
     const instancedGenerator = this.batcher.makeInstancedBatches(
       this.viewer.getWorldTree(),
       this.viewer.getWorldTree().getRenderTree(subtreeId)
@@ -927,9 +928,17 @@ export default class SpeckleRenderer {
   ): Array<{ node: TreeNode; point: Vector3 }> {
     const rvs = []
     const points = []
+    console.warn('Hit -> ', results[0])
+    const node = this.viewer
+      .getWorldTree()
+      .findId(
+        results[0].batchObject.renderView.renderData.id,
+        results[0].batchObject.renderView.renderData.subtreeId
+      )
+    console.warn('Hit NODE-> ', node)
     for (let k = 0; k < results.length; k++) {
       const rv = this.renderViewFromIntersection(results[k])
-
+      console.warn('batch size -> ', this.batcher.getBatch(rv).renderViews.length)
       if (rv) {
         rvs.push(rv)
         points.push(results[k].point)

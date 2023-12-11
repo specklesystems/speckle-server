@@ -315,7 +315,7 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/2f9f2f3021/commits/75bd13f513'
     // 'https://speckle.xyz/streams/0a2f096caf/commits/eee0e4436f?overlay=72828bce0d&c=%5B14.04465,-332.88372,258.40392,53.09575,31.13694,126.39999,0,1%5D&filter=%7B%22propertyInfoKey%22%3A%22level.name%22%7D'
     // 'Bilal's tests
-    // 'https://latest.speckle.dev/streams/97750296c2/commits/5386a0af02' // 700k+ objects 30kk tris
+    'https://latest.speckle.dev/streams/97750296c2/commits/5386a0af02' // 700k+ objects 30kk tris
     // 'https://latest.speckle.dev/streams/97750296c2/commits/48f0567a88' // 1015849 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/aec0841f7e' // 11k objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/96ffc3c786' // 92209 objects
@@ -348,11 +348,12 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/d721ab8df4'
     // Big ass tower
     // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/cef3f40be2'
-    'https://latest.speckle.dev/streams/0cf9e393c4/commits/f4e11a8b01'
+    // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/f4e11a8b01'
 
     // Far away instances
     // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/576310a6d5'
     // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/489d42ca8c'
+    // 'https://latest.speckle.dev/streams/97750296c2/objects/11a7752e40b4ef0620affc55ce9fdf5a'
   )
 }
 

@@ -398,14 +398,14 @@ export default class SpeckleConverter {
       ]
       for (const entry of entries) {
         const value = await this.resolveReference(entry)
-        if (instanced) value.id = this.getCompoundId(value.id, this.instanceCounter++)
         const valueNode: TreeNode = this.tree.parse({
-          id: this.getNodeId(value),
+          id: this.getCompoundId(value.id, this.instanceCounter++),
           raw: value,
           atomic: false,
           children: [],
           instanced
         })
+
         this.tree.addNode(valueNode, node)
         await this.displayableLookup(value, valueNode, instanced)
       }
@@ -430,9 +430,8 @@ export default class SpeckleConverter {
     })
     this.tree.addNode(transformNode, instanceNode)
 
-    defGeometry.id = this.getCompoundId(defGeometry.id, this.instanceCounter++)
     const childNode: TreeNode = this.tree.parse({
-      id: this.getNodeId(defGeometry),
+      id: this.getCompoundId(defGeometry.id, this.instanceCounter++),
       raw: defGeometry,
       atomic: false,
       children: [],

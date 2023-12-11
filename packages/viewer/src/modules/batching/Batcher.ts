@@ -34,19 +34,16 @@ export default class Batcher {
   }
 
   public async *makeInstancedBatches(tree: WorldTree, renderTree: RenderTree) {
-    // const renderViews = tree
-    //   .getRenderTree()
-    //   .getInstancedRenderableRenderViews(...[SpeckleType.Mesh])
-    //   .sort((a, b) => +(a.renderData.id. === b.renderData.id))
-    // console.log(renderViews)
     const pause = new AsyncPause()
     const instanceGroups = tree.getInstances('1')
-    console.warn(instanceGroups)
+    const instancedBatches: { [id: string]: Array<string> } = {}
+    const instancedBatchesMaterials: { [id: number]: Array<string> } = {}
     for (const g in instanceGroups) {
       pause.tick(100)
       if (pause.needsWait) {
         await pause.wait(50)
       }
+
       let instancedNodes = tree.findId(g)
       instancedNodes = instancedNodes.filter((node: TreeNode) => {
         return (
@@ -54,21 +51,88 @@ export default class Batcher {
           node.model.renderView.speckleType === SpeckleType.Mesh
         )
       })
-      const rvs = instancedNodes.map((node: TreeNode) => node.model.renderView)
+      if (!instancedNodes.length) continue
 
-      if (rvs.length) {
+      // const rvs: NodeRenderView[] = instancedNodes.map(
+      //   (node: TreeNode) => node.model.renderView
+      // )
+      const vertCount =
+        (instancedNodes[0].model.renderView.renderData.geometry.attributes.POSITION
+          .length /
+          3) *
+        instancedNodes.length
+
+      if (!instancedBatches[vertCount]) {
+        instancedBatches[vertCount] = []
+      }
+      instancedBatches[vertCount].push(g)
+
+      const materialHash = instancedNodes[0].model.renderView.renderMaterialHash
+      if (!instancedBatchesMaterials[materialHash]) {
+        instancedBatchesMaterials[materialHash] = []
+      }
+      instancedBatchesMaterials[materialHash].push(g)
+    }
+
+    console.warn(instancedBatches)
+    console.warn(instancedBatchesMaterials)
+
+    for (const v in instancedBatches) {
+      if (Number.parseInt(v) < 10000) continue
+      for (let k = 0; k < instancedBatches[v].length; k++) {
+        const nodes = tree.findId(instancedBatches[v][k])
+        const rvs = nodes
+          .map((node: TreeNode) => node.model.renderView)
+          .filter((rv) => rv)
         const materialHash = rvs[0].renderMaterialHash
+
         const instancedBatch = await this.buildInstancedBatch(
           renderTree,
           rvs,
           materialHash
         )
 
+        instancedBatchesMaterials[materialHash].splice(
+          instancedBatchesMaterials[materialHash].indexOf(instancedBatches[v][k]),
+          1
+        )
         this.batches[instancedBatch.id] = instancedBatch
         yield this.batches[instancedBatch.id]
       }
     }
-    yield
+    for (const w in instancedBatchesMaterials) {
+      const materialGroup = instancedBatchesMaterials[w]
+      if (!materialGroup.length) continue
+
+      const rvs = []
+      for (let k = 0; k < materialGroup.length; k++) {
+        const nodes = tree.findId(materialGroup[k])
+        rvs.push(
+          ...nodes.map((node: TreeNode) => node.model.renderView).filter((rv) => rv)
+        )
+      }
+      const batch = await this.buildBatch(
+        renderTree,
+        rvs,
+        Number.parseInt(w),
+        GeometryType.MESH
+      )
+      this.batches[batch.id] = batch
+      yield this.batches[batch.id]
+    }
+
+    // if (rvs.length) {
+    //   const materialHash = rvs[0].renderMaterialHash
+    //   const instancedBatch = await this.buildInstancedBatch(
+    //     renderTree,
+    //     rvs,
+    //     materialHash
+    //   )
+
+    //   this.batches[instancedBatch.id] = instancedBatch
+    //   yield this.batches[instancedBatch.id]
+    // }
+    // yield
   }
 
   public async *makeBatches(
