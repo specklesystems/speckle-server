@@ -64,6 +64,9 @@ import { LegacyViewer } from './modules/LegacyViewer'
 import Input, { InputEvent } from './modules/input/Input'
 import { GeometryType } from './modules/batching/Batch'
 import MeshBatch from './modules/batching/MeshBatch'
+import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial'
+import { SpeckleText } from './modules/objects/SpeckleText'
+import { NodeRenderView } from './modules/tree/NodeRenderView'
 
 export {
   Viewer,
@@ -99,7 +102,10 @@ export {
   InputEvent,
   ObjectLayers,
   GeometryType,
-  MeshBatch
+  MeshBatch,
+  SpeckleTextMaterial,
+  SpeckleText,
+  NodeRenderView
 }
 
 export type {
