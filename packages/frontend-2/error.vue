@@ -4,8 +4,10 @@
     <NuxtLayout name="default">
       <div class="flex flex-col items-center space-y-8">
         <ErrorPageProjectInviteBanner />
-        <h1 class="h1 font-bold">{{ error.statusCode || 500 }}</h1>
-        <h2 class="h3 text-foreground-2">{{ capitalize(error.message || '') }}</h2>
+        <h1 class="h1 font-bold">Error {{ error.statusCode || 500 }}</h1>
+        <h2 class="h3 text-foreground-2 mx-4 break-words">
+          {{ capitalize(error.message || '') }}
+        </h2>
         <div v-if="isDev && error.stack" class="max-w-xl" v-html="error.stack" />
         <FormButton :to="homeRoute" size="xl">Go Home</FormButton>
       </div>
@@ -15,8 +17,7 @@
 </template>
 <script setup lang="ts">
 import type { NuxtError } from '#app'
-import { capitalize } from 'lodash-es'
-import { homeRoute } from './lib/common/helpers/route'
+import { homeRoute } from '~~/lib/common/helpers/route'
 
 /**
  * Any errors thrown while rendering this page will cause Nuxt to revert to the default
@@ -35,4 +36,6 @@ useHead({
 })
 
 const isDev = ref(process.dev)
+
+const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1)
 </script>

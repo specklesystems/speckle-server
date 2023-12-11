@@ -20,12 +20,16 @@
       </div>
     </template>
     <template #footer>
-      <FormButton submit full-width :disabled="loading">Send reset e-mail</FormButton>
+      <div class="flex flex-col space-y-2">
+        <FormButton submit full-width :disabled="loading">Send reset e-mail</FormButton>
+        <FormButton color="secondary" :to="homeRoute">Go Home</FormButton>
+      </div>
     </template>
   </LayoutPanel>
 </template>
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
+import { homeRoute } from '~/lib/common/helpers/route'
 import { usePasswordReset } from '~~/lib/auth/composables/passwordReset'
 import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
 

@@ -1,5 +1,9 @@
 const passport = require('passport')
 const { logger } = require('@/logging/logging')
+const {
+  useNewFrontend,
+  getFrontendOrigin
+} = require('@/modules/shared/helpers/envHelper')
 
 /**
  * Wrapper for passport.authenticate that handles success & failure scenarios correctly
@@ -14,7 +18,11 @@ function passportAuthenticate(strategy, options = undefined) {
       if (err) logger.error(err)
       if (!user) {
         const errMsg = info?.message || 'Failed to authenticate, contact server admins'
-        return res.redirect(`/error?message=${errMsg}`)
+        const errPath = `/error?message=${errMsg}`
+
+        return useNewFrontend()
+          ? res.redirect(new URL(errPath, getFrontendOrigin()).toString())
+          : res.redirect(errPath)
       }
 
       req.user = user
