@@ -19,18 +19,30 @@
       }
     ]"
   >
-    <template #header>Rename Model</template>
+    <template #header>Edit Model</template>
     <form class="flex flex-col text-foreground" @submit="onSubmit">
-      <div class="flex flex-col space-y-3 mb-6">
+      <div class="flex flex-col gap-6 mb-6">
         <FormTextInput
           v-model="newName"
           name="name"
           show-label
-          label="Model name"
-          placeholder="Model name"
+          label="Model Name"
+          placeholder="Name"
           size="lg"
           :rules="rules"
           show-required
+          auto-focus
+          :disabled="loading"
+          help="Use forward slashes in the model name to nest it below other models."
+        />
+        <FormTextInput
+          v-model="newDescription"
+          name="description"
+          show-label
+          label="Model Description"
+          placeholder="Description (Optional)"
+          size="lg"
+          :rules="rules"
           auto-focus
           :disabled="loading"
         />
@@ -56,6 +68,7 @@ graphql(`
   fragment ProjectPageModelsCardRenameDialog on Model {
     id
     name
+    description
   }
 `)
 
@@ -70,11 +83,12 @@ const props = defineProps<{
   projectId: string
 }>()
 
-const { handleSubmit } = useForm<{ name: string }>()
+const { handleSubmit } = useForm<{ name: string; description: string }>()
 const rules = useModelNameValidationRules()
 const updateModel = useUpdateModel()
 
 const newName = ref(props.model.name)
+const newDescription = ref(props.model.description || '')
 const loading = ref(false)
 
 const isOpen = computed({
@@ -87,6 +101,7 @@ const onSubmit = handleSubmit(async (vals) => {
   const updatedModel = await updateModel({
     id: props.model.id,
     name: vals.name,
+    // description: vals.description,
     projectId: props.projectId
   }).finally(() => (loading.value = false))
   isOpen.value = false
