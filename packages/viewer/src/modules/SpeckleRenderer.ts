@@ -581,23 +581,23 @@ export default class SpeckleRenderer {
       }
     }
 
-    // for await (const batch of generator) {
-    //   if (!batch) continue
+    for await (const batch of generator) {
+      if (!batch) continue
 
-    //   this.addBatch(batch, subtreeGroup)
-    //   if (batch.geometryType === GeometryType.MESH) {
-    //     this.updateDirectLights()
-    //   }
+      this.addBatch(batch, subtreeGroup)
+      if (batch.geometryType === GeometryType.MESH) {
+        this.updateDirectLights()
+      }
 
-    //   if (this.cancel[subtreeId]) {
-    //     generator.return()
-    //     this.removeRenderTree(subtreeId)
-    //     delete this.cancel[subtreeId]
-    //     break
-    //   }
-    //   currentBatchCount++
-    //   yield
-    // }
+      if (this.cancel[subtreeId]) {
+        generator.return()
+        this.removeRenderTree(subtreeId)
+        delete this.cancel[subtreeId]
+        break
+      }
+      currentBatchCount++
+      yield
+    }
     const instancedGenerator = this.batcher.makeInstancedBatches(
       this.viewer.getWorldTree(),
       this.viewer.getWorldTree().getRenderTree(subtreeId)

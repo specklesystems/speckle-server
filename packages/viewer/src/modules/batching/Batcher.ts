@@ -14,6 +14,7 @@ import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
 import { SpeckleType } from '../loaders/GeometryConverter'
 import { TreeNode, WorldTree } from '../..'
 import InstancedMeshBatch from './InstancedMeshBatch'
+import { Geometry } from '../converter/Geometry'
 
 export default class Batcher {
   private maxHardwareUniformCount = 0
@@ -106,10 +107,25 @@ export default class Batcher {
 
       const rvs = []
       for (let k = 0; k < materialGroup.length; k++) {
-        const nodes = tree.findId(materialGroup[k])
-        rvs.push(
-          ...nodes.map((node: TreeNode) => node.model.renderView).filter((rv) => rv)
-        )
+        const nodeRvs = tree
+          .findId(materialGroup[k])
+          .map((node: TreeNode) => node.model.renderView)
+          .filter((rv) => rv)
+        nodeRvs.forEach((nodeRv) => {
+          const geometry = nodeRv.renderData.geometry
+          geometry.instanced = false
+          const attribs = geometry.attributes
+          geometry.attributes = {
+            POSITION: attribs.POSITION.slice(),
+            INDEX: attribs.INDEX.slice(),
+            ...(attribs.COLOR && {
+              COLOR: attribs.COLOR.slice()
+            })
+          }
+          Geometry.transformGeometryData(geometry, geometry.transform)
+        })
+
+        rvs.push(...nodeRvs)
       }
       const batch = await this.buildBatch(
         renderTree,
