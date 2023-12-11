@@ -66,6 +66,34 @@ describe('API Tokens', () => {
     ).to.be.ok
   })
 
+  it("can't create PAT with tokens:write scope", async () => {
+    const scopes = [Scopes.Profile.Read, Scopes.Tokens.Write]
+    const { data, errors } = await apollo.execute(
+      CreateTokenDocument,
+      {
+        token: {
+          name: 'sometoken',
+          scopes
+        }
+      },
+      {
+        context: {
+          scopes
+        }
+      }
+    )
+
+    expect(data?.apiTokenCreate).to.not.be.ok
+    expect(errors).to.be.ok
+    expect(
+      errors!.find((e) =>
+        e.message.includes(
+          "You can't create a personal access token with the tokens:write scope"
+        )
+      )
+    ).to.be.ok
+  })
+
   describe('without the tokens:write scope', () => {
     const limitedTokenScopes = difference(AllScopes, [Scopes.Tokens.Write])
     let limitedToken: string

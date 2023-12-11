@@ -6,7 +6,7 @@ const {
   revokeToken,
   getUserTokens
 } = require('../../services/tokens')
-const { canCreateToken } = require('@/modules/core/helpers/token')
+const { canCreatePAT } = require('@/modules/core/helpers/token')
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 const resolvers = {
@@ -23,11 +23,11 @@ const resolvers = {
   },
   Mutation: {
     async apiTokenCreate(parent, args, context) {
-      if (!canCreateToken(context.scopes || [], args.token.scopes)) {
-        throw new ForbiddenError(
-          "You can't create a token with scopes that you don't have"
-        )
-      }
+      canCreatePAT({
+        userScopes: context.scopes || [],
+        tokenScopes: args.token.scopes,
+        strict: true
+      })
 
       return await createPersonalAccessToken(
         context.userId,
