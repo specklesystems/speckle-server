@@ -260,14 +260,17 @@ watch(search, (newVal) => {
 
 watch(areQueriesLoading, (newVal) => (showLoadingBar.value = newVal))
 
-const twoYearsFromNow = new Date()
-twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2)
+function getFutureDateByMonths(monthsToAdd: number) {
+  const futureDate = new Date()
+  futureDate.setMonth(futureDate.getMonth() + monthsToAdd)
+  return futureDate
+}
 
-const onboardingOrFeedbackDate = useSynchronizedCookie<Date | undefined>(
+const onboardingOrFeedbackDate = useSynchronizedCookie<string | undefined>(
   `onboardingOrFeedbackDate`,
   {
     default: () => undefined,
-    expires: twoYearsFromNow
+    expires: getFutureDateByMonths(6)
   }
 )
 
@@ -275,7 +278,7 @@ const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
   `hasCompletedChecklistV1`,
   {
     default: () => false,
-    expires: twoYearsFromNow
+    expires: getFutureDateByMonths(99)
   }
 )
 
@@ -288,13 +291,13 @@ const hasDismissedChecklistForever = useSynchronizedCookie<boolean | undefined>(
   `hasDismissedChecklistForever`,
   {
     default: () => false,
-    expires: twoYearsFromNow
+    expires: getFutureDateByMonths(99)
   }
 )
 
 const hasDismissedOrOpenedFeedback = useSynchronizedCookie<boolean | undefined>(
   `hasDismissedOrOpenedFeedback`,
-  { default: () => false, expires: twoYearsFromNow }
+  { default: () => false, expires: getFutureDateByMonths(3) }
 )
 
 const hasDismissedChecklistTimeAgo = computed(() => {
@@ -321,16 +324,20 @@ const showFeedbackRequest = computed(() => {
 
   const currentDate = new Date()
 
-  if (!onboardingOrFeedbackDate.value) {
-    onboardingOrFeedbackDate.value = currentDate
+  let storedDateString = onboardingOrFeedbackDate.value
+
+  if (!storedDateString) {
+    const formattedDate = currentDate.toISOString().split('T')[0]
+    onboardingOrFeedbackDate.value = formattedDate
+    storedDateString = formattedDate
   }
 
-  const monthDifference =
-    currentDate.getMonth() -
-    onboardingOrFeedbackDate.value.getMonth() +
-    12 * (currentDate.getFullYear() - onboardingOrFeedbackDate.value.getFullYear())
+  const firstVisitDate = new Date(storedDateString)
 
-  return monthDifference > 1
+  const timeDifference = currentDate.getTime() - firstVisitDate.getTime()
+  const daysDifference = timeDifference / (1000 * 3600 * 24)
+
+  return daysDifference > 30
 })
 
 const clearSearch = () => {
