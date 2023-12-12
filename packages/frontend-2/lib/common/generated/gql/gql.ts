@@ -64,6 +64,7 @@ const documents = {
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n    }\n  }\n": types.ActiveUserMainMetadataDocument,
     "\n      mutation CreateOnboardingProject {\n        projectMutations {\n          createForOnboarding {\n            ...ProjectPageProject\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.CreateOnboardingProjectDocument,
     "\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n": types.FinishOnboardingDocument,
+    "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n": types.RequestVerificationByEmailDocument,
     "\n  query AuthServerInfo {\n    serverInfo {\n      ...AuthStategiesServerInfoFragment\n      ...ServerTermsOfServicePrivacyPolicyFragment\n      ...AuthRegisterPanelServerInfo\n    }\n  }\n": types.AuthServerInfoDocument,
     "\n  query AuthorizableAppMetadata($id: String!) {\n    app(id: $id) {\n      id\n      name\n      description\n      trustByDefault\n      redirectUrl\n      scopes {\n        name\n        description\n      }\n      author {\n        name\n        id\n        avatar\n      }\n    }\n  }\n": types.AuthorizableAppMetadataDocument,
     "\n  subscription OnModelVersionCardAutomationsStatusUpdated($projectId: String!) {\n    projectAutomationsStatusUpdated(projectId: $projectId) {\n      status {\n        ...ModelCardAutomationStatus_AutomationsStatus\n      }\n      version {\n        id\n      }\n      model {\n        id\n        versions(limit: 1) {\n          items {\n            id\n          }\n        }\n      }\n    }\n  }\n": types.OnModelVersionCardAutomationsStatusUpdatedDocument,
@@ -384,6 +385,10 @@ export function graphql(source: "\n      mutation CreateOnboardingProject {\n   
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n"): (typeof documents)["\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n"): (typeof documents)["\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

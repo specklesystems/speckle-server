@@ -84,7 +84,7 @@ async function sendVerificationEmail(state: NewEmailVerificationState) {
 }
 
 /**
- * Request email verification (send out verification message) for user with specified email
+ * Request email verification (send out verification message) for user with specified ID
  */
 export async function requestEmailVerification(userId: string) {
   const newVerificationState = await createNewVerification(userId)

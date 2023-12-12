@@ -5,7 +5,7 @@
       <div class="w-full md:w-72 lg:w-96 flex flex-col space-y-6 justify-between">
         <div class="h4">
           You've previously registered with your
-          <strong>G-mail address</strong>
+          <strong>e-mail address</strong>
           and a
           <strong>password.</strong>
           Please use those credentials to log in.
@@ -21,12 +21,16 @@
         <div class="h4">
           After
           <strong>verifying</strong>
-          your e-mail address you can use your
-          <strong>Google Account</strong>
-          to log in directly.
+          your e-mail address you can use other sign-on methods to log in too.
         </div>
         <div class="flex justify-center">
-          <FormButton v-if="hasEmail" size="xl" :icon-left="PaperAirplaneIcon">
+          <FormButton
+            v-if="hasEmail"
+            size="xl"
+            :icon-left="PaperAirplaneIcon"
+            :disabled="resendVerificationEmailLoading"
+            @click="onResend"
+          >
             Resend Verification
           </FormButton>
         </div>
@@ -38,9 +42,45 @@
 import { PaperAirplaneIcon } from '@heroicons/vue/24/outline'
 import { ArrowLeftIcon } from '@heroicons/vue/24/solid'
 import type { Optional } from '@speckle/shared'
+import { ValidationHelpers } from '@speckle/ui-components'
+import { useMutation } from '@vue/apollo-composable'
+import { requestVerificationByEmailMutation } from '~/lib/auth/graphql/mutations'
+import { useGlobalToast, ToastNotificationType } from '~/lib/common/composables/toast'
+import {
+  convertThrowIntoFetchResult,
+  getFirstErrorMessage
+} from '~/lib/common/helpers/graphql'
 import { loginRoute } from '~/lib/common/helpers/route'
 
 const route = useRoute()
+const { mutate: resendVerificationEmail, loading: resendVerificationEmailLoading } =
+  useMutation(requestVerificationByEmailMutation)
+const { triggerNotification } = useGlobalToast()
+
 const email = computed(() => route.query.email as Optional<string>)
-const hasEmail = computed(() => !!email.value?.length)
+const hasEmail = computed(
+  () => !!email.value?.length && ValidationHelpers.VALID_EMAIL.exec(email.value)
+)
+
+const onResend = async () => {
+  const emailAddress = email.value
+  if (!emailAddress || !hasEmail.value) return
+
+  const res = await resendVerificationEmail({ email: emailAddress }).catch(
+    convertThrowIntoFetchResult
+  )
+  if (res?.data?.requestVerificationByEmail) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Verification email (re-)sent successfully'
+    })
+  } else {
+    const errMsg = getFirstErrorMessage(res?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Error sending verification email',
+      description: errMsg
+    })
+  }
+}
 </script>
