@@ -23,7 +23,7 @@ let clicksToOpenDialog = 6
 const showDialog = computed({
   get: () => showDialogBase.value,
   set: (newVal) => {
-    if (newVal && route.name === 'generic-error') {
+    if (newVal && route.fullPath.startsWith('/error')) {
       return
     }
 

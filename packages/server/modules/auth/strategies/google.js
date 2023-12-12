@@ -11,7 +11,10 @@ const {
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
 const { logger } = require('@/logging/logging')
-const { UserInputError } = require('@/modules/core/errors/userinput')
+const {
+  UserInputError,
+  UnverifiedEmailSSOLoginError
+} = require('@/modules/core/errors/userinput')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const strategy = {
@@ -43,9 +46,11 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         const existingUser = await getUserByEmail({ email: user.email })
 
         if (existingUser && !existingUser.verified) {
-          throw new UserInputError(
-            'Email already in use by a user with unverified email. Verify the email on the existing user to be able to log in with Google'
-          )
+          throw new UnverifiedEmailSSOLoginError(undefined, {
+            info: {
+              email: user.email
+            }
+          })
         }
 
         // if there is an existing user, go ahead and log them in (regardless of
@@ -105,7 +110,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           default:
             logger.error(err)
         }
-        return done(null, false, { message: err.message })
+        return done(err, false, { message: err.message })
       }
     }
   )

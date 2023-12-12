@@ -4,6 +4,10 @@ const {
   useNewFrontend,
   getFrontendOrigin
 } = require('@/modules/shared/helpers/envHelper')
+const {
+  UnverifiedEmailSSOLoginError,
+  UserInputError
+} = require('@/modules/core/errors/userinput')
 
 /**
  * Wrapper for passport.authenticate that handles success & failure scenarios correctly
@@ -15,10 +19,15 @@ const {
 function passportAuthenticate(strategy, options = undefined) {
   return (req, res, next) =>
     passport.authenticate(strategy, options, (err, user, info) => {
-      if (err) logger.error(err)
+      if (err && !(err instanceof UserInputError)) logger.error(err)
       if (!user) {
         const errMsg = info?.message || 'Failed to authenticate, contact server admins'
-        const errPath = `/error?message=${errMsg}`
+        let errPath = `/error?message=${errMsg}`
+
+        if (err instanceof UnverifiedEmailSSOLoginError) {
+          const email = err.info()?.email || ''
+          errPath = `/error-email-verify?email=${email}`
+        }
 
         return useNewFrontend()
           ? res.redirect(new URL(errPath, getFrontendOrigin()).toString())
