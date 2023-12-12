@@ -152,7 +152,7 @@ exports.init = async (app) => {
       })
 
       busboy.on('error', async (err) => {
-        res.log.info({ err }, 'Upload request error.')
+        req.log.info({ err }, 'Upload request error.')
         //delete all started uploads
         await Promise.all(
           Object.keys(uploadOperations).map((blobId) =>

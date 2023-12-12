@@ -1,13 +1,6 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
 
-/**
- * Whether the server is supposed to serve frontend 2.0
- */
-export function useNewFrontend() {
-  return ['1', 'true'].includes(process.env.USE_FRONTEND_2 || 'false')
-}
-
 export function isTestEnv() {
   return process.env.NODE_ENV === 'test'
 }
@@ -42,6 +35,17 @@ export function getMaximumObjectSizeMB() {
 
 export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
   return parseInt(process.env[envVarKey] || aDefault)
+}
+
+export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean {
+  return ['1', 'true'].includes(process.env[envVarKey] || aDefault.toString())
+}
+
+/**
+ * Whether the server is supposed to serve frontend 2.0
+ */
+export function useNewFrontend() {
+  return getBooleanFromEnv('USE_FRONTEND_2')
 }
 
 export function getRedisUrl() {
@@ -117,9 +121,7 @@ export function getBaseUrl() {
  * Whether notification job consumption & handling should be disabled
  */
 export function shouldDisableNotificationsConsumption() {
-  return ['1', 'true'].includes(
-    process.env.DISABLE_NOTIFICATIONS_CONSUMPTION || 'false'
-  )
+  return getBooleanFromEnv('DISABLE_NOTIFICATIONS_CONSUMPTION')
 }
 
 /**
@@ -179,7 +181,7 @@ export function speckleAutomateUrl() {
  * Useful in some CLI scenarios when you aren't doing anything with the DB
  */
 export function ignoreMissingMigrations() {
-  return ['1', 'true'].includes(process.env.IGNORE_MISSING_MIRATIONS || 'false')
+  return getBooleanFromEnv('IGNORE_MISSING_MIRATIONS')
 }
 
 /**
@@ -218,4 +220,8 @@ export function getEmailFromAddress() {
 
 export function getMaximumProjectModelsPerPage() {
   return getIntFromEnv('MAX_PROJECT_MODELS_PER_PAGE', '500')
+}
+
+export function getIgnoreMissingMigrations() {
+  return getBooleanFromEnv('IGNORE_MISSING_MIRATIONS')
 }
