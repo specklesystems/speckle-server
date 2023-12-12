@@ -47,7 +47,7 @@ const saveFileUploads = async ({
         branchName,
         userId,
         fileName: upload.fileName,
-        fileType: upload.fileName.split('.').pop() || '',
+        fileType: upload.fileName.split('.').pop() || 'unknown',
         fileSize: upload.fileSize
       })
     })
