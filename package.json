@@ -58,6 +58,7 @@
     "@typescript-eslint/eslint-plugin": "^6.4.1",
     "@typescript-eslint/parser": "^6.4.1",
     "@types/react": "file:./packages/frontend-2/type-augmentations/stubs/types__react",
+    "axios": ">=1.6.0",
     "core-js": "3.22.4",
     "core-js-compat/semver": "^7.5.4",
     "eslint": "^8.11.0",
