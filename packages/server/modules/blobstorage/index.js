@@ -80,6 +80,9 @@ exports.init = async (app) => {
       allowForAllRegisteredUsersOnPublicStreamsWithPublicComments
     ]),
     async (req, res) => {
+      const streamId = req.params.streamId
+      req.log = req.log.child({ streamId, userId: req.context.userId })
+      req.log.debug('Uploading blob.')
       // no checking of startup conditions, just dont init the endpoints if not configured right
       //authorize request
       const uploadOperations = {}
@@ -88,8 +91,6 @@ exports.init = async (app) => {
         headers: req.headers,
         limits: { fileSize: getFileSizeLimit() }
       })
-      const streamId = req.params.streamId
-      req.log = req.log.child({ streamId, userId: req.context.userId })
 
       busboy.on('file', (formKey, file, info) => {
         const { filename: fileName } = info

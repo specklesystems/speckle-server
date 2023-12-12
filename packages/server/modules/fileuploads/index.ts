@@ -12,25 +12,26 @@ import {
 import { Express } from 'express'
 import { z } from 'zod'
 
-const blobUploadResultSchema = z.array(
-  z.object({
-    fileName: z.string(),
-    fileSize: z.number(),
-    blobId: z.string()
-  })
-)
-
-const blobResponseSchema = z.object({
-  uploadResults: blobUploadResultSchema
+const blobUploadResultSchema = z.object({
+  fileName: z.string(),
+  fileSize: z.number().nullable().optional(),
+  blobId: z.string(),
+  uploadStatus: z.number(),
+  formKey: z.string().optional(),
+  uploadError: z.string().optional()
 })
 
-type BloblUploadResult = z.infer<typeof blobUploadResultSchema>
+const blobResponseSchema = z.object({
+  uploadResults: z.array(blobUploadResultSchema)
+})
+
+export type BlobUploadResult = z.infer<typeof blobUploadResultSchema>
 
 type saveFileUploadsParams = {
   userId: string
   streamId: string
   branchName: string
-  uploadResults: BloblUploadResult
+  uploadResults: BlobUploadResult[]
 }
 
 const saveFileUploads = async ({
@@ -48,7 +49,7 @@ const saveFileUploads = async ({
         userId,
         fileName: upload.fileName,
         fileType: upload.fileName.split('.').pop() || 'unknown',
-        fileSize: upload.fileSize
+        fileSize: upload.fileSize || null
       })
     })
   )
@@ -70,12 +71,14 @@ export const init = async (app: Express) => {
         res.status(401).send('Unauthorized. UserId is missing.')
         return
       }
+      const userId = req.context.userId
       const branchName = req.params.branchName || 'main'
       req.log = req.log.child({
         streamId: req.params.streamId,
-        userId: req.context.userId,
+        userId,
         branchName
       })
+      req.log.debug({ requestHeaders: req.headers }, 'Uploading file to stream.')
 
       let upstreamResponse: AxiosResponse
       try {
@@ -83,15 +86,22 @@ export const init = async (app: Express) => {
           `${getServerOrigin()}/api/stream/${req.params.streamId}/blob`,
           req,
           {
-            responseType: 'stream'
+            headers: {
+              Authorization: req.headers.authorization,
+              'Content-Type': req.headers['content-type'], //includes the boundary string for multipart/form-data
+              Accept: 'application/json'
+            }
           }
         )
-        upstreamResponse.data.pipe(res) //stream response from upstream endpoint back to the client
       } catch (err) {
-        req.log.error(err, 'Error while uploading blob.')
         if (err instanceof Error) {
+          req.log.error(
+            { message: err.message, stack: err.stack },
+            'Error while uploading blob.'
+          )
           res.status(500).send(err.message)
         } else {
+          req.log.error(err, 'Error while uploading blob.')
           res.status(500).send('Error while uploading blob.')
         }
         return
@@ -106,18 +116,26 @@ export const init = async (app: Express) => {
           },
           'Error while uploading file.'
         )
-        res.status(upstreamResponse.status).end() // upstream response data should have been streamed
         return
       }
 
-      const uploadedData = blobResponseSchema.parse(upstreamResponse.data)
-      await saveFileUploads({
-        userId: req.context.userId,
-        streamId: req.params.streamId,
-        branchName,
-        uploadResults: uploadedData.uploadResults
-      })
-      res.status(upstreamResponse.status).end() // upstream response data should have been streamed
+      let blobResponse: z.infer<typeof blobResponseSchema>
+      try {
+        blobResponse = await blobResponseSchema.parseAsync(upstreamResponse.data)
+        req.log.debug({ data: blobResponse }, 'Parsed blob response.')
+
+        await saveFileUploads({
+          userId,
+          streamId: req.params.streamId,
+          branchName,
+          uploadResults: blobResponse.uploadResults
+        })
+        req.log.debug('Saved file uploads.')
+        res.status(201).send(blobResponse)
+      } catch (err) {
+        req.log.error(err, 'Error while parsing blob response.')
+        res.status(500).send('Error while parsing blob results.')
+      }
     }
   )
 

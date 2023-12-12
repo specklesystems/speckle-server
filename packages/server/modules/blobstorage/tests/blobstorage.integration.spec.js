@@ -45,7 +45,7 @@ describe('Blobs integration @blobstorage', () => {
       .post(`/api/stream/${streamId}/blob`)
       .set('Authorization', `Bearer ${token}`)
       .attach('blob1', Buffer.alloc(114_857_601, 'asdf'), 'dummy.blob')
-    expect(response.body.uploadResults).to.have.lengthOf(1)
+    expect(response.body).to.have.lengthOf(1)
     const [uploadResult] = response.body.uploadResults
     expect(uploadResult.uploadStatus).to.equal(2)
     expect(uploadResult.uploadError).to.equal('File size limit reached')
