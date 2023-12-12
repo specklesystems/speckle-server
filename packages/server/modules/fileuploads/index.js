@@ -9,6 +9,7 @@ const {
   listenForImportUpdates
 } = require('@/modules/fileuploads/services/resultListener')
 const axios = require('axios')
+const { getServerOrigin } = require('../shared/helpers/envHelper')
 
 const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) => {
   await Promise.all(
@@ -47,7 +48,7 @@ exports.init = async (app) => {
 
       try {
         const response = await axios.post(
-          `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`,
+          `${getServerOrigin()}/api/stream/${req.params.streamId}/blob`,
           req,
           {
             responseType: 'stream'
@@ -66,7 +67,7 @@ exports.init = async (app) => {
           res.log.error(
             {
               statusCode: response.statusCode,
-              path: `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`
+              path: `${getServerOrigin()}/api/stream/${req.params.streamId}/blob`
             },
             'Error while uploading file.'
           )
