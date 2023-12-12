@@ -263,6 +263,14 @@ watch(areQueriesLoading, (newVal) => (showLoadingBar.value = newVal))
 const twoYearsFromNow = new Date()
 twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2)
 
+const onboardingOrFeedbackDate = useSynchronizedCookie<Date | undefined>(
+  `onboardingOrFeedbackDate`,
+  {
+    default: () => undefined,
+    expires: twoYearsFromNow
+  }
+)
+
 const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
   `hasCompletedChecklistV1`,
   {
@@ -310,7 +318,19 @@ const showChecklist = computed(() => {
 
 const showFeedbackRequest = computed(() => {
   if (hasDismissedOrOpenedFeedback.value) return false
-  return true
+
+  const currentDate = new Date()
+
+  if (!onboardingOrFeedbackDate.value) {
+    onboardingOrFeedbackDate.value = currentDate
+  }
+
+  const monthDifference =
+    currentDate.getMonth() -
+    onboardingOrFeedbackDate.value.getMonth() +
+    12 * (currentDate.getFullYear() - onboardingOrFeedbackDate.value.getFullYear())
+
+  return monthDifference > 1
 })
 
 const clearSearch = () => {
