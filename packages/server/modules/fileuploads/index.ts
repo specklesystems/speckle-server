@@ -10,12 +10,27 @@ import {
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
 import { Express } from 'express'
+import { z } from 'zod'
+
+const blobUploadResultSchema = z.array(
+  z.object({
+    fileName: z.string(),
+    fileSize: z.number(),
+    blobId: z.string()
+  })
+)
+
+const blobResponseSchema = z.object({
+  uploadResults: blobUploadResultSchema
+})
+
+type BloblUploadResult = z.infer<typeof blobUploadResultSchema>
 
 type saveFileUploadsParams = {
   userId: string
   streamId: string
   branchName: string
-  uploadResults: { fileName: string; fileSize: number; blobId: string }[]
+  uploadResults: BloblUploadResult
 }
 
 const saveFileUploads = async ({
@@ -95,13 +110,12 @@ export const init = async (app: Express) => {
         return
       }
 
-      const uploadedData = JSON.parse(upstreamResponse.data)
-      const uploadResults = uploadedData.uploadResults
+      const uploadedData = blobResponseSchema.parse(upstreamResponse.data)
       await saveFileUploads({
         userId: req.context.userId,
         streamId: req.params.streamId,
         branchName,
-        uploadResults
+        uploadResults: uploadedData.uploadResults
       })
       res.status(upstreamResponse.status).end() // upstream response data should have been streamed
     }
