@@ -109,6 +109,7 @@
     "@bull-board/express": "^4.2.2",
     "@faker-js/faker": "^7.1.0",
     "@graphql-codegen/cli": "^2.16.3",
+    "@graphql-codegen/typed-document-node": "^5.0.1",
     "@graphql-codegen/typescript": "2.7.2",
     "@graphql-codegen/typescript-operations": "^2.5.2",
     "@graphql-codegen/typescript-resolvers": "2.7.2",
