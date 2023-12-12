@@ -938,7 +938,6 @@ export default class SpeckleRenderer {
     console.warn('Hit NODE-> ', node)
     for (let k = 0; k < results.length; k++) {
       const rv = this.renderViewFromIntersection(results[k])
-      console.warn('batch size -> ', this.batcher.getBatch(rv).renderViews.length)
       if (rv) {
         rvs.push(rv)
         points.push(results[k].point)
@@ -1020,6 +1019,7 @@ export default class SpeckleRenderer {
         if (material.opacity === 0 && this.IGNORE_ZERO_OPACITY_OBJECTS) return null
       }
     }
+
     return rv
   }
 

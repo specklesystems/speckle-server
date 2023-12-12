@@ -86,7 +86,6 @@ export default class Batcher {
           .map((node: TreeNode) => node.model.renderView)
           .filter((rv) => rv)
         const materialHash = rvs[0].renderMaterialHash
-
         const instancedBatch = await this.buildInstancedBatch(
           renderTree,
           rvs,
@@ -123,6 +122,7 @@ export default class Batcher {
             })
           }
           Geometry.transformGeometryData(geometry, geometry.transform)
+          nodeRv.computeAABB()
         })
 
         rvs.push(...nodeRvs)
