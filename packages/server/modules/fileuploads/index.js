@@ -2,13 +2,13 @@
 const {
   insertNewUploadAndNotify
 } = require('@/modules/fileuploads/services/management')
-const request = require('request')
 const { streamWritePermissions } = require('@/modules/shared/authz')
 const { authMiddlewareCreator } = require('@/modules/shared/middleware')
 const { moduleLogger } = require('@/logging/logging')
 const {
   listenForImportUpdates
 } = require('@/modules/fileuploads/services/resultListener')
+const axios = require('axios')
 
 const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) => {
   await Promise.all(
@@ -44,36 +44,39 @@ exports.init = async (app) => {
         userId: req.context.userId,
         branchName
       })
-      req.pipe(
-        request(
+
+      try {
+        const response = await axios.post(
           `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`,
-          async (err, response, body) => {
-            if (err) {
-              res.log.error(err, 'Error while uploading blob.')
-              res.status(500).send(err.message)
-              return
-            }
-            if (response.statusCode === 201) {
-              const { uploadResults } = JSON.parse(body)
-              await saveFileUploads({
-                userId: req.context.userId,
-                streamId: req.params.streamId,
-                branchName,
-                uploadResults
-              })
-            } else {
-              res.log.error(
-                {
-                  statusCode: response.statusCode,
-                  path: `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`
-                },
-                'Error while uploading file.'
-              )
-            }
-            res.status(response.statusCode).send(body)
+          req,
+          {
+            responseType: 'stream'
           }
         )
-      )
+        response.pipe(res)
+        if (response.statusCode === 201) {
+          const { uploadResults } = JSON.parse(response.data)
+          await saveFileUploads({
+            userId: req.context.userId,
+            streamId: req.params.streamId,
+            branchName,
+            uploadResults
+          })
+        } else {
+          res.log.error(
+            {
+              statusCode: response.statusCode,
+              path: `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`
+            },
+            'Error while uploading file.'
+          )
+        }
+        res.status(response.statusCode).send(response.data)
+      } catch (err) {
+        res.log.error(err, 'Error while uploading blob.')
+        res.status(500).send(err.message)
+        return
+      }
     }
   )
 
