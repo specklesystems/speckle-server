@@ -3,6 +3,7 @@
     <div
       class="absolute z-20 flex h-[100dvh] flex-col space-y-2 bg-green-300/0 px-2 pt-[4.2rem]"
     >
+      <!-- Models -->
       <ViewerControlsButtonToggle
         v-tippy="modelsShortcut"
         :active="activeControl === 'models'"
@@ -10,12 +11,23 @@
       >
         <CubeIcon class="h-5 w-5" />
       </ViewerControlsButtonToggle>
+
+      <!-- Explorer -->
       <ViewerControlsButtonToggle
         v-tippy="explorerShortcut"
         :active="activeControl === 'explorer'"
         @click="toggleActiveControl('explorer')"
       >
         <IconFileExplorer class="h-5 w-5" />
+      </ViewerControlsButtonToggle>
+
+      <!-- Measurements -->
+      <ViewerControlsButtonToggle
+        v-tippy="measureShortcut"
+        :active="activeControl === 'measurements'"
+        @click="toggleMeasurements"
+      >
+        <IconMeasurements class="h-5 w-5" />
       </ViewerControlsButtonToggle>
 
       <!-- TODO -->
@@ -107,6 +119,11 @@
           : '-translate-x-[100%] opacity-0'
       }`"
     >
+      <div v-show="activeControl.length !== 0 && activeControl === 'measurements'">
+        <KeepAlive>
+          <div><ViewerMeasurementsOptions @close="toggleMeasurements" /></div>
+        </KeepAlive>
+      </div>
       <div v-show="resourceItems.length !== 0 && activeControl === 'models'">
         <KeepAlive>
           <div>
@@ -173,7 +190,8 @@ import {
 import type { Nullable } from '@speckle/shared'
 import {
   useCameraUtilities,
-  useSectionBoxUtilities
+  useSectionBoxUtilities,
+  useMeasurementUtilities
 } from '~~/lib/viewer/composables/ui'
 import {
   onKeyboardShortcut,
@@ -199,6 +217,8 @@ import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
+
+const { enableMeasurements } = useMeasurementUtilities()
 
 const allAutomationRuns = computed(() => {
   const allAutomationStatuses = modelsAndVersionIds.value
@@ -269,6 +289,7 @@ type ActiveControl =
   | 'filters'
   | 'discussions'
   | 'automate'
+  | 'measurements'
 
 const openAddModel = ref(false)
 
@@ -297,6 +318,9 @@ const projectionShortcut = ref(
 const sectionBoxShortcut = ref(
   `Section Box (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'b'])})`
 )
+const measureShortcut = ref(
+  `Measure Mode (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'd'])})`
+)
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
@@ -316,6 +340,9 @@ onKeyboardShortcut([ModifierKeys.AltOrOpt], 'f', () => {
 })
 onKeyboardShortcut([ModifierKeys.AltOrOpt], ['t'], () => {
   toggleActiveControl('discussions')
+})
+onKeyboardShortcut([ModifierKeys.AltOrOpt], 'd', () => {
+  toggleActiveControl('measurements')
 })
 
 // Viewer actions kbd shortcuts
@@ -360,6 +387,12 @@ const scrollControlsToBottom = () => {
   // TODO: Currently this will scroll to the very bottom, which doesn't make sense when there are multiple models loaded
   // if (scrollableControlsContainer.value)
   //   scrollToBottom(scrollableControlsContainer.value)
+}
+
+const toggleMeasurements = () => {
+  const isMeasurementsActive = activeControl.value === 'measurements'
+  enableMeasurements(!isMeasurementsActive)
+  activeControl.value = isMeasurementsActive ? 'none' : 'measurements'
 }
 
 onMounted(() => {

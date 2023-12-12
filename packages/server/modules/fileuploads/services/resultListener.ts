@@ -8,6 +8,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
+import { trim } from 'lodash'
 
 const branchCreatedPayloadRegexp = /^(.+):::(.+):::(.+):::(.+)$/i
 
@@ -57,6 +58,22 @@ async function onFileImportProcessed(msg: MessageType) {
   })
 }
 
+async function onFileProcessing(msg: MessageType) {
+  const uploadId = trim(msg.payload)
+  const upload = await getFileInfo({ fileId: uploadId })
+  if (!upload) return
+
+  await publish(FileImportSubscriptions.ProjectFileImportUpdated, {
+    projectFileImportUpdated: {
+      id: upload.id,
+      type: ProjectFileImportUpdatedMessageType.Updated,
+      upload
+    },
+    projectId: upload.streamId
+  })
+}
+
 export function listenForImportUpdates() {
   listenFor('file_import_update', onFileImportProcessed)
+  listenFor('file_import_started', onFileProcessing)
 }
