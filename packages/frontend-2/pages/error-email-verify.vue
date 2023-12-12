@@ -52,6 +52,10 @@ import {
 } from '~/lib/common/helpers/graphql'
 import { loginRoute } from '~/lib/common/helpers/route'
 
+definePageMeta({
+  middleware: 'guest'
+})
+
 const route = useRoute()
 const { mutate: resendVerificationEmail, loading: resendVerificationEmailLoading } =
   useMutation(requestVerificationByEmailMutation)

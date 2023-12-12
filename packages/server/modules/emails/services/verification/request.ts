@@ -40,12 +40,16 @@ type NewEmailVerificationState = Awaited<ReturnType<typeof createNewVerification
 
 function buildMjmlBody() {
   const bodyStart = `<mj-text>Hello,<br/><br/>You have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, click the button below:</mj-text>`
-  return { bodyStart, bodyEnd: undefined }
+  const bodyEnd = `<mj-text>The link above is valid for <strong>1 week</strong>. If it does not work, please re-generate it by logging in to your Speckle account with your e-mail address and password, clicking the Notification icon and selecting "Send Verification".</mj-text>`
+
+  return { bodyStart, bodyEnd }
 }
 
 function buildTextBody() {
   const bodyStart = `Hello,\n\nYou have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, open the link below:`
-  return { bodyStart, bodyEnd: undefined }
+  const bodyEnd = `The link above is valid for 1 week. If it does not work, please re-generate it by logging in to your Speckle account with your e-mail address and password, clicking the Notification icon and selecting "Send Verification".`
+
+  return { bodyStart, bodyEnd }
 }
 
 function buildEmailLink(state: NewEmailVerificationState): string {
