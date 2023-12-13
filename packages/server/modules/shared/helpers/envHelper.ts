@@ -221,7 +221,3 @@ export function getEmailFromAddress() {
 export function getMaximumProjectModelsPerPage() {
   return getIntFromEnv('MAX_PROJECT_MODELS_PER_PAGE', '500')
 }
-
-export function getIgnoreMissingMigrations() {
-  return getBooleanFromEnv('IGNORE_MISSING_MIRATIONS')
-}

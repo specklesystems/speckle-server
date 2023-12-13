@@ -6,7 +6,7 @@ import { moduleLogger } from '@/logging/logging'
 import { listenForImportUpdates } from '@/modules/fileuploads/services/resultListener'
 import axios, { AxiosResponse } from 'axios'
 import {
-  getIgnoreMissingMigrations,
+  ignoreMissingMigrations,
   getServerOrigin
 } from '@/modules/shared/helpers/envHelper'
 import { Express } from 'express'
@@ -57,7 +57,7 @@ const saveFileUploads = async ({
 }
 
 export const init = async (app: Express) => {
-  if (getIgnoreMissingMigrations()) {
+  if (ignoreMissingMigrations()) {
     moduleLogger.warn('📄 FileUploads module is DISABLED')
     return
   } else {
