@@ -40,14 +40,21 @@ type NewEmailVerificationState = Awaited<ReturnType<typeof createNewVerification
 
 function buildMjmlBody() {
   const bodyStart = `<mj-text>Hello,<br/><br/>You have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, click the button below:</mj-text>`
-  const bodyEnd = `<mj-text>The link above is valid for <strong>1 week</strong>. If it does not work, please re-generate it by logging in to your Speckle account with your e-mail address and password, clicking the Notification icon and selecting "Send Verification".</mj-text>`
+  const bodyEnd = `<mj-text>This link expires in <strong>1 week</strong>.<br/>
+  If the link does not work, please proceed by</mj-text><br/>
+  <mj-list>
+    <mj-li>Logging in with your e-mail address and password</mj-li>
+    <mj-li>Clicking on the Notification icon</mj-li>
+    <mj-li>Selecting "Send Verification"</mj-li>
+    <mj-li>Verifying your e-mail address by clicking on the link in the e-mail you will receive</mj-li>
+  </mj-list>`
 
   return { bodyStart, bodyEnd }
 }
 
 function buildTextBody() {
   const bodyStart = `Hello,\n\nYou have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, open the link below:`
-  const bodyEnd = `The link above is valid for 1 week. If it does not work, please re-generate it by logging in to your Speckle account with your e-mail address and password, clicking the Notification icon and selecting "Send Verification".`
+  const bodyEnd = `This link expires in 1 week. If the link does not work, please proceed by logging in to your Speckle account with your e-mail address and password, clicking the Notification icon, selecting "Send Verification" and verifying your e-mail address by clicking on the link in the e-mail you will receive.`
 
   return { bodyStart, bodyEnd }
 }

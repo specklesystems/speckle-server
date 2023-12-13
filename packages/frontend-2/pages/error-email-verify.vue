@@ -21,7 +21,7 @@
         <div class="h4">
           After
           <strong>verifying</strong>
-          your e-mail address you can use other sign-on methods to log in too.
+          your e-mail address you can use also use the connected account to log in.
         </div>
         <div class="flex justify-center">
           <FormButton
