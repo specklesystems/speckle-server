@@ -2,6 +2,7 @@
 /* eslint-disable camelcase */
 const expect = require('chai').expect
 const assert = require('assert')
+const { cloneDeep, times, random, padStart } = require('lodash')
 
 const { beforeEachContext } = require('@/test/hooks')
 const { getAnIdForThisOnePlease } = require('@/test/helpers')
@@ -114,6 +115,21 @@ describe('Objects @core-objects', () => {
 
     expect(myIds).to.have.lengthOf(objCount_2)
   }).timeout(30000)
+
+  it(`Should create a single object w/ a ton of closures`, async () => {
+    const obj = {
+      ...cloneDeep(sampleObject),
+      __closure: times(200000, (i) => [
+        'testa078f8b935d3e329e9080b' + padStart(i.toString(), 6, '0'),
+        random(1, 10)
+      ]).reduce((obj, [key, value]) => {
+        obj[key] = value
+        return obj
+      }, {})
+    }
+    const id = await createObject(stream.id, obj)
+    expect(id).to.be.ok
+  })
 
   it('Should get a single object', async () => {
     const obj = await getObject({ streamId: stream.id, objectId: sampleCommit.id })
