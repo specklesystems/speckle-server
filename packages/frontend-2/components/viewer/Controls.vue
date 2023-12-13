@@ -21,15 +21,6 @@
         <IconFileExplorer class="h-5 w-5" />
       </ViewerControlsButtonToggle>
 
-      <!-- Measurements -->
-      <ViewerControlsButtonToggle
-        v-tippy="measureShortcut"
-        :active="activeControl === 'measurements'"
-        @click="toggleMeasurements"
-      >
-        <IconMeasurements class="h-5 w-5" />
-      </ViewerControlsButtonToggle>
-
       <!-- TODO -->
       <!-- <ViewerControlsButtonToggle
         :active="activeControl === 'filters'"
@@ -62,6 +53,15 @@
 
       <!-- TODO: direct add comment -->
       <!-- <ViewerCommentsDirectAddComment v-show="activeControl === 'comments'" /> -->
+
+      <!-- Measurements -->
+      <ViewerControlsButtonToggle
+        v-tippy="measureShortcut"
+        :active="activeControl === 'measurements'"
+        @click="toggleMeasurements"
+      >
+        <IconMeasurements class="h-5 w-5" />
+      </ViewerControlsButtonToggle>
 
       <!-- Standard viewer controls -->
       <ViewerControlsButtonGroup>
