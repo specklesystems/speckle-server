@@ -90,6 +90,9 @@ export const init = async (app: Express) => {
               Authorization: req.headers.authorization,
               'Content-Type': req.headers['content-type'], //includes the boundary string for multipart/form-data
               Accept: 'application/json'
+            },
+            validateStatus(status) {
+              return status >= 200 && status < 500
             }
           }
         )
@@ -116,7 +119,7 @@ export const init = async (app: Express) => {
           },
           'Error while uploading file.'
         )
-        return
+        res.status(upstreamResponse.status).send(upstreamResponse.data)
       }
 
       let blobResponse: z.infer<typeof blobResponseSchema>

@@ -100,7 +100,7 @@ describe('FileUploads @fileuploads', () => {
       // sending an unfinished part
       .send('--XXX\r\nCon')
 
-    expect(response.status).to.equal(500)
+    expect(response.status).to.equal(400)
   })
 
   it('Returns OK but describes errors for too big files', async () => {
