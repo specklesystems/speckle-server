@@ -260,9 +260,9 @@ watch(search, (newVal) => {
 
 watch(areQueriesLoading, (newVal) => (showLoadingBar.value = newVal))
 
-function getFutureDateByMonths(monthsToAdd: number) {
+function getFutureDateByDays(daysToAdd: number) {
   const futureDate = new Date()
-  futureDate.setMonth(futureDate.getMonth() + monthsToAdd)
+  futureDate.setDate(futureDate.getDate() + daysToAdd)
   return futureDate
 }
 
@@ -270,7 +270,7 @@ const onboardingOrFeedbackDate = useSynchronizedCookie<string | undefined>(
   `onboardingOrFeedbackDate`,
   {
     default: () => undefined,
-    expires: getFutureDateByMonths(6)
+    expires: getFutureDateByDays(180)
   }
 )
 
@@ -278,7 +278,7 @@ const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
   `hasCompletedChecklistV1`,
   {
     default: () => false,
-    expires: getFutureDateByMonths(99)
+    expires: getFutureDateByDays(999)
   }
 )
 
@@ -291,13 +291,13 @@ const hasDismissedChecklistForever = useSynchronizedCookie<boolean | undefined>(
   `hasDismissedChecklistForever`,
   {
     default: () => false,
-    expires: getFutureDateByMonths(99)
+    expires: getFutureDateByDays(999)
   }
 )
 
 const hasDismissedOrOpenedFeedback = useSynchronizedCookie<boolean | undefined>(
   `hasDismissedOrOpenedFeedback`,
-  { default: () => false, expires: getFutureDateByMonths(3) }
+  { default: () => false, expires: getFutureDateByDays(180) }
 )
 
 const hasDismissedChecklistTimeAgo = computed(() => {
@@ -321,6 +321,7 @@ const showChecklist = computed(() => {
 
 const showFeedbackRequest = computed(() => {
   if (hasDismissedOrOpenedFeedback.value) return false
+  if (showChecklist) return false
 
   const currentDate = new Date()
 
@@ -337,7 +338,7 @@ const showFeedbackRequest = computed(() => {
   const timeDifference = currentDate.getTime() - firstVisitDate.getTime()
   const daysDifference = timeDifference / (1000 * 3600 * 24)
 
-  return daysDifference > 30
+  return daysDifference > 14
 })
 
 const clearSearch = () => {
