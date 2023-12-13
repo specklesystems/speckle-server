@@ -11,6 +11,7 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import { Express } from 'express'
 import { z } from 'zod'
+import { PassThrough } from 'stream'
 
 const blobUploadResultSchema = z.object({
   fileName: z.string(),
@@ -80,6 +81,8 @@ export const init = async (app: Express) => {
       })
       req.log.debug({ requestHeaders: req.headers }, 'Uploading file to stream.')
 
+      const storerAndPublisher = new PassThrough()
+
       let upstreamResponse: AxiosResponse
       try {
         upstreamResponse = await axios.post(
@@ -92,56 +95,54 @@ export const init = async (app: Express) => {
               Accept: 'application/json'
             },
             validateStatus(status) {
-              return status >= 200 && status < 500
-            }
+              // only throw for 5XX errors
+              return status < 500
+            },
+            responseType: 'stream'
           }
         )
+        await upstreamResponse.data.pipe(res)
+        await upstreamResponse.data.pipe(storerAndPublisher)
       } catch (err) {
         if (err instanceof Error) {
           req.log.error(
             { message: err.message, stack: err.stack },
             'Error while uploading blob.'
           )
-          res.status(500).send(err.message)
         } else {
           req.log.error(err, 'Error while uploading blob.')
-          res.status(500).send('Error while uploading blob.')
         }
-        return
       }
 
-      if (upstreamResponse.status !== 201) {
-        // handle error
-        req.log.error(
-          {
-            statusCode: upstreamResponse.status,
-            path: `${getServerOrigin()}/api/stream/${req.params.streamId}/blob`
-          },
-          'Error while uploading file.'
-        )
-        res.status(upstreamResponse.status).send(upstreamResponse.data)
-      }
+      const chunks: number[] = []
+      storerAndPublisher.on('data', (chunk) => {
+        chunks.push(chunk)
+      })
+      storerAndPublisher.on('end', async () => {
+        let blobResponse: z.infer<typeof blobResponseSchema>
+        try {
+          blobResponse = await blobResponseSchema.parseAsync(
+            JSON.parse(chunks.join(''))
+          )
+          req.log.debug({ data: blobResponse }, 'Parsed blob response.')
 
-      let blobResponse: z.infer<typeof blobResponseSchema>
-      try {
-        blobResponse = await blobResponseSchema.parseAsync(upstreamResponse.data)
-        req.log.debug({ data: blobResponse }, 'Parsed blob response.')
-
-        await saveFileUploads({
-          userId,
-          streamId: req.params.streamId,
-          branchName,
-          uploadResults: blobResponse.uploadResults
-        })
-        req.log.debug('Saved file uploads.')
-        res.status(201).send(blobResponse)
-      } catch (err) {
-        req.log.error(err, 'Error while parsing blob response.')
-        res.status(500).send('Error while parsing blob results.')
-      }
+          await saveFileUploads({
+            userId,
+            streamId: req.params.streamId,
+            branchName,
+            uploadResults: blobResponse.uploadResults
+          })
+          req.log.debug('Saved file uploads.')
+          res.status(201).end()
+          return
+        } catch (err) {
+          req.log.error(err, 'Error while parsing blob response.')
+          res.status(500).send('Error while parsing blob results.')
+          return
+        }
+      })
     }
   )
-
   listenForImportUpdates()
 }
 

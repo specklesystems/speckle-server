@@ -12,6 +12,8 @@ import request from 'supertest'
 import { Scopes } from '@/modules/core/helpers/mainConstants'
 import { BlobUploadResult } from '..'
 import { AddressInfo } from 'net'
+import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
+import cryptoRandomString from 'crypto-random-string'
 
 describe('FileUploads @fileuploads', () => {
   let server: Server
@@ -42,8 +44,10 @@ describe('FileUploads @fileuploads', () => {
     let port = 3000
     if (isAddressInfo(serverAddress)) {
       port = serverAddress.port
+      process.env['CANONICAL_URL'] = `http://127.0.0.1:${port}`
+    } else {
+      process.env['CANONICAL_URL'] = serverAddress || 'http://127.0.0.1:3000'
     }
-    process.env['CANONICAL_URL'] = `http://127.0.0.1:${port}`
 
     userOneId = await createUser(userOne)
     createdStreamId = await createStream({ ownerId: userOneId })
@@ -67,13 +71,17 @@ describe('FileUploads @fileuploads', () => {
         .set('Authorization', `Bearer ${userOneToken}`)
         .set('Accept', 'application/json')
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
-      expect(response.statusCode).to.equal(201)
+
+      expect(response.statusCode).to.equal(200)
       expect(response.body.uploadResults).to.exist
       const uploadResults = response.body.uploadResults
       expect(uploadResults).to.have.lengthOf(1)
       expect(
         uploadResults.map((r: BlobUploadResult) => r.uploadStatus)
       ).to.have.members([1])
+
+      expect(await getStreamPendingModels(createdStreamId)).to.have.lengthOf(1)
+      //TODO expect notification
     })
   })
 
@@ -90,6 +98,8 @@ describe('FileUploads @fileuploads', () => {
     expect(uploadResults.map((r: BlobUploadResult) => r.uploadStatus)).to.have.members([
       1, 1
     ])
+    expect(await getStreamPendingModels(createdStreamId)).to.have.lengthOf(2)
+    //TODO expect notification
   })
 
   it('Returns 400 for bad form data', async () => {
@@ -101,6 +111,8 @@ describe('FileUploads @fileuploads', () => {
       .send('--XXX\r\nCon')
 
     expect(response.status).to.equal(400)
+    expect(await getStreamPendingModels(createdStreamId)).to.have.lengthOf(0)
+    //TODO expect no notifications
   })
 
   it('Returns OK but describes errors for too big files', async () => {
@@ -119,5 +131,37 @@ describe('FileUploads @fileuploads', () => {
     expect(uploadResults.map((r: BlobUploadResult) => r.uploadError)).to.have.members([
       'File size limit reached'
     ])
+    expect(await getStreamPendingModels(createdStreamId)).to.have.lengthOf(0)
+    //TODO expect no notifications
+  })
+
+  //TODO test for bad token
+  it('Returns 403 for token without stream write permissions', async () => {
+    const { token: badToken } = await createToken({
+      userId: userOneId,
+      name: 'test token',
+      scopes: [Scopes.Streams.Read],
+      lifespan: 3600
+    })
+    const response = await request(app)
+      .post(`/api/file/autodetect/${createdStreamId}/main`)
+      .set('Authorization', `Bearer ${badToken}`)
+      .set('Accept', 'application/json')
+      .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
+    expect(response.statusCode).to.equal(403)
+    expect(await getStreamPendingModels(createdStreamId)).to.have.lengthOf(0)
+    //TODO expect no notifications
+  })
+
+  it('Should not upload a file to an invalid stream', async () => {
+    const badStreamId = cryptoRandomString({ length: 10 })
+    const response = await request(app)
+      .post(`/api/file/autodetect/${badStreamId}/main`)
+      .set('Authorization', `Bearer ${userOneToken}`)
+      .set('Accept', 'application/json')
+      .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
+    expect(response.statusCode).to.equal(401)
+    expect(await getStreamPendingModels(badStreamId)).to.have.lengthOf(0)
+    //TODO expect no notifications
   })
 })
