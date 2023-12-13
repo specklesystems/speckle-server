@@ -46,6 +46,14 @@ export default class PointBatch implements Batch {
     return (this.mesh.material as Material[]).length
   }
 
+  public get triCount(): number {
+    return this.getCount()
+  }
+
+  public get vertCount(): number {
+    return this.geometry.attributes.position.count
+  }
+
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
     this.id = id
     this.subtreeId = subtreeId

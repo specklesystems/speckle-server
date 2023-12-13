@@ -11,6 +11,7 @@ export class RenderTree {
   private root: TreeNode
   private _treeBounds: Box3 = new Box3()
   private cancel = false
+
   public get treeBounds(): Box3 {
     return this._treeBounds
   }
@@ -130,16 +131,14 @@ export class RenderTree {
     return transform
   }
 
+  public getInstances() {
+    return this.tree.getInstances(this.root.model.subtreeId)
+  }
+
   public getRenderableRenderViews(...types: SpeckleType[]): NodeRenderView[] {
-    return this.root
-      .all((node: TreeNode): boolean => {
-        return (
-          node.model.renderView !== null &&
-          (node.model.renderView.hasGeometry || node.model.renderView.hasMetadata) &&
-          types.includes(node.model.renderView.renderData.speckleType)
-        )
-      })
-      .map((val: TreeNode) => val.model.renderView)
+    return this.getRenderableNodes(...types).map(
+      (val: TreeNode) => val.model.renderView
+    )
   }
 
   public getRenderableNodes(...types: SpeckleType[]): TreeNode[] {

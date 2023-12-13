@@ -278,16 +278,21 @@ export default class SpeckleRenderer {
       0
     )),
       (this._renderinStats.trisCount = batches.reduce(
-        (a: number, c: Batch) => a + c.getCount(),
+        (a: number, c: Batch) => a + c.triCount,
         0
       )),
-      (this._renderinStats.vertCount = 0),
+      (this._renderinStats.vertCount = batches.reduce(
+        (a: number, c: Batch) => a + c.vertCount,
+        0
+      )),
       (this._renderinStats.batchDetails = batches.map((batch: Batch) => {
         return {
+          type: batch.constructor.name,
+          objCount: batch.renderViews.length,
           drawCalls: batch.drawCalls,
           minDrawCalls: batch.minDrawCalls,
-          tris: batch.getCount(),
-          verts: 0
+          tris: batch.triCount,
+          verts: batch.vertCount
         }
       }))
     return this._renderinStats
@@ -569,6 +574,7 @@ export default class SpeckleRenderer {
     this.rootGroup.add(subtreeGroup)
 
     const generator = this.batcher.makeBatches(
+      this.viewer.getWorldTree(),
       this.viewer.getWorldTree().getRenderTree(subtreeId),
       SpeckleTypeAllRenderables
     )
@@ -586,28 +592,6 @@ export default class SpeckleRenderer {
 
       this.addBatch(batch, subtreeGroup)
       if (batch.geometryType === GeometryType.MESH) {
-        this.updateDirectLights()
-      }
-
-      if (this.cancel[subtreeId]) {
-        generator.return()
-        this.removeRenderTree(subtreeId)
-        delete this.cancel[subtreeId]
-        break
-      }
-      currentBatchCount++
-      yield
-    }
-    const instancedGenerator = this.batcher.makeInstancedBatches(
-      this.viewer.getWorldTree(),
-      this.viewer.getWorldTree().getRenderTree(subtreeId)
-    )
-    for await (const instancedBatch of instancedGenerator) {
-      if (!instancedBatch) {
-        continue
-      }
-      this.addBatch(instancedBatch, subtreeGroup)
-      if (instancedBatch.geometryType === GeometryType.MESH) {
         this.updateDirectLights()
       }
 

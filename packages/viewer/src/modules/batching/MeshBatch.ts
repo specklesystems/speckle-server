@@ -58,6 +58,14 @@ export default class MeshBatch implements Batch {
     ].length
   }
 
+  public get triCount(): number {
+    return this.getCount() / 3
+  }
+
+  public get vertCount(): number {
+    return this.geometry.attributes.position.count
+  }
+
   public constructor(
     id: string,
     subtreeId: string,

@@ -48,6 +48,14 @@ export default class LineBatch implements Batch {
     return 1
   }
 
+  public get triCount(): number {
+    return (this.geometry.index.count / 3) * this.geometry.instanceCount
+  }
+
+  public get vertCount(): number {
+    return this.geometry.attributes.position.count * this.geometry.instanceCount
+  }
+
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
     this.id = id
     this.subtreeId = subtreeId

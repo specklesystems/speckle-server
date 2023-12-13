@@ -34,6 +34,17 @@ export default class TextBatch implements Batch {
     return 1
   }
 
+  public get triCount(): number {
+    return this.getCount()
+  }
+
+  public get vertCount(): number {
+    return (
+      this.mesh.textMesh.geometry.attributes.position.count +
+      this.mesh.backgroundMesh?.geometry.attributes.position.count
+    )
+  }
+
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
     this.id = id
     this.subtreeId = subtreeId

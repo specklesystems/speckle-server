@@ -24,6 +24,8 @@ export interface Batch {
   get minDrawCalls(): number
   get materials(): Material[]
   get groups(): DrawGroup[]
+  get triCount(): number
+  get vertCount(): number
 
   getCount(): number
   setBatchMaterial(material: Material): void

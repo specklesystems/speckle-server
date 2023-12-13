@@ -70,6 +70,14 @@ export default class InstancedMeshBatch implements Batch {
     return 1
   }
 
+  public get triCount(): number {
+    return (this.geometry.index.count / 3) * this.renderViews.length
+  }
+
+  public get vertCount(): number {
+    return this.geometry.attributes.position.count * this.renderViews.length
+  }
+
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
     this.id = id
     this.subtreeId = subtreeId
