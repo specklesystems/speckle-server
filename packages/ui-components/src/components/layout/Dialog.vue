@@ -56,7 +56,7 @@
                 <XMarkIcon class="h-6 w-6" />
               </button>
               <div
-                class="flex-1 simple-scrollbar overflow-y-auto bg-white dark:bg-foundation"
+                class="flex-1 simple-scrollbar overflow-y-auto"
                 :class="hasTitle ? 'p-4 sm:py-6 sm:px-8' : 'p-10'"
                 @scroll="onScroll"
               >

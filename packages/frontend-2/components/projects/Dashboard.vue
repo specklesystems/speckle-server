@@ -13,7 +13,7 @@
       />
       <ProjectsFeedbackRequestBanner
         v-if="showFeedbackRequest"
-        @feedback-dismissed-or-opened="hasDismissedOrOpenedFeedback = true"
+        @feedback-dismissed-or-opened="onDismissOrOpenFeedback"
       />
     </div>
     <div
@@ -164,6 +164,11 @@ const updateDebouncedSearch = debounce(() => {
 const updateSearchImmediately = () => {
   updateDebouncedSearch.cancel()
   debouncedSearch.value = search.value.trim()
+}
+
+const onDismissOrOpenFeedback = () => {
+  onboardingOrFeedbackDate.value = undefined
+  hasDismissedOrOpenedFeedback.value = true
 }
 
 onUserProjectsUpdate((res) => {
@@ -320,18 +325,19 @@ const showChecklist = computed(() => {
 })
 
 const showFeedbackRequest = computed(() => {
-  if (hasDismissedOrOpenedFeedback.value) return false
-  if (showChecklist) return false
+  let storedDateString = onboardingOrFeedbackDate.value
 
   const currentDate = new Date()
-
-  let storedDateString = onboardingOrFeedbackDate.value
 
   if (!storedDateString) {
     const formattedDate = currentDate.toISOString().split('T')[0]
     onboardingOrFeedbackDate.value = formattedDate
     storedDateString = formattedDate
   }
+
+  if (hasDismissedOrOpenedFeedback.value) return false
+  if (showChecklist.value) return false
+  if (projectsPanelResult?.value?.activeUser?.projectInvites.length) return false
 
   const firstVisitDate = new Date(storedDateString)
 
