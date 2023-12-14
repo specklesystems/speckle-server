@@ -54,4 +54,4 @@ COPY --from=build-stage  /speckle-server/packages/frontend-2/.output .
 
 EXPOSE ${PORT}
 
-CMD ["node", "./server/index.mjs"]
+CMD ["/nodejs/bin/node", "./server/index.mjs"]
