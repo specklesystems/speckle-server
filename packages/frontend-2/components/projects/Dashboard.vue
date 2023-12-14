@@ -261,7 +261,7 @@ twoYearsFromNow.setFullYear(twoYearsFromNow.getFullYear() + 2)
 
 const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
   `hasCompletedChecklistV1`,
-  { default: () => false, expires: twoYearsFromNow }
+  { default: () => false }
 )
 
 const hasDismissedChecklistTime = useSynchronizedCookie<string | undefined>(

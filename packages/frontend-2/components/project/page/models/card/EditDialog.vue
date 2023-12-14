@@ -27,7 +27,7 @@
           name="name"
           show-label
           label="Model Name"
-          placeholder="Name"
+          placeholder="model/name/here"
           size="lg"
           :rules="rules"
           show-required
@@ -109,12 +109,10 @@ const onSubmit = handleSubmit(async (vals) => {
 })
 
 watch(
-  () => [props.open, props.model.name],
-  () => (newName.value = props.model.name)
-)
-
-watch(
-  () => [props.open, props.model.name],
-  () => (newDescription.value = props.model.description || '')
+  () => [props.open, props.model.name, props.model.description],
+  () => {
+    newName.value = props.model.name
+    newDescription.value = props.model.description || ''
+  }
 )
 </script>
