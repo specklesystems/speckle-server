@@ -62,7 +62,7 @@ const props = defineProps<{
   parentModelName?: string
 }>()
 
-const { handleSubmit } = useForm<{ name: string }>()
+const { handleSubmit } = useForm<{ name: string; description: string }>()
 const anyMutationsLoading = useMutationLoading()
 const rules = useModelNameValidationRules()
 const createModel = useCreateNewModel()
@@ -71,7 +71,8 @@ const mp = useMixpanel()
 const onSubmit = handleSubmit(async (formValues) => {
   await createModel({
     name: createFinalName(formValues.name),
-    projectId: props.projectId
+    projectId: props.projectId,
+    description: formValues.description
   })
   mp.track('Branch Action', { type: 'action', name: 'create', mode: 'nested' })
   showNewModelCard.value = false
