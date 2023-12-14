@@ -14,6 +14,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import {
+  getBranchById,
   getStreamBranchByName,
   markCommitBranchUpdated
 } from '@/modules/core/repositories/branches'
@@ -118,11 +119,18 @@ export async function createCommitByBranchName(
   const { notify = true } = options || {}
 
   const branchName = params.branchName.toLowerCase()
-  const myBranch = await getStreamBranchByName(streamId, branchName)
-  if (!myBranch)
-    throw new CommitCreateError(`Failed to find branch with name ${branchName}.`, {
-      info: params
-    })
+  let myBranch = await getStreamBranchByName(streamId, branchName)
+  if (!myBranch) {
+    myBranch = (await getBranchById(branchName)) || null
+  }
+  if (!myBranch) {
+    throw new CommitCreateError(
+      `Failed to find branch with name or id ${branchName}.`,
+      {
+        info: params
+      }
+    )
+  }
 
   const commit = await createCommitByBranchId({
     streamId,
