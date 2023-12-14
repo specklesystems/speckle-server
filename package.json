@@ -13,7 +13,7 @@
     "build:public": "yarn workspaces foreach -ptv --no-private run build",
     "build:tailwind-deps": "yarn workspaces foreach -iv -j unlimited --include '{@speckle/shared,@speckle/tailwind-theme,@speckle/ui-components}' run build",
     "ensure:tailwind-deps": "node ./utils/ensure-tailwind-deps.mjs",
-    "lint": "eslint . --ext .js,.ts,.vue --max-warnings=0",
+    "lint": "NODE_OPTIONS='--max-old-space-size=7500' eslint . --ext .js,.ts,.vue --max-warnings=0",
     "helm:readme:generate": "./utils/helm/update-documentation.sh",
     "prettier:check": "prettier --check .",
     "prettier:fix": "prettier --write .",
