@@ -1,5 +1,6 @@
 <template>
   <div>
+    <ProjectPageHeader :project="project" class="mb-8" />
     <h1 class="block h4 font-bold mb-4">Versions</h1>
     <div
       v-if="selectedItems.length"
@@ -119,6 +120,10 @@ graphql(`
   fragment ProjectModelPageVersionsProject on Project {
     id
     role
+    name
+    description
+    allowPublicComments
+    visibility
     model(id: $modelId) {
       id
       name
