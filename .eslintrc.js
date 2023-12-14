@@ -40,7 +40,18 @@ const config = {
     '.*.{ts,js,vue,tsx,jsx}',
     'generated/**/*',
     '.nuxt',
-    '.output'
+    '.output',
+    'utils/helm/**/*',
+    'utils/1_click_image_scripts/**/*',
+    'setup/**/*',
+    'test-queries/**/*',
+    '*-data/**/*',
+    '.yarn/**/*',
+    '.vscode/**/*',
+    '.circleci/**/*',
+    '.github/**/*',
+    '.husky/**/*',
+    '.yarn/**/*'
   ]
 }
 
