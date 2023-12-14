@@ -47,14 +47,20 @@ function buildMjmlBody() {
     <mj-li>Clicking on the Notification icon</mj-li>
     <mj-li>Selecting "Send Verification"</mj-li>
     <mj-li>Verifying your e-mail address by clicking on the link in the e-mail you will receive</mj-li>
-  </mj-list>`
+  </mj-list><br/>
+  <mj-text>
+    See you soon,<br/>
+    Speckle
+  </mj-text>
+  `
 
   return { bodyStart, bodyEnd }
 }
 
 function buildTextBody() {
   const bodyStart = `Hello,\n\nYou have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, open the link below:`
-  const bodyEnd = `This link expires in 1 week. If the link does not work, please proceed by logging in to your Speckle account with your e-mail address and password, clicking the Notification icon, selecting "Send Verification" and verifying your e-mail address by clicking on the link in the e-mail you will receive.`
+  const bodyEnd = `This link expires in 1 week. If the link does not work, please proceed by logging in to your Speckle account with your e-mail address and password, clicking the Notification icon, selecting "Send Verification" and verifying your e-mail address by clicking on the link in the e-mail you will receive.\n\nSee you soon,\nSpeckle
+  `
 
   return { bodyStart, bodyEnd }
 }
