@@ -35,15 +35,13 @@
           :disabled="loading"
           help="Use forward slashes in the model name to nest it below other models."
         />
-        <FormTextInput
+        <FormTextArea
           v-model="newDescription"
           name="description"
           show-label
           label="Model Description"
           placeholder="Description (Optional)"
           size="lg"
-          :rules="rules"
-          auto-focus
           :disabled="loading"
         />
       </div>
@@ -113,5 +111,10 @@ const onSubmit = handleSubmit(async (vals) => {
 watch(
   () => [props.open, props.model.name],
   () => (newName.value = props.model.name)
+)
+
+watch(
+  () => [props.open, props.model.name],
+  () => (newDescription.value = props.model.description || '')
 )
 </script>
