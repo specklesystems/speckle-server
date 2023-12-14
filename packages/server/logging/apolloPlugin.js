@@ -33,7 +33,7 @@ module.exports = {
           graphql_query: query,
           graphql_variables: redactSensitiveVariables(variables),
           graphql_operation_value: op,
-          grqphql_operation_name: name
+          graphql_operation_name: name
         })
 
         const transaction = Sentry.startTransaction({

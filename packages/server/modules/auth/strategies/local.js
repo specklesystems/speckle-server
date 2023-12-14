@@ -51,7 +51,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
 
         return next()
       } catch (err) {
-        res.log.info({ err }, 'Error while logging in.')
+        req.log.info({ err }, 'Error while logging in.')
         return res.status(401).send({ err: true, message: 'Invalid credentials.' })
       }
     },
@@ -121,10 +121,10 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
           case PasswordTooShortError:
           case UserInputError:
           case NoInviteFoundError:
-            res.log.info({ err }, 'Error while registering.')
+            req.log.info({ err }, 'Error while registering.')
             return res.status(400).send({ err: err.message })
           default:
-            res.log.error(err, 'Error while registering.')
+            req.log.error(err, 'Error while registering.')
             return res.status(500).send({ err: err.message })
         }
       }
