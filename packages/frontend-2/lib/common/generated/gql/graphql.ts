@@ -2527,8 +2527,9 @@ export type TestItem = {
 };
 
 export type UpdateModelInput = {
+  description?: InputMaybe<Scalars['String']>;
   id: Scalars['ID'];
-  name: Scalars['String'];
+  name?: InputMaybe<Scalars['String']>;
   projectId: Scalars['ID'];
 };
 

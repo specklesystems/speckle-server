@@ -122,7 +122,8 @@ input CreateModelInput {
 input UpdateModelInput {
   projectId: ID!
   id: ID!
-  name: String!
+  name: String
+  description: String
 }
 
 input DeleteModelInput {

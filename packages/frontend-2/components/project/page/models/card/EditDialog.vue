@@ -101,7 +101,7 @@ const onSubmit = handleSubmit(async (vals) => {
   const updatedModel = await updateModel({
     id: props.model.id,
     name: vals.name,
-    // description: vals.description,
+    description: vals.description,
     projectId: props.projectId
   }).finally(() => (loading.value = false))
   isOpen.value = false

@@ -1,4 +1,4 @@
-import { Roles } from '@speckle/shared'
+import { Roles, isNullOrUndefined } from '@speckle/shared'
 import {
   addBranchCreatedActivity,
   addBranchDeletedActivity,
@@ -73,10 +73,10 @@ export async function updateBranchAndNotify(
   }
 
   const updates: Partial<BranchRecord> = {
-    ...(isBranchUpdateInput(input) && input.description
+    ...(!isNullOrUndefined(input.description)
       ? { description: input.description }
       : {}),
-    ...(input.name ? { name: input.name } : {})
+    ...(input.name?.length ? { name: input.name } : {})
   }
   if (!Object.values(updates).length) {
     throw new BranchUpdateError('Please specify a property to update')
