@@ -14,6 +14,7 @@ import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-
  */
 const documents = {
     "\n  fragment AuthRegisterPanelServerInfo on ServerInfo {\n    inviteOnly\n  }\n": types.AuthRegisterPanelServerInfoFragmentDoc,
+    "\n  query RegisterPanelServerInvite($token: String!) {\n    serverInviteByToken(token: $token) {\n      id\n      email\n    }\n  }\n": types.RegisterPanelServerInviteDocument,
     "\n  fragment ServerTermsOfServicePrivacyPolicyFragment on ServerInfo {\n    termsOfService\n  }\n": types.ServerTermsOfServicePrivacyPolicyFragmentFragmentDoc,
     "\n  query EmailVerificationBannerState {\n    activeUser {\n      id\n      email\n      verified\n      hasPendingVerification\n    }\n  }\n": types.EmailVerificationBannerStateDocument,
     "\n  mutation RequestVerification {\n    requestVerification\n  }\n": types.RequestVerificationDocument,
@@ -184,6 +185,10 @@ export function graphql(source: string): unknown;
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment AuthRegisterPanelServerInfo on ServerInfo {\n    inviteOnly\n  }\n"): (typeof documents)["\n  fragment AuthRegisterPanelServerInfo on ServerInfo {\n    inviteOnly\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query RegisterPanelServerInvite($token: String!) {\n    serverInviteByToken(token: $token) {\n      id\n      email\n    }\n  }\n"): (typeof documents)["\n  query RegisterPanelServerInvite($token: String!) {\n    serverInviteByToken(token: $token) {\n      id\n      email\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -27,7 +27,7 @@ const LIMITED_USER_FIELDS = [
 
 /**
  * Remove fields from user that other users should not see/know about
- * @param {UserRecord} user
+ * @param {UserRecord|LimitedUserRecord} user
  * @returns {LimitedUserRecord}
  */
 function removePrivateFields(user) {

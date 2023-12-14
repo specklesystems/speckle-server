@@ -1837,6 +1837,8 @@ export type Query = {
    */
   projectInvite?: Maybe<PendingStreamCollaborator>;
   serverInfo: ServerInfo;
+  /** Receive metadata about an invite by the invite token */
+  serverInviteByToken?: Maybe<ServerInvite>;
   /** @deprecated use admin.serverStatistics instead */
   serverStats: ServerStats;
   /**
@@ -1931,6 +1933,11 @@ export type QueryProjectArgs = {
 export type QueryProjectInviteArgs = {
   projectId: Scalars['String'];
   token?: InputMaybe<Scalars['String']>;
+};
+
+
+export type QueryServerInviteByTokenArgs = {
+  token: Scalars['String'];
 };
 
 
@@ -3955,6 +3962,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   project?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<QueryProjectArgs, 'id'>>;
   projectInvite?: Resolver<Maybe<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType, RequireFields<QueryProjectInviteArgs, 'projectId'>>;
   serverInfo?: Resolver<ResolversTypes['ServerInfo'], ParentType, ContextType>;
+  serverInviteByToken?: Resolver<Maybe<ResolversTypes['ServerInvite']>, ParentType, ContextType, RequireFields<QueryServerInviteByTokenArgs, 'token'>>;
   serverStats?: Resolver<ResolversTypes['ServerStats'], ParentType, ContextType>;
   stream?: Resolver<Maybe<ResolversTypes['Stream']>, ParentType, ContextType, RequireFields<QueryStreamArgs, 'id'>>;
   streamAccessRequest?: Resolver<Maybe<ResolversTypes['StreamAccessRequest']>, ParentType, ContextType, RequireFields<QueryStreamAccessRequestArgs, 'streamId'>>;
