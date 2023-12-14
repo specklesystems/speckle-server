@@ -54,6 +54,7 @@
   "resolutions": {
     "@babel/traverse": ">=7.23.2",
     "@microsoft/api-extractor/semver": "^7.5.4",
+    "@nuxt/kit": ">=3.2.3",
     "@rushstack/node-core-library/semver": "^7.5.4",
     "@typescript-eslint/eslint-plugin": "^6.4.1",
     "@typescript-eslint/parser": "^6.4.1",
