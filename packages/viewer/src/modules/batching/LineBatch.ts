@@ -49,7 +49,7 @@ export default class LineBatch implements Batch {
   }
 
   public get triCount(): number {
-    return (this.geometry.index.count / 3) * this.geometry.instanceCount
+    return (this.geometry.index.count / 3) * this.geometry['_maxInstanceCount']
   }
 
   public get vertCount(): number {

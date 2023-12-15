@@ -41,6 +41,7 @@ export default class Batcher {
     speckleType: SpeckleType[],
     batchType?: GeometryType
   ) {
+    const start = performance.now()
     let min = Number.MAX_SAFE_INTEGER,
       max = -1,
       average = 0,
@@ -50,6 +51,7 @@ export default class Batcher {
     const instancedBatches: { [id: string]: Array<string> } = {}
 
     const pause = new AsyncPause()
+    const startInstancedGathering = performance.now()
     for (const g in instanceGroups) {
       pause.tick(100)
       if (pause.needsWait) {
@@ -76,7 +78,10 @@ export default class Batcher {
       }
       instancedBatches[vertCount].push(g)
     }
+    const instancedGathering = performance.now() - startInstancedGathering
 
+    let deInstancing = 0
+    let instanceBuild = 0
     for (const v in instancedBatches) {
       for (let k = 0; k < instancedBatches[v].length; k++) {
         const nodes = worldTree.findId(instancedBatches[v][k])
@@ -86,6 +91,7 @@ export default class Batcher {
           .filter((rv) => rv)
 
         if (Number.parseInt(v) < this.minInstancedBatchVertices) {
+          const t0 = performance.now()
           rvs.forEach((nodeRv) => {
             const geometry = nodeRv.renderData.geometry
             geometry.instanced = false
@@ -100,15 +106,18 @@ export default class Batcher {
             Geometry.transformGeometryData(geometry, geometry.transform)
             nodeRv.computeAABB()
           })
+          deInstancing += performance.now() - t0
           continue
         }
 
+        const t1 = performance.now()
         const materialHash = rvs[0].renderMaterialHash
         const instancedBatch = await this.buildInstancedBatch(
           renderTree,
           rvs,
           materialHash
         )
+        instanceBuild += performance.now() - t1
 
         this.batches[instancedBatch.id] = instancedBatch
         min = Math.min(min, instancedBatch.renderViews.length)
@@ -118,6 +127,7 @@ export default class Batcher {
         yield this.batches[instancedBatch.id]
       }
     }
+    const totalInstanced = performance.now() - start
 
     const renderViews = renderTree
       .getRenderableNodes(...speckleType)
@@ -191,6 +201,10 @@ export default class Batcher {
     console.warn('Compute box and sphere -> ', MeshBatch.computeBoxAndSphere)
     console.warn('Compute RTE -> ', MeshBatch.computeRTE)
     console.warn('Batch BVH -> ', MeshBatch.batchBVH)
+    console.warn('Total instanced -> ', totalInstanced)
+    console.warn('Instance gathering -> ', instancedGathering)
+    console.warn('De-instancing -> ', deInstancing)
+    console.warn('Instanced build -> ', instanceBuild)
   }
 
   private splitBatch(
