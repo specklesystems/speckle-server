@@ -71,3 +71,4 @@ kubeconfig
 minio-data/
 postgres-data/
 redis-data/
+registry-data/

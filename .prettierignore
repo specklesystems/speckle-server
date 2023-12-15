@@ -36,3 +36,5 @@ venv
 **/generated/graphql.ts
 
 storybook-static
+
+*-data
