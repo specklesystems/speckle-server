@@ -27,7 +27,7 @@
           name="name"
           show-label
           label="Model Name"
-          placeholder="Name"
+          placeholder="model/name/here"
           size="lg"
           :rules="rules"
           show-required
@@ -35,15 +35,13 @@
           :disabled="loading"
           help="Use forward slashes in the model name to nest it below other models."
         />
-        <FormTextInput
+        <FormTextArea
           v-model="newDescription"
           name="description"
           show-label
           label="Model Description"
           placeholder="Description (Optional)"
           size="lg"
-          :rules="rules"
-          auto-focus
           :disabled="loading"
         />
       </div>
@@ -101,7 +99,7 @@ const onSubmit = handleSubmit(async (vals) => {
   const updatedModel = await updateModel({
     id: props.model.id,
     name: vals.name,
-    // description: vals.description,
+    description: vals.description,
     projectId: props.projectId
   }).finally(() => (loading.value = false))
   isOpen.value = false
@@ -111,7 +109,10 @@ const onSubmit = handleSubmit(async (vals) => {
 })
 
 watch(
-  () => [props.open, props.model.name],
-  () => (newName.value = props.model.name)
+  () => [props.open, props.model.name, props.model.description],
+  () => {
+    newName.value = props.model.name
+    newDescription.value = props.model.description || ''
+  }
 )
 </script>

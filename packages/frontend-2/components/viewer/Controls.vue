@@ -324,10 +324,13 @@ const measureShortcut = ref(
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
-const toggleActiveControl = (control: ActiveControl) =>
-  activeControl.value === control
-    ? (activeControl.value = 'none')
-    : (activeControl.value = control)
+const toggleActiveControl = (control: ActiveControl) => {
+  const isMeasurementsActive = activeControl.value === 'measurements'
+  if (isMeasurementsActive && control !== 'measurements') {
+    enableMeasurements(false)
+  }
+  activeControl.value = activeControl.value === control ? 'none' : control
+}
 
 onKeyboardShortcut([ModifierKeys.AltOrOpt], 'm', () => {
   toggleActiveControl('models')
