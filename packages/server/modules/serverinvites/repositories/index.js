@@ -61,7 +61,7 @@ async function getUserFromTarget(target) {
 
 /**
  * Insert a new invite and delete the old ones
- * @param {ServerInviteRecord} invite
+ * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
  * @param {string[]} alternateTargets If there are alternate targets for the same user
  * (e.g. user ID & email), you can specify them to ensure those will be cleaned up
  * also
@@ -87,17 +87,21 @@ async function insertInviteAndDeleteOld(invite, alternateTargets = []) {
 
 /**
  * Retrieve a valid server invite for the specified target
- * @param {string} email Email address
+ * @param {string|undefined} email Email address
  * @param {string|undefined} token Specify an invite token, if you're looking for
  * a specific invite. For backwards compatibility purposes, the token can also just be the invite ID.
- * @returns {ServerInviteRecord | null}
+ * @returns {import('@/modules/serverinvites/helpers/types').ServerInviteRecord | null}
  */
-async function getServerInvite(email, token = undefined) {
-  if (!email) return null
+async function getServerInvite(email = undefined, token = undefined) {
+  if (!email && !token) return null
 
-  const q = getInvitesBaseQuery().where({
-    [ServerInvites.col.target]: email.toLowerCase()
-  })
+  const q = getInvitesBaseQuery()
+
+  if (email) {
+    q.andWhere({
+      [ServerInvites.col.target]: email.toLowerCase()
+    })
+  }
 
   if (token) {
     q.andWhere(ServerInvites.col.token, token)
@@ -143,7 +147,7 @@ async function updateAllInviteTargets(oldTargets, newTarget) {
 /**
  * Get all pending stream invites
  * @param {string} streamId
- * @returns {ServerInviteRecord[]}
+ * @returns {Promise<import('@/modules/serverinvites/helpers/types').StreamInviteRecord[]>}
  */
 async function getAllStreamInvites(streamId) {
   if (!streamId) return []
@@ -159,7 +163,7 @@ async function getAllStreamInvites(streamId) {
 /**
  * Get all invitations to streams that the specified user has
  * @param {string} userId
- * @returns {Promise<ServerInviteRecord[]>}
+ * @returns {Promise<import('@/modules/serverinvites/helpers/types').StreamInviteRecord[]>}
  */
 async function getAllUserStreamInvites(userId) {
   if (!userId) return []
@@ -177,10 +181,8 @@ async function getAllUserStreamInvites(userId) {
  * Retrieve a stream invite for the specified target, token or both.
  * Note: Either the target, inviteId or token must be set
  * @param {string} streamId
- * @param {string|null} target
- * @param {string|null} token
- * @param {string|null} inviteId
- * @returns {Promise<ServerInviteRecord | null>}
+ * @param {{target?: string|null|undefined, token?: string|null|undefined, inviteId?: string|null|undefined}} [param2]
+ * @returns {Promise<import('@/modules/serverinvites/helpers/types').StreamInviteRecord | null>}
  */
 async function getStreamInvite(
   streamId,
@@ -255,7 +257,7 @@ async function countServerInvites(searchQuery) {
  * @param {string|null} searchQuery
  * @param {number} limit
  * @param {number} offset
- * @returns {Promise<ServerInviteRecord[]>}
+ * @returns {Promise<import('@/modules/serverinvites/helpers/types').ServerInviteRecord[]>}
  */
 async function findServerInvites(searchQuery, limit, offset) {
   const q = findServerInvitesBaseQuery(searchQuery)
@@ -269,7 +271,7 @@ async function findServerInvites(searchQuery, limit, offset) {
  * @param {string|null} searchQuery
  * @param {number} limit
  * @param {Date|null} cursor
- * @returns {Promise<ServerInviteRecord[]>}
+ * @returns {Promise<import('@/modules/serverinvites/helpers/types').ServerInviteRecord[]>}
  */
 async function queryServerInvites(searchQuery, limit, cursor) {
   const q = findServerInvitesBaseQuery(searchQuery, 'desc').limit(limit)
@@ -281,7 +283,7 @@ async function queryServerInvites(searchQuery, limit, cursor) {
 /**
  * Retrieve a specific invite (irregardless of the type)
  * @param {string} inviteId
- * @returns {Promise<ServerInviteRecord | null>}
+ * @returns {Promise<import('@/modules/serverinvites/helpers/types').ServerInviteRecord | null>}
  */
 async function getInvite(inviteId) {
   if (!inviteId) return null
@@ -291,7 +293,7 @@ async function getInvite(inviteId) {
 /**
  * Retrieve a specific invite (irregardless of the type) by the token
  * @param {string} inviteId
- * @returns {Promise<ServerInviteRecord | null>}
+ * @returns {Promise<import('@/modules/serverinvites/helpers/types').ServerInviteRecord | null>}
  */
 async function getInviteByToken(inviteToken) {
   if (!inviteToken) return null
@@ -365,7 +367,7 @@ async function deleteAllStreamInvites(streamId) {
 
 /**
  * Get all invites by IDs
- * @returns {Promise<ServerInviteRecord[]>}
+ * @returns {Promise<import('@/modules/serverinvites/helpers/types').ServerInviteRecord[]>}
  */
 async function getInvites(inviteIds) {
   if (!inviteIds?.length) return []

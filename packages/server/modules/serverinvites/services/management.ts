@@ -30,7 +30,7 @@ export async function createStreamInviteAndNotify(
     throw new InviteCreateValidationError('Either email or userId must be specified')
   }
 
-  const target = userId ? buildUserTarget(userId) : (email as string)
+  const target = (userId ? buildUserTarget(userId) : email)!
   await createAndSendInvite({
     target,
     inviterId,
