@@ -50,7 +50,11 @@ module.exports = {
     await Objects().insert(insertionObject).onConflict().ignore()
 
     if (closures.length > 0) {
-      await Closures().insert(closures).onConflict().ignore()
+      const batchSize = 10000
+      while (closures.length > 0) {
+        const closuresBatch = closures.splice(0, batchSize) // splice so that we don't take up more memory
+        await Closures().insert(closuresBatch).onConflict().ignore()
+      }
     }
 
     return insertionObject.id

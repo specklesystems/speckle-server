@@ -1828,6 +1828,8 @@ export type Query = {
    */
   projectInvite?: Maybe<PendingStreamCollaborator>;
   serverInfo: ServerInfo;
+  /** Receive metadata about an invite by the invite token */
+  serverInviteByToken?: Maybe<ServerInvite>;
   /** @deprecated use admin.serverStatistics instead */
   serverStats: ServerStats;
   /**
@@ -1922,6 +1924,11 @@ export type QueryProjectArgs = {
 export type QueryProjectInviteArgs = {
   projectId: Scalars['String'];
   token?: InputMaybe<Scalars['String']>;
+};
+
+
+export type QueryServerInviteByTokenArgs = {
+  token: Scalars['String'];
 };
 
 

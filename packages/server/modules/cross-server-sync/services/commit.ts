@@ -4,7 +4,7 @@ import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { CreateCommentInput } from '@/test/graphql/generated/graphql'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
-import { Roles } from '@speckle/shared'
+import { Roles, timeoutAt } from '@speckle/shared'
 import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
 import { createObject } from '@/modules/core/services/objects'
 import { getObject } from '@/modules/core/repositories/objects'
@@ -518,11 +518,27 @@ const loadAllObjectsFromParent = async (
 
   // Iterate over all objects and download them into the DB
   const totalObjectCount = (sourceCommit.totalChildrenCount || 0) + 1
+  const batchSize = 50
+  let batchPromises: Promise<unknown>[] = []
   let processedObjectCount = 1
+
   for await (const obj of objectLoader.getObjectIterator()) {
     const typedObj = obj as ObjectLoaderObject
-    logger.debug(`Processing ${obj.id} - ${processedObjectCount++}/${totalObjectCount}`)
-    await createNewObject(typedObj, targetStreamId, { logger })
+    const work = async () => {
+      const id = `${obj.id} - ${processedObjectCount++}/${totalObjectCount}`
+      logger.debug(`Processing ${id}...`)
+      await Promise.race([
+        createNewObject(typedObj, targetStreamId, { logger }),
+        timeoutAt(60 * 1000, `Object create timed out! - ${id}`)
+      ])
+      logger.debug(`Processed! ${id}`)
+    }
+
+    batchPromises.push(work())
+    if (batchPromises.length >= batchSize) {
+      await Promise.all(batchPromises)
+      batchPromises = []
+    }
   }
 }
 
