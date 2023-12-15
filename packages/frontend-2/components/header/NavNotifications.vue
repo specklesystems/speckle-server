@@ -52,6 +52,8 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 const { activeUser } = useActiveUser()
 
 const hasNotifications = computed(() => {
+  if (!activeUser.value) return false
   if (!activeUser.value?.verified) return true
+  return false
 })
 </script>

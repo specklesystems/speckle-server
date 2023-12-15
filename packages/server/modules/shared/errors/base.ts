@@ -1,4 +1,7 @@
-import { VError, Options } from 'verror'
+import { Merge } from 'type-fest'
+import { VError, Options, Info } from 'verror'
+
+type ExtendedOptions<I extends Info = Info> = Merge<Options, { info?: Partial<I> }>
 
 /**
  * Base application error (don't use directly, treat it as abstract). Built on top of `verror` so that you can
@@ -6,7 +9,7 @@ import { VError, Options } from 'verror'
  *
  * This allows for much nicer error handling & monitoring
  */
-export class BaseError extends VError {
+export class BaseError<I extends Info = Info> extends VError {
   /**
    * Error code (override in child class)
    */
@@ -19,7 +22,7 @@ export class BaseError extends VError {
 
   constructor(
     message?: string | null | undefined,
-    options: Options | Error | undefined = undefined
+    options: ExtendedOptions<I> | Error | undefined = undefined
   ) {
     // Resolve options correctly
     if (options) {
@@ -34,7 +37,7 @@ export class BaseError extends VError {
       code: new.target.code
     }
 
-    options.info = info
+    options.info = info as unknown as I
 
     // Get message from defaultMessage, if it's empty
     if (!message) {
@@ -52,6 +55,8 @@ export class BaseError extends VError {
    * Get collected info of this object and previous errors
    */
   info() {
-    return BaseError.info(this)
+    return BaseError.info(this) as Partial<I>
   }
 }
+
+export type { Info }

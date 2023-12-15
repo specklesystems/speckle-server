@@ -1,4 +1,4 @@
-import { BaseError } from '@/modules/shared/errors/base'
+import { BaseError, Info } from '@/modules/shared/errors/base'
 
 export class ForbiddenError extends BaseError {
   static code = 'FORBIDDEN'
@@ -78,3 +78,4 @@ export class EnvironmentResourceError extends BaseError {
 }
 
 export { BaseError }
+export type { Info }
