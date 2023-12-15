@@ -118,12 +118,7 @@ graphql(`
 
 graphql(`
   fragment ProjectModelPageVersionsProject on Project {
-    id
-    role
-    name
-    description
-    allowPublicComments
-    visibility
+    ...ProjectPageProjectHeaderFragment
     model(id: $modelId) {
       id
       name
