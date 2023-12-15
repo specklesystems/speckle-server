@@ -972,6 +972,7 @@ export type Mutation = {
   projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean'];
+  requestVerificationByEmail: Scalars['Boolean'];
   serverInfoUpdate?: Maybe<Scalars['Boolean']>;
   serverInviteBatchCreate: Scalars['Boolean'];
   /** Invite a new user to the speckle server and return the invite ID */
@@ -1157,6 +1158,11 @@ export type MutationInviteResendArgs = {
 
 export type MutationObjectCreateArgs = {
   objectInput: ObjectCreateInput;
+};
+
+
+export type MutationRequestVerificationByEmailArgs = {
+  email: Scalars['String'];
 };
 
 
