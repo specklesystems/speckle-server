@@ -45,11 +45,7 @@ export async function createBranchAndNotify(
 
   const branch = await createBranch({
     name: input.name,
-    description: isBranchCreateInput(input)
-      ? input.description ?? null
-      : 'description' in input
-      ? input.description ?? null
-      : null,
+    description: input.description ?? null,
     streamId: isBranchCreateInput(input) ? input.streamId : input.projectId,
     authorId: creatorId
   })

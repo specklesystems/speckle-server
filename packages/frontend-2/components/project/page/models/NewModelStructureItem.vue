@@ -72,7 +72,7 @@ const onSubmit = handleSubmit(async (formValues) => {
   await createModel({
     name: createFinalName(formValues.name),
     projectId: props.projectId,
-    description: formValues.description
+    description: ''
   })
   mp.track('Branch Action', { type: 'action', name: 'create', mode: 'nested' })
   showNewModelCard.value = false
