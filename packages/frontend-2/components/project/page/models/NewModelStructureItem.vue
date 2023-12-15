@@ -62,7 +62,7 @@ const props = defineProps<{
   parentModelName?: string
 }>()
 
-const { handleSubmit } = useForm<{ name: string; description: string }>()
+const { handleSubmit } = useForm<{ name: string }>()
 const anyMutationsLoading = useMutationLoading()
 const rules = useModelNameValidationRules()
 const createModel = useCreateNewModel()
