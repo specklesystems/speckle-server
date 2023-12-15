@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative aspect-square w-full h-full max-w-[250px] mx-auto mb-8 border-t border-r border-outline-3"
+    class="relative aspect-square w-full h-full max-w-[250px] mx-auto mb-8 border-t border-r border-outline-3 select-none"
   >
     <div
       class="absolute z-50 text-foreground dark:text-foundation"
