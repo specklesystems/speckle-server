@@ -15,6 +15,14 @@
 </template>
 <script setup lang="ts">
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
+import {
+  TrashIcon,
+  PencilIcon,
+  LinkIcon,
+  FingerPrintIcon,
+  ArrowRightOnRectangleIcon,
+  CursorArrowRaysIcon
+} from '@heroicons/vue/24/outline'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 import { VersionActionTypes } from '~~/lib/projects/helpers/components'
@@ -48,22 +56,11 @@ const showActionsMenu = computed({
 const actionsItems = computed<LayoutMenuItem<VersionActionTypes>[][]>(() => [
   [
     {
-      title: 'Delete',
-      id: VersionActionTypes.Delete,
-      disabled: !!props.selectionDisabled,
-      disabledTooltip: disabledMessage.value
-    },
-    {
-      title: 'Move to',
-      id: VersionActionTypes.MoveTo,
-      disabled: !!props.selectionDisabled,
-      disabledTooltip: disabledMessage.value
-    },
-    {
       title: 'Edit message',
       id: VersionActionTypes.EditMessage,
       disabled: !!props.selectionDisabled,
-      disabledTooltip: disabledMessage.value
+      disabledTooltip: disabledMessage.value,
+      icon: PencilIcon
     }
   ],
   [
@@ -71,12 +68,30 @@ const actionsItems = computed<LayoutMenuItem<VersionActionTypes>[][]>(() => [
       title: 'Select',
       id: VersionActionTypes.Select,
       disabled: !!props.selectionDisabled,
-      disabledTooltip: disabledMessage.value
+      disabledTooltip: disabledMessage.value,
+      icon: CursorArrowRaysIcon
+    },
+    {
+      title: 'Move to',
+      id: VersionActionTypes.MoveTo,
+      disabled: !!props.selectionDisabled,
+      disabledTooltip: disabledMessage.value,
+      icon: ArrowRightOnRectangleIcon
     }
   ],
   [
-    { title: 'Share', id: VersionActionTypes.Share },
-    { title: 'Copy ID', id: VersionActionTypes.CopyId }
+    { title: 'Copy Link', id: VersionActionTypes.Share, icon: LinkIcon },
+    { title: 'Copy ID', id: VersionActionTypes.CopyId, icon: FingerPrintIcon }
+  ],
+  [
+    {
+      title: 'Delete',
+      id: VersionActionTypes.Delete,
+      disabled: !!props.selectionDisabled,
+      disabledTooltip: disabledMessage.value,
+      icon: TrashIcon,
+      color: 'danger'
+    }
   ]
 ])
 
