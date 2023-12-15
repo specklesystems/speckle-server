@@ -10,9 +10,8 @@ import type { Server } from 'http'
 import type { Express } from 'express'
 import request from 'supertest'
 import { Scopes } from '@/modules/core/helpers/mainConstants'
-import { AddressInfo } from 'net'
-import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
 import cryptoRandomString from 'crypto-random-string'
+import { noErrors } from '@/test/helpers'
 
 describe('FileUploads @fileuploads', () => {
   let server: Server
@@ -28,25 +27,17 @@ describe('FileUploads @fileuploads', () => {
   let userOneToken: string
   let createdStreamId: string
   let existingCanonicalUrl: string
-
-  const isAddressInfo = (address: unknown): address is AddressInfo => {
-    return (address as AddressInfo).port !== undefined
-  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let sendRequest: (token: string, query: unknown) => Promise<any>
+  let serverAddress: string
 
   before(async () => {
     ;({ app, server } = await beforeEachContext())
-    await initializeTestServer(server, app)
+    ;({ serverAddress, sendRequest } = await initializeTestServer(server, app))
 
     //TODO does mocha have a nicer way of temporarily swapping an environment variable, like vitest?
     existingCanonicalUrl = process.env['CANONICAL_URL'] || ''
-    const serverAddress = server.address()
-    let port = 3000
-    if (isAddressInfo(serverAddress)) {
-      port = serverAddress.port
-      process.env['CANONICAL_URL'] = `http://127.0.0.1:${port}`
-    } else {
-      process.env['CANONICAL_URL'] = serverAddress || `http://127.0.0.1:${port}`
-    }
+    process.env['CANONICAL_URL'] = serverAddress
 
     userOneId = await createUser(userOne)
     createdStreamId = await createStream({ ownerId: userOneId })
@@ -73,8 +64,22 @@ describe('FileUploads @fileuploads', () => {
 
       expect(response.statusCode).to.equal(201)
       expect(response.body).to.deep.equal({})
+      const gqlResponse = await sendRequest(userOneToken, {
+        query: `query {
+          stream(id: "${createdStreamId}") {
+            id
+            fileUploads {
+              id
+              fileName
+              convertedStatus
+            }
+          }
+        }`
+      })
+      expect(noErrors(gqlResponse))
+      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
+      expect(gqlResponse.body.data.stream.fileUploads[0].fileName).to.equal('test.ifc')
 
-      expect(await getStreamPendingModels(createdStreamId)).to.have.lengthOf(1)
       //TODO expect subscription notification
     })
 
@@ -82,12 +87,28 @@ describe('FileUploads @fileuploads', () => {
       const response = await request(app)
         .post(`/api/file/autodetect/${createdStreamId}/main`)
         .set('Authorization', `Bearer ${userOneToken}`)
-        .attach('blob1', require.resolve('@/readme.md'))
-        .attach('blob2', require.resolve('@/package.json'))
+        .attach('blob1', require.resolve('@/readme.md'), 'test1.ifc')
+        .attach('blob2', require.resolve('@/package.json'), 'test2.ifc')
       expect(response.status).to.equal(201)
       expect(response.body).to.deep.equal({})
-      expect(await getStreamPendingModels(createdStreamId)).to.have.lengthOf(2)
-      //TODO expect subscription notification
+      const gqlResponse = await sendRequest(userOneToken, {
+        query: `query {
+          stream(id: "${createdStreamId}") {
+            id
+            fileUploads {
+              id
+              fileName
+              convertedStatus
+            }
+          }
+        }`
+      })
+      expect(noErrors(gqlResponse))
+      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(2)
+      expect(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        gqlResponse.body.data.stream.fileUploads.map((file: any) => file.fileName)
+      ).to.have.members(['test1.ifc', 'test2.ifc'])
     })
 
     it('Returns 400 for bad form data', async () => {
@@ -99,8 +120,20 @@ describe('FileUploads @fileuploads', () => {
         .send('--XXX\r\nCon')
 
       expect(response.status).to.equal(400)
-      expect(await getStreamPendingModels(createdStreamId)).to.have.lengthOf(0)
-      //TODO expect no subscription notifications
+      const gqlResponse = await sendRequest(userOneToken, {
+        query: `query {
+          stream(id: "${createdStreamId}") {
+            id
+            fileUploads {
+              id
+              fileName
+              convertedStatus
+            }
+          }
+        }`
+      })
+      expect(noErrors(gqlResponse))
+      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(0)
     })
 
     it('Returns OK but describes errors for too big files', async () => {
@@ -111,7 +144,20 @@ describe('FileUploads @fileuploads', () => {
       expect(response.status).to.equal(201)
 
       expect(response.body).to.deep.equal({})
-      expect(await getStreamPendingModels(createdStreamId)).to.have.lengthOf(0)
+      const gqlResponse = await sendRequest(userOneToken, {
+        query: `query {
+          stream(id: "${createdStreamId}") {
+            id
+            fileUploads {
+              id
+              fileName
+              convertedStatus
+            }
+          }
+        }`
+      })
+      expect(noErrors(gqlResponse))
+      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(0)
       //TODO expect no notifications
     })
 
@@ -129,7 +175,20 @@ describe('FileUploads @fileuploads', () => {
         .set('Accept', 'application/json')
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
       expect(response.statusCode).to.equal(403)
-      expect(await getStreamPendingModels(createdStreamId)).to.have.lengthOf(0)
+      const gqlResponse = await sendRequest(userOneToken, {
+        query: `query {
+          stream(id: "${createdStreamId}") {
+            id
+            fileUploads {
+              id
+              fileName
+              convertedStatus
+            }
+          }
+        }`
+      })
+      expect(noErrors(gqlResponse))
+      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(0)
       //TODO expect no notifications
     })
 
@@ -141,7 +200,20 @@ describe('FileUploads @fileuploads', () => {
         .set('Accept', 'application/json')
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
       expect(response.statusCode).to.equal(500) //FIXME should be 404 (technically a 401, but we don't want to leak existence of stream so 404 is preferrable)
-      expect(await getStreamPendingModels(badStreamId)).to.have.lengthOf(0)
+      const gqlResponse = await sendRequest(userOneToken, {
+        query: `query {
+          stream(id: "${createdStreamId}") {
+            id
+            fileUploads {
+              id
+              fileName
+              convertedStatus
+            }
+          }
+        }`
+      })
+      expect(noErrors(gqlResponse))
+      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(0)
       //TODO expect no subscription notifications
     })
 
@@ -165,7 +237,20 @@ describe('FileUploads @fileuploads', () => {
         error: 'You do not have the required stream role'
       })
 
-      expect(await getStreamPendingModels(streamTwoId)).to.have.lengthOf(0)
+      const gqlResponse = await sendRequest(userOneToken, {
+        query: `query {
+          stream(id: "${createdStreamId}") {
+            id
+            fileUploads {
+              id
+              fileName
+              convertedStatus
+            }
+          }
+        }`
+      })
+      expect(noErrors(gqlResponse))
+      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(0)
       //TODO expect no subscription notifications
     })
   })
