@@ -20,7 +20,7 @@
       </div>
     </template>
     <template #footer>
-      <div class="flex flex-col space-y-2">
+      <div class="flex flex-col gap-y-2">
         <FormButton submit full-width :disabled="loading">Send reset e-mail</FormButton>
         <FormButton color="secondary" :to="homeRoute">Go Home</FormButton>
       </div>
