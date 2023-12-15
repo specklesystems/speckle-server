@@ -11,7 +11,7 @@
     "directory": "packages/preview-service"
   },
   "engines": {
-    "node": "^18.18.2"
+    "node": "^18.19.0"
   },
   "scripts": {
     "dev": "LOG_PRETTY=true nodemon --trace-deprecation ./bin/www",

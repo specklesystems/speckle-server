@@ -42,6 +42,7 @@
             v-if="serverInfo && hasLocalStrategy"
             :challenge="challenge"
             :server-info="serverInfo"
+            :invite-email="inviteEmail"
           />
         </div>
       </template>
@@ -63,13 +64,30 @@ graphql(`
   }
 `)
 
+const serverInviteQuery = graphql(`
+  query RegisterPanelServerInvite($token: String!) {
+    serverInviteByToken(token: $token) {
+      id
+      email
+    }
+  }
+`)
+
 const newsletterConsent = ref(false)
 
 provide('newsletterconsent', newsletterConsent)
 
 const { result } = useQuery(loginServerInfoQuery)
 const { appId, challenge, inviteToken } = useLoginOrRegisterUtils()
+const { result: inviteMetadata } = useQuery(
+  serverInviteQuery,
+  () => ({ token: inviteToken.value || '' }),
+  {
+    enabled: computed(() => !!inviteToken.value?.length)
+  }
+)
 
+const inviteEmail = computed(() => inviteMetadata.value?.serverInviteByToken?.email)
 const serverInfo = computed(() => result.value?.serverInfo)
 const hasLocalStrategy = computed(() =>
   (serverInfo.value?.authStrategies || []).some((s) => s.id === AuthStrategy.Local)

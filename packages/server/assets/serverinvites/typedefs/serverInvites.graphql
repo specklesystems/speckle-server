@@ -68,6 +68,11 @@ extend type Query {
   streamInvites: [PendingStreamCollaborator!]!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
+
+  """
+  Receive metadata about an invite by the invite token
+  """
+  serverInviteByToken(token: String!): ServerInvite
 }
 
 type ServerInvite {
