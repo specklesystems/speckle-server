@@ -12,7 +12,7 @@
     "url": "https://github.com/specklesystems/Server.git"
   },
   "engines": {
-    "node": "^18.18.2"
+    "node": "^18.19.0"
   },
   "scripts": {
     "build": "tsc -p ./tsconfig.build.json",
@@ -27,6 +27,7 @@
     "lint:tsc": "tsc --noEmit",
     "lint:eslint": "eslint . --ext .js,.ts",
     "cli": "cross-env LOG_PRETTY=true NODE_ENV=development ts-node ./modules/cli/index.js",
+    "cli:download:commit": "cross-env LOG_PRETTY=true LOG_LEVEL=debug yarn cli download commit",
     "migrate": "yarn cli db migrate",
     "migrate:test": "cross-env NODE_ENV=test ts-node ./modules/cli/index.js db migrate",
     "gqlgen": "graphql-codegen --config codegen.yml",
@@ -73,6 +74,7 @@
     "lodash": "^4.17.21",
     "mixpanel": "^0.17.0",
     "mjml": "^4.13.0",
+    "mjml-bullet-list": "^1.2.2",
     "module-alias": "^2.2.2",
     "netmask": "^2.0.2",
     "node-cron": "^3.0.2",
@@ -109,6 +111,7 @@
     "@bull-board/express": "^4.2.2",
     "@faker-js/faker": "^7.1.0",
     "@graphql-codegen/cli": "^2.16.3",
+    "@graphql-codegen/typed-document-node": "^5.0.1",
     "@graphql-codegen/typescript": "2.7.2",
     "@graphql-codegen/typescript-operations": "^2.5.2",
     "@graphql-codegen/typescript-resolvers": "2.7.2",

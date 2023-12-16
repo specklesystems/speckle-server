@@ -81,7 +81,10 @@ const renderEmailHtml = async (
     { params },
     { cache: false, outputFunctionName: 'print' }
   )
-  const fullHtml = mjml2html(fullMjml, { filePath: mjmlPath })
+  const fullHtml = mjml2html(fullMjml, {
+    filePath: mjmlPath,
+    mjmlConfigPath: path.resolve(packageRoot, './assets/emails/config/.mjmlconfig')
+  })
   const renderedHtml = ejs.render(fullHtml.html, { params })
 
   return renderedHtml

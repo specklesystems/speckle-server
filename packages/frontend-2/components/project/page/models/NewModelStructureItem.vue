@@ -71,7 +71,8 @@ const mp = useMixpanel()
 const onSubmit = handleSubmit(async (formValues) => {
   await createModel({
     name: createFinalName(formValues.name),
-    projectId: props.projectId
+    projectId: props.projectId,
+    description: ''
   })
   mp.track('Branch Action', { type: 'action', name: 'create', mode: 'nested' })
   showNewModelCard.value = false

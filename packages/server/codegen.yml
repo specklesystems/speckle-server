@@ -47,6 +47,7 @@ generates:
     plugins:
       - 'typescript'
       - 'typescript-operations'
+      - 'typed-document-node'
     documents:
       - 'test/graphql/*.{js,ts}'
     config:

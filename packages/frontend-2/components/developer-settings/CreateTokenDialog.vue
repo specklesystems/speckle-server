@@ -39,7 +39,6 @@
 
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
-import { AllScopes } from '@speckle/shared'
 import { LayoutDialog, FormSelectBadges } from '@speckle/ui-components'
 import type { TokenFormValues } from '~~/lib/developer-settings/helpers/types'
 import { createAccessTokenMutation } from '~~/lib/developer-settings/graphql/mutations'
@@ -50,11 +49,13 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
+import { useServerInfoScopes } from '~/lib/common/composables/serverInfo'
 
 const emit = defineEmits<{
   (e: 'token-created', tokenId: string): void
 }>()
 
+const { scopes: allScopes } = useServerInfoScopes()
 const { mutate: createToken } = useMutation(createAccessTokenMutation)
 const { triggerNotification } = useGlobalToast()
 const { handleSubmit } = useForm<TokenFormValues>()
@@ -65,9 +66,9 @@ const name = ref('')
 const scopes = ref<typeof apiTokenScopes.value>([])
 
 const apiTokenScopes = computed(() => {
-  return Object.values(AllScopes).map((value) => ({
-    id: value,
-    text: value
+  return Object.values(allScopes.value).map((value) => ({
+    id: value.name,
+    text: value.name
   }))
 })
 

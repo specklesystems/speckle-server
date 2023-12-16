@@ -17,10 +17,17 @@
           :custom-icon="CubeIcon"
           :rules="rules"
           :disabled="anyMutationsLoading"
+          help="Use forward slashes in the model name to nest it below other models."
         />
-        <p class="text-foreground-2 label label--light">
-          Use forward slashes in the model name to nest it below other models.
-        </p>
+        <FormTextArea
+          v-model="newDescription"
+          name="description"
+          show-label
+          label="Model Description"
+          placeholder="Description (Optional)"
+          size="lg"
+          :disabled="anyMutationsLoading"
+        />
       </div>
     </form>
   </LayoutDialog>
@@ -50,21 +57,22 @@ const props = defineProps<{
   parentModelName?: string
 }>()
 
-const { handleSubmit } = useForm<{ name: string }>()
+const { handleSubmit } = useForm<{ name: string; description: string }>()
 const anyMutationsLoading = useMutationLoading()
 const rules = useModelNameValidationRules()
 const createModel = useCreateNewModel()
 const mp = useMixpanel()
 
 const newModelName = ref('')
+const newDescription = ref('')
 
 const openState = computed({
   get: () => props.open,
   set: (newVal) => emit('update:open', newVal)
 })
 
-const onSubmit = handleSubmit(async ({ name }) => {
-  await createModel({ name, projectId: props.projectId })
+const onSubmit = handleSubmit(async ({ name, description }) => {
+  await createModel({ name, description, projectId: props.projectId })
   mp.track('Branch Action', { type: 'action', name: 'create', mode: 'dialog' })
   openState.value = false
 })
@@ -74,6 +82,7 @@ watch(
   (isOpen, oldIsOpen) => {
     if (isOpen && isOpen !== oldIsOpen) {
       newModelName.value = props.parentModelName ? `${props.parentModelName}/` : ''
+      newDescription.value = ''
     }
   }
 )

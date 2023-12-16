@@ -3,6 +3,19 @@ import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityT
 import type { PartialDeep } from 'type-fest'
 import { UnformattableSerializedViewerStateError } from '../errors'
 
+enum MeasurementType {
+  PERPENDICULAR = 0,
+  POINTTOPOINT = 1
+}
+
+interface MeasurementOptions {
+  visible: boolean
+  type?: MeasurementType
+  vertexSnap?: boolean
+  units?: string
+  precision?: number
+}
+
 /**
  * v1 -> v1.1
  * - ui.filters.propertyFilter.isApplied field added
@@ -73,6 +86,10 @@ export type SerializedViewerState = {
     }
     explodeFactor: number
     selection: Nullable<number[]>
+    measurement: {
+      enabled: boolean
+      options: Nullable<MeasurementOptions>
+    }
   }
 }
 
@@ -104,6 +121,19 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
     throw new UnformattableSerializedViewerStateError(
       'Required data missing from SerializedViewerState: ' + missingPath
     )
+  }
+
+  const defaultMeasurementOptions: MeasurementOptions = {
+    visible: false,
+    type: MeasurementType.POINTTOPOINT,
+    vertexSnap: false,
+    units: 'm',
+    precision: 2
+  }
+
+  const measurementOptions = {
+    ...defaultMeasurementOptions,
+    ...state.ui?.measurement?.options
   }
 
   return {
@@ -183,7 +213,11 @@ const initializeMissingData = (state: UnformattedState): SerializedViewerState =
         azimuth: state.ui?.lightConfig?.azimuth
       },
       explodeFactor: state.ui?.explodeFactor || 0,
-      selection: state.ui?.selection || null
+      selection: state.ui?.selection || null,
+      measurement: {
+        enabled: state.ui?.measurement?.enabled ?? false,
+        options: measurementOptions
+      }
     }
   }
 }

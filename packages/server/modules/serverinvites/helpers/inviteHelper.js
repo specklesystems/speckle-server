@@ -67,8 +67,8 @@ function resolveTarget(target) {
 
 /**
  * Build a valid target value from a user ID
- * @param {string} userId
- * @returns {string}
+ * @param {string|null|undefined} userId
+ * @returns {string|null}
  */
 function buildUserTarget(userId) {
   if (!userId) return null

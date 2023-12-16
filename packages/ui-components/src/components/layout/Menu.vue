@@ -18,23 +18,25 @@
       <MenuItems
         ref="menuItems"
         :class="[
-          'absolute mt-2 w-56 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-40',
+          'absolute mt-2 w-48 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-40',
           menuDirection === HorizontalDirection.Left ? 'right-0' : ''
         ]"
       >
-        <div v-for="(group, i) in items" :key="i" class="px-1 py-1">
+        <div v-for="(group, i) in items" :key="i" class="p-1">
           <MenuItem
             v-for="item in group"
             v-slot="{ active, disabled }"
             :key="item.id"
             :disabled="item.disabled"
+            :color="item.color"
           >
             <span v-tippy="item.disabled && item.disabledTooltip">
               <button
-                :class="buildButtonClassses({ active, disabled })"
+                :class="buildButtonClassses({ active, disabled, color: item.color })"
                 :disabled="disabled"
                 @click="chooseItem(item, $event)"
               >
+                <Component :is="item.icon" v-if="item.icon" class="h-5 w-5" />
                 <slot name="item" :item="item">{{ item.title }}</slot>
               </button>
             </span>
@@ -84,14 +86,28 @@ const finalOpen = computed({
   set: (newVal) => emit('update:open', newVal)
 })
 
-const buildButtonClassses = (params: { active?: boolean; disabled?: boolean }) => {
-  const { active, disabled } = params
-  const classParts = ['group flex w-full items-center rounded-md px-2 py-2 text-sm']
+const buildButtonClassses = (params: {
+  active?: boolean
+  disabled?: boolean
+  color?: 'danger' | 'info'
+}) => {
+  const { active, disabled, color } = params
+  const classParts = [
+    'group flex gap-3 w-full items-center rounded-md px-2 py-1.5 text-sm'
+  ]
 
-  if (active) {
+  if (active && !color) {
     classParts.push('bg-primary text-foreground-on-primary')
   } else if (disabled) {
     classParts.push('text-foreground-disabled')
+  } else if (color === 'danger' && active) {
+    classParts.push('text-foreground-on-primary bg-danger')
+  } else if (color === 'danger' && !active) {
+    classParts.push('text-danger')
+  } else if (color === 'info' && active) {
+    classParts.push('text-foreground-on-primary bg-info')
+  } else if (color === 'info' && !active) {
+    classParts.push('text-info')
   } else {
     classParts.push('text-foreground')
   }

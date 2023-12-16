@@ -19,6 +19,8 @@ const {
   getCommitsTotalCountByStreamId,
   getCommitsByUserId
 } = require('../services/commits')
+const { createBranchAndNotify } = require('@/modules/core/services/branch/management')
+const cryptoRandomString = require('crypto-random-string')
 
 describe('Commits @core-commits', () => {
   const user = {
@@ -105,6 +107,41 @@ describe('Commits @core-commits', () => {
       authorId: user.id
     })
     expect(id).to.be.a.string
+  })
+
+  // support SKDs not being able to handle the fe1 - fe2 link transition
+  it('Should create a commit by branch id', async () => {
+    const objectId = await generateObject()
+    const branch = await createBranchAndNotify(
+      { name: 'foobar', projectId: stream.id },
+      user.id
+    )
+    const id = await createCommitByBranchName({
+      streamId: stream.id,
+      branchName: branch.id,
+      message: 'first commit',
+      sourceApplication: 'tests',
+      objectId,
+      authorId: user.id
+    })
+    expect(id).to.be.a.string
+  })
+
+  it('Should fail to create a commit if the branch is not a valid name or id', async () => {
+    const objectId = await generateObject()
+    try {
+      const id = await createCommitByBranchName({
+        streamId: stream.id,
+        branchName: cryptoRandomString({ length: 10 }),
+        message: 'first commit',
+        sourceApplication: 'tests',
+        objectId,
+        authorId: user.id
+      })
+      expect(id).null
+    } catch (error) {
+      expect(error.message).contains('Failed to find branch with name or id')
+    }
   })
 
   it('Should create a commit with a previous commit id', async () => {
