@@ -20,6 +20,7 @@ export class Intersections {
   private boxBuffer: Box3 = new Box3()
   private vec0Buffer: Vector4 = new Vector4()
   private vec1Buffer: Vector4 = new Vector4()
+  private boundsBuffer: Box3 = new Box3()
 
   public constructor() {
     this.raycaster = new SpeckleRaycaster()
@@ -135,8 +136,19 @@ export class Intersections {
         return a.distance - b.distance
       })
     if (bounds) {
+      this.boundsBuffer.copy(bounds)
+      /** We slightly increase the tested bounds to account for fp precision issues which
+       *  have proven to arise exactly at the edge of the bounds
+       */
+      this.boundsBuffer.expandByVector(
+        new Vector3(
+          0.0001 * (this.boundsBuffer.max.x - this.boundsBuffer.min.x),
+          0.0001 * (this.boundsBuffer.max.y - this.boundsBuffer.min.y),
+          0.0001 * (this.boundsBuffer.max.z - this.boundsBuffer.min.z)
+        )
+      )
       results = results.filter((result) => {
-        return bounds.containsPoint(result.point)
+        return this.boundsBuffer.containsPoint(result.point)
       })
     }
 

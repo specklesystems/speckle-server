@@ -141,7 +141,7 @@ export class SelectionExtension extends Extension {
       return
     }
     this.cameraProvider.setCameraView(
-      [selectionInfo.hits[0].node.model.raw.id as string],
+      [selectionInfo.hits[0].node.model.id as string],
       true
     )
   }
