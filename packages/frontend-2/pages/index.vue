@@ -1,7 +1,9 @@
 <template>
   <ProjectsDashboard v-if="isLoggedIn" />
   <template v-else>
-    <h5 class="h5 font-medium leading-7">No homepage design for guests exists yet!</h5>
+    <div class="mx-auto">
+      <CommonLoadingIcon />
+    </div>
   </template>
 </template>
 <script setup lang="ts">

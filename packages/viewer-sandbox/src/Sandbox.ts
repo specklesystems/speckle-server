@@ -24,6 +24,7 @@ import { Units } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
 import { MeasurementsExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
+import { CameraController } from '@speckle/viewer'
 
 export default class Sandbox {
   private viewer: DebugViewer
@@ -390,7 +391,7 @@ export default class Sandbox {
       title: 'Toggle Projection'
     })
     toggleProjection.on('click', () => {
-      this.viewer.toggleCameraProjection()
+      this.viewer.getExtension<CameraController>(CameraController).toggleCameras()
     })
 
     const zoomExtents = this.tabs.pages[0].addButton({

@@ -11,12 +11,25 @@
 <script setup lang="ts">
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { debounce } from 'lodash-es'
+
 const { activeUser } = useActiveUser()
 const logger = useLogger()
+const route = useRoute()
 
-const showDialog = ref(false)
+const showDialogBase = ref(false)
 const clickyCounts = ref(0)
 let clicksToOpenDialog = 6
+
+const showDialog = computed({
+  get: () => showDialogBase.value,
+  set: (newVal) => {
+    if (newVal && route.fullPath.startsWith('/error')) {
+      return
+    }
+
+    showDialogBase.value = newVal
+  }
+})
 
 watch(clickyCounts, (newVal) => {
   if (activeUser.value) return

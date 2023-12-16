@@ -1,7 +1,7 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
 import type { TreeNode } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
-import type { PropertyInfo } from '@speckle/viewer'
+import type { MeasurementOptions, PropertyInfo } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
 import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
@@ -340,4 +340,28 @@ export function useThreadUtilities() {
   }
 
   return { closeAllThreads, open, isOpenThread }
+}
+
+export function useMeasurementUtilities() {
+  const state = useInjectedViewerState()
+
+  const enableMeasurements = (enabled: boolean) => {
+    state.ui.measurement.enabled.value = enabled
+  }
+
+  const setMeasurementOptions = (options: MeasurementOptions) => {
+    state.ui.measurement.options.value = options
+  }
+
+  const removeMeasurement = () => {
+    if (state.viewer.instance?.removeMeasurement) {
+      state.viewer.instance.removeMeasurement()
+    }
+  }
+
+  return {
+    enableMeasurements,
+    setMeasurementOptions,
+    removeMeasurement
+  }
 }

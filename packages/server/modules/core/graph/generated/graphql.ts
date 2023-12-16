@@ -636,6 +636,7 @@ export type CreateCommentReplyInput = {
 };
 
 export type CreateModelInput = {
+  description?: InputMaybe<Scalars['String']>;
   name: Scalars['String'];
   projectId: Scalars['ID'];
 };
@@ -981,6 +982,7 @@ export type Mutation = {
   projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean'];
+  requestVerificationByEmail: Scalars['Boolean'];
   serverInfoUpdate?: Maybe<Scalars['Boolean']>;
   serverInviteBatchCreate: Scalars['Boolean'];
   /** Invite a new user to the speckle server and return the invite ID */
@@ -1166,6 +1168,11 @@ export type MutationInviteResendArgs = {
 
 export type MutationObjectCreateArgs = {
   objectInput: ObjectCreateInput;
+};
+
+
+export type MutationRequestVerificationByEmailArgs = {
+  email: Scalars['String'];
 };
 
 
@@ -1837,6 +1844,8 @@ export type Query = {
    */
   projectInvite?: Maybe<PendingStreamCollaborator>;
   serverInfo: ServerInfo;
+  /** Receive metadata about an invite by the invite token */
+  serverInviteByToken?: Maybe<ServerInvite>;
   /** @deprecated use admin.serverStatistics instead */
   serverStats: ServerStats;
   /**
@@ -1931,6 +1940,11 @@ export type QueryProjectArgs = {
 export type QueryProjectInviteArgs = {
   projectId: Scalars['String'];
   token?: InputMaybe<Scalars['String']>;
+};
+
+
+export type QueryServerInviteByTokenArgs = {
+  token: Scalars['String'];
 };
 
 
@@ -2540,8 +2554,9 @@ export type TestItem = {
 };
 
 export type UpdateModelInput = {
+  description?: InputMaybe<Scalars['String']>;
   id: Scalars['ID'];
-  name: Scalars['String'];
+  name?: InputMaybe<Scalars['String']>;
   projectId: Scalars['ID'];
 };
 
@@ -3736,6 +3751,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   objectCreate?: Resolver<Array<Maybe<ResolversTypes['String']>>, ParentType, ContextType, RequireFields<MutationObjectCreateArgs, 'objectInput'>>;
   projectMutations?: Resolver<ResolversTypes['ProjectMutations'], ParentType, ContextType>;
   requestVerification?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  requestVerificationByEmail?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationRequestVerificationByEmailArgs, 'email'>>;
   serverInfoUpdate?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationServerInfoUpdateArgs, 'info'>>;
   serverInviteBatchCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationServerInviteBatchCreateArgs, 'input'>>;
   serverInviteCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationServerInviteCreateArgs, 'input'>>;
@@ -3955,6 +3971,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   project?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<QueryProjectArgs, 'id'>>;
   projectInvite?: Resolver<Maybe<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType, RequireFields<QueryProjectInviteArgs, 'projectId'>>;
   serverInfo?: Resolver<ResolversTypes['ServerInfo'], ParentType, ContextType>;
+  serverInviteByToken?: Resolver<Maybe<ResolversTypes['ServerInvite']>, ParentType, ContextType, RequireFields<QueryServerInviteByTokenArgs, 'token'>>;
   serverStats?: Resolver<ResolversTypes['ServerStats'], ParentType, ContextType>;
   stream?: Resolver<Maybe<ResolversTypes['Stream']>, ParentType, ContextType, RequireFields<QueryStreamArgs, 'id'>>;
   streamAccessRequest?: Resolver<Maybe<ResolversTypes['StreamAccessRequest']>, ParentType, ContextType, RequireFields<QueryStreamAccessRequestArgs, 'streamId'>>;

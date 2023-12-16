@@ -101,9 +101,9 @@ const redirectUrl = ref('')
 const description = ref('')
 
 const applicationScopes = computed(() => {
-  return Object.values(AllScopes).map((value) => ({
-    id: value,
-    text: value
+  return Object.values(allScopes.value).map((value) => ({
+    id: value.name,
+    text: value.name
   }))
 })
 

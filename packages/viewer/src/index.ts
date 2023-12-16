@@ -66,6 +66,9 @@ import Input, { InputEvent } from './modules/input/Input'
 import { GeometryType } from './modules/batching/Batch'
 import MeshBatch from './modules/batching/MeshBatch'
 import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial'
+import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial'
+import { SpeckleText } from './modules/objects/SpeckleText'
+import { NodeRenderView } from './modules/tree/NodeRenderView'
 
 export {
   Viewer,
@@ -103,7 +106,10 @@ export {
   ObjectLayers,
   GeometryType,
   MeshBatch,
-  SpeckleStandardMaterial
+  SpeckleStandardMaterial,
+  SpeckleTextMaterial,
+  SpeckleText,
+  NodeRenderView
 }
 
 export type {
