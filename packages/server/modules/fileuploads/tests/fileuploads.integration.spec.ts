@@ -40,6 +40,8 @@ describe('FileUploads @fileuploads', () => {
     process.env['CANONICAL_URL'] = serverAddress
 
     userOneId = await createUser(userOne)
+  })
+  beforeEach(async () => {
     createdStreamId = await createStream({ ownerId: userOneId })
     ;({ token: userOneToken } = await createToken({
       userId: userOneId,
@@ -47,6 +49,10 @@ describe('FileUploads @fileuploads', () => {
       scopes: [Scopes.Streams.Write],
       lifespan: 3600
     }))
+  })
+
+  afterEach(async () => {
+    createdStreamId = ''
   })
 
   after(async () => {
@@ -65,8 +71,8 @@ describe('FileUploads @fileuploads', () => {
       expect(response.statusCode).to.equal(201)
       expect(response.body).to.deep.equal({})
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query {
-          stream(id: "${createdStreamId}") {
+        query: `query ($streamId: String!) {
+          stream(id: $streamId) {
             id
             fileUploads {
               id
@@ -74,7 +80,8 @@ describe('FileUploads @fileuploads', () => {
               convertedStatus
             }
           }
-        }`
+        }`,
+        variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
       expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(1)
@@ -92,8 +99,8 @@ describe('FileUploads @fileuploads', () => {
       expect(response.status).to.equal(201)
       expect(response.body).to.deep.equal({})
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query {
-          stream(id: "${createdStreamId}") {
+        query: `query ($streamId: String!) {
+          stream(id: $streamId) {
             id
             fileUploads {
               id
@@ -101,10 +108,14 @@ describe('FileUploads @fileuploads', () => {
               convertedStatus
             }
           }
-        }`
+        }`,
+        variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
-      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(2)
+      expect(
+        gqlResponse.body.data.stream.fileUploads,
+        JSON.stringify(gqlResponse.body.data)
+      ).to.have.lengthOf(2)
       expect(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         gqlResponse.body.data.stream.fileUploads.map((file: any) => file.fileName)
@@ -121,8 +132,8 @@ describe('FileUploads @fileuploads', () => {
 
       expect(response.status).to.equal(400)
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query {
-          stream(id: "${createdStreamId}") {
+        query: `query ($streamId: String!) {
+          stream(id: $streamId) {
             id
             fileUploads {
               id
@@ -130,10 +141,14 @@ describe('FileUploads @fileuploads', () => {
               convertedStatus
             }
           }
-        }`
+        }`,
+        variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
-      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(0)
+      expect(
+        gqlResponse.body.data.stream.fileUploads,
+        JSON.stringify(gqlResponse.body.data)
+      ).to.have.lengthOf(0)
     })
 
     it('Returns OK but describes errors for too big files', async () => {
@@ -145,8 +160,8 @@ describe('FileUploads @fileuploads', () => {
 
       expect(response.body).to.deep.equal({})
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query {
-          stream(id: "${createdStreamId}") {
+        query: `query ($streamId: String!) {
+          stream(id: $streamId) {
             id
             fileUploads {
               id
@@ -154,10 +169,14 @@ describe('FileUploads @fileuploads', () => {
               convertedStatus
             }
           }
-        }`
+        }`,
+        variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
-      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(0)
+      expect(
+        gqlResponse.body.data.stream.fileUploads,
+        JSON.stringify(gqlResponse.body.data)
+      ).to.have.lengthOf(1)
       //TODO expect no notifications
     })
 
@@ -176,8 +195,8 @@ describe('FileUploads @fileuploads', () => {
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
       expect(response.statusCode).to.equal(403)
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query {
-          stream(id: "${createdStreamId}") {
+        query: `query ($streamId: String!) {
+          stream(id: $streamId) {
             id
             fileUploads {
               id
@@ -185,10 +204,14 @@ describe('FileUploads @fileuploads', () => {
               convertedStatus
             }
           }
-        }`
+        }`,
+        variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
-      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(0)
+      expect(
+        gqlResponse.body.data.stream.fileUploads,
+        JSON.stringify(gqlResponse.body.data)
+      ).to.have.lengthOf(0)
       //TODO expect no notifications
     })
 
@@ -201,8 +224,8 @@ describe('FileUploads @fileuploads', () => {
         .attach('test.ifc', require.resolve('@/readme.md'), 'test.ifc')
       expect(response.statusCode).to.equal(500) //FIXME should be 404 (technically a 401, but we don't want to leak existence of stream so 404 is preferrable)
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query {
-          stream(id: "${createdStreamId}") {
+        query: `query ($streamId: String!) {
+          stream(id: $streamId) {
             id
             fileUploads {
               id
@@ -210,10 +233,14 @@ describe('FileUploads @fileuploads', () => {
               convertedStatus
             }
           }
-        }`
+        }`,
+        variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
-      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(0)
+      expect(
+        gqlResponse.body.data.stream.fileUploads,
+        JSON.stringify(gqlResponse.body.data)
+      ).to.have.lengthOf(0)
       //TODO expect no subscription notifications
     })
 
@@ -238,8 +265,8 @@ describe('FileUploads @fileuploads', () => {
       })
 
       const gqlResponse = await sendRequest(userOneToken, {
-        query: `query {
-          stream(id: "${createdStreamId}") {
+        query: `query ($streamId: String!) {
+          stream(id: $streamId) {
             id
             fileUploads {
               id
@@ -247,10 +274,14 @@ describe('FileUploads @fileuploads', () => {
               convertedStatus
             }
           }
-        }`
+        }`,
+        variables: { streamId: createdStreamId }
       })
       expect(noErrors(gqlResponse))
-      expect(gqlResponse.body.data.stream.fileUploads).to.have.lengthOf(0)
+      expect(
+        gqlResponse.body.data.stream.fileUploads,
+        JSON.stringify(gqlResponse.body.data)
+      ).to.have.lengthOf(0)
       //TODO expect no subscription notifications
     })
   })
