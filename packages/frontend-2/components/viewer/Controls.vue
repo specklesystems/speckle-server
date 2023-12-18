@@ -21,15 +21,6 @@
         <IconFileExplorer class="h-5 w-5" />
       </ViewerControlsButtonToggle>
 
-      <!-- Measurements -->
-      <ViewerControlsButtonToggle
-        v-tippy="measureShortcut"
-        :active="activeControl === 'measurements'"
-        @click="toggleMeasurements"
-      >
-        <IconMeasurements class="h-5 w-5" />
-      </ViewerControlsButtonToggle>
-
       <!-- TODO -->
       <!-- <ViewerControlsButtonToggle
         :active="activeControl === 'filters'"
@@ -62,6 +53,15 @@
 
       <!-- TODO: direct add comment -->
       <!-- <ViewerCommentsDirectAddComment v-show="activeControl === 'comments'" /> -->
+
+      <!-- Measurements -->
+      <ViewerControlsButtonToggle
+        v-tippy="measureShortcut"
+        :active="activeControl === 'measurements'"
+        @click="toggleMeasurements"
+      >
+        <IconMeasurements class="h-5 w-5" />
+      </ViewerControlsButtonToggle>
 
       <!-- Standard viewer controls -->
       <ViewerControlsButtonGroup>
@@ -324,10 +324,13 @@ const measureShortcut = ref(
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
-const toggleActiveControl = (control: ActiveControl) =>
-  activeControl.value === control
-    ? (activeControl.value = 'none')
-    : (activeControl.value = control)
+const toggleActiveControl = (control: ActiveControl) => {
+  const isMeasurementsActive = activeControl.value === 'measurements'
+  if (isMeasurementsActive && control !== 'measurements') {
+    enableMeasurements(false)
+  }
+  activeControl.value = activeControl.value === control ? 'none' : control
+}
 
 onKeyboardShortcut([ModifierKeys.AltOrOpt], 'm', () => {
   toggleActiveControl('models')

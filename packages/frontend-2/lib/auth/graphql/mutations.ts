@@ -7,3 +7,9 @@ export const finishOnboardingMutation = graphql(`
     }
   }
 `)
+
+export const requestVerificationByEmailMutation = graphql(`
+  mutation RequestVerificationByEmail($email: String!) {
+    requestVerificationByEmail(email: $email)
+  }
+`)

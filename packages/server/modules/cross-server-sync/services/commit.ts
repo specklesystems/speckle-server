@@ -44,8 +44,8 @@ type ObjectLoaderObject = Record<string, unknown> & {
 type CommitMetadata = Awaited<ReturnType<typeof getCommitMetadata>>
 type ViewerThread = Awaited<ReturnType<typeof getViewerThreads>>[0]
 
-const COMMIT_URL_RGX = /((https?:\/\/)?[\w.]+)\/streams\/([\w]+)\/commits\/([\w]+)/i
-const MODEL_URL_RGX = /((https?:\/\/)?[\w.]+)\/projects\/([\w]+)\/models\/([\w@,]+)/i
+const COMMIT_URL_RGX = /((https?:\/\/)?[\w.\-_]+)\/streams\/([\w]+)\/commits\/([\w]+)/i
+const MODEL_URL_RGX = /((https?:\/\/)?[\w.\-_]+)\/projects\/([\w]+)\/models\/([\w@,]+)/i
 
 const commitBranchMetadataQuery = gql`
   query CrossSyncCommitBranchMetadata($streamId: String!, $commitId: String!) {

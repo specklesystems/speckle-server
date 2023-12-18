@@ -1,14 +1,32 @@
 <template>
   <button
-    class="flex items-center justify-center rounded bg-foundation h-8 w-8 shadow cursor-pointer text-foreground"
+    class="max-w-max transition flex justify-center items-center gap-2 outline-none select-none h-8 text-foreground border-2 bg-foundation border-foundation-2 rounded-md hover:ring-2 active:scale-[0.97] grow"
     @click="onClick"
   >
-    <Component :is="currentIcon" class="h-5 w-5" />
+    <div class="relative flex bg-foundation rounded-md">
+      <div
+        class="absolute -top-[2px] -left-[2px] transition"
+        :class="{
+          'translate-x-7': value !== GridListToggleValue.Grid
+        }"
+      >
+        <div
+          :class="value !== GridListToggleValue.Grid ? 'rounded-r-md' : 'rounded-l-md'"
+          class="w-8 h-8 bg-primary-muted shadow-inner transition"
+        />
+      </div>
+      <div class="relative z-10 flex gap-1 items-center p-1 rounded-l">
+        <Squares2X2Icon class="h-5 w-5" />
+      </div>
+      <div class="relative z-10 flex gap-1 items-center p-1 rounded-r">
+        <Bars3Icon class="h-5 w-5" />
+      </div>
+    </div>
   </button>
 </template>
+
 <script setup lang="ts">
-import { Bars3Icon } from '@heroicons/vue/24/solid'
-import { Squares2X2Icon } from '@heroicons/vue/24/outline'
+import { Bars3Icon, Squares2X2Icon } from '@heroicons/vue/24/solid'
 import { computed } from 'vue'
 import { GridListToggleValue } from '~~/src/helpers/layout/components'
 
@@ -25,10 +43,6 @@ const value = computed({
   get: () => props.modelValue || GridListToggleValue.Grid,
   set: (newVal) => emit('update:modelValue', newVal)
 })
-
-const currentIcon = computed(() =>
-  value.value === GridListToggleValue.Grid ? Bars3Icon : Squares2X2Icon
-)
 
 const onClick = (e: MouseEvent) => {
   emit('click', e)

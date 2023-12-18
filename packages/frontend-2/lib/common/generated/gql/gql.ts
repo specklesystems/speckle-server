@@ -25,8 +25,9 @@ const documents = {
     "\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n": types.ProjectDiscussionsPageHeader_ProjectFragmentDoc,
     "\n  fragment ProjectDiscussionsPageResults_Project on Project {\n    id\n  }\n": types.ProjectDiscussionsPageResults_ProjectFragmentDoc,
     "\n  fragment ProjectModelPageHeaderProject on Project {\n    id\n    name\n    model(id: $modelId) {\n      id\n      name\n    }\n  }\n": types.ProjectModelPageHeaderProjectFragmentDoc,
+    "\n  fragment ProjectPageHeader on Project {\n    id\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n  }\n": types.ProjectPageHeaderFragmentDoc,
     "\n  fragment ProjectModelPageVersionsPagination on Project {\n    id\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n  }\n": types.ProjectModelPageVersionsPaginationFragmentDoc,
-    "\n  fragment ProjectModelPageVersionsProject on Project {\n    id\n    role\n    model(id: $modelId) {\n      id\n      name\n      pendingImportedVersions {\n        ...PendingFileUpload\n      }\n    }\n    ...ProjectModelPageVersionsPagination\n  }\n": types.ProjectModelPageVersionsProjectFragmentDoc,
+    "\n  fragment ProjectModelPageVersionsProject on Project {\n    id\n    role\n    name\n    description\n    allowPublicComments\n    visibility\n    model(id: $modelId) {\n      id\n      name\n      pendingImportedVersions {\n        ...PendingFileUpload\n      }\n    }\n    ...ProjectModelPageVersionsPagination\n  }\n": types.ProjectModelPageVersionsProjectFragmentDoc,
     "\n  fragment ProjectModelPageDialogDeleteVersion on Version {\n    id\n    message\n  }\n": types.ProjectModelPageDialogDeleteVersionFragmentDoc,
     "\n  fragment ProjectModelPageDialogEditMessageVersion on Version {\n    id\n    message\n  }\n": types.ProjectModelPageDialogEditMessageVersionFragmentDoc,
     "\n  fragment ProjectModelPageDialogMoveToVersion on Version {\n    id\n    message\n  }\n": types.ProjectModelPageDialogMoveToVersionFragmentDoc,
@@ -45,7 +46,7 @@ const documents = {
     "\n  fragment ModelCardAutomationStatus_Model on Model {\n    id\n    displayName\n    automationStatus {\n      ...ModelCardAutomationStatus_AutomationsStatus\n    }\n  }\n": types.ModelCardAutomationStatus_ModelFragmentDoc,
     "\n  fragment ModelCardAutomationStatus_Version on Version {\n    id\n    automationStatus {\n      ...ModelCardAutomationStatus_AutomationsStatus\n    }\n  }\n": types.ModelCardAutomationStatus_VersionFragmentDoc,
     "\n  fragment ProjectPageModelsCardDeleteDialog on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsCardDeleteDialogFragmentDoc,
-    "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsCardRenameDialogFragmentDoc,
+    "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n": types.ProjectPageModelsCardRenameDialogFragmentDoc,
     "\n  fragment ProjectPageStatsBlockComments on Project {\n    commentThreadCount: commentThreads(limit: 0) {\n      totalCount\n    }\n  }\n": types.ProjectPageStatsBlockCommentsFragmentDoc,
     "\n  fragment ProjectPageStatsBlockModels on Project {\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n  }\n": types.ProjectPageStatsBlockModelsFragmentDoc,
     "\n  fragment ProjectPageStatsBlockTeam on Project {\n    id\n    role\n    team {\n      role\n      user {\n        ...LimitedUserAvatar\n      }\n    }\n    ...ProjectPageTeamDialog\n  }\n": types.ProjectPageStatsBlockTeamFragmentDoc,
@@ -65,6 +66,7 @@ const documents = {
     "\n  query ActiveUserMainMetadata {\n    activeUser {\n      id\n      email\n      name\n      role\n      avatar\n      isOnboardingFinished\n      createdAt\n      verified\n    }\n  }\n": types.ActiveUserMainMetadataDocument,
     "\n      mutation CreateOnboardingProject {\n        projectMutations {\n          createForOnboarding {\n            ...ProjectPageProject\n            ...ProjectDashboardItem\n          }\n        }\n      }\n    ": types.CreateOnboardingProjectDocument,
     "\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n": types.FinishOnboardingDocument,
+    "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n": types.RequestVerificationByEmailDocument,
     "\n  query AuthServerInfo {\n    serverInfo {\n      ...AuthStategiesServerInfoFragment\n      ...ServerTermsOfServicePrivacyPolicyFragment\n      ...AuthRegisterPanelServerInfo\n    }\n  }\n": types.AuthServerInfoDocument,
     "\n  query AuthorizableAppMetadata($id: String!) {\n    app(id: $id) {\n      id\n      name\n      description\n      trustByDefault\n      redirectUrl\n      scopes {\n        name\n        description\n      }\n      author {\n        name\n        id\n        avatar\n      }\n    }\n  }\n": types.AuthorizableAppMetadataDocument,
     "\n  subscription OnModelVersionCardAutomationsStatusUpdated($projectId: String!) {\n    projectAutomationsStatusUpdated(projectId: $projectId) {\n      status {\n        ...ModelCardAutomationStatus_AutomationsStatus\n      }\n      version {\n        id\n      }\n      model {\n        id\n        versions(limit: 1) {\n          items {\n            id\n          }\n        }\n      }\n    }\n  }\n": types.OnModelVersionCardAutomationsStatusUpdatedDocument,
@@ -232,11 +234,15 @@ export function graphql(source: "\n  fragment ProjectModelPageHeaderProject on P
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  fragment ProjectPageHeader on Project {\n    id\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageHeader on Project {\n    id\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment ProjectModelPageVersionsPagination on Project {\n    id\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectModelPageVersionsPagination on Project {\n    id\n    model(id: $modelId) {\n      id\n      versions(limit: 16, cursor: $versionsCursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectModelPageVersionsCardVersion\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectModelPageVersionsProject on Project {\n    id\n    role\n    model(id: $modelId) {\n      id\n      name\n      pendingImportedVersions {\n        ...PendingFileUpload\n      }\n    }\n    ...ProjectModelPageVersionsPagination\n  }\n"): (typeof documents)["\n  fragment ProjectModelPageVersionsProject on Project {\n    id\n    role\n    model(id: $modelId) {\n      id\n      name\n      pendingImportedVersions {\n        ...PendingFileUpload\n      }\n    }\n    ...ProjectModelPageVersionsPagination\n  }\n"];
+export function graphql(source: "\n  fragment ProjectModelPageVersionsProject on Project {\n    id\n    role\n    name\n    description\n    allowPublicComments\n    visibility\n    model(id: $modelId) {\n      id\n      name\n      pendingImportedVersions {\n        ...PendingFileUpload\n      }\n    }\n    ...ProjectModelPageVersionsPagination\n  }\n"): (typeof documents)["\n  fragment ProjectModelPageVersionsProject on Project {\n    id\n    role\n    name\n    description\n    allowPublicComments\n    visibility\n    model(id: $modelId) {\n      id\n      name\n      pendingImportedVersions {\n        ...PendingFileUpload\n      }\n    }\n    ...ProjectModelPageVersionsPagination\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -312,7 +318,7 @@ export function graphql(source: "\n  fragment ProjectPageModelsCardDeleteDialog 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n  }\n"];
+export function graphql(source: "\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n"): (typeof documents)["\n  fragment ProjectPageModelsCardRenameDialog on Model {\n    id\n    name\n    description\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -389,6 +395,10 @@ export function graphql(source: "\n      mutation CreateOnboardingProject {\n   
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n"): (typeof documents)["\n  mutation FinishOnboarding {\n    activeUserMutations {\n      finishOnboarding\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n"): (typeof documents)["\n  mutation RequestVerificationByEmail($email: String!) {\n    requestVerificationByEmail(email: $email)\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
