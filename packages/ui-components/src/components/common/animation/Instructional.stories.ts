@@ -91,7 +91,7 @@ export const Default: StoryObj = {
             <div class="h-full w-full bg-outline-3 opacity-20 rounded"></div>
           </div>
         </template>
-      </InstructionalAnimation>
+      </Instructional>
     `
   })
 }
