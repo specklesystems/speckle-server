@@ -86,7 +86,7 @@
     "passport-github2": "^0.1.12",
     "passport-google-oauth2": "^0.2.0",
     "passport-google-oauth20": "^2.0.0",
-    "pg": "^8.7.3",
+    "pg": "^8.11.3",
     "pg-query-stream": "^4.2.3",
     "pino": "^8.7.0",
     "pino-http": "^8.2.1",
