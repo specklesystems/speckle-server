@@ -92,8 +92,8 @@ export function useCreateNewModel() {
   const { triggerNotification } = useGlobalToast()
   const evictProjectModels = useEvictProjectModelFields()
 
-  return async (values: { name: string; projectId: string }) => {
-    const { name, projectId } = values
+  return async (values: { name: string; description: string; projectId: string }) => {
+    const { name, description, projectId } = values
 
     const { data, errors } = await apollo
       .mutate({
@@ -101,6 +101,7 @@ export function useCreateNewModel() {
         variables: {
           input: {
             name,
+            description,
             projectId
           }
         },
