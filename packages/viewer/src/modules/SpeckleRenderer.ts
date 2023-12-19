@@ -912,14 +912,6 @@ export default class SpeckleRenderer {
   ): Array<{ node: TreeNode; point: Vector3 }> {
     const rvs = []
     const points = []
-    console.warn('Hit -> ', results[0])
-    const node = this.viewer
-      .getWorldTree()
-      .findId(
-        results[0].batchObject.renderView.renderData.id,
-        results[0].batchObject.renderView.renderData.subtreeId
-      )
-    console.warn('Hit NODE-> ', node)
     for (let k = 0; k < results.length; k++) {
       const rv = this.renderViewFromIntersection(results[k])
       if (rv) {
@@ -934,20 +926,16 @@ export default class SpeckleRenderer {
     }
 
     const queryResult = []
-    let searchTime = 0
     for (let k = 0; k < rvs.length; k++) {
       const hitId = rvs[k].renderData.id
       const subtreeId = rvs[k].renderData.subtreeId
-      const start = performance.now()
       const hitNode = this.viewer.getWorldTree().findId(hitId, subtreeId)[0]
-      searchTime += performance.now() - start
       let parentNode = hitNode
       while (!parentNode.model.atomic && parentNode.parent) {
         parentNode = parentNode.parent
       }
       queryResult.push({ node: parentNode, point: points[k] })
     }
-    console.warn('Search time -> ', searchTime)
     return queryResult
   }
 

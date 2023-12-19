@@ -246,7 +246,6 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
-    console.warn('Ranges -> ', ranges)
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
         value.material = this.mesh.getCachedMaterial(value.material)
@@ -425,7 +424,6 @@ export default class InstancedMeshBatch implements Batch {
         k = n
       }
     }
-    console.warn(this.groups)
     /** We shuffle only when above a certain fragmentation threshold. We don't want to be shuffling every single time */
     if (this.drawCalls > this.maxDrawCalls) {
       this.needsShuffle = true
@@ -523,7 +521,6 @@ export default class InstancedMeshBatch implements Batch {
         materialIndex: materialGroup[0].materialIndex
       })
     }
-    console.warn(newGroups)
     this.groups.length = 0
     for (let i = 0; i < newGroups.length; i++) {
       this.groups.push({
