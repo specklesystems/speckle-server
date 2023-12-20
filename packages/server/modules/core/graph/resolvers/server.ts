@@ -1,16 +1,18 @@
 'use strict'
-const { validateScopes } = require('@/modules/shared')
-const {
+import { validateScopes } from '@/modules/shared'
+import {
   updateServerInfo,
   getServerInfo,
   getPublicScopes,
-  getPublicRoles
-} = require('../../services/generic')
-const { Roles, Scopes, RoleInfo } = require('@speckle/shared')
-const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
-const { speckleAutomateUrl } = require('@/modules/shared/helpers/envHelper')
+  getPublicRoles,
+  ServerInfoParams
+} from '@/modules/core/services/generic'
+import { Roles, Scopes, RoleInfo } from '@speckle/shared'
+import { throwForNotHavingServerRole } from '@/modules/shared/authz'
+import { speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
+import { AuthContext } from '@/modules/shared/authz'
 
-module.exports = {
+export = {
   Query: {
     async serverInfo() {
       return await getServerInfo()
@@ -26,7 +28,7 @@ module.exports = {
       return await getPublicScopes()
     },
 
-    async serverRoles(parent) {
+    async serverRoles(parent: { guestModeEnabled: boolean }) {
       const { guestModeEnabled } = parent
       return Object.values(Roles.Server)
         .filter((role) => guestModeEnabled || role !== Roles.Server.Guest)
@@ -41,7 +43,11 @@ module.exports = {
   },
 
   Mutation: {
-    async serverInfoUpdate(parent, args, context) {
+    async serverInfoUpdate(
+      parent: never,
+      args: { info: ServerInfoParams },
+      context: AuthContext
+    ) {
       await throwForNotHavingServerRole(context, Roles.Server.Admin)
       await validateScopes(context.scopes, Scopes.Server.Setup)
 
