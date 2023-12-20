@@ -1,7 +1,8 @@
-const _ = require('lodash')
-const VError = require('verror')
-const { ZodError } = require('zod')
-const { fromZodError } = require('zod-validation-error')
+import { GraphQLError } from 'graphql'
+import _ from 'lodash'
+import VError from 'verror'
+import { ZodError } from 'zod'
+import { fromZodError } from 'zod-validation-error'
 
 /**
  * Some VError implementation details that we want to remove from object representations
@@ -14,9 +15,9 @@ const VERROR_TRASH_PROPS = ['jse_shortmsg', 'jse_cause', 'jse_info']
  * @param {boolean} debug
  * @returns {(e: import('graphql').GraphQLError) => import('graphql').GraphQLFormattedError}
  */
-function buildErrorFormatter(debug) {
+export function buildErrorFormatter(debug: boolean) {
   // TODO: Add support for client-aware errors and obfuscate everything else
-  return function (error) {
+  return function (error: GraphQLError) {
     const debugMode = debug
     const realError = error.originalError ? error.originalError : error
 
@@ -61,8 +62,4 @@ function buildErrorFormatter(debug) {
       extensions
     }
   }
-}
-
-module.exports = {
-  buildErrorFormatter
 }
