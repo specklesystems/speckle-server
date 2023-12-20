@@ -1,16 +1,12 @@
-const {
-  DateTimeResolver,
-  BigIntResolver,
-  JSONObjectResolver
-} = require('graphql-scalars')
+import { DateTimeResolver, BigIntResolver, JSONObjectResolver } from 'graphql-scalars'
 
-exports.scalarResolvers = {
+export const scalarResolvers = {
   DateTime: DateTimeResolver,
   BigInt: BigIntResolver,
   JSONObject: JSONObjectResolver
 }
 
-exports.scalarSchemas = `
+export const scalarSchemas = `
 scalar DateTime
 
 scalar EmailAddress
