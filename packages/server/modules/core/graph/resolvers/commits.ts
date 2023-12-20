@@ -82,7 +82,7 @@ const getUserCommits = async (
 }
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
-export default {
+export = {
   Query: {},
   Commit: {
     async stream(

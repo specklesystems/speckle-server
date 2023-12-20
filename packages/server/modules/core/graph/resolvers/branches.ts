@@ -31,7 +31,7 @@ const BRANCH_UPDATED = BranchPubsubEvents.BranchUpdated
 const BRANCH_DELETED = BranchPubsubEvents.BranchDeleted
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
-export default {
+export = {
   Query: {},
   Stream: {
     async branches(parent: { id: string }, args: StreamBranchesArgs) {

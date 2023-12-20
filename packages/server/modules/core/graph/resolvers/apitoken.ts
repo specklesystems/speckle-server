@@ -10,7 +10,7 @@ import {
 import { canCreatePAT } from '@/modules/core/helpers/token'
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
-export default {
+export = {
   Query: {},
   User: {
     async apiTokens(
