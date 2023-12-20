@@ -1,9 +1,9 @@
-const { getBlobs } = require('@/modules/blobstorage/services')
-const { keyBy } = require('lodash')
+import { getBlobs } from '@/modules/blobstorage/services'
+import { keyBy } from 'lodash'
 
-module.exports = {
+export = {
   SmartTextEditorValue: {
-    async attachments(parent) {
+    async attachments(parent: { blobIds: string[] }) {
       const { blobIds } = parent
       if (!blobIds) return null
 
