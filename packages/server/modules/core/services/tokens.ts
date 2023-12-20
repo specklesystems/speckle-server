@@ -21,8 +21,13 @@ export type TokenRequestParams = {
 }
 
 const StoredTokenSchema = z.object({
+  // id: z.string(),
+  // name: z.string(),
+  // lastChars: z.string(),
+  // revoked: z.boolean(),
   createdAt: z.date(),
-  lifespan: z.number().nonnegative(),
+  // lastUsed: z.date(),
+  lifespan: z.coerce.number(),
   owner: z.string(),
   tokenDigest: z.string()
 })
@@ -108,8 +113,8 @@ export async function validateToken(
   let token: StoredToken
   try {
     token = StoredTokenSchema.parse(rawToken)
-  } catch {
-    logger.warn({ tokenId }, 'No token for token ID: {tokenId}')
+  } catch (error) {
+    logger.warn({ error, tokenId }, 'No valid token for token ID: {tokenId}')
     return { valid: false }
   }
 
