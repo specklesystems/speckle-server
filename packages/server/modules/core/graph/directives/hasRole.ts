@@ -1,14 +1,14 @@
-const { defaultFieldResolver } = require('graphql')
-const { authorizeResolver } = require('@/modules/shared')
-const { ForbiddenError } = require('@/modules/shared/errors')
-const { mapSchema, getDirective, MapperKind } = require('@graphql-tools/utils')
-const {
+import { GraphQLSchema, defaultFieldResolver } from 'graphql'
+import { authorizeResolver } from '@/modules/shared'
+import { ForbiddenError } from '@/modules/shared/errors'
+import { mapSchema, getDirective, MapperKind } from '@graphql-tools/utils'
+import {
   mapStreamRoleToValue,
   mapServerRoleToValue
-} = require('@/modules/core/helpers/graphTypes')
-const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
+} from '@/modules/core/helpers/graphTypes'
+import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 
-module.exports = {
+export default {
   /**
    * Ensure that the user has the specified SERVER role (e.g. server user, admin etc.)
    * @type {import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder}
@@ -29,7 +29,7 @@ module.exports = {
         """
         directive @${directiveName}(role: ServerRole!) on FIELD_DEFINITION
       `,
-      schemaTransformer: (schema) =>
+      schemaTransformer: (schema: GraphQLSchema) =>
         mapSchema(schema, {
           [MapperKind.OBJECT_FIELD]: (fieldConfig) => {
             const directive = getDirective(schema, fieldConfig, directiveName)?.[0]
@@ -76,7 +76,7 @@ module.exports = {
         """
         directive @${directiveName}(role: StreamRole!) on FIELD_DEFINITION
       `,
-      schemaTransformer: (schema) =>
+      schemaTransformer: (schema: GraphQLSchema) =>
         mapSchema(schema, {
           [MapperKind.OBJECT_FIELD]: (fieldConfig) => {
             const directive = getDirective(schema, fieldConfig, directiveName)?.[0]
