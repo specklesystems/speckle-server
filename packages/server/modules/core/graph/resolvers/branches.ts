@@ -1,25 +1,29 @@
 'use strict'
 
-const { withFilter } = require('graphql-subscriptions')
+import { withFilter } from 'graphql-subscriptions'
 
-const {
+import { StreamBranchesArgs } from '@/modules/core/graph/generated/graphql'
+import {
   pubsub,
-  BranchSubscriptions: BranchPubsubEvents
-} = require('@/modules/shared/utils/subscriptions')
-const { authorizeResolver } = require('@/modules/shared')
+  BranchSubscriptions as BranchPubsubEvents
+} from '@/modules/shared/utils/subscriptions'
+import { authorizeResolver } from '@/modules/shared'
 
-const { getBranchByNameAndStreamId, getBranchById } = require('../../services/branches')
-const {
+import { getBranchByNameAndStreamId, getBranchById } from '../../services/branches'
+import {
   createBranchAndNotify,
   updateBranchAndNotify,
   deleteBranchAndNotify
-} = require('@/modules/core/services/branch/management')
-const {
-  getPaginatedStreamBranches
-} = require('@/modules/core/services/branch/retrieval')
+} from '@/modules/core/services/branch/management'
+import { getPaginatedStreamBranches } from '@/modules/core/services/branch/retrieval'
 
-const { getUserById } = require('../../services/users')
-const { Roles } = require('@speckle/shared')
+import { getUserById } from '../../services/users'
+import { Roles } from '@speckle/shared'
+import {
+  BranchCreateInput,
+  BranchDeleteInput,
+  BranchUpdateInput
+} from '@/test/graphql/generated/graphql'
 
 // subscription events
 const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
@@ -27,14 +31,14 @@ const BRANCH_UPDATED = BranchPubsubEvents.BranchUpdated
 const BRANCH_DELETED = BranchPubsubEvents.BranchDeleted
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
-module.exports = {
+export default {
   Query: {},
   Stream: {
-    async branches(parent, args) {
+    async branches(parent: { id: string }, args: StreamBranchesArgs) {
       return await getPaginatedStreamBranches(parent.id, args)
     },
 
-    async branch(parent, args) {
+    async branch(parent: { id: string }, args: { name: string }) {
       // TODO: TEMPORARY HACK
       // Temporary "Forwards" compatibility layer to allow .NET and PY clients
       // to use FE2 urls without major changes.
@@ -56,14 +60,22 @@ module.exports = {
     }
   },
   Branch: {
-    async author(parent, args, context) {
+    async author(
+      parent: { authorId: string },
+      args: unknown,
+      context: { auth: unknown }
+    ) {
       if (parent.authorId && context.auth)
         return await getUserById({ userId: parent.authorId })
       else return null
     }
   },
   Mutation: {
-    async branchCreate(parent, args, context) {
+    async branchCreate(
+      parent: unknown,
+      args: { branch: BranchCreateInput },
+      context: { userId: string }
+    ) {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
@@ -75,7 +87,11 @@ module.exports = {
       return id
     },
 
-    async branchUpdate(parent, args, context) {
+    async branchUpdate(
+      parent: unknown,
+      args: { branch: BranchUpdateInput },
+      context: { userId: string }
+    ) {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
@@ -86,7 +102,11 @@ module.exports = {
       return !!newBranch
     },
 
-    async branchDelete(parent, args, context) {
+    async branchDelete(
+      parent: unknown,
+      args: { branch: BranchDeleteInput },
+      context: { userId: string }
+    ) {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
