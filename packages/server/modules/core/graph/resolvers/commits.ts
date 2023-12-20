@@ -1,49 +1,54 @@
 'use strict'
 
-const { UserInputError, ApolloError } = require('apollo-server-express')
-const { withFilter } = require('graphql-subscriptions')
-const {
+import { UserInputError, ApolloError } from 'apollo-server-express'
+import { withFilter } from 'graphql-subscriptions'
+import {
   pubsub,
-  CommitSubscriptions: CommitPubsubEvents
-} = require('@/modules/shared/utils/subscriptions')
-const { authorizeResolver } = require('@/modules/shared')
+  CommitSubscriptions as CommitPubsubEvents
+} from '@/modules/shared/utils/subscriptions'
+import { authorizeResolver } from '@/modules/shared'
 
-const {
+import {
   getCommitById,
   getCommitsByUserId,
   getCommitsByStreamId,
   getCommitsTotalCountByUserId
-} = require('../../services/commits')
-const {
+} from '@/modules/core/services/commits'
+import {
   getPaginatedStreamCommits,
   getPaginatedBranchCommits
-} = require('@/modules/core/services/commit/retrieval')
-const {
+} from '@/modules/core/services/commit/retrieval'
+import {
   createCommitByBranchName,
   updateCommitAndNotify,
   deleteCommitAndNotify
-} = require('@/modules/core/services/commit/management')
-const {
-  addCommitReceivedActivity
-} = require('@/modules/activitystream/services/commitActivity')
+} from '@/modules/core/services/commit/management'
+import { addCommitReceivedActivity } from '@/modules/activitystream/services/commitActivity'
 
-const { getUser } = require('../../services/users')
+import { getUser } from '@/modules/core/services/users'
 
-const {
+import {
   isRateLimitBreached,
   getRateLimitResult,
-  RateLimitError,
   RateLimitAction
-} = require('@/modules/core/services/ratelimiter')
-const {
+} from '@/modules/core/services/ratelimiter'
+import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import {
   batchMoveCommits,
   batchDeleteCommits
-} = require('@/modules/core/services/commit/batchCommitActions')
-const {
-  validateStreamAccess
-} = require('@/modules/core/services/streams/streamAccessService')
-const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
-const { Roles } = require('@speckle/shared')
+} from '@/modules/core/services/commit/batchCommitActions'
+import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
+import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
+import { MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
+import { StreamCommitsArgs } from '@/modules/core/graph/generated/graphql'
+import {
+  CommitReceivedInput,
+  CommitUpdateInput,
+  CommitsDeleteInput,
+  CommitsMoveInput,
+  DeleteVersionsInput,
+  MoveVersionsInput
+} from '@/test/graphql/generated/graphql'
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
@@ -56,7 +61,11 @@ const COMMIT_DELETED = CommitPubsubEvents.CommitDeleted
  * @param {{limit: number, cursor: string}} args
  * @returns
  */
-const getUserCommits = async (publicOnly, userId, args) => {
+const getUserCommits = async (
+  publicOnly: boolean,
+  userId: string,
+  args: { limit: number; cursor: string }
+) => {
   const totalCount = await getCommitsTotalCountByUserId({ userId, publicOnly })
   if (args.limit && args.limit > 100)
     throw new UserInputError(
@@ -76,7 +85,16 @@ const getUserCommits = async (publicOnly, userId, args) => {
 module.exports = {
   Query: {},
   Commit: {
-    async stream(parent, _args, ctx) {
+    async stream(
+      parent: { id: string },
+      _args: unknown,
+      ctx: {
+        userId: string
+        loaders: {
+          commits: { getCommitStream: { load: (commitId: string) => { id: string } } }
+        }
+      }
+    ) {
       const { id: commitId } = parent
 
       const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
@@ -87,12 +105,28 @@ module.exports = {
       await validateStreamAccess(ctx.userId, stream.id)
       return stream
     },
-    async streamId(parent, _args, ctx) {
+    async streamId(
+      parent: { id: string },
+      _args: unknown,
+      ctx: {
+        loaders: {
+          commits: { getCommitStream: { load: (commitId: string) => { id: string } } }
+        }
+      }
+    ) {
       const { id: commitId } = parent
       const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
       return stream?.id || null
     },
-    async streamName(parent, _args, ctx) {
+    async streamName(
+      parent: { id: string },
+      _args: unknown,
+      ctx: {
+        loaders: {
+          commits: { getCommitStream: { load: (commitId: string) => { name: string } } }
+        }
+      }
+    ) {
       const { id: commitId } = parent
       const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
       return stream?.name || null
@@ -101,39 +135,81 @@ module.exports = {
      * The DB schema actually has the value under 'author', but some queries (not all)
      * remap it to 'authorId'
      */
-    async authorId(parent) {
-      return parent.authorId || parent.author
+    async authorId(parent: { authorId?: string; author?: string }) {
+      return parent.authorId || parent.author || null
     },
-    async authorName(parent, _args, ctx) {
+    async authorName(
+      parent: { authorId?: string; authorName?: string; author?: string },
+      _args: unknown,
+      ctx: {
+        loaders: {
+          users: {
+            getUser: {
+              load: (author: string) => { name: string }
+            }
+          }
+        }
+      }
+    ) {
       const { authorId, authorName, author } = parent
       if (authorName) return authorName
-      if (!authorId && !author) return null
-      const authorEntity = await ctx.loaders.users.getUser.load(authorId || author)
+      const authorQuery = authorId || author
+      if (!authorQuery) return null
+      const authorEntity = await ctx.loaders.users.getUser.load(authorQuery)
       return authorEntity?.name || null
     },
-    async authorAvatar(parent, _args, ctx) {
+    async authorAvatar(
+      parent: { authorId?: string; authorAvatar?: string; author?: string },
+      _args: unknown,
+      ctx: {
+        loaders: {
+          users: {
+            getUser: {
+              load: (author: string) => { avatar: string }
+            }
+          }
+        }
+      }
+    ) {
       const { authorId, authorAvatar, author } = parent
       if (authorAvatar) return authorAvatar
-      if (!authorId && !author) return null
+      const authorQuery = authorId || author
+      if (!authorQuery) return null
 
-      const authorEntity = await ctx.loaders.users.getUser.load(authorId || author)
+      const authorEntity = await ctx.loaders.users.getUser.load(authorQuery)
       return authorEntity?.avatar || null
     },
-    async branchName(parent, _args, ctx) {
+    async branchName(
+      parent: { id: string },
+      _args: unknown,
+      ctx: {
+        loaders: {
+          commits: { getCommitBranch: { load: (commitId: string) => { name: string } } }
+        }
+      }
+    ) {
       const { id } = parent
       return (await ctx.loaders.commits.getCommitBranch.load(id))?.name || null
     },
-    async branch(parent, _args, ctx) {
+    async branch(
+      parent: { id: string },
+      _args: unknown,
+      ctx: {
+        loaders: {
+          commits: { getCommitBranch: { load: (commitId: string) => { name: string } } }
+        }
+      }
+    ) {
       const { id } = parent
       return await ctx.loaders.commits.getCommitBranch.load(id)
     }
   },
   Stream: {
-    async commits(parent, args) {
+    async commits(parent: { id: string }, args: StreamCommitsArgs) {
       return await getPaginatedStreamCommits(parent.id, args)
     },
 
-    async commit(parent, args) {
+    async commit(parent: { id: string }, args: { id?: string }) {
       if (!args.id) {
         const { commits } = await getCommitsByStreamId({
           streamId: parent.id,
@@ -149,17 +225,21 @@ module.exports = {
     }
   },
   LimitedUser: {
-    async commits(parent, args) {
+    async commits(parent: { id: string }, args: { limit: number; cursor: string }) {
       return await getUserCommits(true, parent.id, args)
     }
   },
   User: {
-    async commits(parent, args, context) {
+    async commits(
+      parent: { id: string },
+      args: { limit: number; cursor: string },
+      context: { userId: string }
+    ) {
       return await getUserCommits(context.userId !== parent.id, parent.id, args)
     }
   },
   Branch: {
-    async commits(parent, args) {
+    async commits(parent: { id: string }, args: { limit: number; cursor?: string }) {
       return await getPaginatedBranchCommits({
         branchId: parent.id,
         limit: args.limit,
@@ -168,7 +248,22 @@ module.exports = {
     }
   },
   Mutation: {
-    async commitCreate(parent, args, context) {
+    async commitCreate(
+      parent: unknown,
+      args: {
+        commit: {
+          streamId: string
+          branchName: string
+          objectId: string
+          authorId: string
+          message: Nullable<string>
+          sourceApplication: Nullable<string>
+          totalChildrenCount?: MaybeNullOrUndefined<number>
+          parents: Nullable<string[]>
+        }
+      },
+      context: { userId: string }
+    ) {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
@@ -191,7 +286,11 @@ module.exports = {
       return id
     },
 
-    async commitUpdate(_parent, args, context) {
+    async commitUpdate(
+      _parent: unknown,
+      args: { commit: CommitUpdateInput },
+      context: { userId: string }
+    ) {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
@@ -202,7 +301,11 @@ module.exports = {
       return true
     },
 
-    async commitReceive(parent, args, context) {
+    async commitReceive(
+      parent: unknown,
+      args: { input: CommitReceivedInput },
+      context: { userId: string }
+    ) {
       await authorizeResolver(
         context.userId,
         args.input.streamId,
@@ -223,7 +326,11 @@ module.exports = {
       return false
     },
 
-    async commitDelete(_parent, args, context) {
+    async commitDelete(
+      _parent: never,
+      args: { commit: { id: string; streamId: string } },
+      context: { userId: string }
+    ) {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
@@ -238,12 +345,20 @@ module.exports = {
       return deleted
     },
 
-    async commitsMove(_, args, ctx) {
+    async commitsMove(
+      _: never,
+      args: { input: CommitsMoveInput | MoveVersionsInput },
+      ctx: { userId: string }
+    ) {
       await batchMoveCommits(args.input, ctx.userId)
       return true
     },
 
-    async commitsDelete(_, args, ctx) {
+    async commitsDelete(
+      _: never,
+      args: { input: CommitsDeleteInput | DeleteVersionsInput },
+      ctx: { userId: string }
+    ) {
       await batchDeleteCommits(args.input, ctx.userId)
       return true
     }
