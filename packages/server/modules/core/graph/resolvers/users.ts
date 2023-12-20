@@ -1,34 +1,35 @@
 'use strict'
-const { UserInputError } = require('apollo-server-express')
-const {
+import { UserInputError } from 'apollo-server-express'
+import {
   getUser,
   getUserByEmail,
   getUserRole,
   deleteUser,
   searchUsers,
   changeUserRole
-} = require('@/modules/core/services/users')
-const { updateUserAndNotify } = require('@/modules/core/services/users/management')
-const { saveActivity } = require('@/modules/activitystream/services')
-const { ActionTypes } = require('@/modules/activitystream/helpers/types')
-const { validateScopes } = require(`@/modules/shared`)
-const zxcvbn = require('zxcvbn')
-const {
-  getAdminUsersListCollection
-} = require('@/modules/core/services/users/adminUsersListService')
-const { Roles, Scopes } = require('@speckle/shared')
-const { markOnboardingComplete } = require('@/modules/core/repositories/users')
-const { UsersMeta } = require('@/modules/core/dbSchema')
-const { getServerInfo } = require('@/modules/core/services/generic')
-const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
+} from '@/modules/core/services/users'
+import { updateUserAndNotify } from '@/modules/core/services/users/management'
+import { saveActivity } from '@/modules/activitystream/services'
+import { ActionTypes } from '@/modules/activitystream/helpers/types'
+import { validateScopes } from '@/modules/shared'
+import zxcvbn from 'zxcvbn'
+import { getAdminUsersListCollection } from '@/modules/core/services/users/adminUsersListService'
+import { Roles, Scopes } from '@speckle/shared'
+import { markOnboardingComplete } from '@/modules/core/repositories/users'
+import { UsersMeta } from '@/modules/core/dbSchema'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { throwForNotHavingServerRole } from '@/modules/shared/authz'
+import { AuthContext } from '@/modules/shared/authz'
+import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
+import { UserUpdateError } from '@/modules/core/errors/user'
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
-module.exports = {
+export = {
   Query: {
     async _() {
       return `Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn.`
     },
-    async activeUser(_parent, _args, context) {
+    async activeUser(_parent: never, _args: never, context: AuthContext) {
       const activeUserId = context.userId
       if (!activeUserId) return null
 
@@ -38,12 +39,12 @@ module.exports = {
 
       return await getUser(activeUserId)
     },
-    async otherUser(_parent, args) {
+    async otherUser(_parent: never, args: { id?: string }) {
       const { id } = args
       if (!id) return null
       return await getUser(id)
     },
-    async user(parent, args, context) {
+    async user(parent: never, args: { id?: string }, context: AuthContext) {
       // User wants info about himself and he's not authenticated - just return null
       if (!context.auth && !args.id) return null
 
@@ -59,11 +60,24 @@ module.exports = {
       return await getUser(args.id || context.userId)
     },
 
-    async adminUsers(_parent, args) {
+    async adminUsers(
+      _parent: never,
+      args: { query: string; limit: number; offset: number }
+    ) {
       return await getAdminUsersListCollection(args)
     },
 
-    async userSearch(parent, args, context) {
+    async userSearch(
+      parent: never,
+      args: {
+        query: string
+        limit: number
+        cursor: string
+        archived: boolean
+        emailOnly: boolean
+      },
+      context: AuthContext
+    ) {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Read)
       await validateScopes(context.scopes, Scopes.Users.Read)
@@ -86,14 +100,18 @@ module.exports = {
       return { cursor, items: users }
     },
 
-    async userPwdStrength(parent, args) {
+    async userPwdStrength(parent: never, args: { pwd: string }) {
       const res = zxcvbn(args.pwd)
       return { score: res.score, feedback: res.feedback }
     }
   },
 
   User: {
-    async email(parent, args, context) {
+    async email(
+      parent: { id: string; email: string },
+      args: never,
+      context: AuthContext
+    ) {
       // NOTE: we're redacting the field (returning null) rather than throwing a full error which would invalidate the request.
       if (context.userId === parent.id) {
         try {
@@ -113,10 +131,28 @@ module.exports = {
         return null
       }
     },
-    async role(parent) {
+    async role(parent: { id: string }) {
       return await getUserRole(parent.id)
     },
-    async isOnboardingFinished(parent, _args, ctx) {
+    async isOnboardingFinished(
+      parent: { id: string },
+      _args: never,
+      ctx: {
+        loaders: {
+          users: {
+            getUserMeta: {
+              load: ({
+                userId,
+                key
+              }: {
+                userId: string
+                key: string
+              }) => Promise<{ value: unknown }>
+            }
+          }
+        }
+      }
+    ) {
       const metaVal = await ctx.loaders.users.getUserMeta.load({
         userId: parent.id,
         key: UsersMeta.metaKey.isOnboardingFinished
@@ -125,18 +161,26 @@ module.exports = {
     }
   },
   LimitedUser: {
-    async role(parent) {
+    async role(parent: { id: string }) {
       return await getUserRole(parent.id)
     }
   },
   Mutation: {
-    async userUpdate(_parent, args, context) {
+    async userUpdate(
+      _parent: never,
+      args: { user: UserUpdateInput },
+      context: AuthContext
+    ) {
+      if (!context.userId) return false
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await updateUserAndNotify(context.userId, args.user)
       return true
     },
 
-    async userRoleChange(_parent, args) {
+    async userRoleChange(
+      _parent: never,
+      args: { userRoleInput: { role: string; id: string } }
+    ) {
       const { guestModeEnabled } = await getServerInfo()
       await changeUserRole({
         role: args.userRoleInput.role,
@@ -146,7 +190,11 @@ module.exports = {
       return true
     },
 
-    async adminDeleteUser(_parent, args, context) {
+    async adminDeleteUser(
+      _parent: never,
+      args: { userConfirmation: { email: string } },
+      context: AuthContext
+    ) {
       await throwForNotHavingServerRole(context, Roles.Server.Admin)
       const user = await getUserByEmail({ email: args.userConfirmation.email })
       if (!user) return false
@@ -155,7 +203,11 @@ module.exports = {
       return true
     },
 
-    async userDelete(parent, args, context) {
+    async userDelete(
+      parent: never,
+      args: { userConfirmation: { email: string }; user: string },
+      context: AuthContext
+    ) {
       const user = await getUser(context.userId)
 
       if (args.userConfirmation.email !== user.email) {
@@ -168,14 +220,14 @@ module.exports = {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Delete)
 
-      await deleteUser(context.userId, args.user)
+      await deleteUser(context.userId)
 
       await saveActivity({
         streamId: null,
         resourceType: 'user',
-        resourceId: context.userId,
+        resourceId: context.userId || null,
         actionType: ActionTypes.User.Delete,
-        userId: context.userId,
+        userId: context.userId || null,
         info: {},
         message: 'User deleted'
       })
@@ -186,10 +238,15 @@ module.exports = {
     activeUserMutations: () => ({})
   },
   ActiveUserMutations: {
-    async finishOnboarding(_parent, _args, ctx) {
+    async finishOnboarding(_parent: never, _args: never, ctx: AuthContext) {
       return await markOnboardingComplete(ctx.userId || '')
     },
-    async update(_parent, args, context) {
+    async update(
+      _parent: never,
+      args: { user: UserUpdateInput },
+      context: AuthContext
+    ) {
+      if (!context.userId) throw new UserUpdateError('Attempting to update a null user')
       const newUser = await updateUserAndNotify(context.userId, args.user)
       return newUser
     }
