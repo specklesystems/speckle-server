@@ -1,8 +1,8 @@
-const { defaultFieldResolver } = require('graphql')
-const { validateScopes } = require('@/modules/shared')
-const { mapSchema, MapperKind, getDirective } = require('@graphql-tools/utils')
+import { GraphQLSchema, defaultFieldResolver } from 'graphql'
+import { validateScopes } from '@/modules/shared'
+import { mapSchema, MapperKind, getDirective } from '@graphql-tools/utils'
 
-module.exports = {
+export default {
   /**
    * Ensure that the user's access token has the specified scope allowed for it
    * @type {import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder}
@@ -16,7 +16,7 @@ module.exports = {
         """
         directive @${directiveName}(scope: String!) on FIELD_DEFINITION
       `,
-      schemaTransformer: (schema) =>
+      schemaTransformer: (schema: GraphQLSchema) =>
         mapSchema(schema, {
           [MapperKind.OBJECT_FIELD]: (fieldConfig) => {
             const directive = getDirective(schema, fieldConfig, directiveName)?.[0]
@@ -52,7 +52,7 @@ module.exports = {
         """
         directive @${directiveName}(scopes: [String]!) on FIELD_DEFINITION
       `,
-      schemaTransformer: (schema) =>
+      schemaTransformer: (schema: GraphQLSchema) =>
         mapSchema(schema, {
           [MapperKind.OBJECT_FIELD]: (fieldConfig) => {
             const directive = getDirective(schema, fieldConfig, directiveName)?.[0]
@@ -66,7 +66,7 @@ module.exports = {
               const currentScopes = context.scopes
 
               await Promise.all(
-                requiredScopes.map(async (requiredScope) => {
+                requiredScopes.map(async (requiredScope: string) => {
                   validateScopes(currentScopes, requiredScope)
                 })
               )
