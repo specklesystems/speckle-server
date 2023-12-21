@@ -90,7 +90,7 @@ const getUserStreamsCore = async (
 /**
  * @type {import('@/modules/core/graph/generated/graphql').Resolvers}
  */
-module.exports = {
+export = {
   Query: {
     async stream(_: never, args: { id: string }, context: AuthContext) {
       const stream = await getStream({ streamId: args.id, userId: context.userId })

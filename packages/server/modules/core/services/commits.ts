@@ -185,7 +185,7 @@ export async function getCommitsTotalCountByBranchName({
 
   if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
 
-  return module.exports.getCommitsTotalCountByBranchId({ branchId: myBranch.id })
+  return getCommitsTotalCountByBranchId({ branchId: myBranch.id })
 }
 
 /**
@@ -222,7 +222,7 @@ export async function getCommitsByBranchName({
 
   if (!myBranch) throw new Error(`Failed to find branch with name ${branchName}.`)
 
-  return module.exports.getCommitsByBranchId({ branchId: myBranch.id, limit, cursor })
+  return getCommitsByBranchId({ branchId: myBranch.id, limit, cursor })
 }
 
 export async function getCommitsTotalCountByStreamId({

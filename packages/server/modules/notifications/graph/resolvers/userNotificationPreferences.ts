@@ -4,7 +4,7 @@ import {
   getUserNotificationPreferences
 } from '@/modules/notifications/services/notificationPreferences'
 
-module.exports = {
+export = {
   User: {
     async notificationPreferences(parent) {
       const preferences = await getUserNotificationPreferences(parent.id)

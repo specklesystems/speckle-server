@@ -56,8 +56,7 @@ export async function createToken({
   scopes,
   lifespan
 }: TokenRequestParams) {
-  const { tokenId, tokenString, tokenHash, lastChars } =
-    await module.exports.createBareToken()
+  const { tokenId, tokenString, tokenHash, lastChars } = await createBareToken()
 
   if (scopes.length === 0) throw new Error('No scopes provided')
 
@@ -84,7 +83,7 @@ export async function createPersonalAccessToken(
   scopes: string[],
   lifespan?: string
 ) {
-  const { id, token } = await module.exports.createToken({
+  const { id, token } = await createToken({
     userId,
     name,
     scopes,
@@ -120,7 +119,7 @@ export async function validateToken(
 
   const timeDiff = Math.abs(Date.now() - new Date(token.createdAt).getTime())
   if (timeDiff > token.lifespan) {
-    await module.exports.revokeToken(tokenId, token.owner)
+    await revokeToken(tokenId, token.owner)
     return { valid: false }
   }
 
