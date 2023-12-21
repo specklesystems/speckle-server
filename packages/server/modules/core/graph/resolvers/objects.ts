@@ -1,18 +1,18 @@
 'use strict'
-const { validateScopes, authorizeResolver } = require('@/modules/shared')
-
-const {
+import { validateScopes, authorizeResolver } from '@/modules/shared'
+import type { AuthContext } from '@/modules/shared/authz'
+import {
   createObjects,
   getObject,
   getObjectChildren,
   getObjectChildrenQuery
-} = require('../../services/objects')
-const { Roles, Scopes } = require('@speckle/shared')
-const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
+} from '../../services/objects'
+import { Roles, Scopes } from '@speckle/shared'
+import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 
-module.exports = {
+export = {
   Stream: {
-    async object(parent, args) {
+    async object(parent: { id: string }, args: { id: string }) {
       const obj = await getObject({ streamId: parent.id, objectId: args.id })
       if (!obj) return null
 
@@ -21,7 +21,17 @@ module.exports = {
     }
   },
   Object: {
-    async children(parent, args) {
+    async children(
+      parent: { id: string; streamId: string; totalChildrenCount: number },
+      args: {
+        query: string
+        orderBy: string
+        limit: number
+        depth: number
+        select: string
+        cursor: string
+      }
+    ) {
       // The simple query branch
       if (!args.query && !args.orderBy) {
         const result = await getObjectChildren({
@@ -56,7 +66,11 @@ module.exports = {
     }
   },
   Mutation: {
-    async objectCreate(parent, args, context) {
+    async objectCreate(
+      parent: never,
+      args: { objectInput: { streamId: string; objects: unknown[] } },
+      context: AuthContext
+    ) {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Streams.Write)
       await authorizeResolver(
