@@ -1,5 +1,6 @@
 'use strict'
 
+import { AuthContext } from '@/modules/shared/authz'
 import { ForbiddenError } from 'apollo-server-express'
 import {
   createPersonalAccessToken,
@@ -13,11 +14,7 @@ import { canCreatePAT } from '@/modules/core/helpers/token'
 export = {
   Query: {},
   User: {
-    async apiTokens(
-      parent: { id: string },
-      args: unknown,
-      context: { userId: string }
-    ) {
+    async apiTokens(parent: { id: string }, args: unknown, context: AuthContext) {
       // TODO!
       if (parent.id !== context.userId)
         throw new ForbiddenError('You can only view your own tokens')
@@ -28,7 +25,7 @@ export = {
   },
   Mutation: {
     async apiTokenCreate(
-      parent: unknown,
+      parent: never,
       args: { token: TokenRequestParams },
       context: { userId: string; scopes: string[] }
     ) {
@@ -48,11 +45,15 @@ export = {
     async apiTokenRevoke(
       parent: unknown,
       args: { token: string },
-      context: { userId: string }
+      context: AuthContext
     ) {
+      if (!context.userId) throw new Error('Invalid user id')
       let id = null
-      if (args.token.toLowerCase().includes('bearer')) id = args.token.split(' ')[1]
-      else id = args.token
+      if (args.token.toLowerCase().includes('bearer')) {
+        id = args.token.split(' ')[1]
+      } else {
+        id = args.token
+      }
       await revokeToken(id, context.userId) // let's not revoke other people's tokens
       return true
     }

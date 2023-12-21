@@ -5,7 +5,7 @@ import knex from '@/db/knex'
 import { ServerAcl as ServerAclSchema } from '@/modules/core/dbSchema'
 import { z } from 'zod'
 import { logger } from '@/logging/logging'
-import { TokenValidationResult } from '../helpers/types'
+import { TokenValidationResult } from '@/modules/core/helpers/types'
 
 const ApiTokens = () => knex('api_tokens')
 const PersonalApiTokens = () => knex('personal_api_tokens')

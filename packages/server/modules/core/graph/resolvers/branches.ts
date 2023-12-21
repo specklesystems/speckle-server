@@ -1,23 +1,24 @@
 'use strict'
 
 import { withFilter } from 'graphql-subscriptions'
-
+import { AuthContext } from '@/modules/shared/authz'
 import { StreamBranchesArgs } from '@/modules/core/graph/generated/graphql'
 import {
   pubsub,
   BranchSubscriptions as BranchPubsubEvents
 } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver } from '@/modules/shared'
-
-import { getBranchByNameAndStreamId, getBranchById } from '../../services/branches'
+import {
+  getBranchByNameAndStreamId,
+  getBranchById
+} from '@/modules/core/services/branches'
 import {
   createBranchAndNotify,
   updateBranchAndNotify,
   deleteBranchAndNotify
 } from '@/modules/core/services/branch/management'
 import { getPaginatedStreamBranches } from '@/modules/core/services/branch/retrieval'
-
-import { getUserById } from '../../services/users'
+import { getUserById } from '@/modules/core/services/users'
 import { Roles } from '@speckle/shared'
 import {
   BranchCreateInput,
@@ -60,11 +61,7 @@ export = {
     }
   },
   Branch: {
-    async author(
-      parent: { authorId: string },
-      args: unknown,
-      context: { auth: unknown }
-    ) {
+    async author(parent: { authorId: string }, args: never, context: AuthContext) {
       if (parent.authorId && context.auth)
         return await getUserById({ userId: parent.authorId })
       else return null
@@ -72,15 +69,17 @@ export = {
   },
   Mutation: {
     async branchCreate(
-      parent: unknown,
+      parent: never,
       args: { branch: BranchCreateInput },
-      context: { userId: string }
+      context: AuthContext
     ) {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
         Roles.Stream.Contributor
       )
+
+      if (!context.userId) throw new Error('Invalid user id')
 
       const { id } = await createBranchAndNotify(args.branch, context.userId)
 
@@ -90,13 +89,15 @@ export = {
     async branchUpdate(
       parent: unknown,
       args: { branch: BranchUpdateInput },
-      context: { userId: string }
+      context: AuthContext
     ) {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
         Roles.Stream.Contributor
       )
+
+      if (!context.userId) throw new Error('Invalid user id')
 
       const newBranch = await updateBranchAndNotify(args.branch, context.userId)
       return !!newBranch
@@ -105,13 +106,15 @@ export = {
     async branchDelete(
       parent: unknown,
       args: { branch: BranchDeleteInput },
-      context: { userId: string }
+      context: AuthContext
     ) {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
         Roles.Stream.Contributor
       )
+
+      if (!context.userId) throw new Error('Invalid user id')
 
       const deleted = await deleteBranchAndNotify(args.branch, context.userId)
       return deleted

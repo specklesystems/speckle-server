@@ -1,5 +1,6 @@
 'use strict'
 import knex from '@/db/knex'
+import { getServerOrigin, getServerVersion } from '@/modules/shared/helpers/envHelper'
 
 const Roles = () => knex('user_roles')
 const Scopes = () => knex('scopes')
@@ -20,8 +21,8 @@ export type ServerInfoParams = {
  */
 export async function getServerInfo() {
   const serverInfo = await Info().select('*').first()
-  serverInfo.version = process.env.SPECKLE_SERVER_VERSION || 'dev'
-  serverInfo.canonicalUrl = process.env.CANONICAL_URL || '127.0.0.1'
+  serverInfo.version = getServerVersion()
+  serverInfo.canonicalUrl = getServerOrigin()
   return serverInfo
 }
 

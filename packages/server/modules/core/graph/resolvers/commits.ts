@@ -1,5 +1,6 @@
 'use strict'
 
+import { AuthContext } from '@/modules/shared/authz'
 import { UserInputError, ApolloError } from 'apollo-server-express'
 import { withFilter } from 'graphql-subscriptions'
 import {
@@ -233,7 +234,7 @@ export = {
     async commits(
       parent: { id: string },
       args: { limit: number; cursor: string },
-      context: { userId: string }
+      context: AuthContext
     ) {
       return await getUserCommits(context.userId !== parent.id, parent.id, args)
     }
@@ -262,13 +263,15 @@ export = {
           parents: Nullable<string[]>
         }
       },
-      context: { userId: string }
+      context: AuthContext
     ) {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
         Roles.Stream.Contributor
       )
+
+      if (!context.userId) throw new Error('Invalid user id')
 
       const rateLimitResult = await getRateLimitResult(
         RateLimitAction.COMMIT_CREATE,
@@ -287,15 +290,17 @@ export = {
     },
 
     async commitUpdate(
-      _parent: unknown,
+      _parent: never,
       args: { commit: CommitUpdateInput },
-      context: { userId: string }
+      context: AuthContext
     ) {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
         Roles.Stream.Contributor
       )
+
+      if (!context.userId) throw new Error('Invalid user id')
 
       await updateCommitAndNotify(args.commit, context.userId)
       return true
@@ -304,7 +309,7 @@ export = {
     async commitReceive(
       parent: unknown,
       args: { input: CommitReceivedInput },
-      context: { userId: string }
+      context: AuthContext
     ) {
       await authorizeResolver(
         context.userId,
@@ -329,13 +334,15 @@ export = {
     async commitDelete(
       _parent: never,
       args: { commit: { id: string; streamId: string } },
-      context: { userId: string }
+      context: AuthContext
     ) {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
         Roles.Stream.Contributor
       )
+
+      if (!context.userId) throw new Error('Invalid user id')
 
       const deleted = await deleteCommitAndNotify(
         args.commit.id,
