@@ -256,12 +256,13 @@ async function countServerInvites(searchQuery) {
  *
  * @param {string|null} searchQuery
  * @param {number} limit
- * @param {number} offset
+ * @param {number|null} offset
  * @returns {Promise<import('@/modules/serverinvites/helpers/types').ServerInviteRecord[]>}
  */
 async function findServerInvites(searchQuery, limit, offset) {
   const q = findServerInvitesBaseQuery(searchQuery)
-  q.limit(limit).offset(offset)
+  q.limit(limit)
+  if (offset) q.offset(offset)
 
   return await q
 }

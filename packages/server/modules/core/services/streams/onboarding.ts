@@ -6,7 +6,7 @@ import { logger } from '@/logging/logging'
 import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
 import { getOnboardingBaseProject } from '@/modules/cross-server-sync/services/onboardingProject'
 import { updateStream } from '../../repositories/streams'
-import { getUser } from '../users'
+import { getUserById } from '../users'
 
 export async function createOnboardingStream(targetUserId: string) {
   const sourceStream = await getOnboardingBaseProject()
@@ -33,7 +33,7 @@ export async function createOnboardingStream(targetUserId: string) {
   }
 
   logger.info('Updating onboarding stream title')
-  const user = await getUser(targetUserId)
+  const user = await getUserById({ userId: targetUserId })
   const name = user.name.split(' ')[0]
   await updateStream({ id: newStream.id, name: `${name}'s First Project` })
   logger.info('Done updating onboarding stream title')

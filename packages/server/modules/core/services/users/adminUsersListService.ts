@@ -1,10 +1,18 @@
-const { countUsers, getUsers } = require('@/modules/core/services/users')
-const { resolveTarget } = require('@/modules/serverinvites/helpers/inviteHelper')
-const {
+import { countUsers, getUsers } from '@/modules/core/services/users'
+import { resolveTarget } from '@/modules/serverinvites/helpers/inviteHelper'
+import {
   countServerInvites,
   findServerInvites
-} = require('@/modules/serverinvites/repositories')
-const { clamp } = require('lodash')
+} from '@/modules/serverinvites/repositories'
+import { clamp } from 'lodash'
+import { UserRecord } from '@/modules/core/helpers/types'
+import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
+
+type PaginationParams = {
+  limit: number
+  offset: number
+  query: string | null
+}
 
 /**
  * @typedef {{
@@ -57,7 +65,7 @@ const { clamp } = require('lodash')
  * @param {PaginationParams} params
  * @returns {PaginationParams}
  */
-function sanitizeParams(params) {
+function sanitizeParams(params: PaginationParams) {
   params.limit = clamp(params.limit || 10, 1, 200)
   params.offset = Math.max(params.offset || 0, 0)
 }
@@ -67,7 +75,7 @@ function sanitizeParams(params) {
  * @param {PaginationParams} params
  * @returns {Promise<TotalCounts>}
  */
-async function getTotalCounts(params) {
+async function getTotalCounts(params: PaginationParams) {
   const { query } = params
 
   const [userCount, inviteCount] = await Promise.all([
@@ -88,7 +96,10 @@ async function getTotalCounts(params) {
  * @param {TotalCounts} totalCounts
  * @returns {UsersInvitesFilters}
  */
-function resolveLimitsAndOffsets(params, totalCounts) {
+function resolveLimitsAndOffsets(
+  params: PaginationParams,
+  totalCounts: { inviteCount: number }
+) {
   const { offset, limit } = params
   const { inviteCount } = totalCounts
 
@@ -109,7 +120,7 @@ function resolveLimitsAndOffsets(params, totalCounts) {
  * @param {import('@/modules/core/helpers/userHelper').UserRecord} user
  * @returns {AdminUsersListItem}
  */
-function mapUserToListItem(user) {
+function mapUserToListItem(user: UserRecord) {
   return {
     invitedUser: null,
     registeredUser: user,
@@ -121,7 +132,7 @@ function mapUserToListItem(user) {
  * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
  * @returns {AdminUsersListItem}
  */
-function mapInviteToListItem(invite) {
+function mapInviteToListItem(invite: ServerInviteRecord) {
   return {
     registeredUser: null,
     invitedUser: {
@@ -139,7 +150,10 @@ function mapInviteToListItem(invite) {
  * @param {TotalCounts} counts
  * @returns {Promise<AdminUsersListItem[]>}
  */
-async function retrieveItems(params, counts) {
+async function retrieveItems(
+  params: PaginationParams,
+  counts: { inviteCount: number }
+) {
   const { invitesFilter, usersFilter } = resolveLimitsAndOffsets(params, counts)
   const { query } = params
 
@@ -165,7 +179,7 @@ async function retrieveItems(params, counts) {
  * @param {PaginationParams} params
  * @returns {Promise<AdminUsersListCollection>}
  */
-async function getAdminUsersListCollection(params) {
+export async function getAdminUsersListCollection(params: PaginationParams) {
   sanitizeParams(params)
 
   const totalCounts = await getTotalCounts(params)
@@ -175,8 +189,4 @@ async function getAdminUsersListCollection(params) {
     items,
     totalCount: totalCounts.totalCount
   }
-}
-
-module.exports = {
-  getAdminUsersListCollection
 }

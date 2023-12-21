@@ -1,12 +1,12 @@
 'use strict'
 import { UserInputError } from 'apollo-server-express'
 import {
-  getUser,
   getUserByEmail,
   getUserRole,
   deleteUser,
   searchUsers,
-  changeUserRole
+  changeUserRole,
+  getUserById
 } from '@/modules/core/services/users'
 import { updateUserAndNotify } from '@/modules/core/services/users/management'
 import { saveActivity } from '@/modules/activitystream/services'
@@ -37,12 +37,12 @@ export = {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Read)
 
-      return await getUser(activeUserId)
+      return await getUserById({ userId: activeUserId })
     },
     async otherUser(_parent: never, args: { id?: string }) {
       const { id } = args
       if (!id) return null
-      return await getUser(id)
+      return await getUserById({ userId: id })
     },
     async user(parent: never, args: { id?: string }, context: AuthContext) {
       // User wants info about himself and he's not authenticated - just return null
@@ -53,11 +53,10 @@ export = {
       if (!args.id) await validateScopes(context.scopes, Scopes.Profile.Read)
       else await validateScopes(context.scopes, Scopes.Users.Read)
 
-      if (!args.id && !context.userId) {
-        throw new UserInputError('You must provide an user id.')
-      }
+      const userId = args.id || context.userId
+      if (!userId) throw new UserInputError('You must provide an user id.')
 
-      return await getUser(args.id || context.userId)
+      return await getUserById({ userId })
     },
 
     async adminUsers(
@@ -208,7 +207,9 @@ export = {
       args: { userConfirmation: { email: string }; user: string },
       context: AuthContext
     ) {
-      const user = await getUser(context.userId)
+      if (!context.userId)
+        throw new UserInputError('You must be logged in to delete a user.')
+      const user = await getUserById({ userId: context.userId })
 
       if (args.userConfirmation.email !== user.email) {
         throw new UserInputError('Malformed input: emails do not match.')

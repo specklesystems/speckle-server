@@ -26,7 +26,7 @@ import {
 } from '@/modules/core/services/commit/management'
 import { addCommitReceivedActivity } from '@/modules/activitystream/services/commitActivity'
 
-import { getUser } from '@/modules/core/services/users'
+import { getUserById } from '@/modules/core/services/users'
 
 import {
   isRateLimitBreached,
@@ -317,11 +317,13 @@ export = {
         Roles.Stream.Reviewer
       )
 
+      if (!context.userId) return false
+
       const commit = await getCommitById({
         streamId: args.input.streamId,
         id: args.input.commitId
       })
-      const user = await getUser(context.userId)
+      const user = await getUserById({ userId: context.userId })
 
       if (commit && user) {
         await addCommitReceivedActivity({ input: args.input, userId: user.id })
