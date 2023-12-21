@@ -139,7 +139,7 @@ module.exports = {
         limit: number
         orderBy: string
         query: string
-        cursor: string
+        cursor: Date
         visibility: 'all' | 'public' | 'private'
       }
     ) {
@@ -168,12 +168,34 @@ module.exports = {
       return await getPendingStreamCollaborators(streamId)
     },
 
-    async favoritedDate(parent: { id: string }, _args: never, ctx: AuthContext) {
+    async favoritedDate(
+      parent: { id: string },
+      _args: never,
+      ctx: AuthContext & {
+        loaders: {
+          streams: {
+            getUserFavoriteData: {
+              load: (streamId: string) => Promise<{ createdAt: Date }>
+            }
+          }
+        }
+      }
+    ) {
       const { id: streamId } = parent
       return await getActiveUserStreamFavoriteDate({ ctx, streamId })
     },
 
-    async favoritesCount(parent: { id: string }, _args: never, ctx: AuthContext) {
+    async favoritesCount(
+      parent: { id: string },
+      _args: never,
+      ctx: AuthContext & {
+        loaders: {
+          streams: {
+            getFavoritesCount: { load: (streamId: string) => Promise<number> }
+          }
+        }
+      }
+    ) {
       const { id: streamId } = parent
 
       return await getStreamFavoritesCount({ ctx, streamId })
@@ -229,7 +251,13 @@ module.exports = {
     async totalOwnedStreamsFavorites(
       parent: { id: string },
       _args: never,
-      ctx: AuthContext
+      ctx: AuthContext & {
+        loaders: {
+          streams: {
+            getOwnedFavoritesCount: { load: (userId: string) => Promise<number> }
+          }
+        }
+      }
     ) {
       const { id: userId } = parent
       return await getOwnedFavoritesCount({ ctx, userId })
@@ -249,7 +277,13 @@ module.exports = {
     async totalOwnedStreamsFavorites(
       parent: { id: string },
       _args: never,
-      ctx: AuthContext
+      ctx: AuthContext & {
+        loaders: {
+          streams: {
+            getOwnedFavoritesCount: { load: (userId: string) => Promise<number> }
+          }
+        }
+      }
     ) {
       const { id: userId } = parent
       return await getOwnedFavoritesCount({ ctx, userId })
