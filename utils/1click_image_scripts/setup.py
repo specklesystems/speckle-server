@@ -168,10 +168,10 @@ def main():
         yaml.dump(yml_doc, f)
 
     ###
-    ### Run the new docker-compose file (will update containers if already running)
+    ### Run the new docker compose file (will update containers if already running)
     #########
     subprocess.run(
-        ["bash", "-c", f'cd "{FILE_PATH}"; docker-compose up -d'], check=True
+        ["bash", "-c", f'cd "{FILE_PATH}"; docker compose up -d'], check=True
     )
 
     ###

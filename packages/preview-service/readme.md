@@ -34,4 +34,4 @@ You must limit the PreviewService container memory to a value that you want to a
 
 To limit the container memory when running with `docker run`, you can use the `-m` flag.
 
-With docker-compose, you must use a docker-compose file at version 2 (not 3) and use the `mem_limit` option.
+With docker compose, you must use a docker compose file at version 2 (not 3) and use the `mem_limit` option.
