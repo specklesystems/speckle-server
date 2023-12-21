@@ -1,14 +1,15 @@
 'use strict'
-const zlib = require('zlib')
-const { corsMiddleware } = require('@/modules/core/configs/cors')
+import zlib from 'zlib'
+import { corsMiddleware } from '@/modules/core/configs/cors'
 
-const { validatePermissionsReadStream } = require('./authUtils')
-const { SpeckleObjectsStream } = require('./speckleObjectsStream')
-const { getObjectsStream } = require('../services/objects')
+import { validatePermissionsReadStream } from './authUtils'
+import { SpeckleObjectsStream } from './speckleObjectsStream'
+import { getObjectsStream } from '../services/objects'
 
-const { pipeline, PassThrough } = require('stream')
+import { pipeline, PassThrough } from 'stream'
+import type { Application } from 'express'
 
-module.exports = (app) => {
+export default (app: Application) => {
   app.options('/api/getobjects/:streamId', corsMiddleware())
 
   app.post('/api/getobjects/:streamId', corsMiddleware(), async (req, res) => {
