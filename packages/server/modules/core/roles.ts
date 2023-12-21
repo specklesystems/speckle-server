@@ -1,12 +1,12 @@
 'use strict'
-const { Roles } = require('@/modules/core/helpers/mainConstants')
+import { Roles } from '@/modules/core/helpers/mainConstants'
 
 // Conventions:
 // "weight: 1000" => resource owner
 // "weight: 100" => resource viewer / basic user
 // Anything in between 100 and 1000 can be used for escalating privileges.
 
-module.exports = [
+export default [
   /**
    * Roles for "this" server.
    */
