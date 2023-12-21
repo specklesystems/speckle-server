@@ -1,4 +1,4 @@
-import { Roles, wait } from '@speckle/shared'
+import { Roles, isStreamRole, wait } from '@speckle/shared'
 import {
   addStreamCreatedActivity,
   addStreamDeletedActivity,
@@ -143,7 +143,7 @@ export async function updateStreamRoleAndNotify(
 
   if (params.role) {
     // Updating role
-    if (!(Object.values(Roles.Stream) as string[]).includes(params.role)) {
+    if (!isStreamRole(params.role)) {
       throw new StreamUpdateError('Invalid role specified', {
         info: { params }
       })

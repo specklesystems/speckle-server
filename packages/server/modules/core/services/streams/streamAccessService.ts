@@ -1,21 +1,21 @@
-const { authorizeResolver } = require(`@/modules/shared`)
+import { authorizeResolver } from '@/modules/shared'
 
-const { Roles } = require('@/modules/core/helpers/mainConstants')
-const { LogicError } = require('@/modules/shared/errors')
-const { ForbiddenError, UserInputError } = require('apollo-server-express')
-const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
-const {
+import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
+import { LogicError } from '@/modules/shared/errors'
+import { ForbiddenError, UserInputError } from 'apollo-server-express'
+import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
+import {
   addStreamPermissionsAddedActivity,
   addStreamPermissionsRevokedActivity,
   addStreamInviteAcceptedActivity
-} = require('@/modules/activitystream/services/streamActivity')
-const {
+} from '@/modules/activitystream/services/streamActivity'
+import {
   getStream,
   revokeStreamPermissions,
   grantStreamPermissions
-} = require('@/modules/core/repositories/streams')
+} from '@/modules/core/repositories/streams'
 
-const { ServerAcl } = require('@/modules/core/dbSchema')
+import { ServerAcl } from '@/modules/core/dbSchema'
 
 /**
  * Check if user is a stream collaborator
@@ -23,9 +23,9 @@ const { ServerAcl } = require('@/modules/core/dbSchema')
  * @param {string} streamId
  * @returns
  */
-async function isStreamCollaborator(userId, streamId) {
+export async function isStreamCollaborator(userId: string, streamId: string) {
   const stream = await getStream({ streamId, userId })
-  return !!stream.role
+  return !!stream?.role
 }
 
 /**
@@ -39,7 +39,11 @@ async function isStreamCollaborator(userId, streamId) {
  * @param {string} [expectedRole] Defaults to reviewer
  * @returns {Promise<boolean>}
  */
-async function validateStreamAccess(userId, streamId, expectedRole) {
+export async function validateStreamAccess(
+  userId: string | undefined | null,
+  streamId: string,
+  expectedRole?: StreamRoles
+) {
   expectedRole = expectedRole || Roles.Stream.Reviewer
 
   const streamRoles = Object.values(Roles.Stream)
@@ -47,7 +51,7 @@ async function validateStreamAccess(userId, streamId, expectedRole) {
     throw new LogicError('Unexpected stream role')
   }
 
-  userId = userId || null
+  if (!userId) userId = null
 
   try {
     await authorizeResolver(userId, streamId, expectedRole)
@@ -78,7 +82,11 @@ async function validateStreamAccess(userId, streamId, expectedRole) {
  * @param {string} userId ID of user that should be removed
  * @param {string} removedById ID of user that is doing the removing
  */
-async function removeStreamCollaborator(streamId, userId, removedById) {
+export async function removeStreamCollaborator(
+  streamId: string,
+  userId: string,
+  removedById: string
+) {
   if (userId !== removedById) {
     // User must be a stream owner to remove others
     await validateStreamAccess(removedById, streamId, Roles.Stream.Owner)
@@ -111,12 +119,12 @@ async function removeStreamCollaborator(streamId, userId, removedById) {
  *  fromInvite?: boolean,
  * }} param4
  */
-async function addOrUpdateStreamCollaborator(
-  streamId,
-  userId,
-  role,
-  addedById,
-  { fromInvite } = {}
+export async function addOrUpdateStreamCollaborator(
+  streamId: string,
+  userId: string,
+  role: StreamRoles,
+  addedById: string,
+  { fromInvite } = { fromInvite: false }
 ) {
   const validRoles = Object.values(Roles.Stream)
   if (!validRoles.includes(role)) {
@@ -163,11 +171,4 @@ async function addOrUpdateStreamCollaborator(
   }
 
   return stream
-}
-
-module.exports = {
-  validateStreamAccess,
-  removeStreamCollaborator,
-  addOrUpdateStreamCollaborator,
-  isStreamCollaborator
 }
