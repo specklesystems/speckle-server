@@ -1,14 +1,12 @@
 'use strict'
-const zlib = require('zlib')
-const { corsMiddleware } = require('@/modules/core/configs/cors')
+import zlib from 'zlib'
+import { corsMiddleware } from '@/modules/core/configs/cors'
+import { validatePermissionsWriteStream } from './authUtils'
+import { hasObjects } from '@/modules/core/services/objects'
+import { chunk } from 'lodash'
+import type { Application } from 'express'
 
-const { validatePermissionsWriteStream } = require('./authUtils')
-
-const { hasObjects } = require('../services/objects')
-
-const { chunk } = require('lodash')
-
-module.exports = (app) => {
+export default (app: Application) => {
   app.options('/api/diff/:streamId', corsMiddleware())
 
   app.post('/api/diff/:streamId', corsMiddleware(), async (req, res) => {
