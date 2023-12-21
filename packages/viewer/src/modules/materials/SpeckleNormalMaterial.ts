@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
-import { speckleNormalVert } from './shaders/speckle-normal-vert'
-import { speckleNormalFrag } from './shaders/speckle-normal-frag'
-import { UniformsUtils, ShaderLib, Vector3, MeshNormalMaterial, IUniform } from 'three'
-import { Matrix4 } from 'three'
+import { IUniform, Matrix4, ShaderLib, Vector3 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import SpeckleMesh from '../objects/SpeckleMesh'
 import { ExtendedMeshNormalMaterial, Uniforms } from './SpeckleMaterial'
+import { speckleNormalFrag } from './shaders/speckle-normal-frag'
+import { speckleNormalVert } from './shaders/speckle-normal-vert'
 
 class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()

@@ -1,8 +1,8 @@
-import { useField } from 'vee-validate'
-import type { RuleExpression } from 'vee-validate'
-import type { Ref, ToRefs } from 'vue'
 import type { Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
+import type { RuleExpression } from 'vee-validate'
+import { useField } from 'vee-validate'
+import type { Ref, ToRefs } from 'vue'
 
 /**
  * Common setup for text input & textarea fields

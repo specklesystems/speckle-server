@@ -1,9 +1,9 @@
-import * as repo from '@/modules/notifications/repositories'
 import {
   NotificationChannel,
-  NotificationType,
-  NotificationPreferences
+  NotificationPreferences,
+  NotificationType
 } from '@/modules/notifications/helpers/types'
+import * as repo from '@/modules/notifications/repositories'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 
 export async function getUserNotificationPreferences(

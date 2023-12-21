@@ -1,12 +1,12 @@
-import { CommentRecord } from '@/modules/comments/helpers/types'
-import { CommentsEmitter, CommentsEvents } from '@/modules/comments/events/emitter'
-import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
-import type { JSONContent } from '@tiptap/core'
-import { iterateContentNodes } from '@/modules/core/services/richTextEditorService'
-import { publishNotification } from '@/modules/notifications/services/publication'
-import { difference, flatten } from 'lodash'
-import { NotificationType } from '@/modules/notifications/helpers/types'
 import { addStreamCommentMentionActivity } from '@/modules/activitystream/services/streamActivity'
+import { CommentsEmitter, CommentsEvents } from '@/modules/comments/events/emitter'
+import { CommentRecord } from '@/modules/comments/helpers/types'
+import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
+import { iterateContentNodes } from '@/modules/core/services/richTextEditorService'
+import { NotificationType } from '@/modules/notifications/helpers/types'
+import { publishNotification } from '@/modules/notifications/services/publication'
+import type { JSONContent } from '@tiptap/core'
+import { difference, flatten } from 'lodash'
 
 function findMentionedUserIds(doc: JSONContent) {
   const mentionedUserIds = new Set<string>()

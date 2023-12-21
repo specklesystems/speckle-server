@@ -1,4 +1,4 @@
-import { moduleLogger, crossServerSyncLogger } from '@/logging/logging'
+import { crossServerSyncLogger, moduleLogger } from '@/logging/logging'
 import { ensureOnboardingProject } from '@/modules/cross-server-sync/services/onboardingProject'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 

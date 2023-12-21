@@ -1,35 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import DataLoader from 'dataloader'
-import {
-  getBatchUserFavoriteData,
-  getBatchStreamFavoritesCounts,
-  getOwnedFavoritesCountByUserIds,
-  getStreams,
-  getStreamRoles,
-  getStreamsSourceApps,
-  getCommitStreams,
-  StreamWithCommitId
-} from '@/modules/core/repositories/streams'
-import { UserWithOptionalRole, getUsers } from '@/modules/core/repositories/users'
-import { keyBy } from 'lodash'
-import { getInvites } from '@/modules/serverinvites/repositories'
-import { AuthContext } from '@/modules/shared/authz'
-import {
-  BranchRecord,
-  CommitRecord,
-  LimitedUserRecord,
-  StreamFavoriteRecord,
-  StreamRecord,
-  UsersMetaRecord
-} from '@/modules/core/helpers/types'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
-import {
-  getCommitBranches,
-  getSpecificBranchCommits,
-  getStreamCommitCounts
-} from '@/modules/core/repositories/commits'
-import { ResourceIdentifier, Scope } from '@/modules/core/graph/generated/graphql'
+import { getAppScopes } from '@/modules/auth/repositories'
+import { getAutomationFunctionRunResultVersions } from '@/modules/automations/repositories/automations'
+import { CommentRecord } from '@/modules/comments/helpers/types'
 import {
   getBranchCommentCounts,
   getCommentParents,
@@ -40,20 +12,48 @@ import {
   getCommitCommentCounts,
   getStreamCommentCounts
 } from '@/modules/comments/repositories/comments'
+import { Users } from '@/modules/core/dbSchema'
+import { ResourceIdentifier, Scope } from '@/modules/core/graph/generated/graphql'
+import { metaHelpers } from '@/modules/core/helpers/meta'
+import {
+  BranchRecord,
+  CommitRecord,
+  LimitedUserRecord,
+  StreamFavoriteRecord,
+  StreamRecord,
+  UsersMetaRecord
+} from '@/modules/core/helpers/types'
 import {
   getBranchCommitCounts,
-  getBranchesByIds,
   getBranchLatestCommits,
+  getBranchesByIds,
   getStreamBranchCounts,
   getStreamBranchesByName
 } from '@/modules/core/repositories/branches'
-import { CommentRecord } from '@/modules/comments/helpers/types'
-import { metaHelpers } from '@/modules/core/helpers/meta'
-import { Users } from '@/modules/core/dbSchema'
-import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
+import {
+  getCommitBranches,
+  getSpecificBranchCommits,
+  getStreamCommitCounts
+} from '@/modules/core/repositories/commits'
+import {
+  StreamWithCommitId,
+  getBatchStreamFavoritesCounts,
+  getBatchUserFavoriteData,
+  getCommitStreams,
+  getOwnedFavoritesCountByUserIds,
+  getStreamRoles,
+  getStreams,
+  getStreamsSourceApps
+} from '@/modules/core/repositories/streams'
+import { UserWithOptionalRole, getUsers } from '@/modules/core/repositories/users'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
-import { getAutomationFunctionRunResultVersions } from '@/modules/automations/repositories/automations'
-import { getAppScopes } from '@/modules/auth/repositories'
+import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
+import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
+import { getInvites } from '@/modules/serverinvites/repositories'
+import { AuthContext } from '@/modules/shared/authz'
+import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import DataLoader from 'dataloader'
+import { keyBy } from 'lodash'
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage

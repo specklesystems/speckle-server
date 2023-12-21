@@ -1,9 +1,9 @@
-import type { MaybeRef } from '@vueuse/core'
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
-import { useAuthCookie } from '~~/lib/auth/composables/auth'
-import { onProjectVersionsPreviewGeneratedSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { useSubscription } from '@vue/apollo-composable'
+import type { MaybeRef } from '@vueuse/core'
+import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { useLock } from '~~/lib/common/composables/singleton'
+import { onProjectVersionsPreviewGeneratedSubscription } from '~~/lib/projects/graphql/subscriptions'
 
 const previewUrlProjectIdRegexp = /\/preview\/([\w\d]+)\//i
 const previewUrlCommitIdRegexp = /\/commits\/([\w\d]+)/i

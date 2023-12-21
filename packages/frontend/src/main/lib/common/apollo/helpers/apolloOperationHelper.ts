@@ -1,11 +1,11 @@
 import { isUndefinedOrVoid } from '@/helpers/typeHelpers'
 import {
-  ApolloError,
-  FetchResult,
-  DataProxy,
   ApolloCache,
-  defaultDataIdFromObject,
-  Reference
+  ApolloError,
+  DataProxy,
+  FetchResult,
+  Reference,
+  defaultDataIdFromObject
 } from '@apollo/client/core'
 import { GraphQLError } from 'graphql'
 

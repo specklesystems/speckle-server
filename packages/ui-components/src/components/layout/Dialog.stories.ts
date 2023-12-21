@@ -1,9 +1,9 @@
-import type { Meta, StoryObj } from '@storybook/vue3'
-import LayoutDialog from '~~/src/components/layout/Dialog.vue'
-import FormButton from '~~/src/components/form/Button.vue'
-import { ref } from 'vue'
 import { action } from '@storybook/addon-actions'
+import type { Meta, StoryObj } from '@storybook/vue3'
+import { ref } from 'vue'
 import { directive as vTippy } from 'vue-tippy'
+import FormButton from '~~/src/components/form/Button.vue'
+import LayoutDialog from '~~/src/components/layout/Dialog.vue'
 
 export default {
   component: LayoutDialog,

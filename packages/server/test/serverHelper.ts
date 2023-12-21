@@ -1,5 +1,5 @@
 import { buildApolloServer } from '@/app'
-import { Roles, AllScopes } from '@/modules/core/helpers/mainConstants'
+import { AllScopes, Roles } from '@/modules/core/helpers/mainConstants'
 import { addLoadersToCtx } from '@/modules/shared/middleware'
 import net from 'net'
 

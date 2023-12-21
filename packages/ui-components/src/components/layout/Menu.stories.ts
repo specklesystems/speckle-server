@@ -1,10 +1,10 @@
-import type { Meta, StoryObj } from '@storybook/vue3'
-import LayoutMenu from '~~/src/components/layout/Menu.vue'
-import type { LayoutMenuItem } from '~~/src/helpers/layout/components'
-import FormButton from '~~/src/components/form/Button.vue'
 import { EllipsisVerticalIcon, StarIcon } from '@heroicons/vue/24/solid'
 import { action } from '@storybook/addon-actions'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import { ref } from 'vue'
+import FormButton from '~~/src/components/form/Button.vue'
+import LayoutMenu from '~~/src/components/layout/Menu.vue'
+import type { LayoutMenuItem } from '~~/src/helpers/layout/components'
 
 type StoryType = StoryObj<
   Record<string, unknown> & {

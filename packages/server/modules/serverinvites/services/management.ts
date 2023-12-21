@@ -1,4 +1,3 @@
-import { Roles } from '@speckle/shared'
 import {
   MutationStreamInviteUseArgs,
   ProjectInviteCreateInput,
@@ -7,12 +6,13 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
-  buildUserTarget,
-  ResourceTargets
+  ResourceTargets,
+  buildUserTarget
 } from '@/modules/serverinvites/helpers/inviteHelper'
 import { createAndSendInvite } from '@/modules/serverinvites/services/inviteCreationService'
-import { has } from 'lodash'
 import { finalizeStreamInvite } from '@/modules/serverinvites/services/inviteProcessingService'
+import { Roles } from '@speckle/shared'
+import { has } from 'lodash'
 
 type FullProjectInviteCreateInput = ProjectInviteCreateInput & { projectId: string }
 

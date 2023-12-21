@@ -1,7 +1,7 @@
-import type { Meta, StoryObj } from '@storybook/vue3'
-import CommonBadge from '~~/src/components/common/Badge.vue'
 import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { FaceSmileIcon } from '@heroicons/vue/24/outline'
+import type { Meta, StoryObj } from '@storybook/vue3'
+import CommonBadge from '~~/src/components/common/Badge.vue'
 
 export default {
   component: CommonBadge,

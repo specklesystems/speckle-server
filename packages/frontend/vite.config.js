@@ -1,8 +1,8 @@
-import path from 'path'
-import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue2'
-import Components from 'unplugin-vue-components/vite'
+import path from 'path'
 import { VuetifyResolver } from 'unplugin-vue-components/resolvers'
+import Components from 'unplugin-vue-components/vite'
+import { defineConfig } from 'vite'
 import gql from 'vite-plugin-simple-gql'
 
 const port = '8080'

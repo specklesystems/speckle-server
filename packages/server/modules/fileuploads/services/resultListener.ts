@@ -1,13 +1,13 @@
-import { FileImportSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
-import { listenFor, MessageType } from '@/modules/core/utils/dbNotificationListener'
-import { getFileInfo } from '@/modules/fileuploads/repositories/fileUploads'
+import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
 import {
   ProjectFileImportUpdatedMessageType,
   ProjectPendingModelsUpdatedMessageType,
   ProjectPendingVersionsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
-import { addBranchCreatedActivity } from '@/modules/activitystream/services/branchActivity'
+import { MessageType, listenFor } from '@/modules/core/utils/dbNotificationListener'
+import { getFileInfo } from '@/modules/fileuploads/repositories/fileUploads'
+import { FileImportSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { trim } from 'lodash'
 
 const branchCreatedPayloadRegexp = /^(.+):::(.+):::(.+):::(.+)$/i

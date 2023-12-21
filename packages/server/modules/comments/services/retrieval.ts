@@ -1,17 +1,17 @@
-import { Optional } from '@speckle/shared'
 import {
-  PaginatedCommitCommentsParams,
-  getPaginatedCommitComments as getPaginatedCommitCommentsDb,
-  getPaginatedCommitCommentsTotalCount,
   PaginatedBranchCommentsParams,
+  PaginatedCommitCommentsParams,
+  PaginatedProjectCommentsParams,
   getPaginatedBranchComments as getPaginatedBranchCommentsDb,
   getPaginatedBranchCommentsTotalCount,
+  getPaginatedCommitComments as getPaginatedCommitCommentsDb,
+  getPaginatedCommitCommentsTotalCount,
   getPaginatedProjectComments as getPaginatedProjectCommentsDb,
   getPaginatedProjectCommentsTotalCount,
-  PaginatedProjectCommentsParams,
   resolvePaginatedProjectCommentsLatestModelResources
 } from '@/modules/comments/repositories/comments'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
+import { Optional } from '@speckle/shared'
 import { isUndefined } from 'lodash'
 
 export async function getPaginatedCommitComments(

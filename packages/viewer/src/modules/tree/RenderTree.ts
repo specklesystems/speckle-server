@@ -1,10 +1,10 @@
+import Logger from 'js-logger'
 import { Box3, Matrix4 } from 'three'
+import { Geometry } from '../converter/Geometry'
 import { GeometryConverter, SpeckleType } from '../converter/GeometryConverter'
-import { TreeNode, WorldTree } from './WorldTree'
 import Materials from '../materials/Materials'
 import { NodeRenderData, NodeRenderView } from './NodeRenderView'
-import { Geometry } from '../converter/Geometry'
-import Logger from 'js-logger'
+import { TreeNode, WorldTree } from './WorldTree'
 
 export class RenderTree {
   private tree: WorldTree

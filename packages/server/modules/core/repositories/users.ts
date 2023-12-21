@@ -1,11 +1,11 @@
 import { ServerAcl, Users, knex } from '@/modules/core/dbSchema'
+import { UserValidationError } from '@/modules/core/errors/user'
+import { metaHelpers } from '@/modules/core/helpers/meta'
 import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { clamp, isArray } from 'lodash'
-import { metaHelpers } from '@/modules/core/helpers/meta'
-import { UserValidationError } from '@/modules/core/errors/user'
-import { Knex } from 'knex'
 import { Roles, ServerRoles } from '@speckle/shared'
+import { Knex } from 'knex'
+import { clamp, isArray } from 'lodash'
 
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**

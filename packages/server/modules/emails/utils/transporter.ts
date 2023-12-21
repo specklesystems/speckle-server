@@ -1,5 +1,5 @@
 import { logger, moduleLogger } from '@/logging/logging'
-import { createTransport, Transporter } from 'nodemailer'
+import { Transporter, createTransport } from 'nodemailer'
 
 let transporter: Transporter | undefined = undefined
 

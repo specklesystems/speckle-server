@@ -1,8 +1,8 @@
-import { writableAsyncComputed as originalWritableAsyncComputed } from '@speckle/ui-components'
 import type {
   AsyncWritableComputedOptions,
   AsyncWritableComputedRef
 } from '@speckle/ui-components'
+import { writableAsyncComputed as originalWritableAsyncComputed } from '@speckle/ui-components'
 
 export type { AsyncWritableComputedOptions, AsyncWritableComputedRef }
 

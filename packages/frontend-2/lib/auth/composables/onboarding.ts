@@ -1,18 +1,18 @@
 import { useApolloClient } from '@vue/apollo-composable'
-import { useMixpanel } from '~~/lib/core/composables/mp'
-import { UnsupportedEnvironmentError } from '~~/lib/core/errors/base'
-import type { OnboardingState } from '~~/lib/auth/helpers/onboarding'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { OnboardingError } from '~~/lib/auth/errors/errors'
 import { finishOnboardingMutation } from '~~/lib/auth/graphql/mutations'
+import type { OnboardingState } from '~~/lib/auth/helpers/onboarding'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { graphql } from '~~/lib/common/generated/gql'
 import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage,
   updateCacheByFilter
 } from '~~/lib/common/helpers/graphql'
-import { graphql } from '~~/lib/common/generated/gql'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { useNavigateToHome } from '~~/lib/common/helpers/route'
+import { useMixpanel } from '~~/lib/core/composables/mp'
+import { UnsupportedEnvironmentError } from '~~/lib/core/errors/base'
 import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
 
 const ONBOARDING_PROP_INDUSTRY = 'onboarding_v1_industry'

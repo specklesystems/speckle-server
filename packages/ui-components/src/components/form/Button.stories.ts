@@ -1,11 +1,11 @@
-import { userEvent, within } from '@storybook/testing-library'
-import FormButton from '~~/src/components/form/Button.vue'
-import type { StoryObj, Meta } from '@storybook/vue3'
-import { wait } from '@speckle/shared'
-import { mergeStories } from '~~/src/stories/helpers/storybook'
-import type { VuePlayFunction } from '~~/src/stories/helpers/storybook'
 import { XMarkIcon } from '@heroicons/vue/24/solid'
+import { wait } from '@speckle/shared'
+import { userEvent, within } from '@storybook/testing-library'
+import type { Meta, StoryObj } from '@storybook/vue3'
+import FormButton from '~~/src/components/form/Button.vue'
 import { rightClick } from '~~/src/helpers/testing'
+import type { VuePlayFunction } from '~~/src/stories/helpers/storybook'
+import { mergeStories } from '~~/src/stories/helpers/storybook'
 
 export default {
   component: FormButton,

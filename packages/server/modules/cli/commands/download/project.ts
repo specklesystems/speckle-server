@@ -1,6 +1,6 @@
-import { CommandModule } from 'yargs'
 import { cliLogger } from '@/logging/logging'
 import { downloadProject } from '@/modules/cross-server-sync/services/project'
+import { CommandModule } from 'yargs'
 
 const command: CommandModule<
   unknown,

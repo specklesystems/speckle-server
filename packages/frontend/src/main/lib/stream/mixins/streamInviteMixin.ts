@@ -1,9 +1,9 @@
 import {
-  StreamInviteQuery,
   StreamInviteDocument,
-  UserStreamInvitesQuery,
+  StreamInviteQuery,
+  UseStreamInviteDocument,
   UserStreamInvitesDocument,
-  UseStreamInviteDocument
+  UserStreamInvitesQuery
 } from '@/graphql/generated/graphql'
 import { MaybeFalsy, Nullable, vueWithMixins } from '@/helpers/typeHelpers'
 import { convertThrowIntoFetchResult } from '@/main/lib/common/apollo/helpers/apolloOperationHelper'

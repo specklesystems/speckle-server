@@ -20,9 +20,9 @@ import {
 } from 'three'
 import { TransformStorage } from '../batching/Batcher'
 import { BatchObject } from '../batching/BatchObject'
-import { SpeckleBatchBVH } from './SpeckleBatchBVH'
-import { ObjectLayers } from '../SpeckleRenderer'
 import Materials from '../materials/Materials'
+import { ObjectLayers } from '../SpeckleRenderer'
+import { SpeckleBatchBVH } from './SpeckleBatchBVH'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()

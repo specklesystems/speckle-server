@@ -1,5 +1,5 @@
-import { gql } from '@apollo/client/core'
 import { usersOwnInviteFieldsFragment } from '@/graphql/fragments/user'
+import { gql } from '@apollo/client/core'
 
 export const streamInviteQuery = gql`
   query StreamInvite($streamId: String!, $token: String) {

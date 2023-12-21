@@ -1,9 +1,9 @@
 import ObjectLoader from '@speckle/objectloader'
-import { ViewerEvent } from '../IViewer'
-import Converter from './converter/Converter'
-import EventEmitter from './EventEmitter'
 import Logger from 'js-logger'
+import { ViewerEvent } from '../IViewer'
+import EventEmitter from './EventEmitter'
 import { Viewer } from './Viewer'
+import Converter from './converter/Converter'
 /**
  * Helper wrapper around the ObjectLoader class, with some built in assumptions.
  */

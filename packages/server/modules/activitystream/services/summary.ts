@@ -1,16 +1,16 @@
-import {
-  getActivity,
-  getActiveUserStreams,
-  UserStreams
-} from '@/modules/activitystream/repositories'
 import { StreamScopeActivity } from '@/modules/activitystream/helpers/types'
+import {
+  UserStreams,
+  getActiveUserStreams,
+  getActivity
+} from '@/modules/activitystream/repositories'
+import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
+import { getUser } from '@/modules/core/repositories/users'
+import { getStream } from '@/modules/core/services/streams'
 import {
   NotificationPublisher,
   NotificationType
 } from '@/modules/notifications/helpers/types'
-import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
-import { getUser } from '@/modules/core/repositories/users'
-import { getStream } from '@/modules/core/services/streams'
 
 export type StreamActivitySummary = {
   stream: StreamRecord | null

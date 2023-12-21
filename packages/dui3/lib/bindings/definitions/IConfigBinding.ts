@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/require-await */
 
-import { BaseBridge } from '~~/lib/bridge/base'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
+import { BaseBridge } from '~~/lib/bridge/base'
 
 /**
  * The name under which this binding will be registered.

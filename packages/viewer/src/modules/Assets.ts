@@ -1,16 +1,16 @@
+import Logger from 'js-logger'
 import {
-  Texture,
-  PMREMGenerator,
-  WebGLRenderer,
-  TextureLoader,
   Color,
-  DataTexture
+  DataTexture,
+  PMREMGenerator,
+  Texture,
+  TextureLoader,
+  WebGLRenderer
 } from 'three'
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js'
+import { Font, FontLoader } from 'three/examples/jsm/loaders/FontLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
-import { FontLoader, Font } from 'three/examples/jsm/loaders/FontLoader.js'
 import { Asset, AssetType } from '../IViewer'
-import Logger from 'js-logger'
 
 export class Assets {
   private static _cache: { [name: string]: Texture | Font } = {}

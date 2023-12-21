@@ -3,29 +3,29 @@ import {
   EffectComposer,
   Pass
 } from 'three/examples/jsm/postprocessing/EffectComposer.js'
-import Batcher from '../batching/Batcher'
 import SpeckleRenderer, { ObjectLayers } from '../SpeckleRenderer'
+import Batcher from '../batching/Batcher'
 import { ApplySAOPass } from './ApplyAOPass'
+import { ColorPass } from './ColorPass'
 import { CopyOutputPass } from './CopyOutputPass'
 import { DepthPass, DepthSize, DepthType } from './DepthPass'
-import { NormalsPass } from './NormalsPass'
 import {
   DefaultDynamicAOPassParams,
-  DynamicSAOPass,
   DynamicAOOutputType,
   DynamicAOPassParams,
+  DynamicSAOPass,
   NormalsType
 } from './DynamicAOPass'
+import { NormalsPass } from './NormalsPass'
+import { OverlayPass } from './OverlayPass'
+import { SpecklePass } from './SpecklePass'
 import {
   DefaultStaticAoPassParams,
   StaticAOPass,
   StaticAoPassParams
 } from './StaticAOPass'
-import { SpecklePass } from './SpecklePass'
-import { ColorPass } from './ColorPass'
-import { StencilPass } from './StencilPass'
 import { StencilMaskPass } from './StencilMaskPass'
-import { OverlayPass } from './OverlayPass'
+import { StencilPass } from './StencilPass'
 
 export enum RenderType {
   NORMAL,

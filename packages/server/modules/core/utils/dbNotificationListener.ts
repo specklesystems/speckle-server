@@ -1,6 +1,6 @@
-import { MaybeAsync, Optional } from '@speckle/shared'
 import { dbNotificationLogger, moduleLogger } from '@/logging/logging'
 import { knex } from '@/modules/core/dbSchema'
+import { MaybeAsync, Optional } from '@speckle/shared'
 import * as Knex from 'knex'
 import * as pg from 'pg'
 

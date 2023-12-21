@@ -1,8 +1,8 @@
-import { join } from 'path'
-import { withoutLeadingSlash } from 'ufo'
-import { sanitizeFilePath } from 'mlly'
-import { filename } from 'pathe/utils'
 import legacy from '@vitejs/plugin-legacy'
+import { sanitizeFilePath } from 'mlly'
+import { join } from 'path'
+import { filename } from 'pathe/utils'
+import { withoutLeadingSlash } from 'ufo'
 
 // Copied out from nuxt vite-builder source to correctly build output chunk/entry/asset/etc file names
 const buildOutputFileName = (chunkName: string) =>

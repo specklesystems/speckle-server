@@ -1,17 +1,17 @@
+import { SpeckleViewer, TimeoutError } from '@speckle/shared'
+import type { NumericPropertyInfo } from '@speckle/viewer'
+import { get } from 'lodash-es'
+import { Box3, Vector3 } from 'three'
+import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
   useInjectedViewerState,
   useResetUiState
 } from '~~/lib/viewer/composables/setup'
-import { isNonNullable } from '~~/lib/common/helpers/utils'
-import { SpeckleViewer, TimeoutError } from '@speckle/shared'
-import { get } from 'lodash-es'
-import { Vector3, Box3 } from 'three'
 import {
   useDiffUtilities,
   useFilterUtilities,
   useSelectionUtilities
 } from '~~/lib/viewer/composables/ui'
-import type { NumericPropertyInfo } from '@speckle/viewer'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 

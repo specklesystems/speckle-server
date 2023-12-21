@@ -1,8 +1,8 @@
 import { Box3, Camera, PerspectiveCamera, Plane, Vector2, Vector3 } from 'three'
-import { MeasurementPointGizmo } from './MeasurementPointGizmo'
 import { ObjectLayers } from '../SpeckleRenderer'
 import { getConversionFactor } from '../converter/Units'
 import { Measurement, MeasurementState } from './Measurement'
+import { MeasurementPointGizmo } from './MeasurementPointGizmo'
 
 export class PerpendicularMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo = null

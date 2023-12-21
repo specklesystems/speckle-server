@@ -1,10 +1,10 @@
-import { computed } from 'vue'
+import { clamp } from 'lodash'
 import type { ToRefs } from 'vue'
+import { computed } from 'vue'
 import type {
   HorizontalOrVertical,
   StepCoreType
 } from '~~/src/helpers/common/components'
-import { clamp } from 'lodash'
 import { TailwindBreakpoints, markClassesUsed } from '~~/src/helpers/tailwind'
 
 export type StepsPadding = 'base' | 'xs' | 'sm'

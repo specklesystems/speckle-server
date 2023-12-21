@@ -14,11 +14,11 @@ import {
   getViewerResourcesForComment,
   getViewerResourcesFromLegacyIdentifiers
 } from '@/modules/core/services/commit/viewerResources'
-import { pubsub } from '@/modules/shared/utils/subscriptions'
 import {
   CommentSubscriptions,
   ProjectSubscriptions,
-  publish
+  publish,
+  pubsub
 } from '@/modules/shared/utils/subscriptions'
 import { MutationCommentArchiveArgs } from '@/test/graphql/generated/graphql'
 import { has } from 'lodash'

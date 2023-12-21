@@ -1,10 +1,9 @@
-import { logger } from './logging'
 import { randomUUID } from 'crypto'
-import HttpLogger from 'pino-http'
-import { IncomingMessage } from 'http'
 import { NextFunction, Response } from 'express'
+import { IncomingMessage } from 'http'
 import pino, { SerializedResponse } from 'pino'
-import { GenReqId } from 'pino-http'
+import HttpLogger, { GenReqId } from 'pino-http'
+import { logger } from './logging'
 
 const REQUEST_ID_HEADER = 'x-request-id'
 

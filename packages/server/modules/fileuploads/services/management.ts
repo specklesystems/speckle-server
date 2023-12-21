@@ -5,8 +5,8 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 import {
-  saveUploadFile,
-  SaveUploadFileInput
+  SaveUploadFileInput,
+  saveUploadFile
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileImportSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 

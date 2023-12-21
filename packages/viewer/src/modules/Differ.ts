@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Color, FrontSide } from 'three'
-import { SpeckleTypeAllRenderables } from './converter/GeometryConverter'
-import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
-import { TreeNode, WorldTree } from './tree/WorldTree'
-import SpecklePointMaterial from './materials/SpecklePointMaterial'
-import { GeometryType } from './batching/Batch'
-import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
 import Logger from 'js-logger'
+import { Color, FrontSide } from 'three'
+import _ from 'underscore'
+import { GeometryType } from './batching/Batch'
+import { SpeckleTypeAllRenderables } from './converter/GeometryConverter'
+import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
+import SpecklePointMaterial from './materials/SpecklePointMaterial'
+import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
 import { NodeRenderView } from './tree/NodeRenderView'
-import _, { omit } from 'underscore'
+import { TreeNode, WorldTree } from './tree/WorldTree'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeckleObject = Record<string, any>

@@ -8,9 +8,9 @@ import {
 import { sendEmail } from '@/modules/emails/services/sending'
 import { InvalidPasswordRecoveryRequestError } from '@/modules/pwdreset/errors'
 import {
+  PasswordResetTokenRecord,
   createToken,
-  getPendingToken,
-  PasswordResetTokenRecord
+  getPendingToken
 } from '@/modules/pwdreset/repositories'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 

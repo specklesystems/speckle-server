@@ -1,32 +1,32 @@
-import Vue from 'vue'
-import { createApolloProvider, ApolloProvider } from '@vue/apollo-option'
-import {
-  ApolloClient,
-  ApolloLink,
-  InMemoryCache,
-  split,
-  TypePolicies,
-  from
-} from '@apollo/client/core'
-import { setContext } from '@apollo/client/link/context'
-import { WebSocketLink } from '@apollo/client/link/ws'
-import { SubscriptionClient } from 'subscriptions-transport-ws'
+import { isInvalidAuth } from '@/helpers/errorHelper'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
-import { createUploadLink } from 'apollo-upload-client'
-import { AppLocalStorage } from '@/utils/localStorage'
-import { getMainDefinition } from '@apollo/client/utilities'
-import { OperationDefinitionNode, Kind } from 'graphql'
 import {
   buildAbstractCollectionMergeFunction,
   incomingOverwritesExistingMergeFunction
 } from '@/main/lib/core/helpers/apolloSetupHelper'
-import { merge } from 'lodash'
+import { isErrorState, registerError } from '@/main/lib/core/utils/appErrorStateManager'
 import { statePolicies as commitObjectViewerStatePolicies } from '@/main/lib/viewer/commit-object-viewer/stateManagerCore'
-import { Optional } from '@speckle/shared'
-import { onError } from '@apollo/client/link/error'
-import { registerError, isErrorState } from '@/main/lib/core/utils/appErrorStateManager'
-import { isInvalidAuth } from '@/helpers/errorHelper'
 import { signOut } from '@/plugins/authHelpers'
+import { AppLocalStorage } from '@/utils/localStorage'
+import {
+  ApolloClient,
+  ApolloLink,
+  InMemoryCache,
+  TypePolicies,
+  from,
+  split
+} from '@apollo/client/core'
+import { setContext } from '@apollo/client/link/context'
+import { onError } from '@apollo/client/link/error'
+import { WebSocketLink } from '@apollo/client/link/ws'
+import { getMainDefinition } from '@apollo/client/utilities'
+import { Optional } from '@speckle/shared'
+import { ApolloProvider, createApolloProvider } from '@vue/apollo-option'
+import { createUploadLink } from 'apollo-upload-client'
+import { Kind, OperationDefinitionNode } from 'graphql'
+import { merge } from 'lodash'
+import { SubscriptionClient } from 'subscriptions-transport-ws'
+import Vue from 'vue'
 
 // Name of the localStorage item
 const AUTH_TOKEN = LocalStorageKeys.AuthToken

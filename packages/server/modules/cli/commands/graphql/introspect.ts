@@ -1,9 +1,9 @@
-import { CommandModule } from 'yargs'
 import { cliLogger } from '@/logging/logging'
 import * as ModulesSetup from '@/modules'
 import { printSchema } from 'graphql/utilities'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { CommandModule } from 'yargs'
 
 const command: CommandModule<unknown, { file: string }> = {
   command: 'introspect [file]',

@@ -1,15 +1,15 @@
 import {
   CommentLinkRecord,
-  CommentRecord,
   CommentLinkResourceType,
+  CommentRecord,
   CommentViewRecord
 } from '@/modules/comments/helpers/types'
 import {
   BranchCommits,
   Branches,
   CommentLinks,
-  Comments,
   CommentViews,
+  Comments,
   Commits,
   knex
 } from '@/modules/core/dbSchema'
@@ -17,23 +17,23 @@ import {
   ResourceIdentifier,
   ResourceType
 } from '@/modules/core/graph/generated/graphql'
+import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
+import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import {
+  BatchedSelectOptions,
+  executeBatchedSelect
+} from '@/modules/shared/helpers/dbHelper'
+import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import {
   MarkNullableOptional,
   MaybeNullOrUndefined,
   Optional
 } from '@/modules/shared/helpers/typeHelper'
-import { clamp, keyBy, reduce } from 'lodash'
-import crs from 'crypto-random-string'
-import {
-  BatchedSelectOptions,
-  executeBatchedSelect
-} from '@/modules/shared/helpers/dbHelper'
-import { Knex } from 'knex'
-import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import { SpeckleViewer } from '@speckle/shared'
-import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
+import crs from 'crypto-random-string'
+import { Knex } from 'knex'
+import { clamp, keyBy, reduce } from 'lodash'
 import { Merge } from 'type-fest'
-import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 
 export const generateCommentId = () => crs({ length: 10 })
 

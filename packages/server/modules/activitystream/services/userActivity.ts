@@ -1,7 +1,7 @@
+import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
+import { saveActivity } from '@/modules/activitystream/services'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
 import { UserRecord } from '@/modules/core/helpers/types'
-import { saveActivity } from '@/modules/activitystream/services'
-import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 
 export async function addUserUpdatedActivity(params: {
   oldUser: UserRecord

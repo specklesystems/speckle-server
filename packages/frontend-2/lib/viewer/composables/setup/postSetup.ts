@@ -1,11 +1,16 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import { ViewerEvent, VisualDiffMode } from '@speckle/viewer'
+import type { Reference } from '@apollo/client'
+import type { Modifier } from '@apollo/client/cache'
+import type { Nullable } from '@speckle/shared'
 import type {
   PropertyInfo,
   StringPropertyInfo,
   SunLightConfiguration
 } from '@speckle/viewer'
+import { ViewerEvent, VisualDiffMode } from '@speckle/viewer'
+import { watchTriggerable } from '@vueuse/core'
+import { difference, flatten, isEqual, uniq } from 'lodash-es'
+import { Vector3 } from 'three'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import type {
   Comment,
@@ -14,11 +19,28 @@ import type {
   ViewerResourceItem
 } from '~~/lib/common/generated/gql/graphql'
 import { ProjectCommentsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
+import type { ModifyFnCacheData } from '~~/lib/common/helpers/graphql'
+import {
+  getCacheId,
+  getObjectReference,
+  isReference,
+  modifyObjectFields
+} from '~~/lib/common/helpers/graphql'
+import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
+import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
+import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
+import {
+  useViewerOpenedThreadUpdateEmitter,
+  useViewerThreadTracking
+} from '~~/lib/viewer/composables/commentBubbles'
+import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
 import {
   useInjectedViewer,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
+import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { useViewerSelectionEventHandler } from '~~/lib/viewer/composables/setup/selection'
+import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 import {
   useGetObjectUrl,
   useOnViewerLoadComplete,
@@ -26,29 +48,7 @@ import {
   useViewerCameraTracker,
   useViewerEventListener
 } from '~~/lib/viewer/composables/viewer'
-import { useViewerCommentUpdateTracking } from '~~/lib/viewer/composables/commentManagement'
-import {
-  getCacheId,
-  getObjectReference,
-  isReference,
-  modifyObjectFields
-} from '~~/lib/common/helpers/graphql'
-import type { ModifyFnCacheData } from '~~/lib/common/helpers/graphql'
-import {
-  useViewerOpenedThreadUpdateEmitter,
-  useViewerThreadTracking
-} from '~~/lib/viewer/composables/commentBubbles'
-import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
-import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
-import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
-import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
-import type { Nullable } from '@speckle/shared'
-import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
-import { watchTriggerable } from '@vueuse/core'
-import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
-import type { Reference } from '@apollo/client'
-import type { Modifier } from '@apollo/client/cache'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()

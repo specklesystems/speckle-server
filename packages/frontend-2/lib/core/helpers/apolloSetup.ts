@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import type { Optional } from '@speckle/shared'
 import type { FieldMergeFunction } from '@apollo/client/core'
+import type { Optional } from '@speckle/shared'
 
 interface AbstractCollection<T extends string> {
   __typename: T

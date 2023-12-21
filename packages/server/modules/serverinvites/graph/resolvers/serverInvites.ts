@@ -1,3 +1,4 @@
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
@@ -7,22 +8,21 @@ import {
 } from '@/modules/serverinvites/helpers/inviteHelper'
 import { createAndSendInvite } from '@/modules/serverinvites/services/inviteCreationService'
 import {
-  createStreamInviteAndNotify,
-  useStreamInviteAndNotify
-} from '@/modules/serverinvites/services/management'
-import {
   cancelStreamInvite,
-  resendInvite,
-  deleteInvite
+  deleteInvite,
+  resendInvite
 } from '@/modules/serverinvites/services/inviteProcessingService'
 import {
   getServerInviteForToken,
   getUserPendingStreamInvite,
   getUserPendingStreamInvites
 } from '@/modules/serverinvites/services/inviteRetrievalService'
+import {
+  createStreamInviteAndNotify,
+  useStreamInviteAndNotify
+} from '@/modules/serverinvites/services/management'
 import { authorizeResolver } from '@/modules/shared'
 import { chunk } from 'lodash'
-import { Resolvers } from '@/modules/core/graph/generated/graphql'
 
 export = {
   Query: {

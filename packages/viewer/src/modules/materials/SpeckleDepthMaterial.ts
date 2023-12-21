@@ -1,20 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
-import { speckleDepthVert } from './shaders/speckle-depth-vert'
-import { speckleDepthFrag } from './shaders/speckle-depth-frag'
-import {
-  UniformsUtils,
-  ShaderLib,
-  Vector3,
-  MeshDepthMaterial,
-  Material,
-  IUniform
-} from 'three'
-import { Matrix4 } from 'three'
+import { IUniform, Matrix4, ShaderLib, Vector3 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import SpeckleMesh from '../objects/SpeckleMesh'
 import { ExtendedMeshDepthMaterial, Uniforms } from './SpeckleMaterial'
+import { speckleDepthFrag } from './shaders/speckle-depth-frag'
+import { speckleDepthVert } from './shaders/speckle-depth-vert'
 
 class SpeckleDepthMaterial extends ExtendedMeshDepthMaterial {
   private static readonly matBuff: Matrix4 = new Matrix4()

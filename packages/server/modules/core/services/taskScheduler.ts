@@ -1,9 +1,9 @@
-import cron from 'node-cron'
+import { activitiesLogger } from '@/logging/logging'
+import { ScheduledTaskRecord } from '@/modules/core/helpers/types'
+import { acquireTaskLock } from '@/modules/core/repositories/scheduledTasks'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
-import { acquireTaskLock } from '@/modules/core/repositories/scheduledTasks'
-import { ScheduledTaskRecord } from '@/modules/core/helpers/types'
-import { activitiesLogger } from '@/logging/logging'
+import cron from 'node-cron'
 
 export const scheduledCallbackWrapper = async (
   scheduledTime: Date,

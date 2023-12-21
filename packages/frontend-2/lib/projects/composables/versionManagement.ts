@@ -1,9 +1,12 @@
 import { ApolloCache } from '@apollo/client/core'
+import type { Nullable } from '@speckle/shared'
+import { SpeckleViewer } from '@speckle/shared'
 import { useApolloClient, useQuery, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
+import { intersection, isUndefined, uniqBy } from 'lodash-es'
 import type { Get } from 'type-fest'
-import { SpeckleViewer } from '@speckle/shared'
-import type { Nullable } from '@speckle/shared'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { useLock } from '~~/lib/common/composables/singleton'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type {
   DeleteVersionsInput,
@@ -25,11 +28,6 @@ import {
   ProjectPendingVersionsUpdatedMessageType,
   ProjectVersionsUpdatedMessageType
 } from '~~/lib/common/generated/gql/graphql'
-import { modelRoute } from '~~/lib/common/helpers/route'
-import {
-  onProjectPendingVersionsUpdatedSubscription,
-  onProjectVersionsUpdateSubscription
-} from '~~/lib/projects/graphql/subscriptions'
 import {
   convertThrowIntoFetchResult,
   evictObjectFields,
@@ -38,17 +36,19 @@ import {
   getObjectReference,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { projectModelVersionsQuery } from '~~/lib/projects/graphql/queries'
+import { modelRoute } from '~~/lib/common/helpers/route'
+import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
+import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
 import {
   deleteVersionsMutation,
   moveVersionsMutation,
   updateVersionMutation
 } from '~~/lib/projects/graphql/mutations'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
-import { intersection, isUndefined, uniqBy } from 'lodash-es'
-import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
-import { useLock } from '~~/lib/common/composables/singleton'
+import { projectModelVersionsQuery } from '~~/lib/projects/graphql/queries'
+import {
+  onProjectPendingVersionsUpdatedSubscription,
+  onProjectVersionsUpdateSubscription
+} from '~~/lib/projects/graphql/subscriptions'
 
 export function useProjectVersionUpdateTracking(
   projectId: MaybeRef<string>,

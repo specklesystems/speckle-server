@@ -1,13 +1,13 @@
+import type { Optional } from '@speckle/shared'
+import type { BlobPostResultItem } from '@speckle/ui-components'
+import { BlobUploadStatus } from '@speckle/ui-components'
 import { clamp } from 'lodash'
+import type { Merge, SetRequired } from 'type-fest'
 import { BaseError } from '~~/lib/core/errors/base'
 import type {
-  UploadableFileItem,
-  UploadFileItem
+  UploadFileItem,
+  UploadableFileItem
 } from '~~/lib/form/composables/fileUpload'
-import type { Optional } from '@speckle/shared'
-import type { Merge, SetRequired } from 'type-fest'
-import { BlobUploadStatus } from '@speckle/ui-components'
-import type { BlobPostResultItem } from '@speckle/ui-components'
 
 export type BlobUploadPrincipal = {
   streamId: string

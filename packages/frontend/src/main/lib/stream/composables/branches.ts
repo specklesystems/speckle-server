@@ -1,9 +1,8 @@
-import { ref, Ref } from 'vue'
-import { computed } from 'vue'
+import { computed, ref, Ref } from 'vue'
 
-import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import { StreamAllBranchesDocument } from '@/graphql/generated/graphql'
 import { Nullable } from '@speckle/shared'
+import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 
 export function useAllStreamBranches(streamId: Ref<string>) {
   const {

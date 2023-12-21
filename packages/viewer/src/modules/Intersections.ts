@@ -10,8 +10,8 @@ import {
 } from 'three'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
-import { SpeckleRaycaster } from './objects/SpeckleRaycaster'
 import { ObjectLayers } from './SpeckleRenderer'
+import { SpeckleRaycaster } from './objects/SpeckleRaycaster'
 
 export class Intersections {
   private raycaster: SpeckleRaycaster

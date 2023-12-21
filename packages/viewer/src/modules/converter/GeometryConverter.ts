@@ -1,9 +1,9 @@
+import Logger from 'js-logger'
 import { Box3, EllipseCurve, Matrix4, Vector2, Vector3 } from 'three'
+import { NodeData } from '../tree/WorldTree'
 import { Geometry, GeometryData } from './Geometry'
 import MeshTriangulationHelper from './MeshTriangulationHelper'
 import { getConversionFactor } from './Units'
-import { NodeData } from '../tree/WorldTree'
-import Logger from 'js-logger'
 
 export enum SpeckleType {
   View3D = 'View3D',

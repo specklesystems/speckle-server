@@ -1,28 +1,27 @@
-import {
-  AuthContext,
-  authPipelineCreator,
-  AuthPipelineFunction,
-  AuthParams,
-  authHasFailed
-} from '@/modules/shared/authz'
-import { Request, Response, NextFunction } from 'express'
-import { ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
-import { ensureError } from '@/modules/shared/helpers/errorHelper'
-import { validateToken } from '@/modules/core/services/tokens'
 import { TokenValidationResult } from '@/modules/core/helpers/types'
 import { buildRequestLoaders } from '@/modules/core/loaders'
+import { getUser } from '@/modules/core/repositories/users'
+import { validateToken } from '@/modules/core/services/tokens'
+import {
+  AuthContext,
+  AuthParams,
+  AuthPipelineFunction,
+  authHasFailed,
+  authPipelineCreator
+} from '@/modules/shared/authz'
+import { ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
+import { ensureError } from '@/modules/shared/helpers/errorHelper'
 import {
   GraphQLContext,
   MaybeNullOrUndefined,
   Nullable
 } from '@/modules/shared/helpers/typeHelper'
-import { getUser } from '@/modules/core/repositories/users'
-import { Optional, resolveMixpanelUserId } from '@speckle/shared'
-import { mixpanel } from '@/modules/shared/utils/mixpanel'
-import { Observability } from '@speckle/shared'
-import { pino } from 'pino'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
+import { mixpanel } from '@/modules/shared/utils/mixpanel'
+import { Observability, Optional, resolveMixpanelUserId } from '@speckle/shared'
+import { NextFunction, Request, Response } from 'express'
 import { Netmask } from 'netmask'
+import { pino } from 'pino'
 import { Merge } from 'type-fest'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {

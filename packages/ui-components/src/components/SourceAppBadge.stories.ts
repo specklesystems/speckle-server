@@ -1,6 +1,6 @@
+import { SourceApps } from '@speckle/shared'
 import type { Meta, StoryObj } from '@storybook/vue3'
 import SourceAppBadge from '~~/src/components/SourceAppBadge.vue'
-import { SourceApps } from '@speckle/shared'
 
 export default {
   component: SourceAppBadge,

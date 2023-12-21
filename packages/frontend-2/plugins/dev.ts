@@ -1,5 +1,5 @@
-import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
+import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 
 export default defineNuxtPlugin(() => {
   const logger = useLogger()

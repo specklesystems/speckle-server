@@ -1,26 +1,25 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
+  ApolloClientOptions,
   ApolloLink,
   InMemoryCache,
-  split,
-  ApolloClientOptions,
-  from
+  from,
+  split
 } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
-import { SubscriptionClient } from 'subscriptions-transport-ws'
-import { createUploadLink } from 'apollo-upload-client'
+import { onError } from '@apollo/client/link/error'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { getMainDefinition } from '@apollo/client/utilities'
-import { OperationDefinitionNode, Kind } from 'graphql'
-import { Nullable } from '@speckle/shared'
+import { Nullable, Observability } from '@speckle/shared'
+import { createUploadLink } from 'apollo-upload-client'
+import { Kind, OperationDefinitionNode } from 'graphql'
+import { SubscriptionClient } from 'subscriptions-transport-ws'
 import {
   buildAbstractCollectionMergeFunction,
   buildArrayMergeFunction,
   incomingOverwritesExistingMergeFunction
 } from '~~/lib/core/helpers/apolloSetup'
-import { onError } from '@apollo/client/link/error'
-import { Observability } from '@speckle/shared'
 
 let subscriptionsStopped = false
 const errorRpm = Observability.simpleRpmCounter()

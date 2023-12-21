@@ -1,8 +1,8 @@
 import { ensureError } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import {
-  requestResetEmail,
-  finalizePasswordReset
+  finalizePasswordReset,
+  requestResetEmail
 } from '~~/lib/auth/services/resetPassword'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 

@@ -1,9 +1,9 @@
 export {
-  ThrottleOrDebounce,
   HorizontalDirection,
-  useWindowResizeHandler,
+  ThrottleOrDebounce,
   useOnBeforeWindowUnload,
-  useResponsiveHorizontalDirectionCalculation
+  useResponsiveHorizontalDirectionCalculation,
+  useWindowResizeHandler
 } from '@speckle/ui-components'
 import { useStorage } from '@vueuse/core'
 import { isString, uniq } from 'lodash-es'

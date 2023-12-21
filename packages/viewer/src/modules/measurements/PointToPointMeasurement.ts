@@ -1,9 +1,9 @@
 /* eslint-disable no-empty */
 import { Box3, Camera, Plane, Vector2 } from 'three'
-import { MeasurementPointGizmo } from './MeasurementPointGizmo'
 import { ObjectLayers } from '../SpeckleRenderer'
 import { getConversionFactor } from '../converter/Units'
 import { Measurement, MeasurementState } from './Measurement'
+import { MeasurementPointGizmo } from './MeasurementPointGizmo'
 
 export class PointToPointMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo = null

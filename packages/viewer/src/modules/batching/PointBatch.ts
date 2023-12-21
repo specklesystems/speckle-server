@@ -1,3 +1,4 @@
+import Logger from 'js-logger'
 import {
   BufferAttribute,
   BufferGeometry,
@@ -8,7 +9,10 @@ import {
   Points,
   WebGLRenderer
 } from 'three'
+import { ObjectLayers } from '../SpeckleRenderer'
 import { Geometry } from '../converter/Geometry'
+import { GeometryConverter } from '../converter/GeometryConverter'
+import SpecklePointColouredMaterial from '../materials/SpecklePointColouredMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import {
   AllBatchUpdateRange,
@@ -17,10 +21,6 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
-import { GeometryConverter } from '../converter/GeometryConverter'
-import { ObjectLayers } from '../SpeckleRenderer'
-import Logger from 'js-logger'
-import SpecklePointColouredMaterial from '../materials/SpecklePointColouredMaterial'
 
 export default class PointBatch implements Batch {
   public id: string

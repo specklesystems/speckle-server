@@ -2,20 +2,20 @@
 // NOTE: any disabling temporary, most of the filtering stuff will go away
 
 import { Nullable } from '@/helpers/typeHelpers'
+import {
+  StateType,
+  commitObjectViewerState
+} from '@/main/lib/viewer/commit-object-viewer/stateManagerCore'
 import { setupNewViewerInjection } from '@/main/lib/viewer/core/composables/viewer'
 import {
   DefaultViewerParams,
-  Viewer,
-  SelectionEvent,
+  NumericPropertyInfo,
   PropertyInfo,
-  NumericPropertyInfo
+  SelectionEvent,
+  Viewer
 } from '@speckle/viewer'
 import { cloneDeep } from 'lodash'
-import { computed, ComputedRef, inject, InjectionKey, provide, Ref } from 'vue'
-import {
-  commitObjectViewerState,
-  StateType
-} from '@/main/lib/viewer/commit-object-viewer/stateManagerCore'
+import { ComputedRef, InjectionKey, Ref, computed, inject, provide } from 'vue'
 
 const ViewerStreamIdKey: InjectionKey<Ref<string>> = Symbol(
   'COMMIT_OBJECT_VIEWER_STREAMID'

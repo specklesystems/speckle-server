@@ -1,8 +1,8 @@
 import type { Nullable, Optional } from '@speckle/shared'
 import { useMutationObserver, useResizeObserver } from '@vueuse/core'
 import { isUndefined } from 'lodash'
+import type { ComputedRef, Ref } from 'vue'
 import { ref } from 'vue'
-import type { Ref, ComputedRef } from 'vue'
 
 /**
  * Use this to calculate the number of hidden elements (e.g. user avatars) in a wrapping flex row that

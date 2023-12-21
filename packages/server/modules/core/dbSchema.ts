@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Optional } from '@speckle/shared'
 import knex from '@/db/knex'
 import { BaseMetaRecord } from '@/modules/core/helpers/meta'
+import { Optional } from '@speckle/shared'
 import { Knex } from 'knex'
 import { reduce } from 'lodash'
 

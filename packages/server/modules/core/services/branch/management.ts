@@ -1,4 +1,3 @@
-import { Roles, isNullOrUndefined } from '@speckle/shared'
 import {
   addBranchCreatedActivity,
   addBranchDeletedActivity,
@@ -17,6 +16,7 @@ import {
   DeleteModelInput,
   UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
+import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
 import { BranchRecord } from '@/modules/core/helpers/types'
 import {
   createBranch,
@@ -26,8 +26,8 @@ import {
   updateBranch
 } from '@/modules/core/repositories/branches'
 import { getStream, markBranchStreamUpdated } from '@/modules/core/repositories/streams'
+import { Roles, isNullOrUndefined } from '@speckle/shared'
 import { has } from 'lodash'
-import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput

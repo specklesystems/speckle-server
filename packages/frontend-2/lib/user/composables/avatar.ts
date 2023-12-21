@@ -1,8 +1,8 @@
 import { graphql } from '~~/lib/common/generated/gql'
 import type {
   ActiveUserAvatarFragment,
-  LimitedUserAvatarFragment,
-  AppAuthorAvatarFragment
+  AppAuthorAvatarFragment,
+  LimitedUserAvatarFragment
 } from '~~/lib/common/generated/gql/graphql'
 
 graphql(`

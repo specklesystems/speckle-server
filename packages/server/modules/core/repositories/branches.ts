@@ -1,4 +1,3 @@
-import { Optional } from '@speckle/shared'
 import { BranchCommits, Branches, Commits, knex } from '@/modules/core/dbSchema'
 import { BranchNameError } from '@/modules/core/errors/branch'
 import {
@@ -11,10 +10,11 @@ import {
   BatchedSelectOptions,
   executeBatchedSelect
 } from '@/modules/shared/helpers/dbHelper'
+import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
+import { Optional } from '@speckle/shared'
 import crs from 'crypto-random-string'
 import { Knex } from 'knex'
 import { clamp, last, trim } from 'lodash'
-import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 
 export const generateBranchId = () => crs({ length: 10 })
 

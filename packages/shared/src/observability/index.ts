@@ -1,5 +1,5 @@
-import pino from 'pino'
 import type { LoggerOptions } from 'pino'
+import pino from 'pino'
 
 let logger: pino.Logger
 

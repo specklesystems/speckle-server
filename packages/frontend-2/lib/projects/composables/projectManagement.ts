@@ -6,17 +6,17 @@ import type { Get } from 'type-fest'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useLock } from '~~/lib/common/composables/singleton'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { ProjectUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
 import type {
+  AdminPanelProjectsListQuery,
   OnProjectUpdatedSubscription,
   ProjectCreateInput,
   ProjectInviteCreateInput,
   ProjectInviteUseInput,
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
-  UpdateProjectMetadataMutation,
-  AdminPanelProjectsListQuery
+  UpdateProjectMetadataMutation
 } from '~~/lib/common/generated/gql/graphql'
+import { ProjectUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
 import {
   ROOT_QUERY,
   convertThrowIntoFetchResult,

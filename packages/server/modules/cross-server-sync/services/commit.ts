@@ -1,27 +1,15 @@
-import fetch from 'cross-fetch'
-import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core'
-import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { CreateCommentInput } from '@/test/graphql/generated/graphql'
-import { getStreamBranchByName } from '@/modules/core/repositories/branches'
-import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
-import { Roles, timeoutAt } from '@speckle/shared'
-import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
-import { createObject } from '@/modules/core/services/objects'
-import { getObject } from '@/modules/core/repositories/objects'
-import ObjectLoader from '@speckle/objectloader'
-import { noop } from 'lodash'
 import { Logger, crossServerSyncLogger } from '@/logging/logging'
-import { createCommitByBranchId } from '@/modules/core/services/commit/management'
-import { getUser } from '@/modules/core/repositories/users'
-import type { SpeckleViewer } from '@speckle/shared'
+import { addCommitCreatedActivity } from '@/modules/activitystream/services/commitActivity'
 import {
-  createCommentThreadAndNotify,
-  createCommentReplyAndNotify
+  createCommentReplyAndNotify,
+  createCommentThreadAndNotify
 } from '@/modules/comments/services/management'
-import {
-  createApolloClient,
-  assertValidGraphQLResult
-} from '@/modules/cross-server-sync/utils/graphqlClient'
+import { getStreamBranchByName } from '@/modules/core/repositories/branches'
+import { getObject } from '@/modules/core/repositories/objects'
+import { getStream, getStreamCollaborators } from '@/modules/core/repositories/streams'
+import { getUser } from '@/modules/core/repositories/users'
+import { createCommitByBranchId } from '@/modules/core/services/commit/management'
+import { createObject } from '@/modules/core/services/objects'
 import { CrossServerCommitSyncError } from '@/modules/cross-server-sync/errors'
 import {
   CrossSyncBranchMetadataQuery,
@@ -30,6 +18,18 @@ import {
   CrossSyncDownloadableCommitViewerThreadsQuery,
   CrossSyncProjectViewerResourcesQuery
 } from '@/modules/cross-server-sync/graph/generated/graphql'
+import {
+  assertValidGraphQLResult,
+  createApolloClient
+} from '@/modules/cross-server-sync/utils/graphqlClient'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { CreateCommentInput } from '@/test/graphql/generated/graphql'
+import { ApolloClient, NormalizedCacheObject, gql } from '@apollo/client/core'
+import ObjectLoader from '@speckle/objectloader'
+import type { SpeckleViewer } from '@speckle/shared'
+import { Roles, timeoutAt } from '@speckle/shared'
+import fetch from 'cross-fetch'
+import { noop } from 'lodash'
 
 type LocalResources = Awaited<ReturnType<typeof getLocalResources>>
 type LocalResourcesWithCommit = LocalResources & { newCommitId: string }

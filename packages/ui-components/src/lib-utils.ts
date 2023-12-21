@@ -1,4 +1,4 @@
-import { resolve, dirname } from 'path'
+import { dirname, resolve } from 'path'
 
 /**
  * Use this to generate an entry for the Tailwind 'content' config key that will ensure

@@ -1,21 +1,21 @@
 import type { Nullable, Optional } from '@speckle/shared'
 import { SpeckleViewer } from '@speckle/shared'
-import { VisualDiffMode } from '@speckle/viewer'
 import type { DiffResult } from '@speckle/viewer'
+import { VisualDiffMode } from '@speckle/viewer'
+import {
+  differenceBy,
+  get,
+  has,
+  isArray,
+  isObjectLike,
+  isString,
+  sortBy
+} from 'lodash-es'
 import type { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import type {
   InitialStateWithUrlHashState,
   InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
-import {
-  isObjectLike,
-  has,
-  get,
-  isArray,
-  differenceBy,
-  sortBy,
-  isString
-} from 'lodash-es'
 
 export function setupUiDiffState(
   state: InitialStateWithUrlHashState

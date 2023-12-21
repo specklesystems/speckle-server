@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { useField } from 'vee-validate'
-import type { RuleExpression } from 'vee-validate'
-import { computed, onMounted, ref, unref } from 'vue'
-import type { Ref, ToRefs } from 'vue'
 import type { Nullable } from '@speckle/shared'
-import { nanoid } from 'nanoid'
 import { isArray } from 'lodash'
+import { nanoid } from 'nanoid'
+import type { RuleExpression } from 'vee-validate'
+import { useField } from 'vee-validate'
+import type { Ref, ToRefs } from 'vue'
+import { computed, onMounted, ref, unref } from 'vue'
 
 export type InputColor = 'page' | 'foundation' | 'transparent'
 

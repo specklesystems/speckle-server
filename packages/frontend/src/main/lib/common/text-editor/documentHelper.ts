@@ -2,7 +2,7 @@ import { RichTextEditor } from '@speckle/shared'
 import { JSONContent } from '@tiptap/core'
 
 const { isDocEmpty, documentToBasicString } = RichTextEditor
-export { isDocEmpty, documentToBasicString }
+export { documentToBasicString, isDocEmpty }
 
 export type SmartTextEditorSchemaOptions = {
   /**

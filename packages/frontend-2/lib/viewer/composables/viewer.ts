@@ -1,15 +1,15 @@
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import type { MaybeAsync, Nullable } from '@speckle/shared'
+import { TimeoutError, timeoutAt } from '@speckle/shared'
+import type { SelectionEvent } from '@speckle/viewer'
+import { ViewerEvent } from '@speckle/viewer'
+import { until } from '@vueuse/core'
+import { debounce, isArray, throttle } from 'lodash-es'
+import { Vector3 } from 'three'
 import type {
   InitialStateWithRequestAndResponse,
   InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
-import { ViewerEvent } from '@speckle/viewer'
-import type { SelectionEvent } from '@speckle/viewer'
-import { debounce, isArray, throttle } from 'lodash-es'
-import { until } from '@vueuse/core'
-import { TimeoutError, timeoutAt } from '@speckle/shared'
-import type { MaybeAsync, Nullable } from '@speckle/shared'
-import { Vector3 } from 'three'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 
 // NOTE: this is a preformance optimisation - this function is hot, and has to do

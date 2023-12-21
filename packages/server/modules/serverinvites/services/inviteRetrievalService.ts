@@ -1,13 +1,13 @@
 import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { getUsers, getUser } from '@/modules/core/repositories/users'
+import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { NoInviteFoundError } from '@/modules/serverinvites/errors'
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes'
 import {
-  resolveTarget,
+  buildUserTarget,
   resolveInviteTargetTitle,
-  buildUserTarget
+  resolveTarget
 } from '@/modules/serverinvites/helpers/inviteHelper'
 import {
   ServerInviteRecord,
@@ -15,9 +15,9 @@ import {
 } from '@/modules/serverinvites/helpers/types'
 import {
   getAllStreamInvites,
-  getStreamInvite,
   getAllUserStreamInvites,
-  getServerInvite
+  getServerInvite,
+  getStreamInvite
 } from '@/modules/serverinvites/repositories'
 import { MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
 import { keyBy, uniq } from 'lodash'

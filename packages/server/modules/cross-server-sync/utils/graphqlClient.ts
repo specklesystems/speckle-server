@@ -1,14 +1,14 @@
+import { CrossSyncClientTestQuery } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { getServerVersion } from '@/modules/shared/helpers/envHelper'
 import {
   ApolloClient,
+  ApolloQueryResult,
+  HttpLink,
   InMemoryCache,
   NormalizedCacheObject,
-  HttpLink,
-  gql,
-  ApolloQueryResult
+  gql
 } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
-import { getServerVersion } from '@/modules/shared/helpers/envHelper'
-import { CrossSyncClientTestQuery } from '@/modules/cross-server-sync/graph/generated/graphql'
 
 export type GraphQLClient = ApolloClient<NormalizedCacheObject>
 

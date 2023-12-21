@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { buildApolloServer } from '@/app'
+import { GraphQLContext, Nullable } from '@/modules/shared/helpers/typeHelper'
+import { addLoadersToCtx } from '@/modules/shared/middleware'
+import { buildUnauthenticatedApolloServer } from '@/test/serverHelper'
+import { TypedDocumentNode } from '@graphql-typed-document-node/core'
 import { ApolloServer } from 'apollo-server-express'
 import { GraphQLResponse } from 'apollo-server-types'
 import { DocumentNode } from 'graphql'
-import { GraphQLContext, Nullable } from '@/modules/shared/helpers/typeHelper'
-import { TypedDocumentNode } from '@graphql-typed-document-node/core'
-import { buildApolloServer } from '@/app'
-import { addLoadersToCtx } from '@/modules/shared/middleware'
-import { buildUnauthenticatedApolloServer } from '@/test/serverHelper'
 
 type TypedGraphqlResponse<R = Record<string, any>> = GraphQLResponse & {
   data: Nullable<R>

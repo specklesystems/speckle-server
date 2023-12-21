@@ -1,8 +1,8 @@
-import { Optional } from '@speckle/shared'
 import { EmailVerificationFinalizationError } from '@/modules/emails/errors'
 import { finalizeEmailVerification } from '@/modules/emails/services/verification/finalize'
-import type { Express } from 'express'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { Optional } from '@speckle/shared'
+import type { Express } from 'express'
 
 export = (app: Express) => {
   app.get('/auth/verifyemail', async (req, res) => {

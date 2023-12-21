@@ -1,9 +1,9 @@
-import { VueRenderer } from '@tiptap/vue-2'
-import SmartTextEditorMentionList from '@/main/components/common/text-editor/SmartTextEditorMentionList.vue'
-import Popper from 'popper.js'
-import vuetify from '@/plugins/vuetify'
 import { getApolloProvider } from '@/config/apolloConfig'
 import { userSearchQuery } from '@/graphql/user'
+import SmartTextEditorMentionList from '@/main/components/common/text-editor/SmartTextEditorMentionList.vue'
+import vuetify from '@/plugins/vuetify'
+import { VueRenderer } from '@tiptap/vue-2'
+import Popper from 'popper.js'
 
 /**
  * @type {import('@tiptap/suggestion').SuggestionOptions}

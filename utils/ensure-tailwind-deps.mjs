@@ -1,8 +1,8 @@
-import mod from 'node:module'
+import { check, lock, unlock } from 'lockfile'
 import { exec } from 'node:child_process'
-import { fileURLToPath } from 'node:url'
+import mod from 'node:module'
 import { dirname, resolve } from 'node:path'
-import { lock, unlock, check } from 'lockfile'
+import { fileURLToPath } from 'node:url'
 
 const lockFileName = 'ensure-tailwind-deps.mjs.lock'
 

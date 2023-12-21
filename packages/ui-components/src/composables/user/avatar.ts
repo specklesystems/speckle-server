@@ -1,5 +1,5 @@
-import { computed } from 'vue'
 import type { ToRefs } from 'vue'
+import { computed } from 'vue'
 
 export type AvatarUser = {
   name: string

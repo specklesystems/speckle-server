@@ -1,10 +1,12 @@
 import { ApolloCache } from '@apollo/client/cache'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 import type { JSONContent } from '@tiptap/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
 import dayjs from 'dayjs'
 import type { Get } from 'type-fest'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type {
   CommentContentInput,
   CreateCommentReplyInput,
@@ -15,6 +17,9 @@ import {
   getCacheId,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
+import type { SuccessfullyUploadedFileItem } from '~~/lib/core/api/blobStorage'
+import { useStateSerialization } from '~~/lib/viewer/composables/serialization'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import {
   archiveCommentMutation,
   createCommentReplyMutation,
@@ -22,12 +27,7 @@ import {
   markCommentViewedMutation
 } from '~~/lib/viewer/graphql/mutations'
 import { onViewerCommentsUpdatedSubscription } from '~~/lib/viewer/graphql/subscriptions'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import type { SuccessfullyUploadedFileItem } from '~~/lib/core/api/blobStorage'
 import { isValidCommentContentInput } from '~~/lib/viewer/helpers/comments'
-import { useStateSerialization } from '~~/lib/viewer/composables/serialization'
 
 export function useViewerCommentUpdateTracking(
   params: {

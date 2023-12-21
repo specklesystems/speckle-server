@@ -1,7 +1,7 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
-  updateNotificationPreferences,
-  getUserNotificationPreferences
+  getUserNotificationPreferences,
+  updateNotificationPreferences
 } from '@/modules/notifications/services/notificationPreferences'
 
 module.exports = {

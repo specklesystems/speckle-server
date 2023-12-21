@@ -1,14 +1,14 @@
-import { truncateTables } from '@/test/hooks'
 import { UserNotificationPreferences, Users } from '@/modules/core/dbSchema'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import {
+  NotificationChannel,
+  NotificationType
+} from '@/modules/notifications/helpers/types'
 import * as repo from '@/modules/notifications/repositories'
 import * as services from '@/modules/notifications/services/notificationPreferences'
-import { expect } from 'chai'
-import {
-  NotificationType,
-  NotificationChannel
-} from '@/modules/notifications/helpers/types'
 import { BaseError } from '@/modules/shared/errors'
+import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import { truncateTables } from '@/test/hooks'
+import { expect } from 'chai'
 
 const cleanup = async () => {
   await truncateTables([Users.name, UserNotificationPreferences.name])

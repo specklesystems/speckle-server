@@ -1,24 +1,24 @@
 import { EmailVerifications, Users } from '@/modules/core/dbSchema'
+import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/routeHelper'
+import { getUser } from '@/modules/core/repositories/users'
+import { deleteVerifications, getPendingToken } from '@/modules/emails/repositories'
+import { requestEmailVerification } from '@/modules/emails/services/verification/request'
 import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
+import {
+  getPendingEmailVerificationStatus,
+  requestVerification
+} from '@/test/graphql/users'
 import { buildApp, truncateTables } from '@/test/hooks'
+import { EmailSendingServiceMock } from '@/test/mocks/global'
 import {
   buildAuthenticatedApolloServer,
   buildUnauthenticatedApolloServer
 } from '@/test/serverHelper'
 import { ApolloServer } from 'apollo-server-express'
-import request from 'supertest'
 import { expect } from 'chai'
-import { deleteVerifications, getPendingToken } from '@/modules/emails/repositories'
-import {
-  getPendingEmailVerificationStatus,
-  requestVerification
-} from '@/test/graphql/users'
-import { requestEmailVerification } from '@/modules/emails/services/verification/request'
-import { getEmailVerificationFinalizationRoute } from '@/modules/core/helpers/routeHelper'
-import { Express } from 'express'
-import { getUser } from '@/modules/core/repositories/users'
 import dayjs from 'dayjs'
-import { EmailSendingServiceMock } from '@/test/mocks/global'
+import { Express } from 'express'
+import request from 'supertest'
 
 const mailerMock = EmailSendingServiceMock
 

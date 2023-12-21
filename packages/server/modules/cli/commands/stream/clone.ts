@@ -1,5 +1,5 @@
-import { cloneStream } from '@/modules/core/services/streams/clone'
 import { cliLogger } from '@/logging/logging'
+import { cloneStream } from '@/modules/core/services/streams/clone'
 import { CommandModule } from 'yargs'
 
 const command: CommandModule<

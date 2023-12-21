@@ -1,6 +1,7 @@
 import {
   Box3,
   BufferGeometry,
+  Event,
   Float32BufferAttribute,
   FrontSide,
   Intersection,
@@ -11,8 +12,7 @@ import {
   Side,
   Uint16BufferAttribute,
   Uint32BufferAttribute,
-  Vector3,
-  Event
+  Vector3
 } from 'three'
 import {
   CENTER,

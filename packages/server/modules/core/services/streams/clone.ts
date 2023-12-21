@@ -1,33 +1,5 @@
-import { StreamCloneError } from '@/modules/core/errors/stream'
-import {
-  BranchCommitRecord,
-  StreamCommitRecord,
-  UserRecord
-} from '@/modules/core/helpers/types'
-import {
-  createStream,
-  getStream,
-  StreamWithOptionalRole
-} from '@/modules/core/repositories/streams'
-import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
-import {
-  getBatchedStreamObjects,
-  insertObjects
-} from '@/modules/core/repositories/objects'
-import {
-  getBatchedStreamCommits,
-  generateCommitId,
-  insertCommits,
-  insertStreamCommits,
-  getBatchedBranchCommits,
-  insertBranchCommits
-} from '@/modules/core/repositories/commits'
-import { chunk } from 'lodash'
-import {
-  getBatchedStreamBranches,
-  generateBranchId,
-  insertBranches
-} from '@/modules/core/repositories/branches'
+import knex from '@/db/knex'
+import { addStreamClonedActivity } from '@/modules/activitystream/services/streamActivity'
 import {
   generateCommentId,
   getBatchedStreamComments,
@@ -35,10 +7,38 @@ import {
   insertCommentLinks,
   insertComments
 } from '@/modules/comments/repositories/comments'
+import { StreamCloneError } from '@/modules/core/errors/stream'
+import {
+  BranchCommitRecord,
+  StreamCommitRecord,
+  UserRecord
+} from '@/modules/core/helpers/types'
+import {
+  generateBranchId,
+  getBatchedStreamBranches,
+  insertBranches
+} from '@/modules/core/repositories/branches'
+import {
+  generateCommitId,
+  getBatchedBranchCommits,
+  getBatchedStreamCommits,
+  insertBranchCommits,
+  insertCommits,
+  insertStreamCommits
+} from '@/modules/core/repositories/commits'
+import {
+  getBatchedStreamObjects,
+  insertObjects
+} from '@/modules/core/repositories/objects'
+import {
+  StreamWithOptionalRole,
+  createStream,
+  getStream
+} from '@/modules/core/repositories/streams'
+import { UserWithOptionalRole, getUser } from '@/modules/core/repositories/users'
 import dayjs from 'dayjs'
-import { addStreamClonedActivity } from '@/modules/activitystream/services/streamActivity'
-import knex from '@/db/knex'
 import { Knex } from 'knex'
+import { chunk } from 'lodash'
 
 type CloneStreamInitialState = {
   user: UserWithOptionalRole<UserRecord>

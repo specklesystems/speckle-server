@@ -1,8 +1,8 @@
-import { UserRecord } from '@/modules/core/helpers/types'
 import { packageRoot } from '@/bootstrap'
-import path from 'path'
-import mjml2html from 'mjml'
+import { UserRecord } from '@/modules/core/helpers/types'
 import * as ejs from 'ejs'
+import mjml2html from 'mjml'
+import path from 'path'
 
 export type EmailTemplateServerInfo = {
   name: string

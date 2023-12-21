@@ -5,7 +5,7 @@ import {
   viewerResourcesToString
 } from '@/modules/core/services/commit/viewerResources'
 import { Nullable, SpeckleViewer } from '@speckle/shared'
-import { has, get, intersection, isObjectLike } from 'lodash'
+import { get, has, intersection, isObjectLike } from 'lodash'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 

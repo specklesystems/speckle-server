@@ -1,8 +1,8 @@
 import { has } from 'lodash-es'
 import type {
-  ProjectPageLatestItemsModelItemFragment,
   PendingFileUploadFragment,
-  ProjectModelPageVersionsCardVersionFragment
+  ProjectModelPageVersionsCardVersionFragment,
+  ProjectPageLatestItemsModelItemFragment
 } from '~~/lib/common/generated/gql/graphql'
 
 export function isPendingModelFragment(

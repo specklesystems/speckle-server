@@ -1,19 +1,19 @@
 import { crossServerSyncLogger, Logger } from '@/logging/logging'
-import { getUser } from '@/modules/core/repositories/users'
-import { CrossServerProjectSyncError } from '@/modules/cross-server-sync/errors'
-import {
-  createApolloClient,
-  GraphQLClient,
-  gql,
-  assertValidGraphQLResult
-} from '@/modules/cross-server-sync/utils/graphqlClient'
-import { CrossSyncProjectMetadataQuery } from '@/modules/cross-server-sync/graph/generated/graphql'
-import { omit } from 'lodash'
-import { downloadCommit } from '@/modules/cross-server-sync/services/commit'
-import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
-import { createBranchAndNotify } from '@/modules/core/services/branch/management'
 import { getStreamBranchByName } from '@/modules/core/repositories/branches'
+import { getUser } from '@/modules/core/repositories/users'
+import { createBranchAndNotify } from '@/modules/core/services/branch/management'
+import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
+import { CrossServerProjectSyncError } from '@/modules/cross-server-sync/errors'
+import { CrossSyncProjectMetadataQuery } from '@/modules/cross-server-sync/graph/generated/graphql'
+import { downloadCommit } from '@/modules/cross-server-sync/services/commit'
+import {
+  assertValidGraphQLResult,
+  createApolloClient,
+  gql,
+  GraphQLClient
+} from '@/modules/cross-server-sync/utils/graphqlClient'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { omit } from 'lodash'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
 

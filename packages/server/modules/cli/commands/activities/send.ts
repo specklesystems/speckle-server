@@ -1,8 +1,8 @@
-import { CommandModule } from 'yargs'
-import { initializeQueue } from '@/modules/notifications/services/queue'
+import { cliLogger } from '@/logging/logging'
 import { sendActivityNotifications } from '@/modules/activitystream/services/summary'
 import { publishNotification } from '@/modules/notifications/services/publication'
-import { cliLogger } from '@/logging/logging'
+import { initializeQueue } from '@/modules/notifications/services/queue'
+import { CommandModule } from 'yargs'
 
 const command: CommandModule = {
   command: 'send [days]',

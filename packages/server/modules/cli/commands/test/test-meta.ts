@@ -1,8 +1,8 @@
-import { CommandModule } from 'yargs'
 import { cliLogger } from '@/logging/logging'
-import { metaHelpers } from '@/modules/core/helpers/meta'
 import { Users } from '@/modules/core/dbSchema'
+import { metaHelpers } from '@/modules/core/helpers/meta'
 import { UserRecord, UsersMetaRecord } from '@/modules/core/helpers/types'
+import { CommandModule } from 'yargs'
 
 const command: CommandModule = {
   command: 'test-meta',

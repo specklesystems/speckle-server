@@ -15,8 +15,8 @@ import { speckleApplyAoFrag } from '../materials/shaders/speckle-apply-ao-frag'
 import { speckleApplyAoVert } from '../materials/shaders/speckle-apply-ao-vert'
 import { Pipeline, RenderType } from './Pipeline'
 import {
-  InputColorTextureUniform,
   InputColorInterpolateTextureUniform,
+  InputColorTextureUniform,
   SpeckleProgressivePass
 } from './SpecklePass'
 

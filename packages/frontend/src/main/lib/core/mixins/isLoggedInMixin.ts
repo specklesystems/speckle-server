@@ -1,5 +1,5 @@
-import Vue from 'vue'
 import { IsLoggedInDocument, IsLoggedInQuery } from '@/graphql/generated/graphql'
+import Vue from 'vue'
 /**
  * Mixin for checking if user is logged in through Apollo Client. Use the reactive 'isLoggedIn' data property
  * to check if a user is logged in.

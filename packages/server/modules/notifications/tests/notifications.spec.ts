@@ -1,23 +1,23 @@
-import { mockRequireModule } from '@/test/mockHelper'
+import {
+  InvalidNotificationError,
+  NotificationValidationError,
+  UnhandledNotificationError
+} from '@/modules/notifications/errors'
 import {
   MentionedInCommentData,
   MentionedInCommentMessage,
   NotificationType
 } from '@/modules/notifications/helpers/types'
 import { publishNotification } from '@/modules/notifications/services/publication'
+import { NotificationJobResultsStatus } from '@/modules/notifications/services/queue'
+import { Optional } from '@/modules/shared/helpers/typeHelper'
+import { mockRequireModule } from '@/test/mockHelper'
 import {
-  buildNotificationsStateTracker,
   NotificationsStateManager,
+  buildNotificationsStateTracker,
   purgeNotifications
 } from '@/test/notificationsHelper'
-import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { expect } from 'chai'
-import {
-  InvalidNotificationError,
-  NotificationValidationError,
-  UnhandledNotificationError
-} from '@/modules/notifications/errors'
-import { NotificationJobResultsStatus } from '@/modules/notifications/services/queue'
 
 const mentionsHandlerMock = mockRequireModule<
   typeof import('@/modules/notifications/services/handlers/mentionedInComment')

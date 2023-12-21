@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import '~~/src/assets/tailwind.css'
-import 'tippy.js/dist/tippy.css'
-import type { Parameters, Decorator } from '@storybook/vue3'
 import { useArgs, useGlobals } from '@storybook/preview-api'
+import type { Decorator, Parameters } from '@storybook/vue3'
+import 'tippy.js/dist/tippy.css'
+import '~~/src/assets/tailwind.css'
 import SingletonManagers from '../src/stories/components/SingletonManagers.vue'
 
 export const parameters: Parameters = {

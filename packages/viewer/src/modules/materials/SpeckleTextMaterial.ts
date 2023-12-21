@@ -1,21 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
-import { speckleTextVert } from './shaders/speckle-text-vert'
+import { IUniform, Matrix4, ShaderLib, Vector2, Vector3 } from 'three'
 import { speckleTextFrag } from './shaders/speckle-text-frag'
-import {
-  UniformsUtils,
-  ShaderLib,
-  Vector3,
-  MeshBasicMaterial,
-  Material,
-  IUniform,
-  Vector2
-} from 'three'
-import { Matrix4 } from 'three'
+import { speckleTextVert } from './shaders/speckle-text-vert'
 
-import { ExtendedMeshBasicMaterial, Uniforms } from './SpeckleMaterial'
 import { createTextDerivedMaterial } from 'troika-three-text'
+import { ExtendedMeshBasicMaterial, Uniforms } from './SpeckleMaterial'
 
 class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()

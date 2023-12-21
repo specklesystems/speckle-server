@@ -1,82 +1,82 @@
-import { Viewer } from './modules/Viewer'
+import { Box3, Vector3 } from 'three'
 import {
   CanonicalView,
   DefaultLightConfiguration,
   DefaultViewerParams,
-  InlineView,
   IViewer,
+  InlineView,
   SelectionEvent,
   SpeckleView,
+  SunLightConfiguration,
   ViewerEvent
 } from './IViewer'
+import { DebugViewer } from './modules/DebugViewer'
+import { DiffResult, VisualDiffMode } from './modules/Differ'
+import { ObjectLayers } from './modules/SpeckleRenderer'
+import { Utils } from './modules/Utils'
+import { Viewer } from './modules/Viewer'
+import { World } from './modules/World'
+import { BatchObject } from './modules/batching/BatchObject'
+import { Units } from './modules/converter/Units'
 import { FilteringState } from './modules/filtering/FilteringManager'
 import {
+  NumericPropertyInfo,
   PropertyInfo,
-  StringPropertyInfo,
-  NumericPropertyInfo
+  StringPropertyInfo
 } from './modules/filtering/PropertyManager'
-import { SunLightConfiguration } from './IViewer'
-import { DataTree, ObjectPredicate, SpeckleObject } from './modules/tree/DataTree'
-import { World } from './modules/World'
-import { DebugViewer } from './modules/DebugViewer'
-import { NodeData, TreeNode, WorldTree } from './modules/tree/WorldTree'
-import {
-  PointQuery,
-  QueryResult,
-  IntersectionQuery,
-  PointQueryResult,
-  IntersectionQueryResult
-} from './modules/queries/Query'
-import { Utils } from './modules/Utils'
-import { ObjectLayers } from './modules/SpeckleRenderer'
-import { DiffResult, VisualDiffMode } from './modules/Differ'
-import { BatchObject } from './modules/batching/BatchObject'
-import { Box3, Vector3 } from 'three'
 import {
   MeasurementOptions,
   MeasurementType
 } from './modules/measurements/Measurements'
-import { Units } from './modules/converter/Units'
+import {
+  IntersectionQuery,
+  IntersectionQueryResult,
+  PointQuery,
+  PointQueryResult,
+  QueryResult
+} from './modules/queries/Query'
+import { DataTree, ObjectPredicate, SpeckleObject } from './modules/tree/DataTree'
+import { NodeData, TreeNode, WorldTree } from './modules/tree/WorldTree'
 
 export {
-  Viewer,
-  DebugViewer,
-  DefaultViewerParams,
-  ViewerEvent,
-  DefaultLightConfiguration,
-  World,
   BatchObject,
   Box3,
-  Vector3,
-  WorldTree,
-  VisualDiffMode,
+  DebugViewer,
+  DefaultLightConfiguration,
+  DefaultViewerParams,
   MeasurementType,
-  Units
+  Units,
+  Vector3,
+  Viewer,
+  ViewerEvent,
+  VisualDiffMode,
+  World,
+  WorldTree
 }
 
 export type {
-  IViewer,
-  SelectionEvent,
-  PropertyInfo,
-  StringPropertyInfo,
-  NumericPropertyInfo,
-  FilteringState,
-  SunLightConfiguration,
+  CanonicalView,
   DataTree,
+  DiffResult,
+  FilteringState,
+  IViewer,
+  InlineView,
+  IntersectionQuery,
+  IntersectionQueryResult,
+  MeasurementOptions,
+  NodeData,
+  NumericPropertyInfo,
+  ObjectLayers,
   ObjectPredicate,
+  PointQuery,
+  PointQueryResult,
+  PropertyInfo,
+  QueryResult,
+  SelectionEvent,
   SpeckleObject,
   SpeckleView,
-  CanonicalView,
-  InlineView,
+  StringPropertyInfo,
+  SunLightConfiguration,
   TreeNode,
-  NodeData,
-  ObjectLayers,
-  PointQuery,
-  IntersectionQuery,
-  QueryResult,
-  PointQueryResult,
-  IntersectionQueryResult,
-  Utils,
-  DiffResult,
-  MeasurementOptions
+  Utils
 }

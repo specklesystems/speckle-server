@@ -1,10 +1,12 @@
 import { ApolloCache } from '@apollo/client/core'
+import { SpeckleViewer } from '@speckle/shared'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
-import { useClipboard } from '@vueuse/core'
 import type { MaybeRef } from '@vueuse/core'
+import { useClipboard } from '@vueuse/core'
+import { isUndefined } from 'lodash-es'
 import type { Get } from 'type-fest'
 import type { GenericValidateFunction } from 'vee-validate'
-import { SpeckleViewer } from '@speckle/shared'
+import { useLock } from '~~/lib/common/composables/singleton'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type {
   DeleteModelInput,
@@ -27,7 +29,9 @@ import {
   getFirstErrorMessage,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
+import { modelRoute, useNavigateToProject } from '~~/lib/common/helpers/route'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
+import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
 import {
   createModelMutation,
   deleteModelMutation,
@@ -37,10 +41,6 @@ import {
   onProjectModelsUpdateSubscription,
   onProjectPendingModelsUpdatedSubscription
 } from '~~/lib/projects/graphql/subscriptions'
-import { modelRoute, useNavigateToProject } from '~~/lib/common/helpers/route'
-import { FileUploadConvertedStatus } from '~~/lib/core/api/fileImport'
-import { useLock } from '~~/lib/common/composables/singleton'
-import { isUndefined } from 'lodash-es'
 
 const isValidModelName: GenericValidateFunction<string> = (name) => {
   name = name.trim()

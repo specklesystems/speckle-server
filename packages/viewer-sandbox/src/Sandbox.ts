@@ -1,22 +1,22 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Box3 } from '@speckle/viewer'
-import { Vector3 } from '@speckle/viewer'
 import {
+  BatchObject,
+  Box3,
   CanonicalView,
   DebugViewer,
+  DiffResult,
+  MeasurementType,
   PropertyInfo,
   SelectionEvent,
   SunLightConfiguration,
+  Units,
+  Vector3,
   ViewerEvent,
-  BatchObject,
-  VisualDiffMode,
-  MeasurementType
+  VisualDiffMode
 } from '@speckle/viewer'
+import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
 import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
-import { DiffResult } from '@speckle/viewer'
-import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
-import { Units } from '@speckle/viewer'
 
 export default class Sandbox {
   private viewer: DebugViewer

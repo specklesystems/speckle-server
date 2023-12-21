@@ -1,9 +1,9 @@
 import { packageRoot } from '@/bootstrap'
-import path from 'path'
-import ejs from 'ejs'
-import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { getServerInfo } from '@/modules/core/services/generic'
 import { ServerInfo } from '@/modules/core/helpers/types'
+import { getServerInfo } from '@/modules/core/services/generic'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import ejs from 'ejs'
+import path from 'path'
 
 type MultiTypeEmailBody = {
   text: string

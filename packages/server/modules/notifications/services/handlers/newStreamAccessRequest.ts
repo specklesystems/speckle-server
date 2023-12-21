@@ -2,24 +2,24 @@ import {
   AccessRequestType,
   getPendingAccessRequest
 } from '@/modules/accessrequests/repositories'
-import { getUser } from '@/modules/core/repositories/users'
-import {
-  NewStreamAccessRequestMessage,
-  NotificationHandler
-} from '@/modules/notifications/helpers/types'
-import { NotificationValidationError } from '@/modules/notifications/errors'
-import { getStream } from '@/modules/core/repositories/streams'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import {
   buildAbsoluteFrontendUrlFromPath,
   getStreamCollaboratorsRoute
 } from '@/modules/core/helpers/routeHelper'
-import { sendEmail } from '@/modules/emails/services/sending'
+import { getStream } from '@/modules/core/repositories/streams'
+import { getUser } from '@/modules/core/repositories/users'
+import { getServerInfo } from '@/modules/core/services/generic'
 import {
   EmailTemplateParams,
   renderEmail
 } from '@/modules/emails/services/emailRendering'
-import { getServerInfo } from '@/modules/core/services/generic'
+import { sendEmail } from '@/modules/emails/services/sending'
+import { NotificationValidationError } from '@/modules/notifications/errors'
+import {
+  NewStreamAccessRequestMessage,
+  NotificationHandler
+} from '@/modules/notifications/helpers/types'
 
 async function validateMessage(msg: NewStreamAccessRequestMessage) {
   const {

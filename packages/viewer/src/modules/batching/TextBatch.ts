@@ -5,9 +5,9 @@ import { Box3, Color, Material, Object3D, WebGLRenderer } from 'three'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { AllBatchUpdateRange, Batch, BatchUpdateRange, GeometryType } from './Batch'
 
-import { SpeckleText } from '../objects/SpeckleText'
 import { ObjectLayers } from '../SpeckleRenderer'
 import SpeckleTextMaterial from '../materials/SpeckleTextMaterial'
+import { SpeckleText } from '../objects/SpeckleText'
 
 export default class TextBatch implements Batch {
   public id: string

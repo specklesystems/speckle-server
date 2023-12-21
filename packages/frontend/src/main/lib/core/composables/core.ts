@@ -1,8 +1,8 @@
-import { OverridedMixpanel } from 'mixpanel-browser'
-import { getCurrentInstance, computed } from 'vue'
-import { useQuery } from '@vue/apollo-composable'
 import { IsLoggedInDocument } from '@/graphql/generated/graphql'
 import { ComposableInvokedOutOfScopeError } from '@/main/lib/core/errors/composition'
+import { useQuery } from '@vue/apollo-composable'
+import { OverridedMixpanel } from 'mixpanel-browser'
+import { computed, getCurrentInstance } from 'vue'
 
 /**
  * Get EventHub

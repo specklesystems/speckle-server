@@ -1,20 +1,20 @@
-import { truncateTables } from '@/test/hooks'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
-import { StreamActivity, Users } from '@/modules/core/dbSchema'
+import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
+import { saveActivity } from '@/modules/activitystream/services'
 import {
   createActivitySummary,
   sendActivityNotifications
 } from '@/modules/activitystream/services/summary'
-import { expect } from 'chai'
+import { StreamActivity, Users } from '@/modules/core/dbSchema'
 import { createStream, deleteStream } from '@/modules/core/services/streams'
-import { saveActivity } from '@/modules/activitystream/services'
-import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
 import {
   ActivityDigestMessage,
   NotificationType,
   NotificationTypeMessageMap
 } from '@/modules/notifications/helpers/types'
+import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { sleep } from '@/test/helpers'
+import { truncateTables } from '@/test/hooks'
+import { expect } from 'chai'
 
 const cleanup = async () => {
   await truncateTables([StreamActivity.name, Users.name])

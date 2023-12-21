@@ -1,9 +1,5 @@
-import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
-import {
-  CommitSubscriptions as CommitPubsubEvents,
-  pubsub
-} from '@/modules/shared/utils/subscriptions'
+import { saveActivity } from '@/modules/activitystream/services'
 import {
   CommitCreateInput,
   CommitReceivedInput,
@@ -12,7 +8,12 @@ import {
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
-import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
+import {
+  CommitSubscriptions as CommitPubsubEvents,
+  ProjectSubscriptions,
+  publish,
+  pubsub
+} from '@/modules/shared/utils/subscriptions'
 import { has } from 'lodash'
 
 /**

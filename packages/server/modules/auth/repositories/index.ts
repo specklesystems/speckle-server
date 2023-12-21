@@ -1,3 +1,4 @@
+import { ScopeRecord, ServerAppsScopesRecord } from '@/modules/auth/helpers/types'
 import {
   AuthorizationCodes,
   RefreshTokens,
@@ -7,7 +8,6 @@ import {
 } from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { ScopeRecord, ServerAppsScopesRecord } from '@/modules/auth/helpers/types'
 import { groupBy, mapValues } from 'lodash'
 
 export type RefreshTokenRecord = {

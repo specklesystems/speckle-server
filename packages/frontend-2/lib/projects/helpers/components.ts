@@ -1,5 +1,5 @@
-import { Roles } from '@speckle/shared'
 import type { Nullable, ServerRoles, StreamRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import type { LimitedUserAvatarFragment } from '~~/lib/common/generated/gql/graphql'
 
 export type ProjectCollaboratorListItem = {

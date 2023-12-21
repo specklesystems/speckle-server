@@ -1,7 +1,7 @@
 import { GetReactiveVarType, Nullable } from '@/helpers/typeHelpers'
-import { makeVar, TypePolicies } from '@apollo/client/cache'
-import type { PropertyInfo, FilteringState } from '@speckle/viewer'
 import emojis from '@/main/store/emojis'
+import { TypePolicies, makeVar } from '@apollo/client/cache'
+import type { FilteringState, PropertyInfo } from '@speckle/viewer'
 
 /**
  * Actual state from state manager. Extracted here to ensure that we don't bundle the full viewer & three.js

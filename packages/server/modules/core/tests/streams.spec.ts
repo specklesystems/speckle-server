@@ -1,58 +1,58 @@
 import { expect } from 'chai'
 import {
   createStream,
-  getStream,
-  updateStream,
   deleteStream,
+  getStream,
   getStreamUsers,
-  grantPermissionsStream
+  grantPermissionsStream,
+  updateStream
 } from '../services/streams'
 
 import {
   createBranch,
-  getBranchByNameAndStreamId,
-  deleteBranchById
+  deleteBranchById,
+  getBranchByNameAndStreamId
 } from '../services/branches'
-import { createObject } from '../services/objects'
 import { createCommitByBranchName } from '../services/commits'
+import { createObject } from '../services/objects'
 
-import { beforeEachContext, truncateTables } from '@/test/hooks'
+import { Streams } from '@/modules/core/dbSchema'
+import { Roles } from '@/modules/core/helpers/mainConstants'
+import {
+  StreamWithOptionalRole,
+  revokeStreamPermissions
+} from '@/modules/core/repositories/streams'
 import {
   addOrUpdateStreamCollaborator,
   isStreamCollaborator
 } from '@/modules/core/services/streams/streamAccessService'
-import { Roles } from '@/modules/core/helpers/mainConstants'
+import { changeUserRole } from '@/modules/core/services/users'
+import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
-  buildAuthenticatedApolloServer,
-  buildUnauthenticatedApolloServer
-} from '@/test/serverHelper'
+  GetLimitedUserStreamsQuery,
+  GetUserStreamsQuery
+} from '@/test/graphql/generated/graphql'
 import {
   getLimitedUserStreams,
   getUserStreams,
   leaveStream
 } from '@/test/graphql/streams'
-import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import { sleep } from '@/test/helpers'
+import { beforeEachContext, truncateTables } from '@/test/hooks'
+import {
+  buildAuthenticatedApolloServer,
+  buildUnauthenticatedApolloServer
+} from '@/test/serverHelper'
 import {
   BasicTestStream,
   createTestStream,
   createTestStreams
 } from '@/test/speckle-helpers/streamHelper'
-import {
-  StreamWithOptionalRole,
-  revokeStreamPermissions
-} from '@/modules/core/repositories/streams'
-import { has, times } from 'lodash'
-import { Streams } from '@/modules/core/dbSchema'
 import { ApolloServer } from 'apollo-server-express'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { sleep } from '@/test/helpers'
 import dayjs, { Dayjs } from 'dayjs'
-import {
-  GetLimitedUserStreamsQuery,
-  GetUserStreamsQuery
-} from '@/test/graphql/generated/graphql'
+import { has, times } from 'lodash'
 import { Get } from 'type-fest'
-import { changeUserRole } from '@/modules/core/services/users'
 
 describe('Streams @core-streams', () => {
   const userOne: BasicTestUser = {

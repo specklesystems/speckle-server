@@ -17,9 +17,7 @@ import {
 
 import {
   IConfigBinding,
-  IConfigBindingKey,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  MockedConfigBinding
+  IConfigBindingKey
 } from '~/lib/bindings/definitions/IConfigBinding'
 
 // Makes TS happy

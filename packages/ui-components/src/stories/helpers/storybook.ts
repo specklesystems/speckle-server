@@ -1,5 +1,5 @@
-import { merge } from 'lodash'
 import type { StoryObj } from '@storybook/vue3'
+import { merge } from 'lodash'
 import type { Get } from 'type-fest'
 
 /**

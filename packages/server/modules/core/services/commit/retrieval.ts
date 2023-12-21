@@ -1,18 +1,18 @@
-import { Nullable, Optional } from '@speckle/shared'
 import {
   ModelVersionsFilter,
   StreamCommitsArgs
 } from '@/modules/core/graph/generated/graphql'
 import {
+  PaginatedBranchCommitsParams,
   getBranchCommitsTotalCount,
   getPaginatedBranchCommits as getPaginatedBranchCommitsDb,
-  getSpecificBranchCommits,
-  PaginatedBranchCommitsParams
+  getSpecificBranchCommits
 } from '@/modules/core/repositories/commits'
 import {
   getCommitsByStreamId,
   getCommitsTotalCountByStreamId
 } from '@/modules/core/services/commits'
+import { Nullable, Optional } from '@speckle/shared'
 import { UserInputError } from 'apollo-server-core'
 
 export async function getPaginatedStreamCommits(

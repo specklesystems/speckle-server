@@ -1,5 +1,5 @@
-import { defineStore } from 'pinia'
 import { Config } from 'lib/bindings/definitions/IConfigBinding'
+import { defineStore } from 'pinia'
 
 export const useDocumentInfoStore = defineStore('documentInfoStore', () => {
   const { $configBinding } = useNuxtApp()

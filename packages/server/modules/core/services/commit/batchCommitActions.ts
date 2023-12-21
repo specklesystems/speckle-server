@@ -3,8 +3,8 @@ import {
   addCommitMovedActivity
 } from '@/modules/activitystream/services/commitActivity'
 import {
-  CommitInvalidAccessError,
-  CommitBatchUpdateError
+  CommitBatchUpdateError,
+  CommitInvalidAccessError
 } from '@/modules/core/errors/commit'
 import {
   CommitsDeleteInput,

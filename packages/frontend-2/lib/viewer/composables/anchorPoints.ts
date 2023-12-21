@@ -1,11 +1,11 @@
-import type { CSSProperties, Ref } from 'vue'
 import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
-import { Vector3 } from 'three'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import type { IntersectionQuery, PointQuery } from '@speckle/viewer'
 import { isArray, round } from 'lodash-es'
-import { useViewerCameraTracker } from '~~/lib/viewer/composables/viewer'
+import { Vector3 } from 'three'
+import type { CSSProperties, Ref } from 'vue'
 import { useWindowResizeHandler } from '~~/lib/common/composables/window'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useViewerCameraTracker } from '~~/lib/viewer/composables/viewer'
 
 export function useViewerAnchoredPointCalculator(params: {
   /**

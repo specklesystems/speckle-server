@@ -1,9 +1,9 @@
 import { logger } from '@/logging/logging'
 import { getQueue, NotificationJobResult } from '@/modules/notifications/services/queue'
-import { EventEmitter } from 'events'
-import { CompletedEventCallback, FailedEventCallback, JobId } from 'bull'
-import { pick } from 'lodash'
 import { Nullable } from '@speckle/shared'
+import { CompletedEventCallback, FailedEventCallback, JobId } from 'bull'
+import { EventEmitter } from 'events'
+import { pick } from 'lodash'
 
 type AckEvent = {
   result?: NotificationJobResult

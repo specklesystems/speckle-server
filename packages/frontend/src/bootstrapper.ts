@@ -1,8 +1,8 @@
-import Vue from 'vue'
-import VTooltip from 'v-tooltip'
-import VueMixpanel from 'vue-mixpanel'
-import PortalVue from 'portal-vue'
 import { formatNumber } from '@/plugins/formatNumber'
+import PortalVue from 'portal-vue'
+import VTooltip from 'v-tooltip'
+import Vue from 'vue'
+import VueMixpanel from 'vue-mixpanel'
 
 /**
  * Global bootstrapping for the frontend app

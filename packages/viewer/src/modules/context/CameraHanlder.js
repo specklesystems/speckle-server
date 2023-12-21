@@ -1,6 +1,6 @@
-import * as THREE from 'three'
 import CameraControls from 'camera-controls'
 import { HOLD_EVENT_TYPE, KeyboardKeyHold } from 'hold-event'
+import * as THREE from 'three'
 import { SpeckleCameraControls } from '../objects/SpeckleCameraControls'
 
 export default class CameraHandler {

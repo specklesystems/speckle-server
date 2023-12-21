@@ -15,10 +15,10 @@ import {
   WebGLRenderer,
   ZeroFactor
 } from 'three'
+import { ObjectLayers } from './SpeckleRenderer'
 import { Geometry } from './converter/Geometry'
 import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
 import { ShadowcatcherPass } from './pipeline/ShadowcatcherPass'
-import { ObjectLayers } from './SpeckleRenderer'
 
 export interface ShadowcatcherConfig {
   textureSize: number

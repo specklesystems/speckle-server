@@ -1,7 +1,7 @@
 export {
   BaseError,
+  ComposableInvokedOutOfScopeError,
   LogicError,
   UninitializedResourceAccessError,
-  ComposableInvokedOutOfScopeError,
   UnsupportedEnvironmentError
 } from '@speckle/ui-components'

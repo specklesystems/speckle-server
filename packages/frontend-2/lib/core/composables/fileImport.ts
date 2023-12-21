@@ -1,15 +1,15 @@
-import type { MaybeRef } from '@vueuse/core'
-import { ensureError } from '@speckle/shared'
 import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
-import { useServerFileUploadLimit } from '~~/lib/common/composables/serverInfo'
-import type {
-  UploadableFileItem,
-  UploadFileItem
-} from '~~/lib/form/composables/fileUpload'
-import { importFile } from '~~/lib/core/api/fileImport'
+import { ensureError } from '@speckle/shared'
+import type { MaybeRef } from '@vueuse/core'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
+import { useServerFileUploadLimit } from '~~/lib/common/composables/serverInfo'
 import { BlobUploadStatus } from '~~/lib/core/api/blobStorage'
+import { importFile } from '~~/lib/core/api/fileImport'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import type {
+  UploadFileItem,
+  UploadableFileItem
+} from '~~/lib/form/composables/fileUpload'
 
 export function useFileImport(params: {
   projectId: MaybeRef<string>

@@ -2,14 +2,14 @@ import Mention from '@tiptap/extension-mention'
 import { VueRenderer } from '@tiptap/vue-3'
 import TiptapMentionList from '~~/components/common/tiptap/MentionList.vue'
 
-import type { SuggestionKeyDownProps, SuggestionOptions } from '@tiptap/suggestion'
 import { ApolloClient } from '@apollo/client/core'
-import { mentionsUserSearchQuery } from '~~/lib/common/graphql/queries'
-import type { MentionsUserSearchQuery } from '~~/lib/common/generated/gql/graphql'
-import type { Get } from 'type-fest'
-import tippy from 'tippy.js'
-import type { Instance, GetReferenceClientRect } from 'tippy.js'
 import type { Optional } from '@speckle/shared'
+import type { SuggestionKeyDownProps, SuggestionOptions } from '@tiptap/suggestion'
+import type { GetReferenceClientRect, Instance } from 'tippy.js'
+import tippy from 'tippy.js'
+import type { Get } from 'type-fest'
+import type { MentionsUserSearchQuery } from '~~/lib/common/generated/gql/graphql'
+import { mentionsUserSearchQuery } from '~~/lib/common/graphql/queries'
 
 export type SuggestionOptionsItem = NonNullable<
   Get<MentionsUserSearchQuery, 'userSearch.items[0]'>

@@ -34,7 +34,7 @@ import {
   getStream,
   markCommitStreamUpdated
 } from '@/modules/core/repositories/streams'
-import { ensureError, MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable, Roles, ensureError } from '@speckle/shared'
 import { has } from 'lodash'
 
 /**

@@ -1,7 +1,5 @@
 import { generateUUID } from 'three/src/math/MathUtils'
-import MeshBatch from './MeshBatch'
 import { SpeckleType } from '../converter/GeometryConverter'
-import LineBatch from './LineBatch'
 import Materials from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import {
@@ -11,14 +9,16 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
+import LineBatch from './LineBatch'
+import MeshBatch from './MeshBatch'
 import PointBatch from './PointBatch'
 // import { FilterMaterialType } from '../FilteringManager'
-import { Material, Mesh, WebGLRenderer } from 'three'
-import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
 import Logger from 'js-logger'
+import { Material, Mesh, WebGLRenderer } from 'three'
 import { World } from '../World'
-import { RenderTree } from '../tree/RenderTree'
+import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
 import SpeckleMesh from '../objects/SpeckleMesh'
+import { RenderTree } from '../tree/RenderTree'
 import TextBatch from './TextBatch'
 
 export enum TransformStorage {

@@ -1,3 +1,41 @@
+import {
+  Branches,
+  Commits,
+  StreamAcl,
+  StreamCommits,
+  StreamFavorites,
+  Streams,
+  Users,
+  knex
+} from '@/modules/core/dbSchema'
+import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
+import {
+  DiscoverableStreamsSortType,
+  DiscoverableStreamsSortingInput,
+  ProjectCreateInput,
+  ProjectUpdateInput,
+  ProjectVisibility,
+  QueryDiscoverableStreamsArgs,
+  SortDirection,
+  StreamCreateInput,
+  StreamUpdateInput
+} from '@/modules/core/graph/generated/graphql'
+import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
+import { metaHelpers } from '@/modules/core/helpers/meta'
+import { isProjectCreateInput } from '@/modules/core/helpers/stream'
+import {
+  LimitedUserRecord,
+  StreamAclRecord,
+  StreamFavoriteRecord,
+  StreamRecord
+} from '@/modules/core/helpers/types'
+import { UserWithOptionalRole } from '@/modules/core/repositories/users'
+import { InvalidArgumentError } from '@/modules/shared/errors'
+import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
+import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
+import cryptoRandomString from 'crypto-random-string'
+import dayjs from 'dayjs'
+import { Knex } from 'knex'
 import _, {
   clamp,
   has,
@@ -9,45 +47,7 @@ import _, {
   reduce,
   toNumber
 } from 'lodash'
-import {
-  Streams,
-  StreamAcl,
-  StreamFavorites,
-  knex,
-  Users,
-  StreamCommits,
-  Commits,
-  Branches
-} from '@/modules/core/dbSchema'
-import { InvalidArgumentError } from '@/modules/shared/errors'
-import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
-import {
-  LimitedUserRecord,
-  StreamAclRecord,
-  StreamFavoriteRecord,
-  StreamRecord
-} from '@/modules/core/helpers/types'
-import {
-  DiscoverableStreamsSortingInput,
-  DiscoverableStreamsSortType,
-  ProjectCreateInput,
-  ProjectUpdateInput,
-  ProjectVisibility,
-  QueryDiscoverableStreamsArgs,
-  SortDirection,
-  StreamCreateInput,
-  StreamUpdateInput
-} from '@/modules/core/graph/generated/graphql'
-import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
-import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
-import dayjs from 'dayjs'
-import { UserWithOptionalRole } from '@/modules/core/repositories/users'
-import cryptoRandomString from 'crypto-random-string'
-import { Knex } from 'knex'
-import { isProjectCreateInput } from '@/modules/core/helpers/stream'
 import { SetRequired } from 'type-fest'
-import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
-import { metaHelpers } from '@/modules/core/helpers/meta'
 
 export type StreamWithOptionalRole = StreamRecord & {
   /**

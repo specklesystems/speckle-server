@@ -1,11 +1,11 @@
-import Vue from 'vue'
+import { BaseError } from '@/helpers/errorHelper'
 import {
   UploadableFileItem,
   UploadFileItem
 } from '@/main/lib/common/file-upload/fileUploadHelper'
 import { getAuthToken } from '@/plugins/authHelpers'
 import { clamp } from 'lodash'
-import { BaseError } from '@/helpers/errorHelper'
+import Vue from 'vue'
 
 export type BlobPostResultItem = {
   blobId?: string

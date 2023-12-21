@@ -11,10 +11,10 @@ import {
   Vector3
 } from 'three'
 import { ExtendedTriangle } from 'three-mesh-bvh'
-import { BatchObject } from '../batching/BatchObject'
-import { ExtendedIntersection, ExtendedShapeCastCallbacks } from './SpeckleRaycaster'
-import { SpeckleMeshBVH } from './SpeckleMeshBVH'
 import { ObjectLayers } from '../SpeckleRenderer'
+import { BatchObject } from '../batching/BatchObject'
+import { SpeckleMeshBVH } from './SpeckleMeshBVH'
+import { ExtendedIntersection, ExtendedShapeCastCallbacks } from './SpeckleRaycaster'
 
 /** 
  * 

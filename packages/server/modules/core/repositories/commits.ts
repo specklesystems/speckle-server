@@ -11,7 +11,14 @@ import {
   CommitRecord,
   StreamCommitRecord
 } from '@/modules/core/helpers/types'
-import { clamp, uniq, uniqBy, reduce } from 'lodash'
+import {
+  BatchedSelectOptions,
+  executeBatchedSelect
+} from '@/modules/shared/helpers/dbHelper'
+import { Nullable, Optional } from '@speckle/shared'
+import crs from 'crypto-random-string'
+import { Knex } from 'knex'
+import { clamp, reduce, uniq, uniqBy } from 'lodash'
 
 const CommitWithStreamBranchMetadataFields = [
   ...Commits.cols,
@@ -19,13 +26,6 @@ const CommitWithStreamBranchMetadataFields = [
   BranchCommits.col.branchId,
   `${Branches.col.name} as branchName`
 ]
-import crs from 'crypto-random-string'
-import {
-  BatchedSelectOptions,
-  executeBatchedSelect
-} from '@/modules/shared/helpers/dbHelper'
-import { Knex } from 'knex'
-import { Nullable, Optional } from '@speckle/shared'
 
 export const generateCommitId = () => crs({ length: 10 })
 

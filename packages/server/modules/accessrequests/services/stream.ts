@@ -6,13 +6,13 @@ import { AccessRequestsEmitter } from '@/modules/accessrequests/events/emitter'
 import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes'
 import {
   AccessRequestType,
+  ServerAccessRequestRecord,
   createNewRequest,
   deleteRequestById,
   generateId,
   getPendingAccessRequest,
   getPendingAccessRequests,
-  getUsersPendingAccessRequest,
-  ServerAccessRequestRecord
+  getUsersPendingAccessRequest
 } from '@/modules/accessrequests/repositories'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'

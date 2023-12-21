@@ -1,6 +1,6 @@
-import { has, isObjectLike } from 'lodash-es'
-import { defineNuxtModule, addComponent } from '@nuxt/kit'
+import { addComponent, defineNuxtModule } from '@nuxt/kit'
 import * as SpeckleUiComponents from '@speckle/ui-components'
+import { has, isObjectLike } from 'lodash-es'
 
 const isVueComponent = (val) => {
   if (!isObjectLike(val)) return false

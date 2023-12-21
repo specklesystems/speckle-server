@@ -1,3 +1,4 @@
+import { AllScopes } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { cloneDeep } from 'lodash-es'
 import {
@@ -5,7 +6,6 @@ import {
   serverInfoBlobSizeLimitQuery
 } from '~~/lib/common/graphql/queries'
 import { prettyFileSize } from '~~/lib/core/helpers/file'
-import { AllScopes } from '@speckle/shared'
 
 export function useServerFileUploadLimit() {
   const { result } = useQuery(serverInfoBlobSizeLimitQuery)

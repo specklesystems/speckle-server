@@ -1,16 +1,16 @@
-import {
-  initializeQueue,
-  consumeIncomingNotifications,
-  registerNotificationHandlers,
-  shutdownQueue
-} from '@/modules/notifications/services/queue'
+import { moduleLogger } from '@/logging/logging'
 import {
   NotificationType,
   NotificationTypeHandlers
 } from '@/modules/notifications/helpers/types'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import {
+  consumeIncomingNotifications,
+  initializeQueue,
+  registerNotificationHandlers,
+  shutdownQueue
+} from '@/modules/notifications/services/queue'
 import { shouldDisableNotificationsConsumption } from '@/modules/shared/helpers/envHelper'
-import { moduleLogger } from '@/logging/logging'
+import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 export async function initializeConsumption(
   customHandlers?: Partial<NotificationTypeHandlers>

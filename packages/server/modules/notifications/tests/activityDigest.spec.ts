@@ -1,8 +1,8 @@
 import {
   ActionTypes,
+  AllActivityTypes,
   ResourceTypes,
-  StreamScopeActivity,
-  AllActivityTypes
+  StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
 import {
   ActivitySummary,
@@ -10,15 +10,15 @@ import {
 } from '@/modules/activitystream/services/summary'
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
 import {
-  digestMostActiveStream,
-  mostActiveComment,
-  digestSummaryData,
+  Digest,
   DigestTopic,
-  farewell,
+  closingOverview,
   commentMentionSummary,
   digestActiveStreams,
-  closingOverview,
-  Digest,
+  digestMostActiveStream,
+  digestSummaryData,
+  farewell,
+  mostActiveComment,
   prepareSummaryEmail
 } from '@/modules/notifications/services/handlers/activityDigest'
 import { expect } from 'chai'

@@ -1,12 +1,12 @@
 /* eslint-disable camelcase */
-import mailchimp from '@mailchimp/mailchimp_marketing'
 import { logger } from '@/logging/logging'
+import { getUserById } from '@/modules/core/services/users'
 import { md5 } from '@/modules/shared/helpers/cryptoHelper'
 import {
   getMailchimpConfig,
   getMailchimpStatus
 } from '@/modules/shared/helpers/envHelper'
-import { getUserById } from '@/modules/core/services/users'
+import mailchimp from '@mailchimp/mailchimp_marketing'
 
 async function addToMailchimpAudience(userId: string) {
   // Do not do anything (inc. logging) if we do not explicitely enable it

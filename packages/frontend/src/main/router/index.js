@@ -1,15 +1,15 @@
 import { LocalStorageKeys } from '@/helpers/mainConstants'
-import { AppLocalStorage } from '@/utils/localStorage'
-import { GlobalEvents } from '@/main/lib/core/helpers/eventHubHelper'
-import Vue from 'vue'
-import VueRouter from 'vue-router'
-import { getMixpanel } from '@/mixpanelManager'
 import {
   deletePostAuthRedirect,
   getPostAuthRedirect,
   setPostAuthRedirect
 } from '@/main/lib/auth/utils/postAuthRedirectManager'
+import { GlobalEvents } from '@/main/lib/core/helpers/eventHubHelper'
+import { getMixpanel } from '@/mixpanelManager'
+import { AppLocalStorage } from '@/utils/localStorage'
 import { reduce } from 'lodash'
+import Vue from 'vue'
+import VueRouter from 'vue-router'
 
 Vue.use(VueRouter)
 

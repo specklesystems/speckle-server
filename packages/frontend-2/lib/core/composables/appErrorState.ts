@@ -1,5 +1,5 @@
-import { useScopedState } from '~~/lib/common/composables/scopedState'
 import { Observability } from '@speckle/shared'
+import { useScopedState } from '~~/lib/common/composables/scopedState'
 
 const ENTER_STATE_AT_ERRORS_PER_MIN = 100
 

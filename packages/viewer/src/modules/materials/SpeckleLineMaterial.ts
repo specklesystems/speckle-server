@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
-import { speckleLineVert } from './shaders/speckle-line-vert'
-import { speckleLineFrag } from './shaders/speckle-line-frag'
-import { UniformsUtils, ShaderLib, Vector3, Vector2 } from 'three'
-import { Matrix4 } from 'three'
-import { Geometry } from '../converter/Geometry'
+import { Matrix4, ShaderLib, UniformsUtils, Vector3 } from 'three'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
+import { Geometry } from '../converter/Geometry'
+import { speckleLineFrag } from './shaders/speckle-line-frag'
+import { speckleLineVert } from './shaders/speckle-line-vert'
 
 class SpeckleLineMaterial extends LineMaterial {
   private static readonly matBuff: Matrix4 = new Matrix4()

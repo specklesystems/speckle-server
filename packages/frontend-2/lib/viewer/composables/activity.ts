@@ -1,39 +1,39 @@
+import type { Nullable } from '@speckle/shared'
+import { SpeckleViewer } from '@speckle/shared'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
-import { ViewerUserActivityStatus } from '~~/lib/common/generated/gql/graphql'
+import type { MaybeRef } from '@vueuse/core'
+import { useIntervalFn } from '@vueuse/core'
+import dayjs, { Dayjs } from 'dayjs'
+import { Vector3 } from 'three'
+import type { CSSProperties, Ref } from 'vue'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { useOnBeforeWindowUnload } from '~~/lib/common/composables/window'
 import type {
   OnViewerUserActivityBroadcastedSubscription,
   ViewerUserActivityMessageInput
 } from '~~/lib/common/generated/gql/graphql'
+import { ViewerUserActivityStatus } from '~~/lib/common/generated/gql/graphql'
+import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
+import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
+import type { InjectableViewerState } from '~~/lib/viewer/composables/setup'
 import {
   useInjectedViewerInterfaceState,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-import type { InjectableViewerState } from '~~/lib/viewer/composables/setup'
 import {
   useSelectionEvents,
   useViewerCameraControlEndTracker
 } from '~~/lib/viewer/composables/viewer'
-import { SpeckleViewer } from '@speckle/shared'
-import type { Nullable } from '@speckle/shared'
-import { Vector3 } from 'three'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { broadcastViewerUserActivityMutation } from '~~/lib/viewer/graphql/mutations'
-import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
-import dayjs, { Dayjs } from 'dayjs'
-import { useIntervalFn } from '@vueuse/core'
-import type { MaybeRef } from '@vueuse/core'
-import type { CSSProperties, Ref } from 'vue'
-import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
-import { useOnBeforeWindowUnload } from '~~/lib/common/composables/window'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { onViewerUserActivityBroadcastedSubscription } from '~~/lib/viewer/graphql/subscriptions'
 
+import type { Merge } from 'type-fest'
 import {
   StateApplyMode,
   useApplySerializedState,
   useStateSerialization
 } from '~~/lib/viewer/composables/serialization'
-import type { Merge } from 'type-fest'
 
 /**
  * How often we send out an "activity" message even if user hasn't made any clicks (just to keep him active)

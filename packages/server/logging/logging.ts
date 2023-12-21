@@ -2,6 +2,7 @@
 // so we can't use local imports with '@' etc., as they aren't yet defined.
 import { Observability } from '@speckle/shared'
 export { Observability } from '@speckle/shared'
+export { extendLoggerComponent }
 
 const { getLogger, extendLoggerComponent } = Observability
 
@@ -31,4 +32,3 @@ export const authLogger = extendLoggerComponent(logger, 'auth')
 export const crossServerSyncLogger = extendLoggerComponent(logger, 'cross-server-sync')
 
 export type Logger = typeof logger
-export { extendLoggerComponent }

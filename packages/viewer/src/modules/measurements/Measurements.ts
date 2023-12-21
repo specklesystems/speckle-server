@@ -1,14 +1,14 @@
 import SpeckleRenderer, { ObjectLayers } from '../SpeckleRenderer'
 
-import { ViewerEvent } from '../../IViewer'
-import { PerpendicularMeasurement } from './PerpendicularMeasurement'
-import { Plane, Ray, Raycaster, Vector2, Vector3 } from 'three'
-import { PointToPointMeasurement } from './PointToPointMeasurement'
-import { Measurement, MeasurementState } from './Measurement'
-import { ExtendedIntersection } from '../objects/SpeckleRaycaster'
 import Logger from 'js-logger'
-import SpeckleMesh from '../objects/SpeckleMesh'
+import { Plane, Ray, Raycaster, Vector2, Vector3 } from 'three'
+import { ViewerEvent } from '../../IViewer'
 import SpeckleGhostMaterial from '../materials/SpeckleGhostMaterial'
+import SpeckleMesh from '../objects/SpeckleMesh'
+import { ExtendedIntersection } from '../objects/SpeckleRaycaster'
+import { Measurement, MeasurementState } from './Measurement'
+import { PerpendicularMeasurement } from './PerpendicularMeasurement'
+import { PointToPointMeasurement } from './PointToPointMeasurement'
 
 export enum MeasurementType {
   PERPENDICULAR,

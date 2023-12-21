@@ -4,7 +4,7 @@ import {
   EmbedParams,
   wrapUrlInIFrame
 } from '@/main/lib/viewer/commit-object-viewer/services/embed'
-import { computed, ref, ComputedRef, unref } from 'vue'
+import { computed, ComputedRef, ref, unref } from 'vue'
 
 /**
  * Get embed viewer query params

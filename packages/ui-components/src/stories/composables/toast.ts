@@ -1,7 +1,6 @@
-import { useTimeoutFn, createGlobalState } from '@vueuse/core'
 import type { Nullable } from '@speckle/shared'
-import { computed, nextTick, watch } from 'vue'
-import { ref } from 'vue'
+import { createGlobalState, useTimeoutFn } from '@vueuse/core'
+import { computed, nextTick, ref, watch } from 'vue'
 import type { ToastNotification } from '~~/src/helpers/global/toast'
 
 /**

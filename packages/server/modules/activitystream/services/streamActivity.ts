@@ -1,27 +1,25 @@
-import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
-import { StreamRoles } from '@/modules/core/helpers/mainConstants'
-import {
-  pubsub,
-  StreamSubscriptions as StreamPubsubEvents
-} from '@/modules/shared/utils/subscriptions'
-import { StreamCreateInput } from '@/test/graphql/generated/graphql'
-import { Knex } from 'knex'
-import { getStreamCollaborators } from '@/modules/core/repositories/streams'
-import { chunk, flatten } from 'lodash'
-import { StreamRecord } from '@/modules/core/helpers/types'
+import { saveActivity } from '@/modules/activitystream/services'
 import {
   ProjectCreateInput,
-  ProjectUpdatedMessageType,
   ProjectUpdateInput,
+  ProjectUpdatedMessageType,
   StreamUpdateInput,
   UserProjectsUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
+import { StreamRoles } from '@/modules/core/helpers/mainConstants'
+import { StreamRecord } from '@/modules/core/helpers/types'
+import { getStreamCollaborators } from '@/modules/core/repositories/streams'
 import {
   ProjectSubscriptions,
+  StreamSubscriptions as StreamPubsubEvents,
+  UserSubscriptions,
   publish,
-  UserSubscriptions
+  pubsub
 } from '@/modules/shared/utils/subscriptions'
+import { StreamCreateInput } from '@/test/graphql/generated/graphql'
+import { Knex } from 'knex'
+import { chunk, flatten } from 'lodash'
 
 /**
  * Save "stream updated" activity

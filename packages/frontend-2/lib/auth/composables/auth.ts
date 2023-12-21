@@ -1,20 +1,20 @@
+import type { Optional } from '@speckle/shared'
+import { SafeLocalStorage, ensureError } from '@speckle/shared'
+import { useApolloClient } from '@vue/apollo-composable'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
+import { speckleWebAppId } from '~~/lib/auth/helpers/strategies'
 import {
   getAccessCode,
   getTokenFromAccessCode,
   registerAndGetAccessCode
 } from '~~/lib/auth/services/auth'
-import { ensureError, SafeLocalStorage } from '@speckle/shared'
-import type { Optional } from '@speckle/shared'
-import { CookieKeys, LocalStorageKeys } from '~~/lib/common/helpers/constants'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
-import { useNavigateToHome, useNavigateToLogin } from '~~/lib/common/helpers/route'
-import { useApolloClient } from '@vue/apollo-composable'
-import { speckleWebAppId } from '~~/lib/auth/helpers/strategies'
-import { randomString } from '~~/lib/common/helpers/random'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { CookieKeys, LocalStorageKeys } from '~~/lib/common/helpers/constants'
+import { randomString } from '~~/lib/common/helpers/random'
+import { useNavigateToHome, useNavigateToLogin } from '~~/lib/common/helpers/route'
 import { useMixpanel, useMixpanelUserIdentification } from '~~/lib/core/composables/mp'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
 
 /**
  * TODO:

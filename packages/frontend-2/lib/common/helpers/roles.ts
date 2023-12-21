@@ -1,5 +1,5 @@
-import { Roles } from '@speckle/shared'
 import type { ServerRoles, StreamRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { ServerRole, StreamRole } from '~~/lib/common/generated/gql/graphql'
 
 /**

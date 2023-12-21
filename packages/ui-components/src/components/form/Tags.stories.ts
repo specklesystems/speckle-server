@@ -1,10 +1,10 @@
 import { wait } from '@speckle/shared'
+import { action } from '@storybook/addon-actions'
 import type { Meta, StoryObj } from '@storybook/vue3'
 import { times } from 'lodash'
 import { useForm } from 'vee-validate'
 import FormButton from '~~/src/components/form/Button.vue'
 import FormSelectTags from '~~/src/components/form/Tags.vue'
-import { action } from '@storybook/addon-actions'
 
 type StoryType = StoryObj<
   Record<string, unknown> & {

@@ -1,65 +1,65 @@
 /* eslint-disable camelcase */
 /* istanbul ignore file */
-import './bootstrap'
-import http from 'http'
 import express, { Express } from 'express'
+import http from 'http'
+import './bootstrap'
 
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
-import 'express-async-errors'
 import compression from 'compression'
+import 'express-async-errors'
 
-import { createTerminus } from '@godaddy/terminus'
-import * as Sentry from '@sentry/node'
 import Logging from '@/logging'
-import { startupLogger, shutdownLogger } from '@/logging/logging'
 import {
   DetermineRequestIdMiddleware,
   LoggingExpressMiddleware
 } from '@/logging/expressLogging'
+import { shutdownLogger, startupLogger } from '@/logging/logging'
+import { createTerminus } from '@godaddy/terminus'
+import * as Sentry from '@sentry/node'
 
 import { errorLoggingMiddleware } from '@/logging/errorLogging'
 import prometheusClient from 'prom-client'
 
 import {
-  ApolloServer,
-  ForbiddenError,
-  ApolloServerExpressConfig,
-  ApolloError
-} from 'apollo-server-express'
-import {
   ApolloServerPluginLandingPageLocalDefault,
-  ApolloServerPluginUsageReportingDisabled,
-  ApolloServerPluginUsageReporting
+  ApolloServerPluginUsageReporting,
+  ApolloServerPluginUsageReportingDisabled
 } from 'apollo-server-core'
+import {
+  ApolloError,
+  ApolloServer,
+  ApolloServerExpressConfig,
+  ForbiddenError
+} from 'apollo-server-express'
 
-import { ExecutionParams, SubscriptionServer } from 'subscriptions-transport-ws'
 import { execute, subscribe } from 'graphql'
+import { ExecutionParams, SubscriptionServer } from 'subscriptions-transport-ws'
 
 import knex from '@/db/knex'
 import { monitorActiveConnections } from '@/logging/httpServerMonitoring'
+import * as ModulesSetup from '@/modules'
 import { buildErrorFormatter } from '@/modules/core/graph/setup'
+import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 import {
   getFileSizeLimitMB,
+  isApolloMonitoringEnabled,
   isDevEnv,
   isTestEnv,
-  useNewFrontend,
-  isApolloMonitoringEnabled
+  useNewFrontend
 } from '@/modules/shared/helpers/envHelper'
-import * as ModulesSetup from '@/modules'
 import { GraphQLContext, Optional } from '@/modules/shared/helpers/typeHelper'
-import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter'
 
-import { get, has, isString, toNumber } from 'lodash'
+import { redactSensitiveVariables } from '@/logging/loggingHelper'
 import { corsMiddleware } from '@/modules/core/configs/cors'
-import { IMocks } from '@graphql-tools/mock'
 import {
   authContextMiddleware,
   buildContext,
   determineClientIpAddressMiddleware,
   mixpanelTrackerHelperMiddleware
 } from '@/modules/shared/middleware'
+import { IMocks } from '@graphql-tools/mock'
 import { GraphQLError } from 'graphql'
-import { redactSensitiveVariables } from '@/logging/loggingHelper'
+import { get, has, isString, toNumber } from 'lodash'
 
 let graphqlServer: ApolloServer
 

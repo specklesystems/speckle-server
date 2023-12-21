@@ -1,12 +1,12 @@
-import type { Meta, StoryObj } from '@storybook/vue3'
-import { action } from '@storybook/addon-actions'
 import {
+  DocumentDuplicateIcon,
   PencilIcon,
   ShieldCheckIcon,
   ShieldExclamationIcon,
-  TrashIcon,
-  DocumentDuplicateIcon
+  TrashIcon
 } from '@heroicons/vue/24/outline'
+import { action } from '@storybook/addon-actions'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import Table from '~~/src/components/layout/Table.vue'
 
 export default {

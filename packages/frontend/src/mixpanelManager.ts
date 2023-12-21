@@ -1,10 +1,10 @@
 /* eslint-disable camelcase */
-import mixpanel, { OverridedMixpanel } from 'mixpanel-browser'
 import { Optional } from '@/helpers/typeHelpers'
-import { AppLocalStorage } from '@/utils/localStorage'
 import * as ThemeStateManager from '@/main/utils/themeStateManager'
-import { intersection, mapKeys } from 'lodash'
+import { AppLocalStorage } from '@/utils/localStorage'
 import { resolveMixpanelServerId } from '@speckle/shared'
+import { intersection, mapKeys } from 'lodash'
+import mixpanel, { OverridedMixpanel } from 'mixpanel-browser'
 
 let mixpanelInitialized = false
 

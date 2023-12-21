@@ -1,8 +1,8 @@
-import { userEvent, within } from '@storybook/testing-library'
-import FormTextInput from '~~/src/components/form/TextInput.vue'
-import FormButton from '~~/src/components/form/Button.vue'
-import type { StoryObj, Meta } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
+import { userEvent, within } from '@storybook/testing-library'
+import type { Meta, StoryObj } from '@storybook/vue3'
+import FormButton from '~~/src/components/form/Button.vue'
+import FormTextInput from '~~/src/components/form/TextInput.vue'
 import type { VuePlayFunction } from '~~/src/stories/helpers/storybook'
 import { mergeStories } from '~~/src/stories/helpers/storybook'
 

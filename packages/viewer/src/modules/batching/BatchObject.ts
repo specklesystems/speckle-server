@@ -1,8 +1,8 @@
 /* eslint-disable camelcase */
 import { Euler, Matrix4, Quaternion, Vector3 } from 'three'
+import { Geometry } from '../converter/Geometry'
 import { SpeckleMeshBVH } from '../objects/SpeckleMeshBVH'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { Geometry } from '../converter/Geometry'
 
 type VectorLike = { x: number; y: number; z?: number; w?: number }
 

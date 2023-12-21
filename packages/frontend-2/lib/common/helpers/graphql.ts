@@ -1,22 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { isUndefinedOrVoid } from '@speckle/shared'
-import type { Optional } from '@speckle/shared'
-import { ApolloError, ApolloCache, defaultDataIdFromObject } from '@apollo/client/core'
-import type {
-  FetchResult,
-  DataProxy,
-  TypedDocumentNode,
-  ServerError,
-  ServerParseError
-} from '@apollo/client/core'
-import { GraphQLError } from 'graphql'
-import type { DocumentNode } from 'graphql'
-import { flatten, isUndefined, has, isFunction, isString } from 'lodash-es'
 import type { Modifier, Reference } from '@apollo/client/cache'
-import type { PartialDeep } from 'type-fest'
+import type {
+  DataProxy,
+  FetchResult,
+  ServerError,
+  ServerParseError,
+  TypedDocumentNode
+} from '@apollo/client/core'
+import { ApolloCache, ApolloError, defaultDataIdFromObject } from '@apollo/client/core'
 import type { NetworkError } from '@apollo/client/errors'
+import type { Optional } from '@speckle/shared'
+import { isUndefinedOrVoid } from '@speckle/shared'
+import type { DocumentNode } from 'graphql'
+import { GraphQLError } from 'graphql'
+import { flatten, has, isFunction, isString, isUndefined } from 'lodash-es'
 import { nanoid } from 'nanoid'
+import type { PartialDeep } from 'type-fest'
 import { StackTrace } from '~~/lib/common/helpers/debugging'
 
 export const isServerError = (err: Error): err is ServerError =>

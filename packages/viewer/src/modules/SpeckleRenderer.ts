@@ -1,3 +1,4 @@
+import Logger from 'js-logger'
 import {
   ACESFilmicToneMapping,
   Box3,
@@ -22,18 +23,7 @@ import {
   VSMShadowMap,
   WebGLRenderer
 } from 'three'
-import { Batch, GeometryType } from './batching/Batch'
-import Batcher from './batching/Batcher'
-import { Geometry } from './converter/Geometry'
-import { SpeckleTypeAllRenderables } from './converter/GeometryConverter'
-import { FilterMaterial } from './filtering/FilteringManager'
-import Input, { InputOptionsDefault } from './input/Input'
-import { Intersections } from './Intersections'
-import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial'
-import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
-import { NodeRenderView } from './tree/NodeRenderView'
-import { Viewer } from './Viewer'
-import { TreeNode } from './tree/WorldTree'
+import { MeshBVHVisualizer } from 'three-mesh-bvh'
 import {
   CanonicalView,
   DefaultLightConfiguration,
@@ -44,25 +34,35 @@ import {
   SunLightConfiguration,
   ViewerEvent
 } from '../IViewer'
+import { Batch, GeometryType } from './batching/Batch'
+import Batcher from './batching/Batcher'
+import { BatchObject } from './batching/BatchObject'
+import MeshBatch from './batching/MeshBatch'
+import { Geometry } from './converter/Geometry'
+import { SpeckleTypeAllRenderables } from './converter/GeometryConverter'
+import { FilterMaterial } from './filtering/FilteringManager'
+import Input, { InputOptionsDefault } from './input/Input'
+import { Intersections } from './Intersections'
+import { MaterialOptions } from './materials/Materials'
+import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial'
+import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
+import SpecklePointMaterial from './materials/SpecklePointMaterial'
+import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
+import { Measurements } from './measurements/Measurements'
+import SpeckleMesh from './objects/SpeckleMesh'
+import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 import {
   DefaultPipelineOptions,
   Pipeline,
   PipelineOptions,
   RenderType
 } from './pipeline/Pipeline'
-import { MeshBVHVisualizer } from 'three-mesh-bvh'
-import MeshBatch from './batching/MeshBatch'
+import { BaseSpecklePass } from './pipeline/SpecklePass'
 import { PlaneId, SectionBoxOutlines } from './SectionBoxOutlines'
 import { Shadowcatcher } from './Shadowcatcher'
-import Logger from 'js-logger'
-import SpeckleMesh from './objects/SpeckleMesh'
-import { ExtendedIntersection } from './objects/SpeckleRaycaster'
-import { BatchObject } from './batching/BatchObject'
-import SpecklePointMaterial from './materials/SpecklePointMaterial'
-import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
-import { Measurements } from './measurements/Measurements'
-import { MaterialOptions } from './materials/Materials'
-import { BaseSpecklePass } from './pipeline/SpecklePass'
+import { NodeRenderView } from './tree/NodeRenderView'
+import { TreeNode } from './tree/WorldTree'
+import { Viewer } from './Viewer'
 
 export enum ObjectLayers {
   STREAM_CONTENT_MESH = 10,

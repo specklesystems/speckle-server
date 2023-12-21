@@ -1,10 +1,5 @@
-import { saveActivity } from '@/modules/activitystream/services'
 import { ActionTypes, ResourceTypes } from '@/modules/activitystream/helpers/types'
-import { BranchRecord } from '@/modules/core/helpers/types'
-import {
-  pubsub,
-  BranchSubscriptions as BranchPubsubEvents
-} from '@/modules/shared/utils/subscriptions'
+import { saveActivity } from '@/modules/activitystream/services'
 import {
   BranchDeleteInput,
   BranchUpdateInput,
@@ -12,8 +7,14 @@ import {
   ProjectModelsUpdatedMessageType,
   UpdateModelInput
 } from '@/modules/core/graph/generated/graphql'
-import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
+import { BranchRecord } from '@/modules/core/helpers/types'
+import {
+  BranchSubscriptions as BranchPubsubEvents,
+  ProjectSubscriptions,
+  publish,
+  pubsub
+} from '@/modules/shared/utils/subscriptions'
 
 /**
  * Save "branch created" activity

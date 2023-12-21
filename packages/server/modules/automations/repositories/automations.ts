@@ -6,10 +6,10 @@ import {
   AutomationRunRecord
 } from '@/modules/automations/helpers/types'
 import {
-  Automations,
-  AutomationRuns,
   AutomationFunctionRuns,
   AutomationFunctionRunsResultVersions,
+  AutomationRuns,
+  Automations,
   Commits
 } from '@/modules/core/dbSchema'
 import { CommitRecord } from '@/modules/core/helpers/types'

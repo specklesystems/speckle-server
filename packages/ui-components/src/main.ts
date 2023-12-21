@@ -1,6 +1,6 @@
 import { createApp } from 'vue'
-import './style.css'
 import App from './App.vue'
+import './style.css'
 
 /**
  * This entrypoint is only used when running the dev server and it's the entrypoint for the

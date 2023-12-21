@@ -1,16 +1,16 @@
-import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
-  getStreamFileUploads,
+  getBranchPendingVersions,
   getFileInfo,
-  getStreamPendingModels,
-  getBranchPendingVersions
+  getStreamFileUploads,
+  getStreamPendingModels
 } from '@/modules/fileuploads/repositories/fileUploads'
 import { authorizeResolver } from '@/modules/shared'
 import {
   FileImportSubscriptions,
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
+import { Roles } from '@speckle/shared'
 
 export = {
   Stream: {

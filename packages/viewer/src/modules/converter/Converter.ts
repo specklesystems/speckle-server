@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import Logger from 'js-logger'
 import { generateUUID } from 'three/src/math/MathUtils'
 import { TreeNode, WorldTree } from '../tree/WorldTree'
-import Logger from 'js-logger'
 
 export type ConverterResultDelegate = (object) => Promise<void>
 

@@ -1,22 +1,22 @@
-import { UninitializedResourceAccessError } from '@/modules/shared/errors'
-import { Optional } from '@/modules/shared/helpers/typeHelper'
+import { Observability, logger, notificationsLogger } from '@/logging/logging'
 import {
   InvalidNotificationError,
   NotificationValidationError,
   UnhandledNotificationError
 } from '@/modules/notifications/errors'
 import {
-  isNotificationMessage,
   NotificationHandler,
   NotificationMessage,
   NotificationType,
-  NotificationTypeHandlers
+  NotificationTypeHandlers,
+  isNotificationMessage
 } from '@/modules/notifications/helpers/types'
-import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
-import Bull from 'bull'
+import { UninitializedResourceAccessError } from '@/modules/shared/errors'
 import { buildBaseQueueOptions } from '@/modules/shared/helpers/bullHelper'
+import { isProdEnv, isTestEnv } from '@/modules/shared/helpers/envHelper'
+import { Optional } from '@/modules/shared/helpers/typeHelper'
+import Bull from 'bull'
 import cryptoRandomString from 'crypto-random-string'
-import { logger, notificationsLogger, Observability } from '@/logging/logging'
 
 export type NotificationJobResult = {
   status: NotificationJobResultsStatus

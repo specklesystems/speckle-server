@@ -1,7 +1,7 @@
 import { isString } from 'lodash-es'
 import {
-  InvalidLoginParametersError,
   AuthFailedError,
+  InvalidLoginParametersError,
   InvalidRegisterParametersError
 } from '~~/lib/auth/errors/errors'
 import { speckleWebAppId } from '~~/lib/auth/helpers/strategies'

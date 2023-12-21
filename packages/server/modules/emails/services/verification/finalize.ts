@@ -1,7 +1,7 @@
-import { Optional } from '@speckle/shared'
 import { markUserAsVerified } from '@/modules/core/repositories/users'
 import { EmailVerificationFinalizationError } from '@/modules/emails/errors'
 import { deleteVerifications, getPendingToken } from '@/modules/emails/repositories'
+import { Optional } from '@speckle/shared'
 
 async function initializeState(tokenId: Optional<string>) {
   if (!tokenId)

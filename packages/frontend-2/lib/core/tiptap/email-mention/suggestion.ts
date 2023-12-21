@@ -3,29 +3,29 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Editor } from '@tiptap/core'
 import type { Range } from '@tiptap/core'
+import { Editor } from '@tiptap/core'
 import { EditorState, Plugin, PluginKey } from '@tiptap/pm/state'
 import { Decoration, DecorationSet, EditorView } from '@tiptap/pm/view'
 
-import tippy from 'tippy.js'
-import type { Instance, GetReferenceClientRect } from 'tippy.js'
-import TiptapEmailMentionPopup from '~~/components/common/tiptap/EmailMentionPopup.vue'
-import { VueRenderer } from '@tiptap/vue-3'
-import { mentionsUserSearchQuery } from '~~/lib/common/graphql/queries'
 import { ApolloClient } from '@apollo/client/core'
-import type {
-  MentionData,
-  SuggestionOptionsItem
-} from '~~/lib/core/tiptap/mentionExtension'
 import type { Optional } from '@speckle/shared'
-import { inviteProjectUserMutation } from '~~/lib/projects/graphql/mutations'
+import { VueRenderer } from '@tiptap/vue-3'
+import type { GetReferenceClientRect, Instance } from 'tippy.js'
+import tippy from 'tippy.js'
+import TiptapEmailMentionPopup from '~~/components/common/tiptap/EmailMentionPopup.vue'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { mentionsUserSearchQuery } from '~~/lib/common/graphql/queries'
 import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { findSuggestionMatch } from '~~/lib/core/tiptap/email-mention/findSuggestionMatch'
+import type {
+  MentionData,
+  SuggestionOptionsItem
+} from '~~/lib/core/tiptap/mentionExtension'
+import { inviteProjectUserMutation } from '~~/lib/projects/graphql/mutations'
 
 /**
  * This is essentially the original Tiptap suggestion extension adapted to support the specialized

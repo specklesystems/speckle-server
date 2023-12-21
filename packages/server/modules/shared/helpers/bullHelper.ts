@@ -1,6 +1,6 @@
-import Bull from 'bull'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 import { createRedisClient } from '@/modules/shared/redis/redis'
+import Bull from 'bull'
 
 export function buildBaseQueueOptions(): Bull.QueueOptions {
   return {

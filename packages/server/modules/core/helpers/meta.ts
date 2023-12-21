@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { MetaSchemaConfig, SchemaConfig } from '@/modules/core/dbSchema'
 import { Nullable } from '@speckle/shared'
-import { SchemaConfig, MetaSchemaConfig } from '@/modules/core/dbSchema'
 import { camelCase, isString } from 'lodash'
 
 /**

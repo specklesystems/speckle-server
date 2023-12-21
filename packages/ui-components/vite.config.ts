@@ -1,10 +1,10 @@
-import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { createRequire } from 'node:module'
+import { resolve } from 'path'
 import vueMacros from 'unplugin-vue-macros/vite'
+import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
 import pkg from './package.json'
-import { resolve } from 'path'
-import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
 

@@ -1,15 +1,15 @@
 import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
 import { DiffResult, VisualDiffMode } from './modules/Differ'
+import { Utils } from './modules/Utils'
+import { World } from './modules/World'
 import { BatchObject } from './modules/batching/BatchObject'
 import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
+import { MeasurementOptions } from './modules/measurements/Measurements'
 import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
 import { WorldTree } from './modules/tree/WorldTree'
-import { Utils } from './modules/Utils'
-import { World } from './modules/World'
-import { MeasurementOptions } from './modules/measurements/Measurements'
 
 export interface ViewerParams {
   showStats: boolean

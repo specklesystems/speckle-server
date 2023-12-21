@@ -1,10 +1,10 @@
 import { redisLogger } from '@/logging/logging'
-import Redis, { RedisOptions } from 'ioredis'
 import sentry from '@/logging/sentryHelper'
 import {
   EnvironmentResourceError,
   MisconfiguredEnvironmentError
 } from '@/modules/shared/errors'
+import Redis, { RedisOptions } from 'ioredis'
 
 export function createRedisClient(redisUrl: string, redisOptions: RedisOptions): Redis {
   let redisClient: Redis

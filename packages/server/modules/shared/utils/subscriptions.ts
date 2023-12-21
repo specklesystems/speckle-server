@@ -1,9 +1,5 @@
-import { MaybeAsync, Nullable } from '@speckle/shared'
-import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
-import { RedisPubSub } from 'graphql-redis-subscriptions'
-import Redis from 'ioredis'
-import { withFilter } from 'graphql-subscriptions'
-import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { AutomationFunctionRunGraphQLReturn } from '@/modules/automations/helpers/graphTypes'
+import { CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes'
 import {
   AutomationRun,
   AutomationsStatus,
@@ -31,15 +27,19 @@ import {
   ViewerResourceItem,
   ViewerUserActivityMessage
 } from '@/modules/core/graph/generated/graphql'
-import { Merge } from 'type-fest'
 import {
   ModelGraphQLReturn,
   ProjectGraphQLReturn,
   VersionGraphQLReturn
 } from '@/modules/core/helpers/graphTypes'
-import { CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes'
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types'
-import { AutomationFunctionRunGraphQLReturn } from '@/modules/automations/helpers/graphTypes'
+import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
+import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { MaybeAsync, Nullable } from '@speckle/shared'
+import { RedisPubSub } from 'graphql-redis-subscriptions'
+import { withFilter } from 'graphql-subscriptions'
+import Redis from 'ioredis'
+import { Merge } from 'type-fest'
 
 /**
  * GraphQL Subscription PubSub instance

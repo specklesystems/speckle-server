@@ -1,11 +1,11 @@
 import { fullStreamAccessRequestFieldsFragment } from '@/graphql/fragments/accessRequests'
 import { activityMainFieldsFragment } from '@/graphql/fragments/activity'
+import { streamFileUploadFragment } from '@/graphql/fragments/streams'
 import {
   limitedUserFieldsFragment,
   streamCollaboratorFieldsFragment
 } from '@/graphql/fragments/user'
 import { gql } from '@apollo/client/core'
-import { streamFileUploadFragment } from '@/graphql/fragments/streams'
 
 /**
  * Common stream fields when querying for streams

@@ -30,8 +30,8 @@ import { StreamRole } from '@/test/graphql/generated/graphql'
 import { truncateTables } from '@/test/hooks'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
 import {
-  buildNotificationsStateTracker,
-  NotificationsStateManager
+  NotificationsStateManager,
+  buildNotificationsStateTracker
 } from '@/test/notificationsHelper'
 import { buildAuthenticatedApolloServer } from '@/test/serverHelper'
 import { getStreamActivities } from '@/test/speckle-helpers/activityStreamHelper'

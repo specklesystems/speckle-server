@@ -1,10 +1,10 @@
-import { Optional } from '@speckle/shared'
 import { Objects } from '@/modules/core/dbSchema'
 import { ObjectRecord } from '@/modules/core/helpers/types'
 import {
   BatchedSelectOptions,
   executeBatchedSelect
 } from '@/modules/shared/helpers/dbHelper'
+import { Optional } from '@speckle/shared'
 import { Knex } from 'knex'
 
 export async function getStreamObjects(

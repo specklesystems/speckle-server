@@ -1,5 +1,5 @@
-import { trim, isNumber } from 'lodash'
 import type { JSONContent } from '@tiptap/core'
+import { isNumber, trim } from 'lodash'
 import type { Optional } from '../../core/helpers/utilityTypes'
 
 /**

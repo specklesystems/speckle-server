@@ -1,4 +1,3 @@
-import { ApolloServer, gql } from 'apollo-server-express'
 import {
   GetActiveUserQuery,
   GetActiveUserQueryVariables,
@@ -12,6 +11,7 @@ import {
   RequestVerificationMutationVariables
 } from '@/test/graphql/generated/graphql'
 import { executeOperation } from '@/test/graphqlHelper'
+import { ApolloServer, gql } from 'apollo-server-express'
 
 const baseUserFieldsFragment = gql`
   fragment BaseUserFields on User {

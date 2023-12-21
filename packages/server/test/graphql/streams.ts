@@ -1,18 +1,18 @@
 import {
-  LeaveStreamMutation,
-  LeaveStreamMutationVariables,
   CreateStreamMutation,
   CreateStreamMutationVariables,
-  UpdateStreamMutationVariables,
-  UpdateStreamMutation,
-  ReadStreamQueryVariables,
-  ReadStreamQuery,
-  ReadDiscoverableStreamsQueryVariables,
-  ReadDiscoverableStreamsQuery,
-  GetUserStreamsQueryVariables,
-  GetUserStreamsQuery,
   GetLimitedUserStreamsQuery,
-  GetLimitedUserStreamsQueryVariables
+  GetLimitedUserStreamsQueryVariables,
+  GetUserStreamsQuery,
+  GetUserStreamsQueryVariables,
+  LeaveStreamMutation,
+  LeaveStreamMutationVariables,
+  ReadDiscoverableStreamsQuery,
+  ReadDiscoverableStreamsQueryVariables,
+  ReadStreamQuery,
+  ReadStreamQueryVariables,
+  UpdateStreamMutation,
+  UpdateStreamMutationVariables
 } from '@/test/graphql/generated/graphql'
 import { executeOperation } from '@/test/graphqlHelper'
 import { ApolloServer, gql } from 'apollo-server-express'

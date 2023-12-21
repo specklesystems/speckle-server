@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
-import { speckleStandardColoredVert } from './shaders/speckle-standard-colored-vert'
-import { speckleStandardColoredFrag } from './shaders/speckle-standard-colored-frag'
-import { UniformsUtils, Texture, NearestFilter } from 'three'
-import SpeckleStandardMaterial from './SpeckleStandardMaterial'
+import { NearestFilter, Texture } from 'three'
 import { Geometry } from '../converter/Geometry'
 import SpeckleMesh from '../objects/SpeckleMesh'
 import { Uniforms } from './SpeckleMaterial'
+import SpeckleStandardMaterial from './SpeckleStandardMaterial'
+import { speckleStandardColoredFrag } from './shaders/speckle-standard-colored-frag'
+import { speckleStandardColoredVert } from './shaders/speckle-standard-colored-vert'
 
 class SpeckleStandardColoredMaterial extends SpeckleStandardMaterial {
   protected get vertexShader(): string {

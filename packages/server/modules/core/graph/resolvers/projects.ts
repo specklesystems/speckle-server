@@ -3,15 +3,15 @@ import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { ProjectVisibility, Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import {
-  getUserStreamsCount,
-  getUserStreams,
+  getStream,
   getStreamCollaborators,
-  getStream
+  getUserStreams,
+  getUserStreamsCount
 } from '@/modules/core/repositories/streams'
 import {
+  RateLimitAction,
   getRateLimitResult,
-  isRateLimitBreached,
-  RateLimitAction
+  isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import {
   createStreamReturnRecord,
@@ -33,9 +33,9 @@ import {
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import {
-  filteredSubscribe,
   ProjectSubscriptions,
-  UserSubscriptions
+  UserSubscriptions,
+  filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
 import { chunk, has } from 'lodash'
 

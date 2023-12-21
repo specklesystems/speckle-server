@@ -1,7 +1,7 @@
+import { Roles } from '@speckle/shared'
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
-import { Roles } from '@speckle/shared'
 
 /**
  * Apply this to a page to prevent access by non-admin users

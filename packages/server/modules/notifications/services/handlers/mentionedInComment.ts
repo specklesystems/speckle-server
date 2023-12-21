@@ -2,8 +2,8 @@ import { ExtendedComment, getComment } from '@/modules/comments/repositories/com
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getCommentRoute } from '@/modules/core/helpers/routeHelper'
 import { ServerInfo } from '@/modules/core/helpers/types'
-import { getStream, StreamWithOptionalRole } from '@/modules/core/repositories/streams'
-import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
+import { StreamWithOptionalRole, getStream } from '@/modules/core/repositories/streams'
+import { UserWithOptionalRole, getUser } from '@/modules/core/repositories/users'
 import { getServerInfo } from '@/modules/core/services/generic'
 import {
   EmailTemplateParams,
@@ -12,8 +12,8 @@ import {
 import { sendEmail } from '@/modules/emails/services/sending'
 import { NotificationValidationError } from '@/modules/notifications/errors'
 import {
-  NotificationHandler,
-  MentionedInCommentMessage
+  MentionedInCommentMessage,
+  NotificationHandler
 } from '@/modules/notifications/helpers/types'
 import { getBaseUrl } from '@/modules/shared/helpers/envHelper'
 import { MaybeFalsy, Nullable } from '@/modules/shared/helpers/typeHelper'

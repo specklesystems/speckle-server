@@ -1,9 +1,14 @@
-import express from 'express'
+import { rateLimiterLogger } from '@/logging/logging'
+import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import {
-  getRedisUrl,
   getIntFromEnv,
+  getRedisUrl,
   isTestEnv
 } from '@/modules/shared/helpers/envHelper'
+import { createRedisClient } from '@/modules/shared/redis/redis'
+import { getIpFromRequest } from '@/modules/shared/utils/ip'
+import { TIME } from '@speckle/shared'
+import express from 'express'
 import {
   BurstyRateLimiter,
   RateLimiterAbstract,
@@ -11,11 +16,6 @@ import {
   RateLimiterRedis,
   RateLimiterRes
 } from 'rate-limiter-flexible'
-import { TIME } from '@speckle/shared'
-import { getIpFromRequest } from '@/modules/shared/utils/ip'
-import { RateLimitError } from '@/modules/core/errors/ratelimit'
-import { rateLimiterLogger } from '@/logging/logging'
-import { createRedisClient } from '@/modules/shared/redis/redis'
 
 // typescript definitions
 export enum RateLimitAction {

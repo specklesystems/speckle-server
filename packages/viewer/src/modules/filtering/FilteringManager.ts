@@ -1,18 +1,18 @@
-import { Color, Texture } from 'three'
 import stc from 'string-to-color'
-import { Assets } from '../Assets'
-import { TreeNode, WorldTree } from '../tree/WorldTree'
-import { NodeRenderView } from '../tree/NodeRenderView'
-import {
-  PropertyInfo,
-  StringPropertyInfo,
-  NumericPropertyInfo
-} from './PropertyManager'
-import SpeckleRenderer from '../SpeckleRenderer'
-import EventEmitter from '../EventEmitter'
+import { Color, Texture } from 'three'
 import { ViewerEvent } from '../../IViewer'
-import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
+import { Assets } from '../Assets'
+import EventEmitter from '../EventEmitter'
+import SpeckleRenderer from '../SpeckleRenderer'
 import SpecklePointMaterial from '../materials/SpecklePointMaterial'
+import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
+import { NodeRenderView } from '../tree/NodeRenderView'
+import { TreeNode, WorldTree } from '../tree/WorldTree'
+import {
+  NumericPropertyInfo,
+  PropertyInfo,
+  StringPropertyInfo
+} from './PropertyManager'
 
 export type FilteringState = {
   selectedObjects?: string[]

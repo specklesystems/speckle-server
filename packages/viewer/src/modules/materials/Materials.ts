@@ -1,3 +1,4 @@
+import Logger from 'js-logger'
 import {
   AlwaysStencilFunc,
   Color,
@@ -9,22 +10,21 @@ import {
   Texture,
   Vector2
 } from 'three'
-import { GeometryType } from '../batching/Batch'
-import { TreeNode } from '../tree/WorldTree'
-import { DisplayStyle, NodeRenderView, RenderMaterial } from '../tree/NodeRenderView'
-import SpeckleLineMaterial from './SpeckleLineMaterial'
-import SpeckleStandardMaterial from './SpeckleStandardMaterial'
-import SpecklePointMaterial from './SpecklePointMaterial'
-import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
-import SpeckleStandardColoredMaterial from './SpeckleStandardColoredMaterial'
 import defaultGradient from '../../assets/gradient.png'
 import { Assets } from '../Assets'
+import { GeometryType } from '../batching/Batch'
 import { getConversionFactor } from '../converter/Units'
+import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
+import { DisplayStyle, NodeRenderView, RenderMaterial } from '../tree/NodeRenderView'
+import { TreeNode } from '../tree/WorldTree'
 import SpeckleGhostMaterial from './SpeckleGhostMaterial'
-import Logger from 'js-logger'
-import SpeckleTextMaterial from './SpeckleTextMaterial'
+import SpeckleLineMaterial from './SpeckleLineMaterial'
 import { SpeckleMaterial } from './SpeckleMaterial'
 import SpecklePointColouredMaterial from './SpecklePointColouredMaterial'
+import SpecklePointMaterial from './SpecklePointMaterial'
+import SpeckleStandardColoredMaterial from './SpeckleStandardColoredMaterial'
+import SpeckleStandardMaterial from './SpeckleStandardMaterial'
+import SpeckleTextMaterial from './SpeckleTextMaterial'
 
 export interface MaterialOptions {
   rampIndex?: number

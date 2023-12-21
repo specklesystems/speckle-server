@@ -7,9 +7,9 @@ import {
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   countDiscoverableStreams,
+  encodeDiscoverableStreamsCursor,
   GetDiscoverableStreamsParams,
-  getDiscoverableStreams as getDiscoverableStreamsQuery,
-  encodeDiscoverableStreamsCursor
+  getDiscoverableStreams as getDiscoverableStreamsQuery
 } from '@/modules/core/repositories/streams'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { clamp } from 'lodash'

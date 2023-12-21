@@ -1,5 +1,5 @@
 import { Viewer } from '@speckle/viewer'
-import { inject, InjectionKey, Ref, ref, provide } from 'vue'
+import { InjectionKey, Ref, inject, provide, ref } from 'vue'
 
 // Keys you can use in the Viewer family of components to inject the viewer, its container and its init state
 export const ViewerKey: InjectionKey<Viewer> = Symbol('VIEWER_INSTANCE')

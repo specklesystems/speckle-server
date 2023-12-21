@@ -1,6 +1,6 @@
-import { difference, intersection } from 'lodash'
-import { md5 } from '@speckle/shared'
 import type { Nullable } from '@speckle/shared'
+import { md5 } from '@speckle/shared'
+import { difference, intersection } from 'lodash'
 import { BaseError } from '~~/src/helpers/common/error'
 
 export type FileTypeSpecifier = UniqueFileTypeSpecifier | `.${string}`

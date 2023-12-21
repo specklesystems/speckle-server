@@ -4,21 +4,21 @@ import {
   ProjectModelsTreeArgs,
   StreamBranchesArgs
 } from '@/modules/core/graph/generated/graphql'
-import { UserInputError } from 'apollo-server-core'
-import { getBranchesByStreamId } from '@/modules/core/services/branches'
+import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import {
-  getStructuredProjectModels,
+  getModelTreeItems,
+  getModelTreeItemsFiltered,
+  getModelTreeItemsFilteredTotalCount,
+  getModelTreeItemsTotalCount,
   getPaginatedProjectModelsItems,
   getPaginatedProjectModelsTotalCount,
-  getModelTreeItemsFiltered,
-  getModelTreeItems,
-  getModelTreeItemsFilteredTotalCount,
-  getModelTreeItemsTotalCount
+  getStructuredProjectModels
 } from '@/modules/core/repositories/branches'
+import { getBranchesByStreamId } from '@/modules/core/services/branches'
+import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
+import { UserInputError } from 'apollo-server-core'
 import { last } from 'lodash'
 import { Merge } from 'type-fest'
-import { ModelsTreeItemGraphQLReturn } from '@/modules/core/helpers/graphTypes'
-import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 
 export async function getStructuredStreamModels(streamId: string) {
   return getStructuredProjectModels(streamId)

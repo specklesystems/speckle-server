@@ -1,12 +1,12 @@
 /* eslint-disable camelcase */
+import { mixpanelLogger } from '@/logging/logging'
+import { enableMixpanel, getBaseUrl } from '@/modules/shared/helpers/envHelper'
 import {
   Optional,
-  resolveMixpanelUserId,
-  resolveMixpanelServerId
+  resolveMixpanelServerId,
+  resolveMixpanelUserId
 } from '@speckle/shared'
-import { enableMixpanel, getBaseUrl } from '@/modules/shared/helpers/envHelper'
 import Mixpanel from 'mixpanel'
-import { mixpanelLogger } from '@/logging/logging'
 
 let client: Optional<Mixpanel.Mixpanel> = undefined
 let baseTrackingProperties: Optional<Record<string, string>> = undefined

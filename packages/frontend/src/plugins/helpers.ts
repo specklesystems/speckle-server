@@ -1,12 +1,12 @@
-import Vue from 'vue'
-import { getMixpanelUserId, getMixpanelServerId } from '@/mixpanelManager'
-import { NotificationEventPayload } from '@/main/lib/core/helpers/eventHubHelper'
-import { AppLocalStorage } from '@/utils/localStorage'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
 import { getInviteTokenFromURL } from '@/main/lib/auth/services/authService'
-import { triggerToastNotification } from '@/main/lib/core/composables/notifications'
-import { getResourceType } from '@/main/lib/viewer/core/helpers/resourceHelper'
 import { setPostAuthRedirect } from '@/main/lib/auth/utils/postAuthRedirectManager'
+import { triggerToastNotification } from '@/main/lib/core/composables/notifications'
+import { NotificationEventPayload } from '@/main/lib/core/helpers/eventHubHelper'
+import { getResourceType } from '@/main/lib/viewer/core/helpers/resourceHelper'
+import { getMixpanelServerId, getMixpanelUserId } from '@/mixpanelManager'
+import { AppLocalStorage } from '@/utils/localStorage'
+import Vue from 'vue'
 
 Vue.prototype.$userId = function () {
   return AppLocalStorage.get(LocalStorageKeys.Uuid)

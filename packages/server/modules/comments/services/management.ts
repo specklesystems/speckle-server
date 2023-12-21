@@ -1,44 +1,44 @@
-import { ensureError, Roles, SpeckleViewer } from '@speckle/shared'
-import { AuthContext } from '@/modules/shared/authz'
-import { ForbiddenError } from '@/modules/shared/errors'
-import { getStream } from '@/modules/core/repositories/streams'
-import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
-import {
-  InsertCommentPayload,
-  getComment,
-  markCommentViewed,
-  insertComment,
-  insertCommentLinks,
-  markCommentUpdated,
-  updateComment
-} from '@/modules/comments/repositories/comments'
-import {
-  CreateCommentInput,
-  CreateCommentReplyInput,
-  EditCommentInput
-} from '@/modules/core/graph/generated/graphql'
-import { getViewerResourceItemsUngrouped } from '@/modules/core/services/commit/viewerResources'
-import { CommentCreateError, CommentUpdateError } from '@/modules/comments/errors'
-import {
-  buildCommentTextFromInput,
-  validateInputAttachments
-} from '@/modules/comments/services/commentTextService'
-import { knex } from '@/modules/core/dbSchema'
-import {
-  CommentLinkRecord,
-  CommentLinkResourceType,
-  CommentRecord
-} from '@/modules/comments/helpers/types'
-import { CommentsEmitter, CommentsEvents } from '@/modules/comments/events/emitter'
 import {
   addCommentArchivedActivity,
   addCommentCreatedActivity,
   addReplyAddedActivity
 } from '@/modules/activitystream/services/commentActivity'
+import { CommentCreateError, CommentUpdateError } from '@/modules/comments/errors'
+import { CommentsEmitter, CommentsEvents } from '@/modules/comments/events/emitter'
+import {
+  CommentLinkRecord,
+  CommentLinkResourceType,
+  CommentRecord
+} from '@/modules/comments/helpers/types'
+import {
+  InsertCommentPayload,
+  getComment,
+  insertComment,
+  insertCommentLinks,
+  markCommentUpdated,
+  markCommentViewed,
+  updateComment
+} from '@/modules/comments/repositories/comments'
+import {
+  buildCommentTextFromInput,
+  validateInputAttachments
+} from '@/modules/comments/services/commentTextService'
 import {
   formatSerializedViewerState,
   inputToDataStruct
 } from '@/modules/comments/services/data'
+import { knex } from '@/modules/core/dbSchema'
+import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
+import {
+  CreateCommentInput,
+  CreateCommentReplyInput,
+  EditCommentInput
+} from '@/modules/core/graph/generated/graphql'
+import { getStream } from '@/modules/core/repositories/streams'
+import { getViewerResourceItemsUngrouped } from '@/modules/core/services/commit/viewerResources'
+import { AuthContext } from '@/modules/shared/authz'
+import { ForbiddenError } from '@/modules/shared/errors'
+import { Roles, SpeckleViewer, ensureError } from '@speckle/shared'
 
 export async function authorizeProjectCommentsAccess(params: {
   projectId: string

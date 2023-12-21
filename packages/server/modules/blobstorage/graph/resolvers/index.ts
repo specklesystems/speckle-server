@@ -1,7 +1,7 @@
 import {
+  blobCollectionSummary,
   getBlobMetadata,
   getBlobMetadataCollection,
-  blobCollectionSummary,
   getFileSizeLimit
 } from '@/modules/blobstorage/services'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'

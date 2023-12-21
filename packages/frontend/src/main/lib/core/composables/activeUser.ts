@@ -1,8 +1,8 @@
 import { MainUserDataDocument } from '@/graphql/generated/graphql'
+import { isAdmin, isGuest } from '@/main/lib/core/helpers/users'
 import { md5 } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { computed } from 'vue'
-import { isAdmin, isGuest } from '@/main/lib/core/helpers/users'
 
 /**
  * Get active user.

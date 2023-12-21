@@ -1,6 +1,6 @@
 import { SetupProps } from '@/helpers/typeHelpers'
 import { BatchActionType } from '@/main/lib/stream/services/commitMultiActions'
-import { ref, computed, SetupContext } from 'vue'
+import { SetupContext, computed, ref } from 'vue'
 
 export { BatchActionType }
 

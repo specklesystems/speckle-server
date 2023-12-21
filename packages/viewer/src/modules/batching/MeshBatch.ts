@@ -10,7 +10,9 @@ import {
   Uint32BufferAttribute,
   WebGLRenderer
 } from 'three'
+import { ObjectLayers } from '../SpeckleRenderer'
 import { Geometry } from '../converter/Geometry'
+import { GeometryConverter } from '../converter/GeometryConverter'
 import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
 import SpeckleMesh from '../objects/SpeckleMesh'
 import { NodeRenderView } from '../tree/NodeRenderView'
@@ -21,10 +23,8 @@ import {
   GeometryType,
   HideAllBatchUpdateRange
 } from './Batch'
-import { ObjectLayers } from '../SpeckleRenderer'
-import { TransformStorage } from './Batcher'
 import { BatchObject } from './BatchObject'
-import { GeometryConverter } from '../converter/GeometryConverter'
+import { TransformStorage } from './Batcher'
 
 export default class MeshBatch implements Batch {
   public id: string

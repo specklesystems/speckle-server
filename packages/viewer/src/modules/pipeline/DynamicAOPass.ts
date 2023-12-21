@@ -12,11 +12,13 @@ import {
   WebGLRenderTarget
 } from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js'
+import {
+  BlurShaderUtils,
+  DepthLimitedBlurShader
+} from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
+import { SAOShader } from 'three/examples/jsm/shaders/SAOShader.js'
 import { speckleSaoFrag } from '../materials/shaders/speckle-sao-frag'
 import { speckleSaoVert } from '../materials/shaders/speckle-sao-vert'
-import { SAOShader } from 'three/examples/jsm/shaders/SAOShader.js'
-import { DepthLimitedBlurShader } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
-import { BlurShaderUtils } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
 import {
   InputDepthTextureUniform,
   InputNormalsTextureUniform,

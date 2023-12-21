@@ -1,18 +1,18 @@
 import {
-  Scopes,
   Roles,
+  Scopes,
   ServerRoles,
   StreamRoles
 } from '@/modules/core/helpers/mainConstants'
-import { getRoles } from '@/modules/shared/roles'
 import { getStream } from '@/modules/core/services/streams'
+import { getRoles } from '@/modules/shared/roles'
 
 import {
+  BadRequestError,
   BaseError,
-  ForbiddenError,
-  UnauthorizedError,
   ContextError,
-  BadRequestError
+  ForbiddenError,
+  UnauthorizedError
 } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 

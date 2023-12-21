@@ -1,8 +1,8 @@
-import cron from 'node-cron'
-import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import { scheduleExecution } from '@/modules/core/services/taskScheduler'
-import { cleanOrphanedWebhookConfigs } from '@/modules/webhooks/services/cleanup'
 import { activitiesLogger, moduleLogger } from '@/logging/logging'
+import { scheduleExecution } from '@/modules/core/services/taskScheduler'
+import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
+import { cleanOrphanedWebhookConfigs } from '@/modules/webhooks/services/cleanup'
+import cron from 'node-cron'
 
 const scheduleWebhookCleanup = () => {
   const cronExpression = '0 4 * * 1'

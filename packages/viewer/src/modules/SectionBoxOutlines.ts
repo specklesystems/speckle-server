@@ -10,11 +10,11 @@ import {
 } from 'three'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
+import { ObjectLayers } from './SpeckleRenderer'
 import MeshBatch from './batching/MeshBatch'
 import { Geometry } from './converter/Geometry'
 import SpeckleGhostMaterial from './materials/SpeckleGhostMaterial'
 import SpeckleLineMaterial from './materials/SpeckleLineMaterial'
-import { ObjectLayers } from './SpeckleRenderer'
 
 export enum PlaneId {
   POSITIVE_X = 'POSITIVE_X',

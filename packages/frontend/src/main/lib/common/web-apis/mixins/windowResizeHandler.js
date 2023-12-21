@@ -1,4 +1,4 @@
-import { throttle, debounce } from 'lodash'
+import { debounce, throttle } from 'lodash'
 
 /**
  * Window resize handler mixin with debounce/throttle built in

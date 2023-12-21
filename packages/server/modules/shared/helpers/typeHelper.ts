@@ -1,15 +1,15 @@
-import {
-  Nullable,
-  Optional,
-  MaybeNullOrUndefined,
-  MaybeAsync,
-  MaybeFalsy
-} from '@speckle/shared'
 import { RequestDataLoaders } from '@/modules/core/loaders'
 import { AuthContext } from '@/modules/shared/authz'
+import {
+  MaybeAsync,
+  MaybeFalsy,
+  MaybeNullOrUndefined,
+  Nullable,
+  Optional
+} from '@speckle/shared'
 import { Express } from 'express'
-import { ConditionalKeys, SetRequired } from 'type-fest'
 import pino from 'pino'
+import { ConditionalKeys, SetRequired } from 'type-fest'
 
 export type MarkNullableOptional<T> = SetRequired<
   Partial<T>,
@@ -50,4 +50,4 @@ export type GraphQLContext = AuthContext & {
   log: pino.Logger
 }
 
-export { Nullable, Optional, MaybeNullOrUndefined, MaybeAsync, MaybeFalsy }
+export { MaybeAsync, MaybeFalsy, MaybeNullOrUndefined, Nullable, Optional }

@@ -1,9 +1,9 @@
-import { useTimeoutFn } from '@vueuse/core'
 import type { Nullable } from '@speckle/shared'
-import { useScopedState } from '~/lib/common/composables/scopedState'
-import type { Ref } from 'vue'
 import type { ToastNotification } from '@speckle/ui-components'
 import { ToastNotificationType } from '@speckle/ui-components'
+import { useTimeoutFn } from '@vueuse/core'
+import type { Ref } from 'vue'
+import { useScopedState } from '~/lib/common/composables/scopedState'
 
 const useGlobalToastState = () =>
   useScopedState<Ref<Nullable<ToastNotification>>>('global-toast-state', () =>

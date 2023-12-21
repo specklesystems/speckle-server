@@ -1,11 +1,11 @@
 import {
+  Commit,
   LimitedUser,
-  Stream,
-  StreamRole,
+  ModelsTreeItem,
   Project,
   ServerRole,
-  ModelsTreeItem,
-  Commit
+  Stream,
+  StreamRole
 } from '@/modules/core/graph/generated/graphql'
 import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { BranchRecord, CommitRecord, StreamRecord } from '@/modules/core/helpers/types'

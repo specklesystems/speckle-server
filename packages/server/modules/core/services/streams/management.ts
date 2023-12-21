@@ -1,9 +1,9 @@
-import { Roles, wait } from '@speckle/shared'
 import {
   addStreamCreatedActivity,
   addStreamDeletedActivity,
   addStreamUpdatedActivity
 } from '@/modules/activitystream/services/streamActivity'
+import { StreamUpdateError } from '@/modules/core/errors/stream'
 import {
   ProjectCreateInput,
   ProjectUpdateInput,
@@ -13,6 +13,7 @@ import {
   StreamUpdateInput,
   StreamUpdatePermissionInput
 } from '@/modules/core/graph/generated/graphql'
+import { isProjectCreateInput } from '@/modules/core/helpers/stream'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
   createStream,
@@ -21,16 +22,15 @@ import {
   updateStream
 } from '@/modules/core/repositories/streams'
 import { createBranch } from '@/modules/core/services/branches'
-import { inviteUsersToStream } from '@/modules/serverinvites/services/inviteCreationService'
-import { StreamUpdateError } from '@/modules/core/errors/stream'
-import { isProjectCreateInput } from '@/modules/core/helpers/stream'
-import { has } from 'lodash'
 import {
   addOrUpdateStreamCollaborator,
   isStreamCollaborator,
   removeStreamCollaborator
 } from '@/modules/core/services/streams/streamAccessService'
 import { deleteAllStreamInvites } from '@/modules/serverinvites/repositories'
+import { inviteUsersToStream } from '@/modules/serverinvites/services/inviteCreationService'
+import { Roles, wait } from '@speckle/shared'
+import { has } from 'lodash'
 
 export async function createStreamReturnRecord(
   params: (StreamCreateInput | ProjectCreateInput) & { ownerId: string },

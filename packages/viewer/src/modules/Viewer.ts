@@ -1,39 +1,39 @@
 import * as THREE from 'three'
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 
-import ViewerObjectLoader from './ViewerObjectLoader'
 import EventEmitter from './EventEmitter'
+import ViewerObjectLoader from './ViewerObjectLoader'
 import CameraHandler from './context/CameraHanlder'
 
-import SectionBox, { SectionBoxEvent } from './SectionBox'
+import Logger from 'js-logger'
 import { Clock, DoubleSide, FrontSide, Texture } from 'three'
-import { Assets } from './Assets'
-import { Optional } from '../helpers/typeHelper'
 import {
   CanonicalView,
   DefaultViewerParams,
-  InlineView,
   IViewer,
+  InlineView,
   PolarView,
   SpeckleView,
   SunLightConfiguration,
   ViewerEvent,
   ViewerParams
 } from '../IViewer'
-import { World } from './World'
-import { TreeNode, WorldTree } from './tree/WorldTree'
+import { Optional } from '../helpers/typeHelper'
+import { Assets } from './Assets'
+import { DiffResult, Differ, VisualDiffMode } from './Differ'
+import SectionBox, { SectionBoxEvent } from './SectionBox'
 import SpeckleRenderer from './SpeckleRenderer'
+import { Utils } from './Utils'
+import { World } from './World'
+import { BatchObject } from './batching/BatchObject'
+import { GeometryConverter, SpeckleType } from './converter/GeometryConverter'
 import { FilteringManager, FilteringState } from './filtering/FilteringManager'
 import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
-import { GeometryConverter, SpeckleType } from './converter/GeometryConverter'
-import { DataTree } from './tree/DataTree'
-import Logger from 'js-logger'
-import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
-import { Queries } from './queries/Queries'
-import { Utils } from './Utils'
-import { DiffResult, Differ, VisualDiffMode } from './Differ'
-import { BatchObject } from './batching/BatchObject'
 import { MeasurementOptions } from './measurements/Measurements'
+import { Queries } from './queries/Queries'
+import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
+import { DataTree } from './tree/DataTree'
+import { TreeNode, WorldTree } from './tree/WorldTree'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */

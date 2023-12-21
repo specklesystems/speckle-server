@@ -1,4 +1,3 @@
-import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import {
   createBranchAndNotify,
@@ -11,20 +10,21 @@ import {
 } from '@/modules/core/services/branch/retrieval'
 import { authorizeResolver } from '@/modules/shared'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import { Roles } from '@speckle/shared'
 import { last } from 'lodash'
 
-import { getViewerResourceGroups } from '@/modules/core/services/commit/viewerResources'
+import { BranchNotFoundError } from '@/modules/core/errors/branch'
+import { CommitNotFoundError } from '@/modules/core/errors/commit'
+import { getModelTreeItems } from '@/modules/core/repositories/branches'
 import {
   getPaginatedBranchCommits,
   getPaginatedStreamCommits
 } from '@/modules/core/services/commit/retrieval'
+import { getViewerResourceGroups } from '@/modules/core/services/commit/viewerResources'
 import {
-  filteredSubscribe,
-  ProjectSubscriptions
+  ProjectSubscriptions,
+  filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
-import { getModelTreeItems } from '@/modules/core/repositories/branches'
-import { BranchNotFoundError } from '@/modules/core/errors/branch'
-import { CommitNotFoundError } from '@/modules/core/errors/commit'
 
 export = {
   Project: {

@@ -1,38 +1,38 @@
-import type { CSSProperties, Ref } from 'vue'
-import { SpeckleViewer } from '@speckle/shared'
 import type { Nullable } from '@speckle/shared'
-import {
-  useInjectedViewerInterfaceState,
-  useInjectedViewerState,
-  useResetUiState
-} from '~~/lib/viewer/composables/setup'
-import type { LoadedCommentThread } from '~~/lib/viewer/composables/setup'
-import { graphql } from '~~/lib/common/generated/gql'
+import { SpeckleViewer } from '@speckle/shared'
+import { useIntervalFn } from '@vueuse/core'
 import { debounce } from 'lodash-es'
 import { Vector3 } from 'three'
-import {
-  useOnViewerLoadComplete,
-  useSelectionEvents,
-  useViewerCameraTracker
-} from '~~/lib/viewer/composables/viewer'
-import {
-  useGetScreenCenterObjectId,
-  useViewerAnchoredPoints
-} from '~~/lib/viewer/composables/anchorPoints'
+import type { Merge } from 'type-fest'
+import type { CSSProperties, Ref } from 'vue'
 import {
   HorizontalDirection,
   useOnBeforeWindowUnload,
   useResponsiveHorizontalDirectionCalculation
 } from '~~/lib/common/composables/window'
+import { graphql } from '~~/lib/common/generated/gql'
 import { useViewerUserActivityBroadcasting } from '~~/lib/viewer/composables/activity'
-import { useIntervalFn } from '@vueuse/core'
+import {
+  useGetScreenCenterObjectId,
+  useViewerAnchoredPoints
+} from '~~/lib/viewer/composables/anchorPoints'
 import {
   StateApplyMode,
   useApplySerializedState,
   useStateSerialization
 } from '~~/lib/viewer/composables/serialization'
-import type { Merge } from 'type-fest'
+import type { LoadedCommentThread } from '~~/lib/viewer/composables/setup'
+import {
+  useInjectedViewerInterfaceState,
+  useInjectedViewerState,
+  useResetUiState
+} from '~~/lib/viewer/composables/setup'
 import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useOnViewerLoadComplete,
+  useSelectionEvents,
+  useViewerCameraTracker
+} from '~~/lib/viewer/composables/viewer'
 
 graphql(`
   fragment ViewerCommentBubblesData on Comment {

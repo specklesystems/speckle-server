@@ -1,31 +1,31 @@
-import {
-  ActivityDigestMessage,
-  NotificationHandler
-} from '@/modules/notifications/helpers/types'
+import { packageRoot } from '@/bootstrap'
 import {
   ActionTypes,
-  StreamActivityRecord,
   AllActivityTypes,
+  StreamActivityRecord,
   StreamScopeActivity
 } from '@/modules/activitystream/helpers/types'
-import { getServerInfo } from '@/modules/core/services/generic'
-import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
-import { getUserNotificationPreferences } from '@/modules/notifications/services/notificationPreferences'
-import { sendEmail, SendEmailParams } from '@/modules/emails/services/sending'
-import { groupBy } from 'lodash'
-import { packageRoot } from '@/bootstrap'
-import path from 'path'
-import * as ejs from 'ejs'
 import {
   ActivitySummary,
-  createActivitySummary,
-  StreamActivitySummary
+  StreamActivitySummary,
+  createActivitySummary
 } from '@/modules/activitystream/services/summary'
+import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
+import { getServerInfo } from '@/modules/core/services/generic'
 import {
   EmailBody,
   EmailInput,
   renderEmail
 } from '@/modules/emails/services/emailRendering'
+import { SendEmailParams, sendEmail } from '@/modules/emails/services/sending'
+import {
+  ActivityDigestMessage,
+  NotificationHandler
+} from '@/modules/notifications/helpers/types'
+import { getUserNotificationPreferences } from '@/modules/notifications/services/notificationPreferences'
+import * as ejs from 'ejs'
+import { groupBy } from 'lodash'
+import path from 'path'
 
 const handler: NotificationHandler<ActivityDigestMessage> = async (msg) => {
   const {

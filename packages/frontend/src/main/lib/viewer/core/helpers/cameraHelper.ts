@@ -1,6 +1,6 @@
-import { Vector3 } from 'three'
 import { Viewer } from '@speckle/viewer'
 import { get } from 'lodash'
+import { Vector3 } from 'three'
 
 export function getCamArray(viewer: Viewer) {
   const controls = viewer.cameraHandler.activeCam.controls

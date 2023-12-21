@@ -1,13 +1,13 @@
 import {
+  DebugViewer,
   DefaultViewerParams,
   SelectionEvent,
-  ViewerEvent,
-  DebugViewer,
-  Viewer
+  Viewer,
+  ViewerEvent
 } from '@speckle/viewer'
 
-import './style.css'
 import Sandbox from './Sandbox'
+import './style.css'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)

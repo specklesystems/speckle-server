@@ -1,10 +1,10 @@
-import { JSONContent } from '@tiptap/core'
-import { isString, isObjectLike, get, has } from 'lodash'
 import { RichTextEditor } from '@speckle/shared'
+import { JSONContent } from '@tiptap/core'
+import { get, has, isObjectLike, isString } from 'lodash'
 
 const { isDocEmpty, documentToBasicString, convertBasicStringToDocument } =
   RichTextEditor
-export { isDocEmpty, documentToBasicString, convertBasicStringToDocument }
+export { convertBasicStringToDocument, documentToBasicString, isDocEmpty }
 
 export type SmartTextEditorValueSchema = {
   version: string

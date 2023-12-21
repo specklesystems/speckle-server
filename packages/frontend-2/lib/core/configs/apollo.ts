@@ -1,28 +1,28 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { ApolloLink, InMemoryCache, split, from } from '@apollo/client/core'
+import type { CookieRef, NuxtApp } from '#app'
+import { ApolloLink, InMemoryCache, from, split } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
-import { SubscriptionClient } from 'subscriptions-transport-ws'
-import type { ApolloConfigResolver } from '~~/lib/core/nuxt-modules/apollo/module'
-import { createUploadLink } from 'apollo-upload-client'
+import { onError } from '@apollo/client/link/error'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { getMainDefinition } from '@apollo/client/utilities'
-import { Kind } from 'graphql'
-import type { OperationDefinitionNode } from 'graphql'
-import type { CookieRef, NuxtApp } from '#app'
 import type { Optional } from '@speckle/shared'
+import { createUploadLink } from 'apollo-upload-client'
+import type { OperationDefinitionNode } from 'graphql'
+import { Kind } from 'graphql'
+import { omit } from 'lodash-es'
+import { SubscriptionClient } from 'subscriptions-transport-ws'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
+import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
+import { loginRoute, useNavigateToLogin } from '~~/lib/common/helpers/route'
+import { useAppErrorState } from '~~/lib/core/composables/appErrorState'
 import {
   buildAbstractCollectionMergeFunction,
   buildArrayMergeFunction,
   incomingOverwritesExistingMergeFunction,
   mergeAsObjectsFunction
 } from '~~/lib/core/helpers/apolloSetup'
-import { onError } from '@apollo/client/link/error'
-import { useNavigateToLogin, loginRoute } from '~~/lib/common/helpers/route'
-import { useAppErrorState } from '~~/lib/core/composables/appErrorState'
-import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
-import { omit } from 'lodash-es'
+import type { ApolloConfigResolver } from '~~/lib/core/nuxt-modules/apollo/module'
 
 const appName = 'frontend-2'
 

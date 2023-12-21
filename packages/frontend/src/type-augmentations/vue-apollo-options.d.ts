@@ -2,8 +2,8 @@ import Vue from 'vue'
 import { CombinedVueInstance } from 'vue/types/vue'
 
 import { ApolloProvider } from '@vue/apollo-option'
-import { DollarApollo } from '@vue/apollo-option/types/vue-apollo'
 import { VueApolloComponentOptions } from '@vue/apollo-option/types/options'
+import { DollarApollo } from '@vue/apollo-option/types/vue-apollo'
 
 type DataDef<Data, Props, V> = Data | ((this: Readonly<Props> & V) => Data)
 

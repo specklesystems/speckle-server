@@ -1,16 +1,16 @@
-import { RichTextParseError } from '@/modules/shared/errors'
-import {
-  isTextEditorValueSchema,
-  isTextEditorDoc,
-  convertBasicStringToDocument,
-  isSerializedTextEditorValueSchema,
-  SmartTextEditorValueSchema,
-  isDocEmpty
-} from '@/modules/core/services/richTextEditorService'
-import { isString, uniq } from 'lodash'
 import { getBlobs } from '@/modules/blobstorage/services'
 import { InvalidAttachmentsError } from '@/modules/comments/errors'
+import {
+  SmartTextEditorValueSchema,
+  convertBasicStringToDocument,
+  isDocEmpty,
+  isSerializedTextEditorValueSchema,
+  isTextEditorDoc,
+  isTextEditorValueSchema
+} from '@/modules/core/services/richTextEditorService'
+import { RichTextParseError } from '@/modules/shared/errors'
 import { JSONContent } from '@tiptap/core'
+import { isString, uniq } from 'lodash'
 
 const COMMENT_SCHEMA_VERSION = '1.0.0'
 const COMMENT_SCHEMA_TYPE = 'stream_comment'

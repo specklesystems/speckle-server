@@ -1,9 +1,9 @@
+import Logger from 'js-logger'
 import TreeModel from 'tree-model'
+import { World } from '../World'
 import { DataTree, DataTreeBuilder } from './DataTree'
 import { NodeRenderView } from './NodeRenderView'
 import { RenderTree } from './RenderTree'
-import Logger from 'js-logger'
-import { World } from '../World'
 
 export type TreeNode = TreeModel.Node<NodeData>
 export type SearchPredicate = (node: TreeNode) => boolean

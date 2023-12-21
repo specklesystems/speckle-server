@@ -24,10 +24,10 @@ import {
   BlurShaderUtils,
   DepthLimitedBlurShader
 } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
-import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
-import SpeckleShadowcatcherMaterial from '../materials/SpeckleShadowcatcherMaterial'
 import { DefaultShadowcatcherConfig, ShadowcatcherConfig } from '../Shadowcatcher'
 import { ObjectLayers } from '../SpeckleRenderer'
+import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
+import SpeckleShadowcatcherMaterial from '../materials/SpeckleShadowcatcherMaterial'
 import { BaseSpecklePass, SpecklePass } from './SpecklePass'
 
 export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {

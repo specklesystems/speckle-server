@@ -1,6 +1,6 @@
-import { Roles } from '@speckle/shared'
-import type { ServerRoles, StreamRoles } from '@speckle/shared'
 import { StreamRole } from '@/graphql/generated/graphql'
+import type { ServerRoles, StreamRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 
 /**
  * Keys for values stored in localStorage

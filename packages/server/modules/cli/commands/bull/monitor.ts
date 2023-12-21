@@ -1,14 +1,14 @@
-import { CommandModule } from 'yargs'
-import express from 'express'
-import { ExpressAdapter } from '@bull-board/express'
-import { createBullBoard } from '@bull-board/api'
-import { BullAdapter } from '@bull-board/api/bullAdapter'
+import { cliLogger } from '@/logging/logging'
 import {
   NOTIFICATIONS_QUEUE,
   buildNotificationsQueue
 } from '@/modules/notifications/services/queue'
+import { createBullBoard } from '@bull-board/api'
+import { BullAdapter } from '@bull-board/api/bullAdapter'
+import { ExpressAdapter } from '@bull-board/express'
+import express from 'express'
 import { noop } from 'lodash'
-import { cliLogger } from '@/logging/logging'
+import { CommandModule } from 'yargs'
 
 const PORT = 3032
 

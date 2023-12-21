@@ -1,6 +1,6 @@
-import Vue, { computed, onMounted, onBeforeUnmount } from 'vue'
-import { camelCase, upperFirst, reduce } from 'lodash'
-import { Optional, CombinedVueInstance, ExtendedVue } from '@/helpers/typeHelpers'
+import { CombinedVueInstance, ExtendedVue, Optional } from '@/helpers/typeHelpers'
+import { camelCase, reduce, upperFirst } from 'lodash'
+import Vue, { computed, onBeforeUnmount, onMounted } from 'vue'
 
 export const STANDARD_PORTAL_KEYS = {
   Toolbar: 'toolbar',

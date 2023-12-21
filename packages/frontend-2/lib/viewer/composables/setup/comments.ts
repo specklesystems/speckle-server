@@ -1,9 +1,9 @@
-import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import type { InitialStateWithUrlHashState } from '~~/lib/viewer/composables/setup'
-import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
-import { reduce } from 'lodash-es'
 import { SpeckleViewer } from '@speckle/shared'
+import { reduce } from 'lodash-es'
+import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
+import type { InitialStateWithUrlHashState } from '~~/lib/viewer/composables/setup'
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
 
 export function setupViewerCommentBubbles(
   options?: Partial<{

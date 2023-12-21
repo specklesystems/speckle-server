@@ -1,10 +1,10 @@
 import * as THREE from 'three'
-import SelectionHelper from './legacy/SelectionHelper'
-import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { Box3 } from 'three'
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { ViewerEvent } from '../IViewer'
-import { ObjectLayers } from './SpeckleRenderer'
 import EventEmitter from './EventEmitter'
+import { ObjectLayers } from './SpeckleRenderer'
+import SelectionHelper from './legacy/SelectionHelper'
 
 export const SectionBoxEvent = {
   DRAG_START: 'section-box-drag-start',

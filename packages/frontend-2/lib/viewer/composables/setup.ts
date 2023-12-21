@@ -1,71 +1,70 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-import {
-  Viewer,
-  DefaultViewerParams,
-  WorldTree,
-  ViewerEvent,
-  DefaultLightConfiguration,
-  VisualDiffMode,
-  MeasurementType
-} from '@speckle/viewer'
-import type {
-  FilteringState,
-  PropertyInfo,
-  SunLightConfiguration,
-  SpeckleView,
-  MeasurementOptions,
-  DiffResult
-} from '@speckle/viewer'
-import type { MaybeRef } from '@vueuse/shared'
-import { inject, ref, provide } from 'vue'
-import type {
-  InjectionKey,
-  ComputedRef,
-  WritableComputedRef,
-  Raw,
-  Ref,
-  ShallowRef
-} from 'vue'
-import { useScopedState } from '~~/lib/common/composables/scopedState'
 import type { Nullable, Optional } from '@speckle/shared'
 import { SpeckleViewer } from '@speckle/shared'
+import type {
+  DiffResult,
+  FilteringState,
+  MeasurementOptions,
+  PropertyInfo,
+  SpeckleView,
+  SunLightConfiguration
+} from '@speckle/viewer'
+import {
+  DefaultLightConfiguration,
+  DefaultViewerParams,
+  MeasurementType,
+  Viewer,
+  ViewerEvent,
+  VisualDiffMode,
+  WorldTree
+} from '@speckle/viewer'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
+import type { MaybeRef } from '@vueuse/shared'
+import { nanoid } from 'nanoid'
+import { Box3, Vector3 } from 'three'
+import type { Get, SetNonNullable } from 'type-fest'
+import type {
+  ComputedRef,
+  InjectionKey,
+  Raw,
+  Ref,
+  ShallowRef,
+  WritableComputedRef
+} from 'vue'
+import { inject, provide, ref } from 'vue'
+import { useScopedState } from '~~/lib/common/composables/scopedState'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import type {
+  ProjectCommentsFilter,
+  ProjectViewerResourcesQueryVariables,
+  ViewerLoadedResourcesQuery,
+  ViewerLoadedResourcesQueryVariables,
+  ViewerLoadedThreadsQuery,
+  ViewerLoadedThreadsQueryVariables,
+  ViewerModelVersionCardItemFragment,
+  ViewerResourceItem
+} from '~~/lib/common/generated/gql/graphql'
+import {
+  convertThrowIntoFetchResult,
+  getFirstErrorMessage
+} from '~~/lib/common/helpers/graphql'
+import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
+import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
 import {
   projectViewerResourcesQuery,
   viewerLoadedResourcesQuery,
   viewerLoadedThreadsQuery,
   viewerModelVersionsQuery
 } from '~~/lib/viewer/graphql/queries'
-import type {
-  ProjectViewerResourcesQueryVariables,
-  ViewerLoadedResourcesQuery,
-  ViewerLoadedResourcesQueryVariables,
-  ViewerLoadedThreadsQuery,
-  ViewerResourceItem,
-  ViewerLoadedThreadsQueryVariables,
-  ProjectCommentsFilter,
-  ViewerModelVersionCardItemFragment
-} from '~~/lib/common/generated/gql/graphql'
-import type { SetNonNullable, Get } from 'type-fest'
-import {
-  convertThrowIntoFetchResult,
-  getFirstErrorMessage
-} from '~~/lib/common/helpers/graphql'
-import { nanoid } from 'nanoid'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
-import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
-import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
-import { Box3, Vector3 } from 'three'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { wrapRefWithTracking } from '~~/lib/common/helpers/debugging'
-import { writableAsyncComputed } from '~~/lib/common/composables/async'
-import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
-import { setupUiDiffState } from '~~/lib/viewer/composables/setup/diff'
-import type { DiffStateCommand } from '~~/lib/viewer/composables/setup/diff'
-import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { flatten, reduce } from 'lodash-es'
+import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
+import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
+import type { DiffStateCommand } from '~~/lib/viewer/composables/setup/diff'
+import { setupUiDiffState } from '~~/lib/viewer/composables/setup/diff'
+import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>

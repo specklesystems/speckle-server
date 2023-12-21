@@ -1,8 +1,8 @@
-import { onKeyDown } from '@vueuse/core'
 import { OperatingSystem } from '@speckle/shared'
-import { clientOs, ModifierKeys } from '~~/src/helpers/form/input'
-import { computed, ref } from 'vue'
+import { onKeyDown } from '@vueuse/core'
 import type { Ref } from 'vue'
+import { computed, ref } from 'vue'
+import { ModifierKeys, clientOs } from '~~/src/helpers/form/input'
 
 /**
  * onKeyDown wrapper that also checks for modifier keys being pressed

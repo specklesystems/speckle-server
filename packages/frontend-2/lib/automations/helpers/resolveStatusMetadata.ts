@@ -1,14 +1,14 @@
-import { AutomationRunStatus } from '~~/lib/common/generated/gql/graphql'
 import {
+  ArrowRightCircleIcon,
+  ArrowRightIcon,
   CheckCircleIcon,
   CheckIcon,
-  XCircleIcon,
-  XMarkIcon,
   EllipsisHorizontalCircleIcon,
   EllipsisHorizontalIcon,
-  ArrowRightCircleIcon,
-  ArrowRightIcon
+  XCircleIcon,
+  XMarkIcon
 } from '@heroicons/vue/24/solid'
+import { AutomationRunStatus } from '~~/lib/common/generated/gql/graphql'
 
 export const resolveStatusMetadata = (
   status: AutomationRunStatus

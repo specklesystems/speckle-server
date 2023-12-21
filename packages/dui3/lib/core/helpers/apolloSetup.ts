@@ -1,5 +1,5 @@
-import { Optional } from '@speckle/shared'
 import { FieldMergeFunction } from '@apollo/client/core'
+import { Optional } from '@speckle/shared'
 
 interface AbstractCollection<T extends string> {
   __typename: T

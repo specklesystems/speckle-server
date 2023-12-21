@@ -1,16 +1,16 @@
 /* istanbul ignore file */
 import { TIME } from '@/../shared/dist-esm'
 import {
-  createRateLimiterMiddleware,
-  getRateLimitResult,
-  isRateLimitBreached,
   RateLimitAction,
-  getActionForPath,
-  sendRateLimitResponse,
   RateLimitBreached,
+  RateLimiterMapping,
   RateLimits,
   createConsumer,
-  RateLimiterMapping
+  createRateLimiterMiddleware,
+  getActionForPath,
+  getRateLimitResult,
+  isRateLimitBreached,
+  sendRateLimitResponse
 } from '@/modules/core/services/ratelimiter'
 import { expect } from 'chai'
 import httpMocks from 'node-mocks-http'

@@ -1,6 +1,6 @@
 import { intersection, isObjectLike } from 'lodash'
-import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes'
 import type { PartialDeep } from 'type-fest'
+import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes'
 import { UnformattableSerializedViewerStateError } from '../errors'
 
 enum MeasurementType {

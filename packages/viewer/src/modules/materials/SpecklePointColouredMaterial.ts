@@ -1,8 +1,6 @@
 /* eslint-disable camelcase */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { specklePointVert } from './shaders/speckle-point-vert'
-import { specklePointFrag } from './shaders/speckle-point-frag'
 import {
   Matrix4,
   NearestFilter,
@@ -13,6 +11,8 @@ import {
   Vector3
 } from 'three'
 import { Geometry } from '../converter/Geometry'
+import { specklePointFrag } from './shaders/speckle-point-frag'
+import { specklePointVert } from './shaders/speckle-point-vert'
 
 class SpecklePointMaterial extends PointsMaterial {
   private static readonly matBuff: Matrix4 = new Matrix4()

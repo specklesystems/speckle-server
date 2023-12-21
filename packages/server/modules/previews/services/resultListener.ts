@@ -1,6 +1,6 @@
 import { getObjectCommitsWithStreamIds } from '@/modules/core/repositories/commits'
+import { MessageType, listenFor } from '@/modules/core/utils/dbNotificationListener'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
-import { listenFor, MessageType } from '@/modules/core/utils/dbNotificationListener'
 
 const payloadRegexp = /^([\w\d]+):([\w\d]+):([\w\d]+)$/i
 

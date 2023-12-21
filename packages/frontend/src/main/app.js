@@ -6,17 +6,17 @@
 import '@/bootstrapper'
 import Vue from 'vue'
 
-import App from '@/main/App.vue'
 import { LocalStorageKeys } from '@/helpers/mainConstants'
+import App from '@/main/App.vue'
 import * as MixpanelManager from '@/mixpanelManager'
 
-import { provide } from 'vue'
-import { DefaultApolloClient } from '@vue/apollo-composable'
 import { createProvider, installVueApollo } from '@/config/apolloConfig'
 import {
   checkAccessCodeAndGetTokens,
   prefetchUserAndSetID
 } from '@/plugins/authHelpers'
+import { DefaultApolloClient } from '@vue/apollo-composable'
+import { provide } from 'vue'
 
 import router from '@/main/router/index'
 import vuetify from '@/plugins/vuetify'
@@ -31,9 +31,9 @@ import VueFilterDateFormat from '@vuejs-community/vue-filter-date-format'
 Vue.use(VueFilterDateFormat)
 
 // adds various helper methods
+import { InvalidAuthTokenError } from '@/main/lib/auth/errors'
 import '@/plugins/helpers'
 import { AppLocalStorage } from '@/utils/localStorage'
-import { InvalidAuthTokenError } from '@/main/lib/auth/errors'
 
 // Async ApexChart load
 Vue.component('ApexChart', async () => {

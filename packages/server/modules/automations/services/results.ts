@@ -1,6 +1,6 @@
 import {
-  Results,
-  CurrentVersionResults
+  CurrentVersionResults,
+  Results
 } from '@/modules/automations/helpers/inputTypes'
 
 export const formatResults = (results: Results): CurrentVersionResults => {

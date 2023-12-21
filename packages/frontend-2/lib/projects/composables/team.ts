@@ -1,5 +1,5 @@
-import { Roles } from '@speckle/shared'
 import type { Nullable, ServerRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'

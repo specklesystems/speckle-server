@@ -1,8 +1,6 @@
 import { GraphqlDirectiveBuilder } from '@/modules/core/graph/helpers/directiveHelper'
 import { ForbiddenError } from '@/modules/shared/errors'
-import { getDirective } from '@graphql-tools/utils'
-import { mapSchema } from '@graphql-tools/utils'
-import { MapperKind } from '@graphql-tools/utils'
+import { MapperKind, getDirective, mapSchema } from '@graphql-tools/utils'
 import { Roles } from '@speckle/shared'
 import { defaultFieldResolver } from 'graphql'
 

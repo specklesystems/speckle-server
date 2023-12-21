@@ -1,8 +1,8 @@
-import path from 'path'
 import type { ApolloClientOptions } from '@apollo/client/core'
 import { addPluginTemplate, defineNuxtModule } from '@nuxt/kit'
 import type { MaybeAsync } from '@speckle/shared'
 import type { NuxtApp } from 'nuxt/dist/app'
+import path from 'path'
 
 /**
  * Config resolver default exported function expected type
