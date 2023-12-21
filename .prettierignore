@@ -34,5 +34,9 @@ venv
 .*.{ts,js,vue,tsx,jsx}
 **/generated/**/*
 **/generated/graphql.ts
+**/*.d.ts
 
 storybook-static
+
+# prettier-plugin-organize-imports breaks the following file 
+packages/ui-components/src/lib.ts
