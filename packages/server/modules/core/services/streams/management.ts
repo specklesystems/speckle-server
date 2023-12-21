@@ -115,7 +115,7 @@ export async function updateStreamAndNotify(
   return newStream
 }
 
-type PermissionUpdateInput =
+export type PermissionUpdateInput =
   | StreamUpdatePermissionInput
   | StreamRevokePermissionInput
   | ProjectUpdateRoleInput
