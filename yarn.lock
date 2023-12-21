@@ -38498,6 +38498,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"prettier-plugin-organize-imports@npm:^3.2.4":
+  version: 3.2.4
+  resolution: "prettier-plugin-organize-imports@npm:3.2.4"
+  peerDependencies:
+    "@volar/vue-language-plugin-pug": ^1.0.4
+    "@volar/vue-typescript": ^1.0.4
+    prettier: ">=2.0"
+    typescript: ">=2.9"
+  peerDependenciesMeta:
+    "@volar/vue-language-plugin-pug":
+      optional: true
+    "@volar/vue-typescript":
+      optional: true
+  checksum: 57ae97d7e403445e650ae92b7da586761d1d88a47e46b3ea274baeb96782165bebd0132db9c652081e185c41b50701ba1d30d615ad1c9000300cc0c67eb12b7a
+  languageName: node
+  linkType: hard
+
 "prettier@npm:^2.8.7":
   version: 2.8.7
   resolution: "prettier@npm:2.8.7"
@@ -40836,6 +40853,7 @@ __metadata:
     lockfile: ^1.0.4
     pino-pretty: ^9.1.1
     prettier: ^2.5.1
+    prettier-plugin-organize-imports: ^3.2.4
     ts-node: ^10.9.1
     tsconfig-paths: ^4.0.0
   languageName: unknown

@@ -48,6 +48,7 @@
     "lockfile": "^1.0.4",
     "pino-pretty": "^9.1.1",
     "prettier": "^2.5.1",
+    "prettier-plugin-organize-imports": "^3.2.4",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.0.0"
   },

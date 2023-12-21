@@ -7,5 +7,6 @@
   "vueIndentScriptAndStyle": false,
   "htmlWhitespaceSensitivity": "ignore",
   "printWidth": 88,
-  "singleQuote": true
+  "singleQuote": true,
+  "plugins": ["prettier-plugin-organize-imports"]
 }
