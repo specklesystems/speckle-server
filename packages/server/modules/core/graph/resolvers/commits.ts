@@ -88,7 +88,7 @@ export = {
   Commit: {
     async stream(
       parent: { id: string },
-      _args: unknown,
+      _args: never,
       ctx: {
         userId: string
         loaders: {
@@ -108,7 +108,7 @@ export = {
     },
     async streamId(
       parent: { id: string },
-      _args: unknown,
+      _args: never,
       ctx: {
         loaders: {
           commits: { getCommitStream: { load: (commitId: string) => { id: string } } }
@@ -121,7 +121,7 @@ export = {
     },
     async streamName(
       parent: { id: string },
-      _args: unknown,
+      _args: never,
       ctx: {
         loaders: {
           commits: { getCommitStream: { load: (commitId: string) => { name: string } } }
@@ -141,7 +141,7 @@ export = {
     },
     async authorName(
       parent: { authorId?: string; authorName?: string; author?: string },
-      _args: unknown,
+      _args: never,
       ctx: {
         loaders: {
           users: {
@@ -161,7 +161,7 @@ export = {
     },
     async authorAvatar(
       parent: { authorId?: string; authorAvatar?: string; author?: string },
-      _args: unknown,
+      _args: never,
       ctx: {
         loaders: {
           users: {
@@ -182,7 +182,7 @@ export = {
     },
     async branchName(
       parent: { id: string },
-      _args: unknown,
+      _args: never,
       ctx: {
         loaders: {
           commits: { getCommitBranch: { load: (commitId: string) => { name: string } } }
@@ -194,7 +194,7 @@ export = {
     },
     async branch(
       parent: { id: string },
-      _args: unknown,
+      _args: never,
       ctx: {
         loaders: {
           commits: { getCommitBranch: { load: (commitId: string) => { name: string } } }
@@ -250,7 +250,7 @@ export = {
   },
   Mutation: {
     async commitCreate(
-      parent: unknown,
+      parent: never,
       args: {
         commit: {
           streamId: string
@@ -307,7 +307,7 @@ export = {
     },
 
     async commitReceive(
-      parent: unknown,
+      parent: never,
       args: { input: CommitReceivedInput },
       context: AuthContext
     ) {
