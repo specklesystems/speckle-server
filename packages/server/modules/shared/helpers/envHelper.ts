@@ -221,3 +221,7 @@ export function getEmailFromAddress() {
 export function getMaximumProjectModelsPerPage() {
   return getIntFromEnv('MAX_PROJECT_MODELS_PER_PAGE', '500')
 }
+
+export function isFileUploadsEnabled() {
+  return !getBooleanFromEnv('DISABLE_FILE_UPLOADS')
+}

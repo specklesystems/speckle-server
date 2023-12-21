@@ -1,16 +1,24 @@
 /* istanbul ignore file */
-const {
-  insertNewUploadAndNotify
-} = require('@/modules/fileuploads/services/management')
-const request = require('request')
-const { streamWritePermissions } = require('@/modules/shared/authz')
-const { authMiddlewareCreator } = require('@/modules/shared/middleware')
-const { moduleLogger } = require('@/logging/logging')
-const {
-  listenForImportUpdates
-} = require('@/modules/fileuploads/services/resultListener')
+import { insertNewUploadAndNotify } from '@/modules/fileuploads/services/management'
+import request from 'request'
+import { streamWritePermissions } from '@/modules/shared/authz'
+import { authMiddlewareCreator } from '@/modules/shared/middleware'
+import { moduleLogger } from '@/logging/logging'
+import { listenForImportUpdates } from '@/modules/fileuploads/services/resultListener'
+import type { Application } from 'express'
+import { isFileUploadsEnabled } from '@/modules/shared/helpers/envHelper'
 
-const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) => {
+const saveFileUploads = async ({
+  userId,
+  streamId,
+  branchName,
+  uploadResults
+}: {
+  userId: string
+  streamId: string
+  branchName: string
+  uploadResults: { blobId: string; fileName: string; fileSize: number }[]
+}) => {
   await Promise.all(
     uploadResults.map(async (upload) => {
       await insertNewUploadAndNotify({
@@ -19,29 +27,34 @@ const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) 
         branchName,
         userId,
         fileName: upload.fileName,
-        fileType: upload.fileName.split('.').pop(),
+        fileType: upload.fileName.split('.').pop() || 'UNKNOWN',
         fileSize: upload.fileSize
       })
     })
   )
 }
 
-exports.init = async (app) => {
-  if (process.env.DISABLE_FILE_UPLOADS) {
+export const init = async (app: Application) => {
+  if (!isFileUploadsEnabled()) {
     moduleLogger.warn('📄 FileUploads module is DISABLED')
     return
-  } else {
-    moduleLogger.info('📄 Init FileUploads module')
   }
+
+  moduleLogger.info('📄 Init FileUploads module')
 
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
     authMiddlewareCreator(streamWritePermissions),
     async (req, res) => {
+      if (!req.context.userId) {
+        res.status(401).send('Unauthorized')
+        return
+      }
+      const userId = req.context.userId
       const branchName = req.params.branchName || 'main'
       req.log = req.log.child({
         streamId: req.params.streamId,
-        userId: req.context.userId,
+        userId,
         branchName
       })
       req.pipe(
@@ -49,20 +62,20 @@ exports.init = async (app) => {
           `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`,
           async (err, response, body) => {
             if (err) {
-              res.log.error(err, 'Error while uploading blob.')
+              req.log.error(err, 'Error while uploading blob.')
               res.status(500).send(err.message)
               return
             }
             if (response.statusCode === 201) {
               const { uploadResults } = JSON.parse(body)
               await saveFileUploads({
-                userId: req.context.userId,
+                userId,
                 streamId: req.params.streamId,
                 branchName,
                 uploadResults
               })
             } else {
-              res.log.error(
+              req.log.error(
                 {
                   statusCode: response.statusCode,
                   path: `${process.env.CANONICAL_URL}/api/stream/${req.params.streamId}/blob`
@@ -80,4 +93,4 @@ exports.init = async (app) => {
   listenForImportUpdates()
 }
 
-exports.finalize = () => {}
+export const finalize = () => {}
