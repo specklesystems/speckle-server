@@ -1,17 +1,18 @@
 'use strict'
-const zlib = require('zlib')
-const { corsMiddleware } = require('@/modules/core/configs/cors')
-const Busboy = require('busboy')
+import zlib from 'zlib'
+import { corsMiddleware } from '@/modules/core/configs/cors'
+import Busboy from 'busboy'
 
-const { validatePermissionsWriteStream } = require('./authUtils')
+import { validatePermissionsWriteStream } from './authUtils'
 
-const { createObjectsBatched } = require('@/modules/core/services/objects')
-const { ObjectHandlingError } = require('@/modules/core/errors/object')
-const { estimateStringMegabyteSize } = require('@/modules/core/utils/chunking')
+import { createObjectsBatched } from '@/modules/core/services/objects'
+import { ObjectHandlingError } from '@/modules/core/errors/object'
+import { estimateStringMegabyteSize } from '@/modules/core/utils/chunking'
+import type { Application } from 'express'
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 
-module.exports = (app) => {
+export default (app: Application) => {
   app.options('/objects/:streamId', corsMiddleware())
 
   app.post('/objects/:streamId', corsMiddleware(), async (req, res) => {
@@ -45,7 +46,7 @@ module.exports = (app) => {
     let totalProcessed = 0
     // let last = {}
 
-    const promises = []
+    const promises: Promise<unknown>[] = []
     let requestDropped = false
 
     busboy.on('file', (name, file, info) => {
@@ -54,7 +55,7 @@ module.exports = (app) => {
       if (requestDropped) return
 
       if (mimeType === 'application/gzip') {
-        const buffer = []
+        const buffer: Uint8Array[] = []
 
         file.on('data', (data) => {
           if (data) buffer.push(data)

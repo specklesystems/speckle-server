@@ -13664,6 +13664,7 @@ __metadata:
     "@tiptap/core": ^2.0.0-beta.176
     "@types/bcrypt": ^5.0.0
     "@types/bull": ^3.15.9
+    "@types/busboy": ^1.5.3
     "@types/compression": ^1.7.2
     "@types/debug": ^4.1.7
     "@types/deep-equal-in-any-order": ^1.0.1
@@ -16112,6 +16113,15 @@ __metadata:
     "@types/ioredis": "*"
     "@types/redis": ^2.8.0
   checksum: 060a274e2939ca70f6ddd89842a5a0e46101a5adaba3fcdc6899e7e64382d01513a954dc5dabfa73993ce584e9a74b3c85b30dcd38362cfcf6eee1416bbf7463
+  languageName: node
+  linkType: hard
+
+"@types/busboy@npm:^1.5.3":
+  version: 1.5.3
+  resolution: "@types/busboy@npm:1.5.3"
+  dependencies:
+    "@types/node": "*"
+  checksum: 1dbe097d318fe1eee4b91919cee7cb81e265867246df7c60994060e27c9e29eb989ac36cd6ecbd3f364e5992e840a1c6bb57c0cd1b8560af174cd4f48fdb2bdf
   languageName: node
   linkType: hard
 
