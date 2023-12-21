@@ -1,9 +1,13 @@
-const { Transform } = require('stream')
+import { Transform } from 'stream'
 
 // A stream that converts database objects stream to "{id}\t{data_json}\n" stream or a json stream of obj.data fields
 
-class SpeckleObjectsStream extends Transform {
-  constructor(simpleText) {
+type TransformCallback = (error?: Error | null, data?: unknown) => void
+export class SpeckleObjectsStream extends Transform {
+  private simpleText: boolean
+  private isFirstObject: boolean
+
+  constructor(simpleText: boolean) {
     super({ writableObjectMode: true })
     this.simpleText = simpleText
 
@@ -11,12 +15,17 @@ class SpeckleObjectsStream extends Transform {
     this.isFirstObject = true
   }
 
-  _transform(dbObj, encoding, callback) {
+  _transform(
+    dbObj: { id: string; dataText: unknown; data: unknown },
+    encoding: BufferEncoding,
+    callback: TransformCallback
+  ) {
     let objData = dbObj.dataText
     if (objData === undefined) objData = JSON.stringify(dbObj.data)
 
     try {
       if (this.simpleText) {
+        //create tab separated value data structure
         this.push(`${dbObj.id}\t`)
         this.push(objData)
         this.push('\n')
@@ -28,14 +37,12 @@ class SpeckleObjectsStream extends Transform {
       }
       callback()
     } catch (e) {
-      callback(e)
+      if (e === null || e instanceof Error) callback(e)
     }
   }
 
-  _flush(callback) {
+  _flush(callback: TransformCallback) {
     if (!this.simpleText) this.push(']')
     callback()
   }
 }
-
-exports.SpeckleObjectsStream = SpeckleObjectsStream
