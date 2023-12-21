@@ -2,7 +2,7 @@ import { addUserUpdatedActivity } from '@/modules/activitystream/services/userAc
 import { UserUpdateError, UserValidationError } from '@/modules/core/errors/user'
 import { PasswordTooShortError } from '@/modules/core/errors/userinput'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
-import { UserRecord } from '@/modules/core/helpers/userHelper'
+import { UserRecord } from '@/modules/core/helpers/types'
 import { getUser, updateUser } from '@/modules/core/repositories/users'
 import { isNullOrUndefined } from '@speckle/shared'
 import bcrypt from 'bcrypt'

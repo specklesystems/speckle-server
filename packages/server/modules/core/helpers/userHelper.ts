@@ -1,4 +1,6 @@
-const { pick } = require('lodash')
+import { pick } from 'lodash'
+import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
+import { Nullable } from '@speckle/shared'
 
 /**
  * @typedef {import('@/modules/core/helpers/types').UserRecord} UserRecord
@@ -11,7 +13,7 @@ const { pick } = require('lodash')
 /**
  * @type {Array<keyof import('@/modules/core/helpers/types').LimitedUserRecord>}
  */
-const LIMITED_USER_FIELDS = [
+export const LIMITED_USER_FIELDS = [
   'id',
   'name',
   'bio',
@@ -30,12 +32,9 @@ const LIMITED_USER_FIELDS = [
  * @param {UserRecord|LimitedUserRecord} user
  * @returns {LimitedUserRecord}
  */
-function removePrivateFields(user) {
+export function removePrivateFields(
+  user: Nullable<UserRecord> | Nullable<LimitedUserRecord>
+) {
   if (!user) return user
   return pick(user, LIMITED_USER_FIELDS)
-}
-
-module.exports = {
-  LIMITED_USER_FIELDS,
-  removePrivateFields
 }
