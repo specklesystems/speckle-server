@@ -29,7 +29,8 @@ export default defineNuxtConfig({
         }
       }
     ],
-    '@speckle/ui-components-nuxt'
+    '@speckle/ui-components-nuxt',
+    '@artmizu/nuxt-prometheus'
   ],
   runtimeConfig: {
     public: {
