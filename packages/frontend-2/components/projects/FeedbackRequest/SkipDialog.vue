@@ -10,6 +10,7 @@
     <CommonAnimationInstructional
       :initial-position="{ top: 56, left: 71 }"
       :actions="dialogActions"
+      :slots-config="slotsConfig"
     >
       <template #background>
         <div class="flex flex-col">
@@ -89,6 +90,11 @@ import { UserCircleIcon, ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outli
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const emit = defineEmits<{ 'skip-dialog-dismissed': [] }>()
+
+const slotsConfig = computed(() => [
+  { name: 'slot1', visible: false },
+  { name: 'slot2', visible: false }
+])
 
 const dialogButtons = computed(() => [
   {
