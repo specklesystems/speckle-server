@@ -10,7 +10,13 @@ const buildOutputFileName = (chunkName: string) =>
     join('/_nuxt/', `${sanitizeFilePath(filename(chunkName))}.[hash].js`)
   )
 
-const { SPECKLE_SERVER_VERSION } = process.env
+const {
+  SPECKLE_SERVER_VERSION,
+  NUXT_PUBLIC_LOG_LEVEL = 'info',
+  NUXT_PUBLIC_LOG_PRETTY = false
+} = process.env
+
+const isLogPretty = ['1', 'true', true, 1].includes(NUXT_PUBLIC_LOG_PRETTY)
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
@@ -38,8 +44,8 @@ export default defineNuxtConfig({
       backendApiOrigin: '',
       mixpanelApiHost: 'UNDEFINED',
       mixpanelTokenId: 'UNDEFINED',
-      logLevel: 'info',
-      logPretty: false,
+      logLevel: NUXT_PUBLIC_LOG_LEVEL,
+      logPretty: isLogPretty,
       logClientApiToken: '',
       logClientApiEndpoint: '',
       speckleServerVersion: SPECKLE_SERVER_VERSION || 'unknown',
