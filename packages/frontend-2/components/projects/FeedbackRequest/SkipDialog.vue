@@ -87,6 +87,27 @@ import { computed } from 'vue'
 import { CommonAnimationInstructional } from '@speckle/ui-components'
 import { UserCircleIcon, ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline'
 
+type AnimationAction = {
+  type: 'animation'
+  top: number
+  left: number
+  duration: number
+}
+
+type ClickAction = { type: 'click' }
+
+type DelayAction = {
+  type: 'delay'
+  duration: number
+}
+
+type SlotAction = {
+  type: 'slot'
+  slot: string
+}
+
+type Action = AnimationAction | ClickAction | DelayAction | SlotAction
+
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const emit = defineEmits<{ 'skip-dialog-dismissed': [] }>()
@@ -106,7 +127,7 @@ const dialogButtons = computed(() => [
   }
 ])
 
-const dialogActions = computed(() => [
+const dialogActions = computed((): Action[] => [
   { type: 'delay', duration: 1000 },
   { type: 'animation', top: 4, left: 89, duration: 1500 },
   { type: 'delay', duration: 2000 },
