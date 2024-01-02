@@ -19,20 +19,10 @@
     </div>
     <div class="w-full h-full overflow-hidden">
       <slot name="background"></slot>
-      <template v-if="slotVisibility.slot1">
-        <slot name="slot1"></slot>
-      </template>
-      <template v-if="slotVisibility.slot2">
-        <slot name="slot2"></slot>
-      </template>
-      <template v-if="slotVisibility.slot3">
-        <slot name="slot3"></slot>
-      </template>
-      <template v-if="slotVisibility.slot4">
-        <slot name="slot4"></slot>
-      </template>
-      <template v-if="slotVisibility.slot5">
-        <slot name="slot5"></slot>
+      <template v-for="slotObject in dynamicSlots" :key="slotObject.name">
+        <template v-if="slotObject.visible">
+          <slot :name="slotObject.name"></slot>
+        </template>
       </template>
     </div>
   </div>
@@ -59,11 +49,9 @@ type DelayAction = {
   duration: number
 }
 
-type SlotKey = 'slot1' | 'slot2' | 'slot3' | 'slot4' | 'slot5'
-
 type SlotAction = {
   type: 'slot'
-  slot: SlotKey
+  slot: string
 }
 
 type Action = AnimationAction | ClickAction | SlotAction | DelayAction
@@ -72,7 +60,8 @@ const props = defineProps({
   actions: Array as PropType<Action[]>,
   initialPosition: {
     type: Object as PropType<{ top: number; left: number }>
-  }
+  },
+  slotsConfig: Array as PropType<{ name: string; visible: boolean }[]>
 })
 
 const isAnimating = ref(true)
@@ -80,13 +69,7 @@ const mousePosition = ref({ ...props.initialPosition })
 const isClicked = ref(false)
 const animationDuration = ref(500)
 const isMouseVisible = ref(true)
-const slotVisibility = ref({
-  slot1: false,
-  slot2: false,
-  slot3: false,
-  slot4: false,
-  slot5: false
-})
+const dynamicSlots = ref(props.slotsConfig || [])
 
 function delay(action: DelayAction) {
   return new Promise<void>((resolve) => {
@@ -97,8 +80,10 @@ function delay(action: DelayAction) {
 }
 
 function toggleSlotVisibility(action: SlotAction) {
-  const slotKey: SlotKey = action.slot
-  slotVisibility.value[slotKey] = !slotVisibility.value[slotKey]
+  const slotToToggle = dynamicSlots.value.find((slot) => slot.name === action.slot)
+  if (slotToToggle) {
+    slotToToggle.visible = !slotToToggle.visible
+  }
 }
 
 async function handleAction(action: Action) {

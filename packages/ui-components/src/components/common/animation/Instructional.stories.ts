@@ -9,6 +9,14 @@ export default {
     actions: {
       control: 'object',
       description: 'Array of actions to animate or interact with the component'
+    },
+    initialPosition: {
+      control: 'object',
+      description: 'Initial position of the mouse icon'
+    },
+    slotsConfig: {
+      control: 'object',
+      description: 'Configuration for dynamic slots'
     }
   }
 } as Meta
@@ -34,6 +42,10 @@ export const Default: StoryObj = {
       { type: 'click' },
       { type: 'delay', duration: 3000 },
       { type: 'slot', slot: 'slot2' }
+    ],
+    slotsConfig: [
+      { name: 'slot1', visible: false },
+      { name: 'slot2', visible: false }
     ]
   },
   render: (args) => ({
