@@ -17,7 +17,7 @@ export type TokenRequestParams = {
   userId: string
   name: string
   scopes: string[]
-  lifespan: string
+  lifespan: number
 }
 
 const StoredTokenSchema = z.object({
@@ -81,7 +81,7 @@ export async function createPersonalAccessToken(
   userId: string,
   name: string,
   scopes: string[],
-  lifespan?: string
+  lifespan: number
 ) {
   const { id, token } = await createToken({
     userId,
