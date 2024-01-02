@@ -9,22 +9,7 @@
   >
     <CommonAnimationInstructional
       :initial-position="{ top: 56, left: 71 }"
-      :actions="[
-        { type: 'delay', duration: 1000 },
-        { type: 'animation', top: 4, left: 89, duration: 1500 },
-        { type: 'delay', duration: 2000 },
-        { type: 'click' },
-        { type: 'slot', slot: 'slot1' },
-        { type: 'delay', duration: 1000 },
-        { type: 'animation', top: 56, left: 71, duration: 1500 },
-        { type: 'delay', duration: 800 },
-        { type: 'slot', slot: 'slot1' },
-        { type: 'slot', slot: 'slot2' },
-        { type: 'delay', duration: 1000 },
-        { type: 'click' },
-        { type: 'delay', duration: 3000 },
-        { type: 'slot', slot: 'slot2' }
-      ]"
+      :actions="dialogActions"
     >
       <template #background>
         <div class="flex flex-col">
@@ -113,5 +98,22 @@ const dialogButtons = computed(() => [
       emit('skip-dialog-dismissed')
     }
   }
+])
+
+const dialogActions = computed(() => [
+  { type: 'delay', duration: 1000 },
+  { type: 'animation', top: 4, left: 89, duration: 1500 },
+  { type: 'delay', duration: 2000 },
+  { type: 'click' },
+  { type: 'slot', slot: 'slot1' },
+  { type: 'delay', duration: 1000 },
+  { type: 'animation', top: 56, left: 71, duration: 1500 },
+  { type: 'delay', duration: 800 },
+  { type: 'slot', slot: 'slot1' },
+  { type: 'slot', slot: 'slot2' },
+  { type: 'delay', duration: 1000 },
+  { type: 'click' },
+  { type: 'delay', duration: 3000 },
+  { type: 'slot', slot: 'slot2' }
 ])
 </script>

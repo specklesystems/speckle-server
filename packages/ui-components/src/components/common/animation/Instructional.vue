@@ -40,8 +40,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, defineProps, type PropType, onBeforeUnmount } from 'vue'
-import MouseIcon from './MouseIcon.vue'
-import ClickIcon from './ClickIcon.vue'
+import MouseIcon from '~~/src/components/common/animation/MouseIcon.vue'
+import ClickIcon from '~~/src/components/common/animation/ClickIcon.vue'
 
 type AnimationAction = {
   type: 'animation'

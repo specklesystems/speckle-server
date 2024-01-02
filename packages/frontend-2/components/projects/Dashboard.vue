@@ -93,6 +93,7 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
+import dayjs from 'dayjs'
 
 const onUserProjectsUpdateSubscription = graphql(`
   subscription OnUserProjectsUpdate {
@@ -266,9 +267,7 @@ watch(search, (newVal) => {
 watch(areQueriesLoading, (newVal) => (showLoadingBar.value = newVal))
 
 function getFutureDateByDays(daysToAdd: number) {
-  const futureDate = new Date()
-  futureDate.setDate(futureDate.getDate() + daysToAdd)
-  return futureDate
+  return dayjs().add(daysToAdd, 'day').toDate()
 }
 
 const onboardingOrFeedbackDate = useSynchronizedCookie<string | undefined>(
@@ -326,11 +325,10 @@ const showChecklist = computed(() => {
 
 const showFeedbackRequest = computed(() => {
   let storedDateString = onboardingOrFeedbackDate.value
-
-  const currentDate = new Date()
+  const currentDate = dayjs()
 
   if (!storedDateString) {
-    const formattedDate = currentDate.toISOString().split('T')[0]
+    const formattedDate = currentDate.format('YYYY-MM-DD')
     onboardingOrFeedbackDate.value = formattedDate
     storedDateString = formattedDate
   }
@@ -339,10 +337,8 @@ const showFeedbackRequest = computed(() => {
   if (showChecklist.value) return false
   if (projectsPanelResult?.value?.activeUser?.projectInvites.length) return false
 
-  const firstVisitDate = new Date(storedDateString)
-
-  const timeDifference = currentDate.getTime() - firstVisitDate.getTime()
-  const daysDifference = timeDifference / (1000 * 3600 * 24)
+  const firstVisitDate = dayjs(storedDateString)
+  const daysDifference = currentDate.diff(firstVisitDate, 'day')
 
   return daysDifference > 14
 })
