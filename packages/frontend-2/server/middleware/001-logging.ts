@@ -8,6 +8,7 @@ import type { GenReqId } from 'pino-http'
 import { randomUUID } from 'crypto'
 import type { IncomingHttpHeaders } from 'http'
 import { REQUEST_ID_HEADER } from '~~/server/lib/core/helpers/constants'
+import { get } from 'lodash'
 
 /**
  * Server request logger
@@ -83,10 +84,15 @@ export const LoggingMiddleware = pinoHttp({
           headers: Record<string, string>
         }
       }
+      const realRaw = get(res, 'raw.raw') as typeof res.raw
+      const isRequestCompleted = !!realRaw.writableEnded
+      const isRequestAborted = !isRequestCompleted
+
       return {
         statusCode: res.raw.statusCode,
         // Allowlist useful headers
-        headers: resRaw.headers
+        headers: resRaw.headers,
+        isRequestAborted
       }
     })
   }

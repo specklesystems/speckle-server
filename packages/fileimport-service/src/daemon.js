@@ -51,7 +51,12 @@ async function startTask() {
 }
 
 async function doTask(task) {
-  let taskLogger = logger.child({ taskId: task.id })
+  const taskId = task.id
+
+  // Mark task as started
+  await knex.raw(`NOTIFY file_import_started, '${task.id}'`)
+
+  let taskLogger = logger.child({ taskId })
   let tempUserToken = null
   let serverApi = null
   let fileTypeForMetric = 'unknown'
@@ -63,7 +68,7 @@ async function doTask(task) {
 
   try {
     taskLogger.info('Doing task.')
-    const info = await FileUploads().where({ id: task.id }).first()
+    const info = await FileUploads().where({ id: taskId }).first()
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
     }

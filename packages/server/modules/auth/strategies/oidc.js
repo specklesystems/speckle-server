@@ -20,6 +20,7 @@ const {
   getOidcName
 } = require('@/modules/shared/helpers/envHelper')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
+const { UnverifiedEmailSSOLoginError } = require('@/modules/core/errors/userinput')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const oidcIssuer = await Issuer.discover(getOidcDiscoveryUrl())
@@ -54,10 +55,11 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           const existingUser = await getUserByEmail({ email: user.email })
 
           if (existingUser && !existingUser.verified) {
-            throw new Error(
-              'Email already in use by a user with unverified email. Verify the email on the existing user to be able to log in with ' +
-                getOidcName()
-            )
+            throw new UnverifiedEmailSSOLoginError(undefined, {
+              info: {
+                email: user.email
+              }
+            })
           }
 
           // if there is an existing user, go ahead and log them in (regardless of
@@ -117,7 +119,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           })
         } catch (err) {
           logger.error(err)
-          return done(null, false, { message: err.message })
+          return done(err, false, { message: err.message })
         }
       }
     )

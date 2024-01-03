@@ -40,7 +40,8 @@
         Use our
         <FormButton link size="sm" to="/downloads">connectors</FormButton>
         to publish a {{ modelName ? '' : 'new model' }} version to
-        {{ modelName || 'this project' }}, or drag and drop a IFC/OBJ/STL file here.
+        {{ modelName ? 'this model' : 'this project' }}, or drag and drop a IFC/OBJ/STL
+        file here.
       </span>
     </div>
   </FormFileUploadZone>

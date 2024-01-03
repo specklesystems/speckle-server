@@ -1,38 +1,62 @@
-'use strict'
-
-const { Roles } = require('@/modules/core/helpers/mainConstants')
-const { removePrivateFields } = require('@/modules/core/helpers/userHelper')
-const { InviteCreateValidationError } = require('@/modules/serverinvites/errors')
-const {
+import { Roles } from '@/modules/core/helpers/mainConstants'
+import { removePrivateFields } from '@/modules/core/helpers/userHelper'
+import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
+import {
   buildUserTarget,
   ResourceTargets
-} = require('@/modules/serverinvites/helpers/inviteHelper')
-const {
-  createAndSendInvite
-} = require('@/modules/serverinvites/services/inviteCreationService')
-const {
+} from '@/modules/serverinvites/helpers/inviteHelper'
+import { createAndSendInvite } from '@/modules/serverinvites/services/inviteCreationService'
+import {
   createStreamInviteAndNotify,
   useStreamInviteAndNotify
-} = require('@/modules/serverinvites/services/management')
-const {
+} from '@/modules/serverinvites/services/management'
+import {
   cancelStreamInvite,
   resendInvite,
   deleteInvite
-} = require('@/modules/serverinvites/services/inviteProcessingService')
-const {
+} from '@/modules/serverinvites/services/inviteProcessingService'
+import {
+  getServerInviteForToken,
   getUserPendingStreamInvite,
   getUserPendingStreamInvites
-} = require('@/modules/serverinvites/services/inviteRetrievalService')
-const { authorizeResolver } = require('@/modules/shared')
-const { chunk } = require('lodash')
+} from '@/modules/serverinvites/services/inviteRetrievalService'
+import { authorizeResolver } from '@/modules/shared'
+import { chunk } from 'lodash'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
 
-/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
-module.exports = {
+export = {
+  Query: {
+    async streamInvite(_parent, args, context) {
+      const { streamId, token } = args
+      return await getUserPendingStreamInvite(streamId, context.userId, token)
+    },
+    async projectInvite(_parent, args, context) {
+      const { projectId, token } = args
+      return await getUserPendingStreamInvite(projectId, context.userId, token)
+    },
+    async streamInvites(_parent, _args, context) {
+      const { userId } = context
+      return await getUserPendingStreamInvites(userId!)
+    },
+    async serverInviteByToken(_parent, args) {
+      const { token } = args
+      return await getServerInviteForToken(token)
+    }
+  },
+  ServerInvite: {
+    async invitedBy(parent, _args, ctx) {
+      const { invitedById } = parent
+      if (!invitedById) return null
+
+      const user = await ctx.loaders.users.getUser.load(invitedById)
+      return user ? removePrivateFields(user) : null
+    }
+  },
   Mutation: {
     async serverInviteCreate(_parent, args, context) {
       await createAndSendInvite({
         target: args.input.email,
-        inviterId: context.userId,
+        inviterId: context.userId!,
         message: args.input.message,
         serverRole: args.input.serverRole
       })
@@ -42,7 +66,7 @@ module.exports = {
 
     async streamInviteCreate(_parent, args, context) {
       await authorizeResolver(context.userId, args.input.streamId, Roles.Stream.Owner)
-      await createStreamInviteAndNotify(args.input, context.userId)
+      await createStreamInviteAndNotify(args.input, context.userId!)
 
       return true
     },
@@ -57,7 +81,7 @@ module.exports = {
           paramsBatchArray.map((params) =>
             createAndSendInvite({
               target: params.email,
-              inviterId: context.userId,
+              inviterId: context.userId!,
               message: params.message,
               serverRole: params.serverRole
             })
@@ -87,10 +111,10 @@ module.exports = {
         await Promise.all(
           paramsBatchArray.map((params) => {
             const { email, userId, message, streamId, role, serverRole } = params
-            const target = userId ? buildUserTarget(userId) : email
+            const target = (userId ? buildUserTarget(userId) : email)!
             return createAndSendInvite({
               target,
-              inviterId: context.userId,
+              inviterId: context.userId!,
               message,
               resourceTarget: ResourceTargets.Streams,
               resourceId: streamId,
@@ -105,7 +129,7 @@ module.exports = {
     },
 
     async streamInviteUse(_parent, args, ctx) {
-      await useStreamInviteAndNotify(args, ctx.userId)
+      await useStreamInviteAndNotify(args, ctx.userId!)
       return true
     },
 
@@ -134,34 +158,5 @@ module.exports = {
 
       return true
     }
-  },
-  Query: {
-    async streamInvite(_parent, args, context) {
-      const { streamId, token } = args
-      return await getUserPendingStreamInvite(streamId, context.userId, token)
-    },
-    async projectInvite(_parent, args, context) {
-      const { projectId, token } = args
-      return await getUserPendingStreamInvite(projectId, context.userId, token)
-    },
-    async streamInvites(_parrent, _args, context) {
-      const { userId } = context
-      return await getUserPendingStreamInvites(userId)
-    }
-  },
-  ServerInvite: {
-    /**
-     * @param {import('@/modules/core/services/users/adminUsersListService').ServerInviteGraphqlReturnType} parent
-     * @param {Object} _args
-     * @param {import('@/modules/shared/index').GraphQLContext} ctx
-     * @returns
-     */
-    async invitedBy(parent, _args, ctx) {
-      const { invitedById } = parent
-      if (!invitedById) return null
-
-      const user = await ctx.loaders.users.getUser.load(invitedById)
-      return user ? removePrivateFields(user) : null
-    }
   }
-}
+} as Resolvers

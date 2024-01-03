@@ -40,12 +40,29 @@ type NewEmailVerificationState = Awaited<ReturnType<typeof createNewVerification
 
 function buildMjmlBody() {
   const bodyStart = `<mj-text>Hello,<br/><br/>You have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, click the button below:</mj-text>`
-  return { bodyStart, bodyEnd: undefined }
+  const bodyEnd = `<mj-text>This link expires in <strong>1 week</strong>.<br/>
+  If the link does not work, please proceed by</mj-text><br/>
+  <mj-list>
+    <mj-li>Logging in with your e-mail address and password</mj-li>
+    <mj-li>Clicking on the Notification icon</mj-li>
+    <mj-li>Selecting "Send Verification"</mj-li>
+    <mj-li>Verifying your e-mail address by clicking on the link in the e-mail you will receive</mj-li>
+  </mj-list><br/>
+  <mj-text>
+    See you soon,<br/>
+    Speckle
+  </mj-text>
+  `
+
+  return { bodyStart, bodyEnd }
 }
 
 function buildTextBody() {
   const bodyStart = `Hello,\n\nYou have just registered to the Speckle server, or initiated the email verification process manually. To finalize the verification process, open the link below:`
-  return { bodyStart, bodyEnd: undefined }
+  const bodyEnd = `This link expires in 1 week. If the link does not work, please proceed by logging in to your Speckle account with your e-mail address and password, clicking the Notification icon, selecting "Send Verification" and verifying your e-mail address by clicking on the link in the e-mail you will receive.\n\nSee you soon,\nSpeckle
+  `
+
+  return { bodyStart, bodyEnd }
 }
 
 function buildEmailLink(state: NewEmailVerificationState): string {
@@ -84,7 +101,7 @@ async function sendVerificationEmail(state: NewEmailVerificationState) {
 }
 
 /**
- * Request email verification (send out verification message) for user with specified email
+ * Request email verification (send out verification message) for user with specified ID
  */
 export async function requestEmailVerification(userId: string) {
   const newVerificationState = await createNewVerification(userId)

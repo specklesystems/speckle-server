@@ -1,4 +1,5 @@
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { SetNonNullable } from 'type-fest'
 
 export type ServerInviteRecord = {
   id: string
@@ -13,3 +14,8 @@ export type ServerInviteRecord = {
   token: string
   serverRole: Nullable<string>
 }
+
+export type StreamInviteRecord = SetNonNullable<
+  ServerInviteRecord,
+  'resourceId' | 'resourceTarget'
+>

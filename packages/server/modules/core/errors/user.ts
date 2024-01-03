@@ -9,3 +9,8 @@ export class UserValidationError extends BaseError {
   static defaultMessage = 'The user input data is invalid'
   static code = 'USER_VALIDATION_ERROR'
 }
+
+export class TokenCreateError extends BaseError {
+  static code = 'TOKEN_CREATE_ERROR'
+  static defaultMessage = 'An error occurred while creating a token'
+}

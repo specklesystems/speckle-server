@@ -32,11 +32,11 @@ const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
  * @typedef {{
  *  target: string;
  *  inviterId: string;
- *  message?: string;
+ *  message?: string | null;
  *  resourceTarget?: string;
  *  resourceId?: string;
  *  role?: string;
- *  serverRole?: string
+ *  serverRole?: string | null
  * }} CreateInviteParams
  */
 

@@ -17,7 +17,7 @@ import { getStreamBranchByName } from '@/modules/core/repositories/branches'
 
 type ProjectMetadata = Awaited<ReturnType<typeof getProjectMetadata>>
 
-const PROJECT_URL_RGX = /((https?:\/\/)?[\w.]+)\/projects\/([\w]+)\/?/i
+const PROJECT_URL_RGX = /((https?:\/\/)?[\w.\-_]+)\/projects\/([\w]+)\/?/i
 
 const projectMetadataQuery = gql`
   query CrossSyncProjectMetadata($id: String!, $versionsCursor: String) {
