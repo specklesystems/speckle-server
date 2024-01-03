@@ -1,32 +1,18 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: speckle-server
+  name: speckle-server-minion
   namespace: {{ .Values.namespace }}
   labels:
 {{ include "speckle.labels" . | indent 4 }}
   annotations:
+    nginx.org/mergeable-ingress-type: "minion"
     {{- if .Values.cert_manager_issuer }}
     cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer }}
     {{- end }}
-    nginx.ingress.kubernetes.io/proxy-body-size: {{ (printf "%dm" (int .Values.file_size_limit_mb)) | quote }}
-    nginx.org/client-max-body-size: {{ (printf "%dm" (int .Values.file_size_limit_mb)) | quote }}
     nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/server-snippet: |
-      location /health {
-          return 403;
-      }
-      location /metrics {
-          return 403;
-      }
 spec:
   ingressClassName: nginx
-  {{- if .Values.cert_manager_issuer }}
-  tls:
-  - hosts:
-    - {{ .Values.domain }}
-    secretName: server-tls
-  {{- end }}
   rules:
   - host: {{ .Values.domain }}
     http:
