@@ -8,7 +8,6 @@ metadata:
   annotations:
     nginx.org/mergeable-ingress-type: "minion"
     nginx.ingress.kubernetes.io/rewrite-target: / # redirects every path defined in this ingress to root
-    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
@@ -16,7 +15,7 @@ spec:
     http:
       paths:
       - pathType: Exact
-        path: "/(health|metrics)"
+        path: "/metrics"
         backend:
           service:
 {{- if .Values.frontend_2.enabled }}
