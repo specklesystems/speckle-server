@@ -12,6 +12,7 @@ import type { OperationDefinitionNode } from 'graphql'
 import { Kind } from 'graphql'
 import { omit } from 'lodash-es'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
+import { useRequestId } from '~/lib/core/composables/server'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
 import { loginRoute, useNavigateToLogin } from '~~/lib/common/helpers/route'
@@ -22,7 +23,6 @@ import {
   incomingOverwritesExistingMergeFunction,
   mergeAsObjectsFunction
 } from '~~/lib/core/helpers/apolloSetup'
-import type { ApolloConfigResolver } from '~~/lib/core/nuxt-modules/apollo/module'
 
 const appName = 'frontend-2'
 
@@ -261,8 +261,9 @@ function createCache(): InMemoryCache {
 async function createWsClient(params: {
   wsEndpoint: string
   authToken: CookieRef<Optional<string>>
+  reqId: string
 }): Promise<SubscriptionClient> {
-  const { wsEndpoint, authToken } = params
+  const { wsEndpoint, authToken, reqId } = params
 
   // WS IN SSR DOESN'T WORK CURRENTLY CAUSE OF SOME NUXT TRANSPILATION WEIRDNESS
   // SO DON'T RUN createWsClient in SSR
@@ -274,7 +275,9 @@ async function createWsClient(params: {
       reconnect: true,
       connectionParams: () => {
         const Authorization = authToken.value ? `Bearer ${authToken.value}` : null
-        return Authorization ? { Authorization, headers: { Authorization } } : {}
+        return Authorization
+          ? { Authorization, headers: { Authorization, 'x-request-id': reqId } }
+          : {}
       }
     },
     wsImplementation
@@ -286,8 +289,9 @@ function createLink(params: {
   wsClient?: SubscriptionClient
   authToken: CookieRef<Optional<string>>
   nuxtApp: NuxtApp
+  reqId: string
 }): ApolloLink {
-  const { httpEndpoint, wsClient, authToken, nuxtApp } = params
+  const { httpEndpoint, wsClient, authToken, nuxtApp, reqId } = params
   const goToLogin = useNavigateToLogin()
   const { registerError, isErrorState } = useAppErrorState()
 
@@ -338,7 +342,8 @@ function createLink(params: {
     return {
       headers: {
         ...headers,
-        ...authHeader
+        ...authHeader,
+        'x-request-id': reqId
       }
     }
   })
@@ -381,15 +386,16 @@ const defaultConfigResolver: ApolloConfigResolver = async () => {
   } = useRuntimeConfig()
   const apiOrigin = useApiOrigin()
   const nuxtApp = useNuxtApp()
+  const reqId = useRequestId()
 
   const httpEndpoint = `${apiOrigin}/graphql`
   const wsEndpoint = httpEndpoint.replace('http', 'ws')
 
   const authToken = useAuthCookie()
   const wsClient = process.client
-    ? await createWsClient({ wsEndpoint, authToken })
+    ? await createWsClient({ wsEndpoint, authToken, reqId })
     : undefined
-  const link = createLink({ httpEndpoint, wsClient, authToken, nuxtApp })
+  const link = createLink({ httpEndpoint, wsClient, authToken, nuxtApp, reqId })
 
   return {
     // If we don't markRaw the cache, sometimes we get cryptic internal Apollo Client errors that essentially

@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto'
 import { defineEventHandler, fromNodeMiddleware } from 'h3'
 import type { IncomingHttpHeaders } from 'http'
 import { IncomingMessage, ServerResponse } from 'http'
+import { get } from 'lodash'
 import type { SerializedResponse } from 'pino'
 import pino from 'pino'
 import type { GenReqId } from 'pino-http'
@@ -83,10 +84,15 @@ export const LoggingMiddleware = pinoHttp({
           headers: Record<string, string>
         }
       }
+      const realRaw = get(res, 'raw.raw') as typeof res.raw
+      const isRequestCompleted = !!realRaw.writableEnded
+      const isRequestAborted = !isRequestCompleted
+
       return {
         statusCode: res.raw.statusCode,
         // Allowlist useful headers
-        headers: resRaw.headers
+        headers: resRaw.headers,
+        isRequestAborted
       }
     })
   }

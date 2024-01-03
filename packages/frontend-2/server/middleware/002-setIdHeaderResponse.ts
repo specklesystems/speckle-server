@@ -2,7 +2,7 @@ import { defineEventHandler, fromNodeMiddleware } from 'h3'
 import { IncomingMessage, ServerResponse } from 'http'
 import { REQUEST_ID_HEADER } from '~~/server/lib/core/helpers/constants'
 
-export const DetermineRequestIdMiddleware = (
+export const getRequestIdMiddleware = (
   req: IncomingMessage,
   res: ServerResponse,
   next: () => void
@@ -12,4 +12,4 @@ export const DetermineRequestIdMiddleware = (
   next()
 }
 
-export default defineEventHandler(fromNodeMiddleware(DetermineRequestIdMiddleware))
+export default defineEventHandler(fromNodeMiddleware(getRequestIdMiddleware))

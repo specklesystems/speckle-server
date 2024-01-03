@@ -6,7 +6,7 @@ const {
 let unsubFromEvents
 
 exports.init = async (_, isInitial) => {
-  moduleLogger.info('🗣 Init comments module')
+  moduleLogger.info('🗣  Init comments module')
 
   if (isInitial) {
     unsubFromEvents = await notifyUsersOnCommentEvents()
