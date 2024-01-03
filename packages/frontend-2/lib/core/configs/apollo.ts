@@ -23,6 +23,7 @@ import {
   incomingOverwritesExistingMergeFunction,
   mergeAsObjectsFunction
 } from '~~/lib/core/helpers/apolloSetup'
+import type { ApolloConfigResolver } from '~~/lib/core/nuxt-modules/apollo/module'
 
 const appName = 'frontend-2'
 
