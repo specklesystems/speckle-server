@@ -21,7 +21,6 @@ import { getServerInfo } from '@/modules/core/services/generic'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import { AuthContext } from '@/modules/shared/authz'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
-import { UserUpdateError } from '@/modules/core/errors/user'
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 export = {
@@ -247,8 +246,7 @@ export = {
       args: { user: UserUpdateInput },
       context: AuthContext
     ) {
-      if (!context.userId) throw new UserUpdateError('Attempting to update a null user')
-      const newUser = await updateUserAndNotify(context.userId, args.user)
+      const newUser = await updateUserAndNotify(context.userId!, args.user)
       return newUser
     }
   }
