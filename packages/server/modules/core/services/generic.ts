@@ -1,11 +1,20 @@
 'use strict'
-import knex from '@/db/knex'
 import { getServerOrigin, getServerVersion } from '@/modules/shared/helpers/envHelper'
-import { ServerInfo } from '@/modules/core/helpers/types'
+import {
+  ScopesRecord,
+  ServerConfigRecord,
+  ServerInfo,
+  UserRolesRecord
+} from '@/modules/core/helpers/types'
+import {
+  UserRoles as UserRolesSchema,
+  Scopes as ScopesSchema,
+  ServerConfig as ServerConfigSchema
+} from '@/modules/core/dbSchema'
 
-const Roles = () => knex('user_roles')
-const Scopes = () => knex('scopes')
-const Info = () => knex('server_config')
+const Roles = () => UserRolesSchema.knex<UserRolesRecord[]>()
+const Scopes = () => ScopesSchema.knex<ScopesRecord[]>()
+const Info = () => ServerConfigSchema.knex<ServerConfigRecord[]>()
 
 export type ServerInfoParams = {
   name: string

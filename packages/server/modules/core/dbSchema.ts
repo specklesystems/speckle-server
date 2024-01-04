@@ -277,6 +277,14 @@ export const Users = buildTableHelper(
 
 export const ServerAcl = buildTableHelper('server_acl', ['userId', 'role'])
 
+export const UserRoles = buildTableHelper('user_roles', [
+  'name',
+  'description',
+  'resourceTarget',
+  'aclTableName',
+  'weight'
+])
+
 export const Comments = buildTableHelper('comments', [
   'id',
   'streamId',
@@ -496,5 +504,18 @@ export const ServerAppsScopes = buildTableHelper('server_apps_scopes', [
 ])
 
 export const Scopes = buildTableHelper('scopes', ['name', 'description', 'public'])
+
+export const ServerConfig = buildTableHelper('server_config', [
+  'id',
+  'name',
+  'company',
+  'description',
+  'adminContact',
+  'termsOfService',
+  'canonicalUrl',
+  'completed',
+  'inviteOnly',
+  'guestModeEnabled'
+])
 
 export { knex }
