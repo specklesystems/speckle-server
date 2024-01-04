@@ -33,7 +33,7 @@ export = {
         context.userId!,
         args.token.name,
         args.token.scopes,
-        args.token.lifespan //FIXME - how do we convert from BigInt, and we should assign a default for falsy values
+        args.token.lifespan
       )
     },
     async apiTokenRevoke(_parent, args, context) {

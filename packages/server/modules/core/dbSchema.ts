@@ -352,6 +352,13 @@ export const ApiTokens = buildTableHelper('api_tokens', [
   'lastUsed'
 ])
 
+export const PersonalApiTokens = buildTableHelper('personal_api_tokens', [
+  'tokenId',
+  'userId'
+])
+
+export const TokenScopes = buildTableHelper('token_scopes', ['tokenId', 'scopeName'])
+
 export const EmailVerifications = buildTableHelper('email_verifications', [
   'id',
   'email',

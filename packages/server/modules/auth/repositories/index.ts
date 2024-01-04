@@ -40,6 +40,16 @@ export type ApiTokenRecord = {
   lastUsed: string
 }
 
+export type TokenScopeRecord = {
+  tokenId: string
+  scopeName: string
+}
+
+export type PersonalApiTokenRecord = {
+  tokenId: string
+  userId: string
+}
+
 export async function deleteExistingAuthTokens(userId: string) {
   if (!userId) throw new InvalidArgumentError('User ID must be set')
 

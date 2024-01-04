@@ -2,36 +2,32 @@
 import bcrypt from 'bcrypt'
 import crs from 'crypto-random-string'
 import knex from '@/db/knex'
-import { ServerAcl as ServerAclSchema } from '@/modules/core/dbSchema'
-import { z } from 'zod'
-import { logger } from '@/logging/logging'
-import { TokenValidationResult } from '@/modules/core/helpers/types'
+import { ServerAclRecord, TokenValidationResult } from '@/modules/core/helpers/types'
 
-const ApiTokens = () => knex('api_tokens')
-const PersonalApiTokens = () => knex('personal_api_tokens')
+import {
+  ApiTokens as ApiTokensSchema,
+  PersonalApiTokens as PersonalApiTokensSchema,
+  TokenScopes as TokenScopesSchema,
+  ServerAcl as ServerAclSchema
+} from '@/modules/core/dbSchema'
+import {
+  ApiTokenRecord,
+  PersonalApiTokenRecord,
+  TokenScopeRecord
+} from '@/modules/auth/repositories'
+import { MaybeNullOrUndefined } from '@speckle/shared'
 
-const TokenScopes = () => knex('token_scopes')
-const ServerRoles = () => ServerAclSchema.knex()
+const ServerRoles = () => ServerAclSchema.knex<ServerAclRecord[]>()
+const TokenScopes = () => TokenScopesSchema.knex<TokenScopeRecord[]>()
+const ApiTokens = () => ApiTokensSchema.knex<ApiTokenRecord[]>()
+const PersonalApiTokens = () => PersonalApiTokensSchema.knex<PersonalApiTokenRecord[]>()
 
 export type TokenRequestParams = {
   userId: string
   name: string
   scopes: string[]
-  lifespan: number
+  lifespan: MaybeNullOrUndefined<bigint>
 }
-
-const StoredTokenSchema = z.object({
-  // id: z.string(),
-  // name: z.string(),
-  // lastChars: z.string(),
-  // revoked: z.boolean(),
-  createdAt: z.date(),
-  // lastUsed: z.date(),
-  lifespan: z.coerce.number(),
-  owner: z.string(),
-  tokenDigest: z.string()
-})
-type StoredToken = z.infer<typeof StoredTokenSchema>
 
 /*
 
@@ -81,7 +77,7 @@ export async function createPersonalAccessToken(
   userId: string,
   name: string,
   scopes: string[],
-  lifespan: number
+  lifespan: MaybeNullOrUndefined<bigint>
 ) {
   const { id, token } = await createToken({
     userId,
@@ -102,15 +98,7 @@ export async function validateToken(
   const tokenId = tokenString.slice(0, 10)
   const tokenContent = tokenString.slice(10, 42)
 
-  const rawToken = await ApiTokens().where({ id: tokenId }).select('*').first()
-
-  let token: StoredToken
-  try {
-    token = StoredTokenSchema.parse(rawToken)
-  } catch (error) {
-    logger.warn({ error, tokenId }, 'No valid token for token ID: {tokenId}')
-    return { valid: false }
-  }
+  const token = await ApiTokens().where({ id: tokenId }).select('*').first()
 
   const timeDiff = Math.abs(Date.now() - new Date(token.createdAt).getTime())
   if (timeDiff > token.lifespan) {
@@ -185,5 +173,5 @@ export async function getUserTokens(userId: string) {
     `,
     [userId]
   )
-  return rows
+  return rows //FIXME this is typed as `any` because of the raw query
 }

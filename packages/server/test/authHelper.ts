@@ -48,5 +48,10 @@ export async function createAuthTokenForUser(
   userId: string,
   scopes: string[] = AllScopes
 ): Promise<string> {
-  return await createPersonalAccessToken(userId, 'test-runner-token', scopes, 3600)
+  return await createPersonalAccessToken(
+    userId,
+    'test-runner-token',
+    scopes,
+    BigInt(3600)
+  )
 }
