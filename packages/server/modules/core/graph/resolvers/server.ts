@@ -4,13 +4,12 @@ import {
   updateServerInfo,
   getServerInfo,
   getPublicScopes,
-  getPublicRoles,
-  ServerInfoParams
+  getPublicRoles
 } from '@/modules/core/services/generic'
 import { Roles, Scopes, RoleInfo } from '@speckle/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import { speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
-import { AuthContext } from '@/modules/shared/authz'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
 
 export = {
   Query: {
@@ -28,7 +27,7 @@ export = {
       return await getPublicScopes()
     },
 
-    async serverRoles(parent: { guestModeEnabled: boolean }) {
+    async serverRoles(parent) {
       const { guestModeEnabled } = parent
       return Object.values(Roles.Server)
         .filter((role) => guestModeEnabled || role !== Roles.Server.Guest)
@@ -43,11 +42,7 @@ export = {
   },
 
   Mutation: {
-    async serverInfoUpdate(
-      parent: never,
-      args: { info: ServerInfoParams },
-      context: AuthContext
-    ) {
+    async serverInfoUpdate(_parent, args, context) {
       await throwForNotHavingServerRole(context, Roles.Server.Admin)
       await validateScopes(context.scopes, Scopes.Server.Setup)
 
@@ -55,4 +50,4 @@ export = {
       return true
     }
   }
-}
+} as Resolvers
