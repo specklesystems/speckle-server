@@ -30,16 +30,19 @@ RUN yarn workspaces focus -A
 # hadolint ignore=DL3059
 RUN yarn workspaces foreach run build
 
-FROM node:16.18.0-bullseye-slim as production-stage
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
-
 ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
+
+FROM gcr.io/distroless/nodejs18-debian12:nonroot as production-stage
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+
+COPY --from=build-stage /tini /tini
+
 ENTRYPOINT ["/tini", "--"]
 
-USER node
+USER nonroot
 
 ENV PORT=8080
 
@@ -51,4 +54,4 @@ COPY --from=build-stage  /speckle-server/packages/frontend-2/.output .
 
 EXPOSE ${PORT}
 
-CMD ["node", "./server/index.mjs"]
+CMD ["/nodejs/bin/node", "./server/index.mjs"]
