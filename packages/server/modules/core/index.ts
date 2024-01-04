@@ -13,38 +13,41 @@ import diffUploadRoute from './rest/diffUpload'
 import diffDownloadRoute from './rest/diffDownload'
 import allScopes from './scopes'
 import allRoles from './roles'
+import { SpeckleModule } from '../shared/helpers/typeHelper'
 
-export const init = async (app: Application) => {
-  moduleLogger.info('💥 Init core module')
-  // Initialize the static route
-  staticRoute(app)
+exports = {
+  init: async (app: Application) => {
+    moduleLogger.info('💥 Init core module')
+    // Initialize the static route
+    staticRoute(app)
 
-  // Initialises the two main bulk upload/download endpoints
-  uploadRoute(app)
-  downloadRoute(app)
+    // Initialises the two main bulk upload/download endpoints
+    uploadRoute(app)
+    downloadRoute(app)
 
-  // Initialises the two diff-based upload/download endpoints
-  diffUploadRoute(app)
-  diffDownloadRoute(app)
+    // Initialises the two diff-based upload/download endpoints
+    diffUploadRoute(app)
+    diffDownloadRoute(app)
 
-  // Register core-based scopes
-  for (const scope of allScopes) {
-    await registerOrUpdateScope(scope)
+    // Register core-based scopes
+    for (const scope of allScopes) {
+      await registerOrUpdateScope(scope)
+    }
+
+    // Register core-based roles
+    for (const role of allRoles) {
+      await registerOrUpdateRole(role)
+    }
+
+    // Setup global pg notification listener
+    setupResultListener()
+
+    initializeMixpanel()
+  },
+
+  finalize: () => {},
+
+  shutdown: () => {
+    shutdownResultListener()
   }
-
-  // Register core-based roles
-  for (const role of allRoles) {
-    await registerOrUpdateRole(role)
-  }
-
-  // Setup global pg notification listener
-  setupResultListener()
-
-  initializeMixpanel()
-}
-
-export const finalize = () => {}
-
-export const shutdown = () => {
-  shutdownResultListener()
-}
+} as SpeckleModule
