@@ -187,7 +187,7 @@ export = {
         parents: args.commit.parents ? args.commit.parents.map((p) => p || '') : null,
         message: args.commit.message || null,
         sourceApplication: args.commit.sourceApplication || null,
-        authorId: context.userId
+        authorId: context.userId!
       })
 
       return id
