@@ -9,6 +9,9 @@ import { updateStream } from '../../repositories/streams'
 import { getUserById } from '../users'
 
 export async function createOnboardingStream(targetUserId: string) {
+  const user = await getUserById({ userId: targetUserId })
+  if (!user) throw new Error('User not found.')
+
   const sourceStream = await getOnboardingBaseProject()
   // clone from base
   let newStream: Optional<StreamRecord> = undefined
@@ -33,7 +36,6 @@ export async function createOnboardingStream(targetUserId: string) {
   }
 
   logger.info('Updating onboarding stream title')
-  const user = await getUserById({ userId: targetUserId })
   const name = user.name.split(' ')[0]
   await updateStream({ id: newStream.id, name: `${name}'s First Project` })
   logger.info('Done updating onboarding stream title')
