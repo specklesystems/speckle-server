@@ -37,14 +37,13 @@ export = {
       )
     },
     async apiTokenRevoke(_parent, args, context) {
-      if (!context.userId) throw new Error('Invalid user id')
       let id = null
       if (args.token.toLowerCase().includes('bearer')) {
         id = args.token.split(' ')[1]
       } else {
         id = args.token
       }
-      await revokeToken(id, context.userId) // let's not revoke other people's tokens
+      await revokeToken(id, context.userId!) // let's not revoke other people's tokens
       return true
     }
   }
