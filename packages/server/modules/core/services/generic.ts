@@ -1,6 +1,7 @@
 'use strict'
 import knex from '@/db/knex'
 import { getServerOrigin, getServerVersion } from '@/modules/shared/helpers/envHelper'
+import { ServerInfo } from '@/modules/core/helpers/types'
 
 const Roles = () => knex('user_roles')
 const Scopes = () => knex('scopes')
@@ -16,10 +17,7 @@ export type ServerInfoParams = {
   guestModeEnabled: boolean
 }
 
-/**
- * @returns {Promise<import('@/modules/core/helpers/types').ServerInfo>}
- */
-export async function getServerInfo() {
+export async function getServerInfo(): Promise<ServerInfo> {
   const serverInfo = await Info().select('*').first()
   serverInfo.version = getServerVersion()
   serverInfo.canonicalUrl = getServerOrigin()
