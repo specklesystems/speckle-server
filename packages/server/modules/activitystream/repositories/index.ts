@@ -1,7 +1,12 @@
 import knex from '@/db/knex'
-import { StreamScopeActivity } from '@/modules/activitystream/helpers/types'
-import { StreamActivity } from '@/modules/core/dbSchema'
+import {
+  StreamActivityRecord,
+  StreamScopeActivity
+} from '@/modules/activitystream/helpers/types'
+import { StreamActivity as StreamActivitySchema } from '@/modules/core/dbSchema'
 import { Roles } from '@/modules/core/helpers/mainConstants'
+
+const StreamActivity = () => StreamActivitySchema.knex<StreamActivityRecord[]>()
 
 export const getActivity = async (
   streamId: string,
@@ -9,10 +14,11 @@ export const getActivity = async (
   end: Date,
   filteredUser: string | null = null
 ): Promise<StreamScopeActivity[]> => {
-  let query = StreamActivity.knex()
-    .where(StreamActivity.col.streamId, '=', streamId)
-    .whereBetween(StreamActivity.col.time, [start, end])
-  if (filteredUser) query = query.andWhereNot(StreamActivity.col.userId, filteredUser)
+  let query = StreamActivity()
+    .where(StreamActivitySchema.col.streamId, '=', streamId)
+    .whereBetween(StreamActivitySchema.col.time, [start, end])
+  if (filteredUser)
+    query = query.andWhereNot(StreamActivitySchema.col.userId, filteredUser)
   return await query
 }
 
@@ -21,22 +27,22 @@ export const getActiveUserStreams = async (
   end: Date
 ): Promise<UserStreams[]> => {
   const query = knex
-    .select(StreamActivity.col.userId)
+    .select(StreamActivitySchema.col.userId)
     // creates the UserSteams type by aggregating the streamId-s, grouped by userId
     .select(
       knex.raw(`array_agg(distinct ${StreamActivity.name}."streamId") as "streamIds"`)
     )
     .from('stream_acl')
-    .groupBy(StreamActivity.col.userId)
+    .groupBy(StreamActivitySchema.col.userId)
     .join(
       StreamActivity.name,
-      StreamActivity.col.streamId,
+      StreamActivitySchema.col.streamId,
       '=',
       'stream_acl.resourceId'
     )
-    .whereBetween(StreamActivity.col.time, [start, end])
+    .whereBetween(StreamActivitySchema.col.time, [start, end])
     // make sure archived users do not counted for activity
-    .join('server_acl', 'server_acl.userId', '=', StreamActivity.col.userId)
+    .join('server_acl', 'server_acl.userId', '=', StreamActivitySchema.col.userId)
     .whereNot('server_acl.role', '=', Roles.Server.ArchivedUser)
   return await query
 }
