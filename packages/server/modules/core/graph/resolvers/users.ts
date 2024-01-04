@@ -192,7 +192,7 @@ export = {
     },
     async update(_parent, args, context) {
       const newUser = await updateUserAndNotify(context.userId!, args.user)
-      return newUser as ResolversTypes['User']
+      return newUser as unknown as ResolversTypes['User']
     }
   }
 } as Resolvers
