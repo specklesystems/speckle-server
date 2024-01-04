@@ -128,7 +128,7 @@ export = {
         orderBy: args.orderBy || null,
         searchQuery: args.query || null,
         visibility: args.visibility || null,
-        cursor: args.cursor || null
+        cursor: new Date(args.offset) || null
       })
       return { totalCount, items: streams }
     }

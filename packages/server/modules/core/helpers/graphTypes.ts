@@ -35,7 +35,6 @@ export type StreamGraphQLReturn = Omit<
   | 'pendingCollaborators'
   | 'favoritedDate'
   | 'favoritesCount'
-  | 'role'
   | 'fileUploads'
   | 'fileUpload'
   | 'webhooks'
