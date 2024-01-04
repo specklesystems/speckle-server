@@ -11,10 +11,6 @@ import {
   updateUserAndNotify,
   MINIMUM_PASSWORD_LENGTH
 } from '@/modules/core/services/users/management'
-
-const Users = () => UsersSchema.knex()
-const Acl = () => ServerAclSchema.knex()
-
 import { deleteStream } from './streams'
 import { LIMITED_USER_FIELDS } from '@/modules/core/helpers/userHelper'
 import { deleteAllUserInvites } from '@/modules/serverinvites/repositories'
@@ -26,7 +22,10 @@ import { UserInputError, PasswordTooShortError } from '@/modules/core/errors/use
 import { Nullable, Roles, ServerRoles, isServerRole } from '@speckle/shared'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
-import { UserRecord } from '../helpers/types'
+import { ServerAclRecord, UserRecord } from '../helpers/types'
+
+const Users = () => UsersSchema.knex<UserRecord[]>()
+const Acl = () => ServerAclSchema.knex<ServerAclRecord[]>()
 
 const _changeUserRole = async ({
   userId,
@@ -38,12 +37,13 @@ const _changeUserRole = async ({
 
 const countAdminUsers = async () => {
   const [{ count }] = await Acl().where({ role: Roles.Server.Admin }).count()
+  if (typeof count === 'number') return count
   return parseInt(count)
 }
 const _ensureAtleastOneAdminRemains = async (userId: string) => {
   if ((await countAdminUsers()) === 1) {
     const currentAdmin = await Acl().where({ role: Roles.Server.Admin }).first()
-    if (currentAdmin.userId === userId) {
+    if (currentAdmin?.userId === userId) {
       throw new UserInputError('Cannot remove the last admin role from the server')
     }
   }
@@ -132,14 +132,11 @@ export async function createUser(
   return newUser.id
 }
 
-/**
- * @returns {Promise<{
- *  id: string,
- *  email: string,
- *  isNewUser?: boolean
- * }>}
- */
-export async function findOrCreateUser({ user }: { user: UserInput }) {
+export async function findOrCreateUser({ user }: { user: UserInput }): Promise<{
+  id: string
+  email: string
+  isNewUser?: boolean
+}> {
   const existingUser = await userByEmailQuery(user.email)
     .select(['id', 'email'])
     .first()
@@ -218,7 +215,7 @@ export async function searchUsers(
   cursor?: string,
   archived = false,
   emailOnly = false
-) {
+): Promise<{ users: UserRecord[]; cursor: string | null }> {
   const query = Users()
     .join('server_acl', 'users.id', 'server_acl.userId')
     .select(...LIMITED_USER_FIELDS)
@@ -314,13 +311,13 @@ export async function getUsers(
     if (user && typeof user === 'object' && 'passwordDigest' in user)
       delete user.passwordDigest
   })
-  //TODO parse into UserRecord[]
   return users
 }
 
 export async function countUsers(searchQuery: string | null = null) {
   const query = getUsersBaseQuery(searchQuery)
   const [userCount] = await query.count()
+  if (typeof userCount.count === 'number') return userCount.count
   return parseInt(userCount.count)
 }
 
