@@ -25,6 +25,7 @@ import { SelectionExtension } from '@speckle/viewer'
 import { MeasurementsExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
+import { UpdateFlags } from '@speckle/viewer'
 
 export default class Sandbox {
   private viewer: DebugViewer
@@ -202,11 +203,16 @@ export default class Sandbox {
     })
     const position = { value: { x: 0, y: 0, z: 0 } }
     folder.addInput(position, 'value', { label: 'Position' }).on('change', () => {
-      const subtree = this.viewer.getRenderer().subtree(url)
-      subtree.position.set(position.value.x, position.value.y, position.value.z)
-      this.viewer.getRenderer().updateDirectLights()
-      this.viewer.getRenderer().updateHelpers()
-      this.viewer.requestRender()
+      const rvs = this.viewer
+        .getWorldTree()
+        .getRenderTree(url)
+        .getRenderViewsForNodeId(url)
+      for (let k = 0; k < rvs.length; k++) {
+        const object = this.viewer.getRenderer().getObject(rvs[k])
+        object.transformTRS(position.value, undefined, undefined, undefined)
+      }
+      this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+      this.viewer.getRenderer().updateShadowCatcher()
     })
 
     folder
