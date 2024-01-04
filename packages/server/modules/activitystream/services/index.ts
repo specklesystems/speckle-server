@@ -4,9 +4,9 @@ import knex from '@/db/knex'
 import type { Knex } from 'knex'
 
 import { dispatchStreamEvent } from '@/modules/webhooks/services/webhooks'
-import { StreamActivityRecord } from '../helpers/types'
-const StreamActivity = () => knex('stream_activity')
-const StreamAcl = () => knex('stream_acl')
+import { StreamActivityRecord } from '@/modules/activitystream/helpers/types'
+import { StreamActivity, StreamAcl } from '@/modules/core/dbSchema'
+import { StreamAclRecord } from '@/modules/core/helpers/types'
 
 export async function saveActivity(
   {
@@ -30,7 +30,7 @@ export async function saveActivity(
     message // something human understandable for frontend purposes mostly
   }
 
-  const q = StreamActivity().insert(dbObject)
+  const q = StreamActivity.knex<StreamActivityRecord>().insert(dbObject)
   if (trx) q.transacting(trx)
   await q
 
@@ -76,14 +76,13 @@ export async function getStreamActivity({
     limit = 200
   }
 
-  const dbQuery = StreamActivity().where({ streamId })
+  const dbQuery = StreamActivity.knex<StreamActivityRecord[]>().where({ streamId })
   if (actionType) dbQuery.andWhere({ actionType })
   if (after) dbQuery.andWhere('time', '>', after)
   if (before) dbQuery.andWhere('time', '<', before)
   if (cursor) dbQuery.andWhere('time', '<', cursor)
-  dbQuery.orderBy('time', 'desc').limit(limit)
-
-  const results = await dbQuery.select('*')
+  dbQuery.orderBy('time', 'desc').limit(limit).select('*')
+  const results = await dbQuery
 
   return {
     items: results,
@@ -110,14 +109,13 @@ export async function getUserActivity({
     limit = 200
   }
 
-  const dbQuery = StreamActivity().where({ userId })
+  const dbQuery = StreamActivity.knex<StreamActivityRecord[]>().where({ userId })
   if (actionType) dbQuery.andWhere({ actionType })
   if (after) dbQuery.andWhere('time', '>', after)
   if (before) dbQuery.andWhere('time', '<', before)
   if (cursor) dbQuery.andWhere('time', '<', cursor)
-  dbQuery.orderBy('time', 'desc').limit(limit)
-
-  const results = await dbQuery.select('*')
+  dbQuery.orderBy('time', 'desc').limit(limit).select('*')
+  const results = await dbQuery
   return {
     items: results,
     cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
@@ -145,14 +143,17 @@ export async function getResourceActivity({
     limit = 200
   }
 
-  const dbQuery = StreamActivity().where({ resourceType, resourceId })
+  const dbQuery = StreamActivity.knex<StreamActivityRecord[]>().where({
+    resourceType,
+    resourceId
+  })
   if (actionType) dbQuery.andWhere({ actionType })
   if (after) dbQuery.andWhere('time', '>', after)
   if (before) dbQuery.andWhere('time', '<', before)
   if (cursor) dbQuery.andWhere('time', '<', cursor)
-  dbQuery.orderBy('time', 'desc').limit(limit)
+  dbQuery.orderBy('time', 'desc').limit(limit).select('*')
 
-  const results = await dbQuery.select('*')
+  const results = await dbQuery
   return {
     items: results,
     cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
@@ -198,7 +199,7 @@ export async function getUserTimeline({
 
   sqlVariables.unshift(userId)
   sqlVariables.push(limit)
-  const results = (await knex.raw(dbRawQuery, sqlVariables)).rows
+  const results = (await knex.raw(dbRawQuery, sqlVariables)).rows //FIXME this is untyped and returns an `any` type
   return {
     items: results,
     cursor: results.length > 0 ? results[results.length - 1].time.toISOString() : null
@@ -216,7 +217,9 @@ export async function getActivityCountByResourceId({
   after?: Date
   before?: Date
 }) {
-  const query = StreamActivity().count().where({ resourceId })
+  const query = StreamActivity.knex<StreamActivityRecord[]>()
+    .count()
+    .where({ resourceId })
   if (actionType) query.andWhere({ actionType })
   if (after) query.andWhere('time', '>', after)
   if (before) query.andWhere('time', '<', before)
@@ -236,7 +239,9 @@ export async function getActivityCountByStreamId({
   after?: Date
   before?: Date
 }) {
-  const query = StreamActivity().count().where({ streamId })
+  const query = StreamActivity.knex<StreamActivityRecord[]>()
+    .count()
+    .where({ streamId })
   if (actionType) query.andWhere({ actionType })
   if (after) query.andWhere('time', '>', after)
   if (before) query.andWhere('time', '<', before)
@@ -256,7 +261,7 @@ export async function getActivityCountByUserId({
   after?: Date
   before?: Date
 }) {
-  const query = StreamActivity().count().where({ userId })
+  const query = StreamActivity.knex<StreamActivityRecord[]>().count().where({ userId })
   if (actionType) query.andWhere({ actionType })
   if (after) query.andWhere('time', '>', after)
   if (before) query.andWhere('time', '<', before)
@@ -274,7 +279,7 @@ export async function getTimelineCount({
   after?: Date
   before?: Date
 }) {
-  const query = StreamAcl()
+  const query = StreamAcl.knex<StreamAclRecord[]>()
     .count()
     .innerJoin('stream_activity', {
       'stream_acl.resourceId': 'stream_activity.streamId'
