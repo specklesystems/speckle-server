@@ -24,6 +24,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRoles } from '@speckle/shared'
 import { AuthContext } from '@/modules/shared/authz'
+import type { Knex } from 'knex'
 
 /**
  * NOTE: Stop adding stuff to this service, create specialized service modules instead for various domains
@@ -110,10 +111,8 @@ export async function getStreams({
   const countQuery = Streams.knex()
 
   if (searchQuery) {
-    //FIXME remove 'any' type
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const whereFunc = function (this: any) {
-      this.where('streams.name', 'ILIKE', `%${searchQuery}%`).orWhere(
+    const whereFunc = function (qb: Knex.QueryBuilder) {
+      qb.where('streams.name', 'ILIKE', `%${searchQuery}%`).orWhere(
         'streams.description',
         'ILIKE',
         `%${searchQuery}%`
