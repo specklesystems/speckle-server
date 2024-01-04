@@ -1,6 +1,5 @@
 'use strict'
 
-import { AuthContext } from '@/modules/shared/authz'
 import { ForbiddenError } from 'apollo-server-express'
 import {
   createPersonalAccessToken,
@@ -8,16 +7,12 @@ import {
   getUserTokens
 } from '@/modules/core/services/tokens'
 import { canCreatePAT } from '@/modules/core/helpers/token'
-import type {
-  RequireFields,
-  MutationApiTokenCreateArgs,
-  Resolvers
-} from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
 
 export = {
   Query: {},
   User: {
-    async apiTokens(parent: { id: string }, _args: unknown, context: AuthContext) {
+    async apiTokens(parent, _args, context) {
       // TODO!
       if (parent.id !== context.userId)
         throw new ForbiddenError('You can only view your own tokens')
@@ -27,11 +22,7 @@ export = {
     }
   },
   Mutation: {
-    async apiTokenCreate(
-      _parent: unknown,
-      args: RequireFields<MutationApiTokenCreateArgs, 'token'>,
-      context: { userId: string; scopes: string[] }
-    ) {
+    async apiTokenCreate(_parent, args, context) {
       canCreatePAT({
         userScopes: context.scopes || [],
         tokenScopes: args.token.scopes,
@@ -39,17 +30,13 @@ export = {
       })
 
       return await createPersonalAccessToken(
-        context.userId,
+        context.userId!,
         args.token.name,
         args.token.scopes,
-        args.token.lifespan
+        args.token.lifespan //FIXME - how do we convert from BigInt, and we should assign a default for falsy values
       )
     },
-    async apiTokenRevoke(
-      _parent: unknown,
-      args: { token: string },
-      context: AuthContext
-    ) {
+    async apiTokenRevoke(_parent, args, context) {
       if (!context.userId) throw new Error('Invalid user id')
       let id = null
       if (args.token.toLowerCase().includes('bearer')) {

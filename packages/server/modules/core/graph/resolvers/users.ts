@@ -19,19 +19,14 @@ import { markOnboardingComplete } from '@/modules/core/repositories/users'
 import { UsersMeta } from '@/modules/core/dbSchema'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
-import { AuthContext } from '@/modules/shared/authz'
-import {
-  Resolvers,
-  ResolversTypes,
-  UserUpdateInput
-} from '@/modules/core/graph/generated/graphql'
+import { Resolvers, ResolversTypes } from '@/modules/core/graph/generated/graphql'
 
 export = {
   Query: {
     async _() {
       return `Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn.`
     },
-    async activeUser(_parent: unknown, _args: unknown, context: AuthContext) {
+    async activeUser(_parent, _args, context) {
       const activeUserId = context.userId
       if (!activeUserId) return null
 
@@ -41,12 +36,12 @@ export = {
 
       return await getUserById({ userId: activeUserId })
     },
-    async otherUser(_parent: unknown, args: { id?: string }) {
+    async otherUser(_parent, args) {
       const { id } = args
       if (!id) return null
       return await getUserById({ userId: id })
     },
-    async user(_parent: unknown, args: { id?: string }, context: AuthContext) {
+    async user(_parent, args, context) {
       // User wants info about himself and he's not authenticated - just return null
       if (!context.auth && !args.id) return null
 
@@ -61,24 +56,11 @@ export = {
       return await getUserById({ userId })
     },
 
-    async adminUsers(
-      _parent: unknown,
-      args: { query: string; limit: number; offset: number }
-    ) {
+    async adminUsers(_parent, args) {
       return await getAdminUsersListCollection(args)
     },
 
-    async userSearch(
-      _parent: unknown,
-      args: {
-        query: string
-        limit: number
-        cursor: string
-        archived: boolean
-        emailOnly: boolean
-      },
-      context: AuthContext
-    ) {
+    async userSearch(_parent, args, context) {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Read)
       await validateScopes(context.scopes, Scopes.Users.Read)
@@ -94,25 +76,21 @@ export = {
       const { cursor, users } = await searchUsers(
         args.query,
         args.limit,
-        args.cursor,
+        args.cursor || undefined,
         args.archived,
         args.emailOnly
       )
       return { cursor, items: users }
     },
 
-    async userPwdStrength(_parent: unknown, args: { pwd: string }) {
+    async userPwdStrength(_parent, args) {
       const res = zxcvbn(args.pwd)
       return { score: res.score, feedback: res.feedback }
     }
   },
 
   User: {
-    async email(
-      parent: { id: string; email: string },
-      _args: unknown,
-      context: AuthContext
-    ) {
+    async email(parent, _args, context) {
       // NOTE: we're redacting the field (returning null) rather than throwing a full error which would invalidate the request.
       if (context.userId === parent.id) {
         try {
@@ -132,28 +110,10 @@ export = {
         return null
       }
     },
-    async role(parent: { id: string }) {
+    async role(parent) {
       return await getUserRole(parent.id)
     },
-    async isOnboardingFinished(
-      parent: { id: string },
-      _args: unknown,
-      ctx: {
-        loaders: {
-          users: {
-            getUserMeta: {
-              load: ({
-                userId,
-                key
-              }: {
-                userId: string
-                key: string
-              }) => Promise<{ value: unknown }>
-            }
-          }
-        }
-      }
-    ) {
+    async isOnboardingFinished(parent, _args, ctx) {
       const metaVal = await ctx.loaders.users.getUserMeta.load({
         userId: parent.id,
         key: UsersMeta.metaKey.isOnboardingFinished
@@ -162,26 +122,19 @@ export = {
     }
   },
   LimitedUser: {
-    async role(parent: { id: string }) {
+    async role(parent) {
       return await getUserRole(parent.id)
     }
   },
   Mutation: {
-    async userUpdate(
-      _parent: unknown,
-      args: { user: UserUpdateInput },
-      context: AuthContext
-    ) {
+    async userUpdate(_parent, args, context) {
       if (!context.userId) return false
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await updateUserAndNotify(context.userId, args.user)
       return true
     },
 
-    async userRoleChange(
-      _parent: unknown,
-      args: { userRoleInput: { role: string; id: string } }
-    ) {
+    async userRoleChange(_parent, args) {
       const { guestModeEnabled } = await getServerInfo()
       await changeUserRole({
         role: args.userRoleInput.role,
@@ -191,11 +144,7 @@ export = {
       return true
     },
 
-    async adminDeleteUser(
-      _parent: unknown,
-      args: { userConfirmation: { email: string } },
-      context: AuthContext
-    ) {
+    async adminDeleteUser(_parent, args, context) {
       await throwForNotHavingServerRole(context, Roles.Server.Admin)
       const user = await getUserByEmail({ email: args.userConfirmation.email })
       if (!user) return false
@@ -204,14 +153,11 @@ export = {
       return true
     },
 
-    async userDelete(
-      _parent: unknown,
-      args: { userConfirmation: { email: string } },
-      context: AuthContext
-    ) {
+    async userDelete(_parent, args, context) {
       if (!context.userId)
         throw new UserInputError('You must be logged in to delete a user.')
       const user = await getUserById({ userId: context.userId })
+      if (!user) throw new UserInputError('User not found.')
 
       if (args.userConfirmation.email !== user.email) {
         throw new UserInputError('Malformed input: emails do not match.')
@@ -241,14 +187,10 @@ export = {
     activeUserMutations: () => ({})
   },
   ActiveUserMutations: {
-    async finishOnboarding(_parent: unknown, _args: unknown, ctx: AuthContext) {
+    async finishOnboarding(_parent, _args, ctx) {
       return await markOnboardingComplete(ctx.userId || '')
     },
-    async update(
-      _parent: unknown,
-      args: { user: UserUpdateInput },
-      context: AuthContext
-    ) {
+    async update(_parent, args, context) {
       const newUser = await updateUserAndNotify(context.userId!, args.user)
       return newUser as ResolversTypes['User']
     }

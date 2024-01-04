@@ -296,9 +296,9 @@ export async function getCommitsByUserId({
   publicOnly
 }: {
   userId: string
-  limit: number
-  cursor: string
-  publicOnly: boolean
+  limit?: number | undefined
+  cursor?: string | undefined
+  publicOnly?: boolean | undefined
 }) {
   limit = limit || 25
   publicOnly = publicOnly !== false

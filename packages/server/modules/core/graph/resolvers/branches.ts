@@ -1,12 +1,6 @@
 'use strict'
 
-import { withFilter } from 'graphql-subscriptions'
-import { AuthContext } from '@/modules/shared/authz'
-import { StreamBranchesArgs } from '@/modules/core/graph/generated/graphql'
-import {
-  pubsub,
-  BranchSubscriptions as BranchPubsubEvents
-} from '@/modules/shared/utils/subscriptions'
+import { BranchSubscriptions as BranchPubsubEvents } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver } from '@/modules/shared'
 import {
   getBranchByNameAndStreamId,
@@ -20,15 +14,8 @@ import {
 import { getPaginatedStreamBranches } from '@/modules/core/services/branch/retrieval'
 import { getUserById } from '@/modules/core/services/users'
 import { Roles } from '@speckle/shared'
-import {
-  BranchCreateInput,
-  BranchDeleteInput,
-  BranchUpdateInput
-} from '@/test/graphql/generated/graphql'
-import type {
-  Resolvers,
-  ResolversParentTypes
-} from '@/modules/core/graph/generated/graphql'
+import type { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { filteredSubscribe } from '@/modules/shared/utils/subscriptions'
 
 // subscription events
 const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
@@ -38,11 +25,11 @@ const BRANCH_DELETED = BranchPubsubEvents.BranchDeleted
 export = {
   Query: {},
   Stream: {
-    async branches(parent: { id: string }, args: StreamBranchesArgs) {
+    async branches(parent, args) {
       return await getPaginatedStreamBranches(parent.id, args)
     },
 
-    async branch(parent: { id: string }, args: { name: string }) {
+    async branch(parent, args) {
       // TODO: TEMPORARY HACK
       // Temporary "Forwards" compatibility layer to allow .NET and PY clients
       // to use FE2 urls without major changes.
@@ -64,22 +51,14 @@ export = {
     }
   },
   Branch: {
-    async author(
-      parent: ResolversParentTypes['Branch'],
-      _args: unknown,
-      context: AuthContext
-    ) {
+    async author(parent, _args, context) {
       if (parent.authorId && context.auth)
         return await getUserById({ userId: parent.authorId })
       else return null
     }
   },
   Mutation: {
-    async branchCreate(
-      _parent: unknown,
-      args: { branch: BranchCreateInput },
-      context: AuthContext
-    ) {
+    async branchCreate(_parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
@@ -93,11 +72,7 @@ export = {
       return id
     },
 
-    async branchUpdate(
-      parent: unknown,
-      args: { branch: BranchUpdateInput },
-      context: AuthContext
-    ) {
+    async branchUpdate(_parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
@@ -110,11 +85,7 @@ export = {
       return !!newBranch
     },
 
-    async branchDelete(
-      parent: unknown,
-      args: { branch: BranchDeleteInput },
-      context: AuthContext
-    ) {
+    async branchDelete(_parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
@@ -129,23 +100,22 @@ export = {
   },
   Subscription: {
     branchCreated: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([BRANCH_CREATED]),
+      subscribe: filteredSubscribe(
+        BRANCH_CREATED,
         async (payload, variables, context) => {
           await authorizeResolver(
             context.userId,
             payload.streamId,
             Roles.Stream.Reviewer
           )
-
           return payload.streamId === variables.streamId
         }
       )
     },
 
     branchUpdated: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([BRANCH_UPDATED]),
+      subscribe: filteredSubscribe(
+        BRANCH_UPDATED,
         async (payload, variables, context) => {
           await authorizeResolver(
             context.userId,
@@ -164,15 +134,14 @@ export = {
     },
 
     branchDeleted: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([BRANCH_DELETED]),
+      subscribe: filteredSubscribe(
+        BRANCH_DELETED,
         async (payload, variables, context) => {
           await authorizeResolver(
             context.userId,
             payload.streamId,
             Roles.Stream.Reviewer
           )
-
           return payload.streamId === variables.streamId
         }
       )

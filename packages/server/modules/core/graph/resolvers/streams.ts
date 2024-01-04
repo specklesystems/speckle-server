@@ -1,16 +1,10 @@
 'use strict'
 import { UserInputError } from 'apollo-server-express'
-import { withFilter } from 'graphql-subscriptions'
-import { PermissionUpdateInput } from '@/modules/core/services/streams/management'
 import {
-  ProjectUpdateInput,
-  QueryDiscoverableStreamsArgs,
-  Resolvers,
   RequireFields,
-  QueryAdminStreamsArgs,
-  StreamUpdateInput
+  Resolvers,
+  UserStreamsArgs
 } from '@/modules/core/graph/generated/graphql'
-import { StreamGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import {
   getStream,
   getStreams,
@@ -23,7 +17,7 @@ import {
 } from '@/modules/core/services/streams'
 
 import {
-  pubsub,
+  filteredSubscribe,
   StreamSubscriptions as StreamPubsubEvents
 } from '@/modules/shared/utils/subscriptions'
 
@@ -53,11 +47,6 @@ import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { Roles, Scopes } from '@speckle/shared'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { AuthContext, throwForNotHavingServerRole } from '@/modules/shared/authz'
-import {
-  ProjectCreateInput,
-  StreamCreateInput
-} from '@/modules/core/graph/generated/graphql'
-import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -77,14 +66,14 @@ const _deleteStream = async (
 const getUserStreamsCore = async (
   forOtherUser: boolean,
   parent: { id: string },
-  args: { limit: number; cursor: string }
+  args: RequireFields<UserStreamsArgs, 'limit'>
 ) => {
   const totalCount = await getUserStreamsCount({ userId: parent.id, forOtherUser })
 
   const { cursor, streams } = await getUserStreams({
     userId: parent.id,
     limit: args.limit,
-    cursor: args.cursor,
+    cursor: args.cursor || undefined,
     forOtherUser
   })
 
@@ -93,7 +82,7 @@ const getUserStreamsCore = async (
 
 export = {
   Query: {
-    async stream(_parent: unknown, args: { id: string }, context: AuthContext) {
+    async stream(_parent, args, context) {
       const stream = await getStream({ streamId: args.id, userId: context.userId })
       if (!stream) {
         throw new StreamNotFoundError('Stream not found')
@@ -109,107 +98,72 @@ export = {
       return stream
     },
 
-    async streams(
-      _parent: unknown,
-      args: { query: string; limit: number; cursor: string },
-      context: AuthContext
-    ) {
+    async streams(_parent, args, context) {
       if (!context.userId) throw new Error('Invalid user id.')
 
       const totalCount = await getUserStreamsCount({
         userId: context.userId,
-        searchQuery: args.query
+        searchQuery: args.query || undefined
       })
 
       const { cursor, streams } = await getUserStreams({
         userId: context.userId,
         limit: args.limit,
-        cursor: args.cursor,
-        searchQuery: args.query
+        cursor: args.cursor || undefined,
+        searchQuery: args.query || undefined
       })
       return { totalCount, cursor, items: streams }
     },
 
-    async discoverableStreams(_parent: unknown, args: QueryDiscoverableStreamsArgs) {
+    async discoverableStreams(_parent, args) {
       return await getDiscoverableStreams(args)
     },
 
-    async adminStreams(
-      _parent: unknown,
-      args: RequireFields<QueryAdminStreamsArgs, 'limit' | 'offset'>
-    ) {
+    async adminStreams(_parent, args) {
       if (args.limit && args.limit > 50)
         throw new UserInputError('Cannot return more than 50 items at a time.')
 
       const { streams, totalCount } = await getStreams({
         limit: args.limit,
-        orderBy: args.orderBy,
-        searchQuery: args.query,
-        visibility: args.visibility,
-        cursor: args.cursor
+        orderBy: args.orderBy || null,
+        searchQuery: args.query || null,
+        visibility: args.visibility || null,
+        cursor: args.cursor || null
       })
       return { totalCount, items: streams }
     }
   },
 
   Stream: {
-    async collaborators(parent: { id: string }) {
+    async collaborators(parent) {
       const users = await getStreamUsers({ streamId: parent.id })
       return users
     },
 
-    async pendingCollaborators(parent: { id: string }) {
+    async pendingCollaborators(parent) {
       const { id: streamId } = parent
       return await getPendingStreamCollaborators(streamId)
     },
 
-    async favoritedDate(
-      parent: { id: string },
-      _args: unknown,
-      ctx: AuthContext & {
-        loaders: {
-          streams: {
-            getUserFavoriteData: {
-              load: (streamId: string) => Promise<{ createdAt: Date }>
-            }
-          }
-        }
-      }
-    ) {
+    async favoritedDate(parent, _args, ctx) {
       const { id: streamId } = parent
       return await getActiveUserStreamFavoriteDate({ ctx, streamId })
     },
 
-    async favoritesCount(
-      parent: { id: string },
-      _args: unknown,
-      ctx: AuthContext & {
-        loaders: {
-          streams: {
-            getFavoritesCount: { load: (streamId: string) => Promise<number> }
-          }
-        }
-      }
-    ) {
+    async favoritesCount(parent, _args, ctx) {
       const { id: streamId } = parent
 
       return await getStreamFavoritesCount({ ctx, streamId })
     },
 
-    async isDiscoverable(parent: { isPublic: boolean; isDiscoverable: boolean }) {
+    async isDiscoverable(parent) {
       const { isPublic, isDiscoverable } = parent
 
       if (!isPublic) return false
       return isDiscoverable
     },
 
-    async role(
-      parent: StreamGraphQLReturn,
-      _args: unknown,
-      ctx: {
-        loaders: { streams: { getRole: { load: (id: string) => Promise<unknown> } } }
-      }
-    ) {
+    async role(parent, _args, ctx) {
       // If role already resolved, return that
       if (has(parent, 'role')) return parent.role
 
@@ -218,21 +172,13 @@ export = {
     }
   },
   User: {
-    async streams(
-      parent: { id: string },
-      args: { limit: number; cursor: string },
-      context: AuthContext
-    ) {
+    async streams(parent, args, context) {
       // Return only the user's public streams if parent.id !== context.userId
       const forOtherUser = parent.id !== context.userId
       return await getUserStreamsCore(forOtherUser, parent, args)
     },
 
-    async favoriteStreams(
-      parent: { id: string },
-      args: { limit: number; cursor: string },
-      context: AuthContext
-    ) {
+    async favoriteStreams(parent, args, context) {
       const { userId } = context
       const { id: requestedUserId } = parent || {}
       const { limit, cursor } = args
@@ -240,56 +186,32 @@ export = {
       if (userId !== requestedUserId)
         throw new UserInputError("Cannot view another user's favorite streams")
 
-      return await getFavoriteStreamsCollection({ userId, limit, cursor })
+      return await getFavoriteStreamsCollection({
+        userId,
+        limit,
+        cursor: cursor || undefined
+      })
     },
 
-    async totalOwnedStreamsFavorites(
-      parent: { id: string },
-      _args: unknown,
-      ctx: AuthContext & {
-        loaders: {
-          streams: {
-            getOwnedFavoritesCount: { load: (userId: string) => Promise<number> }
-          }
-        }
-      }
-    ) {
+    async totalOwnedStreamsFavorites(parent, _args, ctx) {
       const { id: userId } = parent
       return await getOwnedFavoritesCount({ ctx, userId })
     }
   },
   LimitedUser: {
-    async streams(
-      parent: { id: string },
-      args: { limit: number; cursor: string },
-      context: AuthContext
-    ) {
+    async streams(parent, args, context) {
       // a little escape hatch for admins to look into users streams
 
       const isAdmin = adminOverrideEnabled() && context.role === Roles.Server.Admin
       return await getUserStreamsCore(!isAdmin, parent, args)
     },
-    async totalOwnedStreamsFavorites(
-      parent: { id: string },
-      _args: unknown,
-      ctx: AuthContext & {
-        loaders: {
-          streams: {
-            getOwnedFavoritesCount: { load: (userId: string) => Promise<number> }
-          }
-        }
-      }
-    ) {
+    async totalOwnedStreamsFavorites(parent, _args, ctx) {
       const { id: userId } = parent
       return await getOwnedFavoritesCount({ ctx, userId })
     }
   },
   Mutation: {
-    async streamCreate(
-      _parent: unknown,
-      args: { stream: StreamCreateInput | ProjectCreateInput },
-      context: AuthContext
-    ) {
+    async streamCreate(_parent, args, context) {
       if (!context.userId) throw new Error('Invalid user id.')
 
       const rateLimitResult = await getRateLimitResult(
@@ -308,27 +230,20 @@ export = {
       return id
     },
 
-    async streamUpdate(
-      _parent: unknown,
-      args: { stream: StreamUpdateInput | ProjectUpdateInput },
-      context: AuthContext
-    ) {
+    async streamUpdate(_parent, args, context) {
       await authorizeResolver(context.userId, args.stream.id, Roles.Stream.Owner)
       if (!context.userId) throw new Error('Invalid user id.')
       await updateStreamAndNotify(args.stream, context.userId)
       return true
     },
 
-    async streamDelete(_parent: unknown, args: { id: string }, context: AuthContext) {
+    async streamDelete(_parent, args, context) {
       await authorizeResolver(context.userId, args.id, Roles.Stream.Owner)
       return await _deleteStream(parent, args, context)
     },
 
-    async streamsDelete(
-      parent: unknown,
-      args: { ids: string[] },
-      context: AuthContext
-    ) {
+    async streamsDelete(parent, args, context) {
+      if (!args.ids) return true // all (zero) ids were deleted!
       const results = await Promise.all(
         args.ids.map(async (id) => {
           const newArgs = { id }
@@ -338,11 +253,7 @@ export = {
       return results.every((res) => res === true)
     },
 
-    async streamUpdatePermission(
-      _parent: unknown,
-      args: { permissionParams: PermissionUpdateInput & { streamId: string } },
-      context: AuthContext
-    ) {
+    async streamUpdatePermission(_parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.permissionParams.streamId,
@@ -358,11 +269,7 @@ export = {
       return !!result
     },
 
-    async streamRevokePermission(
-      _parent: unknown,
-      args: { permissionParams: PermissionUpdateInput & { streamId: string } },
-      context: AuthContext
-    ) {
+    async streamRevokePermission(_parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.permissionParams.streamId,
@@ -378,11 +285,7 @@ export = {
       return !!result
     },
 
-    async streamFavorite(
-      _parent: unknown,
-      args: { streamId: string; favorited?: boolean },
-      ctx: AuthContext
-    ) {
+    async streamFavorite(_parent, args, ctx) {
       const { streamId, favorited } = args
       const { userId } = ctx
       if (!userId) throw new Error('Invalid user id.')
@@ -390,7 +293,7 @@ export = {
       return await favoriteStream({ userId, streamId, favorited })
     },
 
-    async streamLeave(_parent: unknown, args: { streamId: string }, ctx: AuthContext) {
+    async streamLeave(_parent, args, ctx) {
       const { streamId } = args
       const { userId } = ctx
       if (!userId) throw new Error('Invalid user id.')
@@ -403,26 +306,26 @@ export = {
 
   Subscription: {
     userStreamAdded: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([USER_STREAM_ADDED]),
-        (payload, variables, context) => {
+      subscribe: filteredSubscribe(
+        USER_STREAM_ADDED,
+        (payload, _variables, context) => {
           return payload.ownerId === context.userId
         }
       )
     },
 
     userStreamRemoved: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([USER_STREAM_REMOVED]),
-        (payload, variables, context) => {
+      subscribe: filteredSubscribe(
+        USER_STREAM_REMOVED,
+        (payload, _variables, context) => {
           return payload.ownerId === context.userId
         }
       )
     },
 
     streamUpdated: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([STREAM_UPDATED]),
+      subscribe: filteredSubscribe(
+        STREAM_UPDATED,
         async (payload, variables, context) => {
           await authorizeResolver(context.userId, payload.id, Roles.Stream.Reviewer)
           return payload.id === variables.streamId
@@ -431,8 +334,8 @@ export = {
     },
 
     streamDeleted: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([STREAM_DELETED]),
+      subscribe: filteredSubscribe(
+        STREAM_DELETED,
         async (payload, variables, context) => {
           await authorizeResolver(
             context.userId,
@@ -445,62 +348,27 @@ export = {
     }
   },
   StreamCollaborator: {
-    async serverRole(
-      parent: { id: string },
-      _args: unknown,
-      ctx: AuthContext & {
-        loaders: {
-          users: { getUser: { load: (id: string) => Promise<{ role: string }> } }
-        }
-      }
-    ) {
+    async serverRole(parent, _args, ctx) {
       const { id } = parent
       const user = await ctx.loaders.users.getUser.load(id)
       return user?.role
     }
   },
   PendingStreamCollaborator: {
-    async invitedBy(
-      parent: { invitedById: string },
-      _args: unknown,
-      ctx: AuthContext & {
-        loaders: {
-          users: {
-            getUser: { load: (id: string) => Promise<UserRecord | LimitedUserRecord> }
-          }
-        }
-      }
-    ) {
+    async invitedBy(parent, _args, ctx) {
       const { invitedById } = parent
       if (!invitedById) return null
 
       const user = await ctx.loaders.users.getUser.load(invitedById)
       return user ? removePrivateFields(user) : null
     },
-    async streamName(
-      parent: { streamId: string },
-      _args: unknown,
-      ctx: AuthContext & {
-        loaders: {
-          streams: { getStream: { load: (id: string) => Promise<{ name: string }> } }
-        }
-      }
-    ) {
+    async streamName(parent, _args, ctx) {
       const { streamId } = parent
       const stream = await ctx.loaders.streams.getStream.load(streamId)
+      if (!stream) return null
       return stream.name
     },
-    async token(
-      parent: { inviteId: string; user?: { id: string } },
-      _args: unknown,
-      ctx: AuthContext & {
-        loaders: {
-          invites: {
-            getInvite: { load: (id: string) => Promise<{ token: string } | undefined> } //FIXME why would this return undefined and not null?
-          }
-        }
-      }
-    ) {
+    async token(parent, _args, ctx) {
       const authedUserId = ctx.userId
       const targetUserId = parent.user?.id
       const inviteId = parent.inviteId

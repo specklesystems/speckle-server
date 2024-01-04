@@ -1,11 +1,9 @@
 'use strict'
 
-import { AuthContext } from '@/modules/shared/authz'
 import { UserInputError, ApolloError } from 'apollo-server-express'
-import { withFilter } from 'graphql-subscriptions'
 import {
-  pubsub,
-  CommitSubscriptions as CommitPubsubEvents
+  CommitSubscriptions as CommitPubsubEvents,
+  filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
 import { authorizeResolver } from '@/modules/shared'
 
@@ -41,20 +39,11 @@ import {
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { Roles } from '@speckle/shared'
-import { StreamCommitsArgs } from '@/modules/core/graph/generated/graphql'
-import {
-  CommitReceivedInput,
-  CommitUpdateInput,
-  CommitsDeleteInput,
-  CommitsMoveInput,
-  DeleteVersionsInput,
-  MoveVersionsInput
-} from '@/test/graphql/generated/graphql'
 import type {
-  MutationCommitCreateArgs,
+  LimitedUserCommitsArgs,
+  RequireFields,
   Resolvers
 } from '@/modules/core/graph/generated/graphql'
-import type { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
@@ -64,7 +53,7 @@ const COMMIT_DELETED = CommitPubsubEvents.CommitDeleted
 const getUserCommits = async (
   publicOnly: boolean,
   userId: string,
-  args: { limit: number; cursor: string }
+  args: RequireFields<LimitedUserCommitsArgs, 'limit'>
 ) => {
   const totalCount = await getCommitsTotalCountByUserId({ userId, publicOnly })
   if (args.limit && args.limit > 100)
@@ -74,7 +63,7 @@ const getUserCommits = async (
   const { commits: items, cursor } = await getCommitsByUserId({
     userId,
     limit: args.limit,
-    cursor: args.cursor,
+    cursor: args.cursor || undefined,
     publicOnly
   })
 
@@ -84,7 +73,7 @@ const getUserCommits = async (
 export = {
   Query: {},
   Commit: {
-    async stream(parent: { id: string }, _args: unknown, ctx: GraphQLContext) {
+    async stream(parent, _args, ctx) {
       const { id: commitId } = parent
 
       const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
@@ -95,12 +84,12 @@ export = {
       await validateStreamAccess(ctx.userId, stream.id)
       return stream
     },
-    async streamId(parent: { id: string }, _args: unknown, ctx: GraphQLContext) {
+    async streamId(parent, _args, ctx) {
       const { id: commitId } = parent
       const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
       return stream?.id || null
     },
-    async streamName(parent: { id: string }, _args: unknown, ctx: GraphQLContext) {
+    async streamName(parent, _args, ctx) {
       const { id: commitId } = parent
       const stream = await ctx.loaders.commits.getCommitStream.load(commitId)
       return stream?.name || null
@@ -109,14 +98,10 @@ export = {
      * The DB schema actually has the value under 'author', but some queries (not all)
      * remap it to 'authorId'
      */
-    async authorId(parent: { authorId?: string; author?: string }) {
+    async authorId(parent) {
       return parent.authorId || parent.author || null
     },
-    async authorName(
-      parent: { authorId?: string; authorName?: string; author?: string },
-      _args: unknown,
-      ctx: GraphQLContext
-    ) {
+    async authorName(parent, _args, ctx) {
       const { authorId, authorName, author } = parent
       if (authorName) return authorName
       const authorQuery = authorId || author
@@ -124,11 +109,7 @@ export = {
       const authorEntity = await ctx.loaders.users.getUser.load(authorQuery)
       return authorEntity?.name || null
     },
-    async authorAvatar(
-      parent: { authorId?: string; authorAvatar?: string; author?: string },
-      _args: unknown,
-      context: GraphQLContext
-    ) {
+    async authorAvatar(parent, _args, context) {
       const { authorId, authorAvatar, author } = parent
       if (authorAvatar) return authorAvatar
       const authorQuery = authorId || author
@@ -137,21 +118,21 @@ export = {
       const authorEntity = await context.loaders.users.getUser.load(authorQuery)
       return authorEntity?.avatar || null
     },
-    async branchName(parent: { id: string }, _args: unknown, ctx: GraphQLContext) {
+    async branchName(parent, _args, ctx) {
       const { id } = parent
       return (await ctx.loaders.commits.getCommitBranch.load(id))?.name || null
     },
-    async branch(parent: { id: string }, _args: unknown, ctx: GraphQLContext) {
+    async branch(parent, _args, ctx) {
       const { id } = parent
       return await ctx.loaders.commits.getCommitBranch.load(id)
     }
   },
   Stream: {
-    async commits(parent: { id: string }, args: StreamCommitsArgs) {
+    async commits(parent, args) {
       return await getPaginatedStreamCommits(parent.id, args)
     },
 
-    async commit(parent: { id: string }, args: { id?: string }) {
+    async commit(parent, args) {
       if (!args.id) {
         const { commits } = await getCommitsByStreamId({
           streamId: parent.id,
@@ -167,21 +148,17 @@ export = {
     }
   },
   LimitedUser: {
-    async commits(parent: { id: string }, args: { limit: number; cursor: string }) {
+    async commits(parent, args) {
       return await getUserCommits(true, parent.id, args)
     }
   },
   User: {
-    async commits(
-      parent: { id: string },
-      args: { limit: number; cursor: string },
-      context: AuthContext
-    ) {
+    async commits(parent, args, context) {
       return await getUserCommits(context.userId !== parent.id, parent.id, args)
     }
   },
   Branch: {
-    async commits(parent: { id: string }, args: { limit: number; cursor?: string }) {
+    async commits(parent, args) {
       return await getPaginatedBranchCommits({
         branchId: parent.id,
         limit: args.limit,
@@ -190,11 +167,7 @@ export = {
     }
   },
   Mutation: {
-    async commitCreate(
-      _parent: unknown,
-      args: RequireFields<MutationCommitCreateArgs, 'commit'>,
-      context: AuthContext
-    ) {
+    async commitCreate(_parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
@@ -213,17 +186,16 @@ export = {
 
       const { id } = await createCommitByBranchName({
         ...args.commit,
+        parents: args.commit.parents ? args.commit.parents.map((p) => p || '') : null,
+        message: args.commit.message || null,
+        sourceApplication: args.commit.sourceApplication || null,
         authorId: context.userId
       })
 
       return id
     },
 
-    async commitUpdate(
-      _parent: unknown,
-      args: { commit: CommitUpdateInput },
-      context: AuthContext
-    ) {
+    async commitUpdate(_parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
@@ -236,11 +208,7 @@ export = {
       return true
     },
 
-    async commitReceive(
-      _parent: unknown,
-      args: { input: CommitReceivedInput },
-      context: AuthContext
-    ) {
+    async commitReceive(_parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.input.streamId,
@@ -263,11 +231,7 @@ export = {
       return false
     },
 
-    async commitDelete(
-      _parent: unknown,
-      args: { commit: { id: string; streamId: string } },
-      context: AuthContext
-    ) {
+    async commitDelete(_parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
@@ -284,28 +248,20 @@ export = {
       return deleted
     },
 
-    async commitsMove(
-      _parent: unknown,
-      args: { input: CommitsMoveInput | MoveVersionsInput },
-      ctx: { userId: string }
-    ) {
-      await batchMoveCommits(args.input, ctx.userId)
+    async commitsMove(_parent, args, ctx) {
+      await batchMoveCommits(args.input, ctx.userId!)
       return true
     },
 
-    async commitsDelete(
-      _parent: unknown,
-      args: { input: CommitsDeleteInput | DeleteVersionsInput },
-      ctx: { userId: string }
-    ) {
-      await batchDeleteCommits(args.input, ctx.userId)
+    async commitsDelete(_parent, args, ctx) {
+      await batchDeleteCommits(args.input, ctx.userId!)
       return true
     }
   },
   Subscription: {
     commitCreated: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([COMMIT_CREATED]),
+      subscribe: filteredSubscribe(
+        COMMIT_CREATED,
         async (payload, variables, context) => {
           await authorizeResolver(
             context.userId,
@@ -318,8 +274,8 @@ export = {
     },
 
     commitUpdated: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([COMMIT_UPDATED]),
+      subscribe: filteredSubscribe(
+        COMMIT_UPDATED,
         async (payload, variables, context) => {
           await authorizeResolver(
             context.userId,
@@ -338,8 +294,8 @@ export = {
     },
 
     commitDeleted: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([COMMIT_DELETED]),
+      subscribe: filteredSubscribe(
+        COMMIT_DELETED,
         async (payload, variables, context) => {
           await authorizeResolver(
             context.userId,

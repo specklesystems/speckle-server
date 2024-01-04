@@ -12,11 +12,7 @@ export = {
     }
   },
   Mutation: {
-    async userNotificationPreferencesUpdate(
-      _parent,
-      args,
-      context: { userId: string }
-    ) {
+    async userNotificationPreferencesUpdate(_parent, args, context) {
       await updateNotificationPreferences(context.userId, args.preferences)
       return true
     }

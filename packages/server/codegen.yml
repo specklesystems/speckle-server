@@ -12,6 +12,7 @@ generates:
       mappers:
         Stream: '@/modules/core/helpers/graphTypes#StreamGraphQLReturn'
         Commit: '@/modules/core/helpers/graphTypes#CommitGraphQLReturn'
+        Branch: '@/modules/core/helpers/graphTypes#ModelGraphQLReturn'
         Project: '@/modules/core/helpers/graphTypes#ProjectGraphQLReturn'
         Version: '@/modules/core/helpers/graphTypes#VersionGraphQLReturn'
         ServerInvite: '@/modules/core/helpers/graphTypes#ServerInviteGraphQLReturnType'
