@@ -79,9 +79,7 @@ export = {
         Roles.Stream.Contributor
       )
 
-      if (!context.userId) throw new Error('Invalid user id')
-
-      const newBranch = await updateBranchAndNotify(args.branch, context.userId)
+      const newBranch = await updateBranchAndNotify(args.branch, context.userId!)
       return !!newBranch
     },
 
