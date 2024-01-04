@@ -32,6 +32,7 @@
 import { ref, onMounted, defineProps, type PropType, onBeforeUnmount } from 'vue'
 import MouseIcon from '~~/src/components/common/animation/MouseIcon.vue'
 import ClickIcon from '~~/src/components/common/animation/ClickIcon.vue'
+import { wait } from '@speckle/shared'
 
 type AnimationAction = {
   type: 'animation'
@@ -71,12 +72,8 @@ const animationDuration = ref(500)
 const isMouseVisible = ref(true)
 const dynamicSlots = ref(props.slotsConfig || [])
 
-function delay(action: DelayAction) {
-  return new Promise<void>((resolve) => {
-    setTimeout(() => {
-      resolve()
-    }, action.duration)
-  })
+async function delay(action: DelayAction) {
+  await wait(action.duration)
 }
 
 function toggleSlotVisibility(action: SlotAction) {
@@ -86,7 +83,7 @@ function toggleSlotVisibility(action: SlotAction) {
   }
 }
 
-async function handleAction(action: Action) {
+function handleAction(action: Action) {
   switch (action.type) {
     case 'animation':
       mousePosition.value = { top: action.top, left: action.left }
@@ -107,12 +104,14 @@ async function handleAction(action: Action) {
 onMounted(() => {
   const loopActions = async () => {
     while (isAnimating.value) {
+      await delay({ type: 'delay', duration: 800 })
       isMouseVisible.value = true
       for (const action of props.actions || []) {
         await handleAction(action)
       }
       isMouseVisible.value = false
       mousePosition.value = { ...props.initialPosition }
+      await delay({ type: 'delay', duration: 200 })
     }
   }
 

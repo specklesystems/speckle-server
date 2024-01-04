@@ -28,7 +28,6 @@ export const Default: StoryObj = {
       left: 74
     },
     actions: [
-      { type: 'delay', duration: 1000 },
       { type: 'animation', top: 4, left: 89, duration: 1500 },
       { type: 'delay', duration: 2000 },
       { type: 'click' },

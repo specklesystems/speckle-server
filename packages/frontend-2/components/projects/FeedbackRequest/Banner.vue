@@ -26,7 +26,7 @@
       </div>
     </div>
     <ProjectsFeedbackRequestSkipDialog
-      :open="showSkipDialog"
+      v-model:open="showSkipDialog"
       @skip-dialog-dismissed="emitDismissedOrOpened"
     />
   </div>

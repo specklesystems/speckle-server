@@ -128,7 +128,6 @@ const dialogButtons = computed(() => [
 ])
 
 const dialogActions = computed((): Action[] => [
-  { type: 'delay', duration: 1000 },
   { type: 'animation', top: 4, left: 89, duration: 1500 },
   { type: 'delay', duration: 2000 },
   { type: 'click' },
