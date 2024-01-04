@@ -6,14 +6,14 @@ import {
 } from '@/modules/core/utils/dbNotificationListener'
 import { initialize as initializeMixpanel } from '@/modules/shared/utils/mixpanel'
 import type { Application } from 'express'
-import staticRoute from './rest/static'
-import uploadRoute from './rest/upload'
-import downloadRoute from './rest/download'
-import diffUploadRoute from './rest/diffUpload'
-import diffDownloadRoute from './rest/diffDownload'
-import allScopes from './scopes'
-import allRoles from './roles'
-import { SpeckleModule } from '../shared/helpers/typeHelper'
+import staticRoute from '@/modules/core/rest/static'
+import uploadRoute from '@/modules/core/rest/upload'
+import downloadRoute from '@/modules/core/rest/download'
+import diffUploadRoute from '@/modules/core/rest/diffUpload'
+import diffDownloadRoute from '@/modules/core/rest/diffDownload'
+import allScopes from '@/modules/core/scopes'
+import allRoles from '@/modules/core/roles'
+import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 
 exports = {
   init: async (app: Application) => {
