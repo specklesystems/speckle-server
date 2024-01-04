@@ -1,18 +1,18 @@
 'use strict'
 import { validateScopes, authorizeResolver } from '@/modules/shared'
-import type { AuthContext } from '@/modules/shared/authz'
 import {
   createObjects,
   getObject,
   getObjectChildren,
   getObjectChildrenQuery
-} from '../../services/objects'
+} from '@/modules/core/services/objects'
 import { Roles, Scopes } from '@speckle/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
 
 export = {
   Stream: {
-    async object(parent: { id: string }, args: { id: string }) {
+    async object(parent, args) {
       const obj = await getObject({ streamId: parent.id, objectId: args.id })
       if (!obj) return null
 
@@ -21,17 +21,7 @@ export = {
     }
   },
   Object: {
-    async children(
-      parent: { id: string; streamId: string; totalChildrenCount: number },
-      args: {
-        query: string
-        orderBy: string
-        limit: number
-        depth: number
-        select: string
-        cursor: string
-      }
-    ) {
+    async children(parent, args) {
       // The simple query branch
       if (!args.query && !args.orderBy) {
         const result = await getObjectChildren({
@@ -66,11 +56,7 @@ export = {
     }
   },
   Mutation: {
-    async objectCreate(
-      parent: never,
-      args: { objectInput: { streamId: string; objects: unknown[] } },
-      context: AuthContext
-    ) {
+    async objectCreate(_parent, args, context) {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Streams.Write)
       await authorizeResolver(
@@ -86,4 +72,4 @@ export = {
       return ids
     }
   }
-}
+} as Resolvers
