@@ -125,9 +125,8 @@ export async function getStreams({
     if (!['private', 'public'].includes(visibility))
       throw new Error('Stream visibility should be either private, public or all')
     const isPublic = visibility === 'public'
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const publicFunc = function (this: any) {
-      this.where({ isPublic })
+    const publicFunc = function (qb: Knex.QueryBuilder) {
+      qb.where({ isPublic })
     }
     query.andWhere(publicFunc)
     countQuery.andWhere(publicFunc)
