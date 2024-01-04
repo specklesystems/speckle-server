@@ -1,9 +1,10 @@
 import { getBlobs } from '@/modules/blobstorage/services'
 import { keyBy } from 'lodash'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
 
 export = {
   SmartTextEditorValue: {
-    async attachments(parent: { blobIds: string[] }) {
+    async attachments(parent) {
       const { blobIds } = parent
       if (!blobIds) return null
 
@@ -12,4 +13,4 @@ export = {
       return blobIds.map((blobId) => blobsById[blobId] || null).filter((b) => !!b)
     }
   }
-}
+} as Resolvers
