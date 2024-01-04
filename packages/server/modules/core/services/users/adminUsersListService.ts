@@ -7,6 +7,7 @@ import {
 import { clamp } from 'lodash'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
+import { ServerInviteGraphQLReturnType } from '../../helpers/graphTypes'
 
 type PaginationParams = {
   limit: number
@@ -14,56 +15,30 @@ type PaginationParams = {
   query: string | null
 }
 
-/**
- * @typedef {{
- *  id: string,
- *  email: string,
- *  invitedById: string
- * }} ServerInviteGraphqlReturnType
- */
+type TotalCounts = {
+  userCount: number
+  inviteCount: number
+  totalCount: number
+}
 
-/**
- * @typedef {{
- *  registeredUser: import("@/modules/core/helpers/userHelper").UserRecord | null,
- *  invitedUser: ServerInviteGraphqlReturnType | null,
- *  id: string
- * }} AdminUsersListItem
- */
+type AdminUsersListItem = {
+  registeredUser: UserRecord | null
+  invitedUser: ServerInviteGraphQLReturnType | null
+  id: string
+}
 
-/**
- * @typedef {{
- *  totalCount: number,
- *  items: Array<AdminUsersListItem>
- * }} AdminUsersListCollection
- */
+type AdminUsersListCollection = {
+  totalCount: number
+  items: Array<AdminUsersListItem>
+}
 
-/**
- * @typedef {{
- *  limit: number,
- *  offset: number,
- *  query: string | null
- * }} PaginationParams
- */
-
-/**
- * @typedef {{
- *  userCount: number,
- *  inviteCount: number,
- *  totalCount: number
- * }} TotalCounts
- */
-
-/**
- * @typedef {{
- *  invitesFilter: {offset: number, limit: number} | null,
- *  usersFilter: {offset: number, limit: number} | null
- * }} UsersInvitesFilters
- */
+type UserInvitesFilters = {
+  invitesFilter: { offset: number; limit: number } | null
+  usersFilter: { offset: number; limit: number } | null
+}
 
 /**
  * Sanitizing params to ensure limits aren't too high etc.
- * @param {PaginationParams} params
- * @returns {PaginationParams}
  */
 function sanitizeParams(params: PaginationParams) {
   params.limit = clamp(params.limit || 10, 1, 200)
@@ -72,10 +47,8 @@ function sanitizeParams(params: PaginationParams) {
 
 /**
  * Get total users & invites that we can find using these params
- * @param {PaginationParams} params
- * @returns {Promise<TotalCounts>}
  */
-async function getTotalCounts(params: PaginationParams) {
+async function getTotalCounts(params: PaginationParams): Promise<TotalCounts> {
   const { query } = params
 
   const [userCount, inviteCount] = await Promise.all([
@@ -92,14 +65,11 @@ async function getTotalCounts(params: PaginationParams) {
 /**
  * Resolve limits & offsets for user & invite queries. All invites will always appear first,
  * and only once there are no more results will users start appearing in the list
- * @param {PaginationParams} params
- * @param {TotalCounts} totalCounts
- * @returns {UsersInvitesFilters}
  */
 function resolveLimitsAndOffsets(
   params: PaginationParams,
-  totalCounts: { inviteCount: number }
-) {
+  totalCounts: TotalCounts
+): UserInvitesFilters {
   const { offset, limit } = params
   const { inviteCount } = totalCounts
 
@@ -111,16 +81,14 @@ function resolveLimitsAndOffsets(
   const userLimit = limit - (inviteLimit || 0)
 
   return {
-    invitesFilter: inviteLimit ? { limit: inviteLimit, offset: inviteOffset } : null,
+    invitesFilter: inviteLimit
+      ? { limit: inviteLimit, offset: inviteOffset || 0 }
+      : null,
     usersFilter: userLimit ? { limit: userLimit, offset: userOffset } : null
   }
 }
 
-/**
- * @param {import('@/modules/core/helpers/userHelper').UserRecord} user
- * @returns {AdminUsersListItem}
- */
-function mapUserToListItem(user: UserRecord) {
+function mapUserToListItem(user: UserRecord): AdminUsersListItem {
   return {
     invitedUser: null,
     registeredUser: user,
@@ -128,32 +96,19 @@ function mapUserToListItem(user: UserRecord) {
   }
 }
 
-/**
- * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
- * @returns {AdminUsersListItem}
- */
-function mapInviteToListItem(invite: ServerInviteRecord) {
+function mapInviteToListItem(invite: ServerInviteRecord): AdminUsersListItem {
   return {
     registeredUser: null,
     invitedUser: {
       id: invite.id,
       invitedById: invite.inviterId,
-      email: resolveTarget(invite.target).userEmail
+      email: resolveTarget(invite.target).userEmail || ''
     },
     id: `invite:${invite.id}`
   }
 }
 
-/**
- * Retrieve all list items from DB and convert them to the target model
- * @param {PaginationParams} params
- * @param {TotalCounts} counts
- * @returns {Promise<AdminUsersListItem[]>}
- */
-async function retrieveItems(
-  params: PaginationParams,
-  counts: { inviteCount: number }
-) {
+async function retrieveItems(params: PaginationParams, counts: TotalCounts) {
   const { invitesFilter, usersFilter } = resolveLimitsAndOffsets(params, counts)
   const { query } = params
 
@@ -176,10 +131,10 @@ async function retrieveItems(
 
 /**
  * Resolve admin users list data using the specified filter params
- * @param {PaginationParams} params
- * @returns {Promise<AdminUsersListCollection>}
  */
-export async function getAdminUsersListCollection(params: PaginationParams) {
+export async function getAdminUsersListCollection(
+  params: PaginationParams
+): Promise<AdminUsersListCollection> {
   sanitizeParams(params)
 
   const totalCounts = await getTotalCounts(params)

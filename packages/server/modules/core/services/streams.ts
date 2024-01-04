@@ -23,8 +23,8 @@ import {
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRoles } from '@speckle/shared'
-import { AuthContext } from '@/modules/shared/authz'
 import type { Knex } from 'knex'
+import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 
 /**
  * NOTE: Stop adding stuff to this service, create specialized service modules instead for various domains
@@ -38,8 +38,6 @@ type StreamUpdateParams = StreamUpdateInput | ProjectUpdateInput
 
 /**
  * @deprecated Use createStreamReturnRecord()
- * @param {import('@/modules/core/graph/generated/graphql').StreamCreateInput & {ownerId: string}} param0
- * @returns {Promise<string>}
  */
 export async function createStream(params: StreamCreateParams) {
   const { id } = await createStreamReturnRecord(params, {
@@ -50,7 +48,6 @@ export async function createStream(params: StreamCreateParams) {
 
 /**
  * @deprecated Use updateStreamAndNotify or use the repository function directly
- * @param {import('@/modules/core/graph/generated/graphql').StreamUpdateInput} update
  */
 export async function updateStream(update: StreamUpdateParams) {
   const updatedStream = await updateStreamInDb(update)
@@ -162,11 +159,6 @@ export async function getStreamUsers({ streamId }: { streamId: string }) {
 
 /**
  * Favorite or unfavorite a stream
- * @param {Object} p
- * @param {string} p.userId
- * @param {string} p.streamId
- * @param {boolean} [p.favorited] Whether to favorite or unfavorite (true by default)
- * @returns {Promise<Object>} Updated stream
  */
 export async function favoriteStream({
   userId,
@@ -193,11 +185,6 @@ export async function favoriteStream({
 
 /**
  * Get user favorited streams & metadata
- * @param {Object} p
- * @param {string} p.userId
- * @param {number} [p.limit] Defaults to 25
- * @param {string} [p.cursor] Optionally specify date after which to look for favorites
- * @returns
  */
 export async function getFavoriteStreamsCollection({
   userId,
@@ -225,24 +212,12 @@ export async function getFavoriteStreamsCollection({
 
 /**
  * Get active user stream favorite date (using dataloader)
- * @param {Object} p
- * @param {import('@/modules/shared/index').GraphQLContext} p.ctx
- * @param {string} p.streamId
- * @param {Promise<string| null>}
  */
 export async function getActiveUserStreamFavoriteDate({
   ctx,
   streamId
 }: {
-  ctx: AuthContext & {
-    loaders: {
-      streams: {
-        getUserFavoriteData: {
-          load: (streamId: string) => Promise<{ createdAt: Date }>
-        }
-      }
-    }
-  }
+  ctx: GraphQLContext
   streamId: string
 }) {
   if (!ctx.userId) {
@@ -260,20 +235,12 @@ export async function getActiveUserStreamFavoriteDate({
 
 /**
  * Get stream favorites count (using dataloader)
- * @param {Object} p
- * @param {import('@/modules/shared/index').GraphQLContext} p.ctx
- * @param {string} p.streamId
- * @returns {Promise<number>}
  */
 export async function getStreamFavoritesCount({
   ctx,
   streamId
 }: {
-  ctx: AuthContext & {
-    loaders: {
-      streams: { getFavoritesCount: { load: (streamId: string) => Promise<number> } }
-    }
-  }
+  ctx: GraphQLContext
   streamId: string
 }) {
   if (!streamId) {
@@ -283,23 +250,11 @@ export async function getStreamFavoritesCount({
   return (await ctx.loaders.streams.getFavoritesCount.load(streamId)) || 0
 }
 
-/**
- * @param {Object} p
- * @param {import('@/modules/shared/index').GraphQLContext} p.ctx
- * @param {string} p.userId
- * @returns {Promise<number>}
- */
 export async function getOwnedFavoritesCount({
   ctx,
   userId
 }: {
-  ctx: AuthContext & {
-    loaders: {
-      streams: {
-        getOwnedFavoritesCount: { load: (userId: string) => Promise<number> }
-      }
-    }
-  }
+  ctx: GraphQLContext
   userId: string
 }) {
   if (!userId) {

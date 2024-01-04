@@ -162,8 +162,6 @@ let add32 = (a: any, b: any) => {
 
 /**
  * Generate an MD5 hash for an input string
- * @param {string} s input string
- * @returns {string} md5 hash
  */
 function md5(s: string): string {
   return hex(md51(s))

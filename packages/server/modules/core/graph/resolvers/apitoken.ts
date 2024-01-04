@@ -5,16 +5,19 @@ import { ForbiddenError } from 'apollo-server-express'
 import {
   createPersonalAccessToken,
   revokeToken,
-  getUserTokens,
-  TokenRequestParams
+  getUserTokens
 } from '@/modules/core/services/tokens'
 import { canCreatePAT } from '@/modules/core/helpers/token'
+import type {
+  RequireFields,
+  MutationApiTokenCreateArgs,
+  Resolvers
+} from '@/modules/core/graph/generated/graphql'
 
-/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 export = {
   Query: {},
   User: {
-    async apiTokens(parent: { id: string }, args: unknown, context: AuthContext) {
+    async apiTokens(parent: { id: string }, _args: unknown, context: AuthContext) {
       // TODO!
       if (parent.id !== context.userId)
         throw new ForbiddenError('You can only view your own tokens')
@@ -25,8 +28,8 @@ export = {
   },
   Mutation: {
     async apiTokenCreate(
-      parent: never,
-      args: { token: TokenRequestParams },
+      _parent: unknown,
+      args: RequireFields<MutationApiTokenCreateArgs, 'token'>,
       context: { userId: string; scopes: string[] }
     ) {
       canCreatePAT({
@@ -43,7 +46,7 @@ export = {
       )
     },
     async apiTokenRevoke(
-      parent: unknown,
+      _parent: unknown,
       args: { token: string },
       context: AuthContext
     ) {
@@ -58,4 +61,4 @@ export = {
       return true
     }
   }
-}
+} as Resolvers

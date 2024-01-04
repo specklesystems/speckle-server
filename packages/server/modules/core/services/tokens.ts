@@ -96,11 +96,6 @@ export async function createPersonalAccessToken(
   return token
 }
 
-/**
- *
- * @param {string} tokenString
- * @returns {Promise<import('@/modules/core/helpers/types').TokenValidationResult>}
- */
 export async function validateToken(
   tokenString: string
 ): Promise<TokenValidationResult> {

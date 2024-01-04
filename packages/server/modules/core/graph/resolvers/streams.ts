@@ -5,8 +5,12 @@ import { PermissionUpdateInput } from '@/modules/core/services/streams/managemen
 import {
   ProjectUpdateInput,
   QueryDiscoverableStreamsArgs,
+  Resolvers,
+  RequireFields,
+  QueryAdminStreamsArgs,
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
+import { StreamGraphQLReturn } from '@/modules/core/helpers/graphTypes'
 import {
   getStream,
   getStreams,
@@ -62,7 +66,7 @@ const STREAM_UPDATED = StreamPubsubEvents.StreamUpdated
 const STREAM_DELETED = StreamPubsubEvents.StreamDeleted
 
 const _deleteStream = async (
-  _parent: never,
+  _parent: unknown,
   args: { id: string },
   context: AuthContext
 ) => {
@@ -87,12 +91,9 @@ const getUserStreamsCore = async (
   return { totalCount, cursor, items: streams }
 }
 
-/**
- * @type {import('@/modules/core/graph/generated/graphql').Resolvers}
- */
 export = {
   Query: {
-    async stream(_: never, args: { id: string }, context: AuthContext) {
+    async stream(_parent: unknown, args: { id: string }, context: AuthContext) {
       const stream = await getStream({ streamId: args.id, userId: context.userId })
       if (!stream) {
         throw new StreamNotFoundError('Stream not found')
@@ -109,7 +110,7 @@ export = {
     },
 
     async streams(
-      parent: never,
+      _parent: unknown,
       args: { query: string; limit: number; cursor: string },
       context: AuthContext
     ) {
@@ -129,19 +130,13 @@ export = {
       return { totalCount, cursor, items: streams }
     },
 
-    async discoverableStreams(parent: never, args: QueryDiscoverableStreamsArgs) {
+    async discoverableStreams(_parent: unknown, args: QueryDiscoverableStreamsArgs) {
       return await getDiscoverableStreams(args)
     },
 
     async adminStreams(
-      parent: never,
-      args: {
-        limit: number
-        orderBy: string
-        query: string
-        cursor: Date
-        visibility: 'all' | 'public' | 'private'
-      }
+      _parent: unknown,
+      args: RequireFields<QueryAdminStreamsArgs, 'limit' | 'offset'>
     ) {
       if (args.limit && args.limit > 50)
         throw new UserInputError('Cannot return more than 50 items at a time.')
@@ -170,7 +165,7 @@ export = {
 
     async favoritedDate(
       parent: { id: string },
-      _args: never,
+      _args: unknown,
       ctx: AuthContext & {
         loaders: {
           streams: {
@@ -187,7 +182,7 @@ export = {
 
     async favoritesCount(
       parent: { id: string },
-      _args: never,
+      _args: unknown,
       ctx: AuthContext & {
         loaders: {
           streams: {
@@ -209,8 +204,8 @@ export = {
     },
 
     async role(
-      parent: { id: string; role: string },
-      _args: never,
+      parent: StreamGraphQLReturn,
+      _args: unknown,
       ctx: {
         loaders: { streams: { getRole: { load: (id: string) => Promise<unknown> } } }
       }
@@ -250,7 +245,7 @@ export = {
 
     async totalOwnedStreamsFavorites(
       parent: { id: string },
-      _args: never,
+      _args: unknown,
       ctx: AuthContext & {
         loaders: {
           streams: {
@@ -276,7 +271,7 @@ export = {
     },
     async totalOwnedStreamsFavorites(
       parent: { id: string },
-      _args: never,
+      _args: unknown,
       ctx: AuthContext & {
         loaders: {
           streams: {
@@ -291,7 +286,7 @@ export = {
   },
   Mutation: {
     async streamCreate(
-      parent: never,
+      _parent: unknown,
       args: { stream: StreamCreateInput | ProjectCreateInput },
       context: AuthContext
     ) {
@@ -314,7 +309,7 @@ export = {
     },
 
     async streamUpdate(
-      parent: never,
+      _parent: unknown,
       args: { stream: StreamUpdateInput | ProjectUpdateInput },
       context: AuthContext
     ) {
@@ -324,12 +319,16 @@ export = {
       return true
     },
 
-    async streamDelete(parent: never, args: { id: string }, context: AuthContext) {
+    async streamDelete(_parent: unknown, args: { id: string }, context: AuthContext) {
       await authorizeResolver(context.userId, args.id, Roles.Stream.Owner)
       return await _deleteStream(parent, args, context)
     },
 
-    async streamsDelete(parent: never, args: { ids: string[] }, context: AuthContext) {
+    async streamsDelete(
+      parent: unknown,
+      args: { ids: string[] },
+      context: AuthContext
+    ) {
       const results = await Promise.all(
         args.ids.map(async (id) => {
           const newArgs = { id }
@@ -340,7 +339,7 @@ export = {
     },
 
     async streamUpdatePermission(
-      parent: never,
+      _parent: unknown,
       args: { permissionParams: PermissionUpdateInput & { streamId: string } },
       context: AuthContext
     ) {
@@ -360,7 +359,7 @@ export = {
     },
 
     async streamRevokePermission(
-      parent: never,
+      _parent: unknown,
       args: { permissionParams: PermissionUpdateInput & { streamId: string } },
       context: AuthContext
     ) {
@@ -380,7 +379,7 @@ export = {
     },
 
     async streamFavorite(
-      _parent: never,
+      _parent: unknown,
       args: { streamId: string; favorited?: boolean },
       ctx: AuthContext
     ) {
@@ -391,7 +390,7 @@ export = {
       return await favoriteStream({ userId, streamId, favorited })
     },
 
-    async streamLeave(_parent: never, args: { streamId: string }, ctx: AuthContext) {
+    async streamLeave(_parent: unknown, args: { streamId: string }, ctx: AuthContext) {
       const { streamId } = args
       const { userId } = ctx
       if (!userId) throw new Error('Invalid user id.')
@@ -448,7 +447,7 @@ export = {
   StreamCollaborator: {
     async serverRole(
       parent: { id: string },
-      _args: never,
+      _args: unknown,
       ctx: AuthContext & {
         loaders: {
           users: { getUser: { load: (id: string) => Promise<{ role: string }> } }
@@ -461,12 +460,9 @@ export = {
     }
   },
   PendingStreamCollaborator: {
-    /**
-     * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
-     */
     async invitedBy(
       parent: { invitedById: string },
-      _args: never,
+      _args: unknown,
       ctx: AuthContext & {
         loaders: {
           users: {
@@ -481,12 +477,9 @@ export = {
       const user = await ctx.loaders.users.getUser.load(invitedById)
       return user ? removePrivateFields(user) : null
     },
-    /**
-     * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
-     */
     async streamName(
       parent: { streamId: string },
-      _args: never,
+      _args: unknown,
       ctx: AuthContext & {
         loaders: {
           streams: { getStream: { load: (id: string) => Promise<{ name: string }> } }
@@ -497,12 +490,9 @@ export = {
       const stream = await ctx.loaders.streams.getStream.load(streamId)
       return stream.name
     },
-    /**
-     * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
-     */
     async token(
       parent: { inviteId: string; user?: { id: string } },
-      _args: never,
+      _args: unknown,
       ctx: AuthContext & {
         loaders: {
           invites: {
@@ -524,4 +514,4 @@ export = {
       return invite?.token || null
     }
   }
-}
+} as Resolvers

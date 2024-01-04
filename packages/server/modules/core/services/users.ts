@@ -81,15 +81,10 @@ type UserInput = {
   verified?: boolean
 }
 
-/**
- * @param {{}} user
- * @param {{skipPropertyValidation: boolean } | undefined} options
- * @returns {Promise<string>}
- */
 export async function createUser(
   user: UserInput,
   options?: { skipPropertyValidation: boolean }
-) {
+): Promise<string> {
   // ONLY ALLOW SKIPPING WHEN CREATING USERS FOR TESTS, IT'S UNSAFE OTHERWISE
   const { skipPropertyValidation = false } = options || {
     skipPropertyValidation: false
@@ -160,19 +155,17 @@ export async function findOrCreateUser({ user }: { user: UserInput }) {
   }
 }
 
-/**
- * @param {{userId: string}} param0
- * @returns {import('@/modules/core/helpers/userHelper').UserRecord | null}
- */
-export async function getUserById({ userId }: { userId: string }) {
+export async function getUserById({
+  userId
+}: {
+  userId: string
+}): Promise<UserRecord | null> {
   const user = await Users().where({ id: userId }).select('*').first()
   if (user) delete user.passwordDigest
   return user
 }
 
 /**
- *
- * @param {{userId: string}} id
  * @deprecated {Use getUserById()}
  */
 export async function getUser(id: string) {

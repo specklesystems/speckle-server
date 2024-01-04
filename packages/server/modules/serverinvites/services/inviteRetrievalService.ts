@@ -79,7 +79,6 @@ export async function getPendingStreamCollaborators(
   // Build results
   const results = []
   for (const invite of invites) {
-    /** @type {import("@/modules/core/helpers/userHelper").LimitedUserRecord} */
     let user: Nullable<LimitedUserRecord> = null
     const { userId } = resolveTarget(invite.target)
     if (userId && usersById[userId]) {

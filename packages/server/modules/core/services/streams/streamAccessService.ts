@@ -17,12 +17,6 @@ import {
 
 import { ServerAcl } from '@/modules/core/dbSchema'
 
-/**
- * Check if user is a stream collaborator
- * @param {string} userId
- * @param {string} streamId
- * @returns
- */
 export async function isStreamCollaborator(userId: string, streamId: string) {
   const stream = await getStream({ streamId, userId })
   return !!stream?.role
@@ -34,10 +28,6 @@ export async function isStreamCollaborator(userId: string, streamId: string) {
  * Note: The access check can sometimes succeed even if the user being tested is a guest, e.g.
  * if the stream is public and we're only looking for stream:reviewer or up. If you want to check
  * that the target user is an actual collaborator, use isStreamCollaborator instead.
- * @param {string} [userId] If falsy, will throw for non-public streams
- * @param {string} streamId
- * @param {string} [expectedRole] Defaults to reviewer
- * @returns {Promise<boolean>}
  */
 export async function validateStreamAccess(
   userId: string | undefined | null,
@@ -76,12 +66,6 @@ export async function validateStreamAccess(
   return true
 }
 
-/**
- * Remove collaborator from stream
- * @param {string} streamId
- * @param {string} userId ID of user that should be removed
- * @param {string} removedById ID of user that is doing the removing
- */
 export async function removeStreamCollaborator(
   streamId: string,
   userId: string,
@@ -108,16 +92,6 @@ export async function removeStreamCollaborator(
 
 /**
  * Add a new collaborator to the stream or update their access level
- *
- * Optional parameters:
- * - fromInvite: Set to true, if user is being added as a result of accepting an invitation
- * @param {string} streamId
- * @param {string} userId ID of user who is being added
- * @param {string} role
- * @param {string} addedById ID of user who is adding the new collaborator
- * @param {{
- *  fromInvite?: boolean,
- * }} param4
  */
 export async function addOrUpdateStreamCollaborator(
   streamId: string,

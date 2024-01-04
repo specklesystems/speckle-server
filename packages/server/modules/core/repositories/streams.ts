@@ -197,7 +197,6 @@ export async function getCommitStream(params: { commitId: string; userId?: strin
 
 /**
  * Get base query for finding or counting user favorited streams
- * @param {string} userId The user's ID
  */
 function getFavoritedStreamsQueryBase<
   Result = Array<StreamFavoriteRecord & StreamRecord & StreamAclRecord>
@@ -224,10 +223,6 @@ function getFavoritedStreamsQueryBase<
 
 /**
  * Get favorited streams
- * @param {Object} p
- * @param {string} p.userId
- * @param {string} [p.cursor] ISO8601 timestamp after which to look for favoirtes
- * @param {number} [p.limit] Defaults to 25
  */
 export async function getFavoritedStreams(params: {
   userId: string
@@ -272,11 +267,6 @@ export async function getFavoritedStreamsCount(userId: string) {
 
 /**
  * Set stream as favorited/unfavorited for a specific user
- * @param {Object} p
- * @param {string} p.streamId
- * @param {string} p.userId
- * @param {boolean} [p.favorited] By default favorites the stream, but you can set this
- * to false to unfavorite it
  */
 export async function setStreamFavorited(params: {
   streamId: string
@@ -314,10 +304,6 @@ export async function setStreamFavorited(params: {
 
 /**
  * Get favorite metadata for specified user and all specified stream IDs
- * @param {Object} p
- * @param {string} p.userId
- * @param {string[]} p.streamIds
- * @returns Favorite metadata keyed by stream ID
  */
 export async function getBatchUserFavoriteData(params: {
   userId: string
@@ -340,8 +326,6 @@ export async function getBatchUserFavoriteData(params: {
 
 /**
  * Get favorites counts for all specified streams
- * @param {string[]} streamIds
- * @returns {Promise<Object<string, number>>} Favorite counts keyed by stream ids
  */
 export async function getBatchStreamFavoritesCounts(streamIds: string[]) {
   const query = StreamFavorites.knex()
@@ -358,10 +342,6 @@ export async function getBatchStreamFavoritesCounts(streamIds: string[]) {
 
 /**
  * Check if user can favorite a stream
- * @param {Object} p
- * @param {string} userId
- * @param {string} streamId
- * @returns {Promise<boolean>}
  */
 export async function canUserFavoriteStream(params: {
   userId: string
@@ -394,8 +374,6 @@ export async function canUserFavoriteStream(params: {
 
 /**
  * Find total favorites of owned streams for specified users
- * @param {string[]} userIds
- * @returns {Promise<Record<string, number>>}
  */
 export async function getOwnedFavoritesCountByUserIds(userIds: string[]) {
   const query = StreamAcl.knex()

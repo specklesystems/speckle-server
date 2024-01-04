@@ -4,13 +4,10 @@ import knex from '@/db/knex'
 import type { Knex } from 'knex'
 
 import { dispatchStreamEvent } from '@/modules/webhooks/services/webhooks'
+import { StreamActivityRecord } from '../helpers/types'
 const StreamActivity = () => knex('stream_activity')
 const StreamAcl = () => knex('stream_acl')
 
-/**
- * @param {Omit<import('@/modules/activitystream/helpers/types').StreamActivityRecord, "time">} param0
- * @param {{trx?: import('knex').Knex.Transaction}} param1
- */
 export async function saveActivity(
   {
     streamId,
@@ -20,15 +17,7 @@ export async function saveActivity(
     userId,
     info,
     message
-  }: {
-    streamId: string | null
-    resourceType: string
-    resourceId: string | null
-    actionType: string
-    userId: string | null
-    info: unknown
-    message: string
-  },
+  }: Omit<StreamActivityRecord, 'time'>,
   { trx }: { trx?: Knex.Transaction } = {}
 ) {
   const dbObject = {

@@ -13,7 +13,6 @@ import {
 import { UserWithOptionalRole, getUsers } from '@/modules/core/repositories/users'
 import { keyBy } from 'lodash'
 import { getInvites } from '@/modules/serverinvites/repositories'
-import { AuthContext } from '@/modules/shared/authz'
 import {
   BranchRecord,
   CommitRecord,
@@ -22,7 +21,7 @@ import {
   StreamRecord,
   UsersMetaRecord
 } from '@/modules/core/helpers/types'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { GraphQLContext, Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
 import {
   getCommitBranches,
@@ -91,10 +90,9 @@ const buildDataLoaderCreator = (selfClearing = false) => {
 
 /**
  * Build request-scoped dataloaders
- * @param ctx GraphQL context w/o loaders
  */
 export function buildRequestLoaders(
-  ctx: AuthContext,
+  ctx: GraphQLContext,
   options?: Partial<{ cleanLoadersEarly: boolean }>
 ) {
   const userId = ctx.userId

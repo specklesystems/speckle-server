@@ -70,8 +70,6 @@ export async function createStreamReturnRecord(
 
 /**
  * Delete stream & notify users (emit events & save activity)
- * @param {string} streamId
- * @param {string} deleterId
  */
 export async function deleteStreamAndNotify(streamId: string, deleterId: string) {
   await addStreamDeletedActivity({ streamId, deleterId })

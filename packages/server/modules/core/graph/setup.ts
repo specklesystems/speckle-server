@@ -1,4 +1,4 @@
-import { GraphQLError } from 'graphql'
+import { GraphQLError, GraphQLFormattedError } from 'graphql'
 import _ from 'lodash'
 import VError from 'verror'
 import { ZodError } from 'zod'
@@ -12,10 +12,10 @@ const VERROR_TRASH_PROPS = ['jse_shortmsg', 'jse_cause', 'jse_info']
 
 /**
  * Builds apollo server error formatter
- * @param {boolean} debug
- * @returns {(e: import('graphql').GraphQLError) => import('graphql').GraphQLFormattedError}
  */
-export function buildErrorFormatter(debug: boolean) {
+export function buildErrorFormatter(
+  debug: boolean
+): (error: GraphQLError) => GraphQLFormattedError {
   // TODO: Add support for client-aware errors and obfuscate everything else
   return function (error: GraphQLError) {
     const debugMode = debug

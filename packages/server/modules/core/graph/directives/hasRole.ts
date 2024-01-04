@@ -7,12 +7,12 @@ import {
   mapServerRoleToValue
 } from '@/modules/core/helpers/graphTypes'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
+import { GraphqlDirectiveBuilder } from '../helpers/directiveHelper'
 
 /**
  * Ensure that the user has the specified SERVER role (e.g. server user, admin etc.)
- * @type {import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder}
  */
-export const hasServerRole = () => {
+export const hasServerRole: GraphqlDirectiveBuilder = () => {
   const directiveName = 'hasServerRole'
   return {
     typeDefs: `
@@ -56,9 +56,8 @@ export const hasServerRole = () => {
  * Ensure that the user has the specified STREAM role for a target stream (e.g. owner)
  *
  * Note: Only supported on Stream type fields!
- * @type {import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder}
  */
-export const hasStreamRole = () => {
+export const hasStreamRole: GraphqlDirectiveBuilder = () => {
   const directiveName = 'hasStreamRole'
   return {
     typeDefs: `

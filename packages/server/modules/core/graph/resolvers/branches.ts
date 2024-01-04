@@ -25,13 +25,16 @@ import {
   BranchDeleteInput,
   BranchUpdateInput
 } from '@/test/graphql/generated/graphql'
+import type {
+  Resolvers,
+  ResolversParentTypes
+} from '@/modules/core/graph/generated/graphql'
 
 // subscription events
 const BRANCH_CREATED = BranchPubsubEvents.BranchCreated
 const BRANCH_UPDATED = BranchPubsubEvents.BranchUpdated
 const BRANCH_DELETED = BranchPubsubEvents.BranchDeleted
 
-/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 export = {
   Query: {},
   Stream: {
@@ -61,7 +64,11 @@ export = {
     }
   },
   Branch: {
-    async author(parent: { authorId: string }, args: never, context: AuthContext) {
+    async author(
+      parent: ResolversParentTypes['Branch'],
+      _args: unknown,
+      context: AuthContext
+    ) {
       if (parent.authorId && context.auth)
         return await getUserById({ userId: parent.authorId })
       else return null
@@ -69,7 +76,7 @@ export = {
   },
   Mutation: {
     async branchCreate(
-      parent: never,
+      _parent: unknown,
       args: { branch: BranchCreateInput },
       context: AuthContext
     ) {
@@ -171,4 +178,4 @@ export = {
       )
     }
   }
-}
+} as Resolvers

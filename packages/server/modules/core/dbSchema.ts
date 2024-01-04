@@ -132,8 +132,6 @@ const createBaseInnerSchemaConfigBuilder =
 
 /**
  * Create table schema helper
- * @param tableName
- * @param columns
  */
 function buildTableHelper<
   T extends string,

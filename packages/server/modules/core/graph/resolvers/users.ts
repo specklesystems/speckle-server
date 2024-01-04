@@ -20,15 +20,18 @@ import { UsersMeta } from '@/modules/core/dbSchema'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import { AuthContext } from '@/modules/shared/authz'
-import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
+import {
+  Resolvers,
+  ResolversTypes,
+  UserUpdateInput
+} from '@/modules/core/graph/generated/graphql'
 
-/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 export = {
   Query: {
     async _() {
       return `Ph'nglui mglw'nafh Cthulhu R'lyeh wgah'nagl fhtagn.`
     },
-    async activeUser(_parent: never, _args: never, context: AuthContext) {
+    async activeUser(_parent: unknown, _args: unknown, context: AuthContext) {
       const activeUserId = context.userId
       if (!activeUserId) return null
 
@@ -38,12 +41,12 @@ export = {
 
       return await getUserById({ userId: activeUserId })
     },
-    async otherUser(_parent: never, args: { id?: string }) {
+    async otherUser(_parent: unknown, args: { id?: string }) {
       const { id } = args
       if (!id) return null
       return await getUserById({ userId: id })
     },
-    async user(parent: never, args: { id?: string }, context: AuthContext) {
+    async user(_parent: unknown, args: { id?: string }, context: AuthContext) {
       // User wants info about himself and he's not authenticated - just return null
       if (!context.auth && !args.id) return null
 
@@ -59,14 +62,14 @@ export = {
     },
 
     async adminUsers(
-      _parent: never,
+      _parent: unknown,
       args: { query: string; limit: number; offset: number }
     ) {
       return await getAdminUsersListCollection(args)
     },
 
     async userSearch(
-      parent: never,
+      _parent: unknown,
       args: {
         query: string
         limit: number
@@ -98,7 +101,7 @@ export = {
       return { cursor, items: users }
     },
 
-    async userPwdStrength(parent: never, args: { pwd: string }) {
+    async userPwdStrength(_parent: unknown, args: { pwd: string }) {
       const res = zxcvbn(args.pwd)
       return { score: res.score, feedback: res.feedback }
     }
@@ -107,7 +110,7 @@ export = {
   User: {
     async email(
       parent: { id: string; email: string },
-      args: never,
+      _args: unknown,
       context: AuthContext
     ) {
       // NOTE: we're redacting the field (returning null) rather than throwing a full error which would invalidate the request.
@@ -134,7 +137,7 @@ export = {
     },
     async isOnboardingFinished(
       parent: { id: string },
-      _args: never,
+      _args: unknown,
       ctx: {
         loaders: {
           users: {
@@ -165,7 +168,7 @@ export = {
   },
   Mutation: {
     async userUpdate(
-      _parent: never,
+      _parent: unknown,
       args: { user: UserUpdateInput },
       context: AuthContext
     ) {
@@ -176,7 +179,7 @@ export = {
     },
 
     async userRoleChange(
-      _parent: never,
+      _parent: unknown,
       args: { userRoleInput: { role: string; id: string } }
     ) {
       const { guestModeEnabled } = await getServerInfo()
@@ -189,7 +192,7 @@ export = {
     },
 
     async adminDeleteUser(
-      _parent: never,
+      _parent: unknown,
       args: { userConfirmation: { email: string } },
       context: AuthContext
     ) {
@@ -202,8 +205,8 @@ export = {
     },
 
     async userDelete(
-      parent: never,
-      args: { userConfirmation: { email: string }; user: string },
+      _parent: unknown,
+      args: { userConfirmation: { email: string } },
       context: AuthContext
     ) {
       if (!context.userId)
@@ -238,16 +241,16 @@ export = {
     activeUserMutations: () => ({})
   },
   ActiveUserMutations: {
-    async finishOnboarding(_parent: never, _args: never, ctx: AuthContext) {
+    async finishOnboarding(_parent: unknown, _args: unknown, ctx: AuthContext) {
       return await markOnboardingComplete(ctx.userId || '')
     },
     async update(
-      _parent: never,
+      _parent: unknown,
       args: { user: UserUpdateInput },
       context: AuthContext
     ) {
       const newUser = await updateUserAndNotify(context.userId!, args.user)
-      return newUser
+      return newUser as ResolversTypes['User']
     }
   }
-}
+} as Resolvers

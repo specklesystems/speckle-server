@@ -1,12 +1,12 @@
 import { GraphQLSchema, defaultFieldResolver } from 'graphql'
 import { validateScopes } from '@/modules/shared'
 import { mapSchema, MapperKind, getDirective } from '@graphql-tools/utils'
+import { GraphqlDirectiveBuilder } from '../helpers/directiveHelper'
 
 /**
  * Ensure that the user's access token has the specified scope allowed for it
- * @type {import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder}
  */
-export const hasScope = () => {
+export const hasScope: GraphqlDirectiveBuilder = () => {
   const directiveName = 'hasScope'
   return {
     typeDefs: `
@@ -40,9 +40,8 @@ export const hasScope = () => {
 
 /**
  * Ensure that the user's access token has all of the specified scopes allowed for it
- * @type {import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder}
  */
-export const hasScopes = () => {
+export const hasScopes: GraphqlDirectiveBuilder = () => {
   const directiveName = 'hasScopes'
   return {
     typeDefs: `
