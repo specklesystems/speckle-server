@@ -1,14 +1,19 @@
 import {
-  AuthorizationCodes,
-  RefreshTokens,
-  Scopes,
-  ServerAppsScopes,
+  AuthorizationCodes as AuthorizationCodesSchema,
+  RefreshTokens as RefreshTokensSchema,
+  Scopes as ScopesSchema,
+  ServerAppsScopes as ServerAppsScopesSchema,
   knex
 } from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ScopeRecord, ServerAppsScopesRecord } from '@/modules/auth/helpers/types'
 import { groupBy, mapValues } from 'lodash'
+
+const AuthorizationCodes = () =>
+  AuthorizationCodesSchema.knex<AuthorizationCodeRecord[]>()
+const RefreshTokens = () => RefreshTokensSchema.knex<RefreshTokenRecord[]>()
+const Scopes = () => ScopesSchema.knex<ScopeRecord[]>()
 
 export type RefreshTokenRecord = {
   id: string
@@ -53,8 +58,8 @@ export type PersonalApiTokenRecord = {
 export async function deleteExistingAuthTokens(userId: string) {
   if (!userId) throw new InvalidArgumentError('User ID must be set')
 
-  await RefreshTokens.knex().where(RefreshTokens.col.userId, userId)
-  await AuthorizationCodes.knex().where(AuthorizationCodes.col.userId, userId)
+  await RefreshTokens().where(RefreshTokensSchema.col.userId, userId)
+  await AuthorizationCodes().where(AuthorizationCodesSchema.col.userId, userId)
   await knex.raw(
     `
         DELETE FROM api_tokens
@@ -68,11 +73,11 @@ export async function deleteExistingAuthTokens(userId: string) {
 }
 
 export async function getAppScopes(appIds: string[]) {
-  const items = await ServerAppsScopes.knex<
+  const items = await ServerAppsScopesSchema.knex<
     Array<ServerAppsScopesRecord & ScopeRecord>
   >()
-    .whereIn(ServerAppsScopes.col.appId, appIds)
-    .innerJoin(Scopes.name, Scopes.col.name, ServerAppsScopes.col.scopeName)
+    .whereIn(ServerAppsScopesSchema.col.appId, appIds)
+    .innerJoin(Scopes.name, ScopesSchema.col.name, ServerAppsScopesSchema.col.scopeName)
 
   // Return record where each key is an app id and the value is an array of scopes
   return mapValues(

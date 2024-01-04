@@ -6,49 +6,56 @@ import {
   AutomationRunRecord
 } from '@/modules/automations/helpers/types'
 import {
-  Automations,
-  AutomationRuns,
-  AutomationFunctionRuns,
-  AutomationFunctionRunsResultVersions,
-  Commits
+  Automations as AutomationsSchema,
+  AutomationRuns as AutomationRunsSchema,
+  AutomationFunctionRuns as AutomationFunctionRunsSchema,
+  AutomationFunctionRunsResultVersions as AutomationFunctionRunsResultVersionsSchema,
+  Commits as CommitsSchema
 } from '@/modules/core/dbSchema'
 import { CommitRecord } from '@/modules/core/helpers/types'
-import { Nullable } from '@speckle/shared'
 import { isArray, pick } from 'lodash'
 import { SetOptional } from 'type-fest'
+
+const Automations = () => AutomationsSchema.knex<AutomationRecord[]>()
+const AutomationRuns = () => AutomationRunsSchema.knex<AutomationRunRecord[]>()
+const AutomationFunctionRuns = () =>
+  AutomationFunctionRunsSchema.knex<AutomationFunctionRunRecord[]>()
+const AutomationFunctionRunsResultVersions = () =>
+  AutomationFunctionRunsResultVersionsSchema.knex<
+    AutomationFunctionRunsResultVersionRecord[]
+  >()
+const Commits = () => CommitsSchema.knex<CommitRecord[]>()
 
 export const upsertAutomation = async (
   automation: SetOptional<AutomationRecord, 'createdAt' | 'updatedAt'>
 ) =>
-  await Automations.knex()
+  await Automations()
     .insert(automation)
     .onConflict([
-      Automations.withoutTablePrefix.col.automationId,
-      Automations.withoutTablePrefix.col.automationRevisionId
+      AutomationsSchema.withoutTablePrefix.col.automationId,
+      AutomationsSchema.withoutTablePrefix.col.automationRevisionId
     ])
     .merge(
-      Automations.withoutTablePrefix.cols.filter(
-        (c) => c !== Automations.withoutTablePrefix.col.createdAt
+      AutomationsSchema.withoutTablePrefix.cols.filter(
+        (c) => c !== AutomationsSchema.withoutTablePrefix.col.createdAt
       )
     )
 
-export const getAutomation = async (
-  automationId: string
-): Promise<AutomationRecord> => {
-  return await Automations.knex()
-    .where({ [Automations.col.automationId]: automationId })
+export const getAutomation = async (automationId: string) => {
+  return await Automations()
+    .where({ [AutomationsSchema.col.automationId]: automationId })
     .first()
 }
 
 export const upsertAutomationRunData = async (automationRun: AutomationRunRecord) => {
   const insertModel = pick(
     automationRun,
-    AutomationRuns.withoutTablePrefix.cols
+    AutomationRunsSchema.withoutTablePrefix.cols
   ) as AutomationRunRecord
 
-  return await AutomationRuns.knex()
+  return await AutomationRuns()
     .insert(insertModel)
-    .onConflict(AutomationRuns.withoutTablePrefix.col.automationRunId)
+    .onConflict(AutomationRunsSchema.withoutTablePrefix.col.automationRunId)
     .merge()
 }
 
@@ -64,16 +71,16 @@ export const upsertAutomationFunctionRunData = async (
   const normalizedModels = runs.map((run) => {
     return pick(
       run,
-      AutomationFunctionRuns.withoutTablePrefix.cols
+      AutomationFunctionRunsSchema.withoutTablePrefix.cols
     ) as AutomationFunctionRunRecord
   })
 
   logger.info({ normalizedModels }, 'Normalized runs.')
-  return await AutomationFunctionRuns.knex()
+  return await AutomationFunctionRuns()
     .insert(normalizedModels)
     .onConflict([
-      AutomationFunctionRuns.withoutTablePrefix.col.automationRunId,
-      AutomationFunctionRuns.withoutTablePrefix.col.functionId
+      AutomationFunctionRunsSchema.withoutTablePrefix.col.automationRunId,
+      AutomationFunctionRunsSchema.withoutTablePrefix.col.functionId
     ])
     .merge()
 }
@@ -91,32 +98,30 @@ export const insertAutomationFunctionRunResultVersion = async (
   const normalizedModels = versions.map((run) => {
     return pick(
       run,
-      AutomationFunctionRunsResultVersions.withoutTablePrefix.cols
+      AutomationFunctionRunsResultVersionsSchema.withoutTablePrefix.cols
     ) as AutomationFunctionRunsResultVersionRecord
   })
 
-  return await AutomationFunctionRunsResultVersions.knex().insert(normalizedModels)
+  return await AutomationFunctionRunsResultVersions().insert(normalizedModels)
 }
 
 export const deleteResultVersionsForRuns = async (
   keyPairs: [functionId: string, automationRunId: string][]
 ) => {
-  return await AutomationFunctionRunsResultVersions.knex()
+  return await AutomationFunctionRunsResultVersions()
     .whereIn(
       [
-        AutomationFunctionRunsResultVersions.col.functionId,
-        AutomationFunctionRunsResultVersions.col.automationRunId
+        AutomationFunctionRunsResultVersionsSchema.col.functionId,
+        AutomationFunctionRunsResultVersionsSchema.col.automationRunId
       ],
       keyPairs
     )
     .del()
 }
 
-export const getAutomationRun = async (
-  automationRunId: string
-): Promise<Nullable<AutomationRunRecord>> => {
-  return await AutomationRuns.knex()
-    .where({ [AutomationRuns.col.automationRunId]: automationRunId })
+export const getAutomationRun = async (automationRunId: string) => {
+  return await AutomationRuns()
+    .where({ [AutomationRunsSchema.col.automationRunId]: automationRunId })
     .first()
 }
 
@@ -133,20 +138,20 @@ export const getLatestAutomationRunsFor = async (
   const { projectId, modelId, versionId } = params
   const { limit = 20 } = options || {}
 
-  const runs = await AutomationRuns.knex()
-    .select([...AutomationRuns.cols, 'automations.automationName'])
+  const runs = await AutomationRuns()
+    .select([...AutomationRunsSchema.cols, 'automations.automationName'])
     .join(
       Automations.name,
-      AutomationRuns.col.automationId,
-      Automations.col.automationId
+      AutomationRunsSchema.col.automationId,
+      AutomationsSchema.col.automationId
     )
-    .where({ [Automations.col.projectId]: projectId })
-    .andWhere({ [Automations.col.modelId]: modelId })
-    .andWhere({ [AutomationRuns.col.versionId]: versionId })
-    .distinctOn(AutomationRuns.col.automationId)
+    .where({ [AutomationsSchema.col.projectId]: projectId })
+    .andWhere({ [AutomationsSchema.col.modelId]: modelId })
+    .andWhere({ [AutomationRunsSchema.col.versionId]: versionId })
+    .distinctOn(AutomationRunsSchema.col.automationId)
     .orderBy([
-      { column: AutomationRuns.col.automationId },
-      { column: AutomationRuns.col.createdAt, order: 'desc' }
+      { column: AutomationRunsSchema.col.automationId },
+      { column: AutomationRunsSchema.col.createdAt, order: 'desc' }
     ])
     .limit(limit)
 
@@ -157,12 +162,10 @@ export const getLatestAutomationRunsFor = async (
  * Get function runs for automation runs. The result is an object keyed by automationRunId,
  * with each value being a map between functionId and function run.
  */
-export const getFunctionRunsForAutomationRuns = async (
-  automationRunids: string[]
-): Promise<Record<string, Record<string, AutomationFunctionRunRecord>>> => {
-  const runs = await AutomationFunctionRuns.knex()
-    .select<AutomationFunctionRunRecord[]>(AutomationFunctionRuns.cols)
-    .whereIn(AutomationFunctionRuns.col.automationRunId, automationRunids)
+export const getFunctionRunsForAutomationRuns = async (automationRunids: string[]) => {
+  const runs = await AutomationFunctionRuns()
+    .select<AutomationFunctionRunRecord[]>(AutomationFunctionRunsSchema.cols)
+    .whereIn(AutomationFunctionRunsSchema.col.automationRunId, automationRunids)
 
   const grouped = runs.reduce((acc, run) => {
     if (!acc[run.automationRunId]) acc[run.automationRunId] = {}
@@ -179,21 +182,21 @@ export const getFunctionRunsForAutomationRuns = async (
  */
 export const getAutomationFunctionRunResultVersions = async (
   idPairs: Array<[automationRunId: string, functionId: string]>
-): Promise<Record<string, Record<string, CommitRecord[]>>> => {
-  const q = AutomationFunctionRunsResultVersions.knex()
+) => {
+  const q = AutomationFunctionRunsResultVersions()
     .select<Array<CommitRecord & AutomationFunctionRunsResultVersionRecord>>(
-      ...Commits.cols,
-      ...AutomationFunctionRunsResultVersions.cols
+      ...CommitsSchema.cols,
+      ...AutomationFunctionRunsResultVersionsSchema.cols
     )
     .innerJoin(
       Commits.name,
-      AutomationFunctionRunsResultVersions.col.resultVersionId,
-      Commits.col.id
+      AutomationFunctionRunsResultVersionsSchema.col.resultVersionId,
+      CommitsSchema.col.id
     )
     .whereIn(
       [
-        AutomationFunctionRunsResultVersions.col.automationRunId,
-        AutomationFunctionRunsResultVersions.col.functionId
+        AutomationFunctionRunsResultVersionsSchema.col.automationRunId,
+        AutomationFunctionRunsResultVersionsSchema.col.functionId
       ],
       idPairs
     )
