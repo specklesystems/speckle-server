@@ -225,7 +225,7 @@ export = {
       await saveActivity({
         streamId: null,
         resourceType: 'user',
-        resourceId: context.userId || null,
+        resourceId: context.userId!,
         actionType: ActionTypes.User.Delete,
         userId: context.userId || null,
         info: {},
