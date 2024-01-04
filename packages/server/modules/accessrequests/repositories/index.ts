@@ -1,7 +1,15 @@
-import { ServerAccessRequests, Streams } from '@/modules/core/dbSchema'
+import {
+  ServerAccessRequests as ServerAccessRequestsSchema,
+  Streams as StreamsSchema
+} from '@/modules/core/dbSchema'
+import { StreamRecord } from '@/modules/core/helpers/types'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import cryptoRandomString from 'crypto-random-string'
+
+const ServerAccessRequests = () =>
+  ServerAccessRequestsSchema.knex<ServerAccessRequestRecord[]>()
+const Streams = () => StreamsSchema.knex<StreamRecord[]>()
 
 export enum AccessRequestType {
   Stream = 'stream'
@@ -35,19 +43,23 @@ const baseQuery = <
 >(
   resourceType?: T
 ) => {
-  const q = ServerAccessRequests.knex().select<ServerAccessRequestRecord<T, I>[]>(
-    ServerAccessRequests.cols
+  const q = ServerAccessRequests().select<ServerAccessRequestRecord<T, I>[]>(
+    ServerAccessRequestsSchema.cols
   )
 
   if (resourceType) {
-    q.where(ServerAccessRequests.col.resourceType, resourceType)
+    q.where(ServerAccessRequestsSchema.col.resourceType, resourceType)
   }
 
   // validate that resourceId points to a valid resource
   if (resourceType) {
     switch (resourceType) {
       case AccessRequestType.Stream:
-        q.innerJoin(Streams.name, Streams.col.id, ServerAccessRequests.col.resourceId)
+        q.innerJoin(
+          Streams.name,
+          StreamsSchema.col.id,
+          ServerAccessRequestsSchema.col.resourceId
+        )
         break
     }
   }
@@ -66,8 +78,8 @@ export async function getPendingAccessRequests<T extends AccessRequestType>(
   }
 
   const q = baseQuery<T, string>(resourceType)
-    .andWhere(ServerAccessRequests.col.resourceId, resourceId)
-    .orderBy(ServerAccessRequests.col.createdAt)
+    .andWhere(ServerAccessRequestsSchema.col.resourceId, resourceId)
+    .orderBy(ServerAccessRequestsSchema.col.createdAt)
 
   return await q
 }
@@ -80,7 +92,7 @@ export async function getPendingAccessRequest<
   }
 
   const q = baseQuery<T, string>(resourceType)
-    .andWhere(ServerAccessRequests.col.id, requestId)
+    .andWhere(ServerAccessRequestsSchema.col.id, requestId)
     .first()
 
   return await q
@@ -91,8 +103,8 @@ export async function deleteRequestById(requestId: string) {
     throw new InvalidArgumentError('Request ID missing')
   }
 
-  const q = await ServerAccessRequests.knex()
-    .where(ServerAccessRequests.col.id, requestId)
+  const q = await ServerAccessRequests()
+    .where(ServerAccessRequestsSchema.col.id, requestId)
     .del()
   return !!q
 }
@@ -106,10 +118,10 @@ export async function createNewRequest<
   T extends AccessRequestType = AccessRequestType,
   I extends Nullable<string> = Nullable<string>
 >(input: AccessRecordInput<T, I>) {
-  const results = await ServerAccessRequests.knex().insert<
+  const results = await ServerAccessRequests().insert<
     string,
     ServerAccessRequestRecord<T, I>[]
-  >(input, ServerAccessRequests.cols)
+  >(input, ServerAccessRequestsSchema.cols)
 
   return results[0]
 }
@@ -123,8 +135,8 @@ export async function getUsersPendingAccessRequest<
   }
 
   const q = baseQuery<T, I>(resourceType)
-    .andWhere(ServerAccessRequests.col.requesterId, userId)
-    .andWhere(ServerAccessRequests.col.resourceId, resourceId)
+    .andWhere(ServerAccessRequestsSchema.col.requesterId, userId)
+    .andWhere(ServerAccessRequestsSchema.col.resourceId, resourceId)
     .first()
 
   return await q
