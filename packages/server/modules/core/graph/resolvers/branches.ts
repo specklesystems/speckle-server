@@ -65,9 +65,7 @@ export = {
         Roles.Stream.Contributor
       )
 
-      if (!context.userId) throw new Error('Invalid user id')
-
-      const { id } = await createBranchAndNotify(args.branch, context.userId)
+      const { id } = await createBranchAndNotify(args.branch, context.userId!)
 
       return id
     },
@@ -90,9 +88,7 @@ export = {
         Roles.Stream.Contributor
       )
 
-      if (!context.userId) throw new Error('Invalid user id')
-
-      const deleted = await deleteBranchAndNotify(args.branch, context.userId)
+      const deleted = await deleteBranchAndNotify(args.branch, context.userId!)
       return deleted
     }
   },

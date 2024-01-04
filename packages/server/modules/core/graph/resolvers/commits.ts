@@ -174,11 +174,9 @@ export = {
         Roles.Stream.Contributor
       )
 
-      if (!context.userId) throw new Error('Invalid user id')
-
       const rateLimitResult = await getRateLimitResult(
         RateLimitAction.COMMIT_CREATE,
-        context.userId
+        context.userId!
       )
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
@@ -202,9 +200,7 @@ export = {
         Roles.Stream.Contributor
       )
 
-      if (!context.userId) throw new Error('Invalid user id')
-
-      await updateCommitAndNotify(args.commit, context.userId)
+      await updateCommitAndNotify(args.commit, context.userId!)
       return true
     },
 
@@ -215,13 +211,11 @@ export = {
         Roles.Stream.Reviewer
       )
 
-      if (!context.userId) return false
-
       const commit = await getCommitById({
         streamId: args.input.streamId,
         id: args.input.commitId
       })
-      const user = await getUserById({ userId: context.userId })
+      const user = await getUserById({ userId: context.userId! })
 
       if (commit && user) {
         await addCommitReceivedActivity({ input: args.input, userId: user.id })
@@ -238,12 +232,10 @@ export = {
         Roles.Stream.Contributor
       )
 
-      if (!context.userId) throw new Error('Invalid user id')
-
       const deleted = await deleteCommitAndNotify(
         args.commit.id,
         args.commit.streamId,
-        context.userId
+        context.userId!
       )
       return deleted
     },
