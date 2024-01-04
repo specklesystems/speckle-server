@@ -1,6 +1,10 @@
 'use strict'
 import _ from 'lodash'
-import { Streams, StreamAcl, knex } from '@/modules/core/dbSchema'
+import {
+  Streams as StreamsSchema,
+  StreamAcl as StreamAclSchema,
+  knex
+} from '@/modules/core/dbSchema'
 import {
   getFavoritedStreams,
   getFavoritedStreamsCount,
@@ -25,6 +29,10 @@ import {
 import { StreamRoles } from '@speckle/shared'
 import type { Knex } from 'knex'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { StreamAclRecord, StreamRecord, UserRecord } from '@/modules/core/helpers/types'
+
+const Streams = () => StreamsSchema.knex<StreamRecord[]>()
+const StreamAcl = () => StreamAclSchema.knex<StreamAclRecord[]>()
 
 /**
  * NOTE: Stop adding stuff to this service, create specialized service modules instead for various domains
@@ -105,7 +113,7 @@ export async function getStreams({
 }) {
   const query = knex.select().from('streams')
 
-  const countQuery = Streams.knex()
+  const countQuery = Streams()
 
   if (searchQuery) {
     const whereFunc = function (qb: Knex.QueryBuilder) {
@@ -129,6 +137,7 @@ export async function getStreams({
     countQuery.andWhere(publicFunc)
   }
   const [res] = await countQuery.count()
+  if (typeof res.count === 'number') return res.count
   const count = parseInt(res.count)
 
   if (!count) return { streams: [], totalCount: 0 }
@@ -146,12 +155,15 @@ export async function getStreams({
 }
 
 export async function getStreamUsers({ streamId }: { streamId: string }) {
-  const query = StreamAcl.knex()
+  const query = StreamAcl()
     .columns({ role: 'stream_acl.role' }, 'id', 'name', 'company', 'avatar')
     .select()
     .where({ resourceId: streamId })
     .rightJoin('users', { 'users.id': 'stream_acl.userId' })
-    .select('stream_acl.role', 'name', 'id', 'company', 'avatar')
+    .select<
+      Pick<StreamAclRecord, 'role'> &
+        Pick<UserRecord, 'name' | 'id' | 'avatar' | 'company'>
+    >('stream_acl.role', 'name', 'id', 'company', 'avatar')
     .orderBy('stream_acl.role')
 
   return await query
