@@ -113,7 +113,7 @@ export function addLoadersToCtx(
 ): GraphQLContext {
   const log =
     ctx.log || Observability.extendLoggerComponent(Observability.getLogger(), 'graphql')
-  const loaders = buildRequestLoaders(ctx, options)
+  const loaders = buildRequestLoaders(ctx as GraphQLContext, options)
   return { ...ctx, loaders, log }
 }
 
