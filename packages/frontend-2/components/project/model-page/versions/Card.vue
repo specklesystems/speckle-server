@@ -79,6 +79,7 @@
             :selection-disabled="selectionDisabled"
             @select="onSelect"
             @chosen="$emit('chosen', $event)"
+            @embed="emit('embed')"
           />
         </div>
       </div>
@@ -122,6 +123,7 @@ const emit = defineEmits<{
   (e: 'select'): void
   (e: 'update:selected', val: boolean): void
   (e: 'chosen', val: VersionActionTypes): void
+  (e: 'embed'): void
 }>()
 
 const props = defineProps<{

@@ -41,6 +41,7 @@
           :selection-disabled="disabledSelections[item.id]"
           @select="onSelect(item)"
           @chosen="onSingleActionChosen($event, item)"
+          @embed="embedDialogOpen = true"
         />
         <ProjectModelPageVersionsCard
           v-else
@@ -80,6 +81,7 @@
       :version="editMessageDialogVersion"
       @fully-closed="dialogState = null"
     />
+    <ProjectModelPageDialogEmbed v-model:open="embedDialogOpen" />
     <div class="py-12">
       <!-- Some padding to deal with a card menu potentially opening at the bottom of the page -->
     </div>
@@ -167,6 +169,8 @@ const importArea = ref(
     triggerPicker: () => void
   }>
 )
+
+const embedDialogOpen = ref(false)
 
 const selectedItems = computed({
   get: () =>

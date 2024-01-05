@@ -60,5 +60,6 @@ export enum VersionActionTypes {
   EditMessage = 'edit-message',
   Select = 'select',
   Share = 'share',
-  CopyId = 'copy-id'
+  CopyId = 'copy-id',
+  EmbedModel = 'embed-model'
 }
