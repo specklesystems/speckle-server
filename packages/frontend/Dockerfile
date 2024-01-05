@@ -34,7 +34,7 @@ RUN yarn workspaces foreach run build
 RUN DEBIAN_FRONTEND=noninteractive \
     apt-get -q update && \
     apt-get install --no-install-recommends -y \
-    gettext=0.21-4 \
+    gettext=0.21-12 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
