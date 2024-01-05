@@ -18,7 +18,7 @@ const resolvers = {
         throw new ForbiddenError('You can only view your own tokens')
 
       const tokens = await getUserTokens(context.userId)
-      return tokens
+      return tokens || []
     }
   },
   Mutation: {

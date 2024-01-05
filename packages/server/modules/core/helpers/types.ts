@@ -138,6 +138,29 @@ export type ValidTokenResult = {
   scopes: string[]
   userId: string
   role: ServerRoles
+  /**
+   * Set, if the token is an app token
+   */
+  appId: Nullable<string>
 }
 
 export type TokenValidationResult = InvalidTokenResult | ValidTokenResult
+
+export type TokenScopesRecord = {
+  tokenId: string
+  scopeName: string
+}
+
+export type ServerAppRecord = {
+  id: string
+  secret: Nullable<string>
+  name: string
+  description: Nullable<string>
+  termsAndConditionsLink: Nullable<string>
+  logo: Nullable<string>
+  public: boolean
+  trustByDefault: boolean
+  authorId: string
+  createdAt: Date
+  redirectUrl: string
+}

@@ -33,3 +33,21 @@ export const canCreatePAT = (params: {
 
   return canCreateToken(params)
 }
+
+export const canCreateAppToken = (params: {
+  userScopes: string[]
+  tokenScopes: string[]
+  userAppId: string
+  tokenAppId: string
+  strict?: boolean
+}) => {
+  const { userAppId, tokenAppId, strict } = params
+  if (userAppId !== tokenAppId || !tokenAppId?.length || !userAppId?.length) {
+    if (!strict) return false
+    throw new TokenCreateError(
+      'An app token can only create a new token for the same app'
+    )
+  }
+
+  return canCreateToken(params)
+}
