@@ -221,13 +221,18 @@ describe('API Tokens', () => {
       expect(errors).to.not.be.ok
     })
 
-    it('can create new app tokens', async () => {
+    it('can create new app tokens and revoke them', async () => {
       const { data, errors } = await apollo.execute(AppTokenCreateDocument, {
         token: { name: 'test', scopes: [Scopes.Profile.Read] }
       })
 
       expect(data?.appTokenCreate).to.be.ok
       expect(errors).to.not.be.ok
+
+      const newToken = data?.appTokenCreate || ''
+      const res = await apollo.execute(RevokeTokenDocument, { token: newToken })
+      expect(res.data?.apiTokenRevoke).to.be.ok
+      expect(res.errors).to.not.be.ok
     })
 
     it("can't create app tokens without the tokens:write scope", async () => {
