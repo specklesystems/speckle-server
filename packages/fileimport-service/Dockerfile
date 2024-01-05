@@ -39,7 +39,7 @@ RUN yarn workspaces foreach run build
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
   --no-install-recommends \
-  python3-venv=3.9.2-3 \
+  python3-venv=3.11.2-1+b1 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/* \
   && python3 -m venv /venv

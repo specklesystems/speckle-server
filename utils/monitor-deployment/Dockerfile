@@ -13,7 +13,7 @@ WORKDIR /venv
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install \
     --no-install-suggests --no-install-recommends --yes \
-    python3-venv=3.9.2-3 && \
+    python3-venv=3.11.2-1+b1 && \
     python3 -m venv /venv
 
 COPY utils/monitor-deployment/requirements.txt /requirements.txt
