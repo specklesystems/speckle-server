@@ -17,90 +17,104 @@
         leave-to-class="transform opacity-0 scale-95"
       >
         <MenuItems
-          class="absolute right-0 md:right-4 top-14 md:top-16 w-screen md:w-64 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
+          class="absolute right-4 top-14 w-56 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
           <MenuItem v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-primary cursor-pointer transition border-b border-primary'
+                'flex gap-3 border-b border-primary items-center px-3 py-3 text-sm text-primary cursor-pointer transition'
               ]"
               @click="goToConnectors()"
             >
+              <CloudArrowDownIcon class="w-5 h-5" />
               Connector Downloads
-              <CloudArrowDownIcon class="w-5 h-5 sm:mr-2 text-primary" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="activeUser" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-foreground cursor-pointer transition'
+                'flex gap-2.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition'
               ]"
               @click="() => (showProfileEditDialog = true)"
             >
+              <UserAvatar :user="activeUser" size="sm" class="-ml-0.5 mr-px" />
               Edit Profile
-              <UserAvatar :user="activeUser" size="sm" class="-mr-1 sm:mr-1.5" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="isAdmin" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-foreground cursor-pointer transition'
+                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition'
               ]"
               @click="goToServerManagement()"
             >
+              <Cog6ToothIcon class="w-5 h-5" />
               Server Management
-              <Cog6ToothIcon class="w-5 h-5 sm:mr-2" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-foreground cursor-pointer transition'
+                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition'
               ]"
               @click="onThemeClick"
             >
+              <Icon class="w-5 h-5" />
               {{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}
-              <Icon class="w-5 h-5 sm:mr-2" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="activeUser && !isGuest" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-foreground cursor-pointer transition'
+                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition'
               ]"
               @click="toggleInviteDialog"
             >
+              <EnvelopeIcon class="w-5 h-5" />
               Invite to Speckle
-              <EnvelopeIcon class="w-5 h-5 sm:mr-2" />
+            </NuxtLink>
+          </MenuItem>
+          <MenuItem v-slot="{ active }">
+            <NuxtLink
+              :class="[
+                active ? 'bg-foundation-focus' : '',
+                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition'
+              ]"
+              target="_blank"
+              to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
+              external
+            >
+              <ChatBubbleLeftRightIcon class="w-5 h-5" />
+              Feedback
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="activeUser" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-danger cursor-pointer transition'
+                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-danger cursor-pointer transition'
               ]"
               @click="logout"
             >
+              <ArrowLeftOnRectangleIcon class="w-5 h-5" />
               Sign Out
-              <ArrowLeftOnRectangleIcon class="w-5 h-5 sm:mr-2" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="!activeUser" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex items-center  justify-between px-4 sm:pr-2 sm:pl-4 py-3 text-sm text-primary cursor-pointer transition'
+                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-primary cursor-pointer transition'
               ]"
               :to="loginUrl"
             >
+              <ArrowRightOnRectangleIcon class="w-5 h-5" />
               Sign In
-              <ArrowRightOnRectangleIcon class="w-5 h-5 sm:mr-2" />
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="version">
@@ -124,9 +138,10 @@ import {
   SunIcon,
   MoonIcon,
   EnvelopeIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  CloudArrowDownIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/vue/24/outline'
-import { CloudArrowDownIcon } from '@heroicons/vue/24/solid'
 import { useQuery } from '@vue/apollo-composable'
 import { Roles } from '@speckle/shared'
 import type { Optional } from '@speckle/shared'

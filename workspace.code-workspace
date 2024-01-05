@@ -77,7 +77,7 @@
     "editor.snippetSuggestions": "top",
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": true
+      "source.fixAll.eslint": "explicit"
     },
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "search.useParentIgnoreFiles": true,
@@ -106,6 +106,9 @@
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "[dockercompose]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[json]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode"
     }
   },

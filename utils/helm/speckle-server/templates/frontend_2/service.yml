@@ -12,7 +12,7 @@ spec:
     project: speckle-server
   ports:
     - protocol: TCP
-      name: www
+      name: web
       port: 8080
       targetPort: www
 {{- end }}

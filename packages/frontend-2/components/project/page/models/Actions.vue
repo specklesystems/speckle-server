@@ -11,7 +11,7 @@
         <EllipsisVerticalIcon class="w-4 h-4" />
       </FormButton>
     </LayoutMenu>
-    <ProjectPageModelsCardRenameDialog
+    <ProjectPageModelsCardEditDialog
       v-model:open="isRenameDialogOpen"
       :model="model"
       :project-id="projectId"
@@ -31,6 +31,12 @@ import type { ProjectPageModelsActionsFragment } from '~~/lib/common/generated/g
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
+import {
+  TrashIcon,
+  PencilIcon,
+  LinkIcon,
+  FingerPrintIcon
+} from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
@@ -71,22 +77,30 @@ const openDialog = ref(null as Nullable<ActionTypes>)
 const isMain = computed(() => props.model.name === 'main')
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
-    { title: 'Rename', id: ActionTypes.Rename, disabled: !props.canEdit },
     {
-      title: 'Delete',
-      id: ActionTypes.Delete,
-      disabled: isMain.value || !props.canEdit
-    }
-  ],
-  [
-    { title: 'Copy Link', id: ActionTypes.Share },
-    { title: 'Copy ID', id: ActionTypes.CopyId }
-  ],
-  [
+      title: 'Edit',
+      id: ActionTypes.Rename,
+      disabled: !props.canEdit,
+      icon: PencilIcon
+    },
     {
       title: 'Upload new version',
       id: ActionTypes.UploadVersion,
-      disabled: !props.canEdit
+      disabled: !props.canEdit,
+      icon: TrashIcon
+    }
+  ],
+  [
+    { title: 'Copy Link', id: ActionTypes.Share, icon: LinkIcon },
+    { title: 'Copy ID', id: ActionTypes.CopyId, icon: FingerPrintIcon }
+  ],
+  [
+    {
+      title: 'Delete',
+      id: ActionTypes.Delete,
+      disabled: isMain.value || !props.canEdit,
+      icon: TrashIcon,
+      color: 'danger'
     }
   ]
 ])

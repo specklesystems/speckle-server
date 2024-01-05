@@ -52,8 +52,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
           speckleServerVersion,
           serverName,
           frontendType: 'frontend-2',
-          route: route.path,
-          routeDefinition: route.matched[route.matched.length - 1].path,
+          route: route?.path,
+          routeDefinition: route.matched?.[route.matched.length - 1]?.path,
           ...collectBrowserInfo()
         }
       }

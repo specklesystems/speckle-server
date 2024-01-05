@@ -14,6 +14,7 @@ import type {
 import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 import CommonStepsNumber from '~~/src/components/common/steps/Number.vue'
 import CommonStepsBullet from '~~/src/components/common/steps/Bullet.vue'
+import CommonAnimationInstructional from '~~/src/components/common/animation/Instructional.vue'
 import FormCardButton from '~~/src/components/form/CardButton.vue'
 import FormCheckbox from '~~/src/components/form/Checkbox.vue'
 import FormRadio from '~~/src/components/form/Radio.vue'
@@ -94,6 +95,7 @@ export {
   TailwindBreakpoints,
   CommonStepsBullet,
   CommonStepsNumber,
+  CommonAnimationInstructional,
   FormCardButton,
   FormCheckbox,
   FormRadio,

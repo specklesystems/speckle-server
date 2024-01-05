@@ -626,6 +626,7 @@ export type CreateCommentReplyInput = {
 };
 
 export type CreateModelInput = {
+  description?: InputMaybe<Scalars['String']>;
   name: Scalars['String'];
   projectId: Scalars['ID'];
 };
@@ -971,6 +972,7 @@ export type Mutation = {
   projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean'];
+  requestVerificationByEmail: Scalars['Boolean'];
   serverInfoUpdate?: Maybe<Scalars['Boolean']>;
   serverInviteBatchCreate: Scalars['Boolean'];
   /** Invite a new user to the speckle server and return the invite ID */
@@ -1156,6 +1158,11 @@ export type MutationInviteResendArgs = {
 
 export type MutationObjectCreateArgs = {
   objectInput: ObjectCreateInput;
+};
+
+
+export type MutationRequestVerificationByEmailArgs = {
+  email: Scalars['String'];
 };
 
 
@@ -1827,6 +1834,8 @@ export type Query = {
    */
   projectInvite?: Maybe<PendingStreamCollaborator>;
   serverInfo: ServerInfo;
+  /** Receive metadata about an invite by the invite token */
+  serverInviteByToken?: Maybe<ServerInvite>;
   /** @deprecated use admin.serverStatistics instead */
   serverStats: ServerStats;
   /**
@@ -1921,6 +1930,11 @@ export type QueryProjectArgs = {
 export type QueryProjectInviteArgs = {
   projectId: Scalars['String'];
   token?: InputMaybe<Scalars['String']>;
+};
+
+
+export type QueryServerInviteByTokenArgs = {
+  token: Scalars['String'];
 };
 
 
@@ -2530,8 +2544,9 @@ export type TestItem = {
 };
 
 export type UpdateModelInput = {
+  description?: InputMaybe<Scalars['String']>;
   id: Scalars['ID'];
-  name: Scalars['String'];
+  name?: InputMaybe<Scalars['String']>;
   projectId: Scalars['ID'];
 };
 

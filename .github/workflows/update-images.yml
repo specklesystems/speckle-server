@@ -1,0 +1,31 @@
+name: Image digest update
+
+on:
+  workflow_dispatch:
+  schedule:
+    # At the end of every day
+    - cron: '0 0 * * *'
+
+jobs:
+  image-update:
+    name: Image digest update
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # to push the updates
+      pull-requests: write # to open Pull requests
+      id-token: write # used to sign the commits using gitsign
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update the image digest
+        uses: chainguard-dev/digestabot@v1.0.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          signoff: true # optional
+          author: specklebot <devops@speckle.systems> # optional
+          committer: specklebot <devops@speckle.systems> # optional
+          labels-for-pr: # optional
+          branch-for-pr: update-image-digests # optional
+          title-for-pr: 'chore(deps): bump image digests' # optional
+          commit-message: Update image digests # optional

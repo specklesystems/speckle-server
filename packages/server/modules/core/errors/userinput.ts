@@ -1,13 +1,9 @@
-import { BaseError } from '@/modules/shared/errors'
+import { BaseError, Info } from '@/modules/shared/errors'
 import { Options } from 'verror'
 
-export class UserInputError extends BaseError {
+export class UserInputError<I extends Info = Info> extends BaseError<I> {
   static defaultMessage = 'Invalid user input.'
   static code = 'USER_INPUT_ERROR'
-
-  constructor(message?: string | undefined, options?: Options | Error | undefined) {
-    super(message, options)
-  }
 }
 
 export class PasswordTooShortError extends UserInputError {
@@ -17,4 +13,14 @@ export class PasswordTooShortError extends UserInputError {
       options
     )
   }
+}
+
+interface UnverifiedEmailSSOLoginErrorInfo {
+  email: string
+}
+
+export class UnverifiedEmailSSOLoginError extends UserInputError<UnverifiedEmailSSOLoginErrorInfo> {
+  static defaultMessage =
+    'Email already in use by a user with unverified email. Verify the email on the existing user to be able to log in with this method.'
+  static code = 'UNVERIFIED_EMAIL_SSO_LOGIN_ERROR'
 }

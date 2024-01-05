@@ -73,7 +73,6 @@
             :class="`transition ${
               hovered ? 'inline-block opacity-100' : 'sm:hidden sm:opacity-0'
             }`"
-            :disabled="versionCount === 0"
           >
             {{ versionCount }}
           </FormButton>

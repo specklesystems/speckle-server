@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: speckle-server-redirect
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "speckle.labels" . | indent 4 }}
+  annotations:
+    nginx.org/mergeable-ingress-type: "minion"
+    nginx.ingress.kubernetes.io/rewrite-target: / # redirects every path defined in this ingress to root
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: {{ .Values.domain }}
+    http:
+      paths:
+      - pathType: Exact
+        path: "/metrics"
+        backend:
+          service:
+{{- if .Values.frontend_2.enabled }}
+            name: speckle-frontend-2
+            port:
+              name: web
+{{- else }}
+            name: speckle-frontend
+            port:
+              name: www
+{{- end }}

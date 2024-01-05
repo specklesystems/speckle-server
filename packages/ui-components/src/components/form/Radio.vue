@@ -19,11 +19,15 @@
         @change="onChange"
       />
     </div>
-    <div v-if="icon" class="text-sm">
-      <component :is="icon" class="h-10 w-10"></component>
-    </div>
-    <div class="text-sm">
-      <label :for="finalId" class="text-foreground" :class="{ 'sr-only': hideLabel }">
+    <div class="text-sm" :class="inlineDescription ? 'flex gap-2 items-center' : ''">
+      <label
+        :for="finalId"
+        class="text-foreground flex gap-2 items-center"
+        :class="{ 'sr-only': hideLabel }"
+      >
+        <div v-if="icon" class="text-sm">
+          <component :is="icon" class="h-10 w-10"></component>
+        </div>
         <span>{{ title }}</span>
         <span v-if="showRequired" class="text-danger ml-1">*</span>
       </label>
@@ -180,12 +184,6 @@ const descriptionText = computed(() => props.description || errorMessage.value)
 const descriptionId = computed(() => `${props.name}-description`)
 const descriptionClasses = computed((): string => {
   const classParts: string[] = []
-
-  if (props.inlineDescription) {
-    classParts.push('inline ml-2')
-  } else {
-    classParts.push('block')
-  }
 
   if (errorMessage.value) {
     classParts.push('text-danger')
