@@ -1,4 +1,4 @@
-FROM debian:12-slim@sha256:45287d89d96414e57c7705aa30cb8f9836ef30ae8897440dd8f06c4cff801eec AS build-stage
+FROM debian:12-slim@sha256:f80c45482c8d147da87613cb6878a7238b8642bcc24fc11bad78c7bec726f340 AS build-stage
 WORKDIR /venv
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install \
