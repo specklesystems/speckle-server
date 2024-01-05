@@ -23,8 +23,8 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           signoff: true # optional
-          author: specklebot # optional
-          committer: devops@speckle.systems # optional
+          author: specklebot <devops@speckle.systems> # optional
+          committer: specklebot <devops@speckle.systems> # optional
           labels-for-pr: # optional
           branch-for-pr: update-image-digests # optional
           title-for-pr: 'chore(deps): bump image digests' # optional
