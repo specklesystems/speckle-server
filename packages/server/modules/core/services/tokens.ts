@@ -112,17 +112,17 @@ export async function validateToken(
 
   if (valid) {
     const [scopes, acl, app] = await Promise.all([
-      TokenScopes.knex().select('scopeName').where({ tokenId }) as Promise<
-        { scopeName: string }[]
-      >,
+      TokenScopes.knex()
+        .select<{ scopeName: string }[]>('scopeName')
+        .where({ tokenId }),
       ServerAcl.knex()
-        .select('role')
+        .select<{ role: ServerRoles }[]>('role')
         .where({ userId: token.owner })
-        .first() as Promise<{ role: ServerRoles }>,
+        .first(),
       getTokenAppInfo({ token: tokenString }),
       ApiTokens.knex().where({ id: tokenId }).update({ lastUsed: knex.fn.now() })
     ])
-    const role = acl.role
+    const role = acl!.role
 
     return {
       valid: true,
