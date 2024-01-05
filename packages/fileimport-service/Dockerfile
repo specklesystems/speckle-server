@@ -1,6 +1,6 @@
 ARG NODE_ENV=production
 
-FROM node:18-bullseye-slim@sha256:b816d45defe8dc6a07321f05b7e58a841f97e612f6f6ea0a3be44ea7d77474a1 as build-stage
+FROM node:18-bookworm-slim@sha256:8e04602828ddd8c394c701f265c048f2a7cf9cbf112635ba26cec2d06936f17b as build-stage
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
@@ -47,7 +47,7 @@ RUN apt-get update && \
 COPY packages/fileimport-service/requirements.txt /speckle-server/
 RUN /venv/bin/pip install --disable-pip-version-check --no-cache-dir --requirement /speckle-server/requirements.txt
 
-FROM node:18-bullseye-slim@sha256:b816d45defe8dc6a07321f05b7e58a841f97e612f6f6ea0a3be44ea7d77474a1 as dependency-stage
+FROM node:18-bookworm-slim@sha256:8e04602828ddd8c394c701f265c048f2a7cf9cbf112635ba26cec2d06936f17b as dependency-stage
 # installing just the production dependencies
 # separate stage to avoid including development dependencies
 ARG NODE_ENV

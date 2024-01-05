@@ -1,6 +1,6 @@
 ARG NODE_ENV=production
 
-FROM node:18-bullseye-slim@sha256:b816d45defe8dc6a07321f05b7e58a841f97e612f6f6ea0a3be44ea7d77474a1 as build-stage
+FROM node:18-bookworm-slim@sha256:8e04602828ddd8c394c701f265c048f2a7cf9cbf112635ba26cec2d06936f17b as build-stage
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
@@ -32,7 +32,7 @@ ENV TINI_VERSION=${TINI_VERSION}
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini ./tini
 RUN chmod +x ./tini
 
-FROM node:18-bullseye-slim@sha256:b816d45defe8dc6a07321f05b7e58a841f97e612f6f6ea0a3be44ea7d77474a1 as dependency-stage
+FROM node:18-bookworm-slim@sha256:8e04602828ddd8c394c701f265c048f2a7cf9cbf112635ba26cec2d06936f17b as dependency-stage
 # yarn install
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
