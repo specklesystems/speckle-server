@@ -50,7 +50,7 @@ export async function createTestCommits(commits: BasicTestCommit[]) {
         streamId: c.streamId,
         branchName: 'main',
         message: c.message || 'this message is auto generated',
-        sourceApplication: 'tests',
+        sourceApplication: 'IFC' as const,
         objectId: c.objectId,
         authorId: c.authorId,
         totalChildrenCount: 0,

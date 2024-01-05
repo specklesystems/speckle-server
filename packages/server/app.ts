@@ -222,9 +222,6 @@ async function buildMocksConfig(): Promise<{
 
 /**
  * Create Apollo Server instance
- * @param optionOverrides Optionally override ctor options
- * @param subscriptionServerResolver If you expect to use subscriptions on this instance,
- * pass in a callable that resolves the subscription server
  */
 export async function buildApolloServer(
   optionOverrides?: Partial<ApolloServerExpressConfig>,

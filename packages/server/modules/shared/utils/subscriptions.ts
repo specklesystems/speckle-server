@@ -7,15 +7,30 @@ import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import {
   AutomationRun,
   AutomationsStatus,
+  BranchDeleteInput,
+  BranchUpdateInput,
+  CommitCreateInput,
+  CommitUpdateInput,
+  DeleteModelInput,
   ProjectAutomationsStatusUpdatedMessage,
   ProjectCommentsUpdatedMessage,
+  ProjectCreateInput,
   ProjectFileImportUpdatedMessage,
   ProjectModelsUpdatedMessage,
   ProjectPendingModelsUpdatedMessage,
   ProjectPendingVersionsUpdatedMessage,
+  ProjectUpdateInput,
   ProjectUpdatedMessage,
   ProjectVersionsPreviewGeneratedMessage,
   ProjectVersionsUpdatedMessage,
+  StreamCreateInput,
+  StreamUpdateInput,
+  SubscriptionBranchCreatedArgs,
+  SubscriptionBranchDeletedArgs,
+  SubscriptionBranchUpdatedArgs,
+  SubscriptionCommitCreatedArgs,
+  SubscriptionCommitDeletedArgs,
+  SubscriptionCommitUpdatedArgs,
   SubscriptionProjectAutomationsStatusUpdatedArgs,
   SubscriptionProjectCommentsUpdatedArgs,
   SubscriptionProjectFileImportUpdatedArgs,
@@ -25,8 +40,11 @@ import {
   SubscriptionProjectUpdatedArgs,
   SubscriptionProjectVersionsPreviewGeneratedArgs,
   SubscriptionProjectVersionsUpdatedArgs,
+  SubscriptionStreamDeletedArgs,
+  SubscriptionStreamUpdatedArgs,
   SubscriptionSubscribeFn,
   SubscriptionViewerUserActivityBroadcastedArgs,
+  UpdateModelInput,
   UserProjectsUpdatedMessage,
   ViewerResourceItem,
   ViewerUserActivityMessage
@@ -40,6 +58,7 @@ import {
 import { CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes'
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types'
 import { AutomationFunctionRunGraphQLReturn } from '@/modules/automations/helpers/graphTypes'
+import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -107,6 +126,72 @@ type NoVariables = Record<string, never>
 
 // Add mappings between expected event constant, its payload and variables
 type SubscriptionTypeMap = {
+  [StreamSubscriptions.UserStreamAdded]: {
+    payload: {
+      userStreamAdded: ProjectCreateInput | StreamCreateInput
+      ownerId: string
+    }
+    variables: NoVariables
+  }
+  [StreamSubscriptions.UserStreamRemoved]: {
+    payload: {
+      userStreamRemoved: { id: string }
+      ownerId: string
+    }
+    variables: NoVariables
+  }
+  [StreamSubscriptions.StreamUpdated]: {
+    payload: {
+      streamUpdated: StreamUpdateInput | ProjectUpdateInput
+      id: string
+    }
+    variables: SubscriptionStreamUpdatedArgs
+  }
+  [StreamSubscriptions.StreamDeleted]: {
+    payload: {
+      streamDeleted: { streamId: string }
+      streamId: string
+    }
+    variables: SubscriptionStreamDeletedArgs
+  }
+  [CommitSubscriptions.CommitCreated]: {
+    payload: {
+      commitCreated: CommitCreateInput
+      streamId: string
+    }
+    variables: SubscriptionCommitCreatedArgs
+  }
+  [CommitSubscriptions.CommitUpdated]: {
+    payload: {
+      commitUpdated: CommitUpdateInput
+      streamId: string
+      commitId: string
+    }
+    variables: SubscriptionCommitUpdatedArgs
+  }
+  [CommitSubscriptions.CommitDeleted]: {
+    payload: {
+      commitDeleted: CommitRecord & { streamId: string; branchId: string }
+      streamId: string
+    }
+    variables: SubscriptionCommitDeletedArgs
+  }
+  [BranchSubscriptions.BranchCreated]: {
+    payload: { branchCreated: BranchRecord; streamId: string }
+    variables: SubscriptionBranchCreatedArgs
+  }
+  [BranchSubscriptions.BranchUpdated]: {
+    payload: {
+      branchUpdated: BranchUpdateInput | UpdateModelInput
+      streamId: string
+      branchId: string
+    }
+    variables: SubscriptionBranchUpdatedArgs
+  }
+  [BranchSubscriptions.BranchDeleted]: {
+    payload: { branchDeleted: BranchDeleteInput | DeleteModelInput; streamId: string }
+    variables: SubscriptionBranchDeletedArgs
+  }
   [UserSubscriptions.UserProjectsUpdated]: {
     payload: {
       userProjectsUpdated: Merge<
@@ -235,6 +320,9 @@ type SubscriptionEvent =
   | ProjectSubscriptions
   | ViewerSubscriptions
   | FileImportSubscriptions
+  | BranchSubscriptions
+  | CommitSubscriptions
+  | StreamSubscriptions
 
 /**
  * Publish a GQL subscription event

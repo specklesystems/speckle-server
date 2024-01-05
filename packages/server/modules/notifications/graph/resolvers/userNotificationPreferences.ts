@@ -4,7 +4,7 @@ import {
   getUserNotificationPreferences
 } from '@/modules/notifications/services/notificationPreferences'
 
-module.exports = {
+export = {
   User: {
     async notificationPreferences(parent) {
       const preferences = await getUserNotificationPreferences(parent.id)
@@ -12,12 +12,8 @@ module.exports = {
     }
   },
   Mutation: {
-    async userNotificationPreferencesUpdate(
-      _parent,
-      args,
-      context: { userId: string }
-    ) {
-      await updateNotificationPreferences(context.userId, args.preferences)
+    async userNotificationPreferencesUpdate(_parent, args, context) {
+      await updateNotificationPreferences(context.userId!, args.preferences)
       return true
     }
   }

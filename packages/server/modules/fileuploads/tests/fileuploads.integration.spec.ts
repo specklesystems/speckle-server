@@ -47,7 +47,7 @@ describe('FileUploads @fileuploads', () => {
       userId: userOneId,
       name: 'test token',
       scopes: [Scopes.Streams.Write],
-      lifespan: 3600
+      lifespan: BigInt(3600)
     }))
   })
 
@@ -186,7 +186,7 @@ describe('FileUploads @fileuploads', () => {
         userId: userOneId,
         name: 'test token',
         scopes: [Scopes.Streams.Read],
-        lifespan: 3600
+        lifespan: BigInt(3600)
       })
       const response = await request(app)
         .post(`/api/file/autodetect/${createdStreamId}/main`)

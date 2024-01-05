@@ -1,4 +1,4 @@
-import { Roles, wait } from '@speckle/shared'
+import { Roles, isStreamRole, wait } from '@speckle/shared'
 import {
   addStreamCreatedActivity,
   addStreamDeletedActivity,
@@ -70,8 +70,6 @@ export async function createStreamReturnRecord(
 
 /**
  * Delete stream & notify users (emit events & save activity)
- * @param {string} streamId
- * @param {string} deleterId
  */
 export async function deleteStreamAndNotify(streamId: string, deleterId: string) {
   await addStreamDeletedActivity({ streamId, deleterId })
@@ -115,7 +113,7 @@ export async function updateStreamAndNotify(
   return newStream
 }
 
-type PermissionUpdateInput =
+export type PermissionUpdateInput =
   | StreamUpdatePermissionInput
   | StreamRevokePermissionInput
   | ProjectUpdateRoleInput
@@ -143,7 +141,7 @@ export async function updateStreamRoleAndNotify(
 
   if (params.role) {
     // Updating role
-    if (!(Object.values(Roles.Stream) as string[]).includes(params.role)) {
+    if (!isStreamRole(params.role)) {
       throw new StreamUpdateError('Invalid role specified', {
         info: { params }
       })

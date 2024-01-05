@@ -349,7 +349,7 @@ describe('Streams @core-streams', () => {
         message: 'first commit',
         objectId: testObject.id,
         authorId: userOne.id,
-        sourceApplication: 'tests',
+        sourceApplication: 'IFC' as const,
         totalChildrenCount: null,
         parents: null
       })

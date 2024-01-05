@@ -132,8 +132,6 @@ const createBaseInnerSchemaConfigBuilder =
 
 /**
  * Create table schema helper
- * @param tableName
- * @param columns
  */
 function buildTableHelper<
   T extends string,
@@ -279,6 +277,14 @@ export const Users = buildTableHelper(
 
 export const ServerAcl = buildTableHelper('server_acl', ['userId', 'role'])
 
+export const UserRoles = buildTableHelper('user_roles', [
+  'name',
+  'description',
+  'resourceTarget',
+  'aclTableName',
+  'weight'
+])
+
 export const Comments = buildTableHelper('comments', [
   'id',
   'streamId',
@@ -353,6 +359,13 @@ export const ApiTokens = buildTableHelper('api_tokens', [
   'createdAt',
   'lastUsed'
 ])
+
+export const PersonalApiTokens = buildTableHelper('personal_api_tokens', [
+  'tokenId',
+  'userId'
+])
+
+export const TokenScopes = buildTableHelper('token_scopes', ['tokenId', 'scopeName'])
 
 export const EmailVerifications = buildTableHelper('email_verifications', [
   'id',
@@ -491,5 +504,18 @@ export const ServerAppsScopes = buildTableHelper('server_apps_scopes', [
 ])
 
 export const Scopes = buildTableHelper('scopes', ['name', 'description', 'public'])
+
+export const ServerConfig = buildTableHelper('server_config', [
+  'id',
+  'name',
+  'company',
+  'description',
+  'adminContact',
+  'termsOfService',
+  'canonicalUrl',
+  'completed',
+  'inviteOnly',
+  'guestModeEnabled'
+])
 
 export { knex }

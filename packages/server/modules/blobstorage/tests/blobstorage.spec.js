@@ -126,13 +126,13 @@ describe('Blob storage @blobstorage', () => {
         expect(cursorFromRows([], 'cursorTarget')).to.be.null
         expect(cursorFromRows(null, 'cursorTarget')).to.be.null
       })
-      it("throws if the cursor target doesn't find a date object", () => {
+      it('throws if the cursor target doesnt find a date object', () => {
         try {
           cursorFromRows([{}], 'cursorTarget')
           throw new Error('This should have thrown')
         } catch (err) {
           if (!(err instanceof BadRequestError)) throw err
-          expect(err.message).to.equal('The cursor target is not a date object')
+          expect(err.message).to.equal('The cursor target is not present in the row.')
         }
       })
     })

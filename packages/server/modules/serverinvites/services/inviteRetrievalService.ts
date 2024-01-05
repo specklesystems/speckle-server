@@ -79,14 +79,13 @@ export async function getPendingStreamCollaborators(
   // Build results
   const results = []
   for (const invite of invites) {
-    /** @type {import("@/modules/core/helpers/userHelper").LimitedUserRecord} */
-    let user
+    let user: Nullable<LimitedUserRecord> = null
     const { userId } = resolveTarget(invite.target)
     if (userId && usersById[userId]) {
-      user = removePrivateFields(usersById[userId])
+      user = removePrivateFields(usersById[userId]) as Nullable<LimitedUserRecord>
     }
 
-    results.push(buildPendingStreamCollaboratorModel(invite, user || null))
+    results.push(buildPendingStreamCollaboratorModel(invite, user))
   }
 
   return results

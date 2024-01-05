@@ -38,6 +38,20 @@ export type ServerAclRecord = {
   role: string
 }
 
+export type UserRolesRecord = {
+  name: Nullable<string>
+  description: string
+  resourceTarget: string
+  aclTableName: string
+  weight: number
+}
+
+export type ScopesRecord = {
+  name: string
+  description: string
+  public: boolean
+}
+
 export type StreamRecord = {
   id: string
   name: string

@@ -95,7 +95,7 @@ export type AllActivityTypes =
 // }
 
 export interface StreamScopeActivity extends StreamActivityRecord {
-  streamId: string
+  streamId: Nullable<string>
 }
 
 export interface StreamActivity extends StreamScopeActivity {

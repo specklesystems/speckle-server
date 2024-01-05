@@ -54,9 +54,6 @@ export const getTokenFromRequest = (req: Request | null | undefined): string | n
 
 /**
  * Create an AuthContext from a raw token value
- * @param rawToken
- * @param tokenValidator
- * @returns The resulting AuthContext object of the token validator
  */
 export async function createAuthContextFromToken(
   rawToken: string | null,
@@ -116,7 +113,7 @@ export function addLoadersToCtx(
 ): GraphQLContext {
   const log =
     ctx.log || Observability.extendLoggerComponent(Observability.getLogger(), 'graphql')
-  const loaders = buildRequestLoaders(ctx, options)
+  const loaders = buildRequestLoaders(ctx as GraphQLContext, options)
   return { ...ctx, loaders, log }
 }
 
@@ -172,9 +169,6 @@ const X_SPECKLE_CLIENT_IP_HEADER = 'x-speckle-client-ip'
 /**
  * Determine the IP address of the request source and add it as a header to the request object.
  * This is used to correlate anonymous/unauthenticated requests with external data sources.
- * @param req HTTP request object
- * @param _res HTTP response object
- * @param next Express middleware-compatible next function
  */
 export async function determineClientIpAddressMiddleware(
   req: Request,
