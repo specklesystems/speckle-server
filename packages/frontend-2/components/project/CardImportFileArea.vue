@@ -23,7 +23,7 @@
           v-if="errorMessage"
           class="text-danger inline-flex space-x-1 items-center text-center"
         >
-          <ExclamationTriangleIcon class="h-4 w-4" />
+          <ExclamationTriangleIcon class="h-4 w-4 shrink-0" />
           <span>{{ errorMessage }}</span>
         </span>
         <div
