@@ -138,7 +138,7 @@ export interface IViewer {
 
   getViews(): SpeckleView[]
 
-  loadObject(loader: Loader, priority?: number, zoomToObject?: boolean): Promise<void>
+  loadObject(loader: Loader, zoomToObject?: boolean): Promise<void>
   cancelLoad(url: string, unload?: boolean): Promise<void>
   unloadObject(url: string): Promise<void>
   unloadAll(): Promise<void>

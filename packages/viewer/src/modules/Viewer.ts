@@ -292,8 +292,7 @@ export class Viewer extends EventEmitter implements IViewer {
    * OBJECT LOADING/UNLOADING
    */
 
-  public async loadObject(loader: Loader, priority: number = 1, zoomToObject = true) {
-    priority
+  public async loadObject(loader: Loader, zoomToObject = true) {
     if (++this.inProgressOperations === 1)
       (this as EventEmitter).emit(ViewerEvent.Busy, true)
 
