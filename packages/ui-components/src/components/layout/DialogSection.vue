@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, unref, computed } from 'vue'
+import { ref, unref, computed, onMounted } from 'vue'
 import type { Ref } from 'vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { FormButton } from '~~/src/lib'
@@ -109,7 +109,8 @@ const props = defineProps({
         onClick?: () => void
       }
     | undefined,
-  alwaysOpen: Boolean
+  alwaysOpen: Boolean,
+  defaultOpen: Boolean
 })
 
 const content: Ref<HTMLElement | null> = ref(null)
@@ -153,4 +154,11 @@ const toggleExpansion = () => {
     contentHeight.value = (unref(content)?.scrollHeight || 0) + 64
   }
 }
+
+onMounted(() => {
+  isExpanded.value = props.defaultOpen || false
+  if (isExpanded.value) {
+    contentHeight.value = (unref(content)?.scrollHeight || 0) + 64
+  }
+})
 </script>

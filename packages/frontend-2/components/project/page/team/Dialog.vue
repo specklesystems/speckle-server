@@ -6,8 +6,12 @@
       <ProjectPageTeamDialogInviteUser
         v-if="isOwner && !isServerGuest"
         :project="project"
+        :default-open="openSection === 'invite'"
       />
-      <ProjectPageTeamDialogManagePermissions :project="project" />
+      <ProjectPageTeamDialogManagePermissions
+        :project="project"
+        :default-open="openSection === 'access'"
+      />
       <ProjectPageTeamDialogWebhooks :project="project" />
       <ProjectPageTeamDialogDangerZones
         v-if="isOwner || canLeaveProject"
@@ -20,6 +24,7 @@
 import type { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
+import type { OpenSectionType } from '~~/components/project/page/stats-block/Settings.vue'
 
 graphql(`
   fragment ProjectPageTeamDialog on Project {
@@ -55,6 +60,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   open: boolean
   project: ProjectPageTeamDialogFragment
+  openSection?: OpenSectionType
 }>()
 
 const { isOwner, isServerGuest, canLeaveProject } = useTeamDialogInternals({
