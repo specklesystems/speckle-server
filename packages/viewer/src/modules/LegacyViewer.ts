@@ -353,7 +353,7 @@ export class LegacyViewer extends Viewer {
     zoomToObject = true
   ) {
     const loader = new SpeckleLoader(this.tree, url, token, enableCaching)
-    return this.loadObject(loader, 1, zoomToObject)
+    return this.loadObject(loader, zoomToObject)
   }
 
   public async diff(
