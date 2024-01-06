@@ -81,7 +81,11 @@
       :version="editMessageDialogVersion"
       @fully-closed="dialogState = null"
     />
-    <ProjectModelPageDialogEmbed v-model:open="embedDialogOpen" />
+    <ProjectModelPageDialogEmbed
+      v-model:open="embedDialogOpen"
+      :visibility="project.visibility"
+      :project-id="project.id"
+    />
     <div class="py-12">
       <!-- Some padding to deal with a card menu potentially opening at the bottom of the page -->
     </div>

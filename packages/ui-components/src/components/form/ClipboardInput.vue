@@ -6,7 +6,7 @@
       name="contentArea"
       readonly
       :model-value="value"
-      class="relative z-10 text-sm text-foreground font-mono min-h-[76px]"
+      class="relative z-10 text-sm text-foreground font-mono"
       :rows="rows"
     />
     <FormTextInput
