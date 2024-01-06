@@ -4,7 +4,7 @@
     border-b
     border-t
     title="Invite"
-    :default-open="defaultOpen"
+    :guided-open="defaultOpen"
   >
     <template #icon>
       <UserPlusIcon class="h-full w-full" />

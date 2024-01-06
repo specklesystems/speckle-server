@@ -28,6 +28,14 @@
           <slot name="icon"></slot>
         </div>
         <span>{{ title }}</span>
+        <span v-if="guidedOpen" class="relative flex h-2 w-2">
+          <span
+            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"
+          ></span>
+          <span
+            class="relative inline-flex rounded-full h-2 w-2 bg-primary opacity-80"
+          ></span>
+        </span>
       </div>
       <div>
         <ChevronDownIcon
@@ -110,7 +118,7 @@ const props = defineProps({
       }
     | undefined,
   alwaysOpen: Boolean,
-  defaultOpen: Boolean
+  guidedOpen: Boolean
 })
 
 const content: Ref<HTMLElement | null> = ref(null)
@@ -156,7 +164,7 @@ const toggleExpansion = () => {
 }
 
 onMounted(() => {
-  isExpanded.value = props.defaultOpen || false
+  isExpanded.value = props.guidedOpen || false
   if (isExpanded.value) {
     contentHeight.value = (unref(content)?.scrollHeight || 0) + 64
   }
