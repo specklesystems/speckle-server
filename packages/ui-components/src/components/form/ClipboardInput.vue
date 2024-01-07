@@ -21,7 +21,7 @@
       <FormButton
         color="invert"
         size="sm"
-        :icon-left="ClipboardDocumentIcon"
+        :icon-left="copied ? ClipboardDocumentCheckIcon : ClipboardDocumentIcon"
         hide-text
         @click="handleCopy"
       ></FormButton>
@@ -31,8 +31,12 @@
 
 <script setup lang="ts">
 import { useClipboard } from '@vueuse/core'
-import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
+import {
+  ClipboardDocumentIcon,
+  ClipboardDocumentCheckIcon
+} from '@heroicons/vue/24/outline'
 import { FormTextArea, FormTextInput, FormButton } from '~~/src/lib'
+import { ref } from 'vue'
 
 type Props = {
   value: string
@@ -48,10 +52,17 @@ const emit = defineEmits<{ (e: 'copy', val: string): void }>()
 
 const { copy } = useClipboard({ legacy: true })
 
+const copied = ref(false)
+
 const handleCopy = async () => {
   if (props.value) {
     await copy(props.value)
+    copied.value = true
     emit('copy', props.value)
+
+    setTimeout(() => {
+      copied.value = false
+    }, 2000)
   }
 }
 </script>
