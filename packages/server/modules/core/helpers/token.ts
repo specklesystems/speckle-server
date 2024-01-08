@@ -4,12 +4,10 @@ import { Scopes } from '@speckle/shared'
 export const canCreateToken = (params: {
   userScopes: string[]
   tokenScopes: string[]
-  strict?: boolean
 }) => {
-  const { userScopes, tokenScopes, strict } = params
+  const { userScopes, tokenScopes } = params
   const hasAllScopes = tokenScopes.every((scope) => userScopes.includes(scope))
   if (!hasAllScopes) {
-    if (!strict) return false
     throw new TokenCreateError(
       "You can't create a token with scopes that you don't have"
     )
@@ -21,11 +19,9 @@ export const canCreateToken = (params: {
 export const canCreatePAT = (params: {
   userScopes: string[]
   tokenScopes: string[]
-  strict?: boolean
 }) => {
-  const { tokenScopes, strict } = params
+  const { tokenScopes } = params
   if (tokenScopes.includes(Scopes.Tokens.Write)) {
-    if (!strict) return false
     throw new TokenCreateError(
       "You can't create a personal access token with the tokens:write scope"
     )
@@ -39,11 +35,9 @@ export const canCreateAppToken = (params: {
   tokenScopes: string[]
   userAppId: string
   tokenAppId: string
-  strict?: boolean
 }) => {
-  const { userAppId, tokenAppId, strict } = params
+  const { userAppId, tokenAppId } = params
   if (userAppId !== tokenAppId || !tokenAppId?.length || !userAppId?.length) {
-    if (!strict) return false
     throw new TokenCreateError(
       'An app token can only create a new token for the same app'
     )
