@@ -39,6 +39,7 @@ import {
   formatSerializedViewerState,
   inputToDataStruct
 } from '@/modules/comments/services/data'
+import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 
 export async function authorizeProjectCommentsAccess(params: {
   projectId: string
@@ -60,6 +61,7 @@ export async function authorizeProjectCommentsAccess(params: {
   if (!project.isPublic && !project.role) success = false
   if (requireProjectRole && !project.role && !project.allowPublicComments)
     success = false
+  if (adminOverrideEnabled() && authCtx.role === Roles.Server.Admin) success = true
 
   if (!success) {
     throw new StreamInvalidAccessError('You are not authorized')
