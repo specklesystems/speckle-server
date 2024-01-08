@@ -25,8 +25,7 @@ const resolvers = {
     async apiTokenCreate(parent, args, context) {
       canCreatePAT({
         userScopes: context.scopes || [],
-        tokenScopes: args.token.scopes,
-        strict: true
+        tokenScopes: args.token.scopes
       })
 
       return await createPersonalAccessToken(

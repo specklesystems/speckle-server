@@ -17,7 +17,6 @@ export = {
       const appId = ctx.appId || '' // validation that this is a valid app id is done in canCreateAppToken
 
       canCreateAppToken({
-        strict: true,
         userScopes: ctx.scopes || [],
         tokenScopes: args.token.scopes,
         // both app ids are the same in this scenario, since there's no way to specify a different token app id
