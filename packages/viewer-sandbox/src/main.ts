@@ -141,6 +141,8 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/2ebd336223'
     // IFC story, a subtree of the above
     // 'https://latest.speckle.dev/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216'
+    // Izzy's garden
+    'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
     // Small scale lines
     // 'https://speckle.xyz/streams/638d3b1f83/commits/6025e2b546?c=%5B2.18058,-0.20814,9.67642,3.85491,5.05364,0,0,1%5D'
     // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
@@ -260,7 +262,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/f92e060177/commits/038a587267'
     // 'https://latest.speckle.dev/streams/3f895e614f/commits/8a3e424997'
     // 'https://latest.speckle.dev/streams/f92e060177/commits/f51ee777d5'
-    'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
+    // 'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
     // Big curves
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
     // 'https://speckle.xyz/streams/7ce9010d71/commits/afda4ffdf8'

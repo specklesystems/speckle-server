@@ -370,7 +370,7 @@ export default class SpeckleConverter {
 
   private getEmptyTransformData(id: string) {
     // eslint-disable-next-line camelcase
-    return { id, speckle_type: 'Transform', units: 'm', matrix: new Matrix4() }
+    return { id, speckle_type: 'Transform', units: 'm', matrix: new Array(16) }
   }
 
   /**
@@ -418,10 +418,17 @@ export default class SpeckleConverter {
     instanceNode
   ) {
     const transformNodeId = generateUUID()
-    const transformData = instanceObj.transform
-      ? instanceObj.transform
-      : this.getEmptyTransformData(transformNodeId)
-
+    let transformData = null
+    /** Legacy form of Transform */
+    if (Array.isArray(instanceObj.transform)) {
+      transformData = this.getEmptyTransformData(transformNodeId)
+      transformData.units = instanceObj.units
+      transformData.matrix = instanceObj.transform
+    } else {
+      transformData = instanceObj.transform
+        ? instanceObj.transform
+        : this.getEmptyTransformData(transformNodeId)
+    }
     const transformNode = this.tree.parse({
       id: transformNodeId,
       raw: transformData,
