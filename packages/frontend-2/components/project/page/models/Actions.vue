@@ -35,7 +35,8 @@ import {
   TrashIcon,
   PencilIcon,
   LinkIcon,
-  FingerPrintIcon
+  FingerPrintIcon,
+  ArrowUpTrayIcon
 } from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -87,7 +88,7 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
       title: 'Upload new version',
       id: ActionTypes.UploadVersion,
       disabled: !props.canEdit,
-      icon: TrashIcon
+      icon: ArrowUpTrayIcon
     }
   ],
   [
