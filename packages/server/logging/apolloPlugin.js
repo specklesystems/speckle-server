@@ -18,6 +18,8 @@ const metricCallCount = new prometheusClient.Counter({
 module.exports = {
   // eslint-disable-next-line no-unused-vars
   requestDidStart(ctx) {
+    const reqStartTime = Date.now()
+
     return {
       didResolveOperation(ctx) {
         let logger = ctx.context.log || graphqlLogger
@@ -56,22 +58,27 @@ module.exports = {
       },
       didEncounterErrors(ctx) {
         let logger = ctx.context.log || graphqlLogger
+        const processingTime = Date.now() - reqStartTime
 
         for (const err of ctx.errors) {
           const operationName = ctx.request.operationName || null
           const query = ctx.request.query
           const variables = ctx.request.variables
 
-          if (err.path) {
-            logger = logger.child({ 'query-path': err.path.join(' > ') })
-          }
+          logger = logger.child({
+            ...(err.path ? { 'query-path': err.path.join(' > ') } : {}),
+            processingTime
+          })
+
+          const msg = 'graphql error encountered (req processing took %dms)'
+
           if (
             (err instanceof GraphQLError && err.extensions?.code === 'FORBIDDEN') ||
             err instanceof ApolloError
           ) {
-            logger.info(err, 'graphql error')
+            logger.info(err, msg, processingTime)
           } else {
-            logger.error(err, 'graphql error')
+            logger.error(err, msg, processingTime)
           }
 
           Sentry.withScope((scope) => {
@@ -91,8 +98,12 @@ module.exports = {
         }
       },
       willSendResponse(ctx) {
-        const logger = ctx.context.log || graphqlLogger
-        logger.info('graphql response')
+        const processingTime = Date.now() - reqStartTime
+        const logger = (ctx.context.log || graphqlLogger).child({
+          processingTime
+        })
+
+        logger.info('graphql response processed in %dms', processingTime)
 
         if (ctx.request.transaction) {
           ctx.request.transaction.finish()
