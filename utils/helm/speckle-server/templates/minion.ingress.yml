@@ -1,25 +1,19 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: speckle-server
+  name: speckle-server-minion
   namespace: {{ .Values.namespace }}
   labels:
 {{ include "speckle.labels" . | indent 4 }}
   annotations:
+    nginx.org/mergeable-ingress-type: "minion"
     {{- if .Values.cert_manager_issuer }}
     cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer }}
     {{- end }}
     nginx.ingress.kubernetes.io/proxy-body-size: {{ (printf "%dm" (int .Values.file_size_limit_mb)) | quote }}
-    nginx.org/client-max-body-size: {{ (printf "%dm" (int .Values.file_size_limit_mb)) | quote }}
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
-  {{- if .Values.cert_manager_issuer }}
-  tls:
-  - hosts:
-    - {{ .Values.domain }}
-    secretName: server-tls
-  {{- end }}
   rules:
   - host: {{ .Values.domain }}
     http:
@@ -31,7 +25,7 @@ spec:
           service:
             name: speckle-frontend-2
             port:
-              number: 8080
+              name: web
       {{- else }}
       - pathType: Prefix
         path: "/"
@@ -39,7 +33,7 @@ spec:
           service:
             name: speckle-frontend
             port:
-              number: 8080
+              name: www
       {{- end }}
       - pathType: Exact
         path: "/(graphql|explorer|(auth/.*)|(preview/.*)|(static/.*))"
@@ -47,11 +41,11 @@ spec:
           service:
             name: speckle-server
             port:
-              number: 3000
+              name: web
       - pathType: Exact
         path: "/((objects/.*)|(api/.*))"
         backend:
           service:
             name: speckle-objects
             port:
-              number: 3000
+              name: web

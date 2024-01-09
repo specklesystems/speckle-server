@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.8.4",
+    "@artmizu/nuxt-prometheus": "^2.2.1",
     "@headlessui/vue": "^1.7.13",
     "@heroicons/vue": "^2.0.12",
     "@speckle/shared": "workspace:^",
