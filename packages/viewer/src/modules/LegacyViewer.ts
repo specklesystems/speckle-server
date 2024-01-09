@@ -379,6 +379,7 @@ export class LegacyViewer extends Viewer {
 
   public enableMeasurements(value: boolean) {
     this.measurements.enabled = value
+    this.selection.enabled = !value
   }
 
   public setMeasurementOptions(options: MeasurementOptions) {

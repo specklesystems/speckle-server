@@ -102,6 +102,8 @@ export class SelectionExtension extends Extension {
   }
 
   public selectObjects(ids: Array<string>, multiSelect = false) {
+    if (!this._enabled) return
+
     if (!multiSelect) {
       this.selectedNodes = []
     }
