@@ -203,14 +203,13 @@ export default class SpeckleRenderer {
   }
 
   public set indirectIBLIntensity(value: number) {
+    /** Update envMap intensity for mesh geometry types only */
     const batches = this.batcher.getBatches(undefined, GeometryType.MESH)
     for (let k = 0; k < batches.length; k++) {
-      let material: SpeckleStandardMaterial | SpeckleStandardMaterial[] = (
-        batches[k].renderObject as Mesh
-      ).material as SpeckleStandardMaterial | SpeckleStandardMaterial[]
-      material = Array.isArray(material) ? material : [material]
-      for (let k = 0; k < material.length; k++) {
-        material[k].envMapIntensity = value
+      const materials: SpeckleStandardMaterial[] = batches[k]
+        .materials as SpeckleStandardMaterial[]
+      for (let k = 0; k < materials.length; k++) {
+        materials[k].envMapIntensity = value
       }
     }
   }
