@@ -591,7 +591,7 @@ export default class SpeckleConverter {
     }
     textObj['speckle_type'] = 'Objects.Other.Text'
     const textNode: TreeNode = this.tree.parse({
-      id: this.getNodeId(textObj),
+      id: generateUUID(),
       raw: textObj,
       atomic: false,
       children: []
