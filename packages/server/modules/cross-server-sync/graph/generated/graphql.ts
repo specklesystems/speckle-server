@@ -913,7 +913,7 @@ export type Mutation = {
   adminDeleteUser: Scalars['Boolean'];
   /** Creates an personal api token. */
   apiTokenCreate: Scalars['String'];
-  /** Revokes (deletes) an personal api token. */
+  /** Revokes (deletes) an personal api token/app token. */
   apiTokenRevoke: Scalars['Boolean'];
   /** Register a new third party application. */
   appCreate: Scalars['String'];
@@ -921,6 +921,8 @@ export type Mutation = {
   appDelete: Scalars['Boolean'];
   /** Revokes (de-authorizes) an application that you have previously authorized. */
   appRevokeAccess?: Maybe<Scalars['Boolean']>;
+  /** Create an app token. Only apps can create app tokens and they don't show up under personal access tokens. */
+  appTokenCreate: Scalars['String'];
   /** Update an existing third party application. **Note: This will invalidate all existing tokens, refresh tokens and access codes and will require existing users to re-authorize it.** */
   appUpdate: Scalars['Boolean'];
   automationMutations: AutomationMutations;
@@ -1058,6 +1060,11 @@ export type MutationAppDeleteArgs = {
 
 export type MutationAppRevokeAccessArgs = {
   appId: Scalars['String'];
+};
+
+
+export type MutationAppTokenCreateArgs = {
+  token: ApiTokenCreateInput;
 };
 
 
@@ -1811,6 +1818,8 @@ export type Query = {
   app?: Maybe<ServerApp>;
   /** Returns all the publicly available apps on this server. */
   apps?: Maybe<Array<Maybe<ServerAppListItem>>>;
+  /** If user is authenticated using an app token, this will describe the app */
+  authenticatedAsApp?: Maybe<ServerAppListItem>;
   comment?: Maybe<Comment>;
   /**
    * This query can be used in the following ways:
@@ -2565,7 +2574,7 @@ export type User = {
   /** All the recent activity from this user in chronological order */
   activity?: Maybe<ActivityCollection>;
   /** Returns a list of your personal api tokens. */
-  apiTokens?: Maybe<Array<Maybe<ApiToken>>>;
+  apiTokens: Array<ApiToken>;
   /** Returns the apps you have authorized. */
   authorizedApps?: Maybe<Array<Maybe<ServerAppListItem>>>;
   avatar?: Maybe<Scalars['String']>;

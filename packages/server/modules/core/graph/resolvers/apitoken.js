@@ -18,15 +18,14 @@ const resolvers = {
         throw new ForbiddenError('You can only view your own tokens')
 
       const tokens = await getUserTokens(context.userId)
-      return tokens
+      return tokens || []
     }
   },
   Mutation: {
     async apiTokenCreate(parent, args, context) {
       canCreatePAT({
         userScopes: context.scopes || [],
-        tokenScopes: args.token.scopes,
-        strict: true
+        tokenScopes: args.token.scopes
       })
 
       return await createPersonalAccessToken(

@@ -354,6 +354,19 @@ export const ApiTokens = buildTableHelper('api_tokens', [
   'lastUsed'
 ])
 
+export const PersonalApiTokens = buildTableHelper('personal_api_tokens', [
+  'tokenId',
+  'userId'
+])
+
+export const UserServerAppTokens = buildTableHelper('user_server_app_tokens', [
+  'appId',
+  'userId',
+  'tokenId'
+])
+
+export const TokenScopes = buildTableHelper('token_scopes', ['tokenId', 'scopeName'])
+
 export const EmailVerifications = buildTableHelper('email_verifications', [
   'id',
   'email',
@@ -488,6 +501,20 @@ export const AutomationFunctionRunsResultVersions = buildTableHelper(
 export const ServerAppsScopes = buildTableHelper('server_apps_scopes', [
   'appId',
   'scopeName'
+])
+
+export const ServerApps = buildTableHelper('server_apps', [
+  'id',
+  'secret',
+  'name',
+  'description',
+  'termsAndConditionsLink',
+  'logo',
+  'public',
+  'trustByDefault',
+  'authorId',
+  'createdAt',
+  'redirectUrl'
 ])
 
 export const Scopes = buildTableHelper('scopes', ['name', 'description', 'public'])
