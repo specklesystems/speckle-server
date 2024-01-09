@@ -180,7 +180,6 @@ export async function getUserTokens(userId: string) {
             "tokenId" FROM personal_api_tokens
           WHERE
             "userId" = ? )
-        AND t.appId IS NULL
     `,
     [userId]
   )
