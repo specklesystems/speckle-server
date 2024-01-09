@@ -43,6 +43,11 @@ export const LoggingExpressMiddleware = HttpLogger({
     return `[${path}] ${statusMessage} in ${responseTime}ms`
   },
 
+  customErrorMessage(req) {
+    const path = (get(req, 'originalUrl') || req.url)?.split('?')[0] ?? 'unknown'
+    return `[${path}] request errored`
+  },
+
   // we need to redact any potential sensitive data from being logged.
   // as we do not know what headers may be sent in a request by a user or client
   // we have to allow list selected headers
