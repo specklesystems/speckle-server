@@ -682,13 +682,13 @@ export default class MeshBatch implements Batch {
 
   public getRenderView(index: number): NodeRenderView {
     index
-    console.warn('Deprecated! Do not call this anymore')
+    Logger.warn('Deprecated! Do not call this anymore')
     return null
   }
 
   public getMaterialAtIndex(index: number): Material {
     index
-    console.warn('Deprecated! Do not call this anymore')
+    Logger.warn('Deprecated! Do not call this anymore')
     return null
   }
 
@@ -747,19 +747,12 @@ export default class MeshBatch implements Batch {
     this.gradientIndexBuffer = new Float32BufferAttribute(buffer, 1)
     this.gradientIndexBuffer.setUsage(DynamicDrawUsage)
     this.geometry.setAttribute('gradientIndex', this.gradientIndexBuffer)
-    // console.log(' -- Rest -> ', performance.now() - start5)
-    // const start = performance.now()
     this.updateGradientIndexBufferData(0, buffer.length, 0)
-    // console.log(' -- Gradient index update -> ', performance.now() - start)
     this.updateGradientIndexBuffer()
 
     const start2 = performance.now()
     Geometry.computeVertexNormals(this.geometry, position)
     MeshBatch.computeNormals += performance.now() - start2
-    // const start3 = performance.now()
-    // this.geometry.computeBoundingSphere()
-    // this.geometry.computeBoundingBox()
-    // MeshBatch.computeBoxAndSphere += performance.now() - start3
 
     const start4 = performance.now()
     Geometry.updateRTEGeometry(this.geometry, position)

@@ -664,13 +664,13 @@ export default class InstancedMeshBatch implements Batch {
 
   public getRenderView(index: number): NodeRenderView {
     index
-    console.warn('Deprecated! Do not call this anymore')
+    Logger.warn('Deprecated! Do not call this anymore')
     return null
   }
 
   public getMaterialAtIndex(index: number): Material {
     index
-    console.warn('Deprecated! Do not call this anymore')
+    Logger.warn('Deprecated! Do not call this anymore')
     return null
   }
 

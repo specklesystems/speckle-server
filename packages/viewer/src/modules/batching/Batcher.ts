@@ -189,22 +189,22 @@ export default class Batcher {
         yield this.batches[batch.id]
       }
     }
-    console.warn(
+    Logger.warn(
       `Batch total: ${batchCount} min: ${min}, max: ${max}, average: ${
         average / materialHashes.length
       }`
     )
-    console.warn('Buffer setup -> ', MeshBatch.bufferSetup)
-    console.warn('Array work -> ', MeshBatch.arrayWork)
-    console.warn('Object BVH -> ', MeshBatch.objectBvh)
-    console.warn('Compute normals -> ', MeshBatch.computeNormals)
-    console.warn('Compute box and sphere -> ', MeshBatch.computeBoxAndSphere)
-    console.warn('Compute RTE -> ', MeshBatch.computeRTE)
-    console.warn('Batch BVH -> ', MeshBatch.batchBVH)
-    console.warn('Total instanced -> ', totalInstanced)
-    console.warn('Instance gathering -> ', instancedGathering)
-    console.warn('De-instancing -> ', deInstancing)
-    console.warn('Instanced build -> ', instanceBuild)
+    Logger.warn('Buffer setup -> ', MeshBatch.bufferSetup)
+    Logger.warn('Array work -> ', MeshBatch.arrayWork)
+    Logger.warn('Object BVH -> ', MeshBatch.objectBvh)
+    Logger.warn('Compute normals -> ', MeshBatch.computeNormals)
+    Logger.warn('Compute box and sphere -> ', MeshBatch.computeBoxAndSphere)
+    Logger.warn('Compute RTE -> ', MeshBatch.computeRTE)
+    Logger.warn('Batch BVH -> ', MeshBatch.batchBVH)
+    Logger.warn('Total instanced -> ', totalInstanced)
+    Logger.warn('Instance gathering -> ', instancedGathering)
+    Logger.warn('De-instancing -> ', deInstancing)
+    Logger.warn('Instanced build -> ', instanceBuild)
   }
 
   private splitBatch(
