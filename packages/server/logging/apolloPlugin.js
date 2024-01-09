@@ -20,6 +20,7 @@ module.exports = {
   requestDidStart(ctx) {
     return {
       didResolveOperation(ctx) {
+        const apolloRequestStart = new Date()
         let logger = ctx.context.log || graphqlLogger
 
         const op = `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
@@ -53,6 +54,7 @@ module.exports = {
         Sentry.configureScope((scope) => scope.setSpan(transaction))
         ctx.request.transaction = transaction
         ctx.context.log = logger
+        ctx.context.apolloRequestStart = apolloRequestStart
       },
       didEncounterErrors(ctx) {
         let logger = ctx.context.log || graphqlLogger
@@ -91,12 +93,16 @@ module.exports = {
         }
       },
       willSendResponse(ctx) {
-        const logger = ctx.context.log || graphqlLogger
-        logger.info('graphql response')
+        let logger = ctx.context.log || graphqlLogger
+        if (ctx.context.apolloRequestStart)
+          logger = logger.child({
+            'apollo-query-duration': new Date() - ctx.context.apolloRequestStart
+          })
 
         if (ctx.request.transaction) {
           ctx.request.transaction.finish()
         }
+        logger.info('graphql response')
       }
     }
   }
