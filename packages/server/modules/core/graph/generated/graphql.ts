@@ -170,6 +170,14 @@ export type AppCreateInput = {
   termsAndConditionsLink?: InputMaybe<Scalars['String']>;
 };
 
+export type AppTokenCreateInput = {
+  lifespan?: InputMaybe<Scalars['BigInt']>;
+  /** Optionally limit the token to only have access to specific resources */
+  limitResources?: InputMaybe<Array<TokenResourceIdentifierInput>>;
+  name: Scalars['String'];
+  scopes: Array<Scalars['String']>;
+};
+
 export type AppUpdateInput = {
   description: Scalars['String'];
   id: Scalars['String'];
@@ -1074,7 +1082,7 @@ export type MutationAppRevokeAccessArgs = {
 
 
 export type MutationAppTokenCreateArgs = {
-  token: ApiTokenCreateInput;
+  token: AppTokenCreateInput;
 };
 
 
@@ -2562,6 +2570,15 @@ export type TestItem = {
   foo: Scalars['String'];
 };
 
+export type TokenResourceIdentifierInput = {
+  id: Scalars['String'];
+  type: TokenResourceIdentifierType;
+};
+
+export enum TokenResourceIdentifierType {
+  Project = 'project'
+}
+
 export type UpdateModelInput = {
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['ID'];
@@ -2993,6 +3010,7 @@ export type ResolversTypes = {
   ApiTokenCreateInput: ApiTokenCreateInput;
   AppAuthor: ResolverTypeWrapper<AppAuthor>;
   AppCreateInput: AppCreateInput;
+  AppTokenCreateInput: AppTokenCreateInput;
   AppUpdateInput: AppUpdateInput;
   AuthStrategy: ResolverTypeWrapper<AuthStrategy>;
   AutomationCreateInput: AutomationCreateInput;
@@ -3125,6 +3143,8 @@ export type ResolversTypes = {
   String: ResolverTypeWrapper<Scalars['String']>;
   Subscription: ResolverTypeWrapper<{}>;
   TestItem: ResolverTypeWrapper<TestItem>;
+  TokenResourceIdentifierInput: TokenResourceIdentifierInput;
+  TokenResourceIdentifierType: TokenResourceIdentifierType;
   UpdateModelInput: UpdateModelInput;
   UpdateVersionInput: UpdateVersionInput;
   User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projectInvites: Array<ResolversTypes['PendingStreamCollaborator']>, projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'] }>;
@@ -3168,6 +3188,7 @@ export type ResolversParentTypes = {
   ApiTokenCreateInput: ApiTokenCreateInput;
   AppAuthor: AppAuthor;
   AppCreateInput: AppCreateInput;
+  AppTokenCreateInput: AppTokenCreateInput;
   AppUpdateInput: AppUpdateInput;
   AuthStrategy: AuthStrategy;
   AutomationCreateInput: AutomationCreateInput;
@@ -3286,6 +3307,7 @@ export type ResolversParentTypes = {
   String: Scalars['String'];
   Subscription: {};
   TestItem: TestItem;
+  TokenResourceIdentifierInput: TokenResourceIdentifierInput;
   UpdateModelInput: UpdateModelInput;
   UpdateVersionInput: UpdateVersionInput;
   User: Omit<User, 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projectInvites: Array<ResolversParentTypes['PendingStreamCollaborator']>, projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'] };

@@ -11,6 +11,7 @@ import {
 import { TokenValidationResult } from '@/modules/core/helpers/types'
 import { getTokenAppInfo } from '@/modules/core/repositories/tokens'
 import { ServerRoles } from '@speckle/shared'
+import { TokenResourceIdentifierInput } from '@/modules/core/graph/generated/graphql'
 
 /*
   Tokens
@@ -37,6 +38,10 @@ export async function createToken({
   name: string
   scopes: string[]
   lifespan?: number | bigint
+  /**
+   * Optionally limit the resources that the token can access
+   */
+  limitResources?: TokenResourceIdentifierInput[]
 }) {
   const { tokenId, tokenString, tokenHash, lastChars } = await createBareToken()
 

@@ -24,10 +24,29 @@ type ApiToken {
   lastUsed: DateTime! #date
 }
 
+enum TokenResourceIdentifierType {
+  project
+}
+
+input TokenResourceIdentifierInput {
+  id: String!
+  type: TokenResourceIdentifierType!
+}
+
 input ApiTokenCreateInput {
   scopes: [String!]!
   name: String!
   lifespan: BigInt
+}
+
+input AppTokenCreateInput {
+  scopes: [String!]!
+  name: String!
+  lifespan: BigInt
+  """
+  Optionally limit the token to only have access to specific resources
+  """
+  limitResources: [TokenResourceIdentifierInput!]
 }
 
 extend type Mutation {
@@ -48,7 +67,7 @@ extend type Mutation {
   """
   Create an app token. Only apps can create app tokens and they don't show up under personal access tokens.
   """
-  appTokenCreate(token: ApiTokenCreateInput!): String!
+  appTokenCreate(token: AppTokenCreateInput!): String!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "tokens:write")
 }

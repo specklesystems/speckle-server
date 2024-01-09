@@ -160,6 +160,14 @@ export type AppCreateInput = {
   termsAndConditionsLink?: InputMaybe<Scalars['String']>;
 };
 
+export type AppTokenCreateInput = {
+  lifespan?: InputMaybe<Scalars['BigInt']>;
+  /** Optionally limit the token to only have access to specific resources */
+  limitResources?: InputMaybe<Array<TokenResourceIdentifierInput>>;
+  name: Scalars['String'];
+  scopes: Array<Scalars['String']>;
+};
+
 export type AppUpdateInput = {
   description: Scalars['String'];
   id: Scalars['String'];
@@ -1064,7 +1072,7 @@ export type MutationAppRevokeAccessArgs = {
 
 
 export type MutationAppTokenCreateArgs = {
-  token: ApiTokenCreateInput;
+  token: AppTokenCreateInput;
 };
 
 
@@ -2551,6 +2559,15 @@ export type TestItem = {
   bar: Scalars['String'];
   foo: Scalars['String'];
 };
+
+export type TokenResourceIdentifierInput = {
+  id: Scalars['String'];
+  type: TokenResourceIdentifierType;
+};
+
+export enum TokenResourceIdentifierType {
+  Project = 'project'
+}
 
 export type UpdateModelInput = {
   description?: InputMaybe<Scalars['String']>;
