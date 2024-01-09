@@ -18,9 +18,9 @@ const metricCallCount = new prometheusClient.Counter({
 module.exports = {
   // eslint-disable-next-line no-unused-vars
   requestDidStart(ctx) {
+    const apolloRequestStart = new Date()
     return {
       didResolveOperation(ctx) {
-        const apolloRequestStart = new Date()
         let logger = ctx.context.log || graphqlLogger
 
         const op = `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
@@ -54,10 +54,12 @@ module.exports = {
         Sentry.configureScope((scope) => scope.setSpan(transaction))
         ctx.request.transaction = transaction
         ctx.context.log = logger
-        ctx.context.apolloRequestStart = apolloRequestStart
       },
       didEncounterErrors(ctx) {
         let logger = ctx.context.log || graphqlLogger
+        logger = logger.child({
+          apollo_query_duration_ms: new Date() - apolloRequestStart
+        })
 
         for (const err of ctx.errors) {
           const operationName = ctx.request.operationName || null
@@ -71,9 +73,15 @@ module.exports = {
             (err instanceof GraphQLError && err.extensions?.code === 'FORBIDDEN') ||
             err instanceof ApolloError
           ) {
-            logger.info(err, 'graphql error')
+            logger.info(
+              err,
+              '{graphql_operation_value} failed after {apollo_query_duration_ms} ms'
+            )
           } else {
-            logger.error(err, 'graphql error')
+            logger.error(
+              err,
+              '{graphql_operation_value} failed after {apollo_query_duration_ms} ms'
+            )
           }
 
           Sentry.withScope((scope) => {
@@ -94,15 +102,17 @@ module.exports = {
       },
       willSendResponse(ctx) {
         let logger = ctx.context.log || graphqlLogger
-        if (ctx.context.apolloRequestStart)
-          logger = logger.child({
-            'apollo-query-duration': new Date() - ctx.context.apolloRequestStart
-          })
+        logger = logger.child()
 
         if (ctx.request.transaction) {
           ctx.request.transaction.finish()
         }
-        logger.info('graphql response')
+        logger.info(
+          {
+            apollo_query_duration_ms: new Date() - apolloRequestStart
+          },
+          '{graphql_operation_value} finished after {apollo_query_duration_ms} ms'
+        )
       }
     }
   }
