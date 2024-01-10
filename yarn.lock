@@ -13677,7 +13677,7 @@ __metadata:
     "@mdi/font": ^5.8.55
     "@rushstack/eslint-patch": ^1.1.3
     "@speckle/shared": "workspace:^"
-    "@speckle/viewer": 2.16.0
+    "@speckle/viewer": 2.17.8
     "@swc/core": ^1.2.222
     "@tiptap/core": ^2.0.0-beta.176
     "@tiptap/extension-bold": ^2.0.0-beta.26
@@ -13750,15 +13750,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@speckle/objectloader@npm:^2.16.0":
-  version: 2.16.0
-  resolution: "@speckle/objectloader@npm:2.16.0"
+"@speckle/objectloader@npm:^2.17.8":
+  version: 2.17.9
+  resolution: "@speckle/objectloader@npm:2.17.9"
   dependencies:
     "@babel/core": ^7.17.9
-    "@speckle/shared": ^2.16.0
+    "@speckle/shared": ^2.17.9
     core-js: ^3.21.1
     regenerator-runtime: ^0.13.7
-  checksum: 40d3f30b610be58d03d82a166a00587f7ad9e9e041f69524aab2bdb24d54b4cb05ff3c7b3c414aab6b02617a7f53447a62032378f47d3173a1399ab32e20f274
+  checksum: a7825bc610e8c62ba0c3956dde4b723fc8b0e1cfb10071d519eaf384816dcc0184bb0f971ef81049beb50d31cae3f082dcd4cc539f832f99b904da7dd1311fc0
   languageName: node
   linkType: hard
 
@@ -13959,9 +13959,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@speckle/shared@npm:^2.16.0":
-  version: 2.16.0
-  resolution: "@speckle/shared@npm:2.16.0"
+"@speckle/shared@npm:^2.17.9":
+  version: 2.17.9
+  resolution: "@speckle/shared@npm:2.17.9"
   dependencies:
     lodash: ^4.17.0
     lodash-es: ^4.17.21
@@ -13970,7 +13970,7 @@ __metadata:
     "@tiptap/core": ^2.0.0-beta.176
     pino: ^8.7.0
     pino-http: ^8.0.0
-  checksum: 4198ab886dd34b5465588a83c8921bd75c898fc8a5fd071d70776e9989782fc14db7441b71ad029c29c281f2c8dd4cc4569ed8eee635431a7b46c5d3e9ae306a
+  checksum: 86e299c6bf79b6ea10009be76d7e8a975d49ab162ee6115262a29451be45be4830d7705852ab9e4003c292c69fc4091d1b6833425c5ad66511938e478643b087
   languageName: node
   linkType: hard
 
@@ -14118,11 +14118,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@speckle/viewer@npm:2.16.0":
-  version: 2.16.0
-  resolution: "@speckle/viewer@npm:2.16.0"
+"@speckle/viewer@npm:2.17.8":
+  version: 2.17.8
+  resolution: "@speckle/viewer@npm:2.17.8"
   dependencies:
-    "@speckle/objectloader": ^2.16.0
+    "@speckle/objectloader": ^2.17.8
     "@types/flat": ^5.0.2
     camera-controls: ^1.33.1
     flat: ^5.0.2
@@ -14136,7 +14136,7 @@ __metadata:
     tree-model: 1.0.7
     troika-three-text: 0.47.2
     underscore: 1.13.6
-  checksum: 473d469b4f7afff7131e210dad56d6a00be2781960faaf4e6985d6fb481e41a79982e85bbf1330cba509c7dbd23828c88e9d0e87b3a400ec128ba45732c236ef
+  checksum: d965c79967d405a7bbeee1a92411f32baa726285d11deacb9a0283a2c0d4d72735ac1dfa28f3bf15bd5a6dd35d65092d02b4b84d324de59b1fa37cb7583f228d
   languageName: node
   linkType: hard
 
