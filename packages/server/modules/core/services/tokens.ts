@@ -132,7 +132,7 @@ export async function validateToken(
   const valid = await bcrypt.compare(tokenContent, token.tokenDigest)
 
   if (valid) {
-    const [scopes, acl, app] = await Promise.all([
+    const [scopes, acl, app, resourceAccessRules] = await Promise.all([
       TokenScopes.knex()
         .select<{ scopeName: string }[]>('scopeName')
         .where({ tokenId }),
@@ -141,6 +141,9 @@ export async function validateToken(
         .where({ userId: token.owner })
         .first(),
       getTokenAppInfo({ token: tokenString }),
+      TokenResourceAccess.knex<TokenResourceAccessRecord[]>().where({
+        [TokenResourceAccess.col.tokenId]: tokenId
+      }),
       ApiTokens.knex().where({ id: tokenId }).update({ lastUsed: knex.fn.now() })
     ])
     const role = acl!.role
@@ -150,7 +153,8 @@ export async function validateToken(
       userId: token.owner,
       role,
       scopes: scopes.map((s) => s.scopeName),
-      appId: app?.id || null
+      appId: app?.id || null,
+      resourceAccessRules: resourceAccessRules.length ? resourceAccessRules : null
     }
   } else return { valid: false }
 }

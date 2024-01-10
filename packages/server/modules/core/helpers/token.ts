@@ -1,15 +1,59 @@
 import { TokenCreateError } from '@/modules/core/errors/user'
-import { Scopes } from '@speckle/shared'
+import { TokenResourceIdentifier } from '@/modules/core/graph/generated/graphql'
+import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
+import { MaybeNullOrUndefined, Scopes } from '@speckle/shared'
+import { differenceBy } from 'lodash'
 
-export const canCreateToken = (params: {
-  userScopes: string[]
-  tokenScopes: string[]
+export const resourceAccessRuleToIdentifier = (
+  rule: TokenResourceAccessRecord
+): TokenResourceIdentifier => {
+  return {
+    id: rule.resourceId,
+    type: rule.resourceType
+  }
+}
+
+const canCreateToken = (params: {
+  scopes: {
+    user: string[]
+    token: string[]
+  }
+  limitedResources?: {
+    user: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+    token: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+  }
 }) => {
-  const { userScopes, tokenScopes } = params
-  const hasAllScopes = tokenScopes.every((scope) => userScopes.includes(scope))
+  const { scopes, limitedResources } = params
+  const hasAllScopes = scopes.token.every((scope) => scopes.user.includes(scope))
   if (!hasAllScopes) {
     throw new TokenCreateError(
       "You can't create a token with scopes that you don't have"
+    )
+  }
+
+  const userLimitedResources = limitedResources?.user
+  const tokenLimitedResources = limitedResources?.token
+
+  let throwAboutInvalidResources = false
+  if (userLimitedResources?.length || tokenLimitedResources?.length) {
+    if (userLimitedResources?.length && !tokenLimitedResources?.length) {
+      throwAboutInvalidResources = true
+    } else if (userLimitedResources?.length) {
+      const disallowedResources = differenceBy(
+        tokenLimitedResources || [],
+        userLimitedResources || [],
+        (r) => `${r.type}:${r.id}`
+      )
+
+      if (disallowedResources.length) {
+        throwAboutInvalidResources = true
+      }
+    }
+  }
+
+  if (throwAboutInvalidResources) {
+    throw new TokenCreateError(
+      `You can't create a token with access to resources that you don't have access to`
     )
   }
 
@@ -17,11 +61,13 @@ export const canCreateToken = (params: {
 }
 
 export const canCreatePAT = (params: {
-  userScopes: string[]
-  tokenScopes: string[]
+  scopes: {
+    user: string[]
+    token: string[]
+  }
 }) => {
-  const { tokenScopes } = params
-  if (tokenScopes.includes(Scopes.Tokens.Write)) {
+  const { scopes } = params
+  if (scopes.token.includes(Scopes.Tokens.Write)) {
     throw new TokenCreateError(
       "You can't create a personal access token with the tokens:write scope"
     )
@@ -31,13 +77,21 @@ export const canCreatePAT = (params: {
 }
 
 export const canCreateAppToken = (params: {
-  userScopes: string[]
-  tokenScopes: string[]
-  userAppId: string
-  tokenAppId: string
+  scopes: {
+    user: string[]
+    token: string[]
+  }
+  appId: {
+    user: string
+    token: string
+  }
+  limitedResources: {
+    user: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+    token: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+  }
 }) => {
-  const { userAppId, tokenAppId } = params
-  if (userAppId !== tokenAppId || !tokenAppId?.length || !userAppId?.length) {
+  const { appId } = params
+  if (appId.user !== appId.token || !appId.token?.length || !appId.user?.length) {
     throw new TokenCreateError(
       'An app token can only create a new token for the same app'
     )

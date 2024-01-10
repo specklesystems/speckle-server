@@ -1,5 +1,8 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { canCreateAppToken } from '@/modules/core/helpers/token'
+import {
+  canCreateAppToken,
+  resourceAccessRuleToIdentifier
+} from '@/modules/core/helpers/token'
 import { getTokenAppInfo } from '@/modules/core/repositories/tokens'
 import { createAppToken } from '@/modules/core/services/tokens'
 
@@ -17,11 +20,21 @@ export = {
       const appId = ctx.appId || '' // validation that this is a valid app id is done in canCreateAppToken
 
       canCreateAppToken({
-        userScopes: ctx.scopes || [],
-        tokenScopes: args.token.scopes,
+        scopes: {
+          user: ctx.scopes || [],
+          token: args.token.scopes
+        },
         // both app ids are the same in this scenario, since there's no way to specify a different token app id
-        userAppId: appId,
-        tokenAppId: appId
+        appId: {
+          user: appId,
+          token: appId
+        },
+        limitedResources: {
+          token: args.token.limitResources,
+          user: ctx.resourceAccessRules
+            ? ctx.resourceAccessRules.map(resourceAccessRuleToIdentifier)
+            : null
+        }
       })
 
       const token = await createAppToken({

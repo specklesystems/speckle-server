@@ -143,6 +143,10 @@ export type ValidTokenResult = {
    * Set, if the token is an app token
    */
   appId: Nullable<string>
+  /**
+   * Set, if the token has resource access limits (e.g. only access to specific projects)
+   */
+  resourceAccessRules: Nullable<TokenResourceAccessRecord[]>
 }
 
 export type TokenValidationResult = InvalidTokenResult | ValidTokenResult

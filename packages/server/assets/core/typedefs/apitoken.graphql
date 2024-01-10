@@ -28,6 +28,11 @@ enum TokenResourceIdentifierType {
   project
 }
 
+type TokenResourceIdentifier {
+  id: String!
+  type: TokenResourceIdentifierType!
+}
+
 input TokenResourceIdentifierInput {
   id: String!
   type: TokenResourceIdentifierType!

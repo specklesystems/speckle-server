@@ -2560,6 +2560,12 @@ export type TestItem = {
   foo: Scalars['String'];
 };
 
+export type TokenResourceIdentifier = {
+  __typename?: 'TokenResourceIdentifier';
+  id: Scalars['String'];
+  type: TokenResourceIdentifierType;
+};
+
 export type TokenResourceIdentifierInput = {
   id: Scalars['String'];
   type: TokenResourceIdentifierType;

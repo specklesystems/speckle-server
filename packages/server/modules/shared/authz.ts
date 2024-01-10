@@ -15,6 +15,8 @@ import {
   BadRequestError
 } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import { Nullable } from '@speckle/shared'
+import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
 
 interface AuthResult {
   authorized: boolean
@@ -44,6 +46,10 @@ export interface AuthContext {
    * Set if authenticated with an app token
    */
   appId?: string | null
+  /**
+   * Set, if the token has resource access limits (e.g. only access to specific projects)
+   */
+  resourceAccessRules?: Nullable<TokenResourceAccessRecord[]>
 }
 
 export interface AuthParams {

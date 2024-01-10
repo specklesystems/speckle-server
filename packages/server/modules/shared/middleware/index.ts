@@ -76,9 +76,9 @@ export async function createAuthContextFromToken(
     if (!tokenValidationResult.valid)
       return { auth: false, err: new ForbiddenError('Your token is not valid.') }
 
-    const { scopes, userId, role, appId } = tokenValidationResult
+    const { scopes, userId, role, appId, resourceAccessRules } = tokenValidationResult
 
-    return { auth: true, userId, role, token, scopes, appId }
+    return { auth: true, userId, role, token, scopes, appId, resourceAccessRules }
   } catch (err) {
     const surelyError = ensureError(err, 'Unknown error during token validation')
     return { auth: false, err: surelyError }
