@@ -6,11 +6,15 @@ import {
   ApiTokens,
   PersonalApiTokens,
   TokenScopes,
-  UserServerAppTokens
+  UserServerAppTokens,
+  TokenResourceAccess
 } from '@/modules/core/dbSchema'
-import { TokenValidationResult } from '@/modules/core/helpers/types'
+import {
+  TokenResourceAccessRecord,
+  TokenValidationResult
+} from '@/modules/core/helpers/types'
 import { getTokenAppInfo } from '@/modules/core/repositories/tokens'
-import { ServerRoles } from '@speckle/shared'
+import { Optional, ServerRoles } from '@speckle/shared'
 import { TokenResourceIdentifierInput } from '@/modules/core/graph/generated/graphql'
 
 /*
@@ -32,7 +36,8 @@ export async function createToken({
   userId,
   name,
   scopes,
-  lifespan
+  lifespan,
+  limitResources
 }: {
   userId: string
   name: string
@@ -41,7 +46,7 @@ export async function createToken({
   /**
    * Optionally limit the resources that the token can access
    */
-  limitResources?: TokenResourceIdentifierInput[]
+  limitResources?: TokenResourceIdentifierInput[] | null
 }) {
   const { tokenId, tokenString, tokenHash, lastChars } = await createBareToken()
 
@@ -56,9 +61,20 @@ export async function createToken({
     lifespan
   }
   const tokenScopes = scopes.map((scope) => ({ tokenId, scopeName: scope }))
+  const resourceAccessEntries: Optional<TokenResourceAccessRecord[]> =
+    limitResources?.map((resource) => ({
+      tokenId,
+      resourceId: resource.id,
+      resourceType: resource.type
+    }))
 
-  await ApiTokens.knex().insert(token)
-  await TokenScopes.knex().insert(tokenScopes)
+  await Promise.all([
+    ApiTokens.knex().insert(token),
+    TokenScopes.knex().insert(tokenScopes),
+    ...(resourceAccessEntries?.length
+      ? [TokenResourceAccess.knex().insert(resourceAccessEntries)]
+      : [])
+  ])
 
   return { id: tokenId, token: tokenId + tokenString }
 }

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { BaseMetaRecord } from '@/modules/core/helpers/meta'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerRoles } from '@speckle/shared'
@@ -163,4 +164,10 @@ export type ServerAppRecord = {
   authorId: string
   createdAt: Date
   redirectUrl: string
+}
+
+export type TokenResourceAccessRecord = {
+  tokenId: string
+  resourceId: string
+  resourceType: TokenResourceIdentifierType
 }
