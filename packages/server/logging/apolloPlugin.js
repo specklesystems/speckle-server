@@ -18,7 +18,7 @@ const metricCallCount = new prometheusClient.Counter({
 module.exports = {
   // eslint-disable-next-line no-unused-vars
   requestDidStart(ctx) {
-    const apolloRequestStart = new Date()
+    const apolloRequestStart = Date.now()
     return {
       didResolveOperation(ctx) {
         let logger = ctx.context.log || graphqlLogger
@@ -58,7 +58,7 @@ module.exports = {
       didEncounterErrors(ctx) {
         let logger = ctx.context.log || graphqlLogger
         logger = logger.child({
-          apollo_query_duration_ms: new Date() - apolloRequestStart
+          apollo_query_duration_ms: Date.now() - apolloRequestStart
         })
 
         for (const err of ctx.errors) {
@@ -74,7 +74,7 @@ module.exports = {
             err instanceof ApolloError
           ) {
             logger.info(
-              err,
+              { err },
               '{graphql_operation_value} failed after {apollo_query_duration_ms} ms'
             )
           } else {
@@ -101,15 +101,14 @@ module.exports = {
         }
       },
       willSendResponse(ctx) {
-        let logger = ctx.context.log || graphqlLogger
-        logger = logger.child()
+        const logger = ctx.context.log || graphqlLogger
 
         if (ctx.request.transaction) {
           ctx.request.transaction.finish()
         }
         logger.info(
           {
-            apollo_query_duration_ms: new Date() - apolloRequestStart
+            apollo_query_duration_ms: Date.now() - apolloRequestStart
           },
           '{graphql_operation_value} finished after {apollo_query_duration_ms} ms'
         )
