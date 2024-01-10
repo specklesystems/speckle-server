@@ -1697,6 +1697,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/core@npm:^7.17.9":
+  version: 7.23.2
+  resolution: "@babel/core@npm:7.23.2"
+  dependencies:
+    "@ampproject/remapping": ^2.2.0
+    "@babel/code-frame": ^7.22.13
+    "@babel/generator": ^7.23.0
+    "@babel/helper-compilation-targets": ^7.22.15
+    "@babel/helper-module-transforms": ^7.23.0
+    "@babel/helpers": ^7.23.2
+    "@babel/parser": ^7.23.0
+    "@babel/template": ^7.22.15
+    "@babel/traverse": ^7.23.2
+    "@babel/types": ^7.23.0
+    convert-source-map: ^2.0.0
+    debug: ^4.1.0
+    gensync: ^1.0.0-beta.2
+    json5: ^2.2.3
+    semver: ^6.3.1
+  checksum: 003897718ded16f3b75632d63cd49486bf67ff206cc7ebd1a10d49e2456f8d45740910d5ec7e42e3faf0deec7a2e96b1a02e766d19a67a8309053f0d4e57c0fe
+  languageName: node
+  linkType: hard
+
 "@babel/core@npm:^7.18.2":
   version: 7.18.2
   resolution: "@babel/core@npm:7.18.2"
@@ -2714,7 +2737,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/helper-module-transforms@npm:^7.23.3":
+"@babel/helper-module-transforms@npm:^7.23.0, @babel/helper-module-transforms@npm:^7.23.3":
   version: 7.23.3
   resolution: "@babel/helper-module-transforms@npm:7.23.3"
   dependencies:
@@ -13654,7 +13677,7 @@ __metadata:
     "@mdi/font": ^5.8.55
     "@rushstack/eslint-patch": ^1.1.3
     "@speckle/shared": "workspace:^"
-    "@speckle/viewer": "workspace:^"
+    "@speckle/viewer": 2.17.8
     "@swc/core": ^1.2.222
     "@tiptap/core": ^2.0.0-beta.176
     "@tiptap/extension-bold": ^2.0.0-beta.26
@@ -13726,6 +13749,18 @@ __metadata:
     vuetify-image-input: ^19.1.0
   languageName: unknown
   linkType: soft
+
+"@speckle/objectloader@npm:^2.17.8":
+  version: 2.17.9
+  resolution: "@speckle/objectloader@npm:2.17.9"
+  dependencies:
+    "@babel/core": ^7.17.9
+    "@speckle/shared": ^2.17.9
+    core-js: ^3.21.1
+    regenerator-runtime: ^0.13.7
+  checksum: a7825bc610e8c62ba0c3956dde4b723fc8b0e1cfb10071d519eaf384816dcc0184bb0f971ef81049beb50d31cae3f082dcd4cc539f832f99b904da7dd1311fc0
+  languageName: node
+  linkType: hard
 
 "@speckle/objectloader@workspace:^, @speckle/objectloader@workspace:packages/objectloader":
   version: 0.0.0-use.local
@@ -13924,6 +13959,21 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@speckle/shared@npm:^2.17.9":
+  version: 2.17.9
+  resolution: "@speckle/shared@npm:2.17.9"
+  dependencies:
+    lodash: ^4.17.0
+    lodash-es: ^4.17.21
+    type-fest: ^3.11.1
+  peerDependencies:
+    "@tiptap/core": ^2.0.0-beta.176
+    pino: ^8.7.0
+    pino-http: ^8.0.0
+  checksum: 86e299c6bf79b6ea10009be76d7e8a975d49ab162ee6115262a29451be45be4830d7705852ab9e4003c292c69fc4091d1b6833425c5ad66511938e478643b087
+  languageName: node
+  linkType: hard
+
 "@speckle/shared@workspace:^, @speckle/shared@workspace:packages/shared":
   version: 0.0.0-use.local
   resolution: "@speckle/shared@workspace:packages/shared"
@@ -14067,6 +14117,28 @@ __metadata:
     vite: ^3.2.7
   languageName: unknown
   linkType: soft
+
+"@speckle/viewer@npm:2.17.8":
+  version: 2.17.8
+  resolution: "@speckle/viewer@npm:2.17.8"
+  dependencies:
+    "@speckle/objectloader": ^2.17.8
+    "@types/flat": ^5.0.2
+    camera-controls: ^1.33.1
+    flat: ^5.0.2
+    hold-event: ^0.1.0
+    js-logger: 1.6.1
+    lodash-es: ^4.17.21
+    rainbowvis.js: ^1.0.1
+    string-to-color: ^2.2.2
+    three: ^0.140.0
+    three-mesh-bvh: 0.5.17
+    tree-model: 1.0.7
+    troika-three-text: 0.47.2
+    underscore: 1.13.6
+  checksum: d965c79967d405a7bbeee1a92411f32baa726285d11deacb9a0283a2c0d4d72735ac1dfa28f3bf15bd5a6dd35d65092d02b4b84d324de59b1fa37cb7583f228d
+  languageName: node
+  linkType: hard
 
 "@speckle/viewer@workspace:^, @speckle/viewer@workspace:packages/viewer":
   version: 0.0.0-use.local

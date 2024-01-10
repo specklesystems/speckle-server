@@ -47,22 +47,25 @@ function useSelectOrZoomOnSelection() {
         if (!args.multiple) clearSelection() // note we're not tracking selectino clearing here
 
         if (!firstVisibleSelectionHit) return clearSelection()
-        addToSelection(firstVisibleSelectionHit.object)
+        addToSelection(firstVisibleSelectionHit.node.model.raw as SpeckleObject)
         // Expands default viewer selection behaviour with a special case in diff mode.
         // In diff mode, if we select via a mouse click an object, and that object is
         // "modified", we want to select its pair as well.
         if (
           state.ui.diff.enabled.value &&
           state.ui.diff.result.value &&
-          firstVisibleSelectionHit.object.applicationId
+          firstVisibleSelectionHit.node.model.raw.applicationId
         ) {
           const modifiedObjectPairs = state.ui.diff.result.value.modified
-          const obj = firstVisibleSelectionHit.object
-          const pairedItems = modifiedObjectPairs.find(
-            (item) =>
+          const obj = firstVisibleSelectionHit.node.model.raw as SpeckleObject
+          const pairedItems = modifiedObjectPairs.find((item) => {
+            if (
               (item[0].model.raw as SpeckleObject).id === obj.id ||
               (item[1].model.raw as SpeckleObject).id === obj.id
-          )
+            ) {
+              return true
+            }
+          })
           if (!pairedItems) return
 
           const pair =

@@ -11,6 +11,7 @@ import {
   useFilterUtilities,
   useSelectionUtilities
 } from '~~/lib/viewer/composables/ui'
+import { CameraController } from '@speckle/viewer'
 import type { NumericPropertyInfo } from '@speckle/viewer'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
@@ -50,7 +51,7 @@ export function useStateSerialization() {
   ): SerializedViewerState => {
     const { concreteResourceIdString } = options || {}
 
-    const camControls = state.viewer.instance.cameraHandler.activeCam.controls
+    const camControls = state.viewer.instance.getExtension(CameraController).controls
     const box = state.viewer.instance.getCurrentSectionBox()
 
     const ret: SerializedViewerState = {

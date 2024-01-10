@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   DefaultViewerParams,
   SelectionEvent,
@@ -8,6 +10,14 @@ import {
 
 import './style.css'
 import Sandbox from './Sandbox'
+import {
+  SelectionExtension,
+  CameraController,
+  MeasurementsExtension,
+  ExplodeExtension,
+  DiffExtension,
+  FilteringExtension
+} from '@speckle/viewer'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -31,11 +41,39 @@ const createViewer = async (containerName: string, stream: string) => {
   const viewer: Viewer = new DebugViewer(container, params)
   await viewer.init()
 
+  const cameraController = viewer.createExtension(CameraController)
+  const selection = viewer.createExtension(SelectionExtension)
+  // const sections = viewer.createExtension(SectionTool)
+  // const sectionOutlines = viewer.createExtension(SectionOutlines)
+  const measurements = viewer.createExtension(MeasurementsExtension)
+  const filtering = viewer.createExtension(FilteringExtension)
+  const explode = viewer.createExtension(ExplodeExtension)
+  const diff = viewer.createExtension(DiffExtension)
+  // const boxSelect = viewer.createExtension(BoxSelection)
+  // const rotateCamera = viewer.createExtension(RotateCamera)
+  cameraController // use it
+  selection // use it
+  // sections // use it
+  // sectionOutlines // use it
+  measurements // use it
+  filtering // use it
+  explode // use it
+  diff // use it
+  // rotateCamera // use it
+  // boxSelect // use it
+
   const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
 
   window.addEventListener('load', () => {
     viewer.resize()
   })
+
+  viewer.on(
+    ViewerEvent.ObjectClicked,
+    (event: { hits: { node: { model: { id: string } } }[] }) => {
+      if (event) console.log(event.hits[0].node.model.id)
+    }
+  )
 
   viewer.on(
     ViewerEvent.LoadProgress,
@@ -46,9 +84,24 @@ const createViewer = async (containerName: string, stream: string) => {
     }
   )
 
-  viewer.on(ViewerEvent.LoadComplete, () => {
+  viewer.on(ViewerEvent.LoadComplete, async () => {
+    console.warn(viewer.getRenderer().renderingStats)
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
+    const categories = {}
+    //@ts-ignore
+    await viewer.getWorldTree().walkAsync((node) => {
+      //@ts-ignore
+      if (!categories[node.model.raw.speckle_type]) {
+        //@ts-ignore
+        categories[node.model.raw.speckle_type] = 0
+      }
+      //@ts-ignore
+      categories[node.model.raw.speckle_type]++
+      return true
+    })
+    console.log(categories)
+
     sandbox.refresh()
   })
 
@@ -61,37 +114,6 @@ const createViewer = async (containerName: string, stream: string) => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()
-  })
-
-  viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
-    if (!selectionInfo) {
-      multiSelectList.length = 0
-      await viewer.resetSelection()
-      viewer.setSectionBox()
-      return
-    }
-    if (!selectionInfo.multiple) multiSelectList.length = 0
-
-    const guids = multiSelectList.map((val) => val.hits[0].guid)
-    if (
-      (selectionInfo.multiple && !guids.includes(selectionInfo.hits[0].guid)) ||
-      multiSelectList.length === 0
-    ) {
-      multiSelectList.push(selectionInfo)
-    }
-
-    const ids = multiSelectList.map((val) => val.hits[0].object.id)
-    console.log(selectionInfo)
-    await viewer.selectObjects(ids as string[])
-  })
-
-  viewer.on(ViewerEvent.ObjectDoubleClicked, async (selectionInfo: SelectionEvent) => {
-    if (!selectionInfo) {
-      viewer.zoom()
-      return
-    }
-
-    viewer.zoom([selectionInfo.hits[0].object.id as string])
   })
 
   sandbox.makeGenericUI()
@@ -110,7 +132,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+    // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6c6e43e5f3'
     // 'https://latest.speckle.dev/streams/58b5648c4d/commits/60371ecb2d'
     // 'Super' heavy revit shit
@@ -119,6 +141,8 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/2ebd336223'
     // IFC story, a subtree of the above
     // 'https://latest.speckle.dev/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216'
+    // Izzy's garden
+    'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
     // Small scale lines
     // 'https://speckle.xyz/streams/638d3b1f83/commits/6025e2b546?c=%5B2.18058,-0.20814,9.67642,3.85491,5.05364,0,0,1%5D'
     // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
@@ -180,6 +204,8 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/85bc4f61c6/commits/8575fe2978'
     // Alex cubes
     // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
+    // Alex more cubes
+    // 'https://latest.speckle.dev/streams/4658eb53b9/commits/31a8d5ff2b'
     // Tekla
     // 'https://latest.speckle.dev/streams/caec6d6676/commits/588c731104'
     // Purple market square
@@ -235,6 +261,8 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/f92e060177/commits/46fd255010'
     // 'https://latest.speckle.dev/streams/f92e060177/commits/038a587267'
     // 'https://latest.speckle.dev/streams/3f895e614f/commits/8a3e424997'
+    // 'https://latest.speckle.dev/streams/f92e060177/commits/f51ee777d5'
+    // 'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
     // Big curves
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
     // 'https://speckle.xyz/streams/7ce9010d71/commits/afda4ffdf8'
@@ -259,6 +287,7 @@ const getStream = () => {
 
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/4da17d07da'
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/e2db7d277b'
+    // Bunch a points
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/0dee6dbd98'
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/f9063fe647'
     // 'https://speckle.xyz/streams/be0f962efb/objects/37639741c363a123100eda8044f2fe3f'
@@ -278,6 +307,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/b68abcbf2e/commits/4e94ecad62'
     // Big ass mafa'
     // 'https://speckle.xyz/streams/88307505eb/objects/a232d760059046b81ff97e6c4530c985'
+    // Airport
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/dfb9ca025d'
     // 'Blocks with elements
     // 'https://latest.speckle.dev/streams/e258b0e8db/commits/00e165cc1c'
@@ -285,6 +315,29 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/e258b0e8db/commits/c19577c7d6?c=%5B15.88776,-8.2182,12.17095,18.64059,1.48552,0.6025,0,1%5D'
     // 'https://speckle.xyz/streams/46caea9b53/commits/71938adcd1'
     // 'https://speckle.xyz/streams/2f9f2f3021/commits/75bd13f513'
+    // 'https://speckle.xyz/streams/0a2f096caf/commits/eee0e4436f?overlay=72828bce0d&c=%5B14.04465,-332.88372,258.40392,53.09575,31.13694,126.39999,0,1%5D&filter=%7B%22propertyInfoKey%22%3A%22level.name%22%7D'
+    // 'Bilal's tests
+    // 'https://latest.speckle.dev/streams/97750296c2/commits/5386a0af02' // 700k+ objects 30kk tris
+    // 'https://latest.speckle.dev/streams/97750296c2/commits/2a6fd781f2' // NEW
+
+    // 'https://latest.speckle.dev/streams/97750296c2/commits/48f0567a88' // 1015849 objects
+    // 'https://latest.speckle.dev/streams/97750296c2/commits/aec0841f7e' // 11k objects
+    // 'https://latest.speckle.dev/streams/97750296c2/commits/96ffc3c786' // 92209 objects
+    // 'https://latest.speckle.dev/streams/97750296c2/commits/92115d3789' // 390974 objects 19kk tris
+    // 'https://latest.speckle.dev/streams/97750296c2/commits/a3c8388d89' // 145593 objects 100kk tris o_0
+    // 'https://latest.speckle.dev/streams/97750296c2/commits/2584ad524d' // 22888 objects
+    // 'https://latest.speckle.dev/streams/97750296c2/commits/2bb21d31d6' // 619129 objects
+    // 'https://latest.speckle.dev/streams/97750296c2/commits/7cfb96a6b0' // 84452 objects
+    // 'https://latest.speckle.dev/streams/97750296c2/commits/92a7c35b8b' // 121395 objects
+    // 'https://latest.speckle.dev/streams/97750296c2/commits/2f5803a19e' // 47696 objects
+
+    // Alex facade
+    // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/f4e11a8b01'
+    // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/3c5cb3f539'
+    // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/13729601f3'
+
+    // Weird IFC
+    // 'https://speckle.xyz/streams/25d8a162af/commits/6c842a713c'
     // 'https://speckle.xyz/streams/25d8a162af/commits/6c842a713c'
     // 'https://speckle.xyz/streams/76e3acde68/commits/0ea3d47e6c'
     // Point cloud
@@ -292,6 +345,19 @@ const getStream = () => {
     // 'https://multiconsult.speckle.xyz/streams/9721fe797c/objects/ff5d939a8c26bde092152d5b4a0c945d'
     // 'https://speckle.xyz/streams/87a2be92c7/objects/803c3c413b133ee9a6631160ccb194c9'
     // 'https://latest.speckle.dev/streams/1422d91a81/commits/480d88ba68'
+    // 'https://latest.speckle.dev/streams/92b620fb17/commits/14085847b0'
+    // 'https://latest.speckle.dev/streams/e258b0e8db/commits/eb6ad592f1'
+    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/8c9d3eefa2'
+    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/7589880b8e'
+    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/d721ab8df4'
+    // Big ass tower
+    // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/cef3f40be2'
+    // 'https://latest.speckle.dev/streams/0cf9e393c4/commits/f4e11a8b01'
+
+    // Far away instances
+    // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/576310a6d5'
+    // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/489d42ca8c'
+    // 'https://latest.speckle.dev/streams/97750296c2/objects/11a7752e40b4ef0620affc55ce9fdf5a'
   )
 }
 

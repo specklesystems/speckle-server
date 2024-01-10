@@ -25,7 +25,7 @@ export class PointQuerySolver {
   private solveProjection(query: PointQuery): PointQueryResult {
     // WORLD
     const projected = new Vector3(query.point.x, query.point.y, query.point.z)
-    projected.project(this.renderer.camera)
+    projected.project(this.renderer.renderingCamera)
 
     return {
       // NDC
@@ -38,7 +38,7 @@ export class PointQuerySolver {
   private solveUnprojection(query: PointQuery): PointQueryResult {
     // NDC
     const unprojected = new Vector3(query.point.x, query.point.y, query.point.z)
-    unprojected.unproject(this.renderer.camera)
+    unprojected.unproject(this.renderer.renderingCamera)
 
     return {
       // WORLD
