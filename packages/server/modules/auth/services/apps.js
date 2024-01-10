@@ -3,13 +3,12 @@ const bcrypt = require('bcrypt')
 const crs = require('crypto-random-string')
 const knex = require(`@/db/knex`)
 
-const { createToken, createBareToken } = require(`@/modules/core/services/tokens`)
+const { createBareToken, createAppToken } = require(`@/modules/core/services/tokens`)
 const { logger } = require('@/logging/logging')
 const Users = () => knex('users')
 const ApiTokens = () => knex('api_tokens')
 const ServerApps = () => knex('server_apps')
 const ServerAppsScopes = () => knex('server_apps_scopes')
-const ServerAppsTokens = () => knex('user_server_app_tokens')
 const Scopes = () => knex('scopes')
 
 const AuthorizationCodes = () => knex('authorization_codes')
@@ -227,15 +226,10 @@ module.exports = {
 
     const appScopes = scopes.map((s) => s.scopeName)
 
-    const { token: appToken } = await createToken({
+    const appToken = await createAppToken({
       userId: code.userId,
       name: `${app.name}-token`,
-      /* lifespan: 1.21e+9, */ scopes: appScopes
-    })
-
-    await ServerAppsTokens().insert({
-      userId: code.userId,
-      tokenId: appToken.slice(0, 10),
+      scopes: appScopes,
       appId
     })
 
@@ -282,15 +276,10 @@ module.exports = {
     if (app.secret !== appSecret) throw new Error('Invalid request')
 
     // Create the new token
-    const { token: appToken } = await createToken({
+    const appToken = await createAppToken({
       userId: refreshTokenDb.userId,
       name: `${app.name}-token`,
-      scopes: app.scopes.map((s) => s.name)
-    })
-
-    await ServerAppsTokens().insert({
-      userId: refreshTokenDb.userId,
-      tokenId: appToken.slice(0, 10),
+      scopes: app.scopes.map((s) => s.name),
       appId
     })
 

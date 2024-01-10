@@ -36,14 +36,14 @@ spec:
               name: www
       {{- end }}
       - pathType: Exact
-        path: "/(graphql|explorer|(auth/.*)|(preview/.*)|(static/.*))"
+        path: "/(graphql|explorer|(auth/.*)|(static/.*))"
         backend:
           service:
             name: speckle-server
             port:
               name: web
       - pathType: Exact
-        path: "/((objects/.*)|(api/.*))"
+        path: "/((objects/.*)|(api/.*)|(preview/.*))"
         backend:
           service:
             name: speckle-objects

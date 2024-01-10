@@ -40,6 +40,10 @@ export interface AuthContext {
   scopes?: string[]
   stream?: Stream
   err?: Error | BaseError
+  /**
+   * Set if authenticated with an app token
+   */
+  appId?: string | null
 }
 
 export interface AuthParams {
