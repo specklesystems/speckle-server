@@ -1,6 +1,10 @@
 import { TokenCreateError } from '@/modules/core/errors/user'
-import { TokenResourceIdentifier } from '@/modules/core/graph/generated/graphql'
+import {
+  TokenResourceIdentifier,
+  TokenResourceIdentifierType
+} from '@/modules/core/graph/generated/graphql'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
+import { ResourceTargets } from '@/modules/serverinvites/helpers/inviteHelper'
 import { MaybeNullOrUndefined, Scopes } from '@speckle/shared'
 import { differenceBy } from 'lodash'
 
@@ -12,6 +16,22 @@ export const resourceAccessRuleToIdentifier = (
     type: rule.resourceType
   }
 }
+
+export const roleResourceTypeToTokenResourceType = (
+  type: string
+): TokenResourceIdentifierType => {
+  switch (type) {
+    case ResourceTargets.Streams:
+      return TokenResourceIdentifierType.Project
+    default:
+      throw new Error(`Invalid resource type: ${type}`)
+  }
+}
+
+/**
+ * Role resource targets that we support for token resource limits
+ */
+export const supportedResourceTargets = <const>[ResourceTargets.Streams]
 
 const canCreateToken = (params: {
   scopes: {

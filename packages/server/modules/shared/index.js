@@ -12,6 +12,11 @@ const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 
 const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
 const { getRoles } = require('@/modules/shared/roles')
+const {
+  roleResourceTypeToTokenResourceType,
+  supportedResourceTargets
+} = require('@/modules/core/helpers/token')
+
 const ServerAcl = () => ServerAclSchema.knex()
 
 /**
@@ -31,17 +36,33 @@ async function validateScopes(scopes, scope) {
  * @param  {string | null | undefined} userId
  * @param  {string} resourceId
  * @param  {string} requiredRole
+ * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined} [userResourceAccessLimits]
  */
-async function authorizeResolver(userId, resourceId, requiredRole) {
+async function authorizeResolver(
+  userId,
+  resourceId,
+  requiredRole,
+  userResourceAccessLimits
+) {
   userId = userId || null
-
   const roles = await getRoles()
 
   // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
 
   const role = roles.find((r) => r.name === requiredRole)
-
   if (!role) throw new ApolloError('Unknown role: ' + requiredRole)
+
+  const relevantResourceLimits = userResourceAccessLimits?.filter(
+    (l) =>
+      supportedResourceTargets.includes(role.resourceTarget) && // whitelist of currently supported resources
+      l.type === roleResourceTypeToTokenResourceType(role.resourceTarget)
+  )
+  const isResourceLimited =
+    relevantResourceLimits.length &&
+    !relevantResourceLimits.find((l) => l.id === resourceId)
+  if (isResourceLimited) {
+    throw new ApolloError('You do not have access to this resource.')
+  }
 
   if (adminOverrideEnabled()) {
     const serverRoles = await ServerAcl().select('role').where({ userId })

@@ -1,10 +1,24 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import {
-  canCreateAppToken,
-  resourceAccessRuleToIdentifier
-} from '@/modules/core/helpers/token'
+import { canCreateAppToken } from '@/modules/core/helpers/token'
 import { getTokenAppInfo } from '@/modules/core/repositories/tokens'
 import { createAppToken } from '@/modules/core/services/tokens'
+
+/**
+ * RESOURCE ACCESS CHECKING:
+ *
+ * GQL:
+ * 1. Scopes - if project scope used, also check resource access rules
+ * 2. Project rights (any directives to check?) - not only check access to project (authorizeResolver?), but also check access rules
+ * 3. Some resolvers have custom checks, no directives - check manually
+ *
+ * REST:
+ * ???
+ *
+ * - Validate rules before insert? THat way we can rely on them being correct?
+ * - - Not really, user can change roles after token creation
+ *
+ * - What if rules exist, but only for projects? We still want to treat other types as unlimited
+ */
 
 export = {
   Query: {
@@ -32,8 +46,6 @@ export = {
         limitedResources: {
           token: args.token.limitResources,
           user: ctx.resourceAccessRules
-            ? ctx.resourceAccessRules.map(resourceAccessRuleToIdentifier)
-            : null
         }
       })
 

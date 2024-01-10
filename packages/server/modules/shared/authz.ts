@@ -16,7 +16,7 @@ import {
 } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { Nullable } from '@speckle/shared'
-import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
+import { TokenResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 
 interface AuthResult {
   authorized: boolean
@@ -49,7 +49,7 @@ export interface AuthContext {
   /**
    * Set, if the token has resource access limits (e.g. only access to specific projects)
    */
-  resourceAccessRules?: Nullable<TokenResourceAccessRecord[]>
+  resourceAccessRules?: Nullable<TokenResourceIdentifier[]>
 }
 
 export interface AuthParams {
