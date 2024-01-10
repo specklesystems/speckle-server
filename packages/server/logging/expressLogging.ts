@@ -5,7 +5,6 @@ import { IncomingMessage } from 'http'
 import { NextFunction, Response } from 'express'
 import pino, { SerializedResponse } from 'pino'
 import { GenReqId } from 'pino-http'
-import { get } from 'lodash'
 
 const REQUEST_ID_HEADER = 'x-request-id'
 
@@ -35,17 +34,15 @@ export const LoggingExpressMiddleware = HttpLogger({
     return 'info'
   },
 
-  customSuccessMessage(req, res, responseTime) {
-    const path = (get(req, 'originalUrl') || req.url)?.split('?')[0] ?? 'unknown'
+  customSuccessMessage(req, res) {
     const isCompleted = !req.readableAborted && res.writableEnded
     const statusMessage = isCompleted ? 'request completed' : 'request aborted'
 
-    return `[${path}] ${statusMessage} in ${responseTime}ms`
+    return `[{req.path}] ${statusMessage} in {responseTime}ms`
   },
 
-  customErrorMessage(req) {
-    const path = (get(req, 'originalUrl') || req.url)?.split('?')[0] ?? 'unknown'
-    return `[${path}] request errored`
+  customErrorMessage() {
+    return `[{req.path}] request errored`
   },
 
   // we need to redact any potential sensitive data from being logged.

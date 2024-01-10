@@ -382,17 +382,17 @@ function createLink(params: {
   const loggerLink = new ApolloLink((operation, forward) => {
     const startTime = Date.now()
     return forward(operation).map((result) => {
-      const ellapsed = new Date().getTime() - startTime
+      const elapsed = new Date().getTime() - startTime
       const name = operation.operationName
       const success = !!(result.data && !result.errors?.length)
 
       nuxtApp.$logger.info(
         {
           operation: name,
-          ellapsed,
+          elapsed,
           success
         },
-        `Apollo operation ${name} finished in ${ellapsed}ms`
+        `Apollo operation {operation} finished in {elapsed}ms`
       )
 
       return result
