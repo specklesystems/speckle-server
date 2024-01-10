@@ -4,7 +4,7 @@ import { ICameraProvider } from './core-extensions/Providers'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Material } from 'three'
 import { InputEvent } from '../input/Input'
-import { generateUUID } from 'three/src/math/MathUtils'
+import { MathUtils } from 'three'
 import { IViewer, ObjectLayers, SelectionEvent, ViewerEvent } from '../../IViewer'
 import Materials, {
   DisplayStyle,
@@ -19,7 +19,7 @@ export interface SelectionExtensionOptions {
 
 const DefaultSelectionExtensionOptions = {
   selectionMaterialData: {
-    id: generateUUID(),
+    id: MathUtils.generateUUID(),
     color: 0x047efb,
     opacity: 1,
     roughness: 1,

@@ -1,10 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { generateUUID } from 'three/src/math/MathUtils'
+import { MathUtils } from 'three'
 import { TreeNode, WorldTree } from '../../tree/WorldTree'
 import Logger from 'js-logger'
-import { AsyncPause } from '../../World'
 import { NodeMap } from '../../tree/NodeMap'
-import { Matrix4 } from 'three'
 
 export type ConverterResultDelegate = () => Promise<void>
 export type ConverterNodeDelegate = (object, node) => Promise<void>
@@ -228,7 +226,7 @@ export default class SpeckleConverter {
   }
 
   private getNodeId(obj) {
-    if (this.spoofIDs) return generateUUID()
+    if (this.spoofIDs) return MathUtils.generateUUID()
     return obj.id
   }
 
@@ -417,7 +415,7 @@ export default class SpeckleConverter {
     defGeometry,
     instanceNode
   ) {
-    const transformNodeId = generateUUID()
+    const transformNodeId = MathUtils.generateUUID()
     let transformData = null
     /** Legacy form of Transform */
     if (Array.isArray(instanceObj.transform)) {
@@ -591,7 +589,7 @@ export default class SpeckleConverter {
     }
     textObj['speckle_type'] = 'Objects.Other.Text'
     const textNode: TreeNode = this.tree.parse({
-      id: generateUUID(),
+      id: MathUtils.generateUUID(),
       raw: textObj,
       atomic: false,
       children: []
