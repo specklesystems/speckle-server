@@ -42,10 +42,14 @@ export const LoggingMiddleware = pinoHttp({
   // and we don't really care about 3xx stuff
   // all the user related 4xx responses are treated as info
   customLogLevel: (
-    _: IncomingMessage,
+    req: IncomingMessage,
     res: ServerResponse,
     error: Error | undefined
   ) => {
+    // Mark some lower importance/spammy endpoints w/ 'debug' to reduce noise
+    const shouldBeDebug = ['/metrics', '/health'].includes(req.url || '') ?? false
+    if (shouldBeDebug) return 'debug'
+
     if (res.statusCode >= 400 && res.statusCode < 500) {
       return 'info'
     } else if (res.statusCode >= 500 || error) {
