@@ -59,6 +59,18 @@ const readStreamQuery = gql`
   ${basicStreamFieldsFragment}
 `
 
+export const readStreamsQuery = gql`
+  query ReadStreams {
+    streams {
+      cursor
+      totalCount
+      items {
+        ...BasicStreamFields
+      }
+    }
+  }
+`
+
 const readDiscoverableStreamsQuery = gql`
   query ReadDiscoverableStreams(
     $limit: Int! = 25

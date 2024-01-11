@@ -68,8 +68,8 @@ export async function createToken({
       resourceType: resource.type
     }))
 
+  await ApiTokens.knex().insert(token)
   await Promise.all([
-    ApiTokens.knex().insert(token),
     TokenScopes.knex().insert(tokenScopes),
     ...(resourceAccessEntries?.length
       ? [TokenResourceAccess.knex().insert(resourceAccessEntries)]

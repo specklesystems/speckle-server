@@ -1,9 +1,13 @@
 import { createApp } from '@/modules/auth/services/apps'
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { createAppToken } from '@/modules/core/services/tokens'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   AppTokenCreateDocument,
   CreateTokenDocument,
+  GetUserStreamsDocument,
+  ReadStreamDocument,
+  ReadStreamsDocument,
   RevokeTokenDocument,
   TokenAppInfoDocument
 } from '@/test/graphql/generated/graphql'
@@ -13,6 +17,7 @@ import {
   testApolloServer
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
+import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { AllScopes, Roles, Scopes } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -22,7 +27,7 @@ import { difference } from 'lodash'
  * Older API token test cases can be found in `graph.spec.js`
  */
 describe('API Tokens', () => {
-  const userOne: BasicTestUser = {
+  const user1: BasicTestUser = {
     name: 'Dimitrie Stefanescu',
     email: 'didimitrie@gmail.com',
     password: 'sn3aky-1337-b1m',
@@ -33,12 +38,12 @@ describe('API Tokens', () => {
 
   before(async () => {
     await beforeEachContext()
-    await createTestUsers([userOne])
+    await createTestUsers([user1])
 
     apollo = await testApolloServer({
       context: createTestContext({
         auth: true,
-        userId: userOne.id,
+        userId: user1.id,
         role: Roles.Server.Admin,
         token: 'asd',
         scopes: AllScopes
@@ -196,7 +201,7 @@ describe('API Tokens', () => {
 
       const appToken = await createAppToken({
         appId: testApp1Id,
-        userId: userOne.id,
+        userId: user1.id,
         name: 'testapp',
         scopes: AllScopes
       })
@@ -205,7 +210,7 @@ describe('API Tokens', () => {
       apollo = await testApolloServer({
         context: createTestContext({
           auth: true,
-          userId: userOne.id,
+          userId: user1.id,
           role: Roles.Server.Admin,
           scopes: AllScopes,
           token: testApp1Token,
@@ -280,9 +285,138 @@ describe('API Tokens', () => {
       ).to.be.ok
     })
 
+    it('can create app token with limited resource rules', async () => {
+      const { data, errors } = await apollo.execute(AppTokenCreateDocument, {
+        token: {
+          name: 'test2',
+          scopes: [Scopes.Profile.Read],
+          limitResources: [{ id: 'abcde', type: TokenResourceIdentifierType.Project }]
+        }
+      })
+
+      expect(data?.appTokenCreate).to.be.ok
+      expect(errors).to.not.be.ok
+    })
+
     describe('with limited resource access', () => {
+      const user2: BasicTestUser = {
+        name: 'Some other guy',
+        email: 'bababooey@gmail.com',
+        password: 'sn3aky-1337-b1m',
+        id: ''
+      }
+
+      const stream1: BasicTestStream = {
+        name: 'user1 stream 1',
+        isPublic: true,
+        ownerId: user1.id,
+        id: ''
+      }
+      const stream2: BasicTestStream = {
+        name: 'user1 stream 2',
+        isPublic: false,
+        ownerId: user1.id,
+        id: ''
+      }
+      const stream3: BasicTestStream = {
+        name: 'user2 stream 1',
+        isPublic: true,
+        ownerId: user2.id,
+        id: ''
+      }
+      const stream4: BasicTestStream = {
+        name: 'user2 stream 2',
+        isPublic: true,
+        ownerId: user2.id,
+        id: ''
+      }
+
+      let limitedToken1: string
+
       before(async () => {
-        // TODO:
+        await createTestUsers([user2])
+        await createTestStreams([
+          [stream1, user1],
+          [stream2, user1],
+          [stream3, user2],
+          [stream4, user2]
+        ])
+
+        // Create token
+        const limitResources = [
+          { id: stream1.id, type: TokenResourceIdentifierType.Project },
+          { id: stream3.id, type: TokenResourceIdentifierType.Project }
+        ]
+        const { data } = await apollo.execute(AppTokenCreateDocument, {
+          token: {
+            name: 'test2',
+            scopes: [Scopes.Profile.Read],
+            limitResources
+          }
+        })
+        limitedToken1 = data?.appTokenCreate || ''
+        if (!limitedToken1.length) {
+          throw new Error("Couldn't prepare token for test")
+        }
+
+        apollo = await testApolloServer({
+          context: createTestContext({
+            auth: true,
+            userId: user1.id,
+            role: Roles.Server.Admin,
+            scopes: AllScopes,
+            token: limitedToken1,
+            appId: testApp1Id,
+            resourceAccessRules: limitResources
+          })
+        })
+      })
+
+      // TODO: 1. More queries 2. Check creation of new token with invalid rules (too relaxed)
+
+      it('can only access allowed stream through stream()', async () => {
+        const stream1Res = await apollo.execute(ReadStreamDocument, { id: stream1.id })
+        const stream2Res = await apollo.execute(ReadStreamDocument, { id: stream2.id })
+        const stream2NoRulesRes = await apollo.execute(
+          ReadStreamDocument,
+          { id: stream2.id },
+          { context: { resourceAccessRules: null, token: 'somefaketoken' } }
+        )
+
+        expect(stream1Res.data?.stream?.id).to.be.ok
+        expect(stream1Res.errors).to.not.be.ok
+
+        expect(stream2Res.data?.stream).to.not.be.ok
+        expect(
+          (stream2Res.errors || []).find((e) =>
+            e.message.includes('You do not have access to this resource')
+          )
+        ).to.be.ok
+
+        expect(stream2NoRulesRes.data?.stream?.id).to.be.ok
+        expect(stream2NoRulesRes.errors).to.not.be.ok
+      })
+
+      it('can only access allowed streams through streams()', async () => {
+        const { data, errors } = await apollo.execute(ReadStreamsDocument, {})
+
+        expect(errors).to.be.not.ok
+        expect(data?.streams).to.be.ok
+        expect(data?.streams?.totalCount).to.equal(1)
+        expect(data?.streams?.items?.length).to.equal(1)
+        expect(data?.streams?.items?.[0].id).to.equal(stream1.id)
+      })
+
+      it('can only access allowed streams through User.streams', async () => {
+        const { data, errors } = await apollo.execute(GetUserStreamsDocument, {
+          userId: user2.id
+        })
+
+        expect(errors).to.be.not.ok
+        expect(data?.user?.streams).to.be.ok
+        expect(data?.user?.streams?.totalCount).to.equal(1)
+        expect(data?.user?.streams?.items?.length).to.equal(1)
+        expect(data?.user?.streams?.items?.[0].id).to.equal(stream3.id)
       })
     })
   })
