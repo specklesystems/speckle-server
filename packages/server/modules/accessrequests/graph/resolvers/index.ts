@@ -68,14 +68,12 @@ const resolvers: Resolvers = {
         throw new LogicError('Unable to find request stream')
       }
 
-      if (!stream.isPublic) {
-        await validateStreamAccess(
-          ctx.userId,
-          stream.id,
-          Roles.Stream.Reviewer,
-          ctx.resourceAccessRules
-        )
-      }
+      await validateStreamAccess(
+        ctx.userId,
+        stream.id,
+        Roles.Stream.Reviewer,
+        ctx.resourceAccessRules
+      )
 
       return stream
     }
