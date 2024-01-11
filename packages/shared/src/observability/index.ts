@@ -1,5 +1,6 @@
 import pino from 'pino'
 import type { LoggerOptions } from 'pino'
+import { toClef, clefLevels } from './pinoClef'
 
 let logger: pino.Logger
 
@@ -9,17 +10,28 @@ export function getLogger(logLevel = 'info', pretty = false): pino.Logger {
   const pinoOptions: LoggerOptions = {
     base: undefined, // Set to undefined to avoid adding pid, hostname properties to each log.
     formatters: {
-      level: (label: string) => {
-        return { level: label }
-      }
+      level: (label: string, number: number) =>
+        // for not pretty, we're providing clef levels
+        pretty
+          ? { level: label }
+          : {
+              '@l':
+                number in clefLevels
+                  ? clefLevels[number as keyof typeof clefLevels]
+                  : clefLevels[30]
+            },
+      log: (logObject) => (pretty ? logObject : toClef(logObject))
     },
+    // when not pretty, to produce a clef format, we need the message to be the message template key
+    messageKey: pretty ? 'msg' : '@mt',
     level: logLevel,
-    timestamp: pino.stdTimeFunctions.isoTime
+    // when not pretty, we need the time in the clef appropriate field, not from pino
+    timestamp: pretty ? pino.stdTimeFunctions.isoTime : false
   }
 
   if (pretty) {
     pinoOptions.transport = {
-      target: 'pino-pretty',
+      target: '../pinoPrettyTransport.js',
       options: {
         colorize: true,
         destination: 2, //stderr

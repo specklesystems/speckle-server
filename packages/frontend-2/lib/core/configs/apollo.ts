@@ -378,7 +378,28 @@ function createLink(params: {
     ])
   }
 
-  return from([errorLink, link])
+  // SSR req logging link
+  const loggerLink = new ApolloLink((operation, forward) => {
+    const startTime = Date.now()
+    return forward(operation).map((result) => {
+      const elapsed = new Date().getTime() - startTime
+      const name = operation.operationName
+      const success = !!(result.data && !result.errors?.length)
+
+      nuxtApp.$logger.info(
+        {
+          operation: name,
+          elapsed,
+          success
+        },
+        `Apollo operation {operation} finished in {elapsed}ms`
+      )
+
+      return result
+    })
+  })
+
+  return from([...(process.server ? [loggerLink] : []), errorLink, link])
 }
 
 const defaultConfigResolver: ApolloConfigResolver = async () => {

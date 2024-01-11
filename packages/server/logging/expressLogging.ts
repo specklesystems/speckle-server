@@ -34,6 +34,34 @@ export const LoggingExpressMiddleware = HttpLogger({
     return 'info'
   },
 
+  customSuccessMessage() {
+    return '{requestPath} request {requestStatus} in {responseTime} ms'
+  },
+
+  customSuccessObject(req, res, val: Record<string, unknown>) {
+    const isCompleted = !req.readableAborted && res.writableEnded
+    const requestStatus = isCompleted ? 'completed' : 'aborted'
+    const requestPath = req.url?.split('?')[0] || 'unknown'
+    return {
+      ...val,
+      requestStatus,
+      requestPath
+    }
+  },
+
+  customErrorMessage() {
+    return '{requestPath} request {requestStatus} in {responseTime} ms'
+  },
+  customErrorObject(req, res, err, val: Record<string, unknown>) {
+    const requestStatus = 'failed'
+    const requestPath = req.url?.split('?')[0] || 'unknown'
+    return {
+      ...val,
+      requestStatus,
+      requestPath
+    }
+  },
+
   // we need to redact any potential sensitive data from being logged.
   // as we do not know what headers may be sent in a request by a user or client
   // we have to allow list selected headers

@@ -1,6 +1,7 @@
 import { Box3, Material, Object3D, WebGLRenderer } from 'three'
-import { MaterialOptions } from '../materials/Materials'
+import { FilterMaterialOptions } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
+import { DrawGroup } from './InstancedMeshBatch'
 
 export enum GeometryType {
   MESH,
@@ -19,19 +20,27 @@ export interface Batch {
   geometryType: GeometryType
 
   get bounds(): Box3
+  get drawCalls(): number
+  get minDrawCalls(): number
+  get materials(): Material[]
+  get groups(): DrawGroup[]
+  get triCount(): number
+  get vertCount(): number
 
   getCount(): number
   setBatchMaterial(material: Material): void
+  setBatchBuffers(...range: BatchUpdateRange[]): void
   setVisibleRange(...range: BatchUpdateRange[])
   getVisibleRange(): BatchUpdateRange
   setDrawRanges(...ranges: BatchUpdateRange[])
-  insertDrawRanges(...ranges: BatchUpdateRange[])
-  removeDrawRanges(id: string)
-  autoFillDrawRanges()
   resetDrawRanges()
   buildBatch()
   getRenderView(index: number): NodeRenderView
   getMaterialAtIndex(index: number): Material
+  getMaterial(rv: NodeRenderView): Material
+  getOpaque(): BatchUpdateRange
+  getTransparent(): BatchUpdateRange
+  getStencil(): BatchUpdateRange
   onUpdate(deltaTime: number)
   onRender(renderer: WebGLRenderer)
   purge()
@@ -41,11 +50,10 @@ export interface BatchUpdateRange {
   offset: number
   count: number
   material?: Material
-  materialOptions?: MaterialOptions
-  id?: string
+  materialOptions?: FilterMaterialOptions
 }
 
-export const HideAllBatchUpdateRange = {
+export const NoneBatchUpdateRange = {
   offset: 0,
   count: 0
 } as BatchUpdateRange

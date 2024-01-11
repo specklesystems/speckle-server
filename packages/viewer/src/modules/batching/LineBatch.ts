@@ -1,5 +1,4 @@
 import {
-  BufferGeometry,
   Color,
   DynamicDrawUsage,
   InstancedInterleavedBuffer,
@@ -14,30 +13,47 @@ import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
 import { Geometry } from '../converter/Geometry'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
-import { ObjectLayers } from '../SpeckleRenderer'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import {
   AllBatchUpdateRange,
   Batch,
   BatchUpdateRange,
   GeometryType,
-  HideAllBatchUpdateRange
+  NoneBatchUpdateRange
 } from './Batch'
+import { ObjectLayers } from '../../IViewer'
+import { DrawGroup } from './InstancedMeshBatch'
+import Materials from '../materials/Materials'
 
 export default class LineBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
-  private geometry: BufferGeometry | LineSegmentsGeometry
+  private geometry: LineSegmentsGeometry
   public batchMaterial: SpeckleLineMaterial
   private mesh: LineSegments2 | Line
   public colorBuffer: InstancedInterleavedBuffer
-  private insertedRanges: BatchUpdateRange[] = []
   private static readonly vector4Buffer: Vector4 = new Vector4()
 
   public get bounds() {
     if (!this.geometry.boundingBox) this.geometry.computeBoundingBox()
     return this.geometry.boundingBox
+  }
+
+  public get drawCalls(): number {
+    return 1
+  }
+
+  public get minDrawCalls(): number {
+    return 1
+  }
+
+  public get triCount(): number {
+    return (this.geometry.index.count / 3) * this.geometry['_maxInstanceCount']
+  }
+
+  public get vertCount(): number {
+    return this.geometry.attributes.position.count * this.geometry.instanceCount
   }
 
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
@@ -46,16 +62,20 @@ export default class LineBatch implements Batch {
     this.renderViews = renderViews
   }
 
-  updateBatchObjects() {
-    // TO DO
-  }
-
   public get renderObject(): Object3D {
     return this.mesh
   }
 
   public get geometryType(): GeometryType {
     return this.renderViews[0].geometryType
+  }
+
+  public get materials(): Material[] {
+    return this.mesh.material as Material[]
+  }
+
+  public get groups(): DrawGroup[] {
+    return []
   }
 
   public getCount(): number {
@@ -77,8 +97,8 @@ export default class LineBatch implements Batch {
   public setVisibleRange(...ranges: BatchUpdateRange[]) {
     if (
       ranges.length === 1 &&
-      ranges[0].offset === HideAllBatchUpdateRange.offset &&
-      ranges[0].count === HideAllBatchUpdateRange.count
+      ranges[0].offset === NoneBatchUpdateRange.offset &&
+      ranges[0].count === NoneBatchUpdateRange.count
     ) {
       this.mesh.visible = false
       return
@@ -118,7 +138,20 @@ export default class LineBatch implements Batch {
     // TO DO if required
   }
 
-  public setDrawRanges(...ranges: BatchUpdateRange[]) {
+  public getOpaque(): BatchUpdateRange {
+    if (Materials.isOpaque(this.batchMaterial)) return AllBatchUpdateRange
+    return NoneBatchUpdateRange
+  }
+  public getTransparent(): BatchUpdateRange {
+    if (Materials.isTransparent(this.batchMaterial)) return AllBatchUpdateRange
+    return NoneBatchUpdateRange
+  }
+  public getStencil(): BatchUpdateRange {
+    if (this.batchMaterial.stencilWrite === true) return AllBatchUpdateRange
+    return NoneBatchUpdateRange
+  }
+
+  public setBatchBuffers(...ranges: BatchUpdateRange[]): void {
     const data = this.colorBuffer.array as number[]
 
     for (let i = 0; i < ranges.length; i++) {
@@ -148,35 +181,8 @@ export default class LineBatch implements Batch {
     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
   }
 
-  insertDrawRanges(...ranges: BatchUpdateRange[]) {
-    for (let k = 0; k < ranges.length; k++) {
-      const start = ranges[k].offset * this.colorBuffer.stride
-      const data = this.colorBuffer.array as number[]
-      const materialOptions = {
-        rampIndexColor: new Color(data[start], data[start + 1], data[start + 2])
-      }
-      this.insertedRanges.push({
-        offset: ranges[k].offset,
-        count: ranges[k].count,
-        material: ranges[k].material,
-        materialOptions,
-        id: ranges[k].id
-      })
-    }
-    this.setDrawRanges(...ranges)
-  }
-
-  removeDrawRanges(id: string) {
-    const ranges = this.insertedRanges.filter((value) => value.id === id)
-    if (!ranges.length) {
-      return
-    }
-    this.setDrawRanges(...ranges)
-    this.insertedRanges = this.insertedRanges.filter((value) => !ranges.includes(value))
-  }
-
-  autoFillDrawRanges() {
-    // to do
+  public setDrawRanges(...ranges: BatchUpdateRange[]) {
+    this.setBatchBuffers(...ranges)
   }
 
   public resetDrawRanges() {
@@ -257,6 +263,14 @@ export default class LineBatch implements Batch {
   public getMaterialAtIndex(index: number): Material {
     index
     return this.batchMaterial
+  }
+
+  public getMaterial(rv: NodeRenderView): Material {
+    const start = rv.batchStart * this.colorBuffer.stride
+    const data = this.colorBuffer.array as number[]
+    const material = this.batchMaterial.clone()
+    material.color.setRGB(data[start], data[start + 1], data[start + 2])
+    return material
   }
 
   private makeLineGeometry(position: Float64Array) {

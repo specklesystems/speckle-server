@@ -19,7 +19,8 @@ onMounted(async () => {
   rendererparent.value?.appendChild(container)
 
   viewer.resize()
-  viewer.cameraHandler.onWindowResize()
+  // Not needed
+  // viewer.cameraHandler.onWindowResize()
 })
 
 onBeforeUnmount(() => {
