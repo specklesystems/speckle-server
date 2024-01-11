@@ -66,6 +66,7 @@ import type { DiffStateCommand } from '~~/lib/viewer/composables/setup/diff'
 import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { flatten, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
+import type { EmbedOptions } from '~~/lib/viewer/composables/setup/embed'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -257,6 +258,13 @@ export type InjectableViewerState = Readonly<{
       enabled: Ref<boolean>
       options: Ref<MeasurementOptions>
     }
+    embedOptions: {
+      isTransparent: Ref<boolean>
+      hideControls: Ref<boolean>
+      hideSelectionInfo: Ref<boolean>
+      noScroll: Ref<boolean>
+      autoload: Ref<boolean>
+    }
   }
   /**
    * State stored in the anchor string of the URL
@@ -264,6 +272,7 @@ export type InjectableViewerState = Readonly<{
   urlHashState: {
     focusedThreadId: AsyncWritableComputedRef<Nullable<string>>
     diff: AsyncWritableComputedRef<Nullable<DiffStateCommand>>
+    embedOptions: AsyncWritableComputedRef<Nullable<EmbedOptions>>
   }
 }>
 
@@ -890,6 +899,13 @@ function setupInterfaceState(
           vertexSnap: true,
           precision: 2
         })
+      },
+      embedOptions: {
+        isTransparent: ref(false),
+        hideControls: ref(false),
+        hideSelectionInfo: ref(false),
+        noScroll: ref(false),
+        autoload: ref(false)
       }
     }
   }

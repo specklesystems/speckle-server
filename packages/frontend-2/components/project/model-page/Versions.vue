@@ -41,7 +41,7 @@
           :selection-disabled="disabledSelections[item.id]"
           @select="onSelect(item)"
           @chosen="onSingleActionChosen($event, item)"
-          @embed="embedDialogOpen = true"
+          @embed="handleEmbed(item.id)"
         />
         <ProjectModelPageVersionsCard
           v-else
@@ -85,6 +85,8 @@
       v-model:open="embedDialogOpen"
       :visibility="project.visibility"
       :project-id="project.id"
+      :model-id="project.model.id"
+      :version-id="currentVersionId"
     />
     <div class="py-12">
       <!-- Some padding to deal with a card menu potentially opening at the bottom of the page -->
@@ -174,6 +176,7 @@ const importArea = ref(
   }>
 )
 
+const currentVersionId = ref<string | undefined>(undefined)
 const embedDialogOpen = ref(false)
 
 const selectedItems = computed({
@@ -281,5 +284,14 @@ const onBatchDelete = () => {
     type: VersionActionTypes.Delete,
     items: selectedItems.value.slice()
   }
+}
+
+const handleEmbed = (versionId: string) => {
+  if (process.server) {
+    throw new Error('Not supported in SSR')
+  }
+
+  currentVersionId.value = versionId
+  embedDialogOpen.value = true
 }
 </script>

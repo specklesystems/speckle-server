@@ -79,7 +79,7 @@
             :selection-disabled="selectionDisabled"
             @select="onSelect"
             @chosen="$emit('chosen', $event)"
-            @embed="emit('embed')"
+            @embed="$emit('embed')"
           />
         </div>
       </div>

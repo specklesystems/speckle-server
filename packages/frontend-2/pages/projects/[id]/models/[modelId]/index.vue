@@ -22,7 +22,7 @@
       <ClientOnly>
         <!-- Tour host -->
         <div
-          v-if="tourState.showTour"
+          v-if="viewerState.showTour"
           class="fixed w-full h-[100dvh] flex justify-center items-center pointer-events-none z-[100]"
         >
           <TourOnboarding />
@@ -34,7 +34,7 @@
             enter-from-class="opacity-0"
             enter-active-class="transition duration-1000"
           >
-            <ViewerAnchoredPoints v-show="tourState.showViewerControls" />
+            <ViewerAnchoredPoints v-show="viewerState.showViewerControls" />
           </Transition>
         </div>
 
@@ -46,14 +46,14 @@
           enter-from-class="opacity-0"
           enter-active-class="transition duration-1000"
         >
-          <ViewerControls v-show="tourState.showViewerControls" class="z-20" />
+          <ViewerControls v-show="viewerState.showViewerControls" class="z-20" />
         </Transition>
         <!-- Viewer Object Selection Info Display -->
         <Transition
           enter-from-class="opacity-0"
           enter-active-class="transition duration-1000"
         >
-          <div v-show="tourState.showViewerControls">
+          <div v-show="viewerState.showViewerControls">
             <ViewerSelectionSidebar class="z-20 hidden sm:block" />
           </div>
         </Transition>
@@ -63,7 +63,7 @@
     </div>
   </ViewerPostSetupWrapper>
   <div
-    v-if="tourState.showViewerControls"
+    v-if="viewerState.showViewerControls"
     class="sm:hidden shadow-t fixed bottom-0 left-0 max-h-[65vh] overflow-hidden w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
   >
     <PortalTarget name="bottomPanel"></PortalTarget>
@@ -73,8 +73,7 @@
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { useSetupViewer } from '~~/lib/viewer/composables/setup'
-
-const tourState = useTourStageState()
+import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
 
 definePageMeta({
   layout: 'viewer',
@@ -84,8 +83,19 @@ definePageMeta({
   key: '/projects/:id/models/resources' // To prevent controls flickering on resource url param changes
 })
 
+graphql(`
+  fragment ModelPageProject on Project {
+    id
+    createdAt
+    name
+  }
+`)
+
+const viewerState = useTourStageState()
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
+
+const { embedOptions } = useEmbedState()
 
 const state = useSetupViewer({
   projectId
@@ -97,16 +107,30 @@ const {
   }
 } = state
 
-graphql(`
-  fragment ModelPageProject on Project {
-    id
-    createdAt
-    name
-  }
-`)
-
 const title = computed(() =>
   project.value?.name.length ? `Viewer - ${project.value.name}` : ''
 )
 useHead({ title })
+
+watch(
+  embedOptions,
+  (newOptions) => {
+    if (newOptions.isTransparent) {
+      console.log('is transparent')
+    }
+    if (newOptions.hideControls) {
+      viewerState.value.showViewerControls = false
+    }
+    if (newOptions.hideSelectionInfo) {
+      console.log('hide selection info')
+    }
+    if (newOptions.noScroll) {
+      console.log('no scroll')
+    }
+    if (newOptions.autoload) {
+      console.log('autoload')
+    }
+  },
+  { immediate: true }
+)
 </script>

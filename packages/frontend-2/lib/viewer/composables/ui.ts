@@ -363,3 +363,35 @@ export function useMeasurementUtilities() {
     removeMeasurement
   }
 }
+
+export function useEmbedUtilities() {
+  const state = useInjectedViewerState()
+
+  const isTransparent = (enabled: boolean) => {
+    state.ui.embedOptions.isTransparent.value = enabled
+  }
+
+  const hideControls = (enabled: boolean) => {
+    state.ui.embedOptions.hideControls.value = enabled
+  }
+
+  const hideSelectionInfo = (enabled: boolean) => {
+    state.ui.embedOptions.hideSelectionInfo.value = enabled
+  }
+
+  const noScroll = (enabled: boolean) => {
+    state.ui.embedOptions.noScroll.value = enabled
+  }
+
+  const autoload = (enabled: boolean) => {
+    state.ui.embedOptions.autoload.value = enabled
+  }
+
+  return {
+    isTransparent,
+    hideControls,
+    hideSelectionInfo,
+    noScroll,
+    autoload
+  }
+}
