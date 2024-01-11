@@ -31,7 +31,7 @@ export function getLogger(logLevel = 'info', pretty = false): pino.Logger {
 
   if (pretty) {
     pinoOptions.transport = {
-      target: 'pino-pretty',
+      target: '../pinoPrettyTransport.js',
       options: {
         colorize: true,
         destination: 2, //stderr

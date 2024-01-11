@@ -175,5 +175,9 @@ export default defineNuxtConfig({
         manifest[key] = oldManifest[key]
       }
     }
+  },
+
+  prometheus: {
+    verbose: false
   }
 })

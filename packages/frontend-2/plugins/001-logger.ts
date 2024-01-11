@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 import { isString } from 'lodash-es'
+import { useRequestId } from '~/lib/core/composables/server'
 import { isObjectLike } from '~~/lib/common/helpers/type'
 import { buildFakePinoLogger } from '~~/lib/core/helpers/observability'
 
 /**
- * Pino logger in SSR, basic console.log fallback in CSR
+ * Setting up Pino logger in SSR, basic console.log fallback in CSR
  */
 
 export default defineNuxtPlugin(async (nuxtApp) => {
@@ -20,12 +21,27 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   } = useRuntimeConfig()
   const route = useRoute()
   const router = useRouter()
+  const reqId = useRequestId()
+
+  const collectMainInfo = (params: { isBrowser: boolean }) => {
+    return {
+      browser: params.isBrowser,
+      speckleServerVersion,
+      serverName,
+      frontendType: 'frontend-2',
+      route: route?.path,
+      routeDefinition: route.matched?.[route.matched.length - 1]?.path,
+      req: { id: reqId }
+    }
+  }
 
   // Set up logger
   let logger: ReturnType<typeof import('@speckle/shared').Observability.getLogger>
   if (process.server) {
     const { buildLogger } = await import('~/server/lib/core/helpers/observability')
-    logger = buildLogger(logLevel, logPretty)
+    logger = buildLogger(logLevel, logPretty).child({
+      ...collectMainInfo({ isBrowser: false })
+    })
   } else {
     if (logClientApiToken?.length && logClientApiEndpoint?.length) {
       const seq = await import('seq-logging/browser')
@@ -46,17 +62,10 @@ export default defineNuxtPlugin(async (nuxtApp) => {
         return { userAgent, navigatorPlatform, navigatorVendor, url }
       }
 
-      const collectMainInfo = () => {
-        return {
-          browser: true,
-          speckleServerVersion,
-          serverName,
-          frontendType: 'frontend-2',
-          route: route?.path,
-          routeDefinition: route.matched?.[route.matched.length - 1]?.path,
-          ...collectBrowserInfo()
-        }
-      }
+      const collectCoreInfo = () => ({
+        ...collectBrowserInfo(),
+        ...collectMainInfo({ isBrowser: true })
+      })
 
       const errorListener = (event: ErrorEvent | PromiseRejectionEvent) => {
         const isUnhandledRejection = isObjectLike(event) && 'reason' in event
@@ -70,7 +79,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
           properties: {
             errorMessage: msg,
             isUnhandledRejection,
-            ...collectMainInfo()
+            ...collectCoreInfo()
           },
           exception: err instanceof Error ? err.stack : `${err}`
         })
@@ -102,7 +111,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
           properties: {
             errorMessage,
             extraData: otherData,
-            ...collectMainInfo()
+            ...collectCoreInfo()
           },
           exception
         })
