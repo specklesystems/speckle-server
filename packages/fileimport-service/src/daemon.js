@@ -244,7 +244,7 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
         JSON.parse(data) // validate that data is already in JSON format
         process.stdout.write(data)
       } catch {
-        boundLogger.info('Parser: %s', JSON.stringify(data))
+        boundLogger.info({ parserLog: data }, 'ParserLog: {parserLog}')
       }
     })
 
@@ -254,7 +254,7 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
         JSON.parse(data) // validate that data is already in JSON format
         process.stderr.write(data)
       } catch {
-        boundLogger.info('Parser: %s', JSON.stringify(data))
+        boundLogger.info({ parserLog: data }, 'ParserLog: {parserLog}')
       }
     })
 
