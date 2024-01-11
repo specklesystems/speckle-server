@@ -14,10 +14,10 @@ import { createAppToken } from '@/modules/core/services/tokens'
  * REST:
  * ???
  *
- * - Validate rules before insert? THat way we can rely on them being correct?
+ * - [X] Validate rules before insert? THat way we can rely on them being correct?
  * - - Not really, user can change roles after token creation
  *
- * - What if rules exist, but only for projects? We still want to treat other types as unlimited
+ * - [X] What if rules exist, but only for projects? We still want to treat other types as unlimited
  */
 
 export = {

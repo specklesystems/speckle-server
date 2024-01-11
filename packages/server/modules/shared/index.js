@@ -36,7 +36,7 @@ async function validateScopes(scopes, scope) {
  * @param  {string | null | undefined} userId
  * @param  {string} resourceId
  * @param  {string} requiredRole
- * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined} [userResourceAccessLimits]
+ * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined | null} [userResourceAccessLimits]
  */
 async function authorizeResolver(
   userId,

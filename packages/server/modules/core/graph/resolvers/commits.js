@@ -84,7 +84,12 @@ module.exports = {
         throw new StreamInvalidAccessError('Commit stream not found')
       }
 
-      await validateStreamAccess(ctx.userId, stream.id)
+      await validateStreamAccess(
+        ctx.userId,
+        stream.id,
+        Roles.Stream.Reviewer,
+        ctx.resourceAccessRules
+      )
       return stream
     },
     async streamId(parent, _args, ctx) {
@@ -172,7 +177,8 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        context.resourceAccessRules
       )
 
       const rateLimitResult = await getRateLimitResult(
@@ -195,7 +201,8 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        context.resourceAccessRules
       )
 
       await updateCommitAndNotify(args.commit, context.userId)
@@ -206,7 +213,8 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.input.streamId,
-        Roles.Stream.Reviewer
+        Roles.Stream.Reviewer,
+        context.resourceAccessRules
       )
 
       const commit = await getCommitById({
@@ -227,7 +235,8 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.commit.streamId,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        context.resourceAccessRules
       )
 
       const deleted = await deleteCommitAndNotify(
@@ -256,7 +265,8 @@ module.exports = {
           await authorizeResolver(
             context.userId,
             payload.streamId,
-            Roles.Stream.Reviewer
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
           )
           return payload.streamId === variables.streamId
         }
@@ -270,7 +280,8 @@ module.exports = {
           await authorizeResolver(
             context.userId,
             payload.streamId,
-            Roles.Stream.Reviewer
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
           )
 
           const streamMatch = payload.streamId === variables.streamId
@@ -290,7 +301,8 @@ module.exports = {
           await authorizeResolver(
             context.userId,
             payload.streamId,
-            Roles.Stream.Reviewer
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
           )
 
           return payload.streamId === variables.streamId

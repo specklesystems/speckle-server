@@ -127,7 +127,8 @@ export = {
       await authorizeResolver(
         ctx.userId,
         args.input.projectId,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        ctx.resourceAccessRules
       )
       return await createBranchAndNotify(args.input, ctx.userId!)
     },
@@ -135,7 +136,8 @@ export = {
       await authorizeResolver(
         ctx.userId,
         args.input.projectId,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        ctx.resourceAccessRules
       )
       return await updateBranchAndNotify(args.input, ctx.userId!)
     },
@@ -143,7 +145,8 @@ export = {
       await authorizeResolver(
         ctx.userId,
         args.input.projectId,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        ctx.resourceAccessRules
       )
       return await deleteBranchAndNotify(args.input, ctx.userId!)
     }
@@ -156,7 +159,12 @@ export = {
           const { id: projectId, modelIds } = args
           if (payload.projectId !== projectId) return false
 
-          await authorizeResolver(ctx.userId, projectId, Roles.Stream.Reviewer)
+          await authorizeResolver(
+            ctx.userId,
+            projectId,
+            Roles.Stream.Reviewer,
+            ctx.resourceAccessRules
+          )
           if (!modelIds?.length) return true
           return modelIds.includes(payload.projectModelsUpdated.id)
         }

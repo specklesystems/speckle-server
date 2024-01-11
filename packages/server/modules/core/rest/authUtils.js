@@ -30,7 +30,12 @@ module.exports = {
       }
 
       try {
-        await authorizeResolver(req.context.userId, streamId, Roles.Stream.Reviewer)
+        await authorizeResolver(
+          req.context.userId,
+          streamId,
+          Roles.Stream.Reviewer,
+          req.context.resourceAccessRules
+        )
       } catch (err) {
         return { result: false, status: 401 }
       }
@@ -56,7 +61,12 @@ module.exports = {
     }
 
     try {
-      await authorizeResolver(req.context.userId, streamId, Roles.Stream.Contributor)
+      await authorizeResolver(
+        req.context.userId,
+        streamId,
+        Roles.Stream.Contributor,
+        req.context.resourceAccessRules
+      )
     } catch (err) {
       return { result: false, status: 401 }
     }

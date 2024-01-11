@@ -113,7 +113,7 @@ async function finalizeStreamInvite(accept, streamId, token, userId) {
   if (accept) {
     // Add access for user
     const { role = Roles.Stream.Contributor, inviterId } = invite
-    await addOrUpdateStreamCollaborator(streamId, userId, role, inviterId, {
+    await addOrUpdateStreamCollaborator(streamId, userId, role, inviterId, null, {
       fromInvite: true
     })
 

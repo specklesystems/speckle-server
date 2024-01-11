@@ -85,7 +85,12 @@ module.exports = {
         throw new StreamNotFoundError('Stream not found')
       }
 
-      await authorizeResolver(context.userId, args.id, Roles.Stream.Reviewer)
+      await authorizeResolver(
+        context.userId,
+        args.id,
+        Roles.Stream.Reviewer,
+        context.resourceAccessRules
+      )
 
       if (!stream.isPublic) {
         await throwForNotHavingServerRole(context, Roles.Server.Guest)
@@ -213,7 +218,11 @@ module.exports = {
       }
 
       const { id } = await createStreamReturnRecord(
-        { ...args.stream, ownerId: context.userId },
+        {
+          ...args.stream,
+          ownerId: context.userId,
+          ownerResourceAccessRules: context.resourceAccessRules
+        },
         { createActivity: true }
       )
 
@@ -221,13 +230,23 @@ module.exports = {
     },
 
     async streamUpdate(parent, args, context) {
-      await authorizeResolver(context.userId, args.stream.id, Roles.Stream.Owner)
+      await authorizeResolver(
+        context.userId,
+        args.stream.id,
+        Roles.Stream.Owner,
+        context.resourceAccessRules
+      )
       await updateStreamAndNotify(args.stream, context.userId)
       return true
     },
 
     async streamDelete(parent, args, context, info) {
-      await authorizeResolver(context.userId, args.id, Roles.Stream.Owner)
+      await authorizeResolver(
+        context.userId,
+        args.id,
+        Roles.Stream.Owner,
+        context.resourceAccessRules
+      )
       return await _deleteStream(parent, args, context, info)
     },
 
@@ -246,12 +265,14 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.permissionParams.streamId,
-        Roles.Stream.Owner
+        Roles.Stream.Owner,
+        context.resourceAccessRules
       )
 
       const result = await updateStreamRoleAndNotify(
         args.permissionParams,
-        context.userId
+        context.userId,
+        context.resourceAccessRules
       )
       return !!result
     },
@@ -260,12 +281,14 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.permissionParams.streamId,
-        Roles.Stream.Owner
+        Roles.Stream.Owner,
+        context.resourceAccessRules
       )
 
       const result = await updateStreamRoleAndNotify(
         args.permissionParams,
-        context.userId
+        context.userId,
+        context.resourceAccessRules
       )
       return !!result
     },
@@ -281,7 +304,7 @@ module.exports = {
       const { streamId } = args
       const { userId } = ctx
 
-      await removeStreamCollaborator(streamId, userId, userId)
+      await removeStreamCollaborator(streamId, userId, userId, ctx.resourceAccessRules)
 
       return true
     }
@@ -310,7 +333,12 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([STREAM_UPDATED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.id, Roles.Stream.Reviewer)
+          await authorizeResolver(
+            context.userId,
+            payload.id,
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
+          )
           return payload.id === variables.streamId
         }
       )
@@ -323,7 +351,8 @@ module.exports = {
           await authorizeResolver(
             context.userId,
             payload.streamId,
-            Roles.Stream.Reviewer
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
           )
           return payload.streamId === variables.streamId
         }

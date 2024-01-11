@@ -50,7 +50,12 @@ export = {
         throw new StreamNotFoundError('Project not found')
       }
 
-      await authorizeResolver(context.userId, args.id, Roles.Stream.Reviewer)
+      await authorizeResolver(
+        context.userId,
+        args.id,
+        Roles.Stream.Reviewer,
+        context.resourceAccessRules
+      )
 
       if (!stream.isPublic) {
         await throwForNotHavingServerRole(context, Roles.Server.Guest)
@@ -64,15 +69,20 @@ export = {
     projectMutations: () => ({})
   },
   ProjectMutations: {
-    async delete(_parent, { id }, { userId }) {
-      await authorizeResolver(userId, id, Roles.Stream.Owner)
+    async delete(_parent, { id }, { userId, resourceAccessRules }) {
+      await authorizeResolver(userId, id, Roles.Stream.Owner, resourceAccessRules)
       return await deleteStreamAndNotify(id, userId!)
     },
     async createForOnboarding(_parent, _args, { userId }) {
       return await createOnboardingStream(userId!)
     },
-    async update(_parent, { update }, { userId }) {
-      await authorizeResolver(userId, update.id, Roles.Stream.Owner)
+    async update(_parent, { update }, { userId, resourceAccessRules }) {
+      await authorizeResolver(
+        userId,
+        update.id,
+        Roles.Stream.Owner,
+        resourceAccessRules
+      )
       return await updateStreamAndNotify(update, userId!)
     },
     async create(_parent, args, context) {
@@ -85,45 +95,70 @@ export = {
       }
 
       const project = await createStreamReturnRecord(
-        { ...(args.input || {}), ownerId: context.userId! },
+        {
+          ...(args.input || {}),
+          ownerId: context.userId!,
+          ownerResourceAccessRules: context.resourceAccessRules
+        },
         { createActivity: true }
       )
 
       return project
     },
     async updateRole(_parent, args, ctx) {
-      await authorizeResolver(ctx.userId, args.input.projectId, Roles.Stream.Owner)
-      return await updateStreamRoleAndNotify(args.input, ctx.userId!)
+      await authorizeResolver(
+        ctx.userId,
+        args.input.projectId,
+        Roles.Stream.Owner,
+        ctx.resourceAccessRules
+      )
+      return await updateStreamRoleAndNotify(
+        args.input,
+        ctx.userId!,
+        ctx.resourceAccessRules
+      )
     },
     async leave(_parent, args, context) {
       const { id } = args
       const { userId } = context
-      await removeStreamCollaborator(id, userId!, userId!)
+      await removeStreamCollaborator(id, userId!, userId!, context.resourceAccessRules)
       return true
     },
     invites: () => ({})
   },
   ProjectInviteMutations: {
     async create(_parent, args, ctx) {
-      await authorizeResolver(ctx.userId!, args.projectId, Roles.Stream.Owner)
+      await authorizeResolver(
+        ctx.userId!,
+        args.projectId,
+        Roles.Stream.Owner,
+        ctx.resourceAccessRules
+      )
       await createStreamInviteAndNotify(
         {
           ...args.input,
           projectId: args.projectId
         },
-        ctx.userId!
+        ctx.userId!,
+        ctx.resourceAccessRules
       )
       return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async batchCreate(_parent, args, ctx) {
-      await authorizeResolver(ctx.userId!, args.projectId, Roles.Stream.Owner)
+      await authorizeResolver(
+        ctx.userId!,
+        args.projectId,
+        Roles.Stream.Owner,
+        ctx.resourceAccessRules
+      )
       const inputBatches = chunk(args.input, 10)
       for (const batch of inputBatches) {
         await Promise.all(
           batch.map((i) =>
             createStreamInviteAndNotify(
               { ...i, projectId: args.projectId },
-              ctx.userId!
+              ctx.userId!,
+              ctx.resourceAccessRules
             )
           )
         )
@@ -135,7 +170,12 @@ export = {
       return true
     },
     async cancel(_parent, args, ctx) {
-      await authorizeResolver(ctx.userId, args.projectId, Roles.Stream.Owner)
+      await authorizeResolver(
+        ctx.userId,
+        args.projectId,
+        Roles.Stream.Owner,
+        ctx.resourceAccessRules
+      )
       await cancelStreamInvite(args.projectId, args.inviteId)
       return ctx.loaders.streams.getStream.load(args.projectId)
     }
@@ -218,7 +258,8 @@ export = {
           await authorizeResolver(
             ctx.userId,
             payload.projectUpdated.id,
-            Roles.Stream.Reviewer
+            Roles.Stream.Reviewer,
+            ctx.resourceAccessRules
           )
           return true
         }

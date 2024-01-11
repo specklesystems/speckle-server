@@ -54,19 +54,31 @@ export = {
   },
   Mutation: {
     async serverInviteCreate(_parent, args, context) {
-      await createAndSendInvite({
-        target: args.input.email,
-        inviterId: context.userId!,
-        message: args.input.message,
-        serverRole: args.input.serverRole
-      })
+      await createAndSendInvite(
+        {
+          target: args.input.email,
+          inviterId: context.userId!,
+          message: args.input.message,
+          serverRole: args.input.serverRole
+        },
+        context.resourceAccessRules
+      )
 
       return true
     },
 
     async streamInviteCreate(_parent, args, context) {
-      await authorizeResolver(context.userId, args.input.streamId, Roles.Stream.Owner)
-      await createStreamInviteAndNotify(args.input, context.userId!)
+      await authorizeResolver(
+        context.userId,
+        args.input.streamId,
+        Roles.Stream.Owner,
+        context.resourceAccessRules
+      )
+      await createStreamInviteAndNotify(
+        args.input,
+        context.userId!,
+        context.resourceAccessRules
+      )
 
       return true
     },
@@ -79,12 +91,15 @@ export = {
       for (const paramsBatchArray of batches) {
         await Promise.all(
           paramsBatchArray.map((params) =>
-            createAndSendInvite({
-              target: params.email,
-              inviterId: context.userId!,
-              message: params.message,
-              serverRole: params.serverRole
-            })
+            createAndSendInvite(
+              {
+                target: params.email,
+                inviterId: context.userId!,
+                message: params.message,
+                serverRole: params.serverRole
+              },
+              context.resourceAccessRules
+            )
           )
         )
       }
@@ -112,15 +127,18 @@ export = {
           paramsBatchArray.map((params) => {
             const { email, userId, message, streamId, role, serverRole } = params
             const target = (userId ? buildUserTarget(userId) : email)!
-            return createAndSendInvite({
-              target,
-              inviterId: context.userId!,
-              message,
-              resourceTarget: ResourceTargets.Streams,
-              resourceId: streamId,
-              role: role || Roles.Stream.Contributor,
-              serverRole
-            })
+            return createAndSendInvite(
+              {
+                target,
+                inviterId: context.userId!,
+                message,
+                resourceTarget: ResourceTargets.Streams,
+                resourceId: streamId,
+                role: role || Roles.Stream.Contributor,
+                serverRole
+              },
+              context.resourceAccessRules
+            )
           })
         )
       }
@@ -135,9 +153,9 @@ export = {
 
     async streamInviteCancel(_parent, args, ctx) {
       const { streamId, inviteId } = args
-      const { userId } = ctx
+      const { userId, resourceAccessRules } = ctx
 
-      await authorizeResolver(userId, streamId, Roles.Stream.Owner)
+      await authorizeResolver(userId, streamId, Roles.Stream.Owner, resourceAccessRules)
       await cancelStreamInvite(streamId, inviteId)
 
       return true

@@ -1,9 +1,10 @@
-import { Roles } from '@speckle/shared'
+import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import {
   MutationStreamInviteUseArgs,
   ProjectInviteCreateInput,
   ProjectInviteUseInput,
-  StreamInviteCreateInput
+  StreamInviteCreateInput,
+  TokenResourceIdentifier
 } from '@/modules/core/graph/generated/graphql'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
@@ -22,7 +23,8 @@ const isStreamInviteCreateInput = (
 
 export async function createStreamInviteAndNotify(
   input: StreamInviteCreateInput | FullProjectInviteCreateInput,
-  inviterId: string
+  inviterId: string,
+  inviterResourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 ) {
   const { email, userId, role } = input
 
@@ -31,15 +33,20 @@ export async function createStreamInviteAndNotify(
   }
 
   const target = (userId ? buildUserTarget(userId) : email)!
-  await createAndSendInvite({
-    target,
-    inviterId,
-    resourceTarget: ResourceTargets.Streams,
-    resourceId: isStreamInviteCreateInput(input) ? input.streamId : input.projectId,
-    role: role || Roles.Stream.Contributor,
-    message: isStreamInviteCreateInput(input) ? input.message || undefined : undefined,
-    serverRole: input.serverRole || undefined
-  })
+  await createAndSendInvite(
+    {
+      target,
+      inviterId,
+      resourceTarget: ResourceTargets.Streams,
+      resourceId: isStreamInviteCreateInput(input) ? input.streamId : input.projectId,
+      role: role || Roles.Stream.Contributor,
+      message: isStreamInviteCreateInput(input)
+        ? input.message || undefined
+        : undefined,
+      serverRole: input.serverRole || undefined
+    },
+    inviterResourceAccessRules
+  )
 }
 
 const isStreamInviteUseArgs = (

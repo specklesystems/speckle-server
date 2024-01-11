@@ -1,4 +1,4 @@
-import { Roles, wait } from '@speckle/shared'
+import { MaybeNullOrUndefined, Roles, wait } from '@speckle/shared'
 import {
   addStreamCreatedActivity,
   addStreamDeletedActivity,
@@ -11,7 +11,8 @@ import {
   StreamCreateInput,
   StreamRevokePermissionInput,
   StreamUpdateInput,
-  StreamUpdatePermissionInput
+  StreamUpdatePermissionInput,
+  TokenResourceIdentifier
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
@@ -33,10 +34,13 @@ import {
 import { deleteAllStreamInvites } from '@/modules/serverinvites/repositories'
 
 export async function createStreamReturnRecord(
-  params: (StreamCreateInput | ProjectCreateInput) & { ownerId: string },
+  params: (StreamCreateInput | ProjectCreateInput) & {
+    ownerId: string
+    ownerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+  },
   options?: Partial<{ createActivity: boolean }>
 ): Promise<StreamRecord> {
-  const { ownerId } = params
+  const { ownerId, ownerResourceAccessRules } = params
   const { createActivity = true } = options || {}
 
   const stream = await createStream(params, { ownerId })
@@ -52,7 +56,12 @@ export async function createStreamReturnRecord(
 
   // Invite contributors?
   if (!isProjectCreateInput(params) && params.withContributors?.length) {
-    await inviteUsersToStream(ownerId, streamId, params.withContributors)
+    await inviteUsersToStream(
+      ownerId,
+      streamId,
+      params.withContributors,
+      ownerResourceAccessRules
+    )
   }
 
   // Save activity
@@ -129,7 +138,8 @@ const isStreamRevokePermissionInput = (
 
 export async function updateStreamRoleAndNotify(
   update: PermissionUpdateInput,
-  updaterId: string
+  updaterId: string,
+  updaterResourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 ) {
   const smallestStreamRole = Roles.Stream.Reviewer
   const params = {
@@ -164,9 +174,15 @@ export async function updateStreamRoleAndNotify(
       params.streamId,
       params.userId,
       params.role,
-      updaterId
+      updaterId,
+      updaterResourceAccessRules
     )
   } else {
-    return await removeStreamCollaborator(params.streamId, params.userId, updaterId)
+    return await removeStreamCollaborator(
+      params.streamId,
+      params.userId,
+      updaterId,
+      updaterResourceAccessRules
+    )
   }
 }
