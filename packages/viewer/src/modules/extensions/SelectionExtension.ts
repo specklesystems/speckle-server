@@ -12,12 +12,13 @@ import Materials, {
   RenderMaterial
 } from '../materials/Materials'
 import { TreeNode } from '../tree/WorldTree'
+
 export interface SelectionExtensionOptions {
   selectionMaterialData: RenderMaterial & DisplayStyle & MaterialOptions
   hoverMaterialData?: RenderMaterial & DisplayStyle & MaterialOptions
 }
 
-const DefaultSelectionExtensionOptions = {
+const DefaultSelectionExtensionOptions: SelectionExtensionOptions = {
   selectionMaterialData: {
     id: MathUtils.generateUUID(),
     color: 0x047efb,
