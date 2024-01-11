@@ -60,24 +60,32 @@ export const LoggingMiddleware = pinoHttp({
 
     return shouldBeDebug ? 'debug' : 'info'
   },
-
-  customSuccessMessage(req, res, responseTime) {
-    const path = req.url?.split('?')[0] ?? 'unknown'
-    const isCompleted = !req.readableAborted && res.writableEnded
-    const statusMessage = isCompleted ? 'request completed' : 'request aborted'
-
-    return `[${path}] ${statusMessage} in ${responseTime}ms`
+  customSuccessMessage() {
+    return '{requestPath} request {requestStatus} in {responseTime} ms'
   },
 
-  customSuccessMessage(req, res) {
+  customSuccessObject(req, res, val: Record<string, unknown>) {
     const isCompleted = !req.readableAborted && res.writableEnded
-    const statusMessage = isCompleted ? 'request completed' : 'request aborted'
-
-    return `[{req.path}] ${statusMessage} in {responseTime}ms`
+    const requestStatus = isCompleted ? 'completed' : 'aborted'
+    const requestPath = req.url?.split('?')[0] || 'unknown'
+    return {
+      ...val,
+      requestStatus,
+      requestPath
+    }
   },
 
   customErrorMessage() {
-    return `[{req.path}] request errored`
+    return '{requestPath} request {requestStatus} in {responseTime} ms'
+  },
+  customErrorObject(req, res, err, val: Record<string, unknown>) {
+    const requestStatus = 'failed'
+    const requestPath = req.url?.split('?')[0] || 'unknown'
+    return {
+      ...val,
+      requestStatus,
+      requestPath
+    }
   },
 
   // we need to redact any potential sensitive data from being logged.
