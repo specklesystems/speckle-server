@@ -30,7 +30,7 @@
     "join-images": "^1.1.3",
     "knex": "^2.4.1",
     "node-fetch": "^2.6.1",
-    "pg": "^8.7.3",
+    "pg": "^8.11.3",
     "pg-query-stream": "^4.2.3",
     "pino": "^8.7.0",
     "pino-http": "^8.2.1",
