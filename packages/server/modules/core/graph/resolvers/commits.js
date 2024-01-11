@@ -44,6 +44,7 @@ const {
 } = require('@/modules/core/services/streams/streamAccessService')
 const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
 const { Roles } = require('@speckle/shared')
+const { toProjectIdWhitelist } = require('@/modules/core/helpers/token')
 
 // subscription events
 const COMMIT_CREATED = CommitPubsubEvents.CommitCreated
@@ -54,10 +55,15 @@ const COMMIT_DELETED = CommitPubsubEvents.CommitDeleted
  * @param {boolean} publicOnly
  * @param {string} userId
  * @param {{limit: number, cursor: string}} args
+ * @param {string[] | undefined} streamIdWhitelist
  * @returns
  */
-const getUserCommits = async (publicOnly, userId, args) => {
-  const totalCount = await getCommitsTotalCountByUserId({ userId, publicOnly })
+const getUserCommits = async (publicOnly, userId, args, streamIdWhitelist) => {
+  const totalCount = await getCommitsTotalCountByUserId({
+    userId,
+    publicOnly,
+    streamIdWhitelist
+  })
   if (args.limit && args.limit > 100)
     throw new UserInputError(
       'Cannot return more than 100 items, please use pagination.'
@@ -66,7 +72,8 @@ const getUserCommits = async (publicOnly, userId, args) => {
     userId,
     limit: args.limit,
     cursor: args.cursor,
-    publicOnly
+    publicOnly,
+    streamIdWhitelist
   })
 
   return { items, cursor, totalCount }
@@ -154,13 +161,23 @@ module.exports = {
     }
   },
   LimitedUser: {
-    async commits(parent, args) {
-      return await getUserCommits(true, parent.id, args)
+    async commits(parent, args, ctx) {
+      return await getUserCommits(
+        true,
+        parent.id,
+        args,
+        toProjectIdWhitelist(ctx.resourceAccessRules)
+      )
     }
   },
   User: {
     async commits(parent, args, context) {
-      return await getUserCommits(context.userId !== parent.id, parent.id, args)
+      return await getUserCommits(
+        context.userId !== parent.id,
+        parent.id,
+        args,
+        toProjectIdWhitelist(context.resourceAccessRules)
+      )
     }
   },
   Branch: {

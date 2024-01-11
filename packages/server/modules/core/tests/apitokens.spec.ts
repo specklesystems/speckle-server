@@ -279,5 +279,11 @@ describe('API Tokens', () => {
         )
       ).to.be.ok
     })
+
+    describe('with limited resource access', () => {
+      before(async () => {
+        // TODO:
+      })
+    })
   })
 })
