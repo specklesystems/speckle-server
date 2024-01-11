@@ -35,10 +35,6 @@ export const LoggingExpressMiddleware = HttpLogger({
   },
 
   customSuccessMessage() {
-    // const isCompleted = !req.readableAborted && res.writableEnded
-    // const statusMessage = isCompleted ? 'request completed' : 'request aborted'
-
-    // return `[{req.path}] ${statusMessage} in {responseTime}ms`
     return '{requestPath} request {requestStatus} in {responseTime} ms'
   },
 
