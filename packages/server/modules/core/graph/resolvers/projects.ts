@@ -2,6 +2,7 @@ import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { ProjectVisibility, Resolvers } from '@/modules/core/graph/generated/graphql'
 import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
+import { toProjectIdWhitelist } from '@/modules/core/helpers/token'
 import {
   getUserStreamsCount,
   getUserStreams,
@@ -166,7 +167,7 @@ export = {
       return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async use(_parent, args, ctx) {
-      await useStreamInviteAndNotify(args.input, ctx.userId!)
+      await useStreamInviteAndNotify(args.input, ctx.userId!, ctx.resourceAccessRules)
       return true
     },
     async cancel(_parent, args, ctx) {
@@ -186,7 +187,8 @@ export = {
         userId: ctx.userId!,
         forOtherUser: false,
         searchQuery: args.filter?.search || undefined,
-        withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[]
+        withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
+        streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules)
       })
 
       const { cursor, streams } = await getUserStreams({
@@ -195,7 +197,8 @@ export = {
         cursor: args.cursor || undefined,
         searchQuery: args.filter?.search || undefined,
         forOtherUser: false,
-        withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[]
+        withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
+        streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules)
       })
 
       return { totalCount, cursor, items: streams }

@@ -4,7 +4,8 @@ import {
   ProjectInviteCreateInput,
   ProjectInviteUseInput,
   StreamInviteCreateInput,
-  TokenResourceIdentifier
+  TokenResourceIdentifier,
+  TokenResourceIdentifierType
 } from '@/modules/core/graph/generated/graphql'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
@@ -14,6 +15,11 @@ import {
 import { createAndSendInvite } from '@/modules/serverinvites/services/inviteCreationService'
 import { has } from 'lodash'
 import { finalizeStreamInvite } from '@/modules/serverinvites/services/inviteProcessingService'
+import {
+  ContextResourceAccessRules,
+  isResourceAllowed
+} from '@/modules/core/helpers/token'
+import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 
 type FullProjectInviteCreateInput = ProjectInviteCreateInput & { projectId: string }
 
@@ -55,9 +61,30 @@ const isStreamInviteUseArgs = (
 
 export async function useStreamInviteAndNotify(
   input: MutationStreamInviteUseArgs | ProjectInviteUseInput,
-  userId: string
+  userId: string,
+  userResourceAccessRules: ContextResourceAccessRules
 ) {
   const { accept, token } = input
+
+  if (
+    !isResourceAllowed({
+      resourceId: isStreamInviteUseArgs(input) ? input.streamId : input.projectId,
+      resourceType: TokenResourceIdentifierType.Project,
+      resourceAccessRules: userResourceAccessRules
+    })
+  ) {
+    throw new StreamInvalidAccessError(
+      'You are not allowed to process an invite for this stream',
+      {
+        info: {
+          userId,
+          userResourceAccessRules,
+          input
+        }
+      }
+    )
+  }
+
   await finalizeStreamInvite(
     accept,
     isStreamInviteUseArgs(input) ? input.streamId : input.projectId,

@@ -5,7 +5,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
 import { ResourceTargets } from '@/modules/serverinvites/helpers/inviteHelper'
-import { MaybeNullOrUndefined, Nullable, Scopes } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable, Optional, Scopes } from '@speckle/shared'
 import { differenceBy } from 'lodash'
 
 export type ContextResourceAccessRules = MaybeNullOrUndefined<TokenResourceIdentifier[]>
@@ -47,6 +47,15 @@ export const isNewResourceAllowed = (params: {
   const { resourceType, resourceAccessRules } = params
   const relevantRules = resourceAccessRules?.filter((r) => r.type === resourceType)
   return !relevantRules?.length
+}
+
+export const toProjectIdWhitelist = (
+  resourceAccessRules: ContextResourceAccessRules
+): Optional<string[]> => {
+  const projectRules = resourceAccessRules?.filter(
+    (r) => r.type === TokenResourceIdentifierType.Project
+  )
+  return projectRules?.map((r) => r.id)
 }
 
 const canCreateToken = (params: {

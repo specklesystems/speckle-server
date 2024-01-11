@@ -625,6 +625,11 @@ type BaseUserStreamsQueryParams = {
    * Only return streams where user has the specified roles
    */
   withRoles?: StreamRoles[]
+
+  /**
+   * Only allow streams with the specified IDs to be returned
+   */
+  streamIdWhitelist?: string[]
 }
 
 export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
@@ -650,7 +655,8 @@ function getUserStreamsQueryBase<
   searchQuery,
   forOtherUser,
   ownedOnly,
-  withRoles
+  withRoles,
+  streamIdWhitelist
 }: BaseUserStreamsQueryParams) {
   const query = StreamAcl.knex<Array<S>>()
     .where(StreamAcl.col.userId, userId)
@@ -670,12 +676,17 @@ function getUserStreamsQueryBase<
       .andWhere(Streams.col.isPublic, true)
   }
 
-  if (searchQuery)
+  if (searchQuery) {
     query.andWhere(function () {
       this.where(Streams.col.name, 'ILIKE', `%${searchQuery}%`)
         .orWhere(Streams.col.description, 'ILIKE', `%${searchQuery}%`)
         .orWhere(Streams.col.id, 'ILIKE', `%${searchQuery}%`) //potentially useless?
     })
+  }
+
+  if (streamIdWhitelist?.length) {
+    query.whereIn(Streams.col.id, streamIdWhitelist)
+  }
 
   return query
 }

@@ -147,7 +147,7 @@ export = {
     },
 
     async streamInviteUse(_parent, args, ctx) {
-      await useStreamInviteAndNotify(args, ctx.userId!)
+      await useStreamInviteAndNotify(args, ctx.userId!, ctx.resourceAccessRules)
       return true
     },
 
