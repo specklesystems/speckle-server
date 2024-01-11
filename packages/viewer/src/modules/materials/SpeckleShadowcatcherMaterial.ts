@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable camelcase */
 import { speckleShadowcatcherVert } from './shaders/speckle-shadowcatcher-vert'
 import { speckleShadowcatcherFrag } from './shaders/speckle-shadowcatche-frag'
 import SpeckleBasicMaterial from './SpeckleBasicMaterial'
@@ -8,11 +5,11 @@ import { Vector4 } from 'three'
 import { Uniforms } from './SpeckleMaterial'
 
 class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
-  protected get vertexShader(): string {
+  protected get vertexProgram(): string {
     return speckleShadowcatcherVert
   }
 
-  protected get fragmentShader(): string {
+  protected get fragmentProgram(): string {
     return speckleShadowcatcherFrag
   }
 

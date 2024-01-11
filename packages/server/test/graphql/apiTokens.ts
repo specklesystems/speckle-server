@@ -11,3 +11,18 @@ export const revokeTokenMutation = gql`
     apiTokenRevoke(token: $token)
   }
 `
+
+export const tokenAppInfoQuery = gql`
+  query TokenAppInfo {
+    authenticatedAsApp {
+      id
+      name
+    }
+  }
+`
+
+export const appTokenCreateMutation = gql`
+  mutation AppTokenCreate($token: ApiTokenCreateInput!) {
+    appTokenCreate(token: $token)
+  }
+`

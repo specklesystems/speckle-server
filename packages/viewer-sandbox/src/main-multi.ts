@@ -8,6 +8,13 @@ import {
 
 import './style.css'
 import Sandbox from './Sandbox'
+import {
+  CameraController,
+  SelectionExtension,
+  SectionTool,
+  SectionOutlines,
+  MeasurementsExtension
+} from '@speckle/viewer'
 
 // const container0 = document.querySelector<HTMLElement>('#renderer0')
 // if (!container0) {
@@ -39,6 +46,17 @@ const createViewer = async (containerName: string, stream: string) => {
   const multiSelectList: SelectionEvent[] = []
   const viewer: Viewer = new DebugViewer(container, params)
   await viewer.init()
+
+  const cameraController = viewer.createExtension(CameraController)
+  const selection = viewer.createExtension(SelectionExtension)
+  const sections = viewer.createExtension(SectionTool)
+  const sectionOutlines = viewer.createExtension(SectionOutlines)
+  const measurements = viewer.createExtension(MeasurementsExtension)
+  cameraController // use it
+  selection // use it
+  sections // use it
+  sectionOutlines // use it
+  measurements // use it
 
   const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
 
@@ -72,41 +90,12 @@ const createViewer = async (containerName: string, stream: string) => {
     sandbox.refresh()
   })
 
-  viewer.on(ViewerEvent.ObjectClicked, async (selectionInfo: SelectionEvent) => {
-    if (!selectionInfo) {
-      multiSelectList.length = 0
-      await viewer.resetSelection()
-      viewer.setSectionBox()
-      return
-    }
-    if (!selectionInfo.multiple) multiSelectList.length = 0
-
-    const guids = multiSelectList.map((val) => val.hits[0].guid)
-    if (
-      (selectionInfo.multiple && !guids.includes(selectionInfo.hits[0].guid)) ||
-      multiSelectList.length === 0
-    ) {
-      multiSelectList.push(selectionInfo)
-    }
-
-    const ids = multiSelectList.map((val) => val.hits[0].object.id)
-    console.log(selectionInfo)
-    await viewer.selectObjects(ids as string[])
-  })
-
-  viewer.on(ViewerEvent.ObjectDoubleClicked, async (selectionInfo: SelectionEvent) => {
-    if (!selectionInfo) {
-      viewer.zoom()
-      return
-    }
-
-    viewer.zoom([selectionInfo.hits[0].object.id as string])
-  })
-
   sandbox.makeGenericUI()
   sandbox.makeSceneUI()
   sandbox.makeFilteringUI()
   sandbox.makeBatchesUI()
+  sandbox.makeDiffUI()
+  sandbox.makeMeasurementsUI()
 
   await sandbox.loadUrl(stream)
 }

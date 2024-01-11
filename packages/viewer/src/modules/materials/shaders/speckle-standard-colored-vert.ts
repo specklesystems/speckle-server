@@ -171,10 +171,16 @@ void main() {
     #ifdef USE_RTE
         vec4 position_lowT = vec4(position_low, 1.);
         vec4 position_highT = vec4(position, 1.);
+        const vec3 ZERO3 = vec3(0., 0., 0.);
+
         vec4 rteLocalPosition = computeRelativePositionSeparate(position_lowT.xyz, position_highT.xyz, uViewer_low, uViewer_high);
         #ifdef TRANSFORM_STORAGE
             vec4 rtePivot = computeRelativePositionSeparate(tPivotLow.xyz, tPivotHigh.xyz, uViewer_low, uViewer_high);
             rteLocalPosition.xyz = rotate_vertex_position((rteLocalPosition - rtePivot).xyz, tQuaternion) * tScale.xyz + rtePivot.xyz + tTranslation.xyz;
+        #endif
+        #ifdef USE_INSTANCING
+            vec4 instancePivot = computeRelativePositionSeparate(ZERO3, ZERO3, uViewer_low, uViewer_high);
+            rteLocalPosition.xyz = (mat3(instanceMatrix) * (rteLocalPosition - instancePivot).xyz) + instancePivot.xyz + instanceMatrix[3].xyz;
         #endif
     #endif
 
@@ -182,10 +188,9 @@ void main() {
         vec4 mvPosition = rteLocalPosition;
     #else
         vec4 mvPosition = vec4( transformed, 1.0 );
-    #endif
-    
-    #ifdef USE_INSTANCING
-        mvPosition = instanceMatrix * mvPosition;
+        #ifdef USE_INSTANCING
+            mvPosition = instanceMatrix * mvPosition;
+        #endif
     #endif
 
 

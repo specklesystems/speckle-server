@@ -4,7 +4,7 @@ import {
   Pass
 } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import Batcher from '../batching/Batcher'
-import SpeckleRenderer, { ObjectLayers } from '../SpeckleRenderer'
+import SpeckleRenderer from '../SpeckleRenderer'
 import { ApplySAOPass } from './ApplyAOPass'
 import { CopyOutputPass } from './CopyOutputPass'
 import { DepthPass, DepthSize, DepthType } from './DepthPass'
@@ -21,16 +21,12 @@ import {
   StaticAOPass,
   StaticAoPassParams
 } from './StaticAOPass'
-import { SpecklePass } from './SpecklePass'
+import { RenderType, SpecklePass } from './SpecklePass'
 import { ColorPass } from './ColorPass'
 import { StencilPass } from './StencilPass'
 import { StencilMaskPass } from './StencilMaskPass'
 import { OverlayPass } from './OverlayPass'
-
-export enum RenderType {
-  NORMAL,
-  ACCUMULATION
-}
+import { ObjectLayers } from '../../IViewer'
 
 export enum PipelineOutputType {
   DEPTH_RGBA = 0,
@@ -65,8 +61,6 @@ export const DefaultPipelineOptions: PipelineOptions = {
 }
 
 export class Pipeline {
-  public static ACCUMULATE_FRAMES = 16
-
   private _renderer: WebGLRenderer = null
   private _batcher: Batcher = null
   private _pipelineOptions: PipelineOptions = Object.assign({}, DefaultPipelineOptions)
@@ -97,9 +91,9 @@ export class Pipeline {
     this.dynamicAoPass.setParams(options.dynamicAoParams)
     this.staticAoPass.setParams(options.staticAoParams)
     this.accumulationFrame = 0
-    Pipeline.ACCUMULATE_FRAMES = options.accumulationFrames
     this.depthPass.depthSide = options.depthSide
-
+    this.applySaoPass.setAccumulationFrames(options.accumulationFrames)
+    this.staticAoPass.setAccumulationFrames(options.accumulationFrames)
     this.pipelineOutput = options.pipelineOutput
   }
 
@@ -218,10 +212,17 @@ export class Pipeline {
 
   public set needsProgressive(value: boolean) {
     this._needsProgressive = value
-    if (!value) this._renderType = RenderType.NORMAL
-    if (value && this._renderType === RenderType.NORMAL)
-      this._renderType = RenderType.ACCUMULATION
+    // if (!value) this._renderType = RenderType.NORMAL
+    // if (value && this._renderType === RenderType.NORMAL)
+    //   this._renderType = RenderType.ACCUMULATION
     this.accumulationFrame = 0
+  }
+
+  public get needsAccumulation() {
+    return (
+      this._renderType === RenderType.ACCUMULATION &&
+      this.accumulationFrame < this._pipelineOptions.accumulationFrames
+    )
   }
 
   public get renderType() {
@@ -268,7 +269,7 @@ export class Pipeline {
       ObjectLayers.SHADOWCATCHER
     ])
     this.stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
-    this.overlayPass.setLayers([ObjectLayers.MEASUREMENTS])
+    this.overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
     let restoreVisibility, opaque, stencil
 
     this.onBeforePipelineRender = () => {
@@ -367,7 +368,7 @@ export class Pipeline {
     pipeline.push(this.applySaoPass)
     pipeline.push(this.overlayPass)
 
-    this.needsProgressive = true
+    // this.needsProgressive = true
     return pipeline
   }
 
@@ -395,15 +396,15 @@ export class Pipeline {
   }
 
   public update(renderer: SpeckleRenderer) {
-    this.stencilPass.update(renderer.scene, renderer.camera)
-    this.renderPass.update(renderer.scene, renderer.camera)
-    this.stencilMaskPass.update(renderer.scene, renderer.camera)
-    this.depthPass.update(renderer.scene, renderer.camera)
-    this.dynamicAoPass.update(renderer.scene, renderer.camera)
-    this.normalsPass.update(renderer.scene, renderer.camera)
-    this.staticAoPass.update(renderer.scene, renderer.camera)
-    this.applySaoPass.update(renderer.scene, renderer.camera)
-    this.overlayPass.update(renderer.scene, renderer.camera)
+    this.stencilPass.update(renderer.scene, renderer.renderingCamera)
+    this.renderPass.update(renderer.scene, renderer.renderingCamera)
+    this.stencilMaskPass.update(renderer.scene, renderer.renderingCamera)
+    this.depthPass.update(renderer.scene, renderer.renderingCamera)
+    this.dynamicAoPass.update(renderer.scene, renderer.renderingCamera)
+    this.normalsPass.update(renderer.scene, renderer.renderingCamera)
+    this.staticAoPass.update(renderer.scene, renderer.renderingCamera)
+    this.applySaoPass.update(renderer.scene, renderer.renderingCamera)
+    this.overlayPass.update(renderer.scene, renderer.renderingCamera)
 
     this.staticAoPass.setFrameIndex(this.accumulationFrame)
     this.applySaoPass.setFrameIndex(this.accumulationFrame)
@@ -422,6 +423,7 @@ export class Pipeline {
       const ret = false || this._resetFrame
       if (this._resetFrame) {
         this._resetFrame = false
+        /** This might not be needed */
         this.onStationaryBegin()
       }
       retVal = ret
@@ -429,7 +431,7 @@ export class Pipeline {
       // console.warn('Rendering accumulation frame -> ', this.accumulationFrame)
       this._composer.render()
       this.accumulationFrame++
-      retVal = this.accumulationFrame < Pipeline.ACCUMULATE_FRAMES
+      retVal = this.needsAccumulation
     }
 
     if (this.onAfterPipelineRender) this.onAfterPipelineRender()
@@ -460,7 +462,6 @@ export class Pipeline {
     this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
     this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
-    // console.warn('Starting stationary')
   }
 
   public onStationaryEnd() {
@@ -475,6 +476,5 @@ export class Pipeline {
     this.dynamicAoPass.enabled = true
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
-    // console.warn('Ending stationary')
   }
 }

@@ -1,36 +1,27 @@
-import { generateUUID } from 'three/src/math/MathUtils'
+import { MathUtils } from 'three'
 import MeshBatch from './MeshBatch'
-import { SpeckleType } from '../converter/GeometryConverter'
 import LineBatch from './LineBatch'
-import Materials from '../materials/Materials'
+import Materials, { FilterMaterialType } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import {
-  AllBatchUpdateRange,
-  Batch,
-  BatchUpdateRange,
-  GeometryType,
-  HideAllBatchUpdateRange
-} from './Batch'
+import { Batch, BatchUpdateRange, GeometryType, NoneBatchUpdateRange } from './Batch'
 import PointBatch from './PointBatch'
-// import { FilterMaterialType } from '../FilteringManager'
-import { Material, Mesh, WebGLRenderer } from 'three'
-import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
+import { Material, WebGLRenderer } from 'three'
 import Logger from 'js-logger'
-import { World } from '../World'
+import { AsyncPause } from '../World'
 import { RenderTree } from '../tree/RenderTree'
-import SpeckleMesh from '../objects/SpeckleMesh'
 import TextBatch from './TextBatch'
-
-export enum TransformStorage {
-  VERTEX_TEXTURE = 0,
-  UNIFORM_ARRAY = 1
-}
+import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
+import { SpeckleType } from '../loaders/GeometryConverter'
+import { TreeNode, WorldTree } from '../..'
+import InstancedMeshBatch from './InstancedMeshBatch'
+import { Geometry } from '../converter/Geometry'
 
 export default class Batcher {
   private maxHardwareUniformCount = 0
   private floatTextures = false
   private maxBatchObjects = 0
   private maxBatchVertices = 500000
+  private minInstancedBatchVertices = 10000
   public materials: Materials
   public batches: { [id: string]: Batch } = {}
 
@@ -44,74 +35,122 @@ export default class Batcher {
     this.materials.createDefaultMaterials()
   }
 
-  public async makeBatches(
+  public async *makeBatches(
+    worldTree: WorldTree,
     renderTree: RenderTree,
     speckleType: SpeckleType[],
     batchType?: GeometryType
   ) {
-    const renderViews = renderTree
-      .getRenderableRenderViews(...speckleType)
-      .sort((a, b) => {
-        if (a.renderMaterialHash === 0) return -1
-        if (b.renderMaterialHash === 0) return 1
-        return a.renderMaterialHash - b.renderMaterialHash
-      })
-    const materialHashes = [
-      ...Array.from(new Set(renderViews.map((value) => value.renderMaterialHash)))
-    ]
-
-    Logger.warn(`Batch count: ${materialHashes}`)
-
-    for (let i = 0; i < materialHashes.length; i++) {
-      let renderViewsBatch = renderViews.filter(
-        (value) => value.renderMaterialHash === materialHashes[i]
-      )
-      /** Prune any meshes with no geometry data */
-      let vertCount
-      renderViewsBatch = renderViewsBatch.filter((value) => {
-        const valid = value.validGeometry
-        if (valid) {
-          vertCount += value.renderData.geometry.attributes.POSITION.length / 3
-        }
-        return valid || value.hasMetadata
-      })
-      const batches = this.splitBatch(renderViewsBatch, vertCount)
-      for (let k = 0; k < batches.length; k++) {
-        const restrictedRvs = batches[k]
-        const batch = await this.buildBatch(
-          renderTree,
-          restrictedRvs,
-          materialHashes[i],
-          batchType
-        )
-        this.batches[batch.id] = batch
-      }
-    }
-  }
-
-  public async *makeBatchesAsync(
-    renderTree: RenderTree,
-    speckleType: SpeckleType[],
-    batchType?: GeometryType,
-    priority?: number
-  ) {
-    const pause = World.getPause(priority)
-
-    const renderViews = renderTree
-      .getRenderableRenderViews(...speckleType)
-      .sort((a, b) => {
-        if (a.renderMaterialHash === 0) return -1
-        if (b.renderMaterialHash === 0) return 1
-        return a.renderMaterialHash - b.renderMaterialHash
-      })
-    const materialHashes = [
-      ...Array.from(new Set(renderViews.map((value) => value.renderMaterialHash)))
-    ]
-
+    const start = performance.now()
     let min = Number.MAX_SAFE_INTEGER,
       max = -1,
       average = 0,
       batchCount = 0
+
+    const instanceGroups = renderTree.getInstances()
+    const instancedBatches: { [id: string]: Array<string> } = {}
+
+    const pause = new AsyncPause()
+    const startInstancedGathering = performance.now()
+    for (const g in instanceGroups) {
+      pause.tick(100)
+      if (pause.needsWait) {
+        await pause.wait(50)
+      }
+
+      let instancedNodes = worldTree.findId(g)
+      instancedNodes = instancedNodes.filter((node: TreeNode) => {
+        return (
+          node.model.renderView &&
+          node.model.renderView.speckleType === SpeckleType.Mesh
+        )
+      })
+      if (!instancedNodes.length) continue
+
+      const vertCount =
+        (instancedNodes[0].model.renderView.renderData.geometry.attributes.POSITION
+          .length /
+          3) *
+        instancedNodes.length
+
+      if (!instancedBatches[vertCount]) {
+        instancedBatches[vertCount] = []
+      }
+      instancedBatches[vertCount].push(g)
+    }
+    const instancedGathering = performance.now() - startInstancedGathering
+
+    let deInstancing = 0
+    let instanceBuild = 0
+    for (const v in instancedBatches) {
+      for (let k = 0; k < instancedBatches[v].length; k++) {
+        const nodes = worldTree.findId(instancedBatches[v][k])
+        const rvs = nodes
+          .map((node: TreeNode) => node.model.renderView)
+          /** This disconsiders orphaned nodes caused by incorrect id duplication in the stream */
+          .filter((rv) => rv)
+
+        if (Number.parseInt(v) < this.minInstancedBatchVertices) {
+          const t0 = performance.now()
+          rvs.forEach((nodeRv) => {
+            const geometry = nodeRv.renderData.geometry
+            geometry.instanced = false
+            const attribs = geometry.attributes
+            geometry.attributes = {
+              POSITION: attribs.POSITION.slice(),
+              INDEX: attribs.INDEX.slice(),
+              ...(attribs.COLOR && {
+                COLOR: attribs.COLOR.slice()
+              })
+            }
+            Geometry.transformGeometryData(geometry, geometry.transform)
+            nodeRv.computeAABB()
+          })
+          deInstancing += performance.now() - t0
+          continue
+        }
+
+        const t1 = performance.now()
+        const materialHash = rvs[0].renderMaterialHash
+        const instancedBatch = await this.buildInstancedBatch(
+          renderTree,
+          rvs,
+          materialHash
+        )
+        instanceBuild += performance.now() - t1
+
+        this.batches[instancedBatch.id] = instancedBatch
+        min = Math.min(min, instancedBatch.renderViews.length)
+        max = Math.max(max, instancedBatch.renderViews.length)
+        average += instancedBatch.renderViews.length
+        batchCount++
+        yield this.batches[instancedBatch.id]
+      }
+    }
+    const totalInstanced = performance.now() - start
+
+    const renderViews = renderTree
+      .getRenderableNodes(...speckleType)
+      .flatMap((node: TreeNode) => {
+        if (node.model.renderView) {
+          if (node.model.renderView.renderData.geometry.instanced) {
+            if (node.model.renderView.speckleType !== SpeckleType.Mesh) {
+              return [node.model.renderView]
+            }
+            return []
+          }
+          return [node.model.renderView]
+        } else return []
+      })
+      .sort((a, b) => {
+        if (a.renderMaterialHash === 0) return -1
+        if (b.renderMaterialHash === 0) return 1
+        return a.renderMaterialHash - b.renderMaterialHash
+      })
+
+    const materialHashes = [
+      ...Array.from(new Set(renderViews.map((value) => value.renderMaterialHash)))
+    ]
 
     for (let i = 0; i < materialHashes.length; i++) {
       let renderViewsBatch = renderViews.filter(
@@ -126,10 +165,14 @@ export default class Batcher {
         }
         return valid || value.hasMetadata
       })
-      if (renderViewsBatch.length === 0) continue
 
+      if (renderViewsBatch.length === 0) continue
       const batches = this.splitBatch(renderViewsBatch, vertCount)
       for (let k = 0; k < batches.length; k++) {
+        pause.tick(100)
+        if (pause.needsWait) {
+          await pause.wait(50)
+        }
         const restrictedRvs = batches[k]
         const batch = await this.buildBatch(
           renderTree,
@@ -144,14 +187,24 @@ export default class Batcher {
         average += batch.renderViews.length
         batchCount++
         yield this.batches[batch.id]
-        await pause()
       }
     }
-    console.warn(
+    Logger.warn(
       `Batch total: ${batchCount} min: ${min}, max: ${max}, average: ${
         average / materialHashes.length
       }`
     )
+    Logger.warn('Buffer setup -> ', MeshBatch.bufferSetup)
+    Logger.warn('Array work -> ', MeshBatch.arrayWork)
+    Logger.warn('Object BVH -> ', MeshBatch.objectBvh)
+    Logger.warn('Compute normals -> ', MeshBatch.computeNormals)
+    Logger.warn('Compute box and sphere -> ', MeshBatch.computeBoxAndSphere)
+    Logger.warn('Compute RTE -> ', MeshBatch.computeRTE)
+    Logger.warn('Batch BVH -> ', MeshBatch.batchBVH)
+    Logger.warn('Total instanced -> ', totalInstanced)
+    Logger.warn('Instance gathering -> ', instancedGathering)
+    Logger.warn('De-instancing -> ', deInstancing)
+    Logger.warn('Instanced build -> ', instanceBuild)
   }
 
   private splitBatch(
@@ -205,17 +258,12 @@ export default class Batcher {
     return vSplit
   }
 
-  private async buildBatch(
+  private async buildInstancedBatch(
     renderTree: RenderTree,
     renderViews: NodeRenderView[],
-    materialHash: number,
-    batchType?: GeometryType
+    materialHash: number
   ): Promise<Batch> {
-    const batch = renderViews.filter(
-      (value) => value.renderMaterialHash === materialHash
-    )
-
-    if (!batch.length) {
+    if (!renderViews.length) {
       /** This is for the case when all renderviews have invalid geometries, and it generally
        * means there is something wrong with the stream
        */
@@ -226,7 +274,35 @@ export default class Batcher {
       return null
     }
 
-    const geometryType = batchType !== undefined ? batchType : batch[0].geometryType
+    const matRef = renderViews[0].renderData.renderMaterial
+    const material = this.materials.getMaterial(materialHash, matRef, GeometryType.MESH)
+    const batchID = MathUtils.generateUUID()
+    const geometryBatch = new InstancedMeshBatch(batchID, renderTree.id, renderViews)
+    geometryBatch.setBatchMaterial(material)
+    await geometryBatch.buildBatch()
+
+    return geometryBatch
+  }
+
+  private async buildBatch(
+    renderTree: RenderTree,
+    renderViews: NodeRenderView[],
+    materialHash: number,
+    batchType?: GeometryType
+  ): Promise<Batch> {
+    if (!renderViews.length) {
+      /** This is for the case when all renderviews have invalid geometries, and it generally
+       * means there is something wrong with the stream
+       */
+      Logger.warn(
+        'All renderviews have invalid geometries. Skipping batch!',
+        renderViews
+      )
+      return null
+    }
+
+    const geometryType =
+      batchType !== undefined ? batchType : renderViews[0].geometryType
     let matRef = null
 
     if (geometryType === GeometryType.MESH) {
@@ -243,30 +319,30 @@ export default class Batcher {
 
     const material = this.materials.getMaterial(materialHash, matRef, geometryType)
 
-    const batchID = generateUUID()
+    const batchID = MathUtils.generateUUID()
     let geometryBatch: Batch = null
     switch (geometryType) {
       case GeometryType.MESH:
         geometryBatch = new MeshBatch(
           batchID,
           renderTree.id,
-          batch,
+          renderViews,
           this.floatTextures
             ? TransformStorage.VERTEX_TEXTURE
             : TransformStorage.UNIFORM_ARRAY
         )
         break
       case GeometryType.LINE:
-        geometryBatch = new LineBatch(batchID, renderTree.id, batch)
+        geometryBatch = new LineBatch(batchID, renderTree.id, renderViews)
         break
       case GeometryType.POINT:
-        geometryBatch = new PointBatch(batchID, renderTree.id, batch)
+        geometryBatch = new PointBatch(batchID, renderTree.id, renderViews)
         break
       case GeometryType.POINT_CLOUD:
-        geometryBatch = new PointBatch(batchID, renderTree.id, batch)
+        geometryBatch = new PointBatch(batchID, renderTree.id, renderViews)
         break
       case GeometryType.TEXT:
-        geometryBatch = new TextBatch(batchID, renderTree.id, batch)
+        geometryBatch = new TextBatch(batchID, renderTree.id, renderViews)
         break
     }
 
@@ -302,7 +378,7 @@ export default class Batcher {
       const batch: Batch = this.batches[k]
       const range = ranges[k]
       if (!range) {
-        batch.setVisibleRange(HideAllBatchUpdateRange)
+        batch.setVisibleRange(NoneBatchUpdateRange)
       } else {
         batch.setVisibleRange(range)
       }
@@ -312,28 +388,7 @@ export default class Batcher {
   public getTransparent(): Record<string, BatchUpdateRange> {
     const visibilityRanges = {}
     for (const k in this.batches) {
-      const batch: Batch = this.batches[k]
-      const batchMesh: Mesh = batch.renderObject as Mesh
-      if (batchMesh.geometry.groups.length === 0) {
-        if (Materials.isTransparent(batchMesh.material as Material))
-          visibilityRanges[k] = AllBatchUpdateRange
-      } else {
-        const transparentGroup = batchMesh.geometry.groups.find((value) => {
-          return Materials.isTransparent(batchMesh.material[value.materialIndex])
-        })
-        const hiddenGroup = batchMesh.geometry.groups.find((value) => {
-          return batchMesh.material[value.materialIndex].visible === false
-        })
-        if (transparentGroup) {
-          visibilityRanges[k] = {
-            offset: transparentGroup.start,
-            count:
-              hiddenGroup !== undefined
-                ? hiddenGroup.start
-                : batch.getCount() - transparentGroup.start
-          }
-        }
-      }
+      visibilityRanges[k] = this.batches[k].getTransparent()
     }
     return visibilityRanges
   }
@@ -341,22 +396,7 @@ export default class Batcher {
   public getStencil(): Record<string, BatchUpdateRange> {
     const visibilityRanges = {}
     for (const k in this.batches) {
-      const batch: Batch = this.batches[k]
-      const batchMesh: Mesh = batch.renderObject as Mesh
-      if (batchMesh.geometry.groups.length === 0) {
-        if ((batchMesh.material as Material).stencilWrite === true)
-          visibilityRanges[k] = AllBatchUpdateRange
-      } else {
-        const stencilGroup = batchMesh.geometry.groups.find((value) => {
-          return batchMesh.material[value.materialIndex].stencilWrite === true
-        })
-        if (stencilGroup) {
-          visibilityRanges[k] = {
-            offset: stencilGroup.start,
-            count: stencilGroup.count
-          }
-        }
-      }
+      visibilityRanges[k] = this.batches[k].getStencil()
     }
     return visibilityRanges
   }
@@ -364,26 +404,7 @@ export default class Batcher {
   public getOpaque(): Record<string, BatchUpdateRange> {
     const visibilityRanges = {}
     for (const k in this.batches) {
-      const batch: Batch = this.batches[k]
-      const batchMesh: Mesh = batch.renderObject as Mesh
-      if (batchMesh.geometry.groups.length === 0) {
-        if (Materials.isOpaque(batchMesh.material as Material))
-          visibilityRanges[k] = AllBatchUpdateRange
-      } else {
-        const transparentOrHiddenGroup = batchMesh.geometry.groups.find((value) => {
-          return (
-            Materials.isTransparent(batchMesh.material[value.materialIndex]) ||
-            batchMesh.material[value.materialIndex].visible === false
-          )
-        })
-        visibilityRanges[k] = {
-          offset: 0,
-          count:
-            transparentOrHiddenGroup !== undefined
-              ? transparentOrHiddenGroup.start
-              : batch.getCount()
-        }
-      }
+      visibilityRanges[k] = this.batches[k].getOpaque()
     }
     return visibilityRanges
   }
@@ -407,28 +428,6 @@ export default class Batcher {
     }
   }
 
-  public getByMaterialUUID(materialUUID: string) {
-    const visibilityRanges = {}
-    for (const k in this.batches) {
-      const batch: Batch = this.batches[k]
-      const batchMesh: Mesh = batch.renderObject as Mesh
-      if (batchMesh.geometry.groups.length === 0) {
-        if ((batchMesh.material as Material).uuid === materialUUID)
-          visibilityRanges[k] = AllBatchUpdateRange
-      } else {
-        const materialUUIDGroup = batchMesh.geometry.groups.find((value) => {
-          return batchMesh.material[value.materialIndex].uuid === materialUUID
-        })
-        visibilityRanges[k] = {
-          offset: 0,
-          count:
-            materialUUIDGroup !== undefined ? materialUUIDGroup.start : batch.getCount()
-        }
-      }
-    }
-    return visibilityRanges
-  }
-
   public purgeBatches(subtreeId: string) {
     for (const k in this.batches) {
       if (this.batches[k].subtreeId === subtreeId) {
@@ -448,9 +447,7 @@ export default class Batcher {
   }
 
   public getBatch(rv: NodeRenderView) {
-    return Object.values(this.batches).find((value: Batch) => {
-      return value.renderViews.includes(rv)
-    })
+    return this.batches[rv.batchId]
   }
 
   public getRenderView(batchId: string, index: number) {
@@ -477,106 +474,6 @@ export default class Batcher {
     }
   }
 
-  public setObjectsFilterMaterial(
-    rvs: NodeRenderView[],
-    filterMaterial: FilterMaterial,
-    uniqueRvsOnly = true
-  ): string[] {
-    return this.setObjectsMaterial(
-      rvs,
-      (rv: NodeRenderView) => {
-        return {
-          offset: rv.batchStart,
-          count: rv.batchCount,
-          material: this.materials.getFilterMaterial(
-            rv,
-            filterMaterial.filterType
-          ) as Material,
-          materialOptions: this.materials.getFilterMaterialOptions(filterMaterial)
-        } as BatchUpdateRange
-      },
-      uniqueRvsOnly
-    )
-  }
-
-  public setObjectsMaterial(
-    rvs: NodeRenderView[],
-    batchRangeDelegate: (rv: NodeRenderView) => BatchUpdateRange,
-    uniqueRvsOnly = true
-  ): string[] {
-    let renderViews = rvs
-    if (uniqueRvsOnly) renderViews = [...Array.from(new Set(rvs.map((value) => value)))]
-    const batchIds = [...Array.from(new Set(renderViews.map((value) => value.batchId)))]
-    for (let i = 0; i < batchIds.length; i++) {
-      if (!batchIds[i]) {
-        continue
-      }
-      const batch = this.batches[batchIds[i]]
-      const views = renderViews
-        .filter((value) => value.batchId === batchIds[i])
-        .map(batchRangeDelegate)
-      batch.setDrawRanges(...views)
-    }
-    return batchIds
-  }
-
-  public insertObjectsFilterMaterial(
-    rvs: NodeRenderView[],
-    filterMaterial: FilterMaterial
-  ): string {
-    let renderViews = rvs
-    renderViews = [...Array.from(new Set(rvs.map((value) => value)))]
-    const batchIds = [...Array.from(new Set(renderViews.map((value) => value.batchId)))]
-    const id = generateUUID()
-    for (let i = 0; i < batchIds.length; i++) {
-      if (!batchIds[i]) {
-        continue
-      }
-      const batch = this.batches[batchIds[i]]
-      const batchRenderViews = renderViews.filter(
-        (value) => value.batchId === batchIds[i]
-      )
-      const opaqueRvs = batchRenderViews.filter((rv) => !rv.transparent)
-      const transparentRvs = batchRenderViews.filter((rv) => rv.transparent)
-      let opaqueMaterial, transparentMaterial
-      if (opaqueRvs.length)
-        opaqueMaterial = this.materials
-          .getFilterMaterial(opaqueRvs[0], filterMaterial.filterType)
-          .clone() as Material
-      if (transparentRvs.length)
-        transparentMaterial = this.materials
-          .getFilterMaterial(transparentRvs[0], filterMaterial.filterType)
-          .clone() as Material
-      const views = batchRenderViews.map((rv: NodeRenderView) => {
-        return {
-          offset: rv.batchStart,
-          count: rv.batchCount,
-          material: rv.transparent ? transparentMaterial : opaqueMaterial,
-          materialOptions: this.materials.getFilterMaterialOptions(filterMaterial),
-          id
-        } as BatchUpdateRange
-      })
-      batch.insertDrawRanges(...views)
-    }
-    return id
-  }
-
-  public removeObjectsMaterial(id: string) {
-    for (const k in this.batches) {
-      if (this.batches[k]) {
-        this.batches[k].removeDrawRanges(id)
-      }
-    }
-  }
-
-  public autoFillDrawRanges(batchIds: string[]) {
-    const uniqueBatches = [...Array.from(new Set(batchIds.map((value) => value)))]
-    uniqueBatches.forEach((value) => {
-      if (!value) return
-      this.batches[value].autoFillDrawRanges()
-    })
-  }
-
   /**
    * Used for debuggin only
    */
@@ -588,10 +485,9 @@ export default class Batcher {
         this.batches[k].setDrawRanges({
           offset: 0,
           count: this.batches[k].getCount(),
-          material: this.materials.getFilterMaterial(
-            this.batches[k].renderViews[0],
-            FilterMaterialType.GHOST
-          )
+          material: this.materials.getFilterMaterial(this.batches[k].renderViews[0], {
+            filterType: FilterMaterialType.GHOST
+          })
         })
       }
     }
@@ -603,10 +499,9 @@ export default class Batcher {
         this.batches[k].setDrawRanges({
           offset: 0,
           count: this.batches[k].getCount(),
-          material: this.materials.getFilterMaterial(
-            this.batches[k].renderViews[0],
-            FilterMaterialType.GHOST
-          )
+          material: this.materials.getFilterMaterial(this.batches[k].renderViews[0], {
+            filterType: FilterMaterialType.GHOST
+          })
         })
       }
     }

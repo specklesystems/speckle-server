@@ -10,11 +10,11 @@ export class PropertyManager {
    * @param bypassCache Forces a full rescan if set to true.
    * @returns a list of property infos containing basic information for filtering purposes.
    */
-  public getProperties(
+  public async getProperties(
     tree: WorldTree,
     resourceUrl: string = null,
     bypassCache = false
-  ): PropertyInfo[] {
+  ): Promise<PropertyInfo[]> {
     let rootNode: TreeNode = tree.root
 
     if (!bypassCache && this.propCache[resourceUrl ? resourceUrl : rootNode.model.id])
@@ -30,7 +30,7 @@ export class PropertyManager {
 
     const propValues = {}
 
-    tree.walk((node: TreeNode) => {
+    await tree.walkAsync((node: TreeNode) => {
       if (!node.model.atomic) return true
       const obj = flatten(node.model.raw)
       for (const key in obj) {
@@ -38,6 +38,7 @@ export class PropertyManager {
         if (!propValues[key]) propValues[key] = []
         propValues[key].push({ value: obj[key], id: obj.id })
       }
+      return true
     }, rootNode)
 
     const allPropInfos: PropertyInfo[] = []

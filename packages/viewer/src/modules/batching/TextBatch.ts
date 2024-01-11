@@ -1,13 +1,19 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-empty-function */
-import { Box3, Color, Material, Object3D, WebGLRenderer } from 'three'
+import { Box3, Material, Object3D, WebGLRenderer } from 'three'
 
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { AllBatchUpdateRange, Batch, BatchUpdateRange, GeometryType } from './Batch'
+import {
+  AllBatchUpdateRange,
+  Batch,
+  BatchUpdateRange,
+  GeometryType,
+  NoneBatchUpdateRange
+} from './Batch'
 
 import { SpeckleText } from '../objects/SpeckleText'
-import { ObjectLayers } from '../SpeckleRenderer'
-import SpeckleTextMaterial from '../materials/SpeckleTextMaterial'
+import { ObjectLayers } from '../../IViewer'
+import { DrawGroup } from './InstancedMeshBatch'
+import Materials from '../materials/Materials'
 
 export default class TextBatch implements Batch {
   public id: string
@@ -15,10 +21,28 @@ export default class TextBatch implements Batch {
   public renderViews: NodeRenderView[]
   public batchMaterial: Material
   public mesh: SpeckleText
-  private insertedRanges: BatchUpdateRange[] = []
 
   public get bounds(): Box3 {
     return new Box3() //this.mesh.BVH.getBoundingBox(new Box3())
+  }
+
+  public get drawCalls(): number {
+    return 1
+  }
+
+  public get minDrawCalls(): number {
+    return 1
+  }
+
+  public get triCount(): number {
+    return this.getCount()
+  }
+
+  public get vertCount(): number {
+    return (
+      this.mesh.textMesh.geometry.attributes.position.count +
+      this.mesh.backgroundMesh?.geometry.attributes.position.count
+    )
   }
 
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
@@ -36,7 +60,18 @@ export default class TextBatch implements Batch {
   }
 
   public getCount(): number {
-    return this.mesh.geometry.index.count
+    return (
+      this.mesh.textMesh.geometry.index.count +
+      this.mesh.backgroundMesh?.geometry.index.count
+    )
+  }
+
+  public get materials(): Material[] {
+    return this.mesh.material as Material[]
+  }
+
+  public get groups(): DrawGroup[] {
+    return []
   }
 
   public setBatchMaterial(material: Material) {
@@ -51,10 +86,29 @@ export default class TextBatch implements Batch {
     renderer
   }
 
-  public setVisibleRange(...ranges: BatchUpdateRange[]) {}
+  public setVisibleRange(...ranges: BatchUpdateRange[]) {
+    // TO DO
+  }
 
   public getVisibleRange(): BatchUpdateRange {
     return AllBatchUpdateRange
+  }
+
+  public getOpaque(): BatchUpdateRange {
+    if (Materials.isOpaque(this.batchMaterial)) return AllBatchUpdateRange
+    return NoneBatchUpdateRange
+  }
+  public getTransparent(): BatchUpdateRange {
+    if (Materials.isTransparent(this.batchMaterial)) return AllBatchUpdateRange
+    return NoneBatchUpdateRange
+  }
+  public getStencil(): BatchUpdateRange {
+    if (this.batchMaterial.stencilWrite === true) return AllBatchUpdateRange
+    return NoneBatchUpdateRange
+  }
+
+  public setBatchBuffers(...range: BatchUpdateRange[]): void {
+    throw new Error('Method not implemented.')
   }
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
@@ -64,40 +118,6 @@ export default class TextBatch implements Batch {
     }
   }
 
-  public insertDrawRanges(...ranges: BatchUpdateRange[]) {
-    /** There is a bug in troika library where cloning their derived materials doubles up
-     *  their custom shader code which in turns won't compile anymore. The material we
-     *  recieve in the range argument here is such a clone which won't compile. That's why
-     *  we're 'cloning' it oursleves
-     */
-    const material = new SpeckleTextMaterial({})
-    material.copy(ranges[0].material)
-    ranges[0].material = material.getDerivedMaterial()
-
-    const materialOptions = {
-      rampIndexColor: new Color().copy(this.mesh.textMesh.material.color)
-    }
-    this.insertedRanges.push({
-      offset: ranges[0].offset,
-      count: ranges[0].count,
-      material: this.mesh.textMesh.material,
-      materialOptions,
-      id: ranges[0].id
-    })
-    this.setDrawRanges(...ranges)
-  }
-
-  public removeDrawRanges(id: string) {
-    const ranges = this.insertedRanges.filter((value) => value.id === id)
-    if (!ranges.length) {
-      return
-    }
-    this.setDrawRanges(...ranges)
-    this.insertedRanges = this.insertedRanges.filter((value) => !ranges.includes(value))
-  }
-
-  public autoFillDrawRanges() {}
-
   public resetDrawRanges() {
     this.mesh.textMesh.material = this.batchMaterial
     this.mesh.textMesh.visible = true
@@ -106,7 +126,7 @@ export default class TextBatch implements Batch {
   }
 
   public async buildBatch() {
-    this.mesh = new SpeckleText(this.id)
+    this.mesh = new SpeckleText(this.id, ObjectLayers.STREAM_CONTENT_TEXT)
     this.mesh.matrixAutoUpdate = false
     await this.mesh.update(
       SpeckleText.SpeckleTextParamsFromMetadata(
@@ -117,11 +137,9 @@ export default class TextBatch implements Batch {
     this.renderViews[0].setBatchData(
       this.id,
       0,
-      this.mesh.textMesh.geometry.index.length / 3
+      this.mesh.textMesh.geometry.index.count / 3
     )
     this.mesh.textMesh.material = this.batchMaterial
-    this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_TEXT)
-    this.mesh.textMesh.layers.set(ObjectLayers.STREAM_CONTENT_TEXT)
   }
 
   public getRenderView(index: number): NodeRenderView {
@@ -129,6 +147,10 @@ export default class TextBatch implements Batch {
   }
 
   public getMaterialAtIndex(index: number): Material {
+    return this.batchMaterial
+  }
+
+  public getMaterial(rv: NodeRenderView): Material {
     return this.batchMaterial
   }
 

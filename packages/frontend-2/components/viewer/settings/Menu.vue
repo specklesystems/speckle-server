@@ -12,6 +12,7 @@
 <script setup lang="ts">
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { useInjectedViewer } from '~~/lib/viewer/composables/setup'
+import { CameraController } from '@speckle/viewer'
 type ViewerUserSettings = {
   turntableMode: boolean
 }
@@ -28,7 +29,8 @@ const localViewerSettings = useSynchronizedCookie<ViewerUserSettings>(
 const { instance } = useInjectedViewer()
 
 const setViewerCameraHandlerControlsMaxPolarAngle = (angle: number) => {
-  instance.cameraHandler.controls.maxPolarAngle = angle
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  instance.getExtension(CameraController).controls.maxPolarAngle = angle
 }
 
 const toggleTurntableMode = () => {

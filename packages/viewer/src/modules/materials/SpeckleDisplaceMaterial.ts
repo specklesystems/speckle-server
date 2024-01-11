@@ -1,18 +1,15 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable camelcase */
 import { speckleDisplaceVert } from './shaders/speckle-displace.vert'
 import { speckleDisplaceFrag } from './shaders/speckle-displace-frag'
-import { Vector2 } from 'three'
+import { Material, Vector2 } from 'three'
 import SpeckleBasicMaterial from './SpeckleBasicMaterial'
 import { Uniforms } from './SpeckleMaterial'
 
 class SpeckleDisplaceMaterial extends SpeckleBasicMaterial {
-  protected get vertexShader(): string {
+  protected get vertexProgram(): string {
     return speckleDisplaceVert
   }
 
-  protected get fragmentShader(): string {
+  protected get fragmentProgram(): string {
     return speckleDisplaceFrag
   }
 
@@ -20,8 +17,13 @@ class SpeckleDisplaceMaterial extends SpeckleBasicMaterial {
     return { ...super.uniformsDef, size: new Vector2(), displacement: 0 }
   }
 
-  constructor(parameters, defines = []) {
+  constructor(parameters, defines) {
     super(parameters, defines)
+  }
+
+  public fastCopy(from: Material, to: Material) {
+    super.fastCopy(from, to)
+    to.userData.displacement.value = from.userData.displacement.value
   }
 }
 

@@ -1,7 +1,11 @@
+import { createApp } from '@/modules/auth/services/apps'
+import { createAppToken } from '@/modules/core/services/tokens'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
+  AppTokenCreateDocument,
   CreateTokenDocument,
-  RevokeTokenDocument
+  RevokeTokenDocument,
+  TokenAppInfoDocument
 } from '@/test/graphql/generated/graphql'
 import {
   TestApolloServer,
@@ -11,6 +15,7 @@ import {
 import { beforeEachContext } from '@/test/hooks'
 import { AllScopes, Roles, Scopes } from '@speckle/shared'
 import { expect } from 'chai'
+import cryptoRandomString from 'crypto-random-string'
 import { difference } from 'lodash'
 
 /**
@@ -39,6 +44,13 @@ describe('API Tokens', () => {
         scopes: AllScopes
       })
     })
+  })
+
+  it("don't show an associated app, if they actually don't have one", async () => {
+    const { data, errors } = await apollo.execute(TokenAppInfoDocument, {})
+
+    expect(data?.authenticatedAsApp?.id).to.not.be.ok
+    expect(errors).to.not.be.ok
   })
 
   it("can't create PATs with scopes that the authenticated req itself doesn't have", async () => {
@@ -146,6 +158,125 @@ describe('API Tokens', () => {
       expect(errors).to.be.ok
       expect(
         errors!.find((e) => e.message.includes('do not have the required privileges'))
+      ).to.be.ok
+    })
+  })
+
+  describe('as PAT tokens', () => {
+    it("can't create app tokens", async () => {
+      const res = await apollo.execute(AppTokenCreateDocument, {
+        token: { name: 'invalidone', scopes: [Scopes.Profile.Read] }
+      })
+
+      expect(res.data?.appTokenCreate).to.not.be.ok
+      expect(res.errors).to.be.ok
+      expect(
+        res.errors!.find((e) =>
+          e.message.includes(
+            'An app token can only create a new token for the same app'
+          )
+        )
+      ).to.be.ok
+    })
+  })
+
+  describe('as app tokens', () => {
+    let testApp1Id: string
+    let testApp1Token: string
+    let apollo: TestApolloServer
+
+    before(async () => {
+      const testApp1 = await createApp({
+        name: cryptoRandomString({ length: 10 }),
+        public: true,
+        scopes: AllScopes,
+        redirectUrl: 'http://127.0.0.1:1337'
+      })
+      testApp1Id = testApp1.id
+
+      const appToken = await createAppToken({
+        appId: testApp1Id,
+        userId: userOne.id,
+        name: 'testapp',
+        scopes: AllScopes
+      })
+      testApp1Token = appToken
+
+      apollo = await testApolloServer({
+        context: createTestContext({
+          auth: true,
+          userId: userOne.id,
+          role: Roles.Server.Admin,
+          scopes: AllScopes,
+          token: testApp1Token,
+          appId: testApp1Id
+        })
+      })
+    })
+
+    it("can return the app they're associated with", async () => {
+      const { data, errors } = await apollo.execute(TokenAppInfoDocument, {})
+
+      expect(data?.authenticatedAsApp?.id).to.equal(testApp1Id)
+      expect(errors).to.not.be.ok
+    })
+
+    it('can create new app tokens and revoke them', async () => {
+      const { data, errors } = await apollo.execute(AppTokenCreateDocument, {
+        token: { name: 'test', scopes: [Scopes.Profile.Read] }
+      })
+
+      expect(data?.appTokenCreate).to.be.ok
+      expect(errors).to.not.be.ok
+
+      const newToken = data?.appTokenCreate || ''
+      const res = await apollo.execute(RevokeTokenDocument, { token: newToken })
+      expect(res.data?.apiTokenRevoke).to.be.ok
+      expect(res.errors).to.not.be.ok
+    })
+
+    it("can't create app tokens without the tokens:write scope", async () => {
+      const { data, errors } = await apollo.execute(
+        AppTokenCreateDocument,
+        {
+          token: { name: 'test', scopes: [Scopes.Profile.Read] }
+        },
+        {
+          context: {
+            scopes: [Scopes.Profile.Read]
+          }
+        }
+      )
+
+      expect(data?.appTokenCreate).to.not.be.ok
+      expect(errors).to.be.ok
+      expect(
+        errors!.find((e) => e.message.includes('do not have the required privileges'))
+      ).to.be.ok
+    })
+
+    it("can't create app tokens with scopes that the authenticated req itself doesn't have", async () => {
+      const { data, errors } = await apollo.execute(
+        AppTokenCreateDocument,
+        {
+          token: {
+            name: 'invalidone',
+            scopes: [Scopes.Profile.Read, Scopes.Streams.Read]
+          }
+        },
+        {
+          context: {
+            scopes: [Scopes.Profile.Read, Scopes.Tokens.Write]
+          }
+        }
+      )
+
+      expect(data?.appTokenCreate).to.not.be.ok
+      expect(errors).to.be.ok
+      expect(
+        errors!.find((e) =>
+          e.message.includes("You can't create a token with scopes that you don't have")
+        )
       ).to.be.ok
     })
   })

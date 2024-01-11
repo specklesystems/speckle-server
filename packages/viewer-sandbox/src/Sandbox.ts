@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Box3 } from '@speckle/viewer'
+import { Box3, SectionTool, TreeNode } from '@speckle/viewer'
 import { Vector3 } from '@speckle/viewer'
 import {
   CanonicalView,
@@ -10,13 +10,22 @@ import {
   ViewerEvent,
   BatchObject,
   VisualDiffMode,
-  MeasurementType
+  MeasurementType,
+  ExplodeExtension,
+  DiffExtension,
+  SpeckleLoader,
+  ObjLoader
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import UrlHelper from './UrlHelper'
 import { DiffResult } from '@speckle/viewer'
 import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
 import { Units } from '@speckle/viewer'
+import { SelectionExtension } from '@speckle/viewer'
+import { MeasurementsExtension } from '@speckle/viewer'
+import { FilteringExtension } from '@speckle/viewer'
+import { CameraController } from '@speckle/viewer'
+import { UpdateFlags } from '@speckle/viewer'
 
 export default class Sandbox {
   private viewer: DebugViewer
@@ -132,11 +141,11 @@ export default class Sandbox {
     })
     this.properties = []
 
-    viewer.on(ViewerEvent.LoadComplete, (url: string) => {
+    viewer.on(ViewerEvent.LoadComplete, async (url: string) => {
       this.addStreamControls(url)
-      this.addViewControls()
+      // this.addViewControls()
       this.addBatches()
-      this.properties = this.viewer.getObjectProperties()
+      // this.properties = await this.viewer.getObjectProperties()
       this.batchesParams.totalBvhSize = this.getBVHSize()
       this.refresh()
     })
@@ -155,10 +164,9 @@ export default class Sandbox {
     })
     viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent) => {
       if (selectionEvent && selectionEvent.hits) {
-        const firstHitGuid = selectionEvent.hits[0].guid
-        if (firstHitGuid) {
-          const objects = this.viewer.getObjects(firstHitGuid)
-          this.addObjectControls(firstHitGuid, objects)
+        const firstHitNode = selectionEvent.hits[0].node
+        if (firstHitNode) {
+          this.addObjectControls(firstHitNode)
         }
       }
     })
@@ -195,11 +203,16 @@ export default class Sandbox {
     })
     const position = { value: { x: 0, y: 0, z: 0 } }
     folder.addInput(position, 'value', { label: 'Position' }).on('change', () => {
-      const subtree = this.viewer.getRenderer().subtree(url)
-      subtree.position.set(position.value.x, position.value.y, position.value.z)
-      this.viewer.getRenderer().updateDirectLights()
-      this.viewer.getRenderer().updateHelpers()
-      this.viewer.requestRender()
+      const rvs = this.viewer
+        .getWorldTree()
+        .getRenderTree(url)
+        .getRenderViewsForNodeId(url)
+      for (let k = 0; k < rvs.length; k++) {
+        const object = this.viewer.getRenderer().getObject(rvs[k])
+        object.transformTRS(position.value, undefined, undefined, undefined)
+      }
+      this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+      this.viewer.getRenderer().updateShadowCatcher()
     })
 
     folder
@@ -240,28 +253,39 @@ export default class Sandbox {
     this.viewsFolder.dispose()
   }
 
-  public addObjectControls(id: string, objects: BatchObject[]) {
+  public addObjectControls(node: TreeNode) {
     if (this.objectControls) {
       this.objectControls.dispose()
     }
     this.objectControls = this.tabs.pages[0].addFolder({
-      title: `Object: ${id}`
+      title: `Object: ${node.model.id}`
     })
 
+    const rvs = this.viewer
+      .getWorldTree()
+      .getRenderTree()
+      .getRenderViewsForNode(node, node)
+    const objects: BatchObject[] = []
+    for (let k = 0; k < rvs.length; k++) {
+      const batchObject = this.viewer.getRenderer().getObject(rvs[k])
+      if (batchObject) {
+        objects.push(batchObject)
+      }
+    }
     const position = { value: { x: 0, y: 0, z: 0 } }
     const rotation = { value: { x: 0, y: 0, z: 0 } }
     const scale = { value: { x: 1, y: 1, z: 1 } }
     this.objectControls
       .addInput(position, 'value', { label: 'Position' })
       .on('change', () => {
-        const unionBox: Box3 = new Box3()
+        // const unionBox: Box3 = new Box3()
+        // objects.forEach((obj: BatchObject) => {
+        //   unionBox.union(obj.renderView.aabb)
+        // })
+        // const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
-          unionBox.union(obj.renderView.aabb)
-        })
-        const origin = unionBox.getCenter(new Vector3())
-        objects.forEach((obj: BatchObject) => {
-          obj.transformTRS(position.value, rotation.value, scale.value, origin)
-          this.viewer.getRenderer().markTransformsDirty(obj.renderView.batchId)
+          // obj.transformTRS(position.value, rotation.value, scale.value, origin)
+          obj.position = position.value
         })
         this.viewer.requestRender()
       })
@@ -274,14 +298,14 @@ export default class Sandbox {
         z: { step: 0.1 }
       })
       .on('change', () => {
-        const unionBox: Box3 = new Box3()
+        // const unionBox: Box3 = new Box3()
+        // objects.forEach((obj: BatchObject) => {
+        //   unionBox.union(obj.renderView.aabb)
+        // })
+        // const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
-          unionBox.union(obj.renderView.aabb)
-        })
-        const origin = unionBox.getCenter(new Vector3())
-        objects.forEach((obj: BatchObject) => {
-          obj.transformTRS(position.value, rotation.value, scale.value, origin)
-          this.viewer.getRenderer().markTransformsDirty(obj.renderView.batchId)
+          // obj.transformTRS(position.value, rotation.value, scale.value, origin)
+          obj.euler = rotation.value
         })
         this.viewer.requestRender()
       })
@@ -301,7 +325,6 @@ export default class Sandbox {
         const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
           obj.transformTRS(position.value, rotation.value, scale.value, origin)
-          this.viewer.getRenderer().markTransformsDirty(obj.renderView.batchId)
         })
         this.viewer.requestRender()
       })
@@ -320,6 +343,29 @@ export default class Sandbox {
       this.loadUrl(this.urlParams.url)
     })
 
+    const loadObjButton = this.tabs.pages[0].addButton({
+      title: 'Load OBJ'
+    })
+    loadObjButton.on('click', () => {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.onchange = (e) => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const file = e.target?.files[0]
+
+        const reader = new FileReader()
+        reader.readAsText(file, 'UTF-8')
+
+        reader.onload = async (readerEvent) => {
+          const content = readerEvent?.target?.result
+          const loader = new ObjLoader(this.viewer.getWorldTree(), file.name, content)
+          await this.viewer.loadObject(loader, 1, true)
+        }
+      }
+      input.click()
+    })
+
     const clearButton = this.tabs.pages[0].addButton({
       title: 'Clear All'
     })
@@ -335,17 +381,23 @@ export default class Sandbox {
       title: 'Toggle Section Box'
     })
     toggleSectionBox.on('click', () => {
-      this.viewer.setSectionBoxFromObjects(
-        this.selectionList.map((val) => val.hits[0].object.id) as string[]
-      )
-      this.viewer.toggleSectionBox()
+      let box = this.viewer
+        .getRenderer()
+        .boxFromObjects(
+          this.selectionList.map((val) => val.hits[0].node.model.raw.id) as string[]
+        )
+      if (!box) {
+        box = this.viewer.getRenderer().sceneBox
+      }
+      this.viewer.getExtension<SectionTool>(SectionTool).setBox(box)
+      this.viewer.getExtension<SectionTool>(SectionTool).toggle()
     })
 
     const toggleProjection = this.tabs.pages[0].addButton({
       title: 'Toggle Projection'
     })
     toggleProjection.on('click', () => {
-      this.viewer.toggleCameraProjection()
+      this.viewer.getExtension<CameraController>(CameraController).toggleCameras()
     })
 
     const zoomExtents = this.tabs.pages[0].addButton({
@@ -390,7 +442,16 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      console.warn(await this.viewer.screenshot())
+      // console.warn(await this.viewer.screenshot())
+      // const start = performance.now()
+      const nodes = this.viewer.getWorldTree().root.all(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (node: any) => node.model.raw.id === 'c35234a1e8584b159f7e8be59323cd64'
+      )
+      console.log(nodes)
+      // this.viewer.cancelLoad(
+      //   'https://latest.speckle.dev/streams/97750296c2/objects/c3138e24a866d447eb86b2a8107b2c09'
+      // )
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -901,7 +962,9 @@ export default class Sandbox {
         DisplayName: 'DisplayName',
         EmbodiedCarbon: 'EmbodiedCarbon',
         Floor: 'Floor',
-        Name: 'name'
+        Name: 'name',
+        TypeName: 'parameters.SYMBOL_NAME_PARAM.value',
+        Id: 'id'
       }
     })
 
@@ -913,7 +976,15 @@ export default class Sandbox {
         const data = this.properties.find((value) => {
           return value.key === this.filterParams.filterBy
         }) as PropertyInfo
-        this.viewer.setColorFilter(data)
+        this.viewer.getExtension(FilteringExtension).setColorFilter(data)
+        // this.viewer
+        //   .getExtension(FilteringExtension)
+        //   .isolateObjects(['2f2ab0d53fc998bd34581e6ac8593eaa'], 'isolate', true, true)
+        // this.viewer
+        //   .getExtension(FilteringExtension)
+        //   .setUserObjectColors([
+        //     { objectIds: ['2f2ab0d53fc998bd34581e6ac8593eaa'], color: '#ff0000' }
+        //   ])
         this.pane.refresh()
       })
 
@@ -922,7 +993,7 @@ export default class Sandbox {
         title: 'Clear Filters'
       })
       .on('click', () => {
-        this.viewer.resetFilters()
+        this.viewer.getExtension(FilteringExtension).resetFilters()
       })
   }
 
@@ -936,14 +1007,6 @@ export default class Sandbox {
       this.viewer.requestRender()
     })
 
-    container
-      .addInput(this.batchesParams, 'showBvh', {
-        label: 'Show BVH'
-      })
-      .on('change', (ev) => {
-        this.viewer.getRenderer().showBVH = ev.value
-        this.viewer.requestRender()
-      })
     container.addInput(this.batchesParams, 'totalBvhSize', {
       label: 'BVH Size(MB)',
       disabled: true
@@ -957,7 +1020,9 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         value
-        this.viewer.explode(this.batchesParams.explode)
+        this.viewer
+          .getExtension(ExplodeExtension)
+          .setExplode(this.batchesParams.explode)
       })
     // container
     //   .addInput(Sandbox.batchesParams, 'culling', {
@@ -981,7 +1046,7 @@ export default class Sandbox {
     }
     let diffResult: DiffResult | null = null
     diffButton.on('click', async () => {
-      diffResult = await this.viewer.diff(
+      diffResult = await this.viewer.getExtension(DiffExtension).diff(
         //building
         // 'https://latest.speckle.dev/streams/aea12cab71/objects/bcf37136dea9fe9397cdfd84012f616a',
         // 'https://latest.speckle.dev/streams/aea12cab71/objects/94af0a6b4eaa318647180f8c230cb867',
@@ -998,8 +1063,8 @@ export default class Sandbox {
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/3b42d6ef51d3110b4e33b9f8cdc9f357',
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/774384d431fb34d447d4696abbc4b816',
         // points
-        // 'https://latest.speckle.dev/streams/92b620fb17/objects/7118603b197c00944f53be650ce721ec',
-        // 'https://latest.speckle.dev/streams/92b620fb17/objects/4ffcf75dc4a28ed52500df73d08058ee',
+        'https://latest.speckle.dev/streams/92b620fb17/objects/7118603b197c00944f53be650ce721ec',
+        'https://latest.speckle.dev/streams/92b620fb17/objects/4ffcf75dc4a28ed52500df73d08058ee',
         // randos
         // 'https://latest.speckle.dev/streams/3ed8357f29/objects/d8786c21f277be67a0ea2cd43a1930df',
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216',
@@ -1019,8 +1084,8 @@ export default class Sandbox {
         // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/03f0a8bf0ed8064865eda87a865c7212',
         // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/33ef6b9b547dc9688eb40157b967eab9',
         // large
-        'https://speckle.xyz/streams/e6f9156405/objects/650f358d8aac50168d9e9226ef6f5cbc',
-        'https://latest.speckle.dev/streams/92b620fb17/objects/1154ca1d997ac631571db55f84cb703d',
+        // 'https://speckle.xyz/streams/e6f9156405/objects/650f358d8aac50168d9e9226ef6f5cbc',
+        // 'https://latest.speckle.dev/streams/92b620fb17/objects/1154ca1d997ac631571db55f84cb703d',
         // cubes
         // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/03f0a8bf0ed8064865eda87a865c7212',
         // 'https://latest.speckle.dev/streams/0c6ad366c4/objects/33ef6b9b547dc9688eb40157b967eab9',
@@ -1045,7 +1110,7 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         if (!diffResult) return
-        this.viewer.setDiffTime(diffResult, value.value)
+        this.viewer.getExtension(DiffExtension).updateVisualDiff(value.value)
         this.viewer.requestRender()
       })
     container
@@ -1057,8 +1122,9 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         if (!diffResult) return
-        this.viewer.setVisualDiffMode(diffResult, value.value)
-        this.viewer.setDiffTime(diffResult, diffParams.time)
+        this.viewer
+          .getExtension(DiffExtension)
+          .updateVisualDiff(diffParams.time, value.value)
         this.viewer.requestRender()
       })
   }
@@ -1070,14 +1136,18 @@ export default class Sandbox {
         label: 'Enabled'
       })
       .on('change', () => {
-        this.viewer.enableMeasurements(this.measurementsParams.enabled)
+        this.viewer.getExtension(SelectionExtension).enabled =
+          !this.measurementsParams.enabled
+        this.viewer.getExtension(MeasurementsExtension).enabled =
+          this.measurementsParams.enabled
       })
     container
       .addInput(this.measurementsParams, 'visible', {
         label: 'Visible'
       })
       .on('change', () => {
-        this.viewer.setMeasurementOptions(this.measurementsParams)
+        this.viewer.getExtension(MeasurementsExtension).options =
+          this.measurementsParams
       })
     container
       .addInput(this.measurementsParams, 'type', {
@@ -1088,14 +1158,16 @@ export default class Sandbox {
         }
       })
       .on('change', () => {
-        this.viewer.setMeasurementOptions(this.measurementsParams)
+        this.viewer.getExtension(MeasurementsExtension).options =
+          this.measurementsParams
       })
     container
       .addInput(this.measurementsParams, 'vertexSnap', {
         label: 'Snap'
       })
       .on('change', () => {
-        this.viewer.setMeasurementOptions(this.measurementsParams)
+        this.viewer.getExtension(MeasurementsExtension).options =
+          this.measurementsParams
       })
 
     container
@@ -1104,7 +1176,8 @@ export default class Sandbox {
         options: Units
       })
       .on('change', () => {
-        this.viewer.setMeasurementOptions(this.measurementsParams)
+        this.viewer.getExtension(MeasurementsExtension).options =
+          this.measurementsParams
       })
     container
       .addInput(this.measurementsParams, 'precision', {
@@ -1114,14 +1187,15 @@ export default class Sandbox {
         max: 5
       })
       .on('change', () => {
-        this.viewer.setMeasurementOptions(this.measurementsParams)
+        this.viewer.getExtension(MeasurementsExtension).options =
+          this.measurementsParams
       })
     container
       .addButton({
         title: 'Delete'
       })
       .on('click', () => {
-        this.viewer.removeMeasurement()
+        this.viewer.getExtension(MeasurementsExtension).removeMeasurement()
       })
   }
 
@@ -1147,7 +1221,14 @@ export default class Sandbox {
       const authToken = localStorage.getItem(
         url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
       ) as string
-      await this.viewer.loadObjectAsync(url, authToken, undefined, 1)
+      const loader = new SpeckleLoader(
+        this.viewer.getWorldTree(),
+        url,
+        authToken,
+        true,
+        1
+      )
+      await this.viewer.loadObject(loader, 1, true)
     }
     localStorage.setItem('last-load-url', url)
   }

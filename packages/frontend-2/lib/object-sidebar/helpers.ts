@@ -79,7 +79,7 @@ export function getHeaderAndSubheaderForSpeckleObject(
 }
 
 function cleanName(name: string) {
-  // if (!name) return 'Unnamed'
+  if (!name) return 'Unnamed'
   let cleanName = name.trim()
 
   if (cleanName.startsWith('@')) cleanName = cleanName.substring(1) // remove "@" signs

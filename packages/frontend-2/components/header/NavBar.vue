@@ -23,7 +23,7 @@
       </div>
       <PopupsSignIn v-if="!activeUser" />
     </nav>
-    <div class="h-14"></div>
+    <div class="h-16"></div>
   </div>
 </template>
 <script setup lang="ts">
