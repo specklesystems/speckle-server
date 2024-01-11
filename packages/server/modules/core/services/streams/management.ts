@@ -12,7 +12,8 @@ import {
   StreamRevokePermissionInput,
   StreamUpdateInput,
   StreamUpdatePermissionInput,
-  TokenResourceIdentifier
+  TokenResourceIdentifier,
+  TokenResourceIdentifierType
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
@@ -23,7 +24,10 @@ import {
 } from '@/modules/core/repositories/streams'
 import { createBranch } from '@/modules/core/services/branches'
 import { inviteUsersToStream } from '@/modules/serverinvites/services/inviteCreationService'
-import { StreamUpdateError } from '@/modules/core/errors/stream'
+import {
+  StreamInvalidAccessError,
+  StreamUpdateError
+} from '@/modules/core/errors/stream'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
 import { has } from 'lodash'
 import {
@@ -32,6 +36,7 @@ import {
   removeStreamCollaborator
 } from '@/modules/core/services/streams/streamAccessService'
 import { deleteAllStreamInvites } from '@/modules/serverinvites/repositories'
+import { isNewResourceAllowed } from '@/modules/core/helpers/token'
 
 export async function createStreamReturnRecord(
   params: (StreamCreateInput | ProjectCreateInput) & {
@@ -42,6 +47,16 @@ export async function createStreamReturnRecord(
 ): Promise<StreamRecord> {
   const { ownerId, ownerResourceAccessRules } = params
   const { createActivity = true } = options || {}
+
+  const canCreateStream = isNewResourceAllowed({
+    resourceType: TokenResourceIdentifierType.Project,
+    resourceAccessRules: ownerResourceAccessRules
+  })
+  if (!canCreateStream) {
+    throw new StreamInvalidAccessError(
+      'You do not have the permissions to create a new stream'
+    )
+  }
 
   const stream = await createStream(params, { ownerId })
   const streamId = stream.id

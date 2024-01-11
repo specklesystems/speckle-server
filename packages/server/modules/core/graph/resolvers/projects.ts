@@ -73,8 +73,8 @@ export = {
       await authorizeResolver(userId, id, Roles.Stream.Owner, resourceAccessRules)
       return await deleteStreamAndNotify(id, userId!)
     },
-    async createForOnboarding(_parent, _args, { userId }) {
-      return await createOnboardingStream(userId!)
+    async createForOnboarding(_parent, _args, { userId, resourceAccessRules }) {
+      return await createOnboardingStream(userId!, resourceAccessRules)
     },
     async update(_parent, { update }, { userId, resourceAccessRules }) {
       await authorizeResolver(

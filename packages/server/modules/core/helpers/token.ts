@@ -5,8 +5,10 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
 import { ResourceTargets } from '@/modules/serverinvites/helpers/inviteHelper'
-import { MaybeNullOrUndefined, Scopes } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable, Scopes } from '@speckle/shared'
 import { differenceBy } from 'lodash'
+
+export type ContextResourceAccessRules = MaybeNullOrUndefined<TokenResourceIdentifier[]>
 
 export const resourceAccessRuleToIdentifier = (
   rule: TokenResourceAccessRecord
@@ -19,19 +21,33 @@ export const resourceAccessRuleToIdentifier = (
 
 export const roleResourceTypeToTokenResourceType = (
   type: string
-): TokenResourceIdentifierType => {
+): Nullable<TokenResourceIdentifierType> => {
   switch (type) {
     case ResourceTargets.Streams:
       return TokenResourceIdentifierType.Project
     default:
-      throw new Error(`Invalid resource type: ${type}`)
+      return null
   }
 }
 
-/**
- * Role resource targets that we support for token resource limits
- */
-export const supportedResourceTargets = <const>[ResourceTargets.Streams]
+export const isResourceAllowed = (params: {
+  resourceId: string
+  resourceType: TokenResourceIdentifierType
+  resourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+}) => {
+  const { resourceId, resourceType, resourceAccessRules } = params
+  const relevantRules = resourceAccessRules?.filter((r) => r.type === resourceType)
+  return !relevantRules?.length || relevantRules.some((r) => r.id === resourceId)
+}
+
+export const isNewResourceAllowed = (params: {
+  resourceType: TokenResourceIdentifierType
+  resourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+}) => {
+  const { resourceType, resourceAccessRules } = params
+  const relevantRules = resourceAccessRules?.filter((r) => r.type === resourceType)
+  return !relevantRules?.length
+}
 
 const canCreateToken = (params: {
   scopes: {

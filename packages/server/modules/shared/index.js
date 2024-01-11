@@ -14,7 +14,7 @@ const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
 const { getRoles } = require('@/modules/shared/roles')
 const {
   roleResourceTypeToTokenResourceType,
-  supportedResourceTargets
+  isResourceAllowed
 } = require('@/modules/core/helpers/token')
 
 const ServerAcl = () => ServerAclSchema.knex()
@@ -52,14 +52,14 @@ async function authorizeResolver(
   const role = roles.find((r) => r.name === requiredRole)
   if (!role) throw new ApolloError('Unknown role: ' + requiredRole)
 
-  const relevantResourceLimits = userResourceAccessLimits?.filter(
-    (l) =>
-      supportedResourceTargets.includes(role.resourceTarget) && // whitelist of currently supported resources
-      l.type === roleResourceTypeToTokenResourceType(role.resourceTarget)
-  )
+  const resourceRuleType = roleResourceTypeToTokenResourceType(role.resourceTarget)
   const isResourceLimited =
-    relevantResourceLimits.length &&
-    !relevantResourceLimits.find((l) => l.id === resourceId)
+    resourceRuleType &&
+    !isResourceAllowed({
+      resourceId,
+      resourceType: resourceRuleType,
+      resourceAccessRules: userResourceAccessLimits
+    })
   if (isResourceLimited) {
     throw new ApolloError('You do not have access to this resource.')
   }

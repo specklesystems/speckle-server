@@ -7,7 +7,7 @@ import { createAppToken } from '@/modules/core/services/tokens'
  * RESOURCE ACCESS CHECKING:
  *
  * GQL:
- * 1. Scopes - if project scope used, also check resource access rules
+ * 1. Scopes - if project scope used, also check resource access rules (also - if ask for all projects, filter out the ones that are not allowed)
  * 2. Project rights (any directives to check?) - not only check access to project (authorizeResolver?), but also check access rules
  * 3. Some resolvers have custom checks, no directives - check manually
  *
