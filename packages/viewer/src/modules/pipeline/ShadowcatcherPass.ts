@@ -26,9 +26,9 @@ import {
 } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
 import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
 import SpeckleShadowcatcherMaterial from '../materials/SpeckleShadowcatcherMaterial'
-import { DefaultShadowcatcherConfig, ShadowcatcherConfig } from '../Shadowcatcher'
-import { ObjectLayers } from '../SpeckleRenderer'
 import { BaseSpecklePass, SpecklePass } from './SpecklePass'
+import { ObjectLayers } from '../../IViewer'
+import { DefaultShadowcatcherConfig, ShadowcatcherConfig } from '../ShadowcatcherConfig'
 
 export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
   private readonly levels: number = 4
@@ -64,6 +64,10 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
 
   set needsUpdate(value: boolean) {
     this._needsUpdate = value
+  }
+
+  get drawDepthMaterial() {
+    return this.depthMaterial
   }
 
   constructor() {
@@ -180,6 +184,9 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
     writeBuffer
     readBuffer
     if (this._needsUpdate) {
+      renderer.RTEBuffers.push()
+      renderer.updateRTEViewModel(this.camera)
+
       const colorBuffer = new Color()
       renderer.getClearColor(colorBuffer)
       const originalClearAlpha = renderer.getClearAlpha()
@@ -199,8 +206,8 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
         }
 
         this.camera.updateProjectionMatrix()
+
         renderer.setRenderTarget(this.renderTargets[k])
-        this.scene.overrideMaterial = this.depthMaterial
         renderer.setClearColor(0x000000)
         renderer.setClearAlpha(1)
         renderer.render(this.scene, this.camera)
@@ -244,6 +251,8 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
       renderer.autoClear = originalAutoClear
       renderer.setClearColor(colorBuffer)
       renderer.setClearAlpha(originalClearAlpha)
+
+      renderer.RTEBuffers.pop()
 
       if (this.onAfterRender) this.onAfterRender()
       this._needsUpdate = false
@@ -297,6 +306,7 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
     this.camera.near = near
     this.camera.far = far
     this.camera.updateProjectionMatrix()
+    this.camera.updateMatrixWorld(true)
   }
 
   public updateConfig(config: ShadowcatcherConfig) {

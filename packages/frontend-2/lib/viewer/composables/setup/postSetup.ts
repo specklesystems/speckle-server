@@ -47,6 +47,7 @@ import type { Nullable } from '@speckle/shared'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 import { watchTriggerable } from '@vueuse/core'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
+import { CameraController } from '@speckle/viewer'
 import type { Reference } from '@apollo/client'
 import type { Modifier } from '@apollo/client/cache'
 
@@ -97,7 +98,6 @@ function useViewerObjectAutoLoading() {
       viewer.loadObjectAsync(
         objectUrl,
         authToken.value || undefined,
-        undefined,
         undefined,
         options?.zoomToObject
       )
@@ -301,8 +301,7 @@ function useViewerCameraIntegration() {
   const hasInitialLoadFired = ref(false)
 
   const loadCameraDataFromViewer = () => {
-    const activeCam = instance.cameraHandler.activeCam
-    const controls = activeCam.controls
+    const controls = instance.getExtension(CameraController).controls
     const viewerPos = new Vector3()
     const viewerTarget = new Vector3()
 
@@ -601,6 +600,7 @@ function useExplodeFactorIntegration() {
   watch(
     explodeFactor,
     (newVal) => {
+      /** newVal turns out to be a string. It needs to be a */
       instance.explode(newVal)
     },
     { immediate: true }

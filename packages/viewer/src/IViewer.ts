@@ -1,21 +1,20 @@
 import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
-import { DiffResult, VisualDiffMode } from './modules/Differ'
-import { BatchObject } from './modules/batching/BatchObject'
-import { FilteringState } from './modules/filtering/FilteringManager'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
-import { WorldTree } from './modules/tree/WorldTree'
+import { TreeNode, WorldTree } from './modules/tree/WorldTree'
 import { Utils } from './modules/Utils'
 import { World } from './modules/World'
-import { MeasurementOptions } from './modules/measurements/Measurements'
+import SpeckleRenderer from './modules/SpeckleRenderer'
+import { Extension } from './modules/extensions/core-extensions/Extension'
+import Input from './modules/input/Input'
+import { Loader } from './modules/loaders/Loader'
 
 export interface ViewerParams {
   showStats: boolean
   environmentSrc: Asset | string
   verbose: boolean
-  keepGeometryData: boolean
 }
 export enum AssetType {
   TEXTURE_8BPP = 'png', // For now
@@ -43,7 +42,6 @@ export interface Asset {
 export const DefaultViewerParams: ViewerParams = {
   showStats: false,
   verbose: false,
-  keepGeometryData: false,
   environmentSrc: {
     src: sampleHdri,
     type: AssetType.TEXTURE_EXR
@@ -60,18 +58,21 @@ export enum ViewerEvent {
   LoadCancelled = 'load-cancelled',
   UnloadAllComplete = 'unload-all-complete',
   Busy = 'busy',
-  SectionBoxChanged = 'section-box-changed',
-  SectionBoxUpdated = 'section-box-updated',
   FilteringStateSet = 'filtering-state-set',
   LightConfigUpdated = 'light-config-updated'
+}
+
+export type SpeckleView = {
+  name: string
+  id: string
+  view: Record<string, unknown>
 }
 
 export type SelectionEvent = {
   multiple: boolean
   event?: PointerEvent
   hits: Array<{
-    guid?: string
-    object: Record<string, unknown> & { id: string }
+    node: TreeNode
     point: Vector3
   }>
 }
@@ -103,147 +104,63 @@ export const DefaultLightConfiguration: SunLightConfiguration = {
   shadowcatcher: true
 }
 
-export type CanonicalView =
-  | 'front'
-  | 'back'
-  | 'up'
-  | 'top'
-  | 'down'
-  | 'bottom'
-  | 'right'
-  | 'left'
-  | '3d'
-  | '3D'
+export enum ObjectLayers {
+  STREAM_CONTENT_MESH = 10,
+  STREAM_CONTENT_LINE = 11,
+  STREAM_CONTENT_POINT = 12,
+  STREAM_CONTENT_TEXT = 13,
+  STREAM_CONTENT_POINT_CLOUD = 14,
 
-export type SpeckleView = {
-  name: string
-  id: string
-  view: Record<string, unknown>
+  NONE = 0,
+  STREAM_CONTENT = 1,
+  PROPS = 2,
+  SHADOWCATCHER = 3,
+  OVERLAY = 4,
+  MEASUREMENTS = 5
 }
 
-export type InlineView = {
-  position: Vector3
-  target: Vector3
-}
-
-export type PolarView = {
-  azimuth: number
-  polar: number
-  radius?: number
-  origin?: Vector3
+export enum UpdateFlags {
+  RENDER = 1,
+  SHADOWS = 2
 }
 
 export interface IViewer {
+  get input(): Input
+  get Utils(): Utils
+  get World(): World
+
   init(): Promise<void>
   resize(): void
   on(eventType: ViewerEvent, handler: (arg) => void)
-  requestRender(): void
-  setSectionBox(
-    box?: {
-      min: { x: number; y: number; z: number }
-      max: { x: number; y: number; z: number }
-    },
-    offset?: number
-  )
-  setSectionBoxFromObjects(objectIds: string[], offset?: number)
-  getCurrentSectionBox(): {
-    min: { x: number; y: number; z: number }
-    max: { x: number; y: number; z: number }
-  } | null
-  toggleSectionBox(): void
-  sectionBoxOff(): void
-  sectionBoxOn(): void
+  requestRender(flags?: number): void
 
-  zoom(objectIds?: string[], fit?: number, transition?: boolean): void
-
-  toggleCameraProjection(): void
   setLightConfiguration(config: LightConfiguration): void
 
   getViews(): SpeckleView[]
-  setView(
-    view: CanonicalView | SpeckleView | InlineView | PolarView,
-    transition?: boolean
-  )
 
-  loadObject(
-    url: string,
-    token?: string,
-    enableCaching?: boolean,
-    zoomToObject?: boolean
-  ): Promise<void>
-  loadObjectAsync(
-    url: string,
-    token?: string,
-    enableCaching?: boolean,
-    priority?: number,
-    zoomToObject?: boolean
-  ): Promise<void>
+  loadObject(loader: Loader, zoomToObject?: boolean): Promise<void>
   cancelLoad(url: string, unload?: boolean): Promise<void>
   unloadObject(url: string): Promise<void>
   unloadAll(): Promise<void>
 
-  /** Diffing */
-  diff(urlA: string, urlB: string, mode: VisualDiffMode): Promise<DiffResult>
-  undiff(): void
-  setDiffTime(diffResult: DiffResult, time: number): void
-  setVisualDiffMode(diffResult: DiffResult, mode: VisualDiffMode)
-
   screenshot(): Promise<string>
 
-  /** Old Filtering members. Deprecated */
-  applyFilter(filter: unknown): Promise<void>
-
-  /** New Filtering members */
-  getObjectProperties(resourceURL?: string, bypassCache?: boolean): PropertyInfo[]
-  showObjects(
-    objectIds: string[],
-    stateKey?: string,
-    includeDescendants?
-  ): Promise<FilteringState>
-  hideObjects(
-    objectIds: string[],
-    stateKey?: string,
-    includeDescendants?,
-    ghost?: boolean
-  ): Promise<FilteringState>
-  isolateObjects(
-    objectIds: string[],
-    stateKey?: string,
-    includeDescendants?,
-    ghost?: boolean
-  ): Promise<FilteringState>
-  unIsolateObjects(
-    objectIds: string[],
-    stateKey?: string,
-    includeDescendants?
-  ): Promise<FilteringState>
-
-  selectObjects(objectIds: string[]): Promise<FilteringState>
-  resetSelection(): Promise<FilteringState>
-  highlightObjects(objectIds: string[], ghost?: boolean): Promise<FilteringState>
-  resetHighlight(): Promise<FilteringState>
-
-  setColorFilter(prop: PropertyInfo, ghost?: boolean): Promise<FilteringState>
-  setUserObjectColors(
-    groups: [{ objectIds: string[]; color: string }]
-  ): Promise<FilteringState>
-  removeColorFilter(): Promise<FilteringState>
-  resetFilters(): Promise<FilteringState>
+  getObjectProperties(
+    resourceURL?: string,
+    bypassCache?: boolean
+  ): Promise<PropertyInfo[]>
 
   /** Data ops */
   getDataTree(): DataTree
   getWorldTree(): WorldTree
   query<T extends Query>(query: T): QueryArgsResultMap[T['operation']]
   queryAsync(query: Query): Promise<QueryResult>
-  get Utils(): Utils
-  get World(): World
 
-  getObjects(id: string): BatchObject[]
-  explode(time: number)
+  getRenderer(): SpeckleRenderer
+  getContainer(): HTMLElement
 
-  enableMeasurements(value: boolean)
-  setMeasurementOptions(options: MeasurementOptions)
-  removeMeasurement()
+  createExtension<T extends Extension>(type: new () => T): T
+  getExtension<T extends Extension>(type: new () => T): T
 
   dispose(): void
 }

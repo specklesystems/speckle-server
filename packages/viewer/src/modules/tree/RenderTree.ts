@@ -1,10 +1,10 @@
 import { Box3, Matrix4 } from 'three'
-import { GeometryConverter, SpeckleType } from '../converter/GeometryConverter'
 import { TreeNode, WorldTree } from './WorldTree'
 import Materials from '../materials/Materials'
 import { NodeRenderData, NodeRenderView } from './NodeRenderView'
-import { Geometry } from '../converter/Geometry'
 import Logger from 'js-logger'
+import { GeometryConverter, SpeckleType } from '../loaders/GeometryConverter'
+import { Geometry } from '../converter/Geometry'
 
 export class RenderTree {
   private tree: WorldTree
@@ -25,26 +25,14 @@ export class RenderTree {
     this.root = subtreeRoot
   }
 
-  public buildRenderTree() {
-    this.root.walk((node: TreeNode): boolean => {
-      const rendeNode = this.buildRenderNode(node)
+  public buildRenderTree(geometryConverter: GeometryConverter): Promise<boolean> {
+    const p = this.tree.walkAsync((node: TreeNode): boolean => {
+      const rendeNode = this.buildRenderNode(node, geometryConverter)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
       this.applyTransforms(node)
-      return true
-    })
-  }
-
-  public buildRenderTreeAsync(priority: number): Promise<boolean> {
-    const p = this.tree.walkAsync(
-      (node: TreeNode): boolean => {
-        const rendeNode = this.buildRenderNode(node)
-        node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
-        this.applyTransforms(node)
-        return !this.cancel
-      },
-      this.root,
-      priority
-    )
+      if (!node.model.instanced) geometryConverter.disposeNodeGeometryData(node.model)
+      return !this.cancel
+    }, this.root)
     return p
   }
 
@@ -55,31 +43,38 @@ export class RenderTree {
         if (node.model.renderView.renderData.geometry.bakeTransform) {
           transform.multiply(node.model.renderView.renderData.geometry.bakeTransform)
         }
-        Geometry.transformGeometryData(
-          node.model.renderView.renderData.geometry,
-          transform
+        if (
+          node.model.instanced &&
+          node.model.renderView.speckleType === SpeckleType.Mesh
         )
+          node.model.renderView.renderData.geometry.transform = transform
+        else {
+          Geometry.transformGeometryData(
+            node.model.renderView.renderData.geometry,
+            transform
+          )
+        }
         node.model.renderView.computeAABB()
         this._treeBounds.union(node.model.renderView.aabb)
-
-        if (!GeometryConverter.keepGeometryData) {
-          GeometryConverter.disposeNodeGeometryData(node.model)
-        }
       } else if (node.model.renderView.hasMetadata) {
         node.model.renderView.renderData.geometry.bakeTransform.premultiply(transform)
       }
     }
   }
 
-  private buildRenderNode(node: TreeNode): NodeRenderData {
+  private buildRenderNode(
+    node: TreeNode,
+    geometryConverter: GeometryConverter
+  ): NodeRenderData {
     let ret: NodeRenderData = null
-    const geometryData = GeometryConverter.convertNodeToGeometryData(node.model)
+    const geometryData = geometryConverter.convertNodeToGeometryData(node.model)
     if (geometryData) {
       const renderMaterialNode = this.getRenderMaterialNode(node)
       const displayStyleNode = this.getDisplayStyleNode(node)
       ret = {
         id: node.model.id,
-        speckleType: GeometryConverter.getSpeckleType(node.model),
+        subtreeId: node.model.subtreeId,
+        speckleType: geometryConverter.getSpeckleType(node.model),
         geometry: geometryData,
         renderMaterial: Materials.renderMaterialFromNode(
           renderMaterialNode || displayStyleNode,
@@ -119,20 +114,16 @@ export class RenderTree {
   }
 
   public computeTransform(node: TreeNode): Matrix4 {
+    /** We don't stack transforms nodes with each other */
+    if (node.model.renderView.speckleType === SpeckleType.Transform)
+      return node.model.renderView.renderData.transform
+
     const transform = new Matrix4()
     const ancestors = this.tree.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.renderView) {
         const renderNode: NodeRenderData = ancestors[k].model.renderView.renderData
-        if (
-          renderNode.speckleType === SpeckleType.RevitInstance ||
-          renderNode.speckleType === SpeckleType.BlockInstance
-        ) {
-          /** Revit Instances *hosted* on other instances do not stack the host's transform */
-          if (k > 0) {
-            const curentAncestorId = ancestors[k].model.raw.id
-            if (ancestors[k - 1].model.raw.host === curentAncestorId) continue
-          }
+        if (renderNode.speckleType === SpeckleType.Transform) {
           transform.premultiply(renderNode.geometry.transform)
         }
       }
@@ -140,16 +131,14 @@ export class RenderTree {
     return transform
   }
 
+  public getInstances() {
+    return this.tree.getInstances(this.root.model.subtreeId)
+  }
+
   public getRenderableRenderViews(...types: SpeckleType[]): NodeRenderView[] {
-    return this.root
-      .all((node: TreeNode): boolean => {
-        return (
-          node.model.renderView !== null &&
-          (node.model.renderView.hasGeometry || node.model.renderView.hasMetadata) &&
-          types.includes(node.model.renderView.renderData.speckleType)
-        )
-      })
-      .map((val: TreeNode) => val.model.renderView)
+    return this.getRenderableNodes(...types).map(
+      (val: TreeNode) => val.model.renderView
+    )
   }
 
   public getRenderableNodes(...types: SpeckleType[]): TreeNode[] {
@@ -170,8 +159,8 @@ export class RenderTree {
     if (
       node.model.atomic &&
       node.model.renderView &&
-      GeometryConverter.getSpeckleType(node.model) !== SpeckleType.RevitInstance &&
-      GeometryConverter.getSpeckleType(node.model) !== SpeckleType.BlockInstance
+      node.model.renderView.renderData.speckleType !== SpeckleType.RevitInstance &&
+      node.model.renderView.renderData.speckleType !== SpeckleType.BlockInstance
     ) {
       return [node.model.renderView]
     }
@@ -190,8 +179,8 @@ export class RenderTree {
     if (
       node.model.atomic &&
       node.model.renderView &&
-      GeometryConverter.getSpeckleType(node.model) !== SpeckleType.RevitInstance &&
-      GeometryConverter.getSpeckleType(node.model) !== SpeckleType.BlockInstance
+      node.model.renderView.renderData.speckleType !== SpeckleType.RevitInstance &&
+      node.model.renderView.renderData.speckleType !== SpeckleType.BlockInstance
     ) {
       return [node]
     }
@@ -212,21 +201,28 @@ export class RenderTree {
   }
 
   public getRenderViewsForNodeId(id: string): NodeRenderView[] {
-    const node = this.tree.findId(id)
-    if (!node) {
+    const nodes = this.tree.findId(id)
+    if (!nodes) {
       Logger.warn(`Id ${id} does not exist`)
       return null
     }
-    return this.getRenderViewsForNode(node)
+    const ret = []
+    nodes.forEach((node: TreeNode) => {
+      ret.push(...this.getRenderViewsForNode(node, node))
+    })
+    return ret
   }
 
   public getRenderViewForNodeId(id: string): NodeRenderView {
-    const node = this.tree.findId(id)
-    if (!node) {
+    const nodes = this.tree.findId(id)
+    if (!nodes) {
       Logger.warn(`Id ${id} does not exist`)
       return null
     }
-    return node.model.renderView
+    if (nodes.length > 1) {
+      Logger.warn(`Multiple nodes with ${id} found. Returning first only`)
+    }
+    return nodes[0].model.renderView
   }
 
   public purge() {

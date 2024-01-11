@@ -1,7 +1,7 @@
 import { Box3, Intersection, Material, Object3D, Raycaster } from 'three'
 import { ExtendedTriangle, ShapecastIntersection } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
-import { ObjectLayers } from '../SpeckleRenderer'
+import { ObjectLayers } from '../../IViewer'
 
 export type ExtendedShapeCastCallbacks = {
   intersectsTAS?: (
@@ -11,7 +11,7 @@ export type ExtendedShapeCastCallbacks = {
     depth: number,
     nodeIndex: number
   ) => ShapecastIntersection | boolean
-
+  intersectTASRange?: (batchObject: BatchObject) => ShapecastIntersection | boolean
   intersectsBounds: (
     box: Box3,
     isLeaf: boolean,
@@ -60,7 +60,7 @@ export class SpeckleRaycaster extends Raycaster {
     this.layers.enable(ObjectLayers.STREAM_CONTENT_TEXT)
     this.layers.enable(ObjectLayers.STREAM_CONTENT_POINT_CLOUD)
     // OFF by default
-    // this.layers.enable(ObjectLayers.STREAM_CONTENT_POINT)
+    this.layers.enable(ObjectLayers.STREAM_CONTENT_POINT)
   }
 
   public intersectObjects(objects, recursive = true, intersects = []) {
@@ -85,7 +85,9 @@ function intersectObject(object, raycaster, intersects, recursive) {
     }
     object.raycast(raycaster, intersects)
   }
-
+  recursive &&=
+    // eslint-disable-next-line eqeqeq
+    object.userData.raycastChildren != undefined ? object.raycastChildren : true
   if (recursive === true) {
     const children = object.children
 
