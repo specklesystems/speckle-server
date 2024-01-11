@@ -48,7 +48,6 @@ export const LoggingMiddleware = pinoHttp({
   ) => {
     // Mark some lower importance/spammy endpoints w/ 'debug' to reduce noise
     const shouldBeDebug = ['/metrics', '/health'].includes(req.url || '') ?? false
-    if (shouldBeDebug) return 'debug'
 
     if (res.statusCode >= 400 && res.statusCode < 500) {
       return 'info'
@@ -57,7 +56,8 @@ export const LoggingMiddleware = pinoHttp({
     } else if (res.statusCode >= 300 && res.statusCode < 400) {
       return 'silent'
     }
-    return 'info'
+
+    return shouldBeDebug ? 'debug' : 'info'
   },
 
   customSuccessMessage(req, res) {
