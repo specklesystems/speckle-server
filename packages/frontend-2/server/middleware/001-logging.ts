@@ -47,7 +47,8 @@ export const LoggingMiddleware = pinoHttp({
     error: Error | undefined
   ) => {
     // Mark some lower importance/spammy endpoints w/ 'debug' to reduce noise
-    const shouldBeDebug = ['/metrics', '/health'].includes(req.url || '') ?? false
+    const path = req.url?.split('?')[0]
+    const shouldBeDebug = ['/metrics', '/health'].includes(path || '') ?? false
 
     if (res.statusCode >= 400 && res.statusCode < 500) {
       return 'info'
