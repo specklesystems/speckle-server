@@ -21,7 +21,7 @@ export default defineNuxtPlugin((ctx) => {
         routeName: name,
         routePath: path
       },
-      `[{routePath}] SSR rendered in {responseTime}ms`
+      '{routePath} SSR rendered in {responseTime} ms'
     )
   })
 })
