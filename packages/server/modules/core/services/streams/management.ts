@@ -36,7 +36,11 @@ import {
   removeStreamCollaborator
 } from '@/modules/core/services/streams/streamAccessService'
 import { deleteAllStreamInvites } from '@/modules/serverinvites/repositories'
-import { isNewResourceAllowed } from '@/modules/core/helpers/token'
+import {
+  ContextResourceAccessRules,
+  isNewResourceAllowed
+} from '@/modules/core/helpers/token'
+import { authorizeResolver } from '@/modules/shared'
 
 export async function createStreamReturnRecord(
   params: (StreamCreateInput | ProjectCreateInput) & {
@@ -97,7 +101,18 @@ export async function createStreamReturnRecord(
  * @param {string} streamId
  * @param {string} deleterId
  */
-export async function deleteStreamAndNotify(streamId: string, deleterId: string) {
+export async function deleteStreamAndNotify(
+  streamId: string,
+  deleterId: string,
+  deleterResourceAccessRules: ContextResourceAccessRules
+) {
+  await authorizeResolver(
+    deleterId,
+    streamId,
+    Roles.Stream.Owner,
+    deleterResourceAccessRules
+  )
+
   await addStreamDeletedActivity({ streamId, deleterId })
 
   // TODO: this has been around since before my time, we should get rid of it...
@@ -114,8 +129,16 @@ export async function deleteStreamAndNotify(streamId: string, deleterId: string)
  */
 export async function updateStreamAndNotify(
   update: StreamUpdateInput | ProjectUpdateInput,
-  updaterId: string
+  updaterId: string,
+  updaterResourceAccessRules: ContextResourceAccessRules
 ) {
+  await authorizeResolver(
+    updaterId,
+    update.id,
+    Roles.Stream.Owner,
+    updaterResourceAccessRules
+  )
+
   const oldStream = await getStream({ streamId: update.id, userId: updaterId })
   if (!oldStream) {
     throw new StreamUpdateError('Stream not found', {

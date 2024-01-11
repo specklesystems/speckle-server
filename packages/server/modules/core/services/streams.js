@@ -17,6 +17,10 @@ const { dbLogger } = require('@/logging/logging')
 const {
   createStreamReturnRecord
 } = require('@/modules/core/services/streams/management')
+const { isResourceAllowed } = require('@/modules/core/helpers/token')
+const {
+  TokenResourceIdentifierType
+} = require('@/modules/core/graph/generated/graphql')
 
 /**
  * NOTE: Stop adding stuff to this service, create specialized service modules instead for various domains
@@ -73,7 +77,14 @@ module.exports = {
     return await deleteStreamFromDb(streamId)
   },
 
-  async getStreams({ cursor, limit, orderBy, visibility, searchQuery }) {
+  async getStreams({
+    cursor,
+    limit,
+    orderBy,
+    visibility,
+    searchQuery,
+    streamIdWhitelist
+  }) {
     const query = knex.select().from('streams')
 
     const countQuery = Streams.knex()
@@ -99,6 +110,12 @@ module.exports = {
       query.andWhere(publicFunc)
       countQuery.andWhere(publicFunc)
     }
+
+    if (streamIdWhitelist?.length) {
+      query.whereIn('id', streamIdWhitelist)
+      countQuery.whereIn('id', streamIdWhitelist)
+    }
+
     const [res] = await countQuery.count()
     const count = parseInt(res.count)
 
@@ -134,11 +151,18 @@ module.exports = {
    * @param {string} p.userId
    * @param {string} p.streamId
    * @param {boolean} [p.favorited] Whether to favorite or unfavorite (true by default)
+   * @param {import('@/modules/core/helpers/token').ContextResourceAccessRules} [p.userResourceAccessRules] Resource access rules (if any) for the user doing the favoriting
    * @returns {Promise<Object>} Updated stream
    */
-  async favoriteStream({ userId, streamId, favorited }) {
+  async favoriteStream({ userId, streamId, favorited, userResourceAccessRules }) {
     // Check if user has access to stream
-    if (!(await canUserFavoriteStream({ userId, streamId }))) {
+    const canFavorite = await canUserFavoriteStream({ userId, streamId })
+    const hasResourceAccess = isResourceAllowed({
+      resourceId: streamId,
+      resourceAccessRules: userResourceAccessRules,
+      resourceType: TokenResourceIdentifierType.Project
+    })
+    if (!canFavorite || !hasResourceAccess) {
       throw new UnauthorizedError("User doesn't have access to the specified stream", {
         info: { userId, streamId }
       })
@@ -157,19 +181,21 @@ module.exports = {
    * @param {string} p.userId
    * @param {number} [p.limit] Defaults to 25
    * @param {string} [p.cursor] Optionally specify date after which to look for favorites
+   * @param {string[] | undefined} [p.streamIdWhitelist] Optionally specify a list of stream IDs to filter by
    * @returns
    */
-  async getFavoriteStreamsCollection({ userId, limit, cursor }) {
+  async getFavoriteStreamsCollection({ userId, limit, cursor, streamIdWhitelist }) {
     limit = _.clamp(limit || 25, 1, 25)
 
     // Get total count of favorited streams
-    const totalCount = await getFavoritedStreamsCount(userId)
+    const totalCount = await getFavoritedStreamsCount(userId, streamIdWhitelist)
 
     // Get paginated streams
     const { cursor: finalCursor, streams } = await getFavoritedStreams({
       userId,
       cursor,
-      limit
+      limit,
+      streamIdWhitelist
     })
 
     return { totalCount, cursor: finalCursor, items: streams }

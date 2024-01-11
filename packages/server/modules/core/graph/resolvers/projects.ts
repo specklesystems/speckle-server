@@ -1,8 +1,12 @@
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { ProjectVisibility, Resolvers } from '@/modules/core/graph/generated/graphql'
+import {
+  ProjectVisibility,
+  Resolvers,
+  TokenResourceIdentifierType
+} from '@/modules/core/graph/generated/graphql'
 import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
-import { toProjectIdWhitelist } from '@/modules/core/helpers/token'
+import { isResourceAllowed, toProjectIdWhitelist } from '@/modules/core/helpers/token'
 import {
   getUserStreamsCount,
   getUserStreams,
@@ -71,20 +75,13 @@ export = {
   },
   ProjectMutations: {
     async delete(_parent, { id }, { userId, resourceAccessRules }) {
-      await authorizeResolver(userId, id, Roles.Stream.Owner, resourceAccessRules)
-      return await deleteStreamAndNotify(id, userId!)
+      return await deleteStreamAndNotify(id, userId!, resourceAccessRules)
     },
     async createForOnboarding(_parent, _args, { userId, resourceAccessRules }) {
       return await createOnboardingStream(userId!, resourceAccessRules)
     },
     async update(_parent, { update }, { userId, resourceAccessRules }) {
-      await authorizeResolver(
-        userId,
-        update.id,
-        Roles.Stream.Owner,
-        resourceAccessRules
-      )
-      return await updateStreamAndNotify(update, userId!)
+      return await updateStreamAndNotify(update, userId!, resourceAccessRules)
     },
     async create(_parent, args, context) {
       const rateLimitResult = await getRateLimitResult(
@@ -249,6 +246,15 @@ export = {
       subscribe: filteredSubscribe(
         UserSubscriptions.UserProjectsUpdated,
         (payload, _args, ctx) => {
+          const hasResourceAccess = isResourceAllowed({
+            resourceId: payload.userProjectsUpdated.id,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+          if (!hasResourceAccess) {
+            return false
+          }
+
           return payload.ownerId === ctx.userId
         }
       )

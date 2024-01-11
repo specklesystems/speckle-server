@@ -201,7 +201,7 @@ export async function getCommitStream(params: { commitId: string; userId?: strin
  */
 function getFavoritedStreamsQueryBase<
   Result = Array<StreamFavoriteRecord & StreamRecord & StreamAclRecord>
->(userId: string) {
+>(userId: string, streamIdWhitelist?: Optional<string[]>) {
   if (!userId)
     throw new InvalidArgumentError(
       'User ID must be specified to retrieve favorited streams'
@@ -219,6 +219,10 @@ function getFavoritedStreamsQueryBase<
       q.where(Streams.col.isPublic, true).orWhereNotNull(StreamAcl.col.resourceId)
     )
 
+  if (streamIdWhitelist?.length) {
+    query.whereIn(Streams.col.id, streamIdWhitelist)
+  }
+
   return query
 }
 
@@ -233,13 +237,13 @@ export async function getFavoritedStreams(params: {
   userId: string
   cursor?: string
   limit?: number
+  streamIdWhitelist?: Optional<string[]>
 }) {
-  const { userId, cursor, limit } = params
+  const { userId, cursor, limit, streamIdWhitelist } = params
   const finalLimit = _.clamp(limit || 25, 1, 25)
-  const query =
-    getFavoritedStreamsQueryBase<
-      Array<StreamWithOptionalRole & { favoritedDate: Date; favCursor: string }>
-    >(userId)
+  const query = getFavoritedStreamsQueryBase<
+    Array<StreamWithOptionalRole & { favoritedDate: Date; favCursor: string }>
+  >(userId, streamIdWhitelist)
   query
     .select([
       ...STREAM_WITH_OPTIONAL_ROLE_COLUMNS,
@@ -262,8 +266,14 @@ export async function getFavoritedStreams(params: {
 /**
  * Get total amount of streams favorited by user
  */
-export async function getFavoritedStreamsCount(userId: string) {
-  const query = getFavoritedStreamsQueryBase<[{ count: string }]>(userId)
+export async function getFavoritedStreamsCount(
+  userId: string,
+  streamIdWhitelist?: Optional<string[]>
+) {
+  const query = getFavoritedStreamsQueryBase<[{ count: string }]>(
+    userId,
+    streamIdWhitelist
+  )
   query.count()
 
   const [res] = await query
@@ -462,13 +472,23 @@ export async function getStreamRoles(userId: string, streamIds: string[]) {
 
 export type GetDiscoverableStreamsParams = Required<QueryDiscoverableStreamsArgs> & {
   sort: DiscoverableStreamsSortingInput
+  /**
+   * Only allow streams with the specified IDs to be returned
+   */
+  streamIdWhitelist?: string[]
 }
 
-function buildDiscoverableStreamsBaseQuery<Result = Array<StreamRecord>>() {
+function buildDiscoverableStreamsBaseQuery<Result = Array<StreamRecord>>(
+  params: GetDiscoverableStreamsParams
+) {
   const q = Streams.knex()
     .select<Result>(Streams.cols)
     .where(Streams.col.isDiscoverable, true)
     .andWhere(Streams.col.isPublic, true)
+
+  if (params.streamIdWhitelist?.length) {
+    q.whereIn(Streams.col.id, params.streamIdWhitelist)
+  }
 
   return q
 }
@@ -534,8 +554,8 @@ export const encodeDiscoverableStreamsCursor = (
 /**
  * Counts all discoverable streams
  */
-export async function countDiscoverableStreams() {
-  const q = buildDiscoverableStreamsBaseQuery<{ count: string }[]>()
+export async function countDiscoverableStreams(params: GetDiscoverableStreamsParams) {
+  const q = buildDiscoverableStreamsBaseQuery<{ count: string }[]>(params)
   q.clearSelect()
   q.count()
 
@@ -548,7 +568,7 @@ export async function countDiscoverableStreams() {
  */
 export async function getDiscoverableStreams(params: GetDiscoverableStreamsParams) {
   const { cursor, sort, limit } = params
-  const q = buildDiscoverableStreamsBaseQuery().limit(limit)
+  const q = buildDiscoverableStreamsBaseQuery(params).limit(limit)
 
   const decodedCursor = cursor
     ? decodeDiscoverableStreamsCursor(sort.type, cursor)
