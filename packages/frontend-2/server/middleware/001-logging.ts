@@ -56,6 +56,17 @@ export const LoggingMiddleware = pinoHttp({
     return 'info'
   },
 
+  customSuccessMessage(req, res) {
+    const isCompleted = !req.readableAborted && res.writableEnded
+    const statusMessage = isCompleted ? 'request completed' : 'request aborted'
+
+    return `[{req.path}] ${statusMessage} in {responseTime}ms`
+  },
+
+  customErrorMessage() {
+    return `[{req.path}] request errored`
+  },
+
   // we need to redact any potential sensitive data from being logged.
   // as we do not know what headers may be sent in a request by a user or client
   // we have to allow list selected headers

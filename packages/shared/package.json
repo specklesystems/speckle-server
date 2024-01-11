@@ -39,7 +39,8 @@
   "peerDependencies": {
     "@tiptap/core": "^2.0.0-beta.176",
     "pino": "^8.7.0",
-    "pino-http": "^8.0.0"
+    "pino-http": "^8.0.0",
+    "pino-pretty": ">=8.0.0"
   },
   "devDependencies": {
     "@tiptap/core": "^2.0.0-beta.176",
