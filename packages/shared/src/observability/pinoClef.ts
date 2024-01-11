@@ -1,10 +1,10 @@
 export const clefLevels = {
-  60: 5, // FATAL
-  50: 4, // ERROR
-  40: 3, // WARN
-  30: 2, // INFO = default when not provided
-  20: 1, // DEBUG
-  10: 0 // TRACE / Verbose
+  60: 'Fatal', // FATAL
+  50: 'Error', // ERROR
+  40: 'Warning', // WARN
+  30: 'Information', // INFO = default when not provided
+  20: 'Debug', // DEBUG
+  10: 'Verbose' // TRACE / Verbose
 } as const
 
 export function toClef(log: Record<string, unknown>): Record<string, unknown> {
