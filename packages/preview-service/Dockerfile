@@ -67,7 +67,7 @@ RUN apt-get update && \
   libxfixes3=1:6.0.0-2 \
   libxkbcommon0=1.5.0-1 \
   libxrandr2=2:1.5.2-2+b1 \
-  wget=1.21.3-1+b2 \
+  wget=1.21.3-1+b1 \
   xdg-utils=1.1.3-4.1 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
