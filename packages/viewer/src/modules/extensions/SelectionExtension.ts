@@ -115,9 +115,34 @@ export class SelectionExtension extends Extension {
     this.applySelection()
   }
 
-  public clearSelection() {
-    this.removeSelection()
-    this.selectedNodes = []
+  public unselectObjects(ids: Array<string>) {
+    if (!this._enabled) return
+
+    const nodes = []
+    for (let k = 0; k < ids.length; k++) {
+      nodes.push(...this.viewer.getWorldTree().findId(ids[k]))
+    }
+    this.clearSelection(nodes)
+  }
+
+  public clearSelection(nodes?: Array<TreeNode>) {
+    if (!nodes) {
+      this.removeSelection()
+      this.selectedNodes = []
+      return
+    }
+
+    const rvs = []
+    nodes.forEach((node: TreeNode) => {
+      rvs.push(
+        ...this.viewer.getWorldTree().getRenderTree().getRenderViewsForNode(node, node)
+      )
+    })
+    this.removeSelection(rvs)
+
+    this.selectedNodes = this.selectedNodes.filter(
+      (node: TreeNode) => !nodes.includes(node)
+    )
   }
 
   protected onObjectClicked(selection: SelectionEvent) {
@@ -217,15 +242,17 @@ export class SelectionExtension extends Extension {
     this.viewer.requestRender()
   }
 
-  protected removeSelection() {
+  protected removeSelection(rvs?: Array<NodeRenderView>) {
     this.removeHover()
-    for (const k in this.selectionRvs) {
-      this.viewer
-        .getRenderer()
-        .setMaterial([this.selectionRvs[k]], this.selectionMaterials[k])
-    }
-    this.selectionRvs = {}
-    this.selectionMaterials = {}
+
+    rvs = rvs ? rvs : Object.values(this.selectionRvs)
+    rvs.forEach((rv: NodeRenderView) => {
+      if (this.selectionRvs[rv.guid]) {
+        this.viewer.getRenderer().setMaterial([rv], this.selectionMaterials[rv.guid])
+        delete this.selectionRvs[rv.guid]
+        delete this.selectionMaterials[rv.guid]
+      }
+    })
   }
 
   protected applyHover(renderView: NodeRenderView) {

@@ -127,6 +127,7 @@ export class LegacyViewer extends Viewer {
     ghost = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
+      this.selection.unselectObjects(objectIds)
       const filteringState = this.filtering.hideObjects(
         objectIds,
         stateKey,
