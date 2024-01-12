@@ -282,10 +282,10 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
 
 function handleData(data, isErr, logger) {
   try {
-    if (typeof data !== 'string') throw new Error('Not a string; force writing to log.')
+    Buffer.isBuffer(data) && (data = data.toString())
     data.split('\n').forEach((line) => {
       try {
-        JSON.parse(line) // validate that data is already in JSON format
+        JSON.parse(line) // verify if the data is already in JSON format
         process.stdout.write(line)
       } catch {
         wrapLogLine(line, isErr, logger)
