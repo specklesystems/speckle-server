@@ -71,6 +71,10 @@ export class LegacyViewer extends Viewer {
     await super.init()
   }
 
+  public getRenderer() {
+    return this.speckleRenderer
+  }
+
   /** SECTION BOX */
   public setSectionBox(
     box?: {
