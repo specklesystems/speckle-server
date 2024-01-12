@@ -239,11 +239,11 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
 
     boundLogger = boundLogger.child({ pid: childProc.pid })
     childProc.stdout.on('data', (data) => {
-      handleData(data, boundLogger.info)
+      handleData(data, false, boundLogger)
     })
 
     childProc.stderr.on('data', (data) => {
-      handleData(data, boundLogger.error)
+      handleData(data, true, boundLogger)
     })
 
     let timedOut = false
@@ -280,7 +280,7 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
   })
 }
 
-function handleData(data, logFunc) {
+function handleData(data, isErr, logger) {
   try {
     if (typeof data !== 'string') throw new Error('Not a string; force writing to log.')
     data.split('\n').forEach((line) => {
@@ -288,12 +288,20 @@ function handleData(data, logFunc) {
         JSON.parse(line) // validate that data is already in JSON format
         process.stdout.write(line)
       } catch {
-        logFunc({ parserLogLine: line }, 'ParserLog: {parserLogLine}')
+        wrapLogLine(line, isErr, logger)
       }
     })
   } catch {
-    logFunc({ parserLogLine: data }, 'ParserLog: {parserLogLine}')
+    wrapLogLine(JSON.stringify(data), isErr, logger)
   }
+}
+
+function wrapLogLine(line, isErr, logger) {
+  if (isErr) {
+    logger.error({ parserLogLine: line }, 'ParserLog: {parserLogLine}')
+    return
+  }
+  logger.info({ parserLogLine: line }, 'ParserLog: {parserLogLine}')
 }
 
 async function tick() {
