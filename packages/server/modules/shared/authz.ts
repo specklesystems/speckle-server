@@ -16,7 +16,11 @@ import {
 } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { Nullable } from '@speckle/shared'
-import { TokenResourceIdentifier } from '@/modules/core/graph/generated/graphql'
+import {
+  TokenResourceIdentifier,
+  TokenResourceIdentifierType
+} from '@/modules/core/graph/generated/graphql'
+import { isResourceAllowed } from '@/modules/core/helpers/token'
 
 interface AuthResult {
   authorized: boolean
@@ -29,6 +33,7 @@ interface AuthFailedResult extends AuthResult {
 }
 
 interface Stream {
+  id: string
   role?: StreamRoles
   isPublic: boolean
   allowPublicComments: boolean
@@ -164,6 +169,36 @@ export const validateStreamRole = ({ requiredRole }: { requiredRole: StreamRoles
     roleGetter: (context) => context?.stream?.role || null
   })
 
+export const validateResourceAccess: AuthPipelineFunction = async ({
+  context,
+  authResult
+}) => {
+  const { resourceAccessRules } = context
+
+  if (authHasFailed(authResult)) return { context, authResult }
+  if (!resourceAccessRules?.length) return authSuccess(context)
+
+  const streamId = context.stream?.id
+  if (!streamId) {
+    return authSuccess(context)
+  }
+
+  const hasAccess = isResourceAllowed({
+    resourceId: streamId,
+    resourceType: TokenResourceIdentifierType.Project,
+    resourceAccessRules
+  })
+
+  if (!hasAccess) {
+    return authFailed(
+      context,
+      new ForbiddenError('You do not have the required privileges.')
+    )
+  }
+
+  return authSuccess(context)
+}
+
 export const validateScope =
   ({ requiredScope }: { requiredScope: string }): AuthPipelineFunction =>
   async ({ context, authResult }) => {
@@ -269,17 +304,19 @@ export const authPipelineCreator = (
   return pipeline
 }
 
-export const streamWritePermissions = [
+export const streamWritePermissions: AuthPipelineFunction[] = [
   validateServerRole({ requiredRole: Roles.Server.Guest }),
   validateScope({ requiredScope: Scopes.Streams.Write }),
   contextRequiresStream(getStream as StreamGetter),
-  validateStreamRole({ requiredRole: Roles.Stream.Contributor })
+  validateStreamRole({ requiredRole: Roles.Stream.Contributor }),
+  validateResourceAccess
 ]
-export const streamReadPermissions = [
+export const streamReadPermissions: AuthPipelineFunction[] = [
   validateServerRole({ requiredRole: Roles.Server.Guest }),
   validateScope({ requiredScope: Scopes.Streams.Read }),
   contextRequiresStream(getStream as StreamGetter),
-  validateStreamRole({ requiredRole: Roles.Stream.Contributor })
+  validateStreamRole({ requiredRole: Roles.Stream.Contributor }),
+  validateResourceAccess
 ]
 
 if (adminOverrideEnabled()) streamReadPermissions.push(allowForServerAdmins)

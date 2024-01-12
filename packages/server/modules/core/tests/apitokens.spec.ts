@@ -3,6 +3,7 @@ import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/grap
 import { createAppToken } from '@/modules/core/services/tokens'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
+  AdminProjectListDocument,
   AppTokenCreateDocument,
   CreateTokenDocument,
   GetUserStreamsDocument,
@@ -372,7 +373,7 @@ describe('API Tokens', () => {
         })
       })
 
-      // TODO: 1. More queries 2. Check creation of new token with invalid rules (too relaxed)
+      // TODO: 1. More queries 2. Check creation of new token with invalid rules (too relaxed) 3. REST API
 
       it('can only access allowed stream through stream()', async () => {
         const stream1Res = await apollo.execute(ReadStreamDocument, { id: stream1.id })
@@ -417,6 +418,17 @@ describe('API Tokens', () => {
         expect(data?.user?.streams?.totalCount).to.equal(1)
         expect(data?.user?.streams?.items?.length).to.equal(1)
         expect(data?.user?.streams?.items?.[0].id).to.equal(stream3.id)
+      })
+
+      it('can only access allowed projects through admin.projectList', async () => {
+        const { data, errors } = await apollo.execute(AdminProjectListDocument, {})
+
+        expect(errors).to.be.not.ok
+        expect(data?.admin?.projectList?.totalCount).to.equal(2)
+        expect(data?.admin?.projectList?.items?.length).to.equal(2)
+
+        const returnedIds = data?.admin?.projectList?.items?.map((p) => p.id) || []
+        expect(returnedIds).to.deep.equalInAnyOrder([stream1.id, stream3.id])
       })
     })
   })

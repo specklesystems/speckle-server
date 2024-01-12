@@ -69,6 +69,8 @@ export const readStreamsQuery = gql`
       }
     }
   }
+
+  ${basicStreamFieldsFragment}
 `
 
 const readDiscoverableStreamsQuery = gql`
