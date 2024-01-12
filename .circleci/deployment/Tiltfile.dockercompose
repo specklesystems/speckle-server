@@ -12,7 +12,7 @@ speckle_image = symbols['speckle_image']
 speckle_image('fileimport-service')
 speckle_image('frontend-2')
 speckle_image('docker-compose-ingress')
-speckle_image('monitor-deployment')
+# speckle_image('monitor-deployment')
 speckle_image('preview-service')
 speckle_image('server')
 speckle_image('test-deployment')
