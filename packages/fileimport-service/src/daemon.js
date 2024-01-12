@@ -67,7 +67,7 @@ async function doTask(task) {
   let branchMetadata = { streamId: null, branchName: null }
 
   try {
-    taskLogger.info('Doing task.')
+    taskLogger.info("Doing task '{taskId}'.")
     const info = await FileUploads().where({ id: taskId }).first()
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
@@ -284,9 +284,11 @@ function handleData(data, isErr, logger) {
   try {
     Buffer.isBuffer(data) && (data = data.toString())
     data.split('\n').forEach((line) => {
+      if (!line) return
       try {
         JSON.parse(line) // verify if the data is already in JSON format
         process.stdout.write(line)
+        process.stdout.write('\n')
       } catch {
         wrapLogLine(line, isErr, logger)
       }
