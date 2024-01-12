@@ -13793,7 +13793,7 @@ __metadata:
     "@babel/core": ^7.17.5
     "@speckle/objectloader": "workspace:^"
     "@speckle/shared": "workspace:^"
-    "@speckle/viewer": 2.17.8
+    "@speckle/viewer": "workspace:^"
     babel-loader: ^8.2.2
     clean-webpack-plugin: ^4.0.0-alpha.0
     cookie-parser: ~1.4.4
