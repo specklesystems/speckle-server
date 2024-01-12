@@ -239,23 +239,11 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
 
     boundLogger = boundLogger.child({ pid: childProc.pid })
     childProc.stdout.on('data', (data) => {
-      try {
-        if (typeof data !== 'string') throw new Error('not a string')
-        JSON.parse(data) // validate that data is already in JSON format
-        process.stdout.write(data)
-      } catch {
-        boundLogger.info({ parserLog: data }, 'ParserLog: {parserLog}')
-      }
+      handleData(data, boundLogger.info)
     })
 
     childProc.stderr.on('data', (data) => {
-      try {
-        if (typeof data !== 'string') throw new Error('not a string')
-        JSON.parse(data) // validate that data is already in JSON format
-        process.stderr.write(data)
-      } catch {
-        boundLogger.info({ parserLog: data }, 'ParserLog: {parserLog}')
-      }
+      handleData(data, boundLogger.error)
     })
 
     let timedOut = false
@@ -290,6 +278,22 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
       }
     })
   })
+}
+
+function handleData(data, logFunc) {
+  try {
+    if (typeof data !== 'string') throw new Error('Not a string; force writing to log.')
+    data.split('\n').forEach((line) => {
+      try {
+        JSON.parse(line) // validate that data is already in JSON format
+        process.stdout.write(line)
+      } catch {
+        logFunc({ parserLogLine: line }, 'ParserLog: {parserLogLine}')
+      }
+    })
+  } catch {
+    logFunc({ parserLogLine: data }, 'ParserLog: {parserLogLine}')
+  }
 }
 
 async function tick() {
