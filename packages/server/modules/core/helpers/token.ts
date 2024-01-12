@@ -98,7 +98,7 @@ const canCreateToken = (params: {
 
   if (throwAboutInvalidResources) {
     throw new TokenCreateError(
-      `You can't create a token with access to resources that you don't have access to`
+      `You can't create a token with access to resources that you don't currently have access to`
     )
   }
 

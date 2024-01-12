@@ -23,6 +23,8 @@ import { AllScopes, Roles, Scopes } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { difference } from 'lodash'
+import type { Express } from 'express'
+import request from 'supertest'
 
 /**
  * Older API token test cases can be found in `graph.spec.js`
@@ -36,9 +38,10 @@ describe('API Tokens', () => {
   }
 
   let apollo: TestApolloServer
+  let app: Express
 
   before(async () => {
-    await beforeEachContext()
+    const ctx = await beforeEachContext()
     await createTestUsers([user1])
 
     apollo = await testApolloServer({
@@ -50,6 +53,7 @@ describe('API Tokens', () => {
         scopes: AllScopes
       })
     })
+    app = ctx.app
   })
 
   it("don't show an associated app, if they actually don't have one", async () => {
@@ -351,7 +355,7 @@ describe('API Tokens', () => {
         const { data } = await apollo.execute(AppTokenCreateDocument, {
           token: {
             name: 'test2',
-            scopes: [Scopes.Profile.Read],
+            scopes: [Scopes.Profile.Read, Scopes.Streams.Read, Scopes.Streams.Write],
             limitResources
           }
         })
@@ -373,7 +377,37 @@ describe('API Tokens', () => {
         })
       })
 
-      // TODO: 1. More queries 2. Check creation of new token with invalid rules (too relaxed) 3. REST API
+      it("can't create new token with rules that are relaxed from the original token", async () => {
+        const res1 = await apollo.execute(AppTokenCreateDocument, {
+          token: {
+            name: 'test2',
+            scopes: [Scopes.Profile.Read],
+            limitResources: null
+          }
+        })
+        const res2 = await apollo.execute(AppTokenCreateDocument, {
+          token: {
+            name: 'test2',
+            scopes: [Scopes.Profile.Read],
+            limitResources: [
+              { id: stream1.id, type: TokenResourceIdentifierType.Project },
+              { id: stream2.id, type: TokenResourceIdentifierType.Project }
+            ]
+          }
+        })
+
+        const responses = [res1, res2]
+        for (const res of responses) {
+          expect(res.data?.appTokenCreate).to.not.be.ok
+          expect(
+            (res.errors || []).find((e) =>
+              e.message.includes(
+                "You can't create a token with access to resources that you don't currently have access to"
+              )
+            )
+          ).to.be.ok
+        }
+      })
 
       it('can only access allowed stream through stream()', async () => {
         const stream1Res = await apollo.execute(ReadStreamDocument, { id: stream1.id })
@@ -429,6 +463,146 @@ describe('API Tokens', () => {
 
         const returnedIds = data?.admin?.projectList?.items?.map((p) => p.id) || []
         expect(returnedIds).to.deep.equalInAnyOrder([stream1.id, stream3.id])
+      })
+
+      it('can only post to /objects/:streamId for allowed streams', async () => {
+        const resAllowed = await request(app)
+          .post(`/objects/${stream1.id}`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+          .send({ fake: 'data' })
+
+        // We sent an invalid payload so 400 is fine, as long as its not a 401
+        expect(resAllowed).to.have.status(400)
+
+        const resDisallowed = await request(app)
+          .post(`/objects/${stream2.id}`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+          .send({ fake: 'data' })
+        expect(resDisallowed).to.have.status(401)
+      })
+
+      it('can only GET /objects/:streamId/:objectId for allowed streams', async () => {
+        const resAllowed = await request(app)
+          .get(`/objects/${stream1.id}/fakeobjectid`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+        expect(resAllowed).to.have.status(404)
+
+        const resDisallowed = await request(app)
+          .get(`/objects/${stream2.id}/fakeobjectid`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+        expect(resDisallowed).to.have.status(401)
+      })
+
+      it('can only GET /objects/:streamId/:objectId/single for allowed streams', async () => {
+        const resAllowed = await request(app)
+          .get(`/objects/${stream1.id}/fakeobjectid/single`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+        expect(resAllowed).to.have.status(404)
+
+        const resDisallowed = await request(app)
+          .get(`/objects/${stream2.id}/fakeobjectid/single`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+        expect(resDisallowed).to.have.status(401)
+      })
+
+      it('can only POST /api/getobjects/:streamId for allowed streams', async () => {
+        const resAllowed = await request(app)
+          .post(`/api/getobjects/${stream1.id}`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+          .send({ fake: 'data' })
+
+        // We sent an invalid payload so 500 is fine, as long as its not a 401
+        expect(resAllowed).to.have.status(500)
+
+        const resDisallowed = await request(app)
+          .post(`/api/getobjects/${stream2.id}`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+          .send({ fake: 'data' })
+        expect(resDisallowed).to.have.status(401)
+      })
+
+      it('can only POST /api/diff/:streamId for allowed streams', async () => {
+        const resAllowed = await request(app)
+          .post(`/api/diff/${stream1.id}`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+          .send({ fake: 'data' })
+
+        // We sent an invalid payload so 500 is fine, as long as its not a 401
+        expect(resAllowed).to.have.status(500)
+
+        const resDisallowed = await request(app)
+          .post(`/api/diff/${stream2.id}`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+          .send({ fake: 'data' })
+        expect(resDisallowed).to.have.status(401)
+      })
+
+      it('can only POST /api/stream/:streamId/blob for allowed streams', async () => {
+        const resAllowed = await request(app)
+          .post(`/api/stream/${stream1.id}/blob`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+          .send({ fake: 'data' })
+
+        // We sent an invalid payload so 500 is fine, as long as its not a 403
+        expect(resAllowed).to.have.status(500)
+
+        const resDisallowed = await request(app)
+          .post(`/api/stream/${stream2.id}/blob`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+          .send({ fake: 'data' })
+        expect(resDisallowed).to.have.status(403)
+      })
+
+      it('can only POST /api/stream/:streamId/blob/diff for allowed streams', async () => {
+        const resAllowed = await request(app)
+          .post(`/api/stream/${stream1.id}/blob/diff`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+          .send({ fake: 'data' })
+
+        // We sent an invalid payload so 400 is fine, as long as its not a 403
+        expect(resAllowed).to.have.status(400)
+
+        const resDisallowed = await request(app)
+          .post(`/api/stream/${stream2.id}/blob/diff`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+          .send([1, 2, 3])
+        expect(resDisallowed).to.have.status(403)
+      })
+
+      it('can only GET /api/stream/:streamId/blob/:blobId for allowed streams', async () => {
+        const resAllowed = await request(app)
+          .get(`/api/stream/${stream1.id}/blob/fakeblobid`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+        expect(resAllowed).to.have.status(404)
+
+        const resDisallowed = await request(app)
+          .get(`/api/stream/${stream2.id}/blob/fakeblobid`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+        expect(resDisallowed).to.have.status(403)
+      })
+
+      it('can only DELETE /api/stream/:streamId/blob/:blobId for allowed streams', async () => {
+        const resAllowed = await request(app)
+          .delete(`/api/stream/${stream1.id}/blob/fakeblobid`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+        expect(resAllowed).to.have.status(404)
+
+        const resDisallowed = await request(app)
+          .delete(`/api/stream/${stream2.id}/blob/fakeblobid`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+        expect(resDisallowed).to.have.status(403)
+      })
+
+      it('can only GET /api/stream/:streamId/blobs for allowed streams', async () => {
+        const resAllowed = await request(app)
+          .get(`/api/stream/${stream1.id}/blobs`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+        expect(resAllowed).to.have.status(200)
+
+        const resDisallowed = await request(app)
+          .get(`/api/stream/${stream2.id}/blobs`)
+          .set('Authorization', `Bearer ${limitedToken1}`)
+        expect(resDisallowed).to.have.status(403)
       })
     })
   })

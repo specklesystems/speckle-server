@@ -192,7 +192,8 @@ export const validateResourceAccess: AuthPipelineFunction = async ({
   if (!hasAccess) {
     return authFailed(
       context,
-      new ForbiddenError('You do not have the required privileges.')
+      new ForbiddenError('You do not have the required privileges.'),
+      true
     )
   }
 
