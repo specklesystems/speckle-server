@@ -1,14 +1,13 @@
 <template>
   <div class="relative group bg-foundation-page p-2 rounded-lg pr-12">
-    <FormTextArea
+    <div
       v-if="isMultiline"
-      color="transparent"
-      name="contentArea"
-      readonly
-      :model-value="value"
-      class="relative z-10 text-sm text-foreground font-mono"
-      :rows="rows"
-    />
+      class="relative z-10 text-sm text-foreground font-mono break-all p-2 pl-3"
+      @click="selectAllText"
+      @keypress="keyboardClick(selectAllText)"
+    >
+      {{ value }}
+    </div>
     <FormTextInput
       v-else
       color="transparent"
@@ -35,7 +34,8 @@ import {
   ClipboardDocumentIcon,
   ClipboardDocumentCheckIcon
 } from '@heroicons/vue/24/outline'
-import { FormTextArea, FormTextInput, FormButton } from '~~/src/lib'
+import { FormTextInput, FormButton } from '~~/src/lib'
+import { keyboardClick } from '@speckle/ui-components'
 import { ref } from 'vue'
 
 type Props = {
@@ -63,6 +63,18 @@ const handleCopy = async () => {
     setTimeout(() => {
       copied.value = false
     }, 2000)
+  }
+}
+
+const selectAllText = (event: Event) => {
+  const textElement = event.target as HTMLElement
+
+  const selection = window.getSelection()
+  if (selection) {
+    const range = document.createRange()
+    range.selectNodeContents(textElement)
+    selection.removeAllRanges()
+    selection.addRange(range)
   }
 }
 </script>
