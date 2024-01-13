@@ -249,7 +249,7 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
     let timedOut = false
 
     const timeout = setTimeout(() => {
-      boundLogger.warn('Process timeout. Killing process...')
+      boundLogger.warn('Process timed out. Killing process...')
 
       timedOut = true
       childProc.kill(9)
@@ -263,7 +263,7 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
     }, timeoutMs)
 
     childProc.on('close', (code) => {
-      boundLogger.info({ exitCode: code }, `Process exited with code ${code}`)
+      boundLogger.info({ exitCode: code }, "Process exited with code '{exitCode}'")
 
       if (timedOut) {
         return // ignore `close` calls after killing (the promise was already rejected)
