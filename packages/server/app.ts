@@ -122,6 +122,24 @@ function buildApolloSubscriptionServer(
     help: 'Number of currently connected clients'
   })
 
+  prometheusClient.register.removeSingleMetric(
+    'speckle_server_apollo_graphql_total_subscription_operations'
+  )
+  const metricSubscriptionTotalOperations = new prometheusClient.Counter({
+    name: 'speckle_server_apollo_graphql_total_subscription_operations',
+    help: 'Number of total subscription operations served by this instance',
+    labelNames: ['subscriptionType'] as const
+  })
+
+  prometheusClient.register.removeSingleMetric(
+    'speckle_server_apollo_graphql_total_subscription_responses'
+  )
+  const metricSubscriptionTotalResponses = new prometheusClient.Counter({
+    name: 'speckle_server_apollo_graphql_total_subscription_responses',
+    help: 'Number of total subscription responses served by this instance',
+    labelNames: ['subscriptionType', 'status'] as const
+  })
+
   return SubscriptionServer.create(
     {
       schema,
@@ -178,17 +196,29 @@ function buildApolloSubscriptionServer(
         // kinda hacky, but we're using this as an "subscription event emitted"
         // callback to clear subscription connection dataloaders to avoid stale cache
         const baseParams = params[1]
+        metricSubscriptionTotalOperations.inc({
+          subscriptionType: baseParams.operationName
+        })
         const ctx = baseParams.context as GraphQLContext
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         baseParams.formatResponse = (val: SubscriptionResponse) => {
           ctx.loaders.clearAll()
           logSubscriptionOperation({ ctx, execParams: baseParams, response: val })
+          metricSubscriptionTotalResponses.inc({
+            subscriptionType: baseParams.operationName,
+            status: 'success'
+          })
           return val
         }
         baseParams.formatError = (e: Error) => {
           ctx.loaders.clearAll()
           logSubscriptionOperation({ ctx, execParams: baseParams, error: e })
+
+          metricSubscriptionTotalResponses.inc({
+            subscriptionType: baseParams.operationName,
+            status: 'error'
+          })
           return e
         }
 
