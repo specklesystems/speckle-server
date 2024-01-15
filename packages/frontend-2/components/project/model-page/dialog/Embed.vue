@@ -48,7 +48,7 @@
             </template>
             <div class="flex flex-col gap-3 ml-7 text-sm cursor-default">
               <div
-                v-for="option in embedOptions"
+                v-for="option in embedDialogOptions"
                 :key="option.id"
                 class="flex items-center justify-between"
               >
@@ -102,7 +102,7 @@ const updateOption = (optionRef: Ref<boolean>, newValue: unknown) => {
   optionRef.value = newValue === undefined ? false : !!newValue
 }
 
-const embedOptions = [
+const embedDialogOptions = [
   {
     id: 'isTransparent',
     label: 'Transparent background',
@@ -147,13 +147,15 @@ const updatedUrl = computed(() => {
     url += `%40${props.versionId}`
   }
 
-  const enabledOptions = embedOptions
+  const enabledOptions = embedDialogOptions
     .filter((option) => option.value.value)
     .map((option) => `%22${option.id}%22:true`)
     .join(',')
 
   if (enabledOptions) {
     url += `#embed={${enabledOptions}}`
+  } else {
+    url += `#embed={"isEnabled":true}`
   }
 
   return url

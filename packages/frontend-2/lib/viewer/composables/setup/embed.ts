@@ -2,6 +2,7 @@ import { computed } from 'vue'
 import { useRouteHashState } from '~~/lib/common/composables/url'
 
 export type EmbedOptions = {
+  isEnabled?: boolean
   isTransparent?: boolean
   hideControls?: boolean
   hideSelectionInfo?: boolean
@@ -32,18 +33,22 @@ export function useEmbedState() {
 
   const embedOptions = computed((): EmbedOptions => {
     const embedString = hashState.value.embed
-    if (!embedString) return {}
+    if (!embedString) {
+      return { isEnabled: false }
+    }
 
     try {
       const parsed: unknown = JSON.parse(embedString)
       if (isEmbedOptions(parsed)) {
-        return parsed
+        return { ...parsed, isEnabled: true }
       }
       console.error('Parsed object is not of type EmbedOptions')
     } catch (error) {
       console.error('Error parsing embed options from URL:', error)
+      return { isEnabled: true }
     }
-    return {}
+
+    return { isEnabled: true }
   })
 
   return {

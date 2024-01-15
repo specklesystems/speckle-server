@@ -1,8 +1,8 @@
 <template>
-  <div v-if="showViewerControls">
+  <div v-if="showViewerControls && !embedOptions.hideControls">
     <div
       class="absolute z-20 flex h-[100dvh] flex-col space-y-2 bg-green-300/0 px-2"
-      :class="showNavbar ? 'pt-[4.2rem]' : 'pt-2'"
+      :class="showNavbar && !embedOptions.isEnabled ? 'pt-[4.2rem]' : 'pt-2'"
     >
       <!-- Models -->
       <ViewerControlsButtonToggle
@@ -114,11 +114,11 @@
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 mx-14 mt-[4rem] mb-4 max-h-[calc(100dvh-5.5rem)] w-64 sm:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
+      :class="`simple-scrollbar absolute z-10 mx-14 mb-4 max-h-[calc(100dvh-5.5rem)] w-64 sm:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
-      }`"
+      } ${embedOptions.isEnabled ? 'mt-1.5' : 'mt-[4rem]'}`"
     >
       <div v-show="activeControl.length !== 0 && activeControl === 'measurements'">
         <KeepAlive>
@@ -214,6 +214,7 @@ const {
 import { AutomationRunStatus } from '~~/lib/common/generated/gql/graphql'
 import type { AutomationRun } from '~~/lib/common/generated/gql/graphql'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
+import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
@@ -222,6 +223,7 @@ const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 const { enableMeasurements } = useMeasurementUtilities()
 
 const { showNavbar, showViewerControls } = useTourStageState().value
+const { embedOptions } = useEmbedState()
 
 const allAutomationRuns = computed(() => {
   const allAutomationStatuses = modelsAndVersionIds.value

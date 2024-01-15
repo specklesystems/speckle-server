@@ -34,10 +34,7 @@
             enter-from-class="opacity-0"
             enter-active-class="transition duration-1000"
           >
-            <ViewerAnchoredPoints
-              v-show="tourState.showViewerControls"
-              :can-comment="!hideSelectionInfo"
-            />
+            <ViewerAnchoredPoints v-show="tourState.showViewerControls" />
           </Transition>
         </div>
 
@@ -53,7 +50,7 @@
         </Transition>
         <!-- Viewer Object Selection Info Display -->
         <Transition
-          v-if="!hideSelectionInfo"
+          v-if="!embedOptions.hideSelectionInfo"
           enter-from-class="opacity-0"
           enter-active-class="transition duration-1000"
         >
@@ -67,13 +64,12 @@
     </div>
   </ViewerPostSetupWrapper>
   <div
-    v-if="tourState.showViewerControls"
-    class="sm:hidden shadow-t fixed bottom-0 left-0 max-h-[65vh] overflow-hidden w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
+    class="shadow-t fixed bottom-0 left-0 max-h-[65vh] overflow-hidden w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
   >
-    <PortalTarget name="bottomPanel"></PortalTarget>
-    <PortalTarget name="mobileComments"></PortalTarget>
+    <PortalTarget class="sm:hidden" name="bottomPanel"></PortalTarget>
+    <PortalTarget class="sm:hidden" name="mobileComments"></PortalTarget>
     <div
-      v-if="isEmbed"
+      v-if="embedOptions.isEnabled"
       class="bg-foundation px-3 py-1.5 flex items-center gap-3 select-none"
     >
       <HeaderLogoBlock powered-by />
@@ -120,9 +116,6 @@ const tourState = useTourStageState()
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 
-const isEmbed = ref(false)
-const hideSelectionInfo = ref(false)
-
 const { embedOptions } = useEmbedState()
 
 const state = useSetupViewer({
@@ -145,21 +138,4 @@ const title = computed(() =>
   project.value?.name.length ? `Viewer - ${project.value.name}` : ''
 )
 useHead({ title })
-
-watch(
-  embedOptions,
-  (newOptions) => {
-    if (Object.keys(newOptions).length > 0) {
-      isEmbed.value = true
-
-      if (newOptions.hideControls) {
-        tourState.value.showViewerControls = false
-      }
-      if (newOptions.hideSelectionInfo) {
-        hideSelectionInfo.value = true
-      }
-    }
-  },
-  { immediate: true }
-)
 </script>
