@@ -26,7 +26,7 @@ const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) 
   )
 }
 
-exports.init = async (app) => {
+exports.init = async (app, isInitial) => {
   if (process.env.DISABLE_FILE_UPLOADS) {
     moduleLogger.warn('📄 FileUploads module is DISABLED')
     return
@@ -77,7 +77,10 @@ exports.init = async (app) => {
     }
   )
 
-  listenForImportUpdates()
+  if (isInitial) {
+    moduleLogger.info('📄 Listening for file import updates...')
+    listenForImportUpdates()
+  }
 }
 
 exports.finalize = () => {}
