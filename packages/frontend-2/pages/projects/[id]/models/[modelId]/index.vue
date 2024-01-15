@@ -22,7 +22,7 @@
       <ClientOnly>
         <!-- Tour host -->
         <div
-          v-if="viewerState.showTour"
+          v-if="tourState.showTour"
           class="fixed w-full h-[100dvh] flex justify-center items-center pointer-events-none z-[100]"
         >
           <TourOnboarding />
@@ -34,7 +34,10 @@
             enter-from-class="opacity-0"
             enter-active-class="transition duration-1000"
           >
-            <ViewerAnchoredPoints v-show="viewerState.showViewerControls" />
+            <ViewerAnchoredPoints
+              v-show="tourState.showViewerControls"
+              :can-comment="!hideSelectionInfo"
+            />
           </Transition>
         </div>
 
@@ -46,14 +49,15 @@
           enter-from-class="opacity-0"
           enter-active-class="transition duration-1000"
         >
-          <ViewerControls v-show="viewerState.showViewerControls" class="z-20" />
+          <ViewerControls v-show="tourState.showViewerControls" class="z-20" />
         </Transition>
         <!-- Viewer Object Selection Info Display -->
         <Transition
+          v-if="!hideSelectionInfo"
           enter-from-class="opacity-0"
           enter-active-class="transition duration-1000"
         >
-          <div v-show="viewerState.showViewerControls">
+          <div v-show="tourState.showViewerControls">
             <ViewerSelectionSidebar class="z-20 hidden sm:block" />
           </div>
         </Transition>
@@ -63,17 +67,38 @@
     </div>
   </ViewerPostSetupWrapper>
   <div
-    v-if="viewerState.showViewerControls"
+    v-if="tourState.showViewerControls"
     class="sm:hidden shadow-t fixed bottom-0 left-0 max-h-[65vh] overflow-hidden w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
   >
     <PortalTarget name="bottomPanel"></PortalTarget>
     <PortalTarget name="mobileComments"></PortalTarget>
+    <div
+      v-if="isEmbed"
+      class="bg-foundation px-3 py-1.5 flex items-center gap-3 select-none"
+    >
+      <HeaderLogoBlock powered-by />
+      <div class="h-6 w-px bg-primary"></div>
+      <div class="flex flex-col">
+        <NuxtLink>
+          <div class="flex items-center gap-1 -mb-0.5">
+            <h2 class="font-bold text-base">
+              {{ project?.name }}
+            </h2>
+            <ArrowTopRightOnSquareIcon class="h-3 w-3" />
+          </div>
+          <span class="text-sm text-foreground-2">Created {{ formattedDate }}</span>
+        </NuxtLink>
+      </div>
+    </div>
   </div>
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
 import { useSetupViewer } from '~~/lib/viewer/composables/setup'
 import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
 
 definePageMeta({
   layout: 'viewer',
@@ -91,9 +116,12 @@ graphql(`
   }
 `)
 
-const viewerState = useTourStageState()
+const tourState = useTourStageState()
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
+
+const isEmbed = ref(false)
+const hideSelectionInfo = ref(false)
 
 const { embedOptions } = useEmbedState()
 
@@ -107,6 +135,12 @@ const {
   }
 } = state
 
+dayjs.extend(relativeTime)
+
+const formattedDate = computed(() => {
+  return project.value?.createdAt ? dayjs(project.value.createdAt).fromNow() : ''
+})
+
 const title = computed(() =>
   project.value?.name.length ? `Viewer - ${project.value.name}` : ''
 )
@@ -115,20 +149,15 @@ useHead({ title })
 watch(
   embedOptions,
   (newOptions) => {
-    if (newOptions.isTransparent) {
-      console.log('is transparent')
-    }
-    if (newOptions.hideControls) {
-      viewerState.value.showViewerControls = false
-    }
-    if (newOptions.hideSelectionInfo) {
-      console.log('hide selection info')
-    }
-    if (newOptions.noScroll) {
-      console.log('no scroll')
-    }
-    if (newOptions.autoload) {
-      console.log('autoload')
+    if (Object.keys(newOptions).length > 0) {
+      isEmbed.value = true
+
+      if (newOptions.hideControls) {
+        tourState.value.showViewerControls = false
+      }
+      if (newOptions.hideSelectionInfo) {
+        hideSelectionInfo.value = true
+      }
     }
   },
   { immediate: true }

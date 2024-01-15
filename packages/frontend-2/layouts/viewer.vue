@@ -1,5 +1,8 @@
 <template>
-  <div :class="`relative min-h-full`">
+  <div
+    class="relative min-h-full"
+    :class="embedOptions.isTransparent && 'viewer-transparent'"
+  >
     <div
       v-if="debug"
       class="pointer-events-none fixed bottom-0 z-40 flex w-full space-x-2 p-3 text-xs"
@@ -40,6 +43,24 @@
   </div>
 </template>
 <script setup lang="ts">
+import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
+
 const tourState = useTourStageState()
+const { embedOptions } = useEmbedState()
+
 const debug = ref(false)
+
+watch(
+  embedOptions,
+  (newOptions) => {
+    if (Object.keys(newOptions).length > 0) {
+      tourState.value.showNavbar = false
+
+      if (newOptions.isTransparent) {
+        embedOptions.value.isTransparent = true
+      }
+    }
+  },
+  { immediate: true }
+)
 </script>

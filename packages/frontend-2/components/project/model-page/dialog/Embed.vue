@@ -163,13 +163,6 @@ const iframeCode = computed(() => {
   return `<iframe title="Speckle" src="${updatedUrl.value}" width="600" height="400" frameborder="0"></iframe>`
 })
 
-const handleShareableLinkCopy = async (value: string) => {
-  await copy(value, {
-    successMessage: 'Value copied to clipboard',
-    failureMessage: 'Failed to copy value to clipboard'
-  })
-}
-
 const handleEmbedCodeCopy = async (value: string) => {
   await copy(value, {
     successMessage: 'Value copied to clipboard',
@@ -179,10 +172,10 @@ const handleEmbedCodeCopy = async (value: string) => {
 
 const discoverableButtons = computed(() => [
   {
-    text: 'Copy Shareable Link',
+    text: 'Cancel',
     props: { color: 'invert', fullWidth: true, outline: true },
     onClick: () => {
-      handleShareableLinkCopy(updatedUrl.value)
+      isOpen.value = false
     }
   },
   {

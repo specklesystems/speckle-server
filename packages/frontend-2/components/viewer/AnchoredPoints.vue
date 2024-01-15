@@ -5,7 +5,7 @@
   >
     <!-- Add new thread bubble -->
     <ViewerAnchoredPointNewThread
-      v-if="canPostComment"
+      v-if="canPostComment && embedOptions.hideSelectionInfo"
       v-model="buttonState"
       class="z-[13]"
       @close="closeNewThread"
@@ -111,12 +111,14 @@ import {
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
+import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
 
 const parentEl = ref(null as Nullable<HTMLElement>)
 const { isLoggedIn } = useActiveUser()
 const { sessionId } = useInjectedViewerState()
 const { users } = useViewerUserActivityTracking({ parentEl })
 const { isOpenThread, open } = useThreadUtilities()
+const { embedOptions } = useEmbedState()
 
 const canPostComment = useCheckViewerCommentingAccess()
 

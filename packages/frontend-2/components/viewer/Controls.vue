@@ -1,7 +1,8 @@
 <template>
-  <div>
+  <div v-if="showViewerControls">
     <div
-      class="absolute z-20 flex h-[100dvh] flex-col space-y-2 bg-green-300/0 px-2 pt-[4.2rem]"
+      class="absolute z-20 flex h-[100dvh] flex-col space-y-2 bg-green-300/0 px-2"
+      :class="showNavbar ? 'pt-[4.2rem]' : 'pt-2'"
     >
       <!-- Models -->
       <ViewerControlsButtonToggle
@@ -219,6 +220,8 @@ const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources(
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 
 const { enableMeasurements } = useMeasurementUtilities()
+
+const { showNavbar, showViewerControls } = useTourStageState().value
 
 const allAutomationRuns = computed(() => {
   const allAutomationStatuses = modelsAndVersionIds.value

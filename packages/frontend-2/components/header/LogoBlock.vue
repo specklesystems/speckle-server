@@ -1,16 +1,29 @@
 <template>
-  <NuxtLink class="flex items-center shrink-0" to="/">
+  <NuxtLink
+    class="flex items-center shrink-0"
+    :to="poweredBy ? 'https://speckle.systems/' : '/'"
+    :target="poweredBy ? '_blank' : undefined"
+  >
     <img
-      class="block h-6 w-6"
-      :class="{ 'mr-2': !minimal, grayscale: active }"
+      class="block"
+      :class="{
+        'mr-2': !minimal && !poweredBy,
+        grayscale: active && !poweredBy,
+        'h-8 w-8': poweredBy,
+        'h-6 w-6': !poweredBy
+      }"
       src="~~/assets/images/speckle_logo_big.png"
       alt="Speckle"
     />
+
     <div
       v-if="!minimal"
       class="text-primary h6 mt-0 hidden font-bold leading-7 md:flex"
     >
       Speckle
+    </div>
+    <div v-if="poweredBy" class="text-base font-bold text-primary">
+      Powered by Speckle
     </div>
   </NuxtLink>
 </template>
@@ -23,6 +36,10 @@ defineProps({
   active: {
     type: Boolean,
     default: true
+  },
+  poweredBy: {
+    type: Boolean,
+    default: false
   }
 })
 </script>
