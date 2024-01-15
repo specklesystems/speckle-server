@@ -221,3 +221,11 @@ export function getEmailFromAddress() {
 export function getMaximumProjectModelsPerPage() {
   return getIntFromEnv('MAX_PROJECT_MODELS_PER_PAGE', '500')
 }
+
+/**
+ * Whether to enable the locking functionality in dbNotificationListener, even if outside
+ * of the prod env
+ */
+export function forceDbNotificationListenerLocking() {
+  return getBooleanFromEnv('FORCE_DB_NOTIFICATION_LISTENER_LOCKING')
+}

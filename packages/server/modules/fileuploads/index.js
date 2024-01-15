@@ -78,7 +78,6 @@ exports.init = async (app, isInitial) => {
   )
 
   if (isInitial) {
-    moduleLogger.info('📄 Listening for file import updates...')
     listenForImportUpdates()
   }
 }
