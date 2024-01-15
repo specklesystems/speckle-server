@@ -92,8 +92,9 @@ import {
 } from '@heroicons/vue/24/outline'
 import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { computed } from 'vue'
-import { Nullable } from '@speckle/shared'
-import { ToastNotification, ToastNotificationType } from '~~/src/helpers/global/toast'
+import type { Nullable } from '@speckle/shared'
+import { ToastNotificationType } from '~~/src/helpers/global/toast'
+import type { ToastNotification } from '~~/src/helpers/global/toast'
 
 const emit = defineEmits<{
   (e: 'update:notification', val: Nullable<ToastNotification>): void

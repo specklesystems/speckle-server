@@ -11,7 +11,7 @@
     "directory": "packages/preview-service"
   },
   "engines": {
-    "node": "^18.18.2"
+    "node": "^18.19.0"
   },
   "scripts": {
     "dev": "LOG_PRETTY=true nodemon --trace-deprecation ./bin/www",
@@ -21,7 +21,7 @@
   "dependencies": {
     "@speckle/objectloader": "workspace:^",
     "@speckle/shared": "workspace:^",
-    "@speckle/viewer": "workspace:^",
+    "@speckle/viewer": "2.17.8",
     "cookie-parser": "~1.4.4",
     "crypto": "^1.0.1",
     "express": "~4.17.3",

@@ -1,5 +1,25 @@
 import { Box3, Vector3 } from 'three'
 
+export class AsyncPause {
+  private lastPauseTime: number = 0
+  public needsWait: boolean = false
+
+  public tick(maxDelta: number) {
+    const now = performance.now()
+    const delta = now - this.lastPauseTime
+    // console.log('Delta -> ', delta)
+    if (delta > maxDelta) {
+      this.needsWait = true
+    }
+  }
+
+  public async wait(waitTime: number) {
+    this.lastPauseTime = performance.now()
+    await new Promise((resolve) => setTimeout(resolve, waitTime))
+    this.needsWait = false
+  }
+}
+
 export class World {
   private readonly boxes: Array<Box3> = new Array<Box3>()
   public readonly worldBox: Box3 = new Box3()
@@ -39,30 +59,5 @@ export class World {
   public resetWorld() {
     this.worldBox.makeEmpty()
     this.boxes.length = 0
-  }
-
-  public static getPause(priority: number) {
-    switch (priority) {
-      case 0:
-        return this.getPauseFunction(1000, 0)
-      case 1:
-        return this.getPauseFunction(100, 16)
-      case 2:
-        return this.getPauseFunction(16, 8)
-    }
-  }
-
-  private static getPauseFunction(t0: number, t1: number) {
-    const fn = (t0: number, t1: number) => {
-      let lastAsyncPause = 0
-      const pause = async () => {
-        if (Date.now() - lastAsyncPause >= t0) {
-          lastAsyncPause = Date.now()
-          await new Promise((resolve) => setTimeout(resolve, t1))
-        }
-      }
-      return pause
-    }
-    return fn(t0, t1)
   }
 }

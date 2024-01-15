@@ -35,8 +35,8 @@
 
 <script lang="ts" setup>
 import { ArrowTopRightOnSquareIcon, CheckCircleIcon } from '@heroicons/vue/24/outline'
-import { ConcreteComponent } from 'vue'
-import { CTA } from '~~/lib/server-management/helpers/types'
+import type { ConcreteComponent } from 'vue'
+import type { CTA } from '~~/lib/server-management/helpers/types'
 
 defineEmits<{
   (e: 'cta-clicked', v: MouseEvent): void

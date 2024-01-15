@@ -34,10 +34,8 @@
   </LayoutDialogSection>
 </template>
 <script setup lang="ts">
-import {
-  ProjectPageTeamDialogFragment,
-  ProjectVisibility
-} from '~~/lib/common/generated/gql/graphql'
+import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import { LayoutDialogSection } from '@speckle/ui-components'
 import { CommentPermissions } from '~~/lib/projects/helpers/components'
 import { useUpdateProject } from '~~/lib/projects/composables/projectManagement'

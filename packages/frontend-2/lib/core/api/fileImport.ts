@@ -1,5 +1,5 @@
-import { Optional } from '@speckle/shared'
-import { BlobPostResultItem, PostBlobResponse } from '~~/lib/core/api/blobStorage'
+import type { Optional } from '@speckle/shared'
+import type { BlobPostResultItem, PostBlobResponse } from '~~/lib/core/api/blobStorage'
 
 export enum FileUploadConvertedStatus {
   Queued = 0,
@@ -51,6 +51,16 @@ export function importFile(
   })
 
   request.addEventListener('load', () => {
+    if (!request.response) {
+      return rejectResponse(
+        new Error(
+          `Upload failed${
+            request.status ? ' with code ' + request.status : ''
+          } - no response`
+        )
+      )
+    }
+
     const uploadResults =
       (request.response as Optional<PostBlobResponse>)?.uploadResults || []
     const result = uploadResults.find((r) => r.formKey === formKey)

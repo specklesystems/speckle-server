@@ -75,7 +75,7 @@
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
-import { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { UserCircleIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import { projectRoute, allProjectModelsRoute } from '~~/lib/common/helpers/route'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'

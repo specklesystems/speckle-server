@@ -1,5 +1,5 @@
 import SemanticColorsComponent from '~~/src/stories/styling/semantic-colors/SemanticColors.vue'
-import { StoryObj, Meta } from '@storybook/vue3'
+import type { StoryObj, Meta } from '@storybook/vue3'
 
 export default {
   title: 'Overview/Styling/Semantic Colors',

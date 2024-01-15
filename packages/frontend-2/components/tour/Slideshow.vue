@@ -48,7 +48,7 @@
 </template>
 <script setup lang="ts">
 // Disclaimer, not the cleanest code.
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { items as slideshowItemsRaw } from '~~/lib/tour/slideshowItems'
 import { ArrowRightIcon } from '@heroicons/vue/24/solid'

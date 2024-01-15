@@ -46,7 +46,7 @@
 <script setup lang="ts">
 import { LayoutDialog } from '@speckle/ui-components'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
-import { ApplicationItem } from 'lib/developer-settings/helpers/types'
+import type { ApplicationItem } from '~~/lib/developer-settings/helpers/types'
 
 const props = defineProps<{
   application: ApplicationItem | null

@@ -9,7 +9,7 @@
 </template>
 <script setup lang="ts">
 import CommonBadge from '~~/src/components/common/Badge.vue'
-import { SourceAppDefinition } from '@speckle/shared'
+import type { SourceAppDefinition } from '@speckle/shared'
 
 defineProps<{
   sourceApp: SourceAppDefinition

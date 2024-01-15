@@ -1,13 +1,14 @@
-import { MaybeRef } from '@vueuse/core'
-import { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
+import type { MaybeRef } from '@vueuse/core'
+import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import {
-  FileTypeSpecifier,
   generateFileId,
   isFileTypeSpecifier,
   prettyFileSize,
   validateFileType
 } from '~~/src/helpers/form/file'
-import { CSSProperties, computed, unref } from 'vue'
+import type { FileTypeSpecifier } from '~~/src/helpers/form/file'
+import { computed, unref } from 'vue'
+import type { CSSProperties } from 'vue'
 import { BaseError } from '~~/src/lib'
 
 /**

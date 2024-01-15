@@ -15,12 +15,12 @@ import {
   Batch,
   BatchUpdateRange,
   GeometryType,
-  HideAllBatchUpdateRange
+  NoneBatchUpdateRange
 } from './Batch'
-import { GeometryConverter } from '../converter/GeometryConverter'
-import { ObjectLayers } from '../SpeckleRenderer'
 import Logger from 'js-logger'
-import SpecklePointColouredMaterial from '../materials/SpecklePointColouredMaterial'
+import { ObjectLayers } from '../../IViewer'
+import { DrawGroup } from './InstancedMeshBatch'
+import Materials from '../materials/Materials'
 
 export default class PointBatch implements Batch {
   public id: string
@@ -29,6 +29,7 @@ export default class PointBatch implements Batch {
   private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: Points
+  private needsFlatten = false
 
   private gradientIndexBuffer: BufferAttribute
 
@@ -37,14 +38,26 @@ export default class PointBatch implements Batch {
     return this.geometry.boundingBox
   }
 
+  public get drawCalls(): number {
+    return this.geometry.groups.length
+  }
+
+  public get minDrawCalls(): number {
+    return (this.mesh.material as Material[]).length
+  }
+
+  public get triCount(): number {
+    return this.getCount()
+  }
+
+  public get vertCount(): number {
+    return this.geometry.attributes.position.count
+  }
+
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
     this.id = id
     this.subtreeId = subtreeId
     this.renderViews = renderViews
-  }
-
-  updateBatchObjects() {
-    // TO DO
   }
 
   public get renderObject(): Object3D {
@@ -53,6 +66,14 @@ export default class PointBatch implements Batch {
 
   public get geometryType(): GeometryType {
     return this.renderViews[0].geometryType
+  }
+
+  public get materials(): Material[] {
+    return this.mesh.material as Material[]
+  }
+
+  public get groups(): DrawGroup[] {
+    return this.geometry.groups
   }
 
   public getCount() {
@@ -65,6 +86,10 @@ export default class PointBatch implements Batch {
 
   public onUpdate(deltaTime: number) {
     deltaTime
+    if (this.needsFlatten) {
+      this.flattenDrawGroups()
+      this.needsFlatten = false
+    }
   }
 
   public onRender(renderer: WebGLRenderer) {
@@ -72,11 +97,21 @@ export default class PointBatch implements Batch {
   }
 
   public setVisibleRange(...ranges: BatchUpdateRange[]) {
-    if (ranges.length === 1 && ranges[0] === HideAllBatchUpdateRange) {
+    /** Entire batch needs to NOT be drawn */
+    if (ranges.length === 1 && ranges[0] === NoneBatchUpdateRange) {
       this.geometry.setDrawRange(0, 0)
+      /** We unset the 'visible' flag, otherwise three.js will still run pointless buffer binding commands*/
       this.mesh.visible = false
       return
     }
+    /** Entire batch needs to BE drawn */
+    if (ranges.length === 1 && ranges[0] === AllBatchUpdateRange) {
+      this.geometry.setDrawRange(0, this.getCount())
+      this.mesh.visible = true
+      return
+    }
+
+    /** Parts of the batch need to be visible. We get the min/max offset and total count */
     let minOffset = Infinity
     let maxOffset = 0
     ranges.forEach((range) => {
@@ -91,48 +126,98 @@ export default class PointBatch implements Batch {
     this.mesh.visible = true
   }
 
-  public getVisibleRange() {
+  public getVisibleRange(): BatchUpdateRange {
+    /** Entire batch is visible */
+    if (this.geometry.groups.length === 1 && this.mesh.visible)
+      return AllBatchUpdateRange
+    /** Entire batch is hidden */
+    if (!this.mesh.visible) return NoneBatchUpdateRange
+    /** Parts of the batch are visible */
+    return {
+      offset: this.geometry.drawRange.start,
+      count: this.geometry.drawRange.count
+    }
+  }
+
+  public getOpaque(): BatchUpdateRange {
+    /** If there is any transparent or hidden group return the update range up to it's offset */
+    const transparentOrHiddenGroup = this.groups.find((value) => {
+      return (
+        Materials.isTransparent(this.materials[value.materialIndex]) ||
+        this.materials[value.materialIndex].visible === false
+      )
+    })
+
+    if (transparentOrHiddenGroup) {
+      return {
+        offset: 0,
+        count: transparentOrHiddenGroup.start
+      }
+    }
+    /** Entire batch is opaque */
     return AllBatchUpdateRange
   }
 
-  /**
-   * This is the first version for multi draw ranges with automatic fill support
-   * In the near future, we'll re-sort the index buffer so we minimize draw calls to
-   * a minimmum. For now it's ok
-   */
-  public setDrawRanges(...ranges: BatchUpdateRange[]) {
-    const materials = ranges.map((val) => val.material)
-
-    const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
-    if (Array.isArray(this.mesh.material))
-      this.mesh.material = this.mesh.material.concat(uniqueMaterials)
-    else {
-      this.mesh.material = [this.mesh.material, ...uniqueMaterials]
-    }
-    const sortedRanges = ranges.sort((a, b) => {
-      return a.offset - b.offset
+  public getTransparent(): BatchUpdateRange {
+    /** Look for a transparent group */
+    const transparentGroup = this.groups.find((value) => {
+      return Materials.isTransparent(this.materials[value.materialIndex])
     })
+    /** Look for a hidden group */
+    const hiddenGroup = this.groups.find((value) => {
+      return this.materials[value.materialIndex].visible === false
+    })
+    /** If there is a transparent group return it's range */
+    if (transparentGroup) {
+      return {
+        offset: transparentGroup.start,
+        count:
+          hiddenGroup !== undefined
+            ? hiddenGroup.start
+            : this.getCount() - transparentGroup.start
+      }
+    }
+    /** Entire batch is not transparent */
+    return NoneBatchUpdateRange
+  }
 
-    const newGroups = []
+  public getStencil(): BatchUpdateRange {
+    /** If there is a single group and it's material writes to stencil, return all */
+    if (this.groups.length === 1) {
+      if (this.materials[0].stencilWrite === true) return AllBatchUpdateRange
+    }
+    const stencilGroup = this.groups.find((value) => {
+      return this.materials[value.materialIndex].stencilWrite === true
+    })
+    if (stencilGroup) {
+      return {
+        offset: stencilGroup.start,
+        count: stencilGroup.count
+      }
+    }
+    /** No stencil group */
+    return NoneBatchUpdateRange
+  }
+
+  public setBatchBuffers(...range: BatchUpdateRange[]): void {
     let minGradientIndex = Infinity
     let maxGradientIndex = 0
-
-    for (let k = 0; k < sortedRanges.length; k++) {
-      if (sortedRanges[k].materialOptions) {
-        if (sortedRanges[k].materialOptions.rampIndex !== undefined) {
-          const start = sortedRanges[k].offset
-          const len = sortedRanges[k].offset + sortedRanges[k].count
+    for (let k = 0; k < range.length; k++) {
+      if (range[k].materialOptions) {
+        if (range[k].materialOptions.rampIndex !== undefined) {
+          const start = range[k].offset
+          const len = range[k].offset + range[k].count
           /** The ramp indices specify the *begining* of each ramp color. When sampling with Nearest filter (since we don't want filtering)
            *  we'll always be sampling right at the edge between texels. Most GPUs will sample consistently, but some won't and we end up with
            *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
            *  sampling can occur.
            */
           const shiftedIndex =
-            sortedRanges[k].materialOptions.rampIndex +
-            0.5 / sortedRanges[k].materialOptions.rampWidth
+            range[k].materialOptions.rampIndex +
+            0.5 / range[k].materialOptions.rampWidth
           const minMaxIndices = this.updateGradientIndexBufferData(
             start,
-            sortedRanges[k].count === Infinity
+            range[k].count === Infinity
               ? this.geometry.attributes['gradientIndex'].array.length
               : len,
             shiftedIndex
@@ -140,45 +225,21 @@ export default class PointBatch implements Batch {
           minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
           maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
         }
-        if (sortedRanges[k].materialOptions.rampTexture) {
-          ;(
-            sortedRanges[k].material as SpecklePointColouredMaterial
-          ).setGradientTexture(sortedRanges[k].materialOptions.rampTexture)
-        }
       }
-
-      const collidingGroup = this.getDrawRangeCollision(sortedRanges[k])
-      if (collidingGroup) {
-        // Logger.warn(`Draw range collision @ ${this.id} overwritting...`)
-        collidingGroup.materialIndex = this.mesh.material.indexOf(
-          sortedRanges[k].material
-        )
-        continue
-      }
-      newGroups.push(sortedRanges[k])
     }
-
-    this.updateGradientIndexBuffer()
-
-    for (let i = 0; i < newGroups.length; i++) {
-      this.geometry.addGroup(
-        newGroups[i].offset,
-        newGroups[i].count,
-        this.mesh.material.indexOf(newGroups[i].material)
-      )
-    }
+    if (minGradientIndex < Infinity && maxGradientIndex > 0)
+      this.updateGradientIndexBuffer()
   }
 
-  insertDrawRanges(...ranges: BatchUpdateRange[]) {
-    const materials = ranges.map((val) => val.material)
-
+  public setDrawRanges(...ranges: BatchUpdateRange[]) {
+    const materials = ranges.map((val) => {
+      return val.material
+    })
     const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
-    if (!Array.isArray(this.mesh.material)) {
-      this.mesh.material = [this.mesh.material]
-    }
+
     for (let k = 0; k < uniqueMaterials.length; k++) {
-      if (!this.mesh.material.includes(uniqueMaterials[k]))
-        this.mesh.material.push(uniqueMaterials[k])
+      if (!this.materials.includes(uniqueMaterials[k]))
+        this.materials.push(uniqueMaterials[k])
     }
 
     const sortedRanges = ranges.sort((a, b) => {
@@ -186,22 +247,67 @@ export default class PointBatch implements Batch {
     })
 
     for (let i = 0; i < sortedRanges.length; i++) {
-      const group = {
-        start: sortedRanges[i].offset,
-        count: sortedRanges[i].count,
-        materialIndex: this.mesh.material.indexOf(sortedRanges[i].material),
-        id: sortedRanges[i].id
+      const materialIndex = this.materials.indexOf(sortedRanges[i].material)
+      const collidingGroup = this.getDrawRangeCollision(sortedRanges[i])
+      if (collidingGroup) {
+        collidingGroup.materialIndex = this.materials.indexOf(sortedRanges[i].material)
+      } else {
+        const includingGroup = this.geDrawRangeInclusion(sortedRanges[i])
+        if (includingGroup && includingGroup.materialIndex !== materialIndex) {
+          this.geometry.groups.splice(this.geometry.groups.indexOf(includingGroup), 1)
+          if (includingGroup.start === sortedRanges[i].offset) {
+            this.geometry.addGroup(
+              sortedRanges[i].offset,
+              sortedRanges[i].count,
+              materialIndex
+            )
+            this.geometry.addGroup(
+              sortedRanges[i].offset + sortedRanges[i].count,
+              includingGroup.count - sortedRanges[i].count,
+              includingGroup.materialIndex
+            )
+          } else if (
+            sortedRanges[i].offset + sortedRanges[i].count ===
+            includingGroup.start + includingGroup.count
+          ) {
+            this.geometry.addGroup(
+              includingGroup.start,
+              includingGroup.count - sortedRanges[i].count,
+              includingGroup.materialIndex
+            )
+            this.geometry.addGroup(
+              sortedRanges[i].offset,
+              sortedRanges[i].count,
+              materialIndex
+            )
+          } else {
+            this.geometry.addGroup(
+              includingGroup.start,
+              sortedRanges[i].offset - includingGroup.start,
+              includingGroup.materialIndex
+            )
+            this.geometry.addGroup(
+              sortedRanges[i].offset,
+              sortedRanges[i].count,
+              materialIndex
+            )
+            this.geometry.addGroup(
+              sortedRanges[i].offset + sortedRanges[i].count,
+              includingGroup.count -
+                (sortedRanges[i].count + sortedRanges[i].offset - includingGroup.start),
+              includingGroup.materialIndex
+            )
+          }
+        }
       }
-      this.geometry.groups.push(group)
     }
-
-    this.flattenGroups()
-  }
-
-  removeDrawRanges(id: string) {
-    this.geometry.groups = this.geometry.groups.filter((value) => {
-      return !(value['id'] && value['id'] === id)
-    })
+    let count = 0
+    this.geometry.groups.forEach((value) => (count += value.count))
+    if (count !== this.getCount()) {
+      Logger.error(`Draw groups invalid on ${this.id}`)
+    }
+    this.setBatchBuffers(...ranges)
+    this.needsFlatten = true
   }
 
   private getDrawRangeCollision(range: BatchUpdateRange): {
@@ -211,7 +317,10 @@ export default class PointBatch implements Batch {
   } {
     if (this.geometry.groups.length > 0) {
       for (let i = 0; i < this.geometry.groups.length; i++) {
-        if (range.offset === this.geometry.groups[i].start) {
+        if (
+          range.offset === this.geometry.groups[i].start &&
+          range.count === this.geometry.groups[i].count
+        ) {
           return this.geometry.groups[i]
         }
       }
@@ -220,88 +329,27 @@ export default class PointBatch implements Batch {
     return null
   }
 
-  public autoFillDrawRanges() {
-    if (
-      this.geometry.groups.length > 1 &&
-      this.geometry.groups[0].start === 0 &&
-      this.geometry.groups[0].count === this.getCount()
-    ) {
-      this.geometry.groups.shift()
-    }
-    const sortedRanges = this.geometry.groups
-      .sort((a, b) => {
-        return a.start - b.start
-      })
-      .slice()
-    // console.warn(`Batch ID ${this.id} Group count ${sortedRanges.length}`)
-    for (let k = 0; k < sortedRanges.length; k++) {
-      if (k === 0) {
-        if (sortedRanges[k].start > 0) {
-          this.geometry.addGroup(0, sortedRanges[k].start, 0)
-        }
+  private geDrawRangeInclusion(range: BatchUpdateRange): {
+    start: number
+    count: number
+    materialIndex?: number
+  } {
+    if (this.geometry.groups.length > 0) {
+      for (let i = 0; i < this.geometry.groups.length; i++) {
         if (
-          sortedRanges.length === 1 &&
-          sortedRanges[k].start + sortedRanges[k].count < this.getCount()
+          range.offset >= this.geometry.groups[i].start &&
+          range.offset + range.count <=
+            this.geometry.groups[i].start + this.geometry.groups[i].count
         ) {
-          this.geometry.addGroup(
-            sortedRanges[k].start + sortedRanges[k].count,
-            this.getCount() - sortedRanges[k].start + sortedRanges[k].count,
-            0
-          )
-        }
-      } else if (k === sortedRanges.length - 1) {
-        if (sortedRanges[k].start + sortedRanges[k].count < this.getCount()) {
-          this.geometry.addGroup(
-            sortedRanges[k].start + sortedRanges[k].count,
-            this.getCount() - sortedRanges[k].start + sortedRanges[k].count,
-            0
-          )
-        }
-        if (
-          sortedRanges[k - 1].start + sortedRanges[k - 1].count <
-          sortedRanges[k].start
-        ) {
-          this.geometry.addGroup(
-            sortedRanges[k - 1].start + sortedRanges[k - 1].count,
-            sortedRanges[k].start -
-              (sortedRanges[k - 1].start + sortedRanges[k - 1].count),
-            0
-          )
-        }
-        continue
-      } else {
-        if (
-          sortedRanges[k - 1].start + sortedRanges[k - 1].count <
-          sortedRanges[k].start
-        ) {
-          this.geometry.addGroup(
-            sortedRanges[k - 1].start + sortedRanges[k - 1].count,
-            sortedRanges[k].start -
-              (sortedRanges[k - 1].start + sortedRanges[k - 1].count),
-            0
-          )
+          return this.geometry.groups[i]
         }
       }
+      return null
     }
-    this.geometry.groups.sort((a, b) => {
-      return a.start - b.start
-    })
-
-    let count = 0
-    this.geometry.groups.forEach((val) => {
-      count += val.count
-    })
-    if (count < this.getCount()) {
-      console.error(`DrawRange autocomplete failed! ${count}vs${this.getCount()}`)
-    }
-
-    this.flattenGroups()
+    return null
   }
 
-  private flattenGroups() {
-    /** We're flattening sequential groups to avoid redundant draw calls.
-     *  ! Not thoroughly tested !
-     */
+  private flattenDrawGroups() {
     const materialOrder = []
     this.geometry.groups.reduce((previousValue, currentValue) => {
       if (previousValue.indexOf(currentValue.materialIndex) === -1) {
@@ -319,7 +367,9 @@ export default class PointBatch implements Batch {
     }
     this.geometry.groups = []
     for (let matIndex = 0; matIndex < grouped.length; matIndex++) {
-      const matGroup = grouped[matIndex]
+      const matGroup = grouped[matIndex].sort((a, b) => {
+        return a.start - b.start
+      })
       for (let k = 0; k < matGroup.length; ) {
         let offset = matGroup[k].start
         let count = matGroup[k].count
@@ -353,9 +403,6 @@ export default class PointBatch implements Batch {
         k = n
       }
     }
-    // console.warn(
-    //   `Batch ID ${this.id} Group count ${this.geometry.groups.length} AUTOCOMPLETE`
-    // )
   }
 
   public resetDrawRanges() {
@@ -367,9 +414,11 @@ export default class PointBatch implements Batch {
   }
 
   public buildBatch() {
-    const attributeCount = this.renderViews.flatMap(
-      (val: NodeRenderView) => val.renderData.geometry.attributes.POSITION
-    ).length
+    let attributeCount = 0
+    for (let k = 0; k < this.renderViews.length; k++) {
+      attributeCount +=
+        this.renderViews[k].renderData.geometry.attributes.POSITION.length
+    }
     const position = new Float64Array(attributeCount)
     const color = new Float32Array(attributeCount).fill(1)
     let offset = 0
@@ -385,9 +434,7 @@ export default class PointBatch implements Batch {
 
       offset += geometry.attributes.POSITION.length
 
-      if (!GeometryConverter.keepGeometryData) {
-        this.renderViews[k].disposeGeometry()
-      }
+      this.renderViews[k].disposeGeometry()
     }
     this.makePointGeometry(position, color)
     this.mesh = new Points(this.geometry, this.batchMaterial)
@@ -438,6 +485,21 @@ export default class PointBatch implements Batch {
     }
   }
 
+  public getMaterial(rv: NodeRenderView): Material {
+    for (let k = 0; k < this.geometry.groups.length; k++) {
+      try {
+        if (
+          rv.batchStart >= this.geometry.groups[k].start &&
+          rv.batchEnd <= this.geometry.groups[k].start + this.geometry.groups[k].count
+        ) {
+          return this.materials[this.geometry.groups[k].materialIndex]
+        }
+      } catch (e) {
+        Logger.error('Failed to get material')
+      }
+    }
+  }
+
   private makePointGeometry(
     position: Float64Array,
     color: Float32Array
@@ -454,7 +516,6 @@ export default class PointBatch implements Batch {
     this.updateGradientIndexBufferData(0, buffer.length, 0)
     this.updateGradientIndexBuffer()
 
-    this.geometry.computeVertexNormals()
     this.geometry.computeBoundingSphere()
     this.geometry.computeBoundingBox()
 

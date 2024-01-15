@@ -1,74 +1,110 @@
-import {
-  AlwaysStencilFunc,
-  Color,
-  DoubleSide,
-  FrontSide,
-  Material,
-  MathUtils,
-  ReplaceStencilOp,
-  Texture,
-  Vector2
-} from 'three'
+import { Color, DoubleSide, FrontSide, Material, Texture, Vector2 } from 'three'
 import { GeometryType } from '../batching/Batch'
 import { TreeNode } from '../tree/WorldTree'
-import { DisplayStyle, NodeRenderView, RenderMaterial } from '../tree/NodeRenderView'
+import { NodeRenderView } from '../tree/NodeRenderView'
 import SpeckleLineMaterial from './SpeckleLineMaterial'
 import SpeckleStandardMaterial from './SpeckleStandardMaterial'
 import SpecklePointMaterial from './SpecklePointMaterial'
-import { FilterMaterial, FilterMaterialType } from '../filtering/FilteringManager'
 import SpeckleStandardColoredMaterial from './SpeckleStandardColoredMaterial'
 import defaultGradient from '../../assets/gradient.png'
 import { Assets } from '../Assets'
 import { getConversionFactor } from '../converter/Units'
 import SpeckleGhostMaterial from './SpeckleGhostMaterial'
-import Logger from 'js-logger'
 import SpeckleTextMaterial from './SpeckleTextMaterial'
 import { SpeckleMaterial } from './SpeckleMaterial'
 import SpecklePointColouredMaterial from './SpecklePointColouredMaterial'
 
+export interface RenderMaterial {
+  id: string
+  color: number
+  opacity: number
+  roughness: number
+  metalness: number
+  vertexColors: boolean
+}
+
+export interface DisplayStyle {
+  id: string
+  color: number
+  lineWeight: number
+  opacity?: number
+}
+
 export interface MaterialOptions {
+  stencilOutlines?: boolean
+  pointSize?: number
+  depthWrite?: number
+}
+
+export enum FilterMaterialType {
+  GHOST,
+  GRADIENT,
+  COLORED,
+  HIDDEN
+}
+
+export interface FilterMaterial {
+  filterType: FilterMaterialType
+  rampIndex?: number
+  rampIndexColor?: Color
+  rampTexture?: Texture
+}
+
+export interface FilterMaterialOptions {
   rampIndex?: number
   rampIndexColor?: Color
   rampTexture?: Texture
   rampWidth?: number
-  needsCopy?: boolean
 }
 
 export default class Materials {
   public static readonly UNIFORM_VECTORS_USED = 33
   private readonly materialMap: { [hash: number]: Material } = {}
-  private meshHighlightMaterial: Material = null
-  private meshTransparentHighlightMaterial: Material = null
   private meshGhostMaterial: Material = null
   private meshGradientMaterial: Material = null
   private meshTransparentGradientMaterial: Material = null
   private meshColoredMaterial: Material = null
   private meshTransparentColoredMaterial: Material = null
   private meshHiddenMaterial: Material = null
-  private meshOverlayMaterial: Material = null
-  private meshTransparentOverlayMaterial: Material = null
 
-  private lineHighlightMaterial: Material = null
   private lineGhostMaterial: Material = null
   private lineColoredMaterial: Material = null
   private lineHiddenMaterial: Material = null
-  private lineOverlayMaterial: Material = null
 
-  private pointCloudHighlightMaterial: Material = null
-  private pointHighlightMaterial: Material = null
   private pointGhostMaterial: Material = null
-  private pointOverlayMaterial: Material = null
-  private pointCloudOverlayMaterial: Material = null
   private pointCloudColouredMaterial: Material = null
   private pointCloudGradientMaterial: Material = null
 
-  private textHighlightMaterial: Material = null
   private textGhostMaterial: Material = null
   private textColoredMaterial: Material = null
-  private textOverlayMaterial: Material = null
   private textHiddenMaterial: Material = null
 
   private defaultGradientTextureData: ImageData = null
+
+  private static readonly NullRenderMaterialHash = this.hashCode(
+    GeometryType.MESH.toString()
+  )
+  private static readonly NullRenderMaterialVertexColorsHash = this.hashCode(
+    GeometryType.MESH.toString() + 'vertexColors'
+  )
+  private static readonly NullDisplayStyleHash = this.hashCode(
+    GeometryType.LINE.toString()
+  )
+  private static readonly NullPointMaterialHash = this.hashCode(
+    GeometryType.POINT.toString()
+  )
+  private static readonly NullPointCloudMaterialHash = this.hashCode(
+    GeometryType.POINT_CLOUD.toString()
+  )
+  private static readonly NullPointCloudVertexColorsMaterialHash = this.hashCode(
+    GeometryType.POINT_CLOUD.toString() + 'vertexColors'
+  )
+  private static readonly NullRenderMaterialInstancedHash = this.hashCode(
+    GeometryType.MESH.toString() + 'instanced'
+  )
+  private static readonly NullRenderMaterialInstancedVertexColorHash = this.hashCode(
+    GeometryType.MESH.toString() + 'vertexColors' + 'instanced'
+  )
 
   public static renderMaterialFromNode(
     materialNode: TreeNode,
@@ -127,6 +163,90 @@ export default class Materials {
     // )
   }
 
+  private static renderMaterialToString(renderMaterial: RenderMaterial) {
+    return (
+      renderMaterial.color.toString() +
+      '/' +
+      renderMaterial.opacity.toString() +
+      '/' +
+      renderMaterial.roughness.toString() +
+      '/' +
+      renderMaterial.metalness.toString()
+    )
+  }
+
+  private static displayStyleToString(displayStyle: DisplayStyle) {
+    const plm =
+      displayStyle.color?.toString() +
+      '/' +
+      displayStyle.lineWeight?.toString() +
+      displayStyle.opacity?.toString()
+    return plm
+  }
+
+  private static hashCode(s: string) {
+    let h
+    for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0
+    return h
+  }
+
+  public static isMaterialInstance(material): material is Material {
+    return material instanceof Material
+  }
+
+  public static isFilterMaterial(material): material is FilterMaterial {
+    return 'filterType' in material
+  }
+
+  public static isRendeMaterial(materialData): materialData is RenderMaterial {
+    return (
+      'color' in materialData &&
+      'opacity' in materialData &&
+      'roughness' in materialData &&
+      'metalness' in materialData &&
+      'vertexColors' in materialData
+    )
+  }
+
+  public static isDisplayStyle(materialData): materialData is DisplayStyle {
+    return 'color' in materialData && 'lineWeight' in materialData
+  }
+
+  public static getMaterialHash(
+    renderView: NodeRenderView,
+    materialData?: RenderMaterial | DisplayStyle
+  ) {
+    if (!materialData) {
+      materialData =
+        renderView.renderData.renderMaterial || renderView.renderData.displayStyle
+    }
+    let mat = ''
+    if (materialData) {
+      mat =
+        Materials.isRendeMaterial(materialData) &&
+        (renderView.geometryType === GeometryType.MESH ||
+          renderView.geometryType === GeometryType.POINT ||
+          renderView.geometryType === GeometryType.TEXT)
+          ? Materials.renderMaterialToString(materialData as RenderMaterial)
+          : Materials.isDisplayStyle(materialData) &&
+            renderView.geometryType !== GeometryType.MESH &&
+            renderView.geometryType !== GeometryType.POINT
+          ? Materials.displayStyleToString(materialData as DisplayStyle)
+          : ''
+    }
+    let geometry = ''
+    if (renderView.renderData.geometry.attributes)
+      geometry = renderView.renderData.geometry.attributes.COLOR ? 'vertexColors' : ''
+
+    const s =
+      renderView.geometryType.toString() +
+      geometry +
+      mat +
+      (renderView.geometryType === GeometryType.TEXT ? renderView.renderData.id : '') +
+      (renderView.renderData.geometry.instanced ? 'instanced' : '')
+    return Materials.hashCode(s)
+  }
+
   public static isTransparent(material: Material) {
     return material.transparent === true && material.opacity < 1
   }
@@ -139,46 +259,6 @@ export default class Materials {
   }
 
   private async createDefaultMeshMaterials() {
-    this.meshHighlightMaterial = new SpeckleStandardMaterial(
-      {
-        color: 0x047efb,
-        emissive: 0x0,
-        roughness: 1,
-        metalness: 0,
-        side: DoubleSide
-      },
-      ['USE_RTE']
-    )
-    this.meshHighlightMaterial.clipShadows = true
-    this.meshHighlightMaterial.stencilWrite = true
-    this.meshHighlightMaterial.stencilWriteMask = 0xff
-    this.meshHighlightMaterial.stencilRef = 0x00
-    this.meshHighlightMaterial.stencilFunc = AlwaysStencilFunc
-    this.meshHighlightMaterial.stencilZFail = ReplaceStencilOp
-    this.meshHighlightMaterial.stencilZPass = ReplaceStencilOp
-    this.meshHighlightMaterial.stencilFail = ReplaceStencilOp
-
-    this.meshTransparentHighlightMaterial = new SpeckleStandardMaterial(
-      {
-        color: 0x047efb,
-        emissive: 0x0,
-        roughness: 1,
-        metalness: 0,
-        side: DoubleSide,
-        transparent: true,
-        opacity: 0.5
-      },
-      ['USE_RTE']
-    )
-    this.meshTransparentHighlightMaterial.clipShadows = true
-    this.meshTransparentHighlightMaterial.stencilWrite = true
-    this.meshTransparentHighlightMaterial.stencilWriteMask = 0xff
-    this.meshTransparentHighlightMaterial.stencilRef = 0x00
-    this.meshTransparentHighlightMaterial.stencilFunc = AlwaysStencilFunc
-    this.meshTransparentHighlightMaterial.stencilZFail = ReplaceStencilOp
-    this.meshTransparentHighlightMaterial.stencilZPass = ReplaceStencilOp
-    this.meshTransparentHighlightMaterial.stencilFail = ReplaceStencilOp
-
     this.meshGhostMaterial = new SpeckleGhostMaterial(
       {
         color: 0xffffff,
@@ -246,64 +326,9 @@ export default class Materials {
       ['USE_RTE']
     )
     this.meshHiddenMaterial.visible = false
-
-    this.meshOverlayMaterial = new SpeckleStandardMaterial(
-      {
-        color: 0x04cbfb,
-        emissive: 0x0,
-        roughness: 1,
-        metalness: 0,
-        side: DoubleSide // TBD,
-        // clippingPlanes: []
-      },
-      ['USE_RTE']
-    )
-    this.meshOverlayMaterial.clipShadows = true
-
-    this.meshTransparentOverlayMaterial = new SpeckleStandardMaterial(
-      {
-        color: 0x04cbfb,
-        emissive: 0x0,
-        roughness: 1,
-        metalness: 0,
-        side: DoubleSide,
-        transparent: true,
-        opacity: 0.5
-      },
-      ['USE_RTE']
-    )
-
-    // Jesus prettier... o_0
-    ;(
-      this.meshTransparentHighlightMaterial as SpeckleStandardMaterial
-    ).color.convertSRGBToLinear()
-    ;(this.meshHighlightMaterial as SpeckleStandardMaterial).color.convertSRGBToLinear()
-    ;(this.meshOverlayMaterial as SpeckleStandardMaterial).color.convertSRGBToLinear()
-    // Jesus prettier... o_0
-    ;(
-      this.meshTransparentOverlayMaterial as SpeckleStandardMaterial
-    ).color.convertSRGBToLinear()
   }
 
   private async createLineDefaultMaterials() {
-    this.lineHighlightMaterial = new SpeckleLineMaterial(
-      {
-        color: 0x047efb,
-        linewidth: 1, // in world units with size attenuation, pixels otherwise
-        worldUnits: false,
-        vertexColors: true,
-        alphaToCoverage: false,
-        resolution: new Vector2()
-      },
-      ['USE_RTE']
-    )
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).color = new Color(0x047efb)
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).linewidth = 1
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).worldUnits = false
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).vertexColors = true
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).pixelThreshold = 0.5
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).resolution = new Vector2()
-
     this.lineGhostMaterial = new SpeckleLineMaterial(
       {
         color: 0xffffff,
@@ -358,52 +383,9 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.lineHiddenMaterial).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>this.lineHiddenMaterial).resolution = new Vector2()
     this.lineHiddenMaterial.visible = false
-
-    this.lineOverlayMaterial = new SpeckleLineMaterial(
-      {
-        color: 0x04cbfb,
-        linewidth: 1, // in world units with size attenuation, pixels otherwise
-        worldUnits: false,
-        vertexColors: true,
-        alphaToCoverage: false,
-        resolution: new Vector2()
-      },
-      ['USE_RTE']
-    )
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).color = new Color(0x04cbfb)
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).linewidth = 1
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).worldUnits = false
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).vertexColors = true
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).pixelThreshold = 0.5
-    ;(<SpeckleLineMaterial>this.lineHighlightMaterial).resolution = new Vector2()
-    // Manual line break
-    ;(this.lineHighlightMaterial as SpeckleLineMaterial).color.convertSRGBToLinear()
-    ;(this.lineOverlayMaterial as SpeckleLineMaterial).color.convertSRGBToLinear()
   }
 
   private async createDefaultPointMaterials() {
-    this.pointCloudHighlightMaterial = new SpecklePointMaterial(
-      {
-        color: 0x047efb,
-        vertexColors: true,
-        size: 2,
-        sizeAttenuation: false
-        // clippingPlanes: this.viewer.sectionBox.planes
-      },
-      ['USE_RTE']
-    )
-
-    this.pointHighlightMaterial = new SpecklePointMaterial(
-      {
-        color: 0x047efb,
-        vertexColors: false,
-        size: 2,
-        sizeAttenuation: false
-        // clippingPlanes: this.viewer.sectionBox.planes
-      },
-      ['USE_RTE']
-    )
-
     this.pointGhostMaterial = new SpecklePointMaterial(
       {
         color: 0xffffff,
@@ -411,29 +393,6 @@ export default class Materials {
         size: 2,
         opacity: 0.01,
         sizeAttenuation: false
-        // clippingPlanes: this.viewer.sectionBox.planes
-      },
-      ['USE_RTE']
-    )
-
-    this.pointCloudOverlayMaterial = new SpecklePointMaterial(
-      {
-        color: 0x04cbfb,
-        vertexColors: true,
-        size: 2,
-        sizeAttenuation: false
-        // clippingPlanes: this.viewer.sectionBox.planes
-      },
-      ['USE_RTE']
-    )
-
-    this.pointOverlayMaterial = new SpecklePointMaterial(
-      {
-        color: 0x04cbfb,
-        vertexColors: false,
-        size: 2,
-        sizeAttenuation: false
-        // clippingPlanes: this.viewer.sectionBox.planes
       },
       ['USE_RTE']
     )
@@ -447,6 +406,7 @@ export default class Materials {
       },
       ['USE_RTE']
     )
+    ;(this.pointCloudColouredMaterial as SpecklePointMaterial).toneMapped = false
     this.pointCloudGradientMaterial = new SpecklePointColouredMaterial(
       {
         color: 0xffffff,
@@ -459,45 +419,10 @@ export default class Materials {
     ;(
       this.pointCloudGradientMaterial as SpecklePointColouredMaterial
     ).setGradientTexture(await Assets.getTexture(defaultGradient))
-
-    // Jesus prettier... o_0(
-    ;(
-      this.pointCloudHighlightMaterial as SpecklePointMaterial
-    ).color.convertSRGBToLinear()
-    ;(this.pointCloudHighlightMaterial as SpecklePointMaterial).toneMapped = false
-    ;(this.pointHighlightMaterial as SpecklePointMaterial).color.convertSRGBToLinear()
-    ;(this.pointHighlightMaterial as SpecklePointMaterial).toneMapped = false
-    ;(this.pointOverlayMaterial as SpecklePointMaterial).color.convertSRGBToLinear()
-    ;(this.pointOverlayMaterial as SpecklePointMaterial).toneMapped = false
-    // Jesus prettier... o_0
-    ;(
-      this.pointCloudOverlayMaterial as SpecklePointMaterial
-    ).color.convertSRGBToLinear()
-    ;(this.pointCloudOverlayMaterial as SpecklePointMaterial).toneMapped = false
     ;(this.pointGhostMaterial as SpecklePointMaterial).toneMapped = false
   }
 
   private async createDefaultTextMaterials() {
-    this.textHighlightMaterial = new SpeckleTextMaterial(
-      {
-        color: 0x047efb,
-        opacity: 1,
-        side: DoubleSide
-      },
-      ['USE_RTE']
-    )
-    this.textHighlightMaterial.transparent =
-      this.textHighlightMaterial.opacity < 1 ? true : false
-    this.textHighlightMaterial.depthWrite = this.textHighlightMaterial.transparent
-      ? false
-      : true
-    this.textHighlightMaterial.toneMapped = false
-    ;(this.textHighlightMaterial as SpeckleTextMaterial).color.convertSRGBToLinear()
-
-    this.textHighlightMaterial = (
-      this.textHighlightMaterial as SpeckleTextMaterial
-    ).getDerivedMaterial()
-
     this.textGhostMaterial = new SpeckleTextMaterial(
       {
         color: 0xffffff,
@@ -538,26 +463,6 @@ export default class Materials {
       this.textColoredMaterial as SpeckleTextMaterial
     ).getDerivedMaterial()
 
-    this.textOverlayMaterial = new SpeckleTextMaterial(
-      {
-        color: 0x04cbfb,
-        opacity: 1,
-        side: DoubleSide
-      },
-      ['USE_RTE']
-    )
-    this.textOverlayMaterial.transparent =
-      this.textOverlayMaterial.opacity < 1 ? true : false
-    this.textOverlayMaterial.depthWrite = this.textOverlayMaterial.transparent
-      ? false
-      : true
-    this.textOverlayMaterial.toneMapped = false
-    ;(this.textOverlayMaterial as SpeckleTextMaterial).color.convertSRGBToLinear()
-
-    this.textOverlayMaterial = (
-      this.textOverlayMaterial as SpeckleTextMaterial
-    ).getDerivedMaterial()
-
     this.textHiddenMaterial = new SpeckleTextMaterial(
       {
         color: 0xffffff,
@@ -576,22 +481,21 @@ export default class Materials {
   }
 
   private async createDefaultNullMaterials() {
-    this.materialMap[NodeRenderView.NullRenderMaterialHash] =
-      new SpeckleStandardMaterial(
-        {
-          color: 0x7f7f7f,
-          emissive: 0x0,
-          roughness: 1,
-          metalness: 0,
-          side: DoubleSide
-        },
-        ['USE_RTE']
-      )
+    this.materialMap[Materials.NullRenderMaterialHash] = new SpeckleStandardMaterial(
+      {
+        color: 0x7f7f7f,
+        emissive: 0x0,
+        roughness: 1,
+        metalness: 0,
+        side: DoubleSide
+      },
+      ['USE_RTE']
+    )
     ;(
-      this.materialMap[NodeRenderView.NullRenderMaterialHash] as SpeckleStandardMaterial
+      this.materialMap[Materials.NullRenderMaterialHash] as SpeckleStandardMaterial
     ).color.convertSRGBToLinear()
 
-    this.materialMap[NodeRenderView.NullRenderMaterialVertexColorsHash] =
+    this.materialMap[Materials.NullRenderMaterialVertexColorsHash] =
       new SpeckleStandardMaterial(
         {
           color: 0xffffff,
@@ -605,11 +509,11 @@ export default class Materials {
       )
     ;(
       this.materialMap[
-        NodeRenderView.NullRenderMaterialVertexColorsHash
+        Materials.NullRenderMaterialVertexColorsHash
       ] as SpeckleStandardMaterial
     ).color.convertSRGBToLinear()
 
-    const hash = NodeRenderView.NullDisplayStyleHash // So prettier doesn't fuck up everything
+    const hash = Materials.NullDisplayStyleHash // So prettier doesn't fuck up everything
     this.materialMap[hash] = new SpeckleLineMaterial(
       {
         color: 0x7f7f7f,
@@ -629,7 +533,7 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.materialMap[hash]).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>this.materialMap[hash]).resolution = new Vector2()
 
-    this.materialMap[NodeRenderView.NullPointMaterialHash] = new SpecklePointMaterial(
+    this.materialMap[Materials.NullPointMaterialHash] = new SpecklePointMaterial(
       {
         color: 0x7f7f7f,
         vertexColors: false,
@@ -639,10 +543,10 @@ export default class Materials {
       ['USE_RTE']
     )
     ;(
-      this.materialMap[NodeRenderView.NullPointMaterialHash] as SpecklePointMaterial
+      this.materialMap[Materials.NullPointMaterialHash] as SpecklePointMaterial
     ).color.convertSRGBToLinear()
 
-    this.materialMap[NodeRenderView.NullPointCloudVertexColorsMaterialHash] =
+    this.materialMap[Materials.NullPointCloudVertexColorsMaterialHash] =
       new SpecklePointMaterial(
         {
           color: 0xffffff,
@@ -652,16 +556,50 @@ export default class Materials {
         },
         ['USE_RTE']
       )
-    this.materialMap[NodeRenderView.NullPointCloudMaterialHash] =
-      new SpecklePointMaterial(
+    this.materialMap[Materials.NullPointCloudMaterialHash] = new SpecklePointMaterial(
+      {
+        color: 0xffffff,
+        vertexColors: false,
+        size: 2,
+        sizeAttenuation: false
+      },
+      ['USE_RTE']
+    )
+
+    this.materialMap[Materials.NullRenderMaterialInstancedHash] =
+      new SpeckleStandardMaterial(
         {
-          color: 0xffffff,
-          vertexColors: false,
-          size: 2,
-          sizeAttenuation: false
+          color: 0x7f7f7f,
+          emissive: 0x0,
+          roughness: 1,
+          metalness: 0,
+          side: DoubleSide
         },
         ['USE_RTE']
       )
+    ;(
+      this.materialMap[
+        Materials.NullRenderMaterialInstancedHash
+      ] as SpeckleStandardMaterial
+    ).color.convertSRGBToLinear()
+
+    this.materialMap[Materials.NullRenderMaterialInstancedVertexColorHash] =
+      new SpeckleStandardMaterial(
+        {
+          color: 0xffffff,
+          emissive: 0x0,
+          roughness: 1,
+          metalness: 0,
+          side: DoubleSide,
+          vertexColors: true
+        },
+        ['USE_RTE']
+      )
+    ;(
+      this.materialMap[
+        Materials.NullRenderMaterialInstancedVertexColorHash
+      ] as SpeckleStandardMaterial
+    ).color.convertSRGBToLinear()
   }
 
   public async createDefaultMaterials() {
@@ -707,6 +645,7 @@ export default class Materials {
     )
     mat.color = new Color(materialData.color)
     mat.color.convertSRGBToLinear()
+    mat.opacity = materialData.opacity !== undefined ? materialData.opacity : 1
     mat.linewidth = materialData.lineWeight > 0 ? materialData.lineWeight : 1
     mat.worldUnits = materialData.lineWeight > 0 ? true : false
     mat.vertexColors = true
@@ -796,57 +735,45 @@ export default class Materials {
   }
 
   private getMeshMaterial(hash: number, material: RenderMaterial) {
-    if (material) {
-      return this.makeMeshMaterial(material)
-    } else {
-      if (this.materialMap[hash]) {
-        return this.materialMap[hash].clone()
-      } else {
-        Logger.warn(`Could not create mesh material hash ${hash} for `, material)
-      }
+    if (!this.materialMap[hash]) {
+      this.materialMap[hash] = this.makeMeshMaterial(material)
     }
+    return this.materialMap[hash]
   }
 
   private getLineMaterial(hash: number, material: RenderMaterial | DisplayStyle) {
-    if (this.materialMap[hash]) {
-      return this.materialMap[hash]
+    if (!this.materialMap[hash]) {
+      this.materialMap[hash] = this.makeLineMaterial(material as DisplayStyle)
     }
-    return this.makeLineMaterial(material as DisplayStyle)
+    return this.materialMap[hash]
   }
 
   private getPointMaterial(hash: number, material: RenderMaterial) {
-    if (this.materialMap[hash]) {
-      return this.materialMap[hash]
+    if (!this.materialMap[hash]) {
+      this.materialMap[hash] = this.makePointMaterial(material as RenderMaterial)
     }
-    return this.makePointMaterial(material as RenderMaterial)
+    return this.materialMap[hash]
   }
 
   private getPointCloudMaterial(hash: number, material: RenderMaterial) {
-    return this.getPointMaterial(hash, material)
+    if (!this.materialMap[hash]) {
+      this.materialMap[hash] = this.getPointMaterial(hash, material)
+    }
+    return this.materialMap[hash]
   }
 
   private getTextMaterial(hash: number, material: RenderMaterial | DisplayStyle) {
-    return this.makeTextMaterial(material as DisplayStyle)
-  }
-
-  public getHighlightMaterial(renderView: NodeRenderView): Material {
-    switch (renderView.geometryType) {
-      case GeometryType.MESH:
-        return renderView.transparent
-          ? this.meshTransparentHighlightMaterial
-          : this.meshHighlightMaterial
-      case GeometryType.LINE:
-        return this.lineHighlightMaterial
-      case GeometryType.POINT:
-        return this.pointHighlightMaterial
-      case GeometryType.POINT_CLOUD:
-        return this.pointCloudHighlightMaterial
-      case GeometryType.TEXT:
-        return this.textHighlightMaterial
+    if (!this.materialMap[hash]) {
+      this.materialMap[hash] = this.makeTextMaterial(material as DisplayStyle)
     }
+    return this.materialMap[hash]
   }
 
-  public getGhostMaterial(renderView: NodeRenderView): Material {
+  public getGhostMaterial(
+    renderView: NodeRenderView,
+    filterMaterial?: FilterMaterial
+  ): Material {
+    filterMaterial
     switch (renderView.geometryType) {
       case GeometryType.MESH:
         return this.meshGhostMaterial
@@ -861,58 +788,87 @@ export default class Materials {
     }
   }
 
-  public getGradientMaterial(renderView: NodeRenderView): Material {
+  public getGradientMaterial(
+    renderView: NodeRenderView,
+    filterMaterial?: FilterMaterial
+  ): Material {
     switch (renderView.geometryType) {
-      case GeometryType.MESH:
-        return renderView.transparent
+      case GeometryType.MESH: {
+        const material = renderView.transparent
           ? this.meshTransparentGradientMaterial
           : this.meshGradientMaterial
+        if (filterMaterial?.rampTexture)
+          (material as SpeckleStandardColoredMaterial).setGradientTexture(
+            filterMaterial.rampTexture
+          )
+        return material
+      }
       case GeometryType.LINE:
         return this.lineColoredMaterial
-      case GeometryType.POINT:
-        return this.pointCloudGradientMaterial
-      case GeometryType.POINT_CLOUD:
-        return this.pointCloudGradientMaterial
+      case GeometryType.POINT: {
+        const material = this.pointCloudGradientMaterial
+        if (filterMaterial?.rampTexture)
+          (material as SpeckleStandardColoredMaterial).setGradientTexture(
+            filterMaterial.rampTexture
+          )
+        return material
+      }
+      case GeometryType.POINT_CLOUD: {
+        const material = this.pointCloudGradientMaterial
+        if (filterMaterial?.rampTexture)
+          (material as SpeckleStandardColoredMaterial).setGradientTexture(
+            filterMaterial.rampTexture
+          )
+        return material
+      }
       case GeometryType.TEXT:
         return this.textColoredMaterial
     }
   }
 
-  public getColoredMaterial(renderView: NodeRenderView): Material {
+  public getColoredMaterial(
+    renderView: NodeRenderView,
+    filterMaterial?: FilterMaterial
+  ): Material {
     switch (renderView.geometryType) {
-      case GeometryType.MESH:
-        return renderView.transparent
+      case GeometryType.MESH: {
+        const material = renderView.transparent
           ? this.meshTransparentColoredMaterial
           : this.meshColoredMaterial
+        if (filterMaterial?.rampTexture)
+          (material as SpeckleStandardColoredMaterial).setGradientTexture(
+            filterMaterial.rampTexture
+          )
+        return material
+      }
       case GeometryType.LINE:
         return this.lineColoredMaterial
-      case GeometryType.POINT:
-        return this.pointCloudColouredMaterial
-      case GeometryType.POINT_CLOUD:
-        return this.pointCloudColouredMaterial
+      case GeometryType.POINT: {
+        const material = this.pointCloudColouredMaterial
+        if (filterMaterial?.rampTexture)
+          (material as SpeckleStandardColoredMaterial).setGradientTexture(
+            filterMaterial.rampTexture
+          )
+        return material
+      }
+      case GeometryType.POINT_CLOUD: {
+        const material = this.pointCloudColouredMaterial
+        if (filterMaterial?.rampTexture)
+          (material as SpeckleStandardColoredMaterial).setGradientTexture(
+            filterMaterial.rampTexture
+          )
+        return material
+      }
       case GeometryType.TEXT:
         return this.textColoredMaterial
     }
   }
 
-  public getOverlayMaterial(renderView: NodeRenderView): Material {
-    switch (renderView.geometryType) {
-      case GeometryType.MESH:
-        return renderView.transparent
-          ? this.meshTransparentOverlayMaterial
-          : this.meshOverlayMaterial
-      case GeometryType.LINE:
-        return this.lineOverlayMaterial
-      case GeometryType.POINT:
-        return this.pointOverlayMaterial
-      case GeometryType.POINT_CLOUD:
-        return this.pointCloudOverlayMaterial
-      case GeometryType.TEXT:
-        return this.textOverlayMaterial
-    }
-  }
-
-  public getHiddenMaterial(renderView: NodeRenderView): Material {
+  public getHiddenMaterial(
+    renderView: NodeRenderView,
+    filterMaterial?: FilterMaterial
+  ): Material {
+    filterMaterial
     switch (renderView.geometryType) {
       case GeometryType.MESH:
         return this.meshHiddenMaterial
@@ -927,100 +883,23 @@ export default class Materials {
     }
   }
 
-  public getDebugBatchMaterial(renderView: NodeRenderView) {
-    const color = new Color(MathUtils.randInt(0, 0xffffff))
-    color.convertSRGBToLinear()
-
-    switch (renderView.geometryType) {
-      case GeometryType.MESH:
-        return new SpeckleStandardMaterial(
-          {
-            color,
-            emissive: 0x0,
-            roughness: 1,
-            metalness: 0,
-            opacity: 1,
-            side: DoubleSide // TBD
-          },
-          ['USE_RTE']
-        )
-      case GeometryType.LINE: {
-        const mat: SpeckleLineMaterial = new SpeckleLineMaterial({
-          color,
-          linewidth: 1,
-          worldUnits: false,
-          vertexColors: true,
-          alphaToCoverage: false,
-          resolution: new Vector2()
-        })
-        mat.color = color
-        mat.linewidth = 1
-        mat.worldUnits = false
-        mat.vertexColors = true
-        mat.pixelThreshold = 0.5
-        mat.resolution = new Vector2()
-        return mat
-      }
-      case GeometryType.POINT:
-        return new SpecklePointMaterial(
-          {
-            color,
-            vertexColors: false,
-            size: 2,
-            sizeAttenuation: false
-          },
-          ['USE_RTE']
-        )
-      case GeometryType.POINT_CLOUD:
-        return new SpecklePointMaterial(
-          {
-            color,
-            vertexColors: true,
-            size: 2,
-            sizeAttenuation: false
-          },
-          ['USE_RTE']
-        )
-      case GeometryType.TEXT: {
-        const mat = new SpeckleTextMaterial(
-          {
-            color,
-            opacity: 1,
-            side: DoubleSide
-          },
-          ['USE_RTE']
-        )
-        mat.toneMapped = false
-        mat.color.convertSRGBToLinear()
-
-        return mat.getDerivedMaterial()
-      }
-    }
-  }
-
   public getFilterMaterial(
     renderView: NodeRenderView,
-    filterMaterial: FilterMaterialType
+    filterMaterial: FilterMaterial
   ): Material {
     let retMaterial: Material
-    switch (filterMaterial) {
-      case FilterMaterialType.SELECT:
-        retMaterial = this.getHighlightMaterial(renderView)
-        break
+    switch (filterMaterial.filterType) {
       case FilterMaterialType.GHOST:
-        retMaterial = this.getGhostMaterial(renderView)
+        retMaterial = this.getGhostMaterial(renderView, filterMaterial)
         break
       case FilterMaterialType.GRADIENT:
-        retMaterial = this.getGradientMaterial(renderView)
+        retMaterial = this.getGradientMaterial(renderView, filterMaterial)
         break
       case FilterMaterialType.COLORED:
-        retMaterial = this.getColoredMaterial(renderView)
-        break
-      case FilterMaterialType.OVERLAY:
-        retMaterial = this.getOverlayMaterial(renderView)
+        retMaterial = this.getColoredMaterial(renderView, filterMaterial)
         break
       case FilterMaterialType.HIDDEN:
-        retMaterial = this.getHiddenMaterial(renderView)
+        retMaterial = this.getHiddenMaterial(renderView, filterMaterial)
         break
     }
     /** There's a bug in three.js where it checks for the length of the planes without checking if they exist first
@@ -1030,7 +909,17 @@ export default class Materials {
     return retMaterial
   }
 
-  public getFilterMaterialOptions(filterMaterial: FilterMaterial): MaterialOptions {
+  public getDataMaterial(
+    renderView: NodeRenderView,
+    materialData: RenderMaterial & DisplayStyle
+  ): Material {
+    const materialHash = Materials.getMaterialHash(renderView, materialData)
+    return this.getMaterial(materialHash, materialData, renderView.geometryType)
+  }
+
+  public getFilterMaterialOptions(
+    filterMaterial: FilterMaterial
+  ): FilterMaterialOptions {
     switch (filterMaterial.filterType) {
       case FilterMaterialType.COLORED:
         return {

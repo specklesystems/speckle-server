@@ -18,6 +18,7 @@ const metricCallCount = new prometheusClient.Counter({
 module.exports = {
   // eslint-disable-next-line no-unused-vars
   requestDidStart(ctx) {
+    const apolloRequestStart = Date.now()
     return {
       didResolveOperation(ctx) {
         let logger = ctx.context.log || graphqlLogger
@@ -33,7 +34,7 @@ module.exports = {
           graphql_query: query,
           graphql_variables: redactSensitiveVariables(variables),
           graphql_operation_value: op,
-          grqphql_operation_name: name
+          graphql_operation_name: name
         })
 
         const transaction = Sentry.startTransaction({
@@ -56,6 +57,9 @@ module.exports = {
       },
       didEncounterErrors(ctx) {
         let logger = ctx.context.log || graphqlLogger
+        logger = logger.child({
+          apollo_query_duration_ms: Date.now() - apolloRequestStart
+        })
 
         for (const err of ctx.errors) {
           const operationName = ctx.request.operationName || null
@@ -69,9 +73,15 @@ module.exports = {
             (err instanceof GraphQLError && err.extensions?.code === 'FORBIDDEN') ||
             err instanceof ApolloError
           ) {
-            logger.info(err, 'graphql error')
+            logger.info(
+              { err },
+              '{graphql_operation_value} failed after {apollo_query_duration_ms} ms'
+            )
           } else {
-            logger.error(err, 'graphql error')
+            logger.error(
+              err,
+              '{graphql_operation_value} failed after {apollo_query_duration_ms} ms'
+            )
           }
 
           Sentry.withScope((scope) => {
@@ -92,11 +102,16 @@ module.exports = {
       },
       willSendResponse(ctx) {
         const logger = ctx.context.log || graphqlLogger
-        logger.info('graphql response')
 
         if (ctx.request.transaction) {
           ctx.request.transaction.finish()
         }
+        logger.info(
+          {
+            apollo_query_duration_ms: Date.now() - apolloRequestStart
+          },
+          '{graphql_operation_value} finished after {apollo_query_duration_ms} ms'
+        )
       }
     }
   }

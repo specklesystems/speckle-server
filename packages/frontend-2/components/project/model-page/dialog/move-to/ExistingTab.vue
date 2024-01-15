@@ -26,7 +26,7 @@
   </form>
 </template>
 <script setup lang="ts">
-import {
+import type {
   CommonModelSelectorModelFragment,
   ProjectModelPageDialogMoveToVersionFragment
 } from '~~/lib/common/generated/gql/graphql'

@@ -1,7 +1,7 @@
-import { MaybeRef } from '@vueuse/core'
-import { MaybeNullOrUndefined } from '@speckle/shared'
-import { CSSProperties } from 'vue'
-import { UploadFileItem, UploadableFileItem } from '@speckle/ui-components'
+import type { MaybeRef } from '@vueuse/core'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import type { CSSProperties } from 'vue'
+import type { UploadFileItem, UploadableFileItem } from '@speckle/ui-components'
 
 export type { UploadFileItem, UploadableFileItem }
 

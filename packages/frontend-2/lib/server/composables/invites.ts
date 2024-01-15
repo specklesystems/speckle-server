@@ -1,7 +1,7 @@
 import { useMutation } from '@vue/apollo-composable'
 import { isArray } from 'lodash'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import {
+import type {
   AdminInviteList,
   ServerInviteCreateInput
 } from '~~/lib/common/generated/gql/graphql'

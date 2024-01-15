@@ -1,5 +1,9 @@
-import { ToRefs, computed } from 'vue'
-import { HorizontalOrVertical, StepCoreType } from '~~/src/helpers/common/components'
+import { computed } from 'vue'
+import type { ToRefs } from 'vue'
+import type {
+  HorizontalOrVertical,
+  StepCoreType
+} from '~~/src/helpers/common/components'
 import { clamp } from 'lodash'
 import { TailwindBreakpoints, markClassesUsed } from '~~/src/helpers/tailwind'
 

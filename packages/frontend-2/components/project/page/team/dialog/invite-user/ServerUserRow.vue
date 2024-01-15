@@ -20,8 +20,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { StreamRoles, Roles } from '@speckle/shared'
-import { UserSearchItem } from '~~/lib/common/composables/users'
+import { Roles } from '@speckle/shared'
+import type { StreamRoles } from '@speckle/shared'
+import type { UserSearchItem } from '~~/lib/common/composables/users'
 
 defineEmits<{
   (e: 'invite-user', v: { user: UserSearchItem; streamRole: StreamRoles }): void

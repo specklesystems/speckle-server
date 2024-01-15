@@ -1,5 +1,6 @@
 <template>
   <div>
+    <ProjectPageHeader :project="project" class="mb-8" />
     <h1 class="block h4 font-bold mb-4">Versions</h1>
     <div
       v-if="selectedItems.length"
@@ -85,12 +86,13 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Get } from 'type-fest'
-import { Nullable, Roles } from '@speckle/shared'
+import type { Get } from 'type-fest'
+import { Roles } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { graphql } from '~~/lib/common/generated/gql'
-import { ProjectModelPageVersionsProjectFragment } from '~~/lib/common/generated/gql/graphql'
-import { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import type { ProjectModelPageVersionsProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { useModelVersions } from '~~/lib/projects/composables/versionManagement'
 import { VersionActionTypes } from '~~/lib/projects/helpers/components'
 import { reduce } from 'lodash-es'
@@ -116,8 +118,7 @@ graphql(`
 
 graphql(`
   fragment ProjectModelPageVersionsProject on Project {
-    id
-    role
+    ...ProjectPageProjectHeader
     model(id: $modelId) {
       id
       name

@@ -1,8 +1,10 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
-import { PropertyInfo } from '@speckle/viewer'
+import type { TreeNode } from '@speckle/viewer'
+import { CameraController } from '@speckle/viewer'
+import type { MeasurementOptions, PropertyInfo } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
-import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
   useInjectedViewer,
@@ -59,9 +61,9 @@ export function useCameraUtilities() {
   const setView = (...args: Parameters<typeof instance.setView>) => {
     instance.setView(...args)
   }
-
-  const truck = (...args: Parameters<typeof instance.cameraHandler.controls.truck>) =>
-    instance.cameraHandler.controls.truck(...args)
+  const cameraController = instance.getExtension(CameraController)
+  const truck = (...args: Parameters<typeof cameraController.controls.truck>) =>
+    cameraController.controls.truck(...args)
 
   const zoomExtentsOrSelection = () => {
     const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
@@ -227,7 +229,7 @@ export function useSelectionUtilities() {
 
   const setSelectionFromObjectIds = (objectIds: string[]) => {
     const res = worldTree.value
-      ? worldTree.value.findAll((node) => {
+      ? worldTree.value.findAll((node: TreeNode) => {
           const t = node.model as Record<string, unknown>
           const raw = t.raw as Record<string, unknown>
           const id = raw.id as string
@@ -238,7 +240,7 @@ export function useSelectionUtilities() {
       : []
 
     const objs = res.map(
-      (node) => (node.model as Record<string, unknown>).raw as SpeckleObject
+      (node: TreeNode) => (node.model as Record<string, unknown>).raw as SpeckleObject
     )
     selectedObjects.value = objs
   }
@@ -338,4 +340,28 @@ export function useThreadUtilities() {
   }
 
   return { closeAllThreads, open, isOpenThread }
+}
+
+export function useMeasurementUtilities() {
+  const state = useInjectedViewerState()
+
+  const enableMeasurements = (enabled: boolean) => {
+    state.ui.measurement.enabled.value = enabled
+  }
+
+  const setMeasurementOptions = (options: MeasurementOptions) => {
+    state.ui.measurement.options.value = options
+  }
+
+  const removeMeasurement = () => {
+    if (state.viewer.instance?.removeMeasurement) {
+      state.viewer.instance.removeMeasurement()
+    }
+  }
+
+  return {
+    enableMeasurements,
+    setMeasurementOptions,
+    removeMeasurement
+  }
 }

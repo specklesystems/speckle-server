@@ -1,8 +1,15 @@
+extend type Query {
+  """
+  If user is authenticated using an app token, this will describe the app
+  """
+  authenticatedAsApp: ServerAppListItem @hasServerRole(role: SERVER_USER)
+}
+
 extend type User {
   """
   Returns a list of your personal api tokens.
   """
-  apiTokens: [ApiToken]
+  apiTokens: [ApiToken!]!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "tokens:read")
 }
@@ -30,10 +37,18 @@ extend type Mutation {
   apiTokenCreate(token: ApiTokenCreateInput!): String!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "tokens:write")
+
   """
-  Revokes (deletes) an personal api token.
+  Revokes (deletes) an personal api token/app token.
   """
   apiTokenRevoke(token: String!): Boolean!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "tokens:write")
+
+  """
+  Create an app token. Only apps can create app tokens and they don't show up under personal access tokens.
+  """
+  appTokenCreate(token: ApiTokenCreateInput!): String!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "tokens:write")
 }

@@ -22,7 +22,7 @@ async function pageFunction(objectUrl) {
   await window.v.init()
 
   try {
-    await window.v.loadObject(objectUrl, '')
+    await window.v.loadObjectAsync(objectUrl)
   } catch (error) {
     // Main call failed. Wait some time for other objects to load inside the viewer and generate the preview anyway
     await waitForAnimation(1000)

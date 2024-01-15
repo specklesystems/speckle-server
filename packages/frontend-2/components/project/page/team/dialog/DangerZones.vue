@@ -91,8 +91,9 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
 import { LayoutDialogSection } from '@speckle/ui-components'
-import { GenericValidateFunction, useForm } from 'vee-validate'
-import { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
+import { useForm } from 'vee-validate'
+import type { GenericValidateFunction } from 'vee-validate'
+import type { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import {
   useDeleteProject,

@@ -626,6 +626,7 @@ export type CreateCommentReplyInput = {
 };
 
 export type CreateModelInput = {
+  description?: InputMaybe<Scalars['String']>;
   name: Scalars['String'];
   projectId: Scalars['ID'];
 };
@@ -912,7 +913,7 @@ export type Mutation = {
   adminDeleteUser: Scalars['Boolean'];
   /** Creates an personal api token. */
   apiTokenCreate: Scalars['String'];
-  /** Revokes (deletes) an personal api token. */
+  /** Revokes (deletes) an personal api token/app token. */
   apiTokenRevoke: Scalars['Boolean'];
   /** Register a new third party application. */
   appCreate: Scalars['String'];
@@ -920,6 +921,8 @@ export type Mutation = {
   appDelete: Scalars['Boolean'];
   /** Revokes (de-authorizes) an application that you have previously authorized. */
   appRevokeAccess?: Maybe<Scalars['Boolean']>;
+  /** Create an app token. Only apps can create app tokens and they don't show up under personal access tokens. */
+  appTokenCreate: Scalars['String'];
   /** Update an existing third party application. **Note: This will invalidate all existing tokens, refresh tokens and access codes and will require existing users to re-authorize it.** */
   appUpdate: Scalars['Boolean'];
   automationMutations: AutomationMutations;
@@ -971,6 +974,7 @@ export type Mutation = {
   projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean'];
+  requestVerificationByEmail: Scalars['Boolean'];
   serverInfoUpdate?: Maybe<Scalars['Boolean']>;
   serverInviteBatchCreate: Scalars['Boolean'];
   /** Invite a new user to the speckle server and return the invite ID */
@@ -1056,6 +1060,11 @@ export type MutationAppDeleteArgs = {
 
 export type MutationAppRevokeAccessArgs = {
   appId: Scalars['String'];
+};
+
+
+export type MutationAppTokenCreateArgs = {
+  token: ApiTokenCreateInput;
 };
 
 
@@ -1156,6 +1165,11 @@ export type MutationInviteResendArgs = {
 
 export type MutationObjectCreateArgs = {
   objectInput: ObjectCreateInput;
+};
+
+
+export type MutationRequestVerificationByEmailArgs = {
+  email: Scalars['String'];
 };
 
 
@@ -1545,6 +1559,19 @@ export type ProjectCreateInput = {
   visibility?: InputMaybe<ProjectVisibility>;
 };
 
+export type ProjectFileImportUpdatedMessage = {
+  __typename?: 'ProjectFileImportUpdatedMessage';
+  /** Upload ID */
+  id: Scalars['String'];
+  type: ProjectFileImportUpdatedMessageType;
+  upload: FileUpload;
+};
+
+export enum ProjectFileImportUpdatedMessageType {
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
+
 export type ProjectInviteCreateInput = {
   /** Either this or userId must be filled */
   email?: InputMaybe<Scalars['String']>;
@@ -1791,6 +1818,8 @@ export type Query = {
   app?: Maybe<ServerApp>;
   /** Returns all the publicly available apps on this server. */
   apps?: Maybe<Array<Maybe<ServerAppListItem>>>;
+  /** If user is authenticated using an app token, this will describe the app */
+  authenticatedAsApp?: Maybe<ServerAppListItem>;
   comment?: Maybe<Comment>;
   /**
    * This query can be used in the following ways:
@@ -1814,6 +1843,8 @@ export type Query = {
    */
   projectInvite?: Maybe<PendingStreamCollaborator>;
   serverInfo: ServerInfo;
+  /** Receive metadata about an invite by the invite token */
+  serverInviteByToken?: Maybe<ServerInvite>;
   /** @deprecated use admin.serverStatistics instead */
   serverStats: ServerStats;
   /**
@@ -1908,6 +1939,11 @@ export type QueryProjectArgs = {
 export type QueryProjectInviteArgs = {
   projectId: Scalars['String'];
   token?: InputMaybe<Scalars['String']>;
+};
+
+
+export type QueryServerInviteByTokenArgs = {
+  token: Scalars['String'];
 };
 
 
@@ -2359,6 +2395,8 @@ export type Subscription = {
    * updates regarding comments for those resources.
    */
   projectCommentsUpdated: ProjectCommentsUpdatedMessage;
+  /** Subscribe to changes to any of a project's file imports */
+  projectFileImportUpdated: ProjectFileImportUpdatedMessage;
   /** Subscribe to changes to a project's models. Optionally specify modelIds to track. */
   projectModelsUpdated: ProjectModelsUpdatedMessage;
   /** Subscribe to changes to a project's pending models */
@@ -2451,6 +2489,11 @@ export type SubscriptionProjectCommentsUpdatedArgs = {
 };
 
 
+export type SubscriptionProjectFileImportUpdatedArgs = {
+  id: Scalars['String'];
+};
+
+
 export type SubscriptionProjectModelsUpdatedArgs = {
   id: Scalars['String'];
   modelIds?: InputMaybe<Array<Scalars['String']>>;
@@ -2510,8 +2553,9 @@ export type TestItem = {
 };
 
 export type UpdateModelInput = {
+  description?: InputMaybe<Scalars['String']>;
   id: Scalars['ID'];
-  name: Scalars['String'];
+  name?: InputMaybe<Scalars['String']>;
   projectId: Scalars['ID'];
 };
 
@@ -2530,7 +2574,7 @@ export type User = {
   /** All the recent activity from this user in chronological order */
   activity?: Maybe<ActivityCollection>;
   /** Returns a list of your personal api tokens. */
-  apiTokens?: Maybe<Array<Maybe<ApiToken>>>;
+  apiTokens: Array<ApiToken>;
   /** Returns the apps you have authorized. */
   authorizedApps?: Maybe<Array<Maybe<ServerAppListItem>>>;
   avatar?: Maybe<Scalars['String']>;

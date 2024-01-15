@@ -7,9 +7,10 @@ import type { ApolloConfigResolver } from '~~/lib/core/nuxt-modules/apollo/modul
 import { createUploadLink } from 'apollo-upload-client'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { getMainDefinition } from '@apollo/client/utilities'
-import { OperationDefinitionNode, Kind } from 'graphql'
-import { CookieRef, NuxtApp } from '#app'
-import { Optional } from '@speckle/shared'
+import { Kind } from 'graphql'
+import type { OperationDefinitionNode } from 'graphql'
+import type { CookieRef, NuxtApp } from '#app'
+import type { Optional } from '@speckle/shared'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import {
   buildAbstractCollectionMergeFunction,
@@ -22,6 +23,7 @@ import { useNavigateToLogin, loginRoute } from '~~/lib/common/helpers/route'
 import { useAppErrorState } from '~~/lib/core/composables/appErrorState'
 import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
 import { omit } from 'lodash-es'
+import { useRequestId } from '~/lib/core/composables/server'
 
 const appName = 'frontend-2'
 
@@ -260,8 +262,9 @@ function createCache(): InMemoryCache {
 async function createWsClient(params: {
   wsEndpoint: string
   authToken: CookieRef<Optional<string>>
+  reqId: string
 }): Promise<SubscriptionClient> {
-  const { wsEndpoint, authToken } = params
+  const { wsEndpoint, authToken, reqId } = params
 
   // WS IN SSR DOESN'T WORK CURRENTLY CAUSE OF SOME NUXT TRANSPILATION WEIRDNESS
   // SO DON'T RUN createWsClient in SSR
@@ -273,7 +276,9 @@ async function createWsClient(params: {
       reconnect: true,
       connectionParams: () => {
         const Authorization = authToken.value ? `Bearer ${authToken.value}` : null
-        return Authorization ? { Authorization, headers: { Authorization } } : {}
+        return Authorization
+          ? { Authorization, headers: { Authorization, 'x-request-id': reqId } }
+          : {}
       }
     },
     wsImplementation
@@ -285,8 +290,9 @@ function createLink(params: {
   wsClient?: SubscriptionClient
   authToken: CookieRef<Optional<string>>
   nuxtApp: NuxtApp
+  reqId: string
 }): ApolloLink {
-  const { httpEndpoint, wsClient, authToken, nuxtApp } = params
+  const { httpEndpoint, wsClient, authToken, nuxtApp, reqId } = params
   const goToLogin = useNavigateToLogin()
   const { registerError, isErrorState } = useAppErrorState()
 
@@ -337,7 +343,8 @@ function createLink(params: {
     return {
       headers: {
         ...headers,
-        ...authHeader
+        ...authHeader,
+        'x-request-id': reqId
       }
     }
   })
@@ -371,23 +378,46 @@ function createLink(params: {
     ])
   }
 
-  return from([errorLink, link])
+  // SSR req logging link
+  const loggerLink = new ApolloLink((operation, forward) => {
+    const startTime = Date.now()
+    return forward(operation).map((result) => {
+      const elapsed = new Date().getTime() - startTime
+      const name = operation.operationName
+      const success = !!(result.data && !result.errors?.length)
+
+      nuxtApp.$logger.info(
+        {
+          operation: name,
+          elapsed,
+          success
+        },
+        `Apollo operation {operation} finished in {elapsed}ms`
+      )
+
+      return result
+    })
+  })
+
+  return from([...(process.server ? [loggerLink] : []), errorLink, link])
 }
 
 const defaultConfigResolver: ApolloConfigResolver = async () => {
   const {
-    public: { apiOrigin, speckleServerVersion = 'unknown' }
+    public: { speckleServerVersion = 'unknown' }
   } = useRuntimeConfig()
+  const apiOrigin = useApiOrigin()
   const nuxtApp = useNuxtApp()
+  const reqId = useRequestId()
 
   const httpEndpoint = `${apiOrigin}/graphql`
   const wsEndpoint = httpEndpoint.replace('http', 'ws')
 
   const authToken = useAuthCookie()
   const wsClient = process.client
-    ? await createWsClient({ wsEndpoint, authToken })
+    ? await createWsClient({ wsEndpoint, authToken, reqId })
     : undefined
-  const link = createLink({ httpEndpoint, wsClient, authToken, nuxtApp })
+  const link = createLink({ httpEndpoint, wsClient, authToken, nuxtApp, reqId })
 
   return {
     // If we don't markRaw the cache, sometimes we get cryptic internal Apollo Client errors that essentially

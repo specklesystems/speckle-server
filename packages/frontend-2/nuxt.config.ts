@@ -1,5 +1,4 @@
 import { join } from 'path'
-import type { OutputOptions } from 'rollup'
 import { withoutLeadingSlash } from 'ufo'
 import { sanitizeFilePath } from 'mlly'
 import { filename } from 'pathe/utils'
@@ -11,7 +10,13 @@ const buildOutputFileName = (chunkName: string) =>
     join('/_nuxt/', `${sanitizeFilePath(filename(chunkName))}.[hash].js`)
   )
 
-const { SPECKLE_SERVER_VERSION } = process.env
+const {
+  SPECKLE_SERVER_VERSION,
+  NUXT_PUBLIC_LOG_LEVEL = 'info',
+  NUXT_PUBLIC_LOG_PRETTY = false
+} = process.env
+
+const isLogPretty = ['1', 'true', true, 1].includes(NUXT_PUBLIC_LOG_PRETTY)
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
@@ -30,15 +35,17 @@ export default defineNuxtConfig({
         }
       }
     ],
-    '@speckle/ui-components-nuxt'
+    '@speckle/ui-components-nuxt',
+    '@artmizu/nuxt-prometheus'
   ],
   runtimeConfig: {
     public: {
       apiOrigin: 'UNDEFINED',
+      backendApiOrigin: '',
       mixpanelApiHost: 'UNDEFINED',
       mixpanelTokenId: 'UNDEFINED',
-      logLevel: 'info',
-      logPretty: false,
+      logLevel: NUXT_PUBLIC_LOG_LEVEL,
+      logPretty: isLogPretty,
       logClientApiToken: '',
       logClientApiEndpoint: '',
       speckleServerVersion: SPECKLE_SERVER_VERSION || 'unknown',
@@ -55,6 +62,7 @@ export default defineNuxtConfig({
   vite: {
     vue: {
       script: {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         defineModel: true
       }
     },
@@ -66,11 +74,6 @@ export default defineNuxtConfig({
       // and also under frontend-2. they're the same version, but apparently that's not enough...
       dedupe: ['prosemirror-state', '@tiptap/pm', 'prosemirror-model', 'vee-validate']
     },
-    ...(process.env.IS_STORYBOOK_BUILD
-      ? {}
-      : {
-          assetsInclude: ['**/*.mdx']
-        }),
     server: {
       fs: {
         // Allowing symlinks
@@ -80,7 +83,7 @@ export default defineNuxtConfig({
 
     build: {
       rollupOptions: {
-        output: <OutputOptions>{
+        output: {
           /**
            * Overriding some output file names to avoid adblock
            */
@@ -146,6 +149,7 @@ export default defineNuxtConfig({
       '@vueuse/core',
       '@vueuse/shared',
       '@speckle/ui-components',
+      'v3-infinite-loading',
       /prosemirror.*/
     ]
   },
@@ -171,5 +175,9 @@ export default defineNuxtConfig({
         manifest[key] = oldManifest[key]
       }
     }
+  },
+
+  prometheus: {
+    verbose: false
   }
 })

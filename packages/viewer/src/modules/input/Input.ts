@@ -1,5 +1,4 @@
 import { Vector2 } from 'three'
-import { ViewerEvent } from '../../IViewer'
 import EventEmitter from '../EventEmitter'
 
 export interface InputOptions {
@@ -8,6 +7,15 @@ export interface InputOptions {
 
 export const InputOptionsDefault = {
   hover: false
+}
+
+export enum InputEvent {
+  PointerDown,
+  PointerUp,
+  PointerMove,
+  Click,
+  DoubleClick,
+  KeyUp
 }
 
 export default class Input extends EventEmitter {
@@ -27,21 +35,26 @@ export default class Input extends EventEmitter {
     let mdTime
     this.container.addEventListener('pointerdown', (e) => {
       e.preventDefault()
+      const loc = this._getNormalisedClickPosition(e)
+      ;(loc as unknown as Record<string, unknown>).event = e
       mdTime = new Date().getTime()
+      this.emit(InputEvent.PointerDown, loc)
     })
 
     this.container.addEventListener('pointerup', (e) => {
       e.preventDefault()
+      const loc = this._getNormalisedClickPosition(e)
+      ;(loc as unknown as Record<string, unknown>).event = e
+
+      this.emit(InputEvent.PointerUp, loc)
       const now = new Date().getTime()
       const delta = now - mdTime
       const deltaClick = now - this.lastClick
 
       if (delta > 250 || deltaClick < Input.MAX_DOUBLE_CLICK_TIMING) return
 
-      const loc = this._getNormalisedClickPosition(e)
-      ;(loc as unknown as Record<string, unknown>).event = e
       if (e.shiftKey) (loc as unknown as Record<string, unknown>).multiSelect = true
-      this.emit(ViewerEvent.ObjectClicked, loc)
+      this.emit(InputEvent.Click, loc)
       this.lastClick = new Date().getTime()
     })
 
@@ -59,10 +72,8 @@ export default class Input extends EventEmitter {
       const tapLength = currentTime - this.lastTap
       clearTimeout(this.tapTimeout)
       if (tapLength < 500 && tapLength > 0) {
-        this.emit(
-          ViewerEvent.ObjectDoubleClicked,
-          this._getNormalisedClickPosition(this.touchLocation)
-        )
+        const loc = this._getNormalisedClickPosition(this.touchLocation)
+        this.emit(InputEvent.DoubleClick, loc)
       } else {
         this.tapTimeout = setTimeout(function () {
           clearTimeout(this.tapTimeout)
@@ -74,17 +85,19 @@ export default class Input extends EventEmitter {
     this.container.addEventListener('dblclick', (e) => {
       const data = this._getNormalisedClickPosition(e)
       ;(data as unknown as Record<string, unknown>).event = e
-      this.emit(ViewerEvent.ObjectDoubleClicked, data)
+      this.emit(InputEvent.DoubleClick, data)
     })
 
     this.container.addEventListener('pointermove', (e) => {
       const data = this._getNormalisedClickPosition(e)
       ;(data as unknown as Record<string, unknown>).event = e
       this.emit('pointer-move', data)
+      this.emit(InputEvent.PointerMove, data)
     })
 
     document.addEventListener('keyup', (e) => {
       this.emit('key-up', e)
+      this.emit(InputEvent.KeyUp, e)
     })
 
     // Handle multiple object selection

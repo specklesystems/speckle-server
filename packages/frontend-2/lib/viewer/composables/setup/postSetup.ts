@@ -1,20 +1,19 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import {
+import { ViewerEvent, VisualDiffMode } from '@speckle/viewer'
+import type {
   PropertyInfo,
   StringPropertyInfo,
-  SunLightConfiguration,
-  ViewerEvent,
-  VisualDiffMode
+  SunLightConfiguration
 } from '@speckle/viewer'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
-import {
+import type {
   Comment,
   Project,
-  ProjectCommentsUpdatedMessageType,
   ProjectCommentThreadsArgs,
   ViewerResourceItem
 } from '~~/lib/common/generated/gql/graphql'
+import { ProjectCommentsUpdatedMessageType } from '~~/lib/common/generated/gql/graphql'
 import {
   useInjectedViewer,
   useInjectedViewerState
@@ -32,9 +31,9 @@ import {
   getCacheId,
   getObjectReference,
   isReference,
-  ModifyFnCacheData,
   modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
+import type { ModifyFnCacheData } from '~~/lib/common/helpers/graphql'
 import {
   useViewerOpenedThreadUpdateEmitter,
   useViewerThreadTracking
@@ -44,12 +43,13 @@ import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 import { watchTriggerable } from '@vueuse/core'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
-import { Reference } from '@apollo/client'
-import { Modifier } from '@apollo/client/cache'
+import { CameraController } from '@speckle/viewer'
+import type { Reference } from '@apollo/client'
+import type { Modifier } from '@apollo/client/cache'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -98,7 +98,6 @@ function useViewerObjectAutoLoading() {
       viewer.loadObjectAsync(
         objectUrl,
         authToken.value || undefined,
-        undefined,
         undefined,
         options?.zoomToObject
       )
@@ -302,8 +301,7 @@ function useViewerCameraIntegration() {
   const hasInitialLoadFired = ref(false)
 
   const loadCameraDataFromViewer = () => {
-    const activeCam = instance.cameraHandler.activeCam
-    const controls = activeCam.controls
+    const controls = instance.getExtension(CameraController).controls
     const viewerPos = new Vector3()
     const viewerTarget = new Vector3()
 
@@ -602,6 +600,7 @@ function useExplodeFactorIntegration() {
   watch(
     explodeFactor,
     (newVal) => {
+      /** newVal turns out to be a string. It needs to be a */
       instance.explode(newVal)
     },
     { immediate: true }
@@ -718,6 +717,33 @@ function useDiffingIntegration() {
   })
 }
 
+function useViewerMeasurementIntegration() {
+  const {
+    ui: { measurement },
+    viewer: { instance }
+  } = useInjectedViewerState()
+
+  watch(
+    () => measurement.enabled.value,
+    (newVal, oldVal) => {
+      if (newVal !== oldVal) {
+        instance.enableMeasurements(newVal)
+      }
+    },
+    { immediate: true }
+  )
+
+  watch(
+    () => ({ ...measurement.options.value }),
+    (newMeasurementState) => {
+      if (newMeasurementState) {
+        instance.setMeasurementOptions(newMeasurementState)
+      }
+    },
+    { immediate: true, deep: true }
+  )
+}
+
 export function useViewerPostSetup() {
   if (process.server) return
   useViewerObjectAutoLoading()
@@ -732,5 +758,6 @@ export function useViewerPostSetup() {
   useLightConfigIntegration()
   useExplodeFactorIntegration()
   useDiffingIntegration()
+  useViewerMeasurementIntegration()
   setupDebugMode()
 }

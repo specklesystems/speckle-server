@@ -1,34 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable camelcase */
 import { speckleStandardVert } from './shaders/speckle-standard-vert'
 import { speckleStandardFrag } from './shaders/speckle-standard-frag'
-import {
-  UniformsUtils,
-  ShaderLib,
-  Vector3,
-  MeshStandardMaterial,
-  Material,
-  IUniform,
-  Euler
-} from 'three'
+import { ShaderLib, Vector3, Material, IUniform } from 'three'
 import { Matrix4 } from 'three'
-import { Geometry } from '../converter/Geometry'
-import SpeckleMesh from '../objects/SpeckleMesh'
 import { ExtendedMeshStandardMaterial, Uniforms } from './SpeckleMaterial'
-import Materials from './Materials'
+import { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
 
 class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
-  protected static readonly matBuff: Matrix4 = new Matrix4()
-  protected static readonly vecBuff0: Vector3 = new Vector3()
-  protected static readonly vecBuff1: Vector3 = new Vector3()
-  protected static readonly vecBuff2: Vector3 = new Vector3()
-
-  protected get vertexShader(): string {
+  protected get vertexProgram(): string {
     return speckleStandardVert
   }
 
-  protected get fragmentShader(): string {
+  protected get fragmentProgram(): string {
     return speckleStandardFrag
   }
 
@@ -49,7 +33,7 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
     }
   }
 
-  constructor(parameters, defines = []) {
+  constructor(parameters, defines = ['USE_RTE']) {
     super(parameters)
     this.init(defines)
   }
@@ -99,30 +83,16 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
   }
 
   /** Called by three.js render loop */
-  public onBeforeRender(_this, scene, camera, geometry, object, group) {
-    SpeckleStandardMaterial.matBuff.copy(camera.matrixWorldInverse)
-    SpeckleStandardMaterial.matBuff.elements[12] = 0
-    SpeckleStandardMaterial.matBuff.elements[13] = 0
-    SpeckleStandardMaterial.matBuff.elements[14] = 0
-    object.modelViewMatrix.copy(SpeckleStandardMaterial.matBuff)
+  public onBeforeRender(_this: SpeckleWebGLRenderer, scene, camera, geometry, object) {
+    if (this.defines['USE_RTE']) {
+      object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
+      this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
+      this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
 
-    SpeckleStandardMaterial.vecBuff0.set(
-      camera.matrixWorld.elements[12],
-      camera.matrixWorld.elements[13],
-      camera.matrixWorld.elements[14]
-    )
-
-    Geometry.DoubleToHighLowVector(
-      SpeckleStandardMaterial.vecBuff0,
-      SpeckleStandardMaterial.vecBuff1,
-      SpeckleStandardMaterial.vecBuff2
-    )
-
-    this.userData.uViewer_low.value.copy(SpeckleStandardMaterial.vecBuff1)
-    this.userData.uViewer_high.value.copy(SpeckleStandardMaterial.vecBuff2)
-
-    if (object instanceof SpeckleMesh)
-      (object as SpeckleMesh).updateMaterialTransformsUniform(this)
+      this.userData.rteShadowMatrix.value.copy(_this.RTEBuffers.rteShadowMatrix)
+      this.userData.uShadowViewer_low.value.copy(_this.RTEBuffers.shadowViewerLow)
+      this.userData.uShadowViewer_high.value.copy(_this.RTEBuffers.shadowViewerHigh)
+    }
 
     this.needsUpdate = true
   }

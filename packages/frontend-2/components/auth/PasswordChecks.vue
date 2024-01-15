@@ -35,7 +35,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { GenericValidateFunction } from 'vee-validate'
+import type { GenericValidateFunction } from 'vee-validate'
 import {
   passwordLongEnough,
   passwordHasAtLeastOneNumber,

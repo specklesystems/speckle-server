@@ -1,11 +1,14 @@
 import { Observability } from '@speckle/shared'
 import { defineEventHandler, fromNodeMiddleware } from 'h3'
 import { IncomingMessage, ServerResponse } from 'http'
-import pino, { SerializedResponse } from 'pino'
-import { GenReqId, pinoHttp } from 'pino-http'
+import pino from 'pino'
+import type { SerializedResponse } from 'pino'
+import { pinoHttp } from 'pino-http'
+import type { GenReqId } from 'pino-http'
 import { randomUUID } from 'crypto'
-import { IncomingHttpHeaders } from 'http'
+import type { IncomingHttpHeaders } from 'http'
 import { REQUEST_ID_HEADER } from '~~/server/lib/core/helpers/constants'
+import { get } from 'lodash'
 
 /**
  * Server request logger
@@ -39,10 +42,14 @@ export const LoggingMiddleware = pinoHttp({
   // and we don't really care about 3xx stuff
   // all the user related 4xx responses are treated as info
   customLogLevel: (
-    _: IncomingMessage,
+    req: IncomingMessage,
     res: ServerResponse,
     error: Error | undefined
   ) => {
+    // Mark some lower importance/spammy endpoints w/ 'debug' to reduce noise
+    const path = req.url?.split('?')[0]
+    const shouldBeDebug = ['/metrics', '/health'].includes(path || '') ?? false
+
     if (res.statusCode >= 400 && res.statusCode < 500) {
       return 'info'
     } else if (res.statusCode >= 500 || error) {
@@ -50,7 +57,35 @@ export const LoggingMiddleware = pinoHttp({
     } else if (res.statusCode >= 300 && res.statusCode < 400) {
       return 'silent'
     }
-    return 'info'
+
+    return shouldBeDebug ? 'debug' : 'info'
+  },
+  customSuccessMessage() {
+    return '{requestPath} request {requestStatus} in {responseTime} ms'
+  },
+
+  customSuccessObject(req, res, val: Record<string, unknown>) {
+    const isCompleted = !req.readableAborted && res.writableEnded
+    const requestStatus = isCompleted ? 'completed' : 'aborted'
+    const requestPath = req.url?.split('?')[0] || 'unknown'
+    return {
+      ...val,
+      requestStatus,
+      requestPath
+    }
+  },
+
+  customErrorMessage() {
+    return '{requestPath} request {requestStatus} in {responseTime} ms'
+  },
+  customErrorObject(req, res, err, val: Record<string, unknown>) {
+    const requestStatus = 'failed'
+    const requestPath = req.url?.split('?')[0] || 'unknown'
+    return {
+      ...val,
+      requestStatus,
+      requestPath
+    }
   },
 
   // we need to redact any potential sensitive data from being logged.
@@ -81,10 +116,15 @@ export const LoggingMiddleware = pinoHttp({
           headers: Record<string, string>
         }
       }
+      const realRaw = get(res, 'raw.raw') as typeof res.raw
+      const isRequestCompleted = !!realRaw.writableEnded
+      const isRequestAborted = !isRequestCompleted
+
       return {
         statusCode: res.raw.statusCode,
         // Allowlist useful headers
-        headers: resRaw.headers
+        headers: resRaw.headers,
+        isRequestAborted
       }
     })
   }

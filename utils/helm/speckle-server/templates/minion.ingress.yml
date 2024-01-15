@@ -1,0 +1,51 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: speckle-server-minion
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "speckle.labels" . | indent 4 }}
+  annotations:
+    nginx.org/mergeable-ingress-type: "minion"
+    {{- if .Values.cert_manager_issuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer }}
+    {{- end }}
+    nginx.ingress.kubernetes.io/proxy-body-size: {{ (printf "%dm" (int .Values.file_size_limit_mb)) | quote }}
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: {{ .Values.domain }}
+    http:
+      paths:
+      {{- if .Values.frontend_2.enabled }}
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: speckle-frontend-2
+            port:
+              name: web
+      {{- else }}
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: speckle-frontend
+            port:
+              name: www
+      {{- end }}
+      - pathType: Exact
+        path: "/(graphql|explorer|(auth/.*)|(static/.*))"
+        backend:
+          service:
+            name: speckle-server
+            port:
+              name: web
+      - pathType: Exact
+        path: "/((objects/.*)|(api/.*)|(preview/.*))"
+        backend:
+          service:
+            name: speckle-objects
+            port:
+              name: web

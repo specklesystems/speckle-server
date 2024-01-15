@@ -23,7 +23,7 @@
           v-if="errorMessage"
           class="text-danger inline-flex space-x-1 items-center text-center"
         >
-          <ExclamationTriangleIcon class="h-4 w-4" />
+          <ExclamationTriangleIcon class="h-4 w-4 shrink-0" />
           <span>{{ errorMessage }}</span>
         </span>
         <div
@@ -40,7 +40,8 @@
         Use our
         <FormButton link size="sm" to="/downloads">connectors</FormButton>
         to publish a {{ modelName ? '' : 'new model' }} version to
-        {{ modelName || 'this project' }}, or drag and drop a IFC/OBJ/STL file here.
+        {{ modelName ? 'this model' : 'this project' }}, or drag and drop a IFC/OBJ/STL
+        file here.
       </span>
     </div>
   </FormFileUploadZone>
@@ -49,7 +50,7 @@
 import { useFileImport } from '~~/lib/core/composables/fileImport'
 import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
   projectId: string

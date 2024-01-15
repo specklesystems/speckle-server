@@ -22,7 +22,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     })
     .catch(convertThrowIntoFetchResult)
 
-  // Redirect home, if not logged in
+  // Redirect home, if logged in
   if (data?.activeUser?.id) {
     if (process.server && nuxt.ssrContext?.event.node.req.method === 'OPTIONS') {
       // quickfix hack to prevent redirect in OPTIONS

@@ -4,7 +4,8 @@ import {
   FetchResult,
   DataProxy,
   ApolloCache,
-  defaultDataIdFromObject
+  defaultDataIdFromObject,
+  Reference
 } from '@apollo/client/core'
 import { GraphQLError } from 'graphql'
 
@@ -128,5 +129,21 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
       return false
     }
     throw e
+  }
+}
+
+/**
+ * Inside cache.modify calls you'll get these instead of full objects when reading fields that hold
+ * identifiable objects or object arrays
+ */
+export type CacheObjectReference = Reference
+
+/**
+ * Objects & object arrays in `cache.modify` calls are represented through reference objects, so
+ * if you want to add new ones you shouldn't add the entire object, but only its reference
+ */
+export function getObjectReference(typeName: string, id: string): CacheObjectReference {
+  return {
+    __ref: getCacheId(typeName, id)
   }
 }

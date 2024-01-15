@@ -48,7 +48,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { NumericPropertyInfo } from '@speckle/viewer'
+import type { NumericPropertyInfo } from '@speckle/viewer'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 
 const { setPropertyFilter } = useFilterUtilities()

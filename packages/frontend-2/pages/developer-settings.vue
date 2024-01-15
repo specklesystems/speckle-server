@@ -222,16 +222,17 @@ import {
   PencilIcon,
   LockOpenIcon
 } from '@heroicons/vue/24/outline'
-import { TokenItem, ApplicationItem } from '~~/lib/developer-settings/helpers/types'
+import type {
+  TokenItem,
+  ApplicationItem
+} from '~~/lib/developer-settings/helpers/types'
 import {
   developerSettingsAccessTokensQuery,
   developerSettingsApplicationsQuery
 } from '~~/lib/developer-settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 
-const {
-  public: { apiOrigin }
-} = useRuntimeConfig()
+const apiOrigin = useApiOrigin()
 
 const { result: tokensResult, refetch: refetchTokens } = useQuery(
   developerSettingsAccessTokensQuery

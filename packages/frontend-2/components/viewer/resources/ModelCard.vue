@@ -113,11 +113,11 @@ import {
   ArrowPathRoundedSquareIcon,
   ChevronUpIcon
 } from '@heroicons/vue/24/solid'
-import {
+import type {
   ViewerLoadedResourcesQuery,
   ViewerModelVersionCardItemFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { Get } from 'type-fest'
+import type { Get } from 'type-fest'
 import {
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources

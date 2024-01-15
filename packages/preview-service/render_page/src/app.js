@@ -1,7 +1,8 @@
-import { DebugViewer, DefaultViewerParams } from '@speckle/viewer'
+import { LegacyViewer } from '@speckle/viewer'
+import { DefaultViewerParams } from '@speckle/viewer'
 // import { logger } from '../../observability/logging'
 
-const v = new DebugViewer(document.getElementById('renderer'), DefaultViewerParams)
+const v = new LegacyViewer(document.getElementById('renderer'), DefaultViewerParams)
 window.v = v
 
 // v.on( ViewerEvent.LoadProgress, args => logger.debug( args ) )

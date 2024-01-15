@@ -60,7 +60,7 @@
 import { useMutation } from '@vue/apollo-composable'
 import { AllScopes } from '@speckle/shared'
 import { LayoutDialog, FormSelectBadges } from '@speckle/ui-components'
-import {
+import type {
   ApplicationFormValues,
   ApplicationItem
 } from '~~/lib/developer-settings/helpers/types'
@@ -101,9 +101,9 @@ const redirectUrl = ref('')
 const description = ref('')
 
 const applicationScopes = computed(() => {
-  return Object.values(AllScopes).map((value) => ({
-    id: value,
-    text: value
+  return Object.values(allScopes.value).map((value) => ({
+    id: value.name,
+    text: value.name
   }))
 })
 

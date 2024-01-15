@@ -1,5 +1,5 @@
-import { NuxtApp } from '#app'
-import { Optional } from '@speckle/shared'
+import type { NuxtApp } from '#app'
+import type { Optional } from '@speckle/shared'
 import { buildFakePinoLogger } from '~~/lib/core/helpers/observability'
 
 export const useLogger = () => {

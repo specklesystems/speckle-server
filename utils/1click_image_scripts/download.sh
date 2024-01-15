@@ -14,4 +14,4 @@ docker image rm {speckle/speckle-preview-service:2,speckle/speckle-webhook-servi
 chmod +x setup.py
 
 echo "* Getting the docker images for the latest SpeckleServer release..."
-docker-compose -f template-docker-compose.yml pull
+docker compose -f template-docker-compose.yml pull

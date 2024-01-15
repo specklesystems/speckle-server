@@ -6,8 +6,10 @@ const {
   revokeToken,
   getUserTokens
 } = require('../../services/tokens')
+const { canCreatePAT } = require('@/modules/core/helpers/token')
 
-module.exports = {
+/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
+const resolvers = {
   Query: {},
   User: {
     async apiTokens(parent, args, context) {
@@ -16,11 +18,16 @@ module.exports = {
         throw new ForbiddenError('You can only view your own tokens')
 
       const tokens = await getUserTokens(context.userId)
-      return tokens
+      return tokens || []
     }
   },
   Mutation: {
     async apiTokenCreate(parent, args, context) {
+      canCreatePAT({
+        userScopes: context.scopes || [],
+        tokenScopes: args.token.scopes
+      })
+
       return await createPersonalAccessToken(
         context.userId,
         args.token.name,
@@ -37,3 +44,5 @@ module.exports = {
     }
   }
 }
+
+module.exports = resolvers

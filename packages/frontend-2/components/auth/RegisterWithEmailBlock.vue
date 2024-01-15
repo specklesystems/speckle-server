@@ -15,6 +15,7 @@
         auto-focus
       />
       <FormTextInput
+        v-model="email"
         type="email"
         name="email"
         label="Email"
@@ -22,7 +23,7 @@
         :size="isSmallerOrEqualSm ? 'lg' : 'xl'"
         :rules="emailRules"
         show-label
-        :disabled="loading"
+        :disabled="isEmailDisabled"
       />
       <FormTextInput
         v-model="password"
@@ -80,7 +81,7 @@ import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { loginRoute } from '~~/lib/common/helpers/route'
 import { passwordRules } from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
-import { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { UserIcon, ArrowRightIcon } from '@heroicons/vue/20/solid'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
@@ -101,25 +102,28 @@ type FormValues = { email: string; password: string; name: string; company?: str
 const props = defineProps<{
   challenge: string
   serverInfo: ServerTermsOfServicePrivacyPolicyFragmentFragment
+  inviteEmail?: string
 }>()
 
 const { handleSubmit } = useForm<FormValues>()
 const router = useRouter()
+const { signUpWithEmail, inviteToken } = useAuthManager()
+const { triggerNotification } = useGlobalToast()
 
 const loading = ref(false)
 const password = ref('')
+const email = ref('')
 
 const emailRules = [isEmail]
 const nameRules = [isRequired]
-
-const { signUpWithEmail, inviteToken } = useAuthManager()
-const { triggerNotification } = useGlobalToast()
 
 const newsletterConsent = inject<Ref<boolean>>('newsletterconsent')
 
 const pwdFocused = ref(false)
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
+
+const isEmailDisabled = computed(() => !!props.inviteEmail?.length || loading.value)
 
 const finalLoginRoute = computed(() => {
   const result = router.resolve({
@@ -149,6 +153,16 @@ const onSubmit = handleSubmit(async (fullUser) => {
     loading.value = false
   }
 })
+
+watch(
+  () => props.inviteEmail,
+  (inviteEmail) => {
+    if (inviteEmail) {
+      email.value = inviteEmail
+    }
+  },
+  { immediate: true }
+)
 </script>
 <style>
 .linkify-tos a {

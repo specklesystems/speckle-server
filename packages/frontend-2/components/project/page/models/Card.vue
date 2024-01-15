@@ -73,7 +73,6 @@
             :class="`transition ${
               hovered ? 'inline-block opacity-100' : 'sm:hidden sm:opacity-0'
             }`"
-            :disabled="versionCount === 0"
           >
             {{ versionCount }}
           </FormButton>
@@ -117,7 +116,7 @@
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
-import {
+import type {
   PendingFileUploadFragment,
   ProjectPageLatestItemsModelItemFragment,
   ProjectPageModelsCardProjectFragment
@@ -130,7 +129,7 @@ import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { keyboardClick } from '@speckle/ui-components'
 
 graphql(`

@@ -54,11 +54,12 @@
   </LayoutDialogSection>
 </template>
 <script setup lang="ts">
-import { Nullable, StreamRoles, Roles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
+import type { Nullable, StreamRoles } from '@speckle/shared'
 import { useApolloClient } from '@vue/apollo-composable'
 import { LayoutDialogSection } from '@speckle/ui-components'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import {
+import type {
   Project,
   ProjectPageTeamDialogFragment
 } from '~~/lib/common/generated/gql/graphql'
@@ -72,10 +73,8 @@ import {
   useUpdateUserRole
 } from '~~/lib/projects/composables/projectManagement'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
-import {
-  ProjectCollaboratorListItem,
-  roleSelectItems
-} from '~~/lib/projects/helpers/components'
+import { roleSelectItems } from '~~/lib/projects/helpers/components'
+import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
 import { UsersIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 

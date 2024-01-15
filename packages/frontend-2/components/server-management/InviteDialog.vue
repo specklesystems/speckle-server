@@ -57,11 +57,12 @@
 </template>
 <script setup lang="ts">
 import { EnvelopeIcon } from '@heroicons/vue/24/solid'
-import { Optional, Roles, ServerRoles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
+import type { Optional, ServerRoles } from '@speckle/shared'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { FormSelectProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import type { FormSelectProjects_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import {
   isRequired,
   isOneOrMultipleEmails,

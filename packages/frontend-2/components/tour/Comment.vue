@@ -73,7 +73,7 @@
 import { Vector3 } from 'three'
 import { ArrowRightIcon, ArrowLeftIcon } from '@heroicons/vue/24/solid'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { SlideshowItem } from '~~/lib/tour/slideshowItems'
+import type { SlideshowItem } from '~~/lib/tour/slideshowItems'
 
 const { next, prev, toggle } = inject('slideshowActions') as {
   next: (currentIndex: number) => void

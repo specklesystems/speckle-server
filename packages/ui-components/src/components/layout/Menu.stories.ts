@@ -1,8 +1,8 @@
-import { Meta, StoryObj } from '@storybook/vue3'
+import type { Meta, StoryObj } from '@storybook/vue3'
 import LayoutMenu from '~~/src/components/layout/Menu.vue'
-import { LayoutMenuItem } from '~~/src/helpers/layout/components'
+import type { LayoutMenuItem } from '~~/src/helpers/layout/components'
 import FormButton from '~~/src/components/form/Button.vue'
-import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
+import { EllipsisVerticalIcon, StarIcon } from '@heroicons/vue/24/solid'
 import { action } from '@storybook/addon-actions'
 import { ref } from 'vue'
 
@@ -40,7 +40,8 @@ const defaultItems = (
     {
       title: 'First Group Item - #1',
       id: 'a',
-      disabled: false
+      disabled: false,
+      icon: StarIcon
     },
     {
       title: 'First Group Item - #2 (Disabled)',
@@ -53,7 +54,8 @@ const defaultItems = (
     {
       title: 'Second Group Item - #1',
       id: 'c',
-      disabled: false
+      disabled: false,
+      color: 'info'
     }
   ]
 ]

@@ -11,7 +11,8 @@ import {
   useFilterUtilities,
   useSelectionUtilities
 } from '~~/lib/viewer/composables/ui'
-import { NumericPropertyInfo } from '@speckle/viewer'
+import { CameraController } from '@speckle/viewer'
+import type { NumericPropertyInfo } from '@speckle/viewer'
 
 type SerializedViewerState = SpeckleViewer.ViewerState.SerializedViewerState
 
@@ -50,7 +51,7 @@ export function useStateSerialization() {
   ): SerializedViewerState => {
     const { concreteResourceIdString } = options || {}
 
-    const camControls = state.viewer.instance.cameraHandler.activeCam.controls
+    const camControls = state.viewer.instance.getExtension(CameraController).controls
     const box = state.viewer.instance.getCurrentSectionBox()
 
     const ret: SerializedViewerState = {
@@ -115,7 +116,11 @@ export function useStateSerialization() {
           : null,
         lightConfig: { ...state.ui.lightConfig.value },
         explodeFactor: state.ui.explodeFactor.value,
-        selection: state.ui.selection.value?.toArray() || null
+        selection: state.ui.selection.value?.toArray() || null,
+        measurement: {
+          enabled: state.ui.measurement.enabled.value,
+          options: state.ui.measurement.options.value
+        }
       }
     }
     return ret

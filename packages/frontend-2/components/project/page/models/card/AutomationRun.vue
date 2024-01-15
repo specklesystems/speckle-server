@@ -16,7 +16,7 @@
 </template>
 <script setup lang="ts">
 // import dayjs from 'dayjs'
-import {
+import type {
   AutomationFunctionRun,
   AutomationRun
 } from '~~/lib/common/generated/gql/graphql'

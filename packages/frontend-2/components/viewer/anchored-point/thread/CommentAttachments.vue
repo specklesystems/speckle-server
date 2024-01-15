@@ -54,10 +54,11 @@ import {
   ArrowDownTrayIcon,
   ExclamationTriangleIcon
 } from '@heroicons/vue/24/solid'
-import { Get } from 'type-fest'
-import { ensureError, Nullable } from '@speckle/shared'
+import type { Get } from 'type-fest'
+import { ensureError } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
-import { ThreadCommentAttachmentFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ThreadCommentAttachmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { prettyFileSize } from '~~/lib/core/helpers/file'
 import { useFileDownload } from '~~/lib/core/composables/fileUpload'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'

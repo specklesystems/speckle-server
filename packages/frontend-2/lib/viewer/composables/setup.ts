@@ -2,22 +2,25 @@
 import {
   Viewer,
   DefaultViewerParams,
-  FilteringState,
-  PropertyInfo,
   WorldTree,
   ViewerEvent,
-  SunLightConfiguration,
   DefaultLightConfiguration,
-  SpeckleView,
-  DiffResult,
-  VisualDiffMode
+  LegacyViewer,
+  VisualDiffMode,
+  MeasurementType
 } from '@speckle/viewer'
-import { MaybeRef } from '@vueuse/shared'
-import {
-  inject,
+import type {
+  FilteringState,
+  PropertyInfo,
+  SunLightConfiguration,
+  SpeckleView,
+  MeasurementOptions,
+  DiffResult
+} from '@speckle/viewer'
+import type { MaybeRef } from '@vueuse/shared'
+import { inject, ref, provide } from 'vue'
+import type {
   InjectionKey,
-  ref,
-  provide,
   ComputedRef,
   WritableComputedRef,
   Raw,
@@ -25,7 +28,8 @@ import {
   ShallowRef
 } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import { Nullable, Optional, SpeckleViewer } from '@speckle/shared'
+import type { Nullable, Optional } from '@speckle/shared'
+import { SpeckleViewer } from '@speckle/shared'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
@@ -33,7 +37,7 @@ import {
   viewerLoadedThreadsQuery,
   viewerModelVersionsQuery
 } from '~~/lib/viewer/graphql/queries'
-import {
+import type {
   ProjectViewerResourcesQueryVariables,
   ViewerLoadedResourcesQuery,
   ViewerLoadedResourcesQueryVariables,
@@ -43,30 +47,27 @@ import {
   ProjectCommentsFilter,
   ViewerModelVersionCardItemFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { SetNonNullable, Get } from 'type-fest'
+import type { SetNonNullable, Get } from 'type-fest'
 import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { nanoid } from 'nanoid'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
+import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
-import { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { Box3, Vector3 } from 'three'
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { wrapRefWithTracking } from '~~/lib/common/helpers/debugging'
-import {
-  AsyncWritableComputedRef,
-  writableAsyncComputed
-} from '~~/lib/common/composables/async'
-import {
-  DiffStateCommand,
-  setupUiDiffState
-} from '~~/lib/viewer/composables/setup/diff'
+import { writableAsyncComputed } from '~~/lib/common/composables/async'
+import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
+import { setupUiDiffState } from '~~/lib/viewer/composables/setup/diff'
+import type { DiffStateCommand } from '~~/lib/viewer/composables/setup/diff'
 import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { flatten, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
+import { FilteringExtension } from '@speckle/viewer'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -96,7 +97,7 @@ export type InjectableViewerState = Readonly<{
     /**
      * The actual viewer instance
      */
-    instance: Viewer
+    instance: LegacyViewer
     /**
      * Container onto which the Viewer instance is attached
      */
@@ -254,6 +255,10 @@ export type InjectableViewerState = Readonly<{
     explodeFactor: Ref<number>
     viewerBusy: WritableComputedRef<boolean>
     selection: Ref<Nullable<Vector3>>
+    measurement: {
+      enabled: Ref<boolean>
+      options: Ref<MeasurementOptions>
+    }
   }
   /**
    * State stored in the anchor string of the URL
@@ -312,7 +317,7 @@ function createViewerData(): CachedViewerState {
   container.style.width = '100%'
   container.style.height = '100%'
 
-  const viewer = new Viewer(container, DefaultViewerParams)
+  const viewer = new LegacyViewer(container, DefaultViewerParams)
   const initPromise = viewer.init()
 
   return {
@@ -332,10 +337,10 @@ function setupViewerMetadata(params: {
   const filteringState = shallowRef(undefined as Optional<FilteringState>)
   const views = ref([] as SpeckleView[])
 
-  const refreshWorldTreeAndFilters = (busy: boolean) => {
+  const refreshWorldTreeAndFilters = async (busy: boolean) => {
     if (busy) return
     worldTree.value = viewer.getWorldTree()
-    availableFilters.value = viewer.getObjectProperties()
+    availableFilters.value = await viewer.getObjectProperties()
     views.value = viewer.getViews()
   }
   const updateFilteringState = (newState: FilteringState) => {
@@ -344,12 +349,16 @@ function setupViewerMetadata(params: {
 
   onMounted(() => {
     viewer.on(ViewerEvent.Busy, refreshWorldTreeAndFilters)
-    viewer.on(ViewerEvent.FilteringStateSet, updateFilteringState)
+    viewer
+      .getExtension(FilteringExtension)
+      .on(ViewerEvent.FilteringStateSet, updateFilteringState)
   })
 
   onBeforeUnmount(() => {
     viewer.removeListener(ViewerEvent.Busy, refreshWorldTreeAndFilters)
-    viewer.removeListener(ViewerEvent.FilteringStateSet, updateFilteringState)
+    viewer
+      .getExtension(FilteringExtension)
+      .removeListener(ViewerEvent.FilteringStateSet, updateFilteringState)
   })
 
   return {
@@ -877,7 +886,17 @@ function setupInterfaceState(
         },
         hasAnyFiltersApplied
       },
-      highlightedObjectIds
+      highlightedObjectIds,
+      measurement: {
+        enabled: ref(false),
+        options: ref<MeasurementOptions>({
+          visible: true,
+          type: MeasurementType.POINTTOPOINT,
+          units: 'm',
+          vertexSnap: true,
+          precision: 2
+        })
+      }
     }
   }
 }

@@ -1,3 +1,5 @@
+import { useApiOrigin } from '~/composables/env'
+
 /**
  * Taken from apollo-server-core source code. Loads the Apollo Studio sandbox at /graphql.
  * Won't work in production, because in production the backend /graphql route takes precedence.
@@ -12,9 +14,7 @@ function getConfigStringForHtml(config: Record<string, unknown>) {
 }
 
 export default defineEventHandler(() => {
-  const {
-    public: { apiOrigin }
-  } = useRuntimeConfig()
+  const apiOrigin = useApiOrigin()
 
   const version = '_latest'
   const embeddedExplorerParams = {

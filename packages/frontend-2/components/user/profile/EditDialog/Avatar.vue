@@ -10,11 +10,11 @@
   />
 </template>
 <script setup lang="ts">
-import { UserProfileEditDialogAvatar_UserFragment } from '~~/lib/common/generated/gql/graphql'
+import type { UserProfileEditDialogAvatar_UserFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useUpdateUserProfile } from '~~/lib/user/composables/management'
-import { MaybeNullOrUndefined } from '@speckle/shared'
-import { UserAvatarSize } from '@speckle/ui-components/dist/composables/user/avatar'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
+import type { UserAvatarSize } from '@speckle/ui-components/dist/composables/user/avatar'
 
 graphql(`
   fragment UserProfileEditDialogAvatar_User on User {

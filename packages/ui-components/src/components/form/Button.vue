@@ -29,8 +29,10 @@
 </template>
 <script setup lang="ts">
 import { isObjectLike } from 'lodash'
-import { ConcreteComponent, PropType, computed, resolveDynamicComponent } from 'vue'
-import { Nullable, Optional } from '@speckle/shared'
+import type { PropType } from 'vue'
+import type { PropAnyComponent } from '~~/src/helpers/common/components'
+import { computed, resolveDynamicComponent } from 'vue'
+import type { Nullable, Optional } from '@speckle/shared'
 import { ArrowPathIcon } from '@heroicons/vue/24/solid'
 
 type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
@@ -141,14 +143,14 @@ const props = defineProps({
    * Add icon to the left from the text
    */
   iconLeft: {
-    type: [Object, Function] as PropType<Nullable<ConcreteComponent>>,
+    type: [Object, Function] as PropType<Nullable<PropAnyComponent>>,
     default: null
   },
   /**
    * Add icon to the right from the text
    */
   iconRight: {
-    type: [Object, Function] as PropType<Nullable<ConcreteComponent>>,
+    type: [Object, Function] as PropType<Nullable<PropAnyComponent>>,
     default: null
   },
   /**
@@ -164,7 +166,7 @@ const props = defineProps({
    * The component will try to dynamically resolve NuxtLink and RouterLink and use those, if this is set to null.
    */
   linkComponent: {
-    type: [Object, Function] as PropType<Nullable<ConcreteComponent>>,
+    type: [Object, Function] as PropType<Nullable<PropAnyComponent>>,
     default: null
   },
   /**

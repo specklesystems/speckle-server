@@ -1,8 +1,9 @@
 import { userEvent, within } from '@storybook/testing-library'
 import FormTextArea from '~~/src/components/form/TextArea.vue'
-import { StoryObj, Meta } from '@storybook/vue3'
+import type { StoryObj, Meta } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
-import { VuePlayFunction, mergeStories } from '~~/src/stories/helpers/storybook'
+import { mergeStories } from '~~/src/stories/helpers/storybook'
+import type { VuePlayFunction } from '~~/src/stories/helpers/storybook'
 
 export default {
   component: FormTextArea,

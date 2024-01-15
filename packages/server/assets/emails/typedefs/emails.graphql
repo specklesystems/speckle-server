@@ -10,4 +10,5 @@ extend type Mutation {
   (Re-)send the account verification e-mail
   """
   requestVerification: Boolean! @hasServerRole(role: SERVER_GUEST)
+  requestVerificationByEmail(email: String!): Boolean!
 }

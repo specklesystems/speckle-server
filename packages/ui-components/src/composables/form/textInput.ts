@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { RuleExpression, useField } from 'vee-validate'
-import { Ref, ToRefs, computed, onMounted, ref, unref } from 'vue'
-import { Nullable } from '@speckle/shared'
+import { useField } from 'vee-validate'
+import type { RuleExpression } from 'vee-validate'
+import { computed, onMounted, ref, unref } from 'vue'
+import type { Ref, ToRefs } from 'vue'
+import type { Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
 import { isArray } from 'lodash'
 

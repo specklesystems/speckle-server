@@ -74,7 +74,7 @@
 </template>
 <script setup lang="ts">
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/vue'
-import { SunLightConfiguration } from '@speckle/viewer'
+import type { SunLightConfiguration } from '@speckle/viewer'
 import { SunIcon } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'

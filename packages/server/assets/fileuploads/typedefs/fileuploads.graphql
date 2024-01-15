@@ -96,6 +96,20 @@ type ProjectPendingVersionsUpdatedMessage {
   version: FileUpload!
 }
 
+enum ProjectFileImportUpdatedMessageType {
+  CREATED
+  UPDATED
+}
+
+type ProjectFileImportUpdatedMessage {
+  type: ProjectFileImportUpdatedMessageType!
+  """
+  Upload ID
+  """
+  id: String!
+  upload: FileUpload!
+}
+
 extend type Subscription {
   """
   Subscribe to changes to a project's pending models
@@ -105,4 +119,8 @@ extend type Subscription {
   Subscribe to changes to a project's pending versions
   """
   projectPendingVersionsUpdated(id: String!): ProjectPendingVersionsUpdatedMessage!
+  """
+  Subscribe to changes to any of a project's file imports
+  """
+  projectFileImportUpdated(id: String!): ProjectFileImportUpdatedMessage!
 }

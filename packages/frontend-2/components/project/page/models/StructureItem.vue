@@ -236,7 +236,7 @@ import {
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
 import { ArrowUpOnSquareIcon } from '@heroicons/vue/24/outline'
-import {
+import type {
   PendingFileUploadFragment,
   SingleLevelModelTreeItemFragment
 } from '~~/lib/common/generated/gql/graphql'
@@ -244,7 +244,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { useQuery } from '@vue/apollo-composable'
 import { projectModelChildrenTreeQuery } from '~~/lib/projects/graphql/queries'
 import { has } from 'lodash-es'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsModelExpanded } from '~~/lib/projects/composables/models'
 
