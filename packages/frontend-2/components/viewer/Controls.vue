@@ -1,8 +1,14 @@
 <template>
   <div v-if="showViewerControls && !embedOptions.hideControls">
     <div
-      class="absolute z-20 flex h-[100dvh] flex-col space-y-2 bg-green-300/0 px-2"
-      :class="showNavbar && !embedOptions.isEnabled ? 'pt-[4.2rem]' : 'pt-2'"
+      class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 sm:space-y-2 bg-green-300/0 px-2"
+      :class="
+        showNavbar && !embedOptions.isEnabled
+          ? 'pt-[4.2rem]'
+          : embedOptions.isTransparent
+          ? 'pt-2'
+          : 'pt-2 pb-16'
+      "
     >
       <!-- Models -->
       <ViewerControlsButtonToggle
@@ -10,7 +16,7 @@
         :active="activeControl === 'models'"
         @click="toggleActiveControl('models')"
       >
-        <CubeIcon class="h-5 w-5" />
+        <CubeIcon class="h-4 w-4 sm:h-5 sm:w-5" />
       </ViewerControlsButtonToggle>
 
       <!-- Explorer -->
@@ -19,7 +25,7 @@
         :active="activeControl === 'explorer'"
         @click="toggleActiveControl('explorer')"
       >
-        <IconFileExplorer class="h-5 w-5" />
+        <IconFileExplorer class="h-4 w-4 sm:h-5 sm:w-5" />
       </ViewerControlsButtonToggle>
 
       <!-- TODO -->
@@ -36,7 +42,7 @@
         :active="activeControl === 'discussions'"
         @click="toggleActiveControl('discussions')"
       >
-        <ChatBubbleLeftRightIcon class="h-5 w-5" />
+        <ChatBubbleLeftRightIcon class="h-4 w-4 sm:h-5 sm:w-5" />
       </ViewerControlsButtonToggle>
 
       <!-- Automateeeeeeee FTW -->
@@ -61,7 +67,7 @@
         :active="activeControl === 'measurements'"
         @click="toggleMeasurements"
       >
-        <IconMeasurements class="h-5 w-5" />
+        <IconMeasurements class="h-4 w-4 sm:h-5 sm:w-5" />
       </ViewerControlsButtonToggle>
 
       <!-- Standard viewer controls -->
@@ -74,7 +80,7 @@
           flat
           @click="trackAndzoomExtentsOrSelection()"
         >
-          <ArrowsPointingOutIcon class="h-5 w-5" />
+          <ArrowsPointingOutIcon class="h-4 w-4 sm:h-5 sm:w-5" />
         </ViewerControlsButtonToggle>
 
         <!-- Sun and lights -->
@@ -90,8 +96,8 @@
           :active="isOrthoProjection"
           @click="trackAndtoggleProjection()"
         >
-          <IconPerspective v-if="isOrthoProjection" class="h-4 w-4" />
-          <IconPerspectiveMore v-else class="h-4 w-4" />
+          <IconPerspective v-if="isOrthoProjection" class="h-4 w-4 sm:h-5 sm:w-5" />
+          <IconPerspectiveMore v-else class="h-4 w-4 sm:h-5 sm:w-5" />
         </ViewerControlsButtonToggle>
 
         <!-- Section Box -->
@@ -102,7 +108,7 @@
           :active="isSectionBoxEnabled"
           @click="toggleSectionBox()"
         >
-          <ScissorsIcon class="h-5 w-5" />
+          <ScissorsIcon class="h-4 w-4 sm:h-5 sm:w-5" />
         </ViewerControlsButtonToggle>
 
         <!-- Explosion -->

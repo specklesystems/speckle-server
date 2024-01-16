@@ -3,7 +3,7 @@
     <PopoverButton v-slot="{ open }" as="template">
       <ViewerControlsButtonToggle flat secondary :active="open || isActive">
         <!-- <ChevronUpDownIcon class="w-5 h-5 rotate-45" /> -->
-        <IconExplode class="h-5 w-5" />
+        <IconExplode class="h-4 w-4 sm:h-5 sm:w-5" />
       </ViewerControlsButtonToggle>
     </PopoverButton>
     <Transition

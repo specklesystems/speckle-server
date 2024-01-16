@@ -1,11 +1,11 @@
 <template>
   <div
     v-if="embedOptions.isEnabled"
-    class="select-none fixed bottom-0 left-0 w-full z-20 flex"
+    class="select-none fixed bottom-0 left-0 w-full z-20 flex h-14 items-center"
     :class="
       embedOptions.isTransparent
         ? 'justify-end'
-        : 'items-center gap-4 bg-foundation px-3 py-2'
+        : 'items-center gap-4 bg-foundation px-3'
     "
   >
     <NuxtLink href="https://speckle.systems/" target="_blank">
