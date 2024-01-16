@@ -22,7 +22,7 @@
     >
       Speckle
     </div>
-    <div v-if="poweredBy" class="text-base font-bold text-primary">
+    <div v-if="poweredBy" class="text-sm font-bold text-primary">
       Powered by Speckle
     </div>
   </NuxtLink>

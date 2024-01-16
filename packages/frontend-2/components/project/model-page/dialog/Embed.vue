@@ -95,7 +95,7 @@ const transparentBackground = ref(false)
 const hideViewerControls = ref(false)
 const hideSelectionInfo = ref(false)
 const preventScrolling = ref(false)
-const autoLoadModel = ref(false)
+const manuallyLoadModel = ref(false)
 const commentSlideshowMode = ref(false)
 
 const updateOption = (optionRef: Ref<boolean>, newValue: unknown) => {
@@ -124,9 +124,9 @@ const embedDialogOptions = [
     value: preventScrolling
   },
   {
-    id: 'autoload',
-    label: 'Load model automatically',
-    value: autoLoadModel
+    id: 'manualLoad',
+    label: 'Load model manually',
+    value: manuallyLoadModel
   },
   {
     id: 'commentSlideshow',

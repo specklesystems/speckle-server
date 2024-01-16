@@ -385,8 +385,8 @@ export function useEmbedUtilities() {
     state.ui.embedOptions.noScroll.value = enabled
   }
 
-  const autoload = (enabled: boolean) => {
-    state.ui.embedOptions.autoload.value = enabled
+  const manualLoad = (enabled: boolean) => {
+    state.ui.embedOptions.manualLoad.value = enabled
   }
 
   return {
@@ -394,6 +394,6 @@ export function useEmbedUtilities() {
     hideControls,
     hideSelectionInfo,
     noScroll,
-    autoload
+    manualLoad
   }
 }

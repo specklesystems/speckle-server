@@ -1,6 +1,6 @@
 <template>
   <button
-    :class="`transition rounded-lg w-10 h-10 flex items-center justify-center ${shadowClasses} ${colorClasses} active:scale-[0.9] outline-none`"
+    :class="`transition rounded-lg w-10 h-10 shrink-0 flex items-center justify-center ${shadowClasses} ${colorClasses} active:scale-[0.9] outline-none`"
   >
     <slot></slot>
   </button>

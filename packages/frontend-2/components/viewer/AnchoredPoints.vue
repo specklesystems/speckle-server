@@ -5,7 +5,7 @@
   >
     <!-- Add new thread bubble -->
     <ViewerAnchoredPointNewThread
-      v-if="canPostComment && !embedOptions.hideSelectionInfo"
+      v-if="canPostComment && !embedOptions.isEnabled"
       v-model="buttonState"
       class="z-[13]"
       @close="closeNewThread"

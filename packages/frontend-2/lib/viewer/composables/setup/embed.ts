@@ -7,7 +7,7 @@ export type EmbedOptions = {
   hideControls?: boolean
   hideSelectionInfo?: boolean
   noScroll?: boolean
-  autoload?: boolean
+  manualLoad?: boolean
 }
 
 export function isEmbedOptions(obj: unknown): obj is EmbedOptions {
@@ -19,7 +19,7 @@ export function isEmbedOptions(obj: unknown): obj is EmbedOptions {
         'hideControls',
         'hideSelectionInfo',
         'noScroll',
-        'autoload'
+        'manualLoad'
       ] as Array<keyof EmbedOptions>
     ).every((key) => {
       return !(key in possibleOptions) || typeof possibleOptions[key] === 'boolean'
