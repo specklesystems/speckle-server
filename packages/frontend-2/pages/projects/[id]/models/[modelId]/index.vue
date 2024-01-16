@@ -64,25 +64,34 @@
     </div>
   </ViewerPostSetupWrapper>
   <div
-    class="shadow-t fixed bottom-0 left-0 max-h-[65vh] overflow-hidden w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
+    class="fixed bottom-0 left-0 max-h-[65vh] overflow-hidden w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
+    :class="embedOptions.isTransparent ? '' : 'shadow-t'"
   >
     <PortalTarget class="sm:hidden" name="bottomPanel"></PortalTarget>
     <PortalTarget class="sm:hidden" name="mobileComments"></PortalTarget>
     <div
       v-if="embedOptions.isEnabled"
-      class="bg-foundation px-3 py-1.5 flex items-center gap-3 select-none"
+      :class="
+        embedOptions.isTransparent
+          ? 'grid'
+          : 'flex bg-foundation px-3 py-2.5 items-center gap-3'
+      "
+      class="select-none"
     >
-      <HeaderLogoBlock powered-by />
-      <div class="h-6 w-px bg-primary"></div>
-      <div class="flex flex-col">
+      <HeaderLogoBlock
+        powered-by
+        :class="embedOptions.isTransparent ? 'max-w-max justify-self-end' : ''"
+      />
+      <div v-if="!embedOptions.isTransparent" class="h-6 w-px bg-primary"></div>
+      <div v-if="!embedOptions.isTransparent" class="flex flex-col">
         <NuxtLink>
-          <div class="flex items-center gap-1 -mb-0.5">
-            <h2 class="font-bold text-base">
+          <div class="flex items-center gap-1 -mb-1.5">
+            <h2 class="font-bold text-base text-sm">
               {{ project?.name }}
             </h2>
             <ArrowTopRightOnSquareIcon class="h-3 w-3" />
           </div>
-          <span class="text-sm text-foreground-2">Created {{ formattedDate }}</span>
+          <span class="text-xs text-foreground-2">Created {{ formattedDate }}</span>
         </NuxtLink>
       </div>
     </div>
