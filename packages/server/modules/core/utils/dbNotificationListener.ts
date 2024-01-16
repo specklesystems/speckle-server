@@ -118,11 +118,6 @@ function reconnectClient() {
   }, 3000)
 }
 
-export async function forceClearLock() {
-  const redisClient = createRedisClient(getRedisUrl(), {})
-  await redisClient.del(lockName)
-}
-
 export function setupResultListener() {
   dbNotificationLogger.info('🔔 Initializing postgres notification listening...')
   reconnectClient()
