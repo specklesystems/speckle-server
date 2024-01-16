@@ -52,10 +52,6 @@ async function messageProcessor(msg: MessageType) {
     listenerRegistered: !!listener,
     messageId
   }
-  dbNotificationLogger.debug(
-    logPayload,
-    'Message #{messageId} received in channel {channel}'
-  )
   if (!listener) return
 
   // Only process if lock acquired
@@ -68,7 +64,7 @@ async function messageProcessor(msg: MessageType) {
     await Promise.resolve(listener.listener(msg))
     await unlock()
   } else {
-    dbNotificationLogger.info(
+    dbNotificationLogger.debug(
       logPayload,
       'Message #{messageId} of channel {channel} skipped due to missing lock...'
     )
