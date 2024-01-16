@@ -35,7 +35,7 @@ async function getTaskLock(taskId: string) {
   const releaseLock = async () => {
     if (!redisClient) {
       throw new LogicError(
-        'Unexpected failure! Attempting to get task lock before redis client is initialized'
+        'Unexpected failure! Attempting to release task lock before redis client is initialized'
       )
     }
     await redisClient.del(lockKey)
