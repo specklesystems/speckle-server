@@ -18,14 +18,12 @@ import { World } from './World'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
 import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
-import { DataTree, DataTreeBuilder } from './tree/DataTree'
 import Logger from 'js-logger'
-import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
+import { Query, QueryArgsResultMap } from './queries/Query'
 import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
 import { Extension } from './extensions/core-extensions/Extension'
 import { ICameraProvider, IProvider } from './extensions/core-extensions/Providers'
-import Input from './input/Input'
 import { CameraController } from './extensions/core-extensions/CameraController'
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Loader } from './loaders/Loader'
@@ -69,10 +67,6 @@ export class Viewer extends EventEmitter implements IViewer {
       }
     }
     return this.utils
-  }
-
-  public get input(): Input {
-    return this.speckleRenderer.input
   }
 
   public createExtension<T extends Extension>(
@@ -231,8 +225,9 @@ export class Viewer extends EventEmitter implements IViewer {
     return this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
   }
 
-  public getDataTree(): DataTree {
-    return DataTreeBuilder.build(this.tree)
+  public getDataTree(): void {
+    Logger.error('DataTree has been deprecated! Please use WorldTree')
+    return null
   }
 
   public getWorldTree(): WorldTree {
@@ -248,12 +243,6 @@ export class Viewer extends EventEmitter implements IViewer {
       Queries.DefaultIntersectionQuerySolver.setContext(this.speckleRenderer)
       return Queries.DefaultIntersectionQuerySolver.solve(query)
     }
-  }
-
-  public queryAsync(query: Query): Promise<QueryResult> {
-    //TO DO
-    query
-    return null
   }
 
   public setLightConfiguration(config: SunLightConfiguration): void {

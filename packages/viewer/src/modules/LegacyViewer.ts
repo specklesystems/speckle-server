@@ -30,7 +30,7 @@ import { PolarView } from './extensions/core-extensions/Providers'
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Queries } from './queries/Queries'
 import { Query, QueryArgsResultMap } from './queries/Query'
-import { DataTreeBuilder } from './tree/DataTree'
+import { DataTreeBuilder } from './deprecated/DataTree'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler

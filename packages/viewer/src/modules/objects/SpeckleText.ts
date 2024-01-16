@@ -13,9 +13,8 @@ import {
   Vector4
 } from 'three'
 import { Text } from 'troika-three-text'
-import { SpeckleObject } from '../tree/DataTree'
 import SpeckleBasicMaterial from '../materials/SpeckleBasicMaterial'
-import { ObjectLayers } from '../../IViewer'
+import { ObjectLayers, SpeckleObject } from '../../IViewer'
 
 export interface SpeckleTextParams {
   textValue?: string
