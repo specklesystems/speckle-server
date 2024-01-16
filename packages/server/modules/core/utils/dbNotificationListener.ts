@@ -31,7 +31,7 @@ async function getTaskLock(taskId: string) {
   }
 
   const lockKey = `${lockName}:${taskId}`
-  const lock = await redisClient.set(lockKey, '1', 'EX', 60 * 60, 'NX')
+  const lock = await redisClient.set(lockKey, '1', 'EX', 60, 'NX')
   const releaseLock = async () => {
     if (!redisClient) {
       throw new LogicError(
