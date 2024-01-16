@@ -61,7 +61,7 @@ async function authorizeResolver(
       resourceAccessRules: userResourceAccessLimits
     })
   if (isResourceLimited) {
-    throw new ApolloError('You do not have access to this resource.')
+    throw new ForbiddenError('You do not have access to this resource.')
   }
 
   if (adminOverrideEnabled()) {
@@ -85,8 +85,9 @@ async function authorizeResolver(
     ? await knex(role.aclTableName).select('*').where({ resourceId, userId }).first()
     : null
 
-  if (!userAclEntry)
+  if (!userAclEntry) {
     throw new ForbiddenError('You do not have access to this resource.')
+  }
 
   userAclEntry.role = roles.find((r) => r.name === userAclEntry.role)
 

@@ -104,14 +104,21 @@ export async function createStreamReturnRecord(
 export async function deleteStreamAndNotify(
   streamId: string,
   deleterId: string,
-  deleterResourceAccessRules: ContextResourceAccessRules
+  deleterResourceAccessRules: ContextResourceAccessRules,
+  options?: {
+    skipAccessChecks?: boolean
+  }
 ) {
-  await authorizeResolver(
-    deleterId,
-    streamId,
-    Roles.Stream.Owner,
-    deleterResourceAccessRules
-  )
+  const { skipAccessChecks = false } = options || {}
+
+  if (!skipAccessChecks) {
+    await authorizeResolver(
+      deleterId,
+      streamId,
+      Roles.Stream.Owner,
+      deleterResourceAccessRules
+    )
+  }
 
   await addStreamDeletedActivity({ streamId, deleterId })
 

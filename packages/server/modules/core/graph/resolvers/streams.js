@@ -65,11 +65,13 @@ const USER_STREAM_REMOVED = StreamPubsubEvents.UserStreamRemoved
 const STREAM_UPDATED = StreamPubsubEvents.StreamUpdated
 const STREAM_DELETED = StreamPubsubEvents.StreamDeleted
 
-const _deleteStream = async (_parent, args, context) => {
+const _deleteStream = async (_parent, args, context, options) => {
+  const { skipAccessChecks = false } = options || {}
   return await deleteStreamAndNotify(
     args.id,
     context.userId,
-    context.resourceAccessRules
+    context.resourceAccessRules,
+    { skipAccessChecks }
   )
 }
 
@@ -276,16 +278,18 @@ module.exports = {
       return true
     },
 
-    async streamDelete(parent, args, context, info) {
-      return await _deleteStream(parent, args, context, info)
+    async streamDelete(parent, args, context) {
+      return await _deleteStream(parent, args, context)
     },
 
-    async streamsDelete(parent, args, context, info) {
+    async streamsDelete(parent, args, context) {
       const results = await Promise.all(
         args.ids.map(async (id) => {
           const newArgs = { ...args }
           newArgs.id = id
-          return await _deleteStream(parent, newArgs, context, info)
+          return await _deleteStream(parent, newArgs, context, {
+            skipAccessChecks: true
+          })
         })
       )
       return results.every((res) => res === true)
