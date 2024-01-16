@@ -267,7 +267,6 @@ exports.init = (app, isInitial) => {
   })
 
   if (isInitial) {
-    moduleLogger.info('📸 Listening for preview generation updates')
     listenForPreviewGenerationUpdates()
   }
 }
