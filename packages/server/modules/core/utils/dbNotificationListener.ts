@@ -1,56 +1,78 @@
-import { MaybeAsync, Optional } from '@speckle/shared'
+import { MaybeAsync, Optional, md5 } from '@speckle/shared'
 import { dbNotificationLogger } from '@/logging/logging'
 import { knex } from '@/modules/core/dbSchema'
 import * as Knex from 'knex'
 import * as pg from 'pg'
 import { createRedisClient } from '@/modules/shared/redis/redis'
-import {
-  forceDbNotificationListenerLocking,
-  getRedisUrl,
-  isProdEnv
-} from '@/modules/shared/helpers/envHelper'
-import { randomUUID } from 'crypto'
-
-/**
- * TODO: This currently will emit duplicate events when there are multiple server instances running. Not a big deal currently while there aren't that many events,
- * but we need to figure this out
- */
+import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
+import Redis from 'ioredis'
+import { LogicError } from '@/modules/shared/errors'
 
 export type MessageType = { channel: string; payload: string }
 export type ListenerType = (msg: MessageType) => MaybeAsync<void>
 
 let shuttingDown = false
 let connection: Optional<pg.Connection> = undefined
-let lockRelease: Optional<() => Promise<void>> = undefined
-const uid = randomUUID()
+let redisClient: Optional<Redis> = undefined
+
 const listeners: Record<string, { setup: boolean; listener: ListenerType }> = {}
 const lockName = 'server_postgres_listener_lock'
 
-function messageProcessor(msg: MessageType) {
+function getMessageId(msg: MessageType) {
+  const str = JSON.stringify(msg)
+  return md5(str)
+}
+
+async function getTaskLock(taskId: string) {
+  if (!redisClient) {
+    throw new LogicError(
+      'Unexpected failure! Attempting to get task lock before redis client is initialized'
+    )
+  }
+
+  const lockKey = `${lockName}:${taskId}`
+  const lock = await redisClient.set(lockKey, '1', 'EX', 60 * 60, 'NX')
+  const releaseLock = async () => {
+    if (!redisClient) {
+      throw new LogicError(
+        'Unexpected failure! Attempting to get task lock before redis client is initialized'
+      )
+    }
+    await redisClient.del(lockKey)
+  }
+  return lock ? releaseLock : null
+}
+
+async function messageProcessor(msg: MessageType) {
   const listener = listeners[msg.channel]
-  dbNotificationLogger.info(
-    {
-      ...msg,
-      listenerRegistered: !!listener
-    },
-    'Message received in channel {channel}'
+  const messageId = getMessageId(msg)
+
+  const logPayload = {
+    ...msg,
+    listenerRegistered: !!listener,
+    messageId
+  }
+  dbNotificationLogger.debug(
+    logPayload,
+    'Message #{messageId} received in channel {channel}'
   )
   if (!listener) return
 
-  return listener.listener(msg)
-}
-
-async function getLock() {
-  // Use lock in redis to ensure that only one instance of the server is listening for events
-  const redisClient = createRedisClient(getRedisUrl(), {})
-  const lock = await redisClient.set(lockName, uid, 'NX')
-  const releaseLock = async () => {
-    const lockValue = await redisClient.get(lockName)
-    if (lockValue === uid) {
-      await redisClient.del(lockName)
-    }
+  // Only process if lock acquired
+  const unlock = await getTaskLock(messageId)
+  if (unlock) {
+    dbNotificationLogger.info(
+      logPayload,
+      'Message #{messageId} of channel {channel} starting processing...'
+    )
+    await Promise.resolve(listener.listener(msg))
+    await unlock()
+  } else {
+    dbNotificationLogger.info(
+      logPayload,
+      'Message #{messageId} of channel {channel} skipped due to missing lock...'
+    )
   }
-  return lock ? releaseLock : null
 }
 
 function setupListeners(connection: pg.Connection) {
@@ -62,20 +84,7 @@ function setupListeners(connection: pg.Connection) {
   }
 }
 
-async function setupConnection(connection: pg.Connection) {
-  if (isProdEnv() || forceDbNotificationListenerLocking()) {
-    if (!lockRelease) {
-      lockRelease = (await getLock()) || undefined
-    }
-
-    if (!lockRelease) {
-      dbNotificationLogger.info('Could not acquire lock, not setting up listeners...')
-      return
-    } else {
-      dbNotificationLogger.info('Lock acquired, setting up listeners...')
-    }
-  }
-
+function setupConnection(connection: pg.Connection) {
   Object.values(listeners).forEach((l) => (l.setup = false))
   connection.on('notification', messageProcessor)
 
@@ -94,10 +103,12 @@ function reconnectClient() {
       const newConnection = await (
         knex.client as Knex.Knex.Client
       ).acquireRawConnection()
+
       connection = newConnection
+      redisClient = createRedisClient(getRedisUrl(), {})
 
       clearInterval(interval)
-      await setupConnection(newConnection)
+      setupConnection(newConnection)
     } catch (e: unknown) {
       dbNotificationLogger.error(
         e,
@@ -117,18 +128,13 @@ export function setupResultListener() {
   reconnectClient()
 }
 
-export async function shutdownResultListener() {
+export function shutdownResultListener() {
   dbNotificationLogger.info('...Shutting down postgres notification listening')
   shuttingDown = true
 
   if (connection) {
     connection.end()
     connection = undefined
-  }
-
-  if (lockRelease) {
-    await lockRelease()
-    lockRelease = undefined
   }
 }
 
