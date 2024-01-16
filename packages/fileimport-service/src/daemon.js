@@ -67,7 +67,7 @@ async function doTask(task) {
   let branchMetadata = { streamId: null, branchName: null }
 
   try {
-    taskLogger.info('Doing task.')
+    taskLogger.info("Doing task '{taskId}'.")
     const info = await FileUploads().where({ id: taskId }).first()
     if (!info) {
       throw new Error('Internal error: DB inconsistent')
@@ -239,27 +239,17 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
 
     boundLogger = boundLogger.child({ pid: childProc.pid })
     childProc.stdout.on('data', (data) => {
-      try {
-        JSON.parse(data.toString()) // data is already in JSON format
-        process.stdout.write(data.string())
-      } catch {
-        boundLogger.info('Parser: %s', data.toString())
-      }
+      handleData(data, false, boundLogger)
     })
 
     childProc.stderr.on('data', (data) => {
-      try {
-        JSON.parse(data.toString()) // data is already in JSON format
-        process.stderr.write(data.string())
-      } catch {
-        boundLogger.info('Parser: %s', data.toString())
-      }
+      handleData(data, true, boundLogger)
     })
 
     let timedOut = false
 
     const timeout = setTimeout(() => {
-      boundLogger.warn('Process timeout. Killing process...')
+      boundLogger.warn('Process timed out. Killing process...')
 
       timedOut = true
       childProc.kill(9)
@@ -273,7 +263,7 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
     }, timeoutMs)
 
     childProc.on('close', (code) => {
-      boundLogger.info({ exitCode: code }, `Process exited with code ${code}`)
+      boundLogger.info({ exitCode: code }, "Process exited with code '{exitCode}'")
 
       if (timedOut) {
         return // ignore `close` calls after killing (the promise was already rejected)
@@ -288,6 +278,32 @@ function runProcessWithTimeout(processLogger, cmd, cmdArgs, extraEnv, timeoutMs)
       }
     })
   })
+}
+
+function handleData(data, isErr, logger) {
+  try {
+    Buffer.isBuffer(data) && (data = data.toString())
+    data.split('\n').forEach((line) => {
+      if (!line) return
+      try {
+        JSON.parse(line) // verify if the data is already in JSON format
+        process.stdout.write(line)
+        process.stdout.write('\n')
+      } catch {
+        wrapLogLine(line, isErr, logger)
+      }
+    })
+  } catch {
+    wrapLogLine(JSON.stringify(data), isErr, logger)
+  }
+}
+
+function wrapLogLine(line, isErr, logger) {
+  if (isErr) {
+    logger.error({ parserLogLine: line }, 'ParserLog: {parserLogLine}')
+    return
+  }
+  logger.info({ parserLogLine: line }, 'ParserLog: {parserLogLine}')
 }
 
 async function tick() {
