@@ -25,8 +25,14 @@ async function parseAndCreateCommit({
 
   const start = performance.now()
   const { id, tCount } = await myParser.parse(data)
+  logger = logger.child({ objectId: id })
   const end = performance.now()
-  logger.info(`Total processing time V2: ${(end - start).toFixed(2)}ms`)
+  logger.info(
+    {
+      fileProcessingDurationMs: (end - start).toFixed(2)
+    },
+    'Total processing time V2: {fileProcessingDurationMs}ms'
+  )
 
   const commit = {
     streamId,
@@ -43,7 +49,7 @@ async function parseAndCreateCommit({
   })
 
   if (!branch) {
-    logger.info('Branch not found, creating it.')
+    logger.info("Branch '{branchName}' not found, creating it.")
     await serverApi.createBranch({
       name: branchName,
       streamId,
@@ -55,7 +61,7 @@ async function parseAndCreateCommit({
   const userToken = process.env.USER_TOKEN
 
   const serverBaseUrl = process.env.SPECKLE_SERVER_URL || 'http://127.0.0.1:3000'
-  logger.info(`Creating commit for object (${id}), with message "${message}"`)
+  logger.info(`Creating commit for object ({objectId}), with message "${message}"`)
   const response = await fetch(serverBaseUrl + '/graphql', {
     method: 'POST',
     headers: {
@@ -72,7 +78,7 @@ async function parseAndCreateCommit({
   })
 
   const json = await response.json()
-  logger.info(json)
+  logger.info(json, 'Commit created')
 
   return json.data.commitCreate
 }

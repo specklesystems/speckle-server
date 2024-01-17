@@ -22,7 +22,8 @@ import {
   TreeNode,
   SpeckleLoader,
   DefaultViewerParams,
-  ViewerParams
+  ViewerParams,
+  SelectionEvent
 } from '..'
 import { FilteringExtension, FilteringState } from './extensions/FilteringExtension'
 import { PolarView } from './extensions/core-extensions/Providers'
@@ -30,6 +31,16 @@ import { SpeckleType } from './loaders/GeometryConverter'
 import { Queries } from './queries/Queries'
 import { Query, QueryArgsResultMap } from './queries/Query'
 import { DataTreeBuilder } from './tree/DataTree'
+
+class LegacySelectionExtension extends SelectionExtension {
+  /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
+   * Note: FE2 shouldn't do that, unless it plans on properly extending the SelectionExtension, but we're doing it like this
+   * for now in order to reduce the impact on the FE's codebase with the introduction of the new viewer API
+   */
+  protected onObjectClicked(selection: SelectionEvent) {
+    selection
+  }
+}
 
 export class LegacyViewer extends Viewer {
   private cameraController: CameraController = null
@@ -47,7 +58,7 @@ export class LegacyViewer extends Viewer {
   ) {
     super(container, params)
     this.cameraController = this.createExtension(CameraController)
-    this.selection = this.createExtension(SelectionExtension)
+    this.selection = this.createExtension(LegacySelectionExtension)
     this.sections = this.createExtension(SectionTool)
     this.sectionOutlines = this.createExtension(SectionOutlines)
     this.measurements = this.createExtension(MeasurementsExtension)
@@ -58,6 +69,10 @@ export class LegacyViewer extends Viewer {
 
   public async init(): Promise<void> {
     await super.init()
+  }
+
+  public getRenderer() {
+    return this.speckleRenderer
   }
 
   /** SECTION BOX */
@@ -127,6 +142,7 @@ export class LegacyViewer extends Viewer {
     ghost = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
+      this.selection.unselectObjects(objectIds)
       const filteringState = this.filtering.hideObjects(
         objectIds,
         stateKey,

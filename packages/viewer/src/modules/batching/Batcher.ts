@@ -1,4 +1,4 @@
-import { generateUUID } from 'three/src/math/MathUtils'
+import { MathUtils } from 'three'
 import MeshBatch from './MeshBatch'
 import LineBatch from './LineBatch'
 import Materials, { FilterMaterialType } from '../materials/Materials'
@@ -276,7 +276,7 @@ export default class Batcher {
 
     const matRef = renderViews[0].renderData.renderMaterial
     const material = this.materials.getMaterial(materialHash, matRef, GeometryType.MESH)
-    const batchID = generateUUID()
+    const batchID = MathUtils.generateUUID()
     const geometryBatch = new InstancedMeshBatch(batchID, renderTree.id, renderViews)
     geometryBatch.setBatchMaterial(material)
     await geometryBatch.buildBatch()
@@ -319,7 +319,7 @@ export default class Batcher {
 
     const material = this.materials.getMaterial(materialHash, matRef, geometryType)
 
-    const batchID = generateUUID()
+    const batchID = MathUtils.generateUUID()
     let geometryBatch: Batch = null
     switch (geometryType) {
       case GeometryType.MESH:

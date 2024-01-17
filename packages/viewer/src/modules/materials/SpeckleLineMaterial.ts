@@ -6,7 +6,7 @@ import { ShaderLib, Vector3, IUniform, Material } from 'three'
 import { Matrix4 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import { ExtendedLineMaterial, Uniforms } from './SpeckleMaterial'
-import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 
 class SpeckleLineMaterial extends ExtendedLineMaterial {
   protected get vertexProgram(): string {

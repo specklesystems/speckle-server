@@ -12,7 +12,7 @@ import {
   ReplaceStencilOp,
   UniformsUtils
 } from 'three'
-import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { MaterialOptions } from './Materials'
 
 class SpeckleUserData {
