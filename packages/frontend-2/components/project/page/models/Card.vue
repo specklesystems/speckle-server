@@ -84,6 +84,7 @@
             :can-edit="canEdit"
             @click.stop.prevent
             @upload-version="triggerVersionUpload"
+            @embed="embedDialogOpen = true"
           />
         </div>
       </div>
@@ -113,6 +114,12 @@
       </div>
     </div>
   </div>
+  <ProjectModelPageDialogEmbed
+    v-model:open="embedDialogOpen"
+    :visibility="project.visibility"
+    :project-id="project.id"
+    :model-id="model.id"
+  />
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
@@ -136,6 +143,7 @@ graphql(`
   fragment ProjectPageModelsCardProject on Project {
     id
     role
+    visibility
   }
 `)
 
@@ -168,6 +176,7 @@ const importArea = ref(
 )
 const showActionsMenu = ref(false)
 const hovered = ref(false)
+const embedDialogOpen = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [

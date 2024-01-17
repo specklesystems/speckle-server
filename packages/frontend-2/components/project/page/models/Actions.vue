@@ -36,7 +36,8 @@ import {
   PencilIcon,
   LinkIcon,
   FingerPrintIcon,
-  ArrowUpTrayIcon
+  ArrowUpTrayIcon,
+  CodeBracketIcon
 } from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -53,13 +54,15 @@ enum ActionTypes {
   Delete = 'delete',
   Share = 'share',
   UploadVersion = 'upload-version',
-  CopyId = 'copy-id'
+  CopyId = 'copy-id',
+  Embed = 'embed'
 }
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
   (e: 'model-updated'): void
   (e: 'upload-version'): void
+  (e: 'embed'): void
 }>()
 
 const props = defineProps<{
@@ -93,7 +96,8 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   ],
   [
     { title: 'Copy Link', id: ActionTypes.Share, icon: LinkIcon },
-    { title: 'Copy ID', id: ActionTypes.CopyId, icon: FingerPrintIcon }
+    { title: 'Copy ID', id: ActionTypes.CopyId, icon: FingerPrintIcon },
+    { title: 'Embed Model', id: ActionTypes.Embed, icon: CodeBracketIcon }
   ],
   [
     {
@@ -134,6 +138,9 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       break
     case ActionTypes.CopyId:
       copy(props.model.id, { successMessage: 'Copied model ID to clipboard' })
+      break
+    case ActionTypes.Embed:
+      emit('embed')
       break
   }
 }
