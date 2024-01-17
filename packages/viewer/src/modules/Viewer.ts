@@ -162,7 +162,7 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
-  public requestRender(flags: number = UpdateFlags.RENDER) {
+  public requestRender(flags: UpdateFlags = UpdateFlags.RENDER) {
     if (flags & UpdateFlags.RENDER) {
       this.speckleRenderer.needsRender = true
       this.speckleRenderer.resetPipeline()

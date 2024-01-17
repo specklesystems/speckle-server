@@ -6,13 +6,13 @@ import {
   AllBatchUpdateRange,
   Batch,
   BatchUpdateRange,
+  DrawGroup,
   GeometryType,
   NoneBatchUpdateRange
 } from './Batch'
 
 import { SpeckleText } from '../objects/SpeckleText'
 import { ObjectLayers } from '../../IViewer'
-import { DrawGroup } from './InstancedMeshBatch'
 import Materials from '../materials/Materials'
 
 export default class TextBatch implements Batch {

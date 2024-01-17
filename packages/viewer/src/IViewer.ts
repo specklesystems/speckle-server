@@ -131,7 +131,7 @@ export interface IViewer {
   init(): Promise<void>
   resize(): void
   on(eventType: ViewerEvent, handler: (arg) => void)
-  requestRender(flags?: number): void
+  requestRender(flags?: UpdateFlags): void
 
   setLightConfiguration(config: LightConfiguration): void
 

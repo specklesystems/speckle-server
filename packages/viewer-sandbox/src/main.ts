@@ -4,7 +4,6 @@ import {
   DefaultViewerParams,
   SelectionEvent,
   ViewerEvent,
-  DebugViewer,
   Viewer
 } from '@speckle/viewer'
 
@@ -38,7 +37,7 @@ const createViewer = async (containerName: string, stream: string) => {
   params.verbose = true
 
   const multiSelectList: SelectionEvent[] = []
-  const viewer: Viewer = new DebugViewer(container, params)
+  const viewer: Viewer = new Viewer(container, params)
   await viewer.init()
 
   const cameraController = viewer.createExtension(CameraController)
