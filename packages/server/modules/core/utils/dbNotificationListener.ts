@@ -1,33 +1,74 @@
-import { MaybeAsync, Optional } from '@speckle/shared'
-import { dbNotificationLogger, moduleLogger } from '@/logging/logging'
+import { MaybeAsync, Optional, md5 } from '@speckle/shared'
+import { dbNotificationLogger } from '@/logging/logging'
 import { knex } from '@/modules/core/dbSchema'
 import * as Knex from 'knex'
 import * as pg from 'pg'
-
-/**
- * TODO: This currently will emit duplicate events when there are multiple server instances running. Not a big deal currently while there aren't that many events,
- * but we need to figure this out
- */
+import { createRedisClient } from '@/modules/shared/redis/redis'
+import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
+import Redis from 'ioredis'
+import { LogicError } from '@/modules/shared/errors'
 
 export type MessageType = { channel: string; payload: string }
 export type ListenerType = (msg: MessageType) => MaybeAsync<void>
 
 let shuttingDown = false
 let connection: Optional<pg.Connection> = undefined
-const listeners: Record<string, { setup: boolean; listener: ListenerType }> = {}
+let redisClient: Optional<Redis> = undefined
 
-function messageProcessor(msg: MessageType) {
+const listeners: Record<string, { setup: boolean; listener: ListenerType }> = {}
+const lockName = 'server_postgres_listener_lock'
+
+function getMessageId(msg: MessageType) {
+  const str = JSON.stringify(msg)
+  return md5(str)
+}
+
+async function getTaskLock(taskId: string) {
+  if (!redisClient) {
+    throw new LogicError(
+      'Unexpected failure! Attempting to get task lock before redis client is initialized'
+    )
+  }
+
+  const lockKey = `${lockName}:${taskId}`
+  const lock = await redisClient.set(lockKey, '1', 'EX', 60, 'NX')
+  const releaseLock = async () => {
+    if (!redisClient) {
+      throw new LogicError(
+        'Unexpected failure! Attempting to release task lock before redis client is initialized'
+      )
+    }
+    await redisClient.del(lockKey)
+  }
+  return lock ? releaseLock : null
+}
+
+async function messageProcessor(msg: MessageType) {
   const listener = listeners[msg.channel]
-  dbNotificationLogger.info(
-    {
-      ...msg,
-      listenerRegistered: !!listener
-    },
-    'Message received'
-  )
+  const messageId = getMessageId(msg)
+
+  const logPayload = {
+    ...msg,
+    listenerRegistered: !!listener,
+    messageId
+  }
   if (!listener) return
 
-  return listener.listener(msg)
+  // Only process if lock acquired
+  const unlock = await getTaskLock(messageId)
+  if (unlock) {
+    dbNotificationLogger.info(
+      logPayload,
+      'Message #{messageId} of channel {channel} starting processing...'
+    )
+    await Promise.resolve(listener.listener(msg))
+    await unlock()
+  } else {
+    dbNotificationLogger.debug(
+      logPayload,
+      'Message #{messageId} of channel {channel} skipped due to missing lock...'
+    )
+  }
 }
 
 function setupListeners(connection: pg.Connection) {
@@ -58,7 +99,9 @@ function reconnectClient() {
       const newConnection = await (
         knex.client as Knex.Knex.Client
       ).acquireRawConnection()
+
       connection = newConnection
+      redisClient = createRedisClient(getRedisUrl(), {})
 
       clearInterval(interval)
       setupConnection(newConnection)
@@ -72,13 +115,14 @@ function reconnectClient() {
 }
 
 export function setupResultListener() {
-  moduleLogger.info('🔔 Initializing postgres notification listening...')
+  dbNotificationLogger.info('🔔 Initializing postgres notification listening...')
   reconnectClient()
 }
 
 export function shutdownResultListener() {
-  moduleLogger.info('...Shutting down postgres notification listening')
+  dbNotificationLogger.info('...Shutting down postgres notification listening')
   shuttingDown = true
+
   if (connection) {
     connection.end()
     connection = undefined
@@ -86,6 +130,11 @@ export function shutdownResultListener() {
 }
 
 export function listenFor(eventName: string, cb: ListenerType) {
+  dbNotificationLogger.info(
+    { eventName },
+    'Registering postgres event listener for {eventName}'
+  )
+
   listeners[eventName] = {
     setup: false,
     listener: cb
