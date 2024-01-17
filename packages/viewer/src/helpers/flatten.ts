@@ -7,18 +7,26 @@
 const flattenObject = function (obj) {
   const flatten = {} as Record<string, unknown>
   for (const k in obj) {
-    if (['id', '__closure', '__parents', 'bbox', 'totalChildrenCount'].includes(k))
+    if (
+      k === 'id' ||
+      k === '__closure' ||
+      k === '__parents' ||
+      k === 'bbox' ||
+      k === 'totalChildrenCount'
+    )
       continue
+
     const v = obj[k]
     if (v === null || v === undefined || Array.isArray(v)) continue
     if (v.constructor === Object) {
       const flattenProp = flattenObject(v)
       for (const pk in flattenProp) {
-        flatten[`${k}.${pk}`] = flattenProp[pk]
+        flatten[k + '.' + pk] = flattenProp[pk]
       }
       continue
     }
-    if (['string', 'number', 'boolean'].includes(typeof v)) flatten[k] = v
+    const type = typeof v
+    if (type === 'string' || type === 'number' || type === 'boolean') flatten[k] = v
   }
   if (obj.id) flatten.id = obj.id
   return flatten

@@ -18,25 +18,8 @@ import {
 import { Geometry } from './converter/Geometry'
 import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
 import { ShadowcatcherPass } from './pipeline/ShadowcatcherPass'
-import { ObjectLayers } from './SpeckleRenderer'
-
-export interface ShadowcatcherConfig {
-  textureSize: number
-  weights: { x: number; y: number; z: number; w: number }
-  blurRadius: number
-  stdDeviation: number
-  sigmoidRange: number
-  sigmoidStrength: number
-}
-
-export const DefaultShadowcatcherConfig: ShadowcatcherConfig = {
-  textureSize: 512,
-  weights: { x: 1, y: 1, z: 0, w: 1 },
-  blurRadius: 16,
-  stdDeviation: 4,
-  sigmoidRange: 1.1,
-  sigmoidStrength: 2
-}
+import { ObjectLayers } from '../IViewer'
+import { DefaultShadowcatcherConfig, ShadowcatcherConfig } from './ShadowcatcherConfig'
 
 export class Shadowcatcher {
   public static readonly MESH_NAME = 'Shadowcatcher'

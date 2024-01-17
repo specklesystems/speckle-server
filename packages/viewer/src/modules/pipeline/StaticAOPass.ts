@@ -34,7 +34,6 @@ import {
   InputNormalsTextureUniform,
   SpeckleProgressivePass
 } from './SpecklePass'
-import { Pipeline } from './Pipeline'
 /**
  * SAO implementation inspired from bhouston previous SAO work
  */
@@ -65,6 +64,7 @@ export class StaticAOPass extends Pass implements SpeckleProgressivePass {
   private params: StaticAoPassParams = DefaultStaticAoPassParams
   private fsQuad: FullScreenQuad
   private frameIndex = 0
+  private accumulationFrames = 0
   private kernels: Array<Array<Vector3>> = []
   private noiseTextures: Array<Texture> = []
 
@@ -160,15 +160,19 @@ export class StaticAOPass extends Pass implements SpeckleProgressivePass {
     this.frameIndex = index
   }
 
+  public setAccumulationFrames(frames: number) {
+    this.accumulationFrames = frames
+  }
+
   public update(scene: Scene, camera: Camera) {
     /** DEFINES */
     this.aoMaterial.defines['PERSPECTIVE_CAMERA'] = (camera as PerspectiveCamera)
       .isPerspectiveCamera
       ? 1
       : 0
-    this.aoMaterial.defines['NUM_FRAMES'] = Pipeline.ACCUMULATE_FRAMES
+    this.aoMaterial.defines['NUM_FRAMES'] = this.accumulationFrames
     this.aoMaterial.defines['KERNEL_SIZE'] = this.params.kernelSize
-    this.accumulateMaterial.defines['NUM_FRAMES'] = Pipeline.ACCUMULATE_FRAMES
+    this.accumulateMaterial.defines['NUM_FRAMES'] = this.accumulationFrames
     /** UNIFORMS */
     this.aoMaterial.uniforms['cameraNear'].value = (
       camera as PerspectiveCamera | OrthographicCamera

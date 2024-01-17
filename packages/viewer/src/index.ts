@@ -1,15 +1,15 @@
 import { Viewer } from './modules/Viewer'
 import {
-  CanonicalView,
   DefaultLightConfiguration,
   DefaultViewerParams,
-  InlineView,
   IViewer,
+  ObjectLayers,
   SelectionEvent,
   SpeckleView,
-  ViewerEvent
+  UpdateFlags,
+  ViewerEvent,
+  ViewerParams
 } from './IViewer'
-import { FilteringState } from './modules/filtering/FilteringManager'
 import {
   PropertyInfo,
   StringPropertyInfo,
@@ -28,19 +28,52 @@ import {
   IntersectionQueryResult
 } from './modules/queries/Query'
 import { Utils } from './modules/Utils'
-import { ObjectLayers } from './modules/SpeckleRenderer'
-import { DiffResult, VisualDiffMode } from './modules/Differ'
 import { BatchObject } from './modules/batching/BatchObject'
 import { Box3, Vector3 } from 'three'
 import {
   MeasurementOptions,
-  MeasurementType
-} from './modules/measurements/Measurements'
+  MeasurementType,
+  MeasurementsExtension
+} from './modules/extensions/measurements/MeasurementsExtension'
 import { Units } from './modules/converter/Units'
+import { SelectionExtension } from './modules/extensions/SelectionExtension'
+import { CameraController } from './modules/extensions/core-extensions/CameraController'
+import {
+  CameraControllerEvent,
+  CanonicalView,
+  ICameraProvider,
+  InlineView
+} from './modules/extensions/core-extensions/Providers'
+import { SectionTool } from './modules/extensions/SectionTool'
+import { SectionOutlines } from './modules/extensions/SectionOutlines'
+import {
+  FilteringExtension,
+  FilteringState
+} from './modules/extensions/FilteringExtension'
+import { Extension } from './modules/extensions/core-extensions/Extension'
+import { ExplodeExtension } from './modules/extensions/ExplodeExtension'
+import {
+  DiffExtension,
+  DiffResult,
+  VisualDiffMode
+} from './modules/extensions/DiffExtension'
+import { Loader } from './modules/loaders/Loader'
+import { SpeckleLoader } from './modules/loaders/Speckle/SpeckleLoader'
+import { ObjLoader } from './modules/loaders/OBJ/ObjLoader'
+import { LegacyViewer } from './modules/LegacyViewer'
+import { SpeckleType } from './modules/loaders/GeometryConverter'
+import Input, { InputEvent } from './modules/input/Input'
+import { GeometryType } from './modules/batching/Batch'
+import MeshBatch from './modules/batching/MeshBatch'
+import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial'
+import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial'
+import { SpeckleText } from './modules/objects/SpeckleText'
+import { NodeRenderView } from './modules/tree/NodeRenderView'
 
 export {
   Viewer,
   DebugViewer,
+  LegacyViewer,
   DefaultViewerParams,
   ViewerEvent,
   DefaultLightConfiguration,
@@ -51,16 +84,41 @@ export {
   WorldTree,
   VisualDiffMode,
   MeasurementType,
-  Units
+  Units,
+  Extension,
+  ICameraProvider,
+  SelectionExtension,
+  CameraController,
+  SectionTool,
+  SectionOutlines,
+  MeasurementsExtension,
+  FilteringExtension,
+  CameraControllerEvent,
+  ExplodeExtension,
+  DiffExtension,
+  Loader,
+  SpeckleLoader,
+  ObjLoader,
+  UpdateFlags,
+  SpeckleType,
+  Input,
+  InputEvent,
+  ObjectLayers,
+  GeometryType,
+  MeshBatch,
+  SpeckleStandardMaterial,
+  SpeckleTextMaterial,
+  SpeckleText,
+  NodeRenderView
 }
 
 export type {
   IViewer,
+  ViewerParams,
   SelectionEvent,
   PropertyInfo,
   StringPropertyInfo,
   NumericPropertyInfo,
-  FilteringState,
   SunLightConfiguration,
   DataTree,
   ObjectPredicate,
@@ -70,7 +128,6 @@ export type {
   InlineView,
   TreeNode,
   NodeData,
-  ObjectLayers,
   PointQuery,
   IntersectionQuery,
   QueryResult,
@@ -78,5 +135,6 @@ export type {
   IntersectionQueryResult,
   Utils,
   DiffResult,
-  MeasurementOptions
+  MeasurementOptions,
+  FilteringState
 }
