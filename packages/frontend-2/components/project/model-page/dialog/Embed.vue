@@ -81,7 +81,7 @@ const props = defineProps<{
   projectId: string
   modelId: string
   versionId?: string
-  visibility: ProjectVisibility
+  visibility?: ProjectVisibility
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })

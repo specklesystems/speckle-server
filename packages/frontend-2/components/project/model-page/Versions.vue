@@ -287,10 +287,6 @@ const onBatchDelete = () => {
 }
 
 const handleEmbed = (versionId: string) => {
-  if (process.server) {
-    throw new Error('Not supported in SSR')
-  }
-
   currentVersionId.value = versionId
   embedDialogOpen.value = true
 }

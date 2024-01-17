@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Menu as="div" class="ml-2 flex items-center">
+    <Menu as="div" class="flex items-center">
       <MenuButton v-slot="{ open: userOpen }">
         <span class="sr-only">Open user menu</span>
         <UserAvatar v-if="!userOpen" size="lg" :user="activeUser" hover-effect />

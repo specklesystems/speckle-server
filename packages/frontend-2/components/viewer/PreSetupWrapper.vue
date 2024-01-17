@@ -68,6 +68,14 @@
     :project-created-at="formattedDate"
     :project-url="route.fullPath"
   />
+  <Portal to="primary-actions">
+    <HeaderNavShare
+      :model-id="modelId"
+      :version-id="versionId"
+      :project-id="projectId"
+      :visibility="project?.visibility"
+    />
+  </Portal>
 </template>
 <script setup lang="ts">
 import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
@@ -81,6 +89,8 @@ const { embedOptions } = useEmbedState()
 const tourState = useTourStageState()
 
 const projectId = computed(() => route.params.id as string)
+const modelId = computed(() => route.params.modelId as string)
+const versionId = computed(() => route.params.versionId as string)
 
 const state = useSetupViewer({
   projectId
@@ -97,6 +107,7 @@ graphql(`
     id
     createdAt
     name
+    visibility
   }
 `)
 

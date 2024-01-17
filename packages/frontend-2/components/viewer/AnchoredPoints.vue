@@ -37,7 +37,7 @@
       <ViewerScope :state="state">
         <div
           v-if="usersWithAvatars.length > 0"
-          class="px-1 py-1 flex space-x-1 items-center"
+          class="scale-90 flex space-x-1 items-center"
         >
           <!-- <UserAvatarGroup :users="activeUserAvatars" :overlap="false" hover-effect /> -->
           <template v-for="user in usersWithAvatars" :key="user.id">
