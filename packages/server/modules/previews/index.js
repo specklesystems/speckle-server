@@ -31,7 +31,7 @@ const cors = require('cors')
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 const previewErrorImage = require.resolve('#/assets/previews/images/preview_error.png')
 
-exports.init = (app) => {
+exports.init = (app, isInitial) => {
   if (process.env.DISABLE_PREVIEWS) {
     moduleLogger.warn('📸 Object preview module is DISABLED')
   } else {
@@ -266,7 +266,9 @@ exports.init = (app) => {
     )
   })
 
-  listenForPreviewGenerationUpdates()
+  if (isInitial) {
+    listenForPreviewGenerationUpdates()
+  }
 }
 
 exports.finalize = () => {}

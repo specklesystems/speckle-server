@@ -373,15 +373,31 @@ export async function createCommit(
   return item
 }
 
-export async function getObjectCommitsWithStreamIds(objectIds: string[]) {
+export async function getObjectCommitsWithStreamIds(
+  objectIds: string[],
+  options?: {
+    /**
+     * Optionally also filter by stream ids
+     */
+    streamIds?: string[]
+  }
+) {
   if (!objectIds?.length) return []
-  return await Commits.knex()
+  const { streamIds } = options || {}
+
+  const q = Commits.knex()
     .select<Array<CommitRecord & { streamId: string }>>([
       ...Commits.cols,
       StreamCommits.col.streamId
     ])
     .whereIn(Commits.col.referencedObject, objectIds)
     .innerJoin(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
+
+  if (streamIds?.length) {
+    q.whereIn(StreamCommits.col.streamId, streamIds)
+  }
+
+  return await q
 }
 
 export async function getAllBranchCommits(params: {
