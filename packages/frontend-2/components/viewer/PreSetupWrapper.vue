@@ -1,17 +1,5 @@
 <template>
-  <button
-    v-if="!isLoaded"
-    class="group flex items-center justify-center absolute inset-0"
-    @click="isLoaded = true"
-  >
-    <div
-      :class="embedOptions.isTransparent ? '' : '-mt-8'"
-      class="group-hover:scale-110 group-hover:shadow-xl shadow h-14 w-14 rounded-full border border-foreground bg-primary flex items-center justify-center transition"
-    >
-      <PlayIcon class="h-6 w-6 ml-[3px] text-foreground" />
-    </div>
-  </button>
-  <LazyViewerPostSetupWrapper v-else>
+  <ViewerPostSetupWrapper>
     <div class="absolute top-0 left-0 w-screen h-[100dvh]">
       <!-- Nav -->
       <Portal to="navigation">
@@ -74,7 +62,7 @@
         <ViewerGlobalFilterReset class="z-20" />
       </ClientOnly>
     </div>
-  </LazyViewerPostSetupWrapper>
+  </ViewerPostSetupWrapper>
   <ViewerEmbedFooter
     :project-name="project?.name"
     :project-created-at="formattedDate"
@@ -84,9 +72,9 @@
 <script setup lang="ts">
 import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
 import { useSetupViewer } from '~~/lib/viewer/composables/setup'
-import { PlayIcon } from '@heroicons/vue/20/solid'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import { graphql } from '~~/lib/common/generated/gql'
 
 const route = useRoute()
 const { embedOptions } = useEmbedState()
@@ -104,7 +92,13 @@ const {
   }
 } = state
 
-const isLoaded = ref(true)
+graphql(`
+  fragment ModelPageProject on Project {
+    id
+    createdAt
+    name
+  }
+`)
 
 const title = computed(() =>
   project.value?.name.length ? `Viewer - ${project.value.name}` : ''
@@ -115,18 +109,6 @@ dayjs.extend(relativeTime)
 const formattedDate = computed(() => {
   return project.value?.createdAt ? dayjs(project.value.createdAt).fromNow() : ''
 })
-
-watch(
-  embedOptions,
-  (newOptions) => {
-    if (newOptions.manualLoad === true) {
-      isLoaded.value = false
-    } else {
-      isLoaded.value = true
-    }
-  },
-  { immediate: true }
-)
 
 useHead({ title })
 </script>
