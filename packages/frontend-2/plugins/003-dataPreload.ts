@@ -33,7 +33,13 @@ export default defineNuxtPlugin(async (ctx) => {
   if (idParam && path.startsWith('/projects/')) {
     promises.push(
       preload({
-        queries: [{ query: projectAccessCheckQuery, variables: { id: idParam } }]
+        queries: [
+          {
+            query: projectAccessCheckQuery,
+            variables: { id: idParam },
+            context: { skipLoggingErrors: true }
+          }
+        ]
       })
     )
   }
