@@ -53,6 +53,8 @@ const getOrInitInternalCache = async (params: { redis: Optional<Redis> }) => {
         }
       },
       getMultiple: async (keys) => {
+        if (!keys?.length) return {}
+
         const vals = await client.mget(...keys)
         const keyVals = {} as Record<string, unknown>
         for (let i = 0; i < keys.length; i++) {
@@ -114,8 +116,8 @@ const getOrInitInternalCache = async (params: { redis: Optional<Redis> }) => {
 }
 
 /**
- * Cache utility that is available for the lifetime of the entire server process or the tab session on the client-side
- * The cache itself is stored in redis, but if its unavailable, then we use a basic in-memory store
+ * In SSR: Provides a redis cache that is shared across app processes and requests
+ * In CSR: Provides an in-memory cache that is shared across the app session
  */
 export default defineNuxtPlugin(async (nuxtApp) => {
   const internalCache = await getOrInitInternalCache({

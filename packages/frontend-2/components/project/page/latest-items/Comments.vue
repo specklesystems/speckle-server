@@ -53,16 +53,13 @@ graphql(`
     createdAt
     updatedAt
     archived
-    repliesCount: replies(limit: 0) {
-      totalCount
-    }
+    replyCount
     replyAuthors(limit: 4) {
       totalCount
       items {
         ...FormUsersSelectItem
       }
     }
-    ...LinkableComment
   }
 `)
 

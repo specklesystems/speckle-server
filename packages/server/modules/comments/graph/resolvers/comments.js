@@ -134,6 +134,9 @@ module.exports = {
         authorIds: authorIds.slice(0, args.limit || 25)
       }
     },
+    async replyCount(parent, _args, ctx) {
+      return await ctx.loaders.comments.getReplyCount.load(parent.id)
+    },
     async viewerResources(parent) {
       return await getViewerResourcesForComment(parent.streamId, parent.id)
     },

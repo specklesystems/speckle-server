@@ -35,8 +35,8 @@
           <div class="truncate text-sm">{{ thread.rawText }}</div>
           <div class="space-x-1">
             <span class="text-xs font-bold text-primary">
-              {{ thread.repliesCount.totalCount }}
-              {{ thread.repliesCount.totalCount === 1 ? 'reply' : 'replies' }}
+              {{ thread.replyCount }}
+              {{ thread.replyCount === 1 ? 'reply' : 'replies' }}
             </span>
             <span class="text-xs">
               {{ updatedAt }}
@@ -52,7 +52,7 @@ import dayjs from 'dayjs'
 import type { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
 import { times } from 'lodash-es'
-import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
+import { getLightLinkToThread } from '~~/lib/viewer/helpers/comments'
 import { CheckCircleIcon } from '@heroicons/vue/24/solid'
 import type { AvatarUserWithId } from '@speckle/ui-components'
 
@@ -90,5 +90,7 @@ const allAvatars = computed((): AvatarUserWithId[] => [
   )
 ])
 
-const threadLink = computed(() => getLinkToThread(props.projectId, props.thread))
+const threadLink = computed(() =>
+  getLightLinkToThread(props.projectId, props.thread.id)
+)
 </script>
