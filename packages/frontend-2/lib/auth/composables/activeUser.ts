@@ -8,12 +8,15 @@ export const activeUserQuery = graphql(`
     activeUser {
       id
       email
+      company
+      bio
       name
       role
       avatar
       isOnboardingFinished
       createdAt
       verified
+      notificationPreferences
     }
   }
 `)

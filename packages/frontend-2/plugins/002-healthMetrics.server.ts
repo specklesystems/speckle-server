@@ -13,6 +13,14 @@ export default defineNuxtPlugin((ctx) => {
     path: `${String(name)}: ${path}`
   }
 
+  logger.debug(
+    {
+      routeName: name,
+      routePath: path
+    },
+    '{routePath} SSR render started...'
+  )
+
   ctx.hook('app:rendered', () => {
     const endTime = Date.now() - state.start
     logger.info(

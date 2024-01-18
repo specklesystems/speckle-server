@@ -1,8 +1,8 @@
 <template>
   <ProjectPageLatestItems
-    :count="project.commentThreadCount.totalCount"
+    :count="project?.commentThreadCount.totalCount || 0"
     :hide-filters="showCommentsIntro"
-    :see-all-url="projectDiscussionsRoute(project.id)"
+    :see-all-url="projectDiscussionsRoute(projectId)"
     title="Discussions"
   >
     <template #default="{ gridOrList }">
@@ -31,6 +31,7 @@ import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { useQuery } from '@vue/apollo-composable'
 import { latestCommentThreadsQuery } from '~~/lib/projects/graphql/queries'
 import { projectDiscussionsRoute } from '~~/lib/common/helpers/route'
+import type { Optional } from '@speckle/shared'
 
 graphql(`
   fragment ProjectPageLatestItemsComments on Project {
@@ -66,14 +67,15 @@ graphql(`
 `)
 
 const props = defineProps<{
-  project: ProjectPageLatestItemsCommentsFragment
+  projectId: string
+  project: Optional<ProjectPageLatestItemsCommentsFragment>
 }>()
 
 const { result: latestCommentsResult } = useQuery(latestCommentThreadsQuery, () => ({
-  projectId: props.project?.id
+  projectId: props.projectId
 }))
 
-const showCommentsIntro = computed(
-  () => props.project.commentThreadCount.totalCount < 1
+const showCommentsIntro = computed(() =>
+  props.project ? props.project.commentThreadCount.totalCount < 1 : false
 )
 </script>
