@@ -35,8 +35,8 @@
           <div class="truncate text-sm">{{ thread.rawText }}</div>
           <div class="space-x-1">
             <span class="text-xs font-bold text-primary">
-              {{ thread.replyCount }}
-              {{ thread.replyCount === 1 ? 'reply' : 'replies' }}
+              {{ thread.repliesCount.totalCount }}
+              {{ thread.repliesCount.totalCount === 1 ? 'reply' : 'replies' }}
             </span>
             <span class="text-xs">
               {{ updatedAt }}

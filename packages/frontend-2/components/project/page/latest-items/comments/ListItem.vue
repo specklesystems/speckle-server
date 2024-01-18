@@ -27,8 +27,8 @@
         <div class="w-full px-2 flex justify-between text-xs">
           {{ updatedAt }}
           <span class="ml-4 text-xs font-bold text-primary">
-            {{ thread.replyCount }}
-            {{ thread.replyCount === 1 ? 'reply' : 'replies' }}
+            {{ thread.repliesCount.totalCount }}
+            {{ thread.repliesCount.totalCount === 1 ? 'reply' : 'replies' }}
           </span>
         </div>
       </div>

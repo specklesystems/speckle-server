@@ -53,7 +53,9 @@ graphql(`
     createdAt
     updatedAt
     archived
-    replyCount
+    repliesCount: replies(limit: 0) {
+      totalCount
+    }
     replyAuthors(limit: 4) {
       totalCount
       items {

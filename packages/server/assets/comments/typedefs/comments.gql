@@ -150,10 +150,6 @@ type Comment {
   Get authors of replies to this comment
   """
   replyAuthors(limit: Int! = 25): CommentReplyAuthorCollection!
-  """
-  Get the total number of replies to this comment
-  """
-  replyCount: Int!
   reactions: [String] @deprecated(reason: "Not actually implemented")
   """
   Whether or not comment is a reply to another comment
