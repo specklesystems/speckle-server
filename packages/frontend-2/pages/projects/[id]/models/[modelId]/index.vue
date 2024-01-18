@@ -2,7 +2,7 @@
   <button
     v-if="isManualLoad"
     class="group flex items-center justify-center absolute inset-0"
-    @click="isManualLoad = true"
+    @click="isManualLoad = false"
   >
     <div
       class="group-hover:scale-110 group-hover:shadow-xl shadow h-14 w-14 rounded-full border border-foreground bg-primary flex items-center justify-center transition"

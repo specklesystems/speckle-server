@@ -256,7 +256,6 @@ export type InjectableViewerState = Readonly<{
     explodeFactor: Ref<number>
     viewerBusy: WritableComputedRef<boolean>
     selection: Ref<Nullable<Vector3>>
-    disableZoom: Ref<boolean>
     measurement: {
       enabled: Ref<boolean>
       options: Ref<MeasurementOptions>
@@ -897,7 +896,6 @@ function setupInterfaceState(
         hasAnyFiltersApplied
       },
       highlightedObjectIds,
-      disableZoom: ref(false),
       measurement: {
         enabled: ref(false),
         options: ref<MeasurementOptions>({

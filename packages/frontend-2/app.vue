@@ -23,7 +23,8 @@ useHead({
     lang: 'en'
   },
   bodyAttrs: {
-    class: 'simple-scrollbar'
+    class:
+      'simple-scrollbar bg-foundation-page text-foreground has-[.viewer-transparent]:bg-transparent'
   }
 })
 
