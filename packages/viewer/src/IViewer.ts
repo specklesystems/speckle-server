@@ -1,15 +1,15 @@
 import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
-import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
-import { DataTree } from './modules/tree/DataTree'
+import { Query, QueryArgsResultMap } from './modules/queries/Query'
 import { TreeNode, WorldTree } from './modules/tree/WorldTree'
 import { Utils } from './modules/Utils'
 import { World } from './modules/World'
 import SpeckleRenderer from './modules/SpeckleRenderer'
 import { Extension } from './modules/extensions/core-extensions/Extension'
-import Input from './modules/input/Input'
 import { Loader } from './modules/loaders/Loader'
+
+export type SpeckleObject = Record<string, unknown>
 
 export interface ViewerParams {
   showStats: boolean
@@ -125,14 +125,13 @@ export enum UpdateFlags {
 }
 
 export interface IViewer {
-  get input(): Input
   get Utils(): Utils
   get World(): World
 
   init(): Promise<void>
   resize(): void
   on(eventType: ViewerEvent, handler: (arg) => void)
-  requestRender(flags?: number): void
+  requestRender(flags?: UpdateFlags): void
 
   setLightConfiguration(config: LightConfiguration): void
 
@@ -151,10 +150,8 @@ export interface IViewer {
   ): Promise<PropertyInfo[]>
 
   /** Data ops */
-  getDataTree(): DataTree
   getWorldTree(): WorldTree
   query<T extends Query>(query: T): QueryArgsResultMap[T['operation']]
-  queryAsync(query: Query): Promise<QueryResult>
 
   getRenderer(): SpeckleRenderer
   getContainer(): HTMLElement

@@ -16,7 +16,9 @@ import {
   AllBatchUpdateRange,
   Batch,
   BatchUpdateRange,
+  DrawGroup,
   GeometryType,
+  INSTANCE_TRANSFORM_BUFFER_STRIDE,
   NoneBatchUpdateRange
 } from './Batch'
 import SpeckleInstancedMesh from '../objects/SpeckleInstancedMesh'
@@ -29,15 +31,7 @@ import { InstancedBatchObject } from './InstancedBatchObject'
 import Logger from 'js-logger'
 import Materials from '../materials/Materials'
 
-export interface DrawGroup {
-  start: number
-  count: number
-  materialIndex?: number
-}
-
 export default class InstancedMeshBatch implements Batch {
-  public static readonly INSTANCE_TRANSFORM_BUFFER_STRIDE = 16
-  public static readonly INSTANCE_GRADIENT_BUFFER_STRIDE = 1
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
@@ -489,12 +483,12 @@ export default class InstancedMeshBatch implements Batch {
         let subArray = sourceTransformBuffer.subarray(start, start + count)
         targetTransformBuffer.set(subArray, targetBufferOffset)
         subArray = sourceGradientBuffer.subarray(
-          start / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
-          (start + count) / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+          start / INSTANCE_TRANSFORM_BUFFER_STRIDE,
+          (start + count) / INSTANCE_TRANSFORM_BUFFER_STRIDE
         )
         targetGradientBuffer.set(
           subArray,
-          targetBufferOffset / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+          targetBufferOffset / INSTANCE_TRANSFORM_BUFFER_STRIDE
         )
         let rvElemCount = 0
         for (let m = 0; m < scratchRvs.length; m++) {
@@ -549,8 +543,7 @@ export default class InstancedMeshBatch implements Batch {
     this.materials.length = 0
     this.groups.push({
       start: 0,
-      count:
-        this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
+      count: this.renderViews.length * INSTANCE_TRANSFORM_BUFFER_STRIDE,
       materialIndex: 0
     })
     this.materials.push(this.batchMaterial)
@@ -581,22 +574,22 @@ export default class InstancedMeshBatch implements Batch {
     const batchObjects = []
     let instanceBVH = null
     this.instanceTransformBuffer0 = new Float32Array(
-      this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+      this.renderViews.length * INSTANCE_TRANSFORM_BUFFER_STRIDE
     )
     this.instanceTransformBuffer1 = new Float32Array(
-      this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+      this.renderViews.length * INSTANCE_TRANSFORM_BUFFER_STRIDE
     )
     const targetInstanceTransformBuffer = this.getCurrentTransformBuffer()
 
     for (let k = 0; k < this.renderViews.length; k++) {
       this.renderViews[k].renderData.geometry.transform.toArray(
         targetInstanceTransformBuffer,
-        k * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+        k * INSTANCE_TRANSFORM_BUFFER_STRIDE
       )
       this.renderViews[k].setBatchData(
         this.id,
-        k * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
-        InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+        k * INSTANCE_TRANSFORM_BUFFER_STRIDE,
+        INSTANCE_TRANSFORM_BUFFER_STRIDE
       )
       const batchObject = new InstancedBatchObject(this.renderViews[k], k)
       if (!instanceBVH) {
@@ -652,8 +645,7 @@ export default class InstancedMeshBatch implements Batch {
 
     this.groups.push({
       start: 0,
-      count:
-        this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
+      count: this.renderViews.length * INSTANCE_TRANSFORM_BUFFER_STRIDE,
       materialIndex: 0
     })
     this.mesh.updateDrawGroups(

@@ -8,7 +8,7 @@ import {
   Matrix4,
   Vector3
 } from 'three'
-import { SpeckleObject } from '../tree/DataTree'
+import { SpeckleObject } from '../../IViewer'
 
 export enum GeometryAttributes {
   POSITION = 'POSITION',

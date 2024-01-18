@@ -14,12 +14,12 @@ import {
   AllBatchUpdateRange,
   Batch,
   BatchUpdateRange,
+  DrawGroup,
   GeometryType,
   NoneBatchUpdateRange
 } from './Batch'
 import Logger from 'js-logger'
 import { ObjectLayers } from '../../IViewer'
-import { DrawGroup } from './InstancedMeshBatch'
 import Materials from '../materials/Materials'
 
 export default class PointBatch implements Batch {

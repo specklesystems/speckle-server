@@ -1,36 +1,35 @@
+import { FilteringExtension, FilteringState } from './extensions/FilteringExtension'
 import {
-  Viewer,
-  BatchObject,
-  PropertyInfo,
-  DataTree,
-  WorldTree,
-  QueryResult,
-  SunLightConfiguration,
-  SpeckleView,
   CanonicalView,
   InlineView,
-  VisualDiffMode,
-  DiffResult,
-  MeasurementOptions,
-  CameraController,
-  DiffExtension,
-  ExplodeExtension,
-  MeasurementsExtension,
-  SectionOutlines,
-  SectionTool,
-  SelectionExtension,
-  TreeNode,
-  SpeckleLoader,
-  DefaultViewerParams,
-  ViewerParams,
-  SelectionEvent
-} from '..'
-import { FilteringExtension, FilteringState } from './extensions/FilteringExtension'
-import { PolarView } from './extensions/core-extensions/Providers'
+  PolarView
+} from './extensions/core-extensions/Providers'
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Queries } from './queries/Queries'
-import { Query, QueryArgsResultMap } from './queries/Query'
-import { DataTreeBuilder } from './tree/DataTree'
+import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
+import { DataTree, DataTreeBuilder } from './deprecated/DataTree'
+import { CameraController } from './extensions/core-extensions/CameraController'
+import { SelectionExtension } from './extensions/SelectionExtension'
+import { SectionTool } from './extensions/SectionTool'
+import { Viewer } from './Viewer'
+import {
+  DefaultViewerParams,
+  SelectionEvent,
+  SpeckleView,
+  SunLightConfiguration,
+  ViewerParams
+} from '../IViewer'
+import { SectionOutlines } from './extensions/SectionOutlines'
+import { TreeNode, WorldTree } from './tree/WorldTree'
+import {
+  MeasurementOptions,
+  MeasurementsExtension
+} from './extensions/measurements/MeasurementsExtension'
+import { ExplodeExtension } from './extensions/ExplodeExtension'
+import { DiffExtension, DiffResult, VisualDiffMode } from './extensions/DiffExtension'
+import { PropertyInfo } from './filtering/PropertyManager'
+import { BatchObject } from './batching/BatchObject'
+import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler

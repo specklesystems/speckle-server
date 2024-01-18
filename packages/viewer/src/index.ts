@@ -5,6 +5,7 @@ import {
   IViewer,
   ObjectLayers,
   SelectionEvent,
+  SpeckleObject,
   SpeckleView,
   UpdateFlags,
   ViewerEvent,
@@ -16,9 +17,8 @@ import {
   NumericPropertyInfo
 } from './modules/filtering/PropertyManager'
 import { SunLightConfiguration } from './IViewer'
-import { DataTree, ObjectPredicate, SpeckleObject } from './modules/tree/DataTree'
+import { DataTree, ObjectPredicate } from './modules/deprecated/DataTree'
 import { World } from './modules/World'
-import { DebugViewer } from './modules/DebugViewer'
 import { NodeData, TreeNode, WorldTree } from './modules/tree/WorldTree'
 import {
   PointQuery,
@@ -72,7 +72,6 @@ import { NodeRenderView } from './modules/tree/NodeRenderView'
 
 export {
   Viewer,
-  DebugViewer,
   LegacyViewer,
   DefaultViewerParams,
   ViewerEvent,
