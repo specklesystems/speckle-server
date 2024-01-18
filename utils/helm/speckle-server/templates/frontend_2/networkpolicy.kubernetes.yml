@@ -42,4 +42,6 @@ spec:
       ports:
         - port: 3000
 {{- end -}}
+    # redis
+{{ include "speckle.networkpolicy.egress.redis" $ | indent 4 }}
 {{- end -}}
