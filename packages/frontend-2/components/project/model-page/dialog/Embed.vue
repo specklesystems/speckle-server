@@ -27,16 +27,16 @@
       </p>
     </div>
     <div v-else>
-      <div class="flex gap-8 mb-6">
+      <div class="flex flex-col lg:flex-row gap-8 mb-6">
         <iframe
           title="Embed Preview"
           :src="updatedUrl"
           width="600"
           height="400"
-          class="shrink-0 w-[600px] h-[400px]"
+          class="shrink-0 w-[600px] h-[400px] hidden sm:block order-2 lg:order-1 mx-auto"
           scrolling="no"
         ></iframe>
-        <div class="flex-1">
+        <div class="flex-1 order-1 lg:order-2§">
           <h4 class="font-bold text-sm text-foreground-2 mb-2 ml-0.5">Code</h4>
           <FormClipboardInput :value="iframeCode" is-multiline />
           <p class="text-foreground-2 mt-2 mb-5 ml-0.5">

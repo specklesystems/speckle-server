@@ -21,14 +21,16 @@
           <input
             id="intensity"
             v-model="explodeFactor"
-            class="h-2 mr-2"
+            class="w-24 sm:w-32 h-2 mr-2"
             type="range"
             name="intensity"
             min="0"
             max="1"
             step="0.01"
           />
-          <label class="text-sm text-foreground-2" for="intensity">Intensity</label>
+          <label class="text-xs sm:text-sm text-foreground-2" for="intensity">
+            Intensity
+          </label>
         </div>
       </PopoverPanel>
     </Transition>

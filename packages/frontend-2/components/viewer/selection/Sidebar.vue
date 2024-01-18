@@ -1,7 +1,7 @@
 <template>
   <ViewerCommentsPortalOrDiv v-if="objects.length !== 0" to="bottomPanel">
     <div
-      :class="`sm:bg-foundation simple-scrollbar z-10 relative sm:fixed sm:top-16 sm:right-4 sm:top-[4rem] sm:right-4 sm:mb-4 sm:max-w-64 min-h-[4.75rem] max-h-[50vh] sm:max-h-[calc(100dvh-5.5rem)] w-full sm:w-64 overflow-y-auto sm:rounded-md sm:shadow transition ${
+      :class="`sm:bg-foundation simple-scrollbar z-10 relative sm:fixed sm:top-16 sm:right-4 sm:top-[4rem] sm:right-4 sm:mb-4 sm:max-w-64 min-h-[3rem] sm:min-h-[4.75rem] max-h-[50vh] sm:max-h-[calc(100dvh-5.5rem)] w-full sm:w-64 overflow-y-auto sm:rounded-md sm:shadow transition ${
         objects.length !== 0
           ? 'translate-x-0 opacity-100'
           : 'translate-x-[120%] opacity-0'

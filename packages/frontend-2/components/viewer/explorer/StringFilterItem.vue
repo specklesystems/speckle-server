@@ -9,7 +9,7 @@
       } ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}`"
       @click="setSelection()"
     >
-      <div class="flex space-x-2 items-center flex-shrink truncate text-sm">
+      <div class="flex space-x-2 items-center flex-shrink truncate text-xs sm:text-sm">
         <span
           v-if="color"
           class="w-3 h-3 rounded"

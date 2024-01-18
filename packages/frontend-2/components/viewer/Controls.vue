@@ -12,7 +12,7 @@
     >
       <!-- Models -->
       <ViewerControlsButtonToggle
-        v-tippy="modelsShortcut"
+        v-tippy="isSmallerOrEqualSm ? undefined : modelsShortcut"
         :active="activeControl === 'models'"
         @click="toggleActiveControl('models')"
       >
@@ -21,7 +21,7 @@
 
       <!-- Explorer -->
       <ViewerControlsButtonToggle
-        v-tippy="explorerShortcut"
+        v-tippy="isSmallerOrEqualSm ? undefined : explorerShortcut"
         :active="activeControl === 'explorer'"
         @click="toggleActiveControl('explorer')"
       >
@@ -38,7 +38,7 @@
 
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
-        v-tippy="discussionsShortcut"
+        v-tippy="isSmallerOrEqualSm ? undefined : discussionsShortcut"
         :active="activeControl === 'discussions'"
         @click="toggleActiveControl('discussions')"
       >
@@ -48,7 +48,7 @@
       <!-- Automateeeeeeee FTW -->
       <ViewerControlsButtonToggle
         v-if="allAutomationRuns.length !== 0"
-        v-tippy="summary.longSummary"
+        v-tippy="isSmallerOrEqualSm ? undefined : summary.longSummary"
         :active="activeControl === 'automate'"
         class="p-2"
         @click="toggleActiveControl('automate')"
@@ -63,64 +63,87 @@
 
       <!-- Measurements -->
       <ViewerControlsButtonToggle
-        v-tippy="measureShortcut"
+        v-tippy="isSmallerOrEqualSm ? undefined : measureShortcut"
         :active="activeControl === 'measurements'"
         @click="toggleMeasurements"
       >
         <IconMeasurements class="h-4 w-4 sm:h-5 sm:w-5" />
       </ViewerControlsButtonToggle>
 
-      <!-- Standard viewer controls -->
-      <ViewerControlsButtonGroup>
-        <!-- Views -->
-        <ViewerViewsMenu v-tippy="'Views'" />
-        <!-- Zoom extents -->
-        <ViewerControlsButtonToggle
-          v-tippy="zoomExtentsShortcut"
-          flat
-          @click="trackAndzoomExtentsOrSelection()"
+      <div class="w-8 flex gap-2">
+        <div class="sm:hidden">
+          <ViewerControlsButtonToggle
+            v-tippy="isSmallerOrEqualSm ? undefined : zoomExtentsShortcut"
+            :active="activeControl === 'mobileOverflow'"
+            @click="toggleActiveControl('mobileOverflow')"
+          >
+            <ChevronDoubleRightIcon
+              class="h-4 w-4 sm:h-5 sm:w-5 transition"
+              :class="activeControl === 'mobileOverflow' ? 'rotate-180' : ''"
+            />
+          </ViewerControlsButtonToggle>
+        </div>
+        <div
+          class="-z-10 -mt-28 sm:mt-0 bg-foundation sm:bg-transparent flex flex-col sm:gap-2 rounded-lg transition-all"
+          :class="
+            activeControl === 'mobileOverflow' ? '' : '-translate-x-20 sm:translate-x-0'
+          "
         >
-          <ArrowsPointingOutIcon class="h-4 w-4 sm:h-5 sm:w-5" />
-        </ViewerControlsButtonToggle>
+          <ViewerControlsButtonGroup>
+            <!-- Views -->
+            <ViewerViewsMenu v-tippy="isSmallerOrEqualSm ? undefined : 'Views'" />
+            <!-- Zoom extents -->
+            <ViewerControlsButtonToggle
+              v-tippy="isSmallerOrEqualSm ? undefined : zoomExtentsShortcut"
+              flat
+              @click="trackAndzoomExtentsOrSelection()"
+            >
+              <ArrowsPointingOutIcon class="h-4 w-4 sm:h-5 sm:w-5" />
+            </ViewerControlsButtonToggle>
 
-        <!-- Sun and lights -->
-        <ViewerSunMenu v-tippy="'Light Controls'" />
-      </ViewerControlsButtonGroup>
-      <ViewerControlsButtonGroup>
-        <!-- Projection type -->
-        <!-- TODO (Question for fabs): How to persist state between page navigation? e.g., swap to iso mode, move out, move back, iso mode is still on in viewer but not in ui -->
-        <ViewerControlsButtonToggle
-          v-tippy="projectionShortcut"
-          flat
-          secondary
-          :active="isOrthoProjection"
-          @click="trackAndtoggleProjection()"
-        >
-          <IconPerspective v-if="isOrthoProjection" class="h-4 w-4 sm:h-5 sm:w-5" />
-          <IconPerspectiveMore v-else class="h-4 w-4 sm:h-5 sm:w-5" />
-        </ViewerControlsButtonToggle>
+            <!-- Sun and lights -->
+            <ViewerSunMenu
+              v-tippy="isSmallerOrEqualSm ? undefined : 'Light Controls'"
+            />
+          </ViewerControlsButtonGroup>
+          <ViewerControlsButtonGroup>
+            <!-- Projection type -->
+            <!-- TODO (Question for fabs): How to persist state between page navigation? e.g., swap to iso mode, move out, move back, iso mode is still on in viewer but not in ui -->
+            <ViewerControlsButtonToggle
+              v-tippy="isSmallerOrEqualSm ? undefined : projectionShortcut"
+              flat
+              secondary
+              :active="isOrthoProjection"
+              @click="trackAndtoggleProjection()"
+            >
+              <IconPerspective v-if="isOrthoProjection" class="h-4 w-4 sm:h-5 sm:w-5" />
+              <IconPerspectiveMore v-else class="h-4 w-4 sm:h-5 sm:w-5" />
+            </ViewerControlsButtonToggle>
 
-        <!-- Section Box -->
-        <ViewerControlsButtonToggle
-          v-tippy="sectionBoxShortcut"
-          flat
-          secondary
-          :active="isSectionBoxEnabled"
-          @click="toggleSectionBox()"
-        >
-          <ScissorsIcon class="h-4 w-4 sm:h-5 sm:w-5" />
-        </ViewerControlsButtonToggle>
+            <!-- Section Box -->
+            <ViewerControlsButtonToggle
+              v-tippy="isSmallerOrEqualSm ? undefined : sectionBoxShortcut"
+              flat
+              secondary
+              :active="isSectionBoxEnabled"
+              @click="toggleSectionBox()"
+            >
+              <ScissorsIcon class="h-4 w-4 sm:h-5 sm:w-5" />
+            </ViewerControlsButtonToggle>
 
-        <!-- Explosion -->
-        <ViewerExplodeMenu v-tippy="'Explode'" />
+            <!-- Explosion -->
+            <ViewerExplodeMenu v-tippy="isSmallerOrEqualSm ? undefined : 'Explode'" />
 
-        <!-- Settings -->
-        <ViewerSettingsMenu />
-      </ViewerControlsButtonGroup>
+            <!-- Settings -->
+            <ViewerSettingsMenu />
+          </ViewerControlsButtonGroup>
+        </div>
+        <!-- Standard viewer controls -->
+      </div>
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 mx-14 mb-4 max-h-[calc(100dvh-5.5rem)] w-64 sm:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
+      :class="`simple-scrollbar absolute z-10 ml-12 sm:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] w-56 sm:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
@@ -192,7 +215,8 @@ import {
   ChatBubbleLeftRightIcon,
   ArrowsPointingOutIcon,
   ScissorsIcon,
-  PlusIcon
+  PlusIcon,
+  ChevronDoubleRightIcon
 } from '@heroicons/vue/24/outline'
 import type { Nullable } from '@speckle/shared'
 import {
@@ -301,6 +325,7 @@ type ActiveControl =
   | 'discussions'
   | 'automate'
   | 'measurements'
+  | 'mobileOverflow'
 
 const openAddModel = ref(false)
 

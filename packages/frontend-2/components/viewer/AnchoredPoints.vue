@@ -63,7 +63,14 @@
     <!-- Active user tracking cancel & Follower count display -->
     <div
       v-if="(spotlightUserSessionId && spotlightUser) || followers.length !== 0"
-      class="absolute w-screen mt-[3.5rem] h-[calc(100dvh-3.5rem)] z-10 p-1"
+      class="absolute w-screen z-10 p-1"
+      :class="
+        embedOptions.isEnabled
+          ? embedOptions.isTransparent
+            ? 'h-screen'
+            : 'h-[calc(100dvh-3.5rem)]'
+          : 'h-[calc(100dvh-3.5rem)] mt-[3.5rem]'
+      "
     >
       <div
         class="w-full h-full outline -outline-offset-0 outline-8 rounded-md outline-blue-500/40"

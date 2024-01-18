@@ -1,6 +1,6 @@
 <template>
   <ViewerPostSetupWrapper>
-    <div class="absolute top-0 left-0 w-screen h-[100dvh]">
+    <div class="flex-1">
       <!-- Nav -->
       <Portal to="navigation">
         <ViewerScope :state="state">
@@ -12,13 +12,6 @@
         </ViewerScope>
       </Portal>
 
-      <!-- Note: commented out until we scope it properly. -->
-      <!-- <Portal to="primary-actions">
-      <div class="flex space-x-4">
-        <FormButton :icon-left="ShareIcon">Share</FormButton>
-      </div>
-    </Portal> -->
-
       <ClientOnly>
         <!-- Tour host -->
         <div
@@ -28,7 +21,16 @@
           <TourOnboarding />
         </div>
         <!-- Viewer host -->
-        <div class="special-gradient absolute w-screen h-[100dvh] z-10 overflow-hidden">
+        <div
+          class="special-gradient absolute z-10 overflow-hidden w-screen"
+          :class="
+            embedOptions.isEnabled
+              ? embedOptions.isTransparent
+                ? 'h-[100dvh]'
+                : 'h-[calc(100dvh-3.5rem)]'
+              : 'h-[100dvh]'
+          "
+        >
           <ViewerBase />
           <Transition
             enter-from-class="opacity-0"
@@ -55,7 +57,7 @@
           enter-active-class="transition duration-1000"
         >
           <div v-show="tourState.showViewerControls">
-            <ViewerSelectionSidebar class="z-20 hidden sm:block" />
+            <ViewerSelectionSidebar class="z-20" />
           </div>
         </Transition>
         <!-- Shows up when filters are applied for an easy return to normality -->

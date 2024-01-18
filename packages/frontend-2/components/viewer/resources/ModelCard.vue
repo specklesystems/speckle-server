@@ -12,18 +12,21 @@
       <div
         :class="`${
           showVersions ? 'bg-primary' : 'bg-foundation hover:bg-primary-muted'
-        } group sticky cursor-pointer top-0 z-20 flex h-20 min-w-0 max-w-full items-center justify-between space-x-2 p-2 transition select-none`"
+        } group sticky cursor-pointer top-0 z-20 flex h-10 sm:h-20 min-w-0 max-w-full items-center justify-between space-x-2 p-2 transition select-none`"
         @click="showVersions = !showVersions"
       >
         <div>
-          <UserAvatar :user="loadedVersion?.authorUser" />
+          <UserAvatar
+            :size="isSmallerOrEqualSm ? 'sm' : undefined"
+            :user="loadedVersion?.authorUser"
+          />
         </div>
         <div class="flex min-w-0 flex-grow flex-col space-y-0">
           <div
             v-tippy="modelName.subheader ? model.name : null"
             :class="`${
               showVersions ? 'text-foundation' : ''
-            } font-bold truncate min-w-0`"
+            } text-sm sm:text-base font-bold truncate min-w-0`"
           >
             {{ modelName.header }}
           </div>
@@ -139,6 +142,7 @@ const props = defineProps<{
 const { switchModelToVersion } = useInjectedViewerRequestedResources()
 const { loadMoreVersions } = useInjectedViewerLoadedResources()
 const { diffModelVersions } = useDiffUtilities()
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const showVersions = ref(false)
 

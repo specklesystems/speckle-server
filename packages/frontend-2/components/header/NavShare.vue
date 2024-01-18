@@ -1,5 +1,8 @@
 <template>
-  <Menu as="div" class="flex items-center relative border-r border-outline-1 pr-4">
+  <Menu
+    as="div"
+    class="hidden sm:flex items-center relative border-r border-outline-1 pr-4"
+  >
     <MenuButton as="div">
       <FormButton outlined :icon-right="ChevronDownIcon">Share</FormButton>
     </MenuButton>
