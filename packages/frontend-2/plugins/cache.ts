@@ -21,28 +21,30 @@ const getOrInitInternalCache = async (params: { redis: Optional<Redis> }) => {
 
   if (params.redis) {
     const client = params.redis
+    const redisKeyPrefix = 'fe2-app-cache:'
+    const finalKey = (key: string) => redisKeyPrefix + key
 
     internalCache = {
       has: async (key) => {
-        const exists = await client.exists(key)
+        const exists = await client.exists(finalKey(key))
         return !!exists
       },
       set: async (key, val, options) => {
         if (options?.expiryMs) {
-          await client.set(key, JSON.stringify(val), 'PX', options.expiryMs)
+          await client.set(finalKey(key), JSON.stringify(val), 'PX', options.expiryMs)
         } else {
-          await client.set(key, JSON.stringify(val))
+          await client.set(finalKey(key), JSON.stringify(val))
         }
       },
       get: async <V = unknown>(key: string) => {
-        const val = await client.get(key)
+        const val = await client.get(finalKey(key))
         if (!val) return undefined
 
         return JSON.parse(val) as V
       },
       setMultiple: async (keyVals, options) => {
         const entries = Object.entries(keyVals).map(([key, val]) => [
-          key,
+          finalKey(key),
           JSON.stringify(val)
         ])
 
@@ -55,7 +57,8 @@ const getOrInitInternalCache = async (params: { redis: Optional<Redis> }) => {
       getMultiple: async (keys) => {
         if (!keys?.length) return {}
 
-        const vals = await client.mget(...keys)
+        const finalKeys = keys.map(finalKey)
+        const vals = await client.mget(...finalKeys)
         const keyVals = {} as Record<string, unknown>
         for (let i = 0; i < keys.length; i++) {
           const key = keys[i]
