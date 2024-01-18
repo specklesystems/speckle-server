@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { H3Event } from 'h3'
 
-const serverInfoQuery = graphql(`
+export const mainServerInfoDataQuery = graphql(`
   query MainServerInfoData {
     serverInfo {
       adminContact
@@ -22,7 +22,7 @@ const serverInfoQuery = graphql(`
 `)
 
 export function useServerInfo() {
-  const { result } = useQuery(serverInfoQuery)
+  const { result } = useQuery(mainServerInfoDataQuery)
 
   const serverInfo = computed(() => result.value?.serverInfo)
 

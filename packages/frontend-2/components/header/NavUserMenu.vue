@@ -142,19 +142,18 @@ import {
   CloudArrowDownIcon,
   ChatBubbleLeftRightIcon
 } from '@heroicons/vue/24/outline'
-import { useQuery } from '@vue/apollo-composable'
 import { Roles } from '@speckle/shared'
 import type { Optional } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { loginRoute } from '~~/lib/common/helpers/route'
 import { useTheme, AppTheme } from '~~/lib/core/composables/theme'
-import { serverVersionInfoQuery } from '~~/lib/core/graphql/queries'
+import { useServerInfo } from '~/lib/core/composables/server'
 
 const { logout } = useAuthManager()
 const { activeUser, isGuest } = useActiveUser()
 const { isDarkTheme, setTheme } = useTheme()
-const { result } = useQuery(serverVersionInfoQuery)
+const { serverInfo } = useServerInfo()
 const route = useRoute()
 const router = useRouter()
 
@@ -163,7 +162,7 @@ const showProfileEditDialog = ref(false)
 const token = computed(() => route.query.token as Optional<string>)
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
-const version = computed(() => result.value?.serverInfo.version)
+const version = computed(() => serverInfo.value?.version)
 
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
 

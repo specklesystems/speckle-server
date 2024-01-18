@@ -43,6 +43,7 @@
           :key="pendingModel.id"
           :model="pendingModel"
           :project="project"
+          :project-id="project.id"
           height="h-52"
         />
         <ProjectPageModelsCard
@@ -52,6 +53,7 @@
           :project="project"
           :show-versions="false"
           :show-actions="false"
+          :project-id="project.id"
           height="h-52"
         />
         <ProjectCardImportFileArea
