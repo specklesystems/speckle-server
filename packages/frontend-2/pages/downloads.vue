@@ -80,44 +80,45 @@ const connectorTags = await useAppCached(
         return true
     }) as Tag[]
 
-    const connectorTags = [] as ConnectorTag[]
-    for (const tag of relevantTags) {
-      const connectorTag = { ...tag } as ConnectorTag
+    const connectorTags = await Promise.all(
+      relevantTags.map(async (tag) => {
+        const connectorTag = { ...tag } as ConnectorTag
 
-      const community = tag.codeinjection_head.match(/window.community="([\s\S]*?)"/)
-      connectorTag.communityProvider = community ? community[1] : undefined
-      connectorTag.isCommunity = !!connectorTag.communityProvider
+        const community = tag.codeinjection_head.match(/window.community="([\s\S]*?)"/)
+        connectorTag.communityProvider = community ? community[1] : undefined
+        connectorTag.isCommunity = !!connectorTag.communityProvider
 
-      const installLink = tag.codeinjection_head.match(
-        /window.installLink="([\s\S]*?)"/
-      )
-      connectorTag.installLink = installLink ? installLink[1] : undefined
+        const installLink = tag.codeinjection_head.match(
+          /window.installLink="([\s\S]*?)"/
+        )
+        connectorTag.installLink = installLink ? installLink[1] : undefined
 
-      try {
-        if (connectorTag.installLink?.includes('SpeckleManager')) {
-          connectorTag.directDownload = true
+        try {
+          if (connectorTag.installLink?.includes('SpeckleManager')) {
+            connectorTag.directDownload = true
 
-          const tagFeed = await $fetch<{
-            Versions: ConnectorVersion[]
-          }>(`${spacesEndpoint}/manager2/feeds/${tag.slug}.json`)
+            const tagFeed = await $fetch<{
+              Versions: ConnectorVersion[]
+            }>(`${spacesEndpoint}/manager2/feeds/${tag.slug}.json`)
 
-          const versions = tagFeed.Versions.sort(
-            (a, b) => new Date(b.Date).getTime() - new Date(a.Date).getTime()
-          )
-          connectorTag.versions = versions && versions.length > 0 ? versions : []
-          connectorTag.stable = versions.find((x) => !x.Prerelease)?.Number
-        } else {
+            const versions = tagFeed.Versions.sort(
+              (a, b) => new Date(b.Date).getTime() - new Date(a.Date).getTime()
+            )
+            connectorTag.versions = versions && versions.length > 0 ? versions : []
+            connectorTag.stable = versions.find((x) => !x.Prerelease)?.Number
+          } else {
+            connectorTag.directDownload = false
+            connectorTag.versions = []
+          }
+        } catch (e) {
           connectorTag.directDownload = false
           connectorTag.versions = []
+          // gotta catch 'em all!
         }
-      } catch (e) {
-        connectorTag.directDownload = false
-        connectorTag.versions = []
-        // gotta catch 'em all!
-      }
 
-      connectorTags.push(connectorTag)
-    }
+        return connectorTag
+      })
+    )
 
     connectorTags.sort((a, b) => {
       return b.versions.length - a.versions.length
