@@ -27,7 +27,7 @@
             Copy Link
           </div>
         </MenuItem>
-        <MenuItem v-slot="{ active }">
+        <MenuItem v-if="!isFederated" v-slot="{ active }">
           <div
             :class="[
               active ? 'bg-foundation-focus' : '',
@@ -87,6 +87,8 @@ const { copy } = useClipboard()
 const copyModelLink = useCopyModelLink()
 
 const embedDialogOpen = ref(false)
+
+const isFederated = computed(() => props.modelId.includes(','))
 
 const handleCopyLink = () => {
   copyModelLink(props.projectId, props.modelId, props.versionId)
