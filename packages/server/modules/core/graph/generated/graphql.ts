@@ -380,8 +380,6 @@ export type Comment = {
   replies: CommentCollection;
   /** Get authors of replies to this comment */
   replyAuthors: CommentReplyAuthorCollection;
-  /** Get the total number of replies to this comment */
-  replyCount: Scalars['Int'];
   /** Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects. */
   resources: Array<ResourceIdentifier>;
   screenshot?: Maybe<Scalars['String']>;
@@ -3538,7 +3536,6 @@ export type CommentResolvers<ContextType = GraphQLContext, ParentType extends Re
   reactions?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   replies?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<CommentRepliesArgs, 'limit'>>;
   replyAuthors?: Resolver<ResolversTypes['CommentReplyAuthorCollection'], ParentType, ContextType, RequireFields<CommentReplyAuthorsArgs, 'limit'>>;
-  replyCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   resources?: Resolver<Array<ResolversTypes['ResourceIdentifier']>, ParentType, ContextType>;
   screenshot?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   text?: Resolver<ResolversTypes['SmartTextEditorValue'], ParentType, ContextType>;

@@ -370,8 +370,6 @@ export type Comment = {
   replies: CommentCollection;
   /** Get authors of replies to this comment */
   replyAuthors: CommentReplyAuthorCollection;
-  /** Get the total number of replies to this comment */
-  replyCount: Scalars['Int'];
   /** Resources that this comment targets. Can be a mixture of either one stream, or multiple commits and objects. */
   resources: Array<ResourceIdentifier>;
   screenshot?: Maybe<Scalars['String']>;
