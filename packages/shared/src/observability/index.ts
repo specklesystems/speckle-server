@@ -37,7 +37,7 @@ export function getLogger(
 
   if (pretty) {
     pinoOptions.transport = {
-      target: '../pinoPrettyTransport.js',
+      target: '@speckle/shared/pinoPrettyTransport.js',
       options: {
         colorize: true,
         destination: 2, //stderr

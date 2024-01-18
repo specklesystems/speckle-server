@@ -1,64 +1,168 @@
+/* eslint-disable @typescript-eslint/require-await */
 import type { Optional } from '@speckle/shared'
 import { has as objectHas } from 'lodash-es'
+import type { Redis } from 'ioredis'
+
+type AsyncCacheInterface = {
+  has(key: string): Promise<boolean>
+  get<V = unknown>(key: string): Promise<V | undefined>
+  set<V = unknown>(key: string, val: V, options?: { expiryMs: number }): Promise<void>
+  setMultiple<V = unknown>(
+    keyVals: Record<string, V>,
+    options?: { expiryMs: number }
+  ): Promise<void>
+  getMultiple(keys: string[]): Promise<Record<string, unknown>>
+}
+
+let internalCache: Optional<AsyncCacheInterface> = undefined
+
+const getOrInitInternalCache = async (params: { redis: Optional<Redis> }) => {
+  if (internalCache) return internalCache
+
+  if (params.redis) {
+    const client = params.redis
+
+    internalCache = {
+      has: async (key) => {
+        const exists = await client.exists(key)
+        return !!exists
+      },
+      set: async (key, val, options) => {
+        if (options?.expiryMs) {
+          await client.set(key, JSON.stringify(val), 'PX', options.expiryMs)
+        } else {
+          await client.set(key, JSON.stringify(val))
+        }
+      },
+      get: async <V = unknown>(key: string) => {
+        const val = await client.get(key)
+        if (!val) return undefined
+
+        return JSON.parse(val) as V
+      },
+      setMultiple: async (keyVals, options) => {
+        const entries = Object.entries(keyVals).map(([key, val]) => [
+          key,
+          JSON.stringify(val)
+        ])
+
+        if (options?.expiryMs) {
+          await client.mset(...entries.flat(), 'PX', options.expiryMs)
+        } else {
+          await client.mset(...entries.flat())
+        }
+      },
+      getMultiple: async (keys) => {
+        const vals = await client.mget(...keys)
+        const keyVals = {} as Record<string, unknown>
+        for (let i = 0; i < keys.length; i++) {
+          const key = keys[i]
+          const val = vals[i]
+          if (!val) continue
+
+          keyVals[key] = JSON.parse(val)
+        }
+
+        return keyVals
+      }
+    }
+  } else {
+    const cache: Record<string, unknown> = {}
+
+    internalCache = {
+      has: async (key) => objectHas(cache, key),
+      set: async (key, val, options) => {
+        cache[key] = val
+
+        if (options?.expiryMs) {
+          setTimeout(() => {
+            delete cache[key]
+          }, options.expiryMs)
+        }
+      },
+      get: async <V = unknown>(key: string) => {
+        if (!objectHas(cache, key)) return undefined
+
+        const val = cache[key] as V
+        return val
+      },
+      setMultiple: async (keyVals, options) => {
+        Object.assign(cache, keyVals)
+
+        if (options?.expiryMs) {
+          setTimeout(() => {
+            for (const key of Object.keys(keyVals)) {
+              delete cache[key]
+            }
+          }, options.expiryMs)
+        }
+      },
+      getMultiple: async (keys) => {
+        const keyVals = {} as Record<string, unknown>
+        for (const key of keys) {
+          if (!objectHas(cache, key)) continue
+
+          keyVals[key] = cache[key]
+        }
+
+        return keyVals
+      }
+    }
+  }
+
+  return internalCache
+}
 
 /**
  * Cache utility that is available for the lifetime of the entire server process or the tab session on the client-side
- * The cache itself is a basic in memory object, but could be swapped out to redis in SSR
+ * The cache itself is stored in redis, but if its unavailable, then we use a basic in-memory store
  */
-
-const cache: Record<string, unknown> = {}
-
-export default defineNuxtPlugin((nuxtApp) => {
+export default defineNuxtPlugin(async (nuxtApp) => {
+  const internalCache = await getOrInitInternalCache({
+    redis: nuxtApp.$redis as Redis
+  })
   const reqTouched: Record<string, boolean> = {}
 
   if (process.server) {
-    nuxtApp.hook('app:rendered', () => {
-      const cacheToSend = Object.keys(reqTouched).reduce((acc, key) => {
-        acc[key] = cache[key]
-        return acc
-      }, {} as Record<string, unknown>)
+    nuxtApp.hook('app:rendered', async () => {
+      const touchedKeys = Object.keys(reqTouched)
+      const cacheToSend = await internalCache.getMultiple(touchedKeys)
+
       nuxtApp.ssrContext!.payload.appCache = cacheToSend
     })
   } else if (process.client) {
     const restorable = window.__NUXT__?.appCache as Optional<Record<string, unknown>>
     if (restorable) {
-      Object.assign(cache, restorable)
+      await internalCache.setMultiple(restorable)
     }
   }
 
-  const has = (key: string): boolean => objectHas(cache, key)
-
-  const set = <V>(
-    key: string,
-    val: V,
-    options?: Partial<{
-      /**
-       * Time in milliseconds after which the cache entry will be removed
-       */
-      expiryMs: number
-    }>
-  ) => {
-    cache[key] = val
-    reqTouched[key] = true
-
-    if (options?.expiryMs) {
-      setTimeout(() => {
-        delete cache[key]
-      }, options.expiryMs)
+  const finalCache: AsyncCacheInterface = {
+    has: async (key) => {
+      const has = await internalCache.has(key)
+      return has
+    },
+    set: async (key, val, options) => {
+      await internalCache.set(key, val, options)
+      reqTouched[key] = true
+    },
+    get: async <V = unknown>(key: string) => {
+      const val = await internalCache.get<V>(key)
+      reqTouched[key] = true
+      return val
+    },
+    setMultiple: async (keyVals, options) => {
+      await internalCache.setMultiple(keyVals, options)
+    },
+    getMultiple: async (keys) => {
+      const keyVals = await internalCache.getMultiple(keys)
+      return keyVals
     }
-  }
-
-  const get = <V = unknown>(key: string): V | undefined => {
-    if (!has(key)) return undefined
-
-    const val = cache[key] as V
-    reqTouched[key] = true
-    return val
   }
 
   return {
     provide: {
-      appCache: { has, set, get }
+      appCache: finalCache
     }
   }
 })

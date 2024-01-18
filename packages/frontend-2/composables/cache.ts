@@ -2,7 +2,9 @@ import type { MaybeAsync } from '@speckle/shared'
 
 /**
  * Cache utility that is available for the lifetime of the entire server process (so - across requests)
- * or the full app session on the client-side
+ * or the full app session on the client-side.
+ *
+ * If redis is available, SSR cache is shared across pods
  */
 export function useAppCache() {
   const app = useNuxtApp()
@@ -15,12 +17,11 @@ export async function useAppCached<V = unknown>(
   options?: Parameters<ReturnType<typeof useAppCache>['set']>['2']
 ): Promise<V> {
   const cache = useAppCache()
-  if (cache.has(key)) {
-    return cache.get(key) as V
+  if (await cache.has(key)) {
+    return (await cache.get(key)) as V
   }
 
-  return await Promise.resolve(resolver()).then((val) => {
-    cache.set(key, val, options)
-    return val
-  })
+  const data = await Promise.resolve(resolver())
+  await cache.set(key, data, options)
+  return data
 }
