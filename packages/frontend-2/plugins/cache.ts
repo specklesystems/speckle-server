@@ -155,9 +155,15 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     },
     setMultiple: async (keyVals, options) => {
       await internalCache.setMultiple(keyVals, options)
+      for (const key of Object.keys(keyVals)) {
+        reqTouched[key] = true
+      }
     },
     getMultiple: async (keys) => {
       const keyVals = await internalCache.getMultiple(keys)
+      for (const key of keys) {
+        reqTouched[key] = true
+      }
       return keyVals
     }
   }
