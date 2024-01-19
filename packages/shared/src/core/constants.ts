@@ -77,6 +77,9 @@ export const Scopes = Object.freeze(<const>{
   Apps: {
     Read: 'apps:read',
     Write: 'apps:write'
+  },
+  Automate: {
+    ReportResults: 'automate:report-results'
   }
 })
 
