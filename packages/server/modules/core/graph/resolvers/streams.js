@@ -348,10 +348,6 @@ module.exports = {
             resourceAccessRules: context.resourceAccessRules
           })
 
-          logger.info(
-            { hasResourceAccess, ownerId: payload.ownerId, userId: context.userId },
-            'watda'
-          )
           if (!hasResourceAccess) {
             return false
           }
