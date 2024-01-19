@@ -27,6 +27,21 @@
       </p>
     </div>
     <div v-else>
+      <CommonAlert v-if="props.versionId" class="mb-4 -mt-4" color="info">
+        <template #title>You are about embedding a specific version</template>
+        <template #description>
+          <p>
+            This means that any changes you made after this version will not be included
+            in the embedded model.
+          </p>
+          <p>
+            <strong>Tip:</strong>
+            If you want to share the latest version of your model, go back to the
+            project dashboard and start the embedding process from there.
+          </p>
+        </template>
+      </CommonAlert>
+
       <div class="flex flex-col lg:flex-row gap-8 mb-6">
         <iframe
           title="Embed Preview"
