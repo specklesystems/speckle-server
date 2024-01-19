@@ -13733,7 +13733,7 @@ __metadata:
     unplugin-vue-components: ^0.25.1
     uuid: ^8.3.2
     v-tooltip: ^2.0.3
-    vite: ^4.3.9
+    vite: ^3.2.8
     vite-bundle-visualizer: ^0.7.0
     vite-plugin-simple-gql: ^0.5.0
     vue: ^2.7.5
@@ -14091,7 +14091,7 @@ __metadata:
     unplugin-vue-macros: ^2.7.0
     v3-infinite-loading: ^1.2.2
     vee-validate: ^4.7.0
-    vite: ^4.5.0
+    vite: ^3.2.8
     vite-plugin-dts: ^3.6.3
     vue: ^3.3.8
     vue-advanced-cropper: ^2.8.8
@@ -14115,7 +14115,7 @@ __metadata:
     eslint-config-prettier: ^8.5.0
     tweakpane: ^3.0.8
     typescript: ^4.5.4
-    vite: ^3.2.7
+    vite: ^3.2.8
   languageName: unknown
   linkType: soft
 
@@ -45774,7 +45774,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^3.0.0 || ^4.0.0, vite@npm:^4.3.9, vite@npm:^4.5.0":
+"vite@npm:^3.0.0 || ^4.0.0, vite@npm:^4.5.0":
   version: 4.5.1
   resolution: "vite@npm:4.5.1"
   dependencies:
@@ -45814,9 +45814,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite@npm:^3.2.7":
-  version: 3.2.7
-  resolution: "vite@npm:3.2.7"
+"vite@npm:^3.2.8":
+  version: 3.2.8
+  resolution: "vite@npm:3.2.8"
   dependencies:
     esbuild: ^0.15.9
     fsevents: ~2.3.2
@@ -45848,7 +45848,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 4c5883b721b6ec406419e61d0b3fae8528e80f8c2eb20c087c7b1b76daec3665a0a49c83cd8ac7fdda6089625094b70c6a132daa5edc650c515ddc9f5eed44f0
+  checksum: de7b44f68fbe7a54caf1a63eab01c0c7f6a1a5d88fc59f0d27fb40971d3b15247d38d36c8e7a694733ae208e0c4f0cddf1d57441b9b08c496175e983ec01740d
   languageName: node
   linkType: hard
 
