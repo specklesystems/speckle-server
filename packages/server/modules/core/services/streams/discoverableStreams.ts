@@ -11,7 +11,7 @@ import {
   getDiscoverableStreams as getDiscoverableStreamsQuery,
   encodeDiscoverableStreamsCursor
 } from '@/modules/core/repositories/streams'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
 import { clamp } from 'lodash'
 
 type StreamCollection = {
@@ -32,12 +32,14 @@ function buildRetrievalSortingParams(
 }
 
 function formatRetrievalParams(
-  args: QueryDiscoverableStreamsArgs
+  args: QueryDiscoverableStreamsArgs,
+  streamIdWhitelist?: Optional<string[]>
 ): GetDiscoverableStreamsParams {
   return {
     sort: buildRetrievalSortingParams(args),
     cursor: args.cursor || null,
-    limit: clamp(args.limit || 25, 1, 100)
+    limit: clamp(args.limit || 25, 1, 100),
+    streamIdWhitelist
   }
 }
 
@@ -45,12 +47,13 @@ function formatRetrievalParams(
  * Retrieve discoverable streams
  */
 export async function getDiscoverableStreams(
-  args: QueryDiscoverableStreamsArgs
+  args: QueryDiscoverableStreamsArgs,
+  streamIdWhitelist?: Optional<string[]>
 ): Promise<StreamCollection> {
-  const params = formatRetrievalParams(args)
+  const params = formatRetrievalParams(args, streamIdWhitelist)
   const [items, totalCount] = await Promise.all([
     getDiscoverableStreamsQuery(params),
-    countDiscoverableStreams()
+    countDiscoverableStreams(params)
   ])
 
   const cursor = encodeDiscoverableStreamsCursor(params.sort.type, items, params.cursor)

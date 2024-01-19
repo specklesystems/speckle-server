@@ -154,7 +154,8 @@ exports.init = (app, isInitial) => {
         await authorizeResolver(
           req.context.userId,
           req.params.streamId,
-          Roles.Stream.Reviewer
+          Roles.Stream.Reviewer,
+          req.context.resourceAccessRules
         )
       } catch (err) {
         return { hasPermissions: false, httpErrorCode: 401 }

@@ -519,4 +519,10 @@ export const ServerApps = buildTableHelper('server_apps', [
 
 export const Scopes = buildTableHelper('scopes', ['name', 'description', 'public'])
 
+export const TokenResourceAccess = buildTableHelper('token_resource_access', [
+  'tokenId',
+  'resourceType',
+  'resourceId'
+])
+
 export { knex }

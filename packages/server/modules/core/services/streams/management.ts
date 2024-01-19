@@ -1,4 +1,4 @@
-import { Roles, wait } from '@speckle/shared'
+import { MaybeNullOrUndefined, Roles, wait } from '@speckle/shared'
 import {
   addStreamCreatedActivity,
   addStreamDeletedActivity,
@@ -11,7 +11,9 @@ import {
   StreamCreateInput,
   StreamRevokePermissionInput,
   StreamUpdateInput,
-  StreamUpdatePermissionInput
+  StreamUpdatePermissionInput,
+  TokenResourceIdentifier,
+  TokenResourceIdentifierType
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
@@ -22,7 +24,10 @@ import {
 } from '@/modules/core/repositories/streams'
 import { createBranch } from '@/modules/core/services/branches'
 import { inviteUsersToStream } from '@/modules/serverinvites/services/inviteCreationService'
-import { StreamUpdateError } from '@/modules/core/errors/stream'
+import {
+  StreamInvalidAccessError,
+  StreamUpdateError
+} from '@/modules/core/errors/stream'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
 import { has } from 'lodash'
 import {
@@ -31,13 +36,31 @@ import {
   removeStreamCollaborator
 } from '@/modules/core/services/streams/streamAccessService'
 import { deleteAllStreamInvites } from '@/modules/serverinvites/repositories'
+import {
+  ContextResourceAccessRules,
+  isNewResourceAllowed
+} from '@/modules/core/helpers/token'
+import { authorizeResolver } from '@/modules/shared'
 
 export async function createStreamReturnRecord(
-  params: (StreamCreateInput | ProjectCreateInput) & { ownerId: string },
+  params: (StreamCreateInput | ProjectCreateInput) & {
+    ownerId: string
+    ownerResourceAccessRules?: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+  },
   options?: Partial<{ createActivity: boolean }>
 ): Promise<StreamRecord> {
-  const { ownerId } = params
+  const { ownerId, ownerResourceAccessRules } = params
   const { createActivity = true } = options || {}
+
+  const canCreateStream = isNewResourceAllowed({
+    resourceType: TokenResourceIdentifierType.Project,
+    resourceAccessRules: ownerResourceAccessRules
+  })
+  if (!canCreateStream) {
+    throw new StreamInvalidAccessError(
+      'You do not have the permissions to create a new stream'
+    )
+  }
 
   const stream = await createStream(params, { ownerId })
   const streamId = stream.id
@@ -52,7 +75,12 @@ export async function createStreamReturnRecord(
 
   // Invite contributors?
   if (!isProjectCreateInput(params) && params.withContributors?.length) {
-    await inviteUsersToStream(ownerId, streamId, params.withContributors)
+    await inviteUsersToStream(
+      ownerId,
+      streamId,
+      params.withContributors,
+      ownerResourceAccessRules
+    )
   }
 
   // Save activity
@@ -73,7 +101,25 @@ export async function createStreamReturnRecord(
  * @param {string} streamId
  * @param {string} deleterId
  */
-export async function deleteStreamAndNotify(streamId: string, deleterId: string) {
+export async function deleteStreamAndNotify(
+  streamId: string,
+  deleterId: string,
+  deleterResourceAccessRules: ContextResourceAccessRules,
+  options?: {
+    skipAccessChecks?: boolean
+  }
+) {
+  const { skipAccessChecks = false } = options || {}
+
+  if (!skipAccessChecks) {
+    await authorizeResolver(
+      deleterId,
+      streamId,
+      Roles.Stream.Owner,
+      deleterResourceAccessRules
+    )
+  }
+
   await addStreamDeletedActivity({ streamId, deleterId })
 
   // TODO: this has been around since before my time, we should get rid of it...
@@ -90,8 +136,16 @@ export async function deleteStreamAndNotify(streamId: string, deleterId: string)
  */
 export async function updateStreamAndNotify(
   update: StreamUpdateInput | ProjectUpdateInput,
-  updaterId: string
+  updaterId: string,
+  updaterResourceAccessRules: ContextResourceAccessRules
 ) {
+  await authorizeResolver(
+    updaterId,
+    update.id,
+    Roles.Stream.Owner,
+    updaterResourceAccessRules
+  )
+
   const oldStream = await getStream({ streamId: update.id, userId: updaterId })
   if (!oldStream) {
     throw new StreamUpdateError('Stream not found', {
@@ -129,7 +183,8 @@ const isStreamRevokePermissionInput = (
 
 export async function updateStreamRoleAndNotify(
   update: PermissionUpdateInput,
-  updaterId: string
+  updaterId: string,
+  updaterResourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 ) {
   const smallestStreamRole = Roles.Stream.Reviewer
   const params = {
@@ -164,9 +219,15 @@ export async function updateStreamRoleAndNotify(
       params.streamId,
       params.userId,
       params.role,
-      updaterId
+      updaterId,
+      updaterResourceAccessRules
     )
   } else {
-    return await removeStreamCollaborator(params.streamId, params.userId, updaterId)
+    return await removeStreamCollaborator(
+      params.streamId,
+      params.userId,
+      updaterId,
+      updaterResourceAccessRules
+    )
   }
 }
