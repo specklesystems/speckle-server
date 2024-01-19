@@ -138,24 +138,25 @@ const embedDialogOptions = [
 const baseIframeSrc = 'http://localhost:8081/projects/'
 
 const updatedUrl = computed(() => {
-  let url = `${baseIframeSrc}${props.projectId}`
+  let url = `${baseIframeSrc}${encodeURIComponent(props.projectId)}`
   if (props.modelId) {
-    url += `/models/${props.modelId}`
+    url += `/models/${encodeURIComponent(props.modelId)}`
   }
 
   if (props.versionId) {
-    url += `%40${props.versionId}`
+    url += `@${encodeURIComponent(props.versionId)}`
   }
 
   const enabledOptions = embedDialogOptions
     .filter((option) => option.value.value)
-    .map((option) => `%22${option.id}%22:true`)
+    .map((option) => `"${option.id}":true`)
     .join(',')
 
   if (enabledOptions) {
-    url += `#embed={${enabledOptions}}`
+    const hashFragment = encodeURIComponent(`{${enabledOptions}}`)
+    url += `#embed=${hashFragment}`
   } else {
-    url += `#embed={"isEnabled":true}`
+    url += `#embed=${encodeURIComponent('{"isEnabled":true}')}`
   }
 
   return url

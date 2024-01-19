@@ -1,11 +1,5 @@
 <template>
-  <LayoutDialogSection
-    allow-overflow
-    border-b
-    border-t
-    title="Invite"
-    :guided-open="defaultOpen"
-  >
+  <LayoutDialogSection allow-overflow border-b border-t title="Invite">
     <template #icon>
       <UserPlusIcon class="h-full w-full" />
     </template>

@@ -115,6 +115,7 @@
     </div>
   </div>
   <ProjectModelPageDialogEmbed
+    v-if="project"
     v-model:open="embedDialogOpen"
     :visibility="project.visibility"
     :project-id="project.id"

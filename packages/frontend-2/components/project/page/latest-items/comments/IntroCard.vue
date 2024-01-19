@@ -30,7 +30,7 @@
         />
       </template>
     </div>
-    <div class="text-foreground text-center text-sm sm:text-base">
+    <div class="text-foreground text-center text-xs sm:text-sm">
       <div>Speckle allows for real time discussions straight in your 3D model.</div>
       <div v-if="!small" class="text-xs text-foreground-2">
         Head over to a model and start coordinating right away!

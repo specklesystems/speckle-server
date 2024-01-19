@@ -1,10 +1,5 @@
 <template>
-  <LayoutDialogSection
-    allow-overflow
-    border-b
-    title="Access"
-    :guided-open="defaultOpen"
-  >
+  <LayoutDialogSection allow-overflow border-b title="Access">
     <template #icon>
       <LockOpenIcon
         v-if="project.visibility === ProjectVisibility.Public"

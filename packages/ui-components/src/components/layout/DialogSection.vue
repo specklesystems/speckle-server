@@ -28,14 +28,6 @@
           <slot name="icon"></slot>
         </div>
         <span>{{ title }}</span>
-        <span v-if="guidedOpen" class="relative flex h-2 w-2">
-          <span
-            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"
-          ></span>
-          <span
-            class="relative inline-flex rounded-full h-2 w-2 bg-primary opacity-80"
-          ></span>
-        </span>
       </div>
       <div>
         <ChevronDownIcon
@@ -79,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, unref, computed, onMounted } from 'vue'
+import { ref, unref, computed } from 'vue'
 import type { Ref } from 'vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { FormButton } from '~~/src/lib'
@@ -117,8 +109,7 @@ const props = defineProps({
         onClick?: () => void
       }
     | undefined,
-  alwaysOpen: Boolean,
-  guidedOpen: Boolean
+  alwaysOpen: Boolean
 })
 
 const content: Ref<HTMLElement | null> = ref(null)
@@ -162,11 +153,4 @@ const toggleExpansion = () => {
     contentHeight.value = (unref(content)?.scrollHeight || 0) + 64
   }
 }
-
-onMounted(() => {
-  isExpanded.value = props.guidedOpen || false
-  if (isExpanded.value) {
-    contentHeight.value = (unref(content)?.scrollHeight || 0) + 64
-  }
-})
 </script>

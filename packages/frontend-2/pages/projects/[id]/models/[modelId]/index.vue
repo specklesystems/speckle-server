@@ -1,18 +1,5 @@
 <template>
-  <button
-    v-if="isManualLoad"
-    class="group flex items-center justify-center absolute inset-0"
-    @click="isManualLoad = false"
-  >
-    <div
-      class="group-hover:scale-110 group-hover:shadow-xl shadow h-14 w-14 rounded-full border border-foreground bg-primary flex items-center justify-center transition"
-    >
-      <PlayIcon class="h-6 w-6 ml-[3px] text-foreground" />
-    </div>
-    <div class="absolute bottom-2 right-0 scale-75">
-      <HeaderLogoBlock powered-by />
-    </div>
-  </button>
+  <ViewerEmbedManualLoad v-if="isManualLoad" @play="isManualLoad = false" />
   <LazyViewerPreSetupWrapper v-else />
   <div
     class="fixed shadow-t bottom-0 left-0 max-h-[65vh] overflow-hidden w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
@@ -23,7 +10,6 @@
 </template>
 
 <script setup lang="ts">
-import { PlayIcon } from '@heroicons/vue/20/solid'
 import { useRoute } from 'vue-router'
 
 interface EmbedConfig {

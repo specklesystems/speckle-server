@@ -16,10 +16,7 @@
         @click="showVersions = !showVersions"
       >
         <div>
-          <UserAvatar
-            :size="isSmallerOrEqualSm ? 'sm' : undefined"
-            :user="loadedVersion?.authorUser"
-          />
+          <UserAvatar :user="loadedVersion?.authorUser" />
         </div>
         <div class="flex min-w-0 flex-grow flex-col space-y-0">
           <div
@@ -142,7 +139,6 @@ const props = defineProps<{
 const { switchModelToVersion } = useInjectedViewerRequestedResources()
 const { loadMoreVersions } = useInjectedViewerLoadedResources()
 const { diffModelVersions } = useDiffUtilities()
-const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const showVersions = ref(false)
 
