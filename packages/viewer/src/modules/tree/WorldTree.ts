@@ -22,7 +22,7 @@ export interface NodeData {
 
 export class WorldTree {
   private renderTreeInstances: { [id: string]: RenderTree } = {}
-  public nodeMaps: { [id: string]: NodeMap } = {}
+  private nodeMaps: { [id: string]: NodeMap } = {}
   private readonly supressWarnings = true
   public static readonly ROOT_ID = 'ROOT'
   private subtreeId: number = 0
@@ -60,11 +60,11 @@ export class WorldTree {
     return this._root
   }
 
-  public get nextSubtreeId(): number {
+  private get nextSubtreeId(): number {
     return ++this.subtreeId
   }
 
-  public get nodeCount() {
+  public get nodeCount(): number {
     let nodeCount = 0
     for (const k in this.nodeMaps) nodeCount += this.nodeMaps[k].nodeCount
     return nodeCount
@@ -113,7 +113,7 @@ export class WorldTree {
     return (node ? node : this.root).all(predicate)
   }
 
-  public findId(id: string, subtreeId?: number) {
+  public findId(id: string, subtreeId?: number): TreeNode[] {
     let idNode = null
     if (subtreeId) {
       idNode = this.nodeMaps[subtreeId].getNodeById(id)
@@ -126,6 +126,7 @@ export class WorldTree {
     return idNode
   }
 
+  /** TODO: Would rather not have this */
   public findSubtree(id: string) {
     let idNode = null
     for (const k in this.nodeMaps) {

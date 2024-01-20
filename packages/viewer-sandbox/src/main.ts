@@ -17,6 +17,8 @@ import {
   DiffExtension,
   FilteringExtension
 } from '@speckle/viewer'
+import { SectionTool } from '@speckle/viewer'
+import { SectionOutlines } from '@speckle/viewer'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -42,8 +44,8 @@ const createViewer = async (containerName: string, stream: string) => {
 
   const cameraController = viewer.createExtension(CameraController)
   const selection = viewer.createExtension(SelectionExtension)
-  // const sections = viewer.createExtension(SectionTool)
-  // const sectionOutlines = viewer.createExtension(SectionOutlines)
+  const sections = viewer.createExtension(SectionTool)
+  const sectionOutlines = viewer.createExtension(SectionOutlines)
   const measurements = viewer.createExtension(MeasurementsExtension)
   const filtering = viewer.createExtension(FilteringExtension)
   const explode = viewer.createExtension(ExplodeExtension)
@@ -61,7 +63,7 @@ const createViewer = async (containerName: string, stream: string) => {
   // rotateCamera // use it
   // boxSelect // use it
 
-  const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
+  const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
   window.addEventListener('load', () => {
     viewer.resize()
@@ -132,8 +134,7 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
-    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6c6e43e5f3'
-    // 'https://latest.speckle.dev/streams/58b5648c4d/commits/60371ecb2d'
+    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'Super' heavy revit shit
     // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
     // IFC building (good for a tree based structure)
@@ -141,7 +142,7 @@ const getStream = () => {
     // IFC story, a subtree of the above
     // 'https://latest.speckle.dev/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216'
     // Izzy's garden
-    'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
+    // 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
     // Small scale lines
     // 'https://speckle.xyz/streams/638d3b1f83/commits/6025e2b546?c=%5B2.18058,-0.20814,9.67642,3.85491,5.05364,0,0,1%5D'
     // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
@@ -152,7 +153,7 @@ const getStream = () => {
     // AutoCAD NEW
     // 'https://latest.speckle.dev/streams/3ed8357f29/commits/46905429f6'
     //Blizzard world
-    // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
+    'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
     //Car
     // 'https://latest.speckle.dev/streams/17d2e25a97/commits/6b6cf3d43e'
     // Jonathon's

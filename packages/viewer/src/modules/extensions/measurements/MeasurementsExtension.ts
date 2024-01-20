@@ -135,7 +135,7 @@ export class MeasurementsExtension extends Extension {
     if (this._frameLock) {
       return
     }
-
+    // const start = performance.now()
     let result =
       (this.renderer.intersections.intersect(
         this.renderer.scene,
@@ -181,6 +181,7 @@ export class MeasurementsExtension extends Extension {
     this.renderer.resetPipeline()
     this._frameLock = true
     this._sceneHit = true
+    // console.log('Time -> ', performance.now() - start)
   }
 
   protected onPointerClick(data) {

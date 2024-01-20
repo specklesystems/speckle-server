@@ -139,7 +139,7 @@ export default class SpeckleRenderer {
 
   /**********************
    * Bounds and volumes */
-  public get sceneBox() {
+  public get sceneBox(): Box3 {
     const bounds: Box3 = new Box3()
     const batches = this.batcher.getBatches()
     for (let k = 0; k < batches.length; k++) {
@@ -148,11 +148,11 @@ export default class SpeckleRenderer {
     return bounds
   }
 
-  public get sceneSphere() {
+  public get sceneSphere(): Sphere {
     return this.sceneBox.getBoundingSphere(new Sphere())
   }
 
-  public get sceneCenter() {
+  public get sceneCenter(): Vector3 {
     return this.sceneBox.getCenter(new Vector3())
   }
 
@@ -179,12 +179,8 @@ export default class SpeckleRenderer {
 
   /****************
    * Common Objects */
-  public get allObjects() {
+  public get allObjects(): Object3D {
     return this._scene.getObjectByName('ContentGroup')
-  }
-
-  public subtree(subtreeId: string) {
-    return this._scene.getObjectByName(subtreeId)
   }
 
   public get scene() {
@@ -194,7 +190,7 @@ export default class SpeckleRenderer {
   /********
    * Lights */
 
-  public get sunLight() {
+  public get sunLight(): DirectionalLight {
     return this.sun
   }
 
@@ -252,13 +248,13 @@ export default class SpeckleRenderer {
     return this.pipeline.pipelineOptions
   }
 
-  public get shadowcatcher() {
+  public get shadowcatcher(): Shadowcatcher {
     return this._shadowcatcher
   }
 
   /**************
    * Intersections */
-  public get intersections() {
+  public get intersections(): Intersections {
     return this._intersections
   }
 
@@ -820,7 +816,7 @@ export default class SpeckleRenderer {
     this.sun.target = this.sunTarget
   }
 
-  public updateDirectLights() {
+  private updateDirectLights() {
     const phi = this.sunConfiguration.elevation
     const theta = this.sunConfiguration.azimuth
     const radiusOffset = this.sunConfiguration.radius
@@ -893,7 +889,7 @@ export default class SpeckleRenderer {
     this.viewer.emit(ViewerEvent.LightConfigUpdated, { ...config })
   }
 
-  public updateHelpers() {
+  private updateHelpers() {
     if (this.SHOW_HELPERS) {
       ;(this._scene.getObjectByName('CamHelper') as CameraHelper).update()
       // Thank you prettier, this looks so much better
@@ -1067,7 +1063,7 @@ export default class SpeckleRenderer {
     this.viewer.emit(ViewerEvent.ObjectDoubleClicked, selectionInfo)
   }
 
-  public boxFromObjects(objectIds: string[]) {
+  public boxFromObjects(objectIds: string[]): Box3 {
     let box = new Box3()
     const rvs: NodeRenderView[] = []
     if (objectIds.length > 0) {
@@ -1162,7 +1158,7 @@ export default class SpeckleRenderer {
     return ids.reverse()
   }
 
-  public getBatchSize(batchId: string) {
+  public getBatchSize(batchId: string): number {
     return this.batcher.batches[batchId].renderViews.length
   }
 
