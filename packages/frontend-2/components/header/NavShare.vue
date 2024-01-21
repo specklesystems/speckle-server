@@ -61,8 +61,7 @@
   </Menu>
   <ProjectModelPageDialogEmbed
     v-model:open="embedDialogOpen"
-    :visibility="props.visibility"
-    :project-id="props.projectId"
+    :project="props.project"
     :model-id="props.modelId"
     :version-id="props.versionId"
   />
@@ -76,14 +75,13 @@ import {
   CodeBracketIcon
 } from '@heroicons/vue/24/outline'
 import { keyboardClick } from '@speckle/ui-components'
-import type { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectModelPageDialogEmbedFragment } from '~~/lib/common/generated/gql/graphql'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 
 const props = defineProps<{
-  projectId: string
+  project: ProjectModelPageDialogEmbedFragment
   modelId: string
   versionId?: string
-  visibility?: ProjectVisibility
 }>()
 
 const { copy } = useClipboard()
@@ -94,7 +92,7 @@ const embedDialogOpen = ref(false)
 const isFederated = computed(() => props.modelId.includes(','))
 
 const handleCopyLink = () => {
-  copyModelLink(props.projectId, props.modelId, props.versionId)
+  copyModelLink(props.project.id, props.modelId, props.versionId)
 }
 
 const handleCopyId = () => {

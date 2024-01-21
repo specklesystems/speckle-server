@@ -72,10 +72,10 @@
   />
   <Portal to="primary-actions">
     <HeaderNavShare
+      v-if="project"
       :model-id="modelId"
       :version-id="versionId"
-      :project-id="projectId"
-      :visibility="project?.visibility"
+      :project="project"
     />
   </Portal>
 </template>

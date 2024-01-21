@@ -1,6 +1,6 @@
 <template>
   <template v-if="itemsCount">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
       <!-- Decrementing z-index necessary for the actions menu to render correctly. Each card has its own stacking context because of the scale property -->
       <ProjectPageModelsCard
         v-for="(item, i) in items"
@@ -13,6 +13,7 @@
         :disable-default-link="disableDefaultLinks"
         :style="`z-index: ${items.length - i};`"
         @click="($event) => $emit('model-clicked', { id: item.id, e: $event })"
+        @embed="console.log('embed')"
       />
     </div>
     <FormButtonSecondaryViewAll

@@ -114,13 +114,6 @@
       </div>
     </div>
   </div>
-  <ProjectModelPageDialogEmbed
-    v-if="project"
-    v-model:open="embedDialogOpen"
-    :visibility="project.visibility"
-    :project-id="project.id"
-    :model-id="model.id"
-  />
 </template>
 <script lang="ts" setup>
 import dayjs from 'dayjs'
@@ -144,12 +137,12 @@ graphql(`
   fragment ProjectPageModelsCardProject on Project {
     id
     role
-    visibility
   }
 `)
 
 const emit = defineEmits<{
   (e: 'click', event: MouseEvent | KeyboardEvent): void
+  (e: 'embed'): void
 }>()
 
 const props = withDefaults(

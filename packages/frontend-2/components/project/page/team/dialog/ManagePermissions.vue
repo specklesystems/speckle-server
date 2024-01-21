@@ -45,7 +45,6 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
   project: ProjectPageTeamDialogFragment
-  defaultOpen: boolean
 }>()
 
 const { isOwner, isServerGuest } = useTeamDialogInternals({

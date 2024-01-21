@@ -26,7 +26,7 @@
     </div>
     <div
       v-if="items?.length && project.model"
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 relative z-0"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 relative z-10"
     >
       <!-- Decrementing z-index necessary for the actions menu to render correctly. Each card has its own stacking context because of the scale property -->
       <template v-for="(item, i) in items" :key="item.id">
@@ -84,7 +84,7 @@
     <ProjectModelPageDialogEmbed
       v-model:open="embedDialogOpen"
       :visibility="project.visibility"
-      :project-id="project.id"
+      :project="project"
       :model-id="project.model.id"
       :version-id="currentVersionId"
     />

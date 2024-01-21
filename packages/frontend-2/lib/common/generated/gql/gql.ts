@@ -29,6 +29,7 @@ const documents = {
     "\n  fragment ProjectModelPageVersionsProject on Project {\n    ...ProjectPageProjectHeader\n    model(id: $modelId) {\n      id\n      name\n      pendingImportedVersions {\n        ...PendingFileUpload\n      }\n    }\n    ...ProjectModelPageVersionsPagination\n  }\n": types.ProjectModelPageVersionsProjectFragmentDoc,
     "\n  fragment ProjectModelPageDialogDeleteVersion on Version {\n    id\n    message\n  }\n": types.ProjectModelPageDialogDeleteVersionFragmentDoc,
     "\n  fragment ProjectModelPageDialogEditMessageVersion on Version {\n    id\n    message\n  }\n": types.ProjectModelPageDialogEditMessageVersionFragmentDoc,
+    "\n  fragment ProjectModelPageDialogEmbed on Project {\n    id\n    visibility\n  }\n": types.ProjectModelPageDialogEmbedFragmentDoc,
     "\n  fragment ProjectModelPageDialogMoveToVersion on Version {\n    id\n    message\n  }\n": types.ProjectModelPageDialogMoveToVersionFragmentDoc,
     "\n  fragment ProjectModelPageVersionsCardVersion on Version {\n    id\n    message\n    authorUser {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    previewUrl\n    sourceApplication\n    commentThreadCount: commentThreads(limit: 0) {\n      totalCount\n    }\n    ...ProjectModelPageDialogDeleteVersion\n    ...ProjectModelPageDialogMoveToVersion\n    ...ModelCardAutomationStatus_Version\n  }\n": types.ProjectModelPageVersionsCardVersionFragmentDoc,
     "\n  fragment ProjectModelsPageHeader_Project on Project {\n    id\n    name\n    sourceApps\n    role\n    team {\n      user {\n        ...FormUsersSelectItem\n      }\n    }\n  }\n": types.ProjectModelsPageHeader_ProjectFragmentDoc,
@@ -38,7 +39,7 @@ const documents = {
     "\n  fragment ProjectPageLatestItemsCommentItem on Comment {\n    id\n    author {\n      ...FormUsersSelectItem\n    }\n    screenshot\n    rawText\n    createdAt\n    updatedAt\n    archived\n    repliesCount: replies(limit: 0) {\n      totalCount\n    }\n    replyAuthors(limit: 4) {\n      totalCount\n      items {\n        ...FormUsersSelectItem\n      }\n    }\n    ...LinkableComment\n  }\n": types.ProjectPageLatestItemsCommentItemFragmentDoc,
     "\n  fragment ProjectPageLatestItemsModels on Project {\n    id\n    role\n    modelCount: models(limit: 0) {\n      totalCount\n    }\n  }\n": types.ProjectPageLatestItemsModelsFragmentDoc,
     "\n  fragment ProjectPageModelsActions on Model {\n    id\n    name\n  }\n": types.ProjectPageModelsActionsFragmentDoc,
-    "\n  fragment ProjectPageModelsCardProject on Project {\n    id\n    role\n    visibility\n  }\n": types.ProjectPageModelsCardProjectFragmentDoc,
+    "\n  fragment ProjectPageModelsCardProject on Project {\n    id\n    role\n  }\n": types.ProjectPageModelsCardProjectFragmentDoc,
     "\n  fragment ModelPreview on Model {\n    previewUrl\n  }\n": types.ModelPreviewFragmentDoc,
     "\n  fragment SingleLevelModelTreeItem on ModelsTreeItem {\n    id\n    name\n    fullName\n    model {\n      ...ProjectPageLatestItemsModelItem\n    }\n    hasChildren\n    updatedAt\n  }\n": types.SingleLevelModelTreeItemFragmentDoc,
     "\n  fragment ModelCardAutomationStatus_AutomationsStatus on AutomationsStatus {\n    id\n    status\n    statusMessage\n    automationRuns {\n      id\n      automationId\n      automationName\n      createdAt\n      status\n      functionRuns {\n        id\n        functionId\n        functionName\n        functionLogo\n        elapsed\n        status\n        statusMessage\n        contextView\n        results\n        resultVersions {\n          id\n          model {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n": types.ModelCardAutomationStatus_AutomationsStatusFragmentDoc,
@@ -248,6 +249,10 @@ export function graphql(source: "\n  fragment ProjectModelPageDialogEditMessageV
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  fragment ProjectModelPageDialogEmbed on Project {\n    id\n    visibility\n  }\n"): (typeof documents)["\n  fragment ProjectModelPageDialogEmbed on Project {\n    id\n    visibility\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment ProjectModelPageDialogMoveToVersion on Version {\n    id\n    message\n  }\n"): (typeof documents)["\n  fragment ProjectModelPageDialogMoveToVersion on Version {\n    id\n    message\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -284,7 +289,7 @@ export function graphql(source: "\n  fragment ProjectPageModelsActions on Model 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectPageModelsCardProject on Project {\n    id\n    role\n    visibility\n  }\n"): (typeof documents)["\n  fragment ProjectPageModelsCardProject on Project {\n    id\n    role\n    visibility\n  }\n"];
+export function graphql(source: "\n  fragment ProjectPageModelsCardProject on Project {\n    id\n    role\n  }\n"): (typeof documents)["\n  fragment ProjectPageModelsCardProject on Project {\n    id\n    role\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

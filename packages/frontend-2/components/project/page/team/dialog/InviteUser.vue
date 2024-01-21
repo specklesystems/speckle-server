@@ -67,7 +67,6 @@ type InvitableUser = UserSearchItem | string
 
 const props = defineProps<{
   project: ProjectPageTeamDialogFragment
-  defaultOpen: boolean
 }>()
 
 const loading = ref(false)
