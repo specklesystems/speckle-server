@@ -8,7 +8,8 @@ const {
   contextRequiresStream,
   allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
   allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
-  allowForServerAdmins
+  allowForServerAdmins,
+  validateResourceAccess
 } = require('@/modules/shared/authz')
 const {
   ForbiddenError: SFE,
@@ -18,6 +19,9 @@ const {
   ContextError
 } = require('@/modules/shared/errors')
 const { Roles } = require('@speckle/shared')
+const {
+  TokenResourceIdentifierType
+} = require('@/modules/core/graph/generated/graphql')
 
 describe('AuthZ @shared', () => {
   describe('Auth pipeline', () => {
@@ -208,6 +212,89 @@ describe('AuthZ @shared', () => {
       })
       expect(authResult.authorized).to.equal(true)
       expect(authResult.error).to.not.exist
+    })
+  })
+
+  describe('Validate resource access', () => {
+    it('Succeeds when no resource access rules present', async () => {
+      const res = await validateResourceAccess({
+        context: {},
+        authResult: {}
+      })
+
+      expect(res.authResult.authorized).to.be.true
+    })
+
+    it('Succeeds without a stream in the context, even if rules present', async () => {
+      const res = await validateResourceAccess({
+        context: {
+          resourceAccessRules: [
+            { id: 'foo', type: TokenResourceIdentifierType.Project }
+          ]
+        },
+        authResult: {}
+      })
+
+      expect(res.authResult.authorized).to.be.true
+    })
+
+    it('Fails if authResult already failed', async () => {
+      const res = await validateResourceAccess({
+        context: {
+          resourceAccessRules: [
+            { id: 'foo', type: TokenResourceIdentifierType.Project }
+          ]
+        },
+        authResult: { authorized: false, error: new Error('dummy') }
+      })
+
+      expect(res.authResult.authorized).to.be.false
+    })
+
+    it('Fails if resource access rules arent followed', async () => {
+      const res = await validateResourceAccess({
+        context: {
+          resourceAccessRules: [
+            { id: 'foo', type: TokenResourceIdentifierType.Project }
+          ],
+          stream: { id: 'bar' }
+        },
+        authResult: {}
+      })
+
+      expect(res.authResult.authorized).to.be.false
+      expect(res.authResult.error.message).to.equal(
+        'You do not have the required privileges.'
+      )
+    })
+
+    it('Succeeds if resource access rules are followed', async () => {
+      const res = await validateResourceAccess({
+        context: {
+          resourceAccessRules: [
+            { id: 'foo', type: TokenResourceIdentifierType.Project },
+            { id: 'bar', type: TokenResourceIdentifierType.Project }
+          ],
+          stream: { id: 'bar' }
+        },
+        authResult: {}
+      })
+
+      expect(res.authResult.authorized).to.be.true
+    })
+
+    it('Success if resource access rules are defined, but are from a different type', async () => {
+      const res = await validateResourceAccess({
+        context: {
+          resourceAccessRules: [
+            { id: 'foo', type: 'fake' },
+            { id: 'bar', type: 'fake' }
+          ]
+        },
+        authResult: {}
+      })
+
+      expect(res.authResult.authorized).to.be.true
     })
   })
 

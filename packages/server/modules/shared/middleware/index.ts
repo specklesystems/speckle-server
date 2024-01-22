@@ -24,6 +24,7 @@ import { pino } from 'pino'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { Netmask } from 'netmask'
 import { Merge } from 'type-fest'
+import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -76,9 +77,19 @@ export async function createAuthContextFromToken(
     if (!tokenValidationResult.valid)
       return { auth: false, err: new ForbiddenError('Your token is not valid.') }
 
-    const { scopes, userId, role, appId } = tokenValidationResult
+    const { scopes, userId, role, appId, resourceAccessRules } = tokenValidationResult
 
-    return { auth: true, userId, role, token, scopes, appId }
+    return {
+      auth: true,
+      userId,
+      role,
+      token,
+      scopes,
+      appId,
+      resourceAccessRules: resourceAccessRules
+        ? resourceAccessRules.map(resourceAccessRuleToIdentifier)
+        : null
+    }
   } catch (err) {
     const surelyError = ensureError(err, 'Unknown error during token validation')
     return { auth: false, err: surelyError }

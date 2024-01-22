@@ -79,6 +79,11 @@ spec:
             value: {{ .Values.frontend_2.logClientApiEndpoint }}
           - name: NODE_TLS_REJECT_UNAUTHORIZED
             value: {{ .Values.tlsRejectUnauthorized | quote }}
+          - name: NUXT_REDIS_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
+                key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
 
       priorityClassName: high-priority
       {{- if .Values.frontend_2.affinity }}

@@ -13626,6 +13626,7 @@ __metadata:
     eslint-plugin-vue: ^9.18.1
     eslint-plugin-vuejs-accessibility: ^1.2.0
     graphql: ^16.6.0
+    ioredis: ^5.3.2
     jest: 27
     js-cookie: ^3.0.1
     lodash-es: ^4.17.21

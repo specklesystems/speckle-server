@@ -81,20 +81,31 @@ const logger = useLogger()
 const areQueriesLoading = useQueryLoading()
 
 const latestModelsQueryVariables = computed(
-  (): ProjectLatestModelsPaginationQueryVariables => ({
-    projectId: props.projectId,
-    filter: {
-      search: props.search || null,
-      excludeIds: props.excludedIds || null,
-      onlyWithVersions: !!props.excludeEmptyModels,
-      sourceApps: props.sourceApps?.length
-        ? props.sourceApps.map((a) => a.searchKey)
-        : null,
-      contributors: props.contributors?.length
-        ? props.contributors.map((c) => c.id)
+  (): ProjectLatestModelsPaginationQueryVariables => {
+    const shouldHaveFilter =
+      props.search?.length ||
+      props.excludedIds?.length ||
+      props.sourceApps?.length ||
+      props.contributors?.length ||
+      !!props.excludeEmptyModels
+
+    return {
+      projectId: props.projectId,
+      filter: shouldHaveFilter
+        ? {
+            search: props.search || null,
+            excludeIds: props.excludedIds || null,
+            onlyWithVersions: !!props.excludeEmptyModels,
+            sourceApps: props.sourceApps?.length
+              ? props.sourceApps.map((a) => a.searchKey)
+              : null,
+            contributors: props.contributors?.length
+              ? props.contributors.map((c) => c.id)
+              : null
+          }
         : null
     }
-  })
+  }
 )
 
 const infiniteLoaderId = ref('')

@@ -30,6 +30,9 @@ export const projectWebhooksRoute = (projectId: string) =>
 export const automationDataPageRoute = (baseUrl: string, automationId: string) =>
   new URL(`/automations/${automationId}`, baseUrl).toString()
 
+export const threadRedirectRoute = (projectId: string, threadId: string) =>
+  `/projects/${projectId}/threads/${threadId}`
+
 /**
  * TODO: Page doesn't exist
  */
