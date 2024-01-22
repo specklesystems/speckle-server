@@ -11,6 +11,8 @@ import { useConfigStore } from '~/store/config'
 const uiConfigStore = useConfigStore()
 const { isDarkTheme } = storeToRefs(uiConfigStore)
 
+// dummy comment
+
 useHead({
   // Title suffix
   titleTemplate: (titleChunk) =>
