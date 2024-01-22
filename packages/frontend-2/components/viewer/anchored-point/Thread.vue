@@ -25,6 +25,7 @@
           -->
           <!-- <UserAvatarGroup :users="threadAuthors" /> -->
           <UserAvatarGroup v-if="!modelValue.archived" :users="threadAuthors" />
+
           <CheckCircleIcon v-if="modelValue.archived" class="w-8 h-8 text-primary" />
         </button>
       </div>
@@ -48,12 +49,9 @@
             ]"
           >
             <div
-              class="relative w-full sm:w-80 flex py-2 pl-3 pr-2 sm:px-2 bg-foundation-2"
+              class="relative w-full sm:w-80 flex justify-between items-center py-2 pl-3 pr-2 sm:px-2 bg-foundation-2"
             >
               <div class="flex-grow flex items-center">
-                <span class="sm:hidden text-primary text-sm font-medium">
-                  Discussions
-                </span>
                 <FormButton
                   v-tippy="'Previous'"
                   size="sm"
@@ -115,7 +113,7 @@
             <div class="relative w-full sm:w-80 flex flex-col flex-1 justify-between">
               <div
                 ref="commentsContainer"
-                class="max-h-[calc(50vh)] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
+                class="max-h-[40vh] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
               >
                 <div
                   v-if="!isThreadResourceLoaded"
@@ -147,10 +145,31 @@
               </div>
             </div>
             <ViewerAnchoredPointThreadNewReply
-              v-if="!modelValue.archived && canReply"
+              v-if="!modelValue.archived && canReply && !isSmallerOrEqualSm"
               :model-value="modelValue"
               @submit="onNewReply"
             />
+            <div
+              v-if="isSmallerOrEqualSm"
+              class="flex justify-between w-full gap-2 p-2 mt-2"
+            >
+              <FormButton
+                :icon-left="ArrowLeftIcon"
+                color="invert"
+                full-width
+                @click="emit('prev', modelValue)"
+              >
+                Previous
+              </FormButton>
+              <FormButton
+                :icon-right="ArrowRightIcon"
+                color="default"
+                full-width
+                @click="emit('next', modelValue)"
+              >
+                Next
+              </FormButton>
+            </div>
           </div>
         </div>
       </ViewerCommentsPortalOrDiv>
@@ -162,6 +181,8 @@ import {
   LinkIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ArrowRightIcon,
+  ArrowLeftIcon,
   XMarkIcon,
   CheckCircleIcon,
   ArrowTopRightOnSquareIcon
@@ -210,6 +231,7 @@ const props = defineProps<{
 const threadId = computed(() => props.modelValue.id)
 const { copy } = useClipboard()
 const { activeUser } = useActiveUser()
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const archiveComment = useArchiveComment()
 const { triggerNotification } = useGlobalToast()

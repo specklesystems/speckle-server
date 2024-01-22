@@ -13,7 +13,6 @@
         :disable-default-link="disableDefaultLinks"
         :style="`z-index: ${items.length - i};`"
         @click="($event) => $emit('model-clicked', { id: item.id, e: $event })"
-        @embed="console.log('embed')"
       />
     </div>
     <FormButtonSecondaryViewAll
