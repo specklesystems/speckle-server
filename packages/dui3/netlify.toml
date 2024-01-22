@@ -1,0 +1,8 @@
+[build]
+  base = "packages/dui3/"
+  publish = ".output/server"
+
+[[redirects]]
+  from = "/*"
+  to = "index.html"
+  status = 200
