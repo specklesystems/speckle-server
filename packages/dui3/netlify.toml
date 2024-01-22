@@ -2,6 +2,6 @@
   command = "yarn build"
   publish = ".output"
 
-[[functions]]
+[functions]
   path = "/*"
   handler = ".output/server/index.mjs"
