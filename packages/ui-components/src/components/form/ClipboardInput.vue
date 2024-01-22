@@ -35,8 +35,8 @@ import {
   ClipboardDocumentCheckIcon
 } from '@heroicons/vue/24/outline'
 import { FormTextInput, FormButton } from '~~/src/lib'
-import { keyboardClick } from '@speckle/ui-components'
 import { ref } from 'vue'
+import { keyboardClick } from '~~/src/helpers/global/accessibility'
 
 type Props = {
   value: string
