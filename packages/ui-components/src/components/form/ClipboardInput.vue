@@ -49,7 +49,6 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{ (e: 'copy', val: string): void }>()
-console.log('testing commit')
 
 const { copy } = useClipboard({ legacy: true })
 
