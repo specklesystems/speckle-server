@@ -3,13 +3,13 @@
     v-model:open="isOpen"
     max-width="xl"
     :buttons="
-      project.visibility == projectVisibility.Private
+      visibility == projectVisibility.Private
         ? nonDiscoverableButtons
         : discoverableButtons
     "
   >
     <template #header>Embed Model</template>
-    <div v-if="project.visibility === projectVisibility.Private">
+    <div v-if="visibility === projectVisibility.Private">
       <p>
         <strong>Model embedding only works if the project is “Discoverable”.</strong>
       </p>
@@ -87,22 +87,14 @@
 </template>
 
 <script setup lang="ts">
-import { graphql } from '~~/lib/common/generated/gql'
 import { ref, computed } from 'vue'
 import { Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
 import { useClipboard } from '~~/composables/browser'
-import type { ProjectModelPageDialogEmbedFragment } from '~~/lib/common/generated/gql/graphql'
-
-graphql(`
-  fragment ProjectModelPageDialogEmbed on Project {
-    id
-    visibility
-  }
-`)
 
 const props = defineProps<{
-  project: ProjectModelPageDialogEmbedFragment
+  visibility: ProjectVisibility
+  projectId: string
   modelId: string
   versionId?: string
 }>()
@@ -161,7 +153,7 @@ const embedDialogOptions = [
 const baseIframeSrc = 'http://localhost:8081/projects/'
 
 const updatedUrl = computed(() => {
-  let url = `${baseIframeSrc}${encodeURIComponent(props.project.id)}`
+  let url = `${baseIframeSrc}${encodeURIComponent(props.projectId)}`
   if (props.modelId) {
     url += `/models/${encodeURIComponent(props.modelId)}`
   }
@@ -225,7 +217,7 @@ const nonDiscoverableButtons = computed(() => [
     text: 'Change Access',
     props: { color: 'primary', fullWidth: true },
     onClick: () => {
-      router.push(`/projects/${props.project.id}?settings=access`)
+      router.push(`/projects/${props.projectId}?settings=access`)
     }
   }
 ])

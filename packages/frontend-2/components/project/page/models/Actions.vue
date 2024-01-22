@@ -23,6 +23,12 @@
       :project-id="projectId"
       @deleted="$emit('model-updated')"
     />
+    <ProjectModelPageDialogEmbed
+      v-model:open="embedDialogOpen"
+      :project-id="projectId"
+      :model-id="model.id"
+      :visibility="ProjectVisibility.Public"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -31,6 +37,7 @@ import type { ProjectPageModelsActionsFragment } from '~~/lib/common/generated/g
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
+import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
 import {
   TrashIcon,
   PencilIcon,
@@ -46,6 +53,13 @@ graphql(`
   fragment ProjectPageModelsActions on Model {
     id
     name
+  }
+`)
+
+graphql(`
+  fragment ProjectModelPageDialogEmbed on Project {
+    id
+    visibility
   }
 `)
 
@@ -77,6 +91,7 @@ const { copy } = useClipboard()
 
 const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)
+const embedDialogOpen = ref(false)
 
 const isMain = computed(() => props.model.name === 'main')
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
@@ -140,7 +155,7 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       copy(props.model.id, { successMessage: 'Copied model ID to clipboard' })
       break
     case ActionTypes.Embed:
-      emit('embed')
+      embedDialogOpen.value = true
       break
   }
 }

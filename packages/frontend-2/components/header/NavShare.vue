@@ -61,9 +61,10 @@
   </Menu>
   <ProjectModelPageDialogEmbed
     v-model:open="embedDialogOpen"
-    :project="props.project"
+    :project-id="props.project.id"
     :model-id="props.modelId"
     :version-id="props.versionId"
+    :visibility="ProjectVisibility.Public"
   />
 </template>
 <script setup lang="ts">
@@ -75,7 +76,10 @@ import {
   CodeBracketIcon
 } from '@heroicons/vue/24/outline'
 import { keyboardClick } from '@speckle/ui-components'
-import type { ProjectModelPageDialogEmbedFragment } from '~~/lib/common/generated/gql/graphql'
+import {
+  ProjectVisibility,
+  type ProjectModelPageDialogEmbedFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 
 const props = defineProps<{

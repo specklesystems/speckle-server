@@ -84,7 +84,7 @@
     <ProjectModelPageDialogEmbed
       v-model:open="embedDialogOpen"
       :visibility="project.visibility"
-      :project="project"
+      :project-id="project.id"
       :model-id="project.model.id"
       :version-id="currentVersionId"
     />
@@ -111,6 +111,7 @@ type SingleVersion = NonNullable<Get<typeof versions.value, 'items[0]'>>
 graphql(`
   fragment ProjectModelPageVersionsPagination on Project {
     id
+    visibility
     model(id: $modelId) {
       id
       versions(limit: 16, cursor: $versionsCursor) {
