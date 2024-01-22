@@ -2,21 +2,14 @@
   <ClientOnly>
     <div
       v-if="embedOptions.isEnabled"
-      class="select-none fixed bottom-0 left-0 w-full z-20 flex h-14 items-center"
-      :class="
-        embedOptions.isTransparent
-          ? 'justify-end'
-          : 'items-center gap-4 bg-foundation px-3'
-      "
+      class="select-none fixed bottom-0 left-0 w-full z-20 flex gap-4 px-4 h-14 items-center"
+      :class="embedOptions.isTransparent ? 'bg-transparent' : 'bg-foundation shadow-t'"
     >
       <NuxtLink href="https://speckle.systems/" target="_blank">
-        <HeaderLogoBlock
-          powered-by
-          :class="embedOptions.isTransparent ? 'scale-75' : ''"
-        />
+        <HeaderLogoBlock powered-by />
       </NuxtLink>
-      <div v-if="!embedOptions.isTransparent" class="h-6 w-px bg-primary"></div>
-      <div v-if="!embedOptions.isTransparent" class="flex flex-col">
+      <div class="h-6 w-px bg-primary"></div>
+      <div class="flex flex-col">
         <NuxtLink :to="projectUrl" target="_blank">
           <div class="flex items-center gap-1 -mb-1.5">
             <h2 class="font-bold text-base text-sm">

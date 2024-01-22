@@ -81,10 +81,10 @@
             v-model:open="showActionsMenu"
             :model="model"
             :project-id="projectId"
+            :visibility="project?.visibility"
             :can-edit="canEdit"
             @click.stop.prevent
             @upload-version="triggerVersionUpload"
-            @embed="embedDialogOpen = true"
           />
         </div>
       </div>
@@ -137,12 +137,12 @@ graphql(`
   fragment ProjectPageModelsCardProject on Project {
     id
     role
+    visibility
   }
 `)
 
 const emit = defineEmits<{
   (e: 'click', event: MouseEvent | KeyboardEvent): void
-  (e: 'embed'): void
 }>()
 
 const props = withDefaults(
@@ -172,7 +172,6 @@ const importArea = ref(
 )
 const showActionsMenu = ref(false)
 const hovered = ref(false)
-const embedDialogOpen = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [

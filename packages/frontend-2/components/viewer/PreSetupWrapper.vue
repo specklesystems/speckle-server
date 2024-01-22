@@ -75,7 +75,8 @@
       v-if="project"
       :model-id="modelId"
       :version-id="versionId"
-      :project="project"
+      :project-id="project.id"
+      :visibility="project.visibility"
     />
   </Portal>
 </template>

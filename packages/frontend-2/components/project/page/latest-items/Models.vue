@@ -95,6 +95,7 @@ graphql(`
   fragment ProjectPageLatestItemsModels on Project {
     id
     role
+    visibility
     modelCount: models(limit: 0) {
       totalCount
     }

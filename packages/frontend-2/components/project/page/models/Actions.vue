@@ -27,17 +27,19 @@
       v-model:open="embedDialogOpen"
       :project-id="projectId"
       :model-id="model.id"
-      :visibility="ProjectVisibility.Public"
+      :visibility="props.visibility"
     />
   </div>
 </template>
 <script setup lang="ts">
 import type { Nullable } from '@speckle/shared'
-import type { ProjectPageModelsActionsFragment } from '~~/lib/common/generated/gql/graphql'
+import type {
+  ProjectPageModelsActionsFragment,
+  ProjectVisibility
+} from '~~/lib/common/generated/gql/graphql'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
-import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
 import {
   TrashIcon,
   PencilIcon,
@@ -53,13 +55,6 @@ graphql(`
   fragment ProjectPageModelsActions on Model {
     id
     name
-  }
-`)
-
-graphql(`
-  fragment ProjectModelPageDialogEmbed on Project {
-    id
-    visibility
   }
 `)
 
@@ -84,6 +79,7 @@ const props = defineProps<{
   model: ProjectPageModelsActionsFragment
   projectId: string
   canEdit?: boolean
+  visibility?: ProjectVisibility
 }>()
 
 const copyModelLink = useCopyModelLink()

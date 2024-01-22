@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    max-width="xl"
+    :max-width="visibility == projectVisibility.Private ? 'sm' : 'xl'"
     :buttons="
       visibility == projectVisibility.Private
         ? nonDiscoverableButtons
@@ -93,7 +93,7 @@ import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
 import { useClipboard } from '~~/composables/browser'
 
 const props = defineProps<{
-  visibility: ProjectVisibility
+  visibility?: ProjectVisibility
   projectId: string
   modelId: string
   versionId?: string
@@ -183,8 +183,8 @@ const iframeCode = computed(() => {
 
 const handleEmbedCodeCopy = async (value: string) => {
   await copy(value, {
-    successMessage: 'Value copied to clipboard',
-    failureMessage: 'Failed to copy value to clipboard'
+    successMessage: 'Embed code copied to clipboard',
+    failureMessage: 'Failed to copy embed code to clipboard'
   })
 }
 
@@ -217,7 +217,7 @@ const nonDiscoverableButtons = computed(() => [
     text: 'Change Access',
     props: { color: 'primary', fullWidth: true },
     onClick: () => {
-      router.push(`/projects/${props.projectId}?settings=access`)
+      router.push(`/projects/${props.projectId}`)
     }
   }
 ])

@@ -4,8 +4,8 @@
   <div
     class="fixed shadow-t bottom-0 left-0 max-h-[65vh] overflow-hidden w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
   >
-    <PortalTarget class="sm:hidden" name="bottomPanel"></PortalTarget>
-    <PortalTarget class="sm:hidden" name="mobileComments"></PortalTarget>
+    <PortalTarget name="bottomPanel"></PortalTarget>
+    <PortalTarget name="mobileComments"></PortalTarget>
   </div>
 </template>
 
