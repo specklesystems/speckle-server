@@ -54,7 +54,6 @@
   </div>
 </template>
 <script setup lang="ts">
-// import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { ConnectorTag, ConnectorVersion, Tag } from '~~/lib/connectors'
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
 
@@ -62,75 +61,84 @@ useHead({
   title: 'Speckle Connectors'
 })
 
-const response = await useFetch(
+const spacesEndpoint = 'https://releases.speckle.dev'
+const cmsTagsEndpoint =
   'https://speckle.systems/ghost/api/v3/content/tags?key=c895981da23dbb5c87ee7192e2&limit=all'
+
+const connectorTags = await useAppCached(
+  'connector-downloads',
+  async () => {
+    const cmsTags = await $fetch<{
+      tags: Record<string, unknown>[]
+    }>(cmsTagsEndpoint)
+    const relevantTags = cmsTags.tags.filter((tag) => {
+      if (!tag.codeinjection_head) return false
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, camelcase
+      tag.codeinjection_head = (tag.codeinjection_head as string).replace(/\s/g, '')
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      if ((tag.codeinjection_head as string).match(/(window.connectorTag=true)/))
+        return true
+    }) as Tag[]
+
+    const connectorTags = await Promise.all(
+      relevantTags.map(async (tag) => {
+        const connectorTag = { ...tag } as ConnectorTag
+
+        const community = tag.codeinjection_head.match(/window.community="([\s\S]*?)"/)
+        connectorTag.communityProvider = community ? community[1] : undefined
+        connectorTag.isCommunity = !!connectorTag.communityProvider
+
+        const installLink = tag.codeinjection_head.match(
+          /window.installLink="([\s\S]*?)"/
+        )
+        connectorTag.installLink = installLink ? installLink[1] : undefined
+
+        try {
+          if (connectorTag.installLink?.includes('SpeckleManager')) {
+            connectorTag.directDownload = true
+
+            const tagFeed = await $fetch<{
+              Versions: ConnectorVersion[]
+            }>(`${spacesEndpoint}/manager2/feeds/${tag.slug}.json`)
+
+            const versions = tagFeed.Versions.sort(
+              (a, b) => new Date(b.Date).getTime() - new Date(a.Date).getTime()
+            )
+            connectorTag.versions = versions && versions.length > 0 ? versions : []
+            connectorTag.stable = versions.find((x) => !x.Prerelease)?.Number
+          } else {
+            connectorTag.directDownload = false
+            connectorTag.versions = []
+          }
+        } catch (e) {
+          connectorTag.directDownload = false
+          connectorTag.versions = []
+          // gotta catch 'em all!
+        }
+
+        return connectorTag
+      })
+    )
+
+    connectorTags.sort((a, b) => {
+      return b.versions.length - a.versions.length
+    })
+
+    return connectorTags
+  },
+  {
+    expiryMs:
+      // Cache for an hour
+      1000 * 60 * 60
+  }
 )
 
-// useLazyFetch
-
 const showManagerDownloadDialog = ref(false)
-
-const spacesEndpoint = 'https://releases.speckle.dev'
-
-const relevantTags = (
-  (response.data.value as Record<string, unknown>).tags as Record<string, unknown>[]
-).filter((tag) => {
-  if (!tag.codeinjection_head) return false
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, camelcase
-  tag.codeinjection_head = (tag.codeinjection_head as string).replace(/\s/g, '')
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-  if ((tag.codeinjection_head as string).match(/(window.connectorTag=true)/))
-    return true
-}) as Tag[]
-
-const connectorTags = ref<ConnectorTag[]>([])
-
-for (const tag of relevantTags) {
-  const connectorTag = { ...tag } as ConnectorTag
-
-  const community = tag.codeinjection_head.match(/window.community="([\s\S]*?)"/)
-  connectorTag.communityProvider = community ? community[1] : undefined
-  connectorTag.isCommunity = !!connectorTag.communityProvider
-
-  const installLink = tag.codeinjection_head.match(/window.installLink="([\s\S]*?)"/)
-  connectorTag.installLink = installLink ? installLink[1] : undefined
-
-  try {
-    if (connectorTag.installLink?.includes('SpeckleManager')) {
-      connectorTag.directDownload = true
-      const { data } = await useFetch(
-        `${spacesEndpoint}/manager2/feeds/${tag.slug}.json`
-      )
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-      const versions = (data.value as { Versions: ConnectorVersion[] }).Versions.sort(
-        (a: ConnectorVersion, b: ConnectorVersion) =>
-          new Date(b.Date).getTime() - new Date(a.Date).getTime()
-      )
-      connectorTag.versions = versions && versions.length > 0 ? versions : []
-
-      connectorTag.stable = versions.find((x) => !x.Prerelease)?.Number
-    } else {
-      connectorTag.directDownload = false
-      connectorTag.versions = []
-    }
-  } catch (e) {
-    connectorTag.directDownload = false
-    connectorTag.versions = []
-    // gotta catch 'em all!
-  }
-
-  connectorTags.value.push(connectorTag)
-}
-
-connectorTags.value = connectorTags.value.sort((a, b) => {
-  return b.versions.length - a.versions.length
-})
-
 const searchString = ref<string>()
 
 const searchResults = computed(() => {
-  if (!searchString.value) return connectorTags.value
-  return connectorTags.value.filter((t) =>
+  if (!searchString.value) return connectorTags
+  return connectorTags.filter((t) =>
     t.name.toLowerCase().includes(searchString.value?.toLowerCase() as string)
   )
 })

@@ -39,6 +39,7 @@ export default defineNuxtConfig({
     '@artmizu/nuxt-prometheus'
   ],
   runtimeConfig: {
+    redisUrl: '',
     public: {
       apiOrigin: 'UNDEFINED',
       backendApiOrigin: '',
@@ -105,8 +106,10 @@ export default defineNuxtConfig({
       },
       // older chrome version for CEF 65 support. all identifiers except the chrome one are default ones.
       target: ['es2020', 'edge88', 'firefox78', 'chrome65', 'safari14']
-      // optionally disable minification for debugging
-      // minify: false
+      // // optionally disable minification for debugging
+      // minify: false,
+      // // optionally enable sourcemaps for debugging
+      // sourcemap: 'inline'
     },
     plugins: [
       // again - only for CEF 65

@@ -28,7 +28,16 @@ import { CommitNotFoundError } from '@/modules/core/errors/commit'
 
 export = {
   Project: {
-    async models(parent, args) {
+    async models(parent, args, ctx) {
+      // If limit=0 & no filter, short-cut full execution and use data loader
+      if (args.limit === 0 && !args.filter) {
+        return {
+          totalCount: await ctx.loaders.streams.getBranchCount.load(parent.id),
+          items: [],
+          cursor: null
+        }
+      }
+
       return await getPaginatedProjectModels(parent.id, args)
     },
     async model(_parent, args, ctx) {
@@ -58,7 +67,18 @@ export = {
         loadedVersionsOnly
       })
     },
-    async versions(parent, args) {
+    async versions(parent, args, ctx) {
+      // If limit=0, short-cut full execution and use data loader
+      if (args.limit === 0) {
+        return {
+          totalCount: await ctx.loaders.streams.getCommitCountWithoutGlobals.load(
+            parent.id
+          ),
+          items: [],
+          cursor: null
+        }
+      }
+
       return await getPaginatedStreamCommits(parent.id, args)
     }
   },
@@ -83,7 +103,16 @@ export = {
     async displayName(parent) {
       return last(parent.name.split('/'))
     },
-    async versions(parent, args) {
+    async versions(parent, args, ctx) {
+      // If limit=0 & no filter, short-cut full execution and use data loader
+      if (!args.filter && args.limit === 0) {
+        return {
+          totalCount: await ctx.loaders.branches.getCommitCount.load(parent.id),
+          items: [],
+          cursor: null
+        }
+      }
+
       return await getPaginatedBranchCommits({
         branchId: parent.id,
         cursor: args.cursor,

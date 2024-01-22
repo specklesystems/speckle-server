@@ -43,4 +43,6 @@ spec:
         - ports:
           - port: {{ printf "%s" ( include "server.port" $ | quote ) }}
 {{- end -}}
+    # redis
+{{ include "speckle.networkpolicy.egress.redis.cilium" $ | indent 4 }}
 {{- end -}}
