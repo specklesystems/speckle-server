@@ -19,8 +19,8 @@
             :disabled="isDisabled"
             :cols="title && title.length < 20 ? title.length : undefined"
             @keydown="onInputKeydown"
-            @blur="debouncedEmitTitle"
-            @input="onInputChange"
+            @blur="onBlur('title')"
+            @input="onTitleChange"
           />
         </div>
       </label>
@@ -57,8 +57,8 @@
               description && description?.length < 20 ? description.length : undefined
             "
             @keydown="onInputKeydown"
-            @blur="debouncedEmitDescription"
-            @input="onInputChange"
+            @blur="onBlur('description')"
+            @input="onDescriptionChange"
           />
         </div>
       </label>
@@ -75,7 +75,6 @@
 <script setup lang="ts">
 import { PencilIcon } from '@heroicons/vue/20/solid'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
-import { ref, computed, watch } from 'vue'
 import { debounce } from 'lodash-es'
 
 const props = defineProps({
@@ -85,10 +84,19 @@ const props = defineProps({
   isDisabled: Boolean
 })
 
-const emit = defineEmits(['newTitle', 'newDescription'])
+const emit = defineEmits(['update:title', 'update:description'])
 
 const title = ref(props.initialTitle)
 const description = ref(props.initialDescription)
+
+const lastTitleValue = ref(props.initialTitle)
+const lastDescriptionValue = ref(props.initialDescription)
+
+const emitTitle = () => emit('update:title', title.value)
+const emitDescription = () => emit('update:description', description.value)
+
+const debouncedEmitTitle = debounce(emitTitle, 2000)
+const debouncedEmitDescription = debounce(emitDescription, 2000)
 
 const titleInputClasses = computed(() => [
   'h3 tracking-tight border-0 border-b-2 transition focus:border-outline-3 max-w-full',
@@ -101,38 +109,55 @@ const descriptionInputClasses = computed(() => [
   'p-0 bg-transparent border-transparent focus:outline-none focus:ring-0'
 ])
 
+const onInputKeydown = (e: KeyboardEvent) => {
+  if (e.code === 'Enter' && e.target instanceof HTMLElement) {
+    e.preventDefault()
+    e.target.blur()
+    if (e.target.dataset.type === 'title' && lastTitleValue.value !== title.value) {
+      lastTitleValue.value = title.value
+      debouncedEmitTitle()
+    } else if (
+      e.target.dataset.type === 'description' &&
+      lastDescriptionValue.value !== description.value
+    ) {
+      lastDescriptionValue.value = description.value
+      debouncedEmitDescription()
+    }
+  }
+}
+
+const onTitleChange = () => {
+  debouncedEmitTitle()
+}
+
+const onDescriptionChange = () => {
+  debouncedEmitDescription()
+}
+
+const onBlur = (inputType: string) => {
+  if (inputType === 'title' && lastTitleValue.value !== title.value) {
+    lastTitleValue.value = title.value
+    emitTitle()
+  } else if (
+    inputType === 'description' &&
+    lastDescriptionValue.value !== description.value
+  ) {
+    emitDescription()
+  }
+}
+
 watch(
   () => props.initialTitle,
   (newVal) => {
     title.value = newVal
   }
 )
-
 watch(
   () => props.initialDescription,
   (newVal) => {
     description.value = newVal
   }
 )
-
-const onInputKeydown = (e: KeyboardEvent) => {
-  if (e.code === 'Enter' && e.target instanceof HTMLElement) {
-    e.target.blur()
-  }
-}
-
-const debouncedEmitTitle = debounce(() => {
-  emit('newTitle', title.value)
-}, 2000)
-
-const debouncedEmitDescription = debounce(() => {
-  emit('newDescription', description.value)
-}, 2000)
-
-const onInputChange = () => {
-  debouncedEmitTitle()
-  debouncedEmitDescription()
-}
 </script>
 
 <style scoped>

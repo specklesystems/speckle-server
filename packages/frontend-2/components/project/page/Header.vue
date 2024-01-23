@@ -8,8 +8,8 @@
     :initial-description="descriptionState"
     :can-edit="canEdit"
     :is-disabled="anyMutationsLoading"
-    @new-title="handleNewTitle"
-    @new-description="handleNewDescription"
+    @update:title="handleUpdateTitle"
+    @update:description="handleUpdateDescription"
   />
 </template>
 
@@ -120,12 +120,12 @@ const save = async () => {
   if (res?.id) resetInputs()
 }
 
-const handleNewTitle = (newTitle: string) => {
+const handleUpdateTitle = (newTitle: string) => {
   titleState.value = newTitle
   save()
 }
 
-const handleNewDescription = (newDescription: string) => {
+const handleUpdateDescription = (newDescription: string) => {
   descriptionState.value = newDescription
   save()
 }
