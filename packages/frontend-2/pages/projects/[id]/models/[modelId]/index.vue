@@ -1,16 +1,24 @@
 <template>
-  <ViewerEmbedManualLoad v-if="isManualLoad" @play="isManualLoad = false" />
-  <LazyViewerPreSetupWrapper v-else />
-  <div
-    class="fixed shadow-t bottom-0 left-0 max-h-[65vh] overflow-hidden w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
-  >
-    <PortalTarget name="bottomPanel"></PortalTarget>
-    <PortalTarget name="mobileComments"></PortalTarget>
+  <div>
+    <ViewerEmbedManualLoad v-if="isManualLoad" @play="isManualLoad = false" />
+    <LazyViewerPreSetupWrapper v-else @setup="state = $event" />
+    <ClientOnly>
+      <Component
+        :is="state ? ViewerScope : 'div'"
+        :state="state"
+        wrapper
+        class="fixed shadow-t bottom-0 left-0 max-h-[65vh] overflow-hidden w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
+      >
+        <PortalTarget name="bottomPanel"></PortalTarget>
+        <PortalTarget name="mobileComments"></PortalTarget>
+      </Component>
+    </ClientOnly>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
+import { type InjectableViewerState } from '~~/lib/viewer/composables/setup'
 
 interface EmbedConfig {
   manualLoad: boolean
@@ -24,8 +32,11 @@ definePageMeta({
   key: '/projects/:id/models/resources' // To prevent controls flickering on resource url param changes
 })
 
+const ViewerScope = resolveComponent('ViewerScope')
+
 const isManualLoad = ref(false)
 const route = useRoute()
+const state = ref<InjectableViewerState>()
 
 const checkUrlForEmbedManualLoad = () => {
   if (typeof window !== 'undefined') {

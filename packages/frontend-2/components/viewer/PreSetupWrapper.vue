@@ -82,10 +82,17 @@
 </template>
 <script setup lang="ts">
 import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
-import { useSetupViewer } from '~~/lib/viewer/composables/setup'
+import {
+  useSetupViewer,
+  type InjectableViewerState
+} from '~~/lib/viewer/composables/setup'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { graphql } from '~~/lib/common/generated/gql'
+
+const emit = defineEmits<{
+  setup: [InjectableViewerState]
+}>()
 
 const route = useRoute()
 const { embedOptions } = useEmbedState()
@@ -98,6 +105,8 @@ const versionId = computed(() => route.params.versionId as string)
 const state = useSetupViewer({
   projectId
 })
+
+emit('setup', state)
 
 const {
   resources: {
