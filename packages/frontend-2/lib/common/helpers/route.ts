@@ -9,6 +9,7 @@ export const registerRoute = '/authn/register'
 export const forgottenPasswordRoute = '/authn/forgotten-password'
 export const onboardingRoute = '/onboarding'
 export const downloadManagerRoute = '/download-manager'
+export const serverManagementRoute = '/server-management'
 export const projectRoute = (id: string) => `/projects/${id}`
 export const modelRoute = (
   projectId: string,
