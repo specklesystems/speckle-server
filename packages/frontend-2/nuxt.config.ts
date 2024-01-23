@@ -43,6 +43,7 @@ export default defineNuxtConfig({
     public: {
       apiOrigin: 'UNDEFINED',
       backendApiOrigin: '',
+      baseUrl: '',
       mixpanelApiHost: 'UNDEFINED',
       mixpanelTokenId: 'UNDEFINED',
       logLevel: NUXT_PUBLIC_LOG_LEVEL,

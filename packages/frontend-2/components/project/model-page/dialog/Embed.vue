@@ -103,6 +103,9 @@ const isOpen = defineModel<boolean>('open', { required: true })
 
 const router = useRouter()
 const { copy } = useClipboard()
+const {
+  public: { baseUrl }
+} = useRuntimeConfig()
 
 const projectVisibility = ref(ProjectVisibility)
 
@@ -150,10 +153,13 @@ const embedDialogOptions = [
   }
 ]
 
-const baseIframeSrc = 'http://localhost:8081/projects/'
+const baseIframeSrc = computed(() => {
+  const url = new URL('/projects/', baseUrl)
+  return url.toString()
+})
 
 const updatedUrl = computed(() => {
-  let url = `${baseIframeSrc}${encodeURIComponent(props.projectId)}`
+  let url = `${baseIframeSrc.value}${encodeURIComponent(props.projectId)}`
   if (props.modelId) {
     url += `/models/${encodeURIComponent(props.modelId)}`
   }
