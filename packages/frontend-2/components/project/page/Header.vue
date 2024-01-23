@@ -3,7 +3,7 @@
     <HeaderNavLink :to="projectRoute(project.id)" :name="project.name"></HeaderNavLink>
   </Portal>
 
-  <ProjectPageEditableTitleDescription
+  <CommonEditableTitleDescription
     :initial-title="titleState"
     :initial-description="descriptionState"
     :can-edit="canEdit"

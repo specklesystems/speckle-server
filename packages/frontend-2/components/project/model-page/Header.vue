@@ -8,7 +8,7 @@
     ></HeaderNavLink>
   </Portal>
 
-  <ProjectPageEditableTitleDescription
+  <CommonEditableTitleDescription
     :initial-title="titleState"
     :initial-description="descriptionState"
     :can-edit="canEdit"
