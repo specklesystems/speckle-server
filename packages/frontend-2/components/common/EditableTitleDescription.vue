@@ -116,7 +116,7 @@ watch(
 )
 
 const onInputKeydown = (e: KeyboardEvent) => {
-  if (e.code === 'Enter' && e.target instanceof HTMLInputElement) {
+  if (e.code === 'Enter' && e.target instanceof HTMLElement) {
     e.target.blur()
   }
 }
