@@ -7,7 +7,6 @@ import { NodeMap } from './NodeMap'
 
 export type TreeNode = TreeModel.Node<NodeData>
 export type SearchPredicate = (node: TreeNode) => boolean
-export type AsyncSearchPredicate = (node: TreeNode) => Promise<boolean>
 
 export interface NodeData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -70,7 +69,7 @@ export class WorldTree {
     return nodeCount
   }
 
-  public isRoot(node: TreeNode) {
+  public isRoot(node: TreeNode): boolean {
     return node === this._root
   }
 
@@ -78,7 +77,7 @@ export class WorldTree {
     return node.parent === this._root
   }
 
-  public parse(model) {
+  public parse(model): TreeNode {
     return this.tree.parse(model)
   }
 
@@ -102,7 +101,7 @@ export class WorldTree {
     if (this.nodeMaps[parent.model.subtreeId].addNode(node)) parent.addChild(node)
   }
 
-  public removeNode(node: TreeNode) {
+  public removeNode(node: TreeNode): void {
     node.drop()
   }
 
@@ -139,10 +138,11 @@ export class WorldTree {
     return node.getPath().reverse().slice(1) // We skip the node itself
   }
 
-  public getInstances(subtree: string): { [id: string]: Record<string, TreeNode> } {
-    return this.nodeMaps[subtree].instances
+  public getInstances(subtreeId: string): { [id: string]: Record<string, TreeNode> } {
+    return this.nodeMaps[subtreeId].instances
   }
 
+  /** TO DO: We might want to add boolean as return type here too */
   public walk(predicate: SearchPredicate, node?: TreeNode): void {
     if (!node && !this.supressWarnings) {
       Logger.warn(`Root will be used for searching. You might not want that`)
