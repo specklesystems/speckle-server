@@ -2,6 +2,7 @@ import { ApolloClient } from '@apollo/client/core'
 import {
   provideApolloClient,
   useMutation,
+  useQuery,
   useSubscription
 } from '@vue/apollo-composable'
 import { onProjectVersionsUpdateSubscription } from '~/lib/graphql/subscriptions'
@@ -93,12 +94,12 @@ export function useCreateNewModel(clientId: string | undefined = undefined) {
 }
 
 export function useGetProjects(clientId: string | undefined = undefined) {
-  return async (query: string) => {
+  return async (query: string | undefined) => {
     const client = getValidOrDefaultAccount(clientId)
 
     const res = await client.query({
       query: projectsListQuery,
-      variables: { query }
+      variables: { limit: 10, filter: { search: query } }
     })
 
     if (!res.data) {
@@ -107,7 +108,7 @@ export function useGetProjects(clientId: string | undefined = undefined) {
       // success!
     }
 
-    return res.data?.streams?.items
+    return res.data?.activeUser?.projects.items
   }
 }
 

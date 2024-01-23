@@ -1,11 +1,11 @@
 <template>
   <div>
-    <Menu as="div" class="ml-1 flex items-center">
+    <Menu as="div" class="ml-1 flex items-center z-100">
       <MenuButton v-slot="{ open }">
         <span class="sr-only">Open user menu</span>
 
-        <UserAvatar v-if="!open" size="lg" :user="user" hover-effect />
-        <UserAvatar v-else size="lg" hover-effect>
+        <UserAvatar v-if="!open" :user="user" hover-effect />
+        <UserAvatar v-else hover-effect>
           <XMarkIcon class="w-5 h-5" />
         </UserAvatar>
       </MenuButton>
@@ -18,7 +18,7 @@
         leave-to-class="transform opacity-0 scale-95"
       >
         <MenuItems
-          class="absolute right-0 md:right-4 top-14 md:top-16 w-full md:w-64 origin-top-right bg-foundation sm:rounded-t-md rounded-b-md shadow-lg overflow-hidden"
+          class="absolute right-0 md:right-4 top-10 md:top-16 w-full md:w-64 origin-top-right bg-foundation sm:rounded-t-md rounded-b-2xl shadow-lg overflow-hidden"
         >
           <MenuItem>
             <div class="border border-t-1 border-primary-muted">

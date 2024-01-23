@@ -1,13 +1,13 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div class="p-2 mt-2 space-y-4">
+  <div class="px-[2px]">
     <!-- TODO: Change below buttons page to somewhere else once we have proper pages for send and receive -->
-    <div class="space-x-2 mb-6 p-1 flex">
+    <div class="space-x-2 mb-6 p-1 flex mt-2">
       <FormButton
         :icon-left="CloudArrowUpIcon"
         size="sm"
-        to="/onboarding/send"
         class="flex-1"
+        @click="showSendDialog = !showSendDialog"
       >
         Send
       </FormButton>
@@ -19,6 +19,11 @@
       >
         Receive
       </FormButton>
+      <LayoutDialog v-model:open="showSendDialog" hide-closer>
+        <div class="-mx-4 -my-4 pt-4">
+          <SendWizard />
+        </div>
+      </LayoutDialog>
     </div>
     <!-- This is the place I want to navigate (route) to onboarding page if (configStore.onboardingCompleted) -->
     <div v-for="project in store.projectModelGroups" :key="project.projectId">
@@ -33,6 +38,8 @@ import { useConfigStore } from '~/store/config'
 const store = useHostAppStore()
 const configStore = useConfigStore()
 const router = useRouter()
+
+const showSendDialog = ref(false)
 
 // NOTE: Watching configStore initialization is important since sometimes it init after mount
 watch(

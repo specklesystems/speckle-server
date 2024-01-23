@@ -1,13 +1,12 @@
 import {
   DocumentInfo,
-  DocumentModelStore
-} from 'lib/bindings/definitions/IBasicConnectorBinding'
-import { VersionCreateInput } from 'lib/common/generated/gql/graphql'
+  DocumentModelStore,
+  ToastInfo
+} from '~/lib/bindings/definitions/IBasicConnectorBinding'
 import { IModelCard } from 'lib/models/card'
-import { ModelCardNotification } from 'lib/models/card/notification'
 import { IReceiverModelCard } from 'lib/models/card/receiver'
-import { ISenderModelCard, ISendFilter } from 'lib/models/card/send'
-import { CardSetting, CardSettingValue } from 'lib/models/card/setting'
+import { ISendFilter, ISenderModelCard } from 'lib/models/card/send'
+import { VersionCreateInput } from 'lib/common/generated/gql/graphql'
 import { useCreateVersion } from '~/lib/graphql/composables'
 import { useAccountStore } from '~~/store/accounts'
 
@@ -26,8 +25,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
   const hostAppName = ref<string>()
   const documentInfo = ref<DocumentInfo>()
-  const sendSettings = ref<CardSetting[]>()
-  const receiveSettings = ref<CardSetting[]>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
   const projectModelGroups = computed(() => {
     const projectModelGroups: ProjectModelGroup[] = []
@@ -51,25 +48,17 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   })
 
   const sendFilters = ref<ISendFilter[]>()
-  const selectionFilter = computed(() =>
-    sendFilters.value?.find((f) => f.name === 'Selection')
+  const selectionFilter = computed(
+    () => sendFilters.value?.find((f) => f.name === 'Selection') as ISendFilter
   )
 
-  const everythingFilter = computed(() =>
-    sendFilters.value?.find((f) => f.name === 'Everything')
+  const everythingFilter = computed(
+    () => sendFilters.value?.find((f) => f.name === 'Everything') as ISendFilter
   )
-
-  const tryGetModel = (modelId: string | undefined) => {
-    return documentModelStore.value.models.find((model) => model.modelId === modelId)
-  }
 
   const addModel = async (model: IModelCard) => {
     await app.$baseBinding.addModel(model)
-    documentModelStore.value.models = documentModelStore.value.models.concat([model])
-  }
-
-  const highlightModel = async (modelId: string) => {
-    await app.$baseBinding.highlightModel(modelId)
+    documentModelStore.value.models.push(model)
   }
 
   const updateModelFilter = async (modelId: string, filter: ISendFilter) => {
@@ -79,31 +68,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const model = documentModelStore.value.models[modelIndex] as ISenderModelCard
     model.sendFilter = filter
 
-    await app.$baseBinding.updateModel(documentModelStore.value.models[modelIndex])
-  }
-
-  type DataType = Record<string, unknown>
-  const updateModelSettings = async (modelId: string, newSettings: DataType) => {
-    const modelIndex = documentModelStore.value.models.findIndex(
-      (m) => m.id === modelId
-    )
-    const model = documentModelStore.value.models[modelIndex] as IModelCard
-
-    if (model.settings) {
-      model.settings.forEach((setting) => {
-        if (setting) {
-          if (setting.value !== newSettings[setting.id]) {
-            // console.log(
-            //   'attempted to set new setting value',
-            //   setting.id,
-            //   newSettings[setting.id]
-            // )
-
-            setting.value = newSettings[setting.id] as CardSettingValue
-          }
-        }
-      })
-    }
     await app.$baseBinding.updateModel(documentModelStore.value.models[modelIndex])
   }
 
@@ -158,12 +122,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await app.$receiveBinding.cancelReceive(modelId)
   }
 
-  const getSendSettings = async () =>
-    (sendSettings.value = await app.$sendBinding.getSendSettings())
-
-  const getReceiveSettings = async () =>
-    (receiveSettings.value = await app.$receiveBinding.getReceiveSettings())
-
   const getHostAppName = async () =>
     (hostAppName.value = await app.$baseBinding.getSourceApplicationName())
 
@@ -186,9 +144,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       }, 500) // timeout exists because of rhino
   )
 
-  app.$sendBinding?.on('filtersNeedRefresh', () => void refreshSendFilters())
+  app.$sendBinding.on('filtersNeedRefresh', () => void refreshSendFilters())
 
-  app.$sendBinding?.on('sendersExpired', (senderIds) => {
+  app.$sendBinding.on('sendersExpired', (senderIds) => {
     documentModelStore.value.models
       .filter((m) => senderIds.includes(m.id))
       .forEach((model) => ((model as ISenderModelCard).expired = true))
@@ -198,12 +156,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === args.modelCardId
     ) as ISenderModelCard
-    model.notifications?.push(args)
+    model.notification = args
     setTimeout(() => {
-      const notification = model.notifications?.find((n) => n.id === args.id)
-      const notifications = model.notifications?.filter((n) => n.id !== args.id)
-      notifications?.push({ ...notification, visible: false } as ModelCardNotification)
-      model.notifications = notifications
+      model.notification = undefined
     }, args.timeout)
   })
 
@@ -211,13 +166,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === args.modelCardId
     ) as IReceiverModelCard
-    model.notifications?.push(args)
-
+    model.notification = args
     setTimeout(() => {
-      const notification = model.notifications?.find((n) => n.id === args.id)
-      const notifications = model.notifications?.filter((n) => n.id !== args.id)
-      notifications?.push({ ...notification, visible: false } as ModelCardNotification)
-      model.notifications = notifications
+      model.notification = undefined
     }, args.timeout)
   })
 
@@ -229,11 +180,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     if (args.status === 'Completed') {
       model.sending = false
       model.progress = undefined
-    } else if (args.status === 'Cancelled') {
-      model.sending = false
-      setTimeout(() => {
-        model.progress = undefined
-      }, 3000)
     }
   })
 
@@ -245,11 +191,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     if (args.status === 'Completed') {
       model.receiving = false
       model.progress = undefined
-    } else if (args.status === 'Cancelled') {
-      model.receiving = false
-      setTimeout(() => {
-        model.progress = undefined
-      }, 3000)
     }
   })
 
@@ -263,37 +204,31 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       message: args.message
     }
     const res = await createVersion(version)
-    const notification: ModelCardNotification = {
-      id: `createCommit ${res?.data?.versionMutations.create.id}`,
+    const notification: ToastInfo = {
       modelCardId: args.modelCardId,
       text: 'Version Created',
       level: 'success',
       action: {
         name: 'View',
         url: `${defaultAccount.value?.accountInfo.serverInfo.url}/streams/${args.projectId}/commits/${res?.data?.versionMutations.create.id}`
-      },
-      visible: true
+      }
     }
     const model = documentModelStore.value.models.find(
       (m) => m.id === args.modelCardId
     ) as ISenderModelCard
 
-    model.notifications?.push(notification)
+    model.notification = notification
 
     setTimeout(() => {
-      const not = model.notifications?.find((n) => n.id === notification.id)
-      const notifications = model.notifications?.filter((n) => n.id !== notification.id)
-      notifications?.push({ ...not, visible: false } as ModelCardNotification)
-      model.notifications = notifications
+      model.notification = undefined
     }, 5000)
   })
+
   // First initialization calls
   void refreshDocumentInfo()
   void refreshDocumentModelStore()
   void refreshSendFilters()
   void getHostAppName()
-  void getSendSettings()
-  void getReceiveSettings()
 
   return {
     hostAppName,
@@ -302,14 +237,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     sendFilters,
     selectionFilter,
     everythingFilter,
-    sendSettings,
-    receiveSettings,
     addModel,
-    highlightModel,
     updateModelFilter,
-    updateModelSettings,
     removeModel,
-    tryGetModel,
     sendModel,
     receiveModel,
     sendModelCancel,

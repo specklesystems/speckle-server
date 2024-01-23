@@ -10,6 +10,7 @@ export interface ISenderModelCard extends IModelCard {
 export interface ISendFilter extends IDiscriminatedObject {
   name: string
   summary: string
+  isDefault: boolean
 }
 
 export interface IDirectSelectionSendFilter extends ISendFilter {

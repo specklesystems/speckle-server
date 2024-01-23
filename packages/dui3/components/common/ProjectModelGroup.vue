@@ -1,6 +1,6 @@
 <template>
   <Suspense>
-    <div class="space-y-2 mx-1">
+    <div class="space-y-2 border">
       <div class="text-foreground-2 flex items-center justify-between">
         <button
           class="flex items-center transition hover:text-primary"
@@ -9,22 +9,22 @@
           <ChevronDownIcon
             :class="`w-4 ${showModels ? '' : '-rotate-90'} transition mt-1`"
           />
-          <div>{{ projectDetails.name }}</div>
+          <div class="font-bold">{{ projectDetails.name }}</div>
         </button>
 
-        <div
-          class="rounded-md bg-foundation px-2 flex items-center space-x-2 justify-end"
-        >
-          <span class="text-xs">
+        <div class="rounded-md px-2 flex items-center space-x-2 justify-end">
+          <!-- <span class="text-xs">
             {{ projectDetails.role?.split(':').reverse()[0] }}
-          </span>
+          </span> -->
           <!-- <span class="text-xs"></span> -->
-          <UserAvatar
-            v-for="user in projectDetails.team"
-            :key="user.user.id"
-            size="xs"
-            :user="user.user"
-          />
+          <div class="flex -space-x-2">
+            <UserAvatar
+              v-for="user in projectDetails.team"
+              :key="user.user.id"
+              size="xs"
+              :user="user.user"
+            />
+          </div>
           <div>
             <button>
               <ArrowTopRightOnSquareIcon class="w-3" @click="$openUrl(projectUrl)" />

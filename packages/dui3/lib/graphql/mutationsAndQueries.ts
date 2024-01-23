@@ -40,26 +40,58 @@ export const createProjectMutation = graphql(`
   }
 `)
 
-export const projectsListQuery = graphql(`
-  query ProjectsList($query: String, $limit: Int, $cursor: String) {
-    streams(query: $query, limit: $limit, cursor: $cursor) {
+export const projectListFragment = graphql(`
+  fragment ProjectListProjectItem on Project {
+    id
+    name
+    role
+    updatedAt
+    models {
       totalCount
-      cursor
-      items {
-        id
-        name
+    }
+  }
+`)
+
+export const projectsListQuery = graphql(`
+  query ProjectListQuery($limit: Int!, $filter: UserProjectsFilter, $cursor: String) {
+    activeUser {
+      projects(limit: $limit, filter: $filter, cursor: $cursor) {
+        totalCount
+        cursor
+        items {
+          ...ProjectListProjectItem
+        }
       }
     }
   }
 `)
 
+export const modelListFragment = graphql(`
+  fragment ModelListModelItem on Model {
+    displayName
+    name
+    id
+    previewUrl
+    updatedAt
+    versions {
+      totalCount
+    }
+  }
+`)
+
 export const projectModelsQuery = graphql(`
-  query ProjectModels($projectId: String!, $filter: ProjectModelsFilter) {
+  query ProjectModels(
+    $projectId: String!
+    $cursor: String
+    $limit: Int!
+    $filter: ProjectModelsFilter
+  ) {
     project(id: $projectId) {
-      models(filter: $filter) {
+      id
+      models(cursor: $cursor, limit: $limit, filter: $filter) {
+        totalCount
         items {
-          id
-          name
+          ...ModelListModelItem
         }
       }
     }

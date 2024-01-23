@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
 import { ApolloClient, gql } from '@apollo/client/core'
-import { ApolloClients } from '@vue/apollo-composable'
+import { ApolloClients, provideApolloClients } from '@vue/apollo-composable'
 import { resolveClientConfig } from '~/lib/core/configs/apollo'
 import { Account } from '~/lib/bindings/definitions/IAccountBinding'
+import { createApolloProvider } from '@vue/apollo-option'
 
 export type DUIAccount = {
   /** account info coming from the host app */
@@ -35,6 +36,10 @@ export const useAccountStore = defineStore('accountStore', () => {
     accounts.value.find((acc) => acc.accountInfo.isDefault)
   )
 
+  const selectedAccount = computed(() => {
+    return defaultAccount.value
+  })
+
   const testAccounts = async () => {
     isLoading.value = true
 
@@ -60,6 +65,7 @@ export const useAccountStore = defineStore('accountStore', () => {
     isLoading.value = true
     const accs = await $accountBinding.getAccounts()
     const newAccs: DUIAccount[] = []
+    const clientsForApollo = {} as Record<string, ApolloClient<unknown>>
     for (const acc of accs) {
       const existing = accounts.value.find((a) => a.accountInfo.id === acc.id)
       if (existing) {
@@ -79,7 +85,15 @@ export const useAccountStore = defineStore('accountStore', () => {
         isValid: true
       })
     }
+
     accounts.value = newAccs
+
+    newAccs.forEach((acc) => {
+      clientsForApollo[acc.accountInfo.id] = acc.client
+    })
+
+    provideApolloClients(clientsForApollo)
+
     isLoading.value = false
   }
 
@@ -90,5 +104,5 @@ export const useAccountStore = defineStore('accountStore', () => {
   void refreshAccounts()
 
   app.vueApp.provide(ApolloClients, apolloClients)
-  return { isLoading, accounts, defaultAccount, refreshAccounts }
+  return { isLoading, accounts, defaultAccount, selectedAccount, refreshAccounts }
 })

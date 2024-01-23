@@ -1,25 +1,9 @@
 <template>
-  <div class="space-y-2 px-2">
-    <div class="text-xs"></div>
-    <div
-      v-if="
-        !selectionStore.selectionInfo.selectedObjectIds ||
-        selectionStore.selectionInfo.selectedObjectIds?.length === 0
-      "
-    >
-      Currently sending {{ filter.selectedObjectIds?.length }} objects. Select some
-      objects to change what you send to this model.
+  <div class="space-y-2 p-2 text-primary bg-blue-500/10 rounded-md">
+    <div v-if="selectionStore.selectionInfo.selectedObjectIds?.length === 0">
+      No objects selected, go ahead and select some!
     </div>
-    <div v-else class="space-y-2">
-      <div>
-        Current selection:
-        {{ selectionStore.selectionInfo.summary }}
-      </div>
-      <div class="flex w-full justify-end">
-        <FormButton text @click="save()">Save</FormButton>
-        <FormButton @click="save(true)">Save & Send</FormButton>
-      </div>
-    </div>
+    <div v-else>{{ selectionStore.selectionInfo.summary }}.</div>
   </div>
 </template>
 <script setup lang="ts">

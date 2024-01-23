@@ -1,10 +1,17 @@
 <template>
   <button
     v-tippy="tip"
-    :class="`block w-full  text-left items-center space-x-2 hover:bg-primary-muted transition p-2 select-none group hover:cursor-pointer hover:text-primary ${
-      !account.isValid ? 'text-danger bg-rose-500/10' : ''
-    } ${account.accountInfo.isDefault ? 'bg-blue-500/5' : ''}`"
-    @click="$openUrl(account.accountInfo.serverInfo.url)"
+    :class="`group block w-full p-2 text-left items-center space-x-2  select-none group transition hover:bg-primary-muted hover:cursor-pointer hover:text-primary ${
+      !account.isValid
+        ? 'text-danger bg-rose-500/10 cursor-not-allowed'
+        : 'cursor-pointer'
+    } ${
+      currentSelectedAccountId === account.accountInfo.id
+        ? 'bg-blue-500/5 text-primary'
+        : ''
+    }`"
+    :disabled="!account.isValid"
+    @click="$emit('select', account)"
   >
     <div class="flex items-center space-x-2">
       <UserAvatar :user="userAvatar" :active="account.accountInfo.isDefault" />
@@ -21,17 +28,25 @@
         <!-- </div> -->
       </div>
       <div class="transition opacity-0 group-hover:opacity-100">
-        <ArrowTopRightOnSquareIcon class="w-4 h-4" />
+        <div
+          class="caption opacity-0 transition group-hover:opacity-100 rounded-md bg-primary text-foreground-on-primary p-1"
+        >
+          select
+        </div>
       </div>
     </div>
   </button>
 </template>
 <script setup lang="ts">
 import { DUIAccount } from '~~/store/accounts'
-import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
 
 const props = defineProps<{
   account: DUIAccount
+  currentSelectedAccountId?: string
+}>()
+
+defineEmits<{
+  (e: 'select', account: DUIAccount): void
 }>()
 
 const userAvatar = computed(() => {
@@ -47,6 +62,4 @@ const tip = computed(() => {
   if (!props.account.isValid) value += 'This account is not reachable.'
   return value === '' ? null : value
 })
-
-const { $openUrl } = useNuxtApp()
 </script>
