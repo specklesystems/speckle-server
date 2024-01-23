@@ -5,9 +5,9 @@ import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 
 module.exports = (app: express.Application) => {
   app.options('/liveness')
-  app.post('/liveness', handleLiveness)
+  app.get('/liveness', handleLiveness)
   app.options('/readiness')
-  app.post('/readiness', handleLiveness) //TODO create a dedicated handler for readiness
+  app.get('/readiness', handleLiveness) //TODO create a dedicated handler for readiness
 }
 
 const handleLiveness: express.RequestHandler = async (req, res) => {
