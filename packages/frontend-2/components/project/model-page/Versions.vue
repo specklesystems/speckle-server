@@ -121,7 +121,6 @@ graphql(`
     model(id: $modelId) {
       id
       name
-      description
       pendingImportedVersions {
         ...PendingFileUpload
       }
