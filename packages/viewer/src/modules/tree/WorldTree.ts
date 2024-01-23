@@ -9,6 +9,7 @@ export type TreeNode = TreeModel.Node<NodeData>
 export type SearchPredicate = (node: TreeNode) => boolean
 
 export interface NodeData {
+  id: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw: { [prop: string]: any }
   children: TreeNode[]
