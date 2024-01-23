@@ -4,7 +4,11 @@
     <div class="flex group">
       <label class="max-w-full overflow-hidden">
         <div class="sr-only">Edit title</div>
-        <div class="grow-textarea" :data-replicated-value="title">
+        <div
+          :class="titleInputClasses"
+          class="grow-textarea"
+          :data-replicated-value="title"
+        >
           <textarea
             v-model="title"
             maxlength="512"
