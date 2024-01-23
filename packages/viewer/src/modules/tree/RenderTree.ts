@@ -1,4 +1,4 @@
-import { Box3, Matrix4 } from 'three'
+import { Matrix4 } from 'three'
 import { TreeNode, WorldTree } from './WorldTree'
 import Materials from '../materials/Materials'
 import { NodeRenderData, NodeRenderView } from './NodeRenderView'
@@ -9,12 +9,7 @@ import { Geometry } from '../converter/Geometry'
 export class RenderTree {
   private tree: WorldTree
   private root: TreeNode
-  private _treeBounds: Box3 = new Box3()
   private cancel = false
-
-  public get treeBounds(): Box3 {
-    return this._treeBounds
-  }
 
   public get id(): string {
     return this.root.model.id
@@ -55,7 +50,6 @@ export class RenderTree {
           )
         }
         node.model.renderView.computeAABB()
-        this._treeBounds.union(node.model.renderView.aabb)
       } else if (node.model.renderView.hasMetadata) {
         node.model.renderView.renderData.geometry.bakeTransform.premultiply(transform)
       }
