@@ -2,9 +2,9 @@
   <Portal to="navigation">
     <HeaderNavLink :to="projectRoute(project.id)" :name="project.name"></HeaderNavLink>
     <HeaderNavLink
-      v-if="model"
-      :to="modelVersionsRoute(project.id, model.id)"
-      :name="model.name"
+      v-if="props.project.model"
+      :to="modelVersionsRoute(project.id, props.project.model.id)"
+      :name="props.project.model.name"
     ></HeaderNavLink>
   </Portal>
 
@@ -49,8 +49,6 @@ const props = defineProps<{
   project: ProjectModelPageHeaderProjectFragment
 }>()
 
-const model = computed(() => props.project.model)
-
 const mp = useMixpanel()
 const anyMutationsLoading = useMutationLoading()
 const updateModel = useUpdateModel()
@@ -66,9 +64,10 @@ const currentUpdate = computed((): UpdateModelInput => {
 
   return {
     projectId: props.project.id,
-    id: model.value.id,
-    description: model.value.description !== newDescription ? newDescription : null,
-    name: model.value.name !== newTitle ? newTitle : null
+    id: props.project.model.id,
+    description:
+      props.project.model.description !== newDescription ? newDescription : null,
+    name: props.project.model.name !== newTitle ? newTitle : null
   }
 })
 
@@ -77,15 +76,16 @@ const anythingToUpdate = computed(() => {
   return Object.values(updates).some((u) => !isNullOrUndefined(u))
 })
 
-const resetTitle = () => (titleState.value = model.value.name || '')
-const resetDescription = () => (descriptionState.value = model.value.description || '')
+const resetTitle = () => (titleState.value = props.project.model.name || '')
+const resetDescription = () =>
+  (descriptionState.value = props.project.model.description || '')
 const resetInputs = () => {
   resetTitle()
   resetDescription()
 }
 
 watch(
-  () => model.value.description,
+  () => props.project.model.description,
   () => {
     resetDescription()
   },
@@ -93,7 +93,7 @@ watch(
 )
 
 watch(
-  () => model.value.name,
+  () => props.project.model.name,
   () => {
     resetTitle()
   },
@@ -113,8 +113,8 @@ const save = async () => {
 
   const res = await updateModel({
     projectId: props.project.id,
-    id: model.value.id,
-    name: update.name || model.value.name,
+    id: props.project.model.id,
+    name: update.name || props.project.model.name,
     description: update.description || props.project.model.description
   })
 
