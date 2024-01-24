@@ -62,21 +62,23 @@
               <Cog6ToothIcon class="h-full w-full" />
             </template>
             <div class="flex flex-col gap-3 ml-7 text-sm cursor-default">
-              <div
-                v-for="option in embedDialogOptions"
-                :key="option.id"
-                class="flex items-center justify-between"
-              >
-                <label :for="`option-${option.id}`">{{ option.label }}</label>
-                <FormCheckbox
-                  :id="`option-${option.id}`"
-                  :model-value="option.value.value"
-                  :name="option.label"
-                  hide-label
-                  @update:model-value="
-                    (newValue) => updateOption(option.value, newValue)
-                  "
-                />
+              <div v-for="option in embedDialogOptions" :key="option.id">
+                <label
+                  :for="`option-${option.id}`"
+                  class="flex items-center gap-1 cursor-pointer max-w-max"
+                >
+                  <FormCheckbox
+                    :id="`option-${option.id}`"
+                    :model-value="option.value.value"
+                    :name="option.label"
+                    hide-label
+                    class="cursor-pointer"
+                    @update:model-value="
+                      (newValue) => updateOption(option.value, newValue)
+                    "
+                  />
+                  <span>{{ option.label }}</span>
+                </label>
               </div>
             </div>
           </LayoutDialogSection>

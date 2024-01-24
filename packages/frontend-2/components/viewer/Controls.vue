@@ -83,9 +83,9 @@
           </ViewerControlsButtonToggle>
         </div>
         <div
-          class="-z-10 -mt-28 sm:mt-0 bg-foundation sm:bg-transparent flex flex-col sm:gap-2 rounded-lg transition-all"
+          class="-z-10 -mt-28 sm:mt-0 bg-foundation sm:bg-transparent flex flex-col gap-2 rounded-lg transition-all"
           :class="
-            activeControl === 'mobileOverflow' ? '' : '-translate-x-20 sm:translate-x-0'
+            activeControl === 'mobileOverflow' ? '' : '-translate-x-24 sm:translate-x-0'
           "
         >
           <ViewerControlsButtonGroup>

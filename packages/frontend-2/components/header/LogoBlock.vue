@@ -1,6 +1,6 @@
 <template>
   <NuxtLink
-    class="flex items-center shrink-0"
+    class="flex items-center shrink-0 gap-2"
     :to="poweredBy ? 'https://speckle.systems/' : '/'"
     :target="poweredBy ? '_blank' : undefined"
   >
