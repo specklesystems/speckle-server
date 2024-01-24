@@ -44,7 +44,7 @@
 
       <div class="flex flex-col lg:flex-row gap-8 mb-6">
         <div class="hidden xl:block shrink-0 w-[600px] h-[400px]"></div>
-        <LazyProjectModelPageDialogEmbedIframe
+        <ProjectModelPageDialogEmbedIframe
           :src="updatedUrl"
           title="Embed Preview"
           width="600"
