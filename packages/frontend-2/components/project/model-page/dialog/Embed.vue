@@ -43,12 +43,13 @@
       </CommonAlert>
 
       <div class="flex flex-col lg:flex-row gap-8 mb-6">
+        <div class="shrink-0 w-[600px] h-[400px]"></div>
         <iframe
           title="Embed Preview"
           :src="updatedUrl"
           width="600"
           height="400"
-          class="shrink-0 w-[600px] h-[400px] hidden sm:block order-2 lg:order-1 mx-auto"
+          class="fixed shrink-0 w-[600px] h-[400px] hidden sm:block order-2 lg:order-1 mx-auto"
           scrolling="no"
         ></iframe>
         <div class="flex-1 order-1 lg:order-2§">
