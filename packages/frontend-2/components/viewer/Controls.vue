@@ -83,10 +83,15 @@
           </ViewerControlsButtonToggle>
         </div>
         <div
-          class="-z-10 -mt-28 sm:mt-0 bg-foundation sm:bg-transparent flex flex-col gap-2 rounded-lg transition-all"
-          :class="
-            activeControl === 'mobileOverflow' ? '' : '-translate-x-24 sm:translate-x-0'
-          "
+          class="-z-10 -mt-28 sm:mt-0 bg-foundation sm:bg-transparent sm:gap-2 shadow-md sm:shadow-none flex flex-col rounded-lg transition-all"
+          :class="[
+            activeControl === 'mobileOverflow'
+              ? ''
+              : '-translate-x-24 sm:translate-x-0',
+            embedOptions.isEnabled
+              ? '*:shadow-none *:py-0 *:sm:shadow-md *:sm:py-2'
+              : ''
+          ]"
         >
           <ViewerControlsButtonGroup>
             <!-- Views -->
