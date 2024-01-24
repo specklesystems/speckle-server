@@ -62,8 +62,7 @@
       class="transition-all duration-700 overflow-hidden"
       :class="[
         allowOverflow && isExpanded ? '!overflow-visible' : '',
-        isExpanded ? 'mb-3 mt-1' : '',
-        !button && !alwaysOpen ? 'cursor-pointer hover:bg-foundation' : ''
+        isExpanded ? 'mb-3 mt-1' : ''
       ]"
       :style="
         alwaysOpen

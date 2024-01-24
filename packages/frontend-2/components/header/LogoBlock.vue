@@ -7,7 +7,6 @@
     <img
       class="block"
       :class="{
-        'mr-2': !minimal && !poweredBy,
         grayscale: active && !poweredBy,
         'h-8 w-8': poweredBy,
         'h-6 w-6': !poweredBy
