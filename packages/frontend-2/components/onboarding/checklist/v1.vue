@@ -6,23 +6,25 @@
         background ? 'mx-2 sm:mx-auto px-2 bg-foundation rounded-md shadow-xl' : ''
       } ${allCompleted ? 'max-w-lg mx-auto' : ''}`"
     >
-      <div v-if="isSmallerOrEqualSm" class="px-4 pt-2 pb-1">
-        <div
-          class="bg-foundation p-2 rounded-md text-sm flex flex-col text-center gap-2"
-        >
-          <p>
-            There's more to Speckle - be sure to visit on a computer. Since you're on a
-            mobile device, feel free to keep exploring the web app!
-          </p>
-          <FormButton text size="sm" @click="dismissChecklistForever()">
-            Don't show again
-          </FormButton>
+      <div>
+        <div class="sm:hidden px-4 pt-2 pb-1">
+          <div
+            class="bg-foundation p-2 rounded-md text-sm flex flex-col text-center gap-2"
+          >
+            <p>
+              There's more to Speckle - be sure to visit on a computer. Since you're on
+              a mobile device, feel free to keep exploring the web app!
+            </p>
+            <FormButton text size="sm" @click="dismissChecklistForever()">
+              Don't show again
+            </FormButton>
+          </div>
         </div>
-      </div>
-      <div v-else>
         <div
           v-if="!allCompleted"
-          :class="`grid gap-2 ${showIntro ? 'px-4 grid-cols-5' : 'grid-cols-4'}`"
+          :class="`hidden sm:grid gap-2 ${
+            showIntro ? 'px-4 grid-cols-5' : 'grid-cols-4'
+          }`"
         >
           <div
             v-if="showIntro"
@@ -84,7 +86,7 @@
                 <div
                   :class="`${
                     step.active
-                      ? 'font-bold text-sm sm:text-base text-forergound-on-primary'
+                      ? 'font-bold text-sm sm:text-base text-foreground-on-primary'
                       : ''
                   }`"
                 >
@@ -168,7 +170,7 @@
         </div>
         <div
           v-else
-          class="flex flex-col sm:flex-row items-center justify-center flex-1 gap-x-2 py-4"
+          class="hidden sm:flex flex-col sm:flex-row items-center justify-center flex-1 gap-x-2 py-4"
         >
           <div class="w-6 h-6">
             <!-- <CheckCircleIcon class="absolute w-6 h-6 text-primary" /> -->
@@ -244,7 +246,6 @@ import {
 import { CheckCircleIcon as OutlineCheckCircleIcon } from '@heroicons/vue/24/outline'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 withDefaults(
   defineProps<{
@@ -267,8 +268,6 @@ const showManagerDownloadDialog = ref(false)
 const showAccountLinkDialog = ref(false)
 const showFirstSendDialog = ref(false)
 const showServerInviteDialog = ref(false)
-
-const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const hasDownloadedManager = useSynchronizedCookie<boolean>(`hasDownloadedManager`, {
   default: () => false
