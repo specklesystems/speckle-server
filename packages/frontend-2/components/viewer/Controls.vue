@@ -69,7 +69,6 @@
       >
         <IconMeasurements class="h-4 w-4 sm:h-5 sm:w-5" />
       </ViewerControlsButtonToggle>
-
       <div class="w-8 flex gap-2">
         <div class="sm:hidden">
           <ViewerControlsButtonToggle
@@ -83,14 +82,9 @@
           </ViewerControlsButtonToggle>
         </div>
         <div
-          class="-z-10 -mt-28 sm:mt-0 bg-foundation sm:bg-transparent sm:gap-2 shadow-md sm:shadow-none flex flex-col rounded-lg transition-all"
+          class="-mt-28 sm:mt-0 bg-foundation sm:bg-transparent sm:gap-2 shadow-md sm:shadow-none flex flex-col rounded-lg transition-all *:shadow-none *:py-0 *:sm:shadow-md *:sm:py-2"
           :class="[
-            activeControl === 'mobileOverflow'
-              ? ''
-              : '-translate-x-24 sm:translate-x-0',
-            embedOptions.isEnabled
-              ? '*:shadow-none *:py-0 *:sm:shadow-md *:sm:py-2'
-              : ''
+            activeControl === 'mobileOverflow' ? '' : '-translate-x-24 sm:translate-x-0'
           ]"
         >
           <ViewerControlsButtonGroup>
@@ -120,8 +114,8 @@
               :active="isOrthoProjection"
               @click="trackAndtoggleProjection()"
             >
-              <IconPerspective v-if="isOrthoProjection" class="h-4 w-4 sm:h-5 sm:w-5" />
-              <IconPerspectiveMore v-else class="h-4 w-4 sm:h-5 sm:w-5" />
+              <IconPerspective v-if="isOrthoProjection" class="h-3.5 sm:h-4 w-4" />
+              <IconPerspectiveMore v-else class="h-3.5 sm:h-4 w-4" />
             </ViewerControlsButtonToggle>
 
             <!-- Section Box -->

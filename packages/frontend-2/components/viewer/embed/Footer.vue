@@ -10,9 +10,9 @@
       </NuxtLink>
       <div class="h-6 w-px bg-primary"></div>
       <div class="flex flex-col">
-        <NuxtLink :to="projectCleanUrl" target="_blank">
-          <div class="flex items-center gap-1 -mb-1.5">
-            <h2 class="font-bold text-base text-sm">
+        <NuxtLink :to="projectUrl" target="_blank">
+          <div class="flex items-center gap-1 -mb-1.5 w-full">
+            <h2 class="font-bold text-base text-sm truncate">
               {{ projectName }}
             </h2>
             <ArrowTopRightOnSquareIcon class="h-3 w-3" />
@@ -29,17 +29,11 @@ import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
 
 import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
 
-const props = defineProps<{
+defineProps<{
   projectCreatedAt?: string
   projectName?: string
   projectUrl?: string
 }>()
 
 const { embedOptions } = useEmbedState()
-
-const projectCleanUrl = computed(() => {
-  const url = props.projectUrl || ''
-  const parts = url.split('#')
-  return parts[0]
-})
 </script>

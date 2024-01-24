@@ -15,7 +15,7 @@
       leave-to-class="opacity-0"
     >
       <PopoverPanel
-        class="absolute translate-x-0 left-12 top-2 p-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col space-y-2"
+        class="absolute translate-x-0 left-12 top-0 p-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col space-y-2"
       >
         <div class="flex items-center space-x-1">
           <input

@@ -24,7 +24,7 @@
     </div>
     <div
       v-if="$slots.actions"
-      class="flex items-center py-1 gap-2 px-2"
+      class="flex items-center py-1 sm:py-2 gap-2 px-2"
       :class="
         moveActionsToBottom
           ? 'order-3 border-t border-outline-3 mt-2'
