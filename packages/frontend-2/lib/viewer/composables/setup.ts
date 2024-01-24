@@ -19,14 +19,7 @@ import type {
 } from '@speckle/viewer'
 import type { MaybeRef } from '@vueuse/shared'
 import { inject, ref, provide } from 'vue'
-import type {
-  InjectionKey,
-  ComputedRef,
-  WritableComputedRef,
-  Raw,
-  Ref,
-  ShallowRef
-} from 'vue'
+import type { ComputedRef, WritableComputedRef, Raw, Ref, ShallowRef } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 import type { Nullable, Optional } from '@speckle/shared'
 import { SpeckleViewer } from '@speckle/shared'
@@ -69,6 +62,10 @@ import { flatten, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
 import { FilteringExtension } from '@speckle/viewer'
 import type { EmbedOptions } from '~~/lib/viewer/composables/setup/embed'
+import {
+  InjectableViewerStateKey,
+  useSetupViewerScope
+} from '~/lib/viewer/composables/setup/core'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -306,13 +303,6 @@ export type InitialStateWithInterface = InitialStateWithUrlHashState &
  * Scoped state key for 'viewer' metadata, as we reuse it between routes
  */
 const GlobalViewerDataKey = Symbol('GlobalViewerData')
-
-/**
- * Vue injection key for the Injectable Viewer State
- */
-const InjectableViewerStateKey: InjectionKey<InjectableViewerState> = Symbol(
-  'INJECTABLE_VIEWER_STATE'
-)
 
 function createViewerData(): CachedViewerState {
   if (process.server)
@@ -964,17 +954,6 @@ export function useInjectedViewerInterfaceState(): InjectableViewerState['ui'] {
   return ui
 }
 
-/**
- * Use this when you want to use the viewer state outside the viewer, ie in a component that's inside a portal!
- * @param state
- */
-export function useSetupViewerScope(
-  state: InjectableViewerState
-): InjectableViewerState {
-  provide(InjectableViewerStateKey, state)
-  return state
-}
-
 export function useResetUiState() {
   const {
     ui: { camera, sectionBox, highlightedObjectIds, lightConfig }
@@ -991,3 +970,5 @@ export function useResetUiState() {
     endDiff()
   }
 }
+
+export { InjectableViewerStateKey, useSetupViewerScope }

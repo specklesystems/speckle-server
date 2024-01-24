@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
-import { type InjectableViewerState } from '~~/lib/viewer/composables/setup'
+import type { InjectableViewerState } from '~~/lib/viewer/composables/setup/core'
 
 interface EmbedConfig {
   manualLoad: boolean
@@ -39,6 +39,8 @@ const route = useRoute()
 const state = ref<InjectableViewerState>()
 
 const checkUrlForEmbedManualLoad = () => {
+  if (process.server) return
+
   if (typeof window !== 'undefined') {
     const url = new URL(window.location.href)
     const hashParams = new URLSearchParams(url.hash.substring(1))
