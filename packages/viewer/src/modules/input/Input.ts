@@ -18,6 +18,7 @@ export enum InputEvent {
   KeyUp
 }
 
+//TO DO: Define proper interface for InputEvent
 export default class Input extends EventEmitter {
   private static readonly MAX_DOUBLE_CLICK_TIMING = 500
   private tapTimeout

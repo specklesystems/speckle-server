@@ -959,6 +959,7 @@ export default class SpeckleRenderer {
     return queryResult
   }
 
+  // TO DO: Maybe need a better way
   public renderViewFromIntersection(
     intersection: ExtendedIntersection
   ): NodeRenderView {

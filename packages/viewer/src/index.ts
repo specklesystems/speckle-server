@@ -69,6 +69,7 @@ import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial
 import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial'
 import { SpeckleText } from './modules/objects/SpeckleText'
 import { NodeRenderView } from './modules/tree/NodeRenderView'
+import { ExtendedIntersection } from './modules/objects/SpeckleRaycaster'
 
 export {
   Viewer,
@@ -135,5 +136,6 @@ export type {
   Utils,
   DiffResult,
   MeasurementOptions,
-  FilteringState
+  FilteringState,
+  ExtendedIntersection
 }
