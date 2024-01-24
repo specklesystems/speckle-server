@@ -33,6 +33,7 @@ definePageMeta({
 })
 
 const ViewerScope = resolveComponent('ViewerScope')
+const logger = useLogger()
 
 const isManualLoad = ref(false)
 const route = useRoute()
@@ -51,7 +52,7 @@ const checkUrlForEmbedManualLoad = () => {
         const embedConfig = JSON.parse(embedParam) as EmbedConfig
         isManualLoad.value = embedConfig.manualLoad === true
       } catch (e) {
-        console.error('Error parsing embed parameter:', e)
+        logger.error(e)
       }
     }
   }

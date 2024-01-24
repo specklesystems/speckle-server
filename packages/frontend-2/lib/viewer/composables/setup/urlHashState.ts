@@ -10,6 +10,8 @@ export enum ViewerHashStateKeys {
   EmbedOptions = 'embed'
 }
 
+const logger = useLogger()
+
 export function setupUrlHashState(): InjectableViewerState['urlHashState'] {
   const { hashState } = useRouteHashState()
   const { deserializeDiffCommand, serializeDiffCommand } = useDiffBuilderUtilities()
@@ -48,7 +50,7 @@ export function setupUrlHashState(): InjectableViewerState['urlHashState'] {
       try {
         return JSON.parse(embedString) as EmbedOptions
       } catch (error) {
-        console.error('Error parsing embed options:', error)
+        logger.error(error)
         return null
       }
     },

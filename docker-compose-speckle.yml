@@ -23,6 +23,7 @@ services:
     environment:
       NUXT_PUBLIC_SERVER_NAME: 'local'
       NUXT_PUBLIC_API_ORIGIN: 'http://127.0.0.1'
+      NUXT_PUBLIC_BASE_URL: 'http://127.0.0.1'
       NUXT_PUBLIC_BACKEND_API_ORIGIN: 'http://speckle-server:3000'
       NUXT_REDIS_URL: 'redis://redis'
 

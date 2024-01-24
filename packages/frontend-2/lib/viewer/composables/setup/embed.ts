@@ -11,6 +11,8 @@ export type EmbedOptions = {
   commentSlideshow?: boolean
 }
 
+const logger = useLogger()
+
 export function isEmbedOptions(obj: unknown): obj is EmbedOptions {
   if (typeof obj === 'object' && obj !== null) {
     const possibleOptions = obj as Partial<Record<keyof EmbedOptions, unknown>>
@@ -44,9 +46,9 @@ export function useEmbedState() {
       if (isEmbedOptions(parsed)) {
         return { ...parsed, isEnabled: true }
       }
-      console.error('Parsed object is not of type EmbedOptions')
+      logger.error('Parsed object is not of type EmbedOptions')
     } catch (error) {
-      console.error('Error parsing embed options from URL:', error)
+      logger.error(error)
       return { isEnabled: true }
     }
 
