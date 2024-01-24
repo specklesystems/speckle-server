@@ -101,13 +101,6 @@ const createViewer = async (containerName: string, stream: string) => {
       categories[node.model.raw.speckle_type]++
       return true
     })
-    console.log(categories)
-    console.log(
-      viewer
-        .getWorldTree()
-        .getRenderTree()
-        .getRenderViewsForNodeId('2615ac0ba9acdfcfb12f902a9746f1c7')
-    )
 
     sandbox.refresh()
   })
