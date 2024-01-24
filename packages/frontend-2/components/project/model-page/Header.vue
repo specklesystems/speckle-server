@@ -9,8 +9,8 @@
   </Portal>
 
   <CommonEditableTitleDescription
-    :initial-title="titleState"
-    :initial-description="descriptionState"
+    :title="titleState"
+    :description="descriptionState"
     :can-edit="canEdit"
     :is-disabled="anyMutationsLoading"
     @update:title="handleUpdateTitle"
@@ -104,7 +104,7 @@ const save = async () => {
   if (!anythingToUpdate.value || anyMutationsLoading.value) return
   const update = currentUpdate.value
 
-  mp.track('Stream Action', {
+  mp.track('Branch Action', {
     type: 'action',
     name: 'update',
     action: 'name or description',

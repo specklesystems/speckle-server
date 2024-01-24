@@ -4,8 +4,8 @@
   </Portal>
 
   <CommonEditableTitleDescription
-    :initial-title="titleState"
-    :initial-description="descriptionState"
+    :title="titleState"
+    :description="descriptionState"
     :can-edit="canEdit"
     :is-disabled="anyMutationsLoading"
     @update:title="handleUpdateTitle"

@@ -18,6 +18,7 @@
             spellcheck="false"
             :disabled="isDisabled"
             :cols="title && title.length < 20 ? title.length : undefined"
+            data-type="title"
             @keydown="onInputKeydown"
             @blur="onBlur('title')"
             @input="onTitleChange"
@@ -56,6 +57,7 @@
             :cols="
               description && description?.length < 20 ? description.length : undefined
             "
+            data-type="description"
             @keydown="onInputKeydown"
             @blur="onBlur('description')"
             @input="onDescriptionChange"
@@ -78,19 +80,19 @@ import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import { debounce } from 'lodash-es'
 
 const props = defineProps({
-  initialTitle: String,
-  initialDescription: String,
+  title: String,
+  description: String,
   canEdit: Boolean,
   isDisabled: Boolean
 })
 
 const emit = defineEmits(['update:title', 'update:description'])
 
-const title = ref(props.initialTitle)
-const description = ref(props.initialDescription)
+const title = ref(props.title)
+const description = ref(props.description)
 
-const lastTitleValue = ref(props.initialTitle)
-const lastDescriptionValue = ref(props.initialDescription)
+const lastTitleValue = ref(props.title)
+const lastDescriptionValue = ref(props.description)
 
 const emitTitle = () => emit('update:title', title.value)
 const emitDescription = () => emit('update:description', description.value)
@@ -110,50 +112,50 @@ const descriptionInputClasses = computed(() => [
 ])
 
 const onInputKeydown = (e: KeyboardEvent) => {
-  if (e.code === 'Enter' && e.target instanceof HTMLElement) {
-    e.preventDefault()
-    e.target.blur()
-    if (e.target.dataset.type === 'title' && lastTitleValue.value !== title.value) {
-      lastTitleValue.value = title.value
-      debouncedEmitTitle()
-    } else if (
-      e.target.dataset.type === 'description' &&
-      lastDescriptionValue.value !== description.value
-    ) {
-      lastDescriptionValue.value = description.value
-      debouncedEmitDescription()
+  if (e.target instanceof HTMLElement) {
+    if (e.target.dataset.type === 'title' && e.code === 'Enter') {
+      e.preventDefault()
+      e.target.blur()
+      if (lastTitleValue.value !== title.value) {
+        lastTitleValue.value = title.value
+        debouncedEmitTitle()
+      }
     }
   }
 }
 
 const onTitleChange = () => {
+  lastTitleValue.value = title.value
   debouncedEmitTitle()
 }
 
 const onDescriptionChange = () => {
+  lastTitleValue.value = title.value
   debouncedEmitDescription()
 }
 
 const onBlur = (inputType: string) => {
-  if (inputType === 'title' && lastTitleValue.value !== title.value) {
-    lastTitleValue.value = title.value
-    emitTitle()
-  } else if (
-    inputType === 'description' &&
-    lastDescriptionValue.value !== description.value
-  ) {
-    emitDescription()
+  if (inputType === 'title') {
+    if (lastTitleValue.value !== title.value) {
+      lastTitleValue.value = title.value
+      emitTitle()
+    }
+  } else if (inputType === 'description') {
+    if (lastDescriptionValue.value !== description.value) {
+      lastDescriptionValue.value = description.value
+      emitDescription()
+    }
   }
 }
 
 watch(
-  () => props.initialTitle,
+  () => props.title,
   (newVal) => {
     title.value = newVal
   }
 )
 watch(
-  () => props.initialDescription,
+  () => props.description,
   (newVal) => {
     description.value = newVal
   }
