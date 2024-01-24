@@ -96,6 +96,8 @@ function setupConnection(connection: pg.Connection) {
 function reconnectClient() {
   const interval = setInterval(async () => {
     try {
+      await endConnection()
+
       const newConnection = await (
         knex.client as Knex.Knex.Client
       ).acquireRawConnection()
@@ -114,19 +116,27 @@ function reconnectClient() {
   }, 3000)
 }
 
+const endConnection = async () => {
+  if (connection) {
+    connection.end()
+    connection = undefined
+  }
+
+  if (redisClient) {
+    await redisClient.quit()
+    redisClient = undefined
+  }
+}
+
 export function setupResultListener() {
   dbNotificationLogger.info('🔔 Initializing postgres notification listening...')
   reconnectClient()
 }
 
-export function shutdownResultListener() {
+export async function shutdownResultListener() {
   dbNotificationLogger.info('...Shutting down postgres notification listening')
   shuttingDown = true
-
-  if (connection) {
-    connection.end()
-    connection = undefined
-  }
+  await endConnection()
 }
 
 export function listenFor(eventName: string, cb: ListenerType) {
