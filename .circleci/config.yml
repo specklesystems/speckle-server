@@ -612,7 +612,7 @@ jobs:
 
   docker-build: &build-job
     docker: &docker-image
-      - image: cimg/python:3.9.15-node
+      - image: cimg/python:3.9.18-node
     resource_class: medium
     working_directory: *work-dir
     steps:
