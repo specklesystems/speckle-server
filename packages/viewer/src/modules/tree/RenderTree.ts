@@ -152,12 +152,14 @@ export class RenderTree {
   }
 
   public getRenderViewNodesForNode(node: TreeNode): TreeNode[] {
-    /** TO DO: Not sure the RevitInstance and BlockInstance checks are required anymore*/
     if (
       node.model.atomic &&
-      node.model.renderView &&
+      node.model.renderView
+      /** This should not be needed anymore. */
+      /*&&
       node.model.renderView.renderData.speckleType !== SpeckleType.RevitInstance &&
       node.model.renderView.renderData.speckleType !== SpeckleType.BlockInstance
+      */
     ) {
       return [node]
     }
