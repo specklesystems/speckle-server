@@ -3,7 +3,6 @@
     <div
       v-if="isMultiline"
       class="relative z-10 text-sm text-foreground font-mono break-all p-2 pl-3"
-      @click="selectAllText"
       @keypress="keyboardClick(selectAllText)"
     >
       {{ value }}

@@ -11,10 +11,12 @@
 <script setup lang="ts">
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { debounce } from 'lodash-es'
+import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
 
 const { activeUser } = useActiveUser()
 const logger = useLogger()
 const route = useRoute()
+const { embedOptions } = useEmbedState()
 
 const showDialogBase = ref(false)
 const clickyCounts = ref(0)
@@ -40,12 +42,14 @@ watch(clickyCounts, (newVal) => {
 })
 
 const countClicks = () => {
-  logger.debug({
-    clickyCounts: clickyCounts.value,
-    clicksToOpenDialog,
-    dialogOpenCount: dialogOpenCount.value
-  })
-  clickyCounts.value++
+  if (!embedOptions.value.isEnabled) {
+    logger.debug({
+      clickyCounts: clickyCounts.value,
+      clicksToOpenDialog,
+      dialogOpenCount: dialogOpenCount.value
+    })
+    clickyCounts.value++
+  }
 }
 
 const debouncedCounter = debounce(countClicks, 100)
