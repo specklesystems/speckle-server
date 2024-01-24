@@ -1,5 +1,10 @@
 <template>
-  <LayoutDialogSection allow-overflow border-b title="Access">
+  <LayoutDialogSection
+    allow-overflow
+    border-b
+    title="Access"
+    :guided-open="defaultOpen"
+  >
     <template #icon>
       <LockOpenIcon
         v-if="project.visibility === ProjectVisibility.Public"
@@ -45,6 +50,7 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
   project: ProjectPageTeamDialogFragment
+  defaultOpen: boolean
 }>()
 
 const { isOwner, isServerGuest } = useTeamDialogInternals({

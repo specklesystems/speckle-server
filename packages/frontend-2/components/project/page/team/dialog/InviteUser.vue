@@ -1,5 +1,11 @@
 <template>
-  <LayoutDialogSection allow-overflow border-b border-t title="Invite">
+  <LayoutDialogSection
+    allow-overflow
+    border-b
+    border-t
+    title="Invite"
+    :guided-open="defaultOpen"
+  >
     <template #icon>
       <UserPlusIcon class="h-full w-full" />
     </template>
@@ -67,6 +73,7 @@ type InvitableUser = UserSearchItem | string
 
 const props = defineProps<{
   project: ProjectPageTeamDialogFragment
+  defaultOpen: boolean
 }>()
 
 const loading = ref(false)

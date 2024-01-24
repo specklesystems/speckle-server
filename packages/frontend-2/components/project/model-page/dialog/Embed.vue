@@ -225,7 +225,8 @@ const nonDiscoverableButtons = computed(() => [
     text: 'Change Access',
     props: { color: 'primary', fullWidth: true },
     onClick: () => {
-      router.push(`/projects/${props.projectId}`)
+      isOpen.value = false
+      router.push(`/projects/${props.projectId}?settings=access`)
     }
   }
 ])
