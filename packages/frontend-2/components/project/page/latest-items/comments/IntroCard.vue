@@ -37,6 +37,17 @@
       </div>
       <div v-else class="mt-3">
         <FormButton
+          v-if="embedOptions.isEnabled"
+          size="sm"
+          :icon-right="PlusIcon"
+          :to="router.currentRoute.value.path"
+          external
+          target="_blank"
+        >
+          Discuss in Speckle
+        </FormButton>
+        <FormButton
+          v-else
           size="sm"
           :icon-left="PlusIcon"
           @click="() => $emit('new-discussion')"
@@ -50,6 +61,7 @@
 <script setup lang="ts">
 import { PlusIcon } from '@heroicons/vue/24/solid'
 import { useTheme } from '~~/lib/core/composables/theme'
+import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
 
 defineEmits<{
   (e: 'new-discussion'): void
@@ -65,4 +77,7 @@ withDefaults(
 )
 
 const { isDarkTheme } = useTheme()
+const { embedOptions } = useEmbedState()
+
+const router = useRouter()
 </script>

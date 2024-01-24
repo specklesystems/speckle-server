@@ -16,7 +16,7 @@
     />
 
     <div
-      v-if="!minimal"
+      v-if="!minimal && !poweredBy"
       class="text-primary h6 mt-0 hidden font-bold leading-7 md:flex"
     >
       Speckle

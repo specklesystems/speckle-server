@@ -150,7 +150,7 @@
               @submit="onNewReply"
             />
             <div
-              v-if="isSmallerOrEqualSm"
+              v-if="isSmallerOrEqualSm && embedOptions.commentSlideshow"
               class="flex justify-between w-full gap-2 p-2 mt-2"
             >
               <FormButton
@@ -168,6 +168,20 @@
                 @click="emit('next', modelValue)"
               >
                 Next
+              </FormButton>
+            </div>
+            <div
+              v-if="isSmallerOrEqualSm && !embedOptions.commentSlideshow"
+              class="flex justify-between w-full gap-2 p-2 mt-2"
+            >
+              <FormButton
+                :icon-right="ArrowTopRightOnSquareIcon"
+                full-width
+                :to="getLinkToThread(projectId, props.modelValue)"
+                external
+                target="_blank"
+              >
+                Reply in Speckle
               </FormButton>
             </div>
           </div>
@@ -216,12 +230,14 @@ import {
 import { useDisableGlobalTextSelection } from '~~/lib/common/composables/window'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
+import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
   (e: 'update:expanded', v: boolean): void
   (e: 'next', v: CommentBubbleModel): void
   (e: 'prev', v: CommentBubbleModel): void
+  (e: 'replyInSpeckle'): void
 }>()
 
 const props = defineProps<{
@@ -232,6 +248,7 @@ const threadId = computed(() => props.modelValue.id)
 const { copy } = useClipboard()
 const { activeUser } = useActiveUser()
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
+const { embedOptions } = useEmbedState()
 
 const archiveComment = useArchiveComment()
 const { triggerNotification } = useGlobalToast()
