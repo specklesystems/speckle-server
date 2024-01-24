@@ -40,22 +40,26 @@
           />
         </div>
       </div>
-      <div class="h-12 flex items-center px-2 py-1 space-x-1">
-        <NuxtLink class="min-w-0 cursor-pointer" :href="finalModelUrl">
+      <div
+        class="h-auto sm:h-12 flex flex-col sm:flex-row sm:items-center px-2 py-1 gap-x-1"
+      >
+        <NuxtLink class="min-w-0 max-w-full cursor-pointer" :href="finalModelUrl">
           <div
             v-if="nameParts[0]"
             class="text-xs text-foreground-2 relative -mb-1 truncate"
           >
             {{ nameParts[0] }}
           </div>
-          <div class="font-bold truncate text-foreground flex-shrink min-w-0">
+          <div
+            class="font-bold text-sm sm:text-base truncate text-foreground flex-shrink min-w-0"
+          >
             {{ nameParts[1] }}
           </div>
         </NuxtLink>
-        <div class="grow" />
+        <div class="hidden sm:flex grow" />
         <div class="flex items-center">
           <div
-            :class="`text-xs w-full text-foreground-2 mr-1 truncate transition ${
+            :class="`text-xs w-full text-foreground-2 sm:mr-1 truncate transition ${
               hovered ? 'sm:w-auto' : 'sm:w-0'
             }`"
           >

@@ -1,6 +1,13 @@
 <template>
   <template v-if="itemsCount">
-    <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div
+      class="relative z-10 grid gap-3"
+      :class="
+        smallView
+          ? 'grid-cols-3 md:grid-cols-4'
+          : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
+      "
+    >
       <!-- Decrementing z-index necessary for the actions menu to render correctly. Each card has its own stacking context because of the scale property -->
       <ProjectPageModelsCard
         v-for="(item, i) in items"
@@ -10,6 +17,7 @@
         :project="project"
         :show-actions="showActions"
         :show-versions="showVersions"
+        height="h-32 sm:h-64"
         :disable-default-link="disableDefaultLinks"
         :style="`z-index: ${items.length - i};`"
         @click="($event) => $emit('model-clicked', { id: item.id, e: $event })"
@@ -70,6 +78,7 @@ const props = withDefaults(
     disablePagination?: boolean
     sourceApps?: SourceAppDefinition[]
     contributors?: FormUsersSelectItemFragment[]
+    smallView?: boolean
   }>(),
   {
     showActions: true,
