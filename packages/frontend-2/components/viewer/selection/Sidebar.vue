@@ -1,11 +1,11 @@
 <template>
   <ViewerCommentsPortalOrDiv v-if="objects.length !== 0" to="bottomPanel">
     <div
-      :class="`sm:bg-foundation simple-scrollbar z-10 relative sm:fixed sm:top-16 sm:right-4 sm:top-[4rem] sm:right-4 sm:mb-4 sm:max-w-64 min-h-[3rem] sm:min-h-[4.75rem] max-h-[50vh] sm:max-h-[calc(100dvh-5.5rem)] w-full sm:w-64 overflow-y-auto sm:rounded-md sm:shadow transition ${
+      :class="`sm:bg-foundation simple-scrollbar z-10 relative sm:fixed sm:right-4 sm:right-4 sm:mb-4 sm:max-w-64 min-h-[3rem] sm:min-h-[4.75rem] max-h-[50vh] sm:max-h-[calc(100vh-5.5rem)] w-full sm:w-64 overflow-y-auto sm:rounded-md sm:shadow transition ${
         objects.length !== 0
           ? 'translate-x-0 opacity-100'
           : 'translate-x-[120%] opacity-0'
-      }`"
+      } ${embedOptions.isEnabled ? 'top-2' : 'top-[4rem]'}`"
     >
       <ViewerLayoutPanel @close="trackAndClearSelection()">
         <template #title>Selection Info</template>
@@ -73,6 +73,7 @@ import { containsAll } from '~~/lib/common/helpers/utils'
 import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { uniqWith } from 'lodash-es'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
 
 const {
   viewer: {
@@ -83,6 +84,8 @@ const {
 const { objects, clearSelection } = useSelectionUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
+
+const { embedOptions } = useEmbedState()
 
 const itemCount = ref(42)
 
