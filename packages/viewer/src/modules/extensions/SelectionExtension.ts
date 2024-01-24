@@ -135,7 +135,7 @@ export class SelectionExtension extends Extension {
     const rvs = []
     nodes.forEach((node: TreeNode) => {
       rvs.push(
-        ...this.viewer.getWorldTree().getRenderTree().getRenderViewsForNode(node, node)
+        ...this.viewer.getWorldTree().getRenderTree().getRenderViewsForNode(node)
       )
     })
     this.removeSelection(rvs)
@@ -211,7 +211,7 @@ export class SelectionExtension extends Extension {
       const rvs = this.viewer
         .getWorldTree()
         .getRenderTree()
-        .getRenderViewsForNode(this.selectedNodes[k], this.selectedNodes[k])
+        .getRenderViewsForNode(this.selectedNodes[k])
       rvs.forEach((rv: NodeRenderView) => {
         if (!this.selectionRvs[rv.guid]) this.selectionRvs[rv.guid] = rv
         if (!this.selectionMaterials[rv.guid])

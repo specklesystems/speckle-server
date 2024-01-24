@@ -261,10 +261,7 @@ export default class Sandbox {
       title: `Object: ${node.model.id}`
     })
 
-    const rvs = this.viewer
-      .getWorldTree()
-      .getRenderTree()
-      .getRenderViewsForNode(node, node)
+    const rvs = this.viewer.getWorldTree().getRenderTree().getRenderViewsForNode(node)
     const objects: BatchObject[] = []
     for (let k = 0; k < rvs.length; k++) {
       const batchObject = this.viewer.getRenderer().getObject(rvs[k])

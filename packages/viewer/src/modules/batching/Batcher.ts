@@ -477,22 +477,6 @@ export default class Batcher {
   /**
    * Used for debuggin only
    */
-
-  public async isolateRenderViewBatch(id: string, renderTree: RenderTree) {
-    const rv = renderTree.getRenderViewForNodeId(id)
-    for (const k in this.batches) {
-      if (k !== rv.batchId) {
-        this.batches[k].setDrawRanges({
-          offset: 0,
-          count: this.batches[k].getCount(),
-          material: this.materials.getFilterMaterial(this.batches[k].renderViews[0], {
-            filterType: FilterMaterialType.GHOST
-          })
-        })
-      }
-    }
-  }
-
   public async isolateBatch(batchId: string) {
     for (const k in this.batches) {
       if (k !== batchId) {

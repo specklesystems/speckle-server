@@ -1072,10 +1072,7 @@ export default class SpeckleRenderer {
         const nodes = this.viewer.getWorldTree().findId(objectIds[k])
         nodes.forEach((node: TreeNode) => {
           rvs.push(
-            ...this.viewer
-              .getWorldTree()
-              .getRenderTree()
-              .getRenderViewsForNode(node, node)
+            ...this.viewer.getWorldTree().getRenderTree().getRenderViewsForNode(node)
           )
         })
       }

@@ -525,31 +525,25 @@ export class DiffExtension extends Extension {
     const renderTree = this.tree.getRenderTree()
 
     const addedRvs = diffResult.added.flatMap((value) => {
-      return renderTree.getRenderViewsForNode(value as TreeNode, value as TreeNode)
+      return renderTree.getRenderViewsForNode(value as TreeNode)
     })
     const removedRvs = diffResult.removed.flatMap((value) => {
-      return renderTree.getRenderViewsForNode(value as TreeNode, value as TreeNode)
+      return renderTree.getRenderViewsForNode(value as TreeNode)
     })
     const unchangedRvs = diffResult.unchanged.flatMap((value) => {
-      return renderTree.getRenderViewsForNode(value as TreeNode, value as TreeNode)
+      return renderTree.getRenderViewsForNode(value as TreeNode)
     })
 
     const modifiedOldRvs = diffResult.modified
       .flatMap((value) => {
-        return renderTree.getRenderViewsForNode(
-          value[0] as TreeNode,
-          value[0] as TreeNode
-        )
+        return renderTree.getRenderViewsForNode(value[0] as TreeNode)
       })
       .filter((value) => {
         return !unchangedRvs.includes(value) && !removedRvs.includes(value)
       })
     const modifiedNewRvs = diffResult.modified
       .flatMap((value) => {
-        return renderTree.getRenderViewsForNode(
-          value[1] as TreeNode,
-          value[1] as TreeNode
-        )
+        return renderTree.getRenderViewsForNode(value[1] as TreeNode)
       })
       .filter((value) => {
         return !unchangedRvs.includes(value) && !addedRvs.includes(value)
