@@ -185,7 +185,7 @@ export class RenderTree {
     return ret
   }
 
-  public getAtomicParent(node: TreeNode) {
+  public getAtomicParent(node: TreeNode): TreeNode {
     if (node.model.atomic) {
       return node
     }
@@ -196,9 +196,10 @@ export class RenderTree {
     this.tree = null
   }
 
-  public cancelBuild(subtreeId: string) {
+  /** TO DO: Need to purge only if currently building */
+  public cancelBuild(): void {
     this.cancel = true
-    this.tree.purge(subtreeId)
+    this.tree.purge(this.id)
     this.purge()
   }
 }

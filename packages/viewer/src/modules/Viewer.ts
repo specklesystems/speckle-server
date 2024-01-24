@@ -315,7 +315,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public async cancelLoad(resource: string, unload = false) {
     this.loaders[resource].cancel()
-    this.tree.getRenderTree(resource).cancelBuild(resource)
+    this.tree.getRenderTree(resource).cancelBuild()
     this.speckleRenderer.cancelRenderTree(resource)
     if (unload) {
       await this.unloadObject(resource)
