@@ -5,7 +5,7 @@
         objects.length !== 0
           ? 'translate-x-0 opacity-100'
           : 'translate-x-[120%] opacity-0'
-      } ${embedOptions.isEnabled ? 'top-2' : 'top-[4rem]'}`"
+      } ${embedOptions.isEnabled ? 'sm:top-2' : 'sm:top-[4rem]'}`"
     >
       <ViewerLayoutPanel @close="trackAndClearSelection()">
         <template #title>Selection Info</template>
