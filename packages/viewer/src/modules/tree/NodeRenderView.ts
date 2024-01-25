@@ -28,18 +28,18 @@ export class NodeRenderView {
   private _aabb: Box3 = null
 
   /** TO DO: Not sure if we should store it */
-  public get guid() {
+  public get guid(): string {
     if (!this._guid) {
       this._guid = this._renderData.subtreeId + this._renderData.id
     }
     return this._guid
   }
 
-  public get renderData() {
+  public get renderData(): NodeRenderData {
     return this._renderData
   }
 
-  public get renderMaterialHash() {
+  public get renderMaterialHash(): number {
     return this._materialHash
   }
 
@@ -51,15 +51,15 @@ export class NodeRenderView {
     return this._renderData.geometry && this._renderData.geometry.metaData
   }
 
-  public get speckleType() {
+  public get speckleType(): SpeckleType {
     return this._renderData.speckleType
   }
 
-  public get geometryType() {
+  public get geometryType(): GeometryType {
     return this._geometryType
   }
 
-  public get batchStart() {
+  public get batchStart(): number {
     return this._batchIndexStart
   }
 
@@ -67,33 +67,33 @@ export class NodeRenderView {
     return this._batchIndexStart + this._batchIndexCount
   }
 
-  public get batchCount() {
+  public get batchCount(): number {
     return this._batchIndexCount
   }
 
-  public get batchId() {
+  public get batchId(): string {
     return this._batchId
   }
 
-  public get aabb() {
+  public get aabb(): Box3 {
     return this._aabb
   }
 
-  public get transparent() {
+  public get transparent(): boolean {
     return (
       this._renderData.renderMaterial && this._renderData.renderMaterial.opacity < 1
     )
   }
 
-  public get vertStart() {
+  public get vertStart(): number {
     return this._batchVertexStart
   }
 
-  public get vertEnd() {
+  public get vertEnd(): number {
     return this._batchVertexEnd
   }
 
-  public get needsSegmentConversion() {
+  public get needsSegmentConversion(): boolean {
     return (
       this._renderData.speckleType === SpeckleType.Curve ||
       this._renderData.speckleType === SpeckleType.Polyline ||
@@ -104,7 +104,7 @@ export class NodeRenderView {
     )
   }
 
-  public get validGeometry() {
+  public get validGeometry(): boolean {
     return (
       this._renderData.geometry.attributes &&
       this._renderData.geometry.attributes.POSITION &&
