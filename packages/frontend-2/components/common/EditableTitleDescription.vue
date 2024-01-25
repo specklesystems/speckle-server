@@ -94,8 +94,15 @@ const description = ref(props.description)
 const lastTitleValue = ref(props.title)
 const lastDescriptionValue = ref(props.description)
 
-const emitTitle = () => emit('update:title', title.value)
-const emitDescription = () => emit('update:description', description.value)
+const emitTitle = () => {
+  lastDescriptionValue.value = description.value
+  emit('update:title', title.value)
+}
+
+const emitDescription = () => {
+  lastDescriptionValue.value = description.value
+  emit('update:description', description.value)
+}
 
 const debouncedEmitTitle = debounce(emitTitle, 2000)
 const debouncedEmitDescription = debounce(emitDescription, 2000)
@@ -116,10 +123,7 @@ const onInputKeydown = (e: KeyboardEvent) => {
     if (e.target.dataset.type === 'title' && e.code === 'Enter') {
       e.preventDefault()
       e.target.blur()
-      if (lastTitleValue.value !== title.value) {
-        lastTitleValue.value = title.value
-        debouncedEmitTitle()
-      }
+      emitTitle()
     }
   }
 }
@@ -135,6 +139,9 @@ const onDescriptionChange = () => {
 }
 
 const onBlur = (inputType: string) => {
+  debouncedEmitTitle.cancel()
+  debouncedEmitDescription.cancel()
+
   if (inputType === 'title') {
     if (lastTitleValue.value !== title.value) {
       lastTitleValue.value = title.value
