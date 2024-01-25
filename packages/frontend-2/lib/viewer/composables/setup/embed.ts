@@ -11,8 +11,6 @@ export type EmbedOptions = {
   commentSlideshow?: boolean
 }
 
-const logger = useLogger()
-
 export function isEmbedOptions(obj: unknown): obj is EmbedOptions {
   if (typeof obj === 'object' && obj !== null) {
     const possibleOptions = obj as Partial<Record<keyof EmbedOptions, unknown>>
@@ -33,6 +31,7 @@ export function isEmbedOptions(obj: unknown): obj is EmbedOptions {
 }
 
 export function useEmbedState() {
+  const logger = useLogger()
   const { hashState } = useRouteHashState()
 
   const embedOptions = computed((): EmbedOptions => {
