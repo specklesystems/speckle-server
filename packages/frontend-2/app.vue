@@ -1,7 +1,7 @@
 <template>
   <div
     id="speckle"
-    class="bg-foundation-page text-foreground has-[.viewer-transparent]:bg-transparent"
+    class="bg-foundation-page text-foreground has-[.viewer-transparent]:!bg-transparent"
   >
     <NuxtLayout>
       <NuxtPage />
@@ -24,7 +24,7 @@ useHead({
   },
   bodyAttrs: {
     class:
-      'simple-scrollbar bg-foundation-page text-foreground has-[.viewer-transparent]:bg-transparent'
+      'simple-scrollbar bg-foundation-page text-foreground has-[.viewer-transparent]:!bg-transparent'
   }
 })
 

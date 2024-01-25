@@ -79,7 +79,7 @@
           <LayoutDialogSection
             v-if="!isSmallerOrEqualSm"
             border-b
-            title="Embed Preview"
+            title="Preview"
             :lazy-load="true"
             :lazy-load-height="400"
           >
@@ -88,7 +88,7 @@
             </template>
             <LazyProjectModelPageDialogEmbedIframe
               :src="updatedUrl"
-              title="Embed Preview"
+              title="Preview"
               width="600"
               height="400"
               class="shrink-0 w-[600px] h-[400px] mx-auto"

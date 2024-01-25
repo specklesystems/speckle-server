@@ -2,7 +2,7 @@
   <div class="relative group bg-foundation-page p-2 rounded-lg pr-12">
     <div
       v-if="isMultiline"
-      class="relative z-10 text-xs sm:text-sm text-foreground font-mono break-all p-2 pl-3"
+      class="relative z-10 text-xs sm:text-sm text-foreground font-mono break-all p-2 pl-3 max-h-[4.8rem] simple-scrollbar overflow-y-auto"
       @keypress="keyboardClick(selectAllText)"
     >
       {{ value }}
