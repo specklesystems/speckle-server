@@ -27,7 +27,7 @@
       </p>
     </div>
     <div v-else>
-      <CommonAlert v-if="props.versionId" class="mb-4 -mt-4" color="info">
+      <CommonAlert v-if="props.versionId" class="sm:mb-4 sm:-mt-4" color="info">
         <template #title>You are about embedding a specific version</template>
         <template #description>
           <p>
