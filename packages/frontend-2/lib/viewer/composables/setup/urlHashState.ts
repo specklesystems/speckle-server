@@ -10,9 +10,8 @@ export enum ViewerHashStateKeys {
   EmbedOptions = 'embed'
 }
 
-const logger = useLogger()
-
 export function setupUrlHashState(): InjectableViewerState['urlHashState'] {
+  const logger = useLogger()
   const { hashState } = useRouteHashState()
   const { deserializeDiffCommand, serializeDiffCommand } = useDiffBuilderUtilities()
 
