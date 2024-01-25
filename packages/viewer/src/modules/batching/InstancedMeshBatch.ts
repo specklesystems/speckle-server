@@ -629,10 +629,6 @@ export default class InstancedMeshBatch implements Batch {
     this.mesh.setBatchObjects(batchObjects)
     this.mesh.setBatchMaterial(this.batchMaterial)
     this.mesh.buildTAS()
-    const bounds = new Box3()
-    for (let k = 0; k < this.renderViews.length; k++) {
-      bounds.union(this.renderViews[k].aabb)
-    }
 
     this.geometry.boundingBox = this.mesh.TAS.getBoundingBox(new Box3())
     this.geometry.boundingSphere = this.geometry.boundingBox.getBoundingSphere(

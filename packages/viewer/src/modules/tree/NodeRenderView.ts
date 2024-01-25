@@ -27,6 +27,7 @@ export class NodeRenderView {
 
   private _aabb: Box3 = null
 
+  /** TO DO: Not sure if we should store it */
   public get guid() {
     if (!this._guid) {
       this._guid = this._renderData.subtreeId + this._renderData.id
