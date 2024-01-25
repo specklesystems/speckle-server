@@ -1,6 +1,6 @@
 <template>
   <NuxtLink
-    class="flex items-center shrink-0 gap-2"
+    class="flex items-center shrink-0 gap-1"
     :to="poweredBy ? 'https://speckle.systems/' : '/'"
     :target="poweredBy ? '_blank' : undefined"
   >
@@ -21,7 +21,7 @@
     >
       Speckle
     </div>
-    <div v-if="poweredBy" class="text-sm font-bold text-primary">
+    <div v-if="poweredBy" class="text-xs font-bold text-primary">
       Powered by Speckle
     </div>
   </NuxtLink>

@@ -10,7 +10,7 @@
       </NuxtLink>
       <div class="h-6 w-px bg-primary"></div>
       <div class="flex flex-col">
-        <NuxtLink :to="url" target="_blank" class="leading-none">
+        <NuxtLink :to="url" target="_blank" class="leading-3">
           <div class="flex items-center gap-1 w-full">
             <h2 class="font-bold text-base text-sm truncate">
               {{ name }}
