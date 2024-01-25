@@ -1,7 +1,7 @@
 <template>
   <div v-if="showViewerControls && !embedOptions.hideControls">
     <div
-      class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 sm:space-y-2 bg-green-300/0 px-2"
+      class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 lg:space-y-2 bg-green-300/0 px-2"
       :class="
         showNavbar && !embedOptions.isEnabled
           ? 'pt-[4.2rem]'
@@ -16,7 +16,7 @@
         :active="activeControl === 'models'"
         @click="toggleActiveControl('models')"
       >
-        <CubeIcon class="h-4 w-4 sm:h-5 sm:w-5" />
+        <CubeIcon class="h-4 w-4 lg:h-5 lg:w-5" />
       </ViewerControlsButtonToggle>
 
       <!-- Explorer -->
@@ -25,7 +25,7 @@
         :active="activeControl === 'explorer'"
         @click="toggleActiveControl('explorer')"
       >
-        <IconFileExplorer class="h-4 w-4 sm:h-5 sm:w-5" />
+        <IconFileExplorer class="h-4 w-4 lg:h-5 lg:w-5" />
       </ViewerControlsButtonToggle>
 
       <!-- TODO -->
@@ -42,7 +42,7 @@
         :active="activeControl === 'discussions'"
         @click="toggleActiveControl('discussions')"
       >
-        <ChatBubbleLeftRightIcon class="h-4 w-4 sm:h-5 sm:w-5" />
+        <ChatBubbleLeftRightIcon class="h-4 w-4 lg:h-5 lg:w-5" />
       </ViewerControlsButtonToggle>
 
       <!-- Automateeeeeeee FTW -->
@@ -67,24 +67,24 @@
         :active="activeControl === 'measurements'"
         @click="toggleMeasurements"
       >
-        <IconMeasurements class="h-4 w-4 sm:h-5 sm:w-5" />
+        <IconMeasurements class="h-4 w-4 lg:h-5 lg:w-5" />
       </ViewerControlsButtonToggle>
       <div class="w-8 flex gap-2">
-        <div class="sm:hidden">
+        <div class="lg:hidden">
           <ViewerControlsButtonToggle
             :active="activeControl === 'mobileOverflow'"
             @click="toggleActiveControl('mobileOverflow')"
           >
             <ChevronDoubleRightIcon
-              class="h-4 w-4 sm:h-5 sm:w-5 transition"
+              class="h-4 w-4 lg:h-5 lg:w-5 transition"
               :class="activeControl === 'mobileOverflow' ? 'rotate-180' : ''"
             />
           </ViewerControlsButtonToggle>
         </div>
         <div
-          class="-mt-28 sm:mt-0 bg-foundation sm:bg-transparent sm:gap-2 shadow-md sm:shadow-none flex flex-col rounded-lg transition-all *:shadow-none *:py-0 *:sm:shadow-md *:sm:py-2"
+          class="-mt-28 lg:mt-0 bg-foundation lg:bg-transparent lg:gap-2 shadow-md lg:shadow-none flex flex-col rounded-lg transition-all *:shadow-none *:py-0 *:lg:shadow-md *:lg:py-2"
           :class="[
-            activeControl === 'mobileOverflow' ? '' : '-translate-x-24 sm:translate-x-0'
+            activeControl === 'mobileOverflow' ? '' : '-translate-x-24 lg:translate-x-0'
           ]"
         >
           <ViewerControlsButtonGroup>
@@ -96,7 +96,7 @@
               flat
               @click="trackAndzoomExtentsOrSelection()"
             >
-              <ArrowsPointingOutIcon class="h-4 w-4 sm:h-5 sm:w-5" />
+              <ArrowsPointingOutIcon class="h-4 w-4 lg:h-5 lg:w-5" />
             </ViewerControlsButtonToggle>
 
             <!-- Sun and lights -->
@@ -114,8 +114,8 @@
               :active="isOrthoProjection"
               @click="trackAndtoggleProjection()"
             >
-              <IconPerspective v-if="isOrthoProjection" class="h-3.5 sm:h-4 w-4" />
-              <IconPerspectiveMore v-else class="h-3.5 sm:h-4 w-4" />
+              <IconPerspective v-if="isOrthoProjection" class="h-3.5 lg:h-4 w-4" />
+              <IconPerspectiveMore v-else class="h-3.5 lg:h-4 w-4" />
             </ViewerControlsButtonToggle>
 
             <!-- Section Box -->
@@ -126,7 +126,7 @@
               :active="isSectionBoxEnabled"
               @click="toggleSectionBox()"
             >
-              <ScissorsIcon class="h-4 w-4 sm:h-5 sm:w-5" />
+              <ScissorsIcon class="h-4 w-4 lg:h-5 lg:w-5" />
             </ViewerControlsButtonToggle>
 
             <!-- Explosion -->
@@ -141,7 +141,7 @@
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 ml-12 sm:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] w-56 sm:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
+      :class="`simple-scrollbar absolute z-10 ml-12 lg:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] w-56 lg:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
