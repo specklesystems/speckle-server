@@ -3,15 +3,15 @@
     class="group flex items-center justify-center absolute inset-0"
     @click="$emit('play')"
   >
-    <div class="absolute inset-0">
-      <!-- <PreviewImage :preview-url="version.previewUrl" /> -->
+    <div v-if="previewUrl" class="absolute inset-0">
+      <PreviewImage :preview-url="previewUrl" />
     </div>
     <div
-      class="group-hover:scale-110 group-hover:shadow-xl shadow h-14 w-14 rounded-full border border-foundation bg-primary flex items-center justify-center transition -mt-10"
+      class="relative z-10 pointer-events-none group-hover:scale-110 group-hover:shadow-xl shadow h-14 w-14 rounded-full border border-foundation bg-primary flex items-center justify-center transition -mt-10"
     >
       <PlayIcon class="h-6 w-6 ml-[3px] text-foundation" />
     </div>
-    <ViewerEmbedFooter :project-url="projectUrl" project-name="title" />
+    <ViewerEmbedFooter :project-url="projectUrl" project-name="View in Speckle" />
   </button>
 </template>
 
@@ -19,8 +19,28 @@
 import { PlayIcon } from '@heroicons/vue/20/solid'
 
 const route = useRouter()
+const {
+  public: { apiOrigin }
+} = useRuntimeConfig()
 
 const projectUrl = route.currentRoute.value.path
+
+const projectId = route.currentRoute.value.params.id as string
+const modelId = route.currentRoute.value.params.modelId as string
+const versionId = route.currentRoute.value.params.modelId as string
+
+const previewUrl = computed(() => {
+  if (modelId) {
+    const url = new URL(`/preview/${projectId}/commits/${modelId}`, apiOrigin)
+    return url.toString()
+  } else if (versionId) {
+    const url = new URL(`/preview/${projectId}/objects/${versionId}`, apiOrigin)
+    return url.toString()
+  } else if (projectId) {
+    const url = new URL(`/preview/${projectId}`, apiOrigin)
+    return url.toString()
+  } else return null
+})
 
 defineEmits<{
   (e: 'play'): void

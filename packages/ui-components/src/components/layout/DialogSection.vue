@@ -140,11 +140,7 @@ const backgroundClass = computed(() => {
   const classes = []
 
   if (!props.button && !props.alwaysOpen) {
-    classes.push('cursor-pointer', 'hover:bg-foundation')
-  }
-
-  if (isExpanded.value) {
-    classes.push('bg-foundation')
+    classes.push('cursor-pointer')
   }
 
   return classes

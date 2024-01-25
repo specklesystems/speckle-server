@@ -10,14 +10,16 @@
       </NuxtLink>
       <div class="h-6 w-px bg-primary"></div>
       <div class="flex flex-col">
-        <NuxtLink :to="projectUrl" target="_blank">
-          <div class="flex items-center gap-1 -mb-1.5 w-full">
+        <NuxtLink :to="projectUrl" target="_blank" class="leading-tight">
+          <div class="flex items-center gap-1 w-full">
             <h2 class="font-bold text-base text-sm truncate">
               {{ projectName }}
             </h2>
             <ArrowTopRightOnSquareIcon class="h-3 w-3" />
           </div>
-          <span class="text-xs text-foreground-2">Created {{ projectCreatedAt }}</span>
+          <span v-if="projectCreatedAt" class="text-xs text-foreground-2">
+            Created {{ projectCreatedAt }}
+          </span>
         </NuxtLink>
       </div>
     </div>

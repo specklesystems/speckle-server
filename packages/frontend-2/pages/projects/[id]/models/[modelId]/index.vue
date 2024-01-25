@@ -43,8 +43,7 @@ const checkUrlForEmbedManualLoad = () => {
   if (process.server) return
 
   if (typeof window !== 'undefined') {
-    const url = new URL(window.location.href)
-    const hashParams = new URLSearchParams(url.hash.substring(1))
+    const hashParams = new URLSearchParams(route.hash.substring(1))
     const embedParam = hashParams.get('embed')
 
     if (embedParam) {
