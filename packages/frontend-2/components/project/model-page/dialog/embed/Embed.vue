@@ -80,8 +80,8 @@
             v-if="!isSmallerOrEqualSm"
             border-b
             title="Embed Preview"
-            lazy-load="true"
-            lazy-load-height="400"
+            :lazy-load="true"
+            :lazy-load-height="400"
           >
             <template #icon>
               <EyeIcon class="h-full w-full" />
