@@ -814,7 +814,7 @@
             "cpu": {
               "type": "string",
               "description": "The CPU that should be available on a node when scheduling this pod.",
-              "default": "500m"
+              "default": "1000m"
             },
             "memory": {
               "type": "string",
@@ -829,7 +829,7 @@
             "cpu": {
               "type": "string",
               "description": "The maximum CPU that will be made available to the server Pod in a given period.",
-              "default": "1000m"
+              "default": "1500m"
             },
             "memory": {
               "type": "string",
@@ -1101,7 +1101,7 @@
             "cpu": {
               "type": "string",
               "description": "The CPU that should be available on a node when scheduling this pod.",
-              "default": "500m"
+              "default": "1000m"
             },
             "memory": {
               "type": "string",
@@ -1116,7 +1116,7 @@
             "cpu": {
               "type": "string",
               "description": "The maximum CPU that will be made available to the server Pod in a given period.",
-              "default": "1000m"
+              "default": "1500m"
             },
             "memory": {
               "type": "string",
