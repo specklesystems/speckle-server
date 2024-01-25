@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    :max-width="visibility == projectVisibility.Private ? 'sm' : 'xl'"
+    :max-width="visibility == projectVisibility.Private ? 'sm' : 'md'"
     :buttons="
       visibility == projectVisibility.Private
         ? nonDiscoverableButtons
@@ -43,16 +43,7 @@
       </CommonAlert>
 
       <div class="flex flex-col lg:flex-row gap-8 mb-6">
-        <div class="hidden xl:block shrink-0 w-[600px] h-[400px]"></div>
-        <ProjectModelPageDialogEmbedIframe
-          :src="updatedUrl"
-          title="Embed Preview"
-          width="600"
-          height="400"
-          class-name="lg:fixed -z-10 shrink-0 w-[600px] h-[400px] hidden sm:block order-2 xl:order-1 mx-auto"
-          :condition="!isSmallerOrEqualXl"
-        />
-        <div class="flex-1 order-1 lg:order-2§">
+        <div class="flex-1 order-1 lg:order-2">
           <h4 class="font-bold text-sm text-foreground-2 mb-2 ml-0.5">Code</h4>
           <FormClipboardInput :value="iframeCode" is-multiline />
           <p class="text-sm sm:text-base text-foreground-2 mt-2 mb-5 ml-0.5">
@@ -86,23 +77,23 @@
             </div>
           </LayoutDialogSection>
           <LayoutDialogSection
-            v-if="!isSmallerOrEqualSm && isSmallerOrEqualXl"
+            v-if="!isSmallerOrEqualSm"
             border-b
             title="Embed Preview"
+            lazy-load="true"
+            lazy-load-height="400"
           >
             <template #icon>
               <EyeIcon class="h-full w-full" />
             </template>
-            <div class="h-[400px] w-full">
-              <LazyProjectModelPageDialogEmbedIframe
-                :src="updatedUrl"
-                title="Embed Preview"
-                width="600"
-                height="400"
-                class="shrink-0 w-[600px] h-[400px] mx-auto"
-                :condition="isSmallerOrEqualXl"
-              />
-            </div>
+            <LazyProjectModelPageDialogEmbedIframe
+              :src="updatedUrl"
+              title="Embed Preview"
+              width="600"
+              height="400"
+              class="shrink-0 w-[600px] h-[400px] mx-auto"
+              :condition="!isSmallerOrEqualSm"
+            />
           </LayoutDialogSection>
         </div>
       </div>
@@ -131,7 +122,7 @@ const {
   public: { baseUrl }
 } = useRuntimeConfig()
 
-const { isSmallerOrEqualSm, isSmallerOrEqualXl } = useIsSmallerOrEqualThanBreakpoint()
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const projectVisibility = ref(ProjectVisibility)
 
