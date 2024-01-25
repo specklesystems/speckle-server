@@ -10,15 +10,15 @@
       </NuxtLink>
       <div class="h-6 w-px bg-primary"></div>
       <div class="flex flex-col">
-        <NuxtLink :to="projectUrl" target="_blank" class="leading-tight">
+        <NuxtLink :to="url" target="_blank" class="leading-none">
           <div class="flex items-center gap-1 w-full">
             <h2 class="font-bold text-base text-sm truncate">
-              {{ projectName }}
+              {{ name }}
             </h2>
             <ArrowTopRightOnSquareIcon class="h-3 w-3" />
           </div>
-          <span v-if="projectCreatedAt" class="text-xs text-foreground-2">
-            Created {{ projectCreatedAt }}
+          <span v-if="createdAt" class="text-xs text-foreground-2">
+            Created {{ createdAt }}
           </span>
         </NuxtLink>
       </div>
@@ -32,9 +32,9 @@ import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
 import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
 
 defineProps<{
-  projectCreatedAt?: string
-  projectName?: string
-  projectUrl?: string
+  createdAt?: string
+  name?: string
+  url?: string
 }>()
 
 const { embedOptions } = useEmbedState()

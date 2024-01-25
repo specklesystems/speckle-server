@@ -66,9 +66,9 @@
     </div>
   </ViewerPostSetupWrapper>
   <ViewerEmbedFooter
-    :project-name="project?.name"
-    :project-created-at="formattedDate"
-    :project-url="route.fullPath"
+    :name="modelName || 'Loading...'"
+    :created-at="formattedDate"
+    :url="route.path"
   />
   <Portal to="primary-actions">
     <HeaderNavShare
@@ -127,6 +127,13 @@ const title = computed(() =>
   project.value?.name.length ? `Viewer - ${project.value.name}` : ''
 )
 
+const modelName = computed(() => {
+  if (project.value?.models?.items && project.value.models.items.length > 0) {
+    return project.value.models.items[0].name
+  } else {
+    return project.value?.name
+  }
+})
 dayjs.extend(relativeTime)
 
 const formattedDate = computed(() => {
