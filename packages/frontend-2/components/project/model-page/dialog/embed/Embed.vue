@@ -49,7 +49,7 @@
           title="Embed Preview"
           width="600"
           height="400"
-          class-name="lg:fixed shrink-0 w-[600px] h-[400px] hidden sm:block order-2 xl:order-1 mx-auto"
+          class-name="lg:fixed -z-10 shrink-0 w-[600px] h-[400px] hidden sm:block order-2 xl:order-1 mx-auto"
           :condition="!isSmallerOrEqualXl"
         />
         <div class="flex-1 order-1 lg:order-2§">

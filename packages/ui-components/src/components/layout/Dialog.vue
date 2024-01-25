@@ -64,7 +64,7 @@
               </div>
               <div
                 v-if="hasButtons"
-                class="flex px-4 py-2 sm:py-4 sm:px-6 gap-2 shrink-0"
+                class="relative z-50 flex px-4 py-2 sm:py-4 sm:px-6 gap-2 shrink-0 bg-foundation"
                 :class="!scrolledToBottom && 'shadow-t'"
               >
                 <template v-if="buttons">
