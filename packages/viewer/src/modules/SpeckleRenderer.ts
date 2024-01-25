@@ -1085,9 +1085,9 @@ export default class SpeckleRenderer {
     } else box = this.sceneBox
     for (let k = 0; k < rvs.length; k++) {
       const object = this.getObject(rvs[k])
-      let rvBox = null
-      if ((rvBox = object.aabb) !== null) {
-        box.union(rvBox)
+      const aabb = object ? object.aabb : rvs[k].aabb
+      if (aabb) {
+        box.union(aabb)
       }
     }
     if (box.getSize(new Vector3()).length() === 0) {
