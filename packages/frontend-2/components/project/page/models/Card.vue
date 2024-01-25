@@ -34,7 +34,7 @@
         >
           <ProjectCardImportFileArea
             ref="importArea"
-            :project-id="project.id"
+            :project-id="projectId"
             :model-name="model.name"
             class="h-full w-full"
           />
@@ -69,7 +69,7 @@
             rounded
             size="xs"
             :icon-left="ArrowPathRoundedSquareIcon"
-            :to="modelVersionsRoute(project.id, model.id)"
+            :to="modelVersionsRoute(projectId, model.id)"
             :class="`transition ${
               hovered ? 'inline-block opacity-100' : 'sm:hidden sm:opacity-0'
             }`"
@@ -80,7 +80,7 @@
             v-if="showActions && !isPendingModelFragment(model)"
             v-model:open="showActionsMenu"
             :model="model"
-            :project-id="project.id"
+            :project-id="projectId"
             :can-edit="canEdit"
             @click.stop.prevent
             @upload-version="triggerVersionUpload"
@@ -103,7 +103,7 @@
         class="absolute top-0 left-0 p-2"
       >
         <ProjectPageModelsCardAutomationStatusRefactor
-          :project-id="project.id"
+          :project-id="projectId"
           :model-or-version="{
             ...model,
             automationStatus: model.automationStatus
@@ -129,7 +129,7 @@ import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
-import type { Nullable } from '@speckle/shared'
+import type { Nullable, Optional } from '@speckle/shared'
 import { keyboardClick } from '@speckle/ui-components'
 
 graphql(`
@@ -145,8 +145,9 @@ const emit = defineEmits<{
 
 const props = withDefaults(
   defineProps<{
+    projectId: string
     model: ProjectPageLatestItemsModelItemFragment | PendingFileUploadFragment
-    project: ProjectPageModelsCardProjectFragment
+    project: Optional<ProjectPageModelsCardProjectFragment>
     showVersions?: boolean
     showActions?: boolean
     disableDefaultLink?: boolean
@@ -159,7 +160,8 @@ const props = withDefaults(
   }
 )
 
-provide('projectId', props.project.id)
+// TODO: Get rid of this, its not reactive. Is it even necessary?
+provide('projectId', props.projectId)
 
 const importArea = ref(
   null as Nullable<{
@@ -206,7 +208,7 @@ const updatedAt = computed(() => {
 const finalShowVersions = computed(
   () => props.showVersions && !isPendingModelFragment(props.model)
 )
-const canEdit = computed(() => canModifyModels(props.project))
+const canEdit = computed(() => (props.project ? canModifyModels(props.project) : false))
 const versionCount = computed(() => {
   return isPendingModelFragment(props.model) ? 0 : props.model.versionCount.totalCount
 })
@@ -218,7 +220,7 @@ const pendingVersion = computed(() => {
 })
 
 const finalModelUrl = computed(() =>
-  defaultLinkDisabled.value ? undefined : modelRoute(props.project.id, props.model.id)
+  defaultLinkDisabled.value ? undefined : modelRoute(props.projectId, props.model.id)
 )
 
 const triggerVersionUpload = () => {

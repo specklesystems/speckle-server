@@ -97,13 +97,14 @@ export const adminInviteList = async (
 }
 
 export const adminProjectList = async (
-  args: AdminProjectListArgs
+  args: AdminProjectListArgs & { streamIdWhitelist?: string[] }
 ): Promise<Collection<StreamRecord>> => {
   const parsedCursor = args.cursor ? parseCursorToDate(args.cursor) : null
   const { streams, totalCount, cursorDate } = await getStreams({
     ...args,
     searchQuery: args.query,
-    cursor: parsedCursor
+    cursor: parsedCursor,
+    streamIdWhitelist: args.streamIdWhitelist
   })
   const cursor = cursorDate ? convertDateToCursor(cursorDate) : null
   return {

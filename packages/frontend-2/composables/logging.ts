@@ -2,6 +2,8 @@ import type { NuxtApp } from '#app'
 import type { Optional } from '@speckle/shared'
 import { buildFakePinoLogger } from '~~/lib/core/helpers/observability'
 
+export type AppLogger = ReturnType<typeof useLogger>
+
 export const useLogger = () => {
   return useNuxtApp().$logger
 }

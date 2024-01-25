@@ -50,6 +50,15 @@ const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 const { Roles, Scopes } = require('@speckle/shared')
 const { StreamNotFoundError } = require('@/modules/core/errors/stream')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
+const { logger } = require('@/logging/logging')
+
+const {
+  toProjectIdWhitelist,
+  isResourceAllowed
+} = require('@/modules/core/helpers/token')
+const {
+  TokenResourceIdentifierType
+} = require('@/modules/core/graph/generated/graphql')
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -57,18 +66,29 @@ const USER_STREAM_REMOVED = StreamPubsubEvents.UserStreamRemoved
 const STREAM_UPDATED = StreamPubsubEvents.StreamUpdated
 const STREAM_DELETED = StreamPubsubEvents.StreamDeleted
 
-const _deleteStream = async (_parent, args, context) => {
-  return await deleteStreamAndNotify(args.id, context.userId)
+const _deleteStream = async (_parent, args, context, options) => {
+  const { skipAccessChecks = false } = options || {}
+  return await deleteStreamAndNotify(
+    args.id,
+    context.userId,
+    context.resourceAccessRules,
+    { skipAccessChecks }
+  )
 }
 
-const getUserStreamsCore = async (forOtherUser, parent, args) => {
-  const totalCount = await getUserStreamsCount({ userId: parent.id, forOtherUser })
+const getUserStreamsCore = async (forOtherUser, parent, args, streamIdWhitelist) => {
+  const totalCount = await getUserStreamsCount({
+    userId: parent.id,
+    forOtherUser,
+    streamIdWhitelist
+  })
 
   const { cursor, streams } = await getUserStreams({
     userId: parent.id,
     limit: args.limit,
     cursor: args.cursor,
-    forOtherUser
+    forOtherUser,
+    streamIdWhitelist
   })
 
   return { totalCount, cursor, items: streams }
@@ -85,7 +105,12 @@ module.exports = {
         throw new StreamNotFoundError('Stream not found')
       }
 
-      await authorizeResolver(context.userId, args.id, Roles.Stream.Reviewer)
+      await authorizeResolver(
+        context.userId,
+        args.id,
+        Roles.Stream.Reviewer,
+        context.resourceAccessRules
+      )
 
       if (!stream.isPublic) {
         await throwForNotHavingServerRole(context, Roles.Server.Guest)
@@ -98,20 +123,25 @@ module.exports = {
     async streams(parent, args, context) {
       const totalCount = await getUserStreamsCount({
         userId: context.userId,
-        searchQuery: args.query
+        searchQuery: args.query,
+        streamIdWhitelist: toProjectIdWhitelist(context.resourceAccessRules)
       })
 
       const { cursor, streams } = await getUserStreams({
         userId: context.userId,
         limit: args.limit,
         cursor: args.cursor,
-        searchQuery: args.query
+        searchQuery: args.query,
+        streamIdWhitelist: toProjectIdWhitelist(context.resourceAccessRules)
       })
       return { totalCount, cursor, items: streams }
     },
 
-    async discoverableStreams(parent, args) {
-      return await getDiscoverableStreams(args)
+    async discoverableStreams(parent, args, ctx) {
+      return await getDiscoverableStreams(
+        args,
+        toProjectIdWhitelist(ctx.resourceAccessRules)
+      )
     },
 
     async adminStreams(parent, args) {
@@ -124,7 +154,8 @@ module.exports = {
         orderBy: args.orderBy,
         publicOnly: args.publicOnly,
         searchQuery: args.query,
-        visibility: args.visibility
+        visibility: args.visibility,
+        streamIdWhitelist: toProjectIdWhitelist(args.resourceAccessRules)
       })
       return { totalCount, items: streams }
     }
@@ -171,7 +202,12 @@ module.exports = {
     async streams(parent, args, context) {
       // Return only the user's public streams if parent.id !== context.userId
       const forOtherUser = parent.id !== context.userId
-      return await getUserStreamsCore(forOtherUser, parent, args)
+      return await getUserStreamsCore(
+        forOtherUser,
+        parent,
+        args,
+        toProjectIdWhitelist(context.resourceAccessRules)
+      )
     },
 
     async favoriteStreams(parent, args, context) {
@@ -182,7 +218,12 @@ module.exports = {
       if (userId !== requestedUserId)
         throw new UserInputError("Cannot view another user's favorite streams")
 
-      return await getFavoriteStreamsCollection({ userId, limit, cursor })
+      return await getFavoriteStreamsCollection({
+        userId,
+        limit,
+        cursor,
+        streamIdWhitelist: toProjectIdWhitelist(context.resourceAccessRules)
+      })
     },
 
     async totalOwnedStreamsFavorites(parent, _args, ctx) {
@@ -195,7 +236,12 @@ module.exports = {
       // a little escape hatch for admins to look into users streams
 
       const isAdmin = adminOverrideEnabled() && context.role === Roles.Server.Admin
-      return await getUserStreamsCore(!isAdmin, parent, args)
+      return await getUserStreamsCore(
+        !isAdmin,
+        parent,
+        args,
+        toProjectIdWhitelist(context.resourceAccessRules)
+      )
     },
     async totalOwnedStreamsFavorites(parent, _args, ctx) {
       const { id: userId } = parent
@@ -213,7 +259,11 @@ module.exports = {
       }
 
       const { id } = await createStreamReturnRecord(
-        { ...args.stream, ownerId: context.userId },
+        {
+          ...args.stream,
+          ownerId: context.userId,
+          ownerResourceAccessRules: context.resourceAccessRules
+        },
         { createActivity: true }
       )
 
@@ -221,67 +271,66 @@ module.exports = {
     },
 
     async streamUpdate(parent, args, context) {
-      await authorizeResolver(context.userId, args.stream.id, Roles.Stream.Owner)
-      await updateStreamAndNotify(args.stream, context.userId)
+      await updateStreamAndNotify(
+        args.stream,
+        context.userId,
+        context.resourceAccessRules
+      )
       return true
     },
 
-    async streamDelete(parent, args, context, info) {
-      await authorizeResolver(context.userId, args.id, Roles.Stream.Owner)
-      return await _deleteStream(parent, args, context, info)
+    async streamDelete(parent, args, context) {
+      return await _deleteStream(parent, args, context)
     },
 
-    async streamsDelete(parent, args, context, info) {
+    async streamsDelete(parent, args, context) {
       const results = await Promise.all(
         args.ids.map(async (id) => {
           const newArgs = { ...args }
           newArgs.id = id
-          return await _deleteStream(parent, newArgs, context, info)
+          return await _deleteStream(parent, newArgs, context, {
+            skipAccessChecks: true
+          })
         })
       )
       return results.every((res) => res === true)
     },
 
     async streamUpdatePermission(parent, args, context) {
-      await authorizeResolver(
-        context.userId,
-        args.permissionParams.streamId,
-        Roles.Stream.Owner
-      )
-
       const result = await updateStreamRoleAndNotify(
         args.permissionParams,
-        context.userId
+        context.userId,
+        context.resourceAccessRules
       )
       return !!result
     },
 
     async streamRevokePermission(parent, args, context) {
-      await authorizeResolver(
-        context.userId,
-        args.permissionParams.streamId,
-        Roles.Stream.Owner
-      )
-
       const result = await updateStreamRoleAndNotify(
         args.permissionParams,
-        context.userId
+        context.userId,
+        context.resourceAccessRules
       )
       return !!result
     },
 
     async streamFavorite(_parent, args, ctx) {
       const { streamId, favorited } = args
-      const { userId } = ctx
+      const { userId, resourceAccessRules } = ctx
 
-      return await favoriteStream({ userId, streamId, favorited })
+      return await favoriteStream({
+        userId,
+        streamId,
+        favorited,
+        userResourceAccessRules: resourceAccessRules
+      })
     },
 
     async streamLeave(_parent, args, ctx) {
       const { streamId } = args
       const { userId } = ctx
 
-      await removeStreamCollaborator(streamId, userId, userId)
+      await removeStreamCollaborator(streamId, userId, userId, ctx.resourceAccessRules)
 
       return true
     }
@@ -292,6 +341,17 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([USER_STREAM_ADDED]),
         (payload, variables, context) => {
+          logger.info('whattt')
+          const hasResourceAccess = isResourceAllowed({
+            resourceId: payload.userStreamAdded.id,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: context.resourceAccessRules
+          })
+
+          if (!hasResourceAccess) {
+            return false
+          }
+
           return payload.ownerId === context.userId
         }
       )
@@ -301,6 +361,15 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([USER_STREAM_REMOVED]),
         (payload, variables, context) => {
+          const hasResourceAccess = isResourceAllowed({
+            resourceId: payload.userStreamRemoved.id,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: context.resourceAccessRules
+          })
+          if (!hasResourceAccess) {
+            return false
+          }
+
           return payload.ownerId === context.userId
         }
       )
@@ -310,7 +379,12 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([STREAM_UPDATED]),
         async (payload, variables, context) => {
-          await authorizeResolver(context.userId, payload.id, Roles.Stream.Reviewer)
+          await authorizeResolver(
+            context.userId,
+            payload.id,
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
+          )
           return payload.id === variables.streamId
         }
       )
@@ -323,7 +397,8 @@ module.exports = {
           await authorizeResolver(
             context.userId,
             payload.streamId,
-            Roles.Stream.Reviewer
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
           )
           return payload.streamId === variables.streamId
         }

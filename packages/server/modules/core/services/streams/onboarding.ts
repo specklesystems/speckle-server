@@ -1,5 +1,8 @@
 import { Optional } from '@speckle/shared'
-import { StreamCloneError } from '@/modules/core/errors/stream'
+import {
+  StreamCloneError,
+  StreamInvalidAccessError
+} from '@/modules/core/errors/stream'
 import { cloneStream } from '@/modules/core/services/streams/clone'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { logger } from '@/logging/logging'
@@ -7,8 +10,26 @@ import { createStreamReturnRecord } from '@/modules/core/services/streams/manage
 import { getOnboardingBaseProject } from '@/modules/cross-server-sync/services/onboardingProject'
 import { updateStream } from '../../repositories/streams'
 import { getUser } from '../users'
+import {
+  ContextResourceAccessRules,
+  isNewResourceAllowed
+} from '@/modules/core/helpers/token'
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 
-export async function createOnboardingStream(targetUserId: string) {
+export async function createOnboardingStream(
+  targetUserId: string,
+  targetUserResourceAccessRules: ContextResourceAccessRules
+) {
+  const canCreateStream = isNewResourceAllowed({
+    resourceType: TokenResourceIdentifierType.Project,
+    resourceAccessRules: targetUserResourceAccessRules
+  })
+  if (!canCreateStream) {
+    throw new StreamInvalidAccessError(
+      'You do not have the permissions to create a new stream'
+    )
+  }
+
   const sourceStream = await getOnboardingBaseProject()
   // clone from base
   let newStream: Optional<StreamRecord> = undefined
@@ -29,7 +50,10 @@ export async function createOnboardingStream(targetUserId: string) {
   // clone failed, just create empty stream
   if (!newStream) {
     logger.warn('Fallback: Creating a blank stream for onboarding')
-    newStream = await createStreamReturnRecord({ ownerId: targetUserId })
+    newStream = await createStreamReturnRecord({
+      ownerId: targetUserId,
+      ownerResourceAccessRules: targetUserResourceAccessRules
+    })
   }
 
   logger.info('Updating onboarding stream title')

@@ -381,9 +381,14 @@ function createLink(params: {
   // SSR req logging link
   const loggerLink = new ApolloLink((operation, forward) => {
     const startTime = Date.now()
+    const name = operation.operationName
+
+    nuxtApp.$logger.debug(
+      { operation: name },
+      `Apollo operation {operation} started...`
+    )
     return forward(operation).map((result) => {
       const elapsed = new Date().getTime() - startTime
-      const name = operation.operationName
       const success = !!(result.data && !result.errors?.length)
 
       nuxtApp.$logger.info(

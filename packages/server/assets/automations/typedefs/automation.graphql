@@ -123,9 +123,10 @@ input AutomationRunStatusUpdateInput {
 type AutomationMutations {
   functionRunStatusReport(input: AutomationRunStatusUpdateInput!): Boolean!
     @hasServerRole(role: SERVER_USER)
-  # @hasScope(scope: "automation:result") # TODO: Consult about this w/ Dim
-  create(input: AutomationCreateInput!): Boolean! @hasServerRole(role: SERVER_USER)
-  # @hasScope(scope: "automation:create") # TODO: Consult about this w/ Dim
+    @hasScope(scope: "automate:report-results")
+  create(input: AutomationCreateInput!): Boolean!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "automate:report-results")
 }
 
 extend type Mutation {
