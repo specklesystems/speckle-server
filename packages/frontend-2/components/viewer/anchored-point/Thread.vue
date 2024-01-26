@@ -145,7 +145,12 @@
               </div>
             </div>
             <ViewerAnchoredPointThreadNewReply
-              v-if="!modelValue.archived && canReply && !isSmallerOrEqualSm"
+              v-if="
+                !modelValue.archived &&
+                canReply &&
+                !isSmallerOrEqualSm &&
+                !embedOptions.isEnabled
+              "
               :model-value="modelValue"
               @submit="onNewReply"
             />
@@ -171,7 +176,7 @@
               </FormButton>
             </div>
             <div
-              v-if="isSmallerOrEqualSm && !embedOptions.commentSlideshow"
+              v-if="isSmallerOrEqualSm || embedOptions.isEnabled"
               class="flex justify-between w-full gap-2 p-2 mt-2"
             >
               <FormButton

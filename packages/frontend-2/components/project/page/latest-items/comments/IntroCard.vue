@@ -39,7 +39,7 @@
         <FormButton
           v-if="embedOptions.isEnabled"
           size="sm"
-          :icon-right="PlusIcon"
+          :icon-right="ArrowTopRightOnSquareIcon"
           :to="router.currentRoute.value.path"
           external
           target="_blank"
@@ -59,7 +59,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PlusIcon } from '@heroicons/vue/24/solid'
+import { PlusIcon, ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/solid'
 import { useTheme } from '~~/lib/core/composables/theme'
 import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
 
