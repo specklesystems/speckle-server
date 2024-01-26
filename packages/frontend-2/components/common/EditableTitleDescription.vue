@@ -123,7 +123,6 @@ const onInputKeydown = (e: KeyboardEvent) => {
     if (e.target.dataset.type === 'title' && e.code === 'Enter') {
       e.preventDefault()
       e.target.blur()
-      emitTitle()
     }
   }
 }
