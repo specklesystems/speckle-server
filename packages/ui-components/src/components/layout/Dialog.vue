@@ -35,7 +35,7 @@
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onSubmit"
             >
-              <div :class="scrolledFromTop && 'relative z-10 shadow-lg'">
+              <div :class="scrolledFromTop && 'relative z-20 shadow-lg'">
                 <div
                   v-if="hasTitle"
                   class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] py-2 px-4 sm:px-8 truncate text-lg sm:text-2xl font-bold"
