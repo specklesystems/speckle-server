@@ -21,7 +21,7 @@
             data-type="title"
             @keydown="onInputKeydown"
             @blur="onBlur('title')"
-            @input="onTitleChange"
+            @input="debouncedEmitTitle()"
           />
         </div>
       </label>
@@ -60,7 +60,7 @@
             data-type="description"
             @keydown="onInputKeydown"
             @blur="onBlur('description')"
-            @input="onDescriptionChange"
+            @input="debouncedEmitDescription()"
           />
         </div>
       </label>
@@ -126,16 +126,6 @@ const onInputKeydown = (e: KeyboardEvent) => {
       emitTitle()
     }
   }
-}
-
-const onTitleChange = () => {
-  lastTitleValue.value = title.value
-  debouncedEmitTitle()
-}
-
-const onDescriptionChange = () => {
-  lastTitleValue.value = title.value
-  debouncedEmitDescription()
 }
 
 const onBlur = (inputType: string) => {
