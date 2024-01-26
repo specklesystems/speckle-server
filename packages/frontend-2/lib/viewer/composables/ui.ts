@@ -228,20 +228,15 @@ export function useSelectionUtilities() {
   } = useInjectedViewer()
 
   const setSelectionFromObjectIds = (objectIds: string[]) => {
-    const res = worldTree.value
-      ? worldTree.value.findAll((node: TreeNode) => {
-          const t = node.model as Record<string, unknown>
-          const raw = t.raw as Record<string, unknown>
-          const id = raw.id as string
-          if (!raw || !id) return false
-          if (objectIds.includes(id)) return true
-          return false
-        })
-      : []
-
-    const objs = res.map(
-      (node: TreeNode) => (node.model as Record<string, unknown>).raw as SpeckleObject
-    )
+    const objs: Array<SpeckleObject> = []
+    objectIds.forEach((value: string) => {
+      objs.push(
+        ...(worldTree.value?.findId(value) as unknown as TreeNode[]).map(
+          (node: TreeNode) =>
+            (node.model as Record<string, unknown>).raw as SpeckleObject
+        )
+      )
+    })
     selectedObjects.value = objs
   }
 
