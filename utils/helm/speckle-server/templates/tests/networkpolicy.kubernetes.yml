@@ -1,4 +1,4 @@
-{{- if (and (.Values.test.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
+{{- if (and (.Values.helm_test_enabled) (.Values.test.networkPolicy.enabled) (eq .Values.networkPlugin.type "kubernetes")) -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

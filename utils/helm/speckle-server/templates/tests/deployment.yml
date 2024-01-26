@@ -31,6 +31,8 @@ spec:
               {{- else }}
               value: "1"
               {{- end }}
+            - name: VERIFY_CERTIFICATE
+              value: {{ (default "1" .Values.tlsRejectUnauthorized) | quote }}
           resources:
             requests:
               cpu: {{ .Values.test.requests.cpu }}

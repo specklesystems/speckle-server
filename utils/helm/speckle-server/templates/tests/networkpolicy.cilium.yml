@@ -1,4 +1,4 @@
-{{- if (and (.Values.test.networkPolicy.enabled) (eq .Values.networkPlugin.type "cilium")) -}}
+{{- if (and (.Values.helm_test_enabled) (.Values.test.networkPolicy.enabled) (eq .Values.networkPlugin.type "cilium")) -}}
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
