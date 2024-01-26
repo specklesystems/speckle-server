@@ -7,3 +7,5 @@ image:
 persistence:
   enabled: true
   existingClaim: minio-pvc
+volumePermissions:
+  enabled: true
