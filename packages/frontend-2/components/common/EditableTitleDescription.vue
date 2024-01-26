@@ -21,7 +21,7 @@
             data-type="title"
             @keydown="onInputKeydown"
             @blur="onBlur('title')"
-            @input="debouncedEmitTitle()"
+            @input="onTitleInput"
           />
         </div>
       </label>
@@ -60,7 +60,7 @@
             data-type="description"
             @keydown="onInputKeydown"
             @blur="onBlur('description')"
-            @input="debouncedEmitDescription()"
+            @input="onDescriptionInput"
           />
         </div>
       </label>
@@ -94,13 +94,18 @@ const description = ref(props.description)
 const lastTitleValue = ref(props.title)
 const lastDescriptionValue = ref(props.description)
 
+const titleDebounceSaved = ref(false)
+const descriptionDebounceSaved = ref(false)
+
 const emitTitle = () => {
-  lastDescriptionValue.value = description.value
+  lastTitleValue.value = title.value
+  titleDebounceSaved.value = true
   emit('update:title', title.value)
 }
 
 const emitDescription = () => {
   lastDescriptionValue.value = description.value
+  descriptionDebounceSaved.value = true
   emit('update:description', description.value)
 }
 
@@ -131,17 +136,27 @@ const onBlur = (inputType: string) => {
   debouncedEmitTitle.cancel()
   debouncedEmitDescription.cancel()
 
-  if (inputType === 'title') {
+  if (inputType === 'title' && !titleDebounceSaved.value) {
     if (lastTitleValue.value !== title.value) {
       lastTitleValue.value = title.value
       emitTitle()
     }
-  } else if (inputType === 'description') {
+  } else if (inputType === 'description' && !descriptionDebounceSaved.value) {
     if (lastDescriptionValue.value !== description.value) {
       lastDescriptionValue.value = description.value
       emitDescription()
     }
   }
+}
+
+const onTitleInput = () => {
+  titleDebounceSaved.value = false
+  debouncedEmitTitle()
+}
+
+const onDescriptionInput = () => {
+  descriptionDebounceSaved.value = false
+  debouncedEmitDescription()
 }
 
 watch(
