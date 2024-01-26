@@ -67,7 +67,7 @@ helm_resource('redis',
             release_name='redis',
             namespace='redis',
             chart='oci://registry-1.docker.io/bitnamicharts/redis',
-            flags=['--version=^18.0.0',
+            flags=['--version=18.7.1',
                     '--values=./values/redis.values.yaml',
                     '--kube-context=kind-speckle-server'],
             labels=['speckle-dependencies'])
