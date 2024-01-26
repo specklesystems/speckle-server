@@ -27,7 +27,7 @@ const projectUrl = route.currentRoute.value.path
 
 const projectId = route.currentRoute.value.params.id as string
 const modelId = route.currentRoute.value.params.modelId as string
-const versionId = route.currentRoute.value.params.modelId as string
+const versionId = route.currentRoute.value.params.versionId as string
 
 const previewUrl = computed(() => {
   if (modelId) {
