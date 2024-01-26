@@ -19,6 +19,7 @@
       v-if="project"
       :search="debouncedSearch"
       :project="project"
+      :project-id="project.id"
       :excluded-ids="alreadyLoadedModelIds"
       :show-actions="false"
       :show-versions="false"

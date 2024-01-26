@@ -1,7 +1,12 @@
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
-import { ProjectVisibility, Resolvers } from '@/modules/core/graph/generated/graphql'
+import {
+  ProjectVisibility,
+  Resolvers,
+  TokenResourceIdentifierType
+} from '@/modules/core/graph/generated/graphql'
 import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
+import { isResourceAllowed, toProjectIdWhitelist } from '@/modules/core/helpers/token'
 import {
   getUserStreamsCount,
   getUserStreams,
@@ -50,7 +55,12 @@ export = {
         throw new StreamNotFoundError('Project not found')
       }
 
-      await authorizeResolver(context.userId, args.id, Roles.Stream.Reviewer)
+      await authorizeResolver(
+        context.userId,
+        args.id,
+        Roles.Stream.Reviewer,
+        context.resourceAccessRules
+      )
 
       if (!stream.isPublic) {
         await throwForNotHavingServerRole(context, Roles.Server.Guest)
@@ -64,16 +74,14 @@ export = {
     projectMutations: () => ({})
   },
   ProjectMutations: {
-    async delete(_parent, { id }, { userId }) {
-      await authorizeResolver(userId, id, Roles.Stream.Owner)
-      return await deleteStreamAndNotify(id, userId!)
+    async delete(_parent, { id }, { userId, resourceAccessRules }) {
+      return await deleteStreamAndNotify(id, userId!, resourceAccessRules)
     },
-    async createForOnboarding(_parent, _args, { userId }) {
-      return await createOnboardingStream(userId!)
+    async createForOnboarding(_parent, _args, { userId, resourceAccessRules }) {
+      return await createOnboardingStream(userId!, resourceAccessRules)
     },
-    async update(_parent, { update }, { userId }) {
-      await authorizeResolver(userId, update.id, Roles.Stream.Owner)
-      return await updateStreamAndNotify(update, userId!)
+    async update(_parent, { update }, { userId, resourceAccessRules }) {
+      return await updateStreamAndNotify(update, userId!, resourceAccessRules)
     },
     async create(_parent, args, context) {
       const rateLimitResult = await getRateLimitResult(
@@ -85,45 +93,70 @@ export = {
       }
 
       const project = await createStreamReturnRecord(
-        { ...(args.input || {}), ownerId: context.userId! },
+        {
+          ...(args.input || {}),
+          ownerId: context.userId!,
+          ownerResourceAccessRules: context.resourceAccessRules
+        },
         { createActivity: true }
       )
 
       return project
     },
     async updateRole(_parent, args, ctx) {
-      await authorizeResolver(ctx.userId, args.input.projectId, Roles.Stream.Owner)
-      return await updateStreamRoleAndNotify(args.input, ctx.userId!)
+      await authorizeResolver(
+        ctx.userId,
+        args.input.projectId,
+        Roles.Stream.Owner,
+        ctx.resourceAccessRules
+      )
+      return await updateStreamRoleAndNotify(
+        args.input,
+        ctx.userId!,
+        ctx.resourceAccessRules
+      )
     },
     async leave(_parent, args, context) {
       const { id } = args
       const { userId } = context
-      await removeStreamCollaborator(id, userId!, userId!)
+      await removeStreamCollaborator(id, userId!, userId!, context.resourceAccessRules)
       return true
     },
     invites: () => ({})
   },
   ProjectInviteMutations: {
     async create(_parent, args, ctx) {
-      await authorizeResolver(ctx.userId!, args.projectId, Roles.Stream.Owner)
+      await authorizeResolver(
+        ctx.userId!,
+        args.projectId,
+        Roles.Stream.Owner,
+        ctx.resourceAccessRules
+      )
       await createStreamInviteAndNotify(
         {
           ...args.input,
           projectId: args.projectId
         },
-        ctx.userId!
+        ctx.userId!,
+        ctx.resourceAccessRules
       )
       return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async batchCreate(_parent, args, ctx) {
-      await authorizeResolver(ctx.userId!, args.projectId, Roles.Stream.Owner)
+      await authorizeResolver(
+        ctx.userId!,
+        args.projectId,
+        Roles.Stream.Owner,
+        ctx.resourceAccessRules
+      )
       const inputBatches = chunk(args.input, 10)
       for (const batch of inputBatches) {
         await Promise.all(
           batch.map((i) =>
             createStreamInviteAndNotify(
               { ...i, projectId: args.projectId },
-              ctx.userId!
+              ctx.userId!,
+              ctx.resourceAccessRules
             )
           )
         )
@@ -131,11 +164,16 @@ export = {
       return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async use(_parent, args, ctx) {
-      await useStreamInviteAndNotify(args.input, ctx.userId!)
+      await useStreamInviteAndNotify(args.input, ctx.userId!, ctx.resourceAccessRules)
       return true
     },
     async cancel(_parent, args, ctx) {
-      await authorizeResolver(ctx.userId, args.projectId, Roles.Stream.Owner)
+      await authorizeResolver(
+        ctx.userId,
+        args.projectId,
+        Roles.Stream.Owner,
+        ctx.resourceAccessRules
+      )
       await cancelStreamInvite(args.projectId, args.inviteId)
       return ctx.loaders.streams.getStream.load(args.projectId)
     }
@@ -146,7 +184,8 @@ export = {
         userId: ctx.userId!,
         forOtherUser: false,
         searchQuery: args.filter?.search || undefined,
-        withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[]
+        withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
+        streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules)
       })
 
       const { cursor, streams } = await getUserStreams({
@@ -155,7 +194,8 @@ export = {
         cursor: args.cursor || undefined,
         searchQuery: args.filter?.search || undefined,
         forOtherUser: false,
-        withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[]
+        withRoles: (args.filter?.onlyWithRoles || []) as StreamRoles[],
+        streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules)
       })
 
       return { totalCount, cursor, items: streams }
@@ -206,6 +246,15 @@ export = {
       subscribe: filteredSubscribe(
         UserSubscriptions.UserProjectsUpdated,
         (payload, _args, ctx) => {
+          const hasResourceAccess = isResourceAllowed({
+            resourceId: payload.userProjectsUpdated.id,
+            resourceType: TokenResourceIdentifierType.Project,
+            resourceAccessRules: ctx.resourceAccessRules
+          })
+          if (!hasResourceAccess) {
+            return false
+          }
+
           return payload.ownerId === ctx.userId
         }
       )
@@ -218,7 +267,8 @@ export = {
           await authorizeResolver(
             ctx.userId,
             payload.projectUpdated.id,
-            Roles.Stream.Reviewer
+            Roles.Stream.Reviewer,
+            ctx.resourceAccessRules
           )
           return true
         }

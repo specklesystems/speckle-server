@@ -86,7 +86,16 @@ module.exports = {
     }
   },
   Comment: {
-    async replies(parent, args) {
+    async replies(parent, args, ctx) {
+      // If limit=0, short-cut full execution and use data loader
+      if (args.limit === 0) {
+        return {
+          totalCount: await ctx.loaders.comments.getReplyCount.load(parent.id),
+          items: [],
+          cursor: null
+        }
+      }
+
       const resources = [{ resourceId: parent.id, resourceType: 'comment' }]
       return await getComments({
         resources,

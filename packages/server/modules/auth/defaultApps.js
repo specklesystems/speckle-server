@@ -214,6 +214,7 @@ const SpeckleAutomate = {
     ScopesConst.Users.Read,
     ScopesConst.Tokens.Write,
     ScopesConst.Streams.Read,
-    ScopesConst.Streams.Write
+    ScopesConst.Streams.Write,
+    ScopesConst.Automate.ReportResults
   ]
 }

@@ -73,6 +73,7 @@
     "levelup/bl": ">=1.2.3",
     "levelup/semver": ">=5.7.2",
     "prettier": "^2.8.7",
+    "serialize-javascript": ">=6.0.2",
     "simple-update-notifier/semver": "^7.5.4",
     "tough-cookie": ">=4.1.3",
     "tslib": "^2.3.1",

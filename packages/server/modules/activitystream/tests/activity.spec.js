@@ -246,27 +246,27 @@ describe('Activity @activity', () => {
     const res = await sendRequest(userIz.token, {
       query: `query {stream(id:"${streamSecret.id}") {name activity {items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
-    expect(res.body.errors.length).to.equal(1)
+    expect(res.body.errors?.length).to.equal(1)
   })
 
   it("Should *not* get a stream's activity if you are not a server user", async () => {
     const res = await sendRequest(null, {
       query: `query {stream(id:"${streamPublic.id}") {name activity {items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
-    expect(res.body.errors.length).to.equal(1)
+    expect(res.body.errors?.length).to.equal(1)
   })
 
   it("Should *not* get a user's activity without the `users:read` scope", async () => {
     const res = await sendRequest(userX.token, {
       query: `query {otherUser(id:"${userCr.id}") { name activity {items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
-    expect(res.body.errors.length).to.equal(1)
+    expect(res.body.errors?.length).to.equal(1)
   })
 
   it("Should *not* get a user's timeline without the `users:read` scope", async () => {
     const res = await sendRequest(userX.token, {
       query: `query {otherUser(id:"${userCr.id}") { name timeline {items {id streamId resourceType resourceId actionType userId message time}}} }`
     })
-    expect(res.body.errors.length).to.equal(1)
+    expect(res.body.errors?.length).to.equal(1)
   })
 })

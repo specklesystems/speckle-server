@@ -6,6 +6,7 @@
         v-for="(item, i) in items"
         :key="item.id"
         :model="item"
+        :project-id="projectId"
         :project="project"
         :show-actions="showActions"
         :show-versions="showVersions"
@@ -17,7 +18,7 @@
     <FormButtonSecondaryViewAll
       v-if="showViewAll"
       class="mt-4"
-      :to="allProjectModelsRoute(project.id)"
+      :to="allProjectModelsRoute(projectId)"
     />
   </template>
   <template v-else-if="!areQueriesLoading">
@@ -26,7 +27,7 @@
       @clear-search="() => $emit('clear-search')"
     />
     <div v-else>
-      <ProjectCardImportFileArea :project-id="project.id" class="h-36 col-span-4" />
+      <ProjectCardImportFileArea :project-id="projectId" class="h-36 col-span-4" />
     </div>
   </template>
   <InfiniteLoading
@@ -46,7 +47,7 @@ import {
   latestModelsPaginationQuery,
   latestModelsQuery
 } from '~~/lib/projects/graphql/queries'
-import type { Nullable, SourceAppDefinition } from '@speckle/shared'
+import type { Nullable, Optional, SourceAppDefinition } from '@speckle/shared'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { allProjectModelsRoute } from '~~/lib/common/helpers/route'
 
@@ -58,7 +59,8 @@ const emit = defineEmits<{
 
 const props = withDefaults(
   defineProps<{
-    project: ProjectPageLatestItemsModelsFragment
+    projectId: string
+    project: Optional<ProjectPageLatestItemsModelsFragment>
     search?: string
     showActions?: boolean
     showVersions?: boolean
@@ -79,20 +81,31 @@ const logger = useLogger()
 const areQueriesLoading = useQueryLoading()
 
 const latestModelsQueryVariables = computed(
-  (): ProjectLatestModelsPaginationQueryVariables => ({
-    projectId: props.project.id,
-    filter: {
-      search: props.search || null,
-      excludeIds: props.excludedIds || null,
-      onlyWithVersions: !!props.excludeEmptyModels,
-      sourceApps: props.sourceApps?.length
-        ? props.sourceApps.map((a) => a.searchKey)
-        : null,
-      contributors: props.contributors?.length
-        ? props.contributors.map((c) => c.id)
+  (): ProjectLatestModelsPaginationQueryVariables => {
+    const shouldHaveFilter =
+      props.search?.length ||
+      props.excludedIds?.length ||
+      props.sourceApps?.length ||
+      props.contributors?.length ||
+      !!props.excludeEmptyModels
+
+    return {
+      projectId: props.projectId,
+      filter: shouldHaveFilter
+        ? {
+            search: props.search || null,
+            excludeIds: props.excludedIds || null,
+            onlyWithVersions: !!props.excludeEmptyModels,
+            sourceApps: props.sourceApps?.length
+              ? props.sourceApps.map((a) => a.searchKey)
+              : null,
+            contributors: props.contributors?.length
+              ? props.contributors.map((c) => c.id)
+              : null
+          }
         : null
     }
-  })
+  }
 )
 
 const infiniteLoaderId = ref('')

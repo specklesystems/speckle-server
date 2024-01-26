@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="project">
+    <template v-if="project">
       <ProjectsInviteBanner v-if="invite" :invite="invite" :show-stream-name="false" />
       <!-- Heading text w/ actions -->
       <ProjectPageHeader :project="project" class="mb-8" />
@@ -17,14 +17,15 @@
           <ProjectPageStatsBlockComments :project="project" />
         </div>
       </div>
-      <div class="flex flex-col space-y-8 sm:space-y-14">
-        <!-- Latest models -->
-        <ProjectPageLatestItemsModels :project="project" />
-        <!-- Latest comments -->
-        <ProjectPageLatestItemsComments :project="project" />
-        <!-- More actions -->
-        <!-- <ProjectPageMoreActions /> -->
-      </div>
+    </template>
+    <!-- No v-if=project to ensure internal queries trigger ASAP -->
+    <div v-show="project" class="flex flex-col space-y-8 sm:space-y-14">
+      <!-- Latest models -->
+      <ProjectPageLatestItemsModels :project="project" :project-id="projectId" />
+      <!-- Latest comments -->
+      <ProjectPageLatestItemsComments :project="project" :project-id="projectId" />
+      <!-- More actions -->
+      <!-- <ProjectPageMoreActions /> -->
     </div>
   </div>
 </template>
