@@ -15,10 +15,12 @@ import {
   MeasurementsExtension,
   ExplodeExtension,
   DiffExtension,
-  FilteringExtension
+  FilteringExtension,
+  SpeckleGeometryConverter
 } from '@speckle/viewer'
 import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
+import { GroupOperations } from './Extensions/GroupOperations'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -62,6 +64,7 @@ const createViewer = async (containerName: string, stream: string) => {
   diff // use it
   // rotateCamera // use it
   // boxSelect // use it
+  const groupOperations = viewer.createExtension(GroupOperations)
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
@@ -91,6 +94,7 @@ const createViewer = async (containerName: string, stream: string) => {
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     const categories = {}
     //@ts-ignore
+    const revitInstances = []
     await viewer.getWorldTree().walkAsync((node) => {
       //@ts-ignore
       if (!categories[node.model.raw.speckle_type]) {
@@ -103,6 +107,7 @@ const createViewer = async (containerName: string, stream: string) => {
     })
 
     sandbox.refresh()
+    await groupOperations.getIds()
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
@@ -261,7 +266,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/f92e060177/commits/038a587267'
     // 'https://latest.speckle.dev/streams/3f895e614f/commits/8a3e424997'
     // 'https://latest.speckle.dev/streams/f92e060177/commits/f51ee777d5'
-    'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
+    // 'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
     // Big curves
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
     // 'https://speckle.xyz/streams/7ce9010d71/commits/afda4ffdf8'
@@ -319,7 +324,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/97750296c2/commits/5386a0af02' // 700k+ objects 30kk tris
     // 'https://latest.speckle.dev/streams/97750296c2/commits/2a6fd781f2' // NEW
 
-    // 'https://latest.speckle.dev/streams/97750296c2/commits/48f0567a88' // 1015849 objects
+    'https://latest.speckle.dev/streams/97750296c2/commits/48f0567a88' // 1015849 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/aec0841f7e' // 11k objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/96ffc3c786' // 92209 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/92115d3789' // 390974 objects 19kk tris

@@ -26,6 +26,9 @@ import { MeasurementsExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
 import { UpdateFlags } from '@speckle/viewer'
+import { SpeckleGeometryConverter } from '@speckle/viewer'
+import { SpeckleType } from '@speckle/viewer'
+import { GroupOperations } from './Extensions/GroupOperations'
 
 export default class Sandbox {
   private viewer: DebugViewer
@@ -440,15 +443,9 @@ export default class Sandbox {
     })
     screenshot.on('click', async () => {
       // console.warn(await this.viewer.screenshot())
-      // const start = performance.now()
-      const nodes = this.viewer.getWorldTree().root.all(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (node: any) => node.model.raw.id === 'c35234a1e8584b159f7e8be59323cd64'
-      )
-      console.log(nodes)
-      // this.viewer.cancelLoad(
-      //   'https://latest.speckle.dev/streams/97750296c2/objects/c3138e24a866d447eb86b2a8107b2c09'
-      // )
+      const ids = this.viewer.getExtension(GroupOperations).idGroups['16000']
+      this.viewer.getExtension(SelectionExtension).selectObjects(ids)
+      console.log(this.viewer.getRenderer().renderingStats)
     })
 
     const rotate = this.tabs.pages[0].addButton({

@@ -70,6 +70,7 @@ import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial'
 import { SpeckleText } from './modules/objects/SpeckleText'
 import { NodeRenderView } from './modules/tree/NodeRenderView'
 import { ExtendedIntersection } from './modules/objects/SpeckleRaycaster'
+import { SpeckleGeometryConverter } from './modules/loaders/Speckle/SpeckleGeometryConverter'
 
 export {
   Viewer,
@@ -109,7 +110,8 @@ export {
   SpeckleStandardMaterial,
   SpeckleTextMaterial,
   SpeckleText,
-  NodeRenderView
+  NodeRenderView,
+  SpeckleGeometryConverter
 }
 
 export type {
