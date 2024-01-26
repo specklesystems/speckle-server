@@ -1,5 +1,7 @@
 image:
   debug: true
+volumePermissions:
+  enabled: true
 primary:
   auth:
     username: postgres
@@ -8,8 +10,6 @@ primary:
   persistence:
     enabled: true
     existingClaim: postgres-pvc
-  volumePermissions:
-    enabled: true
   initdb:
     scripts:
       00_speckleserver_database.sql: |
