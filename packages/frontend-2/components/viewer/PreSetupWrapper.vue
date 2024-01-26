@@ -61,7 +61,7 @@
           </div>
         </Transition>
         <!-- Shows up when filters are applied for an easy return to normality -->
-        <ViewerGlobalFilterReset class="z-20" />
+        <ViewerGlobalFilterReset class="z-20" :embed="embedOptions.isEnabled" />
       </ClientOnly>
     </div>
   </ViewerPostSetupWrapper>
