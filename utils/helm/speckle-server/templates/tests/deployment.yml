@@ -32,7 +32,7 @@ spec:
               value: {{ "1" | quote }}
               {{- end }}
             - name: VERIFY_CERTIFICATE
-              value: {{ .Values.tlsRejectUnauthorized | quote }}
+              value: {{ (default "1" .Values.tlsRejectUnauthorized) | quote }}
           resources:
             requests:
               cpu: {{ .Values.test.requests.cpu }}
