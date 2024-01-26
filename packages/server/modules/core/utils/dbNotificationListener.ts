@@ -113,6 +113,7 @@ function reconnectClient() {
         e,
         'Notification listener connection acquisition failed'
       )
+      throw e
     }
   }
 

@@ -565,7 +565,7 @@ server:
     ## @param server.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ##
-    cpu: 500m
+    cpu: 1000m
     ## @param server.requests.memory The Memory that should be available on a node when scheduling this pod.
     ## Depending on the Kubernetes cluster's configuration, exceeding this value may result in pod eviction from a node.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -576,7 +576,7 @@ server:
     ## If this limit is exceeded, execution of the Pod will be paused until the next period.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ##
-    cpu: 1000m
+    cpu: 1500m
     ## @param server.limits.memory The maximum Memory that will be made available to the server Pod.
     ## If this limit is exceeded, processes within the pod that request additional memory may be stopped.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -718,7 +718,7 @@ objects:
     ## @param objects.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ##
-    cpu: 500m
+    cpu: 1000m
     ## @param objects.requests.memory The Memory that should be available on a node when scheduling this pod.
     ## Depending on the Kubernetes cluster's configuration, exceeding this value may result in pod eviction from a node.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -729,7 +729,7 @@ objects:
     ## If this limit is exceeded, execution of the Pod will be paused until the next period.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ##
-    cpu: 1000m
+    cpu: 1500m
     ## @param objects.limits.memory The maximum Memory that will be made available to the server Pod.
     ## If this limit is exceeded, processes within the pod that request additional memory may be stopped.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
