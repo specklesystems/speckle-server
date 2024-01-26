@@ -66,9 +66,7 @@
       class="absolute w-screen z-10 p-1"
       :class="
         embedOptions.isEnabled
-          ? embedOptions.isTransparent
-            ? 'h-screen'
-            : 'h-[calc(100dvh-3.5rem)]'
+          ? 'h-[calc(100dvh-3.5rem)]'
           : 'h-[calc(100dvh-3.5rem)] mt-[3.5rem]'
       "
     >
