@@ -1,5 +1,6 @@
 print('🚀 Deploying Speckle Server into Docker via Tilt...')
 
+symbols = None
 IS_CI = os.getenv('CI', "false") == "true"
 if IS_CI:
   symbols = load_dynamic('./Tiltfile.ci')
