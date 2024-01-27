@@ -68,6 +68,7 @@ workflows:
             - docker-build-file-imports
             - docker-build-test-container
             - docker-build-monitor-container
+            - docker-build-docker-compose-ingress
 
       - deployment-test-helm-chart:
           filters: *filters-deployment-testing
