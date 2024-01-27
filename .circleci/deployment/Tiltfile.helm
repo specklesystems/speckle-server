@@ -71,16 +71,17 @@ helm_resource('redis',
                     '--kube-context=kind-speckle-server'],
             labels=['speckle-dependencies'])
 
-helm_repo('prometheus-repo',
-          'https://prometheus-community.github.io/helm-charts')
-helm_resource('prometheus',
-            release_name='prometheus-operator-crds',
-            namespace='prometheus',
-            resource_deps=['prometheus-repo'],
-            chart='prometheus-repo/prometheus-operator-crds',
-            flags=['--version=^7.0.0',
-                    '--values=./values/prometheus-operator-crds.values.yaml',
-                    '--kube-context=kind-speckle-server'])
+#FIXME this helm chart does not deploy any containers, so tilt incorrectly believes it never gets to a final state
+# helm_repo('prometheus-repo',
+#           'https://prometheus-community.github.io/helm-charts')
+# helm_resource('prometheus',
+#             release_name='prometheus-operator-crds',
+#             namespace='prometheus',
+#             resource_deps=['prometheus-repo'],
+#             chart='prometheus-repo/prometheus-operator-crds',
+#             flags=['--version=^7.0.0',
+#                     '--values=./values/prometheus-operator-crds.values.yaml',
+#                     '--kube-context=kind-speckle-server'])
 
 helm_repo('ingress-nginx-repo',
           'https://kubernetes.github.io/ingress-nginx')
@@ -97,14 +98,17 @@ helm_resource('ingress-nginx',
             resource_deps=['postgresql', 'minio', 'redis', 'ingress-nginx-repo'],
             labels=['speckle-dependencies'])
 
+# Uncomment the below, and comment out the other helm_resource('speckle-server'...) to use the speckle-server helm chart
 # helm_repo('speckle-server-repo',
 #           'https://specklesystems.github.io/helm')
 # helm_resource('speckle-server',
 #             release_name='speckle-server',
-#             resource_deps=['speckle-server-repo'],
 #             namespace='speckle-server',
 #             chart='speckle-server-repo/speckle-server',
-#             flags=['--values=./values/speckle-server.values.yaml'])
+#             deps=['./values/speckle-server.values.yaml'],
+#             resource_deps=['postgresql', 'minio', 'redis', 'ingress-nginx','speckle-server-repo'],
+#             flags=['--values=./values/speckle-server.values.yaml', '--devel'],
+#             labels=['speckle-server'])
 
 helm_resource('speckle-server',
               release_name='speckle-server',
@@ -134,10 +138,11 @@ helm_resource('speckle-server',
               resource_deps=['postgresql', 'minio', 'redis', 'ingress-nginx'],
               labels=['speckle-server'])
 
-local_resource('speckle-server-helm-chart-test',
-                # HACK until https://github.com/helm/helm/issues/11236 is fixed. Then replace with --logs flag.
-                cmd='helm test speckle-server --namespace=speckle-server --kube-context=kind-speckle-server || \
-                    (kubectl describe pod --selector="job-name=speckle-test" --namespace speckle-server --context=kind-speckle-server && \
-                    kubectl logs -n speckle-server -l "job-name=speckle-test" -c test-deployment --context kind-speckle-server --since=0s && \
-                    exit 1)',
-                resource_deps=['speckle-server'])
+  # TODO this is not yet working as it is expecting the updated version of the test container which is not yet released as of 2.17.16
+# local_resource('speckle-server-helm-chart-test',
+#                 # HACK until https://github.com/helm/helm/issues/11236 is fixed. Then replace with --logs flag.
+#                 cmd='helm test speckle-server --namespace=speckle-server --kube-context=kind-speckle-server || \
+#                     (kubectl describe pod --selector="job-name=speckle-test" --namespace speckle-server --context=kind-speckle-server && \
+#                     kubectl logs -n speckle-server -l "job-name=speckle-test" -c test-deployment --context kind-speckle-server --since=0s && \
+#                     exit 1)',
+#                 resource_deps=['speckle-server'])
