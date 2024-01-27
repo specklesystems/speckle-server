@@ -28,6 +28,18 @@ server:
 frontend_2:
   enabled: true
 
+preview_service:
+  replicas: 0
+
+webhook_service:
+  replicas: 0
+
+fileimport_service:
+  replicas: 0
+
+monitoring:
+  replicas: 0
+
 s3:
   endpoint: 'http://minio.minio.svc.cluster.local:9000'
   bucket: 'speckle-server'
