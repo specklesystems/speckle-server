@@ -20,7 +20,6 @@ else:
 # (loads the images from tgz file if CI, otherwise builds them or pulls them from remote as a fallback on non-amd64 machines)
 speckle_image = symbols['speckle_image']
 speckle_image('fileimport-service')
-speckle_image('frontend')
 speckle_image('frontend-2')
 speckle_image('monitor-deployment')
 speckle_image('preview-service')
