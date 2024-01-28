@@ -62,7 +62,6 @@
       v-model:open="embedDialogOpen"
       :project-id="projectId"
       :model-id="modelId"
-      :version-id="versionId"
       :visibility="visibility"
     />
   </Menu>
@@ -95,10 +94,13 @@ const parsedResourceIds = computed(() =>
   SpeckleViewer.ViewerRoute.parseUrlParameters(props.resourceIdString)
 )
 
-const modelId = computed(() => props.resourceIdString.split('@')[0])
-const versionId = computed(() => {
-  const parts = props.resourceIdString.split('@')
-  return parts.length > 1 ? parts[1].split(',')[0] : undefined
+const firstResource = computed(() => parsedResourceIds.value[0] || {})
+
+const modelId = computed(() => {
+  if (SpeckleViewer.ViewerRoute.isModelResource(firstResource.value)) {
+    return firstResource.value.modelId
+  }
+  return ''
 })
 
 const isFederated = computed(() => parsedResourceIds.value.length > 1)

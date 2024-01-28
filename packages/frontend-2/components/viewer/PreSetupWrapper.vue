@@ -100,7 +100,10 @@ const tourState = useTourStageState()
 
 const projectId = computed(() => route.params.id as string)
 const modelId = computed(() => route.params.modelId as string)
-const versionId = computed(() => route.params.versionId as string)
+const versionId = computed(() => {
+  const parts = modelId.value.split('@')
+  return parts.length > 1 ? parts[1] : undefined
+})
 
 const state = useSetupViewer({
   projectId

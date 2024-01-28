@@ -27,7 +27,7 @@
       </p>
     </div>
     <div v-else>
-      <CommonAlert v-if="props.versionId" class="mb-4 sm:-mt-4" color="info">
+      <CommonAlert v-if="multipleVersionedResources" class="mb-4 sm:-mt-4" color="info">
         <template #title>You are about embedding a specific version</template>
         <template #description>
           <p>
@@ -80,13 +80,13 @@
             v-if="!isSmallerOrEqualSm"
             border-b
             title="Preview"
-            :lazy-load="true"
+            lazy-load
             :lazy-load-height="400"
           >
             <template #icon>
               <EyeIcon class="h-full w-full" />
             </template>
-            <LazyProjectModelPageDialogEmbedIframe
+            <ProjectModelPageDialogEmbedIframe
               v-if="!isSmallerOrEqualSm"
               :src="updatedUrl"
               title="Preview"
@@ -106,12 +106,13 @@ import { ref, computed } from 'vue'
 import { Cog6ToothIcon, EyeIcon } from '@heroicons/vue/24/outline'
 import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
 import { useClipboard } from '~~/composables/browser'
+import { SpeckleViewer } from '@speckle/shared'
+import { projectRoute } from '~~/lib/common/helpers/route'
 
 const props = defineProps<{
   visibility?: ProjectVisibility
   projectId: string
   modelId: string
-  versionId?: string
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
@@ -132,6 +133,107 @@ const hideSelectionInfo = ref(false)
 const preventScrolling = ref(false)
 const manuallyLoadModel = ref(false)
 const commentSlideshowMode = ref(false)
+
+const parsedResources = computed(() =>
+  SpeckleViewer.ViewerRoute.parseUrlParameters(props.modelId)
+)
+
+const multipleVersionedResources = computed(() => {
+  return (
+    parsedResources.value.filter(
+      (resource) =>
+        SpeckleViewer.ViewerRoute.isModelResource(resource) &&
+        resource.versionId !== undefined
+    ).length > 1
+  )
+})
+
+const updatedUrl = computed(() => {
+  // Start with the base URL for projects
+  const url = new URL(`/projects/${encodeURIComponent(props.projectId)}`, baseUrl)
+
+  // Parse the modelId to get resources
+  const resources = SpeckleViewer.ViewerRoute.parseUrlParameters(props.modelId)
+
+  // Construct the resource path from the parsed resources
+  const resourcePath = resources
+    .map((resource) => {
+      if (SpeckleViewer.ViewerRoute.isModelResource(resource)) {
+        return resource.versionId
+          ? `${encodeURIComponent(resource.modelId)}@${encodeURIComponent(
+              resource.versionId
+            )}`
+          : encodeURIComponent(resource.modelId)
+      }
+      return encodeURIComponent(resource.toString())
+    })
+    .join(',')
+
+  // Add the resource path to the URL's pathname
+  if (resourcePath) {
+    url.pathname += `/models/${resourcePath}`
+  }
+
+  // Construct the embed options as a hash fragment
+  const enabledOptions = embedDialogOptions
+    .filter((option) => option.value.value)
+    .map((option) => `"${option.id}":true`)
+    .join(',')
+
+  const hashFragment = enabledOptions
+    ? encodeURIComponent(`{${enabledOptions}}`)
+    : encodeURIComponent('{"isEnabled":true}')
+
+  url.hash = `embed=${hashFragment}`
+
+  return url.toString()
+})
+
+const iframeCode = computed(() => {
+  return `<iframe title="Speckle" src="${updatedUrl.value}" width="600" height="400" frameborder="0"></iframe>`
+})
+
+const discoverableButtons = computed(() => [
+  {
+    text: 'Cancel',
+    props: { color: 'invert', fullWidth: true, outline: true },
+    onClick: () => {
+      isOpen.value = false
+    }
+  },
+  {
+    text: 'Copy Embed Code',
+    props: { color: 'primary', fullWidth: true },
+    onClick: () => {
+      handleEmbedCodeCopy(iframeCode.value)
+    }
+  }
+])
+
+const nonDiscoverableButtons = computed(() => [
+  {
+    text: 'Close',
+    props: { color: 'invert', fullWidth: true, outline: true },
+    onClick: () => {
+      isOpen.value = false
+    }
+  },
+  {
+    text: 'Change Access',
+    props: { color: 'primary', fullWidth: true },
+    onClick: () => {
+      isOpen.value = false
+      router.push(`${projectRoute(props.projectId)}?settings=access`)
+    }
+  }
+])
+
+const handleEmbedCodeCopy = async (value: string) => {
+  await copy(value, {
+    successMessage: 'Embed code copied to clipboard',
+    failureMessage: 'Failed to copy embed code to clipboard'
+  })
+}
 
 const updateOption = (optionRef: Ref<boolean>, newValue: unknown) => {
   optionRef.value = newValue === undefined ? false : !!newValue
@@ -169,80 +271,4 @@ const embedDialogOptions = [
     value: commentSlideshowMode
   }
 ]
-
-const baseIframeSrc = computed(() => {
-  const url = new URL('/projects/', baseUrl)
-  return url.toString()
-})
-
-const updatedUrl = computed(() => {
-  let url = `${baseIframeSrc.value}${encodeURIComponent(props.projectId)}`
-  if (props.modelId) {
-    url += `/models/${encodeURIComponent(props.modelId)}`
-  }
-
-  if (props.versionId) {
-    url += `@${encodeURIComponent(props.versionId)}`
-  }
-
-  const enabledOptions = embedDialogOptions
-    .filter((option) => option.value.value)
-    .map((option) => `"${option.id}":true`)
-    .join(',')
-
-  if (enabledOptions) {
-    const hashFragment = encodeURIComponent(`{${enabledOptions}}`)
-    url += `#embed=${hashFragment}`
-  } else {
-    url += `#embed=${encodeURIComponent('{"isEnabled":true}')}`
-  }
-
-  return url
-})
-
-const iframeCode = computed(() => {
-  return `<iframe title="Speckle" src="${updatedUrl.value}" width="600" height="400" frameborder="0"></iframe>`
-})
-
-const handleEmbedCodeCopy = async (value: string) => {
-  await copy(value, {
-    successMessage: 'Embed code copied to clipboard',
-    failureMessage: 'Failed to copy embed code to clipboard'
-  })
-}
-
-const discoverableButtons = computed(() => [
-  {
-    text: 'Cancel',
-    props: { color: 'invert', fullWidth: true, outline: true },
-    onClick: () => {
-      isOpen.value = false
-    }
-  },
-  {
-    text: 'Copy Embed Code',
-    props: { color: 'primary', fullWidth: true },
-    onClick: () => {
-      handleEmbedCodeCopy(iframeCode.value)
-    }
-  }
-])
-
-const nonDiscoverableButtons = computed(() => [
-  {
-    text: 'Close',
-    props: { color: 'invert', fullWidth: true, outline: true },
-    onClick: () => {
-      isOpen.value = false
-    }
-  },
-  {
-    text: 'Change Access',
-    props: { color: 'primary', fullWidth: true },
-    onClick: () => {
-      isOpen.value = false
-      router.push(`/projects/${props.projectId}?settings=access`)
-    }
-  }
-])
 </script>

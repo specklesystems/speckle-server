@@ -85,7 +85,6 @@
       :visibility="project.visibility"
       :project-id="project.id"
       :model-id="project.model.id"
-      :version-id="currentVersionId"
     />
     <div class="py-12">
       <!-- Some padding to deal with a card menu potentially opening at the bottom of the page -->
