@@ -751,10 +751,10 @@ function useDisableZoomOnEmbed() {
   } = useInjectedViewerState()
 
   watch(
-    embedOptions,
-    () => {
+    () => embedOptions.value?.noScroll,
+    (newNoScrollValue) => {
       const cameraController = viewer.instance.getExtension(CameraController)
-      if (embedOptions.value && embedOptions.value.noScroll) {
+      if (newNoScrollValue) {
         cameraController.controls.mouseButtons.wheel = 0
       } else {
         cameraController.controls.mouseButtons.wheel = 4
