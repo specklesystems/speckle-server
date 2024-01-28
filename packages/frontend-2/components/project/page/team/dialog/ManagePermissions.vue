@@ -3,7 +3,7 @@
     allow-overflow
     border-b
     title="Access"
-    :guided-open="defaultOpen"
+    :always-open="defaultOpen"
   >
     <template #icon>
       <LockOpenIcon
