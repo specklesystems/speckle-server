@@ -18,16 +18,16 @@
 <script setup lang="ts">
 import { PlayIcon } from '@heroicons/vue/20/solid'
 
-const route = useRouter()
+const route = useRoute()
 const {
   public: { apiOrigin }
 } = useRuntimeConfig()
 
-const projectUrl = route.currentRoute.value.path
+const projectUrl = route.path
 
-const projectId = route.currentRoute.value.params.id as string
-const modelId = route.currentRoute.value.params.modelId as string
-const versionId = route.currentRoute.value.params.versionId as string
+const projectId = route.params.id as string
+const modelId = route.params.modelId as string
+const versionId = route.params.versionId as string
 
 const previewUrl = computed(() => {
   if (modelId) {
