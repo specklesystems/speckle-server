@@ -24,7 +24,8 @@
 import type { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
-import type { OpenSectionType } from '~~/components/project/page/stats-block/Settings.vue'
+
+type OpenSectionType = 'invite' | 'access' | null
 
 graphql(`
   fragment ProjectPageTeamDialog on Project {

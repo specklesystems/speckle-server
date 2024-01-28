@@ -5,7 +5,7 @@
   >
     <!-- Add new thread bubble -->
     <ViewerAnchoredPointNewThread
-      v-if="canPostComment && !embedOptions.isEnabled"
+      v-if="canPostComment && !embedOptions?.isEnabled"
       v-model="buttonState"
       class="z-[13]"
       @close="closeNewThread"
@@ -65,7 +65,7 @@
       v-if="(spotlightUserSessionId && spotlightUser) || followers.length !== 0"
       class="absolute w-screen z-10 p-1"
       :class="
-        embedOptions.isEnabled
+        embedOptions?.isEnabled
           ? 'h-[calc(100dvh-3.5rem)]'
           : 'h-[calc(100dvh-3.5rem)] mt-[3.5rem]'
       "
@@ -116,16 +116,18 @@ import {
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
-import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
 
 const parentEl = ref(null as Nullable<HTMLElement>)
 const { isLoggedIn } = useActiveUser()
 const { sessionId } = useInjectedViewerState()
 const { users } = useViewerUserActivityTracking({ parentEl })
 const { isOpenThread, open } = useThreadUtilities()
-const { embedOptions } = useEmbedState()
 
 const canPostComment = useCheckViewerCommentingAccess()
+
+const {
+  urlHashState: { embedOptions }
+} = useInjectedViewerState()
 
 const followers = computed(() => {
   if (!isLoggedIn.value) return []

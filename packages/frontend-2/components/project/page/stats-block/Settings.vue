@@ -27,7 +27,7 @@
       <ProjectPageTeamDialog
         v-model:open="dialogOpen"
         :project="project"
-        :open-section="openSection && openSection"
+        :open-section="openSection"
       />
     </template>
   </ProjectPageStatsBlock>
@@ -37,7 +37,7 @@ import { Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageStatsBlockTeamFragment } from '~~/lib/common/generated/gql/graphql'
 
-export type OpenSectionType = 'invite' | 'access' | null
+type OpenSectionType = 'invite' | 'access' | null
 
 graphql(`
   fragment ProjectPageStatsBlockTeam on Project {
@@ -62,18 +62,6 @@ const openSection = ref<OpenSectionType>(null)
 
 const route = useRoute()
 
-onMounted(() => {
-  if (route.query.settings === 'true') {
-    dialogOpen.value = true
-  } else if (route.query.settings === 'invite') {
-    dialogOpen.value = true
-    openSection.value = 'invite'
-  } else if (route.query.settings === 'access') {
-    dialogOpen.value = true
-    openSection.value = 'access'
-  }
-})
-
 watch(
   () => route.query.settings,
   (newSettings) => {
@@ -89,7 +77,8 @@ watch(
       dialogOpen.value = false
       openSection.value = null
     }
-  }
+  },
+  { immediate: true }
 )
 
 const teamUsers = computed(() => props.project.team.map((t) => t.user))

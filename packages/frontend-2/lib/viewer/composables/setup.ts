@@ -257,13 +257,6 @@ export type InjectableViewerState = Readonly<{
       enabled: Ref<boolean>
       options: Ref<MeasurementOptions>
     }
-    embedOptions: {
-      isTransparent: Ref<boolean>
-      hideControls: Ref<boolean>
-      hideSelectionInfo: Ref<boolean>
-      noScroll: Ref<boolean>
-      manualLoad: Ref<boolean>
-    }
   }
   /**
    * State stored in the anchor string of the URL
@@ -895,13 +888,6 @@ function setupInterfaceState(
           vertexSnap: true,
           precision: 2
         })
-      },
-      embedOptions: {
-        isTransparent: ref(false),
-        hideControls: ref(false),
-        hideSelectionInfo: ref(false),
-        noScroll: ref(false),
-        manualLoad: ref(false)
       }
     }
   }

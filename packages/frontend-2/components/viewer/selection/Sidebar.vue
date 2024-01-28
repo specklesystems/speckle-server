@@ -5,7 +5,7 @@
         objects.length !== 0
           ? 'translate-x-0 opacity-100'
           : 'translate-x-[120%] opacity-0'
-      } ${embedOptions.isEnabled ? 'sm:top-2' : 'sm:top-[4rem]'} ${
+      } ${embedOptions?.isEnabled ? 'sm:top-2' : 'sm:top-[4rem]'} ${
         focusedThreadId && isSmallerOrEqualSm ? 'hidden' : ''
       }`"
     >
@@ -75,21 +75,18 @@ import { containsAll } from '~~/lib/common/helpers/utils'
 import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { uniqWith } from 'lodash-es'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 const {
   viewer: {
     metadata: { filteringState }
   },
-  urlHashState: { focusedThreadId },
+  urlHashState: { focusedThreadId, embedOptions },
   ui: { diff }
 } = useInjectedViewerState()
 const { objects, clearSelection } = useSelectionUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
-
-const { embedOptions } = useEmbedState()
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 

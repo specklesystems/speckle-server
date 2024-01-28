@@ -149,13 +149,13 @@
                 !modelValue.archived &&
                 canReply &&
                 !isSmallerOrEqualSm &&
-                !embedOptions.isEnabled
+                !embedOptions?.isEnabled
               "
               :model-value="modelValue"
               @submit="onNewReply"
             />
             <div
-              v-if="isSmallerOrEqualSm && embedOptions.commentSlideshow"
+              v-if="isSmallerOrEqualSm && embedOptions?.commentSlideshow"
               class="flex justify-between w-full gap-2 p-2 mt-2"
             >
               <FormButton
@@ -176,7 +176,7 @@
               </FormButton>
             </div>
             <div
-              v-if="isSmallerOrEqualSm || embedOptions.isEnabled"
+              v-if="isSmallerOrEqualSm || embedOptions?.isEnabled"
               class="flex justify-between w-full gap-2 p-2 mt-2"
             >
               <FormButton
@@ -235,25 +235,26 @@ import {
 import { useDisableGlobalTextSelection } from '~~/lib/common/composables/window'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
-import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
   (e: 'update:expanded', v: boolean): void
   (e: 'next', v: CommentBubbleModel): void
   (e: 'prev', v: CommentBubbleModel): void
-  (e: 'replyInSpeckle'): void
 }>()
 
 const props = defineProps<{
   modelValue: CommentBubbleModel
 }>()
 
+const {
+  urlHashState: { embedOptions }
+} = useInjectedViewerState()
+
 const threadId = computed(() => props.modelValue.id)
 const { copy } = useClipboard()
 const { activeUser } = useActiveUser()
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
-const { embedOptions } = useEmbedState()
 
 const archiveComment = useArchiveComment()
 const { triggerNotification } = useGlobalToast()
