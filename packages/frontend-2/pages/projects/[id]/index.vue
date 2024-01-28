@@ -3,9 +3,9 @@
     <template v-if="project">
       <ProjectsInviteBanner v-if="invite" :invite="invite" :show-stream-name="false" />
       <!-- Heading text w/ actions -->
-      <ProjectPageHeader :project="project" class="mb-8" />
+      <ProjectPageHeader :project="project" />
       <!-- Stats blocks -->
-      <div class="flex flex-col md:flex-row space-y-2 md:space-x-4 mb-14">
+      <div class="flex flex-col md:flex-row space-y-2 md:space-x-4 mt-8 mb-14">
         <ProjectPageStatsBlockSettings
           :project="project"
           class="w-full md:w-72 transition"
