@@ -73,7 +73,7 @@
   <Portal to="primary-actions">
     <HeaderNavShare
       v-if="project"
-      :model-id="modelId"
+      :resource-id-string="modelId"
       :version-id="versionId"
       :project-id="project.id"
       :visibility="project.visibility"

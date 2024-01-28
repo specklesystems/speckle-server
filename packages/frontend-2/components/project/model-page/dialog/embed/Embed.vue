@@ -87,12 +87,12 @@
               <EyeIcon class="h-full w-full" />
             </template>
             <LazyProjectModelPageDialogEmbedIframe
+              v-if="!isSmallerOrEqualSm"
               :src="updatedUrl"
               title="Preview"
               width="600"
               height="400"
               class="shrink-0 w-[600px] h-[400px] mx-auto"
-              :condition="!isSmallerOrEqualSm"
             />
           </LayoutDialogSection>
         </div>

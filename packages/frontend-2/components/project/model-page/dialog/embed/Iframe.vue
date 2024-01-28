@@ -1,6 +1,5 @@
 <template>
   <iframe
-    v-if="shouldDisplay"
     :src="src"
     :title="title"
     :width="width"
@@ -14,15 +13,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps({
-  src: String,
-  title: String,
-  width: { type: [String, Number], default: '600' },
-  height: { type: [String, Number], default: '400' },
-  className: String,
-  condition: Boolean
-})
+const props = defineProps<{
+  src: string
+  title: string
+  width?: string | number
+  height?: string | number
+  className?: string
+}>()
 
-const shouldDisplay = computed(() => props.condition)
 const iframeClass = computed(() => props.className)
 </script>
