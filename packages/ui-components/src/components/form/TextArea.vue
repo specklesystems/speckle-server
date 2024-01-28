@@ -13,8 +13,7 @@
           coreClasses,
           iconClasses,
           textareaClasses || '',
-          !autoExpand ? 'simple-scrollbar' : 'overflow-hidden',
-          'min-h-[3rem] text-sm'
+          'min-h-[3rem] simple-scrollbar text-sm'
         ]"
         :placeholder="placeholder"
         :disabled="disabled"
@@ -60,7 +59,7 @@
 import { ExclamationCircleIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 import type { Nullable } from '@speckle/shared'
 import type { RuleExpression } from 'vee-validate'
-import { computed, ref, toRefs, watch } from 'vue'
+import { computed, ref, toRefs } from 'vue'
 import type { InputColor } from '~~/src/composables/form/textInput'
 import { useTextInputCore } from '~~/src/composables/form/textInput'
 
@@ -93,7 +92,6 @@ const props = withDefaults(
     showRequired?: boolean
     color?: InputColor
     textareaClasses?: string
-    autoExpand?: boolean
   }>(),
   {
     useLabelInErrors: true,
@@ -132,21 +130,6 @@ const iconClasses = computed(() => {
 
   return classParts.join(' ')
 })
-
-const adjustHeight = () => {
-  if (props.autoExpand && inputElement.value) {
-    inputElement.value.style.height = 'auto'
-    inputElement.value.style.height = inputElement.value.scrollHeight + 10 + 'px'
-  }
-}
-
-watch(
-  () => props.modelValue,
-  () => {
-    adjustHeight()
-  },
-  { immediate: true }
-)
 
 defineExpose({ focus })
 </script>
