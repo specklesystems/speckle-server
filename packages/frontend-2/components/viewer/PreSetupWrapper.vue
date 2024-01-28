@@ -1,84 +1,86 @@
 <template>
-  <ViewerPostSetupWrapper>
-    <div class="flex-1">
-      <!-- Nav -->
-      <Portal to="navigation">
-        <ViewerScope :state="state">
-          <HeaderNavLink
-            :to="`/projects/${project?.id}`"
-            :name="project?.name"
-          ></HeaderNavLink>
-          <ViewerExplorerNavbarLink />
-        </ViewerScope>
-      </Portal>
+  <div>
+    <ViewerPostSetupWrapper>
+      <div class="flex-1">
+        <!-- Nav -->
+        <Portal to="navigation">
+          <ViewerScope :state="state">
+            <HeaderNavLink
+              :to="`/projects/${project?.id}`"
+              :name="project?.name"
+            ></HeaderNavLink>
+            <ViewerExplorerNavbarLink />
+          </ViewerScope>
+        </Portal>
 
-      <ClientOnly>
-        <!-- Tour host -->
-        <div
-          v-if="tourState.showTour"
-          class="fixed w-full h-[100dvh] flex justify-center items-center pointer-events-none z-[100]"
-        >
-          <TourOnboarding />
-        </div>
-        <!-- Viewer host -->
-        <div
-          class="special-gradient absolute z-10 overflow-hidden w-screen"
-          :class="
-            embedOptions.isEnabled
-              ? embedOptions.isTransparent
-                ? 'h-[100dvh]'
-                : 'h-[calc(100dvh-3.5rem)]'
-              : 'h-[100dvh]'
-          "
-        >
-          <ViewerBase />
+        <ClientOnly>
+          <!-- Tour host -->
+          <div
+            v-if="tourState.showTour"
+            class="fixed w-full h-[100dvh] flex justify-center items-center pointer-events-none z-[100]"
+          >
+            <TourOnboarding />
+          </div>
+          <!-- Viewer host -->
+          <div
+            class="special-gradient absolute z-10 overflow-hidden w-screen"
+            :class="
+              embedOptions.isEnabled
+                ? embedOptions.isTransparent
+                  ? 'h-[100dvh]'
+                  : 'h-[calc(100dvh-3.5rem)]'
+                : 'h-[100dvh]'
+            "
+          >
+            <ViewerBase />
+            <Transition
+              enter-from-class="opacity-0"
+              enter-active-class="transition duration-1000"
+            >
+              <ViewerAnchoredPoints v-show="tourState.showViewerControls" />
+            </Transition>
+          </div>
+
+          <!-- Global loading bar -->
+          <ViewerLoadingBar class="z-20" />
+
+          <!-- Sidebar sketches -->
           <Transition
             enter-from-class="opacity-0"
             enter-active-class="transition duration-1000"
           >
-            <ViewerAnchoredPoints v-show="tourState.showViewerControls" />
+            <ViewerControls v-show="tourState.showViewerControls" class="z-20" />
           </Transition>
-        </div>
-
-        <!-- Global loading bar -->
-        <ViewerLoadingBar class="z-20" />
-
-        <!-- Sidebar sketches -->
-        <Transition
-          enter-from-class="opacity-0"
-          enter-active-class="transition duration-1000"
-        >
-          <ViewerControls v-show="tourState.showViewerControls" class="z-20" />
-        </Transition>
-        <!-- Viewer Object Selection Info Display -->
-        <Transition
-          v-if="!embedOptions.hideSelectionInfo"
-          enter-from-class="opacity-0"
-          enter-active-class="transition duration-1000"
-        >
-          <div v-show="tourState.showViewerControls">
-            <ViewerSelectionSidebar class="z-20" />
-          </div>
-        </Transition>
-        <!-- Shows up when filters are applied for an easy return to normality -->
-        <ViewerGlobalFilterReset class="z-20" :embed="embedOptions.isEnabled" />
-      </ClientOnly>
-    </div>
-  </ViewerPostSetupWrapper>
-  <ViewerEmbedFooter
-    :name="modelName || 'Loading...'"
-    :created-at="formattedDate"
-    :url="route.path"
-  />
-  <Portal to="primary-actions">
-    <HeaderNavShare
-      v-if="project"
-      :resource-id-string="modelId"
-      :version-id="versionId"
-      :project-id="project.id"
-      :visibility="project.visibility"
+          <!-- Viewer Object Selection Info Display -->
+          <Transition
+            v-if="!embedOptions.hideSelectionInfo"
+            enter-from-class="opacity-0"
+            enter-active-class="transition duration-1000"
+          >
+            <div v-show="tourState.showViewerControls">
+              <ViewerSelectionSidebar class="z-20" />
+            </div>
+          </Transition>
+          <!-- Shows up when filters are applied for an easy return to normality -->
+          <ViewerGlobalFilterReset class="z-20" :embed="embedOptions.isEnabled" />
+        </ClientOnly>
+      </div>
+    </ViewerPostSetupWrapper>
+    <ViewerEmbedFooter
+      :name="modelName || 'Loading...'"
+      :created-at="formattedDate"
+      :url="route.path"
     />
-  </Portal>
+    <Portal to="primary-actions">
+      <HeaderNavShare
+        v-if="project"
+        :resource-id-string="modelId"
+        :version-id="versionId"
+        :project-id="project.id"
+        :visibility="project.visibility"
+      />
+    </Portal>
+  </div>
 </template>
 <script setup lang="ts">
 import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
