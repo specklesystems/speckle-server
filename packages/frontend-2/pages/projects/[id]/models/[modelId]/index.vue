@@ -18,11 +18,8 @@
 
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
+import { deserializeEmbedOptions } from '~~/lib/viewer/composables/setup/embed'
 import type { InjectableViewerState } from '~~/lib/viewer/composables/setup/core'
-
-interface EmbedConfig {
-  manualLoad: boolean
-}
 
 definePageMeta({
   layout: 'viewer',
@@ -33,7 +30,6 @@ definePageMeta({
 })
 
 const ViewerScope = resolveComponent('ViewerScope')
-const logger = useLogger()
 
 const isManualLoad = ref(false)
 const route = useRoute()
@@ -42,19 +38,11 @@ const state = ref<InjectableViewerState>()
 const checkUrlForEmbedManualLoad = () => {
   if (process.server) return
 
-  if (typeof window !== 'undefined') {
-    const hashParams = new URLSearchParams(route.hash.substring(1))
-    const embedParam = hashParams.get('embed')
+  const hashParams = new URLSearchParams(route.hash.substring(1))
+  const embedParam = hashParams.get('embed')
 
-    if (embedParam) {
-      try {
-        const embedConfig = JSON.parse(embedParam) as EmbedConfig
-        isManualLoad.value = embedConfig.manualLoad === true
-      } catch (e) {
-        logger.error(e)
-      }
-    }
-  }
+  const embedOptions = deserializeEmbedOptions(embedParam)
+  isManualLoad.value = embedOptions.manualLoad === true
 }
 
 watch(

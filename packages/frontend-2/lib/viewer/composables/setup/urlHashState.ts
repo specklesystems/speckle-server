@@ -2,7 +2,7 @@ import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import { useRouteHashState } from '~~/lib/common/composables/url'
 import type { InjectableViewerState } from '~~/lib/viewer/composables/setup'
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
-import type { EmbedOptions } from './embed'
+import { deserializeEmbedOptions } from '~~/lib/viewer/composables/setup/embed'
 
 export enum ViewerHashStateKeys {
   FocusedThreadId = 'threadId',
@@ -11,7 +11,6 @@ export enum ViewerHashStateKeys {
 }
 
 export function setupUrlHashState(): InjectableViewerState['urlHashState'] {
-  const logger = useLogger()
   const { hashState } = useRouteHashState()
   const { deserializeDiffCommand, serializeDiffCommand } = useDiffBuilderUtilities()
 
@@ -45,13 +44,7 @@ export function setupUrlHashState(): InjectableViewerState['urlHashState'] {
   const embedOptions = writableAsyncComputed({
     get: () => {
       const embedString = hashState.value[ViewerHashStateKeys.EmbedOptions]
-      if (!embedString) return null
-      try {
-        return JSON.parse(embedString) as EmbedOptions
-      } catch (error) {
-        logger.error(error)
-        return null
-      }
+      return deserializeEmbedOptions(embedString)
     },
     set: async (newOptions) => {
       const embedString = newOptions ? JSON.stringify(newOptions) : null
