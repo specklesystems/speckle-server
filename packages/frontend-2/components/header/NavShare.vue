@@ -1,10 +1,17 @@
 <template>
   <Menu
     as="div"
-    class="hidden sm:flex items-center relative border-r border-outline-1 pr-4"
+    class="flex items-center relative sm:border-r border-outline-1 sm:pr-4 -mr-3 sm:mr-0"
   >
     <MenuButton as="div">
-      <FormButton outlined :icon-right="ChevronDownIcon">Share</FormButton>
+      <FormButton
+        :outlined="!isSmallerOrEqualSm"
+        :icon-right="isSmallerOrEqualSm ? ShareIcon : ChevronDownIcon"
+        :hide-text="isSmallerOrEqualSm"
+        :color="isSmallerOrEqualSm ? 'invert' : 'default'"
+      >
+        Share
+      </FormButton>
     </MenuButton>
     <Transition
       enter-active-class="transition ease-out duration-200"
@@ -15,7 +22,7 @@
       leave-to-class="transform opacity-0 scale-95"
     >
       <MenuItems
-        class="absolute z-50 flex flex-col gap-1 right-4 top-12 w-full sm:w-44 p-1 origin-top-right bg-foundation-2 outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden text-sm"
+        class="absolute z-50 flex flex-col gap-1 right-4 top-12 min-w-max w-full sm:w-44 p-1 origin-top-right bg-foundation-2 outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden text-sm"
       >
         <MenuItem v-slot="{ active }">
           <div
@@ -72,12 +79,14 @@ import {
   ChevronDownIcon,
   LinkIcon,
   FingerPrintIcon,
-  CodeBracketIcon
+  CodeBracketIcon,
+  ShareIcon
 } from '@heroicons/vue/24/outline'
 import { SpeckleViewer } from '@speckle/shared'
 import { keyboardClick } from '@speckle/ui-components'
 import type { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
+import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 const props = defineProps<{
   projectId: string
@@ -87,6 +96,7 @@ const props = defineProps<{
 
 const { copy } = useClipboard()
 const copyModelLink = useCopyModelLink()
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const embedDialogOpen = ref(false)
 

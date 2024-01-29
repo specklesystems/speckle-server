@@ -54,7 +54,7 @@
               <Cog6ToothIcon class="h-full w-full" />
             </template>
             <div
-              class="flex flex-col gap-1.5 sm:gap-2 ml-7 text-xs sm:text-sm cursor-default"
+              class="flex flex-col gap-1.5 sm:gap-2 ml-5 sm:ml-7 text-sm cursor-default"
             >
               <div v-for="option in embedDialogOptions" :key="option.id">
                 <label

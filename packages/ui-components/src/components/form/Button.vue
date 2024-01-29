@@ -16,10 +16,6 @@
       :class="`${iconClasses} ${hideText ? '' : 'mr-2'}`"
     />
     <slot v-if="!hideText">Button</slot>
-    <div v-else style="margin: 0 !important; width: 0.01px">
-      &nbsp;
-      <!-- The point of this is to ensure text & no-text buttons have the same height -->
-    </div>
     <Component
       :is="iconRight"
       v-if="iconRight || !loading"
@@ -433,7 +429,7 @@ const decoratorClasses = computed(() => {
 const buttonClasses = computed(() => {
   const isLinkOrText = props.link || props.text
   return [
-    'transition inline-flex justify-center text-center items-center space-x-2 outline-none select-none leading-[0.9rem]',
+    'transition inline-flex justify-center text-center items-center gap-x-2 outline-none select-none leading-[0.9rem]',
     generalClasses.value,
     sizeClasses.value,
     foregroundClasses.value,
