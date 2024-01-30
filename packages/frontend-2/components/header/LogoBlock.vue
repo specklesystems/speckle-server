@@ -1,44 +1,29 @@
 <template>
-  <NuxtLink
-    class="flex items-center shrink-0 gap-1"
-    :to="poweredBy ? 'https://speckle.systems/' : '/'"
-    :target="poweredBy ? '_blank' : undefined"
-  >
+  <NuxtLink class="flex items-center shrink-0" :to="to">
     <img
       class="block"
       :class="{
-        grayscale: active && !poweredBy,
-        'h-8 w-8': poweredBy,
-        'h-6 w-6': !poweredBy
+        grayscale: active,
+        'h-6 w-6': !largeIcon,
+        'h-10 w-10': largeIcon
       }"
       src="~~/assets/images/speckle_logo_big.png"
       alt="Speckle"
     />
 
     <div
-      v-if="!minimal && !poweredBy"
+      v-if="!minimal"
       class="text-primary h6 mt-0 hidden font-bold leading-7 md:flex"
     >
       Speckle
     </div>
-    <div v-if="poweredBy" class="text-xs font-bold text-primary shrink-0">
-      Powered by Speckle
-    </div>
   </NuxtLink>
 </template>
 <script setup lang="ts">
-defineProps({
-  minimal: {
-    type: Boolean,
-    default: false
-  },
-  active: {
-    type: Boolean,
-    default: true
-  },
-  poweredBy: {
-    type: Boolean,
-    default: false
-  }
-})
+defineProps<{
+  minimal?: boolean
+  active?: boolean
+  to?: string
+  largeIcon?: boolean
+}>()
 </script>

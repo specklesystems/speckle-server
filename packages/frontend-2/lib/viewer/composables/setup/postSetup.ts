@@ -764,30 +764,6 @@ function useDisableZoomOnEmbed() {
   )
 }
 
-function useCommentSlideshow() {
-  const route = useRoute()
-  const router = useRouter()
-  const {
-    ui: { threads },
-    urlHashState: { embedOptions }
-  } = useInjectedViewerState()
-
-  watch(
-    () => embedOptions.value?.commentSlideshow,
-    (commentSlideshow) => {
-      const currentPath = route.fullPath
-      const commentsArray = Object.values(threads.items.value)
-      const latestComment = commentsArray[0]
-
-      if (commentSlideshow) {
-        const newPath = currentPath + '&threadId=' + latestComment.id
-        router.push(newPath)
-      }
-    },
-    { immediate: true }
-  )
-}
-
 export function useViewerPostSetup() {
   if (process.server) return
   useViewerObjectAutoLoading()
@@ -804,6 +780,5 @@ export function useViewerPostSetup() {
   useDiffingIntegration()
   useViewerMeasurementIntegration()
   useDisableZoomOnEmbed()
-  useCommentSlideshow()
   setupDebugMode()
 }
