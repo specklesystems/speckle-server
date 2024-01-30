@@ -661,7 +661,7 @@ jobs:
 
   deployment-test-docker-compose:
     machine:
-      image: ubuntu-2204:2023.02.1
+      image: ubuntu-2204:2024.01.1
       docker_layer_caching: true
     resource_class: large
     working_directory: *work-dir
@@ -694,7 +694,7 @@ jobs:
 
   deployment-test-helm-chart:
     machine:
-      image: ubuntu-2204:2023.02.1
+      image: ubuntu-2204:2024.01.1
       docker_layer_caching: true
     resource_class: large
     working_directory: *work-dir
