@@ -231,7 +231,7 @@ export function useSelectionUtilities() {
     const objs: Array<SpeckleObject> = []
     objectIds.forEach((value: string) => {
       objs.push(
-        ...(worldTree.value?.findId(value) as unknown as TreeNode[]).map(
+        ...((worldTree.value?.findId(value) || []) as unknown as TreeNode[]).map(
           (node: TreeNode) =>
             (node.model as Record<string, unknown>).raw as SpeckleObject
         )
