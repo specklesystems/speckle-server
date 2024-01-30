@@ -1,5 +1,5 @@
 <template>
-  <div class="relative min-h-full" :class="isTransparent && 'viewer-transparent'">
+  <div class="relative min-h-full">
     <div
       v-if="debug"
       class="pointer-events-none fixed bottom-0 z-40 flex w-full space-x-2 p-3 text-xs"
@@ -31,10 +31,8 @@
 </template>
 <script setup lang="ts">
 import { useViewerTour } from '~/lib/viewer/composables/tour'
-import { useEmbed } from '~~/lib/viewer/composables/setup/embed'
 
 const { showNavbar, showTour, showControls } = useViewerTour()
-const { isTransparent } = useEmbed()
 
 const debug = ref(false)
 

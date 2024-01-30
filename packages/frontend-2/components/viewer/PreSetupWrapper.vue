@@ -27,7 +27,7 @@
             :class="
               isEmbedEnabled
                 ? isTransparent
-                  ? 'h-[100dvh]'
+                  ? 'viewer-transparent h-[100dvh]'
                   : 'h-[calc(100dvh-3.5rem)]'
                 : 'h-[100dvh]'
             "
