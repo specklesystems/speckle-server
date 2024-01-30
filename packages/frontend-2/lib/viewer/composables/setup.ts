@@ -61,7 +61,6 @@ import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/
 import { flatten, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
 import { FilteringExtension } from '@speckle/viewer'
-import type { EmbedOptions } from '~~/lib/viewer/composables/setup/embed'
 import {
   InjectableViewerStateKey,
   useSetupViewerScope
@@ -264,7 +263,6 @@ export type InjectableViewerState = Readonly<{
   urlHashState: {
     focusedThreadId: AsyncWritableComputedRef<Nullable<string>>
     diff: AsyncWritableComputedRef<Nullable<DiffStateCommand>>
-    embedOptions: AsyncWritableComputedRef<Nullable<EmbedOptions>>
   }
 }>
 

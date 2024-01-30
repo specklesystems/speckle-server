@@ -5,7 +5,7 @@
   >
     <!-- Add new thread bubble -->
     <ViewerAnchoredPointNewThread
-      v-if="canPostComment && !embedOptions?.isEnabled"
+      v-if="canPostComment && !isEmbedEnabled"
       v-model="buttonState"
       class="z-[13]"
       @close="closeNewThread"
@@ -65,7 +65,7 @@
       v-if="(spotlightUserSessionId && spotlightUser) || followers.length !== 0"
       class="absolute w-screen z-10 p-1"
       :class="
-        embedOptions?.isEnabled
+        isEmbedEnabled
           ? 'h-[calc(100dvh-3.5rem)]'
           : 'h-[calc(100dvh-3.5rem)] mt-[3.5rem]'
       "
@@ -100,6 +100,7 @@
 </template>
 <script setup lang="ts">
 import type { Nullable } from '@speckle/shared'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { LimitedUser } from '~~/lib/common/generated/gql/graphql'
 import type { SetFullyRequired } from '~~/lib/common/helpers/type'
@@ -125,9 +126,7 @@ const { isOpenThread, open } = useThreadUtilities()
 
 const canPostComment = useCheckViewerCommentingAccess()
 
-const {
-  urlHashState: { embedOptions }
-} = useInjectedViewerState()
+const { isEnabled: isEmbedEnabled } = useEmbed()
 
 const followers = computed(() => {
   if (!isLoggedIn.value) return []

@@ -5,7 +5,7 @@
         objects.length !== 0
           ? 'translate-x-0 opacity-100'
           : 'translate-x-[120%] opacity-0'
-      } ${embedOptions?.isEnabled ? 'sm:top-2' : 'sm:top-[4rem]'} ${
+      } ${isEmbedEnabled ? 'sm:top-2' : 'sm:top-[4rem]'} ${
         focusedThreadId && isSmallerOrEqualSm ? 'hidden' : ''
       }`"
     >
@@ -76,17 +76,19 @@ import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composa
 import { uniqWith } from 'lodash-es'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 const {
   viewer: {
     metadata: { filteringState }
   },
-  urlHashState: { focusedThreadId, embedOptions },
+  urlHashState: { focusedThreadId },
   ui: { diff }
 } = useInjectedViewerState()
 const { objects, clearSelection } = useSelectionUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
+const { isEmbedEnabled } = useEmbed()
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 

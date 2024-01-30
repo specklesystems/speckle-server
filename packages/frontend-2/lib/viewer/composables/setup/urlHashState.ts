@@ -2,7 +2,6 @@ import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import { useRouteHashState } from '~~/lib/common/composables/url'
 import type { InjectableViewerState } from '~~/lib/viewer/composables/setup'
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
-import { deserializeEmbedOptions } from '~~/lib/viewer/composables/setup/embed'
 
 export enum ViewerHashStateKeys {
   FocusedThreadId = 'threadId',
@@ -41,25 +40,8 @@ export function setupUrlHashState(): InjectableViewerState['urlHashState'] {
     asyncRead: false
   })
 
-  const embedOptions = writableAsyncComputed({
-    get: () => {
-      const embedString = hashState.value[ViewerHashStateKeys.EmbedOptions]
-      return deserializeEmbedOptions(embedString)
-    },
-    set: async (newOptions) => {
-      const embedString = newOptions ? JSON.stringify(newOptions) : null
-      await hashState.update({
-        ...hashState.value,
-        [ViewerHashStateKeys.EmbedOptions]: embedString
-      })
-    },
-    initialState: null,
-    asyncRead: false
-  })
-
   return {
     focusedThreadId,
-    diff,
-    embedOptions
+    diff
   }
 }
