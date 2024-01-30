@@ -29,14 +29,10 @@ const projectUrl = route.path
 
 const projectId = route.params.id as string
 const modelId = route.params.modelId as string
-const versionId = route.params.versionId as string
 
 const previewUrl = computed(() => {
   if (modelId) {
     const url = new URL(`/preview/${projectId}/commits/${modelId}`, apiOrigin)
-    return url.toString()
-  } else if (versionId) {
-    const url = new URL(`/preview/${projectId}/objects/${versionId}`, apiOrigin)
     return url.toString()
   } else if (projectId) {
     const url = new URL(`/preview/${projectId}`, apiOrigin)

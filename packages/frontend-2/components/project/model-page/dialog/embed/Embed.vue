@@ -112,12 +112,14 @@ import { projectRoute } from '~~/lib/common/helpers/route'
 const props = defineProps<{
   visibility?: ProjectVisibility
   projectId: string
-  modelId: string
+  modelId?: string
+  versionId?: string
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const router = useRouter()
+const route = useRoute()
 const { copy } = useClipboard()
 const {
   public: { baseUrl }
@@ -133,8 +135,10 @@ const hideSelectionInfo = ref(false)
 const preventScrolling = ref(false)
 const manuallyLoadModel = ref(false)
 
+const routeModelId = computed(() => route.params.modelId as string)
+
 const parsedResources = computed(() =>
-  SpeckleViewer.ViewerRoute.parseUrlParameters(props.modelId)
+  SpeckleViewer.ViewerRoute.parseUrlParameters(routeModelId.value)
 )
 
 const multipleVersionedResources = computed(() => {
@@ -148,41 +152,32 @@ const multipleVersionedResources = computed(() => {
 })
 
 const updatedUrl = computed(() => {
-  // Start with the base URL for projects
   const url = new URL(`/projects/${encodeURIComponent(props.projectId)}`, baseUrl)
 
-  // Parse the modelId to get resources
-  const resources = SpeckleViewer.ViewerRoute.parseUrlParameters(props.modelId)
+  url.pathname += '/models/'
 
-  // Construct the resource path from the parsed resources
-  const resourcePath = resources
-    .map((resource) => {
-      if (SpeckleViewer.ViewerRoute.isModelResource(resource)) {
-        return resource.versionId
-          ? `${encodeURIComponent(resource.modelId)}@${encodeURIComponent(
-              resource.versionId
-            )}`
-          : encodeURIComponent(resource.modelId)
-      }
-      return encodeURIComponent(resource.toString())
-    })
-    .join(',')
-
-  // Add the resource path to the URL's pathname
-  if (resourcePath) {
-    url.pathname += `/models/${resourcePath}`
+  // Use props.modelId and props.versionId if provided
+  if (props.modelId) {
+    let modelPath = encodeURIComponent(props.modelId)
+    if (props.versionId) {
+      modelPath += `@${encodeURIComponent(props.versionId)}`
+    }
+    url.pathname += modelPath
+  } else {
+    // Otherwise, use routeModelId directly
+    url.pathname += routeModelId.value
   }
 
   // Construct the embed options as a hash fragment
-  const enabledOptions = embedDialogOptions
-    .filter((option) => option.value.value)
-    .map((option) => `"${option.id}":true`)
-    .join(',')
+  const embedOptions: Record<string, boolean> = { isEnabled: true }
+  embedDialogOptions.forEach((option) => {
+    if (option.value.value) {
+      embedOptions[option.id] = true
+    }
+  })
 
-  const hashFragment = enabledOptions
-    ? encodeURIComponent(`{${enabledOptions}}`)
-    : encodeURIComponent('{"isEnabled":true}')
-
+  // Serialize the embedOptions into a hash fragment
+  const hashFragment = encodeURIComponent(JSON.stringify(embedOptions))
   url.hash = `embed=${hashFragment}`
 
   return url.toString()

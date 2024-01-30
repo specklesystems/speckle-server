@@ -66,7 +66,6 @@
     <ProjectModelPageDialogEmbed
       v-model:open="embedDialogOpen"
       :project-id="projectId"
-      :model-id="modelId"
       :visibility="visibility"
     />
   </Menu>

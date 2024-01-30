@@ -26,8 +26,8 @@
     <ProjectModelPageDialogEmbed
       v-model:open="embedDialogOpen"
       :project-id="projectId"
-      :model-id="model.id"
       :visibility="visibility"
+      :model-id="model.id"
     />
   </div>
 </template>

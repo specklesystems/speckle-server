@@ -84,6 +84,7 @@
       v-model:open="embedDialogOpen"
       :visibility="project.visibility"
       :project-id="project.id"
+      :version-id="currentVersionId"
       :model-id="project.model.id"
     />
     <div class="py-12">
