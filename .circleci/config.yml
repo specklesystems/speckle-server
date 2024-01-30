@@ -272,6 +272,9 @@ workflows:
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
+            - deployment-test-docker-compose
+            - deployment-test-helm-chart
+            - docker-publish-docker-compose-ingress
             - docker-publish-file-imports
             - docker-publish-frontend
             - docker-publish-frontend-2
@@ -280,8 +283,6 @@ workflows:
             - docker-publish-server
             - docker-publish-test-container
             - docker-publish-webhooks
-            - deployment-test-docker-compose
-            - deployment-test-helm-chart
             - get-version
             - publish-approval
 
