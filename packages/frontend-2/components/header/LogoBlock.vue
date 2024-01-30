@@ -1,11 +1,9 @@
 <template>
   <NuxtLink class="flex items-center shrink-0" :to="to" :target="target">
     <img
-      class="block"
+      class="h-8 w-8 block"
       :class="{
-        grayscale: active,
-        'h-6 w-6': !largeIcon,
-        'h-10 w-10': largeIcon
+        grayscale: active
       }"
       src="~~/assets/images/speckle_logo_big.png"
       alt="Speckle"
@@ -13,7 +11,7 @@
 
     <div
       v-if="!minimal"
-      class="text-primary h6 mt-0 font-bold leading-7"
+      class="text-primary text-base mt-0 font-bold leading-7"
       :class="showTextOnMobile ? '' : 'hidden md:flex'"
     >
       Speckle
@@ -25,7 +23,6 @@ defineProps<{
   minimal?: boolean
   active?: boolean
   to?: string
-  largeIcon?: boolean
   showTextOnMobile?: boolean
   target?: string
 }>()

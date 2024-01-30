@@ -102,7 +102,6 @@ export function useEmbed() {
     const hideSelectionInfo = createComputed('hideSelectionInfo')
     const noScroll = createComputed('noScroll')
     const manualLoad = createComputed('manualLoad')
-    const commentSlideshow = createComputed('commentSlideshow')
 
     const showControlsNew = writableAsyncComputed({
       get: () => showControls.value,
@@ -124,8 +123,7 @@ export function useEmbed() {
       showControls: showControlsNew,
       hideSelectionInfo,
       noScroll,
-      manualLoad,
-      commentSlideshow
+      manualLoad
     }
   })
 }

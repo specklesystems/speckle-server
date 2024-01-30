@@ -3,7 +3,7 @@
     <div
       v-if="isEmbedEnabled"
       class="select-none fixed bottom-0 left-0 w-full z-20 flex gap-3 px-4 h-14 items-center"
-      :class="isTransparent ? 'bg-transparent' : 'bg-foundation shadow-t'"
+      :class="isTransparent ? 'bg-transparent' : 'bg-foundation'"
     >
       <HeaderLogoBlock
         large-icon
@@ -11,7 +11,7 @@
         target="_blank"
         show-text-on-mobile
       />
-      <div class="h-6 w-px bg-primary"></div>
+      <div class="h-6 w-px bg-outline-3"></div>
       <div class="flex flex-col">
         <NuxtLink :to="url" target="_blank" class="leading-3">
           <div class="flex items-center gap-1 w-full">
