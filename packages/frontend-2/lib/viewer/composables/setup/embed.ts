@@ -11,7 +11,6 @@ export type EmbedOptions = {
   hideSelectionInfo?: boolean
   noScroll?: boolean
   manualLoad?: boolean
-  commentSlideshow?: boolean
 }
 
 export function isEmbedOptions(obj: unknown): obj is EmbedOptions {
@@ -25,8 +24,7 @@ export function isEmbedOptions(obj: unknown): obj is EmbedOptions {
           'hideControls',
           'hideSelectionInfo',
           'noScroll',
-          'manualLoad',
-          'commentSlideshow'
+          'manualLoad'
         ].includes(key) &&
         typeof possibleOptions[key as keyof EmbedOptions] === 'boolean'
     )

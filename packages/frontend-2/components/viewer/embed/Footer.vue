@@ -2,12 +2,15 @@
   <ClientOnly>
     <div
       v-if="isEmbedEnabled"
-      class="select-none fixed bottom-0 left-0 w-full z-20 flex gap-4 px-4 h-14 items-center"
+      class="select-none fixed bottom-0 left-0 w-full z-20 flex gap-3 px-4 h-14 items-center"
       :class="isTransparent ? 'bg-transparent' : 'bg-foundation shadow-t'"
     >
-      <NuxtLink href="https://speckle.systems/" target="_blank">
-        <HeaderLogoBlock powered-by />
-      </NuxtLink>
+      <HeaderLogoBlock
+        large-icon
+        to="https://speckle.systems/"
+        target="_blank"
+        show-text-on-mobile
+      />
       <div class="h-6 w-px bg-primary"></div>
       <div class="flex flex-col">
         <NuxtLink :to="url" target="_blank" class="leading-3">
@@ -17,8 +20,8 @@
             </h2>
             <ArrowTopRightOnSquareIcon class="h-3 w-3" />
           </div>
-          <span v-if="createdAt" class="text-xs text-foreground-2">
-            Created {{ createdAt }}
+          <span v-if="date" class="text-xs text-foreground-2">
+            {{ date }}
           </span>
         </NuxtLink>
       </div>
@@ -31,7 +34,7 @@ import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 defineProps<{
-  createdAt?: string
+  date?: string
   name?: string
   url?: string
 }>()

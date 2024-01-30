@@ -69,7 +69,7 @@
     </ViewerPostSetupWrapper>
     <ViewerEmbedFooter
       :name="modelName || 'Loading...'"
-      :created-at="formattedDate"
+      :date="lastUpdate"
       :url="route.path"
     />
     <Portal to="primary-actions">
@@ -89,7 +89,6 @@ import {
   type InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
 import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useViewerTour } from '~/lib/viewer/composables/tour'
@@ -141,10 +140,13 @@ const modelName = computed(() => {
     return project.value?.name
   }
 })
-dayjs.extend(relativeTime)
 
-const formattedDate = computed(() => {
-  return project.value?.createdAt ? dayjs(project.value.createdAt).fromNow() : ''
+const lastUpdate = computed(() => {
+  if (project.value?.models?.items[0] && project.value.models.items[0].updatedAt) {
+    return 'Updated ' + dayjs(project.value.models.items[0].updatedAt).fromNow()
+  } else if (project.value) {
+    return 'Created ' + dayjs(project.value.createdAt).fromNow()
+  } else return undefined
 })
 
 useHead({ title })

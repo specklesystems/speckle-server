@@ -154,41 +154,6 @@
               :model-value="modelValue"
               @submit="onNewReply"
             />
-            <div
-              v-if="isSmallerOrEqualSm && commentSlideshow"
-              class="flex justify-between w-full gap-2 p-2 mt-2"
-            >
-              <FormButton
-                :icon-left="ArrowLeftIcon"
-                color="invert"
-                full-width
-                @click="emit('prev', modelValue)"
-              >
-                Previous
-              </FormButton>
-              <FormButton
-                :icon-right="ArrowRightIcon"
-                color="default"
-                full-width
-                @click="emit('next', modelValue)"
-              >
-                Next
-              </FormButton>
-            </div>
-            <div
-              v-if="isSmallerOrEqualSm || (isEmbedEnabled && commentSlideshow)"
-              class="flex justify-between w-full gap-2 p-2 mt-2"
-            >
-              <FormButton
-                :icon-right="ArrowTopRightOnSquareIcon"
-                full-width
-                :to="getLinkToThread(projectId, props.modelValue)"
-                external
-                target="_blank"
-              >
-                Reply in Speckle
-              </FormButton>
-            </div>
           </div>
         </div>
       </ViewerCommentsPortalOrDiv>
@@ -200,8 +165,6 @@ import {
   LinkIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ArrowRightIcon,
-  ArrowLeftIcon,
   XMarkIcon,
   CheckCircleIcon,
   ArrowTopRightOnSquareIcon
@@ -248,7 +211,7 @@ const props = defineProps<{
   modelValue: CommentBubbleModel
 }>()
 
-const { isEmbedEnabled, commentSlideshow } = useEmbed()
+const { isEmbedEnabled } = useEmbed()
 
 const threadId = computed(() => props.modelValue.id)
 const { copy } = useClipboard()

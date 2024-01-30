@@ -132,7 +132,6 @@ const hideViewerControls = ref(false)
 const hideSelectionInfo = ref(false)
 const preventScrolling = ref(false)
 const manuallyLoadModel = ref(false)
-const commentSlideshowMode = ref(false)
 
 const parsedResources = computed(() =>
   SpeckleViewer.ViewerRoute.parseUrlParameters(props.modelId)
@@ -264,11 +263,6 @@ const embedDialogOptions = [
     id: 'manualLoad',
     label: 'Load model manually',
     value: manuallyLoadModel
-  },
-  {
-    id: 'commentSlideshow',
-    label: 'Comment slideshow mode',
-    value: commentSlideshowMode
   }
 ]
 </script>
