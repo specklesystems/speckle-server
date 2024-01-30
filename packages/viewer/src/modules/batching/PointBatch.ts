@@ -6,6 +6,8 @@ import {
   Material,
   Object3D,
   Points,
+  Uint16BufferAttribute,
+  Uint32BufferAttribute,
   WebGLRenderer
 } from 'three'
 import { Geometry } from '../converter/Geometry'
@@ -472,28 +474,29 @@ export default class PointBatch implements Batch {
       )
     }
 
-    const sourceVBO: BufferAttribute = this.geometry.attributes[
-      'position'
-    ] as BufferAttribute
-    const targetVBOData: Float32Array = new Float32Array(sourceVBO.array.length)
+    const sourceIBO: BufferAttribute = this.geometry.index
+    const targetIBOData: Uint16Array | Uint32Array = (
+      sourceIBO.array as Uint16Array | Uint32Array
+    ).slice()
+
     const newGroups = []
     const scratchRvs = this.renderViews.slice()
     scratchRvs.sort((a, b) => {
       return a.batchStart - b.batchStart
     })
-    let targetVBOOffset = 0
+    let targetIBOOffset = 0
     for (let k = 0; k < grouped.length; k++) {
       const materialGroup = grouped[k]
-      const materialGroupStart = targetVBOOffset
+      const materialGroupStart = targetIBOOffset
       let materialGroupCount = 0
       for (let i = 0; i < (materialGroup as []).length; i++) {
         const start = materialGroup[i].start
         const count = materialGroup[i].count
-        const subArray = (sourceVBO.array as Float32Array).subarray(
-          start * 3,
-          (start + count) * 3
+        const subArray = (sourceIBO.array as Uint16Array | Uint32Array).subarray(
+          start,
+          start + count
         )
-        targetVBOData.set(subArray, targetVBOOffset * 3)
+        targetIBOData.set(subArray, targetIBOOffset)
         let rvTrisCount = 0
         for (let m = 0; m < scratchRvs.length; m++) {
           if (
@@ -502,7 +505,7 @@ export default class PointBatch implements Batch {
           ) {
             scratchRvs[m].setBatchData(
               this.id,
-              targetVBOOffset + rvTrisCount,
+              targetIBOOffset + rvTrisCount,
               scratchRvs[m].batchCount
             )
             rvTrisCount += scratchRvs[m].batchCount
@@ -510,7 +513,7 @@ export default class PointBatch implements Batch {
             m--
           }
         }
-        targetVBOOffset += count
+        targetIBOOffset += count
         materialGroupCount += count
       }
       newGroups.push({
@@ -528,8 +531,8 @@ export default class PointBatch implements Batch {
       )
     }
 
-    ;(sourceVBO.array as Float32Array).set(targetVBOData)
-    sourceVBO.needsUpdate = true
+    ;(this.geometry.index.array as Uint16Array | Uint32Array).set(targetIBOData)
+    this.geometry.index.needsUpdate = true
 
     const hiddenGroup = this.geometry.groups.find((value) => {
       return this.mesh.material[value.materialIndex].visible === false
@@ -558,11 +561,19 @@ export default class PointBatch implements Batch {
     }
     const position = new Float64Array(attributeCount)
     const color = new Float32Array(attributeCount).fill(1)
+    const index = new Int32Array(attributeCount / 3)
     let offset = 0
+    let indexOffset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
       position.set(geometry.attributes.POSITION, offset)
       if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
+      index.set(
+        new Int32Array(geometry.attributes.POSITION.length / 3).map(
+          (value, index) => index + indexOffset
+        ),
+        indexOffset
+      )
       this.renderViews[k].setBatchData(
         this.id,
         offset / 3,
@@ -570,10 +581,11 @@ export default class PointBatch implements Batch {
       )
 
       offset += geometry.attributes.POSITION.length
+      indexOffset += geometry.attributes.POSITION.length / 3
 
       this.renderViews[k].disposeGeometry()
     }
-    this.makePointGeometry(position, color)
+    this.makePointGeometry(index, position, color)
     this.mesh = new Points(this.geometry, this.batchMaterial)
     this.mesh.material = [this.batchMaterial]
     this.mesh.geometry.addGroup(0, this.getCount(), 0)
@@ -638,6 +650,7 @@ export default class PointBatch implements Batch {
   }
 
   private makePointGeometry(
+    index: Int32Array,
     position: Float64Array,
     color: Float32Array
   ): BufferGeometry {
@@ -645,6 +658,11 @@ export default class PointBatch implements Batch {
 
     this.geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
     this.geometry.setAttribute('color', new Float32BufferAttribute(color, 3))
+    if (position.length >= 65535 || index.length >= 65535) {
+      this.geometry.setIndex(new Uint32BufferAttribute(index, 1))
+    } else {
+      this.geometry.setIndex(new Uint16BufferAttribute(index, 1))
+    }
 
     const buffer = new Float32Array(position.length / 3)
     this.gradientIndexBuffer = new Float32BufferAttribute(buffer, 1)
