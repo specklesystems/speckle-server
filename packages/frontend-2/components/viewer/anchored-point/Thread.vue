@@ -154,6 +154,20 @@
               :model-value="modelValue"
               @submit="onNewReply"
             />
+            <div
+              v-if="isEmbedEnabled"
+              class="flex justify-between w-full gap-2 p-2 mt-2"
+            >
+              <FormButton
+                :icon-right="ArrowTopRightOnSquareIcon"
+                full-width
+                :to="getLinkToThread(projectId, props.modelValue)"
+                external
+                target="_blank"
+              >
+                Reply in Speckle
+              </FormButton>
+            </div>
           </div>
         </div>
       </ViewerCommentsPortalOrDiv>
