@@ -1,11 +1,11 @@
 <template>
-  <div v-if="showViewerControls && !embedOptions?.hideControls">
+  <div v-if="showControls">
     <div
       class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 md:space-y-2 bg-green-300/0 px-2"
       :class="
-        showNavbar && !embedOptions?.isEnabled
+        showNavbar && !isEmbedEnabled
           ? 'pt-[4.2rem]'
-          : embedOptions?.isTransparent
+          : isTransparent
           ? 'pt-2'
           : 'pt-2 pb-16'
       "
@@ -145,7 +145,7 @@
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
-      } ${embedOptions?.isEnabled ? 'mt-1.5' : 'mt-[4rem]'}`"
+      } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[4rem]'}`"
     >
       <div v-show="activeControl.length !== 0 && activeControl === 'measurements'">
         <KeepAlive>
@@ -229,8 +229,7 @@ import {
 } from '@speckle/ui-components'
 import {
   useInjectedViewerLoadedResources,
-  useInjectedViewerInterfaceState,
-  useInjectedViewerState
+  useInjectedViewerInterfaceState
 } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
@@ -243,6 +242,8 @@ const {
 import { AutomationRunStatus } from '~~/lib/common/generated/gql/graphql'
 import type { AutomationRun } from '~~/lib/common/generated/gql/graphql'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { useViewerTour } from '~/lib/viewer/composables/tour'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
@@ -250,11 +251,9 @@ const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 
 const { enableMeasurements } = useMeasurementUtilities()
 
-const { showNavbar, showViewerControls } = useTourStageState().value
+const { showNavbar, showControls } = useViewerTour()
 
-const {
-  urlHashState: { embedOptions }
-} = useInjectedViewerState()
+const { isTransparent, isEnabled: isEmbedEnabled } = useEmbed()
 
 const allAutomationRuns = computed(() => {
   const allAutomationStatuses = modelsAndVersionIds.value

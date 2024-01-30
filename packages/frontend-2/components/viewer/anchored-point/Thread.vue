@@ -149,7 +149,7 @@
                 !modelValue.archived &&
                 canReply &&
                 !isSmallerOrEqualSm &&
-                !embedOptions?.isEnabled
+                !isEmbedEnabled
               "
               :model-value="modelValue"
               @submit="onNewReply"
@@ -198,6 +198,7 @@ import {
 import { useDisableGlobalTextSelection } from '~~/lib/common/composables/window'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
@@ -210,9 +211,7 @@ const props = defineProps<{
   modelValue: CommentBubbleModel
 }>()
 
-const {
-  urlHashState: { embedOptions }
-} = useInjectedViewerState()
+const { isEmbedEnabled } = useEmbed()
 
 const threadId = computed(() => props.modelValue.id)
 const { copy } = useClipboard()

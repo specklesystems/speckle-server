@@ -17,6 +17,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { useViewerTour } from '~/lib/viewer/composables/tour'
 import {
   useProcessOnboarding,
   FIRST_MODEL_NAME
@@ -34,7 +35,7 @@ definePageMeta({
 
 const router = useRouter()
 const { createOnboardingProject, setUserOnboardingComplete } = useProcessOnboarding()
-const tourStage = useTourStageState()
+const tourStage = useViewerTour()
 
 const status = ref('Setting up your account')
 
@@ -48,9 +49,9 @@ onMounted(async () => {
   await setUserOnboardingComplete()
   status.value = 'Almost done!'
 
-  tourStage.value.showNavbar = false
-  tourStage.value.showViewerControls = false
-  tourStage.value.showTour = true
+  tourStage.showNavbar.value = false
+  tourStage.showControls.value = false
+  tourStage.showTour.value = true
 
   const firstModelToLoad = project?.models.items.find(
     (model) => model.name === FIRST_MODEL_NAME

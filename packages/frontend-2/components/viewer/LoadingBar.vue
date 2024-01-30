@@ -3,7 +3,7 @@
     <div
       v-show="viewerBusy"
       :class="`absolute w-full max-w-screen h-1 bg-blue-500/20 overflow-hidden ${
-        showNavbar && !embedOptions?.isEnabled ? 'mt-14' : 'mt-0'
+        showNavbar && !isEmbedEnabled ? 'mt-14' : 'mt-0'
       } text-xs text-foreground-on-primary z-50`"
     >
       <div class="swoosher absolute top-0 bg-blue-500/50 rounded-md"></div>
@@ -11,16 +11,13 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  useInjectedViewerInterfaceState,
-  useInjectedViewerState
-} from '~~/lib/viewer/composables/setup'
-const {
-  urlHashState: { embedOptions }
-} = useInjectedViewerState()
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { useViewerTour } from '~/lib/viewer/composables/tour'
+import { useInjectedViewerInterfaceState } from '~~/lib/viewer/composables/setup'
+const { isEnabled: isEmbedEnabled } = useEmbed()
 
 const { viewerBusy } = useInjectedViewerInterfaceState()
-const { showNavbar } = useTourStageState().value
+const { showNavbar } = useViewerTour()
 </script>
 <style scoped>
 .swoosher {

@@ -1,9 +1,9 @@
 <template>
   <ClientOnly>
     <div
-      v-if="embedOptions.isEnabled"
+      v-if="isEmbedEnabled"
       class="select-none fixed bottom-0 left-0 w-full z-20 flex gap-3 px-4 h-14 items-center"
-      :class="embedOptions.isTransparent ? 'bg-transparent' : 'bg-foundation shadow-t'"
+      :class="isTransparent ? 'bg-transparent' : 'bg-foundation shadow-t'"
     >
       <HeaderLogoBlock
         large-icon
@@ -31,8 +31,7 @@
 
 <script setup lang="ts">
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
-
-import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 defineProps<{
   date?: string
@@ -40,5 +39,5 @@ defineProps<{
   url?: string
 }>()
 
-const { embedOptions } = useEmbedState()
+const { isEmbedEnabled, isTransparent } = useEmbed()
 </script>

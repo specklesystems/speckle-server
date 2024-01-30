@@ -1,4 +1,7 @@
-import { computed } from 'vue'
+import { writableAsyncComputed } from '~/lib/common/composables/async'
+import { useScopedState } from '~/lib/common/composables/scopedState'
+import { ViewerHashStateKeys } from '~/lib/viewer/composables/setup/urlHashState'
+import { useConditionalViewerRendering } from '~/lib/viewer/composables/ui'
 import { useRouteHashState } from '~~/lib/common/composables/url'
 
 export type EmbedOptions = {
@@ -51,10 +54,78 @@ export function deserializeEmbedOptions(embedString: string | null): EmbedOption
 export function useEmbedState() {
   const { hashState } = useRouteHashState()
 
-  const embedOptions = computed(() => {
-    const embedString = hashState.value.embed
-    return deserializeEmbedOptions(embedString)
+  const embedOptions = writableAsyncComputed({
+    get: () => {
+      const embedString = hashState.value[ViewerHashStateKeys.EmbedOptions]
+      return deserializeEmbedOptions(embedString)
+    },
+    set: async (newOptions) => {
+      const embedString = newOptions ? JSON.stringify(newOptions) : null
+      await hashState.update({
+        ...hashState.value,
+        [ViewerHashStateKeys.EmbedOptions]: embedString
+      })
+    },
+    initialState: null,
+    asyncRead: false
   })
 
   return { embedOptions }
+}
+
+const embedStateScopedKey = Symbol('EmbedStateScopedKey')
+
+export function useEmbed() {
+  const { embedOptions } = useEmbedState()
+  const { showControls } = useConditionalViewerRendering()
+
+  // useScopedState so that we don't keep creating new computeds
+  return useScopedState(embedStateScopedKey, () => {
+    const createComputed = <K extends keyof EmbedOptions>(key: K) =>
+      writableAsyncComputed({
+        get: () => embedOptions.value?.[key],
+        set: async (newVal) => {
+          await embedOptions.update({
+            ...(embedOptions.value ?? {}),
+            ...{
+              [key]: newVal
+            }
+          })
+        },
+        initialState: null,
+        asyncRead: false
+      })
+
+    const isEnabled = createComputed('isEnabled')
+    const isTransparent = createComputed('isTransparent')
+
+    const hideSelectionInfo = createComputed('hideSelectionInfo')
+    const noScroll = createComputed('noScroll')
+    const manualLoad = createComputed('manualLoad')
+    const commentSlideshow = createComputed('commentSlideshow')
+
+    const showControlsNew = writableAsyncComputed({
+      get: () => showControls.value,
+      set: async (newVal) =>
+        await embedOptions.update({
+          ...(embedOptions.value ?? {}),
+          ...{
+            hideControls: !(newVal || undefined)
+          }
+        }),
+      initialState: null,
+      asyncRead: false
+    })
+
+    return {
+      isEnabled,
+      isEmbedEnabled: isEnabled,
+      isTransparent,
+      showControls: showControlsNew,
+      hideSelectionInfo,
+      noScroll,
+      manualLoad,
+      commentSlideshow
+    }
+  })
 }

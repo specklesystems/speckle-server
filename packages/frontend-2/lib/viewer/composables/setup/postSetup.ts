@@ -50,6 +50,7 @@ import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { CameraController } from '@speckle/viewer'
 import type { Reference } from '@apollo/client'
 import type { Modifier } from '@apollo/client/cache'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -745,13 +746,11 @@ function useViewerMeasurementIntegration() {
 }
 
 function useDisableZoomOnEmbed() {
-  const {
-    viewer,
-    urlHashState: { embedOptions }
-  } = useInjectedViewerState()
+  const { viewer } = useInjectedViewerState()
+  const embedOptions = useEmbed()
 
   watch(
-    () => embedOptions.value?.noScroll,
+    () => embedOptions.noScroll.value,
     (newNoScrollValue) => {
       const cameraController = viewer.instance.getExtension(CameraController)
       if (newNoScrollValue) {

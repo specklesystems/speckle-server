@@ -37,7 +37,7 @@
       </div>
       <div v-else class="mt-3">
         <FormButton
-          v-if="embedOptions?.isEnabled"
+          v-if="isEnabled"
           size="sm"
           :icon-right="ArrowTopRightOnSquareIcon"
           :to="route.path"
@@ -60,8 +60,8 @@
 </template>
 <script setup lang="ts">
 import { PlusIcon, ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/solid'
-import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useTheme } from '~~/lib/core/composables/theme'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 defineEmits<{
   (e: 'new-discussion'): void
@@ -76,9 +76,7 @@ withDefaults(
   }
 )
 
-const {
-  urlHashState: { embedOptions }
-} = useInjectedViewerState()
+const { isEnabled } = useEmbed()
 
 const { isDarkTheme } = useTheme()
 

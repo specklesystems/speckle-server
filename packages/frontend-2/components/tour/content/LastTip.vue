@@ -4,9 +4,10 @@
   </div>
 </template>
 <script setup lang="ts">
-const state = useTourStageState()
+import { useViewerTour } from '~/lib/viewer/composables/tour'
 
-state.value.showNavbar = true
+const state = useViewerTour()
 
-state.value.showViewerControls = true
+state.showNavbar.value = true
+state.showControls.value = true
 </script>

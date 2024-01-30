@@ -16,7 +16,7 @@
         <ClientOnly>
           <!-- Tour host -->
           <div
-            v-if="tourState.showTour"
+            v-if="showTour"
             class="fixed w-full h-[100dvh] flex justify-center items-center pointer-events-none z-[100]"
           >
             <TourOnboarding />
@@ -25,8 +25,8 @@
           <div
             class="special-gradient absolute z-10 overflow-hidden w-screen"
             :class="
-              embedOptions.isEnabled
-                ? embedOptions.isTransparent
+              isEmbedEnabled
+                ? isTransparent
                   ? 'h-[100dvh]'
                   : 'h-[calc(100dvh-3.5rem)]'
                 : 'h-[100dvh]'
@@ -37,32 +37,33 @@
               enter-from-class="opacity-0"
               enter-active-class="transition duration-1000"
             >
-              <ViewerAnchoredPoints v-show="tourState.showViewerControls" />
+              <ViewerAnchoredPoints v-show="showControls" />
             </Transition>
           </div>
 
           <!-- Global loading bar -->
           <ViewerLoadingBar class="z-20" />
 
-          <!-- Sidebar sketches -->
+          <!-- Sidebar controls -->
           <Transition
             enter-from-class="opacity-0"
             enter-active-class="transition duration-1000"
           >
-            <ViewerControls v-show="tourState.showViewerControls" class="z-20" />
+            <ViewerControls v-show="showControls" class="z-20" />
           </Transition>
+
           <!-- Viewer Object Selection Info Display -->
           <Transition
-            v-if="!embedOptions.hideSelectionInfo"
+            v-if="!hideSelectionInfo"
             enter-from-class="opacity-0"
             enter-active-class="transition duration-1000"
           >
-            <div v-show="tourState.showViewerControls">
+            <div v-show="showControls">
               <ViewerSelectionSidebar class="z-20" />
             </div>
           </Transition>
           <!-- Shows up when filters are applied for an easy return to normality -->
-          <ViewerGlobalFilterReset class="z-20" :embed="embedOptions.isEnabled" />
+          <ViewerGlobalFilterReset class="z-20" :embed="!!isEmbedEnabled" />
         </ClientOnly>
       </div>
     </ViewerPostSetupWrapper>
@@ -83,21 +84,21 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useEmbedState } from '~~/lib/viewer/composables/setup/embed'
 import {
   useSetupViewer,
   type InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { useViewerTour } from '~/lib/viewer/composables/tour'
 
 const emit = defineEmits<{
   setup: [InjectableViewerState]
 }>()
 
 const route = useRoute()
-const { embedOptions } = useEmbedState()
-const tourState = useTourStageState()
+const { showTour, showControls } = useViewerTour()
 
 const projectId = computed(() => route.params.id as string)
 const modelId = computed(() => route.params.modelId as string)
@@ -109,6 +110,7 @@ const versionId = computed(() => {
 const state = useSetupViewer({
   projectId
 })
+const { isEnabled: isEmbedEnabled, hideSelectionInfo, isTransparent } = useEmbed()
 
 emit('setup', state)
 
