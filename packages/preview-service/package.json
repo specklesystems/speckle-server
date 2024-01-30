@@ -36,7 +36,7 @@
     "pino-http": "^8.2.1",
     "pino-pretty": "^9.1.1",
     "prom-client": "^14.0.1",
-    "puppeteer": "^13.3.2",
+    "puppeteer": "^21.7.0",
     "sharp": "^0.32.6",
     "yargs": "^17.3.0",
     "zlib": "^1.0.5"
