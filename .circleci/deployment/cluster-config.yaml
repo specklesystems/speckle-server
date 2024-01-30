@@ -1,0 +1,45 @@
+apiVersion: ctlptl.dev/v1alpha1
+kind: Registry
+name: ctlptl-registry
+port: 5000
+---
+apiVersion: ctlptl.dev/v1alpha1
+kind: Cluster
+product: kind
+registry: ctlptl-registry
+name: kind-speckle-server
+kindV1Alpha4Cluster:
+  nodes:
+    - role: control-plane
+      kubeadmConfigPatches:
+        - |
+          kind: InitConfiguration
+          nodeRegistration:
+            kubeletExtraArgs:
+              node-labels: "ingress-ready=true"
+      extraMounts:
+        - hostPath: ./postgres-data #FIXME the relative paths are liable to break
+          containerPath: /postgres-volume
+        - hostPath: ./minio-data #FIXME the relative paths are liable to break
+          containerPath: /minio-volume
+      extraPortMappings:
+        - containerPort: 80
+          hostPort: 80 # Docker requires privileged ports binding permissions https://docs.docker.com/desktop/mac/permission-requirements/#binding-privileged-ports
+          protocol: TCP
+          listenAddress: '127.0.0.1' #DO NOT REMOVE - this is required to prevent access from the local network or the world!!!
+        - containerPort: 443
+          hostPort: 443 # Docker requires privileged ports binding permissions https://docs.docker.com/desktop/mac/permission-requirements/#binding-privileged-ports
+          protocol: TCP
+          listenAddress: '127.0.0.1' #DO NOT REMOVE - this is required to prevent access from the local network or the world!!!
+        - containerPort: 5433
+          hostPort: 5433
+          protocol: TCP
+          listenAddress: '127.0.0.1' #DO NOT REMOVE - this is required to prevent access from the local network or the world!!!
+        - containerPort: 6380
+          hostPort: 6380
+          protocol: TCP
+          listenAddress: '127.0.0.1' #DO NOT REMOVE - this is required to prevent access from the local network or the world!!!
+        - containerPort: 9002
+          hostPort: 9002
+          protocol: TCP
+          listenAddress: '127.0.0.1' #DO NOT REMOVE - this is required to prevent access from the local network or the world!!!
