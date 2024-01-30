@@ -13,7 +13,8 @@
 
     <div
       v-if="!minimal"
-      class="text-primary h6 mt-0 hidden font-bold leading-7 md:flex"
+      class="text-primary h6 mt-0 font-bold leading-7"
+      :class="showTextOnMobile ? '' : 'hidden md:flex'"
     >
       Speckle
     </div>
@@ -25,5 +26,6 @@ defineProps<{
   active?: boolean
   to?: string
   largeIcon?: boolean
+  showTextOnMobile?: boolean
 }>()
 </script>
