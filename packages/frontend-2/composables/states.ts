@@ -1,8 +1,5 @@
-export const useTextInputGlobalFocus = () =>
-  useState<boolean>('text-input-focus', () => false)
-
 export const useTourStageState = () =>
-  useState('global-ui-element-state', () => ({
+  useState('viewer-tour-state', () => ({
     showNavbar: true,
     showViewerControls: true,
     showTour: false,
