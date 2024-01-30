@@ -1,5 +1,5 @@
 <template>
-  <NuxtLink class="flex items-center shrink-0" :to="to">
+  <NuxtLink class="flex items-center shrink-0" :to="to" :target="target">
     <img
       class="block"
       :class="{
@@ -27,5 +27,6 @@ defineProps<{
   to?: string
   largeIcon?: boolean
   showTextOnMobile?: boolean
+  target?: string
 }>()
 </script>

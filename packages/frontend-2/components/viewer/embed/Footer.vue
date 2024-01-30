@@ -5,9 +5,12 @@
       class="select-none fixed bottom-0 left-0 w-full z-20 flex gap-3 px-4 h-14 items-center"
       :class="embedOptions.isTransparent ? 'bg-transparent' : 'bg-foundation shadow-t'"
     >
-      <NuxtLink href="https://speckle.systems/" target="_blank">
-        <HeaderLogoBlock large-icon to="https://speckle.systems/" show-text-on-mobile />
-      </NuxtLink>
+      <HeaderLogoBlock
+        large-icon
+        to="https://speckle.systems/"
+        target="_blank"
+        show-text-on-mobile
+      />
       <div class="h-6 w-px bg-primary"></div>
       <div class="flex flex-col">
         <NuxtLink :to="url" target="_blank" class="leading-3">
