@@ -37,7 +37,7 @@
               enter-from-class="opacity-0"
               enter-active-class="transition duration-1000"
             >
-              <ViewerAnchoredPoints v-show="showControls" />
+              <ViewerAnchoredPoints v-show="!isEmbedEnabled && showControls" />
             </Transition>
           </div>
 
