@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: main
-        image: speckle/speckle-frontend-2:{{ .Values.docker_image_tag }}
+        image: {{ default (printf "speckle/speckle-frontend-2:%s" .Values.docker_image_tag) .Values.frontend_2.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:
@@ -48,17 +48,20 @@ spec:
             port: www
           failureThreshold: 3
           initialDelaySeconds: 10
-          periodSeconds: 10
+          periodSeconds: 5
           successThreshold: 1
-          timeoutSeconds: 10
+          timeoutSeconds: 5
         readinessProbe:
           httpGet:
             path: /health
             port: www
+          failureThreshold: 1
           initialDelaySeconds: 5
           periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 5
 
-        env: 
+        env:
           - name: FILE_SIZE_LIMIT_MB
             value: {{ .Values.file_size_limit_mb | quote }}
           - name: NUXT_PUBLIC_API_ORIGIN
