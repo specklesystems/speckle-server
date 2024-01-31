@@ -1,8 +1,9 @@
 <template>
   <div
     ref="resizableElement"
-    class="resizable absolute z-10 right-0 h-[100dvh] overflow-hidden w-full"
+    class="absolute z-10 right-0 h-[100dvh] overflow-hidden w-screen transition-all"
     :style="{ maxWidth: width + 'px' }"
+    :class="open ? '' : 'translate-x-[100%]'"
   >
     <!-- Resize Handle -->
     <div
@@ -27,7 +28,7 @@
             >
               <ArrowRightOnRectangleIcon class="h-4 w-4" />
             </button>
-            <button class="p-0.5 text-foreground hover:text-primary">
+            <button class="p-0.5 text-foreground hover:text-primary" @click="onClose">
               <XMarkIcon class="h-4 w-4" />
             </button>
           </div>
@@ -58,6 +59,14 @@
 import { ref, onUnmounted } from 'vue'
 import { XMarkIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
 
+defineProps<{
+  open: boolean
+}>()
+
+const emit = defineEmits<{
+  (event: 'close'): void
+}>()
+
 const resizableElement = ref(null)
 const width = ref(300)
 let startWidth = 0
@@ -65,6 +74,11 @@ let startX = 0
 
 const startResizing = (event: MouseEvent) => {
   event.preventDefault()
+
+  const element = resizableElement.value as HTMLElement | null
+  if (element) {
+    element.classList.remove('transition-all')
+  }
 
   startX = event.clientX
   startWidth = width.value
@@ -84,20 +98,19 @@ const resizing = (event: MouseEvent) => {
 const stopResizing = () => {
   document.removeEventListener('mousemove', resizing)
   document.removeEventListener('mouseup', stopResizing)
+  const element = resizableElement.value as HTMLElement | null
+  if (element) {
+    element.classList.add('transition-all')
+  }
 }
 
 const minimize = () => {
-  const element = resizableElement.value as HTMLElement | null
+  width.value = 300
+}
 
-  if (element) {
-    element.classList.add('transition-all')
-    width.value = 300
-    setTimeout(() => {
-      if (element) {
-        element.classList.remove('transition-all')
-      }
-    }, 300)
-  }
+const onClose = () => {
+  minimize()
+  emit('close')
 }
 
 onUnmounted(() => {

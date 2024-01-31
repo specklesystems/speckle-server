@@ -1,5 +1,5 @@
 <template>
-  <ViewerSidebar :open="isOpen">
+  <ViewerSidebar :open="sidebarOpen" @close="onClose">
     <template #title>Selection Info</template>
     <template #actions>
       <FormButton
@@ -76,7 +76,7 @@ const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
 
 const itemCount = ref(42)
-const isOpen = ref(objects.value.length === 1)
+const sidebarOpen = ref(false)
 
 const objectsUniqueByAppId = computed(() => {
   if (!diff.enabled.value) return objects.value
@@ -151,15 +151,20 @@ const isolateOrUnisolateSelection = () => {
   }
 }
 
-// const trackAndClearSelection = () => {
-//   clearSelection()
-//   mp.track('Viewer Action', {
-//     type: 'action',
-//     name: 'selection',
-//     action: 'clear',
-//     source: 'sidebar-x-button'
-//   })
-// }
+const trackAndClearSelection = () => {
+  clearSelection()
+  mp.track('Viewer Action', {
+    type: 'action',
+    name: 'selection',
+    action: 'clear',
+    source: 'sidebar-x-button'
+  })
+}
+
+const onClose = () => {
+  sidebarOpen.value = false
+  trackAndClearSelection()
+}
 
 onKeyStroke('Escape', () => {
   // Cleareance of any vis/iso state coming from here should happen in clearSelection()
@@ -173,4 +178,15 @@ onKeyStroke('Escape', () => {
     source: 'keypress-escape'
   })
 })
+
+watch(
+  () => objects.value.length,
+  (newLength) => {
+    if (newLength !== 0) {
+      sidebarOpen.value = true
+    } else {
+      sidebarOpen.value = false
+    }
+  }
+)
 </script>
