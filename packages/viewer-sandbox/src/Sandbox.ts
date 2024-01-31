@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Box3, SectionTool, TreeNode } from '@speckle/viewer'
+import { Box3, SectionTool, TreeNode, WorldTree } from '@speckle/viewer'
 import { Vector3 } from '@speckle/viewer'
 import {
   CanonicalView,
@@ -37,6 +37,7 @@ export default class Sandbox {
   private selectionList: SelectionEvent[]
   private objectControls: FolderApi | null = null
   private batchesFolder: FolderApi | null = null
+  public ids: Array<string> = []
 
   public urlParams = {
     url: 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
@@ -145,7 +146,7 @@ export default class Sandbox {
       this.addStreamControls(url)
       // this.addViewControls()
       this.addBatches()
-      // this.properties = await this.viewer.getObjectProperties()
+      this.properties = await this.viewer.getObjectProperties()
       this.batchesParams.totalBvhSize = this.getBVHSize()
       this.refresh()
     })
@@ -444,14 +445,21 @@ export default class Sandbox {
     screenshot.on('click', async () => {
       // console.warn(await this.viewer.screenshot())
       // const start = performance.now()
-      const nodes = this.viewer.getWorldTree().root.all(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (node: any) => node.model.raw.id === 'c35234a1e8584b159f7e8be59323cd64'
-      )
-      console.log(nodes)
+      // const nodes = this.viewer.getWorldTree().root.all(
+      //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      //   (node: any) => node.model.raw.id === 'c35234a1e8584b159f7e8be59323cd64'
+      // )
+      // console.log(nodes)
       // this.viewer.cancelLoad(
       //   'https://latest.speckle.dev/streams/97750296c2/objects/c3138e24a866d447eb86b2a8107b2c09'
       // )
+
+      this.viewer
+        .getExtension(SelectionExtension)
+        .selectObjects(this.ids /*['c3138e24a866d447eb86b2a8107b2c09']*/)
+      setTimeout(() => {
+        console.log(this.viewer.getRenderer().renderingStats)
+      }, 1000)
     })
 
     const rotate = this.tabs.pages[0].addButton({
