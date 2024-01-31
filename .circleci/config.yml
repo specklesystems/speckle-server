@@ -1,16 +1,14 @@
 version: 2.1
 
 orbs:
-  snyk: snyk/snyk@1.4.0
-  codecov: codecov/codecov@3.2.5
+  snyk: snyk/snyk@2.0.3
+  codecov: codecov/codecov@4.0.0
 
 workflows:
-  version: 2
-
   test-build:
     jobs:
       - vulnerability-scan:
-          context: &snyk-context
+          context:
             - snyk
           filters:
             branches:
@@ -308,7 +306,7 @@ workflows:
 jobs:
   get-version:
     docker:
-      - image: cimg/python:3.9
+      - image: cimg/python:3.9.18
     working_directory: &work-dir /tmp/ci
     steps:
       - checkout
@@ -385,8 +383,8 @@ jobs:
   test-server:
     docker:
       - image: cimg/node:18.19.0
-      - image: cimg/redis:7.0.7
-      - image: 'cimg/postgres:14.5'
+      - image: cimg/redis:7.2.4
+      - image: 'cimg/postgres:14.10'
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -636,7 +634,7 @@ jobs:
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
     docker: &docker-image
-      - image: cimg/python:3.9.15-node
+      - image: cimg/python:3.9.18-node
     resource_class: small
     working_directory: *work-dir
     steps:
@@ -663,7 +661,7 @@ jobs:
 
   deployment-test-docker-compose:
     machine:
-      image: ubuntu-2204:2023.02.1
+      image: ubuntu-2204:2024.01.1
       docker_layer_caching: true
     resource_class: large
     working_directory: *work-dir
@@ -696,7 +694,7 @@ jobs:
 
   deployment-test-helm-chart:
     machine:
-      image: ubuntu-2204:2023.02.1
+      image: ubuntu-2204:2024.01.1
       docker_layer_caching: true
     resource_class: large
     working_directory: *work-dir
@@ -770,7 +768,7 @@ jobs:
 
   docker-build: &build-job
     docker: &docker-image
-      - image: cimg/python:3.9.15-node
+      - image: cimg/python:3.9.18-node
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -792,9 +790,7 @@ jobs:
             [[ "${IS_DRAFT_PR}" == "TRUE" || -z "${CIRCLE_PULL_REQUEST}" ]] && echo "Should not build because either Draft PR or branch without PR, stopping" && exit 1
             echo "proceeding"
       - setup_remote_docker:
-          # a weird issue with yarn installing packages throwing EPERM errors
-          # this fixes it
-          version: 20.10.12
+          version: default
           docker_layer_caching: true
       - run:
           name: Build and Save
@@ -853,8 +849,8 @@ jobs:
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
   docker-publish: &publish-job
-    docker: &base-image
-      - image: cimg/python:3.9.15-node
+    docker:
+      - image: cimg/python:3.9.18-node
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -863,9 +859,7 @@ jobs:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
       - setup_remote_docker:
-          # a weird issue with yarn installing packages throwing EPERM errors
-          # this fixes it
-          version: 20.10.12
+          version: default
           docker_layer_caching: true
       - run:
           name: Publish
