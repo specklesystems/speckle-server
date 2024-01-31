@@ -21,7 +21,7 @@ import {
   Vector3,
   VSMShadowMap
 } from 'three'
-import { Batch, GeometryType } from './batching/Batch'
+import { Batch, BatchUpdateRange, GeometryType } from './batching/Batch'
 import Batcher from './batching/Batcher'
 import { Geometry } from './converter/Geometry'
 import Input, { InputEvent, InputOptionsDefault } from './input/Input'
@@ -696,10 +696,11 @@ export default class SpeckleRenderer {
     material: Material
   ) {
     for (const k in rvs) {
-      const ranges = rvs[k].map((value: NodeRenderView) => {
+      const drawRanges = rvs[k].map((value: NodeRenderView) => {
         return { offset: value.batchStart, count: value.batchCount, material }
       })
-      if (this.batcher.batches[k]) this.batcher.batches[k].setDrawRanges(...ranges)
+      if (this.batcher.batches[k])
+        this.batcher.batches[k].setDrawRanges(...this.flattenDrawRanges(drawRanges))
     }
   }
 
@@ -716,7 +717,8 @@ export default class SpeckleRenderer {
           materialOptions: this.batcher.materials.getFilterMaterialOptions(material)
         }
       })
-      if (this.batcher.batches[k]) this.batcher.batches[k].setDrawRanges(...drawRanges)
+      if (this.batcher.batches[k])
+        this.batcher.batches[k].setDrawRanges(...this.flattenDrawRanges(drawRanges))
     }
   }
 
@@ -734,8 +736,47 @@ export default class SpeckleRenderer {
           material
         }
       })
-      if (this.batcher.batches[k]) this.batcher.batches[k].setDrawRanges(...drawRanges)
+
+      if (this.batcher.batches[k])
+        this.batcher.batches[k].setDrawRanges(...this.flattenDrawRanges(drawRanges))
     }
+  }
+
+  private flattenDrawRanges(ranges: Array<BatchUpdateRange>): Array<BatchUpdateRange> {
+    if (ranges.length < 3) return ranges
+
+    const flatRanges = []
+    let offset = ranges[0].offset
+    let count = 0
+    for (let k = 0; k < ranges.length - 1; k++) {
+      count += ranges[k].count
+      if (offset + count === ranges[k + 1].offset) {
+        if (k === ranges.length - 2) {
+          flatRanges.push({
+            offset,
+            count: count + ranges[k + 1].count,
+            material: ranges[k].material
+          })
+        }
+        continue
+      }
+      flatRanges.push({
+        offset,
+        count,
+        material: ranges[k].material
+      })
+      offset = ranges[k + 1].offset
+      count = 0
+      if (k === ranges.length - 2) {
+        flatRanges.push({
+          offset: ranges[k + 1].offset,
+          count: ranges[k + 1].count,
+          material: ranges[k + 1].material
+        })
+      }
+    }
+
+    return flatRanges
   }
 
   public getMaterial(rv: NodeRenderView): Material {

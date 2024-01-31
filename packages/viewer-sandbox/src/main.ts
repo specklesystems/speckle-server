@@ -105,7 +105,7 @@ const createViewer = async (containerName: string, stream: string) => {
     console.log(categories)
 
     sandbox.refresh()
-    const COUNT = 64000
+    const COUNT = 16000
     await viewer.getWorldTree().walkAsync((node: TreeNode) => {
       if (
         viewer.getWorldTree().isRoot(node) ||
