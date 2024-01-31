@@ -265,6 +265,7 @@ export default class LineBatch implements Batch {
     return this.batchMaterial
   }
 
+  /** TODO: I wish we wouldn't clone the material here...  */
   public getMaterial(rv: NodeRenderView): Material {
     const start = rv.batchStart * this.colorBuffer.stride
     const data = this.colorBuffer.array as number[]
