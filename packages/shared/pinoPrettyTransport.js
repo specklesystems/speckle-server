@@ -12,14 +12,14 @@ module.exports = (opts) =>
     messageFormat: (log, messageKey) => {
       const msg = log[messageKey]
       if (!msg) return undefined
-
+      if (typeof msg !== 'string') return msg
       return msg.replace(/{([^{}]+)}/g, (match, p1) => {
         const val = get(log, p1)
         if (val === undefined) return match
 
         const formattedValue =
           isString(val) || isNumber(val) || isBoolean(val) ? val : JSON.stringify(val)
-        return formattedValue
+        return formattedValue.toLocaleString()
       })
     }
   })
