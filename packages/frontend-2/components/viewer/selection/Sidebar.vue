@@ -1,5 +1,5 @@
 <template>
-  <ViewerCommentsPortalOrDiv v-if="sidebarOpen" to="bottomPanel">
+  <ViewerCommentsPortalOrDiv v-if="shouldRenderSidebar" to="bottomPanel">
     <ViewerSidebar :open="sidebarOpen" @close="onClose">
       <template #title>Selection Info</template>
       <template #actions>
@@ -76,6 +76,7 @@ const {
 const { objects, clearSelection } = useSelectionUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const itemCount = ref(42)
 const sidebarOpen = ref(false)
@@ -85,6 +86,10 @@ const objectsUniqueByAppId = computed(() => {
   return uniqWith(objects.value, (a, b) => {
     return a.applicationId === b.applicationId
   })
+})
+
+const shouldRenderSidebar = computed(() => {
+  return !isSmallerOrEqualSm.value || sidebarOpen.value
 })
 
 const objectsLimited = computed(() => {

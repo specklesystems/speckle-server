@@ -1,7 +1,7 @@
 <template>
   <div
     ref="resizableElement"
-    class="relative sm:absolute z-10 right-0 h-[50dvh] sm:h-[100dvh] overflow-hidden w-screen transition-all flex"
+    class="relative sm:absolute z-10 right-0 h-[50dvh] sm:h-[100dvh] overflow-hidden w-screen transition-all flex sm:shadow-lg"
     :style="!isSmallerOrEqualSm ? { maxWidth: width + 'px' } : {}"
     :class="open ? '' : 'sm:translate-x-[100%]'"
   >
@@ -17,7 +17,7 @@
         class="h-18 absolute z-10 w-full top-0 sm:top-14 right-0 bg-foundation shadow-md"
       >
         <div
-          class="flex items-center justify-between pl-3 pr-2.5 h-10 border-b border-outline-2"
+          class="flex items-center justify-between pl-3 pr-2.5 h-10 border-b border-outline-3"
         >
           <div v-if="$slots.title" class="font-bold text-sm text-primary">
             <slot name="title"></slot>
@@ -50,7 +50,7 @@
       </div>
       <div class="w-full" :class="$slots.actions ? 'h-16 sm:h-32' : 'h-26'"></div>
       <div
-        class="overflow-y-auto simple-scrollbar h-[calc(50dvh-8rem)] sm:h-[calc(100dvh-8rem)] bg-foundation w-full pt-2"
+        class="overflow-y-auto simple-scrollbar h-[calc(50dvh-6rem)] sm:h-[calc(100dvh-8rem)] bg-foundation w-full pt-2"
       >
         <slot></slot>
       </div>
