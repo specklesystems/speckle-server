@@ -54,7 +54,7 @@
           enter-active-class="transition duration-1000"
         >
           <div v-show="tourState.showViewerControls">
-            <ViewerSelectionSidebar class="z-20 hidden sm:block" />
+            <ViewerSelectionSidebar class="z-20 hidden sm:flex" />
           </div>
         </Transition>
         <!-- Shows up when filters are applied for an easy return to normality -->

@@ -43,13 +43,14 @@
           View More ({{ objects.length - itemCount }})
         </FormButton>
       </div>
-      <div
-        v-if="objects.length === 1"
-        class="hidden sm:block text-foreground-2 mt-2 px-2 text-xs"
-      >
-        Hold "shift" to select multiple objects
-      </div>
     </div>
+    <template #footer>
+      <div v-if="objects.length === 1">
+        <div class="text-foreground-2 text-xs">
+          Hold "shift" to select multiple objects
+        </div>
+      </div>
+    </template>
   </ViewerSidebar>
 </template>
 <script setup lang="ts">
