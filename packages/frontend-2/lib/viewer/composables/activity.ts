@@ -27,6 +27,7 @@ import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import { useOnBeforeWindowUnload } from '~~/lib/common/composables/window'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { onViewerUserActivityBroadcastedSubscription } from '~~/lib/viewer/graphql/subscriptions'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 import {
   StateApplyMode,
@@ -143,6 +144,7 @@ export function useViewerUserActivityTracking(params: {
   const { isLoggedIn } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
   const sendUpdate = useViewerUserActivityBroadcasting()
+  const { isEnabled: isEmbedEnabled } = useEmbed()
 
   // TODO: For some reason subscription is set up twice? Vue Apollo bug?
   const { onResult: onUserActivity } = useSubscription(
@@ -174,7 +176,7 @@ export function useViewerUserActivityTracking(params: {
     const incomingSessionId = event.sessionId
 
     if (sessionId.value === incomingSessionId) return
-    if (status === ViewerUserActivityStatus.Disconnected) {
+    if (!isEmbedEnabled && status === ViewerUserActivityStatus.Disconnected) {
       triggerNotification({
         description: `${users.value[incomingSessionId]?.userName || 'A user'} left.`,
         type: ToastNotificationType.Info
@@ -206,7 +208,7 @@ export function useViewerUserActivityTracking(params: {
       lastUpdate: dayjs()
     }
 
-    if (!Object.keys(users.value).includes(incomingSessionId)) {
+    if (!isEmbedEnabled && !Object.keys(users.value).includes(incomingSessionId)) {
       triggerNotification({
         description: `${userData.userName} joined.`,
         type: ToastNotificationType.Info

@@ -24,13 +24,15 @@
       @prev="(model) => openPrevThread(model)"
     />
 
-    <!-- Active users -->
-    <ViewerAnchoredPointUser
-      v-for="user in Object.values(users)"
-      :key="user.state.sessionId"
-      :user="user"
-      class="z-[10]"
-    />
+    <div v-if="!isEmbedEnabled">
+      <!-- Active users -->
+      <ViewerAnchoredPointUser
+        v-for="user in Object.values(users)"
+        :key="user.state.sessionId"
+        :user="user"
+        class="z-[10]"
+      />
+    </div>
 
     <!-- Active user avatars in navbar -->
     <Portal to="secondary-actions">
@@ -62,7 +64,10 @@
 
     <!-- Active user tracking cancel & Follower count display -->
     <div
-      v-if="(spotlightUserSessionId && spotlightUser) || followers.length !== 0"
+      v-if="
+        (!isEmbedEnabled && spotlightUserSessionId && spotlightUser) ||
+        followers.length !== 0
+      "
       class="absolute w-screen z-10 p-1"
       :class="
         isEmbedEnabled
