@@ -24,7 +24,14 @@
           </div>
           <div class="flex items-center gap-0.5">
             <button
-              v-if="width !== 300"
+              v-if="width === 300"
+              class="p-0.5 text-foreground hover:text-primary"
+              @click="width = 600"
+            >
+              <ArrowLeftOnRectangleIcon class="h-4 w-4" />
+            </button>
+            <button
+              v-else
               class="p-0.5 text-foreground hover:text-primary"
               @click="minimize"
             >
@@ -59,7 +66,11 @@
 </template>
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
-import { XMarkIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
+import {
+  XMarkIcon,
+  ArrowRightOnRectangleIcon,
+  ArrowLeftOnRectangleIcon
+} from '@heroicons/vue/24/outline'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 defineProps<{
