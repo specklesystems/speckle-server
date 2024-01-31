@@ -5,7 +5,8 @@ import {
   SelectionEvent,
   ViewerEvent,
   DebugViewer,
-  Viewer
+  Viewer,
+  WorldTree
 } from '@speckle/viewer'
 
 import './style.css'
@@ -18,6 +19,7 @@ import {
   DiffExtension,
   FilteringExtension
 } from '@speckle/viewer'
+import { GeometryType } from '@speckle/viewer'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -103,6 +105,18 @@ const createViewer = async (containerName: string, stream: string) => {
     console.log(categories)
 
     sandbox.refresh()
+    const COUNT = 16000
+    await viewer.getWorldTree().walkAsync((node: TreeNode) => {
+      if (
+        viewer.getWorldTree().isRoot(node) ||
+        node.parent.model.id === WorldTree.ROOT_ID ||
+        !node.model.renderView
+      )
+        return true
+      const dice = Math.random()
+      if (dice < 0.5 && sandbox.ids.length < COUNT) sandbox.ids.push(node.model.id)
+      return true
+    })
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
@@ -142,7 +156,7 @@ const getStream = () => {
     // IFC story, a subtree of the above
     // 'https://latest.speckle.dev/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216'
     // Izzy's garden
-    'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
+    // 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
     // Small scale lines
     // 'https://speckle.xyz/streams/638d3b1f83/commits/6025e2b546?c=%5B2.18058,-0.20814,9.67642,3.85491,5.05364,0,0,1%5D'
     // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
@@ -320,7 +334,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/97750296c2/commits/5386a0af02' // 700k+ objects 30kk tris
     // 'https://latest.speckle.dev/streams/97750296c2/commits/2a6fd781f2' // NEW
 
-    // 'https://latest.speckle.dev/streams/97750296c2/commits/48f0567a88' // 1015849 objects
+    'https://latest.speckle.dev/streams/97750296c2/commits/48f0567a88' // 1015849 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/aec0841f7e' // 11k objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/96ffc3c786' // 92209 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/92115d3789' // 390974 objects 19kk tris
@@ -358,6 +372,8 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/576310a6d5'
     // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/489d42ca8c'
     // 'https://latest.speckle.dev/streams/97750296c2/objects/11a7752e40b4ef0620affc55ce9fdf5a'
+
+    // 'https://latest.speckle.dev/streams/92b620fb17/objects/7118603b197c00944f53be650ce721ec'
   )
 }
 

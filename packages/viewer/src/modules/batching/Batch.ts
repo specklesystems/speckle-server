@@ -11,6 +11,7 @@ export enum GeometryType {
   TEXT
 }
 
+/** TO DO: Unify point and mesh batch implementations */
 export interface Batch {
   id: string
   subtreeId: string

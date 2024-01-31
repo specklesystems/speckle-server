@@ -6,6 +6,8 @@ import {
   Material,
   Object3D,
   Points,
+  Uint16BufferAttribute,
+  Uint32BufferAttribute,
   WebGLRenderer
 } from 'three'
 import { Geometry } from '../converter/Geometry'
@@ -30,6 +32,7 @@ export default class PointBatch implements Batch {
   public batchMaterial: Material
   public mesh: Points
   private needsFlatten = false
+  private needsShuffle = false
 
   private gradientIndexBuffer: BufferAttribute
 
@@ -89,6 +92,10 @@ export default class PointBatch implements Batch {
     if (this.needsFlatten) {
       this.flattenDrawGroups()
       this.needsFlatten = false
+    }
+    if (this.needsShuffle) {
+      this.shuffleDrawGroups()
+      this.needsShuffle = false
     }
   }
 
@@ -403,6 +410,139 @@ export default class PointBatch implements Batch {
         k = n
       }
     }
+    if (this.drawCalls > this.minDrawCalls + 2) {
+      this.needsShuffle = true
+    } else {
+      this.geometry.groups.sort((a, b) => {
+        return a.start - b.start
+      })
+      const transparentOrHiddenGroup = this.geometry.groups.find(
+        (value) =>
+          this.materials[value.materialIndex].transparent === true ||
+          this.materials[value.materialIndex].visible === false
+      )
+      if (transparentOrHiddenGroup) {
+        for (
+          let k = this.geometry.groups.indexOf(transparentOrHiddenGroup);
+          k < this.geometry.groups.length;
+          k++
+        ) {
+          const material = this.materials[this.geometry.groups[k].materialIndex]
+          if (material.transparent !== true && material.visible !== false) {
+            this.needsShuffle = true
+            break
+          }
+        }
+      }
+    }
+  }
+
+  private shuffleDrawGroups() {
+    const groups = this.geometry.groups
+      .sort((a, b) => {
+        return a.start - b.start
+      })
+      .slice()
+
+    this.geometry.groups.sort((a, b) => {
+      const materialA: Material = (this.mesh.material as Array<Material>)[
+        a.materialIndex
+      ]
+      const materialB: Material = (this.mesh.material as Array<Material>)[
+        b.materialIndex
+      ]
+      const visibleOrder = +materialB.visible - +materialA.visible
+      const transparentOrder = +materialA.transparent - +materialB.transparent
+      if (visibleOrder !== 0) return visibleOrder
+      return transparentOrder
+    })
+
+    const materialOrder = []
+    groups.reduce((previousValue, currentValue) => {
+      if (previousValue.indexOf(currentValue.materialIndex) === -1) {
+        previousValue.push(currentValue.materialIndex)
+      }
+      return previousValue
+    }, materialOrder)
+
+    const grouped = []
+    for (let k = 0; k < materialOrder.length; k++) {
+      grouped.push(
+        groups.filter((val) => {
+          return val.materialIndex === materialOrder[k]
+        })
+      )
+    }
+
+    const sourceIBO: BufferAttribute = this.geometry.index
+    const targetIBOData: Uint16Array | Uint32Array = (
+      sourceIBO.array as Uint16Array | Uint32Array
+    ).slice()
+
+    const newGroups = []
+    const scratchRvs = this.renderViews.slice()
+    scratchRvs.sort((a, b) => {
+      return a.batchStart - b.batchStart
+    })
+    let targetIBOOffset = 0
+    for (let k = 0; k < grouped.length; k++) {
+      const materialGroup = grouped[k]
+      const materialGroupStart = targetIBOOffset
+      let materialGroupCount = 0
+      for (let i = 0; i < (materialGroup as []).length; i++) {
+        const start = materialGroup[i].start
+        const count = materialGroup[i].count
+        const subArray = (sourceIBO.array as Uint16Array | Uint32Array).subarray(
+          start,
+          start + count
+        )
+        targetIBOData.set(subArray, targetIBOOffset)
+        let rvTrisCount = 0
+        for (let m = 0; m < scratchRvs.length; m++) {
+          if (
+            scratchRvs[m].batchStart >= start &&
+            scratchRvs[m].batchEnd <= start + count
+          ) {
+            scratchRvs[m].setBatchData(
+              this.id,
+              targetIBOOffset + rvTrisCount,
+              scratchRvs[m].batchCount
+            )
+            rvTrisCount += scratchRvs[m].batchCount
+            scratchRvs.splice(m, 1)
+            m--
+          }
+        }
+        targetIBOOffset += count
+        materialGroupCount += count
+      }
+      newGroups.push({
+        offset: materialGroupStart,
+        count: materialGroupCount,
+        materialIndex: materialGroup[0].materialIndex
+      })
+    }
+    this.geometry.groups = []
+    for (let i = 0; i < newGroups.length; i++) {
+      this.geometry.addGroup(
+        newGroups[i].offset,
+        newGroups[i].count,
+        newGroups[i].materialIndex
+      )
+    }
+
+    ;(this.geometry.index.array as Uint16Array | Uint32Array).set(targetIBOData)
+    this.geometry.index.needsUpdate = true
+
+    const hiddenGroup = this.geometry.groups.find((value) => {
+      return this.mesh.material[value.materialIndex].visible === false
+    })
+    if (hiddenGroup) {
+      this.setVisibleRange({
+        offset: 0,
+        count: hiddenGroup.start
+      })
+    }
   }
 
   public resetDrawRanges() {
@@ -421,11 +561,19 @@ export default class PointBatch implements Batch {
     }
     const position = new Float64Array(attributeCount)
     const color = new Float32Array(attributeCount).fill(1)
+    const index = new Int32Array(attributeCount / 3)
     let offset = 0
+    let indexOffset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
       position.set(geometry.attributes.POSITION, offset)
       if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
+      index.set(
+        new Int32Array(geometry.attributes.POSITION.length / 3).map(
+          (value, index) => index + indexOffset
+        ),
+        indexOffset
+      )
       this.renderViews[k].setBatchData(
         this.id,
         offset / 3,
@@ -433,10 +581,11 @@ export default class PointBatch implements Batch {
       )
 
       offset += geometry.attributes.POSITION.length
+      indexOffset += geometry.attributes.POSITION.length / 3
 
       this.renderViews[k].disposeGeometry()
     }
-    this.makePointGeometry(position, color)
+    this.makePointGeometry(index, position, color)
     this.mesh = new Points(this.geometry, this.batchMaterial)
     this.mesh.material = [this.batchMaterial]
     this.mesh.geometry.addGroup(0, this.getCount(), 0)
@@ -501,6 +650,7 @@ export default class PointBatch implements Batch {
   }
 
   private makePointGeometry(
+    index: Int32Array,
     position: Float64Array,
     color: Float32Array
   ): BufferGeometry {
@@ -508,6 +658,11 @@ export default class PointBatch implements Batch {
 
     this.geometry.setAttribute('position', new Float32BufferAttribute(position, 3))
     this.geometry.setAttribute('color', new Float32BufferAttribute(color, 3))
+    if (position.length >= 65535 || index.length >= 65535) {
+      this.geometry.setIndex(new Uint32BufferAttribute(index, 1))
+    } else {
+      this.geometry.setIndex(new Uint16BufferAttribute(index, 1))
+    }
 
     const buffer = new Float32Array(position.length / 3)
     this.gradientIndexBuffer = new Float32BufferAttribute(buffer, 1)
