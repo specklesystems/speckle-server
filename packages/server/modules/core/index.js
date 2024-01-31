@@ -11,6 +11,9 @@ exports.init = async (app) => {
   // Initialize the static route
   require('./rest/static')(app)
 
+  // Initialize the health check route
+  require('./rest/health')(app)
+
   // Initialises the two main bulk upload/download endpoints
   require('./rest/upload')(app)
   require('./rest/download')(app)
