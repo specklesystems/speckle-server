@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: main
-        image: speckle/speckle-server:{{ .Values.docker_image_tag }}
+        image: {{ default (printf "speckle/speckle-server:%s" .Values.docker_image_tag) .Values.server.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
         args: #overwrites the Dockerfile CMD statement
         {{- if .Values.server.inspect.enabled }}

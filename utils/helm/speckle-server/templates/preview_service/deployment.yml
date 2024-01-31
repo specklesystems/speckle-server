@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: main
-        image: speckle/speckle-preview-service:{{ .Values.docker_image_tag }}
+        image: {{ default (printf "speckle/speckle-preview-service:%s" .Values.docker_image_tag) .Values.preview_service.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:

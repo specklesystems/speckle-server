@@ -1,16 +1,14 @@
 version: 2.1
 
 orbs:
-  snyk: snyk/snyk@1.4.0
-  codecov: codecov/codecov@3.2.5
+  snyk: snyk/snyk@2.0.3
+  codecov: codecov/codecov@4.0.0
 
 workflows:
-  version: 2
-
   test-build:
     jobs:
       - vulnerability-scan:
-          context: &snyk-context
+          context:
             - snyk
           filters:
             branches:
@@ -38,6 +36,54 @@ workflows:
           context:
             - chromatic-ui-components
           filters: *filters-allow-all
+
+      - deployment-testing-approval:
+          type: approval
+          filters: &filters-ignore-main-branch-or-all-tags
+            branches:
+              ignore:
+                - main
+                - frontend-2
+            tags:
+              ignore: /.*/
+
+      - deployment-test-docker-compose:
+          filters: &filters-deployment-testing
+            tags:
+              # run tests for any commit on any branch, including any tags
+              only: /.*/
+          requires:
+            - get-version
+            - pre-commit
+            - deployment-testing-approval
+            - test-frontend-2
+            - test-server
+            - docker-build-server
+            - docker-build-frontend
+            - docker-build-frontend-2
+            - docker-build-previews
+            - docker-build-webhooks
+            - docker-build-file-imports
+            - docker-build-test-container
+            - docker-build-monitor-container
+            - docker-build-docker-compose-ingress
+
+      - deployment-test-helm-chart:
+          filters: *filters-deployment-testing
+          requires:
+            - get-version
+            - pre-commit
+            - deployment-testing-approval
+            - test-frontend-2
+            - test-server
+            - docker-build-server
+            - docker-build-frontend
+            - docker-build-frontend-2
+            - docker-build-previews
+            - docker-build-webhooks
+            - docker-build-file-imports
+            - docker-build-test-container
+            - docker-build-monitor-container
 
       - get-version:
           filters: *filters-allow-all
@@ -224,6 +270,9 @@ workflows:
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
+            - deployment-test-docker-compose
+            - deployment-test-helm-chart
+            - docker-publish-docker-compose-ingress
             - docker-publish-file-imports
             - docker-publish-frontend
             - docker-publish-frontend-2
@@ -257,7 +306,7 @@ workflows:
 jobs:
   get-version:
     docker:
-      - image: cimg/python:3.9
+      - image: cimg/python:3.9.18
     working_directory: &work-dir /tmp/ci
     steps:
       - checkout
@@ -334,8 +383,8 @@ jobs:
   test-server:
     docker:
       - image: cimg/node:18.19.0
-      - image: cimg/redis:7.0.7
-      - image: 'cimg/postgres:14.5'
+      - image: cimg/redis:7.2.4
+      - image: 'cimg/postgres:14.10'
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -585,7 +634,7 @@ jobs:
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
     docker: &docker-image
-      - image: cimg/python:3.9.15-node
+      - image: cimg/python:3.9.18-node
     resource_class: small
     working_directory: *work-dir
     steps:
@@ -610,9 +659,116 @@ jobs:
           additional-arguments: --yarn-workspaces  --strict-out-of-sync=false
           fail-on-issues: false
 
+  deployment-test-docker-compose:
+    machine:
+      image: ubuntu-2204:2024.01.1
+      docker_layer_caching: true
+    resource_class: large
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      # create the nix folder with permissive write permissions
+      - run: |
+          sudo mkdir /nix
+          sudo chmod 777 /nix
+      - restore_cache:
+          keys:
+            - nix-{{ checksum "./.circleci/deployment/docker-compose-shell.nix" }}
+      - run:
+          name: Install the nix package manager
+          command: |
+            sh <(curl -L https://nixos.org/nix/install) --daemon --yes
+            echo "source /etc/bashrc" >> "${BASH_ENV}"
+      - run:
+          name: Initialize nix shell
+          command: |
+            nix-shell --run "echo Here, a nix shell for you" ./.circleci/deployment/docker-compose-shell.nix
+      - save_cache:
+          key: nix-{{ checksum "./.circleci/deployment/docker-compose-shell.nix" }}
+          paths:
+            - /nix
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: nix-shell --run "tilt ci --file ./.circleci/deployment/Tiltfile.dockercompose" ./.circleci/deployment/docker-compose-shell.nix
+
+  deployment-test-helm-chart:
+    machine:
+      image: ubuntu-2204:2024.01.1
+      docker_layer_caching: true
+    resource_class: large
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/ci/workspace
+      # create the nix folder with permissive write permissions
+      - run: |
+          sudo mkdir /nix
+          sudo chmod 777 /nix
+      - restore_cache:
+          keys:
+            - nix-{{ checksum "./.circleci/deployment/helm-chart-shell.nix" }}
+      - run:
+          name: Install the nix package manager
+          command: |
+            sh <(curl -L https://nixos.org/nix/install) --daemon --yes
+            echo "source /etc/bashrc" >> "${BASH_ENV}"
+      - run:
+          name: Initialize nix shell
+          command: |
+            nix-shell \
+            --run "echo Here, a nix shell for you" \
+            ./.circleci/deployment/helm-chart-shell.nix
+      - save_cache:
+          key: nix-{{ checksum "./.circleci/deployment/helm-chart-shell.nix" }}
+          paths:
+            - /nix
+      - run: cat workspace/env-vars >> $BASH_ENV
+      - run: echo "export KUBECONFIG=$(pwd)/.kube/config" >> "${BASH_ENV}"
+      - run: echo "${KUBECONFIG}"
+      - run:
+          name: Template Helm Chart
+          command: |
+            nix-shell \
+            --run "helm template speckle-server ./utils/helm/speckle-server" \
+            ./.circleci/deployment/helm-chart-shell.nix
+      - run:
+          name: Add 127.0.0.1 domains to /etc/hosts
+          command: |
+            sudo tee -a /etc/hosts \<<<'127.0.0.1 speckle.internal'
+            cat /etc/hosts
+      - run:
+          name: Change directory permissions to allow kind to create directories
+          command: |
+            mkdir -p "./minio-data"
+            if [ "$(stat -f "%A" "./minio-data")" != "775" ]; then
+              echo "🔐 We need 'sudo' to set permissions on minio-data directory to 775"
+              sudo chmod 775 "./minio-data"
+            fi
+            mkdir -p "./postgres-data"
+            if [ "$(stat -f "%A" "./postgres-data")" != "775" ]; then
+              echo "🔐 We need 'sudo' to set permissions on postgres-data directory to 775"
+              sudo chmod 775 "./postgres-data"
+            fi
+
+      - run:
+          name: Deploy Kubernetes (kind) cluster
+          command: |
+            nix-shell \
+            --run "ctlptl apply --filename ./.circleci/deployment/cluster-config.yaml" \
+            ./.circleci/deployment/helm-chart-shell.nix
+
+      - run:
+          name: Deploy Kubernetes resources to cluster
+          command: |
+            nix-shell \
+            --run "tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
+            ./.circleci/deployment/helm-chart-shell.nix
+
   docker-build: &build-job
     docker: &docker-image
-      - image: cimg/python:3.9.15-node
+      - image: cimg/python:3.9.18-node
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -634,9 +790,7 @@ jobs:
             [[ "${IS_DRAFT_PR}" == "TRUE" || -z "${CIRCLE_PULL_REQUEST}" ]] && echo "Should not build because either Draft PR or branch without PR, stopping" && exit 1
             echo "proceeding"
       - setup_remote_docker:
-          # a weird issue with yarn installing packages throwing EPERM errors
-          # this fixes it
-          version: 20.10.12
+          version: default
           docker_layer_caching: true
       - run:
           name: Build and Save
@@ -695,8 +849,8 @@ jobs:
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
   docker-publish: &publish-job
-    docker: &base-image
-      - image: cimg/python:3.9.15-node
+    docker:
+      - image: cimg/python:3.9.18-node
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -705,9 +859,7 @@ jobs:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
       - setup_remote_docker:
-          # a weird issue with yarn installing packages throwing EPERM errors
-          # this fixes it
-          version: 20.10.12
+          version: default
           docker_layer_caching: true
       - run:
           name: Publish
