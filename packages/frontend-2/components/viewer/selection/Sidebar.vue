@@ -45,11 +45,9 @@
           </FormButton>
         </div>
       </div>
-      <template #footer>
-        <div v-if="objects.length === 1">
-          <div class="text-foreground-2 text-xs">
-            Hold "shift" to select multiple objects
-          </div>
+      <template v-if="!isSmallerOrEqualSm && objects.length === 1" #footer>
+        <div class="text-foreground-2 text-xs">
+          Hold "shift" to select multiple objects
         </div>
       </template>
     </ViewerSidebar>

@@ -48,9 +48,9 @@
           </div>
         </div>
       </div>
-      <div class="w-full" :class="$slots.actions ? 'h-16 sm:h-32' : 'h-26'"></div>
+      <div class="w-full" :class="$slots.actions ? 'h-24 sm:h-32' : 'h-26'"></div>
       <div
-        class="overflow-y-auto simple-scrollbar h-[calc(50dvh-6rem)] sm:h-[calc(100dvh-8rem)] bg-foundation w-full pt-2"
+        class="overflow-y-auto simple-scrollbar h-[calc(50dvh)] sm:h-[calc(100dvh-8rem)] bg-foundation w-full pt-2"
       >
         <slot></slot>
       </div>
