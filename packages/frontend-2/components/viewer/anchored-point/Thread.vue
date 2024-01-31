@@ -25,7 +25,6 @@
           -->
           <!-- <UserAvatarGroup :users="threadAuthors" /> -->
           <UserAvatarGroup v-if="!modelValue.archived" :users="threadAuthors" />
-
           <CheckCircleIcon v-if="modelValue.archived" class="w-8 h-8 text-primary" />
         </button>
       </div>
