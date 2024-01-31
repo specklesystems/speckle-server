@@ -1,22 +1,24 @@
 <template>
   <div
     ref="resizableElement"
-    class="absolute z-10 right-0 h-[100dvh] overflow-hidden w-screen transition-all"
-    :style="{ maxWidth: width + 'px' }"
-    :class="open ? '' : 'translate-x-[100%]'"
+    class="relative sm:absolute z-10 right-0 h-[50dvh] sm:h-[100dvh] overflow-hidden w-screen transition-all flex"
+    :style="!isSmallerOrEqualSm ? { maxWidth: width + 'px' } : {}"
+    :class="open ? '' : 'sm:translate-x-[100%]'"
   >
     <!-- Resize Handle -->
     <div
       ref="resizeHandle"
-      class="relative z-10 hover:z-50 w-1 h-full border-l bg-foundation hover:bg-outline-2 cursor-ew-resize shadow-lg"
+      class="relative z-10 hover:z-50 w-1 h-full bg-foundation hover:bg-outline-2 cursor-ew-resize shadow-lg"
       @mousedown="startResizing"
     ></div>
-    <div class="flex flex-col bg-foundation shadow-lg w-full">
+    <div class="flex flex-col bg-foundation shadow-lg w-full h-full">
       <!-- Header -->
       <div
-        class="h-18 absolute z-10 w-full top-14 right-0 bg-foundation shadow-md border-l"
+        class="h-18 absolute z-10 w-full top-0 sm:top-14 right-0 bg-foundation shadow-md"
       >
-        <div class="flex items-center justify-between pl-3 pr-2.5 h-10 border-b">
+        <div
+          class="flex items-center justify-between pl-3 pr-2.5 h-10 border-b border-outline-2"
+        >
           <div v-if="$slots.title" class="font-bold text-sm text-primary">
             <slot name="title"></slot>
           </div>
@@ -39,9 +41,9 @@
           </div>
         </div>
       </div>
-      <div class="w-full" :class="$slots.actions ? 'h-32' : 'h-26'"></div>
+      <div class="w-full" :class="$slots.actions ? 'h-16 sm:h-32' : 'h-26'"></div>
       <div
-        class="overflow-y-auto simple-scrollbar h-[calc(100dvh-8rem)] bg-foundation w-full pt-2"
+        class="overflow-y-auto simple-scrollbar h-[calc(50dvh-8rem)] sm:h-[calc(100dvh-8rem)] bg-foundation w-full pt-2"
       >
         <slot></slot>
       </div>
@@ -58,6 +60,7 @@
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
 import { XMarkIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
+import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 defineProps<{
   open: boolean
@@ -71,6 +74,8 @@ const resizableElement = ref(null)
 const width = ref(300)
 let startWidth = 0
 let startX = 0
+
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const startResizing = (event: MouseEvent) => {
   event.preventDefault()

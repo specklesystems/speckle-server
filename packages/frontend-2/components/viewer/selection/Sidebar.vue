@@ -1,57 +1,59 @@
 <template>
-  <ViewerSidebar :open="sidebarOpen" @close="onClose">
-    <template #title>Selection Info</template>
-    <template #actions>
-      <FormButton
-        size="xs"
-        color="secondary"
-        class="opacity-80 hover:opacity-100"
-        @click.stop="hideOrShowSelection"
-      >
-        <div class="flex items-center gap-1">
-          <EyeIcon v-if="!isHidden" class="h-4 w-4" />
-          <EyeSlashIcon v-else class="h-4 w-4" />
-          Hide
-        </div>
-      </FormButton>
-      <FormButton
-        size="xs"
-        color="secondary"
-        class="hover:opacity-100"
-        :class="isIsolated ? 'text-primary opacity-100' : 'opacity-80'"
-        @click.stop="isolateOrUnisolateSelection"
-      >
-        <div class="flex items-center gap-1">
-          <FunnelIconOutline v-if="!isIsolated" class="h-4 w-4" />
-          <FunnelIcon v-else class="h-4 w-4" />
-          Isolate
-        </div>
-      </FormButton>
-    </template>
-    <div class="p-1 mb-2 sm:mb-0 sm:py-2">
-      <div class="space-y-2">
-        <ViewerSelectionObject
-          v-for="object in objectsLimited"
-          :key="(object.id as string)"
-          :object="object"
-          :unfold="true"
-          :root="true"
-        />
-      </div>
-      <div v-if="itemCount <= objects.length" class="mb-2">
-        <FormButton size="xs" text full-width @click="itemCount += 10">
-          View More ({{ objects.length - itemCount }})
+  <ViewerCommentsPortalOrDiv v-if="sidebarOpen" to="bottomPanel">
+    <ViewerSidebar :open="sidebarOpen" @close="onClose">
+      <template #title>Selection Info</template>
+      <template #actions>
+        <FormButton
+          size="xs"
+          color="secondary"
+          class="opacity-80 hover:opacity-100"
+          @click.stop="hideOrShowSelection"
+        >
+          <div class="flex items-center gap-1">
+            <EyeIcon v-if="!isHidden" class="h-4 w-4" />
+            <EyeSlashIcon v-else class="h-4 w-4" />
+            Hide
+          </div>
         </FormButton>
-      </div>
-    </div>
-    <template #footer>
-      <div v-if="objects.length === 1">
-        <div class="text-foreground-2 text-xs">
-          Hold "shift" to select multiple objects
+        <FormButton
+          size="xs"
+          color="secondary"
+          class="hover:opacity-100"
+          :class="isIsolated ? 'text-primary opacity-100' : 'opacity-80'"
+          @click.stop="isolateOrUnisolateSelection"
+        >
+          <div class="flex items-center gap-1">
+            <FunnelIconOutline v-if="!isIsolated" class="h-4 w-4" />
+            <FunnelIcon v-else class="h-4 w-4" />
+            Isolate
+          </div>
+        </FormButton>
+      </template>
+      <div class="p-1 mb-2 sm:mb-0 sm:py-2">
+        <div class="space-y-2">
+          <ViewerSelectionObject
+            v-for="object in objectsLimited"
+            :key="(object.id as string)"
+            :object="object"
+            :unfold="true"
+            :root="true"
+          />
+        </div>
+        <div v-if="itemCount <= objects.length" class="mb-2">
+          <FormButton size="xs" text full-width @click="itemCount += 10">
+            View More ({{ objects.length - itemCount }})
+          </FormButton>
         </div>
       </div>
-    </template>
-  </ViewerSidebar>
+      <template #footer>
+        <div v-if="objects.length === 1">
+          <div class="text-foreground-2 text-xs">
+            Hold "shift" to select multiple objects
+          </div>
+        </div>
+      </template>
+    </ViewerSidebar>
+  </ViewerCommentsPortalOrDiv>
 </template>
 <script setup lang="ts">
 import { EyeIcon, EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
