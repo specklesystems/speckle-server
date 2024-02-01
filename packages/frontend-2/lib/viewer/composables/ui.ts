@@ -221,7 +221,7 @@ export function useFilterUtilities() {
 
 export function useSelectionUtilities() {
   const {
-    filters: { selectedObjects }
+    filters: { selectedObjects, selectedObjectIds }
   } = useInjectedViewerInterfaceState()
   const {
     metadata: { worldTree }
@@ -231,7 +231,7 @@ export function useSelectionUtilities() {
     const objs: Array<SpeckleObject> = []
     objectIds.forEach((value: string) => {
       objs.push(
-        ...(worldTree.value?.findId(value) as unknown as TreeNode[]).map(
+        ...((worldTree.value?.findId(value) || []) as unknown as TreeNode[]).map(
           (node: TreeNode) =>
             (node.model as Record<string, unknown>).raw as SpeckleObject
         )
@@ -266,7 +266,8 @@ export function useSelectionUtilities() {
     removeFromSelection,
     clearSelection,
     setSelectionFromObjectIds,
-    objects: selectedObjects
+    objects: selectedObjects,
+    objectIds: selectedObjectIds
   }
 }
 
