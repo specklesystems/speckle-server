@@ -33,7 +33,7 @@ export const hasIntersection = <V = unknown>(
   if (!length(vals1) || !length(vals2)) return false
 
   // Always iterating over the smallest collection to speed things up, and making
-  // user the biggest one is a Set for quick look ups
+  // sure the biggest one is a Set for quick look ups
   const biggest: Set<V> = length(vals1) > length(vals2) ? toSet(vals1) : toSet(vals2)
   const smallest: V[] | Set<V> = length(vals1) > length(vals2) ? vals2 : vals1
 

@@ -185,8 +185,8 @@ const relevantFiltersLimited = computed(() => {
 
 // Too lazy to follow up in here for now, as i think we need a bit of a better strategy in connectors first :/
 const title = computed(() => {
-  const currentFilterKey =
-    propertyFilter.filter.value?.key || speckleTypeFilter.value?.key || 'Loading'
+  const currentFilterKey = activeFilter.value?.key
+  if (!currentFilterKey) return 'Loading'
 
   if (currentFilterKey === 'level.name') return 'Level Name'
   if (currentFilterKey === 'speckle_type') return 'Object Type'
