@@ -26,7 +26,7 @@
     "lint": "yarn lint:tsc && yarn lint:eslint",
     "lint:tsc": "tsc --noEmit",
     "lint:eslint": "eslint . --ext .js,.ts",
-    "cli": "cross-env LOG_PRETTY=true NODE_ENV=development ts-node ./modules/cli/index.js",
+    "cli": "cross-env LOG_LEVEL=debug LOG_PRETTY=true NODE_ENV=development ts-node ./modules/cli/index.js",
     "cli:download:commit": "cross-env LOG_PRETTY=true LOG_LEVEL=debug yarn cli download commit",
     "migrate": "yarn cli db migrate",
     "migrate:test": "cross-env NODE_ENV=test ts-node ./modules/cli/index.js db migrate",
