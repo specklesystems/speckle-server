@@ -1,80 +1,84 @@
 <template>
   <div
     ref="resizableElement"
-    class="relative sm:absolute z-10 right-0 h-[50dvh] sm:h-[100dvh] overflow-hidden w-screen transition-all flex"
+    class="relative sm:absolute z-10 right-0 h-[50dvh] sm:h-[100dvh] overflow-hidden w-screen"
     :style="!isSmallerOrEqualSm ? { maxWidth: width + 'px' } : {}"
-    :class="open ? '' : 'sm:translate-x-[100%]'"
   >
-    <!-- Resize Handle -->
     <div
-      ref="resizeHandle"
-      class="hidden sm:flex group relative z-10 hover:z-50 w-6 h-full items-center overflow-hidden"
+      class="flex transition-all h-full"
+      :class="open ? '' : 'sm:translate-x-[100%]'"
     >
+      <!-- Resize Handle -->
       <div
-        class="w-5 h-8 bg-foundation group-hover:bg-outline-2 mt-8 rounded-l translate-x-5 group-hover:translate-x-0.5 transition cursor-ew-resize flex items-center justify-center shadow group-hover:shadow-xl"
-        @mousedown="startResizing"
-      >
-        <ArrowsRightLeftIcon
-          class="h-3 w-3 transition opacity-0 group-hover:opacity-80 text-outline-1"
-        />
-      </div>
-      <div
-        class="relative z-10 w-1 h-[100dvh] bg-transparent group-hover:bg-outline-2 cursor-ew-resize transition shadow-lg"
-        @mousedown="startResizing"
-      ></div>
-    </div>
-    <div
-      class="flex flex-col bg-foundation w-full h-full relative z-20 overflow-hidden"
-    >
-      <!-- Header -->
-      <div
-        class="h-18 absolute z-10 w-full top-0 sm:top-14 left-0 bg-foundation shadow-md"
+        ref="resizeHandle"
+        class="hidden sm:flex group relative z-10 hover:z-50 w-6 h-full items-center overflow-hidden"
       >
         <div
-          class="flex items-center justify-between pl-3 pr-2.5 h-10 border-b border-outline-3"
+          class="w-5 h-8 bg-foundation group-hover:bg-outline-2 mt-8 rounded-l translate-x-4 group-hover:translate-x-0.5 transition cursor-ew-resize flex items-center justify-center shadow group-hover:shadow-xl"
+          @mousedown="startResizing"
         >
-          <div v-if="$slots.title" class="font-bold text-sm text-primary">
-            <slot name="title"></slot>
-          </div>
-          <div class="flex items-center gap-0.5">
-            <button
-              v-if="width === 300"
-              class="p-0.5 text-foreground hover:text-primary"
-              @click="width = 600"
-            >
-              <ArrowLeftOnRectangleIcon class="h-4 w-4" />
-            </button>
-            <button
-              v-else
-              class="p-0.5 text-foreground hover:text-primary"
-              @click="minimize"
-            >
-              <ArrowRightOnRectangleIcon class="h-4 w-4" />
-            </button>
-            <button class="p-0.5 text-foreground hover:text-primary" @click="onClose">
-              <XMarkIcon class="h-4 w-4" />
-            </button>
-          </div>
+          <ArrowsRightLeftIcon
+            class="h-3 w-3 transition opacity-0 group-hover:opacity-80 text-outline-1"
+          />
         </div>
-        <div v-if="$slots.actions" class="w-full px-3 h-8">
-          <div class="flex items-center gap-1 h-full">
-            <slot name="actions"></slot>
-          </div>
-        </div>
-      </div>
-      <div class="w-full" :class="$slots.actions ? 'h-24 sm:h-32' : 'h-26'"></div>
-      <div
-        class="overflow-y-auto simple-scrollbar h-[calc(50dvh)] sm:h-[calc(100dvh-8rem)] bg-foundation w-full pt-2"
-      >
-        <slot></slot>
+        <div
+          class="relative z-10 w-1 h-[100dvh] bg-transparent group-hover:bg-outline-2 cursor-ew-resize transition shadow-lg"
+          @mousedown="startResizing"
+        ></div>
       </div>
       <div
-        v-if="$slots.footer"
-        class="absolute z-20 bottom-0 h-8 bg-foundation shadow-t w-full flex items-center px-3 empty:translate-y-10 transition"
+        class="flex flex-col bg-foundation w-full h-full relative z-20 overflow-hidden shadow-lg"
       >
-        <slot name="footer"></slot>
+        <!-- Header -->
+        <div
+          class="h-18 absolute z-10 w-full top-0 sm:top-14 left-0 bg-foundation shadow-md"
+        >
+          <div
+            class="flex items-center justify-between pl-3 pr-2.5 h-10 border-b border-outline-3"
+          >
+            <div v-if="$slots.title" class="font-bold text-sm text-primary">
+              <slot name="title"></slot>
+            </div>
+            <div class="flex items-center gap-0.5">
+              <button
+                v-if="width === 300"
+                class="p-0.5 text-foreground hover:text-primary"
+                @click="width = 600"
+              >
+                <ArrowLeftOnRectangleIcon class="h-4 w-4" />
+              </button>
+              <button
+                v-else
+                class="p-0.5 text-foreground hover:text-primary"
+                @click="minimize"
+              >
+                <ArrowRightOnRectangleIcon class="h-4 w-4" />
+              </button>
+              <button class="p-0.5 text-foreground hover:text-primary" @click="onClose">
+                <XMarkIcon class="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div v-if="$slots.actions" class="w-full px-3 h-8">
+            <div class="flex items-center gap-1 h-full">
+              <slot name="actions"></slot>
+            </div>
+          </div>
+        </div>
+        <div class="w-full" :class="$slots.actions ? 'h-24 sm:h-32' : 'h-26'"></div>
+        <div
+          class="overflow-y-auto simple-scrollbar h-[calc(50dvh)] sm:h-[calc(100dvh-8rem)] bg-foundation w-full pt-2"
+        >
+          <slot></slot>
+        </div>
+        <div
+          v-if="$slots.footer"
+          class="absolute z-20 bottom-0 h-8 bg-foundation shadow-t w-full flex items-center px-3 empty:translate-y-10 transition"
+        >
+          <slot name="footer"></slot>
+        </div>
+        <div v-if="$slots.footer" class="h-8"></div>
       </div>
-      <div v-if="$slots.footer" class="h-8"></div>
     </div>
   </div>
 </template>

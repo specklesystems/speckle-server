@@ -1,7 +1,7 @@
 <template>
   <ViewerCommentsPortalOrDiv v-if="shouldRenderSidebar" to="bottomPanel">
     <ViewerSidebar :open="sidebarOpen" @close="onClose">
-      <template #title>Selection Info</template>
+      <template #title><div class="select-none">Selection Info</div></template>
       <template #actions>
         <FormButton
           size="xs"
@@ -46,7 +46,7 @@
         </div>
       </div>
       <template v-if="!isSmallerOrEqualSm" #footer>
-        <div class="text-foreground-2 text-xs">
+        <div class="text-foreground-2 text-xs select-none">
           Hold "shift" to select multiple objects
         </div>
       </template>
