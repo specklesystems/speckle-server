@@ -43,7 +43,7 @@ workflows:
             branches:
               ignore:
                 - main
-                - frontend-2
+                - testing
             tags:
               ignore: /.*/
 
@@ -150,13 +150,7 @@ workflows:
 
       - publish-approval:
           type: approval
-          filters: &filters-ignore-main-branch-or-all-tags
-            branches:
-              ignore:
-                - main
-                - testing
-            tags:
-              ignore: /.*/
+          filters: *filters-ignore-main-branch-or-all-tags
 
       - docker-publish-server:
           context: &docker-hub-context
