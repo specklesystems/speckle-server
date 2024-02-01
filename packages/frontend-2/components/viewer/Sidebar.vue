@@ -1,20 +1,34 @@
 <template>
   <div
     ref="resizableElement"
-    class="relative sm:absolute z-10 right-0 h-[50dvh] sm:h-[100dvh] overflow-hidden w-screen transition-all flex sm:shadow-lg"
+    class="relative sm:absolute z-10 right-0 h-[50dvh] sm:h-[100dvh] overflow-hidden w-screen transition-all flex"
     :style="!isSmallerOrEqualSm ? { maxWidth: width + 'px' } : {}"
     :class="open ? '' : 'sm:translate-x-[100%]'"
   >
     <!-- Resize Handle -->
     <div
       ref="resizeHandle"
-      class="relative z-10 hover:z-50 w-1 h-full bg-foundation hover:bg-outline-2 cursor-ew-resize shadow-lg"
-      @mousedown="startResizing"
-    ></div>
-    <div class="flex flex-col bg-foundation shadow-lg w-full h-full">
+      class="hidden sm:flex group relative z-10 hover:z-50 w-6 h-full items-center overflow-hidden"
+    >
+      <div
+        class="w-5 h-8 bg-foundation group-hover:bg-outline-2 mt-8 rounded-l translate-x-5 group-hover:translate-x-0.5 transition cursor-ew-resize flex items-center justify-center shadow group-hover:shadow-xl"
+        @mousedown="startResizing"
+      >
+        <ArrowsRightLeftIcon
+          class="h-3 w-3 transition opacity-0 group-hover:opacity-80 text-outline-1"
+        />
+      </div>
+      <div
+        class="relative z-10 w-1 h-[100dvh] bg-transparent group-hover:bg-outline-2 cursor-ew-resize transition shadow-lg"
+        @mousedown="startResizing"
+      ></div>
+    </div>
+    <div
+      class="flex flex-col bg-foundation w-full h-full relative z-20 overflow-hidden"
+    >
       <!-- Header -->
       <div
-        class="h-18 absolute z-10 w-full top-0 sm:top-14 right-0 bg-foundation shadow-md"
+        class="h-18 absolute z-10 w-full top-0 sm:top-14 left-0 bg-foundation shadow-md"
       >
         <div
           class="flex items-center justify-between pl-3 pr-2.5 h-10 border-b border-outline-3"
@@ -56,7 +70,7 @@
       </div>
       <div
         v-if="$slots.footer"
-        class="absolute z-20 bottom-0 left-0 w-full h-8 bg-foundation shadow-t flex items-center px-3 empty:translate-y-10 transition"
+        class="absolute z-20 bottom-0 h-8 bg-foundation shadow-t w-full flex items-center px-3 empty:translate-y-10 transition"
       >
         <slot name="footer"></slot>
       </div>
@@ -69,7 +83,8 @@ import { ref, onUnmounted } from 'vue'
 import {
   XMarkIcon,
   ArrowRightOnRectangleIcon,
-  ArrowLeftOnRectangleIcon
+  ArrowLeftOnRectangleIcon,
+  ArrowsRightLeftIcon
 } from '@heroicons/vue/24/outline'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 

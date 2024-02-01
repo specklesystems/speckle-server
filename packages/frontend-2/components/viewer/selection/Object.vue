@@ -34,9 +34,10 @@
           ...categorisedValuePairs.nulls
         ]"
         :key="index"
+        class="flex w-full"
       >
         <div
-          :class="`grid grid-cols-3 ${
+          :class="`grid grid-cols-3 w-full ${
             kvp.value === null || kvp.value === undefined ? 'text-foreground-2' : ''
           }`"
         >
@@ -46,9 +47,33 @@
           >
             {{ kvp.key }}
           </div>
-          <div class="col-span-2 pl-1 truncate text-xs" :title="(kvp.value as string)">
-            <!-- NOTE: can't do kvp.value || 'null' because 0 || 'null' = 'null' -->
-            {{ kvp.value === null ? 'null' : kvp.value }}
+          <div
+            class="group col-span-2 pl-1 truncate text-xs flex gap-1 items-center"
+            :title="(kvp.value as string)"
+          >
+            <button
+              class="flex gap-1 items-center w-full"
+              :class="kvp.value === null ? 'cursor-default' : 'cursor-pointer'"
+              @click="copy(kvp.value as string)"
+            >
+              <!-- NOTE: can't do kvp.value || 'null' because 0 || 'null' = 'null' -->
+              <span
+                class="border-b border-transparent truncate"
+                :class="
+                  kvp.value === null
+                    ? ''
+                    : 'group-hover:border-outline-3 group-hover:max-w-[calc(100%-1rem)]'
+                "
+              >
+                {{ kvp.value === null ? 'null' : kvp.value }}
+              </span>
+              <div
+                v-if="kvp.value !== null"
+                class="opacity-0 group-hover:opacity-100 w-4"
+              >
+                <ClipboardDocumentIcon class="h-3 w-3" />
+              </div>
+            </button>
           </div>
         </div>
       </div>
@@ -103,6 +128,7 @@
 <script setup lang="ts">
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
+import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
 import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
@@ -123,6 +149,8 @@ const props = withDefaults(
   }>(),
   { debug: false, unfold: false, root: false, modifiedSibling: false }
 )
+
+const { copy } = useClipboard()
 
 const unfold = ref(props.unfold)
 
@@ -254,6 +282,7 @@ const keyValuePairs = computed(() => {
 })
 
 const categorisedValuePairs = computed(() => {
+  console.log(keyValuePairs)
   return {
     primitives: keyValuePairs.value.filter(
       (item) => item.type !== 'object' && item.type !== 'array' && item.value !== null
