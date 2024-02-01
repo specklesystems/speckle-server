@@ -61,12 +61,16 @@ const dialogOpen = ref(false)
 const openSection = ref<OpenSectionType>(null)
 
 const route = useRoute()
+const router = useRouter()
+
+const teamUsers = computed(() => props.project.team.map((t) => t.user))
 
 watch(
   () => route.query.settings,
   (newSettings) => {
     if (newSettings === 'true') {
       dialogOpen.value = true
+      openSection.value = 'team'
     } else if (newSettings === 'invite') {
       dialogOpen.value = true
       openSection.value = 'invite'
@@ -75,11 +79,17 @@ watch(
       openSection.value = 'access'
     } else {
       dialogOpen.value = false
-      openSection.value = null
+      openSection.value = 'team'
     }
   },
   { immediate: true }
 )
 
-const teamUsers = computed(() => props.project.team.map((t) => t.user))
+watch(dialogOpen, (newVal) => {
+  if (!newVal) {
+    const routeQuery = { ...route.query }
+    delete routeQuery.settings
+    router.replace({ query: routeQuery })
+  }
+})
 </script>
