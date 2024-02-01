@@ -101,9 +101,16 @@ const parsedResourceIds = computed(() =>
 
 const firstResource = computed(() => parsedResourceIds.value[0] || {})
 
+const versionId = computed(() => {
+  if (SpeckleViewer.ViewerRoute.isModelResource(firstResource.value)) {
+    return firstResource.value.versionId
+  }
+  return ''
+})
+
 const modelId = computed(() => {
   if (SpeckleViewer.ViewerRoute.isModelResource(firstResource.value)) {
-    return firstResource.value.modelId
+    return firstResource.value.modelId // Assuming your firstResource object has a modelId property
   }
   return ''
 })
@@ -111,11 +118,13 @@ const modelId = computed(() => {
 const isFederated = computed(() => parsedResourceIds.value.length > 1)
 
 const handleCopyId = () => {
-  copy(modelId.value, { successMessage: 'Model ID copied to clipboard' })
+  copy(props.resourceIdString, { successMessage: 'ID copied to clipboard' })
 }
 
 const handleCopyLink = () => {
-  copyModelLink(props.projectId, props.resourceIdString)
+  const modelIdValue = modelId.value
+  const versionIdValue = versionId.value ? versionId.value : undefined
+  copyModelLink(props.projectId, modelIdValue, versionIdValue)
 }
 
 const handleEmbed = () => {

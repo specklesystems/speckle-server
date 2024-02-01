@@ -126,9 +126,6 @@ const {
 } = useRuntimeConfig()
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
-
-const projectVisibility = ref(ProjectVisibility)
-
 const transparentBackground = ref(false)
 const hideViewerControls = ref(false)
 const hideSelectionInfo = ref(false)
