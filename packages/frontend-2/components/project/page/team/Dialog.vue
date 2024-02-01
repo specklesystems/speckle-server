@@ -2,7 +2,10 @@
   <LayoutDialog v-model:open="isOpen" max-width="sm">
     <template #header>Manage Project</template>
     <div class="flex flex-col text-foreground">
-      <ProjectPageTeamDialogManageUsers always-open :project="project" />
+      <ProjectPageTeamDialogManageUsers
+        :always-open="openSection === 'team'"
+        :project="project"
+      />
       <ProjectPageTeamDialogInviteUser
         v-if="isOwner && !isServerGuest"
         :project="project"
@@ -25,7 +28,7 @@ import type { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/
 import { graphql } from '~~/lib/common/generated/gql'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
 
-type OpenSectionType = 'invite' | 'access' | null
+type OpenSectionType = 'invite' | 'access' | 'team' | null
 
 graphql(`
   fragment ProjectPageTeamDialog on Project {

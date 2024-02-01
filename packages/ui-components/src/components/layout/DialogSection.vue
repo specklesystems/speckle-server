@@ -24,7 +24,7 @@
         class="text-sm sm:text-base font-bold flex items-center gap-1 sm:gap-2 select-none"
         :class="titleClasses"
       >
-        <div class="h-4 sm:h-5 w-4 sm:w-5 empty:h-0 empty:w-0">
+        <div class="h-4 sm:h-5 h-4 sm:w-5 empty:h-0 empty:w-0">
           <slot name="icon"></slot>
         </div>
         <span>{{ title }}</span>
@@ -54,7 +54,8 @@
       class="transition-all duration-700 overflow-hidden"
       :class="[
         allowOverflow && isExpanded ? '!overflow-visible' : '',
-        isExpanded ? 'mb-3 mt-1' : ''
+        isExpanded ? 'mb-3 mt-1' : '',
+        !button && !alwaysOpen ? 'cursor-pointer hover:bg-foundation' : ''
       ]"
       :style="
         alwaysOpen
@@ -62,7 +63,7 @@
           : `max-height: ${isExpanded ? contentHeight + 'px' : '0px'}`
       "
     >
-      <div v-if="isExpanded" ref="content" class="rounded-md text-sm pb-3 px-2 mt-1">
+      <div ref="content" class="rounded-md text-sm pb-3 px-2 mt-1">
         <slot>Panel contents</slot>
       </div>
     </div>
@@ -70,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, unref, computed, onMounted } from 'vue'
+import { ref, unref, computed } from 'vue'
 import type { Ref } from 'vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { FormButton } from '~~/src/lib'
@@ -108,8 +109,7 @@ const props = defineProps({
         onClick?: () => void
       }
     | undefined,
-  alwaysOpen: Boolean,
-  lazyLoadHeight: Number
+  alwaysOpen: Boolean
 })
 
 const content: Ref<HTMLElement | null> = ref(null)
@@ -120,7 +120,11 @@ const backgroundClass = computed(() => {
   const classes = []
 
   if (!props.button && !props.alwaysOpen) {
-    classes.push('cursor-pointer')
+    classes.push('cursor-pointer', 'hover:bg-foundation')
+  }
+
+  if (isExpanded.value) {
+    classes.push('bg-foundation')
   }
 
   return classes
@@ -143,18 +147,10 @@ const titleClasses = computed(() => {
   }
 })
 
-const updateContentHeight = () => {
+const toggleExpansion = () => {
+  isExpanded.value = !isExpanded.value
   if (isExpanded.value) {
     contentHeight.value = (unref(content)?.scrollHeight || 0) + 64
   }
 }
-
-const toggleExpansion = () => {
-  isExpanded.value = !isExpanded.value
-  updateContentHeight()
-}
-
-onMounted(() => {
-  updateContentHeight()
-})
 </script>

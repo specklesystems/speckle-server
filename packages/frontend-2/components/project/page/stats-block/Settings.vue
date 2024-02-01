@@ -37,7 +37,7 @@ import { Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageStatsBlockTeamFragment } from '~~/lib/common/generated/gql/graphql'
 
-type OpenSectionType = 'invite' | 'access' | null
+type OpenSectionType = 'invite' | 'access' | 'team' | null
 
 graphql(`
   fragment ProjectPageStatsBlockTeam on Project {
