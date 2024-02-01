@@ -82,7 +82,8 @@ export function useViewerUserActivityBroadcasting(
   const apollo = useApolloClient().client
 
   const invokeMutation = async (message: ViewerUserActivityMessageInput) => {
-    if (!isLoggedIn.value) return false
+    const { isEnabled: isEmbedEnabled } = useEmbed()
+    if (!isLoggedIn.value || isEmbedEnabled) return false
     const result = await apollo
       .mutate({
         mutation: broadcastViewerUserActivityMutation,
