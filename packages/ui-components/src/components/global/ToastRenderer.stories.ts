@@ -63,3 +63,42 @@ export const Default: StoryObj = {
     }
   }
 }
+
+export const NoCtaOrDescription: StoryObj = {
+  render: (args) => ({
+    components: { ToastRenderer, FormButton },
+    setup() {
+      const notification = ref(null as Nullable<ToastNotification>)
+      const onClick = () => {
+        // Update notification without cta or description
+        notification.value = {
+          type: ToastNotificationType.Info,
+          title: 'Displays a toast notification'
+        }
+
+        // Clear after 2s
+        setTimeout(() => (notification.value = null), 2000)
+      }
+      return { args, onClick, notification }
+    },
+    template: `
+      <div>
+        <FormButton @click="onClick">Trigger Title Only</FormButton>
+        <ToastRenderer v-model:notification="notification"/>
+      </div>
+    `
+  }),
+  parameters: {
+    docs: {
+      description: {
+        story: 'Displays a toast notification with only a title, no description or CTA.'
+      },
+      source: {
+        code: `
+<FormButton @click="onClick">Trigger Title Only</FormButton>
+<ToastRenderer v-model:notification="notification"/>
+        `
+      }
+    }
+  }
+}

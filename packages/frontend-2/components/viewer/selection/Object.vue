@@ -53,12 +53,12 @@
           >
             <button
               class="flex gap-1 items-center w-full"
-              :class="kvp.value === null ? 'cursor-default' : 'cursor-pointer'"
-              @click="copy(kvp.value as string)"
+              :class="isCopyable(kvp) ? 'cursor-pointer' : 'cursor-default'"
+              @click="handleCopy(kvp)"
             >
               <!-- NOTE: can't do kvp.value || 'null' because 0 || 'null' = 'null' -->
               <span
-                class="border-b border-transparent truncate"
+                class="border-b border-transparent truncate select-none"
                 :class="
                   kvp.value === null
                     ? ''
@@ -67,10 +67,7 @@
               >
                 {{ kvp.value === null ? 'null' : kvp.value }}
               </span>
-              <div
-                v-if="kvp.value !== null"
-                class="opacity-0 group-hover:opacity-100 w-4"
-              >
+              <div v-if="isCopyable(kvp)" class="opacity-0 group-hover:opacity-100 w-4">
                 <ClipboardDocumentIcon class="h-3 w-3" />
               </div>
             </button>
@@ -220,6 +217,20 @@ const headerClasses = computed(() => {
 const headerAndSubheader = computed(() => {
   return getHeaderAndSubheaderForSpeckleObject(props.object)
 })
+
+const isCopyable = (kvp: Record<string, unknown>) => {
+  return kvp.value !== null && kvp.value !== undefined && typeof kvp.value !== 'object'
+}
+
+const handleCopy = async (kvp: Record<string, unknown>) => {
+  if (isCopyable(kvp)) {
+    const keyName = kvp.key as string
+    await copy(kvp.value as string, {
+      successMessage: `${keyName} copied to clipboard`,
+      failureMessage: `Failed to copy ${keyName} to clipboard`
+    })
+  }
+}
 
 const ignoredProps = [
   '__closure',
