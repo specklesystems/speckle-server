@@ -2,7 +2,7 @@
   <div
     v-show="hasAnyFiltersApplied"
     class="absolute left-0 w-screen p-2 bg-pink-300/0 flex justify-center pointer-events-none"
-    :class="embed ? 'bottom-16 mb-2' : 'bottom-4'"
+    :class="isEmbedEnabled ? 'bottom-16 mb-2' : 'bottom-4'"
   >
     <Transition
       enter-active-class="transform ease-out duration-300 transition"
@@ -13,7 +13,7 @@
       leave-to-class="opacity-0"
     >
       <FormButton
-        :size="embed ? 'xs' : 'sm'"
+        :size="isEmbedEnabled ? 'xs' : 'sm'"
         class="pointer-events-auto"
         @click="trackAndResetFilters"
       >
@@ -25,15 +25,14 @@
 <script setup lang="ts">
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+
 const {
   resetFilters,
   filters: { hasAnyFiltersApplied }
 } = useFilterUtilities()
 
-defineProps<{
-  embed?: boolean
-}>()
-
+const { isEnabled: isEmbedEnabled } = useEmbed()
 const mp = useMixpanel()
 const trackAndResetFilters = () => {
   resetFilters()

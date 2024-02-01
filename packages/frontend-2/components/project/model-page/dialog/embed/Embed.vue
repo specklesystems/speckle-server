@@ -76,13 +76,7 @@
               </div>
             </div>
           </LayoutDialogSection>
-          <LayoutDialogSection
-            v-if="!isSmallerOrEqualSm"
-            border-b
-            title="Preview"
-            lazy-load
-            :lazy-load-height="400"
-          >
+          <LayoutDialogSection v-if="!isSmallerOrEqualSm" border-b title="Preview">
             <template #icon>
               <EyeIcon class="h-full w-full" />
             </template>
@@ -126,6 +120,9 @@ const {
 } = useRuntimeConfig()
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
+
+const projectVisibility = ref(ProjectVisibility)
+
 const transparentBackground = ref(false)
 const hideViewerControls = ref(false)
 const hideSelectionInfo = ref(false)
@@ -227,7 +224,7 @@ const handleEmbedCodeCopy = async (value: string) => {
 }
 
 const updateOption = (optionRef: Ref<boolean>, newValue: unknown) => {
-  optionRef.value = !!newValue
+  optionRef.value = newValue === undefined ? false : !!newValue
 }
 
 const embedDialogOptions = [

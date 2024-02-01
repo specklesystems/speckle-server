@@ -144,12 +144,7 @@
               </div>
             </div>
             <ViewerAnchoredPointThreadNewReply
-              v-if="
-                !modelValue.archived &&
-                canReply &&
-                !isSmallerOrEqualSm &&
-                !isEmbedEnabled
-              "
+              v-if="showNewReplyComponent"
               :model-value="modelValue"
               @submit="onNewReply"
             />
@@ -260,6 +255,15 @@ const comments = computed(() => [
   props.modelValue,
   ...props.modelValue.replies.items.slice().reverse()
 ])
+
+const showNewReplyComponent = computed(() => {
+  return (
+    !props.modelValue.archived &&
+    canReply.value &&
+    !isSmallerOrEqualSm.value &&
+    !isEmbedEnabled.value
+  )
+})
 
 // Note: conflicted with dragging styles, so took it out temporarily
 // const { style } = useExpandedThreadResponsiveLocation({

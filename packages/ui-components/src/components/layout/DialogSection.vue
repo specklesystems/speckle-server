@@ -59,20 +59,10 @@
       :style="
         alwaysOpen
           ? 'max-height: none;'
-          : `max-height: ${
-              lazyLoadHeight
-                ? lazyLoadHeight
-                : isExpanded
-                ? contentHeight + 'px'
-                : '0px'
-            }`
+          : `max-height: ${isExpanded ? contentHeight + 'px' : '0px'}`
       "
     >
-      <div
-        v-if="!lazyLoad || isExpanded"
-        ref="content"
-        class="rounded-md text-sm pb-3 px-2 mt-1"
-      >
+      <div v-if="isExpanded" ref="content" class="rounded-md text-sm pb-3 px-2 mt-1">
         <slot>Panel contents</slot>
       </div>
     </div>
@@ -119,7 +109,6 @@ const props = defineProps({
       }
     | undefined,
   alwaysOpen: Boolean,
-  lazyLoad: Boolean,
   lazyLoadHeight: Number
 })
 
