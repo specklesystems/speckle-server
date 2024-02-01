@@ -246,14 +246,29 @@ export class SelectionExtension extends Extension {
   protected removeSelection(rvs?: Array<NodeRenderView>) {
     this.removeHover()
 
+    const materialMap = {}
     rvs = rvs ? rvs : Object.values(this.selectionRvs)
     rvs.forEach((rv: NodeRenderView) => {
-      if (this.selectionRvs[rv.guid]) {
-        this.viewer.getRenderer().setMaterial([rv], this.selectionMaterials[rv.guid])
-        delete this.selectionRvs[rv.guid]
-        delete this.selectionMaterials[rv.guid]
+      const material = this.selectionMaterials[rv.guid]
+      if (material) {
+        if (!materialMap[material.uuid])
+          materialMap[material.uuid] = { rvs: [], matName: material.constructor.name }
+        materialMap[material.uuid].rvs.push(rv)
       }
     })
+
+    for (const k in materialMap) {
+      this.viewer
+        .getRenderer()
+        .setMaterial(
+          materialMap[k].rvs,
+          this.selectionMaterials[materialMap[k].rvs[0].guid]
+        )
+      materialMap[k].rvs.forEach((rv: NodeRenderView) => {
+        delete this.selectionRvs[rv.guid]
+        delete this.selectionMaterials[rv.guid]
+      })
+    }
   }
 
   protected applyHover(renderView: NodeRenderView) {
