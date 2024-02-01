@@ -3,17 +3,17 @@
     <template #header>Manage Project</template>
     <div class="flex flex-col text-foreground">
       <ProjectPageTeamDialogManageUsers
-        :always-open="openSection === 'team'"
+        :always-open="openSection === OpenSectionType.Team"
         :project="project"
       />
       <ProjectPageTeamDialogInviteUser
         v-if="isOwner && !isServerGuest"
         :project="project"
-        :default-open="openSection === 'invite'"
+        :default-open="openSection === OpenSectionType.Invite"
       />
       <ProjectPageTeamDialogManagePermissions
         :project="project"
-        :default-open="openSection === 'access'"
+        :default-open="openSection === OpenSectionType.Access"
       />
       <ProjectPageTeamDialogWebhooks :project="project" />
       <ProjectPageTeamDialogDangerZones
@@ -27,8 +27,7 @@
 import type { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
-
-type OpenSectionType = 'invite' | 'access' | 'team' | null
+import { OpenSectionType } from '~~/lib/projects/helpers/components'
 
 graphql(`
   fragment ProjectPageTeamDialog on Project {

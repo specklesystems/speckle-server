@@ -1,15 +1,15 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    :max-width="visibility == projectVisibility.Private ? 'sm' : 'md'"
+    :max-width="visibility == ProjectVisibility.Private ? 'sm' : 'md'"
     :buttons="
-      visibility == projectVisibility.Private
+      visibility == ProjectVisibility.Private
         ? nonDiscoverableButtons
         : discoverableButtons
     "
   >
     <template #header>Embed Model</template>
-    <div v-if="visibility === projectVisibility.Private">
+    <div v-if="visibility === ProjectVisibility.Private">
       <p>
         <strong>Model embedding only works if the project is “Discoverable”.</strong>
       </p>
@@ -98,7 +98,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Cog6ToothIcon, EyeIcon } from '@heroicons/vue/24/outline'
-import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
 import { useClipboard } from '~~/composables/browser'
 import { SpeckleViewer } from '@speckle/shared'
 import { projectRoute } from '~~/lib/common/helpers/route'
@@ -120,8 +120,6 @@ const {
 } = useRuntimeConfig()
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
-
-const projectVisibility = ref(ProjectVisibility)
 
 const transparentBackground = ref(false)
 const hideViewerControls = ref(false)
