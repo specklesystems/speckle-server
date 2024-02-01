@@ -42,7 +42,7 @@
           }`"
         >
           <div
-            class="col-span-1 truncate text-xs font-bold"
+            class="col-span-1 truncate text-xs font-bold mr-2"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
