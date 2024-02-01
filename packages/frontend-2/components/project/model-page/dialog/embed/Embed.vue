@@ -230,7 +230,7 @@ const handleEmbedCodeCopy = async (value: string) => {
 }
 
 const updateOption = (optionRef: Ref<boolean>, newValue: unknown) => {
-  optionRef.value = newValue === undefined ? false : !!newValue
+  optionRef.value = !!newValue
 }
 
 const embedDialogOptions = [
