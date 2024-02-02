@@ -148,12 +148,28 @@ export class FilteringExtension extends Extension {
 
     this.VisibilityState.command = command
 
-    let walkFunc: (node: TreeNode) => boolean
     if (command === Command.HIDE || command === Command.SHOW)
-      walkFunc = this.visibilityWalk
-    if (command === Command.ISOLATE || command === Command.UNISOLATE)
-      walkFunc = this.isolationWalk
-    this.WTI.walk(walkFunc.bind(this))
+      this.WTI.walk(this.visibilityWalk.bind(this))
+    if (command === Command.ISOLATE || command === Command.UNISOLATE) {
+      // this.WTI.walk(this.isolationWalk.bind(this))
+      const rvMap = {}
+      this.WTI.walk((node: TreeNode) => {
+        if (!node.model.atomic || this.WTI.isRoot(node)) return true
+        const rvNodes = this.WTI.getRenderTree().getRenderViewNodesForNode(node, node)
+        if (!this.VisibilityState.ids[node.model.raw.id]) {
+          rvNodes.forEach((rvNode: TreeNode) => {
+            rvMap[rvNode.model.id] = rvNode.model.renderView
+          })
+        } else {
+          rvNodes.forEach((rvNode: TreeNode) => {
+            delete rvMap[rvNode.model.id]
+          })
+        }
+        return true
+      })
+      this.VisibilityState.rvs = Object.values(rvMap)
+    }
+
     return this.setFilters()
   }
 
@@ -508,17 +524,26 @@ export class FilteringExtension extends Extension {
 
     if (this.idCache[key] && this.idCache[key].length) return this.idCache[key]
 
-    this.WTI.walk((node: TreeNode) => {
-      if (objectIds.includes(node.model.raw.id)) {
-        const subtree = node.all((node) => {
-          return node.model.raw !== undefined
-        })
-        const idList = subtree.map((node) => node.model.raw.id)
-        allIds.push(...idList)
-        this.idCache[node.model.raw.id] = idList
-      }
-      return true
-    })
+    for (let k = 0; k < objectIds.length; k++) {
+      const node = this.WTI.findId(objectIds[k])[0]
+      const subtree = node.all((node) => {
+        return node.model.raw !== undefined
+      })
+      const idList = subtree.map((node) => node.model.raw.id)
+      allIds.push(...idList)
+      this.idCache[node.model.raw.id] = idList
+    }
+    // this.WTI.walk((node: TreeNode) => {
+    //   if (objectIds.includes(node.model.raw.id)) {
+    //     const subtree = node.all((node) => {
+    //       return node.model.raw !== undefined
+    //     })
+    //     const idList = subtree.map((node) => node.model.raw.id)
+    //     allIds.push(...idList)
+    //     this.idCache[node.model.raw.id] = idList
+    //   }
+    //   return true
+    // })
 
     this.idCache[key] = allIds
     return allIds
