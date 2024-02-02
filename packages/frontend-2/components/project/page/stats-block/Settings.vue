@@ -11,7 +11,7 @@
             <span class="text-sm">Settings</span>
           </div>
           <div v-else class="flex items-center gap-0.5 flex-grow select-none">
-            <Cog6ToothIcon class="h-5 w-5" />
+            <UsersIcon class="h-5 w-5" />
             <span class="text-sm">Team</span>
           </div>
           <div class="flex items-center text-xs">
@@ -36,7 +36,7 @@
   </ProjectPageStatsBlock>
 </template>
 <script setup lang="ts">
-import { Cog6ToothIcon } from '@heroicons/vue/24/outline'
+import { Cog6ToothIcon, UsersIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageStatsBlockTeamFragment } from '~~/lib/common/generated/gql/graphql'
