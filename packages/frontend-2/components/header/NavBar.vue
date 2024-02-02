@@ -5,8 +5,8 @@
         <div class="flex items-center truncate">
           <HeaderLogoBlock
             :active="false"
-            :to="isLoggedIn ? '/' : 'https://speckle.systems/'"
-            :target="isLoggedIn ? undefined : '_blank'"
+            :to="activeUser ? '/' : 'https://speckle.systems/'"
+            :target="activeUser ? undefined : '_blank'"
           />
           <HeaderNavLink
             to="/"
@@ -32,5 +32,5 @@
 </template>
 <script setup lang="ts">
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-const { activeUser, isLoggedIn } = useActiveUser()
+const { activeUser } = useActiveUser()
 </script>

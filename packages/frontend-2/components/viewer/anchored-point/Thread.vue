@@ -151,6 +151,21 @@
               :model-value="modelValue"
               @submit="onNewReply"
             />
+            <div
+              v-if="!canReply"
+              class="p-3 flex flex-col items-center justify-center bg-foundation-2"
+            >
+              <p class="text-sm mb-2 font-bold">Join the conversation</p>
+              <FormButton size="sm" @click="showLoginDialog = true">
+                Sign in to Speckle
+              </FormButton>
+              <AuthLoginPanel
+                v-model:open="showLoginDialog"
+                dialog-mode
+                max-width="sm"
+                subtitle="Create a free account to keep using Speckle!"
+              />
+            </div>
           </div>
         </div>
       </ViewerCommentsPortalOrDiv>
@@ -235,6 +250,7 @@ const threadActivator = ref(null as Nullable<HTMLElement>)
 
 const handle = ref(null as Nullable<HTMLElement>)
 const justCreatedReply = ref(false)
+const showLoginDialog = ref(false)
 
 const comments = computed(() => [
   props.modelValue,

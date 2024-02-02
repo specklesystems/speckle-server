@@ -33,7 +33,7 @@
           </button>
         </div>
         <div
-          v-if="modelValue.isExpanded"
+          v-if="modelValue.isExpanded && canPostComment"
           ref="threadContainer"
           class="sm:absolute min-w-[200px] hover:bg-foundation transition bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm sm:rounded-lg shadow-md"
         >
@@ -69,6 +69,21 @@
             </div>
           </div>
         </div>
+        <div
+          v-if="modelValue.isExpanded && !canPostComment"
+          class="bg-foundation shadow-lg p-4 rounded-md flex flex-col items-center justify-center text-center"
+        >
+          <p class="text-sm mb-2 font-bold">Join the conversation</p>
+          <FormButton size="sm" @click="showLoginDialog = true">
+            Sign in to Speckle
+          </FormButton>
+          <AuthLoginPanel
+            v-model:open="showLoginDialog"
+            dialog-mode
+            max-width="sm"
+            subtitle="Create a free account to keep using Speckle!"
+          />
+        </div>
       </ViewerCommentsPortalOrDiv>
     </div>
   </div>
@@ -95,6 +110,7 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   modelValue: ViewerNewThreadBubbleModel
+  canPostComment?: Nullable<boolean>
 }>()
 
 const { onKeyDownHandler, updateIsTyping, pauseAutomaticUpdates } =
@@ -105,6 +121,7 @@ const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
 const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const isPostingNewThread = ref(false)
+const showLoginDialog = ref(false)
 
 // const { style } = useExpandedThreadResponsiveLocation({
 //   threadContainer,
