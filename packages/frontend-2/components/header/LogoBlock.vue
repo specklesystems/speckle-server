@@ -1,28 +1,34 @@
 <template>
-  <NuxtLink class="flex items-center shrink-0" to="/">
+  <NuxtLink class="flex items-center shrink-0" :to="to" :target="target">
     <img
-      class="block h-6 w-6"
-      :class="{ 'mr-2': !minimal, grayscale: active }"
+      class="h-8 w-8 block"
+      :class="{
+        grayscale: active
+      }"
       src="~~/assets/images/speckle_logo_big.png"
       alt="Speckle"
     />
+
     <div
       v-if="!minimal"
-      class="text-primary h6 mt-0 hidden font-bold leading-7 md:flex"
+      class="text-primary text-base mt-0 font-bold leading-7"
+      :class="showTextOnMobile ? '' : 'hidden md:flex'"
     >
       Speckle
     </div>
   </NuxtLink>
 </template>
 <script setup lang="ts">
-defineProps({
-  minimal: {
-    type: Boolean,
-    default: false
-  },
-  active: {
-    type: Boolean,
-    default: true
+withDefaults(
+  defineProps<{
+    minimal?: boolean
+    active?: boolean
+    to?: string
+    showTextOnMobile?: boolean
+    target?: string
+  }>(),
+  {
+    to: '/'
   }
-})
+)
 </script>
