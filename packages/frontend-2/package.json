@@ -4,6 +4,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "build:docker": "docker build -t speckle/speckle-frontend-2:local -f Dockerfile ../..",
     "build": "nuxt build",
     "dev:nuxt": "nuxt dev",
     "dev:app": "concurrently \"nuxt dev\" \"yarn gqlgen:watch\"",

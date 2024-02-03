@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build": "yarn workspaces foreach -ptv run build",
+    "build:docker": "yarn workspaces foreach -ptv run build:docker",
     "build:public": "yarn workspaces foreach -ptv --no-private run build",
     "build:tailwind-deps": "yarn workspaces foreach -iv -j unlimited --include '{@speckle/shared,@speckle/tailwind-theme,@speckle/ui-components}' run build",
     "ensure:tailwind-deps": "node ./utils/ensure-tailwind-deps.mjs",
