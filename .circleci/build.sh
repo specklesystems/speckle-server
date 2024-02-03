@@ -21,7 +21,7 @@ docker buildx build \
   --build-arg SPECKLE_SERVER_VERSION="${IMAGE_VERSION_TAG}" \
   --tag "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}" \
   --file "${FOLDER}/${SPECKLE_SERVER_PACKAGE}/Dockerfile" \
-  --platform "linux/arm64/v8,darwin/arm64" \
+  --platform "linux/arm64/v8,linux/amd64" \
   .
 echo " Saving image: ${DOCKER_FILE_NAME}"
 docker save --output "/tmp/ci/workspace/${DOCKER_FILE_NAME}" "${DOCKER_IMAGE_TAG}:${IMAGE_VERSION_TAG}"
