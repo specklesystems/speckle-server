@@ -34,7 +34,7 @@
       <ProjectPageTeamDialog
         v-model:open="dialogOpen"
         :project="project"
-        :open-section="openSection || undefined"
+        :open-section="openSection"
       />
     </template>
   </ProjectPageStatsBlock>
@@ -67,7 +67,7 @@ const props = defineProps<{
 }>()
 
 const dialogOpen = ref(false)
-const openSection = ref<OpenSectionType | null>(null)
+const openSection = ref<OpenSectionType | undefined>()
 
 const route = useRoute()
 const router = useRouter()
