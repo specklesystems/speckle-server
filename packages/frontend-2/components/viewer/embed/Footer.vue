@@ -10,6 +10,7 @@
         to="https://speckle.systems/"
         target="_blank"
         show-text-on-mobile
+        :active="false"
       />
       <div class="h-6 w-px bg-outline-3"></div>
       <div class="flex flex-col">
