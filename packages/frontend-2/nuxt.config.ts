@@ -130,11 +130,17 @@ export default defineNuxtConfig({
     // Necessary because of redirects from backend in auth flows
     '/': {
       cors: true,
-      headers: { 'access-control-allow-methods': 'GET' }
+      headers: {
+        'access-control-allow-methods': 'GET',
+        'Access-Control-Expose-Headers': '*'
+      }
     },
     '/authn/login': {
       cors: true,
-      headers: { 'access-control-allow-methods': 'GET' }
+      headers: {
+        'access-control-allow-methods': 'GET',
+        'Access-Control-Expose-Headers': '*'
+      }
     }
   },
 
