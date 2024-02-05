@@ -1,5 +1,5 @@
 <template>
-  <div class="flex gap-1 items-center">
+  <div>
     <Menu as="div" class="ml-2 flex items-center">
       <MenuButton v-slot="{ open: userOpen }">
         <span class="sr-only">Open user menu</span>

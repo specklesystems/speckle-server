@@ -38,11 +38,7 @@
       v-model:open="showLoginDialog"
       dialog-mode
       max-width="sm"
-      :subtitle="
-        canPostComment
-          ? 'Create a free account to keep using Speckle!'
-          : 'Join the conversation'
-      "
+      subtitle="Join the conversation"
     />
 
     <!-- Active user avatars in navbar -->
