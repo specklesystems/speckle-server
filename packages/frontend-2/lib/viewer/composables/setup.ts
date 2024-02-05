@@ -299,14 +299,6 @@ export type InitialStateWithInterface = InitialStateWithUrlHashState &
  */
 const GlobalViewerDataKey = Symbol('GlobalViewerData')
 
-
-/**
- * Vue injection key for the Injectable Viewer State
- */
-const InjectableViewerStateKey: InjectionKey<InjectableViewerState> = Symbol(
-  'INJECTABLE_VIEWER_STATE'
-)
-
 function createViewerDataBuilder(params: { viewerDebug: boolean }) {
   return () => {
     if (process.server)

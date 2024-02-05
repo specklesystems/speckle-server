@@ -76,7 +76,12 @@
               </div>
             </div>
           </LayoutDialogSection>
-          <LayoutDialogSection v-if="!isSmallerOrEqualSm" border-b title="Preview">
+          <LayoutDialogSection
+            v-if="!isSmallerOrEqualSm"
+            lazy-load
+            border-b
+            title="Preview"
+          >
             <template #icon>
               <EyeIcon class="h-full w-full" />
             </template>
