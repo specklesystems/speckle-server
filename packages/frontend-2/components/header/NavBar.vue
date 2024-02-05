@@ -6,7 +6,6 @@
           <HeaderLogoBlock
             :active="false"
             :to="activeUser ? '/' : 'https://speckle.systems/'"
-            :target="activeUser ? undefined : '_blank'"
           />
           <HeaderNavLink
             to="/"

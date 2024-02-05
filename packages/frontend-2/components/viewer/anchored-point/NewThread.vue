@@ -69,22 +69,13 @@
             </div>
           </div>
         </div>
-        <div
-          v-if="modelValue.isExpanded && !canPostComment"
-          class="bg-foundation shadow-lg p-4 rounded-md flex flex-col items-center justify-center text-center"
-        >
-          <p class="text-sm mb-2 font-bold">Join the conversation</p>
-          <FormButton size="sm" @click="showLoginDialog = true">
-            Sign in to Speckle
-          </FormButton>
-          <AuthLoginPanel
-            v-model:open="showLoginDialog"
-            dialog-mode
-            max-width="sm"
-            subtitle="Create a free account to keep using Speckle!"
-          />
-        </div>
       </ViewerCommentsPortalOrDiv>
+      <AuthLoginPanel
+        v-model:open="showLoginDialog"
+        dialog-mode
+        max-width="sm"
+        subtitle="Create a free account to keep using Speckle!"
+      />
     </div>
   </div>
 </template>
@@ -131,6 +122,12 @@ const createThread = useSubmitComment()
 
 const onThreadClick = () => {
   const newIsExpanded = !props.modelValue.isExpanded
+
+  if (!props.canPostComment) {
+    showLoginDialog.value = true
+    return
+  }
+
   if (!newIsExpanded) {
     updateIsTyping(false)
   }
