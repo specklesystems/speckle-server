@@ -70,12 +70,6 @@
           </div>
         </div>
       </ViewerCommentsPortalOrDiv>
-      <AuthLoginPanel
-        v-model:open="showLoginDialog"
-        dialog-mode
-        max-width="sm"
-        subtitle="Create a free account to keep using Speckle!"
-      />
     </div>
   </div>
 </template>
@@ -97,6 +91,7 @@ import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ViewerNewThreadBubbleModel): void
   (e: 'close'): void
+  (e: 'login'): void
 }>()
 
 const props = defineProps<{
@@ -112,7 +107,6 @@ const editor = ref(null as Nullable<{ openFilePicker: () => void }>)
 const commentValue = ref(<CommentEditorValue>{ doc: undefined, attachments: undefined })
 const threadContainer = ref(null as Nullable<HTMLElement>)
 const isPostingNewThread = ref(false)
-const showLoginDialog = ref(false)
 
 // const { style } = useExpandedThreadResponsiveLocation({
 //   threadContainer,
@@ -124,7 +118,7 @@ const onThreadClick = () => {
   const newIsExpanded = !props.modelValue.isExpanded
 
   if (!props.canPostComment) {
-    showLoginDialog.value = true
+    emit('login')
     return
   }
 

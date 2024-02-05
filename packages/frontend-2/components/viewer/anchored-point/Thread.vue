@@ -155,13 +155,7 @@
               v-if="!canReply"
               class="p-3 flex flex-col items-center justify-center bg-foundation-2"
             >
-              <FormButton full-width @click="showLoginDialog = true">Reply</FormButton>
-              <AuthLoginPanel
-                v-model:open="showLoginDialog"
-                dialog-mode
-                max-width="sm"
-                subtitle="Create a free account to keep using Speckle!"
-              />
+              <FormButton full-width @click="$emit('login')">Reply</FormButton>
             </div>
           </div>
         </div>
@@ -213,6 +207,7 @@ const emit = defineEmits<{
   (e: 'update:expanded', v: boolean): void
   (e: 'next', v: CommentBubbleModel): void
   (e: 'prev', v: CommentBubbleModel): void
+  (e: 'login'): void
 }>()
 
 const props = defineProps<{
@@ -247,7 +242,6 @@ const threadActivator = ref(null as Nullable<HTMLElement>)
 
 const handle = ref(null as Nullable<HTMLElement>)
 const justCreatedReply = ref(false)
-const showLoginDialog = ref(false)
 
 const comments = computed(() => [
   props.modelValue,

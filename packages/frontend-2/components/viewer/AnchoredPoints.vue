@@ -9,6 +9,7 @@
       :can-post-comment="canPostComment"
       class="z-[13]"
       @close="closeNewThread"
+      @login="showLoginDialog = true"
     />
 
     <!-- Comment bubbles -->
@@ -22,6 +23,7 @@
       @update:expanded="onThreadExpandedChange"
       @next="(model) => openNextThread(model)"
       @prev="(model) => openPrevThread(model)"
+      @login="showLoginDialog = true"
     />
 
     <!-- Active users -->
@@ -30,6 +32,17 @@
       :key="user.state.sessionId"
       :user="user"
       class="z-[10]"
+    />
+
+    <AuthLoginPanel
+      v-model:open="showLoginDialog"
+      dialog-mode
+      max-width="sm"
+      :subtitle="
+        canPostComment
+          ? 'Create a free account to keep using Speckle!'
+          : 'Join the conversation'
+      "
     />
 
     <!-- Active user avatars in navbar -->
@@ -138,6 +151,8 @@ const {
     hideBubbles
   }
 } = useInjectedViewerInterfaceState()
+
+const showLoginDialog = ref(false)
 
 useViewerCommentBubblesProjection({ parentEl })
 
