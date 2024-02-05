@@ -151,6 +151,12 @@
               :model-value="modelValue"
               @submit="onNewReply"
             />
+            <div
+              v-if="!canReply"
+              class="p-3 flex flex-col items-center justify-center bg-foundation-2"
+            >
+              <FormButton full-width @click="$emit('login')">Reply</FormButton>
+            </div>
           </div>
         </div>
       </ViewerCommentsPortalOrDiv>
@@ -201,6 +207,7 @@ const emit = defineEmits<{
   (e: 'update:expanded', v: boolean): void
   (e: 'next', v: CommentBubbleModel): void
   (e: 'prev', v: CommentBubbleModel): void
+  (e: 'login'): void
 }>()
 
 const props = defineProps<{

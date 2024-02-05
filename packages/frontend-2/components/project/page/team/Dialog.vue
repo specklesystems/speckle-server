@@ -8,7 +8,7 @@
         :project="project"
       />
       <ProjectPageTeamDialogManagePermissions :project="project" />
-      <ProjectPageTeamDialogWebhooks :project="project" />
+      <ProjectPageTeamDialogWebhooks v-if="isOwner" :project="project" />
       <ProjectPageTeamDialogDangerZones
         v-if="isOwner || canLeaveProject"
         :project="project"
