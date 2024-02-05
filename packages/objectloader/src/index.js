@@ -364,7 +364,13 @@ export default class ObjectLoader {
         const newChildrenForBatch = splitBeforeCacheCheck[i].filter(
           (id) => !(id in cachedObjects)
         )
-        newChildren.push(...newChildrenForBatch)
+        /** On Safari this would throw a RangeError for large newChildrenForBatch lengths*/
+        //newChildren.push(...newChildrenForBatch)
+        /** The workaround for the above based off https://stackoverflow.com/a/9650855 */
+        const splitN = 500
+        for (let n = 0, toAdd = newChildrenForBatch; n < toAdd.length; n += splitN) {
+          newChildren.push.apply(newChildren, toAdd.slice(n, n + splitN))
+        }
       }
 
       if (newChildren.length === 0) return
