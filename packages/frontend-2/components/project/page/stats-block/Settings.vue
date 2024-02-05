@@ -108,8 +108,10 @@ onMounted(() => {
 
 watch(
   () => route.query.settings,
-  () => {
-    readDialogStateFromQuery()
+  (newSettings, oldSettings) => {
+    if (newSettings !== oldSettings) {
+      readDialogStateFromQuery()
+    }
   }
 )
 </script>
