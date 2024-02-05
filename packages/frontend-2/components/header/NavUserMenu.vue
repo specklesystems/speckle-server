@@ -1,14 +1,5 @@
 <template>
   <div class="flex gap-1 items-center">
-    <FormButton
-      v-if="!activeUser"
-      :to="loginUrl.fullPath"
-      color="invert"
-      class="hidden md:flex"
-      size="sm"
-    >
-      Sign In
-    </FormButton>
     <Menu as="div" class="ml-2 flex items-center">
       <MenuButton v-slot="{ open: userOpen }">
         <span class="sr-only">Open user menu</span>
@@ -114,7 +105,7 @@
               Sign Out
             </NuxtLink>
           </MenuItem>
-          <MenuItem v-if="!activeUser" v-slot="{ active }">
+          <MenuItem v-if="!activeUser && loginUrl" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
@@ -152,23 +143,24 @@ import {
   ChatBubbleLeftRightIcon
 } from '@heroicons/vue/24/outline'
 import { Roles } from '@speckle/shared'
-import type { Optional } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
-import { loginRoute } from '~~/lib/common/helpers/route'
 import { useTheme, AppTheme } from '~~/lib/core/composables/theme'
 import { useServerInfo } from '~/lib/core/composables/server'
+import type { RouteLocation } from 'vue-router'
+
+defineProps<{
+  loginUrl?: RouteLocation & { href: string }
+}>()
 
 const { logout } = useAuthManager()
 const { activeUser, isGuest } = useActiveUser()
 const { isDarkTheme, setTheme } = useTheme()
 const { serverInfo } = useServerInfo()
-const route = useRoute()
 const router = useRouter()
 
 const showInviteDialog = ref(false)
 const showProfileEditDialog = ref(false)
-const token = computed(() => route.query.token as Optional<string>)
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
 const version = computed(() => serverInfo.value?.version)
@@ -194,13 +186,4 @@ const goToConnectors = () => {
 const goToServerManagement = () => {
   router.push('/server-management')
 }
-
-const loginUrl = computed(() =>
-  router.resolve({
-    path: loginRoute,
-    query: {
-      token: token.value || undefined
-    }
-  })
-)
 </script>

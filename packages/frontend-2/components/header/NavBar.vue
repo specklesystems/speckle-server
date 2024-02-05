@@ -20,8 +20,17 @@
           <PortalTarget name="primary-actions"></PortalTarget>
           <!-- Notifications dropdown -->
           <HeaderNavNotifications />
+          <FormButton
+            v-if="!activeUser"
+            :to="loginUrl.fullPath"
+            color="invert"
+            class="hidden md:flex"
+            size="sm"
+          >
+            Sign In
+          </FormButton>
           <!-- Profile dropdown -->
-          <HeaderNavUserMenu />
+          <HeaderNavUserMenu :login-url="loginUrl" />
         </div>
       </div>
       <PopupsSignIn v-if="!activeUser" />
@@ -31,5 +40,21 @@
 </template>
 <script setup lang="ts">
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { loginRoute } from '~~/lib/common/helpers/route'
+import type { Optional } from '@speckle/shared'
+
 const { activeUser } = useActiveUser()
+const route = useRoute()
+const router = useRouter()
+
+const token = computed(() => route.query.token as Optional<string>)
+
+const loginUrl = computed(() =>
+  router.resolve({
+    path: loginRoute,
+    query: {
+      token: token.value || undefined
+    }
+  })
+)
 </script>
