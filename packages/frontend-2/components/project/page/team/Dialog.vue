@@ -15,10 +15,6 @@
         :project="project"
         :default-open="openSection === OpenSectionType.Access"
       />
-      <ProjectPageTeamDialogManagePermissions
-        :default-open="openSection === OpenSectionType.Access"
-        :project="project"
-      />
       <ProjectPageTeamDialogWebhooks v-if="isOwner" :project="project" />
       <ProjectPageTeamDialogDangerZones
         v-if="isOwner || canLeaveProject"

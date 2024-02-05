@@ -105,4 +105,11 @@ const onButtonClick = () => {
 onMounted(() => {
   readDialogStateFromQuery()
 })
+
+watch(
+  () => route.query.settings,
+  () => {
+    readDialogStateFromQuery()
+  }
+)
 </script>
