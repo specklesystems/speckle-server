@@ -155,8 +155,7 @@
               v-if="!canReply"
               class="p-3 flex flex-col items-center justify-center bg-foundation-2"
             >
-              <p class="text-sm mb-2 font-bold">Join the conversation</p>
-              <FormButton size="sm" @click="showLoginDialog = true">Reply</FormButton>
+              <FormButton full-width @click="showLoginDialog = true">Reply</FormButton>
               <AuthLoginPanel
                 v-model:open="showLoginDialog"
                 dialog-mode
