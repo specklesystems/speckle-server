@@ -59,10 +59,9 @@
 <script setup lang="ts">
 import { EyeIcon, EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
-import { containsAll } from '~~/lib/common/helpers/utils'
+import { containsAll, hasIntersection } from '~~/lib/common/helpers/utils'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
-// import { ViewerSceneExplorerStateKey } from '~~/lib/common/helpers/constants'
 
 const props = defineProps<{
   item: {
@@ -79,13 +78,9 @@ const {
     metadata: { filteringState }
   }
 } = useInjectedViewerState()
-const { clearSelection, setSelectionFromObjectIds, objects } = useSelectionUtilities()
+const { clearSelection, setSelectionFromObjectIds, objectIds } = useSelectionUtilities()
 
-const isSelected = computed(() => {
-  const selObjsIds = objects.value.map((o) => o.id as string)
-
-  return selObjsIds.some((id: string) => props.item.ids.includes(id)) //containsAll(props.item.ids, selObjsIds)
-})
+const isSelected = computed(() => hasIntersection(objectIds.value, props.item.ids))
 
 const availableTargetIds = computed(() => {
   let targets = props.item.ids

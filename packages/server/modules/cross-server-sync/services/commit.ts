@@ -14,6 +14,7 @@ import { Logger, crossServerSyncLogger } from '@/logging/logging'
 import { createCommitByBranchId } from '@/modules/core/services/commit/management'
 import { getUser } from '@/modules/core/repositories/users'
 import type { SpeckleViewer } from '@speckle/shared'
+import { retry } from '@speckle/shared'
 import {
   createCommentThreadAndNotify,
   createCommentReplyAndNotify
@@ -527,10 +528,14 @@ const loadAllObjectsFromParent = async (
     const work = async () => {
       const id = `${obj.id} - ${processedObjectCount++}/${totalObjectCount}`
       logger.debug(`Processing ${id}...`)
-      await Promise.race([
-        createNewObject(typedObj, targetStreamId, { logger }),
-        timeoutAt(60 * 1000, `Object create timed out! - ${id}`)
-      ])
+      await retry(
+        () =>
+          Promise.race([
+            createNewObject(typedObj, targetStreamId, { logger }),
+            timeoutAt(30 * 1000, `Object create timed out! - ${id}`)
+          ]),
+        3
+      )
       logger.debug(`Processed! ${id}`)
     }
 

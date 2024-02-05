@@ -304,13 +304,15 @@ function createLink(params: {
 
     const shouldSkip = !!res.operation.getContext().skipLoggingErrors
     if (!isSubTokenMissingError && !shouldSkip) {
+      const errMsg = res.networkError?.message || res.graphQLErrors?.[0]?.message
       logger.error(
         {
           ...omit(res, ['forward', 'response']),
           networkErrorMessage: res.networkError?.message,
-          gqlErrorMessages: res.graphQLErrors?.map((e) => e.message)
+          gqlErrorMessages: res.graphQLErrors?.map((e) => e.message),
+          errorMessage: errMsg
         },
-        'Apollo Client error'
+        'Apollo Client error: {errorMessage}'
       )
     }
 

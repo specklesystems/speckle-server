@@ -223,7 +223,7 @@ export function useFilterUtilities() {
 
 export function useSelectionUtilities() {
   const {
-    filters: { selectedObjects }
+    filters: { selectedObjects, selectedObjectIds }
   } = useInjectedViewerInterfaceState()
   const {
     metadata: { worldTree }
@@ -268,7 +268,8 @@ export function useSelectionUtilities() {
     removeFromSelection,
     clearSelection,
     setSelectionFromObjectIds,
-    objects: selectedObjects
+    objects: selectedObjects,
+    objectIds: selectedObjectIds
   }
 }
 

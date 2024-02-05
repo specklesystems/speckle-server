@@ -51,7 +51,8 @@ export default defineNuxtConfig({
       logClientApiToken: '',
       logClientApiEndpoint: '',
       speckleServerVersion: SPECKLE_SERVER_VERSION || 'unknown',
-      serverName: 'UNDEFINED'
+      serverName: 'UNDEFINED',
+      viewerDebug: false
     }
   },
 

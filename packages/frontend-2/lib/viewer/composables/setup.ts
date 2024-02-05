@@ -21,8 +21,8 @@ import type { MaybeRef } from '@vueuse/shared'
 import { inject, ref, provide } from 'vue'
 import type { ComputedRef, WritableComputedRef, Raw, Ref, ShallowRef } from 'vue'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import type { Nullable, Optional } from '@speckle/shared'
-import { SpeckleViewer } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
+import { SpeckleViewer, isNonNullable } from '@speckle/shared'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
@@ -227,6 +227,10 @@ export type InjectableViewerState = Readonly<{
       isolatedObjectIds: Ref<string[]>
       hiddenObjectIds: Ref<string[]>
       selectedObjects: Ref<Raw<SpeckleObject>[]>
+      /**
+       * For quick object ID lookups
+       */
+      selectedObjectIds: ComputedRef<Set<string>>
       propertyFilter: {
         filter: Ref<Nullable<PropertyInfo>>
         isApplied: Ref<boolean>
@@ -295,25 +299,38 @@ export type InitialStateWithInterface = InitialStateWithUrlHashState &
  */
 const GlobalViewerDataKey = Symbol('GlobalViewerData')
 
-function createViewerData(): CachedViewerState {
-  if (process.server)
-    // we don't want to use nullable checks everywhere, so the nicer route here ends
-    // up being telling TS to ignore the undefineds - you shouldn't use any of this in SSR anyway
-    return undefined as unknown as CachedViewerState
 
-  const container = document.createElement('div')
-  container.id = 'renderer'
-  container.style.display = 'block'
-  container.style.width = '100%'
-  container.style.height = '100%'
+/**
+ * Vue injection key for the Injectable Viewer State
+ */
+const InjectableViewerStateKey: InjectionKey<InjectableViewerState> = Symbol(
+  'INJECTABLE_VIEWER_STATE'
+)
 
-  const viewer = new LegacyViewer(container, DefaultViewerParams)
-  const initPromise = viewer.init()
+function createViewerDataBuilder(params: { viewerDebug: boolean }) {
+  return () => {
+    if (process.server)
+      // we don't want to use nullable checks everywhere, so the nicer route here ends
+      // up being telling TS to ignore the undefineds - you shouldn't use any of this in SSR anyway
+      return undefined as unknown as CachedViewerState
 
-  return {
-    instance: viewer,
-    container,
-    initPromise
+    const container = document.createElement('div')
+    container.id = 'renderer'
+    container.style.display = 'block'
+    container.style.width = '100%'
+    container.style.height = '100%'
+
+    const viewer = new LegacyViewer(container, {
+      ...DefaultViewerParams,
+      verbose: !!(process.client && params.viewerDebug)
+    })
+    const initPromise = viewer.init()
+
+    return {
+      instance: viewer,
+      container,
+      initPromise
+    }
   }
 }
 
@@ -363,13 +380,17 @@ function setupViewerMetadata(params: {
  * Setup actual viewer instance & related data
  */
 function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
+  const {
+    public: { viewerDebug }
+  } = useRuntimeConfig()
+
   const projectId = computed(() => unref(params.projectId))
 
   const sessionId = computed(() => nanoid())
   const isInitialized = ref(false)
   const { instance, initPromise, container } = useScopedState(
     GlobalViewerDataKey,
-    createViewerData
+    createViewerDataBuilder({ viewerDebug })
   ) || { initPromise: Promise.resolve() }
   initPromise.then(() => (isInitialized.value = true))
 
@@ -820,6 +841,15 @@ function setupInterfaceState(
   const explodeFactor = ref(0)
   const selection = ref(null as Nullable<Vector3>)
 
+  const selectedObjectIds = computed(
+    () =>
+      new Set(
+        selectedObjects.value
+          .map((o) => o.id as MaybeNullOrUndefined<string>)
+          .filter(isNonNullable)
+      )
+  )
+
   /**
    * THREADS
    */
@@ -870,6 +900,7 @@ function setupInterfaceState(
         isolatedObjectIds,
         hiddenObjectIds,
         selectedObjects,
+        selectedObjectIds,
         propertyFilter: {
           filter: propertyFilter,
           isApplied: isPropertyFilterApplied
