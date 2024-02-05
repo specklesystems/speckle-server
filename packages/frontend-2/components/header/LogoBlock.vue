@@ -28,6 +28,7 @@ withDefaults(
     target?: string
   }>(),
   {
+    active: true,
     to: '/'
   }
 )
