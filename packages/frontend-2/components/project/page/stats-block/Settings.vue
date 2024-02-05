@@ -34,6 +34,7 @@
 </template>
 <script setup lang="ts">
 import { Cog6ToothIcon } from '@heroicons/vue/24/outline'
+import type { Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageStatsBlockTeamFragment } from '~~/lib/common/generated/gql/graphql'
 import { OpenSectionType } from '~~/lib/projects/helpers/components'
@@ -64,31 +65,30 @@ const router = useRouter()
 
 const teamUsers = computed(() => props.project.team.map((t) => t.user))
 
-watch(
-  () => route.query.settings,
-  (newSettings) => {
-    if (newSettings === 'true') {
-      dialogOpen.value = true
-      openSection.value = OpenSectionType.Team
-    } else if (newSettings === 'invite') {
-      dialogOpen.value = true
-      openSection.value = OpenSectionType.Invite
-    } else if (newSettings === 'access') {
-      dialogOpen.value = true
-      openSection.value = OpenSectionType.Access
-    } else {
-      dialogOpen.value = false
-      openSection.value = OpenSectionType.Team
-    }
-  },
-  { immediate: true }
-)
+const readDialogStateFromQuery = async () => {
+  const newSettings = route.query.settings as Optional<string | true>
+  let shouldShow = false
 
-watch(dialogOpen, (newVal) => {
-  if (!newVal) {
-    const routeQuery = { ...route.query }
-    delete routeQuery.settings
-    router.replace({ query: routeQuery })
+  if (!newSettings) {
+    shouldShow = false
+  } else if (newSettings === 'invite') {
+    shouldShow = true
+    openSection.value = OpenSectionType.Invite
+  } else if (newSettings === 'access') {
+    shouldShow = true
+    openSection.value = OpenSectionType.Access
+  } else {
+    shouldShow = true
+    openSection.value = OpenSectionType.Team
   }
+
+  if (shouldShow) {
+    dialogOpen.value = true
+    await router.replace({ query: { ...route.query, settings: undefined } })
+  }
+}
+
+onMounted(() => {
+  readDialogStateFromQuery()
 })
 </script>
