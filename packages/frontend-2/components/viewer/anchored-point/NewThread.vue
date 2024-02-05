@@ -24,7 +24,7 @@
       </button>
       <ViewerCommentsPortalOrDiv to="mobileComments">
         <div
-          v-if="modelValue.isExpanded"
+          v-if="modelValue.isExpanded && !isEmbedEnabled"
           class="bg-foundation px-2 py-2 text-sm text-primary sm:hidden font-medium flex justify-between items-center"
         >
           Add Comment
@@ -87,6 +87,9 @@ import {
 } from '~~/lib/viewer/helpers/comments'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+
+const { isEnabled: isEmbedEnabled } = useEmbed()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ViewerNewThreadBubbleModel): void
