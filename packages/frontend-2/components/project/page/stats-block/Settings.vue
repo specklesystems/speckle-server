@@ -17,7 +17,7 @@
       <div class="flex items-center justify-between mt-3">
         <UserAvatarGroup :users="teamUsers" class="max-w-[104px]" />
         <div>
-          <FormButton class="ml-2" @click="dialogOpen = true">
+          <FormButton class="ml-2" @click="onButtonClick">
             {{ project.role === 'stream:owner' ? 'Manage' : 'View' }}
           </FormButton>
         </div>
@@ -86,6 +86,11 @@ const readDialogStateFromQuery = async () => {
     dialogOpen.value = true
     await router.replace({ query: { ...route.query, settings: undefined } })
   }
+}
+
+const onButtonClick = () => {
+  openSection.value = OpenSectionType.Team
+  dialogOpen.value = true
 }
 
 onMounted(() => {
