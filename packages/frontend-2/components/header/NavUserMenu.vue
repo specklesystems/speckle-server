@@ -147,10 +147,10 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme, AppTheme } from '~~/lib/core/composables/theme'
 import { useServerInfo } from '~/lib/core/composables/server'
-import type { RouteLocation } from 'vue-router'
+import type { RouteLocationRaw } from 'vue-router'
 
 defineProps<{
-  loginUrl?: RouteLocation & { href: string }
+  loginUrl?: RouteLocationRaw
 }>()
 
 const { logout } = useAuthManager()
