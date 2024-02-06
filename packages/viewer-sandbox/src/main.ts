@@ -334,7 +334,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/97750296c2/commits/5386a0af02' // 700k+ objects 30kk tris
     // 'https://latest.speckle.dev/streams/97750296c2/commits/2a6fd781f2' // NEW
 
-    'https://latest.speckle.dev/streams/97750296c2/commits/48f0567a88' // 1015849 objects
+    // 'https://latest.speckle.dev/streams/97750296c2/commits/48f0567a88' // 1015849 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/aec0841f7e' // 11k objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/96ffc3c786' // 92209 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/92115d3789' // 390974 objects 19kk tris
@@ -373,7 +373,10 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/489d42ca8c'
     // 'https://latest.speckle.dev/streams/97750296c2/objects/11a7752e40b4ef0620affc55ce9fdf5a'
 
-    // 'https://latest.speckle.dev/streams/92b620fb17/objects/7118603b197c00944f53be650ce721ec'
+    // Text and Dimensions
+    'https://latest.speckle.dev/streams/3f895e614f/commits/fbc78286c9'
+    // 'https://latest.speckle.dev/streams/55cc1cbf0a/commits/aa72674507'
+    // 'https://latest.speckle.dev/streams/55cc1cbf0a/commits/a7f74b6524'
   )
 }
 
