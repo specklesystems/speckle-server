@@ -31,7 +31,8 @@
       >
         <!-- Header -->
         <div
-          class="h-18 absolute z-10 w-full top-0 sm:top-14 left-0 bg-foundation shadow-md"
+          class="h-18 absolute z-10 top-0 w-full left-0 bg-foundation shadow-md"
+          :class="isEmbedEnabled ? '' : 'sm:top-14'"
         >
           <div
             class="flex items-center justify-between pl-3 pr-2.5 h-10 border-b border-outline-3"
@@ -65,7 +66,18 @@
             </div>
           </div>
         </div>
-        <div class="w-full" :class="$slots.actions ? 'h-24 sm:h-32' : 'h-26'"></div>
+        <div
+          class="w-full"
+          :class="
+            isEmbedEnabled
+              ? $slots.actions
+                ? 'h-16'
+                : 'h-10'
+              : $slots.actions
+              ? 'h-24 sm:h-32'
+              : 'h-10'
+          "
+        ></div>
         <div
           class="overflow-y-auto simple-scrollbar h-[calc(50dvh)] sm:h-[calc(100dvh-8rem)] bg-foundation w-full pt-2"
         >
@@ -91,6 +103,7 @@ import {
   ArrowsRightLeftIcon
 } from '@heroicons/vue/24/outline'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
+import { useEmbed } from '~~/lib/viewer/composables/setup/embed'
 
 defineProps<{
   open: boolean
@@ -106,6 +119,7 @@ let startWidth = 0
 let startX = 0
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
+const { isEnabled: isEmbedEnabled } = useEmbed()
 
 const startResizing = (event: MouseEvent) => {
   event.preventDefault()
