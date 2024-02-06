@@ -45,11 +45,6 @@
                 {{ new Date(model.updatedAt).toLocaleString() }}
                 | {{ model.versions.totalCount }} versions
               </div>
-              <div
-                class="absolute top-6 caption right-3 opacity-0 transition group-hover:opacity-100 rounded-md bg-primary text-foreground-on-primary p-1"
-              >
-                select
-              </div>
             </div>
           </div>
         </div>

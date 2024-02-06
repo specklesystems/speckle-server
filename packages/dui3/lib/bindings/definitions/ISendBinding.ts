@@ -24,12 +24,7 @@ export interface ISendBindingEvents {
 
 export type CreateVersionArgs = {
   modelCardId: string
-  projectId: string
-  modelId: string
-  accountId: string
   objectId: string
-  message?: string
-  sourceApplication?: string
 }
 
 export class MockedSendBinding extends BaseBridge {

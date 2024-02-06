@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="-mt-4 mb-4 flex items-center justify-center space-x-2">
+    <div class="-mt-4 mb-4 flex items-center justify-left space-x-2">
       <div
         v-for="index in 3"
         :key="index"
@@ -8,6 +8,13 @@
           index === step ? 'bg-primary' : 'bg-foreground-2'
         }`"
       ></div>
+      <FormButton v-if="step > 1" size="xs" class="-ml-1" text @click="step--">
+        Back
+      </FormButton>
+      <div class="grow"></div>
+      <button class="hover:text-primary transition" @click="emit('close')">
+        <XMarkIcon class="w-4" />
+      </button>
     </div>
     <div v-if="step === 1">
       <div>
@@ -18,9 +25,6 @@
     <div v-if="step === 2 && selectedProject && selectedAccountId">
       <div class="flex items-center justify-between mb-2">
         <div class="h5 font-bold">Select Model</div>
-        <FormButton v-if="step > 1" size="xs" class="-ml-1" text @click="step--">
-          Back
-        </FormButton>
       </div>
       <div>
         <SendModelSelector
@@ -33,11 +37,11 @@
     <div v-if="step === 3">
       <div class="flex items-center justify-between mb-2">
         <div class="h5 font-bold">Send Filter</div>
-        <FormButton v-if="step > 1" size="xs" class="-ml-1" text @click="step--">
-          Back
-        </FormButton>
       </div>
-      <SendFiltersAndSettings v-model="filter" />
+      <SendFiltersAndSettings v-model="filter" @update:filter="(f) => (filter = f)" />
+      <div class="mt-2">
+        <FormButton full-width @click="addModel">Publish</FormButton>
+      </div>
     </div>
   </div>
 </template>
@@ -45,14 +49,22 @@
 import {
   ModelListModelItemFragment,
   ProjectListProjectItemFragment
-} from 'lib/common/generated/gql/graphql'
-import { ISendFilter } from 'lib/models/card/send'
+} from '~/lib/common/generated/gql/graphql'
+import { ISendFilter, SenderModelCard } from '~/lib/models/card/send'
+import { useHostAppStore } from '~/store/hostApp'
+import { useAccountStore } from '~/store/accounts'
+import { XMarkIcon } from '@heroicons/vue/24/outline'
+
+const emit = defineEmits(['close'])
 
 const step = ref(1)
-const selectedAccountId = ref<string | null>()
+const accountStore = useAccountStore()
+const { defaultAccount } = storeToRefs(accountStore)
+
+const selectedAccountId = ref<string>(defaultAccount.value?.accountInfo.id as string)
 const selectedProject = ref<ProjectListProjectItemFragment>()
 const selectedModel = ref<ModelListModelItemFragment>()
-const filter = ref<ISendFilter>()
+const filter = ref<ISendFilter | undefined>(undefined)
 
 const selectProject = (accountId: string, project: ProjectListProjectItemFragment) => {
   step.value++
@@ -63,5 +75,20 @@ const selectProject = (accountId: string, project: ProjectListProjectItemFragmen
 const selectModel = (model: ModelListModelItemFragment) => {
   step.value++
   selectedModel.value = model
+}
+
+const hostAppStore = useHostAppStore()
+
+const addModel = async () => {
+  const model = new SenderModelCard()
+  model.accountId = selectedAccountId.value
+  model.projectId = selectedProject.value?.id as string
+  model.modelId = selectedModel.value?.id as string
+  model.sendFilter = filter.value as ISendFilter
+  model.expired = false
+
+  await hostAppStore.addModel(model)
+  void hostAppStore.sendModel(model.id)
+  emit('close')
 }
 </script>

@@ -2,6 +2,13 @@ export interface IDiscriminatedObject {
   typeDiscriminator: string
 }
 
+export class DiscriminatedObject implements IDiscriminatedObject {
+  typeDiscriminator: string
+  constructor(typeDiscriminator: string) {
+    this.typeDiscriminator = typeDiscriminator
+  }
+}
+
 export interface FormInputBase extends IDiscriminatedObject {
   label?: string
   showLabel?: boolean

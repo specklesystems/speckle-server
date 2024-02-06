@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-4">
-    <div class="h5 font-semibold">Edit Filter</div>
+    <div class="font-semibold">Edit Filter</div>
     <div class="">
       <FormSelectBase
         v-model="selectedSendFilterName"

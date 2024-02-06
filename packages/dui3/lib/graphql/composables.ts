@@ -33,6 +33,14 @@ function getValidOrDefaultAccount(
   throw new Error(`Failed to find a valid account for id ${clientId}`)
 }
 
+function getAccount(clientId: string) {
+  const { accounts } = storeToRefs(useAccountStore())
+  const account = accounts.value.find((acc) => acc.accountInfo.id === clientId)
+  if (account) return account.client as ApolloClient<unknown>
+
+  throw new Error(`Failed to find a valid account for id ${clientId}`)
+}
+
 export function useProjectVersionUpdated(clientId: string | undefined = undefined) {
   return (projectId: string) => {
     const client = getValidOrDefaultAccount(clientId)

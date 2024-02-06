@@ -1,18 +1,19 @@
 <template>
   <div class="space-y-2">
-    <FilterListSelect v-model:filter="filter" />
-    <div class="flex justify-end">
-      <FormButton @click="">Send</FormButton>
-    </div>
+    <FilterListSelect @update:filter="updateFilter" />
+    <!-- Settings maybe later? -->
   </div>
 </template>
 <script setup lang="ts">
 import { ISendFilter } from 'lib/models/card/send'
-import { useHostAppStore } from '~~/store/hostApp'
 
-const store = useHostAppStore()
-const { selectionFilter } = storeToRefs(store)
+const emit = defineEmits<{
+  (e: 'update:filter', filter: ISendFilter): void
+}>()
 
-const filter = ref<ISendFilter>({ ...selectionFilter.value })
-console.log(filter)
+const updateFilter = (filter: ISendFilter) => {
+  // TODO: something like hostApp.validateSendFilter()
+  // which should return a bool and a reason if invalid
+  emit('update:filter', filter)
+}
 </script>

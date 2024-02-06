@@ -10,7 +10,7 @@ export interface IReceiveBinding extends IBinding<IReceiveBindingEvents> {
   receive: (modelId: string, versionId: string) => Promise<void>
   getReceiveSettings: () => Promise<CardSetting[]>
   cancelReceive: (modelId: string) => Promise<void>
-  invalidate: (modelId: string) => Promise<void>
+  invalidate: (modelId: string) => Promise<void> // What is this supposed to do
 }
 
 export interface IReceiveBindingEvents {

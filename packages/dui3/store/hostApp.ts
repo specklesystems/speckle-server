@@ -1,14 +1,14 @@
 import {
   DocumentInfo,
-  DocumentModelStore,
-  ToastInfo
+  DocumentModelStore
 } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 import { IModelCard } from 'lib/models/card'
 import { IReceiverModelCard } from 'lib/models/card/receiver'
 import { ISendFilter, ISenderModelCard } from 'lib/models/card/send'
-import { VersionCreateInput } from 'lib/common/generated/gql/graphql'
-import { useCreateVersion } from '~/lib/graphql/composables'
-import { useAccountStore } from '~~/store/accounts'
+import { useMutation } from '@vue/apollo-composable'
+import { createCommitMutation } from '~/lib/graphql/mutationsAndQueries'
+import { useAccountStore } from '~/store/accounts'
+import { ModelCardNotification } from '~/lib/models/card/notification'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -20,8 +20,8 @@ export type ProjectModelGroup = {
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
-
-  const { defaultAccount } = storeToRefs(useAccountStore())
+  const accStore = useAccountStore()
+  accStore.provideClients()
 
   const hostAppName = ref<string>()
   const documentInfo = ref<DocumentInfo>()
@@ -62,13 +62,12 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   }
 
   const updateModelFilter = async (modelId: string, filter: ISendFilter) => {
-    const modelIndex = documentModelStore.value.models.findIndex(
+    const model = documentModelStore.value.models.find(
       (m) => m.id === modelId
-    )
-    const model = documentModelStore.value.models[modelIndex] as ISenderModelCard
+    ) as ISenderModelCard
     model.sendFilter = filter
 
-    await app.$baseBinding.updateModel(documentModelStore.value.models[modelIndex])
+    await app.$baseBinding.updateModel(model)
   }
 
   const removeModel = async (model: IModelCard) => {
@@ -78,11 +77,17 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     )
   }
 
+  const dismissModelNotification = (modelId: string, index: number) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.id === modelId
+    ) as IModelCard
+    model.notifications?.splice(index, 1)
+  }
+
   const invalidateReceiver = async (modelId: string) => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === modelId
     ) as IReceiverModelCard
-    model.expired = true
     await app.$receiveBinding.invalidate(modelId)
   }
 
@@ -90,7 +95,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === modelId
     ) as ISenderModelCard
-    model.expired = false
+    model.notifications = []
     model.sending = true
     await app.$sendBinding.send(modelId)
   }
@@ -108,7 +113,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === modelId
     ) as IReceiverModelCard
-    model.expired = false
     model.receiving = true
     await app.$receiveBinding.receive(modelId, versionId)
   }
@@ -149,79 +153,105 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   app.$sendBinding.on('sendersExpired', (senderIds) => {
     documentModelStore.value.models
       .filter((m) => senderIds.includes(m.id))
-      .forEach((model) => ((model as ISenderModelCard).expired = true))
+      .forEach((model) => {
+        model.notifications = []
+        model.notifications.push({
+          modelCardId: model.id,
+          level: 'info',
+          dismissible: false,
+          text: 'Model is out of sync with file.',
+          cta: {
+            name: 'Update',
+            action: () => sendModel(model.id)
+          }
+        })
+      })
   })
 
   app.$sendBinding.on('notify', (args) => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === args.modelCardId
     ) as ISenderModelCard
-    model.notification = args
-    setTimeout(() => {
-      model.notification = undefined
-    }, args.timeout)
+
+    model.notifications?.push(args)
   })
 
   app.$receiveBinding.on('notify', (args) => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === args.modelCardId
     ) as IReceiverModelCard
-    model.notification = args
-    setTimeout(() => {
-      model.notification = undefined
-    }, args.timeout)
+    model.notifications?.push(args)
   })
 
   app.$sendBinding.on('senderProgress', (args) => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === args.id
     ) as ISenderModelCard
-    model.progress = args
-    if (args.status === 'Completed') {
+
+    if (args.status === 'Completed' || args.status === 'Cancelled') {
       model.sending = false
       model.progress = undefined
+      return
     }
+
+    model.progress = args
   })
 
   app.$receiveBinding.on('receiverProgress', (args) => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === args.id
     ) as IReceiverModelCard
-    model.progress = args
-    if (args.status === 'Completed') {
+
+    if (args.status === 'Completed' || args.status === 'Cancelled') {
       model.receiving = false
       model.progress = undefined
+      return
     }
+
+    model.progress = args
   })
 
   app.$sendBinding.on('createVersion', async (args) => {
-    const createVersion = useCreateVersion(args.accountId)
-    const version: VersionCreateInput = {
-      projectId: args.projectId,
-      modelId: args.modelId,
-      objectId: args.objectId,
-      sourceApplication: args.sourceApplication,
-      message: args.message
-    }
-    const res = await createVersion(version)
-    const notification: ToastInfo = {
-      modelCardId: args.modelCardId,
-      text: 'Version Created',
-      level: 'success',
-      action: {
-        name: 'View',
-        url: `${defaultAccount.value?.accountInfo.serverInfo.url}/streams/${args.projectId}/commits/${res?.data?.versionMutations.create.id}`
-      }
-    }
     const model = documentModelStore.value.models.find(
       (m) => m.id === args.modelCardId
     ) as ISenderModelCard
+    const acc = accStore.accounts.find((acc) => acc.accountInfo.id === model?.accountId)
 
-    model.notification = notification
+    model.progress = {
+      id: model.id,
+      status: 'Creating a version...'
+    }
 
-    setTimeout(() => {
-      model.notification = undefined
-    }, 5000)
+    const { mutate: createCommit } = useMutation(createCommitMutation, {
+      clientId: model?.accountId
+    })
+
+    const result = await createCommit({
+      commit: {
+        streamId: model?.projectId as string,
+        branchName: model?.modelId as string, // NOTE: creating a new version by speccing a branch id rather than a name relies on a previous hack serverside (ask gergo)
+        objectId: args.objectId,
+        sourceApplication: hostAppName.value || 'dui3'
+      }
+    })
+
+    model.progress = undefined
+    const notification: ModelCardNotification = {
+      modelCardId: args.modelCardId,
+      text: 'New version created!',
+      level: 'success',
+      dismissible: true,
+      cta: {
+        name: 'View',
+        action: () => {
+          app.$baseBinding.openUrl(
+            `${acc?.accountInfo.serverInfo.url}/projects/${model?.projectId}/models/${model.modelId}@${result?.data?.commitCreate}`
+          )
+        }
+      }
+    }
+
+    model.notifications = [notification]
   })
 
   // First initialization calls
@@ -240,6 +270,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     addModel,
     updateModelFilter,
     removeModel,
+    dismissModelNotification,
     sendModel,
     receiveModel,
     sendModelCancel,

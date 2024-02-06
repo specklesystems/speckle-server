@@ -33,11 +33,6 @@
           <div class="caption text-foreground-2">
             {{ new Date(project.updatedAt).toLocaleString() }}
           </div>
-          <div
-            class="absolute top-6 caption right-3 opacity-0 transition group-hover:opacity-100 rounded-md bg-primary text-foreground-on-primary p-1"
-          >
-            select
-          </div>
         </div>
         <div class="caption text-center mt-2">{{ totalCount }} projects found.</div>
       </div>
@@ -52,7 +47,7 @@
     </button>
     <LayoutDialog v-model:open="showNewProjectDialog" hide-closer title="new project">
       <!-- <div class="-mx-6 -my-5 space-y-2"> -->
-      <form @submit="onSubmit">
+      <form @submit="onSubmitCreateNewProject">
         <FormTextInput
           v-model="newProjectName"
           placeholder="new project name"
@@ -81,7 +76,7 @@ defineEmits<{
   (e: 'next', accountId: string, project: ProjectListProjectItemFragment): void
 }>()
 
-const props = withDefaults(
+withDefaults(
   defineProps<{
     showNewProject?: boolean
   }>(),
@@ -100,10 +95,8 @@ const accountId = computed(
 const selectedAccountId = ref<string>()
 
 const { handleSubmit } = useForm<{ name: string }>()
-const onSubmit = handleSubmit(async ({ name }) => {
-  // await createModel({ name, projectId: props.projectId })
-  // mp.track('Branch Action', { type: 'action', name: 'create', mode: 'dialog' })
-  // openState.value = false
+const onSubmitCreateNewProject = handleSubmit(async ({ name }) => {
+  // TODO
 })
 
 const { result: projectsResult, loading } = useQuery(
