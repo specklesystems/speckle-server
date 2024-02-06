@@ -4,7 +4,12 @@
     class="flex items-center relative sm:border-r border-outline-1 sm:pr-4"
   >
     <MenuButton as="div">
-      <FormButton class="hidden sm:flex" outlined :icon-right="ChevronDownIcon">
+      <FormButton
+        class="hidden sm:flex"
+        size="sm"
+        outlined
+        :icon-right="ChevronDownIcon"
+      >
         Share
       </FormButton>
       <button class="sm:hidden mt-1.5">
