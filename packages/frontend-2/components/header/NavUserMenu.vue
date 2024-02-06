@@ -189,16 +189,14 @@ const goToServerManagement = () => {
   router.push('/server-management')
 }
 
-if (process.client) {
-  watch(
-    isProfileRoute,
-    (newVal, oldVal) => {
-      if (newVal && !oldVal) {
-        showProfileEditDialog.value = true
-        void router.replace({ path: homeRoute, force: true }) // in-place replace
-      }
-    },
-    { immediate: true }
-  )
-}
+watch(
+  isProfileRoute,
+  (newVal, oldVal) => {
+    if (newVal && !oldVal) {
+      showProfileEditDialog.value = true
+      void router.replace({ path: homeRoute, force: true }) // in-place replace
+    }
+  },
+  { immediate: true }
+)
 </script>
