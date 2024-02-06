@@ -22,7 +22,7 @@ import { onError } from '@apollo/client/link/error'
 import { useNavigateToLogin, loginRoute } from '~~/lib/common/helpers/route'
 import { useAppErrorState } from '~~/lib/core/composables/appErrorState'
 import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
-import { omit } from 'lodash-es'
+import { isBoolean, omit } from 'lodash-es'
 import { useRequestId } from '~/lib/core/composables/server'
 
 const appName = 'frontend-2'
@@ -302,7 +302,10 @@ function createLink(params: {
       'need a token to subscribe'
     )
 
-    const shouldSkip = !!res.operation.getContext().skipLoggingErrors
+    const skipLoggingErrors = res.operation.getContext().skipLoggingErrors
+    const shouldSkip = isBoolean(skipLoggingErrors)
+      ? skipLoggingErrors
+      : skipLoggingErrors?.(res)
     if (!isSubTokenMissingError && !shouldSkip) {
       const errMsg = res.networkError?.message || res.graphQLErrors?.[0]?.message
       logger.error(

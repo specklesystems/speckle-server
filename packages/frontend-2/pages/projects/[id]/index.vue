@@ -44,6 +44,7 @@ import type { Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
+import type { ErrorResponse } from '@apollo/client/link/error'
 
 graphql(`
   fragment ProjectPageProject on Project {
@@ -80,7 +81,12 @@ const { result: projectPageResult } = useQuery(
   () => ({
     // Custom error policy so that a failing invitedTeam resolver (due to access rights)
     // doesn't kill the entire query
-    errorPolicy: 'all'
+    errorPolicy: 'all',
+    context: {
+      skipLoggingErrors: (err: ErrorResponse) =>
+        err.graphQLErrors?.length === 1 &&
+        err.graphQLErrors.some((e) => !!e.path?.includes('invitedTeam'))
+    }
   })
 )
 
