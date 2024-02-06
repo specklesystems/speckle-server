@@ -48,6 +48,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       const seqLogger = new seq.Logger({
         serverUrl: logClientApiEndpoint,
         apiKey: logClientApiToken,
+        // eslint-disable-next-line no-console
         onError: console.error
       })
 

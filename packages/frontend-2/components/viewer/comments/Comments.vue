@@ -44,6 +44,7 @@
             size="xs"
             :icon-left="loadedVersionsOnly ? CheckCircleIcon : CheckCircleIconOutlined"
             text
+            class="!text-left"
             @click="
               loadedVersionsOnly = loadedVersionsOnly ? undefined : 'loadedVersionsOnly'
             "

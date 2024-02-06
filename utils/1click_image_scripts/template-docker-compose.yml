@@ -44,6 +44,7 @@ services:
     environment:
       NUXT_PUBLIC_SERVER_NAME: 'TODO: change' # e.g. 'my-speckle-server'
       NUXT_PUBLIC_API_ORIGIN: 'TODO: change' # e.g. 'http://127.0.0.1'
+      NUXT_PUBLIC_BASE_URL: 'TODO: change' # e.g. 'http://127.0.0.1'
       NUXT_PUBLIC_BACKEND_API_ORIGIN: 'http://speckle-server:3000'
       NUXT_REDIS_URL: 'redis://redis'
 

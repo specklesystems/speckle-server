@@ -21,9 +21,13 @@
     <!-- No v-if=project to ensure internal queries trigger ASAP -->
     <div v-show="project" class="flex flex-col space-y-8 sm:space-y-14">
       <!-- Latest models -->
-      <ProjectPageLatestItemsModels :project="project" :project-id="projectId" />
+      <div class="relative z-10">
+        <ProjectPageLatestItemsModels :project="project" :project-id="projectId" />
+      </div>
       <!-- Latest comments -->
-      <ProjectPageLatestItemsComments :project="project" :project-id="projectId" />
+      <div class="relative z-0">
+        <ProjectPageLatestItemsComments :project="project" :project-id="projectId" />
+      </div>
       <!-- More actions -->
       <!-- <ProjectPageMoreActions /> -->
     </div>

@@ -40,8 +40,8 @@
       </div>
     </template>
     <div
-      :class="`relative flex flex-col space-y-2 py-2 px-2 simple-scrollbar overflow-y-scroll overflow-x-hidden shadow-inner ${
-        showAllFilters ? 'h-44 visible' : 'h-0 invisible'
+      :class="`relative flex flex-col space-y-2 px-2 simple-scrollbar overflow-y-scroll overflow-x-hidden shadow-inner ${
+        showAllFilters ? 'h-44 visible py-2' : 'h-0 invisible py-1'
       } transition-[height] border-b-2 border-primary-muted`"
     >
       <div class="sticky top-0">
