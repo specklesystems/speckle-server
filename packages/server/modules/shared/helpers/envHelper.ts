@@ -177,6 +177,10 @@ export function speckleAutomateUrl() {
   return automateUrl
 }
 
+export function weeklyEmailDigestEnabled() {
+  return process.env.WEEKLY_DIGEST_ENABLED === 'true'
+}
+
 /**
  * Useful in some CLI scenarios when you aren't doing anything with the DB
  */

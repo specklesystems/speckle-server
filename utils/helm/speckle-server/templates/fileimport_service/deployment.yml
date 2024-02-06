@@ -84,7 +84,8 @@ spec:
 
           - name: FILE_IMPORT_TIME_LIMIT_MIN
             value: {{ .Values.fileimport_service.time_limit_min | quote }}
-
+          - name: MAX_OBJECT_SIZE_MB
+            value: {{ .Values.objects.max_object_size_mb | quote }}
       {{- if .Values.fileimport_service.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.fileimport_service.affinity "context" $) | nindent 8 }}
       {{- end }}

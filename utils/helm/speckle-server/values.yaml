@@ -396,6 +396,10 @@ server:
 
   ## @param server.adminOverrideEnabled Enables the server side admin authz override
   adminOverrideEnabled: false
+
+  ## @param server.weeklyDigestEnabled Enables sending out the serevr weekly digest emails
+  weeklyDigestEnabled: false
+
   ## @param server.max_object_size_mb The maximum size of an individual object which can be uploaded to the server
   max_object_size_mb: 10
   ## @param server.max_project_models_per_page The maximum number of models that can be returned in a single page of a query for all models of a project

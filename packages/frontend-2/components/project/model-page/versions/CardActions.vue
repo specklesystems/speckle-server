@@ -21,7 +21,8 @@ import {
   LinkIcon,
   FingerPrintIcon,
   ArrowRightOnRectangleIcon,
-  CursorArrowRaysIcon
+  CursorArrowRaysIcon,
+  CodeBracketIcon
 } from '@heroicons/vue/24/outline'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
@@ -31,6 +32,7 @@ const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
   (e: 'select'): void
   (e: 'chosen', v: VersionActionTypes): void
+  (e: 'embed'): void
 }>()
 
 const props = defineProps<{
@@ -81,7 +83,8 @@ const actionsItems = computed<LayoutMenuItem<VersionActionTypes>[][]>(() => [
   ],
   [
     { title: 'Copy Link', id: VersionActionTypes.Share, icon: LinkIcon },
-    { title: 'Copy ID', id: VersionActionTypes.CopyId, icon: FingerPrintIcon }
+    { title: 'Copy ID', id: VersionActionTypes.CopyId, icon: FingerPrintIcon },
+    { title: 'Embed Model', id: VersionActionTypes.EmbedModel, icon: CodeBracketIcon }
   ],
   [
     {
@@ -107,6 +110,9 @@ const onActionChosen = (params: { item: LayoutMenuItem<VersionActionTypes> }) =>
       break
     case VersionActionTypes.CopyId:
       copy(props.versionId, { successMessage: 'Version ID copied to clipboard' })
+      break
+    case VersionActionTypes.EmbedModel:
+      emit('embed')
       break
   }
 

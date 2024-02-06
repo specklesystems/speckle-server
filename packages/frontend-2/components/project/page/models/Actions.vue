@@ -23,11 +23,20 @@
       :project-id="projectId"
       @deleted="$emit('model-updated')"
     />
+    <ProjectModelPageDialogEmbed
+      v-model:open="embedDialogOpen"
+      :project-id="projectId"
+      :visibility="visibility"
+      :model-id="model.id"
+    />
   </div>
 </template>
 <script setup lang="ts">
 import type { Nullable } from '@speckle/shared'
-import type { ProjectPageModelsActionsFragment } from '~~/lib/common/generated/gql/graphql'
+import type {
+  ProjectPageModelsActionsFragment,
+  ProjectVisibility
+} from '~~/lib/common/generated/gql/graphql'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
@@ -36,7 +45,8 @@ import {
   PencilIcon,
   LinkIcon,
   FingerPrintIcon,
-  ArrowUpTrayIcon
+  ArrowUpTrayIcon,
+  CodeBracketIcon
 } from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -53,13 +63,15 @@ enum ActionTypes {
   Delete = 'delete',
   Share = 'share',
   UploadVersion = 'upload-version',
-  CopyId = 'copy-id'
+  CopyId = 'copy-id',
+  Embed = 'embed'
 }
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
   (e: 'model-updated'): void
   (e: 'upload-version'): void
+  (e: 'embed'): void
 }>()
 
 const props = defineProps<{
@@ -67,6 +79,7 @@ const props = defineProps<{
   model: ProjectPageModelsActionsFragment
   projectId: string
   canEdit?: boolean
+  visibility?: ProjectVisibility
 }>()
 
 const copyModelLink = useCopyModelLink()
@@ -74,6 +87,7 @@ const { copy } = useClipboard()
 
 const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)
+const embedDialogOpen = ref(false)
 
 const isMain = computed(() => props.model.name === 'main')
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
@@ -93,7 +107,8 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   ],
   [
     { title: 'Copy Link', id: ActionTypes.Share, icon: LinkIcon },
-    { title: 'Copy ID', id: ActionTypes.CopyId, icon: FingerPrintIcon }
+    { title: 'Copy ID', id: ActionTypes.CopyId, icon: FingerPrintIcon },
+    { title: 'Embed Model', id: ActionTypes.Embed, icon: CodeBracketIcon }
   ],
   [
     {
@@ -134,6 +149,9 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       break
     case ActionTypes.CopyId:
       copy(props.model.id, { successMessage: 'Copied model ID to clipboard' })
+      break
+    case ActionTypes.Embed:
+      embedDialogOpen.value = true
       break
   }
 }

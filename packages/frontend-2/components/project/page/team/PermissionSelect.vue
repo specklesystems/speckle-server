@@ -11,6 +11,7 @@
     hide-checkmarks
     by="id"
     class="min-w-[85px]"
+    mount-menu-on-body
   >
     <template #something-selected="{ value }">
       <div class="text-normal text-right">

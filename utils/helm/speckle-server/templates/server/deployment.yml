@@ -157,12 +157,17 @@ spec:
 
           {{- if .Values.server.fileUploads.enabled }}
           {{ else }}
-          - name: DISABLE_FILE_UPLOADS 
+          - name: DISABLE_FILE_UPLOADS
             value: "true"
           {{ end }}
 
           {{- if .Values.server.adminOverrideEnabled }}
           - name: ADMIN_OVERRIDE_ENABLED
+            value: "true"
+          {{- end }}
+
+          {{- if .Values.server.weeklyDigestEnabled }}
+          - name: WEEKLY_DIGEST_ENABLED
             value: "true"
           {{- end }}
 

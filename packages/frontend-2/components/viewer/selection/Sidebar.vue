@@ -64,6 +64,7 @@ import { containsAll } from '~~/lib/common/helpers/utils'
 import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { uniqWith } from 'lodash-es'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 const {
   viewer: {
@@ -74,6 +75,7 @@ const {
 const { objects, clearSelection } = useSelectionUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
+
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const itemCount = ref(42)
