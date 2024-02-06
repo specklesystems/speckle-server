@@ -56,6 +56,7 @@ async function pageFunction(objectUrl) {
 async function getScreenshot(objectUrl, boundLogger = logger) {
   const launchParams = {
     headless: true,
+    executablePath: '/usr/bin/chromium-browser',
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
   }
   // if ( process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD === 'true' ) {
