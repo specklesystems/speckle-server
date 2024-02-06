@@ -47,7 +47,7 @@
           <h4 class="font-bold text-sm text-foreground-2 mb-2 ml-0.5">Embed Code</h4>
           <FormClipboardInput :value="iframeCode" is-multiline />
           <p class="text-sm sm:text-base text-foreground-2 mt-2 mb-5 ml-0.5">
-            Copy this code to embed an iframe of model in your webpage or document.
+            Copy this code to embed your model in a webpage or document.
           </p>
           <LayoutDialogSection border-b border-t title="Options">
             <template #icon>

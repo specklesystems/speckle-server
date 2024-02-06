@@ -16,7 +16,7 @@
       <div class="flex flex-col">
         <NuxtLink :to="url" target="_blank" class="leading-3">
           <div class="flex items-center gap-1 w-full">
-            <h2 class="font-bold text-base text-sm truncate">
+            <h2 class="font-bold text-base text-sm truncate text-foreground">
               {{ name }}
             </h2>
             <ArrowTopRightOnSquareIcon class="h-3 w-3" />
