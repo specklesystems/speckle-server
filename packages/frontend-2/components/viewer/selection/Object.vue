@@ -293,7 +293,6 @@ const keyValuePairs = computed(() => {
 })
 
 const categorisedValuePairs = computed(() => {
-  console.log(keyValuePairs)
   return {
     primitives: keyValuePairs.value.filter(
       (item) => item.type !== 'object' && item.type !== 'array' && item.value !== null
