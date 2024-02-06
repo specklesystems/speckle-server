@@ -3,7 +3,9 @@ declare module '@apollo/client/core' {
     /**
      * Whether to skip logging errors caused in this operation
      */
-    skipLoggingErrors?: boolean | ((err: ErrorResponse) => boolean)
+    skipLoggingErrors?:
+      | boolean
+      | ((err: import('@apollo/client/link/error').ErrorResponse) => boolean)
   }
 }
 
