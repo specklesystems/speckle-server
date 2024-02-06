@@ -126,7 +126,7 @@ export default class SpeckleConverter {
     // If we can convert it, we should invoke the respective conversion routine.
     if (this.directNodeConverterExists(obj)) {
       try {
-        await this.convertToNode(obj.data || obj, childNode)
+        await this.convertToNode(obj, childNode)
         await callback()
         return
       } catch (e) {
@@ -271,9 +271,7 @@ export default class SpeckleConverter {
    * @return {[type]}     [description]
    */
   private getSpeckleType(obj): string {
-    let rawType = 'Base'
-    if (obj.data) rawType = obj.data.speckle_type ? obj.data.speckle_type : 'Base'
-    else rawType = obj.speckle_type ? obj.speckle_type : 'Base'
+    const rawType = obj.speckle_type ? obj.speckle_type : 'Base'
 
     const lookup = this.typeLookupTable[rawType]
     if (lookup) return lookup
@@ -293,9 +291,7 @@ export default class SpeckleConverter {
 
   private getSpeckleTypeChain(obj): string[] {
     let type = ['Base']
-    if (obj.data)
-      type = obj.data.speckle_type ? obj.data.speckle_type.split(':').reverse() : type
-    else type = obj.speckle_type ? obj.speckle_type.split(':').reverse() : type
+    type = obj.speckle_type ? obj.speckle_type.split(':').reverse() : type
     type = type.map<string>((value: string) => {
       return value.split('.').reverse()[0]
     })

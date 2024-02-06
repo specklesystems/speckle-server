@@ -10,10 +10,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
   public typeLookupTable: { [type: string]: SpeckleType } = {}
 
   public getSpeckleType(node: NodeData): SpeckleType {
-    let rawType = 'Base'
-    if (node.raw.data)
-      rawType = node.raw.data.speckle_type ? node.raw.data.speckle_type : 'Base'
-    else rawType = node.raw.speckle_type ? node.raw.speckle_type : 'Base'
+    const rawType = node.raw.speckle_type ? node.raw.speckle_type : 'Base'
 
     const lookup = this.typeLookupTable[rawType]
     if (lookup) {
