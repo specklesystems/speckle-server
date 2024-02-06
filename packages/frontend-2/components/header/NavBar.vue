@@ -12,7 +12,7 @@
           />
           <PortalTarget name="navigation"></PortalTarget>
         </div>
-        <div class="flex items-center gap-1.5 sm:gap-2">
+        <div class="flex items-center gap-2.5 sm:gap-2">
           <PortalTarget name="secondary-actions"></PortalTarget>
           <PortalTarget name="primary-actions"></PortalTarget>
           <!-- Notifications dropdown -->
