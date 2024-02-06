@@ -38,6 +38,7 @@ RUN yarn workspaces foreach run build
 
 FROM node:18-bookworm-slim@sha256:fe687021c06383a2bc5eafa6db29b627ed28a55f6bdfbcea108f0c624b783c37 as node
 
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
   --no-install-recommends \
