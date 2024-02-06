@@ -35,7 +35,7 @@
             v-for="object in objectsLimited"
             :key="(object.id as string)"
             :object="object"
-            :unfold="true"
+            :unfold="shouldUnfold"
             :root="true"
           />
         </div>
@@ -78,7 +78,7 @@ const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
-const itemCount = ref(42)
+const itemCount = ref(20)
 const sidebarOpen = ref(false)
 
 const objectsUniqueByAppId = computed(() => {
@@ -117,6 +117,8 @@ const isIsolated = computed(() => {
   if (!isolatedObjects.value) return false
   return containsAll(allTargetIds.value, isolatedObjects.value)
 })
+
+const shouldUnfold = computed(() => objectsLimited.value.length === 1)
 
 const mp = useMixpanel()
 
