@@ -13,8 +13,8 @@ export interface NodeData {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw: { [prop: string]: any }
   children: TreeNode[]
-  nestedNodes: TreeNode[]
   atomic: boolean
+  nestedNodes?: TreeNode[]
   subtreeId?: number
   renderView?: NodeRenderView
   instanced?: boolean

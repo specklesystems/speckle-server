@@ -146,7 +146,7 @@ export class NodeRenderView {
     this._aabb = new Box3().setFromArray(this._renderData.geometry.attributes.POSITION)
   }
 
-  public getGeometryType(): GeometryType {
+  private getGeometryType(): GeometryType {
     switch (this._renderData.speckleType) {
       case SpeckleType.Mesh:
         return GeometryType.MESH
