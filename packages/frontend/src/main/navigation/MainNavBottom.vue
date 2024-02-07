@@ -1,6 +1,26 @@
 <template>
   <div class="elevation-10">
     <portal-target name="nav-bottom">
+      <div class="pa-4">
+        <h5>New Speckle Experience</h5>
+        <p class="text-caption mb-0 mt-1 primary--text text--disabled">
+          Your same credentials and data in a new and better environment.
+          <!--TODO - Update Link-->
+          <a
+            href="#"
+            style="text-decoration: underline; color: inherit"
+            target="_blank"
+          >
+            Learn more
+          </a>
+        </p>
+        <!--TODO - Update Link-->
+        <v-btn block small class="align-self-center primary mt-4">
+          <v-icon left>mdi-rocket-launch</v-icon>
+          Go to the new site
+        </v-btn>
+      </div>
+      <v-divider></v-divider>
       <v-list nav dense :class="`pt-0 my-0 pb-0`">
         <v-list-item class="d-flex flex-grow-1 justify-center">
           <v-row dense style="max-width: 350px">
