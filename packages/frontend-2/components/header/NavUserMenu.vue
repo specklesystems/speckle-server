@@ -93,6 +93,19 @@
               Feedback
             </NuxtLink>
           </MenuItem>
+          <MenuItem v-slot="{ active }">
+            <NuxtLink
+              :class="[
+                active ? 'bg-foundation-focus' : '',
+                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+              ]"
+              target="_blank"
+              to="/"
+            >
+              <ArrowsRightLeftIcon class="w-5 h-5" />
+              Go to the old Speckle
+            </NuxtLink>
+          </MenuItem>
           <MenuItem v-if="activeUser" v-slot="{ active }">
             <NuxtLink
               :class="[
@@ -135,6 +148,7 @@ import {
   XMarkIcon,
   ArrowLeftOnRectangleIcon,
   ArrowRightOnRectangleIcon,
+  ArrowsRightLeftIcon,
   SunIcon,
   MoonIcon,
   EnvelopeIcon,
