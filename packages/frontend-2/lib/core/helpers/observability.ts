@@ -21,9 +21,10 @@ const prettify = (log: object, msg: string) =>
 
 /**
  * Wrap any logger call w/ logic that prettifies the error message like pino-pretty does
+ * and emits bindings if they are provided
  */
 const log =
-  (logger: (...args: unknown[]) => void) =>
+  (logger: (...args: unknown[]) => void, bindings?: () => Record<string, unknown>) =>
   (...vals: unknown[]) => {
     const finalVals = vals.slice()
 
@@ -38,25 +39,39 @@ const log =
       finalVals.unshift(finalMsg)
     }
 
+    if (bindings) {
+      const boundVals = JSON.parse(JSON.stringify(bindings()))
+      finalVals.push(boundVals)
+    }
+
     logger(...finalVals)
   }
 
 export function buildFakePinoLogger(
-  options?: Partial<{ onError: (...args: any[]) => void }>
+  options?: Partial<{
+    onError: (...args: any[]) => void
+    /**
+     * Returns an object that will be merged into the log context when outputting to the console.
+     * These will not be sent to seq!
+     */
+    consoleBindings: () => Record<string, unknown>
+  }>
 ) {
+  const bindings = options?.consoleBindings
+
   const errLogger = (...args: unknown[]) => {
     const { onError } = options || {}
     if (onError) onError(...args)
-    log(console.error)(...args)
+    log(console.error, bindings)(...args)
   }
 
   const logger = {
-    debug: log(console.debug),
-    info: log(console.info),
-    warn: log(console.warn),
+    debug: log(console.debug, bindings),
+    info: log(console.info, bindings),
+    warn: log(console.warn, bindings),
     error: errLogger,
     fatal: errLogger,
-    trace: log(console.trace),
+    trace: log(console.trace, bindings),
     silent: noop
   } as unknown as ReturnType<typeof Observability.getLogger>
 
