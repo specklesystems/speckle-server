@@ -146,6 +146,7 @@
             <ViewerAnchoredPointThreadNewReply
               v-if="showNewReplyComponent"
               :model-value="modelValue"
+              :disabled="!canReply"
               @submit="onNewReply"
             />
             <div
@@ -163,7 +164,7 @@
               </FormButton>
             </div>
             <div
-              v-if="!canReply && !isEmbedEnabled"
+              v-if="!activeUser && !isEmbedEnabled"
               class="p-3 flex flex-col items-center justify-center bg-foundation-2"
             >
               <FormButton full-width @click="$emit('login')">Reply</FormButton>
@@ -265,10 +266,7 @@ const comments = computed(() => [
 
 const showNewReplyComponent = computed(() => {
   return (
-    !props.modelValue.archived &&
-    canReply.value &&
-    !isSmallerOrEqualSm.value &&
-    !isEmbedEnabled.value
+    !props.modelValue.archived && !isSmallerOrEqualSm.value && !isEmbedEnabled.value
   )
 })
 

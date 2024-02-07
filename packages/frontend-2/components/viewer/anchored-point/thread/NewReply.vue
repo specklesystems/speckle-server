@@ -7,26 +7,30 @@
       :icon-left="PaperClipIcon"
       hide-text
       text
-      :disabled="loading"
+      :disabled="loading || disabled"
       size="sm"
       class="-ml-2 sm:mr-2"
       @click="trackAttachAndOpenFilePicker()"
     />
-    <ViewerCommentsEditor
-      ref="editor"
-      v-model="commentValue"
-      prompt="Press enter to reply"
-      autofocus
-      max-height="150px"
-      @keydown="onKeyDownHandler"
-      @submit="onSubmit"
-    />
+    <div class="flex flex-col">
+      <ViewerCommentsEditor
+        ref="editor"
+        v-model="commentValue"
+        prompt="Press enter to reply"
+        autofocus
+        max-height="150px"
+        :class="disabled ? 'cursor-not-allowed pointer-events-none' : ''"
+        @keydown="onKeyDownHandler"
+        @submit="onSubmit"
+      />
+      <p class="text-xs">You don't have permission for that</p>
+    </div>
     <FormButton
       :icon-left="PaperAirplaneIcon"
       hide-text
       size="sm"
       color="invert"
-      :disabled="loading"
+      :disabled="loading || disabled"
       class="absolute right-6 sm:right-6"
       @click="onSubmit"
     />
@@ -47,6 +51,7 @@ import {
 
 const props = defineProps<{
   modelValue: CommentBubbleModel
+  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
