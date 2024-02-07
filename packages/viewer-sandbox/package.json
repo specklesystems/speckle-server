@@ -30,6 +30,6 @@
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
     "typescript": "^4.5.4",
-    "vite": "^3.2.7"
+    "vite": "^5.0.12"
   }
 }
