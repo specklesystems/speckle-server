@@ -1,16 +1,21 @@
 <template>
-  <Portal to="navigation">
-    <HeaderNavLink :to="projectRoute(project.id)" :name="project.name"></HeaderNavLink>
-  </Portal>
+  <div>
+    <Portal to="navigation">
+      <HeaderNavLink
+        :to="projectRoute(project.id)"
+        :name="project.name"
+      ></HeaderNavLink>
+    </Portal>
 
-  <CommonEditableTitleDescription
-    :title="titleState"
-    :description="descriptionState"
-    :can-edit="canEdit"
-    :is-disabled="anyMutationsLoading"
-    @update:title="handleUpdateTitle"
-    @update:description="handleUpdateDescription"
-  />
+    <CommonEditableTitleDescription
+      :title="titleState"
+      :description="descriptionState"
+      :can-edit="canEdit"
+      :is-disabled="anyMutationsLoading"
+      @update:title="handleUpdateTitle"
+      @update:description="handleUpdateDescription"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">

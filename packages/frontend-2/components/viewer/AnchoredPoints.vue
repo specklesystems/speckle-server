@@ -5,10 +5,12 @@
   >
     <!-- Add new thread bubble -->
     <ViewerAnchoredPointNewThread
-      v-if="canPostComment"
+      v-if="!isEmbedEnabled"
       v-model="buttonState"
+      :can-post-comment="canPostComment"
       class="z-[13]"
       @close="closeNewThread"
+      @login="showLoginDialog = true"
     />
 
     <!-- Comment bubbles -->
@@ -22,14 +24,24 @@
       @update:expanded="onThreadExpandedChange"
       @next="(model) => openNextThread(model)"
       @prev="(model) => openPrevThread(model)"
+      @login="showLoginDialog = true"
     />
 
-    <!-- Active users -->
-    <ViewerAnchoredPointUser
-      v-for="user in Object.values(users)"
-      :key="user.state.sessionId"
-      :user="user"
-      class="z-[10]"
+    <div v-if="!isEmbedEnabled">
+      <!-- Active users -->
+      <ViewerAnchoredPointUser
+        v-for="user in Object.values(users)"
+        :key="user.state.sessionId"
+        :user="user"
+        class="z-[10]"
+      />
+    </div>
+
+    <AuthLoginPanel
+      v-model:open="showLoginDialog"
+      dialog-mode
+      max-width="sm"
+      subtitle="Join the conversation"
     />
 
     <!-- Active user avatars in navbar -->
@@ -37,7 +49,7 @@
       <ViewerScope :state="state">
         <div
           v-if="usersWithAvatars.length > 0"
-          class="px-1 py-1 flex space-x-1 items-center"
+          class="scale-90 flex space-x-1 items-center"
         >
           <!-- <UserAvatarGroup :users="activeUserAvatars" :overlap="false" hover-effect /> -->
           <template v-for="user in usersWithAvatars" :key="user.id">
@@ -62,8 +74,16 @@
 
     <!-- Active user tracking cancel & Follower count display -->
     <div
-      v-if="(spotlightUserSessionId && spotlightUser) || followers.length !== 0"
-      class="absolute w-screen mt-[3.5rem] h-[calc(100dvh-3.5rem)] z-10 p-1"
+      v-if="
+        (!isEmbedEnabled && spotlightUserSessionId && spotlightUser) ||
+        followers.length !== 0
+      "
+      class="absolute w-screen z-10 p-1"
+      :class="
+        isEmbedEnabled
+          ? 'h-[calc(100dvh-3.5rem)]'
+          : 'h-[calc(100dvh-3.5rem)] mt-[3.5rem]'
+      "
     >
       <div
         class="w-full h-full outline -outline-offset-0 outline-8 rounded-md outline-blue-500/40"
@@ -95,6 +115,7 @@
 </template>
 <script setup lang="ts">
 import type { Nullable } from '@speckle/shared'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { LimitedUser } from '~~/lib/common/generated/gql/graphql'
 import type { SetFullyRequired } from '~~/lib/common/helpers/type'
@@ -120,6 +141,8 @@ const { isOpenThread, open } = useThreadUtilities()
 
 const canPostComment = useCheckViewerCommentingAccess()
 
+const { isEnabled: isEmbedEnabled } = useEmbed()
+
 const followers = computed(() => {
   if (!isLoggedIn.value) return []
   const res = [] as LimitedUser[]
@@ -138,6 +161,8 @@ const {
     hideBubbles
   }
 } = useInjectedViewerInterfaceState()
+
+const showLoginDialog = ref(false)
 
 useViewerCommentBubblesProjection({ parentEl })
 

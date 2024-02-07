@@ -12,7 +12,7 @@ export class ExtendedSelection extends SelectionExtension {
   /** This object will recieve the TransformControls translation */
   private dummyAnchor: Object3D = new Object3D()
   /** Stock three.js gizmo */
-  private transformControls: TransformControls = null
+  private transformControls: TransformControls | undefined
 
   public init() {
     /** We set the layers to PROPS so that the viewer regular pipeline ignores it */
@@ -93,9 +93,9 @@ export class ExtendedSelection extends SelectionExtension {
     }
     const center = box.getCenter(new Vector3())
     this.dummyAnchor.position.copy(center)
-    if (attach) this.transformControls.attach(this.dummyAnchor)
+    if (attach) this.transformControls?.attach(this.dummyAnchor)
     else {
-      this.transformControls.detach()
+      this.transformControls?.detach()
     }
   }
 

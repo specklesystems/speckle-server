@@ -1,80 +1,25 @@
 <template>
-  <ViewerPostSetupWrapper>
-    <div class="absolute top-0 left-0 w-screen h-[100dvh]">
-      <!-- Nav -->
-      <Portal to="navigation">
-        <ViewerScope :state="state">
-          <HeaderNavLink
-            :to="`/projects/${project?.id}`"
-            :name="project?.name"
-          ></HeaderNavLink>
-          <ViewerExplorerNavbarLink />
-        </ViewerScope>
-      </Portal>
-
-      <!-- Note: commented out until we scope it properly. -->
-      <!-- <Portal to="primary-actions">
-      <div class="flex space-x-4">
-        <FormButton :icon-left="ShareIcon">Share</FormButton>
-      </div>
-    </Portal> -->
-
-      <ClientOnly>
-        <!-- Tour host -->
-        <div
-          v-if="tourState.showTour"
-          class="fixed w-full h-[100dvh] flex justify-center items-center pointer-events-none z-[100]"
-        >
-          <TourOnboarding />
-        </div>
-        <!-- Viewer host -->
-        <div class="special-gradient absolute w-screen h-[100dvh] z-10 overflow-hidden">
-          <ViewerBase />
-          <Transition
-            enter-from-class="opacity-0"
-            enter-active-class="transition duration-1000"
-          >
-            <ViewerAnchoredPoints v-show="tourState.showViewerControls" />
-          </Transition>
-        </div>
-
-        <!-- Global loading bar -->
-        <ViewerLoadingBar class="z-20" />
-
-        <!-- Sidebar sketches -->
-        <Transition
-          enter-from-class="opacity-0"
-          enter-active-class="transition duration-1000"
-        >
-          <ViewerControls v-show="tourState.showViewerControls" class="z-20" />
-        </Transition>
-        <!-- Viewer Object Selection Info Display -->
-        <Transition
-          enter-from-class="opacity-0"
-          enter-active-class="transition duration-1000"
-        >
-          <div v-show="tourState.showViewerControls">
-            <ViewerSelectionSidebar class="z-20 hidden sm:block" />
-          </div>
-        </Transition>
-        <!-- Shows up when filters are applied for an easy return to normality -->
-        <ViewerGlobalFilterReset class="z-20" />
-      </ClientOnly>
-    </div>
-  </ViewerPostSetupWrapper>
-  <div
-    v-if="tourState.showViewerControls"
-    class="sm:hidden shadow-t fixed bottom-0 left-0 max-h-[65vh] overflow-hidden w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
-  >
-    <PortalTarget name="bottomPanel"></PortalTarget>
-    <PortalTarget name="mobileComments"></PortalTarget>
+  <div :class="isTransparent ? 'viewer-transparent' : ''">
+    <ViewerEmbedManualLoad v-if="isManualLoad" @play="isManualLoad = false" />
+    <LazyViewerPreSetupWrapper v-else @setup="state = $event" />
+    <ClientOnly>
+      <Component
+        :is="state ? ViewerScope : 'div'"
+        :state="state"
+        wrapper
+        class="fixed shadow-t bottom-0 left-0 max-h-[65vh] overflow-hidden w-screen z-50 transition-all duration-300 empty:-bottom-[65vh]"
+      >
+        <PortalTarget name="bottomPanel"></PortalTarget>
+        <PortalTarget name="mobileComments"></PortalTarget>
+      </Component>
+    </ClientOnly>
   </div>
 </template>
-<script setup lang="ts">
-import { graphql } from '~~/lib/common/generated/gql'
-import { useSetupViewer } from '~~/lib/viewer/composables/setup'
 
-const tourState = useTourStageState()
+<script setup lang="ts">
+import { useRoute } from 'vue-router'
+import { deserializeEmbedOptions } from '~~/lib/viewer/composables/setup/embed'
+import type { InjectableViewerState } from '~~/lib/viewer/composables/setup/core'
 
 definePageMeta({
   layout: 'viewer',
@@ -84,29 +29,29 @@ definePageMeta({
   key: '/projects/:id/models/resources' // To prevent controls flickering on resource url param changes
 })
 
+const ViewerScope = resolveComponent('ViewerScope')
+
+const isManualLoad = ref(false)
+const isTransparent = ref(false)
 const route = useRoute()
-const projectId = computed(() => route.params.id as string)
+const state = ref<InjectableViewerState>()
 
-const state = useSetupViewer({
-  projectId
-})
+const checkUrlForEmbedManualLoadSettings = () => {
+  if (process.server) return
 
-const {
-  resources: {
-    response: { project }
-  }
-} = state
+  const hashParams = new URLSearchParams(route.hash.substring(1))
+  const embedParam = hashParams.get('embed')
 
-graphql(`
-  fragment ModelPageProject on Project {
-    id
-    createdAt
-    name
-  }
-`)
+  const embedOptions = deserializeEmbedOptions(embedParam)
+  isManualLoad.value = embedOptions.manualLoad === true
+  isTransparent.value = embedOptions.isTransparent === true
+}
 
-const title = computed(() =>
-  project.value?.name.length ? `Viewer - ${project.value.name}` : ''
+watch(
+  () => route.fullPath,
+  () => {
+    checkUrlForEmbedManualLoadSettings()
+  },
+  { immediate: true }
 )
-useHead({ title })
 </script>
