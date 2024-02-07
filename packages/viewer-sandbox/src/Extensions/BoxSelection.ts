@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { InputEvent } from '@speckle/viewer'
 import { ObjectLayers } from '@speckle/viewer'
+import { NodeRenderView } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
 import { BatchObject } from '@speckle/viewer'
 import {
@@ -10,7 +11,6 @@ import {
   GeometryType,
   MeshBatch
 } from '@speckle/viewer'
-import { NodeRenderView } from '@speckle/viewer/dist/modules/tree/NodeRenderView'
 import {
   Matrix4,
   ShaderMaterial,
@@ -39,6 +39,7 @@ export class BoxSelection extends Extension {
   public constructor(viewer: IViewer, private cameraController: ICameraProvider) {
     super(viewer)
     /** Get the SelectionExtension. We'll need it to remotely enable/disable it */
+    //@ts-ignore
     this.selectionExtension = this.viewer.getExtension(SelectionExtension)
 
     /** Create the drag box */
@@ -60,8 +61,7 @@ export class BoxSelection extends Extension {
     }
     this.frameLock = false
   }
-
-  private onPointerDown(e) {
+  private onPointerDown(e: Vector2 & { event: PointerEvent }) {
     if (e.event.altKey) {
       /** Disable camera controller. We want to be able to drag the selection box */
       this.cameraController.enabled = false
@@ -82,7 +82,7 @@ export class BoxSelection extends Extension {
     this.viewer.requestRender()
   }
 
-  private onPointerMove(e) {
+  private onPointerMove(e: Vector2 & { event: PointerEvent }) {
     /** Selection box only when holding the alt key */
     if (!e.event.altKey || !this.dragging || this.frameLock) return
     /** Copy the current point */
@@ -123,7 +123,7 @@ export class BoxSelection extends Extension {
      **/
     const selectionRvs: Array<NodeRenderView> = []
     for (let b = 0; b < batches.length; b++) {
-      batches[b].mesh.BVH.shapecast({
+      batches[b].mesh.TAS.shapecast({
         /** This is the callback from the TAS's bounds internal nodes */
         intersectsTAS: (box: Box3) => {
           /** We continue traversion only if the selection box intersects an internal node */
