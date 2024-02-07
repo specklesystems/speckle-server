@@ -222,7 +222,7 @@ function buildInviteLink(invite) {
 
   if (resourceTarget === 'streams') {
     return new URL(
-      `${getStreamRoute(resourceId)}?token=${token}`,
+      `${getStreamRoute(resourceId)}?token=${token}&accept=true`,
       getFrontendOrigin()
     ).toString()
   } else {

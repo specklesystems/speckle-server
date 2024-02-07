@@ -5,8 +5,7 @@ import {
   SelectionEvent,
   ViewerEvent,
   DebugViewer,
-  Viewer,
-  WorldTree
+  Viewer
 } from '@speckle/viewer'
 
 import './style.css'
@@ -19,7 +18,6 @@ import {
   DiffExtension,
   FilteringExtension
 } from '@speckle/viewer'
-import { GeometryType } from '@speckle/viewer'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -90,33 +88,7 @@ const createViewer = async (containerName: string, stream: string) => {
     console.warn(viewer.getRenderer().renderingStats)
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
-    const categories = {}
-    //@ts-ignore
-    await viewer.getWorldTree().walkAsync((node) => {
-      //@ts-ignore
-      if (!categories[node.model.raw.speckle_type]) {
-        //@ts-ignore
-        categories[node.model.raw.speckle_type] = 0
-      }
-      //@ts-ignore
-      categories[node.model.raw.speckle_type]++
-      return true
-    })
-    console.log(categories)
-
     sandbox.refresh()
-    const COUNT = 16000
-    await viewer.getWorldTree().walkAsync((node: TreeNode) => {
-      if (
-        viewer.getWorldTree().isRoot(node) ||
-        node.parent.model.id === WorldTree.ROOT_ID ||
-        !node.model.renderView
-      )
-        return true
-      const dice = Math.random()
-      if (dice < 0.5 && sandbox.ids.length < COUNT) sandbox.ids.push(node.model.id)
-      return true
-    })
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
@@ -211,7 +183,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/1c2b3db9fb/commits/f12861736e'
     // 'https://latest.speckle.dev/streams/1c2b3db9fb/commits/1015d417ea'
     // Jedd's views
-    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/e6632fe057'
+    'https://latest.speckle.dev/streams/c1faab5c62/commits/e6632fe057'
     // 'https://latest.speckle.dev/streams/7d051a6449/commits/7632757a33'
     // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
     // MEPs (whatever they are)

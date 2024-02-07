@@ -5,7 +5,7 @@
   >
     <!-- Add new thread bubble -->
     <ViewerAnchoredPointNewThread
-      v-if="canPostComment && !isEmbedEnabled"
+      v-if="!isEmbedEnabled"
       v-model="buttonState"
       :can-post-comment="canPostComment"
       class="z-[13]"

@@ -1,7 +1,12 @@
 <template>
   <div>
     <template v-if="project">
-      <ProjectsInviteBanner v-if="invite" :invite="invite" :show-stream-name="false" />
+      <ProjectsInviteBanner
+        :invite="invite"
+        :show-stream-name="false"
+        :auto-accept="shouldAutoAcceptInvite"
+        @processed="onInviteAccepted"
+      />
       <!-- Heading text w/ actions -->
       <ProjectPageHeader :project="project" />
       <!-- Stats blocks -->
@@ -60,23 +65,32 @@ definePageMeta({
 })
 
 const route = useRoute()
+const router = useRouter()
 const projectId = computed(() => route.params.id as string)
+const shouldAutoAcceptInvite = computed(() => route.query.accept === 'true')
+const token = computed(() => route.query.token as Optional<string>)
+
 useGeneralProjectPageUpdateTracking({ projectId }, { notifyOnProjectUpdate: true })
 const { result: projectPageResult } = useQuery(
   projectPageQuery,
   () => ({
     id: projectId.value,
-    token: (route.query.token as Optional<string>) || null
+    token: token.value
   }),
   () => ({
     // Custom error policy so that a failing invitedTeam resolver (due to access rights)
     // doesn't kill the entire query
-    errorPolicy: 'all'
+    errorPolicy: 'all',
+    context: {
+      skipLoggingErrors: (err) =>
+        err.graphQLErrors?.length === 1 &&
+        err.graphQLErrors.some((e) => !!e.path?.includes('invitedTeam'))
+    }
   })
 )
 
 const project = computed(() => projectPageResult.value?.project)
-const invite = computed(() => projectPageResult.value?.projectInvite)
+const invite = computed(() => projectPageResult.value?.projectInvite || undefined)
 const projectName = computed(() =>
   project.value?.name.length ? project.value.name : ''
 )
@@ -84,4 +98,12 @@ const projectName = computed(() =>
 useHead({
   title: projectName
 })
+
+const onInviteAccepted = async (params: { accepted: boolean }) => {
+  if (params.accepted) {
+    await router.replace({
+      query: { ...route.query, accept: undefined, token: undefined }
+    })
+  }
+}
 </script>
