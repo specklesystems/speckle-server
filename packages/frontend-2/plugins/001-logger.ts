@@ -105,13 +105,21 @@ export default defineNuxtPlugin(async (nuxtApp) => {
           otherData.unshift(firstString)
         }
 
+        const otherDataObjects = otherData.filter(isObjectLike)
+        const otherDataNonObjects = otherData.filter((o) => !isObjectLike(o))
+        const mergedOtherDataObject = Object.assign({}, ...otherDataObjects) as Record<
+          string,
+          unknown
+        >
+
         seqLogger.emit({
           timestamp: new Date(),
           level: 'error',
-          messageTemplate: 'Client-side error: {errorMessage}',
+          messageTemplate: 'Client-side error: {mainSeqErrorMessage}',
           properties: {
-            errorMessage,
-            extraData: otherData,
+            mainSeqErrorMessage: errorMessage, // weird name to avoid collision with otherData
+            extraData: otherDataNonObjects,
+            ...mergedOtherDataObject,
             ...collectCoreInfo()
           },
           exception
