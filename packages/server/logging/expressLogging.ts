@@ -5,6 +5,8 @@ import { IncomingMessage } from 'http'
 import { NextFunction, Response } from 'express'
 import pino, { SerializedResponse } from 'pino'
 import { GenReqId } from 'pino-http'
+import { get } from 'lodash'
+import type { ServerResponse } from 'http'
 
 const REQUEST_ID_HEADER = 'x-request-id'
 
@@ -94,10 +96,14 @@ export const LoggingExpressMiddleware = HttpLogger({
           headers: Record<string, string>
         }
       }
+      const serverRes = get(res, 'raw.raw') as ServerResponse
+      const auth = serverRes.req.context
+
       return {
         statusCode: res.raw.statusCode,
         // Allowlist useful headers
-        headers: resRaw.raw.headers
+        headers: resRaw.raw.headers,
+        userId: auth?.userId
       }
     })
   }
