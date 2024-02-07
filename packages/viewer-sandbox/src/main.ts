@@ -183,7 +183,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/1c2b3db9fb/commits/f12861736e'
     // 'https://latest.speckle.dev/streams/1c2b3db9fb/commits/1015d417ea'
     // Jedd's views
-    'https://latest.speckle.dev/streams/c1faab5c62/commits/e6632fe057'
+    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/e6632fe057'
     // 'https://latest.speckle.dev/streams/7d051a6449/commits/7632757a33'
     // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
     // MEPs (whatever they are)
@@ -303,7 +303,7 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/2f9f2f3021/commits/75bd13f513'
     // 'https://speckle.xyz/streams/0a2f096caf/commits/eee0e4436f?overlay=72828bce0d&c=%5B14.04465,-332.88372,258.40392,53.09575,31.13694,126.39999,0,1%5D&filter=%7B%22propertyInfoKey%22%3A%22level.name%22%7D'
     // 'Bilal's tests
-    // 'https://latest.speckle.dev/streams/97750296c2/commits/5386a0af02' // 700k+ objects 30kk tris
+    'https://latest.speckle.dev/streams/97750296c2/commits/5386a0af02' // 700k+ objects 30kk tris
     // 'https://latest.speckle.dev/streams/97750296c2/commits/2a6fd781f2' // NEW
 
     // 'https://latest.speckle.dev/streams/97750296c2/commits/48f0567a88' // 1015849 objects
