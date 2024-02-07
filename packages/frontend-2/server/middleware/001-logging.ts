@@ -124,7 +124,8 @@ export const LoggingMiddleware = pinoHttp({
         statusCode: res.raw.statusCode,
         // Allowlist useful headers
         headers: resRaw.headers,
-        isRequestAborted
+        isRequestAborted,
+        ...(realRaw.vueLoggerBindings || {})
       }
     })
   }

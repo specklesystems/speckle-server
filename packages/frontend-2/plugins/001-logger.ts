@@ -49,6 +49,14 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     logger = enableDynamicBindings(buildLogger(logLevel, logPretty).child({}), () =>
       collectMainInfo({ isBrowser: false })
     )
+
+    // Collect bindings for pino-http logger
+    nuxtApp.hook('app:rendered', () => {
+      if (!nuxtApp.ssrContext) return
+      nuxtApp.ssrContext.event.node.res.vueLoggerBindings = {
+        userId: getUserId()
+      }
+    })
   } else {
     const collectBrowserInfo = () => {
       const {
