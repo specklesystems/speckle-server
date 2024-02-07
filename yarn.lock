@@ -9994,12 +9994,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@headlessui/vue@npm:^1.7.13":
-  version: 1.7.13
-  resolution: "@headlessui/vue@npm:1.7.13"
+"@headlessui/vue@npm:^1.7.13, @headlessui/vue@npm:^1.7.18":
+  version: 1.7.18
+  resolution: "@headlessui/vue@npm:1.7.18"
+  dependencies:
+    "@tanstack/vue-virtual": ^3.0.0-beta.60
   peerDependencies:
     vue: ^3.2.0
-  checksum: a8b68aec6003c1b0f298a5cca8aa1e37063322be000f0d730b6fc8580b78cccb22ac11fc3fabc5bea40998ed9cfc127328ee3519d803eda8a206b4d344338ab0
+  checksum: aecbc3710de70748227ecd64699c34410bbd8c516b0f2d577bbdcde76ca4dcd31ca404500b817b53d4e8498f286e0b6525bb83bb28904b2e2bef6a2df328414b
   languageName: node
   linkType: hard
 
@@ -14285,7 +14287,7 @@ __metadata:
   dependencies:
     "@babel/preset-env": ^7.21.5
     "@babel/preset-react": ^7.18.6
-    "@headlessui/vue": ^1.7.13
+    "@headlessui/vue": ^1.7.18
     "@heroicons/vue": ^2.0.12
     "@rollup/plugin-typescript": ^11.1.0
     "@speckle/shared": "workspace:^"
@@ -15863,6 +15865,24 @@ __metadata:
   peerDependencies:
     tailwindcss: ">=2.0.0 || >=3.0.0 || >=3.0.0-alpha.1"
   checksum: 26b8135df24fff51c3d3790ae795bdc12bc4a7113fa22dcab80568ae6ee00710e2ed4154048958c472bb654061f0f1573b7ac5e004ae6222cbd5ac6fcf199478
+  languageName: node
+  linkType: hard
+
+"@tanstack/virtual-core@npm:3.0.0":
+  version: 3.0.0
+  resolution: "@tanstack/virtual-core@npm:3.0.0"
+  checksum: 7283d50fc7b7a56608c37a8e94a93b85890ff7e39c6281633a19c4d6f6f4fbf25f8418f1eec302a008a8746a0d1d0cd00630137b55e6cf019818d68af8ed16b6
+  languageName: node
+  linkType: hard
+
+"@tanstack/vue-virtual@npm:^3.0.0-beta.60":
+  version: 3.0.4
+  resolution: "@tanstack/vue-virtual@npm:3.0.4"
+  dependencies:
+    "@tanstack/virtual-core": 3.0.0
+  peerDependencies:
+    vue: ^2.7.0 || ^3.0.0
+  checksum: 9bae7a7f210154f27e379722d4e5777fbc7dcecd379cd1e88b7fe815c0066cabc3cf3235cdf4b708ca99c926c26cd0602704344ae4e22670a1ec78e1e2324bc4
   languageName: node
   linkType: hard
 
