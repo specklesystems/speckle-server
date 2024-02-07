@@ -183,7 +183,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/1c2b3db9fb/commits/f12861736e'
     // 'https://latest.speckle.dev/streams/1c2b3db9fb/commits/1015d417ea'
     // Jedd's views
-    'https://latest.speckle.dev/streams/c1faab5c62/commits/e6632fe057'
+    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/e6632fe057'
     // 'https://latest.speckle.dev/streams/7d051a6449/commits/7632757a33'
     // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
     // MEPs (whatever they are)
@@ -346,6 +346,9 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/97750296c2/objects/11a7752e40b4ef0620affc55ce9fdf5a'
 
     // 'https://latest.speckle.dev/streams/92b620fb17/objects/7118603b197c00944f53be650ce721ec'
+    // Blender Mega Test Stream
+    'https://latest.speckle.dev/streams/c1faab5c62/commits/2ecb757577'
+    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/3deaea94af'
   )
 }
 
