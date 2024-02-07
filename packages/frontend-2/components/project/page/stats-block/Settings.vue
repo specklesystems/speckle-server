@@ -102,16 +102,13 @@ const onButtonClick = () => {
   dialogOpen.value = true
 }
 
-onMounted(() => {
-  readDialogStateFromQuery()
-})
-
 watch(
   () => route.query.settings,
   (newSettings, oldSettings) => {
     if (newSettings !== oldSettings) {
       readDialogStateFromQuery()
     }
-  }
+  },
+  { immediate: true }
 )
 </script>
