@@ -33,6 +33,20 @@ export function useServerInfo() {
 }
 
 /**
+ * Get the req.id that is/was used in the initial SSR request
+ */
+export function useServerRequestId() {
+  const nuxt = useNuxtApp()
+  const state = useState('server_request_id', () => {
+    // The client side should not need to resolve this info, as it should come from the serialized SSR state
+    if (process.client || !nuxt.ssrContext) return undefined
+    return nuxt.ssrContext.event.node.req.id as string
+  })
+
+  return computed(() => state.value)
+}
+
+/**
  * Get the value that should be used as the request correlation ID
  *
  * Note: In SSR, this can only be used after the 001-logging middleware, cause that's when the ID is set, otherwise
