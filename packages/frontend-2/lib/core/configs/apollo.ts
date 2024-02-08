@@ -389,7 +389,7 @@ function createLink(params: {
     const name = operation.operationName
 
     nuxtApp.$logger.debug(
-      { operation: name },
+      { operation: name, graphql: true },
       `Apollo operation {operation} started...`
     )
     return forward(operation).map((result) => {
@@ -400,7 +400,8 @@ function createLink(params: {
         {
           operation: name,
           elapsed,
-          success
+          success,
+          graphql: true
         },
         `Apollo operation {operation} finished in {elapsed}ms`
       )
