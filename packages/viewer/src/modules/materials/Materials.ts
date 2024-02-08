@@ -90,6 +90,9 @@ export default class Materials {
   private static readonly NullDisplayStyleHash = this.hashCode(
     GeometryType.LINE.toString()
   )
+  private static readonly NullTextDisplayStyle = this.hashCode(
+    GeometryType.TEXT.toString()
+  )
   private static readonly NullPointMaterialHash = this.hashCode(
     GeometryType.POINT.toString()
   )
@@ -242,7 +245,9 @@ export default class Materials {
       renderView.geometryType.toString() +
       geometry +
       mat +
-      (renderView.geometryType === GeometryType.TEXT ? renderView.renderData.id : '') +
+      (renderView.geometryType === GeometryType.TEXT && materialData
+        ? renderView.renderData.id
+        : '') +
       (renderView.renderData.geometry.instanced ? 'instanced' : '')
     return Materials.hashCode(s)
   }
@@ -533,6 +538,21 @@ export default class Materials {
     ;(<SpeckleLineMaterial>this.materialMap[hash]).pixelThreshold = 0.5
     ;(<SpeckleLineMaterial>this.materialMap[hash]).resolution = new Vector2()
 
+    this.materialMap[Materials.NullTextDisplayStyle] = new SpeckleTextMaterial(
+      {
+        color: 0x7f7f7f,
+        opacity: 1,
+        side: DoubleSide
+      },
+      ['USE_RTE']
+    )
+    this.materialMap[Materials.NullTextDisplayStyle].transparent = false
+    this.materialMap[Materials.NullTextDisplayStyle].depthWrite = true
+    this.materialMap[Materials.NullTextDisplayStyle].toneMapped = false
+    ;(
+      this.materialMap[Materials.NullTextDisplayStyle] as SpeckleTextMaterial
+    ).color.convertSRGBToLinear()
+
     this.materialMap[Materials.NullPointMaterialHash] = new SpecklePointMaterial(
       {
         color: 0x7f7f7f,
@@ -699,7 +719,7 @@ export default class Materials {
     mat.toneMapped = false
     mat.color.convertSRGBToLinear()
 
-    return mat.getDerivedMaterial()
+    return mat
   }
 
   public getMaterial(
@@ -766,7 +786,7 @@ export default class Materials {
     if (!this.materialMap[hash]) {
       this.materialMap[hash] = this.makeTextMaterial(material as DisplayStyle)
     }
-    return this.materialMap[hash]
+    return (this.materialMap[hash] as SpeckleTextMaterial).getDerivedMaterial()
   }
 
   public getGhostMaterial(
