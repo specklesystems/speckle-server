@@ -8,7 +8,7 @@ import {
   ObjectLoaderRuntimeError
 } from './errors/index.js'
 import { polyfillReadableStreamForAsyncIterator } from './helpers/stream.js'
-
+import { chunk } from 'lodash'
 /**
  * Simple client that streams object info from a Speckle Server.
  * TODO: Object construction progress reporting is weird.
@@ -368,9 +368,9 @@ export default class ObjectLoader {
         //newChildren.push(...newChildrenForBatch)
         /** The workaround for the above based off https://stackoverflow.com/a/9650855 */
         const splitN = 500
-        for (let n = 0, toAdd = newChildrenForBatch; n < toAdd.length; n += splitN) {
-          newChildren.push.apply(newChildren, toAdd.slice(n, n + splitN))
-        }
+        const chunked = chunk(newChildrenForBatch, splitN)
+        for (let k = 0; k < chunked.length; k++)
+          newChildren.push.apply(newChildren, chunked[k])
       }
 
       if (newChildren.length === 0) return
