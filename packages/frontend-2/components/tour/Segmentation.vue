@@ -7,7 +7,7 @@
       <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
       <div
         v-show="step === 0"
-        class="dark:bg-neutral-900/80 border dark:border-neutral-800 text-foreground backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto mx-2"
+        class="border border-outline text-foreground backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto mx-2"
         @mouseenter="rotateGently(Math.random() * 2)"
         @mouseleave="rotateGently(Math.random() * 2)"
       >
