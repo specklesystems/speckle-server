@@ -63,6 +63,10 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       ])
     })
   } else {
+    const localTimeFormat = new Intl.DateTimeFormat('en-GB', {
+      dateStyle: 'full',
+      timeStyle: 'long'
+    })
     const collectBrowserInfo = () => {
       const {
         userAgent,
@@ -70,8 +74,23 @@ export default defineNuxtPlugin(async (nuxtApp) => {
         vendor: navigatorVendor
       } = navigator
       const url = window.location.href
+      const localTime = localTimeFormat.format(new Date())
 
-      return { userAgent, navigatorPlatform, navigatorVendor, url }
+      // Get browser dimensions & screen dimensions
+      const { innerWidth: browserWidth, innerHeight: browserHeight } = window
+      const { width: screenWidth, height: screenHeight } = window.screen
+
+      return {
+        userAgent,
+        navigatorPlatform,
+        navigatorVendor,
+        url,
+        localTime,
+        dimensions: {
+          browser: { width: browserWidth, height: browserHeight },
+          screen: { width: screenWidth, height: screenHeight }
+        }
+      }
     }
 
     const collectCoreInfo = () => ({
