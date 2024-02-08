@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-import { isString } from 'lodash-es'
+import { isString, omit } from 'lodash-es'
 import { useReadUserId } from '~/lib/auth/composables/activeUser'
 import { useRequestId } from '~/lib/core/composables/server'
 import { isObjectLike } from '~~/lib/common/helpers/type'
@@ -43,19 +43,24 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   // Set up logger
   let logger: ReturnType<typeof import('@speckle/shared').Observability.getLogger>
   if (process.server) {
-    const { buildLogger, enableDynamicBindings } = await import(
+    const { buildLogger, enableDynamicBindings, serializeRequest } = await import(
       '~/server/lib/core/helpers/observability'
     )
-    logger = enableDynamicBindings(buildLogger(logLevel, logPretty).child({}), () =>
-      collectMainInfo({ isBrowser: false })
-    )
+    logger = enableDynamicBindings(buildLogger(logLevel, logPretty).child({}), () => ({
+      ...collectMainInfo({ isBrowser: false }),
+      ...(nuxtApp.ssrContext
+        ? { req: serializeRequest(nuxtApp.ssrContext.event.node.req) }
+        : {})
+    }))
 
     // Collect bindings for pino-http logger
     nuxtApp.hook('app:rendered', () => {
       if (!nuxtApp.ssrContext) return
-      nuxtApp.ssrContext.event.node.res.vueLoggerBindings = {
-        userId: getUserId()
-      }
+      const bindings = collectMainInfo({ isBrowser: false })
+      nuxtApp.ssrContext.event.node.res.vueLoggerBindings = omit(bindings, [
+        'req',
+        'res'
+      ])
     })
   } else {
     const collectBrowserInfo = () => {

@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Observability } from '@speckle/shared'
+import type { IncomingMessage } from 'node:http'
 import { get } from 'lodash-es'
 import type { Logger } from 'pino'
+
+const redactedReqHeaders = ['authorization', 'cookie']
 
 export function buildLogger(logLevel: string = 'info', logPretty: boolean = false) {
   return Observability.getLogger(logLevel, logPretty)
@@ -29,4 +32,23 @@ export function enableDynamicBindings(
       return get(target, prop)
     }
   })
+}
+
+export function serializeRequest(req: IncomingMessage) {
+  return {
+    id: req.id,
+    method: req.method,
+    path: req.url?.split('?')[0], // Remove query params which might be sensitive
+    // Allowlist useful headers
+    headers: Object.keys(req.headers).reduce((obj, key) => {
+      let valueToPrint = req.headers[key]
+      if (redactedReqHeaders.includes(key.toLocaleLowerCase())) {
+        valueToPrint = `REDACTED[length: ${valueToPrint ? valueToPrint.length : 0}]`
+      }
+      return {
+        ...obj,
+        [key]: valueToPrint
+      }
+    }, {})
+  }
 }
