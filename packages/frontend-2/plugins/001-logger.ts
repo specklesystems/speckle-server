@@ -189,16 +189,16 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     }
   }
 
-  // Set up global error handler
+  // Set up global vue error handler
   nuxtApp.vueApp.config.errorHandler = (err, _vm, info) => {
     logger.error(err, 'Unhandled error in Vue app', info)
   }
 
   // Uncaught routing error handler
   router.onError((err, to, from) => {
-    // skip 404
+    // skip 404, 403, 401
     if (isObjectLike(err) && 'statusCode' in err) {
-      if ([404].includes(err.statusCode as number)) return
+      if ([404, 403, 401].includes(err.statusCode as number)) return
     }
 
     logger.error(err, 'Unhandled error in routing', {

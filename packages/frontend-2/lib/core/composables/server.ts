@@ -34,6 +34,8 @@ export function useServerInfo() {
 
 /**
  * Get the req.id that is/was used in the initial SSR request
+ *
+ * Note: In SSR, this can only be used after the 001-logging middleware, cause that's when the ID is set
  */
 export function useServerRequestId() {
   const nuxt = useNuxtApp()

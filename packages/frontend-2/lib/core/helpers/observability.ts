@@ -4,7 +4,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { Observability } from '@speckle/shared'
-import { get, isBoolean, isNumber, isObjectLike, isString, noop } from 'lodash-es'
+import {
+  upperFirst,
+  get,
+  isBoolean,
+  isNumber,
+  isObjectLike,
+  isString,
+  noop
+} from 'lodash-es'
 
 /**
  * Add pino-pretty like formatting
@@ -78,4 +86,27 @@ export function buildFakePinoLogger(
   logger.child = () => logger as any
 
   return logger
+}
+
+export type SimpleError = {
+  statusCode: number
+  message: string
+  stack?: string
+}
+
+export const formatAppError = (err: SimpleError) => {
+  const { statusCode, message, stack } = err
+
+  let finalMessage = message || ''
+  if (finalMessage.toLowerCase() === 'fetch failed') {
+    finalMessage = 'Internal API call failed, please contact site administrators'
+  }
+
+  finalMessage = upperFirst(finalMessage)
+
+  return {
+    statusCode,
+    message: finalMessage,
+    stack
+  }
 }

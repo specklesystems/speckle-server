@@ -313,7 +313,8 @@ function createLink(params: {
           ...omit(res, ['forward', 'response']),
           networkErrorMessage: res.networkError?.message,
           gqlErrorMessages: res.graphQLErrors?.map((e) => e.message),
-          errorMessage: errMsg
+          errorMessage: errMsg,
+          graphql: true
         },
         'Apollo Client error: {errorMessage}'
       )
