@@ -85,12 +85,16 @@ export default class Batcher {
     for (const v in instancedBatches) {
       for (let k = 0; k < instancedBatches[v].length; k++) {
         const nodes = worldTree.findId(instancedBatches[v][k])
+        /** Make sure entire instance set is instanced */
+        let instanced = true
+        nodes.every((node: TreeNode) => (instanced &&= node.model.instanced))
+
         const rvs = nodes
           .map((node: TreeNode) => node.model.renderView)
           /** This disconsiders orphaned nodes caused by incorrect id duplication in the stream */
           .filter((rv) => rv)
 
-        if (Number.parseInt(v) < this.minInstancedBatchVertices) {
+        if (Number.parseInt(v) < this.minInstancedBatchVertices || !instanced) {
           const t0 = performance.now()
           rvs.forEach((nodeRv) => {
             const geometry = nodeRv.renderData.geometry
@@ -103,7 +107,12 @@ export default class Batcher {
                 COLOR: attribs.COLOR.slice()
               })
             }
-            Geometry.transformGeometryData(geometry, geometry.transform)
+            /**  - I don't particularly like this branch -
+             *  All instances should have a transform. But it's the easiest thing we can do
+             *  until we figure out the viewer <-> connector object duplication inconsistency
+             */
+            if (geometry.transform)
+              Geometry.transformGeometryData(geometry, geometry.transform)
             nodeRv.computeAABB()
           })
           deInstancing += performance.now() - t0

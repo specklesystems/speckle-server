@@ -48,12 +48,9 @@
             ]"
           >
             <div
-              class="relative w-full sm:w-80 flex py-2 pl-3 pr-2 sm:px-2 bg-foundation-2"
+              class="relative w-full sm:w-80 flex justify-between items-center py-2 pl-3 pr-2 sm:px-2 bg-foundation-2"
             >
               <div class="flex-grow flex items-center">
-                <span class="sm:hidden text-primary text-sm font-medium">
-                  Discussions
-                </span>
                 <FormButton
                   v-tippy="'Previous'"
                   size="sm"
@@ -115,7 +112,7 @@
             <div class="relative w-full sm:w-80 flex flex-col flex-1 justify-between">
               <div
                 ref="commentsContainer"
-                class="max-h-[calc(50vh)] sm:max-h-[300px] 2xl:max-h-[500px] pb-20 overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
+                class="max-h-[40vh] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
               >
                 <div
                   v-if="!isThreadResourceLoaded"
@@ -147,10 +144,30 @@
               </div>
             </div>
             <ViewerAnchoredPointThreadNewReply
-              v-if="!modelValue.archived && canReply"
+              v-if="showNewReplyComponent"
               :model-value="modelValue"
               @submit="onNewReply"
             />
+            <div
+              v-if="isEmbedEnabled"
+              class="flex justify-between w-full gap-2 p-2 mt-2"
+            >
+              <FormButton
+                :icon-right="ArrowTopRightOnSquareIcon"
+                full-width
+                :to="getLinkToThread(projectId, props.modelValue)"
+                external
+                target="_blank"
+              >
+                Reply in Speckle
+              </FormButton>
+            </div>
+            <div
+              v-if="!canReply && !isEmbedEnabled"
+              class="p-3 flex flex-col items-center justify-center bg-foundation-2"
+            >
+              <FormButton full-width @click="$emit('login')">Reply</FormButton>
+            </div>
           </div>
         </div>
       </ViewerCommentsPortalOrDiv>
@@ -195,21 +212,26 @@ import {
 import { useDisableGlobalTextSelection } from '~~/lib/common/composables/window'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentBubbleModel): void
   (e: 'update:expanded', v: boolean): void
   (e: 'next', v: CommentBubbleModel): void
   (e: 'prev', v: CommentBubbleModel): void
+  (e: 'login'): void
 }>()
 
 const props = defineProps<{
   modelValue: CommentBubbleModel
 }>()
 
+const { isEmbedEnabled } = useEmbed()
+
 const threadId = computed(() => props.modelValue.id)
 const { copy } = useClipboard()
 const { activeUser } = useActiveUser()
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const archiveComment = useArchiveComment()
 const { triggerNotification } = useGlobalToast()
@@ -240,6 +262,15 @@ const comments = computed(() => [
   props.modelValue,
   ...props.modelValue.replies.items.slice().reverse()
 ])
+
+const showNewReplyComponent = computed(() => {
+  return (
+    !props.modelValue.archived &&
+    canReply.value &&
+    !isSmallerOrEqualSm.value &&
+    !isEmbedEnabled.value
+  )
+})
 
 // Note: conflicted with dragging styles, so took it out temporarily
 // const { style } = useExpandedThreadResponsiveLocation({

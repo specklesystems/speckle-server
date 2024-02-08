@@ -25,7 +25,7 @@
     </div>
     <div
       v-if="items?.length && project.model"
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 relative z-0"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 relative z-10"
     >
       <!-- Decrementing z-index necessary for the actions menu to render correctly. Each card has its own stacking context because of the scale property -->
       <template v-for="(item, i) in items" :key="item.id">
@@ -40,6 +40,7 @@
           :selection-disabled="disabledSelections[item.id]"
           @select="onSelect(item)"
           @chosen="onSingleActionChosen($event, item)"
+          @embed="handleEmbed(item.id)"
         />
         <ProjectModelPageVersionsCard
           v-else
@@ -79,6 +80,13 @@
       :version="editMessageDialogVersion"
       @fully-closed="dialogState = null"
     />
+    <ProjectModelPageDialogEmbed
+      v-model:open="embedDialogOpen"
+      :visibility="project.visibility"
+      :project-id="project.id"
+      :version-id="currentVersionId"
+      :model-id="project.model.id"
+    />
     <div class="py-12">
       <!-- Some padding to deal with a card menu potentially opening at the bottom of the page -->
     </div>
@@ -102,6 +110,7 @@ type SingleVersion = NonNullable<Get<typeof versions.value, 'items[0]'>>
 graphql(`
   fragment ProjectModelPageVersionsPagination on Project {
     id
+    visibility
     model(id: $modelId) {
       id
       versions(limit: 16, cursor: $versionsCursor) {
@@ -166,6 +175,9 @@ const importArea = ref(
     triggerPicker: () => void
   }>
 )
+
+const currentVersionId = ref<string | undefined>(undefined)
+const embedDialogOpen = ref(false)
 
 const selectedItems = computed({
   get: () =>
@@ -272,5 +284,10 @@ const onBatchDelete = () => {
     type: VersionActionTypes.Delete,
     items: selectedItems.value.slice()
   }
+}
+
+const handleEmbed = (versionId: string) => {
+  currentVersionId.value = versionId
+  embedDialogOpen.value = true
 }
 </script>

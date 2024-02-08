@@ -63,15 +63,27 @@
           : `max-height: ${isExpanded ? contentHeight + 'px' : '0px'}`
       "
     >
-      <div ref="content" class="rounded-md text-sm pb-3 px-2 mt-1">
-        <slot>Panel contents</slot>
-      </div>
+      <template v-if="props.lazyLoad">
+        <div
+          v-if="isExpanded || props.alwaysOpen"
+          ref="content"
+          class="rounded-md text-sm pb-3 px-2 mt-1"
+        >
+          <slot>Panel contents</slot>
+        </div>
+      </template>
+
+      <template v-else>
+        <div ref="content" class="rounded-md text-sm pb-3 px-2 mt-1">
+          <slot>Panel contents</slot>
+        </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, unref, computed } from 'vue'
+import { ref, unref, computed, nextTick } from 'vue'
 import type { Ref } from 'vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { FormButton } from '~~/src/lib'
@@ -109,7 +121,11 @@ const props = defineProps({
         onClick?: () => void
       }
     | undefined,
-  alwaysOpen: Boolean
+  alwaysOpen: Boolean,
+  lazyLoad: {
+    type: Boolean,
+    default: false
+  }
 })
 
 const content: Ref<HTMLElement | null> = ref(null)
@@ -147,9 +163,11 @@ const titleClasses = computed(() => {
   }
 })
 
-const toggleExpansion = () => {
+const toggleExpansion = async () => {
   isExpanded.value = !isExpanded.value
+
   if (isExpanded.value) {
+    await nextTick()
     contentHeight.value = (unref(content)?.scrollHeight || 0) + 64
   }
 }

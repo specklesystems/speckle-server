@@ -28,6 +28,10 @@ export const UsersStreamInviteMixin = vueWithMixins(IsLoggedInMixin).extend({
     inviteToken: {
       type: String as PropType<Nullable<string>>,
       default: null
+    },
+    autoAccept: {
+      type: Boolean,
+      default: false
     }
   },
   data: () => ({
@@ -166,6 +170,11 @@ export const UsersStreamInviteMixin = vueWithMixins(IsLoggedInMixin).extend({
           type: 'error'
         })
       }
+    }
+  },
+  mounted() {
+    if (this.autoAccept) {
+      this.acceptInvite()
     }
   }
 })

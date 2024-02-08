@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-col space-y-4">
-    <div class="flex space-x-6">
+  <div class="flex flex-col gap-y-0 sm:gap-y-4">
+    <div class="flex gap-x-6">
       <FormButton
         v-for="item in items"
         :key="item.id"

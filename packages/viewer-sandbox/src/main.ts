@@ -5,8 +5,7 @@ import {
   SelectionEvent,
   ViewerEvent,
   DebugViewer,
-  Viewer,
-  WorldTree
+  Viewer
 } from '@speckle/viewer'
 
 import './style.css'
@@ -19,7 +18,6 @@ import {
   DiffExtension,
   FilteringExtension
 } from '@speckle/viewer'
-import { GeometryType } from '@speckle/viewer'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -90,33 +88,7 @@ const createViewer = async (containerName: string, stream: string) => {
     console.warn(viewer.getRenderer().renderingStats)
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
-    const categories = {}
-    //@ts-ignore
-    await viewer.getWorldTree().walkAsync((node) => {
-      //@ts-ignore
-      if (!categories[node.model.raw.speckle_type]) {
-        //@ts-ignore
-        categories[node.model.raw.speckle_type] = 0
-      }
-      //@ts-ignore
-      categories[node.model.raw.speckle_type]++
-      return true
-    })
-    console.log(categories)
-
     sandbox.refresh()
-    const COUNT = 16000
-    await viewer.getWorldTree().walkAsync((node: TreeNode) => {
-      if (
-        viewer.getWorldTree().isRoot(node) ||
-        node.parent.model.id === WorldTree.ROOT_ID ||
-        !node.model.renderView
-      )
-        return true
-      const dice = Math.random()
-      if (dice < 0.5 && sandbox.ids.length < COUNT) sandbox.ids.push(node.model.id)
-      return true
-    })
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
@@ -334,7 +306,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/97750296c2/commits/5386a0af02' // 700k+ objects 30kk tris
     // 'https://latest.speckle.dev/streams/97750296c2/commits/2a6fd781f2' // NEW
 
-    'https://latest.speckle.dev/streams/97750296c2/commits/48f0567a88' // 1015849 objects
+    // 'https://latest.speckle.dev/streams/97750296c2/commits/48f0567a88' // 1015849 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/aec0841f7e' // 11k objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/96ffc3c786' // 92209 objects
     // 'https://latest.speckle.dev/streams/97750296c2/commits/92115d3789' // 390974 objects 19kk tris
@@ -374,6 +346,13 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/97750296c2/objects/11a7752e40b4ef0620affc55ce9fdf5a'
 
     // 'https://latest.speckle.dev/streams/92b620fb17/objects/7118603b197c00944f53be650ce721ec'
+    // Blender Mega Test Stream
+    'https://latest.speckle.dev/streams/c1faab5c62/commits/2ecb757577'
+    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/3deaea94af'
+    // Text and Dimensions
+    // 'https://latest.speckle.dev/streams/3f895e614f/commits/fbc78286c9'
+    // 'https://latest.speckle.dev/streams/55cc1cbf0a/commits/aa72674507'
+    // 'https://latest.speckle.dev/streams/55cc1cbf0a/commits/a7f74b6524'
   )
 }
 

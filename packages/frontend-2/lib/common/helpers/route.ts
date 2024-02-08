@@ -2,6 +2,7 @@ import type { LocationQueryRaw } from 'vue-router'
 import { serializeHashState } from '~~/lib/common/composables/url'
 import { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHashState'
 
+export const profileRoute = '/profile'
 export const authBlockedDueToVerificationRoute = '/error-email-verify'
 export const homeRoute = '/'
 export const loginRoute = '/authn/login'

@@ -19,14 +19,17 @@
         @change="onChange"
       />
     </div>
-    <div class="text-sm" :class="inlineDescription ? 'flex gap-2 items-center' : ''">
+    <div
+      class="text-xs sm:text-sm"
+      :class="inlineDescription ? 'flex gap-2 items-center' : ''"
+    >
       <label
         :for="finalId"
         class="text-foreground flex gap-2 items-center"
         :class="{ 'sr-only': hideLabel }"
       >
         <div v-if="icon" class="text-sm">
-          <component :is="icon" class="h-10 w-10"></component>
+          <component :is="icon" class="h-8 sm:h-10 w-8 sm:w-10"></component>
         </div>
         <span>{{ title }}</span>
         <span v-if="showRequired" class="text-danger ml-1">*</span>

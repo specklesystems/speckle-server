@@ -97,7 +97,7 @@ const buildButtonClassses = (params: {
   ]
 
   if (active && !color) {
-    classParts.push('bg-primary text-foreground-on-primary')
+    classParts.push('bg-foundation-focus text-foreground')
   } else if (disabled) {
     classParts.push('text-foreground-disabled')
   } else if (color === 'danger' && active) {

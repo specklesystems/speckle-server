@@ -1,24 +1,31 @@
 <template>
-  <div>
+  <div v-if="showControls">
     <div
-      class="absolute z-20 flex h-[100dvh] flex-col space-y-2 bg-green-300/0 px-2 pt-[4.2rem]"
+      class="absolute z-20 flex max-h-screen simple-scrollbar flex-col space-y-1 md:space-y-2 bg-green-300/0 px-2"
+      :class="
+        showNavbar && !isEmbedEnabled
+          ? 'pt-[4.2rem]'
+          : isTransparent
+          ? 'pt-2'
+          : 'pt-2 pb-16'
+      "
     >
       <!-- Models -->
       <ViewerControlsButtonToggle
-        v-tippy="modelsShortcut"
+        v-tippy="isSmallerOrEqualSm ? undefined : modelsShortcut"
         :active="activeControl === 'models'"
         @click="toggleActiveControl('models')"
       >
-        <CubeIcon class="h-5 w-5" />
+        <CubeIcon class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
 
       <!-- Explorer -->
       <ViewerControlsButtonToggle
-        v-tippy="explorerShortcut"
+        v-tippy="isSmallerOrEqualSm ? undefined : explorerShortcut"
         :active="activeControl === 'explorer'"
         @click="toggleActiveControl('explorer')"
       >
-        <IconFileExplorer class="h-5 w-5" />
+        <IconFileExplorer class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
 
       <!-- TODO -->
@@ -31,17 +38,17 @@
 
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
-        v-tippy="discussionsShortcut"
+        v-tippy="isSmallerOrEqualSm ? undefined : discussionsShortcut"
         :active="activeControl === 'discussions'"
         @click="toggleActiveControl('discussions')"
       >
-        <ChatBubbleLeftRightIcon class="h-5 w-5" />
+        <ChatBubbleLeftRightIcon class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
 
       <!-- Automateeeeeeee FTW -->
       <ViewerControlsButtonToggle
         v-if="allAutomationRuns.length !== 0"
-        v-tippy="summary.longSummary"
+        v-tippy="isSmallerOrEqualSm ? undefined : summary.longSummary"
         :active="activeControl === 'automate'"
         class="p-2"
         @click="toggleActiveControl('automate')"
@@ -56,68 +63,89 @@
 
       <!-- Measurements -->
       <ViewerControlsButtonToggle
-        v-tippy="measureShortcut"
+        v-tippy="isSmallerOrEqualSm ? undefined : measureShortcut"
         :active="activeControl === 'measurements'"
         @click="toggleMeasurements"
       >
-        <IconMeasurements class="h-5 w-5" />
+        <IconMeasurements class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
-
-      <!-- Standard viewer controls -->
-      <ViewerControlsButtonGroup>
-        <!-- Views -->
-        <ViewerViewsMenu v-tippy="'Views'" />
-        <!-- Zoom extents -->
-        <ViewerControlsButtonToggle
-          v-tippy="zoomExtentsShortcut"
-          flat
-          @click="trackAndzoomExtentsOrSelection()"
+      <div class="w-8 flex gap-2">
+        <div class="md:hidden">
+          <ViewerControlsButtonToggle
+            :active="activeControl === 'mobileOverflow'"
+            @click="toggleActiveControl('mobileOverflow')"
+          >
+            <ChevronDoubleRightIcon
+              class="h-4 w-4 md:h-5 md:w-5 transition"
+              :class="activeControl === 'mobileOverflow' ? 'rotate-180' : ''"
+            />
+          </ViewerControlsButtonToggle>
+        </div>
+        <div
+          class="-mt-28 md:mt-0 bg-foundation md:bg-transparent md:gap-2 shadow-md md:shadow-none flex flex-col rounded-lg transition-all *:shadow-none *:py-0 *:md:shadow-md *:md:py-2"
+          :class="[
+            activeControl === 'mobileOverflow' ? '' : '-translate-x-24 md:translate-x-0'
+          ]"
         >
-          <ArrowsPointingOutIcon class="h-5 w-5" />
-        </ViewerControlsButtonToggle>
+          <ViewerControlsButtonGroup>
+            <!-- Views -->
+            <ViewerViewsMenu v-tippy="isSmallerOrEqualSm ? undefined : 'Views'" />
+            <!-- Zoom extents -->
+            <ViewerControlsButtonToggle
+              v-tippy="isSmallerOrEqualSm ? undefined : zoomExtentsShortcut"
+              flat
+              @click="trackAndzoomExtentsOrSelection()"
+            >
+              <ArrowsPointingOutIcon class="h-4 w-4 md:h-5 md:w-5" />
+            </ViewerControlsButtonToggle>
 
-        <!-- Sun and lights -->
-        <ViewerSunMenu v-tippy="'Light Controls'" />
-      </ViewerControlsButtonGroup>
-      <ViewerControlsButtonGroup>
-        <!-- Projection type -->
-        <!-- TODO (Question for fabs): How to persist state between page navigation? e.g., swap to iso mode, move out, move back, iso mode is still on in viewer but not in ui -->
-        <ViewerControlsButtonToggle
-          v-tippy="projectionShortcut"
-          flat
-          secondary
-          :active="isOrthoProjection"
-          @click="trackAndtoggleProjection()"
-        >
-          <IconPerspective v-if="isOrthoProjection" class="h-4 w-4" />
-          <IconPerspectiveMore v-else class="h-4 w-4" />
-        </ViewerControlsButtonToggle>
+            <!-- Sun and lights -->
+            <ViewerSunMenu
+              v-tippy="isSmallerOrEqualSm ? undefined : 'Light Controls'"
+            />
+          </ViewerControlsButtonGroup>
+          <ViewerControlsButtonGroup>
+            <!-- Projection type -->
+            <!-- TODO (Question for fabs): How to persist state between page navigation? e.g., swap to iso mode, move out, move back, iso mode is still on in viewer but not in ui -->
+            <ViewerControlsButtonToggle
+              v-tippy="isSmallerOrEqualSm ? undefined : projectionShortcut"
+              flat
+              secondary
+              :active="isOrthoProjection"
+              @click="trackAndtoggleProjection()"
+            >
+              <IconPerspective v-if="isOrthoProjection" class="h-3.5 md:h-4 w-4" />
+              <IconPerspectiveMore v-else class="h-3.5 md:h-4 w-4" />
+            </ViewerControlsButtonToggle>
 
-        <!-- Section Box -->
-        <ViewerControlsButtonToggle
-          v-tippy="sectionBoxShortcut"
-          flat
-          secondary
-          :active="isSectionBoxEnabled"
-          @click="toggleSectionBox()"
-        >
-          <ScissorsIcon class="h-5 w-5" />
-        </ViewerControlsButtonToggle>
+            <!-- Section Box -->
+            <ViewerControlsButtonToggle
+              v-tippy="isSmallerOrEqualSm ? undefined : sectionBoxShortcut"
+              flat
+              secondary
+              :active="isSectionBoxEnabled"
+              @click="toggleSectionBox()"
+            >
+              <ScissorsIcon class="h-4 w-4 md:h-5 md:w-5" />
+            </ViewerControlsButtonToggle>
 
-        <!-- Explosion -->
-        <ViewerExplodeMenu v-tippy="'Explode'" />
+            <!-- Explosion -->
+            <ViewerExplodeMenu v-tippy="isSmallerOrEqualSm ? undefined : 'Explode'" />
 
-        <!-- Settings -->
-        <ViewerSettingsMenu />
-      </ViewerControlsButtonGroup>
+            <!-- Settings -->
+            <ViewerSettingsMenu />
+          </ViewerControlsButtonGroup>
+        </div>
+        <!-- Standard viewer controls -->
+      </div>
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 mx-14 mt-[4rem] mb-4 max-h-[calc(100dvh-5.5rem)] w-64 sm:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
+      :class="`simple-scrollbar absolute z-10 ml-12 md:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] w-56 md:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
-      }`"
+      } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[4rem]'}`"
     >
       <div v-show="activeControl.length !== 0 && activeControl === 'measurements'">
         <KeepAlive>
@@ -185,7 +213,8 @@ import {
   ChatBubbleLeftRightIcon,
   ArrowsPointingOutIcon,
   ScissorsIcon,
-  PlusIcon
+  PlusIcon,
+  ChevronDoubleRightIcon
 } from '@heroicons/vue/24/outline'
 import type { Nullable } from '@speckle/shared'
 import {
@@ -213,12 +242,18 @@ const {
 import { AutomationRunStatus } from '~~/lib/common/generated/gql/graphql'
 import type { AutomationRun } from '~~/lib/common/generated/gql/graphql'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { useViewerTour } from '~/lib/viewer/composables/tour'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
 
 const { enableMeasurements } = useMeasurementUtilities()
+
+const { showNavbar, showControls } = useViewerTour()
+
+const { isTransparent, isEnabled: isEmbedEnabled } = useEmbed()
 
 const allAutomationRuns = computed(() => {
   const allAutomationStatuses = modelsAndVersionIds.value
@@ -290,6 +325,7 @@ type ActiveControl =
   | 'discussions'
   | 'automate'
   | 'measurements'
+  | 'mobileOverflow'
 
 const openAddModel = ref(false)
 

@@ -35,10 +35,10 @@
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onSubmit"
             >
-              <div :class="scrolledFromTop && 'relative z-10 shadow-lg'">
+              <div :class="scrolledFromTop && 'relative z-20 shadow-lg'">
                 <div
                   v-if="hasTitle"
-                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[4rem] py-2 px-4 sm:px-8 truncate text-xl sm:text-2xl font-bold"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] py-2 px-4 sm:px-8 truncate text-lg sm:text-2xl font-bold"
                 >
                   <div class="w-full truncate pr-12">
                     {{ title }}
@@ -49,22 +49,22 @@
 
               <button
                 v-if="!hideCloser"
-                class="absolute z-20 right-4 bg-foundation rounded-full p-1"
-                :class="hasTitle ? 'top-4' : 'top-3'"
+                class="absolute z-20 bg-foundation rounded-full p-1"
+                :class="hasTitle ? 'top-2 right-3 sm:top-4' : 'right-4 top-3'"
                 @click="open = false"
               >
-                <XMarkIcon class="h-6 w-6" />
+                <XMarkIcon class="h-5 sm:h-6 w-5 sm:w-6" />
               </button>
               <div
                 class="flex-1 simple-scrollbar overflow-y-auto"
-                :class="hasTitle ? 'p-4 sm:py-6 sm:px-8' : 'p-10'"
+                :class="hasTitle ? 'p-3 sm:py-6 sm:px-8' : 'p-10'"
                 @scroll="onScroll"
               >
                 <slot>Put your content here!</slot>
               </div>
               <div
                 v-if="hasButtons"
-                class="flex px-4 py-2 sm:py-4 sm:px-6 gap-2 shrink-0"
+                class="relative z-50 flex px-4 py-2 sm:py-4 sm:px-6 gap-2 shrink-0 bg-foundation"
                 :class="!scrolledToBottom && 'shadow-t'"
               >
                 <template v-if="buttons">
@@ -156,7 +156,7 @@ const maxWidthWeight = computed(() => {
 })
 
 const widthClasses = computed(() => {
-  const classParts: string[] = ['w-full', 'sm:w-full sm:max-w-xl']
+  const classParts: string[] = ['w-full', 'sm:w-full sm:max-w-2xl']
 
   if (maxWidthWeight.value >= 1) {
     classParts.push('md:max-w-2xl')

@@ -43,6 +43,7 @@ export default defineNuxtConfig({
     public: {
       apiOrigin: 'UNDEFINED',
       backendApiOrigin: '',
+      baseUrl: '',
       mixpanelApiHost: 'UNDEFINED',
       mixpanelTokenId: 'UNDEFINED',
       logLevel: NUXT_PUBLIC_LOG_LEVEL,
@@ -130,11 +131,17 @@ export default defineNuxtConfig({
     // Necessary because of redirects from backend in auth flows
     '/': {
       cors: true,
-      headers: { 'access-control-allow-methods': 'GET' }
+      headers: {
+        'access-control-allow-methods': 'GET',
+        'Access-Control-Expose-Headers': '*'
+      }
     },
     '/authn/login': {
       cors: true,
-      headers: { 'access-control-allow-methods': 'GET' }
+      headers: {
+        'access-control-allow-methods': 'GET',
+        'Access-Control-Expose-Headers': '*'
+      }
     }
   },
 
