@@ -2,6 +2,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { nanoid } from 'nanoid'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { H3Event } from 'h3'
+import type { Optional } from '@speckle/shared'
 
 export const mainServerInfoDataQuery = graphql(`
   query MainServerInfoData {
@@ -58,4 +59,18 @@ export function useRequestId(params?: {
     const state = useState('app_request_correlation_id', () => id)
     return state.value
   }
+}
+
+/**
+ * Resolve the user's geolocation, if possible (only supported wherever we host behind Cloudflare)
+ */
+export function useUserCountry() {
+  const nuxt = useNuxtApp()
+  const state = useState('active_user_country', () => {
+    // The client side should not need to resolve this info, as it should come from the serialized SSR state
+    if (process.client || !nuxt.ssrContext) return undefined
+    return nuxt.ssrContext.event.node.req.headers['cf-ipcountry'] as Optional<string>
+  })
+
+  return computed(() => state.value)
 }

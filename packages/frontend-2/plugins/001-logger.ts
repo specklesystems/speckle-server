@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 import { isString, omit } from 'lodash-es'
 import { useReadUserId } from '~/lib/auth/composables/activeUser'
-import { useRequestId } from '~/lib/core/composables/server'
+import { useRequestId, useUserCountry } from '~/lib/core/composables/server'
 import { isObjectLike } from '~~/lib/common/helpers/type'
 import { buildFakePinoLogger } from '~~/lib/core/helpers/observability'
 
@@ -25,6 +25,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   const router = useRouter()
   const reqId = useRequestId()
   const getUserId = useReadUserId()
+  const country = useUserCountry()
 
   const collectMainInfo = (params: { isBrowser: boolean }) => {
     const info = {
@@ -35,7 +36,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       route: route?.path,
       routeDefinition: route.matched?.[route.matched.length - 1]?.path,
       req: { id: reqId },
-      userId: getUserId()
+      userId: getUserId(),
+      country: country.value
     }
     return info
   }
