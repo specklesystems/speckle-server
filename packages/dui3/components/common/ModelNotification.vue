@@ -7,7 +7,7 @@
     </div>
     <div class="flex items-center group space-x-1">
       <FormButton
-        v-if="notification.dismissible || true"
+        v-if="notification.dismissible"
         size="xs"
         text
         :color="notification.level"

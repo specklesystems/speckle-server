@@ -9,6 +9,7 @@ import { useMutation } from '@vue/apollo-composable'
 import { createCommitMutation } from '~/lib/graphql/mutationsAndQueries'
 import { useAccountStore } from '~/store/accounts'
 import { ModelCardNotification } from '~/lib/models/card/notification'
+import { ModelCardProgress } from '~/lib/models/card/progress'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -26,6 +27,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const hostAppName = ref<string>()
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
+  /**
+   * A list of all models currently in the file, grouped by the project they are part of.
+   */
   const projectModelGroups = computed(() => {
     const projectModelGroups: ProjectModelGroup[] = []
     for (const model of documentModelStore.value.models) {
@@ -56,11 +60,20 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     () => sendFilters.value?.find((f) => f.name === 'Everything') as ISendFilter
   )
 
+  /**
+   * Adds a new model and persists it to the host app file.
+   * @param model
+   */
   const addModel = async (model: IModelCard) => {
     await app.$baseBinding.addModel(model)
     documentModelStore.value.models.push(model)
   }
 
+  /**
+   * Updates a model's filter, and persists that change in the host app file.
+   * @param modelId
+   * @param filter
+   */
   const updateModelFilter = async (modelId: string, filter: ISendFilter) => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === modelId
@@ -70,6 +83,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await app.$baseBinding.updateModel(model)
   }
 
+  /**
+   * Removes a model from the store and the host app file.
+   * @param model
+   */
   const removeModel = async (model: IModelCard) => {
     await app.$baseBinding.removeModel(model)
     documentModelStore.value.models = documentModelStore.value.models.filter(
@@ -183,33 +200,22 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.notifications?.push(args)
   })
 
-  app.$sendBinding.on('senderProgress', (args) => {
+  // Hanlde progress events
+  const progressHanlder = (args: ModelCardProgress) => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === args.id
-    ) as ISenderModelCard
+    ) as IModelCard
 
     if (args.status === 'Completed' || args.status === 'Cancelled') {
-      model.sending = false
       model.progress = undefined
       return
     }
 
     model.progress = args
-  })
-
-  app.$receiveBinding.on('receiverProgress', (args) => {
-    const model = documentModelStore.value.models.find(
-      (m) => m.id === args.id
-    ) as IReceiverModelCard
-
-    if (args.status === 'Completed' || args.status === 'Cancelled') {
-      model.receiving = false
-      model.progress = undefined
-      return
-    }
-
-    model.progress = args
-  })
+  }
+  // NOTE: we should probably have only one progress event, but it's too much of a refactor in the .net part
+  app.$sendBinding.on('senderProgress', progressHanlder)
+  app.$receiveBinding.on('receiverProgress', progressHanlder)
 
   app.$sendBinding.on('createVersion', async (args) => {
     const model = documentModelStore.value.models.find(

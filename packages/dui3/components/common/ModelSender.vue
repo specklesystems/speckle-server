@@ -1,6 +1,7 @@
 <template>
   <div class="space-y-2 pt-2">
     <div class="flex items-center space-x-2 min-w-0">
+      <!-- TODO: Better with a icon denoting send/receive maybe? -->
       <UserAvatar :user="modelDetails.author" size="sm" class="max-[275px]:hidden" />
       <div class="truncate font-bold text-foreground grow select-none">
         {{ modelDetails.displayName }}
@@ -21,7 +22,7 @@
     <div class="grid grid-cols-2 py-2 max-[275px]:grid-cols-1 gap-2">
       <div>
         <FormButton
-          v-if="!model.sending"
+          v-if="!model.progress"
           size="sm"
           full-width
           color="card"
