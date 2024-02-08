@@ -148,7 +148,7 @@ export default class Sandbox {
       this.addStreamControls(url)
       this.addViewControls()
       this.addBatches()
-      this.properties = await this.viewer.getObjectProperties()
+      // this.properties = await this.viewer.getObjectProperties()
       this.batchesParams.totalBvhSize = this.getBVHSize()
       this.refresh()
     })
@@ -467,11 +467,8 @@ export default class Sandbox {
       // )
 
       this.viewer
-        .getExtension(SelectionExtension)
-        .selectObjects(this.ids /*['c3138e24a866d447eb86b2a8107b2c09']*/)
-      setTimeout(() => {
-        console.log(this.viewer.getRenderer().renderingStats)
-      }, 1000)
+        .getExtension(FilteringExtension)
+        .isolateObjects(this.ids /*['1c8f29e7d48e531f6acbf987a50467f9']*/)
     })
 
     const rotate = this.tabs.pages[0].addButton({

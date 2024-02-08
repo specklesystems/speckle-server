@@ -349,6 +349,10 @@ const getStream = () => {
     // Blender Mega Test Stream
     'https://latest.speckle.dev/streams/c1faab5c62/commits/2ecb757577'
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/3deaea94af'
+    // Text and Dimensions
+    // 'https://latest.speckle.dev/streams/3f895e614f/commits/fbc78286c9'
+    // 'https://latest.speckle.dev/streams/55cc1cbf0a/commits/aa72674507'
+    // 'https://latest.speckle.dev/streams/55cc1cbf0a/commits/a7f74b6524'
   )
 }
 
