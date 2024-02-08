@@ -9,7 +9,7 @@
     <!-- Progress state -->
     <div
       :class="[
-        modelCard.progress ? 'h-10 opacity-100' : 'h-0 opacity-0 py-0',
+        modelCard.progress ? 'h-9 opacity-100' : 'h-0 opacity-0 py-0',
         'transition-[height,scale,opacity] overflow-hidden bg-blue-500/10'
       ]"
     >

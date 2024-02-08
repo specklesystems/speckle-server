@@ -51,11 +51,16 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     return projectModelGroups
   })
 
+  /**
+   * The host app's available send filters.
+   */
   const sendFilters = ref<ISendFilter[]>()
+  /**
+   * Selection filter shortcut - use it as a default if possible.
+   */
   const selectionFilter = computed(
     () => sendFilters.value?.find((f) => f.name === 'Selection') as ISendFilter
   )
-
   const everythingFilter = computed(
     () => sendFilters.value?.find((f) => f.name === 'Everything') as ISendFilter
   )
@@ -94,6 +99,11 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     )
   }
 
+  /**
+   * Removes a model card's notification.
+   * @param modelId
+   * @param index
+   */
   const dismissModelNotification = (modelId: string, index: number) => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === modelId
@@ -108,20 +118,27 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await app.$receiveBinding.invalidate(modelId)
   }
 
+  /**
+   * Tells the host app to start sending a specific model card. This will reach inside the host application.
+   * @param modelId
+   */
   const sendModel = async (modelId: string) => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === modelId
     ) as ISenderModelCard
     model.notifications = []
-    model.sending = true
+
     await app.$sendBinding.send(modelId)
   }
 
+  /**
+   * Cancels a model card's ongoing send operation. This will reach inside the host application.
+   * @param modelId
+   */
   const sendModelCancel = async (modelId: string) => {
     const model = documentModelStore.value.models.find(
       (m) => m.id === modelId
     ) as ISenderModelCard
-    model.sending = false
     model.progress = undefined
     await app.$sendBinding.cancelSend(modelId)
   }
@@ -167,6 +184,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
   app.$sendBinding.on('filtersNeedRefresh', () => void refreshSendFilters())
 
+  /**
+   * Reacts to the host app's change detection and marks affected sender model cards as epxired.
+   */
   app.$sendBinding.on('sendersExpired', (senderIds) => {
     documentModelStore.value.models
       .filter((m) => senderIds.includes(m.id))
@@ -190,7 +210,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       (m) => m.id === args.modelCardId
     ) as ISenderModelCard
 
+    console.log(args)
+    model.notifications = !model.notifications ? [] : model.notifications
     model.notifications?.push(args)
+    console.log(model.notifications)
   })
 
   app.$receiveBinding.on('notify', (args) => {

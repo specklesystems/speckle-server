@@ -14,7 +14,7 @@
           :class="`action ${item.danger ? 'action-danger' : 'action-normal'}`"
           @click="item.action"
         >
-          <div class="truncate">{{ item.name }}</div>
+          <div class="truncate max-[275px]:text-xs">{{ item.name }}</div>
           <div>
             <Component :is="item.icon" class="w-5 h-5" />
           </div>

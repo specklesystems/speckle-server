@@ -1,6 +1,6 @@
 <template>
   <Suspense>
-    <div class="space-y-2 p-2 my-2 bg-foundation rounded-md shadow">
+    <div class="p-2 my-2 bg-foundation rounded-md shadow">
       <div class="text-foreground-2 flex items-center justify-between">
         <button
           class="flex items-center transition hover:text-primary h-10 min-w-0"
@@ -19,16 +19,18 @@
         </div>
       </div>
 
-      <div v-show="showModels" class="space-y-4">
-        <template v-for="model in project.senders" :key="model.modelId">
-          <CommonModelCard :model-card="model" :project="project">
-            <CommonModelSender :model="model" :project="project" />
-          </CommonModelCard>
-        </template>
+      <div v-show="showModels" class="space-y-4 mt-3">
+        <ModelSender
+          v-for="model in project.senders"
+          :key="model.modelId"
+          :model-card="model"
+          :project="project"
+        />
+
         <template v-for="model in project.receivers" :key="model.modelId">
-          <CommonModelCard :model-card="model" :project="project">
+          <!-- <CommonModelCard :model-card="model" :project="project">
             <CommonModelReceiver :model="model" :project="project" />
-          </CommonModelCard>
+          </CommonModelCard> -->
         </template>
       </div>
     </div>

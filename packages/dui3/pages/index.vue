@@ -1,13 +1,13 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div class="px-[2px]">
-    <!-- TODO: Change below buttons page to somewhere else once we have proper pages for send and receive -->
-    <div class="space-x-2 p-1 flex">
+  <div>
+    <div
+      class="fixed bottom-0 left-0 w-full bg-primary rounded-t-xl space-x-2 p-1 flex z-100"
+    >
       <FormButton
         :icon-left="CloudArrowUpIcon"
         size="sm"
         class="flex-1"
-        text
         @click="showSendDialog = !showSendDialog"
       >
         Publish
@@ -17,7 +17,6 @@
         size="sm"
         to="/onboarding/receive"
         class="flex-1"
-        text
       >
         Receive
       </FormButton>

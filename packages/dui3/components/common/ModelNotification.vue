@@ -1,7 +1,11 @@
 <template>
-  <div :class="`${containerClassColor} flex justify-between items-center py-2 px-2`">
-    <div class="grow relative">
-      <div :class="`${textClassColor} text-xs font-medium transition`">
+  <div
+    :class="`${containerClassColor} flex justify-between items-center py-2 px-2 space-x-2 max-[275px]:flex-col max-[275px]:space-y-2`"
+  >
+    <div class="grow">
+      <div
+        :class="`${textClassColor} text-xs font-medium transition max-[275px]:text-center`"
+      >
         {{ notification.text }}
       </div>
     </div>
