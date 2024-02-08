@@ -16,7 +16,7 @@
           {{ result.category }}: {{ result.objectIds.length }} affected elements
         </div>
       </div>
-      <div class="text-xs text-foreground-2 pl-5">
+      <div v-if="result.message" class="text-xs text-foreground-2 pl-5">
         {{ result.message }}
       </div>
     </button>
@@ -41,7 +41,7 @@ import type { NumericPropertyInfo } from '@speckle/viewer'
 type ObjectResultWithOptionalMetadata = {
   category: string
   objectIds: string[]
-  message: string
+  message: string | null
   level: 'ERROR' | 'WARNING' | 'INFO'
   metadata?: {
     gradient?: boolean
