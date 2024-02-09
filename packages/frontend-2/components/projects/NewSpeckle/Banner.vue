@@ -1,13 +1,16 @@
 <template>
   <div>
     <div
-      class="flex flex-col space-y-4 sm:space-y-0 sm:space-x-2 sm:items-center sm:flex-row px-4 py-5 sm:py-2 transition hover:bg-primary-muted"
+      class="flex flex-col gap-4 justify-between sm:items-center sm:flex-row px-4 py-5 sm:py-2 transition hover:bg-primary-muted"
     >
-      <div class="flex space-x-2 items-center grow text-sm">
-        <div class="text-foreground">New Speckle Experience</div>
+      <div class="flex gap-3 items-center">
+        <div class="bg-primary rounded h-8 w-8 flex items-center justify-center">
+          <SpeakerWaveIcon class="h-5 w-5 text-white" />
+        </div>
+        <div class="text-foreground text-sm">New Speckle Experience</div>
       </div>
-      <div class="flex space-x-2 w-full sm:w-auto shrink-0">
-        <FormButton size="sm" color="default" text @click="showDialog = true">
+      <div class="flex gap-2">
+        <FormButton size="sm" color="default" text @click="emitDismissedOrOpened">
           Skip
         </FormButton>
         <FormButton
@@ -15,7 +18,7 @@
           class="px-4"
           :icon-right="SparklesIcon"
           to="/"
-          @click="emitDismissedOrOpened"
+          @click="showDialog = true"
         >
           Show me
         </FormButton>
@@ -30,12 +33,13 @@
 
 <script setup lang="ts">
 import { SparklesIcon } from '@heroicons/vue/24/solid'
+import { SpeakerWaveIcon } from '@heroicons/vue/24/outline'
 
-const emit = defineEmits<{ 'feedback-dismissed-or-opened': [] }>()
+const emit = defineEmits<{ 'new-speckle-dismissed-or-opened': [] }>()
 
 const emitDismissedOrOpened = () => {
   showDialog.value = false
-  emit('feedback-dismissed-or-opened')
+  emit('new-speckle-dismissed-or-opened')
 }
 
 const showDialog = ref(false)
