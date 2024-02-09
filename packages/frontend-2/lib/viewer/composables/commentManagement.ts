@@ -223,5 +223,9 @@ export function useCheckViewerCommentingAccess() {
     }
   } = useInjectedViewerState()
   const { activeUser } = useActiveUser()
-  return computed(() => activeUser.value && !!project.value?.role)
+  return computed(
+    () =>
+      (activeUser.value && project.value?.role === 'stream:owner') ||
+      (activeUser.value && project.value?.role === 'stream:contributor')
+  )
 }
