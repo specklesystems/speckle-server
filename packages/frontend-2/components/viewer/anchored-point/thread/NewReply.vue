@@ -26,7 +26,9 @@
       v-if="disabled"
       class="dark:bg-foundation-2 bg-neutral-100 cursor-not-allowed text-xs text-foreground rounded w-full p-2 h-full min-h-[60px] pr-12"
     >
-      <p class="opacity-40">You don't have permission to comment</p>
+      <p class="opacity-40 select-none">
+        You do not have edit permissions for this project
+      </p>
     </div>
     <FormButton
       :icon-left="PaperAirplaneIcon"
