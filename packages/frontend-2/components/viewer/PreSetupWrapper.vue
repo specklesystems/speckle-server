@@ -64,7 +64,7 @@
           </Transition>
           <div
             class="absolute z-10 w-screen flex flex-col items-center justify-center gap-2"
-            :class="isEmbedEnabled ? 'bottom-16' : 'bottom-6'"
+            :class="isEmbedEnabled ? 'bottom-16 mb-1' : 'bottom-6'"
           >
             <PortalTarget name="pocket-tip"></PortalTarget>
             <div class="flex gap-3">
