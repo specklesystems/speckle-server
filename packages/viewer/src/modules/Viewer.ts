@@ -176,6 +176,9 @@ export class Viewer extends EventEmitter implements IViewer {
     if (flags & UpdateFlags.SHADOWS) {
       this.speckleRenderer.shadowMapNeedsUpdate = true
     }
+    if (flags & UpdateFlags.CLIPPING_PLANES) {
+      this.speckleRenderer.updateClippingPlanes()
+    }
   }
 
   private frame() {

@@ -801,9 +801,9 @@ export default class SpeckleRenderer {
     return this.batcher.batches[id]
   }
 
-  protected updateClippingPlanes(planes?: Plane[]) {
+  public updateClippingPlanes() {
     if (!this.allObjects) return
-    if (!planes) planes = this._clippingPlanes
+    const planes = this._clippingPlanes
 
     this.allObjects.traverse((object) => {
       const material = (object as unknown as { material }).material
