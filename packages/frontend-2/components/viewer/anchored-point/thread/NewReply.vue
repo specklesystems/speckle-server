@@ -12,18 +12,21 @@
       class="-ml-2 sm:mr-2"
       @click="trackAttachAndOpenFilePicker()"
     />
-    <div class="flex flex-col">
-      <ViewerCommentsEditor
-        ref="editor"
-        v-model="commentValue"
-        prompt="Press enter to reply"
-        autofocus
-        max-height="150px"
-        :class="disabled ? 'cursor-not-allowed pointer-events-none' : ''"
-        @keydown="onKeyDownHandler"
-        @submit="onSubmit"
-      />
-      <p class="text-xs">You don't have permission for that</p>
+    <ViewerCommentsEditor
+      v-if="!disabled"
+      ref="editor"
+      v-model="commentValue"
+      prompt="Press enter to reply"
+      autofocus
+      max-height="150px"
+      @keydown="onKeyDownHandler"
+      @submit="onSubmit"
+    />
+    <div
+      v-if="disabled"
+      class="dark:bg-foundation-2 bg-neutral-100 cursor-not-allowed text-xs text-foreground rounded w-full p-2 h-full min-h-[60px] pr-12"
+    >
+      <p class="opacity-40">You don't have permission to comment</p>
     </div>
     <FormButton
       :icon-left="PaperAirplaneIcon"

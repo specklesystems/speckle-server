@@ -48,7 +48,7 @@
             ]"
           >
             <div
-              class="relative w-full sm:w-80 flex justify-between items-center py-2 pl-3 pr-2 sm:px-2 bg-foundation-2"
+              class="relative w-full flex justify-between items-center py-2 pl-3 pr-2 sm:px-2 bg-foundation-2"
             >
               <div class="flex-grow flex items-center">
                 <FormButton
