@@ -58,6 +58,8 @@ spec:
         volumeMounts:
           - mountPath: /tmp
             name: tmp
+          - mountPath: /.cache/puppeteer
+            name: puppeteer-cache
         {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
@@ -109,6 +111,8 @@ spec:
 
       volumes:
         - name: tmp
+          emptyDir: {}
+        - name: puppeteer-cache
           emptyDir: {}
       {{- if .Values.db.useCertificate }}
         - name: postgres-certificate

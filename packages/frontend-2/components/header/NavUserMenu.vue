@@ -148,6 +148,7 @@ import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme, AppTheme } from '~~/lib/core/composables/theme'
 import { useServerInfo } from '~/lib/core/composables/server'
 import type { RouteLocationRaw } from 'vue-router'
+import { homeRoute, profileRoute } from '~/lib/common/helpers/route'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
@@ -158,14 +159,15 @@ const { activeUser, isGuest } = useActiveUser()
 const { isDarkTheme, setTheme } = useTheme()
 const { serverInfo } = useServerInfo()
 const router = useRouter()
+const route = useRoute()
 
 const showInviteDialog = ref(false)
 const showProfileEditDialog = ref(false)
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
 const version = computed(() => serverInfo.value?.version)
-
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
+const isProfileRoute = computed(() => route.path === profileRoute)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
@@ -186,4 +188,15 @@ const goToConnectors = () => {
 const goToServerManagement = () => {
   router.push('/server-management')
 }
+
+watch(
+  isProfileRoute,
+  (newVal, oldVal) => {
+    if (newVal && !oldVal) {
+      showProfileEditDialog.value = true
+      void router.replace({ path: homeRoute, force: true }) // in-place replace
+    }
+  },
+  { immediate: true }
+)
 </script>

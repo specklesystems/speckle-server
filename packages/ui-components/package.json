@@ -38,7 +38,7 @@
     "vue": "^3.3.0"
   },
   "dependencies": {
-    "@headlessui/vue": "^1.7.13",
+    "@headlessui/vue": "^1.7.18",
     "@heroicons/vue": "^2.0.12",
     "@speckle/shared": "workspace:^",
     "@vueuse/core": "^9.13.0",

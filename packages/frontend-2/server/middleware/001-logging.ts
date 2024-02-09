@@ -9,6 +9,7 @@ import { randomUUID } from 'crypto'
 import type { IncomingHttpHeaders } from 'http'
 import { REQUEST_ID_HEADER } from '~~/server/lib/core/helpers/constants'
 import { get } from 'lodash'
+import { serializeRequest } from '~/server/lib/core/helpers/observability'
 
 /**
  * Server request logger
@@ -31,8 +32,6 @@ const logger = Observability.getLogger(
   useRuntimeConfig().public.logLevel,
   useRuntimeConfig().public.logPretty
 )
-
-const redactedHeaders = ['authorization', 'cookie']
 
 export const LoggingMiddleware = pinoHttp({
   logger,
@@ -68,10 +67,13 @@ export const LoggingMiddleware = pinoHttp({
     const isCompleted = !req.readableAborted && res.writableEnded
     const requestStatus = isCompleted ? 'completed' : 'aborted'
     const requestPath = req.url?.split('?')[0] || 'unknown'
+    const appBindings = res.vueLoggerBindings || {}
+
     return {
       ...val,
       requestStatus,
-      requestPath
+      requestPath,
+      ...appBindings
     }
   },
 
@@ -81,10 +83,13 @@ export const LoggingMiddleware = pinoHttp({
   customErrorObject(req, res, err, val: Record<string, unknown>) {
     const requestStatus = 'failed'
     const requestPath = req.url?.split('?')[0] || 'unknown'
+    const appBindings = res.vueLoggerBindings || {}
+
     return {
       ...val,
       requestStatus,
-      requestPath
+      requestPath,
+      ...appBindings
     }
   },
 
@@ -92,24 +97,7 @@ export const LoggingMiddleware = pinoHttp({
   // as we do not know what headers may be sent in a request by a user or client
   // we have to allow list selected headers
   serializers: {
-    req: pino.stdSerializers.wrapRequestSerializer((req) => {
-      return {
-        id: req.raw.id,
-        method: req.raw.method,
-        path: req.raw.url?.split('?')[0], // Remove query params which might be sensitive
-        // Allowlist useful headers
-        headers: Object.keys(req.raw.headers).reduce((obj, key) => {
-          let valueToPrint = req.raw.headers[key]
-          if (redactedHeaders.includes(key.toLocaleLowerCase())) {
-            valueToPrint = `REDACTED[length: ${valueToPrint ? valueToPrint.length : 0}]`
-          }
-          return {
-            ...obj,
-            [key]: valueToPrint
-          }
-        }, {})
-      }
-    }),
+    req: pino.stdSerializers.wrapRequestSerializer((req) => serializeRequest(req.raw)),
     res: pino.stdSerializers.wrapResponseSerializer((res) => {
       const resRaw = res as SerializedResponse & {
         raw: {
