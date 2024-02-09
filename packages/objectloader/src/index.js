@@ -8,7 +8,7 @@ import {
   ObjectLoaderRuntimeError
 } from './errors/index.js'
 import { polyfillReadableStreamForAsyncIterator } from './helpers/stream.js'
-
+import { chunk } from 'lodash'
 /**
  * Simple client that streams object info from a Speckle Server.
  * TODO: Object construction progress reporting is weird.
@@ -364,7 +364,13 @@ export default class ObjectLoader {
         const newChildrenForBatch = splitBeforeCacheCheck[i].filter(
           (id) => !(id in cachedObjects)
         )
-        newChildren.push(...newChildrenForBatch)
+        /** On Safari this would throw a RangeError for large newChildrenForBatch lengths*/
+        //newChildren.push(...newChildrenForBatch)
+        /** The workaround for the above based off https://stackoverflow.com/a/9650855 */
+        const splitN = 500
+        const chunked = chunk(newChildrenForBatch, splitN)
+        for (let k = 0; k < chunked.length; k++)
+          newChildren.push.apply(newChildren, chunked[k])
       }
 
       if (newChildren.length === 0) return
