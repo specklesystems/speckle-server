@@ -155,7 +155,7 @@ const { items } = useInjectedViewerRequestedResources()
 type ObjectResult = {
   category: string
   objectIds: string[]
-  message: string
+  message: string | null
   level: 'ERROR' | 'WARNING' | 'INFO'
 }
 

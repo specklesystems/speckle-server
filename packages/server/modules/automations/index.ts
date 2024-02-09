@@ -9,7 +9,7 @@ async function initScopes() {
     {
       name: Scopes.Automate.ReportResults,
       description: 'Allows the app to report automation results to the server.',
-      public: false
+      public: true
     }
   ]
 

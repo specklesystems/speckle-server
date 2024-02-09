@@ -11,7 +11,7 @@ const ObjectResultLevelEnum = z.enum(ObjectResultLevel)
 
 const ObjectResultValuesSchema = z.object({
   level: ObjectResultLevelEnum,
-  message: z.string(),
+  message: z.string().nullable(),
   category: z.string(),
   objectIds: z.string().array().nonempty(),
   metadata: z.record(z.string(), z.unknown()).nullable(),
