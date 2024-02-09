@@ -48,6 +48,7 @@ export default defineNuxtConfig({
       mixpanelTokenId: 'UNDEFINED',
       logLevel: NUXT_PUBLIC_LOG_LEVEL,
       logPretty: isLogPretty,
+      logCsrEmitProps: false,
       logClientApiToken: '',
       logClientApiEndpoint: '',
       speckleServerVersion: SPECKLE_SERVER_VERSION || 'unknown',
