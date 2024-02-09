@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-import { isString } from 'lodash-es'
-import { useRequestId } from '~/lib/core/composables/server'
+import { isString, omit } from 'lodash-es'
+import { useReadUserId } from '~/lib/auth/composables/activeUser'
+import {
+  useRequestId,
+  useServerRequestId,
+  useUserCountry
+} from '~/lib/core/composables/server'
 import { isObjectLike } from '~~/lib/common/helpers/type'
 import { buildFakePinoLogger } from '~~/lib/core/helpers/observability'
 
@@ -16,33 +21,91 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       logClientApiToken,
       speckleServerVersion,
       logClientApiEndpoint,
-      serverName
+      serverName,
+      logCsrEmitProps
     }
   } = useRuntimeConfig()
   const route = useRoute()
   const router = useRouter()
   const reqId = useRequestId()
+  const serverReqId = useServerRequestId()
+  const getUserId = useReadUserId()
+  const country = useUserCountry()
 
   const collectMainInfo = (params: { isBrowser: boolean }) => {
-    return {
+    const info = {
       browser: params.isBrowser,
       speckleServerVersion,
       serverName,
       frontendType: 'frontend-2',
       route: route?.path,
       routeDefinition: route.matched?.[route.matched.length - 1]?.path,
-      req: { id: reqId }
+      req: { id: reqId },
+      userId: getUserId(),
+      country: country.value,
+      serverReqId: serverReqId.value
     }
+    return info
   }
 
   // Set up logger
   let logger: ReturnType<typeof import('@speckle/shared').Observability.getLogger>
   if (process.server) {
-    const { buildLogger } = await import('~/server/lib/core/helpers/observability')
-    logger = buildLogger(logLevel, logPretty).child({
-      ...collectMainInfo({ isBrowser: false })
+    const { buildLogger, enableDynamicBindings, serializeRequest } = await import(
+      '~/server/lib/core/helpers/observability'
+    )
+    logger = enableDynamicBindings(buildLogger(logLevel, logPretty).child({}), () => ({
+      ...collectMainInfo({ isBrowser: false }),
+      ...(nuxtApp.ssrContext
+        ? { req: serializeRequest(nuxtApp.ssrContext.event.node.req) }
+        : {})
+    }))
+
+    // Collect bindings for pino-http logger
+    nuxtApp.hook('app:rendered', () => {
+      if (!nuxtApp.ssrContext) return
+      const bindings = collectMainInfo({ isBrowser: false })
+      nuxtApp.ssrContext.event.node.res.vueLoggerBindings = omit(bindings, [
+        'req',
+        'res'
+      ])
     })
   } else {
+    const localTimeFormat = new Intl.DateTimeFormat('en-GB', {
+      dateStyle: 'full',
+      timeStyle: 'long'
+    })
+    const collectBrowserInfo = () => {
+      const {
+        userAgent,
+        platform: navigatorPlatform,
+        vendor: navigatorVendor
+      } = navigator
+      const url = window.location.href
+      const localTime = localTimeFormat.format(new Date())
+
+      // Get browser dimensions & screen dimensions
+      const { innerWidth: browserWidth, innerHeight: browserHeight } = window
+      const { width: screenWidth, height: screenHeight } = window.screen
+
+      return {
+        userAgent,
+        navigatorPlatform,
+        navigatorVendor,
+        url,
+        localTime,
+        dimensions: {
+          browser: { width: browserWidth, height: browserHeight },
+          screen: { width: screenWidth, height: screenHeight }
+        }
+      }
+    }
+
+    const collectCoreInfo = () => ({
+      ...collectBrowserInfo(),
+      ...collectMainInfo({ isBrowser: true })
+    })
+
     if (logClientApiToken?.length && logClientApiEndpoint?.length) {
       const seq = await import('seq-logging/browser')
       const seqLogger = new seq.Logger({
@@ -50,22 +113,6 @@ export default defineNuxtPlugin(async (nuxtApp) => {
         apiKey: logClientApiToken,
         // eslint-disable-next-line no-console
         onError: console.error
-      })
-
-      const collectBrowserInfo = () => {
-        const {
-          userAgent,
-          platform: navigatorPlatform,
-          vendor: navigatorVendor
-        } = navigator
-        const url = window.location.href
-
-        return { userAgent, navigatorPlatform, navigatorVendor, url }
-      }
-
-      const collectCoreInfo = () => ({
-        ...collectBrowserInfo(),
-        ...collectMainInfo({ isBrowser: true })
       })
 
       const errorListener = (event: ErrorEvent | PromiseRejectionEvent) => {
@@ -129,23 +176,29 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       window.addEventListener('error', errorListener)
       window.addEventListener('unhandledrejection', errorListener)
 
-      logger = buildFakePinoLogger({ onError: customLogger })
+      logger = buildFakePinoLogger({
+        onError: customLogger,
+        consoleBindings: logCsrEmitProps ? collectCoreInfo : undefined
+      })
       logger.debug('Set up seq ingestion...')
     } else {
-      logger = buildFakePinoLogger()
+      // No seq integration, fallback to basic console logging
+      logger = buildFakePinoLogger({
+        consoleBindings: logCsrEmitProps ? collectCoreInfo : undefined
+      })
     }
   }
 
-  // Set up global error handler
+  // Set up global vue error handler
   nuxtApp.vueApp.config.errorHandler = (err, _vm, info) => {
     logger.error(err, 'Unhandled error in Vue app', info)
   }
 
   // Uncaught routing error handler
   router.onError((err, to, from) => {
-    // skip 404
+    // skip 404, 403, 401
     if (isObjectLike(err) && 'statusCode' in err) {
-      if ([404].includes(err.statusCode as number)) return
+      if ([404, 403, 401].includes(err.statusCode as number)) return
     }
 
     logger.error(err, 'Unhandled error in routing', {

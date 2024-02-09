@@ -313,7 +313,8 @@ function createLink(params: {
           ...omit(res, ['forward', 'response']),
           networkErrorMessage: res.networkError?.message,
           gqlErrorMessages: res.graphQLErrors?.map((e) => e.message),
-          errorMessage: errMsg
+          errorMessage: errMsg,
+          graphql: true
         },
         'Apollo Client error: {errorMessage}'
       )
@@ -389,7 +390,7 @@ function createLink(params: {
     const name = operation.operationName
 
     nuxtApp.$logger.debug(
-      { operation: name },
+      { operation: name, graphql: true },
       `Apollo operation {operation} started...`
     )
     return forward(operation).map((result) => {
@@ -400,7 +401,8 @@ function createLink(params: {
         {
           operation: name,
           elapsed,
-          success
+          success,
+          graphql: true
         },
         `Apollo operation {operation} finished in {elapsed}ms`
       )

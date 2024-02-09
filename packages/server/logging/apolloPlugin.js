@@ -22,6 +22,8 @@ module.exports = {
     return {
       didResolveOperation(ctx) {
         let logger = ctx.context.log || graphqlLogger
+        const auth = ctx.context
+        const userId = auth?.userId
 
         const op = `GQL ${ctx.operation.operation} ${ctx.operation.selectionSet.selections[0].name.value}`
         const name = `GQL ${ctx.operation.selectionSet.selections[0].name.value}`
@@ -34,7 +36,8 @@ module.exports = {
           graphql_query: query,
           graphql_variables: redactSensitiveVariables(variables),
           graphql_operation_value: op,
-          graphql_operation_name: name
+          graphql_operation_name: name,
+          userId
         })
 
         const transaction = Sentry.startTransaction({
