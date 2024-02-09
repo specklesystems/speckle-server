@@ -21,11 +21,17 @@ export function enableDynamicBindings(
       ) {
         const logMethod = get(target, prop) as (...args: unknown[]) => void
         return (...args: unknown[]) => {
-          // Re-setting bindings on every log call, cause there's no other way to make them dynamic
-          const boundVals = bindings()
-          target.setBindings(boundVals)
+          const log = logMethod.bind(target)
 
-          logMethod.bind(target)(...args)
+          // Re-setting bindings on every log call, cause there's no other way to make them dynamic
+          try {
+            const boundVals = bindings()
+            target.setBindings(boundVals)
+          } catch (e) {
+            target.error(e, 'Failed to set dynamic bindings')
+          }
+
+          return log(...args)
         }
       }
 

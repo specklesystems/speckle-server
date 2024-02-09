@@ -7,6 +7,7 @@ import pino, { SerializedResponse } from 'pino'
 import { GenReqId } from 'pino-http'
 import { get } from 'lodash'
 import type { ServerResponse } from 'http'
+import { Optional } from '@speckle/shared'
 
 const REQUEST_ID_HEADER = 'x-request-id'
 
@@ -44,10 +45,13 @@ export const LoggingExpressMiddleware = HttpLogger({
     const isCompleted = !req.readableAborted && res.writableEnded
     const requestStatus = isCompleted ? 'completed' : 'aborted'
     const requestPath = req.url?.split('?')[0] || 'unknown'
+    const country = req.headers['cf-ipcountry'] as Optional<string>
+
     return {
       ...val,
       requestStatus,
-      requestPath
+      requestPath,
+      country
     }
   },
 
@@ -57,10 +61,13 @@ export const LoggingExpressMiddleware = HttpLogger({
   customErrorObject(req, res, err, val: Record<string, unknown>) {
     const requestStatus = 'failed'
     const requestPath = req.url?.split('?')[0] || 'unknown'
+    const country = req.headers['cf-ipcountry'] as Optional<string>
+
     return {
       ...val,
       requestStatus,
-      requestPath
+      requestPath,
+      country
     }
   },
 
