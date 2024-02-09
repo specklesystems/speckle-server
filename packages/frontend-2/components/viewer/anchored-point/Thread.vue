@@ -146,7 +146,6 @@
             <ViewerAnchoredPointThreadNewReply
               v-if="showNewReplyComponent"
               :model-value="modelValue"
-              :disabled="!canReply"
               @submit="onNewReply"
             />
             <div
@@ -266,7 +265,10 @@ const comments = computed(() => [
 
 const showNewReplyComponent = computed(() => {
   return (
-    !props.modelValue.archived && !isSmallerOrEqualSm.value && !isEmbedEnabled.value
+    canReply &&
+    !props.modelValue.archived &&
+    !isSmallerOrEqualSm.value &&
+    !isEmbedEnabled.value
   )
 })
 

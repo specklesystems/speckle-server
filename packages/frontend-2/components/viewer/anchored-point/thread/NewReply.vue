@@ -7,35 +7,28 @@
       :icon-left="PaperClipIcon"
       hide-text
       text
-      :disabled="loading || disabled"
+      :disabled="loading"
       size="sm"
       class="-ml-2 sm:mr-2"
       @click="trackAttachAndOpenFilePicker()"
     />
-    <ViewerCommentsEditor
-      v-if="!disabled"
-      ref="editor"
-      v-model="commentValue"
-      prompt="Press enter to reply"
-      autofocus
-      max-height="150px"
-      @keydown="onKeyDownHandler"
-      @submit="onSubmit"
-    />
-    <div
-      v-if="disabled"
-      class="dark:bg-foundation-2 bg-neutral-100 cursor-not-allowed text-xs text-foreground rounded w-full p-2 h-full min-h-[60px] pr-12"
-    >
-      <p class="opacity-40 select-none">
-        You do not have edit permissions for this project
-      </p>
+    <div class="flex flex-col">
+      <ViewerCommentsEditor
+        ref="editor"
+        v-model="commentValue"
+        prompt="Press enter to reply"
+        autofocus
+        max-height="150px"
+        @keydown="onKeyDownHandler"
+        @submit="onSubmit"
+      />
     </div>
     <FormButton
       :icon-left="PaperAirplaneIcon"
       hide-text
       size="sm"
       color="invert"
-      :disabled="loading || disabled"
+      :disabled="loading"
       class="absolute right-6 sm:right-6"
       @click="onSubmit"
     />
@@ -56,7 +49,6 @@ import {
 
 const props = defineProps<{
   modelValue: CommentBubbleModel
-  disabled?: boolean
 }>()
 
 const emit = defineEmits<{
