@@ -98,14 +98,22 @@ export const formatAppError = (err: SimpleError) => {
   const { statusCode, message, stack } = err
 
   let finalMessage = message || ''
-  if (finalMessage.toLowerCase() === 'fetch failed') {
+  let finalStatusCode = statusCode || 500
+
+  if (finalMessage.match(/^fetch failed$/i)) {
     finalMessage = 'Internal API call failed, please contact site administrators'
+  }
+
+  if (finalMessage.match(/status code 429/i)) {
+    finalMessage =
+      'You are sending too many requests. You have been rate limited. Please try again later.'
+    finalStatusCode = 429
   }
 
   finalMessage = upperFirst(finalMessage)
 
   return {
-    statusCode,
+    statusCode: finalStatusCode,
     message: finalMessage,
     stack
   }
