@@ -175,7 +175,8 @@ export const WithIcon: StoryObj<typeof defaultArgs> = {
   args: {
     name: 'withIcon',
     label: 'Example radio with Icon',
-    icon: ArrowRightIcon
+    icon: ArrowRightIcon,
+    description: 'Example discription'
   }
 }
 

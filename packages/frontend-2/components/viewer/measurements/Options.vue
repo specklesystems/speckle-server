@@ -28,6 +28,7 @@
           v-for="option in measurementTypeOptions"
           :key="option.value"
           :label="option.title"
+          :description="option.description"
           :value="option.value.toString()"
           name="measurementType"
           :icon="option.icon"
@@ -135,12 +136,14 @@ const measurementTypeOptions = [
   {
     title: 'Point to Point',
     icon: IconPointToPoint,
-    value: MeasurementType.POINTTOPOINT
+    value: MeasurementType.POINTTOPOINT,
+    description: 'Choose two points for precise measurements'
   },
   {
     title: 'Perpendicular',
     icon: IconPerpendicular,
-    value: MeasurementType.PERPENDICULAR
+    value: MeasurementType.PERPENDICULAR,
+    description: 'Tip: Double-click to quick-measure'
   }
 ]
 </script>
