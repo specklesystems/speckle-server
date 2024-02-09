@@ -12,17 +12,15 @@
       class="-ml-2 sm:mr-2"
       @click="trackAttachAndOpenFilePicker()"
     />
-    <div class="flex flex-col">
-      <ViewerCommentsEditor
-        ref="editor"
-        v-model="commentValue"
-        prompt="Press enter to reply"
-        autofocus
-        max-height="150px"
-        @keydown="onKeyDownHandler"
-        @submit="onSubmit"
-      />
-    </div>
+    <ViewerCommentsEditor
+      ref="editor"
+      v-model="commentValue"
+      prompt="Press enter to reply"
+      autofocus
+      max-height="150px"
+      @keydown="onKeyDownHandler"
+      @submit="onSubmit"
+    />
     <FormButton
       :icon-left="PaperAirplaneIcon"
       hide-text

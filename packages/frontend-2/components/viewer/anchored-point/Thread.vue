@@ -265,8 +265,8 @@ const comments = computed(() => [
 
 const showNewReplyComponent = computed(() => {
   return (
-    canReply &&
     !props.modelValue.archived &&
+    canReply.value &&
     !isSmallerOrEqualSm.value &&
     !isEmbedEnabled.value
   )
