@@ -357,10 +357,17 @@ export function useMeasurementUtilities() {
     }
   }
 
+  const clearMeasurements = () => {
+    if (state.viewer.instance?.clearMeasurements) {
+      state.viewer.instance.clearMeasurements()
+    }
+  }
+
   return {
     enableMeasurements,
     setMeasurementOptions,
-    removeMeasurement
+    removeMeasurement,
+    clearMeasurements
   }
 }
 

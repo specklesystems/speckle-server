@@ -74,6 +74,17 @@
         </div>
       </div>
     </div>
+    <Portal to="pocket-tip">
+      <ViewerTip>
+        <strong>Tip:</strong>
+        Right click to cancel measurement
+      </ViewerTip>
+    </Portal>
+    <Portal to="pocket-actions">
+      <FormButton size="sm" @click="() => clearMeasurements()">
+        Reset Measurements
+      </FormButton>
+    </Portal>
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
@@ -102,7 +113,8 @@ const measurementParams = ref({
   precision: measurementPrecision.value
 })
 
-const { setMeasurementOptions, removeMeasurement } = useMeasurementUtilities()
+const { setMeasurementOptions, removeMeasurement, clearMeasurements } =
+  useMeasurementUtilities()
 
 const updateMeasurementsType = (selectedOption: MeasurementTypeOption) => {
   measurementParams.value.type = selectedOption.value

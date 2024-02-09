@@ -406,6 +406,10 @@ export class LegacyViewer extends Viewer {
     this.measurements.removeMeasurement()
   }
 
+  public clearMeasurements() {
+    this.measurements.clearMeasurements()
+  }
+
   public dispose() {
     // TODO: currently it's easier to simply refresh the page :)
   }

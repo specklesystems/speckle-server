@@ -147,19 +147,7 @@
           : '-translate-x-[100%] opacity-0'
       } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[4rem]'}`"
     >
-      <div v-show="activeControl.length !== 0 && activeControl === 'measurements'">
-        <div v-if="activeControl.length !== 0 && activeControl === 'measurements'">
-          <Portal to="pocket-tip">
-            <ViewerTip>
-              <strong>Tip:</strong>
-              Right click to cancel measurement
-            </ViewerTip>
-          </Portal>
-          <Portal to="pocket-actions">
-            <!-- TODO - Update button -->
-            <FormButton size="sm">Reset Measurements</FormButton>
-          </Portal>
-        </div>
+      <div v-if="activeControl.length !== 0 && activeControl === 'measurements'">
         <KeepAlive>
           <div><ViewerMeasurementsOptions @close="toggleMeasurements" /></div>
         </KeepAlive>
