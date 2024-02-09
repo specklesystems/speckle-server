@@ -85,6 +85,7 @@ import {
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 
 defineEmits(['close'])
 
@@ -118,6 +119,11 @@ graphql(`
   }
 `)
 
+const discussionLoadedVersionOnly = useSynchronizedCookie<boolean>(
+  `discussionLoadedVersionOnly`,
+  { default: () => true }
+)
+
 const { commentThreads, commentThreadsMetadata } = useInjectedViewerLoadedResources()
 const { threadFilters } = useInjectedViewerRequestedResources()
 const {
@@ -129,7 +135,6 @@ const {
 
 const showVisibilityOptions = ref(false)
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const loadedVersionsOnly = computed({
   get: () =>
     threadFilters.value.loadedVersionsOnly || false ? 'loadedVersionsOnly' : undefined,
@@ -163,6 +168,17 @@ watch(includeArchived, (newVal) =>
     name: 'settings-change',
     includeArchived: newVal
   })
+)
+
+onMounted(() => {
+  threadFilters.value.loadedVersionsOnly = discussionLoadedVersionOnly.value || false
+})
+
+watch(
+  () => threadFilters.value.loadedVersionsOnly,
+  (newValue) => {
+    discussionLoadedVersionOnly.value = !!newValue
+  }
 )
 
 const onNewDiscussion = () => {

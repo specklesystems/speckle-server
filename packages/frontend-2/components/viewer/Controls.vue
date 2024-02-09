@@ -171,7 +171,7 @@
         </KeepAlive>
       </div>
       <ViewerComments
-        v-if="resourceItems.length !== 0 && activeControl === 'discussions'"
+        v-show="resourceItems.length !== 0 && activeControl === 'discussions'"
         class="pointer-events-auto"
         @close="activeControl = 'none'"
       />
