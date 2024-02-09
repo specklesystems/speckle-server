@@ -727,7 +727,7 @@ function useViewerMeasurementIntegration() {
 
   const { clearMeasurements } = useMeasurementUtilities()
 
-  onMounted(() => {
+  onBeforeUnmount(() => {
     clearMeasurements()
   })
 
