@@ -29,12 +29,6 @@
       </CommonTextLink>
     </div>
     <FormButton submit full-width class="my-8" :disabled="loading">Log in</FormButton>
-    <div class="text-center">
-      <span class="mr-2">Don't have an account?</span>
-      <CommonTextLink :to="finalRegisterRoute" :icon-right="ArrowRightIcon">
-        Register
-      </CommonTextLink>
-    </div>
   </form>
 </template>
 <script setup lang="ts">
@@ -43,8 +37,7 @@ import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { ensureError } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
-import { forgottenPasswordRoute, registerRoute } from '~~/lib/common/helpers/route'
-import { ArrowRightIcon } from '@heroicons/vue/20/solid'
+import { forgottenPasswordRoute } from '~~/lib/common/helpers/route'
 
 type FormValues = { email: string; password: string }
 
@@ -58,17 +51,8 @@ const loading = ref(false)
 const emailRules = [isEmail]
 const passwordRules = [isRequired]
 
-const { loginWithEmail, inviteToken } = useAuthManager()
+const { loginWithEmail } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
-const router = useRouter()
-
-const finalRegisterRoute = computed(() => {
-  const result = router.resolve({
-    path: registerRoute,
-    query: inviteToken.value ? { token: inviteToken.value } : {}
-  })
-  return result.fullPath
-})
 
 const onSubmit = handleSubmit(async ({ email, password }) => {
   try {
