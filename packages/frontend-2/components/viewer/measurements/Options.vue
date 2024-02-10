@@ -82,6 +82,7 @@ import { MeasurementType } from '@speckle/viewer'
 import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
 import { resolveComponent } from 'vue'
 import type { ConcreteComponent } from 'vue'
+import { onKeyStroke } from '@vueuse/core'
 
 interface MeasurementTypeOption {
   title: string
@@ -143,4 +144,11 @@ const measurementTypeOptions = [
     value: MeasurementType.PERPENDICULAR
   }
 ]
+
+onKeyStroke('Delete', () => {
+  removeMeasurement()
+})
+onKeyStroke('Backspace', () => {
+  removeMeasurement()
+})
 </script>
