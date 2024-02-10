@@ -244,6 +244,7 @@ import type { AutomationRun } from '~~/lib/common/generated/gql/graphql'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useViewerTour } from '~/lib/viewer/composables/tour'
+import { onKeyStroke } from '@vueuse/core'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
@@ -440,5 +441,13 @@ onMounted(() => {
 
 watch(isSmallerOrEqualSm, (newVal) => {
   activeControl.value = newVal ? 'none' : 'models'
+})
+
+onKeyStroke('Escape', () => {
+  if (activeControl.value === 'measurements') {
+    toggleMeasurements()
+  } else {
+    activeControl.value = 'none'
+  }
 })
 </script>
