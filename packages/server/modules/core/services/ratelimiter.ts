@@ -36,7 +36,8 @@ export enum RateLimitAction {
   'GET /auth/azure/callback' = 'GET /auth/azure/callback',
   'GET /auth/gh/callback' = 'GET /auth/gh/callback',
   'GET /auth/google/callback' = 'GET /auth/google/callback',
-  'GET /auth/oidc/callback' = 'GET /auth/oidc/callback'
+  'GET /auth/oidc/callback' = 'GET /auth/oidc/callback',
+  'GET /authn/login' = 'GET /authn/login'
 }
 
 export interface RateLimitResult {
@@ -256,6 +257,16 @@ export const LIMITS: RateLimiterOptions = {
     burstOptions: {
       limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
       duration: 1 * TIME.minute
+    }
+  },
+  'GET /authn/login': {
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
+      duration: 1 * TIME.minute
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '10'),
+      duration: 30 * TIME.minute
     }
   }
 }
