@@ -191,82 +191,82 @@ export const LIMITS: RateLimiterOptions = {
   },
   'GET /auth/azure': {
     regularOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
-      duration: 1 * TIME.second
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
+      duration: 10 * TIME.minute
     },
     burstOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
-      duration: 1 * TIME.minute
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '10'),
+      duration: 30 * TIME.minute
     }
   },
   'GET /auth/gh': {
     regularOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
-      duration: 1 * TIME.second
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
+      duration: 10 * TIME.minute
     },
     burstOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
-      duration: 1 * TIME.minute
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '10'),
+      duration: 30 * TIME.minute
     }
   },
   'GET /auth/google': {
     regularOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
-      duration: 1 * TIME.second
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
+      duration: 10 * TIME.minute
     },
     burstOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
-      duration: 1 * TIME.minute
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '10'),
+      duration: 30 * TIME.minute
     }
   },
   'GET /auth/oidc': {
     regularOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
-      duration: 1 * TIME.second
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
+      duration: 10 * TIME.minute
     },
     burstOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
-      duration: 1 * TIME.minute
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '10'),
+      duration: 30 * TIME.minute
     }
   },
   'GET /auth/azure/callback': {
     regularOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
-      duration: 1 * TIME.second
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
+      duration: 10 * TIME.minute
     },
     burstOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
-      duration: 1 * TIME.minute
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '10'),
+      duration: 30 * TIME.minute
     }
   },
   'GET /auth/gh/callback': {
     regularOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
-      duration: 1 * TIME.second
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
+      duration: 10 * TIME.minute
     },
     burstOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
-      duration: 1 * TIME.minute
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '10'),
+      duration: 30 * TIME.minute
     }
   },
   'GET /auth/google/callback': {
     regularOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
-      duration: 1 * TIME.second
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
+      duration: 10 * TIME.minute
     },
     burstOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
-      duration: 1 * TIME.minute
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '10'),
+      duration: 30 * TIME.minute
     }
   },
   'GET /auth/oidc/callback': {
     regularOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
-      duration: 1 * TIME.second
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
+      duration: 10 * TIME.minute
     },
     burstOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '20'),
-      duration: 1 * TIME.minute
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '10'),
+      duration: 30 * TIME.minute
     }
   }
 }
