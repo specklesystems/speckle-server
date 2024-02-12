@@ -98,18 +98,38 @@ export const projectModelsQuery = graphql(`
   }
 `)
 
+export const versionListFragment = graphql(`
+  fragment VersionListItem on Version {
+    id
+    referencedObject
+    message
+    sourceApplication
+    authorUser {
+      avatar
+      id
+      name
+    }
+    createdAt
+    previewUrl
+  }
+`)
+
 export const modelVersionsQuery = graphql(`
-  query ModelVersions($projectId: String!, $modelId: String!) {
+  query ModelVersions(
+    $modelId: String!
+    $projectId: String!
+    $limit: Int!
+    $cursor: String
+  ) {
     project(id: $projectId) {
+      id
       model(id: $modelId) {
-        versions {
+        id
+        versions(limit: $limit, cursor: $cursor) {
+          totalCount
+          cursor
           items {
-            id
-            message
-            referencedObject
-            createdAt
-            previewUrl
-            sourceApplication
+            ...VersionListItem
           }
         }
       }

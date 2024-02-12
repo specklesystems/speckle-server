@@ -1,7 +1,8 @@
 <template>
   <div>
     <div class="-mt-4 mb-4 flex items-center justify-left space-x-2">
-      <CloudArrowUpIcon class="w-6 text-primary" />
+      <CloudArrowDownIcon class="w-6 text-primary" />
+
       <div
         v-for="index in 3"
         :key="index"
@@ -21,7 +22,7 @@
       <div>
         <div class="h5 font-bold">Select Project</div>
       </div>
-      <WizardProjectSelector @next="selectProject" />
+      <WizardProjectSelector :show-new-project="false" @next="selectProject" />
     </div>
     <div v-if="step === 2 && selectedProject && selectedAccountId">
       <div class="flex items-center justify-between mb-2">
@@ -31,18 +32,24 @@
         <WizardModelSelector
           :project="selectedProject"
           :account-id="selectedAccountId"
+          :show-new-model="false"
           @next="selectModel"
         />
       </div>
     </div>
     <div v-if="step === 3">
-      <div class="flex items-center justify-between mb-2">
-        <div class="h5 font-bold">Send Filter</div>
-      </div>
-      <SendFiltersAndSettings v-model="filter" @update:filter="(f) => (filter = f)" />
-      <div class="mt-2">
-        <FormButton full-width @click="addModel">Publish</FormButton>
-      </div>
+      <!-- <div class="flex items-center justify-between mb-2">
+        <div class="h5 font-bold">Select Version</div>
+      </div> -->
+      <WizardVersionSelector
+        v-if="selectedProject && selectedModel"
+        :account-id="selectedAccountId"
+        :project-id="selectedProject.id"
+        :model-id="selectedModel.id"
+      />
+      <!-- <div class="mt-2">
+        <FormButton full-width @click="addModel">Load</FormButton>
+      </div> -->
     </div>
   </div>
 </template>
@@ -54,7 +61,7 @@ import {
 import { ISendFilter, SenderModelCard } from '~/lib/models/card/send'
 import { useHostAppStore } from '~/store/hostApp'
 import { useAccountStore } from '~/store/accounts'
-import { CloudArrowUpIcon, XMarkIcon } from '@heroicons/vue/24/solid'
+import { XMarkIcon, CloudArrowDownIcon } from '@heroicons/vue/24/solid'
 
 const emit = defineEmits(['close'])
 

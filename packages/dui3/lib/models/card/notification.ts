@@ -1,5 +1,3 @@
-import { ConcreteComponent } from 'vue'
-
 export type ModelCardNotification = {
   modelCardId: string
   text: string
@@ -7,7 +5,6 @@ export type ModelCardNotification = {
   cta?: {
     name: string
     action: () => void
-    icon?: ConcreteComponent
   }
   dismissible: boolean
   timeout?: number

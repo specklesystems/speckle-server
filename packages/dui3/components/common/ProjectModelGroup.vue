@@ -1,6 +1,6 @@
 <template>
   <Suspense>
-    <div class="p-2 my-2 bg-foundation rounded-md shadow">
+    <div class="p-2 my-2 bg-foundation dark:bg-neutral-700/10 rounded-md shadow">
       <div class="text-foreground-2 flex items-center justify-between">
         <button
           class="flex items-center transition hover:text-primary h-10 min-w-0"

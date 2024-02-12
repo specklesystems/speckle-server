@@ -22,7 +22,7 @@
       <FormButton
         v-if="notification.cta"
         size="sm"
-        :color="notification.level"
+        :color="notification.level === 'info' ? 'primary' : notification.level"
         @click="notification.cta?.action"
       >
         {{ notification.cta.name }}
@@ -37,7 +37,6 @@ import { ModelCardNotification } from '~/lib/models/card/notification'
 
 const props = defineProps<{
   notification: ModelCardNotification
-  index: number
 }>()
 
 const emit = defineEmits(['dismiss'])

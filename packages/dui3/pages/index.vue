@@ -15,8 +15,8 @@
       <FormButton
         :icon-left="CloudArrowDownIcon"
         size="sm"
-        to="/onboarding/receive"
         class="flex-1"
+        @click="showReceiveDialog = !showReceiveDialog"
       >
         Receive
       </FormButton>
@@ -25,10 +25,17 @@
           <SendWizard @close="showSendDialog = false" />
         </div>
       </LayoutDialog>
+      <LayoutDialog v-model:open="showReceiveDialog" hide-closer>
+        <div class="-mx-4 -my-4 pt-4">
+          <ReceiveWizard @close="showReceiveDialog = false" />
+        </div>
+      </LayoutDialog>
     </div>
-    <!-- This is the place I want to navigate (route) to onboarding page if (configStore.onboardingCompleted) -->
-    <div v-for="project in store.projectModelGroups" :key="project.projectId">
-      <CommonProjectModelGroup :project="project" />
+
+    <div class="space-y-4 mt-4">
+      <div v-for="project in store.projectModelGroups" :key="project.projectId">
+        <CommonProjectModelGroup :project="project" />
+      </div>
     </div>
   </div>
 </template>
@@ -46,4 +53,5 @@ await accountStore.refreshAccounts()
 const store = useHostAppStore()
 
 const showSendDialog = ref(false)
+const showReceiveDialog = ref(false)
 </script>

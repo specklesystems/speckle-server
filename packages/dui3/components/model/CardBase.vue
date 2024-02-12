@@ -11,7 +11,7 @@
         <button
           v-tippy="'Select objects'"
           class="transition hover:text-primary -mt-1"
-          @click="app.$baseBinding.highlightModel(modelCard.id)"
+          @click="app.$baseBinding.highlightModel(modelCard.modelCardId)"
         >
           <CursorArrowRaysIcon class="w-4" />
         </button>
@@ -23,7 +23,7 @@
       </div>
     </div>
     <div v-else-if="loading" class="px-1 py-1">
-      Loading...
+      Fetching model data...
       <CommonLoadingBar loading />
     </div>
     <div v-else class="px-1 py-1">Error loading data.</div>
@@ -35,8 +35,9 @@
 
     <!-- Progress state -->
     <div
+      v-if="modelCard.progress"
       :class="`${
-        modelCard.progress ? 'h-9 opacity-100' : 'h-0 opacity-0 py-0'
+        modelCard.progress ? 'h-10 opacity-100' : 'h-0 opacity-0 py-0'
       } overflow-hidden bg-blue-500/10`"
     >
       <CommonLoadingProgressBar
@@ -54,16 +55,8 @@
       </div>
     </div>
 
-    <!-- Card Notifications -->
-    <div>
-      <CommonModelNotification
-        v-for="(notification, index) in modelCard.notifications"
-        :key="index"
-        :index="index"
-        :notification="notification"
-        @dismiss="store.dismissModelNotification(modelCard.id, index)"
-      />
-    </div>
+    <!-- Card States: Expiry, errors, new version created, etc. -->
+    <slot name="states"></slot>
   </div>
 </template>
 <script setup lang="ts">
@@ -75,6 +68,7 @@ import { CursorArrowRaysIcon } from '@heroicons/vue/24/outline'
 import { ProjectModelGroup, useHostAppStore } from '~~/store/hostApp'
 import { IModelCard } from '~~/lib/models/card'
 import { useAccountStore } from '~/store/accounts'
+import { ISenderModelCard } from 'lib/models/card/send'
 
 const app = useNuxtApp()
 
@@ -117,20 +111,15 @@ const removeModel = () => {
   store.removeModel(props.modelCard)
 }
 
-const cardBgColor = computed(() => {
-  if (!props.modelCard.notifications || props.modelCard.notifications?.length === 0)
-    return 'bg-foundation-2'
+defineExpose({
+  viewModel
+})
 
-  const notification = props.modelCard.notifications[0]
-  switch (notification.level) {
-    case 'danger':
-      return 'bg-red-500/10'
-    case 'info':
-      return 'bg-blue-500/10'
-    case 'success':
-      return 'bg-green-500/10'
-    case 'warning':
-      return 'bg-orange-500/10'
-  }
+const cardBgColor = computed(() => {
+  if (props.modelCard.error) return 'bg-red-500/10'
+  if (props.modelCard.expired) return 'bg-blue-500/10'
+  if ((props.modelCard as ISenderModelCard).latestCreatedVersionId)
+    return 'bg-green-500/10'
+  return 'bg-foundation'
 })
 </script>

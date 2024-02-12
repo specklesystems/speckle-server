@@ -46,7 +46,7 @@ export class GenericBridge extends BaseBridge {
   }
 
   private async runMethod(methodName: string, args: unknown[]): Promise<unknown> {
-    const requestId = (Math.random() + 1).toString(36).substring(2)
+    const requestId = (Math.random() + 1).toString(36).substring(2) + '_' + methodName
     const preserializedArgs = args.map((a) => JSON.stringify(a))
 
     this.bridge.RunMethod(methodName, requestId, JSON.stringify(preserializedArgs))

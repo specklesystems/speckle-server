@@ -4,6 +4,7 @@ import { IModelCard, ModelCard } from '~~/lib/models/card'
 export interface ISenderModelCard extends IModelCard {
   sendFilter?: ISendFilter
   sending?: boolean
+  latestCreatedVersionId?: string
 }
 
 export interface ISendFilter extends IDiscriminatedObject {
