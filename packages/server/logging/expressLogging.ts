@@ -111,7 +111,20 @@ export const LoggingExpressMiddleware = HttpLogger({
       return {
         statusCode: res.raw.statusCode,
         // Allowlist useful headers
-        headers: resRaw.raw.headers,
+        headers: Object.fromEntries(
+          Object.entries(resRaw.raw.headers).filter(
+            ([key]) =>
+              ![
+                'set-cookie',
+                'authorization',
+                'cf-connecting-ip',
+                'true-client-ip',
+                'x-real-ip',
+                'x-forwarded-for',
+                'x-original-forwarded-for'
+              ].includes(key.toLocaleLowerCase())
+          )
+        ),
         userId: auth?.userId
       }
     })
