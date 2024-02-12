@@ -51,6 +51,7 @@ import { CameraController } from '@speckle/viewer'
 import type { Reference } from '@apollo/client'
 import type { Modifier } from '@apollo/client/cache'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -723,6 +724,12 @@ function useViewerMeasurementIntegration() {
     ui: { measurement },
     viewer: { instance }
   } = useInjectedViewerState()
+
+  const { clearMeasurements } = useMeasurementUtilities()
+
+  onBeforeUnmount(() => {
+    clearMeasurements()
+  })
 
   watch(
     () => measurement.enabled.value,
