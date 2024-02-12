@@ -51,6 +51,10 @@
         v-if="!hideEmailBanner"
         class="my-2 mx-4 email-banner"
       ></email-verification-banner>
+      <new-speckle-dialog
+        :model-value="showNewSpeckleDialog"
+        @update:model-value="toggleNewSpeckleDialog"
+      />
       <v-container fluid class="px-4">
         <transition name="fade">
           <router-view></router-view>
@@ -75,6 +79,7 @@ export default {
     SearchBar: () => import('@/main/components/common/SearchBar'),
     GlobalToast: () => import('@/main/components/common/GlobalToast'),
     GlobalLoading: () => import('@/main/components/common/GlobalLoading'),
+    NewSpeckleDialog: () => import('@/main/components/common/NewSpeckleDialog'),
     EmailVerificationBanner: () =>
       import('@/main/components/user/EmailVerificationBanner')
   },
@@ -105,6 +110,7 @@ export default {
   },
   setup() {
     const navDrawer = ref(null)
+    const showNewSpeckleDialog = ref(false)
 
     const { navWidth } = useNavigationDrawerAutoResize({
       drawerRef: navDrawer
@@ -112,11 +118,17 @@ export default {
 
     const { isLoggedIn } = useIsLoggedIn()
 
+    function toggleNewSpeckleDialog(value) {
+      showNewSpeckleDialog.value = value
+    }
+
     // drawer ref must be returned, for it to be filled
     return {
       navDrawer,
       navWidth,
-      isLoggedIn
+      isLoggedIn,
+      toggleNewSpeckleDialog,
+      showNewSpeckleDialog
     }
   },
   data() {

@@ -20,7 +20,7 @@
         </v-btn>
 
         <v-dialog v-model="dialog" persistent max-width="670px">
-          <v-card>
+          <v-card class="whats-new-dialog">
             <v-card-title class="headline d-flex justify-space-between align-center">
               <h4>New Speckle is Here</h4>
               <v-btn icon @click="dialog = false">
@@ -257,3 +257,19 @@ export default {
   }
 }
 </script>
+<style scoped lang="scss">
+.v-application {
+  .whats-new-dialog {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
+      sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol' !important;
+    .headline {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+        Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol' !important;
+    }
+    .v-btn {
+      text-transform: unset !important;
+      letter-spacing: unset !important;
+    }
+  }
+}
+</style>
