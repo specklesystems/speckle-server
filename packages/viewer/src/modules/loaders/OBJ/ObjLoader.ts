@@ -10,9 +10,14 @@ export class ObjLoader extends Loader {
   private baseLoader: OBJLoader
   private converter: ObjConverter
   private tree: WorldTree
+  private isFinished: boolean
 
   public get resource(): string {
     return this._resource
+  }
+
+  public get finished(): boolean {
+    return this.isFinished
   }
 
   public constructor(targetTree: WorldTree, resource: string, resourceData?: string) {
@@ -65,7 +70,7 @@ export class ObjLoader extends Loader {
           .getRenderTree(this._resource)
           .buildRenderTree(new ObjGeometryConverter())
         Logger.log('Tree build time -> ', performance.now() - t0)
-
+        this.isFinished = true
         resolve(res)
       })
       pload.catch(() => {
@@ -76,6 +81,7 @@ export class ObjLoader extends Loader {
   }
 
   public cancel() {
+    this.isFinished = false
     throw new Error('Method not implemented.')
   }
   public dispose() {
