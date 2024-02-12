@@ -157,7 +157,7 @@ export default class SpeckleRenderer {
   }
 
   public get clippingVolume(): Box3 {
-    return !this._clippingVolume.isEmpty()
+    return !this._clippingVolume.isEmpty() && this._renderer.localClippingEnabled
       ? new Box3().copy(this._clippingVolume)
       : this.sceneBox
   }
