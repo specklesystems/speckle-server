@@ -163,7 +163,7 @@
               </FormButton>
             </div>
             <div
-              v-if="!activeUser && !isEmbedEnabled"
+              v-if="!canReply && !isEmbedEnabled"
               class="p-3 flex flex-col items-center justify-center bg-foundation-2"
             >
               <FormButton full-width @click="$emit('login')">Reply</FormButton>
