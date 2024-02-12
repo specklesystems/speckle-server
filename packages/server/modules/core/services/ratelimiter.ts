@@ -29,12 +29,12 @@ export enum RateLimitAction {
   'GET /objects/:streamId/:objectId' = 'GET /objects/:streamId/:objectId',
   'GET /objects/:streamId/:objectId/single' = 'GET /objects/:streamId/:objectId/single',
   'POST /graphql' = 'POST /graphql',
-  'GET /auth/local/login' = 'GET /auth/local/login',
+  'POST /auth/local/login' = 'POST /auth/local/login',
   'GET /auth/azure' = 'GET /auth/azure',
   'GET /auth/gh' = 'GET /auth/gh',
   'GET /auth/goog' = 'GET /auth/goog',
   'GET /auth/oidc' = 'GET /auth/oidc',
-  'GET /auth/azure/callback' = 'GET /auth/azure/callback',
+  'POST /auth/azure/callback' = 'POST /auth/azure/callback',
   'GET /auth/gh/callback' = 'GET /auth/gh/callback',
   'GET /auth/goog/callback' = 'GET /auth/goog/callback',
   'GET /auth/oidc/callback' = 'GET /auth/oidc/callback'
@@ -179,7 +179,7 @@ export const LIMITS: RateLimiterOptions = {
       duration: 1 * TIME.minute
     }
   },
-  'GET /auth/local/login': {
+  'POST /auth/local/login': {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
       duration: 10 * TIME.minute
@@ -229,7 +229,7 @@ export const LIMITS: RateLimiterOptions = {
       duration: 30 * TIME.minute
     }
   },
-  'GET /auth/azure/callback': {
+  'POST /auth/azure/callback': {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
       duration: 10 * TIME.minute
