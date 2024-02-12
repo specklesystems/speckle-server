@@ -44,7 +44,8 @@ export const LoggingExpressMiddleware = HttpLogger({
   customSuccessObject(req, res, val: Record<string, unknown>) {
     const isCompleted = !req.readableAborted && res.writableEnded
     const requestStatus = isCompleted ? 'completed' : 'aborted'
-    const requestPath = req.url?.split('?')[0] || 'unknown'
+    const requestPath =
+      (get(req, 'originalUrl') || get(req, 'url') || '').split('?')[0] || 'unknown'
     const country = req.headers['cf-ipcountry'] as Optional<string>
 
     return {
@@ -60,7 +61,8 @@ export const LoggingExpressMiddleware = HttpLogger({
   },
   customErrorObject(req, res, err, val: Record<string, unknown>) {
     const requestStatus = 'failed'
-    const requestPath = req.url?.split('?')[0] || 'unknown'
+    const requestPath =
+      (get(req, 'originalUrl') || get(req, 'url') || '').split('?')[0] || 'unknown'
     const country = req.headers['cf-ipcountry'] as Optional<string>
 
     return {
@@ -79,7 +81,7 @@ export const LoggingExpressMiddleware = HttpLogger({
       return {
         id: req.raw.id,
         method: req.raw.method,
-        path: req.raw.url?.split('?')[0], // Remove query params which might be sensitive
+        path: (get(req.raw, 'originalUrl') || get(req.raw, 'url') || '').split('?')[0],
         // Allowlist useful headers
         headers: Object.fromEntries(
           Object.entries(req.raw.headers).filter(
