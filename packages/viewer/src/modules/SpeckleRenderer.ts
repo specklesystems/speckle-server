@@ -609,6 +609,7 @@ export default class SpeckleRenderer {
 
     /** We'll just update the shadowcatcher after all batches are loaded */
     this.updateShadowCatcher()
+    this.updateClippingPlanes()
     delete this.cancel[subtreeId]
   }
 

@@ -338,9 +338,11 @@ export class FilteringExtension extends Extension {
   }
 
   public removeColorFilter(): FilteringState {
-    this.ColorStringFilterState = null
-    this.ColorNumericFilterState = null
-    return this.setFilters()
+    if (this.ColorNumericFilterState || this.ColorStringFilterState) {
+      this.ColorStringFilterState = null
+      this.ColorNumericFilterState = null
+      return this.setFilters()
+    }
   }
 
   public setUserObjectColors(groups: { objectIds: string[]; color: string }[]) {
@@ -512,7 +514,9 @@ export class FilteringExtension extends Extension {
       }
     }
 
-    this.Renderer.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+    this.Renderer.viewer.requestRender(
+      UpdateFlags.RENDER | UpdateFlags.SHADOWS | UpdateFlags.CLIPPING_PLANES
+    )
     this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
     return this.CurrentFilteringState
   }
