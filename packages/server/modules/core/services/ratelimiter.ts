@@ -249,7 +249,7 @@ export const LIMITS: RateLimiterOptions = {
       duration: 30 * TIME.minute
     }
   },
-  'GET /auth/google/callback': {
+  'GET /auth/goog/callback': {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
       duration: 10 * TIME.minute
