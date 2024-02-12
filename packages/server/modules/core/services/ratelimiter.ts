@@ -261,8 +261,8 @@ export const LIMITS: RateLimiterOptions = {
   },
   'GET /authn/login': {
     regularOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '2'),
-      duration: 1 * TIME.minute
+      limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
+      duration: 10 * TIME.minute
     },
     burstOptions: {
       limitCount: getIntFromEnv('RATELIMIT_BURST_GET_AUTH', '10'),
