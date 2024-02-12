@@ -1192,6 +1192,13 @@ export default class Sandbox {
       .on('click', () => {
         this.viewer.getExtension(MeasurementsExtension).removeMeasurement()
       })
+    container
+      .addButton({
+        title: 'Delete All'
+      })
+      .on('click', () => {
+        this.viewer.getExtension(MeasurementsExtension).clearMeasurements()
+      })
   }
 
   private getBVHSize() {

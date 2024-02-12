@@ -16,7 +16,7 @@ export function useAppErrorState() {
       const epm = state.errorRpm.hit()
 
       if (!state.inErrorState.value && epm >= ENTER_STATE_AT_ERRORS_PER_MIN) {
-        logger.error(
+        logger.fatal(
           `Too many errors (${epm} errors per minute), entering app error state!`
         )
         state.inErrorState.value = true

@@ -22,6 +22,16 @@ export const activeUserQuery = graphql(`
 `)
 
 /**
+ * Lightweight composable to read user id from cache imperatively (useful for logging)
+ */
+export function useReadUserId() {
+  const client = useApolloClient().client
+  return () => {
+    return client.readQuery({ query: activeUserQuery })?.activeUser?.id
+  }
+}
+
+/**
  * Get active user.
  * undefined - not yet resolved
  * null - resolved that user is a guest
