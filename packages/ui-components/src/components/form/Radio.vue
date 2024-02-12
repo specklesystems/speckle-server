@@ -1,7 +1,7 @@
 <template>
   <div
     class="relative flex gap-2 mb-2 last:mb-0"
-    :class="description ? 'items-start' : 'items-center'"
+    :class="description && inlineDescription ? 'items-start' : 'items-center'"
   >
     <div class="flex h-6 items-center">
       <!-- eslint-disable-next-line vuejs-accessibility/form-control-has-label -->
@@ -31,10 +31,23 @@
         <div v-if="icon" class="text-sm">
           <component :is="icon" class="h-8 sm:h-10 w-8 sm:w-10"></component>
         </div>
-        <span>{{ title }}</span>
+        <div class="flex flex-col">
+          <span>{{ title }}</span>
+          <p
+            v-if="descriptionText && !inlineDescription"
+            :id="descriptionId"
+            :class="descriptionClasses"
+          >
+            {{ descriptionText }}
+          </p>
+        </div>
         <span v-if="showRequired" class="text-danger ml-1">*</span>
       </label>
-      <p v-if="descriptionText" :id="descriptionId" :class="descriptionClasses">
+      <p
+        v-if="descriptionText && inlineDescription"
+        :id="descriptionId"
+        :class="descriptionClasses"
+      >
         {{ descriptionText }}
       </p>
     </div>
@@ -186,7 +199,7 @@ const computedClasses = computed((): string => {
 const descriptionText = computed(() => props.description || errorMessage.value)
 const descriptionId = computed(() => `${props.name}-description`)
 const descriptionClasses = computed((): string => {
-  const classParts: string[] = []
+  const classParts: string[] = ['text-xs']
 
   if (errorMessage.value) {
     classParts.push('text-danger')
