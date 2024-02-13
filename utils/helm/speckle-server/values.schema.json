@@ -953,13 +953,13 @@
             },
             "get_auth": {
               "type": "number",
-              "description": "The maximum number of requests that can be made to the Speckle server to authenticate in a moving one second window.",
-              "default": 2
+              "description": "The maximum number of requests that can be made to the Speckle server to authenticate in a moving 10 minute window.",
+              "default": 4
             },
             "burst_get_auth": {
               "type": "number",
-              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to authenticate in a moving one minute window.",
-              "default": 20
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to authenticate in a moving thirty minute window.",
+              "default": 10
             }
           }
         },

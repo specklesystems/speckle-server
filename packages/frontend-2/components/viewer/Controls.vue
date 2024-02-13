@@ -147,7 +147,7 @@
           : '-translate-x-[100%] opacity-0'
       } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[4rem]'}`"
     >
-      <div v-show="activeControl.length !== 0 && activeControl === 'measurements'">
+      <div v-if="activeControl.length !== 0 && activeControl === 'measurements'">
         <KeepAlive>
           <div><ViewerMeasurementsOptions @close="toggleMeasurements" /></div>
         </KeepAlive>
