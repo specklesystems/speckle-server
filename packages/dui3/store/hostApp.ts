@@ -129,7 +129,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
     ) as ISenderModelCard
-    model.progress = undefined
+    model.progress = { status: 'Starting to send...' }
     model.expired = false
     model.error = undefined
     void app.$sendBinding.send(modelCardId)

@@ -2,7 +2,6 @@
   <div>
     <div class="-mt-4 mb-4 flex items-center justify-left space-x-2">
       <CloudArrowDownIcon class="w-6 text-primary" />
-
       <div
         v-for="index in 3"
         :key="index"
@@ -38,25 +37,21 @@
       </div>
     </div>
     <div v-if="step === 3">
-      <!-- <div class="flex items-center justify-between mb-2">
-        <div class="h5 font-bold">Select Version</div>
-      </div> -->
       <WizardVersionSelector
         v-if="selectedProject && selectedModel"
         :account-id="selectedAccountId"
         :project-id="selectedProject.id"
         :model-id="selectedModel.id"
+        @next="selectVersion"
       />
-      <!-- <div class="mt-2">
-        <FormButton full-width @click="addModel">Load</FormButton>
-      </div> -->
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import {
   ModelListModelItemFragment,
-  ProjectListProjectItemFragment
+  ProjectListProjectItemFragment,
+  VersionListItemFragment
 } from '~/lib/common/generated/gql/graphql'
 import { ISendFilter, SenderModelCard } from '~/lib/models/card/send'
 import { useHostAppStore } from '~/store/hostApp'
@@ -85,9 +80,15 @@ const selectModel = (model: ModelListModelItemFragment) => {
   selectedModel.value = model
 }
 
+const selectVersion = (version: VersionListItemFragment) => {
+  // TODO
+  console.log(version)
+}
+
 const hostAppStore = useHostAppStore()
 
 const addModel = async () => {
+  // TODO: Receiver Model Card, etc.
   const model = new SenderModelCard()
   model.accountId = selectedAccountId.value
   model.projectId = selectedProject.value?.id as string

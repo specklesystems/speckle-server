@@ -1,29 +1,35 @@
 <template>
   <div>
     <div class="space-y-4">
-      <div class="">
-        <FormButton full-width size="xl">Load latest version</FormButton>
-      </div>
-
       <div class="mb-2">
-        <div class="h5 font-bold">Or select a specific version</div>
-        <div class="text-xs text-foreground-2">
-          You will still get notified of new version updates.
-        </div>
+        <div class="h5 font-bold">Select a version</div>
       </div>
-
-      <!-- <pre>{{ versions?.map((v) => v.id) }} </pre> -->
       <div class="grid grid-cols-2 gap-3 max-[475px]:grid-cols-1 mb-4">
-        <div
+        <div class="col-span-2 max-[475px]:col-span-1">
+          <FormButton
+            v-if="versions && versions.length !== 0"
+            full-width
+            size="xl"
+            :disabled="!versions || versions.length === 0"
+            @click="$emit('next', versions[0])"
+          >
+            Load latest
+          </FormButton>
+        </div>
+        <button
           v-for="version in versions"
           :key="version.id"
-          class="p-2 shadow rounded-md hover:bg-primary-muted hover:shadow-md transition cursor-pointer"
+          class="block text-left shadow rounded-md bg-foundation-2 hover:bg-primary-muted transition"
+          @click="$emit('next', version)"
         >
-          <div class="flex space-x-2 items-center min-w-0">
-            <UserAvatar :user="version.authorUser" size="sm" />
-            <!-- <span>{{ version.sourceApplication }}</span> -->
-            <SourceAppBadge
-              :source-app="
+          <div class="mb-2">
+            <img :src="version.previewUrl" alt="version preview" />
+          </div>
+          <div class="mt-1 p-2 border-t dark:border-gray-700">
+            <div class="flex space-x-2 items-center min-w-0">
+              <UserAvatar :user="version.authorUser" size="sm" />
+              <SourceAppBadge
+                :source-app="
                 SourceApps.find((sapp) =>
                   version.sourceApplication?.toLowerCase()?.includes(sapp.searchKey.toLowerCase())
                 ) || {
@@ -33,19 +39,18 @@
                   bgColor: '#000'
                 }
               "
-            />
-            <span class="text-xs truncate">
-              {{ new Date(version.createdAt).toLocaleString() }}
-            </span>
+              />
+              <span class="text-xs truncate">
+                {{ new Date(version.createdAt).toLocaleString() }}
+              </span>
+            </div>
+            <div class="text-xs text-foreground-2 mt-1 line-clamp-1 hover:line-clamp-5">
+              <span>
+                {{ version.message || 'No message' }}
+              </span>
+            </div>
           </div>
-          <div class="text-xs text-foreground-2"></div>
-          <div class="text-xs text-foreground-2 my-2 line-clamp-1">
-            <span>{{ version.message }}</span>
-          </div>
-          <div>
-            <img :src="version.previewUrl" alt="version preview" />
-          </div>
-        </div>
+        </button>
       </div>
       <CommonLoadingBar v-if="loading" loading />
       <FormButton size="xs" full-width :disabled="hasReachedEnd" @click="loadMore">
@@ -58,6 +63,11 @@
 import { useQuery } from '@vue/apollo-composable'
 import { modelVersionsQuery } from '~/lib/graphql/mutationsAndQueries'
 import { SourceApps, SourceAppName } from '@speckle/shared'
+import { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
+
+defineEmits<{
+  (e: 'next', version: VersionListItemFragment): void
+}>()
 
 const props = defineProps<{
   accountId: string
