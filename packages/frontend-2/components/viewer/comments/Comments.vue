@@ -85,6 +85,7 @@ import {
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 
 defineEmits(['close'])
 
@@ -129,10 +130,17 @@ const {
 
 const showVisibilityOptions = ref(false)
 
+const discussionLoadedVersionOnly = useSynchronizedCookie<boolean>(
+  'discussionLoadedVersionOnly'
+)
+
 const loadedVersionsOnly = computed({
-  get: () =>
-    threadFilters.value.loadedVersionsOnly || false ? 'loadedVersionsOnly' : undefined,
-  set: (newVal) => (threadFilters.value.loadedVersionsOnly = !!newVal)
+  get: () => (discussionLoadedVersionOnly.value ? 'loadedVersionsOnly' : undefined),
+  set: (newValue) => {
+    const isLoadedVersionsOnly = newValue === 'loadedVersionsOnly'
+    discussionLoadedVersionOnly.value = isLoadedVersionsOnly
+    threadFilters.value.loadedVersionsOnly = isLoadedVersionsOnly
+  }
 })
 
 const includeArchived = computed({

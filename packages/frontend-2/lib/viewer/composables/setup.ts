@@ -65,6 +65,7 @@ import {
   InjectableViewerStateKey,
   useSetupViewerScope
 } from '~/lib/viewer/composables/setup/core'
+import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -438,7 +439,13 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     asyncRead: false
   })
 
-  const discussionLoadedVersionOnly = ref(true)
+  const discussionLoadedVersionOnly = useSynchronizedCookie<boolean>(
+    'discussionLoadedVersionOnly',
+    {
+      default: () => true
+    }
+  )
+
   const threadFilters = ref({
     loadedVersionsOnly: discussionLoadedVersionOnly.value
   } as Omit<ProjectCommentsFilter, 'resourceIdString'>)
@@ -469,9 +476,13 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     }
   }
 
-  watch(discussionLoadedVersionOnly, (newValue) => {
-    threadFilters.value.loadedVersionsOnly = newValue
-  })
+  watch(
+    discussionLoadedVersionOnly,
+    (newValue) => {
+      threadFilters.value.loadedVersionsOnly = newValue
+    },
+    { immediate: true }
+  )
 
   return {
     ...state,
