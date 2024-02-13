@@ -725,10 +725,11 @@ function useViewerMeasurementIntegration() {
     viewer: { instance }
   } = useInjectedViewerState()
 
-  const { clearMeasurements } = useMeasurementUtilities()
+  const { clearMeasurements, enableMeasurements } = useMeasurementUtilities()
 
   onBeforeUnmount(() => {
     clearMeasurements()
+    enableMeasurements(false)
   })
 
   watch(

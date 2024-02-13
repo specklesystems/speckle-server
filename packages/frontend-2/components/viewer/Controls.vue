@@ -444,10 +444,6 @@ watch(isSmallerOrEqualSm, (newVal) => {
 })
 
 onKeyStroke('Escape', () => {
-  if (activeControl.value === 'measurements') {
-    toggleMeasurements()
-  } else {
-    activeControl.value = 'none'
-  }
+  activeControl.value = 'none'
 })
 </script>
