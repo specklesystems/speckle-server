@@ -725,7 +725,8 @@ function useViewerMeasurementIntegration() {
     viewer: { instance }
   } = useInjectedViewerState()
 
-  const { clearMeasurements, removeMeasurement } = useMeasurementUtilities()
+  const { clearMeasurements, removeMeasurement, enableMeasurements } =
+    useMeasurementUtilities()
 
   onBeforeUnmount(() => {
     clearMeasurements()
@@ -756,6 +757,9 @@ function useViewerMeasurementIntegration() {
   })
   onKeyStroke('Backspace', () => {
     removeMeasurement()
+  })
+  onKeyStroke('Escape', () => {
+    enableMeasurements(false)
   })
 }
 
