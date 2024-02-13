@@ -62,8 +62,17 @@
               <ViewerSelectionSidebar class="z-20" />
             </div>
           </Transition>
-          <!-- Shows up when filters are applied for an easy return to normality -->
-          <ViewerGlobalFilterReset class="z-20" :embed="!!isEmbedEnabled" />
+          <div
+            class="absolute z-10 w-screen flex flex-col items-center justify-center gap-2"
+            :class="isEmbedEnabled ? 'bottom-16 mb-1' : 'bottom-6'"
+          >
+            <PortalTarget name="pocket-tip"></PortalTarget>
+            <div class="flex gap-3">
+              <PortalTarget name="pocket-actions"></PortalTarget>
+              <!-- Shows up when filters are applied for an easy return to normality -->
+              <ViewerGlobalFilterReset class="z-20" :embed="!!isEmbedEnabled" />
+            </div>
+          </div>
         </ClientOnly>
       </div>
     </ViewerPostSetupWrapper>
