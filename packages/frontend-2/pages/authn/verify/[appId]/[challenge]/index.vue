@@ -1,88 +1,107 @@
+<!-- eslint-disable vue/no-v-html -->
 <template>
-  <div class="flex flex-col items-center">
-    <LogoTextWhite class="my-6 sm:mb-14" />
-    <LayoutPanel class="max-w-screen-sm mx-auto w-full">
-      <div
-        v-if="activeUser && app && !action"
-        class="space-y-8 flex flex-col items-center"
-      >
-        <div class="space-y-2 flex flex-col items-center">
-          <UserAvatar :user="activeUser" size="lg" />
-          <div class="text-foreground h6">{{ activeUser.name }}</div>
-          <CommonTextLink size="xs" @click="() => logout()">
-            Not you? Switch accounts
-          </CommonTextLink>
-        </div>
-        <div class="text-foreground h4 text-center">
-          <span class="text-primary font-bold">
-            <ShieldCheckIcon
-              v-if="app?.trustByDefault"
-              class="h-6 w-6 inline-block relative -top-1"
-            />
-            {{ app?.name }}
-          </span>
-          is requesting access to your Speckle account
-        </div>
-        <div v-if="!app.trustByDefault" class="w-full">
-          <Disclosure v-slot="{ open }">
-            <DisclosureButton
-              class="w-full flex justify-between items-center text-foreground px-4 py-2 rounded-lg hover:bg-foundation-focus"
+  <div class="mx-auto">
+    <LayoutPanel class="max-w-lg mx-auto w-full">
+      <div class="space-y-8 flex flex-col items-center">
+        <h1
+          class="text-center h3 font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block text-transparent bg-clip-text"
+        >
+          Authorize Application
+        </h1>
+        <template v-if="activeUser && app && !action">
+          <div class="space-y-2 flex flex-col">
+            <div class="space-x-2 flex items-center">
+              <UserAvatar :user="activeUser" size="lg" />
+              <div class="label-light">{{ activeUser.name }}</div>
+            </div>
+            <CommonTextLink
+              size="xs"
+              :icon-right="ArrowsRightLeftIcon"
+              no-underline
+              @click="() => logout()"
             >
-              <span class="font-bold">
-                App info & requested permissions ({{ app.scopes.length }})
-              </span>
-              <ChevronUpIcon
-                :class="!open ? 'rotate-180 transform' : ''"
-                class="h-5 w-5 text-primary"
+              Not you? Switch accounts
+            </CommonTextLink>
+          </div>
+          <div class="text-foreground h4 text-center">
+            <span class="text-primary font-bold">
+              <ShieldCheckIcon
+                v-if="app?.trustByDefault"
+                class="h-6 w-6 inline-block relative -top-1"
               />
-            </DisclosureButton>
-            <DisclosurePanel
-              class="flex flex-col px-4 py-2 space-y-2 label label--light"
-            >
-              <div v-if="app.author" class="space-x-1 inline-flex items-center">
-                <span class="font-bold">Author:</span>
-                <span>{{ app.author.name }}</span>
-                <UserAvatar :user="app.author" size="sm" />
-              </div>
-              <div v-if="app.description?.length" class="space-x-1">
-                <span class="font-bold">Description:</span>
-                <span>{{ app.description }}</span>
-              </div>
-              <div>
-                <div class="bg-foundation-disabled h-[1px] my-2" />
-              </div>
-              <div class="font-bold">Permissions:</div>
-              <div v-for="scope in app.scopes" :key="scope?.name" class="space-x-1">
-                <span class="font-bold">{{ scope.name }}</span>
-                <span>{{ scope.description }}</span>
-              </div>
-            </DisclosurePanel>
-          </Disclosure>
+              {{ app?.name }}
+            </span>
+            wants to access your Speckle account.
+          </div>
+          <div v-if="!app.trustByDefault" class="w-full">
+            <Disclosure v-slot="{ open }">
+              <DisclosureButton
+                class="w-full flex justify-between items-center text-foreground px-2 py-4 border-t border-b border-outline-3"
+              >
+                <div class="flex space-x-2 items-center">
+                  <InformationCircleIcon class="h-5 w-5" />
+                  <span class="font-bold">
+                    App info & Requested permissions ({{ app.scopes.length }})
+                  </span>
+                </div>
+                <ChevronUpIcon
+                  :class="!open ? 'rotate-180 transform' : ''"
+                  class="h-5 w-5 text-foreground"
+                />
+              </DisclosureButton>
+
+              <DisclosurePanel
+                class="flex flex-col px-2 py-2 space-y-2 label-light border-b border-outline-3"
+              >
+                <div v-if="app.author" class="space-x-1 inline-flex items-center">
+                  <span class="font-bold">Author:</span>
+                  <span>{{ app.author.name }}</span>
+                  <UserAvatar :user="app.author" size="sm" />
+                </div>
+                <div v-if="app.description?.length" class="space-x-1">
+                  <span class="font-bold">Description:</span>
+                  <span>{{ app.description }}</span>
+                </div>
+                <div>
+                  <div class="bg-foundation-disabled h-[1px] my-2" />
+                </div>
+                <div class="font-bold">Permissions:</div>
+                <div v-for="scope in app.scopes" :key="scope?.name" class="space-x-1">
+                  <span class="font-bold">{{ scope.name }}</span>
+                  <span>{{ scope.description }}</span>
+                </div>
+              </DisclosurePanel>
+            </Disclosure>
+          </div>
+          <div class="flex space-x-2 w-full">
+            <FormButton color="secondary" full-width size="lg" @click="deny">
+              Deny
+            </FormButton>
+            <FormButton full-width size="lg" @click="allow">Authorize</FormButton>
+          </div>
+        </template>
+        <div v-else-if="action" class="w-full flex flex-col items-center">
+          <span class="font-bold">
+            <template v-if="action === ChosenAction.Allow">
+              Permission granted.
+            </template>
+            <template v-else>Permission denied.</template>
+          </span>
+          <span class="label-light text-foreground-2">
+            You will be redirected automatically
+          </span>
         </div>
-        <div class="flex space-x-2 w-full">
-          <FormButton color="danger" full-width size="lg" @click="deny">
-            Deny
-          </FormButton>
-          <FormButton full-width size="lg" @click="allow">Allow</FormButton>
+        <div v-else-if="app === null" class="space-x-2">
+          <span>Could not resolve app.</span>
+          <CommonTextLink :to="homeRoute">Go Home</CommonTextLink>
         </div>
-        <div class="w-full text-foreground-2 text-center label-light">
-          Clicking 'Allow' will redirect you to {{ app.redirectUrl }}
-        </div>
-      </div>
-      <div v-else-if="action" class="w-full flex flex-col items-center">
-        <span class="font-bold">
-          <template v-if="action === ChosenAction.Allow">Permission granted.</template>
-          <template v-else>Permission denied.</template>
-        </span>
-        <span class="label-light text-foreground-2">
-          You will be redirected automatically
-        </span>
-      </div>
-      <div v-else-if="app === null" class="space-x-2">
-        <span>Could not resolve app.</span>
-        <CommonTextLink :to="homeRoute">Go Home</CommonTextLink>
       </div>
     </LayoutPanel>
+    <div
+      v-if="serverInfo?.termsOfService"
+      class="mt-3 max-w-lg text-center caption font-medium text-foreground-2 terms-of-service"
+      v-html="serverInfo.termsOfService"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -92,10 +111,22 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthCookie, useAuthManager } from '~~/lib/auth/composables/auth'
 import { authorizableAppMetadataQuery } from '~~/lib/auth/graphql/queries'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
-import { ChevronUpIcon } from '@heroicons/vue/20/solid'
 import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { homeRoute } from '~~/lib/common/helpers/route'
+import {
+  ArrowsRightLeftIcon,
+  InformationCircleIcon,
+  ChevronUpIcon
+} from '@heroicons/vue/24/outline'
+import { useServerInfo } from '~/lib/core/composables/server'
+
+/**
+// TODO: Process redirect as fetch call so that we can catch errors?
+ * - Check all if branches
+ - Responsivity
+ - Layout issues? Check login & register on mobile & desktop? Horizontal scrollbar
+ */
 
 enum ChosenAction {
   Allow = 'allow',
@@ -113,6 +144,7 @@ const { activeUser } = useActiveUser()
 const authToken = useAuthCookie()
 const { logout } = useAuthManager()
 const mp = useMixpanel()
+const { serverInfo } = useServerInfo()
 
 const appId = computed(() => route.params.appId as string)
 const challenge = computed(() => route.params.challenge as string)
