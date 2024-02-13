@@ -51,12 +51,9 @@
               </DisclosureButton>
 
               <DisclosurePanel
-                class="flex flex-col px-2 py-2 space-y-2 label-light border-b border-outline-3"
+                class="flex flex-col px-2 py-5 space-y-5 label-light border-b border-outline-3 label-light"
               >
-                <table
-                  v-if="app.author || app.description?.length"
-                  class="my-8 table-fixed"
-                >
+                <table v-if="app.author || app.description?.length" class="table-fixed">
                   <tbody>
                     <tr v-if="app.author">
                       <td class="font-bold pr-2 w-[100px]">Author:</td>
@@ -73,10 +70,28 @@
                     </tr>
                   </tbody>
                 </table>
-                <div class="font-bold">Permissions:</div>
-                <div v-for="scope in app.scopes" :key="scope?.name" class="space-x-1">
-                  <span class="font-bold">{{ scope.name }}</span>
-                  <span>{{ scope.description }}</span>
+                <div class="space-y-4">
+                  <div class="font-bold">Permissions:</div>
+                  <!-- <ul v-if="false" class="list-disc list-inside space-y-4">
+                  <li v-for="scope in app.scopes" :key="scope?.name">
+                    <span>{{ scope.description }}</span>
+                  </li>
+                </ul> -->
+                  <ul class="list-disc list-inside">
+                    <template
+                      v-for="[group, scope] in Object.entries(groupedScopes)"
+                      :key="group"
+                    >
+                      <li>
+                        <span class="font-bold">{{ group }}</span>
+                        <ul class="ps-5 list-[circle] list-inside">
+                          <li v-for="desc in scope" :key="desc">
+                            <span>{{ desc }}</span>
+                          </li>
+                        </ul>
+                      </li>
+                    </template>
+                  </ul>
                 </div>
               </DisclosurePanel>
             </Disclosure>
@@ -128,6 +143,7 @@ import {
   ChevronUpIcon
 } from '@heroicons/vue/24/outline'
 import { useServerInfo } from '~/lib/core/composables/server'
+import { upperFirst } from 'lodash-es'
 
 /**
 // TODO: Process redirect as fetch call so that we can catch errors?
@@ -180,6 +196,18 @@ const allowUrl = computed(() => {
   finalUrl.searchParams.set('token', authToken.value)
 
   return finalUrl.toString()
+})
+
+const groupedScopes = computed(() => {
+  if (!app.value) return []
+
+  return app.value.scopes.reduce((acc, scope) => {
+    const key = upperFirst(scope.name.split(':')[0])
+
+    if (!acc[key]) acc[key] = []
+    acc[key].push(scope.description)
+    return acc
+  }, {} as Record<string, string[]>)
 })
 
 const deny = () => {
