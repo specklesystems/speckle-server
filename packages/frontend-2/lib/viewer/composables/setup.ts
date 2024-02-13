@@ -438,7 +438,10 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     asyncRead: false
   })
 
-  const threadFilters = ref({} as Omit<ProjectCommentsFilter, 'resourceIdString'>)
+  const discussionLoadedVersionOnly = ref(true)
+  const threadFilters = ref({
+    loadedVersionsOnly: discussionLoadedVersionOnly.value
+  } as Omit<ProjectCommentsFilter, 'resourceIdString'>)
 
   const switchModelToVersion = async (modelId: string, versionId?: string) => {
     const resourceArr = resources.value.slice()
@@ -465,6 +468,10 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
       ])
     }
   }
+
+  watch(discussionLoadedVersionOnly, (newValue) => {
+    threadFilters.value.loadedVersionsOnly = newValue
+  })
 
   return {
     ...state,
