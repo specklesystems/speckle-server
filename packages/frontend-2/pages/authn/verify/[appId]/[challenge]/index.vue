@@ -53,18 +53,26 @@
               <DisclosurePanel
                 class="flex flex-col px-2 py-2 space-y-2 label-light border-b border-outline-3"
               >
-                <div v-if="app.author" class="space-x-1 inline-flex items-center">
-                  <span class="font-bold">Author:</span>
-                  <span>{{ app.author.name }}</span>
-                  <UserAvatar :user="app.author" size="sm" />
-                </div>
-                <div v-if="app.description?.length" class="space-x-1">
-                  <span class="font-bold">Description:</span>
-                  <span>{{ app.description }}</span>
-                </div>
-                <div>
-                  <div class="bg-foundation-disabled h-[1px] my-2" />
-                </div>
+                <table
+                  v-if="app.author || app.description?.length"
+                  class="my-8 table-fixed"
+                >
+                  <tbody>
+                    <tr v-if="app.author">
+                      <td class="font-bold pr-2 w-[100px]">Author:</td>
+                      <td class="inline-flex space-x-1 items-center">
+                        <UserAvatar :user="app.author" size="sm" />
+                        <span>{{ app.author.name }}</span>
+                      </td>
+                    </tr>
+                    <tr v-if="app.description?.length">
+                      <td class="align-top font-bold pr-2">Description:</td>
+                      <td>
+                        {{ app.description }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
                 <div class="font-bold">Permissions:</div>
                 <div v-for="scope in app.scopes" :key="scope?.name" class="space-x-1">
                   <span class="font-bold">{{ scope.name }}</span>
