@@ -16,29 +16,7 @@ import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { rateLimiterLogger } from '@/logging/logging'
 import { createRedisClient } from '@/modules/shared/redis/redis'
-
-// typescript definitions
-export enum RateLimitAction {
-  ALL_REQUESTS = 'ALL_REQUESTS',
-  USER_CREATE = 'USER_CREATE',
-  STREAM_CREATE = 'STREAM_CREATE',
-  COMMIT_CREATE = 'COMMIT_CREATE',
-  'POST /api/getobjects/:streamId' = 'POST /api/getobjects/:streamId',
-  'POST /api/diff/:streamId' = 'POST /api/diff/:streamId',
-  'POST /objects/:streamId' = 'POST /objects/:streamId',
-  'GET /objects/:streamId/:objectId' = 'GET /objects/:streamId/:objectId',
-  'GET /objects/:streamId/:objectId/single' = 'GET /objects/:streamId/:objectId/single',
-  'POST /graphql' = 'POST /graphql',
-  'POST /auth/local/login' = 'POST /auth/local/login',
-  'GET /auth/azure' = 'GET /auth/azure',
-  'GET /auth/gh' = 'GET /auth/gh',
-  'GET /auth/goog' = 'GET /auth/goog',
-  'GET /auth/oidc' = 'GET /auth/oidc',
-  'POST /auth/azure/callback' = 'POST /auth/azure/callback',
-  'GET /auth/gh/callback' = 'GET /auth/gh/callback',
-  'GET /auth/goog/callback' = 'GET /auth/goog/callback',
-  'GET /auth/oidc/callback' = 'GET /auth/oidc/callback'
-}
+import { getRequestPath } from '@/modules/core/helpers/server'
 
 export interface RateLimitResult {
   isWithinLimits: boolean
@@ -66,7 +44,7 @@ export type RateLimits = {
 }
 
 type RateLimiterOptions = {
-  [key in RateLimitAction]: BurstyRateLimiterOptions
+  [key: string]: BurstyRateLimiterOptions
 }
 
 export type RateLimiterMapping = {
@@ -75,7 +53,9 @@ export type RateLimiterMapping = {
   ) => Promise<RateLimitSuccess | RateLimitBreached>
 }
 
-export const LIMITS: RateLimiterOptions = {
+export type RateLimitAction = keyof typeof LIMITS
+
+export const LIMITS = <const>{
   ALL_REQUESTS: {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_ALL_REQUESTS', '500'),
@@ -179,7 +159,7 @@ export const LIMITS: RateLimiterOptions = {
       duration: 1 * TIME.minute
     }
   },
-  'POST /auth/local/login': {
+  '/auth/local/login': {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
       duration: 10 * TIME.minute
@@ -189,7 +169,7 @@ export const LIMITS: RateLimiterOptions = {
       duration: 30 * TIME.minute
     }
   },
-  'GET /auth/azure': {
+  '/auth/azure': {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
       duration: 10 * TIME.minute
@@ -199,7 +179,7 @@ export const LIMITS: RateLimiterOptions = {
       duration: 30 * TIME.minute
     }
   },
-  'GET /auth/gh': {
+  '/auth/gh': {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
       duration: 10 * TIME.minute
@@ -209,7 +189,7 @@ export const LIMITS: RateLimiterOptions = {
       duration: 30 * TIME.minute
     }
   },
-  'GET /auth/goog': {
+  '/auth/goog': {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
       duration: 10 * TIME.minute
@@ -219,7 +199,7 @@ export const LIMITS: RateLimiterOptions = {
       duration: 30 * TIME.minute
     }
   },
-  'GET /auth/oidc': {
+  '/auth/oidc': {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
       duration: 10 * TIME.minute
@@ -229,7 +209,7 @@ export const LIMITS: RateLimiterOptions = {
       duration: 30 * TIME.minute
     }
   },
-  'POST /auth/azure/callback': {
+  '/auth/azure/callback': {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
       duration: 10 * TIME.minute
@@ -239,7 +219,7 @@ export const LIMITS: RateLimiterOptions = {
       duration: 30 * TIME.minute
     }
   },
-  'GET /auth/gh/callback': {
+  '/auth/gh/callback': {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
       duration: 10 * TIME.minute
@@ -249,7 +229,7 @@ export const LIMITS: RateLimiterOptions = {
       duration: 30 * TIME.minute
     }
   },
-  'GET /auth/goog/callback': {
+  '/auth/goog/callback': {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
       duration: 10 * TIME.minute
@@ -259,7 +239,7 @@ export const LIMITS: RateLimiterOptions = {
       duration: 30 * TIME.minute
     }
   },
-  'GET /auth/oidc/callback': {
+  '/auth/oidc/callback': {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_GET_AUTH', '4'),
       duration: 10 * TIME.minute
@@ -270,6 +250,8 @@ export const LIMITS: RateLimiterOptions = {
     }
   }
 }
+
+export const allActions = Object.keys(LIMITS) as RateLimitAction[]
 
 export const sendRateLimitResponse = (
   res: express.Response,
@@ -288,8 +270,12 @@ export const sendRateLimitResponse = (
 }
 
 export const getActionForPath = (path: string, verb: string): RateLimitAction => {
-  const maybeAction = `${verb} ${path}` as keyof typeof RateLimitAction
-  return RateLimitAction[maybeAction] || RateLimitAction.ALL_REQUESTS
+  const maybeAction = `${verb} ${path}` as RateLimitAction
+  const maybeActionNoVerb = path as RateLimitAction
+
+  if (LIMITS[maybeAction]) return maybeAction
+  if (LIMITS[maybeActionNoVerb]) return maybeActionNoVerb
+  return 'ALL_REQUESTS'
 }
 
 export const getSourceFromRequest = (req: express.Request): string => {
@@ -308,7 +294,7 @@ export const createRateLimiterMiddleware = (
     next: express.NextFunction
   ) => {
     if (isTestEnv()) return next()
-    const path = req.originalUrl ? req.originalUrl : req.path
+    const path = getRequestPath(req) || ''
     const action = getActionForPath(path, req.method)
     const source = getSourceFromRequest(req)
 
@@ -358,7 +344,6 @@ const initializeRedisRateLimiters = (
     maxRetriesPerRequest: null
   })
 
-  const allActions = Object.values(RateLimitAction)
   const mapping = Object.fromEntries(
     allActions.map((action) => {
       const limits = options[action]
