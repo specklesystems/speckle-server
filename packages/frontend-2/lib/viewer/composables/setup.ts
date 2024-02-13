@@ -476,14 +476,6 @@ function setupResourceRequest(state: InitialSetupState): InitialStateWithRequest
     }
   }
 
-  watch(
-    discussionLoadedVersionOnly,
-    (newValue) => {
-      threadFilters.value.loadedVersionsOnly = newValue
-    },
-    { immediate: true }
-  )
-
   return {
     ...state,
     resources: {
