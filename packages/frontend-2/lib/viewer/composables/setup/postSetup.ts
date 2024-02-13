@@ -45,7 +45,7 @@ import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import type { Nullable } from '@speckle/shared'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
-import { watchTriggerable } from '@vueuse/core'
+import { onKeyStroke, watchTriggerable } from '@vueuse/core'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { CameraController } from '@speckle/viewer'
 import type { Reference } from '@apollo/client'
@@ -725,7 +725,7 @@ function useViewerMeasurementIntegration() {
     viewer: { instance }
   } = useInjectedViewerState()
 
-  const { clearMeasurements } = useMeasurementUtilities()
+  const { clearMeasurements, removeMeasurement } = useMeasurementUtilities()
 
   onBeforeUnmount(() => {
     clearMeasurements()
@@ -750,6 +750,13 @@ function useViewerMeasurementIntegration() {
     },
     { immediate: true, deep: true }
   )
+
+  onKeyStroke('Delete', () => {
+    removeMeasurement()
+  })
+  onKeyStroke('Backspace', () => {
+    removeMeasurement()
+  })
 }
 
 function useDisableZoomOnEmbed() {
