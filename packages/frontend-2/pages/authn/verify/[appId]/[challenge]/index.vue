@@ -26,14 +26,14 @@
           <div class="text-foreground h4 text-center">
             <span class="text-primary font-bold">
               <ShieldCheckIcon
-                v-if="app?.trustByDefault"
+                v-if="trustByDefault"
                 class="h-6 w-6 inline-block relative -top-1"
               />
               {{ app?.name }}
             </span>
             wants to access your Speckle account.
           </div>
-          <div v-if="!app.trustByDefault" class="w-full">
+          <div v-if="!trustByDefault" class="w-full">
             <Disclosure v-slot="{ open }">
               <DisclosureButton
                 class="w-full flex justify-between items-center text-foreground px-2 py-4 border-t border-b border-outline-3"
@@ -158,8 +158,6 @@ import { toNewProductTerminology } from '~/lib/common/helpers/resources'
 import { FetchError } from 'ofetch'
 
 /**
-// TODO: - Toast prevent hiding
-- Show agi's icons for scope group titles
 - Not you?> Redirect back after login
  * - Check all if branches
  - Responsivity
@@ -229,6 +227,11 @@ const translatedScopes = computed(() => {
   })
 })
 
+const trustByDefault = computed(() => {
+  // return false // TODO Undo
+  return app.value?.trustByDefault
+})
+
 const groupedScopes = computed(() => {
   if (!translatedScopes.value) return []
 
@@ -281,9 +284,9 @@ const allow = async () => {
 }
 
 watch(
-  () => !!app.value?.trustByDefault,
-  (trustByDefault) => {
-    if (trustByDefault) void allow()
+  () => trustByDefault.value,
+  (newVal) => {
+    if (newVal) void allow()
   },
   { immediate: true }
 )

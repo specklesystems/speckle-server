@@ -35,11 +35,6 @@ export const automationDataPageRoute = (baseUrl: string, automationId: string) =
 export const threadRedirectRoute = (projectId: string, threadId: string) =>
   `/projects/${projectId}/threads/${threadId}`
 
-/**
- * TODO: Page doesn't exist
- */
-export const userProfileRoute = (userId: string) => `/profile/${userId}`
-
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()
   return (params?: { query?: LocationQueryRaw }) => {
