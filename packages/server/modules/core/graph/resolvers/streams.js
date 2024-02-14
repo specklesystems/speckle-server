@@ -21,7 +21,6 @@ const {
 const { authorizeResolver, validateScopes } = require(`@/modules/shared`)
 const {
   RateLimitError,
-  RateLimitAction,
   getRateLimitResult,
   isRateLimitBreached
 } = require('@/modules/core/services/ratelimiter')
@@ -250,10 +249,7 @@ module.exports = {
   },
   Mutation: {
     async streamCreate(parent, args, context) {
-      const rateLimitResult = await getRateLimitResult(
-        RateLimitAction.STREAM_CREATE,
-        context.userId
-      )
+      const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
       }
