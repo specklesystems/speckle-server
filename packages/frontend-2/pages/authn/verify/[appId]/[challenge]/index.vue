@@ -111,21 +111,48 @@
             </FormButton>
           </div>
         </template>
-
-        <div v-else-if="app === null" class="flex flex-col space-y-2">
-          <span>Could not resolve app.</span>
-          <CommonTextLink :to="homeRoute">Go Home</CommonTextLink>
-        </div>
-        <div v-else-if="action" class="w-full flex flex-col items-center">
-          <span class="font-bold">
-            <template v-if="action === ChosenAction.Allow">
-              Permission granted.
+        <div
+          v-else-if="app === null || action"
+          class="w-full flex flex-col items-center space-y-4"
+        >
+          <div class="flex space-x-2 items-center">
+            <Component
+              :is="
+                action === ChosenAction.Allow ? CheckCircleIcon : ExclamationCircleIcon
+              "
+              class="h-12 w-12"
+              :class="[action === ChosenAction.Allow ? 'text-success' : 'text-danger']"
+            />
+            <span class="h2 font-bold">
+              <template v-if="action">
+                {{ action === ChosenAction.Allow ? 'Success' : 'Denied' }}
+              </template>
+              <template v-else>Error</template>
+            </span>
+          </div>
+          <div class="text-center">
+            <template v-if="app">
+              <template v-if="action === ChosenAction.Allow">
+                <span class="font-bold">{{ app?.name }}</span>
+                is connected to your
+                <span class="font-bold">Speckle</span>
+                account.
+              </template>
+              <template v-else>
+                <span class="font-bold">{{ app?.name }}</span>
+                has not been connected to your
+                <span class="font-bold">Speckle</span>
+                account.
+              </template>
             </template>
-            <template v-else>Permission denied.</template>
-          </span>
-          <span class="label-light text-foreground-2">
+            <div v-else class="flex space-x-2 items-center">
+              <span>Could not resolve app.</span>
+              <CommonTextLink :to="homeRoute">Go Home</CommonTextLink>
+            </div>
+          </div>
+          <div v-if="action" class="label-light text-foreground-2">
             You will be redirected automatically
-          </span>
+          </div>
         </div>
       </div>
     </LayoutPanel>
@@ -137,7 +164,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ShieldCheckIcon } from '@heroicons/vue/24/solid'
+import {
+  ShieldCheckIcon,
+  CheckCircleIcon,
+  ExclamationCircleIcon
+} from '@heroicons/vue/24/solid'
 import { useQuery } from '@vue/apollo-composable'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthCookie, useAuthManager } from '~~/lib/auth/composables/auth'
@@ -154,7 +185,6 @@ import {
 import { useServerInfo } from '~/lib/core/composables/server'
 import { upperFirst } from 'lodash-es'
 import { toNewProductTerminology } from '~/lib/common/helpers/resources'
-// import { ToastNotificationType, useGlobalToast } from '~/lib/common/composables/toast'
 import { FetchError } from 'ofetch'
 
 /**
@@ -162,7 +192,6 @@ import { FetchError } from 'ofetch'
  * - Check all if branches
  - Responsivity
  - Layout issues? Check login & register on mobile & desktop? Horizontal scrollbar
- - SSR hydration problems
  */
 
 enum ChosenAction {
@@ -228,7 +257,6 @@ const translatedScopes = computed(() => {
 })
 
 const trustByDefault = computed(() => {
-  // return false // TODO Undo
   return app.value?.trustByDefault
 })
 
@@ -250,7 +278,7 @@ const deny = () => {
   loading.value = true
   action.value = ChosenAction.Deny
   mp.track('App Authorization', { allow: false, type: 'action' })
-  window.location.assign(denyUrl.value)
+  // window.location.assign(denyUrl.value)
 }
 
 const allow = async () => {
@@ -267,7 +295,7 @@ const allow = async () => {
 
     // Finally redirect
     action.value = ChosenAction.Allow
-    window.location.assign(allowRes.redirectUrl)
+    // window.location.assign(allowRes.redirectUrl)
   } catch (err) {
     triggerNotification({
       type: ToastNotificationType.Danger,
@@ -283,11 +311,13 @@ const allow = async () => {
   }
 }
 
-watch(
-  () => trustByDefault.value,
-  (newVal) => {
-    if (newVal) void allow()
-  },
-  { immediate: true }
-)
+if (process.client) {
+  watch(
+    () => trustByDefault.value,
+    (newVal) => {
+      if (newVal) void allow()
+    },
+    { immediate: true }
+  )
+}
 </script>
