@@ -21,17 +21,17 @@ module.exports = [
   },
   {
     name: Scopes.Profile.Email,
-    description: 'Grants access to the email address you registered with.',
+    description: 'Read the email address you registered with.',
     public: true
   },
   {
     name: Scopes.Profile.Delete,
-    description: 'Allows a user to delete their account, with all associated data.',
+    description: 'Delete the account with all associated data.',
     public: false
   },
   {
     name: Scopes.Users.Read,
-    description: "Read other users' profile on your behalf.",
+    description: "Read other users' profiles.",
     public: true
   },
   {
@@ -42,7 +42,7 @@ module.exports = [
   },
   {
     name: Scopes.Users.Email,
-    description: 'Access the emails of other users on your behalf.',
+    description: 'Access the emails of other users.',
     public: false
   },
   {
@@ -53,12 +53,12 @@ module.exports = [
   },
   {
     name: Scopes.Tokens.Read,
-    description: 'Access your API tokens.',
+    description: 'Access API tokens.',
     public: false
   },
   {
     name: Scopes.Tokens.Write,
-    description: 'Create and delete API tokens on your behalf.',
+    description: 'Create and delete API tokens.',
     public: false
   }
 ]

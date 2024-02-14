@@ -103,6 +103,11 @@
             <FormButton full-width size="lg" @click="allow">Authorize</FormButton>
           </div>
         </template>
+
+        <div v-else-if="app === null" class="flex flex-col space-y-2">
+          <span>Could not resolve app.</span>
+          <CommonTextLink :to="homeRoute">Go Home</CommonTextLink>
+        </div>
         <div v-else-if="action" class="w-full flex flex-col items-center">
           <span class="font-bold">
             <template v-if="action === ChosenAction.Allow">
@@ -113,10 +118,6 @@
           <span class="label-light text-foreground-2">
             You will be redirected automatically
           </span>
-        </div>
-        <div v-else-if="app === null" class="space-x-2">
-          <span>Could not resolve app.</span>
-          <CommonTextLink :to="homeRoute">Go Home</CommonTextLink>
         </div>
       </div>
     </LayoutPanel>
@@ -144,9 +145,11 @@ import {
 } from '@heroicons/vue/24/outline'
 import { useServerInfo } from '~/lib/core/composables/server'
 import { upperFirst } from 'lodash-es'
+import { toNewProductTerminology } from '~/lib/common/helpers/resources'
 
 /**
 // TODO: Process redirect as fetch call so that we can catch errors?
+- Not you?> Redirect back after login
  * - Check all if branches
  - Responsivity
  - Layout issues? Check login & register on mobile & desktop? Horizontal scrollbar
@@ -198,10 +201,19 @@ const allowUrl = computed(() => {
   return finalUrl.toString()
 })
 
-const groupedScopes = computed(() => {
-  if (!app.value) return []
+const translatedScopes = computed(() => {
+  return app.value?.scopes.map((scope) => {
+    return {
+      description: toNewProductTerminology(scope.description),
+      name: toNewProductTerminology(scope.name)
+    }
+  })
+})
 
-  return app.value.scopes.reduce((acc, scope) => {
+const groupedScopes = computed(() => {
+  if (!translatedScopes.value) return []
+
+  return translatedScopes.value.reduce((acc, scope) => {
     const key = upperFirst(scope.name.split(':')[0])
 
     if (!acc[key]) acc[key] = []
@@ -223,7 +235,7 @@ const allow = () => {
 
   action.value = ChosenAction.Allow
   mp.track('App Authorization', { allow: true, type: 'action' })
-  window.location.replace(allowUrl.value)
+  // window.location.replace(allowUrl.value) TODO:
 }
 
 watch(

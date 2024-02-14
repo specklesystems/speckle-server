@@ -8,7 +8,7 @@ async function initScopes() {
   const scopes: ScopeRecord[] = [
     {
       name: Scopes.Automate.ReportResults,
-      description: 'Allows the app to report automation results to the server.',
+      description: 'Report automation results to the server.',
       public: true
     }
   ]
