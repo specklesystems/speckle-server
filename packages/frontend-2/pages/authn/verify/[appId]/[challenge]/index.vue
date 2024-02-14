@@ -77,7 +77,7 @@
                     <span>{{ scope.description }}</span>
                   </li>
                 </ul> -->
-                  <ul class="list-disc list-inside">
+                  <ul class="list-disc list-inside space-y-2">
                     <template
                       v-for="[group, scope] in Object.entries(groupedScopes)"
                       :key="group"
@@ -154,15 +154,17 @@ import {
 import { useServerInfo } from '~/lib/core/composables/server'
 import { upperFirst } from 'lodash-es'
 import { toNewProductTerminology } from '~/lib/common/helpers/resources'
-import { ToastNotificationType, useGlobalToast } from '~/lib/common/composables/toast'
+// import { ToastNotificationType, useGlobalToast } from '~/lib/common/composables/toast'
 import { FetchError } from 'ofetch'
 
 /**
-// TODO: Process redirect as fetch call so that we can catch errors?
+// TODO: - Toast prevent hiding
+- Show agi's icons for scope group titles
 - Not you?> Redirect back after login
  * - Check all if branches
  - Responsivity
  - Layout issues? Check login & register on mobile & desktop? Horizontal scrollbar
+ - SSR hydration problems
  */
 
 enum ChosenAction {
@@ -173,6 +175,10 @@ enum ChosenAction {
 definePageMeta({
   middleware: 'auth',
   name: 'authorize-app'
+})
+
+useHead({
+  title: 'Authorize Application'
 })
 
 const apiOrigin = useApiOrigin()
@@ -266,7 +272,8 @@ const allow = async () => {
       description:
         err instanceof FetchError
           ? (err.data as string) || err.statusMessage || err.message
-          : ensureError(err).message
+          : ensureError(err).message,
+      autoClose: false
     })
   } finally {
     loading.value = false
@@ -276,7 +283,7 @@ const allow = async () => {
 watch(
   () => !!app.value?.trustByDefault,
   (trustByDefault) => {
-    if (trustByDefault) allow()
+    if (trustByDefault) void allow()
   },
   { immediate: true }
 )

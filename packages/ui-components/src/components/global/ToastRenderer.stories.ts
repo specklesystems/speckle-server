@@ -5,6 +5,9 @@ import ToastRenderer from '~~/src/components/global/ToastRenderer.vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import { ToastNotificationType } from '~~/src/helpers/global/toast'
 import type { ToastNotification } from '~~/src/helpers/global/toast'
+import { useGlobalToast } from '~~/src/stories/composables/toast'
+
+type StoryType = StoryObj<{ notification: ToastNotification }>
 
 export default {
   component: ToastRenderer,
@@ -27,31 +30,20 @@ export default {
   }
 } as Meta
 
-export const Default: StoryObj = {
+export const Default: StoryType = {
   render: (args) => ({
     components: { ToastRenderer, FormButton },
     setup() {
+      const { triggerNotification } = useGlobalToast()
       const notification = ref(null as Nullable<ToastNotification>)
       const onClick = () => {
-        notification.value = {
-          type: ToastNotificationType.Info,
-          title: 'Title',
-          description: 'Description',
-          cta: {
-            title: 'CTA',
-            onClick: () => console.log('Clicked')
-          }
-        }
-
-        // Clear after 2s
-        setTimeout(() => (notification.value = null), 2000)
+        triggerNotification(args.notification)
       }
       return { args, onClick, notification }
     },
     template: `
       <div>
         <FormButton @click="onClick">Trigger!</FormButton>
-        <ToastRenderer v-model:notification="notification"/>
       </div>
     `
   }),
@@ -60,6 +52,27 @@ export const Default: StoryObj = {
       source: {
         code: '<GlobalToastRenderer v-model:notification="notification"/>'
       }
+    }
+  },
+  args: {
+    notification: {
+      type: ToastNotificationType.Info,
+      title: 'Title',
+      description: 'Description',
+      cta: {
+        title: 'CTA',
+        onClick: () => console.log('Clicked')
+      }
+    }
+  }
+}
+
+export const WithManualClose: StoryType = {
+  ...Default,
+  args: {
+    notification: {
+      ...Default.args!.notification!,
+      autoClose: false
     }
   }
 }
