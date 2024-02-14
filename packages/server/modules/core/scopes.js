@@ -16,7 +16,7 @@ module.exports = [
   },
   {
     name: Scopes.Profile.Read,
-    description: 'Read your profile information (name, bio, company).',
+    description: 'Read your profile information.',
     public: true
   },
   {
@@ -37,7 +37,7 @@ module.exports = [
   {
     name: Scopes.Server.Stats,
     description:
-      'Request server stats from the api. Only works in conjunction with a "server:admin" role.',
+      'Request server stats from the API. Only works in conjunction with a "server:admin" role.',
     public: true
   },
   {
@@ -48,17 +48,17 @@ module.exports = [
   {
     name: Scopes.Server.Setup,
     description:
-      'Edit server information. Note: only server admins will be able to use this token.',
+      'Edit server information. Note: Only server admins will be able to use this token.',
     public: false
   },
   {
     name: Scopes.Tokens.Read,
-    description: 'Access your api tokens.',
+    description: 'Access your API tokens.',
     public: false
   },
   {
     name: Scopes.Tokens.Write,
-    description: 'Create and delete api tokens on your behalf.',
+    description: 'Create and delete API tokens on your behalf.',
     public: false
   }
 ]
