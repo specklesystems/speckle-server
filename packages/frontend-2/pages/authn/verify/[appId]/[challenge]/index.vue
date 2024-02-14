@@ -97,10 +97,18 @@
             </Disclosure>
           </div>
           <div class="flex space-x-2 w-full">
-            <FormButton color="secondary" full-width size="lg" @click="deny">
+            <FormButton
+              color="secondary"
+              full-width
+              size="lg"
+              :disabled="loading"
+              @click="deny"
+            >
               Deny
             </FormButton>
-            <FormButton full-width size="lg" @click="allow">Authorize</FormButton>
+            <FormButton full-width size="lg" :disabled="loading" @click="allow">
+              Authorize
+            </FormButton>
           </div>
         </template>
 
@@ -135,7 +143,7 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthCookie, useAuthManager } from '~~/lib/auth/composables/auth'
 import { authorizableAppMetadataQuery } from '~~/lib/auth/graphql/queries'
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
-import type { Nullable } from '@speckle/shared'
+import { ensureError, type Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { homeRoute } from '~~/lib/common/helpers/route'
 import {
@@ -146,6 +154,8 @@ import {
 import { useServerInfo } from '~/lib/core/composables/server'
 import { upperFirst } from 'lodash-es'
 import { toNewProductTerminology } from '~/lib/common/helpers/resources'
+import { ToastNotificationType, useGlobalToast } from '~/lib/common/composables/toast'
+import { FetchError } from 'ofetch'
 
 /**
 // TODO: Process redirect as fetch call so that we can catch errors?
@@ -172,6 +182,8 @@ const authToken = useAuthCookie()
 const { logout } = useAuthManager()
 const mp = useMixpanel()
 const { serverInfo } = useServerInfo()
+const loading = ref(false)
+const { triggerNotification } = useGlobalToast()
 
 const appId = computed(() => route.params.appId as string)
 const challenge = computed(() => route.params.challenge as string)
@@ -197,6 +209,7 @@ const allowUrl = computed(() => {
   finalUrl.searchParams.set('appId', app.value.id)
   finalUrl.searchParams.set('challenge', challenge.value)
   finalUrl.searchParams.set('token', authToken.value)
+  finalUrl.searchParams.set('preventRedirect', 'true')
 
   return finalUrl.toString()
 })
@@ -223,19 +236,41 @@ const groupedScopes = computed(() => {
 })
 
 const deny = () => {
-  if (process.server || !denyUrl.value || !activeUser.value) return
+  if (process.server || !denyUrl.value || !activeUser.value || loading.value) return
 
+  loading.value = true
   action.value = ChosenAction.Deny
   mp.track('App Authorization', { allow: false, type: 'action' })
-  window.location.replace(denyUrl.value)
+  window.location.assign(denyUrl.value)
 }
 
-const allow = () => {
-  if (process.server || !allowUrl.value) return
+const allow = async () => {
+  if (process.server || !allowUrl.value || loading.value) return
 
-  action.value = ChosenAction.Allow
+  loading.value = true
   mp.track('App Authorization', { allow: true, type: 'action' })
-  // window.location.replace(allowUrl.value) TODO:
+
+  try {
+    const allowRes = await $fetch<{ redirectUrl: string }>(allowUrl.value)
+    if (!allowRes?.redirectUrl) {
+      throw new Error('Malformed authorization response, please contact site admins.')
+    }
+
+    // Finally redirect
+    action.value = ChosenAction.Allow
+    window.location.assign(allowRes.redirectUrl)
+  } catch (err) {
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'App authorization failed',
+      description:
+        err instanceof FetchError
+          ? (err.data as string) || err.statusMessage || err.message
+          : ensureError(err).message
+    })
+  } finally {
+    loading.value = false
+  }
 }
 
 watch(

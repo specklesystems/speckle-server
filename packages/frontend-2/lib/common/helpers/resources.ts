@@ -13,12 +13,15 @@ export const buildModelTreeItemId = (projectId: string, fullName: string) =>
  * Converts old terminology (streams, branches, commits, etc.) to new one (projects, models, versions)
  */
 export const toNewProductTerminology = (str: string): string => {
+  const isFirstCharUppercase = (val: string): boolean =>
+    val?.length ? val[0] === val[0].toUpperCase() : false
+
   return str
     .replaceAll(streamRewriteRgx, (match) =>
-      match === match.toUpperCase() ? 'Project' : 'project'
+      isFirstCharUppercase(match) ? 'Project' : 'project'
     )
     .replaceAll(branchRewriteRgx, (match) => {
-      const shouldBeUppercase = match === match.toUpperCase()
+      const shouldBeUppercase = isFirstCharUppercase(match)
       if (match === 'branches') {
         return shouldBeUppercase ? 'Models' : 'models'
       } else {
@@ -26,6 +29,6 @@ export const toNewProductTerminology = (str: string): string => {
       }
     })
     .replaceAll(commitRewriteRgx, (match) =>
-      match === match.toUpperCase() ? 'Version' : 'version'
+      isFirstCharUppercase(match) ? 'Version' : 'version'
     )
 }
