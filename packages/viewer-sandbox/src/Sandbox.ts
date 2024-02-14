@@ -455,7 +455,7 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
+      console.warn(await this.viewer.screenshot())
       // const start = performance.now()
       // const nodes = this.viewer.getWorldTree().root.all(
       //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -465,10 +465,6 @@ export default class Sandbox {
       // this.viewer.cancelLoad(
       //   'https://latest.speckle.dev/streams/97750296c2/objects/c3138e24a866d447eb86b2a8107b2c09'
       // )
-
-      this.viewer
-        .getExtension(FilteringExtension)
-        .isolateObjects(this.ids /*['1c8f29e7d48e531f6acbf987a50467f9']*/)
     })
 
     const rotate = this.tabs.pages[0].addButton({
