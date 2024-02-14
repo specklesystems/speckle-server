@@ -12,9 +12,14 @@ export class SpeckleLoader extends Loader {
   private tree: WorldTree
   private priority: number = 1
   private isCancelled = false
+  private isFinished = false
 
   public get resource(): string {
     return this._resource
+  }
+
+  public get finished(): boolean {
+    return this.isFinished
   }
 
   constructor(
@@ -82,7 +87,7 @@ export class SpeckleLoader extends Loader {
     for await (const obj of this.loader.getObjectIterator()) {
       if (this.isCancelled) {
         this.emit(LoaderEvent.LoadCancelled, this._resource)
-        return
+        return Promise.resolve(false)
       }
       if (first) {
         firstObjectPromise = this.converter.traverse(this._resource, obj, async () => {
@@ -118,18 +123,27 @@ export class SpeckleLoader extends Loader {
         message: `No displayable objects found in object ${this._resource}.`
       })
     }
+    if (this.isCancelled) {
+      return Promise.resolve(false)
+    }
+
     const t0 = performance.now()
     const geometryConverter = new SpeckleGeometryConverter()
-    const p = this.tree.getRenderTree(this._resource).buildRenderTree(geometryConverter)
+
+    const renderTree = this.tree.getRenderTree(this._resource)
+    if (!renderTree) return Promise.resolve(false)
+    const p = renderTree.buildRenderTree(geometryConverter)
 
     p.then(() => {
       Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
+      this.isFinished = true
     })
     return p
   }
 
   cancel() {
     this.isCancelled = true
+    this.isFinished = false
   }
 
   dispose() {

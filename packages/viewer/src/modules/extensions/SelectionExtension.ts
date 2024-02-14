@@ -5,7 +5,13 @@ import { NodeRenderView } from '../tree/NodeRenderView'
 import { Material } from 'three'
 import { InputEvent } from '../input/Input'
 import { MathUtils } from 'three'
-import { IViewer, ObjectLayers, SelectionEvent, ViewerEvent } from '../../IViewer'
+import {
+  IViewer,
+  ObjectLayers,
+  SelectionEvent,
+  UpdateFlags,
+  ViewerEvent
+} from '../../IViewer'
 import Materials, {
   DisplayStyle,
   MaterialOptions,
@@ -240,7 +246,7 @@ export class SelectionExtension extends Extension {
     this.viewer
       .getRenderer()
       .setMaterial(transparentRvs, this.transparentSelectionMaterialData)
-    this.viewer.requestRender()
+    this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.CLIPPING_PLANES)
   }
 
   protected removeSelection(rvs?: Array<NodeRenderView>) {
