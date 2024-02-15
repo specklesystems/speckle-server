@@ -59,6 +59,9 @@ export default class Batcher {
       }
 
       let instancedNodes = worldTree.findId(g)
+      if (!instancedNodes) {
+        continue
+      }
       instancedNodes = instancedNodes.filter((node: TreeNode) => {
         return (
           node.model.renderView &&

@@ -4,13 +4,14 @@ import {
   createRateLimiterMiddleware,
   getRateLimitResult,
   isRateLimitBreached,
-  RateLimitAction,
   getActionForPath,
   sendRateLimitResponse,
   RateLimitBreached,
   RateLimits,
   createConsumer,
-  RateLimiterMapping
+  RateLimiterMapping,
+  allActions,
+  RateLimitAction
 } from '@/modules/core/services/ratelimiter'
 import { expect } from 'chai'
 import httpMocks from 'node-mocks-http'
@@ -23,7 +24,6 @@ type RateLimiterOptions = {
 const initializeInMemoryRateLimiters = (
   options: RateLimiterOptions
 ): RateLimiterMapping => {
-  const allActions = Object.values(RateLimitAction)
   const mapping = Object.fromEntries(
     allActions.map((action) => {
       const limits = options[action]
@@ -40,7 +40,6 @@ const initializeInMemoryRateLimiters = (
 }
 
 const createTestRateLimiterMappings = () => {
-  const allActions = Object.values(RateLimitAction)
   const mapping = Object.fromEntries(
     allActions.map((action) => {
       return [action, { limitCount: 0, duration: 1 * TIME.week }]
@@ -61,25 +60,25 @@ describe('Rate Limiting', () => {
     it('should rate limit known actions', async () => {
       const rateLimiterMapping = createTestRateLimiterMappings()
       const result = await getRateLimitResult(
-        RateLimitAction.STREAM_CREATE,
+        'STREAM_CREATE',
         generateRandomIP(),
         rateLimiterMapping
       )
 
       expect(isRateLimitBreached(result)).to.be.true
-      expect(result.action).to.equal(RateLimitAction.STREAM_CREATE)
+      expect(result.action).to.equal('STREAM_CREATE')
     })
   })
 
   describe('getActionForPath', () => {
     it('should rate limit unknown path as all request action', async () => {
-      expect(getActionForPath('/graphql', 'POST')).to.equal(
-        RateLimitAction['POST /graphql']
+      expect(getActionForPath('/graphql', 'POST')).to.equal('POST /graphql')
+      expect(getActionForPath('/graphql', 'PATCH')).to.equal('ALL_REQUESTS')
+      expect(getActionForPath('/foobar', 'GET')).to.equal('ALL_REQUESTS')
+      expect(getActionForPath('/auth/local/login', 'POST')).to.equal(
+        '/auth/local/login'
       )
-      expect(getActionForPath('/graphql', 'PATCH')).to.equal(
-        RateLimitAction.ALL_REQUESTS
-      )
-      expect(getActionForPath('/foobar', 'GET')).to.equal(RateLimitAction.ALL_REQUESTS)
+      expect(getActionForPath('/auth/local/login', 'GET')).to.equal('/auth/local/login')
     })
   })
 
@@ -87,7 +86,7 @@ describe('Rate Limiting', () => {
     it('should return 429 and set appropriate headers', async () => {
       const breached: RateLimitBreached = {
         isWithinLimits: false,
-        action: RateLimitAction['POST /graphql'],
+        action: 'POST /graphql',
         msBeforeNext: 4900
       }
       const response = httpMocks.createResponse()
@@ -112,7 +111,7 @@ describe('Rate Limiting', () => {
       const testMappings = createTestRateLimiterMappings()
       const limit = 100
       testMappings[action] = createConsumer(
-        RateLimitAction[action],
+        action,
         new RateLimiterMemory({
           keyPrefix: action,
           points: limit,
