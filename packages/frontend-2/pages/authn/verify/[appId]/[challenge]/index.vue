@@ -3,9 +3,7 @@
   <div class="mx-auto">
     <LayoutPanel class="max-w-lg mx-auto w-full">
       <div class="space-y-8 flex flex-col items-center">
-        <h1
-          class="text-center h3 font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block text-transparent bg-clip-text"
-        >
+        <h1 class="text-center h3 font-bold inline-block text-foreground bg-clip-text">
           Authorize Application
         </h1>
         <template v-if="activeUser && app && !action">
@@ -77,14 +75,14 @@
                     <span>{{ scope.description }}</span>
                   </li>
                 </ul> -->
-                  <ul class="list-disc list-inside space-y-2">
+                  <ul class="list-inside space-y-2">
                     <template
                       v-for="[group, scope] in Object.entries(groupedScopes)"
                       :key="group"
                     >
                       <li>
                         <span class="font-bold">{{ group }}</span>
-                        <ul class="ps-5 list-[circle] list-inside">
+                        <ul class="ps-5 list-[circle] list-outside">
                           <li v-for="desc in scope" :key="desc">
                             <span>{{ desc }}</span>
                           </li>
@@ -120,10 +118,10 @@
               :is="
                 action === ChosenAction.Allow ? CheckCircleIcon : ExclamationCircleIcon
               "
-              class="h-12 w-12"
+              class="h-9 w-9"
               :class="[action === ChosenAction.Allow ? 'text-success' : 'text-danger']"
             />
-            <span class="h2 font-bold">
+            <span class="h3 font-bold">
               <template v-if="action">
                 {{ action === ChosenAction.Allow ? 'Success' : 'Denied' }}
               </template>
@@ -133,13 +131,13 @@
           <div class="text-center">
             <template v-if="app">
               <template v-if="action === ChosenAction.Allow">
-                <span class="font-bold">{{ app?.name }}</span>
+                <span class="font-bold text-primary">{{ app?.name }}</span>
                 is connected to your
                 <span class="font-bold">Speckle</span>
                 account.
               </template>
               <template v-else>
-                <span class="font-bold">{{ app?.name }}</span>
+                <span class="font-bold text-primary">{{ app?.name }}</span>
                 has not been connected to your
                 <span class="font-bold">Speckle</span>
                 account.
