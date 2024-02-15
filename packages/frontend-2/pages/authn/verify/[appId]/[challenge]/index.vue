@@ -39,14 +39,14 @@
                 class="w-full flex justify-between items-center text-foreground px-2 py-4 border-t border-b border-outline-3"
               >
                 <div class="flex space-x-2 items-center">
-                  <InformationCircleIcon class="h-5 w-5" />
-                  <span class="font-bold">
+                  <InformationCircleIcon class="h-5 w-5 shrink-0" />
+                  <span class="font-bold text-left">
                     App info & Requested permissions ({{ app.scopes.length }})
                   </span>
                 </div>
                 <ChevronUpIcon
                   :class="!open ? 'rotate-180 transform' : ''"
-                  class="h-5 w-5 text-foreground"
+                  class="h-5 w-5 text-foreground shrink-0"
                 />
               </DisclosureButton>
 
@@ -188,12 +188,6 @@ import { toNewProductTerminology } from '~/lib/common/helpers/resources'
 import { FetchError } from 'ofetch'
 import { usePostAuthRedirect } from '~/lib/auth/composables/postAuthRedirect'
 
-/**
- * - Check all if branches
- - Responsivity
- - Layout issues? Check login & register on mobile & desktop? Horizontal scrollbar
- */
-
 enum ChosenAction {
   Allow = 'allow',
   Deny = 'deny'
@@ -258,7 +252,6 @@ const translatedScopes = computed(() => {
 })
 
 const trustByDefault = computed(() => {
-  // return false
   return app.value?.trustByDefault
 })
 
@@ -280,7 +273,7 @@ const deny = () => {
   loading.value = true
   action.value = ChosenAction.Deny
   mp.track('App Authorization', { allow: false, type: 'action' })
-  // window.location.assign(denyUrl.value)
+  window.location.assign(denyUrl.value)
 }
 
 const allow = async () => {
@@ -297,7 +290,7 @@ const allow = async () => {
 
     // Finally redirect
     action.value = ChosenAction.Allow
-    // window.location.assign(allowRes.redirectUrl)
+    window.location.assign(allowRes.redirectUrl)
   } catch (err) {
     triggerNotification({
       type: ToastNotificationType.Danger,
@@ -316,7 +309,7 @@ const allow = async () => {
 const onSwitchAccounts = async () => {
   const path = route.fullPath
   await logout()
-  postAuthRedirect.set(path)
+  postAuthRedirect.set(path, true)
 }
 
 if (process.client) {
