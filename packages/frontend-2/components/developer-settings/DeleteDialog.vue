@@ -168,10 +168,6 @@ const deleteConfirmed = async () => {
               },
               { fieldNameWhitelist: ['authorizedApps'] }
             )
-
-            // Remove item from authorizedApps
-            const cacheId = getCacheId('AuthorizedApp', itemId)
-            cache.evict({ id: cacheId })
           }
         }
       }
