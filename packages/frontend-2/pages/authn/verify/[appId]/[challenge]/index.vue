@@ -18,7 +18,7 @@
               size="xs"
               :icon-right="ArrowsRightLeftIcon"
               no-underline
-              @click="() => logout()"
+              @click="onSwitchAccounts"
             >
               Not you? Switch accounts
             </CommonTextLink>
@@ -186,9 +186,9 @@ import { useServerInfo } from '~/lib/core/composables/server'
 import { upperFirst } from 'lodash-es'
 import { toNewProductTerminology } from '~/lib/common/helpers/resources'
 import { FetchError } from 'ofetch'
+import { usePostAuthRedirect } from '~/lib/auth/composables/postAuthRedirect'
 
 /**
-- Not you?> Redirect back after login
  * - Check all if branches
  - Responsivity
  - Layout issues? Check login & register on mobile & desktop? Horizontal scrollbar
@@ -217,6 +217,7 @@ const mp = useMixpanel()
 const { serverInfo } = useServerInfo()
 const loading = ref(false)
 const { triggerNotification } = useGlobalToast()
+const postAuthRedirect = usePostAuthRedirect()
 
 const appId = computed(() => route.params.appId as string)
 const challenge = computed(() => route.params.challenge as string)
@@ -257,6 +258,7 @@ const translatedScopes = computed(() => {
 })
 
 const trustByDefault = computed(() => {
+  // return false
   return app.value?.trustByDefault
 })
 
@@ -309,6 +311,12 @@ const allow = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const onSwitchAccounts = async () => {
+  const path = route.fullPath
+  await logout()
+  postAuthRedirect.set(path)
 }
 
 if (process.client) {
