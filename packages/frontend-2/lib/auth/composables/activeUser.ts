@@ -50,11 +50,21 @@ export function useActiveUser() {
 
     return '@' + md5(user.email.toLowerCase()).toUpperCase()
   })
+  const userId = computed(() => activeUser.value?.id)
 
   const isGuest = computed(() => activeUser.value?.role === Roles.Server.Guest)
   const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
 
-  return { activeUser, isLoggedIn, distinctId, refetch, onResult, isGuest, isAdmin }
+  return {
+    activeUser,
+    userId,
+    isLoggedIn,
+    distinctId,
+    refetch,
+    onResult,
+    isGuest,
+    isAdmin
+  }
 }
 
 /**

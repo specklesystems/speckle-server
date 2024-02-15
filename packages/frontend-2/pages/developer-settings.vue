@@ -209,15 +209,11 @@
         </DeveloperSettingsSectionHeader>
         <LayoutTable
           :columns="[
-            { id: 'name', header: 'Name', classes: 'col-span-3' },
-            { id: 'id', header: 'ID', classes: 'col-span-2' },
-            {
-              id: 'scope',
-              header: 'Scope',
-              classes: 'col-span-7 whitespace-break-spaces text-xs'
-            }
+            { id: 'name', header: 'Name', classes: 'col-span-3 ' },
+            { id: 'author', header: 'Author', classes: 'col-span-3 ' },
+            { id: 'description', header: 'Description', classes: 'col-span-6 !pt-1.5' }
           ]"
-          :items="applications"
+          :items="authorizedApps"
           :buttons="[
             {
               icon: XMarkIcon,
@@ -226,27 +222,25 @@
               textColor: 'danger'
             }
           ]"
+          row-items-align="stretch"
         >
           <template #name="{ item }">
             {{ item.name }}
           </template>
-          <template #id="{ item }">
-            <span class="rounded text-xs font-mono bg-foundation-page p-2">
-              {{ item.id }}
-            </span>
-          </template>
-
-          <template #scope="{ item }">
-            <div>
-              {{
-                item.scopes
-                  .map(
-                    (event, index, array) =>
-                      `"${event.name}"${index < array.length - 1 ? ',' : ''}`
-                  )
-                  .join(' ')
-              }}
+          <template #author="{ item }">
+            <div class="flex space-x-2 items-center">
+              <template v-if="item.author">
+                <UserAvatar :user="item.author" />
+                <span>{{ item.author.name }}</span>
+              </template>
+              <template v-else>
+                <HeaderLogoBlock minimal no-link />
+                <span>Speckle</span>
+              </template>
             </div>
+          </template>
+          <template #description="{ item }">
+            {{ item.description }}
           </template>
         </LayoutTable>
       </div>
@@ -291,11 +285,13 @@ import {
 } from '@heroicons/vue/24/outline'
 import type {
   TokenItem,
-  ApplicationItem
+  ApplicationItem,
+  AuthorizedAppItem
 } from '~~/lib/developer-settings/helpers/types'
 import {
   developerSettingsAccessTokensQuery,
-  developerSettingsApplicationsQuery
+  developerSettingsApplicationsQuery,
+  developerSettingsAuthorizedAppsQuery
 } from '~~/lib/developer-settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 
@@ -313,8 +309,9 @@ const { result: tokensResult, refetch: refetchTokens } = useQuery(
 const { result: applicationsResult, refetch: refetchApplications } = useQuery(
   developerSettingsApplicationsQuery
 )
+const { result: authorizedAppsResult } = useQuery(developerSettingsAuthorizedAppsQuery)
 
-const itemToModify = ref<TokenItem | ApplicationItem | null>(null)
+const itemToModify = ref<TokenItem | ApplicationItem | AuthorizedAppItem | null>(null)
 const tokenSuccess = ref('')
 const showCreateTokenDialog = ref(false)
 const showCreateTokenSuccessDialog = ref(false)
@@ -335,7 +332,13 @@ const applications = computed<ApplicationItem[]>(() => {
   return applicationsResult.value?.activeUser?.createdApps || []
 })
 
-const openDeleteDialog = (item: TokenItem | ApplicationItem) => {
+const authorizedApps = computed(() =>
+  (authorizedAppsResult.value?.activeUser?.authorizedApps || []).filter(
+    (app) => app.id !== 'spklwebapp'
+  )
+)
+
+const openDeleteDialog = (item: TokenItem | ApplicationItem | AuthorizedAppItem) => {
   itemToModify.value = item
   showDeleteDialog.value = true
 }
