@@ -26,6 +26,7 @@
       <div class="flex flex-col gap-4">
         <DeveloperSettingsSectionHeader
           title="Access Tokens"
+          subheading
           :buttons="[
             {
               props: {
@@ -72,7 +73,7 @@
               icon: TrashIcon,
               label: 'Delete',
               action: openDeleteDialog,
-              class: 'text-red-500'
+              textColor: 'danger'
             }
           ]"
         >
@@ -104,6 +105,7 @@
 
       <div class="flex flex-col gap-4">
         <DeveloperSettingsSectionHeader
+          subheading
           title="Applications"
           :buttons="[
             {
@@ -145,19 +147,83 @@
               icon: LockOpenIcon,
               label: 'Reveal Secret',
               action: openRevealSecretDialog,
-              class: 'text-primary'
+              textColor: 'primary'
             },
             {
               icon: PencilIcon,
               label: 'Edit',
               action: openEditApplicationDialog,
-              class: 'text-primary'
+              textColor: 'primary'
             },
             {
               icon: TrashIcon,
               label: 'Delete',
               action: openDeleteDialog,
-              class: 'text-red-500'
+              textColor: 'danger'
+            }
+          ]"
+        >
+          <template #name="{ item }">
+            {{ item.name }}
+          </template>
+          <template #id="{ item }">
+            <span class="rounded text-xs font-mono bg-foundation-page p-2">
+              {{ item.id }}
+            </span>
+          </template>
+
+          <template #scope="{ item }">
+            <div>
+              {{
+                item.scopes
+                  .map(
+                    (event, index, array) =>
+                      `"${event.name}"${index < array.length - 1 ? ',' : ''}`
+                  )
+                  .join(' ')
+              }}
+            </div>
+          </template>
+        </LayoutTable>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        <DeveloperSettingsSectionHeader
+          subheading
+          title="Authorized Apps"
+          :buttons="[
+            {
+              props: {
+                color: 'invert',
+                to: 'https://speckle.guide/dev/apps.html',
+                target: '_blank',
+                external: true,
+                iconLeft: BookOpenIcon
+              },
+              label: 'Open Docs'
+            }
+          ]"
+        >
+          Here you can review the apps that you have granted access to. If something
+          looks suspicious, revoke the access.
+        </DeveloperSettingsSectionHeader>
+        <LayoutTable
+          :columns="[
+            { id: 'name', header: 'Name', classes: 'col-span-3' },
+            { id: 'id', header: 'ID', classes: 'col-span-2' },
+            {
+              id: 'scope',
+              header: 'Scope',
+              classes: 'col-span-7 whitespace-break-spaces text-xs'
+            }
+          ]"
+          :items="applications"
+          :buttons="[
+            {
+              icon: XMarkIcon,
+              label: 'Revoke Access',
+              action: openDeleteDialog,
+              textColor: 'danger'
             }
           ]"
         >
@@ -220,7 +286,8 @@ import {
   BookOpenIcon,
   TrashIcon,
   PencilIcon,
-  LockOpenIcon
+  LockOpenIcon,
+  XMarkIcon
 } from '@heroicons/vue/24/outline'
 import type {
   TokenItem,
@@ -231,6 +298,12 @@ import {
   developerSettingsApplicationsQuery
 } from '~~/lib/developer-settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
+
+// TODO: Hide first party apps like in FE1
+
+useHead({
+  title: 'Developer Settings'
+})
 
 const apiOrigin = useApiOrigin()
 

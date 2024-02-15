@@ -44,7 +44,9 @@
                 color="secondary"
                 hide-text
                 :class="button.class"
-                @click.stop="button.action(item)"
+                :text-color="button.textColor"
+                :to="isString(button.action) ? button.action : undefined"
+                @click.stop="!isString(button.action) ? button.action(item) : noop"
               />
             </div>
           </div>
@@ -55,8 +57,10 @@
 </template>
 
 <script setup lang="ts" generic="T extends {id: string}, C extends string">
+import { noop, isString } from 'lodash'
 import { computed } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
+import type { FormButtonTextColor } from '~~/src/helpers/form/button'
 import { FormButton } from '~~/src/lib'
 
 export type TableColumn<I> = {
@@ -68,8 +72,9 @@ export type TableColumn<I> = {
 export interface RowButton<T = unknown> {
   icon: PropAnyComponent
   label: string
-  action: (item: T) => void
-  class: string
+  action: (item: T) => void | string
+  class?: string
+  textColor?: FormButtonTextColor
 }
 
 const props = defineProps<{
