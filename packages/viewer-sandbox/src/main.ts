@@ -355,7 +355,9 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/55cc1cbf0a/commits/aa72674507'
     // 'https://latest.speckle.dev/streams/55cc1cbf0a/commits/a7f74b6524'
     // 'https://latest.speckle.dev/streams/85e05b8c72/commits/53f4328211'
-    'https://latest.speckle.dev/streams/aea12cab71/commits/787ade768e'
+    // 'https://latest.speckle.dev/streams/aea12cab71/commits/787ade768e'
+
+    'https://speckle.xyz/streams/a29e5c7772/commits/a8cfae2645'
   )
 }
 
