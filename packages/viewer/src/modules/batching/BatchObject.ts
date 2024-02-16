@@ -50,10 +50,6 @@ export class BatchObject {
     return this._batchIndex
   }
 
-  public get speckleId(): string {
-    return this._renderView.renderData.id
-  }
-
   public get aabb(): Box3 {
     const box = new Box3().copy(this.renderView.aabb)
     box.applyMatrix4(this.transform)
