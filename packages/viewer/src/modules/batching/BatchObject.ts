@@ -131,9 +131,9 @@ export class BatchObject {
 
   public transformTRS(
     translation: VectorLike,
-    euler: VectorLike,
-    scale: VectorLike,
-    pivot: VectorLike
+    euler?: VectorLike,
+    scale?: VectorLike,
+    pivot?: VectorLike
   ) {
     let T: Matrix4 = BatchObject.matBuff0.identity()
     let R: Matrix4 = BatchObject.matBuff1.identity()
