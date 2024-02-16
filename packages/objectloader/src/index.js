@@ -119,6 +119,7 @@ export default class ObjectLoader {
 
   dispose() {
     this.buffer = []
+    this.promises = []
     Object.values(this.intervals).forEach((i) => clearInterval(i.interval))
   }
 
