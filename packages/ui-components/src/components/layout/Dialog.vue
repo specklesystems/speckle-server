@@ -57,7 +57,7 @@
               </button>
               <div
                 class="flex-1 simple-scrollbar overflow-y-auto"
-                :class="hasTitle ? 'p-3 sm:py-6 sm:px-8' : 'p-10'"
+                :class="hasTitle ? 'p-3 sm:py-6 sm:px-8' : 'p-6 pt-10 sm:p-10'"
                 @scroll="onScroll"
               >
                 <slot>Put your content here!</slot>

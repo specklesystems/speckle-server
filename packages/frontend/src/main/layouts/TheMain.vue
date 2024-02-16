@@ -51,10 +51,7 @@
         v-if="!hideEmailBanner"
         class="my-2 mx-4 email-banner"
       ></email-verification-banner>
-      <new-speckle-dialog
-        :model-value="showNewSpeckleDialog"
-        @update:model-value="toggleNewSpeckleDialog"
-      />
+      <new-speckle-dialog v-if="showNewSpeckleDialog" />
       <v-container fluid class="px-4">
         <transition name="fade">
           <router-view></router-view>
@@ -70,6 +67,7 @@ import { gql } from '@apollo/client/core'
 import { useNavigationDrawerAutoResize } from '../lib/core/composables/dom'
 import { ref } from 'vue'
 import { useIsLoggedIn } from '../lib/core/composables/core'
+import { AppLocalStorage } from '@/utils/localStorage'
 
 export default {
   name: 'TheMain',
@@ -79,7 +77,7 @@ export default {
     SearchBar: () => import('@/main/components/common/SearchBar'),
     GlobalToast: () => import('@/main/components/common/GlobalToast'),
     GlobalLoading: () => import('@/main/components/common/GlobalLoading'),
-    NewSpeckleDialog: () => import('@/main/components/common/NewSpeckleDialog'),
+    NewSpeckleDialog: () => import('@/main/dialogs/NewSpeckle.vue'),
     EmailVerificationBanner: () =>
       import('@/main/components/user/EmailVerificationBanner')
   },
@@ -110,7 +108,7 @@ export default {
   },
   setup() {
     const navDrawer = ref(null)
-    const showNewSpeckleDialog = ref(false)
+    const showNewSpeckleDialog = ref(true)
 
     const { navWidth } = useNavigationDrawerAutoResize({
       drawerRef: navDrawer
@@ -118,16 +116,11 @@ export default {
 
     const { isLoggedIn } = useIsLoggedIn()
 
-    function toggleNewSpeckleDialog(value) {
-      showNewSpeckleDialog.value = value
-    }
-
     // drawer ref must be returned, for it to be filled
     return {
       navDrawer,
       navWidth,
       isLoggedIn,
-      toggleNewSpeckleDialog,
       showNewSpeckleDialog
     }
   },
@@ -171,6 +164,11 @@ export default {
       },
       immediate: true
     }
+  },
+  mounted() {
+    console.log(AppLocalStorage.get('newSpeckleDialogDismissed'))
+    const dialogDismissed = AppLocalStorage.get('newSpeckleDialogDismissed')
+    this.showNewSpeckleDialog = dialogDismissed !== 'true'
   },
   methods: {
     cleanQuery() {

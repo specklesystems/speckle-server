@@ -152,10 +152,15 @@
       <v-card-actions class="px-4">
         <v-row no-gutters>
           <v-col cols="12" sm="6" class="pa-2">
-            <v-btn block text @click="dialog = false">I'll check it out later</v-btn>
+            <v-btn block text @click="closeDialog">Stop reminding me</v-btn>
           </v-col>
           <v-col cols="12" sm="6" class="pa-2">
-            <v-btn block color="primary" class="align-self-center">
+            <v-btn
+              block
+              color="primary"
+              class="align-self-center"
+              href="https://latest.speckle.systems/"
+            >
               Go to the new Speckle
               <v-icon right>mdi-arrow-right</v-icon>
             </v-btn>
@@ -165,18 +170,17 @@
     </v-card>
   </v-dialog>
 </template>
+<script>
+import { AppLocalStorage } from '@/utils/localStorage'
 
-<script lang="ts">
 export default {
-  props: {
-    showDialog: {
-      type: Boolean,
-      required: true
-    }
-  },
+  data: () => ({
+    dialog: true
+  }),
   methods: {
     closeDialog() {
-      this.$emit('update:showDialog', false)
+      AppLocalStorage.set('newSpeckleDialogDismissed', 'true')
+      this.dialog = false
     }
   }
 }

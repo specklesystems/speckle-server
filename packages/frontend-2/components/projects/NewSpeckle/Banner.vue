@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      class="flex flex-col gap-4 justify-between sm:items-center sm:flex-row px-4 py-5 sm:py-2 transition hover:bg-primary-muted"
+      class="flex flex-col gap-4 justify-between sm:items-center sm:flex-row px-4 py-4 sm:py-2 transition hover:bg-primary-muted"
     >
       <div class="flex gap-3 items-center">
         <div class="bg-primary rounded h-8 w-8 flex items-center justify-center">
