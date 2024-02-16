@@ -147,7 +147,7 @@
           : '-translate-x-[100%] opacity-0'
       } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[4rem]'}`"
     >
-      <div v-show="activeControl.length !== 0 && activeControl === 'measurements'">
+      <div v-if="activeControl.length !== 0 && activeControl === 'measurements'">
         <KeepAlive>
           <div><ViewerMeasurementsOptions @close="toggleMeasurements" /></div>
         </KeepAlive>
@@ -244,6 +244,7 @@ import type { AutomationRun } from '~~/lib/common/generated/gql/graphql'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useViewerTour } from '~/lib/viewer/composables/tour'
+import { onKeyStroke } from '@vueuse/core'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 
@@ -440,5 +441,9 @@ onMounted(() => {
 
 watch(isSmallerOrEqualSm, (newVal) => {
   activeControl.value = newVal ? 'none' : 'models'
+})
+
+onKeyStroke('Escape', () => {
+  activeControl.value = 'none'
 })
 </script>

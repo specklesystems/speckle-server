@@ -45,12 +45,13 @@ import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import type { Nullable } from '@speckle/shared'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
-import { watchTriggerable } from '@vueuse/core'
+import { onKeyStroke, watchTriggerable } from '@vueuse/core'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
 import { CameraController } from '@speckle/viewer'
 import type { Reference } from '@apollo/client'
 import type { Modifier } from '@apollo/client/cache'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -724,6 +725,13 @@ function useViewerMeasurementIntegration() {
     viewer: { instance }
   } = useInjectedViewerState()
 
+  const { clearMeasurements, removeMeasurement, enableMeasurements } =
+    useMeasurementUtilities()
+
+  onBeforeUnmount(() => {
+    clearMeasurements()
+  })
+
   watch(
     () => measurement.enabled.value,
     (newVal, oldVal) => {
@@ -743,6 +751,16 @@ function useViewerMeasurementIntegration() {
     },
     { immediate: true, deep: true }
   )
+
+  onKeyStroke('Delete', () => {
+    removeMeasurement()
+  })
+  onKeyStroke('Backspace', () => {
+    removeMeasurement()
+  })
+  onKeyStroke('Escape', () => {
+    enableMeasurements(false)
+  })
 }
 
 function useDisableZoomOnEmbed() {
