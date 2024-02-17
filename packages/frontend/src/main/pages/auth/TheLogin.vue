@@ -93,6 +93,31 @@
         </div>
       </div>
     </div>
+    <div class="d-block d-md-none pa-8 pt-0">
+      <h3 class="font-weight-bold mt-0">Legacy Site</h3>
+      <p class="mb-0 mt-1 primary--text text--disabled text-body-2 pr-4">
+        This is the legacy Speckle site and will be replaced soon.
+        <!-- TODO - UPDATE LINK -->
+        <a
+          href="https://speckle.systems/blog/"
+          target="_blank"
+          class="primary--text text--disabled"
+        >
+          Learn more.
+        </a>
+      </p>
+      <!--TODO - Update Link-->
+      <v-btn
+        href="https://app.speckle.systems/"
+        outlined
+        block
+        class="align-self-center outlined mt-4"
+        small
+      >
+        Go to the new site
+        <v-icon right>mdi-rocket-launch</v-icon>
+      </v-btn>
+    </div>
   </v-card>
 </template>
 

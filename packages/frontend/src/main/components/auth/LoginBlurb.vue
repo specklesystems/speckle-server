@@ -28,15 +28,28 @@
       <v-divider></v-divider>
       <v-row align="center" justify="center" class="py-4">
         <v-col cols="6">
-          <h4 class="mt-0">Legacy Site</h4>
-          <p class="text-body-2 mb-0 mt-1 primary--text text--disabled">
+          <h3 class="text-h6 font-weight-bold mt-0">Legacy Site</h3>
+          <p class="mb-0 mt-1 primary--text text--disabled mr-2">
             This is the legacy Speckle site and will be replaced soon.
+            <!-- TODO - UPDATE LINK -->
+            <a
+              href="https://speckle.systems/blog/"
+              target="_blank"
+              class="primary--text text--disabled"
+            >
+              Learn more.
+            </a>
           </p>
         </v-col>
 
         <v-col cols="6" class="d-flex justify-end">
           <!--TODO - Update Link-->
-          <v-btn block class="align-self-center outlined">
+          <v-btn
+            href="https://app.speckle.systems/"
+            outlined
+            block
+            class="align-self-center outlined ml-4"
+          >
             Go to the new site
             <v-icon right>mdi-rocket-launch</v-icon>
           </v-btn>
