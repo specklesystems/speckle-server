@@ -56,7 +56,15 @@ const {
 
 const authUrl = computed(() => {
   if (props.application?.id) {
-    return `${baseUrl}/authn/verify/${props.application.id}/{code_challenge}`
+    const url = new URL(
+      `/authn/verify/${encodeURIComponent(props.application.id)}`,
+      baseUrl
+    )
+
+    // Add the placeholder for code_challenge
+    url.hash = `{code_challenge}`
+
+    return url.toString()
   }
   return null
 })
