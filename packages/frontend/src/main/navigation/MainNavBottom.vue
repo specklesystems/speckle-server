@@ -14,7 +14,6 @@
             Learn more
           </a>
         </p>
-        <!--TODO - Update Link-->
         <v-btn
           block
           small

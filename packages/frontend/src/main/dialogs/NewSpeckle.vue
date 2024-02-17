@@ -9,142 +9,81 @@
       </v-card-title>
       <v-row no-gutters align="center" justify="space-between" class="pa-6">
         <v-col cols="12" sm="6">image</v-col>
-        <v-col cols="12" sm="6" class="pt-4 pt-sm-0 pb-sm-4 pr-8">
+        <v-col cols="12" sm="6" class="pt-4 pt-sm-0 pb-sm-2 pr-8">
           <h2>What’s New?</h2>
           <div class="d-flex align-center py-2">
-            <!-- TODO - FIND OUT IF WE CAN USE MDI-STARS-OUTLINE -->
             <svg
-              width="26"
-              height="26"
-              viewBox="0 0 26 26"
-              fill="none"
               xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="#3C82F6"
+              width="24"
+              height="24"
             >
-              <g filter="url(#filter0_d_2149_1841)">
-                <path
-                  d="M10.8132 15.9038L10 18.75L9.1868 15.9038C8.75968 14.4089 7.59112 13.2403 6.09619 12.8132L3.25 12L6.09619 11.1868C7.59113 10.7597 8.75968 9.59112 9.1868 8.09619L10 5.25L10.8132 8.09619C11.2403 9.59113 12.4089 10.7597 13.9038 11.1868L16.75 12L13.9038 12.8132C12.4089 13.2403 11.2403 14.4089 10.8132 15.9038Z"
-                  stroke="#3B82F6"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-                <path
-                  d="M19.2589 8.71454L19 9.75L18.7411 8.71454C18.4388 7.50533 17.4947 6.56117 16.2855 6.25887L15.25 6L16.2855 5.74113C17.4947 5.43883 18.4388 4.49467 18.7411 3.28546L19 2.25L19.2589 3.28546C19.5612 4.49467 20.5053 5.43883 21.7145 5.74113L22.75 6L21.7145 6.25887C20.5053 6.56117 19.5612 7.50533 19.2589 8.71454Z"
-                  stroke="#3B82F6"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-                <path
-                  d="M17.8942 20.5673L17.5 21.75L17.1058 20.5673C16.8818 19.8954 16.3546 19.3682 15.6827 19.1442L14.5 18.75L15.6827 18.3558C16.3546 18.1318 16.8818 17.6046 17.1058 16.9327L17.5 15.75L17.8942 16.9327C18.1182 17.6046 18.6454 18.1318 19.3173 18.3558L20.5 18.75L19.3173 19.1442C18.6454 19.3682 18.1182 19.8954 17.8942 20.5673Z"
-                  stroke="#3B82F6"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </g>
-              <defs>
-                <filter
-                  id="filter0_d_2149_1841"
-                  x="-1"
-                  y="-1"
-                  width="28"
-                  height="28"
-                  filterUnits="userSpaceOnUse"
-                  color-interpolation-filters="sRGB"
-                >
-                  <feFlood flood-opacity="0" result="BackgroundImageFix" />
-                  <feColorMatrix
-                    in="SourceAlpha"
-                    type="matrix"
-                    values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-                    result="hardAlpha"
-                  />
-                  <feOffset dy="1" />
-                  <feGaussianBlur stdDeviation="1" />
-                  <feColorMatrix
-                    type="matrix"
-                    values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0"
-                  />
-                  <feBlend
-                    mode="normal"
-                    in2="BackgroundImageFix"
-                    result="effect1_dropShadow_2149_1841"
-                  />
-                  <feBlend
-                    mode="normal"
-                    in="SourceGraphic"
-                    in2="effect1_dropShadow_2149_1841"
-                    result="shape"
-                  />
-                </filter>
-              </defs>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"
+              />
             </svg>
+
             <p class="ml-3 mb-0">Smoother experience</p>
           </div>
           <div class="d-flex align-center py-2">
-            <v-icon>mdi-heart-outline primary--text</v-icon>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="#3C82F6"
+              width="24"
+              height="24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
+              />
+            </svg>
             <p class="ml-3 mb-0">More collaborative features</p>
           </div>
           <div class="d-flex align-center py-2">
-            <v-icon>mdi-rocket-outline primary--text</v-icon>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="#3C82F6"
+              width="24"
+              height="24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"
+              />
+            </svg>
             <p class="ml-3 mb-0">Faster loading time</p>
           </div>
           <h2 class="mt-4 mt-sm-6">How?</h2>
           <div class="d-flex align-center pt-2 py-sm-2">
             <svg
-              width="24"
-              height="25"
-              viewBox="0 0 24 25"
-              fill="none"
               xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="#3C82F6"
+              width="28"
+              height="28"
             >
-              <g filter="url(#filter0_d_2149_1853)">
-                <path
-                  d="M17.9815 18.7248C16.6121 16.9175 14.4424 15.75 12 15.75C9.55761 15.75 7.38789 16.9175 6.01846 18.7248M17.9815 18.7248C19.8335 17.0763 21 14.6744 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 14.6744 4.1665 17.0763 6.01846 18.7248M17.9815 18.7248C16.3915 20.1401 14.2962 21 12 21C9.70383 21 7.60851 20.1401 6.01846 18.7248M15 9.75C15 11.4069 13.6569 12.75 12 12.75C10.3431 12.75 9 11.4069 9 9.75C9 8.09315 10.3431 6.75 12 6.75C13.6569 6.75 15 8.09315 15 9.75Z"
-                  stroke="#3B82F6"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </g>
-              <defs>
-                <filter
-                  id="filter0_d_2149_1853"
-                  x="-2"
-                  y="-1"
-                  width="28"
-                  height="28"
-                  filterUnits="userSpaceOnUse"
-                  color-interpolation-filters="sRGB"
-                >
-                  <feFlood flood-opacity="0" result="BackgroundImageFix" />
-                  <feColorMatrix
-                    in="SourceAlpha"
-                    type="matrix"
-                    values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
-                    result="hardAlpha"
-                  />
-                  <feOffset dy="1" />
-                  <feGaussianBlur stdDeviation="1" />
-                  <feColorMatrix
-                    type="matrix"
-                    values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0"
-                  />
-                  <feBlend
-                    mode="normal"
-                    in2="BackgroundImageFix"
-                    result="effect1_dropShadow_2149_1853"
-                  />
-                  <feBlend
-                    mode="normal"
-                    in="SourceGraphic"
-                    in2="effect1_dropShadow_2149_1853"
-                    result="shape"
-                  />
-                </filter>
-              </defs>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+              />
             </svg>
+
             <p class="ml-3 mb-0">Same user account, same data. Just log in.</p>
           </div>
         </v-col>
