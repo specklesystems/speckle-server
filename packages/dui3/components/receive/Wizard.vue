@@ -42,7 +42,7 @@
         :account-id="selectedAccountId"
         :project-id="selectedProject.id"
         :model-id="selectedModel.id"
-        @next="selectVersion"
+        @next="selectVersionAndAddModel"
       />
     </div>
   </div>
@@ -53,10 +53,10 @@ import {
   ProjectListProjectItemFragment,
   VersionListItemFragment
 } from '~/lib/common/generated/gql/graphql'
-import { ISendFilter, SenderModelCard } from '~/lib/models/card/send'
 import { useHostAppStore } from '~/store/hostApp'
 import { useAccountStore } from '~/store/accounts'
 import { XMarkIcon, CloudArrowDownIcon } from '@heroicons/vue/24/solid'
+import { ReceiverModelCard } from '~/lib/models/card/receiver'
 
 const emit = defineEmits(['close'])
 
@@ -67,7 +67,6 @@ const { defaultAccount } = storeToRefs(accountStore)
 const selectedAccountId = ref<string>(defaultAccount.value?.accountInfo.id as string)
 const selectedProject = ref<ProjectListProjectItemFragment>()
 const selectedModel = ref<ModelListModelItemFragment>()
-const filter = ref<ISendFilter | undefined>(undefined)
 
 const selectProject = (accountId: string, project: ProjectListProjectItemFragment) => {
   step.value++
@@ -80,24 +79,27 @@ const selectModel = (model: ModelListModelItemFragment) => {
   selectedModel.value = model
 }
 
-const selectVersion = (version: VersionListItemFragment) => {
-  // TODO
-  console.log(version)
+const selectVersionAndAddModel = async (
+  version: VersionListItemFragment,
+  latestVersion: VersionListItemFragment
+) => {
+  const modelCard = new ReceiverModelCard()
+  modelCard.accountId = selectedAccountId.value
+  modelCard.projectId = selectedProject.value?.id as string
+  modelCard.modelId = selectedModel.value?.id as string
+
+  modelCard.projectName = selectedProject.value?.name as string
+  modelCard.modelName = selectedModel.value?.name as string
+
+  modelCard.selectedVersionId = version.id
+  modelCard.latestVersionId = latestVersion.id
+
+  modelCard.hasDismissedUpdateWarning = true
+
+  await hostAppStore.addModel(modelCard)
+  await hostAppStore.receiveModel(modelCard.modelCardId)
+  emit('close')
 }
 
 const hostAppStore = useHostAppStore()
-
-const addModel = async () => {
-  // TODO: Receiver Model Card, etc.
-  const model = new SenderModelCard()
-  model.accountId = selectedAccountId.value
-  model.projectId = selectedProject.value?.id as string
-  model.modelId = selectedModel.value?.id as string
-  model.sendFilter = filter.value as ISendFilter
-  model.expired = false
-
-  await hostAppStore.addModel(model)
-  void hostAppStore.sendModel(model.modelCardId)
-  emit('close')
-}
 </script>

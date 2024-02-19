@@ -2,24 +2,26 @@
 <template>
   <div>
     <div
-      class="fixed bottom-0 left-0 w-full bg-primary rounded-t-xl space-x-2 p-1 flex z-100"
+      class="fixed bottom-0 left-0 w-full bg-blue-500/50 rounded-t-md p-2 z-100 grid grid-cols-2 max-[275px]:grid-cols-1 gap-2"
     >
-      <FormButton
-        :icon-left="CloudArrowUpIcon"
-        size="sm"
-        class="flex-1"
-        @click="showSendDialog = !showSendDialog"
-      >
-        Publish
-      </FormButton>
-      <FormButton
-        :icon-left="CloudArrowDownIcon"
-        size="sm"
-        class="flex-1"
-        @click="showReceiveDialog = !showReceiveDialog"
-      >
-        Receive
-      </FormButton>
+      <div>
+        <FormButton
+          :icon-left="CloudArrowUpIcon"
+          full-width
+          @click="showSendDialog = !showSendDialog"
+        >
+          Publish
+        </FormButton>
+      </div>
+      <div>
+        <FormButton
+          :icon-left="CloudArrowDownIcon"
+          full-width
+          @click="showReceiveDialog = !showReceiveDialog"
+        >
+          Receive
+        </FormButton>
+      </div>
       <LayoutDialog v-model:open="showSendDialog" hide-closer>
         <div class="-mx-4 -my-4 pt-4">
           <SendWizard @close="showSendDialog = false" />

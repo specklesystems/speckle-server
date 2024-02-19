@@ -3,39 +3,30 @@
     <div class="grid grid-cols-2 py-2 max-[275px]:grid-cols-1 gap-2">
       <div>
         <FormButton
-          v-if="!modelCard.progress"
           size="sm"
           full-width
           color="card"
           class="flex items-center justify-center"
-          :icon-left="modelCard.progress ? null : CloudArrowUpIcon"
           @click="sendOrCancel"
         >
           {{ modelCard.progress ? 'Cancel' : 'Publish' }}
-        </FormButton>
-        <FormButton
-          v-else
-          size="sm"
-          full-width
-          class="flex items-center justify-center"
-          @click="sendOrCancel"
-        >
-          Cancel
         </FormButton>
       </div>
       <div
         class="flex h-full items-center space-x-2 text-xs max-[275px]:justify-center rounded-md pl-2 font-bold"
       >
-        <button
+        <FormButton
           v-tippy="'Edit what gets published'"
           :icon-left="CubeIcon"
+          link
+          size="sm"
+          color="card"
           class="flex min-w-0 transition hover:text-primary py-1"
           :disabled="!!modelCard.progress"
           @click="openFilterDialog = true"
         >
-          <CubeIcon class="h-4 pr-2" />
           <span class="truncate">{{ modelCard.sendFilter?.name }}</span>
-        </button>
+        </FormButton>
         <LayoutDialog v-model:open="openFilterDialog">
           <div class="-mx-6 -my-6 space-y-2">
             <div>
@@ -94,7 +85,6 @@ import { ISendFilter, ISenderModelCard } from '~/lib/models/card/send'
 import { ProjectModelGroup, useHostAppStore } from '~/store/hostApp'
 
 const cardBase = ref<InstanceType<typeof ModelCardBase>>()
-
 const props = defineProps<{
   modelCard: ISenderModelCard
   project: ProjectModelGroup
@@ -161,6 +151,7 @@ const latestVersionNotification = computed(() => {
   notification.text = 'Version created!'
   notification.cta = {
     name: 'View',
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     action: () => cardBase.value?.viewModel()
   }
   return notification

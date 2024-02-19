@@ -1,5 +1,4 @@
-import { ModelCardNotification } from 'lib/models/card/notification'
-import { ModelCardProgress } from 'lib/models/card/progress'
+import { ModelCardProgress } from '~/lib/models/card'
 import { CardSetting } from 'lib/models/card/setting'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 import { BaseBridge } from '~~/lib/bridge/base'
@@ -7,15 +6,27 @@ import { BaseBridge } from '~~/lib/bridge/base'
 export const IReceiveBindingKey = 'receiveBinding'
 
 export interface IReceiveBinding extends IBinding<IReceiveBindingEvents> {
-  receive: (modelId: string, versionId: string) => Promise<void>
+  receive: (
+    modelId: string,
+    versionId: string,
+    projectName: string,
+    modelName: string
+  ) => Promise<void>
   getReceiveSettings: () => Promise<CardSetting[]>
   cancelReceive: (modelId: string) => Promise<void>
   invalidate: (modelId: string) => Promise<void> // What is this supposed to do
 }
 
 export interface IReceiveBindingEvents {
-  receiverProgress: (args: ModelCardProgress) => void
-  notify: (args: ModelCardNotification) => void
+  setModelProgress: (args: {
+    modelCardId: string
+    progress?: ModelCardProgress
+  }) => void
+  setModelReceiveResult: (args: {
+    modelCardId: string
+    receiveResult: { bakedObjectIds: string[]; display: boolean }
+  }) => void
+  setModelError: (args: { modelCardId: string; error: string }) => void
 }
 
 export class MockedReceiveBinding extends BaseBridge {

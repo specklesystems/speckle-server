@@ -159,6 +159,7 @@ export const modelDetailsQuery = graphql(`
   query ModelDetails($modelId: String!, $projectId: String!) {
     project(id: $projectId) {
       id
+      name
       model(id: $modelId) {
         id
         displayName
@@ -169,6 +170,58 @@ export const modelDetailsQuery = graphql(`
           id
           name
           avatar
+        }
+      }
+    }
+  }
+`)
+
+export const versionDetailsQuery = graphql(`
+  query VersionDetails($projectId: String!, $versionId: String!, $modelId: String!) {
+    project(id: $projectId) {
+      id
+      name
+      model(id: $modelId) {
+        id
+        name
+        versions(limit: 1) {
+          items {
+            id
+            createdAt
+          }
+        }
+        version(id: $versionId) {
+          id
+          referencedObject
+          message
+          sourceApplication
+          createdAt
+          previewUrl
+        }
+      }
+    }
+  }
+`)
+
+export const versionCreatedSubscription = graphql(`
+  subscription OnProjectVersionsUpdate($projectId: String!) {
+    projectVersionsUpdated(id: $projectId) {
+      id
+      type
+      version {
+        id
+        createdAt
+        message
+        sourceApplication
+        authorUser {
+          id
+          name
+          avatar
+        }
+        model {
+          id
+          name
+          displayName
         }
       }
     }

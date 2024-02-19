@@ -5,22 +5,13 @@
         <div class="h5 font-bold">Select a version</div>
       </div>
       <div class="grid grid-cols-2 gap-3 max-[475px]:grid-cols-1 mb-4">
-        <div class="col-span-2 max-[475px]:col-span-1">
-          <FormButton
-            v-if="versions && versions.length !== 0"
-            full-width
-            size="xl"
-            :disabled="!versions || versions.length === 0"
-            @click="$emit('next', versions[0])"
-          >
-            Load latest
-          </FormButton>
-        </div>
         <button
-          v-for="version in versions"
+          v-for="(version, index) in versions"
           :key="version.id"
-          class="block text-left shadow rounded-md bg-foundation-2 hover:bg-primary-muted transition"
-          @click="$emit('next', version)"
+          :class="`block text-left shadow rounded-md bg-foundation-2 hover:bg-primary-muted transition ${
+            index === 0 ? 'outline outline-4 outline-primary' : ''
+          }`"
+          @click="$emit('next', version, versions[0])"
         >
           <div class="mb-2">
             <img :src="version.previewUrl" alt="version preview" />
@@ -50,6 +41,12 @@
               </span>
             </div>
           </div>
+          <div
+            v-if="index === 0"
+            class="w-full py-1 flex items-center justify-center bg-primary text-foreground-on-primary font-semibold"
+          >
+            Load latest
+          </div>
         </button>
       </div>
       <CommonLoadingBar v-if="loading" loading />
@@ -66,7 +63,11 @@ import { SourceApps, SourceAppName } from '@speckle/shared'
 import { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
 
 defineEmits<{
-  (e: 'next', version: VersionListItemFragment): void
+  (
+    e: 'next',
+    version: VersionListItemFragment,
+    latestVersion: VersionListItemFragment
+  ): void
 }>()
 
 const props = defineProps<{
@@ -78,7 +79,8 @@ const props = defineProps<{
 const {
   result: modelVersionResults,
   loading,
-  fetchMore
+  fetchMore,
+  refetch
 } = useQuery(
   modelVersionsQuery,
   () => ({
@@ -86,10 +88,11 @@ const {
     modelId: props.modelId,
     limit: 5
   }),
-  () => ({ clientId: props.accountId })
+  () => ({ clientId: props.accountId, fetchPolicy: 'cache-and-network' })
 )
 
 const versions = computed(() => modelVersionResults.value?.project.model.versions.items)
+
 const hasReachedEnd = ref(false)
 
 const loadMore = () => {
@@ -125,4 +128,9 @@ const loadMore = () => {
     }
   })
 }
+
+onMounted(() => {
+  console.log('mounted')
+  refetch()
+})
 </script>

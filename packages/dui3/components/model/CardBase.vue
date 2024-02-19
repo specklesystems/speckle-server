@@ -1,10 +1,16 @@
 <template>
   <div
-    :class="`rounded-md hover:shadow-md shadow transition overflow-hidden outline outline-blue-500/5 ${cardBgColor}`"
+    :class="`rounded-md hover:shadow-md shadow transition overflow-hidden outline outline-blue-500/10  ${cardBgColor}`"
   >
     <div v-if="modelData" class="px-2 py-2">
       <div class="flex items-center space-x-2 min-w-0">
         <UserAvatar :user="modelData.author" size="sm" class="max-[275px]:hidden" />
+        <div class="text-foreground-2 mt-[2px]">
+          <CommonBadge>
+            <CloudArrowDownIcon v-if="!isSender" class="w-4" />
+            <CloudArrowUpIcon v-else class="w-4" />
+          </CommonBadge>
+        </div>
         <div class="truncate font-bold text-foreground grow select-none">
           {{ modelData.displayName }}
         </div>
@@ -65,10 +71,12 @@ import { useQuery } from '@vue/apollo-composable'
 import { modelDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
 import { CommonLoadingProgressBar } from '@speckle/ui-components'
 import { CursorArrowRaysIcon } from '@heroicons/vue/24/outline'
+import { CloudArrowDownIcon, CloudArrowUpIcon } from '@heroicons/vue/24/solid'
 import { ProjectModelGroup, useHostAppStore } from '~~/store/hostApp'
 import { IModelCard } from '~~/lib/models/card'
 import { useAccountStore } from '~/store/accounts'
 import { ISenderModelCard } from 'lib/models/card/send'
+import { IReceiverModelCard } from '~/lib/models/card/receiver'
 
 const app = useNuxtApp()
 
@@ -87,6 +95,7 @@ const { result: modelResult, loading } = useQuery(
 )
 
 const modelData = computed(() => modelResult.value?.project.model)
+const queryData = computed(() => modelResult.value?.project)
 
 const store = useHostAppStore()
 const accStore = useAccountStore()
@@ -94,6 +103,10 @@ const accStore = useAccountStore()
 const acc = accStore.accounts.find(
   (acc) => acc.accountInfo.id === props.modelCard.accountId
 )
+
+const isSender = computed(() => {
+  return props.modelCard.typeDiscriminator === 'SenderModelCard'
+})
 
 const viewModel = () => {
   app.$baseBinding.openUrl(
@@ -112,14 +125,25 @@ const removeModel = () => {
 }
 
 defineExpose({
-  viewModel
+  viewModel,
+  modelData,
+  queryData
 })
 
 const cardBgColor = computed(() => {
-  if (props.modelCard.error) return 'bg-red-500/10'
-  if (props.modelCard.expired) return 'bg-blue-500/10'
-  if ((props.modelCard as ISenderModelCard).latestCreatedVersionId)
-    return 'bg-green-500/10'
-  return 'bg-foundation'
+  if (props.modelCard.error) return 'bg-red-500/10 hover:bg-red-500/20'
+  if (props.modelCard.expired) return 'bg-blue-500/10 hover:bg-blue-500/20'
+  if (
+    (props.modelCard as ISenderModelCard).latestCreatedVersionId ||
+    (props.modelCard as IReceiverModelCard).receiveResult?.display === true
+  )
+    return 'bg-green-500/10 hover:bg-green-500/20'
+  if (
+    (props.modelCard as IReceiverModelCard).selectedVersionId !==
+      (props.modelCard as IReceiverModelCard).latestVersionId &&
+    !(props.modelCard as IReceiverModelCard).hasDismissedUpdateWarning
+  )
+    return 'bg-orange-500/10'
+  return 'bg-foundation hover:bg-blue-500/10'
 })
 </script>

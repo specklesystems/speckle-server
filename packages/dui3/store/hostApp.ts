@@ -129,9 +129,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
     ) as ISenderModelCard
+    model.latestCreatedVersionId = undefined
+    model.error = undefined
     model.progress = { status: 'Starting to send...' }
     model.expired = false
-    model.error = undefined
     void app.$sendBinding.send(modelCardId)
   }
 
@@ -159,6 +160,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       })
   })
 
+  // should be moved to base bindings
   app.$sendBinding.on('setModelProgress', (args) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
@@ -174,31 +176,68 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.progress = undefined
   })
 
+  // should be moved to base bindings
   app.$sendBinding.on('setModelError', (args) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
     ) as IModelCard
+    model.progress = undefined
     model.error = args.error
   })
 
   /// RECEIVE STUFF - TODO
-  const receiveModel = async (modelId: string, versionId: string) => {
+  const receiveModel = async (modelCardId: string) => {
     const model = documentModelStore.value.models.find(
-      (m) => m.id === modelId
+      (m) => m.modelCardId === modelCardId
     ) as IReceiverModelCard
-    model.receiving = true
-    await app.$receiveBinding.receive(modelId, versionId)
+    model.receiveResult = undefined
+    model.error = undefined
+    model.hasDismissedUpdateWarning = true
+    model.progress = { status: 'Starting to receive...' }
+    await app.$receiveBinding.receive(
+      modelCardId,
+      model.selectedVersionId,
+      model.projectName,
+      model.modelName
+    )
   }
 
-  const receiveModelCancel = async (modelId: string) => {
+  const receiveModelCancel = async (modelCardId: string) => {
     const model = documentModelStore.value.models.find(
-      (m) => m.id === modelId
+      (m) => m.modelCardId === modelCardId
     ) as IReceiverModelCard
-    model.receiving = false
+    await app.$receiveBinding.cancelReceive(modelCardId)
     model.progress = undefined
-    await app.$receiveBinding.cancelReceive(modelId)
   }
 
+  // should be moved to base bindings
+  app.$receiveBinding.on('setModelProgress', (args) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.modelCardId === args.modelCardId
+    ) as IModelCard
+    model.progress = args.progress
+  })
+
+  app.$receiveBinding.on('setModelReceiveResult', (args) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.modelCardId === args.modelCardId
+    ) as IReceiverModelCard
+
+    console.log(args)
+    model.progress = undefined
+    model.receiveResult = args.receiveResult
+  })
+
+  // should be moved to base bindings
+  app.$receiveBinding.on('setModelError', (args) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.modelCardId === args.modelCardId
+    ) as IModelCard
+    model.progress = undefined
+    model.error = args.error
+  })
+
+  // TODO: ask OG what this one's about
   const invalidateReceiver = async (modelId: string) => {
     await app.$receiveBinding.invalidate(modelId)
   }
