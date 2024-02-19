@@ -42,14 +42,14 @@
           </div>
 
           <!-- Global loading bar -->
-          <ViewerLoadingBar class="z-20" />
+          <ViewerLoadingBar class="relative z-20" />
 
           <!-- Sidebar controls -->
           <Transition
             enter-from-class="opacity-0"
             enter-active-class="transition duration-1000"
           >
-            <ViewerControls v-show="showControls" class="z-20" />
+            <ViewerControls v-show="showControls" class="relative z-20" />
           </Transition>
 
           <!-- Viewer Object Selection Info Display -->
