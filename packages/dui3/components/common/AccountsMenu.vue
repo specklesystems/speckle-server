@@ -1,10 +1,7 @@
 <template>
   <div>
     <button @click="showAccountsDialog = true">
-      <UserAvatar v-if="!open" :user="user" hover-effect />
-      <UserAvatar v-else hover-effect>
-        <XMarkIcon class="w-6 h-6" />
-      </UserAvatar>
+      <UserAvatar :user="user" hover-effect />
     </button>
     <LayoutDialog v-model:open="showAccountsDialog" hide-closer>
       <div class="-mx-6 -my-4">
@@ -19,14 +16,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { useAccountStore, DUIAccount } from '~/store/accounts'
-import { useConfigStore } from '~/store/config'
 
 const showAccountsDialog = ref(false)
 
 const accountStore = useAccountStore()
-const { accounts, defaultAccount, isLoading } = storeToRefs(accountStore)
+const { accounts, defaultAccount } = storeToRefs(accountStore)
 
 const user = computed(() => {
   if (!defaultAccount.value) return undefined

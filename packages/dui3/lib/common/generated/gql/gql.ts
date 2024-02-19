@@ -13,8 +13,6 @@ import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-
  * Therefore it is highly recommended to use the babel-plugin for production.
  */
 const documents = {
-    "\n  mutation CommitCreate($commit: CommitCreateInput!) {\n    commitCreate(commit: $commit)\n  }\n": types.CommitCreateDocument,
-    "\n  mutation CreateVersion($input: VersionCreateInput!) {\n    versionMutations {\n      create(input: $input) {\n        id\n        message\n        referencedObject\n      }\n    }\n  }\n": types.CreateVersionDocument,
     "\n  mutation CreateModel($input: CreateModelInput!) {\n    modelMutations {\n      create(input: $input) {\n        id\n        name\n      }\n    }\n  }\n": types.CreateModelDocument,
     "\n  mutation CreateProject($input: ProjectCreateInput) {\n    projectMutations {\n      create(input: $input) {\n        id\n        name\n      }\n    }\n  }\n": types.CreateProjectDocument,
     "\n  fragment ProjectListProjectItem on Project {\n    id\n    name\n    role\n    updatedAt\n    models {\n      totalCount\n    }\n  }\n": types.ProjectListProjectItemFragmentDoc,
@@ -43,14 +41,6 @@ const documents = {
 **/
 export function graphql(source: string): unknown;
 
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  mutation CommitCreate($commit: CommitCreateInput!) {\n    commitCreate(commit: $commit)\n  }\n"): (typeof documents)["\n  mutation CommitCreate($commit: CommitCreateInput!) {\n    commitCreate(commit: $commit)\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  mutation CreateVersion($input: VersionCreateInput!) {\n    versionMutations {\n      create(input: $input) {\n        id\n        message\n        referencedObject\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateVersion($input: VersionCreateInput!) {\n    versionMutations {\n      create(input: $input) {\n        id\n        message\n        referencedObject\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
