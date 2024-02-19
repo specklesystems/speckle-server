@@ -295,8 +295,6 @@ import {
 } from '~~/lib/developer-settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
 
-// TODO: Hide first party apps like in FE1
-
 useHead({
   title: 'Developer Settings'
 })
