@@ -56,7 +56,11 @@ const {
 
 const authUrl = computed(() => {
   if (props.application?.id) {
-    return `${baseUrl}/authn/verify/${props.application.id}/{code_challenge}`
+    const url = new URL(`/authn/verify/${props.application.id}`, baseUrl)
+
+    const finalUrl = `${url.toString()}/{code_challenge}`
+
+    return finalUrl
   }
   return null
 })
