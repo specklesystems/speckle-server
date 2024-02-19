@@ -122,6 +122,18 @@ def read_email_settings(domain):
 
 def main():
     print(LOGO_STR)
+
+    # Docker configuration
+    print("\nConfiguring docker engine...")
+    subprocess.run(
+        [
+            "bash",
+            "-c",
+            f'cp "{os.path.join(FILE_PATH, "daemon.json")}" "/etc/docker/daemon.json"',
+        ]
+    )
+    subprocess.run(["bash", "-c", "sudo systemctl restart docker"], check=True)
+
     ip = get_local_ip()
 
     ###
