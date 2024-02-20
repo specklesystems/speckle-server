@@ -15,6 +15,8 @@ export class GenericBridge extends BaseBridge {
       rejectTimerId: number
     }
   >
+  // TOTHINK: as this is a fast timeout, it forces us for long await methods in .net to return results via events. Kind-of not cool, and i'd be in favour of bumping it to "endless", or remove it altogether
+  // An example is the send or receive operations: they can take fucking long :D
   private TIMEOUT_MS = 1000 * 10 // 2s
 
   constructor(object: IRawBridge) {
@@ -46,7 +48,7 @@ export class GenericBridge extends BaseBridge {
   }
 
   private async runMethod(methodName: string, args: unknown[]): Promise<unknown> {
-    const requestId = (Math.random() + 1).toString(36).substring(2)
+    const requestId = (Math.random() + 1).toString(36).substring(2) + '_' + methodName
     const preserializedArgs = args.map((a) => JSON.stringify(a))
 
     this.bridge.RunMethod(methodName, requestId, JSON.stringify(preserializedArgs))

@@ -1,75 +1,73 @@
 <template>
-  <div :class="containerClass">
-    <div :class="textClass">
-      {{ props.notification.text }}
-    </div>
-    <div v-if="props.notification.action" class="p-1">
-      <FormButton
-        size="sm"
-        :color="props.notification.level"
-        @click="openWindow(props.notification.action.url)"
+  <div
+    :class="`${containerClassColor} flex justify-between items-center py-2 px-2 space-x-2 max-[275px]:flex-col max-[275px]:space-y-2`"
+  >
+    <div class="grow">
+      <div
+        :class="`${textClassColor} text-xs font-medium transition max-[275px]:text-center`"
       >
-        {{ props.notification.action.name }}
+        {{ notification.text }}
+      </div>
+    </div>
+    <div class="flex items-center group space-x-1">
+      <FormButton
+        v-if="notification.dismissible"
+        size="xs"
+        text
+        :color="notification.level"
+        @click="$emit('dismiss')"
+      >
+        <span :class="`${textClassColor}`">Dismiss</span>
+      </FormButton>
+      <FormButton
+        v-if="notification.cta"
+        size="sm"
+        :color="notification.level === 'info' ? 'primary' : notification.level"
+        @click="notification.cta?.action"
+      >
+        {{ notification.cta.name }}
       </FormButton>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ToastInfo } from 'lib/bindings/definitions/IBasicConnectorBinding'
+import { useTimeoutFn } from '@vueuse/core'
+import { ModelCardNotification } from '~/lib/models/card/notification'
 
 const props = defineProps<{
-  notification: ToastInfo
+  notification: ModelCardNotification
 }>()
 
-const containerClass = computed(() => {
-  switch (props.notification.level) {
-    case 'danger':
-      return 'flex justify-between bg-red-500/10 h-8 opacity-100'
-    case 'info':
-      return 'flex justify-between bg-blue-500/10 h-8 opacity-100'
-    case 'success':
-      return 'flex justify-between bg-green-500/10 h-8 opacity-100'
-    case 'warning':
-      return 'flex justify-between bg-orange-500/10 h-8 opacity-100'
-  }
-})
+const emit = defineEmits(['dismiss'])
 
-const textClass = computed(() => {
-  switch (props.notification.level) {
-    case 'danger':
-      return 'text-xs text-red-500 px-2 pt-2 font-medium'
-    case 'info':
-      return 'text-xs text-blue-500 px-2 pt-2 font-medium'
-    case 'success':
-      return 'text-xs text-green-500 px-2 pt-2 font-medium'
-    case 'warning':
-      return 'text-xs text-orange-500 px-2 pt-2 font-medium'
-  }
-})
-
-// FIXME: there is a weird styling state issue if I use dynamic styling as before..
-// It somehow doesn't work! That's why I used it as above with switch cases...
-
-// const typeColors = {
-//   info: 'blue',
-//   success: 'green',
-//   warning: 'orange',
-//   danger: 'red'
-// }
-// const container = computed(() => {
-//   return `flex justify-between bg-${
-//     typeColors[props.notification.level]
-//   }-500/10 h-8 opacity-100`
-// })
-// const textColor = computed(() => {
-//   return `text-xs text-${
-//     typeColors[props.notification.level]
-//   }-500 px-2 pt-2 font-medium`
-// })
-
-const openWindow = (url: string) => {
-  const app = useNuxtApp()
-  app.$openUrl(url)
+if (props.notification.timeout) {
+  useTimeoutFn(() => emit('dismiss'), props.notification.timeout)
 }
+
+const containerClassColor = computed(() => {
+  switch (props.notification.level) {
+    case 'danger':
+      return 'bg-red-500/10'
+    case 'info':
+      return 'bg-blue-500/10'
+    case 'success':
+      return 'bg-green-500/10'
+    case 'warning':
+      return 'bg-orange-500/10'
+  }
+})
+
+const textClassColor = computed(() => {
+  switch (props.notification.level) {
+    case 'danger':
+      return 'text-red-500'
+    case 'info':
+      return 'text-blue-500'
+    case 'success':
+      return 'text-green-500'
+    case 'warning':
+      return 'text-orange-500'
+  }
+})
 </script>

@@ -1,52 +1,44 @@
 <template>
-  <div class="space-y-2 px-2">
-    <div class="text-xs"></div>
-    <div
-      v-if="
-        !selectionStore.selectionInfo.selectedObjectIds ||
-        selectionStore.selectionInfo.selectedObjectIds?.length === 0
-      "
-    >
-      Currently sending {{ filter.selectedObjectIds?.length }} objects. Select some
-      objects to change what you send to this model.
+  <div class="space-y-2 p-2 text-primary bg-blue-500/10 rounded-md text-xs">
+    <div v-if="selectionStore.selectionInfo.selectedObjectIds?.length === 0">
+      No objects selected, go ahead and select some!
     </div>
-    <div v-else class="space-y-2">
-      <div>
-        Current selection:
-        {{ selectionStore.selectionInfo.summary }}
-      </div>
-      <div class="flex w-full justify-end">
-        <FormButton text @click="save()">Save</FormButton>
-        <FormButton @click="save(true)">Save & Send</FormButton>
-      </div>
-    </div>
+    <div v-else>{{ selectionStore.selectionInfo.summary }}.</div>
   </div>
 </template>
 <script setup lang="ts">
-import { IDirectSelectionSendFilter } from 'lib/models/card/send'
+// TODO: set initial filter info from potentially passed in filter prop
+
+import { IDirectSelectionSendFilter, ISendFilter } from 'lib/models/card/send'
 import { useHostAppStore } from '~~/store/hostApp'
 import { useSelectionStore } from '~~/store/selection'
 
 const emit = defineEmits<{
-  (e: 'save', filter: IDirectSelectionSendFilter): void
-  (e: 'save-and-send', filter: IDirectSelectionSendFilter): void
+  (e: 'update:filter', filter: ISendFilter): void
 }>()
 
 const store = useHostAppStore()
 const { selectionFilter } = storeToRefs(store)
 
 const selectionStore = useSelectionStore()
+const { selectionInfo } = storeToRefs(selectionStore)
 
 defineProps<{
   filter: IDirectSelectionSendFilter
 }>()
 
-const save = (andSend = false) => {
-  const filter = { ...selectionFilter.value } as IDirectSelectionSendFilter
-  filter.selectedObjectIds = selectionStore.selectionInfo.selectedObjectIds
-  filter.summary = selectionStore.selectionInfo.summary as string
+watch(
+  selectionInfo,
+  (newValue) => {
+    const filter = { ...selectionFilter.value } as IDirectSelectionSendFilter
+    filter.selectedObjectIds = newValue.selectedObjectIds
+    filter.summary = newValue.summary as string
+    emit('update:filter', filter)
+  },
+  { deep: true, immediate: true }
+)
 
-  if (andSend) return emit('save-and-send', filter)
-  emit('save', filter)
-}
+onMounted(() => {
+  selectionStore.refreshSelectionFromHostApp()
+})
 </script>

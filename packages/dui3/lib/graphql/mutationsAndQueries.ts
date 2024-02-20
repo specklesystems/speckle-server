@@ -1,23 +1,5 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
-export const createCommitMutation = graphql(`
-  mutation CommitCreate($commit: CommitCreateInput!) {
-    commitCreate(commit: $commit)
-  }
-`)
-
-export const createVersionMutation = graphql(`
-  mutation CreateVersion($input: VersionCreateInput!) {
-    versionMutations {
-      create(input: $input) {
-        id
-        message
-        referencedObject
-      }
-    }
-  }
-`)
-
 export const createModelMutation = graphql(`
   mutation CreateModel($input: CreateModelInput!) {
     modelMutations {
@@ -40,44 +22,96 @@ export const createProjectMutation = graphql(`
   }
 `)
 
-export const projectsListQuery = graphql(`
-  query ProjectsList($query: String, $limit: Int, $cursor: String) {
-    streams(query: $query, limit: $limit, cursor: $cursor) {
+export const projectListFragment = graphql(`
+  fragment ProjectListProjectItem on Project {
+    id
+    name
+    role
+    updatedAt
+    models {
       totalCount
-      cursor
-      items {
-        id
-        name
-      }
     }
   }
 `)
 
-export const projectModelsQuery = graphql(`
-  query ProjectModels($projectId: String!, $filter: ProjectModelsFilter) {
-    project(id: $projectId) {
-      models(filter: $filter) {
+export const projectsListQuery = graphql(`
+  query ProjectListQuery($limit: Int!, $filter: UserProjectsFilter, $cursor: String) {
+    activeUser {
+      projects(limit: $limit, filter: $filter, cursor: $cursor) {
+        totalCount
+        cursor
         items {
-          id
-          name
+          ...ProjectListProjectItem
         }
       }
     }
   }
 `)
 
-export const modelVersionsQuery = graphql(`
-  query ModelVersions($projectId: String!, $modelId: String!) {
+export const modelListFragment = graphql(`
+  fragment ModelListModelItem on Model {
+    displayName
+    name
+    id
+    previewUrl
+    updatedAt
+    versions {
+      totalCount
+    }
+  }
+`)
+
+export const projectModelsQuery = graphql(`
+  query ProjectModels(
+    $projectId: String!
+    $cursor: String
+    $limit: Int!
+    $filter: ProjectModelsFilter
+  ) {
     project(id: $projectId) {
+      id
+      models(cursor: $cursor, limit: $limit, filter: $filter) {
+        totalCount
+        items {
+          ...ModelListModelItem
+        }
+      }
+    }
+  }
+`)
+
+export const versionListFragment = graphql(`
+  fragment VersionListItem on Version {
+    id
+    referencedObject
+    message
+    sourceApplication
+    authorUser {
+      avatar
+      id
+      name
+    }
+    createdAt
+    previewUrl
+  }
+`)
+
+export const modelVersionsQuery = graphql(`
+  query ModelVersions(
+    $modelId: String!
+    $projectId: String!
+    $limit: Int!
+    $cursor: String
+  ) {
+    project(id: $projectId) {
+      id
       model(id: $modelId) {
-        versions {
+        id
+        versions(limit: $limit, cursor: $cursor) {
+          totalCount
+          cursor
           items {
-            id
-            message
-            referencedObject
-            createdAt
-            previewUrl
-            sourceApplication
+            ...VersionListItem
           }
         }
       }
@@ -107,6 +141,7 @@ export const modelDetailsQuery = graphql(`
   query ModelDetails($modelId: String!, $projectId: String!) {
     project(id: $projectId) {
       id
+      name
       model(id: $modelId) {
         id
         displayName
@@ -117,6 +152,58 @@ export const modelDetailsQuery = graphql(`
           id
           name
           avatar
+        }
+      }
+    }
+  }
+`)
+
+export const versionDetailsQuery = graphql(`
+  query VersionDetails($projectId: String!, $versionId: String!, $modelId: String!) {
+    project(id: $projectId) {
+      id
+      name
+      model(id: $modelId) {
+        id
+        name
+        versions(limit: 1) {
+          items {
+            id
+            createdAt
+          }
+        }
+        version(id: $versionId) {
+          id
+          referencedObject
+          message
+          sourceApplication
+          createdAt
+          previewUrl
+        }
+      }
+    }
+  }
+`)
+
+export const versionCreatedSubscription = graphql(`
+  subscription OnProjectVersionsUpdate($projectId: String!) {
+    projectVersionsUpdated(id: $projectId) {
+      id
+      type
+      version {
+        id
+        createdAt
+        message
+        sourceApplication
+        authorUser {
+          id
+          name
+          avatar
+        }
+        model {
+          id
+          name
+          displayName
         }
       }
     }

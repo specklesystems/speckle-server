@@ -1,56 +1,59 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div class="p-2 mt-2 space-y-4">
-    <!-- TODO: Change below buttons page to somewhere else once we have proper pages for send and receive -->
-    <div class="space-x-2 mb-6 p-1 flex">
-      <FormButton
-        :icon-left="CloudArrowUpIcon"
-        size="sm"
-        to="/onboarding/send"
-        class="flex-1"
-      >
-        Send
-      </FormButton>
-      <FormButton
-        :icon-left="CloudArrowDownIcon"
-        size="sm"
-        to="/onboarding/receive"
-        class="flex-1"
-      >
-        Receive
-      </FormButton>
+  <div>
+    <div
+      class="fixed bottom-0 left-0 w-full bg-blue-500/50 rounded-t-md p-2 z-100 grid grid-cols-2 max-[275px]:grid-cols-1 gap-2"
+    >
+      <div>
+        <FormButton
+          :icon-left="CloudArrowUpIcon"
+          full-width
+          @click="showSendDialog = !showSendDialog"
+        >
+          Publish
+        </FormButton>
+      </div>
+      <div>
+        <FormButton
+          :icon-left="CloudArrowDownIcon"
+          full-width
+          @click="showReceiveDialog = !showReceiveDialog"
+        >
+          Receive
+        </FormButton>
+      </div>
+      <LayoutDialog v-model:open="showSendDialog" hide-closer>
+        <div class="-mx-4 -my-4 pt-4">
+          <SendWizard @close="showSendDialog = false" />
+        </div>
+      </LayoutDialog>
+      <LayoutDialog v-model:open="showReceiveDialog" hide-closer>
+        <div class="-mx-4 -my-4 pt-4">
+          <ReceiveWizard @close="showReceiveDialog = false" />
+        </div>
+      </LayoutDialog>
     </div>
-    <!-- This is the place I want to navigate (route) to onboarding page if (configStore.onboardingCompleted) -->
-    <div v-for="project in store.projectModelGroups" :key="project.projectId">
-      <CommonProjectModelGroup :project="project" />
+
+    <div class="space-y-4 mt-4">
+      <div v-for="project in store.projectModelGroups" :key="project.projectId">
+        <CommonProjectModelGroup :project="project" />
+      </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { CloudArrowDownIcon, CloudArrowUpIcon } from '@heroicons/vue/24/solid'
+import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'
-import { useConfigStore } from '~/store/config'
+
+// IMPORTANT: the account store needs to be awaited here, and in any other top level page to prevent
+// race conditions on initialisation (model cards get loaded, but accounts are not there yet)
+// TODO: guard against this later, incase we will have more top level entry pages
+const accountStore = useAccountStore()
+await accountStore.refreshAccounts()
+
 const store = useHostAppStore()
-const configStore = useConfigStore()
-const router = useRouter()
 
-// NOTE: Watching configStore initialization is important since sometimes it init after mount
-watch(
-  () => configStore.isInitialized,
-  (newVal) => {
-    if (newVal) {
-      // Now the store is initialized, check for onboarding status
-      if (!configStore.onboardingCompleted && !configStore.onboardingSkipped) {
-        router.push('/onboardingIndex')
-      }
-    }
-  }
-)
-
-onMounted(() => {
-  // We route this page after onboarding steps completed, so it's better to check again all completed or not.
-  if (!configStore.onboardingCompleted && !configStore.onboardingSkipped) {
-    router.push('/onboardingIndex')
-  }
-})
+const showSendDialog = ref(false)
+const showReceiveDialog = ref(false)
 </script>

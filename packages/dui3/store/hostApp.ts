@@ -1,15 +1,10 @@
 import {
   DocumentInfo,
   DocumentModelStore
-} from 'lib/bindings/definitions/IBasicConnectorBinding'
-import { VersionCreateInput } from 'lib/common/generated/gql/graphql'
+} from '~/lib/bindings/definitions/IBasicConnectorBinding'
 import { IModelCard } from 'lib/models/card'
-import { ModelCardNotification } from 'lib/models/card/notification'
 import { IReceiverModelCard } from 'lib/models/card/receiver'
-import { ISenderModelCard, ISendFilter } from 'lib/models/card/send'
-import { CardSetting, CardSettingValue } from 'lib/models/card/setting'
-import { useCreateVersion } from '~/lib/graphql/composables'
-import { useAccountStore } from '~~/store/accounts'
+import { ISendFilter, ISenderModelCard } from 'lib/models/card/send'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -22,13 +17,17 @@ export type ProjectModelGroup = {
 export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
 
-  const { defaultAccount } = storeToRefs(useAccountStore())
-
   const hostAppName = ref<string>()
   const documentInfo = ref<DocumentInfo>()
-  const sendSettings = ref<CardSetting[]>()
-  const receiveSettings = ref<CardSetting[]>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
+
+  /**
+   * Model Card Operations
+   */
+
+  /**
+   * A list of all models currently in the file, grouped by the project they are part of.
+   */
   const projectModelGroups = computed(() => {
     const projectModelGroups: ProjectModelGroup[] = []
     for (const model of documentModelStore.value.models) {
@@ -50,129 +49,210 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     return projectModelGroups
   })
 
-  const sendFilters = ref<ISendFilter[]>()
-  const selectionFilter = computed(() =>
-    sendFilters.value?.find((f) => f.name === 'Selection')
-  )
-
-  const everythingFilter = computed(() =>
-    sendFilters.value?.find((f) => f.name === 'Everything')
-  )
-
-  const tryGetModel = (modelId: string | undefined) => {
-    return documentModelStore.value.models.find((model) => model.modelId === modelId)
-  }
-
+  /**
+   * Adds a new model and persists it to the host app file.
+   * @param model
+   */
   const addModel = async (model: IModelCard) => {
     await app.$baseBinding.addModel(model)
-    documentModelStore.value.models = documentModelStore.value.models.concat([model])
+    documentModelStore.value.models.push(model)
   }
 
-  const highlightModel = async (modelId: string) => {
-    await app.$baseBinding.highlightModel(modelId)
-  }
-
-  const updateModelFilter = async (modelId: string, filter: ISendFilter) => {
+  /**
+   * Updates a model's provided properties and persists the changes in the host application.
+   * @param modelCardId
+   * @param properties
+   */
+  const patchModel = async (
+    modelCardId: string,
+    properties: Record<string, unknown>
+  ) => {
     const modelIndex = documentModelStore.value.models.findIndex(
-      (m) => m.id === modelId
+      (m) => m.modelCardId === modelCardId
     )
-    const model = documentModelStore.value.models[modelIndex] as ISenderModelCard
-    model.sendFilter = filter
 
-    await app.$baseBinding.updateModel(documentModelStore.value.models[modelIndex])
-  }
-
-  type DataType = Record<string, unknown>
-  const updateModelSettings = async (modelId: string, newSettings: DataType) => {
-    const modelIndex = documentModelStore.value.models.findIndex(
-      (m) => m.id === modelId
-    )
-    const model = documentModelStore.value.models[modelIndex] as IModelCard
-
-    if (model.settings) {
-      model.settings.forEach((setting) => {
-        if (setting) {
-          if (setting.value !== newSettings[setting.id]) {
-            // console.log(
-            //   'attempted to set new setting value',
-            //   setting.id,
-            //   newSettings[setting.id]
-            // )
-
-            setting.value = newSettings[setting.id] as CardSettingValue
-          }
-        }
-      })
+    documentModelStore.value.models[modelIndex] = {
+      ...documentModelStore.value.models[modelIndex],
+      ...properties
     }
     await app.$baseBinding.updateModel(documentModelStore.value.models[modelIndex])
   }
 
+  /**
+   * Removes a model from the store and the host app file.
+   * @param model
+   */
   const removeModel = async (model: IModelCard) => {
     await app.$baseBinding.removeModel(model)
     documentModelStore.value.models = documentModelStore.value.models.filter(
-      (item) => item.id !== model.id
+      (item) => item.modelCardId !== model.modelCardId
     )
   }
 
-  const invalidateReceiver = async (modelId: string) => {
-    const model = documentModelStore.value.models.find(
-      (m) => m.id === modelId
-    ) as IReceiverModelCard
-    model.expired = true
-    await app.$receiveBinding.invalidate(modelId)
-  }
+  /**
+   * Send filters
+   */
 
-  const sendModel = async (modelId: string) => {
+  /**
+   * The host app's available send filters.
+   */
+  const sendFilters = ref<ISendFilter[]>()
+
+  /**
+   * Selection filter shortcut - use it as a default if possible.
+   */
+  const selectionFilter = computed(
+    () => sendFilters.value?.find((f) => f.name === 'Selection') as ISendFilter
+  )
+
+  /**
+   * Everything filter shortcut - do not use it as a default.
+   */
+  const everythingFilter = computed(
+    () => sendFilters.value?.find((f) => f.name === 'Everything') as ISendFilter
+  )
+
+  /**
+   * Subscribe to notifications about send filters.
+   */
+  app.$sendBinding.on('refreshSendFilters', () => void refreshSendFilters())
+
+  /**
+   * Send functionality
+   */
+
+  /**
+   * Tells the host app to start sending a specific model card. This will reach inside the host application.
+   * @param modelId
+   */
+  const sendModel = (modelCardId: string) => {
     const model = documentModelStore.value.models.find(
-      (m) => m.id === modelId
+      (m) => m.modelCardId === modelCardId
     ) as ISenderModelCard
+    model.latestCreatedVersionId = undefined
+    model.error = undefined
+    model.progress = { status: 'Starting to send...' }
     model.expired = false
-    model.sending = true
-    await app.$sendBinding.send(modelId)
+    void app.$sendBinding.send(modelCardId)
   }
 
-  const sendModelCancel = async (modelId: string) => {
+  /**
+   * Cancels a model card's ongoing send operation. This will reach inside the host application.
+   * @param modelId
+   */
+  const sendModelCancel = async (modelCardId: string) => {
     const model = documentModelStore.value.models.find(
-      (m) => m.id === modelId
+      (m) => m.modelCardId === modelCardId
     ) as ISenderModelCard
-    model.sending = false
+    await app.$sendBinding.cancelSend(modelCardId)
     model.progress = undefined
-    await app.$sendBinding.cancelSend(modelId)
+    model.error = undefined
+    model.latestCreatedVersionId = undefined
   }
 
-  const receiveModel = async (modelId: string, versionId: string) => {
-    const model = documentModelStore.value.models.find(
-      (m) => m.id === modelId
-    ) as IReceiverModelCard
-    model.expired = false
-    model.receiving = true
-    await app.$receiveBinding.receive(modelId, versionId)
-  }
+  app.$sendBinding.on('setModelsExpired', (modelCardIds) => {
+    documentModelStore.value.models
+      .filter((m) => modelCardIds.includes(m.modelCardId))
+      .forEach((model: ISenderModelCard) => {
+        model.latestCreatedVersionId = undefined
+        model.error = undefined
+        model.expired = true
+      })
+  })
 
-  const receiveModelCancel = async (modelId: string) => {
+  // should be moved to base bindings
+  app.$sendBinding.on('setModelProgress', (args) => {
     const model = documentModelStore.value.models.find(
-      (m) => m.id === modelId
-    ) as IReceiverModelCard
-    model.receiving = false
+      (m) => m.modelCardId === args.modelCardId
+    ) as IModelCard
+    model.progress = args.progress
+  })
+
+  app.$sendBinding.on('setModelCreatedVersionId', (args) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.modelCardId === args.modelCardId
+    ) as ISenderModelCard
+    model.latestCreatedVersionId = args.versionId
     model.progress = undefined
-    await app.$receiveBinding.cancelReceive(modelId)
+  })
+
+  // should be moved to base bindings
+  app.$sendBinding.on('setModelError', (args) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.modelCardId === args.modelCardId
+    ) as IModelCard
+    model.progress = undefined
+    model.error = args.error
+  })
+
+  /// RECEIVE STUFF - TODO
+  const receiveModel = async (modelCardId: string) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.modelCardId === modelCardId
+    ) as IReceiverModelCard
+    model.receiveResult = undefined
+    model.error = undefined
+    model.hasDismissedUpdateWarning = true
+    model.progress = { status: 'Starting to receive...' }
+    await app.$receiveBinding.receive(modelCardId)
   }
 
-  const getSendSettings = async () =>
-    (sendSettings.value = await app.$sendBinding.getSendSettings())
+  const receiveModelCancel = async (modelCardId: string) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.modelCardId === modelCardId
+    ) as IReceiverModelCard
+    await app.$receiveBinding.cancelReceive(modelCardId)
+    model.progress = undefined
+  }
 
-  const getReceiveSettings = async () =>
-    (receiveSettings.value = await app.$receiveBinding.getReceiveSettings())
+  // should be moved to base bindings
+  app.$receiveBinding.on('setModelProgress', (args) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.modelCardId === args.modelCardId
+    ) as IModelCard
+    model.progress = args.progress
+  })
 
+  app.$receiveBinding.on('setModelReceiveResult', (args) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.modelCardId === args.modelCardId
+    ) as IReceiverModelCard
+
+    console.log(args)
+    model.progress = undefined
+    model.receiveResult = args.receiveResult
+  })
+
+  // should be moved to base bindings
+  app.$receiveBinding.on('setModelError', (args) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.modelCardId === args.modelCardId
+    ) as IModelCard
+    model.progress = undefined
+    model.error = args.error
+  })
+
+  /**
+   * Used internally in this store store only for initialisation.
+   */
   const getHostAppName = async () =>
     (hostAppName.value = await app.$baseBinding.getSourceApplicationName())
 
+  /**
+   * Used internally in this store store only for initialisation. Refreshed the document info from the host app. Should be called on document changed events.
+   */
   const refreshDocumentInfo = async () =>
     (documentInfo.value = await app.$baseBinding.getDocumentInfo())
 
+  /**
+   * Used internally in this store store only for initialisation. Refreshes available model cards from the host app. Should be called on document changed events.
+   */
   const refreshDocumentModelStore = async () =>
     (documentModelStore.value = await app.$baseBinding.getDocumentState())
 
+  /**
+   * Sources the available send filters from the app. This is useful in case of host app layer changes, etc.
+   */
   const refreshSendFilters = async () =>
     (sendFilters.value = await app.$sendBinding?.getSendFilters())
 
@@ -186,114 +266,11 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       }, 500) // timeout exists because of rhino
   )
 
-  app.$sendBinding?.on('filtersNeedRefresh', () => void refreshSendFilters())
-
-  app.$sendBinding?.on('sendersExpired', (senderIds) => {
-    documentModelStore.value.models
-      .filter((m) => senderIds.includes(m.id))
-      .forEach((model) => ((model as ISenderModelCard).expired = true))
-  })
-
-  app.$sendBinding.on('notify', (args) => {
-    const model = documentModelStore.value.models.find(
-      (m) => m.id === args.modelCardId
-    ) as ISenderModelCard
-    model.notifications?.push(args)
-    setTimeout(() => {
-      const notification = model.notifications?.find((n) => n.id === args.id)
-      const notifications = model.notifications?.filter((n) => n.id !== args.id)
-      notifications?.push({ ...notification, visible: false } as ModelCardNotification)
-      model.notifications = notifications
-    }, args.timeout)
-  })
-
-  app.$receiveBinding.on('notify', (args) => {
-    const model = documentModelStore.value.models.find(
-      (m) => m.id === args.modelCardId
-    ) as IReceiverModelCard
-    model.notifications?.push(args)
-
-    setTimeout(() => {
-      const notification = model.notifications?.find((n) => n.id === args.id)
-      const notifications = model.notifications?.filter((n) => n.id !== args.id)
-      notifications?.push({ ...notification, visible: false } as ModelCardNotification)
-      model.notifications = notifications
-    }, args.timeout)
-  })
-
-  app.$sendBinding.on('senderProgress', (args) => {
-    const model = documentModelStore.value.models.find(
-      (m) => m.id === args.id
-    ) as ISenderModelCard
-    model.progress = args
-    if (args.status === 'Completed') {
-      model.sending = false
-      model.progress = undefined
-    } else if (args.status === 'Cancelled') {
-      model.sending = false
-      setTimeout(() => {
-        model.progress = undefined
-      }, 3000)
-    }
-  })
-
-  app.$receiveBinding.on('receiverProgress', (args) => {
-    const model = documentModelStore.value.models.find(
-      (m) => m.id === args.id
-    ) as IReceiverModelCard
-    model.progress = args
-    if (args.status === 'Completed') {
-      model.receiving = false
-      model.progress = undefined
-    } else if (args.status === 'Cancelled') {
-      model.receiving = false
-      setTimeout(() => {
-        model.progress = undefined
-      }, 3000)
-    }
-  })
-
-  app.$sendBinding.on('createVersion', async (args) => {
-    const createVersion = useCreateVersion(args.accountId)
-    const version: VersionCreateInput = {
-      projectId: args.projectId,
-      modelId: args.modelId,
-      objectId: args.objectId,
-      sourceApplication: args.sourceApplication,
-      message: args.message
-    }
-    const res = await createVersion(version)
-    const notification: ModelCardNotification = {
-      id: `createCommit ${res?.data?.versionMutations.create.id}`,
-      modelCardId: args.modelCardId,
-      text: 'Version Created',
-      level: 'success',
-      action: {
-        name: 'View',
-        url: `${defaultAccount.value?.accountInfo.serverInfo.url}/streams/${args.projectId}/commits/${res?.data?.versionMutations.create.id}`
-      },
-      visible: true
-    }
-    const model = documentModelStore.value.models.find(
-      (m) => m.id === args.modelCardId
-    ) as ISenderModelCard
-
-    model.notifications?.push(notification)
-
-    setTimeout(() => {
-      const not = model.notifications?.find((n) => n.id === notification.id)
-      const notifications = model.notifications?.filter((n) => n.id !== notification.id)
-      notifications?.push({ ...not, visible: false } as ModelCardNotification)
-      model.notifications = notifications
-    }, 5000)
-  })
   // First initialization calls
   void refreshDocumentInfo()
   void refreshDocumentModelStore()
   void refreshSendFilters()
   void getHostAppName()
-  void getSendSettings()
-  void getReceiveSettings()
 
   return {
     hostAppName,
@@ -302,19 +279,13 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     sendFilters,
     selectionFilter,
     everythingFilter,
-    sendSettings,
-    receiveSettings,
     addModel,
-    highlightModel,
-    updateModelFilter,
-    updateModelSettings,
+    patchModel,
     removeModel,
-    tryGetModel,
     sendModel,
     receiveModel,
     sendModelCancel,
     receiveModelCancel,
-    invalidateReceiver,
     refreshSendFilters
   }
 })
