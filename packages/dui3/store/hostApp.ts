@@ -194,12 +194,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.error = undefined
     model.hasDismissedUpdateWarning = true
     model.progress = { status: 'Starting to receive...' }
-    await app.$receiveBinding.receive(
-      modelCardId,
-      model.selectedVersionId,
-      model.projectName,
-      model.modelName
-    )
+    await app.$receiveBinding.receive(modelCardId)
   }
 
   const receiveModelCancel = async (modelCardId: string) => {
@@ -236,11 +231,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.progress = undefined
     model.error = args.error
   })
-
-  // TODO: ask OG what this one's about
-  const invalidateReceiver = async (modelId: string) => {
-    await app.$receiveBinding.invalidate(modelId)
-  }
 
   /**
    * Used internally in this store store only for initialisation.
@@ -296,7 +286,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     receiveModel,
     sendModelCancel,
     receiveModelCancel,
-    invalidateReceiver,
     refreshSendFilters
   }
 })

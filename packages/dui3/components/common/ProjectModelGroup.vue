@@ -24,30 +24,18 @@
     </div>
 
     <div v-show="showModels" class="space-y-4 mt-3 pb-2">
-      <!-- <div v-if="project.senders.length > 0" class="caption text-foreground-2">
-        Published models
-      </div> -->
       <ModelSender
         v-for="model in project.senders"
         :key="model.modelCardId"
         :model-card="model"
         :project="project"
       />
-      <!-- <div v-if="project.receivers.length > 0" class="caption text-foreground-2">
-        Loaded models
-      </div> -->
       <ModelReceiver
         v-for="model in project.receivers"
         :key="model.modelCardId"
         :model-card="model"
         :project="project"
       />
-
-      <template v-for="model in project.receivers" :key="model.modelId">
-        <!-- <CommonModelCard :model-card="model" :project="project">
-            <CommonModelReceiver :model="model" :project="project" />
-          </CommonModelCard> -->
-      </template>
     </div>
   </div>
 </template>
@@ -87,6 +75,7 @@ const projectUrl = computed(() => {
   }`
 })
 
+// Subscribe to version created events at a project level, and filter to any receivers (if any)
 const { onResult } = useSubscription(
   versionCreatedSubscription,
   () => ({ projectId: props.project.projectId }),

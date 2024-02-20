@@ -79,7 +79,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import ModelCardBase from '~/components/model/CardBase.vue'
-import { CloudArrowUpIcon, CubeIcon } from '@heroicons/vue/24/outline'
+import { CubeIcon } from '@heroicons/vue/24/outline'
 import { ModelCardNotification } from '~/lib/models/card/notification'
 import { ISendFilter, ISenderModelCard } from '~/lib/models/card/send'
 import { ProjectModelGroup, useHostAppStore } from '~/store/hostApp'
@@ -116,12 +116,14 @@ const saveFilterAndSend = async () => {
 
 const expiredNotification = computed(() => {
   if (!props.modelCard.expired) return
+
   const notification = {} as ModelCardNotification
   notification.dismissible = false
   notification.level = props.modelCard.progress ? 'warning' : 'info'
   notification.text = props.modelCard.progress
     ? 'Model was changed while publishing'
     : 'Model is out of sync with application.'
+
   notification.cta = {
     name: props.modelCard.progress ? 'Restart' : 'Update',
     action: async () => {

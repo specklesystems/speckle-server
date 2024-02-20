@@ -6,15 +6,9 @@ import { BaseBridge } from '~~/lib/bridge/base'
 export const IReceiveBindingKey = 'receiveBinding'
 
 export interface IReceiveBinding extends IBinding<IReceiveBindingEvents> {
-  receive: (
-    modelId: string,
-    versionId: string,
-    projectName: string,
-    modelName: string
-  ) => Promise<void>
+  receive: (modelCardId: string) => Promise<void>
   getReceiveSettings: () => Promise<CardSetting[]>
   cancelReceive: (modelId: string) => Promise<void>
-  invalidate: (modelId: string) => Promise<void> // What is this supposed to do
 }
 
 export interface IReceiveBindingEvents {
@@ -22,6 +16,7 @@ export interface IReceiveBindingEvents {
     modelCardId: string
     progress?: ModelCardProgress
   }) => void
+  // See note oon timeout in bridge v2; we might not need this
   setModelReceiveResult: (args: {
     modelCardId: string
     receiveResult: { bakedObjectIds: string[]; display: boolean }

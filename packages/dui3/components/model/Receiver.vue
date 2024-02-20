@@ -60,6 +60,7 @@
         v-if="receiveResultNotification"
         :notification="receiveResultNotification"
         @dismiss="
+          //
           store.patchModel(modelCard.modelCardId, {
             receiveResult: { ...modelCard.receiveResult, display: false }
           })
@@ -109,10 +110,13 @@ const expiredNotification = computed(() => {
   notification.cta = {
     name: 'Update',
     action: async () => {
+      // Note: here we're updating the model card info, and afterwards we're hitting the receive action
       await store.patchModel(props.modelCard.modelCardId, {
         selectedVersionId: props.modelCard.latestVersionId
       })
-      await receiveOrCancel()
+      if (props.modelCard.progress)
+        await store.receiveModelCancel(props.modelCard.modelCardId)
+      await store.receiveModel(props.modelCard.modelCardId)
     }
   }
   return notification
@@ -169,12 +173,11 @@ watchOnce(versionDetailsResult, async (newVal) => {
       hasDismissedUpdateWarning: false
     }
   }
+  // Always update the card's project name and model name, if needed. Note, this is not needed for senders (senders do not need to create layers).
   await store.patchModel(props.modelCard.modelCardId, {
     ...patchObject,
     projectName: newVal?.project.name as string,
     modelName: newVal?.project.model.name as string
   })
 })
-
-// TODO: On init, get a version info query with project name and model name and update across places
 </script>

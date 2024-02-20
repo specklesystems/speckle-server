@@ -47,6 +47,7 @@
     </button>
     <LayoutDialog v-model:open="showNewProjectDialog" hide-closer title="new project">
       <!-- <div class="-mx-6 -my-5 space-y-2"> -->
+      <!-- TODO -->
       <form @submit="onSubmitCreateNewProject">
         <FormTextInput
           v-model="newProjectName"
