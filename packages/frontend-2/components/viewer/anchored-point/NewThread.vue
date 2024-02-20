@@ -10,6 +10,7 @@
   >
     <div class="relative">
       <button
+        v-if="canPostComment"
         v-tippy="!modelValue.isExpanded ? 'New Comment' : 'Close'"
         :class="`bg-foundation-2 ${
           modelValue.isExpanded ? 'outline outline-2 outline-primary' : ''
@@ -87,7 +88,8 @@ import {
 } from '~~/lib/viewer/helpers/comments'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
-import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { useEmbed } from '~~/lib/viewer/composables/setup/embed'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 const { isEnabled: isEmbedEnabled } = useEmbed()
 
@@ -116,11 +118,12 @@ const isPostingNewThread = ref(false)
 //   width: 320
 // })
 const createThread = useSubmitComment()
+const { activeUser } = useActiveUser()
 
 const onThreadClick = () => {
   const newIsExpanded = !props.modelValue.isExpanded
 
-  if (!props.canPostComment) {
+  if (!activeUser) {
     emit('login')
     return
   }
