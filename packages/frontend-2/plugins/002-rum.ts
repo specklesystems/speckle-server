@@ -2,7 +2,7 @@ import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
 import { useCreateErrorLoggingTransport } from '~/lib/core/composables/error'
 
 async function initRumClient() {
-  const { enabled, keys } = resolveInitParams()
+  const { enabled, keys, speckleServerVersion } = resolveInitParams()
   const onAuthStateChange = useOnAuthStateChange()
   const registerErrorTransport = useCreateErrorLoggingTransport()
   if (!enabled) return
@@ -52,6 +52,36 @@ async function initRumClient() {
       // }
     })
   }
+
+  // LogRocket
+  if (keys.logrocket) {
+    const logrocket = (await import('logrocket')).default
+    logrocket.init(keys.logrocket, {
+      release: speckleServerVersion,
+      console: {
+        isEnabled: false // Log manually, prevent console shim
+      }
+    })
+
+    await onAuthStateChange(
+      (user, { resolveDistinctId }) => {
+        const distinctId = resolveDistinctId(user)
+        logrocket.identify(distinctId || '')
+      },
+      { immediate: true }
+    )
+
+    registerErrorTransport({
+      onError: ({ firstError, firstString, otherData, nonObjectOtherData }) => {
+        const error = firstError || firstString || 'Unknown error'
+        logrocket.error(error, {
+          ...otherData,
+          extraData: nonObjectOtherData,
+          mainErrorMessage: firstString
+        })
+      }
+    })
+  }
 }
 
 async function initRumServer() {
@@ -83,16 +113,19 @@ async function initRumServer() {
 
 function resolveInitParams() {
   const {
-    public: { raygunKey }
+    public: { raygunKey, logrocketAppId, speckleServerVersion }
   } = useRuntimeConfig()
   const raygun = raygunKey?.length ? raygunKey : null
-  const enabled = !!raygun
+  const logrocket = logrocketAppId?.length ? logrocketAppId : null
+  const enabled = !!(raygun || logrocket)
 
   return {
     enabled,
     keys: {
-      raygun
-    }
+      raygun,
+      logrocket
+    },
+    speckleServerVersion
   }
 }
 

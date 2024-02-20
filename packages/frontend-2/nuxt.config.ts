@@ -54,7 +54,8 @@ export default defineNuxtConfig({
       speckleServerVersion: SPECKLE_SERVER_VERSION || 'unknown',
       serverName: 'UNDEFINED',
       viewerDebug: false,
-      raygunKey: ''
+      raygunKey: '',
+      logrocketAppId: ''
     }
   },
 
