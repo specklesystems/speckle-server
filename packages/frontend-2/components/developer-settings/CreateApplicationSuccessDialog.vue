@@ -28,11 +28,7 @@
             <strong>Note:</strong>
             To authenticate users inside your app, direct them to
           </p>
-          <CommonClipboardInputWithToast
-            v-if="props.application?.secret"
-            :value="`https://latest.speckle.dev/authn/verify/${props.application?.id}/{code_challenge}`"
-            is-multiline
-          />
+          <CommonClipboardInputWithToast v-if="authUrl" :value="authUrl" is-multiline />
           <p>
             `{code_challenge}` is an OAuth2 plain code challenge that your app needs to
             generate for each authentication request.
@@ -53,6 +49,21 @@ const props = defineProps<{
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
+
+const {
+  public: { baseUrl }
+} = useRuntimeConfig()
+
+const authUrl = computed(() => {
+  if (props.application?.id) {
+    const url = new URL(`/authn/verify/${props.application.id}`, baseUrl)
+
+    const finalUrl = `${url.toString()}/{code_challenge}`
+
+    return finalUrl
+  }
+  return null
+})
 
 const dialogButtons = computed(() => [
   {
