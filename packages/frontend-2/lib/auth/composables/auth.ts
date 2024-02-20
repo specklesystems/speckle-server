@@ -4,7 +4,7 @@ import {
   registerAndGetAccessCode
 } from '~~/lib/auth/services/auth'
 import { ensureError, SafeLocalStorage } from '@speckle/shared'
-import type { Optional } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { CookieKeys, LocalStorageKeys } from '~~/lib/common/helpers/constants'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { useNavigateToHome, useNavigateToLogin } from '~~/lib/common/helpers/route'
@@ -12,19 +12,58 @@ import { useApolloClient } from '@vue/apollo-composable'
 import { speckleWebAppId } from '~~/lib/auth/helpers/strategies'
 import { randomString } from '~~/lib/common/helpers/random'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
-import { useMixpanel, useMixpanelUserIdentification } from '~~/lib/core/composables/mp'
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { useMixpanel } from '~~/lib/core/composables/mp'
+import {
+  useActiveUser,
+  useResolveUserDistinctId
+} from '~~/lib/auth/composables/activeUser'
 import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
+import type { ActiveUserMainMetadataQuery } from '~~/lib/common/generated/gql/graphql'
+import { useScopedState } from '~/lib/common/composables/scopedState'
+
+type UseOnAuthStateChangeCallback = (
+  user: MaybeNullOrUndefined<ActiveUserMainMetadataQuery['activeUser']>,
+  extras: { resolveDistinctId: ReturnType<typeof useResolveUserDistinctId> }
+) => void
+
+const useOnAuthStateChangeState = () =>
+  useScopedState('useOnAuthStateChange', () => ({
+    cbs: [] as Array<UseOnAuthStateChangeCallback>
+  }))
 
 /**
- * TODO:
- * - OAuth error page w/ message passed from server
- * - Invite redirects from server
- * - Verify overall flow - does this make sense (from a security perspective as well)?
- *  - Does challenge do anything?
- *  - Do we really need this back and forth of multiple requests for local auth?
- *  - Can we get rid of backend redirecting to / with access_code in querystring?
+ * Do something when the app auth state changes (user logged in or not). Useful for imperatively
+ * identifying/unidentifying users on mixpanel & other observability tools.
+ *
+ * Use the return to manually remove the callback
  */
+export const useOnAuthStateChange = () => {
+  const { cbs } = useOnAuthStateChangeState()
+  const { activeUser } = useActiveUser()
+  const activeVueInstance = getCurrentInstance()
+  const resolveDistinctId = useResolveUserDistinctId()
+
+  return (
+    cb: UseOnAuthStateChangeCallback,
+    options?: Partial<{ immediate: boolean }>
+  ) => {
+    cbs.push(cb)
+    if (options?.immediate) cb(activeUser.value, { resolveDistinctId })
+
+    const remove = () => {
+      const idx = cbs.indexOf(cb)
+      if (idx > -1) cbs.splice(idx, 1)
+    }
+
+    if (activeVueInstance) {
+      onUnmounted(() => {
+        remove()
+      }, activeVueInstance)
+    }
+
+    return remove
+  }
+}
 
 /**
  * Composable that builds a function for resetting the active auth state.
@@ -32,18 +71,20 @@ import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
  */
 const useResetAuthState = () => {
   const apollo = useApolloClient().client
-  const { reidentify } = useMixpanelUserIdentification()
   const { refetch } = useActiveUser()
+  const resolveDistinctId = useResolveUserDistinctId()
 
   return async () => {
     // evict cache
     apollo.cache.evict({ id: 'ROOT_QUERY', fieldName: 'activeUser' })
 
     // wait till active user is reloaded
-    await refetch()
+    const activeUserRes = await refetch()
+    const user = activeUserRes?.data?.activeUser
 
-    // re-identify mixpanel user
-    reidentify()
+    // process state change callbacks
+    const { cbs } = useOnAuthStateChangeState()
+    cbs.forEach((cb) => cb(user, { resolveDistinctId }))
   }
 }
 
