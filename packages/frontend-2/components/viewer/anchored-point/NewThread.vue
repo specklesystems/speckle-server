@@ -10,7 +10,7 @@
   >
     <div class="relative">
       <button
-        v-if="canPostComment"
+        v-if="canPostComment || !activeUser"
         v-tippy="!modelValue.isExpanded ? 'New Comment' : 'Close'"
         :class="`bg-foundation-2 ${
           modelValue.isExpanded ? 'outline outline-2 outline-primary' : ''
