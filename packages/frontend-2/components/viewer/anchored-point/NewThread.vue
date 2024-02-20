@@ -123,7 +123,7 @@ const { activeUser } = useActiveUser()
 const onThreadClick = () => {
   const newIsExpanded = !props.modelValue.isExpanded
 
-  if (!activeUser) {
+  if (!activeUser.value) {
     emit('login')
     return
   }
