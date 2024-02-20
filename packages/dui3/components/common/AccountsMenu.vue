@@ -5,7 +5,7 @@
     </button>
     <LayoutDialog v-model:open="showAccountsDialog" hide-closer>
       <div class="-mx-6 -my-4">
-        <HeaderUserAccount
+        <CommonUserAccount
           v-for="acc in accounts"
           :key="acc.accountInfo.id"
           :account="(acc as DUIAccount)"
