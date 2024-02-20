@@ -36,7 +36,7 @@
             :key="(object.id as string)"
             :object="object"
             :root="true"
-            :unfold="false"
+            :unfold="objectsLimited.length === 1"
           />
         </div>
         <div v-if="itemCount <= objects.length" class="mb-2">
