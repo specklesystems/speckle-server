@@ -70,7 +70,7 @@ const {
   viewer: {
     metadata: { filteringState }
   },
-  ui: { diff }
+  ui: { diff, measurement }
 } = useInjectedViewerState()
 const { objects, clearSelection } = useSelectionUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
@@ -89,7 +89,7 @@ const objectsUniqueByAppId = computed(() => {
 })
 
 const shouldRenderSidebar = computed(() => {
-  return !isSmallerOrEqualSm.value || sidebarOpen.value
+  return (!isSmallerOrEqualSm.value || sidebarOpen.value) && !measurement.enabled.value
 })
 
 const objectsLimited = computed(() => {
