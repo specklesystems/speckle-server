@@ -1,7 +1,7 @@
 <template>
   <div
     ref="resizableElement"
-    class="relative sm:absolute z-10 right-0 h-[50dvh] sm:h-[100dvh] overflow-hidden w-screen"
+    class="relative sm:absolute z-10 right-0 sm:top-[4.2rem] h-[50dvh] sm:h-[calc(100dvh-4.2rem)] overflow-hidden w-screen sm:pr-3 sm:pb-3 sm:pt-0"
     :style="!isSmallerOrEqualSm ? { maxWidth: width + 'px' } : {}"
   >
     <div
@@ -11,10 +11,10 @@
       <!-- Resize Handle -->
       <div
         ref="resizeHandle"
-        class="hidden sm:flex group relative z-10 hover:z-50 w-6 h-full items-center overflow-hidden"
+        class="hidden sm:flex group relative z-10 hover:z-50 w-6 h-full items-center overflow-hidden -mr-1"
       >
         <div
-          class="w-5 h-8 bg-foundation group-hover:bg-outline-2 mt-8 rounded-l translate-x-4 group-hover:translate-x-0.5 transition cursor-ew-resize flex items-center justify-center shadow group-hover:shadow-xl"
+          class="w-5 h-8 bg-foundation group-hover:bg-outline-2 rounded-l translate-x-4 group-hover:translate-x-0.5 transition cursor-ew-resize flex items-center justify-center shadow group-hover:shadow-xl"
           @mousedown="startResizing"
         >
           <ArrowsRightLeftIcon
@@ -22,17 +22,14 @@
           />
         </div>
         <div
-          class="relative z-10 w-1 h-[100dvh] bg-transparent group-hover:bg-outline-2 cursor-ew-resize transition shadow-lg"
+          class="relative z-10 w-1 h-full pt-[4.2rem] bg-transparent group-hover:bg-outline-2 cursor-ew-resize transition shadow-lg rounded-l"
           @mousedown="startResizing"
         ></div>
       </div>
-      <div
-        class="flex flex-col bg-foundation w-full h-full relative z-20 overflow-hidden shadow-lg"
-      >
+      <div class="flex flex-col w-full h-full relative z-20 overflow-hidden shadow-lg">
         <!-- Header -->
         <div
-          class="h-18 absolute z-10 top-0 w-full left-0 bg-foundation shadow-md"
-          :class="isEmbedEnabled ? '' : 'sm:top-14'"
+          class="h-18 absolute z-10 top-0 w-full left-0 bg-foundation shadow-md sm:rounded-t-md"
         >
           <div
             class="flex items-center justify-between pl-3 pr-2.5 h-10 border-b border-outline-3"
@@ -41,20 +38,6 @@
               <slot name="title"></slot>
             </div>
             <div class="flex items-center gap-0.5">
-              <button
-                v-if="width === 300"
-                class="p-0.5 text-foreground hover:text-primary"
-                @click="width = 600"
-              >
-                <ArrowLeftOnRectangleIcon class="h-4 w-4" />
-              </button>
-              <button
-                v-else
-                class="p-0.5 text-foreground hover:text-primary"
-                @click="minimize"
-              >
-                <ArrowRightOnRectangleIcon class="h-4 w-4" />
-              </button>
               <button class="p-0.5 text-foreground hover:text-primary" @click="onClose">
                 <XMarkIcon class="h-4 w-4" />
               </button>
@@ -74,18 +57,18 @@
                 ? 'h-16'
                 : 'h-10'
               : $slots.actions
-              ? 'h-24 sm:h-32'
+              ? 'h-8 sm:h-20'
               : 'h-10'
           "
         ></div>
         <div
-          class="overflow-y-auto simple-scrollbar h-[calc(50dvh)] sm:h-[calc(100dvh-8rem)] bg-foundation w-full pt-2"
+          class="overflow-y-auto simple-scrollbar h-[calc(50dvh)] sm:h-[calc(100dvh-8rem)] bg-foundation w-full pt-2 sm:rounded-b-md"
         >
           <slot></slot>
         </div>
         <div
           v-if="$slots.footer"
-          class="absolute z-20 bottom-0 h-8 bg-foundation shadow-t w-full flex items-center px-3 empty:translate-y-10 transition"
+          class="absolute z-20 bottom-0 h-8 bg-foundation shadow-t w-full flex items-center px-3 empty:translate-y-10 transition sm:rounded-b-md"
         >
           <slot name="footer"></slot>
         </div>
@@ -96,12 +79,7 @@
 </template>
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
-import {
-  XMarkIcon,
-  ArrowRightOnRectangleIcon,
-  ArrowLeftOnRectangleIcon,
-  ArrowsRightLeftIcon
-} from '@heroicons/vue/24/outline'
+import { XMarkIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { useEmbed } from '~~/lib/viewer/composables/setup/embed'
 
