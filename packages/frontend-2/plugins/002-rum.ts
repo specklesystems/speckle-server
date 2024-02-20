@@ -1,37 +1,18 @@
-import type { Plugin } from '#app'
-import { ensureError } from '@speckle/shared'
-import { isString } from 'lodash-es'
 import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
+import { useErrorLoggingTransport } from '~/lib/core/composables/error'
 
-type PluginNuxtApp = Parameters<Plugin>[0]
-
-async function initRumClient(params: { nuxtApp: PluginNuxtApp }) {
-  const {
-    enabled,
-    keys: { raygunKey }
-  } = resolveInitParams()
-  const { nuxtApp } = params
+async function initRumClient() {
+  const { enabled, keys } = resolveInitParams()
   const onAuthStateChange = useOnAuthStateChange()
   if (!enabled) return
 
   // RayGun
-  if (raygunKey) {
+  if (keys.raygun) {
     const rg4js = (await import('raygun4js')).default
-    rg4js('apiKey', raygunKey)
+    rg4js('apiKey', keys.raygun)
     rg4js('enableCrashReporting', true)
     rg4js('boot')
     rg4js('enableRum', true)
-
-    // TODO: Add to seq logger, instead of doing these manually
-
-    nuxtApp.vueApp.config.errorHandler = (err, vm, info) => {
-      rg4js('send', {
-        error: err,
-        customData: {
-          info
-        }
-      })
-    }
 
     onAuthStateChange(
       (user, { resolveDistinctId }) => {
@@ -43,32 +24,55 @@ async function initRumClient(params: { nuxtApp: PluginNuxtApp }) {
       },
       { immediate: true }
     )
+
+    useErrorLoggingTransport({
+      onError: ({ args, firstError, firstString, otherData, nonObjectOtherData }) => {
+        const error = firstError || firstString || args[0]
+        rg4js('send', {
+          error,
+          customData: {
+            ...otherData,
+            extraData: nonObjectOtherData,
+            mainErrorMessage: firstString
+          }
+        })
+      },
+      onUnhandledError: ({ isUnhandledRejection, error, message }) => {
+        rg4js('send', {
+          error: error || message,
+          customData: {
+            isUnhandledRejection,
+            message,
+            mainErrorMessage: message
+          }
+        })
+      }
+    })
   }
 }
 
-async function initRumServer(params: { nuxtApp: PluginNuxtApp }) {
-  const {
-    enabled,
-    keys: { raygunKey }
-  } = resolveInitParams()
-  const { nuxtApp } = params
+async function initRumServer() {
+  const { enabled, keys } = resolveInitParams()
   if (!enabled) return
 
   // RayGun
-  if (raygunKey) {
+  if (keys.raygun) {
     const raygun = (await import('raygun')).default
     const raygunClient = new raygun.Client().init({
-      apiKey: raygunKey,
+      apiKey: keys.raygun,
       batch: true,
       reportUncaughtExceptions: true
     })
 
-    nuxtApp.hook('vue:error', (error) => {
-      raygunClient.send(isString(error) ? error : ensureError(error))
-    })
-
-    nuxtApp.hook('app:error', (error) => {
-      raygunClient.send(isString(error) ? error : ensureError(error))
+    useErrorLoggingTransport({
+      onError: ({ firstError, firstString, otherData, nonObjectOtherData }) => {
+        const error = firstError || firstString || 'Unknown error'
+        raygunClient.send(error, {
+          ...otherData,
+          extraData: nonObjectOtherData,
+          mainErrorMessage: firstString
+        })
+      }
     })
   }
 }
@@ -77,20 +81,21 @@ function resolveInitParams() {
   const {
     public: { raygunKey }
   } = useRuntimeConfig()
-  const enableRum = raygunKey?.length > 0
+  const raygun = raygunKey?.length ? raygunKey : null
+  const enabled = !!raygun
 
   return {
-    enabled: enableRum,
+    enabled,
     keys: {
-      raygunKey: raygunKey?.length ? raygunKey : null
+      raygun
     }
   }
 }
 
-export default defineNuxtPlugin(async (nuxtApp) => {
+export default defineNuxtPlugin(async () => {
   if (process.server) {
-    await initRumServer({ nuxtApp })
+    await initRumServer()
   } else {
-    await initRumClient({ nuxtApp })
+    await initRumClient()
   }
 })
