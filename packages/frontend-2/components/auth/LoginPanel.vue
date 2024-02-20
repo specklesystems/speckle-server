@@ -34,6 +34,12 @@
           }}
         </div>
         <AuthLoginWithEmailBlock v-if="hasLocalStrategy" :challenge="challenge" />
+        <div class="text-center">
+          <span class="mr-2">Don't have an account?</span>
+          <CommonTextLink :to="finalRegisterRoute" :icon-right="ArrowRightIcon">
+            Register
+          </CommonTextLink>
+        </div>
       </div>
     </div>
   </Component>
@@ -44,6 +50,9 @@ import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { useLoginOrRegisterUtils } from '~~/lib/auth/composables/auth'
 import { loginServerInfoQuery } from '~~/lib/auth/graphql/queries'
 import { LayoutDialog, LayoutPanel } from '@speckle/ui-components'
+import { ArrowRightIcon } from '@heroicons/vue/20/solid'
+import { registerRoute } from '~~/lib/common/helpers/route'
+import { useAuthManager } from '~~/lib/auth/composables/auth'
 
 const props = withDefaults(
   defineProps<{
@@ -57,6 +66,17 @@ const props = withDefaults(
     subtitle: 'Interoperability, Collaboration and Automation for 3D'
   }
 )
+
+const { inviteToken } = useAuthManager()
+const router = useRouter()
+
+const finalRegisterRoute = computed(() => {
+  const result = router.resolve({
+    path: registerRoute,
+    query: inviteToken.value ? { token: inviteToken.value } : {}
+  })
+  return result.fullPath
+})
 
 const concreteComponent = computed(() => {
   return props.dialogMode ? LayoutDialog : LayoutPanel

@@ -12,6 +12,7 @@
         v-if="hasInvite && !showInvitePlaceholder"
         :stream-invite="streamInvite"
         :invite-token="inviteToken"
+        :auto-accept="shouldAutoAcceptInvite"
         @invite-used="onInviteClosed"
       />
 
@@ -26,6 +27,7 @@
           v-if="showInvitePlaceholder"
           :stream-invite="streamInvite"
           :invite-token="inviteToken"
+          :auto-accept="shouldAutoAcceptInvite"
           @invite-used="onInviteClosed"
         />
         <error-placeholder v-else :error-type="errorType">
@@ -150,6 +152,9 @@ export default defineComponent({
   computed: {
     inviteToken(): Nullable<string> {
       return getInviteTokenFromRoute(this.$route)
+    },
+    shouldAutoAcceptInvite(): boolean {
+      return this.$route.query.accept === 'true'
     },
     errorMsg(): MaybeFalsy<string> {
       return this.error?.message.replace('GraphQL error: ', '')

@@ -38,7 +38,7 @@ async function cleanup() {
 
 function getInviteTokenFromEmailParams(emailParams) {
   const { text } = emailParams
-  const [, inviteId] = text.match(/\?token=(.*)\s/i)
+  const [, inviteId] = text.match(/\?token=(.*?)(\s|&)/i)
   return inviteId
 }
 

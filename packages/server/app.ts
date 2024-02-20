@@ -73,15 +73,18 @@ function logSubscriptionOperation(params: {
   response?: SubscriptionResponse
 }) {
   const { error, response, ctx, execParams } = params
+  const userId = ctx.userId
   if (!error && !response) return
 
   const logger = ctx.log.child({
     graphql_query: execParams.query.toString(),
     graphql_variables: redactSensitiveVariables(execParams.variables),
     graphql_operation_name: execParams.operationName,
-    graphql_operation_type: 'subscription'
+    graphql_operation_type: 'subscription',
+    userId
   })
 
+  const errMsg = 'GQL subscription event {graphql_operation_name} errored'
   const errors = response?.errors || (error ? [error] : [])
   if (errors.length) {
     for (const error of errors) {
@@ -89,13 +92,13 @@ function logSubscriptionOperation(params: {
         (error instanceof GraphQLError && error.extensions?.code === 'FORBIDDEN') ||
         error instanceof ApolloError
       ) {
-        logger.info(error, 'graphql error')
+        logger.info(error, errMsg)
       } else {
-        logger.error(error, 'graphql error')
+        logger.error(error, errMsg)
       }
     }
   } else if (response?.data) {
-    logger.info('graphql response')
+    logger.info('GQL subscription event {graphql_operation_name} emitted')
   }
 }
 

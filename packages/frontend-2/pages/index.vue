@@ -14,7 +14,8 @@ useHead({
 })
 
 definePageMeta({
-  middleware: ['dashboard-redirect']
+  middleware: ['dashboard-redirect'],
+  alias: '/profile'
 })
 
 const { isLoggedIn } = useActiveUser()

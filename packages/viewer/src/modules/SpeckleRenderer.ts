@@ -157,7 +157,7 @@ export default class SpeckleRenderer {
   }
 
   public get clippingVolume(): Box3 {
-    return !this._clippingVolume.isEmpty()
+    return !this._clippingVolume.isEmpty() && this._renderer.localClippingEnabled
       ? new Box3().copy(this._clippingVolume)
       : this.sceneBox
   }
@@ -609,6 +609,7 @@ export default class SpeckleRenderer {
 
     /** We'll just update the shadowcatcher after all batches are loaded */
     this.updateShadowCatcher()
+    this.updateClippingPlanes()
     delete this.cancel[subtreeId]
   }
 
@@ -755,7 +756,10 @@ export default class SpeckleRenderer {
           flatRanges.push({
             offset,
             count: count + ranges[k + 1].count,
-            material: ranges[k].material
+            material: ranges[k].material,
+            ...(ranges[k].materialOptions && {
+              materialOptions: ranges[k].materialOptions
+            })
           })
         }
         continue
@@ -763,7 +767,10 @@ export default class SpeckleRenderer {
       flatRanges.push({
         offset,
         count,
-        material: ranges[k].material
+        material: ranges[k].material,
+        ...(ranges[k].materialOptions && {
+          materialOptions: ranges[k].materialOptions
+        })
       })
       offset = ranges[k + 1].offset
       count = 0
@@ -771,7 +778,10 @@ export default class SpeckleRenderer {
         flatRanges.push({
           offset: ranges[k + 1].offset,
           count: ranges[k + 1].count,
-          material: ranges[k + 1].material
+          material: ranges[k + 1].material,
+          ...(ranges[k].materialOptions && {
+            materialOptions: ranges[k].materialOptions
+          })
         })
       }
     }
@@ -801,9 +811,9 @@ export default class SpeckleRenderer {
     return this.batcher.batches[id]
   }
 
-  protected updateClippingPlanes(planes?: Plane[]) {
+  public updateClippingPlanes() {
     if (!this.allObjects) return
-    if (!planes) planes = this._clippingPlanes
+    const planes = this._clippingPlanes
 
     this.allObjects.traverse((object) => {
       const material = (object as unknown as { material }).material

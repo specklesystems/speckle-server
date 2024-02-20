@@ -1,6 +1,6 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
 import type { TreeNode } from '@speckle/viewer'
-import { CameraController } from '@speckle/viewer'
+import { CameraController, MeasurementsExtension } from '@speckle/viewer'
 import type { MeasurementOptions, PropertyInfo } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
@@ -357,10 +357,15 @@ export function useMeasurementUtilities() {
     }
   }
 
+  const clearMeasurements = () => {
+    state.viewer.instance.getExtension(MeasurementsExtension).clearMeasurements()
+  }
+
   return {
     enableMeasurements,
     setMeasurementOptions,
-    removeMeasurement
+    removeMeasurement,
+    clearMeasurements
   }
 }
 
