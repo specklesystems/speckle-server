@@ -15,7 +15,8 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import {
   useActiveUser,
-  useResolveUserDistinctId
+  useResolveUserDistinctId,
+  useWaitForActiveUser
 } from '~~/lib/auth/composables/activeUser'
 import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
 import type { ActiveUserMainMetadataQuery } from '~~/lib/common/generated/gql/graphql'
@@ -39,16 +40,20 @@ const useOnAuthStateChangeState = () =>
  */
 export const useOnAuthStateChange = () => {
   const { cbs } = useOnAuthStateChangeState()
-  const { activeUser } = useActiveUser()
+  const waitForUser = useWaitForActiveUser()
   const activeVueInstance = getCurrentInstance()
   const resolveDistinctId = useResolveUserDistinctId()
 
-  return (
+  return async (
     cb: UseOnAuthStateChangeCallback,
     options?: Partial<{ immediate: boolean }>
   ) => {
     cbs.push(cb)
-    if (options?.immediate) cb(activeUser.value, { resolveDistinctId })
+
+    if (options?.immediate) {
+      const awaitedUser = await waitForUser()
+      cb(awaitedUser?.data?.activeUser, { resolveDistinctId })
+    }
 
     const remove = () => {
       const idx = cbs.indexOf(cb)

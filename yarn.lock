@@ -13871,6 +13871,7 @@ __metadata:
     jest: 27
     js-cookie: ^3.0.1
     lodash-es: ^4.17.21
+    logrocket: ^8.0.1
     mitt: ^3.0.0
     mixpanel-browser: ^2.45.0
     nanoid: ^3.0.0
@@ -33325,6 +33326,13 @@ __metadata:
   version: 1.8.0
   resolution: "loglevel@npm:1.8.0"
   checksum: 41aeea17de24aba8dba68084a31fe9189648bce4f39c1277e021bb276c3c53a75b0d337395919cf271068ad40ecefabad0e4fdeb4a8f11908beee532b898f4a7
+  languageName: node
+  linkType: hard
+
+"logrocket@npm:^8.0.1":
+  version: 8.0.1
+  resolution: "logrocket@npm:8.0.1"
+  checksum: cebb4d057e2fc2bc50992efe00b762ee29f1b46fbd4633f4b2342c83ed23e8f7dbcde829035227bb7c4da38e12d8ccd6d371d8b4c0b026f8efca25a13480ffea
   languageName: node
   linkType: hard
 

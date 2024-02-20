@@ -65,9 +65,9 @@ export function useActiveUser() {
 }
 
 /**
- * Prevnets setup function from resolving until active user is resolved
+ * Prevents setup function from resolving until active user is resolved
  */
-export async function useWaitForActiveUser() {
+export function useWaitForActiveUser() {
   const client = useApolloClient().client
-  await client.query({ query: activeUserQuery }).catch(() => void 0)
+  return async () => await client.query({ query: activeUserQuery }).catch(() => void 0)
 }

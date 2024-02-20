@@ -16,7 +16,7 @@ async function initRumClient() {
     rg4js('boot')
     rg4js('enableRum', true)
 
-    onAuthStateChange(
+    await onAuthStateChange(
       (user, { resolveDistinctId }) => {
         const distinctId = resolveDistinctId(user)
         rg4js('setUser', {
