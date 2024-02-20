@@ -37,7 +37,7 @@
         class="flex w-full"
       >
         <div
-          :class="`grid grid-cols-3 w-full ${
+          :class="`grid grid-cols-3 w-full pl-2 ${
             kvp.value === null || kvp.value === undefined ? 'text-foreground-2' : ''
           }`"
         >
@@ -71,7 +71,11 @@
           </div>
         </div>
       </div>
-      <div v-for="(kvp, index) in categorisedValuePairs.objects" :key="index">
+      <div
+        v-for="(kvp, index) in categorisedValuePairs.objects"
+        :key="index"
+        class="pl-2"
+      >
         <ViewerSelectionObject
           :object="(kvp.value as Record<string,unknown>) || {}"
           :title="(kvp.key as string)"
