@@ -10,7 +10,7 @@
       <button
         class="flex h-full w-full p-2 items-center justify-between gap-4 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
         :class="unfold && 'text-primary'"
-        @click="emit('toggle-unfold')"
+        @click="unfold = !unfold"
       >
         <div :class="`truncate text-xs font-bold ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
@@ -144,9 +144,9 @@ const props = withDefaults(
   { debug: false, unfold: false, root: false, modifiedSibling: false }
 )
 
-const emit = defineEmits(['toggle-unfold'])
-
 const { copy } = useClipboard()
+
+const unfold = ref(props.unfold)
 
 const isAdded = computed(() => {
   if (!diffEnabled.value) return false
