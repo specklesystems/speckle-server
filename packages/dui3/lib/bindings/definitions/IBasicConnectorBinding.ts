@@ -2,7 +2,7 @@
 
 import { BaseBridge } from '~~/lib/bridge/base'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
-import { IModelCard } from '~~/lib/models/card'
+import { IModelCard, ModelCardProgress } from '~~/lib/models/card'
 
 export const IBasicConnectorBindingKey = 'baseBinding'
 
@@ -25,6 +25,11 @@ export interface IBasicConnectorBinding
 
 export interface IBasicConnectorBindingHostEvents {
   documentChanged: () => void
+  setModelError: (args: { modelCardId: string; error: string }) => void
+  setModelProgress: (args: {
+    modelCardId: string
+    progress?: ModelCardProgress
+  }) => void
 }
 
 export type DocumentModelStore = {

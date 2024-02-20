@@ -160,14 +160,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       })
   })
 
-  // should be moved to base bindings
-  app.$sendBinding.on('setModelProgress', (args) => {
-    const model = documentModelStore.value.models.find(
-      (m) => m.modelCardId === args.modelCardId
-    ) as IModelCard
-    model.progress = args.progress
-  })
-
   app.$sendBinding.on('setModelCreatedVersionId', (args) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
@@ -176,16 +168,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.progress = undefined
   })
 
-  // should be moved to base bindings
-  app.$sendBinding.on('setModelError', (args) => {
-    const model = documentModelStore.value.models.find(
-      (m) => m.modelCardId === args.modelCardId
-    ) as IModelCard
-    model.progress = undefined
-    model.error = args.error
-  })
-
-  /// RECEIVE STUFF - TODO
+  /// RECEIVE STUFF
   const receiveModel = async (modelCardId: string) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
@@ -205,14 +188,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.progress = undefined
   }
 
-  // should be moved to base bindings
-  app.$receiveBinding.on('setModelProgress', (args) => {
-    const model = documentModelStore.value.models.find(
-      (m) => m.modelCardId === args.modelCardId
-    ) as IModelCard
-    model.progress = args.progress
-  })
-
   app.$receiveBinding.on('setModelReceiveResult', (args) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
@@ -223,8 +198,16 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.receiveResult = args.receiveResult
   })
 
-  // should be moved to base bindings
-  app.$receiveBinding.on('setModelError', (args) => {
+  // GENERIC STUFF
+
+  app.$baseBinding.on('setModelProgress', (args) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.modelCardId === args.modelCardId
+    ) as IModelCard
+    model.progress = args.progress
+  })
+
+  app.$baseBinding.on('setModelError', (args) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
     ) as IModelCard

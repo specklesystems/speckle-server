@@ -1,4 +1,3 @@
-import { ModelCardProgress } from '~~/lib/models/card'
 import { ISendFilter } from '~~/lib/models/card/send'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 import { BaseBridge } from '~~/lib/bridge/base'
@@ -16,11 +15,6 @@ export interface ISendBinding extends IBinding<ISendBindingEvents> {
 export interface ISendBindingEvents {
   refreshSendFilters: () => void
   setModelsExpired: (modelCardIds: string[]) => void
-  setModelProgress: (args: {
-    modelCardId: string
-    progress?: ModelCardProgress
-  }) => void
-  setModelError: (args: { modelCardId: string; error: string }) => void
   setModelCreatedVersionId: (args: { modelCardId: string; versionId: string }) => void
 }
 
