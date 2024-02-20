@@ -3,7 +3,7 @@ import { omit } from 'lodash-es'
 import type { SetRequired } from 'type-fest'
 import { useReadUserId } from '~/lib/auth/composables/activeUser'
 import {
-  useErrorLoggingTransport,
+  useCreateErrorLoggingTransport,
   useGetErrorLoggingTransports
 } from '~/lib/core/composables/error'
 import {
@@ -42,6 +42,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   const serverReqId = useServerRequestId()
   const getUserId = useReadUserId()
   const country = useUserCountry()
+  const registerErrorTransport = useCreateErrorLoggingTransport()
 
   const collectMainInfo = (params: { isBrowser: boolean }) => {
     const info = {
@@ -194,7 +195,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
   // Register seq transports, if any
   if (errorHandlers.length) {
-    useErrorLoggingTransport({
+    registerErrorTransport({
       onError: (params) => {
         errorHandlers.forEach((handler) => handler(params))
       },

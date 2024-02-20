@@ -1,9 +1,10 @@
 import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
-import { useErrorLoggingTransport } from '~/lib/core/composables/error'
+import { useCreateErrorLoggingTransport } from '~/lib/core/composables/error'
 
 async function initRumClient() {
   const { enabled, keys } = resolveInitParams()
   const onAuthStateChange = useOnAuthStateChange()
+  const registerErrorTransport = useCreateErrorLoggingTransport()
   if (!enabled) return
 
   // RayGun
@@ -11,6 +12,7 @@ async function initRumClient() {
     const rg4js = (await import('raygun4js')).default
     rg4js('apiKey', keys.raygun)
     rg4js('enableCrashReporting', true)
+    rg4js('enablePulse', true)
     rg4js('boot')
     rg4js('enableRum', true)
 
@@ -25,7 +27,7 @@ async function initRumClient() {
       { immediate: true }
     )
 
-    useErrorLoggingTransport({
+    registerErrorTransport({
       onError: ({ args, firstError, firstString, otherData, nonObjectOtherData }) => {
         const error = firstError || firstString || args[0]
         rg4js('send', {
@@ -36,22 +38,24 @@ async function initRumClient() {
             mainErrorMessage: firstString
           }
         })
-      },
-      onUnhandledError: ({ isUnhandledRejection, error, message }) => {
-        rg4js('send', {
-          error: error || message,
-          customData: {
-            isUnhandledRejection,
-            message,
-            mainErrorMessage: message
-          }
-        })
       }
+      // Apparently unhandleds are auto-handled by raygun
+      // onUnhandledError: ({ isUnhandledRejection, error, message }) => {
+      //   rg4js('send', {
+      //     error: error || message,
+      //     customData: {
+      //       isUnhandledRejection,
+      //       message,
+      //       mainErrorMessage: message
+      //     }
+      //   })
+      // }
     })
   }
 }
 
 async function initRumServer() {
+  const registerErrorTransport = useCreateErrorLoggingTransport()
   const { enabled, keys } = resolveInitParams()
   if (!enabled) return
 
@@ -64,7 +68,7 @@ async function initRumServer() {
       reportUncaughtExceptions: true
     })
 
-    useErrorLoggingTransport({
+    registerErrorTransport({
       onError: ({ firstError, firstString, otherData, nonObjectOtherData }) => {
         const error = firstError || firstString || 'Unknown error'
         raygunClient.send(error, {

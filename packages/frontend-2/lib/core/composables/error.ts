@@ -39,21 +39,23 @@ const useErrorLoggingTransportState = () =>
     transports: [] as ErrorLoggingTransport[]
   }))
 
-export const useErrorLoggingTransport = (transport: ErrorLoggingTransport) => {
+export const useCreateErrorLoggingTransport = () => {
   const { transports } = useErrorLoggingTransportState()
 
-  transports.push(transport)
-  const remove = () => {
-    const idx = transports.indexOf(transport)
-    if (idx !== -1) {
-      transports.splice(idx, 1)
+  return (transport: ErrorLoggingTransport) => {
+    transports.push(transport)
+    const remove = () => {
+      const idx = transports.indexOf(transport)
+      if (idx !== -1) {
+        transports.splice(idx, 1)
+      }
     }
-  }
 
-  return remove
+    return remove
+  }
 }
 
 export const useGetErrorLoggingTransports = () => {
   const { transports } = useErrorLoggingTransportState()
-  return transports.slice()
+  return transports
 }
