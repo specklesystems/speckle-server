@@ -20,56 +20,29 @@
         <MenuItems
           class="absolute right-0 md:right-4 top-10 md:top-16 w-full md:w-64 origin-top-right bg-foundation sm:rounded-t-md rounded-b-2xl shadow-lg overflow-hidden"
         >
-          <MenuItem>
-            <div class="border border-t-1 border-primary-muted">
-              <div class="p-2 flex items-center justify-between">
-                <div class="text-xs text-foreground-2">Your accounts</div>
-                <div>
-                  <FormButton
-                    text
-                    size="xs"
-                    @click.stop="accountStore.refreshAccounts()"
-                  >
-                    Refresh
-                  </FormButton>
-                </div>
-              </div>
-              <div v-if="isLoading" class="">
-                <CommonLoadingBar :loading="isLoading" />
-              </div>
-              <div class="space-y-0">
-                <HeaderUserAccount
-                  v-for="acc in accounts"
-                  :key="acc.accountInfo.id"
-                  :account="(acc as DUIAccount)"
-                />
-              </div>
-            </div>
-          </MenuItem>
           <MenuItem v-slot="{ close }" as="div">
-            <div class="px-2 py-3 flex space-x-2 border-t-1 justify-between">
-              <div class="">
-                <button
-                  class="text-xs text-foreground-2 hover:text-primary transition"
-                  @click="$showDevTools"
-                >
-                  Open Dev Tools
-                </button>
-                <NuxtLink
-                  class="text-xs text-foreground-2 hover:text-primary transition"
-                  to="/test"
-                  @click="close()"
-                >
-                  Test Page
-                </NuxtLink>
-              </div>
+            <div class="px-2 py-3 flex flex-col space-y-2 border-t-1 justify-between">
+              <FormButton
+                class="text-xs text-foreground-2 hover:text-primary transition"
+                @click="$showDevTools"
+              >
+                Open Dev Tools
+              </FormButton>
+
+              <FormButton
+                class="text-xs text-foreground-2 hover:text-primary transition"
+                to="/test"
+                @click="close()"
+              >
+                Test Page
+              </FormButton>
               <!-- 
                 NOTE: Here's an example of customising the frontend app based on what bindings we
                 have loaded. E.g., if config bindings are not present, we do not show any button
                 regarding switching themes. 
               -->
               <div v-if="hasConfigBindings">
-                <FormButton size="xs" text @click.stop="toggleTheme()">
+                <FormButton size="xs" text full-width @click="toggleTheme()">
                   {{ isDarkTheme ? 'Switch to light theme' : 'Switch to dark theme' }}
                 </FormButton>
               </div>
@@ -83,11 +56,11 @@
 <script setup lang="ts">
 import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { useAccountStore, DUIAccount } from '~/store/accounts'
+import { useAccountStore } from '~/store/accounts'
 import { useConfigStore } from '~/store/config'
 
 const accountStore = useAccountStore()
-const { accounts, defaultAccount, isLoading } = storeToRefs(accountStore)
+const { defaultAccount } = storeToRefs(accountStore)
 
 const uiConfigStore = useConfigStore()
 const { isDarkTheme, hasConfigBindings } = storeToRefs(uiConfigStore)

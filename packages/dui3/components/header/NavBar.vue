@@ -1,5 +1,6 @@
 <template>
   <nav
+    v-if="!hasNoModelCards"
     class="fixed top-0 h-10 bg-foundation max-w-full w-full shadow hover:shadow-md transition z-20"
   >
     <div class="px-2">
@@ -32,16 +33,25 @@
       </div>
     </div>
   </nav>
+  <div v-else class="fixed top-1 right-2 z-100">
+    <FormButton size="xs" text @click="uiConfigStore.toggleTheme()">
+      {{ isDarkTheme ? 'Switch to light theme' : 'Switch to dark theme' }}
+    </FormButton>
+  </div>
 </template>
 <script setup lang="ts">
 import { useConfigStore } from '~/store/config'
 import { Cog6ToothIcon } from '@heroicons/vue/24/outline'
+import { useHostAppStore } from '~/store/hostApp'
 
 const openConfigDialog = ref(false)
 
 // NOTE: make it true to test settings, it might be removed later. TBD
-const testSettings = ref(true)
+const testSettings = ref(false)
 
 const uiConfigStore = useConfigStore()
-const { hasConfigBindings } = storeToRefs(uiConfigStore)
+const { isDarkTheme, hasConfigBindings } = storeToRefs(uiConfigStore)
+
+const hostAppStore = useHostAppStore()
+const hasNoModelCards = computed(() => hostAppStore.projectModelGroups.length === 0)
 </script>

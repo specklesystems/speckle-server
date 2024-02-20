@@ -32,6 +32,14 @@ export class ModelCard extends DiscriminatedObject implements IModelCard {
   }
 }
 
+export interface IModelCardSharedEvents {
+  setModelError: (args: { modelCardId: string; error: string }) => void
+  setModelProgress: (args: {
+    modelCardId: string
+    progress?: ModelCardProgress
+  }) => void
+}
+
 export type ModelCardProgress = {
   status: string
   progress?: number

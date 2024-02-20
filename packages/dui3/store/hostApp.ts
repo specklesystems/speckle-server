@@ -2,7 +2,7 @@ import {
   DocumentInfo,
   DocumentModelStore
 } from '~/lib/bindings/definitions/IBasicConnectorBinding'
-import { IModelCard } from 'lib/models/card'
+import { IModelCard, ModelCardProgress } from 'lib/models/card'
 import { IReceiverModelCard } from 'lib/models/card/receiver'
 import { ISendFilter, ISenderModelCard } from 'lib/models/card/send'
 
@@ -160,14 +160,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       })
   })
 
-  // should be moved to base bindings
-  app.$sendBinding.on('setModelProgress', (args) => {
-    const model = documentModelStore.value.models.find(
-      (m) => m.modelCardId === args.modelCardId
-    ) as IModelCard
-    model.progress = args.progress
-  })
-
   app.$sendBinding.on('setModelCreatedVersionId', (args) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
@@ -176,16 +168,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.progress = undefined
   })
 
-  // should be moved to base bindings
-  app.$sendBinding.on('setModelError', (args) => {
-    const model = documentModelStore.value.models.find(
-      (m) => m.modelCardId === args.modelCardId
-    ) as IModelCard
-    model.progress = undefined
-    model.error = args.error
-  })
-
-  /// RECEIVE STUFF - TODO
+  /// RECEIVE STUFF
   const receiveModel = async (modelCardId: string) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
@@ -205,32 +188,45 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.progress = undefined
   }
 
-  // should be moved to base bindings
-  app.$receiveBinding.on('setModelProgress', (args) => {
-    const model = documentModelStore.value.models.find(
-      (m) => m.modelCardId === args.modelCardId
-    ) as IModelCard
-    model.progress = args.progress
-  })
-
-  app.$receiveBinding.on('setModelReceiveResult', (args) => {
+  app.$receiveBinding.on('setModelReceiveResult', async (args) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
     ) as IReceiverModelCard
 
     console.log(args)
     model.progress = undefined
-    model.receiveResult = args.receiveResult
+    await patchModel(model.modelCardId, { receiveResult: args.receiveResult }) // NOTE: going through this method to ensure state sync between FE and BE. It's because of a very weird rhino bug on first receives, ask dim and he will cry
   })
 
-  // should be moved to base bindings
-  app.$receiveBinding.on('setModelError', (args) => {
+  // GENERIC STUFF
+  const handleModelProgressEvents = (args: {
+    modelCardId: string
+    progress?: ModelCardProgress
+  }) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.modelCardId === args.modelCardId
+    ) as IModelCard
+    model.progress = args.progress
+  }
+
+  const handleModelError = (args: { modelCardId: string; error: string }) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
     ) as IModelCard
     model.progress = undefined
     model.error = args.error
-  })
+  }
+
+  // NOTE: all bindings that need to send these model events should register.
+  // EG, new binding "mapper binding" wants to send errors to the model card should
+  // be registed here. Why? Each binding gets its own "bridge" parent in .NET, which
+  // is hoisted as a separate global js object.
+  app.$sendBinding.on('setModelProgress', handleModelProgressEvents)
+  app.$receiveBinding.on('setModelProgress', handleModelProgressEvents)
+
+  app.$sendBinding.on('setModelError', handleModelError)
+  app.$receiveBinding.on('setModelError', handleModelError)
+  app.$baseBinding.on('setModelError', handleModelError)
 
   /**
    * Used internally in this store store only for initialisation.

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div class="relative min-h-screen flex flex-col">
     <HeaderNavBar />
     <main class="flex-1 mt-10 px-1 max-[275px]:px-0">
       <slot />

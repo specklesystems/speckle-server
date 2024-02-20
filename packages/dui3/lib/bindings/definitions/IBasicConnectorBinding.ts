@@ -2,7 +2,7 @@
 
 import { BaseBridge } from '~~/lib/bridge/base'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
-import { IModelCard } from '~~/lib/models/card'
+import { IModelCard, IModelCardSharedEvents } from '~~/lib/models/card'
 
 export const IBasicConnectorBindingKey = 'baseBinding'
 
@@ -23,7 +23,7 @@ export interface IBasicConnectorBinding
   removeModel: (model: IModelCard) => Promise<void>
 }
 
-export interface IBasicConnectorBindingHostEvents {
+export interface IBasicConnectorBindingHostEvents extends IModelCardSharedEvents {
   documentChanged: () => void
 }
 
