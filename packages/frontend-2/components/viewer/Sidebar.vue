@@ -3,6 +3,7 @@
     ref="resizableElement"
     class="relative sm:absolute z-10 right-0 sm:top-[4.2rem] h-[50dvh] sm:h-[calc(100dvh-4.2rem)] overflow-hidden w-screen sm:pr-3 sm:pb-3 sm:pt-0"
     :style="!isSmallerOrEqualSm ? { maxWidth: width + 'px' } : {}"
+    :class="open ? '' : 'pointer-events-none'"
   >
     <div
       class="flex transition-all h-full"
@@ -26,7 +27,9 @@
           @mousedown="startResizing"
         ></div>
       </div>
-      <div class="flex flex-col w-full h-full relative z-20 overflow-hidden shadow-lg">
+      <div
+        class="flex flex-col w-full h-full relative z-20 overflow-hidden shadow-lg rounded-b-md"
+      >
         <!-- Header -->
         <div
           class="h-18 absolute z-10 top-0 w-full left-0 bg-foundation shadow-md sm:rounded-t-md"
