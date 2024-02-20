@@ -35,8 +35,9 @@
             v-for="object in objectsLimited"
             :key="(object.id as string)"
             :object="object"
-            :unfold="shouldUnfold"
             :root="true"
+            :unfold="unfoldState"
+            @toggle-unfold="toggleUnfold"
           />
         </div>
         <div v-if="itemCount <= objects.length" class="mb-2">
@@ -80,6 +81,7 @@ const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const itemCount = ref(20)
 const sidebarOpen = ref(false)
+const unfoldState = ref(false)
 
 const objectsUniqueByAppId = computed(() => {
   if (!diff.enabled.value) return objects.value
@@ -118,7 +120,9 @@ const isIsolated = computed(() => {
   return containsAll(allTargetIds.value, isolatedObjects.value)
 })
 
-const shouldUnfold = computed(() => objectsLimited.value.length === 1)
+const toggleUnfold = () => {
+  unfoldState.value = !unfoldState.value
+}
 
 const mp = useMixpanel()
 
@@ -197,5 +201,13 @@ watch(
       sidebarOpen.value = false
     }
   }
+)
+
+watch(
+  () => objects.value.length,
+  (newLength) => {
+    unfoldState.value = newLength === 1
+  },
+  { immediate: true }
 )
 </script>

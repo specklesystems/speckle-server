@@ -10,7 +10,7 @@
       <button
         class="flex h-full w-full p-2 items-center justify-between gap-4 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
         :class="unfold && 'text-primary'"
-        @click="unfold = !unfold"
+        @click="emit('toggle-unfold')"
       >
         <div :class="`truncate text-xs font-bold ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
@@ -51,26 +51,23 @@
             class="group col-span-2 pl-1 truncate text-xs flex gap-1 items-center"
             :title="(kvp.value as string)"
           >
-            <button
-              class="flex gap-1 items-center w-full"
-              :class="isCopyable(kvp) ? 'cursor-pointer' : 'cursor-default'"
-              @click="handleCopy(kvp)"
-            >
+            <div class="flex gap-1 items-center w-full">
               <!-- NOTE: can't do kvp.value || 'null' because 0 || 'null' = 'null' -->
               <span
-                class="border-b border-transparent truncate select-none"
-                :class="
-                  kvp.value === null
-                    ? ''
-                    : 'group-hover:border-outline-3 group-hover:max-w-[calc(100%-1rem)]'
-                "
+                class="truncate"
+                :class="kvp.value === null ? '' : 'group-hover:max-w-[calc(100%-1rem)]'"
               >
                 {{ kvp.value === null ? 'null' : kvp.value }}
               </span>
-              <div v-if="isCopyable(kvp)" class="opacity-0 group-hover:opacity-100 w-4">
+              <button
+                v-if="isCopyable(kvp)"
+                :class="isCopyable(kvp) ? 'cursor-pointer' : 'cursor-default'"
+                class="opacity-0 group-hover:opacity-100 w-4"
+                @click="handleCopy(kvp)"
+              >
                 <ClipboardDocumentIcon class="h-3 w-3" />
-              </div>
-            </button>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -147,9 +144,9 @@ const props = withDefaults(
   { debug: false, unfold: false, root: false, modifiedSibling: false }
 )
 
-const { copy } = useClipboard()
+const emit = defineEmits(['toggle-unfold'])
 
-const unfold = ref(props.unfold)
+const { copy } = useClipboard()
 
 const isAdded = computed(() => {
   if (!diffEnabled.value) return false
