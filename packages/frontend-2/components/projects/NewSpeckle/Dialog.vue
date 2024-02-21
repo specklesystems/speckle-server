@@ -21,7 +21,7 @@ const dialogOpen = ref(true)
 const dialogButtons = computed(() => [
   {
     text: 'Close',
-    props: { color: 'invert', fullWidth: true, outline: true },
+    props: { color: 'secondary', fullWidth: true },
     onClick: () => {
       emit('dialog-dismissed')
     }
@@ -36,9 +36,6 @@ const dialogButtons = computed(() => [
       to: 'https://speckle.systems/blog/',
       external: true,
       target: '_blank'
-    },
-    onClick: () => {
-      emit('dialog-dismissed')
     }
   }
 ])
