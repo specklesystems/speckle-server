@@ -4,17 +4,17 @@ import {
   resolveMixpanelUserId,
   resolveMixpanelServerId
 } from '@speckle/shared'
-import { enableMixpanel, getBaseUrl } from '@/modules/shared/helpers/envHelper'
+import { enableMixpanel, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import Mixpanel from 'mixpanel'
 import { mixpanelLogger } from '@/logging/logging'
 
 let client: Optional<Mixpanel.Mixpanel> = undefined
 let baseTrackingProperties: Optional<Record<string, string>> = undefined
 
-function getMixpanelServerId(): string {
-  const canonicalUrl = getBaseUrl()
+function getMixpanelServerId(debug = false): string {
+  const canonicalUrl = getServerOrigin()
   const url = new URL(canonicalUrl)
-  return resolveMixpanelServerId(url.hostname)
+  return debug ? url.hostname : resolveMixpanelServerId(url.hostname)
 }
 
 function getBaseTrackingProperties() {
@@ -46,8 +46,12 @@ export function getClient() {
 /**
  * Mixpanel tracking helper. An abstraction layer over the client that makes it a bit nicer to work with.
  */
-export function mixpanel(params: { mixpanelUserId: Optional<string> }) {
-  const { mixpanelUserId } = params
+export function mixpanel(params: { userEmail: Optional<string> }) {
+  const { userEmail } = params
+  const mixpanelUserId = userEmail?.length
+    ? resolveMixpanelUserId(userEmail)
+    : undefined
+
   const getUserIdentificationProperties = () => ({
     ...(mixpanelUserId
       ? {
@@ -72,7 +76,11 @@ export function mixpanel(params: { mixpanelUserId: Optional<string> }) {
               {
                 eventName,
                 payload,
-                err: err || false
+                err: err || false,
+                debug: {
+                  userEmail,
+                  serverHostname: getMixpanelServerId(true)
+                }
               },
               'Mixpanel track() invoked'
             )
