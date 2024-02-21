@@ -36,6 +36,7 @@
               :account-id="modelCard.accountId"
               :project-id="modelCard.projectId"
               :model-id="modelCard.modelId"
+              @next="handleVersionSelection"
             />
           </div>
         </LayoutDialog>
@@ -77,6 +78,7 @@ import { ProjectModelGroup, useHostAppStore } from '~/store/hostApp'
 import { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { versionDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
 import { watchOnce } from '@vueuse/core'
+import { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
 
 const app = useNuxtApp()
 
@@ -98,6 +100,18 @@ const receiveOrCancel = async () => {
 const isExpired = computed(() => {
   return props.modelCard.latestVersionId !== props.modelCard.selectedVersionId
 })
+
+const handleVersionSelection = async (
+  selectedVersion: VersionListItemFragment,
+  latestVersion: VersionListItemFragment
+) => {
+  openVersionsDialog.value = false
+  await store.patchModel(props.modelCard.modelCardId, {
+    selectedVersionId: selectedVersion.id,
+    latestVersionId: latestVersion.id // patch this dude as well, to make sure
+  })
+  await store.receiveModel(props.modelCard.modelCardId)
+}
 
 const expiredNotification = computed(() => {
   if (!props.modelCard.latestVersionId || props.modelCard.hasDismissedUpdateWarning)
