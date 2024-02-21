@@ -18,9 +18,12 @@
             class="opacity-80 hover:opacity-100"
             @click.stop="hideOrShowSelection"
           >
-            <div class="flex items-center gap-1">
-              <EyeIcon v-if="!isHidden" class="h-4 w-4" />
-              <EyeSlashIcon v-else class="h-4 w-4" />
+            <div v-if="isHidden" class="flex items-center gap-1">
+              <EyeIcon class="h-4 w-4" />
+              Show
+            </div>
+            <div v-else class="flex items-center gap-1">
+              <EyeSlashIcon class="h-4 w-4" />
               Hide
             </div>
           </FormButton>
@@ -132,7 +135,6 @@ const mp = useMixpanel()
 const hideOrShowSelection = () => {
   if (!isHidden.value) {
     hideObjects(allTargetIds.value)
-    clearSelection() // when hiding, the objects disappear. they can't really stay "selected"
     mp.track('Viewer Action', {
       type: 'action',
       name: 'selection',

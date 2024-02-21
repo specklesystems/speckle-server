@@ -27,27 +27,28 @@
         enable isolate this level, and from the remaining objects, isolate the doors only. 
         Requires a larger rework of the viewer state composable & filtering methods.
 
-        There's v-if=false that's hiding the div below :)
+        Note 21/02/24: We have decided to reimplement some of this functionality, but now the hide
+        and isolate icons are not buttons, but visual indicators. To unhide an object, you can now
+        click on the object in object explorer, which will open the selection info panel.
       -->
-      <div v-if="false" class="flex items-center flex-shrink-0">
-        <button
+      <div class="flex items-center gap-1 flex-shrink-0">
+        <!-- <button
           :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
             isHidden ? 'opacity-100' : ''
           }`"
           @click.stop="hideOrShowObject"
-        >
-          <EyeIcon v-if="!isHidden" class="h-3 w-3" />
-          <EyeSlashIcon v-else class="h-3 w-3" />
-        </button>
+        > -->
+        <EyeSlashIcon v-if="isHidden" class="h-3 w-3" />
+        <!-- </button>
         <button
           :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
             isIsolated ? 'opacity-100' : ''
           }`"
           @click.stop="isolateOrUnisolateObject"
-        >
-          <FunnelIconOutline v-if="!isIsolated" class="h-3 w-3" />
-          <FunnelIcon v-else class="h-3 w-3" />
-        </button>
+        > -->
+        <FunnelIconOutline v-if="!isIsolated" class="h-3 w-3" />
+        <FunnelIcon v-else class="h-3 w-3" />
+        <!-- </button> -->
       </div>
     </div>
     <!-- Debugging info -->
@@ -57,7 +58,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { EyeIcon, EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
+import { EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 import { containsAll, hasIntersection } from '~~/lib/common/helpers/utils'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
@@ -83,13 +84,13 @@ const { clearSelection, setSelectionFromObjectIds, objectIds } = useSelectionUti
 const isSelected = computed(() => hasIntersection(objectIds.value, props.item.ids))
 
 const availableTargetIds = computed(() => {
-  let targets = props.item.ids
+  const targets = props.item.ids
 
-  if (isolatedObjectIds.value.length)
-    targets = props.item.ids.filter((id) => isolatedObjectIds.value.includes(id))
+  // if (isolatedObjectIds.value.length)
+  //   targets = props.item.ids.filter((id) => isolatedObjectIds.value.includes(id))
 
-  if (hiddenObjectIds.value.length)
-    targets = props.item.ids.filter((id) => !hiddenObjectIds.value.includes(id))
+  // if (hiddenObjectIds.value.length)
+  //   targets = props.item.ids.filter((id) => !hiddenObjectIds.value.includes(id))
   return targets
 })
 
@@ -115,22 +116,22 @@ const color = computed(() => {
     ?.color
 })
 
-const hideOrShowObject = () => {
-  // const ids = props.item.ids
-  // if (!isHidden.value) {
-  //   // removeFromSelection(rawSpeckleData)
-  //   filters.hideObjects(ids, stateKey, true)
-  //   return
-  // }
-  // return filters.showObjects(ids, stateKey, true)
-}
+// const hideOrShowObject = () => {
+//   const ids = props.item.ids
+//   if (!isHidden.value) {
+//     // removeFromSelection(rawSpeckleData)
+//     filters.hideObjects(ids, stateKey, true)
+//     return
+//   }
+//   return filters.showObjects(ids, stateKey, true)
+// }
 
-const isolateOrUnisolateObject = () => {
-  // const ids = props.item.ids
-  // if (!isIsolated.value) {
-  //   filters.isolateObjects(ids, stateKey, true)
-  //   return
-  // }
-  // return filters.unIsolateObjects(ids, stateKey, true)
-}
+// const isolateOrUnisolateObject = () => {
+//   const ids = props.item.ids
+//   if (!isIsolated.value) {
+//     filters.isolateObjects(ids, stateKey, true)
+//     return
+//   }
+//   return filters.unIsolateObjects(ids, stateKey, true)
+// }
 </script>
