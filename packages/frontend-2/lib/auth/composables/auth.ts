@@ -251,11 +251,6 @@ export const useAuthManager = () => {
 
     // eslint-disable-next-line camelcase
     goHome({ query: { access_code: accessCode } })
-
-    mixpanel.track('Sign Up', {
-      type: 'action',
-      isInvite: !!inviteToken
-    })
   }
 
   /**

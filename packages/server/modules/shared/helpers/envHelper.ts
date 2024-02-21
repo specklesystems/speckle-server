@@ -187,7 +187,10 @@ export function adminOverrideEnabled() {
 }
 
 export function enableMixpanel() {
-  if (isDevEnv() || isTestEnv()) return false
+  if (isDevEnv() || isTestEnv()) {
+    // Check if explicitly enabled
+    return getBooleanFromEnv('FORCE_ENABLE_MP')
+  }
 
   // if not explicitly set to '0' or 'false', it is enabled by default
   return !['0', 'false'].includes(process.env.ENABLE_MP || 'true')

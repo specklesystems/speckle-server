@@ -41,6 +41,9 @@ export function useMixpanelUserIdentification() {
   const { distinctId } = useActiveUser()
   const { isDarkTheme } = useTheme()
   const serverId = getMixpanelServerId()
+  const {
+    public: { speckleServerVersion }
+  } = useRuntimeConfig()
 
   return {
     reidentify: () => {
@@ -51,7 +54,8 @@ export function useMixpanelUserIdentification() {
       mp.register({
         // eslint-disable-next-line camelcase
         server_id: serverId,
-        hostApp: HOST_APP
+        hostApp: HOST_APP,
+        speckleVersion: speckleServerVersion
       })
 
       // Identify user, if any
