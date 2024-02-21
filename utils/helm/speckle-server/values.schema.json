@@ -983,6 +983,21 @@
             }
           }
         },
+        "migration": {
+          "type": "object",
+          "properties": {
+            "movedFrom": {
+              "type": "string",
+              "description": "Indicate the URL where the server moved from",
+              "default": ""
+            },
+            "movedTo": {
+              "type": "string",
+              "description": "Indicate the URL where the server moved to",
+              "default": ""
+            }
+          }
+        },
         "monitoring": {
           "type": "object",
           "properties": {
