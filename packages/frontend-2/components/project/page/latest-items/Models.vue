@@ -72,7 +72,7 @@
             >
               New
             </FormButton>
-            <FormButton @click="onTest">Test</FormButton>
+            <FormButton v-if="false" @click="onTest">Test</FormButton>
           </div>
         </div>
       </div>
@@ -146,6 +146,8 @@ const updateSearchImmediately = (val?: string) => {
 }
 
 const onTest = () => {
+  // TODO: Remove after RUM tests are done
+
   // Unhandled rejection
   void new Promise((_resolve, reject) => {
     setTimeout(() => {
@@ -169,6 +171,7 @@ watch(search, (newVal) => {
 
 watch(queryLoading, (newVal) => (showLoadingBar.value = newVal))
 
+// TODO: Remove after RUM tests are done
 // if (process.server) {
 //   onTest()
 // }
