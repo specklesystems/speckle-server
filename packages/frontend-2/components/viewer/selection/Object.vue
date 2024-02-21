@@ -8,10 +8,15 @@
   >
     <div class="mb-1 flex items-center">
       <button
-        class="flex h-full w-full p-2 items-center justify-between gap-4 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
+        class="flex h-full w-full p-2 items-center gap-1 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
         :class="unfold && 'text-primary'"
         @click="unfold = !unfold"
       >
+        <ChevronDownIcon
+          :class="`h-3 w-3 transition ${headerClasses} ${
+            !unfold ? '-rotate-90' : 'rotate-0'
+          }`"
+        />
         <div :class="`truncate text-xs font-bold ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
           <span
@@ -20,11 +25,6 @@
             {{ isModifiedQuery.isNew ? '(New)' : '(Old)' }}
           </span>
         </div>
-        <ChevronDownIcon
-          :class="`h-3 w-3 transition ${headerClasses} ${
-            !unfold ? '-rotate-90' : 'rotate-0'
-          }`"
-        />
       </button>
     </div>
     <div v-if="unfold" class="ml-1 space-y-1 p-2">

@@ -6,7 +6,7 @@ export const lightThemeVariables = {
   '--foundation-page': '#f1f5f9',
   /* used as the background for any elements that sit on the page */
   '--foundation': '#fcfcfc',
-  '--foundation-2': '#fcfcfc',
+  '--foundation-2': '#F1F5F9',
   '--foundation-3': '#fcfcfc',
   '--foundation-4': '#fcfcfc',
   '--foundation-5': '#fcfcfc',
