@@ -161,23 +161,45 @@ async function initRumServer(app: PluginNuxtApp) {
       })
     })
   }
+
+  // DebugBear - attach JS
+  if (keys.debugbear) {
+    app.hook('app:rendered', (context) => {
+      context.ssrContext!.head.push({
+        script: [
+          {
+            src: `https://cdn.debugbear.com/${keys.debugbear || ''}.js`,
+            async: true
+          }
+        ]
+      })
+    })
+  }
 }
 
 function resolveInitParams() {
   const {
-    public: { raygunKey, logrocketAppId, speckleServerVersion, speedcurveId }
+    public: {
+      raygunKey,
+      logrocketAppId,
+      speckleServerVersion,
+      speedcurveId,
+      debugbearId
+    }
   } = useRuntimeConfig()
   const raygun = raygunKey?.length ? raygunKey : null
   const logrocket = logrocketAppId?.length ? logrocketAppId : null
   const speedcurve = speedcurveId ? speedcurveId : null
-  const enabled = !!(raygun || logrocket || speedcurve)
+  const debugbear = debugbearId?.length ? debugbearId : null
+  const enabled = !!(raygun || logrocket || speedcurve || debugbear)
 
   return {
     enabled,
     keys: {
       raygun,
       logrocket,
-      speedcurve
+      speedcurve,
+      debugbear
     },
     speckleServerVersion
   }
