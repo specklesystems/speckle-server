@@ -4,7 +4,11 @@ import {
   resolveMixpanelUserId,
   resolveMixpanelServerId
 } from '@speckle/shared'
-import { enableMixpanel, getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import {
+  enableMixpanel,
+  getServerOrigin,
+  getServerVersion
+} from '@/modules/shared/helpers/envHelper'
 import Mixpanel from 'mixpanel'
 import { mixpanelLogger } from '@/logging/logging'
 
@@ -21,7 +25,8 @@ function getBaseTrackingProperties() {
   if (baseTrackingProperties) return baseTrackingProperties
   baseTrackingProperties = {
     server_id: getMixpanelServerId(),
-    hostApp: 'serverside'
+    hostApp: 'serverside',
+    speckleVersion: getServerVersion()
   }
 
   return baseTrackingProperties
